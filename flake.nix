@@ -1,5 +1,5 @@
 {
-  description = "Flake of LibrePhoenix / Akunito's fork";
+  description = "Flake of Akunito";
 
   outputs = inputs@{ self, ... }:
     let
@@ -23,12 +23,12 @@
         email = "diego88aku@gmail.com"; # email (used for certain configurations)
         dotfilesDir = "~/.dotfiles"; # absolute path of the local repo
         theme = "io"; # selcted theme from my themes directory (./themes/)
-        wm = "hyprland"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
+        wm = "plasma5"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if (wm == "hyprland") then "wayland" else "x11";
-        browser = "qutebrowser"; # Default browser; must select one from ./user/app/browser/
+        browser = "vivaldi"; # Default browser; must select one from ./user/app/browser/
         defaultRoamDir = "Personal.p"; # Default org roam directory relative to ~/Org
-        term = "alacritty"; # Default terminal command;
+        term = "kitty"; # Default terminal command;
         font = "Intel One Mono"; # Selected font
         fontPkg = pkgs.intel-one-mono; # Font package
         editor = "nano"; # Default editor;
@@ -47,13 +47,13 @@
                            editor);
       };
 
-      # create patched nixpkgs
-      nixpkgs-patched =
-        (import inputs.nixpkgs { system = systemSettings.system; rocmSupport = (if systemSettings.gpu == "amd" then true else false); }).applyPatches {
-          name = "nixpkgs-patched";
-          src = inputs.nixpkgs;
-          patches = [ ./patches/emacs-no-version-check.patch ];
-        };
+      # create patched nixpkgs # DISABLING emacs
+      # nixpkgs-patched =
+      #   (import inputs.nixpkgs { system = systemSettings.system; rocmSupport = (if systemSettings.gpu == "amd" then true else false); }).applyPatches {
+      #     name = "nixpkgs-patched";
+      #     src = inputs.nixpkgs;
+      #     patches = [ ./patches/emacs-no-version-check.patch ];
+      #   };
 
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
@@ -79,17 +79,17 @@
         };
       };
 
-      pkgs-emacs = import inputs.emacs-pin-nixpkgs {
-        system = systemSettings.system;
-      };
+      # pkgs-emacs = import inputs.emacs-pin-nixpkgs {
+      #   system = systemSettings.system;
+      # };
 
-      pkgs-kdenlive = import inputs.kdenlive-pin-nixpkgs {
-        system = systemSettings.system;
-      };
+      # pkgs-kdenlive = import inputs.kdenlive-pin-nixpkgs {
+      #   system = systemSettings.system;
+      # };
 
-      pkgs-nwg-dock-hyprland = import inputs.nwg-dock-hyprland-pin-nixpkgs {
-        system = systemSettings.system;
-      };
+      # pkgs-nwg-dock-hyprland = import inputs.nwg-dock-hyprland-pin-nixpkgs {
+      #   system = systemSettings.system;
+      # };
 
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
@@ -128,9 +128,9 @@
           extraSpecialArgs = {
             # pass config variables from above
             inherit pkgs-stable;
-            inherit pkgs-emacs;
-            inherit pkgs-kdenlive;
-            inherit pkgs-nwg-dock-hyprland;
+            # inherit pkgs-emacs;
+            # inherit pkgs-kdenlive;
+            # inherit pkgs-nwg-dock-hyprland;
             inherit systemSettings;
             inherit userSettings;
             inherit inputs;
@@ -161,7 +161,7 @@
         extraSpecialArgs = {
           # pass config variables from above
           inherit pkgs-stable;
-          inherit pkgs-emacs;
+          # inherit pkgs-emacs;
           inherit systemSettings;
           inherit userSettings;
           inherit inputs;
@@ -193,9 +193,9 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "nixpkgs/nixos-23.11";
-    emacs-pin-nixpkgs.url = "nixpkgs/f72123158996b8d4449de481897d855bc47c7bf6";
-    kdenlive-pin-nixpkgs.url = "nixpkgs/cfec6d9203a461d9d698d8a60ef003cac6d0da94";
-    nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
+    # emacs-pin-nixpkgs.url = "nixpkgs/f72123158996b8d4449de481897d855bc47c7bf6";
+    # kdenlive-pin-nixpkgs.url = "nixpkgs/cfec6d9203a461d9d698d8a60ef003cac6d0da94";
+    # nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
 
     home-manager-unstable.url = "github:nix-community/home-manager/master";
     home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs";
@@ -203,85 +203,85 @@
     home-manager-stable.url = "github:nix-community/home-manager/release-23.11";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
 
-    nix-on-droid = {
-      url = "github:nix-community/nix-on-droid/master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager-unstable";
-    };
+    # nix-on-droid = {
+    #   url = "github:nix-community/nix-on-droid/master";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    #   inputs.home-manager.follows = "home-manager-unstable";
+    # };
 
-    hyprland = {
-      type = "git";
-      url = "https://github.com/hyprwm/Hyprland";
-      submodules = true;
-      rev = "918d8340afd652b011b937d29d5eea0be08467f5";
-    };
-    hyprland.inputs.nixpkgs.follows = "nixpkgs";
-    hyprland-plugins.url = "github:hyprwm/hyprland-plugins/3ae670253a5a3ae1e3a3104fb732a8c990a31487";
-    hyprland-plugins.inputs.hyprland.follows = "hyprland";
-    hycov.url = "github:DreamMaoMao/hycov/de15cdd6bf2e46cbc69735307f340b57e2ce3dd0";
-    hycov.inputs.hyprland.follows = "hyprland";
-    hyprgrass.url = "github:horriblename/hyprgrass/736119f828eecaed2deaae1d6ff1f50d6dabaaba";
-    hyprgrass.inputs.hyprland.follows = "hyprland";
+    # hyprland = {
+    #   type = "git";
+    #   url = "https://github.com/hyprwm/Hyprland";
+    #   submodules = true;
+    #   rev = "918d8340afd652b011b937d29d5eea0be08467f5";
+    # };
+    # hyprland.inputs.nixpkgs.follows = "nixpkgs";
+    # hyprland-plugins.url = "github:hyprwm/hyprland-plugins/3ae670253a5a3ae1e3a3104fb732a8c990a31487";
+    # hyprland-plugins.inputs.hyprland.follows = "hyprland";
+    # hycov.url = "github:DreamMaoMao/hycov/de15cdd6bf2e46cbc69735307f340b57e2ce3dd0";
+    # hycov.inputs.hyprland.follows = "hyprland";
+    # hyprgrass.url = "github:horriblename/hyprgrass/736119f828eecaed2deaae1d6ff1f50d6dabaaba";
+    # hyprgrass.inputs.hyprland.follows = "hyprland";
 
-    nix-doom-emacs.url = "github:nix-community/nix-doom-emacs";
-    nix-doom-emacs.inputs.nixpkgs.follows = "emacs-pin-nixpkgs";
+    # nix-doom-emacs.url = "github:nix-community/nix-doom-emacs";
+    # nix-doom-emacs.inputs.nixpkgs.follows = "emacs-pin-nixpkgs";
 
-    nix-straight.url = "github:librephoenix/nix-straight.el/pgtk-patch";
-    nix-straight.flake = false;
-    nix-doom-emacs.inputs.nix-straight.follows = "nix-straight";
+    # nix-straight.url = "github:librephoenix/nix-straight.el/pgtk-patch";
+    # nix-straight.flake = false;
+    # nix-doom-emacs.inputs.nix-straight.follows = "nix-straight";
 
-    eaf = {
-      url = "github:emacs-eaf/emacs-application-framework";
-      flake = false;
-    };
-    eaf-browser = {
-      url = "github:emacs-eaf/eaf-browser";
-      flake = false;
-    };
-    org-nursery = {
-      url = "github:chrisbarrett/nursery";
-      flake = false;
-    };
-    org-yaap = {
-      url = "gitlab:tygrdev/org-yaap";
-      flake = false;
-    };
-    org-side-tree = {
-      url = "github:localauthor/org-side-tree";
-      flake = false;
-    };
-    org-timeblock = {
-      url = "github:ichernyshovvv/org-timeblock";
-      flake = false;
-    };
-    org-krita = {
-      url = "github:librephoenix/org-krita";
-      flake = false;
-    };
-    org-xournalpp = {
-      url = "gitlab:vherrmann/org-xournalpp";
-      flake = false;
-    };
-    org-sliced-images = {
-      url = "github:jcfk/org-sliced-images";
-      flake = false;
-    };
-    magit-file-icons = {
-      url = "github:librephoenix/magit-file-icons/abstract-icon-getters-compat";
-      flake = false;
-    };
-    phscroll = {
-      url = "github:misohena/phscroll";
-      flake = false;
-    };
-    mini-frame = {
-      url = "github:muffinmad/emacs-mini-frame";
-      flake = false;
-    };
+    # eaf = {
+    #   url = "github:emacs-eaf/emacs-application-framework";
+    #   flake = false;
+    # };
+    # eaf-browser = {
+    #   url = "github:emacs-eaf/eaf-browser";
+    #   flake = false;
+    # };
+    # org-nursery = {
+    #   url = "github:chrisbarrett/nursery";
+    #   flake = false;
+    # };
+    # org-yaap = {
+    #   url = "gitlab:tygrdev/org-yaap";
+    #   flake = false;
+    # };
+    # org-side-tree = {
+    #   url = "github:localauthor/org-side-tree";
+    #   flake = false;
+    # };
+    # org-timeblock = {
+    #   url = "github:ichernyshovvv/org-timeblock";
+    #   flake = false;
+    # };
+    # org-krita = {
+    #   url = "github:librephoenix/org-krita";
+    #   flake = false;
+    # };
+    # org-xournalpp = {
+    #   url = "gitlab:vherrmann/org-xournalpp";
+    #   flake = false;
+    # };
+    # org-sliced-images = {
+    #   url = "github:jcfk/org-sliced-images";
+    #   flake = false;
+    # };
+    # magit-file-icons = {
+    #   url = "github:librephoenix/magit-file-icons/abstract-icon-getters-compat";
+    #   flake = false;
+    # };
+    # phscroll = {
+    #   url = "github:misohena/phscroll";
+    #   flake = false;
+    # };
+    # mini-frame = {
+    #   url = "github:muffinmad/emacs-mini-frame";
+    #   flake = false;
+    # };
 
-    stylix.url = "github:danth/stylix";
+    # stylix.url = "github:danth/stylix";
 
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    # rust-overlay.url = "github:oxalica/rust-overlay";
 
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";

@@ -6,25 +6,26 @@
 {
   imports =
     [ ../../system/hardware-configuration.nix
-      ../../system/hardware/systemd.nix # systemd config
-      ../../system/hardware/kernel.nix # Kernel config
+      ../../system/hardware/systemd.nix # systemd config / journald parameters (logs)
+      ../../system/hardware/kernel.nix # Kernel config using xanmod
       ../../system/hardware/power.nix # Power management
       ../../system/hardware/time.nix # Network time sync
-      ../../system/hardware/opengl.nix
-      ../../system/hardware/printing.nix
-      ../../system/hardware/bluetooth.nix
+      ../../system/hardware/opengl.nix # package for AMD opengl
+      ../../system/hardware/printing.nix # Printer / to be tested
+      ../../system/hardware/bluetooth.nix # Bluetooth config
       (./. + "../../../system/wm"+("/"+userSettings.wm)+".nix") # My window manager
       #../../system/app/flatpak.nix
-      ../../system/app/virtualization.nix
+      ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
-      ../../system/security/doas.nix
-      ../../system/security/gpg.nix
-      ../../system/security/blocklist.nix
-      ../../system/security/firewall.nix
+      ../../system/security/doas.nix # Doas instead of sudo
+      ../../system/security/gpg.nix # GnuPG (ssh/key agent)
+      ../../system/security/blocklist.nix # Blocklist for hosts
+      # ../../system/security/fail2ban.nix # Fail2ban config to be set up
+      ../../system/security/firewall.nix # Firewall setup
       ../../system/security/firejail.nix
-      ../../system/security/openvpn.nix
+      # ../../system/security/openvpn.nix # Not configured yet
       ../../system/security/automount.nix
-      ../../system/style/stylix.nix
+      # ../../system/style/stylix.nix # Stylix theme
     ];
 
   # Fix nix path
@@ -39,7 +40,7 @@
     experimental-features = nix-command flakes
   '';
 
-  # I'm sorry Stallman-taichou
+  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
   # Kernel modules
@@ -54,7 +55,7 @@
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
   # Networking
-  networking.hostName = systemSettings.hostname; # Define your hostname.
+  networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = true; # Use networkmanager
 
   # Timezone and locale
@@ -90,6 +91,11 @@
     cryptsetup
     home-manager
     wpa_supplicant
+    atuin
+    btop
+    fzf
+    tldr
+    syncthing
   ];
 
   # I use zsh btw
@@ -108,6 +114,6 @@
   };
 
   # It is ok to leave this unchanged for compatibility purposes
-  system.stateVersion = "22.11";
+  system.stateVersion = "23.11";
 
 }
