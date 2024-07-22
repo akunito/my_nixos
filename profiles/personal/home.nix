@@ -9,27 +9,44 @@
   programs.home-manager.enable = true;
 
   imports = [ ../work/home.nix # Personal is essentially work system + games
-              ../../user/app/games/games.nix # Various videogame apps
+              # ../../user/app/games/games.nix # Various videogame apps
             ];
 
-  home.stateVersion = "22.11"; # Please read the comment before changing.
+  home.stateVersion = "23.11"; # Please read the comment before changing.
 
   home.packages = with pkgs; [
     # Core
     zsh
-    alacritty
-    librewolf
-    brave
-    git
-    syncthing
+    atuin
+    # git
+    # syncthing
+    # alacritty
+    kitty
 
+    vivaldi
+    ungoogled-chromium
+
+    vscode
+
+    obsidian
+    spotify
+
+    kdePackages.krdp
   ];
 
-  xdg.enable = true;
-  xdg.userDirs = {
-    extraConfig = {
-      XDG_GAME_DIR = "${config.home.homeDirectory}/Media/Games";
-      XDG_GAME_SAVE_DIR = "${config.home.homeDirectory}/Media/Game Saves";
+  # xdg.enable = true;
+  # xdg.userDirs = {
+  #   extraConfig = {
+  #     XDG_GAME_DIR = "${config.home.homeDirectory}/Media/Games";
+  #     XDG_GAME_SAVE_DIR = "${config.home.homeDirectory}/Media/Game Saves";
+  #   };
+  # };
+
+  programs.bash = {
+    enable = true;
+    shellAliases = {
+      ll = "ls -la";
+      ".." = "cd ..";
     };
   };
 

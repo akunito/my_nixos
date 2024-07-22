@@ -11,6 +11,8 @@ let
     neofetch = "disfetch";
     fetch = "disfetch";
     gitfetch = "onefetch";
+    ll = "ls -la";
+    ".." = "cd ..";
   };
 in
 {
