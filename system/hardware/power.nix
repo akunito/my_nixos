@@ -1,6 +1,11 @@
 { ... }:
 
 {
+  # Overriding to disable power-profiles-daemon 
+  # as it cannot work together with "tlp"
+  services.power-profiles-daemon.enable = false;
+
+  # Enable tlp service
   services.tlp = {
     enable = true;
     settings = {

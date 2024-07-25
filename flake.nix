@@ -7,7 +7,7 @@
       systemSettings = {
         system = "x86_64-linux"; # system arch
         hostname = "nixosaku"; # hostname
-        profile = "aku-personal"; # select a profile defined from my profiles directory
+        profile = "personal"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
         bootMode = "uefi"; # uefi or bios
@@ -20,8 +20,8 @@
       userSettings = rec {
         username = "akunito"; # username
         name = "akunito"; # name/identifier
-        email = "diego88aku@gmail.com"; # email (used for certain configurations)
-        dotfilesDir = "~/.dotfiles"; # absolute path of the local repo
+        email = ""; # email (used for certain configurations)
+        dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
         theme = "io"; # selcted theme from my themes directory (./themes/)
         wm = "plasma5"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
@@ -47,13 +47,13 @@
                            editor);
       };
 
-      # create patched nixpkgs # DISABLING emacs
-      # nixpkgs-patched =
-      #   (import inputs.nixpkgs { system = systemSettings.system; rocmSupport = (if systemSettings.gpu == "amd" then true else false); }).applyPatches {
-      #     name = "nixpkgs-patched";
-      #     src = inputs.nixpkgs;
-      #     patches = [ ./patches/emacs-no-version-check.patch ];
-      #   };
+      # create patched nixpkgs
+      nixpkgs-patched =
+        (import inputs.nixpkgs { system = systemSettings.system; rocmSupport = (if systemSettings.gpu == "amd" then true else false); }).applyPatches {
+          name = "nixpkgs-patched";
+          src = inputs.nixpkgs;
+          # patches = [ ./patches/emacs-no-version-check.patch ]; # DISABLING emacs patches??
+        };
 
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
@@ -68,7 +68,7 @@
                     allowUnfree = true;
                     allowUnfreePredicate = (_: true);
                   };
-                  overlays = [ inputs.rust-overlay.overlays.default ];
+                  # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
                 }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
