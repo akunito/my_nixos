@@ -9,18 +9,24 @@
   home.packages = with pkgs; [
     flameshot
   ];
+  # Plasma config > Directories to be sourced
+  # Run a shell to create the directories if don't exists
+  
+  # Source them
+  home.file."$HOME/.config/autostart" = { # Applications that start with Plasma
+    source = ./autostart;
+    recursive = true;
+  };
+  home.file."$HOME/.local/share/plasma/desktoptheme" = { # Custom Plasma themes
+    source = ./desktoptheme;
+    recursive = true;
+  };
+  home.file."$HOME/.config/plasma-workspace/env" = { # Env scripts run at the start of a Plasma session
+    source = ./env;
+    recursive = true;
+  };
 
-  # # Directories that contains dotfiles to be sourced under theirs path  <<<<
-  # home.file."$HOME/.config/autostart".source = ./autostart; # Applications that start with Plasma
-  # home.file."$HOME/.local/share/plasma/desktoptheme".source = ./desktoptheme; # Custom Plasma themes
-  # home.file."$HOME/.config/plasma-workspace/env".source = ./env; # Env scripts run at the start of a Plasma session
-
-  # home.file."${config.xdg.configHome}" = {
-  #   source = ../../dotfiles;
-  #   recursive = true;
-  # };
-
-  # Set single dotfiles for plasma under .config
+  # Plasma config > Single files to be sourced
   home.file."$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc".source = ./plasma-org.kde.plasma.desktop-appletsrc; # Desktop widgets and panels config
   home.file."$HOME/.config/kdeglobals".source = ./kdeglobals; # General KDE settings
   home.file."$HOME/.config/kwinrc".source = ./kwinrc; # KWin window manager settings
