@@ -9,25 +9,45 @@
   home.packages = with pkgs; [
     flameshot
   ];
+
   # Plasma config > Directories to be sourced
   # Run a shell to create the directories if don't exists
-  
-  # Source them
-  home.file."$HOME/.config/autostart" = { # Applications that start with Plasma
-    source = ./autostart;
-    recursive = true;
-  };
-  home.file."$HOME/.local/share/plasma/desktoptheme" = { # Custom Plasma themes
-    source = ./desktoptheme;
-    recursive = true;
-  };
-  home.file."$HOME/.config/plasma-workspace/env" = { # Env scripts run at the start of a Plasma session
-    source = ./env;
-    recursive = true;
+  home.activation = {
+    createDirectoryMyScripts = ''
+      #!/bin/sh
+      echo "Creating myScripts directory if needed..." 
+      mkdir -p "$HOME/myScripts"
+    '';
   };
 
+  home.file."${config.home.homeDirectory}/myScripts/check_directories.sh".source = ./check_directories.sh;
+  
+  home.activation = {
+    createDirectoriesIfNeeded = ''
+      #!/bin/sh
+      echo "Creating directories if needed..." 
+      mkdir -p "$HOME/.config/autostart"
+      mkdir -p "$HOME/.local/share/plasma/desktoptheme"
+      mkdir -p "$HOME/.config/plasma-workspace/env"
+    '';
+  };
+
+  # # Source them
+  # home.file."$HOME/.config/autostart" = { # Applications that start with Plasma
+  #   source = ./autostart;
+  #   recursive = true;
+  # };
+  # home.file."$HOME/.local/share/plasma/desktoptheme" = { # Custom Plasma themes
+  #   source = ./desktoptheme;
+  #   recursive = true;
+  # };
+  # home.file."$HOME/.config/plasma-workspace/env" = { # Env scripts run at the start of a Plasma session
+  #   source = ./env;
+  #   recursive = true;
+  # };
+
   # Plasma config > Single files to be sourced
-  home.file."$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc".source = ./plasma-org.kde.plasma.desktop-appletsrc; # Desktop widgets and panels config
+  home.file."${config.home.homeDirectory}/.config/plasma-org.kde.plasma.desktop-appletsrc".source = ./plasma-org.kde.plasma.desktop-appletsrc; # Desktop widgets and panels config
   home.file."$HOME/.config/kdeglobals".source = ./kdeglobals; # General KDE settings
   home.file."$HOME/.config/kwinrc".source = ./kwinrc; # KWin window manager settings
   # home.file."$HOME/.config/krunnerrc".source = ./krunnerrc; # KRunner settings // not found
