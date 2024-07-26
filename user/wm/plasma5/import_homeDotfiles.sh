@@ -40,6 +40,7 @@ for item in "${files[@]}"; do
         # echo "Copied $item to $dest_path"
 
         # Option 2: Copy all together on .
+        cp -r "$item" "$DEST_DIR"
         echo "Copied $item to $DEST_DIR"
     else
         echo "Warning: $item does not exist and will not be copied."
