@@ -33,10 +33,11 @@ files=(
 # Copy each file/directory to the destination
 for item in "${files[@]}"; do
     if [ -e "$item" ]; then
-        # Preserve the directory structure
-        dest_path="$DEST_DIR${item/$HOME/}"
-        mkdir -p "$(dirname "$dest_path")"
-        cp -r "$item" "$dest_path"
+        # # Preserve the directory structure ? DISABLED
+        # dest_path="$DEST_DIR${item/$HOME/}"
+        # mkdir -p "$(dirname "$dest_path")"
+        # cp -r "$item" "$dest_path"
+
         echo "Copied $item to $dest_path"
     else
         echo "Warning: $item does not exist and will not be copied."
