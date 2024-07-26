@@ -13,7 +13,7 @@ files=(
     "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc" # Desktop widgets and panels config
     "$HOME/.config/kdeglobals" # General KDE settings
     "$HOME/.config/kwinrc" # KWin window manager settings
-    "$HOME/.config/krunnerrc" # KRunner settings // not found
+    "$HOME/.config/krunnerrc" # KRunner settings
     "$HOME/.config/khotkeysrc" # Custom keybindings
     "$HOME/.config/kscreenlockerrc" # Screen locker settings
     "$HOME/.config/kwalletrc" # Kwallet settings
@@ -25,7 +25,7 @@ files=(
     "$HOME/.config/plasma-workspace/env" # Env scripts run at the start of a Plasma session
     "$HOME/.config/kglobalshortcutsrc" # Global shortcuts
     "$HOME/.local/share/plasma/desktoptheme" # Custom Plasma themes
-    "$HOME/.local/share/plasma/look-and-feel" # Look an dfeel packages
+    "$HOME/.local/share/plasma/look-and-feel" # Look and feel packages
     "$HOME/.local/share/aurorae/themes" # Window decoration themes
     "$HOME/.local/share/color-schemes" # Color schemes
 )
@@ -33,17 +33,14 @@ files=(
 # Copy each file/directory to the destination
 for item in "${files[@]}"; do
     if [ -e "$item" ]; then
-        # # Option 1: Preserve the directory structure ? DISABLED
-        # dest_path="$DEST_DIR${item/$HOME/}"
-        # mkdir -p "$(dirname "$dest_path")"
-        # cp -r "$item" "$dest_path"
-        # echo "Copied $item to $dest_path"
-
-        # Option 2: Copy all together on .
+        # Copy all together in the current directory
         cp -r "$item" "$DEST_DIR"
         echo "Copied $item to $DEST_DIR"
     else
-        echo "Warning: $item does not exist and will not be copied."
+        # Create a blank file if the item does not exist
+        touch "$DEST_DIR/$(basename "$item")"
+        echo "Warning: $item does not exist. Created a blank file at $DEST_DIR/$(basename "$item")."
+    end
     fi
 done
 

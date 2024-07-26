@@ -37,15 +37,17 @@ sed -i "s+~/.dotfiles+$SCRIPT_DIR+g" $SCRIPT_DIR/flake.nix
 if [ -z "$EDITOR" ]; then
     EDITOR=code;
 fi
-# $EDITOR $SCRIPT_DIR/flake.nix;
-code $SCRIPT_DIR/flake.nix;
+# $EDITOR $SCRIPT_DIR/flake.nix; DISABLED
+#code $SCRIPT_DIR/flake.nix;
 
 # Permissions for files that should be owned by root
+echo ""
+echo "Hardening files..."
 sudo $SCRIPT_DIR/harden.sh $SCRIPT_DIR;
 
 # Rebuild system
 echo ""
-echo "Rebuilding system with flake"
+echo "Rebuilding system with flake..."
 sudo nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace;
 
 # Install and build home-manager configuration
@@ -55,6 +57,8 @@ nix run home-manager/master --extra-experimental-features nix-command --extra-ex
 
 
 # TEMPORARY FOR EDITION <<<<<<<<<<<<<<<<<<<<<<< !!!!
+echo ""
+echo "Softening files..."
 sudo $SCRIPT_DIR/soften.sh $SCRIPT_DIR;
 echo "---"
 echo "when you finish edtion, remember to remove the soften command, or exec harden.sh"
