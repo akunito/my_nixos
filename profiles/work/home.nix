@@ -80,6 +80,22 @@
     };
   };
 
+  # Run a Shell script to:
+  # - Create needed directories
+  home.activation = {
+    runShellPreparationScript = ''
+      #!/bin/sh
+      echo -e "\nCreating my directories..."  
+      mkdir -p "$HOME/Syncthing"
+      mkdir -p "$HOME/Syncthing/git_repos"
+      mkdir -p "$HOME/Syncthing/My_Notes"
+      mkdir -p "$HOME/Syncthing/myLibrary"
+      mkdir -p "$HOME/Syncthing/Sync_Everywhere"
+      mkdir -p "$HOME/myScripts"
+    '';
+  };
+
+
   # xdg.mime.enable = true;
   # xdg.mimeApps.enable = true;
   # xdg.mimeApps.associations.added = {

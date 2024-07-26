@@ -55,7 +55,6 @@ echo ""
 echo "Installing and building home-manager"
 nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace;
 
-
 # TEMPORARY FOR EDITION <<<<<<<<<<<<<<<<<<<<<<< !!!!
 echo ""
 echo "Softening files..."
