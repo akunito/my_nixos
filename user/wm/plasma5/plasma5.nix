@@ -11,20 +11,18 @@
   ];
 
   # Source them
-  # home.file.".config/autostart/" = {
-  #   source = ./autostart;
-  #   recursive = true;
-  # };
-  # home.file.".local/share/plasma/desktoptheme" = { # Custom Plasma themes
-  #   source = ./desktoptheme;
-  #   recursive = true;
-  # };
-  # home.file.".config/plasma-workspace/env" = { # Env scripts run at the start of a Plasma session
-  #   source = ./env;
-  #   recursive = true;
-  # };
-
-  home.file.".config/zzzz".source = ./test; # test
+  home.file.".config/autostart/" = {
+    source = ./autostart;
+    recursive = true;
+  };
+  home.file.".local/share/plasma/desktoptheme/" = { # Custom Plasma themes
+    source = ./desktoptheme;
+    recursive = true;
+  };
+  home.file.".config/plasma-workspace/env/" = { # Env scripts run at the start of a Plasma session
+    source = ./env;
+    recursive = true;
+  };
 
   # # # Plasma config > Directories symlinks
   # home.file.".config/autostart".source = ./autostart; # Applications that start with Plasma
