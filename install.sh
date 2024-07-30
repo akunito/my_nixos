@@ -41,22 +41,19 @@ fi
 #code $SCRIPT_DIR/flake.nix;
 
 # Permissions for files that should be owned by root
-echo ""
 echo "Hardening files..."
 sudo $SCRIPT_DIR/harden.sh $SCRIPT_DIR;
 
 # Rebuild system
-echo ""
 echo "Rebuilding system with flake..."
 sudo nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace;
 
 # Install and build home-manager configuration
-echo ""
+# This runs home-manager on GIT, so you have to commit your changes first !!
 echo "Installing and building home-manager"
 nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace;
 
 # TEMPORARY FOR EDITION <<<<<<<<<<<<<<<<<<<<<<< !!!!
-echo ""
 echo "Softening files..."
 sudo $SCRIPT_DIR/soften.sh $SCRIPT_DIR;
 echo "---"

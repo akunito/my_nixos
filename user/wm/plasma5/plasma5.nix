@@ -10,7 +10,7 @@
     flameshot
   ];
 
-  # Source them
+  # Plasma config > Directory symlinks
   home.file.".config/autostart/" = {
     source = ./autostart;
     recursive = true;
@@ -24,12 +24,7 @@
     recursive = true;
   };
 
-  # # # Plasma config > Directories symlinks
-  # home.file.".config/autostart".source = ./autostart; # Applications that start with Plasma
-  # home.file.".local/share/plasma/desktoptheme".source = ./desktoptheme; # Custom Plasma themes
-  # home.file.".config/plasma-workspace/env".source = ./env; # Env scripts run at the start of a Plasma session
-
-  # # Plasma config > Files symlinks
+  # Plasma config > Files symlinks
   home.file.".config/plasma-org.kde.plasma.desktop-appletsrc".source = ./plasma-org.kde.plasma.desktop-appletsrc; # Desktop widgets and panels config
   home.file.".config/kdeglobals".source = ./kdeglobals; # General KDE settings
   home.file.".config/kwinrc".source = ./kwinrc; # KWin window manager settings
