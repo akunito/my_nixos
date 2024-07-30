@@ -45,22 +45,22 @@ echo "Hardening files..."
 sudo $SCRIPT_DIR/harden.sh $SCRIPT_DIR;
 
 # CLEAR all previous IPTABLES RULES
-iptables -P INPUT ACCEPT
-iptables -P FORWARD ACCEPT
-iptables -P OUTPUT ACCEPT
-iptables -t nat -F
-iptables -t mangle -F
-iptables -F
-iptables -X
+sudo iptables -P INPUT ACCEPT
+sudo iptables -P FORWARD ACCEPT
+sudo iptables -P OUTPUT ACCEPT
+sudo iptables -t nat -F
+sudo iptables -t mangle -F
+sudo iptables -F
+sudo iptables -X
 
 # CLEAR all previous IP6TABLES RULES
-ip6tables -P INPUT ACCEPT
-ip6tables -P FORWARD ACCEPT
-ip6tables -P OUTPUT ACCEPT
-ip6tables -t nat -F
-ip6tables -t mangle -F
-ip6tables -F
-ip6tables -X
+sudo ip6tables -P INPUT ACCEPT
+sudo ip6tables -P FORWARD ACCEPT
+sudo ip6tables -P OUTPUT ACCEPT
+sudo ip6tables -t nat -F
+sudo ip6tables -t mangle -F
+sudo ip6tables -F
+sudo ip6tables -X
 
 # Rebuild system
 echo "Rebuilding system with flake..."
