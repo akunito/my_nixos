@@ -144,20 +144,20 @@
   # #   enableSSHSupport = true;
   # # };
 
-  # # Enable the SSH service with enhanced security
-  # services.openssh = {
-  #   enable = true;
-  #   permitRootLogin = "no";               # Disable root login
-  #   passwordAuthentication = false;       # Disable password authentication
-  #   extraConfig = ''
-  #     Port 34389                          # Use a non-default port
-  #     ListenAddress 192.168.0.80:34389    # Bind to the new port
-  #     ListenAddress [::]:34389
-  #     AllowUsers akunito                  # Allow only specific user
-  #     MaxAuthTries 3                      # Limit authentication attempts
-  #     LoginGraceTime 30s                  # Reduce grace time
-  #   '';
-  # };
+  # Enable the SSH service with enhanced security
+  services.openssh = {
+    enable = true;
+    permitRootLogin = "no";               # Disable root login
+    passwordAuthentication = false;       # Disable password authentication
+    extraConfig = ''
+      Port 34389                          # Use a non-default port
+      ListenAddress 192.168.0.80:34389    # Bind to the new port
+      ListenAddress [::]:34389
+      AllowUsers akunito                  # Allow only specific user
+      MaxAuthTries 3                      # Limit authentication attempts
+      LoginGraceTime 30s                  # Reduce grace time
+    '';
+  };
 
   # # Ensure SSH starts at boot
   # systemd.services.sshd.wantedBy = [ "multi-user.target" ];

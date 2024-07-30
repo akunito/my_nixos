@@ -26,6 +26,9 @@
       # ../../system/security/openvpn.nix # Not configured yet
       ../../system/security/automount.nix
       # ../../system/style/stylix.nix # Stylix theme
+      ( import ../../system/security/sshd.nix {
+        authorizedKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM/TKh6hv6ZJl7k2rlmDPUgg1iTcFA82HSLYgV+L4m6Z diego88aku@gmail.com"]; 
+        inherit userSettings; })
     ];
 
   # Fix nix path
