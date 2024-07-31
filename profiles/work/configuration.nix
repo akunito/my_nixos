@@ -57,19 +57,23 @@
   boot.loader.grub.enable = if (systemSettings.bootMode == "uefi") then false else true;
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
-  # # Open LUKS devices
-  # boot.initrd.luks.devices = {
-  #   data = {
-  #     device = "/dev/sdb1";  # Encrypted partition
-  #     preLVM = true;          # If you use LVM on top of LUKS, otherwise omit this line
-  #   };
-  # };
+  # Define the LUKS device decryption
+  boot.initrd.luks.devices.DATA_4TB = {
+    device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
+    preLVM = true;
+  };
 
-  # # Mount DATA_4TB disk on /mnt/data
-  fileSystems."/mnt/DATA_4TB" =
-    { device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
-      fsType = "ext4";
-    };
+  # Define the filesystem
+  fileSystems."/mnt/DATA_4TB" = {
+    device = "/dev/mapper/DATA_4TB";
+    fsType = "ext4";
+  };
+
+  # # # Mount DATA_4TB disk on /mnt/data
+  # fileSystems."/mnt/DATA_4TB" =
+  #   { device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
+  #     fsType = "ext4";
+  #   };
   # fileSystems."/mnt/DATA_4TB" = # Replace with your desired mount point
   # {  
   #   device = "/dev/sdb1";  # by device
