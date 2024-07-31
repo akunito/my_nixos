@@ -12,7 +12,7 @@
   # Firewall settings
   networking.firewall = {
     enable = true;
-    # allowedTCPPorts = [ 34389 ];
+    allowedTCPPorts = [ 34389 ];
     # allowedUDPPorts = [ 34389 ];
     extraCommands = ''
       # Default deny incoming traffic
