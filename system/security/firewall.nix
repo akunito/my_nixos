@@ -13,7 +13,7 @@
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 34389 ];
-    allowedUDPPorts = [ 34389 ];
+    # allowedUDPPorts = [ ... ];
     extraCommands = ''
       # Default deny incoming traffic
       iptables -P INPUT DROP
