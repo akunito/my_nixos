@@ -10,9 +10,9 @@
       PermitRootLogin = "no";
     };
     extraConfig = ''
-      #Port 34389                          # Use a non-default port DISABLED
-      #ListenAddress 192.168.0.80:34389    # Bind to the new port
-      #ListenAddress [::]:34389
+      #Port 34389                          # Use a non-default port DISABLED because sshd does not start after boot if port is different to default / no time now for debugging why
+      #ListenAddress 192.168.0.80:34389    # Bind to the new port DISABLED
+      #ListenAddress [::]:34389            # DISABLED
       AllowUsers akunito                  # Allow only specific user
       MaxAuthTries 3                      # Limit authentication attempts
       LoginGraceTime 30s                  # Reduce grace time
