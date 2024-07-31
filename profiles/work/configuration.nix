@@ -57,6 +57,24 @@
   boot.loader.grub.enable = if (systemSettings.bootMode == "uefi") then false else true;
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
+  # # Open LUKS devices
+  # boot.initrd.luks.devices = {
+  #   data = {
+  #     device = "/dev/sdb1";  # Encrypted partition
+  #     preLVM = true;          # If you use LVM on top of LUKS, otherwise omit this line
+  #   };
+  # };
+
+  # Mount DATA_4TB disk on /mnt/data
+  fileSystems."/mnt/DATA_4TB" = # Replace with your desired mount point
+  {  
+    device = "/dev/sdb1";  # by device
+    # device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";  # by UUID (get them with 'sudo blkid')
+    fsType = "ext4";  # Replace with the correct file system type
+    options = [ "defaults" "noatime" ];  # Additional mount options, adjust as necessary
+  };
+
+
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = true; # Use networkmanager
