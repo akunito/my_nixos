@@ -15,25 +15,23 @@
   home.stateVersion = "23.11"; # Please read the comment before changing.
 
   home.packages = with pkgs; [
-    # Core
     zsh
-    atuin
-    # git
-    # syncthing
-    # alacritty
-    kitty
-
-    vivaldi
-    ungoogled-chromium
-
-    vscode
-
-    obsidian
-    spotify
-
-    kdePackages.krdp
   ];
 
+  # Run a Shell script to:
+  # - Create needed directories
+  home.activation = {
+    runShellPreparationScript = ''
+      #!/bin/sh
+      echo -e "\nCreating my directories..."  
+      mkdir -p "$HOME/Syncthing"
+      mkdir -p "$HOME/Syncthing/git_repos"
+      mkdir -p "$HOME/Syncthing/My_Notes"
+      mkdir -p "$HOME/Syncthing/myLibrary"
+      mkdir -p "$HOME/Syncthing/Sync_Everywhere"
+      mkdir -p "$HOME/myScripts"
+    '';
+  };
   # xdg.enable = true;
   # xdg.userDirs = {
   #   extraConfig = {
@@ -41,13 +39,4 @@
   #     XDG_GAME_SAVE_DIR = "${config.home.homeDirectory}/Media/Game Saves";
   #   };
   # };
-
-  programs.bash = {
-    enable = true;
-    shellAliases = {
-      ll = "ls -la";
-      ".." = "cd ..";
-    };
-  };
-
 }

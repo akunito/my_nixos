@@ -57,31 +57,33 @@
   boot.loader.grub.enable = if (systemSettings.bootMode == "uefi") then false else true;
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
-  # Define the LUKS device decryption
-  boot.initrd.luks.devices.DATA_4TB = {
-    device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
-    preLVM = true;
-  };
-
-  # Define the filesystem
-  fileSystems."/mnt/DATA_4TB" = {
-    device = "/dev/mapper/DATA_4TB";
-    fsType = "ext4";
-  };
-
-  # # # Mount DATA_4TB disk on /mnt/data
-  # fileSystems."/mnt/DATA_4TB" =
-  #   { device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
-  #     fsType = "ext4";
-  #   };
-  # fileSystems."/mnt/DATA_4TB" = # Replace with your desired mount point
-  # {  
-  #   device = "/dev/sdb1";  # by device
-  #   # device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";  # by UUID (get them with 'sudo blkid')
-  #   fsType = "ext4";  # Replace with the correct file system type
-  #   options = [ "defaults" "noatime" ];  # Additional mount options, adjust as necessary
+  # # Mount LUKS device on Boot
+  # boot.initrd.luks.devices.DATA_4TB = {
+  #   device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
+  #   keyFile = "/root/luks-keyfile-DATA_4TB";
+  #   preLVM = true;
+  # };
+  # # Define the filesystem
+  # fileSystems."/mnt/DATA_4TB" = {
+  #   device = "/dev/mapper/DATA_4TB";
+  #   fsType = "ext4";
   # };
 
+  # Mount LUKS device after Boot with SystemD
+  systemd.services.unlock-data4tb = {
+    description = "Unlock LUKS device for DATA_4TB";
+    # wants = [ "local-fs.target" ];
+    # after = [ "local-fs.target" ];
+    # serviceConfig = {
+    #   Type = "oneshot";
+    #   ExecStart = ''
+    #     /run/current-system/sw/bin/cryptsetup luksOpen /dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93 DATA_4TB --key-file /root/luks-keyfile-DATA_4TB
+    #     /run/current-system/sw/bin/mount /mnt/DATA_4TB
+    #   '';
+    #   RemainAfterExit = true;
+    # };
+    # wantedBy = [ "multi-user.target" ];
+  };
 
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
