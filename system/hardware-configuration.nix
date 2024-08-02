@@ -24,6 +24,13 @@
       options = [ "fmask=0022" "dmask=0022" ];
     };
 
+  fileSystems."/mnt/DATA_4TB" =
+    { device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."DATA_4TB".device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
+
   swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking

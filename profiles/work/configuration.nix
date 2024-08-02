@@ -99,6 +99,7 @@
     fzf
     tldr
     syncthing
+    # dconf # for virt-manager able to remember settings?
   ];
 
   # I use zsh btw

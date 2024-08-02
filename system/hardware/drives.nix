@@ -14,7 +14,7 @@
     '';
   # Mount DATA_4TB
   fileSystems."/mnt/DATA_4TB" = {
-    device = "/dev/mapper/DATA_4TB";
-    fsType = "ext4";
+    device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
   };
+
 }
