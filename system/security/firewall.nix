@@ -16,6 +16,7 @@
     allowedUDPPorts = [ 22 ];
     extraCommands = ''
       # ================== General rules ==================
+      # Rules from -> https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands
       # Allowing Loopback Connections
       iptables -A INPUT -i lo -j ACCEPT
       iptables -A OUTPUT -o lo -j ACCEPT
@@ -30,7 +31,7 @@
       iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
 
       # Dropping Invalid Packets
-      sudo iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
+      iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
 
       # ================== SSH rules ==================
       # Allowing Incoming SSH from Specific IP address (if 192.168.0.0/24) or subnet (if 192.168.0.90/24)
