@@ -57,32 +57,35 @@
   boot.loader.grub.enable = if (systemSettings.bootMode == "uefi") then false else true;
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
-  # # Mount LUKS device on Boot
+  # # Mount LUKS device on Boot (it needs pass or keyfile on an uncrypted drive)
   # boot.initrd.luks.devices.DATA_4TB = {
   #   device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
   #   keyFile = "/root/luks-keyfile-DATA_4TB";
   #   preLVM = true;
   # };
-  # # Define the filesystem
-  # fileSystems."/mnt/DATA_4TB" = {
-  #   device = "/dev/mapper/DATA_4TB";
-  #   fsType = "ext4";
-  # };
 
-  # Mount LUKS device after Boot with SystemD
+  # Unlock LUKS device after Boot (eg: keyfile on /root)
+  # I'm not sure if this block of code is relevant or not, or the keyfile was added previously when I did something like:
+    # $ cryptsetup luksAddKey /dev/sdb /root/mykeyfile.key
   systemd.services.unlock-data4tb = {
-    description = "Unlock LUKS device for DATA_4TB";
-    # wants = [ "local-fs.target" ];
-    # after = [ "local-fs.target" ];
-    # serviceConfig = {
-    #   Type = "oneshot";
-    #   ExecStart = ''
-    #     /run/current-system/sw/bin/cryptsetup luksOpen /dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93 DATA_4TB --key-file /root/luks-keyfile-DATA_4TB
-    #     /run/current-system/sw/bin/mount /mnt/DATA_4TB
-    #   '';
-    #   RemainAfterExit = true;
-    # };
-    # wantedBy = [ "multi-user.target" ];
+     description = "Unlock LUKS device for DATA_4TB";
+     wants = [ "local-fs.target" ];  # Ensure the service waits until the local file systems are mounted.
+     after = [ "local-fs.target" ];
+     serviceConfig = {
+       Type = "oneshot";
+       ExecStart = ''
+         /run/current-system/sw/bin/cryptsetup luksOpen /dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93 DATA_4TB --key-file /root/luks-keyfile-DATA_4TB
+         /run/current-system/sw/bin/mount /mnt/DATA_4TB
+       '';
+       RemainAfterExit = true;
+     };
+     wantedBy = [ "multi-user.target" ];
+   };
+
+  # Mount the filesystem
+  fileSystems."/mnt/DATA_4TB" = {
+    device = "/dev/mapper/DATA_4TB";
+    fsType = "ext4";
   };
 
   # Networking
