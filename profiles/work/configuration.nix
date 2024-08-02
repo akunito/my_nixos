@@ -57,23 +57,6 @@
   boot.loader.grub.enable = if (systemSettings.bootMode == "uefi") then false else true;
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
-  # # Mount LUKS device on Boot (it needs pass or keyfile on an uncrypted drive)
-  # boot.initrd.luks.devices.DATA_4TB = {
-  #   device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
-  #   keyFile = "/root/luks-keyfile-DATA_4TB";
-  #   preLVM = true;
-  # };
-
-  # Unlock LUKS device after Boot (eg: keyfile on /root)
-  environment.etc.crypttab.text = ''
-    DATA_4TB UUID=231c229c-1daf-43b5-85d0-f1691fa3ab93 /root/luks-keyfile-DATA_4TB
-    '';
-  # Mount the filesystem
-  fileSystems."/mnt/DATA_4TB" = {
-    device = "/dev/mapper/DATA_4TB";
-    fsType = "ext4";
-  };
-
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = true; # Use networkmanager

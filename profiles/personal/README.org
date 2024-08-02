@@ -1,3 +1,11 @@
 #+title: Just chillin'
 
 This is my profile for a personal computer. It is functionally identical to my [[../work]] profile, but includes extra things like games and social apps!
+
+I also added 
+    ../../system/hardware/drives.nix # To mount my secondary drives 
+    
+    It might fail if the drive is NOT FOUND !!!
+
+    Disable or adjust it if needed
+
