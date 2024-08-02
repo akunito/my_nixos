@@ -48,6 +48,7 @@
 
     vlc
     kdePackages.krdp
+    candy-icons
   ];
 
   # home.file.".local/share/pixmaps/nixos-snowflake-stylix.svg".source =

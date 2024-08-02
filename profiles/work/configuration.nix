@@ -99,6 +99,8 @@
     fzf
     tldr
     syncthing
+    # pciutils # install if you need some commands like lspci
+    # dconf # for virt-manager able to remember settings?
   ];
 
   # I use zsh btw
@@ -117,6 +119,6 @@
   };
 
   # It is ok to leave this unchanged for compatibility purposes
-  system.stateVersion = "23.11";
+  system.stateVersion = "24.05";
 
 }

@@ -7,11 +7,20 @@
               ./fonts.nix
             ];
 
-  # KDE Plasma 6
+  # Enable the X11 windowing system.
+  # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
-  services.xserver.displayManager.sddm.enable = true;
-  services.xserver.displayManager.sddm.wayland.enable = true; # enable if blackscreen with plasma6
+
+  # Enable the KDE Plasma Desktop Environment.
+  services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
+
+
+  # # KDE Plasma 6
+  # services.xserver.enable = true;
+  # services.xserver.displayManager.sddm.enable = true;
+  # services.xserver.displayManager.sddm.wayland.enable = true; # enable if blackscreen with plasma6
+  # services.desktopManager.plasma6.enable = true;
   services.xserver.displayManager.defaultSession = "plasma";
 }
 
