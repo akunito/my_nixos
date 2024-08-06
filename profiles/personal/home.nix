@@ -24,11 +24,11 @@
     runShellPreparationScript = ''
       #!/bin/sh
       echo -e "\nCreating my directories..."  
-      mkdir -p "$HOME/Syncthing"
-      mkdir -p "$HOME/Syncthing/git_repos"
-      mkdir -p "$HOME/Syncthing/My_Notes"
-      mkdir -p "$HOME/Syncthing/myLibrary"
-      mkdir -p "$HOME/Syncthing/Sync_Everywhere"
+      # mkdir -p "$HOME/Syncthing"
+      # mkdir -p "$HOME/Syncthing/git_repos"
+      # mkdir -p "$HOME/Syncthing/My_Notes"
+      # mkdir -p "$HOME/Syncthing/myLibrary"
+      # mkdir -p "$HOME/Syncthing/Sync_Everywhere"
       mkdir -p "$HOME/myScripts"
     '';
   };
