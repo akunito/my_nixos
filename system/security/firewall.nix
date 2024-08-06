@@ -38,6 +38,15 @@
       iptables -A INPUT -p tcp -s 192.168.0.90/24 --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
       iptables -A INPUT -p tcp -s 192.168.0.91/24 --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
       iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
+      # # ================== RDP rules ================== ( IT WORKS OK | DISABLED)
+      # # Allowing Incoming RDP from Specific IP address (if 192.168.0.90/24)
+      # iptables -A INPUT -p tcp -s 192.168.0.90/24 --dport 3389 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      # # Allowing Incoming RDP from Specific IP address (if 192.168.0.91/24)
+      # iptables -A INPUT -p tcp -s 192.168.0.91/24 --dport 3389 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      # # Allowing Outgoing RDP responses (from port 3389)
+      # iptables -A OUTPUT -p tcp --sport 3389 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
     '';
   };
 }
