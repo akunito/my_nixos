@@ -33,6 +33,13 @@
 
   boot.initrd.luks.devices."luks-3177bee3-5047-4c47-8d4f-9be5a5e5033f".device = "/dev/disk/by-uuid/3177bee3-5047-4c47-8d4f-9be5a5e5033f";
 
+  fileSystems."/mnt/TimeShift" =
+    { device = "/dev/disk/by-uuid/57bd79bf-942e-4f82-8851-91afb279f06c";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."TimeShift".device = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
+
   fileSystems."/mnt/DATA_4TB" =
     { device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
       fsType = "ext4";

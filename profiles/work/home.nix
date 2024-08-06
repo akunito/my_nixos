@@ -28,7 +28,7 @@
               ../../user/hardware/bluetooth.nix # Bluetooth
             ];
 
-  home.stateVersion = "23.11"; # Please read the comment before changing.
+  home.stateVersion = "24.05"; # Please read the comment before changing.
 
   home.packages = with pkgs; [
     zsh
@@ -36,7 +36,8 @@
     git
     syncthing
 
-    vivaldi
+    # vivaldi # temporary moved to configuration.nix for issue with plasma 6
+    # qt5.qtbase
     ungoogled-chromium
 
     vscode
@@ -47,7 +48,7 @@
     xournalpp
 
     vlc
-    kdePackages.krdp
+    
     candy-icons
   ];
 
