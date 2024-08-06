@@ -11,6 +11,7 @@
   }];
 
   environment.systemPackages = [
+    # Alias sudo to doas
     (pkgs.writeScriptBin "sudo" ''exec doas "$@"'')
   ];
 }

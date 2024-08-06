@@ -60,6 +60,13 @@
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = true; # Use networkmanager
+  # Static IP
+  networking.interfaces.eth0.ipv4.addresses = [ { # check that eth0 is the right interface to use
+    address = "192.168.0.80";
+    prefixLength = 24;
+  } ];
+  networking.defaultGateway = "192.168.0.1";
+  networking.nameservers = [ "8.8.8.8" "8.8.4.4" ];
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone

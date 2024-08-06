@@ -1,31 +1,6 @@
 { config, pkgs, ... }:
 
 { 
-
-  # # Reconnect network
-  # systemd.services.reconnect-network = {
-  #   description = "Reconnect network interface";
-  #   after = [ "network.target" "NetworkManager.service" ];
-  #   wantedBy = [ "multi-user.target" ];
-
-  #   serviceConfig = {
-  #     Type = "oneshot";
-  #     ExecStart = ''
-  #       ${pkgs.iproute}/bin/ip link set eno1 down && sleep 5 && ${pkgs.iproute}/bin/ip link set eno1 up
-  #     '';
-  #     RemainAfterExit = true;
-  #   };
-  # };
-
-  # Static IP
-  networking.interfaces.eth0.ipv4.addresses = [ { # check that eth0 is the right interface to use
-    address = "192.168.0.80";
-    prefixLength = 24;
-  } ];
-  networking.hostName = "nixosaku";
-  networking.defaultGateway = "192.168.0.1";
-  networking.nameservers = [ "8.8.8.8" "8.8.4.4" ];
-
   # SSH on Boot > https://nixos.wiki/wiki/Remote_disk_unlocking
   boot.kernelParams = [ "ip=dhcp" ];
   boot.initrd = {
