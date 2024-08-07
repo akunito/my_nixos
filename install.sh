@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# FORK: I have adjusted to my basic user and mail. But I never test it.
+# Commit GIT before running this if you made changes on these local files
 
 # Automated script to install my dotfiles
 
