@@ -121,6 +121,7 @@ in
     syncthing
     # pciutils # install if you need some commands like lspci
     # dconf # for virt-manager able to remember settings?
+    virt-viewer
 
     vivaldi
     qt5.qtbase
