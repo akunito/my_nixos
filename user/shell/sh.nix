@@ -13,6 +13,13 @@ let
     gitfetch = "onefetch";
     ll = "ls -la";
     ".." = "cd ..";
+    tre = "eza --long --tree";
+    tre2 = "eza --long --tree --level=2";
+    tre3 = "eza --long --tree --level=3";
+    tra = "eza -a --long --tree";
+    tra2 = "eza -a --long --tree --level=2";
+    tra3 = "eza -a --long --tree --level=3";
+    gl = "git log --graph";
   };
 in
 {
@@ -34,6 +41,10 @@ in
     enable = true;
     enableCompletion = true;
     shellAliases = myAliases;
+    # next line under TEST  <<<<<<<<<<<<<<<
+    interactiveShellInit = ''
+      eval "$(atuin init bash)"
+    '';
   };
 
   home.packages = with pkgs; [
@@ -46,4 +57,14 @@ in
   programs.direnv.enable = true;
   programs.direnv.enableZshIntegration = true;
   programs.direnv.nix-direnv.enable = true;
+
+  # Atuin settings
+  programs.atuin = {
+    enable = true;
+    settings = {
+      # sync = true; # to test if this works
+      sync_address = "https://api.atuin.sh";
+      # session_key = "your-session-key"; # to test
+    };
+  };
 }

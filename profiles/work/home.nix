@@ -96,30 +96,6 @@
     BROWSER = userSettings.browser;
   };
 
-  programs.zsh = {
-    enable = true;
-    shellAliases = {
-      ll = "ls -la";
-      ".." = "cd ..";
-    };
-  };
-
-  programs.bash = {
-    enable = true;
-    shellAliases = {
-      ll = "ls -la";
-      ".." = "cd ..";
-    };
-  };
-
-  programs.atuin = {
-    enable = true;
-    settings = {
-      # Uncomment this to use your instance if selfhosting
-      # sync_address = "https://majiy00-shell.fly.dev";
-    };
-  };
-
   # news.display = "silent";
 
   # gtk.iconTheme = {
