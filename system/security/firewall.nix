@@ -47,6 +47,14 @@
       # # Allowing Outgoing RDP responses (from port 3389)
       # iptables -A OUTPUT -p tcp --sport 3389 -m conntrack --ctstate ESTABLISHED -j ACCEPT
 
+      # ================== VNC rules ================== ( For VM's VNC access )
+      # Allowing Incoming VNC from Specific IP address (if 192.168.0.90/24)
+      iptables -A INPUT -p tcp -s 192.168.0.90/24 --dport 5901 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      # Allowing Incoming VNC from Specific IP address (if 192.168.0.91/24)
+      iptables -A INPUT -p tcp -s 192.168.0.91/24 --dport 5901 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      # Allowing Outgoing VNC responses (from port 5901)
+      iptables -A OUTPUT -p tcp --sport 5901 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
     '';
   };
 }
