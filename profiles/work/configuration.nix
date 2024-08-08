@@ -126,6 +126,7 @@ in
   environment.systemPackages = with pkgs; [
     vim
     wget
+    nmap # net tool for port scanning
     zsh
     git
     cryptsetup
