@@ -62,7 +62,7 @@ in
       auto_sync = true;
       sync_frequency = "5m";
       sync_address = "https://api.atuin.sh";
-      search_mode = "prefix";
+      # search_mode = "prefix";
       enter_accept = true;
       records = true;
     };
