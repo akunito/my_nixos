@@ -29,6 +29,7 @@
 
       # Allowing Internal Network to access External
       iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+      iptables -A FORWARD -i eth0 -o nm-bridge -j ACCEPT
 
       # Dropping Invalid Packets
       iptables -A INPUT -m conntrack --ctstate INVALID -j DROP

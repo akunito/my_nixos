@@ -5,6 +5,7 @@
   imports = [ ./wayland.nix
               ./pipewire.nix
               ./fonts.nix
+              ./dbus.nix
             ];
 
   # Enable Plasma5
