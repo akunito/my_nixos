@@ -41,14 +41,10 @@
     ungoogled-chromium
 
     vscode
-
     obsidian
     spotify
-
     xournalpp
-
     vlc
-    
     candy-icons
 
     realvnc-vnc-viewer

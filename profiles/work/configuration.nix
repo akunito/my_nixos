@@ -78,25 +78,22 @@ in
   networking.defaultGateway = "192.168.0.1";
   networking.nameservers = [ "8.8.8.8" "8.8.4.4" ];  
 
-  # Virtual networks / Bridges > https://discourse.nixos.org/t/network-bridge-with-static-ip-on-host/15580
-  networking.bridges = {
-    "nm-bridge" = {
-      interfaces = [ "eth0" ];
-    };
-    # "virbr0" = {
-    #   interfaces = [ "eth0" ];
-    # };
-  };
-  networking.interfaces.nm-bridge.ipv4.addresses = [ {
-    address = "192.168.0.80"; # host's ip here
-    prefixLength = 24;
-  } ];
-
-  # # Host IP for eth0 (DISABLE if BRIDGE is used)
-  # networking.interfaces.eth0.ipv4.addresses = [ {
-  #   address = "192.168.0.80";
+  # # Virtual networks / Bridges > https://discourse.nixos.org/t/network-bridge-with-static-ip-on-host/15580
+  # networking.bridges = {
+  #   "nm-bridge" = {
+  #     interfaces = [ "eth0" ];
+  #   };
+  # };
+  # networking.interfaces.nm-bridge.ipv4.addresses = [ {
+  #   address = "192.168.0.80"; # host's ip here
   #   prefixLength = 24;
   # } ];
+
+  # Host IP for eth0 (DISABLE if BRIDGE is used)
+  networking.interfaces.eth0.ipv4.addresses = [ {
+    address = "192.168.0.80";
+    prefixLength = 24;
+  } ];
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
@@ -117,7 +114,7 @@ in
   users.users.${userSettings.username} = {
     isNormalUser = true;
     description = userSettings.name;
-    extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
+    extraGroups = [ "networkmanager" "wheel" "input" "dialout" "qemu-libvirtd" "libvirtd" "kvm" "libvirt" ]; # extra groups to add to the user ( you can find groups by $ cat /etc/group )
     packages = [];
     uid = 1000;
   };
@@ -138,8 +135,6 @@ in
     tldr
     syncthing
     # pciutils # install if you need some commands like lspci
-    # dconf # for virt-manager able to remember settings?
-    virt-viewer
 
     vivaldi
     qt5.qtbase

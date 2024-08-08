@@ -20,4 +20,12 @@
 nvram = ["/run/libvirt/nix-ovmf/OVMF_CODE.fd:/run/libvirt/nix-ovmf/OVMF_VARS.fd"]
   '';
 
+  # Virtualization: Connections for virt-manager
+  dconf.settings = {
+    "org/virt-manager/virt-manager/connections" = {
+      autoconnect = ["qemu:///system"];
+      uris = ["qemu:///system"];
+    };
+  };
+  
 }
