@@ -35,4 +35,10 @@
   boot.initrd.luks.devices."TimeShift" = {
       device = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
     };
+
+  # Open Machines LUKS on Boot
+  boot.initrd.luks.devices."Machines" = {
+      device = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
+    };
+    
 }
