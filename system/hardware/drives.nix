@@ -21,7 +21,8 @@
   # To add LUKS devices
     # 1. Add the UUID to the boot.initrd.luks.devices as below.
     # 2. Install.sh and Reboot the system. The device should be now unlocked on /dev/mapper
-    # 3. Run a command to mount the device: $ sudo mount /dev/mapper/DATA_4TB /mnt/DATA_4TB
+    # 3. Create the directory: $ mkdir -p /mnt/DATA_4TB
+    # 3. Mount it: $ sudo mount /dev/mapper/DATA_4TB /mnt/DATA_4TB
     # 4. The device should be now mounted. 
     #    When you install.sh again, the device is added automatically to hardware-configuration.nix
     #    If you try to add it manually on configuration.nix or here, there will be conflicts probably.

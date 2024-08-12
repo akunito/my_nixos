@@ -74,7 +74,7 @@
     extraConfig = {
       XDG_DOTFILES_DIR = "${config.home.homeDirectory}/.dotfiles";
       XDG_ARCHIVE_DIR = "${config.home.homeDirectory}/Archive";
-      XDG_VM_DIR = "${config.home.homeDirectory}/Machines";
+      XDG_VM_DIR = "/mnt/Machines/VirtualMachines";
       XDG_ORG_DIR = "${config.home.homeDirectory}/Org";
       XDG_PODCAST_DIR = "${config.home.homeDirectory}/Media/Podcasts";
       XDG_BOOK_DIR = "${config.home.homeDirectory}/Media/Books";

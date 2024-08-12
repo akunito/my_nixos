@@ -76,7 +76,7 @@ in
   # Static IP
   networking.useDHCP = false;
   networking.defaultGateway = "192.168.0.1";
-  networking.nameservers = [ "8.8.8.8" "8.8.4.4" ];  
+  networking.nameservers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ];  
 
   # # Virtual networks / Bridges > https://discourse.nixos.org/t/network-bridge-with-static-ip-on-host/15580
   # networking.bridges = {
