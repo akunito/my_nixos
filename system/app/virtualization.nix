@@ -3,9 +3,13 @@
 {
   # Virt-manager doc > https://nixos.wiki/wiki/Virt-manager
   # Note there is another virtualization.nix on user folder
+  # Virt-manager doc > https://nixos.wiki/wiki/Virt-manager
+  # Note there is another virtualization.nix on user folder
   environment.systemPackages = with pkgs; [ virt-manager distrobox ];
   programs.virt-manager.enable = true;
+  programs.virt-manager.enable = true;
   virtualisation.libvirtd = {
+    # To enable networks check the doc above
     # To enable networks check the doc above
     allowedBridges = [
       "nm-bridge"
