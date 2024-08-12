@@ -41,6 +41,10 @@ in
     enable = true;
     enableCompletion = true;
     shellAliases = myAliases;
+    # next line under TEST  <<<<<<<<<<<<<<<
+    interactiveShellInit = ''
+      eval "$(atuin init bash)"
+    '';
   };
 
   home.packages = with pkgs; [
