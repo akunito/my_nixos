@@ -14,6 +14,11 @@
     enable = true;
     qemu.runAsRoot = false;
   };
+  # Enable the Cockpit service
+  services.cockpit = {
+    enable = true;
+    packages = with pkgs; [ cockpit-machines ]; # Add cockpit-machines for VM management
+  };
   
   # # TESTING ================================================
   # # Create libvirt user

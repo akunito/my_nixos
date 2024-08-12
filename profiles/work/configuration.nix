@@ -76,7 +76,13 @@ in
   # Static IP
   networking.useDHCP = false;
   networking.defaultGateway = "192.168.0.1";
-  networking.nameservers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ];  
+  networking.nameservers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ];
+  # Host IP for eth0 (DISABLE if BRIDGE is used)
+  networking.interfaces.eth0.ipv4.addresses = [ {
+    address = "192.168.0.80";
+    prefixLength = 24;
+  } ];
+  # to restart wired connections if some issue, you can use >>> $ nmcli networking off && sleep 2 && nmcli networking on 
 
   # # Virtual networks / Bridges > https://discourse.nixos.org/t/network-bridge-with-static-ip-on-host/15580
   # networking.bridges = {
@@ -89,11 +95,6 @@ in
   #   prefixLength = 24;
   # } ];
 
-  # Host IP for eth0 (DISABLE if BRIDGE is used)
-  networking.interfaces.eth0.ipv4.addresses = [ {
-    address = "192.168.0.80";
-    prefixLength = 24;
-  } ];
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone

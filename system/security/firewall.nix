@@ -56,6 +56,14 @@
       # Allowing Outgoing VNC responses (from port 5901)
       iptables -A OUTPUT -p tcp --sport 5901 -m conntrack --ctstate ESTABLISHED -j ACCEPT
 
+      # ================== Cockpit rules ================== ( For VM's access )
+      # Allowing Incoming Cockpit from Specific IP address (if 192.168.0.90/24)
+      iptables -A INPUT -p tcp -s 192.168.0.90/24 --dport 9090 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      # Allowing Incoming Cockpit from Specific IP address (if 192.168.0.91/24)
+      iptables -A INPUT -p tcp -s 192.168.0.91/24 --dport 9090 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      # Allowing Outgoing Cockpit responses (from port 9090)
+      iptables -A OUTPUT -p tcp --sport 9090 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
     '';
   };
 }
