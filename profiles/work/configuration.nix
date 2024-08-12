@@ -114,7 +114,7 @@ in
   users.users.${userSettings.username} = {
     isNormalUser = true;
     description = userSettings.name;
-    extraGroups = [ "networkmanager" "wheel" "input" "dialout" "qemu-libvirtd" "libvirtd" "kvm" "libvirt" ]; # extra groups to add to the user ( you can find groups by $ cat /etc/group )
+    extraGroups = [ "networkmanager" "wheel" "input" "dialout" "qemu-libvirtd" "libvirtd" ]; # extra groups to add to the user ( you can find groups by $ cat /etc/group )
     packages = [];
     uid = 1000;
   };

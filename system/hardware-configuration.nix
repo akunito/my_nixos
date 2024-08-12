@@ -33,6 +33,13 @@
       options = [ "fmask=0022" "dmask=0022" ];
     };
 
+  fileSystems."/mnt/Machines" =
+    { device = "/dev/disk/by-uuid/4208afb6-5dce-4aa4-ac58-8d960e78be6b";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."Machines".device = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
+
   swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
@@ -41,7 +48,7 @@
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
-  # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
+  # networking.interfaces.eth0.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlp9s0.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
