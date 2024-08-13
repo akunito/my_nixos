@@ -3,7 +3,7 @@
 {
   # Virt-manager doc > https://nixos.wiki/wiki/Virt-manager
   # Note there is another virtualization.nix on user folder
-  environment.systemPackages = with pkgs; [ virt-manager distrobox ];
+  environment.systemPackages = with pkgs; [ virt-manager distrobox cockpit-machines ];
   programs.virt-manager.enable = true;
   virtualisation.libvirtd = {
     # To enable networks check the doc above
@@ -17,7 +17,7 @@
   # Enable the Cockpit service
   services.cockpit = {
     enable = true;
-    packages = with pkgs; [ cockpit-machines ]; # Add cockpit-machines for VM management
+    port = 9090;
   };
   
   # # TESTING ================================================
