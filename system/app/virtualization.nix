@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, userSettings, lib, ... }:
 
 {
   # Virt-manager doc > https://nixos.wiki/wiki/Virt-manager
@@ -18,6 +18,8 @@
     enable = true;
     qemu.runAsRoot = false;
   };
+
+  users.users.${userSettings.username}.extraGroups = [ "qemu-libvirtd" "libvirtd" ];
 
   # # redirect ports for printer to be tested
   # virtualisation.spiceUSBRedirection.enable = true; 
