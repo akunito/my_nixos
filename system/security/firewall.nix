@@ -46,6 +46,7 @@
       # Allow NAT for Docker:
       # This allows Docker to perform NAT, which is required for outbound connections from containers to the external network.
       iptables -t nat -A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE
+      iptables -t nat -A POSTROUTING -s 192.168.0.0/24 -d 172.17.0.0/16 -j MASQUERADE                   # is this one needed ??????
       
       # Allow Established and Related Connections:
       # This ensures that return traffic for existing connections is allowed.
@@ -62,11 +63,20 @@
       # If you want to restrict access to Docker containers from external networks, you can add specific rules to control which ports or IP ranges can access your containers.
       # For example, to allow access to a specific container on port 9443 (Portainer's default secure port) from a specific IP range:
       # iptables -A INPUT -p tcp -s 192.168.0.0/24 --dport 9443 -j ACCEPT
-      # Access nginx on port 80 from specific IPs
+      # ================================================================== Access nginx on port 80 from specific IPs
       iptables -A INPUT -p tcp -s 192.168.0.0/24 --dport 80 -j ACCEPT
-      iptables -t nat -A POSTROUTING -s 192.168.0.0/24 -d 172.17.0.0/16 -j MASQUERADE
       iptables -A INPUT -p tcp --dport 80 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
       iptables -A OUTPUT -p tcp --sport 80 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+      # ================================================================== Access Portainer on port 9443 from specific IPs
+      iptables -A INPUT -p tcp -s 192.168.0.0/24 --dport 9443 -j ACCEPT
+      iptables -A INPUT -p tcp --dport 9443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      iptables -A OUTPUT -p tcp --sport 9443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+      iptables -A INPUT -p tcp -s 192.168.0.0/24 --dport 9000 -j ACCEPT
+      iptables -A INPUT -p tcp --dport 9000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      iptables -A OUTPUT -p tcp --sport 9000 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+      iptables -A INPUT -p tcp -s 192.168.0.0/24 --dport 8000 -j ACCEPT
+      iptables -A INPUT -p tcp --dport 8000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      iptables -A OUTPUT -p tcp --sport 8000 -m conntrack --ctstate ESTABLISHED -j ACCEPT
 
 
       # ================== SSH rules ==================

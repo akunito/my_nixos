@@ -143,7 +143,7 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
-            inputs.portainer-on-nixos.nixosModules.portainer # Portainer module
+            # inputs.portainer-on-nixos.nixosModules.portainer # Portainer module
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
@@ -284,8 +284,8 @@
 
     # rust-overlay.url = "github:oxalica/rust-overlay";
 
-    portainer-on-nixos.url = "gitlab:cbleslie/portainer-on-nixos";
-    portainer-on-nixos.inputs.nixpkgs.follows = "nixpkgs";
+    # portainer-on-nixos.url = "gitlab:cbleslie/portainer-on-nixos";
+    # portainer-on-nixos.inputs.nixpkgs.follows = "nixpkgs";
 
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";
