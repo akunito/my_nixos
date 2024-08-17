@@ -7,7 +7,6 @@
   imports =
     [ ../work/configuration.nix # Personal is essentially work system + games.
       ../../system/hardware-configuration.nix
-      ../../system/hardware/drives.nix # Mount my drives (OPTIONAL > it might fail if the drive is NOT FOUND !!!)
       # ../../system/app/gamemode.nix
       # ../../system/app/steam.nix
       # ../../system/app/prismlauncher.nix
@@ -15,6 +14,7 @@
       ../../system/security/gpg.nix
       ../../system/security/blocklist.nix
       ../../system/security/firewall.nix
+      ../../system/hardware/drives.nix # SSH on Boot to unlock LUKS drives + Open my LUKS drives (OPTIONAL)
     ];
 
 

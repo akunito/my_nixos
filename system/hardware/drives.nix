@@ -1,6 +1,9 @@
 { config, pkgs, ... }:
 
 { 
+  # TODO set variables on flake.nix to enable these options dynamically
+  # use example how to do it from profiles/homelab/base.nix >> bootloader
+
   # SSH on Boot > https://nixos.wiki/wiki/Remote_disk_unlocking
   boot.kernelParams = [ "ip=dhcp" ];
   boot.initrd = {

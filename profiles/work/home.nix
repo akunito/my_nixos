@@ -35,7 +35,6 @@
     kitty
     git
     syncthing
-    kdePackages.partitionmanager
 
     # vivaldi # temporary moved to configuration.nix for issue with plasma 6
     # qt5.qtbase

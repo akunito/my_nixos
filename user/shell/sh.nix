@@ -48,6 +48,7 @@ in
     gnugrep gnused
     bat eza bottom fd bc
     direnv nix-direnv
+    atuin
   ];
 
   programs.direnv.enable = true;

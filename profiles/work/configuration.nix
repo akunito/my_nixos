@@ -70,31 +70,27 @@ in
   boot.loader.grub.enable = if (systemSettings.bootMode == "uefi") then false else true;
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
-  # Networking > https://nixos.org/manual/nixos/stable/#sec-networking
+  # TODO Move networking settings to different .nix file and import it ???
+  # TODO Use variable on flake.nix to set main ip address
+  # TODO Use variable on flake.nix to set defaultGateway
+  # TODO Use variable on flake.nix to set nameServers DNS
+  # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = true; # Use networkmanager
-  # Static IP
-  networking.useDHCP = false;
-  networking.defaultGateway = "192.168.0.1";
-  networking.nameservers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ];
-  # Host IP for eth0 (DISABLE if BRIDGE is used)
-  networking.interfaces.eth0.ipv4.addresses = [ {
-    address = "192.168.0.80";
+  networking.useDHCP = systemSettings.dhcp; # Use DHCP
+  networking.defaultGateway = systemSettings.defaultGateway; # Define your default gateway
+  networking.nameServers = systemSettings.nameServers; # Define your DNS servers
+  # Wired network
+  networking.interfaces.${userSettings.networkInterface}.ipv4.addresses = [ { # where your network interface might be eth0
+    address = systemSettings.ipAddress; # Define your IP address
     prefixLength = 24;
   } ];
-  # to restart wired connections if some issue, you can use >>> $ nmcli networking off && sleep 2 && nmcli networking on 
-
-  # # Virtual networks / Bridges > https://discourse.nixos.org/t/network-bridge-with-static-ip-on-host/15580
-  # networking.bridges = {
-  #   "nm-bridge" = {
-  #     interfaces = [ "eth0" ];
-  #   };
-  # };
-  # networking.interfaces.nm-bridge.ipv4.addresses = [ {
-  #   address = "192.168.0.80"; # host's ip here
+  # TODO Set variable on flake.nix to Enable or DIsable wifi ip assignment
+  # # Wireless network
+  # networking.interfaces.${userSettings.wifiInterface}.ipv4.addresses = [ { # where your network interface might be eth0
+  #   address = systemSettings.wifiIpAddress; # Define your IP address
   #   prefixLength = 24;
   # } ];
-
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
@@ -129,15 +125,14 @@ in
     git
     cryptsetup
     home-manager
-    wpa_supplicant
-    atuin
+    wpa_supplicant # for wifi
     btop
     fzf
     tldr
     syncthing
     # pciutils # install if you need some commands like lspci
 
-    vivaldi
+    vivaldi # this is here instead of home manager because the current plasma6 bug
     qt5.qtbase
   ];
 

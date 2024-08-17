@@ -1,5 +1,8 @@
 { lib, pkgs, systemSettings, userSettings, ... }:
 
+# TODO check firewall.nix if I should split it up or not
+# TODO Add networking settings
+
 {
   imports =
     [ ../../system/hardware-configuration.nix
@@ -7,7 +10,9 @@
       ../../system/security/firewall.nix
       ../../system/security/doas.nix
       ../../system/security/gpg.nix
+      # ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
+      ../../system/hardware/drives.nix # SSH on Boot to unlock LUKS drives + Open my LUKS drives (OPTIONAL)
     ];
 
   # Fix nix path
@@ -75,6 +80,10 @@
     rsnapshot
     cryptsetup
     gocryptfs
+    
+    btop
+    fzf
+    tldr
   ];
 
   programs.fuse.userAllowOther = true;
@@ -87,7 +96,7 @@
   programs.zsh.enable = true;
 
   # It is ok to leave this unchanged for compatibility purposes
-  system.stateVersion = "22.11";
+  system.stateVersion = "24.05";
 
   news.display = "silent";
 

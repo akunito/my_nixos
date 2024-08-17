@@ -14,6 +14,16 @@
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        
+        networkInterface = "eth0"; # network interface
+        dhcp = "false"; # true or false for automatic ip assignment
+        ipAddress = "192.168.0.80"; # static ip address to be assigned if dhcp is set to false
+        defaultGateway = "192.168.0.1"; # default gateway
+        nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
+        
+        # Wifi not tested
+        wifiInterface = "wl0"; # wifi interface
+        wifiIpAddress = "192.168.0.81"; # static ip address to be assigned if dhcp is set to false
       };
 
       # ----- USER SETTINGS ----- #
