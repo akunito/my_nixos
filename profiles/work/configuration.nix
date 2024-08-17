@@ -70,27 +70,22 @@ in
   boot.loader.grub.enable = if (systemSettings.bootMode == "uefi") then false else true;
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
-  # TODO Move networking settings to different .nix file and import it ???
-  # TODO Use variable on flake.nix to set main ip address
-  # TODO Use variable on flake.nix to set defaultGateway
-  # TODO Use variable on flake.nix to set nameServers DNS
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = true; # Use networkmanager
   networking.useDHCP = systemSettings.dhcp; # Use DHCP
   networking.defaultGateway = systemSettings.defaultGateway; # Define your default gateway
-  networking.nameServers = systemSettings.nameServers; # Define your DNS servers
-  # Wired network
-  networking.interfaces.${userSettings.networkInterface}.ipv4.addresses = [ { # where your network interface might be eth0
-    address = systemSettings.ipAddress; # Define your IP address
-    prefixLength = 24;
+  networking.nameservers = systemSettings.nameServers; # Define your DNS servers
+  # Wired network -> Static IP will be set if DHCP is disabled
+  networking.interfaces.${systemSettings.networkInterface}.ipv4.addresses = lib.mkIf (systemSettings.dhcp == false) [ {
+    address = systemSettings.ipAddress;
+    prefixLength = 24;    
   } ];
-  # TODO Set variable on flake.nix to Enable or DIsable wifi ip assignment
-  # # Wireless network
-  # networking.interfaces.${userSettings.wifiInterface}.ipv4.addresses = [ { # where your network interface might be eth0
-  #   address = systemSettings.wifiIpAddress; # Define your IP address
-  #   prefixLength = 24;
-  # } ];
+  # Wireless network -> Static IP will be set if DHCP is disabled and wifiEnable is true
+  networking.interfaces.${systemSettings.wifiInterface}.ipv4.addresses = lib.mkIf (systemSettings.dhcp == false && systemSettings.wifiEnable == true) [ {
+    address = systemSettings.wifiIpAddress;
+    prefixLength = 24;    
+  } ];
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
@@ -126,12 +121,14 @@ in
     cryptsetup
     home-manager
     wpa_supplicant # for wifi
+    wpa_supplicant # for wifi
     btop
     fzf
     tldr
     syncthing
     # pciutils # install if you need some commands like lspci
 
+    vivaldi # this is here instead of home manager because the current plasma6 bug
     vivaldi # this is here instead of home manager because the current plasma6 bug
     qt5.qtbase
   ];

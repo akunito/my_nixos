@@ -7,8 +7,14 @@
               ./fonts.nix
             ];
 
+  # TODO: check wayland pkg and settings for sddm ??
+
+  environment.systemPackages = with pkgs;
+    [ wayland ];
+
   # environment.systemPackages = with pkgs;
-  #   [ wayland waydroid
+  #   [ wayland 
+  #     # waydroid
   #     (sddm-chili-theme.override {
   #       themeConfig = {
   #         background = config.stylix.image;
@@ -29,7 +35,7 @@
   #     options = "caps:escape";
   #   };
   #   displayManager.sddm = {
-  #     enable = true;
+  #     # enable = true;
   #     wayland.enable = true;
   #     enableHidpi = true;
   #     theme = "chili";
