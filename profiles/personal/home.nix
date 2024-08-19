@@ -16,6 +16,8 @@
 
   home.packages = with pkgs; [
     zsh
+    pcloud
+    libreoffice
   ];
 
   # xdg.enable = true;
