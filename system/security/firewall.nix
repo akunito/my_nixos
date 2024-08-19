@@ -78,6 +78,12 @@
       iptables -A INPUT -p tcp -s 192.168.0.91/24 --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
       iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
 
+      # # ================== Printer rules ==================
+      # # Allowing Incoming Printer's requests from Specific IP address (if 192.168.0.90/24) or subnet (if 192.168.0.0/24)
+      # iptables -A INPUT -p tcp -s 192.168.0.90/24 --dport 631 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      # iptables -A INPUT -p tcp -s 192.168.0.91/24 --dport 631 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+      # iptables -A OUTPUT -p tcp --sport 631 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
       # # ================== RDP rules ================== ( IT WORKS OK | DISABLED)
       # # Allowing Incoming RDP from Specific IP address (if 192.168.0.90/24)
       # iptables -A INPUT -p tcp -s 192.168.0.90/24 --dport 3389 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
