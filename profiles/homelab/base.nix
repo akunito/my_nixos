@@ -1,7 +1,5 @@
 { lib, pkgs, systemSettings, userSettings, ... }:
 
-# TODO check firewall.nix if I should split it up or not
-
 {
   imports =
     [ ../../system/hardware-configuration.nix
