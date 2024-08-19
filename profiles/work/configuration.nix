@@ -28,7 +28,7 @@
       ../../system/security/automount.nix
       # ../../system/style/stylix.nix # Stylix theme
       ( import ../../system/security/sshd.nix {
-        authorizedKeys = systemSettings.authorizedKeys; # SSH keys
+        authorizedKeys = userSettings.authorizedKeys; # SSH keys
         inherit userSettings; })
       # Patches
       ../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
@@ -68,7 +68,7 @@
   networking.defaultGateway = systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
   # Wired network -> Static IP will be set if DHCP is disabled
-  networking.interfaces.${systemSettings.networkInterface}.ipv4.addresses = lib.mkIf (systemSettings.dhcp == false) [ {
+  networking.interfaces.${systemSettings.networkInterface}.ipv4.addresses = lib.mkIf (systemSettings.dhcp == false && systemSettings.wiredInterface == true) [ {
     address = systemSettings.ipAddress;
     prefixLength = 24;    
   } ];
@@ -115,6 +115,7 @@
     btop
     fzf
     tldr
+    atuin
     syncthing
     # pciutils # install if you need some commands like lspci
 

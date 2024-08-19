@@ -1,9 +1,9 @@
-{ systemSettings, userSettings, ... }:
+{ userSettings, ... }:
 
 {
   imports = [ ../homelab/base.nix
               ( import ../../system/security/sshd.nix {
-                authorizedKeys = systemSettings.authorizedKeys; # SSH keys
+                authorizedKeys = userSettings.authorizedKeys; # SSH keys
                 inherit userSettings; })
             ];
 }
