@@ -11,8 +11,6 @@
     lxc
     swtpm
     bottles
-
-    spice
   
     # Filesystems
     dosfstools

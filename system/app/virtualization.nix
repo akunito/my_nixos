@@ -18,6 +18,9 @@
     enable = true;
     qemu.runAsRoot = false;
   };
+  
+  services.qemuGuest.enable = true;
+  services.spice-vdagentd.enable = true;  # enable copy and paste between host and guest
 
   users.users.${userSettings.username}.extraGroups = lib.mkIf (userSettings.virtualizationEnable == true) [ "qemu-libvirtd" "libvirtd" ];
 
