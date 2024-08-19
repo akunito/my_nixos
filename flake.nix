@@ -1,6 +1,8 @@
 {
   description = "Flake of Akunito";
 
+  # TODO: add ssh key as variable
+
   outputs = inputs@{ self, ... }:
     let
       # ---- SYSTEM SETTINGS ---- #

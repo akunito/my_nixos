@@ -47,7 +47,7 @@
     vlc
     candy-icons
 
-    realvnc-vnc-viewer
+    # realvnc-vnc-viewer
   ];
 
   # home.file.".local/share/pixmaps/nixos-snowflake-stylix.svg".source =

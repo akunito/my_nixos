@@ -4,17 +4,17 @@
 
 { pkgs, lib, systemSettings, userSettings, ... }:
 
-let
-  # Patch for Vivaldi issue on Plasma 6 -> https://github.com/NixOS/nixpkgs/pull/292148
-  # Define the package with the necessary environment variable
-  vivaldi = pkgs.vivaldi.overrideAttrs (oldAttrs: {
-    postInstall = ''
-      wrapProgram $out/bin/vivaldi --set QT_QPA_PLATFORM_PLUGIN_PATH ${pkgs.qt5.qtbase}/lib/qt-5.15/plugins/platforms/
-    '';
-  });
-  # and install qt5.qtbase
-  # remove this wrap and qt5.qtbase when the issue is fixed officially in Plasma 6
-in
+# let
+#   # Patch for Vivaldi issue on Plasma 6 -> https://github.com/NixOS/nixpkgs/pull/292148
+#   # Define the package with the necessary environment variable
+#   vivaldi = pkgs.vivaldi.overrideAttrs (oldAttrs: {
+#     postInstall = ''
+#       wrapProgram $out/bin/vivaldi --set QT_QPA_PLATFORM_PLUGIN_PATH ${pkgs.qt5.qtbase}/lib/qt-5.15/plugins/platforms/
+#     '';
+#   });
+#   # and install qt5.qtbase
+#   # remove this wrap and qt5.qtbase when the issue is fixed officially in Plasma 6
+# in
 
 {
   imports =
@@ -42,6 +42,9 @@ in
       ( import ../../system/security/sshd.nix {
         authorizedKeys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" ]; # update with your client key
         inherit userSettings; })
+      # Patches
+      ../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
+      ../../patches/vivaldifixes.nix # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148 
     ];
 
   # Fix nix path
@@ -121,16 +124,16 @@ in
     cryptsetup
     home-manager
     wpa_supplicant # for wifi
-    wpa_supplicant # for wifi
     btop
     fzf
     tldr
     syncthing
     # pciutils # install if you need some commands like lspci
 
-    vivaldi # this is here instead of home manager because the current plasma6 bug
-    vivaldi # this is here instead of home manager because the current plasma6 bug
+    vivaldi # requires patch to be imported + qt5.qtbase
     qt5.qtbase
+
+    pcloud # requires patch to be imported
   ];
 
   # I use zsh btw
