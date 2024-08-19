@@ -12,7 +12,7 @@
       ../../system/hardware/power.nix # Power management
       ../../system/hardware/time.nix # Network time sync
       ../../system/hardware/opengl.nix # package for AMD opengl
-      ../../system/hardware/printing.nix # Printer / to be tested
+      ../../system/hardware/printing.nix # Printer
       ../../system/hardware/bluetooth.nix # Bluetooth config
       (./. + "../../../system/wm"+("/"+userSettings.wm)+".nix") # My window manager
       #../../system/app/flatpak.nix

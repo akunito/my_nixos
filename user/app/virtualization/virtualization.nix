@@ -12,6 +12,8 @@
     swtpm
     bottles
 
+    spice
+  
     # Filesystems
     dosfstools
   ];
