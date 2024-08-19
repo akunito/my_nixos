@@ -25,19 +25,19 @@
   #   ];
 
   # Configure xwayland
-  services.xserver = {
-    enable = true;
-    xkb = {
-      layout = "us";
-      variant = "";
-      options = "caps:escape";
-    };
-    # displayManager.sddm = {
-    #   enable = true;
-    #   wayland.enable = true;
-    #   enableHidpi = true;
-    #   theme = "chili";
-    #   package = pkgs.sddm;
-    # };
-  };
+  # services.xserver = {
+  #   enable = true;
+  #   xkb = {
+  #     layout = "us";
+  #     variant = "";
+  #     options = "caps:escape";
+  #   };
+  #   # displayManager.sddm = {
+  #   #   enable = true;
+  #   #   wayland.enable = true;
+  #   #   enableHidpi = true;
+  #   #   theme = "chili";
+  #   #   package = pkgs.sddm;
+  #   # };
+  # };
 }

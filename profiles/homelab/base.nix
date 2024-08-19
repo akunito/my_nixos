@@ -1,7 +1,6 @@
 { lib, pkgs, systemSettings, userSettings, ... }:
 
 # TODO check firewall.nix if I should split it up or not
-# TODO Add networking settings
 
 {
   imports =
@@ -42,8 +41,21 @@
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
   # Networking
-  networking.hostName = systemSettings.hostname; # Define your hostname.
+  networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = true; # Use networkmanager
+  networking.useDHCP = systemSettings.dhcp; # Use DHCP
+  networking.defaultGateway = systemSettings.defaultGateway; # Define your default gateway
+  networking.nameservers = systemSettings.nameServers; # Define your DNS servers
+  # Wired network -> Static IP will be set if DHCP is disabled
+  networking.interfaces.${systemSettings.networkInterface}.ipv4.addresses = lib.mkIf (systemSettings.dhcp == false) [ {
+    address = systemSettings.ipAddress;
+    prefixLength = 24;    
+  } ];
+  # Wireless network -> Static IP will be set if DHCP is disabled and wifiEnable is true
+  networking.interfaces.${systemSettings.wifiInterface}.ipv4.addresses = lib.mkIf (systemSettings.dhcp == false && systemSettings.wifiEnable == true) [ {
+    address = systemSettings.wifiIpAddress;
+    prefixLength = 24;    
+  } ];
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
