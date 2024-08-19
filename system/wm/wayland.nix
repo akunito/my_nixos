@@ -7,8 +7,6 @@
               ./fonts.nix
             ];
 
-  # TODO: check wayland pkg and settings for sddm ??
-
   environment.systemPackages = with pkgs;
     [ wayland ];
 

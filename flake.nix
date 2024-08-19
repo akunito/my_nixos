@@ -1,8 +1,6 @@
 {
   description = "Flake of Akunito";
 
-  # TODO: add ssh key as variable
-
   outputs = inputs@{ self, ... }:
     let
       # ---- SYSTEM SETTINGS ---- #
@@ -49,6 +47,8 @@
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if (wm == "hyprland") then "wayland" else "x11";
+        dockerEnable = true; # for enabling docker
+        virtualizationEnable = true; # for enabling virtualization
         browser = "vivaldi"; # Default browser; must select one from ./user/app/browser/
         defaultRoamDir = "Personal.p"; # Default org roam directory relative to ~/Org
         term = "kitty"; # Default terminal command;

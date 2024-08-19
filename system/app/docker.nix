@@ -11,14 +11,14 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
 ];
 
 {
-  virtualisation.docker = {
+  virtualisation.docker = lib.mkIf (userSettings.dockerEnable == true) {
     enable = true;
     enableOnBoot = true;
     storageDriver = storageDriver;
     autoPrune.enable = true;
   };
-  users.users.${userSettings.username}.extraGroups = [ "docker" ];
-  environment.systemPackages = with pkgs; [
+  users.users.${userSettings.username}.extraGroups = lib.mkIf (userSettings.dockerEnable == true) [ "docker" ];
+  environment.systemPackages = with pkgs; lib.mkIf (userSettings.dockerEnable == true) [
     docker
     docker-compose
     lazydocker
