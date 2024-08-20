@@ -17,6 +17,7 @@
   home.packages = with pkgs; [
     zsh
     libreoffice
+    telegram-desktop
   ];
 
   # xdg.enable = true;
