@@ -2,6 +2,7 @@
   description = "Flake of Aga";
 
   outputs = inputs@{ self, ... }:
+    # NOTE that install.sh will replace the username and email by the active one by string replacement
     let
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
