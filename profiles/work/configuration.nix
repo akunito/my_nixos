@@ -29,7 +29,8 @@
       # ../../system/style/stylix.nix # Stylix theme
       ( import ../../system/security/sshd.nix {
         authorizedKeys = userSettings.authorizedKeys; # SSH keys
-        inherit userSettings; })
+        inherit userSettings;
+        inherit lib; })
       # Patches
       ../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
       ../../patches/vivaldifixes.nix # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148 
