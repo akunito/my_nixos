@@ -8,7 +8,7 @@
     settings = {
       PasswordAuthentication = false;
       PermitRootLogin = "no";
-      AllowUsers = [ userSettings.sshAllowUsers ];
+      AllowUsers = userSettings.sshAllowUsers;
     };
     extraConfig = ''
       # Additional settings
