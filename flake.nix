@@ -159,10 +159,33 @@
 
     in {
       homeConfigurations = {
+        # Home Manager configuration for the main 
         user = home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/home.nix") # load home.nix from selected PROFILE
+          ];
+          extraSpecialArgs = {
+            # pass config variables from above
+            inherit pkgs-stable;
+            # inherit pkgs-emacs;
+            # inherit pkgs-kdenlive;
+            # inherit pkgs-nwg-dock-hyprland;
+            inherit systemSettings;
+            inherit userSettings;
+            inherit inputs;
+          };
+        };
+        # Home Manager configuration for an additional SSH user
+        # to create this user you need to set its password
+          # $ sudo passwd akunito
+        # then clone the repository from git and rename the directory to .dotfiles
+        # Now you can install the additional home-manager user with:
+          # $ home-manager switch --flake ~/.dotfiles/#sshUser --show-trace;
+        sshUser = home-manager.lib.homeManagerConfiguration lib.mkIf (systemSettings.createAdditionalUser == true) {
+          inherit pkgs;
+          modules = [
+            ./profiles/additionalUsers/homeSshUser.nix # load home.nix from selected PROFILE
           ];
           extraSpecialArgs = {
             # pass config variables from above
