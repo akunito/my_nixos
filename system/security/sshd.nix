@@ -1,4 +1,4 @@
-{ lib, userSettings, authorizedKeys ? [], ... }:
+{ lib, userSettings, systemSettings, authorizedKeys ? [], ... }:
 
 {
   # Enable incoming ssh
@@ -8,22 +8,13 @@
     settings = {
       PasswordAuthentication = false;
       PermitRootLogin = "no";
-      AllowUsers = userSettings.sshAllowUser;
+      AllowUsers = [ userSettings.username ];
     };
     extraConfig = ''
       # Additional settings
     '';
   };
   
-  # users.users.${userSettings.createSshUser} = lib.mkIf (userSettings.createSshUser != userSettings.username) {
-  #   isNormalUser = true;
-  #   description = "SSH user for the cases where the system's user and the ssh's user are different";
-  #   home = userSettings.sshUserDirectory;
-  #   extraGroups = userSettings.sshUserExtraGroups;
-  #   packages = [];
-  #   openssh.authorizedKeys.keys = authorizedKeys;
-  # };
-
   # Permissions should be like
   # chmod 755 /etc/ssh/authorized_keys.d
   # chmod 444 /etc/ssh/authorized_keys.d/user

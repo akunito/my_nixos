@@ -1,10 +1,11 @@
-{ userSettings, ... }:
+{ userSettings, systemSettings, ... }:
 
 {
   imports = [ ./base.nix
               ( import ../../system/security/sshd.nix {
-                authorizedKeys = userSettings.authorizedKeys; # SSH keys
+                authorizedKeys = systemSettings.authorizedKeys; # SSH keys
                 inherit userSettings;
+                inherit systemSettings;
                 inherit lib; })
             ];
 }

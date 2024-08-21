@@ -28,8 +28,9 @@
       ../../system/security/automount.nix
       # ../../system/style/stylix.nix # Stylix theme
       ( import ../../system/security/sshd.nix {
-        authorizedKeys = userSettings.authorizedKeys; # SSH keys
+        authorizedKeys = systemSettings.authorizedKeys; # SSH keys
         inherit userSettings;
+        inherit systemSettings;
         inherit lib; })
       # Patches
       ../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
@@ -98,7 +99,7 @@
   users.users.${userSettings.username} = {
     isNormalUser = true;
     description = userSettings.name;
-    extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
+    extraGroups = userSettings.extraGroups;
     packages = [];
     uid = 1000;
   };
@@ -116,7 +117,7 @@
     btop
     fzf
     tldr
-    atuin
+    # atuin
     syncthing
     # pciutils # install if you need some commands like lspci
 

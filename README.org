@@ -77,8 +77,10 @@ And a example here:
     ip address del 10.25.0.1/24 dev nm-bridge
 #+END_SRC
 
-** Additional user (multiples users on same the same system)
-I have implemented a way to install an additional user with its own home.nix configuration for home-manager
+** Printer Brother Laser
+Added driver for Brother Laser printers.
+Added some comments how to setup.
+TODO: Implement sharing printer by CAPS on network. I started but didn't finish it.
 
 ** Kernel modules
 Additional [[./kernelModules.org][kernelModules.org]] document that explain the kernel modules for CPU Power Management

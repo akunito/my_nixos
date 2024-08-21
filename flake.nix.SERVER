@@ -45,7 +45,7 @@
       userSettings = rec {
         username = "akunito"; # username
         name = "akunito"; # name/identifier
-        email = "diego88aku@gmail.com"; # email (used for certain configurations)
+        email = ""; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
@@ -53,17 +53,9 @@
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if (wm == "hyprland") then "wayland" else "x11";
-        
-        # SSH User settings
-        authorizedKeys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" ];
-        hostKeys = [ "/home/akunito/.ssh/ssh_host_rsa_key" ];
-        createSshUser = "akunito"; # create ssh user. > If this user and the main system user are different, the user will be created for ssh access
-        sshAllowUser = [ "akunito" ]; # SSH allowed users. 
-        sshUserDirectory = "/home/akunito"; # user home directory
-        sshUserExtraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
-        dockerEnable = false; # for enabling docker
-        virtualizationEnable = false; # for enabling virtualization
+        dockerEnable = true; # for enabling docker
+        virtualizationEnable = true; # for enabling virtualization
 
         browser = "vivaldi"; # Default browser; must select one from ./user/app/browser/
         defaultRoamDir = "Personal.p"; # Default org roam directory relative to ~/Org
@@ -164,28 +156,6 @@
           inherit pkgs;
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/home.nix") # load home.nix from selected PROFILE
-          ];
-          extraSpecialArgs = {
-            # pass config variables from above
-            inherit pkgs-stable;
-            # inherit pkgs-emacs;
-            # inherit pkgs-kdenlive;
-            # inherit pkgs-nwg-dock-hyprland;
-            inherit systemSettings;
-            inherit userSettings;
-            inherit inputs;
-          };
-        };
-        # Home Manager configuration for an additional SSH user
-        # to create this user you need to set its password
-          # $ sudo passwd akunito
-        # then clone the repository from git and rename the directory to .dotfiles
-        # Now you can install the additional home-manager user with:
-          # $ home-manager switch --flake ~/.dotfiles/#sshUser --show-trace;
-        sshUser = home-manager.lib.homeManagerConfiguration lib.mkIf (systemSettings.createAdditionalUser == true) {
-          inherit pkgs;
-          modules = [
-            ./profiles/additionalUsers/homeSshUser.nix # load home.nix from selected PROFILE
           ];
           extraSpecialArgs = {
             # pass config variables from above
