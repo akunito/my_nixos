@@ -6,14 +6,14 @@
               ./pipewire.nix
               ./fonts.nix
               ./dbus.nix
-              # ./gnome-keyring.nix
+              ./gnome-keyring.nix
             ];
 
   # Security
-  security.pam.services.kwallet = {
-    name = "kwallet";
-    enableKwallet = true;
+  security = {
+    pam.services.login.enableGnomeKeyring = true;
   };
+  services.gnome.gnome-keyring.enable = true;
 
   # # KDE Plasma 6
   services.displayManager.sddm.enable = true;
