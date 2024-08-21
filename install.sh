@@ -27,12 +27,18 @@ else
     sed -i "0,/grubDevice.*=.*\".*\";/s//grubDevice = \"\/dev\/$grubDevice\";/" $SCRIPT_DIR/flake.nix
 fi
 
-# Patch flake.nix with different username/name and remove email by default
-# if the user string is followed by @, it will be ignored. eg: akunito@ will not be replaced.
-sed -i "s/akunito\([^@]\)/$(whoami)\1/" $SCRIPT_DIR/flake.nix
-sed -i "s/akunito\([^@]\)/$(getent passwd $(whoami) | cut -d ':' -f 5 | cut -d ',' -f 1)\1/" $SCRIPT_DIR/flake.nix
-sed -i "s/diego88aku@gmail.com//" $SCRIPT_DIR/flake.nix
-sed -i "s+~/.dotfiles+$SCRIPT_DIR+g" $SCRIPT_DIR/flake.nix
+# ask user if wants to replace user and mail by the current user
+read -p "Do you want to replace user and mail by the current user on flake.nix ? (Y/n) " yn
+case $yn in
+    [Yy]|[Yy][Ee][Ss])
+        # Patch flake.nix with different username/name and remove email by default
+        # if the user string is followed by @, it will be ignored. eg: akunito@ will not be replaced.
+        sed -i "s/akunito\([^@]\)/$(whoami)\1/" $SCRIPT_DIR/flake.nix
+        sed -i "s/akunito\([^@]\)/$(getent passwd $(whoami) | cut -d ':' -f 5 | cut -d ',' -f 1)\1/" $SCRIPT_DIR/flake.nix
+        sed -i "s/diego88aku@gmail.com//" $SCRIPT_DIR/flake.nix
+        sed -i "s+~/.dotfiles+$SCRIPT_DIR+g" $SCRIPT_DIR/flake.nix
+        ;;
+esac
 
 # Open up editor to manually edit flake.nix before install
 if [ -z "$EDITOR" ]; then

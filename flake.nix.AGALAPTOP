@@ -57,6 +57,9 @@
         dockerEnable = false; # for enabling docker
         virtualizationEnable = false; # for enabling virtualization
 
+        gitUser = "akunito"; # git username
+        gitEmail = "diego88aku@gmail.com"; # git email
+
         browser = "vivaldi"; # Default browser; must select one from ./user/app/browser/
         defaultRoamDir = "Personal.p"; # Default org roam directory relative to ~/Org
         term = "kitty"; # Default terminal command;
