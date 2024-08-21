@@ -1,5 +1,90 @@
-#+title: NixOS Config
-#+author: Emmet
+#+title: NixOS Config (forked from Librephoenix)
+#+author: Akunito
+
+** How I got here?
+I found videos from Librephoenix where I started to learn about NixOS until I reached the point where I needed to do my own system profiles to build different infraestructure for my different computers, like homeLab, family's laptop, etc.
+
+* My changes
+I have implemented my own features, however most of the original code is still there, but some features are partially commented.
+NOTE: All original documentation from Librephoenix is below on this document, after my list of changes.
+
+** Plasma 5 and Plasma 6 implemented. 
+Currently I'm not using Hyprland as I'm using MacOS, by the moment, at least until Asahi Linux releases on M3 CPUs. Then maybe I will try to use NixOS on my MacBook. That's why I switched to Plasma, mostly to reduce the maintenance time. Plasma just works out of the box with simple and advances features. Everyday I have to deal with different computers on my work or studies or projects, etc. This includes Windows, Linux and MacOS. That got me very annoyed by shortcuts and keys, when switching between them I was constantly mixing them. So I developed a kind of framework that allows me to use the same shotcuts on all my computers. (Additionally I can use Caps Lock as a Hyper key for all global shortcuts like navigate desks) Plasma allows to do this quite easily, if you combine it with a QMK or VIA keyboard. You can find that project on [[https://github.com/akunito/SpinachKeyboardFramework][Keyboard Framework respository]] in case you are interested.
+
+** Plasma configuration files are integrated on this project as well. There are few scripts
+to integrate them, you can check more on the /User/wm/Plasma6 files, where it's explained deeper.
+
+** SSH Server to send the passphrase and Open your LUKS encrypted disks.
+Librephoenix has a homeLab repository where he explains the different options we have for encrypting our data. However he avoided the full encryption of the system because the inconvinience of implementing it on a server where if you restart the computer you cannot set the passphrase when you are out of home. However I have implemented this by setting a SSH server on boot, where it is possible to connect and set the passphrase to open all your LUKS devices. Additionally you can combine this method with the method from Librephoenix, what will increase even more the security, I think. Check more about on his repository.
+
+** Additional/secondary LUKS devices
+On drives.nix you can find instructions how to add additional LUKS devices to be opened automatically on boot.
+
+** Virtualization QEMU server & remote.
+I managed to use this and connect remotelly from MacOS to use virt-manager on the Mac, but with the VM running totally on the NixOS server.
+- Note: virt-manager has permission issues if you set your machines or ISOs on a directory under /home
+- Note: if you want to do this from your MacBook, instructions on the next:
+
+** Virt-manager from MacOS to Linux
+- [[https://github.com/jeffreywildman/homebrew-virt-manager][Virt-manager for MacOS Repository]]
+- [[https://gist.github.com/anamorph/3af11f2bd54af54a45c8b3bdafcc9939][How to install it]]
+- Find my summary here as well:
+#+BEGIN_SRC sh
+    brew tap jeffreywildman/homebrew-virt-manager
+    brew install py2cairo
+    brew install virt-viewer virt-manager
+    brew cask install xquartz
+    virt-manager --no-fork # and run the manager
+#+END_SRC
+
+** Firewall, iptables rules
+I'm not sure yet if this is the best approach for NixOS firewall. However I want to learn more about firewall and networking so I have set some fules for iptables. You can find them under firewall.nix 
+
+** More variables for a dynamic flake.nix management.
+I have added more variables that allows for example:
+- Enable or Disable Docker or Virtualization by setting true or false.
+- Set your SSH authorizedKeys only on flake.nix, and will be inherited on the rest of .nix modules or files.
+- Enable or Disable SSH on BOOT by setting true or false.
+This allows you to set faster many of the features for a different computer, without modifying any other file, but only flake.nix, making much easier to manage different computers and keeping updated each of theirs local repositories.
+You can find different backups as examples of flake.nix like flake.nix.SERVER or flake.nix.AGALAPTOP
+
+** To set network bridges for Virsh/VMs
+You can find a tutorial on [[https://nixos.wiki/wiki/Libvirt][NixOS wiki Libvirt]]
+And a example here:
+#+BEGIN_SRC sh
+    # go to the directory where you want to store these files
+    cd /mnt/DATA_4TB/Syncthing/git_repos/myProjects/homeLab      
+
+    # create a file 
+    touch networking_nm-bridge.xml
+
+    # with this content
+    <network>
+      <name>nm-bridge</name>
+      <forward mode='bridge'/>
+      <bridge name='nm-bridge'/>
+    </network>
+
+    # Add and enable the bridge interface
+    # you might need to use sudo for some of the next commands
+    virsh net-define network_nm-bridge.xml
+    virsh net-start nm-bridge
+    sudo ip link add nm-bridge type bridge
+    sudo ip address ad dev nm-bridge 192.168.0.0/24
+    sudo ip link set dev nm-bridge up
+
+    # if you need to remove a wrong ip address use this
+    ip address del 10.25.0.1/24 dev nm-bridge
+#+END_SRC
+
+** Additional user (multiples users on same the same system)
+I have implemented a way to install an additional user with its own home.nix configuration for home-manager
+
+** Kernel modules
+Additional [[./kernelModules.org][kernelModules.org]] document that explain the kernel modules for CPU Power Management
+
+
+* Original Document
 
 [[https://gitlab.com/librephoenix/nixos-config][Main Repo Link (GitLab)]]
 

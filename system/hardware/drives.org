@@ -1,9 +1,9 @@
 
 
-# How to unlock LUKS drives on Boot by SSH 
-https://nixos.wiki/wiki/Remote_disk_unlocking
+* How to unlock LUKS drives on Boot by SSH 
+[[https://nixos.wiki/wiki/Remote_disk_unlocking][Remote disk unlocking on NixOS Wiki]]
 
-# How to mount your LUKS devices automatically
+* How to mount your LUKS devices automatically
 1. Add the UUID to the boot.initrd.luks.devices as below.
 2. Install.sh and Reboot the system. The device should be now unlocked on /dev/mapper
 3. Create the directory: $ mkdir -p /mnt/DATA_4TB
