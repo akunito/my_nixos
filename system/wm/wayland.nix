@@ -3,7 +3,7 @@
 {
   imports = [ ./pipewire.nix
               ./dbus.nix
-              # ./gnome-keyring.nix
+              ./gnome-keyring.nix
               ./fonts.nix
             ];
 
