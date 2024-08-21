@@ -15,14 +15,14 @@
     '';
   };
   
-  users.users.${userSettings.createSshUser} = lib.mkIf (userSettings.createSshUser != userSettings.username) {
-    isNormalUser = true;
-    description = "SSH user for the cases where the system's user and the ssh's user are different";
-    home = userSettings.sshUserDirectory;
-    extraGroups = userSettings.sshUserExtraGroups;
-    packages = [];
-    openssh.authorizedKeys.keys = authorizedKeys;
-  };
+  # users.users.${userSettings.createSshUser} = lib.mkIf (userSettings.createSshUser != userSettings.username) {
+  #   isNormalUser = true;
+  #   description = "SSH user for the cases where the system's user and the ssh's user are different";
+  #   home = userSettings.sshUserDirectory;
+  #   extraGroups = userSettings.sshUserExtraGroups;
+  #   packages = [];
+  #   openssh.authorizedKeys.keys = authorizedKeys;
+  # };
 
   # Permissions should be like
   # chmod 755 /etc/ssh/authorized_keys.d
