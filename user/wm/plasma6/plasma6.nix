@@ -15,15 +15,6 @@
     source = ./source/autostart;
     recursive = true;
   };
-  # home.file.".local/share/plasma/desktoptheme/" = { # Custom Plasma themes
-  #   source = ./source/desktoptheme;
-  #   recursive = true;
-  # };
-  # home.file.".config/plasma-workspace/env/" = { # Env scripts run at the start of a Plasma session
-  #   source = ./source/env;
-  #   recursive = true;
-  # };
-
   home.file.".config/kde.org/" = { # directory. Stores settings for applications related to the KDE project under the domain kde.org. This includes a variety of modern KDE applications.
     source = ./source/kde.org;
     recursive = true;
@@ -71,10 +62,6 @@
   home.file.".config/konsolerc".source = ./source/konsolerc; # Konsole terminal settings
   home.file.".config/kglobalshortcutsrc".source = ./source/kglobalshortcutsrc; # Global shortcuts
 
-  # home.file.".local/share/plasma/look-and-feel".source = ./source/look-and-feel; # Look an dfeel packages
-  home.file.".local/share/aurorae/themes".source = ./source/themes; # Window decoration themes
-  home.file.".local/share/color-schemes".source = ./source/color-schemes; # Color schemes
-
   home.file.".config/kactivitymanagerd-pluginsrc".source = ./source/kactivitymanagerd-pluginsrc; # Configuration for plugins used by the KDE activity manager
   home.file.".config/kactivitymanagerd-statsrc".source = ./source/kactivitymanagerd-statsrc; # Stores statistical data and settings related to KDE activities
   home.file.".config/kactivitymanagerd-switcher".source = ./source/kactivitymanagerd-switcher; # Configuration for the activity switcher, which lets you switch between different activities
@@ -95,4 +82,6 @@
   home.file.".config/spectaclerc".source = ./source/spectaclerc; # Configuration for Spectacle
   home.file.".config/systemsettingsrc".source = ./source/systemsettingsrc; # Configuration for System Settings
 
+  home.file.".local/share/aurorae/themes".source = ./source/themes; # Window decoration themes
+  home.file.".local/share/color-schemes".source = ./source/color-schemes; # Color schemes
 }

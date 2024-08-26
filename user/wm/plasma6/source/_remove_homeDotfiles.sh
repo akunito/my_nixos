@@ -4,26 +4,23 @@
 
 # List of files and directories to remove
 files=(
-    # "$HOME/.config/autostart" # Applications that start with Plasma
-    # "$HOME/.local/share/plasma/desktoptheme" # Custom Plasma themes
-    # "$HOME/.config/plasma-workspace/env" # Env scripts run at the start of a Plasma session
+    "$HOME/.config/autostart" # Applications that start with Plasma
 
-    # "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc" # Desktop widgets and panels config
-    # "$HOME/.config/kdeglobals" # General KDE settings
-    # "$HOME/.config/kwinrc" # KWin window manager settings
-    # "$HOME/.config/krunnerrc" # KRunner settings
-    # "$HOME/.config/khotkeysrc" # Custom keybindings
-    # "$HOME/.config/kscreenlockerrc" # Screen locker settings
-    # "$HOME/.config/kwalletrc" # Kwallet settings
-    # "$HOME/.config/kcminputrc" # Input settings
-    # "$HOME/.config/ksmserverrc" # Session management settings
-    # "$HOME/.config/dolphinrc" # Dolphin file manager settings
-    # "$HOME/.config/konsolerc" # Konsole terminal settings
-    # "$HOME/.config/autostart" # Applications that start with Plasma
-    # "$HOME/.config/kglobalshortcutsrc" # Global shortcuts
-    # "$HOME/.local/share/plasma/look-and-feel" # Look and feel packages
-    # "$HOME/.local/share/aurorae/themes" # Window decoration themes
-    # "$HOME/.local/share/color-schemes" # Color schemes
+    "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc" # Desktop widgets and panels config
+    "$HOME/.config/kdeglobals" # General KDE settings
+    "$HOME/.config/kwinrc" # KWin window manager settings
+    "$HOME/.config/krunnerrc" # KRunner settings
+    "$HOME/.config/khotkeysrc" # Custom keybindings
+    "$HOME/.config/kscreenlockerrc" # Screen locker settings
+    "$HOME/.config/kwalletrc" # Kwallet settings
+    "$HOME/.config/kcminputrc" # Input settings
+    "$HOME/.config/ksmserverrc" # Session management settings
+    "$HOME/.config/dolphinrc" # Dolphin file manager settings
+    "$HOME/.config/konsolerc" # Konsole terminal settings
+    "$HOME/.config/autostart" # Applications that start with Plasma
+    "$HOME/.config/kglobalshortcutsrc" # Global shortcuts
+    "$HOME/.local/share/aurorae/themes" # Window decoration themes
+    "$HOME/.local/share/color-schemes" # Color schemes
 
     "$HOME/.config/kde.org" # directory. Stores settings for applications related to the KDE project under the domain kde.org. This includes a variety of modern KDE applications.
     "$HOME/.config/kwin" # directory. Stores configurations for KWin, the window manager for Plasma. This includes window rules, shortcuts, and effects

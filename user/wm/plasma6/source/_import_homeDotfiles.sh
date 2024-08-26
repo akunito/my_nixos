@@ -22,10 +22,7 @@ files=(
     "$HOME/.config/dolphinrc" # Dolphin file manager settings
     "$HOME/.config/konsolerc" # Konsole terminal settings
     "$HOME/.config/autostart" # Applications that start with Plasma
-    "$HOME/.config/plasma-workspace/env" # Env scripts run at the start of a Plasma session
     "$HOME/.config/kglobalshortcutsrc" # Global shortcuts
-    "$HOME/.local/share/plasma/desktoptheme" # Custom Plasma themes
-    "$HOME/.local/share/plasma/look-and-feel" # Look and feel packages
     "$HOME/.local/share/aurorae/themes" # Window decoration themes
     "$HOME/.local/share/color-schemes" # Color schemes
 
