@@ -14,7 +14,7 @@
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
-        gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         
         # Network
         networkManager = true;
@@ -27,6 +27,7 @@
         
         # Wifi
         wifiEnable = true; # for enabling wifi
+        wifiPowerSave = true; # for enabling wifi power save for laptops
         wifiInterface = "wlp4s0"; # wifi interface
         wifiIpAddress = "192.168.0.78"; # static ip address to be assigned if dhcp is set to false
 

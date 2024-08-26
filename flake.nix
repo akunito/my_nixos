@@ -14,7 +14,7 @@
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
-        gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         
         # Network
         networkManager = true;
@@ -27,6 +27,7 @@
         
         # Wifi
         wifiEnable = true; # for enabling wifi
+        wifiPowerSave = true; # for enabling wifi power save for laptops
         wifiInterface = "wlp4s0"; # wifi interface
         wifiIpAddress = "192.168.0.78"; # static ip address to be assigned if dhcp is set to false
 
@@ -179,6 +180,7 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
+            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
@@ -239,7 +241,7 @@
     home-manager-stable.url = "github:nix-community/home-manager/release-24.05";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
 
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
 
     # nix-on-droid = {
     #   url = "github:nix-community/nix-on-droid/master";

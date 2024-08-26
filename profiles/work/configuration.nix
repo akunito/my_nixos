@@ -69,6 +69,7 @@
   networking.useDHCP = systemSettings.dhcp; # Use DHCP
   networking.defaultGateway = systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
+  networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
   # Wired network -> Static IP will be set if DHCP is disabled
   networking.interfaces.${systemSettings.networkInterface}.ipv4.addresses = lib.mkIf (systemSettings.dhcp == false && systemSettings.wiredInterface == true) [ {
     address = systemSettings.ipAddress;
