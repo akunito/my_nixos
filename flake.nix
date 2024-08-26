@@ -20,7 +20,7 @@
         networkManager = true;
         networkInterface = "eth0"; # network interface
         wiredInterface = false;
-        dhcp = true; # for automatic ip assignment (boolean, without quotation marks)
+        dhcp = false; # for automatic ip assignment (boolean, without quotation marks)
         ipAddress = "192.168.0.77"; # static ip address to be assigned if dhcp is set to false
         defaultGateway = "192.168.0.1"; # default gateway
         nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS

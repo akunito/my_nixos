@@ -27,10 +27,10 @@
     source = ./source/plasma-workspace;
     recursive = true;
   };
-  home.file.".local/share/kactivitymanagerd/" = { # directory. Custom keybindings
-    source = ./source/kactivitymanagerd;
-    recursive = true;
-  };
+  # home.file.".local/share/kactivitymanagerd/" = { # directory. Custom keybindings
+  #   source = ./source/kactivitymanagerd;
+  #   recursive = true;
+  # };
   home.file.".local/share/kded6/" = { # directory.
     source = ./source/kded6;
     recursive = true;
