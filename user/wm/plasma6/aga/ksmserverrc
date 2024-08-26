@@ -1,0 +1,17 @@
+[$Version]
+update_info=ksmserver_update_loginMode_value.upd:ksmserver_update_loginMode_value_default_enum
+
+[General]
+loginMode=emptySession
+
+[LegacySession: saved at previous logout]
+count=0
+
+[Session: saved at previous logout]
+count=0
+
+[SubSession: bf78a10b-d4cc-4f74-8285-2672a8a7ae7b]
+count=0
+
+[SubSession: d9e74c3f-d495-4219-b153-2963cc57ffbf]
+count=0

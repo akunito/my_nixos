@@ -29,7 +29,6 @@ files=(
     "$HOME/.config/kde.org" # directory. Stores settings for applications related to the KDE project under the domain kde.org. This includes a variety of modern KDE applications.
     "$HOME/.config/kwin" # directory. Stores configurations for KWin, the window manager for Plasma. This includes window rules, shortcuts, and effects
     "$HOME/.config/plasma-workspace" # directory. Contains various configuration files related to the Plasma workspace, including desktop layout, panels, and widgets
-    "$HOME/.local/share/kactivitymanagerd" # directory. Custom keybindings
     "$HOME/.local/share/kded6" # directory. 
     "$HOME/.local/share/plasma" # directory. 
     "$HOME/.local/share/plasmashell" # directory. 

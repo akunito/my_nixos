@@ -1,0 +1,7 @@
+[Applets][3]
+immutability=1
+plugin=org.kde.plasma.diskquota
+
+[Applets][3][Configuration]
+PreloadWeight=42
+geometry=1058,552,181,181
