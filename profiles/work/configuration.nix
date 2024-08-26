@@ -65,7 +65,7 @@
 
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
-  networking.networkmanager.enable = true; # Use networkmanager
+  networking.networkmanager.enable = systemSettings.networkManager; # Use networkmanager
   networking.useDHCP = systemSettings.dhcp; # Use DHCP
   networking.defaultGateway = systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
@@ -79,6 +79,16 @@
     address = systemSettings.wifiIpAddress;
     prefixLength = 24;    
   } ];
+  # Wireless network -> enable and use wpa_supplicant
+  networking.wireless = lib.mkIf (systemSettings.wifiEnable == true) {
+    enable = true;
+    networks."PLAY_Swiatlowodowy_9DEA_5G".psk = "833803160417c037a6b1813fd864d8b360fd5844f8626607939dd53615c7b385";
+    extraConfig = "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel";
+    # output ends up in /run/wpa_supplicant/wpa_supplicant.conf
+
+    # you might need to disable networkmanager if you get some conflict with wpa_supplicant
+  };
+
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
