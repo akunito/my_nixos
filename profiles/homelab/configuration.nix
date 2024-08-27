@@ -1,4 +1,4 @@
-{ userSettings, systemSettings, ... }:
+{ userSettings, systemSettings, lib, ... }:
 
 {
   imports = [ ./base.nix

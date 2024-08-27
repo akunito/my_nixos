@@ -30,6 +30,8 @@
         wifiPowerSave = true; # for enabling wifi power save for laptops
         wifiInterface = "wlp4s0"; # wifi interface
         wifiIpAddress = "192.168.0.78"; # static ip address to be assigned if dhcp is set to false
+        # WPA Supplicant
+        wpaSupplicant = false; # to use instead of networkManager
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
@@ -57,7 +59,7 @@
         wmType = if (wm == "hyprland") then "wayland" else "x11";
 
         dockerEnable = false; # for enabling docker
-        virtualizationEnable = false; # for enabling virtualization
+        virtualizationEnable = true; # for enabling virtualization
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email

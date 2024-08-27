@@ -30,6 +30,8 @@
         wifiPowerSave = false; # for enabling wifi power save for laptops
         wifiInterface = "wlp9s0"; # wifi interface
         wifiIpAddress = "192.168.0.81"; # static ip address to be assigned if dhcp is set to false
+        # WPA Supplicant
+        wpaSupplicant = false; # to use instead of networkManager
 
         # LUKS drives
         bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
