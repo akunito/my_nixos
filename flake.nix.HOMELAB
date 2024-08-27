@@ -182,6 +182,7 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
+            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
