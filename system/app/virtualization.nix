@@ -26,4 +26,15 @@
 
   # # redirect ports for printer to be tested
   # virtualisation.spiceUSBRedirection.enable = true; 
+
+
+  virtualisation.vmVariant = {
+    # following configuration is added only when building VM with build-vm
+    virtualisation = {
+      memorySize = 6000; # Use 2048MiB memory.
+      cores = 4;
+      graphics = true;
+    };
+  };
+
 }
