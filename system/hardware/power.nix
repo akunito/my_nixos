@@ -1,4 +1,4 @@
-{ ... }:
+{ systemSettings, lib, ... }:
 
 {
   # Overriding to disable power-profiles-daemon 
@@ -26,9 +26,22 @@
       START_CHARGE_THRESH_BAT0 = 75;
       STOP_CHARGE_THRESH_BAT0 = 80;
 
-      PLATFORM_PROFILE_ON_AC = "performance";
-      PLATFORM_PROFILE_ON_BAT = "balanced";
+      PLATFORM_PROFILE_ON_AC = systemSettings.PLATFORM_PROFILE_ON_AC;
+      PLATFORM_PROFILE_ON_BAT = systemSettings.PLATFORM_PROFILE_ON_BAT;
+
+      WIFI_PWR_ON_AC = systemSettings.WIFI_PWR_ON_AC;
+      WIFI_PWR_ON_BAT = systemSettings.WIFI_PWR_ON_BAT;
     };
   };
+  
+  powerManagement.enable = false;
+  services.logind.lidSwitch = systemSettings.lidSwitch;
+  services.logind.lidSwitchExternalPower = systemSettings.lidSwitchExternalPower;
+  services.logind.lidSwitchDocked = systemSettings.lidSwitchDocked;
+  services.logind.powerKey = systemSettings.powerKey;
 
+  # Disable wifi powersave for Intel Network Adapter (to avoid disconnect wifi when closing the lid)
+  boot.extraModprobeConfig = lib.mkIf (systemSettings.iwlwifiDisablePowerSave == true) ''
+    options iwlwifi power_save=0
+  '';
 }
