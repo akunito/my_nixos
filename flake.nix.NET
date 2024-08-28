@@ -21,7 +21,7 @@
         networkInterface = "eth0"; # network interface
         wiredInterface = false;
         dhcp = false; # for automatic ip assignment (boolean, without quotation marks)
-        ipAddress = "192.168.0.80"; # static ip address to be assigned if dhcp is set to false
+        ipAddress = "192.168.0.10"; # static ip address to be assigned if dhcp is set to false
         defaultGateway = "192.168.0.1"; # default gateway
         nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
         
@@ -182,6 +182,7 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
+            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x390
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above

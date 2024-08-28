@@ -21,6 +21,7 @@
     # Core
     zsh
     git
+    kitty
   ];
 
 }

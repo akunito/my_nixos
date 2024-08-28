@@ -106,10 +106,11 @@
     
     btop
     fzf
-    tldr
+    # tldr
     atuin
 
-    kitty
+    kitty # to remove if home-manager works
+    home-manager
   ];
 
   programs.fuse.userAllowOther = true;
