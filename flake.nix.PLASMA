@@ -15,23 +15,14 @@
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
-        
+
         # Network
         networkManager = true;
-        networkInterface = "eth0"; # network interface
-        wiredInterface = false;
-        dhcp = false; # for automatic ip assignment (boolean, without quotation marks)
-        ipAddress = "192.168.0.80"; # static ip address to be assigned if dhcp is set to false
+        ipAddress = "192.168.0.80"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.81"; # ip to be reserved on router by mac (manually)
         defaultGateway = "192.168.0.1"; # default gateway
         nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
-        
-        # Wifi
-        wifiEnable = true; # for enabling wifi
         wifiPowerSave = false; # for enabling wifi power save for laptops
-        wifiInterface = "wlp9s0"; # wifi interface
-        wifiIpAddress = "192.168.0.81"; # static ip address to be assigned if dhcp is set to false
-        # WPA Supplicant
-        wpaSupplicant = false; # to use instead of networkManager
 
         # LUKS drives
         bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
