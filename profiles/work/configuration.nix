@@ -70,19 +70,6 @@
   networking.defaultGateway = systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
 
-  # networking.useDHCP = systemSettings.dhcp; # Use DHCP
-  # # Wired network -> Static IP will be set if DHCP is disabled
-  # networking.interfaces.${systemSettings.networkInterface}.ipv4.addresses = lib.mkIf (systemSettings.dhcp == false && systemSettings.wiredInterface == true && systemSettings.networkManager == true) [ {
-  #   address = systemSettings.ipAddress;
-  #   prefixLength = 24;    
-  # } ];
-  # # Wireless network -> Static IP will be set if DHCP is disabled and wifiEnable is true
-  # networking.interfaces.${systemSettings.wifiInterface}.ipv4.addresses = lib.mkIf (systemSettings.dhcp == false && systemSettings.wifiEnable == true && systemSettings.networkManager == true) [ {
-  #   address = systemSettings.wifiIpAddress;
-  #   prefixLength = 24;    
-  # } ];
-
-
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
   i18n.defaultLocale = systemSettings.locale;

@@ -14,18 +14,35 @@
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
-        gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.99"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.100"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.0.80"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.81"; # ip to be reserved on router by mac (manually)
         defaultGateway = "192.168.0.1"; # default gateway
         nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
         wifiPowerSave = false; # for enabling wifi power save for laptops
 
+        # # Network
+        # networkManager = false;
+        # networkInterface = "eth0"; # network interface
+        # wiredInterface = false;
+        # dhcp = false; # for automatic ip assignment (boolean, without quotation marks)
+        # ipAddress = "192.168.0.80"; # static ip address to be assigned if dhcp is set to false
+        # defaultGateway = "192.168.0.1"; # default gateway
+        # nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
+        
+        # # Wifi
+        # wifiEnable = true; # for enabling wifi
+        # wifiPowerSave = false; # for enabling wifi power save for laptops
+        # wifiInterface = "wlp9s0"; # wifi interface
+        # wifiIpAddress = "192.168.0.81"; # static ip address to be assigned if dhcp is set to false
+        # # WPA Supplicant
+        # wpaSupplicant = false; # to use instead of networkManager
+
         # LUKS drives
-        bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+        bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
 
         # SSH System settings for BOOT
@@ -36,7 +53,7 @@
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management
-        iwlwifiDisablePowerSave = true; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
+        iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
         PLATFORM_PROFILE_ON_BAT = "performance";
         PLATFORM_PROFILE_ON_AC = "performance";
@@ -63,7 +80,7 @@
         wmType = if (wm == "hyprland") then "wayland" else "x11";
 
         dockerEnable = true; # for enabling docker
-        virtualizationEnable = false; # for enabling virtualization
+        virtualizationEnable = true; # for enabling virtualization
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email
@@ -186,7 +203,6 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
-            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x390
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
