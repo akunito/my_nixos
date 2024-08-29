@@ -7,7 +7,7 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "homelab"; # hostname
+        hostname = "nixosLabaku"; # hostname
         profile = "homelab"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
@@ -55,15 +55,20 @@
         # Intel Network Adapter Power Management
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
-        PLATFORM_PROFILE_ON_BAT = "performance";
-        PLATFORM_PROFILE_ON_AC = "performance";
+        TLP_ENABLE = true;
+        PROFILE_ON_BAT = "performance";
+        PROFILE_ON_AC = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
         WIFI_PWR_ON_BAT = "off";
         # logind settings
+        LOGIND_ENABLE = false;
         lidSwitch = "ignore"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
         lidSwitchExternalPower = "ignore"; # when the lid is closed but connected to power 
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
         powerKey = "ignore";  # when pressing power key, do one of above
+        # More Power settings
+        powerManagement_ENABLE = false;
+        power-profiles-daemon_ENABLE = false;
 
         # System packages
         systemPackages = with pkgs; [
