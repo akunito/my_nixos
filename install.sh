@@ -43,6 +43,15 @@ case $yn in
         ;;
 esac
 
+# ask user if wants to generate ssh keys for SSH on BOOT
+read -p "Do you want to generate ssh keys for SSH on BOOT ? (Y/n) " yn
+case $yn in
+    [Yy]|[Yy][Ee][Ss])
+        # Generate ssh keys
+        sudo ssh-keygen -t rsa -N "" -f /etc/secrets/initrd/ssh_host_rsa_key
+        ;;
+esac
+
 # Open up editor to manually edit flake.nix before install
 if [ -z "$EDITOR" ]; then
     EDITOR=code;

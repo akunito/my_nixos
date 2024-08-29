@@ -30,25 +30,7 @@
 
   home.stateVersion = "24.05"; # Please read the comment before changing.
 
-  home.packages = with pkgs; [
-    zsh
-    kitty
-    git
-    syncthing
-
-    # vivaldi # temporary moved to configuration.nix for issue with plasma 6
-    # qt5.qtbase
-    ungoogled-chromium
-
-    vscode
-    obsidian
-    spotify
-    xournalpp
-    vlc
-    candy-icons
-
-    # realvnc-vnc-viewer
-  ];
+  home.packages = userSettings.homePackages;
 
   # home.file.".local/share/pixmaps/nixos-snowflake-stylix.svg".source =
   #   config.lib.stylix.colors {

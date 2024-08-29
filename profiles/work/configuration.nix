@@ -95,27 +95,7 @@
   };
 
   # System packages
-  environment.systemPackages = with pkgs; [
-    vim
-    wget
-    nmap # net tool for port scanning
-    zsh
-    git
-    cryptsetup
-    home-manager
-    wpa_supplicant # for wifi
-    btop
-    fzf
-    tldr
-    # atuin
-    syncthing
-    # pciutils # install if you need some commands like lspci
-
-    vivaldi # requires patch to be imported + qt5.qtbase
-    qt5.qtbase
-
-    pcloud # requires patch to be imported
-  ];
+  environment.systemPackages = systemSettings.systemPackages;
 
   # I use zsh btw
   environment.shells = with pkgs; [ zsh ];

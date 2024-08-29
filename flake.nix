@@ -64,6 +64,27 @@
         lidSwitchExternalPower = "ignore"; # when the lid is closed but connected to power 
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
         powerKey = "ignore";  # when pressing power key, do one of above
+
+        # System packages
+        systemPackages = with pkgs; [
+          vim
+          wget
+          zsh
+          git
+          rclone
+          rdiff-backup
+          rsnapshot
+          cryptsetup
+          gocryptfs
+          
+          btop
+          fzf
+          # tldr
+          atuin
+
+          kitty # check if should be removed on labs
+          home-manager
+        ];
       };
 
       # ----- USER SETTINGS ----- #
@@ -90,6 +111,14 @@
         term = "kitty"; # Default terminal command;
         font = "Intel One Mono"; # Selected font
         fontPkg = pkgs.intel-one-mono; # Font package
+
+        # Home-Manager packages
+        homePackages = with pkgs; [
+          # Core
+          zsh
+          git
+        ];
+        
         editor = "nano"; # Default editor;
         # editor spawning translator
         # generates a command that can be used to spawn editor inside a gui

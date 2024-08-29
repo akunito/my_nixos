@@ -17,11 +17,6 @@
 
   home.stateVersion = "24.05"; # Please read the comment before changing.
 
-  home.packages = with pkgs; [
-    # Core
-    zsh
-    git
-    kitty
-  ];
+  home.packages = userSettings.homePackages;
 
 }

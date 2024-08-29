@@ -72,25 +72,7 @@
   };
 
   # System packages
-  environment.systemPackages = with pkgs; [
-    vim
-    wget
-    zsh
-    git
-    rclone
-    rdiff-backup
-    rsnapshot
-    cryptsetup
-    gocryptfs
-    
-    btop
-    fzf
-    # tldr
-    atuin
-
-    kitty # to remove if home-manager works
-    home-manager
-  ];
+  environment.systemPackages = systemSettings.systemPackages;
 
   programs.fuse.userAllowOther = true;
 
