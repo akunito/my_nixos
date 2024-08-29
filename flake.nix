@@ -1,5 +1,5 @@
 {
-  description = "Flake of Akunito HomeLab on Desktop";
+  description = "Flake of Aga on T580";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,48 +7,31 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "homelab"; # hostname
-        profile = "homelab"; # select a profile defined from my profiles directory
+        hostname = "personalaga"; # hostname
+        profile = "personal"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
-        gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.80"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.81"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.0.77"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.78"; # ip to be reserved on router by mac (manually)
         defaultGateway = "192.168.0.1"; # default gateway
         nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
-        wifiPowerSave = false; # for enabling wifi power save for laptops
-
-        # # Network
-        # networkManager = false;
-        # networkInterface = "eth0"; # network interface
-        # wiredInterface = false;
-        # dhcp = false; # for automatic ip assignment (boolean, without quotation marks)
-        # ipAddress = "192.168.0.80"; # static ip address to be assigned if dhcp is set to false
-        # defaultGateway = "192.168.0.1"; # default gateway
-        # nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
-        
-        # # Wifi
-        # wifiEnable = true; # for enabling wifi
-        # wifiPowerSave = false; # for enabling wifi power save for laptops
-        # wifiInterface = "wlp9s0"; # wifi interface
-        # wifiIpAddress = "192.168.0.81"; # static ip address to be assigned if dhcp is set to false
-        # # WPA Supplicant
-        # wpaSupplicant = false; # to use instead of networkManager
+        wifiPowerSave = true; # for enabling wifi power save for laptops
 
         # LUKS drives
-        bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+        bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
 
         # SSH System settings for BOOT
         authorizedKeys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" ];
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
-
+        
         # Printer
         sharePrinter = false; # for enabling printer sharing
 
@@ -56,51 +39,53 @@
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
         PLATFORM_PROFILE_ON_BAT = "performance";
-        PLATFORM_PROFILE_ON_AC = "performance";
+        PLATFORM_PROFILE_ON_AC = "balanced";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
-        WIFI_PWR_ON_BAT = "off";
+        WIFI_PWR_ON_BAT = "on";
         # logind settings
-        lidSwitch = "ignore"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
+        lidSwitch = "suspend"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
         lidSwitchExternalPower = "ignore"; # when the lid is closed but connected to power 
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
-        powerKey = "ignore";  # when pressing power key, do one of above
+        powerKey = "suspend";  # when pressing power key, do one of above
 
         # System packages
         systemPackages = with pkgs; [
           vim
           wget
+          nmap # net tool for port scanning
           zsh
           git
-          rclone
-          rdiff-backup
-          rsnapshot
           cryptsetup
-          gocryptfs
-          
+          home-manager
+          wpa_supplicant # for wifi
           btop
           fzf
-          # tldr
-          atuin
+          tldr
+          # atuin
+          syncthing
+          # pciutils # install if you need some commands like lspci
 
-          kitty # check if should be removed on labs
-          home-manager
+          vivaldi # requires patch to be imported + qt5.qtbase
+          qt5.qtbase
+
+          pcloud # requires patch to be imported
         ];
       };
 
       # ----- USER SETTINGS ----- #
       userSettings = rec {
-        username = "akunito"; # username
-        name = "akunito"; # name/identifier
+        username = "aga"; # username
+        name = "aga"; # name/identifier
         email = ""; # email (used for certain configurations)
-        dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
-        extraGroups = [ "networkmanager" "wheel" ];
+        dotfilesDir = "/home/aga/.dotfiles"; # absolute path of the local repo
+        extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if (wm == "hyprland") then "wayland" else "x11";
 
-        dockerEnable = true; # for enabling docker
+        dockerEnable = false; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization
 
         gitUser = "akunito"; # git username
@@ -114,11 +99,25 @@
 
         # Home-Manager packages
         homePackages = with pkgs; [
-          # Core
           zsh
+          kitty
           git
+          syncthing
+
+          # vivaldi # temporary moved to configuration.nix for issue with plasma 6
+          # qt5.qtbase
+          ungoogled-chromium
+
+          vscode
+          obsidian
+          spotify
+          xournalpp
+          vlc
+          candy-icons
+
+          # realvnc-vnc-viewer
         ];
-        
+
         editor = "nano"; # Default editor;
         # editor spawning translator
         # generates a command that can be used to spawn editor inside a gui
@@ -232,6 +231,7 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
+            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
