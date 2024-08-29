@@ -39,7 +39,7 @@
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
         PLATFORM_PROFILE_ON_BAT = "performance";
-        PLATFORM_PROFILE_ON_AC = "balanced";
+        PLATFORM_PROFILE_ON_AC = "low-power";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
         WIFI_PWR_ON_BAT = "on";
         # logind settings
