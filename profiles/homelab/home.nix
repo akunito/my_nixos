@@ -12,7 +12,7 @@
               ../../user/shell/sh.nix # My zsh and bash config
               ../../user/app/ranger/ranger.nix # My ranger file manager config
               ../../user/app/git/git.nix # My git config
-              # ../../user/app/virtualization/virtualization.nix # Virtual machines
+              ../../user/app/virtualization/virtualization.nix # Virtual machines
             ];
 
   home.stateVersion = "24.05"; # Please read the comment before changing.
