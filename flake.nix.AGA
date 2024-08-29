@@ -1,5 +1,5 @@
 {
-  description = "Flake of Aga";
+  description = "Flake of Aga on T580";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,7 +7,7 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosaga"; # hostname
+        hostname = "personalaga"; # hostname
         profile = "personal"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale

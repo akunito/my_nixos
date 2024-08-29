@@ -18,6 +18,9 @@ fi
 # Generate hardware config for new system
 sudo nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
 
+# Create SSH directory for SSH on BOOT
+sudo mkdir -p /etc/secrets/initrd/
+
 # Check if uefi or bios
 if [ -d /sys/firmware/efi/efivars ]; then
     sed -i "0,/bootMode.*=.*\".*\";/s//bootMode = \"uefi\";/" $SCRIPT_DIR/flake.nix
