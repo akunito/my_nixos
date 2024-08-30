@@ -12,7 +12,6 @@ files=(
     "$HOME/.config/krunnerrc" # KRunner settings
     "$HOME/.config/khotkeysrc" # Custom keybindings
     "$HOME/.config/kscreenlockerrc" # Screen locker settings
-    "$HOME/.config/kwalletrc" # Kwallet settings
     "$HOME/.config/kcminputrc" # Input settings
     "$HOME/.config/ksmserverrc" # Session management settings
     "$HOME/.config/dolphinrc" # Dolphin file manager settings

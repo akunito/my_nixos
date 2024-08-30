@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=pcloud
+Comment=pcloudstartup script
+Exec=/nix/store/72bwpmz2qhgx09p51967w7v131k51iaa-pcloud-1.14.6/app/pcloud
+StartupNotify=false
+Terminal=false

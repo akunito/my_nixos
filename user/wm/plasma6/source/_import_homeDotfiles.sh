@@ -3,7 +3,11 @@
 # Script to import all Plasma's dotfiles under $HOME to the current directory
 
 # Destination directory is current directory
-DEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# DEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Destination directory is passed by parameter
+DEST_DIR="$1"
+echo "Importing dotfiles to $DEST_DIR"
 
 # Create the destination directory if it does not exist
 mkdir -p "$DEST_DIR"
@@ -16,7 +20,6 @@ files=(
     "$HOME/.config/krunnerrc" # KRunner settings
     "$HOME/.config/khotkeysrc" # Custom keybindings
     "$HOME/.config/kscreenlockerrc" # Screen locker settings
-    "$HOME/.config/kwalletrc" # Kwallet settings
     "$HOME/.config/kcminputrc" # Input settings
     "$HOME/.config/ksmserverrc" # Session management settings
     "$HOME/.config/dolphinrc" # Dolphin file manager settings

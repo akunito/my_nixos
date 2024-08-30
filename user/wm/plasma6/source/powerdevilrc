@@ -1,10 +1,1 @@
-[AC][Display]
-TurnOffDisplayIdleTimeoutSec=1800
-
-[AC][SuspendAndShutdown]
-AutoSuspendAction=0
-AutoSuspendIdleTimeoutSec=5400
-PowerButtonAction=1
-
-[BatteryManagement]
-BatteryCriticalAction=1
+/home/aga/.dotfiles/user/wm/plasma6/aga/powerdevilrc

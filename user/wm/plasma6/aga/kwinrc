@@ -50,7 +50,6 @@ CommandAllWheel=Above/Below
 [Plugins]
 cubeEnabled=true
 diminactiveEnabled=true
-fallapartEnabled=true
 kwin4_effect_squashEnabled=false
 kwin4_effect_translucencyEnabled=true
 magiclampEnabled=true
@@ -82,17 +81,23 @@ tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"wi
 [Tiling][adba366a-2952-554c-af5a-43504ce3b512]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
 
+[Tiling][c250dfa1-e637-5e47-a212-237ebcdf940e]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
+[Tiling][c86d65e4-0f81-5ff1-a78a-bce4f4ac0e1b]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
 [Tiling][db4a0e6a-bae7-5665-a79d-fedd4c912b5b]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
 
 [Windows]
 ElectricBorderCooldown=425
 ElectricBorderDelay=275
-ElectricBorders=2
+ElectricBorders=1
 FocusPolicy=FocusFollowsMouse
 
 [Xwayland]
-Scale=1
+Scale=1.25
 
 [org.kde.kdecoration2]
 BorderSize=Tiny

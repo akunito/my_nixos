@@ -1,0 +1,10 @@
+[activities]
+9195da23-5e5a-4f1f-9256-14ba194fb9a0=Default
+
+[activities-icons]
+9195da23-5e5a-4f1f-9256-14ba194fb9a0=action-unavailable-symbolic
+
+[main]
+currentActivity=9195da23-5e5a-4f1f-9256-14ba194fb9a0
+runningActivities=9195da23-5e5a-4f1f-9256-14ba194fb9a0
+stoppedActivities=

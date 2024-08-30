@@ -10,77 +10,89 @@
     flameshot
   ];
 
-  # home.activation = { # FOR TEST
-  #     createDirectoryMyScripts = ''
-  #     #!/bin/sh
-  #     echo "\nRunning home.activation script TEST <<<<<<<<<<<<<<<<<<< ..." 
+  home.activation = {
+      createDirectoryMyScripts = ''
+      #!/bin/sh
+      echo "=================================== Plasma dotfiles manager ================================"
+      HOME_PATH="/home/''+userSettings.username+''"
+      USER_PATH="''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''"
+      SOURCE_PATH="''+userSettings.dotfilesDir+''/user/wm/plasma6/source"
+      mkdir -p $SOURCE_PATH
+      mkdir -p $USER_PATH
 
-  #     echo "Create symlinks to Plasma settings files on my Git repo"
-  #     echo "Building paths from userSettings variables (username & dotfilesDir)"
-  #     echo "Home path ----> /home/''+userSettings.username+''/..."
-  #     echo "Source path --> ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/..."
+      echo "Home path: ----> $HOME_PATH"
+      echo "User path (It should contain the Plasma dotfiles that you want to use. The symlinks from your HOME will point here)"
+      echo "--> $USER_PATH"
+      echo "Source path (It's a transition directory that contain Plasma dotfiles. If you import your current Plasma dotfiles from HOME, will be backed up here)"
+      echo "--> $SOURCE_PATH"
 
-  #     # Directories
-  #     ln -sf ''userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/autostart /home/''+userSettings.username+''/.config/testautostart 
+      # Ask user if Backup is needed
+      read -p "Do you want to backup your Plasma settings dotfiles to $SOURCE_PATH ? (y/N) " yn
+      case $yn in
+          [Yy]|[Yy][Ee][Ss])
+              echo "=== Cleaning destination directory $SOURCE_PATH excluding .sh files"
+              find $SOURCE_PATH -mindepth 1 ! -name "*.sh" -exec rm -rf {} +
+
+              echo "=== Importing your Plasma settings from HOME to $SOURCE_PATH"
+              $SOURCE_PATH/_import_homeDotfiles.sh $SOURCE_PATH
+
+              echo "=== Cleaning the User directory $USER_PATH, excluding .sh files"
+              find $USER_PATH -mindepth 1 ! -name "*.sh" -exec rm -rf {} +
+
+              echo "=== Copying your Dotfiles to $USER_PATH"
+              cp -r $SOURCE_PATH/* $USER_PATH
+              ;;
+      esac
+
+      echo "\n============= Removing files on HOME to create symlinks"
+      ~/.dotfiles/user/wm/plasma6/source/_remove_homeDotfiles.sh
+
+      echo "\n============= Creating symlinks to directories"
+      # Directories
+      ln -sf $USER_PATH/autostart $HOME_PATH/.config/autostart
+      ln -sf $USER_PATH/kde.org $HOME_PATH/.config/kde.org
+      ln -sf $USER_PATH/kwin $HOME_PATH/.config/kwin
+      ln -sf $USER_PATH/plasma-workspace $HOME_PATH/.config/plasma-workspace
+      ln -sf $USER_PATH/share/kded6 $HOME_PATH/.local/kded6
+      ln -sf $USER_PATH/share/plasma $HOME_PATH/.local/plasma
+      ln -sf $USER_PATH/share/plasmashell $HOME_PATH/.local/plasmashell
+      ln -sf $USER_PATH/share/systemsettings $HOME_PATH/.local/systemsettings
       
-  #     # Files
-  #     ln -sf ''userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kdeglobals /home/''+userSettings.username+''/.config/testkdeglobals 
-  #     '';
-  #   };
+      echo "\n============= Creating symlinks to files"
+      # Files
+      ln -sf $USER_PATH/plasma-org.kde.plasma.desktop-appletsrc $HOME_PATH/.config/plasma-org.kde.plasma.desktop-appletsrc
+      ln -sf $USER_PATH/kdeglobals $HOME_PATH/.config/kdeglobals
+      ln -sf $USER_PATH/kwinrc $HOME_PATH/.config/kwinrc
+      ln -sf $USER_PATH/krunnerrc $HOME_PATH/.config/krunnerrc
+      ln -sf $USER_PATH/khotkeysrc $HOME_PATH/.config/khotkeysrc
+      ln -sf $USER_PATH/kscreenlockerrc $HOME_PATH/.config/kscreenlockerrc
+      ln -sf $USER_PATH/kcminputrc $HOME_PATH/.config/kcminputrc
+      ln -sf $USER_PATH/ksmserverrc $HOME_PATH/.config/ksmserverrc
+      ln -sf $USER_PATH/dolphinrc $HOME_PATH/.config/dolphinrc
+      ln -sf $USER_PATH/konsolerc $HOME_PATH/.config/konsolerc
+      ln -sf $USER_PATH/kglobalshortcutsrc $HOME_PATH/.config/kglobalshortcutsrc
+      ln -sf $USER_PATH/kactivitymanagerd-pluginsrc $HOME_PATH/.config/kactivitymanagerd-pluginsrc
+      ln -sf $USER_PATH/kactivitymanagerd-statsrc $HOME_PATH/.config/kactivitymanagerd-statsrc
+      ln -sf $USER_PATH/kactivitymanagerd-switcher $HOME_PATH/.config/kactivitymanagerd-switcher
+      ln -sf $USER_PATH/kactivitymanagerdrc $HOME_PATH/.config/kactivitymanagerdrc
+      ln -sf $USER_PATH/kcmfonts $HOME_PATH/.config/kcmfonts
+      ln -sf $USER_PATH/kded5rc $HOME_PATH/.config/kded5rc
+      ln -sf $USER_PATH/kded6rc $HOME_PATH/.config/kded6rc
+      ln -sf $USER_PATH/kfontinstuirc $HOME_PATH/.config/kfontinstuirc
+      ln -sf $USER_PATH/kwinrulesrc $HOME_PATH/.configkwinrulesrc
+      ln -sf $USER_PATH/plasma-localerc $HOME_PATH/.config/plasma-localerc
+      ln -sf $USER_PATH/plasmanotifyrc $HOME_PATH/.config/plasmanotifyrc
+      ln -sf $USER_PATH/plasmarc $HOME_PATH/.config/plasmarc
+      ln -sf $USER_PATH/plasmashellrc $HOME_PATH/.config/plasmashellrc
+      ln -sf $USER_PATH/plasmawindowed-appletsrc $HOME_PATH/.config/plasmawindowed-appletsrc
+      ln -sf $USER_PATH/plasmawindowedrc $HOME_PATH/.config/plasmawindowedrc
+      ln -sf $USER_PATH/powerdevilrc $HOME_PATH/.config/powerdevilrc
+      ln -sf $USER_PATH/powermanagementprofilesrc $HOME_PATH/.config/powermanagementprofilesrc
+      ln -sf $USER_PATH/spectaclerc $HOME_PATH/.config/spectaclerc
+      ln -sf $USER_PATH/systemsettingsrc $HOME_PATH/.config/systemsettingsrc
 
-  # home.activation = {
-  #     createDirectoryMyScripts = ''
-  #     #!/bin/sh
-  #     echo "\nRunning home.activation script..." 
-
-  #     echo "Create symlinks to Plasma settings files on my Git repo"
-
-  #     # Directories
-  #     ln -sf /home/''+userSettings.username+''/.config/autostart ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/autostart
-  #     ln -sf /home/''+userSettings.username+''/.config/kde.org ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kde.org
-  #     ln -sf /home/''+userSettings.username+''/.config/kwin ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kwin
-  #     ln -sf /home/''+userSettings.username+''/.config/plasma-workspace ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasma-workspace
-  #     ln -sf /home/''+userSettings.username+''/.config/spectacle ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/spectacle
-  #     ln -sf /home/''+userSettings.username+''/.local/share/kded6 ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kded6
-  #     ln -sf /home/''+userSettings.username+''/.local/share/plasma ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasma
-  #     ln -sf /home/''+userSettings.username+''/.local/share/plasmashell ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmashell
-  #     ln -sf /home/''+userSettings.username+''/.local/share/systemsettings ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/systemsettings
-      
-  #     # Files
-  #     ln -sf /home/''+userSettings.username+''/.config/plasma-org.kde.plasma.desktop-appletsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasma-org.kde.plasma.desktop-appletsrc
-  #     ln -sf /home/''+userSettings.username+''/.config/kdeglobals ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kdeglobals
-  #     ln -sf /home/''+userSettings.username+''/.config/kwinrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kwinrc
-  #     ln -sf /home/''+userSettings.username+''/.config/krunnerrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/krunnerrc
-  #     ln -sf /home/''+userSettings.username+''/.config/khotkeysrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/khotkeysrc
-  #     ln -sf /home/''+userSettings.username+''/.config/kscreenlockerrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kscreenlockerrc
-  #     ln -sf /home/''+userSettings.username+''/.config/kwalletrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kwalletrc
-  #     ln -sf /home/''+userSettings.username+''/.config/kcminputrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kcminputrc
-  #     ln -sf /home/''+userSettings.username+''/.config/ksmserverrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/ksmserverrc
-  #     ln -sf /home/''+userSettings.username+''/.config/dolphinrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/dolphinrc
-  #     ln -sf /home/''+userSettings.username+''/.config/konsolerc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/konsolerc
-  #     ln -sf /home/''+userSettings.username+''/.config/kglobalshortcutsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kglobalshortcutsrc
-  #     ln -sf /home/''+userSettings.username+''/.config/kactivitymanagerd-pluginsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kactivitymanagerd-pluginsrc
-  #     ln -sf /home/''+userSettings.username+''/.config/kactivitymanagerd-statsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kactivitymanagerd-statsrc
-  #     ln -sf /home/''+userSettings.username+''/.config/kactivitymanagerd-switcher ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kactivitymanagerd-switcher
-  #     ln -sf /home/''+userSettings.username+''/.config/kactivitymanagerdrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kactivitymanagerdrc
-  #     ln -sf /home/''+userSettings.username+''/.config/kcmfonts ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kcmfonts
-  #     ln -sf /home/''+userSettings.username+''/.config/kded5rc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kded5rc
-  #     ln -sf /home/''+userSettings.username+''/.config/kded6rc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kded6rc
-  #     ln -sf /home/''+userSettings.username+''/.config/kfontinstuirc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kfontinstuirc
-  #     ln -sf /home/''+userSettings.username+''/.config/kwinrulesrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kwinrulesrc
-  #     ln -sf /home/''+userSettings.username+''/.config/plasma-localerc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasma-localerc
-  #     ln -sf /home/''+userSettings.username+''/.config/plasmanotifyrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmanotifyrc
-  #     ln -sf /home/''+userSettings.username+''/.config/plasmarc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmarc
-  #     ln -sf /home/''+userSettings.username+''/.config/plasmashellrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmashellrc
-  #     ln -sf /home/''+userSettings.username+''/.config/plasmawindowed-appletsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmawindowed-appletsrc
-  #     ln -sf /home/''+userSettings.username+''/.config/plasmawindowedrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmawindowedrc
-  #     ln -sf /home/''+userSettings.username+''/.config/powerdevilrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/powerdevilrc
-  #     ln -sf /home/''+userSettings.username+''/.config/powermanagementprofilesrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/powermanagementprofilesrc
-  #     ln -sf /home/''+userSettings.username+''/.config/spectaclerc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/spectaclerc
-  #     ln -sf /home/''+userSettings.username+''/.config/systemsettingsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/systemsettingsrc
-
-  #     ln -sf /home/''+userSettings.username+''/.local/share/aurorae/themes ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/aurorae
-  #     ln -sf /home/''+userSettings.username+''/.local/share/color-schemes ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/color-schemes
-  #     '';
-  #   };
+      ln -sf $USER_PATH/share/aurorae/themes $HOME_PATH/.local/aurorae
+      ln -sf $USER_PATH/share/color-schemes $HOME_PATH/.local/color-schemes
+      '';
+    };
 }

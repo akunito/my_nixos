@@ -31,7 +31,7 @@ else
 fi
 
 # ask user if wants to replace user and mail by the current user
-read -p "Do you want to replace user and mail by the current user on flake.nix ? (Y/n) " yn
+read -p "Do you want to replace user and mail by the current user on flake.nix ? (y/N) " yn
 case $yn in
     [Yy]|[Yy][Ee][Ss])
         # Patch flake.nix with different username/name and remove email by default
@@ -44,7 +44,7 @@ case $yn in
 esac
 
 # ask user if wants to generate ssh keys for SSH on BOOT
-read -p "Do you want to generate ssh keys for SSH on BOOT ? (Y/n) " yn
+read -p "Do you want to generate ssh keys for SSH on BOOT ? (y/N) " yn
 case $yn in
     [Yy]|[Yy][Ee][Ss])
         # Generate ssh keys

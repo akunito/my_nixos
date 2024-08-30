@@ -20,7 +20,7 @@
         networkManager = true;
         ipAddress = "192.168.0.77"; # ip to be reserved on router by mac (manually)
         wifiIpAddress = "192.168.0.78"; # ip to be reserved on router by mac (manually)
-        defaultGateway = "192.168.0.1"; # default gateway
+        defaultGateway = null; # default gateway
         nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
         wifiPowerSave = true; # for enabling wifi power save for laptops
 
@@ -67,6 +67,7 @@
           btop
           fzf
           tldr
+          rsync
           # atuin
           syncthing
           # pciutils # install if you need some commands like lspci
@@ -120,6 +121,8 @@
           xournalpp
           vlc
           candy-icons
+          qbittorrent
+          calibre
 
           # realvnc-vnc-viewer
         ];

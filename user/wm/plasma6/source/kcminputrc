@@ -1,14 +1,1 @@
-[$Version]
-update_info=delete_cursor_old_default_size.upd:DeleteCursorOldDefaultSize,kcminputrc_fix_botched_5_21_0.upd:kcminputrc_fix_botched_5_21_0_pre,kcminputrc_fix_botched_5_21_0.upd:kcminputrc_fix_botched_5_21_0,kcminputrc_repeat.upd:kcminputrc_migrate_key_repeat
-
-[ButtonRebinds][Mouse]
-ExtraButton1=Key,Meta+Ctrl+Alt
-ExtraButton2=Key,Meta+Ctrl+Alt+Shift
-
-[Mouse]
-X11LibInputXAccelProfileFlat=true
-XLbInptAccelProfileFlat=false
-XLbInptPointerAcceleration=0.2
-
-[Tmp]
-update_info=delete_cursor_old_default_size.upd:DeleteCursorOldDefaultSize
+/home/aga/.dotfiles/user/wm/plasma6/aga/kcminputrc

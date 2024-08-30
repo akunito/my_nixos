@@ -136,12 +136,12 @@ ForegroundPositive=39,174,96
 ForegroundVisited=155,89,182
 
 [DirSelect Dialog]
-DirSelectDialog Size=844,598
+DirSelectDialog Size=820,573
 History Items[$e]=file:$HOME/.config/kwin,file:$HOME/Downloads/ObsiDocs,file:$HOME/.dotfiles
 
 [General]
 BrowserApplication=vivaldi-stable.desktop
-ColorSchemeHash=01662607e36cd33eacc7d7d7189f69c26b9a2cc8
+ColorSchemeHash=4a48bd34ba53d580d8594cb0216221e77518509f
 
 [Icons]
 Theme=candy-icons
@@ -162,7 +162,7 @@ Show Full Path=false
 Show Inline Previews=true
 Show Preview=false
 Show Speedbar=true
-Show hidden files=true
+Show hidden files=false
 Sort by=Name
 Sort directories first=true
 Sort hidden files last=false

@@ -1,5 +1,1 @@
-[$Version]
-update_info=kscreenlocker.upd:0.1-autolock
-
-[Daemon]
-Timeout=15
+/home/aga/.dotfiles/user/wm/plasma6/aga/kscreenlockerrc
