@@ -44,7 +44,7 @@
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = systemSettings.networkManager; # Use networkmanager
   networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
-  networking.defaultGateway = systemSettings.defaultGateway; # Define your default gateway
+  networking.defaultGateway = lib.mkIf (systemSettings.defaultGateway != null) systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
 
   # Timezone and locale

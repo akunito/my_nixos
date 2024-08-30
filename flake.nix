@@ -20,8 +20,8 @@
         networkManager = true;
         ipAddress = "192.168.0.99"; # ip to be reserved on router by mac (manually)
         wifiIpAddress = "192.168.0.100"; # ip to be reserved on router by mac (manually)
-        defaultGateway = "192.168.0.1"; # default gateway
-        nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
+        defaultGateway = null; # default gateway
+        nameServers = [ "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
         wifiPowerSave = false; # for enabling wifi power save for laptops
 
         # LUKS drives

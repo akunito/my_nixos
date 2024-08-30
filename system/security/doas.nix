@@ -5,7 +5,7 @@
   security.doas.enable = true;
   security.sudo.enable = false;
   security.doas.extraRules = [{
-    users = [ "${userSettings.username}" "wheel" ];
+    users = [ "${userSettings.username}" ];
     keepEnv = true;
     persist = true;
   }];
