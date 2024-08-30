@@ -11,13 +11,13 @@
       AllowUsers = [ userSettings.username ];
     };
     extraConfig = ''
-      # sshd.nix settings
+      # sshd.nix -> services.openssh.extraConfig
     '';
   };
 
-  # ~/.ssh/config
+  # /etc/ssh/ssh_config 
   programs.ssh.extraConfig = ''
-    # sshd.nix settings
+    # sshd.nix -> programs.ssh.extraConfig
     Host github.com
       HostName github.com
       User akunito
