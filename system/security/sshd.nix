@@ -11,9 +11,19 @@
       AllowUsers = [ userSettings.username ];
     };
     extraConfig = ''
-      # Additional settings
+      # sshd.nix settings
     '';
   };
+
+  # ~/.ssh/config
+  programs.ssh.extraConfig = ''
+    # sshd.nix settings
+    Host github.com
+      HostName github.com
+      User akunito
+      IdentityFile ~/.ssh/ed25519_github # Generate this key for github if needed
+      AddKeysToAgent yes
+  '';
   
   # Permissions should be like
   # chmod 755 /etc/ssh/authorized_keys.d
