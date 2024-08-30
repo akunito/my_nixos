@@ -82,8 +82,8 @@ sudo $SCRIPT_DIR/harden.sh $SCRIPT_DIR;
 # sudo ip6tables -X
 
 # Rebuild system
-echo "Rebuilding system with flake..."
-sudo nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace;
+echo "Rebuilding system with flake... running command as 'doas' instead of 'sudo' cause a bug in nixos-rebuild"
+doas nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace;
 
 # Install and build home-manager configuration
 # This runs home-manager on GIT, so you have to commit your changes first !!
