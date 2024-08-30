@@ -10,78 +10,60 @@
     flameshot
   ];
 
-  # Plasma config > Directory symlinks
-  home.file.".config/autostart/" = {
-    source = ./. + builtins.toPath ("/" + userSettings.username + "/autostart");
-    recursive = true;
-  };
-  home.file.".config/kde.org/" = { # directory. Stores settings for applications related to the KDE project under the domain kde.org. This includes a variety of modern KDE applications.
-    source = ./. + builtins.toPath ("/" + userSettings.username + "/kde.org");
-    recursive = true;
-  };
-  home.file.".config/kwin/" = { # directory. Stores configurations for KWin, the window manager for Plasma. This includes window rules, shortcuts, and effects
-    source = ./. + builtins.toPath ("/" + userSettings.username + "/kwin");
-    recursive = true;
-  };
-  home.file.".config/plasma-workspace/" = { # directory. Contains various configuration files related to the Plasma workspace, including desktop layout, panels, and widgets
-    source = ./. + builtins.toPath ("/" + userSettings.username + "/plasma-workspace");
-    recursive = true;
-  };
-  # home.file.".local/share/kactivitymanagerd/" = { # directory. Custom keybindings
-  #   source = ./. + builtins.toPath ("/" + userSettings.username + "/kactivitymanagerd;
-  #   recursive = true;
-  # };
-  home.file.".local/share/kded6/" = { # directory.
-    source = ./. + builtins.toPath ("/" + userSettings.username + "/kded6");
-    recursive = true;
-  };
-  home.file.".local/share/plasma/" = { # directory.
-    source = ./. + builtins.toPath ("/" + userSettings.username + "/plasma");
-    recursive = true;
-  };  
-  home.file.".local/share/plasmashell/" = { # directory.
-    source = ./. + builtins.toPath ("/" + userSettings.username + "/plasmashell");
-    recursive = true;
-  };
-  home.file.".local/share/systemsettings/" = { # directory.
-    source = ./. + builtins.toPath ("/" + userSettings.username + "/systemsettings");
-    recursive = true;
-  };
 
-  # Plasma config > Files symlinks
-  home.file.".config/plasma-org.kde.plasma.desktop-appletsrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/plasma-org.kde.plasma.desktop-appletsrc"); # Desktop widgets and panels config
-  home.file.".config/kdeglobals".source = ./. + builtins.toPath ("/" + userSettings.username + "/kdeglobals"); # General KDE settings
-  home.file.".config/kwinrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kwinrc"); # KWin window manager settings
-  home.file.".config/krunnerrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/krunnerrc"); # KRunner settings // not found
-  home.file.".config/khotkeysrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/khotkeysrc"); # Custom keybindings
-  home.file.".config/kscreenlockerrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kscreenlockerrc"); # Screen locker settings
-  home.file.".config/kwalletrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kwalletrc"); # Kwallet settings
-  home.file.".config/kcminputrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kcminputrc"); # Input settings
-  home.file.".config/ksmserverrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/ksmserverrc"); # Session management settings
-  home.file.".config/dolphinrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/dolphinrc"); # Dolphin file manager settings
-  home.file.".config/konsolerc".source = ./. + builtins.toPath ("/" + userSettings.username + "/konsolerc"); # Konsole terminal settings
-  home.file.".config/kglobalshortcutsrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kglobalshortcutsrc"); # Global shortcuts
+  home.activation = {
+      createDirectoryMyScripts = ''
+      #!/bin/sh
+      echo "\nRunning home.activation script..." 
 
-  home.file.".config/kactivitymanagerd-pluginsrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kactivitymanagerd-pluginsrc"); # Configuration for plugins used by the KDE activity manager
-  home.file.".config/kactivitymanagerd-statsrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kactivitymanagerd-statsrc"); # Stores statistical data and settings related to KDE activities
-  home.file.".config/kactivitymanagerd-switcher".source = ./. + builtins.toPath ("/" + userSettings.username + "/kactivitymanagerd-switcher"); # Configuration for the activity switcher, which lets you switch between different activities
-  home.file.".config/kactivitymanagerdrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kactivitymanagerdrc"); # General configuration for the KDE activity manager
-  home.file.".config/kcmfonts".source = ./. + builtins.toPath ("/" + userSettings.username + "/kcmfonts"); # Stores font settings from the KDE control module
-  home.file.".config/kded5rc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kded5rc"); # Configuration for the KDE Daemon (kded5), which handles various background tasks in KDE
-  home.file.".config/kded6rc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kded6rc"); # Configuration file for kded6, the upcoming version of KDE Daemon, used in Plasma 6 or newer.
-  home.file.".config/kfontinstuirc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kfontinstuirc"); # Stores settings for the KDE font installer interface.
-  home.file.".config/kwinrulesrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/kwinrulesrc"); # Stores custom window rules in KWin.
-  home.file.".config/plasma-localerc".source = ./. + builtins.toPath ("/" + userSettings.username + "/plasma-localerc"); # Stores locale settings for the Plasma desktop
-  home.file.".config/plasmanotifyrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/plasmanotifyrc"); # Configuration for Plasma notifications
-  home.file.".config/plasmarc".source = ./. + builtins.toPath ("/" + userSettings.username + "/plasmarc"); # Stores general settings for the Plasma desktop
-  home.file.".config/plasmashellrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/plasmashellrc"); # Configuration file for the Plasma shell, which manages the desktop, panels, and widgets. Wallpapers.
-  home.file.".config/plasmawindowed-appletsrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/plasmawindowed-appletsrc"); # Configuration for Plasma applets in windows
-  home.file.".config/plasmawindowedrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/plasmawindowedrc"); # Configuration for Plasma windows
-  home.file.".config/powerdevilrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/powerdevilrc"); # Configuration for Powerdevil
-  home.file.".config/powermanagementprofilesrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/powermanagementprofilesrc"); # Configuration for Power Management Profiles
-  home.file.".config/spectaclerc".source = ./. + builtins.toPath ("/" + userSettings.username + "/spectaclerc"); # Configuration for Spectacle
-  home.file.".config/systemsettingsrc".source = ./. + builtins.toPath ("/" + userSettings.username + "/systemsettingsrc"); # Configuration for System Settings
+      echo "Create symlinks to Plasma settings files on my Git repo"
 
-  home.file.".local/share/aurorae/themes".source = ./. + builtins.toPath ("/" + userSettings.username + "/themes"); # Window decoration themes
-  home.file.".local/share/color-schemes".source = ./. + builtins.toPath ("/" + userSettings.username + "/color-schemes"); # Color schemes
+      # Directories
+      ln -sf /home/''+userSettings.username+''/.config/autostart ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/autostart
+      ln -sf /home/''+userSettings.username+''/.config/kde.org ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kde.org
+      ln -sf /home/''+userSettings.username+''/.config/kwin ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kwin
+      ln -sf /home/''+userSettings.username+''/.config/plasma-workspace ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasma-workspace
+      ln -sf /home/''+userSettings.username+''/.config/spectacle ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/spectacle
+      ln -sf /home/''+userSettings.username+''/.local/share/kded6 ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kded6
+      ln -sf /home/''+userSettings.username+''/.local/share/plasma ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasma
+      ln -sf /home/''+userSettings.username+''/.local/share/plasmashell ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmashell
+      ln -sf /home/''+userSettings.username+''/.local/share/systemsettings ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/systemsettings
+      
+      # Files
+      ln -sf /home/''+userSettings.username+''/.config/plasma-org.kde.plasma.desktop-appletsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasma-org.kde.plasma.desktop-appletsrc
+      ln -sf /home/''+userSettings.username+''/.config/kdeglobals ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kdeglobals
+      ln -sf /home/''+userSettings.username+''/.config/kwinrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kwinrc
+      ln -sf /home/''+userSettings.username+''/.config/krunnerrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/krunnerrc
+      ln -sf /home/''+userSettings.username+''/.config/khotkeysrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/khotkeysrc
+      ln -sf /home/''+userSettings.username+''/.config/kscreenlockerrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kscreenlockerrc
+      ln -sf /home/''+userSettings.username+''/.config/kwalletrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kwalletrc
+      ln -sf /home/''+userSettings.username+''/.config/kcminputrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kcminputrc
+      ln -sf /home/''+userSettings.username+''/.config/ksmserverrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/ksmserverrc
+      ln -sf /home/''+userSettings.username+''/.config/dolphinrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/dolphinrc
+      ln -sf /home/''+userSettings.username+''/.config/konsolerc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/konsolerc
+      ln -sf /home/''+userSettings.username+''/.config/kglobalshortcutsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kglobalshortcutsrc
+      ln -sf /home/''+userSettings.username+''/.config/kactivitymanagerd-pluginsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kactivitymanagerd-pluginsrc
+      ln -sf /home/''+userSettings.username+''/.config/kactivitymanagerd-statsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kactivitymanagerd-statsrc
+      ln -sf /home/''+userSettings.username+''/.config/kactivitymanagerd-switcher ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kactivitymanagerd-switcher
+      ln -sf /home/''+userSettings.username+''/.config/kactivitymanagerdrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kactivitymanagerdrc
+      ln -sf /home/''+userSettings.username+''/.config/kcmfonts ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kcmfonts
+      ln -sf /home/''+userSettings.username+''/.config/kded5rc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kded5rc
+      ln -sf /home/''+userSettings.username+''/.config/kded6rc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kded6rc
+      ln -sf /home/''+userSettings.username+''/.config/kfontinstuirc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kfontinstuirc
+      ln -sf /home/''+userSettings.username+''/.config/kwinrulesrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kwinrulesrc
+      ln -sf /home/''+userSettings.username+''/.config/plasma-localerc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasma-localerc
+      ln -sf /home/''+userSettings.username+''/.config/plasmanotifyrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmanotifyrc
+      ln -sf /home/''+userSettings.username+''/.config/plasmarc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmarc
+      ln -sf /home/''+userSettings.username+''/.config/plasmashellrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmashellrc
+      ln -sf /home/''+userSettings.username+''/.config/plasmawindowed-appletsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmawindowed-appletsrc
+      ln -sf /home/''+userSettings.username+''/.config/plasmawindowedrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/plasmawindowedrc
+      ln -sf /home/''+userSettings.username+''/.config/powerdevilrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/powerdevilrc
+      ln -sf /home/''+userSettings.username+''/.config/powermanagementprofilesrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/powermanagementprofilesrc
+      ln -sf /home/''+userSettings.username+''/.config/spectaclerc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/spectaclerc
+      ln -sf /home/''+userSettings.username+''/.config/systemsettingsrc ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/systemsettingsrc
+
+      ln -sf /home/''+userSettings.username+''/.local/share/aurorae/themes ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/aurorae
+      ln -sf /home/''+userSettings.username+''/.local/share/color-schemes ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/color-schemes
+      '';
+    };
 }
