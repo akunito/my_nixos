@@ -3,7 +3,7 @@
 {
   # Doas instead of sudo
   security.doas.enable = true;
-  security.sudo.enable = false;
+  security.sudo.enable = true;
   security.doas.extraRules = [{
     users = [ "${userSettings.username}" ];
     keepEnv = true;
