@@ -1,10 +1,34 @@
 [AC][Display]
-TurnOffDisplayIdleTimeoutSec=1800
+DisplayBrightness=100
+TurnOffDisplayIdleTimeoutSec=900
+UseProfileSpecificDisplayBrightness=true
+
+[AC][Keyboard]
+KeyboardBrightness=81
+UseProfileSpecificKeyboardBrightness=true
 
 [AC][SuspendAndShutdown]
-AutoSuspendAction=0
 AutoSuspendIdleTimeoutSec=5400
+LidAction=0
+PowerButtonAction=1
+
+[Battery][Display]
+DisplayBrightness=50
+UseProfileSpecificDisplayBrightness=true
+
+[Battery][Keyboard]
+KeyboardBrightness=25
+UseProfileSpecificKeyboardBrightness=true
+
+[Battery][SuspendAndShutdown]
 PowerButtonAction=1
 
 [BatteryManagement]
-BatteryCriticalAction=1
+BatteryCriticalAction=8
+
+[LowBattery][Keyboard]
+KeyboardBrightness=0
+UseProfileSpecificKeyboardBrightness=true
+
+[LowBattery][SuspendAndShutdown]
+PowerButtonAction=8
