@@ -77,6 +77,11 @@
 
           pcloud # requires patch to be imported
         ];
+
+        # Auto update Settings
+        autoUpdate = true; # for enabling automatic updates
+        autoUpdate_dates = "22:30";
+        autoUpdate_randomizedDelaySec = "45min";
       };
       };
 

@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, lib, systemSettings, userSettings, ... }:
+{ pkgs, lib, systemSettings, userSettings, inputs, ... }:
 
 {
   imports =
@@ -69,6 +69,18 @@
   networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
   networking.defaultGateway = lib.mkIf (systemSettings.defaultGateway != null) systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
+
+  system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
+    enable = true;
+    flake = inputs.self.outPath;
+    flags = [
+      "--update-input"
+      "nixpkgs"
+      "-L" # print build logs
+    ];
+    dates = systemSettings.autoUpdate_dates;
+    randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
+  };
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone

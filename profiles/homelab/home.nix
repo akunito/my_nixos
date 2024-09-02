@@ -1,4 +1,4 @@
-{ pkgs, userSettings, ... }:
+{ pkgs, userSettings, systemSettings, lib, ... }:
 
 {
   # Home Manager needs a bit of information about you and the paths it should
@@ -19,33 +19,9 @@
 
   home.packages = userSettings.homePackages;
 
-  # home.activation = { # FOR TEST
-  #     createDirectoryMyScripts = ''
-  #     #!/bin/sh
-  #     echo "\nRunning home.activation script TEST <<<<<<<<<<<<<<<<<<< ..." 
-
-  #     echo "Create symlinks to Plasma settings files on my Git repo"
-  #     echo "Building paths from userSettings variables (username & dotfilesDir)"
-  #     echo "Home path ----> /home/''+userSettings.username+''/..."
-  #     echo "Source path --> ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/..."
-  #     '';
-  #   };
-
-  home.activation = { # FOR TEST
-      createDirectoryMyScripts = ''
-      #!/bin/sh
-      echo "\nRunning home.activation script TEST <<<<<<<<<<<<<<<<<<< ..." 
-
-      echo "Create symlinks to Plasma settings files on my Git repo"
-      echo "Building paths from userSettings variables (username & dotfilesDir)"
-      echo "Home path ----> /home/''+userSettings.username+''/..."
-      echo "Source path --> ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/..."
-
-      # Directories
-      ln -sf /home/''+userSettings.username+''/.config/testautostart ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/autostart
-      
-      # Files
-      ln -sf /home/''+userSettings.username+''/.config/testkdeglobals ''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''/kdeglobals
-      '';
-    };
+  # Auto Upgrade Home Manager
+  services.home-manager.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) { 
+    enable = true;
+    frequency = "daily"; 
+  };
 }

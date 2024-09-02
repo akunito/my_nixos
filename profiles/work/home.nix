@@ -1,4 +1,4 @@
-{ config, pkgs, pkgs-kdenlive, userSettings, ... }:
+{ config, pkgs, pkgs-kdenlive, userSettings, systemSettings, lib, ... }:
 
 {
   # Home Manager needs a bit of information about you and the paths it should
@@ -39,6 +39,12 @@
   #   };
 
   services.syncthing.enable = true;
+
+  # Auto Upgrade Home Manager
+  services.home-manager.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) { 
+    enable = true;
+    frequency = "daily"; 
+  };
 
   xdg.enable = true;
   xdg.userDirs = {

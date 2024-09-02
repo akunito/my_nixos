@@ -73,6 +73,11 @@
           kitty # check if should be removed on labs
           home-manager
         ];
+
+        # Auto update Settings
+        autoUpdate = true; # for enabling automatic updates
+        autoUpdate_dates = "20:00";
+        autoUpdate_randomizedDelaySec = "45min";
       };
 
       # ----- USER SETTINGS ----- #

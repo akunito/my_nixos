@@ -8,6 +8,7 @@ KeyboardBrightness=81
 UseProfileSpecificKeyboardBrightness=true
 
 [AC][SuspendAndShutdown]
+AutoSuspendAction=0
 AutoSuspendIdleTimeoutSec=5400
 LidAction=0
 PowerButtonAction=1

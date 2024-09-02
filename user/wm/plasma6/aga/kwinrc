@@ -60,6 +60,9 @@ DesktopMode=0
 [Tiling]
 padding=4
 
+[Tiling][4d124420-f522-5118-b1cb-20704d93fc3d]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
 [Tiling][5b7a5ba4-43cc-5910-8e98-f358f9d54b43]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
 
