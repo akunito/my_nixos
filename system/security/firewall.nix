@@ -1,11 +1,11 @@
-{ ... }:
+{ systemSettings, ... }:
 
 {
   # Firewall settings
   networking.firewall = {
     enable = true;
-    # allowedTCPPorts = [ 22000 21027 ]; # Syncthing
-    # allowedUDPPorts = [ 22000 21027 ]; # Syncthing
+    allowedTCPPorts = systemSettings.allowedTCPPorts;
+    allowedUDPPorts = systemSettings.allowedUDPPorts;
 
     # extraCommands = ''
     #   # ================== General rules ==================

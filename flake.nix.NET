@@ -24,6 +24,11 @@
         nameServers = [ "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
         wifiPowerSave = false; # for enabling wifi power save for laptops
 
+        # Firewall
+        firewall = true;
+        allowedTCPPorts = [ 52181 53 8093 ];
+        allowedUDPPorts = [ 52181 53 8093 ];
+
         # LUKS drives
         bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
