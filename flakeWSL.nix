@@ -11,9 +11,9 @@
         profile = "wsl"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
-        bootMode = "uefi"; # uefi or bios
+        bootMode = "bios"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
-        grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
+        grubDevice = "/dev/"; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
 
         # Network
@@ -77,10 +77,10 @@
 
       # ----- USER SETTINGS ----- #
       userSettings = rec {
-        username = "akunito"; # username
-        name = "akunito"; # name/identifier
+        username = "nixos"; # username
+        name = "nixos"; # name/identifier
         email = ""; # email (used for certain configurations)
-        dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
+        dotfilesDir = "/home/nixos/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)

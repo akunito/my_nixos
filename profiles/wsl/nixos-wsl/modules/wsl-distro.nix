@@ -54,7 +54,7 @@ with builtins; with lib;
       boot.isContainer = true;
 
       environment.noXlibs = lib.mkForce false; # override xlibs not being installed (due to isContainer) to enable the use of GUI apps
-      hardware.opengl.enable = true; # Enable GPU acceleration
+      hardware.graphics.enable = true; # Enable GPU acceleration
 
       environment = {
 

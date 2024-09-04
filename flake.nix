@@ -77,10 +77,10 @@
 
       # ----- USER SETTINGS ----- #
       userSettings = rec {
-        username = "akunito"; # username
-        name = "akunito"; # name/identifier
+        username = "nixos"; # username
+        name = "nixos"; # name/identifier
         email = ""; # email (used for certain configurations)
-        dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
+        dotfilesDir = "/home/nixos/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
