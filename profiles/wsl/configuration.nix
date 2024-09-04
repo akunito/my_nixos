@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ lib, pkgs, systemSettings, userSettings, ... }:
+{ lib, pkgs, systemSettings, userSettings, inputs, ... }:
 
 with lib;
 let
@@ -16,13 +16,13 @@ in
       ../../system/hardware/time.nix # Network time sync
       ../../system/hardware/opengl.nix
       ../../system/hardware/printing.nix
-      ../../system/hardware/bluetooth.nix
+      # ../../system/hardware/bluetooth.nix
       ../../system/security/doas.nix
       ../../system/security/gpg.nix
       ../../system/security/blocklist.nix
       ../../system/security/firewall.nix
       ../../system/security/firejail.nix
-      ../../system/style/stylix.nix
+      # ../../system/style/stylix.nix
     ];
 
   wsl = {
@@ -63,6 +63,18 @@ in
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname.
 
+  system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
+    enable = true;
+    flake = inputs.self.outPath;
+    flags = [
+      "--update-input"
+      "nixpkgs"
+      "-L" # print build logs
+    ];
+    dates = systemSettings.autoUpdate_dates;
+    randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
+  };
+
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
   i18n.defaultLocale = systemSettings.locale;
@@ -82,19 +94,13 @@ in
   users.users.${userSettings.username} = {
     isNormalUser = true;
     description = userSettings.name;
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = userSettings.extraGroups;
     packages = with pkgs; [];
     uid = 1000;
   };
 
   # System packages
-  environment.systemPackages = with pkgs; [
-    vim
-    wget
-    zsh
-    git
-    home-manager
-  ];
+  environment.systemPackages = systemSettings.systemPackages;
 
   # I use zsh btw
   environment.shells = with pkgs; [ zsh ];
@@ -110,6 +116,6 @@ in
   };
 
   # It is ok to leave this unchanged for compatibility purposes
-  system.stateVersion = "22.05";
+  system.stateVersion = "24.05";
 
 }

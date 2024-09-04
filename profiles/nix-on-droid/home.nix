@@ -1,4 +1,4 @@
-{ config, pkgs, userSettings, ... }:
+{ pkgs, userSettings, systemSettings, lib, ... }:
 
 {
   programs.home-manager.enable = true;
@@ -6,19 +6,21 @@
   imports = [
               ../../user/shell/sh.nix # My zsh and bash config
               ../../user/shell/cli-collection.nix # Useful CLI apps
-              ../../user/app/doom-emacs/doom.nix # My doom emacs config
+              # ../../user/app/doom-emacs/doom.nix # My doom emacs config
               ../../user/app/ranger/ranger.nix # My ranger file manager config
               ../../user/app/git/git.nix # My git config
-              ../../user/style/stylix.nix # Styling and themes for my apps
+              # ../../user/style/stylix.nix # Styling and themes for my apps
             ];
 
-  home.stateVersion = "22.11"; # Please read the comment before changing.
+  home.stateVersion = "24.05"; # Please read the comment before changing.
 
-  home.packages = with pkgs; [
-    # Core
-    zsh
-    git
-  ];
+  home.packages = userSettings.homePackages;  
+  
+  # Auto Upgrade Home Manager
+  services.home-manager.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) { 
+    enable = true;
+    frequency = "daily"; 
+  };
 
   xdg.enable = true;
   xdg.userDirs = {

@@ -1,4 +1,4 @@
-{ config, pkgs, userSettings, ... }:
+{ config, pkgs, userSettings, systemSettings, lib, ... }:
 
 {
   # Home Manager needs a bit of information about you and the paths it should
@@ -11,28 +11,21 @@
   imports = [
               ../../user/shell/sh.nix # My zsh and bash config
               ../../user/shell/cli-collection.nix # Useful CLI apps
-              ../../user/app/doom-emacs/doom.nix # My doom emacs config
+              # ../../user/app/doom-emacs/doom.nix # My doom emacs config
               ../../user/app/ranger/ranger.nix # My ranger file manager config
               ../../user/app/git/git.nix # My git config
-              ../../user/style/stylix.nix # Styling and themes for my apps
+              # ../../user/style/stylix.nix # Styling and themes for my apps
             ];
 
-  home.stateVersion = "22.11"; # Please read the comment before changing.
+  home.stateVersion = "24.05"; # Please read the comment before changing.
 
-  home.packages = with pkgs; [
-    # Core
-    zsh
-    git
-    syncthing
+  home.packages = userSettings.homePackages;
 
-    # Office
-    libreoffice-fresh
-
-    # Various dev packages
-    texinfo
-    libffi zlib
-    nodePackages.ungit
-  ];
+  # Auto Upgrade Home Manager
+  services.home-manager.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) { 
+    enable = true;
+    frequency = "daily"; 
+  };
 
   services.syncthing.enable = true;
 
