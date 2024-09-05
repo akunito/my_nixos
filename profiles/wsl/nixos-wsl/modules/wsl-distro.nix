@@ -40,13 +40,24 @@ with builtins; with lib;
       wsl.wslConf = {
         automount = {
           enabled = true;
-          mountFsTab = true;
+          ldconfig = false;
+          mountFsTab = false; # added
           root = "${cfg.automountPath}/";
           options = cfg.automountOptions;
         };
         network = {
           generateResolvConf = mkDefault true;
           generateHosts = mkDefault true;
+        };
+        boot = { # added to try to fix systemd frozen
+          systemd = true;
+        };
+        interop = { # added
+          appendWindowsPath = true;
+          enabled = true;
+        };
+        user = { # added
+          default = "nixos";
         };
       };
 
