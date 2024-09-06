@@ -1,8 +1,8 @@
-{ pkgs, userSettings, systemSettings, ... }: 
+{ pkgs, userSettings, systemSettings, lib, ... }: 
 
 {
-  ## Update flake inputs daily
-  systemd.services = {
+  ## SystemD service flake-update > to update flake inputs
+  systemd.services = lib.mkIf (systemSettings.autoUpdate == true) {
     flake-update = {
       preStart = "${pkgs.host}/bin/host ${systemSettings.hostname}.net";  # Check network connectivity
       unitConfig = {
@@ -21,4 +21,31 @@
       path = [pkgs.nix pkgs.git pkgs.host];
     };
   };
+
+  system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
+    enable = true;
+    flake = "${userSettings.dotfilesDir}#${systemSettings.hostname}";
+    flags = [
+      "-L"
+    ];
+    dates = systemSettings.autoUpdate_dates;
+    persistent = true;
+    randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
+  };
+  # Allow nixos-upgrade to restart on failure (e.g. when laptop wakes up before network connection is set)
+  systemd.services.nixos-upgrade = lib.mkIf (systemSettings.autoUpdate == true) {
+    preStart = "${pkgs.host}/bin/host ${systemSettings.hostname}.net";  # Check network connectivity
+    serviceConfig = {
+      Restart = "on-failure";
+      RestartSec = "120";
+    };
+    unitConfig = {
+      StartLimitIntervalSec = 600;
+      StartLimitBurst = 2;
+    };
+    after = ["flake-update.service"]; # calls SystemD flake-update
+    wants = ["flake-update.service"];
+    path = [pkgs.host];
+  };
+
 }
