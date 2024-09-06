@@ -1,5 +1,5 @@
 {
-  description = "Flake of Diego for WSL2 NixOS";
+  description = "Flake of Akunito NetLAB on x380";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,30 +7,30 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosdiego"; # hostname
-        profile = "wsl"; # select a profile defined from my profiles directory
+        hostname = "netlab"; # hostname
+        profile = "homelab"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
-        bootMode = "bios"; # uefi or bios
+        bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
-        grubDevice = "/dev/"; # device identifier for grub; only used for legacy (bios) boot mode
+        grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
 
         # Network
-        networkManager = false;
-        ipAddress = "192.168.0.99"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.100"; # ip to be reserved on router by mac (manually)
+        networkManager = true;
+        ipAddress = "192.168.0.100"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.101"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
         nameServers = [ "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
         wifiPowerSave = false; # for enabling wifi power save for laptops
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ ];
-        allowedUDPPorts = [ ];
+        allowedTCPPorts = [ 52181 53 8093 ];
+        allowedUDPPorts = [ 52181 53 8093 ];
 
         # LUKS drives
-        bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+        bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
 
         # SSH System settings for BOOT
@@ -41,15 +41,15 @@
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management
-        iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
+        iwlwifiDisablePowerSave = true; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
-        TLP_ENABLE = false; # Disable for laptops if you want granular power management with profiles
+        TLP_ENABLE = true; # Disable for laptops if you want granular power management with profiles
         PROFILE_ON_AC = "performance";
         PROFILE_ON_BAT = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
         WIFI_PWR_ON_BAT = "off";
         # logind settings
-        LOGIND_ENABLE = false; # Disable for laptops if you want granular power management with profiles
+        LOGIND_ENABLE = true; # Disable for laptops if you want granular power management with profiles
         lidSwitch = "ignore"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
         lidSwitchExternalPower = "ignore"; # when the lid is closed but connected to power 
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
@@ -64,6 +64,16 @@
           wget
           zsh
           git
+          rclone
+          rdiff-backup
+          rsnapshot
+          cryptsetup
+          gocryptfs
+          
+          btop
+          fzf
+          # tldr
+          atuin
 
           kitty # check if should be removed on labs
           home-manager
@@ -71,16 +81,16 @@
 
         # Auto update Settings
         autoUpdate = true; # for enabling automatic updates
-        autoUpdate_dates = "17:30";
+        autoUpdate_dates = "20:00";
         autoUpdate_randomizedDelaySec = "45min";
       };
 
       # ----- USER SETTINGS ----- #
       userSettings = rec {
-        username = "nixos"; # username
-        name = "nixos"; # name/identifier
+        username = "akunito"; # username
+        name = "akunito"; # name/identifier
         email = ""; # email (used for certain configurations)
-        dotfilesDir = "/home/nixos/.dotfiles"; # absolute path of the local repo
+        dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
@@ -220,7 +230,7 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
-            # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x390
+            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x390
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above

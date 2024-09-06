@@ -12,6 +12,7 @@
       ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
       ../../system/hardware/drives.nix # SSH on Boot to unlock LUKS drives + Open my LUKS drives (OPTIONAL)
+      ../../system/security/autoupgrade.nix # tesing auto upgrade
     ];
 
   # Fix nix path
@@ -47,17 +48,18 @@
   networking.defaultGateway = lib.mkIf (systemSettings.defaultGateway != null) systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
 
-  system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
-    enable = true;
-    flake = inputs.self.outPath;
-    flags = [
-      "--update-input"
-      "nixpkgs"
-      "-L" # print build logs
-    ];
-    dates = systemSettings.autoUpdate_dates;
-    randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
-  };
+  # system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
+  #   enable = true;
+  #   flake = inputs.self.outPath;
+  #   flags = [
+  #     "--update-input"
+  #     "nixpkgs"
+  #     "--commit-lock-file"
+  #     "-L" # print build logs
+  #   ];
+  #   dates = systemSettings.autoUpdate_dates;
+  #   randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
+  # };
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone

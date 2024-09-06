@@ -4,80 +4,47 @@
 { config, lib, pkgs, modulesPath, ... }:
 
 {
-  imports = [ ];
+  imports =
+    [ (modulesPath + "/installer/scan/not-detected.nix")
+    ];
 
-  boot.initrd.availableKernelModules = [ "virtio_pci" ];
+  boot.initrd.availableKernelModules = [ "xhci_pci" "nvme" "rtsx_pci_sdmmc" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/d07dbd23-91f0-47a0-b946-49109cb56b20";
+    { device = "/dev/disk/by-uuid/dcd763a6-62d4-4354-a7c4-55ad48310b0b";
       fsType = "ext4";
     };
 
-  fileSystems."/usr/lib/wsl/drivers" =
-    { device = "drivers";
-      fsType = "9p";
+  boot.initrd.luks.devices."luks-a6e1f38d-7f20-40fd-b0bb-f189fd9f8c6c".device = "/dev/disk/by-uuid/a6e1f38d-7f20-40fd-b0bb-f189fd9f8c6c";
+
+  fileSystems."/home" =
+    { device = "/dev/disk/by-uuid/41648cb7-67ab-4a74-8f0a-c67af13ade4c";
+      fsType = "ext4";
     };
 
-  fileSystems."/usr/lib/wsl/lib" =
-    { device = "none";
-      fsType = "overlay";
+  boot.initrd.luks.devices."luks-053939e0-af23-4549-abd2-e22e211c375f".device = "/dev/disk/by-uuid/053939e0-af23-4549-abd2-e22e211c375f";
+
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/3AC5-1DF7";
+      fsType = "vfat";
+      options = [ "fmask=0022" "dmask=0022" ];
     };
 
-  fileSystems."/mnt/wsl" =
-    { device = "none";
-      fsType = "tmpfs";
-    };
-
-  fileSystems."/mnt/wslg" =
-    { device = "none";
-      fsType = "tmpfs";
-    };
-
-  fileSystems."/mnt/wslg/distro" =
-    { device = "";
-      fsType = "none";
-      options = [ "bind" ];
-    };
-
-  fileSystems."/mnt/wslg/doc" =
-    { device = "none";
-      fsType = "overlay";
-    };
-
-  fileSystems."/tmp/.X11-unix" =
-    { device = "/mnt/wslg/.X11-unix";
-      fsType = "none";
-      options = [ "bind" ];
-    };
-
-  fileSystems."/lib/modules" =
-    { device = "none";
-      fsType = "tmpfs";
-    };
-
-  fileSystems."/lib/modules/5.15.153.1-microsoft-standard-WSL2" =
-    { device = "none";
-      fsType = "overlay";
-    };
-
-  fileSystems."/mnt/c" =
-    { device = "C:\134";
-      fsType = "9p";
-    };
-
-  swapDevices =
-    [ { device = "/dev/disk/by-uuid/a426e685-ad4f-48f1-be23-88e89e3b284e"; }
-    ];
+  swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.eth0.useDHCP = lib.mkDefault true;
+  # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
+  # networking.interfaces.enp0s31f6.useDHCP = lib.mkDefault true;
+  # networking.interfaces.wlp4s0.useDHCP = lib.mkDefault true;
+  # networking.interfaces.wwp0s20f0u2.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }
