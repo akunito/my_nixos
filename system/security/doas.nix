@@ -2,10 +2,11 @@
 
 {
   # Doas instead of sudo
-  security.doas.enable = false;
+  security.doas.enable = true;
   security.sudo.enable = true;
   security.doas.extraRules = [{
     users = [ "${userSettings.username}" ];
+    noPass = false;
     keepEnv = true;
     persist = true;
   }];

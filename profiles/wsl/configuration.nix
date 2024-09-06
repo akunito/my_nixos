@@ -23,6 +23,12 @@ in
       ../../system/security/firewall.nix
       ../../system/security/firejail.nix
       # ../../system/style/stylix.nix
+      ../../system/security/autoupgrade.nix # auto upgrade
+      ( import ../../system/security/sshd.nix {
+        authorizedKeys = systemSettings.authorizedKeys; # SSH keys TESTING !
+        inherit userSettings;
+        inherit systemSettings;
+        inherit lib; })
     ];
 
   wsl = {
@@ -62,18 +68,6 @@ in
 
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname.
-
-  system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
-    enable = true;
-    flake = inputs.self.outPath;
-    flags = [
-      "--update-input"
-      "nixpkgs"
-      "-L" # print build logs
-    ];
-    dates = systemSettings.autoUpdate_dates;
-    randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
-  };
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone

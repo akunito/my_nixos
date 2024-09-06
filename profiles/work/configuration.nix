@@ -32,6 +32,7 @@
         inherit userSettings;
         inherit systemSettings;
         inherit lib; })
+      ../../system/security/autoupgrade.nix # auto upgrade
       # Patches
       ../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
       ../../patches/vivaldifixes.nix # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148 
@@ -69,18 +70,6 @@
   networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
   networking.defaultGateway = lib.mkIf (systemSettings.defaultGateway != null) systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
-
-  system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
-    enable = true;
-    flake = inputs.self.outPath;
-    flags = [
-      "--update-input"
-      "nixpkgs"
-      "-L" # print build logs
-    ];
-    dates = systemSettings.autoUpdate_dates;
-    randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
-  };
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone

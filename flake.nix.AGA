@@ -133,6 +133,9 @@
           candy-icons
           qbittorrent
           calibre
+          
+          libreoffice
+          telegram-desktop
 
           # realvnc-vnc-viewer
         ];

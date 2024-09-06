@@ -32,6 +32,12 @@
 
   home.packages = userSettings.homePackages;
 
+  # Auto Upgrade Home Manager
+  services.home-manager.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) { 
+    enable = true;
+    frequency = "daily"; 
+  };
+
   # home.file.".local/share/pixmaps/nixos-snowflake-stylix.svg".source =
   #   config.lib.stylix.colors {
   #     template = builtins.readFile ../../user/pkgs/nixos-snowflake-stylix.svg.mustache;
@@ -39,12 +45,6 @@
   #   };
 
   services.syncthing.enable = true;
-
-  # Auto Upgrade Home Manager
-  services.home-manager.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) { 
-    enable = true;
-    frequency = "daily"; 
-  };
 
   xdg.enable = true;
   xdg.userDirs = {

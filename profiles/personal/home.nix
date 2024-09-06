@@ -14,11 +14,13 @@
 
   home.stateVersion = "24.05"; # Please read the comment before changing.
 
-  home.packages = with pkgs; [
-    zsh
-    libreoffice
-    telegram-desktop
-  ];
+  home.packages = userSettings.homePackages;
+
+  # Auto Upgrade Home Manager
+  services.home-manager.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) { 
+    enable = true;
+    frequency = "daily"; 
+  };
 
   # xdg.enable = true;
   # xdg.userDirs = {
