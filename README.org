@@ -8,6 +8,17 @@ I found videos from Librephoenix where I started to learn about NixOS until I re
 I have implemented my own features, however most of the original code is still there, but some features are partially commented.
 NOTE: All original documentation from Librephoenix is below on this document, after my list of changes.
 
+** Install script
+install.sh has additional arguments
+for example
+./install.sh ~/.dotfiles "NET"
+where $1 is the path where you installed the repository 
+and $2 is the PROFILE to apply to flake.nix
+Note that there are different flake.PROFILE.nix for different systems.
+
+** AutoUpgrade implemented
+You can enable it or not, and set the timing on flake.nix
+
 ** Plasma 5 and Plasma 6 implemented. 
 Currently I'm not using Hyprland as I'm using MacOS, by the moment, at least until Asahi Linux releases on M3 CPUs. Then maybe I will try to use NixOS on my MacBook. That's why I switched to Plasma, mostly to reduce the maintenance time. Plasma just works out of the box with simple and advances features. Everyday I have to deal with different computers on my work or studies or projects, etc. This includes Windows, Linux and MacOS. That got me very annoyed by shortcuts and keys, when switching between them I was constantly mixing them. So I developed a kind of framework that allows me to use the same shotcuts on all my computers. (Additionally I can use Caps Lock as a Hyper key for all global shortcuts like navigate desks) Plasma allows to do this quite easily, if you combine it with a QMK or VIA keyboard. You can find that project on [[https://github.com/akunito/SpinachKeyboardFramework][Keyboard Framework respository]] in case you are interested.
 

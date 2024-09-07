@@ -8,27 +8,20 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "nvme" "rtsx_pci_sdmmc" ];
+  boot.initrd.availableKernelModules = [ "xhci_pci" "nvme" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/dcd763a6-62d4-4354-a7c4-55ad48310b0b";
+    { device = "/dev/disk/by-uuid/e1b7a004-0d2b-4c73-95bf-1310d1da71bd";
       fsType = "ext4";
     };
 
-  boot.initrd.luks.devices."luks-a6e1f38d-7f20-40fd-b0bb-f189fd9f8c6c".device = "/dev/disk/by-uuid/a6e1f38d-7f20-40fd-b0bb-f189fd9f8c6c";
-
-  fileSystems."/home" =
-    { device = "/dev/disk/by-uuid/41648cb7-67ab-4a74-8f0a-c67af13ade4c";
-      fsType = "ext4";
-    };
-
-  boot.initrd.luks.devices."luks-053939e0-af23-4549-abd2-e22e211c375f".device = "/dev/disk/by-uuid/053939e0-af23-4549-abd2-e22e211c375f";
+  boot.initrd.luks.devices."luks-e9676686-10da-4b47-9ff0-d2ac4685f682".device = "/dev/disk/by-uuid/e9676686-10da-4b47-9ff0-d2ac4685f682";
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/3AC5-1DF7";
+    { device = "/dev/disk/by-uuid/2CDB-55A5";
       fsType = "vfat";
       options = [ "fmask=0022" "dmask=0022" ];
     };
@@ -40,10 +33,9 @@
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
   # networking.interfaces.enp0s31f6.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlp4s0.useDHCP = lib.mkDefault true;
-  # networking.interfaces.wwp0s20f0u2.useDHCP = lib.mkDefault true;
+  # networking.interfaces.wwan0.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

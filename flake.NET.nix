@@ -15,11 +15,17 @@
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        
+        # Security
+        doasEnable = true; # for enabling doas
+        sudoEnable = true; # for enabling sudo
+        DOASnoPass = false; # for enabling doas without password
+        wrappSudoToDoas = true; # for wrapping sudo with doas
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.99"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.100"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.0.100"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.101"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
         nameServers = [ "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
         wifiPowerSave = false; # for enabling wifi power save for laptops

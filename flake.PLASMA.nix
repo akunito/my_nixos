@@ -15,6 +15,12 @@
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        
+        # Security
+        doasEnable = true; # for enabling doas
+        sudoEnable = true; # for enabling sudo
+        DOASnoPass = false; # for enabling doas without password
+        wrappSudoToDoas = true; # for wrapping sudo with doas
 
         # Network
         networkManager = true;

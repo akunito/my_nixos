@@ -1,18 +1,15 @@
-{ pkgs, userSettings, systemSettings, lib, ... }: 
+{ pkgs, userSettings, systemSettings, lib, inputs, ... }: 
 
 {
-  # nixos-upgrade.service 
   system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
     enable = true;
-    flake = "${userSettings.dotfilesDir}#system";
+    flake = "${inputs.self.outPath}#system"; # where <#system> depends of your flake (nix flake show flake.nix)
     flags = [
       "--update-input"
       "nixpkgs"
-      "--commit-lock-file"
-      "-L"
+      "-L" # print build logs
     ];
     dates = systemSettings.autoUpdate_dates;
-    persistent = true;
     randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
   };
 }

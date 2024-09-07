@@ -9,10 +9,10 @@
 if [ $# -gt 0 ]
   then
     SCRIPT_DIR=$1
+    rm $1/flake.nix.bak && mv $1/flake.nix $1/flake.nix.bak
+    cp $1/flake.$2.nix $1/flake.nix
   else
     SCRIPT_DIR=~/.dotfiles
-    rm flake.nix.bak && mv flake.nix flake.nix.bak
-    cp flake.$2.nix flake.nix
 fi
 
 # DISABLED TO AVOID OVERWRITE FOR TESTING
