@@ -1,5 +1,5 @@
 {
-  description = "Flake of Akunito HomeLab on Desktop";
+  description = "Flake of Akunito";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,8 +7,8 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosLabaku"; # hostname
-        profile = "homelab"; # select a profile defined from my profiles directory
+        hostname = "personalaku"; # hostname
+        profile = "personal"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
         bootMode = "uefi"; # uefi or bios
@@ -43,48 +43,53 @@
         # Intel Network Adapter Power Management
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
-        TLP_ENABLE = true; # Disable for laptops if you want granular power management with profiles
+        TLP_ENABLE = false; # Disable for laptops if you want granular power management with profiles
+        # TLP Power management
         PROFILE_ON_BAT = "performance";
-        PROFILE_ON_AC = "performance";
+        PROFILE_ON_AC = "low-power";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
-        WIFI_PWR_ON_BAT = "off";
+        WIFI_PWR_ON_BAT = "on";
         INTEL_GPU_MIN_FREQ_ON_AC = 300; # sudo tlp-stat -g
         INTEL_GPU_MIN_FREQ_ON_BAT = 300;
         # logind settings
         LOGIND_ENABLE = false; # Disable for laptops if you want granular power management with profiles
-        lidSwitch = "ignore"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
+        lidSwitch = "suspend"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
         lidSwitchExternalPower = "ignore"; # when the lid is closed but connected to power 
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
-        powerKey = "ignore";  # when pressing power key, do one of above
+        powerKey = "suspend";  # when pressing power key, do one of above
         # More Power settings
-        powerManagement_ENABLE = false; # Enable power management profiles for desktop systems <<<
-        power-profiles-daemon_ENABLE = false; # Enable power management profiles for desktop systems <<<
+        powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
+        power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
 
         # System packages
         systemPackages = with pkgs; [
           vim
           wget
+          nmap # net tool for port scanning
           zsh
           git
-          rclone
-          rdiff-backup
-          rsnapshot
           cryptsetup
-          gocryptfs
-          
+          home-manager
+          wpa_supplicant # for wifi
           btop
           fzf
-          # tldr
-          atuin
+          tldr
+          rsync
+          # atuin
+          syncthing
+          # pciutils # install if you need some commands like lspci
 
-          kitty # check if should be removed on labs
-          home-manager
+          vivaldi # requires patch to be imported + qt5.qtbase
+          qt5.qtbase
+
+          pcloud # requires patch to be imported
         ];
 
         # Auto update Settings
         autoUpdate = true; # for enabling automatic updates
-        autoUpdate_dates = "8:00";
+        autoUpdate_dates = "22:30";
         autoUpdate_randomizedDelaySec = "45min";
+      };
       };
 
       # ----- USER SETTINGS ----- #
@@ -93,7 +98,7 @@
         name = "akunito"; # name/identifier
         email = ""; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
-        extraGroups = [ "networkmanager" "wheel" ];
+        extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
@@ -114,11 +119,25 @@
 
         # Home-Manager packages
         homePackages = with pkgs; [
-          # Core
           zsh
+          kitty
           git
+          syncthing
+
+          # vivaldi # temporary moved to configuration.nix for issue with plasma 6
+          # qt5.qtbase
+          ungoogled-chromium
+
+          vscode
+          obsidian
+          spotify
+          xournalpp
+          vlc
+          candy-icons
+
+          # realvnc-vnc-viewer
         ];
-        
+
         editor = "nano"; # Default editor;
         # editor spawning translator
         # generates a command that can be used to spawn editor inside a gui

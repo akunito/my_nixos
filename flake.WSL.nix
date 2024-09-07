@@ -1,5 +1,5 @@
 {
-  description = "Flake of Akunito HomeLab on Desktop";
+  description = "Flake of Diego for WSL2 NixOS";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,21 +7,21 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosLabaku"; # hostname
-        profile = "homelab"; # select a profile defined from my profiles directory
+        hostname = "nixosdiego"; # hostname
+        profile = "wsl"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
-        bootMode = "uefi"; # uefi or bios
+        bootMode = "bios"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
-        grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
-        gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        grubDevice = "/dev/"; # device identifier for grub; only used for legacy (bios) boot mode
+        gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
 
         # Network
-        networkManager = true;
-        ipAddress = "192.168.0.80"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.81"; # ip to be reserved on router by mac (manually)
+        networkManager = false;
+        ipAddress = "192.168.0.99"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.100"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
-        nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
+        nameServers = [ "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
         wifiPowerSave = false; # for enabling wifi power save for laptops
 
         # Firewall
@@ -30,7 +30,7 @@
         allowedUDPPorts = [ ];
 
         # LUKS drives
-        bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+        bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
 
         # SSH System settings for BOOT
@@ -43,9 +43,9 @@
         # Intel Network Adapter Power Management
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
-        TLP_ENABLE = true; # Disable for laptops if you want granular power management with profiles
-        PROFILE_ON_BAT = "performance";
+        TLP_ENABLE = false; # Disable for laptops if you want granular power management with profiles
         PROFILE_ON_AC = "performance";
+        PROFILE_ON_BAT = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
         WIFI_PWR_ON_BAT = "off";
         INTEL_GPU_MIN_FREQ_ON_AC = 300; # sudo tlp-stat -g
@@ -66,16 +66,6 @@
           wget
           zsh
           git
-          rclone
-          rdiff-backup
-          rsnapshot
-          cryptsetup
-          gocryptfs
-          
-          btop
-          fzf
-          # tldr
-          atuin
 
           kitty # check if should be removed on labs
           home-manager
@@ -83,16 +73,16 @@
 
         # Auto update Settings
         autoUpdate = true; # for enabling automatic updates
-        autoUpdate_dates = "8:00";
+        autoUpdate_dates = "17:30";
         autoUpdate_randomizedDelaySec = "45min";
       };
 
       # ----- USER SETTINGS ----- #
       userSettings = rec {
-        username = "akunito"; # username
-        name = "akunito"; # name/identifier
+        username = "nixos"; # username
+        name = "nixos"; # name/identifier
         email = ""; # email (used for certain configurations)
-        dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
+        dotfilesDir = "/home/nixos/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
@@ -101,7 +91,7 @@
         wmType = if (wm == "hyprland") then "wayland" else "x11";
 
         dockerEnable = true; # for enabling docker
-        virtualizationEnable = true; # for enabling virtualization
+        virtualizationEnable = false; # for enabling virtualization
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email
@@ -118,7 +108,7 @@
           zsh
           git
         ];
-        
+
         editor = "nano"; # Default editor;
         # editor spawning translator
         # generates a command that can be used to spawn editor inside a gui
@@ -232,6 +222,7 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
+            # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x390
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
