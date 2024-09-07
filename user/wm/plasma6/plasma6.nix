@@ -27,7 +27,7 @@
       echo "--> $SOURCE_PATH"
 
       # Ask user if Backup is needed
-      read -p "Do you want to backup your Plasma settings dotfiles to $SOURCE_PATH ? (y/N) " yn
+      read -p "Do you want to backup your Plasma settings dotfiles to $SOURCE_PATH ? (y/N) (10s timeout) " -t 10 yn
       case $yn in
           [Yy]|[Yy][Ee][Ss])
               echo "=== Cleaning destination directory $SOURCE_PATH excluding .sh files"
@@ -41,6 +41,10 @@
 
               echo "=== Copying your Dotfiles to $USER_PATH"
               cp -r $SOURCE_PATH/* $USER_PATH
+              ;;
+          "")
+              ;;
+          *)
               ;;
       esac
 
