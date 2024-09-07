@@ -4,12 +4,15 @@
 
 # Automated script to install my dotfiles
 
-# Clone dotfiles
+# if given parameters ($1 = local repo path, $2 = PROFILE on flake.PROFILE.nix)
+# Clone dotfiles & assign the right flake.nix based on the given parameter
 if [ $# -gt 0 ]
   then
     SCRIPT_DIR=$1
   else
     SCRIPT_DIR=~/.dotfiles
+    rm flake.nix.bak && mv flake.nix flake.nix.bak
+    cp flake.$2.nix flake.nix
 fi
 
 # DISABLED TO AVOID OVERWRITE FOR TESTING
