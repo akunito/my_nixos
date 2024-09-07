@@ -48,6 +48,8 @@
         PROFILE_ON_BAT = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
         WIFI_PWR_ON_BAT = "off";
+        INTEL_GPU_MIN_FREQ_ON_AC = 300; # sudo tlp-stat -g
+        INTEL_GPU_MIN_FREQ_ON_BAT = 300;
         # logind settings
         LOGIND_ENABLE = true; # Disable for laptops if you want granular power management with profiles
         lidSwitch = "ignore"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"

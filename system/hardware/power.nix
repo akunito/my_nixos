@@ -48,8 +48,8 @@
       RADEON_POWER_PROFILE_ON_AC = "high";
       RADEON_POWER_PROFILE_ON_BAT = "low";
 
-      INTEL_GPU_MIN_FREQ_ON_AC = 250;
-      INTEL_GPU_MIN_FREQ_ON_BAT = 250;
+      INTEL_GPU_MIN_FREQ_ON_AC = systemSettings.INTEL_GPU_MIN_FREQ_ON_AC;
+      INTEL_GPU_MIN_FREQ_ON_BAT = systemSettings.INTEL_GPU_MIN_FREQ_ON_BAT;
     };
   };
   
