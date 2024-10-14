@@ -54,61 +54,6 @@
 
   boot.initrd.luks.devices."DATA_4TB".device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
 
-  fileSystems."/var/lib/docker/overlay2/bb469368dd4f22bd1f1e257eadc87fec6bdb81aaa28123a97e3d89563192591a/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/5af988f4749aca89098768a64208e06e1ebf31c2e6b48988df21a3a38bd2acba/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/d88e7414b9e3e82036eba4bae3d20b5ad843a012f21a683d2dd021fc33579be7/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/3417f579c671c190508c014b9f001496e141683fb82b610027ef2edd387524d1/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/752d74c4f1f57500aee17b15b076384ac76c49e3c04f3b166a6e281a86a97af9/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/47b49eafe165e16367e044b6268a789037756affe6178217d92c7de8b940cf5d/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/30cf6701a42d5c5fc2146ed0837b63ba11b450c6ee7c68ef8121015644036ba6/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/5cf961061dc4a8ad27052caf1a73bc10dae5f18c50a105a07bdbd2757f55b0e2/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/460d69f8131083b7946c37f90f0aaff37584048d875d64d82591dd803ad6ab9a/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/222281dce2f7f41de5419c54688a5515dc4e48edb9d0cb5fadc16bf382c485fc/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
-  fileSystems."/var/lib/docker/overlay2/4ff77f8d905baa350982c869df1beaf0bf828396739e43ea2034f6ed3a3f0d24/merged" =
-    { device = "overlay";
-      fsType = "overlay";
-    };
-
   swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
@@ -117,20 +62,8 @@
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.br-476415fef1ac.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-e4ad9b690bad.useDHCP = lib.mkDefault true;
   # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
   # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth05b3ef6.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth1a13fef.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth27d3373.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth306a49a.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth3231360.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth3d8e6ed.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth4d9bfba.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth5fa7eee.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth743c31b.useDHCP = lib.mkDefault true;
-  # networking.interfaces.veth85f5aeb.useDHCP = lib.mkDefault true;
-  # networking.interfaces.vethf076da3.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlp9s0.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
