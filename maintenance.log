@@ -1,0 +1,123 @@
+[2024-10-19 18:27:23] Log file rotated. A new log file has been created.
+[2024-10-19 18:28:28] System maintenance started
+[2024-10-19 18:28:28] System maintenance started | Starting system maintenance on Sat Oct 19 06:28:28 PM CEST 2024
+[2024-10-19 18:28:28] System maintenance started completed successfully.
+[2024-10-19 18:28:28] Garbage collection
+[2024-10-19 18:28:37] Garbage collection | removing old generations of profile /nix/var/nix/profiles/system
+[2024-10-19 18:28:37] Garbage collection | removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
+[2024-10-19 18:28:37] Garbage collection | removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
+[2024-10-19 18:28:37] Garbage collection | finding garbage collector roots...
+[2024-10-19 18:28:37] Garbage collection | deleting garbage...
+[2024-10-19 18:28:37] Garbage collection | deleting unused links...
+[2024-10-19 18:28:37] Garbage collection | note: currently hard linking saves -0.00 MiB
+[2024-10-19 18:28:37] Garbage collection | 0 store paths deleted, 0.00 MiB freed
+[2024-10-19 18:28:37] Garbage collection completed successfully.
+[2024-10-19 18:28:37] Deleting old system generations
+[2024-10-19 18:28:37] Deleting old system generations | 
+[2024-10-19 18:28:37] Deleting old system generations completed successfully.
+[2024-10-19 18:28:37] Listing Home Manager Generations
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-21 15:08 : id 54 -> /nix/store/2kwn0w2lyff4847ydyjixr6xc856j6y6-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-16 21:45 : id 53 -> /nix/store/cqrlwkk1kg13v53fb0xs4f0v0c5f40d6-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-16 21:41 : id 52 -> /nix/store/1j7ydwm592ffgnfiqffxp4vpjrcaxjf7-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-14 19:18 : id 51 -> /nix/store/ad82ais91l3rc9pklsvh35m1r5xcymm8-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-12 22:03 : id 50 -> /nix/store/1j7ydwm592ffgnfiqffxp4vpjrcaxjf7-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-12 22:02 : id 49 -> /nix/store/84qaa75p74078hqkrj2x79mcb0mj1x7x-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-11 00:00 : id 48 -> /nix/store/ad82ais91l3rc9pklsvh35m1r5xcymm8-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-08 19:18 : id 47 -> /nix/store/1j7ydwm592ffgnfiqffxp4vpjrcaxjf7-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-08 10:43 : id 46 -> /nix/store/84qaa75p74078hqkrj2x79mcb0mj1x7x-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-07 10:47 : id 45 -> /nix/store/rccg1ckayyx2n01xp4n80bwina0fwqc3-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-05 21:18 : id 44 -> /nix/store/1j7ydwm592ffgnfiqffxp4vpjrcaxjf7-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-02 15:26 : id 43 -> /nix/store/anxi57h3md0fl9hmv3b8m6g911z9zrkq-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-09-02 15:16 : id 42 -> /nix/store/84bgx8k1lavzaxjy2g4a600s3fqvf1il-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 10:12 : id 41 -> /nix/store/gy4xpj34sjavqk9ws3cz19i54s80krk0-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 10:09 : id 40 -> /nix/store/g35npv1j5mwgh0fv02hk527jdz13i5jp-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 10:04 : id 39 -> /nix/store/bhbz75lgc1iyhhglfbvdc5lvsaa4rmpk-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 10:02 : id 38 -> /nix/store/6l8v0qjwp02249kamn7p9rr84mrf46d1-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 09:55 : id 37 -> /nix/store/196diwvjc8fq6d29p1hair7s0icviax4-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 09:52 : id 36 -> /nix/store/p1nhps75zbnqy8n1i1hj3p28rp48idh1-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 08:41 : id 35 -> /nix/store/5v9ipzhq90c04gf81a7lakivimh5arav-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 08:39 : id 34 -> /nix/store/m230qmx6fcyd5mps9wf2xj2mqgdi3n3p-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 08:37 : id 33 -> /nix/store/hazdgjc8j4xd4niz11fmfgqdhxfwiv7w-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 07:54 : id 32 -> /nix/store/3k08fzk0pz250yvikxsbjjp74f179hzi-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 07:50 : id 31 -> /nix/store/i7pmdcwmhj31qib038hjgwnrkcl23p1y-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 07:49 : id 30 -> /nix/store/l8m4mbcf154ysg3cxn90j76y38c2ccnn-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 07:44 : id 29 -> /nix/store/kdnxs6fcygzkn30b8c6ik82pb0jxzllf-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 07:44 : id 28 -> /nix/store/mg404aa789m699wdk65d5r7x865pj7wh-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-31 07:43 : id 27 -> /nix/store/byvvflccxd6cg0q3ypax042bx3ll1rkk-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-30 17:36 : id 26 -> /nix/store/z07zb0995bbykaqpmifphsmfba9ndimy-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations | 2024-08-30 17:29 : id 25 -> /nix/store/khm2yc6lffws32ac97azlsplgmip6siz-home-manager-generation
+[2024-10-19 18:28:37] Listing Home Manager Generations completed successfully.
+[2024-10-19 18:28:37] Deleting old Home Manager generations
+[2024-10-19 18:28:37] Deleting old Home Manager generations | 
+[2024-10-19 18:28:37] Deleting old Home Manager generations completed successfully.
+[2024-10-19 18:28:37] Run garbage collection
+[2024-10-19 18:28:49] Run garbage collection | finding garbage collector roots...
+[2024-10-19 18:28:49] Run garbage collection | deleting garbage...
+[2024-10-19 18:28:49] Run garbage collection | deleting unused links...
+[2024-10-19 18:28:49] Run garbage collection | note: currently hard linking saves -0.00 MiB
+[2024-10-19 18:28:49] Run garbage collection | 0 store paths deleted, 0.00 MiB freed
+[2024-10-19 18:28:49] Run garbage collection completed successfully.
+[2024-10-19 18:28:49] System maintenance completed
+[2024-10-19 18:28:49] System maintenance completed | System maintenance completed on Sat Oct 19 06:28:49 PM CEST 2024
+[2024-10-19 18:28:49] System maintenance completed completed successfully.
+[2024-10-19 18:30:18] System maintenance started
+[2024-10-19 18:30:18] System maintenance started | Starting system maintenance on Sat Oct 19 06:30:18 PM CEST 2024
+[2024-10-19 18:30:18] System maintenance started completed successfully.
+[2024-10-19 18:30:18] Garbage collection
+[2024-10-19 18:30:22] Garbage collection | removing old generations of profile /nix/var/nix/profiles/system
+[2024-10-19 18:30:22] Garbage collection | removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
+[2024-10-19 18:30:22] Garbage collection | removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
+[2024-10-19 18:30:22] Garbage collection | finding garbage collector roots...
+[2024-10-19 18:30:22] Garbage collection | deleting garbage...
+[2024-10-19 18:30:22] Garbage collection | deleting unused links...
+[2024-10-19 18:30:22] Garbage collection | note: currently hard linking saves -0.00 MiB
+[2024-10-19 18:30:22] Garbage collection | 0 store paths deleted, 0.00 MiB freed
+[2024-10-19 18:30:22] Garbage collection completed successfully.
+[2024-10-19 18:30:22] Deleting old system generations
+[2024-10-19 18:30:22] Deleting old system generations | 
+[2024-10-19 18:30:22] Deleting old system generations completed successfully.
+[2024-10-19 18:30:22] Listing Home Manager Generations
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-21 15:08 : id 54 -> /nix/store/2kwn0w2lyff4847ydyjixr6xc856j6y6-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-16 21:45 : id 53 -> /nix/store/cqrlwkk1kg13v53fb0xs4f0v0c5f40d6-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-16 21:41 : id 52 -> /nix/store/1j7ydwm592ffgnfiqffxp4vpjrcaxjf7-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-14 19:18 : id 51 -> /nix/store/ad82ais91l3rc9pklsvh35m1r5xcymm8-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-12 22:03 : id 50 -> /nix/store/1j7ydwm592ffgnfiqffxp4vpjrcaxjf7-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-12 22:02 : id 49 -> /nix/store/84qaa75p74078hqkrj2x79mcb0mj1x7x-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-11 00:00 : id 48 -> /nix/store/ad82ais91l3rc9pklsvh35m1r5xcymm8-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-08 19:18 : id 47 -> /nix/store/1j7ydwm592ffgnfiqffxp4vpjrcaxjf7-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-08 10:43 : id 46 -> /nix/store/84qaa75p74078hqkrj2x79mcb0mj1x7x-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-07 10:47 : id 45 -> /nix/store/rccg1ckayyx2n01xp4n80bwina0fwqc3-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-05 21:18 : id 44 -> /nix/store/1j7ydwm592ffgnfiqffxp4vpjrcaxjf7-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-02 15:26 : id 43 -> /nix/store/anxi57h3md0fl9hmv3b8m6g911z9zrkq-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-09-02 15:16 : id 42 -> /nix/store/84bgx8k1lavzaxjy2g4a600s3fqvf1il-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 10:12 : id 41 -> /nix/store/gy4xpj34sjavqk9ws3cz19i54s80krk0-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 10:09 : id 40 -> /nix/store/g35npv1j5mwgh0fv02hk527jdz13i5jp-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 10:04 : id 39 -> /nix/store/bhbz75lgc1iyhhglfbvdc5lvsaa4rmpk-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 10:02 : id 38 -> /nix/store/6l8v0qjwp02249kamn7p9rr84mrf46d1-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 09:55 : id 37 -> /nix/store/196diwvjc8fq6d29p1hair7s0icviax4-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 09:52 : id 36 -> /nix/store/p1nhps75zbnqy8n1i1hj3p28rp48idh1-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 08:41 : id 35 -> /nix/store/5v9ipzhq90c04gf81a7lakivimh5arav-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 08:39 : id 34 -> /nix/store/m230qmx6fcyd5mps9wf2xj2mqgdi3n3p-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 08:37 : id 33 -> /nix/store/hazdgjc8j4xd4niz11fmfgqdhxfwiv7w-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 07:54 : id 32 -> /nix/store/3k08fzk0pz250yvikxsbjjp74f179hzi-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 07:50 : id 31 -> /nix/store/i7pmdcwmhj31qib038hjgwnrkcl23p1y-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 07:49 : id 30 -> /nix/store/l8m4mbcf154ysg3cxn90j76y38c2ccnn-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 07:44 : id 29 -> /nix/store/kdnxs6fcygzkn30b8c6ik82pb0jxzllf-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 07:44 : id 28 -> /nix/store/mg404aa789m699wdk65d5r7x865pj7wh-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-31 07:43 : id 27 -> /nix/store/byvvflccxd6cg0q3ypax042bx3ll1rkk-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-30 17:36 : id 26 -> /nix/store/z07zb0995bbykaqpmifphsmfba9ndimy-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations | 2024-08-30 17:29 : id 25 -> /nix/store/khm2yc6lffws32ac97azlsplgmip6siz-home-manager-generation
+[2024-10-19 18:30:22] Listing Home Manager Generations completed successfully.
+[2024-10-19 18:30:22] Deleting old Home Manager generations
+[2024-10-19 18:30:22] Deleting old Home Manager generations | 
+[2024-10-19 18:30:22] Deleting old Home Manager generations completed successfully.
+[2024-10-19 18:30:22] Run garbage collection
+[2024-10-19 18:30:33] Run garbage collection | finding garbage collector roots...
+[2024-10-19 18:30:33] Run garbage collection | deleting garbage...
+[2024-10-19 18:30:33] Run garbage collection | deleting unused links...
+[2024-10-19 18:30:33] Run garbage collection | note: currently hard linking saves -0.00 MiB
+[2024-10-19 18:30:33] Run garbage collection | 0 store paths deleted, 0.00 MiB freed
+[2024-10-19 18:30:33] Run garbage collection completed successfully.
+[2024-10-19 18:30:33] System maintenance completed
+[2024-10-19 18:30:33] System maintenance completed | System maintenance completed on Sat Oct 19 06:30:33 PM CEST 2024
+[2024-10-19 18:30:33] System maintenance completed completed successfully.

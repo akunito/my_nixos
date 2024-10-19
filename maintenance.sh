@@ -1,67 +1,112 @@
 #!/usr/bin/env bash
 
-# Set the number of generations to keep
+#!/bin/bash
+
+SCRIPT_DIR=~/.dotfiles
+
+LOG_FILE="$SCRIPT_DIR/maintenance.log"
+# Check if the log file exists, if not, create it
+if [ ! -f "$LOG_FILE" ]; then
+    touch "$LOG_FILE"
+    echo "Log file created: $LOG_FILE"
+else
+    echo "Log file already exists: $LOG_FILE"
+fi
+
+# Log file path
+LOG_FILE="$SCRIPT_DIR/maintenance.log"
+# Maximum number of old log files to keep
+MAX_LOG_FILES=3
+
+# Function to check if log file exceeds 1MB and rotate it
+rotate_log() {
+    max_size=$((1 * 1024 * 1024)) # 1MB in bytes
+    if [ -f "$LOG_FILE" ] && [ $(stat -c%s "$LOG_FILE") -gt $max_size ]; then
+        # Rotate the current log file
+        mv "$LOG_FILE" "${LOG_FILE}_$(date '+%Y-%m-%d_%H-%M-%S').old"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Log file rotated. A new log file has been created." >> "$LOG_FILE"
+        
+        # Manage old log files: keep only the last $MAX_LOG_FILES files
+        log_count=$(ls -1 "${LOG_FILE}_*.old" 2>/dev/null | wc -l)
+        if [ "$log_count" -gt "$MAX_LOG_FILES" ]; then
+            # Delete the oldest log files, keep only $MAX_LOG_FILES most recent
+            ls -1t "${LOG_FILE}_*.old" | tail -n +$((MAX_LOG_FILES + 1)) | xargs rm -f
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Old log files cleaned up. Kept only the last $MAX_LOG_FILES files." >> "$LOG_FILE"
+        fi
+    fi
+}
+
+# Log function: logs datetime, task, and output
+log_task() {
+    local task="$1"
+    local output
+
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $task" >> "$LOG_FILE"
+
+    # Run the command and capture its output
+    shift
+    output=$("$@" 2>&1)
+
+    # Log each line of output with a timestamp and task name
+    while IFS= read -r line; do
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] $task | $line" >> "$LOG_FILE"
+    done <<< "$output"
+
+    if [ $? -eq 0 ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] $task completed successfully." >> "$LOG_FILE"
+    else
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $task failed." >> "$LOG_FILE"
+    fi
+}
+
+# Rotate log file if it exceeds 1MB
+rotate_log
+
+# Start log
+log_task "System maintenance started" echo "Starting system maintenance on $(date)"
+
+# Garbage collection and system cleanup in NixOS
+log_task "Garbage collection" sudo nix-collect-garbage -d
+
+# Clean up old system generations (keeping the last 8)
 SystemGenerationsToKeep=8
+log_task "Deleting old system generations" sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +$SystemGenerationsToKeep
+
+# Clean up old Home Manager generations (keeping the last 8)
 HomeManagerGenerationsToKeep=8
-
-# Clean up old system generations
-echo "=============================================================================="
-echo "===================== Listing System Generations ============================="
-sudo nix-env -p /nix/var/nix/profiles/system --list-generations
-echo "===================== Keeping only last $SystemGenerationsToKeep system generations =============================="
-sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +$SystemGenerationsToKeep
-echo "===================== Collecting garbage ====================================="
-sudo nix-collect-garbage
-
-# Clean up Home Manager generations
-echo "=============================================================================="
-echo "===================== Listing Home Manager Generations ======================="
-
-# Fetch all generations with 'home-manager generations' command
-home-manager generations
+log_task "Listing Home Manager Generations" home-manager generations
 gen_list=$(home-manager generations)
 
-# Fetch the currently active generation (marked as 'current' in nix-env)
+# Fetch the current generation from nix-env and exclude it from deletion
 current_gen=$(nix-env --list-generations | grep '(current)' | awk '{print $1}')
 
-# Extract the IDs from the home-manager generations output (assuming the format is consistent)
-# Using 'awk' to grab the ID after the word 'id' in each line
+# Extract the IDs from the output
 ids=($(echo "$gen_list" | awk -F'id ' '{print $2}' | awk '{print $1}'))
-
-# Reverse the IDs to have the most recent ones first (bigger number = newer)
 ids=($(echo "${ids[@]}" | tr ' ' '\n' | sort -nr))
 
-# Calculate the total number of generations
+# Calculate total generations
 total_gen=${#ids[@]}
 
-# Check if there are more than $HomeManagerGenerationsToKeep generations to delete
+# Check if there are more than $HomeManagerGenerationsToKeep
 if [ $total_gen -le $HomeManagerGenerationsToKeep ]; then
-    echo "There are only $total_gen generations. No need to delete."
-    exit 0
-fi
-
-echo "ids found are: ${ids[@]}"
-echo "current generation is: $current_gen"
-
-echo "===================== Calculate HM Gens to remove ============================"
-# Calculate how many generations we need to delete (total_gen - HomeManagerGenerationsToKeep)
-delete_count=$((total_gen - HomeManagerGenerationsToKeep))
-
-# Get the list of IDs to delete (all except the last $HomeManagerGenerationsToKeep)
-delete_ids=(${ids[@]:$HomeManagerGenerationsToKeep})
-
-# Exclude the current generation from the delete list
-delete_ids=(${delete_ids[@]/$current_gen/})
-
-# Print the IDs to be deleted
-echo "Deleting generations: ${delete_ids[@]}"
-
-# Delete the old generations using nix-env, if there are any to delete
-if [ ${#delete_ids[@]} -gt 0 ]; then
-    nix-env --delete-generations "${delete_ids[@]}"
+    echo "There are only $total_gen generations. No need to delete." >> "$LOG_FILE"
 else
-    echo "No generations to delete."
+    # Calculate how many generations to delete
+    delete_count=$((total_gen - HomeManagerGenerationsToKeep))
+
+    # Get IDs to delete (excluding last $HomeManagerGenerationsToKeep and current)
+    delete_ids=(${ids[@]:$HomeManagerGenerationsToKeep})
+    delete_ids=(${delete_ids[@]/$current_gen/})
+
+    echo ">>>>>>>>>>>>>>> Deleting generations: ${delete_ids[@]}"
+    # Log the deletion
+    log_task "Deleting old Home Manager generations" nix-env --delete-generations "${delete_ids[@]}"
 fi
 
-# Optional: Run garbage collection to free space
-nix-collect-garbage
+# Run garbage collection older than 30d
+log_task "Run garbage collection older than 30d" sudo nix-collect-garbage --delete-older-than 30d
+
+# End log
+log_task "System maintenance completed" echo "System maintenance completed on $(date)"
+
+echo "Find the output at $LOG_FILE"

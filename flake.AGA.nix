@@ -177,18 +177,19 @@
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-              then
-                pkgs-stable
-              else
-                (import nixpkgs-patched {
-                  system = systemSettings.system;
-                  config = {
-                    allowUnfree = true;
-                    allowUnfreePredicate = (_: true);
-                  };
-                  # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
-                }));
+      # pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      #         then
+      #           pkgs-stable
+      #         else
+      #           (import nixpkgs-patched {
+      #             system = systemSettings.system;
+      #             config = {
+      #               allowUnfree = true;
+      #               allowUnfreePredicate = (_: true);
+      #             };
+      #             # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
+      #           }));
+      pkgs = pkgs-stable; # Overriding pkgs logic to force stable
 
       pkgs-stable = import inputs.nixpkgs-stable {
         system = systemSettings.system;
@@ -221,11 +222,12 @@
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-             then
-               inputs.home-manager-stable
-             else
-               inputs.home-manager-unstable);
+      # home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      #        then
+      #          inputs.home-manager-stable
+      #        else
+      #          inputs.home-manager-unstable);
+      home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
 
       # Systems that can run tests:
       supportedSystems = [ "aarch64-linux" "i686-linux" "x86_64-linux" ];

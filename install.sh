@@ -15,6 +15,9 @@ if [ $# -gt 0 ]
     SCRIPT_DIR=~/.dotfiles
 fi
 
+# Disable .git temporarily to avoid permissions issues
+mv $SCRIPT_DIR/.git $SCRIPT_DIR/.gitbak
+
 # DISABLED TO AVOID OVERWRITE FOR TESTING
 # nix-shell -p git --command "git clone https://gitlab.com/akunito/nixos-config $SCRIPT_DIR"
 
@@ -92,6 +95,9 @@ sudo nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace;
 # This runs home-manager on GIT, so you have to commit your changes first !!
 echo "Installing and building home-manager"
 nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace;
+
+# Enable back .git
+sudo mv $SCRIPT_DIR/.gitbak $SCRIPT_DIR/.git
 
 # TEMPORARY FOR EDITION <<<<<<<<<<<<<<<<<<<<<<< !!!!
 echo "Softening files..."
