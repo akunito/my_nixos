@@ -98,3 +98,12 @@ echo "Softening files..."
 sudo $SCRIPT_DIR/soften.sh $SCRIPT_DIR;
 echo "---"
 echo "when you finish edtion, remember to remove the soften command, or exec harden.sh"
+
+# ask user if wants to run the maintenance script
+read -p "Do you want to run the maintenance script ? (y/N) (10s timeout) " -t 10 yn
+case $yn in
+    [Yy]|[Yy][Ee][Ss])
+        # Generate ssh keys
+        $SCRIPT_DIR/maintenance.sh;
+        ;;
+esac

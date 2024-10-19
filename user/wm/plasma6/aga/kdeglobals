@@ -141,7 +141,7 @@ History Items[$e]=file:$HOME/.config/kwin,file:$HOME/Downloads/ObsiDocs,file:$HO
 
 [General]
 BrowserApplication=vivaldi-stable.desktop
-ColorSchemeHash=4a48bd34ba53d580d8594cb0216221e77518509f
+ColorSchemeHash=babca25f3a5cf7ece26a85de212ab43d0a141257
 
 [Icons]
 Theme=candy-icons

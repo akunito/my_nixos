@@ -1,5 +1,8 @@
 [Applications][org.qbittorrent.qBittorrent]
 Seen=true
 
+[Applications][org.telegram.desktop]
+Seen=true
+
 [Applications][vivaldi-stable]
 Seen=true
