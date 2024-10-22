@@ -4,14 +4,14 @@
   # https://nixos.wiki/wiki/Printing
   
   # Enable printing
-  services.printing = { 
+  services.printing = lib.mkIf (systemSettings.printerBrother == true) { 
     enable = true;
     drivers = [ pkgs.brlaser ]; # brlaser is for my Brother Laser
   };
-  environment.systemPackages = [ pkgs.cups-filters ];
+  environment.systemPackages = lib.mkIf (systemSettings.printerBrother == true) [ pkgs.cups-filters ];
 
   # Enable avahi to explore network devices
-  services.avahi = {
+  services.avahi = lib.mkIf (systemSettings.findPrinters == true)  {
     enable = true;
     nssmdns4 = true;
     openFirewall = true;

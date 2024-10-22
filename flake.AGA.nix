@@ -44,6 +44,8 @@
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
         
         # Printer
+        printerBrother = true; 
+        findPrinters = true;
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management
@@ -325,6 +327,8 @@
 
     home-manager-stable.url = "github:nix-community/home-manager/release-24.05";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
+
+    impermanence.url = "github:nix-community/impermanence/63f4d0443e32b0dd7189001ee1894066765d18a5";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
 

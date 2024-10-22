@@ -44,6 +44,8 @@
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
         
         # Printer
+        printerBrother = true; 
+        findPrinters = true;
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management

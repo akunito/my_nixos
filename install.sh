@@ -16,7 +16,7 @@ if [ $# -gt 0 ]
 fi
 
 # Disable .git temporarily to avoid permissions issues
-mv $SCRIPT_DIR/.git $SCRIPT_DIR/.gitbak
+# mv $SCRIPT_DIR/.git $SCRIPT_DIR/.gitbak
 
 # DISABLED TO AVOID OVERWRITE FOR TESTING
 # nix-shell -p git --command "git clone https://gitlab.com/akunito/nixos-config $SCRIPT_DIR"
@@ -96,17 +96,17 @@ sudo nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace;
 echo "Installing and building home-manager"
 nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace;
 
-# Enable back .git
-sudo mv $SCRIPT_DIR/.gitbak $SCRIPT_DIR/.git
-
 # TEMPORARY FOR EDITION <<<<<<<<<<<<<<<<<<<<<<< !!!!
 echo "Softening files..."
 sudo $SCRIPT_DIR/soften.sh $SCRIPT_DIR;
 echo "---"
 echo "when you finish edtion, remember to remove the soften command, or exec harden.sh"
 
+# Enable back .git
+# sudo mv $SCRIPT_DIR/.gitbak $SCRIPT_DIR/.git
+
 # ask user if wants to run the maintenance script
-read -p "Do you want to run the maintenance script ? (y/N) (10s timeout) " -t 10 yn
+read -p "Do you want to run the maintenance script ? (y/N)"
 case $yn in
     [Yy]|[Yy][Ee][Ss])
         # Generate ssh keys

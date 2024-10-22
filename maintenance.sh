@@ -18,9 +18,9 @@ LOG_FILE="$SCRIPT_DIR/maintenance.log"
 # Maximum number of old log files to keep
 MAX_LOG_FILES=3
 
-# Function to check if log file exceeds 1MB and rotate it
+# Function to check if log file exceeds 10MB and rotate it
 rotate_log() {
-    max_size=$((1 * 1024 * 1024)) # 1MB in bytes
+    max_size=$((10 * 1024 * 1024)) # 10MB in bytes
     if [ -f "$LOG_FILE" ] && [ $(stat -c%s "$LOG_FILE") -gt $max_size ]; then
         # Rotate the current log file
         mv "$LOG_FILE" "${LOG_FILE}_$(date '+%Y-%m-%d_%H-%M-%S').old"
@@ -59,20 +59,17 @@ log_task() {
     fi
 }
 
-# Rotate log file if it exceeds 1MB
+# Rotate log file if it exceeds 10MB
 rotate_log
 
 # Start log
 log_task "System maintenance started" echo "Starting system maintenance on $(date)"
 
-# Garbage collection and system cleanup in NixOS
-log_task "Garbage collection" sudo nix-collect-garbage -d
-
-# Clean up old system generations (keeping the last 8)
-SystemGenerationsToKeep=8
+# Clean up old system generations (keeping the last X generations)
+SystemGenerationsToKeep=20
 log_task "Deleting old system generations" sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +$SystemGenerationsToKeep
 
-# Clean up old Home Manager generations (keeping the last 8)
+# Clean up old Home Manager generations (keeping the last X generations)
 HomeManagerGenerationsToKeep=8
 log_task "Listing Home Manager Generations" home-manager generations
 gen_list=$(home-manager generations)
@@ -103,8 +100,11 @@ else
     log_task "Deleting old Home Manager generations" nix-env --delete-generations "${delete_ids[@]}"
 fi
 
-# Run garbage collection older than 30d
-log_task "Run garbage collection older than 30d" sudo nix-collect-garbage --delete-older-than 30d
+# # Run garbage collection older than 30d
+# log_task "Run garbage collection older than 30d" sudo nix-collect-garbage --delete-older-than 30d # CAREFUL WITH THIS ONE !!
+
+# Garbage collection and system cleanup in NixOS
+log_task "Garbage collection" sudo nix-collect-garbage -d
 
 # End log
 log_task "System maintenance completed" echo "System maintenance completed on $(date)"
