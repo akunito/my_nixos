@@ -44,8 +44,8 @@
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
         
         # Printer
-        printerBrother = true; 
-        findPrinters = true;
+        servicePrinting = true; 
+        networkPrinters = true;
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management
@@ -192,6 +192,7 @@
       #             # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
       #           }));
       pkgs = pkgs-stable; # Overriding pkgs logic to force stable
+      # if you use UNSTABLE check 'nix.package' value in configuration.nix
 
       pkgs-stable = import inputs.nixpkgs-stable {
         system = systemSettings.system;
@@ -327,8 +328,6 @@
 
     home-manager-stable.url = "github:nix-community/home-manager/release-24.05";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
-
-    impermanence.url = "github:nix-community/impermanence/63f4d0443e32b0dd7189001ee1894066765d18a5";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
 

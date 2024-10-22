@@ -207,7 +207,7 @@ DialogHeight=733
 DialogWidth=1454
 
 [Containments][26][Applets][29][Configuration][General]
-launchers=applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:obsidian.desktop,applications:code.desktop,applications:vivaldi-stable.desktop,applications:chromium-browser.desktop,applications:systemsettings.desktop,file:///nix/store/c2h78whmcynm4z5yia8n4mpnqi453jwh-home-manager-path/share/applications/calibre-gui.desktop
+launchers=applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:obsidian.desktop,applications:code.desktop,applications:vivaldi-stable.desktop,applications:chromium-browser.desktop,applications:systemsettings.desktop,applications:calibre-gui.desktop
 showOnlyCurrentActivity=false
 showOnlyCurrentDesktop=false
 
@@ -328,7 +328,7 @@ immutability=1
 plugin=org.kde.plasma.battery
 
 [Containments][32][Applets][45][Configuration]
-PreloadWeight=7
+PreloadWeight=0
 
 [Containments][32][Applets][46]
 immutability=1
@@ -440,4 +440,4 @@ knownItems=org.kde.plasma.cameraindicator,org.kde.plasma.battery,org.kde.plasma.
 
 [ScreenMapping]
 itemsOnDisabledScreens=
-screenMapping=desktop:/redodziauksigowoci.zip,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/2018pit.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/re7175fwexternaldodziauksigowoci.zip,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/PIT37_2023.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/brakujacefaktury.zip,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/brakujacefaktury.zip,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/PIT36L_za_2021_AGNIESZKA_LYSZCZ.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/PIT37_2023.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/Agnieszka Łyszcz CV 2023.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/2023_R98_5724250_PIT11_PIT1101_za_rok_2023.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/re7175fwexternaldodziauksigowoci.zip,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/2018pit.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/2023_R98_5724250_PIT11_PIT1101_za_rok_2023.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/PIT36L_za_2021_AGNIESZKA_LYSZCZ.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/Agnieszka Łyszcz CV 2023.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/redodziauksigowoci.zip,0,3344b4e7-f431-43c7-ba8e-a719124fd562
+screenMapping=desktop:/re7175fwexternaldodziauksigowoci.zip,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/PIT36L_za_2021_AGNIESZKA_LYSZCZ.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/2023_R98_5724250_PIT11_PIT1101_za_rok_2023.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/brakujacefaktury.zip,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/Agnieszka Łyszcz CV 2023.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/redodziauksigowoci.zip,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/re7175fwexternaldodziauksigowoci.zip,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/2018pit.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/2023_R98_5724250_PIT11_PIT1101_za_rok_2023.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/2018pit.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/brakujacefaktury.zip,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/Agnieszka Łyszcz CV 2023.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/PIT36L_za_2021_AGNIESZKA_LYSZCZ.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/PIT37_2023.pdf,0,9195da23-5e5a-4f1f-9256-14ba194fb9a0,desktop:/PIT37_2023.pdf,0,3344b4e7-f431-43c7-ba8e-a719124fd562,desktop:/redodziauksigowoci.zip,0,3344b4e7-f431-43c7-ba8e-a719124fd562

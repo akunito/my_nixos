@@ -97,6 +97,8 @@
 
       ln -sf $USER_PATH/share/aurorae/themes $HOME_PATH/.local/aurorae
       ln -sf $USER_PATH/share/color-schemes $HOME_PATH/.local/color-schemes
+
+      echo "\n============= End\n"
       '';
     };
 }

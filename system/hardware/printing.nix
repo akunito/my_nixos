@@ -3,28 +3,27 @@
 {
   # https://nixos.wiki/wiki/Printing
   
-  # Enable printing
-  services.printing = lib.mkIf (systemSettings.printerBrother == true) { 
-    enable = true;
-    drivers = [ pkgs.brlaser ]; # brlaser is for my Brother Laser
-  };
-  environment.systemPackages = lib.mkIf (systemSettings.printerBrother == true) [ pkgs.cups-filters ];
+  environment.systemPackages = lib.mkIf (systemSettings.servicePrinting == true) [ pkgs.cups-filters ];
 
-  # Enable avahi to explore network devices
-  services.avahi = lib.mkIf (systemSettings.findPrinters == true)  {
-    enable = true;
-    nssmdns4 = true;
-    openFirewall = true;
-  };
+  services = {
+    printing = lib.mkIf (systemSettings.servicePrinting == true) { 
+      enable = true;
+      drivers = [ pkgs.brlaser ]; # brlaser is for my printer Brother Laser
+      listenAddresses = [ "*:631" ];
+      allowFrom = [ "192.168.8.*" ];
+      browsing = true;
+      defaultShared = true;
+      openFirewall = true;
+    };
+    avahi = lib.mkIf (systemSettings.networkPrinters == true)  {
+      enable = true;
+      nssmdns4 = true;
+      openFirewall = true;
+      publish = lib.mkIf (systemSettings.sharePrinter == true) {
+        enable = true;
+        userServices = true;
+      };
+    };
 
-  # Share printer
-  services.avahi.publish = lib.mkIf (systemSettings.sharePrinter == true) {
-    enable = true;
-    userServices = true;
-  };
-  services.printing.listenAddresses = lib.mkIf (systemSettings.sharePrinter == true) [ "*:631" ];
-  services.printing.allowFrom = lib.mkIf (systemSettings.sharePrinter == true) [ "192.168.0.*" ];
-  services.printing.browsing = lib.mkIf (systemSettings.sharePrinter == true) true;
-  services.printing.defaultShared = lib.mkIf (systemSettings.sharePrinter == true) true;
-  services.printing.openFirewall = lib.mkIf (systemSettings.sharePrinter == true) true;
+  }; 
 }
