@@ -8,20 +8,27 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "nvme" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "uas" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-intel" ];
+  boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/e1b7a004-0d2b-4c73-95bf-1310d1da71bd";
+    { device = "/dev/disk/by-uuid/612f9fc9-3fc0-4c87-bd8a-35842e9dcb1f";
       fsType = "ext4";
     };
 
-  boot.initrd.luks.devices."luks-e9676686-10da-4b47-9ff0-d2ac4685f682".device = "/dev/disk/by-uuid/e9676686-10da-4b47-9ff0-d2ac4685f682";
+  boot.initrd.luks.devices."luks-b1b0b2cf-1cc4-467a-943c-0057e748b6a3".device = "/dev/disk/by-uuid/b1b0b2cf-1cc4-467a-943c-0057e748b6a3";
+
+  fileSystems."/home" =
+    { device = "/dev/disk/by-uuid/031e9342-2041-4777-a28b-d562fd3ad1f2";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."luks-4e2319df-5473-4eb5-9f00-483253a7f96e".device = "/dev/disk/by-uuid/4e2319df-5473-4eb5-9f00-483253a7f96e";
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/2CDB-55A5";
+    { device = "/dev/disk/by-uuid/C582-8ED6";
       fsType = "vfat";
       options = [ "fmask=0022" "dmask=0022" ];
     };
@@ -33,10 +40,11 @@
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp0s31f6.useDHCP = lib.mkDefault true;
-  # networking.interfaces.wlp4s0.useDHCP = lib.mkDefault true;
-  # networking.interfaces.wwan0.useDHCP = lib.mkDefault true;
+  # networking.interfaces.br-476415fef1ac.useDHCP = lib.mkDefault true;
+  # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
+  # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
+  # networking.interfaces.wlp9s0.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }

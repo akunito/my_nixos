@@ -5299,3 +5299,162 @@
 [2024-10-23 10:17:40] Collecting garbage | note: currently hard linking saves -0.00 MiB
 [2024-10-23 10:17:40] Collecting garbage | 0 store paths deleted, 0.00 MiB freed
 [2024-10-23 10:57:47] System maintenance completed | System maintenance completed on Wed Oct 23 10:57:47 AM CEST 2024
+[2024-10-23 12:10:07] System maintenance completed | System maintenance completed on Wed Oct 23 12:10:07 PM CEST 2024
+[2024-10-23 12:16:13] System maintenance completed | System maintenance completed on Wed Oct 23 12:16:13 PM CEST 2024
+[2024-10-23 12:22:39] System cleanup: Current generations |  201   2024-10-22 13:18:07   
+[2024-10-23 12:22:39] System cleanup: Current generations |  202   2024-10-22 13:21:55   
+[2024-10-23 12:22:39] System cleanup: Current generations |  203   2024-10-22 13:29:31   
+[2024-10-23 12:22:39] System cleanup: Current generations |  204   2024-10-22 13:34:01   
+[2024-10-23 12:22:39] System cleanup: Current generations |  205   2024-10-22 14:05:16   
+[2024-10-23 12:22:39] System cleanup: Current generations |  206   2024-10-22 14:06:13   
+[2024-10-23 12:22:39] System cleanup: Current generations |  207   2024-10-22 14:13:56   
+[2024-10-23 12:22:39] System cleanup: Current generations |  208   2024-10-22 14:26:55   
+[2024-10-23 12:22:39] System cleanup: Current generations |  209   2024-10-22 14:39:12   
+[2024-10-23 12:22:39] System cleanup: Current generations |  210   2024-10-22 14:46:19   
+[2024-10-23 12:22:39] System cleanup: Current generations |  211   2024-10-22 16:50:01   
+[2024-10-23 12:22:39] System cleanup: Current generations |  212   2024-10-22 16:50:49   
+[2024-10-23 12:22:39] System cleanup: Current generations |  213   2024-10-22 16:51:28   
+[2024-10-23 12:22:39] System cleanup: Current generations |  214   2024-10-23 05:41:22   
+[2024-10-23 12:22:39] System cleanup: Current generations |  215   2024-10-23 08:14:10   
+[2024-10-23 12:22:39] System cleanup: Current generations |  216   2024-10-23 12:06:08   (current)
+[2024-10-23 12:22:39] System cleanup: Removing older generations | 
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  201   2024-10-22 13:18:07   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  202   2024-10-22 13:21:55   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  203   2024-10-22 13:29:31   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  204   2024-10-22 13:34:01   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  205   2024-10-22 14:05:16   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  206   2024-10-22 14:06:13   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  207   2024-10-22 14:13:56   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  208   2024-10-22 14:26:55   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  209   2024-10-22 14:39:12   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  210   2024-10-22 14:46:19   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  211   2024-10-22 16:50:01   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  212   2024-10-22 16:50:49   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  213   2024-10-22 16:51:28   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  214   2024-10-23 05:41:22   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  215   2024-10-23 08:14:10   
+[2024-10-23 12:22:39] System cleanup: Generations after cleanup |  216   2024-10-23 12:06:08   (current)
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-10-22 16:50 : id 44 -> /nix/store/db3xipbq97a5kgacxj5rm4mmhnpw7qsf-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-10-22 14:46 : id 43 -> /nix/store/k1jnlna50kddg1sxd6sf39wb2hhlhc8s-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-10-22 14:39 : id 42 -> /nix/store/6parz7vj91rxrkzyf6fp6lx9d4636sl7-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-10-22 12:11 : id 41 -> /nix/store/k1jnlna50kddg1sxd6sf39wb2hhlhc8s-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-10-18 11:38 : id 40 -> /nix/store/1xxrdhx19ndjqg2g78kw8fhhmbb6hd87-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-10-18 08:35 : id 39 -> /nix/store/g8z5xcw28ccbksqlbx9c7al1rhsqw2vj-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-10-14 10:21 : id 38 -> /nix/store/41gwwv5f8ns47fhxwhj1lszgcb2n7y0p-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-09-11 10:25 : id 37 -> /nix/store/23rlqvszx7qlm98nsg71r2z2vaciq0y7-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-09-09 10:36 : id 36 -> /nix/store/8wymwjqbqc8fa017v6bfhmvfsf7w8z2c-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-09-07 09:18 : id 35 -> /nix/store/2ynz1057fiaax9js6lkqbzx36f8z3024-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-09-03 07:36 : id 34 -> /nix/store/1cw4xlibjwfhjnlaj47n782lxak8yb5v-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Current generations | 2024-08-29 14:08 : id 33 -> /nix/store/4kh3z2afvh6d6m8ivrf8m30raqvavrxy-home-manager-generation
+[2024-10-23 12:22:39] Home-manager cleanup: Removing older generations | 
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-10-22 16:50 : id 44 -> /nix/store/db3xipbq97a5kgacxj5rm4mmhnpw7qsf-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-10-22 14:46 : id 43 -> /nix/store/k1jnlna50kddg1sxd6sf39wb2hhlhc8s-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-10-22 14:39 : id 42 -> /nix/store/6parz7vj91rxrkzyf6fp6lx9d4636sl7-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-10-22 12:11 : id 41 -> /nix/store/k1jnlna50kddg1sxd6sf39wb2hhlhc8s-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-10-18 11:38 : id 40 -> /nix/store/1xxrdhx19ndjqg2g78kw8fhhmbb6hd87-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-10-18 08:35 : id 39 -> /nix/store/g8z5xcw28ccbksqlbx9c7al1rhsqw2vj-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-10-14 10:21 : id 38 -> /nix/store/41gwwv5f8ns47fhxwhj1lszgcb2n7y0p-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-09-11 10:25 : id 37 -> /nix/store/23rlqvszx7qlm98nsg71r2z2vaciq0y7-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-09-09 10:36 : id 36 -> /nix/store/8wymwjqbqc8fa017v6bfhmvfsf7w8z2c-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-09-07 09:18 : id 35 -> /nix/store/2ynz1057fiaax9js6lkqbzx36f8z3024-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-09-03 07:36 : id 34 -> /nix/store/1cw4xlibjwfhjnlaj47n782lxak8yb5v-home-manager-generation
+[2024-10-23 12:22:40] Home-manager cleanup: Generations after cleanup | 2024-08-29 14:08 : id 33 -> /nix/store/4kh3z2afvh6d6m8ivrf8m30raqvavrxy-home-manager-generation
+[2024-10-23 12:22:40] User cleanup: Current generations |   10   2024-08-19 14:24:14   
+[2024-10-23 12:22:40] User cleanup: Current generations |   33   2024-10-18 11:38:22   
+[2024-10-23 12:22:40] User cleanup: Current generations |   34   2024-10-22 14:39:19   
+[2024-10-23 12:22:40] User cleanup: Current generations |   35   2024-10-22 14:46:29   (current)
+[2024-10-23 12:22:40] User cleanup: Removing older generations | 
+[2024-10-23 12:22:40] User cleanup: Generations after cleanup |   10   2024-08-19 14:24:14   
+[2024-10-23 12:22:40] User cleanup: Generations after cleanup |   33   2024-10-18 11:38:22   
+[2024-10-23 12:22:40] User cleanup: Generations after cleanup |   34   2024-10-22 14:39:19   
+[2024-10-23 12:22:40] User cleanup: Generations after cleanup |   35   2024-10-22 14:46:29   (current)
+[2024-10-23 12:22:40] Running nix-collect-garbage | 
+[2024-10-23 12:22:43] Collecting garbage | finding garbage collector roots...
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/r3wqg2nj7dyfhks8jriwrjb9l4w2dl86' to '/tmp/nixos-rebuild.1UIswD/result'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/011rlm8mipj56srwwmm1lwgj37fzmink' to '/tmp/nixos-rebuild.Q0EQs4/nixos-rebuild'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/zf938s8v7wvc6jd0nrjba0f2lknm7hm1' to '/tmp/nixos-rebuild.yiv7DP/result'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/zf83515yv845vqskqx9bzblpnvim01ap' to '/tmp/nixos-rebuild.DheYWe/nixos-rebuild'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/9y8x04axw8h3bnas9x8yi7icbr3c7p6f' to '/tmp/home-manager-build.SUqYmBQiRW/generation'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/4g308ihn8xaawjsjjw2zxkm4hhrmfxgy' to '/tmp/home-manager-build.NPr6QW0Cfl/generation'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/q2s2ya4yk1klpmj6dbkx938abccwz72a' to '/tmp/nixos-rebuild.vcqqGn/nixos-rebuild'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/b123f7pmarcrfmr1s8v0n8l6rasbwiy9' to '/tmp/home-manager-build.esNKlURsIV/news.json'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/297n6a2v860cira7sv8zcjfbyxv0ldc9' to '/tmp/nixos-rebuild.yLfnP4/result'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/7lpildhx3zcf01crf9g7zxnfiiczidyb' to '/tmp/home-manager-build.SUqYmBQiRW/news.json'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/6v8svp4l233496r4lkqpi36nh3hk6j2x' to '/tmp/nixos-rebuild.aH4YbV/nixos-rebuild'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/2g7pd3fblagllbzmdy58fqb89g6jwpwv' to '/tmp/home-manager-build.esNKlURsIV/generation'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/9qfd3dbgbhq7d0mjwzy8n05l9wvhy161' to '/tmp/home-manager-build.IdqMfwX3vX/generation'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/rrz5qr88qi4bd3nr48qxdi9b8l4d7h0c' to '/tmp/home-manager-build.NPr6QW0Cfl/news.json'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/jj3xh6y9y3qszmqnljhaq1hj5i47rmdz' to '/tmp/nixos-rebuild.mKkmwQ/nixos-rebuild'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/hhq5l5d1w04axspphmqb1m45fq5d221h' to '/tmp/home-manager-build.CKYxjByDaU/generation'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/sx88r2fm34klvsjyw8gnwnd9g240a06a' to '/tmp/home-manager-build.IdqMfwX3vX/news.json'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/adgl13adj0ajipf11r001s44id0c40vh' to '/tmp/nixos-rebuild.YnSgx4/result'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/ybqs760qhgl3vhzsjl52xg2z1wg7gkf0' to '/tmp/nixos-rebuild.oOku74/result'
+[2024-10-23 12:22:43] Collecting garbage | removing stale link from '/nix/var/nix/gcroots/auto/77xyh6sq7z90yq9whgiqkm2hvmqzjwza' to '/tmp/home-manager-build.CKYxjByDaU/news.json'
+[2024-10-23 12:22:43] Collecting garbage | deleting garbage...
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/azx6kywr1k9avcgns0bd2va1s1n6bp2q-xonsh-0.15.1.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/xra0vnx2mwwh92ccjd41b5anwap7f8ga-python3-3.11.9-env.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/x52rmwysfqwahcamf62ab7p4hb2bki7p-xonsh-0.15.1.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/bdhk2qpdawk60qszykhwi8xak0dzsml0-python3.11-pyte-0.8.1.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/hfdv8wq9464cx69dvwvlvbn2zyanlqjq-source.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/f5sj6ak62b6y0vdw38sr3cv11yvysvv7-home-manager.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/czqvrac3abdxsj7wxk7d3wv8f44lfn28-po'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/7ipqzh94zcr9acf7p968llkrgy349mx7-home-manager'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/6120nzd2nmphaqa2bjwmd1pdfxqyf14j-stdenv-linux'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/vdbrzhl533lr4xn4f48f2c50hymbfhfh-update-autotools-gnu-config-scripts-hook'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/ym3bq1r8vznaqdh5b9id1i5l31r0lcdl-gnu-config-2024-01-01'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/vqhj138xim73r80qcsc546crm4y80ca2-file-5.45'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/xhw549f4gf12ybgzzbvlki2a1rkyz1dx-python3.11-pytest-subprocess-1.5.0.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/kmjpkhd2lrf4w25crf5hy28wjqq28hgi-source.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/jxmicjmv1940dqk5k5fwsxa750d8nfyh-hm-news.json.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/80db72nq3jg6hnkjjp1f4k9dy3n2di0k-hm-news.json'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/zmj6zg8mbf771wjldi1ashz65d4z1ixh-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/3kmac1dmmfpcdpfa484g5f5snfjysmb4-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/qym6hm6qln8y2xqyw3li9rahksplxjx6-stage-2-init.sh'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/5d22k5a9bmbkls53gaaqarz3dzxdycz4-check-sshd-config'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/5lbx986s464j6a4zzb0sinrkcyh66w8i-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/7l3knvw0r09wdkh1rr887icgw30lsjpv-llvm-15.0.7.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/f00f7h9mrgin3bqy4qhjnnqwxyjkhwk5-5cd554303ead0f8891eee3cd6d25cb07f5a7bf67.patch.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/pfjhgqkdmfj0kdi9vdnp141h2zjkdzkk-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/3jnyh9rpp00b3y4mkl4xrpvppqj7yca7-stdenv-linux'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/n9iajmgf6z1rvwrdxy3fp8q9xa16j7x7-update-autotools-gnu-config-scripts-hook'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/ga0gqnv6qyzvg08jqw0pc2fkyzlv1qrv-gnu-config-2024-01-01'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/2j79hcpj861iicy7s4aq5iq3z3524kdn-boot.json'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/bshr1ix17xh7bv15p2d5ccrnjzcbjman-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/kr4jwd29xa6bj9k6gr1grj8izg721afl-3kmac1dmmfpcdpfa484g5f5snfjysmb4-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/cc5b9247k39q6gp862l3d85k72hs2i37-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/ak724h2ks7zz65mqy8b30jni7fx8x7ax-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/v1a0llhhmfwcjs5bvib328zrl4hgk2v7-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/db6kqiym607y0d7n8ygfzpx3g0yw59g1-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/2ak3xrx9g5x7h29p7r8dpmgbc81c3zjy-lndir-1.0.5'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/656q506q2icdqq67m6xwsx280x2m29fh-glibc-2.39-52-source.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/zgb8msdgfxm76q2bc522gp5jkyry9lsg-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/a9921qc502kdim4agbdppdh30r37xnsv-unit-console-getty.service-disabled'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/mywvjmd80bayzbi161nly2vfpikyc47h-gnumake-4.4.1'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/n4m2mjhzfjcm0nrdi9k85xdsfm3js0mh-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/y19hsq2lxf2gp5qw9ys7vm0pgj95x1y3-source.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/p01xn9rfwqnxzwvhz08imq0mak43z935-llvm-src-15.0.7.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/8xzs7irabz9vpdkmlb4gwi2bfzxh58mf-source.drv'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/s2zb9apr46hzw2smd2khdakfn690fxn9-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/68aqj48a58pj63lhi9qc36x22xz5v767-ensure-all-wrappers-paths-exist'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/b8n026j4zlpmcqz2dzybvrv9y5jqxd92-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/fch69hsc7f4djbvppl5nwc78jmnq2lxk-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/1ninwz1nffg0nhbviqfigb96lipz43l7-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/0hay1965af8x8dvwszqsqx0wzb81cbnx-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/riqkpszjqk02bi1wppfg8ip5xvh102qd-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/sinjjzbn52f5665m1i2mvj239kp3anpk-gnu-install-dirs.patch'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/zfh0xsng79iyh2whw1fjh1nm60hb37la-unit-systemd-rfkill.service-disabled'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/fm1dwqb08lxr1gk02niyvb1j7v4181c0-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/g1s9y2nqapik0s3kahyhic38jjwkahc3-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/y4110vrxwbxmpkxrn8mhm3qlpwhh95z2-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/d2lm6c7mdv9kj28k02hbd0n260b2nfyf-unit-systemd-rfkill.socket-disabled'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/6wf8zxqql7gmmi96k6swmm0pvqp13gi8-patchelf-0.15.0'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/21y3gqgm2a3w94m0wcrz1xxshks80z7p-gnumake-4.4.1'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/a6nsbir3y5ni3wwkw933aqvcmyyywnnz-file-5.45'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/74sack69gsndpj7l5v798frvxnmm29vi-home-manager'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/pwzhcv27ialqbwh6584wr4c73xca6632-lit-shell-script-runner-set-dyld-library-path.patch'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/s3hy3zmxdcqjwi50flj1v7gcj3md4fc2-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting '/nix/store/jagrzz150s3jwmnqvy2a80c2czksfrx8-source'
+[2024-10-23 12:22:43] Collecting garbage | deleting unused links...
+[2024-10-23 12:22:43] Collecting garbage | note: currently hard linking saves -0.00 MiB
+[2024-10-23 12:22:43] Collecting garbage | 63 store paths deleted, 443.19 MiB freed
+[2024-10-23 12:23:01] System maintenance completed | System maintenance completed on Wed Oct 23 12:23:01 PM CEST 2024
