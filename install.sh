@@ -18,6 +18,14 @@ fi
 # DISABLED TO AVOID OVERWRITE FOR TESTING
 # nix-shell -p git --command "git clone https://gitlab.com/akunito/nixos-config $SCRIPT_DIR"
 
+# Ask user if wants to update the flake.nix
+read -p "Do you want to update the flake.nix ? (y/N) " yn
+case $yn in
+    [Yy]|[Yy][Ee][Ss])
+        $SCRIPT_DIR/update.sh;
+        ;;
+esac
+
 # Generate hardware config for new system
 sudo nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
 
@@ -34,6 +42,7 @@ else
 fi
 
 # ask user if wants to replace user and mail by the current user
+echo ""
 read -p "Do you want to replace user and mail by the current user on flake.nix ? (y/N) " yn
 case $yn in
     [Yy]|[Yy][Ee][Ss])
@@ -47,6 +56,8 @@ case $yn in
 esac
 
 # ask user if wants to generate ssh keys for SSH on BOOT
+echo ""
+echo "Only for new installations with formated drive: "
 read -p "Do you want to generate ssh keys for SSH on BOOT ? (y/N) " yn
 case $yn in
     [Yy]|[Yy][Ee][Ss])
@@ -55,34 +66,24 @@ case $yn in
         ;;
 esac
 
-# Open up editor to manually edit flake.nix before install
-if [ -z "$EDITOR" ]; then
-    EDITOR=code;
-fi
+# # Open up editor to manually edit flake.nix before install
+# if [ -z "$EDITOR" ]; then
+#     EDITOR=code;
+# fi
 # $EDITOR $SCRIPT_DIR/flake.nix; DISABLED
-#code $SCRIPT_DIR/flake.nix;
+# code $SCRIPT_DIR/flake.nix;
 
 # Permissions for files that should be owned by root
 echo "Hardening files..."
 sudo $SCRIPT_DIR/harden.sh $SCRIPT_DIR;
 
-# # CLEAR all previous IPTABLES RULES | In case you use custom IPTABLES rules
-# sudo iptables -P INPUT ACCEPT
-# sudo iptables -P FORWARD ACCEPT
-# sudo iptables -P OUTPUT ACCEPT
-# sudo iptables -t nat -F
-# sudo iptables -t mangle -F
-# sudo iptables -F
-# sudo iptables -X
-
-# # CLEAR all previous IP6TABLES RULES | In case you use custom IPTABLES rules
-# sudo ip6tables -P INPUT ACCEPT
-# sudo ip6tables -P FORWARD ACCEPT
-# sudo ip6tables -P OUTPUT ACCEPT
-# sudo ip6tables -t nat -F
-# sudo ip6tables -t mangle -F
-# sudo ip6tables -F
-# sudo ip6tables -X
+# ask user if wants to run clean iptables rules
+read -p "Do you want to clean iptables rules ? (y/N)"
+case $yn in
+    [Yy]|[Yy][Ee][Ss])
+        $SCRIPT_DIR/cleaniptables.sh $SCRIPT_DIR;
+        ;;
+esac
 
 # Rebuild system
 echo "Rebuilding system with flake..."
@@ -103,7 +104,6 @@ nix run home-manager/master --extra-experimental-features nix-command --extra-ex
 read -p "Do you want to run the maintenance script ? (y/N)"
 case $yn in
     [Yy]|[Yy][Ee][Ss])
-        # Generate ssh keys
         $SCRIPT_DIR/maintenance.sh;
         ;;
 esac
