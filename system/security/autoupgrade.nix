@@ -3,7 +3,7 @@
 {
   system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
     enable = true;
-    flake = "${inputs.self.outPath}#system"; # where <#system> depends of your flake (nix flake show flake.nix)
+    flake = "${userSettings.dotfilesDir}#system"; # where <#system> depends of your flake (nix flake show flake.nix)
     flags = [
       "--update-input"
       "nixpkgs"
@@ -13,3 +13,4 @@
     randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
   };
 }
+
