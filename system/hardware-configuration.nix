@@ -33,6 +33,61 @@
       options = [ "fmask=0022" "dmask=0022" ];
     };
 
+  fileSystems."/var/lib/docker/overlay2/84dbebcba2e742dc3d7019d4fb9fa77c1b323b2531b8054ba5117da7e8f6770e/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/a55044d193fbad8d7a96a768c138f435233fbcf9db4e3ce2f2c3521a2b7a9c04/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/005dd607c6b7a56f5e9a3bb751fc636cfe9c372850ff101bcdcce436d0cd3be5/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/ce10956e011245a8061d69d5831c2cb637b9b9e585d02220ba86ec3b34415ad9/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/2d3a18f47dedf344c36ff73428f3345d82e099da72758a66d6603764bddda907/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/840c6a346ae1f59733c4e722623b4c14dde94c59a39859b8f78a3a5f1cc594f0/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/512cc9cdc750db8b77c0bf60e96b98e706ecb35f17899cf887fef4325eaac833/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/4a1026d0612cc3f957f828032a0e415db4701180c6d1cf11bb329ec6aff9d835/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/ab7e9744b9e548b05a6207b0905830d1cff3ac07626ccbfac40e4865d01211cf/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/9106aff1423e4fefa4db177d308432995a52bc3f04b3b019ce1c65f12758dfd1/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
+  fileSystems."/var/lib/docker/overlay2/9c89b6867daa960be19ac6f7e3fc20a33ad1d96518c09bcd48deeccc9ecef892/merged" =
+    { device = "overlay";
+      fsType = "overlay";
+    };
+
   swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
@@ -41,8 +96,20 @@
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.br-476415fef1ac.useDHCP = lib.mkDefault true;
+  # networking.interfaces.br-ae2bff3a19a2.useDHCP = lib.mkDefault true;
   # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
   # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
+  # networking.interfaces.veth2915479.useDHCP = lib.mkDefault true;
+  # networking.interfaces.veth42f1fbf.useDHCP = lib.mkDefault true;
+  # networking.interfaces.veth44dea12.useDHCP = lib.mkDefault true;
+  # networking.interfaces.veth4f7aac3.useDHCP = lib.mkDefault true;
+  # networking.interfaces.veth5054a9b.useDHCP = lib.mkDefault true;
+  # networking.interfaces.veth64f0d17.useDHCP = lib.mkDefault true;
+  # networking.interfaces.veth818dd96.useDHCP = lib.mkDefault true;
+  # networking.interfaces.veth9f42391.useDHCP = lib.mkDefault true;
+  # networking.interfaces.vethae03c1a.useDHCP = lib.mkDefault true;
+  # networking.interfaces.vethb3006c6.useDHCP = lib.mkDefault true;
+  # networking.interfaces.vethc3a257b.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlp9s0.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
