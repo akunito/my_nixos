@@ -91,7 +91,7 @@
         ];
 
         # Auto update Settings
-        autoUpdate = true; # for enabling automatic updates
+        autoUpdate = false; # for enabling automatic updates
         autoUpdate_dates = "8:00";
         autoUpdate_randomizedDelaySec = "45min";
         HomeAutoUpdate = false; # enable home manager auto update
