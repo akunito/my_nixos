@@ -19,7 +19,7 @@ if [ $# -gt 0 ]; then
     rm $1/flake.nix.bak && mv $1/flake.nix $1/flake.nix.bak
     cp $1/flake.$2.nix $1/flake.nix
 else
-    SCRIPT_DIR=~/.dotfiles
+    SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 fi
 
 # DISABLED TO AVOID OVERWRITE FOR TESTING
@@ -39,12 +39,32 @@ case $yn in
 esac
 echo ""
 
+# Call the Docker handling script
+$SCRIPT_DIR/handle_docker.sh "$SILENT_MODE"
+# Check if the Docker handling script was stopped by the user
+if [ $? -ne 0 ]; then
+    echo "Main script stopped due to user decision in Docker handling script."
+    exit 1
+fi
+echo ""
+
 # Generate hardware config for new system
 echo "Generating hardware config for new system"
 sudo nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
 
-# Create SSH directory for SSH on BOOT
-sudo mkdir -p /etc/secrets/initrd/
+# Ask user if they want to open hardware-configuration.nix
+if [ "$SILENT_MODE" = false ]; then
+    echo ""
+    read -p "Do you want to open hardware-configuration.nix ? (y/N) " yn
+else
+    yn="n"
+fi
+case $yn in
+    [Yy]|[Yy][Ee][Ss])
+        sudo nano $SCRIPT_DIR/system/hardware-configuration.nix
+        ;;
+esac
+echo ""
 
 # Check if UEFI or BIOS
 if [ -d /sys/firmware/efi/efivars ]; then
@@ -72,6 +92,8 @@ case $yn in
 esac
 echo ""
 
+# Create SSH directory for SSH on BOOT
+sudo mkdir -p /etc/secrets/initrd/
 # Ask user if they want to generate SSH keys for SSH on BOOT
 if [ "$SILENT_MODE" = false ]; then
     echo ""

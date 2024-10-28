@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # Script to run maintenance tasks on a system
 # Usage: ./maintenance.sh [-s|--silent]
