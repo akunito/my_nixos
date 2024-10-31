@@ -6,7 +6,7 @@
       ../../system/hardware/power.nix # Power management
       ../../system/hardware/time.nix # Network time sync
       ../../system/security/firewall.nix
-      ../../system/security/doas.nix
+      ../../system/security/sudo.nix
       ../../system/security/gpg.nix
       # ../../system/security/openvpn.nix # Not configured yet
       ../../system/app/virtualization.nix # qemu, virt-manager, distrobox

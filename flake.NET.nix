@@ -21,6 +21,7 @@
         sudoEnable = true; # for enabling sudo
         DOASnoPass = false; # for enabling doas without password
         wrappSudoToDoas = true; # for wrapping sudo with doas
+        sudoNOPASSWD = false; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
 
         # Network
         networkManager = true;

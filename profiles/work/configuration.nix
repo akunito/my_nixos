@@ -18,7 +18,7 @@
       #../../system/app/flatpak.nix
       ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
-      ../../system/security/doas.nix # Doas instead of sudo
+      ../../system/security/sudo.nix # Doas instead of sudo
       ../../system/security/gpg.nix # GnuPG (ssh/key agent)
       ../../system/security/blocklist.nix # Blocklist for hosts
       # ../../system/security/fail2ban.nix # Fail2ban config to be set up

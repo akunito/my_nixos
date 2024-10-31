@@ -132,12 +132,10 @@ echo ""
 echo "Rebuilding system with flake..."
 sudo nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
 
-# TEMPORARY FOR EDITION
+# Temporarily soften files for Home-Manager
 echo ""
-echo "Softening files..."
+echo "Softening files for Home-Manager..."
 sudo $SCRIPT_DIR/soften.sh $SCRIPT_DIR
-echo "---"
-echo "when you finish editing, remember to remove the soften command, or exec harden.sh"
 echo ""
 
 # Install and build home-manager configuration

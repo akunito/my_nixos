@@ -17,7 +17,7 @@ in
       ../../system/hardware/opengl.nix
       ../../system/hardware/printing.nix
       # ../../system/hardware/bluetooth.nix
-      ../../system/security/doas.nix
+      ../../system/security/sudo.nix
       ../../system/security/gpg.nix
       ../../system/security/blocklist.nix
       ../../system/security/firewall.nix
