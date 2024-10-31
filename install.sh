@@ -1,9 +1,8 @@
 #!/bin/sh
 
-# Commit GIT before running this if you made changes on these local files
-
 # Automated script to install my dotfiles
 
+# ======================================== Variables ======================================== #
 # Check for silent mode
 SILENT_MODE=false
 for arg in "$@"; do
@@ -22,8 +21,84 @@ else
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 fi
 
-# DISABLED TO AVOID OVERWRITE FOR TESTING
-# nix-shell -p git --command "git clone https://gitlab.com/akunito/nixos-config $SCRIPT_DIR"
+SCRIPT_NEW="$SCRIPT_DIR.NEW"
+SCRIPT_BAK="$SCRIPT_DIR.BAK"
+
+# ======================================== Functions ======================================== #
+wait_for_user_input() {
+    read -n 1 -s -r -p "Press any key to continue..."
+}
+
+backup_local_and_replace_with_remote() {
+    local target_dir=$1
+    local new_dir=$2
+    local backup_dir=$3
+    local success=true
+
+    # Clone from remote
+    echo -e "\n====== Cloning repository in 8 seconds: (Ctrl+C to cancel)"
+    read -t 8 -n 1 -s key
+    if [ -z "$key" ]; then
+        if ! git clone git@github.com:akunito/my_nixos.git "$new_dir"; then
+            echo "Error: Failed to clone repository"
+            success=false
+        fi
+    fi
+
+    if [ "$success" = true ]; then
+        # Remove existing backup directory if it exists
+        if [ -d "$backup_dir" ]; then
+            if ! rm -rf "$backup_dir"; then
+                echo "Error: Failed to remove existing backup directory"
+                rm -rf "$new_dir"
+                success=false
+            fi
+        fi
+        
+        if [ "$success" = true ]; then
+            # Backup original directory
+            if ! mv "$target_dir" "$backup_dir"; then
+                echo "Error: Failed to create backup"
+                # Cleanup cloned directory
+                rm -rf "$new_dir"
+                success=false
+            fi
+        fi
+    fi
+
+    if [ "$success" = true ]; then
+        # Move new directory to target
+        if ! mv "$new_dir" "$target_dir"; then
+            echo "Error: Failed to move new directory to target"
+            # Rollback: restore from backup
+            mv "$backup_dir" "$target_dir"
+            success=false
+        fi
+    fi
+
+    if [ "$success" = false ]; then
+        echo "Operation failed. Rolling back changes..."
+        # Cleanup any leftover directories
+        [ -d "$new_dir" ] && rm -rf "$new_dir"
+        [ -d "$backup_dir" ] && mv "$backup_dir" "$target_dir"
+        return 1
+    fi
+
+    echo -e "\n====== Successfully cloned repository"
+    echo "The local repo was backed up to $backup_dir"
+    echo "The new repo is now in $target_dir"
+    return 0
+}
+
+# ======================================== Execution ======================================== #
+wait_for_user_input
+
+# Backup local and replace with remote
+# Note that if installing in new system might fail if ssh keys are not set.
+# TODO: Test in new system
+backup_local_and_replace_with_remote "$SCRIPT_DIR" "$SCRIPT_NEW" "$SCRIPT_BAK"
+
+wait_for_user_input
 
 # Ask user if they want to update the flake.nix
 if [ "$SILENT_MODE" = false ]; then

@@ -13,6 +13,7 @@
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
       ../../system/hardware/drives.nix # SSH on Boot to unlock LUKS drives + Open my LUKS drives (OPTIONAL)
       ../../system/security/autoupgrade.nix # auto upgrade
+      ../../system/wm/gnome-keyring.nix # gnome keyring
     ];
 
   # Fix nix path
