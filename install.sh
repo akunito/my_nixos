@@ -35,11 +35,6 @@ if [ "$1" != "" ]; then
     cp "$SCRIPT_DIR/flake.$2.nix" "$SCRIPT_DIR/flake.nix"
 fi
 
-# Directory to download the new repo
-SCRIPT_NEW="$SCRIPT_DIR.NEW"
-# Directory to backup the current local repo
-SCRIPT_BAK="$SCRIPT_DIR.BAK"
-
 # Define sudo command based on mode
 # Usage: $0 [path] [profile] <sudo_password>
 if [ -n "$3" ]; then
@@ -60,74 +55,18 @@ wait_for_user_input() {
     read -n 1 -s -r -p "Press any key to continue..."
 }
 
-backup_local_and_replace_with_remote() {
-    local target_dir=$1
-    local new_dir=$2
-    local backup_dir=$3
-    local success=true
-
-    # Clone from remote
-    echo -e "\n====== Cloning repository in 8 seconds: (Ctrl+C to cancel)"
-    read -t 8 -n 1 -s key
-    if [ -z "$key" ]; then
-        if ! git clone git@github.com:akunito/my_nixos.git "$new_dir"; then
-            echo "Error: Failed to clone repository"
-            success=false
-        fi
-    fi
-
-    if [ "$success" = true ]; then
-        # Remove existing backup directory if it exists
-        if [ -d "$backup_dir" ]; then
-            if ! rm -rf "$backup_dir"; then
-                echo "Error: Failed to remove existing backup directory"
-                rm -rf "$new_dir"
-                success=false
-            fi
-        fi
-        
-        if [ "$success" = true ]; then
-            # Backup original directory
-            if ! mv "$target_dir" "$backup_dir"; then
-                echo "Error: Failed to create backup"
-                # Cleanup cloned directory
-                rm -rf "$new_dir"
-                success=false
-            fi
-        fi
-    fi
-
-    if [ "$success" = true ]; then
-        # Move new directory to target
-        if ! mv "$new_dir" "$target_dir"; then
-            echo "Error: Failed to move new directory to target"
-            # Rollback: restore from backup
-            mv "$backup_dir" "$target_dir"
-            success=false
-        fi
-    fi
-
-    if [ "$success" = false ]; then
-        echo "Operation failed. Rolling back changes..."
-        # Cleanup any leftover directories
-        [ -d "$new_dir" ] && rm -rf "$new_dir"
-        [ -d "$backup_dir" ] && mv "$backup_dir" "$target_dir"
-        return 1
-    fi
-
-    echo -e "\n====== Successfully cloned repository"
-    echo "The local repo was backed up to $backup_dir"
-    echo "The new repo is now in $target_dir"
-    return 0
-}
-
 # ======================================== Execution ======================================== #
 $SUDO_CMD echo -e "\nActivating sudo password for this session"
 
-# Backup local and replace with remote
-# Note that if installing in new system might fail if ssh keys are not set.
-# TODO: Test in new system
-backup_local_and_replace_with_remote "$SCRIPT_DIR" "$SCRIPT_NEW" "$SCRIPT_BAK"
+# Overwrite $SCRIPT_DIR with the last commit of the remote repo
+echo -e "\nOverwriting $SCRIPT_DIR with the last commit of the remote repo in 8 seconds: (Ctrl+C to cancel)"
+read -t 8 -n 1 -s key
+if [ -z "$key" ]; then
+    # Fetch the latest changes from the remote repository
+    git -C $SCRIPT_DIR fetch origin
+    # Reset the local branch to match the remote repository
+    git -C $SCRIPT_DIR reset --hard origin/main
+fi
 
 # Ask user if they want to update the flake.nix
 if [ "$SILENT_MODE" = false ]; then
