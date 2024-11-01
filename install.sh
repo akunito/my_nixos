@@ -3,7 +3,7 @@
 # Automated script to install my dotfiles
 
 # ======================================== Variables ======================================== #
-# Check for silent mode
+# Check if silent mode is enabled by -s or --silent
 SILENT_MODE=false
 for arg in "$@"; do
     if [ "$arg" = "-s" ] || [ "$arg" = "--silent" ]; then
@@ -12,17 +12,48 @@ for arg in "$@"; do
     fi
 done
 
-# if given parameters ($1 = local repo path, $2 = PROFILE on flake.PROFILE.nix)
+# Set SCRIPT_DIR based on first parameter or current directory
 if [ $# -gt 0 ]; then
     SCRIPT_DIR=$1
-    rm $1/flake.nix.bak && mv $1/flake.nix $1/flake.nix.bak
-    cp $1/flake.$2.nix $1/flake.nix
 else
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 fi
 
+# If SCRIPT_DIR was provided, check for PROFILE parameter
+if [ "$1" != "" ]; then
+    if [ "$2" = "" ]; then
+        echo "Error: PROFILE parameter is required when providing a path"
+        echo "Usage: $0 <path> <profile>"
+        echo "Example: $0 /path/to/repo HOME"
+        echo "Where HOME indicates the right flake to use, in this case: flake.HOME.nix"
+        exit 1
+    fi
+    
+    # Backup and replace flake.nix with the selected profile
+    rm "$SCRIPT_DIR/flake.nix.bak" 2>/dev/null
+    mv "$SCRIPT_DIR/flake.nix" "$SCRIPT_DIR/flake.nix.bak"
+    cp "$SCRIPT_DIR/flake.$2.nix" "$SCRIPT_DIR/flake.nix"
+fi
+
+# Directory to download the new repo
 SCRIPT_NEW="$SCRIPT_DIR.NEW"
+# Directory to backup the current local repo
 SCRIPT_BAK="$SCRIPT_DIR.BAK"
+
+# Define sudo command based on mode
+# Usage: $0 [path] [profile] <sudo_password>
+if [ -n "$3" ]; then
+    SUDO_PASS="$3"
+    sudo_exec() {
+        echo "$SUDO_PASS" | sudo -S "$@"
+    }
+    SUDO_CMD="sudo_exec"
+else
+    sudo_exec() {
+        sudo "$@"
+    }
+    SUDO_CMD="sudo_exec"
+fi
 
 # ======================================== Functions ======================================== #
 wait_for_user_input() {
@@ -91,14 +122,10 @@ backup_local_and_replace_with_remote() {
 }
 
 # ======================================== Execution ======================================== #
-wait_for_user_input
-
 # Backup local and replace with remote
 # Note that if installing in new system might fail if ssh keys are not set.
 # TODO: Test in new system
 backup_local_and_replace_with_remote "$SCRIPT_DIR" "$SCRIPT_NEW" "$SCRIPT_BAK"
-
-wait_for_user_input
 
 # Ask user if they want to update the flake.nix
 if [ "$SILENT_MODE" = false ]; then
@@ -125,7 +152,7 @@ echo ""
 
 # Generate hardware config for new system
 echo "Generating hardware config for new system"
-sudo nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+$SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
 
 # Ask user if they want to open hardware-configuration.nix
 if [ "$SILENT_MODE" = false ]; then
@@ -136,7 +163,7 @@ else
 fi
 case $yn in
     [Yy]|[Yy][Ee][Ss])
-        sudo nano $SCRIPT_DIR/system/hardware-configuration.nix
+        $SUDO_CMD nano $SCRIPT_DIR/system/hardware-configuration.nix
         ;;
 esac
 echo ""
@@ -168,7 +195,7 @@ esac
 echo ""
 
 # Create SSH directory for SSH on BOOT
-sudo mkdir -p /etc/secrets/initrd/
+$SUDO_CMD mkdir -p /etc/secrets/initrd/
 # Ask user if they want to generate SSH keys for SSH on BOOT
 if [ "$SILENT_MODE" = false ]; then
     echo ""
@@ -179,14 +206,14 @@ else
 fi
 case $yn in
     [Yy]|[Yy][Ee][Ss])
-        sudo ssh-keygen -t rsa -N "" -f /etc/secrets/initrd/ssh_host_rsa_key
+        $SUDO_CMD ssh-keygen -t rsa -N "" -f /etc/secrets/initrd/ssh_host_rsa_key
         ;;
 esac
 echo ""
 
 # Permissions for files that should be owned by root
 echo "Hardening files..."
-sudo $SCRIPT_DIR/harden.sh $SCRIPT_DIR
+$SUDO_CMD $SCRIPT_DIR/harden.sh $SCRIPT_DIR
 
 # Ask user if they want to clean iptables rules
 if [ "$SILENT_MODE" = false ]; then
@@ -197,7 +224,7 @@ else
 fi
 case $yn in
     [Yy]|[Yy][Ee][Ss])
-        $SCRIPT_DIR/cleaniptables.sh $SCRIPT_DIR
+        $SUDO_CMD $SCRIPT_DIR/cleaniptables.sh $SCRIPT_DIR
         ;;
 esac
 echo ""
@@ -205,12 +232,12 @@ echo ""
 # Rebuild system
 echo ""
 echo "Rebuilding system with flake..."
-sudo nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
+$SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
 
 # Temporarily soften files for Home-Manager
 echo ""
 echo "Softening files for Home-Manager..."
-sudo $SCRIPT_DIR/soften.sh $SCRIPT_DIR
+$SUDO_CMD $SCRIPT_DIR/soften.sh $SCRIPT_DIR
 echo ""
 
 # Install and build home-manager configuration
