@@ -22,7 +22,7 @@ fi
 # If SCRIPT_DIR was provided, check for PROFILE parameter
 if [ "$1" != "" ]; then
     if [ "$2" = "" ]; then
-        echo "Error: PROFILE parameter is required when providing a path"
+        echo -e "\nError: PROFILE parameter is required when providing a path"
         echo "Usage: $0 <path> <profile>"
         echo "Example: $0 /path/to/repo HOME"
         echo "Where HOME indicates the right flake to use, in this case: flake.HOME.nix"
@@ -45,7 +45,7 @@ SCRIPT_BAK="$SCRIPT_DIR.BAK"
 if [ -n "$3" ]; then
     SUDO_PASS="$3"
     sudo_exec() {
-        echo "$SUDO_PASS" | sudo -S "$@"
+        echo "$SUDO_PASS" | sudo -S "$@" 2>/dev/null
     }
     SUDO_CMD="sudo_exec"
 else
@@ -122,6 +122,8 @@ backup_local_and_replace_with_remote() {
 }
 
 # ======================================== Execution ======================================== #
+$SUDO_CMD echo -e "\nActivating sudo password for this session"
+
 # Backup local and replace with remote
 # Note that if installing in new system might fail if ssh keys are not set.
 # TODO: Test in new system
@@ -139,7 +141,6 @@ case $yn in
         $SCRIPT_DIR/update.sh
         ;;
 esac
-echo ""
 
 # Call the Docker handling script
 $SCRIPT_DIR/handle_docker.sh "$SILENT_MODE"
@@ -148,10 +149,9 @@ if [ $? -ne 0 ]; then
     echo "Main script stopped due to user decision in Docker handling script."
     exit 1
 fi
-echo ""
 
 # Generate hardware config for new system
-echo "Generating hardware config for new system"
+echo -e "\nGenerating hardware config for new system"
 $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
 
 # Ask user if they want to open hardware-configuration.nix
@@ -166,7 +166,6 @@ case $yn in
         $SUDO_CMD nano $SCRIPT_DIR/system/hardware-configuration.nix
         ;;
 esac
-echo ""
 
 # Check if UEFI or BIOS
 if [ -d /sys/firmware/efi/efivars ]; then
@@ -192,14 +191,12 @@ case $yn in
         sed -i "s+~/.dotfiles+$SCRIPT_DIR+g" $SCRIPT_DIR/flake.nix
         ;;
 esac
-echo ""
 
 # Create SSH directory for SSH on BOOT
 $SUDO_CMD mkdir -p /etc/secrets/initrd/
 # Ask user if they want to generate SSH keys for SSH on BOOT
 if [ "$SILENT_MODE" = false ]; then
-    echo ""
-    echo "Only for new installations with formatted drives: "
+    echo -e "\nOnly if didn't generate it previously on /etc/secrets/initrd"
     read -p "Do you want to generate SSH keys for SSH on BOOT ? (y/N) " yn
 else
     yn="n"
@@ -209,10 +206,9 @@ case $yn in
         $SUDO_CMD ssh-keygen -t rsa -N "" -f /etc/secrets/initrd/ssh_host_rsa_key
         ;;
 esac
-echo ""
 
 # Permissions for files that should be owned by root
-echo "Hardening files..."
+echo -e "\nHardening files..."
 $SUDO_CMD $SCRIPT_DIR/harden.sh $SCRIPT_DIR
 
 # Ask user if they want to clean iptables rules
@@ -227,21 +223,17 @@ case $yn in
         $SUDO_CMD $SCRIPT_DIR/cleaniptables.sh $SCRIPT_DIR
         ;;
 esac
-echo ""
 
 # Rebuild system
-echo ""
-echo "Rebuilding system with flake..."
+echo -e "\nRebuilding system with flake..."
 $SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
 
 # Temporarily soften files for Home-Manager
-echo ""
-echo "Softening files for Home-Manager..."
+echo -e "\nSoftening files for Home-Manager..."
 $SUDO_CMD $SCRIPT_DIR/soften.sh $SCRIPT_DIR
-echo ""
 
 # Install and build home-manager configuration
-echo "Installing and building home-manager"
+echo -e "\nInstalling and building home-manager"
 nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace
 
 # Ask user if they want to run the maintenance script
@@ -259,4 +251,3 @@ elif [ "$yn" = "y" ]; then
 else
     echo "Skipping maintenance script"
 fi
-echo ""
