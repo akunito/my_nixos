@@ -19,20 +19,15 @@ else
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 fi
 
-# If SCRIPT_DIR was provided, check for PROFILE parameter
-if [ "$1" != "" ]; then
-    if [ "$2" = "" ]; then
-        echo -e "\nError: PROFILE parameter is required when providing a path"
-        echo "Usage: $0 <path> <profile>"
-        echo "Example: $0 /path/to/repo HOME"
-        echo "Where HOME indicates the right flake to use, in this case: flake.HOME.nix"
-        exit 1
-    fi
-    
-    # Backup and replace flake.nix with the selected profile
-    rm "$SCRIPT_DIR/flake.nix.bak" 2>/dev/null
-    mv "$SCRIPT_DIR/flake.nix" "$SCRIPT_DIR/flake.nix.bak"
-    cp "$SCRIPT_DIR/flake.$2.nix" "$SCRIPT_DIR/flake.nix"
+# Set PROFILE based on second parameter, if missing, stop script
+if [ $# -gt 1 ]; then
+    PROFILE=$2
+else
+    echo "Error: PROFILE parameter is required when providing a path"
+    echo "Usage: $0 <path> <profile>"
+    echo "Example: $0 /path/to/repo HOME"
+    echo "Where HOME indicates the right flake to use, in this case: flake.HOME.nix"
+    exit 1
 fi
 
 # Define sudo command based on mode
@@ -55,138 +50,214 @@ wait_for_user_input() {
     read -n 1 -s -r -p "Press any key to continue..."
 }
 
-# ======================================== Execution ======================================== #
-$SUDO_CMD echo -e "\nActivating sudo password for this session"
+git_fetch_and_reset_dotfiles_by_remote() {
+    local SCRIPT_DIR=$1
+    # Overwrite $SCRIPT_DIR with the last commit of the remote repo
+    echo -e "\nOverwriting $SCRIPT_DIR with the last commit of the remote repo in 8 seconds: (Ctrl+C to cancel)"
+    read -t 8 -n 1 -s key
+    if [ -z "$key" ]; then
+        # Fetch the latest changes from the remote repository
+        git -C $SCRIPT_DIR fetch origin
+        # Reset the local branch to match the remote repository
+        git -C $SCRIPT_DIR reset --hard origin/main
+    fi
+}
 
-# Overwrite $SCRIPT_DIR with the last commit of the remote repo
-echo -e "\nOverwriting $SCRIPT_DIR with the last commit of the remote repo in 8 seconds: (Ctrl+C to cancel)"
-read -t 8 -n 1 -s key
-if [ -z "$key" ]; then
-    # Fetch the latest changes from the remote repository
-    git -C $SCRIPT_DIR fetch origin
-    # Reset the local branch to match the remote repository
-    git -C $SCRIPT_DIR reset --hard origin/main
-fi
+# Update flake.nix with the selected profile
+switch_flake_profile_nix() {
+    local SCRIPT_DIR=$1
+    local PROFILE=$2
+    
+    # Backup and replace flake.nix with the selected profile
+    rm "$SCRIPT_DIR/flake.nix.bak" 2>/dev/null
+    mv "$SCRIPT_DIR/flake.nix" "$SCRIPT_DIR/flake.nix.bak"
+    cp "$SCRIPT_DIR/flake.$PROFILE.nix" "$SCRIPT_DIR/flake.nix"
+}
 
-# Ask user if they want to update the flake.nix
-if [ "$SILENT_MODE" = false ]; then
-    echo ""
-    read -p "Do you want to update the flake.nix ? (y/N) " yn
-else
-    yn="y"
-fi
-case $yn in
-    [Yy]|[Yy][Ee][Ss])
-        $SCRIPT_DIR/update.sh
-        ;;
-esac
+update_flake_lock() {
+    local SCRIPT_DIR=$1
+    local SILENT_MODE=$2
+    if [ "$SILENT_MODE" = false ]; then
+        echo ""
+        read -p "Do you want to update flake.lock ? (y/N) " yn
+    else
+        yn="y"
+    fi
+    case $yn in
+        [Yy]|[Yy][Ee][Ss])
+            echo -e "\nUpdating flake.lock..."
+            $SCRIPT_DIR/update.sh
+            ;;
+    esac
+}
 
 # Call the Docker handling script
-$SCRIPT_DIR/handle_docker.sh "$SILENT_MODE"
-# Check if the Docker handling script was stopped by the user
-if [ $? -ne 0 ]; then
-    echo "Main script stopped due to user decision in Docker handling script."
-    exit 1
-fi
+handle_docker() {
+    local SCRIPT_DIR=$1
+    local SILENT_MODE=$2
+    $SCRIPT_DIR/handle_docker.sh "$SILENT_MODE"
+    # Check if the Docker handling script was stopped by the user
+    if [ $? -ne 0 ]; then
+        echo "Main script stopped due to user decision in Docker handling script."
+        exit 1
+    fi
+}
 
 # Generate hardware config for new system
-echo -e "\nGenerating hardware config for new system"
-$SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+generate_hardware_config() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    echo -e "\nGenerating hardware config for new system"
+    $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+}
 
 # Ask user if they want to open hardware-configuration.nix
-if [ "$SILENT_MODE" = false ]; then
-    echo ""
-    read -p "Do you want to open hardware-configuration.nix ? (y/N) " yn
-else
-    yn="n"
-fi
-case $yn in
-    [Yy]|[Yy][Ee][Ss])
-        $SUDO_CMD nano $SCRIPT_DIR/system/hardware-configuration.nix
-        ;;
-esac
+open_hardware_configuration_nix() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    local SILENT_MODE=$3
+    if [ "$SILENT_MODE" = false ]; then
+        echo ""
+        read -p "Do you want to open hardware-configuration.nix ? (y/N) " yn
+    else
+        yn="n"
+    fi
+    case $yn in
+        [Yy]|[Yy][Ee][Ss])
+            $SUDO_CMD nano $SCRIPT_DIR/system/hardware-configuration.nix
+            ;;
+    esac
+}
 
 # Check if UEFI or BIOS
-if [ -d /sys/firmware/efi/efivars ]; then
-    sed -i "0,/bootMode.*=.*\".*\";/s//bootMode = \"uefi\";/" $SCRIPT_DIR/flake.nix
-else
-    sed -i "0,/bootMode.*=.*\".*\";/s//bootMode = \"bios\";/" $SCRIPT_DIR/flake.nix
-    grubDevice=$(findmnt / | awk -F' ' '{ print $2 }' | sed 's/\[.*\]//g' | tail -n 1 | lsblk -no pkname | tail -n 1)
-    sed -i "0,/grubDevice.*=.*\".*\";/s//grubDevice = \"\/dev\/$grubDevice\";/" $SCRIPT_DIR/flake.nix
-fi
+check_boot_mode() {
+    local SCRIPT_DIR=$1
+    if [ -d /sys/firmware/efi/efivars ]; then
+        sed -i "0,/bootMode.*=.*\".*\";/s//bootMode = \"uefi\";/" $SCRIPT_DIR/flake.nix
+    else
+        sed -i "0,/bootMode.*=.*\".*\";/s//bootMode = \"bios\";/" $SCRIPT_DIR/flake.nix
+        grubDevice=$(findmnt / | awk -F' ' '{ print $2 }' | sed 's/\[.*\]//g' | tail -n 1 | lsblk -no pkname | tail -n 1)
+        sed -i "0,/grubDevice.*=.*\".*\";/s//grubDevice = \"\/dev\/$grubDevice\";/" $SCRIPT_DIR/flake.nix
+    fi
+}
 
-# Ask user if they want to replace user and email with the current user's
-if [ "$SILENT_MODE" = false ]; then
-    echo ""
-    read -p "Do you want to replace user and mail by the current user on flake.nix ? (y/N) " yn
-else
-    yn="n"
-fi
-case $yn in
-    [Yy]|[Yy][Ee][Ss])
-        sed -i "s/akunito\([^@]\)/$(whoami)\1/" $SCRIPT_DIR/flake.nix
-        sed -i "s/akunito\([^@]\)/$(getent passwd $(whoami) | cut -d ':' -f 5 | cut -d ',' -f 1)\1/" $SCRIPT_DIR/flake.nix
-        sed -i "s/diego88aku@gmail.com//" $SCRIPT_DIR/flake.nix
-        sed -i "s+~/.dotfiles+$SCRIPT_DIR+g" $SCRIPT_DIR/flake.nix
-        ;;
-esac
-
-# Create SSH directory for SSH on BOOT
-$SUDO_CMD mkdir -p /etc/secrets/initrd/
-# Ask user if they want to generate SSH keys for SSH on BOOT
-if [ "$SILENT_MODE" = false ]; then
-    echo -e "\nOnly if didn't generate it previously on /etc/secrets/initrd"
-    read -p "Do you want to generate SSH keys for SSH on BOOT ? (y/N) " yn
-else
-    yn="n"
-fi
-case $yn in
-    [Yy]|[Yy][Ee][Ss])
-        $SUDO_CMD ssh-keygen -t rsa -N "" -f /etc/secrets/initrd/ssh_host_rsa_key
-        ;;
-esac
+# Generate SSH keys for SSH on BOOT
+# SSH on boot is used to unlock encrypted drives by SSH
+generate_root_ssh_keys_for_ssh_server_on_boot() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    local SILENT_MODE=$3
+    $SUDO_CMD mkdir -p /etc/secrets/initrd/
+    # Ask user if they want to generate SSH keys for SSH on BOOT
+    if [ "$SILENT_MODE" = false ]; then
+        echo -e "\nOnly if didn't generate it previously on /etc/secrets/initrd"
+        read -p "Do you want to generate SSH keys for SSH on BOOT ? (y/N) " yn
+    else
+        yn="n"
+    fi
+    case $yn in
+        [Yy]|[Yy][Ee][Ss])
+            $SUDO_CMD ssh-keygen -t rsa -N "" -f /etc/secrets/initrd/ssh_host_rsa_key
+            ;;
+    esac
+}
 
 # Permissions for files that should be owned by root
-echo -e "\nHardening files..."
-$SUDO_CMD $SCRIPT_DIR/harden.sh $SCRIPT_DIR
+hardening_files() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    echo -e "\nHardening files..."
+    $SUDO_CMD $SCRIPT_DIR/harden.sh $SCRIPT_DIR
+}
 
 # Ask user if they want to clean iptables rules
-if [ "$SILENT_MODE" = false ]; then
-    echo ""
-    read -p "Do you want to clean iptables rules ? (y/N) " yn
-else
-    yn="n"
-fi
-case $yn in
-    [Yy]|[Yy][Ee][Ss])
-        $SUDO_CMD $SCRIPT_DIR/cleaniptables.sh $SCRIPT_DIR
-        ;;
-esac
+clean_iptables_rules() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    local SILENT_MODE=$3
+    if [ "$SILENT_MODE" = false ]; then
+        echo ""
+        read -p "Do you want to clean iptables rules ? (y/N) " yn
+    else
+        yn="n"
+    fi
+    case $yn in
+        [Yy]|[Yy][Ee][Ss])
+            $SUDO_CMD $SCRIPT_DIR/cleaniptables.sh $SCRIPT_DIR
+            ;;
+    esac
+}
+
+# Temporarily soften files for Home-Manager
+soften_files_for_home_manager() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    echo -e "\nSoftening files for Home-Manager..."
+    $SUDO_CMD $SCRIPT_DIR/soften.sh $SCRIPT_DIR
+}
+
+# Ask user if they want to run the maintenance script
+maintenance_script() {
+    local SCRIPT_DIR=$1
+    local SILENT_MODE=$2
+    if [ "$SILENT_MODE" = false ]; then
+        echo ""
+        read -p "Do you want to run the maintenance script ? (y/N) " yn
+    else
+        yn="n"
+    fi
+
+    if [ "$SILENT_MODE" = true ]; then
+        $SCRIPT_DIR/maintenance.sh -s
+    elif [ "$yn" = "y" ]; then
+        $SCRIPT_DIR/maintenance.sh
+    else
+        echo "Skipping maintenance script"
+    fi
+}
+
+# ======================================== Main Execution ======================================== #
+$SUDO_CMD echo -e "\nActivating sudo password for this session"
+
+# Update dotfiles to the last commit of the remote repository
+# Or clone the repository if it doesn't exist
+git_fetch_and_reset_dotfiles_by_remote $SCRIPT_DIR
+
+# Switch flake profile to the chosen one flake.<PROFILE>.nix
+switch_flake_profile_nix $SCRIPT_DIR $PROFILE
+
+# Generate SSH keys for SSH on BOOT
+# SSH on boot is used to unlock encrypted drives by SSH
+generate_root_ssh_keys_for_ssh_server_on_boot $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
+
+# Update flake.lock
+update_flake_lock $SCRIPT_DIR $SILENT_MODE
+
+# Generate hardware config and check boot mode
+generate_hardware_config $SCRIPT_DIR $SUDO_CMD
+check_boot_mode $SCRIPT_DIR
+open_hardware_configuration_nix $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
+
+# Clean iptables rules if custom rules are set
+clean_iptables_rules $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
+
+# Handle Docker containers
+handle_docker $SCRIPT_DIR $SILENT_MODE
+
+# Hardening files to Rebuild system
+hardening_files $SCRIPT_DIR $SUDO_CMD
 
 # Rebuild system
 echo -e "\nRebuilding system with flake..."
 $SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
 
 # Temporarily soften files for Home-Manager
-echo -e "\nSoftening files for Home-Manager..."
-$SUDO_CMD $SCRIPT_DIR/soften.sh $SCRIPT_DIR
+soften_files_for_home_manager $SCRIPT_DIR $SUDO_CMD
 
 # Install and build home-manager configuration
 echo -e "\nInstalling and building home-manager"
 nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace
 
-# Ask user if they want to run the maintenance script
-if [ "$SILENT_MODE" = false ]; then
-    echo ""
-    read -p "Do you want to run the maintenance script ? (y/N) " yn
-else
-    yn="n"
-fi
+# Run maintenance script
+maintenance_script $SCRIPT_DIR $SILENT_MODE
 
-if [ "$SILENT_MODE" = true ]; then
-    $SCRIPT_DIR/maintenance.sh -s
-elif [ "$yn" = "y" ]; then
-    $SCRIPT_DIR/maintenance.sh
-else
-    echo "Skipping maintenance script"
-fi
