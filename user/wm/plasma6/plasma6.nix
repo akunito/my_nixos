@@ -13,45 +13,74 @@
   home.activation = {
       createDirectoryMyScripts = ''
       #!/bin/sh
+
+      # Color variables
+      RED='\033[0;31m'
+      GREEN='\033[0;32m'
+      YELLOW='\033[0;33m'
+      BLUE='\033[0;34m'
+      NC='\033[0m' # No Color
+
       echo "=================================== Plasma dotfiles manager ================================"
       HOME_PATH="/home/''+userSettings.username+''"
-      USER_PATH="''+userSettings.dotfilesDir+''/user/wm/plasma6/''+userSettings.username+''"
-      SOURCE_PATH="''+userSettings.dotfilesDir+''/user/wm/plasma6/source"
+      DOTFILES_DIR="''+userSettings.dotfilesDir+''"
+      USER_PATH="/home/''+userSettings.username+''/.dotfiles-plasma-config/userDotfiles"
+      SOURCE_PATH="/home/''+userSettings.username+''/.dotfiles-plasma-config/source"
       mkdir -p $SOURCE_PATH
       mkdir -p $USER_PATH
 
-      echo "Home path: ----> $HOME_PATH"
-      echo "User path (It should contain the Plasma dotfiles that you want to use. The symlinks from your HOME will point here)"
-      echo "--> $USER_PATH"
-      echo "Source path (It's a transition directory that contain Plasma dotfiles. If you import your current Plasma dotfiles from HOME, will be backed up here)"
-      echo "--> $SOURCE_PATH"
+      echo -e "\n''${BLUE}Home path: ----> $HOME_PATH''${NC}"
+      echo -e "\n''${BLUE}User path (It should contain the Plasma dotfiles that you want to use. The symlinks from your HOME will point here)''${NC}"
+      echo -e "''${GREEN}--> $USER_PATH''${NC}"
+      echo -e "\n''${BLUE}Source path (It's a transition directory that contains Plasma dotfiles. If you export your current Plasma dotfiles from HOME, will be backed up here)''${NC}"
+      echo -e "''${GREEN}--> $SOURCE_PATH''${NC}"
 
-      # Ask user if Backup is needed
-      read -p "Do you want to backup your Plasma settings dotfiles to $SOURCE_PATH ? (y/N) (10s timeout) " -t 10 yn
-      case $yn in
-          [Yy]|[Yy][Ee][Ss])
-              echo "=== Cleaning destination directory $SOURCE_PATH excluding .sh files"
-              find $SOURCE_PATH -mindepth 1 ! -name "*.sh" -exec rm -rf {} +
+      # read -n 1 -s -r -p "Press any key to continue..."
 
-              echo "=== Importing your Plasma settings from HOME to $SOURCE_PATH"
-              $SOURCE_PATH/_import_homeDotfiles.sh $SOURCE_PATH
+      echo -e "\n\n''${BLUE}Export your CURRENT Plasma settings to $SOURCE_PATH''${NC}"
+      echo -e "''${YELLOW}(Ignore if already exported !.)''${NC}"
+      echo -e "                            ''${RED}DON'T EXPORT IT TWICE !!!!!''${NC}"
 
-              echo "=== Cleaning the User directory $USER_PATH, excluding .sh files"
-              find $USER_PATH -mindepth 1 ! -name "*.sh" -exec rm -rf {} +
+      # TODO: Improve this to don't break in any case !
+      
+      while true; do
+          echo -e "========================== Do you want to Export them? (y/N) (15s timeout)"
+          read -p "" -t 15 yn || true
+          case $yn in
+              [Yy]|[Yy][Ee][Ss])
+                  echo -e "''${GREEN}yes''${NC}"
 
-              echo "=== Copying your Dotfiles to $USER_PATH"
-              cp -r $SOURCE_PATH/* $USER_PATH
-              ;;
-          "")
-              ;;
-          *)
-              ;;
-      esac
+                  echo -e "\n''${GREEN}=== Backing up your current $SOURCE_PATH to \"''${SOURCE_PATH}.BAK\"''${NC}"
+                  rm -rf $SOURCE_PATH.BAK && mkdir -p $SOURCE_PATH.BAK
+                  cp -r $SOURCE_PATH $SOURCE_PATH.BAK/
 
-      echo "\n============= Removing files on HOME to create symlinks"
-      ~/.dotfiles/user/wm/plasma6/source/_remove_homeDotfiles.sh
+                  echo -e "\n''${BLUE}=== Clearing Source directory $SOURCE_PATH''${NC}"
+                  rm -rf $SOURCE_PATH && mkdir -p $SOURCE_PATH
 
-      echo "\n============= Creating symlinks to directories"
+                  echo -e "\n''${BLUE}=== Exporting your Plasma settings from HOME to $SOURCE_PATH''${NC}"
+                  $DOTFILES_DIR/user/wm/plasma6/_export_homeDotfiles.sh $SOURCE_PATH
+
+                  echo -e "\n''${BLUE}=== Clearing User directory $USER_PATH''${NC}"
+                  rm -rf $USER_PATH && mkdir -p $USER_PATH
+
+                  echo -e "\n''${BLUE}=== Copying your Dotfiles to $USER_PATH''${NC}"
+                  cp -r $SOURCE_PATH $USER_PATH
+                  break
+                  ;;
+              [Nn]|[Nn][Oo]|"")
+                  echo -e "''${RED}no''${NC}"
+                  break
+                  ;;
+              *)
+                  echo -e "''${RED}Invalid option. Please enter y/Y for yes or n/N for no''${NC}"
+                  ;;
+          esac
+      done
+
+      echo -e "\n''${BLUE}============= Removing Plasma files at HOME to create symlinks''${NC}"
+      $DOTFILES_DIR/user/wm/plasma6/_remove_homeDotfiles.sh
+
+      echo -e "\n''${BLUE}============= Creating symlinks to directories''${NC}"
       # Directories
       ln -sf $USER_PATH/autostart $HOME_PATH/.config/autostart
       ln -sf $USER_PATH/kde.org $HOME_PATH/.config/kde.org
@@ -62,7 +91,7 @@
       ln -sf $USER_PATH/share/plasmashell $HOME_PATH/.local/plasmashell
       ln -sf $USER_PATH/share/systemsettings $HOME_PATH/.local/systemsettings
       
-      echo "\n============= Creating symlinks to files"
+      echo -e "\n''${BLUE}============= Creating symlinks to files''${NC}"
       # Files
       ln -sf $USER_PATH/plasma-org.kde.plasma.desktop-appletsrc $HOME_PATH/.config/plasma-org.kde.plasma.desktop-appletsrc
       ln -sf $USER_PATH/kdeglobals $HOME_PATH/.config/kdeglobals
@@ -98,7 +127,7 @@
       ln -sf $USER_PATH/share/aurorae/themes $HOME_PATH/.local/aurorae
       ln -sf $USER_PATH/share/color-schemes $HOME_PATH/.local/color-schemes
 
-      echo "\n============= End\n"
+      echo -e "\n''${BLUE}============= End''${NC}"
       '';
     };
 }

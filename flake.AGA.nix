@@ -39,6 +39,13 @@
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
+        openLUKS = false; # drives.nix
+        disk1_name = "DATA_4TB";
+        disk1_path = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
+        disk2_name = "TimeShift";
+        disk2_path = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
+        disk3_name = "Machines";
+        disk3_path = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
 
         # SSH System settings for BOOT
         authorizedKeys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" ];
@@ -144,7 +151,7 @@
           xournalpp
           vlc
           candy-icons
-          qbittorrent
+          # qbittorrent
           calibre
           
           libreoffice
@@ -180,20 +187,18 @@
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      # pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-      #         then
-      #           pkgs-stable
-      #         else
-      #           (import nixpkgs-patched {
-      #             system = systemSettings.system;
-      #             config = {
-      #               allowUnfree = true;
-      #               allowUnfreePredicate = (_: true);
-      #             };
-      #             # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
-      #           }));
-      pkgs = pkgs-stable; # Overriding pkgs logic to force stable
-      # if you use UNSTABLE check 'nix.package' value in configuration.nix
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
+              then
+                pkgs-stable
+              else
+                (import nixpkgs-patched {
+                  system = systemSettings.system;
+                  config = {
+                    allowUnfree = true;
+                    allowUnfreePredicate = (_: true);
+                  };
+                  # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
+                }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
         system = systemSettings.system;
@@ -218,7 +223,7 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
              then
                inputs.nixpkgs-stable.lib
              else
