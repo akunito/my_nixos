@@ -28,7 +28,7 @@
               ../../user/hardware/bluetooth.nix # Bluetooth
             ];
 
-  home.stateVersion = "24.05"; # Please read the comment before changing.
+  home.stateVersion = userSettings.homeStateVersion; # Please read the comment before changing.
 
   home.packages = userSettings.homePackages;
 

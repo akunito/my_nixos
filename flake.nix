@@ -78,28 +78,29 @@
         power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
 
         # System packages
-        systemPackages = with pkgs; [
-          vim
-          wget
-          nmap # net tool for port scanning
-          zsh
-          git
-          cryptsetup
-          home-manager
-          wpa_supplicant # for wifi
-          btop
-          fzf
-          tldr
-          rsync
-          # atuin
-          syncthing
-          # pciutils # install if you need some commands like lspci
+        systemPackages = [
+          pkgs.vim
+          pkgs.wget
+          pkgs.nmap # net tool for port scanning
+          pkgs.zsh
+          pkgs.git
+          pkgs.cryptsetup
+          pkgs.home-manager
+          pkgs.wpa_supplicant # for wifi
+          pkgs.btop
+          pkgs.fzf
+          pkgs.tldr
+          pkgs.rsync
+          # pkgs.atuin
+          # pkgs.syncthing
+          # pkgs.pciutils # install if you need some commands like lspci
 
-          vivaldi # requires patch to be imported + qt5.qtbase
-          qt5.qtbase
+          pkgs.vivaldi # requires patch to be imported + qt5.qtbase
+          pkgs.qt5.qtbase
 
-          pcloud # requires patch to be imported
+          pkgs.pcloud # requires patch to be imported
         ];
+        systemStateVersion = "24.05";
 
         # Auto update Settings
         autoUpdate = true; # for enabling automatic updates
@@ -143,22 +144,22 @@
 
           # vivaldi # temporary moved to configuration.nix for issue with plasma 6
           # qt5.qtbase
-          pkgs.ungoogled-chromium
+          pkgs-unstable.ungoogled-chromium
 
-          # pkgs.vscode
-          pkgs.obsidian
-          pkgs.spotify
-          # pkgs.xournalpp
-          pkgs.vlc
-          pkgs.candy-icons
-          # pkgs.qbittorrent
+          # pkgs-unstable.vscode
+          pkgs-unstable.obsidian
+          pkgs-unstable.spotify
+          # pkgs-unstable.xournalpp
+          pkgs-unstable.vlc
+          pkgs-unstable.candy-icons
           pkgs.calibre
           
-          pkgs.libreoffice
-          pkgs.telegram-desktop
+          pkgs-unstable.libreoffice
+          pkgs-unstable.telegram-desktop
 
-          # realvnc-vnc-viewer
+          pkgs-unstable.qbittorrent
         ];
+        homeStateVersion = "24.05";
 
         editor = "nano"; # Default editor;
         # editor spawning translator
@@ -187,7 +188,7 @@
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal"))
               then
                 pkgs-stable
               else
@@ -208,7 +209,7 @@
         };
       };
 
-      pkgs-unstable = import inputs.nixpkgs {
+      pkgs-unstable = import inputs.nixpkgs { 
         system = systemSettings.system;
         config = {
           allowUnfree = true;

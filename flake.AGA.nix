@@ -92,7 +92,7 @@
           pkgs.tldr
           pkgs.rsync
           # pkgs.atuin
-          pkgs.syncthing
+          # pkgs.syncthing
           # pkgs.pciutils # install if you need some commands like lspci
 
           pkgs.vivaldi # requires patch to be imported + qt5.qtbase
@@ -100,6 +100,7 @@
 
           pkgs.pcloud # requires patch to be imported
         ];
+        systemStateVersion = "24.05";
 
         # Auto update Settings
         autoUpdate = true; # for enabling automatic updates
@@ -143,21 +144,22 @@
 
           # vivaldi # temporary moved to configuration.nix for issue with plasma 6
           # qt5.qtbase
-          pkgs.ungoogled-chromium
+          pkgs-unstable.ungoogled-chromium
 
-          # pkgs.vscode
-          pkgs.obsidian
-          pkgs.spotify
-          # pkgs.xournalpp
-          pkgs.vlc
-          pkgs.candy-icons
+          # pkgs-unstable.vscode
+          pkgs-unstable.obsidian
+          pkgs-unstable.spotify
+          # pkgs-unstable.xournalpp
+          pkgs-unstable.vlc
+          pkgs-unstable.candy-icons
           pkgs.calibre
           
-          pkgs.libreoffice
-          pkgs.telegram-desktop
+          pkgs-unstable.libreoffice
+          pkgs-unstable.telegram-desktop
 
-          pkgs.qbittorrent
+          pkgs-unstable.qbittorrent
         ];
+        homeStateVersion = "24.05";
 
         editor = "nano"; # Default editor;
         # editor spawning translator
@@ -186,7 +188,7 @@
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal"))
               then
                 pkgs-stable
               else
@@ -230,7 +232,7 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab")) # PERSONAL AS WELL
+      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
              then
                inputs.nixpkgs-stable.lib
              else

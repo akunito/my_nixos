@@ -86,7 +86,7 @@
   programs.zsh.enable = true;
 
   # It is ok to leave this unchanged for compatibility purposes
-  system.stateVersion = "24.05";
+  system.stateVersion = systemSettings.systemStateVersion;
 
   # news.display = "silent";
 

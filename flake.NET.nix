@@ -96,6 +96,7 @@
           kitty # check if should be removed on labs
           home-manager
         ];
+        systemStateVersion = "24.05";
 
         # Auto update Settings
         autoUpdate = true; # for enabling automatic updates
@@ -136,6 +137,7 @@
           zsh
           git
         ];
+        homeStateVersion = "24.05";
 
         editor = "nano"; # Default editor;
         # editor spawning translator
@@ -178,6 +180,14 @@
                 }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
+        system = systemSettings.system;
+        config = {
+          allowUnfree = true;
+          allowUnfreePredicate = (_: true);
+        };
+      };
+
+      pkgs-unstable = import inputs.nixpkgs { 
         system = systemSettings.system;
         config = {
           allowUnfree = true;
