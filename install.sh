@@ -45,6 +45,54 @@ else
     SUDO_CMD="sudo_exec"
 fi
 
+# ======================================== Log functions ======================================== #
+# TODO: move it to different file for DRY
+
+
+LOG_FILE="$SCRIPT_DIR/install.log"
+MAX_LOG_FILES=3
+
+if [ ! -f "$LOG_FILE" ]; then
+    touch "$LOG_FILE"
+    echo "Log file created: $LOG_FILE"
+else
+    echo "Log file already exists: $LOG_FILE"
+fi
+
+
+
+rotate_log() {
+    max_size=$((10 * 1024 * 1024)) 
+    if [ -f "$LOG_FILE" ] && [ $(stat -c%s "$LOG_FILE") -gt $max_size ]; then
+        mv "$LOG_FILE" "${LOG_FILE}_$(date '+%Y-%m-%d_%H-%M-%S').old"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Log file rotated. A new log file has been created." >> "$LOG_FILE"
+        
+        log_count=$(ls -1 "${LOG_FILE}_*.old" 2>/dev/null | wc -l)
+        if [ "$log_count" -gt "$MAX_LOG_FILES" ]; then
+            ls -1t "${LOG_FILE}_*.old" | tail -n +$((MAX_LOG_FILES + 1)) | xargs rm -f
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Old log files cleaned up. Kept only the last $MAX_LOG_FILES files." >> "$LOG_FILE"
+        fi
+    fi
+}
+
+log_task() {
+    local task="$1"
+    local output
+
+    shift
+    output=$("$@" 2>&1)
+
+    while IFS= read -r line; do
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] $task | $line" | tee -a "$LOG_FILE"
+    done <<< "$output"
+
+    if [ $? -ne 0 ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $task failed." | tee -a "$LOG_FILE"
+    fi
+}
+
+rotate_log
+
 # ======================================== Functions ======================================== #
 wait_for_user_input() {
     read -n 1 -s -r -p "Press any key to continue..."
