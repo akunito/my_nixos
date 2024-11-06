@@ -88,6 +88,7 @@
           cryptsetup
           gocryptfs
           wireguard-tools
+          traceroute
           
           btop
           fzf

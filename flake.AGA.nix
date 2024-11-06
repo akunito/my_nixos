@@ -78,27 +78,27 @@
         power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
 
         # System packages
-        systemPackages = with pkgs; [
-          vim
-          wget
-          nmap # net tool for port scanning
-          zsh
-          git
-          cryptsetup
-          home-manager
-          wpa_supplicant # for wifi
-          btop
-          fzf
-          tldr
-          rsync
-          # atuin
-          syncthing
-          # pciutils # install if you need some commands like lspci
+        systemPackages = [
+          pkgs.vim
+          pkgs.wget
+          pkgs.nmap # net tool for port scanning
+          pkgs.zsh
+          pkgs.git
+          pkgs.cryptsetup
+          pkgs.home-manager
+          pkgs.wpa_supplicant # for wifi
+          pkgs.btop
+          pkgs.fzf
+          pkgs.tldr
+          pkgs.rsync
+          # pkgs.atuin
+          pkgs.syncthing
+          # pkgs.pciutils # install if you need some commands like lspci
 
-          vivaldi # requires patch to be imported + qt5.qtbase
-          qt5.qtbase
+          pkgs.vivaldi # requires patch to be imported + qt5.qtbase
+          pkgs.qt5.qtbase
 
-          pcloud # requires patch to be imported
+          pkgs.pcloud # requires patch to be imported
         ];
 
         # Auto update Settings
@@ -135,29 +135,28 @@
         fontPkg = pkgs.intel-one-mono; # Font package
 
         # Home-Manager packages
-        homePackages = with pkgs; [
-          zsh
-          kitty
-          git
-          syncthing
+        homePackages = [
+          pkgs.zsh
+          pkgs.kitty
+          pkgs.git
+          pkgs.syncthing
 
           # vivaldi # temporary moved to configuration.nix for issue with plasma 6
           # qt5.qtbase
-          ungoogled-chromium
+          pkgs.ungoogled-chromium
 
-          vscode
-          obsidian
-          spotify
-          xournalpp
-          vlc
-          candy-icons
-          # qbittorrent
-          calibre
+          # pkgs.vscode
+          pkgs.obsidian
+          pkgs.spotify
+          # pkgs.xournalpp
+          pkgs.vlc
+          pkgs.candy-icons
+          pkgs.calibre
           
-          libreoffice
-          telegram-desktop
+          pkgs.libreoffice
+          pkgs.telegram-desktop
 
-          # realvnc-vnc-viewer
+          pkgs.qbittorrent
         ];
 
         editor = "nano"; # Default editor;
@@ -187,7 +186,7 @@
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
               then
                 pkgs-stable
               else
@@ -201,6 +200,14 @@
                 }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
+        system = systemSettings.system;
+        config = {
+          allowUnfree = true;
+          allowUnfreePredicate = (_: true);
+        };
+      };
+
+      pkgs-unstable = import inputs.nixpkgs { 
         system = systemSettings.system;
         config = {
           allowUnfree = true;
@@ -223,7 +230,7 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
+      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab")) # PERSONAL AS WELL
              then
                inputs.nixpkgs-stable.lib
              else

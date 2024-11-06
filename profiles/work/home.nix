@@ -1,4 +1,4 @@
-{ config, pkgs, pkgs-kdenlive, userSettings, systemSettings, lib, ... }:
+{ config, pkgs, pkgs-kdenlive, pkgs-unstable, userSettings, systemSettings, lib, ... }:
 
 {
   # Home Manager needs a bit of information about you and the paths it should
