@@ -281,6 +281,9 @@ generate_root_ssh_keys_for_ssh_server_on_boot $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 # Update flake.lock
 update_flake_lock $SCRIPT_DIR $SILENT_MODE
 
+# Handle Docker containers (generate_hardware_config must be executed after this !)
+handle_docker $SCRIPT_DIR $SILENT_MODE
+
 # Generate hardware config and check boot mode
 generate_hardware_config $SCRIPT_DIR $SUDO_CMD
 check_boot_mode $SCRIPT_DIR
@@ -288,9 +291,6 @@ open_hardware_configuration_nix $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 
 # Clean iptables rules if custom rules are set
 clean_iptables_rules $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
-
-# Handle Docker containers
-handle_docker $SCRIPT_DIR $SILENT_MODE
 
 # Hardening files to Rebuild system
 hardening_files $SCRIPT_DIR $SUDO_CMD
@@ -309,3 +309,5 @@ nix run home-manager/master --extra-experimental-features nix-command --extra-ex
 # Run maintenance script
 maintenance_script $SCRIPT_DIR $SILENT_MODE
 
+echo -e "\nInstallation script finished"
+echo -e "Remember Containers have been stopped. You might need to set up your Services in case you had."
