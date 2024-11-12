@@ -89,6 +89,7 @@
           gocryptfs
           wireguard-tools
           traceroute
+          openssl
           
           btop
           fzf
