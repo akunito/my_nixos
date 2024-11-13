@@ -15,7 +15,7 @@
       ../../system/hardware/printing.nix # Printer
       ../../system/hardware/bluetooth.nix # Bluetooth config
       (./. + "../../../system/wm"+("/"+userSettings.wm)+".nix") # My window manager
-      #../../system/app/flatpak.nix
+      ../../system/app/flatpak.nix
       ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
       ../../system/security/sudo.nix # Doas instead of sudo
@@ -34,7 +34,7 @@
         inherit lib; })
       ../../system/security/autoupgrade.nix # auto upgrade
       # Patches
-      ../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
+      #../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
       ../../patches/vivaldifixes.nix # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148 
     ];
 
@@ -113,6 +113,8 @@
       pkgs.xdg-desktop-portal-gtk
     ];
   };
+
+  security.pki.certificateFiles = systemSettings.pkiCertificates;
 
   # It is ok to leave this unchanged for compatibility purposes
   system.stateVersion = systemSettings.systemStateVersion;

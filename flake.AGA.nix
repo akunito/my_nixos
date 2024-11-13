@@ -22,6 +22,7 @@
         DOASnoPass = false; # for enabling doas without password
         wrappSudoToDoas = true; # for wrapping sudo with doas
         sudoNOPASSWD = false; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
+        pkiCertificates = [ /home/aga/.certificates/server.cert.pem /home/aga/.certificates/ca.cert.pem ];
 
         # Network
         networkManager = true;
@@ -98,7 +99,7 @@
           pkgs.vivaldi # requires patch to be imported + qt5.qtbase
           pkgs.qt5.qtbase
 
-          pkgs.pcloud # requires patch to be imported
+          #pkgs.pcloud # requires patch to be imported
         ];
         systemStateVersion = "24.05";
 
@@ -158,6 +159,7 @@
           pkgs-unstable.telegram-desktop
 
           pkgs-unstable.qbittorrent
+          pkgs-unstable.nextcloud-client
         ];
         homeStateVersion = "24.05";
 
