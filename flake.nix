@@ -1,5 +1,5 @@
 {
-  description = "Flake of Aga on T580";
+  description = "Flake of Akunito HomeLab on Desktop";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,14 +7,14 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosaga"; # hostname
-        profile = "personal"; # select a profile defined from my profiles directory
+        hostname = "nixosLabaku"; # hostname
+        profile = "homelab"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
-        gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         
         # Security
         doasEnable = true; # for enabling doas
@@ -22,90 +22,89 @@
         DOASnoPass = false; # for enabling doas without password
         wrappSudoToDoas = true; # for wrapping sudo with doas
         sudoNOPASSWD = false; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
-        pkiCertificates = [ /home/aga/.certificates/server.cert.pem /home/aga/.certificates/ca.cert.pem ];
+        pkiCertificates = [ /home/akunito/myCA/akunito.org.es/certs/ca.cert.pem /home/akunito/myCA/akunito.org.es/certs/client-cert.p12 ];
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.77"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.78"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.0.80"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.81"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
         nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
-        wifiPowerSave = true; # for enabling wifi power save for laptops
+        wifiPowerSave = false; # for enabling wifi power save for laptops
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ ];
-        allowedUDPPorts = [ ];
+        allowedTCPPorts = [ 51821 443 80 2321 8384 22000 ];
+        allowedUDPPorts = [ 51821 443 80 8384 22000 ];
 
         # LUKS drives
-        bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+        bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
-        openLUKS = false; # drives.nix
+        openLUKS = true; # drives.nix
         disk1_name = "DATA_4TB";
         disk1_path = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
         disk2_name = "TimeShift";
         disk2_path = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
         disk3_name = "Machines";
         disk3_path = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
-
+        
         # SSH System settings for BOOT
         authorizedKeys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" ];
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
-        
+
         # Printer
-        servicePrinting = true; 
-        networkPrinters = true;
+        servicePrinting = false; 
+        networkPrinters = false;
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
-        TLP_ENABLE = false; # Disable for laptops if you want granular power management with profiles
-        # TLP Power management
+        TLP_ENABLE = true; # Disable for laptops if you want granular power management with profiles
         PROFILE_ON_BAT = "performance";
-        PROFILE_ON_AC = "low-power";
+        PROFILE_ON_AC = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
-        WIFI_PWR_ON_BAT = "on";
+        WIFI_PWR_ON_BAT = "off";
         INTEL_GPU_MIN_FREQ_ON_AC = 300; # sudo tlp-stat -g
         INTEL_GPU_MIN_FREQ_ON_BAT = 300;
         # logind settings
         LOGIND_ENABLE = false; # Disable for laptops if you want granular power management with profiles
-        lidSwitch = "suspend"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
+        lidSwitch = "ignore"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
         lidSwitchExternalPower = "ignore"; # when the lid is closed but connected to power 
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
-        powerKey = "suspend";  # when pressing power key, do one of above
+        powerKey = "ignore";  # when pressing power key, do one of above
         # More Power settings
-        powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
-        power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
+        powerManagement_ENABLE = false; # Enable power management profiles for desktop systems <<<
+        power-profiles-daemon_ENABLE = false; # Enable power management profiles for desktop systems <<<
 
         # System packages
-        systemPackages = [
-          pkgs.vim
-          pkgs.wget
-          pkgs.nmap # net tool for port scanning
-          pkgs.zsh
-          pkgs.git
-          pkgs.cryptsetup
-          pkgs.home-manager
-          pkgs.wpa_supplicant # for wifi
-          pkgs.btop
-          pkgs.fzf
-          pkgs.tldr
-          pkgs.rsync
-          # pkgs.atuin
-          # pkgs.syncthing
-          # pkgs.pciutils # install if you need some commands like lspci
+        systemPackages = with pkgs; [
+          vim
+          wget
+          zsh
+          git
+          rclone
+          rdiff-backup
+          rsnapshot
+          cryptsetup
+          gocryptfs
+          wireguard-tools
+          traceroute
+          openssl
+          
+          btop
+          fzf
+          # tldr
+          atuin
 
-          pkgs.vivaldi # requires patch to be imported + qt5.qtbase
-          pkgs.qt5.qtbase
-
-          pkgs.pcloud # requires patch to be imported
+          kitty # check if should be removed on labs
+          home-manager
         ];
         systemStateVersion = "24.05";
 
         # Auto update Settings
-        autoUpdate = true; # for enabling automatic updates
-        autoUpdate_dates = "22:30";
+        autoUpdate = false; # for enabling automatic updates
+        autoUpdate_dates = "8:00";
         autoUpdate_randomizedDelaySec = "45min";
         HomeAutoUpdate = false; # enable home manager auto update
         HomeAutoUpdate_frecuency = "weekly"; # enable home manager auto update
@@ -113,18 +112,18 @@
 
       # ----- USER SETTINGS ----- #
       userSettings = rec {
-        username = "aga"; # username
-        name = "aga"; # name/identifier
+        username = "akunito"; # username
+        name = "akunito"; # name/identifier
         email = ""; # email (used for certain configurations)
-        dotfilesDir = "/home/aga/.dotfiles"; # absolute path of the local repo
-        extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
+        dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
+        extraGroups = [ "networkmanager" "wheel" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if (wm == "hyprland") then "wayland" else "x11";
 
-        dockerEnable = false; # for enabling docker
+        dockerEnable = true; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization
 
         gitUser = "akunito"; # git username
@@ -137,32 +136,13 @@
         fontPkg = pkgs.intel-one-mono; # Font package
 
         # Home-Manager packages
-        homePackages = [
-          pkgs.zsh
-          pkgs.kitty
-          pkgs.git
-          pkgs.syncthing
-
-          # vivaldi # temporary moved to configuration.nix for issue with plasma 6
-          # qt5.qtbase
-          pkgs-unstable.ungoogled-chromium
-
-          # pkgs-unstable.vscode
-          pkgs-unstable.obsidian
-          pkgs-unstable.spotify
-          # pkgs-unstable.xournalpp
-          pkgs-unstable.vlc
-          pkgs-unstable.candy-icons
-          pkgs.calibre
-          
-          pkgs-unstable.libreoffice
-          pkgs-unstable.telegram-desktop
-
-          pkgs-unstable.qbittorrent
-          pkgs-unstable.nextcloud-client
+        homePackages = with pkgs; [
+          # Core
+          zsh
+          git
         ];
         homeStateVersion = "24.05";
-
+        
         editor = "nano"; # Default editor;
         # editor spawning translator
         # generates a command that can be used to spawn editor inside a gui
@@ -190,7 +170,7 @@
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal"))
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
               then
                 pkgs-stable
               else
@@ -234,7 +214,7 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
+      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
              then
                inputs.nixpkgs-stable.lib
              else
@@ -242,12 +222,11 @@
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      # home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-      #        then
-      #          inputs.home-manager-stable
-      #        else
-      #          inputs.home-manager-unstable);
-      home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
+      home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+             then
+               inputs.home-manager-stable
+             else
+               inputs.home-manager-unstable);
 
       # Systems that can run tests:
       supportedSystems = [ "aarch64-linux" "i686-linux" "x86_64-linux" ];
@@ -285,7 +264,6 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
-            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above

@@ -22,7 +22,7 @@
         DOASnoPass = false; # for enabling doas without password
         wrappSudoToDoas = true; # for wrapping sudo with doas
         sudoNOPASSWD = false; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
-        pkiCertificates = [ /home/aga/.certificates/server.cert.pem /home/aga/.certificates/ca.cert.pem ];
+        pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
 
         # Network
         networkManager = true;

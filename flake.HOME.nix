@@ -22,7 +22,7 @@
         DOASnoPass = false; # for enabling doas without password
         wrappSudoToDoas = true; # for wrapping sudo with doas
         sudoNOPASSWD = false; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
-        pkiCertificates = [ /home/akunito/myCA/certs/server.cert.pem ];
+        pkiCertificates = [ /home/akunito/myCA/akunito.org.es/certs/ca.cert.pem ];
 
         # Network
         networkManager = true;

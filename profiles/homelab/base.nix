@@ -85,7 +85,7 @@
   users.defaultUserShell = pkgs.zsh;
   programs.zsh.enable = true;
 
-  security.pki.certificateFiles = pkiCertificates;
+  security.pki.certificateFiles = systemSettings.pkiCertificates;
 
   # It is ok to leave this unchanged for compatibility purposes
   system.stateVersion = systemSettings.systemStateVersion;
