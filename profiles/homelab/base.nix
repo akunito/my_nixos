@@ -34,6 +34,10 @@
   # Kernel modules
   boot.kernelModules = [ "i2c-dev" "i2c-piix4" ];
 
+  boot.kernel.sysctl = {
+    "vm.overcommit_memory" = 1;
+  };
+
   # Bootloader
   # Use systemd-boot if uefi, default to grub otherwise
   boot.loader.systemd-boot.enable = if (systemSettings.bootMode == "uefi") then true else false;
