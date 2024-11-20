@@ -34,8 +34,17 @@
   # Kernel modules
   boot.kernelModules = [ "i2c-dev" "i2c-piix4" ];
 
+  # Added for homelab services performance and adviced as we got warning on different service's logs
   boot.kernel.sysctl = {
     "vm.overcommit_memory" = 1;
+    # Syncthing optimizations
+    "net.core.rmem_max" = 8388608;
+    "net.core.wmem_max" = 8388608;
+    "net.ipv4.tcp_rmem" = "4096 87380 8388608";  # Aligned with rmem_max
+    "net.ipv4.tcp_wmem" = "4096 87380 8388608";  # Aligned with wmem_max
+    "net.ipv4.tcp_window_scaling" = 1;
+    "net.core.netdev_max_backlog" = 5000;
+    "net.ipv4.tcp_timestamps" = 1;
   };
 
   # Bootloader
