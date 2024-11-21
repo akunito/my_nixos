@@ -36,15 +36,20 @@
 
   # Added for homelab services performance and adviced as we got warning on different service's logs
   boot.kernel.sysctl = {
-    "vm.overcommit_memory" = 1;
+    "vm.overcommit_memory" = 1;     # Allows system to allocate more memory than physically available
+                                    # Useful for applications that allocate but don't use all memory
     # Syncthing optimizations
-    "net.core.rmem_max" = 8388608;
-    "net.core.wmem_max" = 8388608;
-    "net.ipv4.tcp_rmem" = "4096 87380 8388608";  # Aligned with rmem_max
-    "net.ipv4.tcp_wmem" = "4096 87380 8388608";  # Aligned with wmem_max
-    "net.ipv4.tcp_window_scaling" = 1;
-    "net.core.netdev_max_backlog" = 5000;
-    "net.ipv4.tcp_timestamps" = 1;
+    "net.core.rmem_max" = 8388608;  # Maximum receive socket buffer size (8MB)
+    "net.core.wmem_max" = 8388608;  # Maximum send socket buffer size (8MB)
+
+    "net.ipv4.tcp_rmem" = "4096 87380 8388608";  # TCP receive buffer sizes:
+                                                # min (4KB), default (85KB), max (8MB)
+
+    "net.ipv4.tcp_wmem" = "4096 87380 8388608";  # TCP send buffer sizes:
+                                                # min (4KB), default (85KB), max (8MB)
+    "net.ipv4.tcp_window_scaling" = 1;      # Enables window scaling for better throughput
+    "net.core.netdev_max_backlog" = 5000;   # Increases queue length for incoming packets
+    "net.ipv4.tcp_timestamps" = 1;          # Enables TCP timestamps for better RTT estimation
   };
 
   # Bootloader
