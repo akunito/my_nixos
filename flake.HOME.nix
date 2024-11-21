@@ -34,8 +34,8 @@
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ 443 80 2321 22000 ]; # 51821
-        allowedUDPPorts = [ 22000 ]; # 51821
+        allowedTCPPorts = [ 80 443 2321 22000 ]; # 51821
+        allowedUDPPorts = [ 22000 21027 ]; # 51821
 
         # LUKS drives
         bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
