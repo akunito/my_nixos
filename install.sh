@@ -2,7 +2,22 @@
 
 # Automated script to install my dotfiles
 
+# set -x # enable for output debugging
+
 # ======================================== Variables ======================================== #
+# Color definitions
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[1;36m'
+GRAY='\033[0;90m'
+
+# Text formatting
+BOLD='\033[1m'
+RESET='\033[0m'
+
 # Check if silent mode is enabled by -s or --silent
 SILENT_MODE=false
 for arg in "$@"; do
@@ -101,7 +116,7 @@ wait_for_user_input() {
 git_fetch_and_reset_dotfiles_by_remote() {
     local SCRIPT_DIR=$1
     # Overwrite $SCRIPT_DIR with the last commit of the remote repo
-    echo -e "\nOverwriting $SCRIPT_DIR with the last commit of the remote repo in 8 seconds: (Ctrl+C to cancel)"
+    echo -e "\n${CYAN}Overwriting $SCRIPT_DIR with the last commit of the remote repo in 8 seconds: ${RED}(CTRL+C to STOP) ${GREEN}(ENTER to GO)${RESET} "
     read -t 8 -n 1 -s key
     if [ -z "$key" ]; then
         # Fetch the latest changes from the remote repository
@@ -126,14 +141,15 @@ update_flake_lock() {
     local SCRIPT_DIR=$1
     local SILENT_MODE=$2
     if [ "$SILENT_MODE" = false ]; then
-        echo ""
-        read -p "Do you want to update flake.lock ? (y/N) " yn
+        echo -en "\n${CYAN}Do you want to update flake.lock ? (y/N) ${RESET} "
+        read -n 1 yn
+        echo " "
     else
         yn="y"
     fi
     case $yn in
         [Yy]|[Yy][Ee][Ss])
-            echo -e "\nUpdating flake.lock..."
+            echo -e "Updating flake.lock... "
             $SCRIPT_DIR/update.sh
             ;;
     esac
@@ -249,8 +265,9 @@ maintenance_script() {
     local SCRIPT_DIR=$1
     local SILENT_MODE=$2
     if [ "$SILENT_MODE" = false ]; then
+        echo -en "\n${CYAN}Do you want to open the maintenance menu ? (y/N) ${RESET} "
+        read -n 1 yn
         echo ""
-        read -p "Do you want to run the maintenance script ? (y/N) " yn
     else
         yn="n"
     fi
@@ -296,18 +313,18 @@ clean_iptables_rules $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 hardening_files $SCRIPT_DIR $SUDO_CMD
 
 # Rebuild system
-echo -e "\nRebuilding system with flake..."
+echo -e "\n${CYAN}Rebuilding system with flake...${RESET} "
 $SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
 
 # Temporarily soften files for Home-Manager
 soften_files_for_home_manager $SCRIPT_DIR $SUDO_CMD
 
 # Install and build home-manager configuration
-echo -e "\nInstalling and building home-manager"
+echo -e "\n${CYAN}Installing and building home-manager...${RESET} "
 nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace
 
 # Run maintenance script
 maintenance_script $SCRIPT_DIR $SILENT_MODE
 
 echo -e "\nInstallation script finished"
-echo -e "Remember Containers have been stopped. You might need to set up your Services in case you had."
+echo -e "${YELLOW}Remember Containers have been ${RED}stopped. ${YELLOW}If you had services running you might need to set them up again.${RESET} "
