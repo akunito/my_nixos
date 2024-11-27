@@ -10,6 +10,7 @@
       # ../../system/app/gamemode.nix
       # ../../system/app/steam.nix
       # ../../system/app/prismlauncher.nix
+      ../../system/hardware/nfs_client.nix # NFS share directories over network
       ../../system/security/sudo.nix
       ../../system/security/gpg.nix
       ../../system/security/blocklist.nix

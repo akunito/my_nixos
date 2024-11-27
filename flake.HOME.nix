@@ -26,16 +26,16 @@
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.80"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.81"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.8.80"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.8.81"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
-        nameServers = [ "192.168.0.1" "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
+        nameServers = [ "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = false; # for enabling wifi power save for laptops
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ 80 443 2321 22000 ]; # 51821
-        allowedUDPPorts = [ 22000 21027 ]; # 51821
+        allowedTCPPorts = [ 80 443 2321 22000 111 4000 4001 4002 2049 ]; # 80 nginx 443 nginx 2321 gitea 22000 syncthing 111 4000 4001 4002 2049 NFS
+        allowedUDPPorts = [ 22000 21027 111 4000 4001 4002 ]; # 22000 syncthing 21027 syncthing 111 4000 4001 4002 NFS
 
         # LUKS drives
         bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
@@ -47,6 +47,12 @@
         disk2_path = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
         disk3_name = "Machines";
         disk3_path = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
+        # NFS
+        nfsServerEnable = true;
+        nfsExports = ''
+          /mnt/DATA_4TB/Warehouse/Books   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/Warehouse/Movies  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+        '';
         
         # SSH System settings for BOOT
         authorizedKeys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" ];

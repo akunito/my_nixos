@@ -5,14 +5,15 @@
     [ ../../system/hardware-configuration.nix
       ../../system/hardware/power.nix # Power management
       ../../system/hardware/time.nix # Network time sync
+      ../../system/hardware/drives.nix # SSH on Boot to unlock LUKS drives + Open my LUKS drives (OPTIONAL)
+      ../../system/hardware/nfs_server.nix # NFS share directories over network
       ../../system/security/firewall.nix
       ../../system/security/sudo.nix
       ../../system/security/gpg.nix
+      ../../system/security/autoupgrade.nix # auto upgrade
       # ../../system/security/openvpn.nix # Not configured yet
       ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
-      ../../system/hardware/drives.nix # SSH on Boot to unlock LUKS drives + Open my LUKS drives (OPTIONAL)
-      ../../system/security/autoupgrade.nix # auto upgrade
       ../../system/wm/gnome-keyring.nix # gnome keyring
     ];
 
