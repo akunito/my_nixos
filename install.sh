@@ -171,8 +171,28 @@ handle_docker() {
 generate_hardware_config() {
     local SCRIPT_DIR=$1
     local SUDO_CMD=$2
-    echo -e "\nGenerating hardware config for new system"
-    $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+    local SILENT_MODE=$3
+
+    # Ask user if they want to generate hardware-configuration.nix
+    if [ "$SILENT_MODE" = true ]; then
+        echo "Silent mode enabled, skipping hardware configuration generation."
+        return
+    fi
+
+    echo -e "\n${YELLOW}Required if new installations or changes of hardware${RESET}  "
+    echo -e "${YELLOW}If you have some additional drive like docker overlayfs or Network drives you will have issues. ${RESET}  "
+    echo -e "${RED}WARNING: You have to stop/unmount them before generating a new file ${RESET}  "
+    echo -e "Do you want to generate the hardware configuration file? (y/N) "
+    read answer
+    case "$answer" in
+        [Yy]|[Yy][Ee][Ss])
+            echo "Generating hardware configuration file..."
+            $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+            ;;
+        *)
+            echo "Skipping hardware configuration generation."
+            ;;
+    esac
 }
 
 # Ask user if they want to open hardware-configuration.nix

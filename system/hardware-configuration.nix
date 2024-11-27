@@ -20,6 +20,11 @@
 
   boot.initrd.luks.devices."luks-e9676686-10da-4b47-9ff0-d2ac4685f682".device = "/dev/disk/by-uuid/e9676686-10da-4b47-9ff0-d2ac4685f682";
 
+  fileSystems."/mnt/NFS_Movies" =
+    { device = "systemd-1";
+      fsType = "autofs";
+    };
+
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/2CDB-55A5";
       fsType = "vfat";
@@ -32,8 +37,8 @@
     };
 
   fileSystems."/mnt/NFS_Movies" =
-    { device = "systemd-1";
-      fsType = "autofs";
+    { device = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Movies";
+      fsType = "nfs4";
     };
 
   swapDevices = [ ];
