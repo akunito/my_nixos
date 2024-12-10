@@ -4,7 +4,13 @@
 [[https://nixos.wiki/wiki/Remote_disk_unlocking][Remote disk unlocking on NixOS Wiki]]
 
 * How to mount your LUKS devices automatically
+
+0. The drive needs to be already formated, LUKS partition created and assigned, so you can see it at /dev/mapper/partition_name
+My guides: Create LUKS Ext4 partition
+My guides: Format drive bigger than 2Tb
+
 1. Add the UUID to the boot.initrd.luks.devices to your configuration.nix (drives.nix module).
+    This is now done on flake.PROFILE.nix by variables. Adjust it accordingly together with drives.nix
 
     ```sh
     # To get general info

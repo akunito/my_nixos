@@ -26,6 +26,9 @@
         "${systemSettings.disk3_name}" = {
           device = systemSettings.disk3_path;
         };
+        "${systemSettings.disk4_name}" = {
+          device = systemSettings.disk4_path;
+        };
       };
     };
 

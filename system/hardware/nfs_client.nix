@@ -22,6 +22,11 @@
       what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Movies";
       where = "/mnt/NFS_Movies";
     })
+
+    (commonMountOptions // {
+      what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Media";
+      where = "/mnt/NFS_Media";
+    })
   ];
 
   systemd.automounts = let commonAutoMountOptions = {
@@ -36,5 +41,6 @@
   [
     (commonAutoMountOptions // { where = "/mnt/NFS_Books"; })
     (commonAutoMountOptions // { where = "/mnt/NFS_Movies"; })
+    (commonAutoMountOptions // { where = "/mnt/NFS_Media"; })
   ];
 }

@@ -47,11 +47,14 @@
         disk2_path = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
         disk3_name = "Machines";
         disk3_path = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
+        disk4_name = "HDD_4TB";
+        disk4_path = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
         # NFS
         nfsServerEnable = true;
         nfsExports = ''
           /mnt/DATA_4TB/Warehouse/Books   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
           /mnt/DATA_4TB/Warehouse/Movies  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/Warehouse/Media   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
         
         # SSH System settings for BOOT
