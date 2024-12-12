@@ -27,12 +27,6 @@
 
   boot.initrd.luks.devices."luks-4e2319df-5473-4eb5-9f00-483253a7f96e".device = "/dev/disk/by-uuid/4e2319df-5473-4eb5-9f00-483253a7f96e";
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/C582-8ED6";
-      fsType = "vfat";
-      options = [ "fmask=0022" "dmask=0022" ];
-    };
-
   fileSystems."/mnt/Machines" =
     { device = "/dev/disk/by-uuid/4208afb6-5dce-4aa4-ac58-8d960e78be6b";
       fsType = "ext4";
@@ -47,12 +41,11 @@
 
   boot.initrd.luks.devices."TimeShift".device = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
 
-  fileSystems."/mnt/DATA_4TB" =
-    { device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
-      fsType = "ext4";
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/C582-8ED6";
+      fsType = "vfat";
+      options = [ "fmask=0022" "dmask=0022" ];
     };
-
-  boot.initrd.luks.devices."DATA_4TB".device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
 
   fileSystems."/mnt/HDD_4TB" =
     { device = "/dev/disk/by-uuid/328f68ec-08db-45ce-b915-8f82f3388246";
@@ -61,6 +54,13 @@
 
   boot.initrd.luks.devices."HDD_4TB".device = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
 
+  fileSystems."/mnt/DATA_4TB" =
+    { device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."DATA_4TB".device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
+
   swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
@@ -68,6 +68,7 @@
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
+  # networking.interfaces.br-3624b2cf5a24.useDHCP = lib.mkDefault true;
   # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
   # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlp9s0.useDHCP = lib.mkDefault true;
