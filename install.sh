@@ -173,26 +173,41 @@ generate_hardware_config() {
     local SUDO_CMD=$2
     local SILENT_MODE=$3
 
+    run_script_to_stop_drives() {
+        echo -e "Attempting to stop external drives ..."
+        $SUDO_CMD ./stop_external_drives.sh
+        echo "Generating hardware configuration file..."
+        $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+    }
+
     # Ask user if they want to generate hardware-configuration.nix
     if [ "$SILENT_MODE" = true ]; then
-        echo "Silent mode enabled, skipping hardware configuration generation."
+        echo "Silent mode enabled, running custom script ..."
+        run_script_to_stop_drives
         return
     fi
 
-    echo -e "\n${YELLOW}Required if new installations or changes of hardware${RESET}  "
-    echo -e "${YELLOW}If you have some additional drive like docker overlayfs or Network drives you will have issues. ${RESET}  "
-    echo -e "${RED}WARNING: You have to stop/unmount them before generating a new file ${RESET}  "
-    echo -e "Do you want to generate the hardware configuration file? (y/N) "
-    read answer
-    case "$answer" in
-        [Yy]|[Yy][Ee][Ss])
-            echo "Generating hardware configuration file..."
-            $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+    echo -e "\n${BLUE}Generating hardware-configuration.nix${RESET}  "
+    echo -e "${BLUE}Additional mounted drives, ie NFS or docker overlayfs will generate issues. ${RESET}  "
+    echo -e "${YELLOW}WARNING: You have to stop/unmount them before generating a new file ${RESET}  "
+    echo -e "==== ${GREEN}[ENTER]    To run custom script to stop drives ${RESET}   (Recommended)"
+    echo -e "==== ${CYAN}[0]        To stop script now ${RESET}   "
+    echo -e "==== ${CYAN}[1]        To skip generating the file ? ${RESET}   "
+    read -n 1 yn
+    echo " "
+    case "$yn" in
+        [0])
+            echo -e "Script stopped by user."
+            exit 1
+            ;;
+        [1])
+            echo -e "Skipping and not generating hardware-configuration.nix ..."
             ;;
         *)
-            echo "Skipping hardware configuration generation."
+            run_script_to_stop_drives
             ;;
     esac
+    echo " " # To clean up color codes
 }
 
 # Ask user if they want to open hardware-configuration.nix
@@ -301,6 +316,41 @@ maintenance_script() {
     fi
 }
 
+# Ending menu
+ending_menu() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    local SILENT_MODE=$3
+
+    run_startup_services() {
+        echo -e "Attempting to start services ..."
+        echo -e "Running ./startup_services.sh ..."
+        ./startup_services.sh
+    }
+
+    # Ask user if they want to generate hardware-configuration.nix
+    if [ "$SILENT_MODE" = true ]; then
+        echo "Silent mode enabled ..."
+        run_startup_services
+        return
+    fi
+
+    echo -e "\n${BLUE}Ending menu${RESET}  "
+    echo -e "==== ${GREEN}[ENTER]    To continue without services ${RESET}   "
+    echo -e "==== ${CYAN}[1]        To startup services ${RESET}   "
+    read -n 1 yn
+    echo " "
+    case "$yn" in
+        [1])
+            run_startup_services
+            ;;
+        *)
+            # There is a sample of the script in ./stop_external_drives.sh if you want to copy it to ~/myScripts
+            echo -e "Continue without starting services ..."
+            ;;
+    esac
+    echo " " # To clean up color codes
+}
 # ======================================== Main Execution ======================================== #
 $SUDO_CMD echo -e "\nActivating sudo password for this session"
 
@@ -345,6 +395,9 @@ nix run home-manager/master --extra-experimental-features nix-command --extra-ex
 
 # Run maintenance script
 maintenance_script $SCRIPT_DIR $SILENT_MODE
+echo "  " # To clean up color codes
+
+# Ending menu
+ending_menu $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 
 echo -e "\nInstallation script finished"
-echo -e "${YELLOW}Remember Containers have been ${RED}stopped. ${YELLOW}If you had services running you might need to set them up again.${RESET} "

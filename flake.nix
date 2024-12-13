@@ -100,6 +100,7 @@
           wireguard-tools
           traceroute
           openssl
+          restic
           
           btop
           fzf
