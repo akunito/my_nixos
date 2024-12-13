@@ -1,27 +1,30 @@
 { userSettings, systemSettings, pkgs, lib, ... }:
 
 {
-  # Doas instead of sudo
-  security.doas.enable = systemSettings.doasEnable;
-  security.sudo.enable = systemSettings.sudoEnable;
-
-  security.sudo.extraRules = lib.mkIf (systemSettings.sudoNOPASSWD == true) [{
-    users = [ "${userSettings.username}" ];
-    commands = [{
-      command = "ALL";
-      options = [ "NOPASSWD" "SETENV" ];
+  security.sudo = {
+    enable = systemSettings.sudoEnable;
+    extraRules = lib.mkIf (systemSettings.sudoNOPASSWD == true) [{
+      users = [ "${userSettings.username}" ];
+      # groups = [ "wheel" ];
+      commands = systemSettings.sudoCommands;
     }];
-  }];
+    extraConfig = with pkgs; ''
+      Defaults:picloud secure_path="${lib.makeBinPath [
+        systemd
+      ]}:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
+    '';
+  };
 
-  security.doas.extraRules = [{
-    users = [ "${userSettings.username}" ];
-    noPass = systemSettings.DOASnoPass;
-    keepEnv = true;
-    persist = true;
-  }];
+  # security.doas.enable = systemSettings.doasEnable;
+  # security.doas.extraRules = [{
+  #   users = [ "${userSettings.username}" ];
+  #   noPass = systemSettings.DOASnoPass;
+  #   keepEnv = true;
+  #   persist = true;
+  # }];
 
-  environment.systemPackages = lib.mkIf (systemSettings.wrappSudoToDoas == true) [
-    # Alias sudo to doas
-    (pkgs.writeScriptBin "sudo" ''exec doas "$@"'')
-  ];
+  # environment.systemPackages = lib.mkIf (systemSettings.wrappSudoToDoas == true) [
+  #   # Alias sudo to doas
+  #   (pkgs.writeScriptBin "sudo" ''exec doas "$@"'')
+  # ];
 }

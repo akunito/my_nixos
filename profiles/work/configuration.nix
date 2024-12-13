@@ -26,6 +26,7 @@
       ../../system/security/firejail.nix
       # ../../system/security/openvpn.nix # Not configured yet
       ../../system/security/automount.nix
+      ../../system/security/restic.nix # Manage backups
       # ../../system/style/stylix.nix # Stylix theme
       ( import ../../system/security/sshd.nix {
         authorizedKeys = systemSettings.authorizedKeys; # SSH keys

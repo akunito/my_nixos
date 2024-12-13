@@ -17,11 +17,20 @@
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         
         # Security
-        doasEnable = true; # for enabling doas
+        doasEnable = false; # for enabling doas
         sudoEnable = true; # for enabling sudo
         DOASnoPass = false; # for enabling doas without password
-        wrappSudoToDoas = true; # for wrapping sudo with doas
-        sudoNOPASSWD = false; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
+        wrappSudoToDoas = false; # for wrapping sudo with doas
+        sudoNOPASSWD = true; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
+        sudoCommands = [
+        {
+          command = "/run/current-system/sw/bin/systemctl suspend"; # this requires polkit rules to be set
+          options = [ "NOPASSWD" ];
+        }
+        {
+          command = "/run/current-system/sw/bin/restic";
+          options = [ "NOPASSWD" "SETENV" ];
+        }];
         pkiCertificates = [ /home/akunito/myCA/akunito.org.es/certs/ca.cert.pem ];
 
         # Network
