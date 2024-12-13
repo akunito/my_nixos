@@ -24,8 +24,12 @@
         sudoNOPASSWD = true; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
         sudoCommands = [
         {
-          command = "/run/current-system/sw/bin/systemctl suspend";
+          command = "/run/current-system/sw/bin/systemctl suspend"; # this requires polkit rules to be set
           options = [ "NOPASSWD" ];
+        }
+        {
+          command = "/run/wrappers/bin/restic"; # restic wrapper
+          options = [ "NOPASSWD" "SETENV" ];
         }
         {
           command = "/run/current-system/sw/bin/restic";

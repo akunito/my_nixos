@@ -28,6 +28,10 @@
           options = [ "NOPASSWD" ];
         }
         {
+          command = "/run/wrappers/bin/restic"; # allow nopasswd and setenv for restic wrapper
+          options = [ "NOPASSWD" "SETENV" ];
+        }
+        {
           command = "/run/current-system/sw/bin/restic";
           options = [ "NOPASSWD" "SETENV" ];
         }];
