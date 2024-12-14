@@ -13,9 +13,10 @@ case $hostname in
     "nixosaga")
         # Stop all external drives
         echo -e "Stopping NFS drives..."
-        umount /mnt/NFS_Movies 
-        umount /mnt/NFS_Books 
-        umount /mnt/NFS_Media   
+        systemctl stop mnt-NFS_Movies.mount && umount /mnt/NFS_Movies && sleep 1
+        systemctl stop mnt-NFS_Books.mount && umount /mnt/NFS_Books && sleep 1
+        systemctl stop mnt-NFS_Media.mount && umount /mnt/NFS_Media && sleep 1
+        systemctl stop mnt-NFS_Backups.mount && umount /mnt/NFS_Backups && sleep 1
         ;;
     "nixosLabaku")
         # Stop all external drives
