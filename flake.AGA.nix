@@ -37,6 +37,14 @@
         }];
         pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
 
+        # Backups
+        homeBackupEnable = true; # restic.nix
+        homeBackupDescription = "Backup Home Directory with Restic";
+        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/aga/myScripts/agalaptop_backup.sh";
+        homeBackupUser = "aga";
+        homeBackupTimerDescription = "Timer for home_backup service";
+        homeBackupOnCalendar = "*-*-* 0/6:00:00"; # Every 6 hours
+
         # Network
         networkManager = true;
         ipAddress = "192.168.0.77"; # ip to be reserved on router by mac (manually)
