@@ -10,7 +10,7 @@ echo -e "hostname detected: $hostname"
 case $hostname in
     "nixosaga")
         echo -e "Starting NFS drives..."
-        systemctl start mnt-NFS_Books.mount mnt-NFS_Movies.mount mnt-NFS_Media.mount mnt-NFS_Backups.mount
+        sudo systemctl start mnt-NFS_Books.mount mnt-NFS_Movies.mount mnt-NFS_Media.mount mnt-NFS_Backups.mount
         ;;
     "nixosLabaku")
         echo -e "Starting homelab services..."

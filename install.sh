@@ -325,7 +325,7 @@ ending_menu() {
     run_startup_services() {
         echo -e "Attempting to start services ..."
         echo -e "Running ./startup_services.sh ..."
-        $SUDO_CMD ./startup_services.sh
+        ./startup_services.sh
     }
 
     # Ask user if they want to generate hardware-configuration.nix
