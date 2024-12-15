@@ -28,22 +28,52 @@
           options = [ "NOPASSWD" ];
         }
         {
-          command = "/run/wrappers/bin/restic"; # allow nopasswd and setenv for restic wrapper
-          options = [ "NOPASSWD" "SETENV" ];
-        }
-        {
           command = "/run/current-system/sw/bin/restic";
           options = [ "NOPASSWD" "SETENV" ];
         }];
         pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
+        # Polkit
+        polkitEnable = true;
+        polkitRules = ''
+          polkit.addRule(function(action, subject) {
+            if (
+              subject.isInGroup("users")
+                && (
+                  action.id == "org.freedesktop.login1.reboot" ||
+                  action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+                  action.id == "org.freedesktop.login1.power-off" ||
+                  action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+                  action.id == "org.freedesktop.login1.suspend" ||
+                  action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+                  (action.id == "org.freedesktop.systemd1.manage-units" &&
+                  action.lookup("verb") == "start" &&
+                  action.lookup("unit") == "mnt-NFS_Backups.mount")
+                )
+              )
+            {
+              return polkit.Result.YES;
+            }
+          });
+        '';
 
         # Backups
+        resticWrapper = true; # for enabling restic wrapper
+        rsyncWrapper = true; # for enabling rsync wrapper
+
         homeBackupEnable = true; # restic.nix
         homeBackupDescription = "Backup Home Directory with Restic";
         homeBackupExecStart = "/run/current-system/sw/bin/sh /home/aga/myScripts/agalaptop_backup.sh";
         homeBackupUser = "aga";
         homeBackupTimerDescription = "Timer for home_backup service";
         homeBackupOnCalendar = "*-*-* 0/6:00:00"; # Every 6 hours
+        homeBackupCallNextEnabled = true; # for calling next service after backup
+        homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
+
+        remoteBackupEnable = true; # restic.nix
+        remoteBackupDescription = "Copy Restic Backup to Remote Server";
+        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/aga/myScripts/agalaptop_backup_remote.sh";
+        remoteBackupUser = "aga";
+        remoteBackupTimerDescription = "Timer for remote_backup service";
 
         # Network
         networkManager = true;
@@ -84,8 +114,8 @@
             options = "noatime";
           }
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Movies";
-            where = "/mnt/NFS_Movies";
+            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/downloads";
+            where = "/mnt/NFS_downloads";
             type = "nfs";
             options = "noatime";
           }

@@ -6,17 +6,52 @@
 
 # This script must be run as sudo
 
+stop_NFS_drives() { 
+    SERVICE=$1
+    NFS_DIR=$2
+
+    check_status() {
+        status=$(systemctl status $SERVICE | grep "Active:")
+        echo "$status"
+    }
+    stop_drive() {
+        systemctl stop $SERVICE
+        # umount $NFS_DIR
+        status=$(check_status)
+        if echo "$status" | grep -q "inactive (dead)"; then
+            echo "$SERVICE stopped succesfully."
+            return 0
+        else
+            echo "$SERVICE could not be stopped."
+            return 1
+        fi
+    }
+
+    echo "== Trying to stop $SERVICE..."
+    # if status is active (mounted), then stop it, if not, do nothing.
+    if check_status | grep -q "active (mounted)"; then
+        # try to stop_drive. If it fails, try 1 more time.
+        if stop_drive; then
+            return 0
+        else
+            echo "Trying to stop $SERVICE again..."
+            stop_drive
+        fi
+    else
+        echo "$SERVICE is not mounted."
+    fi
+}
+
 hostname=$(hostname)
 echo -e "\nThe script will run the commands depending of the hostname."
 echo -e "hostname detected: $hostname"
 case $hostname in
     "nixosaga")
         # Stop all external drives
-        echo -e "Stopping NFS drives..."
-        systemctl stop mnt-NFS_Movies.mount && umount /mnt/NFS_Movies && sleep 1
-        systemctl stop mnt-NFS_Books.mount && umount /mnt/NFS_Books && sleep 1
-        systemctl stop mnt-NFS_Media.mount && umount /mnt/NFS_Media && sleep 1
-        systemctl stop mnt-NFS_Backups.mount && umount /mnt/NFS_Backups && sleep 1
+        stop_NFS_drives "mnt-NFS_Movies.mount" "/mnt/NFS_Movies"
+        stop_NFS_drives "mnt-NFS_Books.mount" "/mnt/NFS_Books"
+        stop_NFS_drives "mnt-NFS_Media.mount" "/mnt/NFS_Media"
+        stop_NFS_drives "mnt-NFS_Backups.mount" "/mnt/NFS_Backups"
         ;;
     "nixosLabaku")
         # Stop all external drives

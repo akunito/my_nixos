@@ -11,6 +11,8 @@
       ../../system/security/sudo.nix
       ../../system/security/gpg.nix
       ../../system/security/autoupgrade.nix # auto upgrade
+      ../../system/security/restic.nix # Manage backups
+      ../../system/security/polkit.nix # Security rules
       # ../../system/security/openvpn.nix # Not configured yet
       ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )

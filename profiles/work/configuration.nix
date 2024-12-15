@@ -27,6 +27,7 @@
       # ../../system/security/openvpn.nix # Not configured yet
       ../../system/security/automount.nix
       ../../system/security/restic.nix # Manage backups
+      ../../system/security/polkit.nix # Security rules
       # ../../system/style/stylix.nix # Stylix theme
       ( import ../../system/security/sshd.nix {
         authorizedKeys = systemSettings.authorizedKeys; # SSH keys

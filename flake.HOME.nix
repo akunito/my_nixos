@@ -32,14 +32,46 @@
           options = [ "NOPASSWD" "SETENV" ];
         }];
         pkiCertificates = [ /home/akunito/myCA/akunito.org.es/certs/ca.cert.pem ];
+        # Polkit
+        polkitEnable = false;
+        polkitRules = ''
+          polkit.addRule(function(action, subject) {
+            if (
+              subject.isInGroup("users")
+                && (
+                  action.id == "org.freedesktop.login1.reboot" ||
+                  action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+                  action.id == "org.freedesktop.login1.power-off" ||
+                  action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+                  action.id == "org.freedesktop.login1.suspend" ||
+                  action.id == "org.freedesktop.login1.suspend-multiple-sessions"
+                )
+              )
+            {
+              return polkit.Result.YES;
+            }
+          });
+        '';
 
         # Backups
+        resticWrapper = true; # for enabling restic wrapper
+        rsyncWrapper = true; # for enabling rsync wrapper
+        
         homeBackupEnable = true; # restic.nix
-        homeBackupDescription = "Backup Home Directory with Restic";
+        homeBackupDescription = "Backup Home Directory with Restic && DATA_4TB to HDD_4TB";
         homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup.sh";
         homeBackupUser = "akunito";
         homeBackupTimerDescription = "Timer for home_backup service";
         homeBackupOnCalendar = "*-*-* 0/6:00:00"; # Every 6 hours
+        homeBackupCallNextEnabled = false; # for calling next service after backup
+        homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
+
+        remoteBackupEnable = false; # restic.nix
+        remoteBackupDescription = "Copy Restic Backup to Remote Server";
+        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup_remote.sh";
+        remoteBackupUser = "akunito";
+        remoteBackupTimerDescription = "Timer for remote_backup service";
+        remoteBackupAfter = "home_backup.service";
 
         # Network
         networkManager = true;
@@ -70,7 +102,7 @@
         nfsServerEnable = true;
         nfsExports = ''
           /mnt/DATA_4TB/Warehouse/Books   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
-          /mnt/DATA_4TB/Warehouse/Movies  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/Warehouse/downloads  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
           /mnt/DATA_4TB/Warehouse/Media   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
           /mnt/DATA_4TB/backups/AgaLaptop 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
