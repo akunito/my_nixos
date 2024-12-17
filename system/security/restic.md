@@ -70,8 +70,10 @@ To create the restic user and setup the wrapper
 ```
 
 # Sudo setup for Restic binary
-We will config sudo NOPASSWD and SETENV for the Restic binary wrapper, for the given user
-So we don't have to use sudo password when our user uses our Restic wrapper
+We will config sudo NOPASSWD and SETENV for the Restic binary, for the given user
+So we don't have to use sudo password when our user uses our Restic command.
+
+> We don't need to grant it for the Restic wrapper
 
 #### 1. Adjust the commands for sudo on `flake.PROFILE.nix` 
 
@@ -80,10 +82,6 @@ So we don't have to use sudo password when our user uses our Restic wrapper
 		...
         sudoNOPASSWD = true; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
         sudoCommands = [
-        {
-          command = "/run/wrappers/bin/restic"; # config Restic wrapper
-          options = [ "NOPASSWD" "SETENV" ];
-        }
         {
           command = "/run/current-system/sw/bin/restic"; # same for no wrapper binary
           options = [ "NOPASSWD" "SETENV" ];
@@ -153,6 +151,8 @@ In our example we create a service that:
     };
 ```
 
+> Note that it's better to run these tasks as `root` ✅, as this is just an example to explain permissions, wrapper, etc. ❗
+
 ##### 2. Add the service to restic.nix
 Which will grab the variables from the flake
 
@@ -206,28 +206,38 @@ echo "Maintenance"
 /run/wrappers/bin/restic forget --keep-daily 7 --keep-weekly 2 --keep-monthly 1 --prune \
 -r $RESTIC_REPOSITORY \
 -p $RESTIC_PASSWORD_FILE
-
-echo "List snapshots"
-/run/wrappers/bin/restic snapshots \
--r $RESTIC_REPOSITORY \
--p $RESTIC_PASSWORD_FILE
-
 ```
 
 
 # Copy the repository to a remote NFS drive
 
 As we copy to a NFS, the files owned by root will be owned by the user in the NFS.
-This is because NFS is moutned with squash_root, which maps root to nobody for security reasons.
+This is because NFS is mounted with squash_root, which maps root to nobody for security reasons.
 To ignore the errors, we avoid copying owner and group.
+The same could happen if we copy to a remote drive like i.e. some cloud.
 
+##### Add rsync to sudo
+To avoid the script asking for the password, and be able to use `sudo rsync` we need to add it to sudo configuration.
+```sh
+	systemSettings = {
+		...
+		sudoCommands = [
+		...
+        {
+          command = "/run/current-system/sw/bin/rsync";
+          options = [ "NOPASSWD" "SETENV" ];
+        }];
+    ...
+    }
+```
+
+##### Script sample
 -a is equivalent to -rlptgoD so we remove the o and g.
 -v is for verbose
 -P is for progress
 --delete is to delete files in the destination that are not in the source
 --delete-excluded is to delete files in the destination that are excluded in the source
 
-Script sample
 ```sh
 #!/bin/sh
 
