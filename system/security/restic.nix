@@ -15,20 +15,6 @@
     capabilities = "cap_dac_read_search=+ep";
   };
 
-  # Create restic user
-  users.users.rsync = lib.mkIf (systemSettings.rsyncWrapper == true) {
-    isNormalUser = true;
-  };
-  # Wrapper for rsync
-  security.wrappers.rsync = lib.mkIf (systemSettings.rsyncWrapper == true) {
-    source = "/run/current-system/sw/bin/rsync";
-    owner = userSettings.username;
-    group = "wheel";
-    permissions = "u=rwx,g=,o=";
-    capabilities = "cap_dac_read_search=+ep";
-  };
-
-
   # ====================== Local Backup settings ======================
   # Systemd service to execute sh script
   # Main user | Every 6 hours | Script includes wrapper for restic (config on sudo.nix)
@@ -40,7 +26,7 @@
       User = systemSettings.homeBackupUser;
       Environment = "PATH=/run/current-system/sw/bin:/usr/bin:/bin";
     };
-    unitConfig = lib.mkIf (systemSettings.homeBackupEnable == true) { # Call next service on success
+    unitConfig = { # Call next service on success
       OnSuccess = systemSettings.homeBackupCallNext;
     };
   };

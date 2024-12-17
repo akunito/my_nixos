@@ -23,34 +23,45 @@
         wrappSudoToDoas = false; # for wrapping sudo with doas
         sudoNOPASSWD = true; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
         sudoCommands = [
-        {
-          command = "/run/current-system/sw/bin/systemctl suspend"; # this requires polkit rules to be set
-          options = [ "NOPASSWD" ];
-        }
-        {
-          command = "/run/current-system/sw/bin/restic";
-          options = [ "NOPASSWD" "SETENV" ];
-        }];
+          {
+            command = "/run/current-system/sw/bin/systemctl suspend"; # this requires polkit rules to be set
+            options = [ "NOPASSWD" ];
+          }
+          {
+            command = "/run/current-system/sw/bin/restic";
+            options = [ "NOPASSWD" "SETENV" ];
+          }
+          {
+            command = "/run/current-system/sw/bin/rsync";
+            options = [ "NOPASSWD" "SETENV" ];
+          }
+        ];
         pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
         # Polkit
         polkitEnable = true;
         polkitRules = ''
           polkit.addRule(function(action, subject) {
             if (
-              subject.isInGroup("users")
-                && (
-                  action.id == "org.freedesktop.login1.reboot" ||
-                  action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-                  action.id == "org.freedesktop.login1.power-off" ||
-                  action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-                  action.id == "org.freedesktop.login1.suspend" ||
-                  action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
-                  (action.id == "org.freedesktop.systemd1.manage-units" &&
+              subject.isInGroup("users") && (
+                // Allow reboot and power-off actions
+                action.id == "org.freedesktop.login1.reboot" ||
+                action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.power-off" ||
+                action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.suspend" ||
+                action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+
+                // Allow managing specific systemd units
+                (action.id == "org.freedesktop.systemd1.manage-units" &&
                   action.lookup("verb") == "start" &&
-                  action.lookup("unit") == "mnt-NFS_Backups.mount")
-                )
+                  action.lookup("unit") == "mnt-NFS_Backups.mount") ||
+
+                // Allow running rsync and restic
+                (action.id == "org.freedesktop.policykit.exec" &&
+                  (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
+                  action.lookup("command") == "/run/current-system/sw/bin/restic"))
               )
-            {
+            ) {
               return polkit.Result.YES;
             }
           });
@@ -58,14 +69,14 @@
 
         # Backups
         resticWrapper = true; # for enabling restic wrapper
-        rsyncWrapper = true; # for enabling rsync wrapper
+        rsyncWrapper = false; # for enabling rsync wrapper
 
         homeBackupEnable = true; # restic.nix
         homeBackupDescription = "Backup Home Directory with Restic";
         homeBackupExecStart = "/run/current-system/sw/bin/sh /home/aga/myScripts/agalaptop_backup.sh";
         homeBackupUser = "aga";
         homeBackupTimerDescription = "Timer for home_backup service";
-        homeBackupOnCalendar = "*-*-* 0/6:00:00"; # Every 6 hours
+        homeBackupOnCalendar = "0/12:00:00"; # Every 12 hour
         homeBackupCallNextEnabled = true; # for calling next service after backup
         homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
 

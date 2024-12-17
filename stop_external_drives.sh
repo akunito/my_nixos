@@ -4,6 +4,9 @@
 
 # Custom script that is called by .dotfiles/install.sh to stop external drives before generate hardware-configuration.nix
 
+# Capture SILENT_MODE from arguments or default to false
+SILENT_MODE=${1:-false}
+
 # This script must be run as sudo
 
 stop_NFS_drives() { 
@@ -48,7 +51,7 @@ echo -e "hostname detected: $hostname"
 case $hostname in
     "nixosaga")
         # Stop all external drives
-        stop_NFS_drives "mnt-NFS_Movies.mount" "/mnt/NFS_Movies"
+        stop_NFS_drives "mnt-NFS_downloads.mount" "/mnt/NFS_downloads"
         stop_NFS_drives "mnt-NFS_Books.mount" "/mnt/NFS_Books"
         stop_NFS_drives "mnt-NFS_Media.mount" "/mnt/NFS_Media"
         stop_NFS_drives "mnt-NFS_Backups.mount" "/mnt/NFS_Backups"

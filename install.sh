@@ -175,7 +175,7 @@ generate_hardware_config() {
 
     run_script_to_stop_drives() {
         echo -e "Attempting to stop external drives ..."
-        $SUDO_CMD ./stop_external_drives.sh
+        $SUDO_CMD ./stop_external_drives.sh 
         echo "Generating hardware configuration file..."
         $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
     }
@@ -185,28 +185,29 @@ generate_hardware_config() {
         echo "Silent mode enabled, running custom script ..."
         run_script_to_stop_drives
         return
+    else 
+        echo -e "\n${BLUE}Generating hardware-configuration.nix${RESET}  "
+        echo -e "${BLUE}Additional mounted drives, ie NFS or docker overlayfs will generate issues. ${RESET}  "
+        echo -e "${YELLOW}WARNING: You have to stop/unmount them before generating a new file ${RESET}  "
+        echo -e "==== ${GREEN}[ENTER]    To run custom script to stop drives ${RESET}   (Recommended)"
+        echo -e "==== ${CYAN}[0]        To stop script now ${RESET}   "
+        echo -e "==== ${CYAN}[1]        To skip generating the file ? ${RESET}   "
+        read -n 1 yn
+        echo " "
+        case "$yn" in
+            [0])
+                echo -e "Script stopped by user."
+                exit 1
+                ;;
+            [1])
+                echo -e "Skipping and not generating hardware-configuration.nix ..."
+                ;;
+            *)
+                run_script_to_stop_drives
+                ;;
+        esac
     fi
 
-    echo -e "\n${BLUE}Generating hardware-configuration.nix${RESET}  "
-    echo -e "${BLUE}Additional mounted drives, ie NFS or docker overlayfs will generate issues. ${RESET}  "
-    echo -e "${YELLOW}WARNING: You have to stop/unmount them before generating a new file ${RESET}  "
-    echo -e "==== ${GREEN}[ENTER]    To run custom script to stop drives ${RESET}   (Recommended)"
-    echo -e "==== ${CYAN}[0]        To stop script now ${RESET}   "
-    echo -e "==== ${CYAN}[1]        To skip generating the file ? ${RESET}   "
-    read -n 1 yn
-    echo " "
-    case "$yn" in
-        [0])
-            echo -e "Script stopped by user."
-            exit 1
-            ;;
-        [1])
-            echo -e "Skipping and not generating hardware-configuration.nix ..."
-            ;;
-        *)
-            run_script_to_stop_drives
-            ;;
-    esac
     echo " " # To clean up color codes
 }
 
@@ -372,7 +373,7 @@ update_flake_lock $SCRIPT_DIR $SILENT_MODE
 handle_docker $SCRIPT_DIR $SILENT_MODE
 
 # Generate hardware config and check boot mode
-generate_hardware_config $SCRIPT_DIR $SUDO_CMD
+generate_hardware_config $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 check_boot_mode $SCRIPT_DIR
 open_hardware_configuration_nix $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 
@@ -384,6 +385,7 @@ hardening_files $SCRIPT_DIR $SUDO_CMD
 
 # Rebuild system
 echo -e "\n${CYAN}Rebuilding system with flake...${RESET} "
+echo "  " # To clean up color codes
 $SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
 
 # Temporarily soften files for Home-Manager
@@ -400,4 +402,4 @@ echo "  " # To clean up color codes
 # Ending menu
 ending_menu $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 
-echo -e "\nInstallation script finished"
+echo -e "\n${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${RESET} Installation script finished"

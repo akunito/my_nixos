@@ -3,11 +3,11 @@
     "blocklist-hosts": {
       "flake": false,
       "locked": {
-        "lastModified": 1734360652,
-        "narHash": "sha256-+VHx61Y5HAVSwamaea8aqpb1kSEStPtD51Ls7T5hKbk=",
+        "lastModified": 1734397324,
+        "narHash": "sha256-CMafExAcNPDOjFd518MHK1rWYhapP6eBIXKk6YAjJqc=",
         "owner": "StevenBlack",
         "repo": "hosts",
-        "rev": "8d23331fbc3a550124a8ad7335a3f92b6d149073",
+        "rev": "608aed3d80c18c93daab5015a198ca6f00362621",
         "type": "github"
       },
       "original": {

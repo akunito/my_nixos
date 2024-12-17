@@ -23,31 +23,28 @@
         wrappSudoToDoas = false; # for wrapping sudo with doas
         sudoNOPASSWD = true; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
         sudoCommands = [
-        {
-          command = "/run/current-system/sw/bin/systemctl suspend"; # this requires polkit rules to be set
-          options = [ "NOPASSWD" ];
-        }
-        {
-          command = "/run/current-system/sw/bin/restic";
-          options = [ "NOPASSWD" "SETENV" ];
-        }];
+          {
+            command = "/run/current-system/sw/bin/systemctl suspend"; # this requires polkit rules to be set
+            options = [ "NOPASSWD" ];
+          }
+          {
+            command = "/run/current-system/sw/bin/restic";
+            options = [ "NOPASSWD" "SETENV" ];
+          }
+        ];
         pkiCertificates = [ /home/akunito/myCA/akunito.org.es/certs/ca.cert.pem ];
         # Polkit
         polkitEnable = false;
         polkitRules = ''
           polkit.addRule(function(action, subject) {
             if (
-              subject.isInGroup("users")
-                && (
-                  action.id == "org.freedesktop.login1.reboot" ||
-                  action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-                  action.id == "org.freedesktop.login1.power-off" ||
-                  action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-                  action.id == "org.freedesktop.login1.suspend" ||
-                  action.id == "org.freedesktop.login1.suspend-multiple-sessions"
-                )
+              subject.isInGroup("users") && (
+                // Allow running rsync and restic
+                (action.id == "org.freedesktop.policykit.exec" &&
+                  (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
+                  action.lookup("command") == "/run/current-system/sw/bin/restic"))
               )
-            {
+            ) {
               return polkit.Result.YES;
             }
           });
@@ -60,18 +57,16 @@
         homeBackupEnable = true; # restic.nix
         homeBackupDescription = "Backup Home Directory with Restic && DATA_4TB to HDD_4TB";
         homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup.sh";
-        homeBackupUser = "akunito";
+        homeBackupUser = "root";
         homeBackupTimerDescription = "Timer for home_backup service";
-        homeBackupOnCalendar = "*-*-* 0/6:00:00"; # Every 6 hours
-        homeBackupCallNextEnabled = false; # for calling next service after backup
+        homeBackupOnCalendar = "23:00:00"; # At 23h every day
         homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
 
-        remoteBackupEnable = false; # restic.nix
+        remoteBackupEnable = true; # restic.nix
         remoteBackupDescription = "Copy Restic Backup to Remote Server";
         remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup_remote.sh";
-        remoteBackupUser = "akunito";
+        remoteBackupUser = "root";
         remoteBackupTimerDescription = "Timer for remote_backup service";
-        remoteBackupAfter = "home_backup.service";
 
         # Network
         networkManager = true;
