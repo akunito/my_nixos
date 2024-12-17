@@ -26,7 +26,8 @@
                 ];
 
   # Ensure nix flakes are enabled
-  nix.package = pkgs.nixFlakes;
+  nix.package = pkgs.nixVersions.stable; # if using stable version
+  # nix.package = pkgs.nixFlakes; # if using unstable version
   nix.extraOptions = ''
     experimental-features = nix-command flakes
   '';
