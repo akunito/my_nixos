@@ -68,6 +68,7 @@
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
+  # networking.interfaces.br-2352ae7af0cc.useDHCP = lib.mkDefault true;
   # networking.interfaces.br-2e26becc7b5f.useDHCP = lib.mkDefault true;
   # networking.interfaces.br-5b4ceab8f481.useDHCP = lib.mkDefault true;
   # networking.interfaces.docker0.useDHCP = lib.mkDefault true;

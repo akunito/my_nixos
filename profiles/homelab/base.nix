@@ -15,14 +15,14 @@
       ../../system/security/polkit.nix # Security rules
       # ../../system/security/openvpn.nix # Not configured yet
       ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
-      # ../../system/app/grafana.nix # monitoring tools
+      ../../system/app/grafana.nix # monitoring tools
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
       ../../system/wm/gnome-keyring.nix # gnome keyring
     ];
 
   # Fix nix path
   nix.nixPath = [ "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
-                  "nixos-config=$HOME/.dotfiles/system/configuration.nix"
+                  "nixos-config=$HOME/dotfiles/system/configuration.nix"
                   "/nix/var/nix/profiles/per-user/root/channels"
                 ];
 
@@ -109,7 +109,7 @@
   programs.zsh.enable = true;
 
   security.pki.certificateFiles = systemSettings.pkiCertificates;
-
+  
   # It is ok to leave this unchanged for compatibility purposes
   system.stateVersion = systemSettings.systemStateVersion;
 

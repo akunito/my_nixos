@@ -8,12 +8,14 @@ echo -e "\nThe script will run the commands depending of the hostname."
 echo -e "hostname detected: $hostname"
 case $hostname in
     "nixosaga")
-        echo -e "Importing SSL certificates ..."
-        sudo cp /home/aga/.certificates/ca.cert.pem /etc/ssl/certs/
+        echo -e "Nothing set ..."
+        # echo -e "Importing SSL certificates ..."
+        # sudo cp /home/aga/.certificates/ca.cert.pem /etc/ssl/certs/
         ;;
     "nixosLabaku")
-        echo -e "Importing SSL certificates ..."
-        sudo cp /home/akunito/myCA/akunito.org.es/certs/ca.cert.pem /etc/ssl/certs/ca.cert.pem
+        echo -e "Nothing set ..."
+        # echo -e "Importing SSL certificates ..."
+        # sudo cp /home/akunito/myCA/akunito.org.es/certs/ca.cert.pem /etc/ssl/certs/ca.cert.pem
         # sudo chown akunito:akunito /home/akunito/.dotfiles/local/ca.cert.pem
         ;;
     *)

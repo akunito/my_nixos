@@ -32,7 +32,7 @@
             options = [ "NOPASSWD" "SETENV" ];
           }
         ];
-        pkiCertificates = [ ];
+        pkiCertificates = [ /home/akunito/myCA/akunito.org.es/certs/ca.cert.pem /etc/nginx/certs/akunito.org.es.crt ]; # paths relative to base.nix, not to flake
         # Polkit
         polkitEnable = false;
         polkitRules = ''
@@ -78,7 +78,7 @@
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ 80 443 2321 22000 111 4000 4001 4002 2049 ]; # 80 nginx 443 nginx 2321 gitea 22000 syncthing 111 4000 4001 4002 2049 NFS
+        allowedTCPPorts = [ 443 8043 2321 22000 111 4000 4001 4002 2049 ]; # 80 443 8040 8043 nginx 2321 gitea 22000 syncthing 111 4000 4001 4002 2049 NFS
         allowedUDPPorts = [ 22000 21027 111 4000 4001 4002 ]; # 22000 syncthing 21027 syncthing 111 4000 4001 4002 NFS
 
         # LUKS drives
@@ -189,7 +189,7 @@
         name = "akunito"; # name/identifier
         email = ""; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
-        extraGroups = [ "networkmanager" "wheel" "33" ];
+        extraGroups = [ "networkmanager" "wheel" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
