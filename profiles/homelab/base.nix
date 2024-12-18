@@ -15,6 +15,7 @@
       ../../system/security/polkit.nix # Security rules
       # ../../system/security/openvpn.nix # Not configured yet
       ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
+      # ../../system/app/grafana.nix # monitoring tools
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
       ../../system/wm/gnome-keyring.nix # gnome keyring
     ];

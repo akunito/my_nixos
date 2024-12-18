@@ -155,6 +155,19 @@ update_flake_lock() {
     esac
 }
 
+# Generate hardware config for new system
+set_environment() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    local SILENT_MODE=$3
+
+    echo -e "\nRunning ./set_environment.sh  "
+    echo -e "It will import additional environment files or projects to local/ folder (ignored by git)  "
+    $SCRIPT_DIR/set_environment.sh
+
+    echo " " # To clean up color codes
+}
+
 # Call the Docker handling script
 handle_docker() {
     local SCRIPT_DIR=$1
@@ -175,7 +188,7 @@ generate_hardware_config() {
 
     run_script_to_stop_drives() {
         echo -e "Attempting to stop external drives ..."
-        $SUDO_CMD ./stop_external_drives.sh 
+        $SUDO_CMD $SCRIPT_DIR/stop_external_drives.sh 
         echo "Generating hardware configuration file..."
         $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
     }
@@ -325,7 +338,7 @@ ending_menu() {
 
     run_startup_services() {
         echo -e "Attempting to start services ..."
-        echo -e "Running ./startup_services.sh ..."
+        echo -e "Running $SCRIPT_DIR/startup_services.sh ..."
         ./startup_services.sh
     }
 
@@ -361,6 +374,9 @@ git_fetch_and_reset_dotfiles_by_remote $SCRIPT_DIR
 
 # Switch flake profile to the chosen one flake.<PROFILE>.nix
 switch_flake_profile_nix $SCRIPT_DIR $PROFILE
+
+# Copy additional environment files or projects to local/ folder (ignored by git)
+set_environment $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 
 # Generate SSH keys for SSH on BOOT
 # SSH on boot is used to unlock encrypted drives by SSH
