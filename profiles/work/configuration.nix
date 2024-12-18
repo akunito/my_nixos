@@ -42,7 +42,7 @@
 
   # Fix nix path
   nix.nixPath = [ "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
-                  "nixos-config=$HOME/.dotfiles/system/configuration.nix" # adjusted from dotfiles to .dotfiles
+                  "nixos-config=$HOME/dotfiles/system/configuration.nix" # adjusted from dotfiles to .dotfiles
                   "/nix/var/nix/profiles/per-user/root/channels"
                 ];
 

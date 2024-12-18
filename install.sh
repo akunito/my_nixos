@@ -402,7 +402,7 @@ hardening_files $SCRIPT_DIR $SUDO_CMD
 # Rebuild system
 echo -e "\n${CYAN}Rebuilding system with flake...${RESET} "
 echo "  " # To clean up color codes
-$SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
+$SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure
 
 # Temporarily soften files for Home-Manager
 soften_files_for_home_manager $SCRIPT_DIR $SUDO_CMD
