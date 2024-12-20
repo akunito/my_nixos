@@ -19,6 +19,16 @@
     };
   };
 
+  environment.systemPackages = with pkgs; [
+    cadvisor
+  ];
+  services.cadvisor = {
+    enable = true;
+    port = 9092;
+    listenAddress = "127.0.0.1";
+
+  };
+
   services.prometheus = {
     enable = true;
     port = 9090;
@@ -29,8 +39,6 @@
       node = {
         enable = true;
         enabledCollectors = [
-          "logind"
-          "nginx"
           "systemd"
         ];
         # extraFlags = [ "--collector.ethtool" "--collector.softirqs" "--collector.tcpstat" "--collector.wifi" ];
@@ -42,6 +50,12 @@
         job_name = "homelab_node";
         static_configs = [{
           targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ];
+        }];
+      }
+      {
+        job_name = "docker";
+        static_configs = [{
+          targets = [ "127.0.0.1:9092" ];
         }];
       }
     ];
