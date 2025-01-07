@@ -1,17 +1,37 @@
-{ pkgs, userSettings, systemSettings, lib, inputs, ... }: 
+{ pkgs, systemSettings, lib, inputs, ... }: 
 
 {
-  system.autoUpgrade = lib.mkIf (systemSettings.autoUpdate == true) {
-    enable = true;
-    flake = "/home/akunito/.dotfiles#system"; # where <#system> depends of your flake (nix flake show flake.nix)
-    flags = [
-      "--update-input"
-      "nixpkgs"
-      "-L" # print build logs
-      # "--commit-lock-file" # optional to commit flake.lock
-    ];
-    dates = systemSettings.autoUpdate_dates;
-    randomizedDelaySec = systemSettings.autoUpdate_randomizedDelaySec;
+  # ====================== Auto System Update ======================
+  systemd.services.autoSystemUpdate = lib.mkIf (systemSettings.autoSystemUpdateEnable == true) {
+    description = systemSettings.autoSystemUpdateDescription;
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = systemSettings.autoSystemUpdateExecStart;
+      User = systemSettings.autoSystemUpdateUser;
+      Environment = "PATH=/run/current-system/sw/bin:/usr/bin:/bin";
+    };
+    unitConfig = { # Call next service on success
+      OnSuccess = systemSettings.autoSystemUpdateCallNext;
+    };
+  };
+  systemd.timers.autoSystemUpdate = lib.mkIf (systemSettings.autoSystemUpdateEnable == true) {
+    description = systemSettings.autoSystemUpdateTimerDescription;
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = systemSettings.autoSystemUpdateOnCalendar; 
+      Persistent = true;
+    };
+  };
+
+  # ====================== Auto User Update ======================
+  systemd.services.autoUserUpdate = lib.mkIf (systemSettings.autoUserUpdateEnable == true) {
+    description = systemSettings.autoUserUpdateDescription;
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = systemSettings.autoUserUpdateExecStart;
+      User = systemSettings.autoUserUpdateUser;
+      Environment = "PATH=/run/current-system/sw/bin:/usr/bin:/bin";
+    };
   };
 }
 

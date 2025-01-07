@@ -58,7 +58,8 @@ case $hostname in
         ;;
     "nixosLabaku")
         # Stop all external drives
-        echo -e "Nothing to do..."
+        echo -e "Stopping Containers..."
+        docker stop $(sudo docker ps -a -q)
         ;;
     *)
         echo -e "This hostname does not match any command to run. Adjust the script if needed..."

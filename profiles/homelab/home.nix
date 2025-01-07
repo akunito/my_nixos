@@ -19,9 +19,4 @@
 
   home.packages = userSettings.homePackages;
 
-  # Auto Upgrade Home Manager
-  services.home-manager.autoUpgrade = lib.mkIf (systemSettings.HomeAutoUpdate == true) { 
-    enable = true;
-    frequency = systemSettings.HomeAutoUpdate_frecuency; 
-  };
 }

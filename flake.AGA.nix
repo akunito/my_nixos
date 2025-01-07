@@ -227,12 +227,21 @@
         ];
         systemStateVersion = "24.05";
 
-        # Auto update Settings
-        autoUpdate = true; # for enabling automatic updates
-        autoUpdate_dates = "22:30";
-        autoUpdate_randomizedDelaySec = "45min";
-        HomeAutoUpdate = false; # enable home manager auto update
-        HomeAutoUpdate_frecuency = "weekly"; # enable home manager auto update
+        # UPDATES -------------------------------------
+        # Auto update System Settings
+        autoSystemUpdateEnable = true; # for enabling auto system updates
+        autoSystemUpdateDescription = "Auto Update System service";
+        autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoSystemUpdate.sh";
+        autoSystemUpdateUser = "root";
+        autoSystemUpdateTimerDescription = "Auto Update System timer";
+        autoSystemUpdateOnCalendar = "06:00:00"; # At 6h every day
+        autoSystemUpdateCallNext = [ "autoUserUpdate.service" ]; # service to call after update
+
+        # Auto update User Settings
+        autoUserUpdateEnable = true; # for enabling auto system updates
+        autoUserUpdateDescription = "Auto User Update";
+        autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoUserUpdate.sh";
+        autoUserUpdateUser = "aga";
       };
 
       # ----- USER SETTINGS ----- #

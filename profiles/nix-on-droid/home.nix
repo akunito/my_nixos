@@ -15,12 +15,6 @@
   home.stateVersion = userSettings.homeStateVersion; # Please read the comment before changing.
 
   home.packages = userSettings.homePackages;  
-  
-  # Auto Upgrade Home Manager
-  services.home-manager.autoUpgrade = lib.mkIf (systemSettings.HomeAutoUpdate == true) { 
-    enable = true;
-    frequency = systemSettings.HomeAutoUpdate_frecuency; 
-  };
 
   xdg.enable = true;
   xdg.userDirs = {

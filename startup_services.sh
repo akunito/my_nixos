@@ -14,9 +14,9 @@ case $hostname in
         ;;
     "nixosLabaku")
         echo -e "Starting homelab services..."
-        docker-compose -f ~/.homelab/homelab/docker-compose.yml up -d
-        docker-compose -f ~/.homelab/media/docker-compose.yml up -d
-        docker-compose -f ~/.homelab/nginx-proxy/docker-compose.yml up -d
+        docker-compose -f /home/akunito/.homelab/homelab/docker-compose.yml up -d
+        docker-compose -f /home/akunito/.homelab/media/docker-compose.yml up -d
+        docker-compose -f /home/akunito/.homelab/nginx-proxy/docker-compose.yml up -d
         ;;
     *)
         echo -e "This hostname does not match any command to run. Adjust the script if needed..."

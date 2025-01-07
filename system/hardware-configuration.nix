@@ -47,19 +47,19 @@
 
   boot.initrd.luks.devices."TimeShift".device = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
 
-  fileSystems."/mnt/HDD_4TB" =
-    { device = "/dev/disk/by-uuid/328f68ec-08db-45ce-b915-8f82f3388246";
-      fsType = "ext4";
-    };
-
-  boot.initrd.luks.devices."HDD_4TB".device = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
-
   fileSystems."/mnt/DATA_4TB" =
     { device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
       fsType = "ext4";
     };
 
   boot.initrd.luks.devices."DATA_4TB".device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
+
+  fileSystems."/mnt/HDD_4TB" =
+    { device = "/dev/disk/by-uuid/328f68ec-08db-45ce-b915-8f82f3388246";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."HDD_4TB".device = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
 
   swapDevices = [ ];
 
@@ -68,7 +68,6 @@
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-2352ae7af0cc.useDHCP = lib.mkDefault true;
   # networking.interfaces.br-2e26becc7b5f.useDHCP = lib.mkDefault true;
   # networking.interfaces.br-5b4ceab8f481.useDHCP = lib.mkDefault true;
   # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
