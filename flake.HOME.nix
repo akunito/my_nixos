@@ -162,6 +162,7 @@
           gocryptfs
           wireguard-tools
           traceroute
+          iproute2
           openssl
           restic
           
