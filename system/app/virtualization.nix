@@ -37,4 +37,20 @@
     };
   };
 
+  # # QEMU VM settings
+  # # Install QEMU Guest Addition
+  # services.qemuGuest.enable = userSettings.qemuGuestAddition;
+  # # Spice and clipboard
+  # systemd.user.services.spice-vdagent-client = lib.mkIf (userSettings.qemuGuestAddition == true) {
+  #   description = "spice-vdagent client";
+  #   wantedBy = [ "graphical-session.target" ];
+  #   serviceConfig = {
+  #     ExecStart = "${pkgs.spice-vdagent}/bin/spice-vdagent -x";
+  #     Restart = "on-failure";
+  #     RestartSec = "5";
+  #   };
+  # };
+  # systemd.user.services.spice-vdagent-client.enable = lib.mkIf (userSettings.qemuGuestAddition == true) lib.mkDefault true;
+
 }
+

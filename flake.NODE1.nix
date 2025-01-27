@@ -195,6 +195,7 @@
 
         dockerEnable = true; # for enabling docker
         virtualizationEnable = false; # for enabling virtualization
+        qemuGuestAddition = true; # If the system is a QEMU VM
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email

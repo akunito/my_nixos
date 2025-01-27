@@ -1,5 +1,5 @@
 {
-  description = "Flake of Akunito NetLAB on x380";
+  description = "Flake of Akunito HomeLab on Desktop";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,38 +7,82 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "netlab"; # hostname
+        hostname = "nixosLabaku"; # hostname
         profile = "homelab"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
-        gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         
         # Security
-        doasEnable = true; # for enabling doas
+        doasEnable = false; # for enabling doas
         sudoEnable = true; # for enabling sudo
         DOASnoPass = false; # for enabling doas without password
-        wrappSudoToDoas = true; # for wrapping sudo with doas
-        sudoNOPASSWD = false; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
-        pkiCertificates = [ ];
+        wrappSudoToDoas = false; # for wrapping sudo with doas
+        sudoNOPASSWD = true; # for allowing sudo without password (NOT Recommended, check sudo.md for more info)
+        sudoCommands = [
+          {
+            command = "/run/current-system/sw/bin/systemctl suspend"; # this requires polkit rules to be set
+            options = [ "NOPASSWD" ];
+          }
+          {
+            command = "/run/current-system/sw/bin/restic";
+            options = [ "NOPASSWD" "SETENV" ];
+          }
+        ];
+        pkiCertificates = [ ]; # paths relative to base.nix, not to flake
+        # Polkit
+        polkitEnable = false;
+        polkitRules = ''
+          polkit.addRule(function(action, subject) {
+            if (
+              subject.isInGroup("users") && (
+                // Allow running rsync and restic
+                (action.id == "org.freedesktop.policykit.exec" &&
+                  (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
+                  action.lookup("command") == "/run/current-system/sw/bin/restic"))
+              )
+            ) {
+              return polkit.Result.YES;
+            }
+          });
+        '';
+
+        # Backups
+        resticWrapper = true; # for enabling restic wrapper
+        rsyncWrapper = true; # for enabling rsync wrapper
+        
+        homeBackupEnable = false; # restic.nix
+        homeBackupDescription = "Backup Home Directory with Restic && DATA_4TB to HDD_4TB";
+        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup.sh";
+        homeBackupUser = "root";
+        homeBackupTimerDescription = "Timer for home_backup service";
+        homeBackupOnCalendar = "23:00:00"; # At 23h every day
+        homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
+
+        remoteBackupEnable = false; # restic.nix
+        remoteBackupDescription = "Copy Restic Backup to Remote Server";
+        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup_remote.sh";
+        remoteBackupUser = "root";
+        remoteBackupTimerDescription = "Timer for remote_backup service";
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.100"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.101"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.8.80"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.8.81"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
-        nameServers = [ "8.8.8.8" "8.8.4.4" ]; # nameservers / DNS
+        nameServers = [ "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = false; # for enabling wifi power save for laptops
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ 52181 53 8093 ];
-        allowedUDPPorts = [ 52181 53 8093 ];
+        allowedTCPPorts = [ 443 8043 2321 22000 111 4000 4001 4002 2049 ]; # 80 443 8040 8043 nginx 2321 gitea 22000 syncthing 111 4000 4001 4002 2049 NFS
+        allowedUDPPorts = [ 22000 21027 111 4000 4001 4002 ]; # 22000 syncthing 21027 syncthing 111 4000 4001 4002 NFS
 
         # LUKS drives
-        bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+        bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
         openLUKS = false; # drives.nix
         disk1_name = "DATA_4TB";
@@ -47,7 +91,35 @@
         disk2_path = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
         disk3_name = "Machines";
         disk3_path = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
-
+        disk4_name = "HDD_4TB";
+        disk4_path = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
+        # NFS
+        nfsServerEnable = false;
+        nfsExports = ''
+          /mnt/DATA_4TB/Warehouse/Books   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/Warehouse/downloads  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/Warehouse/Media   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/backups/AgaLaptop 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+        '';
+        # NFS client settings
+        nfsClientEnable = false;
+        nfsMounts = [
+          {
+            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";
+            where = "/mnt/NFS_Books";
+            type = "nfs";
+            options = "noatime";
+          }
+        ];
+        nfsAutoMounts = [
+          {
+            where = "/mnt/NFS_Books";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+        ];
+        
         # SSH System settings for BOOT
         authorizedKeys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" ];
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
@@ -58,17 +130,17 @@
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management
-        iwlwifiDisablePowerSave = true; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
+        iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
         TLP_ENABLE = true; # Disable for laptops if you want granular power management with profiles
-        PROFILE_ON_AC = "performance";
         PROFILE_ON_BAT = "performance";
+        PROFILE_ON_AC = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
         WIFI_PWR_ON_BAT = "off";
         INTEL_GPU_MIN_FREQ_ON_AC = 300; # sudo tlp-stat -g
         INTEL_GPU_MIN_FREQ_ON_BAT = 300;
         # logind settings
-        LOGIND_ENABLE = true; # Disable for laptops if you want granular power management with profiles
+        LOGIND_ENABLE = false; # Disable for laptops if you want granular power management with profiles
         lidSwitch = "ignore"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
         lidSwitchExternalPower = "ignore"; # when the lid is closed but connected to power 
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
@@ -84,12 +156,15 @@
           zsh
           git
           rclone
-          rdiff-backup
-          rsnapshot
           cryptsetup
-          gocryptfs
+          #gocryptfs
+          #wireguard-tools
+          traceroute
+          iproute2
+          openssl
+          restic
           
-          btop
+          #btop
           fzf
           # tldr
           atuin
@@ -99,12 +174,21 @@
         ];
         systemStateVersion = "24.05";
 
-        # Auto update Settings
-        autoUpdate = true; # for enabling automatic updates
-        autoUpdate_dates = "20:00";
-        autoUpdate_randomizedDelaySec = "45min";
-        HomeAutoUpdate = false; # enable home manager auto update
-        HomeAutoUpdate_frecuency = "weekly"; # enable home manager auto update
+        # UPDATES -------------------------------------
+        # Auto update System Settings
+        autoSystemUpdateEnable = true; # for enabling auto system updates
+        autoSystemUpdateDescription = "Auto Update System service";
+        autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/autoSystemUpdate.sh";
+        autoSystemUpdateUser = "root";
+        autoSystemUpdateTimerDescription = "Auto Update System timer";
+        autoSystemUpdateOnCalendar = "06:00:00"; # At 6h every day
+        autoSystemUpdateCallNext = [ "autoUserUpdate.service" ]; # service to call after update
+
+        # Auto update User Settings
+        autoUserUpdateEnable = true; # for enabling auto system updates
+        autoUserUpdateDescription = "Auto User Update";
+        autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/autoUserUpdate.sh";
+        autoUserUpdateUser = "akunito";
       };
 
       # ----- USER SETTINGS ----- #
@@ -122,7 +206,7 @@
 
         dockerEnable = true; # for enabling docker
         virtualizationEnable = false; # for enabling virtualization
-        qemuGuestAddition = false; # If the system is a QEMU VM
+        qemuGuestAddition = true; # If the system is a QEMU VM
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email
@@ -262,7 +346,6 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
-            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x390
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
@@ -312,7 +395,7 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "nixpkgs/nixos-24.05";
+    nixpkgs-stable.url = "nixpkgs/nixos-24.11";
     # emacs-pin-nixpkgs.url = "nixpkgs/f72123158996b8d4449de481897d855bc47c7bf6";
     # kdenlive-pin-nixpkgs.url = "nixpkgs/cfec6d9203a461d9d698d8a60ef003cac6d0da94";
     # nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
@@ -320,7 +403,7 @@
     home-manager-unstable.url = "github:nix-community/home-manager/master";
     home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs";
 
-    home-manager-stable.url = "github:nix-community/home-manager/release-24.05";
+    home-manager-stable.url = "github:nix-community/home-manager/release-24.11";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
