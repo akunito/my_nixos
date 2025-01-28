@@ -14,6 +14,8 @@ case $hostname in
         ;;
     "nixosLabaku")
         echo -e "Starting homelab services..."
+        sudo mount /dev/sdb /mnt/DATA_4TB
+        sudo mount /dev/sdc /mnt/HDD_4TB
         docker-compose -f /home/akunito/.homelab/homelab/docker-compose.yml up -d
         docker-compose -f /home/akunito/.homelab/media/docker-compose.yml up -d
         docker-compose -f /home/akunito/.homelab/nginx-proxy/docker-compose.yml up -d

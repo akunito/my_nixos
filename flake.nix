@@ -11,9 +11,9 @@
         profile = "homelab"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
-        bootMode = "uefi"; # uefi or bios
+        bootMode = "bios"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
-        grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
+        grubDevice = "/dev/sda1"; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         
         # Security
@@ -32,7 +32,7 @@
             options = [ "NOPASSWD" "SETENV" ];
           }
         ];
-        pkiCertificates = [ /home/akunito/myCA/akunito.org.es/certs/ca.cert.pem /etc/nginx/certs/akunito.org.es.crt ]; # paths relative to base.nix, not to flake
+        pkiCertificates = [ ]; # paths relative to base.nix, not to flake
         # Polkit
         polkitEnable = false;
         polkitRules = ''
@@ -82,9 +82,9 @@
         allowedUDPPorts = [ 22000 21027 111 4000 4001 4002 ]; # 22000 syncthing 21027 syncthing 111 4000 4001 4002 NFS
 
         # LUKS drives
-        bootSSH = true; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+        bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
-        openLUKS = true; # drives.nix
+        openLUKS = false; # drives.nix
         disk1_name = "DATA_4TB";
         disk1_path = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
         disk2_name = "TimeShift";
@@ -94,7 +94,7 @@
         disk4_name = "HDD_4TB";
         disk4_path = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
         # NFS
-        nfsServerEnable = true;
+        nfsServerEnable = false;
         nfsExports = ''
           /mnt/DATA_4TB/Warehouse/Books   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
           /mnt/DATA_4TB/Warehouse/downloads  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
@@ -156,16 +156,15 @@
           zsh
           git
           rclone
-          rdiff-backup
-          rsnapshot
           cryptsetup
-          gocryptfs
-          wireguard-tools
+          #gocryptfs
+          #wireguard-tools
           traceroute
+          iproute2
           openssl
           restic
           
-          btop
+          #btop
           fzf
           # tldr
           atuin
@@ -190,14 +189,6 @@
         autoUserUpdateDescription = "Auto User Update";
         autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/autoUserUpdate.sh";
         autoUserUpdateUser = "akunito";
-
-        # DEPRECATED autoupdate settings
-        autoUpdate = false; # for enabling automatic updates
-        autoUpdate_dates = "8:00";
-        autoUpdate_randomizedDelaySec = "45min";
-        HomeAutoUpdate = false; # enable home manager auto update
-        HomeAutoUpdate_frecuency = "weekly"; # enable home manager auto update
-
       };
 
       # ----- USER SETTINGS ----- #
@@ -214,7 +205,8 @@
         wmType = if (wm == "hyprland") then "wayland" else "x11";
 
         dockerEnable = true; # for enabling docker
-        virtualizationEnable = true; # for enabling virtualization
+        virtualizationEnable = false; # for enabling virtualization
+        qemuGuestAddition = true; # If the system is a QEMU VM
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email

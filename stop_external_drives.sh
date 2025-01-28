@@ -58,6 +58,9 @@ case $hostname in
         ;;
     "nixosLabaku")
         # Stop all external drives
+        echo -e "Unmount external drives"
+        sudo umount /dev/sdb
+        sudo umount /dev/sdc
         echo -e "Stopping Containers..."
         docker stop $(sudo docker ps -a -q)
         ;;

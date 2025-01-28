@@ -5,61 +5,30 @@
 
 {
   imports =
-    [ (modulesPath + "/installer/scan/not-detected.nix")
+    [ (modulesPath + "/profiles/qemu-guest.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "uas" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci" "virtio_scsi" "sd_mod" "sr_mod" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" ];
+  boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/612f9fc9-3fc0-4c87-bd8a-35842e9dcb1f";
+    { device = "/dev/disk/by-uuid/c6f16d9c-22fe-4836-8878-349d3d010a04";
       fsType = "ext4";
     };
 
-  boot.initrd.luks.devices."luks-b1b0b2cf-1cc4-467a-943c-0057e748b6a3".device = "/dev/disk/by-uuid/b1b0b2cf-1cc4-467a-943c-0057e748b6a3";
-
-  fileSystems."/home" =
-    { device = "/dev/disk/by-uuid/031e9342-2041-4777-a28b-d562fd3ad1f2";
-      fsType = "ext4";
-    };
-
-  boot.initrd.luks.devices."luks-4e2319df-5473-4eb5-9f00-483253a7f96e".device = "/dev/disk/by-uuid/4e2319df-5473-4eb5-9f00-483253a7f96e";
-
-  fileSystems."/mnt/Machines" =
-    { device = "/dev/disk/by-uuid/4208afb6-5dce-4aa4-ac58-8d960e78be6b";
-      fsType = "ext4";
-    };
-
-  boot.initrd.luks.devices."Machines".device = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
-
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/C582-8ED6";
-      fsType = "vfat";
-      options = [ "fmask=0022" "dmask=0022" ];
-    };
-
-  fileSystems."/mnt/TimeShift" =
-    { device = "/dev/disk/by-uuid/57bd79bf-942e-4f82-8851-91afb279f06c";
-      fsType = "ext4";
-    };
-
-  boot.initrd.luks.devices."TimeShift".device = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
-
-  fileSystems."/mnt/DATA_4TB" =
-    { device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
-      fsType = "ext4";
-    };
-
-  boot.initrd.luks.devices."DATA_4TB".device = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
+  boot.initrd.luks.devices."luks-1fcaef11-2235-44e6-be4c-d15980124388".device = "/dev/disk/by-uuid/1fcaef11-2235-44e6-be4c-d15980124388";
 
   fileSystems."/mnt/HDD_4TB" =
     { device = "/dev/disk/by-uuid/328f68ec-08db-45ce-b915-8f82f3388246";
       fsType = "ext4";
     };
 
-  boot.initrd.luks.devices."HDD_4TB".device = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
+  fileSystems."/mnt/DATA_4TB" =
+    { device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
+      fsType = "ext4";
+    };
 
   swapDevices = [ ];
 
@@ -68,12 +37,10 @@
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-2e26becc7b5f.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-5b4ceab8f481.useDHCP = lib.mkDefault true;
+  # networking.interfaces.br-1fa357748f17.useDHCP = lib.mkDefault true;
+  # networking.interfaces.br-4785e815ac61.useDHCP = lib.mkDefault true;
   # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
-  # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
-  # networking.interfaces.wlp9s0.useDHCP = lib.mkDefault true;
+  # networking.interfaces.ens18.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }
