@@ -21,13 +21,25 @@
   boot.initrd.luks.devices."luks-1fcaef11-2235-44e6-be4c-d15980124388".device = "/dev/disk/by-uuid/1fcaef11-2235-44e6-be4c-d15980124388";
 
   fileSystems."/mnt/HDD_4TB" =
-    { device = "/dev/disk/by-uuid/328f68ec-08db-45ce-b915-8f82f3388246";
+    { device = "/dev/disk/by-uuid/95a8a99b-4690-4583-bfc8-a06eb6e826ad";
+      fsType = "ext4";
+    };
+
+  fileSystems."/mnt/HDD_4TB" =
+    { device = "/mnt/HDD_4TB";
+      fsType = "none";
+      options = [ "bind" ];
+    };
+
+  fileSystems."/mnt/DATA_4TB" =
+    { device = "/dev/disk/by-uuid/550c7911-924f-425d-980c-ff83f888a1a1";
       fsType = "ext4";
     };
 
   fileSystems."/mnt/DATA_4TB" =
-    { device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
-      fsType = "ext4";
+    { device = "/mnt/DATA_4TB";
+      fsType = "none";
+      options = [ "bind" ];
     };
 
   swapDevices = [ ];

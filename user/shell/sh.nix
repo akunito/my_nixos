@@ -57,7 +57,7 @@ in
 
   # Atuin settings
   programs.atuin = {
-    enable = true;
+    enable = false;
     enableZshIntegration = true; #
     settings = {
       auto_sync = true;

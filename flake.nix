@@ -164,9 +164,9 @@
           openssl
           restic
           
-          #btop
+          btop
           fzf
-          # tldr
+          tldr
           atuin
 
           kitty # check if should be removed on labs
