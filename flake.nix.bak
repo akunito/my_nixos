@@ -54,7 +54,7 @@
         resticWrapper = true; # for enabling restic wrapper
         rsyncWrapper = true; # for enabling rsync wrapper
         
-        homeBackupEnable = false; # restic.nix
+        homeBackupEnable = true; # restic.nix
         homeBackupDescription = "Backup Home Directory with Restic && DATA_4TB to HDD_4TB";
         homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup.sh";
         homeBackupUser = "root";
@@ -62,7 +62,7 @@
         homeBackupOnCalendar = "23:00:00"; # At 23h every day
         homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
 
-        remoteBackupEnable = false; # restic.nix
+        remoteBackupEnable = true; # restic.nix
         remoteBackupDescription = "Copy Restic Backup to Remote Server";
         remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup_remote.sh";
         remoteBackupUser = "root";
@@ -164,9 +164,9 @@
           openssl
           restic
           
-          #btop
+          btop
           fzf
-          # tldr
+          tldr
           atuin
 
           kitty # check if should be removed on labs

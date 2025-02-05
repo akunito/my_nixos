@@ -20,16 +20,6 @@
 
   boot.initrd.luks.devices."luks-1fcaef11-2235-44e6-be4c-d15980124388".device = "/dev/disk/by-uuid/1fcaef11-2235-44e6-be4c-d15980124388";
 
-  fileSystems."/mnt/HDD_4TB" =
-    { device = "/dev/disk/by-uuid/328f68ec-08db-45ce-b915-8f82f3388246";
-      fsType = "ext4";
-    };
-
-  fileSystems."/mnt/DATA_4TB" =
-    { device = "/dev/disk/by-uuid/0c739f88-5add-4d7c-8c61-b80171341daf";
-      fsType = "ext4";
-    };
-
   swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
