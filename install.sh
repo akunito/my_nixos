@@ -370,7 +370,7 @@ $SUDO_CMD echo -e "\nActivating sudo password for this session"
 
 # Update dotfiles to the last commit of the remote repository
 # Or clone the repository if it doesn't exist
-# git_fetch_and_reset_dotfiles_by_remote $SCRIPT_DIR
+git_fetch_and_reset_dotfiles_by_remote $SCRIPT_DIR
 
 # Switch flake profile to the chosen one flake.<PROFILE>.nix
 switch_flake_profile_nix $SCRIPT_DIR $PROFILE

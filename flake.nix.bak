@@ -11,9 +11,9 @@
         profile = "homelab"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
-        bootMode = "bios"; # uefi or bios
+        bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
-        grubDevice = "/dev/sda1"; # device identifier for grub; only used for legacy (bios) boot mode
+        grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         
         # Security
@@ -163,6 +163,7 @@
           iproute2
           openssl
           restic
+          zim-tools #to unpack .zim files like gutemberg library
           
           btop
           fzf
