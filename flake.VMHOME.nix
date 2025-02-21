@@ -163,6 +163,7 @@
           iproute2
           openssl
           restic
+          zim-tools #to unpack .zim files like gutemberg library
           
           btop
           fzf
