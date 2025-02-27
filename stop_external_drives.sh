@@ -58,11 +58,11 @@ case $hostname in
         ;;
     "nixosLabaku")
         # Stop all external drives
+        echo -e "Stopping Containers..."
+        docker stop $(sudo docker ps -a -q)
         echo -e "Unmount external drives"
         sudo umount /mnt/DATA_4TB
         sudo umount /mnt/HDD_4TB
-        echo -e "Stopping Containers..."
-        docker stop $(sudo docker ps -a -q)
         ;;
     *)
         echo -e "This hostname does not match any command to run. Adjust the script if needed..."
