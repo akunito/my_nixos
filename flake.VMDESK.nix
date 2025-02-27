@@ -198,7 +198,7 @@
           pkgs.rsync
           pkgs.nfs-utils
           pkgs.restic
-          pkgs.rustdesk
+          pkgs-unstable.rustdesk
           # pkgs.atuin
           # pkgs.syncthing
           # pkgs.pciutils # install if you need some commands like lspci
@@ -242,7 +242,7 @@
 
         dockerEnable = false; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization
-        qemuGuestAddition = false; # If the system is a QEMU VM
+        qemuGuestAddition = true; # If the system is a QEMU VM
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email
