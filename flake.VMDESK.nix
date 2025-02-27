@@ -165,7 +165,7 @@
         # Intel Network Adapter Power Management
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
-        TLP_ENABLE = true; # Disable for laptops if you want granular power management with profiles
+        TLP_ENABLE = false; # Disable for laptops if you want granular power management with profiles
         PROFILE_ON_BAT = "performance";
         PROFILE_ON_AC = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
@@ -179,8 +179,8 @@
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
         powerKey = "ignore";  # when pressing power key, do one of above
         # More Power settings
-        powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
-        power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
+        powerManagement_ENABLE = false; # Enable power management profiles for desktop systems <<<
+        power-profiles-daemon_ENABLE = false; # Enable power management profiles for desktop systems <<<
 
         # System packages
         systemPackages = [
