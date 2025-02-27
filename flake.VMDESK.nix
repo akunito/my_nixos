@@ -198,6 +198,7 @@
           pkgs.rsync
           pkgs.nfs-utils
           pkgs.restic
+          pkgs.rustdesk
           # pkgs.atuin
           # pkgs.syncthing
           # pkgs.pciutils # install if you need some commands like lspci
