@@ -164,6 +164,7 @@
           openssl
           restic
           zim-tools #to unpack .zim files like gutemberg library
+          p7zip
           
           btop
           fzf
