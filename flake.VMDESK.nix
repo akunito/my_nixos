@@ -71,8 +71,8 @@
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.97"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.98"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
         nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = true; # for enabling wifi power save for laptops
@@ -263,7 +263,7 @@
           # qt5.qtbase
           pkgs-unstable.ungoogled-chromium
 
-          # pkgs-unstable.vscode
+          pkgs-unstable.vscode
           pkgs-unstable.obsidian
           pkgs-unstable.spotify
           # pkgs-unstable.xournalpp
