@@ -1,5 +1,5 @@
 {
-  description = "Flake of Akunito HomeLab on Desktop";
+  description = "Flake for my VM Desktop";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,8 +7,8 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosLabaku"; # hostname
-        profile = "homelab"; # select a profile defined from my profiles directory
+        hostname = "nixosdesk"; # hostname
+        profile = "personal"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
         bootMode = "uefi"; # uefi or bios
@@ -32,9 +32,9 @@
             options = [ "NOPASSWD" "SETENV" ];
           }
         ];
-        pkiCertificates = [ ]; # paths relative to base.nix, not to flake
+        pkiCertificates = [ ];
         # Polkit
-        polkitEnable = false;
+        polkitEnable = true;
         polkitRules = ''
           polkit.addRule(function(action, subject) {
             if (
@@ -53,53 +53,50 @@
         # Backups
         resticWrapper = true; # for enabling restic wrapper
         rsyncWrapper = true; # for enabling rsync wrapper
-        
-        homeBackupEnable = true; # restic.nix
-        homeBackupDescription = "Backup Home Directory with Restic && DATA_4TB to HDD_4TB";
-        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup.sh";
-        homeBackupUser = "root";
+
+        homeBackupEnable = false; # restic.nix
+        homeBackupDescription = "Backup Home Directory with Restic";
+        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup.sh";
+        homeBackupUser = "akunito";
         homeBackupTimerDescription = "Timer for home_backup service";
-        homeBackupOnCalendar = "23:00:00"; # At 23h every day
+        homeBackupOnCalendar = "0/12:00:00"; # Every 12 hour
+        homeBackupCallNextEnabled = true; # for calling next service after backup
         homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
 
-        remoteBackupEnable = true; # restic.nix
+        remoteBackupEnable = false; # restic.nix
         remoteBackupDescription = "Copy Restic Backup to Remote Server";
-        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup_remote.sh";
-        remoteBackupUser = "root";
+        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup_remote.sh";
+        remoteBackupUser = "akunito";
         remoteBackupTimerDescription = "Timer for remote_backup service";
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.8.80"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.8.81"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
-        nameServers = [ "192.168.8.1" ]; # nameservers / DNS
-        wifiPowerSave = false; # for enabling wifi power save for laptops
+        nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
+        wifiPowerSave = true; # for enabling wifi power save for laptops
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ 443 8043 2321 22000 111 4000 4001 4002 2049 21115 21116 ]; # 80 443 8040 8043 nginx 2321 gitea 22000 syncthing 111 4000 4001 4002 2049 NFS
-        allowedUDPPorts = [ 22000 21027 111 4000 4001 4002 21116 21117 ]; # 22000 syncthing 21027 syncthing 111 4000 4001 4002 NFS
+        allowedTCPPorts = [ ];
+        allowedUDPPorts = [ ];
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
         openLUKS = false; # drives.nix
-        disk1_name = "DATA_4TB";
-        disk1_path = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
-        disk2_name = "TimeShift";
-        disk2_path = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
-        disk3_name = "Machines";
-        disk3_path = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
-        disk4_name = "HDD_4TB";
-        disk4_path = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
-        # NFS
+        disk1_name = "SAMPLE1";
+        disk1_path = "/dev/disk/by-uuid/231c229c-SAMPLE1";
+        disk2_name = "SAMPLE2";
+        disk2_path = "/dev/disk/by-uuid/04aaf88f-SAMPLE2";
+        disk3_name = "SAMPLE3";
+        disk3_path = "/dev/disk/by-uuid/452c53a6-SAMPLE3";
+        # NFS server settings
         nfsServerEnable = false;
         nfsExports = ''
-          /mnt/DATA_4TB/Warehouse/Books   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
-          /mnt/DATA_4TB/Warehouse/downloads  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
-          /mnt/DATA_4TB/Warehouse/Media   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
-          /mnt/DATA_4TB/backups/AgaLaptop 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/example   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/example2  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
         # NFS client settings
         nfsClientEnable = false;
@@ -107,6 +104,24 @@
           {
             what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";
             where = "/mnt/NFS_Books";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/downloads";
+            where = "/mnt/NFS_downloads";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Media";
+            where = "/mnt/NFS_Media";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.80:/mnt/DATA_4TB/backups/akunitoLaptop";
+            where = "/mnt/NFS_Backups";
             type = "nfs";
             options = "noatime";
           }
@@ -118,21 +133,39 @@
               TimeoutIdleSec = "600";
             };
           }
+          {
+            where = "/mnt/NFS_Movies";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_Media";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_Backups";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
         ];
-        
+
         # SSH System settings for BOOT
         authorizedKeys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" ];
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
-
+        
         # Printer
-        servicePrinting = false; 
-        networkPrinters = false;
+        servicePrinting = true; 
+        networkPrinters = true;
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
-        TLP_ENABLE = true; # Disable for laptops if you want granular power management with profiles
+        TLP_ENABLE = false; # Disable for laptops if you want granular power management with profiles
         PROFILE_ON_BAT = "performance";
         PROFILE_ON_AC = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
@@ -150,29 +183,30 @@
         power-profiles-daemon_ENABLE = false; # Enable power management profiles for desktop systems <<<
 
         # System packages
-        systemPackages = with pkgs; [
-          vim
-          wget
-          zsh
-          git
-          rclone
-          cryptsetup
-          #gocryptfs
-          #wireguard-tools
-          traceroute
-          iproute2
-          openssl
-          restic
-          zim-tools #to unpack .zim files like gutemberg library
-          p7zip
-          
-          btop
-          fzf
-          tldr
-          atuin
+        systemPackages = [
+          pkgs.vim
+          pkgs.wget
+          pkgs.nmap # net tool for port scanning
+          pkgs.zsh
+          pkgs.git
+          pkgs.cryptsetup
+          pkgs.home-manager
+          pkgs.wpa_supplicant # for wifi
+          pkgs.btop
+          pkgs.fzf
+          pkgs.tldr
+          pkgs.rsync
+          pkgs.nfs-utils
+          pkgs.restic
+          # pkgs.atuin
+          # pkgs.syncthing
+          # pkgs.pciutils # install if you need some commands like lspci
 
-          kitty # check if should be removed on labs
-          home-manager
+          pkgs.vivaldi # requires patch to be imported + qt5.qtbase
+          pkgs.qt5.qtbase
+
+          #pkgs.pcloud # requires patch to be imported
+          pkgs-unstable.sunshine
         ];
         systemStateVersion = "24.05";
 
@@ -199,15 +233,15 @@
         name = "akunito"; # name/identifier
         email = ""; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
-        extraGroups = [ "networkmanager" "wheel" ];
+        extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if (wm == "hyprland") then "wayland" else "x11";
 
-        dockerEnable = true; # for enabling docker
-        virtualizationEnable = false; # for enabling virtualization
+        dockerEnable = false; # for enabling docker
+        virtualizationEnable = true; # for enabling virtualization
         qemuGuestAddition = true; # If the system is a QEMU VM
 
         gitUser = "akunito"; # git username
@@ -220,10 +254,29 @@
         fontPkg = pkgs.intel-one-mono; # Font package
 
         # Home-Manager packages
-        homePackages = with pkgs; [
-          # Core
-          zsh
-          git
+        homePackages = [
+          pkgs.zsh
+          pkgs.kitty
+          pkgs.git
+          pkgs.syncthing
+
+          # vivaldi # temporary moved to configuration.nix for issue with plasma 6
+          # qt5.qtbase
+          pkgs-unstable.ungoogled-chromium
+
+          pkgs-unstable.vscode
+          pkgs-unstable.obsidian
+          pkgs-unstable.spotify
+          # pkgs-unstable.xournalpp
+          pkgs-unstable.vlc
+          pkgs-unstable.candy-icons
+          pkgs.calibre
+          
+          pkgs-unstable.libreoffice
+          pkgs-unstable.telegram-desktop
+
+          pkgs-unstable.qbittorrent
+          pkgs-unstable.nextcloud-client
         ];
         homeStateVersion = "24.05";
 
@@ -254,7 +307,7 @@
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal"))
               then
                 pkgs-stable
               else
@@ -298,7 +351,7 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
              then
                inputs.nixpkgs-stable.lib
              else
@@ -306,11 +359,12 @@
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-             then
-               inputs.home-manager-stable
-             else
-               inputs.home-manager-unstable);
+      # home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      #        then
+      #          inputs.home-manager-stable
+      #        else
+      #          inputs.home-manager-unstable);
+      home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
 
       # Systems that can run tests:
       supportedSystems = [ "aarch64-linux" "i686-linux" "x86_64-linux" ];
@@ -348,6 +402,7 @@
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             ./system/bin/phoenix.nix
+            # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
@@ -408,7 +463,7 @@
     home-manager-stable.url = "github:nix-community/home-manager/release-24.11";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
 
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
+    # nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
 
     # nix-on-droid = {
     #   url = "github:nix-community/nix-on-droid/master";

@@ -116,6 +116,14 @@
     ];
   };
 
+  # Remote control
+  services.sunshine = lib.mkIf (systemSettings.sunshineEnable == true) {
+    enable = true;
+    autoStart = true;
+    capSysAdmin = true;
+    openFirewall = true;
+  };
+
   security.pki.certificateFiles = systemSettings.pkiCertificates;
 
   # It is ok to leave this unchanged for compatibility purposes
