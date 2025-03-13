@@ -13,15 +13,15 @@
 
               (./. + "../../../user/wm"+("/"+userSettings.wm+"/"+userSettings.wm)+".nix") # My window manager selected from flake
               ../../user/shell/sh.nix # My zsh and bash config
-              # ../../user/shell/cli-collection.nix # Useful CLI apps
+              ../../user/shell/cli-collection.nix # Useful CLI apps
               # ../../user/app/doom-emacs/doom.nix # My doom emacs config
               ../../user/app/ranger/ranger.nix # My ranger file manager config
               ../../user/app/git/git.nix # My git config
               # ../../user/app/keepass/keepass.nix # My password manager
               (./. + "../../../user/app/browser"+("/"+userSettings.browser)+".nix") # My default browser selected from flake
               ../../user/app/virtualization/virtualization.nix # Virtual machines
-              #../../user/app/flatpak/flatpak.nix # Flatpaks
-              # ../../user/style/stylix.nix # Styling and themes for my apps
+              ../../user/app/flatpak/flatpak.nix # Flatpaks
+              ../../user/style/stylix.nix # Styling and themes for my apps
               # ../../user/lang/cc/cc.nix # C and C++ tools
               # ../../user/lang/godot/godot.nix # Game development
               #../../user/pkgs/blockbench.nix # Blockbench ## marked as insecure
@@ -32,11 +32,11 @@
 
   home.packages = userSettings.homePackages;
 
-  # home.file.".local/share/pixmaps/nixos-snowflake-stylix.svg".source =
-  #   config.lib.stylix.colors {
-  #     template = builtins.readFile ../../user/pkgs/nixos-snowflake-stylix.svg.mustache;
-  #     extension = "svg";
-  #   };
+  home.file.".local/share/pixmaps/nixos-snowflake-stylix.svg".source =
+    config.lib.stylix.colors {
+      template = builtins.readFile ../../user/pkgs/nixos-snowflake-stylix.svg.mustache;
+      extension = "svg";
+    };
 
   services.syncthing.enable = true;
 
@@ -78,9 +78,9 @@
 
   # news.display = "silent";
 
-  # gtk.iconTheme = {
-  #   package = pkgs.papirus-icon-theme;
-  #   name = if (config.stylix.polarity == "dark") then "Papirus-Dark" else "Papirus-Light";
-  # };
+  gtk.iconTheme = {
+    package = pkgs.papirus-icon-theme;
+    name = if (config.stylix.polarity == "dark") then "Papirus-Dark" else "Papirus-Light";
+  };
 
 }

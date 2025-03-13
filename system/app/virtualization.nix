@@ -52,5 +52,5 @@
   # };
   # systemd.user.services.spice-vdagent-client.enable = lib.mkIf (userSettings.qemuGuestAddition == true) lib.mkDefault true;
 
+  virtualisation.waydroid.enable = true;
 }
-

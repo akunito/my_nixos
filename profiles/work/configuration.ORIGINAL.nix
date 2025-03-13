@@ -2,42 +2,29 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, pkgs-unstable, lib, systemSettings, userSettings, inputs, ... }:
-
+{ pkgs, lib, systemSettings, userSettings, ... }:
 {
   imports =
     [ ../../system/hardware-configuration.nix
-      ../../system/hardware/systemd.nix # systemd config / journald parameters (logs)
-      ../../system/hardware/kernel.nix # Kernel config using xanmod
+      ../../system/hardware/systemd.nix # systemd config
+      ../../system/hardware/kernel.nix # Kernel config
       ../../system/hardware/power.nix # Power management
       ../../system/hardware/time.nix # Network time sync
-      ../../system/hardware/opengl.nix # package for AMD opengl
-      ../../system/hardware/printing.nix # Printer
-      ../../system/hardware/bluetooth.nix # Bluetooth config
+      ../../system/hardware/opengl.nix
+      ../../system/hardware/printing.nix
+      ../../system/hardware/bluetooth.nix
       (./. + "../../../system/wm"+("/"+userSettings.wm)+".nix") # My window manager
-      ../../system/app/flatpak.nix
-      ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
+      #../../system/app/flatpak.nix
+      ../../system/app/virtualization.nix
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
-      ../../system/security/sudo.nix # Doas instead of sudo
-      ../../system/security/gpg.nix # GnuPG (ssh/key agent)
-      ../../system/security/blocklist.nix # Blocklist for hosts
-      # ../../system/security/fail2ban.nix # Fail2ban config to be set up
-      ../../system/security/firewall.nix # Firewall setup
+      ../../system/security/doas.nix
+      ../../system/security/gpg.nix
+      ../../system/security/blocklist.nix
+      ../../system/security/firewall.nix
       ../../system/security/firejail.nix
-      # ../../system/security/openvpn.nix # Not configured yet
+      ../../system/security/openvpn.nix
       ../../system/security/automount.nix
-      ../../system/security/restic.nix # Manage backups
-      ../../system/security/polkit.nix # Security rules
-      ../../system/style/stylix.nix # Stylix theme
-      ( import ../../system/security/sshd.nix {
-        authorizedKeys = systemSettings.authorizedKeys; # SSH keys
-        inherit userSettings;
-        inherit systemSettings;
-        inherit lib; })
-      ../../system/security/autoupgrade.nix # auto upgrade
-      # Patches
-      #../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
-      ../../patches/vivaldifixes.nix # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148 
+      ../../system/style/stylix.nix
     ];
 
   # Fix nix path
@@ -47,8 +34,6 @@
                 ];
 
   # Ensure nix flakes are enabled
-  nix.package = pkgs.nixVersions.stable; # if using stable version
-  # nix.package = pkgs.nixFlakes; # if using unstable version
   nix.extraOptions = ''
     experimental-features = nix-command flakes
   '';
@@ -67,7 +52,7 @@
       }
     )
   ];
-
+ 
 
   # logseq
   nixpkgs.config.permittedInsecurePackages = [
@@ -77,7 +62,7 @@
   # wheel group gets trusted access to nix daemon
   nix.settings.trusted-users = [ "@wheel" ];
 
-  # Allow unfree packages
+  # I'm sorry Stallman-taichou
   nixpkgs.config.allowUnfree = true;
 
   # Kernel modules
@@ -92,11 +77,8 @@
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
 
   # Networking
-  networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
-  networking.networkmanager.enable = systemSettings.networkManager; # Use networkmanager
-  networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
-  networking.defaultGateway = lib.mkIf (systemSettings.defaultGateway != null) systemSettings.defaultGateway; # Define your default gateway
-  networking.nameservers = systemSettings.nameServers; # Define your DNS servers
+  networking.hostName = systemSettings.hostname; # Define your hostname.
+  networking.networkmanager.enable = true; # Use networkmanager
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
@@ -117,13 +99,34 @@
   users.users.${userSettings.username} = {
     isNormalUser = true;
     description = userSettings.name;
-    extraGroups = userSettings.extraGroups;
+    extraGroups = [ "networkmanager" "wheel" "input" "dialout" "video" "render" ];
     packages = [];
     uid = 1000;
   };
 
   # System packages
-  environment.systemPackages = systemSettings.systemPackages;
+  environment.systemPackages = with pkgs; [
+    vim
+    logseq
+    wget
+    zsh
+    git
+    cryptsetup
+    home-manager
+    wpa_supplicant
+    (pkgs.writeScriptBin "comma" ''
+      if [ "$#" = 0 ]; then
+        echo "usage: comma PKGNAME... [EXECUTABLE]";
+      elif [ "$#" = 1 ]; then
+        nix-shell -p $1 --run $1;
+      elif [ "$#" = 2 ]; then
+        nix-shell -p $1 --run $2;
+      else
+        echo "error: too many arguments";
+        echo "usage: comma PKGNAME... [EXECUTABLE]";
+      fi
+    '')
+  ];
 
   # I use zsh btw
   environment.shells = with pkgs; [ zsh ];
@@ -140,17 +143,7 @@
     ];
   };
 
-  # Remote control
-  services.sunshine = lib.mkIf (systemSettings.sunshineEnable == true) {
-    enable = true;
-    autoStart = true;
-    capSysAdmin = true;
-    openFirewall = true;
-  };
-
-  security.pki.certificateFiles = systemSettings.pkiCertificates;
-
   # It is ok to leave this unchanged for compatibility purposes
-  system.stateVersion = systemSettings.systemStateVersion;
+  system.stateVersion = "22.11";
 
 }

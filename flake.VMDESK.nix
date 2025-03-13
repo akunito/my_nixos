@@ -242,9 +242,9 @@
         extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
-        wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
+        wm = "hyprland"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
-        wmType = if (wm == "hyprland") then "wayland" else "x11";
+        wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
 
         dockerEnable = false; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization
@@ -254,6 +254,7 @@
         gitEmail = "diego88aku@gmail.com"; # git email
 
         browser = "vivaldi"; # Default browser; must select one from ./user/app/browser/
+        spawnBrowser = "vivaldi";
         defaultRoamDir = "Personal.p"; # Default org roam directory relative to ~/Org
         term = "kitty"; # Default terminal command;
         font = "Intel One Mono"; # Selected font
@@ -307,13 +308,15 @@
         (import inputs.nixpkgs { system = systemSettings.system; rocmSupport = (if systemSettings.gpu == "amd" then true else false); }).applyPatches {
           name = "nixpkgs-patched";
           src = inputs.nixpkgs;
-          # patches = [ ./patches/emacs-no-version-check.patch ]; # DISABLING emacs patches??
+          patches = [ #./patches/emacs-no-version-check.patch
+                      #./patches/nixpkgs-348697.patch
+                    ];
         };
 
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal"))
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
               then
                 pkgs-stable
               else
@@ -323,7 +326,7 @@
                     allowUnfree = true;
                     allowUnfreePredicate = (_: true);
                   };
-                  # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
+                  overlays = [ inputs.rust-overlay.overlays.default ];
                 }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
@@ -340,6 +343,7 @@
           allowUnfree = true;
           allowUnfreePredicate = (_: true);
         };
+        overlays = [ inputs.rust-overlay.overlays.default ];
       };
 
       # pkgs-emacs = import inputs.emacs-pin-nixpkgs {
@@ -350,14 +354,14 @@
       #   system = systemSettings.system;
       # };
 
-      # pkgs-nwg-dock-hyprland = import inputs.nwg-dock-hyprland-pin-nixpkgs {
-      #   system = systemSettings.system;
-      # };
+      pkgs-nwg-dock-hyprland = import inputs.nwg-dock-hyprland-pin-nixpkgs {
+        system = systemSettings.system;
+      };
 
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
+      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
              then
                inputs.nixpkgs-stable.lib
              else
@@ -365,12 +369,12 @@
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      # home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-      #        then
-      #          inputs.home-manager-stable
-      #        else
-      #          inputs.home-manager-unstable);
-      home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
+      home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+             then
+               inputs.home-manager-stable
+             else
+               inputs.home-manager-unstable);
+      # home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
 
       # Systems that can run tests:
       supportedSystems = [ "aarch64-linux" "i686-linux" "x86_64-linux" ];
@@ -395,7 +399,7 @@
             inherit pkgs-stable;
             # inherit pkgs-emacs;
             # inherit pkgs-kdenlive;
-            # inherit pkgs-nwg-dock-hyprland;
+            inherit pkgs-nwg-dock-hyprland;
             inherit systemSettings;
             inherit userSettings;
             inherit inputs;
@@ -407,6 +411,7 @@
           system = systemSettings.system;
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
+            # inputs.lix-module.nixosModules.default
             ./system/bin/phoenix.nix
             # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
           ]; # load configuration.nix from selected PROFILE
@@ -457,16 +462,20 @@
     };
 
   inputs = {
+    # lix-module = {
+    #   url = "https://git.lix.systems/lix-project/nixos-module/archive/2.90.0.tar.gz";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "nixpkgs/nixos-24.11";
+    nixpkgs-stable.url = "nixpkgs/nixos-24.05";
     # emacs-pin-nixpkgs.url = "nixpkgs/f72123158996b8d4449de481897d855bc47c7bf6";
     # kdenlive-pin-nixpkgs.url = "nixpkgs/cfec6d9203a461d9d698d8a60ef003cac6d0da94";
-    # nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
+    nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
 
     home-manager-unstable.url = "github:nix-community/home-manager/master";
     home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs";
 
-    home-manager-stable.url = "github:nix-community/home-manager/release-24.11";
+    home-manager-stable.url = "github:nix-community/home-manager/release-24.05";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
 
     # nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
@@ -477,19 +486,24 @@
     #   inputs.home-manager.follows = "home-manager-unstable";
     # };
 
-    # hyprland = {
-    #   type = "git";
-    #   url = "https://github.com/hyprwm/Hyprland";
-    #   submodules = true;
-    #   rev = "918d8340afd652b011b937d29d5eea0be08467f5";
-    # };
-    # hyprland.inputs.nixpkgs.follows = "nixpkgs";
-    # hyprland-plugins.url = "github:hyprwm/hyprland-plugins/3ae670253a5a3ae1e3a3104fb732a8c990a31487";
-    # hyprland-plugins.inputs.hyprland.follows = "hyprland";
-    # hycov.url = "github:DreamMaoMao/hycov/de15cdd6bf2e46cbc69735307f340b57e2ce3dd0";
-    # hycov.inputs.hyprland.follows = "hyprland";
-    # hyprgrass.url = "github:horriblename/hyprgrass/736119f828eecaed2deaae1d6ff1f50d6dabaaba";
-    # hyprgrass.inputs.hyprland.follows = "hyprland";
+   hyprland = {
+      url = "github:hyprwm/Hyprland/main?submodules=true";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hyprland-plugins = {
+      type = "git";
+      url = "https://code.hyprland.org/hyprwm/hyprland-plugins.git";
+      rev = "4d7f0b5d8b952f31f7d2e29af22ab0a55ca5c219"; #v0.44.1
+      inputs.hyprland.follows = "hyprland";
+    };
+    hyprlock = {
+      type = "git";
+      url = "https://code.hyprland.org/hyprwm/hyprlock.git";
+      rev = "73b0fc26c0e2f6f82f9d9f5b02e660a958902763";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hyprgrass.url = "github:horriblename/hyprgrass/427690aec574fec75f5b7b800ac4a0b4c8e4b1d5";
+    hyprgrass.inputs.hyprland.follows = "hyprland";
 
     # nix-doom-emacs.url = "github:nix-community/nix-doom-emacs";
     # nix-doom-emacs.inputs.nixpkgs.follows = "emacs-pin-nixpkgs";
@@ -547,9 +561,9 @@
     #   flake = false;
     # };
 
-    # stylix.url = "github:danth/stylix";
+    stylix.url = "github:danth/stylix";
 
-    # rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.url = "github:oxalica/rust-overlay";
 
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";

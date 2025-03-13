@@ -25,19 +25,15 @@ in
   wayland.windowManager.hyprland = {
     enable = true;
     package = inputs.hyprland.packages.${pkgs.system}.hyprland;
-    plugins = [
-      inputs.hyprland-plugins.packages.${pkgs.system}.hyprtrails
-      inputs.hycov.packages.${pkgs.system}.hycov
-      inputs.hyprgrass.packages.${pkgs.system}.default
-    ];
+    plugins = [ ];
     settings = { };
     extraConfig = ''
-      exec-once = dbus-update-activation-environment DISPLAY XAUTHORITY WAYLAND_DISPLAY
+      exec-once = dbus-update-activation-environment --systemd DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_SESSION_DESKTOP=Hyprland XDG_CURRENT_DESKTOP=Hyprland XDG_SESSION_TYPE=wayland
       exec-once = hyprctl setcursor '' + config.gtk.cursorTheme.name + " " + builtins.toString config.gtk.cursorTheme.size + ''
 
       env = XDG_CURRENT_DESKTOP,Hyprland
-      env = XDG_SESSION_TYPE,wayland
       env = XDG_SESSION_DESKTOP,Hyprland
+      env = XDG_SESSION_TYPE,wayland
       env = WLR_DRM_DEVICES,/dev/dri/card2:/dev/dri/card1
       env = GDK_BACKEND,wayland,x11,*
       env = QT_QPA_PLATFORM,wayland;xcb
@@ -45,18 +41,18 @@ in
       env = QT_AUTO_SCREEN_SCALE_FACTOR,1
       env = QT_WAYLAND_DISABLE_WINDOWDECORATION,1
       env = CLUTTER_BACKEND,wayland
+      env = GDK_PIXBUF_MODULE_FILE,${pkgs.librsvg}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
 
       exec-once = hyprprofile Default
 
-      exec-once = pypr
       exec-once = ydotoold
       #exec-once = STEAM_FRAME_FORCE_CLOSE=1 steam -silent
       exec-once = nm-applet
       exec-once = blueman-applet
-      exec-once = hypr-element-start
       exec-once = GOMAXPROCS=1 syncthing --no-browser
       exec-once = protonmail-bridge --noninteractive
       exec-once = waybar
+      exec-once = emacs --daemon
 
       exec-once = hypridle
       exec-once = sleep 5 && libinput-gestures
@@ -80,6 +76,7 @@ in
            animation = fade, 1, 10, default
            animation = workspaces, 1, 5, wind
            animation = windows, 1, 6, wind, slide
+           animation = specialWorkspace, 1, 6, default, slidefadevert -50%
       }
 
       general {
@@ -99,60 +96,8 @@ in
          inactive_timeout = 30
        }
 
-       plugin {
-         hyprtrails {
-             color = rgba(''+config.lib.stylix.colors.base08+''55)
-         }
-         hycov {
-             overview_gappo = 60 # gaps width from screen edge
-             overview_gappi = 24 # gaps width from clients
-             enable_hotarea = 0 # enable mouse cursor hotarea, when cursor enter hotarea, it will toggle overview
-             enable_click_action = 1 # enable mouse left button jump and right button kill in overview mode
-             hotarea_monitor = all # monitor name which hotarea is in, default is all
-             hotarea_pos = 1 # position of hotarea (1: bottom left, 2: bottom right, 3: top left, 4: top right)
-             hotarea_size = 10 # hotarea size, 10x10
-             swipe_fingers = 3 # finger number of gesture,move any directory
-             move_focus_distance = 100 # distance for movefocus,only can use 3 finger to move
-             enable_gesture = 0 # enable gesture
-             auto_exit = 1 # enable auto exit when no client in overview
-             auto_fullscreen = 0 # auto make active window maximize after exit overview
-             only_active_workspace = 0 # only overview the active workspace
-             only_active_monitor = 0 # only overview the active monitor
-             enable_alt_release_exit = 0 # alt swith mode arg,see readme for detail
-             alt_replace_key = Super_L # alt swith mode arg,see readme for detail
-             alt_toggle_auto_next = 0 # auto focus next window when toggle overview in alt swith mode
-             click_in_cursor = 1 # when click to jump,the target windwo is find by cursor, not the current foucus window.
-             hight_of_titlebar = 0 # height deviation of title bar height
-             show_special = 0 # show windwos in special workspace in overview.
-
-         }
-         touch_gestures {
-             sensitivity = 4.0
-             long_press_delay = 260
-             hyprgrass-bind = , edge:r:l, exec, hyprnome
-             hyprgrass-bind = , edge:l:r, exec, hyprnome --previous
-             hyprgrass-bind = , swipe:3:d, exec, nwggrid-wrapper
-
-             hyprgrass-bind = , swipe:3:u, hycov:toggleoverview
-             hyprgrass-bind = , swipe:3:d, exec, nwggrid-wrapper
-
-             hyprgrass-bind = , swipe:3:l, exec, hyprnome --previous
-             hyprgrass-bind = , swipe:3:r, exec, hyprnome
-
-             hyprgrass-bind = , swipe:4:u, movewindow,u
-             hyprgrass-bind = , swipe:4:d, movewindow,d
-             hyprgrass-bind = , swipe:4:l, movewindow,l
-             hyprgrass-bind = , swipe:4:r, movewindow,r
-
-             hyprgrass-bind = , tap:3, fullscreen,1
-             hyprgrass-bind = , tap:4, fullscreen,0
-
-             hyprgrass-bindm = , longpress:2, movewindow
-             hyprgrass-bindm = , longpress:3, resizewindow
-         }
-       }
-
-       bind=SUPER,SUPER_L,exec,nwggrid-wrapper
+       bind=SUPER,code:9,exec,nwggrid-wrapper
+       bind=SUPER,code:66,exec,nwggrid-wrapper
        bind=SUPER,SPACE,fullscreen,1
        bind=SUPERSHIFT,F,fullscreen,0
        bind=SUPER,Y,workspaceopt,allfloat
@@ -160,29 +105,33 @@ in
        bind=ALT,TAB,bringactivetotop
        bind=ALTSHIFT,TAB,cyclenext,prev
        bind=ALTSHIFT,TAB,bringactivetotop
-       bind=SUPER,TAB,hycov:toggleoverview
-       bind=SUPER,left,hycov:movefocus,leftcross
-       bind=SUPER,right,hycov:movefocus,rightcross
-       bind=SUPER,up,hycov:movefocus,upcross
-       bind=SUPER,down,hycov:movefocus,downcross
        bind=SUPER,V,exec,wl-copy $(wl-paste | tr '\n' ' ')
        bind=SUPERSHIFT,T,exec,screenshot-ocr
        bind=CTRLALT,Delete,exec,hyprctl kill
        bind=SUPERSHIFT,K,exec,hyprctl kill
        bind=SUPER,W,exec,nwg-dock-wrapper
 
+       bind=,code:172,exec,lollypop -t
+       bind=,code:208,exec,lollypop -t
+       bind=,code:209,exec,lollypop -t
+       bind=,code:174,exec,lollypop -s
+       bind=,code:171,exec,lollypop -n
+       bind=,code:173,exec,lollypop -p
+
        bind = SUPER,R,pass,^(com\.obsproject\.Studio)$
        bind = SUPERSHIFT,R,pass,^(com\.obsproject\.Studio)$
 
        bind=SUPER,RETURN,exec,'' + userSettings.term + ''
 
+       bind=SUPERSHIFT,RETURN,exec,'' + userSettings.term + " " + '' --class float_term
+
        bind=SUPER,A,exec,'' + userSettings.spawnEditor + ''
 
-       bind=SUPER,S,exec,'' + userSettings.browser + ''
+       bind=SUPER,S,exec,'' + userSettings.spawnBrowser + ''
 
        bind=SUPERCTRL,S,exec,container-open # qutebrowser only
 
-       bind=SUPERCTRL,R,exec,phoenix refresh
+       bind=SUPERCTRL,P,pin
 
        bind=SUPER,code:47,exec,fuzzel
        bind=SUPER,X,exec,fnottctl dismiss
@@ -192,7 +141,7 @@ in
        bindm=SUPER,mouse:272,movewindow
        bindm=SUPER,mouse:273,resizewindow
        bind=SUPER,T,togglefloating
-       bind=SUPER,G,exec,hyprctl dispatch focusworkspaceoncurrentmonitor 9; pegasus-fe;
+       bind=SUPER,G,exec,hyprctl dispatch focusworkspaceoncurrentmonitor 9 && pegasus-fe;
        bind=,code:148,exec,''+ userSettings.term + " "+''-e numbat
 
        bind=,code:107,exec,grim -g "$(slurp)"
@@ -202,14 +151,14 @@ in
        bind=SHIFTCTRL,code:107,exec,grim -g "$(slurp -o)" - | wl-copy
        bind=SUPERCTRL,code:107,exec,grim - | wl-copy
 
-       bind=,code:122,exec,pamixer -d 10
-       bind=,code:123,exec,pamixer -i 10
-       bind=,code:121,exec,pamixer -t
-       bind=,code:256,exec,pamixer --default-source -t
-       bind=SHIFT,code:122,exec,pamixer --default-source -d 10
-       bind=SHIFT,code:123,exec,pamixer --default-source -i 10
-       bind=,code:232,exec,brightnessctl set 15-
-       bind=,code:233,exec,brightnessctl set +15
+       bind=,code:122,exec,swayosd-client --output-volume lower
+       bind=,code:123,exec,swayosd-client --output-volume raise
+       bind=,code:121,exec,swayosd-client --output-volume mute-toggle
+       bind=,code:256,exec,swayosd-client --output-volume mute-toggle
+       bind=SHIFT,code:122,exec,swayosd-client --output-volume lower
+       bind=SHIFT,code:123,exec,swayosd-client --output-volume raise
+       bind=,code:232,exec,swayosd-client --brightness lower
+       bind=,code:233,exec,swayosd-client --brightness raise
        bind=,code:237,exec,brightnessctl --device='asus::kbd_backlight' set 1-
        bind=,code:238,exec,brightnessctl --device='asus::kbd_backlight' set +1
        bind=,code:255,exec,airplane-mode
@@ -254,31 +203,67 @@ in
        bind=SUPERSHIFT,8,movetoworkspace,8
        bind=SUPERSHIFT,9,movetoworkspace,9
 
-       bind=SUPER,Z,exec,pypr toggle term && hyprctl dispatch bringactivetotop
-       bind=SUPER,F,exec,pypr toggle ranger && hyprctl dispatch bringactivetotop
-       bind=SUPER,N,exec,pypr toggle numbat && hyprctl dispatch bringactivetotop
-       bind=SUPER,M,exec,pypr toggle musikcube && hyprctl dispatch bringactivetotop
-       bind=SUPER,B,exec,pypr toggle btm && hyprctl dispatch bringactivetotop
-       bind=SUPER,D,exec,hypr-element
-       bind=SUPER,code:172,exec,pypr toggle pavucontrol && hyprctl dispatch bringactivetotop
+       bind=SUPER,Z,exec,if hyprctl clients | grep scratch_term; then echo "scratch_term respawn not needed"; else alacritty --class scratch_term; fi
+       bind=SUPER,Z,togglespecialworkspace,scratch_term
+       bind=SUPER,F,exec,if hyprctl clients | grep scratch_ranger; then echo "scratch_ranger respawn not needed"; else kitty --class scratch_ranger -e ranger; fi
+       bind=SUPER,F,togglespecialworkspace,scratch_ranger
+       bind=SUPER,N,exec,if hyprctl clients | grep scratch_numbat; then echo "scratch_ranger respawn not needed"; else alacritty --class scratch_numbat -e numbat; fi
+       bind=SUPER,N,togglespecialworkspace,scratch_numbat
+       bind=SUPER,M,exec,if hyprctl clients | grep lollypop; then echo "scratch_ranger respawn not needed"; else lollypop; fi
+       bind=SUPER,M,togglespecialworkspace,scratch_music
+       bind=SUPER,B,exec,if hyprctl clients | grep scratch_btm; then echo "scratch_ranger respawn not needed"; else alacritty --class scratch_btm -e btm; fi
+       bind=SUPER,B,togglespecialworkspace,scratch_btm
+       bind=SUPER,D,exec,if hyprctl clients | grep Element; then echo "scratch_ranger respawn not needed"; else element-desktop; fi
+       bind=SUPER,D,togglespecialworkspace,scratch_element
+       bind=SUPER,code:172,exec,togglespecialworkspace,scratch_pavucontrol
+       bind=SUPER,code:172,exec,if hyprctl clients | grep pavucontrol; then echo "scratch_ranger respawn not needed"; else pavucontrol; fi
+
        $scratchpadsize = size 80% 85%
 
-       $scratchpad = class:^(scratchpad)$
-       windowrulev2 = float,$scratchpad
-       windowrulev2 = $scratchpadsize,$scratchpad
-       windowrulev2 = workspace special silent,$scratchpad
-       windowrulev2 = center,$scratchpad
+       $scratch_term = class:^(scratch_term)$
+       windowrulev2 = float,$scratch_term
+       windowrulev2 = $scratchpadsize,$scratch_term
+       windowrulev2 = workspace special:scratch_term ,$scratch_term
+       windowrulev2 = center,$scratch_term
+
+       $float_term = class:^(float_term)$
+       windowrulev2 = float,$float_term
+       windowrulev2 = center,$float_term
+
+       $scratch_ranger = class:^(scratch_ranger)$
+       windowrulev2 = float,$scratch_ranger
+       windowrulev2 = $scratchpadsize,$scratch_ranger
+       windowrulev2 = workspace special:scratch_ranger silent,$scratch_ranger
+       windowrulev2 = center,$scratch_ranger
+
+       $scratch_numbat = class:^(scratch_numbat)$
+       windowrulev2 = float,$scratch_numbat
+       windowrulev2 = $scratchpadsize,$scratch_numbat
+       windowrulev2 = workspace special:scratch_numbat silent,$scratch_numbat
+       windowrulev2 = center,$scratch_numbat
+
+       $scratch_btm = class:^(scratch_btm)$
+       windowrulev2 = float,$scratch_btm
+       windowrulev2 = $scratchpadsize,$scratch_btm
+       windowrulev2 = workspace special:scratch_btm silent,$scratch_btm
+       windowrulev2 = center,$scratch_btm
 
        windowrulev2 = float,class:^(Element)$
        windowrulev2 = size 85% 90%,class:^(Element)$
+       windowrulev2 = workspace special:scratch_element silent,class:^(Element)$
        windowrulev2 = center,class:^(Element)$
+
+       windowrulev2 = float,class:^(lollypop)$
+       windowrulev2 = size 85% 90%,class:^(lollypop)$
+       windowrulev2 = workspace special:scratch_music silent,class:^(lollypop)$
+       windowrulev2 = center,class:^(lollypop)$
 
        $savetodisk = title:^(Save to Disk)$
        windowrulev2 = float,$savetodisk
        windowrulev2 = size 70% 75%,$savetodisk
        windowrulev2 = center,$savetodisk
 
-       $pavucontrol = class:^(pavucontrol)$
+       $pavucontrol = class:^(org.pulseaudio.pavucontrol)$
        windowrulev2 = float,$pavucontrol
        windowrulev2 = size 86% 40%,$pavucontrol
        windowrulev2 = move 50% 6%,$pavucontrol
@@ -292,11 +277,24 @@ in
        windowrulev2 = animation popin 1 20,$miniframe
 
        windowrulev2 = float,class:^(pokefinder)$
+       windowrulev2 = float,class:^(Waydroid)$
+
+       windowrulev2 = float,title:^(Blender Render)$
+       windowrulev2 = size 86% 85%,title:^(Blender Render)$
+       windowrulev2 = center,title:^(Blender Render)$
+       windowrulev2 = float,class:^(org.inkscape.Inkscape)$
+       windowrulev2 = float,class:^(pinta)$
+       windowrulev2 = float,class:^(krita)$
+       windowrulev2 = float,class:^(Gimp)
+       windowrulev2 = float,class:^(Gimp)
+       windowrulev2 = float,class:^(libresprite)$
 
        windowrulev2 = opacity 0.80,title:ORUI
 
        windowrulev2 = opacity 1.0,class:^(org.qutebrowser.qutebrowser),fullscreen:1
        windowrulev2 = opacity 0.85,class:^(Element)$
+       windowrulev2 = opacity 0.85,class:^(Logseq)$
+       windowrulev2 = opacity 0.85,class:^(lollypop)$
        windowrulev2 = opacity 1.0,class:^(Brave-browser),fullscreen:1
        windowrulev2 = opacity 1.0,class:^(librewolf),fullscreen:1
        windowrulev2 = opacity 0.85,title:^(My Local Dashboard Awesome Homepage - qutebrowser)$
@@ -304,6 +302,8 @@ in
        windowrulev2 = opacity 0.85,class:^(org.keepassxc.KeePassXC)$
        windowrulev2 = opacity 0.85,class:^(org.gnome.Nautilus)$
        windowrulev2 = opacity 0.85,class:^(org.gnome.Nautilus)$
+
+       windowrulev2 = opacity 0.85,initialTitle:^(Notes)$,initialClass:^(Brave-browser)$
 
        layerrule = blur,waybar
        layerrule = xray,waybar
@@ -318,15 +318,16 @@ in
        layerrule = animation fade,~nwggrid
        blurls = ~nwggrid
 
-       bind=SUPER,code:21,exec,pypr zoom
-       bind=SUPER,code:21,exec,hyprctl reload
+       bind=SUPER,equal, exec, hyprctl keyword cursor:zoom_factor "$(hyprctl getoption cursor:zoom_factor | grep float | awk '{print $2 + 0.5}')"
+       bind=SUPER,minus, exec, hyprctl keyword cursor:zoom_factor "$(hyprctl getoption cursor:zoom_factor | grep float | awk '{print $2 - 0.5}')"
 
        bind=SUPER,I,exec,networkmanager_dmenu
        bind=SUPER,P,exec,keepmenu
        bind=SUPERSHIFT,P,exec,hyprprofile-dmenu
+       bind=SUPERCTRL,R,exec,phoenix refresh
 
        # 3 monitor setup
-       monitor=eDP-1,1920x1080,900x1080,1
+       monitor=eDP-1,1920x1080@300,900x1080,1
        monitor=HDMI-A-1,1920x1080,1920x0,1
        monitor=DP-1,1920x1080,0x0,1
 
@@ -358,10 +359,15 @@ in
 
        misc {
          disable_hyprland_logo = true
-         mouse_move_enables_dpms = false
+         mouse_move_enables_dpms = true
+         enable_swallow = true
+         swallow_regex = (scratch_term)|(Alacritty)|(kitty)
+         font_family = '' + userSettings.font + ''
+
        }
        decoration {
          rounding = 8
+         dim_special = 0.0
          blur {
            enabled = true
            size = 5
@@ -371,6 +377,8 @@ in
            brightness = '' + (if (config.stylix.polarity == "dark") then "0.8" else "1.25") + ''
 
            xray = true
+           special = true
+           popups = true
          }
        }
 
@@ -408,14 +416,6 @@ in
       noDisplay = true;
       icon = "/home/"+userSettings.username+"/.local/share/pixmaps/hyprland-logo-stylix.svg";
     })
-    (pyprland.overrideAttrs (oldAttrs: {
-      src = fetchFromGitHub {
-        owner = "hyprland-community";
-        repo = "pyprland";
-        rev = "refs/tags/2.3.8";
-        hash = "sha256-0YUI2/gJmBoummiHGpq2p2sT25SwCdnsRwfGK2pcm4s=";
-      };
-    }))
     (hyprnome.override (oldAttrs: {
         rustPlatform = oldAttrs.rustPlatform // {
           buildRustPackage = args: oldAttrs.rustPlatform.buildRustPackage (args // {
@@ -427,27 +427,21 @@ in
               rev = "f185e6dbd7cfcb3ecc11471fab7d2be374bd5b28";
               hash = "sha256-tmko/bnGdYOMTIGljJ6T8d76NPLkHAfae6P6G2Aa2Qo=";
             };
-            cargoDeps = oldAttrs.cargoDeps.overrideAttrs (oldAttrs: rec {
-              name = "${pname}-vendor.tar.gz";
-              inherit src;
-              outputHash = "sha256-cQwAGNKTfJTnXDI3IMJQ2583NEIZE7GScW7TsgnKrKs=";
-            });
-            cargoHash = "sha256-cQwAGNKTfJTnXDI3IMJQ2583NEIZE7GScW7TsgnKrKs=";
+            cargoHash = "sha256-TUA0oITHMOJMA7LEPeNk6h7CswNTiAYLIiktct7Ngkg=";
           });
         };
-     })
-    )
-    gnome.zenity
+    }))
+    zenity
     wlr-randr
     wtype
     ydotool
     wl-clipboard
     hyprland-protocols
     hyprpicker
+    inputs.hyprlock.packages.${pkgs.system}.default
     hypridle
     hyprpaper
     fnott
-    fuzzel
     keepmenu
     pinentry-gnome3
     wev
@@ -458,7 +452,7 @@ in
     xdg-utils
     xdg-desktop-portal
     xdg-desktop-portal-gtk
-    xdg-desktop-portal-hyprland
+    # xdg-desktop-portal-hyprland
     wlsunset
     pavucontrol
     pamixer
@@ -479,19 +473,6 @@ in
         nwg-dock-hyprland
       else
         nwg-dock-hyprland -f -x -i 64 -nolauncher -a start -ml 8 -mr 8 -mb 8
-      fi
-    '')
-    (pkgs.writeScriptBin "hypr-element-start" ''
-      #!/usr/bin/env sh
-      sleep 6 && element-desktop --hidden
-    '')
-    (pkgs.writeScriptBin "hypr-element" ''
-      #!/bin/sh
-      if hyprctl clients | grep "class: Element" > /dev/null
-      then
-        hyprctl dispatch closewindow Element
-      else
-        element-desktop
       fi
     '')
     (pkgs.writeScriptBin "sct" ''
@@ -522,16 +503,9 @@ in
       if pgrep -x nixos-rebuild > /dev/null || pgrep -x home-manager > /dev/null || pgrep -x kdenlive > /dev/null || pgrep -x FL64.exe > /dev/null || pgrep -x blender > /dev/null || pgrep -x flatpak > /dev/null;
       then echo "Shouldn't suspend"; sleep 10; else echo "Should suspend"; systemctl suspend; fi
     '')
-    (pkgs.makeDesktopItem {
-      name = "emacsclientnewframe";
-      desktopName = "Emacs Client New Frame";
-      exec = "emacsclient -c -a emacs";
-      terminal = false;
-      icon = "emacs";
-      type = "Application";
-    })])
+    ])
   ++
-  (with pkgs-hyprland; [ hyprlock ])
+  (with pkgs-hyprland; [ ])
   ++ (with pkgs-nwg-dock-hyprland; [
     (nwg-dock-hyprland.overrideAttrs (oldAttrs: {
       patches = ./patches/noactiveclients.patch;
@@ -580,16 +554,14 @@ in
   home.file.".config/nwg-dock-pinned".text = ''
     nwggrid
     Alacritty
-    emacsclientnewframe
+    neovide
     qutebrowser
     brave-browser
-    librewolf
     writer
     impress
     calc
     draw
     krita
-    pinta
     xournalpp
     obs
     kdenlive
@@ -606,18 +578,21 @@ in
       ignore_dbus_inhibit = false
     }
 
+    # FIXME memory leak fries computer inbetween dpms off and suspend
+    #listener {
+    #  timeout = 150 # in seconds
+    #  on-timeout = hyprctl dispatch dpms off
+    #  on-resume = hyprctl dispatch dpms on
+    #}
     listener {
-      timeout = 150 # in seconds
+      timeout = 165 # in seconds
       on-timeout = loginctl lock-session
     }
     listener {
-      timeout = 165 # in seconds
-      on-timeout = hyprctl dispatch dpms off
-      on-resume = hyprctl dispatch dpms on
-    }
-    listener {
-      timeout = 7200 # in seconds
+      timeout = 180 # in seconds
+      #timeout = 5400 # in seconds
       on-timeout = systemctl suspend
+      on-resume = hyprctl dispatch dpms on
     }
   '';
   home.file.".config/hypr/hyprlock.conf".text = ''
@@ -707,37 +682,8 @@ in
       valign = center
     }
   '';
-  home.file.".config/hypr/pyprland.toml".text = ''
-    [pyprland]
-    plugins = ["scratchpads", "magnify"]
-
-    [scratchpads.term]
-    command = "alacritty --class scratchpad"
-    margin = 50
-
-    [scratchpads.ranger]
-    command = "kitty --class scratchpad -e ranger"
-    margin = 50
-
-    [scratchpads.numbat]
-    command = "alacritty --class scratchpad -e numbat"
-    margin = 50
-
-    [scratchpads.musikcube]
-    command = "alacritty --class scratchpad -e musikcube"
-    margin = 50
-
-    [scratchpads.btm]
-    command = "alacritty --class scratchpad -e btm"
-    margin = 50
-
-    [scratchpads.pavucontrol]
-    command = "pavucontrol"
-    margin = 50
-    unfocus = "hide"
-    animation = "fromTop"
-  '';
-
+  services.swayosd.enable = true;
+  services.swayosd.topMargin = 0.5;
   programs.waybar = {
     enable = true;
     package = pkgs.waybar.overrideAttrs (oldAttrs: {
@@ -746,6 +692,7 @@ in
         sed -i 's/zext_workspace_handle_v1_activate(workspace_handle_);/const std::string command = "hyprctl dispatch focusworkspaceoncurrentmonitor " + std::to_string(id());\n\tsystem(command.c_str());/g' src/modules/wlr/workspace_manager.cpp
         sed -i 's/gIPC->getSocket1Reply("dispatch workspace " + std::to_string(id()));/gIPC->getSocket1Reply("dispatch focusworkspaceoncurrentmonitor " + std::to_string(id()));/g' src/modules/hyprland/workspaces.cpp
       '';
+      # patches = [./patches/waybarpaupdate.patch ./patches/waybarbatupdate.patch];
     });
     settings = {
       mainBar = {
@@ -755,28 +702,70 @@ in
         margin = "7 7 3 7";
         spacing = 2;
 
-        modules-left = [ "custom/os" "custom/hyprprofile" "battery" "backlight" "keyboard-state" "pulseaudio" "cpu" "memory" ];
-        modules-center = [ "hyprland/workspaces" ];
-        modules-right = [ "idle_inhibitor" "tray" "clock" ];
+        modules-left = [ "group/power" "group/battery" "group/backlight" "group/cpu" "group/memory" "group/pulseaudio" "keyboard-state" ];
+        modules-center = [ "custom/hyprprofile" "hyprland/workspaces" ];
+        modules-right = [ "group/time" "idle_inhibitor" "tray" ];
 
         "custom/os" = {
           "format" = " {} ";
           "exec" = ''echo "" '';
           "interval" = "once";
           "on-click" = "nwggrid-wrapper";
+          "tooltip" = false;
+        };
+        "group/power" = {
+            "orientation" = "horizontal";
+            "drawer" = {
+                "transition-duration" = 500;
+                "children-class" = "not-power";
+                "transition-left-to-right" = true;
+            };
+            "modules" = [
+                "custom/os"
+                "custom/hyprprofileicon"
+                "custom/lock"
+                "custom/quit"
+                "custom/power"
+                "custom/reboot"
+            ];
+        };
+        "custom/quit" = {
+            "format" = "󰍃";
+            "tooltip" = false;
+            "on-click" = "hyprctl dispatch exit";
+        };
+        "custom/lock" = {
+            "format" = "󰍁";
+            "tooltip" = false;
+            "on-click" = "hyprlock";
+        };
+        "custom/reboot" = {
+            "format" = "󰜉";
+            "tooltip" = false;
+            "on-click" = "reboot";
+        };
+        "custom/power" = {
+            "format" = "󰐥";
+            "tooltip" = false;
+            "on-click" = "shutdown now";
+        };
+        "custom/hyprprofileicon" = {
+          "format" = "󱙋";
+          "on-click" = "hyprprofile-dmenu";
+          "tooltip" = false;
         };
         "custom/hyprprofile" = {
-          "format" = "   {}";
+          "format" = " {}";
           "exec" = ''cat ~/.hyprprofile'';
           "interval" = 3;
           "on-click" = "hyprprofile-dmenu";
         };
         "keyboard-state" = {
           "numlock" = true;
-          "format" = " {icon} ";
+          "format" = "{icon}";
           "format-icons" = {
-            "locked" = "󰎠";
-            "unlocked" = "󱧓";
+            "locked" = "󰎠 ";
+            "unlocked" = "󱧓 ";
           };
         };
         "hyprland/workspaces" = {
@@ -793,32 +782,17 @@ in
             "9" = "󱎓";
             "scratch_term" = "_";
             "scratch_ranger" = "_󰴉";
-            "scratch_musikcube" = "_";
+            "scratch_music" = "_";
             "scratch_btm" = "_";
             "scratch_pavucontrol" = "_󰍰";
           };
           "on-click" = "activate";
-          "on-scroll-up" = "hyprctl dispatch workspace e+1";
-          "on-scroll-down" = "hyprctl dispatch workspace e-1";
-          #"all-outputs" = true;
-          #"active-only" = true;
+          "on-scroll-up" = "hyprnome";
+          "on-scroll-down" = "hyprnome --previous";
+          "all-outputs" = false;
+          "active-only" = false;
           "ignore-workspaces" = ["scratch" "-"];
-          #"show-special" = false;
-          #"persistent-workspaces" = {
-          #    # this block doesn't seem to work for whatever reason
-          #    "eDP-1" = [1 2 3 4 5 6 7 8 9];
-          #    "DP-1" = [1 2 3 4 5 6 7 8 9];
-          #    "HDMI-A-1" = [1 2 3 4 5 6 7 8 9];
-          #    "1" = ["eDP-1" "DP-1" "HDMI-A-1"];
-          #    "2" = ["eDP-1" "DP-1" "HDMI-A-1"];
-          #    "3" = ["eDP-1" "DP-1" "HDMI-A-1"];
-          #    "4" = ["eDP-1" "DP-1" "HDMI-A-1"];
-          #    "5" = ["eDP-1" "DP-1" "HDMI-A-1"];
-          #    "6" = ["eDP-1" "DP-1" "HDMI-A-1"];
-          #    "7" = ["eDP-1" "DP-1" "HDMI-A-1"];
-          #    "8" = ["eDP-1" "DP-1" "HDMI-A-1"];
-          #    "9" = ["eDP-1" "DP-1" "HDMI-A-1"];
-          #};
+          "show-special" = false;
         };
 
         "idle_inhibitor" = {
@@ -832,43 +806,106 @@ in
           #"icon-size" = 21;
           "spacing" = 10;
         };
-        clock = {
+        "clock#time" = {
           "interval" = 1;
-          "format" = "{:%a %Y-%m-%d %I:%M:%S %p}";
+          "format" = "{:%I:%M:%S %p}";
           "timezone" = "America/Chicago";
           "tooltip-format" = ''
             <big>{:%Y %B}</big>
             <tt><small>{calendar}</small></tt>'';
         };
-        cpu = {
-          "format" = "{usage}% ";
+        "clock#date" = {
+          "interval" = 1;
+          "format" = "{:%a %Y-%m-%d}";
+          "timezone" = "America/Chicago";
+          "tooltip-format" = ''
+            <big>{:%Y %B}</big>
+            <tt><small>{calendar}</small></tt>'';
         };
-        memory = { "format" = "{}% "; };
+        "group/time" = {
+          "orientation" = "horizontal";
+          "drawer" = {
+            "transition-duration" = 500;
+            "transition-left-to-right" = false;
+          };
+          "modules" = [ "clock#time" "clock#date" ];
+        };
+
+        cpu = { "format" = "󰍛"; };
+        "cpu#text" = { "format" = "{usage}%"; };
+        "group/cpu" = {
+          "orientation" = "horizontal";
+          "drawer" = {
+            "transition-duration" = 500;
+            "transition-left-to-right" = true;
+          };
+          "modules" = [ "cpu" "cpu#text" ];
+        };
+
+        memory = { "format" = ""; };
+        "memory#text" = { "format" = "{}%"; };
+        "group/memory" = {
+          "orientation" = "horizontal";
+          "drawer" = {
+            "transition-duration" = 500;
+            "transition-left-to-right" = true;
+          };
+          "modules" = [ "memory" "memory#text" ];
+        };
+
         backlight = {
-          "format" = "{percent}% {icon}";
+          "format" = "{icon}";
           "format-icons" = [ "" "" "" "" "" "" "" "" "" ];
         };
+        "backlight#text" = { "format" = "{percent}%"; };
+        "group/backlight" = {
+          "orientation" = "horizontal";
+          "drawer" = {
+            "transition-duration" = 500;
+            "transition-left-to-right" = true;
+          };
+          "modules" = [ "backlight" "backlight#text" ];
+        };
+
         battery = {
           "states" = {
-            "good" = 95;
+            "good" = 75;
             "warning" = 30;
             "critical" = 15;
           };
-          "format" = "{capacity}% {icon}";
-          "format-charging" = "{capacity}% ";
-          "format-plugged" = "{capacity}% ";
-          #"format-good" = ""; # An empty format will hide the module
-          #"format-full" = "";
-          "format-icons" = [ "" "" "" "" "" ];
+          "fullat" = 80;
+          "format" = "{icon}";
+          "format-charging" = "󰂄";
+          "format-plugged" = "󰂄";
+          "format-full" = "󰁹";
+          "format-icons" = [ "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹" ];
+          "interval" = 10;
+        };
+        "battery#text" = {
+          "states" = {
+            "good" = 75;
+            "warning" = 30;
+            "critical" = 15;
+          };
+          "fullat" = 80;
+          "format" = "{capacity}%";
+        };
+        "group/battery" = {
+          "orientation" = "horizontal";
+          "drawer" = {
+            "transition-duration" = 500;
+            "transition-left-to-right" = true;
+          };
+          "modules" = [ "battery" "battery#text" ];
         };
         pulseaudio = {
           "scroll-step" = 1;
-          "format" = "{volume}% {icon}  {format_source}";
-          "format-bluetooth" = "{volume}% {icon}  {format_source}";
-          "format-bluetooth-muted" = "󰸈 {icon}  {format_source}";
-          "format-muted" = "󰸈 {format_source}";
-          "format-source" = "{volume}% ";
-          "format-source-muted" = " ";
+          "format" = "{icon}";
+          "format-bluetooth" = "{icon}";
+          "format-bluetooth-muted" = "󰸈";
+          "format-muted" = "󰸈";
+          "format-source" = "";
+          "format-source-muted" = "";
           "format-icons" = {
             "headphone" = "";
             "hands-free" = "";
@@ -878,7 +915,25 @@ in
             "car" = "";
             "default" = [ "" "" "" ];
           };
-          "on-click" = "pypr toggle pavucontrol && hyprctl dispatch bringactivetotop";
+          "on-click" = "hyprctl dispatch togglespecialworkspace scratch_pavucontrol; if hyprctl clients | grep pavucontrol; then echo 'scratch_ranger respawn not needed'; else pavucontrol; fi";
+        };
+        "pulseaudio#text" = {
+          "scroll-step" = 1;
+          "format" = "{volume}%";
+          "format-bluetooth" = "{volume}%";
+          "format-bluetooth-muted" = "";
+          "format-muted" = "";
+          "format-source" = "{volume}%";
+          "format-source-muted" = "";
+          "on-click" = "hyprctl dispatch togglespecialworkspace scratch_pavucontrol; if hyprctl clients | grep pavucontrol; then echo 'scratch_ranger respawn not needed'; else pavucontrol; fi";
+        };
+        "group/pulseaudio" = {
+          "orientation" = "horizontal";
+          "drawer" = {
+            "transition-duration" = 500;
+            "transition-left-to-right" = true;
+          };
+          "modules" = [ "pulseaudio" "pulseaudio#text" ];
         };
       };
     };
@@ -935,7 +990,7 @@ in
       }
 
       #workspaces button {
-          padding: 0 7px;
+          padding: 0px 6px;
           background-color: transparent;
           color: #'' + config.lib.stylix.colors.base04 + '';
       }
@@ -960,7 +1015,6 @@ in
           color: #'' + config.lib.stylix.colors.base09 + '';
       }
 
-      #clock,
       #battery,
       #cpu,
       #memory,
@@ -975,16 +1029,44 @@ in
       #mode,
       #idle_inhibitor,
       #scratchpad,
+      #custom-hyprprofileicon,
+      #custom-quit,
+      #custom-lock,
+      #custom-reboot,
+      #custom-power,
       #mpd {
-          padding: 0 10px;
+          padding: 0 3px;
           color: #'' + config.lib.stylix.colors.base07 + '';
           border: none;
           border-radius: 8px;
       }
 
+      #custom-hyprprofileicon,
+      #custom-quit,
+      #custom-lock,
+      #custom-reboot,
+      #custom-power,
+      #idle_inhibitor {
+          background-color: transparent;
+          color: #'' + config.lib.stylix.colors.base04 + '';
+      }
+
+      #custom-hyprprofileicon:hover,
+      #custom-quit:hover,
+      #custom-lock:hover,
+      #custom-reboot:hover,
+      #custom-power:hover,
+      #idle_inhibitor:hover {
+          color: #'' + config.lib.stylix.colors.base07 + '';
+      }
+
+      #clock, #tray, #idle_inhibitor {
+          padding: 0 5px;
+      }
+
       #window,
       #workspaces {
-          margin: 0 4px;
+          margin: 0 6px;
       }
 
       /* If workspaces is the leftmost module, omit left margin */
@@ -1178,23 +1260,11 @@ in
         border-color: #'' + config.lib.stylix.colors.base07 + '';
     }
   '';
-  home.file.".config/libinput-gestures.conf".text = ''
-  gesture swipe up 3	hyprctl dispatch hycov:toggleoverview
-  gesture swipe down 3	nwggrid-wrapper
-
-  gesture swipe right 3	hyprnome
-  gesture swipe left 3	hyprnome --previous
-  gesture swipe up 4	hyprctl dispatch movewindow u
-  gesture swipe down 4	hyprctl dispatch movewindow d
-  gesture swipe left 4	hyprctl dispatch movewindow l
-  gesture swipe right 4	hyprctl dispatch movewindow r
-  gesture pinch in	hyprctl dispatch fullscreen 1
-  gesture pinch out	hyprctl dispatch fullscreen 1
-  '';
 
   services.udiskie.enable = true;
   services.udiskie.tray = "always";
   programs.fuzzel.enable = true;
+  programs.fuzzel.package = pkgs.fuzzel;
   programs.fuzzel.settings = {
     main = {
       font = userSettings.font + ":size=20";
