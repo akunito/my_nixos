@@ -28,7 +28,7 @@
       ../../system/security/automount.nix
       ../../system/security/restic.nix # Manage backups
       ../../system/security/polkit.nix # Security rules
-      # ../../system/style/stylix.nix # Stylix theme
+      ../../system/style/stylix.nix # Stylix theme
       ( import ../../system/security/sshd.nix {
         authorizedKeys = systemSettings.authorizedKeys; # SSH keys
         inherit userSettings;
@@ -102,9 +102,10 @@
   environment.systemPackages = systemSettings.systemPackages;
 
   # I use zsh btw
-  environment.shells = with pkgs; [ zsh ];
+  environment.shells = with pkgs; [ zsh fish ];
   users.defaultUserShell = pkgs.zsh;
   programs.zsh.enable = true;
+  programs.fish.enable = true;
 
   fonts.fontDir.enable = true;
 
