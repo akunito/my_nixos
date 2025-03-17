@@ -219,8 +219,8 @@
 
         # Nerd font package
         fonts = [
-          nerd-fonts-jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
-          powerline
+          pkgs.nerd-fonts.jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
+          pkgs.powerline
         ];
 
         systemStateVersion = "24.05";

@@ -1,5 +1,5 @@
 {
-  description = "Flake of Aga on T580";
+  description = "Flake for my VM Desktop";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,14 +7,14 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosaga"; # hostname
+        hostname = "nixosdesk"; # hostname
         profile = "personal"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
-        gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         
         # Security
         doasEnable = false; # for enabling doas
@@ -31,31 +31,14 @@
             command = "/run/current-system/sw/bin/restic";
             options = [ "NOPASSWD" "SETENV" ];
           }
-          {
-            command = "/run/current-system/sw/bin/rsync";
-            options = [ "NOPASSWD" "SETENV" ];
-          }
         ];
-        pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
+        pkiCertificates = [ ];
         # Polkit
         polkitEnable = true;
         polkitRules = ''
           polkit.addRule(function(action, subject) {
             if (
               subject.isInGroup("users") && (
-                // Allow reboot and power-off actions
-                action.id == "org.freedesktop.login1.reboot" ||
-                action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-                action.id == "org.freedesktop.login1.power-off" ||
-                action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-                action.id == "org.freedesktop.login1.suspend" ||
-                action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
-
-                // Allow managing specific systemd units
-                (action.id == "org.freedesktop.systemd1.manage-units" &&
-                  action.lookup("verb") == "start" &&
-                  action.lookup("unit") == "mnt-NFS_Backups.mount") ||
-
                 // Allow running rsync and restic
                 (action.id == "org.freedesktop.policykit.exec" &&
                   (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
@@ -69,27 +52,27 @@
 
         # Backups
         resticWrapper = true; # for enabling restic wrapper
-        rsyncWrapper = false; # for enabling rsync wrapper
+        rsyncWrapper = true; # for enabling rsync wrapper
 
-        homeBackupEnable = true; # restic.nix
+        homeBackupEnable = false; # restic.nix
         homeBackupDescription = "Backup Home Directory with Restic";
-        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/aga/myScripts/agalaptop_backup.sh";
-        homeBackupUser = "aga";
+        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup.sh";
+        homeBackupUser = "akunito";
         homeBackupTimerDescription = "Timer for home_backup service";
         homeBackupOnCalendar = "0/12:00:00"; # Every 12 hour
         homeBackupCallNextEnabled = true; # for calling next service after backup
         homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
 
-        remoteBackupEnable = true; # restic.nix
+        remoteBackupEnable = false; # restic.nix
         remoteBackupDescription = "Copy Restic Backup to Remote Server";
-        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/aga/myScripts/agalaptop_backup_remote.sh";
-        remoteBackupUser = "aga";
+        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup_remote.sh";
+        remoteBackupUser = "akunito";
         remoteBackupTimerDescription = "Timer for remote_backup service";
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.77"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.78"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
         nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = true; # for enabling wifi power save for laptops
@@ -118,7 +101,7 @@
           /mnt/example2  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
         # NFS client settings
-        nfsClientEnable = true;
+        nfsClientEnable = false;
         nfsMounts = [
           {
             what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";
@@ -139,7 +122,7 @@
             options = "noatime";
           }
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/backups/AgaLaptop";
+            what = "192.168.8.80:/mnt/DATA_4TB/backups/akunitoLaptop";
             where = "/mnt/NFS_Backups";
             type = "nfs";
             options = "noatime";
@@ -185,22 +168,21 @@
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
         TLP_ENABLE = false; # Disable for laptops if you want granular power management with profiles
-        # TLP Power management
         PROFILE_ON_BAT = "performance";
-        PROFILE_ON_AC = "low-power";
+        PROFILE_ON_AC = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
-        WIFI_PWR_ON_BAT = "on";
+        WIFI_PWR_ON_BAT = "off";
         INTEL_GPU_MIN_FREQ_ON_AC = 300; # sudo tlp-stat -g
         INTEL_GPU_MIN_FREQ_ON_BAT = 300;
         # logind settings
         LOGIND_ENABLE = false; # Disable for laptops if you want granular power management with profiles
-        lidSwitch = "suspend"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
+        lidSwitch = "ignore"; # when the lid is closed, do one of "ignore", "poweroff", "reboot", "halt", "kexec", "suspend", "hibernate", "hybrid-sleep", "suspend-then-hibernate", "lock"
         lidSwitchExternalPower = "ignore"; # when the lid is closed but connected to power 
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
-        powerKey = "suspend";  # when pressing power key, do one of above
+        powerKey = "ignore";  # when pressing power key, do one of above
         # More Power settings
-        powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
-        power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
+        powerManagement_ENABLE = false; # Enable power management profiles for desktop systems <<<
+        power-profiles-daemon_ENABLE = false; # Enable power management profiles for desktop systems <<<
 
         # System packages
         systemPackages = [
@@ -227,19 +209,18 @@
 
           #pkgs.pcloud # requires patch to be imported
           pkgs-unstable.sunshine
-          pkgs-unstable.tailscale
         ];
 
         # Remote Control
         sunshineEnable = true;
         
         # Stylix
-        stylixEnable = false;
+        stylixEnable = true;
 
-        # Fonts
+        # Nerd font package
         fonts = [
-          pkgs.nerdfonts
-          pkgs.powerline
+          nerd-fonts.jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
+          powerline
         ];
 
         systemStateVersion = "24.05";
@@ -248,7 +229,7 @@
         # Auto update System Settings
         autoSystemUpdateEnable = true; # for enabling auto system updates
         autoSystemUpdateDescription = "Auto Update System service";
-        autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoSystemUpdate.sh";
+        autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/autoSystemUpdate.sh";
         autoSystemUpdateUser = "root";
         autoSystemUpdateTimerDescription = "Auto Update System timer";
         autoSystemUpdateOnCalendar = "06:00:00"; # At 6h every day
@@ -257,31 +238,32 @@
         # Auto update User Settings
         autoUserUpdateEnable = true; # for enabling auto system updates
         autoUserUpdateDescription = "Auto User Update";
-        autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoUserUpdate.sh";
-        autoUserUpdateUser = "aga";
+        autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/autoUserUpdate.sh";
+        autoUserUpdateUser = "akunito";
       };
 
       # ----- USER SETTINGS ----- #
       userSettings = rec {
-        username = "aga"; # username
-        name = "aga"; # name/identifier
+        username = "akunito"; # username
+        name = "akunito"; # name/identifier
         email = ""; # email (used for certain configurations)
-        dotfilesDir = "/home/aga/.dotfiles"; # absolute path of the local repo
+        dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
-        wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
+        wm = "hyprland"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
-        wmType = if (wm == "hyprland") then "wayland" else "x11";
+        wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
 
         dockerEnable = false; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization
-        qemuGuestAddition = false; # If the system is a QEMU VM
+        qemuGuestAddition = true; # If the system is a QEMU VM
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email
 
         browser = "vivaldi"; # Default browser; must select one from ./user/app/browser/
+        spawnBrowser = "vivaldi";
         defaultRoamDir = "Personal.p"; # Default org roam directory relative to ~/Org
         term = "kitty"; # Default terminal command;
         font = "Intel One Mono"; # Selected font
@@ -298,7 +280,7 @@
           # qt5.qtbase
           pkgs-unstable.ungoogled-chromium
 
-          # pkgs-unstable.vscode
+          pkgs-unstable.vscode
           pkgs-unstable.obsidian
           pkgs-unstable.spotify
           # pkgs-unstable.xournalpp
@@ -335,13 +317,15 @@
         (import inputs.nixpkgs { system = systemSettings.system; rocmSupport = (if systemSettings.gpu == "amd" then true else false); }).applyPatches {
           name = "nixpkgs-patched";
           src = inputs.nixpkgs;
-          # patches = [ ./patches/emacs-no-version-check.patch ]; # DISABLING emacs patches??
+          patches = [ #./patches/emacs-no-version-check.patch
+                      #./patches/nixpkgs-348697.patch
+                    ];
         };
 
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal"))
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
               then
                 pkgs-stable
               else
@@ -351,7 +335,7 @@
                     allowUnfree = true;
                     allowUnfreePredicate = (_: true);
                   };
-                  # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
+                  overlays = [ inputs.rust-overlay.overlays.default ];
                 }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
@@ -368,6 +352,7 @@
           allowUnfree = true;
           allowUnfreePredicate = (_: true);
         };
+        overlays = [ inputs.rust-overlay.overlays.default ];
       };
 
       # pkgs-emacs = import inputs.emacs-pin-nixpkgs {
@@ -378,14 +363,14 @@
       #   system = systemSettings.system;
       # };
 
-      # pkgs-nwg-dock-hyprland = import inputs.nwg-dock-hyprland-pin-nixpkgs {
-      #   system = systemSettings.system;
-      # };
+      pkgs-nwg-dock-hyprland = import inputs.nwg-dock-hyprland-pin-nixpkgs {
+        system = systemSettings.system;
+      };
 
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
+      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
              then
                inputs.nixpkgs-stable.lib
              else
@@ -393,12 +378,12 @@
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      # home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-      #        then
-      #          inputs.home-manager-stable
-      #        else
-      #          inputs.home-manager-unstable);
-      home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
+      home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+             then
+               inputs.home-manager-stable
+             else
+               inputs.home-manager-unstable);
+      # home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
 
       # Systems that can run tests:
       supportedSystems = [ "aarch64-linux" "i686-linux" "x86_64-linux" ];
@@ -423,7 +408,7 @@
             inherit pkgs-stable;
             # inherit pkgs-emacs;
             # inherit pkgs-kdenlive;
-            # inherit pkgs-nwg-dock-hyprland;
+            inherit pkgs-nwg-dock-hyprland;
             inherit systemSettings;
             inherit userSettings;
             inherit inputs;
@@ -435,8 +420,9 @@
           system = systemSettings.system;
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
+            # inputs.lix-module.nixosModules.default
             ./system/bin/phoenix.nix
-            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
+            # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
@@ -485,19 +471,23 @@
     };
 
   inputs = {
+    # lix-module = {
+    #   url = "https://git.lix.systems/lix-project/nixos-module/archive/2.90.0.tar.gz";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "nixpkgs/nixos-24.11";
+    nixpkgs-stable.url = "nixpkgs/nixos-24.05";
     # emacs-pin-nixpkgs.url = "nixpkgs/f72123158996b8d4449de481897d855bc47c7bf6";
     # kdenlive-pin-nixpkgs.url = "nixpkgs/cfec6d9203a461d9d698d8a60ef003cac6d0da94";
-    # nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
+    nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
 
     home-manager-unstable.url = "github:nix-community/home-manager/master";
     home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs";
 
-    home-manager-stable.url = "github:nix-community/home-manager/release-24.11";
+    home-manager-stable.url = "github:nix-community/home-manager/release-24.05";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
 
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
+    # nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
 
     # nix-on-droid = {
     #   url = "github:nix-community/nix-on-droid/master";
@@ -505,19 +495,24 @@
     #   inputs.home-manager.follows = "home-manager-unstable";
     # };
 
-    # hyprland = {
-    #   type = "git";
-    #   url = "https://github.com/hyprwm/Hyprland";
-    #   submodules = true;
-    #   rev = "918d8340afd652b011b937d29d5eea0be08467f5";
-    # };
-    # hyprland.inputs.nixpkgs.follows = "nixpkgs";
-    # hyprland-plugins.url = "github:hyprwm/hyprland-plugins/3ae670253a5a3ae1e3a3104fb732a8c990a31487";
-    # hyprland-plugins.inputs.hyprland.follows = "hyprland";
-    # hycov.url = "github:DreamMaoMao/hycov/de15cdd6bf2e46cbc69735307f340b57e2ce3dd0";
-    # hycov.inputs.hyprland.follows = "hyprland";
-    # hyprgrass.url = "github:horriblename/hyprgrass/736119f828eecaed2deaae1d6ff1f50d6dabaaba";
-    # hyprgrass.inputs.hyprland.follows = "hyprland";
+   hyprland = {
+      url = "github:hyprwm/Hyprland/main?submodules=true";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hyprland-plugins = {
+      type = "git";
+      url = "https://code.hyprland.org/hyprwm/hyprland-plugins.git";
+      rev = "4d7f0b5d8b952f31f7d2e29af22ab0a55ca5c219"; #v0.44.1
+      inputs.hyprland.follows = "hyprland";
+    };
+    hyprlock = {
+      type = "git";
+      url = "https://code.hyprland.org/hyprwm/hyprlock.git";
+      rev = "73b0fc26c0e2f6f82f9d9f5b02e660a958902763";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hyprgrass.url = "github:horriblename/hyprgrass/427690aec574fec75f5b7b800ac4a0b4c8e4b1d5";
+    hyprgrass.inputs.hyprland.follows = "hyprland";
 
     # nix-doom-emacs.url = "github:nix-community/nix-doom-emacs";
     # nix-doom-emacs.inputs.nixpkgs.follows = "emacs-pin-nixpkgs";
@@ -577,7 +572,7 @@
 
     stylix.url = "github:danth/stylix";
 
-    # rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.url = "github:oxalica/rust-overlay";
 
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";

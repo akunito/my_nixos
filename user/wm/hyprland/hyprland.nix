@@ -52,7 +52,7 @@ in
       exec-once = GOMAXPROCS=1 syncthing --no-browser
       exec-once = protonmail-bridge --noninteractive
       exec-once = waybar
-      exec-once = emacs --daemon
+      #exec-once = emacs --daemon
 
       exec-once = hypridle
       exec-once = sleep 5 && libinput-gestures
@@ -327,9 +327,11 @@ in
        bind=SUPERCTRL,R,exec,phoenix refresh
 
        # 3 monitor setup
-       monitor=eDP-1,1920x1080@300,900x1080,1
-       monitor=HDMI-A-1,1920x1080,1920x0,1
-       monitor=DP-1,1920x1080,0x0,1
+       monitor=Virtual-1,1920x1080@90,0x0,1
+       monitor=Virtual-2,1920x1080@90,0x0,1
+       #monitor=eDP-1,1920x1080@120,900x1080,1
+       #monitor=HDMI-A-1,1920x1080,1920x0,1
+       #monitor=DP-1,1920x1080,0x0,1
 
        # hdmi tv
        #monitor=eDP-1,1920x1080,1920x0,1
