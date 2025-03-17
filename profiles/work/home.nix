@@ -21,22 +21,15 @@
               (./. + "../../../user/app/browser"+("/"+userSettings.browser)+".nix") # My default browser selected from flake
               ../../user/app/virtualization/virtualization.nix # Virtual machines
               ../../user/app/flatpak/flatpak.nix # Flatpaks
-              ../../user/style/stylix.nix # Styling and themes for my apps
               # ../../user/lang/cc/cc.nix # C and C++ tools
               # ../../user/lang/godot/godot.nix # Game development
               #../../user/pkgs/blockbench.nix # Blockbench ## marked as insecure
               ../../user/hardware/bluetooth.nix # Bluetooth
-            ];
+            ] ++ lib.optional systemSettings.stylixEnable ../../user/style/stylix.nix; # Styling and themes for my apps
 
   home.stateVersion = userSettings.homeStateVersion; # Please read the comment before changing.
 
   home.packages = userSettings.homePackages;
-
-  home.file.".local/share/pixmaps/nixos-snowflake-stylix.svg".source =
-    config.lib.stylix.colors {
-      template = builtins.readFile ../../user/pkgs/nixos-snowflake-stylix.svg.mustache;
-      extension = "svg";
-    };
 
   services.syncthing.enable = true;
 
@@ -78,7 +71,7 @@
 
   # news.display = "silent";
 
-  gtk.iconTheme = {
+  gtk.iconTheme = lib.mkIf (systemSettings.stylixEnable == true) {
     package = pkgs.papirus-icon-theme;
     name = if (config.stylix.polarity == "dark") then "Papirus-Dark" else "Papirus-Light";
   };

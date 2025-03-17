@@ -213,6 +213,15 @@
 
         # Remote Control
         sunshineEnable = true;
+        
+        # Stylix
+        stylixEnable = true;
+
+        # Nerd font package
+        fonts = [
+          nerd-fonts-jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
+          powerline
+        ];
 
         systemStateVersion = "24.05";
 

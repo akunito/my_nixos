@@ -161,6 +161,13 @@
           atuin
           home-manager
         ];
+
+        # Remote Control
+        sunshineEnable = false;
+        
+        # Stylix
+        stylixEnable = false;
+
         systemStateVersion = "24.05";
 
         # UPDATES -------------------------------------

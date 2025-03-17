@@ -225,6 +225,13 @@
 
           #pkgs.pcloud # requires patch to be imported
         ];
+
+        # Remote Control
+        sunshineEnable = true;
+        
+        # Stylix
+        stylixEnable = true;
+        
         systemStateVersion = "24.05";
 
         # UPDATES -------------------------------------

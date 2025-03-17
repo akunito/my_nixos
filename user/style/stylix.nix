@@ -10,6 +10,12 @@ in
 
   imports = [ inputs.stylix.homeManagerModules.stylix ];
 
+  home.file.".local/share/pixmaps/nixos-snowflake-stylix.svg".source = 
+    config.lib.stylix.colors {
+      template = builtins.readFile ../../user/pkgs/nixos-snowflake-stylix.svg.mustache;
+      extension = "svg";
+    };
+
   home.file.".currenttheme".text = userSettings.theme;
   stylix.autoEnable = false;
   stylix.polarity = themePolarity;

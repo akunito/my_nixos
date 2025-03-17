@@ -96,8 +96,10 @@
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ ];
-        allowedUDPPorts = [ ];
+        allowedTCPPorts = [ 47984 47989 47990 48010 ];
+          # sunshine 47984 47989 47990 48010
+        allowedUDPPorts = [ 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 ];
+          # sunshine 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
@@ -224,7 +226,22 @@
           pkgs.qt5.qtbase
 
           #pkgs.pcloud # requires patch to be imported
+          pkgs-unstable.sunshine
+          pkgs-unstable.tailscale
         ];
+
+        # Remote Control
+        sunshineEnable = true;
+        
+        # Stylix
+        stylixEnable = false;
+
+        # Fonts
+        fonts = [
+          pkgs.nerdfonts
+          pkgs.powerline
+        ];
+
         systemStateVersion = "24.05";
 
         # UPDATES -------------------------------------
