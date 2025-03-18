@@ -139,6 +139,8 @@
     ];
   };
 
+  services.tailscale.enable = userSettings.tailscaleEnabled;
+
   # Remote control
   services.sunshine = lib.mkIf (systemSettings.sunshineEnable == true) {
     enable = true;

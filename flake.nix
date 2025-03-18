@@ -293,8 +293,11 @@
 
           pkgs-unstable.qbittorrent
           pkgs-unstable.nextcloud-client
+          pkgs-unstable.tailscale
         ];
         homeStateVersion = "24.05";
+
+        tailscaleEnabled = true;
 
         editor = "nano"; # Default editor;
         # editor spawning translator
