@@ -236,6 +236,9 @@
           zsh
           git
         ];
+
+        tailscaleEnabled = false;
+        
         homeStateVersion = "24.05";
 
         editor = "nano"; # Default editor;
