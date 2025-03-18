@@ -327,8 +327,9 @@ in
        bind=SUPERCTRL,R,exec,phoenix refresh
 
        # 3 monitor setup
-       monitor=Virtual-1,1920x1080@90,0x0,1
-       monitor=Virtual-2,1920x1080@90,0x0,1
+       monitor = , preferred, auto, 1
+       monitor=Virtual-1,1920x1080@90,0x0,1 # QEMU 1
+       monitor=Virtual-2,1920x1080@90,0x0,1 # QEMU 2
        #monitor=eDP-1,1920x1080@120,900x1080,1
        #monitor=HDMI-A-1,1920x1080,1920x0,1
        #monitor=DP-1,1920x1080,0x0,1

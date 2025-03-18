@@ -497,18 +497,19 @@
 
    hyprland = {
       url = "github:hyprwm/Hyprland/main?submodules=true";
+      # url = "github:hyprwm/Hyprland/v0.47.2-b?submodules=true";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland-plugins = {
       type = "git";
       url = "https://code.hyprland.org/hyprwm/hyprland-plugins.git";
-      rev = "4d7f0b5d8b952f31f7d2e29af22ab0a55ca5c219"; #v0.44.1
+      # rev = "4d7f0b5d8b952f31f7d2e29af22ab0a55ca5c219"; #v0.44.1
       inputs.hyprland.follows = "hyprland";
     };
     hyprlock = {
       type = "git";
       url = "https://code.hyprland.org/hyprwm/hyprlock.git";
-      rev = "73b0fc26c0e2f6f82f9d9f5b02e660a958902763";
+      # rev = "73b0fc26c0e2f6f82f9d9f5b02e660a958902763";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprgrass.url = "github:horriblename/hyprgrass/427690aec574fec75f5b7b800ac4a0b4c8e4b1d5";
