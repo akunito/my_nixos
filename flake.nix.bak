@@ -496,8 +496,8 @@
     # };
 
    hyprland = {
-      # url = "github:hyprwm/Hyprland/main?submodules=true";
-      url = "github:hyprwm/Hyprland/v0.47.2-b?submodules=true";
+      url = "github:hyprwm/Hyprland/main?submodules=true";
+      # url = "github:hyprwm/Hyprland/v0.47.2-b?submodules=true";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland-plugins = {
