@@ -81,7 +81,7 @@
         firewall = true;
         allowedTCPPorts = [ 47984 47989 47990 48010 ];
           # sunshine 47984 47989 47990 48010
-        allowedUDPPorts = [ 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 ];
+        allowedUDPPorts = [ 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 51820 ];
           # sunshine 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010
 
         # LUKS drives
@@ -213,7 +213,8 @@
 
         # Remote Control
         sunshineEnable = true;
-        
+        # Wireguard
+        wireguardEnable = true;
         # Stylix
         stylixEnable = false;
 
@@ -295,6 +296,7 @@
           pkgs-unstable.qbittorrent
           pkgs-unstable.nextcloud-client
           #pkgs-unstable.tailscale
+          pkgs-unstable.wireguard-tools
         ];
 
         tailscaleEnabled = false;

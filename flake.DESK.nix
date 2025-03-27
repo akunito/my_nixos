@@ -224,13 +224,22 @@
           pkgs.qt5.qtbase
 
           #pkgs.pcloud # requires patch to be imported
+          pkgs-unstable.sunshine
+          pkgs-unstable.wireguard-tools
         ];
 
         # Remote Control
         sunshineEnable = true;
-        
+        # Wireguard
+        wireguardEnable = true;
         # Stylix
         stylixEnable = true;
+        
+        # Nerd font package
+        fonts = [
+          pkgs.nerd-fonts.jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
+          pkgs.powerline
+        ];
         
         systemStateVersion = "24.05";
 

@@ -227,11 +227,13 @@
 
           #pkgs.pcloud # requires patch to be imported
           pkgs-unstable.sunshine
+          pkgs-unstable.wireguard-tools
         ];
 
         # Remote Control
         sunshineEnable = true;
-        
+        # Wireguard
+        wireguardEnable = true;
         # Stylix
         stylixEnable = false;
 

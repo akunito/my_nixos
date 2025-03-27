@@ -181,7 +181,8 @@
 
         # Remote Control
         sunshineEnable = false;
-        
+        # Wireguard
+        wireguardEnable = false;  
         # Stylix
         stylixEnable = false;
 

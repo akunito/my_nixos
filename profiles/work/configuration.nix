@@ -96,6 +96,8 @@
   networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
   networking.defaultGateway = lib.mkIf (systemSettings.defaultGateway != null) systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
+  # Wireguard
+  networking.wireguard.enable = systemSettings.wireguardEnable;
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
