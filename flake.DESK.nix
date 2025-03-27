@@ -263,6 +263,7 @@
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if (wm == "hyprland") then "wayland" else "x11";
+        wmEnableHyprland = false; 
 
         dockerEnable = false; # for enabling docker
         virtualizationEnable = false; # for enabling virtualization

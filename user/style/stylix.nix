@@ -116,7 +116,7 @@ in
      libsForQt5.qt5ct pkgs.libsForQt5.breeze-qt5 libsForQt5.breeze-icons pkgs.noto-fonts-monochrome-emoji
   ];
   qt = {
-    enable = true;
+    enable = false; # modified for Plasma Virtual Desk
     style.package = pkgs.libsForQt5.breeze-qt5;
     style.name = "breeze-dark";
     platformTheme = "kde";

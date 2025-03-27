@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, userSettings, ... }:
 
 {
   # Import wayland config
@@ -7,7 +7,8 @@
               ./fonts.nix
               ./dbus.nix
               ./gnome-keyring.nix
-            ];
+            ]
+    ++ lib.optional userSettings.wmEnableHyprland (./. + "/hyprland.nix");
 
   # Security
   security = {

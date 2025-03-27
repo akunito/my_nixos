@@ -1,10 +1,11 @@
-{ config, pkgs, userSettings, ... }:
+{ config, lib, pkgs, userSettings, ... }:
 
 {
 
   imports = [ ../../app/terminal/alacritty.nix
               ../../app/terminal/kitty.nix
-            ];
+            ]
+    ++ lib.optional userSettings.wmEnableHyprland (./. + "/../hyprland/hyprland.nix");
 
   home.packages = with pkgs; [
     flameshot

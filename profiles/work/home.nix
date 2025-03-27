@@ -9,8 +9,6 @@
   programs.home-manager.enable = true;
 
   imports = [
-                  # I have to add plasma5 and plasma6.nix to /user/wm/... <<<<<<<
-
               (./. + "../../../user/wm"+("/"+userSettings.wm+"/"+userSettings.wm)+".nix") # My window manager selected from flake
               ../../user/shell/sh.nix # My zsh and bash config
               ../../user/shell/cli-collection.nix # Useful CLI apps
