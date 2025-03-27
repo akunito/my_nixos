@@ -215,7 +215,7 @@
         sunshineEnable = true;
         
         # Stylix
-        stylixEnable = true;
+        stylixEnable = false;
 
         # Nerd font package
         fonts = [
@@ -254,7 +254,7 @@
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
-        wmEnableHyprland = true; 
+        wmEnableHyprland = false; 
 
         dockerEnable = false; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization

@@ -215,7 +215,7 @@
         sunshineEnable = true;
         
         # Stylix
-        stylixEnable = true;
+        stylixEnable = false;
 
         # Nerd font package
         fonts = [
