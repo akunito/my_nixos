@@ -98,6 +98,8 @@
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
   # Wireguard
   networking.wireguard.enable = systemSettings.wireguardEnable;
+  # DNS resolved ?
+  services.resolved.enable = true;
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone

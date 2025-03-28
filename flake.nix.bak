@@ -302,6 +302,7 @@
           pkgs-unstable.qbittorrent
           pkgs-unstable.nextcloud-client
           #pkgs-unstable.tailscale
+          pkgs-unstable.wireguard-tools
         ];
 
         tailscaleEnabled = false;
