@@ -32,7 +32,7 @@
             options = [ "NOPASSWD" "SETENV" ];
           }
         ];
-        pkiCertificates = [ ];
+        pkiCertificates = [ /home/akunito/.certificates/ca.cert.pem ];
         # Polkit
         polkitEnable = true;
         polkitRules = ''
