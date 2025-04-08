@@ -243,7 +243,7 @@
           pkgs.powerline
         ];
 
-        systemStateVersion = "24.05";
+        systemStateVersion = "24.11";
 
         # UPDATES -------------------------------------
         # Auto update System Settings
@@ -316,7 +316,7 @@
         ];
         tailscaleEnabled = false;
         
-        homeStateVersion = "24.05";
+        homeStateVersion = "24.11";
 
         editor = "nano"; # Default editor;
         # editor spawning translator
