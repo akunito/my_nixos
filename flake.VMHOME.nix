@@ -78,11 +78,11 @@
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ 443 8043 2321 22000 111 4000 4001 4002 2049 21115 21116 ]; 
-                      # 80 443 8040 8043 nginx 2321 gitea 22000 syncthing 111 4000 4001 4002 2049 NFS 21115 21116 rustdesk
+        allowedTCPPorts = [ 443 8043 2321 22000 111 4000 4001 4002 2049 ]; 
+                      # 80 443 8040 8043 nginx 2321 gitea 22000 syncthing 111 4000 4001 4002 2049 NFS
                       # 
-        allowedUDPPorts = [ 22000 21027 111 4000 4001 4002 21116 21117 ]; 
-                      # 22000 syncthing 21027 syncthing 111 4000 4001 4002 NFS 21116 21117 rustdesk
+        allowedUDPPorts = [ 22000 21027 111 4000 4001 4002 ]; 
+                      # 22000 syncthing 21027 syncthing 111 4000 4001 4002 NFS 21116 21117
                       # 
 
         # LUKS drives
@@ -424,7 +424,7 @@
     home-manager-stable.url = "github:nix-community/home-manager/release-24.11";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
 
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
+    # nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
 
     # nix-on-droid = {
     #   url = "github:nix-community/nix-on-droid/master";

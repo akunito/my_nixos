@@ -8,6 +8,7 @@
       ../../system/hardware/drives.nix # SSH on Boot to unlock LUKS drives + Open my LUKS drives (OPTIONAL)
       ../../system/hardware/nfs_server.nix # NFS share directories over network
       ../../system/security/firewall.nix
+      ../../system/security/fail2ban.nix # Fail2ban config to be set up
       ../../system/security/sudo.nix
       ../../system/security/gpg.nix
       ../../system/security/autoupgrade.nix # auto upgrade
