@@ -155,6 +155,12 @@
 
   security.pki.certificateFiles = systemSettings.pkiCertificates;
 
+  # Enable swap file
+  swapDevices = lib.mkIf (systemSettings.swapFileEnable == true) [{
+    device = "/swapfile";
+    size = systemSettings.swapFileSyzeGB * 1024; # 32GB
+  }];
+
   # It is ok to leave this unchanged for compatibility purposes
   system.stateVersion = systemSettings.systemStateVersion;
 

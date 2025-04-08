@@ -169,7 +169,12 @@
         # Stylix
         stylixEnable = false;
 
-        systemStateVersion = "24.05";
+        # Swap file
+        swapFileEnable = false;
+        swapFileSyzeGB = 32; # 32GB
+
+        # System Version
+        systemStateVersion = "24.11";
 
         # UPDATES -------------------------------------
         # Auto update System Settings
@@ -223,7 +228,7 @@
         ];
         tailscaleEnabled = false;
         
-        homeStateVersion = "24.05";
+        homeStateVersion = "24.11";
 
         editor = "nano"; # Default editor;
         # editor spawning translator

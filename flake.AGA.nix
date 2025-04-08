@@ -243,6 +243,11 @@
           pkgs.powerline
         ];
 
+        # Swap file
+        swapFileEnable = false;
+        swapFileSyzeGB = 32; # 32GB
+
+        # System Version
         systemStateVersion = "24.11";
 
         # UPDATES -------------------------------------
