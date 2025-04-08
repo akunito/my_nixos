@@ -224,7 +224,7 @@
           pkgs.powerline
         ];
 
-        systemStateVersion = "24.05";
+        systemStateVersion = "24.11";
 
         # UPDATES -------------------------------------
         # Auto update System Settings
@@ -301,7 +301,7 @@
 
         tailscaleEnabled = false;
 
-        homeStateVersion = "24.05";
+        homeStateVersion = "24.11";
 
         editor = "nano"; # Default editor;
         # editor spawning translator
@@ -483,7 +483,7 @@
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "nixpkgs/nixos-24.05";
+    nixpkgs-stable.url = "nixpkgs/nixos-24.11";
     # emacs-pin-nixpkgs.url = "nixpkgs/f72123158996b8d4449de481897d855bc47c7bf6";
     # kdenlive-pin-nixpkgs.url = "nixpkgs/cfec6d9203a461d9d698d8a60ef003cac6d0da94";
     # nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
@@ -491,7 +491,7 @@
     home-manager-unstable.url = "github:nix-community/home-manager/master";
     home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs";
 
-    home-manager-stable.url = "github:nix-community/home-manager/release-24.05";
+    home-manager-stable.url = "github:nix-community/home-manager/release-24.11";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
 
     # nixos-hardware.url = "github:NixOS/nixos-hardware/master"; # additional settings for specific hardware
