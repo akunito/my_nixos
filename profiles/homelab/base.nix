@@ -9,6 +9,7 @@
       ../../system/hardware/nfs_server.nix # NFS share directories over network
       ../../system/security/firewall.nix
       ../../system/security/fail2ban.nix # Fail2ban config to be set up
+      ../../system/hardware/nfs_client.nix # NFS share directories over network
       ../../system/security/sudo.nix
       ../../system/security/gpg.nix
       ../../system/security/autoupgrade.nix # auto upgrade
@@ -96,6 +97,22 @@
     packages = [];
     uid = 1000;
   };
+
+  # Additional users
+  # users.users.${userSettings.username2} = lib.mkIf (usersettings.username2enable == true) {
+  #   isNormalUser = true;
+  #   description = userSettings.username2;
+  #   extraGroups = userSettings.username2extraGroups;
+  #   packages = [];
+  #   uid = userSettings.username2uid;
+  # };
+  # users.users.${userSettings.username3} = lib.mkIf (usersettings.username3enable == true) {
+  #   isNormalUser = true;
+  #   description = userSettings.username3;
+  #   extraGroups = userSettings.username3extraGroups;
+  #   packages = [];
+  #   uid = userSettings.username3uid;
+  # };
 
   # System packages
   environment.systemPackages = systemSettings.systemPackages;

@@ -106,22 +106,32 @@
           /mnt/DATA_4TB/backups/AgaLaptop 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
         # NFS client settings
-        nfsClientEnable = false;
+        nfsClientEnable = true;
         nfsMounts = [
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";
-            where = "/mnt/NFS_Books";
+            what = "192.168.8.200:/mnt/hddpool/media";
+            where = "/mnt/NFS_media";
             type = "nfs";
             options = "noatime";
           }
-        ];
-        nfsAutoMounts = [
-          {
-            where = "/mnt/NFS_Books";
-            automountConfig = {
-              TimeoutIdleSec = "600";
-            };
-          }
+          # {
+          #   what = "192.168.8.200:/mnt/ssdpool/myServices";
+          #   where = "/mnt/NFS_myServices";
+          #   type = "nfs";
+          #   options = "noatime";
+          # }
+          # {
+          #   what = "192.168.8.200:/mnt/ssdpool/library";
+          #   where = "/mnt/NFS_library";
+          #   type = "nfs";
+          #   options = "noatime";
+          # }
+          # {
+          #   what = "192.168.8.200:/mnt/ssdpool/emulators";
+          #   where = "/mnt/NFS_emulators";
+          #   type = "nfs";
+          #   options = "noatime";
+          # }
         ];
         
         # SSH System settings for BOOT
@@ -169,6 +179,7 @@
           restic
           zim-tools #to unpack .zim files like gutemberg library
           p7zip
+          nfs-utils
           
           btop
           fzf
@@ -186,7 +197,12 @@
         # Stylix
         stylixEnable = false;
 
-        systemStateVersion = "24.05";
+        # Swap file
+        swapFileEnable = true;
+        swapFileSyzeGB = 32; # 32GB
+
+        # System Version
+        systemStateVersion = "24.11";
 
         # UPDATES -------------------------------------
         # Auto update System Settings
@@ -212,6 +228,16 @@
         email = ""; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" ];
+
+        # username2enable = true; # enable additional user
+        # username2 = "mariadb"; # username
+        # username2uid = 999; # uid
+        # username2extraGroups = [ ];
+
+        # username3enable = true; # enable additional user
+        # username3 = "nextcloud"; # username
+        # username3uid = 33; # uid
+        # username3extraGroups = [ ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
@@ -241,7 +267,7 @@
 
         tailscaleEnabled = false;
         
-        homeStateVersion = "24.05";
+        homeStateVersion = "24.11";
 
         editor = "nano"; # Default editor;
         # editor spawning translator
