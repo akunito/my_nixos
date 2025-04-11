@@ -83,12 +83,12 @@
                             # 2321 # gitea
                             22000 # syncthing
                             111 4000 4001 4002 2049 # NFS server ?
-                            8443 8080 8843 8880 6789 # unify controller
+                            8443 8080 8843 8880 6789 # unifi controller
                           ]; 
         allowedUDPPorts = [ 
                             22000 21027 # syncthing
                             111 4000 4001 4002 # NFS server ?
-                            3478 10001 1900 5514 # unify controller
+                            3478 10001 1900 5514 # unifi controller
                           ]; 
 
         # LUKS drives
@@ -120,23 +120,42 @@
             type = "nfs";
             options = "noatime";
           }
-          # {
-          #   what = "192.168.8.200:/mnt/ssdpool/myServices";
-          #   where = "/mnt/NFS_myServices";
-          #   type = "nfs";
-          #   options = "noatime";
-          # }
-          # {
-          #   what = "192.168.8.200:/mnt/ssdpool/library";
-          #   where = "/mnt/NFS_library";
-          #   type = "nfs";
-          #   options = "noatime";
-          # }
-          # {
-          #   what = "192.168.8.200:/mnt/ssdpool/emulators";
-          #   where = "/mnt/NFS_emulators";
-          #   type = "nfs";
-          #   options = "noatime";
+          {
+            what = "192.168.8.200:/mnt/ssdpool/myServices/akunito";
+            where = "/mnt/NFS_myServices/akunito";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.200:/mnt/ssdpool/myServices/nm_iodine";
+            where = "/mnt/NFS_myServices/nm_iodine";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.200:/mnt/ssdpool/myServices/www-data";
+            where = "/mnt/NFS_myServices/www-data";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.200:/mnt/ssdpool/library";
+            where = "/mnt/NFS_library";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.200:/mnt/ssdpool/emulators";
+            where = "/mnt/NFS_emulators";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.200:/mnt/ssdpool/backups";
+            where = "/mnt/NFS_backups";
+            type = "nfs";
+            options = "noatime";
+          }
         ];
         nfsAutoMounts = [
           {
@@ -145,24 +164,42 @@
               TimeoutIdleSec = "600";
             };
           }
-          # {
-          #   where = "/mnt/NFS_myServices";
-          #   automountConfig = {
-          #     TimeoutIdleSec = "600";
-          #   };
-          # }
-          # {
-          #   where = "/mnt/NFS_library";
-          #   automountConfig = {
-          #     TimeoutIdleSec = "600";
-          #   };
-          # }
-          # {
-          #   where = "/mnt/NFS_emulators";
-          #   automountConfig = {
-          #     TimeoutIdleSec = "600";
-          #   };
-          # }
+          {
+            where = "/mnt/NFS_myServices/akunito";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_myServices/nm_iodine";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_myServices/www-data";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_library";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_emulators";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_backups";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
         ];
         
         # SSH System settings for BOOT

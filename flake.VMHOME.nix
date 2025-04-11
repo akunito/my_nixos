@@ -120,23 +120,30 @@
             type = "nfs";
             options = "noatime";
           }
-          # {
-          #   what = "192.168.8.200:/mnt/ssdpool/myServices";
-          #   where = "/mnt/NFS_myServices";
-          #   type = "nfs";
-          #   options = "noatime";
-          # }
-          # {
-          #   what = "192.168.8.200:/mnt/ssdpool/library";
-          #   where = "/mnt/NFS_library";
-          #   type = "nfs";
-          #   options = "noatime";
-          # }
-          # {
-          #   what = "192.168.8.200:/mnt/ssdpool/emulators";
-          #   where = "/mnt/NFS_emulators";
-          #   type = "nfs";
-          #   options = "noatime";
+          {
+            what = "192.168.8.200:/mnt/ssdpool/myServices";
+            where = "/mnt/NFS_myServices";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.200:/mnt/ssdpool/library";
+            where = "/mnt/NFS_library";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.200:/mnt/ssdpool/emulators";
+            where = "/mnt/NFS_emulators";
+            type = "nfs";
+            options = "noatime";
+          }
+          {
+            what = "192.168.8.200:/mnt/ssdpool/backups";
+            where = "/mnt/NFS_backups";
+            type = "nfs";
+            options = "noatime";
+          }
         ];
         nfsAutoMounts = [
           {
@@ -145,24 +152,30 @@
               TimeoutIdleSec = "600";
             };
           }
-          # {
-          #   where = "/mnt/NFS_myServices";
-          #   automountConfig = {
-          #     TimeoutIdleSec = "600";
-          #   };
-          # }
-          # {
-          #   where = "/mnt/NFS_library";
-          #   automountConfig = {
-          #     TimeoutIdleSec = "600";
-          #   };
-          # }
-          # {
-          #   where = "/mnt/NFS_emulators";
-          #   automountConfig = {
-          #     TimeoutIdleSec = "600";
-          #   };
-          # }
+          {
+            where = "/mnt/NFS_myServices";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_library";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_emulators";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          {
+            where = "/mnt/NFS_backups";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
         ];
         
         # SSH System settings for BOOT
