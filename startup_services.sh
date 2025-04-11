@@ -27,6 +27,7 @@ case $hostname in
         docker-compose -f /home/akunito/.homelab/homelab/docker-compose.yml up -d nextcloud-db nextcloud-redis nextcloud-app nextcloud-cron syncthing-app freshrss heimdall-app obsidian-remote calibre-web-automated 
         docker-compose -f /home/akunito/.homelab/media/docker-compose.yml up -d
         docker-compose -f /home/akunito/.homelab/nginx-proxy/docker-compose.yml up -d
+        docker-compose -f /home/akunito/.homelab/unifi/docker-compose.yml up -d
         ;;
     *)
         echo -e "This hostname does not match any command to run. Adjust the script if needed..."
