@@ -131,6 +131,31 @@
           #   where = "/mnt/NFS_emulators";
           #   type = "nfs";
           #   options = "noatime";
+        ];
+        nfsAutoMounts = [
+          {
+            where = "/mnt/NFS_media";
+            automountConfig = {
+              TimeoutIdleSec = "600";
+            };
+          }
+          # {
+          #   where = "/mnt/NFS_myServices";
+          #   automountConfig = {
+          #     TimeoutIdleSec = "600";
+          #   };
+          # }
+          # {
+          #   where = "/mnt/NFS_library";
+          #   automountConfig = {
+          #     TimeoutIdleSec = "600";
+          #   };
+          # }
+          # {
+          #   where = "/mnt/NFS_emulators";
+          #   automountConfig = {
+          #     TimeoutIdleSec = "600";
+          #   };
           # }
         ];
         

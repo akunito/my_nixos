@@ -78,12 +78,18 @@
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ 443 8043 2321 22000 111 4000 4001 4002 2049 ]; 
-                      # 80 443 8040 8043 nginx 2321 gitea 22000 syncthing 111 4000 4001 4002 2049 NFS
-                      # 
-        allowedUDPPorts = [ 22000 21027 111 4000 4001 4002 ]; 
-                      # 22000 syncthing 21027 syncthing 111 4000 4001 4002 NFS 21116 21117
-                      # 
+        allowedTCPPorts = [ 
+                            443 8043 # nginx
+                            # 2321 # gitea
+                            22000 # syncthing
+                            111 4000 4001 4002 2049 # NFS server ?
+                            8443 8080 8843 8880 6789 # unifi controller
+                          ]; 
+        allowedUDPPorts = [ 
+                            22000 21027 # syncthing
+                            111 4000 4001 4002 # NFS server ?
+                            3478 10001 1900 5514 # unifi controller
+                          ]; 
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
