@@ -118,7 +118,7 @@
           /mnt/example2  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
         # NFS client settings
-        nfsClientEnable = true;
+        nfsClientEnable = false;
         nfsMounts = [
           {
             what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";

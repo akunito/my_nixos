@@ -115,31 +115,31 @@
         nfsClientEnable = true;
         nfsMounts = [
           {
-            what = "192.168.8.200:/mnt/hddpool/media";
+            what = "192.168.20.200:/mnt/hddpool/media";
             where = "/mnt/NFS_media";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.200:/mnt/ssdpool/myServices";
-            where = "/mnt/NFS_myServices";
+            what = "192.168.20.200:/mnt/ssdpool/services";
+            where = "/mnt/NFS_services";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.200:/mnt/ssdpool/library";
+            what = "192.168.20.200:/mnt/ssdpool/library";
             where = "/mnt/NFS_library";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.200:/mnt/ssdpool/emulators";
+            what = "192.168.20.200:/mnt/ssdpool/emulators";
             where = "/mnt/NFS_emulators";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.200:/mnt/ssdpool/backups";
+            what = "192.168.20.200:/mnt/ssdpool/backups";
             where = "/mnt/NFS_backups";
             type = "nfs";
             options = "noatime";
@@ -153,7 +153,7 @@
             };
           }
           {
-            where = "/mnt/NFS_myServices";
+            where = "/mnt/NFS_services";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
@@ -271,7 +271,7 @@
         name = "akunito"; # name/identifier
         email = ""; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
-        extraGroups = [ "networkmanager" "wheel" ];
+        extraGroups = [ "networkmanager" "wheel" "nscd" "www-data" ];
 
         # username2enable = true; # enable additional user
         # username2 = "mariadb"; # username

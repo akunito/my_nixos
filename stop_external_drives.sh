@@ -51,18 +51,26 @@ echo -e "hostname detected: $hostname"
 case $hostname in
     "nixosaga")
         # Stop all external drives
-        stop_NFS_drives "mnt-NFS_downloads.mount" "/mnt/NFS_downloads"
-        stop_NFS_drives "mnt-NFS_Books.mount" "/mnt/NFS_Books"
-        stop_NFS_drives "mnt-NFS_Media.mount" "/mnt/NFS_Media"
-        stop_NFS_drives "mnt-NFS_Backups.mount" "/mnt/NFS_Backups"
+        sudo stop_NFS_drives "mnt-NFS_downloads.mount" "/mnt/NFS_downloads"
+        sudo stop_NFS_drives "mnt-NFS_Books.mount" "/mnt/NFS_Books"
+        sudo stop_NFS_drives "mnt-NFS_Media.mount" "/mnt/NFS_Media"
+        sudo stop_NFS_drives "mnt-NFS_Backups.mount" "/mnt/NFS_Backups"
         ;;
     "nixosLabaku")
         # Stop all external drives
         echo -e "Stopping Containers..."
         docker stop $(sudo docker ps -a -q)
-        echo -e "Unmount external drives"
+
+        echo -e "Unmount external drives..."
         sudo umount /mnt/DATA_4TB
         sudo umount /mnt/HDD_4TB
+
+        echo -e "Unmount NFS drives..."
+        sudo stop_NFS_drives "mnt-NFS_media.mount" "/mnt/NFS_media"
+        sudo stop_NFS_drives "mnt-NFS_services.mount" "/mnt/NFS_services999"
+        sudo stop_NFS_drives "mnt-NFS_library.mount" "/mnt/NFS_library"
+        sudo stop_NFS_drives "mnt-NFS_emulators.mount" "/mnt/NFS_emulators"
+        sudo stop_NFS_drives "mnt-NFS_backups.mount" "/mnt/NFS_backups"
         ;;
     *)
         echo -e "This hostname does not match any command to run. Adjust the script if needed..."

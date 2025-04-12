@@ -114,6 +114,10 @@
   #   uid = userSettings.username3uid;
   # };
 
+  users.groups.www-data = { 
+    gid = 33;
+  };
+  
   # System packages
   environment.systemPackages = systemSettings.systemPackages;
 

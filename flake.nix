@@ -121,20 +121,8 @@
             options = "noatime";
           }
           {
-            what = "192.168.8.200:/mnt/ssdpool/myServices/akunito";
-            where = "/mnt/NFS_myServices/akunito";
-            type = "nfs";
-            options = "noatime";
-          }
-          {
-            what = "192.168.8.200:/mnt/ssdpool/myServices/nm_iodine";
-            where = "/mnt/NFS_myServices/nm_iodine";
-            type = "nfs";
-            options = "noatime";
-          }
-          {
-            what = "192.168.8.200:/mnt/ssdpool/myServices/www-data";
-            where = "/mnt/NFS_myServices/www-data";
+            what = "192.168.8.200:/mnt/ssdpool/services";
+            where = "/mnt/NFS_services";
             type = "nfs";
             options = "noatime";
           }
@@ -165,19 +153,7 @@
             };
           }
           {
-            where = "/mnt/NFS_myServices/akunito";
-            automountConfig = {
-              TimeoutIdleSec = "600";
-            };
-          }
-          {
-            where = "/mnt/NFS_myServices/nm_iodine";
-            automountConfig = {
-              TimeoutIdleSec = "600";
-            };
-          }
-          {
-            where = "/mnt/NFS_myServices/www-data";
+            where = "/mnt/NFS_services";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
@@ -295,7 +271,7 @@
         name = "akunito"; # name/identifier
         email = ""; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
-        extraGroups = [ "networkmanager" "wheel" ];
+        extraGroups = [ "networkmanager" "wheel" "nscd" "www-data" ];
 
         # username2enable = true; # enable additional user
         # username2 = "mariadb"; # username

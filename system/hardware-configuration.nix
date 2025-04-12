@@ -26,26 +26,6 @@
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
-  fileSystems."/mnt/NFS_media" =
-    { device = "192.168.8.200:/mnt/hddpool/media";
-      fsType = "nfs4";
-    };
-
-  fileSystems."/mnt/NFS_library" =
-    { device = "192.168.8.200:/mnt/ssdpool/library";
-      fsType = "nfs4";
-    };
-
-  fileSystems."/mnt/NFS_emulators" =
-    { device = "192.168.8.200:/mnt/ssdpool/emulators";
-      fsType = "nfs4";
-    };
-
-  fileSystems."/mnt/NFS_backups" =
-    { device = "192.168.8.200:/mnt/ssdpool/backups";
-      fsType = "nfs4";
-    };
-
   swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
@@ -53,9 +33,7 @@
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-bfbd71eeeace.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-cc3f0d8e9fa6.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-e88be8de71b1.useDHCP = lib.mkDefault true;
+  # networking.interfaces.br-01876ad0fdda.useDHCP = lib.mkDefault true;
   # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
   # networking.interfaces.ens18.useDHCP = lib.mkDefault true;
 
