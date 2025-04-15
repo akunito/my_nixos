@@ -51,10 +51,10 @@ echo -e "hostname detected: $hostname"
 case $hostname in
     "nixosaga")
         # Stop all external drives
-        sudo stop_NFS_drives "mnt-NFS_downloads.mount" "/mnt/NFS_downloads"
-        sudo stop_NFS_drives "mnt-NFS_Books.mount" "/mnt/NFS_Books"
-        sudo stop_NFS_drives "mnt-NFS_Media.mount" "/mnt/NFS_Media"
-        sudo stop_NFS_drives "mnt-NFS_Backups.mount" "/mnt/NFS_Backups"
+        sudo systemctl stop mnt-NFS_downloads.mount
+        sudo systemctl stop mnt-NFS_Books.mount
+        sudo systemctl stop mnt-NFS_Media.mount
+        sudo systemctl stop mnt-NFS_Backups.mount
         ;;
     "nixosLabaku")
         # Stop all external drives
@@ -66,11 +66,11 @@ case $hostname in
         sudo umount /mnt/HDD_4TB
 
         echo -e "Unmount NFS drives..."
-        sudo stop_NFS_drives "mnt-NFS_media.mount" "/mnt/NFS_media"
-        sudo stop_NFS_drives "mnt-NFS_services.mount" "/mnt/NFS_services999"
-        sudo stop_NFS_drives "mnt-NFS_library.mount" "/mnt/NFS_library"
-        sudo stop_NFS_drives "mnt-NFS_emulators.mount" "/mnt/NFS_emulators"
-        sudo stop_NFS_drives "mnt-NFS_backups.mount" "/mnt/NFS_backups"
+        sudo systemctl stop mnt-NFS_media.mount
+        sudo systemctl stop mnt-NFS_services.mount
+        sudo systemctl stop mnt-NFS_library.mount
+        sudo systemctl stop mnt-NFS_emulators.mount
+        sudo systemctl stop mnt-NFS_backups.mount
         ;;
     *)
         echo -e "This hostname does not match any command to run. Adjust the script if needed..."
