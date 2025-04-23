@@ -115,31 +115,31 @@
         nfsClientEnable = true;
         nfsMounts = [
           {
-            what = "192.168.8.200:/mnt/hddpool/media";
+            what = "192.168.20.200:/mnt/hddpool/media";
             where = "/mnt/NFS_media";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.200:/mnt/ssdpool/services";
+            what = "192.168.20.200:/mnt/ssdpool/services";
             where = "/mnt/NFS_services";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.200:/mnt/ssdpool/library";
+            what = "192.168.20.200:/mnt/ssdpool/library";
             where = "/mnt/NFS_library";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.200:/mnt/ssdpool/emulators";
+            what = "192.168.20.200:/mnt/ssdpool/emulators";
             where = "/mnt/NFS_emulators";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.200:/mnt/ssdpool/backups";
+            what = "192.168.20.200:/mnt/ssdpool/backups";
             where = "/mnt/NFS_backups";
             type = "nfs";
             options = "noatime";

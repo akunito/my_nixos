@@ -215,7 +215,7 @@
           git
           rclone
           cryptsetup
-          #gocryptfs
+          gocryptfs
           #wireguard-tools
           traceroute
           iproute2
