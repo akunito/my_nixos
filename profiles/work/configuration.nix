@@ -82,8 +82,6 @@
 
   # Kernel modules
   boot.kernelModules = systemSettings.kernelModules;
-  
-  hardware.graphics.enable32Bit = true; # For 32 bit applications #AMDGPU
 
   # Bootloader
   # Use systemd-boot if uefi, default to grub otherwise

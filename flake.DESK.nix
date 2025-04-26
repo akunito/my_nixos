@@ -16,6 +16,8 @@
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
 
+        amdLACTdriverEnable = true; # for enabling amdgpu lact driver
+
         kernelModules = [ 
           "amdgpu" 
           "i2c-dev" 

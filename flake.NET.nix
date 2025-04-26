@@ -15,7 +15,8 @@
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
-        
+                amdLACTdriverEnable = false; # for enabling amdgpu lact driver
+
         kernelModules = [ 
           "i2c-dev" 
           "i2c-piix4" 
