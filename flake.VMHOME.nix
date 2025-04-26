@@ -16,6 +16,11 @@
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         
+        kernelModules = [ 
+          "i2c-dev" 
+          "i2c-piix4" 
+        ]; # kernel modules to load
+        
         # Security
         doasEnable = false; # for enabling doas
         sudoEnable = true; # for enabling sudo

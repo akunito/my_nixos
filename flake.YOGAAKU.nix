@@ -15,6 +15,12 @@
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+
+        kernelModules = [ 
+          "i2c-dev" 
+          "i2c-piix4" 
+          "cpufreq_powersave" 
+        ]; # kernel modules to load
         
         # Security
         doasEnable = false; # for enabling doas
@@ -204,12 +210,14 @@
           # pkgs.syncthing
           # pkgs.pciutils # install if you need some commands like lspci
 
-          pkgs.vivaldi # requires patch to be imported + qt5.qtbase
+          # pkgs.vivaldi # requires patch to be imported + qt5.qtbase
           pkgs.qt5.qtbase
 
           #pkgs.pcloud # requires patch to be imported
           pkgs-unstable.sunshine
         ];
+
+        vivaldiPatch = false; # for enabling vivaldi patch
 
         # Remote Control
         sunshineEnable = true;
@@ -389,7 +397,7 @@
 #              else
 #                inputs.nixpkgs.lib);
 
-      lib = inputs.nixpkgs-stable.lib;
+      lib = inputs.nixpkgs-stable.lib; # Overriding lib to force stable
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable

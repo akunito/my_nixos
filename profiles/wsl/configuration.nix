@@ -64,7 +64,7 @@ in
   nixpkgs.config.allowUnfree = true;
 
   # Kernel modules
-  boot.kernelModules = [ "i2c-dev" "i2c-piix4" "cpufreq_powersave" ];
+  boot.kernelModules = systemSettings.kernelModules;
 
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname.

@@ -36,8 +36,9 @@
       ../../system/security/autoupgrade.nix # auto upgrade
       # Patches
       #../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
-      ../../patches/vivaldifixes.nix # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148 
-    ] ++ lib.optional systemSettings.stylixEnable ../../system/style/stylix.nix; # Stylix theme
+      
+    ] ++ lib.optional systemSettings.stylixEnable ../../system/style/stylix.nix # Stylix theme
+    ++ lib.optional systemSettings.vivaldiPatch ../../patches/vivaldifixes.nix; # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148 
 
   # Fix nix path
   nix.nixPath = [ "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
@@ -80,7 +81,9 @@
   nixpkgs.config.allowUnfree = true;
 
   # Kernel modules
-  boot.kernelModules = [ "i2c-dev" "i2c-piix4" "cpufreq_powersave" ];
+  boot.kernelModules = systemSettings.kernelModules;
+  
+  hardware.graphics.enable32Bit = true; # For 32 bit applications #AMDGPU
 
   # Bootloader
   # Use systemd-boot if uefi, default to grub otherwise

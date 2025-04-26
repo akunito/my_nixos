@@ -39,7 +39,7 @@
   nixpkgs.config.allowUnfree = true;
 
   # Kernel modules
-  boot.kernelModules = [ "i2c-dev" "i2c-piix4" ];
+  boot.kernelModules = systemSettings.kernelModules;
 
   # Added for homelab services performance and adviced as we got warning on different service's logs
   boot.kernel.sysctl = {
