@@ -121,12 +121,6 @@
             options = "noatime";
           }
           {
-            what = "192.168.20.200:/mnt/ssdpool/services";
-            where = "/mnt/NFS_services";
-            type = "nfs";
-            options = "noatime";
-          }
-          {
             what = "192.168.20.200:/mnt/ssdpool/library";
             where = "/mnt/NFS_library";
             type = "nfs";
@@ -135,12 +129,6 @@
           {
             what = "192.168.20.200:/mnt/ssdpool/emulators";
             where = "/mnt/NFS_emulators";
-            type = "nfs";
-            options = "noatime";
-          }
-          {
-            what = "192.168.20.200:/mnt/ssdpool/backups";
-            where = "/mnt/NFS_backups";
             type = "nfs";
             options = "noatime";
           }
@@ -153,12 +141,6 @@
             };
           }
           {
-            where = "/mnt/NFS_services";
-            automountConfig = {
-              TimeoutIdleSec = "600";
-            };
-          }
-          {
             where = "/mnt/NFS_library";
             automountConfig = {
               TimeoutIdleSec = "600";
@@ -166,12 +148,6 @@
           }
           {
             where = "/mnt/NFS_emulators";
-            automountConfig = {
-              TimeoutIdleSec = "600";
-            };
-          }
-          {
-            where = "/mnt/NFS_backups";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
