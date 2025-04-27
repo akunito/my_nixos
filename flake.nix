@@ -1,5 +1,5 @@
 {
-  description = "Flake of Akunito HomeLab on Desktop";
+  description = "Flake for my VM Desktop";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,14 +7,22 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosLabaku"; # hostname
-        profile = "homelab"; # select a profile defined from my profiles directory
+        hostname = "nixosaku"; # hostname
+        profile = "personal"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+
+        amdLACTdriverEnable = true; # for enabling amdgpu lact driver
+
+        kernelModules = [ 
+          "i2c-dev" 
+          "i2c-piix4" 
+          # "cpufreq_powersave" 
+        ]; # kernel modules to load
         
         # Security
         doasEnable = false; # for enabling doas
@@ -32,13 +40,26 @@
             options = [ "NOPASSWD" "SETENV" ];
           }
         ];
-        pkiCertificates = [ ]; # paths relative to base.nix, not to flake
+        pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
         # Polkit
-        polkitEnable = false;
+        polkitEnable = true;
         polkitRules = ''
           polkit.addRule(function(action, subject) {
             if (
               subject.isInGroup("users") && (
+                // Allow reboot and power-off actions
+                action.id == "org.freedesktop.login1.reboot" ||
+                action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.power-off" ||
+                action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.suspend" ||
+                action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+
+                // Allow managing specific systemd units
+                (action.id == "org.freedesktop.systemd1.manage-units" &&
+                  action.lookup("verb") == "start" &&
+                  action.lookup("unit") == "mnt-NFS_Backups.mount") ||
+
                 // Allow running rsync and restic
                 (action.id == "org.freedesktop.policykit.exec" &&
                   (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
@@ -53,147 +74,127 @@
         # Backups
         resticWrapper = true; # for enabling restic wrapper
         rsyncWrapper = true; # for enabling rsync wrapper
-        
-        homeBackupEnable = true; # restic.nix
-        homeBackupDescription = "Backup Home Directory with Restic && DATA_4TB to HDD_4TB";
-        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup.sh";
-        homeBackupUser = "root";
+
+        homeBackupEnable = false; # restic.nix
+        homeBackupDescription = "Backup Home Directory with Restic";
+        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup.sh";
+        homeBackupUser = "akunito";
         homeBackupTimerDescription = "Timer for home_backup service";
-        homeBackupOnCalendar = "23:00:00"; # At 23h every day
+        homeBackupOnCalendar = "0/12:00:00"; # Every 12 hour
+        homeBackupCallNextEnabled = true; # for calling next service after backup
         homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
 
-        remoteBackupEnable = true; # restic.nix
+        remoteBackupEnable = false; # restic.nix
         remoteBackupDescription = "Copy Restic Backup to Remote Server";
-        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup_remote.sh";
-        remoteBackupUser = "root";
+        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup_remote.sh";
+        remoteBackupUser = "akunito";
         remoteBackupTimerDescription = "Timer for remote_backup service";
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.8.80"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.8.81"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.8.96"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.8.98"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
-        nameServers = [ "192.168.8.1" ]; # nameservers / DNS
-        wifiPowerSave = false; # for enabling wifi power save for laptops
+        nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
+        wifiPowerSave = true; # for enabling wifi power save for laptops
 
         # Firewall
         firewall = true;
         allowedTCPPorts = [ 
-                            443 8043 # nginx
-                            # 2321 # gitea
-                            22000 # syncthing
-                            111 4000 4001 4002 2049 # NFS server ?
-                            8443 8080 8843 8880 6789 # unifi controller
-                          ]; 
+          # 47984 47989 47990 48010 # sunshine
+        ];
         allowedUDPPorts = [ 
-                            22000 21027 # syncthing
-                            111 4000 4001 4002 # NFS server ?
-                            3478 10001 1900 5514 # unifi controller
-                          ]; 
+          # 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 51820 # sunshine
+        ];
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
         openLUKS = false; # drives.nix
-        disk1_name = "DATA_4TB";
-        disk1_path = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
-        disk2_name = "TimeShift";
-        disk2_path = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
-        disk3_name = "Machines";
-        disk3_path = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
-        disk4_name = "HDD_4TB";
-        disk4_path = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
-        # NFS
+        disk1_name = "SAMPLE1";
+        disk1_path = "/dev/disk/by-uuid/231c229c-SAMPLE1";
+        disk2_name = "SAMPLE2";
+        disk2_path = "/dev/disk/by-uuid/04aaf88f-SAMPLE2";
+        disk3_name = "SAMPLE3";
+        disk3_path = "/dev/disk/by-uuid/452c53a6-SAMPLE3";
+        # NFS server settings
         nfsServerEnable = false;
         nfsExports = ''
-          /mnt/DATA_4TB/Warehouse/Books   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
-          /mnt/DATA_4TB/Warehouse/downloads  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
-          /mnt/DATA_4TB/Warehouse/Media   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
-          /mnt/DATA_4TB/backups/AgaLaptop 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/example   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/example2  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
         # NFS client settings
-        nfsClientEnable = true;
+        nfsClientEnable = false;
         nfsMounts = [
           {
-            what = "192.168.20.200:/mnt/hddpool/media";
-            where = "/mnt/NFS_media";
+            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";
+            where = "/mnt/NFS_Books";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.20.200:/mnt/ssdpool/services";
-            where = "/mnt/NFS_services";
+            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/downloads";
+            where = "/mnt/NFS_downloads";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.20.200:/mnt/ssdpool/library";
-            where = "/mnt/NFS_library";
+            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Media";
+            where = "/mnt/NFS_Media";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.20.200:/mnt/ssdpool/emulators";
-            where = "/mnt/NFS_emulators";
-            type = "nfs";
-            options = "noatime";
-          }
-          {
-            what = "192.168.20.200:/mnt/ssdpool/backups";
-            where = "/mnt/NFS_backups";
+            what = "192.168.8.80:/mnt/DATA_4TB/backups/akunitoLaptop";
+            where = "/mnt/NFS_Backups";
             type = "nfs";
             options = "noatime";
           }
         ];
         nfsAutoMounts = [
           {
-            where = "/mnt/NFS_media";
+            where = "/mnt/NFS_Books";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
           {
-            where = "/mnt/NFS_services";
+            where = "/mnt/NFS_Movies";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
           {
-            where = "/mnt/NFS_library";
+            where = "/mnt/NFS_Media";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
           {
-            where = "/mnt/NFS_emulators";
-            automountConfig = {
-              TimeoutIdleSec = "600";
-            };
-          }
-          {
-            where = "/mnt/NFS_backups";
+            where = "/mnt/NFS_Backups";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
         ];
-        
+
         # SSH System settings for BOOT
         authorizedKeys = [ 
           "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" 
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com"
         ];
-        hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
 
+        hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
+        
         # Printer
-        servicePrinting = false; 
-        networkPrinters = false;
+        servicePrinting = true; 
+        networkPrinters = true;
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
-        TLP_ENABLE = true; # Disable for laptops if you want granular power management with profiles
+        TLP_ENABLE = false; # Disable for laptops if you want granular power management with profiles
         PROFILE_ON_BAT = "performance";
         PROFILE_ON_AC = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
@@ -207,45 +208,54 @@
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
         powerKey = "ignore";  # when pressing power key, do one of above
         # More Power settings
-        powerManagement_ENABLE = false; # Enable power management profiles for desktop systems <<<
-        power-profiles-daemon_ENABLE = false; # Enable power management profiles for desktop systems <<<
+        powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
+        power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
 
         # System packages
-        systemPackages = with pkgs; [
-          vim
-          wget
-          zsh
-          git
-          rclone
-          cryptsetup
-          gocryptfs
-          #wireguard-tools
-          traceroute
-          iproute2
-          openssl
-          restic
-          zim-tools #to unpack .zim files like gutemberg library
-          p7zip
-          nfs-utils
-          
-          btop
-          fzf
-          tldr
-          atuin
+        systemPackages = [
+          pkgs.vim
+          pkgs.wget
+          pkgs.nmap # net tool for port scanning
+          pkgs.zsh
+          pkgs.git
+          pkgs.cryptsetup
+          pkgs.home-manager
+          pkgs.wpa_supplicant # for wifi
+          pkgs.btop
+          pkgs.fzf
+          pkgs.tldr
+          pkgs.rsync
+          pkgs.nfs-utils
+          pkgs.restic
+          pkgs.clinfo # for checking rocm (OpenCL)
+          pkgs.dialog # scripting GUI tool
+          # pkgs.atuin
+          # pkgs.pciutils # install if you need some commands like lspci
 
-          kitty # check if should be removed on labs
-          home-manager
+          # pkgs-stable.vivaldi # requires patch to be imported + qt5.qtbase
+          # pkgs.qt5.qtbase
+
+          #pkgs.pcloud # requires patch to be imported
+          pkgs-unstable.sunshine
         ];
 
+        vivaldiPatch = false; # for enabling vivaldi patch
+
         # Remote Control
-        sunshineEnable = false;
+        sunshineEnable = true;
         # Wireguard
-        wireguardEnable = false;  
+        wireguardEnable = true;
         # Stylix
         stylixEnable = false;
 
+        # Nerd font package
+        fonts = [
+          pkgs.nerdfonts # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
+          pkgs.powerline
+        ];
+
         # Swap file
-        swapFileEnable = true;
+        swapFileEnable = false;
         swapFileSyzeGB = 32; # 32GB
 
         # System Version
@@ -272,48 +282,67 @@
       userSettings = rec {
         username = "akunito"; # username
         name = "akunito"; # name/identifier
-        email = ""; # email (used for certain configurations)
+        email = "diego88aku@gmail.com"; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
-        extraGroups = [ "networkmanager" "wheel" "nscd" "www-data" ];
-
-        # username2enable = true; # enable additional user
-        # username2 = "mariadb"; # username
-        # username2uid = 999; # uid
-        # username2extraGroups = [ ];
-
-        # username3enable = true; # enable additional user
-        # username3 = "nextcloud"; # username
-        # username3uid = 33; # uid
-        # username3extraGroups = [ ];
+        extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
         theme = "io"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
-        wmType = if (wm == "hyprland") then "wayland" else "x11";
+        wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
         wmEnableHyprland = false; 
 
-        dockerEnable = true; # for enabling docker
-        virtualizationEnable = false; # for enabling virtualization
-        qemuGuestAddition = true; # If the system is a QEMU VM
+        dockerEnable = false; # for enabling docker
+        virtualizationEnable = true; # for enabling virtualization
+        qemuGuestAddition = false; # If the system is a QEMU VM
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email
 
         browser = "vivaldi"; # Default browser; must select one from ./user/app/browser/
+        spawnBrowser = "vivaldi";
         defaultRoamDir = "Personal.p"; # Default org roam directory relative to ~/Org
         term = "kitty"; # Default terminal command;
         font = "Intel One Mono"; # Selected font
         fontPkg = pkgs.intel-one-mono; # Font package
 
         # Home-Manager packages
-        homePackages = with pkgs; [
-          # Core
-          zsh
-          git
+        homePackages = [
+          pkgs.zsh
+          pkgs.kitty
+          pkgs.git
+          pkgs.syncthing
+
+          # vivaldi # temporary moved to configuration.nix for issue with plasma 6
+          # qt5.qtbase
+          pkgs-unstable.ungoogled-chromium
+
+          pkgs-unstable.vscode
+          pkgs-unstable.obsidian
+          pkgs-unstable.spotify
+          # pkgs-unstable.xournalpp
+          pkgs-unstable.vlc
+          pkgs-unstable.candy-icons
+          pkgs.calibre
+          
+          pkgs-unstable.libreoffice
+          pkgs-unstable.telegram-desktop
+
+          pkgs-unstable.qbittorrent
+          pkgs-unstable.nextcloud-client
+          #pkgs-unstable.tailscale
+          pkgs-unstable.wireguard-tools
+          
+          pkgs-unstable.bitwarden
+          pkgs-unstable.moonlight-qt
+          # pkgs-unstable.teams # MS Teams (Not supported)
+          pkgs-unstable.discord
+          pkgs-unstable.kdePackages.kcalc
+          pkgs-unstable.kdePackages.korganizer
         ];
 
         tailscaleEnabled = false;
-        
+
         homeStateVersion = "24.11";
 
         editor = "nano"; # Default editor;
@@ -337,24 +366,27 @@
         (import inputs.nixpkgs { system = systemSettings.system; rocmSupport = (if systemSettings.gpu == "amd" then true else false); }).applyPatches {
           name = "nixpkgs-patched";
           src = inputs.nixpkgs;
-          # patches = [ ./patches/emacs-no-version-check.patch ]; # DISABLING emacs patches??
+          patches = [ #./patches/emacs-no-version-check.patch
+                      #./patches/nixpkgs-348697.patch
+                    ];
         };
 
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-              then
-                pkgs-stable
-              else
-                (import nixpkgs-patched {
-                  system = systemSettings.system;
-                  config = {
-                    allowUnfree = true;
-                    allowUnfreePredicate = (_: true);
-                  };
-                  # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
-                }));
+      # pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      #         then
+      #           pkgs-stable
+      #         else
+      #           (import nixpkgs-patched {
+      #             system = systemSettings.system;
+      #             config = {
+      #               allowUnfree = true;
+      #               allowUnfreePredicate = (_: true);
+      #             };
+      #             # overlays = [ inputs.rust-overlay.overlays.default ];
+      #           }));
+      pkgs = pkgs-stable; # Overriding pkgs to force stable
 
       pkgs-stable = import inputs.nixpkgs-stable {
         system = systemSettings.system;
@@ -370,6 +402,7 @@
           allowUnfree = true;
           allowUnfreePredicate = (_: true);
         };
+        # overlays = [ inputs.rust-overlay.overlays.default ];
       };
 
       # pkgs-emacs = import inputs.emacs-pin-nixpkgs {
@@ -387,19 +420,22 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-             then
-               inputs.nixpkgs-stable.lib
-             else
-               inputs.nixpkgs.lib);
+      # lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      #        then
+      #          inputs.nixpkgs-stable.lib
+      #        else
+      #          inputs.nixpkgs.lib);
+    
+      lib = inputs.nixpkgs-stable.lib; # Overriding lib to force stable
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-             then
-               inputs.home-manager-stable
-             else
-               inputs.home-manager-unstable);
+      # home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      #        then
+      #          inputs.home-manager-stable
+      #        else
+      #          inputs.home-manager-unstable);
+      home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
 
       # Systems that can run tests:
       supportedSystems = [ "aarch64-linux" "i686-linux" "x86_64-linux" ];
@@ -436,7 +472,9 @@
           system = systemSettings.system;
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
+            # inputs.lix-module.nixosModules.default
             ./system/bin/phoenix.nix
+            # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
@@ -485,6 +523,10 @@
     };
 
   inputs = {
+    # lix-module = {
+    #   url = "https://git.lix.systems/lix-project/nixos-module/archive/2.90.0.tar.gz";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     nixpkgs.url = "nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "nixpkgs/nixos-24.11";
     # emacs-pin-nixpkgs.url = "nixpkgs/f72123158996b8d4449de481897d855bc47c7bf6";
@@ -505,19 +547,25 @@
     #   inputs.home-manager.follows = "home-manager-unstable";
     # };
 
-    # hyprland = {
-    #   type = "git";
-    #   url = "https://github.com/hyprwm/Hyprland";
-    #   submodules = true;
-    #   rev = "918d8340afd652b011b937d29d5eea0be08467f5";
-    # };
-    # hyprland.inputs.nixpkgs.follows = "nixpkgs";
-    # hyprland-plugins.url = "github:hyprwm/hyprland-plugins/3ae670253a5a3ae1e3a3104fb732a8c990a31487";
-    # hyprland-plugins.inputs.hyprland.follows = "hyprland";
-    # hycov.url = "github:DreamMaoMao/hycov/de15cdd6bf2e46cbc69735307f340b57e2ce3dd0";
-    # hycov.inputs.hyprland.follows = "hyprland";
-    # hyprgrass.url = "github:horriblename/hyprgrass/736119f828eecaed2deaae1d6ff1f50d6dabaaba";
-    # hyprgrass.inputs.hyprland.follows = "hyprland";
+  #  hyprland = {
+  #     url = "github:hyprwm/Hyprland/main?submodules=true";
+  #     # url = "github:hyprwm/Hyprland/v0.47.2-b?submodules=true";
+  #     inputs.nixpkgs.follows = "nixpkgs";
+  #   };
+  #   hyprland-plugins = {
+  #     type = "git";
+  #     url = "https://code.hyprland.org/hyprwm/hyprland-plugins.git";
+  #     # rev = "4d7f0b5d8b952f31f7d2e29af22ab0a55ca5c219"; #v0.44.1
+  #     inputs.hyprland.follows = "hyprland";
+  #   };
+  #   hyprlock = {
+  #     type = "git";
+  #     url = "https://code.hyprland.org/hyprwm/hyprlock.git";
+  #     # rev = "73b0fc26c0e2f6f82f9d9f5b02e660a958902763";
+  #     inputs.nixpkgs.follows = "nixpkgs";
+  #   };
+  #   hyprgrass.url = "github:horriblename/hyprgrass/427690aec574fec75f5b7b800ac4a0b4c8e4b1d5";
+  #   hyprgrass.inputs.hyprland.follows = "hyprland";
 
     # nix-doom-emacs.url = "github:nix-community/nix-doom-emacs";
     # nix-doom-emacs.inputs.nixpkgs.follows = "emacs-pin-nixpkgs";

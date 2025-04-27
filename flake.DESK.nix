@@ -19,10 +19,9 @@
         amdLACTdriverEnable = true; # for enabling amdgpu lact driver
 
         kernelModules = [ 
-          "amdgpu" 
           "i2c-dev" 
           "i2c-piix4" 
-          "cpufreq_powersave" 
+          # "cpufreq_powersave" 
         ]; # kernel modules to load
         
         # Security
@@ -41,13 +40,26 @@
             options = [ "NOPASSWD" "SETENV" ];
           }
         ];
-        pkiCertificates = [ ];
+        pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
         # Polkit
         polkitEnable = true;
         polkitRules = ''
           polkit.addRule(function(action, subject) {
             if (
               subject.isInGroup("users") && (
+                // Allow reboot and power-off actions
+                action.id == "org.freedesktop.login1.reboot" ||
+                action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.power-off" ||
+                action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.suspend" ||
+                action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+
+                // Allow managing specific systemd units
+                (action.id == "org.freedesktop.systemd1.manage-units" &&
+                  action.lookup("verb") == "start" &&
+                  action.lookup("unit") == "mnt-NFS_Backups.mount") ||
+
                 // Allow running rsync and restic
                 (action.id == "org.freedesktop.policykit.exec" &&
                   (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
@@ -216,8 +228,8 @@
           pkgs.nfs-utils
           pkgs.restic
           pkgs.clinfo # for checking rocm (OpenCL)
+          pkgs.dialog # scripting GUI tool
           # pkgs.atuin
-          # pkgs.syncthing
           # pkgs.pciutils # install if you need some commands like lspci
 
           # pkgs-stable.vivaldi # requires patch to be imported + qt5.qtbase
@@ -323,6 +335,10 @@
           
           pkgs-unstable.bitwarden
           pkgs-unstable.moonlight-qt
+          # pkgs-unstable.teams # MS Teams (Not supported)
+          pkgs-unstable.discord
+          pkgs-unstable.kdePackages.kcalc
+          pkgs-unstable.kdePackages.korganizer
         ];
 
         tailscaleEnabled = false;
@@ -517,8 +533,8 @@
     # kdenlive-pin-nixpkgs.url = "nixpkgs/cfec6d9203a461d9d698d8a60ef003cac6d0da94";
     # nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
 
-    home-manager-unstable.url = "github:nix-community/home-manager/master";
-    home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs";
+    # home-manager-unstable.url = "github:nix-community/home-manager/master";
+    # home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs";
 
     home-manager-stable.url = "github:nix-community/home-manager/release-24.11";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
