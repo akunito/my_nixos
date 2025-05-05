@@ -56,6 +56,18 @@ case $hostname in
         sudo systemctl stop mnt-NFS_Media.mount
         sudo systemctl stop mnt-NFS_Backups.mount
         ;;
+    "nixosaku")
+        # Stop all external drives
+        echo -e "Stopping Containers..."
+        docker stop $(sudo docker ps -a -q)
+
+        echo -e "Unmount NFS drives..."
+        fusermount -u /home/akunito/Volumes/homelab_home
+        fusermount -u /home/akunito/Volumes/homelab_DATA_4TB
+        sudo systemctl stop mnt-NFS_media.mount
+        sudo systemctl stop mnt-NFS_library.mount
+        sudo systemctl stop mnt-NFS_emulators.mount
+        ;;
     "nixosLabaku")
         # Stop all external drives
         echo -e "Stopping Containers..."

@@ -124,54 +124,42 @@
           /mnt/example2  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
         # NFS client settings
-        nfsClientEnable = false;
+        nfsClientEnable = true;
         nfsMounts = [
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";
-            where = "/mnt/NFS_Books";
+            what = "192.168.20.200:/mnt/hddpool/media";
+            where = "/mnt/NFS_media";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/downloads";
-            where = "/mnt/NFS_downloads";
+            what = "192.168.20.200:/mnt/ssdpool/library";
+            where = "/mnt/NFS_library";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Media";
-            where = "/mnt/NFS_Media";
-            type = "nfs";
-            options = "noatime";
-          }
-          {
-            what = "192.168.8.80:/mnt/DATA_4TB/backups/akunitoLaptop";
-            where = "/mnt/NFS_Backups";
+            what = "192.168.20.200:/mnt/ssdpool/emulators";
+            where = "/mnt/NFS_emulators";
             type = "nfs";
             options = "noatime";
           }
         ];
         nfsAutoMounts = [
           {
-            where = "/mnt/NFS_Books";
+            where = "/mnt/NFS_media";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
           {
-            where = "/mnt/NFS_Movies";
+            where = "/mnt/NFS_library";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
           {
-            where = "/mnt/NFS_Media";
-            automountConfig = {
-              TimeoutIdleSec = "600";
-            };
-          }
-          {
-            where = "/mnt/NFS_Backups";
+            where = "/mnt/NFS_emulators";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
@@ -231,6 +219,7 @@
           pkgs.dialog # scripting GUI tool
           pkgs.gparted
           pkgs.lm_sensors
+          pkgs.sshfs
           
           # pkgs.atuin
           # pkgs.pciutils # install if you need some commands like lspci
@@ -240,6 +229,12 @@
 
           # pkgs.pcloud # requires patch to be imported
           pkgs-unstable.sunshine
+
+          # Overwrite the Wallpaper for SDDM
+          # (pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
+          #   [General]
+          #   background=${pkgs.kdePackages.plasma-workspace-wallpapers}/share/wallpapers/MilkyWay/contents/images/5120x2880.png
+          # '')
         ];
 
         vivaldiPatch = false; # for enabling vivaldi patch
