@@ -229,13 +229,16 @@
           pkgs.restic
           pkgs.clinfo # for checking rocm (OpenCL)
           pkgs.dialog # scripting GUI tool
+          pkgs.gparted
+          pkgs.lm_sensors
+          
           # pkgs.atuin
           # pkgs.pciutils # install if you need some commands like lspci
 
           # pkgs-stable.vivaldi # requires patch to be imported + qt5.qtbase
           # pkgs.qt5.qtbase
 
-          #pkgs.pcloud # requires patch to be imported
+          # pkgs.pcloud # requires patch to be imported
           pkgs-unstable.sunshine
         ];
 
