@@ -211,7 +211,6 @@
           pkgs.wpa_supplicant # for wifi
           pkgs.btop
           pkgs.fzf
-          pkgs.tldr
           pkgs.rsync
           pkgs.nfs-utils
           pkgs.restic
@@ -220,14 +219,7 @@
           pkgs.gparted
           pkgs.lm_sensors
           pkgs.sshfs
-          
-          # pkgs.atuin
           # pkgs.pciutils # install if you need some commands like lspci
-
-          # pkgs-stable.vivaldi # requires patch to be imported + qt5.qtbase
-          # pkgs.qt5.qtbase
-
-          # pkgs.pcloud # requires patch to be imported
           pkgs-unstable.sunshine
 
           # Overwrite the Wallpaper for SDDM
@@ -311,14 +303,11 @@
           pkgs.git
           pkgs.syncthing
 
-          # vivaldi # temporary moved to configuration.nix for issue with plasma 6
-          # qt5.qtbase
           pkgs-unstable.ungoogled-chromium
 
           pkgs-unstable.vscode
           pkgs-unstable.obsidian
           pkgs-unstable.spotify
-          # pkgs-unstable.xournalpp
           pkgs-unstable.vlc
           pkgs-unstable.candy-icons
           pkgs.calibre
@@ -328,18 +317,31 @@
 
           pkgs-unstable.qbittorrent
           pkgs-unstable.nextcloud-client
-          #pkgs-unstable.tailscale
           pkgs-unstable.wireguard-tools
           
           pkgs-unstable.bitwarden
           pkgs-unstable.moonlight-qt
-          # pkgs-unstable.teams # MS Teams (Not supported)
           pkgs-unstable.discord
           pkgs-unstable.kdePackages.kcalc
-          pkgs-unstable.kdePackages.korganizer
         ];
 
         tailscaleEnabled = false;
+
+        zshInitExtra = ''
+          PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
+          %F{green}→%f "
+          RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
+          [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
+        '';
+
+        sshExtraConfig = ''
+          # sshd.nix -> programs.ssh.extraConfig
+          Host github.com
+            HostName github.com
+            User akunito
+            IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
+            AddKeysToAgent yes
+        '';
 
         homeStateVersion = "24.11";
 

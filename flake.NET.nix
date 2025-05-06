@@ -164,6 +164,22 @@
         ];
         tailscaleEnabled = false;
         
+        zshInitExtra = ''
+          PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
+          %F{green}→%f "
+          RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
+          [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
+        '';
+
+        sshExtraConfig = ''
+          # sshd.nix -> programs.ssh.extraConfig
+          Host github.com
+            HostName github.com
+            User akunito
+            IdentityFile ~/.ssh/ed25519_github # Generate this key for github if needed
+            AddKeysToAgent yes
+        '';
+
         homeStateVersion = "24.11";
 
         editor = "nano"; # Default editor;

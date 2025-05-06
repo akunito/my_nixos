@@ -16,14 +16,7 @@
   };
 
   # /etc/ssh/ssh_config 
-  programs.ssh.extraConfig = ''
-    # sshd.nix -> programs.ssh.extraConfig
-    Host github.com
-      HostName github.com
-      User akunito
-      IdentityFile ~/.ssh/ed25519_github # Generate this key for github if needed
-      AddKeysToAgent yes
-  '';
+  programs.ssh.extraConfig = userSettings.sshExtraConfig;
   
   # Permissions should be like
   # chmod 755 /etc/ssh/authorized_keys.d
