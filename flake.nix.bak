@@ -339,7 +339,7 @@
           Host github.com
             HostName github.com
             User akunito
-            IdentityFile ~/.ssh/ed25519_github # Generate this key for github if needed
+            IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
             AddKeysToAgent yes
         '';
 

@@ -199,6 +199,15 @@
         powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
         power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
 
+        background-package = pkgs.stdenvNoCC.mkDerivation {
+          name = "background-image";
+          src = ./assets/wallpapers;
+          dontUnpack = true;
+          installPhase = ''
+            cp $src/lock8.png $out
+          '';
+        };
+
         # System packages
         systemPackages = [
           pkgs.vim
@@ -223,10 +232,12 @@
           pkgs-unstable.sunshine
 
           # Overwrite the Wallpaper for SDDM
-          # (pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
-          #   [General]
-          #   background=${pkgs.kdePackages.plasma-workspace-wallpapers}/share/wallpapers/MilkyWay/contents/images/5120x2880.png
-          # '')
+          (
+            pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
+              [General]
+              background = ${systemSettings.background-package}
+            ''
+          )
         ];
 
         vivaldiPatch = false; # for enabling vivaldi patch
