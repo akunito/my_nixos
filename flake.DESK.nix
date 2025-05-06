@@ -341,11 +341,16 @@
         tailscaleEnabled = false;
 
         zshInitExtra = ''
-          PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
+          PROMPT=" ◉ %U%F{green}%n%f%u@%U%F{cyan}%m%f%u:%F{yellow}%~%f
           %F{green}→%f "
           RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
           [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
         '';
+          # %F{color}: Sets the foreground color (e.g., cyan, yellow, green, blue).
+          # %n: Displays the username.
+          # %m: Displays the hostname.
+          # %~: Displays the current directory.
+          # %f: Resets the color to default.
 
         sshExtraConfig = ''
           # sshd.nix -> programs.ssh.extraConfig

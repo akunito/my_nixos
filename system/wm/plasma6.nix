@@ -26,4 +26,5 @@
   # # You can disable this if you're only using the Wayland session.
   # services.xserver.enable = true;
   # services.xserver.displayManager.sddm.enable = true;
+
 }

@@ -235,7 +235,7 @@
           (
             pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
               [General]
-              background = ${background-package}
+              background = ${systemSettings.background-package}
             ''
           )
         ];
