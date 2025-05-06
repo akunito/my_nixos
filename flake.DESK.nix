@@ -54,6 +54,8 @@
                 action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
                 action.id == "org.freedesktop.login1.suspend" ||
                 action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.logout" ||
+                action.id == "org.freedesktop.login1.logout-multiple-sessions" ||
 
                 // Allow managing specific systemd units
                 (action.id == "org.freedesktop.systemd1.manage-units" &&
