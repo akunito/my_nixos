@@ -201,6 +201,7 @@
         powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
         power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
 
+        # Source a background image to use by SDDM
         background-package = pkgs.stdenvNoCC.mkDerivation {
           name = "background-image";
           src = ./assets/wallpapers;
@@ -231,6 +232,8 @@
           pkgs.lm_sensors
           pkgs.sshfs
           # pkgs.pciutils # install if you need some commands like lspci
+          
+          pkgs.qt5.qtbase
           pkgs-unstable.sunshine
 
           # Overwrite the Wallpaper for SDDM
