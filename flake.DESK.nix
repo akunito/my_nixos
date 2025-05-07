@@ -315,6 +315,7 @@
           pkgs.kitty
           pkgs.git
           pkgs.syncthing
+          pkgs-unstable.mission-center
 
           pkgs-unstable.ungoogled-chromium
 
