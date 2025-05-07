@@ -11,9 +11,9 @@
     rocmPackages.clr.icd
   ];
 
-  hardware.graphics.extraPackages32 = with pkgs; [
-    driversi686Linux.amdvlk
-  ];
+  # hardware.graphics.extraPackages32 = with pkgs; [
+  #   driversi686Linux.amdvlk
+  # ];
 
   # LACT - Linux AMDGPU Controller #AMDGPU
   environment.systemPackages = with pkgs; lib.mkIf (systemSettings.amdLACTdriverEnable == true) [ lact ];
