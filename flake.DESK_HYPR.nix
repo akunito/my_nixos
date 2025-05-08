@@ -292,7 +292,7 @@
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
-        theme = "io"; # selcted theme from my themes directory (./themes/)
+        theme = "miramare"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
@@ -328,6 +328,7 @@
           pkgs-unstable.vlc
           pkgs-unstable.candy-icons
           pkgs.calibre
+          pkgs.kdePackages.dolphin
           
           pkgs-unstable.libreoffice
           pkgs-unstable.telegram-desktop

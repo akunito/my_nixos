@@ -42,6 +42,7 @@ in
       env = QT_WAYLAND_DISABLE_WINDOWDECORATION,1
       env = CLUTTER_BACKEND,wayland
       env = GDK_PIXBUF_MODULE_FILE,${pkgs.librsvg}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
+      env = GDK_SCALE,1.2 # toolkit-specific scale
 
       exec-once = hyprprofile Default
 
@@ -96,6 +97,8 @@ in
          inactive_timeout = 30
        }
 
+       $mainMod = SUPERCTRLALT
+
        bind=SUPER,code:9,exec,nwggrid-wrapper
        bind=SUPER,code:66,exec,nwggrid-wrapper
        bind=SUPER,SPACE,fullscreen,1
@@ -138,9 +141,11 @@ in
        bind=SUPERSHIFT,X,exec,fnottctl dismiss all
        bind=SUPER,Q,killactive
        bind=SUPERSHIFT,Q,exit
-       bindm=SUPER,mouse:272,movewindow
-       bindm=SUPER,mouse:273,resizewindow
-       bind=SUPER,T,togglefloating
+       bindm=ALT,mouse:272,movewindow
+       bindm=ALT,mouse:273,resizewindow
+       bind=$mainModSHIFT,T,togglefloating
+       bind=$mainModSHIFT,G,togglefloating
+       bind=$mainModSHIFT,G,pin
        bind=SUPER,G,exec,hyprctl dispatch focusworkspaceoncurrentmonitor 9 && pegasus-fe;
        bind=,code:148,exec,''+ userSettings.term + " "+''-e numbat
 
@@ -178,33 +183,47 @@ in
        bind=SUPERSHIFT,K,movewindow,u
        bind=SUPERSHIFT,L,movewindow,r
 
-       bind=SUPER,1,focusworkspaceoncurrentmonitor,1
-       bind=SUPER,2,focusworkspaceoncurrentmonitor,2
-       bind=SUPER,3,focusworkspaceoncurrentmonitor,3
-       bind=SUPER,4,focusworkspaceoncurrentmonitor,4
-       bind=SUPER,5,focusworkspaceoncurrentmonitor,5
-       bind=SUPER,6,focusworkspaceoncurrentmonitor,6
-       bind=SUPER,7,focusworkspaceoncurrentmonitor,7
-       bind=SUPER,8,focusworkspaceoncurrentmonitor,8
-       bind=SUPER,9,focusworkspaceoncurrentmonitor,9
+       bind=$mainMod,1,focusworkspaceoncurrentmonitor,1
+       bind=$mainMod,2,focusworkspaceoncurrentmonitor,2
+       bind=$mainMod,3,focusworkspaceoncurrentmonitor,3
+       bind=$mainMod,4,focusworkspaceoncurrentmonitor,4
+       bind=$mainMod,5,focusworkspaceoncurrentmonitor,5
+       bind=$mainMod,6,focusworkspaceoncurrentmonitor,6
+       bind=$mainMod,7,focusworkspaceoncurrentmonitor,7
+       bind=$mainMod,8,focusworkspaceoncurrentmonitor,8
+       bind=$mainMod,9,focusworkspaceoncurrentmonitor,9
+       bind=$mainMod,0,focusworkspaceoncurrentmonitor,10
+       bind=$mainMod,Q,focusworkspaceoncurrentmonitor,m-1
+       bind=$mainMod,W,focusworkspaceoncurrentmonitor,m+1
 
        bind=SUPERCTRL,right,exec,hyprnome
        bind=SUPERCTRL,left,exec,hyprnome --previous
        bind=SUPERSHIFT,right,exec,hyprnome --move
        bind=SUPERSHIFT,left,exec,hyprnome --previous --move
 
-       bind=SUPERSHIFT,1,movetoworkspace,1
-       bind=SUPERSHIFT,2,movetoworkspace,2
-       bind=SUPERSHIFT,3,movetoworkspace,3
-       bind=SUPERSHIFT,4,movetoworkspace,4
-       bind=SUPERSHIFT,5,movetoworkspace,5
-       bind=SUPERSHIFT,6,movetoworkspace,6
-       bind=SUPERSHIFT,7,movetoworkspace,7
-       bind=SUPERSHIFT,8,movetoworkspace,8
-       bind=SUPERSHIFT,9,movetoworkspace,9
+       bind=$mainMod SHIFT,1,movetoworkspace,1
+       bind=$mainMod SHIFT,2,movetoworkspace,2
+       bind=$mainMod SHIFT,3,movetoworkspace,3
+       bind=$mainMod SHIFT,4,movetoworkspace,4
+       bind=$mainMod SHIFT,5,movetoworkspace,5
+       bind=$mainMod SHIFT,6,movetoworkspace,6
+       bind=$mainMod SHIFT,7,movetoworkspace,7
+       bind=$mainMod SHIFT,8,movetoworkspace,8
+       bind=$mainMod SHIFT,9,movetoworkspace,9
+       bind=$mainMod SHIFT,0,movetoworkspace,10
+       bind=$mainMod SHIFT,Q,movetoworkspace,m-1
+       bind=$mainMod SHIFT,W,movetoworkspace,m+1
 
-       bind=SUPER,Z,exec,if hyprctl clients | grep scratch_term; then echo "scratch_term respawn not needed"; else alacritty --class scratch_term; fi
-       bind=SUPER,Z,togglespecialworkspace,scratch_term
+       bind=$mainMod,T,exec,if hyprctl clients | grep scratch_term; then echo "scratch_term respawn not needed"; else kitty --class scratch_term; fi
+       bind=$mainMod,T,togglespecialworkspace,scratch_term
+       bind=$mainMod,L,exec,if hyprctl clients | grep scratch_telegram; then echo "scratch_telegram respawn not needed"; else .telegram-desktop-wrapped --class scratch_telegram; fi
+       bind=$mainMod,L,togglespecialworkspace,scratch_telegram
+       bind=$mainMod,Y,exec,if hyprctl clients | grep scratch_spotify; then echo "scratch_spotify respawn not needed"; else spotify --class scratch_spotify; fi
+       bind=$mainMod,Y,togglespecialworkspace,scratch_spotify
+       
+       bind=$mainMod,G,exec,if hyprctl clients | grep Chromium-browser; then hyprctl dispatch focuswindow class:Chromium-browser; else chromium; fi
+       bind=$mainMod,E,exec,if hyprctl clients | grep "class: org.kde.dolphin"; then hyprctl dispatch focuswindow class:org.kde.dolphin; else dolphin; fi
+      
        bind=SUPER,F,exec,if hyprctl clients | grep scratch_ranger; then echo "scratch_ranger respawn not needed"; else kitty --class scratch_ranger -e ranger; fi
        bind=SUPER,F,togglespecialworkspace,scratch_ranger
        bind=SUPER,N,exec,if hyprctl clients | grep scratch_numbat; then echo "scratch_ranger respawn not needed"; else alacritty --class scratch_numbat -e numbat; fi
@@ -225,6 +244,18 @@ in
        windowrulev2 = $scratchpadsize,$scratch_term
        windowrulev2 = workspace special:scratch_term ,$scratch_term
        windowrulev2 = center,$scratch_term
+
+       $scratch_telegram = class:^(scratch.telegram)$
+       windowrulev2 = float,$scratch_telegram
+       windowrulev2 = $scratchpadsize,$scratch_telegram
+       windowrulev2 = workspace special:scratch_telegram ,$scratch_telegram
+       windowrulev2 = center,$scratch_telegram
+       
+       $scratch_spotify = class:^(scratch_spotify)$
+       windowrulev2 = float,$scratch_spotify
+       windowrulev2 = $scratchpadsize,$scratch_spotify
+       windowrulev2 = workspace special:scratch_spotify ,$scratch_spotify
+       windowrulev2 = center,$scratch_spotify
 
        $float_term = class:^(float_term)$
        windowrulev2 = float,$float_term
@@ -328,6 +359,8 @@ in
 
        # 3 monitor setup
        monitor = , 1920x1080@60, auto, 1
+       monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000, 3840x2160@120, 0x0, 1.5
+       monitor=desc:NSL RGB-27QHDS, 2560x1440@144, 2550x-0, 1.066667, transform, 3
        monitor=desc:Red Hat Inc. QEMU Monitor,1920x1080@60,0x0,1 # QEMU 1
        monitor=Virtual-2,1920x1080@60,1920x0,1 # QEMU 2
        #monitor=eDP-1,1920x1080@120,900x1080,1
@@ -341,6 +374,20 @@ in
        # hdmi work projector
        #monitor=eDP-1,1920x1080,1920x0,1
        #monitor=HDMI-A-1,1920x1200,0x0,1
+
+       # Workspaces binding
+       workspace =  1, default:true,  persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  2,                persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  3,                persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  4,                persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  5,                persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  6,                persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  7,                persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  8,                persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  9,                persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  10,               persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
+       workspace =  11, default:true, persistent:true, monitor=desc:NSL RGB-27QHDS
+       workspace =  12,               persistent:true, monitor=desc:NSL RGB-27QHDS
 
        xwayland {
          force_zero_scaling = true
@@ -660,7 +707,7 @@ in
 
     label {
       monitor =
-      text = Hello, Emmet
+      text = Hello, Aku
       color = rgb(''+config.lib.stylix.colors.base07-rgb-r+'',''+config.lib.stylix.colors.base07-rgb-g+'', ''+config.lib.stylix.colors.base07-rgb-b+'')
       font_size = 25
       font_family = ''+userSettings.font+''
@@ -812,7 +859,7 @@ in
         "clock#time" = {
           "interval" = 1;
           "format" = "{:%I:%M:%S %p}";
-          "timezone" = "America/Chicago";
+          "timezone" = "Europe/Warsaw";
           "tooltip-format" = ''
             <big>{:%Y %B}</big>
             <tt><small>{calendar}</small></tt>'';
@@ -820,7 +867,7 @@ in
         "clock#date" = {
           "interval" = 1;
           "format" = "{:%a %Y-%m-%d}";
-          "timezone" = "America/Chicago";
+          "timezone" = "Europe/Warsaw";
           "tooltip-format" = ''
             <big>{:%Y %B}</big>
             <tt><small>{calendar}</small></tt>'';

@@ -328,6 +328,7 @@
           pkgs-unstable.vlc
           pkgs-unstable.candy-icons
           pkgs.calibre
+          pkgs.kdePackages.dolphin
           
           pkgs-unstable.libreoffice
           pkgs-unstable.telegram-desktop
