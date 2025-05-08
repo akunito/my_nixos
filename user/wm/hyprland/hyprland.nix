@@ -42,7 +42,15 @@ in
       env = QT_WAYLAND_DISABLE_WINDOWDECORATION,1
       env = CLUTTER_BACKEND,wayland
       env = GDK_PIXBUF_MODULE_FILE,${pkgs.librsvg}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
-      env = GDK_SCALE,1.2 # toolkit-specific scale
+      
+       xwayland {
+         force_zero_scaling = true
+       }
+       
+       # toolkit-specific scale
+      env = GDK_SCALE,1
+      env = XCURSOR_SIZE,28
+      env = GDK_DPI_SCALE,1.7
 
       exec-once = hyprprofile Default
 
@@ -218,12 +226,28 @@ in
        bind=$mainMod,T,togglespecialworkspace,scratch_term
        bind=$mainMod,L,exec,if hyprctl clients | grep scratch_telegram; then echo "scratch_telegram respawn not needed"; else .telegram-desktop-wrapped --class scratch_telegram; fi
        bind=$mainMod,L,togglespecialworkspace,scratch_telegram
-       bind=$mainMod,Y,exec,if hyprctl clients | grep scratch_spotify; then echo "scratch_spotify respawn not needed"; else spotify --class scratch_spotify; fi
+       bind=$mainMod,Y,exec,if hyprctl clients | grep scratch_spotify; then echo "scratch_spotify respawn not needed"; else spotify --class scratch_spotify --enable-features=UseOzonePlatform --ozone-platform=wayland; fi
        bind=$mainMod,Y,togglespecialworkspace,scratch_spotify
        
-       bind=$mainMod,G,exec,if hyprctl clients | grep Chromium-browser; then hyprctl dispatch focuswindow class:Chromium-browser; else chromium; fi
+       bind=$mainMod,G,exec,if hyprctl clients | grep "class: chromium-browser"; then hyprctl dispatch focuswindow class:chromium-browser; else chromium; fi
        bind=$mainMod,E,exec,if hyprctl clients | grep "class: org.kde.dolphin"; then hyprctl dispatch focuswindow class:org.kde.dolphin; else dolphin; fi
-      
+      #  bind=$mainMod,V,exec,if hyprctl clients | grep "class: Vivaldi-flatpak"; then hyprctl dispatch focuswindow class:Vivaldi-flatpak; else com.vivaldi.Vivaldi; fi
+       bind=$mainMod,V,exec,if hyprctl clients | grep "class: Vivaldi-nixos"; then hyprctl dispatch focuswindow class:Vivaldi-nixos; else vivaldi; fi
+       bind=$mainMod,C,exec,if hyprctl clients | grep "class: code"; then hyprctl dispatch focuswindow class:code; else code --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch %F; fi
+       bind=$mainMod,D,exec,if hyprctl clients | grep "class: obsidian"; then hyprctl dispatch focuswindow class:obsidian; else obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations %U; fi
+      #  bind=$mainMod,M,exec,if hyprctl clients | grep "class: io.missioncenter.MissionCenter"; then hyprctl dispatch focuswindow class:io.missioncenter.MissionCenter; else missioncenter; fi
+       
+      #  bind=$mainMod,M,exec,if hyprctl clients | grep "class: io.missioncenter.MissionCenter";
+      #  then hyprctl dispatch focuswindow class:io.missioncenter.MissionCenter; else missioncenter; fi
+
+      #  bind = $mainMod,exec,if 
+       bind = $mainMod, S, togglespecialworkspace, magic
+       bind = $mainMod, S, movetoworkspace, +0
+       bind = $mainMod, S, togglespecialworkspace, magic
+       bind = $mainMod, S, movetoworkspace, special:magic
+       bind = $mainMod, S, togglespecialworkspace, magic
+       bind=$mainMod,Z,movetoworkspacesilent, +30
+
        bind=SUPER,F,exec,if hyprctl clients | grep scratch_ranger; then echo "scratch_ranger respawn not needed"; else kitty --class scratch_ranger -e ranger; fi
        bind=SUPER,F,togglespecialworkspace,scratch_ranger
        bind=SUPER,N,exec,if hyprctl clients | grep scratch_numbat; then echo "scratch_ranger respawn not needed"; else alacritty --class scratch_numbat -e numbat; fi
@@ -388,10 +412,6 @@ in
        workspace =  10,               persistent:true, monitor=desc:Samsung Electric Company Odyssey G70NC H1AK500000
        workspace =  11, default:true, persistent:true, monitor=desc:NSL RGB-27QHDS
        workspace =  12,               persistent:true, monitor=desc:NSL RGB-27QHDS
-
-       xwayland {
-         force_zero_scaling = true
-       }
 
        binds {
          movefocus_cycles_fullscreen = false

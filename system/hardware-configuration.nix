@@ -21,18 +21,18 @@
 
   boot.initrd.luks.devices."luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c".device = "/dev/disk/by-uuid/9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
 
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/7620-B197";
+      fsType = "vfat";
+      options = [ "fmask=0077" "dmask=0077" ];
+    };
+
   fileSystems."/home" =
     { device = "/dev/disk/by-uuid/45580fe3-dda1-40ab-a972-543f1654f09f";
       fsType = "btrfs";
     };
 
   boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
-
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/7620-B197";
-      fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
-    };
 
   swapDevices =
     [ { device = "/dev/disk/by-uuid/ffa522b1-04ad-4280-a332-c229cb58fed5"; }
