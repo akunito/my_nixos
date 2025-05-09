@@ -18,6 +18,8 @@
 
         amdLACTdriverEnable = true; # for enabling amdgpu lact driver
 
+        kernelPackages = pkgs.linuxPackages_latest; # linuxPackages_xanmod_latest; # kernel packages to use
+        
         kernelModules = [ 
           "i2c-dev" 
           "i2c-piix4" 
@@ -105,11 +107,9 @@
         firewall = true;
         allowedTCPPorts = [ 
           # 47984 47989 47990 48010 # sunshine
-          80 443
         ];
         allowedUDPPorts = [ 
           # 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 51820 # sunshine
-          53
         ];
 
         # LUKS drives

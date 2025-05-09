@@ -17,6 +17,8 @@
         gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
         amdLACTdriverEnable = false; # for enabling amdgpu lact driver
 
+        kernelPackages = pkgs.linuxPackages_latest; # linuxPackages_xanmod_latest; # kernel packages to use
+        
         kernelModules = [ 
           "i2c-dev" 
           "i2c-piix4" 

@@ -1,6 +1,6 @@
-{ config, pkgs, ... }:
+{ config, pkgs, systemSettings, ... }:
 
 {
-  boot.kernelPackages = pkgs.linuxPackages_latest; # linuxPackages_xanmod_latest;
+  boot.kernelPackages = systemSettings.kernelPackages;
   boot.consoleLogLevel = 0;
 }

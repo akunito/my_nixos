@@ -18,6 +18,8 @@
 
         amdLACTdriverEnable = true; # for enabling amdgpu lact driver
 
+        kernelPackages = pkgs.linuxPackages_latest; # linuxPackages_xanmod_latest; # kernel packages to use
+        
         kernelModules = [ 
           "i2c-dev" 
           "i2c-piix4" 
