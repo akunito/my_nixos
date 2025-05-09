@@ -5,7 +5,7 @@
   imports = [ ../../app/terminal/alacritty.nix
               ../../app/terminal/kitty.nix
             ]
-    ++ lib.optional userSettings.wmEnableHyprland (./. + "/../hyprland/hyprland.nix");
+    ++ lib.optional userSettings.wmEnableHyprland (./. + "/../hyprland/hyprland_noStylix.nix");
 
   home.packages = with pkgs; [
     flameshot
