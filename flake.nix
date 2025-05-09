@@ -224,7 +224,7 @@
           pkgs.wpa_supplicant # for wifi
           pkgs.traceroute # for test
           pkgs.iproute2 # for test
-          pkgs.bindutils # for dig command
+          pkgs.dnsutils # for dig command
           pkgs.btop
           pkgs.fzf
           pkgs.rsync
