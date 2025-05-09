@@ -99,6 +99,7 @@
         defaultGateway = null; # default gateway
         nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = true; # for enabling wifi power save for laptops
+        resolvedEnable = false; # for enabling systemd-resolved
 
         # Firewall
         firewall = true;
@@ -221,6 +222,9 @@
           pkgs.cryptsetup
           pkgs.home-manager
           pkgs.wpa_supplicant # for wifi
+          pkgs.traceroute # for test
+          pkgs.iproute2 # for test
+          pkgs.bindutils # for dig command
           pkgs.btop
           pkgs.fzf
           pkgs.rsync

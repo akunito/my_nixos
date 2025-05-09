@@ -94,13 +94,14 @@
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = systemSettings.networkManager; # Use networkmanager
-  networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
-  networking.defaultGateway = lib.mkIf (systemSettings.defaultGateway != null) systemSettings.defaultGateway; # Define your default gateway
-  networking.nameservers = systemSettings.nameServers; # Define your DNS servers
+  networking.networkmanager.dns = "default"; # DNS
+  # networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
+  # networking.defaultGateway = lib.mkIf (systemSettings.defaultGateway != null) systemSettings.defaultGateway; # Define your default gateway
+  # networking.nameservers = systemSettings.nameServers; # Define your DNS servers
   # Wireguard
   networking.wireguard.enable = systemSettings.wireguardEnable;
   # DNS resolved ?
-  services.resolved.enable = true;
+  services.resolved.enable = systemSettings.resolvedEnable; 
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone

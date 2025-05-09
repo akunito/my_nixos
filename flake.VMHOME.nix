@@ -82,6 +82,8 @@
         nameServers = [ "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = false; # for enabling wifi power save for laptops
 
+        resolvedEnable = true; # for enabling systemd-resolved
+
         # Firewall
         firewall = true;
         allowedTCPPorts = [ 
