@@ -14,9 +14,9 @@
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
-        gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
+        gpuType = "intel"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
 
-        amdLACTdriverEnable = true; # for enabling amdgpu lact driver
+        amdLACTdriverEnable = false; # for enabling amdgpu lact driver
 
         kernelPackages = pkgs.linuxPackages_latest; # linuxPackages_xanmod_latest; # kernel packages to use
         

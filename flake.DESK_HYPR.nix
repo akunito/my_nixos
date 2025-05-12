@@ -228,6 +228,7 @@
           pkgs.iproute2 # for test
           pkgs.dnsutils # for dig command
           pkgs.btop
+          pkgs.btop-rocm # for rocm AMD GPU
           pkgs.fzf
           pkgs.rsync
           pkgs.nfs-utils
@@ -241,6 +242,8 @@
           
           pkgs.qt5.qtbase
           pkgs-unstable.sunshine
+
+          pkgs-unstable.lmstudio
 
           # Overwrite the Wallpaper for SDDM
           (
