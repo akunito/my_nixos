@@ -1,5 +1,5 @@
 {
-  description = "Flake for my VM Desktop";
+  description = "Flake for my laptop";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,7 +7,7 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosdesk"; # hostname
+        hostname = "nixolaptopaku"; # hostname
         profile = "personal"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
@@ -15,14 +15,15 @@
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
-        amdLACTdriverEnable = false; # for enabling amdgpu lact driver
+
+        amdLACTdriverEnable = true; # for enabling amdgpu lact driver
 
         kernelPackages = pkgs.linuxPackages_latest; # linuxPackages_xanmod_latest; # kernel packages to use
         
         kernelModules = [ 
           "i2c-dev" 
           "i2c-piix4" 
-          "cpufreq_powersave" 
+          # "cpufreq_powersave" 
         ]; # kernel modules to load
         
         # Security
@@ -48,6 +49,21 @@
           polkit.addRule(function(action, subject) {
             if (
               subject.isInGroup("users") && (
+                // Allow reboot and power-off actions
+                action.id == "org.freedesktop.login1.reboot" ||
+                action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.power-off" ||
+                action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.suspend" ||
+                action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.logout" ||
+                action.id == "org.freedesktop.login1.logout-multiple-sessions" ||
+
+                // Allow managing specific systemd units
+                (action.id == "org.freedesktop.systemd1.manage-units" &&
+                  action.lookup("verb") == "start" &&
+                  action.lookup("unit") == "mnt-NFS_Backups.mount") ||
+
                 // Allow running rsync and restic
                 (action.id == "org.freedesktop.policykit.exec" &&
                   (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
@@ -80,20 +96,21 @@
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.8.96"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.8.98"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
         nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = true; # for enabling wifi power save for laptops
-
-        resolvedEnable = true; # for enabling systemd-resolved
+        resolvedEnable = false; # for enabling systemd-resolved
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ 47984 47989 47990 48010 ];
-          # sunshine 47984 47989 47990 48010
-        allowedUDPPorts = [ 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 51820 ];
-          # sunshine 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010
+        allowedTCPPorts = [ 
+          # 47984 47989 47990 48010 # sunshine
+        ];
+        allowedUDPPorts = [ 
+          # 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 51820 # sunshine
+        ];
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
@@ -112,54 +129,42 @@
           /mnt/example2  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
         # NFS client settings
-        nfsClientEnable = false;
+        nfsClientEnable = true;
         nfsMounts = [
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";
-            where = "/mnt/NFS_Books";
+            what = "192.168.20.200:/mnt/hddpool/media";
+            where = "/mnt/NFS_media";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/downloads";
-            where = "/mnt/NFS_downloads";
+            what = "192.168.20.200:/mnt/ssdpool/library";
+            where = "/mnt/NFS_library";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Media";
-            where = "/mnt/NFS_Media";
-            type = "nfs";
-            options = "noatime";
-          }
-          {
-            what = "192.168.8.80:/mnt/DATA_4TB/backups/akunitoLaptop";
-            where = "/mnt/NFS_Backups";
+            what = "192.168.20.200:/mnt/ssdpool/emulators";
+            where = "/mnt/NFS_emulators";
             type = "nfs";
             options = "noatime";
           }
         ];
         nfsAutoMounts = [
           {
-            where = "/mnt/NFS_Books";
+            where = "/mnt/NFS_media";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
           {
-            where = "/mnt/NFS_Movies";
+            where = "/mnt/NFS_library";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
           {
-            where = "/mnt/NFS_Media";
-            automountConfig = {
-              TimeoutIdleSec = "600";
-            };
-          }
-          {
-            where = "/mnt/NFS_Backups";
+            where = "/mnt/NFS_emulators";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
@@ -171,6 +176,7 @@
           "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" 
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com"
         ];
+
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
         
         # Printer
@@ -195,8 +201,18 @@
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
         powerKey = "ignore";  # when pressing power key, do one of above
         # More Power settings
-        powerManagement_ENABLE = false; # Enable power management profiles for desktop systems <<<
-        power-profiles-daemon_ENABLE = false; # Enable power management profiles for desktop systems <<<
+        powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
+        power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
+
+        # Source a background image to use by SDDM
+        background-package = pkgs.stdenvNoCC.mkDerivation {
+          name = "background-image";
+          src = ./assets/wallpapers;
+          dontUnpack = true;
+          installPhase = ''
+            cp $src/lock8.png $out
+          '';
+        };
 
         # System packages
         systemPackages = [
@@ -208,21 +224,31 @@
           pkgs.cryptsetup
           pkgs.home-manager
           pkgs.wpa_supplicant # for wifi
+          pkgs.traceroute # for test
+          pkgs.iproute2 # for test
+          pkgs.dnsutils # for dig command
           pkgs.btop
           pkgs.fzf
-          pkgs.tldr
           pkgs.rsync
           pkgs.nfs-utils
           pkgs.restic
-          # pkgs.atuin
-          # pkgs.syncthing
+          pkgs.clinfo # for checking rocm (OpenCL)
+          pkgs.dialog # scripting GUI tool
+          pkgs.gparted
+          pkgs.lm_sensors
+          pkgs.sshfs
           # pkgs.pciutils # install if you need some commands like lspci
-
-          # pkgs.vivaldi # requires patch to be imported + qt5.qtbase
+          
           pkgs.qt5.qtbase
-
-          #pkgs.pcloud # requires patch to be imported
           pkgs-unstable.sunshine
+
+          # Overwrite the Wallpaper for SDDM
+          (
+            pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
+              [General]
+              background = ${systemSettings.background-package}
+            ''
+          )
         ];
 
         vivaldiPatch = false; # for enabling vivaldi patch
@@ -268,19 +294,19 @@
       userSettings = rec {
         username = "akunito"; # username
         name = "akunito"; # name/identifier
-        email = ""; # email (used for certain configurations)
+        email = "diego88aku@gmail.com"; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
-        theme = "io"; # selcted theme from my themes directory (./themes/)
+        theme = "miramare"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
-        wmEnableHyprland = false; 
+        wmEnableHyprland = true; 
 
         dockerEnable = false; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization
-        qemuGuestAddition = true; # If the system is a QEMU VM
+        qemuGuestAddition = false; # If the system is a QEMU VM
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email
@@ -298,43 +324,52 @@
           pkgs.kitty
           pkgs.git
           pkgs.syncthing
+          pkgs-unstable.mission-center
 
-          # vivaldi # temporary moved to configuration.nix for issue with plasma 6
-          # qt5.qtbase
           pkgs-unstable.ungoogled-chromium
 
           pkgs-unstable.vscode
           pkgs-unstable.obsidian
           pkgs-unstable.spotify
-          # pkgs-unstable.xournalpp
           pkgs-unstable.vlc
           pkgs-unstable.candy-icons
           pkgs.calibre
+          pkgs.kdePackages.dolphin
           
           pkgs-unstable.libreoffice
           pkgs-unstable.telegram-desktop
 
           pkgs-unstable.qbittorrent
           pkgs-unstable.nextcloud-client
-          #pkgs-unstable.tailscale
           pkgs-unstable.wireguard-tools
+          
+          pkgs-unstable.bitwarden
+          pkgs-unstable.moonlight-qt
+          pkgs-unstable.discord
+          pkgs-unstable.kdePackages.kcalc
+          pkgs-unstable.vivaldi
         ];
 
         tailscaleEnabled = false;
 
         zshInitExtra = ''
-          PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
+          PROMPT=" ◉ %U%F{cyan}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
           %F{green}→%f "
           RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
           [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
         '';
+          # %F{color}: Sets the foreground color (e.g., cyan, yellow, green, blue).
+          # %n: Displays the username.
+          # %m: Displays the hostname.
+          # %~: Displays the current directory.
+          # %f: Resets the color to default.
 
         sshExtraConfig = ''
           # sshd.nix -> programs.ssh.extraConfig
           Host github.com
             HostName github.com
             User akunito
-            IdentityFile ~/.ssh/ed25519_github # Generate this key for github if needed
+            IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
             AddKeysToAgent yes
         '';
 
@@ -466,7 +501,7 @@
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
             # inputs.lix-module.nixosModules.default
             ./system/bin/phoenix.nix
-            # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
+            # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-l14
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
@@ -615,7 +650,7 @@
     #   flake = false;
     # };
 
-    stylix.url = "github:danth/stylix";
+    # stylix.url = "github:danth/stylix";
 
     rust-overlay.url = "github:oxalica/rust-overlay";
 
