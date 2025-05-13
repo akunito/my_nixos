@@ -21,10 +21,11 @@ case $hostname in
         echo -e "Available commands:"
         while true; do
             echo -e "\n1) Mount homelab HOME via SSHFS"
-            echo -e "2) Mount homelab DATA_4TB via SSHFS"
-            echo -e "3) Start NFS media mount"
-            echo -e "4) Start NFS library mount"
-            echo -e "5) Start NFS emulators mount"
+            echo -e "2) Mount homelab DATA_4TB via SSHFS and backup home directory"
+            echo -e "3) Mount homelab HDD_4TB via SSHFS"
+            echo -e "4) Start NFS media mount"
+            echo -e "5) Start NFS library mount"
+            echo -e "6) Start NFS emulators mount"
             echo -e "S) STOP all running stop_external_drives.sh"
             echo -e "Q) QUIT menu and continue"
             
@@ -38,16 +39,23 @@ case $hostname in
                 2)
                     echo -e "Mounting homelab DATA_4TB via SSHFS..."
                     sshfs akunito@192.168.8.80:/mnt/DATA_4TB /home/akunito/Volumes/homelab_DATA_4TB
+
+                    echo -e "Backing up home directory to homelab DATA_4TB..."
+                    systemctl start home_backup.service
                     ;;
                 3)
+                    echo -e "Mounting homelab HDD_4TB via SSHFS..."
+                    sshfs akunito@192.168.8.80:/mnt/HDD_4TB /home/akunito/Volumes/homelab_HDD_4TB
+                    ;;
+                4)
                     echo -e "Starting NFS media mount..."
                     sudo systemctl start mnt-NFS_media.mount
                     ;;
-                4)
+                5)
                     echo -e "Starting NFS emulators mount..."
                     sudo systemctl start mnt-NFS_emulators.mount
                     ;;
-                5)
+                6)
                     echo -e "Starting NFS library mount..."
                     sudo systemctl start mnt-NFS_library.mount
                     ;;
