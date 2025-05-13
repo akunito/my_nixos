@@ -490,7 +490,7 @@
             inherit pkgs-stable;
             # inherit pkgs-emacs;
             # inherit pkgs-kdenlive;
-            inherit pkgs-nwg-dock-hyprland;
+            # inherit pkgs-nwg-dock-hyprland;
             inherit systemSettings;
             inherit userSettings;
             inherit inputs;
