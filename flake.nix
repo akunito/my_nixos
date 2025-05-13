@@ -445,9 +445,9 @@
       #   system = systemSettings.system;
       # };
 
-      pkgs-nwg-dock-hyprland = import inputs.nwg-dock-hyprland-pin-nixpkgs {
-        system = systemSettings.system;
-      };
+      # pkgs-nwg-dock-hyprland = import inputs.nwg-dock-hyprland-pin-nixpkgs {
+      #   system = systemSettings.system;
+      # };
 
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
@@ -490,7 +490,7 @@
             inherit pkgs-stable;
             # inherit pkgs-emacs;
             # inherit pkgs-kdenlive;
-            inherit pkgs-nwg-dock-hyprland;
+            # inherit pkgs-nwg-dock-hyprland;
             inherit systemSettings;
             inherit userSettings;
             inherit inputs;
@@ -561,7 +561,7 @@
     nixpkgs-stable.url = "nixpkgs/nixos-24.11";
     # emacs-pin-nixpkgs.url = "nixpkgs/f72123158996b8d4449de481897d855bc47c7bf6";
     # kdenlive-pin-nixpkgs.url = "nixpkgs/cfec6d9203a461d9d698d8a60ef003cac6d0da94";
-    nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
+    # nwg-dock-hyprland-pin-nixpkgs.url = "nixpkgs/2098d845d76f8a21ae4fe12ed7c7df49098d3f15";
 
     home-manager-unstable.url = "github:nix-community/home-manager/master";
     home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs";
@@ -582,20 +582,20 @@
       # url = "github:hyprwm/Hyprland/v0.47.2-b?submodules=true";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hyprland-plugins = {
-      type = "git";
-      url = "https://code.hyprland.org/hyprwm/hyprland-plugins.git";
-      # rev = "4d7f0b5d8b952f31f7d2e29af22ab0a55ca5c219"; #v0.44.1
-      inputs.hyprland.follows = "hyprland";
-    };
-    hyprlock = {
-      type = "git";
-      url = "https://code.hyprland.org/hyprwm/hyprlock.git";
-      # rev = "73b0fc26c0e2f6f82f9d9f5b02e660a958902763";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hyprgrass.url = "github:horriblename/hyprgrass/427690aec574fec75f5b7b800ac4a0b4c8e4b1d5";
-    hyprgrass.inputs.hyprland.follows = "hyprland";
+  #   hyprland-plugins = {
+  #     type = "git";
+  #     url = "https://code.hyprland.org/hyprwm/hyprland-plugins.git";
+  #     # rev = "4d7f0b5d8b952f31f7d2e29af22ab0a55ca5c219"; #v0.44.1
+  #     inputs.hyprland.follows = "hyprland";
+  #   };
+  #   hyprlock = {
+  #     type = "git";
+  #     url = "https://code.hyprland.org/hyprwm/hyprlock.git";
+  #     # rev = "73b0fc26c0e2f6f82f9d9f5b02e660a958902763";
+  #     inputs.nixpkgs.follows = "nixpkgs";
+  #   };
+  #   hyprgrass.url = "github:horriblename/hyprgrass/427690aec574fec75f5b7b800ac4a0b4c8e4b1d5";
+  #   hyprgrass.inputs.hyprland.follows = "hyprland";
 
     # nix-doom-emacs.url = "github:nix-community/nix-doom-emacs";
     # nix-doom-emacs.inputs.nixpkgs.follows = "emacs-pin-nixpkgs";

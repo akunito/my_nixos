@@ -1,5 +1,5 @@
 {
-  description = "Flake for my VM Desktop";
+  description = "Flake for my Desktop";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -79,18 +79,18 @@
         resticWrapper = true; # for enabling restic wrapper
         rsyncWrapper = true; # for enabling rsync wrapper
 
-        homeBackupEnable = false; # restic.nix
+        homeBackupEnable = true; # restic.nix
         homeBackupDescription = "Backup Home Directory with Restic";
-        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup.sh";
+        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup.sh";
         homeBackupUser = "akunito";
         homeBackupTimerDescription = "Timer for home_backup service";
-        homeBackupOnCalendar = "0/12:00:00"; # Every 12 hour
-        homeBackupCallNextEnabled = true; # for calling next service after backup
+        homeBackupOnCalendar = "0/6:00:00"; # Every 6 hour
+        homeBackupCallNextEnabled = false; # for calling next service after backup
         homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
 
         remoteBackupEnable = false; # restic.nix
         remoteBackupDescription = "Copy Restic Backup to Remote Server";
-        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup_remote.sh";
+        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup_remote.sh";
         remoteBackupUser = "akunito";
         remoteBackupTimerDescription = "Timer for remote_backup service";
 
@@ -101,8 +101,7 @@
         defaultGateway = null; # default gateway
         nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = true; # for enabling wifi power save for laptops
-
-        resolvedEnable = true; # for enabling systemd-resolved
+        resolvedEnable = false; # for enabling systemd-resolved
 
         # Firewall
         firewall = true;
@@ -225,7 +224,11 @@
           pkgs.cryptsetup
           pkgs.home-manager
           pkgs.wpa_supplicant # for wifi
+          pkgs.traceroute # for test
+          pkgs.iproute2 # for test
+          pkgs.dnsutils # for dig command
           pkgs.btop
+          pkgs.btop-rocm # for rocm AMD GPU
           pkgs.fzf
           pkgs.rsync
           pkgs.nfs-utils
@@ -239,6 +242,8 @@
           
           pkgs.qt5.qtbase
           pkgs-unstable.sunshine
+
+          pkgs-unstable.lmstudio
 
           # Overwrite the Wallpaper for SDDM
           (
@@ -260,7 +265,7 @@
 
         # Nerd font package
         fonts = [
-          pkgs.nerdfonts # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
+          pkgs.nerd-fonts.jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
           pkgs.powerline
         ];
 
@@ -296,11 +301,11 @@
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
-        theme = "io"; # selcted theme from my themes directory (./themes/)
+        theme = "miramare"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
         wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
-        wmEnableHyprland = false; 
+        wmEnableHyprland = true; 
 
         dockerEnable = false; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization
@@ -332,6 +337,7 @@
           pkgs-unstable.vlc
           pkgs-unstable.candy-icons
           pkgs.calibre
+          pkgs.kdePackages.dolphin
           
           pkgs-unstable.libreoffice
           pkgs-unstable.telegram-desktop
@@ -344,12 +350,13 @@
           pkgs-unstable.moonlight-qt
           pkgs-unstable.discord
           pkgs-unstable.kdePackages.kcalc
+          pkgs-unstable.vivaldi
         ];
 
         tailscaleEnabled = false;
 
         zshInitExtra = ''
-          PROMPT=" ◉ %U%F{green}%n%f%u@%U%F{cyan}%m%f%u:%F{yellow}%~%f
+          PROMPT=" ◉ %U%F{cyan}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
           %F{green}→%f "
           RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
           [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
@@ -400,19 +407,18 @@
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      # pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-      #         then
-      #           pkgs-stable
-      #         else
-      #           (import nixpkgs-patched {
-      #             system = systemSettings.system;
-      #             config = {
-      #               allowUnfree = true;
-      #               allowUnfreePredicate = (_: true);
-      #             };
-      #             # overlays = [ inputs.rust-overlay.overlays.default ];
-      #           }));
-      pkgs = pkgs-stable; # Overriding pkgs to force stable
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+              then
+                pkgs-stable
+              else
+                (import nixpkgs-patched {
+                  system = systemSettings.system;
+                  config = {
+                    allowUnfree = true;
+                    allowUnfreePredicate = (_: true);
+                  };
+                  overlays = [ inputs.rust-overlay.overlays.default ];
+                }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
         system = systemSettings.system;
@@ -428,7 +434,7 @@
           allowUnfree = true;
           allowUnfreePredicate = (_: true);
         };
-        # overlays = [ inputs.rust-overlay.overlays.default ];
+        overlays = [ inputs.rust-overlay.overlays.default ];
       };
 
       # pkgs-emacs = import inputs.emacs-pin-nixpkgs {
@@ -446,22 +452,20 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      # lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-      #        then
-      #          inputs.nixpkgs-stable.lib
-      #        else
-      #          inputs.nixpkgs.lib);
-    
-      lib = inputs.nixpkgs-stable.lib; # Overriding lib to force stable
+      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+             then
+               inputs.nixpkgs-stable.lib
+             else
+               inputs.nixpkgs.lib);
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      # home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-      #        then
-      #          inputs.home-manager-stable
-      #        else
-      #          inputs.home-manager-unstable);
-      home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
+      home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+             then
+               inputs.home-manager-stable
+             else
+               inputs.home-manager-unstable);
+      # home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
 
       # Systems that can run tests:
       supportedSystems = [ "aarch64-linux" "i686-linux" "x86_64-linux" ];
@@ -573,11 +577,11 @@
     #   inputs.home-manager.follows = "home-manager-unstable";
     # };
 
-  #  hyprland = {
-  #     url = "github:hyprwm/Hyprland/main?submodules=true";
-  #     # url = "github:hyprwm/Hyprland/v0.47.2-b?submodules=true";
-  #     inputs.nixpkgs.follows = "nixpkgs";
-  #   };
+   hyprland = {
+      url = "github:hyprwm/Hyprland/main?submodules=true";
+      # url = "github:hyprwm/Hyprland/v0.47.2-b?submodules=true";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   #   hyprland-plugins = {
   #     type = "git";
   #     url = "https://code.hyprland.org/hyprwm/hyprland-plugins.git";
@@ -651,7 +655,7 @@
 
     # stylix.url = "github:danth/stylix";
 
-    # rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.url = "github:oxalica/rust-overlay";
 
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";
