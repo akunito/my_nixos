@@ -13,7 +13,10 @@
       "fd86:ea04:1111::1/128"     # WG pfsense ipv6
       "172.26.3.155/16"           # WG server network
       "fd86:ea04:1111::155/64"    # WG server IPv6 network
-      "::1/128"                   # IPv6 localhost    ];
+      "::1/128"                   # IPv6 localhost    ]; 
+      "192.168.8.96/32"           # My desktop
+      "192.168.8.97/32"           # My desktop
+      "192.168.8.92/32"           # My laptop
     ];
     bantime = "24h";            # Ban duration
     bantime-increment = {

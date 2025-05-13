@@ -79,18 +79,18 @@
         resticWrapper = true; # for enabling restic wrapper
         rsyncWrapper = true; # for enabling rsync wrapper
 
-        homeBackupEnable = false; # restic.nix
+        homeBackupEnable = true; # restic.nix
         homeBackupDescription = "Backup Home Directory with Restic";
-        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup.sh";
+        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup.sh";
         homeBackupUser = "akunito";
         homeBackupTimerDescription = "Timer for home_backup service";
-        homeBackupOnCalendar = "0/12:00:00"; # Every 12 hour
-        homeBackupCallNextEnabled = true; # for calling next service after backup
+        homeBackupOnCalendar = "0/6:00:00"; # Every 6 hour
+        homeBackupCallNextEnabled = false; # for calling next service after backup
         homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
 
         remoteBackupEnable = false; # restic.nix
         remoteBackupDescription = "Copy Restic Backup to Remote Server";
-        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/nixosdesk_backup_remote.sh";
+        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup_remote.sh";
         remoteBackupUser = "akunito";
         remoteBackupTimerDescription = "Timer for remote_backup service";
 
