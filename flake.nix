@@ -333,6 +333,8 @@
           pkgs-unstable.ungoogled-chromium
 
           pkgs-unstable.vscode
+          pkgs-unstable.windsurf
+          pkgs-unstable.code-cursor
           pkgs-unstable.obsidian
           pkgs-unstable.spotify
           pkgs-unstable.vlc

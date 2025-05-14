@@ -308,7 +308,7 @@
         wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
         wmEnableHyprland = true; 
 
-        dockerEnable = false; # for enabling docker
+        dockerEnable = true; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization
         qemuGuestAddition = false; # If the system is a QEMU VM
 
