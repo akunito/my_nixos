@@ -29,7 +29,7 @@ in
     syntaxHighlighting.enable = true;
     enableCompletion = true;
     shellAliases = myAliases;
-    initExtra = userSettings.zshInitExtra;
+    initContent = userSettings.zshinitContent;
   };
 
   programs.bash = {
