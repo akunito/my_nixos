@@ -308,7 +308,7 @@
         wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
         wmEnableHyprland = true; 
 
-        dockerEnable = false; # for enabling docker
+        dockerEnable = true; # for enabling docker
         virtualizationEnable = true; # for enabling virtualization
         qemuGuestAddition = false; # If the system is a QEMU VM
 
@@ -358,7 +358,7 @@
 
         tailscaleEnabled = false;
 
-        zshInitExtra = ''
+        zshinitContent = ''
           PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
           %F{green}→%f "
           RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"

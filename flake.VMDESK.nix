@@ -48,6 +48,21 @@
           polkit.addRule(function(action, subject) {
             if (
               subject.isInGroup("users") && (
+                // Allow reboot and power-off actions
+                action.id == "org.freedesktop.login1.reboot" ||
+                action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.power-off" ||
+                action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.suspend" ||
+                action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.logout" ||
+                action.id == "org.freedesktop.login1.logout-multiple-sessions" ||
+
+                // Allow managing specific systemd units
+                (action.id == "org.freedesktop.systemd1.manage-units" &&
+                  action.lookup("verb") == "start" &&
+                  action.lookup("unit") == "mnt-NFS_Backups.mount") ||
+
                 // Allow running rsync and restic
                 (action.id == "org.freedesktop.policykit.exec" &&
                   (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
@@ -80,20 +95,23 @@
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.0.89"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.8.89"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.8.89"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
         nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = true; # for enabling wifi power save for laptops
 
-        resolvedEnable = true; # for enabling systemd-resolved
+        resolvedEnable = false; # for enabling systemd-resolved
 
         # Firewall
         firewall = true;
-        allowedTCPPorts = [ 47984 47989 47990 48010 ];
-          # sunshine 47984 47989 47990 48010
-        allowedUDPPorts = [ 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 51820 ];
-          # sunshine 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010
+        allowedTCPPorts = [ 
+          47984 47989 47990 48010 # sunshine
+        ];
+        allowedUDPPorts = [ 
+          47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 # sunshine
+          # 51820 # Wireguard
+        ];
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
@@ -115,51 +133,39 @@
         nfsClientEnable = false;
         nfsMounts = [
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";
-            where = "/mnt/NFS_Books";
+            what = "192.168.20.200:/mnt/hddpool/media";
+            where = "/mnt/NFS_media";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/downloads";
-            where = "/mnt/NFS_downloads";
+            what = "192.168.20.200:/mnt/ssdpool/library";
+            where = "/mnt/NFS_library";
             type = "nfs";
             options = "noatime";
           }
           {
-            what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Media";
-            where = "/mnt/NFS_Media";
-            type = "nfs";
-            options = "noatime";
-          }
-          {
-            what = "192.168.8.80:/mnt/DATA_4TB/backups/akunitoLaptop";
-            where = "/mnt/NFS_Backups";
+            what = "192.168.20.200:/mnt/ssdpool/emulators";
+            where = "/mnt/NFS_emulators";
             type = "nfs";
             options = "noatime";
           }
         ];
         nfsAutoMounts = [
           {
-            where = "/mnt/NFS_Books";
+            where = "/mnt/NFS_media";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
           {
-            where = "/mnt/NFS_Movies";
+            where = "/mnt/NFS_library";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
           }
           {
-            where = "/mnt/NFS_Media";
-            automountConfig = {
-              TimeoutIdleSec = "600";
-            };
-          }
-          {
-            where = "/mnt/NFS_Backups";
+            where = "/mnt/NFS_emulators";
             automountConfig = {
               TimeoutIdleSec = "600";
             };
@@ -172,6 +178,7 @@
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPp/10TlSOte830j6ofuEQ21YKxFD34iiyY55yl6sW7V diego88aku@gmail.com" # Laptop
         ];
+
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
         
         # Printer
@@ -196,8 +203,18 @@
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
         powerKey = "ignore";  # when pressing power key, do one of above
         # More Power settings
-        powerManagement_ENABLE = false; # Enable power management profiles for desktop systems <<<
-        power-profiles-daemon_ENABLE = false; # Enable power management profiles for desktop systems <<<
+        powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
+        power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
+
+        # Source a background image to use by SDDM
+        background-package = pkgs.stdenvNoCC.mkDerivation {
+          name = "background-image";
+          src = ./assets/wallpapers;
+          dontUnpack = true;
+          installPhase = ''
+            cp $src/lock8.png $out
+          '';
+        };
 
         # System packages
         systemPackages = [
@@ -208,22 +225,25 @@
           pkgs.git
           pkgs.cryptsetup
           pkgs.home-manager
-          pkgs.wpa_supplicant # for wifi
+          pkgs.dnsutils # for dig command
           pkgs.btop
           pkgs.fzf
-          pkgs.tldr
           pkgs.rsync
-          pkgs.nfs-utils
           pkgs.restic
-          # pkgs.atuin
-          # pkgs.syncthing
+          pkgs.lm_sensors
+          pkgs.sshfs
           # pkgs.pciutils # install if you need some commands like lspci
-
-          # pkgs.vivaldi # requires patch to be imported + qt5.qtbase
+          
           pkgs.qt5.qtbase
-
-          #pkgs.pcloud # requires patch to be imported
           pkgs-unstable.sunshine
+
+          # Overwrite the Wallpaper for SDDM
+          (
+            pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
+              [General]
+              background = ${systemSettings.background-package}
+            ''
+          )
         ];
 
         vivaldiPatch = false; # for enabling vivaldi patch
@@ -269,7 +289,7 @@
       userSettings = rec {
         username = "akunito"; # username
         name = "akunito"; # name/identifier
-        email = ""; # email (used for certain configurations)
+        email = "diego88aku@gmail.com"; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
@@ -307,7 +327,6 @@
           pkgs-unstable.vscode
           pkgs-unstable.obsidian
           pkgs-unstable.spotify
-          # pkgs-unstable.xournalpp
           pkgs-unstable.vlc
           pkgs-unstable.candy-icons
           pkgs.calibre
@@ -317,18 +336,22 @@
 
           pkgs-unstable.qbittorrent
           pkgs-unstable.nextcloud-client
-          #pkgs-unstable.tailscale
           pkgs-unstable.wireguard-tools
         ];
 
         tailscaleEnabled = false;
 
         zshinitContent = ''
-          PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
+          PROMPT=" ◉ %U%F{gren}%n%f%u@%U%F{gren}%m%f%u:%F{yellow}%~%f
           %F{green}→%f "
           RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
           [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
         '';
+          # %F{color}: Sets the foreground color (e.g., cyan, yellow, green, blue).
+          # %n: Displays the username.
+          # %m: Displays the hostname.
+          # %~: Displays the current directory.
+          # %f: Resets the color to default.
 
         sshExtraConfig = ''
           # sshd.nix -> programs.ssh.extraConfig
