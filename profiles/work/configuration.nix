@@ -127,6 +127,10 @@
     uid = 1000;
   };
 
+  users.groups.${userSettings.username} = {
+    gid = 1000;
+  };
+
   # System packages
   environment.systemPackages = systemSettings.systemPackages;
 
