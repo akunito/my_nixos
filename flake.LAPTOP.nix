@@ -273,6 +273,8 @@
 
         # System Version
         systemStateVersion = "24.11";
+        # System stable or unstable
+        systemStable = false; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
 
         # UPDATES -------------------------------------
         # Auto update System Settings

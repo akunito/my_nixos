@@ -272,6 +272,8 @@
         '';
 
         homeStateVersion = "24.11";
+        # System stable or unstable
+        systemStable = true; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
 
         editor = "nano"; # Default editor;
         # editor spawning translator

@@ -1,4 +1,4 @@
-{ pkgs, userSettings, ... }:
+{ pkgs, userSettings, systemSettings, lib, ... }:
 let
 
   # My shell aliases
@@ -23,14 +23,33 @@ let
   };
 in
 {
-  programs.zsh = {
-    enable = true;
-    autosuggestion.enable = true;
-    syntaxHighlighting.enable = true;
-    enableCompletion = true;
-    shellAliases = myAliases;
-    initContent = userSettings.zshinitContent;
-  };
+  programs.zsh = if (systemSettings.systemStable == false) then 
+    { # UNSTABLE SYSTEM
+      enable = true;
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
+      enableCompletion = true;
+      shellAliases = myAliases;
+      initContent = userSettings.zshinitContent;
+    }
+    else 
+    { # STABLE SYSTEM
+      enable = true;
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
+      enableCompletion = true;
+      shellAliases = myAliases;
+      initExtra = userSettings.zshinitContent; # this is different 
+    };
+
+  # programs.zsh = { # For future version
+  #   enable = true;
+  #   autosuggestion.enable = true;
+  #   syntaxHighlighting.enable = true;
+  #   enableCompletion = true;
+  #   shellAliases = myAliases;
+  #   initContent = userSettings.zshinitContent;
+  # };
 
   programs.bash = {
     enable = true;
