@@ -240,6 +240,7 @@
           pkgs.gparted
           pkgs.lm_sensors
           pkgs.sshfs
+          pkgs.openssl
           # pkgs.pciutils # install if you need some commands like lspci
           
           pkgs.qt5.qtbase
