@@ -358,6 +358,9 @@
           pkgs-unstable.discord
           pkgs-unstable.kdePackages.kcalc
           pkgs-unstable.vivaldi
+
+          pkgs-unstable.powershell
+          pkgs-unstable.azure-cli
         ];
 
         tailscaleEnabled = false;
