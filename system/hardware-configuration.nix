@@ -14,7 +14,7 @@
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/b3d11016-4b6f-4528-9bfc-b1d27718183d";
+    { device = "/dev/mapper/luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
       fsType = "btrfs";
       options = [ "subvol=@" ];
     };
@@ -28,7 +28,7 @@
     };
 
   fileSystems."/home" =
-    { device = "/dev/disk/by-uuid/45580fe3-dda1-40ab-a972-543f1654f09f";
+    { device = "/dev/mapper/luks-a40d2e06-e814-4344-99c8-c2e00546beb3";
       fsType = "btrfs";
     };
 
@@ -37,17 +37,6 @@
   swapDevices =
     [ { device = "/dev/disk/by-uuid/ffa522b1-04ad-4280-a332-c229cb58fed5"; }
     ];
-
-  # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
-  # (the default) this is the recommended approach. When using systemd-networkd it's
-  # still possible to use this option, but it's recommended to use it in conjunction
-  # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
-  networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
-  # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp11s0f0.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp11s0f1.useDHCP = lib.mkDefault true;
-  # networking.interfaces.wlp13s0.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
