@@ -2,7 +2,7 @@
 
 {
   hardware.opengl.driSupport32Bit = true;
-  environment.systemPackages = [ pkgs.steam pkgs.steam-run ];
+  environment.systemPackages = [ pkgs.steam pkgs.steam-run pkgs.wine pkgs.wine-wayland ];
 
   programs.steam = {
     enable = true;
