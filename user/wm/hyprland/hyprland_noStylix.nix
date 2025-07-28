@@ -496,8 +496,8 @@ in
     libsForQt5.qt5.qtwayland
     qt6.qtwayland
     xdg-utils
-    xdg-desktop-portal
-    xdg-desktop-portal-gtk
+    # xdg-desktop-portal # debugging
+    # xdg-desktop-portal-gtk # debugging
     # xdg-desktop-portal-hyprland
     wlsunset
     pavucontrol
