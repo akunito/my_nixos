@@ -248,6 +248,9 @@
 
           pkgs-unstable.lmstudio
 
+          # Games
+          pkgs-unstable.runelite
+
           # Overwrite the Wallpaper for SDDM
           (
             pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
