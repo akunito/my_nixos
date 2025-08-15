@@ -38,7 +38,8 @@
       #../../patches/pcloudfixes.nix # pcloud fix https://gist.github.com/zarelit/c71518fe1272703788d3b5f570ef12e9
       
     ] ++ lib.optional systemSettings.stylixEnable ../../system/style/stylix.nix # Stylix theme
-    ++ lib.optional systemSettings.vivaldiPatch ../../patches/vivaldifixes.nix; # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148 
+    ++ lib.optional systemSettings.vivaldiPatch ../../patches/vivaldifixes.nix # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148 
+    ++ lib.optional systemSettings.sambaEnable ../../system/app/samba.nix; # Samba config
 
   # Fix nix path
   nix.nixPath = [ "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"

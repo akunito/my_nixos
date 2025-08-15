@@ -11,9 +11,11 @@
     lxc
     swtpm
     bottles
+    virtio-win
   
     # Filesystems
     dosfstools
+    virtiofsd
   ];
 
   home.file.".config/libvirt/qemu.conf".text = ''

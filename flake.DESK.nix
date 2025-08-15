@@ -262,6 +262,8 @@
 
         vivaldiPatch = false; # for enabling vivaldi patch
 
+        # Samba
+        sambaEnable = true;
         # Remote Control
         sunshineEnable = true;
         # Wireguard

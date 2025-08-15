@@ -6,6 +6,7 @@
   environment.systemPackages = with pkgs; lib.mkIf (userSettings.virtualizationEnable == true) [
     virt-manager
     distrobox
+    virtiofsd
   ];
 
   programs.virt-manager.enable = lib.mkIf (userSettings.virtualizationEnable == true) true;
@@ -17,6 +18,7 @@
     ];
     enable = true;
     qemu.runAsRoot = false;
+    qemu.vhostUserPackages = [ pkgs.virtiofsd ];
   };
   
   services.qemuGuest.enable = true;
@@ -36,7 +38,7 @@
       graphics = true;
     };
   };
-
+  
   # # QEMU VM settings
   # # Install QEMU Guest Addition
   # services.qemuGuest.enable = userSettings.qemuGuestAddition;
