@@ -23,6 +23,7 @@
         kernelModules = [ 
           "i2c-dev" 
           "i2c-piix4" 
+          "xpadneo" # xbox controller
           # "cpufreq_powersave" 
         ]; # kernel modules to load
         
@@ -241,6 +242,8 @@
           pkgs.lm_sensors
           pkgs.sshfs
           pkgs.openssl
+          pkgs.python3Full
+
           # pkgs.pciutils # install if you need some commands like lspci
           
           pkgs.qt5.qtbase
@@ -250,6 +253,9 @@
 
           # Games
           pkgs-unstable.runelite
+          pkgs-unstable.rpcs3 # ps3 emulator
+          pkgs-unstable.xemu # xbox emulator
+          pkgs-unstable.ryubing # Nintendo switch emulator
 
           # Overwrite the Wallpaper for SDDM
           (
@@ -270,6 +276,8 @@
         wireguardEnable = true;
         # Stylix
         stylixEnable = false;
+        # Xbox wireless controller
+        xboxControllerEnable = true;
 
         # Nerd font package
         fonts = [
