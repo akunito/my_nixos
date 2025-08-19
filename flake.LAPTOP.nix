@@ -114,14 +114,34 @@
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
-        openLUKS = false; # drives.nix
+        openLUKSdisks = false; # drives.nix
+        # disk 1
+        disk1_enabled = false;
         disk1_name = "SAMPLE1";
         disk1_path = "/dev/disk/by-uuid/231c229c-SAMPLE1";
+        disk1_fsType = "ext4";
+        disk1_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        # disk 2
+        disk2_enabled = false;
         disk2_name = "SAMPLE2";
         disk2_path = "/dev/disk/by-uuid/04aaf88f-SAMPLE2";
+        disk2_fsType = "ext4";
+        disk2_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        # disk 3
+        disk3_enabled = false;
         disk3_name = "SAMPLE3";
         disk3_path = "/dev/disk/by-uuid/452c53a6-SAMPLE3";
+        disk3_fsType = "ext4";
+        disk3_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        # disk 4
+        disk4_enabled = false;
+        disk4_name = "SAMPLE4";
+        disk4_path = "/dev/disk/by-uuid/9e2c3c08-SAMPLE4";
+        disk4_fsType = "ext4";
+        disk4_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        
         # NFS server settings
         nfsServerEnable = false;
         nfsExports = ''
@@ -254,12 +274,18 @@
 
         vivaldiPatch = false; # for enabling vivaldi patch
 
+       # Samba
+        sambaEnable = false;
         # Remote Control
         sunshineEnable = true;
         # Wireguard
         wireguardEnable = true;
         # Stylix
         stylixEnable = false;
+        # Xbox wireless controller
+        xboxControllerEnable = true;
+        # appimage support
+        appImageEnable = true;
 
         # Nerd font package
         fonts = [

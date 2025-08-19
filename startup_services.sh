@@ -24,8 +24,8 @@ case $hostname in
             echo -e "2) Mount homelab DATA_4TB via SSHFS and backup home directory"
             echo -e "3) Mount homelab HDD_4TB via SSHFS"
             echo -e "4) Start NFS media mount"
-            echo -e "5) Start NFS library mount"
-            echo -e "6) Start NFS emulators mount"
+            echo -e "5) Start NFS emulators mount"
+            echo -e "6) Start NFS library mount"
             echo -e "S) STOP all running stop_external_drives.sh"
             echo -e "Q) QUIT menu and continue"
             

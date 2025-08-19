@@ -103,16 +103,34 @@
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
-        openLUKS = false; # drives.nix
-        disk1_name = "DATA_4TB";
-        disk1_path = "/dev/disk/by-uuid/231c229c-1daf-43b5-85d0-f1691fa3ab93";
-        disk2_name = "TimeShift";
-        disk2_path = "/dev/disk/by-uuid/04aaf88f-c0dd-40ad-be7e-85e29c0bd719";
-        disk3_name = "Machines";
-        disk3_path = "/dev/disk/by-uuid/452c53a6-0578-4c38-840d-87f1f3f34ddb";
-        disk4_name = "HDD_4TB";
-        disk4_path = "/dev/disk/by-uuid/9665096c-1316-4d03-bd0c-0aa1d5748dd9";
+        openLUKSdisks = false; # drives.nix
+        # disk 1
+        disk1_enabled = false;
+        disk1_name = "SAMPLE1";
+        disk1_path = "/dev/disk/by-uuid/231c229c-SAMPLE1";
+        disk1_fsType = "ext4";
+        disk1_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        # disk 2
+        disk2_enabled = false;
+        disk2_name = "SAMPLE2";
+        disk2_path = "/dev/disk/by-uuid/04aaf88f-SAMPLE2";
+        disk2_fsType = "ext4";
+        disk2_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        # disk 3
+        disk3_enabled = false;
+        disk3_name = "SAMPLE3";
+        disk3_path = "/dev/disk/by-uuid/452c53a6-SAMPLE3";
+        disk3_fsType = "ext4";
+        disk3_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        # disk 4
+        disk4_enabled = false;
+        disk4_name = "SAMPLE4";
+        disk4_path = "/dev/disk/by-uuid/9e2c3c08-SAMPLE4";
+        disk4_fsType = "ext4";
+        disk4_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+
         # NFS
         nfsServerEnable = false;
         nfsExports = ''
@@ -224,12 +242,18 @@
           home-manager
         ];
 
+        # Samba
+        sambaEnable = false;
         # Remote Control
         sunshineEnable = false;
         # Wireguard
-        wireguardEnable = false;  
+        wireguardEnable = false;
         # Stylix
         stylixEnable = false;
+        # Xbox wireless controller
+        xboxControllerEnable = false;
+        # appimage support
+        appImageEnable = false;
 
         # Swap file
         swapFileEnable = true;

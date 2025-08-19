@@ -116,14 +116,26 @@
 
         # LUKS drives
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
+
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
-        openLUKS = false; # drives.nix
-        disk1_name = "SAMPLE1";
+        openLUKSdisks = true; # drives.nix
+        # disk 1
+        disk1_enabled = true;
+        disk1_name = "/mnt/2nd_NVME";
         disk1_path = "/dev/disk/by-uuid/231c229c-SAMPLE1";
-        disk2_name = "SAMPLE2";
+        # disk 2
+        disk2_enabled = true;
+        disk2_name = "/mnt/DATA";
         disk2_path = "/dev/disk/by-uuid/04aaf88f-SAMPLE2";
+        # disk 3
+        disk3_enabled = false;
         disk3_name = "SAMPLE3";
         disk3_path = "/dev/disk/by-uuid/452c53a6-SAMPLE3";
+        # disk 4
+        disk4_enabled = false;
+        disk4_name = "SAMPLE4";
+        disk4_path = "/dev/disk/by-uuid/9e2c3c08-SAMPLE4";
+
         # NFS server settings
         nfsServerEnable = false;
         nfsExports = ''
@@ -242,11 +254,7 @@
           pkgs.lm_sensors
           pkgs.sshfs
           pkgs.openssl
-          pkgs.python3Minimal
-
-          # dependency for custom proton
-          pkgs.icoutils 
-          pkgs.dmenu
+          pkgs.python3Full
 
           # pkgs.pciutils # install if you need some commands like lspci
           
@@ -282,6 +290,8 @@
         stylixEnable = false;
         # Xbox wireless controller
         xboxControllerEnable = true;
+        # appimage support
+        appImageEnable = true;
 
         # Nerd font package
         fonts = [
