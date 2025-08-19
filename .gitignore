@@ -3,3 +3,4 @@
 *.BAK
 flake.lock
 local/
+hardware-configuration.nix

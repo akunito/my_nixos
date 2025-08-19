@@ -15,7 +15,8 @@
           authorizedKeys = systemSettings.authorizedKeys; # SSH keys
           hostKeys = systemSettings.hostKeys;
         };
-      }; 
+      };
+
       # luks.devices = lib.mkIf (systemSettings.openLUKSdisks == true) {
       #   "${systemSettings.disk1_name}" = lib.mkIf (systemSettings.disk1_enabled == true) {
       #     device = systemSettings.disk1_path;

@@ -232,17 +232,19 @@ open_hardware_configuration_nix() {
     local SCRIPT_DIR=$1
     local SUDO_CMD=$2
     local SILENT_MODE=$3
-    if [ "$SILENT_MODE" = false ]; then
-        echo ""
-        read -p "Do you want to open hardware-configuration.nix ? (y/N) " yn
-    else
-        yn="n"
-    fi
-    case $yn in
-        [Yy]|[Yy][Ee][Ss])
-            $SUDO_CMD nano $SCRIPT_DIR/system/hardware-configuration.nix
-            ;;
-    esac
+    # if [ "$SILENT_MODE" = false ]; then
+    #     echo ""
+    #     read -p "Do you want to open hardware-configuration.nix ? (y/N) " yn
+    # else
+    #     yn="n"
+    # fi
+    # case $yn in
+    #     [Yy]|[Yy][Ee][Ss])
+    #         $SUDO_CMD nano $SCRIPT_DIR/system/hardware-configuration.nix
+    #         ;;
+    # esac
+    echo "Let's check the hardware-configuration.nix" && sleep 2
+    $SUDO_CMD nano $SCRIPT_DIR/system/hardware-configuration.nix
 }
 
 # Check if UEFI or BIOS
