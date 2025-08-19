@@ -195,16 +195,19 @@ generate_hardware_config() {
 
     # Ask user if they want to generate hardware-configuration.nix
     if [ "$SILENT_MODE" = true ]; then
-        echo "Silent mode enabled, running custom script ..."
-        run_script_to_stop_drives
+        echo "Silent mode enabled, hardware-configuration.nix will not be generated if you don't press [Y/y] in 8 seconds..."
+        read -t 8 -n 1 -s key
+        if [ "$key" = "y" ] || [ "$key" = "Y" ]; then
+            run_script_to_stop_drives
+        fi
         return
     else 
         echo -e "\n${BLUE}Generating hardware-configuration.nix${RESET}  "
         echo -e "${BLUE}Additional mounted drives, ie NFS or docker overlayfs will generate issues. ${RESET}  "
         echo -e "${YELLOW}WARNING: You have to stop/unmount them before generating a new file ${RESET}  "
-        echo -e "==== ${GREEN}[ENTER]    To run custom script to stop drives ${RESET}   (Recommended)"
-        echo -e "==== ${CYAN}[0]        To stop script now ${RESET}   "
-        echo -e "==== ${CYAN}[1]        To skip generating the file ? ${RESET}   "
+        echo -e "==== ${GREEN}[ENTER]    To skip generating hardware-configuration.nix ? ${RESET}   "
+        echo -e "==== ${RED}[0]        EXIT this script now ${RESET}   "
+        echo -e "==== ${CYAN}[1]        Stop drives & generate hardware-configuration.nix ${RESET}   "
         read -n 1 yn
         echo " "
         case "$yn" in
@@ -213,10 +216,10 @@ generate_hardware_config() {
                 exit 1
                 ;;
             [1])
-                echo -e "Skipping and not generating hardware-configuration.nix ..."
+                run_script_to_stop_drives
                 ;;
             *)
-                run_script_to_stop_drives
+                echo -e "Skipping and not generating hardware-configuration.nix ..."
                 ;;
         esac
     fi

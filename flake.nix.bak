@@ -123,26 +123,18 @@
         disk1_enabled = true;
         disk1_name = "/mnt/2nd_NVME";
         disk1_path = "/dev/disk/by-uuid/231c229c-SAMPLE1";
-        disk1_fsType = "/dev/mapper/2nd_NVME";
-        disk1_options = [ "nofail" "x-systemd.device-timeout=3s" ];
         # disk 2
         disk2_enabled = true;
         disk2_name = "/mnt/DATA";
         disk2_path = "/dev/disk/by-uuid/04aaf88f-SAMPLE2";
-        disk2_fsType = "ext4";
-        disk2_options = [ "nofail" "x-systemd.device-timeout=3s" ];
         # disk 3
         disk3_enabled = false;
         disk3_name = "SAMPLE3";
         disk3_path = "/dev/disk/by-uuid/452c53a6-SAMPLE3";
-        disk3_fsType = "ext4";
-        disk3_options = [ "nofail" "x-systemd.device-timeout=3s" ];
         # disk 4
         disk4_enabled = false;
         disk4_name = "SAMPLE4";
         disk4_path = "/dev/disk/by-uuid/9e2c3c08-SAMPLE4";
-        disk4_fsType = "ext4";
-        disk4_options = [ "nofail" "x-systemd.device-timeout=3s" ];
 
         # NFS server settings
         nfsServerEnable = false;
