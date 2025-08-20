@@ -15,7 +15,6 @@
       ../../system/security/gpg.nix
       ../../system/security/blocklist.nix
       ../../system/security/firewall.nix
-      ../../system/hardware/drives.nix # SSH on Boot to unlock LUKS drives + Open my LUKS drives (OPTIONAL)
     ];
 
 

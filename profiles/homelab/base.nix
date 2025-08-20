@@ -5,7 +5,6 @@
     [ ../../system/hardware-configuration.nix
       ../../system/hardware/power.nix # Power management
       ../../system/hardware/time.nix # Network time sync
-      ../../system/hardware/drives.nix # SSH on Boot to unlock LUKS drives + Open my LUKS drives (OPTIONAL)
       ../../system/hardware/nfs_server.nix # NFS share directories over network
       ../../system/security/firewall.nix
       ../../system/security/fail2ban.nix # Fail2ban config to be set up
@@ -20,7 +19,9 @@
       ../../system/app/grafana.nix # monitoring tools
       ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
       ../../system/wm/gnome-keyring.nix # gnome keyring
-    ];
+    ] ++ lib.optional systemSettings.sambaEnable ../../system/app/samba.nix # Samba config
+    ++ lib.optional systemSettings.appImageEnable ../../system/app/appimage.nix # AppImage support
+    ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix; # Mount drives
 
   # Fix nix path
   nix.nixPath = [ "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
