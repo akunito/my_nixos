@@ -1,7 +1,7 @@
 { pkgs, lib, ... }:
 
 {
-  hardware.opengl.driSupport32Bit = true;
+  # hardware.graphics.enable32Bit = true; # already in opengl.nix
   environment.systemPackages = [ pkgs.steam pkgs.steam-run pkgs.wine pkgs.wine-wayland pkgs.protontricks ];
 
   programs.steam = {

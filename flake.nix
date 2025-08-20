@@ -134,19 +134,19 @@
         disk3_name = "/mnt/NFS_media";
         disk3_device = "192.168.20.200:/mnt/hddpool/media";
         disk3_fsType = "nfs4";
-        disk3_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk3_options = [ "nofail" "x-systemd.device-timeout=5s" ];
         # disk 4
         disk4_enabled = true;
         disk4_name = "/mnt/NFS_emulators";
         disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
         disk4_fsType = "nfs4";
-        disk4_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk4_options = [ "nofail" "x-systemd.device-timeout=5s" ];
         # disk 5
         disk5_enabled = true;
         disk5_name = "/mnt/NFS_library";
         disk5_device = "192.168.20.200:/mnt/ssdpool/library";
         disk5_fsType = "nfs4";
-        disk5_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk5_options = [ "nofail" "x-systemd.device-timeout=5s" ];
 
         # NFS server settings
         nfsServerEnable = false;
