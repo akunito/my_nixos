@@ -400,7 +400,31 @@
           pkgs-unstable.rpcs3 # ps3 emulator
           pkgs-unstable.xemu # xbox emulator
           pkgs-unstable.dolphin-emu # gamecube and wii emulator
+          pkgs.hoolamike # wabbajack for linux
           # pkgs-unstable.dolphin-emu-primehack # improved for FPS games [this conflict with the path for dolphin-emu. Install one by flatpak]
+          # (pkgs.callPackage (
+          #   { lib, stdenv, fetchFromGitHub, python3Packages }:
+          #   python3Packages.buildPythonApplication {
+          #     pname = "hoolamike";
+          #     version = "0.1.0";
+          #     src = inputs.hoolamike;
+              
+          #     format = "setuptools"; # Add this line
+          #     pyproject = true;     # Add this line
+              
+          #     propagatedBuildInputs = with python3Packages; [
+          #       requests
+          #       python-dateutil
+          #       setuptools          # Add this line
+          #     ];
+
+          #     meta = with lib; {
+          #       description = "Hoolamike Python application";
+          #       homepage = "https://github.com/Niedzwiedzw/hoolamike";
+          #       license = licenses.mit;
+          #     };
+          #   }
+          # ) {})
         ];
 
         tailscaleEnabled = false;
@@ -533,7 +557,7 @@
         user = home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           modules = [
-            (./. + "/profiles" + ("/" + systemSettings.profile) + "/home.nix") # load home.nix from selected PROFILE
+            (./. + "/profiles" + ("/" + systemSettings.profile) + "/home.nix") # load home.nix from selected PROFILE      
           ];
           extraSpecialArgs = {
             # pass config variables from above
@@ -706,6 +730,11 @@
     # stylix.url = "github:danth/stylix";
 
     rust-overlay.url = "github:oxalica/rust-overlay";
+
+    hoolamike = {
+      url = "github:Niedzwiedzw/hoolamike";
+      flake = false;
+    };
 
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";
