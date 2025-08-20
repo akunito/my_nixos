@@ -275,12 +275,6 @@
 
           pkgs-unstable.lmstudio
 
-          # Games
-          pkgs-unstable.runelite
-          pkgs-unstable.rpcs3 # ps3 emulator
-          pkgs-unstable.xemu # xbox emulator
-          pkgs-unstable.ryubing # Nintendo switch emulator
-
           # Overwrite the Wallpaper for SDDM
           (
             pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
@@ -400,6 +394,13 @@
 
           pkgs-unstable.powershell
           pkgs-unstable.azure-cli
+
+          # Games
+          pkgs-unstable.runelite # RuneScape client
+          pkgs-unstable.rpcs3 # ps3 emulator
+          pkgs-unstable.xemu # xbox emulator
+          pkgs-unstable.dolphin-emu # gamecube and wii emulator
+          # pkgs-unstable.dolphin-emu-primehack # improved for FPS games [this conflict with the path for dolphin-emu. Install one by flatpak]
         ];
 
         tailscaleEnabled = false;
