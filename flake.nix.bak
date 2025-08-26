@@ -254,6 +254,7 @@
           pkgs.traceroute # for test
           pkgs.iproute2 # for test
           pkgs.dnsutils # for dig command
+          pkgs.nettools # netstat and other commands
           pkgs.btop
           pkgs.btop-rocm # for rocm AMD GPU
           pkgs.fzf
@@ -266,7 +267,7 @@
           pkgs.lm_sensors
           pkgs.sshfs
           pkgs.openssl
-          pkgs.python3Full
+          pkgs.python3Minimal
 
           # pkgs.pciutils # install if you need some commands like lspci
           
@@ -393,38 +394,13 @@
           pkgs-unstable.vivaldi
 
           pkgs-unstable.powershell
-          pkgs-unstable.azure-cli
+          pkgs.azure-cli
 
           # Games
           pkgs-unstable.runelite # RuneScape client
           pkgs-unstable.rpcs3 # ps3 emulator
           pkgs-unstable.xemu # xbox emulator
           pkgs-unstable.dolphin-emu # gamecube and wii emulator
-          pkgs-hoolamike # wabbajack for linux
-          # pkgs-unstable.dolphin-emu-primehack # improved for FPS games [this conflict with the path for dolphin-emu. Install one by flatpak]
-          # (pkgs.callPackage (
-          #   { lib, stdenv, fetchFromGitHub, python3Packages }:
-          #   python3Packages.buildPythonApplication {
-          #     pname = "hoolamike";
-          #     version = "0.1.0";
-          #     src = inputs.hoolamike;
-              
-          #     format = "setuptools"; # Add this line
-          #     pyproject = true;     # Add this line
-              
-          #     propagatedBuildInputs = with python3Packages; [
-          #       requests
-          #       python-dateutil
-          #       setuptools          # Add this line
-          #     ];
-
-          #     meta = with lib; {
-          #       description = "Hoolamike Python application";
-          #       homepage = "https://github.com/Niedzwiedzw/hoolamike";
-          #       license = licenses.mit;
-          #     };
-          #   }
-          # ) {})
         ];
 
         tailscaleEnabled = false;
@@ -730,11 +706,6 @@
     # stylix.url = "github:danth/stylix";
 
     rust-overlay.url = "github:oxalica/rust-overlay";
-
-    hoolamike = {
-      url = "github:Niedzwiedzw/hoolamike";
-      flake = false;
-    };
 
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";
