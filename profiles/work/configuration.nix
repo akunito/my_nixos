@@ -72,10 +72,9 @@
     )
   ];
 
-
   # logseq
   nixpkgs.config.permittedInsecurePackages = [
-      "electron-27.3.11"
+    "electron-27.3.11"
   ];
 
   # wheel group gets trusted access to nix daemon

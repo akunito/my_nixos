@@ -125,7 +125,7 @@
         disk1_options = [ "nofail" "x-systemd.device-timeout=3s" ];
         # disk 2
         disk2_enabled = true;
-        disk2_name = "/mnt/DATA";
+        disk2_name = "/mnt/DATA_SATA3";
         disk2_device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
         disk2_fsType = "ntfs3";
         disk2_options = [ "nofail" "x-systemd.device-timeout=3s" ];
@@ -147,6 +147,12 @@
         disk5_device = "192.168.20.200:/mnt/ssdpool/library";
         disk5_fsType = "nfs4";
         disk5_options = [ "nofail" "x-systemd.device-timeout=5s" ];
+        # disk 6
+        disk6_enabled = true;
+        disk6_name = "/mnt/DATA";
+        disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
+        disk6_fsType = "ntfs3"; 
+        disk6_options = [ "nofail" "x-systemd.device-timeout=3s" ];
 
         # NFS server settings
         nfsServerEnable = false;
@@ -267,7 +273,10 @@
           pkgs.lm_sensors
           pkgs.sshfs
           pkgs.openssl
-          pkgs.python3Minimal
+          # pkgs.python3Minimal
+          pkgs.python313Full
+          # pkgs.python312
+          # pkgs.python312Packages.pip
 
           # pkgs.pciutils # install if you need some commands like lspci
           
@@ -399,7 +408,7 @@
           # Games
           pkgs-unstable.runelite # RuneScape client
           pkgs-unstable.rpcs3 # ps3 emulator
-          pkgs-unstable.xemu # xbox emulator
+          # pkgs-unstable.xemu # xbox emulator
           pkgs-unstable.dolphin-emu # gamecube and wii emulator
         ];
 
