@@ -44,5 +44,10 @@
     fsType = systemSettings.disk5_fsType;
     options = systemSettings.disk5_options;
   };
+  fileSystems."${systemSettings.disk6_name}" = lib.mkIf (systemSettings.disk6_enabled == true) {
+    device = systemSettings.disk6_device;
+    fsType = systemSettings.disk6_fsType;
+    options = systemSettings.disk6_options;
+  };
 
 }
