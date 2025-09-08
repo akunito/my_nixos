@@ -102,38 +102,44 @@
                           ]; 
 
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
-        mount2ndDrives = false; # drives.nix
+        mount2ndDrives = true; # drives.nix
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # disk 1
-        disk1_enabled = false;
-        disk1_name = "/mnt/2nd_NVME";
-        disk1_device = "/dev/mapper/2nd_NVME";
+        disk1_enabled = true;
+        disk1_name = "/mnt/DATA_4TB";
+        disk1_device = "/dev/disk/by-uuid/0904cd17-7be1-433a-a21b-2c34f969550f";
         disk1_fsType = "ext4"; # ext4, btrfs, xfs, ntfs3, vfat, nfs4
-        disk1_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk1_options = [ "nofail" "x-systemd.device-timeout=5s" ];
         # disk 2
-        disk2_enabled = false;
-        disk2_name = "/mnt/DATA";
-        disk2_device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
-        disk2_fsType = "ntfs3";
-        disk2_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk2_enabled = false; # DISABLED
+        disk2_name = "";
+        disk2_device = "";
+        disk2_fsType = "";
+        disk2_options = [ ];
         # disk 3
-        disk3_enabled = false;
+        disk3_enabled = true;
         disk3_name = "/mnt/NFS_media";
         disk3_device = "192.168.20.200:/mnt/hddpool/media";
         disk3_fsType = "nfs4";
-        disk3_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk3_options = [ "nofail" "x-systemd.device-timeout=5s" ];
         # disk 4
-        disk4_enabled = false;
+        disk4_enabled = true;
         disk4_name = "/mnt/NFS_emulators";
         disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
         disk4_fsType = "nfs4";
-        disk4_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk4_options = [ "nofail" "x-systemd.device-timeout=5s" ];
         # disk 5
-        disk5_enabled = false;
+        disk5_enabled = true;
         disk5_name = "/mnt/NFS_library";
         disk5_device = "192.168.20.200:/mnt/ssdpool/library";
         disk5_fsType = "nfs4";
-        disk5_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk5_options = [ "nofail" "x-systemd.device-timeout=5s" ];
+        # disk 6
+        disk6_enabled = false; # DISABLED
+        disk6_name = "";
+        disk6_device = "";
+        disk6_fsType = ""; 
+        disk6_options = [ ];
 
         # NFS
         nfsServerEnable = false;

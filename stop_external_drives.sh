@@ -73,14 +73,14 @@ case $hostname in
         echo -e "Stopping Containers..."
         docker stop $(sudo docker ps -a -q)
 
-        echo -e "Unmount external drives..."
-        sudo umount /mnt/DATA_4TB
-        sudo umount /mnt/HDD_4TB
+        # echo -e "Unmount external drives..."
+        # sudo umount /mnt/DATA_4TB
+        # sudo umount /mnt/HDD_4TB
 
-        echo -e "Unmount NFS drives..."
-        sudo systemctl stop mnt-NFS_media.mount
-        sudo systemctl stop mnt-NFS_library.mount
-        sudo systemctl stop mnt-NFS_emulators.mount
+        # echo -e "Unmount NFS drives..."
+        # sudo systemctl stop mnt-NFS_media.mount
+        # sudo systemctl stop mnt-NFS_library.mount
+        # sudo systemctl stop mnt-NFS_emulators.mount
         ;;
     *)
         echo -e "This hostname does not match any command to run. Adjust the script if needed..."
