@@ -7,7 +7,7 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosaku"; # hostname
+        hostname = "nixosaga"; # hostname
         profile = "personal"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
@@ -43,7 +43,9 @@
             options = [ "NOPASSWD" "SETENV" ];
           }
         ];
-        pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
+        pkiCertificates = [ 
+          # /home/akunito/.myCA/ca.cert.pem 
+        ];
         # Polkit
         polkitEnable = true;
         polkitRules = ''
@@ -80,7 +82,7 @@
         resticWrapper = true; # for enabling restic wrapper
         rsyncWrapper = true; # for enabling rsync wrapper
 
-        homeBackupEnable = true; # restic.nix
+        homeBackupEnable = false; # restic.nix
         homeBackupDescription = "Backup Home Directory with Restic";
         homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup.sh";
         homeBackupUser = "akunito";
@@ -97,8 +99,8 @@
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.8.96"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.8.98"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.8.xxx"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.8.xxx"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
         nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = true; # for enabling wifi power save for laptops
@@ -118,13 +120,13 @@
         mount2ndDrives = true; # drives.nix
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # disk 1
-        disk1_enabled = true;
+        disk1_enabled = false;
         disk1_name = "/mnt/2nd_NVME";
         disk1_device = "/dev/mapper/2nd_NVME";
         disk1_fsType = "ext4"; # ext4, btrfs, xfs, ntfs3, vfat, nfs4
         disk1_options = [ "nofail" "x-systemd.device-timeout=3s" ];
         # disk 2
-        disk2_enabled = true;
+        disk2_enabled = false;
         disk2_name = "/mnt/DATA_SATA3";
         disk2_device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
         disk2_fsType = "ntfs3";
@@ -148,7 +150,7 @@
         disk5_fsType = "nfs4";
         disk5_options = [ "nofail" "x-systemd.device-timeout=5s" ];
         # disk 6
-        disk6_enabled = true;
+        disk6_enabled = false;
         disk6_name = "/mnt/DATA";
         disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
         disk6_fsType = "ntfs3"; 
@@ -283,7 +285,7 @@
           pkgs.qt5.qtbase
           pkgs-unstable.sunshine
 
-          pkgs-unstable.lmstudio
+          # pkgs-unstable.lmstudio
 
           # Overwrite the Wallpaper for SDDM
           (
@@ -343,10 +345,10 @@
 
       # ----- USER SETTINGS ----- #
       userSettings = rec {
-        username = "akunito"; # username
-        name = "akunito"; # name/identifier
+        username = "aga"; # username
+        name = "aga"; # name/identifier
         email = "diego88aku@gmail.com"; # email (used for certain configurations)
-        dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
+        dotfilesDir = "/home/aga/.dotfiles"; # absolute path of the local repo
         extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
 
         theme = "miramare"; # selcted theme from my themes directory (./themes/)
@@ -380,8 +382,8 @@
           pkgs-unstable.ungoogled-chromium
 
           pkgs-unstable.vscode
-          pkgs-unstable.windsurf
-          pkgs-unstable.code-cursor
+          # pkgs-unstable.windsurf
+          # pkgs-unstable.code-cursor
           pkgs-unstable.obsidian
           pkgs-unstable.spotify
           pkgs-unstable.vlc
@@ -406,16 +408,16 @@
           pkgs.azure-cli
 
           # Games
-          pkgs-unstable.runelite # RuneScape client
-          pkgs-unstable.rpcs3 # ps3 emulator
+          # pkgs-unstable.runelite # RuneScape client
+          # pkgs-unstable.rpcs3 # ps3 emulator
           # pkgs.xemu # xbox emulator
-          pkgs-unstable.dolphin-emu # gamecube and wii emulator
+          # pkgs-unstable.dolphin-emu # gamecube and wii emulator
         ];
 
         tailscaleEnabled = false;
 
         zshinitContent = ''
-          PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
+          PROMPT=" ◉ %U%F{yellow}%n%f%u@%U%F{yellow}%m%f%u:%F{magenta}%~%f
           %F{green}→%f "
           RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
           [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
