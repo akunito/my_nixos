@@ -273,8 +273,8 @@
           pkgs.lm_sensors
           pkgs.sshfs
           pkgs.openssl
-          # pkgs.python3Minimal
-          pkgs.python313Full
+          pkgs.python3Minimal
+          # pkgs.python313Full
           # pkgs.python312
           # pkgs.python312Packages.pip
 
