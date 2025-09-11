@@ -61,9 +61,9 @@ case $hostname in
         echo -e "Stopping Containers..."
         docker stop $(sudo docker ps -a -q)
 
-        echo -e "Unmount NFS drives..."
-        fusermount -u /home/akunito/Volumes/homelab_home
-        fusermount -u /home/akunito/Volumes/homelab_DATA_4TB
+        # echo -e "Unmount NFS drives..."
+        # fusermount -u /home/akunito/Volumes/homelab_home
+        # fusermount -u /home/akunito/Volumes/homelab_DATA_4TB
         # sudo systemctl stop mnt-NFS_media.mount
         # sudo systemctl stop mnt-NFS_library.mount
         # sudo systemctl stop mnt-NFS_emulators.mount
