@@ -287,6 +287,7 @@
             ''
           )
         ];
+        starCitizenModules = false;
 
         vivaldiPatch = false; # for enabling vivaldi patch
 

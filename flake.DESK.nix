@@ -299,6 +299,7 @@
             ''
           )
         ];
+        starCitizenModules = true;
 
         vivaldiPatch = false; # for enabling vivaldi patch
 
@@ -425,11 +426,13 @@
           pkgs.azure-cli
 
           # Games
+          pkgs-unstable.lug-helper
           pkgs-unstable.runelite # RuneScape client
           pkgs-unstable.rpcs3 # ps3 emulator
           # pkgs.xemu # xbox emulator
           pkgs-unstable.dolphin-emu # gamecube and wii emulator
-        ];
+        ]
+        ++ lib.optional systemSettings.starCitizenModules pkgs-unstable.lug-helper;
 
         tailscaleEnabled = false;
 

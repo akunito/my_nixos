@@ -41,6 +41,13 @@
 
   boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
 
+  fileSystems."/mnt/EXT" =
+    { device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."usbcrypt".device = "/dev/disk/by-uuid/26a7c0f8-0aab-49a3-beba-549ce0923cdd";
+
   fileSystems."/mnt/DATA" =
     { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
       fsType = "ntfs3";
@@ -56,22 +63,15 @@
       fsType = "nfs4";
     };
 
-  fileSystems."/mnt/NFS_media" =
-    { device = "192.168.20.200:/mnt/hddpool/media";
-      fsType = "nfs4";
-    };
-
   fileSystems."/mnt/NFS_library" =
     { device = "192.168.20.200:/mnt/ssdpool/library";
       fsType = "nfs4";
     };
 
-  fileSystems."/mnt/EXT" =
-    { device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
-      fsType = "ext4";
+  fileSystems."/mnt/NFS_media" =
+    { device = "192.168.20.200:/mnt/hddpool/media";
+      fsType = "nfs4";
     };
-
-  boot.initrd.luks.devices."usbcrypt".device = "/dev/disk/by-uuid/26a7c0f8-0aab-49a3-beba-549ce0923cdd";
 
   swapDevices =
     [ { device = "/dev/disk/by-uuid/ffa522b1-04ad-4280-a332-c229cb58fed5"; }

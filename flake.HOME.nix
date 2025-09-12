@@ -210,6 +210,7 @@
           kitty # check if should be removed on labs
           home-manager
         ];
+        starCitizenModules = false;
 
         # Samba
         sambaEnable = false;
@@ -283,6 +284,7 @@
           zsh
           git
         ];
+
         tailscaleEnabled = false;
         
         zshinitContent = ''

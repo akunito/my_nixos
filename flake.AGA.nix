@@ -282,6 +282,7 @@
           pkgs-unstable.sunshine
           pkgs-unstable.wireguard-tools
         ];
+        starCitizenModules = false;
 
         vivaldiPatch = true; # for enabling vivaldi patch
 
@@ -384,6 +385,7 @@
           pkgs-unstable.qbittorrent
           pkgs-unstable.nextcloud-client
         ];
+
         tailscaleEnabled = false;
         
         zshinitContent = ''

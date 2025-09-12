@@ -261,6 +261,7 @@
           #pkgs.pcloud # requires patch to be imported
           pkgs-unstable.sunshine
         ];
+        starCitizenModules = false;
 
         vivaldiPatch = false; # for enabling vivaldi patch
 

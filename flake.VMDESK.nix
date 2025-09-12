@@ -386,6 +386,8 @@
           pkgs-unstable.wireguard-tools
         ];
 
+        starCitizenModules = false;
+
         tailscaleEnabled = false;
 
         zshinitContent = ''

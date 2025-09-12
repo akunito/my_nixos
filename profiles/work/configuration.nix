@@ -42,6 +42,7 @@
     ++ lib.optional systemSettings.sambaEnable ../../system/app/samba.nix # Samba config
     ++ lib.optional systemSettings.xboxControllerEnable ../../system/hardware/xbox.nix # Xbox wireless controller
     ++ lib.optional systemSettings.appImageEnable ../../system/app/appimage.nix # AppImage support
+    ++ lib.optional systemSettings.starCitizenModules ../../system/app/starcitizen.nix # Star Citizen support
     ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix; # Mount drives
 
   # Fix nix path
