@@ -62,5 +62,12 @@
         options = systemSettings.disk6_options;
       };
     })
+    (lib.mkIf (systemSettings.disk7_enabled) {
+      "${systemSettings.disk7_name}" = lib.mkForce {
+        device = systemSettings.disk7_device;
+        fsType = systemSettings.disk7_fsType;
+        options = systemSettings.disk7_options;
+      };
+    })
   ];
 }

@@ -8,7 +8,7 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "uas" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
@@ -51,13 +51,13 @@
       fsType = "ntfs3";
     };
 
-  fileSystems."/mnt/NFS_media" =
-    { device = "192.168.20.200:/mnt/hddpool/media";
+  fileSystems."/mnt/NFS_emulators" =
+    { device = "192.168.20.200:/mnt/ssdpool/emulators";
       fsType = "nfs4";
     };
 
-  fileSystems."/mnt/NFS_emulators" =
-    { device = "192.168.20.200:/mnt/ssdpool/emulators";
+  fileSystems."/mnt/NFS_media" =
+    { device = "192.168.20.200:/mnt/hddpool/media";
       fsType = "nfs4";
     };
 
@@ -65,6 +65,13 @@
     { device = "192.168.20.200:/mnt/ssdpool/library";
       fsType = "nfs4";
     };
+
+  fileSystems."/mnt/EXT" =
+    { device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."usbcrypt".device = "/dev/disk/by-uuid/26a7c0f8-0aab-49a3-beba-549ce0923cdd";
 
   swapDevices =
     [ { device = "/dev/disk/by-uuid/ffa522b1-04ad-4280-a332-c229cb58fed5"; }

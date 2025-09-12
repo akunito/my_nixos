@@ -153,6 +153,12 @@
         disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
         disk6_fsType = "ntfs3"; 
         disk6_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        # disk 7
+        disk7_enabled = true;
+        disk7_name = "/mnt/EXT";
+        disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
+        disk7_fsType = "ext4";
+        disk7_options = [ "nofail" "x-systemd.device-timeout=5s" ];
 
         # NFS server settings
         nfsServerEnable = false;
