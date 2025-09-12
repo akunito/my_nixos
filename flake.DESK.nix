@@ -310,19 +310,32 @@
         appImageEnable = true;
 
         # Nerd font package
-        fonts = [
-          pkgs.nerd-fonts.jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
-          pkgs.powerline
-        ];
+        # fonts = [
+        #   pkgs.nerd-fonts.jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
+        #   pkgs.powerline
+        # ];
+        fonts = if (systemSettings.systemStable == true)
+                then
+                  [
+                    pkgs.nerdfonts
+                    pkgs.powerline
+                  ]
+                else
+                  [
+                    pkgs.nerd-fonts.jetbrains-mono
+                    pkgs.powerline
+                  ];
 
         # Swap file
         swapFileEnable = false;
         swapFileSyzeGB = 32; # 32GB
-
+        # download buffer size for nix
+        downloadBufferSize = "134217728"; # 128MB
+        
         # System Version
         systemStateVersion = "24.11";
         # System stable or unstable
-        systemStable = false; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
+        systemStable = true; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
 
         # UPDATES -------------------------------------
         # Auto update System Settings
@@ -400,7 +413,7 @@
           pkgs-unstable.moonlight-qt
           pkgs-unstable.discord
           pkgs-unstable.kdePackages.kcalc
-          pkgs-unstable.vivaldi
+          pkgs.vivaldi
 
           pkgs-unstable.powershell
           pkgs.azure-cli
@@ -466,7 +479,7 @@
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      pkgs = (if (systemSettings.systemStable == true)
               then
                 pkgs-stable
               else
@@ -511,7 +524,7 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      lib = (if (systemSettings.systemStable == true)
              then
                inputs.nixpkgs-stable.lib
              else
@@ -519,12 +532,11 @@
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
+      home-manager = (if (systemSettings.systemStable == true)
              then
                inputs.home-manager-stable
              else
                inputs.home-manager-unstable);
-      # home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
 
       # Systems that can run tests:
       supportedSystems = [ "aarch64-linux" "i686-linux" "x86_64-linux" ];

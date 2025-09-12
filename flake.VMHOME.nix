@@ -268,6 +268,8 @@
         # Swap file
         swapFileEnable = true;
         swapFileSyzeGB = 32; # 32GB
+        # download buffer size for nix
+        downloadBufferSize = "134217728";
 
         # System Version
         systemStateVersion = "24.11";

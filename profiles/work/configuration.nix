@@ -171,6 +171,10 @@
     size = systemSettings.swapFileSyzeGB * 1024; # 32GB
   }];
 
+  nix.settings = {
+    download-buffer-size = systemSettings.downloadBufferSize;
+  };
+
   # It is ok to leave this unchanged for compatibility purposes
   system.stateVersion = systemSettings.systemStateVersion;
 
