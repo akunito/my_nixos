@@ -7,7 +7,7 @@
   imports =
     [ ../work/configuration.nix # Personal is essentially work system + games.
       ../../system/hardware-configuration.nix
-      # ../../system/app/gamemode.nix # GameMode for performance tuning (This is breaking my system, probably AMDGPU driver related)
+      ../../system/app/gamemode.nix # GameMode for performance tuning (This is breaking my system, probably AMDGPU driver related)
       # ../../system/app/steam.nix
       # ../../system/app/prismlauncher.nix # Minecraft Launcher
       ../../system/hardware/nfs_client.nix # NFS share directories over network
