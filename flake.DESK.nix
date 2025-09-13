@@ -299,7 +299,7 @@
             ''
           )
         ];
-        starCitizenModules = false;
+        starCitizenModules = true;
 
         vivaldiPatch = false; # for enabling vivaldi patch
 
@@ -342,7 +342,7 @@
         # System Version
         systemStateVersion = "24.11";
         # System stable or unstable
-        systemStable = true; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
+        systemStable = false; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
 
         # UPDATES -------------------------------------
         # Auto update System Settings
@@ -426,13 +426,12 @@
           pkgs.azure-cli
 
           # Games
-          pkgs-unstable.lug-helper
           pkgs-unstable.runelite # RuneScape client
           pkgs-unstable.rpcs3 # ps3 emulator
           # pkgs.xemu # xbox emulator
           pkgs-unstable.dolphin-emu # gamecube and wii emulator
-        ]
-        ++ lib.optional systemSettings.starCitizenModules pkgs-unstable.lug-helper;
+        ];
+        # ++ lib.optional systemSettings.starCitizenModules pkgs-unstable.lug-helper;
 
         tailscaleEnabled = false;
 

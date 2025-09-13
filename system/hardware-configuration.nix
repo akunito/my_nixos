@@ -14,7 +14,7 @@
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/b3d11016-4b6f-4528-9bfc-b1d27718183d";
+    { device = "/dev/mapper/luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
       fsType = "btrfs";
       options = [ "subvol=@" ];
     };
@@ -35,26 +35,26 @@
   boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
 
   fileSystems."/mnt/2nd_NVME" =
-    { device = "/dev/disk/by-uuid/6e58a216-7670-4321-8e11-5abd4c69c968";
+    { device = "/dev/mapper/2nd_NVME";
       fsType = "ext4";
     };
 
   boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
 
   fileSystems."/mnt/EXT" =
-    { device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
+    { device = "/dev/mapper/usbcrypt";
       fsType = "ext4";
     };
 
   boot.initrd.luks.devices."usbcrypt".device = "/dev/disk/by-uuid/26a7c0f8-0aab-49a3-beba-549ce0923cdd";
 
-  fileSystems."/mnt/DATA" =
-    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
+  fileSystems."/mnt/DATA_SATA3" =
+    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
       fsType = "ntfs3";
     };
 
-  fileSystems."/mnt/DATA_SATA3" =
-    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
+  fileSystems."/mnt/DATA" =
+    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
       fsType = "ntfs3";
     };
 
@@ -76,18 +76,6 @@
   swapDevices =
     [ { device = "/dev/disk/by-uuid/ffa522b1-04ad-4280-a332-c229cb58fed5"; }
     ];
-
-  # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
-  # (the default) this is the recommended approach. When using systemd-networkd it's
-  # still possible to use this option, but it's recommended to use it in conjunction
-  # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
-  networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
-  # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp11s0f0.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp11s0f1.useDHCP = lib.mkDefault true;
-  # networking.interfaces.virbr0.useDHCP = lib.mkDefault true;
-  # networking.interfaces.wlp13s0.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
