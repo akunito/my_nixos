@@ -299,7 +299,7 @@
             ''
           )
         ];
-        starCitizenModules = true;
+        starCitizenModules = false;
 
         vivaldiPatch = false; # for enabling vivaldi patch
 
@@ -342,7 +342,7 @@
         # System Version
         systemStateVersion = "24.11";
         # System stable or unstable
-        systemStable = true; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
+        systemStable = false; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
 
         # UPDATES -------------------------------------
         # Auto update System Settings
