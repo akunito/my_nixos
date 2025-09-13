@@ -426,11 +426,13 @@
           pkgs.azure-cli
 
           # Games
+          pkgs-unstable.lug-helper
           pkgs-unstable.runelite # RuneScape client
           pkgs-unstable.rpcs3 # ps3 emulator
           # pkgs.xemu # xbox emulator
           pkgs-unstable.dolphin-emu # gamecube and wii emulator
-        ];
+        ]
+        ++ lib.optional systemSettings.starCitizenModules pkgs-unstable.lug-helper;
 
         tailscaleEnabled = false;
 
@@ -496,7 +498,7 @@
                     allowUnfree = true;
                     allowUnfreePredicate = (_: true);
                   };
-                  overlays = [ inputs.rust-overlay.overlays.default ];
+                  # overlays = [ inputs.rust-overlay.overlays.default ];
                 }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
@@ -513,7 +515,7 @@
           allowUnfree = true;
           allowUnfreePredicate = (_: true);
         };
-        overlays = [ inputs.rust-overlay.overlays.default ];
+        # overlays = [ inputs.rust-overlay.overlays.default ];
       };
 
       # pkgs-emacs = import inputs.emacs-pin-nixpkgs {

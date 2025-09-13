@@ -498,7 +498,7 @@
                     allowUnfree = true;
                     allowUnfreePredicate = (_: true);
                   };
-                  overlays = [ inputs.rust-overlay.overlays.default ];
+                  # overlays = [ inputs.rust-overlay.overlays.default ];
                 }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
@@ -515,7 +515,7 @@
           allowUnfree = true;
           allowUnfreePredicate = (_: true);
         };
-        overlays = [ inputs.rust-overlay.overlays.default ];
+        # overlays = [ inputs.rust-overlay.overlays.default ];
       };
 
       # pkgs-emacs = import inputs.emacs-pin-nixpkgs {
