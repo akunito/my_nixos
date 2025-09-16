@@ -176,6 +176,8 @@
     download-buffer-size = systemSettings.downloadBufferSize;
   };
 
+  programs.fuse.userAllowOther = systemSettings.fuseAllowOther;
+
   # It is ok to leave this unchanged for compatibility purposes
   system.stateVersion = systemSettings.systemStateVersion;
 

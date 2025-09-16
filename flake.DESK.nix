@@ -28,6 +28,7 @@
         ]; # kernel modules to load
         
         # Security
+        fuseAllowOther = true; # for enabling user_allow_other in /etc/fuse.conf (allows mount SSHFS with -o allow_other)
         doasEnable = false; # for enabling doas
         sudoEnable = true; # for enabling sudo
         DOASnoPass = false; # for enabling doas without password
@@ -281,8 +282,6 @@
           pkgs.openssl
           pkgs.python3Minimal
           # pkgs.python313Full
-          # pkgs.python312
-          # pkgs.python312Packages.pip
 
           # pkgs.pciutils # install if you need some commands like lspci
           

@@ -28,6 +28,7 @@
         ]; # kernel modules to load
         
         # Security
+        fuseAllowOther = false; # for enabling user_allow_other in /etc/fuse.conf
         doasEnable = false; # for enabling doas
         sudoEnable = true; # for enabling sudo
         DOASnoPass = false; # for enabling doas without password

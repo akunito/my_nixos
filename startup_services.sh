@@ -17,6 +17,14 @@ case $hostname in
         else
             echo -e "Skipping flatpak update..."
         fi
+        # Ask user if want to backup home directory to homelab DATA_4TB via SSHFS
+        read -p "Do you want to backup home directory and homelab DATA_4TB SSHFS to EXT? (y/N): " backup_home
+        if [ "$backup_home" = "y" ]; then
+            echo -e "Running manual_personal_backup.sh..."
+            /home/akunito/myScripts/manual_personal_backup.sh
+        else
+            echo -e "Skipping backups..."
+        fi
 
         echo -e "Available commands:"
         while true; do
