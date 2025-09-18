@@ -105,7 +105,7 @@ case $hostname in
         # gocryptfs -o allow_other /mnt/NFS_services/crypt /mnt/NFS_services/plain
 
         echo -e "Starting services"
-        docker-compose -f /home/akunito/.homelab/homelab/docker-compose.yml up -d nextcloud-db nextcloud-redis nextcloud-app nextcloud-cron syncthing-app freshrss obsidian-remote calibre-web-automated 
+        docker-compose -f /home/akunito/.homelab/homelab/docker-compose.yml up -d nextcloud-db nextcloud-redis nextcloud-app nextcloud-cron syncthing-app freshrss obsidian-remote # calibre-web-automated 
         docker-compose -f /home/akunito/.homelab/media/docker-compose.yml up -d
         docker-compose -f /home/akunito/.homelab/nginx-proxy/docker-compose.yml up -d
         docker-compose -f /home/akunito/.homelab/unifi/docker-compose.yml up -d
