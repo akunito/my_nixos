@@ -1,5 +1,5 @@
 {
-  description = "Flake for my Desktop";
+  description = "Flake of Akunito HomeLab on Desktop";
 
   outputs = inputs@{ self, ... }:
     # NOTE that install.sh will replace the username and email by the active one by string replacement
@@ -7,24 +7,21 @@
       # ---- SYSTEM SETTINGS ---- #
       systemSettings = {
         system = "x86_64-linux"; # system arch
-        hostname = "nixosaku"; # hostname
-        profile = "personal"; # select a profile defined from my profiles directory
+        hostname = "nixosLabaku"; # hostname
+        profile = "homelab"; # select a profile defined from my profiles directory
         timezone = "Europe/Warsaw"; # select timezone
         locale = "en_US.UTF-8"; # select locale
         bootMode = "uefi"; # uefi or bios
         bootMountPath = "/boot"; # mount path for efi boot partition; only used for uefi boot mode
         grubDevice = ""; # device identifier for grub; only used for legacy (bios) boot mode
         gpuType = "amd"; # amd, intel or nvidia; only makes some slight mods for amd at the moment
-
-        amdLACTdriverEnable = true; # for enabling amdgpu lact driver
+                amdLACTdriverEnable = false; # for enabling amdgpu lact driver
 
         kernelPackages = pkgs.linuxPackages_latest; # linuxPackages_xanmod_latest; # kernel packages to use
         
         kernelModules = [ 
           "i2c-dev" 
           "i2c-piix4" 
-          "xpadneo" # xbox controller
-          # "cpufreq_powersave" 
         ]; # kernel modules to load
         
         # Security
@@ -44,28 +41,13 @@
             options = [ "NOPASSWD" "SETENV" ];
           }
         ];
-        pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
+        pkiCertificates = [ ]; # paths relative to base.nix, not to flake
         # Polkit
-        polkitEnable = true;
+        polkitEnable = false;
         polkitRules = ''
           polkit.addRule(function(action, subject) {
             if (
               subject.isInGroup("users") && (
-                // Allow reboot and power-off actions
-                action.id == "org.freedesktop.login1.reboot" ||
-                action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-                action.id == "org.freedesktop.login1.power-off" ||
-                action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-                action.id == "org.freedesktop.login1.suspend" ||
-                action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
-                action.id == "org.freedesktop.login1.logout" ||
-                action.id == "org.freedesktop.login1.logout-multiple-sessions" ||
-
-                // Allow managing specific systemd units
-                (action.id == "org.freedesktop.systemd1.manage-units" &&
-                  action.lookup("verb") == "start" &&
-                  action.lookup("unit") == "mnt-NFS_Backups.mount") ||
-
                 // Allow running rsync and restic
                 (action.id == "org.freedesktop.policykit.exec" &&
                   (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
@@ -80,56 +62,61 @@
         # Backups
         resticWrapper = true; # for enabling restic wrapper
         rsyncWrapper = true; # for enabling rsync wrapper
-
+        
         homeBackupEnable = true; # restic.nix
-        homeBackupDescription = "Backup Home Directory with Restic";
-        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup.sh";
-        homeBackupUser = "akunito";
+        homeBackupDescription = "Backup Home Directory with Restic && DATA_4TB to HDD_4TB";
+        homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup.sh";
+        homeBackupUser = "root";
         homeBackupTimerDescription = "Timer for home_backup service";
-        homeBackupOnCalendar = "0/6:00:00"; # Every 6 hour
-        homeBackupCallNextEnabled = false; # for calling next service after backup
+        homeBackupOnCalendar = "23:00:00"; # At 23h every day
         homeBackupCallNext = [ "remote_backup.service" ]; # service to call after backup
 
-        remoteBackupEnable = false; # restic.nix
+        remoteBackupEnable = true; # restic.nix
         remoteBackupDescription = "Copy Restic Backup to Remote Server";
-        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup_remote.sh";
-        remoteBackupUser = "akunito";
+        remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/homelab_backup_remote.sh";
+        remoteBackupUser = "root";
         remoteBackupTimerDescription = "Timer for remote_backup service";
 
         # Network
         networkManager = true;
-        ipAddress = "192.168.8.96"; # ip to be reserved on router by mac (manually)
-        wifiIpAddress = "192.168.8.98"; # ip to be reserved on router by mac (manually)
+        ipAddress = "192.168.8.80"; # ip to be reserved on router by mac (manually)
+        wifiIpAddress = "192.168.8.81"; # ip to be reserved on router by mac (manually)
         defaultGateway = null; # default gateway
-        nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
-        wifiPowerSave = true; # for enabling wifi power save for laptops
-        resolvedEnable = false; # for enabling systemd-resolved
+        nameServers = [ "192.168.8.1" ]; # nameservers / DNS
+        wifiPowerSave = false; # for enabling wifi power save for laptops
+
+        resolvedEnable = true; # for enabling systemd-resolved
 
         # Firewall
         firewall = true;
         allowedTCPPorts = [ 
-          # 47984 47989 47990 48010 # sunshine
-        ];
+                            443 8043 # nginx
+                            # 2321 # gitea
+                            22000 # syncthing
+                            111 4000 4001 4002 2049 # NFS server ?
+                            8443 8080 8843 8880 6789 # unifi controller
+                          ]; 
         allowedUDPPorts = [ 
-          # 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 # sunshine
-          # 51820 # Wireguard
-        ];
+                            22000 21027 # syncthing
+                            111 4000 4001 4002 # NFS server ?
+                            3478 10001 1900 5514 # unifi controller
+                          ]; 
 
         # check drives.nix & drives.org if you need to set your LUKS devices to be opened on boot and automate mounting.
         mount2ndDrives = true; # drives.nix
         bootSSH = false; # for enabling ssh on boot (to unlock encrypted drives by SSH)
         # disk 1
         disk1_enabled = true;
-        disk1_name = "/mnt/2nd_NVME";
-        disk1_device = "/dev/mapper/2nd_NVME";
+        disk1_name = "/mnt/DATA_4TB";
+        disk1_device = "/dev/disk/by-uuid/0904cd17-7be1-433a-a21b-2c34f969550f";
         disk1_fsType = "ext4"; # ext4, btrfs, xfs, ntfs3, vfat, nfs4
-        disk1_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk1_options = [ "nofail" "x-systemd.device-timeout=5s" ];
         # disk 2
-        disk2_enabled = true;
-        disk2_name = "/mnt/DATA_SATA3";
-        disk2_device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
-        disk2_fsType = "ntfs3";
-        disk2_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk2_enabled = false; # DISABLED
+        disk2_name = "";
+        disk2_device = "";
+        disk2_fsType = "";
+        disk2_options = [ ];
         # disk 3
         disk3_enabled = true;
         disk3_name = "/mnt/NFS_media";
@@ -149,23 +136,25 @@
         disk5_fsType = "nfs4";
         disk5_options = [ "nofail" "x-systemd.device-timeout=5s" ];
         # disk 6
-        disk6_enabled = true;
-        disk6_name = "/mnt/DATA";
-        disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
-        disk6_fsType = "ntfs3"; 
-        disk6_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+        disk6_enabled = false; # DISABLED
+        disk6_name = "";
+        disk6_device = "";
+        disk6_fsType = ""; 
+        disk6_options = [ ];
         # disk 7
-        disk7_enabled = true;
+        disk7_enabled = false;
         disk7_name = "/mnt/EXT";
         disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
         disk7_fsType = "ext4";
         disk7_options = [ "nofail" "x-systemd.device-timeout=5s" ];
 
-        # NFS server settings
+        # NFS
         nfsServerEnable = false;
         nfsExports = ''
-          /mnt/example   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
-          /mnt/example2  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/Warehouse/Books   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/Warehouse/downloads  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/Warehouse/Media   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
+          /mnt/DATA_4TB/backups/AgaLaptop 192.168.8.77(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.78(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
         '';
         # NFS client settings
         nfsClientEnable = true;
@@ -209,25 +198,24 @@
             };
           }
         ];
-
+        
         # SSH System settings for BOOT
         authorizedKeys = [ 
           "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" 
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPp/10TlSOte830j6ofuEQ21YKxFD34iiyY55yl6sW7V diego88aku@gmail.com" # Laptop
         ];
-
         hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
-        
+
         # Printer
-        servicePrinting = true; 
-        networkPrinters = true;
+        servicePrinting = false; 
+        networkPrinters = false;
         sharePrinter = false; # for enabling printer sharing
 
         # Intel Network Adapter Power Management
         iwlwifiDisablePowerSave = false; # modify iwlwifi power save for Intel Adapter | true = disable power save | false = do nothing
         # TLP Power management
-        TLP_ENABLE = false; # Disable for laptops if you want granular power management with profiles
+        TLP_ENABLE = true; # Disable for laptops if you want granular power management with profiles
         PROFILE_ON_BAT = "performance";
         PROFILE_ON_AC = "performance";
         WIFI_PWR_ON_AC = "off"; # Sets Wi-Fi power saving mode. off – disabled saving mode | on – enabled
@@ -241,109 +229,60 @@
         lidSwitchDocked = "ignore"; # when the lid is closed, and connected to another display
         powerKey = "ignore";  # when pressing power key, do one of above
         # More Power settings
-        powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
-        power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
-
-        # Source a background image to use by SDDM
-        background-package = pkgs.stdenvNoCC.mkDerivation {
-          name = "background-image";
-          src = ./assets/wallpapers;
-          dontUnpack = true;
-          installPhase = ''
-            cp $src/lock8.png $out
-          '';
-        };
+        powerManagement_ENABLE = false; # Enable power management profiles for desktop systems <<<
+        power-profiles-daemon_ENABLE = false; # Enable power management profiles for desktop systems <<<
 
         # System packages
-        systemPackages = [
-          pkgs.vim
-          pkgs.wget
-          pkgs.nmap # net tool for port scanning
-          pkgs.zsh
-          pkgs.git
-          pkgs.cryptsetup
-          pkgs.home-manager
-          pkgs.wpa_supplicant # for wifi
-          pkgs.traceroute # for test
-          pkgs.iproute2 # for test
-          pkgs.dnsutils # for dig command
-          pkgs.nettools # netstat and other commands
-          pkgs.btop
-          pkgs.btop-rocm # for rocm AMD GPU
-          pkgs.fzf
-          pkgs.rsync
-          pkgs.nfs-utils
-          pkgs.restic
-          pkgs.clinfo # for checking rocm (OpenCL)
-          pkgs.dialog # scripting GUI tool
-          pkgs.gparted
-          pkgs.lm_sensors
-          pkgs.sshfs
-          pkgs.openssl
-          pkgs.python3Minimal
-          # pkgs.python313Full
-          # pkgs.python312
-          # pkgs.python312Packages.pip
-
-          # pkgs.pciutils # install if you need some commands like lspci
+        systemPackages = with pkgs; [
+          vim
+          wget
+          zsh
+          git
+          rclone
+          cryptsetup
+          gocryptfs
+          #wireguard-tools
+          traceroute
+          iproute2
+          openssl
+          restic
+          zim-tools #to unpack .zim files like gutemberg library
+          p7zip
+          nfs-utils
           
-          pkgs.qt5.qtbase
-          pkgs-unstable.sunshine
+          btop
+          fzf
+          tldr
+          atuin
 
-          pkgs-unstable.lmstudio
-
-          # Overwrite the Wallpaper for SDDM
-          (
-            pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
-              [General]
-              background = ${systemSettings.background-package}
-            ''
-          )
+          kitty # check if should be removed on labs
+          home-manager
         ];
-        starCitizenModules = true;
-
-        vivaldiPatch = false; # for enabling vivaldi patch
+        starCitizenModules = false;
 
         # Samba
-        sambaEnable = true;
+        sambaEnable = false;
         # Remote Control
-        sunshineEnable = true;
+        sunshineEnable = false;
         # Wireguard
-        wireguardEnable = true;
+        wireguardEnable = false;
         # Stylix
         stylixEnable = false;
         # Xbox wireless controller
-        xboxControllerEnable = true;
+        xboxControllerEnable = false;
         # appimage support
-        appImageEnable = true;
-
-        # Nerd font package
-        # fonts = [
-        #   pkgs.nerd-fonts.jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
-        #   pkgs.powerline
-        # ];
-        fonts = if (systemSettings.systemStable == true)
-                then
-                  [
-                    pkgs.nerdfonts
-                    pkgs.powerline
-                  ]
-                else
-                  [
-                    pkgs.nerd-fonts.jetbrains-mono
-                    pkgs.powerline
-                  ];
+        appImageEnable = false;
 
         # Swap file
-        swapFileEnable = false;
+        swapFileEnable = true;
         swapFileSyzeGB = 32; # 32GB
         # download buffer size for nix
-        downloadBufferSize = "134217728"; # 128MB
-        
+        downloadBufferSize = "134217728";
+
         # System Version
         systemStateVersion = "24.11";
         # System stable or unstable
-        systemStable = false; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
+        systemStable = true; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
 
         # UPDATES -------------------------------------
         # Auto update System Settings
@@ -366,95 +305,61 @@
       userSettings = rec {
         username = "akunito"; # username
         name = "akunito"; # name/identifier
-        email = "diego88aku@gmail.com"; # email (used for certain configurations)
+        email = ""; # email (used for certain configurations)
         dotfilesDir = "/home/akunito/.dotfiles"; # absolute path of the local repo
-        extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
+        extraGroups = [ "networkmanager" "wheel" "nscd" "www-data" ];
 
-        theme = "miramare"; # selcted theme from my themes directory (./themes/)
+        # username2enable = true; # enable additional user
+        # username2 = "mariadb"; # username
+        # username2uid = 999; # uid
+        # username2extraGroups = [ ];
+
+        # username3enable = true; # enable additional user
+        # username3 = "nextcloud"; # username
+        # username3uid = 33; # uid
+        # username3extraGroups = [ ];
+
+        theme = "io"; # selcted theme from my themes directory (./themes/)
         wm = "plasma6"; # Selected window manager or desktop environment; must select one in both ./user/wm/ and ./system/wm/
         # window manager type (hyprland or x11) translator
-        wmType = if ((wm == "hyprland") || (wm == "plasma")) then "wayland" else "x11";
-        wmEnableHyprland = true; 
+        wmType = if (wm == "hyprland") then "wayland" else "x11";
+        wmEnableHyprland = false; 
 
         dockerEnable = true; # for enabling docker
-        virtualizationEnable = true; # for enabling virtualization
-        qemuGuestAddition = false; # If the system is a QEMU VM
+        virtualizationEnable = false; # for enabling virtualization
+        qemuGuestAddition = true; # If the system is a QEMU VM
 
         gitUser = "akunito"; # git username
         gitEmail = "diego88aku@gmail.com"; # git email
 
         browser = "vivaldi"; # Default browser; must select one from ./user/app/browser/
-        spawnBrowser = "vivaldi";
         defaultRoamDir = "Personal.p"; # Default org roam directory relative to ~/Org
         term = "kitty"; # Default terminal command;
         font = "Intel One Mono"; # Selected font
         fontPkg = pkgs.intel-one-mono; # Font package
 
         # Home-Manager packages
-        homePackages = [
-          pkgs.zsh
-          pkgs.kitty
-          pkgs.git
-          pkgs.syncthing
-          pkgs-unstable.mission-center
-
-          pkgs-unstable.ungoogled-chromium
-
-          pkgs-unstable.vscode
-          pkgs-unstable.windsurf
-          pkgs-unstable.code-cursor
-          pkgs-unstable.obsidian
-          pkgs-unstable.spotify
-          pkgs-unstable.vlc
-          pkgs-unstable.candy-icons
-          pkgs.calibre
-          pkgs.kdePackages.dolphin
-          
-          pkgs-unstable.libreoffice
-          pkgs-unstable.telegram-desktop
-
-          pkgs-unstable.qbittorrent
-          pkgs-unstable.nextcloud-client
-          pkgs-unstable.wireguard-tools
-          
-          pkgs-unstable.bitwarden
-          pkgs-unstable.moonlight-qt
-          pkgs-unstable.discord
-          pkgs-unstable.kdePackages.kcalc
-          pkgs.vivaldi
-
-          pkgs-unstable.powershell
-          pkgs.azure-cli
-
-          # Games
-          pkgs-unstable.lug-helper
-          pkgs-unstable.runelite # RuneScape client
-          pkgs-unstable.rpcs3 # ps3 emulator
-          # pkgs.xemu # xbox emulator
-          pkgs-unstable.dolphin-emu # gamecube and wii emulator
-        ]
-        ++ lib.optional systemSettings.starCitizenModules pkgs-unstable.lug-helper;
+        homePackages = with pkgs; [
+          # Core
+          zsh
+          git
+        ];
 
         tailscaleEnabled = false;
-
+        
         zshinitContent = ''
-          PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
+          PROMPT=" ◉ %U%F{red}%n%f%u@%U%F{red}%m%f%u:%F{yellow}%~%f
           %F{green}→%f "
           RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
           [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
         '';
-          # %F{color}: Sets the foreground color (e.g., cyan, yellow, green, blue).
-          # %n: Displays the username.
-          # %m: Displays the hostname.
-          # %~: Displays the current directory.
-          # %f: Resets the color to default.
 
         sshExtraConfig = ''
           # sshd.nix -> programs.ssh.extraConfig
           Host github.com
             HostName github.com
             User akunito
-            IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
+            IdentityFile ~/.ssh/ed25519_github # Generate this key for github if needed
             AddKeysToAgent yes
         '';
 
@@ -481,15 +386,13 @@
         (import inputs.nixpkgs { system = systemSettings.system; rocmSupport = (if systemSettings.gpu == "amd" then true else false); }).applyPatches {
           name = "nixpkgs-patched";
           src = inputs.nixpkgs;
-          patches = [ #./patches/emacs-no-version-check.patch
-                      #./patches/nixpkgs-348697.patch
-                    ];
+          # patches = [ ./patches/emacs-no-version-check.patch ]; # DISABLING emacs patches??
         };
 
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if (systemSettings.systemStable == true)
+      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
               then
                 pkgs-stable
               else
@@ -499,7 +402,7 @@
                     allowUnfree = true;
                     allowUnfreePredicate = (_: true);
                   };
-                  # overlays = [ inputs.rust-overlay.overlays.default ];
+                  # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
                 }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
@@ -516,7 +419,6 @@
           allowUnfree = true;
           allowUnfreePredicate = (_: true);
         };
-        # overlays = [ inputs.rust-overlay.overlays.default ];
       };
 
       # pkgs-emacs = import inputs.emacs-pin-nixpkgs {
@@ -534,7 +436,7 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if (systemSettings.systemStable == true)
+      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
              then
                inputs.nixpkgs-stable.lib
              else
@@ -542,7 +444,7 @@
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      home-manager = (if (systemSettings.systemStable == true)
+      home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
              then
                inputs.home-manager-stable
              else
@@ -564,7 +466,7 @@
         user = home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           modules = [
-            (./. + "/profiles" + ("/" + systemSettings.profile) + "/home.nix") # load home.nix from selected PROFILE      
+            (./. + "/profiles" + ("/" + systemSettings.profile) + "/home.nix") # load home.nix from selected PROFILE
           ];
           extraSpecialArgs = {
             # pass config variables from above
@@ -583,9 +485,7 @@
           system = systemSettings.system;
           modules = [
             (./. + "/profiles" + ("/" + systemSettings.profile) + "/configuration.nix")
-            # inputs.lix-module.nixosModules.default
             ./system/bin/phoenix.nix
-            # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t590
           ]; # load configuration.nix from selected PROFILE
           specialArgs = {
             # pass config variables from above
@@ -634,10 +534,6 @@
     };
 
   inputs = {
-    # lix-module = {
-    #   url = "https://git.lix.systems/lix-project/nixos-module/archive/2.90.0.tar.gz";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
     nixpkgs.url = "nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "nixpkgs/nixos-24.11";
     # emacs-pin-nixpkgs.url = "nixpkgs/f72123158996b8d4449de481897d855bc47c7bf6";
@@ -658,25 +554,19 @@
     #   inputs.home-manager.follows = "home-manager-unstable";
     # };
 
-   hyprland = {
-      url = "github:hyprwm/Hyprland/main?submodules=true";
-      # url = "github:hyprwm/Hyprland/v0.47.2-b?submodules=true";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-  #   hyprland-plugins = {
-  #     type = "git";
-  #     url = "https://code.hyprland.org/hyprwm/hyprland-plugins.git";
-  #     # rev = "4d7f0b5d8b952f31f7d2e29af22ab0a55ca5c219"; #v0.44.1
-  #     inputs.hyprland.follows = "hyprland";
-  #   };
-  #   hyprlock = {
-  #     type = "git";
-  #     url = "https://code.hyprland.org/hyprwm/hyprlock.git";
-  #     # rev = "73b0fc26c0e2f6f82f9d9f5b02e660a958902763";
-  #     inputs.nixpkgs.follows = "nixpkgs";
-  #   };
-  #   hyprgrass.url = "github:horriblename/hyprgrass/427690aec574fec75f5b7b800ac4a0b4c8e4b1d5";
-  #   hyprgrass.inputs.hyprland.follows = "hyprland";
+    # hyprland = {
+    #   type = "git";
+    #   url = "https://github.com/hyprwm/Hyprland";
+    #   submodules = true;
+    #   rev = "918d8340afd652b011b937d29d5eea0be08467f5";
+    # };
+    # hyprland.inputs.nixpkgs.follows = "nixpkgs";
+    # hyprland-plugins.url = "github:hyprwm/hyprland-plugins/3ae670253a5a3ae1e3a3104fb732a8c990a31487";
+    # hyprland-plugins.inputs.hyprland.follows = "hyprland";
+    # hycov.url = "github:DreamMaoMao/hycov/de15cdd6bf2e46cbc69735307f340b57e2ce3dd0";
+    # hycov.inputs.hyprland.follows = "hyprland";
+    # hyprgrass.url = "github:horriblename/hyprgrass/736119f828eecaed2deaae1d6ff1f50d6dabaaba";
+    # hyprgrass.inputs.hyprland.follows = "hyprland";
 
     # nix-doom-emacs.url = "github:nix-community/nix-doom-emacs";
     # nix-doom-emacs.inputs.nixpkgs.follows = "emacs-pin-nixpkgs";
@@ -736,7 +626,7 @@
 
     # stylix.url = "github:danth/stylix";
 
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    # rust-overlay.url = "github:oxalica/rust-overlay";
 
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";

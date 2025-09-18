@@ -84,8 +84,9 @@ case $hostname in
     "nixosLabaku")
         echo -e "Starting homelab services..."
         # sudo mount UUID=550c7911-924f-425d-980c-ff83f888a1a1 /mnt/DATA_4TB
-        sudo mount UUID=04a3274a-5747-44be-a0de-4ac82cd3e1a5 /mnt/HDD_4TB
-        sudo mount UUID=0904cd17-7be1-433a-a21b-2c34f969550f /mnt/DATA_4TB # this is the zVOL iSCSI mounted on DATA_4TB directory  
+        # sudo mount UUID=04a3274a-5747-44be-a0de-4ac82cd3e1a5 /mnt/HDD_4TB
+        # sudo mount UUID=0904cd17-7be1-433a-a21b-2c34f969550f /mnt/DATA_4TB # this is the zVOL iSCSI mounted on DATA_4TB directory  
+           # not mounted because it's managed dynamically now
 
         echo -e "Checking zvol_services on DATA_4TB directory"
         ls -la /mnt/DATA_4TB
