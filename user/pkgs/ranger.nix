@@ -31,7 +31,7 @@
     )
   ];
   home.packages = with pkgs; [
-    poppler_utils
+    poppler-utils
     librsvg
     ffmpegthumbnailer
   ];

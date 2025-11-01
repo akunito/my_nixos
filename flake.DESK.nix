@@ -415,7 +415,7 @@
           pkgs-unstable.nextcloud-client
           pkgs-unstable.wireguard-tools
           
-          pkgs-unstable.bitwarden
+          pkgs-unstable.bitwarden-desktop
           pkgs-unstable.moonlight-qt
           pkgs-unstable.discord
           pkgs-unstable.kdePackages.kcalc
