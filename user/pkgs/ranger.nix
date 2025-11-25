@@ -31,7 +31,7 @@
     )
   ];
   home.packages = with pkgs; [
-    poppler-utils
+    # poppler-utils # temporary disabled due to build issues in VMHOME flake
     librsvg
     ffmpegthumbnailer
   ];
