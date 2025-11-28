@@ -4,9 +4,9 @@
   # https://nixos.wiki/wiki/Git 
   home.packages = [ pkgs.git ];
   programs.git.enable = true;
-  programs.git.userName = userSettings.gitUser;
-  programs.git.userEmail = userSettings.gitEmail;
-  programs.git.extraConfig = {
+  programs.git.settings.user.name = userSettings.gitUser;
+  programs.git.settings.user.email = userSettings.gitEmail;
+  programs.git.settings = {
     init.defaultBranch = "main";
     safe.directory = [ 
       ("/home/" + userSettings.username + "/.dotfiles/.git")

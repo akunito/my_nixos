@@ -1,12 +1,26 @@
 { config, pkgs, userSettings, lib, ... }:
 
 {
+
+  nixpkgs.overlays = [
+    (final: prev: {
+      libvirt = prev.libvirt.override {
+        enableXen = false;
+        enableGlusterfs = false;
+        enableIscsi = false;
+      };
+    })
+  ];
+
   # Virt-manager doc > https://nixos.wiki/wiki/Virt-manager
   # Note there is another virtualization.nix on user folder
   environment.systemPackages = with pkgs; lib.mkIf (userSettings.virtualizationEnable == true) [
     virt-manager
     distrobox
     virtiofsd
+    # gnome-boxes # VM management
+    # dnsmasq # VM networking
+    phodav # (optional) Share files with guest VMs
   ];
 
   programs.virt-manager.enable = lib.mkIf (userSettings.virtualizationEnable == true) true;
@@ -17,18 +31,26 @@
       "virbr0"
     ];
     enable = true;
-    qemu.runAsRoot = false;
-    qemu.vhostUserPackages = [ pkgs.virtiofsd ];
+    onShutdown = "shutdown";
+    qemu = {
+      runAsRoot = false;
+      package = pkgs.qemu_kvm;
+      vhostUserPackages = [ pkgs.virtiofsd ];
+      # Enable TPM emulation (for Windows 11)
+      swtpm.enable = true;
+    };
   };
-  
+
   services.qemuGuest.enable = true;
   services.spice-vdagentd.enable = true;  # enable copy and paste between host and guest
 
   users.users.${userSettings.username}.extraGroups = lib.mkIf (userSettings.virtualizationEnable == true) [ "qemu-libvirtd" "libvirtd" ];
+  # Allow VM management
+  users.groups.libvirtd.members = [ "akunito" ];
+  users.groups.kvm.members = [ "akunito" ];
 
   # # redirect ports for printer to be tested
-  # virtualisation.spiceUSBRedirection.enable = true; 
-
+  virtualisation.spiceUSBRedirection.enable = true; 
 
   virtualisation.vmVariant = {
     # following configuration is added only when building VM with build-vm

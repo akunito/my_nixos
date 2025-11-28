@@ -423,6 +423,8 @@
 
           pkgs-unstable.powershell
           pkgs.azure-cli
+          
+          pkgs.octavePackages.dicom # medical images *tomography* viewer
 
           # Games
           pkgs-unstable.runelite # RuneScape client

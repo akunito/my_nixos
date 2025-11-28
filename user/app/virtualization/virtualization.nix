@@ -18,9 +18,17 @@
     virtiofsd
   ];
 
+  # home.file.".config/libvirt/qemu.conf".text = ''
+  # nvram = ["/run/libvirt/nix-ovmf/OVMF_CODE.fd:/run/libvirt/nix-ovmf/OVMF_VARS.fd"]
+  #   '';
+
   home.file.".config/libvirt/qemu.conf".text = ''
-  nvram = ["/run/libvirt/nix-ovmf/OVMF_CODE.fd:/run/libvirt/nix-ovmf/OVMF_VARS.fd"]
-    '';
+    nvram = [
+      "/run/libvirt/nix-ovmf/OVMF_CODE.fd:/run/libvirt/nix-ovmf/OVMF_VARS.fd"
+      "/run/libvirt/nix-ovmf/OVMF_CODE.secboot.fd:/run/libvirt/nix-ovmf/OVMF_VARS.fd"
+    ];
+  '';
+
 
   # Virtualization: Connections for virt-manager
   dconf.settings = lib.mkIf (userSettings.virtualizationEnable == true) {
