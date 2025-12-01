@@ -7,8 +7,8 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-SystemGenerationsToKeep=8
-HomeManagerGenerationsToKeep=5
+SystemGenerationsToKeep=4
+HomeManagerGenerationsToKeep=2
 UserGenerationsKeepOnlyOlderThan="15d"
 
 LOG_FILE="$SCRIPT_DIR/maintenance.log"

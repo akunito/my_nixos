@@ -60,6 +60,8 @@
                 action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
                 action.id == "org.freedesktop.login1.suspend" ||
                 action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+                action.id == "org.freedesktop.login1.logout" ||
+                action.id == "org.freedesktop.login1.logout-multiple-sessions" ||
 
                 // Allow managing specific systemd units
                 (action.id == "org.freedesktop.systemd1.manage-units" &&
@@ -104,7 +106,7 @@
         nameServers = [ "192.168.8.1" "192.168.8.1" ]; # nameservers / DNS
         wifiPowerSave = true; # for enabling wifi power save for laptops
 
-        resolvedEnable = true; # for enabling systemd-resolved
+        resolvedEnable = false; # for enabling systemd-resolved
 
         # Firewall
         firewall = true;
@@ -256,6 +258,16 @@
         powerManagement_ENABLE = true; # Enable power management profiles for desktop systems <<<
         power-profiles-daemon_ENABLE = true; # Enable power management profiles for desktop systems <<<
 
+        # Source a background image to use by SDDM
+        background-package = pkgs.stdenvNoCC.mkDerivation {
+          name = "background-image";
+          src = ./assets/wallpapers;
+          dontUnpack = true;
+          installPhase = ''
+            cp $src/lock8.png $out
+          '';
+        };
+
         # System packages
         systemPackages = [
           pkgs.vim
@@ -300,22 +312,33 @@
         # appimage support
         appImageEnable = false;
 
-        # Fonts
-        fonts = [
-          pkgs.nerdfonts
-          pkgs.powerline
-        ];
+        # Nerd font package
+        # fonts = [
+        #   pkgs.nerd-fonts.jetbrains-mono # "nerd-fonts-jetbrains-mono" # If unstable or new version | "nerdfonts" if old version
+        #   pkgs.powerline
+        # ];
+        fonts = if (systemSettings.systemStable == true)
+                then
+                  [
+                    pkgs.nerdfonts
+                    pkgs.powerline
+                  ]
+                else
+                  [
+                    pkgs.nerd-fonts.jetbrains-mono
+                    pkgs.powerline
+                  ];
 
         # Swap file
         swapFileEnable = false;
         swapFileSyzeGB = 32; # 32GB
         # download buffer size for nix
-        downloadBufferSize = "134217728";
+        downloadBufferSize = "134217728"; # 128MB
 
         # System Version
         systemStateVersion = "24.11";
         # System stable or unstable
-        systemStable = true; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
+        systemStable = false; # use stable or unstable nixpkgs; if false, use nixpkgs-unstable
 
         # UPDATES -------------------------------------
         # Auto update System Settings
@@ -356,6 +379,7 @@
         gitEmail = "diego88aku@gmail.com"; # git email
 
         browser = "vivaldi"; # Default browser; must select one from ./user/app/browser/
+        spawnBrowser = "vivaldi";
         defaultRoamDir = "Personal.p"; # Default org roam directory relative to ~/Org
         term = "kitty"; # Default terminal command;
         font = "Intel One Mono"; # Selected font
@@ -367,12 +391,13 @@
           pkgs.kitty
           pkgs.git
           pkgs.syncthing
+          pkgs-unstable.mission-center
 
           # vivaldi # temporary moved to configuration.nix for issue with plasma 6
           # qt5.qtbase
           pkgs-unstable.ungoogled-chromium
 
-          # pkgs-unstable.vscode
+          pkgs-unstable.vscode
           pkgs-unstable.obsidian
           pkgs-unstable.spotify
           # pkgs-unstable.xournalpp
@@ -428,13 +453,15 @@
         (import inputs.nixpkgs { system = systemSettings.system; rocmSupport = (if systemSettings.gpu == "amd" then true else false); }).applyPatches {
           name = "nixpkgs-patched";
           src = inputs.nixpkgs;
-          # patches = [ ./patches/emacs-no-version-check.patch ]; # DISABLING emacs patches??
+          patches = [ #./patches/emacs-no-version-check.patch
+                      #./patches/nixpkgs-348697.patch
+                    ];
         };
 
       # configure pkgs
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      pkgs = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal"))
+      pkgs = (if (systemSettings.systemStable == true)
               then
                 pkgs-stable
               else
@@ -444,7 +471,7 @@
                     allowUnfree = true;
                     allowUnfreePredicate = (_: true);
                   };
-                  # overlays = [ inputs.rust-overlay.overlays.default ]; # not needed
+                  # overlays = [ inputs.rust-overlay.overlays.default ];
                 }));
 
       pkgs-stable = import inputs.nixpkgs-stable {
@@ -461,6 +488,7 @@
           allowUnfree = true;
           allowUnfreePredicate = (_: true);
         };
+        # overlays = [ inputs.rust-overlay.overlays.default ];
       };
 
       # pkgs-emacs = import inputs.emacs-pin-nixpkgs {
@@ -478,7 +506,7 @@
       # configure lib
       # use nixpkgs if running a server (homelab or worklab profile)
       # otherwise use patched nixos-unstable nixpkgs
-      lib = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab") || (systemSettings.profile == "personal")) # PERSONAL AS WELL
+      lib = (if (systemSettings.systemStable == true)
              then
                inputs.nixpkgs-stable.lib
              else
@@ -486,12 +514,11 @@
 
       # use home-manager-stable if running a server (homelab or worklab profile)
       # otherwise use home-manager-unstable
-      # home-manager = (if ((systemSettings.profile == "homelab") || (systemSettings.profile == "worklab"))
-      #        then
-      #          inputs.home-manager-stable
-      #        else
-      #          inputs.home-manager-unstable);
-      home-manager = inputs.home-manager-stable; # Overriding home-manager logic to force stable
+      home-manager = (if (systemSettings.systemStable == true)
+             then
+               inputs.home-manager-stable
+             else
+               inputs.home-manager-unstable);
 
       # Systems that can run tests:
       supportedSystems = [ "aarch64-linux" "i686-linux" "x86_64-linux" ];
