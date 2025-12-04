@@ -424,10 +424,8 @@
           pkgs-unstable.powershell
           pkgs.azure-cli
           
-          pkgs.octavePackages.dicom # medical images *tomography* viewer
-
           # Games
-          pkgs-unstable.runelite # RuneScape client
+          # pkgs-unstable.runelite # RuneScape client
           pkgs-unstable.rpcs3 # ps3 emulator
           # pkgs.xemu # xbox emulator
           pkgs-unstable.dolphin-emu # gamecube and wii emulator

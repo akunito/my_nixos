@@ -393,6 +393,7 @@
           pkgs.zsh
           pkgs.kitty
           pkgs.git
+          pkgs.git-crypt
           pkgs.syncthing
           pkgs-unstable.mission-center
 
@@ -410,6 +411,7 @@
           
           pkgs-unstable.libreoffice
           pkgs-unstable.telegram-desktop
+          pkgs-unstable.drawio
 
           pkgs-unstable.qbittorrent
           pkgs-unstable.nextcloud-client
