@@ -393,6 +393,7 @@
           pkgs.zsh
           pkgs.kitty
           pkgs.git
+          pkgs.git-crypt
           pkgs.syncthing
           pkgs-unstable.mission-center
 
