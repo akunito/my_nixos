@@ -425,6 +425,7 @@
 
           pkgs-unstable.powershell
           pkgs.azure-cli
+          pkgs-unstable.cloudflared # Cloudflare tunnel client
           
           # Games
           # pkgs-unstable.runelite # RuneScape client
