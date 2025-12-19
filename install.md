@@ -3,6 +3,8 @@ author: Akunito
 title: Install script
 ---
 
+> **Note**: This document contains historical installation notes from the original LibrePhoenix repository. Some sections are outdated. For current, up-to-date installation instructions, see [Installation Documentation](docs/installation.md).
+
 ## Interactive Install Script
 
 Read the comments in `./install.sh` for more info Basically to use the script, you have to create a copy of `flake.nix` to ie: `flake.PERSONAL.nix` or `flake.HOMELAB.nix`, and adjust the variables there. You can use as example any of `my flake.{PROFILES}.nix` 
@@ -17,9 +19,11 @@ Then you can run the script like this:
 # where $1 is the path to your ~/.dotfiles and $2 is PROFILE on flake.PROFILE.nix
 ```
 
-## Note that the rest of the document is partially deprecated but some of the notes from Emmet might be still valid, use it with caution.
+## Note
 
-These are just some simple install notes for myself (in-case I have to reinstall unexpectedly). You could also use these to try out my config in a VM.
+The following sections contain historical installation notes from the original LibrePhoenix repository. Some information may be outdated. For current installation instructions, see the [Installation Documentation](docs/installation.md).
+
+These are preserved for reference and historical context.
 
 ---
 ## Automated Install Script (Experimental)
@@ -31,101 +35,41 @@ It essentially just runs [*the manual install steps*]{.spurious-link target="Man
 
 I\'ll eventually™ add the ability to supply arguments to this script as well.
 
-The quickest way to install is running the install script directly from the remote git repo using `nix run`{.verbatim}, which is essentially just one of the following:
+**Note**: This section describes the original LibrePhoenix installation method, which is no longer applicable for this fork. 
 
-```sh
-# Install from gitlab
-nix run gitlab:librephoenix/nixos-config
+For current installation instructions, see [Installation Documentation](docs/installation.md).
 
-# Or install from github
-nix run github:librephoenix/nixos-config
-
-# Or install from codeberg
-nix run git+https://codeberg.org/librephoenix/nixos-config
-```
-
-This will install the dotfiles to `~/.dotfiles`{.verbatim}, but if you\'d like to install to a custom directory, just supply it as a positional argument, i.e:
-
-```sh
-# Install from gitlab
-nix run gitlab:librephoenix/nixos-config -- /your/custom/directory
-```
+The original method was to run the install script directly from the remote git repo using `nix run`, but this fork uses a different installation approach with profile-based flakes.
 
 The script will ask for sudo permissions at certain points, *but you should not run the script as root*.
 
-If the above `nix run`{.verbatim} command gives you an error, odds are you either don\'t have `git`{.verbatim} installed, or you haven\'t enabled the experimental features in your Nix config (`nix-command`{.verbatim} and `flakes`{.verbatim}). To get the command to install properly, you can first enter a shell with `git`{.verbatim} available using:
+**Note**: This section is outdated. See [Installation Documentation](docs/installation.md) for current installation methods.
 
-```sh
-nix-shell -p git
-```
+**Note**: This section describes the original LibrePhoenix installation process, which has been significantly updated in this fork. 
 
-and then running:
+The current installation process:
+- Uses profile-based flakes (`flake.PROFILE.nix`)
+- Supports custom directories
+- Supports both UEFI and BIOS boot modes
+- Does not require editing `flake.nix` during installation (configure your profile flake beforehand)
 
-```sh
-nix run --experimental-features 'nix-command flakes' gitlab:librephoenix/nixos-config
-```
+For current installation instructions, see [Installation Documentation](docs/installation.md).
 
-And if you want a single copy-paste solution:
-
-```sh
-nix-shell -p git --command "nix run --experimental-features 'nix-command flakes' gitlab:librephoenix/nixos-config"
-```
-
-This *should* still work with a custom dotfiles directory too, i.e:
-
-```sh
-nix-shell -p git --command "nix run --experimental-features 'nix-command flakes' gitlab:librephoenix/nixos-config -- /your/custom/directory"
-```
-
-At a certain point in the install script it will open `nano`{.verbatim} (or whatever your \$EDITOR is set to) and ask you to edit the `flake.nix`{.verbatim}. You can edit as much or as little of the config variables as you like, and it will continue the install after you exit the editor.
-
-Potential Errors: I\'ve only tested it working on UEFI with the default EFI mount point of `/boot`{.verbatim}. I\'ve added experimental legacy (BIOS) boot support, but it does rely on a quick and dirty script to find the grub device. If you are testing it using some weird boot configuration for whatever reason, try modifying `bootMountPath`{.verbatim} (UEFI) or `grubDevice`{.verbatim} (legacy BIOS) in `flake.nix`{.verbatim} before install, or else it will complain about not being able to install the bootloader.
-
-Note: If you\'re installing this to a VM, Hyprland won\'t work unless 3D acceleration is enabled.
-
-Disclaimer: If you install my `homelab`{.verbatim} or `worklab`{.verbatim} profiles *CHANGE THE PUBLIC SSH KEYS UNLESS YOU WANT ME TO BE ABLE TO SSH INTO YOUR SERVER. YOU CAN CHANGE OR REMOVE THE SSH KEY IN THE RELEVANT CONFIGURATION.NIX*:
-
--   [configuration.nix](./profiles/homelab/configuration.nix) for homelab profile
--   [configuration.nix](./profiles/worklab/configuration.nix) for worklab profile
-
-### Install From Local Git Clone
-
-The dotfiles can be installed after cloning the repo into `~/.dotfiles`{.verbatim} using:
-
-```sh
-git clone https://gitlab.com/librephoenix/nixos-config.git ~/.dotfiles ~/.dotfiles/install.sh
-```
-
-or with a custom directory:
-
-```sh
-git clone https://gitlab.com/librephoenix/nixos-config.git /your/custom/directory /your/custom/directory/install.sh
-```
-
-If you install to a custom directory, make sure to edit the `userSettings.dotfilesDir`{.verbatim} in the [flake.nix](./flake.nix), or else my [phoenix wrapper script](./system/bin/phoenix.nix) won\'t work.
-
-At a certain point in the install script it will open `nano`{.verbatim} (or whatever your `$EDITOR`{.verbatim} is set to) and ask you to edit the `flake.nix`{.verbatim}. You can edit as much or as little of the config variables as you like, and it will continue the install after you exit the editor.
-
-Potential Errors: I mainly only test this on UEFI, but I\'ve added experimental legacy (BIOS) boot support. Keep in mind, it does rely on a quick and dirty script to find the grub device. If you are testing it using some weird boot configuration for whatever reason, try modifying `bootMountPath`{.verbatim} (UEFI) or `grubDevice`{.verbatim} (legacy BIOS) in `flake.nix`{.verbatim} before install, or else it will complain about not being able to install the bootloader.
-
-Note: If you\'re installing this to a VM, Hyprland won\'t work unless 3D acceleration is enabled.
-
-Disclaimer: If you install my `homelab`{.verbatim} or `worklab`{.verbatim} profiles *CHANGE THE PUBLIC SSH KEYS UNLESS YOU WANT ME TO BE ABLE TO SSH INTO YOUR SERVER. YOU CAN CHANGE OR REMOVE THE SSH KEY IN THE RELEVANT CONFIGURATION.NIX*:
-
--   [configuration.nix](./profiles/homelab/configuration.nix) for homelab profile
--   [configuration.nix](./profiles/worklab/configuration.nix) for worklab profile
+**Security Note**: If you install the `homelab` or `worklab` profiles, **CHANGE THE PUBLIC SSH KEYS** in the relevant `configuration.nix` files before use.
 
 ### Automatic Install Script Limitations
 
-At this time, this only works on an existing NixOS install. It also only works if the dotfiles are cloned into `~/.dotfiles`{.verbatim}. It also only works on UEFI, not on BIOS :(
+**Note**: This section is outdated. The current install script supports:
+- ✅ Custom directories (not just `~/.dotfiles`)
+- ✅ BIOS boot mode detection and configuration
+- ✅ Profile-based installation
 
-Future upgrade plans:
-
+Current limitations:
 -   [ ] Be able to install directly from NixOS iso
 -   [ ] Be able to install just home-manager config to a non-NixOS Linux distro
--   [ ] Be able to detect EFI mount point for systemd-boot?
--   [x] ~~Be able to detect UEFI or BIOS and switch config as needed~~
--   [ ] ??? (open up an issue if you think there is anything else I should try to figure out)
+-   [ ] Be able to detect EFI mount point for systemd-boot automatically
+
+For current installation instructions, see [Installation Documentation](docs/installation.md).
 
 ## Manual Install Procedure
 
@@ -136,14 +80,16 @@ If you instead want to install this manually to see all the steps (kind of like 
 Start by cloning the repo:
 
 ```sh
-git clone https://gitlab.com/librephoenix/nixos-config.git ~/.dotfiles
+git clone <your-repo-url> ~/.dotfiles
 ```
 
 Any custom directory should also work:
 
 ```sh
-git clone https://gitlab.com/librephoenix/nixos-config.git /your/custom/directory
+git clone <your-repo-url> /your/custom/directory
 ```
+
+**Note**: Replace `<your-repo-url>` with your actual repository URL. This is a fork, not the original LibrePhoenix repository.
 
 If you install to a custom directory, make sure to edit the `userSettings.dotfilesDir`{.verbatim} in the beginning [flake.nix](./flake.nix), or else my [phoenix wrapper script](./system/bin/phoenix.nix) won\'t work.
 
@@ -162,7 +108,7 @@ To get the hardware configuration on a new system, either copy from `/etc/nixos/
 sudo nixos-generate-config --show-hardware-config > ~/.dotfiles/system/hardware-configuration.nix
 ```
 
-Also, if you have a differently named user account than my default (`emmet`{.verbatim}), you *must* update the following lines in the let binding near the top of the [flake.nix](./flake.nix):
+Also, if you have a differently named user account, you *must* update the following lines in the let binding near the top of the [flake.nix](./flake.nix):
 
 ```nix
 ...

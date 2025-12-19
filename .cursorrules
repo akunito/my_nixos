@@ -1,0 +1,214 @@
+# Cursor Rules for NixOS Configuration Repository
+
+## Documentation Standards
+
+### Documentation Structure
+
+This repository uses a **3-level documentation structure**:
+
+1. **Level 1: Top-Level** (`README.md`)
+   - Overview and quick start
+   - Navigation to major topics
+   - Project structure overview
+
+2. **Level 2: Major Topics** (`docs/*.md`)
+   - Comprehensive guides for major topics
+   - Located in the `docs/` directory
+   - Examples: `installation.md`, `configuration.md`, `profiles.md`, etc.
+
+3. **Level 3: Specific Documentation** (`docs/{subdirectory}/*.md`)
+   - Detailed guides for specific topics
+   - Located in subdirectories of `docs/`
+   - Examples: `docs/security/luks-encryption.md`, `docs/hardware/drive-management.md`, etc.
+
+### Documentation File Format
+
+- **All documentation must be in Markdown (.md format)**
+- Convert any existing `.org` files to `.md` when updating
+- Keep original `.org` files for reference but create `.md` equivalents
+- Use consistent formatting across all documentation
+
+### Cross-Referencing
+
+- **Always add cross-references** between related documentation
+- Link to Level 2 docs from Level 1 (README.md)
+- Link to Level 3 docs from Level 2 docs
+- Link back to parent docs from Level 3 docs
+- Use relative paths for internal links
+- Reference original README.org files when they exist
+
+### README Files in Subdirectories
+
+- **Preserve existing README.org files** - don't remove them
+- **Create README.md equivalents** in the `docs/` structure
+- **Add references** between original README files and new documentation
+- **Convert content** from .org to .md format when integrating
+- **Maintain both** - original README.org for historical reference, new .md for main documentation
+
+### Integration Strategy
+
+When encountering README.org or README.md files in subdirectories:
+
+1. **Read the content** and understand its purpose
+2. **Convert to Markdown** if it's in .org format
+3. **Place in appropriate Level 2 or Level 3 location** in `docs/`
+4. **Add cross-references** from:
+   - Main documentation to the new doc
+   - New doc back to related docs
+   - New doc to original README file
+5. **Update relevant Level 2 docs** to reference the new documentation
+6. **Keep original README files** with a note pointing to new location
+
+### Temporary/Planning Documentation
+
+**Important**: Any document created for planning, analysis, design ideas, recommendations, bug fixing notes, or any topic that should be considered and potentially deleted afterwards should be placed in:
+
+```
+docs/future/
+```
+
+Examples of documents that belong in `docs/future/`:
+- `docs/future/design-ideas.md`
+- `docs/future/bug-fixes.md`
+- `docs/future/analysis.md`
+- `docs/future/recommendations.md`
+- `docs/future/planning.md`
+
+**Rules for `docs/future/`**:
+- These are temporary/working documents
+- Can be deleted after implementation or when no longer needed
+- Should be reviewed periodically and cleaned up
+- Not part of the main documentation structure
+- Can be referenced from main docs if needed, but clearly marked as temporary
+
+### Documentation Updates
+
+When updating documentation:
+
+1. **Follow the 3-level structure**
+2. **Maintain cross-references** - update links when moving/renaming docs
+3. **Convert .org to .md** when updating
+4. **Add references** to original files
+5. **Keep original files** unless explicitly asked to remove
+6. **Update table of contents** in parent documents
+7. **Check for broken links** after changes
+
+### Code Examples
+
+- Use proper code blocks with language specification
+- Include file paths in code examples
+- Show both configuration snippets and command-line examples
+- Include expected outputs when helpful
+- Use consistent formatting for Nix code
+
+### Best Practices
+
+- **Be comprehensive** - document all features and options
+- **Include examples** - show how to use features
+- **Add troubleshooting** - common issues and solutions
+- **Keep it updated** - update docs when code changes
+- **Use clear headings** - organize content logically
+- **Add table of contents** - for longer documents
+- **Cross-reference** - link related topics
+- **Preserve history** - keep original files when converting
+
+### File Naming Conventions
+
+- Use lowercase with hyphens: `luks-encryption.md`
+- Be descriptive: `cpu-power-management.md` not `cpu.md`
+- Match directory structure: `docs/security/luks-encryption.md`
+- Keep original names when converting: `README.org` → `README.md` equivalent
+
+### Documentation Checklist
+
+When creating or updating documentation:
+
+- [ ] Follows 3-level structure
+- [ ] In Markdown format (.md)
+- [ ] Has table of contents (if long)
+- [ ] Cross-references related docs
+- [ ] Links to original README files if they exist
+- [ ] Includes examples
+- [ ] Has troubleshooting section (if applicable)
+- [ ] Uses consistent formatting
+- [ ] No broken links
+- [ ] Properly placed in docs/ structure
+
+## Code Standards
+
+### Nix Code Style
+
+- Use consistent indentation (2 spaces)
+- Format let bindings clearly
+- Group related configurations
+- Add comments for non-obvious configurations
+- Use descriptive variable names
+
+### Module Organization
+
+- Keep modules focused and single-purpose
+- Use conditional enabling with `lib.mkIf`
+- Access variables via function arguments
+- Document module purpose at the top
+
+## Git Commit Guidelines
+
+### Documentation Review Before Commits
+
+**CRITICAL**: Before committing any changes to git, always:
+
+1. **Review Documentation Impact**
+   - Check if your changes affect any documented features
+   - Identify which documentation files need updates
+   - Verify documentation accuracy matches code changes
+
+2. **Update Documentation When Needed**
+   - Update relevant documentation files if features changed
+   - Add new documentation for new features
+   - Remove or mark deprecated documentation
+   - Update examples if they're no longer accurate
+   - Fix broken links or references
+
+3. **Documentation Checklist Before Commit**
+   - [ ] Code changes reviewed for documentation impact
+   - [ ] Relevant documentation files identified
+   - [ ] Documentation updated to reflect changes
+   - [ ] Examples updated if needed
+   - [ ] Cross-references checked and updated
+   - [ ] New features documented (if applicable)
+   - [ ] Deprecated features marked (if applicable)
+   - [ ] Links verified (no broken references)
+
+4. **What to Document**
+   - **New Features**: Add documentation to appropriate level (2 or 3)
+   - **Changed Features**: Update existing documentation
+   - **Removed Features**: Mark as deprecated or remove documentation
+   - **Configuration Changes**: Update configuration guide
+   - **Script Changes**: Update scripts documentation
+   - **Module Changes**: Update module documentation
+
+5. **Documentation Commit Messages**
+   - Include documentation updates in commit messages
+   - Example: "Add feature X and update documentation"
+   - Or separate commits: "Update docs for feature X"
+
+### Automated Documentation Checks
+
+When making changes, consider:
+
+- **Configuration Changes**: Update `docs/configuration.md` and relevant module docs
+- **Script Changes**: Update `docs/scripts.md` and script headers
+- **Module Changes**: Update `docs/system-modules.md` or `docs/user-modules.md`
+- **New Features**: Add to appropriate documentation level
+- **Security Changes**: Update `docs/security.md` and related docs
+- **Hardware Changes**: Update `docs/hardware.md` and related docs
+
+## General Guidelines
+
+- **Preserve existing content** - don't remove without explicit request
+- **Format consistently** - follow existing patterns
+- **Add value** - improve clarity and organization
+- **Test changes** - verify documentation accuracy
+- **Update references** - keep links current
+- **Document as you code** - update docs with code changes
+
