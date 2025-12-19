@@ -250,7 +250,8 @@ Regularly review patches:
 
 ## Related Documentation
 
-- [Patches README](../../patches/README.org) - Original patch documentation (preserved)
 - [Nixpkgs Manual](https://nixos.org/manual/nixpkgs/) - Nixpkgs documentation
 - [Configuration Guide](configuration.md) - Flake configuration
+
+**Original Documentation**: The original [patches/README.org](../../patches/README.org) file is preserved for historical reference. All content has been integrated into this documentation.
 

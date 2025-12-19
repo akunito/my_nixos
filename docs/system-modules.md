@@ -17,6 +17,17 @@ Complete reference for system-level NixOS modules in this configuration.
 
 System modules are located in the `system/` directory and provide system-level configuration. They are imported in profile `configuration.nix` files and receive variables via `specialArgs`.
 
+### Module Import Syntax
+
+Separate Nix files can be imported as modules using an import block:
+
+```nix
+imports = [ import1.nix
+            import2.nix
+            ...
+          ];
+```
+
 ### Module Structure
 
 ```nix
@@ -609,10 +620,56 @@ Modules receive variables via function arguments:
 { lib, systemSettings, pkgs, userSettings, authorizedKeys ? [], ... }:
 ```
 
+### Variables from flake.nix
+
+Variables can be imported from `flake.nix` by setting the `specialArgs` block inside the flake. This allows variables to be managed in one place (`flake.nix`) rather than having to manage them in multiple locations.
+
+Common attribute sets passed to system modules:
+
+- `userSettings` - Settings for the normal user (see flake.nix for more details)
+- `systemSettings` - Settings for the system (see flake.nix for more details)
+- `inputs` - Flake inputs (see flake.nix for more details)
+- `pkgs-stable` - Allows including stable versions of packages along with (default) unstable versions
+
+### Boot Options for Unreliable Drives
+
+If you have a drive which can be not connected at all times, you might try to use these options to avoid freezing the boot loader:
+
+```nix
+options = [ "nofail" "x-systemd.device-timeout=3s" ];
+```
+
+Example usage:
+
+```nix
+boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
+
+fileSystems."/mnt/2nd_NVME" =
+  { device = "/dev/mapper/2nd_NVME";
+    fsType = "ext4";
+    options = [ "nofail" "x-systemd.device-timeout=3s" ];
+  };
+
+boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
+
+fileSystems."/mnt/DATA" =
+  { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
+    fsType = "ntfs3";
+    options = [ "nofail" "x-systemd.device-timeout=3s" ];
+  };
+
+fileSystems."/mnt/NFS_media" =
+  { device = "192.168.20.200:/mnt/hddpool/media";
+    fsType = "nfs4";
+    options = [ "nofail" "x-systemd.device-timeout=3s" ];
+  };
+```
+
 ## Related Documentation
 
 - [Configuration Guide](configuration.md) - Understanding configuration structure
 - [Hardware Guide](hardware.md) - Hardware-specific documentation
 - [Security Guide](security.md) - Security configurations
-- [System README](../../system/README.org) - Original system modules documentation (preserved)
+
+**Original Documentation**: The original [system/README.org](../../system/README.org) file is preserved for historical reference. All content has been integrated into this documentation.
 

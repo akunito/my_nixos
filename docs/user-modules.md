@@ -17,6 +17,17 @@ Complete reference for user-level Home Manager modules in this configuration.
 
 User modules are located in the `user/` directory and provide user-level configuration managed by Home Manager. They are imported in profile `home.nix` files and receive variables via `extraSpecialArgs`.
 
+### Module Import Syntax
+
+Separate Nix files can be imported as modules using an import block:
+
+```nix
+imports = [ import1.nix
+            import2.nix
+            ...
+          ];
+```
+
 ### Module Structure
 
 ```nix
@@ -367,6 +378,19 @@ Modules receive variables via function arguments:
 { lib, userSettings, pkgs, systemSettings, ... }:
 ```
 
+### Variables from flake.nix
+
+Variables can be imported from `flake.nix` by setting the `extraSpecialArgs` block inside the flake. This allows variables to be managed in one place (`flake.nix`) rather than having to manage them in multiple locations.
+
+Common attribute sets passed to user modules:
+
+- `userSettings` - Settings for the normal user (see flake.nix for more details)
+- `systemSettings` - Settings for the system (see flake.nix for more details)
+- `inputs` - Flake inputs (see flake.nix for more details)
+- `pkgs-stable` - Allows including stable versions of packages along with (default) unstable versions
+- `pkgs-emacs` - Pinned version of nixpkgs used for Emacs and its dependencies
+- `pkgs-kdenlive` - Pinned version of nixpkgs used for kdenlive
+
 ### User Settings
 
 Common user settings used across modules:
@@ -432,5 +456,6 @@ userSettings = {
 - [Ranger Guide](user-modules/ranger.md) - Ranger file manager documentation
 - [XMonad Guide](user-modules/xmonad.md) - XMonad window manager documentation
 - [Picom Guide](user-modules/picom.md) - Picom compositor documentation
-- [User README](../../user/README.org) - Original user modules documentation (preserved)
+
+**Original Documentation**: The original [user/README.org](../../user/README.org) file is preserved for historical reference. All content has been integrated into this documentation.
 

@@ -42,7 +42,7 @@ Profiles allow you to:
 
 **Best For**: Your main personal computer
 
-**Note**: This profile includes secondary drive mounting via `system/hardware/drives.nix`. It may fail if drives are not found - disable or adjust as needed. See [Profile README](../../profiles/personal/README.md) (also available as [README.org](../../profiles/personal/README.org)) for details.
+**Note**: This profile includes secondary drive mounting via `system/hardware/drives.nix`. It may fail if drives are not found - disable or adjust as needed. This profile is functionally identical to the work profile but includes extra things like games and social apps.
 
 ### Work Profile
 
@@ -59,7 +59,7 @@ Profiles allow you to:
 
 **Best For**: Work computers where you want to stay focused
 
-**Note**: Functionally identical to personal profile but excludes games and social apps.
+**Note**: Functionally identical to personal profile but excludes games and social apps. This is the work profile, including all the things needed to be efficient for various tasks, and **not** including distracting things such as games and social apps!
 
 ### Homelab Profile
 
@@ -80,7 +80,7 @@ Profiles allow you to:
 
 **Security Note**: ⚠️ **CHANGE THE SSH KEYS** in `configuration.nix` before using!
 
-**Note**: This is a template system configuration for homelab/server installation. See [Profile README](../../profiles/homelab/README.md) (also available as [README.org](../../profiles/homelab/README.org)) for details.
+**Note**: This is a template system configuration to be installed as a homelab/server.
 
 ### Worklab Profile
 
@@ -112,7 +112,7 @@ Profiles allow you to:
 
 **Best For**: Using NixOS tools on Windows systems
 
-**Note**: The `nixos-wsl` directory is taken directly from [NixOS-WSL](https://github.com/nix-community/NixOS-WSL) and patched slightly to allow it to run with the unstable channel of nixpkgs. See [Profile README](../../profiles/wsl/README.md) (also available as [README.org](../../profiles/wsl/README.org)) for details.
+**Note**: The `nixos-wsl` directory is taken directly from [NixOS-WSL](https://github.com/nix-community/NixOS-WSL) and patched slightly to allow it to run with the unstable channel of nixpkgs.
 
 ### Nix-on-Droid Profile
 
@@ -128,7 +128,7 @@ Profiles allow you to:
 
 **Best For**: Running NixOS tools on Android devices
 
-**Note**: Essentially just Emacs and some CLI apps. See [Profile README](../../profiles/nix-on-droid/README.md) (also available as [README.org](../../profiles/nix-on-droid/README.org)) for details.
+**Note**: Essentially just Emacs and some CLI apps for running NixOS tools on Android devices.
 
 ## Profile Structure
 
@@ -138,8 +138,10 @@ Each profile directory contains:
 profiles/PROFILE/
 ├── configuration.nix    # System-level configuration
 ├── home.nix             # User-level configuration
-└── README.org           # Profile documentation
+└── README.org           # Profile documentation (preserved for reference)
 ```
+
+**Note**: Profile-specific README.org files are preserved for historical reference. Profile information is documented in this guide.
 
 ### Configuration.nix
 
@@ -271,6 +273,8 @@ Some profiles inherit from others:
 - **Worklab** profile uses **Homelab** base configuration (`base.nix`)
 
 This allows sharing common configurations while maintaining differences.
+
+**Note**: The personal and work profiles are functionally identical (the work profile is actually imported into the personal profile). The only difference is that the personal profile has a few extra things like gaming and social apps. Similarly, the homelab and worklab profiles are functionally identical (they both utilize the `base.nix` file). The only difference is that they have different preinstalled SSH keys.
 
 ## Best Practices
 

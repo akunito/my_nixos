@@ -21,3 +21,5 @@ The Picom module is integrated into the user configuration. See [User Modules Gu
 
 - [User Modules Guide](../user-modules.md) - User-level modules overview
 
+**Original Documentation**: The original [user/wm/picom/README.org](../../../user/wm/picom/README.org) file is preserved for historical reference. All content has been integrated into this documentation.
+

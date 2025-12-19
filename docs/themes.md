@@ -106,9 +106,19 @@ Each theme directory contains:
 - `polarity.txt` - Light or dark theme
 - Preview images
 
-**Note**: Theme README.org files are preserved in their original location. See [Themes README](../../themes/README.org) for the original documentation.
+**Note**: Theme README.org files are preserved in their original location for historical reference. All content has been integrated into this documentation.
 
 ## Theme Structure
+
+Each theme directory stores a few relevant files:
+
+- `${theme-name}.yaml` - Stores all 16 colors for the theme
+- `backgroundurl.txt` - Direct link to the wallpaper associated with the theme
+- `backgroundsha256.txt` - SHA256 sum of the wallpaper
+- `polarity.txt` - Whether the background is `light` or `dark`
+- `${theme-name}.png` - Screenshot of the theme for previewing purposes
+
+Look at any of the theme directories for more info!
 
 ### Theme Directory
 
