@@ -34,14 +34,58 @@ else
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 fi
 
+# ======================================== Profile Management ======================================== #
+
+# List available profiles
+list_available_profiles() {
+    local SCRIPT_DIR=$1
+    echo -e "${CYAN}Available profiles:${RESET}"
+    ls -1 "$SCRIPT_DIR"/flake.*.nix 2>/dev/null | \
+        sed 's/.*flake\.\(.*\)\.nix/\1/' | \
+        sed 's/^/  - /' | \
+        grep -v "^  - nix$" | \
+        grep -v "^  - nix\.bak$" || echo "  (no profiles found)"
+}
+
+# Validate profile exists
+validate_profile() {
+    local SCRIPT_DIR=$1
+    local PROFILE=$2
+    
+    if [ ! -f "$SCRIPT_DIR/flake.$PROFILE.nix" ]; then
+        echo -e "${RED}Error: Profile flake file not found: flake.$PROFILE.nix${RESET}"
+        echo -e "${YELLOW}Current directory: $SCRIPT_DIR${RESET}"
+        echo -e "${YELLOW}Looking for: flake.$PROFILE.nix${RESET}"
+        echo ""
+        list_available_profiles "$SCRIPT_DIR"
+        exit 1
+    fi
+}
+
+# Get profile directory from flake file
+get_profile_dir_from_flake() {
+    local SCRIPT_DIR=$1
+    local PROFILE=$2
+    local FLAKE_FILE="$SCRIPT_DIR/flake.$PROFILE.nix"
+    
+    if [ -f "$FLAKE_FILE" ]; then
+        # Try to extract profile directory from flake file
+        grep -oP 'profile = "\K[^"]+' "$FLAKE_FILE" | head -1 || echo ""
+    else
+        echo ""
+    fi
+}
+
 # Set PROFILE based on second parameter, if missing, stop script
 if [ $# -gt 1 ]; then
     PROFILE=$2
 else
-    echo "Error: PROFILE parameter is required when providing a path"
+    echo -e "${RED}Error: PROFILE parameter is required when providing a path${RESET}"
     echo "Usage: $0 <path> <profile>"
     echo "Example: $0 /path/to/repo HOME"
     echo "Where HOME indicates the right flake to use, in this case: flake.HOME.nix"
+    echo ""
+    list_available_profiles "$SCRIPT_DIR"
     exit 1
 fi
 
@@ -109,6 +153,118 @@ log_task() {
 rotate_log
 
 # ======================================== Functions ======================================== #
+
+# Pre-installation validation checks
+pre_install_checks() {
+    local SCRIPT_DIR=$1
+    local PROFILE=$2
+    local ERRORS=0
+    local WARNINGS=0
+    
+    echo -e "\n${CYAN}Running pre-installation checks...${RESET}"
+    
+    # Check Nix is installed
+    if ! command -v nix &> /dev/null; then
+        echo -e "${RED}✗ Error: Nix is not installed${RESET}"
+        echo "  Please install Nix first: https://nixos.org/download.html"
+        ERRORS=$((ERRORS + 1))
+    else
+        echo -e "${GREEN}✓ Nix is installed${RESET}"
+    fi
+    
+    # Check flake file exists (already validated, but double-check)
+    if [ ! -f "$SCRIPT_DIR/flake.$PROFILE.nix" ]; then
+        echo -e "${RED}✗ Error: Profile flake file not found: flake.$PROFILE.nix${RESET}"
+        ERRORS=$((ERRORS + 1))
+    else
+        echo -e "${GREEN}✓ Profile flake file found: flake.$PROFILE.nix${RESET}"
+    fi
+    
+    # Check profile directory exists
+    local PROFILE_DIR=$(get_profile_dir_from_flake "$SCRIPT_DIR" "$PROFILE")
+    if [ -n "$PROFILE_DIR" ]; then
+        if [ ! -d "$SCRIPT_DIR/profiles/$PROFILE_DIR" ]; then
+            echo -e "${YELLOW}⚠ Warning: Profile directory not found: profiles/$PROFILE_DIR${RESET}"
+            WARNINGS=$((WARNINGS + 1))
+        else
+            echo -e "${GREEN}✓ Profile directory found: profiles/$PROFILE_DIR${RESET}"
+        fi
+    else
+        echo -e "${YELLOW}⚠ Warning: Could not determine profile directory from flake file${RESET}"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+    
+    # Check sudo access (non-blocking warning)
+    if ! sudo -n true 2>/dev/null; then
+        echo -e "${YELLOW}⚠ Warning: Sudo access will be required for system rebuild${RESET}"
+        echo "  You may be prompted for your password during installation"
+        WARNINGS=$((WARNINGS + 1))
+    else
+        echo -e "${GREEN}✓ Sudo access available${RESET}"
+    fi
+    
+    # Check if we're in a git repository
+    if [ ! -d "$SCRIPT_DIR/.git" ]; then
+        echo -e "${YELLOW}⚠ Warning: Not a git repository (or .git directory missing)${RESET}"
+        WARNINGS=$((WARNINGS + 1))
+    else
+        echo -e "${GREEN}✓ Git repository detected${RESET}"
+    fi
+    
+    # Check disk space (basic check)
+    if command -v df &> /dev/null; then
+        local AVAILABLE_SPACE=$(df "$SCRIPT_DIR" | tail -1 | awk '{print $4}')
+        if [ "$AVAILABLE_SPACE" -lt 1048576 ]; then  # Less than 1GB in KB
+            echo -e "${YELLOW}⚠ Warning: Low disk space (< 1GB available)${RESET}"
+            WARNINGS=$((WARNINGS + 1))
+        else
+            echo -e "${GREEN}✓ Sufficient disk space available${RESET}"
+        fi
+    fi
+    
+    echo ""
+    if [ $ERRORS -gt 0 ]; then
+        echo -e "${RED}Pre-installation checks failed with $ERRORS error(s)${RESET}"
+        exit 1
+    elif [ $WARNINGS -gt 0 ]; then
+        echo -e "${YELLOW}Pre-installation checks passed with $WARNINGS warning(s)${RESET}"
+    else
+        echo -e "${GREEN}Pre-installation checks passed ✓${RESET}"
+    fi
+    echo ""
+}
+
+# Get current system generation for rollback
+get_current_generation() {
+    if [ -d /nix/var/nix/profiles/system ]; then
+        nix-env --list-generations --profile /nix/var/nix/profiles/system 2>/dev/null | tail -1 | awk '{print $1}' || echo ""
+    else
+        echo ""
+    fi
+}
+
+# Rollback to previous generation
+rollback_system() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    local PREVIOUS_GEN=$3
+    
+    echo -e "\n${RED}Installation failed, attempting rollback...${RESET}"
+    
+    if [ -n "$PREVIOUS_GEN" ]; then
+        echo -e "${YELLOW}Rolling back to generation: $PREVIOUS_GEN${RESET}"
+    else
+        echo -e "${YELLOW}Rolling back to previous generation${RESET}"
+    fi
+    
+    if $SUDO_CMD nixos-rebuild switch --rollback 2>/dev/null; then
+        echo -e "${GREEN}✓ Rollback successful${RESET}"
+    else
+        echo -e "${RED}✗ Rollback failed - manual intervention may be required${RESET}"
+        echo "  You can try manually: sudo nixos-rebuild switch --rollback"
+    fi
+}
+
 wait_for_user_input() {
     read -n 1 -s -r -p "Press any key to continue..."
 }
@@ -131,10 +287,26 @@ switch_flake_profile_nix() {
     local SCRIPT_DIR=$1
     local PROFILE=$2
     
-    # Backup and replace flake.nix with the selected profile
-    rm "$SCRIPT_DIR/flake.nix.bak" 2>/dev/null
-    mv "$SCRIPT_DIR/flake.nix" "$SCRIPT_DIR/flake.nix.bak"
+    # Validate profile file exists
+    if [ ! -f "$SCRIPT_DIR/flake.$PROFILE.nix" ]; then
+        echo -e "${RED}Error: Profile flake not found: flake.$PROFILE.nix${RESET}"
+        echo -e "${YELLOW}Current directory: $SCRIPT_DIR${RESET}"
+        echo -e "${YELLOW}Looking for: flake.$PROFILE.nix${RESET}"
+        list_available_profiles "$SCRIPT_DIR"
+        exit 1
+    fi
+    
+    # Backup existing flake.nix if it exists
+    if [ -f "$SCRIPT_DIR/flake.nix" ]; then
+        rm "$SCRIPT_DIR/flake.nix.bak" 2>/dev/null
+        mv "$SCRIPT_DIR/flake.nix" "$SCRIPT_DIR/flake.nix.bak"
+        echo -e "${GREEN}✓ Backed up existing flake.nix to flake.nix.bak${RESET}"
+    fi
+    
+    # Copy profile flake to active flake
     cp "$SCRIPT_DIR/flake.$PROFILE.nix" "$SCRIPT_DIR/flake.nix"
+    echo -e "${GREEN}✓ Switched to profile: $PROFILE${RESET}"
+    echo -e "${CYAN}  Using flake file: flake.$PROFILE.nix${RESET}"
 }
 
 update_flake_lock() {
@@ -366,11 +538,29 @@ ending_menu() {
     echo " " # To clean up color codes
 }
 # ======================================== Main Execution ======================================== #
+
+# Validate profile before starting
+validate_profile "$SCRIPT_DIR" "$PROFILE"
+
+# Run pre-installation checks
+pre_install_checks "$SCRIPT_DIR" "$PROFILE"
+
+# Get current generation for potential rollback
+CURRENT_GENERATION=$(get_current_generation)
+if [ -n "$CURRENT_GENERATION" ]; then
+    echo -e "${CYAN}Current system generation: $CURRENT_GENERATION${RESET}"
+    echo -e "${CYAN}This will be used for rollback if installation fails${RESET}"
+    echo ""
+fi
+
 $SUDO_CMD echo -e "\nActivating sudo password for this session"
 
 # Update dotfiles to the last commit of the remote repository
 # Or clone the repository if it doesn't exist
 git_fetch_and_reset_dotfiles_by_remote $SCRIPT_DIR
+
+# Re-validate profile after git reset (in case files changed)
+validate_profile "$SCRIPT_DIR" "$PROFILE"
 
 # Switch flake profile to the chosen one flake.<PROFILE>.nix
 switch_flake_profile_nix $SCRIPT_DIR $PROFILE
@@ -402,14 +592,35 @@ hardening_files $SCRIPT_DIR $SUDO_CMD
 # Rebuild system
 echo -e "\n${CYAN}Rebuilding system with flake...${RESET} "
 echo "  " # To clean up color codes
-$SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure
+
+# Save generation before rebuild for rollback
+PRE_REBUILD_GENERATION=$(get_current_generation)
+
+# Attempt system rebuild with error handling
+if ! $SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure; then
+    echo -e "\n${RED}System rebuild failed!${RESET}"
+    rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ System rebuild successful${RESET}"
 
 # Temporarily soften files for Home-Manager
 soften_files_for_home_manager $SCRIPT_DIR $SUDO_CMD
 
 # Install and build home-manager configuration
 echo -e "\n${CYAN}Installing and building home-manager...${RESET} "
-nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace
+
+# Attempt Home Manager install with error handling
+if ! nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace; then
+    echo -e "\n${RED}Home Manager installation failed!${RESET}"
+    echo -e "${YELLOW}Note: System rebuild was successful, but Home Manager configuration failed${RESET}"
+    echo -e "${YELLOW}You may need to fix Home Manager configuration and retry${RESET}"
+    # Don't rollback system for Home Manager failures - system is still functional
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Home Manager installation successful${RESET}"
 
 # Run maintenance script
 maintenance_script $SCRIPT_DIR $SILENT_MODE

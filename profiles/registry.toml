@@ -1,0 +1,65 @@
+# Profile Registry
+# This file contains metadata about available profiles and their corresponding flake files.
+# Used by install.sh for validation and profile discovery.
+
+[profiles.DESK]
+flake_file = "flake.DESK.nix"
+profile_dir = "personal"
+hostname = "nixosaku"
+description = "Desktop computer configuration"
+
+[profiles.HOME]
+flake_file = "flake.HOME.nix"
+profile_dir = "homelab"
+hostname = "nixosLabaku"
+description = "Home server / homelab configuration"
+
+[profiles.LAPTOP]
+flake_file = "flake.LAPTOP.nix"
+profile_dir = "personal"
+hostname = "nixolaptopaku"
+description = "Laptop computer configuration"
+
+[profiles.WSL]
+flake_file = "flake.WSL.nix"
+profile_dir = "wsl"
+hostname = "nixosdiego"
+description = "Windows Subsystem for Linux configuration"
+
+[profiles.VMDESK]
+flake_file = "flake.VMDESK.nix"
+profile_dir = "personal"
+hostname = "nixosdesk"
+description = "Virtual machine desktop configuration"
+
+[profiles.VMHOME]
+flake_file = "flake.VMHOME.nix"
+profile_dir = "homelab"
+hostname = "nixosLabaku"
+description = "Virtual machine homelab configuration"
+
+[profiles.AGA]
+flake_file = "flake.AGA.nix"
+profile_dir = "personal"
+hostname = "nixosaga"
+description = "Aga's system configuration"
+
+[profiles.AGADESK]
+flake_file = "flake.AGADESK.nix"
+profile_dir = "personal"
+hostname = "nixosaga"
+description = "Aga's desktop configuration"
+
+[profiles.YOGAAKU]
+flake_file = "flake.YOGAAKU.nix"
+profile_dir = "personal"
+hostname = "yogaaku"
+description = "Yoga laptop configuration"
+
+# Note: ORIGINAL is kept for historical reference but may not be actively used
+[profiles.ORIGINAL]
+flake_file = "flake.ORIGINAL.nix"
+profile_dir = "personal"
+hostname = "snowfire"
+description = "Original configuration (historical reference)"
+
