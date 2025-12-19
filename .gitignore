@@ -1,6 +1,130 @@
+# ============================================================================
+# Git Ignore Patterns for NixOS Configuration Repository
+# ============================================================================
+#
+# Note: Files already tracked in git will continue to be tracked even if they
+# match patterns below. To stop tracking already-committed files:
+#   git rm --cached <file>
+#   git commit -m "Stop tracking <file>"
+#
+# Common already-tracked files that may need removal:
+#   - desktop.png
+#   - flake.nix.bak
+#   - maintenance.log_*.old
+#   - profiles/work/configuration.ORIGINAL.nix
+#
+# ============================================================================
+
+# Log files
 *.log
+*.log.*
+*.log_*.old
+
+# Backup files
 *.bak
 *.BAK
+*.backup
+*.tmp
+*~
+*.ORIGINAL.nix
+
+# Nix files
 flake.lock
-local/
 hardware-configuration.nix
+
+# Local/custom files (user-specific, not in repo)
+local/
+*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+.cursor/
+*.code-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+desktop.png
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+tmp/
+temp/
+
+# Build artifacts
+result
+result-*
+.direnv/
+
+# Nix store symlinks (if any)
+/nix/
+
+# Personal/custom scripts (should be in ~/myScripts)
+# Uncomment if you want to ignore custom scripts in repo root
+# custom_*.sh
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Secrets and sensitive files
+*.key
+*.pem
+*.cert
+secrets/
+*.secret
+
+# Plasma configuration (managed separately)
+.dotfiles-plasma-config/
+
+# Documentation build artifacts (if any)
+docs/_build/
+docs/.doctrees/
+
+# Python cache (if any Python scripts)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Node modules (if any Node.js tools)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Compiled files
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Archives (unless needed)
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
