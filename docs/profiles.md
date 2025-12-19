@@ -138,10 +138,10 @@ Each profile directory contains:
 profiles/PROFILE/
 ├── configuration.nix    # System-level configuration
 ├── home.nix             # User-level configuration
-└── README.org           # Profile documentation (preserved for reference)
+└── README.md             # Profile documentation
 ```
 
-**Note**: Profile-specific README.org files are preserved for historical reference. Profile information is documented in this guide.
+**Note**: Profile-specific README.md files are available in each profile directory. See [profiles/README.md](../../profiles/README.md) for an overview.
 
 ### Configuration.nix
 

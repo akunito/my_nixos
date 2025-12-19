@@ -42,5 +42,7 @@ The XMonad module is integrated into both system and user configurations. See [U
 - [System Modules Guide](../system-modules.md) - System-level modules overview
 - [Themes Guide](../themes.md) - Stylix theme integration
 
-**Original Documentation**: The original [user/wm/xmonad/README.org](../../../user/wm/xmonad/README.org) file is preserved for historical reference. All content has been integrated into this documentation.
+**Related Documentation**: See [user/wm/xmonad/README.md](../../../user/wm/xmonad/README.md) for directory-level documentation.
+
+**Note**: The original [user/wm/xmonad/README.org](../../../user/wm/xmonad/README.org) file is preserved for historical reference.
 

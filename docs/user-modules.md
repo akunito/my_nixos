@@ -457,5 +457,7 @@ userSettings = {
 - [XMonad Guide](user-modules/xmonad.md) - XMonad window manager documentation
 - [Picom Guide](user-modules/picom.md) - Picom compositor documentation
 
-**Original Documentation**: The original [user/README.org](../../user/README.org) file is preserved for historical reference. All content has been integrated into this documentation.
+**Related Documentation**: See [user/README.md](../../user/README.md) for directory-level documentation.
+
+**Note**: The original [user/README.org](../../user/README.org) file is preserved for historical reference.
 

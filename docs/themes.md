@@ -106,7 +106,9 @@ Each theme directory contains:
 - `polarity.txt` - Light or dark theme
 - Preview images
 
-**Note**: Theme README.org files are preserved in their original location for historical reference. All content has been integrated into this documentation.
+**Related Documentation**: See [themes/README.md](../../themes/README.md) for directory-level documentation.
+
+**Note**: Theme-specific README.org files are preserved in their original location for historical reference.
 
 ## Theme Structure
 

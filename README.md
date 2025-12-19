@@ -107,7 +107,7 @@ Detailed guides for specific topics:
 
 And more in respective subdirectories.
 
-**Note**: Original README.org files in subdirectories are preserved for historical reference. All content from README.org files has been converted to Markdown and integrated into the documentation structure in `docs/`. See individual documentation files for references to original sources.
+**Note**: README.md files are now available in subdirectories alongside the code. Original README.org files are preserved for historical reference. Comprehensive documentation is available in `docs/`.
 
 ## Features
 

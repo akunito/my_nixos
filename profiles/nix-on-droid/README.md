@@ -2,16 +2,10 @@
 
 I need Emacs on the go!
 
-This is the Nix on Droid profile, which is a minimal installation used on Android. This (obviously) requires [nix-on-droid](https://github.com/nix-community/nix-on-droid) to be installed.
-
-## Features
-
-Essentially just use this for:
-- Emacs
-- Some CLI apps
+This is my **Nix on Droid** profile, which is a minimal installation I use on Android. This (obviously) requires [nix-on-droid](https://github.com/nix-community/nix-on-droid) to be installed. I essentially just use this for Emacs and some CLI apps.
 
 ## Related Documentation
 
-- [Profiles Guide](../../docs/profiles.md) - Complete profiles documentation
-- [nix-on-droid Repository](https://github.com/nix-community/nix-on-droid) - Original project
+For comprehensive documentation, see [docs/profiles.md](../../docs/profiles.md).
 
+**Note**: The original [README.org](./README.org) file is preserved for historical reference.

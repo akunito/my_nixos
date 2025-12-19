@@ -35,5 +35,7 @@ The Doom Emacs module is integrated into the user configuration and can be enabl
 - [User Modules Guide](../user-modules.md) - User-level modules overview
 - [Themes Guide](../themes.md) - Stylix theme integration
 
-**Original Documentation**: The original [user/app/doom-emacs/README.org](../../../user/app/doom-emacs/README.org) file is preserved for historical reference. All content has been integrated into this documentation.
+**Related Documentation**: See [user/app/doom-emacs/README.md](../../../user/app/doom-emacs/README.md) for directory-level documentation.
+
+**Note**: The original [user/app/doom-emacs/README.org](../../../user/app/doom-emacs/README.org) file is preserved for historical reference.
 

@@ -6,6 +6,6 @@ This is a template system configuration to be installed as a homelab/server!
 
 ## Related Documentation
 
-- [Profiles Guide](../../docs/profiles.md) - Complete profiles documentation
-- [Security Guide](../../docs/security.md) - Security configurations (especially SSH keys!)
+For comprehensive documentation, see [docs/profiles.md](../../docs/profiles.md).
 
+**Note**: The original [README.org](./README.org) file is preserved for historical reference.

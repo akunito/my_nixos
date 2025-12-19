@@ -44,5 +44,7 @@ The Ranger module is integrated into the user configuration. See [User Modules G
 
 - [User Modules Guide](../user-modules.md) - User-level modules overview
 
-**Original Documentation**: The original [user/app/ranger/README.org](../../../user/app/ranger/README.org) file is preserved for historical reference. All content has been integrated into this documentation.
+**Related Documentation**: See [user/app/ranger/README.md](../../../user/app/ranger/README.md) for directory-level documentation.
+
+**Note**: The original [user/app/ranger/README.org](../../../user/app/ranger/README.org) file is preserved for historical reference.
 

@@ -671,5 +671,7 @@ fileSystems."/mnt/NFS_media" =
 - [Hardware Guide](hardware.md) - Hardware-specific documentation
 - [Security Guide](security.md) - Security configurations
 
-**Original Documentation**: The original [system/README.org](../../system/README.org) file is preserved for historical reference. All content has been integrated into this documentation.
+**Related Documentation**: See [system/README.md](../../system/README.md) for directory-level documentation.
+
+**Note**: The original [system/README.org](../../system/README.org) file is preserved for historical reference.
 
