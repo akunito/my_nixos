@@ -289,6 +289,7 @@
           pkgs-unstable.sunshine
 
           pkgs-unstable.lmstudio
+          pkgs.easyeffects
 
           # Overwrite the Wallpaper for SDDM
           (

@@ -58,7 +58,7 @@ case $hostname in
                     ;;
                 4)  
                     echo -e "Mounting leftyworkout_TEST project via SSHFS..."
-                    sshfs root@192.168.8.87:/root/leftyworkout_TEST /home/akunito/Volumes/leftyworkout_TEST
+                    sshfs admin@192.168.8.87:/admin/leftyworkout_TEST /home/akunito/Volumes/leftyworkout_TEST
                     ;;
                 5)
                     echo -e "Starting NFS media mount..."
