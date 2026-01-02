@@ -243,6 +243,58 @@ get_current_generation() {
     fi
 }
 
+# Get current home-manager generation for verification
+get_current_home_manager_generation() {
+    # Extract the current generation ID from home-manager generations output
+    home-manager generations 2>/dev/null | head -1 | grep -oP 'id \K\d+' || echo ""
+}
+
+# Check if rebuild was successful by verifying a new generation was created
+check_rebuild_success() {
+    local PRE_REBUILD_GEN=$1
+    local POST_REBUILD_GEN=$(get_current_generation)
+    
+    # If we couldn't get pre-rebuild generation, assume success if post-rebuild exists
+    if [ -z "$PRE_REBUILD_GEN" ]; then
+        if [ -n "$POST_REBUILD_GEN" ]; then
+            return 0  # Success - generation exists
+        else
+            return 1  # Failure - no generation
+        fi
+    fi
+    
+    # If generations are different, a new generation was created (success)
+    if [ "$PRE_REBUILD_GEN" != "$POST_REBUILD_GEN" ]; then
+        return 0  # Success - new generation created
+    fi
+    
+    # If generations are the same, rebuild didn't create a new generation (failure)
+    return 1  # Failure - no new generation
+}
+
+# Check if home-manager switch was successful by verifying a new generation was created
+check_home_manager_success() {
+    local PRE_SWITCH_GEN=$1
+    local POST_SWITCH_GEN=$(get_current_home_manager_generation)
+    
+    # If we couldn't get pre-switch generation, assume success if post-switch exists
+    if [ -z "$PRE_SWITCH_GEN" ]; then
+        if [ -n "$POST_SWITCH_GEN" ]; then
+            return 0  # Success - generation exists
+        else
+            return 1  # Failure - no generation
+        fi
+    fi
+    
+    # If generations are different, a new generation was created (success)
+    if [ "$PRE_SWITCH_GEN" != "$POST_SWITCH_GEN" ]; then
+        return 0  # Success - new generation created
+    fi
+    
+    # If generations are the same, switch didn't create a new generation (failure)
+    return 1  # Failure - no new generation
+}
+
 # Rollback to previous generation
 rollback_system() {
     local SCRIPT_DIR=$1
@@ -597,13 +649,63 @@ echo "  " # To clean up color codes
 PRE_REBUILD_GENERATION=$(get_current_generation)
 
 # Attempt system rebuild with error handling
-if ! $SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure; then
-    echo -e "\n${RED}System rebuild failed!${RESET}"
-    rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
-    exit 1
-fi
+# Capture exit code but don't fail immediately - check if generation was created
+# 
+# Known nixos-rebuild switch exit codes:
+# - 0: Complete success (configuration built and activated successfully)
+# - 1: General failure (could be build failure, config error, or service activation issue)
+# - 4: Partial success (system installed, but some services failed to start/restart)
+# - 243: Credential-related failure (e.g., systemd-sysctl.service credential issues)
+# - Other: Various errors (build failures, missing dependencies, etc.)
+#
+# Strategy: Trust exit code 0 as complete success. For non-zero codes, verify if a new
+# generation was created to distinguish between complete failures and partial successes.
+REBUILD_EXIT_CODE=0
+$SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure || REBUILD_EXIT_CODE=$?
 
-echo -e "${GREEN}✓ System rebuild successful${RESET}"
+# Determine rebuild success based on exit code and generation check
+if [ "$REBUILD_EXIT_CODE" -eq 0 ]; then
+    # Exit code 0 = complete success - trust nixos-rebuild
+    POST_REBUILD_GENERATION=$(get_current_generation)
+    echo -e "\n${GREEN}✓ System rebuild successful${RESET}"
+    if [ -n "$POST_REBUILD_GENERATION" ]; then
+        echo -e "${CYAN}  New generation: $POST_REBUILD_GENERATION${RESET}"
+    fi
+elif [ "$REBUILD_EXIT_CODE" -eq 4 ]; then
+    # Exit code 4 = known partial success case (system installed, services may have failed)
+    # Verify by checking if generation was created
+    if check_rebuild_success "$PRE_REBUILD_GENERATION"; then
+        POST_REBUILD_GENERATION=$(get_current_generation)
+        echo -e "\n${YELLOW}⚠ System rebuild completed with warnings${RESET}"
+        echo -e "${YELLOW}  Some services may have failed to start, but the system configuration was applied${RESET}"
+        echo -e "${GREEN}  New generation created: $POST_REBUILD_GENERATION${RESET}"
+        echo -e "${CYAN}  Review service logs if needed: journalctl -p err${RESET}"
+    else
+        # Exit code 4 but no new generation - actual failure
+        echo -e "\n${RED}System rebuild failed!${RESET}"
+        echo -e "${RED}  Exit code: $REBUILD_EXIT_CODE (no new generation was created)${RESET}"
+        rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
+        exit 1
+    fi
+else
+    # Other exit codes (1, 243, etc.) - check if generation was created
+    # This handles cases where rebuild partially succeeded despite non-zero exit code
+    if check_rebuild_success "$PRE_REBUILD_GENERATION"; then
+        POST_REBUILD_GENERATION=$(get_current_generation)
+        echo -e "\n${YELLOW}⚠ System rebuild completed with warnings${RESET}"
+        echo -e "${YELLOW}  Exit code: $REBUILD_EXIT_CODE, but new generation was created${RESET}"
+        echo -e "${GREEN}  New generation: $POST_REBUILD_GENERATION${RESET}"
+        echo -e "${CYAN}  The system configuration was applied, but some issues occurred${RESET}"
+        echo -e "${CYAN}  Review the rebuild output above for details${RESET}"
+    else
+        # No new generation was created - rebuild failed
+        echo -e "\n${RED}System rebuild failed!${RESET}"
+        echo -e "${RED}  Exit code: $REBUILD_EXIT_CODE (no new generation was created)${RESET}"
+        echo -e "${YELLOW}  This indicates a complete failure during the rebuild process${RESET}"
+        rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
+        exit 1
+    fi
+fi
 
 # Temporarily soften files for Home-Manager
 soften_files_for_home_manager $SCRIPT_DIR $SUDO_CMD
@@ -611,16 +713,50 @@ soften_files_for_home_manager $SCRIPT_DIR $SUDO_CMD
 # Install and build home-manager configuration
 echo -e "\n${CYAN}Installing and building home-manager...${RESET} "
 
-# Attempt Home Manager install with error handling
-if ! nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace; then
-    echo -e "\n${RED}Home Manager installation failed!${RESET}"
-    echo -e "${YELLOW}Note: System rebuild was successful, but Home Manager configuration failed${RESET}"
-    echo -e "${YELLOW}You may need to fix Home Manager configuration and retry${RESET}"
-    # Don't rollback system for Home Manager failures - system is still functional
-    exit 1
-fi
+# Save generation before home-manager switch for verification
+PRE_HOME_MANAGER_GENERATION=$(get_current_home_manager_generation)
 
-echo -e "${GREEN}✓ Home Manager installation successful${RESET}"
+# Attempt Home Manager install with error handling
+# Capture exit code but don't fail immediately - check if generation was created
+#
+# Known home-manager switch exit codes:
+# - 0: Complete success (configuration built and activated successfully)
+# - 1: General failure (could be build failure, config error, or file conflict)
+# - Other: Various errors (missing dependencies, download failures, etc.)
+#
+# Strategy: Trust exit code 0 as complete success. For non-zero codes, verify if a new
+# generation was created to distinguish between complete failures and partial successes.
+HOME_MANAGER_EXIT_CODE=0
+nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace || HOME_MANAGER_EXIT_CODE=$?
+
+# Determine home-manager switch success based on exit code and generation check
+if [ "$HOME_MANAGER_EXIT_CODE" -eq 0 ]; then
+    # Exit code 0 = complete success - trust home-manager
+    POST_HOME_MANAGER_GENERATION=$(get_current_home_manager_generation)
+    echo -e "\n${GREEN}✓ Home Manager installation successful${RESET}"
+    if [ -n "$POST_HOME_MANAGER_GENERATION" ]; then
+        echo -e "${CYAN}  New generation: $POST_HOME_MANAGER_GENERATION${RESET}"
+    fi
+else
+    # Non-zero exit code - check if generation was created (partial success possible)
+    if check_home_manager_success "$PRE_HOME_MANAGER_GENERATION"; then
+        POST_HOME_MANAGER_GENERATION=$(get_current_home_manager_generation)
+        echo -e "\n${YELLOW}⚠ Home Manager installation completed with warnings${RESET}"
+        echo -e "${YELLOW}  Exit code: $HOME_MANAGER_EXIT_CODE, but new generation was created${RESET}"
+        echo -e "${GREEN}  New generation: $POST_HOME_MANAGER_GENERATION${RESET}"
+        echo -e "${CYAN}  The user configuration was applied, but some issues occurred${RESET}"
+        echo -e "${CYAN}  Review the home-manager output above for details${RESET}"
+    else
+        # No new generation was created - home-manager switch failed
+        echo -e "\n${RED}Home Manager installation failed!${RESET}"
+        echo -e "${RED}  Exit code: $HOME_MANAGER_EXIT_CODE (no new generation was created)${RESET}"
+        echo -e "${YELLOW}Note: System rebuild was successful, but Home Manager configuration failed${RESET}"
+        echo -e "${YELLOW}You may need to fix Home Manager configuration and retry${RESET}"
+        echo -e "${CYAN}Common issues: file conflicts, download failures, or configuration errors${RESET}"
+        # Don't rollback system for Home Manager failures - system is still functional
+        exit 1
+    fi
+fi
 
 # Run maintenance script
 maintenance_script $SCRIPT_DIR $SILENT_MODE
