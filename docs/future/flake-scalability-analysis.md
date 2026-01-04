@@ -451,3 +451,4 @@ This would reduce each profile file from ~750 lines to ~20-30 lines, with common
 - [Configuration Guide](../configuration.md) - Current configuration structure
 - [Profiles Guide](../profiles.md) - Profile documentation
 
+
