@@ -34,21 +34,36 @@ This is the **cleanest NixOS-native solution** that avoids the transition issue 
 
 **Steps:**
 
-For DESK profile, use one of these commands:
+**Important:** Your configuration requires the `--impure` flag because it references absolute paths (like `/home` in PKI certificates). The `install.sh` script uses `--impure` automatically, but when running `nixos-rebuild` directly, you must include it.
+
+**Why the errors occurred:**
+1. **Error 1:** `access to absolute path '/home' is forbidden in pure evaluation mode`
+   - Your configuration references `/home` (likely in `pkiCertificates` path)
+   - NixOS pure mode doesn't allow absolute paths
+   - **Solution:** Add `--impure` flag
+
+2. **Error 2:** `path '/home/akunito/.dotfiles/flake.DESK.nix' is not a flake (because it's not a directory)`
+   - You cannot point directly to a flake file
+   - Flakes must be referenced by directory, not file
+   - **Solution:** Point to the directory, not the file
+
+**Correct commands for DESK profile:**
 
 ```bash
-# Option 1: Direct nixos-rebuild with DESK flake file (recommended)
-sudo nixos-rebuild boot --flake ~/.dotfiles#system
-
-# Option 2: If you're in the dotfiles directory and flake.nix is already set to DESK
+# First, ensure flake.nix is set to DESK (install.sh does this automatically)
+# If you haven't run install.sh recently, do this first:
 cd ~/.dotfiles
-sudo nixos-rebuild boot --flake .#system
+cp flake.DESK.nix flake.nix
 
-# Option 3: Explicitly specify the DESK flake file
-sudo nixos-rebuild boot --flake ~/.dotfiles/flake.DESK.nix#system
+# Then run boot with --impure flag (required for your configuration)
+sudo nixos-rebuild boot --flake ~/.dotfiles#system --impure
+
+# Or if you're already in the dotfiles directory:
+cd ~/.dotfiles
+sudo nixos-rebuild boot --flake .#system --impure
 ```
 
-**Note:** The `install.sh` script uses `nixos-rebuild switch`, but for this fix we need `boot` instead. After running the boot command:
+**Note:** The `install.sh` script uses `nixos-rebuild switch --impure`, but for this fix we need `boot --impure` instead. After running the boot command:
 
 ```bash
 # Reboot to apply the changes cleanly
@@ -72,14 +87,15 @@ sudo systemctl reset-failed mnt-EXT.mount 2>&1 || true
 sudo systemctl daemon-reload
 
 # Now try the normal switch (for DESK profile)
-# Option 1: Using install.sh (uses switch internally)
+# Option 1: Using install.sh (uses switch --impure internally, recommended)
 ./install.sh ~/.dotfiles "DESK"
 
-# Option 2: Direct nixos-rebuild with DESK flake file
-sudo nixos-rebuild switch --flake ~/.dotfiles#system
+# Option 2: Direct nixos-rebuild with --impure flag (required for your config)
+sudo nixos-rebuild switch --flake ~/.dotfiles#system --impure
 
 # Option 3: If you're in the dotfiles directory and flake.nix is already set to DESK
-sudo nixos-rebuild switch --flake .#system
+cd ~/.dotfiles
+sudo nixos-rebuild switch --flake .#system --impure
 ```
 
 Often the unit is just in a "failed" state, and resetting it allows the switch to proceed.
@@ -100,14 +116,15 @@ Often the unit is just in a "failed" state, and resetting it allows the switch t
 sudo systemctl mask mnt-EXT.mount
 
 # Rebuild (for DESK profile)
-# Option 1: Using install.sh (uses switch internally)
+# Option 1: Using install.sh (uses switch --impure internally, recommended)
 ./install.sh ~/.dotfiles "DESK"
 
-# Option 2: Direct nixos-rebuild with DESK flake file
-sudo nixos-rebuild switch --flake ~/.dotfiles#system
+# Option 2: Direct nixos-rebuild with --impure flag (required for your config)
+sudo nixos-rebuild switch --flake ~/.dotfiles#system --impure
 
 # Option 3: If you're in the dotfiles directory and flake.nix is already set to DESK
-sudo nixos-rebuild switch --flake .#system
+cd ~/.dotfiles
+sudo nixos-rebuild switch --flake .#system --impure
 
 # IMPORTANT: Unmask immediately after successful rebuild
 sudo systemctl unmask mnt-EXT.mount
@@ -127,12 +144,48 @@ When re-enabling disk7 in the future:
    disk7_options = [ "nofail" "x-systemd.automount" "x-systemd.idle-timeout=600" ];
    ```
 
+## Why Direct Commands Fail (Configuration-Specific Issues)
+
+Your DESK profile configuration has specific requirements that cause errors when running `nixos-rebuild` directly without proper flags:
+
+### Error 1: Pure Evaluation Mode Restriction
+
+**Error:** `access to absolute path '/home' is forbidden in pure evaluation mode`
+
+**Cause:**
+- Your configuration references absolute paths (e.g., `pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ]` in DESK-config.nix)
+- NixOS runs in "pure evaluation mode" by default, which forbids absolute paths for reproducibility
+- The `install.sh` script automatically adds `--impure` flag to allow these paths
+
+**Solution:** Always include `--impure` flag when running `nixos-rebuild` directly
+
+### Error 2: Flake File vs Directory
+
+**Error:** `path '/home/akunito/.dotfiles/flake.DESK.nix' is not a flake (because it's not a directory)`
+
+**Cause:**
+- Flakes must be referenced by directory, not by file
+- You cannot point directly to `flake.DESK.nix` file
+- The `install.sh` script copies `flake.DESK.nix` → `flake.nix` first, then references the directory
+
+**Solution:** Point to the directory (`~/.dotfiles`) not the file (`flake.DESK.nix`)
+
+### Why `install.sh` Works
+
+The `install.sh` script handles these issues automatically:
+1. Copies `flake.DESK.nix` → `flake.nix` (sets up the flake)
+2. Uses `--impure` flag automatically
+3. Uses `--show-trace` for better error messages
+
+**That's why using `./install.sh ~/.dotfiles "DESK"` works, but direct commands need the flags.**
+
 ## Current Configuration State
 
 - **disk7_enabled**: `false` (disabled in `profiles/DESK-config.nix`)
 - **Mount unit**: Exists in previous generation but not in new generation (causing transition error)
 - **Device UUID**: `b6be2dd5-d6c0-4839-8656-cb9003347c93` (not currently found on system)
-- **Solution**: Use `nixos-rebuild boot` + reboot to avoid transition issue
+- **Solution**: Use `nixos-rebuild boot --impure` + reboot to avoid transition issue
+- **Note**: Always use `--impure` flag with your configuration due to absolute path references
 
 ## References
 
@@ -143,10 +196,10 @@ When re-enabling disk7 in the future:
 
 ### Recommended Approach (Boot & Reboot)
 
+- [ ] Ensure flake.nix is set to DESK: `cd ~/.dotfiles && cp flake.DESK.nix flake.nix` (if needed)
 - [ ] Run one of:
-  - `sudo nixos-rebuild boot --flake ~/.dotfiles#system` (recommended for DESK profile)
-  - `sudo nixos-rebuild boot --flake ~/.dotfiles/flake.DESK.nix#system` (explicit DESK flake)
-  - `cd ~/.dotfiles && sudo nixos-rebuild boot --flake .#system` (if flake.nix is already DESK)
+  - `sudo nixos-rebuild boot --flake ~/.dotfiles#system --impure` (recommended, includes --impure flag)
+  - `cd ~/.dotfiles && sudo nixos-rebuild boot --flake .#system --impure` (if already in directory)
 - [ ] Reboot: `sudo reboot`
 - [ ] Verify system boots successfully
 - [ ] Verify disk7 is properly disabled in new generation
@@ -157,18 +210,18 @@ When re-enabling disk7 in the future:
 - [ ] Run `sudo systemctl reset-failed mnt-EXT.mount`
 - [ ] Run `sudo systemctl daemon-reload`
 - [ ] Try rebuild with one of:
-  - `./install.sh ~/.dotfiles "DESK"` (uses switch internally)
-  - `sudo nixos-rebuild switch --flake ~/.dotfiles#system`
-  - `cd ~/.dotfiles && sudo nixos-rebuild switch --flake .#system` (if flake.nix is already DESK)
+  - `./install.sh ~/.dotfiles "DESK"` (uses switch --impure internally, recommended)
+  - `sudo nixos-rebuild switch --flake ~/.dotfiles#system --impure` (must include --impure)
+  - `cd ~/.dotfiles && sudo nixos-rebuild switch --flake .#system --impure` (if flake.nix is already DESK)
 - [ ] If still fails, use boot method above
 
 ### Last Resort (Masking - Only if Reboot Impossible)
 
 - [ ] Run `sudo systemctl mask mnt-EXT.mount`
 - [ ] Rebuild with one of:
-  - `./install.sh ~/.dotfiles "DESK"` (uses switch internally)
-  - `sudo nixos-rebuild switch --flake ~/.dotfiles#system`
-  - `cd ~/.dotfiles && sudo nixos-rebuild switch --flake .#system` (if flake.nix is already DESK)
+  - `./install.sh ~/.dotfiles "DESK"` (uses switch --impure internally, recommended)
+  - `sudo nixos-rebuild switch --flake ~/.dotfiles#system --impure` (must include --impure)
+  - `cd ~/.dotfiles && sudo nixos-rebuild switch --flake .#system --impure` (if flake.nix is already DESK)
 - [ ] **IMPORTANT:** Immediately unmask: `sudo systemctl unmask mnt-EXT.mount`
 - [ ] Verify rebuild succeeded
 
