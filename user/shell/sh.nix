@@ -1,4 +1,4 @@
-{ pkgs, userSettings, systemSettings, lib, ... }:
+{ pkgs, userSettings, systemSettings, lib, config, ... }:
 let
 
   # My shell aliases
@@ -26,6 +26,7 @@ in
   programs.zsh = if (systemSettings.systemStable == false) then 
     { # UNSTABLE SYSTEM
       enable = true;
+      dotDir = "${config.home.homeDirectory}/.zsh"; # Lock in legacy behavior to silence warning
       autosuggestion.enable = true;
       syntaxHighlighting.enable = true;
       enableCompletion = true;
@@ -35,6 +36,7 @@ in
     else 
     { # STABLE SYSTEM
       enable = true;
+      dotDir = "${config.home.homeDirectory}/.zsh"; # Lock in legacy behavior to silence warning
       autosuggestion.enable = true;
       syntaxHighlighting.enable = true;
       enableCompletion = true;

@@ -67,13 +67,27 @@ get_profile_dir_from_flake() {
     local SCRIPT_DIR=$1
     local PROFILE=$2
     local FLAKE_FILE="$SCRIPT_DIR/flake.$PROFILE.nix"
+    local PROFILE_CONFIG_FILE="$SCRIPT_DIR/profiles/${PROFILE}-config.nix"
     
     if [ -f "$FLAKE_FILE" ]; then
-        # Try to extract profile directory from flake file
-        grep -oP 'profile = "\K[^"]+' "$FLAKE_FILE" | head -1 || echo ""
-    else
-        echo ""
+        # Try to extract profile directory from flake file (old structure)
+        local PROFILE_DIR=$(grep -oP 'profile = "\K[^"]+' "$FLAKE_FILE" | head -1)
+        if [ -n "$PROFILE_DIR" ]; then
+            echo "$PROFILE_DIR"
+            return
+        fi
     fi
+    
+    # Try to extract from profile config file (new refactored structure)
+    if [ -f "$PROFILE_CONFIG_FILE" ]; then
+        local PROFILE_DIR=$(grep -oP 'profile = "\K[^"]+' "$PROFILE_CONFIG_FILE" | head -1)
+        if [ -n "$PROFILE_DIR" ]; then
+            echo "$PROFILE_DIR"
+            return
+        fi
+    fi
+    
+    echo ""
 }
 
 # Set PROFILE based on second parameter, if missing, stop script
@@ -319,6 +333,186 @@ rollback_system() {
 
 wait_for_user_input() {
     read -n 1 -s -r -p "Press any key to continue..."
+}
+
+# Check if repository is behind remote
+check_repo_behind_remote() {
+    local SCRIPT_DIR=$1
+    
+    # Check if remote is configured
+    if ! git -C "$SCRIPT_DIR" remote get-url origin >/dev/null 2>&1; then
+        return 1  # No remote configured
+    fi
+    
+    # Get current branch name
+    local CURRENT_BRANCH=$(git -C "$SCRIPT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null)
+    if [ -z "$CURRENT_BRANCH" ]; then
+        return 1  # Cannot determine current branch
+    fi
+    
+    # Fetch from origin (don't update local refs, just check)
+    if ! git -C "$SCRIPT_DIR" fetch origin >/dev/null 2>&1; then
+        return 1  # Network error or remote unreachable
+    fi
+    
+    # Try to get remote branch (try common branch names)
+    local REMOTE_BRANCH=""
+    for branch in "$CURRENT_BRANCH" "main" "master"; do
+        if git -C "$SCRIPT_DIR" rev-parse "origin/$branch" >/dev/null 2>&1; then
+            REMOTE_BRANCH="origin/$branch"
+            break
+        fi
+    done
+    
+    if [ -z "$REMOTE_BRANCH" ]; then
+        return 1  # Cannot find remote branch
+    fi
+    
+    # Check if local branch is behind remote
+    local LOCAL_COMMIT=$(git -C "$SCRIPT_DIR" rev-parse HEAD 2>/dev/null)
+    local REMOTE_COMMIT=$(git -C "$SCRIPT_DIR" rev-parse "$REMOTE_BRANCH" 2>/dev/null)
+    
+    if [ -z "$LOCAL_COMMIT" ] || [ -z "$REMOTE_COMMIT" ]; then
+        return 1  # Cannot determine commit status
+    fi
+    
+    # Check if local is behind remote
+    if git -C "$SCRIPT_DIR" merge-base --is-ancestor "$LOCAL_COMMIT" "$REMOTE_COMMIT" 2>/dev/null; then
+        if [ "$LOCAL_COMMIT" != "$REMOTE_COMMIT" ]; then
+            return 0  # Behind remote
+        fi
+    fi
+    
+    return 1  # Up-to-date or ahead
+}
+
+# Check if repository has uncommitted changes
+check_repo_dirty() {
+    local SCRIPT_DIR=$1
+    
+    # Check if working tree is dirty
+    if ! git -C "$SCRIPT_DIR" diff-index --quiet HEAD -- 2>/dev/null; then
+        return 0  # Has uncommitted changes
+    fi
+    
+    # Check if there are untracked files (optional - might be too strict)
+    # For now, we only check committed changes
+    
+    return 1  # Clean working tree
+}
+
+# Safely update repository preserving local changes
+update_repository_safe() {
+    local SCRIPT_DIR=$1
+    local SUDO_CMD=$2
+    local HAS_CHANGES=false
+    
+    # Check if there are local changes
+    if check_repo_dirty "$SCRIPT_DIR"; then
+        HAS_CHANGES=true
+    fi
+    
+    # Soften files for git operations
+    $SUDO_CMD "$SCRIPT_DIR/soften.sh" "$SCRIPT_DIR" || {
+        echo -e "${RED}✗ Failed to soften files for git operations${RESET}"
+        return 2
+    }
+    
+    # Stash local changes if any
+    if [ "$HAS_CHANGES" = true ]; then
+        echo -e "${CYAN}Stashing local changes...${RESET}"
+        git -C "$SCRIPT_DIR" stash >/dev/null 2>&1 || {
+            echo -e "${YELLOW}⚠ Warning: Failed to stash local changes${RESET}"
+        }
+    fi
+    
+    # Pull from origin (use current branch's upstream)
+    echo -e "${CYAN}Pulling latest changes from remote...${RESET}"
+    if ! git -C "$SCRIPT_DIR" pull >/dev/null 2>&1; then
+        echo -e "${RED}✗ Failed to pull from remote${RESET}"
+        # Try to restore stash if we stashed
+        if [ "$HAS_CHANGES" = true ]; then
+            git -C "$SCRIPT_DIR" stash pop >/dev/null 2>&1 || true
+        fi
+        $SUDO_CMD "$SCRIPT_DIR/harden.sh" "$SCRIPT_DIR" || true
+        return 2
+    fi
+    
+    # Apply stashed changes if any
+    if [ "$HAS_CHANGES" = true ]; then
+        echo -e "${CYAN}Applying local changes...${RESET}"
+        if ! git -C "$SCRIPT_DIR" stash pop >/dev/null 2>&1; then
+            echo -e "${YELLOW}⚠ Warning: Some local changes may have conflicts${RESET}"
+            echo -e "${YELLOW}  Review the repository state manually${RESET}"
+        fi
+    fi
+    
+    # Harden files
+    $SUDO_CMD "$SCRIPT_DIR/harden.sh" "$SCRIPT_DIR" || {
+        echo -e "${YELLOW}⚠ Warning: Failed to harden files${RESET}"
+    }
+    
+    return 0
+}
+
+# Check and update repository if needed
+check_and_update_repository() {
+    local SCRIPT_DIR=$1
+    local SILENT_MODE=$2
+    
+    # Check if we're in a git repository
+    if [ ! -d "$SCRIPT_DIR/.git" ]; then
+        return 1  # Not a git repo, skip
+    fi
+    
+    # Check if repository is behind remote
+    if ! check_repo_behind_remote "$SCRIPT_DIR"; then
+        return 1  # Up-to-date or cannot check, skip
+    fi
+    
+    # Repository is behind remote
+    local IS_DIRTY=false
+    if check_repo_dirty "$SCRIPT_DIR"; then
+        IS_DIRTY=true
+    fi
+    
+    # Show status to user
+    echo -e "\n${CYAN}Repository Status:${RESET}"
+    echo -e "${YELLOW}  Local repository is behind remote${RESET}"
+    if [ "$IS_DIRTY" = true ]; then
+        echo -e "${YELLOW}  ⚠ Warning: You have uncommitted local changes${RESET}"
+        echo -e "${CYAN}  Local changes will be preserved using git stash${RESET}"
+    fi
+    
+    # Ask user if they want to update
+    if [ "$SILENT_MODE" = true ]; then
+        # Silent mode: default to NO update (safe)
+        echo -e "${CYAN}Silent mode: Skipping repository update (default: NO)${RESET}"
+        return 1
+    fi
+    
+    echo -en "\n${CYAN}Update repository now? (y/N) ${RESET}"
+    read -n 1 yn
+    echo ""
+    
+    case $yn in
+        [Yy]|[Yy][Ee][Ss])
+            # User confirmed: update repository
+            if update_repository_safe "$SCRIPT_DIR" "$SUDO_CMD"; then
+                echo -e "${GREEN}✓ Repository updated successfully${RESET}"
+                return 0
+            else
+                echo -e "${RED}✗ Repository update failed${RESET}"
+                echo -e "${YELLOW}  Continuing with installation using current repository state${RESET}"
+                return 2
+            fi
+            ;;
+        *)
+            # Default: Skip update (Enter, 'n', or anything else)
+            echo -e "${CYAN}Skipping repository update${RESET}"
+            return 1
+            ;;
+    esac
 }
 
 git_fetch_and_reset_dotfiles_by_remote() {
@@ -591,6 +785,12 @@ ending_menu() {
 }
 # ======================================== Main Execution ======================================== #
 
+# Check and update repository if needed (before validation to prevent conflicts)
+check_and_update_repository "$SCRIPT_DIR" "$SILENT_MODE"
+UPDATE_STATUS=$?
+# Continue with installation regardless of update status
+# (update is optional, installation should proceed)
+
 # Validate profile before starting
 validate_profile "$SCRIPT_DIR" "$PROFILE"
 
@@ -607,12 +807,9 @@ fi
 
 $SUDO_CMD echo -e "\nActivating sudo password for this session"
 
-# Update dotfiles to the last commit of the remote repository
-# Or clone the repository if it doesn't exist
-git_fetch_and_reset_dotfiles_by_remote $SCRIPT_DIR
-
-# Re-validate profile after git reset (in case files changed)
-validate_profile "$SCRIPT_DIR" "$PROFILE"
+# Note: Repository update (if needed) was handled at the beginning of the script
+# before profile validation to prevent conflicts. The old git_fetch_and_reset_dotfiles_by_remote
+# function has been replaced with check_and_update_repository() which preserves local changes.
 
 # Switch flake profile to the chosen one flake.<PROFILE>.nix
 switch_flake_profile_nix $SCRIPT_DIR $PROFILE
