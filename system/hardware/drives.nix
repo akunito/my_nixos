@@ -67,6 +67,7 @@
         device = systemSettings.disk7_device;
         fsType = systemSettings.disk7_fsType;
         options = systemSettings.disk7_options;
+        neededForBoot = false;  # Not needed for boot, allows systemd unit generation even if device missing
       };
     })
   ];

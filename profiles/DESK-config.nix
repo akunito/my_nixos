@@ -105,7 +105,10 @@
     disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
     disk6_fsType = "ntfs3"; 
     disk6_options = [ "nofail" "x-systemd.device-timeout=3s" "uid=1000" "gid=1000" ];
-    disk7_enabled = false;  # Temporarily disabled - device UUID b6be2dd5-d6c0-4839-8656-cb9003347c93 not found
+    # Temporarily disabled - device UUID b6be2dd5-d6c0-4839-8656-cb9003347c93 not found
+    # NixOS fails to generate systemd mount unit when device doesn't exist, causing build failures
+    # Re-enable when device is available or UUID is updated
+    disk7_enabled = false;
     # disk7_name = "/mnt/EXT";
     # disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
     # disk7_fsType = "ext4";
