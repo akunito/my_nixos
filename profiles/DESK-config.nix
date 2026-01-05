@@ -222,7 +222,7 @@
     
     theme = "miramare";
     wm = "plasma6";
-    wmEnableHyprland = true;
+    wmEnableHyprland = false;  # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
     
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";

@@ -1,15 +1,19 @@
 { pkgs, lib, userSettings, systemSettings, ... }:
 
-lib.mkMerge [
+{
+  # CRITICAL: imports must be at top level, NOT inside lib.mkMerge or lib.mkIf
+  # NixOS needs to resolve imports before evaluating conditions
+  imports = [
+    # ./wayland.nix
+    ./pipewire.nix
+    ./fonts.nix
+    ./dbus.nix
+    # ./gnome-keyring.nix
+    # ./hyprland.nix  <-- REMOVED: Plasma should not import Hyprland
+    # Hyprland should be imported separately at the profile level if wmEnableHyprland is true
+  ];
+} // lib.mkMerge [
   {
-    # Import wayland config
-    imports = [ # ./wayland.nix
-                ./pipewire.nix
-                ./fonts.nix
-                ./dbus.nix
-                #./gnome-keyring.nix
-              ]
-      ++ lib.optional userSettings.wmEnableHyprland (./. + "/hyprland.nix");
 
     # # Security
     # security = {
@@ -18,16 +22,31 @@ lib.mkMerge [
     # services.gnome.gnome-keyring.enable = true;
 
     # # KDE Plasma 6
-    services.displayManager.sddm.enable = true;
-    services.desktopManager.plasma6.enable = true;
-    services.displayManager.sddm.wayland.enable = true; # enable if blackscreen with plasma6
-    # services.displayManager.sddm.enableHidpi = true; # Enable if using high-DPI displays
-    services.displayManager.defaultSession = "plasma";
+    # Apply conditions ONLY to configuration options, not imports
+    services.displayManager.sddm = lib.mkIf (userSettings.wm == "plasma6") {
+      enable = true;
+      wayland.enable = true; # enable if blackscreen with plasma6
+      # enableHidpi = true; # Enable if using high-DPI displays
+    };
+    
+    services.desktopManager.plasma6 = lib.mkIf (userSettings.wm == "plasma6") {
+      enable = true;
+    };
+    
+    services.displayManager.defaultSession = lib.mkIf (userSettings.wm == "plasma6") "plasma";
  
     # # Enable the X11 windowing system.
     # # You can disable this if you're only using the Wayland session.
-    services.xserver.enable = true;
-    programs.xwayland.enable = true;
+    # CRITICAL FIX: XWayland requires XKB keyboard layout configuration to start correctly.
+    # Without it, XWayland apps (like LACT) may crash on launch or hang.
+    services.xserver = lib.mkIf (userSettings.wm == "plasma6") {
+      enable = true;
+      xkb = {
+        layout = "us";
+        variant = "";
+      };
+    };
+    programs.xwayland.enable = lib.mkIf (userSettings.wm == "plasma6") true;
   }
   
   # SDDM setup script for monitor rotation (DESK profile only)

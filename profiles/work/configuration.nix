@@ -46,7 +46,8 @@
     ++ lib.optional systemSettings.xboxControllerEnable ../../system/hardware/xbox.nix # Xbox wireless controller
     ++ lib.optional systemSettings.appImageEnable ../../system/app/appimage.nix # AppImage support
     ++ lib.optional systemSettings.starCitizenModules ../../system/app/starcitizen.nix # Star Citizen support
-    ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix; # Mount drives
+    ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix # Mount drives
+    ++ lib.optional (userSettings.wmEnableHyprland == true) ../../system/wm/hyprland.nix; # Hyprland (if enabled)
 
   # Fix nix path
   nix.nixPath = [ "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
@@ -151,7 +152,7 @@
   xdg.portal = {
     enable = true;
     extraPortals = [
-      # pkgs.kdePackages.xdg-desktop-portal-kde
+      pkgs.kdePackages.xdg-desktop-portal-kde  # Note: NixOS auto-adds this with plasma6.enable, but harmless to include explicitly
       pkgs.xdg-desktop-portal
       pkgs.xdg-desktop-portal-gtk
     ];

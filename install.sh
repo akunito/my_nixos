@@ -118,6 +118,9 @@ else
     SUDO_CMD="sudo_exec"
 fi
 
+# Track file hardening state for cleanup on early exit
+FILES_HARDENED=false
+
 # ======================================== Log functions ======================================== #
 # TODO: move it to different file for DRY
 
@@ -165,6 +168,21 @@ log_task() {
 }
 
 rotate_log
+
+# ======================================== Cleanup Handler ======================================== #
+
+# Cleanup function to soften files on early exit if they were hardened
+cleanup_on_exit() {
+    if [ "$FILES_HARDENED" = true ]; then
+        echo -e "\n${YELLOW}Cleaning up: Softening files due to early exit...${RESET}" >&2
+        $SUDO_CMD "$SCRIPT_DIR/soften.sh" "$SCRIPT_DIR" || true
+    fi
+}
+
+# Set up EXIT trap to automatically cleanup on any exit (errors, Ctrl+C, etc.)
+# Note: Only trap EXIT, not INT/TERM, as EXIT trap is automatically triggered
+# for all exit conditions including signals in POSIX shells
+trap cleanup_on_exit EXIT
 
 # ======================================== Functions ======================================== #
 
@@ -699,6 +717,8 @@ hardening_files() {
     local SUDO_CMD=$2
     echo -e "\nHardening files..."
     $SUDO_CMD $SCRIPT_DIR/harden.sh $SCRIPT_DIR
+    # Update state tracking immediately after successful hardening
+    FILES_HARDENED=true
 }
 
 # Ask user if they want to clean iptables rules
@@ -725,6 +745,8 @@ soften_files_for_home_manager() {
     local SUDO_CMD=$2
     echo -e "\nSoftening files for Home-Manager..."
     $SUDO_CMD $SCRIPT_DIR/soften.sh $SCRIPT_DIR
+    # Update state tracking immediately after successful softening
+    FILES_HARDENED=false
 }
 
 # Ask user if they want to run the maintenance script
@@ -961,5 +983,10 @@ echo "  " # To clean up color codes
 
 # Ending menu
 ending_menu $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
+
+# Disable cleanup on successful completion to preserve final file state
+FILES_HARDENED=false
+# Clear the EXIT trap to prevent cleanup from running
+trap - EXIT
 
 echo -e "\n${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${RESET} Installation script finished"
