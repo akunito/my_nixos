@@ -6,14 +6,17 @@ Complete guide to GPU monitoring tools and their configuration for different GPU
 
 - [Overview](#overview)
 - [Available Tools](#available-tools)
-- [Profile-Specific Configuration](#profile-specific-configuration)
+- [Module-Based Configuration](#module-based-configuration)
 - [Usage Instructions](#usage-instructions)
 - [Troubleshooting](#troubleshooting)
+- [Module Implementation](#module-implementation)
 - [Related Documentation](#related-documentation)
 
 ## Overview
 
-This configuration provides comprehensive GPU monitoring capabilities for AMD, Intel, and NVIDIA GPUs. Different tools are available depending on your GPU type and profile configuration.
+This configuration provides comprehensive GPU monitoring capabilities for AMD, Intel, and NVIDIA GPUs. GPU monitoring tools are automatically installed via the `system/hardware/gpu-monitoring.nix` module based on the `gpuType` setting in your profile configuration.
+
+**Module-Based Configuration**: All GPU monitoring packages are managed by a single module (`system/hardware/gpu-monitoring.nix`), ensuring consistency and preventing conflicts. No manual package configuration is needed in profile files.
 
 ### GPU Types by Profile
 
@@ -29,37 +32,47 @@ This configuration provides comprehensive GPU monitoring capabilities for AMD, I
 
 ## Available Tools
 
-### btop-rocm
+### btop (System Monitor)
 
-**Purpose**: System monitor with AMD GPU statistics integration
+**Purpose**: System monitor with optional GPU statistics integration
 
-**Availability**: DESK and AGADESK profiles only
+**Availability**: All profiles (automatically installed by module)
 
-**Requirements**:
-- `btop-rocm` package (already installed)
-- `rocmPackages.rocm-smi` package (provides ROCm SMI library)
+**For AMD GPUs (DESK, AGADESK):**
+- Provided by `btop-rocm` package (compiled with ROCm support)
+- Requires `rocmPackages.rocm-smi` for GPU detection (automatically installed)
+- **IMPORTANT**: Use `btop` command, not `btop-rocm` (the package provides the `btop` binary)
+
+**For Intel/Other GPUs:**
+- Standard `btop` package
+- May show Intel GPU stats via sysfs/hwmon
 
 **Features**:
 - CPU, memory, and process monitoring
-- AMD GPU utilization, temperature, and memory usage
+- AMD GPU utilization, temperature, and memory usage (AMD profiles with ROCm)
 - Real-time statistics display
 - Terminal-based interface
 
 **Usage**:
 ```bash
-btop-rocm
+btop
 ```
 
 **Configuration**:
 - Configuration file: `~/.config/btop/btop.conf`
-- GPU monitoring is enabled automatically when ROCm SMI library is available
+- GPU monitoring is enabled automatically when ROCm SMI library is available (AMD)
 - Press `5`, `6`, `7` keys to toggle GPU monitoring boxes
 
-### nvitop
+### nvtop (GPU Monitor)
 
-**Purpose**: Universal GPU monitor supporting AMD, NVIDIA, and Intel GPUs
+**Purpose**: Dedicated GPU monitor with GPU-specific variants
 
-**Availability**: All profiles (recommended for all GPU types)
+**Availability**: All profiles (automatically installed by module)
+
+**GPU-Specific Variants**:
+- **AMD**: `nvtopPackages.amd` - AMD-specific variant (prevents NVIDIA build errors)
+- **Intel**: `nvtopPackages.intel` - Intel-specific variant
+- **Other**: `nvtopPackages.modelling` - Generic fallback
 
 **Features**:
 - Works with AMD GPUs via amdgpu driver (no ROCm required)
@@ -68,18 +81,19 @@ btop-rocm
 - Real-time GPU utilization, temperature, memory usage
 - Process-level GPU usage information
 - Terminal-based interface similar to htop
-- Python-based implementation
 
 **Usage**:
 ```bash
-nvitop
+nvtop
 ```
 
 **Benefits**:
-- Universal support for all GPU types
-- No additional dependencies for AMD GPUs (uses amdgpu driver directly)
-- Works on all profiles regardless of GPU type
-- Can coexist with btop
+- GPU-specific compilation avoids dependency issues
+- Prevents build failures and runtime errors
+- Works reliably for each GPU type
+- No conflicts with other GPU drivers
+
+**IMPORTANT**: Do NOT use generic `pkgs.nvtop` or `pkgs.nvitop` - they cause build/runtime errors. The module automatically uses the correct variant.
 
 ### rocm-smi
 
@@ -131,11 +145,32 @@ btop
 
 **Note**: For AMD dedicated GPUs, use `btop-rocm` instead. Regular `btop` may show Intel GPU stats on systems with Intel integrated graphics.
 
+### intel-gpu-tools
+
+**Purpose**: Intel GPU monitoring and diagnostics
+
+**Availability**: Intel profiles only (LAPTOP, AGA, YOGAAKU, WSL, automatically installed by module)
+
+**Features**:
+- Provides `intel_gpu_top` command for real-time Intel GPU usage
+- Intel GPU diagnostics and monitoring
+- Terminal-based interface
+
+**Usage**:
+```bash
+intel_gpu_top
+```
+
+**Benefits**:
+- Intel-specific GPU monitoring
+- Real-time usage statistics
+- Highly recommended for Intel systems
+
 ### LACT (Linux AMDGPU Controller)
 
 **Purpose**: GUI tool for AMD GPU monitoring and overclocking
 
-**Availability**: DESK and AGADESK profiles (when `amdLACTdriverEnable = true`)
+**Availability**: DESK and AGADESK profiles (when `amdLACTdriverEnable = true`, configured in `opengl.nix`)
 
 **Features**:
 - Real-time GPU monitoring
@@ -155,47 +190,44 @@ lact
 - Automatically started on boot when enabled
 - Configuration via GUI interface
 
-## Profile-Specific Configuration
+## Module-Based Configuration
 
-### DESK and AGADESK Profiles (AMD Dedicated GPU)
+GPU monitoring is handled automatically by the `system/hardware/gpu-monitoring.nix` module. No manual package configuration is needed in profile files.
 
-**Installed Packages**:
-```nix
-systemPackages = pkgs: pkgs-unstable: [
-  pkgs.btop              # System monitor
-  pkgs.btop-rocm         # System monitor with GPU stats
-  pkgs.rocmPackages.rocm-smi  # ROCm SMI library and CLI tool
-  pkgs.nvitop            # Universal GPU monitor
-];
-```
+### Module Location
 
-**Available Tools**:
-- `btop-rocm` - System monitor with AMD GPU stats
-- `nvitop` - Universal GPU monitor
-- `rocm-smi` - Command-line GPU stats
-- `lact` - GUI monitoring and overclocking (if enabled)
+The module is located at `system/hardware/gpu-monitoring.nix` and is automatically imported in all profile `configuration.nix` files.
 
-**Configuration**:
+### Automatic Package Installation
+
+Packages are automatically installed based on `gpuType` setting:
+
+**AMD Profiles (DESK, AGADESK):**
+- `btop-rocm` - System monitor (provides `btop` command)
+- `rocmPackages.rocm-smi` - ROCm SMI library and CLI tool
+- `nvtopPackages.amd` - AMD-specific GPU monitor
+- `radeontop` - Low-level AMD GPU monitor
+
+**Intel Profiles (LAPTOP, AGA, YOGAAKU, WSL):**
+- `btop` - Standard system monitor
+- `nvtopPackages.intel` - Intel-specific GPU monitor
+- `intel-gpu-tools` - Provides `intel_gpu_top` command
+
+**Other GPU Types:**
+- `btop` - Standard system monitor
+- `nvtopPackages.modelling` - Generic GPU monitor
+
+### Profile Configuration
+
+**Required Setting**:
 ```nix
 systemSettings = {
-  gpuType = "amd";
-  amdLACTdriverEnable = true;  # Enable LACT GUI tool
+  gpuType = "amd";  # or "intel" or "nvidia"
+  amdLACTdriverEnable = true;  # Optional: Enable LACT GUI tool for AMD
 };
 ```
 
-### Other Profiles (Intel, AMD Integrated)
-
-**Recommended Package**:
-```nix
-systemPackages = pkgs: pkgs-unstable: [
-  pkgs.btop              # System monitor (may show Intel GPU stats)
-  pkgs.nvitop            # Universal GPU monitor (optional but recommended)
-];
-```
-
-**Available Tools**:
-- `btop` - System monitor (may show Intel GPU stats)
-- `nvitop` - Universal GPU monitor (works with Intel and AMD integrated GPUs)
+**No Manual Package Configuration Needed**: The module handles all GPU monitoring packages automatically. Do NOT add GPU monitoring packages to `systemPackages` in profile configs.
 
 ## Usage Instructions
 
@@ -208,13 +240,15 @@ rocm-smi
 
 **System Monitor with GPU**:
 ```bash
-btop-rocm
+btop
 ```
+Note: On AMD profiles, this is provided by `btop-rocm` package. Press `5`, `6`, `7` to toggle GPU boxes.
 
 **Dedicated GPU Monitor**:
 ```bash
-nvitop
+nvtop
 ```
+Note: Uses GPU-specific variant automatically (AMD: `nvtopPackages.amd`, Intel: `nvtopPackages.intel`)
 
 **GUI Monitoring**:
 ```bash
@@ -230,32 +264,43 @@ btop
 
 **GPU Monitor**:
 ```bash
-nvitop
+nvtop
 ```
+Note: Uses Intel-specific variant (`nvtopPackages.intel`)
+
+**Intel GPU Top**:
+```bash
+intel_gpu_top
+```
+Note: Real-time Intel GPU usage statistics (highly recommended)
 
 ### Keyboard Shortcuts
 
-**btop/btop-rocm**:
-- `5`, `6`, `7` - Toggle GPU monitoring boxes
+**btop**:
+- `5`, `6`, `7` - Toggle GPU monitoring boxes (AMD profiles with ROCm)
 - `h` - Help menu
 - `q` - Quit
 
-**nvitop**:
+**nvtop**:
 - `h` - Help menu
 - `q` - Quit
 - Arrow keys - Navigate
 - `F5` - Toggle processes view
 
+**intel_gpu_top**:
+- `q` - Quit
+- Real-time display updates automatically
+
 ## Troubleshooting
 
-### btop-rocm Not Showing GPU Stats
+### btop Not Showing GPU Stats (AMD Profiles)
 
-**Problem**: `btop-rocm` runs but doesn't display GPU information.
+**Problem**: `btop` runs but doesn't display GPU information on AMD profiles.
 
 **Solutions**:
-1. Verify `rocmPackages.rocm-smi` is installed:
+1. Verify `rocmPackages.rocm-smi` is installed (should be automatic via module):
    ```bash
-   nix-env -q | grep rocm-smi
+   which rocm-smi
    ```
 
 2. Check if ROCm SMI library is available:
@@ -272,6 +317,10 @@ nvitop
 4. Check btop configuration:
    - Ensure GPU monitoring is enabled in `~/.config/btop/btop.conf`
    - Try pressing `5`, `6`, `7` keys to toggle GPU boxes
+
+5. Verify module is imported:
+   - Check that `system/hardware/gpu-monitoring.nix` is imported in your profile's `configuration.nix`
+   - Verify `gpuType = "amd"` is set in your profile config
 
 ### rocm-smi Command Not Found
 
@@ -293,31 +342,65 @@ nvitop
    which rocm-smi
    ```
 
-### nvitop Not Detecting GPU
+### nvtop Not Detecting GPU
 
-**Problem**: `nvitop` doesn't show any GPU information.
+**Problem**: `nvtop` doesn't show any GPU information.
 
 **Solutions**:
-1. Verify GPU driver is loaded:
+1. Verify correct variant is installed:
+   - AMD profiles: Should use `nvtopPackages.amd`
+   - Intel profiles: Should use `nvtopPackages.intel`
+   - Module automatically selects the correct variant
+
+2. Verify GPU driver is loaded:
    ```bash
    lsmod | grep amdgpu  # For AMD
    lsmod | grep i915     # For Intel
    lsmod | grep nvidia   # For NVIDIA
    ```
 
-2. Check GPU permissions:
+3. Check GPU permissions:
    ```bash
    ls -l /dev/dri/
    ```
    User should be in `video` or `render` group.
 
-3. Verify GPU is accessible:
+4. Verify GPU is accessible:
    ```bash
    # For AMD
    cat /sys/class/drm/card*/device/uevent
    
    # For Intel
-   intel_gpu_top  # If available
+   intel_gpu_top  # Should be available on Intel profiles
+   ```
+
+5. Verify module is imported and `gpuType` is set correctly
+
+### Module Not Installing Packages
+
+**Problem**: GPU monitoring packages are not installed.
+
+**Solutions**:
+1. Verify `gpuType` is set in profile config:
+   ```nix
+   systemSettings = {
+     gpuType = "amd";  # or "intel"
+   };
+   ```
+
+2. Verify module is imported in profile `configuration.nix`:
+   ```nix
+   imports = [
+     # ... other imports ...
+     ../../system/hardware/gpu-monitoring.nix
+   ];
+   ```
+
+3. Check that `systemSettings` is passed via `specialArgs` (should be automatic in flake-base.nix)
+
+4. Rebuild system:
+   ```bash
+   sudo nixos-rebuild switch
    ```
 
 ### LACT Not Starting
@@ -347,6 +430,23 @@ nvitop
    lspci | grep -i amd
    ```
 
+### User Permissions
+
+**Problem**: GPU monitoring tools require elevated permissions.
+
+**Solutions**:
+1. Verify user is in `video` and `render` groups:
+   ```bash
+   groups
+   ```
+
+2. Add user to groups if needed:
+   ```nix
+   users.users.${username}.extraGroups = [ "video" "render" ];
+   ```
+
+3. Log out and log back in after adding groups
+
 ### GPU Stats Not Updating
 
 **Problem**: GPU statistics are static or not updating.
@@ -369,6 +469,36 @@ nvitop
    ```bash
    groups  # Should include video or render group
    ```
+
+## Module Implementation
+
+### Module Location
+
+`system/hardware/gpu-monitoring.nix`
+
+### How It Works
+
+The module uses `lib.mkIf` to conditionally install packages based on `systemSettings.gpuType`:
+
+- **AMD**: Installs `btop-rocm`, `rocmPackages.rocm-smi`, `nvtopPackages.amd`, `radeontop`
+- **Intel**: Installs `btop`, `nvtopPackages.intel`, `intel-gpu-tools`
+- **Other**: Installs `btop`, `nvtopPackages.modelling` (fallback)
+
+### Importing the Module
+
+The module is automatically imported in all profile `configuration.nix` files:
+- `profiles/work/configuration.nix` (used by personal, DESK, AGADESK, LAPTOP, etc.)
+- `profiles/homelab/base.nix` (used by homelab, HOME, VMHOME)
+- `profiles/wsl/configuration.nix` (used by WSL)
+
+No manual import needed in individual profile configs.
+
+### Benefits
+
+- **DRY Principle**: Single source of truth for GPU monitoring
+- **No Conflicts**: Prevents binary collisions (btop vs btop-rocm)
+- **Automatic**: Packages selected based on GPU type
+- **Consistent**: Same tools across all profiles with same GPU type
 
 ## Related Documentation
 

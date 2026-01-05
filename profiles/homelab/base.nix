@@ -5,6 +5,7 @@
     [ ../../system/hardware-configuration.nix
       ../../system/hardware/power.nix # Power management
       ../../system/hardware/time.nix # Network time sync
+      ../../system/hardware/gpu-monitoring.nix # GPU monitoring tools
       ../../system/hardware/nfs_server.nix # NFS share directories over network
       ../../system/security/firewall.nix
       ../../system/security/fail2ban.nix # Fail2ban config to be set up

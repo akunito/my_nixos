@@ -74,7 +74,6 @@
       pkgs.cryptsetup
       pkgs.home-manager
       pkgs.wpa_supplicant
-      pkgs.btop
       pkgs.fzf
       pkgs.tldr
       pkgs.rsync

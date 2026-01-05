@@ -139,17 +139,25 @@ OpenGL is automatically configured based on GPU type in `system/hardware/opengl.
 
 ### GPU Monitoring
 
-The configuration includes multiple tools for GPU monitoring:
+GPU monitoring is handled automatically by the `system/hardware/gpu-monitoring.nix` module based on GPU type.
 
 **For AMD Dedicated GPUs (DESK, AGADESK profiles):**
-- `btop-rocm` - System monitor with AMD GPU stats (requires `rocmPackages.rocm-smi`)
-- `nvitop` - Universal GPU monitor supporting AMD, NVIDIA, and Intel GPUs
+- `btop` - System monitor with AMD GPU stats (provided by `btop-rocm` package, requires `rocmPackages.rocm-smi`)
+- `nvtop` - AMD-specific GPU monitor (from `nvtopPackages.amd`)
+- `radeontop` - Low-level AMD GPU pipe monitoring
 - `rocm-smi` - Command-line tool for AMD GPU statistics
 - `lact` - GUI tool for detailed AMD GPU monitoring and overclocking
 
-**For All GPU Types:**
-- `btop` - System monitor (may show Intel GPU stats via sysfs/hwmon)
-- `nvitop` - Universal GPU monitor (works with AMD, NVIDIA, and Intel GPUs)
+**For Intel GPUs (LAPTOP, AGA, YOGAAKU, WSL profiles):**
+- `btop` - Standard system monitor (may show Intel GPU stats via sysfs/hwmon)
+- `nvtop` - Intel-specific GPU monitor (from `nvtopPackages.intel`)
+- `intel_gpu_top` - Real-time Intel GPU usage statistics (from `intel-gpu-tools`)
+
+**For Other GPU Types:**
+- `btop` - Standard system monitor
+- `nvtop` - Generic GPU monitor (from `nvtopPackages.modelling`)
+
+**Configuration**: GPU monitoring packages are automatically installed based on `gpuType` setting. No manual package configuration needed.
 
 **Documentation**: See [GPU Monitoring](hardware/gpu-monitoring.md)
 

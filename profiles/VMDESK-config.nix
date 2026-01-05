@@ -93,7 +93,6 @@
       pkgs.cryptsetup
       pkgs.home-manager
       pkgs.dnsutils
-      pkgs.btop
       pkgs.fzf
       pkgs.rsync
       pkgs.restic

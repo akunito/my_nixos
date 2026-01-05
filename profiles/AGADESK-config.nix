@@ -154,10 +154,6 @@
       pkgs.iproute2
       pkgs.dnsutils
       pkgs.nettools
-      pkgs.btop
-      pkgs.btop-rocm
-      pkgs.rocmPackages.rocm-smi
-      pkgs.nvitop
       pkgs.fzf
       pkgs.rsync
       pkgs.nfs-utils

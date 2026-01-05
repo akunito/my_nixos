@@ -143,7 +143,6 @@
       pkgs.traceroute
       pkgs.iproute2
       pkgs.dnsutils
-      pkgs.btop
       pkgs.fzf
       pkgs.rsync
       pkgs.nfs-utils
