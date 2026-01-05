@@ -11,7 +11,9 @@
 
   # Create LM Studio configuration directory
   # Note: LM Studio uses ~/.lmstudio/ (NOT ~/.config/LMStudio/) on Linux
-  home.file.".lmstudio/mcp.json".text = ''
+  # We create a template file instead of mcp.json directly to avoid overwriting
+  # existing user-configured files (which may contain API keys)
+  home.file.".lmstudio/mcp.json.example".text = ''
     {
       "mcpServers": {
         "brave-search": {
@@ -25,9 +27,10 @@
     }
   '';
 
-  # Note: The user must manually edit ~/.lmstudio/mcp.json to replace
-  # "YOUR_API_KEY_HERE" with their actual Brave Search API key.
-  # This is intentional for security - API keys should not be in Nix config
-  # (they would be exposed in world-readable /nix/store).
+  # Note: If ~/.lmstudio/mcp.json doesn't exist, copy the example file:
+  #   cp ~/.lmstudio/mcp.json.example ~/.lmstudio/mcp.json
+  # Then edit ~/.lmstudio/mcp.json to replace "YOUR_API_KEY_HERE" with your actual Brave Search API key.
+  # This approach prevents Home Manager from overwriting existing configuration files.
+  # Security: API keys should not be in Nix config (they would be exposed in world-readable /nix/store).
 }
 

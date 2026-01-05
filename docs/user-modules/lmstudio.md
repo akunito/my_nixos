@@ -28,8 +28,8 @@ The LM Studio module provides a self-contained configuration for LM Studio, incl
 ## Module Features
 
 - **Self-contained**: Includes Node.js dependency directly (no profile config changes needed)
-- **MCP Server Template**: Creates `~/.lmstudio/mcp.json` with placeholder for API key
-- **Security-focused**: Does not hardcode API keys (user must add manually)
+- **MCP Server Template**: Creates `~/.lmstudio/mcp.json.example` template file (won't overwrite existing `mcp.json`)
+- **Security-focused**: Does not hardcode API keys (user must add manually) and protects existing configuration
 
 ## Installation
 
@@ -52,7 +52,7 @@ Model Context Protocol (MCP) allows LM Studio models to interact with external t
 
 ### Brave Search MCP Server
 
-The module creates a template configuration file at `~/.lmstudio/mcp.json` with a placeholder for the Brave Search API key.
+The module creates a template configuration file at `~/.lmstudio/mcp.json.example` with a placeholder for the Brave Search API key. This prevents overwriting existing `mcp.json` files that may already contain your API key.
 
 #### Step 1: Obtain Brave Search API Key
 
@@ -60,7 +60,21 @@ The module creates a template configuration file at `~/.lmstudio/mcp.json` with 
 2. Sign up for a free account
 3. Get your API key (free tier: 2,000 queries/month)
 
-#### Step 2: Configure API Key
+#### Step 2: Create Configuration File
+
+The module creates a template file at `~/.lmstudio/mcp.json.example`. 
+
+**If `~/.lmstudio/mcp.json` doesn't exist:**
+1. Copy the example file:
+   ```sh
+   cp ~/.lmstudio/mcp.json.example ~/.lmstudio/mcp.json
+   ```
+
+**If `~/.lmstudio/mcp.json` already exists:**
+- The module won't overwrite it (to protect your API key)
+- You can use the example file as a reference if needed
+
+#### Step 3: Configure API Key
 
 1. Open `~/.lmstudio/mcp.json` in your editor
 2. Replace `"YOUR_API_KEY_HERE"` with your actual Brave Search API key:
@@ -81,7 +95,7 @@ The module creates a template configuration file at `~/.lmstudio/mcp.json` with 
 
 3. Save the file
 
-#### Step 3: Enable MCP Server in LM Studio
+#### Step 4: Enable MCP Server in LM Studio
 
 1. Open LM Studio
 2. Navigate to **Settings** → **Integrations** (or **MCP Servers**)
@@ -89,7 +103,7 @@ The module creates a template configuration file at `~/.lmstudio/mcp.json` with 
 4. Enable it
 5. Restart LM Studio if prompted
 
-#### Step 4: Verify Setup
+#### Step 5: Verify Setup
 
 1. Start a chat in LM Studio
 2. Ask the model to search the web for something
@@ -318,10 +332,20 @@ LM Studio supports plugins installed via the LM Studio Hub. These are installed 
 **Problem**: `~/.lmstudio/mcp.json` doesn't exist.
 
 **Solutions**:
-1. Rebuild Home Manager: `home-manager switch`
-2. Check Home Manager logs for errors
-3. Manually create directory: `mkdir -p ~/.lmstudio`
-4. Verify module is imported in profile's `home.nix`
+1. Copy the example file: `cp ~/.lmstudio/mcp.json.example ~/.lmstudio/mcp.json`
+2. Edit the file to add your API key (see MCP Server Setup section)
+3. Rebuild Home Manager: `home-manager switch`
+4. Check Home Manager logs for errors
+5. Manually create directory: `mkdir -p ~/.lmstudio`
+6. Verify module is imported in profile's `home.nix`
+
+### Home Manager Clobber Warning
+
+**Problem**: Home Manager warns about overwriting `~/.lmstudio/mcp.json`.
+
+**Cause**: The file already exists (likely with your API key configured).
+
+**Solution**: The module now creates `mcp.json.example` instead of `mcp.json` to avoid this issue. Your existing `mcp.json` file will not be overwritten.
 
 ### Model Performance Issues
 
@@ -379,8 +403,10 @@ LM Studio supports plugins installed via the LM Studio Hub. These are installed 
 The module creates the following:
 
 - **Directory**: `~/.lmstudio/`
-- **Configuration File**: `~/.lmstudio/mcp.json` (template with placeholder)
+- **Template File**: `~/.lmstudio/mcp.json.example` (template with placeholder - copy to `mcp.json` if needed)
 - **Packages**: `nodejs` (includes npm and npx)
+
+**Note**: The module creates `mcp.json.example` instead of `mcp.json` to avoid overwriting existing configuration files that may contain your API key.
 
 **Module File**: `user/app/lmstudio/lmstudio.nix`
 
