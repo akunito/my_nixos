@@ -212,6 +212,7 @@
     xboxControllerEnable = true;
     appImageEnable = true;
     gamemodeEnable = true;
+    enableSwayForDESK = true;  # Enable SwayFX as second WM option alongside Plasma6
     
     systemStable = false;
   };

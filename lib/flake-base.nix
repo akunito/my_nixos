@@ -53,7 +53,7 @@ let
   # Compute derived userSettings values first
   userSettings = userSettingsMerged // {
     # Compute wmType from wm
-    wmType = if ((userSettingsMerged.wm == "hyprland") || (userSettingsMerged.wm == "plasma") || (userSettingsMerged.wm == "plasma6")) 
+    wmType = if ((userSettingsMerged.wm == "hyprland") || (userSettingsMerged.wm == "plasma") || (userSettingsMerged.wm == "plasma6") || (userSettingsMerged.wm == "sway")) 
              then "wayland" 
              else "x11";
     

@@ -23,17 +23,19 @@
 
     # # KDE Plasma 6
     # Apply conditions ONLY to configuration options, not imports
-    services.displayManager.sddm = lib.mkIf (userSettings.wm == "plasma6") {
+    # Allow coexistence with SwayFX - SDDM will show both sessions
+    services.displayManager.sddm = lib.mkIf (userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) {
       enable = true;
       wayland.enable = true; # enable if blackscreen with plasma6
       # enableHidpi = true; # Enable if using high-DPI displays
     };
     
+    # Default to Plasma unless user selects SwayFX at login
+    services.displayManager.defaultSession = lib.mkIf (userSettings.wm == "plasma6") "plasma";
+    
     services.desktopManager.plasma6 = lib.mkIf (userSettings.wm == "plasma6") {
       enable = true;
     };
-    
-    services.displayManager.defaultSession = lib.mkIf (userSettings.wm == "plasma6") "plasma";
  
     # # Enable the X11 windowing system.
     # # You can disable this if you're only using the Wayland session.

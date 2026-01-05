@@ -23,7 +23,8 @@
               # ../../user/lang/godot/godot.nix # Game development
               #../../user/pkgs/blockbench.nix # Blockbench ## marked as insecure
               ../../user/hardware/bluetooth.nix # Bluetooth
-            ] ++ lib.optional systemSettings.stylixEnable ../../user/style/stylix.nix; # Styling and themes for my apps
+            ] ++ lib.optional systemSettings.stylixEnable ../../user/style/stylix.nix # Styling and themes for my apps
+            ++ lib.optional (systemSettings.enableSwayForDESK == true) ../../user/wm/sway/sway.nix; # SwayFX (if enabled for DESK profile)
 
   home.stateVersion = userSettings.homeStateVersion; # Please read the comment before changing.
 

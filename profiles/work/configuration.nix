@@ -47,7 +47,8 @@
     ++ lib.optional systemSettings.appImageEnable ../../system/app/appimage.nix # AppImage support
     ++ lib.optional systemSettings.starCitizenModules ../../system/app/starcitizen.nix # Star Citizen support
     ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix # Mount drives
-    ++ lib.optional (userSettings.wmEnableHyprland == true) ../../system/wm/hyprland.nix; # Hyprland (if enabled)
+    ++ lib.optional (userSettings.wmEnableHyprland == true) ../../system/wm/hyprland.nix # Hyprland (if enabled)
+    ++ lib.optional (systemSettings.enableSwayForDESK == true) ../../system/wm/sway.nix; # SwayFX (if enabled for DESK profile)
 
   # Fix nix path
   nix.nixPath = [ "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
