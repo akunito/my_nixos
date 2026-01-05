@@ -15,6 +15,8 @@
       ../../system/hardware/gpu-monitoring.nix # GPU monitoring tools
       ../../system/hardware/printing.nix # Printer
       ../../system/hardware/bluetooth.nix # Bluetooth config
+      ../../system/hardware/performance.nix # Performance optimizations (desktop-only)
+      ../../system/hardware/io-scheduler.nix # I/O scheduler optimization (desktop-only)
       (./. + "../../../system/wm"+("/"+userSettings.wm)+".nix") # My window manager
       ../../system/app/flatpak.nix
       ../../system/app/virtualization.nix # qemu, virt-manager, distrobox

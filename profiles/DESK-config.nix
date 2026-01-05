@@ -79,12 +79,12 @@
     disk1_name = "/mnt/2nd_NVME";
     disk1_device = "/dev/mapper/2nd_NVME";
     disk1_fsType = "ext4";
-    disk1_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+    disk1_options = [ "nofail" "x-systemd.device-timeout=3s" "noatime" "nodiratime" ];
     disk2_enabled = true;
     disk2_name = "/mnt/DATA_SATA3";
     disk2_device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
     disk2_fsType = "ntfs3";
-    disk2_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+    disk2_options = [ "nofail" "x-systemd.device-timeout=3s" "uid=1000" "gid=1000" ];
     disk3_enabled = true;
     disk3_name = "/mnt/NFS_media";
     disk3_device = "192.168.20.200:/mnt/hddpool/media";
@@ -104,12 +104,12 @@
     disk6_name = "/mnt/DATA";
     disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
     disk6_fsType = "ntfs3"; 
-    disk6_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+    disk6_options = [ "nofail" "x-systemd.device-timeout=3s" "uid=1000" "gid=1000" ];
     disk7_enabled = true;
     disk7_name = "/mnt/EXT";
     disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
     disk7_fsType = "ext4";
-    disk7_options = [ "nofail" "x-systemd.device-timeout=5s" ];
+    disk7_options = [ "nofail" "x-systemd.device-timeout=5s" "noatime" "nodiratime" ];
     
     # NFS client
     nfsClientEnable = true;
@@ -118,19 +118,19 @@
         what = "192.168.20.200:/mnt/hddpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
-        options = "noatime";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
       }
       {
         what = "192.168.20.200:/mnt/ssdpool/library";
         where = "/mnt/NFS_library";
         type = "nfs";
-        options = "noatime";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
       }
       {
         what = "192.168.20.200:/mnt/ssdpool/emulators";
         where = "/mnt/NFS_emulators";
         type = "nfs";
-        options = "noatime";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
       }
     ];
     nfsAutoMounts = [

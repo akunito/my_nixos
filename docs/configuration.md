@@ -220,8 +220,45 @@ systemSettings = {
   LOGIND_ENABLE = false;
   lidSwitch = "ignore";
   powerManagement_ENABLE = true;
+  power-profiles-daemon_ENABLE = true;  # Desktop: Use PPD for CPU management
 };
 ```
+
+### Performance Optimizations
+
+Performance optimizations are automatically applied based on profile type using consolidated modules with `lib.mkMerge`.
+
+**Architecture**: The `system/hardware/performance.nix` and `system/hardware/io-scheduler.nix` modules use `lib.mkMerge` to provide profile-specific optimizations in a single, maintainable structure.
+
+**Profile-Specific Optimizations**:
+
+**Desktop Profiles** (DESK, AGADESK):
+- Aggressive VM and network settings (maximum performance)
+- Ananicy enabled (interactive process priority management)
+- I/O scheduler: mq-deadline for NVMe, bfq for SATA
+
+**Laptop Profiles** (LAPTOP, YOGAAKU):
+- Conservative VM and network settings (battery-focused)
+- Ananicy enabled (prevents lag without hurting battery)
+- I/O scheduler: mq-deadline for NVMe, bfq for SATA
+
+**Server Profiles** (VMHOME, HOME):
+- Throughput-focused VM and network settings (24/7 operation)
+- Ananicy disabled (not needed for non-interactive systems)
+- I/O scheduler: mq-deadline for all drives
+
+**Global Defaults** (All Profiles):
+- TCP BBR congestion control
+- NFS optimizations (sunrpc settings)
+
+**Mount Options** (Profile-Specific):
+- Local ext4 drives: Add `noatime`, `nodiratime` for reduced metadata writes
+- NTFS drives: Add `uid=`, `gid=` for proper permissions
+- NFS mounts: Use optimized options (`rsize`, `wsize`, `nfsvers`, `tcp`, etc.)
+
+**Configuration**: See `system/hardware/performance.nix` and `system/hardware/io-scheduler.nix` modules.
+
+**Documentation**: See [Hardware Guide - Performance Optimizations](hardware.md#performance-optimizations)
 
 ## User Settings
 

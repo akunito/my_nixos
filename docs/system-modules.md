@@ -485,6 +485,18 @@ systemSettings = {
 - SDDM display manager
 - Desktop environment setup
 
+**SDDM Configuration**:
+- Auto-focus password field on login screen
+- Monitor rotation script for multi-monitor setups (uses EDID/model name matching)
+- Wayland session support enabled
+- Theme configuration via `lib/flake-base.nix` (wallpaper and focus settings)
+
+**GUI Configuration**:
+KDE System Settings provides a GUI for SDDM configuration:
+- Location: System Settings > Startup and Shutdown > Login Screen (SDDM)
+- Features: Theme selection, background customization
+- **Note**: The "Apply Plasma Settings" button often fails on NixOS because it attempts to write to `/etc/sddm.conf`, which is managed by NixOS. The script-based approach (using `setupScript`) is preferred for NixOS as it's declaratively managed.
+
 ### Hyprland (`system/wm/hyprland.nix`)
 
 **Purpose**: Hyprland Wayland compositor

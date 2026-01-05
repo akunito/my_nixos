@@ -11,6 +11,7 @@ Complete guide to hardware-specific configurations and optimizations.
 - [Network Adapters](#network-adapters)
 - [Peripherals](#peripherals)
 - [Kernel Modules](#kernel-modules)
+- [Performance Optimizations](#performance-optimizations)
 - [Best Practices](#best-practices)
 
 ## Overview
@@ -299,6 +300,152 @@ systemd.timers.drive-health = {
 };
 ```
 
+## Performance Optimizations
+
+### Consolidated Performance Module Architecture
+
+The `system/hardware/performance.nix` module uses `lib.mkMerge` to provide profile-specific optimizations in a single, maintainable file. This approach follows DRY principles by consolidating all performance logic instead of creating separate files for each profile type.
+
+**Architecture**:
+- **Global defaults**: Common settings (TCP BBR, NFS optimizations) that benefit all profiles
+- **Desktop block**: Aggressive settings for DESK and AGADESK
+- **Laptop block**: Conservative, battery-focused settings for LAPTOP and YOGAAKU
+- **Server block**: Throughput-focused settings for homelab profiles (VMHOME, HOME)
+
+**Profile Mapping**:
+
+| Profile | Hostname | Gets Optimizations | Type |
+|---------|----------|-------------------|------|
+| DESK | nixosaku | ✅ Desktop (aggressive) | Desktop |
+| AGADESK | nixosaga | ✅ Desktop (aggressive) | Desktop |
+| LAPTOP | nixolaptopaku | ✅ Laptop (conservative) | Laptop |
+| YOGAAKU | yogaaku | ✅ Laptop (conservative) | Laptop |
+| VMHOME | nixosLabaku | ✅ Server (throughput) | Server |
+| HOME | nixosLabaku | ✅ Server (throughput) | Server |
+| VMDESK | nixosdesk | ❌ None (VM excluded) | VM |
+| WSL | nixosdiego | ❌ None | WSL |
+
+### Desktop Optimizations (DESK, AGADESK)
+
+**VM Settings** (desktop-optimized):
+- `vm.swappiness = 10` - Reduce swap usage
+- `vm.dirty_ratio = 15` - Reduce dirty page ratio
+- `vm.dirty_background_ratio = 5`
+
+**Network Settings** (aggressive - maximum performance):
+- `net.core.rmem_max = 16MB` - Large receive buffers
+- `net.core.wmem_max = 16MB` - Large send buffers
+- `net.core.netdev_max_backlog = 5000` - High network backlog
+- `net.ipv4.tcp_fastopen = 3` - Enable TCP Fast Open
+
+**Ananicy**: Enabled for interactive process priority management
+
+### Laptop Optimizations (LAPTOP, YOGAAKU)
+
+**VM Settings** (battery-focused):
+- `vm.swappiness = 20` - Moderate swap usage (balance performance/battery)
+- `vm.dirty_ratio = 20` - Balanced dirty page ratio
+- `vm.dirty_background_ratio = 10`
+
+**Network Settings** (conservative - save power):
+- `net.core.rmem_max = 8MB` - Smaller buffers to save power
+- `net.core.wmem_max = 8MB` - Smaller buffers
+- `net.core.netdev_max_backlog = 3000` - Moderate backlog
+- `net.ipv4.tcp_fastopen = 3` - Enable TCP Fast Open
+
+**Ananicy**: Enabled (prevents lag without hurting battery)
+
+### Server Optimizations (VMHOME, HOME)
+
+**VM Settings** (throughput-focused, 24/7 operation):
+- `vm.swappiness = 60` - Higher swap usage (benefits caching)
+- `vm.dirty_ratio = 30` - Higher dirty page ratio (better for server workloads)
+- `vm.dirty_background_ratio = 15`
+
+**Network Settings** (large buffers for server workloads):
+- `net.core.rmem_max = 32MB` - Very large buffers for NFS/server operations
+- `net.core.wmem_max = 32MB` - Very large buffers
+- `net.core.netdev_max_backlog = 10000` - High backlog for server traffic
+- `net.ipv4.tcp_fastopen = 3` - Enable TCP Fast Open
+
+**Ananicy**: Disabled (not needed for non-interactive systems)
+
+### Global Defaults (All Profiles)
+
+**TCP BBR Congestion Control**:
+- `net.core.default_qdisc = "fq"`
+- `net.ipv4.tcp_congestion_control = "bbr"`
+
+**NFS Optimizations**:
+- `sunrpc.tcp_max_slot_table_entries = 128`
+- `sunrpc.udp_slot_table_entries = 128`
+
+These settings benefit all profiles without negative side effects.
+
+### Process Priority Management (Ananicy)
+
+Ananicy automatically manages process priorities to prevent system lag without reducing performance.
+
+**How It Works**:
+- Automatically detects background processes (indexers, compilers, language servers, build tools)
+- Sets them to low priority (Nice=19) so they yield to interactive processes
+- Allows 100% CPU usage when system is idle (fast operations)
+- Instantly yields CPU when user interacts (mouse, keyboard, GUI)
+- Zero lag, maximum performance
+
+**Benefits**:
+- **Cursor IDE**: No lag during indexing
+- **Development**: Compilers don't freeze the system
+- **Gaming**: Background tasks don't affect frame rates
+- **General**: System remains responsive during any background work
+
+**Configuration**: Enabled for desktop and laptop profiles via `system/hardware/performance.nix`. Not enabled for servers (non-interactive systems).
+
+### I/O Scheduler Optimization
+
+The `system/hardware/io-scheduler.nix` module uses `lib.mkMerge` to configure optimal I/O schedulers based on profile type.
+
+**Desktop & Laptop Configuration**:
+- **NVMe drives**: `mq-deadline` (better than none for modern NVMe)
+- **SATA drives**: `bfq` (better for interactive workloads)
+
+**Server Configuration**:
+- **All drives**: `mq-deadline` (better for server workloads than bfq)
+
+**VM Exclusion**: VMs (VMDESK) are automatically excluded - hypervisors handle I/O scheduling for virtual machines.
+
+**Automatic Application**: Applied via udev rules, automatically configured based on hostname/profile.
+
+### Filesystem Mount Options
+
+Performance-oriented mount options improve I/O performance:
+
+**Local ext4 drives**:
+```nix
+disk1_options = [ "nofail" "x-systemd.device-timeout=3s" "noatime" "nodiratime" ];
+```
+
+**NTFS drives**:
+```nix
+disk2_options = [ "nofail" "x-systemd.device-timeout=3s" "uid=1000" "gid=1000" ];
+```
+
+**NFS mounts**:
+```nix
+nfsMounts = [
+  {
+    what = "192.168.20.200:/mnt/hddpool/media";
+    where = "/mnt/NFS_media";
+    type = "nfs";
+    options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
+  }
+];
+```
+
+**CRITICAL**: Always append to existing options, never replace. Preserve `nofail` and timeout options.
+
+**Documentation**: See [Performance Optimizations](hardware/performance-optimizations.md) for detailed information.
+
 ## Best Practices
 
 ### 1. Drive Management
@@ -307,6 +454,8 @@ systemd.timers.drive-health = {
 - Add `nofail` for external drives
 - Set appropriate timeouts for network drives
 - Test drive mounting after configuration changes
+- Use performance mount options (`noatime`, `nodiratime` for ext4)
+- Optimize NFS mounts with proper `rsize`, `wsize`, and `nfsvers` settings
 
 ### 2. Power Management
 
@@ -314,6 +463,7 @@ systemd.timers.drive-health = {
 - Use `powersave` for 24/7 servers
 - Use `performance` only when needed
 - Monitor power consumption
+- **Desktop systems**: Use `power-profiles-daemon` with Gamemode for gaming
 
 ### 3. GPU Configuration
 
@@ -327,6 +477,7 @@ systemd.timers.drive-health = {
 - Reserve IPs in router by MAC address
 - Disable WiFi power save if experiencing disconnections
 - Test network connectivity after changes
+- Use TCP BBR for improved network performance (automatic for desktop profiles)
 
 ### 5. Kernel Modules
 
@@ -335,7 +486,14 @@ systemd.timers.drive-health = {
 - Keep kernel modules updated
 - Document custom module configurations
 
-### 6. Hardware Testing
+### 6. Performance Optimization
+
+- Enable performance module for desktop profiles (automatic)
+- Use optimized mount options for better I/O performance
+- Let Ananicy manage process priorities automatically
+- Monitor system responsiveness during intensive operations
+
+### 7. Hardware Testing
 
 After hardware configuration changes:
 
@@ -344,6 +502,7 @@ After hardware configuration changes:
 3. Verify modules loaded: `lsmod`
 4. Test specific hardware features
 5. Monitor system stability
+6. Test system responsiveness during background operations
 
 ## Troubleshooting
 
