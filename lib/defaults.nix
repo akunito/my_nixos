@@ -203,15 +203,8 @@
     # System packages - empty by default, profiles specify their own
     systemPackages = [ ];
     
-    # Background package - profiles can override
-    background-package = pkgs.stdenvNoCC.mkDerivation {
-      name = "background-image";
-      src = ../../assets/wallpapers;
-      dontUnpack = true;
-      installPhase = ''
-        cp $src/lock8.png $out
-      '';
-    };
+    # Background package - handled in flake-base.nix with proper self reference
+    # Profiles can override this if needed
   };
   
   userSettings = {
