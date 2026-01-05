@@ -208,6 +208,7 @@
     wireguardEnable = true;
     xboxControllerEnable = true;
     appImageEnable = true;
+    gamemodeEnable = true;
     
     systemStable = false;
   };

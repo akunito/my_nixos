@@ -10,7 +10,7 @@
 
   imports = [ ../work/home.nix # Personal is essentially work system + games
               # ../../user/app/games/games.nix # Various videogame apps
-            ]; 
+            ] ++ lib.optional (systemSettings.hostname == "nixosaku") ../../user/app/lmstudio/lmstudio.nix; # LM Studio only for DESK profile 
             #++ lib.optional systemSettings.starCitizenModules ../../user/app/games/starcitizen.nix;
 
   home.stateVersion = userSettings.homeStateVersion; # Please read the comment before changing.

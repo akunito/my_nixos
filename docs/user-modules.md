@@ -172,6 +172,21 @@ userSettings = {
 - virt-manager
 - Virtualization utilities
 
+### LM Studio (`user/app/lmstudio/`)
+
+**Purpose**: LM Studio configuration with MCP server support
+
+**Features**:
+- Self-contained module (includes Node.js for MCP servers)
+- MCP server template configuration for web search
+- Brave Search integration support
+- Documentation for plugins and browser extensions
+
+**Settings**:
+- No profile-level configuration needed (module is self-contained)
+
+**Documentation**: See [LM Studio Documentation](user-modules/lmstudio.md)
+
 ### DMenu Scripts (`user/app/dmenu-scripts/`)
 
 **Purpose**: DMenu-based scripts

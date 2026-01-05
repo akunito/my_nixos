@@ -1,5 +1,47 @@
 # Cursor Rules for NixOS Configuration Repository
 
+## CRITICAL: NixOS-Specific Requirements
+
+**IMPORTANT**: This repository is for **NixOS**, not a generic Linux distribution. All implementations, guides, plans, and configurations MUST be NixOS-specific.
+
+### NixOS-First Approach
+
+- **Always use NixOS-specific solutions** - Never suggest generic Linux commands or configurations
+- **Use NixOS package names** - Check package availability in `nixpkgs` before suggesting packages
+- **Follow NixOS configuration patterns** - Use Nix language and NixOS module system
+- **Verify package names** - Use `nix search nixpkgs <package>` or check [search.nixos.org](https://search.nixos.org) for correct package names
+- **Use NixOS services** - Configure services through `systemd.services`, `services.*`, or appropriate NixOS modules
+- **NixOS file paths** - Use NixOS-specific paths (e.g., `/etc/nixos/` for system config, `~/.config/nixpkgs/` for user config)
+
+### Package and Configuration Verification
+
+Before suggesting any package or configuration:
+
+1. **Verify package exists in nixpkgs** - Use `nix search` or search.nixos.org
+2. **Check NixOS module availability** - Many services have dedicated NixOS modules (e.g., `services.nginx`, `services.postgresql`)
+3. **Use correct attribute paths** - Package names in NixOS use attribute paths (e.g., `pkgs.vim`, `pkgs.python3Packages.requests`)
+4. **Prefer NixOS modules over manual configuration** - Use `services.*`, `programs.*`, `environment.*` when available
+5. **Check NixOS options** - Use `nixos-option` or [NixOS Options Search](https://search.nixos.org/options) to verify available options
+
+### Common Mistakes to Avoid
+
+- ❌ **DON'T** suggest `apt install`, `yum install`, or other package managers
+- ❌ **DON'T** suggest editing files in `/etc/` directly (use NixOS configuration)
+- ❌ **DON'T** suggest generic Linux service management (`systemctl enable` should be done via NixOS config)
+- ❌ **DON'T** assume package names match other distributions
+- ❌ **DON'T** suggest manual installation scripts without NixOS equivalents
+- ✅ **DO** use `nix-env`, `nix-shell`, or `home-manager` for user packages
+- ✅ **DO** configure everything through NixOS configuration files
+- ✅ **DO** use NixOS-specific paths and conventions
+- ✅ **DO** verify package names and module options before suggesting
+
+### When in Doubt
+
+- Search nixpkgs: `nix search nixpkgs <term>`
+- Check NixOS options: `nixos-option <option.path>`
+- Review NixOS manual: [nixos.org/manual](https://nixos.org/manual/nixos/)
+- Check existing configuration files in this repository for patterns
+
 ## Documentation Standards
 
 ### Documentation Structure
