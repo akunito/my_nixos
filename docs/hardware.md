@@ -137,6 +137,22 @@ OpenGL is automatically configured based on GPU type in `system/hardware/opengl.
 - ROCm support (if enabled)
 - AMDGPU driver configuration
 
+### GPU Monitoring
+
+The configuration includes multiple tools for GPU monitoring:
+
+**For AMD Dedicated GPUs (DESK, AGADESK profiles):**
+- `btop-rocm` - System monitor with AMD GPU stats (requires `rocmPackages.rocm-smi`)
+- `nvitop` - Universal GPU monitor supporting AMD, NVIDIA, and Intel GPUs
+- `rocm-smi` - Command-line tool for AMD GPU statistics
+- `lact` - GUI tool for detailed AMD GPU monitoring and overclocking
+
+**For All GPU Types:**
+- `btop` - System monitor (may show Intel GPU stats via sysfs/hwmon)
+- `nvitop` - Universal GPU monitor (works with AMD, NVIDIA, and Intel GPUs)
+
+**Documentation**: See [GPU Monitoring](hardware/gpu-monitoring.md)
+
 ## Network Adapters
 
 ### WiFi Power Management
@@ -368,6 +384,7 @@ systemSettings = {
 
 - [Drive Management](hardware/drive-management.md) - Detailed drive setup
 - [CPU Power Management](hardware/cpu-power-management.md) - Power optimization
+- [GPU Monitoring](hardware/gpu-monitoring.md) - GPU monitoring tools and configuration
 - [Kernel Modules](../kernelModules.md) - Kernel module documentation
 - [Configuration Guide](configuration.md) - General configuration
 
