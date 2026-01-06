@@ -17,6 +17,9 @@
         "sway/workspaces" = {
           disable-scroll = true;
           all-outputs = true;
+          persistent_workspaces = {
+            "*" = [ "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" ];
+          };
           format = "{name}: {icon}";
           format-icons = {
             "1" = "一";

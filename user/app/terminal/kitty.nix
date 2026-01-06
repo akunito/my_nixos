@@ -57,9 +57,10 @@
     })
   ];
   programs.kitty.keybindings = {
-    # CRITICAL: Use Ctrl+Shift+C/V for copy/paste (NOT Ctrl+C which breaks SIGINT)
-    "ctrl+shift+c" = "copy_to_clipboard";
-    "ctrl+shift+v" = "paste_from_clipboard";
+    # CRITICAL: Use Ctrl+Shift+X/C/V for cut/copy/paste (NOT Ctrl+C which breaks SIGINT)
+    "ctrl+shift+x" = "copy_to_clipboard";  # Cut (copy selection)
+    "ctrl+shift+c" = "copy_to_clipboard";  # Copy
+    "ctrl+shift+v" = "paste_from_clipboard";  # Paste
     # Keep Ctrl+C for SIGINT (process termination) - default behavior, no override needed
   };
 }

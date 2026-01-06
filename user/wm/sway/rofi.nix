@@ -15,7 +15,7 @@ let
         fg-col:  #${base07};
         fg-col2:  #${base05};
         grey:  #${base04};
-        width: 60;
+        width: 80;
         font: "${userSettings.font} 12";
       }
       
@@ -99,7 +99,7 @@ let
         fg-col:  #cdd6f4;
         fg-col2:  #bac2de;
         grey:  #6c7086;
-        width: 60;
+        width: 80;
         font: "${userSettings.font} 12";
       }
       
@@ -199,7 +199,7 @@ in {
         show-match: true;
         sidebar-mode: false;
         terminal: "${userSettings.term}";
-        width: 60;
+        width: 80;
         xoffset: 0;
         yoffset: 0;
       }

@@ -56,18 +56,33 @@
       bind & kill-window
       
       # Keyboard shortcuts display (using tmux-menus plugin)
-      bind ? display-menu -T "#[align=centre fg=green]Keybindings" \
-        "Split Vertical" "|" "split-window -h" \
-        "Split Horizontal" "-" "split-window -v" \
-        "Next Window" "n" "next-window" \
-        "Previous Window" "p" "previous-window" \
-        "New Window" "c" "new-window" \
-        "Rename Window" "," "command-prompt -I '#W' 'rename-window %%'" \
-        "Close Pane" "x" "kill-pane" \
-        "Close Window" "&" "kill-window" \
-        "Copy Mode" "[" "copy-mode" \
-        "Paste" "]" "paste-buffer" \
-        "Help" "?" "list-keys"
+      ${if systemSettings.stylixEnable == true then ''
+        bind ? display-menu -T "#[align=centre fg=#${config.lib.stylix.colors.base0D}]Keybindings" \
+          "Split Vertical" "|" "split-window -h" \
+          "Split Horizontal" "-" "split-window -v" \
+          "Next Window" "n" "next-window" \
+          "Previous Window" "p" "previous-window" \
+          "New Window" "c" "new-window" \
+          "Rename Window" "," "command-prompt -I '#W' 'rename-window %%'" \
+          "Close Pane" "x" "kill-pane" \
+          "Close Window" "&" "kill-window" \
+          "Copy Mode" "[" "copy-mode" \
+          "Paste" "]" "paste-buffer" \
+          "Help" "?" "list-keys"
+      '' else ''
+        bind ? display-menu -T "#[align=centre fg=blue]Keybindings" \
+          "Split Vertical" "|" "split-window -h" \
+          "Split Horizontal" "-" "split-window -v" \
+          "Next Window" "n" "next-window" \
+          "Previous Window" "p" "previous-window" \
+          "New Window" "c" "new-window" \
+          "Rename Window" "," "command-prompt -I '#W' 'rename-window %%'" \
+          "Close Pane" "x" "kill-pane" \
+          "Close Window" "&" "kill-window" \
+          "Copy Mode" "[" "copy-mode" \
+          "Paste" "]" "paste-buffer" \
+          "Help" "?" "list-keys"
+      ''}
       
       # Status bar with Stylix colors showing windows (tabs) and panes
       ${lib.optionalString (systemSettings.stylixEnable == true) ''

@@ -177,13 +177,22 @@ in {
 
       # Startup commands (daemons)
       startup = [
+        # CRITICAL: Set dark mode environment variables for XWayland apps
+        {
+          command = "bash -c 'export GTK_APPLICATION_PREFER_DARK_THEME=1; export GTK_THEME=Adwaita-dark; dbus-update-activation-environment --systemd GTK_APPLICATION_PREFER_DARK_THEME GTK_THEME'";
+          always = true;
+        }
         # Wallpaper (with Stylix safety check)
         (lib.mkIf (systemSettings.stylixEnable == true) {
           command = "swaybg -i ${config.stylix.image} -m fill";
           always = true;
         })
         {
-          command = "pkill waybar; ${pkgs.waybar}/bin/waybar";
+          command = "bash ${config.home.homeDirectory}/.config/sway/scripts/debug-startup.sh";
+          always = true;
+        }
+        {
+          command = "pkill waybar; sleep 0.5; ${pkgs.waybar}/bin/waybar 2>&1 | tee -a ${config.home.homeDirectory}/.dotfiles/.cursor/debug.log &";
           always = true;
         }
         {
@@ -233,6 +242,9 @@ in {
           { criteria = { class = "Spotify"; }; command = "floating enable"; }
           { criteria = { class = "Dolphin"; }; command = "floating enable"; }
           { criteria = { class = "dolphin"; }; command = "floating enable"; }
+          
+          # Dolphin on Wayland (use app_id)
+          { criteria = { app_id = "org.kde.dolphin"; }; command = "floating enable"; }
         ];
       };
     };
@@ -298,7 +310,21 @@ in {
       }
       
       # Additional SwayFX configuration
-      # Floating window rules
+      # Floating window rules (duplicate from config.window.commands for reliability)
+      for_window [app_id="kitty"] floating enable
+      for_window [app_id="org.telegram.desktop"] floating enable
+      for_window [app_id="telegram-desktop"] floating enable
+      for_window [app_id="bitwarden"] floating enable
+      for_window [app_id="bitwarden-desktop"] floating enable
+      for_window [app_id="org.kde.dolphin"] floating enable
+      for_window [class="Dolphin"] floating enable
+      for_window [class="dolphin"] floating enable
+      for_window [class="Spotify"] floating enable
+      for_window [app_id="rofi"] floating enable
+      for_window [app_id="nwg-dock"] floating enable
+      for_window [app_id="swayfx-settings"] floating enable
+      
+      # Additional floating window rules
       for_window [app_id="pavucontrol"] floating enable
       for_window [app_id="nm-connection-editor"] floating enable
       for_window [app_id="blueman-manager"] floating enable

@@ -16,12 +16,41 @@ if [ -z "$APP_NAME" ]; then
 fi
 
 # Get list of windows matching the app (check both app_id for Wayland and class for XWayland)
-WINDOWS=$(swaymsg -t get_tree | jq -r "
-    recurse(.nodes[]?, .floating_nodes[]?)
-    | select(.type == \"con\")
-    | select(.app_id == \"$APP_NAME\" or .window_properties.class == \"$APP_NAME\")
-    | .id
-")
+# Handle special cases for apps with multiple possible app_id values
+case "$APP_NAME" in
+    telegram-desktop)
+        WINDOWS=$(swaymsg -t get_tree | jq -r "
+            recurse(.nodes[]?, .floating_nodes[]?)
+            | select(.type == \"con\")
+            | select(.app_id == \"org.telegram.desktop\" or .app_id == \"telegram-desktop\")
+            | .id
+        ")
+        ;;
+    dolphin)
+        WINDOWS=$(swaymsg -t get_tree | jq -r "
+            recurse(.nodes[]?, .floating_nodes[]?)
+            | select(.type == \"con\")
+            | select(.app_id == \"org.kde.dolphin\" or .window_properties.class == \"Dolphin\" or .window_properties.class == \"dolphin\")
+            | .id
+        ")
+        ;;
+    bitwarden-desktop)
+        WINDOWS=$(swaymsg -t get_tree | jq -r "
+            recurse(.nodes[]?, .floating_nodes[]?)
+            | select(.type == \"con\")
+            | select(.app_id == \"bitwarden\" or .app_id == \"bitwarden-desktop\")
+            | .id
+        ")
+        ;;
+    *)
+        WINDOWS=$(swaymsg -t get_tree | jq -r "
+            recurse(.nodes[]?, .floating_nodes[]?)
+            | select(.type == \"con\")
+            | select(.app_id == \"$APP_NAME\" or .window_properties.class == \"$APP_NAME\")
+            | .id
+        ")
+        ;;
+esac
 
 if [ -z "$WINDOWS" ]; then
     # App is not open, launch it

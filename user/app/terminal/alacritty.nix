@@ -24,14 +24,13 @@
           x = 0;
           y = 0;
         };
-        # Font hinting for better alignment
-        hinting = "Slight";
-        # Disable ligatures if causing alignment issues
-        ligatures = false;
       };
-      # Improve font rendering and alignment
+      # Font rendering options for better alignment
       render_timer = false;
       use_thin_strokes = true;
+      # Additional rendering settings for proper font alignment
+      debug.render_timer = false;
+      debug.highlight_damage = false;
       
       # CRITICAL: Disable audio bell
       bell = {
@@ -43,9 +42,13 @@
       # Do not define any keybindings that capture Alt combinations
       # Let Alt keys pass through to Tmux for Alt+Arrow navigation
       
-      # CRITICAL: Use Ctrl+Shift+C/V for copy/paste (NOT Ctrl+C which breaks SIGINT)
-      # Note: Alacritty uses default keybindings, Ctrl+Shift+C/V should work by default
-      # We don't need to explicitly set keyboard bindings unless we want to override defaults
+      # CRITICAL: Use Ctrl+Shift+X/C/V for cut/copy/paste (NOT Ctrl+C which breaks SIGINT)
+      # Ctrl+C must remain for SIGINT (process termination)
+      key_bindings = [
+        { key = "X"; mods = "Control|Shift"; action = "Copy"; }  # Cut (copy selection)
+        { key = "C"; mods = "Control|Shift"; action = "Copy"; }  # Copy
+        { key = "V"; mods = "Control|Shift"; action = "Paste"; } # Paste
+      ];
     }
     (lib.mkIf (systemSettings.stylixEnable == true) {
       # Stylix color integration
