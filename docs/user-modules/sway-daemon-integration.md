@@ -135,6 +135,13 @@ Each daemon is defined as an attribute set in the `daemons` list:
 - `false`: Starts immediately (e.g., `nm-applet`, `kwalletd6`)
 - **Note**: Daemons that send Sway commands (e.g., `libinput-gestures`) must set this to `true`
 
+#### `requires_tray` (boolean, optional)
+- Whether the daemon requires the system tray (StatusNotifierWatcher) to be ready before starting
+- `true`: Waits for `org.freedesktop.StatusNotifierWatcher` to be available on DBus (exponential backoff: 1s, 2s, 4s, 8s, max 15 seconds)
+- `false` or omitted: Starts immediately
+- **Use case**: System tray applets (e.g., `nm-applet`, `blueman-applet`) that need to register with waybar's tray module
+- **Note**: This ensures waybar's tray module has registered as StatusNotifierWatcher before applets try to connect, preventing "No such object path" errors
+
 ### NixOS-Specific Considerations
 
 #### Binary Wrappers
@@ -612,6 +619,27 @@ programs.my-daemon = {
   # ... configuration ...
 };
 ```
+
+### Example: Adding Tray Applet with Tray Wait
+
+```nix
+# In user/wm/sway/default.nix, add to daemons list:
+{
+  name = "nm-applet";
+  command = "${pkgs.networkmanagerapplet}/bin/nm-applet --indicator";
+  pattern = "nm-applet";
+  match_type = "full";
+  reload = "";
+  requires_sway = false;  # Doesn't need Sway IPC
+  requires_tray = true;  # CRITICAL: Wait for waybar's tray to be ready
+}
+```
+
+**Key Points**:
+- `requires_tray = true` ensures the applet waits for StatusNotifierWatcher
+- Prevents "No such object path '/StatusNotifierWatcher'" errors
+- Uses exponential backoff (1s, 2s, 4s, 8s) for efficient waiting
+- Logs warnings if tray not ready after 15 seconds but starts anyway
 
 ## Related Documentation
 

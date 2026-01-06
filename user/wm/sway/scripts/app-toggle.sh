@@ -101,42 +101,35 @@ fi
 # 3. IDENTIFY STATE
 FOCUSED_ID=$(swaymsg -t get_tree 2>/dev/null | jq -r '.. | select(.focused? == true) | .id' 2>/dev/null || echo "none")
 ID_LIST=$(echo "$WINDOW_JSON" | jq -r '.[].id' 2>/dev/null || echo "")
-COUNT=$(echo "$WINDOW_JSON" | jq 'length' 2>/dev/null || echo "0")
 
-# 4. DETERMINE TARGET ID
-TARGET_ID=""
+# Re-verify count to prevent race conditions (Fixes Issue 2)
+ACTUAL_COUNT=$(echo "$WINDOW_JSON" | jq 'length' 2>/dev/null || echo "0")
 
 # Check if app is currently focused
 if echo "$ID_LIST" | grep -q "^$FOCUSED_ID$"; then
-    # --- APP IS FOCUSED (CYCLE) ---
-    if [ "$COUNT" -gt 1 ]; then
-        # Find current index, add 1, modulo length -> Get Next ID
-        # This ensures A -> B -> C -> A cycling regardless of window state.
-        TARGET_ID=$(echo "$WINDOW_JSON" | jq -r --arg focus "$FOCUSED_ID" '
+    # --- APP IS FOCUSED ---
+    
+    if [ "$ACTUAL_COUNT" -eq 1 ]; then
+        # SINGLE WINDOW -> Toggle Hide
+        swaymsg "move scratchpad" 2>/dev/null
+    elif [ "$ACTUAL_COUNT" -gt 1 ]; then
+        # MULTIPLE WINDOWS -> Cycle (Always use FOCUS)
+        NEXT_ID=$(echo "$WINDOW_JSON" | jq -r --arg focus "$FOCUSED_ID" '
             [.[].id] | . as $ids | ($ids | index($focus | tonumber)) as $idx | 
             if $idx then $ids[($idx + 1) % length] else $ids[0] end')
+        
+        swaymsg "[con_id=$NEXT_ID] focus" 2>/dev/null
     else
-        # Single window focused -> Minimize (Toggle)
-        swaymsg "move scratchpad" 2>/dev/null
-        exit 0
+        # Count is 0 or invalid (Safety fallback)
+        $CMD &
     fi
 else
     # --- APP IS NOT FOCUSED (ACTIVATE FIRST) ---
-    # Just pick the first window in the list. No prioritization of visible vs hidden.
-    # This keeps the behavior predictable.
+    # Just pick the first window in the list.
     TARGET_ID=$(echo "$ID_LIST" | head -n 1)
-fi
-
-# 5. ACT ON TARGET
-# Check if the target is in scratchpad to decide action
-IS_SCRATCHPAD=$(echo "$WINDOW_JSON" | jq -r --arg id "$TARGET_ID" '.[] | select(.id == ($id|tonumber)) | .scratchpad_state' 2>/dev/null || echo "error")
-
-if [ "$IS_SCRATCHPAD" != "none" ] && [ "$IS_SCRATCHPAD" != "null" ] && [ "$IS_SCRATCHPAD" != "error" ]; then
-    # Hidden -> Show it (Brings to current WS)
-    # Necessary because scratchpad windows have no "previous workspace" to go to.
-    swaymsg "[con_id=$TARGET_ID] scratchpad show" 2>/dev/null
-else
-    # Visible -> Focus it (Switches to its WS)
-    # This preserves the window's location on other monitors/workspaces.
+    
+    # Always use FOCUS. 
+    # If visible elsewhere -> Switches Workspace.
+    # If hidden -> Shows it.
     swaymsg "[con_id=$TARGET_ID] focus" 2>/dev/null
 fi

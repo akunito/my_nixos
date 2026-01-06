@@ -73,6 +73,7 @@ let
       match_type = "full";  # NixOS wrapper
       reload = "";
       requires_sway = false;
+      requires_tray = true;  # Wait for waybar's tray (StatusNotifierWatcher) to be ready
     }
     {
       name = "blueman-applet";
@@ -81,6 +82,7 @@ let
       match_type = "full";  # NixOS wrapper
       reload = "";
       requires_sway = false;
+      requires_tray = true;  # Wait for waybar's tray (StatusNotifierWatcher) to be ready
     }
     {
       name = "cliphist";
@@ -119,13 +121,14 @@ let
   daemon-manager = pkgs.writeShellScriptBin "daemon-manager" ''
     #!/bin/sh
     # Unified daemon manager for SwayFX
-    # Usage: daemon-manager [PATTERN] [MATCH_TYPE] [COMMAND] [RELOAD_CMD] [REQUIRES_SWAY]
+    # Usage: daemon-manager [PATTERN] [MATCH_TYPE] [COMMAND] [RELOAD_CMD] [REQUIRES_SWAY] [REQUIRES_TRAY]
     
     PATTERN="$1"
     MATCH_TYPE="$2"
     COMMAND="$3"
     RELOAD_CMD="$4"
     REQUIRES_SWAY="$5"
+    REQUIRES_TRAY="$6"
     
     # Determine pgrep flags based on match_type
     # Note: We no longer use pkill - safe_kill uses pgrep + kill instead
@@ -250,6 +253,31 @@ let
       fi
     fi
     
+    if [ "$REQUIRES_TRAY" = "true" ]; then
+      # Wait for StatusNotifierWatcher to be ready (exponential backoff: 1s, 2s, 4s, 8s = 15s total)
+      # This ensures waybar's tray module has registered before applets try to connect
+      TRAY_READY=false
+      TOTAL_WAIT=0
+      for delay in 1 2 4 8; do
+        # Check if org.freedesktop.StatusNotifierWatcher is available on DBus
+        if ${pkgs.dbus}/bin/dbus-send --session --print-reply \
+          --dest=org.freedesktop.DBus \
+          /org/freedesktop/DBus \
+          org.freedesktop.DBus.GetNameOwner \
+          string:org.freedesktop.StatusNotifierWatcher > /dev/null 2>&1; then
+          TRAY_READY=true
+          log "StatusNotifierWatcher is ready (waited ${TOTAL_WAIT} seconds)" "info"
+          break
+        fi
+        # Sleep before next check (exponential backoff)
+        sleep $delay
+        TOTAL_WAIT=$((TOTAL_WAIT + delay))
+      done
+      if [ "$TRAY_READY" = "false" ]; then
+        log "WARNING: StatusNotifierWatcher not ready after 15 seconds, starting daemon anyway: $PATTERN" "warning"
+      fi
+    fi
+    
     # Kill any stale processes (safety check even though we checked above)
     # Use safe_kill to prevent self-termination
     safe_kill "$PATTERN" "$PGREP_FLAG"
@@ -297,7 +325,8 @@ let
             ${lib.strings.escapeShellArg daemon.match_type} \
             ${lib.strings.escapeShellArg daemon.command} \
             ${lib.strings.escapeShellArg (if daemon.reload != "" then daemon.reload else "")} \
-            ${if daemon.requires_sway then "true" else "false"}
+            ${if daemon.requires_sway then "true" else "false"} \
+            ${if daemon.requires_tray or false then "true" else "false"}
         fi
       '') daemons}
       
@@ -309,7 +338,8 @@ let
             ${lib.strings.escapeShellArg daemon.match_type} \
             ${lib.strings.escapeShellArg daemon.command} \
             ${lib.strings.escapeShellArg (if daemon.reload != "" then daemon.reload else "")} \
-            ${if daemon.requires_sway then "true" else "false"} &
+            ${if daemon.requires_sway then "true" else "false"} \
+            ${if daemon.requires_tray or false then "true" else "false"} &
         fi
       '') daemons}
       wait

@@ -19,9 +19,32 @@
         
         "sway/workspaces" = {
           disable-scroll = true;
-          all-outputs = true;
-          persistent_workspaces = {
-            "*" = [ "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" ];
+          all-outputs = false;  # Only show workspaces for the current monitor
+          "persistent-workspaces" = {
+            # DP-1 (Samsung 4K): Workspaces 1-10
+            "1" = [ "DP-1" ];
+            "2" = [ "DP-1" ];
+            "3" = [ "DP-1" ];
+            "4" = [ "DP-1" ];
+            "5" = [ "DP-1" ];
+            "6" = [ "DP-1" ];
+            "7" = [ "DP-1" ];
+            "8" = [ "DP-1" ];
+            "9" = [ "DP-1" ];
+            "10" = [ "DP-1" ];
+            
+            # DP-2 (NSL 2K): Workspaces 11-15
+            "11" = [ "DP-2" ];
+            "12" = [ "DP-2" ];
+            "13" = [ "DP-2" ];
+            "14" = [ "DP-2" ];
+            "15" = [ "DP-2" ];
+            
+            # DP-3 (BenQ): Workspace 21
+            "21" = [ "DP-3" ];
+            
+            # HDMI-A-1 (Philips): Workspace 31
+            "31" = [ "HDMI-A-1" ];
           };
           format = "{name}: {icon}";
           format-icons = {
