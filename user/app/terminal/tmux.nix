@@ -1,4 +1,4 @@
-{ config, pkgs, lib, systemSettings, ... }:
+{ config, pkgs, lib, systemSettings, userSettings, ... }:
 
 {
   programs.tmux = {
@@ -56,7 +56,9 @@
       bind & kill-window
       
       # Keyboard shortcuts display (using tmux-menus plugin)
-      ${if systemSettings.stylixEnable == true then ''
+      # CRITICAL: Check if Stylix is actually available (not just enabled)
+      # Stylix is disabled for Plasma 6 even if stylixEnable is true
+      ${if (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") then ''
         bind ? display-menu -T "#[align=centre fg=#${config.lib.stylix.colors.base0D}]Keybindings" \
           "Split Vertical" "|" "split-window -h" \
           "Split Horizontal" "-" "split-window -v" \
@@ -85,7 +87,9 @@
       ''}
       
       # Status bar with Stylix colors showing windows (tabs) and panes
-      ${lib.optionalString (systemSettings.stylixEnable == true) ''
+      # CRITICAL: Check if Stylix is actually available (not just enabled)
+      # Stylix is disabled for Plasma 6 even if stylixEnable is true
+      ${lib.optionalString (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") ''
         set -g status-style "bg=#${config.lib.stylix.colors.base00},fg=#${config.lib.stylix.colors.base07}"
         set -g status-left-length 40
         set -g status-right-length 80

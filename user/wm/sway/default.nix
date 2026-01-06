@@ -180,7 +180,7 @@ let
     reload = "";
     requires_sway = false;
     requires_tray = true;  # Wait for waybar's tray (StatusNotifierWatcher) to be ready
-  } ++ lib.optional (systemSettings.stylixEnable == true) {
+  } ++ lib.optional (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") {
     name = "swaybg";
     command = "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill";
     pattern = "swaybg";
@@ -853,19 +853,28 @@ in {
         hidden_state hide
       }
       
-      # SwayFX visual settings (blur, shadows, rounded corners)
-      corner_radius 6
+      # SwayFX visual settings matching Khanelinix aesthetic (blur, shadows, rounded corners)
+      corner_radius 12
       blur enable
-      blur_passes 2
-      blur_radius 4
+      blur_xray disable
+      blur_passes 3
+      blur_radius 5
       shadows enable
+      shadow_blur_radius 20
+      shadow_color #00000070
       
-      # NOTE: layer_effects command removed - causes segfault in SwayFX 0.5.3
-      # Blur will still work for windows, but not specifically for layer surfaces
-      # If needed, can be re-enabled after SwayFX update or syntax fix
-      # layer_effects waybar blur
-      # layer_effects nwg-dock-hyprland blur
-      # layer_effects rofi blur
+      # Dim inactive windows slightly for focus
+      default_dim_inactive 0.1
+      
+      # Layer effects (Blur the Waybar and nwg-dock)
+      # CRITICAL: Split into separate lines if chaining not supported
+      # NOTE: Previous config had layer_effects commented out due to segfault in SwayFX 0.5.3
+      # Test if current SwayFX version supports layer_effects
+      # If not supported, blur will still work for windows
+      layer_effects "waybar" blur enable
+      layer_effects "waybar" corner_radius 12
+      layer_effects "nwg-dock" blur enable
+      layer_effects "nwg-dock" corner_radius 12
       
       # Keyboard input configuration for polyglot typing (English/Spanish)
       input "type:keyboard" {
@@ -914,7 +923,9 @@ in {
   };
 
   # Btop theme configuration (Stylix colors)
-  home.file.".config/btop/btop.conf" = lib.mkIf (systemSettings.stylixEnable == true) {
+  # CRITICAL: Check if Stylix is actually available (not just enabled)
+  # Stylix is disabled for Plasma 6 even if stylixEnable is true
+  home.file.".config/btop/btop.conf" = lib.mkIf (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") {
     text = ''
       # Btop Configuration
       # Theme matching Stylix colors

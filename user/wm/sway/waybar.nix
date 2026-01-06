@@ -1,4 +1,4 @@
-{ config, pkgs, lib, systemSettings, ... }:
+{ config, pkgs, lib, systemSettings, userSettings, ... }:
 
 {
   programs.waybar = {
@@ -130,43 +130,79 @@
       };
     };
     
-    style = if systemSettings.stylixEnable == true then ''
+    # CRITICAL: Check if Stylix is actually available (not just enabled)
+    # Stylix is disabled for Plasma 6 even if stylixEnable is true
+    # Use the same condition as the Stylix module to ensure consistency
+    style = if (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") then ''
       * {
         border: none;
-        border-radius: 0;
+        border-radius: 12px;
         font-family: ${config.stylix.fonts.sansSerif.name}, Font Awesome, sans-serif;
         font-size: 13px;
         min-height: 0;
       }
       
       window#waybar {
-        background-color: rgba(${config.lib.stylix.colors.base00}, 0.8);
-        border-bottom: 1px solid rgba(${config.lib.stylix.colors.base02}, 0.5);
+        background-color: rgba(${config.lib.stylix.colors.base00}, 0.7);
+        border: 1px solid rgba(${config.lib.stylix.colors.base02}, 0.3);
+        border-radius: 16px;
+        margin: 8px 12px;
+        padding: 0;
         color: #${config.lib.stylix.colors.base07};
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         transition-property: background-color;
-        transition-duration: .5s;
+        transition-duration: .3s;
       }
       
       window#waybar.hidden {
         opacity: 0.2;
       }
       
+      #workspaces {
+        margin: 4px 8px;
+        padding: 0;
+        border-radius: 12px;
+        background-color: rgba(${config.lib.stylix.colors.base01}, 0.4);
+      }
+      
       #workspaces button {
-        padding: 0 5px;
+        padding: 4px 12px;
+        margin: 2px;
+        border-radius: 10px;
         background-color: transparent;
         color: #${config.lib.stylix.colors.base05};
+        transition: all 0.2s ease;
       }
       
       #workspaces button:hover {
-        background: rgba(${config.lib.stylix.colors.base02}, 0.2);
+        background-color: rgba(${config.lib.stylix.colors.base02}, 0.4);
+        color: #${config.lib.stylix.colors.base07};
       }
       
       #workspaces button.focused {
+        background-color: rgba(${config.lib.stylix.colors.base0D}, 0.3);
         color: #${config.lib.stylix.colors.base0D};
+        box-shadow: 0 2px 8px rgba(${config.lib.stylix.colors.base0D}, 0.3);
       }
       
       #workspaces button.urgent {
-        background-color: #${config.lib.stylix.colors.base08};
+        background-color: rgba(${config.lib.stylix.colors.base08}, 0.5);
+        color: #${config.lib.stylix.colors.base07};
+        animation: urgent-pulse 2s ease-in-out infinite;
+      }
+      
+      @keyframes urgent-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
+      
+      #window {
+        margin: 4px 8px;
+        padding: 4px 12px;
+        border-radius: 10px;
+        background-color: rgba(${config.lib.stylix.colors.base01}, 0.4);
         color: #${config.lib.stylix.colors.base07};
       }
       
@@ -185,36 +221,44 @@
       #idle_inhibitor,
       #mpd,
       #bluetooth {
-        padding: 0 10px;
+        margin: 4px 4px;
+        padding: 4px 12px;
+        border-radius: 10px;
+        background-color: rgba(${config.lib.stylix.colors.base01}, 0.4);
         color: #${config.lib.stylix.colors.base07};
+        transition: all 0.2s ease;
       }
       
-      #window {
-        color: #${config.lib.stylix.colors.base07};
+      #clock:hover,
+      #battery:hover,
+      #network:hover,
+      #pulseaudio:hover,
+      #bluetooth:hover {
+        background-color: rgba(${config.lib.stylix.colors.base02}, 0.5);
       }
       
       #clock {
-        background-color: transparent;
+        font-weight: 600;
       }
       
       #battery {
-        background-color: transparent;
         color: #${config.lib.stylix.colors.base07};
       }
       
       #battery.charging, #battery.plugged {
         color: #${config.lib.stylix.colors.base0B};
+        background-color: rgba(${config.lib.stylix.colors.base0B}, 0.2);
       }
       
       @keyframes blink {
         to {
-          background-color: #${config.lib.stylix.colors.base07};
-          color: #${config.lib.stylix.colors.base00};
+          background-color: #${config.lib.stylix.colors.base08};
+          color: #${config.lib.stylix.colors.base07};
         }
       }
       
       #battery.critical:not(.charging) {
-        background-color: #${config.lib.stylix.colors.base08};
+        background-color: rgba(${config.lib.stylix.colors.base08}, 0.6);
         color: #${config.lib.stylix.colors.base07};
         animation-name: blink;
         animation-duration: 0.5s;
@@ -224,41 +268,41 @@
       }
       
       label:focus {
-        background-color: #${config.lib.stylix.colors.base02};
+        background-color: rgba(${config.lib.stylix.colors.base02}, 0.5);
       }
       
       #pulseaudio {
-        background-color: transparent;
         color: #${config.lib.stylix.colors.base07};
       }
       
       #pulseaudio.muted {
-        background-color: transparent;
         color: #${config.lib.stylix.colors.base04};
+        background-color: rgba(${config.lib.stylix.colors.base04}, 0.2);
       }
       
       #network {
-        background-color: transparent;
         color: #${config.lib.stylix.colors.base07};
       }
       
       #network.disconnected {
-        background-color: transparent;
         color: #${config.lib.stylix.colors.base08};
+        background-color: rgba(${config.lib.stylix.colors.base08}, 0.2);
       }
       
       #bluetooth {
-        background-color: transparent;
         color: #${config.lib.stylix.colors.base07};
       }
       
       #bluetooth.disabled {
-        background-color: transparent;
         color: #${config.lib.stylix.colors.base04};
+        background-color: rgba(${config.lib.stylix.colors.base04}, 0.2);
       }
       
       #tray {
-        background-color: transparent;
+        margin: 4px 4px;
+        padding: 4px 8px;
+        border-radius: 10px;
+        background-color: rgba(${config.lib.stylix.colors.base01}, 0.4);
       }
       
       #tray > .passive {
@@ -267,7 +311,8 @@
       
       #tray > .needs-attention {
         -gtk-icon-effect: highlight;
-        background-color: #${config.lib.stylix.colors.base08};
+        background-color: rgba(${config.lib.stylix.colors.base08}, 0.4);
+        border-radius: 8px;
       }
     '' else ''
       * {

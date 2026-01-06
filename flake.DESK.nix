@@ -25,6 +25,11 @@
 
     rust-overlay.url = "github:oxalica/rust-overlay";
 
+    stylix = {
+      url = "github:danth/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";
       flake = false;

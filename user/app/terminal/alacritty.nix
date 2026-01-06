@@ -54,7 +54,9 @@
         { key = "V"; mods = "Control|Shift"; chars = "\x16"; }  # Original Ctrl+V
       ];
     }
-    (lib.mkIf (systemSettings.stylixEnable == true) {
+    # CRITICAL: Check if Stylix is actually available (not just enabled)
+    # Stylix is disabled for Plasma 6 even if stylixEnable is true
+    (lib.mkIf (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") {
       # Stylix color integration
       colors = {
         primary = {

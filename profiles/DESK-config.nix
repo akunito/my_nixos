@@ -214,6 +214,7 @@
     gamemodeEnable = true;
     enableSwayForDESK = true;  # Enable SwayFX as second WM option alongside Plasma6
     swayPrimaryMonitor = "DP-1";  # Primary monitor for SwayFX dock (Samsung 4K)
+    stylixEnable = true;  # Enable Stylix for theming
     
     systemStable = false;
   };

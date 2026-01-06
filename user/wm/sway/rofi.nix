@@ -2,7 +2,9 @@
 
 let
   # Theme content (Stylix or fallback)
-  themeContent = if systemSettings.stylixEnable == true then (let
+  # CRITICAL: Check if Stylix is actually available (not just enabled)
+  # Stylix is disabled for Plasma 6 even if stylixEnable is true
+  themeContent = if (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") then (let
       inherit (config.lib.stylix.colors) base00 base01 base02 base03 base04 base05 base06 base07
                                         base08 base09 base0A base0B base0C base0D base0E base0F;
     in ''
@@ -26,11 +28,13 @@ let
         border-color: @border-col;
         padding: 0px;
         width: 38%;
+        transparency: "real";
       }
       
       mainbox {
         border: 0px;
         padding: 12px;
+        background-color: @bg-col;
       }
       
       inputbar {
@@ -71,6 +75,7 @@ let
         lines: 12;
         columns: 1;
         spacing: 4px;
+        background-color: @bg-col;
       }
       
       element {

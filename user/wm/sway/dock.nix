@@ -1,4 +1,4 @@
-{ config, pkgs, lib, systemSettings, ... }:
+{ config, pkgs, lib, systemSettings, userSettings, ... }:
 
 {
   # nwg-dock configuration (Sway-compatible Python version)
@@ -15,15 +15,18 @@
     </svg>
   '';
   
-  home.file.".config/nwg-dock/style.css".text = if systemSettings.stylixEnable == true then ''
-    /* nwg-dock Frosted Glass styling with Stylix colors */
+  # CRITICAL: Check if Stylix is actually available (not just enabled)
+  # Stylix is disabled for Plasma 6 even if stylixEnable is true
+  home.file.".config/nwg-dock/style.css".text = if (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") then ''
+    /* nwg-dock Pill/Island styling with Stylix colors - Khanelinix aesthetic */
     
     window {
-      background-color: rgba(${config.lib.stylix.colors.base00}, 0.6);
-      border-radius: 20px;
+      background-color: rgba(${config.lib.stylix.colors.base00}, 0.7);
+      border-radius: 16px;
       border: 1px solid rgba(${config.lib.stylix.colors.base02}, 0.3);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
     
     /* Make hotspot/hover area transparent (invisible) */
@@ -56,6 +59,8 @@
     #dock {
       padding: 8px;
       spacing: 8px;
+      margin: 10px;
+      margin-bottom: 10px;
     }
     
     #dock button {
@@ -64,24 +69,29 @@
       padding: 8px;
       border: 1px solid rgba(${config.lib.stylix.colors.base02}, 0.2);
       transition: all 0.2s ease;
+      margin: 2px;
     }
     
     #dock button:hover {
       background-color: rgba(${config.lib.stylix.colors.base0D}, 0.3);
       transform: scale(1.1);
+      box-shadow: 0 2px 8px rgba(${config.lib.stylix.colors.base0D}, 0.3);
     }
     
     #dock button:active {
       background-color: rgba(${config.lib.stylix.colors.base0D}, 0.5);
+      transform: scale(1.05);
     }
     
     #dock button.running {
       border: 2px solid #${config.lib.stylix.colors.base0D};
+      background-color: rgba(${config.lib.stylix.colors.base0D}, 0.2);
     }
     
     #dock button.focused {
       background-color: rgba(${config.lib.stylix.colors.base0D}, 0.4);
       border: 2px solid #${config.lib.stylix.colors.base0D};
+      box-shadow: 0 2px 8px rgba(${config.lib.stylix.colors.base0D}, 0.4);
     }
   '' else ''
     /* nwg-dock Frosted Glass styling (fallback) */
