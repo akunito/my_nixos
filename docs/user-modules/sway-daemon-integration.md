@@ -25,6 +25,8 @@ The SwayFX daemon integration system provides a unified, DRY (Don't Repeat Yours
 - **Duplicate Instances**: Without proper management, daemons can spawn multiple instances during reloads
 - **Self-Termination Bugs**: Using `pkill -f` can match the manager script's own arguments, causing it to kill itself
 
+**Note**: SwayFX's default internal bar (`swaybar`) is disabled by default and can be toggled manually. It is **not** managed by the daemon system as it's part of SwayFX itself, not an external daemon.
+
 ### What It Does
 
 The system:
@@ -266,6 +268,34 @@ programs.waybar = {
 - Both: `systemd.enable = false` in their respective `programs.waybar` blocks
 
 **Future Enhancement**: Could use separate config files (`config-sway`, `config-hyprland`) via `xdg.configFile`, but this would bypass `programs.waybar.settings`.
+
+### Swaybar (SwayFX Internal Bar)
+
+**CRITICAL**: SwayFX's default internal bar (`swaybar`) is **disabled by default** and is **not** managed by the daemon system.
+
+**Configuration** (`user/wm/sway/default.nix`, `extraConfig` section):
+```nix
+bar {
+  mode invisible
+  hidden_state hide
+  position bottom
+}
+```
+
+**Manual Toggle**:
+- **Keybinding**: `${hyper}+Shift+Home` (Mod4+Control+Alt+Shift+Home) - toggles bar visibility
+- **Script**: `~/.config/sway/scripts/swaybar-toggle.sh` - can be run manually or via keybinding
+- **Command**: 
+  - Show: `swaymsg bar mode dock`
+  - Hide: `swaymsg bar mode invisible`
+  - Toggle: Run the toggle script
+
+**Why Disabled**:
+- The system uses `waybar` (external status bar) instead of `swaybar` (SwayFX internal bar)
+- `nwg-dock` provides the dock functionality
+- Disabling `swaybar` prevents conflicts and reduces visual clutter
+
+**Note**: `swaybar` is part of SwayFX itself, not an external daemon, so it's **not** included in the `daemons` list. It can be toggled on-demand if needed for debugging or specific use cases. The `swaybar` is completely independent of `nwg-dock` and `waybar` - disabling it does not affect dock functionality.
 
 ## Critical Requirements
 

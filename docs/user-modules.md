@@ -300,6 +300,7 @@ imports = [
 - nwg-dock application launcher
 - SwayNC notification center
 - Libinput-gestures (touchpad gestures for workspace navigation)
+- Swaybar (SwayFX internal bar) disabled by default, toggleable via `${hyper}+b`
 - Multi-monitor support
 - Workspace management with swaysome
 

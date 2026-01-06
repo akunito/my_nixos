@@ -546,6 +546,9 @@ in {
           # Power menu
           "${hyper}+Shift+BackSpace" = "exec ${config.home.homeDirectory}/.config/sway/scripts/power-menu.sh";
           
+          # Toggle SwayFX default bar (swaybar) - disabled by default, can be toggled manually
+          "${hyper}+Shift+Home" = "exec ${config.home.homeDirectory}/.config/sway/scripts/swaybar-toggle.sh";
+          
           # Exit Sway
           "${hyper}+Shift+e" = "exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway? This will end your Wayland session.' -b 'Yes, exit Sway' 'swaymsg exit'";
         }
@@ -608,6 +611,14 @@ in {
     extraConfig = ''
       # Window border settings
       default_border pixel 2
+      
+      # Disable SwayFX's default internal bar (swaybar) by default
+      # Can be toggled manually via ${hyper}+Shift+Home keybinding or: swaymsg bar mode dock/invisible
+      bar {
+        mode invisible
+        hidden_state hide
+        position bottom
+      }
       
       # CRITICAL: Alt key for Plasma-like window manipulation
       # Alt+drag moves windows, Alt+right-drag resizes windows
@@ -674,6 +685,13 @@ in {
       
       # Workspace configuration
       workspace_auto_back_and_forth yes
+      
+      # Disable SwayFX's default internal bar (swaybar) by default
+      # Can be toggled manually via swaybar-toggle.sh script or keybinding
+      bar bar-0 {
+        mode invisible
+        hidden_state hide
+      }
       
       # SwayFX visual settings (blur, shadows, rounded corners)
       corner_radius 6
@@ -793,6 +811,11 @@ in {
     executable = true;
   };
   
+  home.file.".config/sway/scripts/swaybar-toggle.sh" = {
+    source = ./scripts/swaybar-toggle.sh;
+    executable = true;
+  };
+  
   home.file.".config/sway/scripts/debug-startup.sh" = {
     source = ./scripts/debug-startup.sh;
     executable = true;
@@ -800,6 +823,32 @@ in {
   
   home.file.".config/sway/scripts/swaysome-init.sh" = {
     source = ./scripts/swaysome-init.sh;
+    executable = true;
+  };
+  
+  # Generate swaybar-toggle script with proper package paths
+  home.file.".config/sway/scripts/swaybar-toggle.sh" = {
+    text = ''
+      #!/bin/sh
+      # Toggle SwayFX's default bar (swaybar) visibility
+      # The bar is disabled by default in the config (mode invisible)
+      # This script allows manual toggling when needed
+
+      # Get current bar mode
+      CURRENT_MODE=$(${pkgs.swayfx}/bin/swaymsg -t get_bar_config bar-0 | ${pkgs.jq}/bin/jq -r '.mode' 2>/dev/null)
+
+      if [ "$CURRENT_MODE" = "invisible" ] || [ -z "$CURRENT_MODE" ]; then
+        # Bar is invisible or doesn't exist - show it
+        ${pkgs.swayfx}/bin/swaymsg bar bar-0 mode dock
+        # Optional notification (fails gracefully if libnotify not available)
+        command -v notify-send >/dev/null 2>&1 && notify-send -t 2000 "Swaybar" "Bar enabled (dock mode)" || true
+      else
+        # Bar is visible - hide it
+        ${pkgs.swayfx}/bin/swaymsg bar bar-0 mode invisible
+        # Optional notification (fails gracefully if libnotify not available)
+        command -v notify-send >/dev/null 2>&1 && notify-send -t 2000 "Swaybar" "Bar disabled (invisible mode)" || true
+      fi
+    '';
     executable = true;
   };
   
