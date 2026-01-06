@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Usage: app-toggle.sh <app_id|class> <launch_command...>
-# Example: app-toggle.sh cursor cursor --flags --more-flags
+# Example: app-toggle.sh cursor cursor --flags
 
 APP_ID=$1
-shift # Shift arguments so $@ becomes the command (e.g., "cursor --flags")
+shift
 CMD="$@"
 
 if [ -z "$APP_ID" ] || [ -z "$CMD" ]; then
@@ -11,12 +11,9 @@ if [ -z "$APP_ID" ] || [ -z "$CMD" ]; then
     exit 1
 fi
 
-# 1. Get all windows for this app (Wayland app_id OR XWayland class)
-# Include ALL windows (visible, scratchpad, etc.)
-# IMPROVEMENT: Case-Insensitive Matching to ensure windows are found across all workspaces.
-# We search recursively for nodes and floating_nodes.
-# NOTE: We do NOT match by .name (window title) as it causes false positives.
-WINDOW_JSON=$(swaymsg -t get_tree 2>/dev/null | jq --arg app "$APP_ID" '
+# 1. Get all windows (Case-Insensitive, Recursive)
+# Finds all windows for the app, regardless of workspace or scratchpad state.
+WINDOW_JSON=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg app "$APP_ID" '
     [
         recurse(.nodes[]?, .floating_nodes[]?) 
         | select(.type=="con" or .type=="floating_con")
@@ -28,7 +25,6 @@ WINDOW_JSON=$(swaymsg -t get_tree 2>/dev/null | jq --arg app "$APP_ID" '
 ' 2>/dev/null)
 
 # 2. IF NOT RUNNING -> LAUNCH
-# Safety check for empty JSON or empty array
 if [ -z "$WINDOW_JSON" ] || [ "$WINDOW_JSON" = "[]" ]; then
     # Check if this is a Flatpak app
     # Method 1: Check if APP_ID exists in flatpak list (most reliable)
@@ -107,56 +103,40 @@ FOCUSED_ID=$(swaymsg -t get_tree 2>/dev/null | jq -r '.. | select(.focused? == t
 ID_LIST=$(echo "$WINDOW_JSON" | jq -r '.[].id' 2>/dev/null || echo "")
 COUNT=$(echo "$WINDOW_JSON" | jq 'length' 2>/dev/null || echo "0")
 
-# Check if the currently focused window belongs to this app
-IS_FOCUSED=$(echo "$ID_LIST" | grep -q "^$FOCUSED_ID$" && echo "yes" || echo "no")
+# 4. DETERMINE TARGET ID
+TARGET_ID=""
 
-if [ "$IS_FOCUSED" = "yes" ]; then
-    # --- APP IS FOCUSED ---
-    
+# Check if app is currently focused
+if echo "$ID_LIST" | grep -q "^$FOCUSED_ID$"; then
+    # --- APP IS FOCUSED (CYCLE) ---
     if [ "$COUNT" -gt 1 ]; then
-        # MULTIPLE WINDOWS: Cycle to next
-        # CRITICAL FIX: Use proper rotation logic to cycle through ALL windows
-        # Rotate the list so the FOCUSED_ID is at the end, then pick the first element.
-        # This ensures true A -> B -> C -> A cycling (not ping-pong between first two).
-        NEXT_ID=$(echo "$WINDOW_JSON" | jq -r --arg focus "$FOCUSED_ID" '
+        # Find current index, add 1, modulo length -> Get Next ID
+        # This ensures A -> B -> C -> A cycling regardless of window state.
+        TARGET_ID=$(echo "$WINDOW_JSON" | jq -r --arg focus "$FOCUSED_ID" '
             [.[].id] | . as $ids | ($ids | index($focus | tonumber)) as $idx | 
             if $idx then $ids[($idx + 1) % length] else $ids[0] end')
-        
-        # CRITICAL: Check if next window is in scratchpad
-        IS_SCRATCHPAD=$(echo "$WINDOW_JSON" | jq -r --arg id "$NEXT_ID" '.[] | select(.id == ($id|tonumber)) | .scratchpad_state' 2>/dev/null || echo "error")
-        
-        if [ "$IS_SCRATCHPAD" != "none" ] && [ "$IS_SCRATCHPAD" != "null" ] && [ "$IS_SCRATCHPAD" != "error" ]; then
-            swaymsg "[con_id=$NEXT_ID] scratchpad show" 2>/dev/null
-        else
-            swaymsg "[con_id=$NEXT_ID] focus" 2>/dev/null
-        fi
     else
-        # SINGLE WINDOW: Toggle Hide (Move to Scratchpad)
+        # Single window focused -> Minimize (Toggle)
         swaymsg "move scratchpad" 2>/dev/null
+        exit 0
     fi
-
 else
-    # --- APP IS RUNNING BUT NOT FOCUSED ---
-    
-    # Prioritize scratchpad windows - show hidden windows first
-    TARGET_ID=$(echo "$WINDOW_JSON" | jq -r '
-        .[] | select(.scratchpad_state != "none" and .scratchpad_state != null) | .id
-    ' 2>/dev/null | head -n 1)
-    
-    if [ -z "$TARGET_ID" ] || [ "$TARGET_ID" = "" ]; then
-        # No scratchpad window found, pick first visible window
-        TARGET_ID=$(echo "$ID_LIST" | head -n 1)
-    fi
-    
-    # Check if target is in scratchpad
-    IS_SCRATCHPAD=$(echo "$WINDOW_JSON" | jq -r --arg id "$TARGET_ID" '.[] | select(.id == ($id|tonumber)) | .scratchpad_state' 2>/dev/null || echo "error")
+    # --- APP IS NOT FOCUSED (ACTIVATE FIRST) ---
+    # Just pick the first window in the list. No prioritization of visible vs hidden.
+    # This keeps the behavior predictable.
+    TARGET_ID=$(echo "$ID_LIST" | head -n 1)
+fi
 
-    if [ "$IS_SCRATCHPAD" != "none" ] && [ "$IS_SCRATCHPAD" != "null" ] && [ "$IS_SCRATCHPAD" != "error" ]; then
-        # Window is hidden in scratchpad - use 'scratchpad show' to show it
-        # This is OK for "not focused" case as we're bringing the app to front
-        swaymsg "[con_id=$TARGET_ID] scratchpad show" 2>/dev/null
-    else
-        # Window is visible - just focus it
-        swaymsg "[con_id=$TARGET_ID] focus" 2>/dev/null
-    fi
+# 5. ACT ON TARGET
+# Check if the target is in scratchpad to decide action
+IS_SCRATCHPAD=$(echo "$WINDOW_JSON" | jq -r --arg id "$TARGET_ID" '.[] | select(.id == ($id|tonumber)) | .scratchpad_state' 2>/dev/null || echo "error")
+
+if [ "$IS_SCRATCHPAD" != "none" ] && [ "$IS_SCRATCHPAD" != "null" ] && [ "$IS_SCRATCHPAD" != "error" ]; then
+    # Hidden -> Show it (Brings to current WS)
+    # Necessary because scratchpad windows have no "previous workspace" to go to.
+    swaymsg "[con_id=$TARGET_ID] scratchpad show" 2>/dev/null
+else
+    # Visible -> Focus it (Switches to its WS)
+    # This preserves the window's location on other monitors/workspaces.
+    swaymsg "[con_id=$TARGET_ID] focus" 2>/dev/null
 fi
