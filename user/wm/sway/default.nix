@@ -303,7 +303,7 @@ in {
       }
       output "DP-2" {
           mode 2560x1440@144.000Hz
-          scale 1.15
+          scale 1.25
           transform 90
           position 2400,-876
       }
