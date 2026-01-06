@@ -193,6 +193,86 @@ When creating or updating documentation:
 - Access variables via function arguments
 - Document module purpose at the top
 
+## SwayFX Daemon Integration System
+
+**CRITICAL**: When modifying daemon-related code, you MUST follow the daemon integration plan to prevent regressions and system breakage.
+
+### When This Rule Applies
+
+This rule applies when:
+- Modifying the `daemons` list in `user/wm/sway/default.nix`
+- Changing `daemon-manager`, `start-sway-daemons`, or `daemon-sanity-check` scripts
+- Modifying Sway startup commands related to daemons
+- Adding/removing Systemd service configurations for daemons
+- **Enabling Home Manager modules that might create Systemd services**
+
+### Required Actions
+
+Before making any changes:
+
+1. **Read the documentation**: Review `docs/user-modules/sway-daemon-integration.md` to understand the architecture
+2. **Follow DRY principle**: Modify the `daemons` list in `default.nix`, never edit generated scripts directly
+3. **Test changes**: Run `daemon-sanity-check` after modifications
+4. **Verify no conflicts**: Check for Systemd service conflicts
+5. **Check logs**: Review `journalctl --user -t sway-daemon-mgr` after changes
+
+### Systemd Side-Effects Rule
+
+**CRITICAL**: When enabling Home Manager modules (e.g., `programs.waybar.enable = true`), check if they auto-generate Systemd services. If the process is managed by `daemon-manager`, you MUST explicitly disable the Systemd service (e.g., `systemd.enable = false`) to prevent race conditions.
+
+**Example**:
+```nix
+programs.waybar = {
+  enable = true;
+  systemd.enable = false;  # Required if managed by daemon-manager
+  # ... configuration ...
+};
+```
+
+**Why**: If both Systemd and `daemon-manager` try to start the same daemon, you get duplicate instances and race conditions.
+
+### Key Principles
+
+1. **Never edit generated scripts directly** - They are auto-generated from the `daemons` list
+2. **Always modify the `daemons` list** - This is the single source of truth
+3. **Use `match_type = "full"` for NixOS-wrapped binaries** - NixOS wraps binaries (e.g., `waybar` → `.waybar-wrapped`), requiring full command line matching
+4. **Prevent Systemd conflicts** - Always check and disable auto-generated services if managed by `daemon-manager`
+5. **Use safe kill logic** - Never use `pkill -f` directly without filtering `$$` (self PID) and `$PPID` (parent PID) to prevent self-termination
+6. **Use XDG runtime directories for lock files** - Always use `/run/user/$(id -u)/` (XDG runtime directory), never `/tmp/` to prevent security issues and stale locks
+
+### Checklist
+
+When modifying daemon-related code:
+
+- [ ] Read `docs/user-modules/sway-daemon-integration.md`
+- [ ] Modified `daemons` list (not generated scripts)
+- [ ] Used `match_type = "full"` for NixOS-wrapped binaries
+- [ ] Checked for Systemd service conflicts and disabled if needed
+- [ ] Used safe kill logic (filtered `$$` and `$PPID`)
+- [ ] Used XDG runtime directory for lock files (`/run/user/$(id -u)/`)
+- [ ] Tested with `daemon-sanity-check`
+- [ ] Verified logs with `journalctl --user -t sway-daemon-mgr`
+- [ ] No duplicate instances after reload
+
+### Common Mistakes to Avoid
+
+- ❌ **DON'T** edit generated scripts directly (they're auto-generated)
+- ❌ **DON'T** use `match_type = "exact"` for NixOS-wrapped binaries
+- ❌ **DON'T** forget to disable Systemd services for daemons managed by `daemon-manager`
+- ❌ **DON'T** use `pkill -f` without filtering `$$` and `$PPID`
+- ❌ **DON'T** use `/tmp/` for lock files (use `/run/user/$(id -u)/`)
+- ✅ **DO** modify the `daemons` list in `default.nix`
+- ✅ **DO** use `match_type = "full"` for all NixOS-wrapped binaries
+- ✅ **DO** check for Systemd conflicts when enabling Home Manager modules
+- ✅ **DO** use safe kill logic that filters self and parent PIDs
+- ✅ **DO** use XDG runtime directories for lock files
+
+### Reference Documentation
+
+- **Primary Guide**: `docs/user-modules/sway-daemon-integration.md` - Complete architecture and usage guide
+- **Source Code**: `user/wm/sway/default.nix` (lines 36-111 for daemon list, lines 114-355 for script generation)
+- **Systemd Example**: `user/wm/sway/waybar.nix` (line 8) - Example of disabling Systemd service
+
 ## Git Commit Guidelines
 
 ### Documentation Review Before Commits

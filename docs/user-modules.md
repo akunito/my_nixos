@@ -289,6 +289,30 @@ imports = [
 - `hyprland_noStylix.nix` - Configuration without Stylix
 - `hyprprofiles/` - Multiple profile configurations
 
+### SwayFX (`user/wm/sway/`)
+
+**Purpose**: SwayFX Wayland compositor configuration
+
+**Features**:
+- SwayFX configuration (blur, shadows, rounded corners)
+- Unified daemon management system
+- Waybar status bar (with explicit config path for compatibility)
+- nwg-dock application launcher
+- SwayNC notification center
+- Libinput-gestures (touchpad gestures for workspace navigation)
+- Multi-monitor support
+- Workspace management with swaysome
+
+**Settings**:
+- `userSettings.wm` - Set to "sway"
+- `systemSettings.enableSwayForDESK` - Enable SwayFX for DESK profile
+
+**Important Notes**:
+- **Waybar Compatibility**: Sway and Hyprland are mutually exclusive in the same profile due to waybar config file conflicts
+- **Libinput-Gestures**: Configured for 3-finger swipe gestures matching Sway keybindings (`next_on_output`/`prev_on_output`)
+
+**Documentation**: See [SwayFX Daemon Integration](user-modules/sway-daemon-integration.md) - Complete guide to the daemon management system
+
 ### XMonad (`user/wm/xmonad/`)
 
 **Purpose**: XMonad tiling window manager
@@ -469,6 +493,7 @@ userSettings = {
 - [Plasma 6 Guide](user-modules/plasma6.md) - Plasma 6 specific documentation
 - [Doom Emacs Guide](user-modules/doom-emacs.md) - Doom Emacs documentation
 - [Ranger Guide](user-modules/ranger.md) - Ranger file manager documentation
+- [SwayFX Daemon Integration](user-modules/sway-daemon-integration.md) - SwayFX daemon management system
 - [XMonad Guide](user-modules/xmonad.md) - XMonad window manager documentation
 - [Picom Guide](user-modules/picom.md) - Picom compositor documentation
 

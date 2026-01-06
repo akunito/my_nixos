@@ -46,7 +46,7 @@ fi
 # #endregion
 
 # #region agent log - Hypothesis C: Waybar process check
-WAYBAR_PROCESS=$(pgrep -x waybar || echo "not_running")
+WAYBAR_PROCESS=$(pgrep -f waybar || echo "not_running")
 log_json "WAYBAR_PROCESS_CHECK" "Checking if waybar is running" "{\"pid\":\"$WAYBAR_PROCESS\"}" "C"
 # #endregion
 

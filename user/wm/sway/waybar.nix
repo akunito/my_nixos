@@ -3,6 +3,9 @@
 {
   programs.waybar = {
     enable = true;
+    # CRITICAL: Disable systemd service - waybar is managed by daemon-manager via Sway startup
+    # This prevents systemd and daemon-manager from both trying to start waybar
+    systemd.enable = false;
     settings = {
       mainBar = {
         layer = "top";

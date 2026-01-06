@@ -26,6 +26,33 @@
       -webkit-backdrop-filter: blur(10px);
     }
     
+    /* Make hotspot/hover area transparent (invisible) */
+    /* nwg-dock creates a separate window for the hotspot area */
+    /* Target all possible hotspot element selectors */
+    window.hotspot,
+    window#hotspot,
+    window[class*="hotspot"],
+    .hotspot,
+    #hotspot,
+    *[class*="hotspot"],
+    *[id*="hotspot"] {
+      background-color: transparent !important;
+      border: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      opacity: 0 !important;
+    }
+    
+    /* Also target GTK widget classes that might be used for hotspot */
+    widget.hotspot,
+    widget#hotspot,
+    box.hotspot,
+    box#hotspot {
+      background-color: transparent !important;
+      border: none !important;
+      opacity: 0 !important;
+    }
+    
     #dock {
       padding: 8px;
       spacing: 8px;
@@ -67,6 +94,33 @@
       -webkit-backdrop-filter: blur(10px);
     }
     
+    /* Make hotspot/hover area transparent (invisible) */
+    /* nwg-dock creates a separate window for the hotspot area */
+    /* Target all possible hotspot element selectors */
+    window.hotspot,
+    window#hotspot,
+    window[class*="hotspot"],
+    .hotspot,
+    #hotspot,
+    *[class*="hotspot"],
+    *[id*="hotspot"] {
+      background-color: transparent !important;
+      border: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      opacity: 0 !important;
+    }
+    
+    /* Also target GTK widget classes that might be used for hotspot */
+    widget.hotspot,
+    widget#hotspot,
+    box.hotspot,
+    box#hotspot {
+      background-color: transparent !important;
+      border: none !important;
+      opacity: 0 !important;
+    }
+    
     #dock {
       padding: 8px;
       spacing: 8px;
@@ -83,6 +137,10 @@
     #dock button:hover {
       background-color: rgba(255, 255, 255, 0.2);
       transform: scale(1.1);
+    }
+    
+    #dock button:active {
+      background-color: rgba(255, 255, 255, 0.3);
     }
     
     #dock button.running {

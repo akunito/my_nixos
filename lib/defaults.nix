@@ -175,6 +175,7 @@
     stylixEnable = false;
     xboxControllerEnable = false;
     appImageEnable = false;
+    swayPrimaryMonitor = null;  # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
     
     # Font defaults - will be computed based on systemStable in flake-base.nix
     # This is just a placeholder

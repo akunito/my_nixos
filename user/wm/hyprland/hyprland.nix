@@ -756,6 +756,9 @@ in
   services.swayosd.topMargin = 0.5;
   programs.waybar = {
     enable = true;
+    # CRITICAL: Disable systemd service - waybar is managed by Hyprland's exec-once
+    # This prevents systemd from auto-starting waybar and conflicting with manual startup
+    systemd.enable = false;
     package = pkgs.waybar.overrideAttrs (oldAttrs: {
       postPatch = ''
         # use hyprctl to switch workspaces
