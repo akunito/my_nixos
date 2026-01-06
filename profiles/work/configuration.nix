@@ -164,7 +164,10 @@
   # Remote control
   services.sunshine = lib.mkIf (systemSettings.sunshineEnable == true) {
     enable = true;
-    autoStart = true;
+    # Conditional autoStart:
+    # - In Sway: false (managed by daemon-manager via user/wm/sway/default.nix)
+    # - In Plasma 6 / other environments: true (managed by Systemd)
+    autoStart = !(userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true);
     capSysAdmin = true;
     openFirewall = true;
   };

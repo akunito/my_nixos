@@ -108,7 +108,15 @@ let
       reload = "";
       requires_sway = true;  # Needs SwayFX IPC to send workspace commands
     }
-  ] ++ lib.optional (systemSettings.stylixEnable == true) {
+  ] ++ lib.optional (systemSettings.sunshineEnable == true) {
+    name = "sunshine";
+    command = "${pkgs.sunshine}/bin/sunshine";
+    pattern = "sunshine";
+    match_type = "full";  # NixOS wrapper - full match required
+    reload = "";
+    requires_sway = false;
+    requires_tray = true;  # Wait for waybar's tray (StatusNotifierWatcher) to be ready
+  } ++ lib.optional (systemSettings.stylixEnable == true) {
     name = "swaybg";
     command = "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill";
     pattern = "swaybg";
@@ -144,23 +152,6 @@ let
       echo "$1" | systemd-cat -t sway-daemon-mgr -p "$2"
     }
     
-    # Debug logging function for instrumentation (writes NDJSON to debug log)
-    # #region agent log
-    debug_log() {
-      local location="$1"
-      local message="$2"
-      local hypothesis_id="$3"
-      local data="$4"
-      local timestamp=$(date +%s%3N 2>/dev/null || date +%s000)
-      local log_file="''${HOME}/.dotfiles/.cursor/debug.log"
-      # Escape quotes in strings for JSON (simple approach: replace " with \")
-      local esc_location=$(echo "$location" | sed 's/"/\\"/g')
-      local esc_message=$(echo "$message" | sed 's/"/\\"/g')
-      local esc_hypothesis=$(echo "$hypothesis_id" | sed 's/"/\\"/g')
-      echo "{\"id\":\"log_''${timestamp}_$$\",\"timestamp\":''${timestamp},\"location\":\"''${esc_location}\",\"message\":\"''${esc_message}\",\"data\":''${data},\"sessionId\":\"debug-session\",\"runId\":\"test-run\",\"hypothesisId\":\"''${esc_hypothesis}\"}" >> "$log_file" 2>/dev/null || true
-    }
-    # #endregion
-    
     # Safe kill function - prevents self-termination by excluding script's own PID and parent PID
     # CRITICAL: pkill -f matches command line arguments, which can include the pattern we're searching for
     # This causes the script to kill itself. This function filters out $$ and $PPID before killing.
@@ -171,9 +162,6 @@ let
       local PARENT_PID=$PPID
       local KILLED_COUNT=0
       
-      # #region agent log
-      debug_log "daemon-manager:safe_kill:entry" "Safe kill function called" "A" "{\"pattern\":\"''${KILL_PATTERN}\",\"self_pid\":''${SELF_PID},\"parent_pid\":''${PARENT_PID}}"
-      # #endregion
       
       log "DEBUG: Safe kill - excluding self (PID: $SELF_PID) and parent (PID: $PARENT_PID)" "info"
       
@@ -181,9 +169,6 @@ let
       MATCHING_PIDS=$(${pkgs.procps}/bin/pgrep $KILL_PGREP_FLAG "$KILL_PATTERN" 2>/dev/null || echo "")
       
       if [ -z "$MATCHING_PIDS" ]; then
-        # #region agent log
-        debug_log "daemon-manager:safe_kill:no_matches" "No matching processes found" "A" "{\"pattern\":\"''${KILL_PATTERN}\"}"
-        # #endregion
         log "DEBUG: No matching processes found for pattern: $KILL_PATTERN" "info"
         return 0
       fi
@@ -198,9 +183,6 @@ let
         fi
       done
       
-      # #region agent log
-      debug_log "daemon-manager:safe_kill:exit" "Safe kill completed" "A" "{\"pattern\":\"''${KILL_PATTERN}\",\"killed_count\":''${KILLED_COUNT},\"matching_pids\":\"''${MATCHING_PIDS}\"}"
-      # #endregion
       
       log "DEBUG: Safe kill completed - killed $KILLED_COUNT processes" "info"
       return 0
@@ -222,21 +204,12 @@ let
         
         # Exponential backoff verification: wait progressively longer to ensure processes are dead
         # This prevents race conditions where processes are still terminating
-        # #region agent log
-        debug_log "daemon-manager:exponential_backoff:start" "Starting exponential backoff verification" "B" "{\"pattern\":\"''${PATTERN}\",\"initial_count\":''${RUNNING_COUNT}}"
-        # #endregion
         REMAINING=$RUNNING_COUNT
         for wait_time in 0.5 1 2; do
           sleep $wait_time
           REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l)
-          # #region agent log
-          debug_log "daemon-manager:exponential_backoff:check" "After wait check" "B" "{\"pattern\":\"''${PATTERN}\",\"wait_time\":''${wait_time},\"remaining\":''${REMAINING}}"
-          # #endregion
           log "DEBUG: After ''${wait_time}s wait, $REMAINING processes remaining: $PATTERN" "info"
           if [ "$REMAINING" -eq 0 ]; then
-            # #region agent log
-            debug_log "daemon-manager:exponential_backoff:success" "All processes terminated" "B" "{\"pattern\":\"''${PATTERN}\",\"wait_time\":''${wait_time}}"
-            # #endregion
             break
           fi
           # If processes still exist, try killing again (they might have been in a bad state)
@@ -245,9 +218,6 @@ let
             safe_kill "$PATTERN" "$PGREP_FLAG"
           fi
         done
-        # #region agent log
-        debug_log "daemon-manager:exponential_backoff:end" "Exponential backoff completed" "B" "{\"pattern\":\"''${PATTERN}\",\"final_remaining\":''${REMAINING}}"
-        # #endregion
         
         # Final verification: if processes still exist after all attempts, log warning but proceed
         if [ "$REMAINING" -gt 0 ]; then
@@ -311,16 +281,10 @@ let
       # Wait for StatusNotifierWatcher to be ready (exponential backoff: 0.5s, 1s, 2s, 4s, 8s = 15.5s total)
       # NOTE: On Sway/Hyprland, Waybar itself acts as the StatusNotifierWatcher when its tray module is enabled
       # This ensures waybar's tray module has registered before applets try to connect
-      # #region agent log
-      debug_log "daemon-manager:tray_wait:start" "Starting StatusNotifierWatcher wait" "C" "{\"pattern\":\"''${PATTERN}\",\"daemon\":\"''${PATTERN}\"}"
-      # #endregion
       TRAY_READY=false
       TOTAL_WAIT=0
       CHECK_COUNT=0
       for delay in 0.5 1 2 4 8; do
-        # #region agent log
-        debug_log "daemon-manager:tray_wait:check" "Checking StatusNotifierWatcher availability" "C" "{\"pattern\":\"''${PATTERN}\",\"check_count\":''${CHECK_COUNT},\"delay\":''${delay}}"
-        # #endregion
         # Check if org.freedesktop.StatusNotifierWatcher is available on DBus
         # This checks if Waybar (or another watcher) has registered the service
         if ${pkgs.dbus}/bin/dbus-send --session --print-reply \
@@ -329,9 +293,6 @@ let
           org.freedesktop.DBus.GetNameOwner \
           string:org.freedesktop.StatusNotifierWatcher > /dev/null 2>&1; then
           TRAY_READY=true
-          # #region agent log
-          debug_log "daemon-manager:tray_wait:ready" "StatusNotifierWatcher is ready" "C" "{\"pattern\":\"''${PATTERN}\",\"check_count\":''${CHECK_COUNT},\"total_wait\":''${TOTAL_WAIT}}"
-          # #endregion
           log "StatusNotifierWatcher is ready (check #$CHECK_COUNT, waited ~''${TOTAL_WAIT} seconds)" "info"
           break
         fi
@@ -342,9 +303,6 @@ let
         TOTAL_WAIT=$((TOTAL_WAIT + 1))  # Approximate, close enough for logging
       done
       if [ "$TRAY_READY" = "false" ]; then
-        # #region agent log
-        debug_log "daemon-manager:tray_wait:timeout" "StatusNotifierWatcher wait timed out" "C" "{\"pattern\":\"''${PATTERN}\",\"check_count\":''${CHECK_COUNT},\"total_wait\":''${TOTAL_WAIT}}"
-        # #endregion
         log "WARNING: StatusNotifierWatcher not ready after ~15 seconds, starting daemon anyway: $PATTERN" "warning"
         log "NOTE: Tray icon may not appear until waybar's tray module initializes" "info"
       fi
@@ -364,15 +322,9 @@ let
     fi
     
     # Start daemon with systemd logging
-    # #region agent log
-    debug_log "daemon-manager:start:before" "About to start daemon" "D" "{\"pattern\":\"''${PATTERN}\",\"command\":\"''${COMMAND}\",\"requires_tray\":\"''${REQUIRES_TRAY}\"}"
-    # #endregion
     log "Starting daemon: $PATTERN (command: $COMMAND)" "info"
     nohup sh -c "$COMMAND" 2>&1 | systemd-cat -t "sway-daemon-''${PATTERN}" &
     DAEMON_PID=$!
-    # #region agent log
-    debug_log "daemon-manager:start:after" "Daemon start command executed" "D" "{\"pattern\":\"''${PATTERN}\",\"daemon_pid\":''${DAEMON_PID}}"
-    # #endregion
     log "Daemon start command executed, PID: $DAEMON_PID" "info"
     
     # Verify it started with progressive wait (some daemons take longer to initialize)
@@ -382,9 +334,6 @@ let
       sleep $check_delay
       if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" > /dev/null 2>&1; then
         ACTUAL_PID=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | head -1)
-        # #region agent log
-        debug_log "daemon-manager:start:verified" "Daemon started successfully" "D" "{\"pattern\":\"''${PATTERN}\",\"daemon_pid\":''${DAEMON_PID},\"actual_pid\":\"''${ACTUAL_PID}\",\"check_delay\":''${check_delay}}"
-        # #endregion
         log "Daemon started successfully: $PATTERN (started PID: $DAEMON_PID, actual PID: $ACTUAL_PID, verified after ''${check_delay}s)" "info"
         DAEMON_STARTED=true
         break
@@ -394,9 +343,6 @@ let
     if [ "$DAEMON_STARTED" = "false" ]; then
       # Additional check: see if process started but verification failed
       CHECK_CMD=$(ps -p $DAEMON_PID -o comm= 2>/dev/null || echo "not_found")
-      # #region agent log
-      debug_log "daemon-manager:start:failed" "Failed to start daemon" "D" "{\"pattern\":\"''${PATTERN}\",\"daemon_pid\":''${DAEMON_PID},\"check_cmd\":\"''${CHECK_CMD}\"}"
-      # #endregion
       log "ERROR: Failed to start daemon: $PATTERN (started PID: $DAEMON_PID, process: $CHECK_CMD)" "err"
       exit 1
     fi
@@ -484,7 +430,8 @@ let
             ${lib.strings.escapeShellArg daemon.match_type} \
             ${lib.strings.escapeShellArg daemon.command} \
             ${lib.strings.escapeShellArg (if daemon.reload != "" then daemon.reload else "")} \
-            ${if daemon.requires_sway then "true" else "false"}
+            ${if daemon.requires_sway then "true" else "false"} \
+            ${if daemon.requires_tray or false then "true" else "false"}
         fi
       fi
     '') daemons}
