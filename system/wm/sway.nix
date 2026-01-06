@@ -52,9 +52,18 @@
   # XWayland support for compatibility
   programs.xwayland.enable = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) true;
 
+  # KWallet PAM integration for automatic wallet unlocking on login
+  # This enables KWallet to unlock automatically when logging in through SDDM or unlocking the screen
+  security.pam.services = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
+    login.enableKwallet = true;      # Unlock wallet on TTY/login
+    sddm.enableKwallet = true;       # Unlock wallet on SDDM login
+    swaylock.enableKwallet = true;   # Unlock wallet on screen unlock
+  };
+
+  # TODO: Remove later - GNOME Keyring removed in favor of KWallet to prevent conflicts
   # GNOME Keyring for Vivaldi and other apps that need secure credential storage
-  services.gnome.gnome-keyring.enable = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) true;
-  security.pam.services.login.enableGnomeKeyring = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) true;
+  # services.gnome.gnome-keyring.enable = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) true;
+  # security.pam.services.login.enableGnomeKeyring = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) true;
 
   # Keyboard input configuration for polyglot typing (English/Spanish)
   # This will be configured in the Sway config file, but we ensure xkb is available

@@ -7,46 +7,47 @@ let
                                         base08 base09 base0A base0B base0C base0D base0E base0F;
     in ''
       * {
-        bg-col:  #${base00}E6;
-        bg-col-light:  #${base01}E6;
+        bg-col:  #${base00}FF;
+        bg-col-light:  #${base01}FF;
         border-col:  #${base02};
         selected-col:  #${base0D};
         blue:  #${base0D};
         fg-col:  #${base07};
         fg-col2:  #${base05};
         grey:  #${base04};
-        width: 80;
-        font: "${userSettings.font} 12";
+        width: 95;
+        font: "${userSettings.font} 14";
       }
       
       window {
         background-color: @bg-col;
         border-radius: 20px;
-        border: 0px;
+        border: 2px;
+        border-color: @border-col;
         padding: 0px;
-        /* backdrop-filter: blur(10px); */
-        /* -webkit-backdrop-filter: blur(10px); */
+        width: 95%;
       }
       
       mainbox {
         border: 0px;
-        padding: 0px;
+        padding: 12px;
       }
       
       inputbar {
         children: [prompt,entry];
         border: 0px;
         border-radius: 20px 20px 0px 0px;
-        padding: 8px;
+        padding: 12px;
         background-color: @bg-col-light;
+        margin: 0px 0px 8px 0px;
       }
       
       prompt {
         background-color: @selected-col;
-        padding: 6px;
+        padding: 10px 14px;
         text-color: @fg-col;
-        border-radius: 10px;
-        margin: 5px;
+        border-radius: 12px;
+        margin: 0px 8px 0px 0px;
       }
       
       textbox-prompt-colon {
@@ -55,82 +56,89 @@ let
       }
       
       entry {
-        padding: 6px;
-        margin: 5px;
+        padding: 10px 14px;
+        margin: 0px;
         text-color: @fg-col;
         background-color: @bg-col-light;
+        border-radius: 12px;
       }
       
       listview {
         border: 0px;
         border-radius: 0px 0px 20px 20px;
-        padding: 4px;
+        padding: 8px;
         margin: 0px;
         lines: 12;
         columns: 1;
+        spacing: 4px;
       }
       
       element {
         border: 0px;
-        padding: 4px;
+        padding: 12px 16px;
         background-color: transparent;
+        text-color: @fg-col;
       }
       
       element selected {
         background-color: @selected-col;
-        border-radius: 8px;
+        border-radius: 12px;
+        text-color: @fg-col;
       }
       
       element-text {
         background-color: inherit;
-        text-color: @fg-col;
+        text-color: inherit;
+        vertical-align: 0.5;
       }
       
       element-icon {
         background-color: inherit;
+        size: 24px;
       }
     '') else ''
       * {
-        bg-col:  #1e1e2eE6;
-        bg-col-light:  #313244E6;
+        bg-col:  #1e1e2eFF;
+        bg-col-light:  #313244FF;
         border-col:  #45475a;
         selected-col:  #89b4fa;
         blue:  #89b4fa;
         fg-col:  #cdd6f4;
         fg-col2:  #bac2de;
         grey:  #6c7086;
-        width: 80;
-        font: "${userSettings.font} 12";
+        width: 95;
+        font: "${userSettings.font} 14";
       }
       
       window {
         background-color: @bg-col;
         border-radius: 20px;
-        border: 0px;
+        border: 2px;
+        border-color: @border-col;
         padding: 0px;
-        /* backdrop-filter: blur(10px); */
-        /* -webkit-backdrop-filter: blur(10px); */
+        width: 95%;
       }
       
       mainbox {
         border: 0px;
-        padding: 0px;
+        padding: 12px;
       }
       
       inputbar {
         children: [prompt,entry];
         border: 0px;
         border-radius: 20px 20px 0px 0px;
-        padding: 8px;
+        padding: 12px;
         background-color: @bg-col-light;
+        margin: 0px 0px 8px 0px;
       }
       
       prompt {
         background-color: @selected-col;
-        padding: 6px;
+        padding: 10px 14px;
         text-color: @fg-col;
-        border-radius: 10px;
-        margin: 5px;
+        border-radius: 12px;
+        margin: 0px 8px 0px 0px;
       }
       
       textbox-prompt-colon {
@@ -139,39 +147,45 @@ let
       }
       
       entry {
-        padding: 6px;
-        margin: 5px;
+        padding: 10px 14px;
+        margin: 0px;
         text-color: @fg-col;
         background-color: @bg-col-light;
+        border-radius: 12px;
       }
       
       listview {
         border: 0px;
         border-radius: 0px 0px 20px 20px;
-        padding: 4px;
+        padding: 8px;
         margin: 0px;
         lines: 12;
         columns: 1;
+        spacing: 4px;
       }
       
       element {
         border: 0px;
-        padding: 4px;
+        padding: 12px 16px;
         background-color: transparent;
+        text-color: @fg-col;
       }
       
       element selected {
         background-color: @selected-col;
-        border-radius: 8px;
+        border-radius: 12px;
+        text-color: @fg-col;
       }
       
       element-text {
         background-color: inherit;
-        text-color: @fg-col;
+        text-color: inherit;
+        vertical-align: 0.5;
       }
       
       element-icon {
         background-color: inherit;
+        size: 24px;
       }
     '';
 in {
@@ -190,7 +204,7 @@ in {
         display-combi: "";
         filebrowser-dir: "~";
         fixed-num-lines: true;
-        font: "${userSettings.font} 12";
+        font: "${userSettings.font} 14";
         icon-theme: "Papirus";
         lines: 12;
         location: 0;
@@ -199,7 +213,7 @@ in {
         show-match: true;
         sidebar-mode: false;
         terminal: "${userSettings.term}";
-        width: 80;
+        width: 95;
         xoffset: 0;
         yoffset: 0;
       }
