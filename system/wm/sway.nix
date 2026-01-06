@@ -8,6 +8,7 @@
     ./fonts.nix
     ./dbus.nix
     ../dm/sddm.nix  # Shared SDDM configuration (KWallet PAM)
+    ./keyd.nix  # Keyboard remapping (Caps Lock to Hyper)
   ];
 
   # CRITICAL: Use swayfx instead of standard sway

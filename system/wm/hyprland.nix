@@ -6,6 +6,7 @@ in
   imports = [ ./wayland.nix
               ./pipewire.nix
               ./dbus.nix
+              ./keyd.nix  # Keyboard remapping (Caps Lock to Hyper)
             ];
 
   # Security

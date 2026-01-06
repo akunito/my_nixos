@@ -9,6 +9,7 @@
     ./fonts.nix
     ./dbus.nix
     ../dm/sddm.nix  # Shared SDDM configuration (KWallet PAM)
+    ./keyd.nix  # Keyboard remapping (Caps Lock to Hyper)
     # ./gnome-keyring.nix
     # ./hyprland.nix  <-- REMOVED: Plasma should not import Hyprland
     # Hyprland should be imported separately at the profile level if wmEnableHyprland is true
