@@ -82,7 +82,7 @@ in
     LC_NUMERIC = systemSettings.locale;
     LC_PAPER = systemSettings.locale;
     LC_TELEPHONE = systemSettings.locale;
-    LC_TIME = systemSettings.locale;
+    LC_TIME = systemSettings.timeLocale;  # Use timeLocale for Monday as first day of week
   };
 
   # User account

@@ -53,6 +53,7 @@
             weeks-pos = "right";
             on-scroll = 1;
             on-click-right = "mode";
+            first-day-of-week = 1;  # Start week on Monday (0 = Sunday, 1 = Monday)
             format = {
               months = "<span color='#ffead3'><b>{}</b></span>";
               days = "<span color='#ecc6d9'>{}</span>";

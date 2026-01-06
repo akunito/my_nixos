@@ -234,7 +234,7 @@ in {
           always = true;
         }
         {
-          command = "${pkgs.nwg-dock}/bin/nwg-dock -d -r -p bottom -i 48 -w 5 -mb 10 -hd 10 -c \"rofi -show drun\"";
+          command = "${config.home.homeDirectory}/.config/sway/scripts/dock-diagnostic.sh";
           always = true;
         }
         {

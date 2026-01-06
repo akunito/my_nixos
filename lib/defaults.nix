@@ -12,6 +12,7 @@
     # Common defaults (profile-specific values will override)
     timezone = "Europe/Warsaw";
     locale = "en_US.UTF-8";
+    timeLocale = "en_GB.UTF-8";  # Locale for time/date formatting (uses Monday as first day of week)
     bootMode = "uefi";
     bootMountPath = "/boot";
     grubDevice = "";
