@@ -54,20 +54,23 @@ log_json "SWAY_READY" "Checking if SwayFX is ready and responding" "{\"swaymsg_o
 log_json "ENV_VARS" "Checking critical environment variables" "{\"WAYLAND_DISPLAY\":\"${WAYLAND_DISPLAY:-not_set}\",\"XDG_RUNTIME_DIR\":\"${XDG_RUNTIME_DIR:-not_set}\",\"SWAYSOCK\":\"${SWAYSOCK:-not_set}\",\"PATH\":\"${PATH:0:200}\"}" "E"
 # #endregion
 
-# Kill any existing waybar processes
-if [ "$WAYBAR_PROCESS_BEFORE" != "not_running" ]; then
-  log_json "WAYBAR_KILL" "Killing existing waybar processes" "{\"pid\":\"$WAYBAR_PROCESS_BEFORE\"}" "C"
-  pkill waybar 2>/dev/null
-  sleep 0.5
-fi
+# Kill any existing waybar processes (always kill to avoid duplicates)
+log_json "WAYBAR_KILL" "Killing existing waybar processes" "{\"pid_before\":\"$WAYBAR_PROCESS_BEFORE\"}" "C"
+pkill -x waybar 2>/dev/null
+pkill -f "waybar" 2>/dev/null
+sleep 1
+WAYBAR_AFTER_KILL=$(pgrep -x waybar || echo "not_running")
+log_json "WAYBAR_KILL_RESULT" "Waybar process after kill" "{\"pid_after_kill\":\"$WAYBAR_AFTER_KILL\"}" "C"
 
 # Start waybar with error capture (non-blocking)
 # #region agent log - Hypothesis C: Waybar start attempt
 log_json "WAYBAR_START_CMD" "Executing waybar start command" "{\"binary\":\"$WAYBAR_BIN\"}" "C"
 # Start waybar in background, redirect stderr to log file
-waybar >> "$LOG_FILE" 2>&1 &
+# Use nohup and disown to ensure it runs independently
+nohup waybar >> "$LOG_FILE" 2>&1 &
 WAYBAR_START_PID=$!
-sleep 2
+disown $WAYBAR_START_PID 2>/dev/null || true
+sleep 3
 # #endregion
 
 # #region agent log - Hypothesis C: Waybar process after start

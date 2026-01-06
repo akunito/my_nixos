@@ -16,9 +16,14 @@ log_json "DOCK_PROCESS_BEFORE" "Checking nwg-dock process before start" "{\"pid\
 # #endregion
 
 # #region agent log - Hypothesis B: nwg-dock parameter validation
-# NOTE: -r means "Leave the program resident, but w/o hotspot" - this DISABLES hover detection!
+# NOTE: -d and -r are MUTUALLY EXCLUSIVE! Cannot use both.
+# -d = autohide (show when hotspot hovered, close when left) - HIDDEN BY DEFAULT
+# -r = resident (always visible, but without hotspot) - ALWAYS VISIBLE
+# We use -d for autohide mode (user wants hide/show on hover)
+# -hd = hotspot delay (ms); lower = faster response, 0 = instant
+# -mb = margin bottom (pixels from bottom edge)
 # NOTE: -w means "number of Workspaces" not width!
-log_json "DOCK_PARAMS" "nwg-dock parameters being used" "{\"auto_hide\":\"-d\",\"resident_no_hotspot\":\"-r (DISABLES HOTSPOT)\",\"position\":\"bottom\",\"icon_size\":48,\"workspace_count\":5,\"margin_bottom\":10,\"hotspot_delay\":10}" "B"
+log_json "DOCK_PARAMS" "nwg-dock parameters being used" "{\"mode\":\"-d (autohide, show on hover)\",\"position\":\"bottom\",\"icon_size\":48,\"workspace_count\":5,\"margin_bottom\":10,\"hotspot_delay\":0,\"layer\":\"bottom\"}" "B"
 # #endregion
 
 # #region agent log - Hypothesis C: nwg-dock binary check
@@ -29,10 +34,14 @@ log_json "DOCK_BINARY_CHECK" "Checking nwg-dock binary" "{\"path\":\"$NWG_DOCK_P
 
 # Start nwg-dock with error capture
 # #region agent log - Hypothesis D: nwg-dock start attempt
-log_json "DOCK_START_CMD" "Executing nwg-dock start command" "{\"params\":\"-d -r -p bottom -i 48 -w 5 -mb 10 -hd 10\"}" "D"
-nwg-dock -d -r -p bottom -i 48 -w 5 -mb 10 -hd 10 -c "rofi -show drun" 2>&1 &
+# Use -d (autohide) for hide/show on hover (without -r, they're mutually exclusive)
+# Use -l bottom for layer-shell bottom layer
+# Use -hd 0 for instant hotspot response (no delay)
+# Use -mb 10 for margin from bottom (creates hover area)
+log_json "DOCK_START_CMD" "Executing nwg-dock start command" "{\"params\":\"-d -l bottom -p bottom -i 48 -w 5 -mb 10 -hd 0\"}" "D"
+nwg-dock -d -l bottom -p bottom -i 48 -w 5 -mb 10 -hd 0 -c "rofi -show drun" 2>&1 &
 DOCK_PID=$!
-sleep 2
+sleep 3
 # #endregion
 
 # #region agent log - Hypothesis E: nwg-dock process after start
@@ -83,7 +92,13 @@ DOCK_FINAL_CHECK=$(pgrep -x nwg-dock || echo "not_running")
 if [ "$DOCK_FINAL_CHECK" = "not_running" ]; then
   log_json "DOCK_STARTUP_ERROR" "Dock failed to start or crashed" "{\"start_pid\":\"$DOCK_PID\",\"final_status\":\"not_running\"}" "J"
 else
-  log_json "DOCK_STARTUP_SUCCESS" "Dock started successfully" "{\"pid\":\"$DOCK_FINAL_CHECK\"}" "J"
+  log_json "DOCK_STARTUP_SUCCESS" "Dock started successfully in autohide mode" "{\"pid\":\"$DOCK_FINAL_CHECK\",\"mode\":\"autohide\",\"hotspot_delay\":0,\"margin_bottom\":10}" "J"
 fi
+# #endregion
+
+# #region agent log - Hypothesis K: Dock visibility check (autohide mode)
+# In autohide mode, dock should be hidden by default
+# It will only appear when mouse hovers over bottom edge (hotspot area)
+log_json "DOCK_AUTOHIDE_INFO" "Dock in autohide mode - hidden by default, shows on hover" "{\"hotspot_area\":\"bottom edge (margin_bottom pixels from bottom)\",\"hover_to_show\":true}" "K"
 # #endregion
 
