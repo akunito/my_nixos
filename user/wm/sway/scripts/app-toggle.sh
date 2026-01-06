@@ -42,21 +42,25 @@ WINDOW_JSON=$(swaymsg -t get_tree 2>/dev/null | jq --arg app "$APP_ID" '
         | select(
             (.app_id == $app) or 
             (.window_properties.class == $app) or
-            (.app_id | ascii_downcase == ($app | ascii_downcase)) or
-            (.window_properties.class | ascii_downcase == ($app | ascii_downcase)) or
-            (.name | ascii_downcase | contains($app | ascii_downcase))
+            ((.app_id // "") | ascii_downcase == ($app | ascii_downcase)) or
+            ((.window_properties.class // "") | ascii_downcase == ($app | ascii_downcase)) or
+            ((.name // "") | ascii_downcase | contains($app | ascii_downcase))
         )
     ]
 ' 2>/dev/null)
 
 WINDOW_COUNT=$(echo "$WINDOW_JSON" | jq 'length' 2>/dev/null || echo "error")
+# Ensure WINDOW_COUNT is a valid number (handle empty string case)
+if [ -z "$WINDOW_COUNT" ] || [ "$WINDOW_COUNT" = "error" ]; then
+    WINDOW_COUNT="0"
+fi
 
 # #region agent log - After query
 JSON_LENGTH=${#WINDOW_JSON}
 JSON_PREVIEW=$(echo "$WINDOW_JSON" | head -c 200 | tr '\n' ' ' | sed 's/"/\\"/g')
 # Also log actual app_id/class found for debugging
-FOUND_APP_IDS=$(echo "$WINDOW_JSON" | jq -r '.[] | .app_id // "null"' | sort -u | tr '\n' ',' | sed 's/,$//')
-FOUND_CLASSES=$(echo "$WINDOW_JSON" | jq -r '.[] | .window_properties.class // "null"' | sort -u | tr '\n' ',' | sed 's/,$//')
+FOUND_APP_IDS=$(echo "$WINDOW_JSON" | jq -r '.[] | .app_id // "null"' 2>/dev/null | sort -u | tr '\n' ',' | sed 's/,$//' || echo "")
+FOUND_CLASSES=$(echo "$WINDOW_JSON" | jq -r '.[] | .window_properties.class // "null"' 2>/dev/null | sort -u | tr '\n' ',' | sed 's/,$//' || echo "")
 log_json "AFTER_QUERY" "Query completed" "{\"COUNT\":\"$WINDOW_COUNT\",\"FOUND_APP_IDS\":\"$FOUND_APP_IDS\",\"FOUND_CLASSES\":\"$FOUND_CLASSES\",\"JSON_PREVIEW\":\"$JSON_PREVIEW\"}" "B"
 # #endregion
 
@@ -77,8 +81,8 @@ if [ -z "$WINDOW_JSON" ] || [ "$WINDOW_JSON_NORMALIZED" = "[]" ] || [ "$WINDOW_C
     fi
     
     if [ "$IS_FLATPAK" = "true" ]; then
-        # Launch via Flatpak
-        flatpak run "$APP_ID" &
+        # Launch via Flatpak - redirect output to prevent EPIPE errors
+        flatpak run "$APP_ID" >/dev/null 2>&1 &
     else
         # Launch normally (use the provided command)
         # Extract first word of command to check if it exists
@@ -86,8 +90,9 @@ if [ -z "$WINDOW_JSON" ] || [ "$WINDOW_JSON_NORMALIZED" = "[]" ] || [ "$WINDOW_C
         
         # Check if command exists in PATH
         if command -v "$CMD_FIRST" &>/dev/null; then
-            # Command exists in PATH - use it
-            $CMD &
+            # Command exists in PATH - use it with output redirection
+            # Redirect stdout/stderr to prevent EPIPE errors with Electron apps
+            $CMD >/dev/null 2>&1 &
         else
             # Command not in PATH - check Nix profile locations
             # Try exact name first, then try common variations (case-insensitive search)
@@ -113,18 +118,21 @@ if [ -z "$WINDOW_JSON" ] || [ "$WINDOW_JSON_NORMALIZED" = "[]" ] || [ "$WINDOW_C
             
             if [ -n "$FOUND_BIN" ]; then
                 # Found binary - use full path
+                # Redirect output to prevent EPIPE errors with Electron apps
                 CMD_ARGS=$(echo "$CMD" | cut -d' ' -f2-)
                 if [ -n "$CMD_ARGS" ]; then
-                    "$FOUND_BIN" $CMD_ARGS &
+                    "$FOUND_BIN" $CMD_ARGS >/dev/null 2>&1 &
                 else
-                    "$FOUND_BIN" &
+                    "$FOUND_BIN" >/dev/null 2>&1 &
                 fi
             elif [[ "$APP_ID" =~ ^(org\.|com\.|io\.|net\.|de\.|app\.) ]]; then
                 # Command not found but APP_ID looks like Flatpak - try flatpak run as fallback
-                flatpak run "$APP_ID" &
+                # Redirect output to prevent EPIPE errors
+                flatpak run "$APP_ID" >/dev/null 2>&1 &
             else
                 # Last resort - try the command anyway (might work with full PATH from Sway)
-                $CMD &
+                # Redirect output to prevent EPIPE errors
+                $CMD >/dev/null 2>&1 &
             fi
         fi
     fi
@@ -138,7 +146,8 @@ log_json "BEFORE_STATE_ID" "Identifying state" "{}" "D"
 
 FOCUSED_ID=$(swaymsg -t get_tree 2>/dev/null | jq -r '.. | select(.focused? == true) | .id' 2>/dev/null || echo "none")
 ID_LIST=$(echo "$WINDOW_JSON" | jq -r '.[].id' 2>/dev/null || echo "")
-COUNT=$(echo "$WINDOW_JSON" | jq 'length' 2>/dev/null || echo "0")
+# Use WINDOW_COUNT consistently (already calculated and validated above)
+COUNT="$WINDOW_COUNT"
 
 # #region agent log - State identification result
 log_json "STATE_ID" "State identified" "{\"FOCUSED_ID\":\"$FOCUSED_ID\",\"ID_LIST\":\"$ID_LIST\",\"COUNT\":\"$COUNT\"}" "D"
