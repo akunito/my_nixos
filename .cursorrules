@@ -273,6 +273,59 @@ When modifying daemon-related code:
 - **Source Code**: `user/wm/sway/default.nix` (lines 36-111 for daemon list, lines 114-355 for script generation)
 - **Systemd Example**: `user/wm/sway/waybar.nix` (line 8) - Example of disabling Systemd service
 
+## DESK Startup Applications Script
+
+**CRITICAL**: When adding new automation to the beginning of Sway sessions (startup scripts that launch applications), you MUST check and potentially extend the existing `desk-startup-apps` script instead of creating new startup commands.
+
+### When This Rule Applies
+
+This rule applies when:
+- Adding applications to launch automatically at Sway startup
+- Creating new startup automation scripts for the DESK profile
+- Modifying application launch sequences at session start
+- Adding new applications to the DESK startup workflow
+
+### Required Actions
+
+Before creating new startup automation:
+
+1. **Check Existing Script**: Review `user/wm/sway/default.nix` for the `desk-startup-apps-script` definition (generated in the `let` block)
+2. **Use Assignment Rules**: Use Sway assignment rules (`assign [app_id="..."] workspace number X`) in `window.commands` to route apps to correct workspaces
+3. **Extend Existing Script**: Modify the `desk-startup-apps-script` instead of creating new startup commands
+4. **Follow Parallel Launch Pattern**: Use parallel launching (background processes with `&`) after the KWallet detection phase
+5. **Respect DESK Profile**: The script is conditional on DESK profile (`systemSettings.swayPrimaryMonitor != null`) - maintain this pattern
+
+### Architecture
+
+The `desk-startup-apps` script uses a 3-phase approach:
+- **Phase 1 (Blocking)**: Launch Vivaldi and wait for window to appear
+- **Phase 2 (Smart Wait)**: Detect and wait for KDE Wallet prompt if it appears
+- **Phase 3 (Parallel Launch)**: Launch remaining applications in parallel (Cursor, Obsidian, Chromium)
+
+### Key Principles
+
+1. **Use Assignment Rules**: Always define `assign` rules in `window.commands` before adding apps to the startup script
+2. **Parallel Launch**: Launch apps in Phase 3 in parallel using `&` for faster startup
+3. **Conditional Execution**: Script checks for DESK profile and exits early on other profiles
+4. **No Config Reload Execution**: Script uses `always = false` to only run on initial startup
+5. **KWallet Awareness**: Script intelligently waits for KWallet prompt before launching remaining apps
+
+### Implementation Pattern
+
+```nix
+# 1. Add assignment rule in window.commands
+assign [app_id="my-app"] workspace number X
+
+# 2. Add app to Phase 3 (parallel launch) in desk-startup-apps-script
+my-app >/dev/null 2>&1 &
+```
+
+### Reference Documentation
+
+- **Script Location**: `user/wm/sway/default.nix` (generated script in `let` block, startup command in `startup` list)
+- **Assignment Rules**: `user/wm/sway/default.nix` (`window.commands` section)
+- **Startup Command**: `user/wm/sway/default.nix` (`startup` list, after `daemon-sanity-check`)
+
 ## Git Commit Guidelines
 
 ### Documentation Review Before Commits

@@ -32,6 +32,64 @@ let
     fi
   '';
   
+  # DESK startup apps script - launches applications in specific workspaces after daemons are ready
+  desk-startup-apps-script = pkgs.writeShellScriptBin "desk-startup-apps" ''
+    #!/bin/bash
+    PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
+    
+    if [ -z "$PRIMARY" ]; then
+      # Not DESK profile, exit
+      exit 0
+    fi
+    
+    # Wait a moment for everything to settle
+    sleep 2
+    
+    # Phase 1: Smart wait for KWallet prompt (before launching apps that need it)
+    KWALLET_FOUND=false
+    for i in $(seq 1 5); do
+      KWALLET_WINDOW=$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r '
+        recurse(.nodes[]?) 
+        | select(.type=="con" or .type=="floating_con")
+        | select(.name != null)
+        | select(.name | test("(?i)(kde.?wallet|kwallet)"; "i"))
+        | .id' 2>/dev/null | head -1)
+      
+      if [ -n "$KWALLET_WINDOW" ] && [ "$KWALLET_WINDOW" != "null" ]; then
+        KWALLET_FOUND=true
+        break
+      fi
+      sleep 1
+    done
+    
+    if [ "$KWALLET_FOUND" = "true" ]; then
+      # Wait for KWallet window to close
+      while [ -n "$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r "recurse(.nodes[]?) | select(.id == $KWALLET_WINDOW) | .id" 2>/dev/null | ${pkgs.gnugrep}/bin/grep -v null)" ]; do
+        sleep 0.5
+      done
+    fi
+    
+    # Phase 2: Launch Vivaldi (blocking, after KWallet is handled)
+    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
+    ${pkgs.swaysome}/bin/swaysome focus 1
+    ${pkgs.flatpak}/bin/flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
+    
+    # Wait for Vivaldi window to appear (max 30 seconds)
+    VIVALDI_READY=false
+    for i in $(seq 1 30); do
+      if ${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r 'recurse(.nodes[]?) | select(.app_id == "com.vivaldi.Vivaldi") | .id' 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '[0-9]'; then
+        VIVALDI_READY=true
+        break
+      fi
+      sleep 1
+    done
+    
+    # Phase 3: Parallel launch Cursor, Obsidian, and Chromium
+    cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
+    obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
+    chromium >/dev/null 2>&1 &
+  '';
+  
   # Daemon definitions - shared by all generated scripts (DRY principle)
   # WARNING: Sway and Hyprland both use programs.waybar which writes to
   # ~/.config/waybar/config. They are mutually exclusive in the same profile.
@@ -654,6 +712,11 @@ in {
           command = "${daemon-sanity-check}/bin/daemon-sanity-check --fix";
           always = false;  # Only run on initial startup, not on reload
         }
+        # DESK-only startup apps (runs after daemons are ready)
+        {
+          command = "${desk-startup-apps-script}/bin/desk-startup-apps";
+          always = false;  # Only run on initial startup, not on config reload
+        }
       ];
 
       # Window rules
@@ -678,6 +741,12 @@ in {
           
           # Dolphin on Wayland (use app_id)
           { criteria = { app_id = "org.kde.dolphin"; }; command = "floating enable"; }
+          
+          # DESK startup apps - assign to specific workspaces
+          { criteria = { app_id = "com.vivaldi.Vivaldi"; }; command = "move to workspace number 1"; }
+          { criteria = { app_id = "cursor"; }; command = "move to workspace number 2"; }
+          { criteria = { app_id = "obsidian"; }; command = "move to workspace number 11"; }
+          { criteria = { class = "chromium-browser"; }; command = "move to workspace number 12"; }
         ];
       };
     };
@@ -926,6 +995,7 @@ in {
     daemon-manager
     start-sway-daemons
     daemon-sanity-check
+    desk-startup-apps-script
   ] ++ (with pkgs; [
     # SwayFX and related
     swayfx

@@ -13,11 +13,13 @@ swaysome init 1
 # (e.g., everything piling up on the first detected screen).
 sleep 1
 
+# Focus primary monitor first (ensures mouse cursor is positioned correctly)
+swaymsg focus output DP-1
+
 # 3. Initialize Monitor 1 (DP-1) -> Group 1 (Workspaces 1-10)
 # Instead of trying to create "Workspace 1" manually (which might fail),
 # we tell swaysome: "This monitor owns Group 1."
 # Swaysome then automatically creates/focuses the correct workspaces.
-swaymsg focus output DP-1
 swaysome focus-group 1
 
 # 4. Initialize Monitor 2 (DP-2) -> Group 2 (Workspaces 11-20)
