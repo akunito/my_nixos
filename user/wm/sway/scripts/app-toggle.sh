@@ -1,138 +1,74 @@
-#!/bin/sh
-# Smart application toggle/cycle/launch script
-# Usage: app-toggle.sh <app_name>
-#
-# Logic:
-# - If app is not open -> Launch it
-# - If app is open and focused -> Move to Scratchpad (Hide)
-# - If app is open but not focused -> Focus it
-# - If multiple windows exist -> Cycle focus
+#!/usr/bin/env bash
+# Usage: app-toggle.sh <app_id|class> <launch_command...>
+# Example: app-toggle.sh cursor cursor --flags --more-flags
 
-APP_NAME="$1"
+APP_ID=$1
+shift # Shift arguments so $@ becomes the command (e.g., "cursor --flags")
+CMD="$@"
 
-if [ -z "$APP_NAME" ]; then
-    echo "Usage: app-toggle.sh <app_name>"
+if [ -z "$APP_ID" ] || [ -z "$CMD" ]; then
+    echo "Usage: $0 <app_id|class> <command...>"
     exit 1
 fi
 
-# Get list of windows matching the app (check both app_id for Wayland and class for XWayland)
-# Handle special cases for apps with multiple possible app_id values
-case "$APP_NAME" in
-    telegram-desktop)
-        WINDOWS=$(swaymsg -t get_tree | jq -r "
-            recurse(.nodes[]?, .floating_nodes[]?)
-            | select(.type == \"con\")
-            | select(.app_id == \"org.telegram.desktop\" or .app_id == \"telegram-desktop\")
-            | .id
-        ")
-        ;;
-    dolphin)
-        WINDOWS=$(swaymsg -t get_tree | jq -r "
-            recurse(.nodes[]?, .floating_nodes[]?)
-            | select(.type == \"con\")
-            | select(.app_id == \"org.kde.dolphin\" or .window_properties.class == \"Dolphin\" or .window_properties.class == \"dolphin\")
-            | .id
-        ")
-        ;;
-    bitwarden-desktop)
-        WINDOWS=$(swaymsg -t get_tree | jq -r "
-            recurse(.nodes[]?, .floating_nodes[]?)
-            | select(.type == \"con\")
-            | select(.app_id == \"bitwarden\" or .app_id == \"bitwarden-desktop\")
-            | .id
-        ")
-        ;;
-    *)
-        WINDOWS=$(swaymsg -t get_tree | jq -r "
-            recurse(.nodes[]?, .floating_nodes[]?)
-            | select(.type == \"con\")
-            | select(.app_id == \"$APP_NAME\" or .window_properties.class == \"$APP_NAME\")
-            | .id
-        ")
-        ;;
-esac
+# 1. Get all windows for this app (Wayland app_id OR XWayland class)
+# We recurse to find windows in tabs, stacks, floating, or scratchpad.
+# CRITICAL: Use .nodes[]? and .floating_nodes[]? to handle leaf nodes safely
+WINDOW_JSON=$(swaymsg -t get_tree | jq -r --arg app "$APP_ID" '
+    [recurse(.nodes[]?) | select(.type=="con"), recurse(.floating_nodes[]?) | select(.type=="con")]
+    | map(select((.app_id == $app) or (.window_properties.class == $app)))')
 
-if [ -z "$WINDOWS" ]; then
-    # App is not open, launch it
-    case "$APP_NAME" in
-        telegram-desktop)
-            telegram-desktop &
-            ;;
-        dolphin)
-            dolphin &
-            ;;
-        kitty)
-            kitty &
-            ;;
-        obsidian)
-            obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations &
-            ;;
-        vivaldi)
-            vivaldi &
-            ;;
-        chromium)
-            chromium &
-            ;;
-        spotify)
-            spotify --enable-features=UseOzonePlatform --ozone-platform=wayland &
-            ;;
-        nwg-look)
-            nwg-look &
-            ;;
-        bitwarden-desktop)
-            bitwarden &
-            ;;
-        code)
-            code --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch &
-            ;;
-        cursor)
-            cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch &
-            ;;
-        mission-center)
-            mission-center &
-            ;;
-        bottles)
-            bottles &
-            ;;
-        *)
-            # Try to launch as-is
-            $APP_NAME &
-            ;;
-    esac
-else
-    # App is open, check if focused
-    FOCUSED_WINDOW=$(swaymsg -t get_tree | jq -r '.. | select(.type? == "con" and .focused? == true) | .id')
-    
-    # Count number of windows
-    WINDOW_COUNT=$(echo "$WINDOWS" | wc -l)
-    
-    if [ "$WINDOW_COUNT" -eq 1 ]; then
-        # Single window
-        WINDOW_ID=$(echo "$WINDOWS" | head -n1)
-        
-        if [ "$FOCUSED_WINDOW" = "$WINDOW_ID" ]; then
-            # Window is focused, move to scratchpad
-            swaymsg "[id=$WINDOW_ID] move scratchpad"
-        else
-            # Window is not focused, focus it
-            swaymsg "[id=$WINDOW_ID] focus"
-        fi
-    else
-        # Multiple windows, cycle focus
-        # Get currently focused window ID
-        if echo "$WINDOWS" | grep -q "^$FOCUSED_WINDOW$"; then
-            # Currently focused window is in the list, focus next
-            NEXT_WINDOW=$(echo "$WINDOWS" | grep -A1 "^$FOCUSED_WINDOW$" | tail -n1)
-            if [ -z "$NEXT_WINDOW" ]; then
-                # Wrap around to first
-                NEXT_WINDOW=$(echo "$WINDOWS" | head -n1)
-            fi
-            swaymsg "[id=$NEXT_WINDOW] focus"
-        else
-            # No window from this app is focused, focus first
-            FIRST_WINDOW=$(echo "$WINDOWS" | head -n1)
-            swaymsg "[id=$FIRST_WINDOW] focus"
-        fi
-    fi
+# 2. IF NOT RUNNING -> LAUNCH
+if [ "$(echo "$WINDOW_JSON" | jq 'length')" -eq 0 ]; then
+    $CMD &
+    exit 0
 fi
 
+# 3. IDENTIFY STATE
+FOCUSED_ID=$(swaymsg -t get_tree | jq -r '.. | select(.focused? == true) | .id')
+ID_LIST=$(echo "$WINDOW_JSON" | jq -r '.[].id')
+COUNT=$(echo "$WINDOW_JSON" | jq 'length')
+
+# Check if the currently focused window belongs to this app
+if echo "$ID_LIST" | grep -q "^$FOCUSED_ID$"; then
+    # --- APP IS FOCUSED ---
+    
+    if [ "$COUNT" -gt 1 ]; then
+        # MULTIPLE WINDOWS: Cycle to next
+        # CRITICAL FIX: Use proper rotation logic to cycle through ALL windows
+        # Rotate the list so the FOCUSED_ID is at the end, then pick the first element.
+        # This ensures true A -> B -> C -> A cycling (not ping-pong between first two).
+        NEXT_ID=$(echo "$WINDOW_JSON" | jq -r --arg focus "$FOCUSED_ID" '
+            [.[].id] | . as $ids | ($ids | index($focus | tonumber)) as $idx | 
+            $ids[($idx + 1) % length]')
+        
+        # CRITICAL: Check if next window is in scratchpad
+        IS_SCRATCHPAD=$(echo "$WINDOW_JSON" | jq -r --arg id "$NEXT_ID" '.[] | select(.id == ($id|tonumber)) | .scratchpad_state')
+        
+        if [ "$IS_SCRATCHPAD" != "none" ] && [ "$IS_SCRATCHPAD" != "null" ]; then
+            swaymsg "[con_id=$NEXT_ID] scratchpad show"
+        else
+            swaymsg "[con_id=$NEXT_ID] focus"
+        fi
+    else
+        # SINGLE WINDOW: Toggle Hide (Move to Scratchpad)
+        swaymsg "move scratchpad"
+    fi
+
+else
+    # --- APP IS RUNNING BUT NOT FOCUSED ---
+    
+    # Pick the first available window to show
+    TARGET_ID=$(echo "$ID_LIST" | head -n 1)
+    
+    # CRITICAL: Check if it is hidden in scratchpad
+    IS_SCRATCHPAD=$(echo "$WINDOW_JSON" | jq -r --arg id "$TARGET_ID" '.[] | select(.id == ($id|tonumber)) | .scratchpad_state')
+
+    if [ "$IS_SCRATCHPAD" != "none" ] && [ "$IS_SCRATCHPAD" != "null" ]; then
+        # It is hidden -> Show it
+        swaymsg "[con_id=$TARGET_ID] scratchpad show"
+    else
+        # It is visible elsewhere -> Focus it
+        swaymsg "[con_id=$TARGET_ID] focus"
+    fi
+fi
