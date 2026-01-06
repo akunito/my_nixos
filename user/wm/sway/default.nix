@@ -581,8 +581,9 @@ in {
           # Note: Using different keys to avoid conflicts with window management bindings
           # Format: app-toggle.sh <app_id|class> <launch_command...>
           "${hyper}+T" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh kitty kitty";
+          "${hyper}+R" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Alacritty alacritty";
           "${hyper}+L" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram";
-          "${hyper}+E" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
+          "${hyper}+E" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
           "${hyper}+D" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
           "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.vivaldi.Vivaldi vivaldi";
           "${hyper}+G" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh chromium-browser chromium";
@@ -665,7 +666,7 @@ in {
           # Window management toggles
           "${hyper}+Escape" = "kill";
           "${hyper}+Shift+f" = "floating toggle";
-          "${hyper}+Shift+d" = "sticky toggle";
+          "${hyper}+Shift+s" = "sticky toggle";
           "${hyper}+Shift+g" = "fullscreen toggle";
           
           # Scratchpad
@@ -681,8 +682,11 @@ in {
           # Toggle SwayFX default bar (swaybar) - disabled by default, can be toggled manually
           "${hyper}+Shift+Home" = "exec ${config.home.homeDirectory}/.config/sway/scripts/swaybar-toggle.sh";
           
+          # Hide window (move to scratchpad)
+          "${hyper}+Shift+e" = "move scratchpad";
+          
           # Exit Sway
-          "${hyper}+Shift+e" = "exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway? This will end your Wayland session.' -b 'Yes, exit Sway' 'swaymsg exit'";
+          "${hyper}+Shift+End" = "exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway? This will end your Wayland session.' -b 'Yes, exit Sway' 'swaymsg exit'";
         }
       ];
 
@@ -741,6 +745,19 @@ in {
           
           # Dolphin on Wayland (use app_id)
           { criteria = { app_id = "org.kde.dolphin"; }; command = "floating enable"; }
+          
+          # Sticky windows - visible on all workspaces of their monitor
+          { criteria = { app_id = "kitty"; }; command = "sticky enable"; }
+          { criteria = { app_id = "Alacritty"; }; command = "sticky enable"; }
+          { criteria = { app_id = "org.telegram.desktop"; }; command = "sticky enable"; }
+          { criteria = { app_id = "telegram-desktop"; }; command = "sticky enable"; }
+          { criteria = { app_id = "bitwarden"; }; command = "sticky enable"; }
+          { criteria = { app_id = "bitwarden-desktop"; }; command = "sticky enable"; }
+          { criteria = { app_id = "Bitwarden"; }; command = "sticky enable"; }
+          { criteria = { app_id = "org.kde.dolphin"; }; command = "sticky enable"; }
+          { criteria = { class = "Dolphin"; }; command = "sticky enable"; }
+          { criteria = { class = "dolphin"; }; command = "sticky enable"; }
+          { criteria = { class = "Spotify"; }; command = "sticky enable"; }
           
           # DESK startup apps - assign to specific workspaces
           { criteria = { app_id = "com.vivaldi.Vivaldi"; }; command = "move to workspace number 1"; }
