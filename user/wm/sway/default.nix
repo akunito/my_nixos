@@ -3,6 +3,217 @@
 let
   # Hyper key combination (Super+Ctrl+Alt)
   hyper = "Mod4+Control+Mod1";
+  
+  # Daemon definitions - shared by all generated scripts (DRY principle)
+  daemons = [
+    {
+      name = "waybar";
+      command = "${pkgs.waybar}/bin/waybar";
+      pattern = "waybar";
+      match_type = "exact";  # Use pgrep -x for exact match (safer)
+      reload = "${pkgs.procps}/bin/pkill -SIGUSR2 waybar";  # Hot reload CSS/config
+      requires_sway = true;
+    }
+    {
+      name = "nwg-dock";
+      command = "${pkgs.nwg-dock}/bin/nwg-dock -d -l bottom -p bottom -i 48 -w 5 -mb 10 -hd 0 -c \"rofi -show drun\"";
+      pattern = "nwg-dock";
+      match_type = "exact";  # Use pgrep -x for exact match
+      reload = "";  # No reload support
+      requires_sway = true;
+    }
+    {
+      name = "swaync";
+      command = "${pkgs.swaynotificationcenter}/bin/swaync";
+      pattern = "swaync";
+      match_type = "exact";  # Use pgrep -x for exact match
+      reload = "${pkgs.swaynotificationcenter}/bin/swaync-client -R";
+      requires_sway = true;
+    }
+    {
+      name = "nm-applet";
+      command = "${pkgs.networkmanagerapplet}/bin/nm-applet --indicator";
+      pattern = "nm-applet";
+      match_type = "exact";  # Use pgrep -x for exact match
+      reload = "";
+      requires_sway = false;
+    }
+    {
+      name = "blueman-applet";
+      command = "${pkgs.blueman}/bin/blueman-applet";
+      pattern = "blueman-applet";
+      match_type = "exact";  # Use pgrep -x for exact match
+      reload = "";
+      requires_sway = false;
+    }
+    {
+      name = "cliphist";
+      command = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
+      pattern = "wl-paste.*cliphist";  # Regex pattern for full command match
+      match_type = "full";  # Use pgrep -f for full command match (needed for complex commands)
+      reload = "";
+      requires_sway = true;
+    }
+    {
+      name = "kwalletd6";
+      command = "${pkgs.kdePackages.kwallet}/bin/kwalletd6";
+      pattern = "kwalletd6";
+      match_type = "exact";  # Use pgrep -x for exact match
+      reload = "";
+      requires_sway = false;
+    }
+    {
+      name = "libinput-gestures";
+      command = "${pkgs.libinput-gestures}/bin/libinput-gestures";
+      pattern = "libinput-gestures";
+      match_type = "exact";  # Use pgrep -x for exact match
+      reload = "";
+      requires_sway = false;
+    }
+  ] ++ lib.optional (systemSettings.stylixEnable == true) {
+    name = "swaybg";
+    command = "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill";
+    pattern = "swaybg";
+    match_type = "exact";  # Use pgrep -x for exact match
+    reload = "";
+    requires_sway = true;
+  };
+  
+  # Generate daemon-manager script
+  daemon-manager = pkgs.writeShellScriptBin "daemon-manager" ''
+    #!/bin/sh
+    # Unified daemon manager for SwayFX
+    # Usage: daemon-manager [PATTERN] [MATCH_TYPE] [COMMAND] [RELOAD_CMD] [REQUIRES_SWAY]
+    
+    PATTERN="$1"
+    MATCH_TYPE="$2"
+    COMMAND="$3"
+    RELOAD_CMD="$4"
+    REQUIRES_SWAY="$5"
+    
+    # Determine pgrep/pkill flags based on match_type
+    if [ "$MATCH_TYPE" = "exact" ]; then
+      PGREP_FLAG="-x"
+      PKILL_FLAG="-x"
+    else
+      PGREP_FLAG="-f"
+      PKILL_FLAG="-f"
+    fi
+    
+    # Logging function using systemd-cat
+    # systemd-cat is a standard system utility available in PATH
+    log() {
+      echo "$1" | systemd-cat -t sway-daemon-mgr -p "$2"
+    }
+    
+    # Check if process is running
+    if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" > /dev/null 2>&1; then
+      if [ -n "$RELOAD_CMD" ]; then
+        # Process running and supports reload
+        eval "$RELOAD_CMD"
+        log "Reload signal sent to daemon: $PATTERN" "info"
+        exit 0
+      else
+        # Process running but no reload support
+        log "Daemon already running: $PATTERN" "info"
+        exit 0
+      fi
+    fi
+    
+    # Process not running - start it
+    if [ "$REQUIRES_SWAY" = "true" ]; then
+      # Wait for SwayFX IPC to be ready (max 10 seconds)
+      SWAY_READY=false
+      for i in $(seq 1 10); do
+        if ${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1; then
+          SWAY_READY=true
+          break
+        fi
+        sleep 1
+      done
+      if [ "$SWAY_READY" = "false" ]; then
+        log "WARNING: SwayFX not ready after 10 seconds, starting daemon anyway: $PATTERN" "warning"
+      fi
+    fi
+    
+    # Kill any stale processes
+    ${pkgs.procps}/bin/pkill $PKILL_FLAG "$PATTERN" 2>/dev/null
+    sleep 0.5
+    
+    # Start daemon with systemd logging
+    nohup sh -c "$COMMAND" 2>&1 | systemd-cat -t "sway-daemon-''${PATTERN}" &
+    DAEMON_PID=$!
+    
+    # Verify it started
+    sleep 1
+    if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" > /dev/null 2>&1; then
+      log "Daemon started successfully: $PATTERN (PID: $DAEMON_PID)" "info"
+      exit 0
+    else
+      log "ERROR: Failed to start daemon: $PATTERN" "err"
+      exit 1
+    fi
+  '';
+  
+  # Generate startup script (iterates daemon list)
+  start-sway-daemons = pkgs.writeShellScriptBin "start-sway-daemons" ''
+    #!/bin/sh
+    # Auto-generated script - starts all SwayFX daemons
+    # Do not edit manually - generated from daemon list in default.nix
+    
+    ${lib.concatMapStringsSep "\n" (daemon: ''
+      ${daemon-manager}/bin/daemon-manager \
+        ${lib.strings.escapeShellArg daemon.pattern} \
+        ${lib.strings.escapeShellArg daemon.match_type} \
+        ${lib.strings.escapeShellArg daemon.command} \
+        ${lib.strings.escapeShellArg (if daemon.reload != "" then daemon.reload else "")} \
+        ${if daemon.requires_sway then "true" else "false"} &
+    '') daemons}
+    wait
+  '';
+  
+  # Generate sanity check script (uses same daemon list)
+  daemon-sanity-check = pkgs.writeShellScriptBin "daemon-sanity-check" ''
+    #!/bin/sh
+    # Auto-generated script - checks status of all SwayFX daemons
+    # Do not edit manually - generated from daemon list in default.nix
+    
+    FIX_MODE=false
+    if [ "$1" = "--fix" ]; then
+      FIX_MODE=true
+    fi
+    
+    ALL_RUNNING=true
+    ${lib.concatMapStringsSep "\n" (daemon: ''
+      MATCH_TYPE=${lib.strings.escapeShellArg daemon.match_type}
+      if [ "$MATCH_TYPE" = "exact" ]; then
+        PGREP_FLAG="-x"
+      else
+        PGREP_FLAG="-f"
+      fi
+      
+      if ${pkgs.procps}/bin/pgrep $PGREP_FLAG ${lib.strings.escapeShellArg daemon.pattern} > /dev/null 2>&1; then
+        echo "✓ ${daemon.name} is running" | systemd-cat -t sway-daemon-check -p info
+      else
+        echo "✗ ${daemon.name} is NOT running" | systemd-cat -t sway-daemon-check -p warning
+        ALL_RUNNING=false
+        if [ "$FIX_MODE" = "true" ]; then
+          ${daemon-manager}/bin/daemon-manager \
+            ${lib.strings.escapeShellArg daemon.pattern} \
+            ${lib.strings.escapeShellArg daemon.match_type} \
+            ${lib.strings.escapeShellArg daemon.command} \
+            ${lib.strings.escapeShellArg (if daemon.reload != "" then daemon.reload else "")} \
+            ${if daemon.requires_sway then "true" else "false"}
+        fi
+      fi
+    '') daemons}
+    
+    if [ "$ALL_RUNNING" = "true" ]; then
+      exit 0
+    else
+      exit 1
+    fi
+  '';
 in {
 
   imports = [
@@ -209,50 +420,21 @@ in {
           command = "bash -c 'export GTK_APPLICATION_PREFER_DARK_THEME=1; export GTK_THEME=Adwaita-dark; dbus-update-activation-environment --systemd GTK_APPLICATION_PREFER_DARK_THEME GTK_THEME'";
           always = true;
         }
-        # Wallpaper (with Stylix safety check)
-        (lib.mkIf (systemSettings.stylixEnable == true) {
-          command = "swaybg -i ${config.stylix.image} -m fill";
-          always = true;
-        })
+        # Note: Wallpaper (swaybg) is now handled by the unified daemon manager
         {
           command = "bash ${config.home.homeDirectory}/.config/sway/scripts/debug-startup.sh";
           always = true;
         }
+        # Unified daemon management - starts all daemons with smart reload support
         {
-          command = "bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-startup.sh";
+          command = "${start-sway-daemons}/bin/start-sway-daemons";
           always = true;
         }
-        {
-          command = "${pkgs.swaynotificationcenter}/bin/swaync";
-          always = true;
-        }
-        {
-          command = "${pkgs.networkmanagerapplet}/bin/nm-applet --indicator";
-          always = true;
-        }
-        {
-          command = "${pkgs.blueman}/bin/blueman-applet";
-          always = true;
-        }
-        {
-          command = "bash ${config.home.homeDirectory}/.config/sway/scripts/dock-diagnostic.sh";
-          always = true;
-        }
-        {
-          command = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
-          always = true;
-        }
-        # KWallet daemon for Vivaldi and other apps that need secure credential storage
-        # Using kwalletd6 for Plasma 6
-        # Note: If kwalletd6 doesn't exist in your Nixpkgs version, try kwalletd or kwalletd5 instead
-        {
-          command = "${pkgs.kdePackages.kwallet}/bin/kwalletd6";
-          always = true;
-        }
-        {
-          command = "${pkgs.libinput-gestures}/bin/libinput-gestures";
-          always = true;
-        }
+        # Optional: Sanity check after startup (can be removed if not needed)
+        # {
+        #   command = "${daemon-sanity-check}/bin/daemon-sanity-check --fix";
+        #   always = false;  # Only run on initial startup, not on reload
+        # }
       ];
 
       # Window rules
@@ -485,8 +667,12 @@ in {
     executable = true;
   };
   
-  # Home Manager packages
-  home.packages = with pkgs; [
+  # Add generated daemon management scripts to PATH
+  home.packages = [
+    daemon-manager
+    start-sway-daemons
+    daemon-sanity-check
+  ] ++ (with pkgs; [
     # SwayFX and related
     swayfx
     swaylock-effects
@@ -527,6 +713,6 @@ in {
     # System monitoring
     # btop is installed by system/hardware/gpu-monitoring.nix module
     # AMD profiles get btop-rocm, Intel/others get standard btop
-  ];
+  ]);
 }
 

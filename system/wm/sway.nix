@@ -7,6 +7,7 @@
     ./pipewire.nix
     ./fonts.nix
     ./dbus.nix
+    ../dm/sddm.nix  # Shared SDDM configuration (KWallet PAM)
   ];
 
   # CRITICAL: Use swayfx instead of standard sway
@@ -52,12 +53,10 @@
   # XWayland support for compatibility
   programs.xwayland.enable = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) true;
 
-  # KWallet PAM integration for automatic wallet unlocking on login
-  # This enables KWallet to unlock automatically when logging in through SDDM or unlocking the screen
+  # KWallet PAM integration for Sway-specific screen unlock
+  # Note: login and sddm KWallet settings are now handled by ../dm/sddm.nix
   security.pam.services = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
-    login.enableKwallet = true;      # Unlock wallet on TTY/login
-    sddm.enableKwallet = true;       # Unlock wallet on SDDM login
-    swaylock.enableKwallet = true;   # Unlock wallet on screen unlock
+    swaylock.enableKwallet = true;   # Unlock wallet on screen unlock (Sway-specific)
   };
 
   # TODO: Remove later - GNOME Keyring removed in favor of KWallet to prevent conflicts
