@@ -64,8 +64,17 @@ log_json "DOCK_ENV_VARS" "Checking environment variables for dock" "{\"WAYLAND_D
 # #endregion
 
 # #region agent log - Hypothesis I: SwayFX readiness for dock
-SWAY_READY_DOCK=$(swaymsg -t get_version 2>&1 || echo "swaymsg_failed")
-log_json "DOCK_SWAY_READY" "Checking if SwayFX is ready for dock" "{\"swaymsg_output\":\"$SWAY_READY_DOCK\"}" "I"
+# Wait for SwayFX to be ready (max 10 seconds)
+SWAY_READY_DOCK=false
+for i in $(seq 1 10); do
+  if swaymsg -t get_version >/dev/null 2>&1; then
+    SWAY_READY_DOCK=true
+    break
+  fi
+  sleep 1
+done
+SWAY_VERSION_DOCK=$(swaymsg -t get_version 2>&1 || echo "swaymsg_failed")
+log_json "DOCK_SWAY_READY" "Checking if SwayFX is ready for dock" "{\"swaymsg_output\":\"$SWAY_VERSION_DOCK\",\"ready\":\"$SWAY_READY_DOCK\",\"waited_seconds\":\"$i\"}" "I"
 # #endregion
 
 # #region agent log - Hypothesis J: Dock final status check

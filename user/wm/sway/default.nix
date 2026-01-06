@@ -234,7 +234,7 @@ in {
           always = true;
         }
         {
-          command = "${config.home.homeDirectory}/.config/sway/scripts/dock-diagnostic.sh";
+          command = "bash ${config.home.homeDirectory}/.config/sway/scripts/dock-diagnostic.sh";
           always = true;
         }
         {
@@ -476,6 +476,11 @@ in {
   
   home.file.".config/sway/scripts/waybar-startup.sh" = {
     source = ./scripts/waybar-startup.sh;
+    executable = true;
+  };
+  
+  home.file.".config/sway/scripts/dock-diagnostic.sh" = {
+    source = ./scripts/dock-diagnostic.sh;
     executable = true;
   };
   

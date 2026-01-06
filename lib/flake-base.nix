@@ -105,12 +105,20 @@ let
   
   # Add SDDM wallpaper override if using plasma6 (which uses SDDM)
   # This needs to be done after backgroundPackage is computed
-  systemPackagesEvaluated = systemPackagesEvaluatedBase ++ lib.optional (userSettings.wm == "plasma6") (
-    pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" ''
+  # DESK-specific: Add ForcePasswordFocus only for DESK system (hostname: nixosaku)
+  sddmThemeConfig = if systemSettings.hostname == "nixosaku"
+    then ''
       [General]
       background = ${toString backgroundPackage}
       ForcePasswordFocus=true
     ''
+    else ''
+      [General]
+      background = ${toString backgroundPackage}
+    '';
+  
+  systemPackagesEvaluated = systemPackagesEvaluatedBase ++ lib.optional (userSettings.wm == "plasma6") (
+    pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" sddmThemeConfig
   );
   
   systemSettingsWithFonts = systemSettings // {

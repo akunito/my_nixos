@@ -37,8 +37,17 @@ log_json "WAYBAR_PROCESS_BEFORE" "Checking if waybar is running before start" "{
 # #endregion
 
 # #region agent log - Hypothesis D: SwayFX readiness check
+# Wait for SwayFX to be ready (max 10 seconds)
+SWAY_READY=false
+for i in $(seq 1 10); do
+  if swaymsg -t get_version >/dev/null 2>&1; then
+    SWAY_READY=true
+    break
+  fi
+  sleep 1
+done
 SWAY_VERSION=$(swaymsg -t get_version 2>&1 || echo "swaymsg_failed")
-log_json "SWAY_READY" "Checking if SwayFX is ready and responding" "{\"swaymsg_output\":\"$SWAY_VERSION\"}" "D"
+log_json "SWAY_READY" "Checking if SwayFX is ready and responding" "{\"swaymsg_output\":\"$SWAY_VERSION\",\"ready\":\"$SWAY_READY\",\"waited_seconds\":\"$i\"}" "D"
 # #endregion
 
 # #region agent log - Hypothesis E: Environment variables check
@@ -52,13 +61,11 @@ if [ "$WAYBAR_PROCESS_BEFORE" != "not_running" ]; then
   sleep 0.5
 fi
 
-# Start waybar with error capture
+# Start waybar with error capture (non-blocking)
 # #region agent log - Hypothesis C: Waybar start attempt
 log_json "WAYBAR_START_CMD" "Executing waybar start command" "{\"binary\":\"$WAYBAR_BIN\"}" "C"
-waybar 2>&1 | while IFS= read -r line; do
-  log_json "WAYBAR_STDERR" "Waybar stderr output" "{\"line\":\"$line\"}" "C"
-  echo "$line"
-done &
+# Start waybar in background, redirect stderr to log file
+waybar >> "$LOG_FILE" 2>&1 &
 WAYBAR_START_PID=$!
 sleep 2
 # #endregion
@@ -75,4 +82,5 @@ SWAY_TREE=$(swaymsg -t get_tree 2>/dev/null || echo "swaymsg_failed")
 WAYBAR_WINDOW=$(echo "$SWAY_TREE" | jq -r '.. | select(.app_id? == "waybar") | {app_id,visible,rect,geometry}' 2>/dev/null || echo "no_window_or_jq_failed")
 log_json "WAYBAR_WINDOW_CHECK" "Checking waybar window in sway tree" "{\"window_info\":\"$WAYBAR_WINDOW\"}" "C"
 # #endregion
+
 
