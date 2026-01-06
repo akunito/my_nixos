@@ -187,21 +187,35 @@ let
     if [ -n "$RUNNING_PIDS" ] && [ "$RUNNING_COUNT" -gt 0 ]; then
       # Process(es) running - check for duplicates
       if [ "$RUNNING_COUNT" -gt 1 ]; then
-        # Multiple instances detected - kill all and restart
+        # Multiple instances detected - kill all and restart with exponential backoff
         log "WARNING: Multiple instances detected ($RUNNING_COUNT), killing all: $PATTERN" "warning"
         log "DEBUG: About to safely kill processes with pattern: $PATTERN (PGREP_FLAG: $PGREP_FLAG)" "info"
         safe_kill "$PATTERN" "$PGREP_FLAG"
-        sleep 1
-        # Verify processes are actually gone before starting
-        REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l)
-        log "DEBUG: After first kill check, REMAINING=$REMAINING for pattern: $PATTERN" "info"
-        if [ "$REMAINING" -gt 0 ]; then
-          log "WARNING: Still $REMAINING processes remaining after kill, waiting longer: $PATTERN" "warning"
-          sleep 1
-          # Check again
+        
+        # Exponential backoff verification: wait progressively longer to ensure processes are dead
+        # This prevents race conditions where processes are still terminating
+        REMAINING=$RUNNING_COUNT
+        for wait_time in 0.5 1 2; do
+          sleep $wait_time
           REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l)
-          log "After additional wait, $REMAINING processes remaining: $PATTERN" "info"
+          log "DEBUG: After ''${wait_time}s wait, $REMAINING processes remaining: $PATTERN" "info"
+          if [ "$REMAINING" -eq 0 ]; then
+            break
+          fi
+          # If processes still exist, try killing again (they might have been in a bad state)
+          if [ "$REMAINING" -gt 0 ]; then
+            log "WARNING: Still $REMAINING processes remaining, attempting kill again: $PATTERN" "warning"
+            safe_kill "$PATTERN" "$PGREP_FLAG"
+          fi
+        done
+        
+        # Final verification: if processes still exist after all attempts, log warning but proceed
+        if [ "$REMAINING" -gt 0 ]; then
+          log "WARNING: $REMAINING processes still remaining after kill attempts, proceeding anyway: $PATTERN" "warning"
+        else
+          log "All duplicate processes successfully terminated: $PATTERN" "info"
         fi
+        
         log "Falling through to start fresh instance after killing duplicates: $PATTERN" "info"
         log "DEBUG: After kill, REMAINING=$REMAINING, continuing to start section" "info"
         # CRITICAL: Force fall-through by clearing RUNNING_COUNT so we don't hit the single-instance check below
@@ -254,27 +268,33 @@ let
     fi
     
     if [ "$REQUIRES_TRAY" = "true" ]; then
-      # Wait for StatusNotifierWatcher to be ready (exponential backoff: 1s, 2s, 4s, 8s = 15s total)
+      # Wait for StatusNotifierWatcher to be ready (exponential backoff: 0.5s, 1s, 2s, 4s, 8s = 15.5s total)
+      # NOTE: On Sway/Hyprland, Waybar itself acts as the StatusNotifierWatcher when its tray module is enabled
       # This ensures waybar's tray module has registered before applets try to connect
       TRAY_READY=false
       TOTAL_WAIT=0
-      for delay in 1 2 4 8; do
+      CHECK_COUNT=0
+      for delay in 0.5 1 2 4 8; do
         # Check if org.freedesktop.StatusNotifierWatcher is available on DBus
+        # This checks if Waybar (or another watcher) has registered the service
         if ${pkgs.dbus}/bin/dbus-send --session --print-reply \
           --dest=org.freedesktop.DBus \
           /org/freedesktop/DBus \
           org.freedesktop.DBus.GetNameOwner \
           string:org.freedesktop.StatusNotifierWatcher > /dev/null 2>&1; then
           TRAY_READY=true
-          log "StatusNotifierWatcher is ready (waited ${TOTAL_WAIT} seconds)" "info"
+          log "StatusNotifierWatcher is ready (check #$CHECK_COUNT, waited ~''${TOTAL_WAIT} seconds)" "info"
           break
         fi
+        CHECK_COUNT=$((CHECK_COUNT + 1))
         # Sleep before next check (exponential backoff)
         sleep $delay
-        TOTAL_WAIT=$((TOTAL_WAIT + delay))
+        # Approximate total wait (using integer arithmetic)
+        TOTAL_WAIT=$((TOTAL_WAIT + 1))  # Approximate, close enough for logging
       done
       if [ "$TRAY_READY" = "false" ]; then
-        log "WARNING: StatusNotifierWatcher not ready after 15 seconds, starting daemon anyway: $PATTERN" "warning"
+        log "WARNING: StatusNotifierWatcher not ready after ~15 seconds, starting daemon anyway: $PATTERN" "warning"
+        log "NOTE: Tray icon may not appear until waybar's tray module initializes" "info"
       fi
     fi
     
@@ -283,20 +303,34 @@ let
     safe_kill "$PATTERN" "$PGREP_FLAG"
     sleep 0.5
     
+    # Final verification: ensure no processes are running before starting
+    FINAL_CHECK=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l)
+    if [ "$FINAL_CHECK" -gt 0 ]; then
+      log "WARNING: $FINAL_CHECK processes still running before start, killing again: $PATTERN" "warning"
+      safe_kill "$PATTERN" "$PGREP_FLAG"
+      sleep 1
+    fi
+    
     # Start daemon with systemd logging
     log "Starting daemon: $PATTERN (command: $COMMAND)" "info"
     nohup sh -c "$COMMAND" 2>&1 | systemd-cat -t "sway-daemon-''${PATTERN}" &
     DAEMON_PID=$!
     log "Daemon start command executed, PID: $DAEMON_PID" "info"
     
-    # Verify it started (wait longer for waybar to fully initialize)
-    sleep 2
-    log "Checking if daemon started (pattern: $PATTERN, match_type: $MATCH_TYPE)" "info"
-    if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" > /dev/null 2>&1; then
-      ACTUAL_PID=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | head -1)
-      log "Daemon started successfully: $PATTERN (started PID: $DAEMON_PID, actual PID: $ACTUAL_PID)" "info"
-      exit 0
-    else
+    # Verify it started with progressive wait (some daemons take longer to initialize)
+    # Use exponential backoff: check quickly first, then wait longer
+    DAEMON_STARTED=false
+    for check_delay in 0.5 1 2; do
+      sleep $check_delay
+      if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" > /dev/null 2>&1; then
+        ACTUAL_PID=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | head -1)
+        log "Daemon started successfully: $PATTERN (started PID: $DAEMON_PID, actual PID: $ACTUAL_PID, verified after ''${check_delay}s)" "info"
+        DAEMON_STARTED=true
+        break
+      fi
+    done
+    
+    if [ "$DAEMON_STARTED" = "false" ]; then
       # Additional check: see if process started but verification failed
       CHECK_CMD=$(ps -p $DAEMON_PID -o comm= 2>/dev/null || echo "not_found")
       log "ERROR: Failed to start daemon: $PATTERN (started PID: $DAEMON_PID, process: $CHECK_CMD)" "err"
@@ -314,7 +348,16 @@ let
     # Uses XDG runtime directory which is automatically cleaned on logout/reboot
     LOCK_FILE="/run/user/$(id -u)/sway-startup.lock"
     (
-      flock -n 9 || { echo "Another startup process is running, exiting"; exit 0; }
+      # Try to acquire lock with timeout (5 seconds) to prevent indefinite blocking
+      # If lock is held, wait briefly then exit gracefully
+      if ! flock -n 9; then
+        # Lock is held - wait a bit to see if it releases
+        sleep 1
+        if ! flock -n 9; then
+          echo "Another startup process is running, exiting gracefully" | systemd-cat -t sway-daemon-mgr -p info
+          exit 0
+        fi
+      fi
       
       # Start waybar first (synchronously) to avoid race conditions
       # Waybar is critical and multiple parallel instances cause conflicts
@@ -838,11 +881,6 @@ in {
   
   home.file.".config/sway/scripts/power-menu.sh" = {
     source = ./scripts/power-menu.sh;
-    executable = true;
-  };
-  
-  home.file.".config/sway/scripts/swaybar-toggle.sh" = {
-    source = ./scripts/swaybar-toggle.sh;
     executable = true;
   };
   
