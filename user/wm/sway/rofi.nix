@@ -15,7 +15,7 @@ let
         fg-col:  #${base07};
         fg-col2:  #${base05};
         grey:  #${base04};
-        width: 95;
+        width: 38;
         font: "${userSettings.font} 14";
       }
       
@@ -25,7 +25,7 @@ let
         border: 2px;
         border-color: @border-col;
         padding: 0px;
-        width: 95%;
+        width: 38%;
       }
       
       mainbox {
@@ -106,7 +106,7 @@ let
         fg-col:  #cdd6f4;
         fg-col2:  #bac2de;
         grey:  #6c7086;
-        width: 95;
+        width: 38;
         font: "${userSettings.font} 14";
       }
       
@@ -116,7 +116,7 @@ let
         border: 2px;
         border-color: @border-col;
         padding: 0px;
-        width: 95%;
+        width: 38%;
       }
       
       mainbox {
@@ -213,7 +213,7 @@ in {
         show-match: true;
         sidebar-mode: false;
         terminal: "${userSettings.term}";
-        width: 95;
+        width: 38;
         xoffset: 0;
         yoffset: 0;
       }

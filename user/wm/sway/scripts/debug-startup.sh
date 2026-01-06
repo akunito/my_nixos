@@ -58,6 +58,26 @@ if [ -f "$HOME/.config/waybar/config" ] || [ -f "$HOME/.config/waybar/config.jso
 fi
 # #endregion
 
+# #region agent log - Hypothesis E: Environment variables check
+log_json "ENV_VARS" "Checking critical environment variables" "{\"WAYLAND_DISPLAY\":\"${WAYLAND_DISPLAY:-not_set}\",\"XDG_RUNTIME_DIR\":\"${XDG_RUNTIME_DIR:-not_set}\",\"SWAYSOCK\":\"${SWAYSOCK:-not_set}\"}" "E"
+# #endregion
+
+# #region agent log - Hypothesis D: SwayFX readiness check
+SWAY_VERSION=$(swaymsg -t get_version 2>&1 || echo "swaymsg_failed")
+log_json "SWAY_READY" "Checking if SwayFX is ready and responding" "{\"swaymsg_output\":\"$SWAY_VERSION\"}" "D"
+# #endregion
+
+# #region agent log - Hypothesis A: Waybar config file location check
+WAYBAR_CONFIG_DIR="$HOME/.config/waybar"
+WAYBAR_CONFIG_FILE=""
+if [ -f "$WAYBAR_CONFIG_DIR/config" ]; then
+  WAYBAR_CONFIG_FILE="$WAYBAR_CONFIG_DIR/config"
+elif [ -f "$WAYBAR_CONFIG_DIR/config.json" ]; then
+  WAYBAR_CONFIG_FILE="$WAYBAR_CONFIG_DIR/config.json"
+fi
+log_json "WAYBAR_CONFIG_LOCATION" "Checking waybar config file location" "{\"config_dir\":\"$WAYBAR_CONFIG_DIR\",\"config_file\":\"$WAYBAR_CONFIG_FILE\",\"dir_exists\":$(test -d "$WAYBAR_CONFIG_DIR" && echo true || echo false)}" "A"
+# #endregion
+
 # #region agent log - Hypothesis A: Rofi width config
 if [ -f "$HOME/.config/rofi/config.rasi" ]; then
   ROFI_WIDTH=$(grep -i "width" "$HOME/.config/rofi/config.rasi" | head -1 || echo "not_found")

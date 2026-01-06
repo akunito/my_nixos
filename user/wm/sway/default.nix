@@ -218,7 +218,7 @@ in {
           always = true;
         }
         {
-          command = "pkill waybar; sleep 0.5; ${pkgs.waybar}/bin/waybar 2>&1 | tee -a ${config.home.homeDirectory}/.dotfiles/.cursor/debug.log &";
+          command = "bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-startup.sh";
           always = true;
         }
         {
@@ -474,6 +474,11 @@ in {
     executable = true;
   };
   
+  home.file.".config/sway/scripts/waybar-startup.sh" = {
+    source = ./scripts/waybar-startup.sh;
+    executable = true;
+  };
+  
   # Home Manager packages
   home.packages = with pkgs; [
     # SwayFX and related
@@ -514,7 +519,8 @@ in {
     polkit_gnome
     
     # System monitoring
-    btop  # Modern system monitor (replacement for htop)
+    # btop is installed by system/hardware/gpu-monitoring.nix module
+    # AMD profiles get btop-rocm, Intel/others get standard btop
   ];
 }
 

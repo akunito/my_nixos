@@ -29,6 +29,7 @@ log_json "DOCK_BINARY_CHECK" "Checking nwg-dock binary" "{\"path\":\"$NWG_DOCK_P
 
 # Start nwg-dock with error capture
 # #region agent log - Hypothesis D: nwg-dock start attempt
+log_json "DOCK_START_CMD" "Executing nwg-dock start command" "{\"params\":\"-d -r -p bottom -i 48 -w 5 -mb 10 -hd 10\"}" "D"
 nwg-dock -d -r -p bottom -i 48 -w 5 -mb 10 -hd 10 -c "rofi -show drun" 2>&1 &
 DOCK_PID=$!
 sleep 2
@@ -55,6 +56,25 @@ if [ -f "$CSS_FILE" ]; then
   log_json "DOCK_CSS_CHECK" "Checking nwg-dock CSS file" "{\"exists\":true,\"size\":\"$CSS_SIZE\",\"opacity_lines\":\"$CSS_OPACITY\"}" "G"
 else
   log_json "DOCK_CSS_CHECK" "nwg-dock CSS file not found" "{\"path\":\"$CSS_FILE\",\"exists\":false}" "G"
+fi
+# #endregion
+
+# #region agent log - Hypothesis H: Environment variables for dock
+log_json "DOCK_ENV_VARS" "Checking environment variables for dock" "{\"WAYLAND_DISPLAY\":\"${WAYLAND_DISPLAY:-not_set}\",\"XDG_RUNTIME_DIR\":\"${XDG_RUNTIME_DIR:-not_set}\",\"SWAYSOCK\":\"${SWAYSOCK:-not_set}\"}" "H"
+# #endregion
+
+# #region agent log - Hypothesis I: SwayFX readiness for dock
+SWAY_READY_DOCK=$(swaymsg -t get_version 2>&1 || echo "swaymsg_failed")
+log_json "DOCK_SWAY_READY" "Checking if SwayFX is ready for dock" "{\"swaymsg_output\":\"$SWAY_READY_DOCK\"}" "I"
+# #endregion
+
+# #region agent log - Hypothesis J: Dock final status check
+sleep 1
+DOCK_FINAL_CHECK=$(pgrep -x nwg-dock || echo "not_running")
+if [ "$DOCK_FINAL_CHECK" = "not_running" ]; then
+  log_json "DOCK_STARTUP_ERROR" "Dock failed to start or crashed" "{\"start_pid\":\"$DOCK_PID\",\"final_status\":\"not_running\"}" "J"
+else
+  log_json "DOCK_STARTUP_SUCCESS" "Dock started successfully" "{\"pid\":\"$DOCK_FINAL_CHECK\"}" "J"
 fi
 # #endregion
 
