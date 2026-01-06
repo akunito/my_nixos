@@ -106,11 +106,11 @@ in {
           "${hyper}+M" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh mission-center mission-center";
           "${hyper}+B" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
           
-          # Workspace navigation (using swaysome for local cycling)
-          "${hyper}+Q" = "exec swaysome focus prev";  # LOCAL navigation (within current monitor only)
-          "${hyper}+W" = "exec swaysome focus next";  # LOCAL navigation (within current monitor only)
-          "${hyper}+Shift+Q" = "exec swaysome move prev";  # Move window to previous workspace on current monitor (LOCAL)
-          "${hyper}+Shift+W" = "exec swaysome move next";  # Move window to next workspace on current monitor (LOCAL)
+          # Workspace navigation (using Sway native commands for local cycling)
+          "${hyper}+Q" = "workspace prev_on_output";  # LOCAL navigation (within current monitor only)
+          "${hyper}+W" = "workspace next_on_output";  # LOCAL navigation (within current monitor only)
+          "${hyper}+Shift+Q" = "move container to workspace prev_on_output";  # Move window to previous workspace on current monitor (LOCAL)
+          "${hyper}+Shift+W" = "move container to workspace next_on_output";  # Move window to next workspace on current monitor (LOCAL)
           
           # Direct workspace bindings (using swaysome)
           "${hyper}+1" = "exec swaysome focus 1";
@@ -199,9 +199,10 @@ in {
       # Startup commands (daemons)
       startup = [
         # Initialize swaysome and assign workspace groups to monitors
+        # No 'always = true' - runs only on initial startup, not on config reload
+        # This prevents jumping back to empty workspaces when editing config
         {
           command = "${config.home.homeDirectory}/.config/sway/scripts/swaysome-init.sh";
-          always = true;
         }
         # CRITICAL: Set dark mode environment variables for XWayland apps
         {

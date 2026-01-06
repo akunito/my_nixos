@@ -1,37 +1,49 @@
 #!/bin/bash
 # Initialize swaysome and assign workspace groups to monitors
+# This script uses the "Wait, Then Assign" strategy to prevent race conditions
 
-# Initialize swaysome FIRST (creates workspace groups as sequential blocks)
-# Group 1 = Workspaces 1-10, Group 2 = Workspaces 11-20, etc.
+# 1. Initialize swaysome context
+# This tells swaysome to start tracking workspaces.
 swaysome init 1
 
-# Wait for outputs to be ready
+# 2. THE FIX: Wait for monitors to wake up
+# This sleep prevents the "race condition" where Sway commands 
+# run before the monitors are actually ready.
+# Without this, commands may fail or be sent to the wrong monitor
+# (e.g., everything piling up on the first detected screen).
 sleep 1
 
-# Assign workspace group 1 to DP-1 (gives it workspaces 1-10)
+# 3. Initialize Monitor 1 (DP-1) -> Group 1 (Workspaces 1-10)
+# Instead of trying to create "Workspace 1" manually (which might fail),
+# we tell swaysome: "This monitor owns Group 1."
+# Swaysome then automatically creates/focuses the correct workspaces.
 swaymsg focus output DP-1
 swaysome focus-group 1
 
-# Assign workspace group 2 to DP-2 (gives it workspaces 11-20)
-# This ensures DP-2 gets the 11-20 range, which includes our desired 11-15
+# 4. Initialize Monitor 2 (DP-2) -> Group 2 (Workspaces 11-20)
+# We use 'focus-group 2' because swaysome groups are sequential blocks.
+# Group 2 automatically contains the 11-20 range (includes our desired 11-15).
 swaymsg focus output DP-2
 swaysome focus-group 2
 
-# Assign workspace group 3 to DP-3 if enabled (gives it workspaces 21-30)
+# 5. Initialize Optional Monitors (Check if they exist first)
+# Monitor 3 (BenQ) -> Group 3 (Workspaces 21-30)
 # This includes workspace 21 which we want for DP-3
-if swaymsg -t get_outputs | grep -q '"name": "DP-3"'; then
+# Note: Using simple "DP-3" grep (safer, less sensitive to JSON formatting)
+if swaymsg -t get_outputs | grep -q "DP-3"; then
     swaymsg focus output DP-3
     swaysome focus-group 3
 fi
 
-# Assign workspace group 4 to HDMI-A-1 if enabled (gives it workspaces 31-40)
+# Monitor 4 (Philips) -> Group 4 (Workspaces 31-40)
 # This includes workspace 31 which we want for HDMI-A-1
-if swaymsg -t get_outputs | grep -q '"name": "HDMI-A-1"'; then
+# Note: Using simple "HDMI-A-1" grep (safer, less sensitive to JSON formatting)
+if swaymsg -t get_outputs | grep -q "HDMI-A-1"; then
     swaymsg focus output HDMI-A-1
     swaysome focus-group 4
 fi
 
-# Return to workspace 1 on DP-1
+# 6. Final Polish: Return focus to your main screen
 swaymsg focus output DP-1
 swaysome focus 1
 
