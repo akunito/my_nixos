@@ -113,5 +113,26 @@
       
       echo "=== SDDM Monitor Rotation Script Completed ==="
     '';
+    
+    # SDDM overlay to patch Login.qml for password field focus
+    # Patches the Breeze theme's Login.qml to add focus: true to the password TextField
+    nixpkgs.overlays = [
+      (final: prev: {
+        # Patch SDDM to add focus: true to password field in Login.qml
+        sddm = prev.sddm.overrideAttrs (oldAttrs: {
+          postPatch = (oldAttrs.postPatch or "") + ''
+            # Patch Login.qml to add focus: true to password TextField
+            # Find Login.qml files in the breeze theme
+            for qmlfile in $(find . -path "*/themes/breeze*" -name "Login.qml" 2>/dev/null); do
+              # Check if file contains password field and doesn't already have focus: true
+              if grep -q "echoMode: TextInput.Password" "$qmlfile" && ! grep -q "focus: true" "$qmlfile"; then
+                # Add focus: true after echoMode line (with proper indentation)
+                sed -i '/echoMode: TextInput.Password/a\                focus: true' "$qmlfile"
+              fi
+            done
+          '';
+        });
+      })
+    ];
   })
 ]

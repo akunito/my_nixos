@@ -42,12 +42,16 @@
       # Do not define any keybindings that capture Alt combinations
       # Let Alt keys pass through to Tmux for Alt+Arrow navigation
       
-      # CRITICAL: Use Ctrl+Shift+X/C/V for cut/copy/paste (NOT Ctrl+C which breaks SIGINT)
-      # Ctrl+C must remain for SIGINT (process termination)
+      # Use Ctrl+X/C/V for cut/copy/paste (standard shortcuts)
+      # Ctrl+Shift+C sends SIGINT (original Ctrl+C - interrupt process)
       key_bindings = [
-        { key = "X"; mods = "Control|Shift"; action = "Copy"; }  # Cut (copy selection)
-        { key = "C"; mods = "Control|Shift"; action = "Copy"; }  # Copy
-        { key = "V"; mods = "Control|Shift"; action = "Paste"; } # Paste
+        { key = "X"; mods = "Control"; action = "Copy"; }  # Cut (copy selection)
+        { key = "C"; mods = "Control"; action = "Copy"; }  # Copy
+        { key = "V"; mods = "Control"; action = "Paste"; } # Paste
+        # Send original control characters via Ctrl+Shift (for SIGINT and other functions)
+        { key = "C"; mods = "Control|Shift"; chars = "\x03"; }  # SIGINT (original Ctrl+C - interrupt process)
+        { key = "X"; mods = "Control|Shift"; chars = "\x18"; }  # Original Ctrl+X
+        { key = "V"; mods = "Control|Shift"; chars = "\x16"; }  # Original Ctrl+V
       ];
     }
     (lib.mkIf (systemSettings.stylixEnable == true) {
