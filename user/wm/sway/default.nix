@@ -100,6 +100,12 @@ let
       reload = "";
       requires_sway = false;
     }
+  ] ++ lib.optionals (
+    # Only include libinput-gestures on laptop systems (has touchpad)
+    # Desktop systems (DESK, AGADESK, VMDESK) don't have touchpads
+    lib.hasInfix "laptop" (lib.toLower systemSettings.hostname) ||
+    lib.hasInfix "yoga" (lib.toLower systemSettings.hostname)
+  ) [
     {
       name = "libinput-gestures";
       command = "${pkgs.libinput-gestures}/bin/libinput-gestures";
@@ -162,44 +168,31 @@ let
       local PARENT_PID=$PPID
       local KILLED_COUNT=0
       
-      
-      log "DEBUG: Safe kill - excluding self (PID: $SELF_PID) and parent (PID: $PARENT_PID)" "info"
-      
       # Get all matching PIDs
       MATCHING_PIDS=$(${pkgs.procps}/bin/pgrep $KILL_PGREP_FLAG "$KILL_PATTERN" 2>/dev/null || echo "")
       
       if [ -z "$MATCHING_PIDS" ]; then
-        log "DEBUG: No matching processes found for pattern: $KILL_PATTERN" "info"
         return 0
       fi
       
       # Filter and kill (exclude self and parent)
       for PID in $MATCHING_PIDS; do
         if [ "$PID" != "$SELF_PID" ] && [ "$PID" != "$PARENT_PID" ]; then
-          log "DEBUG: Killing PID $PID (pattern: $KILL_PATTERN)" "info"
           kill "$PID" 2>/dev/null && KILLED_COUNT=$((KILLED_COUNT + 1)) || true
-        else
-          log "DEBUG: Skipping PID $PID (self or parent)" "info"
         fi
       done
-      
-      
-      log "DEBUG: Safe kill completed - killed $KILLED_COUNT processes" "info"
       return 0
     }
     
     # Check if process is running and count instances
-    log "DEBUG: Checking for pattern '$PATTERN' with match_type '$MATCH_TYPE' (flags: $PGREP_FLAG)" "info"
     RUNNING_PIDS=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
     RUNNING_COUNT=$(echo "$RUNNING_PIDS" | grep -v "^$" | wc -l)
-    log "DEBUG: Found $RUNNING_COUNT running instances (PIDs: $RUNNING_PIDS) for pattern: $PATTERN" "info"
     
     if [ -n "$RUNNING_PIDS" ] && [ "$RUNNING_COUNT" -gt 0 ]; then
       # Process(es) running - check for duplicates
       if [ "$RUNNING_COUNT" -gt 1 ]; then
         # Multiple instances detected - kill all and restart with exponential backoff
         log "WARNING: Multiple instances detected ($RUNNING_COUNT), killing all: $PATTERN" "warning"
-        log "DEBUG: About to safely kill processes with pattern: $PATTERN (PGREP_FLAG: $PGREP_FLAG)" "info"
         safe_kill "$PATTERN" "$PGREP_FLAG"
         
         # Exponential backoff verification: wait progressively longer to ensure processes are dead
@@ -208,7 +201,6 @@ let
         for wait_time in 0.5 1 2; do
           sleep $wait_time
           REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l)
-          log "DEBUG: After ''${wait_time}s wait, $REMAINING processes remaining: $PATTERN" "info"
           if [ "$REMAINING" -eq 0 ]; then
             break
           fi
@@ -227,7 +219,6 @@ let
         fi
         
         log "Falling through to start fresh instance after killing duplicates: $PATTERN" "info"
-        log "DEBUG: After kill, REMAINING=$REMAINING, continuing to start section" "info"
         # CRITICAL: Force fall-through by clearing RUNNING_COUNT so we don't hit the single-instance check below
         RUNNING_COUNT=0
         RUNNING_PIDS=""
@@ -261,7 +252,6 @@ let
     fi
     
     # Process not running - start it
-    log "DEBUG: Reached start section for pattern: $PATTERN (RUNNING_COUNT was: $RUNNING_COUNT)" "info"
     if [ "$REQUIRES_SWAY" = "true" ]; then
       # Wait for SwayFX IPC to be ready (max 10 seconds)
       SWAY_READY=false
@@ -892,11 +882,6 @@ in {
   
   home.file.".config/sway/scripts/power-menu.sh" = {
     source = ./scripts/power-menu.sh;
-    executable = true;
-  };
-  
-  home.file.".config/sway/scripts/debug-startup.sh" = {
-    source = ./scripts/debug-startup.sh;
     executable = true;
   };
   
