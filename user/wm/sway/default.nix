@@ -202,6 +202,17 @@ let
       requires_tray = true;  # Wait for waybar's tray (StatusNotifierWatcher) to be ready
     }
     {
+      name = "sov";
+      # Sov runs as a daemon reading from a named pipe
+      # Usage: echo 0 > /tmp/sovpipe (hide), echo 1 > /tmp/sovpipe (show), echo 2 > /tmp/sovpipe (toggle)
+      # The -t 500 parameter sets toggle delay to 500ms
+      command = "rm -f /tmp/sovpipe && mkfifo /tmp/sovpipe && ${pkgs.coreutils}/bin/tail -f /tmp/sovpipe | ${pkgs.sov}/bin/sov -t 500";
+      pattern = "sov";
+      match_type = "full";  # NixOS wrapper
+      reload = "";  # Sov doesn't support reload, use pipe commands instead
+      requires_sway = true;  # Needs Sway IPC to query workspaces
+    }
+    {
       name = "cliphist";
       command = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
       pattern = "wl-paste.*cliphist";  # Regex pattern for full command match
@@ -675,7 +686,8 @@ in {
           # Use "${hyper}+space" or "${hyper}+BackSpace" for rofi launcher
           
           # Window Overview (Mission Control-like)
-          "${hyper}+Tab" = "exec bash -c 'DEBUG_LOG=\"/home/akunito/.dotfiles/.cursor/debug.log\"; echo \"{\\\"timestamp\\\":$(date +%s000),\\\"location\\\":\\\"sov-keybinding\\\",\\\"message\\\":\\\"Sov keybinding triggered\\\",\\\"data\\\":{\\\"hyper\\\":\\\"${hyper}\\\"},\\\"sessionId\\\":\\\"debug-session\\\",\\\"runId\\\":\\\"run1\\\",\\\"hypothesisId\\\":\\\"hypothesis-d\\\"}\" >> \"$DEBUG_LOG\" 2>/dev/null || true; if [ -f \"${pkgs.sov}/bin/sov\" ]; then ${pkgs.sov}/bin/sov; else echo \"Sov binary not found at ${pkgs.sov}/bin/sov\" | systemd-cat -t sov -p err; fi'";  # Workspace overview
+          # Sov runs as a daemon; send toggle command (2) to the named pipe
+          "${hyper}+Tab" = "exec bash -c 'echo 2 > /tmp/sovpipe 2>/dev/null || true'";  # Toggle workspace overview
           
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
