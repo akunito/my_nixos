@@ -1,6 +1,49 @@
 { config, pkgs, lib, systemSettings, userSettings, ... }:
 
 let
+  # Helper function to convert hex color + alpha to rgba()
+  # hex: 6-digit hex color (e.g., "0d1001")
+  # alphaHex: 2-digit hex alpha (e.g., "B3" = 179/255 = 0.702)
+  # Uses manual hex conversion since Nix doesn't have built-in hex parsing
+  # CRITICAL: Waybar's CSS parser does NOT support 8-digit hex colors (#RRGGBBAA)
+  # Must use rgba() format instead
+  hexToRgba = hex: alphaHex:
+    let
+      # Convert single hex digit to decimal
+      hexDigitToDec = d:
+        if d == "0" then 0
+        else if d == "1" then 1
+        else if d == "2" then 2
+        else if d == "3" then 3
+        else if d == "4" then 4
+        else if d == "5" then 5
+        else if d == "6" then 6
+        else if d == "7" then 7
+        else if d == "8" then 8
+        else if d == "9" then 9
+        else if d == "a" || d == "A" then 10
+        else if d == "b" || d == "B" then 11
+        else if d == "c" || d == "C" then 12
+        else if d == "d" || d == "D" then 13
+        else if d == "e" || d == "E" then 14
+        else if d == "f" || d == "F" then 15
+        else 0;
+      # Convert 2-digit hex to decimal
+      hexToDec = hexStr:
+        let
+          d1 = builtins.substring 0 1 hexStr;
+          d2 = builtins.substring 1 1 hexStr;
+        in
+          hexDigitToDec d1 * 16 + hexDigitToDec d2;
+      r = hexToDec (builtins.substring 0 2 hex);
+      g = hexToDec (builtins.substring 2 2 hex);
+      b = hexToDec (builtins.substring 4 2 hex);
+      alpha = (hexToDec alphaHex) / 255.0;
+      # Format alpha to 3 decimal places
+      alphaStr = builtins.substring 0 5 (toString alpha);
+    in
+      "rgba(${toString r}, ${toString g}, ${toString b}, ${alphaStr})";
+  
   # Shared module configurations (DRY principle)
   sharedModules = {
     clock = {
@@ -143,11 +186,6 @@ let
                    then systemSettings.swayPrimaryMonitor 
                    else null;
   hasPrimaryMonitor = primaryMonitor != null;
-  
-  # Debug: Trace values during Nix evaluation (visible during build)
-  _debugTrace = builtins.trace "DEBUG: systemSettings.swayPrimaryMonitor = ${if systemSettings ? swayPrimaryMonitor then toString systemSettings.swayPrimaryMonitor else "NOT SET"}" 
-                (builtins.trace "DEBUG: primaryMonitor = ${if primaryMonitor != null then primaryMonitor else "null"}"
-                (builtins.trace "DEBUG: hasPrimaryMonitor = ${toString hasPrimaryMonitor}" null));
 in {
   # Official NixOS Waybar Setup for SwayFX
   # Reference: https://wiki.nixos.org/wiki/Waybar
@@ -256,8 +294,8 @@ in {
       }
       
       window#waybar {
-        background-color: #${config.lib.stylix.colors.base00}B3;
-        border: 1px solid #${config.lib.stylix.colors.base02}4D;
+        background-color: ${hexToRgba config.lib.stylix.colors.base00 "B3"};
+        border: 1px solid ${hexToRgba config.lib.stylix.colors.base02 "4D"};
         border-radius: 16px;
         margin: 8px 12px;
         padding: 0;
@@ -270,26 +308,25 @@ in {
       
       /* Dock bar: hidden by default, show on hover at bottom */
       /* CRITICAL: Use name="dock" class selector (Waybar adds classes based on name config) */
-      /* Must maintain min-height: 2px to create invisible "tripwire" for hover detection */
+      /* Waybar CSS parser doesn't support 'height' property on window elements */
+      /* Use opacity and min-height only for hover detection */
       window#waybar.dock {
         opacity: 0;
-        min-height: 2px;  /* CRITICAL: Tiny hitbox for hover detection (not height: 0) */
-        height: 2px;
+        min-height: 2px;  /* CRITICAL: Tiny hitbox for hover detection */
         margin: 0;
         padding: 0;
         background-color: transparent;  /* Invisible but present */
-        transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+        transition: opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
         pointer-events: auto;  /* Must allow pointer events for hover to work */
       }
       
       window#waybar.dock:hover {
         opacity: 1;
         min-height: 44px;  /* Full height on hover */
-        height: auto;
         margin: 0 12px 10px 12px;
         padding: 8px;
-        background-color: #${config.lib.stylix.colors.base00}B3;  /* Restore background */
-        border: 1px solid #${config.lib.stylix.colors.base02}4D;
+        background-color: ${hexToRgba config.lib.stylix.colors.base00 "B3"};  /* Restore background */
+        border: 1px solid ${hexToRgba config.lib.stylix.colors.base02 "4D"};
         border-radius: 20px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
       }
@@ -312,7 +349,7 @@ in {
       }
       
       #taskbar button:hover {
-        background-color: #${config.lib.stylix.colors.base0D}33;
+        background-color: ${hexToRgba config.lib.stylix.colors.base0D "33"};
       }
       
       window#waybar.hidden {
@@ -323,7 +360,7 @@ in {
         margin: 4px 8px;
         padding: 0;
         border-radius: 12px;
-        background-color: #${config.lib.stylix.colors.base01}66;
+        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
       }
       
       #workspaces button {
@@ -336,18 +373,18 @@ in {
       }
       
       #workspaces button:hover {
-        background-color: #${config.lib.stylix.colors.base02}66;
+        background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
         color: #${config.lib.stylix.colors.base07};
       }
       
       #workspaces button.focused {
-        background-color: #${config.lib.stylix.colors.base0D}4D;
+        background-color: ${hexToRgba config.lib.stylix.colors.base0D "4D"};
         color: #${config.lib.stylix.colors.base0D};
-        box-shadow: 0 2px 8px #${config.lib.stylix.colors.base0D}4D;
+        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base0D "4D"};
       }
       
       #workspaces button.urgent {
-        background-color: #${config.lib.stylix.colors.base08}80;
+        background-color: ${hexToRgba config.lib.stylix.colors.base08 "80"};
         color: #${config.lib.stylix.colors.base07};
         animation: urgent-pulse 2s ease-in-out infinite;
       }
@@ -362,7 +399,7 @@ in {
         margin: 4px 8px;
         padding: 4px 12px;
         border-radius: 10px;
-        background-color: #${config.lib.stylix.colors.base01}66;
+        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
         color: #${config.lib.stylix.colors.base07};
       }
       
@@ -384,7 +421,7 @@ in {
         margin: 4px 4px;
         padding: 4px 12px;
         border-radius: 10px;
-        background-color: #${config.lib.stylix.colors.base01}66;
+        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
         color: #${config.lib.stylix.colors.base07};
         transition: all 0.2s ease;
       }
@@ -394,7 +431,7 @@ in {
       #network:hover,
       #pulseaudio:hover,
       #bluetooth:hover {
-        background-color: #${config.lib.stylix.colors.base02}80;
+        background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
       }
       
       #clock {
@@ -407,7 +444,7 @@ in {
       
       #battery.charging, #battery.plugged {
         color: #${config.lib.stylix.colors.base0B};
-        background-color: #${config.lib.stylix.colors.base0B}33;
+        background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
       }
       
       @keyframes blink {
@@ -418,7 +455,7 @@ in {
       }
       
       #battery.critical:not(.charging) {
-        background-color: #${config.lib.stylix.colors.base08}99;
+        background-color: ${hexToRgba config.lib.stylix.colors.base08 "99"};
         color: #${config.lib.stylix.colors.base07};
         animation-name: blink;
         animation-duration: 0.5s;
@@ -428,7 +465,7 @@ in {
       }
       
       label:focus {
-        background-color: #${config.lib.stylix.colors.base02}80;
+        background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
       }
       
       #pulseaudio {
@@ -437,7 +474,7 @@ in {
       
       #pulseaudio.muted {
         color: #${config.lib.stylix.colors.base04};
-        background-color: #${config.lib.stylix.colors.base04}33;
+        background-color: ${hexToRgba config.lib.stylix.colors.base04 "33"};
       }
       
       #network {
@@ -446,7 +483,7 @@ in {
       
       #network.disconnected {
         color: #${config.lib.stylix.colors.base08};
-        background-color: #${config.lib.stylix.colors.base08}33;
+        background-color: ${hexToRgba config.lib.stylix.colors.base08 "33"};
       }
       
       #bluetooth {
@@ -455,14 +492,14 @@ in {
       
       #bluetooth.disabled {
         color: #${config.lib.stylix.colors.base04};
-        background-color: #${config.lib.stylix.colors.base04}33;
+        background-color: ${hexToRgba config.lib.stylix.colors.base04 "33"};
       }
       
       #tray {
         margin: 4px 4px;
         padding: 4px 8px;
         border-radius: 10px;
-        background-color: #${config.lib.stylix.colors.base01}66;
+        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
       }
       
       /* Add spacing between tray icons */
@@ -484,7 +521,7 @@ in {
       
       #tray > .needs-attention {
         -gtk-icon-effect: highlight;
-        background-color: #${config.lib.stylix.colors.base08}66;
+        background-color: ${hexToRgba config.lib.stylix.colors.base08 "66"};
         border-radius: 8px;
       }
     '' else ''
