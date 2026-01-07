@@ -261,6 +261,15 @@ let
     REQUIRES_SWAY="$5"
     REQUIRES_TRAY="$6"
     
+    # Debug logging
+    DEBUG_LOG="/home/akunito/.dotfiles/.cursor/debug.log"
+    log_debug() {
+      echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager\",\"message\":\"$1\",\"data\":$2,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"$3\"}" >> "$DEBUG_LOG" 2>/dev/null || true
+    }
+    
+    # Log entry with all parameters
+    log_debug "Daemon manager entry" "{\"pattern\":\"$PATTERN\",\"matchType\":\"$MATCH_TYPE\",\"command\":\"$COMMAND\",\"requiresSway\":\"$REQUIRES_SWAY\",\"requiresTray\":\"$REQUIRES_TRAY\"}" "hypothesis-c"
+    
     # Determine pgrep flags based on match_type
     # Note: We no longer use pkill - safe_kill uses pgrep + kill instead
     if [ "$MATCH_TYPE" = "exact" ]; then
@@ -268,6 +277,7 @@ let
     else
       PGREP_FLAG="-f"
     fi
+    log_debug "Pgrep flag determined" "{\"pgrepFlag\":\"$PGREP_FLAG\",\"matchType\":\"$MATCH_TYPE\"}" "hypothesis-c"
     
     # Logging function using systemd-cat
     # systemd-cat is a standard system utility available in PATH
@@ -304,6 +314,7 @@ let
     # Check if process is running and count instances
     RUNNING_PIDS=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
     RUNNING_COUNT=$(echo "$RUNNING_PIDS" | grep -v "^$" | wc -l)
+    log_debug "Process check result" "{\"pattern\":\"$PATTERN\",\"pgrepFlag\":\"$PGREP_FLAG\",\"runningPids\":\"$RUNNING_PIDS\",\"runningCount\":$RUNNING_COUNT}" "hypothesis-c"
     
     if [ -n "$RUNNING_PIDS" ] && [ "$RUNNING_COUNT" -gt 0 ]; then
       # Process(es) running - check for duplicates
@@ -369,18 +380,22 @@ let
     fi
     
     # Process not running - start it
+    log_debug "Process not running, preparing to start" "{\"pattern\":\"$PATTERN\"}" "hypothesis-d"
     if [ "$REQUIRES_SWAY" = "true" ]; then
       # Wait for SwayFX IPC to be ready (max 10 seconds)
       SWAY_READY=false
+      log_debug "Checking Sway readiness" "{\"pattern\":\"$PATTERN\"}" "hypothesis-d"
       for i in $(seq 1 10); do
         if ${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1; then
           SWAY_READY=true
+          log_debug "Sway ready" "{\"pattern\":\"$PATTERN\",\"attempt\":$i}" "hypothesis-d"
           break
         fi
         sleep 1
       done
       if [ "$SWAY_READY" = "false" ]; then
         log "WARNING: SwayFX not ready after 10 seconds, starting daemon anyway: $PATTERN" "warning"
+        log_debug "Sway not ready after timeout" "{\"pattern\":\"$PATTERN\"}" "hypothesis-d"
       fi
     fi
     
@@ -447,8 +462,10 @@ let
     PATTERN_SANITIZED=$(echo "$PATTERN" | tr -d '.*+?^$[](){}|' | tr ' ' '_' | tr '/' '_')
     STDOUT_LOG="/tmp/daemon-''${PATTERN_SANITIZED}-stdout.log"
     STDERR_LOG="/tmp/daemon-''${PATTERN_SANITIZED}-stderr.log"
+    log_debug "Log file paths created" "{\"pattern\":\"$PATTERN\",\"patternSanitized\":\"$PATTERN_SANITIZED\",\"stdoutLog\":\"$STDOUT_LOG\",\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-e"
     rm -f "$STDOUT_LOG" "$STDERR_LOG"
     
+    log_debug "About to start daemon process" "{\"pattern\":\"$PATTERN\",\"command\":\"$COMMAND\",\"hasPipe\":$HAS_PIPE,\"stdoutLog\":\"$STDOUT_LOG\",\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-e"
     if [ "$HAS_PIPE" = "true" ]; then
       # Pipe command - use bash
       nohup bash -c "$COMMAND" >"$STDOUT_LOG" 2>"$STDERR_LOG" &
@@ -458,17 +475,24 @@ let
     fi
     DAEMON_PID=$!
     log "Daemon start command executed, PID: $DAEMON_PID (pattern: $PATTERN, has_pipe: $HAS_PIPE)" "info"
+    log_debug "Daemon process started" "{\"pattern\":\"$PATTERN\",\"daemonPid\":$DAEMON_PID,\"hasPipe\":$HAS_PIPE}" "hypothesis-e"
     
     # CRITICAL: Check if process is still alive after a brief moment to detect immediate crashes
     sleep 0.3
     if ! kill -0 $DAEMON_PID 2>/dev/null; then
       # Process died - check error logs
+      log_debug "Process died immediately after start" "{\"pattern\":\"$PATTERN\",\"daemonPid\":$DAEMON_PID,\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-f"
       if [ -f "$STDERR_LOG" ]; then
         ERROR_OUTPUT=$(cat "$STDERR_LOG" 2>/dev/null | head -20 | tr '\n' ' ')
+        ERROR_SIZE=$(stat -c%s "$STDERR_LOG" 2>/dev/null || echo "0")
         log "ERROR: Daemon process died immediately (PID: $DAEMON_PID, pattern: $PATTERN). Error: $ERROR_OUTPUT" "err"
+        log_debug "Error log contents" "{\"pattern\":\"$PATTERN\",\"errorOutput\":\"$ERROR_OUTPUT\",\"errorSize\":$ERROR_SIZE}" "hypothesis-f"
       else
         log "ERROR: Daemon process died immediately (PID: $DAEMON_PID, pattern: $PATTERN). No error log available." "err"
+        log_debug "No error log file found" "{\"pattern\":\"$PATTERN\",\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-f"
       fi
+    else
+      log_debug "Process still alive after initial check" "{\"pattern\":\"$PATTERN\",\"daemonPid\":$DAEMON_PID}" "hypothesis-f"
     fi
     
     # Also pipe logs to systemd for real-time monitoring (background processes)
@@ -483,11 +507,15 @@ let
     # Verify it started with progressive wait (some daemons take longer to initialize)
     # Use exponential backoff: check quickly first, then wait longer
     DAEMON_STARTED=false
+    log_debug "Starting verification loop" "{\"pattern\":\"$PATTERN\",\"daemonPid\":$DAEMON_PID}" "hypothesis-f"
     for check_delay in 0.5 1 2; do
       sleep $check_delay
-      if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" > /dev/null 2>&1; then
-        ACTUAL_PID=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | head -1)
+      VERIFY_RESULT=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
+      log_debug "Verification check" "{\"pattern\":\"$PATTERN\",\"checkDelay\":$check_delay,\"verifyResult\":\"$VERIFY_RESULT\",\"pgrepFlag\":\"$PGREP_FLAG\"}" "hypothesis-f"
+      if [ -n "$VERIFY_RESULT" ]; then
+        ACTUAL_PID=$(echo "$VERIFY_RESULT" | head -1)
         log "Daemon started successfully: $PATTERN (started PID: $DAEMON_PID, actual PID: $ACTUAL_PID, verified after ''${check_delay}s)" "info"
+        log_debug "Daemon verified successfully" "{\"pattern\":\"$PATTERN\",\"startedPid\":$DAEMON_PID,\"actualPid\":$ACTUAL_PID,\"checkDelay\":$check_delay}" "hypothesis-f"
         DAEMON_STARTED=true
         break
       fi
@@ -497,6 +525,18 @@ let
       # Additional check: see if process started but verification failed
       CHECK_CMD=$(ps -p $DAEMON_PID -o comm= 2>/dev/null || echo "not_found")
       log "ERROR: Failed to start daemon: $PATTERN (started PID: $DAEMON_PID, process: $CHECK_CMD)" "err"
+      log_debug "Daemon verification failed" "{\"pattern\":\"$PATTERN\",\"startedPid\":$DAEMON_PID,\"checkCmd\":\"$CHECK_CMD\",\"stdoutLog\":\"$STDOUT_LOG\",\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-f"
+      # Check log files for errors
+      if [ -f "$STDOUT_LOG" ]; then
+        STDOUT_SIZE=$(stat -c%s "$STDOUT_LOG" 2>/dev/null || echo "0")
+        STDOUT_PREVIEW=$(head -5 "$STDOUT_LOG" 2>/dev/null | tr '\n' ' ' || echo "")
+        log_debug "Stdout log contents" "{\"pattern\":\"$PATTERN\",\"stdoutSize\":$STDOUT_SIZE,\"stdoutPreview\":\"$STDOUT_PREVIEW\"}" "hypothesis-f"
+      fi
+      if [ -f "$STDERR_LOG" ]; then
+        STDERR_SIZE=$(stat -c%s "$STDERR_LOG" 2>/dev/null || echo "0")
+        STDERR_PREVIEW=$(head -10 "$STDERR_LOG" 2>/dev/null | tr '\n' ' ' || echo "")
+        log_debug "Stderr log contents" "{\"pattern\":\"$PATTERN\",\"stderrSize\":$STDERR_SIZE,\"stderrPreview\":\"$STDERR_PREVIEW\"}" "hypothesis-f"
+      fi
       exit 1
     fi
   '';
