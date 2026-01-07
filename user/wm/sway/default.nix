@@ -202,18 +202,6 @@ let
       requires_tray = true;  # Wait for waybar's tray (StatusNotifierWatcher) to be ready
     }
     {
-      name = "sov";
-      # Sov runs as a daemon reading from a named pipe
-      # Usage: echo 0 > /tmp/sovpipe (hide), echo 1 > /tmp/sovpipe (show), echo 2 > /tmp/sovpipe (toggle)
-      # The -t 500 parameter sets toggle delay to 500ms
-      # CRITICAL: Pipe command - daemon-manager will use bash automatically for pipe handling
-      command = "rm -f /tmp/sovpipe && mkfifo /tmp/sovpipe && ${pkgs.coreutils}/bin/tail -f /tmp/sovpipe | ${pkgs.sov}/bin/sov -t 500";
-      pattern = "sov.*-t 500";  # More specific pattern to match actual sov process
-      match_type = "full";  # NixOS wrapper
-      reload = "";  # Sov doesn't support reload, use pipe commands instead
-      requires_sway = true;  # Needs Sway IPC to query workspaces
-    }
-    {
       name = "cliphist";
       command = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
       pattern = "wl-paste.*cliphist";  # Regex pattern for full command match
@@ -443,7 +431,7 @@ let
     # Start daemon with systemd logging
     log "Starting daemon: $PATTERN (command: $COMMAND)" "info"
     # CRITICAL: For pipe commands, use bash -c to ensure proper pipe handling
-    # Some commands (like sov with tail -f pipe) need bash for proper pipe execution
+    # Commands containing pipes need bash for proper pipe execution
     # Use grep -F for fixed string matching (literal pipe character)
     HAS_PIPE=false
     if echo "$COMMAND" | grep -Fq "|"; then
@@ -455,16 +443,18 @@ let
     
     # Start daemon with proper shell and capture both stdout and stderr to temp files
     # Then tail those files to systemd for real-time monitoring
-    STDOUT_LOG="/tmp/daemon-''${PATTERN}-stdout.log"
-    STDERR_LOG="/tmp/daemon-''${PATTERN}-stderr.log"
+    # Sanitize pattern for use in filenames (replace special chars with underscores)
+    PATTERN_SANITIZED=$(echo "$PATTERN" | tr -d '.*+?^$[](){}|' | tr ' ' '_' | tr '/' '_')
+    STDOUT_LOG="/tmp/daemon-''${PATTERN_SANITIZED}-stdout.log"
+    STDERR_LOG="/tmp/daemon-''${PATTERN_SANITIZED}-stderr.log"
     rm -f "$STDOUT_LOG" "$STDERR_LOG"
     
     if [ "$HAS_PIPE" = "true" ]; then
       # Pipe command - use bash
-      nohup bash -c "exec $COMMAND" >"$STDOUT_LOG" 2>"$STDERR_LOG" &
+      nohup bash -c "$COMMAND" >"$STDOUT_LOG" 2>"$STDERR_LOG" &
     else
       # Simple command - use sh
-      nohup sh -c "exec $COMMAND" >"$STDOUT_LOG" 2>"$STDERR_LOG" &
+      nohup sh -c "$COMMAND" >"$STDOUT_LOG" 2>"$STDERR_LOG" &
     fi
     DAEMON_PID=$!
     log "Daemon start command executed, PID: $DAEMON_PID (pattern: $PATTERN, has_pipe: $HAS_PIPE)" "info"
@@ -482,8 +472,13 @@ let
     fi
     
     # Also pipe logs to systemd for real-time monitoring (background processes)
-    (tail -f "$STDOUT_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN}" -p info &) || true
-    (tail -f "$STDERR_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN}" -p err &) || true
+    # Only start tail processes if log files exist and are non-empty
+    if [ -f "$STDOUT_LOG" ] && [ -s "$STDOUT_LOG" ]; then
+      (tail -f "$STDOUT_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p info &) || true
+    fi
+    if [ -f "$STDERR_LOG" ] && [ -s "$STDERR_LOG" ]; then
+      (tail -f "$STDERR_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p err &) || true
+    fi
     
     # Verify it started with progressive wait (some daemons take longer to initialize)
     # Use exponential backoff: check quickly first, then wait longer
@@ -726,8 +721,8 @@ in {
           # Use "${hyper}+space" or "${hyper}+BackSpace" for rofi launcher
           
           # Window Overview (Mission Control-like)
-          # Sov runs as a daemon; send toggle command (2) to the named pipe
-          "${hyper}+Tab" = "exec bash -c 'echo 2 > /tmp/sovpipe 2>/dev/null || true'";  # Toggle workspace overview
+          # Sov is a one-shot tool that shows workspace overview when executed
+          "${hyper}+Tab" = "exec ${pkgs.sov}/bin/sov";  # Show workspace overview
           
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
