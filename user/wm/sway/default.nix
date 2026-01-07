@@ -206,8 +206,9 @@ let
       # Sov runs as a daemon reading from a named pipe
       # Usage: echo 0 > /tmp/sovpipe (hide), echo 1 > /tmp/sovpipe (show), echo 2 > /tmp/sovpipe (toggle)
       # The -t 500 parameter sets toggle delay to 500ms
+      # CRITICAL: Pipe command - daemon-manager will use bash automatically for pipe handling
       command = "rm -f /tmp/sovpipe && mkfifo /tmp/sovpipe && ${pkgs.coreutils}/bin/tail -f /tmp/sovpipe | ${pkgs.sov}/bin/sov -t 500";
-      pattern = "sov";
+      pattern = "sov.*-t 500";  # More specific pattern to match actual sov process
       match_type = "full";  # NixOS wrapper
       reload = "";  # Sov doesn't support reload, use pipe commands instead
       requires_sway = true;  # Needs Sway IPC to query workspaces
@@ -441,9 +442,48 @@ let
     
     # Start daemon with systemd logging
     log "Starting daemon: $PATTERN (command: $COMMAND)" "info"
-    nohup sh -c "$COMMAND" 2>&1 | systemd-cat -t "sway-daemon-''${PATTERN}" &
+    # CRITICAL: For pipe commands, use bash -c to ensure proper pipe handling
+    # Some commands (like sov with tail -f pipe) need bash for proper pipe execution
+    # Use grep -F for fixed string matching (literal pipe character)
+    HAS_PIPE=false
+    if echo "$COMMAND" | grep -Fq "|"; then
+      HAS_PIPE=true
+      log "Detected pipe in command, using bash: $PATTERN" "info"
+    else
+      log "No pipe detected, using sh: $PATTERN" "info"
+    fi
+    
+    # Start daemon with proper shell and capture both stdout and stderr to temp files
+    # Then tail those files to systemd for real-time monitoring
+    STDOUT_LOG="/tmp/daemon-''${PATTERN}-stdout.log"
+    STDERR_LOG="/tmp/daemon-''${PATTERN}-stderr.log"
+    rm -f "$STDOUT_LOG" "$STDERR_LOG"
+    
+    if [ "$HAS_PIPE" = "true" ]; then
+      # Pipe command - use bash
+      nohup bash -c "exec $COMMAND" >"$STDOUT_LOG" 2>"$STDERR_LOG" &
+    else
+      # Simple command - use sh
+      nohup sh -c "exec $COMMAND" >"$STDOUT_LOG" 2>"$STDERR_LOG" &
+    fi
     DAEMON_PID=$!
-    log "Daemon start command executed, PID: $DAEMON_PID" "info"
+    log "Daemon start command executed, PID: $DAEMON_PID (pattern: $PATTERN, has_pipe: $HAS_PIPE)" "info"
+    
+    # CRITICAL: Check if process is still alive after a brief moment to detect immediate crashes
+    sleep 0.3
+    if ! kill -0 $DAEMON_PID 2>/dev/null; then
+      # Process died - check error logs
+      if [ -f "$STDERR_LOG" ]; then
+        ERROR_OUTPUT=$(cat "$STDERR_LOG" 2>/dev/null | head -20 | tr '\n' ' ')
+        log "ERROR: Daemon process died immediately (PID: $DAEMON_PID, pattern: $PATTERN). Error: $ERROR_OUTPUT" "err"
+      else
+        log "ERROR: Daemon process died immediately (PID: $DAEMON_PID, pattern: $PATTERN). No error log available." "err"
+      fi
+    fi
+    
+    # Also pipe logs to systemd for real-time monitoring (background processes)
+    (tail -f "$STDOUT_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN}" -p info &) || true
+    (tail -f "$STDERR_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN}" -p err &) || true
     
     # Verify it started with progressive wait (some daemons take longer to initialize)
     # Use exponential backoff: check quickly first, then wait longer
