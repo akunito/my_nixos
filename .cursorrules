@@ -1,223 +1,128 @@
-# Cursor Rules for NixOS Configuration Repository
+# Cursor Rules for NixOS Flake Configuration
 
-## CRITICAL: NixOS-Specific Requirements
+## CRITICAL: PRIME DIRECTIVES (NixOS Flake Architecture)
 
-**IMPORTANT**: This repository is for **NixOS**, not a generic Linux distribution. All implementations, guides, plans, and configurations MUST be NixOS-specific.
+1.  **Immutability**: This system is immutable. Never suggest editing files in `/nix/store`, `/etc/nixos` (unless symlinked), or running imperative commands like `nix-env`, `nix-channel`, or `apt/yum`.
+2.  **Source of Truth**: `flake.nix` is the absolute root. If a package isn't in `inputs`, it cannot be installed.
+3.  **Operational Workflow**: `install.sh` is the master controller. It handles `nixos-rebuild switch`, git staging, and generation cleanup.
+    * **Dry Runs**: Before suggesting a complex switch, advise running `nixos-rebuild build --flake .#<profile>` to verify syntax.
+    * **Application**: Changes are applied via `install.sh` (or `phoenix sync`), never by manual systemd commands.
+4.  **Profile Awareness**:
+    * **Variables**: `systemSettings`, `userSettings`, and `profile` are passed via `specialArgs` (NixOS) and `extraSpecialArgs` (Home-Manager).
+    * **Conditionals**: Use `config = lib.mkIf (config.systemSettings.profile == "DESK") { ... };`.
+    * **Inheritance**: Check `nixosConfigurations` in `flake.nix`. Do not duplicate code in a profile config if it belongs in `system/modules/core`.
+
+---
+
+## NixOS-Specific Requirements
 
 ### NixOS-First Approach
-
-- **Always use NixOS-specific solutions** - Never suggest generic Linux commands or configurations
-- **Use NixOS package names** - Check package availability in `nixpkgs` before suggesting packages
-- **Follow NixOS configuration patterns** - Use Nix language and NixOS module system
-- **Verify package names** - Use `nix search nixpkgs <package>` or check [search.nixos.org](https://search.nixos.org) for correct package names
-- **Use NixOS services** - Configure services through `systemd.services`, `services.*`, or appropriate NixOS modules
-- **NixOS file paths** - Use NixOS-specific paths (e.g., `/etc/nixos/` for system config, `~/.config/nixpkgs/` for user config)
+-   **Always use NixOS-specific solutions** - Never suggest generic Linux commands.
+-   **Use NixOS package names** - Check `nixpkgs` availability via `nix search` or [search.nixos.org](https://search.nixos.org).
+-   **Follow NixOS configuration patterns** - Use Nix language and NixOS module system.
+-   **NixOS file paths** - Use relative paths (`./.`) or `self`. Absolute paths break flake purity.
 
 ### Package and Configuration Verification
-
-Before suggesting any package or configuration:
-
-1. **Verify package exists in nixpkgs** - Use `nix search` or search.nixos.org
-2. **Check NixOS module availability** - Many services have dedicated NixOS modules (e.g., `services.nginx`, `services.postgresql`)
-3. **Use correct attribute paths** - Package names in NixOS use attribute paths (e.g., `pkgs.vim`, `pkgs.python3Packages.requests`)
-4. **Prefer NixOS modules over manual configuration** - Use `services.*`, `programs.*`, `environment.*` when available
-5. **Check NixOS options** - Use `nixos-option` or [NixOS Options Search](https://search.nixos.org/options) to verify available options
+1.  **Verify package exists** in `inputs` or `nixpkgs`.
+2.  **Check NixOS module availability** (e.g., `services.nginx`).
+3.  **Use correct attribute paths** (e.g., `pkgs.vim`, `pkgs.python3Packages.requests`).
+4.  **Check NixOS options** using `nixos-option` or `search.nixos.org/options`.
 
 ### Common Mistakes to Avoid
+-   ❌ **DON'T** suggest `apt install`, `yum install`.
+-   ❌ **DON'T** suggest editing `/etc/` directly.
+-   ❌ **DON'T** suggest manual `systemctl enable` (use NixOS config).
+-   ✅ **DO** use `home-manager` modules for user config.
 
-- ❌ **DON'T** suggest `apt install`, `yum install`, or other package managers
-- ❌ **DON'T** suggest editing files in `/etc/` directly (use NixOS configuration)
-- ❌ **DON'T** suggest generic Linux service management (`systemctl enable` should be done via NixOS config)
-- ❌ **DON'T** assume package names match other distributions
-- ❌ **DON'T** suggest manual installation scripts without NixOS equivalents
-- ✅ **DO** use `nix-env`, `nix-shell`, or `home-manager` for user packages
-- ✅ **DO** configure everything through NixOS configuration files
-- ✅ **DO** use NixOS-specific paths and conventions
-- ✅ **DO** verify package names and module options before suggesting
+---
 
-### When in Doubt
+## Component Configuration & Best Practices
 
-- Search nixpkgs: `nix search nixpkgs <term>`
-- Check NixOS options: `nixos-option <option.path>`
-- Review NixOS manual: [nixos.org/manual](https://nixos.org/manual/nixos/)
-- Check existing configuration files in this repository for patterns
+### System vs User Distinction
+-   `environment.systemPackages` = **System-level** (available to all users, root).
+-   `home.packages` = **User-level** (Home Manager, per-user).
+-   Distinguish between `services.*` (System/NixOS) and `programs.*` (User/Home Manager).
+
+### Waybar-Specific Rules
+-   **CSS Parser**: Strict syntax. **Must use `rgba()`**, not 8-digit hex (`#RRGGBBAA`).
+-   **Colors**: Prefer Nix functions (e.g., `lib.stylix.colors` with `hexToRgba`).
+-   **Regeneration**: Config changes require a rebuild (`install.sh`) or service reload (`systemctl --user reload waybar`).
+
+### Window Manager Isolation
+-   **Mutual Exclusivity**: Ensure `programs.sway.enable` and `programs.hyprland.enable` are not accidentally active simultaneously unless intended.
+-   **Portals**: Check `xdg.portal` config matches the active WM.
+-   **Display Manager**: Check `services.displayManager.sessionPackages` to ensure the WM session is exposed to SDDM.
+
+---
 
 ## Documentation Standards
 
-### Documentation Structure
+### Structure (3-Level or 4-Level Based on File Size)
 
-This repository uses a **3-level documentation structure**:
+**Standard 3-Level Structure** (for files <200 lines):
+1.  **Level 1**: `README.md` (Overview).
+2.  **Level 2**: `docs/*.md` (Major Topics: installation, configuration, profiles).
+3.  **Level 3**: `docs/{subdirectory}/*.md` (Specifics: security, hardware).
+4.  **Future/Temp**: `docs/future/*.md` (Planning, bugs, analysis).
 
-1. **Level 1: Top-Level** (`README.md`)
-   - Overview and quick start
-   - Navigation to major topics
-   - Project structure overview
+**Extended 4-Level Structure** (for files >400 lines to reduce token consumption):
+1.  **Level 1**: `README.md` (Overview).
+2.  **Level 2**: `docs/{category}.md` (Index/overview - brief, links to Level 3).
+3.  **Level 3**: `docs/{category}/{subcategory}/` (Groupings - e.g., `docs/user-modules/applications/`).
+4.  **Level 4**: `docs/{category}/{subcategory}/{specific}.md` (Individual topics).
+5.  **Future/Temp**: `docs/future/*.md` (Planning, bugs, analysis).
 
-2. **Level 2: Major Topics** (`docs/*.md`)
-   - Comprehensive guides for major topics
-   - Located in the `docs/` directory
-   - Examples: `installation.md`, `configuration.md`, `profiles.md`, etc.
+**Decision Rule**: Use 4-level structure when Level 2 files exceed 400 lines to improve maintainability and reduce AI token consumption.
 
-3. **Level 3: Specific Documentation** (`docs/{subdirectory}/*.md`)
-   - Detailed guides for specific topics
-   - Located in subdirectories of `docs/`
-   - Examples: `docs/security/luks-encryption.md`, `docs/hardware/drive-management.md`, etc.
+### Format & Maintenance
+-   **Markdown Only**: Convert `.org` to `.md` when updating.
+-   **Preserve Legacy**: Keep original `.org` files for reference, link them to new `.md` files.
+-   **Cross-Referencing**: Extensive linking between levels.
+-   **Checklist**:
+    -   [ ] Follows 3-level or 4-level structure (based on file size).
+    -   [ ] In Markdown format.
+    -   [ ] Cross-references added.
+    -   [ ] Links to original README files if they exist.
 
-### Documentation File Format
-
-- **All documentation must be in Markdown (.md format)**
-- Convert any existing `.org` files to `.md` when updating
-- Keep original `.org` files for reference but create `.md` equivalents
-- Use consistent formatting across all documentation
-
-### Cross-Referencing
-
-- **Always add cross-references** between related documentation
-- Link to Level 2 docs from Level 1 (README.md)
-- Link to Level 3 docs from Level 2 docs
-- Link back to parent docs from Level 3 docs
-- Use relative paths for internal links
-- Reference original README.org files when they exist
-
-### README Files in Subdirectories
-
-- **Preserve existing README.org files** - don't remove them
-- **Create README.md equivalents** in the `docs/` structure
-- **Add references** between original README files and new documentation
-- **Convert content** from .org to .md format when integrating
-- **Maintain both** - original README.org for historical reference, new .md for main documentation
-
-### Integration Strategy
-
-When encountering README.org or README.md files in subdirectories:
-
-1. **Read the content** and understand its purpose
-2. **Convert to Markdown** if it's in .org format
-3. **Place in appropriate Level 2 or Level 3 location** in `docs/`
-4. **Add cross-references** from:
-   - Main documentation to the new doc
-   - New doc back to related docs
-   - New doc to original README file
-5. **Update relevant Level 2 docs** to reference the new documentation
-6. **Keep original README files** with a note pointing to new location
-
-### Temporary/Planning Documentation
-
-**Important**: Any document created for planning, analysis, design ideas, recommendations, bug fixing notes, or any topic that should be considered and potentially deleted afterwards should be placed in:
-
-```
-docs/future/
-```
-
-Examples of documents that belong in `docs/future/`:
-- `docs/future/design-ideas.md`
-- `docs/future/bug-fixes.md`
-- `docs/future/analysis.md`
-- `docs/future/recommendations.md`
-- `docs/future/planning.md`
-
-**Rules for `docs/future/`**:
-- These are temporary/working documents
-- Can be deleted after implementation or when no longer needed
-- Should be reviewed periodically and cleaned up
-- Not part of the main documentation structure
-- Can be referenced from main docs if needed, but clearly marked as temporary
-
-### Documentation Updates
-
-When updating documentation:
-
-1. **Follow the 3-level structure**
-2. **Maintain cross-references** - update links when moving/renaming docs
-3. **Convert .org to .md** when updating
-4. **Add references** to original files
-5. **Keep original files** unless explicitly asked to remove
-6. **Update table of contents** in parent documents
-7. **Check for broken links** after changes
-
-### Code Examples
-
-- Use proper code blocks with language specification
-- Include file paths in code examples
-- Show both configuration snippets and command-line examples
-- Include expected outputs when helpful
-- Use consistent formatting for Nix code
-
-### Best Practices
-
-- **Be comprehensive** - document all features and options
-- **Include examples** - show how to use features
-- **Add troubleshooting** - common issues and solutions
-- **Keep it updated** - update docs when code changes
-- **Use clear headings** - organize content logically
-- **Add table of contents** - for longer documents
-- **Cross-reference** - link related topics
-- **Preserve history** - keep original files when converting
-
-### File Naming Conventions
-
-- Use lowercase with hyphens: `luks-encryption.md`
-- Be descriptive: `cpu-power-management.md` not `cpu.md`
-- Match directory structure: `docs/security/luks-encryption.md`
-- Keep original names when converting: `README.org` → `README.md` equivalent
-
-### Documentation Checklist
-
-When creating or updating documentation:
-
-- [ ] Follows 3-level structure
-- [ ] In Markdown format (.md)
-- [ ] Has table of contents (if long)
-- [ ] Cross-references related docs
-- [ ] Links to original README files if they exist
-- [ ] Includes examples
-- [ ] Has troubleshooting section (if applicable)
-- [ ] Uses consistent formatting
-- [ ] No broken links
-- [ ] Properly placed in docs/ structure
+---
 
 ## Code Standards
 
-### Nix Code Style
-
-- Use consistent indentation (2 spaces)
-- Format let bindings clearly
-- Group related configurations
-- Add comments for non-obvious configurations
-- Use descriptive variable names
+### Nix Syntax & Style
+-   **Indentation**: 2 spaces.
+-   **Conditionals**: Prefer `lib.mkIf` over shell script logic inside configs.
+-   **Lists**: Use multi-line lists for packages to reduce merge conflicts.
+-   **Paths**: Always use relative paths (`./.`) or `self` inputs.
+-   **Comments**: Explain *why* a module is enabled, not *what* it does.
 
 ### Module Organization
+-   Keep modules focused and single-purpose.
+-   Access variables via function arguments (`pkgs`, `lib`, `config`, `inputs`).
+-   Document module purpose at the top.
 
-- Keep modules focused and single-purpose
-- Use conditional enabling with `lib.mkIf`
-- Access variables via function arguments
-- Document module purpose at the top
+---
 
 ## SwayFX Daemon Integration System
 
 **CRITICAL**: When modifying daemon-related code, you MUST follow the daemon integration plan to prevent regressions and system breakage.
 
 ### When This Rule Applies
-
 This rule applies when:
-- Modifying the `daemons` list in `user/wm/sway/default.nix`
-- Changing `daemon-manager`, `start-sway-daemons`, or `daemon-sanity-check` scripts
-- Modifying Sway startup commands related to daemons
-- Adding/removing Systemd service configurations for daemons
-- **Enabling Home Manager modules that might create Systemd services**
+-   Modifying the `daemons` list in `user/wm/sway/default.nix`
+-   Changing `daemon-manager`, `start-sway-daemons`, or `daemon-sanity-check` scripts
+-   Modifying Sway startup commands related to daemons
+-   Adding/removing Systemd service configurations for daemons
+-   **Enabling Home Manager modules that might create Systemd services**
 
 ### Required Actions
-
 Before making any changes:
-
-1. **Read the documentation**: Review `docs/user-modules/sway-daemon-integration.md` to understand the architecture
-2. **Follow DRY principle**: Modify the `daemons` list in `default.nix`, never edit generated scripts directly
-3. **Test changes**: Run `daemon-sanity-check` after modifications
-4. **Verify no conflicts**: Check for Systemd service conflicts
-5. **Check logs**: Review `journalctl --user -t sway-daemon-mgr` after changes
+1.  **Read the documentation**: Review `docs/user-modules/sway-daemon-integration.md` to understand the architecture
+2.  **Follow DRY principle**: Modify the `daemons` list in `default.nix`, never edit generated scripts directly
+3.  **Test changes**: Run `daemon-sanity-check` after modifications
+4.  **Verify no conflicts**: Check for Systemd service conflicts
+5.  **Check logs**: Review `journalctl --user -t sway-daemon-mgr` after changes
 
 ### Systemd Side-Effects Rule
-
 **CRITICAL**: When enabling Home Manager modules (e.g., `programs.waybar.enable = true`), check if they auto-generate Systemd services. If the process is managed by `daemon-manager`, you MUST explicitly disable the Systemd service (e.g., `systemd.enable = false`) to prevent race conditions.
 
 **Example**:
@@ -232,128 +137,116 @@ programs.waybar = {
 **Why**: If both Systemd and `daemon-manager` try to start the same daemon, you get duplicate instances and race conditions.
 
 ### Key Principles
-
-1. **Never edit generated scripts directly** - They are auto-generated from the `daemons` list
-2. **Always modify the `daemons` list** - This is the single source of truth
-3. **Use `match_type = "full"` for NixOS-wrapped binaries** - NixOS wraps binaries (e.g., `waybar` → `.waybar-wrapped`), requiring full command line matching
-4. **Prevent Systemd conflicts** - Always check and disable auto-generated services if managed by `daemon-manager`
-5. **Use safe kill logic** - Never use `pkill -f` directly without filtering `$$` (self PID) and `$PPID` (parent PID) to prevent self-termination
-6. **Use XDG runtime directories for lock files** - Always use `/run/user/$(id -u)/` (XDG runtime directory), never `/tmp/` to prevent security issues and stale locks
+1.  **Never edit generated scripts directly** - They are auto-generated from the `daemons` list
+2.  **Always modify the `daemons` list** - This is the single source of truth
+3.  **Use `match_type = "full"` for NixOS-wrapped binaries** - NixOS wraps binaries (e.g., `waybar` → `.waybar-wrapped`), requiring full command line matching
+4.  **Prevent Systemd conflicts** - Always check and disable auto-generated services if managed by `daemon-manager`
+5.  **Use safe kill logic** - Never use `pkill -f` directly without filtering `$$` (self PID) and `$PPID` (parent PID) to prevent self-termination
+6.  **Use XDG runtime directories for lock files** - Always use `/run/user/$(id -u)/` (XDG runtime directory), never `/tmp/` to prevent security issues and stale locks
 
 ### Lock File Mechanism Rules
-
 **CRITICAL**: The lock file mechanism MUST use the simple atomic design:
-- ✅ **CORRECT**: `flock -n 9 || { echo "..."; exit 0; }` - immediate exit if lock held
-- ❌ **FORBIDDEN**: Retry logic with `sleep` and double-check - creates race conditions
-- ❌ **FORBIDDEN**: `flock -w` with timeout - unnecessary complexity
-- **Why**: The simple design prevents race conditions. Any retry logic allows multiple processes to pass the lock check.
+-   ✅ **CORRECT**: `flock -n 9 || { echo "..."; exit 0; }` - immediate exit if lock held
+-   ❌ **FORBIDDEN**: Retry logic with `sleep` and double-check - creates race conditions
+-   ❌ **FORBIDDEN**: `flock -w` with timeout - unnecessary complexity
+-   **Why**: The simple design prevents race conditions. Any retry logic allows multiple processes to pass the lock check.
 
 ### Startup Script Timing Rules
-
 **CRITICAL**: Startup scripts MUST NOT add unnecessary delays:
-- ✅ **CORRECT**: Simple, fast startup with minimal delays
-- ❌ **FORBIDDEN**: Blocking config validation that delays startup
-- ❌ **FORBIDDEN**: Final verification checks that add 2+ second delays
-- ❌ **FORBIDDEN**: Multiple sleep statements in startup sequence
-- **Why**: Added delays interfere with daemon timing, especially Wayland initialization.
+-   ✅ **CORRECT**: Simple, fast startup with minimal delays
+-   ❌ **FORBIDDEN**: Blocking config validation that delays startup
+-   ❌ **FORBIDDEN**: Final verification checks that add 2+ second delays
+-   ❌ **FORBIDDEN**: Multiple sleep statements in startup sequence
+-   **Why**: Added delays interfere with daemon timing, especially Wayland initialization.
 
 ### Daemon Manager Verification Rules
-
 **CRITICAL**: Verification timing MUST be appropriate for each daemon:
-- ✅ **CORRECT**: Standard verification (0.5s, 1s, 2s) for most daemons
-- ✅ **CORRECT**: Extended verification for waybar (add post-verification check after 2s)
-- ❌ **FORBIDDEN**: Too-short verification that doesn't catch crashes
-- ❌ **FORBIDDEN**: Too-long verification that delays startup unnecessarily
-- **Why**: Waybar needs extra time for Wayland connection, but other daemons don't.
+-   ✅ **CORRECT**: Standard verification (0.5s, 1s, 2s) for most daemons
+-   ✅ **CORRECT**: Extended verification for waybar (add post-verification check after 2s)
+-   ❌ **FORBIDDEN**: Too-short verification that doesn't catch crashes
+-   ❌ **FORBIDDEN**: Too-long verification that delays startup unnecessarily
+-   **Why**: Waybar needs extra time for Wayland connection, but other daemons don't.
 
 ### Testing Requirements
-
 **CRITICAL**: Before committing daemon-related changes:
-1. **Check git history** - Review working commits (e.g., `00dadd0`) to understand original design
-2. **Test lock mechanism** - Verify no race conditions with rapid reloads
-3. **Test waybar startup** - Verify waybar starts and stays running
-4. **Test reload** - Verify `swaymsg reload` doesn't cause conflicts
-5. **Check logs** - Review `journalctl --user -t sway-daemon-mgr` for errors
-6. **Verify no orphaned processes** - Check for leftover tail processes
+1.  **Check git history** - Review working commits (e.g., `00dadd0`) to understand original design
+2.  **Test lock mechanism** - Verify no race conditions with rapid reloads
+3.  **Test waybar startup** - Verify waybar starts and stays running
+4.  **Test reload** - Verify `swaymsg reload` doesn't cause conflicts
+5.  **Check logs** - Review `journalctl --user -t sway-daemon-mgr` for errors
+6.  **Verify no orphaned processes** - Check for leftover tail processes
 
 ### Checklist
-
 When modifying daemon-related code:
 
-- [ ] Read `docs/user-modules/sway-daemon-integration.md`
-- [ ] Modified `daemons` list (not generated scripts)
-- [ ] Used `match_type = "full"` for NixOS-wrapped binaries
-- [ ] Checked for Systemd service conflicts and disabled if needed
-- [ ] Used safe kill logic (filtered `$$` and `$PPID`)
-- [ ] Used XDG runtime directory for lock files (`/run/user/$(id -u)/`)
-- [ ] Tested with `daemon-sanity-check`
-- [ ] Verified logs with `journalctl --user -t sway-daemon-mgr`
-- [ ] No duplicate instances after reload
+-   [ ] Read `docs/user-modules/sway-daemon-integration.md`
+-   [ ] Modified `daemons` list (not generated scripts)
+-   [ ] Used `match_type = "full"` for NixOS-wrapped binaries
+-   [ ] Checked for Systemd service conflicts and disabled if needed
+-   [ ] Used safe kill logic (filtered `$$` and `$PPID`)
+-   [ ] Used XDG runtime directory for lock files (`/run/user/$(id -u)/`)
+-   [ ] Tested with `daemon-sanity-check`
+-   [ ] Verified logs with `journalctl --user -t sway-daemon-mgr`
+-   [ ] No duplicate instances after reload
 
 ### Common Mistakes to Avoid
-
-- ❌ **DON'T** edit generated scripts directly (they're auto-generated)
-- ❌ **DON'T** use `match_type = "exact"` for NixOS-wrapped binaries
-- ❌ **DON'T** forget to disable Systemd services for daemons managed by `daemon-manager`
-- ❌ **DON'T** use `pkill -f` without filtering `$$` and `$PPID`
-- ❌ **DON'T** use `/tmp/` for lock files (use `/run/user/$(id -u)/`)
-- ❌ **DON'T** add retry logic to lock file mechanism (creates race conditions)
-- ❌ **DON'T** add blocking delays to startup scripts (interferes with timing)
-- ❌ **DON'T** add final verification checks that delay startup (redundant with daemon-manager)
-- ✅ **DO** modify the `daemons` list in `default.nix`
-- ✅ **DO** use `match_type = "full"` for all NixOS-wrapped binaries
-- ✅ **DO** check for Systemd conflicts when enabling Home Manager modules
-- ✅ **DO** use safe kill logic that filters self and parent PIDs
-- ✅ **DO** use XDG runtime directories for lock files
-- ✅ **DO** use simple atomic lock mechanism (no retry logic)
-- ✅ **DO** check git history before modifying daemon code
-- ✅ **DO** test daemon changes with actual Sway session before committing
+-   ❌ **DON'T** edit generated scripts directly (they're auto-generated)
+-   ❌ **DON'T** use `match_type = "exact"` for NixOS-wrapped binaries
+-   ❌ **DON'T** forget to disable Systemd services for daemons managed by `daemon-manager`
+-   ❌ **DON'T** use `pkill -f` without filtering `$$` and `$PPID`
+-   ❌ **DON'T** use `/tmp/` for lock files (use `/run/user/$(id -u)/`)
+-   ❌ **DON'T** add retry logic to lock file mechanism (creates race conditions)
+-   ❌ **DON'T** add blocking delays to startup scripts (interferes with timing)
+-   ❌ **DON'T** add final verification checks that delay startup (redundant with daemon-manager)
+-   ✅ **DO** modify the `daemons` list in `default.nix`
+-   ✅ **DO** use `match_type = "full"` for all NixOS-wrapped binaries
+-   ✅ **DO** check for Systemd conflicts when enabling Home Manager modules
+-   ✅ **DO** use safe kill logic that filters self and parent PIDs
+-   ✅ **DO** use XDG runtime directories for lock files
+-   ✅ **DO** use simple atomic lock mechanism (no retry logic)
+-   ✅ **DO** check git history before modifying daemon code
+-   ✅ **DO** test daemon changes with actual Sway session before committing
 
 ### Reference Documentation
+-   **Primary Guide**: `docs/user-modules/sway-daemon-integration.md` - Complete architecture and usage guide
+-   **Source Code**: `user/wm/sway/default.nix` (lines 36-111 for daemon list, lines 114-355 for script generation)
+-   **Systemd Example**: `user/wm/sway/waybar.nix` (line 8) - Example of disabling Systemd service
 
-- **Primary Guide**: `docs/user-modules/sway-daemon-integration.md` - Complete architecture and usage guide
-- **Source Code**: `user/wm/sway/default.nix` (lines 36-111 for daemon list, lines 114-355 for script generation)
-- **Systemd Example**: `user/wm/sway/waybar.nix` (line 8) - Example of disabling Systemd service
+---
 
 ## DESK Startup Applications Script
 
 **CRITICAL**: When adding new automation to the beginning of Sway sessions (startup scripts that launch applications), you MUST check and potentially extend the existing `desk-startup-apps` script instead of creating new startup commands.
 
 ### When This Rule Applies
-
 This rule applies when:
-- Adding applications to launch automatically at Sway startup
-- Creating new startup automation scripts for the DESK profile
-- Modifying application launch sequences at session start
-- Adding new applications to the DESK startup workflow
+-   Adding applications to launch automatically at Sway startup
+-   Creating new startup automation scripts for the DESK profile
+-   Modifying application launch sequences at session start
+-   Adding new applications to the DESK startup workflow
 
 ### Required Actions
-
 Before creating new startup automation:
-
-1. **Check Existing Script**: Review `user/wm/sway/default.nix` for the `desk-startup-apps-script` definition (generated in the `let` block)
-2. **Use Assignment Rules**: Use Sway assignment rules (`assign [app_id="..."] workspace number X`) in `window.commands` to route apps to correct workspaces
-3. **Extend Existing Script**: Modify the `desk-startup-apps-script` instead of creating new startup commands
-4. **Follow Parallel Launch Pattern**: Use parallel launching (background processes with `&`) after the KWallet detection phase
-5. **Respect DESK Profile**: The script is conditional on DESK profile (`systemSettings.swayPrimaryMonitor != null`) - maintain this pattern
+1.  **Check Existing Script**: Review `user/wm/sway/default.nix` for the `desk-startup-apps-script` definition (generated in the `let` block)
+2.  **Use Assignment Rules**: Use Sway assignment rules (`assign [app_id="..."] workspace number X`) in `window.commands` to route apps to correct workspaces
+3.  **Extend Existing Script**: Modify the `desk-startup-apps-script` instead of creating new startup commands
+4.  **Follow Parallel Launch Pattern**: Use parallel launching (background processes with `&`) after the KWallet detection phase
+5.  **Respect DESK Profile**: The script is conditional on DESK profile (`systemSettings.swayPrimaryMonitor != null`) - maintain this pattern
 
 ### Architecture
-
 The `desk-startup-apps` script uses a 3-phase approach:
-- **Phase 1 (Blocking)**: Launch Vivaldi and wait for window to appear
-- **Phase 2 (Smart Wait)**: Detect and wait for KDE Wallet prompt if it appears
-- **Phase 3 (Parallel Launch)**: Launch remaining applications in parallel (Cursor, Obsidian, Chromium)
+-   **Phase 1 (Blocking)**: Launch Vivaldi and wait for window to appear
+-   **Phase 2 (Smart Wait)**: Detect and wait for KDE Wallet prompt if it appears
+-   **Phase 3 (Parallel Launch)**: Launch remaining applications in parallel (Cursor, Obsidian, Chromium)
 
 ### Key Principles
-
-1. **Use Assignment Rules**: Always define `assign` rules in `window.commands` before adding apps to the startup script
-2. **Parallel Launch**: Launch apps in Phase 3 in parallel using `&` for faster startup
-3. **Conditional Execution**: Script checks for DESK profile and exits early on other profiles
-4. **No Config Reload Execution**: Script uses `always = false` to only run on initial startup
-5. **KWallet Awareness**: Script intelligently waits for KWallet prompt before launching remaining apps
+1.  **Use Assignment Rules**: Always define `assign` rules in `window.commands` before adding apps to the startup script
+2.  **Parallel Launch**: Launch apps in Phase 3 in parallel using `&` for faster startup
+3.  **Conditional Execution**: Script checks for DESK profile and exits early on other profiles
+4.  **No Config Reload Execution**: Script uses `always = false` to only run on initial startup
+5.  **KWallet Awareness**: Script intelligently waits for KWallet prompt before launching remaining apps
 
 ### Implementation Pattern
-
 ```nix
 # 1. Add assignment rule in window.commands
 assign [app_id="my-app"] workspace number X
@@ -363,69 +256,26 @@ my-app >/dev/null 2>&1 &
 ```
 
 ### Reference Documentation
+-   **Script Location**: `user/wm/sway/default.nix` (generated script in `let` block, startup command in `startup` list)
+-   **Assignment Rules**: `user/wm/sway/default.nix` (`window.commands` section)
+-   **Startup Command**: `user/wm/sway/default.nix` (`startup` list, after `daemon-sanity-check`)
 
-- **Script Location**: `user/wm/sway/default.nix` (generated script in `let` block, startup command in `startup` list)
-- **Assignment Rules**: `user/wm/sway/default.nix` (`window.commands` section)
-- **Startup Command**: `user/wm/sway/default.nix` (`startup` list, after `daemon-sanity-check`)
+---
 
 ## Git Commit Guidelines
 
-### Documentation Review Before Commits
+### Documentation First
 
-**CRITICAL**: Before committing any changes to git, always:
+Before committing, verify documentation impact:
 
-1. **Review Documentation Impact**
-   - Check if your changes affect any documented features
-   - Identify which documentation files need updates
-   - Verify documentation accuracy matches code changes
+1. **Review**: Check if changes affect documented features.
+2. **Update**: Update `docs/*.md` files (Level 2 or 3).
+3. **Create**: If adding features, create new docs.
+4. **Message**: Mention docs in commit (e.g., "Add feature X and update documentation").
 
-2. **Update Documentation When Needed**
-   - Update relevant documentation files if features changed
-   - Add new documentation for new features
-   - Remove or mark deprecated documentation
-   - Update examples if they're no longer accurate
-   - Fix broken links or references
+### Automated Checks
 
-3. **Documentation Checklist Before Commit**
-   - [ ] Code changes reviewed for documentation impact
-   - [ ] Relevant documentation files identified
-   - [ ] Documentation updated to reflect changes
-   - [ ] Examples updated if needed
-   - [ ] Cross-references checked and updated
-   - [ ] New features documented (if applicable)
-   - [ ] Deprecated features marked (if applicable)
-   - [ ] Links verified (no broken references)
-
-4. **What to Document**
-   - **New Features**: Add documentation to appropriate level (2 or 3)
-   - **Changed Features**: Update existing documentation
-   - **Removed Features**: Mark as deprecated or remove documentation
-   - **Configuration Changes**: Update configuration guide
-   - **Script Changes**: Update scripts documentation
-   - **Module Changes**: Update module documentation
-
-5. **Documentation Commit Messages**
-   - Include documentation updates in commit messages
-   - Example: "Add feature X and update documentation"
-   - Or separate commits: "Update docs for feature X"
-
-### Automated Documentation Checks
-
-When making changes, consider:
-
-- **Configuration Changes**: Update `docs/configuration.md` and relevant module docs
-- **Script Changes**: Update `docs/scripts.md` and script headers
-- **Module Changes**: Update `docs/system-modules.md` or `docs/user-modules.md`
-- **New Features**: Add to appropriate documentation level
-- **Security Changes**: Update `docs/security.md` and related docs
-- **Hardware Changes**: Update `docs/hardware.md` and related docs
-
-## General Guidelines
-
-- **Preserve existing content** - don't remove without explicit request
-- **Format consistently** - follow existing patterns
-- **Add value** - improve clarity and organization
-- **Test changes** - verify documentation accuracy
-- **Update references** - keep links current
-- **Document as you code** - update docs with code changes
-
+*   **Configuration Change**: Update `docs/configuration.md` and module docs.
+*   **Script Change**: Update `docs/scripts.md`.
+*   **Module Change**: Update `docs/system-modules.md` or `docs/user-modules.md`.
+*   **New Feature**: Add to `docs/future/` or `docs/`.
