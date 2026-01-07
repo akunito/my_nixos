@@ -1669,9 +1669,14 @@ in {
         {
           command = "${config.home.homeDirectory}/.config/sway/scripts/swaysome-init.sh";
         }
-        # CRITICAL: Set dark mode environment variables for GTK and Qt apps (both XWayland and Wayland native)
+        # CRITICAL: Sync Home Manager environment variables with D-Bus activation environment
+        # Home Manager defines variables in ~/.nix-profile/etc/profile.d/hm-session-vars.sh,
+        # but Sway doesn't automatically import these into D-Bus activation environment.
+        # This command syncs declarative config with the running session so GUI apps inherit
+        # the correct GTK/QT theme variables.
+        # Note: gsettings are handled by dconf.settings in Home Manager, not here.
         {
-          command = "bash -c 'export GTK_APPLICATION_PREFER_DARK_THEME=1; export GTK_THEME=Adwaita-dark; gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true; gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark 2>/dev/null || true; dbus-update-activation-environment --systemd GTK_APPLICATION_PREFER_DARK_THEME GTK_THEME'";
+          command = "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME";
           always = true;
         }
         # Unified daemon management - starts all daemons with smart reload support

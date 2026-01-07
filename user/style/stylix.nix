@@ -67,6 +67,8 @@ if stylixEnabled then {
   stylix.targets.kde.enable = false;
   stylix.targets.kitty.enable = true;
   stylix.targets.gtk.enable = true;
+  stylix.targets.qt.enable = true;
+  stylix.targets.qt.platform = "qtct";  # Use qtct for custom Stylix colors (Stylix generates qt5ct config automatically)
   stylix.targets.rofi.enable = if (userSettings.wmType == "x11") then true else false;
   
   # CRITICAL: Stylix creates CSS files but doesn't set gtk-theme-name automatically
@@ -86,10 +88,23 @@ if stylixEnabled then {
   };
   
   # CRITICAL: Set environment variables system-wide for dark mode
+  # Note: QT_QPA_PLATFORMTHEME is set by Stylix when stylix.targets.qt.enable = true
+  # Use lib.mkForce to override Home Manager's qt module which sets it to "kde" when qt.platformTheme.name = "kde"
   home.sessionVariables = {
     GTK_THEME = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
     GTK_APPLICATION_PREFER_DARK_THEME = "1";
-    QT_QPA_PLATFORMTHEME = "gtk3";
+    QT_QPA_PLATFORMTHEME = lib.mkForce "qt5ct";  # Force qt5ct for Stylix (overrides qt module's "kde" setting)
+  };
+  
+  # CRITICAL: Set gsettings for GTK4/LibAdwaita apps (Chromium, Blueman, etc.)
+  # Home Manager's gtk module sets config files but doesn't set gsettings via dconf
+  # NOTE: This is only applied when Stylix is enabled (not for Plasma 6)
+  # Plasma 6 has its own theming system and doesn't use Stylix
+  dconf.settings = {
+    "org/gnome/desktop/interface" = {
+      color-scheme = if config.stylix.polarity == "dark" then "prefer-dark" else "default";
+      gtk-theme = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
+    };
   };
   
   stylix.targets.feh.enable = if (userSettings.wmType == "x11") then true else false;
@@ -99,26 +114,28 @@ if stylixEnabled then {
     feh --no-fehbg --bg-fill ''+config.stylix.image+'';
   '';
   home.file.".fehbg-stylix".executable = true;
+  # CRITICAL: Do NOT manually create qt5ct config files - Stylix generates them declaratively
+  # when stylix.targets.qt.enable = true. Manual file creation conflicts with Stylix.
+  # Stylix automatically generates:
+  # - .config/qt5ct/colors/oomox-current.conf
+  # - .config/qt5ct/qt5ct.conf
+  # - .config/Trolltech.conf
+  # - .config/kdeglobals
   home.file = {
-    ".config/qt5ct/colors/oomox-current.conf".source = config.lib.stylix.colors {
-      template = builtins.readFile ./oomox-current.conf.mustache;
-      extension = ".conf";
-    };
     ".config/Trolltech.conf" = {
       source = config.lib.stylix.colors {
-      template = builtins.readFile ./Trolltech.conf.mustache;
-      extension = ".conf";
-    };
+        template = builtins.readFile ./Trolltech.conf.mustache;
+        extension = ".conf";
+      };
       force = true;  # CRITICAL: Allow overwriting existing file (managed by Stylix)
     };
     ".config/kdeglobals" = {
       source = config.lib.stylix.colors {
-      template = builtins.readFile ./Trolltech.conf.mustache;
-      extension = "";
+        template = builtins.readFile ./Trolltech.conf.mustache;
+        extension = "";
       };
       force = true;  # CRITICAL: Allow overwriting existing file (managed by Stylix)
     };
-    ".config/qt5ct/qt5ct.conf".text = pkgs.lib.mkBefore (builtins.readFile ./qt5ct.conf);
   };
   home.file.".config/hypr/hyprpaper.conf".text = ''
     preload = ''+config.stylix.image+''
@@ -126,23 +143,24 @@ if stylixEnabled then {
     wallpaper = ,''+config.stylix.image+''
 
   '';
-  # Qt5 styling - only for X11 (not needed for Wayland/SwayFX)
+  # Qt styling - works on both X11 and Wayland
   # Note: Removed breeze-icons to avoid conflict with papirus-icon-theme
   # Papirus icon theme is set in profiles/work/home.nix and includes some breeze icons
-  # Since we're using QT_QPA_PLATFORMTHEME=gtk3, we don't need breeze-icons
+  # Stylix generates qt5ct config automatically when stylix.targets.qt.enable = true
+  # NOTE: This is only applied when Stylix is enabled (not for Plasma 6)
+  # Plasma 6 has its own Qt theming system and doesn't use Stylix/qt5ct
   home.packages = with pkgs; [
-     libsForQt5.qt5ct pkgs.noto-fonts-monochrome-emoji
-  ] ++ lib.optionals (userSettings.wmType == "x11") [
-     # Only include breeze if available and needed for X11
-     # If breeze is not available, qt5ct will use built-in styles
+    libsForQt5.qt5ct  # qt5ct is needed for QT5/QT6 theming (Stylix uses it)
+    pkgs.noto-fonts-monochrome-emoji
   ];
-  qt = lib.mkIf (userSettings.wmType == "x11") {
+  qt = {
     enable = true;
     # style.package and style.name are optional - qt5ct can work without them
     # If breeze package becomes available, uncomment these lines:
     # style.package = pkgs.libsForQt5.breeze;
     # style.name = "breeze-dark";
-    platformTheme.name = "kde";
+    # NOTE: Do NOT set platformTheme.name here - it causes Home Manager to set QT_QPA_PLATFORMTHEME = "kde"
+    # We want QT_QPA_PLATFORMTHEME = "qt5ct" instead, which is set via home.sessionVariables above
   };
   fonts.fontconfig.defaultFonts = {
     monospace = [ userSettings.font ];

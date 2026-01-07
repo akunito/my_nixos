@@ -43,8 +43,8 @@ in
   };
   stylix.targets.console.enable = true;
 
-  environment.sessionVariables = {
-    QT_QPA_PLATFORMTHEME = "qt5ct";
-  };
+  # CRITICAL: Do NOT set QT_QPA_PLATFORMTHEME at system level - let user-level control it
+  # User-level (Home Manager) sets this via Stylix or home.sessionVariables
+  # System-level should only set base variables, not application-specific theming
 
 }
