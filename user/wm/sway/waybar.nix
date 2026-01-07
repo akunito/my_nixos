@@ -308,7 +308,7 @@ in {
       
       /* Dock bar: hidden by default, show on hover at bottom */
       /* CRITICAL: Use name="dock" class selector (Waybar adds classes based on name config) */
-      /* Waybar CSS parser doesn't support 'height' property on window elements */
+      /* Waybar CSS parser doesn't support 'height' or 'pointer-events' properties */
       /* Use opacity and min-height only for hover detection */
       window#waybar.dock {
         opacity: 0;
@@ -317,7 +317,6 @@ in {
         padding: 0;
         background-color: transparent;  /* Invisible but present */
         transition: opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
-        pointer-events: auto;  /* Must allow pointer events for hover to work */
       }
       
       window#waybar.dock:hover {
@@ -331,13 +330,9 @@ in {
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
       }
       
-      /* Auto-width for taskbar based on content */
+      /* Taskbar styling - Waybar CSS parser has limited support */
+      /* Removed flexbox properties (display: flex, justify-content) as they may not be supported */
       #taskbar {
-        width: auto;
-        min-width: 100px;
-        max-width: 100%;
-        display: flex;
-        justify-content: center;
         border-radius: 12px;
         padding: 4px;
       }
