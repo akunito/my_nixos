@@ -316,11 +316,29 @@ let
     RUNNING_PIDS=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
     RUNNING_COUNT=$(echo "$RUNNING_PIDS" | grep -v "^$" | wc -l)
     
-    # #region agent log
+    # CRITICAL: For waybar, also check for old patterns from previous rebuilds
+    # Old waybar processes might be running with old store paths or simplified patterns
+    # We need to kill these to prevent conflicts
     if echo "$PATTERN" | grep -q "waybar -c"; then
+      # Check for old patterns: /bin/waybar, waybar -c (without store path), or old store paths
+      OLD_PATTERNS="/bin/waybar waybar -c"
+      for OLD_PAT in $OLD_PATTERNS; do
+        OLD_PIDS=$(${pkgs.procps}/bin/pgrep -f "$OLD_PAT" 2>/dev/null | grep -v "^$" || echo "")
+        if [ -n "$OLD_PIDS" ]; then
+          # Check if these PIDs are different from the current pattern's PIDs
+          for OLD_PID in $OLD_PIDS; do
+            if ! echo "$RUNNING_PIDS" | grep -q "^''${OLD_PID}$"; then
+              log "WARNING: Found old waybar process (PID: $OLD_PID, pattern: $OLD_PAT), killing it" "warning"
+              kill "$OLD_PID" 2>/dev/null || true
+            fi
+          done
+        fi
+      done
+      
+      # #region agent log
       echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:check-instances\",\"message\":\"Checking waybar instances\",\"data\":{\"pattern\":\"$PATTERN\",\"runningCount\":\"$RUNNING_COUNT\",\"pids\":\"$RUNNING_PIDS\",\"hypothesisId\":\"D\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # #endregion
     fi
-    # #endregion
     
     if [ -n "$RUNNING_PIDS" ] && [ "$RUNNING_COUNT" -gt 0 ]; then
       # Process(es) running - check for duplicates
@@ -569,22 +587,26 @@ let
     # Also pipe logs to systemd for real-time monitoring (background processes)
     # Only start tail processes if log files exist and are non-empty
     # Track tail PIDs for cleanup to prevent orphaned processes
+    # CRITICAL: Start tail processes in background without subshell to capture correct PID
     TAIL_STDOUT_PID=""
     TAIL_STDERR_PID=""
     
     if [ -f "$STDOUT_LOG" ] && [ -s "$STDOUT_LOG" ]; then
-      (tail -f "$STDOUT_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p info &)
+      tail -f "$STDOUT_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p info &
       TAIL_STDOUT_PID=$!
     fi
     if [ -f "$STDERR_LOG" ] && [ -s "$STDERR_LOG" ]; then
-      (tail -f "$STDERR_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p err &)
+      tail -f "$STDERR_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p err &
       TAIL_STDERR_PID=$!
     fi
     
     # Cleanup function to kill orphaned tail processes
+    # Also kill any remaining tail processes matching the pattern (safety net)
     cleanup_tails() {
       [ -n "$TAIL_STDOUT_PID" ] && kill "$TAIL_STDOUT_PID" 2>/dev/null || true
       [ -n "$TAIL_STDERR_PID" ] && kill "$TAIL_STDERR_PID" 2>/dev/null || true
+      # Safety net: kill any orphaned tail processes for this daemon's logs
+      ${pkgs.procps}/bin/pkill -f "tail -f.*daemon-''${PATTERN_SANITIZED}" 2>/dev/null || true
     }
     trap cleanup_tails EXIT
     
@@ -895,14 +917,16 @@ let
         fi
         
         # Additional check for waybar: verify the main process is actually running (not just child processes)
+        # CRITICAL: Use the exact pattern from daemon definition (with full store path) for consistency
         if [ "${daemon.name}" = "waybar" ] && [ "$DAEMON_RUNNING" = "false" ]; then
           # Check if any waybar process is running (might be child processes)
           if ${pkgs.procps}/bin/pgrep -f "waybar" > /dev/null 2>&1; then
             # Waybar processes exist, but main process might have crashed
-            # Check if main process (with -c flag) exists
-            if ${pkgs.procps}/bin/pgrep -f "waybar -c" > /dev/null 2>&1; then
+            # CRITICAL: Use the exact pattern from daemon definition (not a simplified fallback)
+            # This ensures we match the same process that daemon-manager would match
+            if ${pkgs.procps}/bin/pgrep $PGREP_FLAG ${lib.strings.escapeShellArg daemon.pattern} > /dev/null 2>&1; then
               DAEMON_RUNNING=true
-              log "INFO: ${daemon.name} main process is running (child processes detected)" "info"
+              log "INFO: ${daemon.name} main process is running (matched with pattern: ${daemon.pattern})" "info"
             fi
           fi
         fi
