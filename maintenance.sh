@@ -9,15 +9,26 @@
 set -o pipefail
 
 # Configuration variables
-SystemGenerationsToKeep=4
-HomeManagerGenerationsToKeep=2
-UserGenerationsKeepOnlyOlderThan="15d"
+# System and Home-Manager use count-based cleanup: keep last N generations
+SystemGenerationsToKeep=6      # Keep last 6 system generations (uses +N syntax)
+HomeManagerGenerationsToKeep=4 # Keep last 4 home-manager generations (uses +N syntax)
+# User generations use time-based cleanup: delete older than N days
+UserGenerationsKeepOnlyOlderThan="15d"  # Delete user generations older than 15 days (uses Nd syntax)
 MAX_LOG_FILES=3
 MAX_LOG_SIZE=$((10 * 1024 * 1024))  # 10MB in bytes
 
 # Script directory and log file
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 LOG_FILE="$SCRIPT_DIR/maintenance.log"
+
+# CRITICAL: Refuse to run as root
+# This script must run as a normal user and uses sudo internally when needed
+if [ "$EUID" -eq 0 ]; then
+    echo "ERROR: This script must be run as a normal user." >&2
+    echo "It will use sudo internally when needed for system operations." >&2
+    echo "Please run: $0" >&2
+    exit 1
+fi
 
 # Ensure log file exists
 if [ ! -f "$LOG_FILE" ]; then
@@ -32,6 +43,8 @@ rotate_log() {
         
         if [ "$file_size" -gt "$MAX_LOG_SIZE" ]; then
             mv "$LOG_FILE" "${LOG_FILE}_$(date '+%Y-%m-%d_%H-%M-%S').old"
+            # Explicitly create new log file to ensure correct ownership
+            touch "$LOG_FILE"
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] Log file rotated. A new log file has been created." >> "$LOG_FILE"
         fi
     fi
@@ -53,7 +66,41 @@ cleanup_old_logs() {
     fi
 }
 
+# Function to count generations from list output
+# Uses simple wc -l for robustness
+count_generations() {
+    local output="$1"
+    if [ -z "$output" ]; then
+        echo "0"
+    else
+        echo "$output" | grep -E '^\s+[0-9]+' | wc -l
+    fi
+}
+
+# Function to parse space freed from nix-collect-garbage output
+# Safely handles different output formats, defaults to "Unknown" if parsing fails
+parse_gc_space_freed() {
+    local output="$1"
+    local space_freed
+    
+    # Try to extract "X.XX MiB freed" pattern
+    space_freed=$(echo "$output" | grep -oE '[0-9]+\.[0-9]+ MiB freed' | head -1)
+    
+    if [ -n "$space_freed" ]; then
+        echo "$space_freed"
+    else
+        # Try alternative format: "Note: currently hard linking saves X.XX MiB"
+        space_freed=$(echo "$output" | grep -oE 'saves [0-9]+\.[0-9]+ MiB' | head -1 | sed 's/saves //')
+        if [ -n "$space_freed" ]; then
+            echo "$space_freed"
+        else
+            echo "Unknown"
+        fi
+    fi
+}
+
 # Function to log task execution with proper error handling
+# Returns exit code for error tracking
 log_task() {
     local task="$1"
     local output
@@ -106,22 +153,193 @@ check_sudo() {
     fi
 }
 
+# Task: System generations cleanup
+# Sets before/after/deleted counts via name references
+# Returns exit code (0 = success, 1 = error)
+task_system_cleanup() {
+    local -n before_ref=$1
+    local -n after_ref=$2
+    local -n deleted_ref=$3
+    local has_error=0
+    
+    echo "=== System Generations Cleanup ===" | tee -a "$LOG_FILE"
+    
+    local system_list_before
+    system_list_before=$(sudo nix-env -p /nix/var/nix/profiles/system --list-generations 2>&1)
+    if ! log_task "System cleanup: Current generations" sudo nix-env -p /nix/var/nix/profiles/system --list-generations; then
+        has_error=1
+    fi
+    before_ref=$(count_generations "$system_list_before")
+    
+    if ! log_task "System cleanup: Removing older generations" sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +$SystemGenerationsToKeep; then
+        has_error=1
+    fi
+    
+    local system_list_after
+    system_list_after=$(sudo nix-env -p /nix/var/nix/profiles/system --list-generations 2>&1)
+    if ! log_task "System cleanup: Generations after cleanup" sudo nix-env -p /nix/var/nix/profiles/system --list-generations; then
+        has_error=1
+    fi
+    after_ref=$(count_generations "$system_list_after")
+    deleted_ref=$((before_ref - after_ref))
+    
+    if [ $deleted_ref -gt 0 ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] System cleanup: Deleted $deleted_ref generation(s)" | tee -a "$LOG_FILE"
+    elif [ $before_ref -le $SystemGenerationsToKeep ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] System cleanup: No generations to delete (only $before_ref exist, keeping $SystemGenerationsToKeep)" | tee -a "$LOG_FILE"
+    fi
+    
+    return $has_error
+}
+
+# Task: Home-Manager generations cleanup
+# Sets before/after/deleted counts via name references
+# Returns exit code (0 = success, 1 = error)
+task_hm_cleanup() {
+    local -n before_ref=$1
+    local -n after_ref=$2
+    local -n deleted_ref=$3
+    local has_error=0
+    
+    echo "=== Home-Manager Generations Cleanup ===" | tee -a "$LOG_FILE"
+    
+    local hm_list_before
+    hm_list_before=$(home-manager generations 2>&1)
+    if ! log_task "Home-manager cleanup: Current generations" home-manager generations; then
+        has_error=1
+    fi
+    before_ref=$(count_generations "$hm_list_before")
+    
+    if ! log_task "Home-manager cleanup: Removing older generations" nix-env --profile "$HOME/.local/state/nix/profiles/home-manager" --delete-generations +$HomeManagerGenerationsToKeep; then
+        has_error=1
+    fi
+    
+    local hm_list_after
+    hm_list_after=$(home-manager generations 2>&1)
+    if ! log_task "Home-manager cleanup: Generations after cleanup" home-manager generations; then
+        has_error=1
+    fi
+    after_ref=$(count_generations "$hm_list_after")
+    deleted_ref=$((before_ref - after_ref))
+    
+    if [ $deleted_ref -gt 0 ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Home-manager cleanup: Deleted $deleted_ref generation(s)" | tee -a "$LOG_FILE"
+    elif [ $before_ref -le $HomeManagerGenerationsToKeep ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Home-manager cleanup: No generations to delete (only $before_ref exist, keeping $HomeManagerGenerationsToKeep)" | tee -a "$LOG_FILE"
+    elif [ -z "$hm_list_before" ] || [ "$before_ref" -eq 0 ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Home-manager cleanup: No generations found" | tee -a "$LOG_FILE"
+    fi
+    
+    return $has_error
+}
+
+# Task: User generations cleanup
+# Sets before/after/deleted counts via name references
+# Returns exit code (0 = success, 1 = error)
+task_user_cleanup() {
+    local -n before_ref=$1
+    local -n after_ref=$2
+    local -n deleted_ref=$3
+    local has_error=0
+    
+    echo "=== User Generations Cleanup ===" | tee -a "$LOG_FILE"
+    
+    local user_list_before
+    user_list_before=$(nix-env --list-generations 2>&1)
+    if ! log_task "User cleanup: Current generations" nix-env --list-generations; then
+        has_error=1
+    fi
+    before_ref=$(count_generations "$user_list_before")
+    
+    if ! log_task "User cleanup: Removing older generations" nix-env --delete-generations $UserGenerationsKeepOnlyOlderThan; then
+        has_error=1
+    fi
+    
+    local user_list_after
+    user_list_after=$(nix-env --list-generations 2>&1)
+    if ! log_task "User cleanup: Generations after cleanup" nix-env --list-generations; then
+        has_error=1
+    fi
+    after_ref=$(count_generations "$user_list_after")
+    deleted_ref=$((before_ref - after_ref))
+    
+    if [ $deleted_ref -gt 0 ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] User cleanup: Deleted $deleted_ref generation(s)" | tee -a "$LOG_FILE"
+    elif [ -z "$user_list_before" ] || [ "$before_ref" -eq 0 ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] User cleanup: No generations found" | tee -a "$LOG_FILE"
+    else
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] User cleanup: No generations older than $UserGenerationsKeepOnlyOlderThan to delete" | tee -a "$LOG_FILE"
+    fi
+    
+    return $has_error
+}
+
+# Task: Garbage collection
+# Sets space_freed via name reference
+# Returns exit code (0 = success, 1 = error)
+task_gc() {
+    local -n space_freed_ref=$1
+    local has_error=0
+    
+    echo "=== Garbage Collection ===" | tee -a "$LOG_FILE"
+    
+    # Garbage collection (no flags - cleans up store paths orphaned by generation deletion)
+    if ! log_task "Running nix-collect-garbage" echo "Starting garbage collection..."; then
+        has_error=1
+    fi
+    
+    local gc_output
+    gc_output=$(sudo nix-collect-garbage 2>&1)
+    if ! log_task "Collecting garbage" echo "$gc_output"; then
+        has_error=1
+    fi
+    space_freed_ref=$(parse_gc_space_freed "$gc_output")
+    
+    return $has_error
+}
+
 # Execute all maintenance tasks
+# Returns non-zero exit code if any critical task fails (for automation)
 execute_all() {
-    log_task "System cleanup: Current generations" sudo nix-env -p /nix/var/nix/profiles/system --list-generations
-    log_task "System cleanup: Removing older generations" sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +$SystemGenerationsToKeep
-    log_task "System cleanup: Generations after cleanup" sudo nix-env -p /nix/var/nix/profiles/system --list-generations
-
-    log_task "Home-manager cleanup: Current generations" home-manager generations
-    log_task "Home-manager cleanup: Removing older generations" nix-env --profile "$HOME/.local/state/nix/profiles/home-manager" --delete-generations +$HomeManagerGenerationsToKeep
-    log_task "Home-manager cleanup: Generations after cleanup" home-manager generations
-
-    log_task "User cleanup: Current generations" nix-env --list-generations
-    log_task "User cleanup: Removing older generations" nix-env --delete-generations $UserGenerationsKeepOnlyOlderThan
-    log_task "User cleanup: Generations after cleanup" nix-env --list-generations
-
-    log_task "Running nix-collect-garbage"
-    log_task "Collecting garbage" sudo nix-collect-garbage
+    local has_error=0
+    local system_before=0
+    local system_after=0
+    local system_deleted=0
+    local hm_before=0
+    local hm_after=0
+    local hm_deleted=0
+    local user_before=0
+    local user_after=0
+    local user_deleted=0
+    local gc_space_freed=""
+    
+    # Run all cleanup tasks
+    if ! task_system_cleanup system_before system_after system_deleted; then
+        has_error=1
+    fi
+    
+    if ! task_hm_cleanup hm_before hm_after hm_deleted; then
+        has_error=1
+    fi
+    
+    if ! task_user_cleanup user_before user_after user_deleted; then
+        has_error=1
+    fi
+    
+    if ! task_gc gc_space_freed; then
+        has_error=1
+    fi
+    
+    # Summary
+    echo "" | tee -a "$LOG_FILE"
+    echo "=== Maintenance Summary ===" | tee -a "$LOG_FILE"
+    echo "System generations: $system_before -> $system_after (deleted: $system_deleted)" | tee -a "$LOG_FILE"
+    echo "Home-manager generations: $hm_before -> $hm_after (deleted: $hm_deleted)" | tee -a "$LOG_FILE"
+    echo "User generations: $user_before -> $user_after (deleted: $user_deleted)" | tee -a "$LOG_FILE"
+    echo "Space freed: $gc_space_freed" | tee -a "$LOG_FILE"
+    
+    # Return error status for automation (cron/systemd)
+    return $has_error
 }
 
 # Show interactive menu
@@ -129,8 +347,8 @@ show_menu() {
     echo ""
     echo "Select maintenance tasks to perform (separate by spaces for multiple choices):"
     echo "1) Run all tasks"
-    echo "2) Remove system generations older than $SystemGenerationsToKeep"
-    echo "3) Remove home-manager generations older than $HomeManagerGenerationsToKeep"
+    echo "2) Prune system generations (Keep last $SystemGenerationsToKeep)"
+    echo "3) Prune home-manager generations (Keep last $HomeManagerGenerationsToKeep)"
     echo "4) Remove user generations older than $UserGenerationsKeepOnlyOlderThan"
     echo "5) Run Nix collect-garbage"
     echo "Q) Quit"
@@ -160,8 +378,13 @@ done
 
 # Main execution logic
 if $silent; then
-    execute_all
-    echo "Non-interactive run completed. Find the output at $LOG_FILE"
+    if execute_all; then
+        echo "Non-interactive run completed successfully. Find the output at $LOG_FILE"
+        exit 0
+    else
+        echo "Non-interactive run completed with errors. Find the output at $LOG_FILE" >&2
+        exit 1
+    fi
 else
     while true; do
         show_menu
@@ -174,27 +397,24 @@ else
                     execute_all
                     ;;
                 2)
-                    log_task "System cleanup: Current generations" sudo nix-env -p /nix/var/nix/profiles/system --list-generations
-                    log_task "System cleanup: Removing older generations" sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +$SystemGenerationsToKeep
-                    log_task "System cleanup: Generations after cleanup" sudo nix-env -p /nix/var/nix/profiles/system --list-generations
+                    local system_before system_after system_deleted
+                    task_system_cleanup system_before system_after system_deleted
                     ;;
                 3)
-                    log_task "Home-manager cleanup: Current generations" home-manager generations
-                    log_task "Home-manager cleanup: Removing older generations" nix-env --profile "$HOME/.local/state/nix/profiles/home-manager" --delete-generations +$HomeManagerGenerationsToKeep
-                    log_task "Home-manager cleanup: Generations after cleanup" home-manager generations
+                    local hm_before hm_after hm_deleted
+                    task_hm_cleanup hm_before hm_after hm_deleted
                     ;;
                 4)
-                    log_task "User cleanup: Current generations" nix-env --list-generations
-                    log_task "User cleanup: Removing older generations" nix-env --delete-generations $UserGenerationsKeepOnlyOlderThan
-                    log_task "User cleanup: Generations after cleanup" nix-env --list-generations
+                    local user_before user_after user_deleted
+                    task_user_cleanup user_before user_after user_deleted
                     ;;
                 5)
-                    log_task "Running nix-collect-garbage"
-                    log_task "Collecting garbage" sudo nix-collect-garbage
+                    local gc_space_freed
+                    task_gc gc_space_freed
                     ;;
                 [Qq])
                     echo "Quitting..."
-                    log_task "System maintenance completed" echo "System maintenance completed on $(date)"
+                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] System maintenance session ended by user" | tee -a "$LOG_FILE"
                     echo "Find the output at $LOG_FILE"
                     exit 0
                     ;;

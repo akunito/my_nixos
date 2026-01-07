@@ -123,18 +123,19 @@ The `maintenance.sh` script automates system maintenance tasks.
 ### What It Does
 
 1. **System Generations Cleanup**
-   - Keeps last 4 system generations
+   - Keeps last 6 system generations (count-based: `+N` syntax)
    - Removes older generations
 
 2. **Home Manager Generations Cleanup**
-   - Keeps last 2 Home Manager generations
+   - Keeps last 4 Home Manager generations (count-based: `+N` syntax)
    - Removes older generations
 
 3. **User Generations Cleanup**
-   - Removes user generations older than 15 days
+   - Removes user generations older than 15 days (time-based: `Nd` syntax)
 
 4. **Garbage Collection**
    - Collects garbage from system and user stores
+   - Removes store paths orphaned by generation deletion
    - Frees disk space
 
 ### Configuration
@@ -142,9 +143,9 @@ The `maintenance.sh` script automates system maintenance tasks.
 Edit these variables in `maintenance.sh`:
 
 ```sh
-SystemGenerationsToKeep=4
-HomeManagerGenerationsToKeep=2
-UserGenerationsKeepOnlyOlderThan="15d"
+SystemGenerationsToKeep=6      # Keep last 6 system generations (count-based)
+HomeManagerGenerationsToKeep=4  # Keep last 4 home-manager generations (count-based)
+UserGenerationsKeepOnlyOlderThan="15d"  # Delete user generations older than 15 days (time-based)
 ```
 
 ### Logging

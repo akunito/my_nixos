@@ -334,27 +334,29 @@ harden.sh
 - `-s, --silent` - Run all tasks silently without menu
 
 **What It Does**:
-1. **System Generations Cleanup**: Keeps last 4 generations, removes older
-2. **Home Manager Generations Cleanup**: Keeps last 2 generations, removes older
-3. **User Generations Cleanup**: Removes generations older than 15 days
-4. **Garbage Collection**: Collects unused Nix store entries
+1. **System Generations Cleanup**: Keeps last 6 generations (count-based), removes older
+2. **Home Manager Generations Cleanup**: Keeps last 4 generations (count-based), removes older
+3. **User Generations Cleanup**: Removes generations older than 15 days (time-based)
+4. **Garbage Collection**: Collects unused Nix store entries orphaned by generation deletion
 
 **Configuration**:
 ```sh
-SystemGenerationsToKeep=4
-HomeManagerGenerationsToKeep=2
-UserGenerationsKeepOnlyOlderThan="15d"
+SystemGenerationsToKeep=6      # Keep last 6 system generations (count-based: +N)
+HomeManagerGenerationsToKeep=4 # Keep last 4 home-manager generations (count-based: +N)
+UserGenerationsKeepOnlyOlderThan="15d"  # Delete user generations older than 15 days (time-based: Nd)
 ```
 
-**Logging**: All actions logged to `maintenance.log` with timestamps.
+**Logging**: All actions logged to `maintenance.log` with timestamps. Includes summary statistics.
 
 **Interactive Menu**:
 - `1` - Run all tasks
-- `2` - Remove system generations
-- `3` - Remove home-manager generations
-- `4` - Remove user generations
+- `2` - Prune system generations (Keep last 6)
+- `3` - Prune home-manager generations (Keep last 4)
+- `4` - Remove user generations older than 15d
 - `5` - Run garbage collection
 - `Q` - Quit
+
+**Note**: The script must be run as a normal user (not root). It uses `sudo` internally when needed.
 
 **Related**: See [Maintenance Guide](maintenance.md)
 
