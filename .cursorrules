@@ -240,6 +240,42 @@ programs.waybar = {
 5. **Use safe kill logic** - Never use `pkill -f` directly without filtering `$$` (self PID) and `$PPID` (parent PID) to prevent self-termination
 6. **Use XDG runtime directories for lock files** - Always use `/run/user/$(id -u)/` (XDG runtime directory), never `/tmp/` to prevent security issues and stale locks
 
+### Lock File Mechanism Rules
+
+**CRITICAL**: The lock file mechanism MUST use the simple atomic design:
+- ✅ **CORRECT**: `flock -n 9 || { echo "..."; exit 0; }` - immediate exit if lock held
+- ❌ **FORBIDDEN**: Retry logic with `sleep` and double-check - creates race conditions
+- ❌ **FORBIDDEN**: `flock -w` with timeout - unnecessary complexity
+- **Why**: The simple design prevents race conditions. Any retry logic allows multiple processes to pass the lock check.
+
+### Startup Script Timing Rules
+
+**CRITICAL**: Startup scripts MUST NOT add unnecessary delays:
+- ✅ **CORRECT**: Simple, fast startup with minimal delays
+- ❌ **FORBIDDEN**: Blocking config validation that delays startup
+- ❌ **FORBIDDEN**: Final verification checks that add 2+ second delays
+- ❌ **FORBIDDEN**: Multiple sleep statements in startup sequence
+- **Why**: Added delays interfere with daemon timing, especially Wayland initialization.
+
+### Daemon Manager Verification Rules
+
+**CRITICAL**: Verification timing MUST be appropriate for each daemon:
+- ✅ **CORRECT**: Standard verification (0.5s, 1s, 2s) for most daemons
+- ✅ **CORRECT**: Extended verification for waybar (add post-verification check after 2s)
+- ❌ **FORBIDDEN**: Too-short verification that doesn't catch crashes
+- ❌ **FORBIDDEN**: Too-long verification that delays startup unnecessarily
+- **Why**: Waybar needs extra time for Wayland connection, but other daemons don't.
+
+### Testing Requirements
+
+**CRITICAL**: Before committing daemon-related changes:
+1. **Check git history** - Review working commits (e.g., `00dadd0`) to understand original design
+2. **Test lock mechanism** - Verify no race conditions with rapid reloads
+3. **Test waybar startup** - Verify waybar starts and stays running
+4. **Test reload** - Verify `swaymsg reload` doesn't cause conflicts
+5. **Check logs** - Review `journalctl --user -t sway-daemon-mgr` for errors
+6. **Verify no orphaned processes** - Check for leftover tail processes
+
 ### Checklist
 
 When modifying daemon-related code:
@@ -261,11 +297,17 @@ When modifying daemon-related code:
 - ❌ **DON'T** forget to disable Systemd services for daemons managed by `daemon-manager`
 - ❌ **DON'T** use `pkill -f` without filtering `$$` and `$PPID`
 - ❌ **DON'T** use `/tmp/` for lock files (use `/run/user/$(id -u)/`)
+- ❌ **DON'T** add retry logic to lock file mechanism (creates race conditions)
+- ❌ **DON'T** add blocking delays to startup scripts (interferes with timing)
+- ❌ **DON'T** add final verification checks that delay startup (redundant with daemon-manager)
 - ✅ **DO** modify the `daemons` list in `default.nix`
 - ✅ **DO** use `match_type = "full"` for all NixOS-wrapped binaries
 - ✅ **DO** check for Systemd conflicts when enabling Home Manager modules
 - ✅ **DO** use safe kill logic that filters self and parent PIDs
 - ✅ **DO** use XDG runtime directories for lock files
+- ✅ **DO** use simple atomic lock mechanism (no retry logic)
+- ✅ **DO** check git history before modifying daemon code
+- ✅ **DO** test daemon changes with actual Sway session before committing
 
 ### Reference Documentation
 

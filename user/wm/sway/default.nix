@@ -261,15 +261,6 @@ let
     REQUIRES_SWAY="$5"
     REQUIRES_TRAY="$6"
     
-    # Debug logging
-    DEBUG_LOG="/home/akunito/.dotfiles/.cursor/debug.log"
-    log_debug() {
-      echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager\",\"message\":\"$1\",\"data\":$2,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"$3\"}" >> "$DEBUG_LOG" 2>/dev/null || true
-    }
-    
-    # Log entry with all parameters
-    log_debug "Daemon manager entry" "{\"pattern\":\"$PATTERN\",\"matchType\":\"$MATCH_TYPE\",\"command\":\"$COMMAND\",\"requiresSway\":\"$REQUIRES_SWAY\",\"requiresTray\":\"$REQUIRES_TRAY\"}" "hypothesis-c"
-    
     # Determine pgrep flags based on match_type
     # Note: We no longer use pkill - safe_kill uses pgrep + kill instead
     if [ "$MATCH_TYPE" = "exact" ]; then
@@ -277,7 +268,6 @@ let
     else
       PGREP_FLAG="-f"
     fi
-    log_debug "Pgrep flag determined" "{\"pgrepFlag\":\"$PGREP_FLAG\",\"matchType\":\"$MATCH_TYPE\"}" "hypothesis-c"
     
     # Logging function using systemd-cat
     # systemd-cat is a standard system utility available in PATH
@@ -314,7 +304,6 @@ let
     # Check if process is running and count instances
     RUNNING_PIDS=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
     RUNNING_COUNT=$(echo "$RUNNING_PIDS" | grep -v "^$" | wc -l)
-    log_debug "Process check result" "{\"pattern\":\"$PATTERN\",\"pgrepFlag\":\"$PGREP_FLAG\",\"runningPids\":\"$RUNNING_PIDS\",\"runningCount\":$RUNNING_COUNT}" "hypothesis-c"
     
     if [ -n "$RUNNING_PIDS" ] && [ "$RUNNING_COUNT" -gt 0 ]; then
       # Process(es) running - check for duplicates
@@ -380,22 +369,18 @@ let
     fi
     
     # Process not running - start it
-    log_debug "Process not running, preparing to start" "{\"pattern\":\"$PATTERN\"}" "hypothesis-d"
     if [ "$REQUIRES_SWAY" = "true" ]; then
       # Wait for SwayFX IPC to be ready (max 10 seconds)
       SWAY_READY=false
-      log_debug "Checking Sway readiness" "{\"pattern\":\"$PATTERN\"}" "hypothesis-d"
       for i in $(seq 1 10); do
         if ${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1; then
           SWAY_READY=true
-          log_debug "Sway ready" "{\"pattern\":\"$PATTERN\",\"attempt\":$i}" "hypothesis-d"
           break
         fi
         sleep 1
       done
       if [ "$SWAY_READY" = "false" ]; then
         log "WARNING: SwayFX not ready after 10 seconds, starting daemon anyway: $PATTERN" "warning"
-        log_debug "Sway not ready after timeout" "{\"pattern\":\"$PATTERN\"}" "hypothesis-d"
       fi
     fi
     
@@ -462,10 +447,7 @@ let
     PATTERN_SANITIZED=$(echo "$PATTERN" | tr -d '.*+?^$[](){}|' | tr ' ' '_' | tr '/' '_')
     STDOUT_LOG="/tmp/daemon-''${PATTERN_SANITIZED}-stdout.log"
     STDERR_LOG="/tmp/daemon-''${PATTERN_SANITIZED}-stderr.log"
-    log_debug "Log file paths created" "{\"pattern\":\"$PATTERN\",\"patternSanitized\":\"$PATTERN_SANITIZED\",\"stdoutLog\":\"$STDOUT_LOG\",\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-e"
     rm -f "$STDOUT_LOG" "$STDERR_LOG"
-    
-    log_debug "About to start daemon process" "{\"pattern\":\"$PATTERN\",\"command\":\"$COMMAND\",\"hasPipe\":$HAS_PIPE,\"stdoutLog\":\"$STDOUT_LOG\",\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-e"
     if [ "$HAS_PIPE" = "true" ]; then
       # Pipe command - use bash
       nohup bash -c "$COMMAND" >"$STDOUT_LOG" 2>"$STDERR_LOG" &
@@ -475,68 +457,76 @@ let
     fi
     DAEMON_PID=$!
     log "Daemon start command executed, PID: $DAEMON_PID (pattern: $PATTERN, has_pipe: $HAS_PIPE)" "info"
-    log_debug "Daemon process started" "{\"pattern\":\"$PATTERN\",\"daemonPid\":$DAEMON_PID,\"hasPipe\":$HAS_PIPE}" "hypothesis-e"
     
     # CRITICAL: Check if process is still alive after a brief moment to detect immediate crashes
     sleep 0.3
     if ! kill -0 $DAEMON_PID 2>/dev/null; then
       # Process died - check error logs
-      log_debug "Process died immediately after start" "{\"pattern\":\"$PATTERN\",\"daemonPid\":$DAEMON_PID,\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-f"
       if [ -f "$STDERR_LOG" ]; then
         ERROR_OUTPUT=$(cat "$STDERR_LOG" 2>/dev/null | head -20 | tr '\n' ' ')
-        ERROR_SIZE=$(stat -c%s "$STDERR_LOG" 2>/dev/null || echo "0")
         log "ERROR: Daemon process died immediately (PID: $DAEMON_PID, pattern: $PATTERN). Error: $ERROR_OUTPUT" "err"
-        log_debug "Error log contents" "{\"pattern\":\"$PATTERN\",\"errorOutput\":\"$ERROR_OUTPUT\",\"errorSize\":$ERROR_SIZE}" "hypothesis-f"
       else
         log "ERROR: Daemon process died immediately (PID: $DAEMON_PID, pattern: $PATTERN). No error log available." "err"
-        log_debug "No error log file found" "{\"pattern\":\"$PATTERN\",\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-f"
       fi
-    else
-      log_debug "Process still alive after initial check" "{\"pattern\":\"$PATTERN\",\"daemonPid\":$DAEMON_PID}" "hypothesis-f"
     fi
     
     # Also pipe logs to systemd for real-time monitoring (background processes)
     # Only start tail processes if log files exist and are non-empty
+    # Track tail PIDs for cleanup to prevent orphaned processes
+    TAIL_STDOUT_PID=""
+    TAIL_STDERR_PID=""
+    
     if [ -f "$STDOUT_LOG" ] && [ -s "$STDOUT_LOG" ]; then
-      (tail -f "$STDOUT_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p info &) || true
+      (tail -f "$STDOUT_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p info &)
+      TAIL_STDOUT_PID=$!
     fi
     if [ -f "$STDERR_LOG" ] && [ -s "$STDERR_LOG" ]; then
-      (tail -f "$STDERR_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p err &) || true
+      (tail -f "$STDERR_LOG" 2>/dev/null | systemd-cat -t "sway-daemon-''${PATTERN_SANITIZED}" -p err &)
+      TAIL_STDERR_PID=$!
     fi
+    
+    # Cleanup function to kill orphaned tail processes
+    cleanup_tails() {
+      [ -n "$TAIL_STDOUT_PID" ] && kill "$TAIL_STDOUT_PID" 2>/dev/null || true
+      [ -n "$TAIL_STDERR_PID" ] && kill "$TAIL_STDERR_PID" 2>/dev/null || true
+    }
+    trap cleanup_tails EXIT
     
     # Verify it started with progressive wait (some daemons take longer to initialize)
     # Use exponential backoff: check quickly first, then wait longer
     DAEMON_STARTED=false
-    log_debug "Starting verification loop" "{\"pattern\":\"$PATTERN\",\"daemonPid\":$DAEMON_PID}" "hypothesis-f"
     for check_delay in 0.5 1 2; do
       sleep $check_delay
       VERIFY_RESULT=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
-      log_debug "Verification check" "{\"pattern\":\"$PATTERN\",\"checkDelay\":$check_delay,\"verifyResult\":\"$VERIFY_RESULT\",\"pgrepFlag\":\"$PGREP_FLAG\"}" "hypothesis-f"
       if [ -n "$VERIFY_RESULT" ]; then
         ACTUAL_PID=$(echo "$VERIFY_RESULT" | head -1)
         log "Daemon started successfully: $PATTERN (started PID: $DAEMON_PID, actual PID: $ACTUAL_PID, verified after ''${check_delay}s)" "info"
-        log_debug "Daemon verified successfully" "{\"pattern\":\"$PATTERN\",\"startedPid\":$DAEMON_PID,\"actualPid\":$ACTUAL_PID,\"checkDelay\":$check_delay}" "hypothesis-f"
         DAEMON_STARTED=true
         break
       fi
     done
     
+    # CRITICAL: For waybar, add post-verification health check
+    # Waybar often crashes 1-2 seconds after launch due to DBus/Portal timeouts
+    # We must wait for this window to catch crashes during Wayland initialization
+    if [ "$DAEMON_STARTED" = "true" ] && [ "$PATTERN" = "/bin/waybar" ]; then
+      sleep 2
+      if ! ${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" >/dev/null 2>&1; then
+        log "ERROR: Waybar crashed after initial verification (during Wayland init)" "err"
+        if [ -f "$STDERR_LOG" ]; then
+          ERROR_CONTENT=$(cat "$STDERR_LOG" 2>/dev/null | tail -20 | tr '\n' ' ' || echo "")
+          log "Waybar crash error: $ERROR_CONTENT" "err"
+        fi
+        DAEMON_STARTED=false
+      else
+        log "Waybar health check passed (post-verification)" "info"
+      fi
+    fi
+    
     if [ "$DAEMON_STARTED" = "false" ]; then
       # Additional check: see if process started but verification failed
       CHECK_CMD=$(ps -p $DAEMON_PID -o comm= 2>/dev/null || echo "not_found")
       log "ERROR: Failed to start daemon: $PATTERN (started PID: $DAEMON_PID, process: $CHECK_CMD)" "err"
-      log_debug "Daemon verification failed" "{\"pattern\":\"$PATTERN\",\"startedPid\":$DAEMON_PID,\"checkCmd\":\"$CHECK_CMD\",\"stdoutLog\":\"$STDOUT_LOG\",\"stderrLog\":\"$STDERR_LOG\"}" "hypothesis-f"
-      # Check log files for errors
-      if [ -f "$STDOUT_LOG" ]; then
-        STDOUT_SIZE=$(stat -c%s "$STDOUT_LOG" 2>/dev/null || echo "0")
-        STDOUT_PREVIEW=$(head -5 "$STDOUT_LOG" 2>/dev/null | tr '\n' ' ' || echo "")
-        log_debug "Stdout log contents" "{\"pattern\":\"$PATTERN\",\"stdoutSize\":$STDOUT_SIZE,\"stdoutPreview\":\"$STDOUT_PREVIEW\"}" "hypothesis-f"
-      fi
-      if [ -f "$STDERR_LOG" ]; then
-        STDERR_SIZE=$(stat -c%s "$STDERR_LOG" 2>/dev/null || echo "0")
-        STDERR_PREVIEW=$(head -10 "$STDERR_LOG" 2>/dev/null | tr '\n' ' ' || echo "")
-        log_debug "Stderr log contents" "{\"pattern\":\"$PATTERN\",\"stderrSize\":$STDERR_SIZE,\"stderrPreview\":\"$STDERR_PREVIEW\"}" "hypothesis-f"
-      fi
       exit 1
     fi
   '';
@@ -547,54 +537,35 @@ let
     # Auto-generated script - starts all SwayFX daemons
     # Do not edit manually - generated from daemon list in default.nix
     
-    # Debug logging
-    DEBUG_LOG="/home/akunito/.dotfiles/.cursor/debug.log"
-    log_debug() {
-      echo "{\"timestamp\":$(date +%s000),\"location\":\"start-sway-daemons\",\"message\":\"$1\",\"data\":$2,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"$3\"}" >> "$DEBUG_LOG" 2>/dev/null || true
-    }
-    
     # File locking to prevent concurrent execution (e.g., rapid reload spam)
     # Uses XDG runtime directory which is automatically cleaned on logout/reboot
+    # CRITICAL: Use simple atomic lock - no retry logic to prevent race conditions
     LOCK_FILE="/run/user/$(id -u)/sway-startup.lock"
     (
-      # Try to acquire lock with timeout (5 seconds) to prevent indefinite blocking
-      # If lock is held, wait briefly then exit gracefully
-      if ! flock -n 9; then
-        # Lock is held - wait a bit to see if it releases
-        sleep 1
-        if ! flock -n 9; then
-          echo "Another startup process is running, exiting gracefully" | systemd-cat -t sway-daemon-mgr -p info
-          log_debug "Lock held, exiting" "{\"lockFile\":\"$LOCK_FILE\"}" "hypothesis-b"
-          exit 0
-        fi
-      fi
+      # Original working design: immediate exit if lock is held (prevents race conditions)
+      flock -n 9 || { 
+        echo "Another startup process is running, exiting" | systemd-cat -t sway-daemon-mgr -p info
+        exit 0 
+      }
       
-      log_debug "Startup script started" "{\"lockFile\":\"$LOCK_FILE\"}" "hypothesis-b"
-      
-      # Check waybar config file before starting
+      # Check waybar config file before starting (non-blocking)
+      # Validation is optional - don't block startup if it fails
       WAYBAR_CONFIG="${config.xdg.configHome}/waybar/config"
       if [ -f "$WAYBAR_CONFIG" ]; then
-        CONFIG_SIZE=$(stat -c%s "$WAYBAR_CONFIG" 2>/dev/null || echo "0")
-        log_debug "Waybar config file exists" "{\"path\":\"$WAYBAR_CONFIG\",\"size\":$CONFIG_SIZE}" "hypothesis-a"
-        # Try to validate JSON structure (if jq is available)
+        # Try to validate JSON structure (if jq is available) - non-blocking
         if command -v ${pkgs.jq}/bin/jq >/dev/null 2>&1; then
-          if ${pkgs.jq}/bin/jq empty "$WAYBAR_CONFIG" 2>/dev/null; then
-            CONFIG_IS_ARRAY=$(${pkgs.jq}/bin/jq -e 'type == "array"' "$WAYBAR_CONFIG" 2>/dev/null || echo "false")
-            CONFIG_IS_OBJECT=$(${pkgs.jq}/bin/jq -e 'type == "object"' "$WAYBAR_CONFIG" 2>/dev/null || echo "false")
-            log_debug "Waybar config JSON validation" "{\"isArray\":$CONFIG_IS_ARRAY,\"isObject\":$CONFIG_IS_OBJECT}" "hypothesis-a"
-          else
-            log_debug "Waybar config JSON invalid" "{\"error\":\"jq validation failed\"}" "hypothesis-a"
+          if ! ${pkgs.jq}/bin/jq empty "$WAYBAR_CONFIG" 2>/dev/null; then
+            echo "WARNING: Waybar config JSON validation failed (non-blocking)" | systemd-cat -t sway-daemon-mgr -p warning
           fi
         fi
       else
-        log_debug "Waybar config file missing" "{\"path\":\"$WAYBAR_CONFIG\"}" "hypothesis-a"
+        echo "WARNING: Waybar config file missing (non-blocking)" | systemd-cat -t sway-daemon-mgr -p warning
       fi
       
       # Start waybar first (synchronously) to avoid race conditions
       # Waybar is critical and multiple parallel instances cause conflicts
       ${lib.concatMapStringsSep "\n" (daemon: ''
         if [ "${daemon.name}" = "waybar" ]; then
-          log_debug "Starting waybar daemon" "{\"command\":\"${daemon.command}\",\"pattern\":\"${daemon.pattern}\"}" "hypothesis-b"
           ${daemon-manager}/bin/daemon-manager \
             ${lib.strings.escapeShellArg daemon.pattern} \
             ${lib.strings.escapeShellArg daemon.match_type} \
@@ -602,16 +573,6 @@ let
             ${lib.strings.escapeShellArg (if daemon.reload != "" then daemon.reload else "")} \
             ${if daemon.requires_sway then "true" else "false"} \
             ${if daemon.requires_tray or false then "true" else "false"}
-          WAYBAR_EXIT=$?
-          log_debug "Waybar daemon manager exit code" "{\"exitCode\":$WAYBAR_EXIT}" "hypothesis-b"
-          # Check if waybar process is running after start
-          sleep 1
-          if ${pkgs.procps}/bin/pgrep -f "/bin/waybar" >/dev/null 2>&1; then
-            WAYBAR_PID=$(${pkgs.procps}/bin/pgrep -f "/bin/waybar" | head -1)
-            log_debug "Waybar process running" "{\"pid\":$WAYBAR_PID}" "hypothesis-b"
-          else
-            log_debug "Waybar process not running after start" "{\"exitCode\":$WAYBAR_EXIT}" "hypothesis-b"
-          fi
         fi
       '') daemons}
       
@@ -628,16 +589,6 @@ let
         fi
       '') daemons}
       wait
-      
-      # Final check: verify waybar is running
-      sleep 2
-      if ${pkgs.procps}/bin/pgrep -f "/bin/waybar" >/dev/null 2>&1; then
-        WAYBAR_PIDS=$(${pkgs.procps}/bin/pgrep -f "/bin/waybar")
-        WAYBAR_COUNT=$(echo "$WAYBAR_PIDS" | wc -l)
-        log_debug "Final waybar check - running" "{\"pids\":\"$WAYBAR_PIDS\",\"count\":$WAYBAR_COUNT}" "hypothesis-b"
-      else
-        log_debug "Final waybar check - not running" "{}" "hypothesis-b"
-      fi
     ) 9>"$LOCK_FILE"
   '';
   
@@ -683,6 +634,102 @@ let
     else
       exit 1
     fi
+  '';
+  
+  # Generate daemon health monitor script (periodically checks and restarts crashed daemons)
+  daemon-health-monitor = pkgs.writeShellScriptBin "daemon-health-monitor" ''
+    #!/bin/sh
+    # Daemon health monitor - periodically checks daemon health and restarts crashed daemons
+    # Runs continuously in background (not managed by daemon-manager to avoid circular dependency)
+    
+    # Logging function using systemd-cat
+    log() {
+      echo "$1" | systemd-cat -t sway-daemon-monitor -p "$2"
+    }
+    
+    # Track restart attempts per daemon to implement exponential backoff
+    RESTART_ATTEMPTS=""
+    
+    # Get restart count for a daemon
+    get_restart_count() {
+      local DAEMON_NAME="$1"
+      echo "$RESTART_ATTEMPTS" | grep "^$DAEMON_NAME:" | cut -d: -f2 || echo "0"
+    }
+    
+    # Increment restart count for a daemon
+    increment_restart_count() {
+      local DAEMON_NAME="$1"
+      local CURRENT=$(get_restart_count "$DAEMON_NAME")
+      local NEW=$((CURRENT + 1))
+      RESTART_ATTEMPTS=$(echo "$RESTART_ATTEMPTS" | grep -v "^$DAEMON_NAME:" || true)
+      RESTART_ATTEMPTS="$RESTART_ATTEMPTS"$'\n'"$DAEMON_NAME:$NEW"
+    }
+    
+    # Reset restart count for a daemon (when it's healthy)
+    reset_restart_count() {
+      local DAEMON_NAME="$1"
+      RESTART_ATTEMPTS=$(echo "$RESTART_ATTEMPTS" | grep -v "^$DAEMON_NAME:" || true)
+    }
+    
+    log "Daemon health monitor started" "info"
+    
+    # Main monitoring loop (check every 30 seconds)
+    while true; do
+      sleep 30
+      
+      ${lib.concatMapStringsSep "\n" (daemon: ''
+        MATCH_TYPE=${lib.strings.escapeShellArg daemon.match_type}
+        if [ "$MATCH_TYPE" = "exact" ]; then
+          PGREP_FLAG="-x"
+        else
+          PGREP_FLAG="-f"
+        fi
+        
+        # Check if daemon is running
+        if ! ${pkgs.procps}/bin/pgrep $PGREP_FLAG ${lib.strings.escapeShellArg daemon.pattern} > /dev/null 2>&1; then
+          RESTART_COUNT=$(get_restart_count "${daemon.name}")
+          
+          # Exponential backoff: skip restart if too many attempts (max 3 attempts = 90 seconds)
+          if [ "$RESTART_COUNT" -ge 3 ]; then
+            log "WARNING: ${daemon.name} crashed but restart limit reached (''${RESTART_COUNT} attempts). Skipping restart." "warning"
+            continue
+          fi
+          
+          log "WARNING: ${daemon.name} is not running (restart attempt: $((RESTART_COUNT + 1)))" "warning"
+          
+          # Attempt to restart the daemon
+          ${daemon-manager}/bin/daemon-manager \
+            ${lib.strings.escapeShellArg daemon.pattern} \
+            ${lib.strings.escapeShellArg daemon.match_type} \
+            ${lib.strings.escapeShellArg daemon.command} \
+            ${lib.strings.escapeShellArg (if daemon.reload != "" then daemon.reload else "")} \
+            ${if daemon.requires_sway then "true" else "false"} \
+            ${if daemon.requires_tray or false then "true" else "false"}
+          
+          if [ $? -eq 0 ]; then
+            # Check if restart was successful
+            sleep 2
+            if ${pkgs.procps}/bin/pgrep $PGREP_FLAG ${lib.strings.escapeShellArg daemon.pattern} > /dev/null 2>&1; then
+              log "SUCCESS: ${daemon.name} restarted successfully" "info"
+              reset_restart_count "${daemon.name}"
+            else
+              log "ERROR: ${daemon.name} restart failed" "err"
+              increment_restart_count "${daemon.name}"
+            fi
+          else
+            log "ERROR: ${daemon.name} restart command failed" "err"
+            increment_restart_count "${daemon.name}"
+          fi
+        else
+          # Daemon is running - reset restart count
+          RESTART_COUNT=$(get_restart_count "${daemon.name}")
+          if [ "$RESTART_COUNT" -gt 0 ]; then
+            log "INFO: ${daemon.name} is healthy again (was restarted ''${RESTART_COUNT} times)" "info"
+            reset_restart_count "${daemon.name}"
+          fi
+        fi
+      '') daemons}
+    done
   '';
 in {
 
@@ -913,6 +960,12 @@ in {
           command = "${daemon-sanity-check}/bin/daemon-sanity-check --fix";
           always = false;  # Only run on initial startup, not on reload
         }
+        # Daemon health monitor - periodically checks and restarts crashed daemons
+        # Runs continuously in background (not managed by daemon-manager to avoid circular dependency)
+        {
+          command = "${daemon-health-monitor}/bin/daemon-health-monitor";
+          always = false;  # Only run on initial startup, not on reload
+        }
         # DESK-only startup apps (runs after daemons are ready)
         {
           command = "${desk-startup-apps-script}/bin/desk-startup-apps";
@@ -1127,58 +1180,6 @@ in {
     '';
   };
 
-  # Debug script to check waybar status
-  home.file.".config/sway/scripts/debug-waybar.sh" = {
-    text = ''
-      #!/bin/sh
-      DEBUG_LOG="/home/akunito/.dotfiles/.cursor/debug.log"
-      log_debug() {
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"debug-waybar.sh\",\"message\":\"$1\",\"data\":$2,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"$3\"}" >> "$DEBUG_LOG" 2>/dev/null || true
-      }
-      
-      WAYBAR_CONFIG="${config.xdg.configHome}/waybar/config"
-      WAYBAR_STYLE="${config.xdg.configHome}/waybar/style.css"
-      
-      log_debug "Debug script started" "{}" "hypothesis-a"
-      
-      # Check config file
-      if [ -f "$WAYBAR_CONFIG" ]; then
-        CONFIG_SIZE=$(stat -c%s "$WAYBAR_CONFIG" 2>/dev/null || echo "0")
-        CONFIG_FIRST_LINES=$(head -5 "$WAYBAR_CONFIG" 2>/dev/null | tr '\n' ' ' || echo "")
-        log_debug "Waybar config file exists" "{\"path\":\"$WAYBAR_CONFIG\",\"size\":$CONFIG_SIZE,\"firstLines\":\"$CONFIG_FIRST_LINES\"}" "hypothesis-a"
-        
-        # Check if it's an array or object
-        if command -v ${pkgs.jq}/bin/jq >/dev/null 2>&1; then
-          CONFIG_TYPE=$(${pkgs.jq}/bin/jq -r 'type' "$WAYBAR_CONFIG" 2>/dev/null || echo "unknown")
-          CONFIG_LENGTH=$(${pkgs.jq}/bin/jq -r 'if type == "array" then length else "N/A" end' "$WAYBAR_CONFIG" 2>/dev/null || echo "N/A")
-          log_debug "Waybar config structure" "{\"type\":\"$CONFIG_TYPE\",\"length\":\"$CONFIG_LENGTH\"}" "hypothesis-a"
-        fi
-      else
-        log_debug "Waybar config file missing" "{\"path\":\"$WAYBAR_CONFIG\"}" "hypothesis-a"
-      fi
-      
-      # Check style file
-      if [ -f "$WAYBAR_STYLE" ]; then
-        STYLE_SIZE=$(stat -c%s "$WAYBAR_STYLE" 2>/dev/null || echo "0")
-        log_debug "Waybar style file exists" "{\"path\":\"$WAYBAR_STYLE\",\"size\":$STYLE_SIZE}" "hypothesis-c"
-      else
-        log_debug "Waybar style file missing" "{\"path\":\"$WAYBAR_STYLE\"}" "hypothesis-c"
-      fi
-      
-      # Check waybar process
-      if ${pkgs.procps}/bin/pgrep -f "/bin/waybar" >/dev/null 2>&1; then
-        WAYBAR_PIDS=$(${pkgs.procps}/bin/pgrep -f "/bin/waybar")
-        WAYBAR_COUNT=$(echo "$WAYBAR_PIDS" | wc -l)
-        log_debug "Waybar process running" "{\"pids\":\"$WAYBAR_PIDS\",\"count\":$WAYBAR_COUNT}" "hypothesis-b"
-      else
-        log_debug "Waybar process not running" "{}" "hypothesis-b"
-      fi
-      
-      # Check conditional logic
-      log_debug "Conditional check" "{\"stylixEnable\":${if systemSettings.stylixEnable then "true" else "false"},\"wm\":\"${userSettings.wm}\",\"enableSwayForDESK\":${if systemSettings.enableSwayForDESK == true then "true" else "false"}}" "hypothesis-e"
-    '';
-    executable = true;
-  };
 
 
   # Btop theme configuration (Stylix colors)
@@ -1283,6 +1284,7 @@ in {
     daemon-manager
     start-sway-daemons
     daemon-sanity-check
+    daemon-health-monitor
     desk-startup-apps-script
   ] ++ (with pkgs; [
     # SwayFX and related
