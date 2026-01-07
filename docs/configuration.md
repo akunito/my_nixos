@@ -403,6 +403,50 @@ After making changes:
 - Don't commit `local/` directory (gitignored)
 - Use descriptive commit messages
 
+### 7. Escaping Bash Variables in Nix Strings
+
+**CRITICAL**: When writing shell scripts inside Nix multiline strings (`''`), escape bash variable syntax to prevent Nix from interpreting it as Nix variable interpolation.
+
+**The Problem**: Nix interprets `${}` as Nix variable interpolation. Writing `${VAR:-default}` causes Nix to try evaluating `VAR` as a Nix variable, leading to errors like `error: undefined variable 'default'`.
+
+**The Solution**: Escape bash variables by doubling single quotes: `''${VAR}` instead of `${VAR}`.
+
+**Example**:
+
+❌ **WRONG**:
+```nix
+pkgs.writeShellApplication {
+  name = "my-script";
+  text = ''
+    echo "PATH=${PATH:-/usr/bin}"
+  '';
+}
+# Error: undefined variable 'PATH' or 'default'
+```
+
+✅ **CORRECT**:
+```nix
+pkgs.writeShellApplication {
+  name = "my-script";
+  text = ''
+    echo "PATH=''${PATH:-/usr/bin}"
+  '';
+}
+```
+
+**Common Patterns**:
+- `${VAR:-default}` → `''${VAR:-default}` (default value)
+- `${VAR}` → `''${VAR}` (variable reference)
+- `${VAR:+value}` → `''${VAR:+value}` (alternate value)
+- `${#VAR}` → `''${#VAR}` (string length)
+
+**When This Applies**:
+- `pkgs.writeShellApplication` / `pkgs.writeShellScriptBin`
+- Any Nix multiline string (`''`) containing shell scripts
+- `home.file` with shell script content
+
+**Reference**: See `.cursorrules` "Nix String Interpolation in Shell Scripts" section for complete details.
+
 ## Related Documentation
 
 - [Installation Guide](installation.md) - Setting up the configuration

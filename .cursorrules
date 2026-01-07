@@ -113,6 +113,48 @@
 -   **Paths**: Always use relative paths (`./.`) or `self` inputs.
 -   **Comments**: Explain *why* a module is enabled, not *what* it does.
 
+### Nix String Interpolation in Shell Scripts
+**CRITICAL**: When writing bash/sh scripts inside Nix multiline strings (`''`), you MUST escape bash variable syntax to prevent Nix from interpreting it as Nix variable interpolation.
+
+**The Problem**: In Nix multiline strings (`''`), `${}` is interpreted as Nix variable interpolation, not bash syntax. Writing `${VAR:-default}` causes Nix to try evaluating `VAR` as a Nix variable, leading to errors like `error: undefined variable 'default'`.
+
+**The Solution**: Escape bash variable syntax by doubling the single quotes: `''${VAR}` instead of `${VAR}`.
+
+**Common Patterns That Need Escaping**:
+-   `${VAR:-default}` → `''${VAR:-default}` (parameter expansion with default value)
+-   `${VAR}` → `''${VAR}` (simple variable reference)
+-   `${VAR:+value}` → `''${VAR:+value}` (parameter expansion with alternate value)
+-   `${#VAR}` → `''${#VAR}` (parameter length)
+-   `${VAR#pattern}` → `''${VAR#pattern}` (parameter prefix removal)
+-   `${VAR%pattern}` → `''${VAR%pattern}` (parameter suffix removal)
+
+**Examples**:
+
+❌ **WRONG** (Nix tries to interpret as Nix variable):
+```nix
+text = ''
+  echo "Environment: WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-unset}"
+'';
+# Error: undefined variable 'unset'
+```
+
+✅ **CORRECT** (Escaped for bash):
+```nix
+text = ''
+  echo "Environment: WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-unset}"
+'';
+```
+
+**When This Applies**:
+-   `pkgs.writeShellApplication` with `text = ''...''`
+-   `pkgs.writeShellScriptBin` with `text = ''...''`
+-   Any Nix multiline string (`''`) containing bash/sh scripts
+-   `home.file` with `text = ''...''` containing shell scripts
+
+**Verification**: Before committing, check that all bash variable references in Nix multiline strings use `''${}` instead of `${}`.
+
+**Reference Examples**: See `user/wm/sway/default.nix` line 27 for correct usage.
+
 ### Module Organization
 -   Keep modules focused and single-purpose.
 -   Access variables via function arguments (`pkgs`, `lib`, `config`, `inputs`).

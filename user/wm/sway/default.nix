@@ -21,6 +21,11 @@ let
     ];
     text = ''
       #!/bin/bash
+      # Redirect all output/errors to systemd journal
+      exec > >(systemd-cat -t desk-startup-apps) 2>&1
+      echo "Script started at $(date)"
+      echo "Environment: WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-unset} XDG_CURRENT_DESKTOP=''${XDG_CURRENT_DESKTOP:-unset}"
+      
       PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
       
       if [ -z "$PRIMARY" ]; then
@@ -67,37 +72,65 @@ let
       # Small delay to ensure workspaces are ready
       sleep 0.5
       
+      # Wait for Sway socket to be ready (up to 5 seconds)
+      echo "Waiting for Sway socket..."
+      for i in {1..10}; do
+        if swaymsg -t get_version >/dev/null 2>&1; then
+          echo "Sway socket detected."
+          break
+        fi
+        echo "Waiting for Sway... (attempt $i/10)"
+        sleep 0.5
+      done
+      
       # Phase 1: Rofi dialog with explanation and password entry
       show_kwallet_dialog() {
         # Step 1: Show explanation and options
+        echo "Showing Rofi dialog for KWallet password..."
         CHOICE=$(echo -e "Enter Password\nSkip Apps" | rofi -dmenu \
           -p "KWallet Required" \
           -mesg "KWallet password is required to launch applications (Vivaldi, Chromium, Cursor, Obsidian).\n\nSelect an option:")
         
+        ROFI_EXIT=$?
+        
+        if [ $ROFI_EXIT -ne 0 ] || [ -z "$CHOICE" ]; then
+          echo "Rofi dialog cancelled or failed (exit code: $ROFI_EXIT)"
+          return 1
+        fi
+        
         case "$CHOICE" in
           "Enter Password")
             # Step 2: Password entry dialog
+            echo "Showing Rofi password entry dialog..."
             PASSWORD=$(rofi -dmenu -password \
               -p "KWallet Password" \
               -mesg "Enter your KWallet password to unlock and launch applications:")
             
-            if [ -z "$PASSWORD" ]; then
-              # User cancelled password entry
+            ROFI_PASS_EXIT=$?
+            
+            if [ $ROFI_PASS_EXIT -ne 0 ] || [ -z "$PASSWORD" ]; then
+              echo "Rofi password entry cancelled or failed (exit code: $ROFI_PASS_EXIT)"
               notify-send -t 5000 "KWallet" "Password entry cancelled. Apps will not launch automatically." || true
               return 1
             fi
             
             # Attempt to unlock KWallet with password
             # Method 1: Try kwalletcli (if available)
-            # CRITICAL: Use here-string instead of pipe to prevent password leakage in debug mode
             if command -v kwalletcli >/dev/null 2>&1; then
+              echo "Attempting to unlock KWallet with kwalletcli..."
               if kwalletcli --open kdewallet <<< "$PASSWORD" 2>/dev/null; then
+                echo "KWallet unlocked successfully via kwalletcli"
                 notify-send -t 3000 "KWallet" "KWallet unlocked successfully." || true
                 return 0
+              else
+                echo "kwalletcli unlock failed, falling back to GUI prompt"
               fi
+            else
+              echo "kwalletcli not available, falling back to GUI prompt"
             fi
             
             # Method 2: Fallback to GUI prompt
+            echo "Falling back to GUI prompt for KWallet unlock"
             notify-send -t 5000 "KWallet" "Command-line unlock not available. Showing GUI prompt..." || true
             
             # Trigger GUI prompt (password will be entered there)
@@ -118,11 +151,13 @@ let
             return 2
             ;;
           "Skip Apps")
+            echo "User chose to skip app launching"
             notify-send -t 3000 "KWallet" "App launching skipped. You can launch apps manually when ready." || true
             return 1
             ;;
           *)
             # User closed dialog or ESC - default to skip for safety
+            echo "User closed dialog or invalid choice, defaulting to skip"
             return 1
             ;;
         esac
@@ -134,10 +169,14 @@ let
         DIALOG_RESULT=$?
         if [ "$DIALOG_RESULT" -eq 1 ]; then
           # User chose to skip or cancelled
-          echo "User chose to skip app launching" | systemd-cat -t desk-startup-apps -p info
+          echo "User chose to skip app launching (exit code: $DIALOG_RESULT)"
           exit 0
+        elif [ "$DIALOG_RESULT" -eq 2 ]; then
+          # GUI prompt was shown, continue to launcher
+          echo "GUI prompt was shown, launching background monitor"
+        else
+          echo "Unexpected dialog result: $DIALOG_RESULT"
         fi
-        # DIALOG_RESULT=2 means GUI prompt was shown, continue to launcher
       fi
       
       # Phase 2: Launch background launcher script
@@ -168,6 +207,11 @@ let
     ];
     text = ''
       #!/bin/bash
+      # Redirect all output/errors to systemd journal
+      exec > >(systemd-cat -t desk-startup-apps) 2>&1
+      echo "Script started at $(date)"
+      echo "Environment: WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-unset} XDG_CURRENT_DESKTOP=''${XDG_CURRENT_DESKTOP:-unset}"
+      
       PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
       
       # Function to check if KWallet is unlocked (with fallback for kwalletd5)
@@ -198,9 +242,20 @@ let
       
       # Function to show rofi password dialog (for launcher retry)
       show_kwallet_password_dialog() {
+        # LOGGING: Capture Rofi output/errors
+        echo "Attempting to show Rofi password dialog..."
+        
+        # Run Rofi
         PASSWORD=$(rofi -dmenu -password \
           -p "KWallet Password" \
           -mesg "KWallet password is required to launch applications.\nEnter password or press ESC to cancel:")
+        
+        ROFI_EXIT=$?
+        
+        if [ $ROFI_EXIT -ne 0 ]; then
+          echo "Rofi exited with code $ROFI_EXIT (User cancelled or Error)"
+          return 1
+        fi
         
         if [ -z "$PASSWORD" ]; then
           return 1
