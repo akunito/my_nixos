@@ -5,6 +5,7 @@ let
   hyper = "Mod4+Control+Mod1";
   
   # DESK startup apps script - launches applications in specific workspaces after daemons are ready
+  # CRITICAL: KWallet must be unlocked before ANY apps launch
   desk-startup-apps-script = pkgs.writeShellScriptBin "desk-startup-apps" ''
     #!/bin/bash
     PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
@@ -17,49 +18,146 @@ let
     # Wait a moment for everything to settle
     sleep 2
     
-    # Phase 1: Smart wait for KWallet prompt (before launching apps that need it)
-    KWALLET_FOUND=false
-    for i in $(seq 1 5); do
-      KWALLET_WINDOW=$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r '
-        recurse(.nodes[]?) 
-        | select(.type=="con" or .type=="floating_con")
-        | select(.name != null)
-        | select(.name | test("(?i)(kde.?wallet|kwallet)"; "i"))
-        | .id' 2>/dev/null | head -1)
-      
-      if [ -n "$KWALLET_WINDOW" ] && [ "$KWALLET_WINDOW" != "null" ]; then
-        KWALLET_FOUND=true
-        break
-      fi
-      sleep 1
-    done
+    # Phase 0: Ensure workspaces exist on correct monitors
+    # This prevents apps from opening off-screen
     
-    if [ "$KWALLET_FOUND" = "true" ]; then
-      # Wait for KWallet window to close
-      while [ -n "$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r "recurse(.nodes[]?) | select(.id == $KWALLET_WINDOW) | .id" 2>/dev/null | ${pkgs.gnugrep}/bin/grep -v null)" ]; do
-        sleep 0.5
-      done
+    # Focus primary monitor first
+    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
+    
+    # Create/focus workspace 1 on primary monitor (ensures it exists)
+    ${pkgs.swaysome}/bin/swaysome focus 1
+    
+    # Create/focus workspace 2 on primary monitor (for Cursor)
+    ${pkgs.swaysome}/bin/swaysome focus 2
+    
+    # Return to workspace 1
+    ${pkgs.swaysome}/bin/swaysome focus 1
+    
+    # Check if DP-2 exists, then ensure workspaces 11 and 12 exist
+    # CRITICAL: Use monitor-relative numbers with swaysome
+    if ${pkgs.sway}/bin/swaymsg -t get_outputs | ${pkgs.gnugrep}/bin/grep -q "DP-2"; then
+        # Focus DP-2
+        ${pkgs.sway}/bin/swaymsg focus output DP-2
+        # On DP-2, swaysome focus 1 creates workspace 11 (monitor-relative)
+        ${pkgs.swaysome}/bin/swaysome focus 1
+        # On DP-2, swaysome focus 2 creates workspace 12 (monitor-relative)
+        ${pkgs.swaysome}/bin/swaysome focus 2
+    else
+        # DP-2 not connected, workspaces 11/12 will fallback to DP-1
+        # Focus primary and create workspaces there
+        ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
+        ${pkgs.swaysome}/bin/swaysome focus 1  # This creates workspace 11 on DP-1 (fallback)
+        ${pkgs.swaysome}/bin/swaysome focus 2  # This creates workspace 12 on DP-1 (fallback)
     fi
     
-    # Phase 2: Launch Vivaldi (blocking, after KWallet is handled)
+    # Return to primary monitor, workspace 1
+    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
+    ${pkgs.swaysome}/bin/swaysome focus 1
+    
+    # Small delay to ensure workspaces are ready
+    sleep 0.5
+    
+    # Phase 1: Ensure KWallet is running and trigger password prompt
+    # kwalletd6 should already be started by daemon-manager, but we verify
+    
+    # Wait a moment for kwalletd6 to fully start (if it wasn't already)
+    sleep 1
+    
+    # Trigger KWallet to prompt for password by requesting access
+    # This will show the password prompt if wallet is locked
+    # Using qdbus to request wallet access (triggers prompt if locked)
+    # Try multiple qdbus paths, then kwallet-query as fallback
+    (command -v qdbus >/dev/null 2>&1 && qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+    (test -f ${pkgs.qt6.qttools}/bin/qdbus && ${pkgs.qt6.qttools}/bin/qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+    (test -f ${pkgs.qt5.qttools}/bin/qdbus && ${pkgs.qt5.qttools}/bin/qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+    # Fallback: Use kwallet-query if available
+    (${pkgs.kdePackages.kwallet}/bin/kwallet-query kdewallet 2>/dev/null) || true
+    
+    # Small delay to allow prompt to appear
+    sleep 1
+    
+    # Phase 2: Detect and handle KWallet prompt (BLOCKING - no apps until complete)
+    
+    KWALLET_PROMPT_FOUND=false
+    KWALLET_WINDOW_ID=""
+    
+    # Wait for KWallet prompt to appear (30 second timeout)
+    for i in $(seq 1 30); do
+        # Search for KWallet window - check multiple possible names
+        KWALLET_WINDOW_ID=$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r '
+            recurse(.nodes[]?, .floating_nodes[]?) 
+            | select(.type=="con" or .type=="floating_con")
+            | select(.name != null)
+            | select(.name | test("(?i)(kde.?wallet|kwallet|password|unlock)"; "i"))
+            | .id' 2>/dev/null | head -1)
+        
+        if [ -n "$KWALLET_WINDOW_ID" ] && [ "$KWALLET_WINDOW_ID" != "null" ]; then
+            KWALLET_PROMPT_FOUND=true
+            break
+        fi
+        sleep 1
+    done
+    
+    if [ "$KWALLET_PROMPT_FOUND" = "true" ]; then
+        # CRITICAL: Move KWallet window to main monitor if it's not there
+        # Get current output of KWallet window
+        CURRENT_OUTPUT=$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r "
+            recurse(.nodes[]?, .floating_nodes[]?) 
+            | select(.id == $KWALLET_WINDOW_ID)
+            | .output" 2>/dev/null | head -1)
+        
+        if [ "$CURRENT_OUTPUT" != "$PRIMARY" ] && [ -n "$CURRENT_OUTPUT" ]; then
+            ${pkgs.sway}/bin/swaymsg "[con_id=$KWALLET_WINDOW_ID] move to output $PRIMARY"
+        fi
+        
+        # CRITICAL: Focus the KWallet window so user can type without clicking
+        ${pkgs.sway}/bin/swaymsg "[con_id=$KWALLET_WINDOW_ID] focus"
+        
+        # Wait for window to close (user entered password)
+        while [ -n "$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r "recurse(.nodes[]?, .floating_nodes[]?) | select(.id == $KWALLET_WINDOW_ID) | .id" 2>/dev/null | ${pkgs.gnugrep}/bin/grep -v null)" ]; do
+            sleep 0.5
+        done
+        
+        # Small delay to ensure unlock is fully processed
+        sleep 1
+    else
+        # Prompt not found - check if KWallet is already unlocked
+        # Try to verify unlock status via DBus
+        # If already unlocked, proceed immediately
+        # Small delay in case prompt appears late
+        sleep 2
+    fi
+    
+    # Phase 3: Launch ALL apps in parallel (KWallet is now unlocked)
+    # Workspaces are guaranteed to exist, KWallet is unlocked
+    
+    # Ensure secondary monitor workspaces are active before launching apps there
+    if ${pkgs.sway}/bin/swaymsg -t get_outputs | ${pkgs.gnugrep}/bin/grep -q "DP-2"; then
+        ${pkgs.sway}/bin/swaymsg focus output DP-2
+        ${pkgs.swaysome}/bin/swaysome focus 1 # Creates/activates workspace 11
+        ${pkgs.swaysome}/bin/swaysome focus 2 # Creates/activates workspace 12
+    fi
+    
+    # Launch all apps in parallel
+    # Vivaldi on primary monitor, workspace 1
     ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
     ${pkgs.swaysome}/bin/swaysome focus 1
     ${pkgs.flatpak}/bin/flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
     
-    # Wait for Vivaldi window to appear (max 30 seconds)
-    VIVALDI_READY=false
-    for i in $(seq 1 30); do
-      if ${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r 'recurse(.nodes[]?) | select(.app_id == "com.vivaldi.Vivaldi") | .id' 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '[0-9]'; then
-        VIVALDI_READY=true
-        break
-      fi
-      sleep 1
-    done
-    
-    # Phase 3: Parallel launch Cursor, Obsidian, and Chromium
+    # Cursor on primary monitor, workspace 2
+    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
+    ${pkgs.swaysome}/bin/swaysome focus 2
     cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
+    
+    # Obsidian on secondary monitor, workspace 11
     obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
+    
+    # Chromium on secondary monitor, workspace 12
     chromium >/dev/null 2>&1 &
+    
+    # Return focus to primary monitor, workspace 1 (where Vivaldi is)
+    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
+    ${pkgs.swaysome}/bin/swaysome focus 1
   '';
   
   # Daemon definitions - shared by all generated scripts (DRY principle)
@@ -768,11 +866,6 @@ in {
           { criteria = { class = "dolphin"; }; command = "sticky enable"; }
           { criteria = { class = "Spotify"; }; command = "sticky enable"; }
           
-          # DESK startup apps - assign to specific workspaces
-          { criteria = { app_id = "com.vivaldi.Vivaldi"; }; command = "move to workspace number 1"; }
-          { criteria = { app_id = "cursor"; }; command = "move to workspace number 2"; }
-          { criteria = { app_id = "obsidian"; }; command = "move to workspace number 11"; }
-          { criteria = { class = "chromium-browser"; }; command = "move to workspace number 12"; }
         ];
       };
     };
@@ -854,6 +947,14 @@ in {
       
       # Workspace configuration
       workspace_auto_back_and_forth yes
+      
+      # DESK startup apps - assign to specific workspaces
+      # Using 'assign' instead of 'for_window' prevents flickering on wrong workspace
+      assign [app_id="com.vivaldi.Vivaldi"] workspace number 1
+      assign [app_id="cursor"] workspace number 2
+      assign [app_id="obsidian"] workspace number 11
+      assign [app_id="chromium"] workspace number 12
+      assign [class="chromium-browser"] workspace number 12
       
       # Disable SwayFX's default internal bar (swaybar) by default
       # Can be toggled manually via swaybar-toggle.sh script or keybinding
