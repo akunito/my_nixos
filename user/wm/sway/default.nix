@@ -761,8 +761,10 @@ in {
           # Use "${hyper}+space" or "${hyper}+BackSpace" for rofi launcher
           
           # Window Overview (Mission Control-like)
-          # Sov is a one-shot tool that shows workspace overview when executed
-          "${hyper}+Tab" = "exec ${pkgs.sov}/bin/sov";  # Show workspace overview
+          # Using Rofi in window mode with grid layout for stable workspace overview
+          # Grid layout: 3 columns, large icons (48px), vertical orientation
+          # Rofi inherits Stylix colors automatically via existing rofi.nix configuration
+          "${hyper}+Tab" = "exec rofi -show window -theme-str 'window {width: 60%;} listview {columns: 3; lines: 6; fixed-height: true;} element {orientation: vertical; padding: 10px;} element-icon {size: 48px;}'";
           
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
@@ -1125,7 +1127,7 @@ in {
     '';
   };
 
-  # Debug script to check waybar and sov status
+  # Debug script to check waybar status
   home.file.".config/sway/scripts/debug-waybar.sh" = {
     text = ''
       #!/bin/sh
@@ -1172,33 +1174,12 @@ in {
         log_debug "Waybar process not running" "{}" "hypothesis-b"
       fi
       
-      # Check sov binary
-      if [ -f "${pkgs.sov}/bin/sov" ]; then
-        SOV_SIZE=$(stat -c%s "${pkgs.sov}/bin/sov" 2>/dev/null || echo "0")
-        log_debug "Sov binary exists" "{\"path\":\"${pkgs.sov}/bin/sov\",\"size\":$SOV_SIZE}" "hypothesis-d"
-      else
-        log_debug "Sov binary missing" "{\"path\":\"${pkgs.sov}/bin/sov\"}" "hypothesis-d"
-      fi
-      
       # Check conditional logic
       log_debug "Conditional check" "{\"stylixEnable\":${if systemSettings.stylixEnable then "true" else "false"},\"wm\":\"${userSettings.wm}\",\"enableSwayForDESK\":${if systemSettings.enableSwayForDESK == true then "true" else "false"}}" "hypothesis-e"
     '';
     executable = true;
   };
 
-  # Sov configuration (Workspace Overview)
-  # CRITICAL: Check if Stylix is actually available (not just enabled)
-  # Stylix is disabled for Plasma 6 even if stylixEnable is true
-  # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
-  home.file.".config/sov/config" = lib.mkIf (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
-    text = ''
-      # Sov configuration with Stylix colors (8-digit hex codes)
-      background-color = "#${config.lib.stylix.colors.base00}CC"
-      border-color = "#${config.lib.stylix.colors.base02}FF"
-      text-color = "#${config.lib.stylix.colors.base07}FF"
-      active-workspace-color = "#${config.lib.stylix.colors.base0D}FF"
-    '';
-  };
 
   # Btop theme configuration (Stylix colors)
   # CRITICAL: Check if Stylix is actually available (not just enabled)
@@ -1310,7 +1291,6 @@ in {
     swayidle
     swaynotificationcenter
     waybar  # Waybar status bar (also configured via programs.waybar)
-    sov  # Workspace overview for SwayFX
     swaysome  # Workspace namespace per monitor
     
     # Screenshot workflow
