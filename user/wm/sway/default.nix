@@ -363,6 +363,12 @@ let
     # Auto-generated script - starts all SwayFX daemons
     # Do not edit manually - generated from daemon list in default.nix
     
+    # Debug logging
+    DEBUG_LOG="/home/akunito/.dotfiles/.cursor/debug.log"
+    log_debug() {
+      echo "{\"timestamp\":$(date +%s000),\"location\":\"start-sway-daemons\",\"message\":\"$1\",\"data\":$2,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"$3\"}" >> "$DEBUG_LOG" 2>/dev/null || true
+    }
+    
     # File locking to prevent concurrent execution (e.g., rapid reload spam)
     # Uses XDG runtime directory which is automatically cleaned on logout/reboot
     LOCK_FILE="/run/user/$(id -u)/sway-startup.lock"
@@ -374,14 +380,37 @@ let
         sleep 1
         if ! flock -n 9; then
           echo "Another startup process is running, exiting gracefully" | systemd-cat -t sway-daemon-mgr -p info
+          log_debug "Lock held, exiting" "{\"lockFile\":\"$LOCK_FILE\"}" "hypothesis-b"
           exit 0
         fi
+      fi
+      
+      log_debug "Startup script started" "{\"lockFile\":\"$LOCK_FILE\"}" "hypothesis-b"
+      
+      # Check waybar config file before starting
+      WAYBAR_CONFIG="${config.xdg.configHome}/waybar/config"
+      if [ -f "$WAYBAR_CONFIG" ]; then
+        CONFIG_SIZE=$(stat -c%s "$WAYBAR_CONFIG" 2>/dev/null || echo "0")
+        log_debug "Waybar config file exists" "{\"path\":\"$WAYBAR_CONFIG\",\"size\":$CONFIG_SIZE}" "hypothesis-a"
+        # Try to validate JSON structure (if jq is available)
+        if command -v ${pkgs.jq}/bin/jq >/dev/null 2>&1; then
+          if ${pkgs.jq}/bin/jq empty "$WAYBAR_CONFIG" 2>/dev/null; then
+            CONFIG_IS_ARRAY=$(${pkgs.jq}/bin/jq -e 'type == "array"' "$WAYBAR_CONFIG" 2>/dev/null || echo "false")
+            CONFIG_IS_OBJECT=$(${pkgs.jq}/bin/jq -e 'type == "object"' "$WAYBAR_CONFIG" 2>/dev/null || echo "false")
+            log_debug "Waybar config JSON validation" "{\"isArray\":$CONFIG_IS_ARRAY,\"isObject\":$CONFIG_IS_OBJECT}" "hypothesis-a"
+          else
+            log_debug "Waybar config JSON invalid" "{\"error\":\"jq validation failed\"}" "hypothesis-a"
+          fi
+        fi
+      else
+        log_debug "Waybar config file missing" "{\"path\":\"$WAYBAR_CONFIG\"}" "hypothesis-a"
       fi
       
       # Start waybar first (synchronously) to avoid race conditions
       # Waybar is critical and multiple parallel instances cause conflicts
       ${lib.concatMapStringsSep "\n" (daemon: ''
         if [ "${daemon.name}" = "waybar" ]; then
+          log_debug "Starting waybar daemon" "{\"command\":\"${daemon.command}\",\"pattern\":\"${daemon.pattern}\"}" "hypothesis-b"
           ${daemon-manager}/bin/daemon-manager \
             ${lib.strings.escapeShellArg daemon.pattern} \
             ${lib.strings.escapeShellArg daemon.match_type} \
@@ -389,6 +418,16 @@ let
             ${lib.strings.escapeShellArg (if daemon.reload != "" then daemon.reload else "")} \
             ${if daemon.requires_sway then "true" else "false"} \
             ${if daemon.requires_tray or false then "true" else "false"}
+          WAYBAR_EXIT=$?
+          log_debug "Waybar daemon manager exit code" "{\"exitCode\":$WAYBAR_EXIT}" "hypothesis-b"
+          # Check if waybar process is running after start
+          sleep 1
+          if ${pkgs.procps}/bin/pgrep -f "/bin/waybar" >/dev/null 2>&1; then
+            WAYBAR_PID=$(${pkgs.procps}/bin/pgrep -f "/bin/waybar" | head -1)
+            log_debug "Waybar process running" "{\"pid\":$WAYBAR_PID}" "hypothesis-b"
+          else
+            log_debug "Waybar process not running after start" "{\"exitCode\":$WAYBAR_EXIT}" "hypothesis-b"
+          fi
         fi
       '') daemons}
       
@@ -405,6 +444,16 @@ let
         fi
       '') daemons}
       wait
+      
+      # Final check: verify waybar is running
+      sleep 2
+      if ${pkgs.procps}/bin/pgrep -f "/bin/waybar" >/dev/null 2>&1; then
+        WAYBAR_PIDS=$(${pkgs.procps}/bin/pgrep -f "/bin/waybar")
+        WAYBAR_COUNT=$(echo "$WAYBAR_PIDS" | wc -l)
+        log_debug "Final waybar check - running" "{\"pids\":\"$WAYBAR_PIDS\",\"count\":$WAYBAR_COUNT}" "hypothesis-b"
+      else
+        log_debug "Final waybar check - not running" "{}" "hypothesis-b"
+      fi
     ) 9>"$LOCK_FILE"
   '';
   
@@ -528,7 +577,7 @@ in {
           # Use "${hyper}+space" or "${hyper}+BackSpace" for rofi launcher
           
           # Window Overview (Mission Control-like)
-          "${hyper}+Tab" = "exec ${pkgs.sov}/bin/sov";  # Workspace overview
+          "${hyper}+Tab" = "exec bash -c 'DEBUG_LOG=\"/home/akunito/.dotfiles/.cursor/debug.log\"; echo \"{\\\"timestamp\\\":$(date +%s000),\\\"location\\\":\\\"sov-keybinding\\\",\\\"message\\\":\\\"Sov keybinding triggered\\\",\\\"data\\\":{\\\"hyper\\\":\\\"${hyper}\\\"},\\\"sessionId\\\":\\\"debug-session\\\",\\\"runId\\\":\\\"run1\\\",\\\"hypothesisId\\\":\\\"hypothesis-d\\\"}\" >> \"$DEBUG_LOG\" 2>/dev/null || true; if [ -f \"${pkgs.sov}/bin/sov\" ]; then ${pkgs.sov}/bin/sov; else echo \"Sov binary not found at ${pkgs.sov}/bin/sov\" | systemd-cat -t sov -p err; fi'";  # Workspace overview
           
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
@@ -886,6 +935,67 @@ in {
       # Mouse warping
       mouse_warping output
     '';
+  };
+
+  # Debug script to check waybar and sov status
+  home.file.".config/sway/scripts/debug-waybar.sh" = {
+    text = ''
+      #!/bin/sh
+      DEBUG_LOG="/home/akunito/.dotfiles/.cursor/debug.log"
+      log_debug() {
+        echo "{\"timestamp\":$(date +%s000),\"location\":\"debug-waybar.sh\",\"message\":\"$1\",\"data\":$2,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"$3\"}" >> "$DEBUG_LOG" 2>/dev/null || true
+      }
+      
+      WAYBAR_CONFIG="${config.xdg.configHome}/waybar/config"
+      WAYBAR_STYLE="${config.xdg.configHome}/waybar/style.css"
+      
+      log_debug "Debug script started" "{}" "hypothesis-a"
+      
+      # Check config file
+      if [ -f "$WAYBAR_CONFIG" ]; then
+        CONFIG_SIZE=$(stat -c%s "$WAYBAR_CONFIG" 2>/dev/null || echo "0")
+        CONFIG_FIRST_LINES=$(head -5 "$WAYBAR_CONFIG" 2>/dev/null | tr '\n' ' ' || echo "")
+        log_debug "Waybar config file exists" "{\"path\":\"$WAYBAR_CONFIG\",\"size\":$CONFIG_SIZE,\"firstLines\":\"$CONFIG_FIRST_LINES\"}" "hypothesis-a"
+        
+        # Check if it's an array or object
+        if command -v ${pkgs.jq}/bin/jq >/dev/null 2>&1; then
+          CONFIG_TYPE=$(${pkgs.jq}/bin/jq -r 'type' "$WAYBAR_CONFIG" 2>/dev/null || echo "unknown")
+          CONFIG_LENGTH=$(${pkgs.jq}/bin/jq -r 'if type == "array" then length else "N/A" end' "$WAYBAR_CONFIG" 2>/dev/null || echo "N/A")
+          log_debug "Waybar config structure" "{\"type\":\"$CONFIG_TYPE\",\"length\":\"$CONFIG_LENGTH\"}" "hypothesis-a"
+        fi
+      else
+        log_debug "Waybar config file missing" "{\"path\":\"$WAYBAR_CONFIG\"}" "hypothesis-a"
+      fi
+      
+      # Check style file
+      if [ -f "$WAYBAR_STYLE" ]; then
+        STYLE_SIZE=$(stat -c%s "$WAYBAR_STYLE" 2>/dev/null || echo "0")
+        log_debug "Waybar style file exists" "{\"path\":\"$WAYBAR_STYLE\",\"size\":$STYLE_SIZE}" "hypothesis-c"
+      else
+        log_debug "Waybar style file missing" "{\"path\":\"$WAYBAR_STYLE\"}" "hypothesis-c"
+      fi
+      
+      # Check waybar process
+      if ${pkgs.procps}/bin/pgrep -f "/bin/waybar" >/dev/null 2>&1; then
+        WAYBAR_PIDS=$(${pkgs.procps}/bin/pgrep -f "/bin/waybar")
+        WAYBAR_COUNT=$(echo "$WAYBAR_PIDS" | wc -l)
+        log_debug "Waybar process running" "{\"pids\":\"$WAYBAR_PIDS\",\"count\":$WAYBAR_COUNT}" "hypothesis-b"
+      else
+        log_debug "Waybar process not running" "{}" "hypothesis-b"
+      fi
+      
+      # Check sov binary
+      if [ -f "${pkgs.sov}/bin/sov" ]; then
+        SOV_SIZE=$(stat -c%s "${pkgs.sov}/bin/sov" 2>/dev/null || echo "0")
+        log_debug "Sov binary exists" "{\"path\":\"${pkgs.sov}/bin/sov\",\"size\":$SOV_SIZE}" "hypothesis-d"
+      else
+        log_debug "Sov binary missing" "{\"path\":\"${pkgs.sov}/bin/sov\"}" "hypothesis-d"
+      fi
+      
+      # Check conditional logic
+      log_debug "Conditional check" "{\"stylixEnable\":${if systemSettings.stylixEnable then "true" else "false"},\"wm\":\"${userSettings.wm}\",\"enableSwayForDESK\":${if systemSettings.enableSwayForDESK == true then "true" else "false"}}" "hypothesis-e"
+    '';
+    executable = true;
   };
 
   # Sov configuration (Workspace Overview)
