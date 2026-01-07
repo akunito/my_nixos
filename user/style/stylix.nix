@@ -14,6 +14,15 @@ in
 if stylixEnabled then {
   # imports must be at the top level
   imports = [ inputs.stylix.homeModules.stylix ];
+  
+  # DEBUG: Log Stylix configuration state
+  home.file.".stylix-debug.log".text = ''
+    stylixEnabled: ${toString stylixEnabled}
+    userSettings.wm: ${userSettings.wm}
+    systemSettings.enableSwayForDESK: ${toString systemSettings.enableSwayForDESK}
+    stylix.targets.qt.enable: ${toString (if (userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) then false else true)}
+    stylix.targets.gtk.enable: true
+  '';
 
   home.file.".local/share/pixmaps/nixos-snowflake-stylix.svg".source = 
     config.lib.stylix.colors {
@@ -66,10 +75,12 @@ if stylixEnabled then {
   # This module should not be loaded for Plasma 6, but disable KDE target as a safety measure
   stylix.targets.kde.enable = false;
   stylix.targets.kitty.enable = true;
-  stylix.targets.gtk.enable = true;
+  # CRITICAL: Disable GTK target in dual-DE setup to prevent conflicts with Plasma 6
+  # Plasma 6 manages GTK theming, so Stylix should not interfere
+  # Only enable GTK target when NOT in dual-DE setup
+  stylix.targets.gtk.enable = if (userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) then false else true;
   # CRITICAL: Disable QT target in dual-DE setup to prevent conflicts with Plasma 6
   # Plasma 6 manages QT theming, so Stylix should not interfere
-  # Keep GTK enabled for Sway (Plasma can override via its own GTK settings)
   stylix.targets.qt.enable = if (userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) then false else true;
   stylix.targets.qt.platform = "qtct";  # Use qtct for custom Stylix colors (Stylix generates qt5ct config automatically)
   stylix.targets.rofi.enable = if (userSettings.wmType == "x11") then true else false;
@@ -77,7 +88,8 @@ if stylixEnabled then {
   # CRITICAL: Stylix creates CSS files but doesn't set gtk-theme-name automatically
   # We need to set it manually to ensure dark mode. Stylix's CSS will still be loaded
   # via gtk.css which imports colors.css.
-  gtk = {
+  # DEBUG: Disable GTK module for Plasma 6 to prevent theme locking
+  gtk = lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == false) {
     enable = true;
     gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
     gtk3.extraConfig = {
@@ -101,7 +113,8 @@ if stylixEnabled then {
   # Home Manager's gtk module sets config files but doesn't set gsettings via dconf
   # NOTE: This is only applied when Stylix is enabled (not for Plasma 6)
   # Plasma 6 has its own theming system and doesn't use Stylix
-  dconf.settings = {
+  # DEBUG: Disable dconf.settings for dual-DE setup to prevent Plasma 6 lock
+  dconf.settings = lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == false) {
     "org/gnome/desktop/interface" = {
       color-scheme = if config.stylix.polarity == "dark" then "prefer-dark" else "default";
       gtk-theme = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";

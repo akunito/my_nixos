@@ -4,6 +4,22 @@ let
   # Hyper key combination (Super+Ctrl+Alt)
   hyper = "Mod4+Control+Mod1";
   
+  # DEBUG: Script to set Sway-specific GTK/QT theme variables and sync with D-Bus
+  set-sway-theme-vars = pkgs.writeShellScriptBin "set-sway-theme-vars" ''
+    # Set theme variables based on Stylix polarity
+    export QT_QPA_PLATFORMTHEME=qt5ct
+    export GTK_THEME=${if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then (if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita") else "Adwaita-dark"}
+    export GTK_APPLICATION_PREFER_DARK_THEME=1
+    
+    # DEBUG: Log to debug file
+    echo "DEBUG: set-sway-theme-vars executed - QT_QPA_PLATFORMTHEME=$QT_QPA_PLATFORMTHEME GTK_THEME=$GTK_THEME" >> /home/akunito/.dotfiles/.cursor/debug.log
+    
+    # Sync with D-Bus activation environment
+    dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME
+    
+    echo "DEBUG: dbus-update-activation-environment completed" >> /home/akunito/.dotfiles/.cursor/debug.log
+  '';
+  
   # DESK startup apps init script - non-blocking initialization with GPG-encrypted password file
   desk-startup-apps-init = pkgs.writeShellApplication {
     name = "desk-startup-apps-init";
@@ -120,7 +136,9 @@ let
       
       # Phase 2: Decrypt password file (GPG agent handles passphrase if cached)
       echo "Attempting to decrypt password file..."
-      PASSWORD=$(gpg --decrypt "$PASSWORD_FILE" 2>/dev/null)
+      # Use --no-tty to prevent TTY issues in background scripts
+      # GPG agent will handle passphrase if cached (same system as SSH keys)
+      PASSWORD=$(gpg --no-tty --decrypt "$PASSWORD_FILE" 2>/dev/null)
       DECRYPT_EXIT=$?
       
       if [ $DECRYPT_EXIT -ne 0 ] || [ -z "$PASSWORD" ]; then
@@ -1636,7 +1654,7 @@ in {
         # They are set ONLY here in Sway startup, ensuring isolation between Plasma and Sway
         # Note: gsettings are handled by dconf.settings in Home Manager, not here.
         {
-          command = ''bash -c 'export QT_QPA_PLATFORMTHEME=qt5ct && export GTK_THEME=${if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then (if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita") else "Adwaita-dark"} && export GTK_APPLICATION_PREFER_DARK_THEME=1 && dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME' '';
+          command = "${set-sway-theme-vars}/bin/set-sway-theme-vars";
           always = true;
         }
         # Unified daemon management - starts all daemons with smart reload support
