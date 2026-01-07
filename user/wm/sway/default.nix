@@ -909,10 +909,11 @@ let
         fi
         
         # Check if daemon is running
-        # CRITICAL: For waybar, double-check with a more specific pattern to avoid false negatives
-        # Waybar spawns multiple processes, but we only care about the main process
+        # CRITICAL: Pattern is already interpolated in Nix, so we can use it directly in pgrep
+        # escapeShellArg would break pgrep pattern matching (adds quotes/escapes that pgrep doesn't understand)
+        # The pattern is trusted (comes from Nix config), so direct interpolation is safe
         DAEMON_RUNNING=false
-        if ${pkgs.procps}/bin/pgrep $PGREP_FLAG ${lib.strings.escapeShellArg daemon.pattern} > /dev/null 2>&1; then
+        if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" > /dev/null 2>&1; then
           DAEMON_RUNNING=true
         fi
         
@@ -924,7 +925,7 @@ let
             # Waybar processes exist, but main process might have crashed
             # CRITICAL: Use the exact pattern from daemon definition (not a simplified fallback)
             # This ensures we match the same process that daemon-manager would match
-            if ${pkgs.procps}/bin/pgrep $PGREP_FLAG ${lib.strings.escapeShellArg daemon.pattern} > /dev/null 2>&1; then
+            if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" > /dev/null 2>&1; then
               DAEMON_RUNNING=true
               log "INFO: ${daemon.name} main process is running (matched with pattern: ${daemon.pattern})" "info"
             fi
@@ -983,7 +984,7 @@ let
             else
               sleep 2
             fi
-            if ${pkgs.procps}/bin/pgrep $PGREP_FLAG ${lib.strings.escapeShellArg daemon.pattern} > /dev/null 2>&1; then
+            if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" > /dev/null 2>&1; then
               log "SUCCESS: ${daemon.name} restarted successfully" "info"
               # #region agent log
               echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:restart-success\",\"message\":\"Daemon restarted successfully\",\"data\":{\"daemon\":\"${daemon.name}\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
