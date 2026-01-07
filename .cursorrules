@@ -162,6 +162,133 @@ programs.waybar = {
 5.  **Use safe kill logic** - Never use `pkill -f` directly without filtering `$$` (self PID) and `$PPID` (parent PID) to prevent self-termination
 6.  **Use XDG runtime directories for lock files** - Always use `/run/user/$(id -u)/` (XDG runtime directory), never `/tmp/` to prevent security issues and stale locks
 
+### Pattern Check Specificity for Cleanup
+**CRITICAL**: When implementing cleanup logic for daemons, pattern checks must be broader than exact matching patterns.
+
+**Example**:
+-   ❌ **WRONG**: `if echo "$PATTERN" | grep -q "waybar -c"` (too specific, misses other patterns)
+-   ✅ **CORRECT**: `if echo "$PATTERN" | grep -qE "(/bin/)?waybar"` (broader, catches both absolute paths and short commands)
+
+**Why**: Cleanup logic needs to run for multiple pattern formats (old and new), not just the current exact pattern.
+
+**Regex Dialect Note**: Use Extended Regex (ERE) with `grep -E` when validating patterns that will be passed to `pgrep` (which also uses ERE). This ensures consistency between validation and actual matching.
+
+### Pattern Anchoring with Nix Store Paths
+**CRITICAL**: When using `pkill -f` with anchored patterns (`^`), account for NixOS absolute store paths.
+
+**NixOS Nuance**: Binaries run from absolute paths (e.g., `/nix/store/...-waybar-.../bin/waybar`). A pattern anchored with `^waybar` will **fail** to match `/nix/store/.../bin/waybar` when using `pkill -f`.
+
+**Example**:
+-   ❌ **WRONG**: `pkill -f '^waybar'` (won't match `/nix/store/.../bin/waybar`)
+-   ✅ **CORRECT**: `pkill -f '^/nix/store.*/bin/waybar'` (matches full store path)
+-   ✅ **ALTERNATIVE**: `pkill -f 'waybar$'` (matches end of command line, works if binary name is consistent)
+
+**Why**: NixOS uses absolute store paths, so regex anchoring must account for the full path prefix. If the start is variable, use end anchoring (`$`) or verify the exact string being matched.
+
+**Verification Tip**: Before defining strict anchors (`^`), verify the actual running process name format using `ps -ef | grep waybar`. The `pgrep -f` matches against `/proc/pid/cmdline`, which might appear short if the process was started via symlink (e.g., `/run/current-system/sw/bin/waybar`).
+
+**Note**: For cleanup operations, prefer broader patterns (e.g., `(/bin/)?waybar` with Extended Regex) that work regardless of store path prefix or command format.
+
+### Diagnostic Logging Best Practices
+**CRITICAL**: Always use explicit priority flags in `systemd-cat` logging calls for better debugging.
+
+**Example**:
+```sh
+# If using the log() wrapper function (defined in daemon-manager):
+log "INFO: Starting daemon" "info"    # ✅ CORRECT: Explicit priority
+log "WARNING: Process not found" "warning"  # ✅ CORRECT: Explicit priority
+log "ERROR: Failed to start" "err"   # ✅ CORRECT: Explicit priority
+
+# If log() wrapper is not available, use systemd-cat directly:
+echo "INFO: Starting daemon" | systemd-cat -t sway-daemon-mgr -p info
+echo "WARNING: Process not found" | systemd-cat -t sway-daemon-mgr -p warning
+echo "ERROR: Failed to start" | systemd-cat -t sway-daemon-mgr -p err
+```
+
+**Why**: Explicit priority flags enable better log filtering and debugging (`journalctl -p warning`).
+
+**Note**: The `log()` wrapper function is defined in `daemon-manager` and `daemon-health-monitor` scripts. If implementing logging in a new script, verify the wrapper exists or use `systemd-cat` directly with explicit priority flags.
+
+### Store Path Validation Rule
+**CRITICAL**: Always validate extracted store paths before using in pattern matching to prevent false matches.
+
+**Example**:
+```sh
+CURRENT_STORE_PATH=$(dirname $(dirname "$CLEAN_EXEC"))
+# CRITICAL: Validate before use
+if [ -z "$CURRENT_STORE_PATH" ] || [ "$CURRENT_STORE_PATH" = "." ]; then
+  # Skip store path-based cleanup for invalid paths
+  CURRENT_STORE_PATH=""
+fi
+```
+
+**Why**: Invalid paths (e.g., `.` from legacy patterns) cause `grep -q "."` to match everything, breaking cleanup logic.
+
+### Legacy Pattern Handling
+**CRITICAL**: Cleanup logic must handle multiple pattern formats simultaneously during system evolution.
+
+**NixOS-Specific Definition**: In NixOS, a "Legacy Pattern" specifically means **"A process running from a Nix Store path with a different hash than the current configuration"** (e.g., `/nix/store/HASH_A-waybar...` vs `/nix/store/HASH_B-waybar...`). This occurs after system rebuilds when store paths change.
+
+**Why**: During migration or pattern updates, old processes may still be running with old patterns or different store path hashes. Cleanup must handle both.
+
+### String Parsing Best Practices
+**CRITICAL**: Prefer `cut` over `awk` for simple field extraction in shell scripts when input format is predictable.
+
+**Example**:
+-   ✅ **CORRECT**: `CLEAN_EXEC=$(echo "$PATTERN" | cut -d' ' -f1 | sed 's/^\^//')` (for strictly formatted strings like Nix store paths)
+-   ⚠️ **ACCEPTABLE**: `CLEAN_EXEC=$(echo "$PATTERN" | awk '{print $1}' | sed 's/^\^//')` (if whitespace is variable/unpredictable)
+
+**Why**: `cut` is lighter weight (part of `coreutils`) and more appropriate for simple field extraction in restricted shell environments. However, `awk` is more robust if input has variable whitespace (e.g., multiple spaces between command and argument). For extracting binary paths from known command strings (like Nix store paths), `cut` is preferred.
+
+**Note**: Ensure `coreutils` is available in the environment for `cut` to work.
+
+**Regex Dialect Compatibility**: When validating patterns that will be passed to `pgrep` (which uses Extended Regex - ERE), use `grep -E` instead of standard `grep` (which uses Basic Regex - BRE) to ensure consistency. Example: `grep -qE "(/bin/)?waybar"` instead of `grep -q "/bin/waybar"`.
+
+### TOCTOU Race Conditions (Already Solved)
+**CRITICAL**: The current implementation already solves TOCTOU race conditions correctly using `safe_kill()` and `safe_kill_pid()` functions.
+
+**Current Working Approach** (DO NOT CHANGE):
+-   Uses `safe_kill()` function which uses `pgrep` + `kill` (SIGTERM) with PID filtering
+-   Uses `safe_kill_pid()` function for PID-based cleanup with SIGKILL
+-   **Line 604 in `default.nix`**: "Note: We no longer use pkill - safe_kill uses pgrep + kill instead"
+
+**What NOT to Do**:
+-   ❌ **WRONG**: `pid=$(pgrep -f pattern); kill $pid` (TOCTOU race condition)
+-   ❌ **WRONG**: `pkill -f pattern` directly (causes self-termination)
+-   ❌ **WRONG**: `pkill -USR2 -f pattern` for cleanup (SIGUSR2 is for reload, not kill)
+
+**What to Do** (Already Implemented):
+-   ✅ **CORRECT**: Use existing `safe_kill()` or `safe_kill_pid()` functions
+-   ✅ **CORRECT**: SIGUSR2 is ONLY used for reload commands (already correctly implemented)
+
+**Why This Works**: `safe_kill()` gets all PIDs with `pgrep`, filters out `$$` (self PID) and `$PPID` (parent PID) to prevent self-termination, then kills remaining PIDs. This solves both TOCTOU race conditions and self-termination bugs.
+
+**Technical Detail**: The specific mechanism that solves self-termination is the explicit filtering of `$$` and `$PPID` before killing. Standard `pkill` does not do this easily, which is why `safe_kill` is mandatory. This filtering ensures the script never kills itself or its parent process, even if the pattern matches the script's own command line arguments.
+
+**Reference**: See `sway-daemon-integration.md` Safe Kill Functions section for details.
+
+### Dependency Availability
+**CRITICAL**: Ensure required binaries are available in the environment when implementing daemon management scripts.
+
+**Required Dependencies**:
+-   `procps` (provides `pkill`, `pgrep`) - Required for process management
+-   `coreutils` (provides `cut`, `dirname`) - Required for string parsing and path manipulation
+-   `gnugrep` (provides `grep`) - Usually available, but verify if using strict derivations
+
+**NixOS Context**: In NixOS shell scripts (especially inside `systemd` units or strict derivations), these binaries might not be in the default `$PATH` unless explicitly added.
+
+**Example**:
+```nix
+# In daemon-manager script generation, ensure packages are available:
+daemon-manager = pkgs.writeShellScriptBin "daemon-manager" ''
+  # Use explicit paths from pkgs
+  ${pkgs.procps}/bin/pkill -f pattern
+  ${pkgs.coreutils}/bin/cut -d' ' -f1
+'';
+```
+
+**Why**: NixOS uses isolated environments. Scripts must explicitly reference package paths or ensure packages are in the environment's `PATH`.
+
 ### Lock File Mechanism Rules
 **CRITICAL**: The lock file mechanism MUST use the simple atomic design:
 -   ✅ **CORRECT**: `flock -n 9 || { echo "..."; exit 0; }` - immediate exit if lock held

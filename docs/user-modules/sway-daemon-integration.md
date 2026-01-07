@@ -360,6 +360,8 @@ bar {
 
 **Problem**: Using `pkill -f [PATTERN]` or `kill` directly matches command line arguments or doesn't filter self/parent PIDs. If the manager script's arguments contain the pattern, it kills itself.
 
+**Why `safe_kill` is Mandatory**: The specific mechanism that solves self-termination is the explicit filtering of `$$` (self PID) and `$PPID` (parent PID) before killing. Standard `pkill` does not do this easily, which is why `safe_kill` is mandatory. This filtering ensures the script never kills itself or its parent process, even if the pattern matches the script's own command line arguments.
+
 **Two Safe Kill Functions**:
 
 1. **`safe_kill`** - Pattern-based cleanup with SIGTERM (graceful termination)
@@ -448,11 +450,21 @@ LOCK_FILE="$LOCK_DIR/sway-startup.lock"
 - These old processes must be killed before starting a new instance to prevent duplicates
 
 **The Solution** (implemented in `daemon-manager`):
-1. **Pattern Check**: Detects waybar using tight pattern match (`/bin/waybar`)
+1. **Pattern Check**: Detects waybar using broader pattern match `grep -qE "(/bin/)?waybar"` - **CRITICAL**: Pattern check must be broader than exact matching pattern to catch all instances (both absolute paths and short commands)
 2. **Old Pattern Cleanup**: Checks for old patterns (`/bin/waybar`, `waybar -c`) and kills processes with different PIDs
 3. **Store Path Extraction**: Uses robust `dirname` approach to extract current store path from pattern
 4. **Store Path Comparison**: Compares running waybar processes' command lines against current store path
 5. **Safe Cleanup**: Uses `safe_kill_pid` wrapper to kill old processes (filters `$$` and `$PPID`, uses SIGKILL)
+
+**NixOS Legacy Pattern Definition**: In NixOS, "Legacy Pattern" specifically means a process running from a Nix Store path with a different hash than the current configuration (e.g., `/nix/store/HASH_A-waybar...` vs `/nix/store/HASH_B-waybar...`). This occurs after system rebuilds when store paths change.
+
+**General Principle**: When implementing cleanup logic for any daemon, pattern checks must be broader than exact matching patterns to handle legacy patterns (hash mismatches) and multiple format variations.
+
+**Regex Dialect Note**: Use Extended Regex (ERE) with `grep -E` when validating patterns that will be passed to `pgrep` (which also uses ERE). This ensures consistency between validation and actual matching.
+
+**Verification Tip**: Before defining strict anchors (`^`), verify the actual running process name format using `ps -ef | grep waybar` to see how `/proc/pid/cmdline` appears.
+
+**Dependency Requirements**: Ensure `procps` (for `pkill`/`pgrep`) and `coreutils` (for `cut`/`dirname`) are available in the script's environment. In NixOS, use explicit package paths (e.g., `${pkgs.procps}/bin/pkill`) or ensure packages are in the environment's `PATH`.
 
 **Store Path Extraction** (robust `dirname` approach):
 ```sh
@@ -660,6 +672,119 @@ programs.waybar = {
 **Symptom**: Stale locks after crashes, security issues
 
 **Solution**: Always use `/run/user/$(id -u)/` (XDG runtime directory)
+
+### Pattern Check Specificity Mistakes
+
+**Problem**: Pattern checks for cleanup logic are too specific, preventing cleanup from running.
+
+**Symptom**: Old processes from previous rebuilds are not killed, causing duplicate instances.
+
+**Solution**: Use broader pattern checks that catch all pattern formats, including both absolute paths and short commands.
+
+**Example**:
+```sh
+# ❌ Wrong: Too specific, only matches exact pattern
+if echo "$PATTERN" | grep -q "waybar -c"; then
+  # Cleanup logic
+fi
+
+# ✅ Correct: Broader pattern catches all waybar instances (absolute paths and short commands)
+if echo "$PATTERN" | grep -qE "(/bin/)?waybar"; then
+  # Cleanup logic
+fi
+```
+
+**Note**: The regex `(/bin/)?waybar` uses Extended Regex (ERE) syntax (`grep -E`) to match both:
+- Absolute paths: `/nix/store/.../bin/waybar`
+- Short commands: `waybar` (when relying on PATH)
+
+**Why**: Cleanup logic must handle multiple pattern formats (old and new) simultaneously during system evolution.
+
+### Store Path Validation Mistakes
+
+**Problem**: Using invalid store paths (e.g., `.` from legacy patterns) in `grep` causes false matches.
+
+**Symptom**: Cleanup logic skips killing old processes because `grep -q "."` matches everything.
+
+**Solution**: Always validate extracted store paths before using in pattern matching.
+
+**Example**:
+```sh
+CURRENT_STORE_PATH=$(dirname $(dirname "$CLEAN_EXEC"))
+# CRITICAL: Validate before use
+if [ -z "$CURRENT_STORE_PATH" ] || [ "$CURRENT_STORE_PATH" = "." ]; then
+  # Skip store path-based cleanup for invalid paths
+  CURRENT_STORE_PATH=""
+fi
+```
+
+**Why**: Invalid paths cause `grep -q "."` to match everything, breaking cleanup logic.
+
+### Diagnostic Logging Mistakes
+
+**Problem**: Logging without explicit priority flags makes debugging harder.
+
+**Symptom**: Cannot filter logs by priority (`journalctl -p warning` doesn't work).
+
+**Solution**: Always use explicit priority flags in `systemd-cat` calls.
+
+**Example**:
+```sh
+# ❌ Wrong: No priority flag
+log "Starting daemon"  # If log() wrapper doesn't pass priority
+
+# ✅ Correct: Explicit priority flag (if using log() wrapper)
+log "INFO: Starting daemon" "info"
+log "WARNING: Process not found" "warning"
+log "ERROR: Failed to start" "err"
+
+# ✅ Correct: Direct systemd-cat usage (if log() wrapper not available)
+echo "INFO: Starting daemon" | systemd-cat -t sway-daemon-mgr -p info
+echo "WARNING: Process not found" | systemd-cat -t sway-daemon-mgr -p warning
+echo "ERROR: Failed to start" | systemd-cat -t sway-daemon-mgr -p err
+```
+
+**Why**: Explicit priority flags enable better log filtering and debugging.
+
+**Note**: The `log()` wrapper function is defined in `daemon-manager` and `daemon-health-monitor` scripts. If implementing logging in a new script, verify the wrapper exists or use `systemd-cat` directly with explicit priority flags.
+
+### TOCTOU Race Condition Mistakes (Already Solved)
+
+**Problem**: Manual PID extraction creates race conditions between process check and kill.
+
+**Current Solution**: The implementation already uses `safe_kill()` and `safe_kill_pid()` functions which solve this correctly.
+
+**What NOT to Do**:
+```sh
+# ❌ Wrong: Race condition between check and kill
+pid=$(pgrep -f pattern)
+kill $pid
+
+# ❌ Wrong: Direct pkill causes self-termination
+pkill -f pattern  # Can kill the script itself!
+
+# ❌ WRONG: Using SIGUSR2 for cleanup (this reloads, doesn't kill)
+pkill -USR2 -f '^pattern'  # This will cause multiple instances!
+```
+
+**What to Do** (Already Implemented):
+```sh
+# ✅ Correct: Use existing safe_kill() function
+safe_kill "$PATTERN" "$PGREP_FLAG"
+
+# ✅ Correct: Use existing safe_kill_pid() for PID-based cleanup
+safe_kill_pid "$PID"
+```
+
+**Why**: The current `safe_kill()` approach:
+- Gets all PIDs with `pgrep` first
+- Filters out `$$` (self PID) and `$PPID` (parent PID)
+- Then kills remaining PIDs with `kill` (SIGTERM)
+- This prevents both TOCTOU race conditions AND self-termination bugs
+
+**Technical Detail**: The specific mechanism that solves self-termination is the explicit filtering of `$$` and `$PPID` before killing. Standard `pkill` does not do this easily, which is why `safe_kill` is mandatory. This filtering ensures the script never kills itself or its parent process, even if the pattern matches the script's own command line arguments.
+
+**Note**: SIGUSR2 is ONLY used for reload commands (already correctly implemented). See `sway-daemon-integration.md` Safe Kill Functions section for details.
 
 ## Troubleshooting
 

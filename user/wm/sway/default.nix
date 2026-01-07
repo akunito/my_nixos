@@ -662,8 +662,10 @@ let
     # CRITICAL: For waybar, also check for old patterns from previous rebuilds
     # Old waybar processes might be running with old store paths or simplified patterns
     # We need to kill these to prevent conflicts
-    # Pattern check uses "/bin/waybar" to match both old ("waybar -c") and new ("^${pkgs.waybar}/bin/waybar") patterns
-    if echo "$PATTERN" | grep -q "/bin/waybar"; then
+    # Pattern check uses "(/bin/)?waybar" (Extended Regex) to match both old ("waybar -c") and new ("^${pkgs.waybar}/bin/waybar") patterns
+    # This catches both absolute paths (/nix/store/.../bin/waybar) and short commands (waybar)
+    # Using grep -E for Extended Regex to match pgrep's ERE dialect
+    if echo "$PATTERN" | grep -qE "(/bin/)?waybar"; then
       log "Waybar cleanup: checking for old patterns and store paths (pattern: $PATTERN)" "info"
       # Check for old patterns: /bin/waybar, waybar -c (without store path), or old store paths
       # Also check for any waybar process that doesn't match the current pattern
