@@ -153,21 +153,44 @@ let
       
       # Phase 3: Unlock KWallet with decrypted password
       echo "Password decrypted successfully. Attempting to unlock KWallet..."
-      if command -v kwalletcli >/dev/null 2>&1; then
-        if kwalletcli --open kdewallet <<< "$PASSWORD" 2>/dev/null; then
-          echo "KWallet unlocked successfully via kwalletcli"
-          notify-send -t 3000 "KWallet" "KWallet unlocked successfully." || true
-          # Clear password from memory (best effort)
-          PASSWORD=""
-        else
-          echo "kwalletcli unlock failed, falling back to GUI prompt"
-          PASSWORD=""  # Clear password from memory
+      # Use qdbus to unlock wallet (kwalletcli doesn't support unlocking)
+      # Try kwalletd6 first (Plasma 6), then fallback to kwalletd5 (Plasma 5)
+      KWALLET_UNLOCKED=false
+      if command -v qdbus >/dev/null 2>&1; then
+        # Try kwalletd6 first
+        if qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open kdewallet 0 "$PASSWORD" >/dev/null 2>&1; then
+          # Verify unlock succeeded
+          if qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.isOpen kdewallet 2>/dev/null | grep -q "true"; then
+            echo "KWallet unlocked successfully via qdbus (kwalletd6)"
+            notify-send -t 3000 "KWallet" "KWallet unlocked successfully." || true
+            KWALLET_UNLOCKED=true
+          fi
+        fi
+        
+        # If kwalletd6 didn't work, try kwalletd5
+        if [ "$KWALLET_UNLOCKED" = "false" ]; then
+          if qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open kdewallet 0 "$PASSWORD" >/dev/null 2>&1; then
+            if qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.isOpen kdewallet 2>/dev/null | grep -q "true"; then
+              echo "KWallet unlocked successfully via qdbus (kwalletd5)"
+              notify-send -t 3000 "KWallet" "KWallet unlocked successfully." || true
+              KWALLET_UNLOCKED=true
+            fi
+          fi
+        fi
+        
+        # Clear password from memory (best effort)
+        PASSWORD=""
+        
+        # If both methods failed, fall back to GUI prompt
+        if [ "$KWALLET_UNLOCKED" = "false" ]; then
+          echo "qdbus unlock failed for both kwalletd6 and kwalletd5, falling back to GUI prompt"
           notify-send -t 5000 "KWallet" "Command-line unlock failed. Showing GUI prompt..." || true
           trigger_kwallet_gui_prompt
         fi
       else
-        echo "kwalletcli not available, falling back to GUI prompt"
+        echo "qdbus not available, falling back to GUI prompt"
         PASSWORD=""  # Clear password from memory
+        notify-send -t 5000 "KWallet" "qdbus not available. Showing GUI prompt..." || true
         trigger_kwallet_gui_prompt
       fi
       
