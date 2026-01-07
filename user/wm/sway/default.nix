@@ -314,6 +314,23 @@ let
       return 0
     }
     
+    # Wrapper function for PID-based cleanup with SIGKILL
+    # Follows safe_kill pattern but works with individual PIDs
+    # CRITICAL: Defined in helper functions section (after safe_kill) for reuse
+    safe_kill_pid() {
+      local TARGET_PID="$1"
+      local SELF_PID=$$
+      local PARENT_PID=$PPID
+      
+      # CRITICAL: Filter self and parent PIDs (safe kill principle)
+      if [ "$TARGET_PID" = "$SELF_PID" ] || [ "$TARGET_PID" = "$PARENT_PID" ]; then
+        return 0
+      fi
+      
+      # Use SIGKILL for cleanup (stubborn processes from previous rebuilds)
+      kill -9 "$TARGET_PID" 2>/dev/null && return 0 || return 1
+    }
+    
     # Check if process is running and count instances
     RUNNING_PIDS=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
     RUNNING_COUNT=$(echo "$RUNNING_PIDS" | grep -v "^$" | wc -l)
@@ -321,7 +338,9 @@ let
     # CRITICAL: For waybar, also check for old patterns from previous rebuilds
     # Old waybar processes might be running with old store paths or simplified patterns
     # We need to kill these to prevent conflicts
-    if echo "$PATTERN" | grep -q "waybar -c"; then
+    # Pattern check uses "/bin/waybar" to match both old ("waybar -c") and new ("^${pkgs.waybar}/bin/waybar") patterns
+    if echo "$PATTERN" | grep -q "/bin/waybar"; then
+      log "Waybar cleanup: checking for old patterns and store paths (pattern: $PATTERN)" "info"
       # Check for old patterns: /bin/waybar, waybar -c (without store path), or old store paths
       # Also check for any waybar process that doesn't match the current pattern
       OLD_PATTERNS="/bin/waybar waybar -c"
@@ -332,8 +351,8 @@ let
           for OLD_PID in $OLD_PIDS; do
             if ! echo "$RUNNING_PIDS" | grep -q "^''${OLD_PID}$"; then
               log "WARNING: Found old waybar process (PID: $OLD_PID, pattern: $OLD_PAT), killing it" "warning"
-              # Use kill -9 for stubborn processes
-              kill -9 "$OLD_PID" 2>/dev/null || true
+              # Use safe_kill_pid for stubborn processes (filters $$ and $PPID, uses SIGKILL)
+              safe_kill_pid "$OLD_PID"
             fi
           done
         fi
@@ -341,18 +360,38 @@ let
       # Also kill any waybar process that doesn't match the current store path pattern
       # This catches processes from previous rebuilds with different store paths
       ALL_WAYBAR_PIDS=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | grep -v "^$" || echo "")
-      CURRENT_STORE_PATH=$(echo "$PATTERN" | sed 's|/bin/waybar.*||')
-      for WB_PID in $ALL_WAYBAR_PIDS; do
-        # Check if this PID's command line contains the current store path
-        WB_CMD=$(ps -p "$WB_PID" -o cmd= 2>/dev/null || echo "")
-        if [ -n "$WB_CMD" ] && ! echo "$WB_CMD" | grep -q "$CURRENT_STORE_PATH"; then
-          if ! echo "$RUNNING_PIDS" | grep -q "^''${WB_PID}$"; then
-            log "WARNING: Found old waybar process (PID: $WB_PID, old store path), killing it" "warning"
-            kill -9 "$WB_PID" 2>/dev/null || true
-          fi
-        fi
-      done
+      # Extract store path using robust dirname approach (works with any binary location)
+      # Use cut instead of awk for lighter weight (standard on NixOS)
+      CLEAN_EXEC=$(echo "$PATTERN" | cut -d' ' -f1 | sed 's/^\^//')
+      # Get the store path using dirname (assumes standard /bin/binary structure)
+      # dirname twice: /nix/store/.../bin/waybar -> /nix/store/.../bin -> /nix/store/...
+      CURRENT_STORE_PATH=$(dirname $(dirname "$CLEAN_EXEC"))
       
+      # CRITICAL: Validate store path extraction
+      # If pattern is legacy (e.g., "waybar -c"), dirname returns "." which would match everything in grep
+      # This would cause cleanup to skip killing old processes (inverse logic: ! grep would be false)
+      if [ -z "$CURRENT_STORE_PATH" ] || [ "$CURRENT_STORE_PATH" = "." ]; then
+        # Skip store path-based cleanup for legacy patterns
+        # Old pattern cleanup (lines 327-340) will still handle these cases
+        CURRENT_STORE_PATH=""
+        log "INFO: Skipping store path cleanup (legacy pattern detected)" "info"
+      fi
+      
+      # Only proceed with store path comparison if we successfully extracted a valid path
+      if [ -n "$CURRENT_STORE_PATH" ] && [ "$CURRENT_STORE_PATH" != "." ]; then
+        for WB_PID in $ALL_WAYBAR_PIDS; do
+          # Check if this PID's command line contains the current store path
+          WB_CMD=$(ps -p "$WB_PID" -o cmd= 2>/dev/null || echo "")
+          if [ -n "$WB_CMD" ] && ! echo "$WB_CMD" | grep -q "$CURRENT_STORE_PATH"; then
+            if ! echo "$RUNNING_PIDS" | grep -q "^''${WB_PID}$"; then
+              log "WARNING: Found old waybar process (PID: $WB_PID, old store path), killing it" "warning"
+              safe_kill_pid "$WB_PID"
+            fi
+          fi
+        done
+      fi
+      
+      log "Waybar pattern match result: $RUNNING_COUNT instances (PIDs: $RUNNING_PIDS)" "info"
       # #region agent log
       echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:check-instances\",\"message\":\"Checking waybar instances\",\"data\":{\"pattern\":\"$PATTERN\",\"runningCount\":\"$RUNNING_COUNT\",\"pids\":\"$RUNNING_PIDS\",\"hypothesisId\":\"D\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
       # #endregion
