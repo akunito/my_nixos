@@ -520,6 +520,53 @@ sudo ./cleanIPTABLESrules.sh
 
 ## Utility Scripts
 
+### scripts/generate_docs_index.py
+
+**Purpose**: Generates `docs/00_INDEX.md` - a hierarchical documentation index for AI context retrieval optimization.
+
+**Usage**:
+```sh
+python3 scripts/generate_docs_index.py
+```
+
+**What It Does**:
+1. Scans project structure (`docs/`, `system/`, `user/`, `profiles/`, `lib/`)
+2. Parses Nix files to extract module purposes and `lib.mkIf` conditional logic
+3. Parses Markdown files to extract summaries
+4. Generates a hierarchical index organized by:
+   - Flake Architecture
+   - Profiles
+   - System Modules (by category)
+   - User Modules (by category)
+   - Documentation (by structure level)
+
+**Features**:
+- **Nix Module Parsing**: Extracts first comment block as module purpose
+- **Conditional Detection**: Identifies `lib.mkIf` conditions and notes when modules are active
+- **Documentation Structure Detection**: Recognizes 3-level and 4-level documentation structures
+- **Auto-Generation Warning**: Index file includes warning header to prevent manual editing
+
+**Output**:
+- Creates/updates `docs/00_INDEX.md` with hierarchical navigation tree
+- Each entry includes: Title, Summary, File Path, and Conditional Logic (if applicable)
+
+**When to Regenerate**:
+- After adding new major modules
+- After restructuring documentation
+- After modifying `lib.mkIf` conditions in modules
+- When index becomes outdated
+
+**Note**: The index is auto-generated. Do not edit `docs/00_INDEX.md` manually. Always regenerate using this script.
+
+**Dependencies**:
+- Python 3.6 or higher
+- Standard library only (no external dependencies)
+
+**Error Handling**:
+- If Python 3 is not available, script will output a clear warning
+- Handles missing directories gracefully
+- Provides helpful error messages for unreadable files
+
 ### handle_docker.sh
 
 **Purpose**: Stops Docker containers before system updates to prevent boot issues.

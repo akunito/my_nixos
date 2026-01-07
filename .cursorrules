@@ -1,3 +1,19 @@
+# CRITICAL CONTEXT PROTOCOL
+
+1. **PHASE 1: INDEX CHECK**
+   - Before answering ANY architectural or implementation question, you MUST read `docs/00_INDEX.md`.
+   - IDENTIFY which branch (Flake, System, User, Profiles) is relevant.
+
+2. **PHASE 2: SCOPED RETRIEVAL**
+   - Once the branch is identified, ONLY read the "Key Files" listed in that branch.
+   - **NixOS Context:** Pay attention to `lib.mkIf` conditions noted in the index to understand when modules are active.
+
+3. **PHASE 3: IMPLEMENTATION**
+   - Proceed with the task using the scoped context.
+   - If creating new major modules, remind the user to run `python3 scripts/generate_docs_index.py`.
+
+---
+
 # Cursor Rules for NixOS Flake Configuration
 
 ## CRITICAL: PRIME DIRECTIVES (NixOS Flake Architecture)
@@ -78,11 +94,13 @@
 -   **Markdown Only**: Convert `.org` to `.md` when updating.
 -   **Preserve Legacy**: Keep original `.org` files for reference, link them to new `.md` files.
 -   **Cross-Referencing**: Extensive linking between levels.
+-   **Index Maintenance**: After adding new major modules or restructuring documentation, regenerate the index with `python3 scripts/generate_docs_index.py`. The index (`docs/00_INDEX.md`) is auto-generated and should not be edited manually.
 -   **Checklist**:
     -   [ ] Follows 3-level or 4-level structure (based on file size).
     -   [ ] In Markdown format.
     -   [ ] Cross-references added.
     -   [ ] Links to original README files if they exist.
+    -   [ ] Index regenerated after structural changes (if applicable).
 
 ---
 
