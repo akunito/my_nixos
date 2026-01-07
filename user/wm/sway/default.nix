@@ -81,14 +81,17 @@ let
           | .id' 2>/dev/null | head -1)
         
         if [ -n "$WINDOW_ID" ] && [ "$WINDOW_ID" != "null" ]; then
-          echo "Found KWallet window: $WINDOW_ID"
-          # Make the window Floating
+          echo "Found KWallet window: $WINDOW_ID (fail-safe)"
+          # Fail-safe: Move to output and workspace (for_window rules should handle this, but keep as backup)
+          swaymsg "[con_id=$WINDOW_ID] move container to output $PRIMARY" 2>/dev/null || true
+          sleep 0.1
+          swaymsg "[con_id=$WINDOW_ID] move container to workspace number 1" 2>/dev/null || true
+          sleep 0.1
+          # Apply window properties
           swaymsg "[con_id=$WINDOW_ID] floating enable" 2>/dev/null || true
-          # Make the window Sticky
           swaymsg "[con_id=$WINDOW_ID] sticky enable" 2>/dev/null || true
-          # Focus the window (brings it to top)
           swaymsg "[con_id=$WINDOW_ID] focus" 2>/dev/null || true
-          echo "KWallet window configured: floating, sticky, focused"
+          echo "KWallet window configured: floating, sticky, focused (fail-safe)"
           break
         fi
         echo "Waiting for KWallet window... (attempt $i/10)"
@@ -1487,6 +1490,7 @@ in {
           { criteria = { app_id = "Bitwarden"; }; command = "floating enable"; }
           { criteria = { app_id = "com.usebottles.bottles"; }; command = "floating enable"; }
           { criteria = { app_id = "swayfx-settings"; }; command = "floating enable"; }
+          { criteria = { app_id = "io.missioncenter.MissionCenter"; }; command = "floating enable, sticky enable, resize set 800 600"; }
           
           # XWayland apps (use class)
           { criteria = { class = "Spotify"; }; command = "floating enable"; }
@@ -1508,6 +1512,7 @@ in {
           { criteria = { class = "Dolphin"; }; command = "sticky enable"; }
           { criteria = { class = "dolphin"; }; command = "sticky enable"; }
           { criteria = { class = "Spotify"; }; command = "sticky enable"; }
+          { criteria = { app_id = "io.missioncenter.MissionCenter"; }; command = "sticky enable"; }
           
         ];
       };
@@ -1684,6 +1689,33 @@ in {
       for_window [app_id="blueman-manager"] floating enable
       for_window [app_id="swappy"] floating enable
       for_window [app_id="swaync"] floating enable
+      
+      # Mission Center - Floating, Sticky, Resized
+      for_window [app_id="io.missioncenter.MissionCenter"] floating enable, sticky enable, resize set 800 600
+      
+      # KWallet - Force to Primary Monitor, Workspace 1 (Floating, Sticky)
+      # Multiple rules to catch all KWallet variants (kwalletd5, kwalletd6, kwallet-query, etc.)
+      # Note: Sway doesn't support regex in for_window criteria, so we use explicit string matching
+      # Note: Use Nix string interpolation for PRIMARY_OUTPUT variable
+      # CRITICAL: Primary app_id is org.kde.ksecretd (captured from actual KWallet window)
+      # CRITICAL: Actual window name is "KDE Wallet Service" (captured from actual window)
+      
+      # App ID-based matching (Wayland native) - PRIMARY
+      for_window [app_id="org.kde.ksecretd"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      # Fallback variants (in case different KWallet windows use these)
+      for_window [app_id="org.kde.kwalletd5"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [app_id="org.kde.kwalletd6"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [app_id="kwallet-query"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      
+      # Title-based matching (fallback) - PRIMARY
+      for_window [title="KDE Wallet Service"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [title="KWallet"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [title="kwallet"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      
+      # Class-based matching (X11/XWayland) - fallback
+      for_window [class="kwalletmanager5"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [class="kwalletmanager6"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [class="KWalletManager"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
       
       # Focus follows mouse
       focus_follows_mouse yes

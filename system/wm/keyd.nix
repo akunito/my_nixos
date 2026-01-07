@@ -20,7 +20,18 @@
         main = {
           # Map CapsLock to Ctrl+Alt+Meta (Super) - this equals Hyper key (Mod4+Control+Mod1)
           # This disables normal Caps Lock functionality (no uppercase toggle)
-          capslock = "C-A-M";
+          # Using overload: Caps Lock acts as Hyper when held, Escape when tapped
+          # Note: Keychron keyboards with firmware remapping already send C-A-M directly,
+          # so this remapping only affects keyboards that send standard Caps Lock keycodes
+          capslock = "overload(hyper, esc)";
+        };
+        # Use single letter M for Meta in the suffix
+        "hyper:C-A-M" = {
+          # This layer is active when capslock is held
+          # The ":C-A-M" suffix automatically sends Control+Alt+Meta modifiers as held modifiers
+          # All keys work normally, but with the Hyper modifiers active
+          # Dummy entry to prevent Nix from optimizing away the empty set
+          noop = "noop";
         };
       };
     };
