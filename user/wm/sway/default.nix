@@ -913,8 +913,22 @@ let
         # escapeShellArg would break pgrep pattern matching (adds quotes/escapes that pgrep doesn't understand)
         # The pattern is trusted (comes from Nix config), so direct interpolation is safe
         DAEMON_RUNNING=false
-        if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" > /dev/null 2>&1; then
+        PGREP_RESULT=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" 2>&1 || echo "")
+        if [ -n "$PGREP_RESULT" ]; then
           DAEMON_RUNNING=true
+          # #region agent log
+          if [ "${daemon.name}" = "waybar" ]; then
+            echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:waybar-running\",\"message\":\"Waybar is running\",\"data\":{\"daemon\":\"${daemon.name}\",\"pattern\":\"${daemon.pattern}\",\"pgrepResult\":\"$PGREP_RESULT\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+          fi
+          # #endregion
+        else
+          # #region agent log
+          if [ "${daemon.name}" = "waybar" ]; then
+            # Check what waybar processes actually exist
+            ALL_WAYBAR=$(pgrep -f "waybar" 2>/dev/null | tr '\n' ',' || echo "none")
+            echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:waybar-not-found\",\"message\":\"Waybar pattern not found\",\"data\":{\"daemon\":\"${daemon.name}\",\"pattern\":\"${daemon.pattern}\",\"pgrepFlag\":\"$PGREP_FLAG\",\"pgrepResult\":\"$PGREP_RESULT\",\"allWaybarProcs\":\"$ALL_WAYBAR\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+          fi
+          # #endregion
         fi
         
         # Additional check for waybar: verify the main process is actually running (not just child processes)
