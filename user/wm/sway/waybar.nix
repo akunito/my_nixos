@@ -210,8 +210,7 @@ in {
         margin: 8px 12px;
         padding: 0;
         color: #${config.lib.stylix.colors.base07};
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        /* backdrop-filter not supported by waybar CSS parser - removed */
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         transition-property: background-color;
         transition-duration: .3s;
