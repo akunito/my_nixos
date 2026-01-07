@@ -232,27 +232,28 @@ in {
             tray = sharedModules.tray;
             "sway/window" = sharedModules."sway/window";
           }
-          {
-            # Primary monitor dock (hidden by default, hover to show)
-            name = "dock";  # CRITICAL: Add name for reliable CSS targeting
-            output = primaryMonitor;
-            layer = "top";
-            position = "bottom";
-            height = 44;
-            spacing = 4;
-            mode = "overlay";  # Changed from "dock" to allow hiding
-            
-            modules-center = [ "wlr/taskbar" ];
-            
-            "wlr/taskbar" = {
-              icon-size = 24;
-              format = "{icon}";
-              on-click = "activate";
-              tooltip-format = "{title}";
-              ignore-list = [ "nwg-dock" ];
-              all-outputs = true;  # Show all apps from all monitors
-            };
-          }
+          # Dock bar removed: wlr/taskbar requires foreign-toplevel-manager protocol
+          # which is often disabled or flaky in SwayFX. Rofi remains the primary
+          # application switcher. Dock can be re-enabled when SwayFX protocol support improves.
+          # {
+          #   # Primary monitor dock (hidden by default, hover to show)
+          #   name = "dock";
+          #   output = primaryMonitor;
+          #   layer = "top";
+          #   position = "bottom";
+          #   height = 44;
+          #   spacing = 4;
+          #   mode = "overlay";
+          #   modules-center = [ "wlr/taskbar" ];
+          #   "wlr/taskbar" = {
+          #     icon-size = 24;
+          #     format = "{icon}";
+          #     on-click = "activate";
+          #     tooltip-format = "{title}";
+          #     ignore-list = [ "nwg-dock" ];
+          #     all-outputs = true;
+          #   };
+          # }
         ]
       else
         # Multi-monitor setup: bar on each monitor with per-monitor workspaces
@@ -306,46 +307,8 @@ in {
         transition-duration: .3s;
       }
       
-      /* Dock bar: hidden by default, show on hover at bottom */
-      /* CRITICAL: Use name="dock" class selector (Waybar adds classes based on name config) */
-      /* Waybar CSS parser doesn't support 'height' or 'pointer-events' properties */
-      /* Use opacity and min-height only for hover detection */
-      window#waybar.dock {
-        opacity: 0;
-        min-height: 2px;  /* CRITICAL: Tiny hitbox for hover detection */
-        margin: 0;
-        padding: 0;
-        background-color: transparent;  /* Invisible but present */
-        transition: opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
-      }
-      
-      window#waybar.dock:hover {
-        opacity: 1;
-        min-height: 44px;  /* Full height on hover */
-        margin: 0 12px 10px 12px;
-        padding: 8px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base00 "B3"};  /* Restore background */
-        border: 1px solid ${hexToRgba config.lib.stylix.colors.base02 "4D"};
-        border-radius: 20px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-      }
-      
-      /* Taskbar styling - Waybar CSS parser has limited support */
-      /* Removed flexbox properties (display: flex, justify-content) as they may not be supported */
-      #taskbar {
-        border-radius: 12px;
-        padding: 4px;
-      }
-      
-      #taskbar button {
-        border-radius: 8px;
-        padding: 4px 8px;
-        margin: 0 2px;
-      }
-      
-      #taskbar button:hover {
-        background-color: ${hexToRgba config.lib.stylix.colors.base0D "33"};
-      }
+      /* Dock bar CSS removed: Dock bar disabled due to wlr/taskbar protocol limitations in SwayFX */
+      /* Dock can be re-enabled when SwayFX foreign-toplevel-manager protocol support improves */
       
       window#waybar.hidden {
         opacity: 0.2;
@@ -359,7 +322,8 @@ in {
       }
       
       #workspaces button {
-        padding: 4px 12px;
+        min-width: 20px;  /* CRITICAL: Prevent collapse to zero width */
+        padding: 0 5px;  /* Horizontal padding is critical for visibility */
         margin: 2px;
         border-radius: 10px;
         background-color: transparent;
