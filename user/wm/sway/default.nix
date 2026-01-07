@@ -177,14 +177,15 @@ let
       command = "${pkgs.waybar}/bin/waybar -l info -c ${config.xdg.configHome}/waybar/config";
       # CRITICAL: Pattern matching for NixOS-wrapped binaries
       # NixOS wraps binaries: waybar -> .waybar-wrapped (process name changes)
-      # Using pgrep -f matches full command line, so we match the store path + -c flag
-      # This matches only the main waybar process, not child processes spawned per output
-      # Official pattern: Match the full command line with config flag
-      pattern = "${pkgs.waybar}/bin/waybar -c";  # Match full store path + config flag (official NixOS pattern)
+      # Using pgrep -f matches full command line with anchored pattern (^) to match binary path regardless of flags
+      # This matches the main waybar process with any flags (-c, -l info, etc.)
+      # The ^ anchor ensures we match the start of the command line, preventing substring matches
+      pattern = "^${pkgs.waybar}/bin/waybar";  # Anchored pattern matches binary path regardless of flags
       match_type = "full";  # Essential for NixOS wrapper (.waybar-wrapped) - matches full command line
       # Official reload method: SIGUSR2 for waybar (hot reload CSS/config)
       # Reference: https://github.com/Alexays/Waybar/wiki/Configuration
-      reload = "${pkgs.procps}/bin/pkill -f -SIGUSR2 '${pkgs.waybar}/bin/waybar -c'";  # Official hot reload signal
+      # Using anchored pkill pattern to match any waybar command with this store path
+      reload = "${pkgs.procps}/bin/pkill -USR2 -f '^${pkgs.waybar}/bin/waybar'";  # Anchored pattern for reliable reload
       requires_sway = true;  # Wait for SwayFX IPC to be ready before starting
     }
     {
@@ -394,24 +395,11 @@ let
         # Fall through to start fresh instance
       elif [ -n "$RELOAD_CMD" ]; then
         # Single instance running and supports reload - send reload signal
-        # For waybar, use direct kill with PID to avoid pkill -f self-matching
-        # For other daemons (e.g., swaync-client -R), use the reload command
-        if echo "$RELOAD_CMD" | grep -q "pkill.*-f"; then
-          # Reload command uses pkill -f, use PID instead to avoid self-matching
-          if [ -n "$RUNNING_PIDS" ]; then
-            log "Sending reload signal to daemon PID: $RUNNING_PIDS (pattern: $PATTERN)" "info"
-            kill -SIGUSR2 $RUNNING_PIDS 2>/dev/null || {
-              log "WARNING: Direct kill failed, using reload command" "warning"
-              eval "$RELOAD_CMD"
-            }
-          else
-            eval "$RELOAD_CMD"
-          fi
-        else
-          # Reload command doesn't use pkill -f, safe to use directly
-          eval "$RELOAD_CMD"
-        fi
-        log "Reload signal sent to daemon: $PATTERN (PID: $RUNNING_PIDS)" "info"
+        # Using anchored pkill patterns (^) prevents self-matching and is atomic (no TOCTOU race)
+        # All reload commands are safe to use directly with eval
+        log "Sending reload signal to daemon: $PATTERN" "info"
+        eval "$RELOAD_CMD"
+        log "Reload signal sent to daemon: $PATTERN" "info"
         exit 0
       else
         # Single instance running but no reload support - leave it running
@@ -919,6 +907,10 @@ let
     log "Health monitor: Waiting 60 seconds grace period for system initialization" "info"
     sleep 60
     
+    # CRITICAL: Initialize failure counters BEFORE while loop to persist across iterations
+    # If initialized inside the loop, they reset every 30 seconds and strike system never triggers
+    WAYBAR_FAILURE_COUNT=0
+    
     # Main monitoring loop (check every 30 seconds)
     while true; do
       sleep 30
@@ -965,6 +957,33 @@ let
             if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" > /dev/null 2>&1; then
               DAEMON_RUNNING=true
               log "INFO: ${daemon.name} main process is running (matched with pattern: ${daemon.pattern})" "info"
+            fi
+          fi
+        fi
+        
+        # Strike system for waybar: require 3 consecutive failures (90 seconds) before restart
+        # This prevents false positives from temporary pgrep failures or process state transitions
+        if [ "${daemon.name}" = "waybar" ]; then
+          if [ "$DAEMON_RUNNING" = "false" ]; then
+            WAYBAR_FAILURE_COUNT=$((WAYBAR_FAILURE_COUNT + 1))
+            log "Waybar pattern not found (failure count: $WAYBAR_FAILURE_COUNT)" "warning"
+            
+            # Only proceed with restart if we've seen 3 consecutive failures (90 seconds total)
+            if [ "$WAYBAR_FAILURE_COUNT" -lt 3 ]; then
+              # Skip restart, wait for next check cycle (30 seconds later)
+              log "Waybar strike system: Skipping restart (failure count: $WAYBAR_FAILURE_COUNT/3)" "info"
+              continue
+            else
+              # Reset counter before restart attempt
+              log "Waybar strike system: Threshold reached (3 failures), proceeding with restart" "warning"
+              WAYBAR_FAILURE_COUNT=0
+              # Fall through to existing restart logic below
+            fi
+          else
+            # Waybar is running - reset failure count if it was non-zero
+            if [ "$WAYBAR_FAILURE_COUNT" -gt 0 ]; then
+              log "Waybar recovered (was down for $WAYBAR_FAILURE_COUNT checks)" "info"
+              WAYBAR_FAILURE_COUNT=0
             fi
           fi
         fi
