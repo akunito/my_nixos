@@ -125,6 +125,7 @@ And more in respective subdirectories.
 - **Printer Support** - Brother Laser printer drivers and network printing
 - **NFS Client/Server** - Network file system support
 - **Automated Backups** - Restic-based backup system with SystemD timers
+- **Keyboard Remapping** - keyd service for Caps Lock to Hyper key remapping (see [System Modules - keyd](docs/system-modules.md#keyd-systemwmkeydnix))
 
 ### Security Features
 - **LUKS Encryption** - Full disk encryption with remote unlock capability

@@ -530,6 +530,30 @@ KDE System Settings provides a GUI for SDDM configuration:
 - Wayland session support
 - Compositor integration
 
+### keyd (`system/wm/keyd.nix`)
+
+**Purpose**: Keyboard remapping at kernel level
+
+**Settings**:
+- Automatically enabled for Sway, Plasma 6, and Hyprland
+
+**Features**:
+- Caps Lock remapped to Hyper key (Control+Alt+Meta) when held
+- Escape key when Caps Lock is tapped
+- Works at kernel input level (Sway, Plasma, Hyprland, console, TTY, login screens)
+- Applies to all keyboards via `ids = [ "*" ]`
+
+**Configuration**:
+- Caps Lock acts as Hyper modifier when held, Escape when tapped
+- Keychron keyboards with firmware remapping already send C-A-M directly
+- Remapping only affects keyboards that send standard Caps Lock keycodes
+
+**Debugging**:
+- Use `.cursor/debug-keyd-nixos.sh` script to diagnose issues
+- Check service status: `systemctl status keyd`
+- Monitor key events: `sudo keyd monitor`
+- Validate config: `sudo keyd check /etc/keyd/default.conf`
+
 ### X11 (`system/wm/x11.nix`)
 
 **Purpose**: X11 support
