@@ -321,6 +321,7 @@ let
     # We need to kill these to prevent conflicts
     if echo "$PATTERN" | grep -q "waybar -c"; then
       # Check for old patterns: /bin/waybar, waybar -c (without store path), or old store paths
+      # Also check for any waybar process that doesn't match the current pattern
       OLD_PATTERNS="/bin/waybar waybar -c"
       for OLD_PAT in $OLD_PATTERNS; do
         OLD_PIDS=$(${pkgs.procps}/bin/pgrep -f "$OLD_PAT" 2>/dev/null | grep -v "^$" || echo "")
@@ -329,9 +330,24 @@ let
           for OLD_PID in $OLD_PIDS; do
             if ! echo "$RUNNING_PIDS" | grep -q "^''${OLD_PID}$"; then
               log "WARNING: Found old waybar process (PID: $OLD_PID, pattern: $OLD_PAT), killing it" "warning"
-              kill "$OLD_PID" 2>/dev/null || true
+              # Use kill -9 for stubborn processes
+              kill -9 "$OLD_PID" 2>/dev/null || true
             fi
           done
+        fi
+      done
+      # Also kill any waybar process that doesn't match the current store path pattern
+      # This catches processes from previous rebuilds with different store paths
+      ALL_WAYBAR_PIDS=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | grep -v "^$" || echo "")
+      CURRENT_STORE_PATH=$(echo "$PATTERN" | sed 's|/bin/waybar.*||')
+      for WB_PID in $ALL_WAYBAR_PIDS; do
+        # Check if this PID's command line contains the current store path
+        WB_CMD=$(ps -p "$WB_PID" -o cmd= 2>/dev/null || echo "")
+        if [ -n "$WB_CMD" ] && ! echo "$WB_CMD" | grep -q "$CURRENT_STORE_PATH"; then
+          if ! echo "$RUNNING_PIDS" | grep -q "^''${WB_PID}$"; then
+            log "WARNING: Found old waybar process (PID: $WB_PID, old store path), killing it" "warning"
+            kill -9 "$WB_PID" 2>/dev/null || true
+          fi
         fi
       done
       
@@ -895,6 +911,12 @@ let
     }
     
     log "Daemon health monitor started" "info"
+    
+    # CRITICAL: Grace period after startup to avoid false negatives during SwayFX initialization
+    # Wait 60 seconds before starting monitoring to allow SwayFX and daemons to fully initialize
+    # This prevents the health monitor from incorrectly restarting daemons during the startup phase
+    log "Health monitor: Waiting 60 seconds grace period for system initialization" "info"
+    sleep 60
     
     # Main monitoring loop (check every 30 seconds)
     while true; do
