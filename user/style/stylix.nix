@@ -3,11 +3,13 @@
 let
   themePath = "../../../themes"+("/"+userSettings.theme+"/"+userSettings.theme)+".yaml";
   themePolarity = lib.removeSuffix "\n" (builtins.readFile (./. + "../../../themes"+("/"+userSettings.theme)+"/polarity.txt"));
-  backgroundUrl = builtins.readFile (./. + "../../../themes"+("/"+userSettings.theme)+"/backgroundurl.txt");
-  backgroundSha256 = builtins.readFile (./. + "../../../themes/"+("/"+userSettings.theme)+"/backgroundsha256.txt");
-  # CRITICAL: Stylix should NOT be used with Plasma 6
+  # CRITICAL: Remove trailing newline from URL and SHA256 to prevent malformed URLs
+  backgroundUrl = lib.removeSuffix "\n" (builtins.readFile (./. + "../../../themes"+("/"+userSettings.theme)+"/backgroundurl.txt"));
+  backgroundSha256 = lib.removeSuffix "\n" (builtins.readFile (./. + "../../../themes/"+("/"+userSettings.theme)+"/backgroundsha256.txt"));
+  # CRITICAL: Stylix should NOT be used with Plasma 6 (unless SwayFX is enabled)
   # Plasma 6 has its own theming system and Stylix conflicts with it
-  stylixEnabled = systemSettings.stylixEnable == true && userSettings.wm != "plasma6";
+  # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
+  stylixEnabled = systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true);
 in
 if stylixEnabled then {
   # imports must be at the top level
@@ -66,6 +68,30 @@ if stylixEnabled then {
   stylix.targets.kitty.enable = true;
   stylix.targets.gtk.enable = true;
   stylix.targets.rofi.enable = if (userSettings.wmType == "x11") then true else false;
+  
+  # CRITICAL: Stylix creates CSS files but doesn't set gtk-theme-name automatically
+  # We need to set it manually to ensure dark mode. Stylix's CSS will still be loaded
+  # via gtk.css which imports colors.css.
+  gtk = {
+    enable = true;
+    gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
+    gtk3.extraConfig = {
+      gtk-theme-name = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
+      gtk-application-prefer-dark-theme = 1;
+    };
+    gtk4.extraConfig = {
+      gtk-theme-name = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
+      gtk-application-prefer-dark-theme = 1;
+    };
+  };
+  
+  # CRITICAL: Set environment variables system-wide for dark mode
+  home.sessionVariables = {
+    GTK_THEME = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
+    GTK_APPLICATION_PREFER_DARK_THEME = "1";
+    QT_QPA_PLATFORMTHEME = "gtk3";
+  };
+  
   stylix.targets.feh.enable = if (userSettings.wmType == "x11") then true else false;
   programs.feh.enable = true;
   home.file.".fehbg-stylix".text = ''
@@ -78,13 +104,19 @@ if stylixEnabled then {
       template = builtins.readFile ./oomox-current.conf.mustache;
       extension = ".conf";
     };
-    ".config/Trolltech.conf".source = config.lib.stylix.colors {
-      template = builtins.readFile ./Trolltech.conf.mustache;
-      extension = ".conf";
+    ".config/Trolltech.conf" = {
+      source = config.lib.stylix.colors {
+        template = builtins.readFile ./Trolltech.conf.mustache;
+        extension = ".conf";
+      };
+      force = true;  # CRITICAL: Allow overwriting existing file (managed by Stylix)
     };
-    ".config/kdeglobals".source = config.lib.stylix.colors {
-      template = builtins.readFile ./Trolltech.conf.mustache;
-      extension = "";
+    ".config/kdeglobals" = {
+      source = config.lib.stylix.colors {
+        template = builtins.readFile ./Trolltech.conf.mustache;
+        extension = "";
+      };
+      force = true;  # CRITICAL: Allow overwriting existing file (managed by Stylix)
     };
     ".config/qt5ct/qt5ct.conf".text = pkgs.lib.mkBefore (builtins.readFile ./qt5ct.conf);
   };
@@ -95,9 +127,11 @@ if stylixEnabled then {
 
   '';
   # Qt5 styling - only for X11 (not needed for Wayland/SwayFX)
-  # Note: breeze package may not be available in all nixpkgs versions
+  # Note: Removed breeze-icons to avoid conflict with papirus-icon-theme
+  # Papirus icon theme is set in profiles/work/home.nix and includes some breeze icons
+  # Since we're using QT_QPA_PLATFORMTHEME=gtk3, we don't need breeze-icons
   home.packages = with pkgs; [
-     libsForQt5.qt5ct libsForQt5.breeze-icons pkgs.noto-fonts-monochrome-emoji
+     libsForQt5.qt5ct pkgs.noto-fonts-monochrome-emoji
   ] ++ lib.optionals (userSettings.wmType == "x11") [
      # Only include breeze if available and needed for X11
      # If breeze is not available, qt5ct will use built-in styles

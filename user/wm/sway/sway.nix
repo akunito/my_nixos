@@ -4,7 +4,6 @@
   imports = [
     ./default.nix
     ./waybar.nix
-    ./dock.nix
     ./rofi.nix
   ];
 }

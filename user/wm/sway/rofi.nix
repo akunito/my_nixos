@@ -4,7 +4,8 @@ let
   # Theme content (Stylix or fallback)
   # CRITICAL: Check if Stylix is actually available (not just enabled)
   # Stylix is disabled for Plasma 6 even if stylixEnable is true
-  themeContent = if (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") then (let
+  # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
+  themeContent = if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then (let
       inherit (config.lib.stylix.colors) base00 base01 base02 base03 base04 base05 base06 base07
                                         base08 base09 base0A base0B base0C base0D base0E base0F;
     in ''

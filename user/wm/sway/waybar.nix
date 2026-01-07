@@ -6,8 +6,10 @@
     # CRITICAL: Disable systemd service - waybar is managed by daemon-manager via Sway startup
     # This prevents systemd and daemon-manager from both trying to start waybar
     systemd.enable = false;
-    settings = {
-      mainBar = {
+    # CRITICAL: settings must be a List of attribute sets when defining multiple bars
+    settings = [
+      {
+        # Main Top Bar (first element)
         layer = "top";
         position = "top";
         height = 30;
@@ -127,13 +129,31 @@
           tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{num_connections} connections\n\n{device_enumerate}";
           tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
         };
-      };
-    };
+      }
+      {
+        # New Dock Bar (second element)
+        layer = "top";
+        position = "bottom";
+        height = 44;
+        spacing = 4;
+        mode = "dock";  # Exclusive zone mode
+        modules-center = [ "wlr/taskbar" ];
+        
+        "wlr/taskbar" = {
+          icon-size = 24;
+          format = "{icon}";
+          on-click = "activate";
+          tooltip-format = "{title}";
+          ignore-list = [ "nwg-dock" ];  # Ignore old dock if still running
+        };
+      }
+    ];
     
     # CRITICAL: Check if Stylix is actually available (not just enabled)
     # Stylix is disabled for Plasma 6 even if stylixEnable is true
+    # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
     # Use the same condition as the Stylix module to ensure consistency
-    style = if (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") then ''
+    style = if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then ''
       * {
         border: none;
         border-radius: 12px;
@@ -143,8 +163,8 @@
       }
       
       window#waybar {
-        background-color: rgba(${config.lib.stylix.colors.base00}, 0.7);
-        border: 1px solid rgba(${config.lib.stylix.colors.base02}, 0.3);
+        background-color: #${config.lib.stylix.colors.base00}B3;
+        border: 1px solid #${config.lib.stylix.colors.base02}4D;
         border-radius: 16px;
         margin: 8px 12px;
         padding: 0;
@@ -156,6 +176,30 @@
         transition-duration: .3s;
       }
       
+      window#waybar:last-child {
+        background-color: #${config.lib.stylix.colors.base00}B3;
+        border: 1px solid #${config.lib.stylix.colors.base02}4D;
+        border-radius: 20px;
+        margin: 0 12px 10px 12px;
+        padding: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      }
+      
+      #taskbar {
+        border-radius: 12px;
+        padding: 4px;
+      }
+      
+      #taskbar button {
+        border-radius: 8px;
+        padding: 4px 8px;
+        margin: 0 2px;
+      }
+      
+      #taskbar button:hover {
+        background-color: #${config.lib.stylix.colors.base0D}33;
+      }
+      
       window#waybar.hidden {
         opacity: 0.2;
       }
@@ -164,7 +208,7 @@
         margin: 4px 8px;
         padding: 0;
         border-radius: 12px;
-        background-color: rgba(${config.lib.stylix.colors.base01}, 0.4);
+        background-color: #${config.lib.stylix.colors.base01}66;
       }
       
       #workspaces button {
@@ -177,18 +221,18 @@
       }
       
       #workspaces button:hover {
-        background-color: rgba(${config.lib.stylix.colors.base02}, 0.4);
+        background-color: #${config.lib.stylix.colors.base02}66;
         color: #${config.lib.stylix.colors.base07};
       }
       
       #workspaces button.focused {
-        background-color: rgba(${config.lib.stylix.colors.base0D}, 0.3);
+        background-color: #${config.lib.stylix.colors.base0D}4D;
         color: #${config.lib.stylix.colors.base0D};
-        box-shadow: 0 2px 8px rgba(${config.lib.stylix.colors.base0D}, 0.3);
+        box-shadow: 0 2px 8px #${config.lib.stylix.colors.base0D}4D;
       }
       
       #workspaces button.urgent {
-        background-color: rgba(${config.lib.stylix.colors.base08}, 0.5);
+        background-color: #${config.lib.stylix.colors.base08}80;
         color: #${config.lib.stylix.colors.base07};
         animation: urgent-pulse 2s ease-in-out infinite;
       }
@@ -202,7 +246,7 @@
         margin: 4px 8px;
         padding: 4px 12px;
         border-radius: 10px;
-        background-color: rgba(${config.lib.stylix.colors.base01}, 0.4);
+        background-color: #${config.lib.stylix.colors.base01}66;
         color: #${config.lib.stylix.colors.base07};
       }
       
@@ -224,7 +268,7 @@
         margin: 4px 4px;
         padding: 4px 12px;
         border-radius: 10px;
-        background-color: rgba(${config.lib.stylix.colors.base01}, 0.4);
+        background-color: #${config.lib.stylix.colors.base01}66;
         color: #${config.lib.stylix.colors.base07};
         transition: all 0.2s ease;
       }
@@ -234,7 +278,7 @@
       #network:hover,
       #pulseaudio:hover,
       #bluetooth:hover {
-        background-color: rgba(${config.lib.stylix.colors.base02}, 0.5);
+        background-color: #${config.lib.stylix.colors.base02}80;
       }
       
       #clock {
@@ -247,7 +291,7 @@
       
       #battery.charging, #battery.plugged {
         color: #${config.lib.stylix.colors.base0B};
-        background-color: rgba(${config.lib.stylix.colors.base0B}, 0.2);
+        background-color: #${config.lib.stylix.colors.base0B}33;
       }
       
       @keyframes blink {
@@ -258,7 +302,7 @@
       }
       
       #battery.critical:not(.charging) {
-        background-color: rgba(${config.lib.stylix.colors.base08}, 0.6);
+        background-color: #${config.lib.stylix.colors.base08}99;
         color: #${config.lib.stylix.colors.base07};
         animation-name: blink;
         animation-duration: 0.5s;
@@ -268,7 +312,7 @@
       }
       
       label:focus {
-        background-color: rgba(${config.lib.stylix.colors.base02}, 0.5);
+        background-color: #${config.lib.stylix.colors.base02}80;
       }
       
       #pulseaudio {
@@ -277,7 +321,7 @@
       
       #pulseaudio.muted {
         color: #${config.lib.stylix.colors.base04};
-        background-color: rgba(${config.lib.stylix.colors.base04}, 0.2);
+        background-color: #${config.lib.stylix.colors.base04}33;
       }
       
       #network {
@@ -286,7 +330,7 @@
       
       #network.disconnected {
         color: #${config.lib.stylix.colors.base08};
-        background-color: rgba(${config.lib.stylix.colors.base08}, 0.2);
+        background-color: #${config.lib.stylix.colors.base08}33;
       }
       
       #bluetooth {
@@ -295,14 +339,14 @@
       
       #bluetooth.disabled {
         color: #${config.lib.stylix.colors.base04};
-        background-color: rgba(${config.lib.stylix.colors.base04}, 0.2);
+        background-color: #${config.lib.stylix.colors.base04}33;
       }
       
       #tray {
         margin: 4px 4px;
         padding: 4px 8px;
         border-radius: 10px;
-        background-color: rgba(${config.lib.stylix.colors.base01}, 0.4);
+        background-color: #${config.lib.stylix.colors.base01}66;
       }
       
       #tray > .passive {
@@ -311,7 +355,7 @@
       
       #tray > .needs-attention {
         -gtk-icon-effect: highlight;
-        background-color: rgba(${config.lib.stylix.colors.base08}, 0.4);
+        background-color: #${config.lib.stylix.colors.base08}66;
         border-radius: 8px;
       }
     '' else ''

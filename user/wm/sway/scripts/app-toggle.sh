@@ -11,6 +11,63 @@ if [ -z "$APP_ID" ] || [ -z "$CMD" ]; then
     exit 1
 fi
 
+# Function to wait for window to appear after launch
+wait_for_window() {
+    local app_id="$1"
+    local max_iterations=50  # 50 * 0.1s = 5 seconds maximum
+    local poll_interval=0.1  # Poll every 0.1 seconds
+    local iteration=0
+    
+    while [ "$iteration" -lt "$max_iterations" ]; do
+        # Check if window exists (case-insensitive)
+        local window_exists=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg app "$app_id" '
+            [
+                recurse(.nodes[]?, .floating_nodes[]?) 
+                | select(.type=="con" or .type=="floating_con")
+                | select(
+                    ((.app_id // "") | ascii_downcase == ($app | ascii_downcase)) or 
+                    ((.window_properties.class // "") | ascii_downcase == ($app | ascii_downcase))
+                )
+            ] | length
+        ' 2>/dev/null || echo "0")
+        
+        if [ "$window_exists" != "0" ] && [ "$window_exists" != "" ]; then
+            return 0  # Window found
+        fi
+        
+        sleep "$poll_interval"
+        iteration=$((iteration + 1))
+    done
+    
+    return 1  # Timeout
+}
+
+# Function to apply sticky/floating based on APP_ID
+apply_window_properties() {
+    local app_id="$1"
+    
+    # Normalize APP_ID to lowercase for comparison
+    local app_lower=$(echo "$app_id" | tr '[:upper:]' '[:lower:]')
+    
+    # Check if this app needs sticky/floating
+    case "$app_lower" in
+        "alacritty")
+            # Try both case variations
+            swaymsg '[app_id="Alacritty"] floating enable, sticky enable' 2>/dev/null || \
+            swaymsg '[app_id="alacritty"] floating enable, sticky enable' 2>/dev/null
+            ;;
+        "spotify")
+            # Try both XWayland (class) and Wayland (app_id)
+            swaymsg '[class="Spotify"] floating enable, sticky enable' 2>/dev/null || \
+            swaymsg '[app_id="spotify"] floating enable, sticky enable' 2>/dev/null
+            ;;
+        *)
+            # No special handling needed for other apps
+            return 0
+            ;;
+    esac
+}
+
 # 1. Get all windows (Case-Insensitive, Recursive)
 # Finds all windows for the app, regardless of workspace or scratchpad state.
 WINDOW_JSON=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg app "$APP_ID" '
@@ -95,6 +152,13 @@ if [ -z "$WINDOW_JSON" ] || [ "$WINDOW_JSON" = "[]" ]; then
             fi
         fi
     fi
+    
+    # Wait for window to appear and apply sticky/floating properties
+    # This fixes race condition where window appears before Sway applies window rules
+    if wait_for_window "$APP_ID"; then
+        apply_window_properties "$APP_ID"
+    fi
+    
     exit 0
 fi
 

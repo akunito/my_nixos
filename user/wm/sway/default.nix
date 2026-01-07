@@ -4,34 +4,6 @@ let
   # Hyper key combination (Super+Ctrl+Alt)
   hyper = "Mod4+Control+Mod1";
   
-  # Dock arguments (reusable base arguments)
-  dockArgs = "-d -l overlay -p bottom -a end -mb 0 -hd 0 -i 48 -w 5 -c \"${pkgs.rofi}/bin/rofi -show drun\"";
-  
-  # Wrapper script for nwg-dock with primary monitor detection
-  nwg-dock-wrapper = pkgs.writeShellScriptBin "nwg-dock-wrapper" ''
-    #!/bin/sh
-    # Build-time configuration
-    TARGET="${if systemSettings.swayPrimaryMonitor != null && systemSettings.profile == "personal" then systemSettings.swayPrimaryMonitor else ""}"
-
-    run_dock() {
-      # Pass all arguments to nwg-dock
-      ${pkgs.nwg-dock}/bin/nwg-dock ${dockArgs} "$@"
-    }
-
-    if [ -n "$TARGET" ]; then
-      # Runtime check: Is the monitor actually connected?
-      if ${pkgs.sway}/bin/swaymsg -t get_outputs 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q "$TARGET"; then
-        echo "Primary monitor $TARGET found. Restricting dock."
-        run_dock -o "$TARGET"
-      else
-        echo "Primary monitor $TARGET not found. Showing dock on all outputs."
-        run_dock
-      fi
-    else
-      run_dock
-    fi
-  '';
-  
   # DESK startup apps script - launches applications in specific workspaces after daemons are ready
   desk-startup-apps-script = pkgs.writeShellScriptBin "desk-startup-apps" ''
     #!/bin/bash
@@ -106,17 +78,6 @@ let
       requires_sway = true;
     }
     {
-      name = "nwg-dock";
-      # Uses wrapper script for primary monitor detection
-      # Wrapper checks if primary monitor is configured and connected at runtime
-      # Falls back gracefully if monitor not found
-      command = "${nwg-dock-wrapper}/bin/nwg-dock-wrapper";
-      pattern = "nwg-dock";  # Matches the binary name eventually run
-      match_type = "full";  # Use full match for safety with wrappers
-      reload = "";  # No reload support
-      requires_sway = true;
-    }
-    {
       name = "swaync";
       command = "${pkgs.swaynotificationcenter}/bin/swaync";
       pattern = "swaync";
@@ -180,7 +141,7 @@ let
     reload = "";
     requires_sway = false;
     requires_tray = true;  # Wait for waybar's tray (StatusNotifierWatcher) to be ready
-  } ++ lib.optional (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") {
+  } ++ lib.optional (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
     name = "swaybg";
     command = "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill";
     pattern = "swaybg";
@@ -567,7 +528,7 @@ in {
           # Use "${hyper}+space" or "${hyper}+BackSpace" for rofi launcher
           
           # Window Overview (Mission Control-like)
-          "${hyper}+Tab" = "exec rofi -show window -theme-str 'listview { columns: 2; lines: 10; }' -show-icons";
+          "${hyper}+Tab" = "exec ${pkgs.sov}/bin/sov";  # Workspace overview
           
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
@@ -698,9 +659,9 @@ in {
         {
           command = "${config.home.homeDirectory}/.config/sway/scripts/swaysome-init.sh";
         }
-        # CRITICAL: Set dark mode environment variables for XWayland apps
+        # CRITICAL: Set dark mode environment variables for GTK and Qt apps (both XWayland and Wayland native)
         {
-          command = "bash -c 'export GTK_APPLICATION_PREFER_DARK_THEME=1; export GTK_THEME=Adwaita-dark; dbus-update-activation-environment --systemd GTK_APPLICATION_PREFER_DARK_THEME GTK_THEME'";
+          command = "bash -c 'export GTK_APPLICATION_PREFER_DARK_THEME=1; export GTK_THEME=Adwaita-dark; gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true; gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark 2>/dev/null || true; dbus-update-activation-environment --systemd GTK_APPLICATION_PREFER_DARK_THEME GTK_THEME'";
           always = true;
         }
         # Unified daemon management - starts all daemons with smart reload support
@@ -728,7 +689,6 @@ in {
         commands = [
           # Wayland apps (use app_id)
           { criteria = { app_id = "rofi"; }; command = "floating enable"; }
-          { criteria = { app_id = "nwg-dock"; }; command = "floating enable"; }
           { criteria = { app_id = "kitty"; }; command = "floating enable"; }
           { criteria = { app_id = "org.telegram.desktop"; }; command = "floating enable"; }
           { criteria = { app_id = "telegram-desktop"; }; command = "floating enable"; }
@@ -866,15 +826,15 @@ in {
       # Dim inactive windows slightly for focus
       default_dim_inactive 0.1
       
-      # Layer effects (Blur the Waybar and nwg-dock)
+      # Layer effects (Blur the Waybar)
       # CRITICAL: Split into separate lines if chaining not supported
       # NOTE: Previous config had layer_effects commented out due to segfault in SwayFX 0.5.3
       # Test if current SwayFX version supports layer_effects
       # If not supported, blur will still work for windows
       layer_effects "waybar" blur enable
       layer_effects "waybar" corner_radius 12
-      layer_effects "nwg-dock" blur enable
-      layer_effects "nwg-dock" corner_radius 12
+      layer_effects "waybar" blur enable
+      layer_effects "waybar" corner_radius 12
       
       # Keyboard input configuration for polyglot typing (English/Spanish)
       input "type:keyboard" {
@@ -902,10 +862,16 @@ in {
       for_window [app_id="org.kde.dolphin"] floating enable
       for_window [class="Dolphin"] floating enable
       for_window [class="dolphin"] floating enable
-      for_window [class="Spotify"] floating enable
       for_window [app_id="rofi"] floating enable
-      for_window [app_id="nwg-dock"] floating enable
       for_window [app_id="swayfx-settings"] floating enable
+      
+      # Alacritty: floating and sticky (case variations)
+      for_window [app_id="Alacritty"] floating enable, sticky enable
+      for_window [app_id="alacritty"] floating enable, sticky enable
+      
+      # Spotify: floating and sticky (both XWayland and Wayland)
+      for_window [class="Spotify"] floating enable, sticky enable
+      for_window [app_id="spotify"] floating enable, sticky enable
       
       # Additional floating window rules
       for_window [app_id="pavucontrol"] floating enable
@@ -922,10 +888,25 @@ in {
     '';
   };
 
+  # Sov configuration (Workspace Overview)
+  # CRITICAL: Check if Stylix is actually available (not just enabled)
+  # Stylix is disabled for Plasma 6 even if stylixEnable is true
+  # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
+  home.file.".config/sov/config" = lib.mkIf (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
+    text = ''
+      # Sov configuration with Stylix colors (8-digit hex codes)
+      background-color = "#${config.lib.stylix.colors.base00}CC"
+      border-color = "#${config.lib.stylix.colors.base02}FF"
+      text-color = "#${config.lib.stylix.colors.base07}FF"
+      active-workspace-color = "#${config.lib.stylix.colors.base0D}FF"
+    '';
+  };
+
   # Btop theme configuration (Stylix colors)
   # CRITICAL: Check if Stylix is actually available (not just enabled)
   # Stylix is disabled for Plasma 6 even if stylixEnable is true
-  home.file.".config/btop/btop.conf" = lib.mkIf (systemSettings.stylixEnable == true && userSettings.wm != "plasma6") {
+  # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
+  home.file.".config/btop/btop.conf" = lib.mkIf (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
     text = ''
       # Btop Configuration
       # Theme matching Stylix colors
@@ -1031,7 +1012,7 @@ in {
     swayidle
     swaynotificationcenter
     waybar  # Waybar status bar (also configured via programs.waybar)
-    nwg-dock  # Sway-compatible dock (Python version, NOT nwg-dock-hyprland)
+    sov  # Workspace overview for SwayFX
     swaysome  # Workspace namespace per monitor
     
     # Screenshot workflow
