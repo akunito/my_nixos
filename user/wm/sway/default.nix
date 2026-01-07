@@ -191,7 +191,7 @@ let
     {
       name = "swaync";
       command = "${pkgs.swaynotificationcenter}/bin/swaync";
-      pattern = "swaync";
+      pattern = "^${pkgs.swaynotificationcenter}/bin/swaync";  # Anchored pattern prevents false positives
       match_type = "full";  # Fixes "An instance is already running" (NixOS wrapper)
       reload = "${pkgs.swaynotificationcenter}/bin/swaync-client -R";
       requires_sway = true;
@@ -199,7 +199,7 @@ let
     {
       name = "nm-applet";
       command = "${pkgs.networkmanagerapplet}/bin/nm-applet --indicator";
-      pattern = "nm-applet";
+      pattern = "^${pkgs.networkmanagerapplet}/bin/nm-applet";  # Anchored pattern prevents false positives
       match_type = "full";  # NixOS wrapper
       reload = "";
       requires_sway = false;
@@ -208,7 +208,7 @@ let
     {
       name = "blueman-applet";
       command = "${pkgs.blueman}/bin/blueman-applet";
-      pattern = "blueman-applet";
+      pattern = "^${pkgs.blueman}/bin/blueman-applet";  # Anchored pattern prevents false positives
       match_type = "full";  # NixOS wrapper
       reload = "";
       requires_sway = false;
@@ -225,7 +225,7 @@ let
     {
       name = "kwalletd6";
       command = "${pkgs.kdePackages.kwallet}/bin/kwalletd6";
-      pattern = "kwalletd6";
+      pattern = "^${pkgs.kdePackages.kwallet}/bin/kwalletd6";  # Anchored pattern prevents false positives
       match_type = "full";  # KDE daemons are always wrapped on NixOS
       reload = "";
       requires_sway = false;
@@ -239,7 +239,7 @@ let
     {
       name = "libinput-gestures";
       command = "${pkgs.libinput-gestures}/bin/libinput-gestures";
-      pattern = "libinput-gestures";
+      pattern = "^${pkgs.libinput-gestures}/bin/libinput-gestures";  # Anchored pattern prevents false positives
       match_type = "full";  # Python script/wrapper - full match required
       reload = "";
       requires_sway = true;  # Needs SwayFX IPC to send workspace commands
@@ -247,7 +247,7 @@ let
   ] ++ lib.optional (systemSettings.sunshineEnable == true) {
     name = "sunshine";
     command = "${pkgs.sunshine}/bin/sunshine";
-    pattern = "sunshine";
+    pattern = "^${pkgs.sunshine}/bin/sunshine";  # Anchored pattern prevents false positives
     match_type = "full";  # NixOS wrapper - full match required
     reload = "";
     requires_sway = false;
@@ -255,7 +255,7 @@ let
   } ++ lib.optional (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
     name = "swaybg";
     command = "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill";
-    pattern = "swaybg";
+    pattern = "^${pkgs.swaybg}/bin/swaybg";  # Anchored pattern prevents false positives
     match_type = "full";  # NixOS wrapper - full match required
     reload = "";
     requires_sway = true;
