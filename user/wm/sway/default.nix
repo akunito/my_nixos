@@ -782,7 +782,10 @@ let
     # File locking to prevent concurrent execution (e.g., rapid reload spam)
     # Uses XDG runtime directory which is automatically cleaned on logout/reboot
     # CRITICAL: Use simple atomic lock - no retry logic to prevent race conditions
-    LOCK_FILE="/run/user/$(id -u)/sway-startup.lock"
+    LOCK_DIR="/run/user/$(id -u)"
+    LOCK_FILE="$LOCK_DIR/sway-startup.lock"
+    # Ensure directory exists (defensive - systemd-logind usually creates it)
+    [ -d "$LOCK_DIR" ] || mkdir -p "$LOCK_DIR" || { echo "Failed to create lock directory" | systemd-cat -t sway-daemon-mgr -p err; exit 1; }
     (
       # Original working design: immediate exit if lock is held (prevents race conditions)
       flock -n 9 || { 
@@ -1362,7 +1365,7 @@ in {
         # Runs continuously in background (not managed by daemon-manager to avoid circular dependency)
         {
           command = "${daemon-health-monitor}/bin/daemon-health-monitor";
-          always = false;  # Only run on initial startup, not on reload
+          always = true;  # Ensure it restarts if monitor crashes or Sway reloads
         }
         # DESK-only startup apps (runs after daemons are ready)
         {
