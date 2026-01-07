@@ -43,6 +43,12 @@ in
   };
   stylix.targets.console.enable = true;
 
+  # CRITICAL: Disable QT/GTK targets at system level to prevent conflicts with Plasma 6
+  # System-level Stylix should only handle system-wide theming (console, GRUB, LightDM)
+  # Application theming (QT/GTK) should be handled at user-level or by Plasma 6
+  stylix.targets.qt.enable = false;   # CRITICAL: Let Plasma manage QT
+  stylix.targets.gtk.enable = false;  # CRITICAL: Let Plasma manage GTK
+
   # CRITICAL: Do NOT set QT_QPA_PLATFORMTHEME at system level - let user-level control it
   # User-level (Home Manager) sets this via Stylix or home.sessionVariables
   # System-level should only set base variables, not application-specific theming

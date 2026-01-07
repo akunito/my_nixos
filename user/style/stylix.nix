@@ -67,7 +67,10 @@ if stylixEnabled then {
   stylix.targets.kde.enable = false;
   stylix.targets.kitty.enable = true;
   stylix.targets.gtk.enable = true;
-  stylix.targets.qt.enable = true;
+  # CRITICAL: Disable QT target in dual-DE setup to prevent conflicts with Plasma 6
+  # Plasma 6 manages QT theming, so Stylix should not interfere
+  # Keep GTK enabled for Sway (Plasma can override via its own GTK settings)
+  stylix.targets.qt.enable = if (userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) then false else true;
   stylix.targets.qt.platform = "qtct";  # Use qtct for custom Stylix colors (Stylix generates qt5ct config automatically)
   stylix.targets.rofi.enable = if (userSettings.wmType == "x11") then true else false;
   
@@ -87,14 +90,12 @@ if stylixEnabled then {
     };
   };
   
-  # CRITICAL: Set environment variables system-wide for dark mode
-  # Note: QT_QPA_PLATFORMTHEME is set by Stylix when stylix.targets.qt.enable = true
-  # Use lib.mkForce to override Home Manager's qt module which sets it to "kde" when qt.platformTheme.name = "kde"
-  home.sessionVariables = {
-    GTK_THEME = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
-    GTK_APPLICATION_PREFER_DARK_THEME = "1";
-    QT_QPA_PLATFORMTHEME = lib.mkForce "qt5ct";  # Force qt5ct for Stylix (overrides qt module's "kde" setting)
-  };
+  # CRITICAL: Do NOT set GTK/QT environment variables in home.sessionVariables
+  # These variables leak into Plasma 6 sessions, causing conflicts with Plasma's theming
+  # Instead, these variables are set ONLY in Sway startup commands (user/wm/sway/default.nix)
+  # via dbus-update-activation-environment, ensuring they only apply to Sway sessions
+  # Note: GTK_APPLICATION_PREFER_DARK_THEME is also set in Sway config, not here
+  # This prevents variable leakage between Plasma 6 and Sway sessions
   
   # CRITICAL: Set gsettings for GTK4/LibAdwaita apps (Chromium, Blueman, etc.)
   # Home Manager's gtk module sets config files but doesn't set gsettings via dconf
@@ -160,7 +161,8 @@ if stylixEnabled then {
     # style.package = pkgs.libsForQt5.breeze;
     # style.name = "breeze-dark";
     # NOTE: Do NOT set platformTheme.name here - it causes Home Manager to set QT_QPA_PLATFORMTHEME = "kde"
-    # We want QT_QPA_PLATFORMTHEME = "qt5ct" instead, which is set via home.sessionVariables above
+    # QT_QPA_PLATFORMTHEME is set in Sway startup commands (user/wm/sway/default.nix) to prevent Plasma leakage
+    # When qt target is disabled (dual-DE setup), Stylix won't generate qt5ct color config, but qt5ct package is still available
   };
   fonts.fontconfig.defaultFonts = {
     monospace = [ userSettings.font ];

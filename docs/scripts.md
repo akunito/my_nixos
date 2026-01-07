@@ -682,24 +682,40 @@ cd user/wm/plasma6
 
 ### user/wm/sway/desk-startup-apps-init
 
-**Purpose**: Non-blocking initialization script for DESK profile that sets up workspaces and handles KWallet password entry via rofi.
+**Purpose**: Non-blocking initialization script for DESK profile that sets up workspaces and unlocks KWallet using a GPG-encrypted password file.
 
 **Usage**: Called automatically by Sway on startup (only for DESK profile)
 
 **What It Does**:
 - Sets up workspaces on primary and secondary monitors (fast, non-blocking)
-- Shows rofi dialog with explanation about KWallet requirement
-- Allows user to enter password via rofi (masked input) or skip app launching
-- Attempts to unlock KWallet with entered password using `kwalletcli` (secure here-string method)
-- Falls back to GUI prompt if command-line unlock not available
-- Launches background launcher script (`desk-startup-apps-launcher`) if user chooses to continue
+- Waits for Sway socket to be ready (required for GPG pinentry to have a display)
+- Checks for GPG-encrypted password file at `~/.config/kwallet/password.gpg`
+- Decrypts password file using GPG (GPG agent handles passphrase if cached)
+- Attempts to unlock KWallet with decrypted password using `kwalletcli` (secure here-string method)
+- Falls back to GUI prompt if password file missing, decryption fails, or unlock fails
+- Launches background launcher script (`desk-startup-apps-launcher`) to monitor unlock status
 - Exits immediately (system continues starting normally, no blocking)
 
 **Key Features**:
 - Non-blocking system startup
-- Rofi password entry integration
-- User cancellation option
+- GPG-encrypted password file integration (uses existing GPG agent infrastructure)
+- Automatic password decryption (if GPG agent passphrase cached)
 - KWallet version compatibility (kwalletd5 and kwalletd6)
+- Graceful fallback to GUI prompt
+
+**Password File Setup**:
+```bash
+# Create directory
+mkdir -p ~/.config/kwallet
+
+# Create and encrypt password file (replace with your email/key ID)
+echo "your-kwallet-password" | gpg --encrypt --recipient "your-email@example.com" -o ~/.config/kwallet/password.gpg
+
+# Set secure permissions
+chmod 600 ~/.config/kwallet/password.gpg
+```
+
+**Note**: The password file uses GPG encryption. If your GPG agent has the passphrase cached (same system used for SSH keys), decryption happens automatically. Otherwise, GPG will prompt for the passphrase via pinentry.
 
 **Related**: See [Sway Configuration](../user-modules/sway.md) for details.
 
@@ -711,17 +727,18 @@ cd user/wm/plasma6
 
 **What It Does**:
 - Monitors KWallet unlock status (checks every 2 seconds)
-- Reopens KWallet prompt if closed (with rofi password dialog option)
+- Reopens KWallet GUI prompt if closed
 - Sends desktop notifications when KWallet window is closed
 - Launches applications when KWallet is unlocked (all apps launch in parallel)
 - Handles Flatpak app detection and launching
-- Implements backoff strategy to prevent infinite loops (exits after 5 failures)
-- Provides user cancellation option via rofi dialog
+- Implements timeout and backoff strategy (5 minute timeout, exits after 10 failures)
+- Exits gracefully on timeout or max failures
 
 **Key Features**:
-- Persistent KWallet prompting
+- Persistent KWallet prompting (GUI-based)
 - Flatpak app support (checks if apps are installed via Flatpak)
-- Infinite loop prevention (backoff strategy, max failures)
+- Timeout protection (5 minutes total, then exits gracefully)
+- Backoff strategy (exponential backoff, max 2 minutes)
 - Parallel app launching (all apps launch simultaneously)
 - Relies on Sway assign rules for workspace placement (no focus switching)
 
