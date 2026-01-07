@@ -680,6 +680,59 @@ cd user/wm/plasma6
 
 **Related**: See [XMonad Documentation](user-modules/xmonad.md) for details.
 
+### user/wm/sway/desk-startup-apps-init
+
+**Purpose**: Non-blocking initialization script for DESK profile that sets up workspaces and handles KWallet password entry via rofi.
+
+**Usage**: Called automatically by Sway on startup (only for DESK profile)
+
+**What It Does**:
+- Sets up workspaces on primary and secondary monitors (fast, non-blocking)
+- Shows rofi dialog with explanation about KWallet requirement
+- Allows user to enter password via rofi (masked input) or skip app launching
+- Attempts to unlock KWallet with entered password using `kwalletcli` (secure here-string method)
+- Falls back to GUI prompt if command-line unlock not available
+- Launches background launcher script (`desk-startup-apps-launcher`) if user chooses to continue
+- Exits immediately (system continues starting normally, no blocking)
+
+**Key Features**:
+- Non-blocking system startup
+- Rofi password entry integration
+- User cancellation option
+- KWallet version compatibility (kwalletd5 and kwalletd6)
+
+**Related**: See [Sway Configuration](../user-modules/sway.md) for details.
+
+### user/wm/sway/desk-startup-apps-launcher
+
+**Purpose**: Background app launcher with persistent KWallet monitoring that launches applications when KWallet is unlocked.
+
+**Usage**: Launched by `desk-startup-apps-init`, runs in background
+
+**What It Does**:
+- Monitors KWallet unlock status (checks every 2 seconds)
+- Reopens KWallet prompt if closed (with rofi password dialog option)
+- Sends desktop notifications when KWallet window is closed
+- Launches applications when KWallet is unlocked (all apps launch in parallel)
+- Handles Flatpak app detection and launching
+- Implements backoff strategy to prevent infinite loops (exits after 5 failures)
+- Provides user cancellation option via rofi dialog
+
+**Key Features**:
+- Persistent KWallet prompting
+- Flatpak app support (checks if apps are installed via Flatpak)
+- Infinite loop prevention (backoff strategy, max failures)
+- Parallel app launching (all apps launch simultaneously)
+- Relies on Sway assign rules for workspace placement (no focus switching)
+
+**Flatpak App Handling**:
+- Checks if apps are installed via Flatpak using `flatpak list` or `flatpak info`
+- Launches Flatpak apps with `flatpak run APP_ID`
+- Falls back to native packages if Flatpak version not available
+- Supports both Flatpak and native app IDs in Sway assign rules
+
+**Related**: See [Sway Configuration](../user-modules/sway.md) for details.
+
 ### user/app/ranger/scope.sh
 
 **Purpose**: Ranger file preview script for file content preview.

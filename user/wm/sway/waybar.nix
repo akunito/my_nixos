@@ -46,85 +46,85 @@ let
   
   # Shared module configurations (DRY principle)
   sharedModules = {
-    clock = {
-      format = "{:%H:%M}";
-      format-alt = "{:%A, %B %d, %Y (%R)}";
-      tooltip-format = "<tt><small>{calendar}</small></tt>";
-      calendar = {
-        mode = "year";
-        mode-mon-col = 3;
-        weeks-pos = "right";
-        on-scroll = 1;
-        on-click-right = "mode";
-        first-day-of-week = 1;  # Start week on Monday (0 = Sunday, 1 = Monday)
-        format = {
-          months = "<span color='#ffead3'><b>{}</b></span>";
-          days = "<span color='#ecc6d9'>{}</span>";
-          weeks = "<span color='#99ffdd'><b>W{}</b></span>";
-          weekdays = "<span color='#ffcc66'><b>{}</b></span>";
-          today = "<span color='#ff6699'><b><u>{}</u></b></span>";
+        clock = {
+          format = "{:%H:%M}";
+          format-alt = "{:%A, %B %d, %Y (%R)}";
+          tooltip-format = "<tt><small>{calendar}</small></tt>";
+          calendar = {
+            mode = "year";
+            mode-mon-col = 3;
+            weeks-pos = "right";
+            on-scroll = 1;
+            on-click-right = "mode";
+            first-day-of-week = 1;  # Start week on Monday (0 = Sunday, 1 = Monday)
+            format = {
+              months = "<span color='#ffead3'><b>{}</b></span>";
+              days = "<span color='#ecc6d9'>{}</span>";
+              weeks = "<span color='#99ffdd'><b>W{}</b></span>";
+              weekdays = "<span color='#ffcc66'><b>{}</b></span>";
+              today = "<span color='#ff6699'><b><u>{}</u></b></span>";
+            };
+          };
+          actions = {
+            on-click-right = "mode";
+            on-click-forward = "tz_up";
+            on-click-backward = "tz_down";
+            on-scroll-up = "shift_up";
+            on-scroll-down = "shift_down";
+          };
         };
-      };
-      actions = {
-        on-click-right = "mode";
-        on-click-forward = "tz_up";
-        on-click-backward = "tz_down";
-        on-scroll-up = "shift_up";
-        on-scroll-down = "shift_down";
-      };
-    };
-    
-    pulseaudio = {
-      format = "{icon} {volume}%";
-      format-bluetooth = "{icon} {volume}% {format_source}";
-      format-bluetooth-muted = "󰂲 {format_source}";
-      format-muted = "󰝟";
-      format-source = "{volume}% 󰍬";
-      format-source-muted = "󰍭";
-      format-icons = {
-        headphone = "󰋋";
-        hands-free = "󰋎";
-        headset = "󰋎";
-        phone = "󰄜";
-        portable = "󰓃";
-        car = "󰄋";
-        default = [ "󰕿" "󰖀" "󰕾" ];
-      };
-      on-click = "pavucontrol";
-      on-click-right = "pactl set-sink-mute @DEFAULT_SINK@ toggle";
-    };
-    
-    network = {
-      format-wifi = "󰤨 {signalStrength}%";
-      format-ethernet = "󰈀 Connected";
-      format-linked = "󰈀 {ifname} (No IP)";
-      format-disconnected = "󰤭 Disconnected";
-      format-alt = "{ifname}: {ipaddr}/{cidr}";
-      tooltip-format = "{ifname} via {gwaddr}";
-    };
-    
-    battery = {
-      states = {
-        warning = 30;
-        critical = 15;
-      };
-      format = "{icon} {capacity}%";
-      format-charging = "󰂄 {capacity}%";
-      format-plugged = "󰂄 {capacity}%";
-      format-alt = "{icon} {time}";
-      format-icons = [ "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹" ];
-    };
-    
-    bluetooth = {
-      format = "󰂯";
-      format-disabled = "󰂲";
-      format-off = "󰂲";
-      format-on = "󰂯";
-      format-connected = "󰂱 {num_connections}";
-      tooltip-format = "{controller_alias}\t{controller_address}\n\n{num_connections} connections";
-      tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{num_connections} connections\n\n{device_enumerate}";
-      tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
-    };
+        
+        pulseaudio = {
+          format = "{icon} {volume}%";
+          format-bluetooth = "{icon} {volume}% {format_source}";
+          format-bluetooth-muted = "󰂲 {format_source}";
+          format-muted = "󰝟";
+          format-source = "{volume}% 󰍬";
+          format-source-muted = "󰍭";
+          format-icons = {
+            headphone = "󰋋";
+            hands-free = "󰋎";
+            headset = "󰋎";
+            phone = "󰄜";
+            portable = "󰓃";
+            car = "󰄋";
+            default = [ "󰕿" "󰖀" "󰕾" ];
+          };
+          on-click = "pavucontrol";
+          on-click-right = "pactl set-sink-mute @DEFAULT_SINK@ toggle";
+        };
+        
+        network = {
+          format-wifi = "󰤨 {signalStrength}%";
+          format-ethernet = "󰈀 Connected";
+          format-linked = "󰈀 {ifname} (No IP)";
+          format-disconnected = "󰤭 Disconnected";
+          format-alt = "{ifname}: {ipaddr}/{cidr}";
+          tooltip-format = "{ifname} via {gwaddr}";
+        };
+        
+        battery = {
+          states = {
+            warning = 30;
+            critical = 15;
+          };
+          format = "{icon} {capacity}%";
+          format-charging = "󰂄 {capacity}%";
+          format-plugged = "󰂄 {capacity}%";
+          format-alt = "{icon} {time}";
+          format-icons = [ "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹" ];
+        };
+        
+        bluetooth = {
+          format = "󰂯";
+          format-disabled = "󰂲";
+          format-off = "󰂲";
+          format-on = "󰂯";
+          format-connected = "󰂱 {num_connections}";
+          tooltip-format = "{controller_alias}\t{controller_address}\n\n{num_connections} connections";
+          tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{num_connections} connections\n\n{device_enumerate}";
+          tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
+        };
     
     tray = {
       icon-spacing = 10;

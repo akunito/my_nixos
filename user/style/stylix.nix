@@ -106,15 +106,15 @@ if stylixEnabled then {
     };
     ".config/Trolltech.conf" = {
       source = config.lib.stylix.colors {
-        template = builtins.readFile ./Trolltech.conf.mustache;
-        extension = ".conf";
-      };
+      template = builtins.readFile ./Trolltech.conf.mustache;
+      extension = ".conf";
+    };
       force = true;  # CRITICAL: Allow overwriting existing file (managed by Stylix)
     };
     ".config/kdeglobals" = {
       source = config.lib.stylix.colors {
-        template = builtins.readFile ./Trolltech.conf.mustache;
-        extension = "";
+      template = builtins.readFile ./Trolltech.conf.mustache;
+      extension = "";
       };
       force = true;  # CRITICAL: Allow overwriting existing file (managed by Stylix)
     };

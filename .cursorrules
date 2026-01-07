@@ -234,7 +234,7 @@ When modifying daemon-related code:
 
 ## DESK Startup Applications Script
 
-**CRITICAL**: When adding new automation to the beginning of Sway sessions (startup scripts that launch applications), you MUST check and potentially extend the existing `desk-startup-apps` script instead of creating new startup commands.
+**CRITICAL**: When adding new automation to the beginning of Sway sessions (startup scripts that launch applications), you MUST check and potentially extend the existing `desk-startup-apps` scripts instead of creating new startup commands.
 
 ### When This Rule Applies
 This rule applies when:
@@ -245,36 +245,65 @@ This rule applies when:
 
 ### Required Actions
 Before creating new startup automation:
-1.  **Check Existing Script**: Review `user/wm/sway/default.nix` for the `desk-startup-apps-script` definition (generated in the `let` block)
-2.  **Use Assignment Rules**: Use Sway assignment rules (`assign [app_id="..."] workspace number X`) in `window.commands` to route apps to correct workspaces
-3.  **Extend Existing Script**: Modify the `desk-startup-apps-script` instead of creating new startup commands
-4.  **Follow Parallel Launch Pattern**: Use parallel launching (background processes with `&`) after the KWallet detection phase
-5.  **Respect DESK Profile**: The script is conditional on DESK profile (`systemSettings.swayPrimaryMonitor != null`) - maintain this pattern
+1.  **Check Existing Scripts**: Review `user/wm/sway/default.nix` for the `desk-startup-apps-init` and `desk-startup-apps-launcher` definitions (generated in the `let` block)
+2.  **Use Assignment Rules**: Use Sway assignment rules (`assign [app_id="..."] workspace number X`) in `window.commands` to route apps to correct workspaces. Support both Flatpak and native app IDs.
+3.  **Extend Existing Script**: Modify the `desk-startup-apps-launcher` script's `launch_apps()` function instead of creating new startup commands
+4.  **Follow Parallel Launch Pattern**: Launch apps in parallel (background processes with `&`) - Sway assign rules handle workspace placement automatically
+5.  **Respect DESK Profile**: The scripts are conditional on DESK profile (`systemSettings.swayPrimaryMonitor != null`) - maintain this pattern
+6.  **Handle Flatpak Apps**: Check if apps are installed via Flatpak and launch accordingly using `flatpak run APP_ID`
 
 ### Architecture
-The `desk-startup-apps` script uses a 3-phase approach:
--   **Phase 1 (Blocking)**: Launch Vivaldi and wait for window to appear
--   **Phase 2 (Smart Wait)**: Detect and wait for KDE Wallet prompt if it appears
--   **Phase 3 (Parallel Launch)**: Launch remaining applications in parallel (Cursor, Obsidian, Chromium)
+The `desk-startup-apps` system uses a 2-script approach:
+-   **desk-startup-apps-init**: Non-blocking initialization script that runs in Sway startup sequence
+    - Sets up workspaces (fast, non-blocking)
+    - Shows rofi password dialog with explanation
+    - Attempts to unlock KWallet with entered password (using kwalletcli)
+    - Launches background launcher script (if not cancelled)
+    - Exits immediately (system continues starting normally)
+-   **desk-startup-apps-launcher**: Background app launcher with persistent KWallet monitoring
+    - Monitors KWallet unlock status (checks every 2 seconds)
+    - Reopens KWallet prompt if closed (with rofi password dialog option)
+    - Sends desktop notifications
+    - Launches apps when unlocked (all apps launch in parallel)
+    - Implements backoff strategy to prevent infinite loops
+    - Runs until KWallet is unlocked or user cancels
+
+**Key Features**:
+- Non-blocking system startup (system continues immediately)
+- Rofi password entry integration (masked input, secure password passing via here-strings)
+- Flatpak app detection and launching
+- Persistent KWallet prompting with user cancellation options
+- Parallel app launching (all apps launch simultaneously when KWallet is unlocked)
+- Infinite loop prevention (backoff strategy, max failures)
 
 ### Key Principles
-1.  **Use Assignment Rules**: Always define `assign` rules in `window.commands` before adding apps to the startup script
-2.  **Parallel Launch**: Launch apps in Phase 3 in parallel using `&` for faster startup
-3.  **Conditional Execution**: Script checks for DESK profile and exits early on other profiles
-4.  **No Config Reload Execution**: Script uses `always = false` to only run on initial startup
-5.  **KWallet Awareness**: Script intelligently waits for KWallet prompt before launching remaining apps
+1.  **Use Assignment Rules**: Always define `assign` rules in `window.commands` before adding apps to the launcher script. Support both Flatpak and native app IDs (e.g., `app_id="com.vivaldi.Vivaldi"` and `app_id="vivaldi"`).
+2.  **Parallel Launch**: Launch all apps in parallel using `&` - Sway assign rules handle workspace placement automatically (no focus switching needed)
+3.  **Conditional Execution**: Scripts check for DESK profile and exit early on other profiles
+4.  **No Config Reload Execution**: Init script uses `always = false` to only run on initial startup
+5.  **KWallet Awareness**: System waits for KWallet unlock before launching apps, but doesn't block system startup
+6.  **Flatpak Support**: Check if apps are installed via Flatpak using `flatpak list` or `flatpak info`, launch with `flatpak run APP_ID`
+7.  **Security**: Use here-strings (`<<<`) for password passing, not pipes, to prevent password leakage in debug mode
 
 ### Implementation Pattern
 ```nix
-# 1. Add assignment rule in window.commands
-assign [app_id="my-app"] workspace number X
+# 1. Add assignment rules in window.commands (support both Flatpak and native)
+assign [app_id="com.myapp.App"] workspace number X  # Flatpak
+assign [app_id="myapp"] workspace number X  # Native
 
-# 2. Add app to Phase 3 (parallel launch) in desk-startup-apps-script
-my-app >/dev/null 2>&1 &
+# 2. Add app to launch_apps() function in desk-startup-apps-launcher
+# Check if Flatpak first, then fallback to native
+if is_flatpak_installed "com.myapp.App"; then
+  flatpak run com.myapp.App >/dev/null 2>&1 &
+else
+  command -v myapp >/dev/null 2>&1 && myapp >/dev/null 2>&1 & || true
+fi
 ```
 
 ### Reference Documentation
--   **Script Location**: `user/wm/sway/default.nix` (generated script in `let` block, startup command in `startup` list)
+-   **Script Locations**: `user/wm/sway/default.nix` (generated scripts in `let` block, startup command in `startup` list)
+-   **Init Script**: `desk-startup-apps-init` - Non-blocking initialization with rofi password dialog
+-   **Launcher Script**: `desk-startup-apps-launcher` - Background app launcher with KWallet monitoring
 -   **Assignment Rules**: `user/wm/sway/default.nix` (`window.commands` section)
 -   **Startup Command**: `user/wm/sway/default.nix` (`startup` list, after `daemon-sanity-check`)
 

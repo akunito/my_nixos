@@ -1,164 +1,488 @@
-{ config, pkgs, lib, userSettings, systemSettings, ... }:
+{ config, pkgs, lib, userSettings, systemSettings, pkgs-unstable ? pkgs, ... }:
 
 let
   # Hyper key combination (Super+Ctrl+Alt)
   hyper = "Mod4+Control+Mod1";
   
-  # DESK startup apps script - launches applications in specific workspaces after daemons are ready
-  # CRITICAL: KWallet must be unlocked before ANY apps launch
-  desk-startup-apps-script = pkgs.writeShellScriptBin "desk-startup-apps" ''
-    #!/bin/bash
-    PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
-    
-    if [ -z "$PRIMARY" ]; then
-      # Not DESK profile, exit
-      exit 0
-    fi
-    
-    # Wait a moment for everything to settle
-    sleep 2
-    
-    # Phase 0: Ensure workspaces exist on correct monitors
-    # This prevents apps from opening off-screen
-    
-    # Focus primary monitor first
-    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
-    
-    # Create/focus workspace 1 on primary monitor (ensures it exists)
-    ${pkgs.swaysome}/bin/swaysome focus 1
-    
-    # Create/focus workspace 2 on primary monitor (for Cursor)
-    ${pkgs.swaysome}/bin/swaysome focus 2
-    
-    # Return to workspace 1
-    ${pkgs.swaysome}/bin/swaysome focus 1
-    
-    # Check if DP-2 exists, then ensure workspaces 11 and 12 exist
-    # CRITICAL: Use monitor-relative numbers with swaysome
-    if ${pkgs.sway}/bin/swaymsg -t get_outputs | ${pkgs.gnugrep}/bin/grep -q "DP-2"; then
+  # DESK startup apps init script - non-blocking initialization with rofi password dialog
+  desk-startup-apps-init = pkgs.writeShellApplication {
+    name = "desk-startup-apps-init";
+    runtimeInputs = with pkgs; [
+      sway
+      swaysome
+      rofi
+      gnugrep
+      jq
+      libnotify
+      flatpak
+      qt6.qttools  # for qdbus
+      kdePackages.kwallet  # for kwallet-query
+      kwalletcli
+    ];
+    text = ''
+      #!/bin/bash
+      PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
+      
+      if [ -z "$PRIMARY" ]; then
+        # Not DESK profile, exit
+        exit 0
+      fi
+      
+      # Phase 0: Workspace setup (fast, non-blocking)
+      # Focus primary monitor first
+      if [ -n "$PRIMARY" ]; then
+        swaymsg focus output "$PRIMARY"
+      fi
+      
+      # Create/focus workspace 1 on primary monitor (ensures it exists)
+      swaysome focus 1
+      
+      # Create/focus workspace 2 on primary monitor (for Cursor)
+      swaysome focus 2
+      
+      # Return to workspace 1
+      swaysome focus 1
+      
+      # Check if DP-2 exists, then ensure workspaces 11 and 12 exist
+      if swaymsg -t get_outputs | grep -q "DP-2"; then
         # Focus DP-2
-        ${pkgs.sway}/bin/swaymsg focus output DP-2
-        # On DP-2, swaysome focus 1 creates workspace 11 (monitor-relative)
-        ${pkgs.swaysome}/bin/swaysome focus 1
-        # On DP-2, swaysome focus 2 creates workspace 12 (monitor-relative)
-        ${pkgs.swaysome}/bin/swaysome focus 2
-    else
+        swaymsg focus output DP-2
+        swaysome focus 1  # Creates workspace 11
+        swaysome focus 2  # Creates workspace 12
+      else
         # DP-2 not connected, workspaces 11/12 will fallback to DP-1
-        # Focus primary and create workspaces there
-        ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
-        ${pkgs.swaysome}/bin/swaysome focus 1  # This creates workspace 11 on DP-1 (fallback)
-        ${pkgs.swaysome}/bin/swaysome focus 2  # This creates workspace 12 on DP-1 (fallback)
-    fi
-    
-    # Return to primary monitor, workspace 1
-    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
-    ${pkgs.swaysome}/bin/swaysome focus 1
-    
-    # Small delay to ensure workspaces are ready
-    sleep 0.5
-    
-    # Phase 1: Ensure KWallet is running and trigger password prompt
-    # kwalletd6 should already be started by daemon-manager, but we verify
-    
-    # Wait a moment for kwalletd6 to fully start (if it wasn't already)
-    sleep 1
-    
-    # Trigger KWallet to prompt for password by requesting access
-    # This will show the password prompt if wallet is locked
-    # Using qdbus to request wallet access (triggers prompt if locked)
-    # Try multiple qdbus paths, then kwallet-query as fallback
-    (command -v qdbus >/dev/null 2>&1 && qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
-    (test -f ${pkgs.qt6.qttools}/bin/qdbus && ${pkgs.qt6.qttools}/bin/qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
-    (test -f ${pkgs.qt5.qttools}/bin/qdbus && ${pkgs.qt5.qttools}/bin/qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
-    # Fallback: Use kwallet-query if available
-    (${pkgs.kdePackages.kwallet}/bin/kwallet-query kdewallet 2>/dev/null) || true
-    
-    # Small delay to allow prompt to appear
-    sleep 1
-    
-    # Phase 2: Detect and handle KWallet prompt (BLOCKING - no apps until complete)
-    
-    KWALLET_PROMPT_FOUND=false
-    KWALLET_WINDOW_ID=""
-    
-    # Wait for KWallet prompt to appear (30 second timeout)
-    for i in $(seq 1 30); do
-        # Search for KWallet window - check multiple possible names
-        KWALLET_WINDOW_ID=$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r '
-            recurse(.nodes[]?, .floating_nodes[]?) 
-            | select(.type=="con" or .type=="floating_con")
-            | select(.name != null)
-            | select(.name | test("(?i)(kde.?wallet|kwallet|password|unlock)"; "i"))
-            | .id' 2>/dev/null | head -1)
-        
-        if [ -n "$KWALLET_WINDOW_ID" ] && [ "$KWALLET_WINDOW_ID" != "null" ]; then
-            KWALLET_PROMPT_FOUND=true
-            break
+        if [ -n "$PRIMARY" ]; then
+          swaymsg focus output "$PRIMARY"
         fi
-        sleep 1
-    done
-    
-    if [ "$KWALLET_PROMPT_FOUND" = "true" ]; then
-        # CRITICAL: Move KWallet window to main monitor if it's not there
-        # Get current output of KWallet window
-        CURRENT_OUTPUT=$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r "
-            recurse(.nodes[]?, .floating_nodes[]?) 
-            | select(.id == $KWALLET_WINDOW_ID)
-            | .output" 2>/dev/null | head -1)
+        swaysome focus 1  # Creates workspace 11 on DP-1 (fallback)
+        swaysome focus 2  # Creates workspace 12 on DP-1 (fallback)
+      fi
+      
+      # Return to primary monitor, workspace 1
+      if [ -n "$PRIMARY" ]; then
+        swaymsg focus output "$PRIMARY"
+      fi
+      swaysome focus 1
+      
+      # Small delay to ensure workspaces are ready
+      sleep 0.5
+      
+      # Phase 1: Rofi dialog with explanation and password entry
+      show_kwallet_dialog() {
+        # Step 1: Show explanation and options
+        CHOICE=$(echo -e "Enter Password\nSkip Apps" | rofi -dmenu \
+          -p "KWallet Required" \
+          -mesg "KWallet password is required to launch applications (Vivaldi, Chromium, Cursor, Obsidian).\n\nSelect an option:")
         
-        if [ "$CURRENT_OUTPUT" != "$PRIMARY" ] && [ -n "$CURRENT_OUTPUT" ]; then
-            ${pkgs.sway}/bin/swaymsg "[con_id=$KWALLET_WINDOW_ID] move to output $PRIMARY"
+        case "$CHOICE" in
+          "Enter Password")
+            # Step 2: Password entry dialog
+            PASSWORD=$(rofi -dmenu -password \
+              -p "KWallet Password" \
+              -mesg "Enter your KWallet password to unlock and launch applications:")
+            
+            if [ -z "$PASSWORD" ]; then
+              # User cancelled password entry
+              notify-send -t 5000 "KWallet" "Password entry cancelled. Apps will not launch automatically." || true
+              return 1
+            fi
+            
+            # Attempt to unlock KWallet with password
+            # Method 1: Try kwalletcli (if available)
+            # CRITICAL: Use here-string instead of pipe to prevent password leakage in debug mode
+            if command -v kwalletcli >/dev/null 2>&1; then
+              if kwalletcli --open kdewallet <<< "$PASSWORD" 2>/dev/null; then
+                notify-send -t 3000 "KWallet" "KWallet unlocked successfully." || true
+                return 0
+              fi
+            fi
+            
+            # Method 2: Fallback to GUI prompt
+            notify-send -t 5000 "KWallet" "Command-line unlock not available. Showing GUI prompt..." || true
+            
+            # Trigger GUI prompt (password will be entered there)
+            if [ -n "$PRIMARY" ]; then
+              swaymsg focus output "$PRIMARY"
+            fi
+            swaysome focus 1
+            sleep 0.2
+            
+            # Try kwalletd6 first, then kwalletd5
+            (command -v qdbus >/dev/null 2>&1 && qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+            (qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+            (command -v qdbus >/dev/null 2>&1 && qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+            (qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+            (kwallet-query kdewallet 2>/dev/null) || true
+            
+            # Return 2 to indicate GUI prompt was shown (launcher will monitor)
+            return 2
+            ;;
+          "Skip Apps")
+            notify-send -t 3000 "KWallet" "App launching skipped. You can launch apps manually when ready." || true
+            return 1
+            ;;
+          *)
+            # User closed dialog or ESC - default to skip for safety
+            return 1
+            ;;
+        esac
+      }
+      
+      # Show dialog and handle result
+      DIALOG_RESULT=0
+      if ! show_kwallet_dialog; then
+        DIALOG_RESULT=$?
+        if [ "$DIALOG_RESULT" -eq 1 ]; then
+          # User chose to skip or cancelled
+          echo "User chose to skip app launching" | systemd-cat -t desk-startup-apps -p info
+          exit 0
+        fi
+        # DIALOG_RESULT=2 means GUI prompt was shown, continue to launcher
+      fi
+      
+      # Phase 2: Launch background launcher script
+      # If password was entered successfully (DIALOG_RESULT=0), launcher will detect unlocked state
+      # If GUI prompt was shown (DIALOG_RESULT=2), launcher will monitor for unlock
+      ${desk-startup-apps-launcher}/bin/desk-startup-apps-launcher &
+      
+      # Exit immediately - system continues
+      exit 0
+    '';
+  };
+  
+  # DESK startup apps launcher script - background app launcher with persistent KWallet monitoring
+  desk-startup-apps-launcher = pkgs.writeShellApplication {
+    name = "desk-startup-apps-launcher";
+    runtimeInputs = with pkgs; [
+      sway
+      swaysome
+      rofi
+      gnugrep
+      jq
+      libnotify
+      flatpak
+      qt6.qttools  # for qdbus
+      kdePackages.kwallet  # for kwallet-query
+      kwalletcli
+      dbus
+    ];
+    text = ''
+      #!/bin/bash
+      PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
+      
+      # Function to check if KWallet is unlocked (with fallback for kwalletd5)
+      # CRITICAL: Handle service not found errors gracefully
+      is_kwallet_unlocked() {
+        # Try kwalletd6 first (prefer Plasma 6)
+        if dbus-send --session --print-reply \
+          --dest=org.kde.kwalletd6 \
+          /modules/kwalletd6 \
+          org.kde.KWallet.isOpen \
+          string:"kdewallet" > /dev/null 2>&1; then
+          return 0
         fi
         
-        # CRITICAL: Focus the KWallet window so user can type without clicking
-        ${pkgs.sway}/bin/swaymsg "[con_id=$KWALLET_WINDOW_ID] focus"
+        # Fallback to kwalletd5
+        if dbus-send --session --print-reply \
+          --dest=org.kde.kwalletd5 \
+          /modules/kwalletd5 \
+          org.kde.KWallet.isOpen \
+          string:"kdewallet" > /dev/null 2>&1; then
+          return 0
+        fi
         
-        # Wait for window to close (user entered password)
-        while [ -n "$(${pkgs.sway}/bin/swaymsg -t get_tree 2>/dev/null | ${pkgs.jq}/bin/jq -r "recurse(.nodes[]?, .floating_nodes[]?) | select(.id == $KWALLET_WINDOW_ID) | .id" 2>/dev/null | ${pkgs.gnugrep}/bin/grep -v null)" ]; do
-            sleep 0.5
-        done
+        # Service not found or not open - return false
+        # This is not an error, just means wallet is locked or service unavailable
+        return 1
+      }
+      
+      # Function to show rofi password dialog (for launcher retry)
+      show_kwallet_password_dialog() {
+        PASSWORD=$(rofi -dmenu -password \
+          -p "KWallet Password" \
+          -mesg "KWallet password is required to launch applications.\nEnter password or press ESC to cancel:")
         
-        # Small delay to ensure unlock is fully processed
-        sleep 1
-    else
-        # Prompt not found - check if KWallet is already unlocked
-        # Try to verify unlock status via DBus
-        # If already unlocked, proceed immediately
-        # Small delay in case prompt appears late
-        sleep 2
-    fi
-    
-    # Phase 3: Launch ALL apps in parallel (KWallet is now unlocked)
-    # Workspaces are guaranteed to exist, KWallet is unlocked
-    
-    # Ensure secondary monitor workspaces are active before launching apps there
-    if ${pkgs.sway}/bin/swaymsg -t get_outputs | ${pkgs.gnugrep}/bin/grep -q "DP-2"; then
-        ${pkgs.sway}/bin/swaymsg focus output DP-2
-        ${pkgs.swaysome}/bin/swaysome focus 1 # Creates/activates workspace 11
-        ${pkgs.swaysome}/bin/swaysome focus 2 # Creates/activates workspace 12
-    fi
-    
-    # Launch all apps in parallel
-    # Vivaldi on primary monitor, workspace 1
-    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
-    ${pkgs.swaysome}/bin/swaysome focus 1
-    ${pkgs.flatpak}/bin/flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
-    
-    # Cursor on primary monitor, workspace 2
-    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
-    ${pkgs.swaysome}/bin/swaysome focus 2
-    cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
-    
-    # Obsidian on secondary monitor, workspace 11
-    obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
-    
-    # Chromium on secondary monitor, workspace 12
-    chromium >/dev/null 2>&1 &
-    
-    # Return focus to primary monitor, workspace 1 (where Vivaldi is)
-    ${pkgs.sway}/bin/swaymsg focus output "$PRIMARY"
-    ${pkgs.swaysome}/bin/swaysome focus 1
-  '';
+        if [ -z "$PASSWORD" ]; then
+          return 1
+        fi
+        
+        # Try to unlock with password
+        # CRITICAL: Use here-string instead of pipe to prevent password leakage in debug mode
+        if command -v kwalletcli >/dev/null 2>&1; then
+          if kwalletcli --open kdewallet <<< "$PASSWORD" 2>/dev/null; then
+            return 0
+          fi
+        fi
+        
+        # Fallback to GUI prompt
+        trigger_kwallet_gui_prompt
+        return 2
+      }
+      
+      # Function to trigger KWallet GUI prompt (with fallback for kwalletd5)
+      trigger_kwallet_gui_prompt() {
+        # Ensure primary monitor workspace 1 is focused
+        if [ -n "$PRIMARY" ]; then
+          swaymsg focus output "$PRIMARY"
+        fi
+        swaysome focus 1
+        sleep 0.2
+        
+        # Try kwalletd6 first, then kwalletd5
+        (command -v qdbus >/dev/null 2>&1 && qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+        (qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+        (command -v qdbus >/dev/null 2>&1 && qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+        (qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open "kdewallet" 0 "" 2>/dev/null) || \
+        (kwallet-query kdewallet 2>/dev/null) || true
+        
+        sleep 1  # Allow prompt to appear
+      }
+      
+      # Function to find KWallet window
+      find_kwallet_window() {
+        swaymsg -t get_tree 2>/dev/null | jq -r '
+          recurse(.nodes[]?, .floating_nodes[]?) 
+          | select(.type=="con" or .type=="floating_con")
+          | select(.name != null)
+          | select(.name | test("(?i)(kde.?wallet|kwallet|password|unlock)"; "i"))
+          | .id' 2>/dev/null | head -1
+      }
+      
+      # Function to ensure KWallet window is on primary monitor, workspace 1
+      ensure_kwallet_positioning() {
+        local WINDOW_ID="$1"
+        if [ -z "$WINDOW_ID" ] || [ "$WINDOW_ID" = "null" ]; then
+          return 1
+        fi
+        
+        # Check if PRIMARY is set
+        if [ -z "$PRIMARY" ]; then
+          return 1
+        fi
+        
+        # Get current output
+        local CURRENT_OUTPUT
+        CURRENT_OUTPUT=$(swaymsg -t get_tree 2>/dev/null | jq -r "
+          recurse(.nodes[]?, .floating_nodes[]?) 
+          | select(.id == $WINDOW_ID)
+          | .output" 2>/dev/null | head -1)
+        
+        # Move to primary monitor if needed
+        if [ "$CURRENT_OUTPUT" != "$PRIMARY" ] && [ -n "$CURRENT_OUTPUT" ] && [ -n "$PRIMARY" ]; then
+          swaymsg "[con_id=$WINDOW_ID] move to output $PRIMARY"
+        fi
+        
+        # Focus the window
+        swaymsg "[con_id=$WINDOW_ID] focus"
+      }
+      
+      # Function to send desktop notification
+      send_notification() {
+        local MESSAGE="$1"
+        # Try multiple notification methods
+        command -v notify-send >/dev/null 2>&1 && notify-send -t 10000 "KWallet Required" "$MESSAGE" || \
+        command -v dunstify >/dev/null 2>&1 && dunstify -t 10000 "KWallet Required" "$MESSAGE" || \
+        notify-send -t 10000 "KWallet Required" "$MESSAGE" 2>/dev/null || true
+      }
+      
+      # Function to show cancellation prompt (for launcher)
+      show_cancellation_prompt_launcher() {
+        # Show rofi dialog with options
+        CHOICE=$(echo -e "Enter Password\nContinue Waiting\nCancel App Launch" | rofi -dmenu \
+          -p "KWallet Required" \
+          -mesg "KWallet password is required. Select an option:")
+        
+        case "$CHOICE" in
+          "Enter Password")
+            # Show password dialog
+            if show_kwallet_password_dialog; then
+              return 0  # Password entered and unlock attempted
+            else
+              return 1  # User cancelled
+            fi
+            ;;
+          "Continue Waiting")
+            return 0  # Continue waiting
+            ;;
+          "Cancel App Launch")
+            return 1  # Cancel and exit
+            ;;
+          *)
+            # User closed dialog or ESC - default to continue waiting
+            return 0
+            ;;
+        esac
+      }
+      
+      # Function to check if Flatpak app is installed
+      is_flatpak_installed() {
+        local APP_ID="$1"
+        if flatpak list --app --columns=application 2>/dev/null | grep -q "^''${APP_ID}$"; then
+          return 0
+        elif flatpak info "$APP_ID" &>/dev/null 2>&1; then
+          return 0
+        fi
+        return 1
+      }
+      
+      # Function to launch apps
+      # CRITICAL: Rely on Sway assign rules for workspace placement (no focus switching)
+      launch_apps() {
+        # Launch all apps in parallel - Sway assign rules handle workspace placement
+        # Vivaldi on workspace 1 (assign rule: app_id="com.vivaldi.Vivaldi" or app_id="vivaldi")
+        if is_flatpak_installed "com.vivaldi.Vivaldi"; then
+          flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
+        else
+          # Fallback to NixOS package if available
+          # Note: Check if vivaldi is in PATH or use full path
+          if command -v vivaldi >/dev/null 2>&1; then
+            vivaldi >/dev/null 2>&1 &
+          fi
+        fi
+        
+        # Cursor on workspace 2 (assign rule: app_id="cursor")
+        # Check if cursor is available as Flatpak first, then NixOS package
+        if is_flatpak_installed "com.todesktop.230313mzl4w4u92"; then
+          flatpak run com.todesktop.230313mzl4w4u92 >/dev/null 2>&1 &
+        else
+          # Use absolute path from pkgs-unstable (fallback to PATH if not available)
+          if [ -f "${pkgs-unstable.code-cursor}/bin/cursor" ]; then
+            ${pkgs-unstable.code-cursor}/bin/cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
+          elif command -v cursor >/dev/null 2>&1; then
+            cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
+          fi
+        fi
+        
+        # Obsidian on workspace 11 (assign rule: app_id="obsidian")
+        # Check if obsidian is available as Flatpak first, then NixOS package
+        if is_flatpak_installed "md.obsidian.Obsidian"; then
+          flatpak run md.obsidian.Obsidian >/dev/null 2>&1 &
+        else
+          # Use absolute path from pkgs-unstable (fallback to PATH if not available)
+          if [ -f "${pkgs-unstable.obsidian}/bin/obsidian" ]; then
+            ${pkgs-unstable.obsidian}/bin/obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
+          elif command -v obsidian >/dev/null 2>&1; then
+            obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
+          fi
+        fi
+        
+        # Chromium on workspace 12 (assign rule: app_id="chromium" or class="chromium-browser")
+        # Check if chromium is available as Flatpak first, then NixOS package
+        if is_flatpak_installed "org.chromium.Chromium"; then
+          flatpak run org.chromium.Chromium >/dev/null 2>&1 &
+        else
+          # Use absolute path from pkgs-unstable (fallback to PATH if not available)
+          if [ -f "${pkgs-unstable.ungoogled-chromium}/bin/chromium" ]; then
+            ${pkgs-unstable.ungoogled-chromium}/bin/chromium >/dev/null 2>&1 &
+          elif command -v chromium >/dev/null 2>&1; then
+            chromium >/dev/null 2>&1 &
+          fi
+        fi
+        
+        echo "Apps launched successfully" | systemd-cat -t desk-startup-apps -p info
+      }
+      
+      # Main monitoring loop
+      KWALLET_WAS_UNLOCKED=false
+      LAST_WINDOW_ID=""
+      NOTIFICATION_SENT=false
+      CANCELLATION_PROMPT_SHOWN=false
+      FAILURE_COUNT=0
+      MAX_FAILURES=5
+      BACKOFF_BASE=30  # seconds
+      
+      # Check if already unlocked
+      if is_kwallet_unlocked; then
+        launch_apps
+        exit 0
+      fi
+      
+      # Initial prompt trigger (if not already shown by init script)
+      # Check if GUI prompt window exists, if not trigger it
+      CURRENT_WINDOW_ID=$(find_kwallet_window)
+      if [ -z "$CURRENT_WINDOW_ID" ] || [ "$CURRENT_WINDOW_ID" = "null" ]; then
+        trigger_kwallet_gui_prompt
+      fi
+      
+      # Monitor loop (runs until KWallet is unlocked or user cancels)
+      while true; do
+        sleep 2  # Check every 2 seconds
+        
+        # Check if KWallet is unlocked
+        if is_kwallet_unlocked; then
+          if [ "$KWALLET_WAS_UNLOCKED" = "false" ]; then
+            # Just unlocked, launch apps
+            launch_apps
+            exit 0
+          fi
+          KWALLET_WAS_UNLOCKED=true
+          continue
+        fi
+        
+        # KWallet is not unlocked - check if window exists
+        CURRENT_WINDOW_ID=$(find_kwallet_window)
+        
+        if [ -z "$CURRENT_WINDOW_ID" ] || [ "$CURRENT_WINDOW_ID" = "null" ]; then
+          # Window doesn't exist - user closed it or it never appeared
+          
+          # Infinite loop prevention: Check failure count
+          if [ $FAILURE_COUNT -ge $MAX_FAILURES ]; then
+            send_notification "KWallet unlock failed multiple times. Exiting. You can launch apps manually."
+            echo "KWallet unlock failed $FAILURE_COUNT times, exiting" | systemd-cat -t desk-startup-apps -p err
+            exit 1
+          fi
+          
+          # Implement backoff if multiple failures
+          if [ $FAILURE_COUNT -gt 3 ]; then
+            BACKOFF_TIME=$((BACKOFF_BASE * (2 ** (FAILURE_COUNT - 3))))
+            echo "Backing off for $BACKOFF_TIME seconds after $FAILURE_COUNT failures" | systemd-cat -t desk-startup-apps -p warning
+            sleep $BACKOFF_TIME
+          fi
+          
+          if [ "$NOTIFICATION_SENT" = "false" ]; then
+            # Send notification (only once per closure)
+            send_notification "KWallet password is required to launch applications. Please unlock KWallet to continue."
+            NOTIFICATION_SENT=true
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+          fi
+          
+          # Show cancellation prompt if not shown recently (every 30 seconds)
+          if [ "$CANCELLATION_PROMPT_SHOWN" = "false" ]; then
+            if ! show_cancellation_prompt_launcher; then
+              # User chose to cancel
+              echo "User cancelled app launching" | systemd-cat -t desk-startup-apps -p info
+              send_notification "App launching cancelled. You can launch apps manually when ready."
+              exit 0
+            fi
+            CANCELLATION_PROMPT_SHOWN=true
+            # Reset after 30 seconds to allow user to cancel again if needed
+            (sleep 30 && CANCELLATION_PROMPT_SHOWN=false) &
+          else
+            # Reopen GUI prompt
+            trigger_kwallet_gui_prompt
+            sleep 1  # Allow prompt to appear
+          fi
+          
+          # Ensure positioning
+          NEW_WINDOW_ID=$(find_kwallet_window)
+          if [ -n "$NEW_WINDOW_ID" ] && [ "$NEW_WINDOW_ID" != "null" ]; then
+            ensure_kwallet_positioning "$NEW_WINDOW_ID"
+            LAST_WINDOW_ID="$NEW_WINDOW_ID"
+            NOTIFICATION_SENT=false  # Reset for next closure
+          fi
+        else
+          # Window exists - ensure it's positioned correctly
+          if [ "$CURRENT_WINDOW_ID" != "$LAST_WINDOW_ID" ]; then
+            ensure_kwallet_positioning "$CURRENT_WINDOW_ID"
+            LAST_WINDOW_ID="$CURRENT_WINDOW_ID"
+          fi
+          NOTIFICATION_SENT=false  # Reset if window exists
+          CANCELLATION_PROMPT_SHOWN=false  # Reset if window exists
+          FAILURE_COUNT=0  # Reset failure count if window exists
+        fi
+      done
+    '';
+  };
   
   # Daemon definitions - shared by all generated scripts (DRY principle)
   # WARNING: Sway and Hyprland both use programs.waybar which writes to
@@ -1369,7 +1693,7 @@ in {
         }
         # DESK-only startup apps (runs after daemons are ready)
         {
-          command = "${desk-startup-apps-script}/bin/desk-startup-apps";
+          command = "${desk-startup-apps-init}/bin/desk-startup-apps-init";
           always = false;  # Only run on initial startup, not on config reload
         }
       ];
@@ -1493,10 +1817,22 @@ in {
       
       # DESK startup apps - assign to specific workspaces
       # Using 'assign' instead of 'for_window' prevents flickering on wrong workspace
+      # Vivaldi - support both Flatpak and native versions
       assign [app_id="com.vivaldi.Vivaldi"] workspace number 1
+      assign [app_id="vivaldi"] workspace number 1
+      assign [app_id="vivaldi-stable"] workspace number 1
+      
+      # Cursor - support both Flatpak and native versions
       assign [app_id="cursor"] workspace number 2
+      assign [app_id="com.todesktop.230313mzl4w4u92"] workspace number 2
+      
+      # Obsidian - support both Flatpak and native versions
       assign [app_id="obsidian"] workspace number 11
+      assign [app_id="md.obsidian.Obsidian"] workspace number 11
+      
+      # Chromium - support both Flatpak and native versions
       assign [app_id="chromium"] workspace number 12
+      assign [app_id="org.chromium.Chromium"] workspace number 12
       assign [class="chromium-browser"] workspace number 12
       
       # Disable SwayFX's default internal bar (swaybar) by default
@@ -1686,7 +2022,8 @@ in {
     start-sway-daemons
     daemon-sanity-check
     daemon-health-monitor
-    desk-startup-apps-script
+    desk-startup-apps-init
+    desk-startup-apps-launcher
   ] ++ (with pkgs; [
     # SwayFX and related
     swayfx
@@ -1703,7 +2040,10 @@ in {
     swaybg  # Wallpaper manager
     
     # Universal launcher
-    rofi  # rofi-wayland has been merged into rofi (as of 2025-09-06)
+    rofi  # Native Wayland support is built-in (rofi-wayland was merged into rofi)
+    
+    # KWallet command-line tools
+    kwalletcli  # Required for command-line KWallet unlock
     
     # Gaming tools
     gamescope
