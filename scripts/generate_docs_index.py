@@ -2,8 +2,10 @@
 """
 Hierarchical Documentation Index Generator for NixOS Flake Configuration
 
-This script scans the project structure and generates docs/00_INDEX.md to optimize
-AI context retrieval by providing a hierarchical navigation tree.
+This script scans the project structure and generates:
+- docs/00_ROUTER.md  (small, machine-friendly router table; driven by doc frontmatter)
+- docs/01_CATALOG.md (full catalog; equivalent to the legacy docs/00_INDEX.md)
+- docs/00_INDEX.md   (compatibility shim pointing at router+catalog)
 
 CRITICAL: This file is auto-generated. Do not edit manually.
 Regenerate with: python3 scripts/generate_docs_index.py
@@ -12,7 +14,7 @@ Regenerate with: python3 scripts/generate_docs_index.py
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Directories to strictly ignore
 IGNORE_DIRS = {'.git', 'node_modules', 'result'}
@@ -160,6 +162,105 @@ def extract_markdown_summary(file_path: Path) -> Optional[str]:
         return None
 
 
+def _parse_inline_yaml_list(value: str) -> List[str]:
+    """
+    Parse a simple inline YAML list like: [a, b, "c d"]
+    Minimal parser (no external deps) suitable for this repo's frontmatter.
+    """
+    v = value.strip()
+    if not (v.startswith('[') and v.endswith(']')):
+        return []
+    inner = v[1:-1].strip()
+    if not inner:
+        return []
+    parts: List[str] = []
+    buf = ""
+    in_quotes = False
+    quote_char = ""
+    for ch in inner:
+        if ch in ("'", '"'):
+            if not in_quotes:
+                in_quotes = True
+                quote_char = ch
+            elif quote_char == ch:
+                in_quotes = False
+            buf += ch
+            continue
+        if ch == "," and not in_quotes:
+            item = buf.strip().strip("'\"")
+            if item:
+                parts.append(item)
+            buf = ""
+        else:
+            buf += ch
+    item = buf.strip().strip("'\"")
+    if item:
+        parts.append(item)
+    return parts
+
+
+def parse_markdown_frontmatter(file_path: Path) -> Dict[str, Any]:
+    """
+    Parse YAML frontmatter from a Markdown file.
+    Supported shapes:
+      - key: value
+      - key: [a, b]
+      - key:
+          - item1
+          - item2
+    """
+    try:
+        content = file_path.read_text(encoding='utf-8')
+    except Exception as e:
+        print(f"Warning: Could not read {file_path}: {e}", file=sys.stderr)
+        return {}
+
+    lines = content.split('\n')
+    if not lines or lines[0].strip() != '---':
+        return {}
+
+    fm_lines: List[str] = []
+    for i in range(1, len(lines)):
+        if lines[i].strip() == '---':
+            break
+        fm_lines.append(lines[i])
+    else:
+        return {}
+
+    data: Dict[str, Any] = {}
+    current_key: Optional[str] = None
+    for raw in fm_lines:
+        stripped = raw.strip()
+        if not stripped or stripped.startswith('#'):
+            continue
+
+        if current_key and stripped.startswith('- '):
+            item = stripped[2:].strip().strip("'\"")
+            if item:
+                if isinstance(data.get(current_key), list):
+                    data[current_key].append(item)
+            continue
+
+        if ':' in stripped:
+            key, val = stripped.split(':', 1)
+            key = key.strip()
+            val = val.strip()
+            current_key = None
+
+            if val == "":
+                current_key = key
+                data[key] = []
+                continue
+
+            if val.startswith('[') and val.endswith(']'):
+                data[key] = _parse_inline_yaml_list(val)
+            else:
+                data[key] = val.strip().strip("'\"")
+            continue
+
+    return data
+
+
 def detect_doc_structure(file_path: Path) -> Tuple[int, str]:
     """
     Detect documentation structure level (3 or 4).
@@ -222,13 +323,21 @@ def scan_directory(directory: Path, base_path: Path = None) -> Dict:
                         'conditions': conditions
                     })
                 elif item.suffix == '.md' and 'docs' in item.parts:
-                    summary = extract_markdown_summary(item)
+                    frontmatter = parse_markdown_frontmatter(item)
+                    fm_summary = frontmatter.get('summary') if isinstance(frontmatter.get('summary'), str) else None
+                    summary = fm_summary or extract_markdown_summary(item)
                     level, category = detect_doc_structure(item)
+                    doc_id = frontmatter.get('id') if isinstance(frontmatter.get('id'), str) else None
+                    tags = frontmatter.get('tags') if isinstance(frontmatter.get('tags'), list) else []
+                    related_files = frontmatter.get('related_files') if isinstance(frontmatter.get('related_files'), list) else []
                     results['markdown_files'].append({
                         'path': rel_path,
                         'summary': summary,
                         'level': level,
-                        'category': category
+                        'category': category,
+                        'id': doc_id,
+                        'tags': tags,
+                        'related_files': related_files,
                     })
     except PermissionError:
         print(f"Warning: Permission denied for {directory}", file=sys.stderr)
@@ -250,6 +359,62 @@ def format_conditions(conditions: List[str]) -> str:
         return f" *Enabled when:*{formatted}"
 
 
+def _escape_md_table_cell(value: str) -> str:
+    return value.replace('|', '\\|').replace('\n', ' ').strip()
+
+
+def generate_router(data: Dict) -> str:
+    """Generate docs/00_ROUTER.md as a Markdown table: ID | Summary | Tags | Primary Path."""
+    lines: List[str] = []
+    lines.append("⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`")
+    lines.append("")
+    lines.append("# Router Index")
+    lines.append("")
+    lines.append("Use this file to select the best node ID(s), then read the referenced docs/files.")
+    lines.append("")
+    lines.append("| ID | Summary | Tags | Primary Path |")
+    lines.append("|---|---|---|---|")
+
+    docs = [d for d in data.get('markdown_files', []) if d.get('id')]
+    docs.sort(key=lambda d: str(d.get('id')))
+
+    for d in docs:
+        doc_id = _escape_md_table_cell(str(d.get('id')))
+        summary = _escape_md_table_cell(str(d.get('summary') or ""))
+        tags_list = d.get('tags') if isinstance(d.get('tags'), list) else []
+        tags = _escape_md_table_cell(", ".join(str(t) for t in tags_list))
+
+        related = d.get('related_files') if isinstance(d.get('related_files'), list) else []
+        primary_path = str(related[0]) if related else str(d.get('path'))  # fallback rule
+        primary_path = _escape_md_table_cell(primary_path)
+
+        lines.append(f"| {doc_id} | {summary} | {tags} | {primary_path} |")
+
+    lines.append("")
+    lines.append("## Notes")
+    lines.append("")
+    lines.append("- If a document is missing `related_files`, the generator falls back to using the document’s own path as the default scope.")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def generate_compat_index() -> str:
+    """Generate docs/00_INDEX.md as a short compatibility shim."""
+    return "\n".join([
+        "⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`",
+        "",
+        "# Documentation Index (compatibility shim)",
+        "",
+        "This repo uses a Router + Catalog system for AI context retrieval:",
+        "",
+        "- **Router (small, fast):** `docs/00_ROUTER.md`",
+        "- **Catalog (full listing):** `docs/01_CATALOG.md`",
+        "",
+        "If you were following older instructions that mention `docs/00_INDEX.md`, use `docs/00_ROUTER.md` first.",
+        "",
+    ])
+
+
 def generate_index(data: Dict) -> str:
     """Generate the index Markdown content."""
     lines = []
@@ -257,10 +422,10 @@ def generate_index(data: Dict) -> str:
     # Header
     lines.append("⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`")
     lines.append("")
-    lines.append("# Documentation Index")
+    lines.append("# Documentation Catalog")
     lines.append("")
-    lines.append("This index provides a hierarchical navigation tree for AI context retrieval.")
-    lines.append("Before answering architectural questions, read this index to identify relevant branches.")
+    lines.append("This catalog provides a hierarchical navigation tree for AI context retrieval.")
+    lines.append("Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the full listing.")
     lines.append("")
     
     # Flake Architecture
@@ -429,16 +594,27 @@ def main():
     
     print(f"Found {len(all_data['nix_files'])} Nix files and {len(all_data['markdown_files'])} Markdown files")
     
-    # Generate index
-    print("Generating index...")
-    index_content = generate_index(all_data)
-    
-    # Write index file
-    index_path = PROJECT_ROOT / 'docs' / '00_INDEX.md'
-    index_path.parent.mkdir(parents=True, exist_ok=True)
-    index_path.write_text(index_content, encoding='utf-8')
-    
-    print(f"Index generated successfully at {index_path}")
+    docs_dir = PROJECT_ROOT / 'docs'
+    docs_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate router + catalog + shim
+    print("Generating router + catalog...")
+    router_content = generate_router(all_data)
+    catalog_content = generate_index(all_data)
+    compat_content = generate_compat_index()
+
+    router_path = docs_dir / '00_ROUTER.md'
+    catalog_path = docs_dir / '01_CATALOG.md'
+    compat_path = docs_dir / '00_INDEX.md'
+
+    router_path.write_text(router_content, encoding='utf-8')
+    catalog_path.write_text(catalog_content, encoding='utf-8')
+    compat_path.write_text(compat_content, encoding='utf-8')
+
+    print("Indexes generated successfully:")
+    print(f"  - Router:  {router_path}")
+    print(f"  - Catalog: {catalog_path}")
+    print(f"  - Shim:    {compat_path}")
     print(f"  - {len(all_data['nix_files'])} Nix modules indexed")
     print(f"  - {len(all_data['markdown_files'])} documentation files indexed")
 

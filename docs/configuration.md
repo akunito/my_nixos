@@ -2,6 +2,10 @@
 
 Complete guide to understanding and customizing the NixOS configuration system.
 
+## AI agent context (Router/Catalog)
+
+If you’re using Cursor or another coding agent, start with `docs/00_ROUTER.md` to pick the relevant doc ID(s), then read only the scoped docs/code. See `docs/agent-context.md` for details.
+
 ## Table of Contents
 
 - [Configuration Structure](#configuration-structure)
@@ -445,7 +449,7 @@ pkgs.writeShellApplication {
 - Any Nix multiline string (`''`) containing shell scripts
 - `home.file` with shell script content
 
-**Reference**: See `.cursorrules` "Nix String Interpolation in Shell Scripts" section for complete details.
+**Reference**: See `AGENTS.md` for agent-facing repo invariants, and `docs/agent-context.md` for the Router/Catalog retrieval protocol. For Nix shell-string pitfalls, keep bash variable expansions escaped inside Nix multiline strings (`''${VAR}`), as shown in the examples in this guide.
 
 ## Related Documentation
 

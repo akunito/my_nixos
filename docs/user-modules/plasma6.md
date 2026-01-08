@@ -1,3 +1,19 @@
+---
+id: user-modules.plasma6
+summary: Plasma 6 configuration integration for NixOS/Home Manager with export/import and symlink-based mutability.
+tags: [plasma6, kde, desktop, home-manager, configuration]
+related_files:
+  - user/wm/plasma6/**
+  - system/wm/plasma6.nix
+  - docs/user-modules/plasma6.md
+key_files:
+  - user/wm/plasma6/plasma6.nix
+  - system/wm/plasma6.nix
+  - docs/user-modules/plasma6.md
+activation_hints:
+  - If changing KDE Plasma 6 behavior, config export/import, or PAM/KWallet interactions in Plasma sessions
+---
+
 # Plasma 6 Desktop Configuration
 
 Complete guide to configuring KDE Plasma 6 desktop environment.
@@ -72,7 +88,7 @@ If you already have Plasma configured and want to save your settings:
 
 ### During Installation
 
-The `install.sh` script will ask if you want to export Plasma dotfiles when applying Home Manager configuration. This makes it easier to manage during initial setup.
+Note: `install.sh` does not currently prompt to export Plasma dotfiles. Use the export script manually (`./_export_homeDotfiles.sh`) when you want to capture your current Plasma state.
 
 ## Importing Configuration
 

@@ -2,6 +2,10 @@
 
 Complete guide for installing and setting up this NixOS configuration repository.
 
+## AI agent context (Router/Catalog)
+
+If you’re using Cursor or another coding agent, the intended retrieval flow is: `docs/00_ROUTER.md` → relevant docs → scoped code. See `docs/agent-context.md`.
+
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)

@@ -1,3 +1,17 @@
+---
+id: user-modules.doom-emacs
+summary: Doom Emacs user module and config layout, including Stylix theme templates and profile integration.
+tags: [emacs, doom-emacs, editor, stylix, user-modules]
+related_files:
+  - user/app/doom-emacs/**
+  - docs/user-modules/doom-emacs.md
+key_files:
+  - user/app/doom-emacs/doom.nix
+  - docs/user-modules/doom-emacs.md
+activation_hints:
+  - If modifying Doom Emacs module imports, templates, or Emacs package config
+---
+
 # Doom Emacs
 
 ## What is Doom Emacs?

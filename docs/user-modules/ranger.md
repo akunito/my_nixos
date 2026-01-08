@@ -1,3 +1,18 @@
+---
+id: user-modules.ranger
+summary: Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo.
+tags: [ranger, tui, file-manager, user-modules]
+related_files:
+  - user/app/ranger/**
+  - user/pkgs/ranger.nix
+  - docs/user-modules/ranger.md
+key_files:
+  - user/app/ranger/ranger.nix
+  - docs/user-modules/ranger.md
+activation_hints:
+  - If changing ranger config, previews, keybindings, or packaging
+---
+
 # Ranger File Manager
 
 ## What is Ranger?

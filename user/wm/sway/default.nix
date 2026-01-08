@@ -430,14 +430,11 @@ EOF
     '';
   };
   
-  # Systemd-first Sway session daemons (scalable relog fix)
+  # Sway session services (official/systemd approach)
   #
-  # Default to systemd-first unless explicitly disabled in systemSettings.
-  # This keeps a rollback path without forcing you to delete the legacy daemon-manager code immediately.
-  useSystemdSessionDaemons =
-    if systemSettings ? swaySessionDaemonsUseSystemd
-    then systemSettings.swaySessionDaemonsUseSystemd
-    else true;
+  # NOTE: The legacy daemon-manager path is deprecated in this repo; Sway session daemons should be
+  # managed via systemd user services bound to sway-session.target (see systemd.user.* below).
+  useSystemdSessionDaemons = true;
   
   # Define Stylix environment variables for waybar command
   # These are injected directly into the waybar command to bypass race conditions
@@ -2278,21 +2275,6 @@ in {
             always = true;
           }
         ]
-        ++ lib.optionals (!useSystemdSessionDaemons) [
-          # Legacy custom daemon lifecycle (kept for rollback)
-          {
-            command = "${start-sway-daemons}/bin/start-sway-daemons";
-            always = true;
-          }
-          {
-            command = "${daemon-sanity-check}/bin/daemon-sanity-check --fix";
-            always = false;  # Only run on initial startup, not on reload
-          }
-          {
-            command = "${daemon-health-monitor}/bin/daemon-health-monitor";
-            always = true;  # Ensure it restarts if monitor crashes or Sway reloads
-          }
-        ]
         ++ [
           # DESK-only startup apps (runs after daemons are ready)
           {
@@ -2738,17 +2720,8 @@ in {
     executable = true;
   };
   
-  # NOTE: waybar-startup.sh and dock-diagnostic.sh have been removed
-  # They were orphaned scripts superseded by daemon-manager
-  # waybar-startup.sh functionality is now in daemon-manager
-  # dock-diagnostic.sh was diagnostic-only and not used in startup
-  
-  # Add generated daemon management scripts to PATH
+  # Add helper scripts to PATH
   home.packages = [
-    daemon-manager
-    start-sway-daemons
-    daemon-sanity-check
-    daemon-health-monitor
     desk-startup-apps-init
     desk-startup-apps-launcher
     restore-qt5ct-files

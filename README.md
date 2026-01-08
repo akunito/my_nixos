@@ -65,6 +65,15 @@ For complete script documentation, see [Scripts Reference](docs/scripts.md).
 
 This repository uses a 3-level documentation structure:
 
+## AI agent context (Cursor / other coding agents)
+
+This repo uses a **Router + Catalog** system to keep AI context scoped as docs grow:
+
+- **Router (small, fast):** `docs/00_ROUTER.md` (pick relevant IDs first)
+- **Catalog (full listing):** `docs/01_CATALOG.md`
+- **How it works / template:** `docs/agent-context.md`
+- **Agent instructions:** `AGENTS.md` + scoped `.cursor/rules/*.mdc`
+
 ### Level 1: Top-Level (This File)
 - Overview and quick start
 - Navigation to major topics

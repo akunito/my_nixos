@@ -1,3 +1,17 @@
+---
+id: user-modules.picom
+summary: Picom compositor module overview and where its config and Nix module live.
+tags: [picom, compositor, x11, animations, user-modules]
+related_files:
+  - user/wm/picom/**
+  - docs/user-modules/picom.md
+key_files:
+  - user/wm/picom/picom.nix
+  - docs/user-modules/picom.md
+activation_hints:
+  - If changing compositor settings, picom fork selection, or picom config files
+---
+
 # Picom
 
 ## Overview

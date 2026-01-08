@@ -560,7 +560,7 @@ fix-terminals
 
 ### scripts/generate_docs_index.py
 
-**Purpose**: Generates `docs/00_INDEX.md` - a hierarchical documentation index for AI context retrieval optimization.
+**Purpose**: Generates a Router + Catalog index for AI context retrieval optimization.
 
 **Usage**:
 ```sh
@@ -585,7 +585,10 @@ python3 scripts/generate_docs_index.py
 - **Auto-Generation Warning**: Index file includes warning header to prevent manual editing
 
 **Output**:
-- Creates/updates `docs/00_INDEX.md` with hierarchical navigation tree
+- Creates/updates:
+  - `docs/00_ROUTER.md` (small routing table)
+  - `docs/01_CATALOG.md` (full catalog)
+  - `docs/00_INDEX.md` (compatibility shim)
 - Each entry includes: Title, Summary, File Path, and Conditional Logic (if applicable)
 
 **When to Regenerate**:

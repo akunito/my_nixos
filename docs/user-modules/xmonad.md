@@ -1,3 +1,19 @@
+---
+id: user-modules.xmonad
+summary: XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo.
+tags: [xmonad, x11, window-manager, haskell, user-modules]
+related_files:
+  - user/wm/xmonad/**
+  - system/wm/xmonad.nix
+  - docs/user-modules/xmonad.md
+key_files:
+  - user/wm/xmonad/xmonad.nix
+  - system/wm/xmonad.nix
+  - docs/user-modules/xmonad.md
+activation_hints:
+  - If modifying XMonad behavior, startup scripts, or Stylix theming templates for XMonad/xmobar
+---
+
 # XMonad
 
 ## What is XMonad?

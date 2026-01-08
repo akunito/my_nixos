@@ -1,3 +1,17 @@
+---
+id: user-modules.sway-to-hyprland-migration
+summary: Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions.
+tags: [sway, swayfx, hyprland, migration, wayland, workspaces]
+related_files:
+  - user/wm/hyprland/**
+  - user/wm/sway/**
+  - docs/user-modules/sway-to-hyprland-migration.md
+key_files:
+  - docs/user-modules/sway-to-hyprland-migration.md
+activation_hints:
+  - If migrating configs from SwayFX to Hyprland or debugging workspace mapping parity
+---
+
 # SwayFX to Hyprland Migration Guide
 
 Complete guide for migrating SwayFX window management logic to Hyprland equivalents.

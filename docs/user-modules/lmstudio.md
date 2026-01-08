@@ -1,3 +1,17 @@
+---
+id: user-modules.lmstudio
+summary: LM Studio user module, including MCP server setup templates and web-search tooling integration guidance.
+tags: [lmstudio, mcp, ai, user-modules]
+related_files:
+  - user/app/lmstudio/**
+  - docs/user-modules/lmstudio.md
+key_files:
+  - user/app/lmstudio/lmstudio.nix
+  - docs/user-modules/lmstudio.md
+activation_hints:
+  - If configuring LM Studio, MCP servers, or related user-level setup
+---
+
 # LM Studio Module
 
 Complete guide for the LM Studio user module, including web search capabilities, plugin installation, and browser extensions.
