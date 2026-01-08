@@ -128,7 +128,7 @@ Before answering architectural questions, read this index to identify relevant b
 
 ### Style
 
-- **system/style/stylix.nix**: System module: stylix.nix
+- **system/style/stylix.nix**: CRITICAL: Disable QT/GTK targets at system level to prevent conflicts with Plasma 6
 
 ### Wm
 
@@ -169,7 +169,8 @@ Before answering architectural questions, read this index to identify relevant b
 - **user/app/keepass/keepass.nix**: nixpkgs.overlays = [
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
 - **user/app/ranger/ranger.nix**: this lets my copy and paste images and/or plaintext of files directly out of ranger
-- **user/app/terminal/alacritty.nix**: Font rendering settings for proper alignment *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/app/terminal/alacritty.nix**: Explicitly install JetBrains Mono Nerd Font to ensure it's available *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/app/terminal/fix-terminals.nix**: Python script to configure VS Code and Cursor terminal keybindings
 - **user/app/terminal/kitty.nix**: Window decorations - match Alacritty (default shows decorations, window manager handles styling) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/tmux.nix**: Note: Custom menu is implemented via display-menu in extraConfig (bind ?)
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
@@ -201,7 +202,9 @@ Before answering architectural questions, read this index to identify relevant b
 
 ### Style
 
-- **user/style/stylix.nix**: CRITICAL: Remove trailing newline from URL and SHA256 to prevent malformed URLs *Enabled when:* `userSettings.wmType == "x11"`
+- **user/style/stylix.nix**: CRITICAL: Remove trailing newline from URL and SHA256 to prevent malformed URLs *Enabled when:*
+   - `userSettings.wm != "plasma6"`
+   - `userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == false`
 
 ### Wm
 
@@ -211,7 +214,9 @@ Before answering architectural questions, read this index to identify relevant b
 - **user/wm/input/nihongo.nix**: Enumerate when press trigger key repeatedly
 - **user/wm/picom/picom.nix**: User module: picom.nix
 - **user/wm/plasma6/plasma6.nix**: ++ lib.optional userSettings.wmEnableHyprland (./. + "/../hyprland/hyprland_noStylix.nix")
-- **user/wm/sway/default.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/wm/sway/default.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
+   - `systemSettings.stylixEnable == true`
+   - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
 - **user/wm/sway/sway.nix**: User module: sway.nix
 - **user/wm/sway/waybar.nix**: Helper function to convert hex color + alpha to rgba()
@@ -222,6 +227,8 @@ Before answering architectural questions, read this index to identify relevant b
 ### Future
 
 - **docs/future/README.md**: This directory contains temporary documentation for planning, analysis, design ideas, recommendations, bug fixes, and other topics that are under consideration and may be deleted after implementati...
+- **docs/future/debug-instrumentation-analysis.md**: **Date**: 2026-01-XX
+- **docs/future/debug-instrumentation-removal-plan.md**: **Date**: 2026-01-XX
 - **docs/future/fix-home-manager-deprecated-install-warning.md**: During home-manager activation, you see this warning:
 - **docs/future/fix-mnt-ext-mount-error.md**: The error occurs during NixOS configuration switch when systemd tries to stop `mnt-EXT.mount` from the previous generation, but the unit doesn't exist in the new generation (because we disabled dis...
 - **docs/future/flake-refactoring-migration.md**: The flake profile refactoring has been successfully implemented to eliminate code duplication across multiple `flake.*.nix` files. The new structure reduces each profile file from ~750 lines to ~30...
@@ -242,10 +249,16 @@ Before answering architectural questions, read this index to identify relevant b
 - **docs/hardware/drive-management.md**: Complete guide to managing drives, LUKS encryption, and automatic mounting.
 - **docs/hardware/gpu-monitoring.md**: Complete guide to GPU monitoring tools and their configuration for different GPU types.
 
+### Keybindings
+
+- **docs/keybindings/hyprland.md**: Complete reference for all Hyprland keybindings in this NixOS configuration.
+- **docs/keybindings/sway.md**: Complete reference for all SwayFX keybindings in this NixOS configuration.
+
 - **docs/00_INDEX.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/configuration.md**: Complete guide to understanding and customizing the NixOS configuration system.
 - **docs/hardware.md**: Complete guide to hardware-specific configurations and optimizations.
 - **docs/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
+- **docs/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
 - **docs/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
 - **docs/patches.md**: Guide to understanding and using Nixpkgs patches in this configuration.
 - **docs/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.

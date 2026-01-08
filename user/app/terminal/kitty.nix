@@ -60,12 +60,13 @@
     })
   ];
   programs.kitty.keybindings = {
-    # Use Ctrl+X/C/V for cut/copy/paste (standard shortcuts)
-    "ctrl+x" = "copy_to_clipboard";  # Cut (copy selection)
-    "ctrl+c" = "copy_to_clipboard";  # Copy
-    "ctrl+v" = "paste_from_clipboard";  # Paste
-    # Send original control characters via Ctrl+Shift (for SIGINT and other functions)
-    "ctrl+shift+c" = "send_text all \\x03";  # SIGINT (original Ctrl+C - interrupt process)
+    # Smart Copy/Paste behavior (similar to VS Code)
+    # Ctrl+C: If text is selected, copies it. If no text is selected, sends SIGINT (interrupt signal)
+    "ctrl+c" = "copy_or_interrupt";
+    # Ctrl+V: Paste from clipboard
+    "ctrl+v" = "paste_from_clipboard";
+    # Send original control characters via Ctrl+Shift (for explicit SIGINT and other functions)
+    "ctrl+shift+c" = "send_text all \\x03";  # Always send SIGINT (original Ctrl+C - interrupt process)
     "ctrl+shift+x" = "send_text all \\x18";  # Original Ctrl+X
     "ctrl+shift+v" = "send_text all \\x16";  # Original Ctrl+V
   };

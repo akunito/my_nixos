@@ -522,6 +522,35 @@ sudo ./cleanIPTABLESrules.sh
 
 ## Utility Scripts
 
+### fix-terminals
+
+**Purpose**: Configure VS Code and Cursor terminal keybindings for proper copy/paste behavior.
+
+**Usage**:
+```sh
+fix-terminals
+```
+
+**What It Does**:
+- Patches `keybindings.json` files for VS Code and Cursor
+- Adds required keybindings:
+  - `Ctrl+V` → `workbench.action.terminal.paste` (when terminal focused)
+  - `Ctrl+C` → `workbench.action.terminal.copySelection` (when terminal focused and text selected)
+
+**Key Features**:
+- **Idempotent**: Safe to run multiple times without duplicating entries
+- **Backup**: Creates `.bak` files before modifying configuration files
+- **Fresh Install Support**: Creates parent directories if they don't exist (e.g., `~/.config/Code/User/`)
+- **JSON Comment Support**: Handles VS Code/Cursor JSON files with comments (strips comments before parsing)
+
+**Target Files**:
+- `~/.config/Code/User/keybindings.json` (VS Code)
+- `~/.config/Cursor/User/keybindings.json` (Cursor)
+
+**Module**: `user/app/terminal/fix-terminals.nix`
+
+**Related**: See [Terminal Keybindings](../keybindings.md#terminal-keybindings) for complete documentation.
+
 ### scripts/generate_docs_index.py
 
 **Purpose**: Generates `docs/00_INDEX.md` - a hierarchical documentation index for AI context retrieval optimization.

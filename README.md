@@ -80,6 +80,7 @@ Located in the `docs/` directory:
 - **[User Modules](docs/user-modules.md)** - User-level applications and configurations
 - **[Maintenance & Scripts](docs/maintenance.md)** - Maintenance tasks, scripts, and automation
 - **[Scripts Reference](docs/scripts.md)** - Complete documentation for all shell scripts
+- **[Keybindings](docs/keybindings.md)** - Complete reference for all keybindings
 - **[Security](docs/security.md)** - Security configurations, SSH, encryption, backups
 - **[Hardware](docs/hardware.md)** - Hardware-specific configurations, drives, power management
 - **[Themes](docs/themes.md)** - Theme system and customization
@@ -97,6 +98,11 @@ Detailed guides for specific topics:
 **Hardware**:
 - **[CPU Power Management](docs/hardware/cpu-power-management.md)** - Kernel modules and CPU governors
 - **[Drive Management](docs/hardware/drive-management.md)** - Mounting and managing drives
+- **[GPU Monitoring](docs/hardware/gpu-monitoring.md)** - GPU monitoring tools and configuration
+
+**Keybindings**:
+- **[Sway Keybindings](docs/keybindings/sway.md)** - Complete SwayFX keybindings reference
+- **[Hyprland Keybindings](docs/keybindings/hyprland.md)** - Complete Hyprland keybindings reference
 
 **User Modules**:
 - **[Plasma 6 Desktop](docs/user-modules/plasma6.md)** - KDE Plasma 6 configuration

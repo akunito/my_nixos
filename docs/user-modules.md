@@ -127,6 +127,8 @@ userSettings = {
 **Available Terminals**:
 - `alacritty.nix` - Alacritty terminal
 - `kitty.nix` - Kitty terminal
+- `tmux.nix` - Tmux terminal multiplexer
+- `fix-terminals.nix` - VS Code/Cursor terminal keybindings configuration script
 
 **Settings**:
 - `userSettings.terminal` - Terminal selection
@@ -135,6 +137,21 @@ userSettings = {
 - Stylix theme integration
 - Font configuration
 - Keybinding customization
+- VS Code/Cursor terminal keybindings (via `fix-terminals` script)
+
+**fix-terminals Script**:
+- Python script to configure VS Code and Cursor terminal keybindings
+- Ensures proper Ctrl+C/V behavior in integrated terminals
+- Idempotent: safe to run multiple times
+- Creates backups before modifying configuration files
+- Handles fresh installs (creates directories if needed)
+
+**Usage**:
+```sh
+fix-terminals
+```
+
+**Documentation**: See [Scripts Reference](scripts.md#fix-terminals) and [Terminal Keybindings](keybindings.md#terminal-keybindings) for complete documentation.
 
 ### Keepass (`user/app/keepass/`)
 
