@@ -9,6 +9,7 @@ let
     inherit pkgs lib systemSettings;
     writeDebugLog = debugQt5ct.writeDebugLog;
     writeSwaySessionEnv = write-sway-session-env;
+    writeSwayPortalEnv = write-sway-portal-env;
   };
   
   # Hyper key combination (Super+Ctrl+Alt)
@@ -52,6 +53,86 @@ GTK_THEME=''${GTK_THEME:-}
 GTK_APPLICATION_PREFER_DARK_THEME=''${GTK_APPLICATION_PREFER_DARK_THEME:-}
 QT_STYLE_OVERRIDE=''${QT_STYLE_OVERRIDE:-}
 EOF
+  '';
+
+  # Write a Sway-only portal environment file.
+  #
+  # Why: systemd --user currently has DISPLAY=:0 even in Sway, and xdg-desktop-portal-gtk may try X11
+  # and fail early during relog ("cannot open display: :0"). We do NOT want to clear DISPLAY globally
+  # because tray apps may need Xwayland. Instead we provide a portal-scoped env file that forces GTK
+  # to prefer Wayland when the file exists (Sway session).
+  write-sway-portal-env = pkgs.writeShellScriptBin "write-sway-portal-env" ''
+    #!/bin/sh
+    ENV_FILE="/run/user/$(id -u)/sway-portal.env"
+    umask 077
+    mkdir -p "$(dirname "$ENV_FILE")" 2>/dev/null || true
+    cat >"$ENV_FILE" <<EOF
+WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-}
+XDG_CURRENT_DESKTOP=''${XDG_CURRENT_DESKTOP:-sway}
+XDG_SESSION_TYPE=wayland
+GDK_BACKEND=wayland
+EOF
+  '';
+
+  # Wrapper for xdg-desktop-portal-gtk to force Wayland in Sway sessions.
+  #
+  # Runtime evidence:
+  # - systemd --user manager can have DISPLAY=:0 even in Sway
+  # - xdg-desktop-portal-gtk sometimes starts with X11 and fails: "cannot open display: :0"
+  # This wrapper unsets DISPLAY *only for this service* when we detect a Sway session.
+  xdg-desktop-portal-gtk-wrapper = pkgs.writeShellScriptBin "xdg-desktop-portal-gtk-wrapper" ''
+    #!/bin/sh
+    WRITE_LOG="${debugQt5ct.writeDebugLog}/bin/write-debug-log"
+    COREUTILS="${pkgs.coreutils}/bin"
+    TS="$($COREUTILS/date +%s%3N 2>/dev/null || $COREUTILS/date +%s000)"
+
+    XDG_CD="''${XDG_CURRENT_DESKTOP:-}"
+    SWAYSOCK_VAL="''${SWAYSOCK:-}"
+    DISPLAY_VAL="''${DISPLAY:-}"
+    WAYLAND_VAL="''${WAYLAND_DISPLAY:-}"
+    XDR_VAL="''${XDG_RUNTIME_DIR:-/run/user/$($COREUTILS/id -u)}"
+
+    WAYLAND_SOCK="$XDR_VAL/$WAYLAND_VAL"
+    SWAYSOCK_EXISTS=false
+    if [ -n "$SWAYSOCK_VAL" ] && [ -S "$SWAYSOCK_VAL" ]; then
+      SWAYSOCK_EXISTS=true
+    fi
+    WAYLAND_SOCK_EXISTS=false
+    if [ -n "$WAYLAND_VAL" ] && [ -S "$WAYLAND_SOCK" ]; then
+      WAYLAND_SOCK_EXISTS=true
+    fi
+
+    IS_SWAY=false
+    # IMPORTANT:
+    # On fast relog, systemd --user may retain stale env like XDG_CURRENT_DESKTOP=sway and WAYLAND_DISPLAY=wayland-1
+    # even while the compositor/socket is gone. Forcing Wayland in that window makes portal-gtk fail and blocks
+    # org.freedesktop.portal.Desktop activation (Waybar then crash-loops).
+    #
+    # So we only treat it as "real Sway" when we see an actual live socket.
+    if [ "$SWAYSOCK_EXISTS" = "true" ]; then
+      IS_SWAY=true
+    elif [ "$WAYLAND_SOCK_EXISTS" = "true" ] && echo "$XDG_CD" | ${pkgs.gnugrep}/bin/grep -qi "sway"; then
+      IS_SWAY=true
+    fi
+
+    # #region agent log
+    $WRITE_LOG "H_PORTAL_GTK_WRAPPER" "xdg-desktop-portal-gtk-wrapper:entry" "Wrapper invoked" \
+      "{\"ts\":$TS,\"is_sway\":$IS_SWAY,\"xdg_current_desktop\":\"$XDG_CD\",\"xdr\":\"$XDR_VAL\",\"display\":\"$DISPLAY_VAL\",\"wayland_display\":\"$WAYLAND_VAL\",\"wayland_sock\":\"$WAYLAND_SOCK\",\"wayland_sock_exists\":$WAYLAND_SOCK_EXISTS,\"swaysock\":\"$SWAYSOCK_VAL\",\"swaysock_exists\":$SWAYSOCK_EXISTS}"
+    # #endregion
+
+    if [ "$IS_SWAY" = "true" ]; then
+      export GDK_BACKEND=wayland
+      export XDG_SESSION_TYPE=wayland
+      unset DISPLAY
+    fi
+
+    # #region agent log
+    TS2="$($COREUTILS/date +%s%3N 2>/dev/null || $COREUTILS/date +%s000)"
+    $WRITE_LOG "H_PORTAL_GTK_WRAPPER" "xdg-desktop-portal-gtk-wrapper:exec" "About to exec xdg-desktop-portal-gtk" \
+      "{\"ts\":$TS2,\"is_sway\":$IS_SWAY,\"display\":\"''${DISPLAY:-}\",\"gdk_backend\":\"''${GDK_BACKEND:-}\",\"xdg_session_type\":\"''${XDG_SESSION_TYPE:-}\",\"wayland_display\":\"''${WAYLAND_DISPLAY:-}\",\"wayland_sock\":\"$WAYLAND_SOCK\",\"wayland_sock_exists\":$WAYLAND_SOCK_EXISTS,\"swaysock_exists\":$SWAYSOCK_EXISTS}"
+    # #endregion
+
+    exec ${pkgs.xdg-desktop-portal-gtk}/libexec/xdg-desktop-portal-gtk
   '';
   
   # CRITICAL: Restore qt5ct files on Sway startup to ensure correct content
@@ -175,6 +256,27 @@ EOF
       # Redirect all output/errors to systemd journal
       exec > >(systemd-cat -t desk-startup-apps) 2>&1
       echo "Script started at $(date)"
+
+      # #region agent log
+      LOGFILE="/home/akunito/.dotfiles/.cursor/debug.log"
+      RUN_ID="pre-fix"
+      log_ndjson() {
+        local hypothesisId="$1"; shift
+        local location="$1"; shift
+        local message="$1"; shift
+        # remaining args are jq key/value pairs like: --arg k v --argjson n 1 ...
+        jq -cn \
+          --arg sessionId "debug-session" \
+          --arg runId "$RUN_ID" \
+          --arg hypothesisId "$hypothesisId" \
+          --arg location "$location" \
+          --arg message "$message" \
+          --argjson timestamp "$(date +%s%3N)" \
+          "$@" \
+          '{sessionId:$sessionId,runId:$runId,hypothesisId:$hypothesisId,location:$location,message:$message,data:.,timestamp:$timestamp}' \
+          >> "$LOGFILE" 2>/dev/null || true
+      }
+      # #endregion
       
       PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
       
@@ -201,6 +303,19 @@ EOF
         fi
         return 1
       }
+
+      # #region agent log
+      PAM_SOCKET="''${PAM_KWALLET5_LOGIN:-}"
+      PAM_SOCKET_EXISTS="false"
+      if [ -n "$PAM_SOCKET" ] && [ -S "$PAM_SOCKET" ]; then PAM_SOCKET_EXISTS="true"; fi
+      log_ndjson "H_env" "user/wm/sway/default.nix:desk-startup-apps-init" "startup env snapshot" \
+        --arg PRIMARY "$PRIMARY" \
+        --arg DESKTOP_SESSION "''${DESKTOP_SESSION:-}" \
+        --arg XDG_CURRENT_DESKTOP "''${XDG_CURRENT_DESKTOP:-}" \
+        --arg ORIGINAL_XDG_CURRENT_DESKTOP "''${ORIGINAL_XDG_CURRENT_DESKTOP:-}" \
+        --arg PAM_KWALLET5_LOGIN "$PAM_SOCKET" \
+        --arg PAM_KWALLET5_LOGIN_exists "$PAM_SOCKET_EXISTS"
+      # #endregion
       
       # Wait for Sway socket to be ready (up to 5 seconds)
       echo "Waiting for Sway socket..."
@@ -222,9 +337,23 @@ EOF
 
       # If PAM already unlocked KWallet, don't force a prompt.
       if is_kwallet_unlocked; then
+        # #region agent log
+        log_ndjson "H_pam_unlocked" "user/wm/sway/default.nix:desk-startup-apps-init" "kwallet already unlocked at session start; skipping GUI prompt" \
+          --arg action "skip_prompt"
+        # #endregion
         echo "KWallet already unlocked (PAM). Skipping GUI prompt."
         exit 0
       fi
+
+      # #region agent log
+      # Capture basic process evidence (no secrets).
+      PROC_KSECRETD="$(ps -ef 2>/dev/null | rg -n 'ksecretd.*--pam-login' | head -n1 || true)"
+      PROC_KWALLETD6="$(ps -ef 2>/dev/null | rg -n '/kwalletd6' | head -n1 || true)"
+      log_ndjson "H_pam_failed" "user/wm/sway/default.nix:desk-startup-apps-init" "kwallet NOT unlocked at session start; will trigger GUI prompt" \
+        --arg action "trigger_prompt" \
+        --arg proc_ksecretd_pam_login "$PROC_KSECRETD" \
+        --arg proc_kwalletd6 "$PROC_KWALLETD6"
+      # #endregion
       
       # Trigger the KWallet GUI prompt (only if still locked)
       echo "Triggering KWallet GUI prompt..."
@@ -234,6 +363,15 @@ EOF
       (command -v qdbus >/dev/null 2>&1 && qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open "kdewallet" 0 "desk-startup-apps" 2>/dev/null) || \
       (qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open "kdewallet" 0 "desk-startup-apps" 2>/dev/null) || \
       (kwallet-query kdewallet 2>/dev/null) || true
+
+      # #region agent log
+      # Re-check unlock status after attempting to open (if still locked, user will see prompt).
+      if is_kwallet_unlocked; then
+        log_ndjson "H_post_open" "user/wm/sway/default.nix:desk-startup-apps-init" "kwallet reports open after open() call" --arg post_open "open"
+      else
+        log_ndjson "H_post_open" "user/wm/sway/default.nix:desk-startup-apps-init" "kwallet still locked after open() call (prompt expected)" --arg post_open "locked"
+      fi
+      # #endregion
       
       sleep 1  # Allow prompt to appear
       
@@ -2041,6 +2179,37 @@ in {
     };
   };
 
+  # Sway-only portal reliability: add drop-ins (NOT full unit files) to avoid shadowing /etc/systemd/user units.
+  #
+  # We wrap ExecStart to avoid GTK choosing X11 via DISPLAY=:0 during fast relog.
+  xdg.configFile."systemd/user/xdg-desktop-portal-gtk.service.d/10-sway-portal-env.conf" = lib.mkIf useSystemdSessionDaemons {
+    text = ''
+      [Unit]
+      # During fast relogs portal-gtk can fail before the compositor is fully ready.
+      # Avoid hitting systemd's default start-rate limiting, otherwise the service becomes "dead"
+      # and DBus activation for portals can block clients (Waybar timeouts).
+      StartLimitIntervalSec=0
+
+      [Service]
+      # Critical for fast relog: portal-gtk can transiently fail (broken pipe / display attach issues).
+      # If it doesn't auto-restart, xdg-desktop-portal + clients (Waybar) can block on DBus activation timeouts.
+      Restart=on-failure
+      RestartSec=1s
+
+      # Force Wayland behavior for portal-gtk in Sway, and prevent DISPLAY=:0 from selecting X11.
+      # This is scoped to this service only (no global env mutation).
+      EnvironmentFile=-%t/sway-portal.env
+      UnsetEnvironment=DISPLAY
+
+      # Keep the prestart snapshot for evidence.
+      ExecStartPre=${relogDebug.portal-gtk-prestart-debug}/bin/portal-gtk-prestart-debug
+
+      # Override ExecStart via wrapper (drop-in, not unit shadowing).
+      ExecStart=
+      ExecStart=${xdg-desktop-portal-gtk-wrapper}/bin/xdg-desktop-portal-gtk-wrapper
+    '';
+  };
+
   # Clipboard history is now handled via systemd user service (cliphist)
 
   # SwayFX configuration
@@ -2263,6 +2432,11 @@ in {
         }
         ]
         ++ lib.optionals useSystemdSessionDaemons [
+          # Portal env must exist before portals restart during fast relog; it is only consumed by portal units via drop-in.
+          {
+            command = "${relogDebug.write-sway-portal-env-debug}/bin/write-sway-portal-env-debug";
+            always = true;
+          }
           # Snapshot the Sway session environment for systemd --user units
           # (keeps Stylix containment: services get theme vars only in Sway sessions)
           {

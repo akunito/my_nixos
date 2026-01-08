@@ -3,6 +3,7 @@
 , systemSettings
 , writeDebugLog
 , writeSwaySessionEnv
+, writeSwayPortalEnv
 , ...
 }:
 
@@ -11,6 +12,31 @@ let
   # NOTE: writeDebugLog is pkgs.writeShellScriptBin "write-debug-log" from debug-qt5ct.nix
   writeLog = "${writeDebugLog}/bin/write-debug-log";
   coreutils = "${pkgs.coreutils}/bin";
+
+  # Debug wrapper: write the portal env file + log what was captured.
+  write-sway-portal-env-debug = pkgs.writeShellScriptBin "write-sway-portal-env-debug" ''
+    #!/bin/sh
+    TS="$(${coreutils}/date +%s%3N 2>/dev/null || ${coreutils}/date +%s000)"
+    ENV_FILE="/run/user/$(${coreutils}/id -u)/sway-portal.env"
+
+    # #region agent log
+    ${writeLog} "H_PORTAL_ENV" "write-sway-portal-env-debug:entry" "About to write %t/sway-portal.env" \
+      "{\"ts\":$TS,\"xdr\":\"''${XDG_RUNTIME_DIR:-}\",\"display\":\"''${DISPLAY:-}\",\"wayland_display\":\"''${WAYLAND_DISPLAY:-}\",\"swaysock\":\"''${SWAYSOCK:-}\",\"env_file\":\"$ENV_FILE\"}"
+    # #endregion
+
+    "${writeSwayPortalEnv}/bin/write-sway-portal-env" >/dev/null 2>&1 || true
+
+    # #region agent log
+    ENV_EXISTS=false
+    ENV_SIZE=0
+    if [ -f "$ENV_FILE" ]; then
+      ENV_EXISTS=true
+      ENV_SIZE="$(${coreutils}/stat -c '%s' "$ENV_FILE" 2>/dev/null || echo 0)"
+    fi
+    ${writeLog} "H_PORTAL_ENV" "write-sway-portal-env-debug:exit" "Finished writing %t/sway-portal.env" \
+      "{\"ts\":$TS,\"env_exists\":$ENV_EXISTS,\"env_size\":$ENV_SIZE}"
+    # #endregion
+  '';
 
   # Debug wrapper: write the session env file + log what was captured.
   write-sway-session-env-debug = pkgs.writeShellScriptBin "write-sway-session-env-debug" ''
@@ -89,12 +115,40 @@ let
       "{\"ts\":$TS,\"env_exists\":$ENV_EXISTS,\"swaysock_set\":$([ -n "$SWAYSOCK_VAL" ] && echo true || echo false),\"swaysock_exists\":$SWAYSOCK_EXISTS,\"wayland_display_set\":$([ -n "$WAYLAND_DISPLAY_VAL" ] && echo true || echo false)}"
     # #endregion
   '';
+
+  # ExecStartPre hook for xdg-desktop-portal-gtk: capture env that determines backend selection.
+  portal-gtk-prestart-debug = pkgs.writeShellScriptBin "portal-gtk-prestart-debug" ''
+    #!/bin/sh
+    TS="$(${coreutils}/date +%s%3N 2>/dev/null || ${coreutils}/date +%s000)"
+    ENV_FILE="/run/user/$(${coreutils}/id -u)/sway-portal.env"
+
+    ENV_EXISTS=false
+    if [ -f "$ENV_FILE" ]; then ENV_EXISTS=true; fi
+
+    WAYLAND_DISPLAY_VAL="''${WAYLAND_DISPLAY:-}"
+    SWAYSOCK_VAL="''${SWAYSOCK:-}"
+    XDR_VAL="''${XDG_RUNTIME_DIR:-/run/user/$(${coreutils}/id -u)}"
+    WAYLAND_SOCK="$XDR_VAL/$WAYLAND_DISPLAY_VAL"
+
+    SWAYSOCK_EXISTS=false
+    if [ -n "$SWAYSOCK_VAL" ] && [ -S "$SWAYSOCK_VAL" ]; then SWAYSOCK_EXISTS=true; fi
+
+    WAYLAND_SOCK_EXISTS=false
+    if [ -n "$WAYLAND_DISPLAY_VAL" ] && [ -S "$WAYLAND_SOCK" ]; then WAYLAND_SOCK_EXISTS=true; fi
+
+    # #region agent log
+    ${writeLog} "H_PORTAL_GTK" "portal-gtk-prestart-debug:prestart" "xdg-desktop-portal-gtk ExecStartPre snapshot" \
+      "{\"ts\":$TS,\"env_exists\":$ENV_EXISTS,\"display\":\"''${DISPLAY:-}\",\"gdk_backend\":\"''${GDK_BACKEND:-}\",\"wayland_display\":\"$WAYLAND_DISPLAY_VAL\",\"wayland_sock\":\"$WAYLAND_SOCK\",\"wayland_sock_exists\":$WAYLAND_SOCK_EXISTS,\"swaysock_set\":$([ -n \"$SWAYSOCK_VAL\" ] && echo true || echo false),\"swaysock_exists\":$SWAYSOCK_EXISTS,\"xdg_current_desktop\":\"''${XDG_CURRENT_DESKTOP:-}\"}"
+    # #endregion
+  '';
 in
 {
   inherit
+    write-sway-portal-env-debug
     write-sway-session-env-debug
     sway-session-start-debug
-    waybar-prestart-debug;
+    waybar-prestart-debug
+    portal-gtk-prestart-debug;
 }
 
 
