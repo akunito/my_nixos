@@ -1310,6 +1310,15 @@ in {
           # Note: Removed "${hyper}+d" to avoid conflict with application bindings
           # Use "${hyper}+space" or "${hyper}+BackSpace" for rofi launcher
           
+          # Rofi Calculator (with -no-show-match -no-sort for better UX)
+          "${hyper}+x" = "exec rofi -show calc -modi calc -no-show-match -no-sort";
+          
+          # Rofi Emoji Picker
+          "${hyper}+period" = "exec rofi -show emoji";
+          
+          # Rofi File Browser (separate from combi mode)
+          "${hyper}+slash" = "exec rofi -show filebrowser";
+          
           # Window Overview (Mission Control-like)
           # Using Rofi in window mode with grid layout for stable workspace overview
           # Grid layout: 3 columns, large icons (48px), vertical orientation
@@ -1848,7 +1857,7 @@ in {
     swaybg  # Wallpaper manager
     
     # Universal launcher
-    rofi  # Native Wayland support is built-in (rofi-wayland was merged into rofi)
+    # rofi is now installed via programs.rofi module (see user/wm/sway/rofi.nix)
     
     # KWallet command-line tools
     

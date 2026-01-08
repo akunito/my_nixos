@@ -195,35 +195,42 @@ let
       }
     '';
 in {
-  # Write theme file manually
+  # Write theme file manually (preserve Stylix integration)
   home.file.".config/rofi/themes/custom.rasi" = {
     text = themeContent;
   };
 
-  # Write config.rasi manually (don't use programs.rofi to avoid conflict)
-  # The rofi package is already installed via home.packages in default.nix
-  home.file.".config/rofi/config.rasi" = {
-    text = ''
-      configuration {
-        columns: 1;
-        combi-modi: "drun,run,window,filebrowser";
-        display-combi: "";
-        filebrowser-dir: "~";
-        fixed-num-lines: true;
-        font: "${userSettings.font} 14";
-        icon-theme: "Papirus";
-        lines: 12;
-        location: 0;
-        modi: "combi,drun,run,window";
-        show-icons: true;
-        show-match: true;
-        sidebar-mode: false;
-        terminal: "${userSettings.term}";
-        width: 38;
-        xoffset: 0;
-        yoffset: 0;
-      }
-      @theme "themes/custom.rasi"
-    '';
+  # Use programs.rofi module for proper plugin support and ROFI_PLUGIN_PATH configuration
+  programs.rofi = {
+    enable = true;
+    package = pkgs.rofi;  # Standard package with native Wayland support
+    theme = "themes/custom";  # Explicitly load custom.rasi theme
+    
+    # Plugins must be in programs.rofi.plugins (NOT home.packages) for ROFI_PLUGIN_PATH to work
+    plugins = with pkgs; [
+      rofi-calc
+      rofi-emoji
+    ];
+    
+    # Migrate existing config.rasi settings to extraConfig
+    extraConfig = {
+      columns = 1;
+      combi-modi = "drun,run,window,filebrowser,calc,emoji";
+      display-combi = "";
+      filebrowser-dir = "~";
+      fixed-num-lines = true;
+      font = "${userSettings.font} 14";
+      icon-theme = "Papirus";
+      lines = 12;
+      location = 0;
+      modi = "combi,drun,run,window,calc,emoji";
+      show-icons = true;
+      show-match = true;
+      sidebar-mode = false;
+      terminal = "${userSettings.term}";
+      width = 38;
+      xoffset = 0;
+      yoffset = 0;
+    };
   };
 }
