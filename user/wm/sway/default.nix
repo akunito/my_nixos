@@ -11,10 +11,6 @@ let
     # Sync with D-Bus activation environment
     # Variables are already set by extraSessionCommands, we just need to sync them
     dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME
-    
-    # DEBUG: Log to debug file
-    echo "DEBUG: set-sway-theme-vars executed - QT_QPA_PLATFORMTHEME=$QT_QPA_PLATFORMTHEME GTK_THEME=$GTK_THEME" >> /home/akunito/.dotfiles/.cursor/debug.log
-    echo "DEBUG: dbus-update-activation-environment completed" >> /home/akunito/.dotfiles/.cursor/debug.log
   '';
   
   # DESK startup apps init script - shows KWallet GUI prompt with sticky/floating/on-top properties
@@ -487,9 +483,6 @@ let
       fi
       
       log "Waybar pattern match result: $RUNNING_COUNT instances (PIDs: $RUNNING_PIDS)" "info"
-      # #region agent log
-      echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:check-instances\",\"message\":\"Checking waybar instances\",\"data\":{\"pattern\":\"$PATTERN\",\"runningCount\":\"$RUNNING_COUNT\",\"pids\":\"$RUNNING_PIDS\",\"hypothesisId\":\"D\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      # #endregion
     fi
     
     if [ -n "$RUNNING_PIDS" ] && [ "$RUNNING_COUNT" -gt 0 ]; then
@@ -559,11 +552,6 @@ let
       done
       if [ "$SWAY_READY" = "false" ]; then
         log "WARNING: SwayFX not ready after 15 seconds, starting daemon anyway: $PATTERN" "warning"
-        # #region agent log
-        if [ "$PATTERN" = "waybar -c" ]; then
-          echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:sway-not-ready\",\"message\":\"SwayFX not ready for waybar\",\"data\":{\"pattern\":\"$PATTERN\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        fi
-        # #endregion
       fi
     fi
     
@@ -613,9 +601,6 @@ let
     
     # Start daemon with systemd logging
     log "Starting daemon: $PATTERN (command: $COMMAND)" "info"
-    # #region agent log
-    echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:start\",\"message\":\"Starting daemon\",\"data\":{\"pattern\":\"$PATTERN\",\"command\":\"$COMMAND\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-    # #endregion
     
     # Official Waybar debugging: Check environment variables and Wayland socket
     # Reference: https://github.com/Alexays/Waybar/wiki/Troubleshooting
@@ -623,13 +608,6 @@ let
       # Check Wayland display (official waybar requirement)
       if [ -z "$WAYLAND_DISPLAY" ]; then
         log "WARNING: WAYLAND_DISPLAY not set for waybar (may cause connection issues)" "warning"
-        # #region agent log
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-env-check\",\"message\":\"WAYLAND_DISPLAY not set\",\"data\":{\"pattern\":\"$PATTERN\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        # #endregion
-      else
-        # #region agent log
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-env-check\",\"message\":\"WAYLAND_DISPLAY is set\",\"data\":{\"pattern\":\"$PATTERN\",\"waylandDisplay\":\"$WAYLAND_DISPLAY\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        # #endregion
       fi
       # Check if SwayFX socket exists (official waybar requirement for sway/workspaces module)
       # SwayFX IPC socket format: $XDG_RUNTIME_DIR/sway-ipc.<uid>.<pid>.sock
@@ -639,20 +617,12 @@ let
         if [ -n "$SWAY_PID" ]; then
           SWAY_SOCKET="''${XDG_RUNTIME_DIR}/sway-ipc.$(id -u).''${SWAY_PID}.sock"
           if [ -S "$SWAY_SOCKET" ]; then
-            # #region agent log
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-socket-check\",\"message\":\"SwayFX socket found\",\"data\":{\"pattern\":\"$PATTERN\",\"socket\":\"$SWAY_SOCKET\",\"swayPid\":\"$SWAY_PID\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            # #endregion
+            # Socket found, waybar can connect
           else
             log "WARNING: SwayFX IPC socket not found: $SWAY_SOCKET (waybar sway/workspaces module may fail)" "warning"
-            # #region agent log
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-socket-check\",\"message\":\"SwayFX socket not found\",\"data\":{\"pattern\":\"$PATTERN\",\"socket\":\"$SWAY_SOCKET\",\"swayPid\":\"$SWAY_PID\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            # #endregion
           fi
         else
           log "WARNING: SwayFX process not found (waybar sway/workspaces module will fail)" "warning"
-          # #region agent log
-          echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-sway-check\",\"message\":\"SwayFX process not found\",\"data\":{\"pattern\":\"$PATTERN\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          # #endregion
         fi
       fi
     fi
@@ -698,29 +668,12 @@ let
           if [ -n "$CSS_ERRORS" ]; then
             CSS_ERROR_SUMMARY=$(echo "$CSS_ERRORS" | head -20 | tr '\n' '|' | sed 's/|$//')
             log "CRITICAL: Waybar CSS errors detected: $CSS_ERROR_SUMMARY" "err"
-            # #region agent log
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-immediate-css-crash\",\"message\":\"Waybar crashed immediately with CSS errors\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"cssErrors\":\"$CSS_ERROR_SUMMARY\",\"fullError\":\"$ERROR_OUTPUT\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            # #endregion
-          else
-            # #region agent log
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:immediate-crash\",\"message\":\"Daemon crashed immediately\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"error\":\"$ERROR_OUTPUT\",\"hasCssErrors\":\"false\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            # #endregion
           fi
-        else
-          # #region agent log
-          echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:immediate-crash\",\"message\":\"Daemon crashed immediately\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"error\":\"$ERROR_OUTPUT\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          # #endregion
         fi
       else
         log "ERROR: Daemon process died immediately (PID: $DAEMON_PID, pattern: $PATTERN). No error log available." "err"
-        # #region agent log
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:immediate-crash\",\"message\":\"Daemon crashed immediately (no logs)\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        # #endregion
       fi
     else
-      # #region agent log
-      echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:process-alive\",\"message\":\"Process still alive after 0.3s\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      # #endregion
     fi
     
     # Also pipe logs to systemd for real-time monitoring (background processes)
@@ -758,15 +711,9 @@ let
       if [ -n "$VERIFY_RESULT" ]; then
         ACTUAL_PID=$(echo "$VERIFY_RESULT" | head -1)
         log "Daemon started successfully: $PATTERN (started PID: $DAEMON_PID, actual PID: $ACTUAL_PID, verified after ''${check_delay}s)" "info"
-        # #region agent log
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:verification-success\",\"message\":\"Daemon verified running\",\"data\":{\"pattern\":\"$PATTERN\",\"startedPid\":\"$DAEMON_PID\",\"actualPid\":\"$ACTUAL_PID\",\"checkDelay\":\"$check_delay\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        # #endregion
         DAEMON_STARTED=true
         break
-      else
-        # #region agent log
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:verification-check\",\"message\":\"Daemon not found in verification\",\"data\":{\"pattern\":\"$PATTERN\",\"startedPid\":\"$DAEMON_PID\",\"checkDelay\":\"$check_delay\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        # #endregion
+      fi
       fi
     done
     
@@ -774,19 +721,12 @@ let
     # Waybar often crashes 1-2 seconds after launch due to DBus/Portal timeouts or SwayFX IPC issues
     # We must wait for this window to catch crashes during Wayland initialization
     if [ "$DAEMON_STARTED" = "true" ] && echo "$PATTERN" | grep -q "waybar -c"; then
-      # #region agent log
-      echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-pre-check\",\"message\":\"Starting waybar post-verification check\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      # #endregion
-      
       # Check for CSS errors in stderr before the health check
       if [ -f "$STDERR_LOG" ]; then
         CSS_ERRORS=$(cat "$STDERR_LOG" 2>/dev/null | grep -iE "(css|style|parse|syntax|error|invalid|unknown)" || echo "")
         if [ -n "$CSS_ERRORS" ]; then
           CSS_ERROR_SUMMARY=$(echo "$CSS_ERRORS" | head -10 | tr '\n' '|' | sed 's/|$//')
           log "WARNING: Potential CSS errors detected in Waybar stderr: $CSS_ERROR_SUMMARY" "warning"
-          # #region agent log
-          echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-css-errors\",\"message\":\"CSS errors detected in stderr\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"cssErrors\":\"$CSS_ERROR_SUMMARY\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          # #endregion
         fi
       fi
       
@@ -817,10 +757,6 @@ let
           # Check for multiple instances
           ALL_WAYBAR_PROCS=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | tr '\n' ',' || echo "none")
           PROCESS_TREE=$(ps aux | grep -E "waybar|daemon-manager|daemon-health-monitor" | grep -v grep | head -10 | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
-          
-          # #region agent log
-          echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-crash-timing\",\"message\":\"Waybar crashed at ''${TOTAL_WAIT}s check\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"checkTime\":\"''${TOTAL_WAIT}s\",\"allWaybarProcs\":\"$ALL_WAYBAR_PROCS\",\"stderrBase64\":\"$FULL_STDERR\",\"stdoutBase64\":\"$FULL_STDOUT\",\"processTree\":\"$PROCESS_TREE\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          # #endregion
           break
         fi
       done
@@ -840,23 +776,10 @@ let
           # Capture full error details
           FULL_STDERR_CRASH=$(cat "$STDERR_LOG" 2>/dev/null | head -200 | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
           FULL_STDOUT_CRASH=$(cat "$STDOUT_LOG" 2>/dev/null | head -200 | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
-          ALL_WAYBAR_PROCS_CRASH=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | tr '\n' ',' || echo "none")
-          HEALTH_MONITOR_RUNNING=$(${pkgs.procps}/bin/pgrep -f "daemon-health-monitor" >/dev/null 2>&1 && echo "true" || echo "false")
-          
-          # #region agent log
-          echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-crash\",\"message\":\"Waybar crashed after post-verification\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"error\":\"$ERROR_CONTENT\",\"hasCssErrors\":\"$([ -n \"$CSS_CRASH_ERRORS\" ] && echo \"true\" || echo \"false\")\",\"cssErrors\":\"$CSS_CRASH_SUMMARY\",\"fullStderrBase64\":\"$FULL_STDERR_CRASH\",\"fullStdoutBase64\":\"$FULL_STDOUT_CRASH\",\"allWaybarProcs\":\"$ALL_WAYBAR_PROCS_CRASH\",\"healthMonitorRunning\":\"$HEALTH_MONITOR_RUNNING\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          # #endregion
-        else
-          # #region agent log
-          echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-crash\",\"message\":\"Waybar crashed after post-verification (no logs)\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          # #endregion
         fi
         DAEMON_STARTED=false
       else
         log "Waybar health check passed (post-verification, survived 6s check)" "info"
-        # #region agent log
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"daemon-manager:waybar-healthy\",\"message\":\"Waybar health check passed (survived 6s)\",\"data\":{\"pattern\":\"$PATTERN\",\"pid\":\"$DAEMON_PID\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        # #endregion
       fi
     fi
     
@@ -900,31 +823,16 @@ let
         if command -v ${pkgs.jq}/bin/jq >/dev/null 2>&1; then
           if ! ${pkgs.jq}/bin/jq empty "$WAYBAR_CONFIG" 2>/dev/null; then
             echo "WARNING: Waybar config JSON validation failed (non-blocking)" | systemd-cat -t sway-daemon-mgr -p warning
-            # #region agent log
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"start-sway-daemons:config-validation\",\"message\":\"Waybar config JSON validation failed\",\"data\":{\"configFile\":\"$WAYBAR_CONFIG\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            # #endregion
           else
-            # #region agent log
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"start-sway-daemons:config-valid\",\"message\":\"Waybar config JSON validation passed\",\"data\":{\"configFile\":\"$WAYBAR_CONFIG\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            # #endregion
           fi
         fi
       else
         echo "WARNING: Waybar config file missing (non-blocking) - Home Manager should generate this" | systemd-cat -t sway-daemon-mgr -p warning
-        # #region agent log
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"start-sway-daemons:config-missing\",\"message\":\"Waybar config file missing\",\"data\":{\"configFile\":\"$WAYBAR_CONFIG\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        # #endregion
       fi
       # Check CSS file exists (official waybar requirement)
       if [ ! -f "$WAYBAR_CSS" ]; then
         echo "WARNING: Waybar CSS file missing (non-blocking) - Home Manager should generate this" | systemd-cat -t sway-daemon-mgr -p warning
-        # #region agent log
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"start-sway-daemons:css-missing\",\"message\":\"Waybar CSS file missing\",\"data\":{\"cssFile\":\"$WAYBAR_CSS\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        # #endregion
       else
-        # #region agent log
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"start-sway-daemons:css-exists\",\"message\":\"Waybar CSS file exists\",\"data\":{\"cssFile\":\"$WAYBAR_CSS\",\"hypothesisId\":\"A\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-        # #endregion
       fi
       
       # Start waybar first (synchronously) to avoid race conditions
@@ -1068,19 +976,7 @@ let
         PGREP_RESULT=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" 2>&1 || echo "")
         if [ -n "$PGREP_RESULT" ]; then
           DAEMON_RUNNING=true
-          # #region agent log
-          if [ "${daemon.name}" = "waybar" ]; then
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:waybar-running\",\"message\":\"Waybar is running\",\"data\":{\"daemon\":\"${daemon.name}\",\"pattern\":\"${daemon.pattern}\",\"pgrepResult\":\"$PGREP_RESULT\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          fi
-          # #endregion
         else
-          # #region agent log
-          if [ "${daemon.name}" = "waybar" ]; then
-            # Check what waybar processes actually exist
-            ALL_WAYBAR=$(pgrep -f "waybar" 2>/dev/null | tr '\n' ',' || echo "none")
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:waybar-not-found\",\"message\":\"Waybar pattern not found\",\"data\":{\"daemon\":\"${daemon.name}\",\"pattern\":\"${daemon.pattern}\",\"pgrepFlag\":\"$PGREP_FLAG\",\"pgrepResult\":\"$PGREP_RESULT\",\"allWaybarProcs\":\"$ALL_WAYBAR\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          fi
-          # #endregion
         fi
         
         # Additional check for waybar: verify the main process is actually running (not just child processes)
@@ -1136,24 +1032,15 @@ let
             if [ -f "$WAYBAR_STDERR_LOG" ]; then
               WAYBAR_STDERR_CONTENT=$(cat "$WAYBAR_STDERR_LOG" 2>/dev/null | tail -100 | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
             fi
-            # #region agent log
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:waybar-down-detected\",\"message\":\"Waybar not running, checking before restart\",\"data\":{\"daemon\":\"${daemon.name}\",\"pattern\":\"${daemon.pattern}\",\"restartCount\":\"$RESTART_COUNT\",\"allWaybarProcs\":\"$ALL_WAYBAR_PROCS_HM\",\"stderrBase64\":\"$WAYBAR_STDERR_CONTENT\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            # #endregion
           fi
           
           # Exponential backoff: skip restart if too many attempts (max 3 attempts = 90 seconds)
           if [ "$RESTART_COUNT" -ge 3 ]; then
             log "WARNING: ${daemon.name} crashed but restart limit reached (''${RESTART_COUNT} attempts). Skipping restart." "warning"
-            # #region agent log
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:restart-limit\",\"message\":\"Restart limit reached\",\"data\":{\"daemon\":\"${daemon.name}\",\"restartCount\":\"$RESTART_COUNT\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            # #endregion
             continue
           fi
           
           log "WARNING: ${daemon.name} is not running (restart attempt: $((RESTART_COUNT + 1)))" "warning"
-          # #region agent log
-          echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:daemon-down\",\"message\":\"Daemon not running, attempting restart\",\"data\":{\"daemon\":\"${daemon.name}\",\"pattern\":\"${daemon.pattern}\",\"restartAttempt\":\"$((RESTART_COUNT + 1))\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          # #endregion
           
           # Attempt to restart the daemon
           ${daemon-manager}/bin/daemon-manager \
@@ -1165,9 +1052,6 @@ let
             ${if daemon.requires_tray or false then "true" else "false"}
           
           RESTART_EXIT_CODE=$?
-          # #region agent log
-          echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:restart-attempt\",\"message\":\"Restart command executed\",\"data\":{\"daemon\":\"${daemon.name}\",\"exitCode\":\"$RESTART_EXIT_CODE\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-          # #endregion
           
           if [ $RESTART_EXIT_CODE -eq 0 ]; then
             # Check if restart was successful
@@ -1179,9 +1063,6 @@ let
             fi
             if ${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" > /dev/null 2>&1; then
               log "SUCCESS: ${daemon.name} restarted successfully" "info"
-              # #region agent log
-              echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:restart-success\",\"message\":\"Daemon restarted successfully\",\"data\":{\"daemon\":\"${daemon.name}\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-              # #endregion
               reset_restart_count "${daemon.name}"
             else
               log "ERROR: ${daemon.name} restart failed" "err"
@@ -1194,21 +1075,12 @@ let
                   WAYBAR_STDERR_FAIL=$(cat "$WAYBAR_STDERR_LOG_FAIL" 2>/dev/null | tail -100 | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
                 fi
                 ALL_WAYBAR_PROCS_FAIL=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | tr '\n' ',' || echo "none")
-                # #region agent log
-                echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:restart-failed\",\"message\":\"Waybar restart failed (not running after check)\",\"data\":{\"daemon\":\"${daemon.name}\",\"pattern\":\"${daemon.pattern}\",\"waitTime\":\"5s\",\"allWaybarProcs\":\"$ALL_WAYBAR_PROCS_FAIL\",\"stderrBase64\":\"$WAYBAR_STDERR_FAIL\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-                # #endregion
-              else
-                # #region agent log
-                echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:restart-failed\",\"message\":\"Daemon restart failed (not running after check)\",\"data\":{\"daemon\":\"${daemon.name}\",\"pattern\":\"${daemon.pattern}\",\"waitTime\":\"2s\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-                # #endregion
+              fi
               fi
               increment_restart_count "${daemon.name}"
             fi
           else
             log "ERROR: ${daemon.name} restart command failed" "err"
-            # #region agent log
-            echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:restart-cmd-failed\",\"message\":\"Restart command failed\",\"data\":{\"daemon\":\"${daemon.name}\",\"exitCode\":\"$RESTART_EXIT_CODE\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            # #endregion
             increment_restart_count "${daemon.name}"
           fi
         else
@@ -1216,11 +1088,6 @@ let
           RESTART_COUNT=$(get_restart_count "${daemon.name}")
           if [ "$RESTART_COUNT" -gt 0 ]; then
             log "INFO: ${daemon.name} is healthy again (was restarted ''${RESTART_COUNT} times)" "info"
-            # #region agent log
-            if [ "${daemon.name}" = "waybar" ]; then
-              echo "{\"timestamp\":$(date +%s000),\"location\":\"health-monitor:daemon-healthy\",\"message\":\"Daemon is healthy\",\"data\":{\"daemon\":\"${daemon.name}\",\"wasRestarted\":\"$RESTART_COUNT\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-            fi
-            # #endregion
             reset_restart_count "${daemon.name}"
           fi
         fi
@@ -1290,26 +1157,6 @@ in {
       export GTK_APPLICATION_PREFER_DARK_THEME=1
       # Fix for Java apps if needed
       export _JAVA_AWT_WM_NONREPARENTING=1
-      # #region agent log
-      echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:env-set\",\"message\":\"Environment variables set for Sway\",\"data\":{\"QT_QPA_PLATFORMTHEME\":\"$QT_QPA_PLATFORMTHEME\",\"GTK_THEME\":\"$GTK_THEME\",\"GTK_APPLICATION_PREFER_DARK_THEME\":\"$GTK_APPLICATION_PREFER_DARK_THEME\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      # #endregion
-      # Check if waybar config exists
-      if [ -f "${config.xdg.configHome}/waybar/config" ]; then
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:waybar-config-check\",\"message\":\"Waybar config file exists\",\"data\":{\"path\":\"${config.xdg.configHome}/waybar/config\",\"hypothesisId\":\"D\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      else
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:waybar-config-check\",\"message\":\"Waybar config file MISSING\",\"data\":{\"path\":\"${config.xdg.configHome}/waybar/config\",\"hypothesisId\":\"D\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      fi
-      # Check if GTK config files exist
-      if [ -f "${config.xdg.configHome}/gtk-3.0/settings.ini" ]; then
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:gtk-config-check\",\"message\":\"GTK-3 config exists\",\"data\":{\"path\":\"${config.xdg.configHome}/gtk-3.0/settings.ini\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      else
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:gtk-config-check\",\"message\":\"GTK-3 config MISSING\",\"data\":{\"path\":\"${config.xdg.configHome}/gtk-3.0/settings.ini\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      fi
-      if [ -f "${config.xdg.configHome}/gtk-4.0/settings.ini" ]; then
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:gtk-config-check\",\"message\":\"GTK-4 config exists\",\"data\":{\"path\":\"${config.xdg.configHome}/gtk-4.0/settings.ini\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      else
-        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:gtk-config-check\",\"message\":\"GTK-4 config MISSING\",\"data\":{\"path\":\"${config.xdg.configHome}/gtk-4.0/settings.ini\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
-      fi
     '';
     
     config = {
