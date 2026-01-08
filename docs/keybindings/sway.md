@@ -160,9 +160,13 @@ All application shortcuts use the `app-toggle.sh` script which toggles applicati
 
 - **`${hyper}+L`** → Telegram (`org.telegram.desktop`)
 
+### File Manager
+
+- **`${hyper}+E`** → Dolphin (`org.kde.dolphin`)
+
 ### Development Tools
 
-- **`${hyper}+E`** → DBeaver (`io.dbeaver.DBeaverCommunity`)
+- **`${hyper}+U`** → DBeaver (`io.dbeaver.DBeaverCommunity`)
 - **`${hyper}+D`** → Obsidian (`obsidian`)
 - **`${hyper}+C`** → Cursor (`cursor`)
 
@@ -177,6 +181,7 @@ All application shortcuts use the `app-toggle.sh` script which toggles applicati
 
 ### System Tools
 
+- **`${hyper}+A`** → Pavucontrol (`pavucontrol`)
 - **`${hyper}+N`** → nwg-look (`nwg-look`)
 - **`${hyper}+P`** → Bitwarden (`Bitwarden`)
 - **`${hyper}+M`** → Mission Center (`mission-center`)
@@ -218,7 +223,9 @@ The following keybindings were intentionally removed to avoid conflicts:
 - **`${hyper}+l`** → Removed (conflicts with `${hyper}+L` for Telegram)
 - **`${hyper}+s`** → Removed (conflicts with layout bindings)
 - **`${hyper}+w`** → Removed (conflicts with `${hyper}+W` for workspace next)
-- **`${hyper}+e`** → Removed (conflicts with `${hyper}+E` for DBeaver)
+- **`${hyper}+e`** → Removed (conflicts with `${hyper}+E` for Dolphin file explorer)
+- **`${hyper}+a`** → Removed (conflicts with `${hyper}+A` for Pavucontrol)
+- **`${hyper}+u`** → Removed (conflicts with `${hyper}+U` for DBeaver)
 
 ## Related Documentation
 

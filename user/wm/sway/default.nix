@@ -1209,7 +1209,9 @@ in {
           "${hyper}+T" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh kitty kitty";
           "${hyper}+R" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Alacritty alacritty";
           "${hyper}+L" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram";
-          "${hyper}+E" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
+          "${hyper}+E" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
+          "${hyper}+U" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
+          "${hyper}+A" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh pavucontrol pavucontrol";
           "${hyper}+D" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
           "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.vivaldi.Vivaldi vivaldi";
           "${hyper}+G" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh chromium-browser chromium";
@@ -1269,7 +1271,9 @@ in {
           "${hyper}+Shift+space" = "floating toggle";
           # Note: Removed "${hyper}+s" to avoid conflict with layout bindings
           # Note: Removed "${hyper}+w" to avoid conflict with "${hyper}+W" (workspace next)
-          # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (dolphin)
+          # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (dolphin file explorer)
+          # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (pavucontrol)
+          # Note: Removed "${hyper}+u" to avoid conflict with "${hyper}+U" (dbeaver)
           
           # Window movement (conditional - floating vs tiled)
           "${hyper}+Shift+j" = "exec ${config.home.homeDirectory}/.config/sway/scripts/window-move.sh left";
