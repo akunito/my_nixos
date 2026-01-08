@@ -1,6 +1,9 @@
 { config, pkgs, lib, userSettings, systemSettings, pkgs-unstable ? pkgs, ... }:
 
 let
+  # Import debugging utilities
+  debugQt5ct = import ./debug-qt5ct.nix { inherit pkgs lib systemSettings; };
+  
   # Hyper key combination (Super+Ctrl+Alt)
   hyper = "Mod4+Control+Mod1";
   
@@ -1401,8 +1404,9 @@ in {
         # CRITICAL: Restore qt5ct files before daemons start to ensure correct Qt theming
         # Plasma 6 might modify qt5ct files even though it shouldn't use them
         # This script restores files from backup and sets read-only permissions
+        # Using debug version for comprehensive logging
         {
-          command = "${restore-qt5ct-files}/bin/restore-qt5ct-files";
+          command = "${debugQt5ct.restore-qt5ct-files-debug}/bin/restore-qt5ct-files-debug";
           always = false;  # Only run on initial startup, not on reload
         }
         # Unified daemon management - starts all daemons with smart reload support
@@ -1787,6 +1791,10 @@ in {
     desk-startup-apps-init
     desk-startup-apps-launcher
     restore-qt5ct-files
+    # Debug utilities (can be removed after fixing the issue)
+    debugQt5ct.restore-qt5ct-files-debug
+    debugQt5ct.dolphin-debug
+    debugQt5ct.writeDebugLog
   ] ++ (with pkgs; [
     # SwayFX and related
     swayfx

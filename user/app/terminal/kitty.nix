@@ -3,6 +3,8 @@
 {
   home.packages = with pkgs; [
     kitty
+    # Explicitly install JetBrains Mono Nerd Font to ensure it's available
+    nerd-fonts.jetbrains-mono
   ];
   programs.kitty.enable = true;
   programs.kitty.settings = lib.mkMerge [
@@ -14,7 +16,10 @@
       window_border_width = "0"; # No border (window manager handles it)
       window_margin_width = "0"; # No margin
       font_size = "12";
-      font_family = userSettings.font;
+      # Use "JetBrainsMono Nerd Font Mono" - the exact family name as registered in the system
+      # This matches the fix applied to Alacritty
+      # Intel One Mono may not be available or correctly named in fontconfig
+      font_family = "JetBrainsMono Nerd Font Mono";
       
       # CRITICAL: Disable audio bell
       enable_audio_bell = false;
