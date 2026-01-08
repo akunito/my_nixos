@@ -608,11 +608,45 @@ let
       # CRITICAL: For waybar, we need to ensure SwayFX IPC is fully functional, not just responding
       # This includes checking that the IPC socket exists and is accessible
       # #region agent log
-      echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-check-start\",\"message\":\"Starting SwayFX IPC readiness check\",\"data\":{\"pattern\":\"$PATTERN\",\"requires_sway\":true},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # Track SwayFX process start time and socket creation time to compare reboot vs logout/login
+      SWAY_PID_INIT=$(pgrep -x sway | head -1 || echo "")
+      SWAY_START_TIME=""
+      SWAY_SOCKET_CREATE_TIME=""
+      SWAY_SOCKET_ACCESS_TIME=""
+      if [ -n "$SWAY_PID_INIT" ]; then
+        # Get process start time (seconds since boot)
+        SWAY_START_TIME=$(ps -o lstart= -p "$SWAY_PID_INIT" 2>/dev/null | xargs -I {} date -d "{}" +%s 2>/dev/null || echo "")
+        # Get socket file creation time if it exists
+        if [ -n "$XDG_RUNTIME_DIR" ]; then
+          SWAY_SOCKET_INIT="$XDG_RUNTIME_DIR/sway-ipc.$(id -u).$SWAY_PID_INIT.sock"
+          if [ -S "$SWAY_SOCKET_INIT" ]; then
+            SWAY_SOCKET_CREATE_TIME=$(stat -c %Y "$SWAY_SOCKET_INIT" 2>/dev/null || echo "")
+            SWAY_SOCKET_ACCESS_TIME=$(stat -c %X "$SWAY_SOCKET_INIT" 2>/dev/null || echo "")
+          fi
+        fi
+      fi
+      # Check for stale socket files from previous sessions
+      STALE_SOCKETS=""
+      if [ -n "$XDG_RUNTIME_DIR" ]; then
+        STALE_SOCKETS=$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -name "sway-ipc.*.sock" -type s 2>/dev/null | wc -l || echo "0")
+      fi
+      # Check system uptime to distinguish reboot vs logout/login
+      UPTIME_SECONDS=$(cat /proc/uptime 2>/dev/null | cut -d' ' -f1 | cut -d'.' -f1 || echo "")
+      echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-check-start\",\"message\":\"Starting SwayFX IPC readiness check\",\"data\":{\"pattern\":\"$PATTERN\",\"requires_sway\":true,\"sway_pid\":\"$SWAY_PID_INIT\",\"sway_start_time\":\"$SWAY_START_TIME\",\"socket_create_time\":\"$SWAY_SOCKET_CREATE_TIME\",\"socket_access_time\":\"$SWAY_SOCKET_ACCESS_TIME\",\"stale_sockets\":$STALE_SOCKETS,\"uptime_seconds\":\"$UPTIME_SECONDS\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"F\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
       # #endregion
       SWAY_READY=false
       TOTAL_WAIT=0
-      for delay in 0.5 1 1.5 2 2.5 3; do
+      # CRITICAL: For waybar, use longer delays to allow SwayFX IPC to fully initialize
+      # SwayFX IPC can take 15+ seconds to become functional after socket creation
+      # Other daemons don't need as much time
+      if echo "$PATTERN" | grep -q "waybar"; then
+        # Waybar needs more time - use longer delays: 1s, 2s, 3s, 4s, 5s, 6s = 21s max
+        DELAYS="1 2 3 4 5 6"
+      else
+        # Other daemons use standard delays: 0.5s, 1s, 1.5s, 2s, 2.5s, 3s = 10.5s max
+        DELAYS="0.5 1 1.5 2 2.5 3"
+      fi
+      for delay in $DELAYS; do
         # Check if swaymsg works AND can actually query outputs (proves IPC is functional)
         # Also check that the IPC socket exists (critical for waybar workspace module)
         # #region agent log
@@ -627,7 +661,23 @@ let
             SWAY_SOCKET_EXISTS="true"
           fi
         fi
-        echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-check-iteration\",\"message\":\"SwayFX IPC check iteration\",\"data\":{\"delay\":$delay,\"total_wait\":$TOTAL_WAIT,\"outputs_check\":$SWAY_OUTPUTS_CHECK,\"workspaces_check\":$SWAY_WORKSPACES_CHECK,\"sway_pid\":\"$SWAY_PID_CHECK\",\"socket_exists\":$SWAY_SOCKET_EXISTS,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # Track socket file age and process age to identify timing issues
+        SOCKET_AGE=""
+        PROCESS_AGE=""
+        CURRENT_TIME=$(date +%s)
+        if [ -n "$SWAY_PID_CHECK" ]; then
+          PROCESS_START=$(ps -o lstart= -p "$SWAY_PID_CHECK" 2>/dev/null | xargs -I {} date -d "{}" +%s 2>/dev/null || echo "")
+          if [ -n "$PROCESS_START" ]; then
+            PROCESS_AGE=$((CURRENT_TIME - PROCESS_START))
+          fi
+        fi
+        if [ "$SWAY_SOCKET_EXISTS" = "true" ] && [ -n "$SWAY_SOCKET_PATH" ]; then
+          SOCKET_CREATE=$(stat -c %Y "$SWAY_SOCKET_PATH" 2>/dev/null || echo "")
+          if [ -n "$SOCKET_CREATE" ]; then
+            SOCKET_AGE=$((CURRENT_TIME - SOCKET_CREATE))
+          fi
+        fi
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-check-iteration\",\"message\":\"SwayFX IPC check iteration\",\"data\":{\"delay\":$delay,\"total_wait\":$TOTAL_WAIT,\"outputs_check\":$SWAY_OUTPUTS_CHECK,\"workspaces_check\":$SWAY_WORKSPACES_CHECK,\"sway_pid\":\"$SWAY_PID_CHECK\",\"socket_exists\":$SWAY_SOCKET_EXISTS,\"socket_age_seconds\":\"$SOCKET_AGE\",\"process_age_seconds\":\"$PROCESS_AGE\",\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"F\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
         # #endregion
         # CRITICAL: For waybar, also verify the IPC socket exists (required for workspace module)
         # Process name is "sway", not "swayfx" - check both for compatibility
@@ -669,7 +719,11 @@ let
         sleep $delay
       done
       if [ "$SWAY_READY" = "false" ]; then
-        log "WARNING: SwayFX not ready after 15 seconds, starting daemon anyway: $PATTERN" "warning"
+        if echo "$PATTERN" | grep -q "waybar"; then
+          log "WARNING: SwayFX not ready after 21 seconds (waybar extended timeout), starting daemon anyway: $PATTERN" "warning"
+        else
+          log "WARNING: SwayFX not ready after 10.5 seconds, starting daemon anyway: $PATTERN" "warning"
+        fi
         # #region agent log
         echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-not-ready\",\"message\":\"SwayFX IPC not ready after timeout\",\"data\":{\"total_wait\":$TOTAL_WAIT,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
         # #endregion
@@ -862,7 +916,8 @@ let
     # CRITICAL: For waybar, add post-verification health check
     # Waybar often crashes 1-2 seconds after launch due to DBus/Portal timeouts or SwayFX IPC issues
     # We must wait for this window to catch crashes during Wayland initialization
-    if [ "$DAEMON_STARTED" = "true" ] && echo "$PATTERN" | grep -q "waybar -c"; then
+    # Also verify that waybar successfully connected to SwayFX IPC (workspace module requires this)
+    if [ "$DAEMON_STARTED" = "true" ] && echo "$PATTERN" | grep -q "waybar"; then
       # Check for CSS errors in stderr before the health check
       if [ -f "$STDERR_LOG" ]; then
         CSS_ERRORS=$(cat "$STDERR_LOG" 2>/dev/null | grep -iE "(css|style|parse|syntax|error|invalid|unknown)" || echo "")
@@ -922,6 +977,41 @@ let
         DAEMON_STARTED=false
       else
         log "Waybar health check passed (post-verification, survived 6s check)" "info"
+        
+        # CRITICAL: Verify waybar actually connected to SwayFX IPC
+        # Check stderr for "Unable to connect to Sway" warnings (workspace module failure)
+        # #region agent log
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:waybar-ipc-check\",\"message\":\"Checking if waybar connected to SwayFX IPC\",\"data\":{\"pid\":$DAEMON_PID,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # #endregion
+        
+        if [ -f "$STDERR_LOG" ]; then
+          IPC_CONNECTION_ERROR=$(cat "$STDERR_LOG" 2>/dev/null | grep -iE "(unable to connect to sway|sway/workspaces.*disabling|sway/window.*disabling)" || echo "")
+          if [ -n "$IPC_CONNECTION_ERROR" ]; then
+            log "WARNING: Waybar started but failed to connect to SwayFX IPC (workspace module disabled). This usually means SwayFX IPC wasn't ready when waybar started. Error: $IPC_CONNECTION_ERROR" "warning"
+            # #region agent log
+            echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:waybar-ipc-failed\",\"message\":\"Waybar failed to connect to SwayFX IPC\",\"data\":{\"pid\":$DAEMON_PID,\"error\":\"$IPC_CONNECTION_ERROR\",\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+            # #endregion
+            
+            # Check if SwayFX IPC is NOW ready (it might have become ready after waybar started)
+            if ${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1 && \
+               ${pkgs.swayfx}/bin/swaymsg -t get_workspaces > /dev/null 2>&1; then
+              log "INFO: SwayFX IPC is now ready. Waybar may need a reload to connect (swaymsg reload or restart waybar)." "info"
+              # #region agent log
+              echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-ipc-now-ready\",\"message\":\"SwayFX IPC is now ready but waybar already started\",\"data\":{\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+              # #endregion
+            else
+              log "WARNING: SwayFX IPC is still not ready. Waybar workspace module will remain disabled until SwayFX IPC becomes functional." "warning"
+              # #region agent log
+              echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-ipc-still-not-ready\",\"message\":\"SwayFX IPC still not ready\",\"data\":{\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+              # #endregion
+            fi
+          else
+            log "INFO: Waybar appears to have connected to SwayFX IPC successfully (no connection errors in logs)" "info"
+            # #region agent log
+            echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:waybar-ipc-success\",\"message\":\"Waybar connected to SwayFX IPC successfully\",\"data\":{\"pid\":$DAEMON_PID,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+            # #endregion
+          fi
+        fi
       fi
     fi
     
@@ -1001,62 +1091,174 @@ let
       if [ "$IS_FRESH_SESSION" = "true" ]; then
         echo "Fresh Sway session detected (PID $PPID). Performing cleanup..." | systemd-cat -t sway-daemon-mgr -p info
         # #region agent log
-        echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:cleanup-start\",\"message\":\"Cleanup phase started\",\"data\":{\"ppid\":$PPID,\"session\":\"fresh\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"A\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # Track system state to compare reboot vs logout/login
+        UPTIME_SECONDS=$(cat /proc/uptime 2>/dev/null | cut -d' ' -f1 | cut -d'.' -f1 || echo "")
+        # Check for stale socket files from previous sessions
+        STALE_SOCKET_COUNT=0
+        STALE_SOCKET_AGES=""
+        if [ -n "$XDG_RUNTIME_DIR" ] && [ -d "$XDG_RUNTIME_DIR" ]; then
+          STALE_SOCKET_COUNT=$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -name "sway-ipc.*.sock" -type s 2>/dev/null | wc -l || echo "0")
+          # Get ages of stale sockets
+          CURRENT_TIME=$(date +%s)
+          for socket in "$XDG_RUNTIME_DIR"/sway-ipc.*.sock; do
+            if [ -S "$socket" ]; then
+              SOCKET_AGE=$((CURRENT_TIME - $(stat -c %Y "$socket" 2>/dev/null || echo "$CURRENT_TIME")))
+              STALE_SOCKET_AGES="$STALE_SOCKET_AGES$SOCKET_AGE,"
+            fi
+          done
+          STALE_SOCKET_AGES=$(echo "$STALE_SOCKET_AGES" | sed 's/,$//')
+        fi
+        # Check for orphaned Sway processes
+        ORPHANED_SWAY_COUNT=$(pgrep -x sway 2>/dev/null | wc -l || echo "0")
+        # Check systemd user services state
+        SYSTEMD_USER_ACTIVE=$(systemctl --user is-active 2>/dev/null | head -1 || echo "unknown")
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:cleanup-start\",\"message\":\"Cleanup phase started\",\"data\":{\"ppid\":$PPID,\"session\":\"fresh\",\"uptime_seconds\":\"$UPTIME_SECONDS\",\"stale_socket_count\":$STALE_SOCKET_COUNT,\"stale_socket_ages\":\"$STALE_SOCKET_AGES\",\"orphaned_sway_count\":$ORPHANED_SWAY_COUNT,\"systemd_user_active\":\"$SYSTEMD_USER_ACTIVE\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"F\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
         # #endregion
         
         # 1. Clean up OLD sentinels from previous crashed/closed sessions to prevent clutter
         # This prevents accumulation of stale sentinel files over time
+        # CRITICAL: Also clean up stale SwayFX IPC socket files from previous sessions
+        # These can interfere with new session initialization (hypothesis: stale sockets block IPC)
+        # After logout, socket files may persist even though the process is dead, causing connection issues
+        STALE_SOCKETS_REMOVED=0
+        if [ -n "$XDG_RUNTIME_DIR" ] && [ -d "$XDG_RUNTIME_DIR" ]; then
+          # Find all sway-ipc socket files
+          for socket in "$XDG_RUNTIME_DIR"/sway-ipc.*.sock; do
+            if [ -S "$socket" ]; then
+              # Extract PID from socket filename (format: sway-ipc.UID.PID.sock)
+              SOCKET_PID=$(basename "$socket" | cut -d'.' -f3 | cut -d'.' -f1 || echo "")
+              # Check if process with that PID is still running
+              if [ -n "$SOCKET_PID" ] && ! kill -0 "$SOCKET_PID" 2>/dev/null; then
+                # Process is dead, socket is stale - remove it
+                echo "Removing stale SwayFX IPC socket: $socket (PID $SOCKET_PID not running)" | systemd-cat -t sway-daemon-mgr -p warning
+                rm -f "$socket" 2>/dev/null || true
+                STALE_SOCKETS_REMOVED=$((STALE_SOCKETS_REMOVED + 1))
+                # #region agent log
+                echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:stale-socket-removed\",\"message\":\"Removed stale SwayFX IPC socket\",\"data\":{\"socket\":\"$socket\",\"pid\":\"$SOCKET_PID\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"F\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+                # #endregion
+              elif [ -n "$SOCKET_PID" ] && [ "$SOCKET_PID" != "$PPID" ]; then
+                # Socket belongs to a different Sway process (from previous session)
+                # This is the key issue: after logout/login, old socket may still exist
+                echo "Found SwayFX IPC socket from different session: $socket (PID $SOCKET_PID, current PPID $PPID)" | systemd-cat -t sway-daemon-mgr -p warning
+                # Remove it to prevent conflicts
+                rm -f "$socket" 2>/dev/null || true
+                STALE_SOCKETS_REMOVED=$((STALE_SOCKETS_REMOVED + 1))
+                # #region agent log
+                echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:conflicting-socket-removed\",\"message\":\"Removed SwayFX IPC socket from different session\",\"data\":{\"socket\":\"$socket\",\"old_pid\":\"$SOCKET_PID\",\"current_ppid\":$PPID},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"F\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+                # #endregion
+              fi
+            fi
+          done
+        fi
+        if [ "$STALE_SOCKETS_REMOVED" -gt 0 ]; then
+          echo "Removed $STALE_SOCKETS_REMOVED stale/conflicting SwayFX IPC socket(s)" | systemd-cat -t sway-daemon-mgr -p info
+        fi
         find "$SENTINEL_DIR" -maxdepth 1 -name "sway-session-init-*" -delete 2>/dev/null || true
         
         # 2. Create NEW sentinel immediately to mark this session as initialized
         touch "$SENTINEL_FILE" || echo "WARNING: Failed to create sentinel file" | systemd-cat -t sway-daemon-mgr -p warning
         
         # 3. Process Cleanup Loop
-        ${lib.concatMapStringsSep "\n" (daemon: ''
-          # Cleanup logic for ${daemon.name}
-          MATCH_TYPE=${lib.strings.escapeShellArg daemon.match_type}
-          PATTERN=${lib.strings.escapeShellArg daemon.pattern}
-          
-          if [ "$MATCH_TYPE" = "exact" ]; then
-            PGREP_FLAG="-x"
+        # CRITICAL: This cleanup must complete BEFORE any daemons are started
+        # If daemons start during cleanup, they will be killed by the cleanup loop
+        # For waybar specifically, we need to kill ALL waybar processes (not just matching current pattern)
+        # to prevent daemon-manager's cleanup from interfering
+        CLEANUP_START_TIME=$(date +%s)
+        
+        # Special cleanup for waybar: kill ALL waybar processes regardless of pattern/store path
+        # This ensures daemon-manager doesn't find old processes and kill the newly started one
+        ALL_WAYBAR_PIDS=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | grep -v "^$" || echo "")
+        if [ -n "$ALL_WAYBAR_PIDS" ]; then
+          echo "Cleaning up ALL waybar processes from previous session (PIDs: $ALL_WAYBAR_PIDS)" | systemd-cat -t sway-daemon-mgr -p info
+          # #region agent log
+          echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:cleanup-all-waybar\",\"message\":\"Cleaning up all waybar processes\",\"data\":{\"pids\":\"$ALL_WAYBAR_PIDS\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"G\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+          # #endregion
+          for WB_PID in $ALL_WAYBAR_PIDS; do
+            if [ "$WB_PID" != "$$" ] && [ "$WB_PID" != "$PPID" ]; then
+              kill "$WB_PID" 2>/dev/null || true
+            fi
+          done
+          # Wait for waybar processes to terminate
+          for wait_time in 0.5 1 2; do
+            sleep $wait_time
+            REMAINING=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | wc -l || echo "0")
+            if [ "$REMAINING" -eq 0 ]; then
+              break
+            fi
+          done
+          FINAL_REMAINING=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | wc -l || echo "0")
+          if [ "$FINAL_REMAINING" -gt 0 ]; then
+            echo "WARNING: $FINAL_REMAINING waybar processes still running after cleanup" | systemd-cat -t sway-daemon-mgr -p warning
           else
-            PGREP_FLAG="-f"
+            echo "Successfully cleaned up all waybar processes" | systemd-cat -t sway-daemon-mgr -p info
           fi
-          
-          # Check if any processes are running
-          # CRITICAL: pgrep returns exit code 1 if no processes found
-          # The `|| echo ""` ensures we get empty string instead of script aborting
-          RUNNING_PIDS=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
-          if [ -n "$RUNNING_PIDS" ]; then
-            echo "Cleaning up orphaned ${daemon.name} processes from previous session (PIDs: $RUNNING_PIDS)" | systemd-cat -t sway-daemon-mgr -p info
-            # Use safe_kill to prevent self-termination
-            safe_kill "$PATTERN" "$PGREP_FLAG"
+        fi
+        
+        ${lib.concatMapStringsSep "\n" (daemon: ''
+          # Skip waybar in the normal cleanup loop (already handled above)
+          if [ "${daemon.name}" = "waybar" ]; then
+            # Waybar already cleaned up above
+            :
+          else
+            # Cleanup logic for ${daemon.name}
+            MATCH_TYPE=${lib.strings.escapeShellArg daemon.match_type}
+            PATTERN=${lib.strings.escapeShellArg daemon.pattern}
             
-            # Wait for processes to terminate (exponential backoff: 0.5s, 1s, 2s = 3.5s max)
-            for wait_time in 0.5 1 2; do
-              sleep $wait_time
-              # CRITICAL: pgrep returns exit code 1 if no processes found, handle with || echo ""
-              REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l || echo "0")
-              if [ "$REMAINING" -eq 0 ]; then
-                break
-              fi
-            done
-            
-            # Final verification
-            # CRITICAL: pgrep returns exit code 1 if no processes found, handle with || echo ""
-            FINAL_REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l || echo "0")
-            if [ "$FINAL_REMAINING" -gt 0 ]; then
-              echo "WARNING: $FINAL_REMAINING ${daemon.name} processes still running after cleanup" | systemd-cat -t sway-daemon-mgr -p warning
+            if [ "$MATCH_TYPE" = "exact" ]; then
+              PGREP_FLAG="-x"
             else
-              echo "Successfully cleaned up ${daemon.name} processes" | systemd-cat -t sway-daemon-mgr -p info
+              PGREP_FLAG="-f"
+            fi
+            
+            # Check if any processes are running
+            # CRITICAL: pgrep returns exit code 1 if no processes found
+            # The `|| echo ""` ensures we get empty string instead of script aborting
+            RUNNING_PIDS=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
+            if [ -n "$RUNNING_PIDS" ]; then
+              echo "Cleaning up orphaned ${daemon.name} processes from previous session (PIDs: $RUNNING_PIDS)" | systemd-cat -t sway-daemon-mgr -p info
+              # #region agent log
+              echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:cleanup-daemon\",\"message\":\"Cleaning up daemon\",\"data\":{\"daemon\":\"${daemon.name}\",\"pids\":\"$RUNNING_PIDS\",\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"G\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+              # #endregion
+              # Use safe_kill to prevent self-termination
+              safe_kill "$PATTERN" "$PGREP_FLAG"
+              
+              # Wait for processes to terminate (exponential backoff: 0.5s, 1s, 2s = 3.5s max)
+              for wait_time in 0.5 1 2; do
+                sleep $wait_time
+                # CRITICAL: pgrep returns exit code 1 if no processes found, handle with || echo ""
+                REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l || echo "0")
+                if [ "$REMAINING" -eq 0 ]; then
+                  break
+                fi
+              done
+              
+              # Final verification
+              # CRITICAL: pgrep returns exit code 1 if no processes found, handle with || echo ""
+              FINAL_REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l || echo "0")
+              if [ "$FINAL_REMAINING" -gt 0 ]; then
+                echo "WARNING: $FINAL_REMAINING ${daemon.name} processes still running after cleanup" | systemd-cat -t sway-daemon-mgr -p warning
+              else
+                echo "Successfully cleaned up ${daemon.name} processes" | systemd-cat -t sway-daemon-mgr -p info
+              fi
             fi
           fi
         '') daemons}
+        CLEANUP_END_TIME=$(date +%s)
+        CLEANUP_DURATION=$((CLEANUP_END_TIME - CLEANUP_START_TIME))
+        echo "Cleanup loop completed in $CLEANUP_DURATION seconds" | systemd-cat -t sway-daemon-mgr -p info
+        # #region agent log
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:cleanup-loop-end\",\"message\":\"Cleanup loop completed\",\"data\":{\"duration_seconds\":$CLEANUP_DURATION,\"ppid\":$PPID},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"G\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # #endregion
         
         echo "Cleanup phase complete." | systemd-cat -t sway-daemon-mgr -p info
         # #region agent log
         echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:cleanup-end\",\"message\":\"Cleanup phase completed\",\"data\":{\"ppid\":$PPID},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"A\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
         # #endregion
+        
+        # CRITICAL: Wait a brief moment after cleanup to ensure all killed processes have fully terminated
+        # This prevents race conditions where daemons start while cleanup is still processing
+        # Especially important for waybar which can be killed by cleanup if it starts too early
+        sleep 0.5
       else
         echo "Sway config reload detected (Sentinel exists, PID $PPID valid). Skipping aggressive cleanup." | systemd-cat -t sway-daemon-mgr -p info
       fi
