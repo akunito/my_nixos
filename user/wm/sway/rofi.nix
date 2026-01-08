@@ -19,7 +19,7 @@ let
         fg-col2:  #${base05};
         grey:  #${base04};
         width: 38;
-        font: "${userSettings.font} 14";
+        font: "JetBrainsMono Nerd Font 14";
       }
       
       window {
@@ -113,7 +113,7 @@ let
         fg-col2:  #bac2de;
         grey:  #6c7086;
         width: 38;
-        font: "${userSettings.font} 14";
+        font: "JetBrainsMono Nerd Font 14";
       }
       
       window {
@@ -219,7 +219,7 @@ in {
       display-combi = "";
       filebrowser-dir = "~";
       fixed-num-lines = true;
-      font = "${userSettings.font} 14";
+      font = "JetBrainsMono Nerd Font 14";
       icon-theme = "Papirus";
       lines = 12;
       location = 0;
