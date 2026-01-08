@@ -13,6 +13,70 @@ let
     dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME
   '';
   
+  # CRITICAL: Restore qt5ct files on Sway startup to ensure correct content
+  # Plasma 6 might modify these files even though it shouldn't use them
+  # Files are kept writable to allow Dolphin to persist color scheme preferences
+  # Follows Sway daemon integration principles: uses systemd-cat for logging with explicit priority flags
+  restore-qt5ct-files = pkgs.writeShellScriptBin "restore-qt5ct-files" ''
+    #!/bin/sh
+    # Restore qt5ct files on Sway startup to ensure correct content
+    # Plasma 6 might modify these files even though it shouldn't use them
+    # Files are kept writable to allow Dolphin to persist color scheme preferences
+    # Only run when enableSwayForDESK = true
+    if [ "${toString systemSettings.enableSwayForDESK}" != "true" ]; then
+      exit 0
+    fi
+    
+    # Logging function using systemd-cat with explicit priority flags
+    log() {
+      echo "$1" | systemd-cat -t restore-qt5ct -p "$2"
+    }
+    
+    QT5CT_DIR="$HOME/.config/qt5ct"
+    QT5CT_CONF="$QT5CT_DIR/qt5ct.conf"
+    QT5CT_COLORS_DIR="$QT5CT_DIR/colors"
+    QT5CT_COLOR_CONF="$QT5CT_COLORS_DIR/oomox-current.conf"
+    QT5CT_BACKUP_DIR="$HOME/.config/qt5ct-backup"
+    QT5CT_BACKUP_CONF="$QT5CT_BACKUP_DIR/qt5ct.conf"
+    QT5CT_BACKUP_COLOR_CONF="$QT5CT_BACKUP_DIR/colors/oomox-current.conf"
+    
+    # Ensure backup directory exists
+    mkdir -p "$QT5CT_BACKUP_DIR/colors" || true
+    
+    # Check if files exist
+    if [ ! -f "$QT5CT_CONF" ] || [ ! -f "$QT5CT_COLOR_CONF" ]; then
+      log "WARNING: qt5ct files not found, skipping restoration" "warning"
+      exit 0
+    fi
+    
+    # Check if backup exists (created by Home Manager activation)
+    if [ -f "$QT5CT_BACKUP_CONF" ] && [ -f "$QT5CT_BACKUP_COLOR_CONF" ]; then
+      # Compare files to see if they were modified
+      if ! cmp -s "$QT5CT_CONF" "$QT5CT_BACKUP_CONF" || ! cmp -s "$QT5CT_COLOR_CONF" "$QT5CT_BACKUP_COLOR_CONF"; then
+        log "INFO: qt5ct files were modified, restoring from backup" "info"
+        # Restore from backup (ensure writable for Dolphin preferences)
+        chmod 644 "$QT5CT_CONF" 2>/dev/null || true
+        chmod 644 "$QT5CT_COLOR_CONF" 2>/dev/null || true
+        cp -f "$QT5CT_BACKUP_CONF" "$QT5CT_CONF"
+        cp -f "$QT5CT_BACKUP_COLOR_CONF" "$QT5CT_COLOR_CONF"
+        log "INFO: qt5ct files restored from backup" "info"
+      else
+        log "INFO: qt5ct files are unchanged, no restoration needed" "info"
+      fi
+    else
+      log "WARNING: qt5ct backup files not found, creating backup now" "warning"
+      # Create backup for future use
+      cp -f "$QT5CT_CONF" "$QT5CT_BACKUP_CONF" || true
+      cp -f "$QT5CT_COLOR_CONF" "$QT5CT_BACKUP_COLOR_CONF" || true
+    fi
+    
+    # Ensure files are writable (not read-only) so Dolphin can persist preferences
+    chmod 644 "$QT5CT_CONF" 2>/dev/null || log "WARNING: Failed to set writable on qt5ct.conf" "warning"
+    chmod 644 "$QT5CT_COLOR_CONF" 2>/dev/null || log "WARNING: Failed to set writable on oomox-current.conf" "warning"
+    
+    log "INFO: qt5ct files restored and writable (Dolphin can persist preferences)" "info"
+  '';
+  
   # DESK startup apps init script - shows KWallet GUI prompt with sticky/floating/on-top properties
   desk-startup-apps-init = pkgs.writeShellApplication {
     name = "desk-startup-apps-init";
@@ -1334,6 +1398,13 @@ in {
           command = "${set-sway-theme-vars}/bin/set-sway-theme-vars";
           always = true;
         }
+        # CRITICAL: Restore qt5ct files before daemons start to ensure correct Qt theming
+        # Plasma 6 might modify qt5ct files even though it shouldn't use them
+        # This script restores files from backup and sets read-only permissions
+        {
+          command = "${restore-qt5ct-files}/bin/restore-qt5ct-files";
+          always = false;  # Only run on initial startup, not on reload
+        }
         # Unified daemon management - starts all daemons with smart reload support
         # Note: Wallpaper (swaybg) is handled by the unified daemon manager
         # CRITICAL: Ensure no 'output * bg' commands exist in config to avoid duplicate wallpaper processes
@@ -1715,6 +1786,7 @@ in {
     daemon-health-monitor
     desk-startup-apps-init
     desk-startup-apps-launcher
+    restore-qt5ct-files
   ] ++ (with pkgs; [
     # SwayFX and related
     swayfx

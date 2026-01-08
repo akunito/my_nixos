@@ -302,6 +302,29 @@ stylix.targets.qt.platform = "qtct";  # For custom Stylix colors
 qt.platformTheme.name = "gtk3";  # For Adwaita matching
 ```
 
+**CRITICAL: Plasma 6 Compatibility**:
+
+When using Plasma 6 with Sway enabled (`enableSwayForDESK = true`), qt5ct files are generated for Sway sessions but must not interfere with Plasma 6's native theming:
+
+- **Qt Target Condition**: `stylix.targets.qt.enable = userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true`
+  - When `enableSwayForDESK = false`: Qt target is disabled, no qt5ct files generated
+  - When `enableSwayForDESK = true`: Qt target is enabled, qt5ct files generated for Sway
+
+- **File Management**:
+  - When `enableSwayForDESK = false`: qt5ct files are removed via `home.file` (empty text overrides Stylix files)
+  - When `enableSwayForDESK = true`: Files exist but Plasma 6 doesn't read them because `QT_QPA_PLATFORMTHEME` is unset (containment approach)
+
+- **File Protection** (when `enableSwayForDESK = true`):
+  - **Backup**: Home Manager activation script creates backups in `~/.config/qt5ct-backup/`
+  - **Read-Only**: Files are set to read-only (444) to prevent Plasma 6 modifications
+  - **Restoration**: Sway startup script (`restore-qt5ct-files`) restores files from backup if modified
+  - **Dark Mode**: Stylix automatically configures dark mode based on `stylix.polarity`
+
+- **Containment Strategy**: 
+  - Global `QT_QPA_PLATFORMTHEME` is force-unset (`""`) to prevent Plasma 6 leakage
+  - Variable is re-injected only for Sway sessions via `extraSessionCommands`
+  - Qt applications only read qt5ct files when `QT_QPA_PLATFORMTHEME=qt5ct` is explicitly set
+
 **Important**: Do NOT manually create qt5ct config files. Stylix generates them declaratively. Manual file creation conflicts with Stylix's declarative approach.
 
 ### Wayland Environment Variable Injection
@@ -413,6 +436,88 @@ Can use Stylix colors directly or use `hyprland_noStylix.nix` for manual theming
 4. On Wayland: Ensure `dbus-update-activation-environment` includes `QT_QPA_PLATFORMTHEME` in Sway startup
 5. Rebuild: `phoenix sync user`
 6. Restart the application
+
+### Dolphin Styling Issues in Plasma 6
+
+**Problem**: Dolphin (KDE file manager) shows wrong style in Plasma 6 when Stylix is enabled, or wrong style in Sway after logging into Plasma 6.
+
+**Root Cause**: When `enableSwayForDESK = true`, Stylix generates qt5ct config files for Sway sessions. Plasma 6 might modify/overwrite these files when logging in, causing Dolphin to have wrong styling in subsequent Sway sessions.
+
+**Solutions**:
+
+1. **When `enableSwayForDESK = false`**:
+   - qt5ct files are automatically removed via Home Manager configuration
+   - Dolphin uses Plasma 6's native Breeze theme
+   - No action needed
+
+2. **When `enableSwayForDESK = true`**:
+   - qt5ct files exist for Sway sessions (required)
+   - **File Protection**: Files are automatically backed up via Home Manager activation
+   - **File Restoration**: Sway startup script restores files from backup if Plasma 6 modified them
+   - **Writable Files**: Files are kept writable (644) to allow Dolphin to persist color scheme preferences
+   - In Plasma 6, `QT_QPA_PLATFORMTHEME` is unset, so Qt should use default "kde" platform theme
+   - Verify environment variable is unset: `env | grep QT_QPA_PLATFORMTHEME` (should be empty)
+   - If Dolphin still shows wrong style:
+     - Check file permissions: `ls -la ~/.config/qt5ct/` (should be writable: `-rw-r--r--`)
+     - Check if files were restored: `journalctl --user -t restore-qt5ct`
+     - Try selecting color scheme in Dolphin: Settings → Window Color Scheme → "Breeze Dark"
+     - Check Plasma 6 system settings: System Settings → Appearance → Application Style
+     - Rebuild: `phoenix sync user`
+     - Restart Dolphin
+
+3. **Debug Steps**:
+   ```bash
+   # Check qt5ct files and permissions
+   ls -la ~/.config/qt5ct/
+   ls -la ~/.config/qt5ct/colors/
+   
+   # Check backup files
+   ls -la ~/.config/qt5ct-backup/
+   
+   # Check environment variables
+   env | grep QT_QPA_PLATFORMTHEME
+   env | grep QT_
+   
+   # Check restoration logs
+   journalctl --user -t restore-qt5ct
+   
+   # Check Stylix debug log
+   cat ~/.stylix-debug.log
+   ```
+
+**Architecture**: The solution uses a multi-layer protection approach:
+- **Containment**: Global environment variables are force-unset (`QT_QPA_PLATFORMTHEME = ""`)
+- **Variable Re-injection**: Variables are re-injected only for Sway sessions via `extraSessionCommands`
+- **File Backup**: Home Manager activation script creates backups of Stylix-generated qt5ct files
+- **File Restoration**: Sway startup script (`restore-qt5ct-files`) restores files from backup if modified by Plasma 6
+- **Writable Files**: Files are kept writable (644) to allow Dolphin to persist color scheme preferences
+- **Dark Mode**: Stylix automatically configures dark mode based on `stylix.polarity` (no additional config needed)
+
+**File Protection Mechanism**:
+1. **Home Manager Activation** (`user/style/stylix.nix`):
+   - Runs after Stylix generates qt5ct files
+   - Creates backups in `~/.config/qt5ct-backup/`
+   - Files are kept writable (644) to allow Dolphin to persist preferences
+
+2. **Sway Startup Script** (`user/wm/sway/default.nix`):
+   - Runs on Sway session startup (not on reload)
+   - Compares qt5ct files with backup using `cmp`
+   - Restores from backup if files were modified by Plasma 6
+   - Ensures files are writable (644) so Dolphin can persist color scheme preferences
+   - Logs actions to systemd journal (`restore-qt5ct` tag)
+
+**Why Writable Files?**:
+- Dolphin needs to write to qt5ct.conf to persist its color scheme preference (Settings → Window Color Scheme)
+- If files are read-only, Dolphin's preference doesn't persist, causing broken style on reopen
+- Restoration on Sway startup protects against Plasma 6 modifications while allowing Dolphin preferences
+
+**Troubleshooting**:
+- **Files not writable**: Check activation script ran: `home-manager switch` should show backup messages
+- **Files not restored**: Check Sway startup logs: `journalctl --user -t restore-qt5ct`
+- **Dolphin preference not persisting**: Verify files are writable: `ls -la ~/.config/qt5ct/` (should be `-rw-r--r--`)
+- **Backup missing**: Activation script creates backup on each rebuild, check `~/.config/qt5ct-backup/`
+- **Light mode in Sway**: Verify `QT_QPA_PLATFORMTHEME=qt5ct` is set: `env | grep QT_QPA_PLATFORMTHEME` (should be "qt5ct" in Sway)
+- **Style broken after reopen**: Try selecting color scheme in Dolphin: Settings → Window Color Scheme → "Breeze Dark"
 
 ### Environment Variables Not Set
 

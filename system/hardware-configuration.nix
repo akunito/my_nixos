@@ -41,13 +41,13 @@
 
   boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
 
-  fileSystems."/mnt/DATA" =
-    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
+  fileSystems."/mnt/DATA_SATA3" =
+    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
       fsType = "ntfs3";
     };
 
-  fileSystems."/mnt/DATA_SATA3" =
-    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
+  fileSystems."/mnt/DATA" =
+    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
       fsType = "ntfs3";
     };
 
@@ -56,13 +56,13 @@
       fsType = "nfs4";
     };
 
-  fileSystems."/mnt/NFS_media" =
-    { device = "192.168.20.200:/mnt/hddpool/media";
+  fileSystems."/mnt/NFS_library" =
+    { device = "192.168.20.200:/mnt/ssdpool/library";
       fsType = "nfs4";
     };
 
-  fileSystems."/mnt/NFS_library" =
-    { device = "192.168.20.200:/mnt/ssdpool/library";
+  fileSystems."/mnt/NFS_media" =
+    { device = "192.168.20.200:/mnt/hddpool/media";
       fsType = "nfs4";
     };
 
