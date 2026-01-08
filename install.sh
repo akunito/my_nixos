@@ -761,12 +761,15 @@ maintenance_script() {
         yn="n"
     fi
 
-    if [ "$SILENT_MODE" = true ]; then
-        $SCRIPT_DIR/maintenance.sh -s
-    elif [ "$yn" = "y" ]; then
+    if [ "$yn" = "y" ]; then
+        # User wants to open the interactive menu
         $SCRIPT_DIR/maintenance.sh
     else
-        echo "Skipping maintenance script"
+        # Run maintenance in background with default parameters
+        # Parameters: --silent --system-generations 8 --home-manager-generations 6 --user-generations 20d
+        echo "Running maintenance script in background with default parameters..."
+        nohup $SCRIPT_DIR/maintenance.sh --silent --system-generations 8 --home-manager-generations 6 --user-generations 20d > /dev/null 2>&1 &
+        echo "Maintenance script started in background. Check $SCRIPT_DIR/maintenance.log for details."
     fi
 }
 

@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 
 # Script to run maintenance tasks on a system
-# Usage: ./maintenance.sh [-s|--silent]
+# Usage: ./maintenance.sh [OPTIONS]
 # Options:
-# -s, --silent: Run the maintenance tasks in non-interactive mode (without menu)
+#   -s, --silent                          Run in silent mode (suppress all output except final result)
+#   --system-generations N                 Keep last N system generations (default: 6)
+#   --home-manager-generations N           Keep last N home-manager generations (default: 4)
+#   --user-generations "Time"              Delete user generations older than Time (default: "15d")
+#                                         Time format: Nd, Nh, Nw, Nm, or Ns (e.g., "15d", "2h", "1w")
+#   -h, --help                            Show this help message
+# Examples:
+#   ./maintenance.sh --silent
+#   ./maintenance.sh --system-generations 10 --home-manager-generations 5
+#   ./maintenance.sh --user-generations "30d" --silent
 
 # Bash strict mode: catch pipeline failures
 set -o pipefail
 
-# Configuration variables
+# Configuration variables (defaults - can be overridden via command-line)
 # System and Home-Manager use count-based cleanup: keep last N generations
 SystemGenerationsToKeep=6      # Keep last 6 system generations (uses +N syntax)
 HomeManagerGenerationsToKeep=4 # Keep last 4 home-manager generations (uses +N syntax)
@@ -17,23 +26,24 @@ UserGenerationsKeepOnlyOlderThan="15d"  # Delete user generations older than 15 
 MAX_LOG_FILES=3
 MAX_LOG_SIZE=$((10 * 1024 * 1024))  # 10MB in bytes
 
+# Global state tracking for silent mode
+SILENT_MODE_ACTIVE=false
+silent=false
+
 # Script directory and log file
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 LOG_FILE="$SCRIPT_DIR/maintenance.log"
 
 # CRITICAL: Refuse to run as root
 # This script must run as a normal user and uses sudo internally when needed
-if [ "$EUID" -eq 0 ]; then
-    echo "ERROR: This script must be run as a normal user." >&2
-    echo "It will use sudo internally when needed for system operations." >&2
-    echo "Please run: $0" >&2
-    exit 1
-fi
-
-# Ensure log file exists
-if [ ! -f "$LOG_FILE" ]; then
-    touch "$LOG_FILE"
-fi
+check_root() {
+    if [ "$EUID" -eq 0 ]; then
+        echo "ERROR: This script must be run as a normal user." >&2
+        echo "It will use sudo internally when needed for system operations." >&2
+        echo "Please run: $0" >&2
+        exit 1
+    fi
+}
 
 # Function to rotate log file when it exceeds size limit
 rotate_log() {
@@ -99,28 +109,151 @@ parse_gc_space_freed() {
     fi
 }
 
+# Helper function for consistent logging
+# Always logs to file, conditionally outputs to stdout based on silent mode
+log_message() {
+    local msg="$1"
+    local timestamp
+    
+    # Add timestamp if message doesn't already have one
+    if [[ ! "$msg" =~ ^\[.*\] ]]; then
+        timestamp="[$(date '+%Y-%m-%d %H:%M:%S')]"
+        echo "$timestamp $msg" >> "$LOG_FILE"
+        if ! $silent; then
+            echo "$timestamp $msg"
+        fi
+    else
+        # Message already has timestamp, use as-is
+        echo "$msg" >> "$LOG_FILE"
+        if ! $silent; then
+            echo "$msg"
+        fi
+    fi
+}
+
 # Function to log task execution with proper error handling
+# Uses streaming to avoid memory issues with large outputs (e.g., Nix GC)
 # Returns exit code for error tracking
 log_task() {
     local task="$1"
-    local output
-    local exit_code
-    
+    local pipe_exit_code
     shift
     
-    # Capture both output and exit code
-    output=$("$@" 2>&1)
-    exit_code=$?
+    # Stream output line-by-line to log_message
+    # Use pipe to avoid buffering entire output in memory
+    # PIPESTATUS[0] captures exit code of command, not the while loop
+    "$@" 2>&1 | while IFS= read -r line; do
+        log_message "$task | $line"
+    done
     
-    # Log output line by line
-    while IFS= read -r line; do
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] $task | $line" | tee -a "$LOG_FILE"
-    done <<< "$output"
+    # Capture the exit code of the first command in the pipe
+    pipe_exit_code=${PIPESTATUS[0]}
     
     # Check exit code and log errors
-    if [ $exit_code -ne 0 ]; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $task failed with exit code $exit_code." | tee -a "$LOG_FILE"
-        return $exit_code
+    if [ $pipe_exit_code -ne 0 ]; then
+        log_message "ERROR: $task failed with exit code $pipe_exit_code."
+        return $pipe_exit_code
+    fi
+    
+    return 0
+}
+
+# Function to show usage information
+show_usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+Options:
+  -s, --silent                          Run in silent mode (suppress all output except final result)
+  --system-generations N                 Keep last N system generations (default: 6)
+  --home-manager-generations N           Keep last N home-manager generations (default: 4)
+  --user-generations "Time"              Delete user generations older than Time (default: "15d")
+                                         Time format: Nd, Nh, Nw, Nm, or Ns (e.g., "15d", "2h", "1w")
+  -h, --help                            Show this help message
+
+Examples:
+  $0 --silent
+  $0 --system-generations 10 --home-manager-generations 5
+  $0 --user-generations "30d" --silent
+  $0 --system-generations 8 --home-manager-generations 3 --user-generations "7d"
+
+Default values:
+  System generations: $SystemGenerationsToKeep
+  Home-manager generations: $HomeManagerGenerationsToKeep
+  User generations: $UserGenerationsKeepOnlyOlderThan
+EOF
+}
+
+# Function to parse command-line arguments
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -s|--silent)
+                silent=true
+                shift
+                ;;
+            --system-generations)
+                # CRITICAL: Check value exists and is not a flag
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    SystemGenerationsToKeep="$2"
+                    shift 2
+                else
+                    echo "ERROR: --system-generations requires a non-empty argument." >&2
+                    show_usage
+                    exit 1
+                fi
+                ;;
+            --home-manager-generations)
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    HomeManagerGenerationsToKeep="$2"
+                    shift 2
+                else
+                    echo "ERROR: --home-manager-generations requires a non-empty argument." >&2
+                    show_usage
+                    exit 1
+                fi
+                ;;
+            --user-generations)
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    UserGenerationsKeepOnlyOlderThan="$2"
+                    shift 2
+                else
+                    echo "ERROR: --user-generations requires a non-empty argument." >&2
+                    show_usage
+                    exit 1
+                fi
+                ;;
+            -h|--help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                echo "ERROR: Unknown option: $1" >&2
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
+}
+
+# Function to validate parameters
+validate_parameters() {
+    # Validate system generations (positive integer)
+    if ! [[ "$SystemGenerationsToKeep" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: --system-generations must be a positive integer (>= 1)" >&2
+        return 1
+    fi
+    
+    # Validate home-manager generations (positive integer)
+    if ! [[ "$HomeManagerGenerationsToKeep" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: --home-manager-generations must be a positive integer (>= 1)" >&2
+        return 1
+    fi
+    
+    # Validate user generations (Nix time format: Nd, Nh, Nw, Nm, Ns)
+    if ! [[ "$UserGenerationsKeepOnlyOlderThan" =~ ^[0-9]+[dhwms]$ ]]; then
+        echo "ERROR: --user-generations must be in Nix time format: 'Nd', 'Nh', 'Nw', 'Nm', or 'Ns' (e.g., '15d', '2h', '1w')" >&2
+        return 1
     fi
     
     return 0
@@ -139,7 +272,7 @@ validate_commands() {
     fi
     
     if [ ${#missing_commands[@]} -gt 0 ]; then
-        echo "ERROR: Required commands not found: ${missing_commands[*]}" | tee -a "$LOG_FILE"
+        log_message "ERROR: Required commands not found: ${missing_commands[*]}"
         return 1
     fi
     
@@ -149,8 +282,24 @@ validate_commands() {
 # Function to check sudo access (for commands that need it)
 check_sudo() {
     if ! sudo -n true 2>/dev/null; then
-        echo "WARNING: Sudo access may be required for some operations." | tee -a "$LOG_FILE"
+        log_message "WARNING: Sudo access may be required for some operations."
     fi
+}
+
+# Cleanup function that restores FDs only if silent mode was active
+cleanup() {
+    local exit_code=$?
+    
+    # Only restore FDs if silent mode was actually activated
+    if [ "$SILENT_MODE_ACTIVE" = true ]; then
+        # Restore original stdout/stderr
+        exec 1>&3 2>&4 2>/dev/null || true
+        # Close custom file descriptors
+        exec 3>&- 4>&- 2>/dev/null || true
+    fi
+    
+    # Exit with captured exit code
+    exit $exit_code
 }
 
 # Task: System generations cleanup
@@ -162,7 +311,7 @@ task_system_cleanup() {
     local -n deleted_ref=$3
     local has_error=0
     
-    echo "=== System Generations Cleanup ===" | tee -a "$LOG_FILE"
+    log_message "=== System Generations Cleanup ==="
     
     local system_list_before
     system_list_before=$(sudo nix-env -p /nix/var/nix/profiles/system --list-generations 2>&1)
@@ -184,9 +333,9 @@ task_system_cleanup() {
     deleted_ref=$((before_ref - after_ref))
     
     if [ $deleted_ref -gt 0 ]; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] System cleanup: Deleted $deleted_ref generation(s)" | tee -a "$LOG_FILE"
+        log_message "System cleanup: Deleted $deleted_ref generation(s)"
     elif [ $before_ref -le $SystemGenerationsToKeep ]; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] System cleanup: No generations to delete (only $before_ref exist, keeping $SystemGenerationsToKeep)" | tee -a "$LOG_FILE"
+        log_message "System cleanup: No generations to delete (only $before_ref exist, keeping $SystemGenerationsToKeep)"
     fi
     
     return $has_error
@@ -201,7 +350,7 @@ task_hm_cleanup() {
     local -n deleted_ref=$3
     local has_error=0
     
-    echo "=== Home-Manager Generations Cleanup ===" | tee -a "$LOG_FILE"
+    log_message "=== Home-Manager Generations Cleanup ==="
     
     local hm_list_before
     hm_list_before=$(home-manager generations 2>&1)
@@ -223,11 +372,11 @@ task_hm_cleanup() {
     deleted_ref=$((before_ref - after_ref))
     
     if [ $deleted_ref -gt 0 ]; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Home-manager cleanup: Deleted $deleted_ref generation(s)" | tee -a "$LOG_FILE"
+        log_message "Home-manager cleanup: Deleted $deleted_ref generation(s)"
     elif [ $before_ref -le $HomeManagerGenerationsToKeep ]; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Home-manager cleanup: No generations to delete (only $before_ref exist, keeping $HomeManagerGenerationsToKeep)" | tee -a "$LOG_FILE"
+        log_message "Home-manager cleanup: No generations to delete (only $before_ref exist, keeping $HomeManagerGenerationsToKeep)"
     elif [ -z "$hm_list_before" ] || [ "$before_ref" -eq 0 ]; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Home-manager cleanup: No generations found" | tee -a "$LOG_FILE"
+        log_message "Home-manager cleanup: No generations found"
     fi
     
     return $has_error
@@ -242,7 +391,7 @@ task_user_cleanup() {
     local -n deleted_ref=$3
     local has_error=0
     
-    echo "=== User Generations Cleanup ===" | tee -a "$LOG_FILE"
+    log_message "=== User Generations Cleanup ==="
     
     local user_list_before
     user_list_before=$(nix-env --list-generations 2>&1)
@@ -264,11 +413,11 @@ task_user_cleanup() {
     deleted_ref=$((before_ref - after_ref))
     
     if [ $deleted_ref -gt 0 ]; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] User cleanup: Deleted $deleted_ref generation(s)" | tee -a "$LOG_FILE"
+        log_message "User cleanup: Deleted $deleted_ref generation(s)"
     elif [ -z "$user_list_before" ] || [ "$before_ref" -eq 0 ]; then
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] User cleanup: No generations found" | tee -a "$LOG_FILE"
+        log_message "User cleanup: No generations found"
     else
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] User cleanup: No generations older than $UserGenerationsKeepOnlyOlderThan to delete" | tee -a "$LOG_FILE"
+        log_message "User cleanup: No generations older than $UserGenerationsKeepOnlyOlderThan to delete"
     fi
     
     return $has_error
@@ -281,7 +430,7 @@ task_gc() {
     local -n space_freed_ref=$1
     local has_error=0
     
-    echo "=== Garbage Collection ===" | tee -a "$LOG_FILE"
+    log_message "=== Garbage Collection ==="
     
     # Garbage collection (no flags - cleans up store paths orphaned by generation deletion)
     if ! log_task "Running nix-collect-garbage" echo "Starting garbage collection..."; then
@@ -331,12 +480,12 @@ execute_all() {
     fi
     
     # Summary
-    echo "" | tee -a "$LOG_FILE"
-    echo "=== Maintenance Summary ===" | tee -a "$LOG_FILE"
-    echo "System generations: $system_before -> $system_after (deleted: $system_deleted)" | tee -a "$LOG_FILE"
-    echo "Home-manager generations: $hm_before -> $hm_after (deleted: $hm_deleted)" | tee -a "$LOG_FILE"
-    echo "User generations: $user_before -> $user_after (deleted: $user_deleted)" | tee -a "$LOG_FILE"
-    echo "Space freed: $gc_space_freed" | tee -a "$LOG_FILE"
+    log_message ""
+    log_message "=== Maintenance Summary ==="
+    log_message "System generations: $system_before -> $system_after (deleted: $system_deleted)"
+    log_message "Home-manager generations: $hm_before -> $hm_after (deleted: $hm_deleted)"
+    log_message "User generations: $user_before -> $user_after (deleted: $user_deleted)"
+    log_message "Space freed: $gc_space_freed"
     
     # Return error status for automation (cron/systemd)
     return $has_error
@@ -354,74 +503,129 @@ show_menu() {
     echo "Q) Quit"
 }
 
-# Initialize: rotate and cleanup logs
-rotate_log
-cleanup_old_logs
-
-# Validate required commands
-if ! validate_commands; then
-    echo "Please install missing commands and try again."
-    exit 1
-fi
-
-# Check sudo access
-check_sudo
-
-# Parse command line arguments
-silent=false
-
-for arg in "$@"; do
-    if [[ "$arg" == "-s" || "$arg" == "--silent" ]]; then
-        silent=true
-    fi
-done
-
-# Main execution logic
-if $silent; then
-    if execute_all; then
-        echo "Non-interactive run completed successfully. Find the output at $LOG_FILE"
-        exit 0
-    else
-        echo "Non-interactive run completed with errors. Find the output at $LOG_FILE" >&2
+# Main execution wrapper
+main() {
+    local exit_code=0
+    
+    # Set trap early (before any potential exits)
+    trap cleanup EXIT
+    
+    # 1. Check root (must be first)
+    check_root
+    
+    # 2. Parse arguments
+    parse_arguments "$@"
+    
+    # 3. Validate parameters
+    if ! validate_parameters; then
         exit 1
     fi
-else
-    while true; do
-        show_menu
-        read -p "Enter your choice: " -a choices
-        echo ""
+    
+    # 4. Setup logging / silent mode
+    # Ensure log directory exists
+    mkdir -p "$(dirname "$LOG_FILE")"
+    
+    # Test write access to log file BEFORE redirecting
+    if ! touch "$LOG_FILE" 2>/dev/null; then
+        echo "ERROR: Cannot write to $LOG_FILE. Check permissions." >&2
+        exit 1
+    fi
+    
+    # 5. Handle silent mode redirection
+    if $silent; then
+        # Save original stdout and stderr
+        exec 3>&1
+        exec 4>&2
+        
+        # Redirect stdout and stderr to log file
+        exec 1>> "$LOG_FILE"
+        exec 2>&1
+        
+        # Set flag ONLY after successful redirection
+        SILENT_MODE_ACTIVE=true
+    fi
+    
+    # 6. Initialize: rotate and cleanup logs
+    rotate_log
+    cleanup_old_logs
+    
+    # 7. Validate required commands
+    if ! validate_commands; then
+        log_message "Please install missing commands and try again."
+        exit 1
+    fi
+    
+    # 8. Check sudo access
+    check_sudo
+    
+    # 9. Execute maintenance tasks
+    if $silent; then
+        # Silent mode: just execute
+        if execute_all; then
+            exit_code=0
+        else
+            exit_code=1
+        fi
+        
+        # Restore original stdout/stderr for final message
+        exec 1>&3 2>&4
+        # Close custom file descriptors
+        exec 3>&- 4>&-
+        # Clear flag
+        SILENT_MODE_ACTIVE=false
+        # Clear trap (we'll exit manually)
+        trap - EXIT
+        
+        # Output single result line
+        if [ $exit_code -eq 0 ]; then
+            echo "Success: Maintenance completed successfully. See $LOG_FILE for details."
+        else
+            echo "Error: Maintenance failed. See $LOG_FILE for details." >&2
+        fi
+        
+        exit $exit_code
+    else
+        # Interactive mode: show menu
+        while true; do
+            show_menu
+            read -p "Enter your choice: " -a choices
+            echo ""
 
-        for choice in "${choices[@]}"; do
-            case $choice in
-                1)
-                    execute_all
-                    ;;
-                2)
-                    local system_before system_after system_deleted
-                    task_system_cleanup system_before system_after system_deleted
-                    ;;
-                3)
-                    local hm_before hm_after hm_deleted
-                    task_hm_cleanup hm_before hm_after hm_deleted
-                    ;;
-                4)
-                    local user_before user_after user_deleted
-                    task_user_cleanup user_before user_after user_deleted
-                    ;;
-                5)
-                    local gc_space_freed
-                    task_gc gc_space_freed
-                    ;;
-                [Qq])
-                    echo "Quitting..."
-                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] System maintenance session ended by user" | tee -a "$LOG_FILE"
-                    echo "Find the output at $LOG_FILE"
-                    exit 0
-                    ;;
-                *)
-                    echo "Invalid option: $choice"
-                    ;;
-            esac
+            for choice in "${choices[@]}"; do
+                case $choice in
+                    1)
+                        execute_all
+                        ;;
+                    2)
+                        local system_before system_after system_deleted
+                        task_system_cleanup system_before system_after system_deleted
+                        ;;
+                    3)
+                        local hm_before hm_after hm_deleted
+                        task_hm_cleanup hm_before hm_after hm_deleted
+                        ;;
+                    4)
+                        local user_before user_after user_deleted
+                        task_user_cleanup user_before user_after user_deleted
+                        ;;
+                    5)
+                        local gc_space_freed
+                        task_gc gc_space_freed
+                        ;;
+                    [Qq])
+                        echo "Quitting..."
+                        log_message "System maintenance session ended by user"
+                        echo "Find the output at $LOG_FILE"
+                        exit 0
+                        ;;
+                    *)
+                        echo "Invalid option: $choice"
+                        ;;
+                esac
+            done
         done
-    done
-fi
+    fi
+}
+
+# Call main function with all arguments
+main "$@"
