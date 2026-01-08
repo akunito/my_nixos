@@ -294,6 +294,9 @@ imports = [
 
 **Features**:
 - Hyprland configuration
+- Workspace controller script (`workspace-controller.sh`) - Replaces swaysome for per-monitor workspace groups
+- Window movement script (`window-move.sh`) - Conditional floating/tiled logic
+- App toggle script (`app-toggle.sh`) - Launch/focus/hide logic
 - Waybar status bar
 - Hyprprofiles (multiple configurations)
 - Custom patches
@@ -305,6 +308,9 @@ imports = [
 - `hyprland.nix` - Main configuration
 - `hyprland_noStylix.nix` - Configuration without Stylix
 - `hyprprofiles/` - Multiple profile configurations
+- `scripts/` - Window management scripts (workspace-controller.sh, window-move.sh, app-toggle.sh)
+
+**Documentation**: See [SwayFX to Hyprland Migration Guide](user-modules/sway-to-hyprland-migration.md) - Complete migration documentation and script details
 
 ### SwayFX (`user/wm/sway/`)
 

@@ -63,10 +63,15 @@ Complete Hyprland keybindings reference with main modifier.
 
 **Key Features**:
 - Main modifier (`$mainMod`) = SUPERCTRLALT (same as Hyper)
+- Workspace controller script (`workspace-controller.sh`) - Replaces swaysome for per-monitor workspace groups
+- Window movement script (`window-move.sh`) - Conditional floating/tiled logic
+- App toggle script (`app-toggle.sh`) - Launch/focus/hide logic
 - nwggrid application launcher
-- Direct workspace access (1-0)
+- Direct workspace access (1-0) with per-monitor workspace groups
 - Special workspaces (scratchpads)
 - Media controls (volume, brightness, music)
+
+**Migration**: See [SwayFX to Hyprland Migration Guide](user-modules/sway-to-hyprland-migration.md) for script details.
 
 ## Terminal Keybindings
 
@@ -135,15 +140,17 @@ Window decorations match Alacritty styling.
 
 ### Workspace Navigation
 
-**Sway**:
+**SwayFX**:
 - `${hyper}+Q` / `${hyper}+W` → Previous/Next workspace (local, current monitor)
-- `${hyper}+1` through `${hyper}+0` → Direct workspace access
-- `${hyper}+Shift+1` through `${hyper}+Shift+0` → Move window to workspace
+- `${hyper}+1` through `${hyper}+0` → Direct workspace access (using `swaysome`)
+- `${hyper}+Shift+1` through `${hyper}+Shift+0` → Move window to workspace (using `swaysome`)
 
 **Hyprland**:
 - `$mainMod+Q` / `$mainMod+W` → Previous/Next workspace (current monitor)
-- `$mainMod+1` through `$mainMod+0` → Direct workspace access
-- `$mainMod+Shift+1` through `$mainMod+Shift+0` → Move window to workspace
+- `$mainMod+1` through `$mainMod+0` → Direct workspace access (using `workspace-controller.sh`)
+- `$mainMod+Shift+1` through `$mainMod+Shift+0` → Move window to workspace (using `workspace-controller.sh`)
+
+**Note**: Both use per-monitor workspace groups (1-10 on Mon1, 11-20 on Mon2). SwayFX uses `swaysome`, Hyprland uses `workspace-controller.sh`.
 
 ### Window Management
 
@@ -152,8 +159,10 @@ Window decorations match Alacritty styling.
 - Hyprland: `SUPER+H/J/K/L` → Focus left/down/up/right
 
 **Window Movement**:
-- Sway: `${hyper}+Shift+j/colon/Shift+k/Shift+l` → Move left/right/down/up
-- Hyprland: `SUPER+Shift+H/J/K/L` → Move left/down/up/right
+- SwayFX: `${hyper}+Shift+j/colon/Shift+k/Shift+l` → Move left/right/down/up (using `window-move.sh`)
+- Hyprland: `$mainMod+Shift+j/colon/Shift+k/Shift+l` → Move left/right/down/up (using `window-move.sh`)
+
+**Note**: Both use conditional logic (floating: 5% movement, tiled: swap position)
 
 **Window Toggles**:
 - Fullscreen: `${hyper}+f` (Sway) / `SUPER+SPACE` (Hyprland)

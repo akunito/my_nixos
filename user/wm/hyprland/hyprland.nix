@@ -186,21 +186,31 @@ in
        bind=SUPER,K,movefocus,u
        bind=SUPER,L,movefocus,r
 
-       bind=SUPERSHIFT,H,movewindow,l
-       bind=SUPERSHIFT,J,movewindow,d
-       bind=SUPERSHIFT,K,movewindow,u
-       bind=SUPERSHIFT,L,movewindow,r
+       # Window movement using window-move.sh (conditional floating/tiled logic)
+       # SwayFX-style keybindings (matching SwayFX layout)
+       bind=$mainMod SHIFT,J,exec,~/.config/hypr/scripts/window-move.sh l
+       bind=$mainMod,colon,exec,~/.config/hypr/scripts/window-move.sh r
+       bind=$mainMod SHIFT,K,exec,~/.config/hypr/scripts/window-move.sh d
+       bind=$mainMod SHIFT,L,exec,~/.config/hypr/scripts/window-move.sh u
+       # Alternative keybindings (original Hyprland layout)
+       bind=SUPERSHIFT,H,exec,~/.config/hypr/scripts/window-move.sh l
+       bind=SUPERSHIFT,J,exec,~/.config/hypr/scripts/window-move.sh d
+       bind=SUPERSHIFT,K,exec,~/.config/hypr/scripts/window-move.sh u
+       bind=SUPERSHIFT,L,exec,~/.config/hypr/scripts/window-move.sh r
 
-       bind=$mainMod,1,focusworkspaceoncurrentmonitor,1
-       bind=$mainMod,2,focusworkspaceoncurrentmonitor,2
-       bind=$mainMod,3,focusworkspaceoncurrentmonitor,3
-       bind=$mainMod,4,focusworkspaceoncurrentmonitor,4
-       bind=$mainMod,5,focusworkspaceoncurrentmonitor,5
-       bind=$mainMod,6,focusworkspaceoncurrentmonitor,6
-       bind=$mainMod,7,focusworkspaceoncurrentmonitor,7
-       bind=$mainMod,8,focusworkspaceoncurrentmonitor,8
-       bind=$mainMod,9,focusworkspaceoncurrentmonitor,9
-       bind=$mainMod,0,focusworkspaceoncurrentmonitor,10
+       # Workspace navigation using workspace-controller.sh (Swaysome replacement)
+       # CRITICAL: Uses workspace dispatcher (NOT focusworkspaceoncurrentmonitor) to preserve per-monitor workspace groups
+       bind=$mainMod,1,exec,~/.config/hypr/scripts/workspace-controller.sh focus 1
+       bind=$mainMod,2,exec,~/.config/hypr/scripts/workspace-controller.sh focus 2
+       bind=$mainMod,3,exec,~/.config/hypr/scripts/workspace-controller.sh focus 3
+       bind=$mainMod,4,exec,~/.config/hypr/scripts/workspace-controller.sh focus 4
+       bind=$mainMod,5,exec,~/.config/hypr/scripts/workspace-controller.sh focus 5
+       bind=$mainMod,6,exec,~/.config/hypr/scripts/workspace-controller.sh focus 6
+       bind=$mainMod,7,exec,~/.config/hypr/scripts/workspace-controller.sh focus 7
+       bind=$mainMod,8,exec,~/.config/hypr/scripts/workspace-controller.sh focus 8
+       bind=$mainMod,9,exec,~/.config/hypr/scripts/workspace-controller.sh focus 9
+       bind=$mainMod,0,exec,~/.config/hypr/scripts/workspace-controller.sh focus 10
+       # Relative workspace navigation (prev/next) - safe to use focusworkspaceoncurrentmonitor for relative movement
        bind=$mainMod,Q,focusworkspaceoncurrentmonitor,m-1
        bind=$mainMod,W,focusworkspaceoncurrentmonitor,m+1
 
@@ -209,16 +219,18 @@ in
        bind=SUPERSHIFT,right,exec,hyprnome --move
        bind=SUPERSHIFT,left,exec,hyprnome --previous --move
 
-       bind=$mainMod SHIFT,1,movetoworkspace,1
-       bind=$mainMod SHIFT,2,movetoworkspace,2
-       bind=$mainMod SHIFT,3,movetoworkspace,3
-       bind=$mainMod SHIFT,4,movetoworkspace,4
-       bind=$mainMod SHIFT,5,movetoworkspace,5
-       bind=$mainMod SHIFT,6,movetoworkspace,6
-       bind=$mainMod SHIFT,7,movetoworkspace,7
-       bind=$mainMod SHIFT,8,movetoworkspace,8
-       bind=$mainMod SHIFT,9,movetoworkspace,9
-       bind=$mainMod SHIFT,0,movetoworkspace,10
+       # Move window to workspace using workspace-controller.sh
+       bind=$mainMod SHIFT,1,exec,~/.config/hypr/scripts/workspace-controller.sh move 1
+       bind=$mainMod SHIFT,2,exec,~/.config/hypr/scripts/workspace-controller.sh move 2
+       bind=$mainMod SHIFT,3,exec,~/.config/hypr/scripts/workspace-controller.sh move 3
+       bind=$mainMod SHIFT,4,exec,~/.config/hypr/scripts/workspace-controller.sh move 4
+       bind=$mainMod SHIFT,5,exec,~/.config/hypr/scripts/workspace-controller.sh move 5
+       bind=$mainMod SHIFT,6,exec,~/.config/hypr/scripts/workspace-controller.sh move 6
+       bind=$mainMod SHIFT,7,exec,~/.config/hypr/scripts/workspace-controller.sh move 7
+       bind=$mainMod SHIFT,8,exec,~/.config/hypr/scripts/workspace-controller.sh move 8
+       bind=$mainMod SHIFT,9,exec,~/.config/hypr/scripts/workspace-controller.sh move 9
+       bind=$mainMod SHIFT,0,exec,~/.config/hypr/scripts/workspace-controller.sh move 10
+       # Relative workspace movement (prev/next) - safe to use movetoworkspace for relative movement
        bind=$mainMod SHIFT,Q,movetoworkspace,m-1
        bind=$mainMod SHIFT,W,movetoworkspace,m+1
 
@@ -229,12 +241,13 @@ in
        bind=$mainMod,Y,exec,if hyprctl clients | grep scratch_spotify; then echo "scratch_spotify respawn not needed"; else spotify --class scratch_spotify --enable-features=UseOzonePlatform --ozone-platform=wayland; fi
        bind=$mainMod,Y,togglespecialworkspace,scratch_spotify
        
-       bind=$mainMod,G,exec,if hyprctl clients | grep "class: chromium-browser"; then hyprctl dispatch focuswindow class:chromium-browser; else chromium; fi
-       bind=$mainMod,E,exec,if hyprctl clients | grep "class: org.kde.dolphin"; then hyprctl dispatch focuswindow class:org.kde.dolphin; else dolphin; fi
-      #  bind=$mainMod,V,exec,if hyprctl clients | grep "class: Vivaldi-flatpak"; then hyprctl dispatch focuswindow class:Vivaldi-flatpak; else com.vivaldi.Vivaldi; fi
-       bind=$mainMod,V,exec,if hyprctl clients | grep "class: Vivaldi-nixos"; then hyprctl dispatch focuswindow class:Vivaldi-nixos; else vivaldi; fi
-       bind=$mainMod,C,exec,if hyprctl clients | grep "class: code"; then hyprctl dispatch focuswindow class:code; else code --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch %F; fi
-       bind=$mainMod,D,exec,if hyprctl clients | grep "class: obsidian"; then hyprctl dispatch focuswindow class:obsidian; else obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations %U; fi
+       # Application toggles using app-toggle.sh (SwayFX migration)
+       # Format: app-toggle.sh <app_class> <launch_command...>
+       bind=$mainMod,G,exec,~/.config/hypr/scripts/app-toggle.sh chromium-browser chromium
+       bind=$mainMod,E,exec,~/.config/hypr/scripts/app-toggle.sh org.kde.dolphin dolphin
+       bind=$mainMod,V,exec,~/.config/hypr/scripts/app-toggle.sh Vivaldi-nixos vivaldi
+       bind=$mainMod,C,exec,~/.config/hypr/scripts/app-toggle.sh code code --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch %F
+       bind=$mainMod,D,exec,~/.config/hypr/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations %U
       #  bind=$mainMod,M,exec,if hyprctl clients | grep "class: io.missioncenter.MissionCenter"; then hyprctl dispatch focuswindow class:io.missioncenter.MissionCenter; else missioncenter; fi
        
       #  bind=$mainMod,M,exec,if hyprctl clients | grep "class: io.missioncenter.MissionCenter";
@@ -1333,6 +1346,22 @@ in
         border-color: #'' + config.lib.stylix.colors.base07 + '';
     }
   '';
+
+  # Hyprland window management scripts (SwayFX migration)
+  home.file.".config/hypr/scripts/workspace-controller.sh" = {
+    source = ./scripts/workspace-controller.sh;
+    executable = true;
+  };
+  
+  home.file.".config/hypr/scripts/window-move.sh" = {
+    source = ./scripts/window-move.sh;
+    executable = true;
+  };
+  
+  home.file.".config/hypr/scripts/app-toggle.sh" = {
+    source = ./scripts/app-toggle.sh;
+    executable = true;
+  };
 
   services.udiskie.enable = true;
   services.udiskie.tray = "always";
