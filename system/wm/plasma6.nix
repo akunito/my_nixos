@@ -52,6 +52,19 @@
     };
     programs.xwayland.enable = lib.mkIf (userSettings.wm == "plasma6") true;
   }
+
+  # Use patched Breeze SDDM theme on nixosaku to keep password focus stable on multi-monitor
+  (lib.mkIf ((userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.hostname == "nixosaku") {
+    environment.systemPackages = [
+      (import ../dm/sddm-breeze-patched-theme.nix { inherit pkgs; })
+    ];
+
+    services.displayManager.sddm.settings = {
+      Theme = {
+        Current = "breeze-patched";
+      };
+    };
+  })
   
   # SDDM setup script for monitor rotation (DESK profile only)
   # This runs BEFORE SDDM shows the session selector, so it applies to both Plasma and SwayFX sessions
@@ -82,45 +95,31 @@
       echo "xrandr binary found: $XRANDR"
       echo "xrandr version: $($XRANDR --version 2>&1 || echo 'version check failed')"
       
-      # First, ensure all monitors are detected and enabled (wake up sleeping monitors)
-      echo "Waking up monitors..."
-      if ! $XRANDR --auto; then
-        echo "ERROR: xrandr --auto failed"
-      fi
-      sleep 1
-      
-      # Dump full xrandr output for debugging
-      echo "=== Full xrandr --query output ==="
+      # NOTE: Avoid `xrandr --auto` here.
+      # It can trigger a cascade of mode-sets while SDDM is starting, which often
+      # causes the Breeze greeter to lose keyboard focus on multi-monitor setups.
+
+      # Dump xrandr output for debugging
+      echo "=== Full xrandr --query output (initial) ==="
       $XRANDR --query 2>&1 || echo "xrandr --query failed"
-      echo "=== Full xrandr --props output ==="
-      $XRANDR --props 2>&1 | head -100 || echo "xrandr --props failed (showing first 100 lines)"
-      
-      # Try to detect monitor with multiple patterns
-      MONITOR=""
-      PATTERNS=("27QHDS" "NSL.*RGB" "RGB-27QHDS" "NSL")
-      
-      echo "Attempting to detect NSL RGB-27QHDS monitor..."
-      for pattern in "''${PATTERNS[@]}"; do
-        echo "Trying pattern: $pattern"
-        # Method: Use --props to get EDID info, then grep backwards to find port
-        # The grep -B 20 looks 20 lines "Back" from where it finds the monitor name
-        # to find the port identifier line (e.g., "DP-1 connected")
-        PROPS_OUTPUT=$($XRANDR --props 2>&1)
-        echo "Pattern search in props output (first 200 chars): $(echo "$PROPS_OUTPUT" | head -c 200)"
-        MONITOR=$(echo "$PROPS_OUTPUT" | grep -B 20 "$pattern" | grep "^[A-Z]" | head -n 1 | cut -d' ' -f1)
-        
-        if [ ! -z "$MONITOR" ]; then
-          echo "Monitor detected via pattern '$pattern': $MONITOR"
+
+      # We expect the portrait monitor to be on DP-2 on nixosaku
+      MONITOR="DP-2"
+
+      # Wait a bit for the output to show up as connected (hotplug / MST / wake-up delays)
+      echo "Waiting for $MONITOR to become connected..."
+      for i in $(seq 1 40); do
+        if $XRANDR --query | grep -q "^$MONITOR connected"; then
+          echo "$MONITOR is connected."
           break
-        else
-          echo "Pattern '$pattern' did not match any monitor"
         fi
+        sleep 0.25
       done
-      
-      # Fallback to DP-2 if detection failed
-      if [ -z "$MONITOR" ]; then
-        echo "EDID detection failed, using fallback: DP-2"
-        MONITOR="DP-2"
+
+      if ! $XRANDR --query | grep -q "^$MONITOR connected"; then
+        echo "WARNING: $MONITOR still not connected after timeout."
+        echo "Available monitors:"
+        $XRANDR --query | grep " connected" || echo "No connected outputs found"
       fi
       
       # Verify monitor exists before rotating
@@ -142,6 +141,9 @@
       
       if [ $ROTATE_EXIT -eq 0 ]; then
         echo "Rotation successful for $MONITOR"
+        # Apply again shortly after to win races against late mode-sets.
+        sleep 0.25
+        $XRANDR --output "$MONITOR" --rotate right 2>&1 || true
         # Verify rotation
         CURRENT_ROTATION=$($XRANDR --query | grep "^$MONITOR" | grep -o "right\|left\|inverted\|normal" | head -1)
         echo "Current rotation for $MONITOR: $CURRENT_ROTATION"

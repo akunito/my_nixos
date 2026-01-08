@@ -103,12 +103,17 @@ let
                                 '';
                               };
   
-  # Add SDDM wallpaper override if using plasma6 (which uses SDDM)
-  # This needs to be done after backgroundPackage is computed
-  # DESK-specific: Add ForcePasswordFocus only for DESK system (hostname: nixosaku)
+  # Add SDDM theme override if using plasma6 (which uses SDDM).
+  # This needs to be done after backgroundPackage is computed.
+  #
+  # DESK-specific (hostname: nixosaku):
+  # - Force password focus (helps, but not sufficient alone for multi-monitor focus loss)
+  # - Use a dark presentation while keeping Breeze layout (solid dark background)
   sddmThemeConfig = if systemSettings.hostname == "nixosaku"
     then ''
       [General]
+      type=color
+      color=#111111
       background = ${toString backgroundPackage}
       ForcePasswordFocus=true
     ''
@@ -118,7 +123,7 @@ let
     '';
   
   systemPackagesEvaluated = systemPackagesEvaluatedBase ++ lib.optional (userSettings.wm == "plasma6") (
-    pkgs.writeTextDir "share/sddm/themes/breeze/theme.conf.user" sddmThemeConfig
+    pkgs.writeTextDir "share/sddm/themes/breeze-patched/theme.conf.user" sddmThemeConfig
   );
   
   systemSettingsWithFonts = systemSettings // {
