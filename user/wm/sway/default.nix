@@ -118,6 +118,47 @@ EOF
     log "INFO: qt5ct files restored and writable (Dolphin can persist preferences)" "info"
   '';
   
+  # Focus the primary output and warp the cursor onto it at Sway session start.
+  # This avoids "focus_follows_mouse" pulling focus to an off/unused monitor if the cursor last lived there.
+  sway-focus-primary-output = pkgs.writeShellApplication {
+    name = "sway-focus-primary-output";
+    runtimeInputs = with pkgs; [
+      sway
+      jq
+    ];
+    text = ''
+      #!/bin/bash
+      set -euo pipefail
+
+      PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
+      if [ -z "$PRIMARY" ]; then
+        exit 0
+      fi
+
+      # Focus the intended output first.
+      swaymsg focus output "$PRIMARY" >/dev/null 2>&1 || true
+
+      # Warp cursor to the center of the primary output so focus_follows_mouse can't "steal" focus.
+      SEAT="$(swaymsg -t get_seats 2>/dev/null | jq -r '.[0].name // "seat0"' 2>/dev/null || echo "seat0")"
+      read -r X Y W H < <(
+        swaymsg -t get_outputs 2>/dev/null | jq -r --arg name "$PRIMARY" '
+          .[]
+          | select(.name == $name)
+          | .rect
+          | "\(.x) \(.y) \(.width) \(.height)"
+        ' 2>/dev/null | head -n1
+      )
+
+      if [ -n "''${X:-}" ] && [ -n "''${W:-}" ]; then
+        CX=$((X + W / 2))
+        CY=$((Y + H / 2))
+        swaymsg "seat $SEAT cursor set $CX $CY" >/dev/null 2>&1 || true
+      fi
+
+      exit 0
+    '';
+  };
+
   # DESK startup apps init script - shows KWallet GUI prompt with sticky/floating/on-top properties
   desk-startup-apps-init = pkgs.writeShellApplication {
     name = "desk-startup-apps-init";
@@ -126,6 +167,7 @@ EOF
       swaysome
       qt6.qttools  # for qdbus
       kdePackages.kwallet  # for kwallet-query
+      dbus          # for dbus-send (PAM-unlock detection)
       jq
     ];
     text = ''
@@ -140,6 +182,25 @@ EOF
         # Not DESK profile, exit
         exit 0
       fi
+
+      # Check if KWallet is already unlocked (PAM via SDDM should do this if wallet password == login password).
+      is_kwallet_unlocked() {
+        if dbus-send --session --print-reply \
+          --dest=org.kde.kwalletd6 \
+          /modules/kwalletd6 \
+          org.kde.KWallet.isOpen \
+          string:"kdewallet" > /dev/null 2>&1; then
+          return 0
+        fi
+        if dbus-send --session --print-reply \
+          --dest=org.kde.kwalletd5 \
+          /modules/kwalletd5 \
+          org.kde.KWallet.isOpen \
+          string:"kdewallet" > /dev/null 2>&1; then
+          return 0
+        fi
+        return 1
+      }
       
       # Wait for Sway socket to be ready (up to 5 seconds)
       echo "Waiting for Sway socket..."
@@ -158,8 +219,14 @@ EOF
       fi
       swaysome focus 1
       sleep 0.3
+
+      # If PAM already unlocked KWallet, don't force a prompt.
+      if is_kwallet_unlocked; then
+        echo "KWallet already unlocked (PAM). Skipping GUI prompt."
+        exit 0
+      fi
       
-      # Trigger the KWallet GUI prompt
+      # Trigger the KWallet GUI prompt (only if still locked)
       echo "Triggering KWallet GUI prompt..."
       # Try kwalletd6 first, then kwalletd5
       (command -v qdbus >/dev/null 2>&1 && qdbus org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.open "kdewallet" 0 "desk-startup-apps" 2>/dev/null) || \
@@ -191,6 +258,23 @@ EOF
           # Apply window properties
           swaymsg "[con_id=$WINDOW_ID] floating enable" 2>/dev/null || true
           swaymsg "[con_id=$WINDOW_ID] sticky enable" 2>/dev/null || true
+
+          # Warp cursor into the center of the KWallet window so focus_follows_mouse can't pull focus away.
+          SEAT="$(swaymsg -t get_seats 2>/dev/null | jq -r '.[0].name // "seat0"' 2>/dev/null || echo "seat0")"
+          read -r X Y W H < <(
+            swaymsg -t get_tree 2>/dev/null | jq -r --arg wid "$WINDOW_ID" '
+              recurse(.nodes[]?, .floating_nodes[]?)
+              | select(.id == ($wid|tonumber))
+              | .rect
+              | "\(.x) \(.y) \(.width) \(.height)"
+            ' 2>/dev/null | head -n1
+          )
+          if [ -n "''${X:-}" ] && [ -n "''${W:-}" ]; then
+            CX=$((X + W / 2))
+            CY=$((Y + H / 2))
+            swaymsg "seat $SEAT cursor set $CX $CY" >/dev/null 2>&1 || true
+          fi
+
           swaymsg "[con_id=$WINDOW_ID] focus" 2>/dev/null || true
           echo "KWallet window configured: floating, sticky, focused (fail-safe)"
           break
@@ -2028,6 +2112,7 @@ in {
           "${hyper}+Shift+x" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh full";
           "${hyper}+Shift+c" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh area";
           "Print" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh area";
+          "Shift+Print" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh clipboard";
           
           # Application keybindings (using app-toggle.sh script)
           # Note: Using different keys to avoid conflicts with window management bindings
@@ -2149,6 +2234,11 @@ in {
       # Startup commands
       startup =
         [
+        # DESK-only: focus the primary output and warp cursor onto it early
+        {
+          command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
+          always = false;  # Only run on initial startup, not on config reload
+        }
         # Initialize swaysome and assign workspace groups to monitors
         # No 'always = true' - runs only on initial startup, not on config reload
         # This prevents jumping back to empty workspaces when editing config
@@ -2496,6 +2586,101 @@ in {
     # gesture swipe up 3 ${pkgs.swayfx}/bin/swaymsg fullscreen toggle
   '';
 
+  # Swappy configuration (screenshot editor) - managed by Home Manager
+  # Stylix integration: use Stylix font + accent color when available.
+  xdg.configFile."swappy/config".text =
+    let
+      stylixAvailable =
+        systemSettings.stylixEnable == true
+        && (config ? stylix)
+        && (config.stylix ? fonts)
+        && (config ? lib)
+        && (config.lib ? stylix)
+        && (config.lib.stylix ? colors);
+
+      # Convert 6-digit hex ("rrggbb") to rgba(r,g,b,1)
+      # We keep alpha fixed at 1 because Swappy expects a single default color.
+      hexToRgbaSolid = hex:
+        let
+          hexDigitToDec = d:
+            if d == "0" then 0
+            else if d == "1" then 1
+            else if d == "2" then 2
+            else if d == "3" then 3
+            else if d == "4" then 4
+            else if d == "5" then 5
+            else if d == "6" then 6
+            else if d == "7" then 7
+            else if d == "8" then 8
+            else if d == "9" then 9
+            else if d == "a" || d == "A" then 10
+            else if d == "b" || d == "B" then 11
+            else if d == "c" || d == "C" then 12
+            else if d == "d" || d == "D" then 13
+            else if d == "e" || d == "E" then 14
+            else if d == "f" || d == "F" then 15
+            else 0;
+          hexToDec = hexStr:
+            let
+              d1 = builtins.substring 0 1 hexStr;
+              d2 = builtins.substring 1 1 hexStr;
+            in
+              hexDigitToDec d1 * 16 + hexDigitToDec d2;
+          r = hexToDec (builtins.substring 0 2 hex);
+          g = hexToDec (builtins.substring 2 2 hex);
+          b = hexToDec (builtins.substring 4 2 hex);
+        in
+          "rgba(${toString r}, ${toString g}, ${toString b}, 1)";
+
+      saveDir = "${config.home.homeDirectory}/Pictures/Screenshots";
+      fontName = if stylixAvailable then config.stylix.fonts.sansSerif.name else "JetBrainsMono Nerd Font";
+      accentHex = if stylixAvailable then config.lib.stylix.colors.base0D else "268bd2";
+    in
+    lib.generators.toINI {} {
+      Default = {
+        save_dir = saveDir;
+        save_filename_format = "swappy-%Y%m%d-%H%M%S.png";
+        show_panel = false;
+        line_size = 5;
+        text_size = 20;
+        text_font = fontName;
+        custom_color = hexToRgbaSolid accentHex;
+      };
+    };
+
+  # Ensure the default screenshots directory exists (used by Swappy save_dir).
+  home.activation.ensureScreenshotsDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    mkdir -p "$HOME/Pictures/Screenshots" || true
+  '';
+
+   # Cleanup: remove stale broken user-level portal unit files from a previous iteration.
+   # Evidence: systemd reports "Service has no ExecStart= ... Refusing." for these units,
+   # which prevents Waybar from starting (it tries to activate org.freedesktop.portal.Desktop).
+   home.activation.cleanupBrokenPortalUnits = lib.hm.dag.entryAfter ["writeBoundary"] ''
+     portal_units="xdg-desktop-portal.service xdg-desktop-portal-gtk.service"
+     for unit in $portal_units; do
+       unit_path="$HOME/.config/systemd/user/$unit"
+
+       # If a user unit exists but has no ExecStart, it shadows the real system unit and breaks activation.
+       if [ -e "$unit_path" ] && ! grep -q '^ExecStart=' "$unit_path" 2>/dev/null; then
+         # Only delete if it matches our previous minimal override shape (avoid deleting legit custom units).
+         if grep -q '^EnvironmentFile=-%t/sway-session\\.env' "$unit_path" 2>/dev/null; then
+           rm -f "$unit_path" || true
+         fi
+       fi
+
+       # Remove any lingering enable symlinks under *.wants/ (dangling symlinks keep the unit "enabled").
+       for link in "$HOME/.config/systemd/user/"*.wants/"$unit"; do
+         if [ -L "$link" ]; then
+           rm -f "$link" || true
+         fi
+       done
+     done
+
+     # Reload user systemd if available.
+     command -v systemctl >/dev/null 2>&1 && systemctl --user daemon-reload >/dev/null 2>&1 || true
+   '';
+
   # Install scripts to .config/sway/scripts/
   home.file.".config/sway/scripts/screenshot.sh" = {
     source = ./scripts/screenshot.sh;
@@ -2584,6 +2769,7 @@ in {
     grim
     slurp
     swappy
+    font-awesome_5  # Swappy uses Font Awesome icons
     swaybg  # Wallpaper manager
     
     # Universal launcher

@@ -18,6 +18,8 @@
     # Security
     fuseAllowOther = false;
     pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
+    # Sudo UX: keep sudo authentication cached longer (minutes)
+    sudoTimestampTimeoutMinutes = 180;
     
     # Polkit
     polkitEnable = true;

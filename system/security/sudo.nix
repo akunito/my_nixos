@@ -12,6 +12,8 @@
       Defaults:picloud secure_path="${lib.makeBinPath [
         systemd
       ]}:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
+    '' + lib.optionalString (systemSettings.sudoTimestampTimeoutMinutes != null) ''
+      Defaults:${userSettings.username} timestamp_timeout=${toString systemSettings.sudoTimestampTimeoutMinutes}
     '';
   };
 

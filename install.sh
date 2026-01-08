@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Automated script to install my dotfiles
 
@@ -121,6 +121,9 @@ fi
 # Track file hardening state for cleanup on early exit
 FILES_HARDENED=false
 
+# Sudo keepalive state (optional)
+SUDO_KEEPALIVE_PID=""
+
 # ======================================== Log functions ======================================== #
 # TODO: move it to different file for DRY
 
@@ -183,6 +186,20 @@ cleanup_on_exit() {
 # Note: Only trap EXIT, not INT/TERM, as EXIT trap is automatically triggered
 # for all exit conditions including signals in POSIX shells
 trap cleanup_on_exit EXIT
+
+# Keep sudo timestamp alive while this script runs (prevents mid-run reprompts)
+sudo_keepalive_start() {
+    # Store parent PID explicitly (background subshells can have surprising $$ semantics)
+    local parent_pid="$$"
+    (
+        while true; do
+            sudo -n true 2>/dev/null || exit 0
+            sleep 60
+            kill -0 "$parent_pid" 2>/dev/null || exit 0
+        done
+    ) &
+    SUDO_KEEPALIVE_PID="$!"
+}
 
 # ======================================== Functions ======================================== #
 
@@ -697,6 +714,11 @@ generate_root_ssh_keys_for_ssh_server_on_boot() {
     local SUDO_CMD=$2
     local SILENT_MODE=$3
     $SUDO_CMD mkdir -p /etc/secrets/initrd/
+    # Fast path: if the key already exists, skip prompting/generation
+    if $SUDO_CMD test -f /etc/secrets/initrd/ssh_host_rsa_key 2>/dev/null; then
+        echo -e "\nSSH on BOOT key already exists at /etc/secrets/initrd/ssh_host_rsa_key (skipping)"
+        return
+    fi
     # Ask user if they want to generate SSH keys for SSH on BOOT
     if [ "$SILENT_MODE" = false ]; then
         echo -e "\nOnly if didn't generate it previously on /etc/secrets/initrd"
@@ -721,24 +743,6 @@ hardening_files() {
     FILES_HARDENED=true
 }
 
-# Ask user if they want to clean iptables rules
-clean_iptables_rules() {
-    local SCRIPT_DIR=$1
-    local SUDO_CMD=$2
-    local SILENT_MODE=$3
-    if [ "$SILENT_MODE" = false ]; then
-        echo ""
-        read -p "Do you want to clean iptables rules ? (y/N) " yn
-    else
-        yn="n"
-    fi
-    case $yn in
-        [Yy]|[Yy][Ee][Ss])
-            $SUDO_CMD $SCRIPT_DIR/cleaniptables.sh $SCRIPT_DIR
-            ;;
-    esac
-}
-
 # Temporarily soften files for Home-Manager
 soften_files_for_home_manager() {
     local SCRIPT_DIR=$1
@@ -749,27 +753,23 @@ soften_files_for_home_manager() {
     FILES_HARDENED=false
 }
 
-# Ask user if they want to run the maintenance script
 maintenance_script() {
     local SCRIPT_DIR=$1
     local SILENT_MODE=$2
-    if [ "$SILENT_MODE" = false ]; then
-        echo -en "\n${CYAN}Do you want to open the maintenance menu ? (y/N) ${RESET} "
-        read -n 1 yn
-        echo ""
-    else
-        yn="n"
-    fi
 
-    if [ "$yn" = "y" ]; then
-        # User wants to open the interactive menu
-        $SCRIPT_DIR/maintenance.sh
+    # Always run maintenance automatically (quiet), then wait for completion.
+    # If you want interactive maintenance, run maintenance.sh manually.
+    echo "Running maintenance (quiet)..."
+    $SCRIPT_DIR/maintenance.sh --silent --system-generations 8 --home-manager-generations 6 --user-generations 20d > /dev/null 2>&1 &
+    MAINT_PID=$!
+
+    wait "$MAINT_PID"
+    MAINT_EXIT_CODE=$?
+
+    if [ "$MAINT_EXIT_CODE" -eq 0 ]; then
+        echo "Maintenance: OK (details: $SCRIPT_DIR/maintenance.log)"
     else
-        # Run maintenance in background with default parameters
-        # Parameters: --silent --system-generations 8 --home-manager-generations 6 --user-generations 20d
-        echo "Running maintenance script in background with default parameters..."
-        nohup $SCRIPT_DIR/maintenance.sh --silent --system-generations 8 --home-manager-generations 6 --user-generations 20d > /dev/null 2>&1 &
-        echo "Maintenance script started in background. Check $SCRIPT_DIR/maintenance.log for details."
+        echo -e "${YELLOW}Maintenance: ERROR (exit $MAINT_EXIT_CODE) (details: $SCRIPT_DIR/maintenance.log)${RESET}"
     fi
 }
 
@@ -830,7 +830,13 @@ if [ -n "$CURRENT_GENERATION" ]; then
     echo ""
 fi
 
-$SUDO_CMD echo -e "\nActivating sudo password for this session"
+# Pre-auth sudo once up-front (so we don't get prompts mid-run)
+echo -e "\n${CYAN}Caching sudo credentials for this run...${RESET}"
+if ! $SUDO_CMD -v 2>/dev/null; then
+    echo -e "${RED}Error: sudo authentication failed${RESET}"
+    exit 1
+fi
+sudo_keepalive_start
 
 # Note: Repository update (if needed) was handled at the beginning of the script
 # before profile validation to prevent conflicts. The old git_fetch_and_reset_dotfiles_by_remote
@@ -856,9 +862,6 @@ handle_docker $SCRIPT_DIR $SILENT_MODE
 generate_hardware_config $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 check_boot_mode $SCRIPT_DIR
 open_hardware_configuration_nix $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
-
-# Clean iptables rules if custom rules are set
-clean_iptables_rules $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 
 # Hardening files to Rebuild system
 hardening_files $SCRIPT_DIR $SUDO_CMD

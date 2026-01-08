@@ -44,21 +44,25 @@ This repository contains shell scripts for automating common tasks, system maint
 - `[sudo_password]` - Optional sudo password for non-interactive use
 - `[-s|--silent]` - Silent mode (non-interactive)
 
+**Notes**:
+- Sudo is authenticated early in the run to reduce mid-run prompts. On DESK + LAPTOP, sudo is configured to cache authentication for ~3 hours.
+- Docker is only acted on if the Docker daemon is running and there are running containers (then you’ll be prompted to stop them).
+- Maintenance is always run automatically (quiet) near the end; run `./maintenance.sh` directly if you want the interactive menu.
+
 **What It Does**:
 1. Fetches and resets repository to latest remote commit
 2. Switches flake profile (`flake.PROFILE.nix` → `flake.nix`)
 3. Sets up environment files (`set_environment.sh`)
 4. Generates SSH keys for boot-time SSH (if enabled)
 5. Updates flake.lock
-6. Handles Docker containers (stops them to prevent boot issues)
+6. Handles Docker containers (only prompts if there are running containers; can stop them automatically)
 7. Generates hardware configuration
 8. Detects boot mode (UEFI/BIOS) and updates flake
-9. Cleans iptables rules (optional)
-10. Hardens system files
-11. Rebuilds NixOS system
-12. Installs Home Manager configuration
-13. Runs maintenance script (optional)
-14. Starts startup services (optional)
+9. Hardens system files
+10. Rebuilds NixOS system
+11. Installs Home Manager configuration
+12. Runs maintenance script automatically (quiet) and waits for completion (see `maintenance.log`; run `./maintenance.sh` manually for interactive mode)
+13. Starts startup services (optional)
 
 **Features**:
 - Interactive and silent modes
@@ -358,6 +362,9 @@ UserGenerationsKeepOnlyOlderThan="15d"  # Delete user generations older than 15 
 
 **Note**: The script must be run as a normal user (not root). It uses `sudo` internally when needed.
 
+### Sudo prompt behavior (DESK + LAPTOP)
+
+On DESK and LAPTOP profiles, sudo is configured to keep the authentication timestamp cached longer (3 hours) to reduce repeated password prompts during long maintenance / install operations.\n+
 **Related**: See [Maintenance Guide](maintenance.md)
 
 ### autoSystemUpdate.sh

@@ -31,6 +31,10 @@
     DOASnoPass = false;
     wrappSudoToDoas = false;
     sudoNOPASSWD = true;
+    # Sudo timestamp timeout (minutes). When set, applies as:
+    #   Defaults:<user> timestamp_timeout=<minutes>
+    # Keep null to use system default.
+    sudoTimestampTimeoutMinutes = null;
     sudoCommands = [
       {
         command = "/run/current-system/sw/bin/systemctl suspend";

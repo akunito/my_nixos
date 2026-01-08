@@ -34,6 +34,50 @@ silent=false
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 LOG_FILE="$SCRIPT_DIR/maintenance.log"
 
+# ======================================== GC Throttling ======================================== #
+#
+# Goal: avoid running nix-collect-garbage on every dev rebuild (which can delete unrooted
+# store paths like `nix run home-manager/...` and cause repeated downloads/builds).
+#
+# Policy: run GC at most once per interval. Default: 3 days.
+#
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles-maintenance"
+GC_STAMP_FILE="$STATE_DIR/last_gc_success_epoch"
+GC_MIN_INTERVAL_SECONDS=$((3 * 24 * 60 * 60)) # 3 days
+
+ensure_state_dir() {
+    mkdir -p "$STATE_DIR" 2>/dev/null || true
+}
+
+should_run_gc() {
+    ensure_state_dir
+
+    if [ ! -f "$GC_STAMP_FILE" ]; then
+        return 0
+    fi
+
+    local last now age
+    last=$(cat "$GC_STAMP_FILE" 2>/dev/null || echo "")
+    if ! [[ "$last" =~ ^[0-9]+$ ]]; then
+        # Corrupt stamp file: allow GC and overwrite stamp later.
+        return 0
+    fi
+
+    now=$(date +%s 2>/dev/null || echo 0)
+    age=$((now - last))
+
+    if [ "$age" -ge 0 ] && [ "$age" -lt "$GC_MIN_INTERVAL_SECONDS" ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+mark_gc_ran_successfully() {
+    ensure_state_dir
+    date +%s 2>/dev/null > "$GC_STAMP_FILE" || true
+}
+
 # CRITICAL: Refuse to run as root
 # This script must run as a normal user and uses sudo internally when needed
 check_root() {
@@ -283,6 +327,19 @@ validate_commands() {
 check_sudo() {
     if ! sudo -n true 2>/dev/null; then
         log_message "WARNING: Sudo access may be required for some operations."
+        if $silent; then
+            # Silent mode must be non-interactive; avoid sudo prompts that will fail without a tty.
+            SUDO_AVAILABLE=false
+        fi
+    fi
+}
+
+# Sudo wrapper: interactive when not silent, non-interactive (no prompt) in silent mode.
+sudo_exec() {
+    if $silent; then
+        sudo -n "$@"
+    else
+        sudo "$@"
     fi
 }
 
@@ -312,21 +369,29 @@ task_system_cleanup() {
     local has_error=0
     
     log_message "=== System Generations Cleanup ==="
+
+    if [ "${SUDO_AVAILABLE:-true}" != "true" ]; then
+        before_ref=0
+        after_ref=0
+        deleted_ref=0
+        log_message "System cleanup: Skipped (sudo not available in silent mode)"
+        return 0
+    fi
     
     local system_list_before
-    system_list_before=$(sudo nix-env -p /nix/var/nix/profiles/system --list-generations 2>&1)
-    if ! log_task "System cleanup: Current generations" sudo nix-env -p /nix/var/nix/profiles/system --list-generations; then
+    system_list_before=$(sudo_exec nix-env -p /nix/var/nix/profiles/system --list-generations 2>&1)
+    if ! log_task "System cleanup: Current generations" sudo_exec nix-env -p /nix/var/nix/profiles/system --list-generations; then
         has_error=1
     fi
     before_ref=$(count_generations "$system_list_before")
     
-    if ! log_task "System cleanup: Removing older generations" sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +$SystemGenerationsToKeep; then
+    if ! log_task "System cleanup: Removing older generations" sudo_exec nix-env -p /nix/var/nix/profiles/system --delete-generations +$SystemGenerationsToKeep; then
         has_error=1
     fi
     
     local system_list_after
-    system_list_after=$(sudo nix-env -p /nix/var/nix/profiles/system --list-generations 2>&1)
-    if ! log_task "System cleanup: Generations after cleanup" sudo nix-env -p /nix/var/nix/profiles/system --list-generations; then
+    system_list_after=$(sudo_exec nix-env -p /nix/var/nix/profiles/system --list-generations 2>&1)
+    if ! log_task "System cleanup: Generations after cleanup" sudo_exec nix-env -p /nix/var/nix/profiles/system --list-generations; then
         has_error=1
     fi
     after_ref=$(count_generations "$system_list_after")
@@ -431,18 +496,33 @@ task_gc() {
     local has_error=0
     
     log_message "=== Garbage Collection ==="
-    
-    # Garbage collection (no flags - cleans up store paths orphaned by generation deletion)
-    if ! log_task "Running nix-collect-garbage" echo "Starting garbage collection..."; then
-        has_error=1
+
+    if [ "${SUDO_AVAILABLE:-true}" != "true" ]; then
+        space_freed_ref="Skipped (sudo not available in silent mode)"
+        log_message "Garbage collection: Skipped (sudo not available in silent mode)"
+        return 0
     fi
-    
-    local gc_output
-    gc_output=$(sudo nix-collect-garbage 2>&1)
-    if ! log_task "Collecting garbage" echo "$gc_output"; then
-        has_error=1
+
+    if should_run_gc; then
+        # Garbage collection (no flags - cleans up store paths orphaned by generation deletion)
+        if ! log_task "Running nix-collect-garbage" echo "Starting garbage collection..."; then
+            has_error=1
+        fi
+
+        local gc_output
+        gc_output=$(sudo_exec nix-collect-garbage 2>&1)
+        if ! log_task "Collecting garbage" echo "$gc_output"; then
+            has_error=1
+        fi
+
+        space_freed_ref=$(parse_gc_space_freed "$gc_output")
+        if [ $has_error -eq 0 ]; then
+            mark_gc_ran_successfully
+        fi
+    else
+        space_freed_ref="Skipped (GC ran recently; interval: ${GC_MIN_INTERVAL_SECONDS}s)"
+        log_message "Garbage collection: Skipped (ran within the last $((GC_MIN_INTERVAL_SECONDS / 3600))h)"
     fi
-    space_freed_ref=$(parse_gc_space_freed "$gc_output")
     
     return $has_error
 }
@@ -460,7 +540,7 @@ execute_all() {
     local user_before=0
     local user_after=0
     local user_deleted=0
-    local gc_space_freed=""
+    local gc_space_freed="N/A"
     
     # Run all cleanup tasks
     if ! task_system_cleanup system_before system_after system_deleted; then
@@ -486,6 +566,15 @@ execute_all() {
     log_message "Home-manager generations: $hm_before -> $hm_after (deleted: $hm_deleted)"
     log_message "User generations: $user_before -> $user_after (deleted: $user_deleted)"
     log_message "Space freed: $gc_space_freed"
+
+    # Export summary for silent-mode one-liner
+    SUMMARY_SYSTEM_BEFORE="$system_before"
+    SUMMARY_SYSTEM_AFTER="$system_after"
+    SUMMARY_HM_BEFORE="$hm_before"
+    SUMMARY_HM_AFTER="$hm_after"
+    SUMMARY_USER_BEFORE="$user_before"
+    SUMMARY_USER_AFTER="$user_after"
+    SUMMARY_GC_SPACE_FREED="$gc_space_freed"
     
     # Return error status for automation (cron/systemd)
     return $has_error
@@ -506,6 +595,15 @@ show_menu() {
 # Main execution wrapper
 main() {
     local exit_code=0
+
+    # Summary fields (populated by execute_all)
+    SUMMARY_SYSTEM_BEFORE=""
+    SUMMARY_SYSTEM_AFTER=""
+    SUMMARY_HM_BEFORE=""
+    SUMMARY_HM_AFTER=""
+    SUMMARY_USER_BEFORE=""
+    SUMMARY_USER_AFTER=""
+    SUMMARY_GC_SPACE_FREED="N/A"
     
     # Set trap early (before any potential exits)
     trap cleanup EXIT
@@ -556,6 +654,7 @@ main() {
     fi
     
     # 8. Check sudo access
+    SUDO_AVAILABLE=true
     check_sudo
     
     # 9. Execute maintenance tasks
@@ -576,11 +675,11 @@ main() {
         # Clear trap (we'll exit manually)
         trap - EXIT
         
-        # Output single result line
+        # Output single result line (nice, stable, one-liner)
         if [ $exit_code -eq 0 ]; then
-            echo "Success: Maintenance completed successfully. See $LOG_FILE for details."
+            echo "Maintenance: OK (system: ${SUMMARY_SYSTEM_BEFORE}->${SUMMARY_SYSTEM_AFTER}, hm: ${SUMMARY_HM_BEFORE}->${SUMMARY_HM_AFTER}, user: ${SUMMARY_USER_BEFORE}->${SUMMARY_USER_AFTER}, gc: ${SUMMARY_GC_SPACE_FREED}) (log: $LOG_FILE)"
         else
-            echo "Error: Maintenance failed. See $LOG_FILE for details." >&2
+            echo "Maintenance: ERROR (system: ${SUMMARY_SYSTEM_BEFORE}->${SUMMARY_SYSTEM_AFTER}, hm: ${SUMMARY_HM_BEFORE}->${SUMMARY_HM_AFTER}, user: ${SUMMARY_USER_BEFORE}->${SUMMARY_USER_AFTER}, gc: ${SUMMARY_GC_SPACE_FREED}) (log: $LOG_FILE)" >&2
         fi
         
         exit $exit_code
