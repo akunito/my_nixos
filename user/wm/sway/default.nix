@@ -618,6 +618,7 @@ let
           SWAY_SOCKET="''${XDG_RUNTIME_DIR}/sway-ipc.$(id -u).''${SWAY_PID}.sock"
           if [ -S "$SWAY_SOCKET" ]; then
             # Socket found, waybar can connect
+            :
           else
             log "WARNING: SwayFX IPC socket not found: $SWAY_SOCKET (waybar sway/workspaces module may fail)" "warning"
           fi
@@ -712,7 +713,6 @@ let
         log "Daemon started successfully: $PATTERN (started PID: $DAEMON_PID, actual PID: $ACTUAL_PID, verified after ''${check_delay}s)" "info"
         DAEMON_STARTED=true
         break
-      fi
       fi
     done
     
@@ -822,7 +822,6 @@ let
         if command -v ${pkgs.jq}/bin/jq >/dev/null 2>&1; then
           if ! ${pkgs.jq}/bin/jq empty "$WAYBAR_CONFIG" 2>/dev/null; then
             echo "WARNING: Waybar config JSON validation failed (non-blocking)" | systemd-cat -t sway-daemon-mgr -p warning
-          else
           fi
         fi
       else
@@ -831,7 +830,6 @@ let
       # Check CSS file exists (official waybar requirement)
       if [ ! -f "$WAYBAR_CSS" ]; then
         echo "WARNING: Waybar CSS file missing (non-blocking) - Home Manager should generate this" | systemd-cat -t sway-daemon-mgr -p warning
-      else
       fi
       
       # Start waybar first (synchronously) to avoid race conditions
@@ -975,7 +973,6 @@ let
         PGREP_RESULT=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" 2>&1 || echo "")
         if [ -n "$PGREP_RESULT" ]; then
           DAEMON_RUNNING=true
-        else
         fi
         
         # Additional check for waybar: verify the main process is actually running (not just child processes)
@@ -1074,7 +1071,6 @@ let
                   WAYBAR_STDERR_FAIL=$(cat "$WAYBAR_STDERR_LOG_FAIL" 2>/dev/null | tail -100 | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
                 fi
                 ALL_WAYBAR_PROCS_FAIL=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | tr '\n' ',' || echo "none")
-              fi
               fi
               increment_restart_count "${daemon.name}"
             fi
