@@ -11,6 +11,7 @@
       # ../../system/app/steam.nix
       # ../../system/app/prismlauncher.nix # Minecraft Launcher
       ../../system/hardware/nfs_client.nix # NFS share directories over network
+      ../../system/hardware/keychron.nix # Keychron keyboard udev rules for WebHID access
       ../../system/security/sudo.nix
       ../../system/security/gpg.nix
       ../../system/security/blocklist.nix
