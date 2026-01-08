@@ -890,7 +890,24 @@ PRE_REBUILD_GENERATION=$(get_current_generation)
 # Strategy: Trust exit code 0 as complete success. For non-zero codes, verify if a new
 # generation was created to distinguish between complete failures and partial successes.
 REBUILD_EXIT_CODE=0
+
+# #region agent log
+DEBUG_LOG_FILE="$SCRIPT_DIR/.cursor/debug.log"
+debug_log() {
+  # $1=hypothesisId $2=location $3=message $4=json_data_string
+  python3 -c "import json,time,os; import sys; p='$DEBUG_LOG_FILE'; payload={'sessionId':'debug-session','runId':os.environ.get('DEBUG_RUN_ID','pre-fix'),'hypothesisId':sys.argv[1],'location':sys.argv[2],'message':sys.argv[3],'data':json.loads(sys.argv[4]) if sys.argv[4] else {},'timestamp':int(time.time()*1000)}; open(p,'a').write(json.dumps(payload)+'\n')" \
+    "$1" "$2" "$3" "${4:-{}}" 2>/dev/null || true
+}
+export DEBUG_RUN_ID="${DEBUG_RUN_ID:-pre-fix}"
+debug_log "A_parse_quote" "install.sh:rebuild" "preRebuildGeneration" "{\"generation\":\"$PRE_REBUILD_GENERATION\"}"
+debug_log "A_parse_quote" "install.sh:rebuild" "nixos-rebuild starting" "{\"flake\":\"$SCRIPT_DIR#system\"}"
+# #endregion
+
 $SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure || REBUILD_EXIT_CODE=$?
+
+# #region agent log
+debug_log "A_parse_quote" "install.sh:rebuild" "nixos-rebuild finished" "{\"exitCode\":$REBUILD_EXIT_CODE}"
+# #endregion
 
 # Determine rebuild success based on exit code and generation check
 if [ "$REBUILD_EXIT_CODE" -eq 0 ]; then
@@ -900,6 +917,9 @@ if [ "$REBUILD_EXIT_CODE" -eq 0 ]; then
     if [ -n "$POST_REBUILD_GENERATION" ]; then
         echo -e "${CYAN}  New generation: $POST_REBUILD_GENERATION${RESET}"
     fi
+    # #region agent log
+    debug_log "A_parse_quote" "install.sh:rebuild" "rebuildSuccess" "{\"postGeneration\":\"$POST_REBUILD_GENERATION\"}"
+    # #endregion
 elif [ "$REBUILD_EXIT_CODE" -eq 4 ]; then
     # Exit code 4 = known partial success case (system installed, services may have failed)
     # Verify by checking if generation was created
@@ -909,10 +929,16 @@ elif [ "$REBUILD_EXIT_CODE" -eq 4 ]; then
         echo -e "${YELLOW}  Some services may have failed to start, but the system configuration was applied${RESET}"
         echo -e "${GREEN}  New generation created: $POST_REBUILD_GENERATION${RESET}"
         echo -e "${CYAN}  Review service logs if needed: journalctl -p err${RESET}"
+        # #region agent log
+        debug_log "A_parse_quote" "install.sh:rebuild" "rebuildPartialSuccess" "{\"exitCode\":$REBUILD_EXIT_CODE,\"postGeneration\":\"$POST_REBUILD_GENERATION\"}"
+        # #endregion
     else
         # Exit code 4 but no new generation - actual failure
         echo -e "\n${RED}System rebuild failed!${RESET}"
         echo -e "${RED}  Exit code: $REBUILD_EXIT_CODE (no new generation was created)${RESET}"
+        # #region agent log
+        debug_log "A_parse_quote" "install.sh:rebuild" "rebuildFailureNoGeneration" "{\"exitCode\":$REBUILD_EXIT_CODE}"
+        # #endregion
         rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
         exit 1
     fi
@@ -926,11 +952,17 @@ else
         echo -e "${GREEN}  New generation: $POST_REBUILD_GENERATION${RESET}"
         echo -e "${CYAN}  The system configuration was applied, but some issues occurred${RESET}"
         echo -e "${CYAN}  Review the rebuild output above for details${RESET}"
+        # #region agent log
+        debug_log "A_parse_quote" "install.sh:rebuild" "rebuildNonzeroButGeneration" "{\"exitCode\":$REBUILD_EXIT_CODE,\"postGeneration\":\"$POST_REBUILD_GENERATION\"}"
+        # #endregion
     else
         # No new generation was created - rebuild failed
         echo -e "\n${RED}System rebuild failed!${RESET}"
         echo -e "${RED}  Exit code: $REBUILD_EXIT_CODE (no new generation was created)${RESET}"
         echo -e "${YELLOW}  This indicates a complete failure during the rebuild process${RESET}"
+        # #region agent log
+        debug_log "A_parse_quote" "install.sh:rebuild" "rebuildFailureNoGeneration" "{\"exitCode\":$REBUILD_EXIT_CODE}"
+        # #endregion
         rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
         exit 1
     fi

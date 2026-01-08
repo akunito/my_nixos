@@ -26,16 +26,7 @@ pkgs.stdenvNoCC.mkDerivation {
     # to avoid the password field losing keyboard focus on multi-monitor setups.
     perl -0777 -i -pe '
       s@
-(\Q            Timer {\E\s*
-                //SDDM has a bug in 0.13 where even though we set the focus on the right item within the window, the window doesn'\''t have focus\s*
-                //it is fixed in 6d5b36b28907b16280ff78995fef764bb0c573db which will be 0.14\s*
-                //we need to call "window->activate()" *After* it'\''s been shown. We can'\''t control that in QML so we use a shoddy timer\s*
-                //it'\''s been this way for all Plasma 5.x without a huge problem\s*
-                running: true\s*
-                repeat: false\s*
-                interval: 200\s*
-                onTriggered: mainStack.forceActiveFocus\(\)\s*
-            }\s*)@
+(\s*Timer\s*\{\s*[\s\S]*?interval:\s*200\s*[\s\S]*?onTriggered:\s*mainStack\.forceActiveFocus\(\)\s*[\s\S]*?\}\s*)@
 $1
 
             Timer {
