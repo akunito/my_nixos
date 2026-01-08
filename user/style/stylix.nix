@@ -79,16 +79,21 @@ if systemSettings.stylixEnable == true then {
 
   stylix.fonts = {
     monospace = {
-      name = userSettings.font;
-      package = userSettings.fontPkg;
+      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
+      # This matches the fix we applied to Alacritty and Rofi
+      name = "JetBrainsMono Nerd Font";
+      package = pkgs.nerd-fonts.jetbrains-mono;
     };
     serif = {
-      name = userSettings.font;
-      package = userSettings.fontPkg;
+      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
+      name = "JetBrainsMono Nerd Font";
+      package = pkgs.nerd-fonts.jetbrains-mono;
     };
     sansSerif = {
-      name = userSettings.font;
-      package = userSettings.fontPkg;
+      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
+      # This is used by Waybar and other applications
+      name = "JetBrainsMono Nerd Font";
+      package = pkgs.nerd-fonts.jetbrains-mono;
     };
     emoji = {
       name = "Noto Emoji";
@@ -188,9 +193,10 @@ if systemSettings.stylixEnable == true then {
     # When qt module is disabled (Plasma 6), Stylix still generates qt5ct color config via stylix.targets.qt.enable = true
   };
   fonts.fontconfig.defaultFonts = {
-    monospace = [ userSettings.font ];
-    sansSerif = [ userSettings.font ];
-    serif = [ userSettings.font ];
+    # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
+    monospace = [ "JetBrainsMono Nerd Font" ];
+    sansSerif = [ "JetBrainsMono Nerd Font" ];
+    serif = [ "JetBrainsMono Nerd Font" ];
   };
 } else {
   # Return empty configuration when Stylix is disabled (Plasma 6 or stylixEnable == false)

@@ -19,16 +19,20 @@ in
   stylix.base16Scheme = ./. + themePath;
   stylix.fonts = {
     monospace = {
-      name = userSettings.font;
-      package = userSettings.fontPkg;
+      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
+      # This matches the fix we applied to user-level Stylix, Alacritty, and Rofi
+      name = "JetBrainsMono Nerd Font";
+      package = pkgs.nerd-fonts.jetbrains-mono;
     };
     serif = {
-      name = userSettings.font;
-      package = userSettings.fontPkg;
+      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
+      name = "JetBrainsMono Nerd Font";
+      package = pkgs.nerd-fonts.jetbrains-mono;
     };
     sansSerif = {
-      name = userSettings.font;
-      package = userSettings.fontPkg;
+      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
+      name = "JetBrainsMono Nerd Font";
+      package = pkgs.nerd-fonts.jetbrains-mono;
     };
     emoji = {
       name = "Noto Color Emoji";
