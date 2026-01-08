@@ -17,6 +17,10 @@ if systemSettings.stylixEnable == true then {
   # DEBUG: Log Stylix configuration state
   # CRITICAL: Use lib.mkMerge to merge all home.file definitions
   # This prevents "attribute 'home.file' already defined" errors
+  # #region agent log - Check lib.mkMerge evaluation
+  # Note: This will be evaluated at build time, so we can't log runtime values here
+  # But we can verify the structure is correct
+  # #endregion
   home.file = lib.mkMerge [
     {
       # Unconditional individual file definitions

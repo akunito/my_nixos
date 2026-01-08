@@ -1282,6 +1282,26 @@ in {
       export GTK_APPLICATION_PREFER_DARK_THEME=1
       # Fix for Java apps if needed
       export _JAVA_AWT_WM_NONREPARENTING=1
+      # #region agent log
+      echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:env-set\",\"message\":\"Environment variables set for Sway\",\"data\":{\"QT_QPA_PLATFORMTHEME\":\"$QT_QPA_PLATFORMTHEME\",\"GTK_THEME\":\"$GTK_THEME\",\"GTK_APPLICATION_PREFER_DARK_THEME\":\"$GTK_APPLICATION_PREFER_DARK_THEME\",\"hypothesisId\":\"C\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # #endregion
+      # Check if waybar config exists
+      if [ -f "${config.xdg.configHome}/waybar/config" ]; then
+        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:waybar-config-check\",\"message\":\"Waybar config file exists\",\"data\":{\"path\":\"${config.xdg.configHome}/waybar/config\",\"hypothesisId\":\"D\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      else
+        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:waybar-config-check\",\"message\":\"Waybar config file MISSING\",\"data\":{\"path\":\"${config.xdg.configHome}/waybar/config\",\"hypothesisId\":\"D\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      fi
+      # Check if GTK config files exist
+      if [ -f "${config.xdg.configHome}/gtk-3.0/settings.ini" ]; then
+        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:gtk-config-check\",\"message\":\"GTK-3 config exists\",\"data\":{\"path\":\"${config.xdg.configHome}/gtk-3.0/settings.ini\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      else
+        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:gtk-config-check\",\"message\":\"GTK-3 config MISSING\",\"data\":{\"path\":\"${config.xdg.configHome}/gtk-3.0/settings.ini\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      fi
+      if [ -f "${config.xdg.configHome}/gtk-4.0/settings.ini" ]; then
+        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:gtk-config-check\",\"message\":\"GTK-4 config exists\",\"data\":{\"path\":\"${config.xdg.configHome}/gtk-4.0/settings.ini\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      else
+        echo "{\"timestamp\":$(date +%s000),\"location\":\"extraSessionCommands:gtk-config-check\",\"message\":\"GTK-4 config MISSING\",\"data\":{\"path\":\"${config.xdg.configHome}/gtk-4.0/settings.ini\",\"hypothesisId\":\"B\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      fi
     '';
     
     config = {
