@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# NOTE: Waybar runs as a systemd user service. This script is executed via an explicit bash path
+# in `waybar.nix` to avoid PATH issues with `/usr/bin/env bash`.
 set -euo pipefail
 
 # Waybar custom/perf module
@@ -8,7 +10,11 @@ set -euo pipefail
 # - Prefer AMD DRM card exposing gpu_busy_percent
 # - Choose the one with the largest mem_info_vram_total (dGPU beats iGPU)
 
-STATE_FILE="${XDG_RUNTIME_DIR:-/tmp}/waybar-perf.cpu"
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
+if [[ ! -d "$runtime_dir" ]] || [[ ! -w "$runtime_dir" ]]; then
+  runtime_dir="/tmp"
+fi
+STATE_FILE="${runtime_dir}/waybar-perf.cpu"
 
 read_cpu_line() {
   # Reads the first 'cpu ' aggregate line from /proc/stat
@@ -28,7 +34,8 @@ cpu_percent() {
   else
     prev=""
   fi
-  printf '%s' "$cur" > "$STATE_FILE"
+  # Best-effort state write; never fail the whole module for this.
+  { printf '%s' "$cur" > "$STATE_FILE"; } 2>/dev/null || true
 
   if [[ -z "$prev" ]]; then
     echo 0
@@ -217,13 +224,20 @@ json_escape() {
   printf '%s' "$s"
 }
 
-CPU_PCT="$(cpu_percent)"
-RAM_PCT="$(ram_percent)"
-CPU_T="$(cpu_temp_c)"
+CPU_PCT="0"
+RAM_PCT="0"
+CPU_T="0"
+GPU_PCT="0"
+GPU_T="0"
 
-GPU_DEV="$(select_discrete_amd_drm_device)"
-GPU_PCT="$(gpu_busy_percent "$GPU_DEV")"
-GPU_T="$(gpu_temp_c "$GPU_DEV")"
+# Ensure we always output JSON, even if individual probes fail.
+CPU_PCT="$(cpu_percent 2>/dev/null || echo 0)"
+RAM_PCT="$(ram_percent 2>/dev/null || echo 0)"
+CPU_T="$(cpu_temp_c 2>/dev/null || echo 0)"
+
+GPU_DEV="$(select_discrete_amd_drm_device 2>/dev/null || true)"
+GPU_PCT="$(gpu_busy_percent "$GPU_DEV" 2>/dev/null || echo 0)"
+GPU_T="$(gpu_temp_c "$GPU_DEV" 2>/dev/null || echo 0)"
 
 TEXT=" ${CPU_PCT}% 󰘚 ${GPU_PCT}% 󰍛 ${RAM_PCT}%  ${CPU_T}° 󰢮 ${GPU_T}°"
 TIP="CPU ${CPU_PCT}% | GPU ${GPU_PCT}% | RAM ${RAM_PCT}% | CPU ${CPU_T}°C | GPU ${GPU_T}°C"

@@ -46,6 +46,21 @@ $1
                 function onCountChanged() {
                     focusRepairTimer.restart()
                 }
+                function onDataChanged() {
+                    focusRepairTimer.restart()
+                }
+                function onModelReset() {
+                    focusRepairTimer.restart()
+                }
+                function onLayoutChanged() {
+                    focusRepairTimer.restart()
+                }
+                function onRowsInserted() {
+                    focusRepairTimer.restart()
+                }
+                function onRowsRemoved() {
+                    focusRepairTimer.restart()
+                }
             }
 @s;
     ' "$out/share/sddm/themes/breeze-patched/Main.qml"

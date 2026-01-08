@@ -108,12 +108,10 @@ let
   #
   # DESK-specific (hostname: nixosaku):
   # - Force password focus (helps, but not sufficient alone for multi-monitor focus loss)
-  # - Use a dark presentation while keeping Breeze layout (solid dark background)
+  # - Keep the background image (Breeze "dark mode" via solid color was too aggressive)
   sddmThemeConfig = if systemSettings.hostname == "nixosaku"
     then ''
       [General]
-      type=color
-      color=#111111
       background = ${toString backgroundPackage}
       ForcePasswordFocus=true
     ''

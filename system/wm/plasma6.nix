@@ -59,6 +59,10 @@
       (import ../dm/sddm-breeze-patched-theme.nix { inherit pkgs; })
     ];
 
+    # IMPORTANT: Use X11 greeter on nixosaku so `setupScript` runs (xrandr rotation)
+    # Wayland greeter won't execute the xrandr-based setup script.
+    services.displayManager.sddm.wayland.enable = lib.mkForce false;
+
     services.displayManager.sddm.settings = {
       Theme = {
         Current = "breeze-patched";

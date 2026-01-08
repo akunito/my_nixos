@@ -128,7 +128,7 @@ let
         };
     
     tray = {
-      icon-spacing = 10;
+      icon-spacing = 16;
       tooltip = true;
     };
     
@@ -238,7 +238,9 @@ in {
             "custom/perf" = {
               return-type = "json";
               interval = 2;
-              exec = "${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
+              # Run explicitly with Nix bash. Waybar is a systemd user service and may not have `bash` on PATH,
+              # so `/usr/bin/env bash` scripts can fail silently.
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
               tooltip = true;
             };
           }
@@ -292,7 +294,7 @@ in {
             "custom/perf" = {
               return-type = "json";
               interval = 2;
-              exec = "${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
               tooltip = true;
             };
           }
@@ -498,12 +500,14 @@ in {
       
       /* Add spacing between tray icons */
       #tray > * {
-        margin: 0 4px;  /* Horizontal margin between icons */
+        margin: 0 8px;  /* Horizontal margin between icons */
+        padding: 0 2px;
       }
 
       /* Some Waybar builds wrap tray items in buttons/widgets; cover common cases */
       #tray button {
-        margin: 0 4px;
+        margin: 0 8px;
+        padding: 0 2px;
       }
       
       #tray > *:first-child {
