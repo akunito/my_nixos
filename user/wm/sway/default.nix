@@ -2662,23 +2662,23 @@ in {
        unit_path="$HOME/.config/systemd/user/$unit"
 
        # If a user unit exists but has no ExecStart, it shadows the real system unit and breaks activation.
-       if [ -e "$unit_path" ] && ! grep -q '^ExecStart=' "$unit_path" 2>/dev/null; then
+       if [ -e "$unit_path" ] && ! ${pkgs.gnugrep}/bin/grep -q '^ExecStart=' "$unit_path" 2>/dev/null; then
          # Only delete if it matches our previous minimal override shape (avoid deleting legit custom units).
-         if grep -q '^EnvironmentFile=-%t/sway-session\\.env' "$unit_path" 2>/dev/null; then
-           rm -f "$unit_path" || true
+         if ${pkgs.gnugrep}/bin/grep -q '^EnvironmentFile=-%t/sway-session\\.env' "$unit_path" 2>/dev/null; then
+           ${pkgs.coreutils}/bin/rm -f "$unit_path" || true
          fi
        fi
 
        # Remove any lingering enable symlinks under *.wants/ (dangling symlinks keep the unit "enabled").
        for link in "$HOME/.config/systemd/user/"*.wants/"$unit"; do
          if [ -L "$link" ]; then
-           rm -f "$link" || true
+           ${pkgs.coreutils}/bin/rm -f "$link" || true
          fi
        done
      done
 
      # Reload user systemd if available.
-     command -v systemctl >/dev/null 2>&1 && systemctl --user daemon-reload >/dev/null 2>&1 || true
+     ${pkgs.systemd}/bin/systemctl --user daemon-reload >/dev/null 2>&1 || true
    '';
 
   # Install scripts to .config/sway/scripts/
