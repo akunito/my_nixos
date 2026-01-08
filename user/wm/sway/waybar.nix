@@ -47,7 +47,7 @@ let
   # Shared module configurations (DRY principle)
   sharedModules = {
         clock = {
-          format = "{:%H:%M}";
+          format = "{:%d/%m/%Y %H:%M}";
           format-alt = "{:%A, %B %d, %Y (%R)}";
           tooltip-format = "<tt><small>{calendar}</small></tt>";
           calendar = {
@@ -90,7 +90,8 @@ let
             car = "󰄋";
             default = [ "󰕿" "󰖀" "󰕾" ];
           };
-          on-click = "exec pavucontrol";
+          # Use absolute store path so it works reliably under systemd (no PATH assumptions)
+          on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
           on-click-right = "pactl set-sink-mute @DEFAULT_SINK@ toggle";
         };
         
@@ -222,7 +223,7 @@ in {
             
             modules-left = [ "sway/workspaces" "sway/window" ];
             modules-center = [ "clock" ];
-            modules-right = [ "tray" "pulseaudio" "network" "battery" "bluetooth" ];
+            modules-right = [ "tray" "pulseaudio" "battery" "custom/perf" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -233,6 +234,13 @@ in {
             bluetooth = sharedModules.bluetooth;
             tray = sharedModules.tray;
             "sway/window" = sharedModules."sway/window";
+
+            "custom/perf" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
+              tooltip = true;
+            };
           }
           # Dock bar removed: wlr/taskbar requires foreign-toplevel-manager protocol
           # which is often disabled or flaky in SwayFX. Rofi remains the primary
@@ -269,7 +277,7 @@ in {
             
             modules-left = [ "sway/workspaces" "sway/window" ];
             modules-center = [ "clock" ];
-            modules-right = [ "tray" "pulseaudio" "network" "battery" "bluetooth" ];
+            modules-right = [ "tray" "pulseaudio" "battery" "custom/perf" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -280,6 +288,13 @@ in {
             bluetooth = sharedModules.bluetooth;
             tray = sharedModules.tray;
             "sway/window" = sharedModules."sway/window";
+
+            "custom/perf" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
+              tooltip = true;
+            };
           }
         ];
     
@@ -297,16 +312,32 @@ in {
       }
       
       window#waybar {
-        background-color: ${hexToRgba config.lib.stylix.colors.base00 "B3"};
-        border: 1px solid ${hexToRgba config.lib.stylix.colors.base02 "4D"};
+        /* Default: bar container is invisible (modules keep their own pill backgrounds) */
+        background-color: transparent;
+        border: 1px solid transparent;
         border-radius: 16px;
         margin: 8px 12px;
         padding: 0;
         color: #${config.lib.stylix.colors.base07};
         /* backdrop-filter not supported by waybar CSS parser - removed */
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        transition-property: background-color;
+        box-shadow: none;
+        transition-property: background-color, border-color, box-shadow;
         transition-duration: .3s;
+        transition-timing-function: ease;
+        /* Only show after sustained hover */
+        transition-delay: 1s;
+      }
+
+      /* On hover (after delay): bring back the container chrome */
+      window#waybar:hover {
+        background-color: ${hexToRgba config.lib.stylix.colors.base00 "B3"};
+        border-color: ${hexToRgba config.lib.stylix.colors.base02 "4D"};
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Hide immediately when not hovered */
+      window#waybar:not(:hover) {
+        transition-delay: 0s;
       }
       
       /* Dock bar CSS removed: Dock bar disabled due to wlr/taskbar protocol limitations in SwayFX */
@@ -378,7 +409,8 @@ in {
       #mode,
       #idle_inhibitor,
       #mpd,
-      #bluetooth {
+      #bluetooth,
+      #custom-perf {
         margin: 4px 4px;
         padding: 4px 12px;
         border-radius: 10px;
@@ -391,7 +423,8 @@ in {
       #battery:hover,
       #network:hover,
       #pulseaudio:hover,
-      #bluetooth:hover {
+      #bluetooth:hover,
+      #custom-perf:hover {
         background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
       }
       
@@ -467,6 +500,11 @@ in {
       #tray > * {
         margin: 0 4px;  /* Horizontal margin between icons */
       }
+
+      /* Some Waybar builds wrap tray items in buttons/widgets; cover common cases */
+      #tray button {
+        margin: 0 4px;
+      }
       
       #tray > *:first-child {
         margin-left: 0;
@@ -495,9 +533,22 @@ in {
       }
       
       window#waybar {
-        background-color: rgba(0, 0, 0, 0.8);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: transparent;
+        border-bottom: 1px solid transparent;
         color: #ffffff;
+        transition-property: background-color, border-color, box-shadow;
+        transition-duration: .3s;
+        transition-timing-function: ease;
+        transition-delay: 1s;
+      }
+
+      window#waybar:hover {
+        background-color: rgba(0, 0, 0, 0.8);
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+
+      window#waybar:not(:hover) {
+        transition-delay: 0s;
       }
       
       #workspaces button {
@@ -515,7 +566,8 @@ in {
       #network,
       #pulseaudio,
       #tray,
-      #bluetooth {
+      #bluetooth,
+      #custom-perf {
         padding: 0 10px;
         color: #ffffff;
       }

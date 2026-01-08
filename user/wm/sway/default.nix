@@ -2777,6 +2777,11 @@ in {
     executable = true;
   };
   
+  home.file.".config/sway/scripts/waybar-perf.sh" = {
+    source = ./scripts/waybar-perf.sh;
+    executable = true;
+  };
+
   home.file.".config/sway/scripts/power-menu.sh" = {
     source = ./scripts/power-menu.sh;
     executable = true;
