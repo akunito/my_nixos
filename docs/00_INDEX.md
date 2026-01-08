@@ -5,98 +5,6 @@
 This index provides a hierarchical navigation tree for AI context retrieval.
 Before answering architectural questions, read this index to identify relevant branches.
 
----
-
-## Development Guidelines (Manual Section)
-
-### Debug Instrumentation Best Practices
-
-**CRITICAL**: When adding debug instrumentation (logging, verbose output, debug flags, temporary debugging code), always create a separate `.nix` module file and import it into the main module, rather than adding instrumentation directly to the main file.
-
-**Why**: This practice makes cleanup significantly easier - you can simply remove the import statement and delete the debug module file when debugging is complete, without searching through the main file for scattered debug code.
-
-**Pattern**:
-1. Create separate debug module: `user/wm/sway/debug-feature.nix` (or `system/module/debug-feature.nix`)
-2. Import in main file: `debugFeature = import ./debug-feature.nix { inherit pkgs lib systemSettings; };`
-3. Use debug utilities: Reference exported functions/scripts from the debug module
-4. Cleanup: Remove the import line and delete the debug module file when done
-
-**Example**:
-
-**Step 1: Create debug module** (`user/wm/sway/debug-feature.nix`):
-```nix
-{ pkgs, lib, systemSettings, ... }:
-
-let
-  LOG_FILE = "/home/akunito/.dotfiles/.cursor/debug.log";
-  
-  # Debug script with instrumentation
-  debug-script = pkgs.writeShellScriptBin "debug-script" ''
-    #!/bin/sh
-    log_debug() {
-      local hypothesis_id="$1"
-      local location="$2"
-      local message="$3"
-      local data="$4"
-      local timestamp=$(date +%s%3N 2>/dev/null || date +%s000)
-      echo "{\"id\":\"log_''${timestamp}_$$\",\"timestamp\":$timestamp,\"location\":\"$location\",\"message\":\"$message\",\"data\":$data}" >> "${LOG_FILE}" 2>/dev/null || true
-    }
-    
-    # #region agent log
-    log_debug "H1" "debug-script:entry" "Script started" "{\"pid\":$$}"
-    # #endregion
-    
-    # ... actual script logic ...
-    
-    # #region agent log
-    log_debug "H1" "debug-script:exit" "Script completed" "{\"exit_code\":0}"
-    # #endregion
-  '';
-in
-{
-  inherit debug-script;
-}
-```
-
-**Step 2: Import and use in main module** (`user/wm/sway/default.nix`):
-```nix
-{ config, pkgs, lib, userSettings, systemSettings, ... }:
-
-let
-  # Import debugging utilities
-  debugFeature = import ./debug-feature.nix { inherit pkgs lib systemSettings; };
-  
-  # ... rest of module ...
-in
-{
-  # Use debug utilities from debugFeature
-  home.packages = [ debugFeature.debug-script ];
-  
-  # ... rest of configuration ...
-}
-```
-
-**Step 3: Cleanup** (when debugging is complete):
-- Remove the import line: `debugFeature = import ./debug-feature.nix { ... };`
-- Remove usage: `home.packages = [ debugFeature.debug-script ];`
-- Delete the file: `rm user/wm/sway/debug-feature.nix`
-
-**What Counts as Debug Instrumentation**:
-- JSON/NDJSON logging statements
-- Verbose mode flags (`set -x`, debug logging)
-- Debug file creation (`.debug.log`, `/tmp/*.log`)
-- Temporary diagnostic code
-- Hypothesis testing instrumentation
-- Performance profiling code
-- Any code added specifically for debugging that should be removed later
-
-**What Does NOT Count**:
-- Production logging (systemd-cat, journalctl) - these are permanent features
-- Error handling and error messages - these are production features
-- Configuration validation - these are production features
-
----
-
 ## Flake Architecture
 
 - **flake.nix**: Main flake entry point defining inputs and outputs
@@ -172,6 +80,7 @@ in
    - `systemSettings.hostname == "nixolaptopaku" || systemSettings.hostname == "yogaaku"`
    - `systemSettings.profile == "homelab"`
 - **system/hardware/kernel.nix**: System module: kernel.nix
+- **system/hardware/keychron.nix**: Grant access to Keychron keyboards for the Keychron Launcher / VIA
 - **system/hardware/nfs_client.nix**: You need to install pkgs.nfs-utils *Enabled when:* `systemSettings.nfsClientEnable == true`
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
 - **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:* `systemSettings.amdLACTdriverEnable == true`
@@ -220,7 +129,7 @@ in
 
 ### Style
 
-- **system/style/stylix.nix**: CRITICAL: Disable QT/GTK targets at system level to prevent conflicts with Plasma 6
+- **system/style/stylix.nix**: Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
 
 ### Wm
 
@@ -263,7 +172,7 @@ in
 - **user/app/ranger/ranger.nix**: this lets my copy and paste images and/or plaintext of files directly out of ranger
 - **user/app/terminal/alacritty.nix**: Explicitly install JetBrains Mono Nerd Font to ensure it's available *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/fix-terminals.nix**: Python script to configure VS Code and Cursor terminal keybindings
-- **user/app/terminal/kitty.nix**: Window decorations - match Alacritty (default shows decorations, window manager handles styling) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/app/terminal/kitty.nix**: Explicitly install JetBrains Mono Nerd Font to ensure it's available *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/tmux.nix**: Note: Custom menu is implemented via display-menu in extraConfig (bind ?)
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
 
@@ -296,6 +205,7 @@ in
 
 - **user/style/stylix.nix**: CRITICAL: Remove trailing newline from URL and SHA256 to prevent malformed URLs *Enabled when:*
    - `userSettings.wm != "plasma6"`
+   - `userSettings.wm == "plasma6" && systemSettings.enableSwayForDESK == false`
    - `userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == false`
 
 ### Wm
@@ -306,7 +216,15 @@ in
 - **user/wm/input/nihongo.nix**: Enumerate when press trigger key repeatedly
 - **user/wm/picom/picom.nix**: User module: picom.nix
 - **user/wm/plasma6/plasma6.nix**: ++ lib.optional userSettings.wmEnableHyprland (./. + "/../hyprland/hyprland_noStylix.nix")
-- **user/wm/sway/default.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
+- **user/wm/sway/debug-qt5ct.nix**: Debug logging function for NDJSON format
+- **user/wm/sway/default.nix**: Import debugging utilities *Enabled when:*
+   - `programs.waybar.systemd.enable = true`
+   - `like Unit.Description / ExecStart`
+   - `wl-paste`
+   - `Qt6`
+   - `useSystemdSessionDaemons && ( lib.hasInfix "laptop" (lib.toLower systemSettings.hostname) || lib.hasInfix "yoga" (lib.toLower systemSettings.hostname) )`
+   - `useSystemdSessionDaemons && systemSettings.sunshineEnable == true`
+   - `useSystemdSessionDaemons && systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
    - `systemSettings.stylixEnable == true`
    - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
@@ -332,6 +250,7 @@ in
 - **docs/future/profile-migration-status.md**: **Date**: 2025-01-02
 - **docs/future/sov-crash-analysis.md**: **Date**: 2026-01-07
 - **docs/future/sov-dependency-analysis.md**: **Date**: 2026-01-07
+- **docs/future/sway-daemon-relog-notes-2026-01-08.md**: This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
 - **docs/future/vmhome-migration-test.md**: **Date**: 2025-01-XX
 - **docs/future/waybar-sov-debug-analysis.md**: **Date**: 2026-01-07
 
@@ -375,4 +294,5 @@ in
 - **docs/user-modules/plasma6.md**: Complete guide to configuring KDE Plasma 6 desktop environment.
 - **docs/user-modules/ranger.md**: [Ranger](https://ranger.github.io/) is a minimalistic TUI file manager controlled with vim keybindings (making it extremely efficient).
 - **docs/user-modules/sway-daemon-integration.md**: Complete guide to the unified daemon management system for SwayFX components.
+- **docs/user-modules/sway-to-hyprland-migration.md**: Complete guide for migrating SwayFX window management logic to Hyprland equivalents.
 - **docs/user-modules/xmonad.md**: [XMonad](https://xmonad.org/) is a tiling window manager written and configured in Haskell. With a custom XMonad config built over years, it's extremely efficient to operate (since it can be manage...

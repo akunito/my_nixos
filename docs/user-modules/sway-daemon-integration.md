@@ -23,6 +23,44 @@ Complete guide to the unified daemon management system for SwayFX components.
 - [Systemd Trade-offs](#systemd-trade-offs) - What we gain and lose by not using Systemd
 - [Terminology Clarification](#terminology-clarification) - Sanity Check vs Health Monitor
 
+---
+
+## Systemd-first Sway session daemons (current default)
+
+As of 2026-01, this repo defaults to a **systemd --user first** architecture for Sway session daemons to fix relog race conditions (Waybar late start / missing workspace module, tray ordering issues, duplicate “already running” instances).
+
+### Key idea
+
+- **Single target**: `sway-session.target` is the session boundary for Sway-only daemons.
+- **Ordering**: tray apps are ordered `After=waybar.service` so SNI is available deterministically.
+- **Restart semantics**: systemd provides `Restart=on-failure` without the legacy 150s grace/strike delay.
+- **Stylix containment preserved**: services read theme/session vars from a **session-scoped** env file:
+  - `%t/sway-session.env` (i.e., `/run/user/$UID/sway-session.env`)
+  - written by `write-sway-session-env` from Sway startup
+  - units use `EnvironmentFile=-%t/sway-session.env`
+  - we do **not** mutate the persistent systemd manager env via `dbus-update-activation-environment --systemd` to avoid Plasma 6 leakage.
+
+### Toggle / rollback
+
+The systemd-first setup is controlled by:
+
+- `systemSettings.swaySessionDaemonsUseSystemd` (defaults to `true` if unset)
+
+When set to `false`, the legacy `daemon-manager` / `start-sway-daemons` / `daemon-health-monitor` system is re-enabled for rollback.
+
+### Where it lives
+
+- `user/wm/sway/default.nix`
+  - `useSystemdSessionDaemons` toggle
+  - `systemd.user.targets.sway-session` + `systemd.user.services.*` overrides
+  - Sway `startup` writes `%t/sway-session.env` and starts `sway-session.target`
+- `user/wm/sway/waybar.nix`
+  - `programs.waybar.systemd.enable = true`
+
+### Note on this document
+
+Most of the remaining sections document the **legacy custom daemon integration system** (still present for rollback and historical context).
+
 ## Overview
 
 The SwayFX daemon integration system provides a unified, DRY (Don't Repeat Yourself) approach to managing all SwayFX-related daemons. It solves several critical issues:

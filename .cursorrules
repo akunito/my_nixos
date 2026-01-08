@@ -251,6 +251,14 @@ in
 
 **CRITICAL**: When modifying daemon-related code, you MUST follow the daemon integration plan to prevent regressions and system breakage.
 
+### Systemd-first mode (current default)
+
+This repo now supports a **systemd --user first** architecture for Sway session daemons to fix relog race conditions.
+
+- **Toggle**: `systemSettings.swaySessionDaemonsUseSystemd` (defaults to `true` if unset)
+- **Systemd-first**: daemons are bound to `sway-session.target` and launched/managed by systemd user units
+- **Legacy mode** (`false`): daemons are managed by `daemon-manager` + generated scripts from the `daemons` list
+
 ### When This Rule Applies
 This rule applies when:
 -   Modifying the `daemons` list in `user/wm/sway/default.nix`
@@ -268,18 +276,31 @@ Before making any changes:
 5.  **Check logs**: Review `journalctl --user -t sway-daemon-mgr` after changes
 
 ### Systemd Side-Effects Rule
-**CRITICAL**: When enabling Home Manager modules or adding packages that auto-generate Systemd services, check if they create Systemd services. If the process is managed by `daemon-manager`, you MUST explicitly disable the Systemd service to prevent race conditions.
+**CRITICAL**: Always ensure a daemon is managed by **exactly one** lifecycle manager:
 
-**Pattern 1: Packages with Home Manager Modules** (e.g., `waybar`):
+- If `systemSettings.swaySessionDaemonsUseSystemd == true`:
+  - Prefer **systemd user services** bound to `sway-session.target`
+  - Avoid starting the same daemon via `daemon-manager` / Sway startup
+- If `systemSettings.swaySessionDaemonsUseSystemd == false` (legacy):
+  - Use `daemon-manager` as the lifecycle manager
+  - Disable any auto-generated systemd services for daemons in the `daemons` list
+
+**Pattern (systemd-first)**:
+
+- Enable systemd services and bind them to `sway-session.target` (Sway-only), e.g. `waybar`:
+
 ```nix
 programs.waybar = {
   enable = true;
-  systemd.enable = false;  # Required if managed by daemon-manager
+  systemd.enable = true;   # Required if systemd-first
   # ... configuration ...
 };
 ```
 
-**Pattern 2: Packages without Home Manager Modules** (e.g., `swaync`):
+**Pattern (legacy daemon-manager)**:
+
+- For packages without Home Manager modules, prevent systemd from managing the daemon:
+
 ```nix
 # In user/wm/sway/default.nix (configuration section)
 # Use mkForce to ensure it doesn't get linked to systemd targets by Home Manager

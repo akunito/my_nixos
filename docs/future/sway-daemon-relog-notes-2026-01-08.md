@@ -98,4 +98,22 @@ For the next run, we must ensure:
   - `journalctl --user -t sway-daemon-mgr`
   - `journalctl --user -t sway-daemon-monitor`
 
+## Systemd-first regression debug run (2026-01-08, follow-up)
+
+This run targets the case where **systemd-first is enabled** but on logout→login, **Waybar takes 2–4 minutes** to appear (while after a full reboot everything starts fast).
+
+### Instrumentation added (temporary)
+
+- `user/wm/sway/debug-relog.nix` (imported by `user/wm/sway/default.nix`)
+  - Wraps the two Sway startup commands:
+    - env snapshot writer → `write-sway-session-env-debug`
+    - `systemctl --user start sway-session.target` → `sway-session-start-debug` (records duration + unit states)
+  - Adds `ExecStartPre` for `waybar.service` to log whether `SWAYSOCK` exists and whether `%t/sway-session.env` exists right before Waybar launches.
+
+### What to look for in `debug.log`
+
+- **H_SYSTEMD**: whether `systemctl --user start sway-session.target` blocks for a long time (duration_ms)
+- **H_ENV**: whether `%t/sway-session.env` is missing/empty or written too early
+- **H_WAYBAR**: whether `SWAYSOCK` is unset or points to a missing socket at Waybar ExecStartPre
+
 
