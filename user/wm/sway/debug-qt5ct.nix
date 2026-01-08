@@ -4,6 +4,7 @@ let
   # Debug logging function for NDJSON format
   # Logs to /home/akunito/.dotfiles/.cursor/debug.log
   LOG_FILE = "/home/akunito/.dotfiles/.cursor/debug.log";
+  coreutils = "${pkgs.coreutils}/bin";
   
   # Helper function to write NDJSON log entry
   writeDebugLog = pkgs.writeShellScriptBin "write-debug-log" ''
@@ -14,7 +15,8 @@ let
     LOCATION="$2"
     MESSAGE="$3"
     DATA="$4"
-    TIMESTAMP=$(date +%s%3N 2>/dev/null || date +%s000)
+    # systemd units may have a minimal PATH; use explicit coreutils paths for reliability.
+    TIMESTAMP=$(${coreutils}/date +%s%3N 2>/dev/null || ${coreutils}/date +%s000)
     LOG_ID="log_''${TIMESTAMP}_$$"
     echo "{\"id\":\"$LOG_ID\",\"timestamp\":$TIMESTAMP,\"location\":\"$LOCATION\",\"message\":\"$MESSAGE\",\"data\":$DATA,\"sessionId\":\"debug-session\",\"runId\":\"dolphin-debug\",\"hypothesisId\":\"$HYPOTHESIS_ID\"}" >> "${LOG_FILE}" 2>/dev/null || true
   '';
