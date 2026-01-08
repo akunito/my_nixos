@@ -18,18 +18,27 @@ GRAY='\033[0;90m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
-# Check if silent mode is enabled by -s or --silent
+#
+# Argument parsing
+# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent]
+# - Also supports -s/--silent anywhere without breaking positional parsing.
+#
 SILENT_MODE=false
+POSITIONAL_ARGS=()
 for arg in "$@"; do
-    if [ "$arg" = "-s" ] || [ "$arg" = "--silent" ]; then
-        SILENT_MODE=true
-        break
-    fi
+    case "$arg" in
+        -s|--silent)
+            SILENT_MODE=true
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$arg")
+            ;;
+    esac
 done
 
-# Set SCRIPT_DIR based on first parameter or current directory
-if [ $# -gt 0 ]; then
-    SCRIPT_DIR=$1
+# Set SCRIPT_DIR based on first positional parameter or current directory
+if [ ${#POSITIONAL_ARGS[@]} -gt 0 ]; then
+    SCRIPT_DIR="${POSITIONAL_ARGS[0]}"
 else
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 fi
@@ -90,13 +99,13 @@ get_profile_dir_from_flake() {
     echo ""
 }
 
-# Set PROFILE based on second parameter, if missing, stop script
-if [ $# -gt 1 ]; then
-    PROFILE=$2
+# Set PROFILE based on second positional parameter, if missing, stop script
+if [ ${#POSITIONAL_ARGS[@]} -gt 1 ]; then
+    PROFILE="${POSITIONAL_ARGS[1]}"
 else
-    echo -e "${RED}Error: PROFILE parameter is required when providing a path${RESET}"
-    echo "Usage: $0 <path> <profile>"
-    echo "Example: $0 /path/to/repo HOME"
+    echo -e "${RED}Error: PROFILE parameter is required${RESET}"
+    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent]"
+    echo "Example: $0 /path/to/repo HOME -s"
     echo "Where HOME indicates the right flake to use, in this case: flake.HOME.nix"
     echo ""
     list_available_profiles "$SCRIPT_DIR"
@@ -104,9 +113,9 @@ else
 fi
 
 # Define sudo command based on mode
-# Usage: $0 [path] [profile] <sudo_password>
-if [ -n "$3" ]; then
-    SUDO_PASS="$3"
+# Usage: $0 <path> <profile> [sudo_password] [-s|--silent]
+if [ ${#POSITIONAL_ARGS[@]} -gt 2 ] && [ -n "${POSITIONAL_ARGS[2]}" ]; then
+    SUDO_PASS="${POSITIONAL_ARGS[2]}"
     sudo_exec() {
         echo "$SUDO_PASS" | sudo -S "$@" 2>/dev/null
     }
@@ -598,7 +607,8 @@ update_flake_lock() {
         read -n 1 yn
         echo " "
     else
-        yn="y"
+        # Silent mode should follow the prompt default (N) unless explicitly chosen.
+        yn="n"
     fi
     case $yn in
         [Yy]|[Yy][Ee][Ss])
@@ -782,13 +792,13 @@ ending_menu() {
     run_startup_services() {
         echo -e "Attempting to start services ..."
         echo -e "Running $SCRIPT_DIR/startup_services.sh ..."
-        ./startup_services.sh
+        "$SCRIPT_DIR/startup_services.sh"
     }
 
     # Ask user if they want to generate hardware-configuration.nix
     if [ "$SILENT_MODE" = true ]; then
-        echo "Silent mode enabled ..."
-        run_startup_services
+        # Silent mode should follow the prompt default (ENTER = no services).
+        echo "Silent mode enabled (default: no startup services)."
         return
     fi
 
@@ -1022,6 +1032,17 @@ fi
 # Run maintenance script
 maintenance_script $SCRIPT_DIR $SILENT_MODE
 echo "  " # To clean up color codes
+
+# Flatpak reconciliation (optional, profile baseline-driven)
+# - Non-fatal: if anything fails, installation should still finish
+# - Respects SILENT_MODE (script no-ops or logs only)
+if [ -f "$SCRIPT_DIR/scripts/flatpak-reconcile.sh" ]; then
+    # shellcheck disable=SC1090
+    . "$SCRIPT_DIR/scripts/flatpak-reconcile.sh" || true
+    if declare -F flatpak_reconcile >/dev/null 2>&1; then
+        flatpak_reconcile || true
+    fi
+fi
 
 # Ending menu
 ending_menu $SCRIPT_DIR $SUDO_CMD $SILENT_MODE

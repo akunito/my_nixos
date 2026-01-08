@@ -62,7 +62,8 @@ This repository contains shell scripts for automating common tasks, system maint
 10. Rebuilds NixOS system
 11. Installs Home Manager configuration
 12. Runs maintenance script automatically (quiet) and waits for completion (see `maintenance.log`; run `./maintenance.sh` manually for interactive mode)
-13. Starts startup services (optional)
+13. Reconciles Flatpak baseline vs installed apps (optional; see `scripts/flatpak-reconcile.sh`)
+14. Starts startup services (optional)
 
 **Features**:
 - Interactive and silent modes
@@ -72,6 +73,32 @@ This repository contains shell scripts for automating common tasks, system maint
 - Error handling
 
 **Related**: See [Installation Guide](installation.md)
+
+### scripts/flatpak-reconcile.sh
+
+**Purpose**: Compares a profile’s declarative Flatpak baseline against currently installed Flatpaks (both `--user` and `--system`) and offers to install/remove/snapshot.
+
+**When it runs**: Called by `install.sh` near the end (after Home Manager + maintenance, before the ending menu).
+
+**Baseline file**:
+- Per-profile: `profiles/<PROFILE>-flatpaks.json` (example: `profiles/DESK-flatpaks.json`)
+
+**Format**:
+```json
+{
+  "user": ["com.spotify.Client"],
+  "system": ["org.videolan.VLC"]
+}
+```
+
+**Behavior**:
+- If the baseline file is missing/invalid/empty: **no-op**
+- If Flatpak can’t be queried reliably (missing command/timeout/error): **no-op** (prevents false “everything missing” on fresh installs)
+- If there’s drift: prints missing/extra per scope and offers:
+  - Install missing (user/system)
+  - Uninstall extra (user/system)
+  - Snapshot baseline to match installed (explicit opt-in; won’t overwrite with empty without confirmation)
+- In `--silent` mode: never prompts; only logs drift summary (if any)
 
 ### set_environment.sh
 

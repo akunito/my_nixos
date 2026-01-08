@@ -83,6 +83,29 @@ ram_percent() {
   echo $(( (100 * used) / mem_total ))
 }
 
+ram_human() {
+  local key val unit
+  local mem_total=0 mem_avail=0
+  while read -r key val unit; do
+    case "$key" in
+      MemTotal:) mem_total=$val ;;
+      MemAvailable:) mem_avail=$val ;;
+    esac
+  done < /proc/meminfo
+
+  local used=$((mem_total - mem_avail))
+  # Values are in kB; display in GiB with 1 decimal.
+  awk -v u="$used" -v t="$mem_total" 'BEGIN {
+    ug = u/1048576.0; tg = t/1048576.0;
+    printf "%.1f/%.1f GiB", ug, tg
+  }'
+}
+
+load_avg() {
+  # /proc/loadavg: 1 5 15 ...
+  awk '{printf "%s %s %s", $1, $2, $3}' /proc/loadavg 2>/dev/null || echo "?"
+}
+
 cpu_temp_c() {
   # Prefer k10temp (Ryzen); fall back to first readable hwmon temp.
   local hw name
@@ -140,6 +163,22 @@ select_discrete_amd_drm_device() {
   done
 
   printf '%s' "$best_dev"
+}
+
+gpu_vram_human() {
+  local dev="$1"
+  local total=0 used=0
+  [[ -n "$dev" ]] || { echo "n/a"; return 0; }
+  [[ -r "$dev/mem_info_vram_total" ]] && read -r total < "$dev/mem_info_vram_total" || true
+  [[ -r "$dev/mem_info_vram_used" ]] && read -r used < "$dev/mem_info_vram_used" || true
+  if (( total <= 0 )); then
+    echo "n/a"
+    return 0
+  fi
+  awk -v u="$used" -v t="$total" 'BEGIN {
+    ug = u/1073741824.0; tg = t/1073741824.0;
+    printf "%.1f/%.1f GiB", ug, tg
+  }'
 }
 
 gpu_busy_percent() {
@@ -234,13 +273,16 @@ GPU_T="0"
 CPU_PCT="$(cpu_percent 2>/dev/null || echo 0)"
 RAM_PCT="$(ram_percent 2>/dev/null || echo 0)"
 CPU_T="$(cpu_temp_c 2>/dev/null || echo 0)"
+RAM_H="$(ram_human 2>/dev/null || echo "n/a")"
+LOAD="$(load_avg 2>/dev/null || echo "?")"
 
 GPU_DEV="$(select_discrete_amd_drm_device 2>/dev/null || true)"
 GPU_PCT="$(gpu_busy_percent "$GPU_DEV" 2>/dev/null || echo 0)"
 GPU_T="$(gpu_temp_c "$GPU_DEV" 2>/dev/null || echo 0)"
+GPU_VRAM="$(gpu_vram_human "$GPU_DEV" 2>/dev/null || echo "n/a")"
 
 TEXT=" ${CPU_PCT}% 󰘚 ${GPU_PCT}% 󰍛 ${RAM_PCT}%  ${CPU_T}° 󰢮 ${GPU_T}°"
-TIP="CPU ${CPU_PCT}% | GPU ${GPU_PCT}% | RAM ${RAM_PCT}% | CPU ${CPU_T}°C | GPU ${GPU_T}°C"
+TIP="Performance\n\nCPU: ${CPU_PCT}%  •  Load: ${LOAD}  •  Temp: ${CPU_T}°C\nRAM: ${RAM_PCT}%  •  ${RAM_H}\nGPU (RX 7800 XT): ${GPU_PCT}%  •  Temp: ${GPU_T}°C  •  VRAM: ${GPU_VRAM}"
 
 printf '{"text":"%s","tooltip":"%s"}\n' "$(json_escape "$TEXT")" "$(json_escape "$TIP")"
 

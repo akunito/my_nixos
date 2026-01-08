@@ -128,14 +128,11 @@ let
         };
     
     tray = {
-      icon-spacing = 16;
+      icon-spacing = 48;
       tooltip = true;
     };
     
-    "sway/window" = {
-      format = "{}";
-      max-length = 50;
-    };
+    # "sway/window" removed (active window title not shown in bar)
   };
   
   # Workspace configuration for primary monitor (all workspaces grouped)
@@ -221,9 +218,9 @@ in {
             height = 30;
             spacing = 4;
             
-            modules-left = [ "sway/workspaces" "sway/window" ];
+            modules-left = [ "sway/workspaces" ];
             modules-center = [ "clock" ];
-            modules-right = [ "tray" "pulseaudio" "battery" "custom/perf" ];
+            modules-right = [ "custom/notifications" "tray" "pulseaudio" "battery" "custom/perf" "custom/flatpak-updates" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -233,7 +230,7 @@ in {
             battery = sharedModules.battery;
             bluetooth = sharedModules.bluetooth;
             tray = sharedModules.tray;
-            "sway/window" = sharedModules."sway/window";
+            # "sway/window" removed
 
             "custom/perf" = {
               return-type = "json";
@@ -241,6 +238,25 @@ in {
               # Run explicitly with Nix bash. Waybar is a systemd user service and may not have `bash` on PATH,
               # so `/usr/bin/env bash` scripts can fail silently.
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+
+            # Notifications history (Sway Notification Center)
+            # `swaync-client -swb` streams JSON updates (waybar format) when notifications change.
+            "custom/notifications" = {
+              return-type = "json";
+              exec = "${pkgs.swaynotificationcenter}/bin/swaync-client -swb";
+              on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
+              on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
+              tooltip = true;
+            };
+
+            # Flatpak updates indicator (read-only)
+            "custom/flatpak-updates" = {
+              return-type = "json";
+              interval = 1800; # 30min
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-flatpak-updates.sh ${pkgs.flatpak}/bin/flatpak";
               tooltip = true;
             };
           }
@@ -277,9 +293,9 @@ in {
             height = 30;
             spacing = 4;
             
-            modules-left = [ "sway/workspaces" "sway/window" ];
+            modules-left = [ "sway/workspaces" ];
             modules-center = [ "clock" ];
-            modules-right = [ "tray" "pulseaudio" "battery" "custom/perf" ];
+            modules-right = [ "custom/notifications" "tray" "pulseaudio" "battery" "custom/perf" "custom/flatpak-updates" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -289,12 +305,28 @@ in {
             battery = sharedModules.battery;
             bluetooth = sharedModules.bluetooth;
             tray = sharedModules.tray;
-            "sway/window" = sharedModules."sway/window";
+            # "sway/window" removed
 
             "custom/perf" = {
               return-type = "json";
               interval = 2;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+
+            "custom/notifications" = {
+              return-type = "json";
+              exec = "${pkgs.swaynotificationcenter}/bin/swaync-client -swb";
+              on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
+              on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
+              tooltip = true;
+            };
+
+            "custom/flatpak-updates" = {
+              return-type = "json";
+              interval = 1800;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-flatpak-updates.sh ${pkgs.flatpak}/bin/flatpak";
               tooltip = true;
             };
           }
@@ -323,23 +355,7 @@ in {
         color: #${config.lib.stylix.colors.base07};
         /* backdrop-filter not supported by waybar CSS parser - removed */
         box-shadow: none;
-        transition-property: background-color, border-color, box-shadow;
-        transition-duration: .3s;
-        transition-timing-function: ease;
-        /* Only show after sustained hover */
-        transition-delay: 1s;
-      }
-
-      /* On hover (after delay): bring back the container chrome */
-      window#waybar:hover {
-        background-color: ${hexToRgba config.lib.stylix.colors.base00 "B3"};
-        border-color: ${hexToRgba config.lib.stylix.colors.base02 "4D"};
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-      }
-
-      /* Hide immediately when not hovered */
-      window#waybar:not(:hover) {
-        transition-delay: 0s;
+        /* Keep the bar container always invisible; only widgets have backgrounds */
       }
       
       /* Dock bar CSS removed: Dock bar disabled due to wlr/taskbar protocol limitations in SwayFX */
@@ -412,7 +428,9 @@ in {
       #idle_inhibitor,
       #mpd,
       #bluetooth,
-      #custom-perf {
+      #custom-perf,
+      #custom-notifications,
+      #custom-flatpak-updates {
         margin: 4px 4px;
         padding: 4px 12px;
         border-radius: 10px;
@@ -426,7 +444,9 @@ in {
       #network:hover,
       #pulseaudio:hover,
       #bluetooth:hover,
-      #custom-perf:hover {
+      #custom-perf:hover,
+      #custom-notifications:hover,
+      #custom-flatpak-updates:hover {
         background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
       }
       
@@ -500,14 +520,14 @@ in {
       
       /* Add spacing between tray icons */
       #tray > * {
-        margin: 0 8px;  /* Horizontal margin between icons */
-        padding: 0 2px;
+        margin: 0 24px;  /* Horizontal margin between icons */
+        padding: 0 4px;
       }
 
       /* Some Waybar builds wrap tray items in buttons/widgets; cover common cases */
       #tray button {
-        margin: 0 8px;
-        padding: 0 2px;
+        margin: 0 24px;
+        padding: 0 4px;
       }
       
       #tray > *:first-child {
@@ -540,19 +560,7 @@ in {
         background-color: transparent;
         border-bottom: 1px solid transparent;
         color: #ffffff;
-        transition-property: background-color, border-color, box-shadow;
-        transition-duration: .3s;
-        transition-timing-function: ease;
-        transition-delay: 1s;
-      }
-
-      window#waybar:hover {
-        background-color: rgba(0, 0, 0, 0.8);
-        border-bottom-color: rgba(255, 255, 255, 0.1);
-      }
-
-      window#waybar:not(:hover) {
-        transition-delay: 0s;
+        /* Keep the bar container always invisible; only widgets have backgrounds */
       }
       
       #workspaces button {
@@ -571,7 +579,9 @@ in {
       #pulseaudio,
       #tray,
       #bluetooth,
-      #custom-perf {
+      #custom-perf,
+      #custom-notifications,
+      #custom-flatpak-updates {
         padding: 0 10px;
         color: #ffffff;
       }

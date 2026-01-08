@@ -5,6 +5,7 @@ in
   imports = [
     ../../app/terminal/alacritty.nix
     ../../app/terminal/kitty.nix
+    ../../app/swaybgplus/swaybgplus.nix
     (import ../../app/dmenu-scripts/networkmanager-dmenu.nix {
       dmenu_command = "fuzzel -d"; inherit config lib pkgs;
     })

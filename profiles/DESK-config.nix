@@ -11,6 +11,9 @@
     profile = "personal";
     gpuType = "amd";
     amdLACTdriverEnable = true;
+
+    # Wallpapers (Sway/SwayFX): use SwayBG+ (GUI/CLI) instead of Stylix-managed swaybg service
+    swaybgPlusEnable = true;
     
     kernelModules = [ 
       "i2c-dev" 

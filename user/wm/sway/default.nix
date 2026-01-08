@@ -790,7 +790,11 @@ PY
     reload = "";
     requires_sway = false;
     requires_tray = true;  # Wait for waybar's tray (StatusNotifierWatcher) to be ready
-  } ++ lib.optional (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
+  } ++ lib.optional (
+    systemSettings.stylixEnable == true
+    && (systemSettings.swaybgPlusEnable or false) != true
+    && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)
+  ) {
     name = "swaybg";
     command = "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill";
     pattern = "^${pkgs.swaybg}/bin/swaybg";  # Anchored pattern prevents false positives
@@ -1870,6 +1874,7 @@ in {
     ../../app/terminal/tmux.nix
     ../../app/gaming/mangohud.nix
     ../../app/ai/aichat.nix
+    ../../app/swaybgplus/swaybgplus.nix
     ../../shell/sh.nix
   ];
 
@@ -2070,7 +2075,11 @@ in {
     };
   };
   
-  systemd.user.services.swaybg = lib.mkIf (useSystemdSessionDaemons && systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
+  systemd.user.services.swaybg = lib.mkIf (useSystemdSessionDaemons
+    && systemSettings.stylixEnable == true
+    && (systemSettings.swaybgPlusEnable or false) != true
+    && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)
+  ) {
     Unit = {
       Description = "swaybg (Stylix wallpaper)";
       PartOf = [ "sway-session.target" ];
@@ -2204,7 +2213,8 @@ in {
           "${hyper}+N" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh nwg-look nwg-look";
           "${hyper}+P" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Bitwarden bitwarden";
           "${hyper}+C" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh cursor cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch";
-          "${hyper}+M" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter mission-center";
+          # Mission Center (app_id is io.missioncenter.MissionCenter, binary is missioncenter)
+          "${hyper}+m" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
           "${hyper}+B" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
           
           # Workspace navigation (using Sway native commands for local cycling)
@@ -2534,15 +2544,11 @@ in {
       # Dim inactive windows slightly for focus
       default_dim_inactive 0.1
       
-      # Layer effects (Blur the Waybar)
-      # CRITICAL: Split into separate lines if chaining not supported
-      # NOTE: Previous config had layer_effects commented out due to segfault in SwayFX 0.5.3
-      # Test if current SwayFX version supports layer_effects
-      # If not supported, blur will still work for windows
-      layer_effects "waybar" blur enable
-      layer_effects "waybar" corner_radius 12
-      layer_effects "waybar" blur enable
-      layer_effects "waybar" corner_radius 12
+      # Layer effects (Waybar)
+      # Keep the bar surface fully transparent (no glass blur); only individual widget pills have backgrounds (Waybar CSS).
+      # If `layer_effects` isn't supported in your SwayFX build, these lines are ignored and won't break startup.
+      layer_effects "waybar" blur disable
+      layer_effects "waybar" corner_radius 0
       
       # Keyboard input configuration for polyglot typing (English/Spanish)
       input "type:keyboard" {
@@ -2779,6 +2785,11 @@ in {
   
   home.file.".config/sway/scripts/waybar-perf.sh" = {
     source = ./scripts/waybar-perf.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/waybar-flatpak-updates.sh" = {
+    source = ./scripts/waybar-flatpak-updates.sh;
     executable = true;
   };
 
