@@ -13,7 +13,31 @@ let
   set-sway-theme-vars = pkgs.writeShellScriptBin "set-sway-theme-vars" ''
     # Sync with D-Bus activation environment
     # Variables are already set by extraSessionCommands, we just need to sync them
-    dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME
+    # IMPORTANT (Stylix containment): do NOT use --systemd here.
+    # We only want to update D-Bus activation env for the current Sway session, not mutate the
+    # persistent systemd --user manager environment (which can leak into Plasma 6 if lingering is enabled).
+    dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME
+  '';
+  
+  # Write a session-scoped environment file for systemd --user services started from Sway.
+  # This preserves the Stylix containment model:
+  # - Global Home Manager session vars remain forced-empty to avoid Plasma 6 leakage
+  # - Sway injects the desired vars (extraSessionCommands), and we snapshot them into %t/sway-session.env
+  # - Systemd units use EnvironmentFile=%t/sway-session.env (no global systemd import-environment needed)
+  write-sway-session-env = pkgs.writeShellScriptBin "write-sway-session-env" ''
+    #!/bin/sh
+    ENV_FILE="/run/user/$(id -u)/sway-session.env"
+    umask 077
+    mkdir -p "$(dirname "$ENV_FILE")" 2>/dev/null || true
+    cat >"$ENV_FILE" <<EOF
+WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-}
+SWAYSOCK=''${SWAYSOCK:-}
+XDG_CURRENT_DESKTOP=''${XDG_CURRENT_DESKTOP:-sway}
+QT_QPA_PLATFORMTHEME=''${QT_QPA_PLATFORMTHEME:-}
+GTK_THEME=''${GTK_THEME:-}
+GTK_APPLICATION_PREFER_DARK_THEME=''${GTK_APPLICATION_PREFER_DARK_THEME:-}
+QT_STYLE_OVERRIDE=''${QT_STYLE_OVERRIDE:-}
+EOF
   '';
   
   # CRITICAL: Restore qt5ct files on Sway startup to ensure correct content

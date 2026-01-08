@@ -200,11 +200,13 @@ in {
   # 5. Waybar works with SwayFX the same as with Sway (no special configuration needed)
   programs.waybar = {
     enable = true;
-    # CRITICAL: Disable systemd service - waybar is managed by daemon-manager via Sway startup
-    # Official NixOS practice: When managing waybar manually (not via systemd), disable the service
-    # This prevents systemd and daemon-manager from both trying to start waybar (causes conflicts)
-    # Reference: https://wiki.nixos.org/wiki/Waybar#Home_Manager
-    systemd.enable = false;
+    # CRITICAL: Enable systemd service - waybar lifecycle is managed by systemd --user
+    # We bind waybar to Sway via sway-session.target (configured in user/wm/sway/default.nix)
+    # so it starts/stops cleanly with Sway and does not leak into Plasma 6 sessions.
+    #
+    # NOTE: Some Home Manager versions don't support programs.waybar.systemd.target,
+    # so we keep target-binding logic in default.nix via systemd.user.services.waybar.
+    systemd.enable = true;
     # CRITICAL: settings must be a List of attribute sets when defining multiple bars
     settings = 
       if hasPrimaryMonitor then
