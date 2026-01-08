@@ -606,19 +606,73 @@ let
     if [ "$REQUIRES_SWAY" = "true" ]; then
       # Wait for SwayFX IPC to be ready (max 15 seconds with exponential backoff)
       # CRITICAL: For waybar, we need to ensure SwayFX IPC is fully functional, not just responding
+      # This includes checking that the IPC socket exists and is accessible
+      # #region agent log
+      echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-check-start\",\"message\":\"Starting SwayFX IPC readiness check\",\"data\":{\"pattern\":\"$PATTERN\",\"requires_sway\":true},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # #endregion
       SWAY_READY=false
+      TOTAL_WAIT=0
       for delay in 0.5 1 1.5 2 2.5 3; do
         # Check if swaymsg works AND can actually query outputs (proves IPC is functional)
-        if ${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1 && \
-           ${pkgs.swayfx}/bin/swaymsg -t get_workspaces > /dev/null 2>&1; then
-          SWAY_READY=true
-          log "SwayFX IPC is ready (waited ~''${delay}s): $PATTERN" "info"
-          break
+        # Also check that the IPC socket exists (critical for waybar workspace module)
+        # #region agent log
+        SWAY_OUTPUTS_CHECK=$(${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1; echo $?)
+        SWAY_WORKSPACES_CHECK=$(${pkgs.swayfx}/bin/swaymsg -t get_workspaces > /dev/null 2>&1; echo $?)
+        # Check for SwayFX process (process name is "sway", not "swayfx")
+        SWAY_PID_CHECK=$(pgrep -x sway | head -1 || echo "")
+        SWAY_SOCKET_EXISTS="false"
+        if [ -n "$SWAY_PID_CHECK" ] && [ -n "$XDG_RUNTIME_DIR" ]; then
+          SWAY_SOCKET_PATH="$XDG_RUNTIME_DIR/sway-ipc.$(id -u).$SWAY_PID_CHECK.sock"
+          if [ -S "$SWAY_SOCKET_PATH" ]; then
+            SWAY_SOCKET_EXISTS="true"
+          fi
         fi
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-check-iteration\",\"message\":\"SwayFX IPC check iteration\",\"data\":{\"delay\":$delay,\"total_wait\":$TOTAL_WAIT,\"outputs_check\":$SWAY_OUTPUTS_CHECK,\"workspaces_check\":$SWAY_WORKSPACES_CHECK,\"sway_pid\":\"$SWAY_PID_CHECK\",\"socket_exists\":$SWAY_SOCKET_EXISTS,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # #endregion
+        # CRITICAL: For waybar, also verify the IPC socket exists (required for workspace module)
+        # Process name is "sway", not "swayfx" - check both for compatibility
+        SWAY_PID=$(pgrep -x sway | head -1 || pgrep -x swayfx | head -1 || echo "")
+        SOCKET_READY=false
+        if [ -n "$SWAY_PID" ] && [ -n "$XDG_RUNTIME_DIR" ]; then
+          SWAY_SOCKET="$XDG_RUNTIME_DIR/sway-ipc.$(id -u).$SWAY_PID.sock"
+          if [ -S "$SWAY_SOCKET" ]; then
+            SOCKET_READY=true
+          fi
+        fi
+        # For waybar, require both IPC commands AND socket to be ready
+        # For other daemons, IPC commands are sufficient
+        if echo "$PATTERN" | grep -q "waybar"; then
+          # Waybar requires socket for workspace module
+          if ${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1 && \
+             ${pkgs.swayfx}/bin/swaymsg -t get_workspaces > /dev/null 2>&1 && \
+             [ "$SOCKET_READY" = "true" ]; then
+            SWAY_READY=true
+            log "SwayFX IPC and socket ready (waited ~''${delay}s): $PATTERN" "info"
+            # #region agent log
+            echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-ready\",\"message\":\"SwayFX IPC and socket confirmed ready\",\"data\":{\"total_wait\":$TOTAL_WAIT,\"sway_pid\":\"$SWAY_PID\",\"socket\":\"$SWAY_SOCKET\",\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+            # #endregion
+            break
+          fi
+        else
+          # Other daemons only need IPC commands
+          if ${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1 && \
+             ${pkgs.swayfx}/bin/swaymsg -t get_workspaces > /dev/null 2>&1; then
+            SWAY_READY=true
+            log "SwayFX IPC is ready (waited ~''${delay}s): $PATTERN" "info"
+            # #region agent log
+            echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-ready\",\"message\":\"SwayFX IPC confirmed ready\",\"data\":{\"total_wait\":$TOTAL_WAIT,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+            # #endregion
+            break
+          fi
+        fi
+        TOTAL_WAIT=$(awk "BEGIN {print $TOTAL_WAIT + $delay}" 2>/dev/null || echo "$TOTAL_WAIT")
         sleep $delay
       done
       if [ "$SWAY_READY" = "false" ]; then
         log "WARNING: SwayFX not ready after 15 seconds, starting daemon anyway: $PATTERN" "warning"
+        # #region agent log
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:sway-not-ready\",\"message\":\"SwayFX IPC not ready after timeout\",\"data\":{\"total_wait\":$TOTAL_WAIT,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # #endregion
       fi
     fi
     
@@ -672,6 +726,9 @@ let
     # Official Waybar debugging: Check environment variables and Wayland socket
     # Reference: https://github.com/Alexays/Waybar/wiki/Troubleshooting
     if echo "$PATTERN" | grep -q "waybar"; then
+      # #region agent log
+      echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:waybar-pre-start\",\"message\":\"About to start waybar process\",\"data\":{\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"D\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # #endregion
       # Check Wayland display (official waybar requirement)
       if [ -z "$WAYLAND_DISPLAY" ]; then
         log "WARNING: WAYLAND_DISPLAY not set for waybar (may cause connection issues)" "warning"
@@ -679,8 +736,21 @@ let
       # Check if SwayFX socket exists (official waybar requirement for sway/workspaces module)
       # SwayFX IPC socket format: $XDG_RUNTIME_DIR/sway-ipc.<uid>.<pid>.sock
       # Reference: https://github.com/Alexays/Waybar/wiki/Module:-sway-workspaces
+      # NOTE: This check is now redundant since we verify socket in REQUIRES_SWAY check above
+      # Keeping for logging/debugging purposes only
       if [ -n "$XDG_RUNTIME_DIR" ]; then
-        SWAY_PID=$(pgrep -x swayfx | head -1)
+        # CRITICAL: Process name is "sway", not "swayfx" - check both for compatibility
+        SWAY_PID=$(pgrep -x sway | head -1 || pgrep -x swayfx | head -1 || echo "")
+        # #region agent log
+        SWAY_SOCKET_CHECK=""
+        if [ -n "$SWAY_PID" ]; then
+          SWAY_SOCKET_CHECK="''${XDG_RUNTIME_DIR}/sway-ipc.$(id -u).''${SWAY_PID}.sock"
+          SOCKET_EXISTS=$([ -S "$SWAY_SOCKET_CHECK" ] && echo "true" || echo "false")
+        else
+          SOCKET_EXISTS="false"
+        fi
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:waybar-socket-check\",\"message\":\"Checking SwayFX IPC socket before waybar start\",\"data\":{\"sway_pid\":\"$SWAY_PID\",\"socket_path\":\"$SWAY_SOCKET_CHECK\",\"socket_exists\":$SOCKET_EXISTS,\"wayland_display\":\"$WAYLAND_DISPLAY\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"D\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # #endregion
         if [ -n "$SWAY_PID" ]; then
           SWAY_SOCKET="''${XDG_RUNTIME_DIR}/sway-ipc.$(id -u).''${SWAY_PID}.sock"
           if [ -S "$SWAY_SOCKET" ]; then
@@ -721,6 +791,12 @@ let
     fi
     DAEMON_PID=$!
     log "Daemon start command executed, PID: $DAEMON_PID (pattern: $PATTERN, has_pipe: $HAS_PIPE)" "info"
+    
+    # #region agent log
+    if echo "$PATTERN" | grep -q "waybar"; then
+      echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:waybar-started\",\"message\":\"Waybar process started\",\"data\":{\"pid\":$DAEMON_PID,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"D\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+    fi
+    # #endregion
     
     # CRITICAL: Check if process is still alive after a brief moment to detect immediate crashes
     sleep 0.3
@@ -877,6 +953,119 @@ let
         exit 0 
       }
       
+      # Safe kill function - prevents self-termination by excluding script's own PID and parent PID
+      # CRITICAL: Matches daemon-manager implementation exactly for consistency
+      # Reference: daemon-manager lines 447-471
+      safe_kill() {
+        local KILL_PATTERN="$1"
+        local KILL_PGREP_FLAG="$2"
+        local SELF_PID=$$
+        local PARENT_PID=$PPID
+        
+        # Get all matching PIDs
+        MATCHING_PIDS=$(${pkgs.procps}/bin/pgrep $KILL_PGREP_FLAG "$KILL_PATTERN" 2>/dev/null || echo "")
+        
+        if [ -z "$MATCHING_PIDS" ]; then
+          return 0
+        fi
+        
+        # Filter and kill (exclude self and parent)
+        for PID in $MATCHING_PIDS; do
+          if [ "$PID" != "$SELF_PID" ] && [ "$PID" != "$PARENT_PID" ]; then
+            kill "$PID" 2>/dev/null || true
+          fi
+        done
+        return 0
+      }
+      
+      # --- SESSION CLEANUP PHASE ---
+      # Sentinel file based on Sway's PID to detect Fresh Start vs Reload
+      # CRITICAL: Use XDG runtime directory (consistent with lock file location)
+      # Note: Cleanup relies on patterns matching current store paths. Major system updates
+      # changing store paths may require a manual 'pkill -u $USER <daemon>' if patterns no longer match old processes.
+      SENTINEL_DIR="/run/user/$(id -u)"
+      # Ensure directory exists (sanity check - should already exist from lock file)
+      mkdir -p "$SENTINEL_DIR" 2>/dev/null || true
+      SENTINEL_FILE="$SENTINEL_DIR/sway-session-init-$PPID"
+      
+      # Check if this is a fresh session or a reload
+      IS_FRESH_SESSION=false
+      if [ ! -f "$SENTINEL_FILE" ]; then
+        # Sentinel doesn't exist - fresh session
+        IS_FRESH_SESSION=true
+      elif ! kill -0 "$PPID" 2>/dev/null; then
+        # Sentinel exists but Sway PID is invalid (Sway exited or PID reused) - treat as fresh session
+        IS_FRESH_SESSION=true
+      fi
+      
+      if [ "$IS_FRESH_SESSION" = "true" ]; then
+        echo "Fresh Sway session detected (PID $PPID). Performing cleanup..." | systemd-cat -t sway-daemon-mgr -p info
+        # #region agent log
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:cleanup-start\",\"message\":\"Cleanup phase started\",\"data\":{\"ppid\":$PPID,\"session\":\"fresh\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"A\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # #endregion
+        
+        # 1. Clean up OLD sentinels from previous crashed/closed sessions to prevent clutter
+        # This prevents accumulation of stale sentinel files over time
+        find "$SENTINEL_DIR" -maxdepth 1 -name "sway-session-init-*" -delete 2>/dev/null || true
+        
+        # 2. Create NEW sentinel immediately to mark this session as initialized
+        touch "$SENTINEL_FILE" || echo "WARNING: Failed to create sentinel file" | systemd-cat -t sway-daemon-mgr -p warning
+        
+        # 3. Process Cleanup Loop
+        ${lib.concatMapStringsSep "\n" (daemon: ''
+          # Cleanup logic for ${daemon.name}
+          MATCH_TYPE=${lib.strings.escapeShellArg daemon.match_type}
+          PATTERN=${lib.strings.escapeShellArg daemon.pattern}
+          
+          if [ "$MATCH_TYPE" = "exact" ]; then
+            PGREP_FLAG="-x"
+          else
+            PGREP_FLAG="-f"
+          fi
+          
+          # Check if any processes are running
+          # CRITICAL: pgrep returns exit code 1 if no processes found
+          # The `|| echo ""` ensures we get empty string instead of script aborting
+          RUNNING_PIDS=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null || echo "")
+          if [ -n "$RUNNING_PIDS" ]; then
+            echo "Cleaning up orphaned ${daemon.name} processes from previous session (PIDs: $RUNNING_PIDS)" | systemd-cat -t sway-daemon-mgr -p info
+            # Use safe_kill to prevent self-termination
+            safe_kill "$PATTERN" "$PGREP_FLAG"
+            
+            # Wait for processes to terminate (exponential backoff: 0.5s, 1s, 2s = 3.5s max)
+            for wait_time in 0.5 1 2; do
+              sleep $wait_time
+              # CRITICAL: pgrep returns exit code 1 if no processes found, handle with || echo ""
+              REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l || echo "0")
+              if [ "$REMAINING" -eq 0 ]; then
+                break
+              fi
+            done
+            
+            # Final verification
+            # CRITICAL: pgrep returns exit code 1 if no processes found, handle with || echo ""
+            FINAL_REMAINING=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "$PATTERN" 2>/dev/null | wc -l || echo "0")
+            if [ "$FINAL_REMAINING" -gt 0 ]; then
+              echo "WARNING: $FINAL_REMAINING ${daemon.name} processes still running after cleanup" | systemd-cat -t sway-daemon-mgr -p warning
+            else
+              echo "Successfully cleaned up ${daemon.name} processes" | systemd-cat -t sway-daemon-mgr -p info
+            fi
+          fi
+        '') daemons}
+        
+        echo "Cleanup phase complete." | systemd-cat -t sway-daemon-mgr -p info
+        # #region agent log
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:cleanup-end\",\"message\":\"Cleanup phase completed\",\"data\":{\"ppid\":$PPID},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"A\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # #endregion
+      else
+        echo "Sway config reload detected (Sentinel exists, PID $PPID valid). Skipping aggressive cleanup." | systemd-cat -t sway-daemon-mgr -p info
+      fi
+      # --- END CLEANUP PHASE ---
+      
+      # #region agent log
+      echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:before-waybar\",\"message\":\"About to start waybar\",\"data\":{\"ppid\":$PPID},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # #endregion
+      
       # Official Waybar Config Validation (non-blocking)
       # Reference: https://github.com/Alexays/Waybar/wiki/Configuration
       # Waybar config files are auto-generated by Home Manager programs.waybar module
@@ -901,6 +1090,9 @@ let
       
       # Start waybar first (synchronously) to avoid race conditions
       # Waybar is critical and multiple parallel instances cause conflicts
+      # #region agent log
+      echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:waybar-start\",\"message\":\"Starting waybar via daemon-manager\",\"data\":{\"ppid\":$PPID},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # #endregion
       ${lib.concatMapStringsSep "\n" (daemon: ''
         if [ "${daemon.name}" = "waybar" ]; then
           ${daemon-manager}/bin/daemon-manager \
@@ -910,6 +1102,10 @@ let
             ${lib.strings.escapeShellArg (if daemon.reload != "" then daemon.reload else "")} \
             ${if daemon.requires_sway then "true" else "false"} \
             ${if daemon.requires_tray or false then "true" else "false"}
+          # #region agent log
+          WAYBAR_EXIT=$?
+          echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:waybar-exit\",\"message\":\"Waybar daemon-manager exited\",\"data\":{\"exit_code\":$WAYBAR_EXIT,\"ppid\":$PPID},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+          # #endregion
         fi
       '') daemons}
       

@@ -205,19 +205,24 @@ Patterns must be specific to avoid false positives. **Always use anchored Nix st
 
 ### start-sway-daemons
 
-**Purpose**: Startup orchestrator with file locking
+**Purpose**: Startup orchestrator with file locking and session cleanup
 
 **Features**:
 - File locking to prevent concurrent execution
+- Session cleanup phase (kills orphaned daemons from previous sessions)
+- PID-based Sentinel pattern to distinguish fresh startup from config reload
 - Waybar starts first (synchronously) to avoid race conditions
 - Other daemons start in parallel
-- Uses XDG runtime directory for lock file
+- Uses XDG runtime directory for lock file and sentinel
 
 **Lock File**: `/run/user/$(id -u)/sway-startup.lock`
 
+**Sentinel File**: `/run/user/$(id -u)/sway-session-init-$PPID`
+
 **Startup Order**:
-1. Waybar (synchronous, critical)
-2. All other daemons (parallel)
+1. Session cleanup (only on fresh startup, not on reload)
+2. Waybar (synchronous, critical)
+3. All other daemons (parallel)
 
 ### daemon-sanity-check
 
@@ -283,6 +288,8 @@ startup = [
 
 **Notes**:
 - `start-sway-daemons` runs with `always = true` (executes on reload) - primary startup mechanism
+- Session cleanup only runs on fresh startup (detected via Sentinel pattern), not on `swaymsg reload`
+- On reload, `daemon-manager` handles graceful reloads (SIGUSR2 for waybar, leave others running)
 - `daemon-sanity-check` runs with `always = false` (only on initial startup) - safety net to catch any daemons that failed to start
 - `daemon-health-monitor` runs with `always = true` (executes on reload) - critical infrastructure that must restart automatically
 
@@ -351,6 +358,69 @@ bar {
 - Disabling `swaybar` prevents conflicts and reduces visual clutter
 
 **Note**: `swaybar` is part of SwayFX itself, not an external daemon, so it's **not** included in the `daemons` list. It can be toggled on-demand if needed for debugging or specific use cases. The `swaybar` is completely independent of `nwg-dock` and `waybar` - disabling it does not affect dock functionality.
+
+## Session Cleanup
+
+**Purpose**: Automatically clean up orphaned daemon processes from previous Sway sessions when starting a new session.
+
+### The Problem
+
+When a Sway session closes (via `swaymsg exit`), daemon processes started by `daemon-manager` are not explicitly killed. These orphaned processes remain running and cause issues when a new Sway session starts:
+
+- **Orphaned Processes**: Daemons from the previous session are still running
+- **False Positives**: `daemon-manager` detects these old processes and either sends reload signals (for daemons with reload support) or leaves them running (for daemons without reload), but they're from a different session
+- **Component Failures**: Components don't load correctly because old processes interfere with new session initialization
+
+### The Solution
+
+The `start-sway-daemons` script includes a **session cleanup phase** that uses a **PID-based Sentinel pattern** to distinguish between:
+
+- **Fresh Session Startup**: Aggressively kill all orphaned daemon processes
+- **Config Reload**: Skip cleanup, let `daemon-manager` handle graceful reloads
+
+### Sentinel Pattern
+
+Since `start-sway-daemons` is executed BY Sway (via `exec_always`), checking "if Sway is running" will always return true. Instead, we use a PID-based Sentinel pattern:
+
+- **Sentinel File**: `/run/user/$(id -u)/sway-session-init-$PPID` where `$PPID` is the Sway process PID
+- **Fresh Session Detection**: If sentinel doesn't exist OR Sway PID is invalid → Run cleanup
+- **Reload Detection**: If sentinel exists AND Sway PID is valid → Skip cleanup
+
+**Why XDG Runtime Directory**: Consistent with existing lock file location, automatically cleaned on logout/reboot.
+
+### Cleanup Behavior
+
+**On Fresh Startup**:
+1. Clean up old sentinels from previous crashed/closed sessions
+2. Create new sentinel file to mark session as initialized
+3. Iterate through all daemons in the `daemons` list
+4. For each daemon, kill all matching processes using `safe_kill` (prevents self-termination)
+5. Wait for processes to terminate (exponential backoff: 0.5s, 1s, 2s)
+6. Verify cleanup completed successfully
+7. Proceed with normal daemon startup
+
+**On Config Reload** (`swaymsg reload`):
+- Skip cleanup phase entirely
+- Let `daemon-manager` handle graceful reloads:
+  - Daemons with reload support (e.g., waybar): Send reload signal (SIGUSR2)
+  - Daemons without reload: Leave running (no action needed)
+  - Multiple instances: Kill duplicates and restart (handled by `daemon-manager`)
+
+### Nix Store Path Limitation
+
+**CRITICAL**: Cleanup relies on patterns matching current store paths. After major system updates, old processes from previous store paths may not be matched because:
+
+- `daemon.pattern` includes the full store path (e.g., `/nix/store/abc-waybar-1.0/bin/waybar`)
+- After update, new pattern is `/nix/store/xyz-waybar-1.1/...`
+- Old process running as `abc` won't match new pattern `xyz`
+- Old process remains as orphan
+
+**Solution**: 
+- For waybar, `daemon-manager` has special cleanup logic that handles legacy patterns
+- For other daemons, manual cleanup may be needed: `pkill -u $USER <daemon>`
+- Store path changes typically require a rebuild (`home-manager switch`), which usually involves a session restart
+
+**Note**: This is an acceptable trade-off because cleanup is primarily for processes from previous Sway sessions (same store path), not for processes from system updates.
 
 ## Critical Requirements
 
@@ -931,6 +1001,38 @@ pattern = "^${pkgs.waybar}/bin/waybar";
 3. Check logs: `journalctl --user -t sway-daemon-mgr | grep -i "duplicate\|multiple"`
 4. Run sanity check: `daemon-sanity-check --fix`
 5. For waybar: Check cleanup logic is running (see [Waybar-Specific Cleanup Logic](#waybar-specific-cleanup-logic))
+
+### Orphaned Processes from Previous Sessions
+
+**Problem**: Daemon processes from previous Sway sessions are still running after closing and reopening a session
+
+**Symptoms**:
+- Components don't load correctly when reopening Sway session
+- `pgrep -f "waybar\|swaync\|nm-applet"` shows processes from previous session
+- `daemon-manager` sends reload signals to old processes instead of starting new ones
+
+**Solution**:
+1. **Automatic Cleanup**: The session cleanup phase should handle this automatically on fresh session startup. Check cleanup logs:
+   ```sh
+   journalctl --user -t sway-daemon-mgr | grep -i cleanup
+   ```
+2. **Verify Sentinel**: Check if sentinel file exists (indicates session was initialized):
+   ```sh
+   ls -la /run/user/$(id -u)/sway-session-init-*
+   ```
+3. **Manual Cleanup**: If automatic cleanup didn't work (e.g., after system update with store path changes), manually kill orphaned processes:
+   ```sh
+   pkill -u $USER waybar
+   pkill -u $USER swaync
+   # etc. for other daemons
+   ```
+4. **Check for Store Path Mismatch**: After system updates, old processes may have different store paths. Check running processes:
+   ```sh
+   ps aux | grep waybar
+   ```
+   Compare store paths with current configuration. If different, manual cleanup is needed.
+
+**Prevention**: The session cleanup phase automatically kills orphaned processes on fresh session startup. This should prevent most cases of orphaned processes.
 
 ## Examples
 

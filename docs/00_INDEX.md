@@ -5,6 +5,98 @@
 This index provides a hierarchical navigation tree for AI context retrieval.
 Before answering architectural questions, read this index to identify relevant branches.
 
+---
+
+## Development Guidelines (Manual Section)
+
+### Debug Instrumentation Best Practices
+
+**CRITICAL**: When adding debug instrumentation (logging, verbose output, debug flags, temporary debugging code), always create a separate `.nix` module file and import it into the main module, rather than adding instrumentation directly to the main file.
+
+**Why**: This practice makes cleanup significantly easier - you can simply remove the import statement and delete the debug module file when debugging is complete, without searching through the main file for scattered debug code.
+
+**Pattern**:
+1. Create separate debug module: `user/wm/sway/debug-feature.nix` (or `system/module/debug-feature.nix`)
+2. Import in main file: `debugFeature = import ./debug-feature.nix { inherit pkgs lib systemSettings; };`
+3. Use debug utilities: Reference exported functions/scripts from the debug module
+4. Cleanup: Remove the import line and delete the debug module file when done
+
+**Example**:
+
+**Step 1: Create debug module** (`user/wm/sway/debug-feature.nix`):
+```nix
+{ pkgs, lib, systemSettings, ... }:
+
+let
+  LOG_FILE = "/home/akunito/.dotfiles/.cursor/debug.log";
+  
+  # Debug script with instrumentation
+  debug-script = pkgs.writeShellScriptBin "debug-script" ''
+    #!/bin/sh
+    log_debug() {
+      local hypothesis_id="$1"
+      local location="$2"
+      local message="$3"
+      local data="$4"
+      local timestamp=$(date +%s%3N 2>/dev/null || date +%s000)
+      echo "{\"id\":\"log_''${timestamp}_$$\",\"timestamp\":$timestamp,\"location\":\"$location\",\"message\":\"$message\",\"data\":$data}" >> "${LOG_FILE}" 2>/dev/null || true
+    }
+    
+    # #region agent log
+    log_debug "H1" "debug-script:entry" "Script started" "{\"pid\":$$}"
+    # #endregion
+    
+    # ... actual script logic ...
+    
+    # #region agent log
+    log_debug "H1" "debug-script:exit" "Script completed" "{\"exit_code\":0}"
+    # #endregion
+  '';
+in
+{
+  inherit debug-script;
+}
+```
+
+**Step 2: Import and use in main module** (`user/wm/sway/default.nix`):
+```nix
+{ config, pkgs, lib, userSettings, systemSettings, ... }:
+
+let
+  # Import debugging utilities
+  debugFeature = import ./debug-feature.nix { inherit pkgs lib systemSettings; };
+  
+  # ... rest of module ...
+in
+{
+  # Use debug utilities from debugFeature
+  home.packages = [ debugFeature.debug-script ];
+  
+  # ... rest of configuration ...
+}
+```
+
+**Step 3: Cleanup** (when debugging is complete):
+- Remove the import line: `debugFeature = import ./debug-feature.nix { ... };`
+- Remove usage: `home.packages = [ debugFeature.debug-script ];`
+- Delete the file: `rm user/wm/sway/debug-feature.nix`
+
+**What Counts as Debug Instrumentation**:
+- JSON/NDJSON logging statements
+- Verbose mode flags (`set -x`, debug logging)
+- Debug file creation (`.debug.log`, `/tmp/*.log`)
+- Temporary diagnostic code
+- Hypothesis testing instrumentation
+- Performance profiling code
+- Any code added specifically for debugging that should be removed later
+
+**What Does NOT Count**:
+- Production logging (systemd-cat, journalctl) - these are permanent features
+- Error handling and error messages - these are production features
+- Configuration validation - these are production features
+
+---
+
 ## Flake Architecture
 
 - **flake.nix**: Main flake entry point defining inputs and outputs
