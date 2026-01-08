@@ -10,12 +10,13 @@ let
   # Keep logging implementation centralized via existing helper script.
   # NOTE: writeDebugLog is pkgs.writeShellScriptBin "write-debug-log" from debug-qt5ct.nix
   writeLog = "${writeDebugLog}/bin/write-debug-log";
+  coreutils = "${pkgs.coreutils}/bin";
 
   # Debug wrapper: write the session env file + log what was captured.
   write-sway-session-env-debug = pkgs.writeShellScriptBin "write-sway-session-env-debug" ''
     #!/bin/sh
-    TS="$(date +%s%3N 2>/dev/null || date +%s000)"
-    ENV_FILE="/run/user/$(id -u)/sway-session.env"
+    TS="$(${coreutils}/date +%s%3N 2>/dev/null || ${coreutils}/date +%s000)"
+    ENV_FILE="/run/user/$(${coreutils}/id -u)/sway-session.env"
 
     # #region agent log
     ${writeLog} "H_ENV" "write-sway-session-env-debug:entry" "About to write %t/sway-session.env" \
@@ -30,8 +31,8 @@ let
     ENV_MTIME=0
     if [ -f "$ENV_FILE" ]; then
       ENV_EXISTS=true
-      ENV_SIZE="$(stat -c '%s' "$ENV_FILE" 2>/dev/null || echo 0)"
-      ENV_MTIME="$(stat -c '%Y' "$ENV_FILE" 2>/dev/null || echo 0)"
+      ENV_SIZE="$(${coreutils}/stat -c '%s' "$ENV_FILE" 2>/dev/null || echo 0)"
+      ENV_MTIME="$(${coreutils}/stat -c '%Y' "$ENV_FILE" 2>/dev/null || echo 0)"
     fi
     ${writeLog} "H_ENV" "write-sway-session-env-debug:exit" "Finished writing %t/sway-session.env" \
       "{\"ts\":$TS,\"env_exists\":$ENV_EXISTS,\"env_size\":$ENV_SIZE,\"env_mtime\":$ENV_MTIME}"
@@ -41,7 +42,7 @@ let
   # Debug wrapper: start sway-session.target and measure any blocking time in systemctl.
   sway-session-start-debug = pkgs.writeShellScriptBin "sway-session-start-debug" ''
     #!/bin/sh
-    TS_START="$(date +%s%3N 2>/dev/null || date +%s000)"
+    TS_START="$(${coreutils}/date +%s%3N 2>/dev/null || ${coreutils}/date +%s000)"
 
     GS_ACTIVE="$(systemctl --user show -p ActiveState --value graphical-session.target 2>/dev/null || echo "unknown")"
     GS_SUB="$(systemctl --user show -p SubState --value graphical-session.target 2>/dev/null || echo "unknown")"
@@ -54,7 +55,7 @@ let
     systemctl --user start sway-session.target >/dev/null 2>&1
     RC="$?"
 
-    TS_END="$(date +%s%3N 2>/dev/null || date +%s000)"
+    TS_END="$(${coreutils}/date +%s%3N 2>/dev/null || ${coreutils}/date +%s000)"
     DURATION_MS=$((TS_END - TS_START))
 
     SS_ACTIVE="$(systemctl --user show -p ActiveState --value sway-session.target 2>/dev/null || echo "unknown")"
@@ -71,8 +72,8 @@ let
   # ExecStartPre hook for waybar: record whether env + SWAYSOCK are valid right before launch.
   waybar-prestart-debug = pkgs.writeShellScriptBin "waybar-prestart-debug" ''
     #!/bin/sh
-    TS="$(date +%s%3N 2>/dev/null || date +%s000)"
-    ENV_FILE="/run/user/$(id -u)/sway-session.env"
+    TS="$(${coreutils}/date +%s%3N 2>/dev/null || ${coreutils}/date +%s000)"
+    ENV_FILE="/run/user/$(${coreutils}/id -u)/sway-session.env"
 
     SWAYSOCK_VAL="''${SWAYSOCK:-}"
     WAYLAND_DISPLAY_VAL="''${WAYLAND_DISPLAY:-}"

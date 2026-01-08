@@ -25,6 +25,13 @@ let
     # persistent systemd --user manager environment (which can leak into Plasma 6 if lingering is enabled).
     dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME
   '';
+
+  # Ensure core Wayland session vars are visible to systemd --user units launched via DBus activation
+  # (e.g. xdg-desktop-portal). We intentionally do NOT include theme vars here to preserve Plasma 6 containment.
+  set-sway-systemd-session-vars = pkgs.writeShellScriptBin "set-sway-systemd-session-vars" ''
+    #!/bin/sh
+    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP
+  '';
   
   # Write a session-scoped environment file for systemd --user services started from Sway.
   # This preserves the Stylix containment model:
@@ -2152,6 +2159,11 @@ in {
         # This script syncs them with D-Bus activation environment to ensure GUI applications launched via D-Bus inherit the variables
         {
           command = "${set-sway-theme-vars}/bin/set-sway-theme-vars";
+          always = true;
+        }
+        # Make core Wayland session vars available to systemd --user (needed for DBus-activated services like xdg-desktop-portal)
+        {
+          command = "${set-sway-systemd-session-vars}/bin/set-sway-systemd-session-vars";
           always = true;
         }
         # CRITICAL: Restore qt5ct files before daemons start to ensure correct Qt theming
