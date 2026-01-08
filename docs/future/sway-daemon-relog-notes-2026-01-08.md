@@ -2,6 +2,12 @@
 
 This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
 
+## Archived incident report (post-mortem)
+
+If you need the final root cause + fix summary (Waybar slow after fast relog due to portal-gtk failures), see:
+
+- `docs/future/incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08.md`
+
 ## User-observed behavior (session relog cycle)
 
 Observed across 4 consecutive logins (logout to SDDM, then login):

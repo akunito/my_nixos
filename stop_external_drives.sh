@@ -9,6 +9,31 @@ SILENT_MODE=${1:-false}
 
 # This script must be run as sudo
 
+RED='\033[0;31m'
+CYAN='\033[1;36m'
+MAGENTA='\033[0;35m'
+BOLD='\033[1m'
+RESET='\033[0m'
+
+stop_docker_containers_if_any() {
+    # If docker isn't available or daemon isn't running, do nothing
+    command -v docker >/dev/null 2>&1 || return 0
+    systemctl is-active --quiet docker 2>/dev/null || return 0
+
+    # Only stop RUNNING containers; avoid calling `docker stop` with empty args
+    local running
+    running="$(docker ps -q 2>/dev/null || true)"
+    [ -n "$running" ] || return 0
+
+    echo -e "${CYAN}Stopping running Docker containers...${RESET}"
+    # shellcheck disable=SC2086
+    docker stop $running >/dev/null 2>&1 || {
+        echo -e "${RED}Warning: failed to stop one or more containers${RESET}"
+        return 1
+    }
+    return 0
+}
+
 stop_NFS_drives() { 
     SERVICE=$1
     NFS_DIR=$2
@@ -47,7 +72,7 @@ stop_NFS_drives() {
 
 hostname=$(hostname)
 echo -e "\nThe script will run the commands depending of the hostname."
-echo -e "hostname detected: $hostname"
+echo -e "${BOLD}hostname detected:${RESET} ${MAGENTA}${hostname}${RESET}"
 case $hostname in
     "nixosaga")
         # Stop all external drives
@@ -58,8 +83,7 @@ case $hostname in
         ;;
     "nixosaku")
         # Stop all external drives
-        echo -e "Stopping Containers..."
-        docker stop $(sudo docker ps -a -q)
+        stop_docker_containers_if_any || true
 
         # echo -e "Unmount NFS drives..."
         # fusermount -u /home/akunito/Volumes/homelab_home
@@ -70,8 +94,7 @@ case $hostname in
         ;;
     "nixosLabaku")
         # Stop all external drives
-        echo -e "Stopping Containers..."
-        docker stop $(sudo docker ps -a -q)
+        stop_docker_containers_if_any || true
 
         # echo -e "Unmount external drives..."
         # sudo umount /mnt/DATA_4TB

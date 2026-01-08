@@ -7,6 +7,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
 | docs.agent-context | How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md) and a reusable template for other projects. | cursor, agents, docs, routing, rules | docs/00_ROUTER.md |
+| future.incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08 | Waybar delayed 2–4 minutes after fast relog in Sway due to xdg-desktop-portal-gtk failures + systemd start-limit lockout; fixed via portal-gtk drop-in (UnsetEnvironment=DISPLAY + no start-limit + restart). | incident, sway, swayfx, waybar, xdg-desktop-portal, xdg-desktop-portal-gtk, systemd-user, dbus, relog | user/wm/sway/default.nix |
 | future.router-drift-audit-2026-01-08 | Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system). | router, catalog, audit, docs, drift | docs/00_ROUTER.md |
 | user-modules.doom-emacs | Doom Emacs user module and config layout, including Stylix theme templates and profile integration. | emacs, doom-emacs, editor, stylix, user-modules | user/app/doom-emacs/** |
 | user-modules.lmstudio | LM Studio user module, including MCP server setup templates and web-search tooling integration guidance. | lmstudio, mcp, ai, user-modules | user/app/lmstudio/** |

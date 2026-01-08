@@ -230,6 +230,7 @@ EOF
       qt6.qttools  # for qdbus
       kdePackages.kwallet  # for kwallet-query
       dbus          # for dbus-send (PAM-unlock detection)
+      ripgrep       # for rg in debug instrumentation (ps filtering)
       jq
     ];
     text = ''

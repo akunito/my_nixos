@@ -822,6 +822,10 @@ validate_profile "$SCRIPT_DIR" "$PROFILE"
 # Run pre-installation checks
 pre_install_checks "$SCRIPT_DIR" "$PROFILE"
 
+# Highlight detected hostname early (helps users understand profile-specific behavior)
+HOSTNAME_DETECTED="$(hostname 2>/dev/null || echo unknown)"
+echo -e "${BOLD}hostname detected:${RESET} ${MAGENTA}${HOSTNAME_DETECTED}${RESET}"
+
 # Get current generation for potential rollback
 CURRENT_GENERATION=$(get_current_generation)
 if [ -n "$CURRENT_GENERATION" ]; then

@@ -218,7 +218,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/plasma6/plasma6.nix**: ++ lib.optional userSettings.wmEnableHyprland (./. + "/../hyprland/hyprland_noStylix.nix")
 - **user/wm/sway/debug-qt5ct.nix**: Debug logging function for NDJSON format
 - **user/wm/sway/debug-relog.nix**: Keep logging implementation centralized via existing helper script.
-- **user/wm/sway/default.nix**: Import debugging utilities *Enabled when:*
+- **user/wm/sway/default.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
    - `programs.waybar.systemd.enable = true`
    - `ExecStart is required`
    - `like Unit.Description / ExecStart`
@@ -227,6 +227,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `useSystemdSessionDaemons && ( lib.hasInfix "laptop" (lib.toLower systemSettings.hostname) || lib.hasInfix "yoga" (lib.toLower systemSettings.hostname) )`
    - `useSystemdSessionDaemons && systemSettings.sunshineEnable == true`
    - `useSystemdSessionDaemons && systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+   - `Waybar timeouts`
    - `systemSettings.stylixEnable == true`
    - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
@@ -248,6 +249,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/improvements-analysis.md**: **Date**: 2025-01-XX
 - **docs/future/improvements-implemented.md**: **Date**: 2025-01-XX
 - **docs/future/improvements-summary.md**: **Date**: 2025-01-XX
+- **docs/future/incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08.md**: Waybar delayed 2–4 minutes after fast relog in Sway due to xdg-desktop-portal-gtk failures + systemd start-limit lockout; fixed via portal-gtk drop-in (UnsetEnvironment=DISPLAY + no start-limit + restart).
 - **docs/future/migration-verification-results.md**: **Date**: 2025-01-02
 - **docs/future/profile-migration-status.md**: **Date**: 2025-01-02
 - **docs/future/router-drift-audit-2026-01-08.md**: Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system).
