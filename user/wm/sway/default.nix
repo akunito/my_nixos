@@ -673,7 +673,6 @@ let
       else
         log "ERROR: Daemon process died immediately (PID: $DAEMON_PID, pattern: $PATTERN). No error log available." "err"
       fi
-    else
     fi
     
     # Also pipe logs to systemd for real-time monitoring (background processes)
@@ -1754,6 +1753,7 @@ in {
     networkmanagerapplet
     blueman
     polkit_gnome
+    pavucontrol  # GUI audio mixer (referenced in waybar config)
     
     # System monitoring
     # btop is installed by system/hardware/gpu-monitoring.nix module
