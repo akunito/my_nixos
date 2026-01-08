@@ -115,6 +115,197 @@ EOF
     #!/bin/sh
     exec ${pkgs.systemd}/bin/systemctl --user start sway-session.target
   '';
+
+  # #region agent log
+  # Debug instrumentation (NDJSON) for relog/Waybar delays.
+  #
+  # Log sink (required): ${config.home.homeDirectory}/.dotfiles/.cursor/debug.log
+  # Keep this until post-fix verification proves success; then remove.
+  debug-sway-startup-snapshot = pkgs.writeShellScriptBin "debug-sway-startup-snapshot" ''
+    #!/bin/sh
+    set -u
+    COREUTILS="${pkgs.coreutils}/bin"
+    PY="${pkgs.python3}/bin/python3"
+    LOG="${config.home.homeDirectory}/.dotfiles/.cursor/debug.log"
+    TS="$($COREUTILS/date +%s%3N)"
+    UID_VAL="$($COREUTILS/id -u)"
+    XDR_VAL="''${XDG_RUNTIME_DIR:-/run/user/$UID_VAL}"
+    WAYLAND_VAL="''${WAYLAND_DISPLAY:-}"
+    SWAYSOCK_VAL="''${SWAYSOCK:-}"
+    DISPLAY_VAL="''${DISPLAY:-}"
+    XDG_CD="''${XDG_CURRENT_DESKTOP:-}"
+    WAYLAND_SOCK="$XDR_VAL/$WAYLAND_VAL"
+    WAYLAND_SOCK_EXISTS=0; [ -n "$WAYLAND_VAL" ] && [ -S "$WAYLAND_SOCK" ] && WAYLAND_SOCK_EXISTS=1
+    SWAYSOCK_EXISTS=0; [ -n "$SWAYSOCK_VAL" ] && [ -S "$SWAYSOCK_VAL" ] && SWAYSOCK_EXISTS=1
+    LOG="$LOG" TS="$TS" XDR_VAL="$XDR_VAL" WAYLAND_VAL="$WAYLAND_VAL" SWAYSOCK_VAL="$SWAYSOCK_VAL" DISPLAY_VAL="$DISPLAY_VAL" XDG_CD="$XDG_CD" WAYLAND_SOCK_EXISTS="$WAYLAND_SOCK_EXISTS" SWAYSOCK_EXISTS="$SWAYSOCK_EXISTS" \
+      "$PY" - <<'PY'
+import json, os
+payload = {
+  "sessionId":"debug-session","runId":"repro","hypothesisId":"A",
+  "location":"user/wm/sway/default.nix:debug-sway-startup-snapshot",
+  "message":"sway_startup_snapshot",
+  "timestamp":int(os.environ.get("TS","0")),
+  "data":{
+    "XDG_RUNTIME_DIR":os.environ.get("XDR_VAL",""),
+    "XDG_CURRENT_DESKTOP":os.environ.get("XDG_CD",""),
+    "WAYLAND_DISPLAY":os.environ.get("WAYLAND_VAL",""),
+    "SWAYSOCK":os.environ.get("SWAYSOCK_VAL",""),
+    "DISPLAY":os.environ.get("DISPLAY_VAL",""),
+    "wayland_sock_exists":int(os.environ.get("WAYLAND_SOCK_EXISTS","0")),
+    "swaysock_exists":int(os.environ.get("SWAYSOCK_EXISTS","0")),
+  }
+}
+with open(os.environ["LOG"], "a", encoding="utf-8") as f:
+  f.write(json.dumps(payload, separators=(",",":")) + "\n")
+PY
+  '';
+
+  write-sway-portal-env-debug = pkgs.writeShellScriptBin "write-sway-portal-env-debug" ''
+    #!/bin/sh
+    set -u
+    COREUTILS="${pkgs.coreutils}/bin"
+    PY="${pkgs.python3}/bin/python3"
+    LOG="${config.home.homeDirectory}/.dotfiles/.cursor/debug.log"
+    ENV_FILE="/run/user/$($COREUTILS/id -u)/sway-portal.env"
+    ${write-sway-portal-env}/bin/write-sway-portal-env
+    TS="$($COREUTILS/date +%s%3N)"
+    EXISTS=0; [ -f "$ENV_FILE" ] && EXISTS=1
+    SIZE=0; [ -f "$ENV_FILE" ] && SIZE="$($COREUTILS/stat -c %s "$ENV_FILE" 2>/dev/null || echo 0)"
+    LOG="$LOG" TS="$TS" ENV_FILE="$ENV_FILE" EXISTS="$EXISTS" SIZE="$SIZE" \
+      "$PY" - <<'PY'
+import json, os
+payload={"sessionId":"debug-session","runId":"repro","hypothesisId":"B",
+  "location":"user/wm/sway/default.nix:write-sway-portal-env-debug",
+  "message":"wrote_sway_portal_env",
+  "timestamp":int(os.environ.get("TS","0")),
+  "data":{"path":os.environ.get("ENV_FILE",""),"exists":int(os.environ.get("EXISTS","0")),"size":int(os.environ.get("SIZE","0"))}}
+with open(os.environ["LOG"],"a",encoding="utf-8") as f: f.write(json.dumps(payload,separators=(",",":"))+"\n")
+PY
+  '';
+
+  write-sway-session-env-debug = pkgs.writeShellScriptBin "write-sway-session-env-debug" ''
+    #!/bin/sh
+    set -u
+    COREUTILS="${pkgs.coreutils}/bin"
+    PY="${pkgs.python3}/bin/python3"
+    LOG="${config.home.homeDirectory}/.dotfiles/.cursor/debug.log"
+    ENV_FILE="/run/user/$($COREUTILS/id -u)/sway-session.env"
+    ${write-sway-session-env}/bin/write-sway-session-env
+    TS="$($COREUTILS/date +%s%3N)"
+    EXISTS=0; [ -f "$ENV_FILE" ] && EXISTS=1
+    SIZE=0; [ -f "$ENV_FILE" ] && SIZE="$($COREUTILS/stat -c %s "$ENV_FILE" 2>/dev/null || echo 0)"
+    LOG="$LOG" TS="$TS" ENV_FILE="$ENV_FILE" EXISTS="$EXISTS" SIZE="$SIZE" \
+      "$PY" - <<'PY'
+import json, os
+payload={"sessionId":"debug-session","runId":"repro","hypothesisId":"C",
+  "location":"user/wm/sway/default.nix:write-sway-session-env-debug",
+  "message":"wrote_sway_session_env",
+  "timestamp":int(os.environ.get("TS","0")),
+  "data":{"path":os.environ.get("ENV_FILE",""),"exists":int(os.environ.get("EXISTS","0")),"size":int(os.environ.get("SIZE","0"))}}
+with open(os.environ["LOG"],"a",encoding="utf-8") as f: f.write(json.dumps(payload,separators=(",",":"))+"\n")
+PY
+  '';
+
+  sway-session-start-debug = pkgs.writeShellScriptBin "sway-session-start-debug" ''
+    #!/bin/sh
+    set -u
+    COREUTILS="${pkgs.coreutils}/bin"
+    PY="${pkgs.python3}/bin/python3"
+    SYSTEMCTL="${pkgs.systemd}/bin/systemctl"
+    LOG="${config.home.homeDirectory}/.dotfiles/.cursor/debug.log"
+    T0="$($COREUTILS/date +%s%3N)"
+    $SYSTEMCTL --user start sway-session.target
+    RC="$?"
+    T1="$($COREUTILS/date +%s%3N)"
+    DUR_MS="$((T1 - T0))"
+    WAYBAR_STATE="$($SYSTEMCTL --user show waybar.service -p ActiveState -p SubState -p Result -p NRestarts 2>/dev/null | tr '\n' ';' | $COREUTILS/sed 's/;*$//')"
+    PORTALGTK_STATE="$($SYSTEMCTL --user show xdg-desktop-portal-gtk.service -p ActiveState -p SubState -p Result -p NRestarts -p FragmentPath -p DropInPaths 2>/dev/null | tr '\n' ';' | $COREUTILS/sed 's/;*$//')"
+    PORTAL_STATE="$($SYSTEMCTL --user show xdg-desktop-portal.service -p ActiveState -p SubState -p Result -p NRestarts -p FragmentPath -p DropInPaths 2>/dev/null | tr '\n' ';' | $COREUTILS/sed 's/;*$//')"
+    LOG="$LOG" T0="$T0" DUR_MS="$DUR_MS" RC="$RC" WAYBAR_STATE="$WAYBAR_STATE" PORTALGTK_STATE="$PORTALGTK_STATE" PORTAL_STATE="$PORTAL_STATE" \
+      "$PY" - <<'PY'
+import json, os
+payload={"sessionId":"debug-session","runId":"repro","hypothesisId":"D",
+  "location":"user/wm/sway/default.nix:sway-session-start-debug",
+  "message":"systemctl_start_sway_session_target_done",
+  "timestamp":int(os.environ.get("T0","0")),
+  "data":{
+    "rc":int(os.environ.get("RC","-1")),
+    "duration_ms":int(os.environ.get("DUR_MS","-1")),
+    "waybar":os.environ.get("WAYBAR_STATE",""),
+    "portal_gtk":os.environ.get("PORTALGTK_STATE",""),
+    "portal":os.environ.get("PORTAL_STATE",""),
+  }}
+with open(os.environ["LOG"],"a",encoding="utf-8") as f: f.write(json.dumps(payload,separators=(",",":"))+"\n")
+PY
+  '';
+
+  waybar-prestart-debug = pkgs.writeShellScriptBin "waybar-prestart-debug" ''
+    #!/bin/sh
+    set -u
+    COREUTILS="${pkgs.coreutils}/bin"
+    PY="${pkgs.python3}/bin/python3"
+    SYSTEMCTL="${pkgs.systemd}/bin/systemctl"
+    LOG="${config.home.homeDirectory}/.dotfiles/.cursor/debug.log"
+    TS="$($COREUTILS/date +%s%3N)"
+    ENV_FILE="/run/user/$($COREUTILS/id -u)/sway-session.env"
+    PORTAL_OK="$($SYSTEMCTL --user is-active xdg-desktop-portal.service 2>/dev/null || true)"
+    PORTALGTK_OK="$($SYSTEMCTL --user is-active xdg-desktop-portal-gtk.service 2>/dev/null || true)"
+    FAILS="$($SYSTEMCTL --user --failed --no-legend 2>/dev/null | $COREUTILS/head -n 12 | tr '\n' '|' )"
+    LOG="$LOG" TS="$TS" ENV_FILE="$ENV_FILE" PORTAL_OK="$PORTAL_OK" PORTALGTK_OK="$PORTALGTK_OK" FAILS="$FAILS" \
+      "$PY" - <<'PY'
+import json, os
+payload={"sessionId":"debug-session","runId":"repro","hypothesisId":"E",
+  "location":"user/wm/sway/default.nix:waybar-prestart-debug",
+  "message":"waybar_prestart_snapshot",
+  "timestamp":int(os.environ.get("TS","0")),
+  "data":{
+    "sway_session_env_exists":1 if os.path.exists(os.environ.get("ENV_FILE","")) else 0,
+    "portal_active":os.environ.get("PORTAL_OK",""),
+    "portal_gtk_active":os.environ.get("PORTALGTK_OK",""),
+    "failed_units_head":os.environ.get("FAILS",""),
+  }}
+with open(os.environ["LOG"],"a",encoding="utf-8") as f: f.write(json.dumps(payload,separators=(",",":"))+"\n")
+PY
+  '';
+
+  portal-gtk-prestart-debug = pkgs.writeShellScriptBin "portal-gtk-prestart-debug" ''
+    #!/bin/sh
+    set -u
+    COREUTILS="${pkgs.coreutils}/bin"
+    PY="${pkgs.python3}/bin/python3"
+    SYSTEMCTL="${pkgs.systemd}/bin/systemctl"
+    LOG="${config.home.homeDirectory}/.dotfiles/.cursor/debug.log"
+    TS="$($COREUTILS/date +%s%3N)"
+    UID_VAL="$($COREUTILS/id -u)"
+    XDR_VAL="''${XDG_RUNTIME_DIR:-/run/user/$UID_VAL}"
+    WAYLAND_VAL="''${WAYLAND_DISPLAY:-}"
+    SWAYSOCK_VAL="''${SWAYSOCK:-}"
+    DISPLAY_VAL="''${DISPLAY:-}"
+    GDK_VAL="''${GDK_BACKEND:-}"
+    WAYLAND_SOCK="$XDR_VAL/$WAYLAND_VAL"
+    WAYLAND_SOCK_EXISTS=0; [ -n "$WAYLAND_VAL" ] && [ -S "$WAYLAND_SOCK" ] && WAYLAND_SOCK_EXISTS=1
+    SWAYSOCK_EXISTS=0; [ -n "$SWAYSOCK_VAL" ] && [ -S "$SWAYSOCK_VAL" ] && SWAYSOCK_EXISTS=1
+    UNIT_META="$($SYSTEMCTL --user show xdg-desktop-portal-gtk.service -p FragmentPath -p DropInPaths 2>/dev/null | tr '\n' ';' | $COREUTILS/sed 's/;*$//')"
+    LOG="$LOG" TS="$TS" DISPLAY_VAL="$DISPLAY_VAL" GDK_VAL="$GDK_VAL" WAYLAND_VAL="$WAYLAND_VAL" SWAYSOCK_VAL="$SWAYSOCK_VAL" WAYLAND_SOCK_EXISTS="$WAYLAND_SOCK_EXISTS" SWAYSOCK_EXISTS="$SWAYSOCK_EXISTS" UNIT_META="$UNIT_META" \
+      "$PY" - <<'PY'
+import json, os
+payload={"sessionId":"debug-session","runId":"repro","hypothesisId":"F",
+  "location":"user/wm/sway/default.nix:portal-gtk-prestart-debug",
+  "message":"portal_gtk_prestart_snapshot",
+  "timestamp":int(os.environ.get("TS","0")),
+  "data":{
+    "DISPLAY":os.environ.get("DISPLAY_VAL",""),
+    "GDK_BACKEND":os.environ.get("GDK_VAL",""),
+    "WAYLAND_DISPLAY":os.environ.get("WAYLAND_VAL",""),
+    "SWAYSOCK":os.environ.get("SWAYSOCK_VAL",""),
+    "wayland_sock_exists":int(os.environ.get("WAYLAND_SOCK_EXISTS","0")),
+    "swaysock_exists":int(os.environ.get("SWAYSOCK_EXISTS","0")),
+    "unit_meta":os.environ.get("UNIT_META",""),
+  }}
+with open(os.environ["LOG"],"a",encoding="utf-8") as f: f.write(json.dumps(payload,separators=(",",":"))+"\n")
+PY
+  '';
+  # #endregion agent log
   
   # CRITICAL: Restore qt5ct files on Sway startup to ensure correct content
   # Plasma 6 might modify these files even though it shouldn't use them
@@ -1742,6 +1933,9 @@ in {
     };
     Service = {
       EnvironmentFile = [ "-%t/sway-session.env" ];
+      # #region agent log
+      ExecStartPre = [ "${waybar-prestart-debug}/bin/waybar-prestart-debug" ];
+      # #endregion agent log
     };
     Install = {
       WantedBy = lib.mkForce [ "sway-session.target" ];
@@ -1905,6 +2099,9 @@ in {
       StartLimitIntervalSec=0
 
       [Service]
+      # #region agent log
+      ExecStartPre=${portal-gtk-prestart-debug}/bin/portal-gtk-prestart-debug
+      # #endregion agent log
       # Critical for fast relog: portal-gtk can transiently fail (broken pipe / display attach issues).
       # If it doesn't auto-restart, xdg-desktop-portal + clients (Waybar) can block on DBus activation timeouts.
       Restart=on-failure
@@ -2007,7 +2204,7 @@ in {
           "${hyper}+N" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh nwg-look nwg-look";
           "${hyper}+P" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Bitwarden bitwarden";
           "${hyper}+C" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh cursor cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch";
-          "${hyper}+M" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh mission-center mission-center";
+          "${hyper}+M" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter mission-center";
           "${hyper}+B" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
           
           # Workspace navigation (using Sway native commands for local cycling)
@@ -2111,6 +2308,10 @@ in {
       # Startup commands
       startup =
         [
+        # #region agent log
+        # Debug: capture what Sway sees at startup (env + socket existence).
+        { command = "${debug-sway-startup-snapshot}/bin/debug-sway-startup-snapshot"; always = true; }
+        # #endregion agent log
         # DESK-only: focus the primary output and warp cursor onto it early
         {
           command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
@@ -2144,18 +2345,24 @@ in {
         ++ lib.optionals useSystemdSessionDaemons [
           # Portal env must exist before portals restart during fast relog; it is only consumed by portal units via drop-in.
           {
-            command = "${write-sway-portal-env}/bin/write-sway-portal-env";
+            # #region agent log
+            command = "${write-sway-portal-env-debug}/bin/write-sway-portal-env-debug";
+            # #endregion agent log
             always = true;
           }
           # Snapshot the Sway session environment for systemd --user units
           # (keeps Stylix containment: services get theme vars only in Sway sessions)
           {
-            command = "${write-sway-session-env}/bin/write-sway-session-env";
+            # #region agent log
+            command = "${write-sway-session-env-debug}/bin/write-sway-session-env-debug";
+            # #endregion agent log
             always = true;
           }
           # Start the Sway session target; services are ordered and restarted by systemd
           {
-            command = "${sway-session-start}/bin/sway-session-start";
+            # #region agent log
+            command = "${sway-session-start-debug}/bin/sway-session-start-debug";
+            # #endregion agent log
             always = true;
           }
         ]
@@ -2181,6 +2388,7 @@ in {
           { criteria = { app_id = "com.usebottles.bottles"; }; command = "floating enable"; }
           { criteria = { app_id = "swayfx-settings"; }; command = "floating enable"; }
           { criteria = { app_id = "io.missioncenter.MissionCenter"; }; command = "floating enable, sticky enable, resize set 800 600"; }
+          { criteria = { app_id = "lact"; }; command = "floating enable"; }
           
           # XWayland apps (use class)
           { criteria = { class = "Spotify"; }; command = "floating enable"; }
@@ -2377,8 +2585,9 @@ in {
       for_window [app_id="pavucontrol"] floating enable
       for_window [app_id="nm-connection-editor"] floating enable
       for_window [app_id="blueman-manager"] floating enable
-      for_window [app_id="swappy"] floating enable
+      for_window [app_id="swappy"] floating enable, sticky enable
       for_window [app_id="swaync"] floating enable
+      for_window [app_id="lact"] floating enable
       
       # Mission Center - Floating, Sticky, Resized
       for_window [app_id="io.missioncenter.MissionCenter"] floating enable, sticky enable, resize set 800 600

@@ -90,7 +90,7 @@ let
             car = "󰄋";
             default = [ "󰕿" "󰖀" "󰕾" ];
           };
-          on-click = "pavucontrol";
+          on-click = "exec pavucontrol";
           on-click-right = "pactl set-sink-mute @DEFAULT_SINK@ toggle";
         };
         

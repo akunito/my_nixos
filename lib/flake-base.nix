@@ -99,7 +99,7 @@ let
                                 src = self + "/assets/wallpapers";
                                 dontUnpack = true;
                                 installPhase = ''
-                                  cp $src/lock8.png $out
+                                  cp $src/fuji.jpg $out
                                 '';
                               };
   
