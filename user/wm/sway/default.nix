@@ -501,8 +501,10 @@ let
       log "Waybar cleanup: checking for old patterns and store paths (pattern: $PATTERN)" "info"
       # Check for old patterns: /bin/waybar, waybar -c (without store path), or old store paths
       # Also check for any waybar process that doesn't match the current pattern
-      OLD_PATTERNS="/bin/waybar waybar -c"
-      for OLD_PAT in $OLD_PATTERNS; do
+      # CRITICAL: Do NOT define this as an unquoted space-separated string.
+      # "waybar -c" must be treated as a single pattern; otherwise the loop iterates "waybar" and "-c"
+      # which causes us to kill valid current waybar processes, leading to multi-minute "missing waybar" recovery.
+      for OLD_PAT in "/bin/waybar" "waybar -c"; do
         OLD_PIDS=$(${pkgs.procps}/bin/pgrep -f "$OLD_PAT" 2>/dev/null | grep -v "^$" || echo "")
         if [ -n "$OLD_PIDS" ]; then
           # Check if these PIDs are different from the current pattern's PIDs
@@ -646,7 +648,39 @@ let
         # Other daemons use standard delays: 0.5s, 1s, 1.5s, 2s, 2.5s, 3s = 10.5s max
         DELAYS="0.5 1 1.5 2 2.5 3"
       fi
+      # #region agent log
+      echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:wait-loop-start\",\"message\":\"Starting wait loop for SwayFX IPC\",\"data\":{\"pattern\":\"$PATTERN\",\"delays\":\"$DELAYS\",\"swaysock\":\"$SWAYSOCK\",\"swaysock_exists\":$([ -n "$SWAYSOCK" ] && [ -S "$SWAYSOCK" ] && echo "true" || echo "false")},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"H1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # #endregion
+      ITERATION_COUNT=0
       for delay in $DELAYS; do
+        ITERATION_COUNT=$((ITERATION_COUNT + 1))
+        # #region agent log
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:wait-loop-iteration-start\",\"message\":\"Wait loop iteration start\",\"data\":{\"iteration\":$ITERATION_COUNT,\"delay\":$delay,\"total_wait\":$TOTAL_WAIT,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"H1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # #endregion
+        # Optimization (correctness): After logout/login, SWAYSOCK can be stale (points to old PID socket).
+        # Derive the CURRENT socket from the running sway PID and use it for readiness checks.
+        CURRENT_SWAY_PID=$(pgrep -x sway | head -1 || echo "")
+        CURRENT_SWAYSOCK=""
+        if [ -n "$CURRENT_SWAY_PID" ] && [ -n "$XDG_RUNTIME_DIR" ]; then
+          CURRENT_SWAYSOCK="$XDG_RUNTIME_DIR/sway-ipc.$(id -u).$CURRENT_SWAY_PID.sock"
+        fi
+        if [ -n "$CURRENT_SWAYSOCK" ] && [ -S "$CURRENT_SWAYSOCK" ]; then
+          # Force this process to talk to the correct socket even if env is stale
+          export SWAYSOCK="$CURRENT_SWAYSOCK"
+        else
+          # If env points to a missing socket, treat it as stale and don't let it short-circuit waiting.
+          if [ -n "$SWAYSOCK" ] && [ ! -S "$SWAYSOCK" ]; then
+            # #region agent log
+            echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:swaysock-stale\",\"message\":\"SWAYSOCK is stale (missing socket). Will wait for derived socket.\",\"data\":{\"iteration\":$ITERATION_COUNT,\"delay\":$delay,\"swaysock_env\":\"$SWAYSOCK\",\"derived_swaysock\":\"$CURRENT_SWAYSOCK\",\"derived_pid\":\"$CURRENT_SWAY_PID\",\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"H2\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+            # #endregion
+            unset SWAYSOCK
+          fi
+          # Socket not ready yet; wait a short interval before retrying to avoid swaymsg hangs.
+          sleep 1
+          TOTAL_WAIT=$(awk "BEGIN {print $TOTAL_WAIT + 1}" 2>/dev/null || echo "$TOTAL_WAIT")
+          continue
+        fi
+        
         # Check if swaymsg works AND can actually query outputs (proves IPC is functional)
         # Also check that the IPC socket exists (critical for waybar workspace module)
         # #region agent log
@@ -716,8 +750,14 @@ let
           fi
         fi
         TOTAL_WAIT=$(awk "BEGIN {print $TOTAL_WAIT + $delay}" 2>/dev/null || echo "$TOTAL_WAIT")
+        # #region agent log
+        echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:wait-loop-iteration-end\",\"message\":\"Wait loop iteration end, about to sleep\",\"data\":{\"iteration\":$ITERATION_COUNT,\"delay\":$delay,\"total_wait\":$TOTAL_WAIT,\"sway_ready\":$SWAY_READY,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"H1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+        # #endregion
         sleep $delay
       done
+      # #region agent log
+      echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-manager:wait-loop-end\",\"message\":\"Wait loop completed\",\"data\":{\"total_iterations\":$ITERATION_COUNT,\"total_wait\":$TOTAL_WAIT,\"sway_ready\":$SWAY_READY,\"pattern\":\"$PATTERN\"},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"H1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # #endregion
       if [ "$SWAY_READY" = "false" ]; then
         if echo "$PATTERN" | grep -q "waybar"; then
           log "WARNING: SwayFX not ready after 21 seconds (waybar extended timeout), starting daemon anyway: $PATTERN" "warning"
@@ -1164,6 +1204,27 @@ let
         # For waybar specifically, we need to kill ALL waybar processes (not just matching current pattern)
         # to prevent daemon-manager's cleanup from interfering
         CLEANUP_START_TIME=$(date +%s)
+
+        # Special cleanup for daemon-health-monitor: kill ALL instances from previous sessions/generations
+        # IMPORTANT: daemon-health-monitor is NOT part of the daemons list, so it won't be handled by the loop below.
+        # If old monitors remain running after logout/login, they can race and repeatedly restart/kill waybar.
+        ALL_HEALTH_MONITOR_PIDS=$(${pkgs.procps}/bin/pgrep -f "daemon-health-monitor" 2>/dev/null | grep -v "^$" || echo "")
+        if [ -n "$ALL_HEALTH_MONITOR_PIDS" ]; then
+          echo "Cleaning up ALL daemon-health-monitor processes from previous session (PIDs: $ALL_HEALTH_MONITOR_PIDS)" | systemd-cat -t sway-daemon-mgr -p info
+          for HM_PID in $ALL_HEALTH_MONITOR_PIDS; do
+            if [ "$HM_PID" != "$$" ] && [ "$HM_PID" != "$PPID" ]; then
+              kill "$HM_PID" 2>/dev/null || true
+            fi
+          done
+          # Short wait loop to ensure they are gone
+          for wait_time in 0.5 1 2; do
+            sleep $wait_time
+            REMAINING_HM=$(${pkgs.procps}/bin/pgrep -f "daemon-health-monitor" 2>/dev/null | wc -l || echo "0")
+            if [ "$REMAINING_HM" -eq 0 ]; then
+              break
+            fi
+          done
+        fi
         
         # Special cleanup for waybar: kill ALL waybar processes regardless of pattern/store path
         # This ensures daemon-manager doesn't find old processes and kill the newly started one
@@ -1194,10 +1255,25 @@ let
           fi
         fi
         
+        # Special cleanup for swaync: kill ALL swaync processes regardless of pattern/store path
+        # This prevents "Instance already running" errors from previous generations
+        ALL_SWAYNC_PIDS=$(${pkgs.procps}/bin/pgrep -f "swaync" 2>/dev/null | grep -v "^$" || echo "")
+        if [ -n "$ALL_SWAYNC_PIDS" ]; then
+          echo "Cleaning up ALL swaync processes from previous session" | systemd-cat -t sway-daemon-mgr -p info
+          for SNC_PID in $ALL_SWAYNC_PIDS; do
+            # Protect self and parent
+            if [ "$SNC_PID" != "$$" ] && [ "$SNC_PID" != "$PPID" ]; then
+              kill "$SNC_PID" 2>/dev/null || true
+            fi
+          done
+          # Short wait loop to ensure they are gone
+          sleep 0.5
+        fi
+        
         ${lib.concatMapStringsSep "\n" (daemon: ''
-          # Skip waybar in the normal cleanup loop (already handled above)
-          if [ "${daemon.name}" = "waybar" ]; then
-            # Waybar already cleaned up above
+          # Skip waybar and swaync in the normal cleanup loop (already handled above)
+          if [ "${daemon.name}" = "waybar" ] || [ "${daemon.name}" = "swaync" ]; then
+            # Waybar and swaync already cleaned up above
             :
           else
             # Cleanup logic for ${daemon.name}
@@ -1293,7 +1369,18 @@ let
       # Start waybar first (synchronously) to avoid race conditions
       # Waybar is critical and multiple parallel instances cause conflicts
       # #region agent log
-      echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:waybar-start\",\"message\":\"Starting waybar via daemon-manager\",\"data\":{\"ppid\":$PPID},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+      # Check system state before starting waybar
+      WAYBAR_BEFORE_PIDS=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null | wc -l || echo "0")
+      SWAY_PID_BEFORE=$(pgrep -x sway | head -1 || echo "")
+      SWAY_SOCKET_BEFORE=""
+      if [ -n "$SWAY_PID_BEFORE" ] && [ -n "$XDG_RUNTIME_DIR" ]; then
+        SWAY_SOCKET_BEFORE="$XDG_RUNTIME_DIR/sway-ipc.$(id -u).$SWAY_PID_BEFORE.sock"
+      fi
+      SWAY_IPC_WORKING_BEFORE="false"
+      if ${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1 && ${pkgs.swayfx}/bin/swaymsg -t get_workspaces > /dev/null 2>&1; then
+        SWAY_IPC_WORKING_BEFORE="true"
+      fi
+      echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:waybar-start\",\"message\":\"Starting waybar via daemon-manager\",\"data\":{\"ppid\":$PPID,\"waybar_pids_before\":$WAYBAR_BEFORE_PIDS,\"sway_pid\":\"$SWAY_PID_BEFORE\",\"sway_socket\":\"$SWAY_SOCKET_BEFORE\",\"sway_ipc_working\":$SWAY_IPC_WORKING_BEFORE},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"H3\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
       # #endregion
       ${lib.concatMapStringsSep "\n" (daemon: ''
         if [ "${daemon.name}" = "waybar" ]; then
@@ -1306,7 +1393,15 @@ let
             ${if daemon.requires_tray or false then "true" else "false"}
           # #region agent log
           WAYBAR_EXIT=$?
-          echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:waybar-exit\",\"message\":\"Waybar daemon-manager exited\",\"data\":{\"exit_code\":$WAYBAR_EXIT,\"ppid\":$PPID},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+          # Check system state after waybar daemon-manager exits
+          sleep 1
+          WAYBAR_AFTER_PIDS=$(${pkgs.procps}/bin/pgrep -f "waybar" 2>/dev/null || echo "")
+          WAYBAR_AFTER_COUNT=$(echo "$WAYBAR_AFTER_PIDS" | grep -v "^$" | wc -l || echo "0")
+          SWAY_IPC_WORKING_AFTER="false"
+          if ${pkgs.swayfx}/bin/swaymsg -t get_outputs > /dev/null 2>&1 && ${pkgs.swayfx}/bin/swaymsg -t get_workspaces > /dev/null 2>&1; then
+            SWAY_IPC_WORKING_AFTER="true"
+          fi
+          echo "{\"timestamp\":$(date +%s)000,\"location\":\"start-sway-daemons:waybar-exit\",\"message\":\"Waybar daemon-manager exited\",\"data\":{\"exit_code\":$WAYBAR_EXIT,\"ppid\":$PPID,\"waybar_pids_after\":\"$WAYBAR_AFTER_PIDS\",\"waybar_count\":$WAYBAR_AFTER_COUNT,\"sway_ipc_working\":$SWAY_IPC_WORKING_AFTER},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"H3\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
           # #endregion
         fi
       '') daemons}
@@ -1377,6 +1472,17 @@ let
     # Daemon health monitor - periodically checks daemon health and restarts crashed daemons
     # Runs continuously in background (not managed by daemon-manager to avoid circular dependency)
     
+    # Prevent duplicate monitors (e.g., from sway reload or multiple startup triggers)
+    # NOTE: Orphaned monitors across logout/login are cleaned up by start-sway-daemons on fresh sessions.
+    LOCK_DIR="/run/user/$(id -u)"
+    LOCK_FILE="$LOCK_DIR/sway-daemon-health-monitor.lock"
+    [ -d "$LOCK_DIR" ] || mkdir -p "$LOCK_DIR" 2>/dev/null || true
+    exec 9>"$LOCK_FILE"
+    flock -n 9 || {
+      echo "daemon-health-monitor already running (lock held), exiting" | systemd-cat -t sway-daemon-monitor -p info
+      exit 0
+    }
+    
     # Logging function using systemd-cat
     log() {
       echo "$1" | systemd-cat -t sway-daemon-monitor -p "$2"
@@ -1407,6 +1513,10 @@ let
     }
     
     log "Daemon health monitor started" "info"
+    
+    # #region agent log
+    echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-health-monitor:entry\",\"message\":\"daemon-health-monitor started\",\"data\":{\"pid\":$$,\"ppid\":$PPID,\"wayland_display\":\"$WAYLAND_DISPLAY\",\"xdg_runtime_dir\":\"$XDG_RUNTIME_DIR\",\"swaysock_env\":\"$SWAYSOCK\",\"dbus_session_bus\":\"$DBUS_SESSION_BUS_ADDRESS\"},\"sessionId\":\"debug-session\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H1\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+    # #endregion
     
     # CRITICAL: Grace period after startup to avoid false negatives during SwayFX initialization
     # Wait 60 seconds before starting monitoring to allow SwayFX and daemons to fully initialize
@@ -1462,6 +1572,17 @@ let
             WAYBAR_FAILURE_COUNT=$((WAYBAR_FAILURE_COUNT + 1))
             log "Waybar pattern not found (failure count: $WAYBAR_FAILURE_COUNT)" "warning"
             
+            # #region agent log
+            ALL_WAYBAR_FA=$(${pkgs.procps}/bin/pgrep -fa "waybar" 2>/dev/null | head -20 | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
+            WAYBAR_PGREP_ERR=$(${pkgs.procps}/bin/pgrep $PGREP_FLAG "${daemon.pattern}" 2>&1 >/dev/null | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
+            LATEST_WAYBAR_STDERR_FILE=$(ls -1t /tmp/daemon-*waybar*-stderr.log 2>/dev/null | head -1 || echo "")
+            LATEST_WAYBAR_STDERR_TAIL=""
+            if [ -n "$LATEST_WAYBAR_STDERR_FILE" ] && [ -f "$LATEST_WAYBAR_STDERR_FILE" ]; then
+              LATEST_WAYBAR_STDERR_TAIL=$(tail -100 "$LATEST_WAYBAR_STDERR_FILE" 2>/dev/null | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
+            fi
+            echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-health-monitor:waybar-missing\",\"message\":\"waybar considered missing\",\"data\":{\"failure_count\":$WAYBAR_FAILURE_COUNT,\"pattern\":\"${daemon.pattern}\",\"pgrep_flag\":\"$PGREP_FLAG\",\"pgrep_result_raw\":\"$PGREP_RESULT\",\"pgrep_err_b64\":\"$WAYBAR_PGREP_ERR\",\"pgrep_fa_waybar_b64\":\"$ALL_WAYBAR_FA\",\"latest_stderr_file\":\"$LATEST_WAYBAR_STDERR_FILE\",\"latest_stderr_tail_b64\":\"$LATEST_WAYBAR_STDERR_TAIL\"},\"sessionId\":\"debug-session\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H2\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+            # #endregion
+            
             # Only proceed with restart if we've seen 3 consecutive failures (90 seconds total)
             if [ "$WAYBAR_FAILURE_COUNT" -lt 3 ]; then
               # Skip restart, wait for next check cycle (30 seconds later)
@@ -1471,6 +1592,10 @@ let
               # Reset counter before restart attempt
               log "Waybar strike system: Threshold reached (3 failures), proceeding with restart" "warning"
               WAYBAR_FAILURE_COUNT=0
+              
+              # #region agent log
+              echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-health-monitor:waybar-threshold\",\"message\":\"waybar strike threshold reached; will restart\",\"data\":{\"pattern\":\"${daemon.pattern}\",\"match_type\":\"${daemon.match_type}\",\"command\":\"${daemon.command}\",\"swaysock_env\":\"$SWAYSOCK\",\"wayland_display\":\"$WAYLAND_DISPLAY\"},\"sessionId\":\"debug-session\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H3\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+              # #endregion
               # Fall through to existing restart logic below
             fi
           else
@@ -1513,6 +1638,13 @@ let
             ${if daemon.requires_tray or false then "true" else "false"}
           
           RESTART_EXIT_CODE=$?
+          
+          # #region agent log
+          if [ "${daemon.name}" = "waybar" ]; then
+            POST_WAYBAR_FA=$(${pkgs.procps}/bin/pgrep -fa "waybar" 2>/dev/null | head -20 | ${pkgs.coreutils}/bin/base64 -w 0 2>/dev/null || echo "")
+            echo "{\"timestamp\":$(date +%s)000,\"location\":\"daemon-health-monitor:waybar-restart-result\",\"message\":\"waybar restart attempt finished\",\"data\":{\"restart_exit_code\":$RESTART_EXIT_CODE,\"pattern\":\"${daemon.pattern}\",\"pgrep_flag\":\"$PGREP_FLAG\",\"post_pgrep_fa_waybar_b64\":\"$POST_WAYBAR_FA\"},\"sessionId\":\"debug-session\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H4\"}" >> /home/akunito/.dotfiles/.cursor/debug.log 2>/dev/null || true
+          fi
+          # #endregion
           
           if [ $RESTART_EXIT_CODE -eq 0 ]; then
             # Check if restart was successful
@@ -1597,6 +1729,14 @@ in {
     events = {
       "before-sleep" = "${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
     };
+  };
+
+  # SYSTEMD CONFLICT RESOLUTION
+  # Disable the systemd service to prevent conflicts with our daemon-manager.
+  # The swaynotificationcenter package auto-generates swaync.service.
+  # Use mkForce to ensure it doesn't get linked to systemd targets by Home Manager
+  systemd.user.services.swaync = {
+    install.wantedBy = lib.mkForce []; 
   };
 
   # Clipboard history is now handled via cliphist in startup commands

@@ -268,9 +268,9 @@ Before making any changes:
 5.  **Check logs**: Review `journalctl --user -t sway-daemon-mgr` after changes
 
 ### Systemd Side-Effects Rule
-**CRITICAL**: When enabling Home Manager modules (e.g., `programs.waybar.enable = true`), check if they auto-generate Systemd services. If the process is managed by `daemon-manager`, you MUST explicitly disable the Systemd service (e.g., `systemd.enable = false`) to prevent race conditions.
+**CRITICAL**: When enabling Home Manager modules or adding packages that auto-generate Systemd services, check if they create Systemd services. If the process is managed by `daemon-manager`, you MUST explicitly disable the Systemd service to prevent race conditions.
 
-**Example**:
+**Pattern 1: Packages with Home Manager Modules** (e.g., `waybar`):
 ```nix
 programs.waybar = {
   enable = true;
@@ -279,13 +279,24 @@ programs.waybar = {
 };
 ```
 
-**Why**: If both Systemd and `daemon-manager` try to start the same daemon, you get duplicate instances and race conditions.
+**Pattern 2: Packages without Home Manager Modules** (e.g., `swaync`):
+```nix
+# In user/wm/sway/default.nix (configuration section)
+# Use mkForce to ensure it doesn't get linked to systemd targets by Home Manager
+systemd.user.services.swaync = {
+  install.wantedBy = lib.mkForce []; 
+};
+```
+
+**Why**: If both Systemd and `daemon-manager` try to start the same daemon, you get duplicate instances, race conditions, and the systemd session is marked as "degraded".
 
 ### Key Principles
 1.  **Never edit generated scripts directly** - They are auto-generated from the `daemons` list
 2.  **Always modify the `daemons` list** - This is the single source of truth
 3.  **Use `match_type = "full"` for NixOS-wrapped binaries** - NixOS wraps binaries (e.g., `waybar` → `.waybar-wrapped`), requiring full command line matching
-4.  **Prevent Systemd conflicts** - Always check and disable auto-generated services if managed by `daemon-manager`
+4.  **Prevent Systemd conflicts** - Always check and disable auto-generated services if managed by `daemon-manager`:
+   - For packages with Home Manager modules: Use `systemd.enable = false` in the module config
+   - For packages without Home Manager modules: Use `systemd.user.services.<name>.enable = false` with `install.wantedBy = lib.mkForce []` in the main config
 5.  **Use safe kill logic** - Never use `pkill -f` directly without filtering `$$` (self PID) and `$PPID` (parent PID) to prevent self-termination
 6.  **Use XDG runtime directories for lock files** - Always use `/run/user/$(id -u)/` (XDG runtime directory), never `/tmp/` to prevent security issues and stale locks
 

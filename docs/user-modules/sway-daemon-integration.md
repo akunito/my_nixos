@@ -58,12 +58,12 @@ graph TD
     C --> G[Startup Orchestration]
     D --> H[Single-Run Health Check]
     E --> I[Continuous Health Monitoring]
-    F --> J[Sway Startup Commands]
+    F --> J["Sway Startup Commands<br/>default.nix:1794-1834"]
     G --> J
     H --> J
     I --> J
-    K[waybar.nix] --> L[Systemd Service Disabled]
-    L --> J
+    K["Systemd Service Disable<br/>waybar.nix:207"] --> J
+    L["Systemd Service Disable<br/>swaync.service (mkForce)"] --> J
     E --> D
 ```
 
@@ -145,9 +145,17 @@ Each daemon is defined as an attribute set in the `daemons` list:
 
 #### `requires_sway` (boolean)
 - Whether the daemon requires SwayFX IPC to be ready before starting
-- `true`: Waits for `swaymsg -t get_outputs` to succeed (max 10 seconds)
+- `true`: Waits for SwayFX IPC to be ready before starting
+  - **For waybar**: Extended timeout of 21 seconds (delays: 1s, 2s, 3s, 4s, 5s, 6s) due to workspace module requiring full IPC functionality
+  - **For other daemons**: Standard timeout of 10.5 seconds (delays: 0.5s, 1s, 1.5s, 2s, 2.5s, 3s)
+  - **Checks performed**:
+    - `swaymsg -t get_outputs` succeeds
+    - `swaymsg -t get_workspaces` succeeds
+    - Socket exists: `$XDG_RUNTIME_DIR/sway-ipc.$(id -u).$SWAY_PID.sock`
+    - **Optimization**: Fast-fail check for `$SWAYSOCK` environment variable - if set but socket doesn't exist, wait and retry to avoid `swaymsg` timeout hangs
 - `false`: Starts immediately (e.g., `nm-applet`, `kwalletd6`)
 - **Note**: Daemons that send Sway commands (e.g., `libinput-gestures`) must set this to `true`
+- **Timing Note**: On boot, IPC is ready in ~1-2 seconds. On relog scenarios, IPC can take ~15-21 seconds to initialize, which is why waybar has an extended timeout.
 
 #### `requires_tray` (boolean, optional)
 - Whether the daemon requires the system tray (StatusNotifierWatcher) to be ready before starting
@@ -210,7 +218,10 @@ Patterns must be specific to avoid false positives. **Always use anchored Nix st
 **Features**:
 - File locking to prevent concurrent execution
 - Session cleanup phase (kills orphaned daemons from previous sessions)
+  - **Generic cleanup for waybar and swaync**: Kills ALL processes regardless of pattern/store path to prevent "Instance already running" errors
+  - **Pattern-based cleanup for other daemons**: Uses daemon-specific patterns from the daemon list
 - PID-based Sentinel pattern to distinguish fresh startup from config reload
+- Stale socket cleanup: Removes SwayFX IPC sockets from previous sessions
 - Waybar starts first (synchronously) to avoid race conditions
 - Other daemons start in parallel
 - Uses XDG runtime directory for lock file and sentinel
@@ -295,7 +306,11 @@ startup = [
 
 ### Systemd Service Conflict Prevention
 
-When Home Manager modules auto-generate Systemd services, they must be disabled:
+**CRITICAL**: Daemons managed by this system *must* have their systemd services disabled to prevent conflicts with `daemon-manager`.
+
+When Home Manager modules auto-generate Systemd services, they must be disabled. There are two patterns depending on whether the package has a Home Manager module:
+
+#### Pattern 1: Packages with Home Manager Modules (e.g., `waybar`)
 
 **Example** (`user/wm/sway/waybar.nix`):
 ```nix
@@ -306,7 +321,24 @@ programs.waybar = {
 };
 ```
 
-**Why**: If both Systemd and `daemon-manager` try to start waybar, you get duplicate instances.
+#### Pattern 2: Packages without Home Manager Modules (e.g., `swaync`)
+
+Some packages (like `swaynotificationcenter`) auto-generate systemd services without a Home Manager module. These must be disabled in the main configuration file:
+
+**Example** (`user/wm/sway/default.nix`):
+```nix
+# SYSTEMD CONFLICT RESOLUTION
+# Disable the systemd service to prevent conflicts with our daemon-manager.
+# The swaynotificationcenter package auto-generates swaync.service.
+# Use mkForce to ensure it doesn't get linked to systemd targets by Home Manager
+systemd.user.services.swaync = {
+  install.wantedBy = lib.mkForce []; 
+};
+```
+
+**Why**: If both Systemd and `daemon-manager` try to start the same daemon, you get duplicate instances and the systemd session is marked as "degraded".
+
+**General Rule**: Any package added to the `daemons` list that also ships a systemd unit (like `swaync`, `mako`, `kanshi`) **must** have a corresponding `systemd.user.services.<name>` entry with `install.wantedBy = lib.mkForce []` in the Nix config to prevent the service from being enabled.
 
 **Hyprland Note**: Hyprland's waybar configuration also requires `systemd.enable = false` to prevent conflicts with its `exec-once` startup mechanism.
 
@@ -512,12 +544,13 @@ LOCK_FILE="$LOCK_DIR/sway-startup.lock"
 
 ### Waybar-Specific Cleanup Logic
 
-**CRITICAL**: Waybar requires special cleanup logic due to NixOS store path changes on rebuild.
+**CRITICAL**: Waybar and swaync require special cleanup logic due to NixOS store path changes on rebuild.
 
 **The Problem**:
-- After a NixOS rebuild, waybar's store path changes (e.g., `/nix/store/abc123.../bin/waybar` → `/nix/store/def456.../bin/waybar`)
-- Old waybar processes from previous rebuilds may still be running with old store paths
-- These old processes must be killed before starting a new instance to prevent duplicates
+- After a NixOS rebuild, daemon store paths change (e.g., `/nix/store/abc123.../bin/waybar` → `/nix/store/def456.../bin/waybar`)
+- Old daemon processes from previous rebuilds may still be running with old store paths
+- These old processes must be killed before starting a new instance to prevent duplicates and "Instance already running" errors
+- Notification daemons (waybar, swaync) are particularly prone to lingering processes
 
 **The Solution** (implemented in `daemon-manager`):
 1. **Pattern Check**: Detects waybar using broader pattern match `grep -qE "(/bin/)?waybar"` - **CRITICAL**: Pattern check must be broader than exact matching pattern to catch all instances (both absolute paths and short commands)
@@ -557,7 +590,9 @@ CURRENT_STORE_PATH=$(dirname $(dirname "$CLEAN_EXEC"))
 - **Less brittle**: Doesn't rely on hardcoded string "waybar" or "/bin/waybar"
 - **Safety guard**: Prevents false matches when legacy patterns produce invalid store paths
 
-**When to Apply Similar Logic**: Other daemons that frequently change store paths on rebuild might benefit from similar cleanup logic, but waybar is the most critical case due to its visibility and frequent rebuilds.
+**Generic Cleanup Pattern**: Both waybar and swaync use generic cleanup in `start-sway-daemons` that kills ALL processes matching the daemon name (regardless of store path). This ensures old processes from previous sessions are cleaned up before new ones are started, preventing "Instance already running" errors.
+
+**When to Apply Similar Logic**: Other notification daemons that frequently change store paths on rebuild might benefit from similar generic cleanup logic. Currently, waybar and swaync use this pattern due to their critical nature and tendency to linger after logout.
 
 ### Store Path Extraction Best Practices
 
