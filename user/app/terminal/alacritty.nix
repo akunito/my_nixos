@@ -3,6 +3,8 @@
 {
   home.packages = with pkgs; [
     alacritty
+    # Explicitly install JetBrains Mono Nerd Font to ensure it's available
+    nerd-fonts.jetbrains-mono
   ];
   programs.alacritty.enable = true;
   programs.alacritty.settings = lib.mkMerge [
@@ -10,12 +12,16 @@
       window.opacity = lib.mkForce 0.85;
       font = {
         normal = {
-          family = userSettings.font;
+          # Use "JetBrainsMono Nerd Font Mono" - the exact family name as registered in the system
+          # This is the monospace version which is best for terminal use
+          # Verified via: fc-list : family | grep JetBrains
+          family = "JetBrainsMono Nerd Font Mono";
           style = "Regular";
         };
         size = 12;
         # Font rendering settings for proper alignment
-        builtin_box_drawing = true;
+        # Disable builtin_box_drawing if font alignment issues occur
+        builtin_box_drawing = false;
         offset = {
           x = 0;
           y = 0;
@@ -25,10 +31,8 @@
           y = 0;
         };
       };
-      # Font rendering options for better alignment
-      render_timer = false;
-      use_thin_strokes = true;
       # Additional rendering settings for proper font alignment
+      # Note: render_timer and use_thin_strokes are deprecated in Alacritty 0.16+
       debug.render_timer = false;
       debug.highlight_damage = false;
       
@@ -42,18 +46,28 @@
       # Do not define any keybindings that capture Alt combinations
       # Let Alt keys pass through to Tmux for Alt+Arrow navigation
       
-      # Use Ctrl+X/C/V for cut/copy/paste (standard shortcuts)
+      # Use Ctrl+C/V for copy/paste (standard shortcuts)
+      # Note: Alacritty doesn't support Cut action, so Ctrl+X is not bound
       # Ctrl+Shift+C sends SIGINT (original Ctrl+C - interrupt process)
       # CRITICAL: Alacritty 0.16+ uses [keyboard] section with bindings, not key_bindings
       keyboard = {
         bindings = [
-          { key = "X"; mods = "Control"; action = "Cut"; }  # Cut
+          # Standard Copy/Paste
           { key = "C"; mods = "Control"; action = "Copy"; }  # Copy
           { key = "V"; mods = "Control"; action = "Paste"; } # Paste
+          
           # Send original control characters via Ctrl+Shift (for SIGINT and other functions)
-          { key = "C"; mods = "Control|Shift"; chars = "\u0003"; }  # SIGINT (original Ctrl+C - interrupt process)
-          { key = "X"; mods = "Control|Shift"; chars = "\u0018"; }  # Original Ctrl+X
-          { key = "V"; mods = "Control|Shift"; chars = "\u0016"; }  # Original Ctrl+V
+          # Use \u0003 (Unicode) instead of \x03 (Hex) because Nix doesn't support \x escape sequences
+          # Home Manager will correctly translate \u0003 to the character code that Alacritty needs
+          
+          # Ctrl+Shift+C sends SIGINT (ASCII 0x03 / End of Text)
+          { key = "C"; mods = "Control|Shift"; chars = "\u0003"; }
+          
+          # Ctrl+Shift+X sends CAN (ASCII 0x18 / Cancel) - mimics standard Ctrl+X
+          { key = "X"; mods = "Control|Shift"; chars = "\u0018"; }
+          
+          # Ctrl+Shift+V sends SYN (ASCII 0x16 / Synchronous Idle) - mimics standard Ctrl+V
+          { key = "V"; mods = "Control|Shift"; chars = "\u0016"; }
         ];
       };
     }
