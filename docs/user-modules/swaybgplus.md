@@ -29,8 +29,8 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
 - **Monitor/output layout saves are NixOS-safe**: if your Sway config is Home-Manager managed (symlink into `/nix/store`), SwayBG+ writes output lines to:
   - `~/.config/sway/swaybgplus-outputs.conf`
   - Sway includes this file so `swaymsg reload` applies it.
-- **Persistence is handled by systemd**: a user unit restores wallpapers at Sway session start; no “edit the sway config” scripts.
-- **Restore is startup-race safe**: the restore wrapper sources `%t/sway-session.env` when available, auto-detects a live `SWAYSOCK` if missing, and waits briefly for `swaymsg` to become responsive before applying.
+- **Persistence is handled by systemd**: a user unit keeps wallpapers applied during the Sway session (it will re-apply if `swaybg` gets killed during Home-Manager/systemd reloads).
+- **Restore is startup-race safe**: the wallpaper ensure service re-sources `%t/sway-session.env` while waiting, auto-detects a live `SWAYSOCK` if missing, and waits briefly for `swaymsg` to become responsive before applying.
 - **Stylix containment is preserved**: when SwayBG+ is enabled, the Stylix-managed `swaybg` service is not started for Sway (avoids fighting wallpapers), while Plasma 6 containment remains unchanged.
 
 ## Where it lives
@@ -63,11 +63,13 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
 
 ## Troubleshooting
 
-- **After rebuild/login the wallpaper is “gone” (but you already set one before)**
+- **After rebuild/reboot the wallpaper is “gone” (but you already set one before)**
   - Check whether the config still exists:
     - `~/.local/state/swaybgplus/backgrounds/current_config.json`
-  - If it exists, this is usually a **startup race** (restore ran before `SWAYSOCK`/outputs were ready).
-  - This repo’s restore wrapper mitigates that by auto-detecting `SWAYSOCK` and waiting briefly for `swaymsg` readiness.
+  - If it exists, this is usually either:
+    - **startup race** (restore ran before `SWAYSOCK`/outputs were ready), or
+    - `swaybg` got killed during a **Home-Manager / systemd --user reload**
+  - This repo’s ensure service mitigates both by waiting for IPC readiness and re-applying when `swaybg` disappears.
   - Debug commands:
     - `systemctl --user status swaybgplus-restore.service`
     - `journalctl --user -u swaybgplus-restore.service -b`

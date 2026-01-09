@@ -1,3 +1,15 @@
+---
+id: keybindings.sway
+summary: SwayFX keybindings reference, including unified rofi launcher and window overview.
+tags: [sway, swayfx, keybindings, rofi, wayland]
+related_files:
+  - user/wm/sway/default.nix
+  - user/wm/sway/rofi.nix
+  - user/wm/sway/waybar.nix
+  - user/wm/sway/scripts/window-overview-grouped.sh
+  - user/wm/sway/scripts/rofi-power-mode.sh
+---
+
 # SwayFX Keybindings Reference
 
 Complete reference for all SwayFX keybindings in this NixOS configuration.
@@ -49,16 +61,21 @@ The Hyper key is the primary modifier for all Sway keybindings. It's configured 
 
 - **`${hyper}+Shift+End`** → Exit Sway (with confirmation dialog)
 
+### Lock
+
+- **`Mod4+l`** → Lock screen (swaylock-effects)
+
 ### Power Menu
 
-- **`${hyper}+Shift+BackSpace`** → Power menu script
+- **`${hyper}+Shift+BackSpace`** → Power menu (rofi `power` mode)
 
 ## Launchers
 
 ### Rofi Universal Launcher
 
-- **`${hyper}+space`** → Rofi combi launcher (drun, run, window modes)
-- **`${hyper}+BackSpace`** → Rofi combi launcher (alternative)
+- **`${hyper}+space`** → Rofi unified combi launcher
+  - Includes: `drun`, `run`, `window`, `filebrowser`, `calc`, `emoji`, `power`
+  - **Tip**: In rofi, use `Ctrl+Tab` / `Ctrl+Shift+Tab` to cycle modes (so you can jump into `emoji` or `calc` quickly).
 
 ### Rofi Utilities
 
@@ -69,8 +86,7 @@ The Hyper key is the primary modifier for all Sway keybindings. It's configured 
 ### Window Overview
 
 - **`${hyper}+Tab`** → Window overview (Mission Control-like)
-  - Uses Rofi in window mode with grid layout
-  - 3 columns, large icons (48px), vertical orientation
+  - Grouped by app (app_id / XWayland class), then choose the specific window
 
 ### Workspace Toggle
 

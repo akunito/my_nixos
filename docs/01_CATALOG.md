@@ -223,7 +223,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/debug-relog.nix**: Keep logging implementation centralized via existing helper script.
 - **user/wm/sway/debug/relog-instrumentation.nix**: NDJSON sink for this repo (debug-mode compatible).
 - **user/wm/sway/default.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
-   - `programs.waybar.systemd.enable = true`
+   - `IPC toggling is rejected by Sway`
    - `ExecStart is required`
    - `like Unit.Description / ExecStart`
    - `wl-paste`
@@ -272,7 +272,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Keybindings
 
 - **docs/keybindings/hyprland.md**: Complete reference for all Hyprland keybindings in this NixOS configuration.
-- **docs/keybindings/sway.md**: Complete reference for all SwayFX keybindings in this NixOS configuration.
+- **docs/keybindings/sway.md**: SwayFX keybindings reference, including unified rofi launcher and window overview.
 
 - **docs/00_INDEX.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/00_ROUTER.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
@@ -305,6 +305,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/picom.md**: Picom compositor module overview and where its config and Nix module live.
 - **docs/user-modules/plasma6.md**: Plasma 6 configuration integration for NixOS/Home Manager with export/import and symlink-based mutability.
 - **docs/user-modules/ranger.md**: Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo.
+- **docs/user-modules/rofi.md**: Rofi configuration (Stylix-templated theme, unified combi launcher, power script-mode, and grouped window overview).
 - **docs/user-modules/sway-daemon-integration.md**: Sway session services are managed via systemd --user units bound to sway-session.target (official/systemd approach; no custom daemon-manager).
 - **docs/user-modules/sway-to-hyprland-migration.md**: Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions.
 - **docs/user-modules/swaybgplus.md**: GUI multi-monitor wallpapers for SwayFX/Wayland via SwayBG+ (Home-Manager/NixOS-safe; no Stylix/Plasma conflicts).
