@@ -2,6 +2,21 @@
 
 let
   swaybgplusPkg = pkgs.callPackage ../../pkgs/swaybgplus.nix { };
+  swaybgplusRestoreWrapper = pkgs.writeShellScriptBin "swaybgplus-restore-wrapper" ''
+    #!/bin/sh
+    set -eu
+
+    # If there is no saved wallpaper config yet, do nothing and succeed.
+    CFG="${config.home.homeDirectory}/.config/sway/backgrounds/current_config.json"
+    if [ ! -r "$CFG" ]; then
+      exit 0
+    fi
+
+    # Ensure required helpers are available even in a minimal systemd --user environment.
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.procps pkgs.sway pkgs.swaybg swaybgplusPkg ]}:$PATH"
+
+    exec "${swaybgplusPkg}/bin/swaybgplus" --restore
+  '';
 in
 {
   home.packages = lib.mkIf (systemSettings.swaybgPlusEnable or false) [
@@ -28,7 +43,7 @@ in
     };
     Service = {
       Type = "oneshot";
-      ExecStart = "${swaybgplusPkg}/bin/swaybgplus --restore";
+      ExecStart = "${swaybgplusRestoreWrapper}/bin/swaybgplus-restore-wrapper";
       EnvironmentFile = [ "-%t/sway-session.env" ];
     };
     Install = {

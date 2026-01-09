@@ -2326,6 +2326,12 @@ in {
       output "HDMI-A-1" {
           position 3652,-876
       }
+
+      # SwayBG+ writes updated output lines to a user-writable file because this config is
+      # Home-Manager managed (symlink into /nix/store, read-only).
+      #
+      # Apply changes with: `swaymsg reload` (or your reload keybinding) after clicking Save in SwayBG+.
+      include ${config.home.homeDirectory}/.config/sway/swaybgplus-outputs.conf
       
       # Workspace-to-monitor assignments with fallbacks
       # DP-1 (Samsung 4K): Workspaces 1-10
@@ -2406,6 +2412,7 @@ in {
       input "type:keyboard" {
         xkb_layout "us"
         xkb_variant "altgr-intl"
+        xkb_numlock enabled
       }
       
       # Touchpad configuration

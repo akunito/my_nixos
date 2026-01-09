@@ -16,6 +16,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | user-modules.ranger | Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo. | ranger, tui, file-manager, user-modules | user/app/ranger/** |
 | user-modules.sway-daemon-integration | Sway session services are managed via systemd --user units bound to sway-session.target (official/systemd approach; no custom daemon-manager). | sway, swayfx, systemd-user, waybar, home-manager, session | user/wm/sway/** |
 | user-modules.sway-to-hyprland-migration | Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions. | sway, swayfx, hyprland, migration, wayland, workspaces | user/wm/hyprland/** |
+| user-modules.swaybgplus | GUI multi-monitor wallpapers for SwayFX/Wayland via SwayBG+ (Home-Manager/NixOS-safe; no Stylix/Plasma conflicts). | sway, swayfx, wayland, wallpapers, swaybg, home-manager, stylix, systemd-user, gtk3 | user/pkgs/swaybgplus.nix |
 | user-modules.xmonad | XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo. | xmonad, x11, window-manager, haskell, user-modules | user/wm/xmonad/** |
 
 ## Notes

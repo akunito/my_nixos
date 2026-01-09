@@ -57,6 +57,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Dm
 
+- **system/dm/sddm-breeze-patched-theme.nix**: Copy upstream Breeze SDDM theme from Plasma Desktop
 - **system/dm/sddm.nix**: KWallet PAM integration for automatic wallet unlocking on login *Enabled when:* `primary for graphical sessions`
 
 ### Hardware
@@ -170,6 +171,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/keepass/keepass.nix**: nixpkgs.overlays = [
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
 - **user/app/ranger/ranger.nix**: this lets my copy and paste images and/or plaintext of files directly out of ranger
+- **user/app/swaybgplus/swaybgplus.nix**: !/bin/sh *Enabled when:* `systemSettings.swaybgPlusEnable or false`
 - **user/app/terminal/alacritty.nix**: Explicitly install JetBrains Mono Nerd Font to ensure it's available *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/fix-terminals.nix**: Python script to configure VS Code and Cursor terminal keybindings
 - **user/app/terminal/kitty.nix**: Explicitly install JetBrains Mono Nerd Font to ensure it's available *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
@@ -195,6 +197,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/pkgs/pokemon-colorscripts.nix**: User module: pokemon-colorscripts.nix
 - **user/pkgs/ranger.nix**: give image previews out of the box when building with w3m
 - **user/pkgs/rogauracore.nix**: THIS DOES NOT WORK YET!
+- **user/pkgs/swaybgplus.nix**: NOTE: fetchFromGitHub hashes the *unpacked* content (like `nix store prefetch-file --unpack`).
 
 ### Shell
 
@@ -226,7 +229,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `Qt6`
    - `useSystemdSessionDaemons && ( lib.hasInfix "laptop" (lib.toLower systemSettings.hostname) || lib.hasInfix "yoga" (lib.toLower systemSettings.hostname) )`
    - `useSystemdSessionDaemons && systemSettings.sunshineEnable == true`
-   - `useSystemdSessionDaemons && systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+   - `useSystemdSessionDaemons && systemSettings.stylixEnable == true && (systemSettings.swaybgPlusEnable or false) != true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
    - `Waybar timeouts`
    - `systemSettings.stylixEnable == true`
    - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
@@ -303,4 +306,5 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/ranger.md**: Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo.
 - **docs/user-modules/sway-daemon-integration.md**: Sway session services are managed via systemd --user units bound to sway-session.target (official/systemd approach; no custom daemon-manager).
 - **docs/user-modules/sway-to-hyprland-migration.md**: Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions.
+- **docs/user-modules/swaybgplus.md**: GUI multi-monitor wallpapers for SwayFX/Wayland via SwayBG+ (Home-Manager/NixOS-safe; no Stylix/Plasma conflicts).
 - **docs/user-modules/xmonad.md**: XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo.
