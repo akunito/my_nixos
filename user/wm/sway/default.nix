@@ -420,52 +420,51 @@ PY
     runtimeInputs = with pkgs; [
       systemd
       dbus
+      coreutils
+      socat
     ];
     text = ''
       #!/bin/bash
       set -euo pipefail
 
-      # Don't fail the session if something is missing; just log.
-      if ! command -v systemctl >/dev/null 2>&1; then
-        echo "systemctl not found; cannot start plasma-kwallet-pam.service" | systemd-cat -t kwallet-pam -p warning
-        exit 0
-      fi
-
-      if ! systemctl --user cat plasma-kwallet-pam.service >/dev/null 2>&1; then
-        echo "plasma-kwallet-pam.service not found in user units" | systemd-cat -t kwallet-pam -p warning
-        exit 0
-      fi
-
-      # Ensure the systemd --user manager has the current Wayland/X11 env before we start
-      # anything that might DBus-activate Qt components (kwalletd6/ksecretd).
+      # Apply PAM-provided credentials to KWallet in a non-Plasma session.
       #
-      # Runtime evidence (previous repro): ksecretd crashed with "Failed to create wl_display"
-      # because it was started without WAYLAND_DISPLAY/DISPLAY in the systemd user environment.
-      systemctl --user import-environment XDG_RUNTIME_DIR WAYLAND_DISPLAY SWAYSOCK DISPLAY >/dev/null 2>&1 || true
+      # Runtime evidence:
+      # - pam_kwallet5 creates a socket like /run/user/$UID/kwallet5.socket
+      # - plasma-kwallet-pam.service runs pam_kwallet_init which does: env | socat ...UNIX-CONNECT:$PAM_KWALLET5_LOGIN
+      # - In this Sway session, pam_kwallet_init failed with "env: command not found"
+      # - We also saw ksecretd crashes ("Failed to create wl_display") when this is triggered without a proper Wayland env.
+      #
+      # So: do the equivalent of pam_kwallet_init ourselves, using absolute binaries and *current* session env.
 
-      # The service needs to know where the PAM socket is.
-      # Runtime evidence showed the user systemd environment does not contain PAM_KWALLET* vars.
-      # We set it explicitly to the canonical path in %t (XDG_RUNTIME_DIR).
       RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
       SOCKET_PATH="$RUNTIME_DIR/kwallet5.socket"
-      systemctl --user set-environment "PAM_KWALLET5_LOGIN=$SOCKET_PATH" >/dev/null 2>&1 || true
-      if [ -S "$SOCKET_PATH" ]; then
-        echo "PAM_KWALLET5_LOGIN socket exists at $SOCKET_PATH" | systemd-cat -t kwallet-pam -p info
-      else
-        echo "PAM_KWALLET5_LOGIN socket missing at $SOCKET_PATH (pam_kwallet auth may not have run; unlock may fail)" | systemd-cat -t kwallet-pam -p warning
+      WAYLAND="''${WAYLAND_DISPLAY:-}"
+      SWAYSOCK_VAL="''${SWAYSOCK:-}"
+      DISPLAY_VAL="''${DISPLAY:-}"
+      WAYLAND_SOCK="$RUNTIME_DIR/$WAYLAND"
+      WAYLAND_SOCK_EXISTS=0; [ -n "$WAYLAND" ] && [ -S "$WAYLAND_SOCK" ] && WAYLAND_SOCK_EXISTS=1
+      SWAYSOCK_EXISTS=0; [ -n "$SWAYSOCK_VAL" ] && [ -S "$SWAYSOCK_VAL" ] && SWAYSOCK_EXISTS=1
+
+      echo "kwallet-pam preflight: XDG_RUNTIME_DIR=$RUNTIME_DIR WAYLAND_DISPLAY=$WAYLAND wayland_sock_exists=$WAYLAND_SOCK_EXISTS SWAYSOCK_exists=$SWAYSOCK_EXISTS DISPLAY=$DISPLAY_VAL socket=$SOCKET_PATH" \
+        | systemd-cat -t kwallet-pam -p info
+
+      if [ ! -S "$SOCKET_PATH" ]; then
+        echo "PAM_KWALLET5_LOGIN socket missing at $SOCKET_PATH (pam_kwallet auth may not have run); cannot apply creds" \
+          | systemd-cat -t kwallet-pam -p warning
+        exit 0
       fi
 
-      # Start the helper (it will exit quickly after applying PAM creds).
-      systemctl --user start plasma-kwallet-pam.service >/dev/null 2>&1 || true
-      STATE="$(systemctl --user show plasma-kwallet-pam.service -p ActiveState -p SubState -p Result 2>/dev/null | tr '\n' ';' | sed 's/;*$//')"
-      echo "started plasma-kwallet-pam.service; state=$STATE" | systemd-cat -t kwallet-pam -p info
+      # Send current environment to pam_kwallet5 via the socket (equivalent to pam_kwallet_init).
+      ${pkgs.coreutils}/bin/env | ${pkgs.socat}/bin/socat STDIN "UNIX-CONNECT:$SOCKET_PATH" >/dev/null 2>&1 || true
+      echo "sent env to kwallet PAM socket via socat" | systemd-cat -t kwallet-pam -p info
 
       # Evidence probe: is the wallet open right now?
       OUT6="$(dbus-send --session --print-reply --dest=org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.isOpen string:kdewallet 2>/dev/null || true)"
       if echo "$OUT6" | grep -q "boolean true"; then
         echo "kwalletd6 reports kdewallet is OPEN after plasma-kwallet-pam start" | systemd-cat -t kwallet-pam -p info
       else
-        echo "kwalletd6 reports kdewallet is NOT open after plasma-kwallet-pam start (prompt may still appear)" | systemd-cat -t kwallet-pam -p warning
+        echo "kwalletd6 reports kdewallet is NOT open after kwallet PAM socket env send (prompt may still appear)" | systemd-cat -t kwallet-pam -p warning
       fi
 
       exit 0
