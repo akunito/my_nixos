@@ -10,6 +10,8 @@ json_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
   s="${s//\"/\\\"}"
+  # Encode literal newlines as JSON \n so Waybar renders them as new lines.
+  s="${s//$'\n'/\\n}"
   printf '%s' "$s"
 }
 
@@ -41,7 +43,12 @@ else
 fi
 
 text="${pct}% ${icon}"
-tip="Microphone\n\nVolume: ${pct}%\nMuted: ${is_muted}\n\nClick: open pavucontrol"
+tip="Microphone
+
+Volume: ${pct}%
+Muted: ${is_muted}
+
+Click: open pavucontrol"
 
 printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
   "$(json_escape "$text")" "$(json_escape "$tip")" "$cls"

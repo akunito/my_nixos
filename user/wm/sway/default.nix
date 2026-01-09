@@ -1802,6 +1802,42 @@ in {
     };
   };
 
+  # Official/standard dynamic output configuration for Sway/SwayFX (wlroots): kanshi.
+  # Plasma 6 safety: bind kanshi to sway-session.target so it only runs in Sway sessions.
+  services.kanshi = lib.mkIf useSystemdSessionDaemons {
+    enable = true;
+    systemdTarget = "sway-session.target";
+
+    # Official schema: ordered list of directives (kanshi(5)).
+    # We keep a single "desk" profile which always enforces the intended layout and disables the
+    # usually-OFF outputs to prevent phantom pointer/workspace regions.
+    #
+    # If you later want a second profile that enables DP-3/HDMI-A-1, we can add it, but kanshi can
+    # only switch profiles automatically when it can distinguish states (typically cable connect/disconnect).
+    settings = [
+      {
+        profile = {
+          name = "desk";
+          outputs = [
+            { criteria = "DP-1"; scale = 1.6; position = "0,0"; }
+            # NOTE: kanshi's transform values map inversely to what Sway reports in get_outputs on this setup.
+            # Setting 270 here yields Sway-reported transform 90 (desired).
+            { criteria = "DP-2"; mode = "2560x1440@144.000Hz"; scale = 1.25; transform = "270"; position = "2400,-876"; }
+            { criteria = "DP-3"; status = "disable"; }
+            { criteria = "HDMI-A-1"; status = "disable"; }
+          ];
+          exec = [ "${config.home.homeDirectory}/.config/sway/scripts/swaysome-init.sh" ];
+        };
+      }
+    ];
+  };
+
+  # Volume/brightness OSD (matches Hyprland behavior)
+  services.swayosd = lib.mkIf useSystemdSessionDaemons {
+    enable = true;
+    topMargin = 0.5;
+  };
+
   # Systemd-first Sway session daemons (scalable relog fix)
   #
   # We bind session daemons to a dedicated target started from Sway.
@@ -2083,10 +2119,10 @@ in {
           "Mod4+l" = "exec ${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
 
           # Media keys (volume)
-          # Note: Uses pactl (works with PulseAudio and PipeWire-Pulse)
-          "XF86AudioLowerVolume" = "exec ${pkgs.pulseaudio}/bin/pactl set-sink-volume @DEFAULT_SINK@ -5%";
-          "XF86AudioRaiseVolume" = "exec ${pkgs.pulseaudio}/bin/pactl set-sink-volume @DEFAULT_SINK@ +5%";
-          "XF86AudioMute" = "exec ${pkgs.pulseaudio}/bin/pactl set-sink-mute @DEFAULT_SINK@ toggle";
+          # Uses swayosd-client to both adjust volume and show an on-screen display.
+          "XF86AudioLowerVolume" = "exec ${pkgs.swayosd}/bin/swayosd-client --output-volume lower";
+          "XF86AudioRaiseVolume" = "exec ${pkgs.swayosd}/bin/swayosd-client --output-volume raise";
+          "XF86AudioMute" = "exec ${pkgs.swayosd}/bin/swayosd-client --output-volume mute-toggle";
           
           # Screenshot workflow
           "${hyper}+Shift+x" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh full";
@@ -2225,9 +2261,8 @@ in {
         # Initialize swaysome and assign workspace groups to monitors
         # No 'always = true' - runs only on initial startup, not on config reload
         # This prevents jumping back to empty workspaces when editing config
-        {
-          command = "${config.home.homeDirectory}/.config/sway/scripts/swaysome-init.sh";
-        }
+        # Workspace grouping is triggered by kanshi profiles (after outputs are configured),
+        # to avoid assigning workspaces to phantom/"usually OFF" outputs.
         # NOTE: Theme variables are now set via extraSessionCommands (cleaner, native Home Manager option)
         # This script syncs them with D-Bus activation environment to ensure GUI applications launched via D-Bus inherit the variables
         {
@@ -2289,13 +2324,17 @@ in {
           { criteria = { app_id = "com.usebottles.bottles"; }; command = "floating enable"; }
           { criteria = { app_id = "swayfx-settings"; }; command = "floating enable"; }
           { criteria = { app_id = "io.missioncenter.MissionCenter"; }; command = "floating enable, sticky enable, resize set 800 600"; }
-          { criteria = { app_id = "lact"; }; command = "floating enable"; }
+          # LACT (Linux AMDGPU Controller): often XWayland; keep explicit app_id match for Wayland variants too.
+          { criteria = { app_id = "lact"; }; command = "floating enable, sticky enable"; }
+          { criteria = { title = "LACT"; }; command = "floating enable, sticky enable"; }
           
           # XWayland apps (use class)
           { criteria = { class = "SwayBG+"; }; command = "floating enable"; }
           { criteria = { class = "Spotify"; }; command = "floating enable"; }
           { criteria = { class = "Dolphin"; }; command = "floating enable"; }
           { criteria = { class = "dolphin"; }; command = "floating enable"; }
+          { criteria = { class = "lact"; }; command = "floating enable, sticky enable"; }
+          { criteria = { class = "LACT"; }; command = "floating enable, sticky enable"; }
           
           # Dolphin on Wayland (use app_id)
           { criteria = { app_id = "org.kde.dolphin"; }; command = "floating enable"; }
@@ -2316,6 +2355,10 @@ in {
           { criteria = { class = "dolphin"; }; command = "sticky enable"; }
           { criteria = { class = "Spotify"; }; command = "sticky enable"; }
           { criteria = { app_id = "io.missioncenter.MissionCenter"; }; command = "sticky enable"; }
+          { criteria = { app_id = "lact"; }; command = "sticky enable"; }
+          { criteria = { title = "LACT"; }; command = "sticky enable"; }
+          { criteria = { class = "lact"; }; command = "sticky enable"; }
+          { criteria = { class = "LACT"; }; command = "sticky enable"; }
           
         ];
       };
@@ -2337,49 +2380,10 @@ in {
       # Alt+drag moves windows, Alt+right-drag resizes windows
       floating_modifier Mod1
       
-      # Monitor configuration with scaling and positioning
-      # DP-1: Samsung Odyssey G70NC (4K: 3840x2160) - Primary monitor
-      # DP-2: NSL RGB-27QHDS (2K: 2560x1440) - Secondary monitor (portrait, right side)
-      # Calculations:
-      # - DP-1: 3840x2160 @ scale 1.6 = logical 2400x1350
-      # - DP-2: 2560x1440 rotated 90° = 1440x2560 @ scale 1.15 = logical 1252x2226
-      # - To align bottoms: DP-1 bottom at y=1350, DP-2 bottom should be at y=1350
-      # - DP-2 top at y=1350-2226=-876 (extends above DP-1, which is fine)
-      # - DP-2 x position: right of DP-1 = 2400
-      output "DP-1" {
-          scale 1.6
-          position 0,0
-      }
-      output "DP-2" {
-          mode 2560x1440@144.000Hz
-          scale 1.25
-          transform 90
-          position 2400,-876
-      }
-      
-      # DP-3 (BenQ): Position left of DP-1
-      # Position: negative x to place it left of DP-1
-      output "DP-3" {
-          position -1920,0
-      }
-      
-      # HDMI-A-1 (Philips): Position right of DP-2
-      # DP-2 logical width: 1252, so HDMI-A-1 x = 2400 + 1252 = 3652
-      # Align vertically with DP-2 (y = -876 or adjust for alignment)
-      output "HDMI-A-1" {
-          # Disable by default to avoid "phantom" monitor area when the panel is usually OFF.
-          # If you physically turn it on and want to use it, either:
-          # - temporarily: `swaymsg output HDMI-A-1 enable`
-          # - permanently: remove this `disable` line
-          disable
-          position 3652,-876
-      }
-
-      # SwayBG+ writes updated output lines to a user-writable file because this config is
-      # Home-Manager managed (symlink into /nix/store, read-only).
+      # Output layout is managed dynamically by kanshi (official wlroots/Sway output profile manager).
+      # This avoids phantom pointer/workspace regions on monitors that are usually OFF.
       #
-      # Apply changes with: `swaymsg reload` (or your reload keybinding) after clicking Save in SwayBG+.
-      include ${config.home.homeDirectory}/.config/sway/swaybgplus-outputs.conf
+      # IMPORTANT: Do NOT include swaybgplus output geometry here; it can re-enable "usually OFF" outputs.
       
       # Workspace-to-monitor assignments with fallbacks
       # DP-1 (Samsung 4K): Workspaces 1-10
@@ -2511,7 +2515,11 @@ in {
       for_window [app_id="blueman-manager"] floating enable
       for_window [app_id="swappy"] floating enable, sticky enable
       for_window [app_id="swaync"] floating enable
-      for_window [app_id="lact"] floating enable
+      # LACT (Linux AMDGPU Controller): ensure floating+sticky (Wayland app_id + XWayland class)
+      for_window [app_id="lact"] floating enable, sticky enable
+      for_window [title="LACT"] floating enable, sticky enable
+      for_window [class="lact"] floating enable, sticky enable
+      for_window [class="LACT"] floating enable, sticky enable
       
       # Mission Center - Floating, Sticky, Resized
       for_window [app_id="io.missioncenter.MissionCenter"] floating enable, sticky enable, resize set 800 600
@@ -2728,6 +2736,11 @@ in {
 
   home.file.".config/sway/scripts/waybar-mic.sh" = {
     source = ./scripts/waybar-mic.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/waybar-gpu-tool.sh" = {
+    source = ./scripts/waybar-gpu-tool.sh;
     executable = true;
   };
 

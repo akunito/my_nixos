@@ -97,9 +97,9 @@ The Hyper key is the primary modifier for all Sway keybindings. It's configured 
 
 ### Volume
 
-- **`XF86AudioLowerVolume`** → Lower volume (`pactl set-sink-volume @DEFAULT_SINK@ -5%`)
-- **`XF86AudioRaiseVolume`** → Raise volume (`pactl set-sink-volume @DEFAULT_SINK@ +5%`)
-- **`XF86AudioMute`** → Mute toggle (`pactl set-sink-mute @DEFAULT_SINK@ toggle`)
+- **`XF86AudioLowerVolume`** → Lower volume (OSD via `swayosd-client`)
+- **`XF86AudioRaiseVolume`** → Raise volume (OSD via `swayosd-client`)
+- **`XF86AudioMute`** → Mute toggle (OSD via `swayosd-client`)
 
 ## Workspace Navigation
 

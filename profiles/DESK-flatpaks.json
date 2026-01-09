@@ -1,6 +1,21 @@
 {
-  "user": [],
-  "system": []
+  "user": [
+    "io.dbeaver.DBeaverCommunity",
+    "io.github.mactan_sc.RSILauncher"
+  ],
+  "system": [
+    "app.zen_browser.zen",
+    "com.github.IsmaelMartinez.teams_for_linux",
+    "com.github.Matoking.protontricks",
+    "com.github.tchx84.Flatseal",
+    "com.usebottles.bottles",
+    "com.valvesoftware.Steam",
+    "com.vivaldi.Vivaldi",
+    "io.exodus.Exodus",
+    "io.github.shiiion.primehack",
+    "it.fabiodistasio.AntaresSQL",
+    "net.davidotek.pupgui2",
+    "net.lutris.Lutris",
+    "org.mozilla.Thunderbird"
+  ]
 }
-
-

@@ -1,6 +1,21 @@
 { config, pkgs, lib, systemSettings, userSettings, ... }:
 
 let
+  # Some GPU tooling is optional depending on hardware / nixpkgs settings.
+  # Avoid hard failures during evaluation (e.g. missing pkgs.nvidia-settings on non-NVIDIA hosts).
+  nvidiaSettingsBin =
+    if builtins.hasAttr "nvidia-settings" pkgs
+    then "${pkgs.nvidia-settings}/bin/nvidia-settings"
+    else "";
+  intelGpuTopBin =
+    if builtins.hasAttr "intel-gpu-tools" pkgs
+    then "${pkgs.intel-gpu-tools}/bin/intel_gpu_top"
+    else "";
+  lactBin =
+    if builtins.hasAttr "lact" pkgs
+    then "${pkgs.lact}/bin/lact"
+    else "";
+
   # Helper function to convert hex color + alpha to rgba()
   # hex: 6-digit hex color (e.g., "0d1001")
   # alphaHex: 2-digit hex alpha (e.g., "B3" = 179/255 = 0.702)
@@ -218,7 +233,9 @@ in {
             layer = "top";
             position = "top";
             height = 30;
-            spacing = 4;
+            # Spacing affects inter-module gaps even if CSS margins are 0.
+            # Set to 0 so the left cluster can truly fuse into a single pill.
+            spacing = 0;
             
             modules-left = [
               "battery"
@@ -272,7 +289,7 @@ in {
               return-type = "json";
               interval = 2;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
               tooltip = true;
             };
             "custom/ram" = {
@@ -293,7 +310,7 @@ in {
               return-type = "json";
               interval = 2;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu-temp";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
               tooltip = true;
             };
 
@@ -386,7 +403,7 @@ in {
             layer = "top";
             position = "top";
             height = 30;
-            spacing = 4;
+            spacing = 0;
             
             modules-left = [
               "battery"
@@ -437,7 +454,7 @@ in {
               return-type = "json";
               interval = 2;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
               tooltip = true;
             };
             "custom/ram" = {
@@ -458,7 +475,7 @@ in {
               return-type = "json";
               interval = 2;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu-temp";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
               tooltip = true;
             };
 
@@ -530,7 +547,9 @@ in {
       
       window#waybar {
         /* Default: bar container is invisible (modules keep their own pill backgrounds) */
-        background-color: transparent;
+        /* NOTE: A fully transparent GTK window can be flaky for :hover selectors.
+           Use an almost-transparent background to make hover detection reliable. */
+        background-color: rgba(0, 0, 0, 0.001);
         border: 1px solid transparent;
         border-radius: 16px;
         margin: 8px 12px;
@@ -681,29 +700,84 @@ in {
         border-radius: 0;
       }
 
-      /* Noise reduction: hide until hover (with state-based exceptions) */
-      window#waybar:not(:hover) #custom-notifications,
-      window#waybar:not(:hover) #tray {
-        min-width: 0;
+      /* Noise reduction: hide by default, show on bar hover (Waybar CSS is picky with :not()) */
+      #custom-notifications,
+      #tray {
+        opacity: 0;
         margin: 0;
         padding: 0;
-        opacity: 0;
+        background-color: transparent;
+        border-radius: 0;
       }
 
-      /* VPN: hide when off unless hovered; show when on (handled by class) */
-      window#waybar:not(:hover) #custom-vpn.off {
-        min-width: 0;
-        margin: 0;
-        padding: 0;
-        opacity: 0;
+      window#waybar:hover #custom-notifications,
+      #waybar:hover #custom-notifications,
+      window#waybar:hover #tray,
+      #waybar:hover #tray {
+        opacity: 1;
+        margin: 4px 4px;
+        padding: 4px 12px;
+        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+        border-radius: 10px;
       }
 
-      /* Idle inhibitor: hide when deactivated unless hovered; keep when activated */
-      window#waybar:not(:hover) #idle_inhibitor:not(.activated) {
-        min-width: 0;
+      /* Tray spacing: collapse while hidden, restore on hover */
+      #tray,
+      #tray > *,
+      #tray button {
         margin: 0;
         padding: 0;
+      }
+      window#waybar:hover #tray > *,
+      #waybar:hover #tray > * {
+        margin: 0 24px;
+        padding: 0 4px;
+      }
+      window#waybar:hover #tray button,
+      #waybar:hover #tray button {
+        margin: 0 24px;
+        padding: 0 4px;
+      }
+
+      /* VPN: hide when off unless bar is hovered; show always when on */
+      #custom-vpn.off {
         opacity: 0;
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+        border-radius: 0;
+      }
+      window#waybar:hover #custom-vpn.off,
+      #waybar:hover #custom-vpn.off {
+        opacity: 1;
+        margin: 4px 4px;
+        padding: 4px 12px;
+        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+        border-radius: 10px;
+      }
+
+      /* Idle inhibitor: hide when deactivated unless bar is hovered; keep when activated */
+      #idle_inhibitor {
+        opacity: 0;
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+        border-radius: 0;
+      }
+      window#waybar:hover #idle_inhibitor,
+      #waybar:hover #idle_inhibitor {
+        opacity: 1;
+        margin: 4px 4px;
+        padding: 4px 12px;
+        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+        border-radius: 10px;
+      }
+      /* Activated must always be visible even without hover */
+      #idle_inhibitor.activated {
+        opacity: 1;
+        margin: 4px 4px;
+        padding: 4px 12px;
+        border-radius: 10px;
       }
 
       /* Collapse flatpak module when it's hidden (no updates) */
@@ -747,9 +821,7 @@ in {
         font-weight: 600;
       }
       
-      #battery {
-        color: #${config.lib.stylix.colors.base07};
-      }
+      /* battery color is handled by the Stylix color-group rules above */
       
       #battery.charging, #battery.plugged {
         color: #${config.lib.stylix.colors.base0B};
@@ -777,9 +849,31 @@ in {
         background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
       }
       
-      #pulseaudio {
-        color: #${config.lib.stylix.colors.base07};
+      /* pulseaudio color is handled by the Stylix color-group rules above */
+
+      /* Left cluster: render as one shared segmented pill */
+      .modules-left {
+        margin: 4px 4px;
+        padding: 0;
+        border-radius: 10px;
+        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
       }
+
+      #battery,
+      #backlight,
+      #pulseaudio,
+      #custom-mic,
+      #custom-cpu,
+      #custom-gpu,
+      #custom-ram,
+      #custom-cpu-temp,
+      #custom-gpu-temp {
+        margin: 0;
+        border-radius: 0;
+        background-color: transparent;
+      }
+
+      /* No separators: fully merged pill */
       
       #pulseaudio.muted {
         color: #${config.lib.stylix.colors.base04};
@@ -850,7 +944,7 @@ in {
       }
       
       window#waybar {
-        background-color: transparent;
+        background-color: rgba(0, 0, 0, 0.001);
         border-bottom: 1px solid transparent;
         color: #ffffff;
         /* Keep the bar container always invisible; only widgets have backgrounds */
@@ -886,24 +980,69 @@ in {
         color: #ffffff;
       }
 
-      /* Noise reduction: hide until hover (with state-based exceptions) */
-      window#waybar:not(:hover) #custom-notifications,
-      window#waybar:not(:hover) #tray {
-        min-width: 0;
-        padding: 0;
+      /* Noise reduction: hide by default, show on bar hover */
+      #custom-notifications,
+      #tray {
         opacity: 0;
+        padding: 0;
       }
 
-      window#waybar:not(:hover) #custom-vpn.off {
-        min-width: 0;
-        padding: 0;
-        opacity: 0;
+      window#waybar:hover #custom-notifications,
+      window#waybar:hover #tray {
+        opacity: 1;
+        padding: 0 10px;
       }
 
-      window#waybar:not(:hover) #idle_inhibitor:not(.activated) {
-        min-width: 0;
-        padding: 0;
+      /* VPN: hide when off unless bar is hovered; show always when on */
+      #custom-vpn.off {
         opacity: 0;
+        padding: 0;
+      }
+      window#waybar:hover #custom-vpn.off {
+        opacity: 1;
+        padding: 0 10px;
+      }
+
+      /* Idle inhibitor: hide when deactivated unless bar is hovered; keep when activated */
+      #idle_inhibitor {
+        opacity: 0;
+        padding: 0;
+      }
+      window#waybar:hover #idle_inhibitor,
+      #idle_inhibitor.activated {
+        opacity: 1;
+        padding: 0 10px;
+      }
+
+      /* Left cluster: render as one shared segmented pill */
+      .modules-left {
+        padding: 0;
+        border-radius: 10px;
+      }
+
+      #battery,
+      #backlight,
+      #pulseaudio,
+      #custom-mic,
+      #custom-cpu,
+      #custom-gpu,
+      #custom-ram,
+      #custom-cpu-temp,
+      #custom-gpu-temp {
+        padding-left: 10px;
+        padding-right: 10px;
+        margin: 0;
+      }
+
+      #backlight,
+      #pulseaudio,
+      #custom-mic,
+      #custom-cpu,
+      #custom-gpu,
+      #custom-ram,
+      #custom-cpu-temp,
+      #custom-gpu-temp {
+        border-left: 1px solid rgba(255,255,255,0.08);
       }
     '';
   };

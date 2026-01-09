@@ -24,6 +24,8 @@ json_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
   s="${s//\"/\\\"}"
+  # Encode literal newlines as JSON \n so Waybar renders them as new lines.
+  s="${s//$'\n'/\\n}"
   printf '%s' "$s"
 }
 
@@ -249,7 +251,13 @@ case "$MODE" in
     LOAD="$(load_avg 2>/dev/null || echo "?")"
     CPU_T="$(cpu_temp_c 2>/dev/null || echo 0)"
     TEXT="${CPU_PCT}% "
-    TIP="CPU\n\nUsage: ${CPU_PCT}%\nLoad: ${LOAD}\nTemp: ${CPU_T}°C\n\nClick: open btop++"
+    TIP="CPU
+
+Usage: ${CPU_PCT}%
+Load: ${LOAD}
+Temp: ${CPU_T}°C
+
+Click: open btop++"
     printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
       "$(json_escape "$TEXT")" "$(json_escape "$TIP")" "cpu"
     ;;
@@ -257,7 +265,12 @@ case "$MODE" in
     GPU_PCT="$(gpu_busy_percent "$GPU_DEV" 2>/dev/null || echo 0)"
     GPU_T="$(gpu_temp_c "$GPU_DEV" 2>/dev/null || echo 0)"
     TEXT="${GPU_PCT}% 󰘚"
-    TIP="GPU\n\nUsage: ${GPU_PCT}%\nTemp: ${GPU_T}°C\n\nClick: open btop++"
+    TIP="GPU
+
+Usage: ${GPU_PCT}%
+Temp: ${GPU_T}°C
+
+Click: open btop++"
     printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
       "$(json_escape "$TEXT")" "$(json_escape "$TIP")" "gpu"
     ;;
@@ -265,21 +278,34 @@ case "$MODE" in
     RAM_PCT="$(ram_percent 2>/dev/null || echo 0)"
     RAM_H="$(ram_human 2>/dev/null || echo "n/a")"
     TEXT="${RAM_PCT}% 󰍛"
-    TIP="RAM\n\nUsage: ${RAM_PCT}%\n${RAM_H}\n\nClick: open btop++"
+    TIP="RAM
+
+Usage: ${RAM_PCT}%
+${RAM_H}
+
+Click: open btop++"
     printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
       "$(json_escape "$TEXT")" "$(json_escape "$TIP")" "ram"
     ;;
   cpu-temp)
     CPU_T="$(cpu_temp_c 2>/dev/null || echo 0)"
     TEXT="${CPU_T}° "
-    TIP="CPU Temp\n\n${CPU_T}°C\n\nClick: open btop++"
+    TIP="CPU Temp
+
+${CPU_T}°C
+
+Click: open btop++"
     printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
       "$(json_escape "$TEXT")" "$(json_escape "$TIP")" "cpu_temp"
     ;;
   gpu-temp)
     GPU_T="$(gpu_temp_c "$GPU_DEV" 2>/dev/null || echo 0)"
     TEXT="${GPU_T}° "
-    TIP="GPU Temp\n\n${GPU_T}°C\n\nClick: open btop++"
+    TIP="GPU Temp
+
+${GPU_T}°C
+
+Click: open btop++"
     printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
       "$(json_escape "$TEXT")" "$(json_escape "$TIP")" "gpu_temp"
     ;;
