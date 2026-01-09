@@ -220,7 +220,7 @@ in {
             
             modules-left = [ "sway/workspaces" ];
             modules-center = [ "clock" ];
-            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" ];
+            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "custom/power-menu" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -275,10 +275,10 @@ in {
             idle_inhibitor = {
               format = "{icon}";
               tooltip = true;
-              tooltip-format = "Anfetas: {status}";
+              tooltip-format = "Anfetas {status}";
               format-icons = {
-                activated = " ";
-                deactivated = "";
+                activated = " ";
+                deactivated = "";
               };
             };
 
@@ -289,6 +289,15 @@ in {
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-vpn-wg-client.sh ${pkgs.iproute2}/bin/ip";
               on-click = "${pkgs.kitty}/bin/kitty --title 'VPN toggle' -e ${pkgs.bash}/bin/bash -lc 'if ${pkgs.iproute2}/bin/ip link show wg-client >/dev/null 2>&1; then sudo ${pkgs.wireguard-tools}/bin/wg-quick down ~/.wireguard/wg-client.conf; else sudo ${pkgs.wireguard-tools}/bin/wg-quick up ~/.wireguard/wg-client.conf; fi; rc=$?; if [ $rc -eq 0 ]; then echo \"Bye bye!\"; sleep 3; exit 0; else echo \"VPN command failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
               tooltip = true;
+            };
+
+            # Power menu (same as ${hyper}+Shift+BackSpace)
+            "custom/power-menu" = {
+              interval = 3600;
+              exec = "${pkgs.coreutils}/bin/printf '⏻'";
+              on-click = "${config.home.homeDirectory}/.config/sway/scripts/power-menu.sh";
+              tooltip = true;
+              tooltip-format = "Power menu";
             };
           }
           # Dock bar removed: wlr/taskbar requires foreign-toplevel-manager protocol
@@ -326,7 +335,7 @@ in {
             
             modules-left = [ "sway/workspaces" ];
             modules-center = [ "clock" ];
-            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" ];
+            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "custom/power-menu" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -374,10 +383,10 @@ in {
             idle_inhibitor = {
               format = "{icon}";
               tooltip = true;
-              tooltip-format = "Anfetas: {status}";
+              tooltip-format = "Anfetas {status}";
               format-icons = {
-                activated = " ";
-                deactivated = "";
+                activated = " ";
+                deactivated = "";
               };
             };
 
@@ -387,6 +396,14 @@ in {
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-vpn-wg-client.sh ${pkgs.iproute2}/bin/ip";
               on-click = "${pkgs.kitty}/bin/kitty --title 'VPN toggle' -e ${pkgs.bash}/bin/bash -lc 'if ${pkgs.iproute2}/bin/ip link show wg-client >/dev/null 2>&1; then sudo ${pkgs.wireguard-tools}/bin/wg-quick down ~/.wireguard/wg-client.conf; else sudo ${pkgs.wireguard-tools}/bin/wg-quick up ~/.wireguard/wg-client.conf; fi; rc=$?; if [ $rc -eq 0 ]; then echo \"Bye bye!\"; sleep 3; exit 0; else echo \"VPN command failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
               tooltip = true;
+            };
+
+            "custom/power-menu" = {
+              interval = 3600;
+              exec = "${pkgs.coreutils}/bin/printf '⏻'";
+              on-click = "${config.home.homeDirectory}/.config/sway/scripts/power-menu.sh";
+              tooltip = true;
+              tooltip-format = "Power menu";
             };
           }
         ];
@@ -490,7 +507,9 @@ in {
       #custom-perf,
       #custom-notifications,
       #custom-flatpak-updates,
-      #custom-vpn {
+      #custom-vpn,
+      #custom-nixos-update,
+      #custom-power-menu {
         margin: 4px 4px;
         padding: 4px 12px;
         border-radius: 10px;
@@ -507,7 +526,9 @@ in {
       #custom-perf:hover,
       #custom-notifications:hover,
       #custom-flatpak-updates:hover,
-      #custom-vpn:hover {
+      #custom-vpn:hover,
+      #custom-nixos-update:hover,
+      #custom-power-menu:hover {
         background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
       }
 
@@ -534,6 +555,16 @@ in {
       }
       #custom-vpn.off {
         color: #${config.lib.stylix.colors.base04};
+      }
+
+      /* Anfetas (idle inhibitor): green when enabled, white when off */
+      #idle_inhibitor {
+        color: #${config.lib.stylix.colors.base07};
+      }
+
+      #idle_inhibitor.activated {
+        color: #${config.lib.stylix.colors.base0B};
+        background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
       }
 
       #custom-nixos-update {

@@ -36,14 +36,28 @@ if [[ "$count" == "0" ]]; then
 fi
 
 text="${icon} ${dot}"
-tooltip="Flatpak updates: ${count}\n\n${updates}"
+
+# Build a compact tooltip (avoid multi-line rendering issues in some setups)
+apps=""
+while IFS= read -r line; do
+  [[ -n "${line//[[:space:]]/}" ]] || continue
+  if [[ -z "$apps" ]]; then
+    apps="$line"
+  else
+    apps="${apps}, ${line}"
+  fi
+done <<<"$updates"
+
+tooltip="Flatpak updates: ${count} | Click: update"
+if [[ -n "$apps" ]]; then
+  tooltip="${tooltip} | Apps: ${apps}"
+fi
 
 # Minimal JSON escaping (quotes + backslashes + newlines)
 json_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
   s="${s//\"/\\\"}"
-  s="${s//$'\n'/\\n}"
   printf '%s' "$s"
 }
 

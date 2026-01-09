@@ -42,20 +42,19 @@ text="${icon} ${dot}"
 
 tip="Notifications: ${count}"
 if [[ "$dnd" == "true" ]]; then
-  tip="${tip}\nDND: on"
+  tip="${tip} | DND: on"
 else
-  tip="${tip}\nDND: off"
+  tip="${tip} | DND: off"
 fi
 if [[ "$inhibited" == "true" ]]; then
-  tip="${tip}\nInhibited: yes"
+  tip="${tip} | Inhibited: yes"
 fi
-tip="${tip}\n\nLeft click: open panel\nRight click: clear all"
+tip="${tip} | Click: open panel | Right click: clear"
 
 json_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
   s="${s//\"/\\\"}"
-  s="${s//$'\n'/\\n}"
   printf '%s' "$s"
 }
 

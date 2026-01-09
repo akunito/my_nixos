@@ -24,18 +24,19 @@ fi
 if [[ "$is_on" == "true" ]]; then
   text="${icon} ${dot}"
   cls="on"
-  tip="VPN: ON\n\nClick: toggle (down)"
+  tip="VPN: ON | Click: toggle (down)"
 else
   text="${icon}"
   cls="off"
-  tip="VPN: OFF\n\nClick: toggle (up)"
+  tip="VPN: OFF | Click: toggle (up)"
 fi
 
 json_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
   s="${s//\"/\\\"}"
-  s="${s//$'\n'/\\n}"
+  # Let JSON contain "\n" escapes so Waybar renders actual newlines in the tooltip.
+  # (We generate those escapes explicitly below; avoid double-escaping.)
   printf '%s' "$s"
 }
 
