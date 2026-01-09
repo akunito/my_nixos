@@ -29,8 +29,9 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
 - **Monitor/output layout saves are NixOS-safe**: if your Sway config is Home-Manager managed (symlink into `/nix/store`), SwayBG+ writes output lines to:
   - `~/.config/sway/swaybgplus-outputs.conf`
   - Sway includes this file so `swaymsg reload` applies it.
-- **Persistence is handled by systemd**: a user unit keeps wallpapers applied during the Sway session (it will re-apply if `swaybg` gets killed during Home-Manager/systemd reloads).
-- **Restore is startup-race safe**: the wallpaper ensure service re-sources `%t/sway-session.env` while waiting, auto-detects a live `SWAYSOCK` if missing, and waits briefly for `swaymsg` to become responsive before applying.
+- **Persistence is handled by systemd**: a user unit restores wallpapers at Sway session start.
+- **Home-Manager rebuild-safe**: Home-Manager activation can reload `systemd --user` and kill `swaybg`; this repo re-triggers wallpaper restore once after `reloadSystemd` when (and only when) a real Sway IPC socket is present.
+- **Restore is startup-race safe**: the restore wrapper re-sources `%t/sway-session.env` while waiting, auto-detects a live `SWAYSOCK` if missing, and waits briefly for `swaymsg` to become responsive before applying.
 - **Stylix containment is preserved**: when SwayBG+ is enabled, the Stylix-managed `swaybg` service is not started for Sway (avoids fighting wallpapers), while Plasma 6 containment remains unchanged.
 
 ## Where it lives
@@ -69,7 +70,7 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
   - If it exists, this is usually either:
     - **startup race** (restore ran before `SWAYSOCK`/outputs were ready), or
     - `swaybg` got killed during a **Home-Manager / systemd --user reload**
-  - This repo’s ensure service mitigates both by waiting for IPC readiness and re-applying when `swaybg` disappears.
+  - This repo mitigates both by waiting for IPC readiness and (on HM switch) triggering restore once after `reloadSystemd` if a live Sway IPC socket is detected.
   - Debug commands:
     - `systemctl --user status swaybgplus-restore.service`
     - `journalctl --user -u swaybgplus-restore.service -b`

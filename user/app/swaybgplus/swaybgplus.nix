@@ -2,11 +2,16 @@
 
 let
   swaybgplusPkg = pkgs.callPackage ../../pkgs/swaybgplus.nix { };
-  swaybgplusWallpaperEnsure = pkgs.writeShellScriptBin "swaybgplus-wallpaper-ensure" ''
+  swaybgplusRestoreWrapper = pkgs.writeShellScriptBin "swaybgplus-restore-wrapper" ''
     #!/bin/sh
     set -eu
 
     CFG="${config.xdg.stateHome}/swaybgplus/backgrounds/current_config.json"
+    # If there is no saved wallpaper config yet, do nothing and succeed.
+    if [ ! -r "$CFG" ]; then
+      exit 0
+    fi
+
     # Ensure required helpers are available even in a minimal systemd --user environment.
     export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.procps pkgs.sway pkgs.swaybg swaybgplusPkg ]}:$PATH"
 
@@ -14,13 +19,13 @@ let
     # We try (in order):
     # - %t/sway-session.env (if present)
     # - autodetect newest sway-ipc socket
-    # - if none, keep waiting (cold boot race) but never fail the session
+    # - if none, wait briefly (cold boot race), then exit successfully (don't break session)
     RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
     ENV_FILE="$RUNTIME_DIR/sway-session.env"
 
     wait_for_sway_ipc() {
       i=0
-      while [ "$i" -lt 240 ]; do
+      while [ "$i" -lt 240 ]; do  # up to ~60s
         # The env file may be created after we start; re-source it while waiting.
         if [ -r "$ENV_FILE" ]; then
           # shellcheck disable=SC1090
@@ -46,7 +51,7 @@ let
 
     wait_for_swaymsg() {
       i=0
-      while [ "$i" -lt 120 ]; do
+      while [ "$i" -lt 120 ]; do  # up to ~30s
         if swaymsg -t get_outputs -r >/dev/null 2>&1; then
           return 0
         fi
@@ -56,41 +61,16 @@ let
       return 1
     }
 
-    last_mtime=""
-    while :; do
-      # If there is no saved wallpaper config yet, do nothing (but keep running).
-      if [ ! -r "$CFG" ]; then
-        sleep 2
-        continue
-      fi
+    if ! wait_for_sway_ipc; then
+      echo "swaybgplus-restore: no live SWAYSOCK after waiting; skipping restore" >&2
+      exit 0
+    fi
+    if ! wait_for_swaymsg; then
+      echo "swaybgplus-restore: swaymsg not responsive yet; skipping restore" >&2
+      exit 0
+    fi
 
-      # Make sure Sway IPC is actually live.
-      if ! wait_for_sway_ipc; then
-        sleep 1
-        continue
-      fi
-      if ! wait_for_swaymsg; then
-        sleep 1
-        continue
-      fi
-
-      mtime="$(stat -c %Y "$CFG" 2>/dev/null || echo '')"
-      has_swaybg=false
-      if pgrep -x swaybg >/dev/null 2>&1; then
-        has_swaybg=true
-      fi
-
-      # Re-apply on either:
-      # - config change
-      # - swaybg got killed (common during user systemd reloads / HM switch)
-      if [ "$mtime" != "$last_mtime" ] || [ "$has_swaybg" != "true" ]; then
-        echo "swaybgplus: ensuring wallpaper (cfg_mtime=$mtime, had_swaybg=$has_swaybg)" >&2
-        "${swaybgplusPkg}/bin/swaybgplus" --restore || true
-        last_mtime="$mtime"
-      fi
-
-      sleep 2
-    done
+    exec "${swaybgplusPkg}/bin/swaybgplus" --restore
   '';
 in
 {
@@ -112,21 +92,42 @@ in
   # This is inert outside Sway because it only binds to sway-session.target.
   systemd.user.services.swaybgplus-restore = lib.mkIf (systemSettings.swaybgPlusEnable or false) {
     Unit = {
-      Description = "SwayBG+ ensure wallpapers (self-heals across HM rebuilds + reboot)";
+      Description = "SwayBG+ restore wallpapers";
       PartOf = [ "sway-session.target" ];
       After = [ "sway-session.target" "graphical-session.target" ];
     };
     Service = {
-      Type = "simple";
-      ExecStart = "${swaybgplusWallpaperEnsure}/bin/swaybgplus-wallpaper-ensure";
-      Restart = "always";
-      RestartSec = "2s";
+      Type = "oneshot";
+      ExecStart = "${swaybgplusRestoreWrapper}/bin/swaybgplus-restore-wrapper";
       EnvironmentFile = [ "-%t/sway-session.env" ];
     };
     Install = {
       WantedBy = [ "sway-session.target" ];
     };
   };
+
+  # Home-Manager activation reloads systemd --user and can kill background processes like swaybg.
+  # Re-run wallpaper restore once after HM activation when (and only when) we're in a real Sway session.
+  home.activation.swaybgplusRestoreAfterSwitch = lib.mkIf (systemSettings.swaybgPlusEnable or false) (
+    lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+      RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+      ENV_FILE="$RUNTIME_DIR/sway-session.env"
+      if [ -r "$ENV_FILE" ]; then
+        # shellcheck disable=SC1090
+        . "$ENV_FILE"
+      fi
+
+      # Only trigger restore when we're in a real Sway session (live IPC socket).
+      if [ -n "''${SWAYSOCK:-}" ] && [ -S "''${SWAYSOCK:-}" ]; then
+        ${pkgs.systemd}/bin/systemctl --user start swaybgplus-restore.service >/dev/null 2>&1 || true
+      else
+        CAND="$(ls -t "$RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -n1 || true)"
+        if [ -n "$CAND" ] && [ -S "$CAND" ]; then
+          ${pkgs.systemd}/bin/systemctl --user start swaybgplus-restore.service >/dev/null 2>&1 || true
+        fi
+      fi
+    ''
+  );
 }
 
 
