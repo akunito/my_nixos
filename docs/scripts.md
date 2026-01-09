@@ -92,7 +92,8 @@ This repository contains shell scripts for automating common tasks, system maint
 ```
 
 **Behavior**:
-- If the baseline file is missing/invalid/empty: **no-op**
+- If the baseline file is missing/invalid: **no-op**
+- If the baseline file exists but is empty (`[]`), it’s treated as **opted-in** and the script can offer **Snapshot** to populate it
 - If Flatpak can’t be queried reliably (missing command/timeout/error): **no-op** (prevents false “everything missing” on fresh installs)
 - If there’s drift: prints missing/extra per scope and offers:
   - Install missing (user/system)

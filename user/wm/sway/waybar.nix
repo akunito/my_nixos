@@ -75,10 +75,11 @@ let
         };
         
         pulseaudio = {
-          format = "{icon} {volume}%";
+          # Screenshot style: percent first, icon last
+          format = "{volume}% {icon}";
           format-bluetooth = "{icon} {volume}% {format_source}";
           format-bluetooth-muted = "󰂲 {format_source}";
-          format-muted = "󰝟";
+          format-muted = "0% 󰝟";
           format-source = "{volume}% 󰍬";
           format-source-muted = "󰍭";
           format-icons = {
@@ -92,7 +93,7 @@ let
           };
           # Use absolute store path so it works reliably under systemd (no PATH assumptions)
           on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
-          on-click-right = "pactl set-sink-mute @DEFAULT_SINK@ toggle";
+          on-click-right = "${pkgs.pulseaudio}/bin/pactl set-sink-mute @DEFAULT_SINK@ toggle";
         };
         
         network = {
@@ -109,7 +110,8 @@ let
             warning = 30;
             critical = 15;
           };
-          format = "{icon} {capacity}%";
+          # Screenshot style: percent first, icon last
+          format = "{capacity}% {icon}";
           format-charging = "󰂄 {capacity}%";
           format-plugged = "󰂄 {capacity}%";
           format-alt = "{icon} {time}";
@@ -218,9 +220,19 @@ in {
             height = 30;
             spacing = 4;
             
-            modules-left = [ "custom/perf" ];
+            modules-left = [
+              "battery"
+              "backlight"
+              "pulseaudio"
+              "custom/mic"
+              "custom/cpu"
+              "custom/gpu"
+              "custom/ram"
+              "custom/cpu-temp"
+              "custom/gpu-temp"
+            ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "battery" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "clock" "custom/power-menu" ];
+            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -232,12 +244,55 @@ in {
             tray = sharedModules.tray;
             # "sway/window" removed
 
-            "custom/perf" = {
+            backlight = {
+              # “Contrast” == brightness/backlight %
+              format = "{percent}% ◐";
+              scroll-step = 5;
+              tooltip = false;
+            };
+
+            # Microphone widget (percent + mic icon)
+            "custom/mic" = {
               return-type = "json";
               interval = 2;
-              # Run explicitly with Nix bash. Waybar is a systemd user service and may not have `bash` on PATH,
-              # so `/usr/bin/env bash` scripts can fail silently.
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-mic.sh ${pkgs.pulseaudio}/bin/pactl";
+              on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
+              tooltip = true;
+            };
+
+            # Split metrics (CPU/GPU/RAM/temps); click opens btop++
+            "custom/cpu" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+            "custom/gpu" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+            "custom/ram" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh ram";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+            "custom/cpu-temp" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu-temp";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+            "custom/gpu-temp" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu-temp";
               on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
               tooltip = true;
             };
@@ -333,9 +388,19 @@ in {
             height = 30;
             spacing = 4;
             
-            modules-left = [ "custom/perf" ];
+            modules-left = [
+              "battery"
+              "backlight"
+              "pulseaudio"
+              "custom/mic"
+              "custom/cpu"
+              "custom/gpu"
+              "custom/ram"
+              "custom/cpu-temp"
+              "custom/gpu-temp"
+            ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "battery" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "clock" "custom/power-menu" ];
+            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -347,10 +412,52 @@ in {
             tray = sharedModules.tray;
             # "sway/window" removed
 
-            "custom/perf" = {
+            backlight = {
+              format = "{percent}% ◐";
+              scroll-step = 5;
+              tooltip = false;
+            };
+
+            "custom/mic" = {
               return-type = "json";
               interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-perf.sh";
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-mic.sh ${pkgs.pulseaudio}/bin/pactl";
+              on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
+              tooltip = true;
+            };
+
+            "custom/cpu" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+            "custom/gpu" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+            "custom/ram" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh ram";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+            "custom/cpu-temp" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu-temp";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+              tooltip = true;
+            };
+            "custom/gpu-temp" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu-temp";
               on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
               tooltip = true;
             };
@@ -505,6 +612,12 @@ in {
       #mpd,
       #bluetooth,
       #custom-perf,
+      #custom-mic,
+      #custom-cpu,
+      #custom-gpu,
+      #custom-ram,
+      #custom-cpu-temp,
+      #custom-gpu-temp,
       #custom-notifications,
       #custom-flatpak-updates,
       #custom-vpn,
@@ -517,6 +630,28 @@ in {
         color: #${config.lib.stylix.colors.base07};
         transition: all 0.2s ease;
       }
+
+      /* Stylix color groups (left cluster) */
+      #battery,
+      #backlight,
+      #custom-ram {
+        color: #${config.lib.stylix.colors.base0A};
+      }
+
+      #pulseaudio,
+      #custom-mic {
+        color: #${config.lib.stylix.colors.base0C};
+      }
+
+      #custom-cpu,
+      #custom-cpu-temp {
+        color: #${config.lib.stylix.colors.base08};
+      }
+
+      #custom-gpu,
+      #custom-gpu-temp {
+        color: #${config.lib.stylix.colors.base0E};
+      }
       
       #clock:hover,
       #battery:hover,
@@ -524,6 +659,12 @@ in {
       #pulseaudio:hover,
       #bluetooth:hover,
       #custom-perf:hover,
+      #custom-mic:hover,
+      #custom-cpu:hover,
+      #custom-gpu:hover,
+      #custom-ram:hover,
+      #custom-cpu-temp:hover,
+      #custom-gpu-temp:hover,
       #custom-notifications:hover,
       #custom-flatpak-updates:hover,
       #custom-vpn:hover,
@@ -538,6 +679,31 @@ in {
         padding: 0;
         background-color: transparent;
         border-radius: 0;
+      }
+
+      /* Noise reduction: hide until hover (with state-based exceptions) */
+      window#waybar:not(:hover) #custom-notifications,
+      window#waybar:not(:hover) #tray {
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        opacity: 0;
+      }
+
+      /* VPN: hide when off unless hovered; show when on (handled by class) */
+      window#waybar:not(:hover) #custom-vpn.off {
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        opacity: 0;
+      }
+
+      /* Idle inhibitor: hide when deactivated unless hovered; keep when activated */
+      window#waybar:not(:hover) #idle_inhibitor:not(.activated) {
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        opacity: 0;
       }
 
       /* Collapse flatpak module when it's hidden (no updates) */
@@ -702,15 +868,42 @@ in {
       
       #clock,
       #battery,
+      #backlight,
       #network,
       #pulseaudio,
       #tray,
       #bluetooth,
       #custom-perf,
+      #custom-mic,
+      #custom-cpu,
+      #custom-gpu,
+      #custom-ram,
+      #custom-cpu-temp,
+      #custom-gpu-temp,
       #custom-notifications,
       #custom-flatpak-updates {
         padding: 0 10px;
         color: #ffffff;
+      }
+
+      /* Noise reduction: hide until hover (with state-based exceptions) */
+      window#waybar:not(:hover) #custom-notifications,
+      window#waybar:not(:hover) #tray {
+        min-width: 0;
+        padding: 0;
+        opacity: 0;
+      }
+
+      window#waybar:not(:hover) #custom-vpn.off {
+        min-width: 0;
+        padding: 0;
+        opacity: 0;
+      }
+
+      window#waybar:not(:hover) #idle_inhibitor:not(.activated) {
+        min-width: 0;
+        padding: 0;
+        opacity: 0;
       }
     '';
   };

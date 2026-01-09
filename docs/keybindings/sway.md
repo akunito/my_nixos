@@ -23,6 +23,7 @@ Complete reference for all SwayFX keybindings in this NixOS configuration.
 - [Workspace Navigation](#workspace-navigation)
 - [Window Management](#window-management)
 - [Application Shortcuts](#application-shortcuts)
+- [Media Keys](#media-keys)
 - [Screenshots](#screenshots)
 - [Utilities](#utilities)
 
@@ -91,6 +92,14 @@ The Hyper key is the primary modifier for all Sway keybindings. It's configured 
 ### Workspace Toggle
 
 - **`Mod4+Tab`** → Workspace back and forth (toggle between last two workspaces)
+
+## Media Keys
+
+### Volume
+
+- **`XF86AudioLowerVolume`** → Lower volume (`pactl set-sink-volume @DEFAULT_SINK@ -5%`)
+- **`XF86AudioRaiseVolume`** → Raise volume (`pactl set-sink-volume @DEFAULT_SINK@ +5%`)
+- **`XF86AudioMute`** → Mute toggle (`pactl set-sink-mute @DEFAULT_SINK@ toggle`)
 
 ## Workspace Navigation
 

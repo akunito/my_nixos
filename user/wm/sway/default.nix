@@ -2081,6 +2081,12 @@ in {
 
           # Lock screen (Meta/Super + l)
           "Mod4+l" = "exec ${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
+
+          # Media keys (volume)
+          # Note: Uses pactl (works with PulseAudio and PipeWire-Pulse)
+          "XF86AudioLowerVolume" = "exec ${pkgs.pulseaudio}/bin/pactl set-sink-volume @DEFAULT_SINK@ -5%";
+          "XF86AudioRaiseVolume" = "exec ${pkgs.pulseaudio}/bin/pactl set-sink-volume @DEFAULT_SINK@ +5%";
+          "XF86AudioMute" = "exec ${pkgs.pulseaudio}/bin/pactl set-sink-mute @DEFAULT_SINK@ toggle";
           
           # Screenshot workflow
           "${hyper}+Shift+x" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh full";
@@ -2361,6 +2367,11 @@ in {
       # DP-2 logical width: 1252, so HDMI-A-1 x = 2400 + 1252 = 3652
       # Align vertically with DP-2 (y = -876 or adjust for alignment)
       output "HDMI-A-1" {
+          # Disable by default to avoid "phantom" monitor area when the panel is usually OFF.
+          # If you physically turn it on and want to use it, either:
+          # - temporarily: `swaymsg output HDMI-A-1 enable`
+          # - permanently: remove this `disable` line
+          disable
           position 3652,-876
       }
 
@@ -2446,13 +2457,16 @@ in {
       layer_effects "waybar" corner_radius 0
 
       # NumLock (config-only; cannot be toggled via `swaymsg` at runtime)
-      # Use `*` for maximum compatibility across keyboards.
-      input * xkb_numlock enabled
+      #
+      # IMPORTANT: Use the official Sway form (`type:keyboard`) rather than `*`.
+      # In Sway, `input` matching supports `type:keyboard` and concrete identifiers.
+      input type:keyboard xkb_numlock enabled
       
       # Keyboard input configuration for polyglot typing (English/Spanish)
-      input "type:keyboard" {
+      input type:keyboard {
         xkb_layout "us"
         xkb_variant "altgr-intl"
+        xkb_numlock enabled
       }
       
       # Touchpad configuration
@@ -2704,6 +2718,16 @@ in {
   
   home.file.".config/sway/scripts/waybar-perf.sh" = {
     source = ./scripts/waybar-perf.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/waybar-metrics.sh" = {
+    source = ./scripts/waybar-metrics.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/waybar-mic.sh" = {
+    source = ./scripts/waybar-mic.sh;
     executable = true;
   };
 

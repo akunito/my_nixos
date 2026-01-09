@@ -161,11 +161,16 @@ flatpak_reconcile() {
   local repo_dir="${SCRIPT_DIR:-}"
   local profile="${PROFILE:-}"
   local silent="${SILENT_MODE:-false}"
+  local baseline_file=""
 
   if [ -z "$repo_dir" ] || [ -z "$profile" ]; then
     _flatpak_reconcile_log "flatpak-reconcile: missing SCRIPT_DIR/PROFILE; skipping."
     return 0
   fi
+
+  # Opt-in: only run if the baseline file exists for this profile (even if empty).
+  baseline_file="$repo_dir/profiles/${profile}-flatpaks.json"
+  [ -r "$baseline_file" ] || return 0
 
   local baseline_user baseline_system
   baseline_user="$(_flatpak_reconcile_read_baseline_scope "$repo_dir" "$profile" user 2>/dev/null || true)"
@@ -173,11 +178,6 @@ flatpak_reconcile() {
 
   baseline_user="$(printf "%s\n" "$baseline_user" | sed '/^[[:space:]]*$/d' | sort -u || true)"
   baseline_system="$(printf "%s\n" "$baseline_system" | sed '/^[[:space:]]*$/d' | sort -u || true)"
-
-  # If baseline is missing/empty, treat as "not configured" => no-op.
-  if [ -z "${baseline_user}${baseline_system}" ]; then
-    return 0
-  fi
 
   local installed_user installed_system
   local rc_user=0 rc_system=0
@@ -188,19 +188,31 @@ flatpak_reconcile() {
   installed_user="$(printf "%s\n" "$installed_user" | sed '/^[[:space:]]*$/d' | sort -u || true)"
   installed_system="$(printf "%s\n" "$installed_system" | sed '/^[[:space:]]*$/d' | sort -u || true)"
 
-  # If we couldn't reliably read installed lists, do nothing (avoid false "everything missing").
-  # We only proceed if each scope either:
-  # - was readable (rc==0), or
-  # - baseline for that scope is empty (so we don't care about it)
-  if { [ $rc_user -ne 0 ] && [ -n "$baseline_user" ]; } || { [ $rc_system -ne 0 ] && [ -n "$baseline_system" ]; }; then
+  local user_unreliable=false
+  local system_unreliable=false
+  [ $rc_user -ne 0 ] && user_unreliable=true
+  [ $rc_system -ne 0 ] && system_unreliable=true
+
+  # If we couldn't reliably read either scope, do nothing (no false results).
+  if [ "$user_unreliable" = true ] && [ "$system_unreliable" = true ]; then
     return 0
   fi
 
   local missing_user extra_user missing_system extra_system
-  missing_user="$(comm -23 <(printf "%s\n" "$baseline_user") <(printf "%s\n" "$installed_user") || true)"
-  extra_user="$(comm -13 <(printf "%s\n" "$baseline_user") <(printf "%s\n" "$installed_user") || true)"
-  missing_system="$(comm -23 <(printf "%s\n" "$baseline_system") <(printf "%s\n" "$installed_system") || true)"
-  extra_system="$(comm -13 <(printf "%s\n" "$baseline_system") <(printf "%s\n" "$installed_system") || true)"
+  if [ "$user_unreliable" = true ]; then
+    missing_user=""
+    extra_user=""
+  else
+    missing_user="$(comm -23 <(printf "%s\n" "$baseline_user" | sed '/^[[:space:]]*$/d') <(printf "%s\n" "$installed_user" | sed '/^[[:space:]]*$/d') || true)"
+    extra_user="$(comm -13 <(printf "%s\n" "$baseline_user" | sed '/^[[:space:]]*$/d') <(printf "%s\n" "$installed_user" | sed '/^[[:space:]]*$/d') || true)"
+  fi
+  if [ "$system_unreliable" = true ]; then
+    missing_system=""
+    extra_system=""
+  else
+    missing_system="$(comm -23 <(printf "%s\n" "$baseline_system" | sed '/^[[:space:]]*$/d') <(printf "%s\n" "$installed_system" | sed '/^[[:space:]]*$/d') || true)"
+    extra_system="$(comm -13 <(printf "%s\n" "$baseline_system" | sed '/^[[:space:]]*$/d') <(printf "%s\n" "$installed_system" | sed '/^[[:space:]]*$/d') || true)"
+  fi
 
   if [ -z "${missing_user}${extra_user}${missing_system}${extra_system}" ]; then
     return 0
@@ -209,6 +221,8 @@ flatpak_reconcile() {
   if [ "$silent" = true ]; then
     _flatpak_reconcile_log ""
     _flatpak_reconcile_log "Flatpak drift detected (silent mode):"
+    [ "$user_unreliable" = true ] && _flatpak_reconcile_log "  - user scope: unavailable (skipping)"
+    [ "$system_unreliable" = true ] && _flatpak_reconcile_log "  - system scope: unavailable (skipping)"
     [ -n "$missing_user" ] && _flatpak_reconcile_log "  - Missing (user): $(printf "%s" "$missing_user" | wc -l)"
     [ -n "$extra_user" ] && _flatpak_reconcile_log "  - Extra   (user): $(printf "%s" "$extra_user" | wc -l)"
     [ -n "$missing_system" ] && _flatpak_reconcile_log "  - Missing (system): $(printf "%s" "$missing_system" | wc -l)"
@@ -275,10 +289,19 @@ flatpak_reconcile() {
       ;;
     3)
       # Snapshot baseline file (explicit opt-in). Guard against overwriting with unknown/empty data.
-      local baseline_file="$repo_dir/profiles/${profile}-flatpaks.json"
-
       # If both installed lists are empty, require explicit confirmation to write empty.
-      if [ -z "${installed_user}${installed_system}" ]; then
+      local snapshot_user="$installed_user"
+      local snapshot_system="$installed_system"
+
+      # If a scope is unavailable, keep its current baseline (do not clobber with unknown/empty).
+      if [ "$user_unreliable" = true ]; then
+        snapshot_user="$baseline_user"
+      fi
+      if [ "$system_unreliable" = true ]; then
+        snapshot_system="$baseline_system"
+      fi
+
+      if [ -z "${snapshot_user}${snapshot_system}" ]; then
         _flatpak_reconcile_log "Installed Flatpak list is empty; refusing to overwrite baseline by default."
         printf "Force write empty baseline anyway? (y/N) "
         read -r yn || true
@@ -291,7 +314,7 @@ flatpak_reconcile() {
         esac
       fi
 
-      _flatpak_reconcile_write_baseline_json "$baseline_file" "$installed_user" "$installed_system" || {
+      _flatpak_reconcile_write_baseline_json "$baseline_file" "$snapshot_user" "$snapshot_system" || {
         _flatpak_reconcile_log "Failed to write baseline file: $baseline_file"
         return 0
       }
