@@ -220,7 +220,7 @@ in {
             
             modules-left = [ "sway/workspaces" ];
             modules-center = [ "clock" ];
-            modules-right = [ "custom/notifications" "tray" "pulseaudio" "battery" "custom/perf" "custom/flatpak-updates" ];
+            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/flatpak-updates" "tray" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -243,10 +243,11 @@ in {
             };
 
             # Notifications history (Sway Notification Center)
-            # `swaync-client -swb` streams JSON updates (waybar format) when notifications change.
+            # Icon-only (no counter), and hidden when there are no notifications.
             "custom/notifications" = {
               return-type = "json";
-              exec = "${pkgs.swaynotificationcenter}/bin/swaync-client -swb";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-notifications.sh ${pkgs.swaynotificationcenter}/bin/swaync-client";
               on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
               on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
               tooltip = true;
@@ -257,6 +258,27 @@ in {
               return-type = "json";
               interval = 1800; # 30min
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-flatpak-updates.sh ${pkgs.flatpak}/bin/flatpak";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'Flatpak update' -e ${pkgs.bash}/bin/bash -lc '${pkgs.flatpak}/bin/flatpak update -y; rc=$?; if [ $rc -eq 0 ]; then echo \"All Flatpaks updated. Bye bye!\"; sleep 3; exit 0; else echo \"Flatpak update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
+              tooltip = true;
+            };
+
+            # Coffee button: toggle idle inhibition (prevents swayidle screen blank/suspend logic that respects inhibit)
+            idle_inhibitor = {
+              format = "{icon}";
+              tooltip = true;
+              tooltip-format = "Anfetas: {status}";
+              format-icons = {
+                activated = " ";
+                deactivated = "";
+              };
+            };
+
+            # WireGuard VPN toggle (wg-quick)
+            "custom/vpn" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-vpn-wg-client.sh ${pkgs.iproute2}/bin/ip";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'VPN toggle' -e ${pkgs.bash}/bin/bash -lc 'if ${pkgs.iproute2}/bin/ip link show wg-client >/dev/null 2>&1; then sudo ${pkgs.wireguard-tools}/bin/wg-quick down ~/.wireguard/wg-client.conf; else sudo ${pkgs.wireguard-tools}/bin/wg-quick up ~/.wireguard/wg-client.conf; fi; rc=$?; if [ $rc -eq 0 ]; then echo \"Bye bye!\"; sleep 3; exit 0; else echo \"VPN command failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
               tooltip = true;
             };
           }
@@ -295,7 +317,7 @@ in {
             
             modules-left = [ "sway/workspaces" ];
             modules-center = [ "clock" ];
-            modules-right = [ "custom/notifications" "tray" "pulseaudio" "battery" "custom/perf" "custom/flatpak-updates" ];
+            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/flatpak-updates" "tray" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -317,7 +339,8 @@ in {
 
             "custom/notifications" = {
               return-type = "json";
-              exec = "${pkgs.swaynotificationcenter}/bin/swaync-client -swb";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-notifications.sh ${pkgs.swaynotificationcenter}/bin/swaync-client";
               on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
               on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
               tooltip = true;
@@ -327,6 +350,25 @@ in {
               return-type = "json";
               interval = 1800;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-flatpak-updates.sh ${pkgs.flatpak}/bin/flatpak";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'Flatpak update' -e ${pkgs.bash}/bin/bash -lc '${pkgs.flatpak}/bin/flatpak update -y; rc=$?; if [ $rc -eq 0 ]; then echo \"All Flatpaks updated. Bye bye!\"; sleep 3; exit 0; else echo \"Flatpak update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
+              tooltip = true;
+            };
+
+            idle_inhibitor = {
+              format = "{icon}";
+              tooltip = true;
+              tooltip-format = "Anfetas: {status}";
+              format-icons = {
+                activated = " ";
+                deactivated = "";
+              };
+            };
+
+            "custom/vpn" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-vpn-wg-client.sh ${pkgs.iproute2}/bin/ip";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'VPN toggle' -e ${pkgs.bash}/bin/bash -lc 'if ${pkgs.iproute2}/bin/ip link show wg-client >/dev/null 2>&1; then sudo ${pkgs.wireguard-tools}/bin/wg-quick down ~/.wireguard/wg-client.conf; else sudo ${pkgs.wireguard-tools}/bin/wg-quick up ~/.wireguard/wg-client.conf; fi; rc=$?; if [ $rc -eq 0 ]; then echo \"Bye bye!\"; sleep 3; exit 0; else echo \"VPN command failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
               tooltip = true;
             };
           }
@@ -430,7 +472,8 @@ in {
       #bluetooth,
       #custom-perf,
       #custom-notifications,
-      #custom-flatpak-updates {
+      #custom-flatpak-updates,
+      #custom-vpn {
         margin: 4px 4px;
         padding: 4px 12px;
         border-radius: 10px;
@@ -446,8 +489,40 @@ in {
       #bluetooth:hover,
       #custom-perf:hover,
       #custom-notifications:hover,
-      #custom-flatpak-updates:hover {
+      #custom-flatpak-updates:hover,
+      #custom-vpn:hover {
         background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
+      }
+
+      /* Collapse notifications module when it's hidden (no notifications) */
+      #custom-notifications.hidden {
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+        border-radius: 0;
+      }
+
+      /* Collapse flatpak module when it's hidden (no updates) */
+      #custom-flatpak-updates.hidden {
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+        border-radius: 0;
+      }
+
+      /* VPN state hint */
+      #custom-vpn.on {
+        color: #${config.lib.stylix.colors.base0B};
+        background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
+      }
+      #custom-vpn.off {
+        color: #${config.lib.stylix.colors.base04};
+      }
+
+      /* Perf turns red if CPU or GPU temp >= 80C */
+      #custom-perf.hot {
+        color: #${config.lib.stylix.colors.base08};
+        background-color: ${hexToRgba config.lib.stylix.colors.base08 "33"};
       }
       
       #clock {

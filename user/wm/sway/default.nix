@@ -412,6 +412,47 @@ PY
     '';
   };
 
+  # Start the kwallet-pam helper user service during Sway startup.
+  # Runtime evidence: plasma-kwallet-pam.service exists but was inactive in Sway sessions,
+  # which prevents pam credentials from being applied to unlock the wallet automatically.
+  sway-start-plasma-kwallet-pam = pkgs.writeShellApplication {
+    name = "sway-start-plasma-kwallet-pam";
+    runtimeInputs = with pkgs; [
+      systemd
+      dbus
+    ];
+    text = ''
+      #!/bin/bash
+      set -euo pipefail
+
+      # Don't fail the session if something is missing; just log.
+      if ! command -v systemctl >/dev/null 2>&1; then
+        echo "systemctl not found; cannot start plasma-kwallet-pam.service" | systemd-cat -t kwallet-pam -p warning
+        exit 0
+      fi
+
+      if ! systemctl --user cat plasma-kwallet-pam.service >/dev/null 2>&1; then
+        echo "plasma-kwallet-pam.service not found in user units" | systemd-cat -t kwallet-pam -p warning
+        exit 0
+      fi
+
+      # Start the helper (it will exit quickly after applying PAM creds).
+      systemctl --user start plasma-kwallet-pam.service >/dev/null 2>&1 || true
+      STATE="$(systemctl --user show plasma-kwallet-pam.service -p ActiveState -p SubState -p Result 2>/dev/null | tr '\n' ';' | sed 's/;*$//')"
+      echo "started plasma-kwallet-pam.service; state=$STATE" | systemd-cat -t kwallet-pam -p info
+
+      # Evidence probe: is the wallet open right now?
+      OUT6="$(dbus-send --session --print-reply --dest=org.kde.kwalletd6 /modules/kwalletd6 org.kde.KWallet.isOpen string:kdewallet 2>/dev/null || true)"
+      if echo "$OUT6" | grep -q "boolean true"; then
+        echo "kwalletd6 reports kdewallet is OPEN after plasma-kwallet-pam start" | systemd-cat -t kwallet-pam -p info
+      else
+        echo "kwalletd6 reports kdewallet is NOT open after plasma-kwallet-pam start (prompt may still appear)" | systemd-cat -t kwallet-pam -p warning
+      fi
+
+      exit 0
+    '';
+  };
+
   # DESK startup apps init script - shows KWallet GUI prompt with sticky/floating/on-top properties
   desk-startup-apps-init = pkgs.writeShellApplication {
     name = "desk-startup-apps-init";
@@ -2327,6 +2368,11 @@ in {
           command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
           always = false;  # Only run on initial startup, not on config reload
         }
+        # Apply PAM-provided credentials to KWallet in Sway sessions (non-Plasma).
+        {
+          command = "${sway-start-plasma-kwallet-pam}/bin/sway-start-plasma-kwallet-pam";
+          always = false;  # Only run on initial startup, not on config reload
+        }
         # Initialize swaysome and assign workspace groups to monitors
         # No 'always = true' - runs only on initial startup, not on config reload
         # This prevents jumping back to empty workspaces when editing config
@@ -2790,6 +2836,16 @@ in {
 
   home.file.".config/sway/scripts/waybar-flatpak-updates.sh" = {
     source = ./scripts/waybar-flatpak-updates.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/waybar-notifications.sh" = {
+    source = ./scripts/waybar-notifications.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/waybar-vpn-wg-client.sh" = {
+    source = ./scripts/waybar-vpn-wg-client.sh;
     executable = true;
   };
 

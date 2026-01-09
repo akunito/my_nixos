@@ -5,6 +5,7 @@ set -euo pipefail
 FLATPAK_BIN="${1:-flatpak}"
 
 icon="󰏓"
+dot=""
 
 if ! command -v "$FLATPAK_BIN" >/dev/null 2>&1; then
   # fall back to plain `flatpak` if a path was provided but isn't executable
@@ -34,7 +35,7 @@ if [[ "$count" == "0" ]]; then
   exit 0
 fi
 
-text="${icon} ${count}"
+text="${icon} ${dot}"
 tooltip="Flatpak updates: ${count}\n\n${updates}"
 
 # Minimal JSON escaping (quotes + backslashes + newlines)

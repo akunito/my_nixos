@@ -284,6 +284,14 @@ GPU_VRAM="$(gpu_vram_human "$GPU_DEV" 2>/dev/null || echo "n/a")"
 TEXT=" ${CPU_PCT}% 󰘚 ${GPU_PCT}% 󰍛 ${RAM_PCT}%  ${CPU_T}° 󰢮 ${GPU_T}°"
 TIP="Performance\n\nCPU: ${CPU_PCT}%  •  Load: ${LOAD}  •  Temp: ${CPU_T}°C\nRAM: ${RAM_PCT}%  •  ${RAM_H}\nGPU (RX 7800 XT): ${GPU_PCT}%  •  Temp: ${GPU_T}°C  •  VRAM: ${GPU_VRAM}"
 
-printf '{"text":"%s","tooltip":"%s"}\n' "$(json_escape "$TEXT")" "$(json_escape "$TIP")"
+THRESHOLD=80
+CLASS="normal"
+if [[ "${CPU_T:-0}" =~ ^[0-9]+$ ]] && [[ "${GPU_T:-0}" =~ ^[0-9]+$ ]]; then
+  if (( CPU_T >= THRESHOLD )) || (( GPU_T >= THRESHOLD )); then
+    CLASS="hot"
+  fi
+fi
+
+printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' "$(json_escape "$TEXT")" "$(json_escape "$TIP")" "$CLASS"
 
 
