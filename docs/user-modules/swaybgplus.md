@@ -30,6 +30,7 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
   - `~/.config/sway/swaybgplus-outputs.conf`
   - Sway includes this file so `swaymsg reload` applies it.
 - **Persistence is handled by systemd**: a user unit restores wallpapers at Sway session start; no “edit the sway config” scripts.
+- **Restore is startup-race safe**: the restore wrapper sources `%t/sway-session.env` when available, auto-detects a live `SWAYSOCK` if missing, and waits briefly for `swaymsg` to become responsive before applying.
 - **Stylix containment is preserved**: when SwayBG+ is enabled, the Stylix-managed `swaybg` service is not started for Sway (avoids fighting wallpapers), while Plasma 6 containment remains unchanged.
 
 ## Where it lives
@@ -61,6 +62,15 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
   - Run `swaymsg reload` to apply output changes
 
 ## Troubleshooting
+
+- **After rebuild/login the wallpaper is “gone” (but you already set one before)**
+  - Check whether the config still exists:
+    - `~/.local/state/swaybgplus/backgrounds/current_config.json`
+  - If it exists, this is usually a **startup race** (restore ran before `SWAYSOCK`/outputs were ready).
+  - This repo’s restore wrapper mitigates that by auto-detecting `SWAYSOCK` and waiting briefly for `swaymsg` readiness.
+  - Debug commands:
+    - `systemctl --user status swaybgplus-restore.service`
+    - `journalctl --user -u swaybgplus-restore.service -b`
 
 - **GUI opens but wallpaper doesn’t change**
   - Ensure you clicked **Apply** (Save is output config, not wallpaper).

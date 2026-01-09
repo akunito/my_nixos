@@ -2016,8 +2016,9 @@ in {
           "${hyper}+Shift+Return" = "exec ${config.home.homeDirectory}/.nix-profile/bin/desk-startup-apps-launcher";
           
           # Rofi Universal Launcher
-          "${hyper}+space" = "exec rofi -show combi -combi-modi 'drun,run,window' -show-icons";
-          "${hyper}+BackSpace" = "exec rofi -show combi -combi-modi 'drun,run,window' -show-icons";
+          # Use rofi's configured combi-modi (includes apps/run/window/filebrowser/calc/emoji/power)
+          "${hyper}+space" = "exec rofi -show combi -show-icons";
+          "${hyper}+BackSpace" = "exec rofi -show combi -show-icons";
           # Note: Removed "${hyper}+d" to avoid conflict with application bindings
           # Use "${hyper}+space" or "${hyper}+BackSpace" for rofi launcher
           
@@ -2036,8 +2037,9 @@ in {
           # Rofi inherits Stylix colors automatically via existing rofi.nix configuration
           # Default: grouped app -> window picker (less noisy when apps have multiple windows)
           "${hyper}+Tab" = "exec ${config.home.homeDirectory}/.config/sway/scripts/window-overview-grouped.sh";
-          # Fallback: raw rofi window mode grid (kept for quick comparison / debugging)
-          "${hyper}+Shift+Tab" = "exec rofi -show window -theme-str 'window {width: 60%;} listview {columns: 3; lines: 6; fixed-height: true;} element {orientation: vertical; padding: 10px;} element-icon {size: 48px;}'";
+          # Power menu (rofi script-mode)
+          # Replaces the previous ${hyper}+Shift+Tab fallback binding.
+          "${hyper}+Shift+Tab" = "exec rofi -show power -show-icons";
           
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
@@ -2652,6 +2654,11 @@ in {
 
   home.file.".config/sway/scripts/window-overview-grouped.sh" = {
     source = ./scripts/window-overview-grouped.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/rofi-power-mode.sh" = {
+    source = ./scripts/rofi-power-mode.sh;
     executable = true;
   };
   

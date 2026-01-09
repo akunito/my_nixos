@@ -215,7 +215,7 @@ in {
     # Migrate existing config.rasi settings to extraConfig
     extraConfig = {
       columns = 1;
-      combi-modi = "drun,run,window,filebrowser,calc,emoji";
+      combi-modi = "drun,run,window,filebrowser,calc,emoji,power";
       display-combi = "";
       display-window = "";
       filebrowser-dir = "~";
@@ -224,7 +224,8 @@ in {
       icon-theme = "Papirus";
       lines = 12;
       location = 0;
-      modi = "combi,drun,run,window,calc,emoji";
+      # Script mode for power actions (integrates into combi via combi-modi)
+      modi = "combi,drun,run,window,filebrowser,calc,emoji,power:${config.home.homeDirectory}/.config/sway/scripts/rofi-power-mode.sh";
       show-icons = true;
       show-match = true;
       sidebar-mode = false;
