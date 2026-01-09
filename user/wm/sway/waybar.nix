@@ -295,7 +295,7 @@ in {
             "custom/power-menu" = {
               interval = 3600;
               exec = "${pkgs.coreutils}/bin/printf '⏻'";
-              on-click = "${config.home.homeDirectory}/.config/sway/scripts/power-menu.sh";
+              on-click = "${config.home.homeDirectory}/.config/sway/scripts/rofi-power-launch.sh";
               tooltip = true;
               tooltip-format = "Power menu";
             };
@@ -401,7 +401,7 @@ in {
             "custom/power-menu" = {
               interval = 3600;
               exec = "${pkgs.coreutils}/bin/printf '⏻'";
-              on-click = "${config.home.homeDirectory}/.config/sway/scripts/power-menu.sh";
+              on-click = "${config.home.homeDirectory}/.config/sway/scripts/rofi-power-launch.sh";
               tooltip = true;
               tooltip-format = "Power menu";
             };

@@ -2018,9 +2018,8 @@ in {
           # Rofi Universal Launcher
           # Use rofi's configured combi-modi (includes apps/run/window/filebrowser/calc/emoji/power)
           "${hyper}+space" = "exec rofi -show combi -show-icons";
-          "${hyper}+BackSpace" = "exec rofi -show combi -show-icons";
           # Note: Removed "${hyper}+d" to avoid conflict with application bindings
-          # Use "${hyper}+space" or "${hyper}+BackSpace" for rofi launcher
+          # Use "${hyper}+space" for rofi launcher
           
           # Rofi Calculator (with -no-show-match -no-sort for better UX)
           "${hyper}+x" = "exec rofi -show calc -modi calc -no-show-match -no-sort";
@@ -2037,9 +2036,6 @@ in {
           # Rofi inherits Stylix colors automatically via existing rofi.nix configuration
           # Default: grouped app -> window picker (less noisy when apps have multiple windows)
           "${hyper}+Tab" = "exec ${config.home.homeDirectory}/.config/sway/scripts/window-overview-grouped.sh";
-          # Power menu (rofi script-mode)
-          # Replaces the previous ${hyper}+Shift+Tab fallback binding.
-          "${hyper}+Shift+Tab" = "exec rofi -show power -show-icons";
           
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
@@ -2157,7 +2153,7 @@ in {
           "${hyper}+Shift+v" = "exec sh -c '${pkgs.cliphist}/bin/cliphist list | ${pkgs.rofi}/bin/rofi -dmenu | ${pkgs.cliphist}/bin/cliphist decode | ${pkgs.wl-clipboard}/bin/wl-copy'";
           
           # Power menu
-          "${hyper}+Shift+BackSpace" = "exec ${config.home.homeDirectory}/.config/sway/scripts/power-menu.sh";
+          "${hyper}+Shift+BackSpace" = "exec rofi -show power -show-icons";
           
           # Toggle SwayFX default bar (swaybar) - disabled by default, can be toggled manually
           "${hyper}+Shift+Home" = "exec ${config.home.homeDirectory}/.config/sway/scripts/swaybar-toggle.sh";
@@ -2661,6 +2657,11 @@ in {
     source = ./scripts/rofi-power-mode.sh;
     executable = true;
   };
+
+  home.file.".config/sway/scripts/rofi-power-launch.sh" = {
+    source = ./scripts/rofi-power-launch.sh;
+    executable = true;
+  };
   
   home.file.".config/sway/scripts/waybar-perf.sh" = {
     source = ./scripts/waybar-perf.sh;
@@ -2687,10 +2688,6 @@ in {
     executable = true;
   };
 
-  home.file.".config/sway/scripts/power-menu.sh" = {
-    source = ./scripts/power-menu.sh;
-    executable = true;
-  };
   
   home.file.".config/sway/scripts/swaysome-init.sh" = {
     source = ./scripts/swaysome-init.sh;
