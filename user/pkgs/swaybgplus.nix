@@ -5,6 +5,7 @@
 , wrapGAppsHook3
 , python3
 , gtk3
+, gobject-introspection
 , swaybg
 }:
 
@@ -30,6 +31,7 @@ stdenvNoCC.mkDerivation rec {
   # Needed so GI can load Gtk typelibs ("Gtk-3.0.typelib") and so GTK apps get a sane runtime env.
   buildInputs = [
     gtk3
+    gobject-introspection
   ];
 
   nativeBuildInputs = [
@@ -73,7 +75,7 @@ def main():
         "cwd": os.getcwd(),
         "env": {k: os.environ.get(k, "") for k in [
             "WAYLAND_DISPLAY","DISPLAY","SWAYSOCK","XDG_RUNTIME_DIR","XDG_CURRENT_DESKTOP","XDG_SESSION_TYPE",
-            "GDK_BACKEND","XDG_CONFIG_HOME","HOME"
+            "GDK_BACKEND","XDG_CONFIG_HOME","HOME","GI_TYPELIB_PATH"
         ]},
     })
 
@@ -121,11 +123,13 @@ PY
     # CLI wrapper
     makeWrapper ${pythonEnv}/bin/python3 $out/bin/swaybgplus \
       --add-flags "$out/share/swaybgplus/swaybgplus_cli.py" \
+      --prefix GI_TYPELIB_PATH : "${lib.makeSearchPath "lib/girepository-1.0" [ gtk3 gobject-introspection ]}" \
       --prefix PATH : ${lib.makeBinPath [ swaybg ]}
 
     # GUI wrapper
     makeWrapper ${pythonEnv}/bin/python3 $out/bin/swaybgplus-gui \
       --add-flags "$out/share/swaybgplus/_agent_gui_wrapper.py" \
+      --prefix GI_TYPELIB_PATH : "${lib.makeSearchPath "lib/girepository-1.0" [ gtk3 gobject-introspection ]}" \
       --prefix PATH : ${lib.makeBinPath [ swaybg ]}
 
     runHook postInstall

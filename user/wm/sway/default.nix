@@ -436,6 +436,18 @@ PY
         exit 0
       fi
 
+      # The service needs to know where the PAM socket is.
+      # Runtime evidence showed the user systemd environment does not contain PAM_KWALLET* vars.
+      # We set it explicitly to the canonical path in %t (XDG_RUNTIME_DIR).
+      RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+      SOCKET_PATH="$RUNTIME_DIR/kwallet5.socket"
+      systemctl --user set-environment "PAM_KWALLET5_LOGIN=$SOCKET_PATH" >/dev/null 2>&1 || true
+      if [ -S "$SOCKET_PATH" ]; then
+        echo "PAM_KWALLET5_LOGIN socket exists at $SOCKET_PATH" | systemd-cat -t kwallet-pam -p info
+      else
+        echo "PAM_KWALLET5_LOGIN socket missing at $SOCKET_PATH (pam_kwallet auth may not have run; unlock may fail)" | systemd-cat -t kwallet-pam -p warning
+      fi
+
       # Start the helper (it will exit quickly after applying PAM creds).
       systemctl --user start plasma-kwallet-pam.service >/dev/null 2>&1 || true
       STATE="$(systemctl --user show plasma-kwallet-pam.service -p ActiveState -p SubState -p Result 2>/dev/null | tr '\n' ';' | sed 's/;*$//')"
