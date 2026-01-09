@@ -681,6 +681,7 @@ EOF
   } ++ lib.optional (
     systemSettings.stylixEnable == true
     && (systemSettings.swaybgPlusEnable or false) != true
+    && (systemSettings.swwwEnable or false) != true
     && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)
   ) {
     name = "swaybg";
@@ -1763,6 +1764,7 @@ in {
     ../../app/gaming/mangohud.nix
     ../../app/ai/aichat.nix
     ../../app/swaybgplus/swaybgplus.nix
+    ../../app/swww/swww.nix
     ../../shell/sh.nix
   ];
 
@@ -1965,6 +1967,7 @@ in {
   systemd.user.services.swaybg = lib.mkIf (useSystemdSessionDaemons
     && systemSettings.stylixEnable == true
     && (systemSettings.swaybgPlusEnable or false) != true
+    && (systemSettings.swwwEnable or false) != true
     && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)
   ) {
     Unit = {

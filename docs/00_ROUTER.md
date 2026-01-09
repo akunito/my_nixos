@@ -16,9 +16,11 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | user-modules.plasma6 | Plasma 6 configuration integration for NixOS/Home Manager with export/import and symlink-based mutability. | plasma6, kde, desktop, home-manager, configuration | user/wm/plasma6/** |
 | user-modules.ranger | Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo. | ranger, tui, file-manager, user-modules | user/app/ranger/** |
 | user-modules.rofi | Rofi configuration (Stylix-templated theme, unified combi launcher, power script-mode, and grouped window overview). | rofi, launcher, sway, swayfx, wayland, stylix, base16, scripts | user/wm/sway/rofi.nix |
+| user-modules.stylix-containment | Stylix theming containment in this repo (Sway gets Stylix; Plasma 6 does not) via env isolation + session-scoped systemd. | stylix, sway, swayfx, plasma6, qt, gtk, containment, systemd-user, home-manager | user/style/stylix.nix |
 | user-modules.sway-daemon-integration | Sway session services are managed via systemd --user units bound to sway-session.target (official/systemd approach; no custom daemon-manager). | sway, swayfx, systemd-user, waybar, home-manager, session | user/wm/sway/** |
 | user-modules.sway-to-hyprland-migration | Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions. | sway, swayfx, hyprland, migration, wayland, workspaces | user/wm/hyprland/** |
 | user-modules.swaybgplus | GUI multi-monitor wallpapers for SwayFX/Wayland via SwayBG+ (Home-Manager/NixOS-safe; no Stylix/Plasma conflicts). | sway, swayfx, wayland, wallpapers, swaybg, home-manager, stylix, systemd-user, gtk3 | user/pkgs/swaybgplus.nix |
+| user-modules.swww | Robust wallpapers for SwayFX via swww (daemon + oneshot restore; rebuild/reboot safe; no polling/flicker). | swww, sway, swayfx, wayland, wallpapers, systemd-user, home-manager, stylix | user/app/swww/** |
 | user-modules.xmonad | XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo. | xmonad, x11, window-manager, haskell, user-modules | user/wm/xmonad/** |
 
 ## Notes

@@ -6,6 +6,7 @@ in
     ../../app/terminal/alacritty.nix
     ../../app/terminal/kitty.nix
     ../../app/swaybgplus/swaybgplus.nix
+    ../../app/swww/swww.nix
     (import ../../app/dmenu-scripts/networkmanager-dmenu.nix {
       dmenu_command = "fuzzel -d"; inherit config lib pkgs;
     })
@@ -68,7 +69,7 @@ in
       exec-once = sleep 5 && libinput-gestures
       exec-once = obs-notification-mute-daemon
 
-      exec-once = hyprpaper
+      ${lib.optionalString ((systemSettings.swwwEnable or false) != true) "exec-once = hyprpaper"}
 
       bezier = wind, 0.05, 0.9, 0.1, 1.05
       bezier = winIn, 0.1, 1.1, 0.1, 1.0

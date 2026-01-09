@@ -13,8 +13,9 @@
     gpuType = "amd";
     amdLACTdriverEnable = true;
 
-    # Wallpapers (Sway/SwayFX): use SwayBG+ (GUI/CLI) instead of Stylix-managed swaybg service
-    swaybgPlusEnable = true;
+    # Wallpapers (Sway/SwayFX): use swww (daemon + oneshot restore; robust across reboot + HM rebuilds)
+    swwwEnable = true;
+    swaybgPlusEnable = false;
     
     kernelModules = [ 
       "i2c-dev" 

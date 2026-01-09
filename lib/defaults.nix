@@ -180,6 +180,7 @@
     xboxControllerEnable = false;
     appImageEnable = false;
     swaybgPlusEnable = false; # Enable SwayBG+ (GUI/CLI wallpaper manager) and disable Stylix swaybg service when active
+    swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     swayPrimaryMonitor = null;  # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
     
     # Font defaults - will be computed based on systemStable in flake-base.nix

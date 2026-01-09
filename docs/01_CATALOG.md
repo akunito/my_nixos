@@ -172,6 +172,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
 - **user/app/ranger/ranger.nix**: this lets my copy and paste images and/or plaintext of files directly out of ranger
 - **user/app/swaybgplus/swaybgplus.nix**: !/bin/sh *Enabled when:* `systemSettings.swaybgPlusEnable or false`
+- **user/app/swww/swww.nix**: !/bin/sh *Enabled when:*
+   - `wallpaper backend for SwayFX`
+   - `SwayFX`
+   - `lib.hm.dag.entryAfter [ "reloadSystemd" ] '' RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" ENV_FILE="$RUNTIME_DIR/sway-session.env" if [ -r "$ENV_FILE" ]; then # shellcheck disable=SC1090 . "$ENV_FILE" fi if [ -n "''${SWAYSOCK:-}" ] && [ -S "''${SWAYSOCK:-}" ]; then ${pkgs.systemd}/bin/systemctl --user start swww-restore.service >/dev/null 2>&1 || true else CAND="$(ls -t "$RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -n1 || true)" if [ -n "$CAND" ] && [ -S "$CAND" ]; then ${pkgs.systemd}/bin/systemctl --user start swww-restore.service >/dev/null 2>&1 || true fi fi ''`
 - **user/app/terminal/alacritty.nix**: Explicitly install JetBrains Mono Nerd Font to ensure it's available *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/fix-terminals.nix**: Python script to configure VS Code and Cursor terminal keybindings
 - **user/app/terminal/kitty.nix**: Explicitly install JetBrains Mono Nerd Font to ensure it's available *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
@@ -230,7 +234,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `Qt6`
    - `useSystemdSessionDaemons && ( lib.hasInfix "laptop" (lib.toLower systemSettings.hostname) || lib.hasInfix "yoga" (lib.toLower systemSettings.hostname) )`
    - `useSystemdSessionDaemons && systemSettings.sunshineEnable == true`
-   - `useSystemdSessionDaemons && systemSettings.stylixEnable == true && (systemSettings.swaybgPlusEnable or false) != true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+   - `useSystemdSessionDaemons && systemSettings.stylixEnable == true && (systemSettings.swaybgPlusEnable or false) != true && (systemSettings.swwwEnable or false) != true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
    - `Waybar timeouts`
    - `systemSettings.stylixEnable == true`
    - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
@@ -306,7 +310,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/plasma6.md**: Plasma 6 configuration integration for NixOS/Home Manager with export/import and symlink-based mutability.
 - **docs/user-modules/ranger.md**: Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo.
 - **docs/user-modules/rofi.md**: Rofi configuration (Stylix-templated theme, unified combi launcher, power script-mode, and grouped window overview).
+- **docs/user-modules/stylix-containment.md**: Stylix theming containment in this repo (Sway gets Stylix; Plasma 6 does not) via env isolation + session-scoped systemd.
 - **docs/user-modules/sway-daemon-integration.md**: Sway session services are managed via systemd --user units bound to sway-session.target (official/systemd approach; no custom daemon-manager).
 - **docs/user-modules/sway-to-hyprland-migration.md**: Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions.
 - **docs/user-modules/swaybgplus.md**: GUI multi-monitor wallpapers for SwayFX/Wayland via SwayBG+ (Home-Manager/NixOS-safe; no Stylix/Plasma conflicts).
+- **docs/user-modules/swww.md**: Robust wallpapers for SwayFX via swww (daemon + oneshot restore; rebuild/reboot safe; no polling/flicker).
 - **docs/user-modules/xmonad.md**: XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo.

@@ -218,9 +218,9 @@ in {
             height = 30;
             spacing = 4;
             
-            modules-left = [ "sway/workspaces" ];
-            modules-center = [ "clock" ];
-            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "custom/power-menu" ];
+            modules-left = [ "custom/perf" ];
+            modules-center = [ "sway/workspaces" ];
+            modules-right = [ "battery" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -333,9 +333,9 @@ in {
             height = 30;
             spacing = 4;
             
-            modules-left = [ "sway/workspaces" ];
-            modules-center = [ "clock" ];
-            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "custom/power-menu" ];
+            modules-left = [ "custom/perf" ];
+            modules-center = [ "sway/workspaces" ];
+            modules-right = [ "battery" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
