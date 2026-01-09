@@ -2034,7 +2034,10 @@ in {
           # Using Rofi in window mode with grid layout for stable workspace overview
           # Grid layout: 3 columns, large icons (48px), vertical orientation
           # Rofi inherits Stylix colors automatically via existing rofi.nix configuration
-          "${hyper}+Tab" = "exec rofi -show window -theme-str 'window {width: 60%;} listview {columns: 3; lines: 6; fixed-height: true;} element {orientation: vertical; padding: 10px;} element-icon {size: 48px;}'";
+          # Default: grouped app -> window picker (less noisy when apps have multiple windows)
+          "${hyper}+Tab" = "exec ${config.home.homeDirectory}/.config/sway/scripts/window-overview-grouped.sh";
+          # Fallback: raw rofi window mode grid (kept for quick comparison / debugging)
+          "${hyper}+Shift+Tab" = "exec rofi -show window -theme-str 'window {width: 60%;} listview {columns: 3; lines: 6; fixed-height: true;} element {orientation: vertical; padding: 10px;} element-icon {size: 48px;}'";
           
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
@@ -2644,6 +2647,11 @@ in {
   
   home.file.".config/sway/scripts/window-move.sh" = {
     source = ./scripts/window-move.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/window-overview-grouped.sh" = {
+    source = ./scripts/window-overview-grouped.sh;
     executable = true;
   };
   

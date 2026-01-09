@@ -7,7 +7,7 @@ let
     set -eu
 
     # If there is no saved wallpaper config yet, do nothing and succeed.
-    CFG="${config.home.homeDirectory}/.config/sway/backgrounds/current_config.json"
+    CFG="${config.xdg.stateHome}/swaybgplus/backgrounds/current_config.json"
     if [ ! -r "$CFG" ]; then
       exit 0
     fi

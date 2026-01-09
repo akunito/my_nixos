@@ -53,7 +53,7 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
   - Run `swaybgplus-gui`
   - “Load Image” → pick a file
   - Click **Apply** → wallpaper is applied immediately
-  - Persistence file is written to `~/.config/sway/backgrounds/current_config.json` (used by restore service)
+  - Persistence file is written to `~/.local/state/swaybgplus/backgrounds/current_config.json` (used by restore service; survives HM rebuilds)
 
 - **Set per-output positions/resolution/scale**:
   - Adjust outputs in the GUI
@@ -65,7 +65,7 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
 - **GUI opens but wallpaper doesn’t change**
   - Ensure you clicked **Apply** (Save is output config, not wallpaper).
   - Verify persistence exists:
-    - `~/.config/sway/backgrounds/current_config.json`
+    - `~/.local/state/swaybgplus/backgrounds/current_config.json`
 
 - **Saving output config fails / read-only errors**
   - On Home-Manager, `~/.config/sway/config` is commonly a symlink into `/nix/store`.

@@ -232,7 +232,7 @@
     dotfilesDir = "/home/akunito/.dotfiles";
     extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
     
-    theme = "miramare";
+    theme = "ashes";
     wm = "plasma6";
     wmEnableHyprland = false;  # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
     

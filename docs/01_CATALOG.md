@@ -221,6 +221,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/plasma6/plasma6.nix**: ++ lib.optional userSettings.wmEnableHyprland (./. + "/../hyprland/hyprland_noStylix.nix")
 - **user/wm/sway/debug-qt5ct.nix**: Debug logging function for NDJSON format
 - **user/wm/sway/debug-relog.nix**: Keep logging implementation centralized via existing helper script.
+- **user/wm/sway/debug/relog-instrumentation.nix**: NDJSON sink for this repo (debug-mode compatible).
 - **user/wm/sway/default.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
    - `programs.waybar.systemd.enable = true`
    - `ExecStart is required`

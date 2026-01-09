@@ -157,6 +157,39 @@ def patch_background_manager():
     # Disable upstream "startup script" injection into sway config; we manage restore via systemd user service.
     bm_path = "background_manager.py"
     bm = open(bm_path, "r", encoding="utf-8").read()
+
+    # Persist wallpaper state under XDG_STATE_HOME so Home-Manager rebuilds don't clobber it.
+    # Keep legacy compatibility by migrating from ~/.config/sway/backgrounds on first run.
+    bm = bm.replace(
+        '        self.config_dir = os.path.expanduser("~/.config/sway/backgrounds")',
+        '        state_home = os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))\n'
+        '        self.config_dir = os.path.join(state_home, "swaybgplus", "backgrounds")',
+        1,
+    )
+    if "legacy_dir = os.path.expanduser(\"~/.config/sway/backgrounds\")" not in bm:
+        bm = bm.replace(
+            "        self.ensure_config_dir()",
+            "        self.ensure_config_dir()\n"
+            "\n"
+            "        # Migrate legacy config (~/.config/sway/backgrounds) -> XDG_STATE_HOME/swaybgplus/backgrounds\n"
+            "        legacy_dir = os.path.expanduser(\"~/.config/sway/backgrounds\")\n"
+            "        try:\n"
+            "            legacy_cfg = os.path.join(legacy_dir, \"current_config.json\")\n"
+            "            new_cfg = os.path.join(self.config_dir, \"current_config.json\")\n"
+            "            if os.path.exists(legacy_cfg) and not os.path.exists(new_cfg):\n"
+            "                os.makedirs(self.config_dir, exist_ok=True)\n"
+            "                shutil.copy2(legacy_cfg, new_cfg)\n"
+            "                for f in os.listdir(legacy_dir):\n"
+            "                    if f.endswith((\".png\", \".jpg\", \".jpeg\")) and f != \"current_config.json\":\n"
+            "                        src = os.path.join(legacy_dir, f)\n"
+            "                        dst = os.path.join(self.config_dir, f)\n"
+            "                        if os.path.exists(src) and not os.path.exists(dst):\n"
+            "                            shutil.copy2(src, dst)\n"
+            "        except Exception:\n"
+            "            pass",
+            1,
+        )
+
     bm = bm.replace(
         "            # Create startup script\n            self.create_startup_script()\n",
         "            # Startup integration is handled by systemd (swaybgplus-restore.service); do not edit sway config.\n",

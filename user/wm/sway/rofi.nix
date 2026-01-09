@@ -217,6 +217,7 @@ in {
       columns = 1;
       combi-modi = "drun,run,window,filebrowser,calc,emoji";
       display-combi = "";
+      display-window = "";
       filebrowser-dir = "~";
       fixed-num-lines = true;
       font = "JetBrainsMono Nerd Font 14";
@@ -229,6 +230,7 @@ in {
       sidebar-mode = false;
       terminal = "${userSettings.term}";
       width = 38;
+      window-format = "{t}";
       xoffset = 0;
       yoffset = 0;
     };

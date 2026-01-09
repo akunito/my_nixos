@@ -110,7 +110,7 @@ This run targets the case where **systemd-first is enabled** but on logout→log
 
 ### Instrumentation added (temporary)
 
-- `user/wm/sway/debug-relog.nix` (imported by `user/wm/sway/default.nix`)
+- `user/wm/sway/debug/relog-instrumentation.nix` (kept unlinked by default; can be imported/wired during regressions)
   - Wraps the two Sway startup commands:
     - env snapshot writer → `write-sway-session-env-debug`
     - `systemctl --user start sway-session.target` → `sway-session-start-debug` (records duration + unit states)
