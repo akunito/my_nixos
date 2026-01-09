@@ -9,6 +9,7 @@
   systemSettings = {
     hostname = "nixosaku";
     profile = "personal";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK -s -u";
     gpuType = "amd";
     amdLACTdriverEnable = true;
 

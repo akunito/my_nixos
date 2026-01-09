@@ -20,15 +20,19 @@ RESET='\033[0m'
 
 #
 # Argument parsing
-# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent]
-# - Also supports -s/--silent anywhere without breaking positional parsing.
+# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent] [-u|--update]
+# - Also supports -s/--silent and -u/--update anywhere without breaking positional parsing.
 #
 SILENT_MODE=false
+UPDATE_FLAKE_LOCK=false
 POSITIONAL_ARGS=()
 for arg in "$@"; do
     case "$arg" in
         -s|--silent)
             SILENT_MODE=true
+            ;;
+        -u|--update)
+            UPDATE_FLAKE_LOCK=true
             ;;
         *)
             POSITIONAL_ARGS+=("$arg")
@@ -104,8 +108,8 @@ if [ ${#POSITIONAL_ARGS[@]} -gt 1 ]; then
     PROFILE="${POSITIONAL_ARGS[1]}"
 else
     echo -e "${RED}Error: PROFILE parameter is required${RESET}"
-    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent]"
-    echo "Example: $0 /path/to/repo HOME -s"
+    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent] [-u|--update]"
+    echo "Example: $0 /path/to/repo HOME -s -u"
     echo "Where HOME indicates the right flake to use, in this case: flake.HOME.nix"
     echo ""
     list_available_profiles "$SCRIPT_DIR"
@@ -602,6 +606,13 @@ switch_flake_profile_nix() {
 update_flake_lock() {
     local SCRIPT_DIR=$1
     local SILENT_MODE=$2
+    local UPDATE_FLAKE_LOCK=$3
+
+    if [ "$UPDATE_FLAKE_LOCK" = true ]; then
+        echo -e "Updating flake.lock... "
+        $SCRIPT_DIR/update.sh
+        return 0
+    fi
     if [ "$SILENT_MODE" = false ]; then
         echo -en "\n${CYAN}Do you want to update flake.lock ? (y/N) ${RESET} "
         read -n 1 yn
@@ -867,7 +878,7 @@ set_environment $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 generate_root_ssh_keys_for_ssh_server_on_boot $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 
 # Update flake.lock
-update_flake_lock $SCRIPT_DIR $SILENT_MODE
+update_flake_lock $SCRIPT_DIR $SILENT_MODE $UPDATE_FLAKE_LOCK
 
 # Handle Docker containers (generate_hardware_config must be executed after this !)
 handle_docker $SCRIPT_DIR $SILENT_MODE

@@ -8,6 +8,7 @@
   systemSettings = {
     hostname = "yogaaku";
     profile = "personal";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles YOGAAKU -s -u";
     bootMode = "bios";
     gpuType = "intel";
     

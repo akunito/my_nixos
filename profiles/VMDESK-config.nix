@@ -8,6 +8,7 @@
   systemSettings = {
     hostname = "nixosdesk";
     profile = "personal";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles VMDESK -s -u";
     gpuType = "amd";
     amdLACTdriverEnable = false;
     

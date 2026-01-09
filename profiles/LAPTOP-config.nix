@@ -8,6 +8,7 @@
   systemSettings = {
     hostname = "nixolaptopaku";
     profile = "personal";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP -s -u";
     gpuType = "intel";
     
     kernelModules = [ 

@@ -8,6 +8,7 @@
   systemSettings = {
     hostname = "nixosdiego";
     profile = "wsl";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles WSL -s -u";
     bootMode = "bios";
     grubDevice = "/dev/";
     gpuType = "intel";

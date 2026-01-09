@@ -2849,6 +2849,11 @@ in {
     executable = true;
   };
 
+  home.file.".config/sway/scripts/waybar-nixos-update.sh" = {
+    source = ./scripts/waybar-nixos-update.sh;
+    executable = true;
+  };
+
   home.file.".config/sway/scripts/power-menu.sh" = {
     source = ./scripts/power-menu.sh;
     executable = true;

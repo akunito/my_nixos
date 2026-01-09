@@ -8,6 +8,7 @@
   systemSettings = {
     hostname = "nixosaga";
     profile = "personal";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles AGADESK -s -u";
     gpuType = "amd";
     amdLACTdriverEnable = true;
     

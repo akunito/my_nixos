@@ -220,7 +220,7 @@ in {
             
             modules-left = [ "sway/workspaces" ];
             modules-center = [ "clock" ];
-            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/flatpak-updates" "tray" ];
+            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -259,6 +259,15 @@ in {
               interval = 1800; # 30min
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-flatpak-updates.sh ${pkgs.flatpak}/bin/flatpak";
               on-click = "${pkgs.kitty}/bin/kitty --title 'Flatpak update' -e ${pkgs.bash}/bin/bash -lc '${pkgs.flatpak}/bin/flatpak update -y; rc=$?; if [ $rc -eq 0 ]; then echo \"All Flatpaks updated. Bye bye!\"; sleep 3; exit 0; else echo \"Flatpak update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
+              tooltip = true;
+            };
+
+            # Update NixOS (runs install.sh for the active profile)
+            "custom/nixos-update" = {
+              return-type = "json";
+              interval = 3600;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-nixos-update.sh";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'Update NixOS' -e ${pkgs.bash}/bin/bash -lc '${systemSettings.installCommand}; rc=$?; if [ $rc -eq 0 ]; then echo \"Update completed. Bye bye!\"; sleep 3; exit 0; else echo \"Update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
               tooltip = true;
             };
 
@@ -317,7 +326,7 @@ in {
             
             modules-left = [ "sway/workspaces" ];
             modules-center = [ "clock" ];
-            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/flatpak-updates" "tray" ];
+            modules-right = [ "battery" "custom/perf" "pulseaudio" "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -351,6 +360,14 @@ in {
               interval = 1800;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-flatpak-updates.sh ${pkgs.flatpak}/bin/flatpak";
               on-click = "${pkgs.kitty}/bin/kitty --title 'Flatpak update' -e ${pkgs.bash}/bin/bash -lc '${pkgs.flatpak}/bin/flatpak update -y; rc=$?; if [ $rc -eq 0 ]; then echo \"All Flatpaks updated. Bye bye!\"; sleep 3; exit 0; else echo \"Flatpak update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
+              tooltip = true;
+            };
+
+            "custom/nixos-update" = {
+              return-type = "json";
+              interval = 3600;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-nixos-update.sh";
+              on-click = "${pkgs.kitty}/bin/kitty --title 'Update NixOS' -e ${pkgs.bash}/bin/bash -lc '${systemSettings.installCommand}; rc=$?; if [ $rc -eq 0 ]; then echo \"Update completed. Bye bye!\"; sleep 3; exit 0; else echo \"Update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
               tooltip = true;
             };
 
@@ -517,6 +534,10 @@ in {
       }
       #custom-vpn.off {
         color: #${config.lib.stylix.colors.base04};
+      }
+
+      #custom-nixos-update {
+        color: #${config.lib.stylix.colors.base0D};
       }
 
       /* Perf turns red if CPU or GPU temp >= 80C */

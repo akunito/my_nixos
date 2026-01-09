@@ -8,6 +8,7 @@
   systemSettings = {
     hostname = "nixosLabaku";
     profile = "homelab";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles HOME -s -u";
     gpuType = "amd";
     amdLACTdriverEnable = false;
     

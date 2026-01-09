@@ -206,6 +206,11 @@
     autoUserUpdateDescription = "Auto User Update";
     autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/autoUserUpdate.sh";
     autoUserUpdateUser = "akunito";
+
+    # Profile install invocation (used by Waybar update button)
+    # Each profile should override this with the exact install.sh invocation for that profile.
+    # Example: "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK -s"
+    installCommand = "";
     
     # System packages - empty by default, profiles specify their own
     systemPackages = [ ];
