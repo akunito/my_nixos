@@ -436,6 +436,13 @@ PY
         exit 0
       fi
 
+      # Ensure the systemd --user manager has the current Wayland/X11 env before we start
+      # anything that might DBus-activate Qt components (kwalletd6/ksecretd).
+      #
+      # Runtime evidence (previous repro): ksecretd crashed with "Failed to create wl_display"
+      # because it was started without WAYLAND_DISPLAY/DISPLAY in the systemd user environment.
+      systemctl --user import-environment XDG_RUNTIME_DIR WAYLAND_DISPLAY SWAYSOCK DISPLAY >/dev/null 2>&1 || true
+
       # The service needs to know where the PAM socket is.
       # Runtime evidence showed the user systemd environment does not contain PAM_KWALLET* vars.
       # We set it explicitly to the canonical path in %t (XDG_RUNTIME_DIR).
@@ -2269,6 +2276,8 @@ in {
           # Mission Center (app_id is io.missioncenter.MissionCenter, binary is missioncenter)
           "${hyper}+m" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
           "${hyper}+B" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
+          # SwayBG+ (wallpaper UI)
+          "${hyper}+s" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh SwayBG+ SwayBG+";
           
           # Workspace navigation (using Sway native commands for local cycling)
           "${hyper}+Q" = "workspace prev_on_output";  # LOCAL navigation (within current monitor only)
@@ -2317,7 +2326,7 @@ in {
           # Note: Removed "${hyper}+l" to avoid conflict with "${hyper}+L" (telegram)
           "${hyper}+f" = "fullscreen toggle";
           "${hyper}+Shift+space" = "floating toggle";
-          # Note: Removed "${hyper}+s" to avoid conflict with layout bindings
+          # Note: "${hyper}+s" is reserved for SwayBG+ (see application bindings above)
           # Note: Removed "${hyper}+w" to avoid conflict with "${hyper}+W" (workspace next)
           # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (dolphin file explorer)
           # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (pavucontrol)
@@ -2380,11 +2389,6 @@ in {
           command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
           always = false;  # Only run on initial startup, not on config reload
         }
-        # Apply PAM-provided credentials to KWallet in Sway sessions (non-Plasma).
-        {
-          command = "${sway-start-plasma-kwallet-pam}/bin/sway-start-plasma-kwallet-pam";
-          always = false;  # Only run on initial startup, not on config reload
-        }
         # Initialize swaysome and assign workspace groups to monitors
         # No 'always = true' - runs only on initial startup, not on config reload
         # This prevents jumping back to empty workspaces when editing config
@@ -2401,6 +2405,12 @@ in {
         {
           command = "${set-sway-systemd-session-vars}/bin/set-sway-systemd-session-vars";
           always = true;
+        }
+        # Apply PAM-provided credentials to KWallet in Sway sessions (non-Plasma).
+        # Must run AFTER set-sway-systemd-session-vars so systemd --user has WAYLAND_DISPLAY/SWAYSOCK.
+        {
+          command = "${sway-start-plasma-kwallet-pam}/bin/sway-start-plasma-kwallet-pam";
+          always = false;  # Only run on initial startup, not on config reload
         }
         # CRITICAL: Restore qt5ct files before daemons start to ensure correct Qt theming
         # Plasma 6 might modify qt5ct files even though it shouldn't use them
@@ -2448,6 +2458,7 @@ in {
           # Wayland apps (use app_id)
           { criteria = { app_id = "rofi"; }; command = "floating enable"; }
           { criteria = { app_id = "kitty"; }; command = "floating enable"; }
+          { criteria = { app_id = "SwayBG+"; }; command = "floating enable"; }
           { criteria = { app_id = "org.telegram.desktop"; }; command = "floating enable"; }
           { criteria = { app_id = "telegram-desktop"; }; command = "floating enable"; }
           { criteria = { app_id = "bitwarden"; }; command = "floating enable"; }
@@ -2459,6 +2470,7 @@ in {
           { criteria = { app_id = "lact"; }; command = "floating enable"; }
           
           # XWayland apps (use class)
+          { criteria = { class = "SwayBG+"; }; command = "floating enable"; }
           { criteria = { class = "Spotify"; }; command = "floating enable"; }
           { criteria = { class = "Dolphin"; }; command = "floating enable"; }
           { criteria = { class = "dolphin"; }; command = "floating enable"; }
@@ -2469,12 +2481,14 @@ in {
           # Sticky windows - visible on all workspaces of their monitor
           { criteria = { app_id = "kitty"; }; command = "sticky enable"; }
           { criteria = { app_id = "Alacritty"; }; command = "sticky enable"; }
+          { criteria = { app_id = "SwayBG+"; }; command = "sticky enable"; }
           { criteria = { app_id = "org.telegram.desktop"; }; command = "sticky enable"; }
           { criteria = { app_id = "telegram-desktop"; }; command = "sticky enable"; }
           { criteria = { app_id = "bitwarden"; }; command = "sticky enable"; }
           { criteria = { app_id = "bitwarden-desktop"; }; command = "sticky enable"; }
           { criteria = { app_id = "Bitwarden"; }; command = "sticky enable"; }
           { criteria = { app_id = "org.kde.dolphin"; }; command = "sticky enable"; }
+          { criteria = { class = "SwayBG+"; }; command = "sticky enable"; }
           { criteria = { class = "Dolphin"; }; command = "sticky enable"; }
           { criteria = { class = "dolphin"; }; command = "sticky enable"; }
           { criteria = { class = "Spotify"; }; command = "sticky enable"; }
@@ -2637,6 +2651,10 @@ in {
       for_window [app_id="rofi"] floating enable
       for_window [app_id="swayfx-settings"] floating enable
       
+      # SwayBG+ (wallpaper UI): always floating and sticky (Wayland + XWayland)
+      for_window [app_id="SwayBG+"] floating enable, sticky enable
+      for_window [class="SwayBG+"] floating enable, sticky enable
+
       # Alacritty: floating and sticky (case variations)
       for_window [app_id="Alacritty"] floating enable, sticky enable
       for_window [app_id="alacritty"] floating enable, sticky enable
