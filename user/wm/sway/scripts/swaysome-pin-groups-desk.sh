@@ -34,32 +34,47 @@ get_output_by_hwid() {
   ' | head -n1
 }
 
-# Create initial workspace on each monitor using swaymsg
-create_initial_workspace() {
+# Assign workspace range to output by hardware ID
+assign_workspace_range_to_output() {
   local hwid="$1"
-  local workspace="$2"
-  local name="$3"
+  local start_ws="$2"
+  local end_ws="$3"
+  local name="$4"
 
   local output_name
   output_name="$(get_output_by_hwid "$hwid")"
 
   if [ -n "$output_name" ]; then
-    echo "DESK: Creating workspace $workspace on $name ($hwid) via output $output_name" >&2
-    # Focus output and create workspace
+    echo "DESK: Assigning $name ($hwid) workspaces $start_ws-$end_ws to $output_name" >&2
+
+    # Focus the output first
     $SWAYMSG_BIN "focus output \"$output_name\"" >/dev/null 2>&1
-    $SWAYMSG_BIN "workspace number $workspace" >/dev/null 2>&1
-    echo "DESK: Workspace $workspace created on $name" >&2
+
+    # Create the first workspace in the range on this output
+    $SWAYMSG_BIN "workspace $start_ws" >/dev/null 2>&1
+
+    echo "DESK: Successfully assigned $name workspaces $start_ws-$end_ws" >&2
   else
     echo "DESK: WARNING - $name ($hwid) not found or not active" >&2
   fi
 }
 
-create_initial_workspace "$SAMSUNG" 11 "Samsung"
-create_initial_workspace "$NSL" 21 "NSL"
-create_initial_workspace "$PHILIPS" 31 "Philips"
-create_initial_workspace "$BNQ" 41 "BNQ"
+# Assign workspace ranges deterministically by hardware ID
+assign_workspace_range_to_output "$SAMSUNG" 11 20 "Samsung"
+assign_workspace_range_to_output "$NSL" 21 30 "NSL"
+assign_workspace_range_to_output "$PHILIPS" 31 40 "Philips"
+assign_workspace_range_to_output "$BNQ" 41 50 "BNQ"
 
-echo "DESK: Group pinning complete" >&2
+# Handle orphaned workspaces (workspaces 1-10 should go to the first monitor)
+echo "DESK: Moving orphaned workspaces (1-10) to primary monitor..." >&2
+for ws in 1 2 3 4 5 6 7 8 9 10; do
+  if swaymsg -t get_workspaces | jq -r ".[] | select(.name==\"$ws\") | .output" | grep -v "DP-1" >/dev/null 2>&1; then
+    $SWAYMSG_BIN "workspace $ws" >/dev/null 2>&1
+    $SWAYMSG_BIN "move workspace to DP-1" >/dev/null 2>&1
+  fi
+done
+
+echo "DESK: Hardware-ID-based workspace assignment complete" >&2
 exit 0
 
 

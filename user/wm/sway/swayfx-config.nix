@@ -342,7 +342,7 @@ in
           # DESK-only: ensure swaysome workspace groups are properly initialized on every config reload
           # This fixes workspace group assignments that get lost when running `swaymsg reload`
           {
-            command = "$HOME/.nix-profile/bin/swaysome init 1 && $HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh && $HOME/.nix-profile/bin/swaysome rearrange-workspaces";
+            command = "$HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh";
             always = true; # Run on every config reload to maintain workspace groups
           }
         ]
