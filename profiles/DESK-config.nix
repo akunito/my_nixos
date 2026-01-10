@@ -286,7 +286,7 @@ in
             # IMPORTANT: start swaysome groups at 1 so group 0 (workspaces 1-10) is never used.
             "$HOME/.nix-profile/bin/swaysome init 1"
             "$HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh"
-            # "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
+            "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
             # "$HOME/.config/sway/scripts/swaysome-init.sh"
           ];
         };

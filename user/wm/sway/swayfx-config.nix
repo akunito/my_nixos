@@ -172,7 +172,7 @@ in
           "${hyper}+U" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
           "${hyper}+A" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh pavucontrol pavucontrol";
           "${hyper}+D" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
-          "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.vivaldi.Vivaldi vivaldi";
+          "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh vivaldi vivaldi";
           "${hyper}+G" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh chromium-browser chromium";
           "${hyper}+Y" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh spotify spotify --enable-features=UseOzonePlatform --ozone-platform=wayland";
           "${hyper}+N" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh nwg-look nwg-look";
@@ -184,14 +184,13 @@ in
           # SwayBG+ (wallpaper UI)
           "${hyper}+s" = "exec swaybgplus-gui";
 
-          # Workspace navigation (using Sway native commands for local cycling)
-          #
-          # NOTE: Use lowercase keysyms; adding Q/W variants causes Sway to warn about duplicate binds
-          # (it normalizes the combo and overwrites the earlier binding).
-          "${hyper}+q" = "workspace prev_on_output"; # LOCAL navigation (within current monitor only)
-          "${hyper}+w" = "workspace next_on_output"; # LOCAL navigation (within current monitor only)
-          "${hyper}+Shift+q" = "move container to workspace prev_on_output"; # Move window to previous workspace on current monitor (LOCAL)
-          "${hyper}+Shift+w" = "move container to workspace next_on_output"; # Move window to next workspace on current monitor (LOCAL)
+          # Workspace navigation with auto-creation and wrapping (Option B)
+          # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
+          # Hyper+Shift+Q/W: Move window to workspace in current group, wrap at boundaries
+          "${hyper}+q" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-nav-prev.sh";
+          "${hyper}+w" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-nav-next.sh";
+          "${hyper}+Shift+q" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-prev.sh";
+          "${hyper}+Shift+w" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-next.sh";
 
           # Direct workspace bindings (using swaysome)
           #
@@ -303,14 +302,6 @@ in
             command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
             always = false; # Only run on initial startup, not on config reload
           }
-          # Initialize swaysome and assign workspace groups to monitors
-          # No 'always = true' - runs only on initial startup, not on config reload
-          # This prevents jumping back to empty workspaces when editing config
-          # Workspace grouping is triggered by kanshi profiles (after outputs are configured),
-          # to avoid assigning workspaces to phantom/"usually OFF" outputs.
-          {
-            command = "${config.home.homeDirectory}/.config/sway/scripts/swaysome-init.sh";
-          }
           # NOTE: Theme variables are now set via extraSessionCommands (cleaner, native Home Manager option)
           # This script syncs them with D-Bus activation environment to ensure GUI applications launched via D-Bus inherit the variables
           {
@@ -345,6 +336,14 @@ in
           {
             command = "${sway-session-start}/bin/sway-session-start";
             always = true;
+          }
+        ]
+        ++ lib.optionals (systemSettings.enableSwayForDESK == true) [
+          # DESK-only: ensure swaysome workspace groups are properly initialized on every config reload
+          # This fixes workspace group assignments that get lost when running `swaymsg reload`
+          {
+            command = "$HOME/.nix-profile/bin/swaysome init 1 && $HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh && $HOME/.nix-profile/bin/swaysome rearrange-workspaces";
+            always = true; # Run on every config reload to maintain workspace groups
           }
         ]
         ++ [

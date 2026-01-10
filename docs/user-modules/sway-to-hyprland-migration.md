@@ -30,7 +30,7 @@ This document explains how SwayFX window management features (using `swaysome` f
    - Monitor 3: Workspaces 21-30
    - Monitor 4: Workspaces 31-40
 
-2. **swaysome-init.sh**: Initializes workspace groups on startup
+2. **Workspace assignment scripts**: Initialize workspace groups and assign them to outputs
    - Uses `swaysome init`, `swaysome focus-group`, `swaysome focus`
 
 3. **window-move.sh**: Conditional window movement

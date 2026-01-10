@@ -190,10 +190,6 @@
     executable = true;
   };
 
-  home.file.".config/sway/scripts/swaysome-init.sh" = {
-    source = ./scripts/swaysome-init.sh;
-    executable = true;
-  };
 
   home.file.".config/sway/scripts/swaysome-assign-groups.sh" = {
     source = ./scripts/swaysome-assign-groups.sh;

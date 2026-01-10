@@ -644,9 +644,9 @@ in {
       }
       
       #workspaces button.focused {
-        /* Keep the per-group foreground color; only add a neutral highlight */
-        background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
-        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base03 "4D"};
+        /* Keep the per-group foreground color; use same background as hover */
+        background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
+        box-shadow: 0 3px 12px ${hexToRgba config.lib.stylix.colors.base03 "80"}, 0 1px 4px ${hexToRgba config.lib.stylix.colors.base00 "60"};
       }
       
       #workspaces button.urgent {
@@ -818,11 +818,18 @@ in {
       /* Anfetas (idle inhibitor): green when enabled, white when off */
       #idle_inhibitor {
         color: #${config.lib.stylix.colors.base07};
+        transition: all 0.2s ease;
+      }
+
+      #idle_inhibitor:hover {
+        background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
+        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base03 "4D"};
       }
 
       #idle_inhibitor.activated {
         color: #${config.lib.stylix.colors.base0B};
         background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
+        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base0B "4D"};
       }
 
       #custom-nixos-update {
@@ -921,18 +928,32 @@ in {
         padding: 4px 8px;
         border-radius: 10px;
         background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+        transition: all 0.2s ease;
       }
-      
-      /* Add spacing between tray icons */
+
+      /* Add hover effect to tray widget */
+      #tray:hover {
+        background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
+        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base03 "4D"};
+      }
+
+      /* Increase spacing between tray icons */
       #tray > * {
-        margin: 0 24px;  /* Horizontal margin between icons */
-        padding: 0 4px;
+        margin: 0 32px;  /* Increased from 24px to 32px */
+        padding: 0 6px;   /* Increased padding slightly */
       }
 
       /* Some Waybar builds wrap tray items in buttons/widgets; cover common cases */
       #tray button {
-        margin: 0 24px;
-        padding: 0 4px;
+        margin: 0 32px;   /* Match the increased spacing */
+        padding: 0 6px;
+        transition: all 0.2s ease;
+      }
+
+      /* Add hover effect to individual tray buttons */
+      #tray button:hover {
+        background-color: ${hexToRgba config.lib.stylix.colors.base02 "4D"};
+        border-radius: 6px;
       }
       
       #tray > *:first-child {

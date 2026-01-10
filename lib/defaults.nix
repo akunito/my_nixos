@@ -210,7 +210,6 @@
             "$HOME/.nix-profile/bin/swaysome init 1"
             "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
             "$HOME/.config/sway/scripts/swaysome-assign-groups.sh"
-            "$HOME/.config/sway/scripts/swaysome-init.sh"
           ];
         };
       }

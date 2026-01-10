@@ -5,8 +5,8 @@ tags: [sway, swayfx, wayland, kanshi, outputs, monitors, home-manager, systemd-u
 related_files:
   - user/wm/sway/kanshi.nix
   - user/wm/sway/swayfx-config.nix
-  - user/wm/sway/scripts/swaysome-init.sh
   - user/wm/sway/scripts/swaysome-assign-groups.sh
+  - user/wm/sway/scripts/swaysome-pin-groups-desk.sh
   - profiles/*-config.nix
   - lib/defaults.nix
   - lib/flake-base.nix
@@ -78,9 +78,11 @@ This contains Home‑Manager-compatible kanshi `settings` directives (see `kansh
 
 Workspace grouping is executed **after** kanshi applies the profile:
 
-- kanshi profile includes: `exec swaysome init` and `swaysome rearrange-workspaces` (and may also call `~/.config/sway/scripts/swaysome-init.sh`)
+- kanshi profile includes: `exec swaysome init`, `swaysome rearrange-workspaces`, and workspace assignment scripts
 
 This prevents swaysome from assigning workspace groups to outputs that are going to be disabled by kanshi.
+
+**Note on config reload**: When `swaymsg reload` is run, kanshi profiles are not re-applied. To maintain correct workspace group assignments, Sway's startup commands include a DESK-specific command that runs `always = true` (on every reload) to re-initialize swaysome workspace groups.
 
 **Note on group numbering**:
 

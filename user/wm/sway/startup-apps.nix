@@ -257,7 +257,7 @@ let
       echo "App launcher triggered at $(date)"
 
       PRIMARY_HARDWARE="Samsung Electric Company Odyssey G70NC H1AK500000"
-      VERTICAL_HARDWARE="NSL RGB-27QHDS    Unknown"
+      export VERTICAL_HARDWARE="NSL RGB-27QHDS    Unknown"
 
       if [ -z "$PRIMARY_HARDWARE" ]; then
         # Not DESK profile, exit
