@@ -4,7 +4,7 @@ set -euo pipefail
 # Usage: waybar-flatpak-updates.sh [/nix/store/.../bin/flatpak]
 FLATPAK_BIN="${1:-flatpak}"
 
-icon="󰏓"
+icon="󰇚"
 dot=""
 
 if ! command -v "$FLATPAK_BIN" >/dev/null 2>&1; then
@@ -35,7 +35,7 @@ if [[ "$count" == "0" ]]; then
   exit 0
 fi
 
-text="${icon} ${dot}"
+text="${icon}"
 
 # Build a compact tooltip (avoid multi-line rendering issues in some setups)
 apps=""

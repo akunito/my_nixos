@@ -180,10 +180,10 @@ let
     ) 10);
 
   swaysomeWorkspaceIcons =
-    (mkSwaysomeGroupIcons 1 "" config.lib.stylix.colors.base0D) //
-    (mkSwaysomeGroupIcons 2 "󰍹" config.lib.stylix.colors.base0B) //
-    (mkSwaysomeGroupIcons 3 "" config.lib.stylix.colors.base0A) //
-    (mkSwaysomeGroupIcons 4 "󰌢" config.lib.stylix.colors.base08);
+    (mkSwaysomeGroupIcons 1 "󰍹" config.lib.stylix.colors.base0C) //
+    (mkSwaysomeGroupIcons 2 "󰍹" config.lib.stylix.colors.base08) //
+    (mkSwaysomeGroupIcons 3 "󰍹" config.lib.stylix.colors.base0A) //
+    (mkSwaysomeGroupIcons 4 "󰍹" config.lib.stylix.colors.base0E);
   
   # Workspace configuration for primary monitor (all workspaces grouped)
   primaryWorkspaces = {
@@ -252,13 +252,13 @@ in {
               "pulseaudio"
               "custom/mic"
               "custom/cpu"
-              "custom/gpu"
-              "custom/ram"
               "custom/cpu-temp"
+              "custom/gpu"
               "custom/gpu-temp"
+              "custom/ram"
             ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
+            modules-right = [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -350,7 +350,7 @@ in {
                 click-to-reveal = false;
                 transition-left-to-right = false;
               };
-              modules = [ "custom/reveal" "custom/notifications" "tray" ];
+              modules = [ "custom/reveal" "custom/notifications" "custom/vpn" "tray" ];
             };
 
             # Flatpak updates indicator (read-only)
@@ -380,7 +380,7 @@ in {
               # as the custom idle toggle + keybinding.
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
               format-icons = {
-                activated = " ";
+                activated = "";
                 deactivated = "";
               };
             };
@@ -442,13 +442,13 @@ in {
               "pulseaudio"
               "custom/mic"
               "custom/cpu"
-              "custom/gpu"
-              "custom/ram"
               "custom/cpu-temp"
+              "custom/gpu"
               "custom/gpu-temp"
+              "custom/ram"
             ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
+            modules-right = [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -533,8 +533,9 @@ in {
                 children-class = "drawer-hidden";
                 click-to-reveal = false;
                 transition-left-to-right = false;
+                hover-timeout = 8000;
               };
-              modules = [ "custom/reveal" "custom/notifications" "tray" ];
+              modules = [ "custom/reveal" "custom/notifications" "custom/vpn" "tray" ];
             };
 
             "custom/flatpak-updates" = {
@@ -561,7 +562,7 @@ in {
               # as the custom idle toggle + keybinding.
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
               format-icons = {
-                activated = " ";
+                activated = "";
                 deactivated = "";
               };
             };
@@ -709,22 +710,32 @@ in {
       #battery,
       #backlight,
       #custom-ram {
-        color: #${config.lib.stylix.colors.base0A};
+        color: #${config.lib.stylix.colors.base08};
+      }
+
+      #clock {
+        color: #${config.lib.stylix.colors.base0C};
       }
 
       #pulseaudio,
-      #custom-mic {
+      #custom-mic,
+      #custom-flatpak-updates {
         color: #${config.lib.stylix.colors.base0C};
       }
 
       #custom-cpu,
-      #custom-cpu-temp {
+      #custom-cpu-temp,
+      #custom-notifications {
         color: #${config.lib.stylix.colors.base08};
       }
 
       #custom-gpu,
       #custom-gpu-temp {
-        color: #${config.lib.stylix.colors.base0E};
+        color: #${config.lib.stylix.colors.base0C};
+      }
+
+      #custom-power-menu {
+        color: #${config.lib.stylix.colors.base08};
       }
       
       #clock:hover,
@@ -774,27 +785,12 @@ in {
         padding: 4px 12px;
         border-radius: 10px;
         background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
-        color: #${config.lib.stylix.colors.base07};
+        color: #${config.lib.stylix.colors.base08};
       }
 
       /* (custom idle toggle removed; keeping built-in idle_inhibitor only) */
 
-      /* VPN: hide when off unless bar is hovered; show always when on */
-      #custom-vpn.off {
-        opacity: 0;
-        margin: 0;
-        padding: 0;
-        background-color: transparent;
-        border-radius: 0;
-      }
-      window#waybar:hover #custom-vpn.off,
-      #waybar:hover #custom-vpn.off {
-        opacity: 1;
-        margin: 4px 4px;
-        padding: 4px 12px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
-        border-radius: 10px;
-      }
+      /* VPN: always visible in drawer */
 
       /* Idle inhibitor should stay visible even when deactivated. */
 
@@ -812,12 +808,12 @@ in {
         background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
       }
       #custom-vpn.off {
-        color: #${config.lib.stylix.colors.base04};
+        color: #${config.lib.stylix.colors.base0C};
       }
 
       /* Anfetas (idle inhibitor): green when enabled, white when off */
       #idle_inhibitor {
-        color: #${config.lib.stylix.colors.base07};
+        color: #${config.lib.stylix.colors.base0C};
         transition: all 0.2s ease;
       }
 
@@ -1032,15 +1028,7 @@ in {
         padding: 0 10px;
       }
 
-      /* VPN: hide when off unless bar is hovered; show always when on */
-      #custom-vpn.off {
-        opacity: 0;
-        padding: 0;
-      }
-      window#waybar:hover #custom-vpn.off {
-        opacity: 1;
-        padding: 0 10px;
-      }
+      /* VPN: always visible in drawer */
 
       /* Idle inhibitor should stay visible even when deactivated. */
 

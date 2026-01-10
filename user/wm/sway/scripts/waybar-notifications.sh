@@ -38,7 +38,7 @@ if [[ "$dnd" == "true" ]]; then
   icon="$dnd_icon"
 fi
 
-text="${icon} ${dot}"
+text="${icon}"
 
 tip="Notifications: ${count}"
 if [[ "$dnd" == "true" ]]; then
