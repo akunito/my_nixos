@@ -313,7 +313,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/rofi.md**: Rofi configuration (Stylix-templated theme, unified combi launcher, power script-mode, and grouped window overview).
 - **docs/user-modules/stylix-containment.md**: Stylix theming containment in this repo (Sway gets Stylix; Plasma 6 does not) via env isolation + session-scoped systemd.
 - **docs/user-modules/sway-daemon-integration.md**: Sway session services are managed via systemd --user units bound to sway-session.target (official/systemd approach; no custom daemon-manager).
-- **docs/user-modules/sway-output-layout-kanshi.md**: Fix “phantom OFF monitors” in Sway/SwayFX using kanshi (wlroots) + Sway-only systemd target, profile-scoped in flakes.
+- **docs/user-modules/sway-output-layout-kanshi.md**: Complete Sway/SwayFX output management with kanshi (monitor config) + swaysome (workspaces), ensuring stability across reloads/rebuilds.
 - **docs/user-modules/sway-to-hyprland-migration.md**: Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions.
 - **docs/user-modules/swaybgplus.md**: GUI multi-monitor wallpapers for SwayFX/Wayland via SwayBG+ (Home-Manager/NixOS-safe; no Stylix/Plasma conflicts).
 - **docs/user-modules/swww.md**: Robust wallpapers for SwayFX via swww (daemon + oneshot restore; rebuild/reboot safe; no polling/flicker).

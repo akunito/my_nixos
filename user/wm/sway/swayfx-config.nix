@@ -346,6 +346,14 @@ in
             always = true; # Run on every config reload to maintain workspace groups
           }
         ]
+        ++ lib.optionals ((systemSettings.swayKanshiSettings or null) != null) [
+          # Reapply monitor configuration on every config reload for any profile using kanshi
+          # This fixes monitor settings that revert to defaults when running `swaymsg reload`
+          {
+            command = "/run/current-system/sw/bin/systemctl --user restart kanshi.service";
+            always = true; # Run on every config reload to maintain monitor settings
+          }
+        ]
         ++ [
           # DESK-only startup apps (runs after daemons are ready)
           {

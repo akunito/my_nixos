@@ -1,7 +1,7 @@
 ---
 id: user-modules.sway-output-layout-kanshi
-summary: Fix “phantom OFF monitors” in Sway/SwayFX using kanshi (wlroots) + Sway-only systemd target, profile-scoped in flakes.
-tags: [sway, swayfx, wayland, kanshi, outputs, monitors, home-manager, systemd-user, plasma6, profiles]
+summary: Complete Sway/SwayFX output management with kanshi (monitor config) + swaysome (workspaces), ensuring stability across reloads/rebuilds.
+tags: [sway, swayfx, wayland, kanshi, outputs, monitors, workspaces, swaysome, home-manager, systemd-user, plasma6, profiles, reload]
 related_files:
   - user/wm/sway/kanshi.nix
   - user/wm/sway/swayfx-config.nix
@@ -13,11 +13,13 @@ related_files:
   - docs/user-modules/swaybgplus.md
 key_files:
   - user/wm/sway/kanshi.nix
+  - user/wm/sway/swayfx-config.nix
   - profiles/DESK-config.nix
   - lib/defaults.nix
 activation_hints:
+  - If monitor settings (scale, resolution, transform) revert to defaults on sway reload
+  - If workspaces are assigned to wrong outputs after sway reload
   - If the mouse can move into a monitor that is physically OFF
-  - If workspaces are assigned to outputs that should be disabled
   - If Sway output layout drifts across relogs/rebuilds
 ---
 
@@ -82,7 +84,9 @@ Workspace grouping is executed **after** kanshi applies the profile:
 
 This prevents swaysome from assigning workspace groups to outputs that are going to be disabled by kanshi.
 
-**Note on config reload**: When `swaymsg reload` is run, kanshi profiles are not re-applied. To maintain correct workspace group assignments, Sway's startup commands include a DESK-specific command that runs `always = true` (on every reload) to re-initialize swaysome workspace groups.
+**Note on config reload**:
+- **Monitor configuration**: When `swaymsg reload` is run, kanshi profiles are not re-applied by default. To maintain correct monitor settings (scale, resolution, transform), Sway's startup commands include a command that runs `always = true` to restart the kanshi service on every reload.
+- **Workspace assignments**: For DESK profile, workspace group assignments are maintained via a DESK-specific command that runs `always = true` (on every reload) to re-initialize swaysome workspace groups using hardware ID-based assignment.
 
 **Note on group numbering**:
 
@@ -93,11 +97,13 @@ This prevents swaysome from assigning workspace groups to outputs that are going
 
 - **Default profiles**: Groups are assigned in Sway's output enumeration order. The first detected output gets group 1 (11–20), second gets group 2 (21–30), etc. This is consistent within a session but may vary across hardware changes.
 
-- **DESK profile**: Additionally pins output→group mapping by hardware ID so it does not depend on enumeration order:
-  - Samsung → Group 1 → 11–20
-  - NSL → Group 2 → 21–30
-- Philips → Group 3 → 31–40
-- BNQ → Group 4 → 41–50
+- **DESK profile**: Uses hardware ID-based assignment to ensure deterministic mapping that doesn't depend on enumeration order:
+  - Samsung (DP-1) → workspaces 11–20
+  - NSL (DP-2) → workspaces 21–30
+  - Philips (HDMI-A-1) → workspaces 31–40
+  - BNQ (DP-3) → workspaces 41–50
+
+  The assignment is implemented in `swaysome-pin-groups-desk.sh` which actively moves ALL existing workspaces in each range to their correct outputs based on stable hardware IDs, ensuring consistency across reloads, rebuilds, reboots, and hardware changes.
 
 ## Important: don’t mix kanshi with SwayBG+ output geometry include
 
@@ -121,10 +127,23 @@ Recommendation:
 - **Check which profile kanshi applied**:
   - `journalctl --user -u kanshi.service -n 80 --no-pager`
 
-- **See Sway’s current output state**:
+- **Verify reload commands are present**:
+  - `grep "restart kanshi" ~/.config/sway/config` (should show systemctl restart command)
+  - `grep "swaysome-pin-groups-desk.sh" ~/.config/sway/config` (DESK profile only)
+
+- **Check if kanshi restarts on reload**:
+  - Run `swaymsg reload`
+  - Check `systemctl --user status kanshi.service` (should show recent restart)
+
+- **See Sway's current output state**:
   - `swaymsg -t get_outputs | jq -r '.[] | {name, active, dpms, rect, scale, transform, current_mode}'`
 
-- **If DP-2 transform looks “wrong”**:
+- **If DP-2 transform looks "wrong"**:
   - Some stacks report transform differently. Prefer verifying with `swaymsg -t get_outputs` (JSON) rather than the human output.
+
+- **If workspace assignments are wrong after reload**:
+  - DESK profile: Check that `swaysome-pin-groups-desk.sh` is in sway config
+  - Other profiles: Check that kanshi restart command is present
+  - Verify hardware IDs in `swaymsg -t get_outputs` match your profile configuration
 
 

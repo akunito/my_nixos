@@ -47,10 +47,17 @@ assign_workspace_range_to_output() {
   if [ -n "$output_name" ]; then
     echo "DESK: Assigning $name ($hwid) workspaces $start_ws-$end_ws to $output_name" >&2
 
-    # Focus the output first
-    $SWAYMSG_BIN "focus output \"$output_name\"" >/dev/null 2>&1
+    # Move ALL existing workspaces in this range to the correct output
+    for ws in $(seq "$start_ws" "$end_ws"); do
+      if $SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r ".[] | select(.name==\"$ws\") | .output" | grep -v "$output_name" >/dev/null 2>&1; then
+        echo "DESK: Moving workspace $ws to $output_name" >&2
+        $SWAYMSG_BIN "workspace $ws" >/dev/null 2>&1
+        $SWAYMSG_BIN "move workspace to \"$output_name\"" >/dev/null 2>&1
+      fi
+    done
 
-    # Create the first workspace in the range on this output
+    # Focus the output and create the first workspace if it doesn't exist
+    $SWAYMSG_BIN "focus output \"$output_name\"" >/dev/null 2>&1
     $SWAYMSG_BIN "workspace $start_ws" >/dev/null 2>&1
 
     echo "DESK: Successfully assigned $name workspaces $start_ws-$end_ws" >&2
