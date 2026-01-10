@@ -4,6 +4,9 @@
 
 set -eu
 
+# kanshi runs this script from a minimal systemd user unit; ensure basic tools are on PATH.
+export PATH="/run/current-system/sw/bin:/run/wrappers/bin:/etc/profiles/per-user/${USER:-$(id -un)}/bin:${HOME:-}/.nix-profile/bin:/usr/bin:/bin:${PATH:-}"
+
 # Helper: true when an output exists AND is active (prevents phantom/off outputs receiving workspaces)
 output_is_active() {
   name="$1"

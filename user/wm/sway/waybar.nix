@@ -249,7 +249,7 @@ in {
               "custom/gpu-temp"
             ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "clock" "custom/power-menu" ];
+            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/idle-toggle" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -323,6 +323,34 @@ in {
               on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
               on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
               tooltip = true;
+            };
+
+            # Custom idle inhibit toggle (script + systemd user service)
+            "custom/idle-toggle" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-status.sh";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
+              tooltip = true;
+            };
+
+            # Extras drawer (official Waybar group drawer)
+            "custom/reveal" = {
+              interval = 3600;
+              exec = "${pkgs.coreutils}/bin/printf '⋯'";
+              tooltip = true;
+              tooltip-format = "Extras (click)";
+            };
+
+            "group/extras" = {
+              orientation = "inherit";
+              drawer = {
+                transition-duration = 200;
+                children-class = "drawer-hidden";
+                click-to-reveal = true;
+                transition-left-to-right = false;
+              };
+              modules = [ "custom/reveal" "custom/notifications" "tray" ];
             };
 
             # Flatpak updates indicator (read-only)
@@ -417,7 +445,7 @@ in {
               "custom/gpu-temp"
             ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/notifications" "custom/nixos-update" "custom/flatpak-updates" "tray" "clock" "custom/power-menu" ];
+            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/idle-toggle" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -486,6 +514,32 @@ in {
               on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
               on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
               tooltip = true;
+            };
+
+            "custom/idle-toggle" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-status.sh";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
+              tooltip = true;
+            };
+
+            "custom/reveal" = {
+              interval = 3600;
+              exec = "${pkgs.coreutils}/bin/printf '⋯'";
+              tooltip = true;
+              tooltip-format = "Extras (click)";
+            };
+
+            "group/extras" = {
+              orientation = "inherit";
+              drawer = {
+                transition-duration = 200;
+                children-class = "drawer-hidden";
+                click-to-reveal = true;
+                transition-left-to-right = false;
+              };
+              modules = [ "custom/reveal" "custom/notifications" "tray" ];
             };
 
             "custom/flatpak-updates" = {
@@ -637,6 +691,8 @@ in {
       #custom-ram,
       #custom-cpu-temp,
       #custom-gpu-temp,
+      #custom-reveal,
+      #custom-idle-toggle,
       #custom-notifications,
       #custom-flatpak-updates,
       #custom-vpn,
@@ -700,43 +756,35 @@ in {
         border-radius: 0;
       }
 
-      /* Noise reduction: hide by default, show on bar hover (Waybar CSS is picky with :not()) */
-      #custom-notifications,
-      #tray {
-        opacity: 0;
-        margin: 0;
-        padding: 0;
-        background-color: transparent;
-        border-radius: 0;
+      /* Extras are now handled via Waybar's official group drawer (group/extras).
+         Avoid CSS hover hacks for tray/notifications which are flaky in GTK CSS. */
+
+      /* Drawer: hidden children class (configured via drawer.children-class) */
+      .drawer-hidden {
+        /* IMPORTANT:
+         * Do NOT force opacity=0 here.
+         * Waybar's group drawer uses GTK reveal/slide logic; depending on build/theme
+         * the class can remain present during reveal animations (or on wrappers),
+         * which would make revealed modules stay invisible.
+         */
       }
 
-      window#waybar:hover #custom-notifications,
-      #waybar:hover #custom-notifications,
-      window#waybar:hover #tray,
-      #waybar:hover #tray {
-        opacity: 1;
+      /* Drawer leader (always visible handle) */
+      #custom-reveal {
         margin: 4px 4px;
         padding: 4px 12px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
         border-radius: 10px;
+        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+        color: #${config.lib.stylix.colors.base07};
       }
 
-      /* Tray spacing: collapse while hidden, restore on hover */
-      #tray,
-      #tray > *,
-      #tray button {
-        margin: 0;
-        padding: 0;
+      /* Custom idle toggle styling (green when active) */
+      #custom-idle-toggle.activated {
+        color: #${config.lib.stylix.colors.base0B};
+        background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
       }
-      window#waybar:hover #tray > *,
-      #waybar:hover #tray > * {
-        margin: 0 24px;
-        padding: 0 4px;
-      }
-      window#waybar:hover #tray button,
-      #waybar:hover #tray button {
-        margin: 0 24px;
-        padding: 0 4px;
+      #custom-idle-toggle.deactivated {
+        color: #${config.lib.stylix.colors.base07};
       }
 
       /* VPN: hide when off unless bar is hovered; show always when on */

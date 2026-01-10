@@ -26,9 +26,10 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
 ## What this integration does (important on NixOS/HM)
 
 - **Wallpaper apply is GUI-driven**: the GUI includes an **Apply** action that starts `swaybg` and writes the persisted config.
-- **Monitor/output layout saves are NixOS-safe**: if your Sway config is Home-Manager managed (symlink into `/nix/store`), SwayBG+ writes output lines to:
+- **Monitor/output layout saves are NixOS-safe** (optional): if your Sway config is Home-Manager managed (symlink into `/nix/store`), SwayBG+ can write output lines to:
   - `~/.config/sway/swaybgplus-outputs.conf`
-  - Sway includes this file so `swaymsg reload` applies it.
+  - When Sway includes this file, `swaymsg reload` applies it.
+  - **Important**: if you use **kanshi** for output layout (recommended for “phantom OFF monitors”), do **not** include this file, or it can override kanshi and reintroduce phantom regions.
 - **Persistence is handled by systemd**: a user unit restores wallpapers at Sway session start.
 - **Home-Manager rebuild-safe**: Home-Manager activation can reload `systemd --user` and kill `swaybg`; this repo re-triggers wallpaper restore once after `reloadSystemd` when (and only when) a real Sway IPC socket is present.
 - **Restore is startup-race safe**: the restore wrapper re-sources `%t/sway-session.env` while waiting, auto-detects a live `SWAYSOCK` if missing, and waits briefly for `swaymsg` to become responsive before applying.
@@ -45,7 +46,7 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
   - provides `swaybgplus-restore.service` (oneshot) to restore wallpaper on session start
 - **Sway integration**: `user/wm/sway/default.nix`
   - disables Stylix `swaybg` service when `systemSettings.swaybgPlusEnable = true`
-  - includes `~/.config/sway/swaybgplus-outputs.conf` so output lines are applied on `reload`
+  - (legacy/optional) can include `~/.config/sway/swaybgplus-outputs.conf` for output layout changes — but this should be disabled when kanshi owns output layout
 - **Profile toggle**: `profiles/DESK-config.nix`
   - `systemSettings.swaybgPlusEnable = true;`
 
@@ -60,7 +61,7 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
 - **Set per-output positions/resolution/scale**:
   - Adjust outputs in the GUI
   - Click **Save** → writes to `~/.config/sway/swaybgplus-outputs.conf`
-  - Run `swaymsg reload` to apply output changes
+  - Run `swaymsg reload` to apply output changes **only if** Sway includes that file and you are not using kanshi for output layout
 
 ## Troubleshooting
 
@@ -82,7 +83,9 @@ This repo integrates **SwayBG+** as a GUI tool to set wallpapers on **multiple m
 
 - **Saving output config fails / read-only errors**
   - On Home-Manager, `~/.config/sway/config` is commonly a symlink into `/nix/store`.
-  - SwayBG+ writes output lines to `~/.config/sway/swaybgplus-outputs.conf`; ensure Sway includes it and then run `swaymsg reload`.
+  - SwayBG+ writes output lines to `~/.config/sway/swaybgplus-outputs.conf`.
+  - If kanshi owns output layout, do **not** include this file; keep it for reference only.
+  - If you are not using kanshi for output layout, ensure Sway includes it and then run `swaymsg reload`.
 
 - **Wallpaper fights with Stylix**
   - When SwayBG+ is enabled, this repo disables Stylix’s Sway-only `swaybg` service to avoid double-ownership.

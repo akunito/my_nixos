@@ -227,7 +227,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/debug-relog.nix**: Keep logging implementation centralized via existing helper script.
 - **user/wm/sway/debug/relog-instrumentation.nix**: NDJSON sink for this repo (debug-mode compatible).
 - **user/wm/sway/default.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
+   - `useSystemdSessionDaemons && (systemSettings.swayKanshiSettings or null) != null`
+   - `scalable relog fix`
    - `IPC toggling is rejected by Sway`
+   - `for a reliable toggle from keybindings + Waybar custom module`
+   - `custom toggle`
    - `ExecStart is required`
    - `like Unit.Description / ExecStart`
    - `wl-paste`
@@ -240,7 +244,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
 - **user/wm/sway/sway.nix**: User module: sway.nix
-- **user/wm/sway/waybar.nix**: Helper function to convert hex color + alpha to rgba()
+- **user/wm/sway/waybar.nix**: Some GPU tooling is optional depending on hardware / nixpkgs settings.
 - **user/wm/xmonad/xmonad.nix**: User module: xmonad.nix
 
 ## Documentation
@@ -265,6 +269,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/sov-dependency-analysis.md**: **Date**: 2026-01-07
 - **docs/future/sway-daemon-relog-notes-2026-01-08.md**: This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
 - **docs/future/vmhome-migration-test.md**: **Date**: 2025-01-XX
+- **docs/future/waybar-drawer-and-idle-toggle.md**: Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX.
 - **docs/future/waybar-sov-debug-analysis.md**: **Date**: 2026-01-07
 
 ### Hardware
@@ -312,6 +317,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/rofi.md**: Rofi configuration (Stylix-templated theme, unified combi launcher, power script-mode, and grouped window overview).
 - **docs/user-modules/stylix-containment.md**: Stylix theming containment in this repo (Sway gets Stylix; Plasma 6 does not) via env isolation + session-scoped systemd.
 - **docs/user-modules/sway-daemon-integration.md**: Sway session services are managed via systemd --user units bound to sway-session.target (official/systemd approach; no custom daemon-manager).
+- **docs/user-modules/sway-output-layout-kanshi.md**: Fix “phantom OFF monitors” in Sway/SwayFX using kanshi (wlroots) + Sway-only systemd target, profile-scoped in flakes.
 - **docs/user-modules/sway-to-hyprland-migration.md**: Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions.
 - **docs/user-modules/swaybgplus.md**: GUI multi-monitor wallpapers for SwayFX/Wayland via SwayBG+ (Home-Manager/NixOS-safe; no Stylix/Plasma conflicts).
 - **docs/user-modules/swww.md**: Robust wallpapers for SwayFX via swww (daemon + oneshot restore; rebuild/reboot safe; no polling/flicker).

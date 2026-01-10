@@ -222,6 +222,49 @@
     enableSwayForDESK = true;  # Enable SwayFX as second WM option alongside Plasma6
     swayPrimaryMonitor = "DP-1";  # Primary monitor for SwayFX dock (Samsung 4K)
     stylixEnable = true;  # Enable Stylix for theming
+
+    # Sway/SwayFX: kanshi output layout (DESK-only).
+    # Other profiles keep default behavior by leaving this as null (see lib/defaults.nix).
+    #
+    # NOTE: On this setup, kanshi transform values map inversely to what Sway reports:
+    # - kanshi transform "270" => Sway reports transform 90 (desired portrait rotation).
+    swayKanshiSettings = [
+      # If the Philips/TV output is present, enable and configure it.
+      # NOTE: Ordering matters: kanshi picks the first matching profile.
+      {
+        profile = {
+          name = "desk-tv";
+          outputs = [
+            { criteria = "DP-1"; scale = 1.6; position = "0,0"; }
+            # kanshi transform 270 => Sway reports transform 90 (desired)
+            { criteria = "DP-2"; mode = "2560x1440@144.000Hz"; scale = 1.25; transform = "270"; position = "2400,-876"; }
+
+            # HDMI-A-1 (Philips): enable at 1920x1080@60 and place to the right of DP-2.
+            # DP-2 logical width is 1152 (1440 / 1.25) so x = 2400 + 1152 = 3552
+            # Explicitly enable the output (it may be disabled by the fallback profile).
+            { criteria = "HDMI-A-1"; status = "enable"; mode = "1920x1080@60.000Hz"; scale = 1.0; position = "3552,-876"; }
+
+            # Optional outputs remain disabled unless we add a dedicated profile for them.
+            { criteria = "DP-3"; status = "disable"; }
+          ];
+          exec = [ "$HOME/.config/sway/scripts/swaysome-init.sh" ];
+        };
+      }
+
+      # Fallback: no TV output, keep usually-OFF outputs disabled.
+      {
+        profile = {
+          name = "desk";
+          outputs = [
+            { criteria = "DP-1"; scale = 1.6; position = "0,0"; }
+            { criteria = "DP-2"; mode = "2560x1440@144.000Hz"; scale = 1.25; transform = "270"; position = "2400,-876"; }
+            { criteria = "DP-3"; status = "disable"; }
+            { criteria = "HDMI-A-1"; status = "disable"; }
+          ];
+          exec = [ "$HOME/.config/sway/scripts/swaysome-init.sh" ];
+        };
+      }
+    ];
     
     systemStable = false;
   };

@@ -1803,34 +1803,35 @@ in {
   };
 
   # Official/standard dynamic output configuration for Sway/SwayFX (wlroots): kanshi.
-  # Plasma 6 safety: bind kanshi to sway-session.target so it only runs in Sway sessions.
-  services.kanshi = lib.mkIf useSystemdSessionDaemons {
+  #
+  # IMPORTANT:
+  # - This must not affect Plasma 6.
+  # - We only enable kanshi when the active profile provides `systemSettings.swayKanshiSettings`.
+  # - The kanshi systemd unit is bound to sway-session.target (Sway-only).
+  services.kanshi = lib.mkIf (useSystemdSessionDaemons && (systemSettings.swayKanshiSettings or null) != null) {
     enable = true;
     systemdTarget = "sway-session.target";
-
-    # Official schema: ordered list of directives (kanshi(5)).
-    # We keep a single "desk" profile which always enforces the intended layout and disables the
-    # usually-OFF outputs to prevent phantom pointer/workspace regions.
-    #
-    # If you later want a second profile that enables DP-3/HDMI-A-1, we can add it, but kanshi can
-    # only switch profiles automatically when it can distinguish states (typically cable connect/disconnect).
-    settings = [
-      {
-        profile = {
-          name = "desk";
-          outputs = [
-            { criteria = "DP-1"; scale = 1.6; position = "0,0"; }
-            # NOTE: kanshi's transform values map inversely to what Sway reports in get_outputs on this setup.
-            # Setting 270 here yields Sway-reported transform 90 (desired).
-            { criteria = "DP-2"; mode = "2560x1440@144.000Hz"; scale = 1.25; transform = "270"; position = "2400,-876"; }
-            { criteria = "DP-3"; status = "disable"; }
-            { criteria = "HDMI-A-1"; status = "disable"; }
-          ];
-          exec = [ "${config.home.homeDirectory}/.config/sway/scripts/swaysome-init.sh" ];
-        };
-      }
-    ];
+    settings = systemSettings.swayKanshiSettings;
   };
+
+  # Ensure Home Manager owns kanshi config robustly (only when kanshi is enabled for this profile).
+  xdg.configFile."kanshi/config".force =
+    (useSystemdSessionDaemons && (systemSettings.swayKanshiSettings or null) != null);
+
+  # CRITICAL: Home-Manager activation reloads systemd --user and can coincide with compositor state changes.
+  # On this setup, output layout can revert to defaults right after `sync-user.sh`.
+  # Fix: after HM activation reloads systemd, restart kanshi *only if we're in a real Sway session*,
+  # so the configured output layout is re-applied deterministically.
+  home.activation.kanshiReapplyAfterSwitch =
+    lib.mkIf (useSystemdSessionDaemons && (systemSettings.swayKanshiSettings or null) != null) (
+      lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+        # Only reapply in an actual live Sway session.
+        if ${pkgs.swayfx}/bin/swaymsg -t get_version >/dev/null 2>&1; then
+          ${pkgs.systemd}/bin/systemctl --user reset-failed kanshi.service >/dev/null 2>&1 || true
+          ${pkgs.systemd}/bin/systemctl --user restart kanshi.service >/dev/null 2>&1 || true
+        fi
+      ''
+    );
 
   # Volume/brightness OSD (matches Hyprland behavior)
   services.swayosd = lib.mkIf useSystemdSessionDaemons {
@@ -1869,6 +1870,26 @@ in {
       };
     Install = {
       WantedBy = lib.mkForce [ "sway-session.target" ];
+    };
+  };
+
+  # Custom idle inhibit lock (for a reliable toggle from keybindings + Waybar custom module).
+  # This is separate from Waybar's built-in idle_inhibitor module so we can test safely.
+  systemd.user.services."idle-inhibit" = lib.mkIf useSystemdSessionDaemons {
+    Unit = {
+      Description = "Idle inhibit lock (custom toggle)";
+      PartOf = [ "sway-session.target" ];
+      After = [ "sway-session.target" ];
+    };
+    Service = {
+      Type = "simple";
+      ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=idle --who=IdleToggle --why=Idle_inhibited ${pkgs.coreutils}/bin/sleep infinity";
+      Restart = "no";
+      EnvironmentFile = [ "-%t/sway-session.env" ];
+    };
+    Install = {
+      # Do not autostart; toggled by script/keybinding.
+      WantedBy = [];
     };
   };
   
@@ -2123,6 +2144,8 @@ in {
           "XF86AudioLowerVolume" = "exec ${pkgs.swayosd}/bin/swayosd-client --output-volume lower";
           "XF86AudioRaiseVolume" = "exec ${pkgs.swayosd}/bin/swayosd-client --output-volume raise";
           "XF86AudioMute" = "exec ${pkgs.swayosd}/bin/swayosd-client --output-volume mute-toggle";
+          # Keyd virtual keyboard emits a quick mute down/up; bind the combo to avoid clobbering real mute.
+          "${hyper}+XF86AudioMute" = "exec ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
           
           # Screenshot workflow
           "${hyper}+Shift+x" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh full";
@@ -2327,6 +2350,12 @@ in {
           # LACT (Linux AMDGPU Controller): often XWayland; keep explicit app_id match for Wayland variants too.
           { criteria = { app_id = "lact"; }; command = "floating enable, sticky enable"; }
           { criteria = { title = "LACT"; }; command = "floating enable, sticky enable"; }
+
+          # KDE Discover: floating + sticky (Wayland app_id + common fallbacks)
+          { criteria = { app_id = "org.kde.discover"; }; command = "floating enable, sticky enable"; }
+          { criteria = { app_id = "plasma-discover"; }; command = "floating enable, sticky enable"; }
+          { criteria = { app_id = "discover"; }; command = "floating enable, sticky enable"; }
+          { criteria = { title = "Discover"; }; command = "floating enable, sticky enable"; }
           
           # XWayland apps (use class)
           { criteria = { class = "SwayBG+"; }; command = "floating enable"; }
@@ -2335,6 +2364,9 @@ in {
           { criteria = { class = "dolphin"; }; command = "floating enable"; }
           { criteria = { class = "lact"; }; command = "floating enable, sticky enable"; }
           { criteria = { class = "LACT"; }; command = "floating enable, sticky enable"; }
+          { criteria = { class = "discover"; }; command = "floating enable, sticky enable"; }
+          { criteria = { class = "Discover"; }; command = "floating enable, sticky enable"; }
+          { criteria = { class = "plasma-discover"; }; command = "floating enable, sticky enable"; }
           
           # Dolphin on Wayland (use app_id)
           { criteria = { app_id = "org.kde.dolphin"; }; command = "floating enable"; }
@@ -2359,6 +2391,13 @@ in {
           { criteria = { title = "LACT"; }; command = "sticky enable"; }
           { criteria = { class = "lact"; }; command = "sticky enable"; }
           { criteria = { class = "LACT"; }; command = "sticky enable"; }
+          { criteria = { app_id = "org.kde.discover"; }; command = "sticky enable"; }
+          { criteria = { app_id = "plasma-discover"; }; command = "sticky enable"; }
+          { criteria = { app_id = "discover"; }; command = "sticky enable"; }
+          { criteria = { title = "Discover"; }; command = "sticky enable"; }
+          { criteria = { class = "discover"; }; command = "sticky enable"; }
+          { criteria = { class = "Discover"; }; command = "sticky enable"; }
+          { criteria = { class = "plasma-discover"; }; command = "sticky enable"; }
           
         ];
       };
@@ -2520,6 +2559,15 @@ in {
       for_window [title="LACT"] floating enable, sticky enable
       for_window [class="lact"] floating enable, sticky enable
       for_window [class="LACT"] floating enable, sticky enable
+
+      # KDE Discover: ensure floating+sticky (Wayland app_id + XWayland class/title fallbacks)
+      for_window [app_id="org.kde.discover"] floating enable, sticky enable
+      for_window [app_id="plasma-discover"] floating enable, sticky enable
+      for_window [app_id="discover"] floating enable, sticky enable
+      for_window [class="plasma-discover"] floating enable, sticky enable
+      for_window [class="discover"] floating enable, sticky enable
+      for_window [class="Discover"] floating enable, sticky enable
+      for_window [title="Discover"] floating enable, sticky enable
       
       # Mission Center - Floating, Sticky, Resized
       for_window [app_id="io.missioncenter.MissionCenter"] floating enable, sticky enable, resize set 800 600
@@ -2761,6 +2809,16 @@ in {
 
   home.file.".config/sway/scripts/waybar-nixos-update.sh" = {
     source = ./scripts/waybar-nixos-update.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/idle-inhibit-status.sh" = {
+    source = ./scripts/idle-inhibit-status.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/idle-inhibit-toggle.sh" = {
+    source = ./scripts/idle-inhibit-toggle.sh;
     executable = true;
   };
 

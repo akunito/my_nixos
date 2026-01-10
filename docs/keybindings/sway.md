@@ -100,6 +100,9 @@ The Hyper key is the primary modifier for all Sway keybindings. It's configured 
 - **`XF86AudioLowerVolume`** → Lower volume (OSD via `swayosd-client`)
 - **`XF86AudioRaiseVolume`** → Raise volume (OSD via `swayosd-client`)
 - **`XF86AudioMute`** → Mute toggle (OSD via `swayosd-client`)
+- **`${hyper}+XF86AudioMute`** → Toggle **custom idle inhibit** (systemd user `idle-inhibit.service`)
+  - Shows a desktop notification with ON/OFF status
+  - This is intentionally separate from Waybar’s built-in `idle_inhibitor` while testing
 
 ## Workspace Navigation
 
