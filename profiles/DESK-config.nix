@@ -246,14 +246,16 @@
             # Explicitly enable the output (it may be disabled by the fallback profile).
             { criteria = "Philips Consumer Electronics Company PHILIPS FTV 0x01010101"; status = "enable"; mode = "1920x1080@60.000Hz"; scale = 1.0; position = "3552,-876"; }
 
-            # Optional outputs remain disabled unless we add a dedicated profile for them.
-            { criteria = "BNQ ZOWIE XL LCD 7CK03588SL0"; status = "disable"; }
+            # BNQ (Group 4 -> workspaces 41-50): enable and place to the LEFT of Samsung.
+            # Best available mode observed: 1920x1080@60Hz. Keep scale default 1.0.
+            { criteria = "BNQ ZOWIE XL LCD 7CK03588SL0"; status = "enable"; mode = "1920x1080@60.000Hz"; scale = 1.0; position = "-1920,0"; }
           ];
           # CRITICAL: re-trigger swaysome initialization whenever kanshi applies (startup + hotplug).
           exec = [
             # NOTE: This file is a profile config imported by the flake and does NOT have `pkgs` in scope.
             # Use a runtime path that exists in the user environment instead.
             "$HOME/.nix-profile/bin/swaysome init"
+            "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
             "$HOME/.config/sway/scripts/swaysome-init.sh"
           ];
         };
@@ -266,11 +268,12 @@
           outputs = [
             { criteria = "Samsung Electric Company Odyssey G70NC H1AK500000"; mode = "3840x2160@120.000Hz"; scale = 1.6; position = "0,0"; }
             { criteria = "NSL RGB-27QHDS    Unknown"; mode = "2560x1440@144.000Hz"; scale = 1.25; transform = "270"; position = "2400,-876"; }
-            { criteria = "BNQ ZOWIE XL LCD 7CK03588SL0"; status = "disable"; }
             { criteria = "Philips Consumer Electronics Company PHILIPS FTV 0x01010101"; status = "disable"; }
+            { criteria = "BNQ ZOWIE XL LCD 7CK03588SL0"; status = "enable"; mode = "1920x1080@60.000Hz"; scale = 1.0; position = "-1920,0"; }
           ];
           exec = [
             "$HOME/.nix-profile/bin/swaysome init"
+            "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
             "$HOME/.config/sway/scripts/swaysome-init.sh"
           ];
         };

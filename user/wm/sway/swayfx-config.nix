@@ -110,7 +110,7 @@ in
 
       # Keybindings
       keybindings = lib.mkMerge [
-        (lib.mkOptionDefault {
+        {
           # Reload SwayFX configuration
           "${hyper}+Shift+r" = "reload";
 
@@ -182,35 +182,19 @@ in
           "${hyper}+s" = "exec swaybgplus-gui";
 
           # Workspace navigation (using Sway native commands for local cycling)
-          # NOTE: Use lowercase keysyms; Hyper does not include Shift.
+          #
+          # NOTE: Use lowercase keysyms; adding Q/W variants causes Sway to warn about duplicate binds
+          # (it normalizes the combo and overwrites the earlier binding).
           "${hyper}+q" = "workspace prev_on_output"; # LOCAL navigation (within current monitor only)
           "${hyper}+w" = "workspace next_on_output"; # LOCAL navigation (within current monitor only)
           "${hyper}+Shift+q" = "move container to workspace prev_on_output"; # Move window to previous workspace on current monitor (LOCAL)
           "${hyper}+Shift+w" = "move container to workspace next_on_output"; # Move window to next workspace on current monitor (LOCAL)
 
           # Direct workspace bindings (using swaysome)
-          "${hyper}+1" = "exec swaysome focus 1";
-          "${hyper}+2" = "exec swaysome focus 2";
-          "${hyper}+3" = "exec swaysome focus 3";
-          "${hyper}+4" = "exec swaysome focus 4";
-          "${hyper}+5" = "exec swaysome focus 5";
-          "${hyper}+6" = "exec swaysome focus 6";
-          "${hyper}+7" = "exec swaysome focus 7";
-          "${hyper}+8" = "exec swaysome focus 8";
-          "${hyper}+9" = "exec swaysome focus 9";
-          "${hyper}+0" = "exec swaysome focus 10";
-
-          # Move window to workspace 1-10 (using swaysome)
-          "${hyper}+Shift+1" = "exec swaysome move 1";
-          "${hyper}+Shift+2" = "exec swaysome move 2";
-          "${hyper}+Shift+3" = "exec swaysome move 3";
-          "${hyper}+Shift+4" = "exec swaysome move 4";
-          "${hyper}+Shift+5" = "exec swaysome move 5";
-          "${hyper}+Shift+6" = "exec swaysome move 6";
-          "${hyper}+Shift+7" = "exec swaysome move 7";
-          "${hyper}+Shift+8" = "exec swaysome move 8";
-          "${hyper}+Shift+9" = "exec swaysome move 9";
-          "${hyper}+Shift+0" = "exec swaysome move 10";
+          #
+          # NOTE: The 1..0 and Shift+1..0 bindings are defined in the override block below
+          # to implement the absolute-to-Samsung workflow. Do not define them here as well,
+          # or Home Manager will throw a conflicting-definition error.
 
           # Move window between monitors
           "${hyper}+Shift+Left" = "move container to output left";
@@ -277,32 +261,34 @@ in
 
           # Exit Sway
           "${hyper}+Shift+End" = "exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway? This will end your Wayland session.' -b 'Yes, exit Sway' 'swaymsg exit'";
-        })
+        }
         # Overrides (must win without breaking the rest of the keymap)
         {
-          # Absolute navigation: ALWAYS go to Samsung main output, then focus relative workspace N (Group 1 -> IDs 11-20).
-          "${hyper}+1" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 1'";
-          "${hyper}+2" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 2'";
-          "${hyper}+3" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 3'";
-          "${hyper}+4" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 4'";
-          "${hyper}+5" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 5'";
-          "${hyper}+6" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 6'";
-          "${hyper}+7" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 7'";
-          "${hyper}+8" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 8'";
-          "${hyper}+9" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 9'";
-          "${hyper}+0" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 10'";
+          # Relative workspace navigation (standard swaysome behavior):
+          # - It uses the CURRENT output's workspace group and maps index -> workspace number block.
+          "${hyper}+1" = "exec ${pkgs.swaysome}/bin/swaysome focus 1";
+          "${hyper}+2" = "exec ${pkgs.swaysome}/bin/swaysome focus 2";
+          "${hyper}+3" = "exec ${pkgs.swaysome}/bin/swaysome focus 3";
+          "${hyper}+4" = "exec ${pkgs.swaysome}/bin/swaysome focus 4";
+          "${hyper}+5" = "exec ${pkgs.swaysome}/bin/swaysome focus 5";
+          "${hyper}+6" = "exec ${pkgs.swaysome}/bin/swaysome focus 6";
+          "${hyper}+7" = "exec ${pkgs.swaysome}/bin/swaysome focus 7";
+          "${hyper}+8" = "exec ${pkgs.swaysome}/bin/swaysome focus 8";
+          "${hyper}+9" = "exec ${pkgs.swaysome}/bin/swaysome focus 9";
+          # IMPORTANT: swaysome expects index 10 for the \"0\" key.
+          "${hyper}+0" = "exec ${pkgs.swaysome}/bin/swaysome focus 10";
 
-          # Absolute move: ALWAYS send to Samsung main output's raw workspace IDs 11-20.
-          "${hyper}+Shift+1" = "move container to workspace number 11";
-          "${hyper}+Shift+2" = "move container to workspace number 12";
-          "${hyper}+Shift+3" = "move container to workspace number 13";
-          "${hyper}+Shift+4" = "move container to workspace number 14";
-          "${hyper}+Shift+5" = "move container to workspace number 15";
-          "${hyper}+Shift+6" = "move container to workspace number 16";
-          "${hyper}+Shift+7" = "move container to workspace number 17";
-          "${hyper}+Shift+8" = "move container to workspace number 18";
-          "${hyper}+Shift+9" = "move container to workspace number 19";
-          "${hyper}+Shift+0" = "move container to workspace number 20";
+          # Relative move (same group as current output)
+          "${hyper}+Shift+1" = "exec ${pkgs.swaysome}/bin/swaysome move 1";
+          "${hyper}+Shift+2" = "exec ${pkgs.swaysome}/bin/swaysome move 2";
+          "${hyper}+Shift+3" = "exec ${pkgs.swaysome}/bin/swaysome move 3";
+          "${hyper}+Shift+4" = "exec ${pkgs.swaysome}/bin/swaysome move 4";
+          "${hyper}+Shift+5" = "exec ${pkgs.swaysome}/bin/swaysome move 5";
+          "${hyper}+Shift+6" = "exec ${pkgs.swaysome}/bin/swaysome move 6";
+          "${hyper}+Shift+7" = "exec ${pkgs.swaysome}/bin/swaysome move 7";
+          "${hyper}+Shift+8" = "exec ${pkgs.swaysome}/bin/swaysome move 8";
+          "${hyper}+Shift+9" = "exec ${pkgs.swaysome}/bin/swaysome move 9";
+          "${hyper}+Shift+0" = "exec ${pkgs.swaysome}/bin/swaysome move 10";
         }
       ];
 
