@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Shared workspace utilities for navigation and moving
-# Provides functions for workspace group management with wrapping
+# Provides functions for workspace group management with wrapping within group boundaries
 
 set -euo pipefail
 
@@ -46,7 +46,7 @@ get_group_workspaces() {
         sort -n
 }
 
-# Get next workspace with wrapping (Option B)
+# Get next workspace with sequential creation and wrapping
 # Args: CURRENT_WS GROUP_WORKSPACES_ARRAY
 # Returns: workspace number to focus/create
 get_next_workspace_wrap() {
@@ -54,24 +54,24 @@ get_next_workspace_wrap() {
     shift
     local group_workspaces=("$@")
 
-    # Find next workspace in sequence
-    local next_ws=""
-    for ws in "${group_workspaces[@]}"; do
-        if [ "$ws" -gt "$current_ws" ]; then
-            next_ws="$ws"
-            break
-        fi
-    done
+    # Calculate group boundaries (11-20 = group 1, 21-30 = group 2, etc.)
+    local ws_num=$((current_ws))
+    local group_num=$(((ws_num - 1) / 10))
+    local group_start=$((group_num * 10 + 1))
+    local group_end=$((group_num * 10 + 10))
 
-    if [ -n "$next_ws" ]; then
-        echo "$next_ws"
+    # Calculate next sequential workspace
+    local next_sequential=$((current_ws + 1))
+
+    # If beyond group end, wrap to group start
+    if [ "$next_sequential" -gt "$group_end" ]; then
+        echo "$group_start"
     else
-        # No next workspace, wrap to beginning
-        echo "${group_workspaces[0]}"
+        echo "$next_sequential"
     fi
 }
 
-# Get previous workspace with wrapping (Option B)
+# Get previous workspace with sequential creation and wrapping
 # Args: CURRENT_WS GROUP_WORKSPACES_ARRAY
 # Returns: workspace number to focus/create
 get_prev_workspace_wrap() {
@@ -79,34 +79,38 @@ get_prev_workspace_wrap() {
     shift
     local group_workspaces=("$@")
 
-    # Find previous workspace in sequence
-    local prev_ws=""
-    for ((i=${#group_workspaces[@]}-1; i>=0; i--)); do
-        local ws="${group_workspaces[i]}"
-        if [ "$ws" -lt "$current_ws" ]; then
-            prev_ws="$ws"
-            break
-        fi
-    done
+    # Calculate group boundaries (11-20 = group 1, 21-30 = group 2, etc.)
+    local ws_num=$((current_ws))
+    local group_num=$(((ws_num - 1) / 10))
+    local group_start=$((group_num * 10 + 1))
+    local group_end=$((group_num * 10 + 10))
 
-    if [ -n "$prev_ws" ]; then
-        echo "$prev_ws"
+    # Calculate previous sequential workspace
+    local prev_sequential=$((current_ws - 1))
+
+    # If below group start, wrap to group end
+    if [ "$prev_sequential" -lt "$group_start" ]; then
+        echo "$group_end"
     else
-        # No previous workspace, wrap to end
-        echo "${group_workspaces[-1]}"
+        echo "$prev_sequential"
     fi
 }
 
 # Focus or create workspace
-# Args: WORKSPACE_NUMBER
+# Args: WORKSPACE_NUMBER OUTPUT_NAME
 focus_workspace() {
     local workspace="$1"
-    $SWAYMSG_BIN "workspace number $workspace" >/dev/null 2>&1
+    local output="$2"
+    # Create/focus the workspace (output should already be focused)
+    $SWAYMSG_BIN "workspace $workspace" >/dev/null 2>&1
 }
 
 # Move container to workspace
-# Args: WORKSPACE_NUMBER
+# Args: WORKSPACE_NUMBER OUTPUT_NAME
 move_to_workspace() {
     local workspace="$1"
-    $SWAYMSG_BIN "move container to workspace number $workspace" >/dev/null 2>&1
+    local output="$2"
+    # First focus the correct output, then move to workspace
+    $SWAYMSG_BIN "focus output \"$output\"" >/dev/null 2>&1
+    $SWAYMSG_BIN "move container to workspace $workspace" >/dev/null 2>&1
 }

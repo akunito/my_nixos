@@ -23,6 +23,6 @@ fi
 TARGET_WS="$(get_next_workspace_wrap "$CURRENT_WS" "${GROUP_WORKSPACES[@]}")"
 
 # Move container to the workspace (creates it if it doesn't exist)
-move_to_workspace "$TARGET_WS"
+move_to_workspace "$TARGET_WS" "$CURRENT_OUTPUT"
 
 exit 0

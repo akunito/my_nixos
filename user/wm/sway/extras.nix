@@ -201,6 +201,31 @@
     executable = true;
   };
 
+  home.file.".config/sway/scripts/workspace-utils.sh" = {
+    source = ./scripts/workspace-utils.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/workspace-nav-prev.sh" = {
+    source = ./scripts/workspace-nav-prev.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/workspace-nav-next.sh" = {
+    source = ./scripts/workspace-nav-next.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/workspace-move-prev.sh" = {
+    source = ./scripts/workspace-move-prev.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/workspace-move-next.sh" = {
+    source = ./scripts/workspace-move-next.sh;
+    executable = true;
+  };
+
   # Generate swaybar-toggle script with proper package paths
   home.file.".config/sway/scripts/swaybar-toggle.sh" = {
     text = ''

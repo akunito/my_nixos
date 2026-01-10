@@ -23,6 +23,6 @@ fi
 TARGET_WS="$(get_prev_workspace_wrap "$CURRENT_WS" "${GROUP_WORKSPACES[@]}")"
 
 # Focus the workspace (creates it if it doesn't exist)
-focus_workspace "$TARGET_WS"
+focus_workspace "$TARGET_WS" "$CURRENT_OUTPUT"
 
 exit 0
