@@ -1,4 +1,15 @@
-# Waybar and Sov Startup Failure - Comprehensive Debug Analysis
+---
+id: future.waybar-sov-debug-analysis-2026-01-07
+summary: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).
+tags: [waybar, sov, sway, swayfx, debug, incident, deprecated, daemon-manager]
+related_files:
+  - user/wm/sway/**
+  - docs/user-modules/sway-daemon-integration.md
+---
+
+# Waybar and Sov Startup Failure - Comprehensive Debug Analysis (LEGACY)
+
+**Status**: This document is **historical**. The repo’s current, canonical approach is **systemd-first** Sway session services bound to `sway-session.target`. See `docs/user-modules/sway-daemon-integration.md`.
 
 **Date**: 2026-01-07  
 **Issue**: Neither waybar, waybar dock, nor sov are starting after system rebuild and Sway session restart  

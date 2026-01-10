@@ -195,6 +195,16 @@
     executable = true;
   };
 
+  home.file.".config/sway/scripts/swaysome-assign-groups.sh" = {
+    source = ./scripts/swaysome-assign-groups.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/swaysome-pin-groups-desk.sh" = {
+    source = ./scripts/swaysome-pin-groups-desk.sh;
+    executable = true;
+  };
+
   # Generate swaybar-toggle script with proper package paths
   home.file.".config/sway/scripts/swaybar-toggle.sh" = {
     text = ''

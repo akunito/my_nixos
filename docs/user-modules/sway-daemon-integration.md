@@ -53,4 +53,21 @@ This repo manages Sway session services using **systemd --user** units bound to 
 - Verify ordering if a tray app starts before Waybar:
   - ensure `After=waybar.service` (and `Wants=waybar.service` if needed)
 
+## Waybar-specific troubleshooting
+
+### Waybar exits immediately (config/CSS parse errors)
+
+Waybar will fail fast (exit code 1) if it cannot parse the generated config or CSS. The most common signature is a selector parse error like:
+
+- `style.css:<line>:<col> Expected a valid selector`
+
+Notes:
+
+- Waybar’s CSS parser is **not** a full browser engine; some selectors are rejected (notably attribute selectors like `button[data-name="…"]` or prefix matches like `^=`).
+- Prefer simple selectors (`#id`, `.class`, element names) and/or use **Pango markup** in `format` / `format-icons` when you need per-item styling (see `user/wm/sway/waybar.nix` workspaces section).
+
+If you edit `user/wm/sway/waybar.nix`, remember it must be **applied** (Home Manager generation updated) before `~/.config/waybar/style.css` changes:
+
+- `./sync-user.sh` (repo helper; runs `home-manager switch`)
+
 

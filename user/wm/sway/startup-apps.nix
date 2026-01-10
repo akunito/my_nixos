@@ -166,9 +166,8 @@ let
         sleep 0.5
       done
 
-      # Focus Main Output -> Group 1 relative workspace 1 (workspace ID 11)
-      swaymsg focus output "$PRIMARY_HARDWARE" >/dev/null 2>&1 || true
-      swaysome focus 1
+      # Switch to workspace 11 for KWallet prompt
+      swaymsg workspace number 11 >/dev/null 2>&1 || true
       sleep 0.3
 
       # If PAM already unlocked KWallet, don't force a prompt.
@@ -318,25 +317,16 @@ let
         return 1
       }
 
-      # Launch Vivaldi (Main / Group 1 -> workspace 11)
-      swaymsg focus output "$PRIMARY_HARDWARE" >/dev/null 2>&1 || true
-      swaysome focus 1
+      # Launch Vivaldi (workspace 11)
+      swaymsg workspace number 11 >/dev/null 2>&1 || true
       if is_flatpak_installed "com.vivaldi.Vivaldi"; then
         flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
       else
         (command -v vivaldi >/dev/null 2>&1 && vivaldi >/dev/null 2>&1 &) || true
       fi
 
-      # Launch Chromium (Main / Group 1 -> workspace 12; assign rules may move it later)
-      swaysome focus 2
-      if is_flatpak_installed "org.chromium.Chromium"; then
-        flatpak run org.chromium.Chromium >/dev/null 2>&1 &
-      else
-        (command -v chromium >/dev/null 2>&1 && chromium >/dev/null 2>&1 &) || true
-      fi
-
-      # Launch Cursor (Main / Group 1 -> workspace 12)
-      # Note: Cursor will be assigned to workspace 12 via Sway assign rules
+      # Launch Cursor (workspace 12)
+      swaymsg workspace number 12 >/dev/null 2>&1 || true
       if is_flatpak_installed "com.todesktop.230313mzl4w4u92"; then
         flatpak run com.todesktop.230313mzl4w4u92 >/dev/null 2>&1 &
       else
@@ -347,14 +337,16 @@ let
         fi
       fi
 
-      # Launch Obsidian (Vertical / Group 2 -> workspace 21; fallback to main if missing)
-      if swaymsg -t get_outputs 2>/dev/null | grep -Fq "$VERTICAL_HARDWARE"; then
-        swaymsg focus output "$VERTICAL_HARDWARE" >/dev/null 2>&1 || true
-        swaysome focus 1  # Creates workspace 21
+      # Launch Chromium (workspace 22)
+      swaymsg workspace number 22 >/dev/null 2>&1 || true
+      if is_flatpak_installed "org.chromium.Chromium"; then
+        flatpak run org.chromium.Chromium >/dev/null 2>&1 &
       else
-        swaymsg focus output "$PRIMARY_HARDWARE" >/dev/null 2>&1 || true
-        swaysome focus 1  # Falls back to workspace 11 on main
+        (command -v chromium >/dev/null 2>&1 && chromium >/dev/null 2>&1 &) || true
       fi
+
+      # Launch Obsidian (workspace 21)
+      swaymsg workspace number 21 >/dev/null 2>&1 || true
       if is_flatpak_installed "md.obsidian.Obsidian"; then
         flatpak run md.obsidian.Obsidian >/dev/null 2>&1 &
       else
@@ -365,9 +357,8 @@ let
         fi
       fi
 
-      # Return to workspace 11 on main monitor
-      swaymsg focus output "$PRIMARY_HARDWARE" >/dev/null 2>&1 || true
-      swaysome focus 1
+      # Return to workspace 11
+      swaymsg workspace number 11 >/dev/null 2>&1 || true
 
       echo "Apps launched successfully"
       notify-send -t 3000 "App Launcher" "Startup applications launched successfully." || true

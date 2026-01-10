@@ -283,9 +283,11 @@ in
           exec = [
             # NOTE: This file is a profile config imported by the flake and does NOT have `pkgs` in scope.
             # Use a runtime path that exists in the user environment instead.
-            "$HOME/.nix-profile/bin/swaysome init"
-            "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
-            "$HOME/.config/sway/scripts/swaysome-init.sh"
+            # IMPORTANT: start swaysome groups at 1 so group 0 (workspaces 1-10) is never used.
+            "$HOME/.nix-profile/bin/swaysome init 1"
+            "$HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh"
+            # "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
+            # "$HOME/.config/sway/scripts/swaysome-init.sh"
           ];
         };
       }
@@ -301,9 +303,8 @@ in
             (monitors.bnqLeft // { status = "enable"; position = "-1920,0"; })
           ];
           exec = [
-            "$HOME/.nix-profile/bin/swaysome init"
-            "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
-            "$HOME/.config/sway/scripts/swaysome-init.sh"
+            "$HOME/.nix-profile/bin/swaysome init 1"
+            "$HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh"
           ];
         };
       }

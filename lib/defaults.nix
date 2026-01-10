@@ -206,8 +206,10 @@
           # Keep workspaces grouped per-output deterministically.
           # Use user profile PATH (swaysome is installed by the Sway module).
           exec = [
-            "$HOME/.nix-profile/bin/swaysome init"
+            # IMPORTANT: start swaysome groups at 1 so group 0 (workspaces 1-10) is never used.
+            "$HOME/.nix-profile/bin/swaysome init 1"
             "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
+            "$HOME/.config/sway/scripts/swaysome-assign-groups.sh"
             "$HOME/.config/sway/scripts/swaysome-init.sh"
           ];
         };

@@ -117,10 +117,10 @@ Workspace navigation is **local** (within current monitor only) to prevent works
 
 ### Direct Workspace Access
 
-Direct workspace access using `swaysome`:
+Direct workspace access using `swaysome` workspace groups:
 
-- **`${hyper}+1`** through **`${hyper}+0`** → Focus workspace 1-10
-- **`${hyper}+Shift+1`** through **`${hyper}+Shift+0`** → Move window to workspace 1-10
+- **`${hyper}+1`** through **`${hyper}+0`** → Focus workspace relative to current monitor (11-20 on monitor 1, 21-30 on monitor 2, etc.)
+- **`${hyper}+Shift+1`** through **`${hyper}+Shift+0`** → Move window to workspace relative to current monitor
 
 ### Monitor Navigation
 

@@ -807,7 +807,13 @@ chmod 600 ~/.config/kwallet/password.gpg
 - Timeout protection (5 minutes total, then exits gracefully)
 - Backoff strategy (exponential backoff, max 2 minutes)
 - Parallel app launching (all apps launch simultaneously)
-- Relies on Sway assign rules for workspace placement (no focus switching)
+- Explicit workspace switching before app launch (ensures apps open on correct workspaces)
+
+**Application Assignments**:
+- **Vivaldi**: Launches on workspace 11
+- **Cursor**: Launches on workspace 12
+- **Chromium**: Launches on workspace 22
+- **Obsidian**: Launches on workspace 21
 
 **Flatpak App Handling**:
 - Checks if apps are installed via Flatpak using `flatpak list` or `flatpak info`

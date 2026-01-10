@@ -266,7 +266,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/sway-daemon-relog-notes-2026-01-08.md**: This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
 - **docs/future/vmhome-migration-test.md**: **Date**: 2025-01-XX
 - **docs/future/waybar-drawer-and-idle-toggle.md**: Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX.
-- **docs/future/waybar-sov-debug-analysis.md**: **Date**: 2026-01-07
+- **docs/future/waybar-sov-debug-analysis.md**: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).
 
 ### Hardware
 

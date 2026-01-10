@@ -6,6 +6,7 @@ related_files:
   - user/wm/sway/kanshi.nix
   - user/wm/sway/swayfx-config.nix
   - user/wm/sway/scripts/swaysome-init.sh
+  - user/wm/sway/scripts/swaysome-assign-groups.sh
   - profiles/*-config.nix
   - lib/defaults.nix
   - lib/flake-base.nix
@@ -80,6 +81,21 @@ Workspace grouping is executed **after** kanshi applies the profile:
 - kanshi profile includes: `exec swaysome init` and `swaysome rearrange-workspaces` (and may also call `~/.config/sway/scripts/swaysome-init.sh`)
 
 This prevents swaysome from assigning workspace groups to outputs that are going to be disabled by kanshi.
+
+**Note on group numbering**:
+
+- This repo uses `swaysome init 1` and then assigns groups starting at **1**, so **group 0 is never used**.
+- Result: first assigned output gets **11–20**, second gets **21–30**, etc.
+
+### Group assignment
+
+- **Default profiles**: Groups are assigned in Sway's output enumeration order. The first detected output gets group 1 (11–20), second gets group 2 (21–30), etc. This is consistent within a session but may vary across hardware changes.
+
+- **DESK profile**: Additionally pins output→group mapping by hardware ID so it does not depend on enumeration order:
+  - Samsung → Group 1 → 11–20
+  - NSL → Group 2 → 21–30
+- Philips → Group 3 → 31–40
+- BNQ → Group 4 → 41–50
 
 ## Important: don’t mix kanshi with SwayBG+ output geometry include
 

@@ -151,25 +151,46 @@ let
     
     # "sway/window" removed (active window title not shown in bar)
   };
+
+  # Swaysome workspace groups (10s/20s/30s/40s) -> readable labels on a single bar.
+  #
+  # Important: `sway/workspaces` does NOT support a generic `rewrite` map.
+  # Instead we encode the decoded label into `format-icons` and display `{icon}`.
+  #
+  # Also: `{name}` is "number stripped from workspace value" (e.g. "1: web" -> "web"),
+  # so numeric-only workspaces can render empty when using `{name}`. We avoid `{name}`.
+  stylixForSway =
+    systemSettings.stylixEnable == true
+    && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true);
+
+  mkSwaysomeGroupIcons = group: groupIcon: groupColor:
+    builtins.listToAttrs (builtins.genList (d:
+      let
+        digit = d; # 0..9
+        ws = "${toString group}${toString digit}"; # e.g. "11", "20", "39"
+        label = if digit == 0 then "10" else toString digit; # show key "0" as 10
+      in
+      {
+        name = ws;
+        value =
+          if stylixForSway
+          then "<span foreground='#${groupColor}'>${groupIcon}</span> ${label}"
+          else "${groupIcon} ${label}";
+      }
+    ) 10);
+
+  swaysomeWorkspaceIcons =
+    (mkSwaysomeGroupIcons 1 "" config.lib.stylix.colors.base0D) //
+    (mkSwaysomeGroupIcons 2 "󰍹" config.lib.stylix.colors.base0B) //
+    (mkSwaysomeGroupIcons 3 "" config.lib.stylix.colors.base0A) //
+    (mkSwaysomeGroupIcons 4 "󰌢" config.lib.stylix.colors.base08);
   
   # Workspace configuration for primary monitor (all workspaces grouped)
   primaryWorkspaces = {
     disable-scroll = true;
     all-outputs = true;  # Show all workspaces from all monitors
-    format = "{name}: {icon}";  # Note: {output} token not supported by sway/workspaces module
-    format-icons = {
-      "1" = "一";
-      "2" = "二";
-      "3" = "三";
-      "4" = "四";
-      "5" = "五";
-      "6" = "六";
-      "7" = "七";
-      "8" = "八";
-      "9" = "九";
-      "10" = "十";
-      urgent = "";
-      focused = "";
+    format = "{icon}";
+    format-icons = swaysomeWorkspaceIcons // {
       default = "";
     };
   };
@@ -178,20 +199,8 @@ let
   secondaryWorkspaces = {
     disable-scroll = true;
     all-outputs = false;  # Only show workspaces for current monitor
-    format = "{name}: {icon}";
-    format-icons = {
-      "1" = "一";
-      "2" = "二";
-      "3" = "三";
-      "4" = "四";
-      "5" = "五";
-      "6" = "六";
-      "7" = "七";
-      "8" = "八";
-      "9" = "九";
-      "10" = "十";
-      urgent = "";
-      focused = "";
+    format = "{icon}";
+    format-icons = swaysomeWorkspaceIcons // {
       default = "";
     };
   };
@@ -626,16 +635,18 @@ in {
         color: #${config.lib.stylix.colors.base05};
         transition: all 0.2s ease;
       }
+
+      /* Per-group workspace colors are applied via Pango markup in `format-icons`
+         because Waybar's CSS selector parser rejects attribute selectors. */
       
       #workspaces button:hover {
         background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
-        color: #${config.lib.stylix.colors.base07};
       }
       
       #workspaces button.focused {
-        background-color: ${hexToRgba config.lib.stylix.colors.base0D "4D"};
-        color: #${config.lib.stylix.colors.base0D};
-        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base0D "4D"};
+        /* Keep the per-group foreground color; only add a neutral highlight */
+        background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
+        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base03 "4D"};
       }
       
       #workspaces button.urgent {
