@@ -3,6 +3,7 @@
 let
   # Hyper key combination (Super+Ctrl+Alt)
   hyper = "Mod4+Control+Mod1";
+  mainMon = "Samsung Electric Company Odyssey G70NC H1AK500000";
 
   useSystemdSessionDaemons = config.user.wm.sway.useSystemdSessionDaemons;
 
@@ -109,7 +110,7 @@ in
 
       # Keybindings
       keybindings = lib.mkMerge [
-        {
+        (lib.mkOptionDefault {
           # Reload SwayFX configuration
           "${hyper}+Shift+r" = "reload";
 
@@ -181,10 +182,11 @@ in
           "${hyper}+s" = "exec swaybgplus-gui";
 
           # Workspace navigation (using Sway native commands for local cycling)
-          "${hyper}+Q" = "workspace prev_on_output"; # LOCAL navigation (within current monitor only)
-          "${hyper}+W" = "workspace next_on_output"; # LOCAL navigation (within current monitor only)
-          "${hyper}+Shift+Q" = "move container to workspace prev_on_output"; # Move window to previous workspace on current monitor (LOCAL)
-          "${hyper}+Shift+W" = "move container to workspace next_on_output"; # Move window to next workspace on current monitor (LOCAL)
+          # NOTE: Use lowercase keysyms; Hyper does not include Shift.
+          "${hyper}+q" = "workspace prev_on_output"; # LOCAL navigation (within current monitor only)
+          "${hyper}+w" = "workspace next_on_output"; # LOCAL navigation (within current monitor only)
+          "${hyper}+Shift+q" = "move container to workspace prev_on_output"; # Move window to previous workspace on current monitor (LOCAL)
+          "${hyper}+Shift+w" = "move container to workspace next_on_output"; # Move window to next workspace on current monitor (LOCAL)
 
           # Direct workspace bindings (using swaysome)
           "${hyper}+1" = "exec swaysome focus 1";
@@ -228,7 +230,7 @@ in
           "${hyper}+f" = "fullscreen toggle";
           "${hyper}+Shift+space" = "floating toggle";
           # Note: "${hyper}+s" is reserved for SwayBG+ (see application bindings above)
-          # Note: Removed "${hyper}+w" to avoid conflict with "${hyper}+W" (workspace next)
+          # Note: "${hyper}+w" is used for workspace next_on_output (see Workspace navigation above)
           # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (dolphin file explorer)
           # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (pavucontrol)
           # Note: Removed "${hyper}+u" to avoid conflict with "${hyper}+U" (dbeaver)
@@ -275,6 +277,32 @@ in
 
           # Exit Sway
           "${hyper}+Shift+End" = "exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway? This will end your Wayland session.' -b 'Yes, exit Sway' 'swaymsg exit'";
+        })
+        # Overrides (must win without breaking the rest of the keymap)
+        {
+          # Absolute navigation: ALWAYS go to Samsung main output, then focus relative workspace N (Group 1 -> IDs 11-20).
+          "${hyper}+1" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 1'";
+          "${hyper}+2" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 2'";
+          "${hyper}+3" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 3'";
+          "${hyper}+4" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 4'";
+          "${hyper}+5" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 5'";
+          "${hyper}+6" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 6'";
+          "${hyper}+7" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 7'";
+          "${hyper}+8" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 8'";
+          "${hyper}+9" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 9'";
+          "${hyper}+0" = "exec 'swaymsg focus output \"${mainMon}\"; swaysome focus 10'";
+
+          # Absolute move: ALWAYS send to Samsung main output's raw workspace IDs 11-20.
+          "${hyper}+Shift+1" = "move container to workspace number 11";
+          "${hyper}+Shift+2" = "move container to workspace number 12";
+          "${hyper}+Shift+3" = "move container to workspace number 13";
+          "${hyper}+Shift+4" = "move container to workspace number 14";
+          "${hyper}+Shift+5" = "move container to workspace number 15";
+          "${hyper}+Shift+6" = "move container to workspace number 16";
+          "${hyper}+Shift+7" = "move container to workspace number 17";
+          "${hyper}+Shift+8" = "move container to workspace number 18";
+          "${hyper}+Shift+9" = "move container to workspace number 19";
+          "${hyper}+Shift+0" = "move container to workspace number 20";
         }
       ];
 
@@ -430,31 +458,8 @@ in
       #
       # IMPORTANT: Do NOT include swaybgplus output geometry here; it can re-enable "usually OFF" outputs.
 
-      # Workspace-to-monitor assignments with fallbacks
-      # DP-1 (Samsung 4K): Workspaces 1-10
-      workspace 1 output DP-1
-      workspace 2 output DP-1
-      workspace 3 output DP-1
-      workspace 4 output DP-1
-      workspace 5 output DP-1
-      workspace 6 output DP-1
-      workspace 7 output DP-1
-      workspace 8 output DP-1
-      workspace 9 output DP-1
-      workspace 10 output DP-1
-
-      # DP-2 (NSL 2K): Workspaces 11-15 (fallback to DP-1 if DP-2 disconnected)
-      workspace 11 output DP-2 DP-1
-      workspace 12 output DP-2 DP-1
-      workspace 13 output DP-2 DP-1
-      workspace 14 output DP-2 DP-1
-      workspace 15 output DP-2 DP-1
-
-      # DP-3 (BenQ): Workspace 21 (fallback to DP-1 if DP-3 disconnected)
-      workspace 21 output DP-3 DP-1
-
-      # HDMI-A-1 (Philips): Workspace 31 (fallback to DP-1 if HDMI-A-1 disconnected)
-      workspace 31 output HDMI-A-1 DP-1
+      # Workspace placement is managed by swaysome (per-output groups) and kanshi (outputs).
+      # Do not hardcode connector-based workspace->output mappings here (anti-drift).
 
       # Workspace configuration
       workspace_auto_back_and_forth yes
@@ -462,22 +467,22 @@ in
       # DESK startup apps - assign to specific workspaces
       # Using 'assign' instead of 'for_window' prevents flickering on wrong workspace
       # Vivaldi - support both Flatpak and native versions
-      assign [app_id="com.vivaldi.Vivaldi"] workspace number 1
-      assign [app_id="vivaldi"] workspace number 1
-      assign [app_id="vivaldi-stable"] workspace number 1
+      assign [app_id="com.vivaldi.Vivaldi"] workspace number 11
+      assign [app_id="vivaldi"] workspace number 11
+      assign [app_id="vivaldi-stable"] workspace number 11
 
       # Cursor - support both Flatpak and native versions
-      assign [app_id="cursor"] workspace number 2
-      assign [app_id="com.todesktop.230313mzl4w4u92"] workspace number 2
+      assign [app_id="cursor"] workspace number 12
+      assign [app_id="com.todesktop.230313mzl4w4u92"] workspace number 12
 
       # Obsidian - support both Flatpak and native versions
-      assign [app_id="obsidian"] workspace number 11
-      assign [app_id="md.obsidian.Obsidian"] workspace number 11
+      assign [app_id="obsidian"] workspace number 21
+      assign [app_id="md.obsidian.Obsidian"] workspace number 21
 
       # Chromium - support both Flatpak and native versions
-      assign [app_id="chromium"] workspace number 12
-      assign [app_id="org.chromium.Chromium"] workspace number 12
-      assign [class="chromium-browser"] workspace number 12
+      assign [app_id="chromium"] workspace number 22
+      assign [app_id="org.chromium.Chromium"] workspace number 22
+      assign [class="chromium-browser"] workspace number 22
 
       # Disable SwayFX's default internal bar (swaybar) by default
       # Can be toggled manually via swaybar-toggle.sh script or keybinding

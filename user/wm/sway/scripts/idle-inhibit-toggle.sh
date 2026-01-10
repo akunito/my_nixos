@@ -10,15 +10,14 @@ set -u
 
 SERVICE="swayidle.service"
 
-SYSTEMCTL_BIN="$(command -v systemctl || true)"
-if [[ -z "$SYSTEMCTL_BIN" ]] && [[ -x /run/current-system/sw/bin/systemctl ]]; then
-  SYSTEMCTL_BIN="/run/current-system/sw/bin/systemctl"
-fi
+SYSTEMCTL_BIN="/run/current-system/sw/bin/systemctl"
+[[ -x "$SYSTEMCTL_BIN" ]] || SYSTEMCTL_BIN="$(command -v systemctl || true)"
 
-NOTIFY_BIN="$(command -v notify-send || true)"
-if [[ -z "$NOTIFY_BIN" ]] && [[ -x /run/current-system/sw/bin/notify-send ]]; then
-  NOTIFY_BIN="/run/current-system/sw/bin/notify-send"
-fi
+NOTIFY_BIN="/run/current-system/sw/bin/notify-send"
+[[ -x "$NOTIFY_BIN" ]] || NOTIFY_BIN="$(command -v notify-send || true)"
+
+PKILL_BIN="/run/current-system/sw/bin/pkill"
+[[ -x "$PKILL_BIN" ]] || PKILL_BIN="$(command -v pkill || true)"
 
 # When invoked from Waybar (systemd user service), env can be minimal.
 # Ensure we can reach the user bus for `systemctl --user` and `notify-send`.
@@ -71,6 +70,11 @@ fi
 
 if [[ -n "$NOTIFY_BIN" ]]; then
   "$NOTIFY_BIN" -t 2000 "Idle inhibit" "$msg"
+fi
+
+# Waybar signal refresh (if the module is configured with signal=8).
+if [[ -n "${PKILL_BIN:-}" ]]; then
+  "$PKILL_BIN" -SIGRTMIN+8 waybar >/dev/null 2>&1 || true
 fi
 
 

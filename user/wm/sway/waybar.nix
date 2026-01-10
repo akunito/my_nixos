@@ -249,7 +249,7 @@ in {
               "custom/gpu-temp"
             ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/idle-toggle" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
+            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -322,15 +322,6 @@ in {
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-notifications.sh ${pkgs.swaynotificationcenter}/bin/swaync-client";
               on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
               on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
-              tooltip = true;
-            };
-
-            # Custom idle inhibit toggle (script + systemd user service)
-            "custom/idle-toggle" = {
-              return-type = "json";
-              interval = 5;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-status.sh";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
               tooltip = true;
             };
 
@@ -448,7 +439,7 @@ in {
               "custom/gpu-temp"
             ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/idle-toggle" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
+            modules-right = [ "custom/vpn" "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -516,14 +507,6 @@ in {
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-notifications.sh ${pkgs.swaynotificationcenter}/bin/swaync-client";
               on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
               on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
-              tooltip = true;
-            };
-
-            "custom/idle-toggle" = {
-              return-type = "json";
-              interval = 5;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-status.sh";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
               tooltip = true;
             };
 
@@ -698,7 +681,6 @@ in {
       #custom-cpu-temp,
       #custom-gpu-temp,
       #custom-reveal,
-      #custom-idle-toggle,
       #custom-notifications,
       #custom-flatpak-updates,
       #custom-vpn,
@@ -784,14 +766,7 @@ in {
         color: #${config.lib.stylix.colors.base07};
       }
 
-      /* Custom idle toggle styling (green when active) */
-      #custom-idle-toggle.activated {
-        color: #${config.lib.stylix.colors.base0B};
-        background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
-      }
-      #custom-idle-toggle.deactivated {
-        color: #${config.lib.stylix.colors.base07};
-      }
+      /* (custom idle toggle removed; keeping built-in idle_inhibitor only) */
 
       /* VPN: hide when off unless bar is hovered; show always when on */
       #custom-vpn.off {

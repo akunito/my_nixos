@@ -129,9 +129,9 @@ let
       exec > >(systemd-cat -t desk-startup-apps) 2>&1
       echo "Script started at $(date)"
 
-      PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
+      PRIMARY_HARDWARE="Samsung Electric Company Odyssey G70NC H1AK500000"
 
-      if [ -z "$PRIMARY" ]; then
+      if [ -z "$PRIMARY_HARDWARE" ]; then
         # Not DESK profile, exit
         exit 0
       fi
@@ -166,10 +166,8 @@ let
         sleep 0.5
       done
 
-      # Focus Primary Output -> Workspace 1
-      if [ -n "$PRIMARY" ]; then
-        swaymsg focus output "$PRIMARY"
-      fi
+      # Focus Main Output -> Group 1 relative workspace 1 (workspace ID 11)
+      swaymsg focus output "$PRIMARY_HARDWARE" >/dev/null 2>&1 || true
       swaysome focus 1
       sleep 0.3
 
@@ -204,9 +202,9 @@ let
         if [ -n "$WINDOW_ID" ] && [ "$WINDOW_ID" != "null" ]; then
           echo "Found KWallet window: $WINDOW_ID (fail-safe)"
           # Fail-safe: Move to output and workspace (for_window rules should handle this, but keep as backup)
-          swaymsg "[con_id=$WINDOW_ID] move container to output $PRIMARY" 2>/dev/null || true
+          swaymsg "[con_id=$WINDOW_ID] move container to output $PRIMARY_HARDWARE" 2>/dev/null || true
           sleep 0.1
-          swaymsg "[con_id=$WINDOW_ID] move container to workspace number 1" 2>/dev/null || true
+          swaymsg "[con_id=$WINDOW_ID] move container to workspace number 11" 2>/dev/null || true
           sleep 0.1
           # Apply window properties
           swaymsg "[con_id=$WINDOW_ID] floating enable" 2>/dev/null || true
@@ -259,9 +257,10 @@ let
       exec > >(systemd-cat -t desk-startup-apps) 2>&1
       echo "App launcher triggered at $(date)"
 
-      PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
+      PRIMARY_HARDWARE="Samsung Electric Company Odyssey G70NC H1AK500000"
+      VERTICAL_HARDWARE="NSL RGB-27QHDS    Unknown"
 
-      if [ -z "$PRIMARY" ]; then
+      if [ -z "$PRIMARY_HARDWARE" ]; then
         # Not DESK profile, exit
         echo "Not DESK profile, exiting"
         exit 0
@@ -319,10 +318,8 @@ let
         return 1
       }
 
-      # Launch Vivaldi (workspace 1, primary monitor)
-      if [ -n "$PRIMARY" ]; then
-        swaymsg focus output "$PRIMARY"
-      fi
+      # Launch Vivaldi (Main / Group 1 -> workspace 11)
+      swaymsg focus output "$PRIMARY_HARDWARE" >/dev/null 2>&1 || true
       swaysome focus 1
       if is_flatpak_installed "com.vivaldi.Vivaldi"; then
         flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
@@ -330,7 +327,7 @@ let
         (command -v vivaldi >/dev/null 2>&1 && vivaldi >/dev/null 2>&1 &) || true
       fi
 
-      # Launch Chromium (workspace 2, primary monitor)
+      # Launch Chromium (Main / Group 1 -> workspace 12; assign rules may move it later)
       swaysome focus 2
       if is_flatpak_installed "org.chromium.Chromium"; then
         flatpak run org.chromium.Chromium >/dev/null 2>&1 &
@@ -338,8 +335,8 @@ let
         (command -v chromium >/dev/null 2>&1 && chromium >/dev/null 2>&1 &) || true
       fi
 
-      # Launch Cursor (workspace 2, primary monitor - same as Chromium)
-      # Note: Cursor will be assigned to workspace 2 via Sway assign rules
+      # Launch Cursor (Main / Group 1 -> workspace 12)
+      # Note: Cursor will be assigned to workspace 12 via Sway assign rules
       if is_flatpak_installed "com.todesktop.230313mzl4w4u92"; then
         flatpak run com.todesktop.230313mzl4w4u92 >/dev/null 2>&1 &
       else
@@ -350,15 +347,13 @@ let
         fi
       fi
 
-      # Launch Obsidian (workspace 11, secondary monitor or primary if no secondary)
-      if swaymsg -t get_outputs | grep -q "DP-2"; then
-        swaymsg focus output DP-2
-        swaysome focus 1  # Creates workspace 11
+      # Launch Obsidian (Vertical / Group 2 -> workspace 21; fallback to main if missing)
+      if swaymsg -t get_outputs 2>/dev/null | grep -Fq "$VERTICAL_HARDWARE"; then
+        swaymsg focus output "$VERTICAL_HARDWARE" >/dev/null 2>&1 || true
+        swaysome focus 1  # Creates workspace 21
       else
-        if [ -n "$PRIMARY" ]; then
-          swaymsg focus output "$PRIMARY"
-        fi
-        swaysome focus 1  # Falls back to workspace 11 on primary
+        swaymsg focus output "$PRIMARY_HARDWARE" >/dev/null 2>&1 || true
+        swaysome focus 1  # Falls back to workspace 11 on main
       fi
       if is_flatpak_installed "md.obsidian.Obsidian"; then
         flatpak run md.obsidian.Obsidian >/dev/null 2>&1 &
@@ -370,10 +365,8 @@ let
         fi
       fi
 
-      # Return to workspace 1 on primary monitor
-      if [ -n "$PRIMARY" ]; then
-        swaymsg focus output "$PRIMARY"
-      fi
+      # Return to workspace 11 on main monitor
+      swaymsg focus output "$PRIMARY_HARDWARE" >/dev/null 2>&1 || true
       swaysome focus 1
 
       echo "Apps launched successfully"
