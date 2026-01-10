@@ -6,6 +6,9 @@ set -eu
 # kanshi runs this script from a minimal systemd user unit; ensure basic tools are on PATH.
 export PATH="/run/current-system/sw/bin:/run/wrappers/bin:/etc/profiles/per-user/${USER:-$(id -un)}/bin:${HOME:-}/.nix-profile/bin:/usr/bin:/bin:${PATH:-}"
 
+# This script must be safe for ALL profiles (not DESK-specific).
+# Keep it non-opinionated: no hardcoded output names, no forced workspace jumps.
+
 # Wait briefly for Sway IPC to be ready and outputs to be enumerated.
 i=0
 while [ "$i" -lt 30 ]; do
@@ -16,13 +19,9 @@ while [ "$i" -lt 30 ]; do
   i=$((i + 1))
 done
 
-# kanshi runs `${pkgs.swaysome}/bin/swaysome init` on every profile apply (startup + hotplug).
-# Here we only ensure focus lands on the main monitor + its relative workspace 1 (which is ID 11 in Group 1).
-MAIN_OUTPUT="Samsung Electric Company Odyssey G70NC H1AK500000"
-
-# Return focus to main output (even if focus_follows_mouse would otherwise pull it away).
-swaymsg focus output "$MAIN_OUTPUT" >/dev/null 2>&1 || true
-
-# Focus relative workspace 1 on Group 1 (maps to workspace number 11).
-swaysome focus 1 >/dev/null 2>&1 || true
+# Optional: if swaysome is present, try to rearrange already-opened workspaces to the correct outputs.
+# (This is idempotent and helps after hotplug or when old workspaces existed before swaysome init.)
+if command -v swaysome >/dev/null 2>&1; then
+  swaysome rearrange-workspaces >/dev/null 2>&1 || true
+fi
 

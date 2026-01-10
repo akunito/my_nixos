@@ -226,7 +226,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/debug-qt5ct.nix**: Debug logging function for NDJSON format
 - **user/wm/sway/debug-relog.nix**: Keep logging implementation centralized via existing helper script.
 - **user/wm/sway/debug/relog-instrumentation.nix**: NDJSON sink for this repo (debug-mode compatible).
-- **user/wm/sway/default.nix**: Internal cross-module wiring (kept minimal). Submodules populate `scripts.*`.
+- **user/wm/sway/default.nix**: Internal cross-module wiring (kept minimal).
 - **user/wm/sway/extras.nix**: Btop theme configuration (Stylix colors) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/wm/sway/kanshi.nix**: Official/standard dynamic output configuration for Sway/SwayFX (wlroots): kanshi. *Enabled when:* `wlroots`
 - **user/wm/sway/legacy-daemon-manager.nix**: Legacy daemon-manager path is deprecated in this repo; systemd-first is the default. *Enabled when:* `!useSystemdSessionDaemons`

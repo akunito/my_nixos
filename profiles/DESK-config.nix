@@ -2,6 +2,32 @@
 # Only profile-specific overrides - defaults are in lib/defaults.nix
 # Note: Package lists will be evaluated in flake-base.nix where pkgs is available
 
+let
+  monitors = {
+    samsungMain = {
+      criteria = "Samsung Electric Company Odyssey G70NC H1AK500000";
+      mode = "3840x2160@120.000Hz";
+      scale = 1.6;
+    };
+    nslVertical = {
+      criteria = "NSL RGB-27QHDS    Unknown";
+      mode = "2560x1440@144.000Hz";
+      scale = 1.25;
+      # kanshi transform 270 => Sway reports transform 90 (desired)
+      transform = "270";
+    };
+    philipsTv = {
+      criteria = "Philips Consumer Electronics Company PHILIPS FTV 0x01010101";
+      mode = "1920x1080@60.000Hz";
+      scale = 1.0;
+    };
+    bnqLeft = {
+      criteria = "BNQ ZOWIE XL LCD 7CK03588SL0";
+      mode = "1920x1080@60.000Hz";
+      scale = 1.0;
+    };
+  };
+in
 {
   # Flag to use rust-overlay
   useRustOverlay = false;
@@ -220,8 +246,12 @@
     appImageEnable = true;
     gamemodeEnable = true;
     enableSwayForDESK = true;  # Enable SwayFX as second WM option alongside Plasma6
-    swayPrimaryMonitor = "DP-1";  # Primary monitor for SwayFX dock (Samsung 4K)
+    # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.
+    swayPrimaryMonitor = monitors.samsungMain.criteria;
     stylixEnable = true;  # Enable Stylix for theming
+
+    # Monitor inventory (data-only); used to build DESK kanshi settings.
+    swayMonitorInventory = monitors;
 
     # Sway/SwayFX: kanshi output layout (DESK-only).
     # Other profiles keep default behavior by leaving this as null (see lib/defaults.nix).
@@ -237,18 +267,17 @@
           outputs = [
             # CRITICAL: Use full hardware IDs as criteria (anti-drift).
             # Ordering matters: Samsung is first so swaysome stabilizes Group 1 on it.
-            { criteria = "Samsung Electric Company Odyssey G70NC H1AK500000"; mode = "3840x2160@120.000Hz"; scale = 1.6; position = "0,0"; }
-            # kanshi transform 270 => Sway reports transform 90 (desired)
-            { criteria = "NSL RGB-27QHDS    Unknown"; mode = "2560x1440@144.000Hz"; scale = 1.25; transform = "270"; position = "2400,-876"; }
+            (monitors.samsungMain // { position = "0,0"; })
+            (monitors.nslVertical // { position = "2400,-876"; })
 
             # HDMI-A-1 (Philips): enable at 1920x1080@60 and place to the right of DP-2.
             # DP-2 logical width is 1152 (1440 / 1.25) so x = 2400 + 1152 = 3552
             # Explicitly enable the output (it may be disabled by the fallback profile).
-            { criteria = "Philips Consumer Electronics Company PHILIPS FTV 0x01010101"; status = "enable"; mode = "1920x1080@60.000Hz"; scale = 1.0; position = "3552,-876"; }
+            (monitors.philipsTv // { status = "enable"; position = "3552,-876"; })
 
             # BNQ (Group 4 -> workspaces 41-50): enable and place to the LEFT of Samsung.
             # Best available mode observed: 1920x1080@60Hz. Keep scale default 1.0.
-            { criteria = "BNQ ZOWIE XL LCD 7CK03588SL0"; status = "enable"; mode = "1920x1080@60.000Hz"; scale = 1.0; position = "-1920,0"; }
+            (monitors.bnqLeft // { status = "enable"; position = "-1920,0"; })
           ];
           # CRITICAL: re-trigger swaysome initialization whenever kanshi applies (startup + hotplug).
           exec = [
@@ -266,10 +295,10 @@
         profile = {
           name = "desk";
           outputs = [
-            { criteria = "Samsung Electric Company Odyssey G70NC H1AK500000"; mode = "3840x2160@120.000Hz"; scale = 1.6; position = "0,0"; }
-            { criteria = "NSL RGB-27QHDS    Unknown"; mode = "2560x1440@144.000Hz"; scale = 1.25; transform = "270"; position = "2400,-876"; }
-            { criteria = "Philips Consumer Electronics Company PHILIPS FTV 0x01010101"; status = "disable"; }
-            { criteria = "BNQ ZOWIE XL LCD 7CK03588SL0"; status = "enable"; mode = "1920x1080@60.000Hz"; scale = 1.0; position = "-1920,0"; }
+            (monitors.samsungMain // { position = "0,0"; })
+            (monitors.nslVertical // { position = "2400,-876"; })
+            (monitors.philipsTv // { status = "disable"; })
+            (monitors.bnqLeft // { status = "enable"; position = "-1920,0"; })
           ];
           exec = [
             "$HOME/.nix-profile/bin/swaysome init"

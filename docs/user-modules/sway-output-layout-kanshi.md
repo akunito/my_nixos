@@ -48,9 +48,14 @@ Key properties:
 
 `lib/defaults.nix` defines:
 
-- `systemSettings.swayKanshiSettings = null;`
+- `systemSettings.swayKanshiSettings = [ … ];` (generic)
 
-Meaning: **kanshi is disabled by default** in all profiles unless explicitly enabled.
+Meaning: **kanshi is enabled by default for Sway sessions** with a non-opinionated “enable everything” profile. This makes first-time Sway use on new profiles work without needing monitor-specific configuration.
+
+Notes:
+
+- This still remains **Sway-only** (bound to `sway-session.target`), so it does not affect Plasma 6.
+- Profiles can (and should) override with an explicit, anti-drift layout when needed.
 
 ### DESK override
 
@@ -72,7 +77,7 @@ This contains Home‑Manager-compatible kanshi `settings` directives (see `kansh
 
 Workspace grouping is executed **after** kanshi applies the profile:
 
-- kanshi profile includes: `exec $HOME/.config/sway/scripts/swaysome-init.sh`
+- kanshi profile includes: `exec swaysome init` and `swaysome rearrange-workspaces` (and may also call `~/.config/sway/scripts/swaysome-init.sh`)
 
 This prevents swaysome from assigning workspace groups to outputs that are going to be disabled by kanshi.
 

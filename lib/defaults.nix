@@ -183,11 +183,36 @@
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     swayPrimaryMonitor = null;  # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
 
+    # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)
+    # Profiles can override/populate this and then build `swayKanshiSettings` from it.
+    swayMonitorInventory = { };
+
     # Sway/SwayFX dynamic outputs (kanshi)
-    # - Default: null (disabled) so other profiles keep compositor defaults.
-    # - Profiles (e.g. DESK) can override with Home-Manager-compatible kanshi settings directives.
-    #   This is consumed by `user/wm/sway/default.nix`.
-    swayKanshiSettings = null;
+    #
+    # Default: enabled with a generic "enable everything" profile so new/unknown monitors work
+    # without needing an explicit per-profile layout.
+    #
+    # Profiles (e.g. DESK) can override this with explicit, anti-drift, hardware-ID-based layouts.
+    # This is consumed by `user/wm/sway/kanshi.nix` (only when Sway module is enabled).
+    swayKanshiSettings = [
+      {
+        profile = {
+          name = "default-auto";
+          # IMPORTANT: This is intentionally non-opinionated: enable all outputs and let Sway place them.
+          # Profiles can override with explicit positions/scales when needed.
+          outputs = [
+            { criteria = "*"; status = "enable"; }
+          ];
+          # Keep workspaces grouped per-output deterministically.
+          # Use user profile PATH (swaysome is installed by the Sway module).
+          exec = [
+            "$HOME/.nix-profile/bin/swaysome init"
+            "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
+            "$HOME/.config/sway/scripts/swaysome-init.sh"
+          ];
+        };
+      }
+    ];
     
     # Font defaults - will be computed based on systemStable in flake-base.nix
     # This is just a placeholder

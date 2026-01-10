@@ -40,9 +40,12 @@ let
       # Warp cursor to the center of the primary output so focus_follows_mouse can't "steal" focus.
       SEAT="$(swaymsg -t get_seats 2>/dev/null | jq -r '.[0].name // "seat0"' 2>/dev/null || echo "seat0")"
       read -r X Y W H < <(
-        swaymsg -t get_outputs 2>/dev/null | jq -r --arg name "$PRIMARY" '
+        swaymsg -t get_outputs 2>/dev/null | jq -r --arg primary "$PRIMARY" '
           .[]
-          | select(.name == $name)
+          | select(
+              (.name == $primary)
+              or ((.make + " " + .model + " " + .serial) == $primary)
+            )
           | .rect
           | "\(.x) \(.y) \(.width) \(.height)"
         ' 2>/dev/null | head -n1
