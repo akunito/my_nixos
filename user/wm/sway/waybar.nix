@@ -328,7 +328,7 @@ in {
             # Custom idle inhibit toggle (script + systemd user service)
             "custom/idle-toggle" = {
               return-type = "json";
-              interval = 2;
+              interval = 5;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-status.sh";
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
               tooltip = true;
@@ -347,7 +347,7 @@ in {
               drawer = {
                 transition-duration = 200;
                 children-class = "drawer-hidden";
-                click-to-reveal = true;
+                click-to-reveal = false;
                 transition-left-to-right = false;
               };
               modules = [ "custom/reveal" "custom/notifications" "tray" ];
@@ -376,6 +376,9 @@ in {
               format = "{icon}";
               tooltip = true;
               tooltip-format = "Anfetas {status}";
+              # For testing/transition: clicking the built-in module toggles the same swayidle.service
+              # as the custom idle toggle + keybinding.
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
               format-icons = {
                 activated = " ";
                 deactivated = "";
@@ -518,7 +521,7 @@ in {
 
             "custom/idle-toggle" = {
               return-type = "json";
-              interval = 2;
+              interval = 5;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-status.sh";
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
               tooltip = true;
@@ -536,7 +539,7 @@ in {
               drawer = {
                 transition-duration = 200;
                 children-class = "drawer-hidden";
-                click-to-reveal = true;
+                click-to-reveal = false;
                 transition-left-to-right = false;
               };
               modules = [ "custom/reveal" "custom/notifications" "tray" ];
@@ -562,6 +565,9 @@ in {
               format = "{icon}";
               tooltip = true;
               tooltip-format = "Anfetas {status}";
+              # For testing/transition: clicking the built-in module toggles the same swayidle.service
+              # as the custom idle toggle + keybinding.
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
               format-icons = {
                 activated = " ";
                 deactivated = "";
@@ -804,29 +810,7 @@ in {
         border-radius: 10px;
       }
 
-      /* Idle inhibitor: hide when deactivated unless bar is hovered; keep when activated */
-      #idle_inhibitor {
-        opacity: 0;
-        margin: 0;
-        padding: 0;
-        background-color: transparent;
-        border-radius: 0;
-      }
-      window#waybar:hover #idle_inhibitor,
-      #waybar:hover #idle_inhibitor {
-        opacity: 1;
-        margin: 4px 4px;
-        padding: 4px 12px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
-        border-radius: 10px;
-      }
-      /* Activated must always be visible even without hover */
-      #idle_inhibitor.activated {
-        opacity: 1;
-        margin: 4px 4px;
-        padding: 4px 12px;
-        border-radius: 10px;
-      }
+      /* Idle inhibitor should stay visible even when deactivated. */
 
       /* Collapse flatpak module when it's hidden (no updates) */
       #custom-flatpak-updates.hidden {
@@ -1051,16 +1035,7 @@ in {
         padding: 0 10px;
       }
 
-      /* Idle inhibitor: hide when deactivated unless bar is hovered; keep when activated */
-      #idle_inhibitor {
-        opacity: 0;
-        padding: 0;
-      }
-      window#waybar:hover #idle_inhibitor,
-      #idle_inhibitor.activated {
-        opacity: 1;
-        padding: 0 10px;
-      }
+      /* Idle inhibitor should stay visible even when deactivated. */
 
       /* Left cluster: render as one shared segmented pill */
       .modules-left {
