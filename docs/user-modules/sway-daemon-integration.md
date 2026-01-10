@@ -7,7 +7,9 @@ related_files:
   - system/wm/sway.nix
   - docs/user-modules/sway-daemon-integration.md
 key_files:
-  - user/wm/sway/default.nix
+  - user/wm/sway/session-env.nix
+  - user/wm/sway/session-systemd.nix
+  - user/wm/sway/swayfx-config.nix
   - user/wm/sway/waybar.nix
   - system/wm/sway.nix
 activation_hints:
@@ -21,10 +23,13 @@ This repo manages Sway session services using **systemd --user** units bound to 
 
 ## Where it lives
 
-- `user/wm/sway/default.nix`
+- `user/wm/sway/session-env.nix`
   - writes `%t/sway-session.env` (session-scoped env file)
-  - starts `sway-session.target`
+  - writes `%t/sway-portal.env` and installs the portal-gtk drop-in (fast relog reliability)
+- `user/wm/sway/session-systemd.nix`
   - defines/overrides `systemd.user.targets.sway-session` and `systemd.user.services.*` so services are Sway-only
+- `user/wm/sway/swayfx-config.nix`
+  - starts `sway-session.target` via a Sway startup command
 - `user/wm/sway/waybar.nix`
   - Waybar config (Home Manager)
 - `system/wm/sway.nix`

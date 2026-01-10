@@ -3,7 +3,7 @@ id: keybindings.sway
 summary: SwayFX keybindings reference, including unified rofi launcher and window overview.
 tags: [sway, swayfx, keybindings, rofi, wayland]
 related_files:
-  - user/wm/sway/default.nix
+  - user/wm/sway/swayfx-config.nix
   - user/wm/sway/rofi.nix
   - user/wm/sway/waybar.nix
   - user/wm/sway/scripts/window-overview-grouped.sh
@@ -31,7 +31,7 @@ Complete reference for all SwayFX keybindings in this NixOS configuration.
 
 SwayFX is a fork of Sway with additional visual effects (blur, shadows, rounded corners). All keybindings use the **Hyper key** (`${hyper}`) which is mapped to CapsLock via `keyd`.
 
-**Configuration File**: `user/wm/sway/default.nix`
+**Configuration File**: `user/wm/sway/swayfx-config.nix`
 
 **Hyper Key Notation**: `${hyper}` = Mod4+Control+Mod1 (CapsLock via keyd)
 

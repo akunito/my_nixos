@@ -226,24 +226,20 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/debug-qt5ct.nix**: Debug logging function for NDJSON format
 - **user/wm/sway/debug-relog.nix**: Keep logging implementation centralized via existing helper script.
 - **user/wm/sway/debug/relog-instrumentation.nix**: NDJSON sink for this repo (debug-mode compatible).
-- **user/wm/sway/default.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
-   - `useSystemdSessionDaemons && (systemSettings.swayKanshiSettings or null) != null`
-   - `scalable relog fix`
-   - `IPC toggling is rejected by Sway`
-   - `for a reliable toggle from keybindings + Waybar custom module`
-   - `custom toggle`
-   - `ExecStart is required`
-   - `like Unit.Description / ExecStart`
-   - `wl-paste`
-   - `Qt6`
-   - `useSystemdSessionDaemons && ( lib.hasInfix "laptop" (lib.toLower systemSettings.hostname) || lib.hasInfix "yoga" (lib.toLower systemSettings.hostname) )`
-   - `useSystemdSessionDaemons && systemSettings.sunshineEnable == true`
-   - `useSystemdSessionDaemons && systemSettings.stylixEnable == true && (systemSettings.swaybgPlusEnable or false) != true && (systemSettings.swwwEnable or false) != true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
-   - `Waybar timeouts`
-   - `systemSettings.stylixEnable == true`
-   - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/wm/sway/default.nix**: Internal cross-module wiring (kept minimal). Submodules populate `scripts.*`.
+- **user/wm/sway/extras.nix**: Btop theme configuration (Stylix colors) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/wm/sway/kanshi.nix**: Official/standard dynamic output configuration for Sway/SwayFX (wlroots): kanshi. *Enabled when:* `wlroots`
+- **user/wm/sway/legacy-daemon-manager.nix**: Legacy daemon-manager path is deprecated in this repo; systemd-first is the default. *Enabled when:* `!useSystemdSessionDaemons`
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
+- **user/wm/sway/session-env.nix**: Script to sync theme variables with D-Bus activation environment *Enabled when:* `Waybar timeouts`
+- **user/wm/sway/session-systemd.nix**: Volume/brightness OSD (matches Hyprland behavior) *Enabled when:*
+   - `matches Hyprland behavior`
+   - `lib.hasInfix "laptop" (lib.toLower systemSettings.hostname) || lib.hasInfix "yoga" (lib.toLower systemSettings.hostname)`
+   - `systemSettings.sunshineEnable == true`
+   - `systemSettings.stylixEnable == true && (systemSettings.swaybgPlusEnable or false) != true && (systemSettings.swwwEnable or false) != true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/wm/sway/startup-apps.nix**: CRITICAL: Restore qt5ct files on Sway startup to ensure correct content
 - **user/wm/sway/sway.nix**: User module: sway.nix
+- **user/wm/sway/swayfx-config.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:* `systemSettings.stylixEnable == true`
 - **user/wm/sway/waybar.nix**: Some GPU tooling is optional depending on hardware / nixpkgs settings.
 - **user/wm/xmonad/xmonad.nix**: User module: xmonad.nix
 

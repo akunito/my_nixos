@@ -3,14 +3,15 @@ id: user-modules.sway-output-layout-kanshi
 summary: Fix “phantom OFF monitors” in Sway/SwayFX using kanshi (wlroots) + Sway-only systemd target, profile-scoped in flakes.
 tags: [sway, swayfx, wayland, kanshi, outputs, monitors, home-manager, systemd-user, plasma6, profiles]
 related_files:
-  - user/wm/sway/default.nix
+  - user/wm/sway/kanshi.nix
+  - user/wm/sway/swayfx-config.nix
   - user/wm/sway/scripts/swaysome-init.sh
   - profiles/*-config.nix
   - lib/defaults.nix
   - lib/flake-base.nix
   - docs/user-modules/swaybgplus.md
 key_files:
-  - user/wm/sway/default.nix
+  - user/wm/sway/kanshi.nix
   - profiles/DESK-config.nix
   - lib/defaults.nix
 activation_hints:
@@ -61,7 +62,7 @@ This contains Home‑Manager-compatible kanshi `settings` directives (see `kansh
 
 ### Consumption in Sway module
 
-`user/wm/sway/default.nix`:
+`user/wm/sway/kanshi.nix`:
 
 - enables `services.kanshi` **only when** `systemSettings.swayKanshiSettings != null`
 - binds it to `sway-session.target`

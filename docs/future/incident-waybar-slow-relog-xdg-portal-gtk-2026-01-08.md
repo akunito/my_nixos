@@ -3,7 +3,8 @@ id: future.incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08
 summary: Waybar delayed 2–4 minutes after fast relog in Sway due to xdg-desktop-portal-gtk failures + systemd start-limit lockout; fixed via portal-gtk drop-in (UnsetEnvironment=DISPLAY + no start-limit + restart).
 tags: [incident, sway, swayfx, waybar, xdg-desktop-portal, xdg-desktop-portal-gtk, systemd-user, dbus, relog]
 related_files:
-  - user/wm/sway/default.nix
+  - user/wm/sway/session-env.nix
+  - user/wm/sway/session-systemd.nix
   - user/wm/sway/waybar.nix
   - docs/user-modules/sway-daemon-integration.md
   - docs/future/sway-daemon-relog-notes-2026-01-08.md
