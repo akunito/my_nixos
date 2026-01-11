@@ -297,6 +297,11 @@ in
       # Startup commands
       startup =
         [
+          # Startup logging for workspace assignment debugging
+          {
+            command = "/home/akunito/.dotfiles/user/wm/sway/scripts/workspace-startup-logger.sh";
+            always = false; # Only run on initial startup, not on config reload
+          }
           # DESK-only: focus the primary output and warp cursor onto it early
           {
             command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
