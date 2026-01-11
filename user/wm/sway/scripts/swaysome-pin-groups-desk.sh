@@ -110,21 +110,67 @@ assign_workspace_range_to_output "$NSL" 21 30 "NSL"
 assign_workspace_range_to_output "$PHILIPS" 31 40 "Philips"
 assign_workspace_range_to_output "$BNQ" 41 50 "BNQ"
 
-# Handle orphaned workspaces (workspaces 1-10 should go to the first monitor)
-echo "=== HANDLING ORPHANED WORKSPACES ===" >> "$LOG_FILE"
-echo "DESK: Moving orphaned workspaces (1-10) to primary monitor..." >&2
-echo "Moving orphaned workspaces (1-10) to primary monitor (DP-1)" >> "$LOG_FILE"
-orphaned_count=0
-for ws in 1 2 3 4 5 6 7 8 9 10; do
-  current_output=$($SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r ".[] | select(.name==\"$ws\") | .output" 2>/dev/null || echo "")
-  if [ -n "$current_output" ] && [ "$current_output" != "DP-1" ]; then
-    echo "Moving orphaned workspace $ws from $current_output to DP-1" >> "$LOG_FILE"
-    $SWAYMSG_BIN "workspace $ws" >/dev/null 2>&1
-    $SWAYMSG_BIN "move workspace to DP-1" >/dev/null 2>&1
-    orphaned_count=$((orphaned_count + 1))
+# Renumber workspaces that are outside their monitor's assigned ranges
+echo "=== RENUMBERING INVALID WORKSPACES ===" >> "$LOG_FILE"
+echo "DESK: Renumbering workspaces outside correct ranges..." >&2
+echo "Renumbering workspaces to fit monitor ranges" >> "$LOG_FILE"
+
+renumbered_count=0
+
+# Get workspace list and process each one
+workspace_list=$($SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r '.[] | .name' 2>/dev/null || echo "")
+
+for ws in $workspace_list; do
+  if [ -n "$ws" ]; then
+    # Get the output for this workspace
+    output=$($SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r ".[] | select(.name==\"$ws\") | .output" 2>/dev/null || echo "")
+
+    if [ -n "$output" ]; then
+      # Determine if workspace is in the correct range for its monitor
+      should_renumber=false
+      case "$output" in
+        "DP-1")      # Samsung: should be 11-20
+          if [ "$ws" -lt 11 ] || [ "$ws" -gt 20 ]; then
+            offset=10
+            should_renumber=true
+          fi
+          ;;
+        "DP-2")      # NSL: should be 21-30
+          if [ "$ws" -lt 21 ] || [ "$ws" -gt 30 ]; then
+            offset=20
+            should_renumber=true
+          fi
+          ;;
+        "HDMI-A-1")  # Philips: should be 31-40
+          if [ "$ws" -lt 31 ] || [ "$ws" -gt 40 ]; then
+            offset=30
+            should_renumber=true
+          fi
+          ;;
+        "DP-3")      # BNQ: should be 41-50
+          if [ "$ws" -lt 41 ] || [ "$ws" -gt 50 ]; then
+            offset=40
+            should_renumber=true
+          fi
+          ;;
+      esac
+
+      if [ "$should_renumber" = true ]; then
+        # Calculate new workspace number
+        new_ws=$((ws + offset))
+
+        echo "Renumbering workspace $ws on $output to $new_ws (correct range)" >> "$LOG_FILE"
+        echo "DESK: Renumbering workspace $ws to $new_ws on $output" >&2
+        $SWAYMSG_BIN "rename workspace \"$ws\" to \"$new_ws\"" >/dev/null 2>&1
+        renumbered_count=$((renumbered_count + 1))
+      else
+        echo "Workspace $ws on $output is already in correct range" >> "$LOG_FILE"
+      fi
+    fi
   fi
 done
-echo "Moved $orphaned_count orphaned workspaces to DP-1" >> "$LOG_FILE"
+
+echo "Renumbered $renumbered_count workspaces to correct ranges" >> "$LOG_FILE"
 
 # Log final state
 echo "=== POST-ASSIGNMENT STATE ===" >> "$LOG_FILE"

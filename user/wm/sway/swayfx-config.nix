@@ -344,19 +344,17 @@ in
           }
         ]
         ++ lib.optionals (systemSettings.enableSwayForDESK == true) [
+          # DESK-only: ensure monitor configurations are reapplied BEFORE workspace assignment on reload
+          # This prevents workspaces from being assigned to monitors with wrong/default configurations
+          {
+            command = "/run/current-system/sw/bin/systemctl --user restart kanshi.service";
+            always = true; # Run on every config reload to fix monitor settings first
+          }
           # DESK-only: ensure swaysome workspace groups are properly initialized on every config reload
           # This fixes workspace group assignments that get lost when running `swaymsg reload`
           {
             command = "$HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh";
-            always = true; # Run on every config reload to maintain workspace groups
-          }
-        ]
-        ++ lib.optionals ((systemSettings.swayKanshiSettings or null) != null) [
-          # Reapply monitor configuration on every config reload for any profile using kanshi
-          # This fixes monitor settings that revert to defaults when running `swaymsg reload`
-          {
-            command = "/run/current-system/sw/bin/systemctl --user restart kanshi.service";
-            always = true; # Run on every config reload to maintain monitor settings
+            always = true; # Run on every config reload to maintain workspace groups (after monitors are fixed)
           }
         ]
         ++ [
