@@ -306,6 +306,24 @@ let
 
       echo "User confirmed, launching applications..."
 
+      # CRITICAL: Wait for workspace assignment to complete (prevents race condition)
+      # This is MANDATORY - without this, apps may create workspaces on wrong monitors
+      LOCK_FILE="/tmp/sway-workspaces-ready.lock"
+      TIMEOUT=15
+      ELAPSED=0
+      echo "Waiting for workspace assignment to complete..."
+      while [ ! -f "$LOCK_FILE" ] && [ $ELAPSED -lt $TIMEOUT ]; do
+        sleep 0.5
+        ELAPSED=$((ELAPSED + 1))
+      done
+      if [ ! -f "$LOCK_FILE" ]; then
+        echo "WARNING: Workspace assignment lock not found after $TIMEOUT seconds" >&2
+        echo "WARNING: Workspace assignment lock not found after $TIMEOUT seconds"
+        # Continue anyway, but log the warning
+      else
+        echo "Workspace assignment complete, proceeding with app launch"
+      fi
+
       # Function to check if Flatpak app is installed
       is_flatpak_installed() {
         local APP_ID="$1"

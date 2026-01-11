@@ -196,8 +196,396 @@
     executable = true;
   };
 
-  home.file.".config/sway/scripts/swaysome-pin-groups-desk.sh" = {
-    source = ./scripts/swaysome-pin-groups-desk.sh;
+  # DESK workspace assignment script with Nix path interpolation
+  # CRITICAL: Uses ${pkgs.jq}/bin/jq and ${pkgs.sway}/bin/swaymsg for strict NixOS compatibility
+  home.file.".config/sway/scripts/swaysome-pin-groups-desk.sh" = lib.mkIf (systemSettings.enableSwayForDESK == true) {
+    text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      # DESK-only: Pin output -> swaysome group mapping deterministically by hardware ID.
+      # Goal:
+      # - Samsung  -> group 1 (11-20)
+      # - NSL      -> group 2 (21-30)
+      # - Philips  -> group 3 (31-40)
+      # - BNQ      -> group 4 (41-50)
+
+      # CRITICAL: Use Nix-interpolated paths (strict NixOS compatibility)
+      SWAYMSG_BIN="${pkgs.sway}/bin/swaymsg"
+      JQ_BIN="${pkgs.jq}/bin/jq"
+      SWAYSOME_BIN="${pkgs.swaysome}/bin/swaysome"
+
+      [ -n "$SWAYMSG_BIN" ] || exit 0
+      [ -n "$JQ_BIN" ] || exit 0
+      [ -n "$SWAYSOME_BIN" ] || exit 0
+
+      # Hardware IDs (exact matches from swaymsg -t get_outputs)
+      SAMSUNG="Samsung Electric Company Odyssey G70NC H1AK500000"
+      NSL="NSL RGB-27QHDS    Unknown"
+      PHILIPS="Philips Consumer Electronics Company PHILIPS FTV 0x01010101"
+      BNQ="BNQ ZOWIE XL LCD 7CK03588SL0"
+
+      # Expected output names (extracted from DESK-config.nix/kanshi)
+      # These are the actual output names Sway assigns based on hardware
+      EXPECTED_OUTPUTS=("DP-1" "DP-2" "HDMI-A-1" "DP-3")
+
+      # Lock file for signaling completion
+      LOCK_FILE="/tmp/sway-workspaces-ready.lock"
+
+      # Cleanup function for lock file
+      cleanup() {
+        rm -f "$LOCK_FILE"
+      }
+      trap cleanup EXIT INT TERM
+      rm -f "$LOCK_FILE"  # Remove stale lock at start
+
+      # Instrumentation: Log execution context and timing
+      LOG_FILE="/tmp/sway-workspace-assignment.log"
+      echo "=== DESK WORKSPACE ASSIGNMENT START ===" >> "$LOG_FILE"
+      echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
+      echo "PID: $$" >> "$LOG_FILE"
+      echo "Called from: ''${0}" >> "$LOG_FILE"
+      echo "Arguments: $*" >> "$LOG_FILE"
+
+      # Save original focused workspace
+      ORIGINAL_FOCUSED_WS=$($SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r '.[] | select(.focused==true) | .name' 2>/dev/null || echo "")
+      echo "Original focused workspace: $ORIGINAL_FOCUSED_WS" >> "$LOG_FILE"
+
+      # Log current workspace state before any changes
+      echo "=== PRE-ASSIGNMENT STATE ===" >> "$LOG_FILE"
+      $SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r '.[] | "Workspace \(.name) -> \(.output) (focused: \(.focused))"' >> "$LOG_FILE" 2>&1 || echo "Failed to get workspace state" >> "$LOG_FILE"
+
+      # Log monitor state
+      echo "=== MONITOR STATE ===" >> "$LOG_FILE"
+      $SWAYMSG_BIN -t get_outputs 2>/dev/null | $JQ_BIN -r '.[] | select(.active==true) | "\(.name): \(.make) \(.model) \(.serial) -> \(.current_mode.width)x\(.current_mode.height)@\(.current_mode.refresh/1000)Hz"' >> "$LOG_FILE" 2>&1 || echo "Failed to get monitor state" >> "$LOG_FILE"
+
+      echo "DESK: Starting hardware-ID-based workspace initialization..." >&2
+      echo "DESK: Starting hardware-ID-based workspace initialization..." >> "$LOG_FILE"
+
+      # Wait for kanshi to stabilize (poll for specific expected outputs)
+      wait_for_kanshi_stability() {
+        local timeout=15
+        local elapsed=0
+        echo "Waiting for kanshi to configure all expected outputs..." >> "$LOG_FILE"
+        while [ $elapsed -lt $timeout ]; do
+          local all_present=true
+          for output in "''${EXPECTED_OUTPUTS[@]}"; do
+            if ! $SWAYMSG_BIN -t get_outputs 2>/dev/null | $JQ_BIN -e --arg name "$output" '.[] | select(.name==$name and .active==true)' >/dev/null 2>&1; then
+              all_present=false
+              break
+            fi
+          done
+          if [ "$all_present" = true ]; then
+            echo "All expected outputs are active" >> "$LOG_FILE"
+            return 0
+          fi
+          sleep 0.5
+          elapsed=$((elapsed + 1))
+        done
+        echo "WARNING: Timeout waiting for all expected outputs after ''${timeout}s" >&2
+        echo "WARNING: Timeout waiting for all expected outputs after ''${timeout}s" >> "$LOG_FILE"
+        return 1
+      }
+
+      # Function to get output name by hardware ID
+      get_output_by_hwid() {
+        local hwid="$1"
+        local result
+        result=$($SWAYMSG_BIN -t get_outputs 2>/dev/null | $JQ_BIN -r --arg hwid "$hwid" '
+          .[] | select(.active==true) | select((.make + " " + .model + " " + .serial) == $hwid) | .name
+        ' | head -n1)
+        echo "Hardware ID lookup: '$hwid' -> '$result'" >> "$LOG_FILE"
+        echo "$result"
+      }
+
+      # Collision-safe workspace renumbering
+      renumber_workspace_safe() {
+        local source_ws="$1"
+        local target_ws="$2"
+        local output="$3"
+        
+        # Check if target exists
+        if $SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -e --arg name "$target_ws" '.[] | select(.name==$name)' >/dev/null 2>&1; then
+          # Target exists: move containers from source to target
+          echo "Target workspace $target_ws exists, moving containers from $source_ws" >> "$LOG_FILE"
+          $SWAYMSG_BIN "[workspace=$source_ws] move container to workspace $target_ws" >/dev/null 2>&1 || true
+          # Focus target to verify move and trigger source workspace destruction (Sway auto-destroys empty workspaces)
+          $SWAYMSG_BIN "workspace $target_ws" >/dev/null 2>&1 || true
+        else
+          # Target missing: standard rename
+          echo "Target workspace $target_ws does not exist, renaming $source_ws" >> "$LOG_FILE"
+          $SWAYMSG_BIN "rename workspace \"$source_ws\" to \"$target_ws\"" >/dev/null 2>&1 || true
+        fi
+      }
+
+      # Renumber invalid workspaces FIRST (before assignment)
+      renumber_invalid_workspaces() {
+        echo "=== RENUMBERING INVALID WORKSPACES (PHASE 1) ===" >> "$LOG_FILE"
+        echo "DESK: Renumbering workspaces outside correct ranges..." >&2
+        echo "Renumbering workspaces to fit monitor ranges" >> "$LOG_FILE"
+
+        local renumbered_count=0
+        local workspace_list
+        workspace_list=$($SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r '.[] | .name' 2>/dev/null || echo "")
+
+        for ws in $workspace_list; do
+          if [ -z "$ws" ]; then
+            continue
+          fi
+          # Skip non-numeric workspace names
+          if ! [[ "$ws" =~ ^[0-9]+$ ]]; then
+            continue
+          fi
+          
+          # Get the output for this workspace
+          local output
+          output=$($SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r ".[] | select(.name==\"$ws\") | .output" 2>/dev/null || echo "")
+
+          if [ -z "$output" ]; then
+            continue
+          fi
+
+          # Determine if workspace is in the correct range for its monitor
+          local should_renumber=false
+          local offset=0
+          case "$output" in
+            "DP-1")      # Samsung: should be 11-20
+              if [ "$ws" -lt 11 ] || [ "$ws" -gt 20 ]; then
+                offset=10
+                should_renumber=true
+              fi
+              ;;
+            "DP-2")      # NSL: should be 21-30
+              if [ "$ws" -lt 21 ] || [ "$ws" -gt 30 ]; then
+                offset=20
+                should_renumber=true
+              fi
+              ;;
+            "HDMI-A-1")  # Philips: should be 31-40
+              if [ "$ws" -lt 31 ] || [ "$ws" -gt 40 ]; then
+                offset=30
+                should_renumber=true
+              fi
+              ;;
+            "DP-3")      # BNQ: should be 41-50
+              if [ "$ws" -lt 41 ] || [ "$ws" -gt 50 ]; then
+                offset=40
+                should_renumber=true
+              fi
+              ;;
+          esac
+
+          if [ "$should_renumber" = true ]; then
+            # Calculate new workspace number
+            local new_ws=$((ws + offset))
+            # Ensure new workspace is in valid range
+            case "$output" in
+              "DP-1")      if [ "$new_ws" -lt 11 ] || [ "$new_ws" -gt 20 ]; then continue; fi ;;
+              "DP-2")      if [ "$new_ws" -lt 21 ] || [ "$new_ws" -gt 30 ]; then continue; fi ;;
+              "HDMI-A-1")  if [ "$new_ws" -lt 31 ] || [ "$new_ws" -gt 40 ]; then continue; fi ;;
+              "DP-3")      if [ "$new_ws" -lt 41 ] || [ "$new_ws" -gt 50 ]; then continue; fi ;;
+            esac
+
+            echo "Renumbering workspace $ws on $output to $new_ws (correct range)" >> "$LOG_FILE"
+            echo "DESK: Renumbering workspace $ws to $new_ws on $output" >&2
+            renumber_workspace_safe "$ws" "$new_ws" "$output"
+            renumbered_count=$((renumbered_count + 1))
+          else
+            echo "Workspace $ws on $output is already in correct range" >> "$LOG_FILE"
+          fi
+        done
+
+        echo "Renumbered $renumbered_count workspaces to correct ranges" >> "$LOG_FILE"
+      }
+
+      # Pre-create essential workspace on specific output (optimized: focus output + workspace)
+      pre_create_essential_workspace() {
+        local workspace_num="$1"
+        local output_name="$2"
+        
+        # Check if workspace already exists on correct output
+        local current_output
+        current_output=$($SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r ".[] | select(.name==\"$workspace_num\") | .output" 2>/dev/null || echo "")
+        
+        if [ -n "$current_output" ] && [ "$current_output" = "$output_name" ]; then
+          echo "Workspace $workspace_num already exists on correct output $output_name" >> "$LOG_FILE"
+          return 0
+        fi
+        
+        # Focus output first, then create workspace (one IPC event, no flicker)
+        echo "Pre-creating workspace $workspace_num on $output_name" >> "$LOG_FILE"
+        $SWAYMSG_BIN "focus output \"$output_name\"" >/dev/null 2>&1
+        $SWAYMSG_BIN "workspace $workspace_num" >/dev/null 2>&1
+      }
+
+      # Pre-create all essential workspaces used by startup apps
+      pre_create_all_essential_workspaces() {
+        echo "=== PRE-CREATING ESSENTIAL WORKSPACES ===" >> "$LOG_FILE"
+        echo "DESK: Pre-creating essential workspaces (11, 12, 21, 22, 31, 41)..." >&2
+        
+        local samsung_output
+        samsung_output=$(get_output_by_hwid "$SAMSUNG")
+        local nsl_output
+        nsl_output=$(get_output_by_hwid "$NSL")
+        local philips_output
+        philips_output=$(get_output_by_hwid "$PHILIPS")
+        local bnq_output
+        bnq_output=$(get_output_by_hwid "$BNQ")
+        
+        if [ -n "$samsung_output" ]; then
+          pre_create_essential_workspace 11 "$samsung_output"
+          pre_create_essential_workspace 12 "$samsung_output"
+        fi
+        
+        if [ -n "$nsl_output" ]; then
+          pre_create_essential_workspace 21 "$nsl_output"
+          pre_create_essential_workspace 22 "$nsl_output"
+        fi
+        
+        if [ -n "$philips_output" ]; then
+          pre_create_essential_workspace 31 "$philips_output"
+        fi
+        
+        if [ -n "$bnq_output" ]; then
+          pre_create_essential_workspace 41 "$bnq_output"
+        fi
+      }
+
+      # Assign workspace range to output by hardware ID
+      assign_workspace_range_to_output() {
+        local hwid="$1"
+        local start_ws="$2"
+        local end_ws="$3"
+        local name="$4"
+
+        local output_name
+        output_name="$(get_output_by_hwid "$hwid")"
+
+        echo "=== ASSIGNING $name ($start_ws-$end_ws) ===" >> "$LOG_FILE"
+        echo "Hardware ID: $hwid" >> "$LOG_FILE"
+        echo "Target output: $output_name" >> "$LOG_FILE"
+
+        if [ -n "$output_name" ]; then
+          echo "DESK: Assigning $name ($hwid) workspaces $start_ws-$end_ws to $output_name" >&2
+          echo "DESK: Assigning $name ($hwid) workspaces $start_ws-$end_ws to $output_name" >> "$LOG_FILE"
+
+          # Move ALL existing workspaces in this range to the correct output
+          local moved_count=0
+          for ws in $(seq "$start_ws" "$end_ws"); do
+            local current_output
+            current_output=$($SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r ".[] | select(.name==\"$ws\") | .output" 2>/dev/null || echo "")
+            if [ -n "$current_output" ] && [ "$current_output" != "$output_name" ]; then
+              echo "Moving workspace $ws from $current_output to $output_name" >> "$LOG_FILE"
+              echo "DESK: Moving workspace $ws to $output_name" >&2
+              $SWAYMSG_BIN "workspace $ws" >/dev/null 2>&1
+              $SWAYMSG_BIN "move workspace to \"$output_name\"" >/dev/null 2>&1
+              moved_count=$((moved_count + 1))
+            elif [ -n "$current_output" ]; then
+              echo "Workspace $ws already on correct output $output_name" >> "$LOG_FILE"
+            fi
+          done
+          echo "Moved $moved_count workspaces for $name" >> "$LOG_FILE"
+
+          # Focus the output and ensure the first workspace exists
+          echo "Focusing output $output_name and ensuring workspace $start_ws exists" >> "$LOG_FILE"
+          $SWAYMSG_BIN "focus output \"$output_name\"" >/dev/null 2>&1
+          $SWAYMSG_BIN "workspace $start_ws" >/dev/null 2>&1
+
+          echo "DESK: Successfully assigned $name workspaces $start_ws-$end_ws" >&2
+          echo "Successfully assigned $name workspaces $start_ws-$end_ws" >> "$LOG_FILE"
+        else
+          echo "DESK: WARNING - $name ($hwid) not found or not active" >&2
+          echo "WARNING - $name ($hwid) not found or not active" >> "$LOG_FILE"
+        fi
+      }
+
+      # Verify all essential workspaces exist on correct outputs
+      verify_essential_workspaces() {
+        echo "=== VERIFYING ESSENTIAL WORKSPACES ===" >> "$LOG_FILE"
+        local essential_workspaces=(11 12 21 22 31 41)
+        local all_correct=true
+        
+        local samsung_output
+        samsung_output=$(get_output_by_hwid "$SAMSUNG")
+        local nsl_output
+        nsl_output=$(get_output_by_hwid "$NSL")
+        local philips_output
+        philips_output=$(get_output_by_hwid "$PHILIPS")
+        local bnq_output
+        bnq_output=$(get_output_by_hwid "$BNQ")
+        
+        for ws in "''${essential_workspaces[@]}"; do
+          local expected_output=""
+          case "$ws" in
+            11|12) expected_output="$samsung_output" ;;
+            21|22) expected_output="$nsl_output" ;;
+            31) expected_output="$philips_output" ;;
+            41) expected_output="$bnq_output" ;;
+          esac
+          
+          if [ -z "$expected_output" ]; then
+            echo "WARNING: Cannot verify workspace $ws - output not found" >> "$LOG_FILE"
+            continue
+          fi
+          
+          local current_output
+          current_output=$($SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r ".[] | select(.name==\"$ws\") | .output" 2>/dev/null || echo "")
+          
+          if [ -z "$current_output" ]; then
+            echo "ERROR: Workspace $ws does not exist" >> "$LOG_FILE"
+            all_correct=false
+          elif [ "$current_output" != "$expected_output" ]; then
+            echo "ERROR: Workspace $ws is on $current_output but should be on $expected_output" >> "$LOG_FILE"
+            all_correct=false
+          else
+            echo "OK: Workspace $ws is on correct output $expected_output" >> "$LOG_FILE"
+          fi
+        done
+        
+        if [ "$all_correct" = true ]; then
+          echo "All essential workspaces verified" >> "$LOG_FILE"
+          return 0
+        else
+          echo "WARNING: Some essential workspaces are not correctly assigned" >> "$LOG_FILE"
+          return 1
+        fi
+      }
+
+      # Main execution sequence
+      wait_for_kanshi_stability
+      renumber_invalid_workspaces  # Run FIRST before assignment
+      pre_create_all_essential_workspaces  # Create 11,12,21,22,31,41
+      assign_workspace_range_to_output "$SAMSUNG" 11 20 "Samsung"
+      assign_workspace_range_to_output "$NSL" 21 30 "NSL"
+      assign_workspace_range_to_output "$PHILIPS" 31 40 "Philips"
+      assign_workspace_range_to_output "$BNQ" 41 50 "BNQ"
+      verify_essential_workspaces
+      
+      # Create completion lock file
+      touch "$LOCK_FILE"
+      echo "Created completion lock file: $LOCK_FILE" >> "$LOG_FILE"
+      echo "DESK: Workspaces ready - lock file created" >&2
+
+      # Log final state
+      echo "=== POST-ASSIGNMENT STATE ===" >> "$LOG_FILE"
+      $SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -r '.[] | "Workspace \(.name) -> \(.output) (focused: \(.focused))"' >> "$LOG_FILE" 2>&1 || echo "Failed to get final workspace state" >> "$LOG_FILE"
+
+      # Restore original focus with safety check
+      if [ -n "$ORIGINAL_FOCUSED_WS" ]; then
+        if $SWAYMSG_BIN -t get_workspaces 2>/dev/null | $JQ_BIN -e --arg name "$ORIGINAL_FOCUSED_WS" '.[] | select(.name==$name)' >/dev/null 2>&1; then
+          echo "Restoring focus to original workspace: $ORIGINAL_FOCUSED_WS" >> "$LOG_FILE"
+          $SWAYMSG_BIN "workspace $ORIGINAL_FOCUSED_WS" >/dev/null 2>&1 || true
+        else
+          # Original workspace was renamed/deleted, default to workspace 11
+          echo "Original workspace $ORIGINAL_FOCUSED_WS no longer exists, defaulting to workspace 11" >> "$LOG_FILE"
+          $SWAYMSG_BIN "workspace 11" >/dev/null 2>&1 || true
+        fi
+      fi
+
+      echo "DESK: Hardware-ID-based workspace assignment complete" >&2
+      echo "=== WORKSPACE ASSIGNMENT COMPLETE ===" >> "$LOG_FILE"
+      exit 0
+    '';
     executable = true;
   };
 
