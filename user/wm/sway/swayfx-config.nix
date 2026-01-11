@@ -71,15 +71,22 @@ in
         command = "${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
       }
       {
-        timeout = 900; # 15 minutes
-        command = "${pkgs.sway}/bin/swaymsg 'output * dpms off'";
-        resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * dpms on'";
+        timeout = 720; # 12 minutes
+        # FIX: Use 'power off' (modern syntax) and ensure single quotes protect the wildcard
+        command = "${pkgs.sway}/bin/swaymsg 'output * power off'";
+        resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * power on'";
+      }
+      {
+        timeout = 2700; # 45 minutes
+        command = "${pkgs.systemd}/bin/systemctl suspend";
       }
     ];
-    # New syntax: events is now an attrset keyed by event name, value is the command string
-    events = {
-      "before-sleep" = "${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
-    };
+    events = [
+      {
+        event = "before-sleep";
+        command = "${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
+      }
+    ];
   };
 
   # SwayFX configuration
@@ -611,6 +618,15 @@ in
 
       # Mouse warping
       mouse_warping output
+    '';
+  };
+
+  # Gamemode hooks: disable swayidle when gamemode is active
+  xdg.configFile."gamemode.ini" = lib.mkIf (systemSettings.gamemodeEnable == true) {
+    text = ''
+      [custom]
+      start=${pkgs.systemd}/bin/systemctl --user stop swayidle.service
+      end=${pkgs.systemd}/bin/systemctl --user start swayidle.service
     '';
   };
 }
