@@ -167,8 +167,9 @@ let
     builtins.listToAttrs (builtins.genList (d:
       let
         digit = d; # 0..9
-        ws = "${toString group}${toString digit}"; # e.g. "11", "20", "39"
-        label = if digit == 0 then "10" else toString digit; # show key "0" as 10
+        ws = toString (group * 10 + digit + 1); # e.g. group 1: 11-20, group 2: 21-30
+        lastDigit = if digit == 9 then 0 else digit + 1; # last digit of workspace number
+        label = if lastDigit == 0 then "10" else toString lastDigit; # show key "0" as 10
       in
       {
         name = ws;
@@ -395,10 +396,12 @@ in {
             };
 
             # Power menu (same as ${hyper}+Shift+BackSpace)
+            # Use swaymsg exec to ensure rofi runs with proper environment (ROFI_PLUGIN_PATH, etc.)
+            # Explicitly specify modi to avoid loading calc/emoji plugins that may not be available
             "custom/power-menu" = {
               interval = 3600;
               exec = "${pkgs.coreutils}/bin/printf '⏻'";
-              on-click = "${config.home.homeDirectory}/.config/sway/scripts/rofi-power-launch.sh";
+              on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show power -modi power:${config.home.homeDirectory}/.config/sway/scripts/rofi-power-mode.sh -show-icons\"";
               tooltip = true;
               tooltip-format = "Power menu";
             };
@@ -575,10 +578,13 @@ in {
               tooltip = true;
             };
 
+            # Power menu (same as ${hyper}+Shift+BackSpace)
+            # Use swaymsg exec to ensure rofi runs with proper environment (ROFI_PLUGIN_PATH, etc.)
+            # Explicitly specify modi to avoid loading calc/emoji plugins that may not be available
             "custom/power-menu" = {
               interval = 3600;
               exec = "${pkgs.coreutils}/bin/printf '⏻'";
-              on-click = "${config.home.homeDirectory}/.config/sway/scripts/rofi-power-launch.sh";
+              on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show power -modi power:${config.home.homeDirectory}/.config/sway/scripts/rofi-power-mode.sh -show-icons\"";
               tooltip = true;
               tooltip-format = "Power menu";
             };

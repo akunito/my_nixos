@@ -175,6 +175,17 @@ if echo "$ID_LIST" | grep -q "^$FOCUSED_ID$"; then
     
     if [ "$ACTUAL_COUNT" -eq 1 ]; then
         # SINGLE WINDOW -> Toggle Hide
+        # Store the original floating state before moving to scratchpad
+        ORIGINAL_FLOATING=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg id "$FOCUSED_ID" '
+            recurse(.nodes[]?, .floating_nodes[]?) 
+            | select(.id == ($id | tonumber))
+            | if .floating == "user_on" or .floating == "auto_on" then "true" else "false" end
+        ' 2>/dev/null || echo "false")
+        
+        # Store the floating state in a temporary file (using window ID as identifier)
+        TMP_FILE="/tmp/sway-window-state-${FOCUSED_ID}"
+        echo "$ORIGINAL_FLOATING" > "$TMP_FILE"
+        
         swaymsg "move scratchpad" 2>/dev/null
     elif [ "$ACTUAL_COUNT" -gt 1 ]; then
         # MULTIPLE WINDOWS -> Cycle (Always use FOCUS)
@@ -192,8 +203,29 @@ else
     # Just pick the first window in the list.
     TARGET_ID=$(echo "$ID_LIST" | head -n 1)
     
-    # Always use FOCUS. 
-    # If visible elsewhere -> Switches Workspace.
-    # If hidden -> Shows it.
-    swaymsg "[con_id=$TARGET_ID] focus" 2>/dev/null
+    # Check if this window was previously hidden (has a state file)
+    TMP_FILE="/tmp/sway-window-state-${TARGET_ID}"
+    if [ -f "$TMP_FILE" ]; then
+        # Restore the original floating state
+        ORIGINAL_FLOATING=$(cat "$TMP_FILE" 2>/dev/null || echo "false")
+        
+        # Focus the window first
+        swaymsg "[con_id=$TARGET_ID] focus" 2>/dev/null
+        
+        # Small delay to ensure window is focused before restoring state
+        sleep 0.1
+        
+        # Restore floating state based on what it was before
+        if [ "$ORIGINAL_FLOATING" = "true" ]; then
+            swaymsg "[con_id=$TARGET_ID] floating enable" 2>/dev/null
+        else
+            swaymsg "[con_id=$TARGET_ID] floating disable" 2>/dev/null
+        fi
+        
+        # Clean up the temporary file
+        rm -f "$TMP_FILE" 2>/dev/null
+    else
+        # No state file - just focus (window wasn't hidden via this script)
+        swaymsg "[con_id=$TARGET_ID] focus" 2>/dev/null
+    fi
 fi
