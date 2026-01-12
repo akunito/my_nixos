@@ -229,11 +229,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/default.nix**: Internal cross-module wiring (kept minimal).
 - **user/wm/sway/extras.nix**: Btop theme configuration (Stylix colors) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/wm/sway/kanshi.nix**: Official/standard dynamic output configuration for Sway/SwayFX (wlroots): kanshi. *Enabled when:* `wlroots`
-- **user/wm/sway/legacy-daemon-manager.nix**: Legacy daemon-manager path is deprecated in this repo; systemd-first is the default. *Enabled when:* `!useSystemdSessionDaemons`
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
-- **user/wm/sway/session-env.nix**: Script to sync theme variables with D-Bus activation environment *Enabled when:* `Waybar timeouts`
+- **user/wm/sway/session-env.nix**: Script to sync theme variables with D-Bus activation environment
 - **user/wm/sway/session-systemd.nix**: Volume/brightness OSD (matches Hyprland behavior) *Enabled when:*
-   - `matches Hyprland behavior`
    - `lib.hasInfix "laptop" (lib.toLower systemSettings.hostname) || lib.hasInfix "yoga" (lib.toLower systemSettings.hostname)`
    - `systemSettings.sunshineEnable == true`
    - `systemSettings.stylixEnable == true && (systemSettings.swaybgPlusEnable or false) != true && (systemSettings.swwwEnable or false) != true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`

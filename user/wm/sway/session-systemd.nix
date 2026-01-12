@@ -1,10 +1,6 @@
 { config, pkgs, lib, systemSettings, userSettings, ... }:
 
-let
-  useSystemdSessionDaemons = config.user.wm.sway.useSystemdSessionDaemons;
-in
 {
-  config = lib.mkIf useSystemdSessionDaemons {
     # Volume/brightness OSD (matches Hyprland behavior)
     services.swayosd = {
       enable = true;
@@ -214,7 +210,6 @@ in
         WantedBy = [ "sway-session.target" ];
       };
     };
-  };
 }
 
 

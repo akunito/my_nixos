@@ -1,8 +1,6 @@
 { config, pkgs, lib, ... }:
 
 let
-  useSystemdSessionDaemons = config.user.wm.sway.useSystemdSessionDaemons;
-
   # Script to sync theme variables with D-Bus activation environment
   # Note: Variables are set via extraSessionCommands, this script only syncs with D-Bus.
   set-sway-theme-vars = pkgs.writeShellScriptBin "set-sway-theme-vars" ''
@@ -169,31 +167,30 @@ in
   # Sway-only portal reliability: add drop-ins (NOT full unit files) to avoid shadowing /etc/systemd/user units.
   #
   # We wrap ExecStart to avoid GTK choosing X11 via DISPLAY=:0 during fast relog.
-  xdg.configFile."systemd/user/xdg-desktop-portal-gtk.service.d/10-sway-portal-env.conf" =
-    lib.mkIf useSystemdSessionDaemons {
-      text = ''
-        [Unit]
-        # During fast relogs portal-gtk can fail before the compositor is fully ready.
-        # Avoid hitting systemd's default start-rate limiting, otherwise the service becomes "dead"
-        # and DBus activation for portals can block clients (Waybar timeouts).
-        StartLimitIntervalSec=0
+  xdg.configFile."systemd/user/xdg-desktop-portal-gtk.service.d/10-sway-portal-env.conf" = {
+    text = ''
+      [Unit]
+      # During fast relogs portal-gtk can fail before the compositor is fully ready.
+      # Avoid hitting systemd's default start-rate limiting, otherwise the service becomes "dead"
+      # and DBus activation for portals can block clients (Waybar timeouts).
+      StartLimitIntervalSec=0
 
-        [Service]
-        # Critical for fast relog: portal-gtk can transiently fail (broken pipe / display attach issues).
-        # If it doesn't auto-restart, xdg-desktop-portal + clients (Waybar) can block on DBus activation timeouts.
-        Restart=on-failure
-        RestartSec=1s
+      [Service]
+      # Critical for fast relog: portal-gtk can transiently fail (broken pipe / display attach issues).
+      # If it doesn't auto-restart, xdg-desktop-portal + clients (Waybar) can block on DBus activation timeouts.
+      Restart=on-failure
+      RestartSec=1s
 
-        # Force Wayland behavior for portal-gtk in Sway, and prevent DISPLAY=:0 from selecting X11.
-        # This is scoped to this service only (no global env mutation).
-        EnvironmentFile=-%t/sway-portal.env
-        UnsetEnvironment=DISPLAY
+      # Force Wayland behavior for portal-gtk in Sway, and prevent DISPLAY=:0 from selecting X11.
+      # This is scoped to this service only (no global env mutation).
+      EnvironmentFile=-%t/sway-portal.env
+      UnsetEnvironment=DISPLAY
 
-        # Override ExecStart via wrapper (drop-in, not unit shadowing).
-        ExecStart=
-        ExecStart=${xdg-desktop-portal-gtk-wrapper}/bin/xdg-desktop-portal-gtk-wrapper
-      '';
-    };
+      # Override ExecStart via wrapper (drop-in, not unit shadowing).
+      ExecStart=
+      ExecStart=${xdg-desktop-portal-gtk-wrapper}/bin/xdg-desktop-portal-gtk-wrapper
+    '';
+  };
 
   # Cleanup: remove stale broken user-level portal unit files from a previous iteration.
   # Evidence: systemd reports "Service has no ExecStart= ... Refusing." for these units,

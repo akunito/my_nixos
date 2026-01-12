@@ -1,12 +1,6 @@
 { lib, ... }:
 
 {
-  options.user.wm.sway.useSystemdSessionDaemons = lib.mkOption {
-    type = lib.types.bool;
-    default = true;
-    description = "Use systemd --user sway-session.target for Sway session daemons (preferred; legacy daemon-manager is deprecated).";
-  };
-
   # Internal cross-module wiring (kept minimal).
   #
   # Leaf modules (session-env/startup-apps/...) publish script derivations here so other modules
@@ -43,7 +37,6 @@
     ./startup-apps.nix
     ./swayfx-config.nix
     ./extras.nix
-    ./legacy-daemon-manager.nix
   ];
 }
 

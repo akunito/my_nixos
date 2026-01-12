@@ -5,8 +5,6 @@ let
   hyper = "Mod4+Control+Mod1";
   mainMon = "Samsung Electric Company Odyssey G70NC H1AK500000";
 
-  useSystemdSessionDaemons = config.user.wm.sway.useSystemdSessionDaemons;
-
   # Pull script derivations from the submodules that own them (session-env/startup-apps).
   scripts = config.user.wm.sway._internal.scripts;
   set-sway-theme-vars = scripts.setSwayThemeVars;
@@ -338,8 +336,6 @@ in
             command = "${restore-qt5ct-files}/bin/restore-qt5ct-files";
             always = false; # Only run on initial startup, not on reload
           }
-        ]
-        ++ lib.optionals useSystemdSessionDaemons [
           # Portal env must exist before portals restart during fast relog; it is only consumed by portal units via drop-in.
           {
             command = "${write-sway-portal-env}/bin/write-sway-portal-env";

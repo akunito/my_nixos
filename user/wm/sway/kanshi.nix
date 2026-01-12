@@ -1,8 +1,7 @@
 { config, pkgs, lib, systemSettings, ... }:
 
 let
-  useSystemdSessionDaemons = config.user.wm.sway.useSystemdSessionDaemons;
-  enabled = useSystemdSessionDaemons && (systemSettings.swayKanshiSettings or null) != null;
+  enabled = (systemSettings.swayKanshiSettings or null) != null;
 in
 {
   config = lib.mkIf enabled {

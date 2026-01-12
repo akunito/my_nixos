@@ -165,7 +165,7 @@
   services.sunshine = lib.mkIf (systemSettings.sunshineEnable == true) {
     enable = true;
     # Conditional autoStart:
-    # - In Sway: false (managed by daemon-manager via user/wm/sway/default.nix)
+    # - In Sway: false (managed by systemd --user via user/wm/sway/session-systemd.nix)
     # - In Plasma 6 / other environments: true (managed by Systemd)
     autoStart = !(userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true);
     capSysAdmin = true;

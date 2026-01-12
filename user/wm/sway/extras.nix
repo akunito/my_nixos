@@ -263,7 +263,6 @@
     slurp
     swappy
     font-awesome_5 # Swappy uses Font Awesome icons
-    swaybg # Wallpaper manager
 
     # Gaming tools
     gamescope
