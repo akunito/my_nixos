@@ -788,32 +788,34 @@ chmod 600 ~/.config/kwallet/password.gpg
 
 ### user/wm/sway/desk-startup-apps-launcher
 
-**Purpose**: Background app launcher with persistent KWallet monitoring that launches applications when KWallet is unlocked.
+**Purpose**: Manual app launcher for DESK profile that launches applications to their assigned workspaces.
 
-**Usage**: Launched by `desk-startup-apps-init`, runs in background
+**Usage**: Triggered manually via keybinding (`${hyper}+Shift+Return`) or called directly
 
 **What It Does**:
-- Monitors KWallet unlock status (checks every 2 seconds)
-- Reopens KWallet GUI prompt if closed
-- Sends desktop notifications when KWallet window is closed
-- Launches applications when KWallet is unlocked (all apps launch in parallel)
+- Checks if KWallet is unlocked (exits if not unlocked)
+- Shows Rofi confirmation dialog asking user to confirm app launch
+- Launches applications in parallel (all apps launch simultaneously)
 - Handles Flatpak app detection and launching
-- Implements timeout and backoff strategy (5 minute timeout, exits after 10 failures)
-- Exits gracefully on timeout or max failures
+- Falls back to native packages if Flatpak version not available
 
 **Key Features**:
-- Persistent KWallet prompting (GUI-based)
+- KWallet unlock check (requires KWallet to be unlocked before launching)
+- Rofi confirmation dialog (user must confirm before apps launch)
 - Flatpak app support (checks if apps are installed via Flatpak)
-- Timeout protection (5 minutes total, then exits gracefully)
-- Backoff strategy (exponential backoff, max 2 minutes)
 - Parallel app launching (all apps launch simultaneously)
-- Explicit workspace switching before app launch (ensures apps open on correct workspaces)
+- Declarative workspace assignment (Sway's `assign` rules handle placement automatically)
 
-**Application Assignments**:
-- **Vivaldi**: Launches on workspace 11
-- **Cursor**: Launches on workspace 12
-- **Chromium**: Launches on workspace 22
-- **Obsidian**: Launches on workspace 21
+**Application Assignments** (handled by Sway's declarative `assign` rules in `swayfx-config.nix`):
+- **Vivaldi**: Assigned to workspace 11
+- **Cursor**: Assigned to workspace 12
+- **Chromium**: Assigned to workspace 22
+- **Obsidian**: Assigned to workspace 21
+
+**Workspace Management**:
+- Workspace-to-output assignments are handled declaratively in Sway's configuration using hardware IDs
+- App-to-workspace assignments are handled declaratively via Sway's `assign` rules
+- The script does NOT perform any workspace switching or management - it simply launches apps and lets Sway's configuration handle placement
 
 **Flatpak App Handling**:
 - Checks if apps are installed via Flatpak using `flatpak list` or `flatpak info`
@@ -821,7 +823,7 @@ chmod 600 ~/.config/kwallet/password.gpg
 - Falls back to native packages if Flatpak version not available
 - Supports both Flatpak and native app IDs in Sway assign rules
 
-**Related**: See [Sway Configuration](../user-modules/sway.md) for details.
+**Related**: See [Sway Configuration](../user-modules/sway.md) and [Sway Output Layout](../user-modules/sway-output-layout-kanshi.md) for details.
 
 ### user/app/ranger/scope.sh
 

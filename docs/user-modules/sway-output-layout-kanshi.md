@@ -6,7 +6,6 @@ related_files:
   - user/wm/sway/kanshi.nix
   - user/wm/sway/swayfx-config.nix
   - user/wm/sway/scripts/swaysome-assign-groups.sh
-  - user/wm/sway/scripts/swaysome-pin-groups-desk.sh
   - profiles/*-config.nix
   - lib/defaults.nix
   - lib/flake-base.nix
@@ -86,7 +85,7 @@ This prevents swaysome from assigning workspace groups to outputs that are going
 
 **Note on config reload**:
 - **Monitor configuration**: When `swaymsg reload` is run, kanshi profiles are not re-applied by default. To maintain correct monitor settings (scale, resolution, transform), Sway's startup commands include a command that runs `always = true` to restart the kanshi service on every reload.
-- **Workspace assignments**: For DESK profile, workspace group assignments are maintained via a DESK-specific command that runs `always = true` (on every reload) to re-initialize swaysome workspace groups using hardware ID-based assignment.
+- **Workspace assignments**: For DESK profile, workspace-to-output assignments are handled declaratively in Sway's configuration using hardware IDs directly. These assignments are loaded when Sway starts, eliminating race conditions and ensuring workspaces are assigned to the correct monitors from the start.
 
 **Note on group numbering**:
 
@@ -97,13 +96,13 @@ This prevents swaysome from assigning workspace groups to outputs that are going
 
 - **Default profiles**: Groups are assigned in Sway's output enumeration order. The first detected output gets group 1 (11–20), second gets group 2 (21–30), etc. This is consistent within a session but may vary across hardware changes.
 
-- **DESK profile**: Uses hardware ID-based assignment to ensure deterministic mapping that doesn't depend on enumeration order:
-  - Samsung (DP-1) → workspaces 11–20
-  - NSL (DP-2) → workspaces 21–30
-  - Philips (HDMI-A-1) → workspaces 31–40
-  - BNQ (DP-3) → workspaces 41–50
+- **DESK profile**: Uses declarative hardware ID-based assignment in Sway's configuration to ensure deterministic mapping that doesn't depend on enumeration order:
+  - Samsung → workspaces 11–20
+  - NSL → workspaces 21–30
+  - Philips → workspaces 31–40
+  - BNQ → workspaces 41–50
 
-  The assignment is implemented in `swaysome-pin-groups-desk.sh` which actively moves ALL existing workspaces in each range to their correct outputs based on stable hardware IDs, ensuring consistency across reloads, rebuilds, reboots, and hardware changes.
+  The assignment is implemented directly in `swayfx-config.nix` using Sway's native `workspace <number> output "<hardware-id>"` syntax. This declarative approach ensures workspaces are assigned to the correct monitors when Sway starts, before any applications launch, eliminating race conditions. Hardware IDs (Make Model Serial) are used instead of connector names (DP-1, HDMI-A-1) for stability across cable detection order changes.
 
 ## Important: don’t mix kanshi with SwayBG+ output geometry include
 
@@ -129,7 +128,6 @@ Recommendation:
 
 - **Verify reload commands are present**:
   - `grep "restart kanshi" ~/.config/sway/config` (should show systemctl restart command)
-  - `grep "swaysome-pin-groups-desk.sh" ~/.config/sway/config` (DESK profile only)
 
 - **Check if kanshi restarts on reload**:
   - Run `swaymsg reload`
@@ -142,8 +140,9 @@ Recommendation:
   - Some stacks report transform differently. Prefer verifying with `swaymsg -t get_outputs` (JSON) rather than the human output.
 
 - **If workspace assignments are wrong after reload**:
-  - DESK profile: Check that `swaysome-pin-groups-desk.sh` is in sway config
+  - DESK profile: Verify workspace-to-output assignments in `swayfx-config.nix` (should use hardware IDs, not connector names)
   - Other profiles: Check that kanshi restart command is present
   - Verify hardware IDs in `swaymsg -t get_outputs` match your profile configuration
+  - Check that `swaysome init 1` is present in kanshi profile exec commands (DESK profile)
 
 

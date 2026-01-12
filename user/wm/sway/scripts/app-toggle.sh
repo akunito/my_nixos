@@ -17,16 +17,17 @@ wait_for_window() {
     local max_iterations=50  # 50 * 0.1s = 5 seconds maximum
     local poll_interval=0.1  # Poll every 0.1 seconds
     local iteration=0
+    local norm_app=$(echo "$app_id" | tr '[:upper:]' '[:lower:]')
     
     while [ "$iteration" -lt "$max_iterations" ]; do
-        # Check if window exists (case-insensitive)
-        local window_exists=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg app "$app_id" '
+        # Check if window exists (case-insensitive, normalized)
+        local window_exists=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg norm_app "$norm_app" '
             [
                 recurse(.nodes[]?, .floating_nodes[]?) 
                 | select(.type=="con" or .type=="floating_con")
                 | select(
-                    ((.app_id // "") | ascii_downcase == ($app | ascii_downcase)) or 
-                    ((.window_properties.class // "") | ascii_downcase == ($app | ascii_downcase))
+                    ((.app_id // "") | ascii_downcase == $norm_app) or 
+                    ((.window_properties.class // "") | ascii_downcase == $norm_app)
                 )
             ] | length
         ' 2>/dev/null || echo "0")
@@ -70,13 +71,15 @@ apply_window_properties() {
 
 # 1. Get all windows (Case-Insensitive, Recursive)
 # Finds all windows for the app, regardless of workspace or scratchpad state.
-WINDOW_JSON=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg app "$APP_ID" '
+# Normalize APP_ID to lowercase for consistent matching
+NORMALIZED_APP=$(echo "$APP_ID" | tr '[:upper:]' '[:lower:]')
+WINDOW_JSON=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg app "$APP_ID" --arg norm_app "$NORMALIZED_APP" '
     [
         recurse(.nodes[]?, .floating_nodes[]?) 
         | select(.type=="con" or .type=="floating_con")
         | select(
-            ((.app_id // "") | ascii_downcase == ($app | ascii_downcase)) or 
-            ((.window_properties.class // "") | ascii_downcase == ($app | ascii_downcase))
+            ((.app_id // "") | ascii_downcase == $norm_app) or 
+            ((.window_properties.class // "") | ascii_downcase == $norm_app)
         )
     ]
 ' 2>/dev/null)

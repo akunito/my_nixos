@@ -239,7 +239,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.stylixEnable == true && (systemSettings.swaybgPlusEnable or false) != true && (systemSettings.swwwEnable or false) != true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/wm/sway/startup-apps.nix**: CRITICAL: Restore qt5ct files on Sway startup to ensure correct content
 - **user/wm/sway/sway.nix**: User module: sway.nix
-- **user/wm/sway/swayfx-config.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:* `systemSettings.stylixEnable == true`
+- **user/wm/sway/swayfx-config.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
+   - `systemSettings.stylixEnable == true`
+   - `systemSettings.gamemodeEnable == true`
 - **user/wm/sway/waybar.nix**: Some GPU tooling is optional depending on hardware / nixpkgs settings.
 - **user/wm/xmonad/xmonad.nix**: User module: xmonad.nix
 
