@@ -179,7 +179,7 @@ in
           "${hyper}+U" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
           "${hyper}+A" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh pavucontrol pavucontrol";
           "${hyper}+D" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
-          "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh vivaldi vivaldi";
+          "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.vivaldi.Vivaldi com.vivaldi.Vivaldi";
           "${hyper}+G" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh chromium-browser chromium";
           "${hyper}+Y" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh spotify spotify --enable-features=UseOzonePlatform --ozone-platform=wayland";
           "${hyper}+N" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh nwg-look nwg-look";
@@ -188,8 +188,9 @@ in
           # Mission Center (app_id is io.missioncenter.MissionCenter, binary is missioncenter)
           "${hyper}+m" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
           "${hyper}+B" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
-          # SwayBG+ (wallpaper UI)
-          "${hyper}+s" = "exec swaybgplus-gui";
+          # SwayBG+ (wallpaper UI) - moved from hyper+s
+          # "${hyper}+s" = "exec swaybgplus-gui";
+          "${hyper}+s" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh pavucontrol pavucontrol";
 
           # Workspace navigation with auto-creation and wrapping (Option B)
           # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
@@ -222,7 +223,7 @@ in
           # Note: Removed "${hyper}+l" to avoid conflict with "${hyper}+L" (telegram)
           "${hyper}+f" = "fullscreen toggle";
           "${hyper}+Shift+space" = "floating toggle";
-          # Note: "${hyper}+s" is reserved for SwayBG+ (see application bindings above)
+          # Note: "${hyper}+s" is used for pavucontrol (see application bindings above)
           # Note: "${hyper}+w" is used for workspace next_on_output (see Workspace navigation above)
           # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (dolphin file explorer)
           # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (pavucontrol)
