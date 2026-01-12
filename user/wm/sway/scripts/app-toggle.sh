@@ -203,20 +203,35 @@ if echo "$ID_LIST" | grep -q "^$FOCUSED_ID$"; then
     fi
 else
     # --- APP IS NOT FOCUSED (ACTIVATE FIRST) ---
-    # Just pick the first window in the list.
-    TARGET_ID=$(echo "$ID_LIST" | head -n 1)
+    
+    # 1. Smart-select the target window
+    # Iterate through all IDs for this app and check if any have a saved state file.
+    # This ensures we restore the specific window we hid, not a secondary/helper window.
+    TARGET_ID=""
+    for id in $ID_LIST; do
+        if [ -f "/tmp/sway-window-state-${id}" ]; then
+            TARGET_ID="$id"
+            break
+        fi
+    done
+
+    # Fallback: If no state file found, just pick the first one (e.g. freshly launched or manually hidden)
+    if [ -z "$TARGET_ID" ]; then
+        TARGET_ID=$(echo "$ID_LIST" | head -n 1)
+    fi
     
     # Check if this window was previously hidden (has a state file)
     TMP_FILE="/tmp/sway-window-state-${TARGET_ID}"
+    
     if [ -f "$TMP_FILE" ]; then
         # Restore the original floating state
         ORIGINAL_FLOATING=$(cat "$TMP_FILE" 2>/dev/null || echo "false")
         
-        # Focus the window first
+        # Focus the window first (brings it from scratchpad)
         swaymsg "[con_id=$TARGET_ID] focus" 2>/dev/null
         
-        # Small delay to ensure window is focused before restoring state
-        sleep 0.1
+        # Slightly increased delay to ensure Sway processes the focus event
+        sleep 0.2
         
         # Restore floating state based on what it was before
         if [ "$ORIGINAL_FLOATING" = "true" ]; then
@@ -228,7 +243,9 @@ else
         # Clean up the temporary file
         rm -f "$TMP_FILE" 2>/dev/null
     else
-        # No state file - just focus (window wasn't hidden via this script)
+        # No state file found. 
+        # This implies the window was hidden manually (Mod+Minus) or is a fresh instance.
+        # We simply focus it. It will likely appear Floating (Sway default for scratchpad).
         swaymsg "[con_id=$TARGET_ID] focus" 2>/dev/null
     fi
 fi
