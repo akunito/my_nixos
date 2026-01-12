@@ -177,7 +177,7 @@ in
           "${hyper}+L" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram";
           "${hyper}+E" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
           "${hyper}+U" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
-          "${hyper}+A" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh pavucontrol pavucontrol";
+          "${hyper}+A" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
           "${hyper}+D" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
           "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.vivaldi.Vivaldi com.vivaldi.Vivaldi";
           "${hyper}+G" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh chromium-browser chromium";
@@ -190,7 +190,7 @@ in
           "${hyper}+B" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
           # SwayBG+ (wallpaper UI) - moved from hyper+s
           # "${hyper}+s" = "exec swaybgplus-gui";
-          "${hyper}+s" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh pavucontrol pavucontrol";
+          "${hyper}+s" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
 
           # Workspace navigation with auto-creation and wrapping (Option B)
           # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
@@ -395,6 +395,9 @@ in
           { criteria = { app_id = "discover"; }; command = "floating enable, sticky enable"; }
           { criteria = { title = "Discover"; }; command = "floating enable, sticky enable"; }
 
+          # Pavucontrol: floating + sticky (correct app_id)
+          { criteria = { app_id = "org.pulseaudio.pavucontrol"; }; command = "floating enable, sticky enable"; }
+
           # XWayland apps (use class)
           { criteria = { class = "SwayBG+"; }; command = "floating enable"; }
           { criteria = { class = "Spotify"; }; command = "floating enable"; }
@@ -436,6 +439,7 @@ in
           { criteria = { class = "discover"; }; command = "sticky enable"; }
           { criteria = { class = "Discover"; }; command = "sticky enable"; }
           { criteria = { class = "plasma-discover"; }; command = "sticky enable"; }
+          { criteria = { app_id = "org.pulseaudio.pavucontrol"; }; command = "sticky enable"; }
         ];
       };
     };
@@ -578,7 +582,8 @@ in
       for_window [app_id="spotify"] floating enable, sticky enable
 
       # Additional floating window rules
-      for_window [app_id="pavucontrol"] floating enable
+      # Pavucontrol: floating + sticky (correct app_id)
+      for_window [app_id="org.pulseaudio.pavucontrol"] floating enable, sticky enable
       for_window [app_id="nm-connection-editor"] floating enable
       for_window [app_id="blueman-manager"] floating enable
       for_window [app_id="swappy"] floating enable, sticky enable
