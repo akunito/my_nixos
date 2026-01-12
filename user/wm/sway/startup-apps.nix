@@ -256,33 +256,8 @@ let
       exec > >(systemd-cat -t desk-startup-apps) 2>&1
       echo "App launcher triggered at $(date)"
 
-      # ============================================================================
-      # Monitor Configuration
-      # ============================================================================
-      # Monitor 1 -> Workspaces 11-20 (Group 1)
-      MONITOR_1_OUTPUT="Samsung Electric Company Odyssey G70NC H1AK500000"
-      MONITOR_1_START=11
-      MONITOR_1_END=20
-
-      # Monitor 2 -> Workspaces 21-30 (Group 2) - [This slot fixes Workspace 22]
-      MONITOR_2_OUTPUT="NSL RGB-27QHDS    Unknown"
-      MONITOR_2_START=21
-      MONITOR_2_END=30
-
-      # Monitor 3 -> Workspaces 31-40 (Group 3)
-      MONITOR_3_OUTPUT="Philips Consumer Electronics Company PHILIPS FTV 0x01010101"
-      MONITOR_3_START=31
-      MONITOR_3_END=40
-
-      # Monitor 4 -> Workspaces 41-50 (Group 4)
-      MONITOR_4_OUTPUT="BNQ ZOWIE XL LCD 7CK03588SL0"
-      MONITOR_4_START=41
-      MONITOR_4_END=50
-
-      # Legacy variables for compatibility (reference monitor config)
-      PRIMARY_HARDWARE="$MONITOR_1_OUTPUT"
-      export VERTICAL_HARDWARE="$MONITOR_2_OUTPUT"
-
+      # DESK profile check
+      PRIMARY_HARDWARE="Samsung Electric Company Odyssey G70NC H1AK500000"
       if [ -z "$PRIMARY_HARDWARE" ]; then
         # Not DESK profile, exit
         echo "Not DESK profile, exiting"
@@ -330,24 +305,6 @@ let
 
       echo "User confirmed, launching applications..."
 
-      # CRITICAL: Wait for workspace assignment to complete (prevents race condition)
-      # This is MANDATORY - without this, apps may create workspaces on wrong monitors
-      LOCK_FILE="/tmp/sway-workspaces-ready.lock"
-      TIMEOUT=15
-      ELAPSED=0
-      echo "Waiting for workspace assignment to complete..."
-      while [ ! -f "$LOCK_FILE" ] && [ $ELAPSED -lt $TIMEOUT ]; do
-        sleep 0.5
-        ELAPSED=$((ELAPSED + 1))
-      done
-      if [ ! -f "$LOCK_FILE" ]; then
-        echo "WARNING: Workspace assignment lock not found after $TIMEOUT seconds" >&2
-        echo "WARNING: Workspace assignment lock not found after $TIMEOUT seconds"
-        # Continue anyway, but log the warning
-      else
-        echo "Workspace assignment complete, proceeding with app launch"
-      fi
-
       # Function to check if Flatpak app is installed
       is_flatpak_installed() {
         local APP_ID="$1"
@@ -359,76 +316,7 @@ let
         return 1
       }
 
-      # Function to get output name by hardware ID
-      get_output_by_hwid() {
-        local hwid="$1"
-        swaymsg -t get_outputs 2>/dev/null | jq -r --arg hwid "$hwid" '
-          .[] | select(.active==true) | select((.make + " " + .model + " " + .serial) == $hwid) | .name
-        ' | head -n1
-      }
-
-      # Function to determine which monitor a workspace should be on
-      get_monitor_for_workspace() {
-        local workspace_num="$1"
-        
-        if [ "$workspace_num" -ge "$MONITOR_1_START" ] && [ "$workspace_num" -le "$MONITOR_1_END" ]; then
-          echo "$MONITOR_1_OUTPUT"
-        elif [ "$workspace_num" -ge "$MONITOR_2_START" ] && [ "$workspace_num" -le "$MONITOR_2_END" ]; then
-          echo "$MONITOR_2_OUTPUT"
-        elif [ "$workspace_num" -ge "$MONITOR_3_START" ] && [ "$workspace_num" -le "$MONITOR_3_END" ]; then
-          echo "$MONITOR_3_OUTPUT"
-        elif [ "$workspace_num" -ge "$MONITOR_4_START" ] && [ "$workspace_num" -le "$MONITOR_4_END" ]; then
-          echo "$MONITOR_4_OUTPUT"
-        else
-          echo ""
-        fi
-      }
-
-      # Function to ensure workspace is on correct monitor before switching
-      ensure_workspace_on_correct_monitor() {
-        local workspace_num="$1"
-        local expected_hwid
-        expected_hwid=$(get_monitor_for_workspace "$workspace_num")
-        
-        if [ -z "$expected_hwid" ]; then
-          echo "WARNING: Could not determine correct monitor for workspace $workspace_num"
-          return 1
-        fi
-
-        local expected_output
-        expected_output=$(get_output_by_hwid "$expected_hwid")
-
-        if [ -z "$expected_output" ]; then
-          echo "WARNING: Could not find output for hardware ID: $expected_hwid"
-          return 1
-        fi
-
-        # STEP 1: Focus the target output FIRST.
-        # This prevents the race condition: if the workspace doesn't exist yet, 
-        # ensuring focus here means the subsequent 'workspace' command creates it on this output.
-        swaymsg "focus output \"$expected_output\"" >/dev/null 2>&1 || true
-        sleep 0.1
-
-        # STEP 2: Check if workspace exists and which output it's currently on
-        local current_output
-        current_output=$(swaymsg -t get_workspaces 2>/dev/null | jq -r ".[] | select(.name==\"$workspace_num\") | .output" 2>/dev/null || echo "")
-
-        # STEP 3: Handle "Stranded" Workspaces
-        # If it exists but is on the wrong output, move it WITHOUT focusing it first (avoids flicker).
-        if [ -n "$current_output" ] && [ "$current_output" != "$expected_output" ]; then
-          echo "Moving workspace $workspace_num from $current_output to $expected_output"
-          swaymsg "[workspace=\"$workspace_num\"] move workspace to output \"$expected_output\"" >/dev/null 2>&1 || true
-          sleep 0.1
-        fi
-
-        # STEP 4: Finally, switch to the workspace.
-        swaymsg "workspace number $workspace_num" >/dev/null 2>&1 || true
-        
-        return 0
-      }
-
       # Launch Cursor (workspace 12)
-      ensure_workspace_on_correct_monitor 12
       if is_flatpak_installed "com.todesktop.230313mzl4w4u92"; then
         flatpak run com.todesktop.230313mzl4w4u92 >/dev/null 2>&1 &
       else
@@ -440,7 +328,6 @@ let
       fi
 
       # Launch Chromium (workspace 22)
-      ensure_workspace_on_correct_monitor 22
       if is_flatpak_installed "org.chromium.Chromium"; then
         flatpak run org.chromium.Chromium >/dev/null 2>&1 &
       else
@@ -448,7 +335,6 @@ let
       fi
 
       # Launch Obsidian (workspace 21)
-      ensure_workspace_on_correct_monitor 21
       if is_flatpak_installed "md.obsidian.Obsidian"; then
         flatpak run md.obsidian.Obsidian >/dev/null 2>&1 &
       else
@@ -460,15 +346,11 @@ let
       fi
 
       # Launch Vivaldi (workspace 11) - Launch last due to slow startup (~10 seconds)
-      ensure_workspace_on_correct_monitor 11
       if is_flatpak_installed "com.vivaldi.Vivaldi"; then
         flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
       else
         (command -v vivaldi >/dev/null 2>&1 && vivaldi >/dev/null 2>&1 &) || true
       fi
-
-      # Return to workspace 11
-      ensure_workspace_on_correct_monitor 11
 
       echo "Apps launched successfully"
       notify-send -t 3000 "App Launcher" "Startup applications launched successfully." || true

@@ -279,13 +279,10 @@ in
             # Best available mode observed: 1920x1080@60Hz. Keep scale default 1.0.
             (monitors.bnqLeft // { status = "enable"; position = "-1920,0"; })
           ];
-          # CRITICAL: Hardware-ID-based workspace assignment whenever kanshi applies (startup + hotplug).
+          # CRITICAL: Initialize swaysome daemon (workspace groups starting at 1).
+          # Workspace-to-output assignments are now handled declaratively in swayfx-config.nix.
           exec = [
-            # NOTE: This file is a profile config imported by the flake and does NOT have `pkgs` in scope.
-            # Use a runtime path that exists in the user environment instead.
-            # The script handles initialization and assignment deterministically by hardware ID.
-            "$HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh"
-            # "$HOME/.config/sway/scripts/swaysome-init.sh"
+            "$HOME/.nix-profile/bin/swaysome init 1"
           ];
         };
       }
@@ -302,7 +299,6 @@ in
           ];
           exec = [
             "$HOME/.nix-profile/bin/swaysome init 1"
-            "$HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh"
           ];
         };
       }

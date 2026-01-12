@@ -357,12 +357,8 @@ in
             command = "/run/current-system/sw/bin/systemctl --user restart kanshi.service";
             always = true; # Run on every config reload to fix monitor settings first
           }
-          # DESK-only: ensure swaysome workspace groups are properly initialized on every config reload
-          # This fixes workspace group assignments that get lost when running `swaymsg reload`
-          {
-            command = "$HOME/.config/sway/scripts/swaysome-pin-groups-desk.sh";
-            always = true; # Run on every config reload to maintain workspace groups (after monitors are fixed)
-          }
+          # Note: Workspace-to-output assignments are now handled declaratively in extraConfig
+          # swaysome init 1 is handled by kanshi profiles
         ]
         ++ [
           # DESK-only startup apps (runs after daemons are ready)
@@ -469,6 +465,21 @@ in
 
       # Workspace configuration
       workspace_auto_back_and_forth yes
+
+      # Workspace-to-Output assignments (hardware ID-based, declarative)
+      # Sway supports hardware IDs directly - no need for connector names or scripts
+      ${lib.concatStringsSep "\n" (
+        let
+          samsung = "Samsung Electric Company Odyssey G70NC H1AK500000";
+          nsl     = "NSL RGB-27QHDS    Unknown";
+          philips = "Philips Consumer Electronics Company PHILIPS FTV 0x01010101";
+          bnq     = "BNQ ZOWIE XL LCD 7CK03588SL0";
+        in
+          (map (i: "workspace ${toString i} output \"${samsung}\"") (lib.range 11 20)) ++
+          (map (i: "workspace ${toString i} output \"${nsl}\"") (lib.range 21 30)) ++
+          (map (i: "workspace ${toString i} output \"${philips}\"") (lib.range 31 40)) ++
+          (map (i: "workspace ${toString i} output \"${bnq}\"") (lib.range 41 50))
+      )}
 
       # DESK startup apps - assign to specific workspaces
       # Using 'assign' instead of 'for_window' prevents flickering on wrong workspace
