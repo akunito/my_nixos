@@ -178,18 +178,30 @@ if echo "$ID_LIST" | grep -q "^$FOCUSED_ID$"; then
     
     if [ "$ACTUAL_COUNT" -eq 1 ]; then
         # SINGLE WINDOW -> Toggle Hide
-        # Store the original floating state before moving to scratchpad
-        ORIGINAL_FLOATING=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg id "$FOCUSED_ID" '
+        
+        # 1. Get the current geometry (Width/Height) and Floating state
+        # We need the geometry to freeze the window size preventing app reflows
+        eval $(swaymsg -t get_tree 2>/dev/null | jq -r --arg id "$FOCUSED_ID" '
             recurse(.nodes[]?, .floating_nodes[]?) 
             | select(.id == ($id | tonumber))
-            | if .floating == "user_on" or .floating == "auto_on" then "true" else "false" end
-        ' 2>/dev/null || echo "false")
+            | "ORIGINAL_FLOATING=" + (if .floating == "user_on" or .floating == "auto_on" then "true" else "false" end) + 
+              "\nWIDTH=" + (.rect.width | tostring) + 
+              "\nHEIGHT=" + (.rect.height | tostring)
+        ' 2>/dev/null)
         
-        # Store the floating state in a temporary file (using window ID as identifier)
+        # 2. Save the state
         TMP_FILE="/tmp/sway-window-state-${FOCUSED_ID}"
         echo "$ORIGINAL_FLOATING" > "$TMP_FILE"
         
-        swaymsg "move scratchpad" 2>/dev/null
+        # 3. Move to scratchpad with GEOMETRY FREEZE
+        if [ "$ORIGINAL_FLOATING" = "false" ] && [ -n "${WIDTH:-}" ] && [ -n "${HEIGHT:-}" ] && [ "${WIDTH:-0}" -gt 0 ] 2>/dev/null && [ "${HEIGHT:-0}" -gt 0 ] 2>/dev/null; then
+            # If it was tiled, we MUST force the floating size to match the tiled size
+            # before hiding. This prevents the "resize" event that breaks internal layouts.
+            swaymsg "[con_id=$FOCUSED_ID] floating enable, resize set $WIDTH $HEIGHT, move scratchpad" 2>/dev/null
+        else
+            # If it was already floating, or geometry couldn't be determined, just hide it.
+            swaymsg "move scratchpad" 2>/dev/null
+        fi
     elif [ "$ACTUAL_COUNT" -gt 1 ]; then
         # MULTIPLE WINDOWS -> Cycle (Always use FOCUS)
         NEXT_ID=$(echo "$WINDOW_JSON" | jq -r --arg focus "$FOCUSED_ID" '
