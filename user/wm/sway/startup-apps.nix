@@ -403,31 +403,29 @@ let
           return 1
         fi
 
-        # Check if workspace exists and which output it's currently on
+        # STEP 1: Focus the target output FIRST.
+        # This prevents the race condition: if the workspace doesn't exist yet, 
+        # ensuring focus here means the subsequent 'workspace' command creates it on this output.
+        swaymsg "focus output \"$expected_output\"" >/dev/null 2>&1 || true
+        sleep 0.1
+
+        # STEP 2: Check if workspace exists and which output it's currently on
         local current_output
         current_output=$(swaymsg -t get_workspaces 2>/dev/null | jq -r ".[] | select(.name==\"$workspace_num\") | .output" 2>/dev/null || echo "")
 
-        # If workspace exists but is on wrong output, move it
+        # STEP 3: Handle "Stranded" Workspaces
+        # If it exists but is on the wrong output, move it WITHOUT focusing it first (avoids flicker).
         if [ -n "$current_output" ] && [ "$current_output" != "$expected_output" ]; then
           echo "Moving workspace $workspace_num from $current_output to $expected_output"
-          swaymsg "workspace $workspace_num" >/dev/null 2>&1 || true
-          swaymsg "move workspace to \"$expected_output\"" >/dev/null 2>&1 || true
+          swaymsg "[workspace=\"$workspace_num\"] move workspace to output \"$expected_output\"" >/dev/null 2>&1 || true
+          sleep 0.1
         fi
 
-        # Focus the correct output and switch to workspace
-        swaymsg "focus output \"$expected_output\"" >/dev/null 2>&1 || true
+        # STEP 4: Finally, switch to the workspace.
         swaymsg "workspace number $workspace_num" >/dev/null 2>&1 || true
         
         return 0
       }
-
-      # Launch Vivaldi (workspace 11)
-      ensure_workspace_on_correct_monitor 11
-      if is_flatpak_installed "com.vivaldi.Vivaldi"; then
-        flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
-      else
-        (command -v vivaldi >/dev/null 2>&1 && vivaldi >/dev/null 2>&1 &) || true
-      fi
 
       # Launch Cursor (workspace 12)
       ensure_workspace_on_correct_monitor 12
@@ -459,6 +457,14 @@ let
         elif command -v obsidian >/dev/null 2>&1; then
           obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
         fi
+      fi
+
+      # Launch Vivaldi (workspace 11) - Launch last due to slow startup (~10 seconds)
+      ensure_workspace_on_correct_monitor 11
+      if is_flatpak_installed "com.vivaldi.Vivaldi"; then
+        flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
+      else
+        (command -v vivaldi >/dev/null 2>&1 && vivaldi >/dev/null 2>&1 &) || true
       fi
 
       # Return to workspace 11
