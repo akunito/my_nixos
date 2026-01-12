@@ -133,8 +133,8 @@ in
           # Note: Removed "${hyper}+d" to avoid conflict with application bindings
           # Use "${hyper}+space" for rofi launcher
 
-          # Rofi Calculator (with -no-show-match -no-sort for better UX)
-          "${hyper}+x" = "exec rofi -show calc -modi calc -no-show-match -no-sort";
+          # KCalc (replaces rofi calculator)
+          "${hyper}+x" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.kcalc kcalc";
 
           # Rofi Emoji Picker
           "${hyper}+period" = "exec rofi -show emoji";
@@ -398,6 +398,10 @@ in
           # Pavucontrol: floating + sticky (correct app_id)
           { criteria = { app_id = "org.pulseaudio.pavucontrol"; }; command = "floating enable, sticky enable"; }
 
+          # KCalc: floating + sticky (KDE calculator)
+          { criteria = { app_id = "org.kde.kcalc"; }; command = "floating enable, sticky enable"; }
+          { criteria = { app_id = "kcalc"; }; command = "floating enable, sticky enable"; }
+
           # XWayland apps (use class)
           { criteria = { class = "SwayBG+"; }; command = "floating enable"; }
           { criteria = { class = "Spotify"; }; command = "floating enable"; }
@@ -440,6 +444,8 @@ in
           { criteria = { class = "Discover"; }; command = "sticky enable"; }
           { criteria = { class = "plasma-discover"; }; command = "sticky enable"; }
           { criteria = { app_id = "org.pulseaudio.pavucontrol"; }; command = "sticky enable"; }
+          { criteria = { app_id = "org.kde.kcalc"; }; command = "sticky enable"; }
+          { criteria = { app_id = "kcalc"; }; command = "sticky enable"; }
         ];
       };
     };
@@ -585,6 +591,9 @@ in
       # Additional floating window rules
       # Pavucontrol: floating + sticky (correct app_id)
       for_window [app_id="org.pulseaudio.pavucontrol"] floating enable, sticky enable
+      # KCalc: floating + sticky (KDE calculator)
+      for_window [app_id="org.kde.kcalc"] floating enable, sticky enable
+      for_window [app_id="kcalc"] floating enable, sticky enable
       for_window [app_id="nm-connection-editor"] floating enable
       for_window [app_id="blueman-manager"] floating enable
       for_window [app_id="swappy"] floating enable, sticky enable
