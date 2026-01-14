@@ -14,6 +14,7 @@ let
   sway-start-plasma-kwallet-pam = scripts.swayStartPlasmaKwalletPam;
   restore-qt5ct-files = scripts.restoreQt5ctFiles;
   desk-startup-apps-init = scripts.deskStartupAppsInit;
+  rebuild-ksycoca = scripts.rebuildKsycoCa;
 
   # Focus the primary output and warp the cursor onto it at Sway session start.
   # This avoids "focus_follows_mouse" pulling focus to an off/unused monitor if the cursor last lived there.
@@ -106,6 +107,12 @@ let
   };
 in
 {
+  # Set XDG_MENU_PREFIX for KDE applications (Dolphin menu database)
+  # Using home.sessionVariables (safe method that doesn't break DBus/networking)
+  home.sessionVariables = {
+    XDG_MENU_PREFIX = "plasma-";
+  };
+
   # CRITICAL: Idle daemon with swaylock-effects
   services.swayidle = {
     enable = true;
@@ -368,6 +375,11 @@ in
           {
             command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
             always = false; # Only run on initial startup, not on config reload
+          }
+          # Rebuild KDE menu database for Dolphin (must run after XDG_MENU_PREFIX is set via home.sessionVariables)
+          {
+            command = "${rebuild-ksycoca}/bin/rebuild-ksycoca";
+            always = false; # Run only on initial login, not on reload
           }
           # NOTE: Theme variables are now set via extraSessionCommands (cleaner, native Home Manager option)
           # This script syncs them with D-Bus activation environment to ensure GUI applications launched via D-Bus inherit the variables

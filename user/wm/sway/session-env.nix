@@ -142,6 +142,19 @@ EOF
     "${write-sway-session-env}/bin/write-sway-session-env" >/dev/null 2>&1 || true
     exec ${pkgs.systemd}/bin/systemctl --user start sway-session.target
   '';
+
+  # Rebuild KDE system configuration cache to populate Dolphin menus
+  # This ensures Dolphin's "Open With" dialog shows installed applications
+  rebuild-ksycoca = pkgs.writeShellScriptBin "rebuild-ksycoca" ''
+    #!/bin/sh
+    # Rebuild KDE system configuration cache to populate Dolphin menus.
+    # We explicitly use the Nix store path to ensure availability.
+    # This requires 'plasma-applications.menu' to exist in XDG_CONFIG_DIRS.
+
+    if [ -x "${pkgs.kdePackages.kservice}/bin/kbuildsycoca6" ]; then
+      "${pkgs.kdePackages.kservice}/bin/kbuildsycoca6" --noincremental || true
+    fi
+  '';
 in
 {
   # Internal script handles used by `swayfx-config.nix` startup commands.
@@ -150,6 +163,7 @@ in
   user.wm.sway._internal.scripts.writeSwaySessionEnv = write-sway-session-env;
   user.wm.sway._internal.scripts.writeSwayPortalEnv = write-sway-portal-env;
   user.wm.sway._internal.scripts.swaySessionStart = sway-session-start;
+  user.wm.sway._internal.scripts.rebuildKsycoCa = rebuild-ksycoca;
 
   # CRITICAL: Portal configuration to avoid conflicts with KDE
   xdg.portal = {
