@@ -363,6 +363,9 @@ in
       pkgs-unstable.cloudflared
       pkgs-unstable.rpcs3
       pkgs-unstable.dolphin-emu
+      # CUPS client packages for printer access in Sway
+      pkgs.cups-filters
+      pkgs.system-config-printer
     ];
     
     zshinitContent = ''

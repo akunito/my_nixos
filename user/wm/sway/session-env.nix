@@ -9,7 +9,7 @@ let
     # IMPORTANT (Stylix containment): do NOT use --systemd here.
     # We only want to update D-Bus activation env for the current Sway session, not mutate the
     # persistent systemd --user manager environment (which can leak into Plasma 6 if lingering is enabled).
-    dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME
+    dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME CUPS_SERVER
   '';
 
   # Ensure core Wayland session vars are visible to systemd --user units launched via DBus activation
@@ -37,6 +37,7 @@ QT_QPA_PLATFORMTHEME=''${QT_QPA_PLATFORMTHEME:-}
 GTK_THEME=''${GTK_THEME:-}
 GTK_APPLICATION_PREFER_DARK_THEME=''${GTK_APPLICATION_PREFER_DARK_THEME:-}
 QT_STYLE_OVERRIDE=''${QT_STYLE_OVERRIDE:-}
+CUPS_SERVER=localhost:631
 EOF
   '';
 

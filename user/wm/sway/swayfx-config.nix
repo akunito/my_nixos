@@ -96,14 +96,21 @@ in
     # CRITICAL: Inject theme variables that we force-unset globally
     # This runs early in the Sway startup sequence, ensuring the environment is set before any apps launch
     # Variables are set ONLY for Sway sessions, not affecting Plasma 6
-    extraSessionCommands = lib.mkIf (systemSettings.stylixEnable == true) ''
-      # Inject variables that we force-unset globally to prevent Plasma 6 leakage
-      export QT_QPA_PLATFORMTHEME=qt5ct
-      export GTK_THEME=${if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita"}
-      export GTK_APPLICATION_PREFER_DARK_THEME=1
-      # Fix for Java apps if needed
-      export _JAVA_AWT_WM_NONREPARENTING=1
-    '';
+    extraSessionCommands = lib.mkMerge [
+      # Always set CUPS_SERVER for printer access in Sway
+      ''
+        export CUPS_SERVER=localhost:631
+      ''
+      # Conditionally set theme variables if Stylix is enabled
+      (lib.mkIf (systemSettings.stylixEnable == true) ''
+        # Inject variables that we force-unset globally to prevent Plasma 6 leakage
+        export QT_QPA_PLATFORMTHEME=qt5ct
+        export GTK_THEME=${if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita"}
+        export GTK_APPLICATION_PREFER_DARK_THEME=1
+        # Fix for Java apps if needed
+        export _JAVA_AWT_WM_NONREPARENTING=1
+      '')
+    ];
 
     config = {
       # Hyper key definition (Ctrl+Alt+Super)
