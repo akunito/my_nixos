@@ -16,11 +16,13 @@
       "i2c-dev" 
       "i2c-piix4" 
       "cpufreq_powersave"
+      "xpadneo" # xbox controller
     ];
     
     # Security
     fuseAllowOther = false;
-    pkiCertificates = [ /home/akunito/.certificates/ca.cert.pem ];
+    # pkiCertificates = [ /home/akunito/.certificates/ca.cert.pem ];
+    sudoTimestampTimeoutMinutes = 180;
     
     # Polkit
     polkitEnable = true;

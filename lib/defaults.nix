@@ -215,6 +215,11 @@
       }
     ];
     
+    # Sway/SwayFX keyboard layouts (multi-language support)
+    # Format: list of XKB layout codes with optional variants in parentheses
+    # Example: [ "us(altgr-intl)" "es" "pl" ] → layouts: "us,es,pl", variants: "altgr-intl,,"
+    swayKeyboardLayouts = [ "us(altgr-intl)" "es" "pl" ];
+    
     # Font defaults - will be computed based on systemStable in flake-base.nix
     # This is just a placeholder
     fonts = [ ];

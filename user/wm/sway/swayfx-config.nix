@@ -58,6 +58,52 @@ let
       exit 0
     '';
   };
+
+  # Parse keyboard layouts and variants from systemSettings.swayKeyboardLayouts
+  # Input format: [ "us(altgr-intl)" "es" "pl" ]
+  # Output: { layouts = "us,es,pl"; variants = "altgr-intl,,"; }
+  parseLayout = entry:
+    let
+      parts = lib.splitString "(" entry;
+    in
+    if lib.length parts > 1
+    then {
+      layout = lib.head parts;
+      variant = lib.removeSuffix ")" (lib.elemAt parts 1);
+    }
+    else { layout = entry; variant = ""; };
+
+  parsedLayouts = map parseLayout systemSettings.swayKeyboardLayouts;
+  xkbLayouts = lib.concatStringsSep "," (map (x: x.layout) parsedLayouts);
+  xkbVariants = lib.concatStringsSep "," (map (x: x.variant) parsedLayouts);
+
+  # Keyboard layout switching script
+  keyboard-layout-switch = pkgs.writeShellApplication {
+    name = "keyboard-layout-switch";
+    runtimeInputs = with pkgs; [
+      sway
+      jq
+      libnotify
+    ];
+    text = ''
+      #!/bin/bash
+      set -euo pipefail
+
+      # Switch to next layout
+      swaymsg input type:keyboard xkb_switch_layout next
+
+      # Wait for state update
+      sleep 0.1
+
+      # Query current layout name
+      CURRENT_LAYOUT=$(swaymsg -t get_inputs --raw | \
+        jq -r '.[] | select(.type == "keyboard") | .xkb_active_layout_name' | \
+        head -n1)
+
+      # Send notification
+      notify-send -t 2000 "Keyboard Layout" "$CURRENT_LAYOUT"
+    '';
+  };
 in
 {
   # CRITICAL: Idle daemon with swaylock-effects
@@ -128,6 +174,9 @@ in
         {
           # Reload SwayFX configuration
           "${hyper}+Shift+r" = "reload";
+
+          # Keyboard layout switching (English/Spanish/Polish)
+          "${hyper}+Return" = "exec ${keyboard-layout-switch}/bin/keyboard-layout-switch";
 
           # Manual startup apps launcher
           "${hyper}+Shift+Return" = "exec ${config.home.homeDirectory}/.nix-profile/bin/desk-startup-apps-launcher";
@@ -548,10 +597,10 @@ in
       # In Sway, `input` matching supports `type:keyboard` and concrete identifiers.
       input type:keyboard xkb_numlock enabled
 
-      # Keyboard input configuration for polyglot typing (English/Spanish)
+      # Keyboard input configuration for multi-language support (English/Spanish/Polish)
       input type:keyboard {
-        xkb_layout "us"
-        xkb_variant "altgr-intl"
+        xkb_layout "${xkbLayouts}"
+        xkb_variant "${xkbVariants}"
         xkb_numlock enabled
       }
 
