@@ -51,6 +51,21 @@
       fsType = "ntfs3";
     };
 
+  fileSystems."/mnt/NFS_emulators" =
+    { device = "192.168.20.200:/mnt/ssdpool/emulators";
+      fsType = "nfs4";
+    };
+
+  fileSystems."/mnt/NFS_media" =
+    { device = "192.168.20.200:/mnt/hddpool/media";
+      fsType = "nfs4";
+    };
+
+  fileSystems."/mnt/NFS_library" =
+    { device = "192.168.20.200:/mnt/ssdpool/library";
+      fsType = "nfs4";
+    };
+
   swapDevices =
     [ { device = "/dev/disk/by-uuid/ffa522b1-04ad-4280-a332-c229cb58fed5"; }
     ];

@@ -56,18 +56,18 @@
           { key = "C"; mods = "Control"; action = "Copy"; }  # Copy
           { key = "V"; mods = "Control"; action = "Paste"; } # Paste
           
-          # Send original control characters via Ctrl+Shift (for SIGINT and other functions)
-          # Use \u0003 (Unicode) instead of \x03 (Hex) because Nix doesn't support \x escape sequences
-          # Home Manager will correctly translate \u0003 to the character code that Alacritty needs
+          # Send original control characters via Ctrl+Shift
+          # We use builtins.fromJSON because Nix strings don't support \u escape sequences directly,
+          # but JSON does. This generates the raw control character which Home Manager serializes correctly to TOML.
           
-          # Ctrl+Shift+C sends SIGINT (ASCII 0x03 / End of Text)
-          { key = "C"; mods = "Control|Shift"; chars = "\u0003"; }
+          # Ctrl+Shift+C -> SIGINT (ASCII 0x03)
+          { key = "C"; mods = "Control|Shift"; chars = builtins.fromJSON ''"\u0003"''; }
           
-          # Ctrl+Shift+X sends CAN (ASCII 0x18 / Cancel) - mimics standard Ctrl+X
-          { key = "X"; mods = "Control|Shift"; chars = "\u0018"; }
+          # Ctrl+Shift+X -> CAN (ASCII 0x18)
+          { key = "X"; mods = "Control|Shift"; chars = builtins.fromJSON ''"\u0018"''; }
           
-          # Ctrl+Shift+V sends SYN (ASCII 0x16 / Synchronous Idle) - mimics standard Ctrl+V
-          { key = "V"; mods = "Control|Shift"; chars = "\u0016"; }
+          # Ctrl+Shift+V -> SYN (ASCII 0x16)
+          { key = "V"; mods = "Control|Shift"; chars = builtins.fromJSON ''"\u0016"''; }
         ];
       };
     }
