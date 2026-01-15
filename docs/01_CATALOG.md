@@ -176,10 +176,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `wallpaper backend for SwayFX`
    - `SwayFX`
    - `lib.hm.dag.entryAfter [ "reloadSystemd" ] '' RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" ENV_FILE="$RUNTIME_DIR/sway-session.env" if [ -r "$ENV_FILE" ]; then # shellcheck disable=SC1090 . "$ENV_FILE" fi if [ -n "''${SWAYSOCK:-}" ] && [ -S "''${SWAYSOCK:-}" ]; then ${pkgs.systemd}/bin/systemctl --user start swww-restore.service >/dev/null 2>&1 || true else CAND="$(ls -t "$RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -n1 || true)" if [ -n "$CAND" ] && [ -S "$CAND" ]; then ${pkgs.systemd}/bin/systemctl --user start swww-restore.service >/dev/null 2>&1 || true fi fi ''`
-- **user/app/terminal/alacritty.nix**: Explicitly install JetBrains Mono Nerd Font to ensure it's available *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/app/terminal/alacritty.nix**: Wrapper script to auto-start tmux with alacritty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/fix-terminals.nix**: Python script to configure VS Code and Cursor terminal keybindings
-- **user/app/terminal/kitty.nix**: Explicitly install JetBrains Mono Nerd Font to ensure it's available *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
-- **user/app/terminal/tmux.nix**: Note: Custom menu is implemented via display-menu in extraConfig (bind ?)
+- **user/app/terminal/kitty.nix**: Wrapper script to auto-start tmux with kitty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/app/terminal/tmux.nix**: ssh-smart script: reads hosts from .ssh/config and provides interactive selection
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
 
 ### Hardware
@@ -317,4 +317,5 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/sway-to-hyprland-migration.md**: Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions.
 - **docs/user-modules/swaybgplus.md**: GUI multi-monitor wallpapers for SwayFX/Wayland via SwayBG+ (Home-Manager/NixOS-safe; no Stylix/Plasma conflicts).
 - **docs/user-modules/swww.md**: Robust wallpapers for SwayFX via swww (daemon + oneshot restore; rebuild/reboot safe; no polling/flicker).
+- **docs/user-modules/tmux.md**: Tmux terminal multiplexer module with custom keybindings, SSH smart launcher, and Stylix integration for modern terminal workflow.
 - **docs/user-modules/xmonad.md**: XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo.

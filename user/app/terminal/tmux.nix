@@ -45,9 +45,16 @@ let
     # Connect via SSH
     exec ssh "$SELECTED" "$@"
   '';
+  
+  # ssh-smart-tmux: wrapper that opens ssh-smart in a new pane for interactive selection
+  ssh-smart-tmux = pkgs.writeShellScriptBin "ssh-smart-tmux" ''
+    #!/usr/bin/env bash
+    # Wrapper to run ssh-smart in a new tmux pane for interactive selection
+    ${pkgs.tmux}/bin/tmux new-window -n "ssh-smart" "${ssh-smart}/bin/ssh-smart"
+  '';
 in
 {
-  home.packages = [ ssh-smart ];
+  home.packages = [ ssh-smart ssh-smart-tmux ];
   
   programs.tmux = {
     enable = true;
@@ -63,7 +70,6 @@ in
       sensible  # Sensible defaults
       yank      # Better clipboard integration
       copycat   # Enhanced search and copy functionality
-      sidebar   # Sidebar navigation
       # Note: Custom menu is implemented via display-menu in extraConfig (bind ?)
     ];
     
@@ -156,12 +162,11 @@ in
       bind -n C-M-] paste-buffer
       
       # Plugin shortcuts
-      # Sidebar toggle
-      bind -n C-M-b run-shell "$HOME/.config/tmux/plugins/tmux-sidebar/scripts/toggle.sh"
-      # Copycat search
-      bind -n C-M-p run-shell "$HOME/.config/tmux/plugins/tmux-copycat/scripts/copycat_mode_start.sh"
-      # SSH smart launcher
-      bind -n C-M-a run-shell "${ssh-smart}/bin/ssh-smart"
+      # Copycat search - use the plugin's search functionality
+      # Copycat uses prefix+/ by default, but we bind it to Ctrl+Alt+P
+      bind -n C-M-p copy-mode \; send-keys /
+      # SSH smart launcher - open in new window for interactive selection
+      bind -n C-M-a run-shell "${ssh-smart-tmux}/bin/ssh-smart-tmux"
       
       # Fast navigation menu
       ${if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then ''
@@ -178,9 +183,8 @@ in
           "Scroll Down" "C-M-s" "copy-mode -u" \
           "Copy Mode" "C-M-[" "copy-mode" \
           "Paste" "C-M-]" "paste-buffer" \
-          "Toggle Sidebar" "C-M-b" "run-shell 'tmux run-shell ~/.config/tmux/plugins/tmux-sidebar/scripts/toggle.sh'" \
-          "Copycat Search" "C-M-p" "run-shell 'tmux run-shell ~/.config/tmux/plugins/tmux-copycat/scripts/copycat_mode_start.sh'" \
-          "SSH Smart" "C-M-a" "run-shell '${ssh-smart}/bin/ssh-smart'" \
+          "Copycat Search" "C-M-p" "copy-mode; send-keys /" \
+          "SSH Smart" "C-M-a" "run-shell '${ssh-smart-tmux}/bin/ssh-smart-tmux'" \
           "Help" "?" "list-keys"
       '' else ''
         bind -n C-M-H display-menu -T "#[align=centre fg=blue]Fast Navigation" \
@@ -196,9 +200,8 @@ in
           "Scroll Down" "C-M-s" "copy-mode -u" \
           "Copy Mode" "C-M-[" "copy-mode" \
           "Paste" "C-M-]" "paste-buffer" \
-          "Toggle Sidebar" "C-M-b" "run-shell 'tmux run-shell ~/.config/tmux/plugins/tmux-sidebar/scripts/toggle.sh'" \
-          "Copycat Search" "C-M-p" "run-shell 'tmux run-shell ~/.config/tmux/plugins/tmux-copycat/scripts/copycat_mode_start.sh'" \
-          "SSH Smart" "C-M-a" "run-shell '${ssh-smart}/bin/ssh-smart'" \
+          "Copycat Search" "C-M-p" "copy-mode; send-keys /" \
+          "SSH Smart" "C-M-a" "run-shell '${ssh-smart-tmux}/bin/ssh-smart-tmux'" \
           "Help" "?" "list-keys"
       ''}
       
