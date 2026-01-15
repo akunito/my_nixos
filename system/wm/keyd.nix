@@ -35,5 +35,15 @@
         };
       };
     };
+
+    keyboards.razer_mouse = {
+      ids = [ "1532:00b2" ];  # Razer DeathAdder V3
+      settings = {
+        main = {
+          # Map side button (mouse1) to Control+Alt modifier combination
+          mouse1 = "C-A";
+        };
+      };
+    };
   };
 }
