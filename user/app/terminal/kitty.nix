@@ -1,10 +1,17 @@
 { pkgs, lib, userSettings, config, systemSettings, ... }:
 
+let
+  # Wrapper script to auto-start tmux with kitty session
+  kitty-tmux-wrapper = pkgs.writeShellScriptBin "kitty-tmux-wrapper" ''
+    exec ${pkgs.tmux}/bin/tmux attach -t kitty || exec ${pkgs.tmux}/bin/tmux new -s kitty
+  '';
+in
 {
   home.packages = with pkgs; [
     kitty
     # Explicitly install JetBrains Mono Nerd Font to ensure it's available
     nerd-fonts.jetbrains-mono
+    kitty-tmux-wrapper
   ];
   programs.kitty.enable = true;
   programs.kitty.settings = lib.mkMerge [
@@ -31,6 +38,11 @@
       # Socket listener for automation
       allow_remote_control = "yes";
       listen_on = "unix:/tmp/mykitty";
+      
+      # Auto-start tmux with persistent session
+      # Attach to "kitty" session if it exists, otherwise create it
+      # Use the wrapper script that execs tmux, replacing the shell
+      shell = "${kitty-tmux-wrapper}/bin/kitty-tmux-wrapper";
     }
     # CRITICAL: Check if Stylix is actually available (not just enabled)
     # Stylix is disabled for Plasma 6 even if stylixEnable is true

@@ -46,6 +46,14 @@
       # Do not define any keybindings that capture Alt combinations
       # Let Alt keys pass through to Tmux for Alt+Arrow navigation
       
+      # Auto-start tmux with persistent session
+      # Attach to "alacritty" session if it exists, otherwise create it
+      # Use exec so zsh is replaced by tmux, keeping the terminal alive
+      shell = {
+        program = "${pkgs.zsh}/bin/zsh";
+        args = [ "-c" "exec ${pkgs.tmux}/bin/tmux attach -t alacritty || exec ${pkgs.tmux}/bin/tmux new -s alacritty" ];
+      };
+      
       # Use Ctrl+C/V for copy/paste (standard shortcuts)
       # Note: Alacritty doesn't support Cut action, so Ctrl+X is not bound
       # Ctrl+Shift+C sends SIGINT (original Ctrl+C - interrupt process)
