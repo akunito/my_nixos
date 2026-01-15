@@ -54,7 +54,7 @@ in
     clock24 = true;
     keyMode = "vi";
     mouse = true;
-    prefix = "C-a";  # Ctrl+A as prefix (easier than Ctrl+B)
+    prefix = "C-o";  # Ctrl+O as prefix
     baseIndex = 1;
     escapeTime = 0;
     terminal = "screen-256color";  # 256-color support
@@ -80,62 +80,141 @@ in
       bind-key -T copy-mode-vi v send-keys -X begin-selection
       bind-key -T copy-mode-vi r send-keys -X rectangle-toggle
       
-      # CRITICAL: Fast navigation without prefix (Ctrl+Alt+Arrow to avoid conflict with window manager Alt key)
-      # Alt key is now reserved for window manipulation in Sway
-      bind -n C-M-Left select-pane -L
-      bind -n C-M-Down select-pane -D
-      bind -n C-M-Up select-pane -U
-      bind -n C-M-Right select-pane -R
-      bind -n C-M-h select-pane -L
-      bind -n C-M-j select-pane -D
-      bind -n C-M-k select-pane -U
-      bind -n C-M-l select-pane -R
+      # ============================================================================
+      # BASIC NAVIGATION (with Ctrl+O prefix)
+      # ============================================================================
       
-      # Tabs and Splits
-      bind | split-window -h -c "#{pane_current_path}"
-      bind - split-window -v -c "#{pane_current_path}"
-      bind h select-pane -L
-      bind j select-pane -D
-      bind k select-pane -U
-      bind l select-pane -R
-      bind n next-window
-      bind p previous-window
-      bind c new-window -c "#{pane_current_path}"
-      bind , command-prompt -I "#W" "rename-window '%%'"
-      bind x kill-pane
-      bind & kill-window
-      
-      # Keyboard shortcuts display (using tmux-menus plugin)
-      # CRITICAL: Check if Stylix is actually available (not just enabled)
-      # Stylix is disabled for Plasma 6 even if stylixEnable is true
-      # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
+      # Show keybindings menu
       ${if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then ''
-        bind ? display-menu -T "#[align=centre fg=#${config.lib.stylix.colors.base0D}]Keybindings" \
-          "Split Vertical" "|" "split-window -h" \
-          "Split Horizontal" "-" "split-window -v" \
-          "Next Window" "n" "next-window" \
-          "Previous Window" "p" "previous-window" \
-          "New Window" "c" "new-window" \
-          "Rename Window" "," "command-prompt -I '#W' 'rename-window %%'" \
+        bind h display-menu -T "#[align=centre fg=#${config.lib.stylix.colors.base0D}]Keybindings" \
+          "Split Vertical" "e" "split-window -h -c '#{pane_current_path}'" \
+          "Split Horizontal" "r" "split-window -v -c '#{pane_current_path}'" \
+          "New Window" "t" "new-window -c '#{pane_current_path}'" \
+          "Next Window" "w" "next-window" \
+          "Previous Window" "q" "previous-window" \
+          "Rename Window" "2" "command-prompt -I '#W' 'rename-window %%'" \
+          "Close Window" "z" "kill-window" \
           "Close Pane" "x" "kill-pane" \
-          "Close Window" "&" "kill-window" \
           "Copy Mode" "[" "copy-mode" \
           "Paste" "]" "paste-buffer" \
           "Help" "?" "list-keys"
       '' else ''
-        bind ? display-menu -T "#[align=centre fg=blue]Keybindings" \
-          "Split Vertical" "|" "split-window -h" \
-          "Split Horizontal" "-" "split-window -v" \
-          "Next Window" "n" "next-window" \
-          "Previous Window" "p" "previous-window" \
-          "New Window" "c" "new-window" \
-          "Rename Window" "," "command-prompt -I '#W' 'rename-window %%'" \
+        bind h display-menu -T "#[align=centre fg=blue]Keybindings" \
+          "Split Vertical" "e" "split-window -h -c '#{pane_current_path}'" \
+          "Split Horizontal" "r" "split-window -v -c '#{pane_current_path}'" \
+          "New Window" "t" "new-window -c '#{pane_current_path}'" \
+          "Next Window" "w" "next-window" \
+          "Previous Window" "q" "previous-window" \
+          "Rename Window" "2" "command-prompt -I '#W' 'rename-window %%'" \
+          "Close Window" "z" "kill-window" \
           "Close Pane" "x" "kill-pane" \
-          "Close Window" "&" "kill-window" \
           "Copy Mode" "[" "copy-mode" \
           "Paste" "]" "paste-buffer" \
           "Help" "?" "list-keys"
       ''}
+      
+      # Window and pane management
+      bind e split-window -h -c "#{pane_current_path}"
+      bind r split-window -v -c "#{pane_current_path}"
+      bind t new-window -c "#{pane_current_path}"
+      bind w next-window
+      bind q previous-window
+      bind 2 command-prompt -I "#W" "rename-window '%%'"
+      bind z kill-window
+      bind x kill-pane
+      
+      # Pane navigation (vi-style)
+      bind j select-pane -L
+      bind k select-pane -D
+      bind l select-pane -U
+      bind \; select-pane -R
+      
+      # Copy mode and paste
+      bind [ copy-mode
+      bind ] paste-buffer
+      
+      # ============================================================================
+      # FAST NAVIGATION (no prefix - Ctrl+Alt)
+      # ============================================================================
+      
+      # Window and pane management
+      bind -n C-M-e split-window -h -c "#{pane_current_path}"
+      bind -n C-M-r split-window -v -c "#{pane_current_path}"
+      bind -n C-M-t new-window -c "#{pane_current_path}"
+      bind -n C-M-w next-window
+      bind -n C-M-q previous-window
+      bind -n C-M-y command-prompt -I "#W" "rename-window '%%'"
+      bind -n C-M-z kill-window
+      bind -n C-M-x kill-pane
+      
+      # Scrolling
+      bind -n C-M-d copy-mode
+      bind -n C-M-s copy-mode -u
+      
+      # Copy mode and paste
+      bind -n C-M-[ copy-mode
+      bind -n C-M-] paste-buffer
+      
+      # Plugin shortcuts
+      # Sidebar toggle
+      bind -n C-M-b run-shell "$HOME/.config/tmux/plugins/tmux-sidebar/scripts/toggle.sh"
+      # Copycat search
+      bind -n C-M-p run-shell "$HOME/.config/tmux/plugins/tmux-copycat/scripts/copycat_mode_start.sh"
+      # SSH smart launcher
+      bind -n C-M-a run-shell "${ssh-smart}/bin/ssh-smart"
+      
+      # Fast navigation menu
+      ${if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then ''
+        bind -n C-M-H display-menu -T "#[align=centre fg=#${config.lib.stylix.colors.base0D}]Fast Navigation" \
+          "Split Vertical" "C-M-e" "split-window -h" \
+          "Split Horizontal" "C-M-r" "split-window -v" \
+          "New Window" "C-M-t" "new-window" \
+          "Next Window" "C-M-w" "next-window" \
+          "Previous Window" "C-M-q" "previous-window" \
+          "Rename Window" "C-M-y" "command-prompt -I '#W' 'rename-window %%'" \
+          "Close Window" "C-M-z" "kill-window" \
+          "Close Pane" "C-M-x" "kill-pane" \
+          "Scroll Up" "C-M-d" "copy-mode" \
+          "Scroll Down" "C-M-s" "copy-mode -u" \
+          "Copy Mode" "C-M-[" "copy-mode" \
+          "Paste" "C-M-]" "paste-buffer" \
+          "Toggle Sidebar" "C-M-b" "run-shell 'tmux run-shell ~/.config/tmux/plugins/tmux-sidebar/scripts/toggle.sh'" \
+          "Copycat Search" "C-M-p" "run-shell 'tmux run-shell ~/.config/tmux/plugins/tmux-copycat/scripts/copycat_mode_start.sh'" \
+          "SSH Smart" "C-M-a" "run-shell '${ssh-smart}/bin/ssh-smart'" \
+          "Help" "?" "list-keys"
+      '' else ''
+        bind -n C-M-H display-menu -T "#[align=centre fg=blue]Fast Navigation" \
+          "Split Vertical" "C-M-e" "split-window -h" \
+          "Split Horizontal" "C-M-r" "split-window -v" \
+          "New Window" "C-M-t" "new-window" \
+          "Next Window" "C-M-w" "next-window" \
+          "Previous Window" "C-M-q" "previous-window" \
+          "Rename Window" "C-M-y" "command-prompt -I '#W' 'rename-window %%'" \
+          "Close Window" "C-M-z" "kill-window" \
+          "Close Pane" "C-M-x" "kill-pane" \
+          "Scroll Up" "C-M-d" "copy-mode" \
+          "Scroll Down" "C-M-s" "copy-mode -u" \
+          "Copy Mode" "C-M-[" "copy-mode" \
+          "Paste" "C-M-]" "paste-buffer" \
+          "Toggle Sidebar" "C-M-b" "run-shell 'tmux run-shell ~/.config/tmux/plugins/tmux-sidebar/scripts/toggle.sh'" \
+          "Copycat Search" "C-M-p" "run-shell 'tmux run-shell ~/.config/tmux/plugins/tmux-copycat/scripts/copycat_mode_start.sh'" \
+          "SSH Smart" "C-M-a" "run-shell '${ssh-smart}/bin/ssh-smart'" \
+          "Help" "?" "list-keys"
+      ''}
+      
+      # ============================================================================
+      # PANE NAVIGATION (no prefix - Ctrl+Alt)
+      # ============================================================================
+      
+      # Pane navigation (vi-style)
+      bind -n C-M-j select-pane -L
+      bind -n C-M-k select-pane -D
+      bind -n C-M-l select-pane -U
+      bind -n C-M-\; select-pane -R
+      
+      # Alternative pane navigation
+      bind -n C-M-f select-pane -L
+      bind -n C-M-g select-pane -U
       
       # Status bar with Stylix colors showing windows (tabs) and panes
       # CRITICAL: Check if Stylix is actually available (not just enabled)
@@ -154,14 +233,6 @@ in
       # SSH session management
       set -g default-command "${pkgs.zsh}/bin/zsh -l"
       set -ga terminal-overrides ",xterm-256color:Tc"
-      
-      # Window navigation
-      bind -r C-h select-window -t :-
-      bind -r C-l select-window -t :+
-      
-      # Plugin keybindings (defaults):
-      # copycat: prefix + / (search), prefix + Ctrl-f (file search), prefix + Ctrl-g (url search)
-      # sidebar: prefix + s (toggle sidebar)
     '';
   };
 }
