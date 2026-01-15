@@ -1,10 +1,27 @@
 { pkgs, lib, userSettings, config, systemSettings, ... }:
 
+let
+  # Wrapper script to auto-start tmux with alacritty session
+  # Falls back to zsh if tmux fails to prevent terminal crash
+  alacritty-tmux-wrapper = pkgs.writeShellScriptBin "alacritty-tmux-wrapper" ''
+    # Try to attach to existing alacritty session
+    if ${pkgs.tmux}/bin/tmux has-session -t alacritty 2>/dev/null; then
+      exec ${pkgs.tmux}/bin/tmux attach -t alacritty
+    # Try to create new alacritty session
+    elif ${pkgs.tmux}/bin/tmux new-session -d -s alacritty 2>/dev/null; then
+      exec ${pkgs.tmux}/bin/tmux attach -t alacritty
+    else
+      # Fall back to regular shell if tmux fails
+      exec ${pkgs.zsh}/bin/zsh -l
+    fi
+  '';
+in
 {
   home.packages = with pkgs; [
     alacritty
     # Explicitly install JetBrains Mono Nerd Font to ensure it's available
     nerd-fonts.jetbrains-mono
+    alacritty-tmux-wrapper
   ];
   programs.alacritty.enable = true;
   programs.alacritty.settings = lib.mkMerge [
@@ -48,10 +65,12 @@
       
       # Auto-start tmux with persistent session
       # Attach to "alacritty" session if it exists, otherwise create it
-      # Use exec so zsh is replaced by tmux, keeping the terminal alive
-      shell = {
-        program = "${pkgs.zsh}/bin/zsh";
-        args = [ "-c" "exec ${pkgs.tmux}/bin/tmux attach -t alacritty || exec ${pkgs.tmux}/bin/tmux new -s alacritty" ];
+      # Use the wrapper script that falls back to zsh if tmux fails
+      # CRITICAL: Use terminal.shell instead of deprecated shell
+      terminal = {
+        shell = {
+          program = "${alacritty-tmux-wrapper}/bin/alacritty-tmux-wrapper";
+        };
       };
       
       # Use Ctrl+C/V for copy/paste (standard shortcuts)

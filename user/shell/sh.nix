@@ -21,6 +21,7 @@ let
     tra3 = "eza -a --long --tree --level=3";
     gl = "git log --graph";
     startup = "${config.home.homeDirectory}/.nix-profile/bin/desk-startup-apps-launcher";
+    ssh-smart = "ssh-smart";
   };
 in
 {

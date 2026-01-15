@@ -1,6 +1,54 @@
 { config, pkgs, lib, systemSettings, userSettings, ... }:
 
+let
+  # ssh-smart script: reads hosts from .ssh/config and provides interactive selection
+  ssh-smart = pkgs.writeShellScriptBin "ssh-smart" ''
+    #!/usr/bin/env bash
+    # ssh-smart: Interactive SSH host selection from .ssh/config
+    
+    SSH_CONFIG="''${SSH_CONFIG:-$HOME/.ssh/config}"
+    
+    if [ ! -f "$SSH_CONFIG" ]; then
+      echo "Error: SSH config file not found at $SSH_CONFIG" >&2
+      exit 1
+    fi
+    
+    # Extract Host entries from .ssh/config (ignoring wildcards and comments)
+    # This regex matches "Host" followed by a hostname (not starting with * or ?)
+    HOSTS=$(grep -E "^[[:space:]]*Host[[:space:]]+[^*?]" "$SSH_CONFIG" | \
+            sed -E 's/^[[:space:]]*Host[[:space:]]+//' | \
+            grep -v "^[[:space:]]*$" | \
+            sort -u)
+    
+    if [ -z "$HOSTS" ]; then
+      echo "No hosts found in $SSH_CONFIG" >&2
+      exit 1
+    fi
+    
+    # Use fzf if available, otherwise use a simple selection
+    if command -v fzf >/dev/null 2>&1; then
+      SELECTED=$(echo "$HOSTS" | fzf --height=40% --border --prompt="SSH to: ")
+    else
+      # Simple numbered selection
+      echo "Available hosts:"
+      echo "$HOSTS" | nl -w2 -s'. '
+      echo ""
+      read -p "Select host number: " SELECTION
+      SELECTED=$(echo "$HOSTS" | sed -n "''${SELECTION}p")
+    fi
+    
+    if [ -z "$SELECTED" ]; then
+      echo "No host selected. Exiting." >&2
+      exit 1
+    fi
+    
+    # Connect via SSH
+    exec ssh "$SELECTED" "$@"
+  '';
+in
 {
+  home.packages = [ ssh-smart ];
+  
   programs.tmux = {
     enable = true;
     clock24 = true;
@@ -14,6 +62,8 @@
     plugins = with pkgs.tmuxPlugins; [
       sensible  # Sensible defaults
       yank      # Better clipboard integration
+      copycat   # Enhanced search and copy functionality
+      sidebar   # Sidebar navigation
       # Note: Custom menu is implemented via display-menu in extraConfig (bind ?)
     ];
     
@@ -108,6 +158,10 @@
       # Window navigation
       bind -r C-h select-window -t :-
       bind -r C-l select-window -t :+
+      
+      # Plugin keybindings (defaults):
+      # copycat: prefix + / (search), prefix + Ctrl-f (file search), prefix + Ctrl-g (url search)
+      # sidebar: prefix + s (toggle sidebar)
     '';
   };
 }

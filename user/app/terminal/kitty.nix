@@ -2,8 +2,18 @@
 
 let
   # Wrapper script to auto-start tmux with kitty session
+  # Falls back to zsh if tmux fails to prevent terminal crash
   kitty-tmux-wrapper = pkgs.writeShellScriptBin "kitty-tmux-wrapper" ''
-    exec ${pkgs.tmux}/bin/tmux attach -t kitty || exec ${pkgs.tmux}/bin/tmux new -s kitty
+    # Try to attach to existing kitty session
+    if ${pkgs.tmux}/bin/tmux has-session -t kitty 2>/dev/null; then
+      exec ${pkgs.tmux}/bin/tmux attach -t kitty
+    # Try to create new kitty session
+    elif ${pkgs.tmux}/bin/tmux new-session -d -s kitty 2>/dev/null; then
+      exec ${pkgs.tmux}/bin/tmux attach -t kitty
+    else
+      # Fall back to regular shell if tmux fails
+      exec ${pkgs.zsh}/bin/zsh -l
+    fi
   '';
 in
 {
