@@ -25,18 +25,38 @@ in
     DEFAULT_BROWSER = "${vivaldi-with-kwallet}/bin/vivaldi";
   };
 
-  xdg.mimeApps.defaultApplications = {
-  "text/html" = "vivaldi.desktop";
-  "x-scheme-handler/http" = "vivaldi.desktop";
-  "x-scheme-handler/https" = "vivaldi.desktop";
-  "x-scheme-handler/about" = "vivaldi.desktop";
-  "x-scheme-handler/unknown" = "vivaldi.desktop";
+  # Custom desktop entry for pkgs Vivaldi using standard "vivaldi" name
+  # This ensures Vivaldi recognizes itself as default browser
+  # The desktop file in ~/.local/share/applications/ takes precedence over Flatpak
+  xdg.desktopEntries."vivaldi" = {
+    name = "Vivaldi";
+    genericName = "Web Browser";
+    exec = "${vivaldi-with-kwallet}/bin/vivaldi %U";
+    icon = "vivaldi";
+    terminal = false;
+    categories = [ "Network" "WebBrowser" ];
+    mimeType = [
+      "text/html"
+      "x-scheme-handler/http"
+      "x-scheme-handler/https"
+      "x-scheme-handler/about"
+      "x-scheme-handler/unknown"
+    ];
   };
 
-  # Desktop file override for Flatpak Vivaldi to use KWallet
+  # Set pkgs Vivaldi as default browser (using standard desktop entry name)
+  xdg.mimeApps.defaultApplications = {
+    "text/html" = "vivaldi.desktop";
+    "x-scheme-handler/http" = "vivaldi.desktop";
+    "x-scheme-handler/https" = "vivaldi.desktop";
+    "x-scheme-handler/about" = "vivaldi.desktop";
+    "x-scheme-handler/unknown" = "vivaldi.desktop";
+  };
+
+  # Desktop file for Flatpak Vivaldi using unique name to avoid conflicts
   # This allows Flatpak Vivaldi to also use KWallet instead of defaulting to Basic storage
-  xdg.desktopEntries."vivaldi-flatpak-kwallet" = {
-    name = "Vivaldi (Flatpak with KWallet)";
+  xdg.desktopEntries."vivaldi-flatpak" = {
+    name = "Vivaldi (Flatpak)";
     genericName = "Web Browser";
     exec = "flatpak run --command=vivaldi com.vivaldi.Vivaldi --password-store=kwallet6 %U";
     icon = "vivaldi";
