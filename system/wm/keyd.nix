@@ -15,7 +15,7 @@
     enable = true;
     
     keyboards.default = {
-      ids = [ "*" ];  # Apply to all keyboards and input devices
+      ids = [ "*" ];  # Apply to all keyboards (and keyboards with mouse buttons)
       settings = {
         main = {
           # Map CapsLock to Ctrl+Alt+Meta (Super) - this equals Hyper key (Mod4+Control+Mod1)
@@ -24,11 +24,6 @@
           # Note: Keychron keyboards with firmware remapping already send C-A-M directly,
           # so this remapping only affects keyboards that send standard Caps Lock keycodes
           capslock = "overload(hyper, esc)";
-          
-          # Map mouse side button (mouse1) to Control+Alt modifier combination
-          # This applies to any device that sends mouse1 events (mice, keyboards with mouse buttons, etc.)
-          # Using overload: mouse1 acts as combo_C_A (Control+Alt) when held, Escape when tapped
-          mouse1 = "overload(combo_C_A, esc)";
         };
         # Use single letter M for Meta in the suffix
         "hyper:C-A-M" = {
@@ -37,6 +32,20 @@
           # All keys work normally, but with the Hyper modifiers active
           # Dummy entry to prevent Nix from optimizing away the empty set
           noop = "noop";
+        };
+      };
+    };
+
+    # Separate entry for mice - keyd's "*" wildcard only matches keyboards, not mice
+    # This ensures mouse1 mapping works for actual mouse devices
+    # Note: To add more mice, add their vendor:product IDs to the ids list
+     keyboards.razer_mouse = {
+      ids = [ "1532:00b2" ];  # Razer DeathAdder V3 - add more mouse IDs here as needed
+      settings = {
+        main = {
+          # Map mouse side button (mouse1) to Control+Alt modifier combination
+          # Using overload: mouse1 acts as combo_C_A (Control+Alt) when held, Escape when tapped
+          mouse1 = "overload(combo_C_A, noop)";
         };
         # combo_C_A layer for Control+Alt (triggered by mouse1)
         "combo_C_A:C-A" = {
