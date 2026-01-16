@@ -12,7 +12,8 @@ let
         --add-flags "--password-store=kwallet6" \
         --add-flags "--enable-features=UseOzonePlatform,WaylandWindowDecorations" \
         --add-flags "--ozone-platform=wayland" \
-        --add-flags "--ozone-platform-hint=auto"
+        --add-flags "--ozone-platform-hint=auto" \
+        --add-flags "--force-device-scale-factor=1"
     '';
   };
 in
