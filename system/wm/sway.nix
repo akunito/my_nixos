@@ -28,6 +28,10 @@
     wayland.enable = true;
   };
 
+  # Set Sway as default SDDM session for DESK
+  # This takes precedence over Plasma default when both are enabled
+  services.displayManager.defaultSession = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) "sway";
+
   # CRITICAL: Force Electron apps to native Wayland mode
   environment.variables = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
     NIXOS_OZONE_WL = "1";

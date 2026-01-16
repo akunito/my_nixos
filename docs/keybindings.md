@@ -6,6 +6,7 @@ Complete reference for all keybindings across window managers and applications i
 
 - [Overview](#overview)
 - [Hyper Key System](#hyper-key-system)
+- [Mouse Button Mapping](#mouse-button-mapping)
 - [Window Manager Keybindings](#window-manager-keybindings)
 - [Terminal Keybindings](#terminal-keybindings)
 - [Common Keybindings](#common-keybindings)
@@ -39,6 +40,57 @@ The Hyper key provides:
 - **Ergonomic**: CapsLock is easily accessible
 - **System-wide**: Works everywhere, not just in window managers
 - **Consistent**: Same modifier across all WMs
+
+## Mouse Button Mapping
+
+Mouse side buttons can be remapped to modifier combinations using keyd, providing an ergonomic way to access modifiers without using keyboard keys.
+
+### Mouse Button Configuration
+
+- **Physical Button**: Mouse side button (mouse1)
+- **Function**: Acts as Control+Alt when held
+- **Configuration**: `system/wm/keyd.nix`
+- **Device Matching**: Requires explicit device IDs (keyd's `*` wildcard only matches keyboards)
+
+### Configuration Details
+
+The mouse button mapping uses `overload(combo_C_A, noop)` syntax:
+- **`combo_C_A`**: Layer that sends Control+Alt modifiers
+- **`noop`**: Dummy key that does nothing (prevents unwanted key events on release)
+
+**Why `noop` instead of `esc`?**:
+- Mouse buttons don't have a "tap" concept like keyboard keys
+- Using `esc` would send Escape on every button release
+- Using `noop` prevents any unwanted key events while maintaining modifier behavior
+
+### Adding More Mice
+
+To add mouse button mapping for additional mice:
+
+1. Find the mouse device ID using `sudo keyd monitor` (press the side button and note the vendor:product ID)
+2. Add a new entry in `system/wm/keyd.nix`:
+
+```nix
+keyboards.your_mouse = {
+  ids = [ "vendor:product" ];  # Replace with your mouse's ID
+  settings = {
+    main = {
+      mouse1 = "overload(combo_C_A, noop)";
+    };
+    "combo_C_A:C-A" = {
+      noop = "noop";
+    };
+  };
+};
+```
+
+### Usage
+
+- **Hold side button**: Activates Control+Alt modifiers
+- **Release side button**: Releases Control+Alt modifiers (no other keys sent)
+- **Works system-wide**: Available in all applications and environments
+
+**Example**: Hold side button + press `C` = `Ctrl+Alt+C` in any application
 
 ## Window Manager Keybindings
 
@@ -199,6 +251,7 @@ Window decorations match Alacritty styling.
 
 ## Related Documentation
 
+- [Mouse Button Mapping Guide](keybindings/mouse-button-mapping.md) - Quick guide for mapping mouse buttons to modifiers
 - [Scripts Reference](scripts.md) - Complete script documentation including `fix-terminals`
 - [User Modules](user-modules.md) - Terminal and application modules
 - [System Modules](system-modules.md) - Keyd configuration (`system/wm/keyd.nix`)

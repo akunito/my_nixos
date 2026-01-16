@@ -44,14 +44,11 @@
       settings = {
         main = {
           # Map mouse side button (mouse1) to Control+Alt modifier combination
-          # Using overload: mouse1 acts as combo_C_A (Control+Alt) when held, Escape when tapped
+          # Using overload with noop instead of esc - noop does nothing, preventing unwanted key events
           mouse1 = "overload(combo_C_A, noop)";
         };
         # combo_C_A layer for Control+Alt (triggered by mouse1)
         "combo_C_A:C-A" = {
-          # This layer is active when mouse1 is held
-          # The ":C-A" suffix automatically sends Control+Alt modifiers as held modifiers
-          # All keys work normally, but with the Control+Alt modifiers active
           # Dummy entry to prevent Nix from optimizing away the empty set
           noop = "noop";
         };

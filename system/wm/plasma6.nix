@@ -32,8 +32,8 @@
       # enableHidpi = true; # Enable if using high-DPI displays
     };
     
-    # Default to Plasma unless user selects SwayFX at login
-    services.displayManager.defaultSession = lib.mkIf (userSettings.wm == "plasma6") "plasma";
+    # Default to Plasma unless Sway is enabled for DESK (in which case Sway takes precedence)
+    services.displayManager.defaultSession = lib.mkIf (userSettings.wm == "plasma6" && !(systemSettings.enableSwayForDESK or false)) "plasma";
     
     services.desktopManager.plasma6 = lib.mkIf (userSettings.wm == "plasma6") {
       enable = true;

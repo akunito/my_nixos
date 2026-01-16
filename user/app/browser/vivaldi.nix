@@ -9,7 +9,10 @@ let
     buildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/vivaldi \
-        --add-flags "--password-store=kwallet6"
+        --add-flags "--password-store=kwallet6" \
+        --add-flags "--enable-features=UseOzonePlatform,WaylandWindowDecorations" \
+        --add-flags "--ozone-platform=wayland" \
+        --add-flags "--ozone-platform-hint=auto"
     '';
   };
 in

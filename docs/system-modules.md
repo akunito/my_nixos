@@ -610,7 +610,7 @@ KDE System Settings provides a GUI for SDDM configuration:
 
 ### keyd (`system/wm/keyd.nix`)
 
-**Purpose**: Keyboard remapping at kernel level
+**Purpose**: Keyboard and mouse remapping at kernel level
 
 **Settings**:
 - Automatically enabled for Sway, Plasma 6, and Hyprland
@@ -618,13 +618,31 @@ KDE System Settings provides a GUI for SDDM configuration:
 **Features**:
 - Caps Lock remapped to Hyper key (Control+Alt+Meta) when held
 - Escape key when Caps Lock is tapped
+- Mouse side button (mouse1) remapped to Control+Alt when held
 - Works at kernel input level (Sway, Plasma, Hyprland, console, TTY, login screens)
 - Applies to all keyboards via `ids = [ "*" ]`
+- Mouse devices require explicit device IDs (keyd's `*` wildcard only matches keyboards)
 
 **Configuration**:
-- Caps Lock acts as Hyper modifier when held, Escape when tapped
-- Keychron keyboards with firmware remapping already send C-A-M directly
-- Remapping only affects keyboards that send standard Caps Lock keycodes
+- **Caps Lock**: Acts as Hyper modifier when held, Escape when tapped
+  - Uses `overload(hyper, esc)` syntax
+  - Keychron keyboards with firmware remapping already send C-A-M directly
+  - Remapping only affects keyboards that send standard Caps Lock keycodes
+- **Mouse Side Button (mouse1)**: Acts as Control+Alt modifier when held
+  - Uses `overload(combo_C_A, noop)` syntax
+  - `noop` prevents unwanted key events on button release (unlike `esc` which would send Escape)
+  - Requires separate device entry for each mouse (vendor:product ID)
+
+**Mouse Button Mapping**:
+- Default entry (`keyboards.default`) handles keyboards and keyboards with mouse buttons
+- Separate entry (`keyboards.razer_mouse`) handles actual mouse devices
+- To add more mice, add their vendor:product IDs to the `ids` list in the mouse entry
+- Example: `ids = [ "1532:00b2" ]` for Razer DeathAdder V3
+
+**Why `noop` instead of `esc` for mouse buttons?**:
+- Mouse buttons don't have a "tap" concept like keyboard keys
+- Using `overload(layer, esc)` would send Escape on every button release
+- Using `overload(layer, noop)` prevents any unwanted key events while maintaining the modifier behavior
 
 **Debugging**:
 - Use `.cursor/debug-keyd-nixos.sh` script to diagnose issues

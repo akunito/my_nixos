@@ -45,6 +45,9 @@
     ];
     enable = true;
     onShutdown = "shutdown";
+    # Set timeout for guest shutdown (default is 300s/5min, which can cause hangs)
+    # After timeout, guests will be force-stopped
+    shutdownTimeout = 10;  # 60 seconds - adjust if you have slow-shutting VMs
     qemu = {
       runAsRoot = false;
       package = pkgs.qemu_kvm;
@@ -53,6 +56,17 @@
       swtpm.enable = true;
       # Note: OVMF (UEFI firmware) is now available by default with QEMU
       # The ovmf.enable option has been removed in recent NixOS versions
+    };
+  };
+
+  # Ensure libvirt-guests service stops before libvirtd and has proper timeout
+  # This prevents hanging during system shutdown
+  systemd.services.libvirt-guests = lib.mkIf (userSettings.virtualizationEnable == true) {
+    # Ensure guests are shut down before libvirtd stops
+    before = [ "libvirtd.service" ];
+    # Set service timeout to prevent indefinite hanging
+    serviceConfig = {
+      TimeoutStopSec = 10;  # 10 seconds total timeout (includes shutdownTimeout)
     };
   };
 

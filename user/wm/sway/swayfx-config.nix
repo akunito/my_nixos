@@ -240,7 +240,7 @@ in
           "${hyper}+U" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
           "${hyper}+A" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
           "${hyper}+D" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
-          "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Vivaldi-flatpak flatpak run com.vivaldi.Vivaldi";
+          "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh vivaldi-stable vivaldi";
           "${hyper}+G" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh chromium-browser chromium";
           "${hyper}+Y" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh spotify spotify --enable-features=UseOzonePlatform --ozone-platform=wayland";
           "${hyper}+N" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh nwg-look nwg-look";
@@ -558,7 +558,7 @@ in
 
       # DESK startup apps - assign to specific workspaces
       # Using 'assign' instead of 'for_window' prevents flickering on wrong workspace
-      # Vivaldi - support both Flatpak and native versions
+      # Vivaldi - using pkgs version (keeping flatpak assignments for compatibility)
       assign [app_id="Vivaldi-flatpak"] workspace number 11
       assign [app_id="com.vivaldi.Vivaldi"] workspace number 11
       assign [app_id="vivaldi"] workspace number 11

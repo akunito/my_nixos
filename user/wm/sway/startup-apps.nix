@@ -346,11 +346,7 @@ let
       fi
 
       # Launch Vivaldi (workspace 11) - Launch last due to slow startup (~10 seconds)
-      if is_flatpak_installed "com.vivaldi.Vivaldi"; then
-        flatpak run com.vivaldi.Vivaldi >/dev/null 2>&1 &
-      else
-        (command -v vivaldi >/dev/null 2>&1 && vivaldi >/dev/null 2>&1 &) || true
-      fi
+      (command -v vivaldi >/dev/null 2>&1 && vivaldi >/dev/null 2>&1 &) || true
 
       echo "Apps launched successfully"
       notify-send -t 3000 "App Launcher" "Startup applications launched successfully." || true
