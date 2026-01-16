@@ -16,14 +16,27 @@
   # Note there is another virtualization.nix on user folder
   environment.systemPackages = with pkgs; lib.mkIf (userSettings.virtualizationEnable == true) [
     virt-manager
+    virt-viewer  # Standalone viewer with better SPICE support
     distrobox
     virtiofsd
+    # SPICE client packages for clipboard and display integration
+    spice
+    spice-gtk
+    spice-protocol
+    # Windows VirtIO tools (provides virtio-win.iso with VirtIO drivers and SPICE guest tools)
+    virtio-win
     # gnome-boxes # VM management
     # dnsmasq # VM networking
     phodav # (optional) Share files with guest VMs
+    # Note: spice-vdagent is NOT needed on host - it's a guest daemon
   ];
 
   programs.virt-manager.enable = lib.mkIf (userSettings.virtualizationEnable == true) true;
+  
+  # Enable dconf for virt-manager UI settings persistence
+  # Safe to duplicate - NixOS merges definitions without error
+  # (May already be enabled via system/wm/dbus.nix, but this acts as a safeguard)
+  programs.dconf.enable = lib.mkIf (userSettings.virtualizationEnable == true) true;
   virtualisation.libvirtd = lib.mkIf (userSettings.virtualizationEnable == true) {
     # To enable networks check the doc above
     allowedBridges = [
@@ -38,11 +51,15 @@
       vhostUserPackages = [ pkgs.virtiofsd ];
       # Enable TPM emulation (for Windows 11)
       swtpm.enable = true;
+      # Note: OVMF (UEFI firmware) is now available by default with QEMU
+      # The ovmf.enable option has been removed in recent NixOS versions
     };
   };
 
+  # Note: These services are for when NixOS runs AS a guest VM, not for managing guest VMs
+  # They enable clipboard/resolution syncing when this NixOS system is running inside a VM
   services.qemuGuest.enable = true;
-  services.spice-vdagentd.enable = true;  # enable copy and paste between host and guest
+  services.spice-vdagentd.enable = true;  # enable copy and paste when NixOS is a guest
 
   users.users.${userSettings.username}.extraGroups = lib.mkIf (userSettings.virtualizationEnable == true) [ "qemu-libvirtd" "libvirtd" ];
   # Allow VM management

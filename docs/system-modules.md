@@ -86,19 +86,97 @@ systemSettings = {
 
 ### Virtualization (`system/app/virtualization.nix`)
 
-**Purpose**: QEMU/KVM virtualization support
+**Purpose**: QEMU/KVM virtualization support with SPICE integration for clipboard sharing and display management
 
 **Settings**:
-- `systemSettings.virtualizationEnable` - Enable virtualization
+- `userSettings.virtualizationEnable` - Enable virtualization
 
 **Features**:
-- Libvirt/QEMU support
+- Libvirt/QEMU support with virt-manager
+- SPICE protocol support for bidirectional clipboard and display integration
+- OVMF (UEFI firmware) support (available by default with QEMU)
+- USB redirection via SPICE
 - Remote management capability
 - Network bridge configuration
 
+**Host Configuration**:
+The module provides:
+- `virt-manager` - VM management UI
+- `virt-viewer` - Standalone viewer with SPICE support
+- `spice`, `spice-gtk`, `spice-protocol` - SPICE client libraries
+- `virtio-win` - Windows VirtIO drivers and SPICE guest tools ISO
+
+**Important Notes**:
+- `services.qemuGuest` and `services.spice-vdagentd` are for when **NixOS runs AS a guest VM**, not for managing guest VMs
+- The host uses `spice-gtk` (via virt-manager) as the SPICE client
+- `spice-vdagent` is a guest daemon and should NOT be installed on the host
+
+**Guest VM Setup**:
+
+**For NixOS Guests** (declarative configuration):
+Add to the guest's flake profile:
+```nix
+services.qemuGuest.enable = true;
+services.spice-vdagentd.enable = true;  # Enables clipboard/resolution syncing
+```
+
+**For Non-NixOS Linux Guests** (imperative setup):
+```bash
+# Install spice-vdagent
+sudo apt install spice-vdagent  # Debian/Ubuntu
+sudo dnf install spice-vdagent  # Fedora/RHEL
+sudo pacman -S spice-vdagent     # Arch
+
+# Enable the service
+sudo systemctl enable --now spice-vdagentd.service
+```
+
+**For Windows Guests**:
+
+**Windows 11 with QXL (Recommended for SPICE)**:
+1. Download latest virtio-win ISO from [Fedora repository](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/latest-virtio/)
+2. Configure VM XML with QXL video model (see [Windows 11 QXL Setup Guide](../user-modules/windows11-qxl-setup.md))
+3. Mount virtio-win ISO in the VM
+4. Install QXL driver from `E:\qxldod\w10\amd64\` (Windows 10-compatible driver works on Windows 11)
+5. Install VirtIO-Windows Guest Tools (`virtio-win-gt-x64.msi`) for SPICE support
+6. Reboot after installation
+7. Verify SPICE channel is connected and test clipboard/resolution
+
+**Windows 11 with VirtIO-GPU (Alternative)**:
+1. Configure VM XML with VirtIO video model (without `accel3d`)
+2. Install VirtIO display driver from `E:\Display\w11\amd64\` or `E:\Display\w10\amd64\`
+3. Install VirtIO-Windows Guest Tools for SPICE support
+4. Reboot after installation
+
+**Note**: QXL provides better SPICE integration for dynamic resolution. See [Windows 11 QXL Setup Guide](../user-modules/windows11-qxl-setup.md) for complete instructions.
+
+**Per-VM Configuration** (via virt-manager):
+- **Display**: Use SPICE (not VNC)
+- **Video**: 
+  - **QXL** (recommended for Windows 11 with SPICE) - Better dynamic resolution support
+  - **VirtIO** (alternative) - More modern, but less smooth auto-resize
+- **Channel**: Add Hardware → Channel → Spice Agent (spicevmc)
+  - Type: `spicevmc`
+  - Target: `virtio`, name: `com.redhat.spice.0`
+
+**Video Memory Configuration** (for high resolutions):
+- For 4K displays: `vgamem='131072'` (128MB), `ram='262144'` (256MB)
+- For 2K displays: `vgamem='65536'` (64MB), `ram='131072'` (128MB)
+- Limit maximum resolution if needed: `<resolution x='2560' y='1440'/>` in video model
+
+**Troubleshooting Clipboard**:
+- Verify SPICE channel is active: Check if virt-manager window auto-resizes guest display
+- In virt-manager: VM → View → Details → Channel → should show "Connected"
+- If host/guest use Wayland, clipboard may work better with XWayland apps
+- Native Wayland apps may have limitations with SPICE clipboard
+
+**Default Network**:
+- The default `virbr0` network is created automatically by libvirtd on first run
+- If missing, activate manually: `virsh net-start default && virsh net-autostart default`
+
 **Usage**:
 ```nix
-systemSettings = {
+userSettings = {
   virtualizationEnable = true;
 };
 ```
