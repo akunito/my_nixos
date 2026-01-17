@@ -94,6 +94,7 @@
     wireguardEnable = true;
     xboxControllerEnable = false;
     appImageEnable = false;
+    aichatEnable = false;  # Enable aichat CLI tool with OpenRouter support
     
     # Auto update - uses aga user
     autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoSystemUpdate.sh";

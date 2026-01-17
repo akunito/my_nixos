@@ -179,6 +179,7 @@
     stylixEnable = false;
     xboxControllerEnable = false;
     appImageEnable = false;
+    aichatEnable = false; # Enable aichat CLI tool with OpenRouter support
     swaybgPlusEnable = false; # Enable SwayBG+ (GUI/CLI wallpaper manager) and disable Stylix swaybg service when active
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     swayPrimaryMonitor = null;  # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")

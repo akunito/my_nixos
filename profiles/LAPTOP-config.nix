@@ -166,6 +166,7 @@
     wireguardEnable = true;
     xboxControllerEnable = true;
     appImageEnable = true;
+    aichatEnable = true;  # Enable aichat CLI tool with OpenRouter support
     
     systemStable = false;
   };

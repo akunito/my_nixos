@@ -107,7 +107,7 @@ let
             default = [ "󰕿" "󰖀" "󰕾" ];
           };
           # Use absolute store path so it works reliably under systemd (no PATH assumptions)
-          on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
+          on-click = "${pkgs.sway}/bin/swaymsg exec \"${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol ${pkgs.pavucontrol}/bin/pavucontrol\"";
           on-click-right = "${pkgs.pulseaudio}/bin/pactl set-sink-mute @DEFAULT_SINK@ toggle";
         };
         
@@ -283,7 +283,7 @@ in {
               return-type = "json";
               interval = 2;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-mic.sh ${pkgs.pulseaudio}/bin/pactl";
-              on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
+              on-click = "${pkgs.sway}/bin/swaymsg exec \"${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol ${pkgs.pavucontrol}/bin/pavucontrol\"";
               tooltip = true;
             };
 
@@ -473,7 +473,7 @@ in {
               return-type = "json";
               interval = 2;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-mic.sh ${pkgs.pulseaudio}/bin/pactl";
-              on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
+              on-click = "${pkgs.sway}/bin/swaymsg exec \"${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol ${pkgs.pavucontrol}/bin/pavucontrol\"";
               tooltip = true;
             };
 

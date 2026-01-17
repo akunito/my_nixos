@@ -249,6 +249,8 @@ let
       flatpak
       rofi
       dbus
+      kitty
+      bash
     ];
     text = ''
       #!/bin/bash
@@ -294,23 +296,6 @@ let
         exit 1
       fi
 
-      # Show Rofi Confirmation Dialog
-      echo "Showing confirmation dialog..."
-      # Use rofi script mode - use -p to set prompt text that appears in inputbar
-      # Mode name is "startup" but prompt shows "Startup Apps?"
-      CONFIRM=$(rofi -show startup_apps? \
-        -modi "startup_apps?:printf 'Yes\nNo'" \
-        -theme-str 'window {width: 400px;}' \
-        -theme-str 'textbox {enabled: true;}' \
-        -theme-str 'listview {lines: 2;}')
-
-      if [ "$CONFIRM" != "Yes" ]; then
-        echo "User cancelled app launch"
-        exit 0
-      fi
-
-      echo "User confirmed, launching applications..."
-
       # Function to check if Flatpak app is installed
       is_flatpak_installed() {
         local APP_ID="$1"
@@ -322,40 +307,101 @@ let
         return 1
       }
 
-      # Launch Cursor (workspace 12)
-      if is_flatpak_installed "com.todesktop.230313mzl4w4u92"; then
-        flatpak run com.todesktop.230313mzl4w4u92 >/dev/null 2>&1 &
-      else
-        if [ -f "${pkgs-unstable.code-cursor}/bin/cursor" ]; then
-          ${pkgs-unstable.code-cursor}/bin/cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
-        elif command -v cursor >/dev/null 2>&1; then
-          cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
+      # Function to launch startup applications
+      launch_startup_apps() {
+        echo "Launching startup applications..."
+
+        # Launch Cursor (workspace 12)
+        if is_flatpak_installed "com.todesktop.230313mzl4w4u92"; then
+          flatpak run com.todesktop.230313mzl4w4u92 >/dev/null 2>&1 &
+        else
+          if [ -f "${pkgs-unstable.code-cursor}/bin/cursor" ]; then
+            ${pkgs-unstable.code-cursor}/bin/cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
+          elif command -v cursor >/dev/null 2>&1; then
+            cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
+          fi
         fi
-      fi
 
-      # Launch Chromium (workspace 22)
-      if is_flatpak_installed "org.chromium.Chromium"; then
-        flatpak run org.chromium.Chromium >/dev/null 2>&1 &
-      else
-        (command -v chromium >/dev/null 2>&1 && chromium >/dev/null 2>&1 &) || true
-      fi
-
-      # Launch Obsidian (workspace 21)
-      if is_flatpak_installed "md.obsidian.Obsidian"; then
-        flatpak run md.obsidian.Obsidian >/dev/null 2>&1 &
-      else
-        if [ -f "${pkgs-unstable.obsidian}/bin/obsidian" ]; then
-          ${pkgs-unstable.obsidian}/bin/obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
-        elif command -v obsidian >/dev/null 2>&1; then
-          obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
+        # Launch Chromium (workspace 22)
+        if is_flatpak_installed "org.chromium.Chromium"; then
+          flatpak run org.chromium.Chromium >/dev/null 2>&1 &
+        else
+          (command -v chromium >/dev/null 2>&1 && chromium >/dev/null 2>&1 &) || true
         fi
+
+        # Launch Obsidian (workspace 21)
+        if is_flatpak_installed "md.obsidian.Obsidian"; then
+          flatpak run md.obsidian.Obsidian >/dev/null 2>&1 &
+        else
+          if [ -f "${pkgs-unstable.obsidian}/bin/obsidian" ]; then
+            ${pkgs-unstable.obsidian}/bin/obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
+          elif command -v obsidian >/dev/null 2>&1; then
+            obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
+          fi
+        fi
+
+        # Launch Vivaldi (workspace 11) - Launch last due to slow startup (~10 seconds)
+        (command -v vivaldi >/dev/null 2>&1 && vivaldi >/dev/null 2>&1 &) || true
+
+        echo "Apps launched successfully"
+        notify-send -t 3000 "App Launcher" "Startup applications launched successfully." || true
+      }
+
+      # Show Rofi menu using dmenu mode (more reliable than script mode with temp files)
+      echo "Showing menu..."
+      SELECTION=$(printf "Startup Apps\nNixOS: Update System\nNixOS: Sync System\nNixOS: Sync User\nFlatpak: Update packages\nRun: startup_services.sh\nRun: stop_external_drives.sh\nProject: LiftCraft Menu\n" | \
+        rofi -dmenu \
+        -p "Menu" \
+        -theme-str 'window {width: 400px;}' \
+        -theme-str 'listview {lines: 8;}')
+
+      # Handle user cancellation
+      if [ -z "$SELECTION" ]; then
+        echo "User cancelled"
+        exit 0
       fi
 
-      # Launch Vivaldi (workspace 11) - Launch last due to slow startup (~10 seconds)
-      (command -v vivaldi >/dev/null 2>&1 && vivaldi >/dev/null 2>&1 &) || true
+      echo "User selected: $SELECTION"
 
-      echo "Apps launched successfully"
-      notify-send -t 3000 "App Launcher" "Startup applications launched successfully." || true
+      # Execute based on selection
+      case "$SELECTION" in
+        "Startup Apps")
+          launch_startup_apps
+          ;;
+        "NixOS: Update System")
+          # Run in terminal to show progress
+          ${pkgs.kitty}/bin/kitty --title "NixOS: Update System" -e ${pkgs.bash}/bin/bash -lc "if ${systemSettings.installCommand}; then echo \"Update completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"Update failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
+          ;;
+        "NixOS: Sync System")
+          # Run in terminal to show progress
+          ${pkgs.kitty}/bin/kitty --title "NixOS: Sync System" -e ${pkgs.bash}/bin/bash -lc "if ''$HOME/.dotfiles/sync-system.sh; then echo \"System sync completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"System sync failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
+          ;;
+        "NixOS: Sync User")
+          # Run in terminal to show progress
+          ${pkgs.kitty}/bin/kitty --title "NixOS: Sync User" -e ${pkgs.bash}/bin/bash -lc "if ''$HOME/.dotfiles/sync-user.sh; then echo \"User sync completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"User sync failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
+          ;;
+        "Flatpak: Update packages")
+          # Run in terminal to show progress - update both user and system packages
+          ${pkgs.kitty}/bin/kitty --title "Flatpak: Update packages" -e ${pkgs.bash}/bin/bash -lc "if ${pkgs.flatpak}/bin/flatpak update -y && sudo ${pkgs.flatpak}/bin/flatpak update --system -y; then echo \"Flatpak packages updated successfully. Bye bye!\"; sleep 3; exit 0; else echo \"Flatpak update failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
+          ;;
+        "Run: startup_services.sh")
+          # Run in terminal to show progress
+          ${pkgs.kitty}/bin/kitty --title "startup_services.sh" -e ${pkgs.bash}/bin/bash -lc "if ''$HOME/.dotfiles/startup_services.sh; then echo \"startup_services.sh completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"startup_services.sh failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
+          ;;
+        "Run: stop_external_drives.sh")
+          # Run in terminal to show progress
+          ${pkgs.kitty}/bin/kitty --title "stop_external_drives.sh" -e ${pkgs.bash}/bin/bash -lc "if ''$HOME/.dotfiles/stop_external_drives.sh; then echo \"stop_external_drives.sh completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"stop_external_drives.sh failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
+          ;;
+        "Project: LiftCraft Menu")
+          # Run in terminal to show progress
+          ${pkgs.kitty}/bin/kitty --title "LiftCraft Menu" -e ${pkgs.bash}/bin/bash -lc "if /home/akunito/Nextcloud/git_repos/myProjects/leftyworkout/menu.sh backend; then echo \"LiftCraft menu completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"LiftCraft menu failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
+          ;;
+        *)
+          echo "Unknown selection: $SELECTION"
+          notify-send -t 3000 "Error" "Unknown selection: $SELECTION" || true
+          exit 1
+          ;;
+      esac
 
       exit 0
     '';

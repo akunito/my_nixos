@@ -245,6 +245,7 @@ in
     xboxControllerEnable = true;
     appImageEnable = true;
     gamemodeEnable = true;
+    aichatEnable = true;  # Enable aichat CLI tool with OpenRouter support
     enableSwayForDESK = true;  # Enable SwayFX as second WM option alongside Plasma6
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.
     swayPrimaryMonitor = monitors.samsungMain.criteria;
