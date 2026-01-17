@@ -212,7 +212,7 @@ in
       pkgs.wget
       pkgs.nmap
       pkgs.zsh
-      pkgs.git
+      # pkgs.git
       pkgs.cryptsetup
       pkgs.home-manager
       pkgs.wpa_supplicant
@@ -339,8 +339,8 @@ in
       pkgs-unstable.mission-center
       pkgs-unstable.ungoogled-chromium
       pkgs-unstable.vscode
-      pkgs-unstable.windsurf
       pkgs-unstable.code-cursor
+      pkgs-unstable.opencode
       pkgs-unstable.obsidian
       pkgs-unstable.spotify
       pkgs-unstable.vlc

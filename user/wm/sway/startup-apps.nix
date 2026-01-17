@@ -296,7 +296,13 @@ let
 
       # Show Rofi Confirmation Dialog
       echo "Showing confirmation dialog..."
-      CONFIRM=$(echo -e "Yes\nNo" | rofi -dmenu -p "Launch startup applications?" -mesg "This will launch: Vivaldi, Chromium, Cursor, and Obsidian to their workspaces." -theme-str 'window {width: 400px;}')
+      # Use rofi script mode - use -p to set prompt text that appears in inputbar
+      # Mode name is "startup" but prompt shows "Startup Apps?"
+      CONFIRM=$(rofi -show startup_apps? \
+        -modi "startup_apps?:printf 'Yes\nNo'" \
+        -theme-str 'window {width: 400px;}' \
+        -theme-str 'textbox {enabled: true;}' \
+        -theme-str 'listview {lines: 2;}')
 
       if [ "$CONFIRM" != "Yes" ]; then
         echo "User cancelled app launch"

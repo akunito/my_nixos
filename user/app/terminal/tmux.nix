@@ -67,10 +67,11 @@ in
     terminal = "screen-256color";  # 256-color support
     
     plugins = with pkgs.tmuxPlugins; [
-      sensible  # Sensible defaults
-      yank      # Better clipboard integration
-      copycat   # Enhanced search and copy functionality
-      # Note: Custom menu is implemented via display-menu in extraConfig (bind ?)
+      sensible     # Sensible defaults
+      yank         # Better clipboard integration
+      copycat      # Enhanced search and copy functionality
+      resurrect    # Session save/restore (required by continuum)
+      continuum    # Automatic session persistence
     ];
     
     extraConfig = ''
@@ -232,6 +233,19 @@ in
         setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base04}]#I:#W"
         setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D}]#I:#W"
       ''}
+      
+      # ============================================================================
+      # SESSION PERSISTENCE (tmux-continuum)
+      # ============================================================================
+      
+      # Save session every 15 minutes (900 seconds)
+      set -g @continuum-save-interval '15'
+      
+      # Automatically restore sessions when tmux server starts
+      set -g @continuum-restore 'on'
+      
+      # Automatically save sessions periodically
+      set -g @continuum-save 'on'
       
       # SSH session management
       set -g default-command "${pkgs.zsh}/bin/zsh -l"
