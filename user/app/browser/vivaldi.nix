@@ -9,6 +9,7 @@ let
     buildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/vivaldi \
+        --set CUPS_SERVER "localhost:631" \
         --add-flags "--password-store=kwallet6" \
         --add-flags "--enable-features=UseOzonePlatform,WaylandWindowDecorations" \
         --add-flags "--ozone-platform=wayland" \
@@ -23,6 +24,7 @@ in
 
   home.sessionVariables = {
     DEFAULT_BROWSER = "${vivaldi-with-kwallet}/bin/vivaldi";
+    CUPS_SERVER = "localhost:631";
   };
 
   # Custom desktop entry for pkgs Vivaldi using standard "vivaldi" name

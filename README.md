@@ -65,6 +65,16 @@ For complete script documentation, see [Scripts Reference](docs/scripts.md).
 
 This repository uses a 3-level documentation structure:
 
+## Navigating Documentation
+
+This repo uses a **Router + Catalog** system to help you find documentation quickly:
+
+- **Router (quick lookup):** `docs/00_ROUTER.md` - Compact table for finding specific topics
+- **Catalog (browse all):** `docs/01_CATALOG.md` - Complete listing of all modules and docs
+- **Navigation guide:** [`docs/navigation.md`](docs/navigation.md) - **Start here** to learn how to use the Router/Catalog system
+
+**Quick start**: Open [`docs/navigation.md`](docs/navigation.md) to learn how to efficiently find the documentation you need.
+
 ## AI agent context (Cursor / other coding agents)
 
 This repo uses a **Router + Catalog** system to keep AI context scoped as docs grow:

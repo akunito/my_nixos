@@ -143,6 +143,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/wm/plasma6.nix**: CRITICAL: imports must be at top level, NOT inside lib.mkMerge or lib.mkIf *Enabled when:*
    - `KWallet PAM`
    - `userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true`
+   - `userSettings.wm == "plasma6" && !(systemSettings.enableSwayForDESK or false)`
    - `userSettings.wm == "plasma6"`
    - `(userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.hostname == "nixosaku"`
    - `systemSettings.hostname == "nixosaku"`
@@ -155,7 +156,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### App
 
-- **user/app/ai/aichat.nix**: Aichat Configuration for OpenRouter
+- **user/app/ai/aichat.nix**: Aichat Module
 - **user/app/browser/brave.nix**: Module installing brave as default browser
 - **user/app/browser/floorp.nix**: Module installing  as default browser
 - **user/app/browser/librewolf.nix**: Module installing librewolf as default browser
@@ -277,6 +278,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Keybindings
 
 - **docs/keybindings/hyprland.md**: Complete reference for all Hyprland keybindings in this NixOS configuration.
+- **docs/keybindings/mouse-button-mapping.md**: Quick guide to mapping mouse side buttons to modifier keys using keyd.
 - **docs/keybindings/sway.md**: SwayFX keybindings reference, including unified rofi launcher and window overview.
 
 - **docs/00_INDEX.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
@@ -288,6 +290,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
 - **docs/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
 - **docs/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
+- **docs/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
 - **docs/patches.md**: Guide to understanding and using Nixpkgs patches in this configuration.
 - **docs/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.
 - **docs/scripts.md**: Complete reference for all shell scripts in this repository.
