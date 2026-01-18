@@ -12,6 +12,7 @@
               # ../../user/app/games/games.nix # Various videogame apps
             ] ++ lib.optional (systemSettings.hostname == "nixosaku") ../../user/app/lmstudio/lmstudio.nix # LM Studio only for DESK profile 
             ++ lib.optional systemSettings.aichatEnable ../../user/app/ai/aichat.nix # Aichat/OpenRouter support
+            ++ [ ../../user/app/nixvim/nixvim.nix ] # NixVim configuration (Cursor IDE-like experience) - always enabled for DESK and LAPTOP
             #++ lib.optional systemSettings.starCitizenModules ../../user/app/games/starcitizen.nix
             ;
 

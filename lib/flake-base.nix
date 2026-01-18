@@ -205,7 +205,11 @@ in {
       inherit pkgs;
       modules = [
         (self + "/profiles" + ("/" + systemSettingsWithFonts.profile) + "/home.nix")
-      ];
+      ] ++ lib-unstable.optional (inputs ? nixvim && (systemSettingsWithFonts.profile == "personal")) (
+        if inputs.nixvim ? homeModules then inputs.nixvim.homeModules.nixvim
+        else if inputs.nixvim ? homeManagerModules then inputs.nixvim.homeManagerModules.nixvim
+        else throw "nixvim input does not have homeModules or homeManagerModules"
+      );
       extraSpecialArgs = {
         inherit pkgs-stable;
         inherit pkgs-unstable;
