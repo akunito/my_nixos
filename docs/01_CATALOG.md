@@ -165,6 +165,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
 - **user/app/dmenu-scripts/networkmanager-dmenu.nix**: gui_if_available = <True or False> (Default: True)
 - **user/app/doom-emacs/doom.nix**: This block from https://github.com/znewman01/dotfiles/blob/be9f3a24c517a4ff345f213bf1cf7633713c9278/emacs/default.nix#L12-L34
+- **user/app/file-manager/file-manager.nix**: File manager configuration module
 - **user/app/flatpak/flatpak.nix**: services.flatpak.enable = true;
 - **user/app/games/games.nix**: Games
 - **user/app/gaming/mangohud.nix**: MangoHud Configuration
@@ -317,6 +318,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/nixvim.md**: NixVim configuration module providing a Cursor IDE-like Neovim experience with AI-powered features (Avante + Supermaven), LSP intelligence, and modern editor UX.
 - **docs/user-modules/picom.md**: Picom compositor module overview and where its config and Nix module live.
 - **docs/user-modules/plasma6.md**: Plasma 6 configuration integration for NixOS/Home Manager with export/import and symlink-based mutability.
+- **docs/user-modules/ranger-guide.md**: Ranger is a minimalistic TUI (Terminal User Interface) file manager controlled with vim keybindings, making it extremely efficient for file management tasks.
 - **docs/user-modules/ranger.md**: Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo.
 - **docs/user-modules/rofi.md**: Rofi configuration (Stylix-templated theme, unified combi launcher, power script-mode, and grouped window overview).
 - **docs/user-modules/stylix-containment.md**: Stylix theming containment in this repo (Sway gets Stylix; Plasma 6 does not) via env isolation + session-scoped systemd.
