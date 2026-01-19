@@ -9,6 +9,20 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 - **Application workflow**: apply changes via `install.sh` (or `phoenix sync`), not manual systemd enable/start.
 - **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths inside Nix.
 
+## Home Manager updates
+
+When modifying Home Manager configuration (user-level modules), apply changes using:
+
+```bash
+cd /home/akunito/.dotfiles && ./sync-user.sh
+```
+
+This command updates the Home Manager configuration and applies changes without requiring a full system rebuild. Use this for:
+- User application configurations (tmux, nixvim, etc.)
+- User shell configurations
+- User window manager settings
+- Any changes in `user/` directory
+
 ## Router-first retrieval protocol (CRITICAL)
 
 Before answering any architectural or implementation question:

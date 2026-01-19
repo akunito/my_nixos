@@ -292,7 +292,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
 - **docs/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
 - **docs/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
+- **docs/nix-quote-escaping.md**: Guide to properly escaping quotes and special characters in Nix strings to avoid common syntax errors.
 - **docs/patches.md**: Guide to understanding and using Nixpkgs patches in this configuration.
+- **docs/profile-feature-flags.md**: Guide to creating and using feature flags for profile-specific module enabling. Explains the pattern of setting defaults to false and enabling features only in specific profiles.
 - **docs/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.
 - **docs/scripts.md**: Complete reference for all shell scripts in this repository.
 - **docs/security.md**: Complete guide to security configurations and features in this NixOS setup.

@@ -42,6 +42,8 @@ This tmux configuration is optimized for modern terminal usage with:
 - **sensible** - Sensible defaults for tmux
 - **yank** - Better clipboard integration
 - **copycat** - Enhanced search and copy functionality
+- **resurrect** - Session save/restore functionality
+- **continuum** - Automatic session persistence (saves every 5 minutes)
 
 ### Custom Scripts
 
@@ -129,6 +131,25 @@ When Stylix is enabled and SwayFX is active (not Plasma 6), tmux automatically:
 - Uses Stylix colors for status bar
 - Applies theme colors to menus and displays
 - Maintains visual consistency with desktop theme
+
+## Session Persistence
+
+Tmux sessions are automatically saved and restored across reboots:
+
+- **Automatic saving**: Sessions are saved every 5 minutes in the background
+- **Save on close**: Sessions are automatically saved when:
+  - All windows in a session are closed
+  - You detach from tmux
+- **Automatic restore**: Sessions are automatically restored when tmux starts after a reboot
+- **Save location**: `~/.tmux/resurrect/`
+
+This ensures minimal data loss and seamless session recovery. The 5-minute interval provides a good balance between data protection and performance overhead.
+
+### Manual Control
+
+You can also manually save/restore sessions:
+- **Manual save**: `Ctrl+O` then `Ctrl+S` (via tmux-resurrect)
+- **Manual restore**: `Ctrl+O` then `Ctrl+R` (via tmux-resurrect)
 
 ## Integration
 

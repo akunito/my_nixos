@@ -238,14 +238,20 @@ in
       # SESSION PERSISTENCE (tmux-continuum)
       # ============================================================================
       
-      # Save session every 15 minutes (900 seconds)
-      set -g @continuum-save-interval '15'
+      # Save session every 5 minutes (minimal overhead, better data protection)
+      set -g @continuum-save-interval '5'
       
       # Automatically restore sessions when tmux server starts
       set -g @continuum-restore 'on'
       
       # Automatically save sessions periodically
       set -g @continuum-save 'on'
+      
+      # Save on session close/detach to prevent data loss
+      # Hook to save when session is closed (all windows in session are closed)
+      set-hook -g session-closed "run-shell 'tmux show-options -g @resurrect-save-script-path 2>/dev/null | awk \"{print \\\$2}\" | xargs -r sh'"
+      # Hook to save when client detaches (user detaches from tmux)
+      set-hook -g client-detached "run-shell 'tmux show-options -g @resurrect-save-script-path 2>/dev/null | awk \"{print \\\$2}\" | xargs -r sh'"
       
       # SSH session management
       set -g default-command "${pkgs.zsh}/bin/zsh -l"
