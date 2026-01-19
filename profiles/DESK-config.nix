@@ -246,6 +246,8 @@ in
     appImageEnable = true;
     gamemodeEnable = true;
     aichatEnable = true;  # Enable aichat CLI tool with OpenRouter support
+    nixvimEnabled = true;  # Enable NixVim configuration (Cursor IDE-like experience)
+    lmstudioEnabled = true;  # Enable LM Studio configuration and MCP server support
     enableSwayForDESK = true;  # Enable SwayFX as second WM option alongside Plasma6
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.
     swayPrimaryMonitor = monitors.samsungMain.criteria;

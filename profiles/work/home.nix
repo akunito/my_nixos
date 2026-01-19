@@ -25,6 +25,9 @@
               ../../user/hardware/bluetooth.nix # Bluetooth
             ] ++ lib.optional systemSettings.stylixEnable ../../user/style/stylix.nix # Styling and themes for my apps
             ++ lib.optional (systemSettings.enableSwayForDESK == true) ../../user/wm/sway/sway.nix # SwayFX (if enabled for DESK profile)
+            ++ lib.optional systemSettings.nixvimEnabled ../../user/app/nixvim/nixvim.nix # NixVim (Cursor IDE-like experience)
+            ++ lib.optional systemSettings.aichatEnable ../../user/app/ai/aichat.nix # Aichat/OpenRouter support
+            ++ lib.optional systemSettings.lmstudioEnabled ../../user/app/lmstudio/lmstudio.nix # LM Studio configuration and MCP server support
             ;
 
   home.stateVersion = userSettings.homeStateVersion; # Please read the comment before changing.
