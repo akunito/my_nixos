@@ -446,6 +446,7 @@ The NixVim module is located at `user/app/nixvim/nixvim.nix` and includes:
 5. **UI Plugins**: Telescope, gitsigns, which-key, web-devicons
 6. **Keymaps**: Custom keybindings
 7. **Options**: Neovim options (number, relativenumber, clipboard, etc.)
+8. **Plugin Loading Safety**: Safe require wrapper in `extraConfigLuaPre` to handle plugin loading timing issues
 
 ### Neovim Options
 
@@ -601,6 +602,33 @@ The configuration includes Wayland clipboard support:
    ```bash
    ./install.sh ~/.dotfiles DESK -s
    ```
+
+### Plugin Loading Errors
+
+**Problem**: Errors like `module 'nvim-web-devicons' not found` or `module 'which-key' not found` when starting Neovim.
+
+**Cause**: NixVim generates `require()` calls in `init.lua` before plugins are fully loaded into the runtime path. This is a timing issue where the generated configuration tries to require plugins that haven't been added to Neovim's runtime path yet.
+
+**Solution**: The configuration includes a safe require wrapper in `extraConfigLuaPre` that:
+- Intercepts `require()` calls for plugins that might not be loaded yet
+- Uses `pcall()` to safely attempt loading
+- Returns dummy modules if plugins aren't available (prevents errors)
+- Allows plugins to load properly once they're in the runtime path
+
+**Plugins Handled**:
+- `nvim-web-devicons` (required by Telescope)
+- `which-key` (keybinding discovery)
+- `telescope`, `gitsigns`, `dressing`, `conform` (UI plugins)
+- `avante`, `avante_lib` (AI assistant)
+- `supermaven-nvim` (AI autocomplete)
+
+**Verification**: Test if plugins are available:
+```vim
+:lua print(pcall(require, 'nvim-web-devicons'))
+:lua print(pcall(require, 'which-key'))
+```
+
+**Note**: This is a workaround for a known NixVim timing issue. The configuration uses official NixVim plugin modules (`plugins.web-devicons.enable = true`, etc.) but adds the safe require wrapper to handle the loading order.
 
 ## Security Considerations
 

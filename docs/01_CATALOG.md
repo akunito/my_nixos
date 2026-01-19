@@ -311,6 +311,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/user-modules/doom-emacs.md**: Doom Emacs user module and config layout, including Stylix theme templates and profile integration.
 - **docs/user-modules/lmstudio.md**: LM Studio user module, including MCP server setup templates and web-search tooling integration guidance.
+- **docs/user-modules/nixvim-beginners-guide.md**: Beginner's guide to using NixVim and Avante, including Vim navigation basics for users new to Vim/Neovim.
 - **docs/user-modules/nixvim.md**: NixVim configuration module providing a Cursor IDE-like Neovim experience with AI-powered features (Avante + Supermaven), LSP intelligence, and modern editor UX.
 - **docs/user-modules/picom.md**: Picom compositor module overview and where its config and Nix module live.
 - **docs/user-modules/plasma6.md**: Plasma 6 configuration integration for NixOS/Home Manager with export/import and symlink-based mutability.

@@ -17,6 +17,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | user-modules.doom-emacs | Doom Emacs user module and config layout, including Stylix theme templates and profile integration. | emacs, doom-emacs, editor, stylix, user-modules | user/app/doom-emacs/** |
 | user-modules.lmstudio | LM Studio user module, including MCP server setup templates and web-search tooling integration guidance. | lmstudio, mcp, ai, user-modules | user/app/lmstudio/** |
 | user-modules.nixvim | NixVim configuration module providing a Cursor IDE-like Neovim experience with AI-powered features (Avante + Supermaven), LSP intelligence, and modern editor UX. | nixvim, neovim, editor, ai, lsp, cursor-ide, user-modules | user/app/nixvim/** |
+| user-modules.nixvim-beginners-guide | Beginner's guide to using NixVim and Avante, including Vim navigation basics for users new to Vim/Neovim. | nixvim, neovim, vim, beginners, tutorial, avante, user-modules | user/app/nixvim/** |
 | user-modules.picom | Picom compositor module overview and where its config and Nix module live. | picom, compositor, x11, animations, user-modules | user/wm/picom/** |
 | user-modules.plasma6 | Plasma 6 configuration integration for NixOS/Home Manager with export/import and symlink-based mutability. | plasma6, kde, desktop, home-manager, configuration | user/wm/plasma6/** |
 | user-modules.ranger | Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo. | ranger, tui, file-manager, user-modules | user/app/ranger/** |
