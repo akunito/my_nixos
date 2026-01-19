@@ -394,7 +394,7 @@ let
           ;;
         "Project: LiftCraft Menu")
           # Run in terminal to show progress
-          ${pkgs.kitty}/bin/kitty --title "LiftCraft Menu" -e ${pkgs.bash}/bin/bash -lc "if /home/akunito/Nextcloud/git_repos/myProjects/leftyworkout/menu.sh backend; then echo \"LiftCraft menu completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"LiftCraft menu failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
+          ${pkgs.kitty}/bin/kitty --title "LiftCraft Menu" -e ${pkgs.bash}/bin/bash -lc "if cd /home/akunito/Nextcloud/git_repos/myProjects/leftyworkout/ && ./menu.sh backend; then echo \"LiftCraft menu completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"LiftCraft menu failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
           ;;
         *)
           echo "Unknown selection: $SELECTION"
