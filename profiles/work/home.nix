@@ -14,6 +14,7 @@
               ../../user/shell/cli-collection.nix # Useful CLI apps
               # ../../user/app/doom-emacs/doom.nix # My doom emacs config
               ../../user/app/ranger/ranger.nix # My ranger file manager config
+              ../../user/app/file-manager/file-manager.nix # File manager MIME configuration (Ranger/Dolphin)
               ../../user/app/git/git.nix # My git config
               # ../../user/app/keepass/keepass.nix # My password manager
               (./. + "../../../user/app/browser"+("/"+userSettings.browser)+".nix") # My default browser selected from flake
@@ -58,12 +59,10 @@
     };
   };
 
-  # xdg.mime.enable = true;
-  # xdg.mimeApps.enable = true;
-  # xdg.mimeApps.associations.added = {
-  #   # TODO fix mime associations, most of them are totally broken :(
-  #   "application/octet-stream" = "flstudio.desktop;";
-  # };
+  # XDG MIME configuration is now handled by user/app/file-manager/file-manager.nix
+  # This ensures proper file manager associations for directories
+  # You can override the default file manager by setting userSettings.fileManager in your profile config
+  # Options: "ranger" (default) or "dolphin"
 
   home.sessionVariables = {
     EDITOR = userSettings.editor;

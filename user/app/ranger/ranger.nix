@@ -24,6 +24,9 @@ in
     highlight
     (pkgs.writeScriptBin "cbx" myCbxScript)
   ];
+  # File manager default is now handled by user/app/file-manager/file-manager.nix
+  # This ensures consistent configuration across the system
+  # We still add it as an association so Ranger is available as an option
   xdg.mimeApps.associations.added = {
     "inode/directory" = "ranger.desktop";
   };

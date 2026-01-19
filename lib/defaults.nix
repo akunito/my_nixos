@@ -288,6 +288,7 @@
     font = "Intel One Mono";
     fontPkg = pkgs.intel-one-mono;
     editor = "nano";
+    fileManager = "ranger";  # "ranger" or "dolphin"
     
     # Home packages - empty by default, profiles specify their own
     homePackages = [ ];
