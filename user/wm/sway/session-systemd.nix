@@ -1,4 +1,4 @@
-{ config, pkgs, lib, systemSettings, userSettings, ... }:
+{ config, pkgs, lib, systemSettings, userSettings, pkgs-unstable ? pkgs, ... }:
 
 {
     # Volume/brightness OSD (matches Hyprland behavior)
@@ -202,6 +202,25 @@
       };
       Service = {
         ExecStart = "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill";
+        Restart = "on-failure";
+        RestartSec = "2s";
+        EnvironmentFile = [ "-%t/sway-session.env" ];
+      };
+      Install = {
+        WantedBy = [ "sway-session.target" ];
+      };
+    };
+
+    # Nextcloud Desktop Client: starts in background when Sway session begins
+    systemd.user.services."nextcloud-client" = lib.mkIf (systemSettings.nextcloudEnable == true) {
+      Unit = {
+        Description = "Nextcloud Desktop Client";
+        PartOf = [ "sway-session.target" ];
+        After = [ "sway-session.target" "waybar.service" ];
+        Wants = [ "waybar.service" ];
+      };
+      Service = {
+        ExecStart = "${pkgs-unstable.nextcloud-client}/bin/nextcloud --background";
         Restart = "on-failure";
         RestartSec = "2s";
         EnvironmentFile = [ "-%t/sway-session.env" ];

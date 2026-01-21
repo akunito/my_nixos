@@ -164,6 +164,7 @@
     wireguardEnable = true;
     xboxControllerEnable = true;
     appImageEnable = true;
+    nextcloudEnable = true;
     
     # Fonts - uses nerdfonts (not nerd-fonts.jetbrains-mono)
     fonts = [

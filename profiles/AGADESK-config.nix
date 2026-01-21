@@ -179,6 +179,7 @@
     xboxControllerEnable = true;
     appImageEnable = true;
     gamemodeEnable = true;
+    nextcloudEnable = true;
     
     systemStable = false;
   };

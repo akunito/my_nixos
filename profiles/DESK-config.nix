@@ -42,6 +42,7 @@ in
     # Wallpapers (Sway/SwayFX): use swww (daemon + oneshot restore; robust across reboot + HM rebuilds)
     swwwEnable = true;
     swaybgPlusEnable = false;
+    nextcloudEnable = true; # To startup with Sway daemon
     
     kernelModules = [ 
       "i2c-dev" 

@@ -41,13 +41,13 @@
 
   boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
 
-  fileSystems."/mnt/DATA" =
-    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
+  fileSystems."/mnt/DATA_SATA3" =
+    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
       fsType = "ntfs3";
     };
 
-  fileSystems."/mnt/DATA_SATA3" =
-    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
+  fileSystems."/mnt/DATA" =
+    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
       fsType = "ntfs3";
     };
 

@@ -110,6 +110,7 @@
     wireguardEnable = true;
     xboxControllerEnable = false;
     appImageEnable = false;
+    nextcloudEnable = true;
     
     systemStable = false;
   };

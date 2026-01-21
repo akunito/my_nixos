@@ -184,6 +184,7 @@
     lmstudioEnabled = false; # Enable LM Studio configuration and MCP server support
     swaybgPlusEnable = false; # Enable SwayBG+ (GUI/CLI wallpaper manager) and disable Stylix swaybg service when active
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
+    nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
     swayPrimaryMonitor = null;  # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
 
     # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)

@@ -167,6 +167,7 @@
     xboxControllerEnable = true;
     appImageEnable = true;
     aichatEnable = true;  # Enable aichat CLI tool with OpenRouter support
+    nextcloudEnable = true;
     nixvimEnabled = true;  # Enable NixVim configuration (Cursor IDE-like experience)
     
     systemStable = false;
