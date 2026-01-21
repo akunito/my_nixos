@@ -241,7 +241,7 @@ let
   # DESK startup apps launcher script - manual trigger with confirmation dialog
   desk-startup-apps-launcher = pkgs.writeShellApplication {
     name = "desk-startup-apps-launcher";
-    runtimeInputs = with pkgs; [
+      runtimeInputs = with pkgs; [
       sway
       swaysome
       jq
@@ -251,6 +251,7 @@ let
       dbus
       kitty
       bash
+      zsh
     ];
     text = ''
       #!/bin/bash
@@ -349,7 +350,7 @@ let
 
       # Show Rofi menu using dmenu mode (more reliable than script mode with temp files)
       echo "Showing menu..."
-      SELECTION=$(printf "Startup Apps\nNixOS: Update System\nNixOS: Sync System\nNixOS: Sync User\nFlatpak: Update packages\nRun: startup_services.sh\nRun: stop_external_drives.sh\nProject: LiftCraft Menu\n" | \
+      SELECTION=$(printf "Startup Apps\nNixOS: Update System\nNixOS: Sync System\nNixOS: Sync User\nFlatpak: Update packages\nRun: startup_services.sh\nRun: stop_external_drives.sh\nControl Panel Menu\n" | \
         rofi -dmenu \
         -p "Menu" \
         -theme-str 'window {width: 400px;}' \
@@ -392,9 +393,10 @@ let
           # Run in terminal to show progress
           ${pkgs.kitty}/bin/kitty --title "stop_external_drives.sh" -e ${pkgs.bash}/bin/bash -lc "if ''$HOME/.dotfiles/stop_external_drives.sh; then echo \"stop_external_drives.sh completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"stop_external_drives.sh failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
           ;;
-        "Project: LiftCraft Menu")
+        "Control Panel Menu")
           # Run in terminal to show progress
-          ${pkgs.kitty}/bin/kitty --title "LiftCraft Menu" -e ${pkgs.bash}/bin/bash -lc "if cd /home/akunito/Nextcloud/git_repos/myProjects/leftyworkout/ && ./menu.sh backend; then echo \"LiftCraft menu completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"LiftCraft menu failed. Check the output above for details.\"; exec ${pkgs.bash}/bin/bash; fi" &
+          # Change to script directory first to ensure dependencies are found, use zsh for proper environment
+          ${pkgs.kitty}/bin/kitty --title "Control Panel Menu" -e ${pkgs.zsh}/bin/zsh -lc "cd ''$HOME/Nextcloud/git_repos/mySCRIPTS/ControlPanel && if ./menu.sh; then echo \"Control Panel menu completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"Control Panel menu failed. Check the output above for details.\"; exec ${pkgs.zsh}/bin/zsh; fi" &
           ;;
         *)
           echo "Unknown selection: $SELECTION"

@@ -22,6 +22,7 @@ let
     gl = "git log --graph";
     startup = "${config.home.homeDirectory}/.nix-profile/bin/desk-startup-apps-launcher";
     ssh-smart = "ssh-smart";
+    controlpanel = "${config.home.homeDirectory}/Nextcloud/git_repos/mySCRIPTS/ControlPanel/menu.sh";
   };
 in
 {
