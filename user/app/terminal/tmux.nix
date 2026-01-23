@@ -258,5 +258,22 @@ in
       set -ga terminal-overrides ",xterm-256color:Tc"
     '';
   };
+
+  # Systemd user service to start tmux server at login
+  # This ensures the server is running before terminals open, allowing continuum to restore sessions
+  systemd.user.services.tmux-server = {
+    Unit = {
+      Description = "Tmux server";
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "forking";
+      ExecStart = "${pkgs.tmux}/bin/tmux start-server";
+      Restart = "on-failure";
+    };
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
+  };
 }
 

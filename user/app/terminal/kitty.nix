@@ -2,16 +2,18 @@
 
 let
   # Wrapper script to auto-start tmux with kitty session
-  # Falls back to zsh if tmux fails to prevent terminal crash
+  # Robust fail-safe strategy: attach → new-session → plain shell
+  # This ensures the user always gets a working terminal, even if systemd service fails
   kitty-tmux-wrapper = pkgs.writeShellScriptBin "kitty-tmux-wrapper" ''
-    # Try to attach to existing kitty session
+    # Primary: Try to attach to existing kitty session (restored by continuum or already running)
     if ${pkgs.tmux}/bin/tmux has-session -t kitty 2>/dev/null; then
       exec ${pkgs.tmux}/bin/tmux attach -t kitty
-    # Try to create new kitty session
+    # Fallback 1: If attach fails (server down or no session), create new kitty session
     elif ${pkgs.tmux}/bin/tmux new-session -d -s kitty 2>/dev/null; then
       exec ${pkgs.tmux}/bin/tmux attach -t kitty
+    # Fallback 2: If tmux fails entirely, fall back to plain shell
+    # This prevents terminal denial-of-service if systemd service fails
     else
-      # Fall back to regular shell if tmux fails
       exec ${pkgs.zsh}/bin/zsh -l
     fi
   '';
