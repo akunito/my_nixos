@@ -238,7 +238,7 @@ in
           "${hyper}+L" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram";
           "${hyper}+E" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
           "${hyper}+U" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
-          "${hyper}+A" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
+          "${hyper}+A" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh .blueman-manager-wrapped blueman-manager";
           "${hyper}+D" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
           "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh vivaldi-stable vivaldi";
           "${hyper}+G" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh chromium-browser chromium";
@@ -287,7 +287,7 @@ in
           # Note: "${hyper}+s" is used for pavucontrol (see application bindings above)
           # Note: "${hyper}+w" is used for workspace next_on_output (see Workspace navigation above)
           # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (dolphin file explorer)
-          # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (pavucontrol)
+          # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (blueman-manager)
           # Note: Removed "${hyper}+u" to avoid conflict with "${hyper}+U" (dbeaver)
 
           # Window movement (conditional - floating vs tiled)
@@ -461,6 +461,9 @@ in
 
           # Pavucontrol: floating + sticky (correct app_id)
           { criteria = { app_id = "org.pulseaudio.pavucontrol"; }; command = "floating enable, sticky enable"; }
+
+          # Blueman-manager: floating + sticky (Bluetooth Manager - NixOS wrapped)
+          { criteria = { app_id = ".blueman-manager-wrapped"; }; command = "floating enable, sticky enable"; }
 
           # KCalc: floating + sticky (KDE calculator)
           { criteria = { app_id = "org.kde.kcalc"; }; command = "floating enable, sticky enable"; }
@@ -659,7 +662,7 @@ in
       for_window [app_id="org.kde.kcalc"] floating enable, sticky enable
       for_window [app_id="kcalc"] floating enable, sticky enable
       for_window [app_id="nm-connection-editor"] floating enable
-      for_window [app_id="blueman-manager"] floating enable
+      for_window [app_id=".blueman-manager-wrapped"] floating enable, sticky enable
       for_window [app_id="swappy"] floating enable, sticky enable
       for_window [app_id="swaync"] floating enable
       # LACT (Linux AMDGPU Controller): ensure floating+sticky (Wayland app_id + XWayland class)

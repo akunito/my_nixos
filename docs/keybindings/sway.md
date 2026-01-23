@@ -209,7 +209,7 @@ All application shortcuts use the `app-toggle.sh` script which toggles applicati
 
 ### System Tools
 
-- **`${hyper}+A`** → Pavucontrol (`pavucontrol`)
+- **`${hyper}+A`** → Bluetooth Manager (`blueman-manager`)
 - **`${hyper}+N`** → nwg-look (`nwg-look`)
 - **`${hyper}+P`** → Bitwarden (`Bitwarden`)
 - **`${hyper}+M`** → Mission Center (`mission-center`)
@@ -252,7 +252,7 @@ The following keybindings were intentionally removed to avoid conflicts:
 - **`${hyper}+s`** → Removed (conflicts with layout bindings)
 - **`${hyper}+w`** → Removed (conflicts with `${hyper}+W` for workspace next)
 - **`${hyper}+e`** → Removed (conflicts with `${hyper}+E` for Dolphin file explorer)
-- **`${hyper}+a`** → Removed (conflicts with `${hyper}+A` for Pavucontrol)
+- **`${hyper}+a`** → Removed (conflicts with `${hyper}+A` for Bluetooth Manager)
 - **`${hyper}+u`** → Removed (conflicts with `${hyper}+U` for DBeaver)
 
 ## Related Documentation
