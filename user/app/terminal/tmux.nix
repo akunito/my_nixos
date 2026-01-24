@@ -52,6 +52,140 @@ let
     # Wrapper to run ssh-smart in a new tmux pane for interactive selection
     ${pkgs.tmux}/bin/tmux new-window -n "ssh-smart" "${ssh-smart}/bin/ssh-smart"
   '';
+
+  # Prevent duplicate resurrect saves in the same second (avoids broken 'last' symlink)
+  tmux-resurrect-save-wrapper = pkgs.writeShellScriptBin "tmux-resurrect-save-wrapper" ''
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    TMUX_SAVE="${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/scripts/save.sh"
+    TMUX_BIN="${pkgs.tmux}/bin/tmux"
+    DATE="${pkgs.coreutils}/bin/date"
+    CAT="${pkgs.coreutils}/bin/cat"
+    ECHO="${pkgs.coreutils}/bin/echo"
+    GREP="${pkgs.gnugrep}/bin/grep"
+    FLOCK="${pkgs.util-linux}/bin/flock"
+
+    LOCK_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
+    LOCK_FILE="$LOCK_DIR/tmux-resurrect-save.lock"
+    STATE_FILE="$LOCK_DIR/tmux-resurrect-save.last"
+
+    exec 9>"$LOCK_FILE"
+    if ! $FLOCK -n 9; then
+      exit 0
+    fi
+
+    # Avoid overwriting 'last' with an empty save
+    sessions="$($TMUX_BIN list-sessions -F '#S' 2>/dev/null || true)"
+    if [ -z "$sessions" ]; then
+      exit 0
+    fi
+    non_bootstrap="$(printf '%s\n' "$sessions" | $GREP -v '^__bootstrap$' || true)"
+    if [ -z "$non_bootstrap" ]; then
+      exit 0
+    fi
+
+    now="$($DATE +%s)"
+    if [ -f "$STATE_FILE" ]; then
+      last="$($CAT "$STATE_FILE" 2>/dev/null || true)"
+      if [ -n "$last" ] && [ "$now" -le "$last" ]; then
+        exit 0
+      fi
+    fi
+
+    $ECHO "$now" > "$STATE_FILE"
+    exec "$TMUX_SAVE" "$@"
+  '';
+
+  # Restore once per server start, triggered on first client attach
+  tmux-resurrect-restore-wrapper = pkgs.writeShellScriptBin "tmux-resurrect-restore-wrapper" ''
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    TMUX_BIN="${pkgs.tmux}/bin/tmux"
+    DATE="${pkgs.coreutils}/bin/date"
+    MKDIR="${pkgs.coreutils}/bin/mkdir"
+    TAIL="${pkgs.coreutils}/bin/tail"
+
+    LOG_DIR="''${XDG_CACHE_HOME:-$HOME/.cache}/tmux"
+    LOG_FILE="$LOG_DIR/resurrect-restore.log"
+    $MKDIR -p "$LOG_DIR" >/dev/null 2>&1 || true
+
+    log() {
+      printf '%s %s\n' "$($DATE +"%F %T")" "$*" >>"$LOG_FILE"
+    }
+
+    RESTORED="$($TMUX_BIN show-options -gqv @resurrect-restored 2>/dev/null || true)"
+    if [ "$RESTORED" = "1" ]; then
+      log "skip: already restored"
+      exit 0
+    fi
+
+    BOOTSTRAP="__bootstrap"
+    sessions="$($TMUX_BIN list-sessions -F '#S' 2>/dev/null || true)"
+    if [ -n "$sessions" ] && [ "$sessions" != "$BOOTSTRAP" ]; then
+      log "skip: sessions already present [$sessions]"
+      $TMUX_BIN set -g @resurrect-restored 1
+      exit 0
+    fi
+
+    RESTORE_SCRIPT="$($TMUX_BIN show-options -gqv @resurrect-restore-script-path 2>/dev/null || true)"
+    if [ -z "$RESTORE_SCRIPT" ]; then
+      log "restore script not set"
+      exit 0
+    fi
+
+    log "running restore script $RESTORE_SCRIPT"
+    if "$RESTORE_SCRIPT" >>"$LOG_FILE" 2>&1; then
+      log "restore script ok"
+    else
+      log "restore script failed exit=$?"
+    fi
+
+    $TMUX_BIN set -g @resurrect-restored 1
+
+    if $TMUX_BIN has-session -t kitty 2>/dev/null; then
+      log "switch to kitty"
+      $TMUX_BIN switch-client -t kitty || true
+    else
+      sessions="$($TMUX_BIN list-sessions -F '#S' 2>/dev/null || true)"
+      if [ -n "$sessions" ]; then
+        target="$(printf '%s\n' "$sessions" | $TAIL -n 1)"
+        log "switch to last session=$target"
+        $TMUX_BIN switch-client -t "$target" || true
+      fi
+    fi
+
+    if $TMUX_BIN has-session -t "$BOOTSTRAP" 2>/dev/null; then
+      log "kill bootstrap session"
+      $TMUX_BIN kill-session -t "$BOOTSTRAP" || true
+    fi
+  '';
+
+  # Fix broken resurrect 'last' symlink before tmux server starts
+  tmux-resurrect-fix-last = pkgs.writeShellScriptBin "tmux-resurrect-fix-last" ''
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    LS="${pkgs.coreutils}/bin/ls"
+    LN="${pkgs.coreutils}/bin/ln"
+    HEAD="${pkgs.coreutils}/bin/head"
+    BASENAME="${pkgs.coreutils}/bin/basename"
+
+    RES_DIR="$HOME/.tmux/resurrect"
+    LAST="$RES_DIR/last"
+
+    if [ ! -d "$RES_DIR" ]; then
+      exit 0
+    fi
+
+    if [ ! -e "$LAST" ]; then
+      latest="$($LS -t "$RES_DIR"/tmux_resurrect_*.txt 2>/dev/null | $HEAD -n 1 || true)"
+      if [ -n "$latest" ]; then
+        $LN -sfn "$($BASENAME "$latest")" "$LAST"
+      fi
+    fi
+  '';
 in
 {
   home.packages = [ ssh-smart ssh-smart-tmux ];
@@ -238,14 +372,27 @@ in
       # SESSION PERSISTENCE (tmux-continuum)
       # ============================================================================
       
+      # Keep tmux server alive even when no sessions exist yet.
+      # This prevents systemd start-server from exiting immediately at login.
+      set -g exit-empty off
+
       # Save session every 5 minutes (minimal overhead, better data protection)
       set -g @continuum-save-interval '5'
       
       # Automatically restore sessions when tmux server starts
       set -g @continuum-restore 'on'
+
+      # Allow auto-restore even if the first client attaches later
+      set -g @continuum-restore-max-delay '60'
       
       # Automatically save sessions periodically
       set -g @continuum-save 'on'
+
+      # Use a save wrapper to avoid duplicate saves in the same second
+      set -g @resurrect-save-script-path "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper"
+
+      # Restore on first client attach (server may start without a client)
+      set-hook -g client-attached "run-shell '${tmux-resurrect-restore-wrapper}/bin/tmux-resurrect-restore-wrapper'"
       
       # Save on session close/detach to prevent data loss
       # Hook to save when session is closed (all windows in session are closed)
@@ -264,15 +411,20 @@ in
   systemd.user.services.tmux-server = {
     Unit = {
       Description = "Tmux server";
-      After = [ "graphical-session.target" ];
+      After = [ "sway-session.target" "graphical-session.target" ];
     };
     Service = {
       Type = "forking";
-      ExecStart = "${pkgs.tmux}/bin/tmux start-server";
+      Environment = [
+        "TMUX_TMPDIR=%t"
+        "PATH=${lib.makeBinPath [ pkgs.tmux pkgs.coreutils pkgs.procps pkgs.gnugrep pkgs.gnused pkgs.gawk pkgs.util-linux pkgs.bash pkgs.nettools pkgs.gnutar ]}"
+      ];
+      ExecStartPre = [ "${tmux-resurrect-fix-last}/bin/tmux-resurrect-fix-last" ];
+      ExecStart = "${pkgs.tmux}/bin/tmux -f %h/.config/tmux/tmux.conf start-server";
       Restart = "on-failure";
     };
     Install = {
-      WantedBy = [ "graphical-session.target" ];
+      WantedBy = [ "sway-session.target" "graphical-session.target" ];
     };
   };
 }
