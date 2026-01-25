@@ -370,6 +370,9 @@ in
       # CUPS client packages for printer access in Sway
       pkgs.cups-filters
       pkgs.system-config-printer
+      pkgs-unstable.ollama-rocm
+      pkgs-unstable.claude-code
+      pkgs-unstable.qwen-code
     ];
     
     zshinitContent = ''
