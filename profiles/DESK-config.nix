@@ -373,6 +373,7 @@ in
       pkgs-unstable.ollama-rocm
       pkgs-unstable.claude-code
       pkgs-unstable.qwen-code
+      pkgs-unstable.antigravity
     ];
     
     zshinitContent = ''
