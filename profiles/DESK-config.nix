@@ -240,6 +240,8 @@ in
     ];
     
     starCitizenModules = true;
+    starcitizenEnable = true;
+    protongamesEnable = true;
     sambaEnable = true;
     sunshineEnable = true;
     wireguardEnable = true;

@@ -39,5 +39,8 @@
       url = "github:StevenBlack/hosts";
       flake = false;
     };
+
+    nix-citizen.url = "github:LovingMelody/nix-citizen";
+    nix-citizen.inputs.nixpkgs.follows = "nixpkgs";
   };
 }

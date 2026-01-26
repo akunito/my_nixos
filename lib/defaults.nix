@@ -172,6 +172,8 @@
     
     # Feature flags defaults
     starCitizenModules = false;
+    starcitizenEnable = false;
+    protongamesEnable = false;
     vivaldiPatch = false;
     sambaEnable = false;
     sunshineEnable = false;
