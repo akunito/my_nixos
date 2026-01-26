@@ -110,7 +110,7 @@ if systemSettings.stylixEnable == true then
         ".config/qt6ct/qt6ct.conf".text = ''
           [Appearance]
           color_scheme_path=${config.home.homeDirectory}/.config/qt6ct/colors/oomox-current.conf
-          custom_palette=true
+          custom_palette=false
           standard_dialogs=default
           style=adwaita-dark
         '';
