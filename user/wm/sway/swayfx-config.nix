@@ -295,7 +295,7 @@ in
           "${hyper}+m" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
           "${hyper}+B" =
-            "exec env ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
+            "exec env ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles Bottles";
           # SwayBG+ (wallpaper UI) - moved from hyper+s
           # "${hyper}+s" = "exec swaybgplus-gui";
           "${hyper}+s" =
