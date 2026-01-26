@@ -213,18 +213,64 @@ if systemSettings.stylixEnable == true then
       gtk3.extraConfig = {
         gtk-theme-name = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
         gtk-application-prefer-dark-theme = 1;
+
+        # CRITICAL: Force Portal for file chooser
+        gtk-use-portal = 1;
+
+        # Restore legacy settings requested by user
+        gtk-button-images = 1;
+        gtk-cursor-blink = 1;
+        gtk-cursor-blink-time = 1000;
+        gtk-cursor-theme-name = "breeze_cursors";
+        gtk-cursor-theme-size = 24;
+        gtk-decoration-layout = "icon:minimize,maximize,close";
+        gtk-enable-animations = 1;
+        gtk-font-name = "Noto Sans, 10";
+        gtk-icon-theme-name = "breeze-dark";
+        gtk-menu-images = 1;
+        gtk-primary-button-warps-slider = 1;
+        gtk-sound-theme-name = "ocean";
+        gtk-toolbar-style = 3;
       };
       gtk4.extraConfig = {
         gtk-theme-name = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
         # REMOVED: gtk-application-prefer-dark-theme = 1;  # Deprecated for libadwaita - use dconf.settings instead
+
+        # CRITICAL: Force Portal for file chooser
+        gtk-use-portal = 1;
+
+        # Restore legacy settings requested by user
+        gtk-cursor-blink = 1;
+        gtk-cursor-blink-time = 1000;
+        gtk-cursor-theme-name = "breeze_cursors";
+        gtk-cursor-theme-size = 24;
+        gtk-decoration-layout = "icon:minimize,maximize,close";
+        gtk-enable-animations = 1;
+        gtk-font-name = "Noto Sans, 10";
+        gtk-icon-theme-name = "breeze-dark";
+        gtk-primary-button-warps-slider = 1;
+        gtk-sound-theme-name = "ocean";
       };
     };
 
     # CRITICAL: Force unset global environment variables to prevent leakage into Plasma 6
     home.sessionVariables = {
       QT_QPA_PLATFORMTHEME = lib.mkForce "qt6ct";
-      GTK_THEME = lib.mkForce "";
-      GTK_APPLICATION_PREFER_DARK_THEME = lib.mkForce "";
+
+      # Only force empty for Plasma - Sway needs dark GTK theme
+      GTK_THEME =
+        if (userSettings.wm == "plasma6" && !(systemSettings.enableSwayForDESK or false)) then
+          lib.mkForce ""
+        else
+          lib.mkForce "Adwaita-dark";
+
+      GTK_APPLICATION_PREFER_DARK_THEME =
+        if (userSettings.wm == "plasma6" && !(systemSettings.enableSwayForDESK or false)) then
+          lib.mkForce ""
+        else
+          lib.mkForce "1";
+      # Force Portal usage for GTK apps via environment variable (reinforces generated settings.ini)
+      GTK_USE_PORTAL = lib.mkForce "1";
       # Only force empty for Plasma - Sway needs dark Qt style for portal
       QT_STYLE_OVERRIDE =
         if (userSettings.wm == "plasma6" && !(systemSettings.enableSwayForDESK or false)) then
