@@ -207,9 +207,23 @@ if systemSettings.stylixEnable == true then
     # In Plasma 6, this means GTK apps will use Adwaita-Dark (Stylix theme) instead of Breeze
     # This is acceptable as it fixes the light mode issue
     # Only enable GTK module when NOT in Plasma 6 to avoid unnecessary config generation
-    gtk = lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == false) {
+    gtk = lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) {
       enable = true;
       gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
+      gtk2.extraConfig = ''
+        gtk-enable-animations=1
+        gtk-primary-button-warps-slider=1
+        gtk-toolbar-style=3
+        gtk-menu-images=1
+        gtk-button-images=1
+        gtk-cursor-blink-time=1000
+        gtk-cursor-blink=1
+        gtk-cursor-theme-size=24
+        gtk-cursor-theme-name="breeze_cursors"
+        gtk-sound-theme-name="ocean"
+        gtk-icon-theme-name="breeze-dark"
+        gtk-font-name="Noto Sans 10"
+      '';
       gtk3.extraConfig = {
         gtk-theme-name = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
         gtk-application-prefer-dark-theme = 1;

@@ -51,8 +51,8 @@
       fsType = "ntfs3";
     };
 
-  fileSystems."/mnt/NFS_media" =
-    { device = "192.168.20.200:/mnt/hddpool/media";
+  fileSystems."/mnt/NFS_emulators" =
+    { device = "192.168.20.200:/mnt/ssdpool/emulators";
       fsType = "nfs4";
     };
 
@@ -61,8 +61,8 @@
       fsType = "nfs4";
     };
 
-  fileSystems."/mnt/NFS_emulators" =
-    { device = "192.168.20.200:/mnt/ssdpool/emulators";
+  fileSystems."/mnt/NFS_media" =
+    { device = "192.168.20.200:/mnt/hddpool/media";
       fsType = "nfs4";
     };
 
