@@ -320,6 +320,7 @@
     starcitizenEnable = false;
     GOGlauncherEnable = false;
     dolphinEmulatorPrimehackEnable = false;
+    steamPackEnable = false;
 
     # Git defaults
     gitUser = "akunito";

@@ -1,16 +1,16 @@
-{ pkgs, lib, ... }:
+{
+  pkgs,
+  userSettings,
+  lib,
+  ...
+}:
 
 {
-  # hardware.graphics.enable32Bit = true; # already in opengl.nix
-  environment.systemPackages = [ 
-    pkgs.steam 
-    pkgs.steam-run 
-    pkgs.wine 
-    pkgs.wine-wayland 
-    pkgs.protontricks 
-  ];
+  # Steam configuration
+  # Controlled by user variable 'steamPackEnable'
+  # Maintains system-level integration (firewall, udev, hardware)
 
-  programs.steam = {
+  programs.steam = lib.mkIf (userSettings.steamPackEnable == true) {
     enable = true;
     protontricks.enable = true;
     remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
@@ -18,12 +18,13 @@
     localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
   };
 
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "steam"
-    "steam-original"
-    "steam-unwrapped"
-    "steam-run"
-  ];
+  nixpkgs.config.allowUnfreePredicate =
+    pkg:
+    builtins.elem (lib.getName pkg) [
+      "steam"
+      "steam-original"
+      "steam-unwrapped"
+      "steam-run"
+    ];
 
 }
-

@@ -375,6 +375,7 @@ in
     starcitizenEnable = true;
     GOGlauncherEnable = true;
     dolphinEmulatorPrimehackEnable = true;
+    steamPackEnable = true;
 
     fileManager = "dolphin"; # Explicitly set Dolphin as file manager (overrides default "ranger")
 
