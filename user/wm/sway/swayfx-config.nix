@@ -1,4 +1,11 @@
-{ config, pkgs, lib, userSettings, systemSettings, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  userSettings,
+  systemSettings,
+  ...
+}:
 
 let
   # Hyper key combination (Super+Ctrl+Alt)
@@ -28,7 +35,9 @@ let
       #!/bin/bash
       set -euo pipefail
 
-      PRIMARY="${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""}"
+      PRIMARY="${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else ""
+      }"
       if [ -z "$PRIMARY" ]; then
         exit 0
       fi
@@ -63,16 +72,21 @@ let
   # Parse keyboard layouts and variants from systemSettings.swayKeyboardLayouts
   # Input format: [ "us(altgr-intl)" "es" "pl" ]
   # Output: { layouts = "us,es,pl"; variants = "altgr-intl,,"; }
-  parseLayout = entry:
+  parseLayout =
+    entry:
     let
       parts = lib.splitString "(" entry;
     in
-    if lib.length parts > 1
-    then {
-      layout = lib.head parts;
-      variant = lib.removeSuffix ")" (lib.elemAt parts 1);
-    }
-    else { layout = entry; variant = ""; };
+    if lib.length parts > 1 then
+      {
+        layout = lib.head parts;
+        variant = lib.removeSuffix ")" (lib.elemAt parts 1);
+      }
+    else
+      {
+        layout = entry;
+        variant = "";
+      };
 
   parsedLayouts = map parseLayout systemSettings.swayKeyboardLayouts;
   xkbLayouts = lib.concatStringsSep "," (map (x: x.layout) parsedLayouts);
@@ -200,7 +214,8 @@ in
           "${hyper}+Return" = "exec ${keyboard-layout-switch}/bin/keyboard-layout-switch";
 
           # Manual startup apps launcher
-          "${hyper}+Shift+Return" = "exec ${config.home.homeDirectory}/.nix-profile/bin/desk-startup-apps-launcher";
+          "${hyper}+Shift+Return" =
+            "exec ${config.home.homeDirectory}/.nix-profile/bin/desk-startup-apps-launcher";
 
           # Rofi Universal Launcher
           # Use rofi's configured combi-modi (includes apps/run/window/filebrowser/calc/emoji/power)
@@ -209,7 +224,8 @@ in
           # Use "${hyper}+space" for rofi launcher
 
           # GNOME Calculator (replaces rofi calculator)
-          "${hyper}+x" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.gnome.Calculator gnome-calculator";
+          "${hyper}+x" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.gnome.Calculator gnome-calculator";
 
           # Rofi Emoji Picker
           "${hyper}+period" = "exec rofi -show emoji";
@@ -222,13 +238,15 @@ in
           # Grid layout: 3 columns, large icons (48px), vertical orientation
           # Rofi inherits Stylix colors automatically via existing rofi.nix configuration
           # Default: grouped app -> window picker (less noisy when apps have multiple windows)
-          "${hyper}+Tab" = "exec ${config.home.homeDirectory}/.config/sway/scripts/window-overview-grouped.sh";
+          "${hyper}+Tab" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/window-overview-grouped.sh";
 
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
 
           # Lock screen (Meta/Super + l)
-          "Mod4+l" = "exec ${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
+          "Mod4+l" =
+            "exec ${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
 
           # Media keys (volume)
           # Uses swayosd-client to both adjust volume and show an on-screen display.
@@ -236,7 +254,8 @@ in
           "XF86AudioRaiseVolume" = "exec ${pkgs.swayosd}/bin/swayosd-client --output-volume raise";
           "XF86AudioMute" = "exec ${pkgs.swayosd}/bin/swayosd-client --output-volume mute-toggle";
           # Keyd virtual keyboard emits a quick mute down/up; bind the combo to avoid clobbering real mute.
-          "${hyper}+XF86AudioMute" = "exec ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
+          "${hyper}+XF86AudioMute" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
 
           # Screenshot workflow
           "${hyper}+Shift+x" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh full";
@@ -248,32 +267,49 @@ in
           # Note: Using different keys to avoid conflicts with window management bindings
           # Format: app-toggle.sh <app_id|class> <launch_command...>
           "${hyper}+T" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh kitty kitty";
-          "${hyper}+R" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Alacritty alacritty";
-          "${hyper}+L" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram";
-          "${hyper}+E" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
-          "${hyper}+U" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
-          "${hyper}+A" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh .blueman-manager-wrapped blueman-manager";
-          "${hyper}+D" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
-          "${hyper}+V" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh vivaldi-stable vivaldi";
-          "${hyper}+G" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh chromium-browser chromium";
-          "${hyper}+Y" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh spotify spotify --enable-features=UseOzonePlatform --ozone-platform=wayland";
-          "${hyper}+N" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh nwg-look nwg-look";
-          "${hyper}+P" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Bitwarden bitwarden";
-          "${hyper}+C" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh cursor cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch";
+          "${hyper}+R" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Alacritty alacritty";
+          "${hyper}+L" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram";
+          "${hyper}+E" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
+          "${hyper}+U" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
+          "${hyper}+A" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh .blueman-manager-wrapped blueman-manager";
+          "${hyper}+D" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
+          "${hyper}+V" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh vivaldi-stable vivaldi";
+          "${hyper}+G" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh chromium-browser chromium";
+          "${hyper}+Y" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh spotify spotify --enable-features=UseOzonePlatform --ozone-platform=wayland";
+          "${hyper}+N" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh nwg-look nwg-look";
+          "${hyper}+P" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Bitwarden bitwarden";
+          "${hyper}+C" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh cursor cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch";
           # Mission Center (app_id is io.missioncenter.MissionCenter, binary is missioncenter)
-          "${hyper}+m" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
-          "${hyper}+B" = "exec env BOTTLES_IGNORE_SANDBOX=1 bottles";
+          "${hyper}+m" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
+          "${hyper}+B" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles env BOTTLES_IGNORE_SANDBOX=1 bottles";
           # SwayBG+ (wallpaper UI) - moved from hyper+s
           # "${hyper}+s" = "exec swaybgplus-gui";
-          "${hyper}+s" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
+          "${hyper}+s" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
 
           # Workspace navigation with auto-creation and wrapping (Option B)
           # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
           # Hyper+Shift+Q/W: Move window to workspace in current group, wrap at boundaries
           "${hyper}+q" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-nav-prev.sh";
           "${hyper}+w" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-nav-next.sh";
-          "${hyper}+Shift+q" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-prev.sh";
-          "${hyper}+Shift+w" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-next.sh";
+          "${hyper}+Shift+q" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-prev.sh";
+          "${hyper}+Shift+w" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-next.sh";
 
           # Direct workspace bindings (using swaysome)
           #
@@ -333,7 +369,8 @@ in
           "${hyper}+Shift+minus" = "move scratchpad";
 
           # Clipboard history
-          "${hyper}+Shift+v" = "exec sh -c '${pkgs.cliphist}/bin/cliphist list | ${pkgs.rofi}/bin/rofi -dmenu | ${pkgs.cliphist}/bin/cliphist decode | ${pkgs.wl-clipboard}/bin/wl-copy'";
+          "${hyper}+Shift+v" =
+            "exec sh -c '${pkgs.cliphist}/bin/cliphist list | ${pkgs.rofi}/bin/rofi -dmenu | ${pkgs.cliphist}/bin/cliphist decode | ${pkgs.wl-clipboard}/bin/wl-copy'";
 
           # Power menu
           "${hyper}+Shift+BackSpace" = "exec rofi -show power -show-icons";
@@ -345,7 +382,8 @@ in
           "${hyper}+Shift+e" = "move scratchpad";
 
           # Exit Sway
-          "${hyper}+Shift+End" = "exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway? This will end your Wayland session.' -b 'Yes, exit Sway' 'swaymsg exit'";
+          "${hyper}+Shift+End" =
+            "exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway? This will end your Wayland session.' -b 'Yes, exit Sway' 'swaymsg exit'";
         }
         # Overrides (must win without breaking the rest of the keymap)
         {
@@ -378,165 +416,464 @@ in
       ];
 
       # Startup commands
-      startup =
-        [
-          # CRITICAL: Import environment variables EARLY, before any DBus-activated services start
-          # xdg-desktop-portal is DBus-activated when apps request screen sharing
-          # If these variables aren't in systemd BEFORE activation, portal fails and no picker appears
-          {
-            command = "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK";
-            always = true;
-          }
-          {
-            command = "${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK";
-            always = true;
-          }
-          # Startup logging for workspace assignment debugging
-          {
-            command = "/home/akunito/.dotfiles/user/wm/sway/scripts/workspace-startup-logger.sh";
-            always = false; # Only run on initial startup, not on config reload
-          }
-          # DESK-only: focus the primary output and warp cursor onto it early
-          {
-            command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
-            always = false; # Only run on initial startup, not on config reload
-          }
-          # Rebuild KDE menu database for Dolphin (must run after XDG_MENU_PREFIX is set via home.sessionVariables)
-          {
-            command = "${rebuild-ksycoca}/bin/rebuild-ksycoca";
-            always = false; # Run only on initial login, not on reload
-          }
-          # NOTE: Theme variables are now set via extraSessionCommands (cleaner, native Home Manager option)
-          # This script syncs them with D-Bus activation environment to ensure GUI applications launched via D-Bus inherit the variables
-          {
-            command = "${set-sway-theme-vars}/bin/set-sway-theme-vars";
-            always = true;
-          }
-          # Make core Wayland session vars available to systemd --user (needed for DBus-activated services like xdg-desktop-portal)
-          {
-            command = "${set-sway-systemd-session-vars}/bin/set-sway-systemd-session-vars";
-            always = true;
-          }
-          # Apply PAM-provided credentials to KWallet in Sway sessions (non-Plasma).
-          # Must run AFTER set-sway-systemd-session-vars so systemd --user has WAYLAND_DISPLAY/SWAYSOCK.
-          {
-            command = "${sway-start-plasma-kwallet-pam}/bin/sway-start-plasma-kwallet-pam";
-            always = false; # Only run on initial startup, not on config reload
-          }
-          # CRITICAL: Restore qt5ct files before daemons start to ensure correct Qt theming
-          # Plasma 6 might modify qt5ct files even though it shouldn't use them
-          {
-            command = "${restore-qt5ct-files}/bin/restore-qt5ct-files";
-            always = false; # Only run on initial startup, not on reload
-          }
-          # Portal env must exist before portals restart during fast relog; it is only consumed by portal units via drop-in.
-          {
-            command = "${write-sway-portal-env}/bin/write-sway-portal-env";
-            always = true;
-          }
-          # Start the Sway session target; services are ordered and restarted by systemd
-          {
-            command = "${sway-session-start}/bin/sway-session-start";
-            always = true;
-          }
-        ]
-        ++ lib.optionals (systemSettings.enableSwayForDESK == true) [
-          # DESK-only: ensure monitor configurations are reapplied BEFORE workspace assignment on reload
-          # This prevents workspaces from being assigned to monitors with wrong/default configurations
-          {
-            command = "/run/current-system/sw/bin/systemctl --user restart kanshi.service";
-            always = true; # Run on every config reload to fix monitor settings first
-          }
-          # Note: Workspace-to-output assignments are now handled declaratively in extraConfig
-          # swaysome init 1 is handled by kanshi profiles
-        ]
-        ++ [
-          # DESK-only startup apps (runs after daemons are ready)
-          {
-            command = "${desk-startup-apps-init}/bin/desk-startup-apps-init";
-            always = false; # Only run on initial startup, not on config reload
-          }
-        ];
+      startup = [
+        # CRITICAL: Import environment variables EARLY, before any DBus-activated services start
+        # xdg-desktop-portal is DBus-activated when apps request screen sharing
+        # If these variables aren't in systemd BEFORE activation, portal fails and no picker appears
+        {
+          command = "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK";
+          always = true;
+        }
+        {
+          command = "${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK";
+          always = true;
+        }
+        # Startup logging for workspace assignment debugging
+        {
+          command = "/home/akunito/.dotfiles/user/wm/sway/scripts/workspace-startup-logger.sh";
+          always = false; # Only run on initial startup, not on config reload
+        }
+        # DESK-only: focus the primary output and warp cursor onto it early
+        {
+          command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
+          always = false; # Only run on initial startup, not on config reload
+        }
+        # Rebuild KDE menu database for Dolphin (must run after XDG_MENU_PREFIX is set via home.sessionVariables)
+        {
+          command = "${rebuild-ksycoca}/bin/rebuild-ksycoca";
+          always = false; # Run only on initial login, not on reload
+        }
+        # NOTE: Theme variables are now set via extraSessionCommands (cleaner, native Home Manager option)
+        # This script syncs them with D-Bus activation environment to ensure GUI applications launched via D-Bus inherit the variables
+        {
+          command = "${set-sway-theme-vars}/bin/set-sway-theme-vars";
+          always = true;
+        }
+        # Make core Wayland session vars available to systemd --user (needed for DBus-activated services like xdg-desktop-portal)
+        {
+          command = "${set-sway-systemd-session-vars}/bin/set-sway-systemd-session-vars";
+          always = true;
+        }
+        # Apply PAM-provided credentials to KWallet in Sway sessions (non-Plasma).
+        # Must run AFTER set-sway-systemd-session-vars so systemd --user has WAYLAND_DISPLAY/SWAYSOCK.
+        {
+          command = "${sway-start-plasma-kwallet-pam}/bin/sway-start-plasma-kwallet-pam";
+          always = false; # Only run on initial startup, not on config reload
+        }
+        # CRITICAL: Restore qt5ct files before daemons start to ensure correct Qt theming
+        # Plasma 6 might modify qt5ct files even though it shouldn't use them
+        {
+          command = "${restore-qt5ct-files}/bin/restore-qt5ct-files";
+          always = false; # Only run on initial startup, not on reload
+        }
+        # Portal env must exist before portals restart during fast relog; it is only consumed by portal units via drop-in.
+        {
+          command = "${write-sway-portal-env}/bin/write-sway-portal-env";
+          always = true;
+        }
+        # Start the Sway session target; services are ordered and restarted by systemd
+        {
+          command = "${sway-session-start}/bin/sway-session-start";
+          always = true;
+        }
+      ]
+      ++ lib.optionals (systemSettings.enableSwayForDESK == true) [
+        # DESK-only: ensure monitor configurations are reapplied BEFORE workspace assignment on reload
+        # This prevents workspaces from being assigned to monitors with wrong/default configurations
+        {
+          command = "/run/current-system/sw/bin/systemctl --user restart kanshi.service";
+          always = true; # Run on every config reload to fix monitor settings first
+        }
+        # Note: Workspace-to-output assignments are now handled declaratively in extraConfig
+        # swaysome init 1 is handled by kanshi profiles
+      ]
+      ++ [
+        # DESK-only startup apps (runs after daemons are ready)
+        {
+          command = "${desk-startup-apps-init}/bin/desk-startup-apps-init";
+          always = false; # Only run on initial startup, not on config reload
+        }
+      ];
 
       # Window rules
       window = {
         commands = [
           # Wayland apps (use app_id)
-          { criteria = { app_id = "rofi"; }; command = "floating enable"; }
-          { criteria = { app_id = "kitty"; }; command = "floating enable"; }
-          { criteria = { app_id = "SwayBG+"; }; command = "floating enable"; }
-          { criteria = { title = "SwayBG+"; }; command = "floating enable"; }
-          { criteria = { app_id = "org.telegram.desktop"; }; command = "floating enable"; }
-          { criteria = { app_id = "telegram-desktop"; }; command = "floating enable"; }
-          { criteria = { app_id = "bitwarden"; }; command = "floating enable"; }
-          { criteria = { app_id = "bitwarden-desktop"; }; command = "floating enable"; }
-          { criteria = { app_id = "Bitwarden"; }; command = "floating enable"; }
-          { criteria = { app_id = "com.usebottles.bottles"; }; command = "floating enable"; }
-          { criteria = { app_id = "swayfx-settings"; }; command = "floating enable"; }
-          { criteria = { app_id = "io.missioncenter.MissionCenter"; }; command = "floating enable, sticky enable, resize set 800 600"; }
+          {
+            criteria = {
+              app_id = "rofi";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "kitty";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "SwayBG+";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              title = "SwayBG+";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "org.telegram.desktop";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "telegram-desktop";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "bitwarden";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "bitwarden-desktop";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "Bitwarden";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "com.usebottles.bottles";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "swayfx-settings";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "io.missioncenter.MissionCenter";
+            };
+            command = "floating enable, sticky enable, resize set 800 600";
+          }
           # LACT (Linux AMDGPU Controller): often XWayland; keep explicit app_id match for Wayland variants too.
-          { criteria = { app_id = "lact"; }; command = "floating enable, sticky enable"; }
-          { criteria = { title = "LACT"; }; command = "floating enable, sticky enable"; }
+          {
+            criteria = {
+              app_id = "lact";
+            };
+            command = "floating enable, sticky enable";
+          }
+          {
+            criteria = {
+              title = "LACT";
+            };
+            command = "floating enable, sticky enable";
+          }
 
           # KDE Discover: floating + sticky (Wayland app_id + common fallbacks)
-          { criteria = { app_id = "org.kde.discover"; }; command = "floating enable, sticky enable"; }
-          { criteria = { app_id = "plasma-discover"; }; command = "floating enable, sticky enable"; }
-          { criteria = { app_id = "discover"; }; command = "floating enable, sticky enable"; }
-          { criteria = { title = "Discover"; }; command = "floating enable, sticky enable"; }
+          {
+            criteria = {
+              app_id = "org.kde.discover";
+            };
+            command = "floating enable, sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "plasma-discover";
+            };
+            command = "floating enable, sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "discover";
+            };
+            command = "floating enable, sticky enable";
+          }
+          {
+            criteria = {
+              title = "Discover";
+            };
+            command = "floating enable, sticky enable";
+          }
 
           # Pavucontrol: floating + sticky (correct app_id)
-          { criteria = { app_id = "org.pulseaudio.pavucontrol"; }; command = "floating enable, sticky enable"; }
+          {
+            criteria = {
+              app_id = "org.pulseaudio.pavucontrol";
+            };
+            command = "floating enable, sticky enable";
+          }
 
           # Blueman-manager: floating + sticky (Bluetooth Manager - NixOS wrapped)
-          { criteria = { app_id = ".blueman-manager-wrapped"; }; command = "floating enable, sticky enable"; }
+          {
+            criteria = {
+              app_id = ".blueman-manager-wrapped";
+            };
+            command = "floating enable, sticky enable";
+          }
 
           # GNOME Calculator: floating + sticky
-          { criteria = { app_id = "org.gnome.Calculator"; }; command = "floating enable, sticky enable"; }
+          {
+            criteria = {
+              app_id = "org.gnome.Calculator";
+            };
+            command = "floating enable, sticky enable";
+          }
 
           # XWayland apps (use class)
-          { criteria = { class = "SwayBG+"; }; command = "floating enable"; }
-          { criteria = { class = "Spotify"; }; command = "floating enable"; }
-          { criteria = { class = "Dolphin"; }; command = "floating enable"; }
-          { criteria = { class = "dolphin"; }; command = "floating enable"; }
-          { criteria = { class = "lact"; }; command = "floating enable, sticky enable"; }
-          { criteria = { class = "LACT"; }; command = "floating enable, sticky enable"; }
-          { criteria = { class = "discover"; }; command = "floating enable, sticky enable"; }
-          { criteria = { class = "Discover"; }; command = "floating enable, sticky enable"; }
-          { criteria = { class = "plasma-discover"; }; command = "floating enable, sticky enable"; }
+          {
+            criteria = {
+              class = "SwayBG+";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              class = "Spotify";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              class = "Dolphin";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              class = "dolphin";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              class = "lact";
+            };
+            command = "floating enable, sticky enable";
+          }
+          {
+            criteria = {
+              class = "LACT";
+            };
+            command = "floating enable, sticky enable";
+          }
+          {
+            criteria = {
+              class = "discover";
+            };
+            command = "floating enable, sticky enable";
+          }
+          {
+            criteria = {
+              class = "Discover";
+            };
+            command = "floating enable, sticky enable";
+          }
+          {
+            criteria = {
+              class = "plasma-discover";
+            };
+            command = "floating enable, sticky enable";
+          }
 
           # Dolphin on Wayland (use app_id)
-          { criteria = { app_id = "org.kde.dolphin"; }; command = "floating enable"; }
+          {
+            criteria = {
+              app_id = "org.kde.dolphin";
+            };
+            command = "floating enable";
+          }
 
           # Sticky windows - visible on all workspaces of their monitor
-          { criteria = { app_id = "kitty"; }; command = "sticky enable"; }
-          { criteria = { app_id = "Alacritty"; }; command = "sticky enable"; }
-          { criteria = { app_id = "SwayBG+"; }; command = "sticky enable"; }
-          { criteria = { title = "SwayBG+"; }; command = "sticky enable"; }
-          { criteria = { app_id = "org.telegram.desktop"; }; command = "sticky enable"; }
-          { criteria = { app_id = "telegram-desktop"; }; command = "sticky enable"; }
-          { criteria = { app_id = "bitwarden"; }; command = "sticky enable"; }
-          { criteria = { app_id = "bitwarden-desktop"; }; command = "sticky enable"; }
-          { criteria = { app_id = "Bitwarden"; }; command = "sticky enable"; }
-          { criteria = { app_id = "org.kde.dolphin"; }; command = "sticky enable"; }
-          { criteria = { class = "SwayBG+"; }; command = "sticky enable"; }
-          { criteria = { class = "Dolphin"; }; command = "sticky enable"; }
-          { criteria = { class = "dolphin"; }; command = "sticky enable"; }
-          { criteria = { class = "Spotify"; }; command = "sticky enable"; }
-          { criteria = { app_id = "io.missioncenter.MissionCenter"; }; command = "sticky enable"; }
-          { criteria = { app_id = "lact"; }; command = "sticky enable"; }
-          { criteria = { title = "LACT"; }; command = "sticky enable"; }
-          { criteria = { class = "lact"; }; command = "sticky enable"; }
-          { criteria = { class = "LACT"; }; command = "sticky enable"; }
-          { criteria = { app_id = "org.kde.discover"; }; command = "sticky enable"; }
-          { criteria = { app_id = "plasma-discover"; }; command = "sticky enable"; }
-          { criteria = { app_id = "discover"; }; command = "sticky enable"; }
-          { criteria = { title = "Discover"; }; command = "sticky enable"; }
-          { criteria = { class = "discover"; }; command = "sticky enable"; }
-          { criteria = { class = "Discover"; }; command = "sticky enable"; }
-          { criteria = { class = "plasma-discover"; }; command = "sticky enable"; }
-          { criteria = { app_id = "org.pulseaudio.pavucontrol"; }; command = "sticky enable"; }
-          { criteria = { app_id = "org.kde.kcalc"; }; command = "sticky enable"; }
-          { criteria = { app_id = "kcalc"; }; command = "sticky enable"; }
+          {
+            criteria = {
+              app_id = "kitty";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "Alacritty";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "SwayBG+";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              title = "SwayBG+";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "org.telegram.desktop";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "telegram-desktop";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "bitwarden";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "bitwarden-desktop";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "Bitwarden";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "org.kde.dolphin";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              class = "SwayBG+";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              class = "Dolphin";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              class = "dolphin";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              class = "Spotify";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "io.missioncenter.MissionCenter";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "lact";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              title = "LACT";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              class = "lact";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              class = "LACT";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "org.kde.discover";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "plasma-discover";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "discover";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              title = "Discover";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              class = "discover";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              class = "Discover";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              class = "plasma-discover";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "org.pulseaudio.pavucontrol";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "org.kde.kcalc";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "kcalc";
+            };
+            command = "sticky enable";
+          }
         ];
       };
     };
@@ -573,14 +910,14 @@ in
       ${lib.concatStringsSep "\n" (
         let
           samsung = "Samsung Electric Company Odyssey G70NC H1AK500000";
-          nsl     = "NSL RGB-27QHDS    Unknown";
+          nsl = "NSL RGB-27QHDS    Unknown";
           philips = "Philips Consumer Electronics Company PHILIPS FTV 0x01010101";
-          bnq     = "BNQ ZOWIE XL LCD 7CK03588SL0";
+          bnq = "BNQ ZOWIE XL LCD 7CK03588SL0";
         in
-          (map (i: "workspace ${toString i} output \"${samsung}\"") (lib.range 11 20)) ++
-          (map (i: "workspace ${toString i} output \"${nsl}\"") (lib.range 21 30)) ++
-          (map (i: "workspace ${toString i} output \"${philips}\"") (lib.range 31 40)) ++
-          (map (i: "workspace ${toString i} output \"${bnq}\"") (lib.range 41 50))
+        (map (i: "workspace ${toString i} output \"${samsung}\"") (lib.range 11 20))
+        ++ (map (i: "workspace ${toString i} output \"${nsl}\"") (lib.range 21 30))
+        ++ (map (i: "workspace ${toString i} output \"${philips}\"") (lib.range 31 40))
+        ++ (map (i: "workspace ${toString i} output \"${bnq}\"") (lib.range 41 50))
       )}
 
       # DESK startup apps - assign to specific workspaces
@@ -714,21 +1051,41 @@ in
       # CRITICAL: Actual window name is "KDE Wallet Service" (captured from actual window)
 
       # App ID-based matching (Wayland native) - PRIMARY
-      for_window [app_id="org.kde.ksecretd"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [app_id="org.kde.ksecretd"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
       # Fallback variants (in case different KWallet windows use these)
-      for_window [app_id="org.kde.kwalletd5"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
-      for_window [app_id="org.kde.kwalletd6"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
-      for_window [app_id="kwallet-query"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [app_id="org.kde.kwalletd5"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
+      for_window [app_id="org.kde.kwalletd6"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
+      for_window [app_id="kwallet-query"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
 
       # Title-based matching (fallback) - PRIMARY
-      for_window [title="KDE Wallet Service"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
-      for_window [title="KWallet"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
-      for_window [title="kwallet"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [title="KDE Wallet Service"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
+      for_window [title="KWallet"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
+      for_window [title="kwallet"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
 
       # Class-based matching (X11/XWayland) - fallback
-      for_window [class="kwalletmanager5"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
-      for_window [class="kwalletmanager6"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
-      for_window [class="KWalletManager"] move to output "${if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"}", move to workspace number 1, floating enable, sticky enable
+      for_window [class="kwalletmanager5"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
+      for_window [class="kwalletmanager6"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
+      for_window [class="KWalletManager"] move to output "${
+        if systemSettings.swayPrimaryMonitor != null then systemSettings.swayPrimaryMonitor else "DP-1"
+      }", move to workspace number 1, floating enable, sticky enable
 
       # Focus follows mouse
       focus_follows_mouse yes
@@ -747,5 +1104,3 @@ in
     '';
   };
 }
-
-

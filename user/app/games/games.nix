@@ -59,8 +59,12 @@ in
     ]);
 
   # Session variable to suppress Bottles warning (User Session Scope)
+  # Also adding Gaming Optimizations for AMD
   home.sessionVariables = lib.mkIf (userSettings.protongamesEnable == true) {
     BOTTLES_IGNORE_SANDBOX = "1";
+    # AMD RDNA 3 Optimizations
+    RADV_PERFTEST = "gpl"; # Graphics Pipeline Library - reduces stuttering
+    AMD_VULKAN_ICD = "radv"; # Ensure Mesa driver is used over AMDVLK
   };
 
   nixpkgs.config = {
