@@ -157,7 +157,7 @@ in
       # Conditionally set theme variables if Stylix is enabled
       (lib.mkIf (systemSettings.stylixEnable == true) ''
         # Inject variables that we force-unset globally to prevent Plasma 6 leakage
-        export QT_QPA_PLATFORMTHEME=qt5ct
+        export QT_QPA_PLATFORMTHEME=qt6ct
         export GTK_THEME=${if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita"}
         export GTK_APPLICATION_PREFER_DARK_THEME=1
         # Fix for Java apps if needed

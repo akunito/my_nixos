@@ -46,7 +46,8 @@
     buildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/dolphin \
-        --set QT_QPA_PLATFORMTHEME qt6ct
+        --set QT_QPA_PLATFORMTHEME qt6ct \
+        --set QT_SCALE_FACTOR 0.8
     '';
   });
 }
