@@ -6,17 +6,15 @@ let
   set-sway-theme-vars = pkgs.writeShellScriptBin "set-sway-theme-vars" ''
     # Sync with D-Bus activation environment
     # Variables are already set by extraSessionCommands, we just need to sync them
-    # IMPORTANT (Stylix containment): do NOT use --systemd here.
-    # We only want to update D-Bus activation env for the current Sway session, not mutate the
     # persistent systemd --user manager environment (which can leak into Plasma 6 if lingering is enabled).
-    dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME CUPS_SERVER
+    dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME CUPS_SERVER PATH
   '';
 
   # Ensure core Wayland session vars are visible to systemd --user units launched via DBus activation
   # (e.g. xdg-desktop-portal). We intentionally do NOT include theme vars here to preserve Plasma 6 containment.
   set-sway-systemd-session-vars = pkgs.writeShellScriptBin "set-sway-systemd-session-vars" ''
     #!/bin/sh
-    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP
+    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP PATH
   '';
 
   # Write a session-scoped environment file for systemd --user services started from Sway.

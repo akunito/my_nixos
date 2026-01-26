@@ -322,6 +322,8 @@ in
     wm = "plasma6";
     wmEnableHyprland = false;  # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
     
+    fileManager = "dolphin";  # Explicitly set Dolphin as file manager (overrides default "ranger")
+
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";
     
@@ -350,7 +352,8 @@ in
       pkgs-unstable.vlc
       pkgs-unstable.candy-icons
       pkgs.calibre
-      pkgs.kdePackages.dolphin
+      # pkgs.kdePackages.dolphin # Removed: Configured via fileManager settings
+
       pkgs-unstable.libreoffice
       pkgs-unstable.telegram-desktop
       pkgs-unstable.drawio
