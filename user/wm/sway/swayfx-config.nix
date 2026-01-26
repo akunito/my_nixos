@@ -262,7 +262,7 @@ in
           "${hyper}+C" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh cursor cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch";
           # Mission Center (app_id is io.missioncenter.MissionCenter, binary is missioncenter)
           "${hyper}+m" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
-          "${hyper}+B" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
+          "${hyper}+B" = "exec env GTK_THEME= BOTTLES_IGNORE_SANDBOX=1 ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
           # SwayBG+ (wallpaper UI) - moved from hyper+s
           # "${hyper}+s" = "exec swaybgplus-gui";
           "${hyper}+s" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";

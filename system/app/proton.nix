@@ -8,4 +8,9 @@
     pkgs-unstable.protonup-qt
     pkgs-unstable.dolphin-emu-primehack
   ];
+
+
+  environment.variables = lib.mkIf (systemSettings.protongamesEnable == true) {
+    BOTTLES_IGNORE_SANDBOX = "1"; # Disable unsupported environment warning
+  };
 }
