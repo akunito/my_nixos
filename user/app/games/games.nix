@@ -1,40 +1,67 @@
-{ pkgs, pkgs-stable, ... }:
+{
+  pkgs,
+  pkgs-unstable,
+  pkgs-stable,
+  userSettings,
+  lib,
+  inputs,
+  ...
+}:
 let
-  myRetroarch =
-    (pkgs.retroarch.override {
-      cores = with pkgs.libretro; [
-        vba-m
-        (desmume.overrideAttrs (oldAttrs: {
-          preConfigure = ''
-            sed -i 's/0009BF123456/0022AA067857/g' desmume/src/firmware.cpp;
-            sed -i 's/outConfig.MACAddress\[0\] = 0x00/outConfig.MACAddress[0] = 0x00/g' desmume/src/firmware.cpp;
-            sed -i 's/outConfig.MACAddress\[1\] = 0x09/outConfig.MACAddress[1] = 0x22/g' desmume/src/firmware.cpp;
-            sed -i 's/outConfig.MACAddress\[2\] = 0xBF/outConfig.MACAddress[2] = 0xAA/g' desmume/src/firmware.cpp;
-            sed -i 's/outConfig.MACAddress\[3\] = 0x12/outConfig.MACAddress[3] = 0x06/g' desmume/src/firmware.cpp;
-            sed -i 's/outConfig.MACAddress\[4\] = 0x34/outConfig.MACAddress[4] = 0x78/g' desmume/src/firmware.cpp;
-            sed -i 's/outConfig.MACAddress\[5\] = 0x56/outConfig.MACAddress[5] = 0x57/g' desmume/src/firmware.cpp;
-            sed -i 's/0x00, 0x09, 0xBF, 0x12, 0x34, 0x56/0x00, 0x22, 0xAA, 0x06, 0x78, 0x57/g' desmume/src/wifi.cpp;
-          '';
-        }))
-        dolphin
-        genesis-plus-gx
-      ];
-    });
+  myRetroarch = pkgs.retroarch.withCores (
+    cores: with pkgs.libretro; [
+      vba-m
+      (desmume.overrideAttrs (oldAttrs: {
+        preConfigure = ''
+          sed -i 's/0009BF123456/0022AA067857/g' desmume/src/firmware.cpp;
+          sed -i 's/outConfig.MACAddress\[0\] = 0x00/outConfig.MACAddress[0] = 0x00/g' desmume/src/firmware.cpp;
+          sed -i 's/outConfig.MACAddress\[1\] = 0x09/outConfig.MACAddress[1] = 0x22/g' desmume/src/firmware.cpp;
+          sed -i 's/outConfig.MACAddress\[2\] = 0xBF/outConfig.MACAddress[2] = 0xAA/g' desmume/src/firmware.cpp;
+          sed -i 's/outConfig.MACAddress\[3\] = 0x12/outConfig.MACAddress[3] = 0x06/g' desmume/src/firmware.cpp;
+          sed -i 's/outConfig.MACAddress\[4\] = 0x34/outConfig.MACAddress[4] = 0x78/g' desmume/src/firmware.cpp;
+          sed -i 's/outConfig.MACAddress\[5\] = 0x56/outConfig.MACAddress[5] = 0x57/g' desmume/src/firmware.cpp;
+          sed -i 's/0x00, 0x09, 0xBF, 0x12, 0x34, 0x56/0x00, 0x22, 0xAA, 0x06, 0x78, 0x57/g' desmume/src/wifi.cpp;
+        '';
+      }))
+      genesis-plus-gx
+    ]
+  );
 in
 {
-  home.packages = (with pkgs; [
-    # Games
-    pegasus-frontend
-    myRetroarch
-    libfaketime
-    airshipper
-    qjoypad
-    superTux
-    superTuxKart
-    gamepad-tool
-  ]) ++ (with pkgs-stable; [
-    pokefinder
-  ]);
+  home.packages =
+    (with pkgs; [
+      # Games
+      pegasus-frontend
+      myRetroarch
+      libfaketime
+      airshipper
+      qjoypad
+      superTux
+      superTuxKart
+      gamepad-tool
+    ])
+    ++ (with pkgs-stable; [
+      pokefinder
+    ])
+    ++ (lib.optionals (userSettings.protongamesEnable == true) [
+      (pkgs-unstable.bottles.override { removeWarningPopup = true; })
+      pkgs-unstable.lutris
+      pkgs-unstable.protonup-qt
+    ])
+    ++ (lib.optionals (userSettings.GOGlauncherEnable == true) [
+      pkgs-unstable.heroic
+    ])
+    ++ (lib.optionals (userSettings.dolphinEmulatorPrimehackEnable == true) [
+      pkgs-unstable.dolphin-emu-primehack
+    ])
+    ++ (lib.optionals (userSettings.starcitizenEnable == true) [
+      inputs.nix-citizen.packages.${pkgs.system}.rsi-launcher
+    ]);
+
+  # Session variable to suppress Bottles warning (User Session Scope)
+  home.sessionVariables = lib.mkIf (userSettings.protongamesEnable == true) {
+    BOTTLES_IGNORE_SANDBOX = "1";
+  };
 
   nixpkgs.config = {
     allowUnfree = true;

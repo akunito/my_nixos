@@ -1,12 +1,12 @@
-{ pkgs, pkgs-unstable, systemSettings, lib, inputs, ... }:
+{ pkgs, pkgs-unstable, userSettings, lib, inputs, ... }:
 
 {
-  environment.systemPackages = lib.mkIf (systemSettings.starcitizenEnable == true) [ 
-    inputs.nix-citizen.packages.${systemSettings.system}.rsi-launcher
-  ];
-
-  boot.kernel.sysctl = lib.mkIf (systemSettings.starcitizenEnable == true) {
+  # Kernel tweaks for Star Citizen (system-level requirement)
+  # Actual launcher is in user/app/games/games.nix
+  boot.kernel.sysctl = lib.mkIf (userSettings.starcitizenEnable == true) {
     "vm.max_map_count" = 16777216;
     "fs.file-max" = 524288;
   };
 }
+
+

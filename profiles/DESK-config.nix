@@ -31,7 +31,7 @@ in
 {
   # Flag to use rust-overlay
   useRustOverlay = false;
-  
+
   systemSettings = {
     hostname = "nixosaku";
     profile = "personal";
@@ -43,19 +43,19 @@ in
     swwwEnable = true;
     swaybgPlusEnable = false;
     nextcloudEnable = true; # To startup with Sway daemon
-    
-    kernelModules = [ 
-      "i2c-dev" 
-      "i2c-piix4" 
+
+    kernelModules = [
+      "i2c-dev"
+      "i2c-piix4"
       "xpadneo" # xbox controller
     ];
-    
+
     # Security
     fuseAllowOther = true;
     pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
     # Sudo UX: keep sudo authentication cached longer (minutes)
     sudoTimestampTimeoutMinutes = 180;
-    
+
     # Polkit
     polkitEnable = true;
     polkitRules = ''
@@ -87,58 +87,85 @@ in
         }
       });
     '';
-    
+
     # Backups
     homeBackupEnable = true;
     homeBackupCallNextEnabled = false;
-    
+
     # Network
     ipAddress = "192.168.8.96";
     wifiIpAddress = "192.168.8.98";
-    nameServers = [ "192.168.8.1" "192.168.8.1" ];
+    nameServers = [
+      "192.168.8.1"
+      "192.168.8.1"
+    ];
     resolvedEnable = false;
-    
+
     # Firewall
-    allowedTCPPorts = [ 
+    allowedTCPPorts = [
       # 47984 47989 47990 48010 # sunshine
     ];
-    allowedUDPPorts = [ 
+    allowedUDPPorts = [
       # 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 # sunshine
       # 51820 # Wireguard
     ];
-    
+
     # Drives
     mount2ndDrives = true;
     disk1_enabled = true;
     disk1_name = "/mnt/2nd_NVME";
     disk1_device = "/dev/mapper/2nd_NVME";
     disk1_fsType = "ext4";
-    disk1_options = [ "nofail" "x-systemd.device-timeout=3s" "noatime" "nodiratime" ];
+    disk1_options = [
+      "nofail"
+      "x-systemd.device-timeout=3s"
+      "noatime"
+      "nodiratime"
+    ];
     disk2_enabled = true;
     disk2_name = "/mnt/DATA_SATA3";
     disk2_device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
     disk2_fsType = "ntfs3";
-    disk2_options = [ "nofail" "x-systemd.device-timeout=3s" "uid=1000" "gid=1000" ];
+    disk2_options = [
+      "nofail"
+      "x-systemd.device-timeout=3s"
+      "uid=1000"
+      "gid=1000"
+    ];
     disk3_enabled = true;
     disk3_name = "/mnt/NFS_media";
     disk3_device = "192.168.20.200:/mnt/hddpool/media";
     disk3_fsType = "nfs4";
-    disk3_options = [ "nofail" "x-systemd.device-timeout=5s" ];
+    disk3_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
     disk4_enabled = true;
     disk4_name = "/mnt/NFS_emulators";
     disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
     disk4_fsType = "nfs4";
-    disk4_options = [ "nofail" "x-systemd.device-timeout=5s" ];
+    disk4_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
     disk5_enabled = true;
     disk5_name = "/mnt/NFS_library";
     disk5_device = "192.168.20.200:/mnt/ssdpool/library";
     disk5_fsType = "nfs4";
-    disk5_options = [ "nofail" "x-systemd.device-timeout=5s" ];
+    disk5_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
     disk6_enabled = true;
     disk6_name = "/mnt/DATA";
     disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
-    disk6_fsType = "ntfs3"; 
-    disk6_options = [ "nofail" "x-systemd.device-timeout=3s" "uid=1000" "gid=1000" ];
+    disk6_fsType = "ntfs3";
+    disk6_options = [
+      "nofail"
+      "x-systemd.device-timeout=3s"
+      "uid=1000"
+      "gid=1000"
+    ];
     # Temporarily disabled - device UUID b6be2dd5-d6c0-4839-8656-cb9003347c93 not found
     # NixOS fails to generate systemd mount unit when device doesn't exist, causing build failures
     # Re-enable when device is available or UUID is updated
@@ -147,7 +174,7 @@ in
     # disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
     # disk7_fsType = "ext4";
     # disk7_options = [ "nofail" "x-systemd.device-timeout=5s" "noatime" "nodiratime" ];
-    
+
     # NFS client
     nfsClientEnable = true;
     nfsMounts = [
@@ -190,22 +217,22 @@ in
         };
       }
     ];
-    
+
     # SSH
-    authorizedKeys = [ 
-      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local" 
+    authorizedKeys = [
+      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfNRaYr4LSuhcXgI97o2cRfW0laPLXg7OzwiSIuV9N7cin0WC1rN1hYi6aSGAhK+Yu/bXQazTegVhQC+COpHE6oVI4fmEsWKfhC53DLNeniut1Zp02xLJppHT0TgI/I2mmBGVkEaExbOadzEayZVL5ryIaVw7Op92aTmCtZ6YJhRV0hU5MhNcW5kbUoayOxqWItDX6ARYQov6qHbfKtxlXAr623GpnqHeH8p9LDX7PJKycDzzlS5e44+S79JMciFPXqCtVgf2Qq9cG72cpuPqAjOSWH/fCgnmrrg6nSPk8rLWOkv4lSRIlZstxc9/Zv/R6JP/jGqER9A3B7/vDmE8e3nFANxc9WTX5TrBTxB4Od75kFsqqiyx9/zhFUGVrP1hJ7MeXwZJBXJIZxtS5phkuQ2qUId9zsCXDA7r0mpUNmSOfhsrTqvnr5O3LLms748rYkXOw8+M/bPBbmw76T40b3+ji2aVZ4p4PY4Zy55YJaROzOyH4GwUom+VzHsAIAJF/Tg1DpgKRklzNsYg9aWANTudE/J545ymv7l2tIRlJYYwYP7On/PC+q1r/Tfja7zAykb3tdUND1CVvSr6CkbFwZdQDyqSGLkybWYw6efVNgmF4yX9nGfOpfVk0hGbkd39lUQCIe3MzVw7U65guXw/ZwXpcS0k1KQ+0NvIo5Z1ahQ== akunito@Diegos-MacBook-Pro.local"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPp/10TlSOte830j6ofuEQ21YKxFD34iiyY55yl6sW7V diego88aku@gmail.com" # Laptop
     ];
-    
+
     # Printer
-    servicePrinting = true; 
+    servicePrinting = true;
     networkPrinters = true;
-    
+
     # Power management
     powerManagement_ENABLE = true;
     power-profiles-daemon_ENABLE = true;
-    
+
     # System packages - will be evaluated in flake-base.nix
     # Use function that receives pkgs and pkgs-unstable
     systemPackages = pkgs: pkgs-unstable: [
@@ -238,23 +265,20 @@ in
       pkgs.easyeffects
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
-    
-    starCitizenModules = true;
-    starcitizenEnable = true;
-    protongamesEnable = true;
+
     sambaEnable = true;
     sunshineEnable = true;
     wireguardEnable = true;
     xboxControllerEnable = true;
     appImageEnable = true;
     gamemodeEnable = true;
-    aichatEnable = true;  # Enable aichat CLI tool with OpenRouter support
-    nixvimEnabled = true;  # Enable NixVim configuration (Cursor IDE-like experience)
-    lmstudioEnabled = true;  # Enable LM Studio configuration and MCP server support
-    enableSwayForDESK = true;  # Enable SwayFX as second WM option alongside Plasma6
+    aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
+    nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
+    lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
+    enableSwayForDESK = true; # Enable SwayFX as second WM option alongside Plasma6
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.
     swayPrimaryMonitor = monitors.samsungMain.criteria;
-    stylixEnable = true;  # Enable Stylix for theming
+    stylixEnable = true; # Enable Stylix for theming
 
     # Monitor inventory (data-only); used to build DESK kanshi settings.
     swayMonitorInventory = monitors;
@@ -279,11 +303,23 @@ in
             # HDMI-A-1 (Philips): enable at 1920x1080@60 and place to the right of DP-2.
             # DP-2 logical width is 1152 (1440 / 1.25) so x = 2400 + 1152 = 3552
             # Explicitly enable the output (it may be disabled by the fallback profile).
-            (monitors.philipsTv // { status = "enable"; position = "3552,-876"; })
+            (
+              monitors.philipsTv
+              // {
+                status = "enable";
+                position = "3552,-876";
+              }
+            )
 
             # BNQ (Group 4 -> workspaces 41-50): enable and place to the LEFT of Samsung.
             # Best available mode observed: 1920x1080@60Hz. Keep scale default 1.0.
-            (monitors.bnqLeft // { status = "enable"; position = "-1920,0"; })
+            (
+              monitors.bnqLeft
+              // {
+                status = "enable";
+                position = "-1920,0";
+              }
+            )
           ];
           # CRITICAL: Initialize swaysome daemon (workspace groups starting at 1).
           # Workspace-to-output assignments are now handled declaratively in swayfx-config.nix.
@@ -301,7 +337,13 @@ in
             (monitors.samsungMain // { position = "0,0"; })
             (monitors.nslVertical // { position = "2400,-876"; })
             (monitors.philipsTv // { status = "disable"; })
-            (monitors.bnqLeft // { status = "enable"; position = "-1920,0"; })
+            (
+              monitors.bnqLeft
+              // {
+                status = "enable";
+                position = "-1920,0";
+              }
+            )
           ];
           exec = [
             "$HOME/.nix-profile/bin/swaysome init 1"
@@ -309,33 +351,43 @@ in
         };
       }
     ];
-    
+
     systemStable = false;
   };
-  
+
   userSettings = {
     username = "akunito";
     name = "akunito";
     email = "diego88aku@gmail.com";
     dotfilesDir = "/home/akunito/.dotfiles";
-    extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
-    
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "input"
+      "dialout"
+    ];
+
     theme = "ashes";
     wm = "plasma6";
-    wmEnableHyprland = false;  # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
-    
-    fileManager = "dolphin";  # Explicitly set Dolphin as file manager (overrides default "ranger")
+    wmEnableHyprland = false; # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
+
+    protongamesEnable = true;
+    starcitizenEnable = true;
+    GOGlauncherEnable = true;
+    dolphinEmulatorPrimehackEnable = true;
+
+    fileManager = "dolphin"; # Explicitly set Dolphin as file manager (overrides default "ranger")
 
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";
-    
+
     browser = "vivaldi";
     spawnBrowser = "vivaldi";
     defaultRoamDir = "Personal.p";
     term = "kitty";
     font = "Intel One Mono";
     # fontPkg will be set in flake-base.nix based on font name
-    
+
     # Home packages - will be evaluated in flake-base.nix
     # Use function that receives pkgs and pkgs-unstable
     homePackages = pkgs: pkgs-unstable: [
@@ -375,7 +427,7 @@ in
       pkgs.azure-cli
       pkgs-unstable.cloudflared
       pkgs-unstable.rpcs3
-      pkgs-unstable.dolphin-emu
+      # pkgs-unstable.dolphin-emu # Replaced by dolphinEmulatorPrimehackEnable or standard installation if needed
       # CUPS client packages for printer access in Sway
       pkgs.cups-filters
       pkgs.system-config-printer
@@ -384,7 +436,7 @@ in
       pkgs-unstable.qwen-code
       pkgs-unstable.antigravity
     ];
-    
+
     zshinitContent = ''
       PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "
@@ -392,7 +444,7 @@ in
       [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
 
     '';
-    
+
     sshExtraConfig = ''
       # sshd.nix -> programs.ssh.extraConfig
       Host github.com
@@ -403,4 +455,3 @@ in
     '';
   };
 }
-

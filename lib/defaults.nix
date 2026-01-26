@@ -8,22 +8,22 @@
   systemSettings = {
     # System architecture - most profiles use x86_64-linux
     system = "x86_64-linux";
-    
+
     # Common defaults (profile-specific values will override)
     timezone = "Europe/Warsaw";
     locale = "en_US.UTF-8";
-    timeLocale = "en_GB.UTF-8";  # Locale for time/date formatting (uses Monday as first day of week)
+    timeLocale = "en_GB.UTF-8"; # Locale for time/date formatting (uses Monday as first day of week)
     bootMode = "uefi";
     bootMountPath = "/boot";
     grubDevice = "";
-    
+
     # Kernel defaults
     kernelPackages = pkgs.linuxPackages_latest;
-    kernelModules = [ 
-      "i2c-dev" 
-      "i2c-piix4" 
+    kernelModules = [
+      "i2c-dev"
+      "i2c-piix4"
     ];
-    
+
     # Security defaults
     fuseAllowOther = false;
     doasEnable = false;
@@ -42,11 +42,14 @@
       }
       {
         command = "/run/current-system/sw/bin/restic";
-        options = [ "NOPASSWD" "SETENV" ];
+        options = [
+          "NOPASSWD"
+          "SETENV"
+        ];
       }
     ];
     pkiCertificates = [ ];
-    
+
     # Polkit defaults
     polkitEnable = false;
     polkitRules = ''
@@ -63,7 +66,7 @@
         }
       });
     '';
-    
+
     # Backup defaults
     resticWrapper = true;
     rsyncWrapper = true;
@@ -75,25 +78,28 @@
     homeBackupOnCalendar = "0/6:00:00";
     homeBackupCallNextEnabled = false;
     homeBackupCallNext = [ "remote_backup.service" ];
-    
+
     remoteBackupEnable = false;
     remoteBackupDescription = "Copy Restic Backup to Remote Server";
     remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup_remote.sh";
     remoteBackupUser = "akunito";
     remoteBackupTimerDescription = "Timer for remote_backup service";
-    
+
     # Network defaults
     networkManager = true;
     defaultGateway = null;
-    nameServers = [ "192.168.8.1" "192.168.8.1" ];
+    nameServers = [
+      "192.168.8.1"
+      "192.168.8.1"
+    ];
     wifiPowerSave = true;
     resolvedEnable = false;
-    
+
     # Firewall defaults
     firewall = true;
     allowedTCPPorts = [ ];
     allowedUDPPorts = [ ];
-    
+
     # Drive defaults
     mount2ndDrives = false;
     bootSSH = false;
@@ -102,38 +108,59 @@
     disk1_name = "/mnt/2nd_NVME";
     disk1_device = "/dev/mapper/2nd_NVME";
     disk1_fsType = "ext4";
-    disk1_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+    disk1_options = [
+      "nofail"
+      "x-systemd.device-timeout=3s"
+    ];
     disk2_enabled = false;
     disk2_name = "/mnt/DATA_SATA3";
     disk2_device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
     disk2_fsType = "ntfs3";
-    disk2_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+    disk2_options = [
+      "nofail"
+      "x-systemd.device-timeout=3s"
+    ];
     disk3_enabled = false;
     disk3_name = "/mnt/NFS_media";
     disk3_device = "192.168.20.200:/mnt/hddpool/media";
     disk3_fsType = "nfs4";
-    disk3_options = [ "nofail" "x-systemd.device-timeout=5s" ];
+    disk3_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
     disk4_enabled = false;
     disk4_name = "/mnt/NFS_emulators";
     disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
     disk4_fsType = "nfs4";
-    disk4_options = [ "nofail" "x-systemd.device-timeout=5s" ];
+    disk4_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
     disk5_enabled = false;
     disk5_name = "/mnt/NFS_library";
     disk5_device = "192.168.20.200:/mnt/ssdpool/library";
     disk5_fsType = "nfs4";
-    disk5_options = [ "nofail" "x-systemd.device-timeout=5s" ];
+    disk5_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
     disk6_enabled = false;
     disk6_name = "/mnt/DATA";
     disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
     disk6_fsType = "ntfs3";
-    disk6_options = [ "nofail" "x-systemd.device-timeout=3s" ];
+    disk6_options = [
+      "nofail"
+      "x-systemd.device-timeout=3s"
+    ];
     disk7_enabled = false;
     disk7_name = "/mnt/EXT";
     disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
     disk7_fsType = "ext4";
-    disk7_options = [ "nofail" "x-systemd.device-timeout=5s" ];
-    
+    disk7_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
+
     # NFS defaults
     nfsServerEnable = false;
     nfsExports = ''
@@ -143,16 +170,16 @@
     nfsClientEnable = false;
     nfsMounts = [ ];
     nfsAutoMounts = [ ];
-    
+
     # SSH defaults
     authorizedKeys = [ ];
     hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
-    
+
     # Printer defaults
     servicePrinting = false;
     networkPrinters = false;
     sharePrinter = false;
-    
+
     # Power management defaults
     iwlwifiDisablePowerSave = false;
     TLP_ENABLE = false;
@@ -169,7 +196,7 @@
     powerKey = "ignore";
     powerManagement_ENABLE = false;
     power-profiles-daemon_ENABLE = false;
-    
+
     # Feature flags defaults
     starCitizenModules = false;
     starcitizenEnable = false;
@@ -187,7 +214,7 @@
     swaybgPlusEnable = false; # Enable SwayBG+ (GUI/CLI wallpaper manager) and disable Stylix swaybg service when active
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
-    swayPrimaryMonitor = null;  # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
+    swayPrimaryMonitor = null; # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
 
     # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)
     # Profiles can override/populate this and then build `swayKanshiSettings` from it.
@@ -207,7 +234,10 @@
           # IMPORTANT: This is intentionally non-opinionated: enable all outputs and let Sway place them.
           # Profiles can override with explicit positions/scales when needed.
           outputs = [
-            { criteria = "*"; status = "enable"; }
+            {
+              criteria = "*";
+              status = "enable";
+            }
           ];
           # Keep workspaces grouped per-output deterministically.
           # Use user profile PATH (swaysome is installed by the Sway module).
@@ -220,23 +250,27 @@
         };
       }
     ];
-    
+
     # Sway/SwayFX keyboard layouts (multi-language support)
     # Format: list of XKB layout codes with optional variants in parentheses
     # Example: [ "us(altgr-intl)" "es" "pl" ] → layouts: "us,es,pl", variants: "altgr-intl,,"
-    swayKeyboardLayouts = [ "us(altgr-intl)" "es" "pl" ];
-    
+    swayKeyboardLayouts = [
+      "us(altgr-intl)"
+      "es"
+      "pl"
+    ];
+
     # Font defaults - will be computed based on systemStable in flake-base.nix
     # This is just a placeholder
     fonts = [ ];
-    
+
     # System defaults
     swapFileEnable = false;
     swapFileSyzeGB = 32;
     downloadBufferSize = "134217728";
     systemStateVersion = "24.11";
     systemStable = false;
-    
+
     # Update defaults
     autoSystemUpdateEnable = true;
     autoSystemUpdateDescription = "Auto Update System service";
@@ -245,7 +279,7 @@
     autoSystemUpdateTimerDescription = "Auto Update System timer";
     autoSystemUpdateOnCalendar = "06:00:00";
     autoSystemUpdateCallNext = [ "autoUserUpdate.service" ];
-    
+
     autoUserUpdateEnable = true;
     autoUserUpdateDescription = "Auto User Update";
     autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/autoUserUpdate.sh";
@@ -255,34 +289,42 @@
     # Each profile should override this with the exact install.sh invocation for that profile.
     # Example: "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK -s"
     installCommand = "";
-    
+
     # System packages - empty by default, profiles specify their own
     systemPackages = [ ];
-    
+
     # Background package - handled in flake-base.nix with proper self reference
     # Profiles can override this if needed
   };
-  
+
   userSettings = {
     # User defaults
     email = "diego88aku@gmail.com";
-    extraGroups = [ "networkmanager" "wheel" ];
-    
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
+
     # Theme and WM defaults
     theme = "miramare";
     wm = "plasma6";
     wmType = "wayland"; # Will be computed from wm
     wmEnableHyprland = false;
-    
+
     # Feature flags
     dockerEnable = true;
     virtualizationEnable = true;
     qemuGuestAddition = false;
-    
+
+    protongamesEnable = false;
+    starcitizenEnable = false;
+    GOGlauncherEnable = false;
+    dolphinEmulatorPrimehackEnable = false;
+
     # Git defaults
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";
-    
+
     # Application defaults
     browser = "vivaldi";
     spawnBrowser = "vivaldi";
@@ -291,14 +333,14 @@
     font = "Intel One Mono";
     fontPkg = pkgs.intel-one-mono;
     editor = "nano";
-    fileManager = "ranger";  # "ranger" or "dolphin"
-    
+    fileManager = "ranger"; # "ranger" or "dolphin"
+
     # Home packages - empty by default, profiles specify their own
     homePackages = [ ];
-    
+
     # Tailscale
     tailscaleEnabled = false;
-    
+
     # ZSH prompt defaults
     zshinitContent = ''
       PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
@@ -306,7 +348,7 @@
       RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
       [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
     '';
-    
+
     # SSH config defaults
     sshExtraConfig = ''
       # sshd.nix -> programs.ssh.extraConfig
@@ -316,12 +358,11 @@
         IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
         AddKeysToAgent yes
     '';
-    
+
     # Version
     homeStateVersion = "24.11";
-    
+
     # Editor spawn command - computed from editor and term
     spawnEditor = "exec kitty -e nano"; # Will be computed
   };
 }
-

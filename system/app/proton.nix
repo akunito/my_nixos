@@ -1,16 +1,19 @@
-{ pkgs, pkgs-unstable, systemSettings, lib, ... }:
+{
+  pkgs,
+  pkgs-unstable,
+  userSettings,
+  lib,
+  ...
+}:
 
 {
-  environment.systemPackages = lib.mkIf (systemSettings.protongamesEnable == true) [ 
-    (pkgs-unstable.bottles.override { removeWarningPopup = true; })
-    pkgs-unstable.lutris
-    pkgs-unstable.heroic
-    pkgs-unstable.protonup-qt
-    pkgs-unstable.dolphin-emu-primehack
-  ];
-
-
-  environment.variables = lib.mkIf (systemSettings.protongamesEnable == true) {
-    BOTTLES_IGNORE_SANDBOX = "1"; # Disable unsupported environment warning
-  };
+  # Only applying the overlay to fix Bottles warning globally (system-wide)
+  # Actual packages are installed via Home Manager (user/app/games/games.nix)
+  #
+  # Note: This overlay applies to both pkgs (stable) and pkgs-unstable
+  # nixpkgs.overlays = lib.mkIf (userSettings.protongamesEnable == true) [
+  #   (final: prev: {
+  #     bottles = prev.bottles.override { removeWarningPopup = true; };
+  #   })
+  # ];
 }
