@@ -87,7 +87,7 @@ if systemSettings.stylixEnable == true then {
         color_scheme_path=${config.home.homeDirectory}/.config/qt6ct/colors/oomox-current.conf
         custom_palette=true
         standard_dialogs=default
-        style=breeze
+        style=Fusion
       '';
       
       # Symlink the generated color scheme from qt5ct to qt6ct
@@ -105,6 +105,8 @@ if systemSettings.stylixEnable == true then {
           extension = ".conf";
       };
     })
+
+
 
 
 
@@ -202,7 +204,7 @@ if systemSettings.stylixEnable == true then {
     QT_QPA_PLATFORMTHEME = lib.mkForce "qt6ct";
     GTK_THEME = lib.mkForce "";
     GTK_APPLICATION_PREFER_DARK_THEME = lib.mkForce "";
-    QT_STYLE_OVERRIDE = lib.mkForce "breeze";  # Force Breeze style
+    QT_STYLE_OVERRIDE = lib.mkForce "";  # Let qt6ct control style
   };
 
 
@@ -233,8 +235,6 @@ if systemSettings.stylixEnable == true then {
   ] ++ lib.optionals (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) [
     libsForQt5.qt5ct
     pkgs.kdePackages.qt6ct
-    pkgs.libsForQt5.breeze-qt5 # Breeze for Qt5
-    pkgs.kdePackages.breeze # Breeze for Qt6
   ];
   
 
