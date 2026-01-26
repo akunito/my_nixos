@@ -105,6 +105,26 @@ if systemSettings.stylixEnable == true then {
           extension = ".conf";
       };
     })
+
+    # CRITICAL: Manually configure Kvantum to use a dark theme
+    # Since we can't use stylix.targets.kvantum.enable (removed due to error),
+    # we must ensure Kvantum has a configuration file that selects a dark theme.
+    # We use "KvGnomeDark" which is usually available in the kvantum package.
+    (lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) {
+      ".config/Kvantum/kvantum.kvconfig".text = ''
+        [General]
+        theme=KvGnomeDark
+      '';
+    })
+
+    # CRITICAL: Prevent theme leakage into Plasma 6
+    # Since we now set QT_QPA_PLATFORMTHEME globally (to support Sway), we must explicit unset it for Plasma.
+    # Plasma sources scripts in ~/.config/plasma-workspace/env/ at startup.
+    {
+      ".config/plasma-workspace/env/unset-qt-theme.sh".text = ''
+        unset QT_QPA_PLATFORMTHEME
+      '';
+    }
   ];
   stylix.autoEnable = false;
   stylix.polarity = themePolarity;
@@ -187,16 +207,14 @@ if systemSettings.stylixEnable == true then {
   };
   
   # CRITICAL: Force unset global environment variables to prevent leakage into Plasma 6
-  # Stylix may set these via targets, but we override to empty string to prevent leakage
-  # An empty string effectively unsets the variable in the generated shell script
-  # Note: Home Manager doesn't support null for sessionVariables, so we use empty strings
   home.sessionVariables = {
-    QT_QPA_PLATFORMTHEME = lib.mkForce "";
+    QT_QPA_PLATFORMTHEME = lib.mkForce "qt6ct";
     GTK_THEME = lib.mkForce "";
     GTK_APPLICATION_PREFER_DARK_THEME = lib.mkForce "";
-    QT_STYLE_OVERRIDE = lib.mkForce "";  # Also unset if Stylix sets it
+    QT_STYLE_OVERRIDE = lib.mkForce "kvantum";  # Force Kvantum style
   };
-  
+
+
   # CRITICAL: Set gsettings for GTK4/LibAdwaita apps (Chromium, Blueman, etc.)
   # Home Manager's gtk module sets config files but doesn't set gsettings via dconf
   # NOTE: This is only applied when NOT in Plasma 6 to prevent locking Plasma settings
@@ -224,8 +242,8 @@ if systemSettings.stylixEnable == true then {
   ] ++ lib.optionals (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) [
     libsForQt5.qt5ct
     pkgs.kdePackages.qt6ct
-    pkgs.libsForQt5.qtstyleplugin-kvantum
-    pkgs.kdePackages.qtstyleplugin-kvantum
+    pkgs.libsForQt5.qtstyleplugin-kvantum # Verified package name
+    pkgs.kdePackages.qtstyleplugin-kvantum # Verified package name
   ];
   
 
