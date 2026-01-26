@@ -87,7 +87,7 @@ if systemSettings.stylixEnable == true then {
         color_scheme_path=${config.home.homeDirectory}/.config/qt6ct/colors/oomox-current.conf
         custom_palette=true
         standard_dialogs=default
-        style=kvantum
+        style=breeze
       '';
       
       # Symlink the generated color scheme from qt5ct to qt6ct
@@ -106,16 +106,7 @@ if systemSettings.stylixEnable == true then {
       };
     })
 
-    # CRITICAL: Manually configure Kvantum to use a dark theme
-    # Since we can't use stylix.targets.kvantum.enable (removed due to error),
-    # we must ensure Kvantum has a configuration file that selects a dark theme.
-    # We use "KvGnomeDark" which is usually available in the kvantum package.
-    (lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) {
-      ".config/Kvantum/kvantum.kvconfig".text = ''
-        [General]
-        theme=KvGnomeDark
-      '';
-    })
+
 
     # CRITICAL: Prevent theme leakage into Plasma 6
     # Since we now set QT_QPA_PLATFORMTHEME globally (to support Sway), we must explicit unset it for Plasma.
@@ -211,7 +202,7 @@ if systemSettings.stylixEnable == true then {
     QT_QPA_PLATFORMTHEME = lib.mkForce "qt6ct";
     GTK_THEME = lib.mkForce "";
     GTK_APPLICATION_PREFER_DARK_THEME = lib.mkForce "";
-    QT_STYLE_OVERRIDE = lib.mkForce "kvantum";  # Force Kvantum style
+    QT_STYLE_OVERRIDE = lib.mkForce "breeze";  # Force Breeze style
   };
 
 
@@ -242,8 +233,8 @@ if systemSettings.stylixEnable == true then {
   ] ++ lib.optionals (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) [
     libsForQt5.qt5ct
     pkgs.kdePackages.qt6ct
-    pkgs.libsForQt5.qtstyleplugin-kvantum # Verified package name
-    pkgs.kdePackages.qtstyleplugin-kvantum # Verified package name
+    pkgs.libsForQt5.breeze-qt5 # Breeze for Qt5
+    pkgs.kdePackages.breeze # Breeze for Qt6
   ];
   
 
