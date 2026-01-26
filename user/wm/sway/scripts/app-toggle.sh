@@ -53,6 +53,8 @@ apply_window_properties() {
         "spotify")
             swaymsg '[class="Spotify"] floating enable, sticky enable' 2>/dev/null || \
             swaymsg '[app_id="spotify"] floating enable, sticky enable' 2>/dev/null ;;
+        "org.gnome.calculator")
+            swaymsg '[app_id="org.gnome.Calculator"] floating enable, sticky enable' 2>/dev/null ;;
         *) return 0 ;;
     esac
 }

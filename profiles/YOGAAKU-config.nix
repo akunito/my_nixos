@@ -221,6 +221,7 @@
       pkgs-unstable.moonlight-qt
       pkgs-unstable.discord
       pkgs-unstable.kdePackages.kcalc
+      pkgs-unstable.gnome-calculator
     ];
     
     zshinitContent = ''

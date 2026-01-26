@@ -194,8 +194,8 @@ in
           # Note: Removed "${hyper}+d" to avoid conflict with application bindings
           # Use "${hyper}+space" for rofi launcher
 
-          # KCalc (replaces rofi calculator)
-          "${hyper}+x" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.kcalc kcalc";
+          # GNOME Calculator (replaces rofi calculator)
+          "${hyper}+x" = "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.gnome.Calculator gnome-calculator";
 
           # Rofi Emoji Picker
           "${hyper}+period" = "exec rofi -show emoji";
@@ -465,9 +465,8 @@ in
           # Blueman-manager: floating + sticky (Bluetooth Manager - NixOS wrapped)
           { criteria = { app_id = ".blueman-manager-wrapped"; }; command = "floating enable, sticky enable"; }
 
-          # KCalc: floating + sticky (KDE calculator)
-          { criteria = { app_id = "org.kde.kcalc"; }; command = "floating enable, sticky enable"; }
-          { criteria = { app_id = "kcalc"; }; command = "floating enable, sticky enable"; }
+          # GNOME Calculator: floating + sticky
+          { criteria = { app_id = "org.gnome.Calculator"; }; command = "floating enable, sticky enable"; }
 
           # XWayland apps (use class)
           { criteria = { class = "SwayBG+"; }; command = "floating enable"; }
@@ -658,9 +657,8 @@ in
       # Additional floating window rules
       # Pavucontrol: floating + sticky (correct app_id)
       for_window [app_id="org.pulseaudio.pavucontrol"] floating enable, sticky enable
-      # KCalc: floating + sticky (KDE calculator)
-      for_window [app_id="org.kde.kcalc"] floating enable, sticky enable
-      for_window [app_id="kcalc"] floating enable, sticky enable
+      # GNOME Calculator: floating + sticky
+      for_window [app_id="org.gnome.Calculator"] floating enable, sticky enable
       for_window [app_id="nm-connection-editor"] floating enable
       for_window [app_id=".blueman-manager-wrapped"] floating enable, sticky enable
       for_window [app_id="swappy"] floating enable, sticky enable

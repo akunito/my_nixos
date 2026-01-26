@@ -364,6 +364,7 @@ in
       pkgs-unstable.moonlight-qt
       pkgs-unstable.discord
       pkgs-unstable.kdePackages.kcalc
+      pkgs-unstable.gnome-calculator
       # pkgs.vivaldi  # Removed: Vivaldi is now handled by user/app/browser/vivaldi.nix with KWallet support
       pkgs-unstable.powershell
       pkgs.azure-cli
