@@ -87,7 +87,7 @@ if systemSettings.stylixEnable == true then {
         color_scheme_path=${config.home.homeDirectory}/.config/qt6ct/colors/oomox-current.conf
         custom_palette=true
         standard_dialogs=default
-        style=Fusion
+        style=adwaita-dark
       '';
       
       # Symlink the generated color scheme from qt5ct to qt6ct
@@ -204,7 +204,7 @@ if systemSettings.stylixEnable == true then {
     QT_QPA_PLATFORMTHEME = lib.mkForce "qt6ct";
     GTK_THEME = lib.mkForce "";
     GTK_APPLICATION_PREFER_DARK_THEME = lib.mkForce "";
-    QT_STYLE_OVERRIDE = lib.mkForce "";  # Let qt6ct control style
+    QT_STYLE_OVERRIDE = lib.mkForce "adwaita-dark"; # Force Adwaita Dark style
   };
 
 
@@ -233,8 +233,8 @@ if systemSettings.stylixEnable == true then {
   home.packages = with pkgs; [
     pkgs.noto-fonts-monochrome-emoji
   ] ++ lib.optionals (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) [
-    libsForQt5.qt5ct
-    pkgs.kdePackages.qt6ct
+    pkgs.adwaita-qt # Adwaita style for Qt5
+    pkgs.adwaita-qt6 # Adwaita style for Qt6
   ];
   
 
