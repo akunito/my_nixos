@@ -27,16 +27,19 @@
       plasma = {
         default = "kde";
         "org.freedesktop.impl.portal.FileChooser" = "kde";
+        "org.freedesktop.impl.portal.Settings" = "gtk"; # Use GTK for dark mode
       };
       # For Sway/SwayFX - use mkForce to override Sway module's gtk default
       sway = {
         default = lib.mkForce "kde";
-        "org.freedesktop.impl.portal.FileChooser" = lib.mkForce "kde";
+        "org.freedesktop.impl.portal.FileChooser" = lib.mkForce "kde"; # Dolphin-style picker
+        "org.freedesktop.impl.portal.Settings" = lib.mkForce "gtk"; # Dark mode from GTK/dconf
       };
       # Fallback for any other desktop
       common = {
         default = "kde";
         "org.freedesktop.impl.portal.FileChooser" = "kde";
+        "org.freedesktop.impl.portal.Settings" = "gtk"; # Use GTK for dark mode
       };
     };
 
