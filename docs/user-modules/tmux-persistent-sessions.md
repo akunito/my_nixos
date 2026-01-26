@@ -62,6 +62,48 @@ A systemd user service (`tmux-server.service`) starts the tmux server automatica
 3. **Duplicate Prevention**: The save wrapper prevents multiple saves in the same second
 4. **Data Storage**: Session data is stored in `~/.tmux/resurrect/` directory
 
+## What Gets Restored
+
+### Automatically Restored ✅
+
+1. **Session Structure**: All sessions, windows, and panes with their exact layout
+2. **Working Directories**: Each pane's current working directory is preserved
+3. **Pane States**: Zoomed panes, active pane, and focus positions
+4. **Session Context**: Active and alternative session/window selections
+
+### Process Restoration ✅ (Configured)
+
+The following programs will be automatically restarted when sessions are restored:
+- **Text Editors**: `vim`, `nvim`, `emacs`
+- **System Monitors**: `htop`, `btop`, `btm`, `top`
+- **Utilities**: `ssh`, `less`, `man`, `tail`, `watch`
+
+**Important Notes**:
+- Programs restart in their **default state** (no internal state preserved)
+- For `vim`/`nvim`: Special session handling preserves open files and layouts (requires vim-obsession plugin)
+- SSH connections will **not** preserve authentication or session state
+- Programs with complex internal state may not restore perfectly
+
+### NOT Restored ❌
+
+1. **In-Session Shell History**: The command history buffer of running shells is not restored
+   - However, all commands are saved to permanent history via Atuin (see below)
+2. **Process Internal State**: Programs' memory state, scroll positions, filters, or interactive modes
+3. **TTY Output**: Terminal scrollback buffer and displayed content
+4. **Network Connections**: Active SSH sessions, tunnels, or forwarded ports
+
+## Shell History Solution
+
+While tmux-resurrect cannot restore the in-session shell history buffer, this configuration uses **Atuin** for superior shell history management:
+
+- **Auto-Sync**: History syncs every 5 minutes and on every command
+- **Cross-Session**: All commands are immediately available in all tmux panes
+- **Cloud Backup**: History is backed up to Atuin's cloud service
+- **Smart Search**: Press `Ctrl+R` or `↑` to search through complete history
+- **Context Aware**: Maintains command context including directories and exit codes
+
+This means even if a pane is restored fresh, you have instant access to your complete command history across all sessions and machines.
+
 ## Key Features
 
 ### 1. Automatic Restoration
@@ -99,6 +141,11 @@ set -g @continuum-save 'on'                   # Enable auto-saving
 # Custom script paths
 set -g @resurrect-save-script-path "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper"
 set -g @resurrect-restore-script-path "${tmux-resurrect-restore-wrapper}/bin/tmux-resurrect-restore-wrapper"
+
+# Process restoration settings
+set -g @resurrect-processes 'vim nvim emacs ssh htop btop btm top less man tail watch'
+set -g @resurrect-strategy-vim 'session'
+set -g @resurrect-strategy-nvim 'session'
 
 # Hooks for event-based saving
 set-hook -g client-attached "run-shell '${tmux-resurrect-restore-wrapper}/bin/tmux-resurrect-restore-wrapper'"

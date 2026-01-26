@@ -400,6 +400,19 @@ in
       # Hook to save when client detaches (user detaches from tmux)
       set-hook -g client-detached "run-shell 'tmux show-options -g @resurrect-save-script-path 2>/dev/null | awk \"{print \\\$2}\" | xargs -r sh'"
       
+      # ============================================================================
+      # PROCESS RESTORATION (tmux-resurrect)
+      # ============================================================================
+      
+      # Restore commonly used programs when sessions are restored
+      # Programs will be restarted in their default state (no internal state preserved)
+      set -g @resurrect-processes 'vim nvim emacs ssh htop btop btm top less man tail watch'
+      
+      # Special handling for vim/neovim sessions
+      # This works with vim-obsession plugin to restore editor state
+      set -g @resurrect-strategy-vim 'session'
+      set -g @resurrect-strategy-nvim 'session'
+      
       # SSH session management
       set -g default-command "${pkgs.zsh}/bin/zsh -l"
       set -ga terminal-overrides ",xterm-256color:Tc"
