@@ -74,12 +74,13 @@ Custom wrapper scripts prevent multiple saves happening in the same second, whic
 Sessions are restored only once per server start, preventing multiple restorations when multiple terminals connect.
 
 ### 4. Robust Fallback Strategy
-Terminal wrappers implement a multi-stage fallback:
-- First: Attach to existing named session (alacritty/kitty)
-- Second: Wait for continuum to restore sessions
-- Third: Create bootstrap session to trigger restore
-- Fourth: Create new named session
-- Fifth: Fall back to plain shell
+Terminal wrappers implement a smart deadlock-breaking strategy:
+1.  **Check for Session**: Checks if the specific session (`kitty` or `alacritty`) already exists.
+2.  **Manual Restore Trigger**: If *no* sessions exist, the wrapper explicitly triggers the `tmux-resurrect` restore script. This breaks the "deadlock" where `continuum` waits for a client attach while the wrapper waits for sessions.
+3.  **Wait Loop**: Waits for the specific named session to appear (up to 10s).
+4.  **Strict Attachment**: Attaches *only* to the matching session (Kitty -> `kitty`, Alacritty -> `alacritty`).
+5.  **Creation Fallback**: If the session never appears (first run), it creates a new one with the correct name.
+6.  **Shell Fallback**: If all else fails, falls back to a plain Zsh shell.
 
 ### 5. Broken Link Repair
 The fix-last script repairs broken 'last' symlinks before the server starts, ensuring reliable restoration.
@@ -150,13 +151,32 @@ systemd.user.services.tmux-server = {
 - Alacritty wrapper logs: `~/.cache/tmux/alacritty-wrapper.log`
 - Kitty wrapper logs: `~/.cache/tmux/kitty-wrapper.log`
 
-## Benefits
+### 5. Benefits
 
 - **Zero Data Loss**: Sessions are saved every 5 minutes plus on events
 - **Seamless Experience**: Sessions restore automatically after reboot
 - **Robust Recovery**: Multiple fallback mechanisms ensure terminals always work
 - **Performance Optimized**: Efficient saving prevents system overhead
 - **Reliable**: Handles edge cases like broken symlinks and duplicate saves
+
+## User Guide: How to Use
+
+This feature works automatically in the background. You do not need to manually save or restore sessions under normal modifications.
+
+### Automatic Behavior
+1.  **On Reboot**: Just open your terminal (Kitty or Alacritty). The wrapper will automatically find and restore your previous session.
+2.  **On Close**: Closing a window or detaching automatically triggers a save.
+3.  **On Work**: Your environment is auto-saved every 5 minutes.
+
+### Manual Override (Optional)
+If you need to force a save state immediately (e.g., right before a risky operation):
+- Press `Ctrl + O` (Prefix) then `Ctrl + S`.
+- To manually restore (if needed): `Ctrl + O` then `Ctrl + R`.
+
+### Strict Separation
+- **Kitty** will always load the `kitty` tmux session.
+- **Alacritty** will always load the `alacritty` tmux session.
+- They operate independently, so you can have different work contexts in each terminal.
 
 ## Integration Points
 
