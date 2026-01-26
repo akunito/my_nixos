@@ -37,17 +37,7 @@
   # Automatically add Dolphin to packages if it's selected as the file manager
   # Ranger is already included via user/app/ranger/ranger.nix
   #
-  # CRITICAL: Wrap Dolphin to force QT_QPA_PLATFORMTHEME=qt6ct
-  # This fixes theming issues in Sway (where global theme is qt5ct) because Dolphin is Qt6
-  # and requires qt6ct to properly consume Stylix colors without artifacts (white lines).
-  home.packages = lib.optional (userSettings.fileManager == "dolphin") (pkgs.symlinkJoin {
-    name = "dolphin-wrapped";
-    paths = [ pkgs.kdePackages.dolphin ];
-    buildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/dolphin \
-        --set QT_QPA_PLATFORMTHEME qt6ct \
-        --set QT_SCALE_FACTOR 0.8
-    '';
-  });
+  # Standard Dolphin installation
+  # Theming is now handled globally via Stylix and adwaita-qt in user/style/stylix.nix
+  home.packages = lib.optional (userSettings.fileManager == "dolphin") pkgs.kdePackages.dolphin;
 }
