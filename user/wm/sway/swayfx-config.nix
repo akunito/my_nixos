@@ -78,6 +78,20 @@ let
   xkbLayouts = lib.concatStringsSep "," (map (x: x.layout) parsedLayouts);
   xkbVariants = lib.concatStringsSep "," (map (x: x.variant) parsedLayouts);
 
+  # Swaylock wrapper with 4-second grace period
+  # Shows warning notification and cancels lock if user provides input during grace period
+  swaylock-with-grace = pkgs.writeShellApplication {
+    name = "swaylock-with-grace";
+    runtimeInputs = with pkgs; [
+      sway
+      jq
+      libnotify
+      swaylock-effects
+      bc
+    ];
+    text = builtins.readFile ./scripts/swaylock-with-grace.sh;
+  };
+
   # Keyboard layout switching script
   keyboard-layout-switch = pkgs.writeShellApplication {
     name = "keyboard-layout-switch";
@@ -114,21 +128,21 @@ in
   };
 
   # CRITICAL: Idle daemon with swaylock-effects
+  # Timeouts are ABSOLUTE from last user activity, not incremental
   services.swayidle = {
     enable = true;
     timeouts = [
       {
-        timeout = 600; # 10 minutes
-        command = "${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
+        timeout = 720; # 12 minutes - lock screen (with 4-second grace period)
+        command = "${swaylock-with-grace}/bin/swaylock-with-grace";
       }
       {
-        timeout = 720; # 12 minutes
-        # FIX: Use 'power off' (modern syntax) and ensure single quotes protect the wildcard
+        timeout = 900; # 15 minutes - turn off displays (12 + 3)
         command = "${pkgs.sway}/bin/swaymsg 'output * power off'";
         resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * power on'";
       }
       {
-        timeout = 2700; # 45 minutes
+        timeout = 3600; # 60 minutes - suspend system (1 hour)
         command = "${pkgs.systemd}/bin/systemctl suspend";
       }
     ];
