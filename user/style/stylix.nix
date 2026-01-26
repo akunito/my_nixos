@@ -250,9 +250,6 @@ if systemSettings.stylixEnable == true then
         gtk-theme-name = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
         # REMOVED: gtk-application-prefer-dark-theme = 1;  # Deprecated for libadwaita - use dconf.settings instead
 
-        # CRITICAL: Force Portal for file chooser
-        gtk-use-portal = 1;
-
         # Restore legacy settings requested by user
         gtk-cursor-blink = 1;
         gtk-cursor-blink-time = 1000;
@@ -298,13 +295,19 @@ if systemSettings.stylixEnable == true then
     # NOTE: This is only applied when NOT in Plasma 6 to prevent locking Plasma settings
     # Plasma 6 has its own theming system and doesn't use Stylix
     dconf.settings =
-      lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == false)
+      lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)
         {
           "org/gnome/desktop/interface" = {
             color-scheme = if config.stylix.polarity == "dark" then "prefer-dark" else "default";
             gtk-theme = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
           };
         };
+
+    # CRITICAL: Force GTK_THEME for xdg-desktop-portal-gtk service
+    # This ensures the portal process itself knows to use dark mode, fixing light mode issues
+    systemd.user.services.xdg-desktop-portal-gtk.Service.Environment = lib.mkIf (
+      userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true
+    ) (lib.mkForce [ "GTK_THEME=Adwaita-dark" ]);
 
     stylix.targets.feh.enable = if (userSettings.wmType == "x11") then true else false;
     programs.feh.enable = true;
