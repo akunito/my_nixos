@@ -37,6 +37,26 @@
     NIXOS_OZONE_WL = "1";
   };
 
+  # CRITICAL: xdg-desktop-portal-wlr systemd service
+  # The xdg.portal.wlr.enable option doesn't create the service properly
+  # We need to manually create the systemd user service
+  systemd.user.services.xdg-desktop-portal-wlr = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
+    description = "Portal service (wlroots implementation)";
+    partOf = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" ];
+    
+    serviceConfig = {
+      Type = "dbus";
+      BusName = "org.freedesktop.impl.portal.desktop.wlr";
+      # Clear any existing ExecStart first (from overrides.conf), then set ours
+      ExecStart = [
+        ""  # This clears the existing ExecStart
+        "${pkgs.xdg-desktop-portal-wlr}/libexec/xdg-desktop-portal-wlr"
+      ];
+      Restart = "on-failure";
+    };
+  };
+
   # Polkit authentication agent (needed for GUI admin apps)
   security.polkit.enable = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) true;
   

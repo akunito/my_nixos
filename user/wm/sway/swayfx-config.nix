@@ -366,6 +366,17 @@ in
       # Startup commands
       startup =
         [
+          # CRITICAL: Import environment variables EARLY, before any DBus-activated services start
+          # xdg-desktop-portal is DBus-activated when apps request screen sharing
+          # If these variables aren't in systemd BEFORE activation, portal fails and no picker appears
+          {
+            command = "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK";
+            always = true;
+          }
+          {
+            command = "${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK";
+            always = true;
+          }
           # Startup logging for workspace assignment debugging
           {
             command = "/home/akunito/.dotfiles/user/wm/sway/scripts/workspace-startup-logger.sh";

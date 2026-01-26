@@ -362,7 +362,10 @@ in
       pkgs-unstable.wireguard-tools
       pkgs-unstable.bitwarden-desktop
       pkgs-unstable.moonlight-qt
+      # Discord - works in Plasma, will work in Sway after portal fix
       pkgs-unstable.discord
+      # Vesktop - alternative with native Wayland support
+      pkgs-unstable.vesktop
       pkgs-unstable.kdePackages.kcalc
       pkgs-unstable.gnome-calculator
       # pkgs.vivaldi  # Removed: Vivaldi is now handled by user/app/browser/vivaldi.nix with KWallet support

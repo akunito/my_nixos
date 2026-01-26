@@ -7,7 +7,7 @@ let
     # Sync with D-Bus activation environment
     # Variables are already set by extraSessionCommands, we just need to sync them
     # persistent systemd --user manager environment (which can leak into Plasma 6 if lingering is enabled).
-    dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME CUPS_SERVER PATH
+    ${pkgs.dbus}/bin/dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME CUPS_SERVER PATH
   '';
 
   # Ensure core Wayland session vars are visible to systemd --user units launched via DBus activation
@@ -163,19 +163,8 @@ in
   user.wm.sway._internal.scripts.swaySessionStart = sway-session-start;
   user.wm.sway._internal.scripts.rebuildKsycoCa = rebuild-ksycoca;
 
-  # CRITICAL: Portal configuration to avoid conflicts with KDE
-  xdg.portal = {
-    enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-wlr
-      xdg-desktop-portal-gtk
-    ];
-    config = {
-      sway = {
-        default = [ "wlr" "gtk" ];
-      };
-    };
-  };
+  # Portal configuration is now handled at system level in system/wm/sway.nix
+  # Removed duplicate Home Manager xdg.portal configuration to avoid conflicts
 
   # Sway-only portal reliability: add drop-ins (NOT full unit files) to avoid shadowing /etc/systemd/user units.
   #
