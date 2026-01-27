@@ -52,5 +52,7 @@
   environment.systemPackages = with pkgs; [
     kdePackages.kio # KDE I/O framework for file operations
     kdePackages.kio-extras # Additional KIO protocols
+    adwaita-qt # Qt5 Adwaita style
+    adwaita-qt6 # Qt6 Adwaita style (CRITICAL for KDE portal dark mode)
   ];
 }

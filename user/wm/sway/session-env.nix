@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   # Script to sync theme variables with D-Bus activation environment
@@ -7,14 +12,22 @@ let
     # Sync with D-Bus activation environment
     # Variables are already set by extraSessionCommands, we just need to sync them
     # persistent systemd --user manager environment (which can leak into Plasma 6 if lingering is enabled).
-    ${pkgs.dbus}/bin/dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME CUPS_SERVER PATH
+    # CRITICAL: Include ALL theme variables so apps launched via Rofi/D-Bus see dark mode settings
+    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd \
+      WAYLAND_DISPLAY XDG_CURRENT_DESKTOP \
+      QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE \
+      GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME GTK_USE_PORTAL \
+      CUPS_SERVER PATH
   '';
 
   # Ensure core Wayland session vars are visible to systemd --user units launched via DBus activation
-  # (e.g. xdg-desktop-portal). We intentionally do NOT include theme vars here to preserve Plasma 6 containment.
+  # (e.g. xdg-desktop-portal). Now includes theme vars to ensure dark mode works for Rofi-launched apps.
   set-sway-systemd-session-vars = pkgs.writeShellScriptBin "set-sway-systemd-session-vars" ''
     #!/bin/sh
-    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP PATH
+    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd \
+      WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP PATH \
+      QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE \
+      GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME GTK_USE_PORTAL
   '';
 
   # Write a session-scoped environment file for systemd --user services started from Sway.
@@ -23,20 +36,20 @@ let
   # - Sway injects the desired vars (extraSessionCommands), and we snapshot them into %t/sway-session.env
   # - Systemd units use EnvironmentFile=%t/sway-session.env (no global systemd import-environment needed)
   write-sway-session-env = pkgs.writeShellScriptBin "write-sway-session-env" ''
-    #!/bin/sh
-    ENV_FILE="/run/user/$(id -u)/sway-session.env"
-    umask 077
-    mkdir -p "$(dirname "$ENV_FILE")" 2>/dev/null || true
-    cat >"$ENV_FILE" <<EOF
-WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-}
-SWAYSOCK=''${SWAYSOCK:-}
-XDG_CURRENT_DESKTOP=''${XDG_CURRENT_DESKTOP:-sway}
-QT_QPA_PLATFORMTHEME=''${QT_QPA_PLATFORMTHEME:-}
-GTK_THEME=''${GTK_THEME:-}
-GTK_APPLICATION_PREFER_DARK_THEME=''${GTK_APPLICATION_PREFER_DARK_THEME:-}
-QT_STYLE_OVERRIDE=''${QT_STYLE_OVERRIDE:-}
-CUPS_SERVER=localhost:631
-EOF
+        #!/bin/sh
+        ENV_FILE="/run/user/$(id -u)/sway-session.env"
+        umask 077
+        mkdir -p "$(dirname "$ENV_FILE")" 2>/dev/null || true
+        cat >"$ENV_FILE" <<EOF
+    WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-}
+    SWAYSOCK=''${SWAYSOCK:-}
+    XDG_CURRENT_DESKTOP=''${XDG_CURRENT_DESKTOP:-sway}
+    QT_QPA_PLATFORMTHEME=''${QT_QPA_PLATFORMTHEME:-}
+    GTK_THEME=''${GTK_THEME:-}
+    GTK_APPLICATION_PREFER_DARK_THEME=''${GTK_APPLICATION_PREFER_DARK_THEME:-}
+    QT_STYLE_OVERRIDE=''${QT_STYLE_OVERRIDE:-}
+    CUPS_SERVER=localhost:631
+    EOF
   '';
 
   # Write a Sway-only portal environment file.
@@ -46,16 +59,16 @@ EOF
   # because tray apps may need Xwayland. Instead we provide a portal-scoped env file that forces GTK
   # to prefer Wayland when the file exists (Sway session).
   write-sway-portal-env = pkgs.writeShellScriptBin "write-sway-portal-env" ''
-    #!/bin/sh
-    ENV_FILE="/run/user/$(id -u)/sway-portal.env"
-    umask 077
-    mkdir -p "$(dirname "$ENV_FILE")" 2>/dev/null || true
-    cat >"$ENV_FILE" <<EOF
-WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-}
-XDG_CURRENT_DESKTOP=''${XDG_CURRENT_DESKTOP:-sway}
-XDG_SESSION_TYPE=wayland
-GDK_BACKEND=wayland
-EOF
+        #!/bin/sh
+        ENV_FILE="/run/user/$(id -u)/sway-portal.env"
+        umask 077
+        mkdir -p "$(dirname "$ENV_FILE")" 2>/dev/null || true
+        cat >"$ENV_FILE" <<EOF
+    WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-}
+    XDG_CURRENT_DESKTOP=''${XDG_CURRENT_DESKTOP:-sway}
+    XDG_SESSION_TYPE=wayland
+    GDK_BACKEND=wayland
+    EOF
   '';
 
   # Wrapper for xdg-desktop-portal-gtk to force Wayland in Sway sessions.
@@ -222,5 +235,3 @@ in
     ${pkgs.systemd}/bin/systemctl --user daemon-reload >/dev/null 2>&1 || true
   '';
 }
-
-
