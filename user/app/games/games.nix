@@ -3,6 +3,7 @@
   pkgs-unstable,
   pkgs-stable,
   userSettings,
+  systemSettings,
   lib,
   inputs,
   ...
@@ -26,6 +27,15 @@ let
       genesis-plus-gx
     ]
   );
+
+  # Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery
+  # Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery
+  amdWrapperArgs =
+    if (systemSettings.gpuType or "") == "amd" then
+      ''--run 'mkdir -p $HOME/.local/state' --run 'echo "--- Lutris Wrapper $(date) ---" >> $HOME/.local/state/lutris-wrapper.log' --run 'echo "VK_ICD_FILENAMES=$VK_ICD_FILENAMES" >> $HOME/.local/state/lutris-wrapper.log' --set AMD_VULKAN_ICD "radv" --set VK_ICD_FILENAMES "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json:/run/opengl-driver-32/share/vulkan/icd.d/radeon_icd.i686.json" --prefix XDG_DATA_DIRS : "/run/opengl-driver/share:/run/opengl-driver-32/share"''
+    else
+      "";
+
 in
 {
   home.packages =
@@ -44,8 +54,22 @@ in
       pokefinder
     ])
     ++ (lib.optionals (userSettings.protongamesEnable == true) [
-      (pkgs-unstable.bottles.override { removeWarningPopup = true; })
-      pkgs-unstable.lutris
+      (pkgs-unstable.bottles.overrideAttrs (old: {
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
+        buildCommand = ''
+          ${old.buildCommand}
+          wrapProgram $out/bin/bottles ${amdWrapperArgs}
+        '';
+      }))
+      # Lutris with explicit Vulkan environment wrapping to fix FHS/sandbox driver discovery
+      (pkgs-unstable.lutris.overrideAttrs (old: {
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
+        buildCommand = ''
+          ${old.buildCommand}
+          wrapProgram $out/bin/lutris ${amdWrapperArgs} \
+            --set PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION "python"
+        '';
+      }))
       pkgs-unstable.protonup-qt
       # Wine and debugging tools
       pkgs.wineWowPackages.stagingFull # Wine with 32/64-bit support + wine-mono
@@ -70,8 +94,6 @@ in
     # AMD RDNA 3 Optimizations
     RADV_PERFTEST = "gpl"; # Graphics Pipeline Library - reduces stuttering
     AMD_VULKAN_ICD = "radv"; # Ensure Mesa driver is used over AMDVLK
-    # Fix Lutris protobuf crash: "Google protobuf could not be loaded"
-    PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION = "python";
   };
 
   nixpkgs.config = {

@@ -1,4 +1,10 @@
-{ pkgs, lib, userSettings, systemSettings, ... }:
+{
+  pkgs,
+  lib,
+  userSettings,
+  systemSettings,
+  ...
+}:
 
 {
   # Import shared dependencies
@@ -7,82 +13,104 @@
     ./pipewire.nix
     ./fonts.nix
     ./dbus.nix
-    ../dm/sddm.nix  # Shared SDDM configuration (KWallet PAM)
-    ./keyd.nix  # Keyboard remapping (Caps Lock to Hyper)
+    ../dm/sddm.nix # Shared SDDM configuration (KWallet PAM)
+    ./keyd.nix # Keyboard remapping (Caps Lock to Hyper)
   ];
 
   # CRITICAL: Use swayfx instead of standard sway
   programs.sway = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
     enable = true;
-    package = pkgs.swayfx;  # Use SwayFX for blur, shadows, rounded corners
+    package = pkgs.swayfx; # Use SwayFX for blur, shadows, rounded corners
     extraPackages = with pkgs; [
-      swaylock-effects  # Elegant lock screen with blurred screenshot
-      swayidle          # Idle daemon for screen locking
-      xwayland          # XWayland support for compatibility
+      swaylock-effects # Elegant lock screen with blurred screenshot
+      swayidle # Idle daemon for screen locking
+      xwayland # XWayland support for compatibility
     ];
   };
 
   # SDDM session configuration - allow both Plasma and SwayFX
-  services.displayManager.sddm = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
-    enable = true;
-    wayland.enable = true;
-  };
+  services.displayManager.sddm =
+    lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true)
+      {
+        enable = true;
+        wayland.enable = true;
+      };
 
   # Set Sway as default SDDM session for DESK
   # This takes precedence over Plasma default when both are enabled
-  services.displayManager.defaultSession = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) "sway";
+  services.displayManager.defaultSession = lib.mkIf (
+    userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true
+  ) "sway";
 
-  # CRITICAL: Force Electron apps to native Wayland mode
-  environment.variables = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
-    NIXOS_OZONE_WL = "1";
-  };
+  # CRITICAL: Force Electron apps to native Wayland mode and set Vulkan ICD paths
+  # VK_ICD_FILENAMES: Explicitly point to RADV drivers for Vulkan discovery (fixes Lutris "Found no drivers" error)
+  # This must be at system level because extraSessionCommands don't reliably propagate to all processes
+  environment.variables =
+    lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true)
+      {
+        NIXOS_OZONE_WL = "1";
+        # Vulkan ICD discovery for AMD GPUs (RADV)
+        VK_ICD_FILENAMES = "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json:/run/opengl-driver-32/share/vulkan/icd.d/radeon_icd.i686.json";
+        # AMD Vulkan ICD selection (force RADV over any AMDVLK if installed)
+        AMD_VULKAN_ICD = "RADV";
+      };
 
   # CRITICAL: xdg-desktop-portal-wlr systemd service
   # The xdg.portal.wlr.enable option doesn't create the service properly
   # We need to manually create the systemd user service
-  systemd.user.services.xdg-desktop-portal-wlr = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
-    description = "Portal service (wlroots implementation)";
-    partOf = [ "graphical-session.target" ];
-    after = [ "graphical-session.target" ];
-    
-    serviceConfig = {
-      Type = "dbus";
-      BusName = "org.freedesktop.impl.portal.desktop.wlr";
-      # Clear any existing ExecStart first (from overrides.conf), then set ours
-      ExecStart = [
-        ""  # This clears the existing ExecStart
-        "${pkgs.xdg-desktop-portal-wlr}/libexec/xdg-desktop-portal-wlr"
-      ];
-      Restart = "on-failure";
-    };
-  };
+  systemd.user.services.xdg-desktop-portal-wlr =
+    lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true)
+      {
+        description = "Portal service (wlroots implementation)";
+        partOf = [ "graphical-session.target" ];
+        after = [ "graphical-session.target" ];
+
+        serviceConfig = {
+          Type = "dbus";
+          BusName = "org.freedesktop.impl.portal.desktop.wlr";
+          # Clear any existing ExecStart first (from overrides.conf), then set ours
+          ExecStart = [
+            "" # This clears the existing ExecStart
+            "${pkgs.xdg-desktop-portal-wlr}/libexec/xdg-desktop-portal-wlr"
+          ];
+          Restart = "on-failure";
+        };
+      };
 
   # Polkit authentication agent (needed for GUI admin apps)
-  security.polkit.enable = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) true;
-  
+  security.polkit.enable = lib.mkIf (
+    userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true
+  ) true;
+
   # Polkit-gnome authentication agent
-  systemd.user.services.polkit-gnome-authentication-agent-1 = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
-    description = "polkit-gnome-authentication-agent-1";
-    wantedBy = [ "graphical-session.target" ];
-    wants = [ "graphical-session.target" ];
-    after = [ "graphical-session.target" ];
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-      Restart = "on-failure";
-      RestartSec = 1;
-      TimeoutStopSec = 10;
-    };
-  };
+  systemd.user.services.polkit-gnome-authentication-agent-1 =
+    lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true)
+      {
+        description = "polkit-gnome-authentication-agent-1";
+        wantedBy = [ "graphical-session.target" ];
+        wants = [ "graphical-session.target" ];
+        after = [ "graphical-session.target" ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+          Restart = "on-failure";
+          RestartSec = 1;
+          TimeoutStopSec = 10;
+        };
+      };
 
   # XWayland support for compatibility
-  programs.xwayland.enable = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) true;
+  programs.xwayland.enable = lib.mkIf (
+    userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true
+  ) true;
 
   # KWallet PAM integration for Sway-specific screen unlock
   # Note: login and sddm KWallet settings are now handled by ../dm/sddm.nix
-  security.pam.services = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
-    swaylock.enableKwallet = true;   # Unlock wallet on screen unlock (Sway-specific)
-  };
+  security.pam.services =
+    lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true)
+      {
+        swaylock.enableKwallet = true; # Unlock wallet on screen unlock (Sway-specific)
+      };
 
   # TODO: Remove later - GNOME Keyring removed in favor of KWallet to prevent conflicts
   # GNOME Keyring for Vivaldi and other apps that need secure credential storage
@@ -92,12 +120,13 @@
   # Keyboard input configuration for polyglot typing (English/Spanish)
   # This will be configured in the Sway config file, but we ensure xkb is available
   # Use mkForce to override the variant from wayland.nix when Sway is enabled
-  services.xserver = lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
-    enable = true;
-    xkb = {
-      layout = "us";
-      variant = lib.mkForce "altgr-intl";  # US International (AltGr Dead Keys) for English/Spanish hybrid
-    };
-  };
+  services.xserver =
+    lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true)
+      {
+        enable = true;
+        xkb = {
+          layout = "us";
+          variant = lib.mkForce "altgr-intl"; # US International (AltGr Dead Keys) for English/Spanish hybrid
+        };
+      };
 }
-

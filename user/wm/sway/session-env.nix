@@ -13,9 +13,9 @@ let
     # Variables are already set by extraSessionCommands, we just need to sync them
     # persistent systemd --user manager environment (which can leak into Plasma 6 if lingering is enabled).
     # CRITICAL: Include ALL theme variables so apps launched via Rofi/D-Bus see dark mode settings
-    # XDG_DATA_DIRS is critical for Vulkan ICD discovery (Lutris, Wine, games)
+    # XDG_DATA_DIRS and VK_ICD_FILENAMES are critical for Vulkan ICD discovery (Lutris, Wine, games)
     ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd \
-      WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_DATA_DIRS \
+      WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_DATA_DIRS VK_ICD_FILENAMES \
       QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE \
       GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME GTK_USE_PORTAL \
       CUPS_SERVER PATH
@@ -25,9 +25,9 @@ let
   # (e.g. xdg-desktop-portal). Now includes theme vars to ensure dark mode works for Rofi-launched apps.
   set-sway-systemd-session-vars = pkgs.writeShellScriptBin "set-sway-systemd-session-vars" ''
     #!/bin/sh
-    # XDG_DATA_DIRS is critical for Vulkan ICD discovery (Lutris, Wine, games)
+    # XDG_DATA_DIRS and VK_ICD_FILENAMES are critical for Vulkan ICD discovery (Lutris, Wine, games)
     ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd \
-      WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_DATA_DIRS PATH \
+      WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_DATA_DIRS VK_ICD_FILENAMES PATH \
       QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE \
       GTK_THEME GTK_APPLICATION_PREFER_DARK_THEME GTK_USE_PORTAL
   '';

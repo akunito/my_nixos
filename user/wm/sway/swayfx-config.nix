@@ -181,9 +181,11 @@ in
       # Always set CUPS_SERVER for printer access in Sway
       # CRITICAL: Add OpenGL driver paths to XDG_DATA_DIRS for Vulkan ICD discovery
       # Without this, Lutris/Wine can't find Vulkan drivers when launched from Rofi/D-Bus
+      # VK_ICD_FILENAMES explicitly points to RADV drivers (fixes Lutris "Found no drivers" error)
       ''
         export CUPS_SERVER=localhost:631
         export XDG_DATA_DIRS="/run/opengl-driver/share:/run/opengl-driver-32/share:$XDG_DATA_DIRS"
+        export VK_ICD_FILENAMES="/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json:/run/opengl-driver-32/share/vulkan/icd.d/radeon_icd.i686.json"
       ''
       # Conditionally set theme variables if Stylix is enabled
       (lib.mkIf (systemSettings.stylixEnable == true) ''
@@ -423,13 +425,13 @@ in
         # CRITICAL: Import environment variables EARLY, before any DBus-activated services start
         # xdg-desktop-portal is DBus-activated when apps request screen sharing
         # If these variables aren't in systemd BEFORE activation, portal fails and no picker appears
-        # XDG_DATA_DIRS is critical for Vulkan ICD discovery (Lutris, Wine, games)
+        # XDG_DATA_DIRS and VK_ICD_FILENAMES are critical for Vulkan ICD discovery (Lutris, Wine, games)
         {
-          command = "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK XDG_DATA_DIRS";
+          command = "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK XDG_DATA_DIRS VK_ICD_FILENAMES";
           always = true;
         }
         {
-          command = "${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK XDG_DATA_DIRS";
+          command = "${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK XDG_DATA_DIRS VK_ICD_FILENAMES";
           always = true;
         }
         # Startup logging for workspace assignment debugging
