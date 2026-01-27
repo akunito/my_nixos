@@ -32,7 +32,7 @@ let
   # Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery
   amdWrapperArgs =
     if (systemSettings.gpuType or "") == "amd" then
-      ''--run 'mkdir -p $HOME/.local/state' --run 'echo "--- Lutris Wrapper $(date) ---" >> $HOME/.local/state/lutris-wrapper.log' --run 'echo "VK_ICD_FILENAMES=$VK_ICD_FILENAMES" >> $HOME/.local/state/lutris-wrapper.log' --set AMD_VULKAN_ICD "radv" --set VK_ICD_FILENAMES "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json:/run/opengl-driver-32/share/vulkan/icd.d/radeon_icd.i686.json" --prefix XDG_DATA_DIRS : "/run/opengl-driver/share:/run/opengl-driver-32/share"''
+      ''--run 'mkdir -p $HOME/.local/state' --run 'echo "--- Lutris Wrapper $(date) ---" >> $HOME/.local/state/lutris-wrapper.log' --run 'echo "NODEVICE_SELECT=$NODEVICE_SELECT" >> $HOME/.local/state/lutris-wrapper.log' --run 'echo "VK_ICD_FILENAMES=$VK_ICD_FILENAMES" >> $HOME/.local/state/lutris-wrapper.log' --set NODEVICE_SELECT "1" --set VK_ICD_FILENAMES "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json:/run/opengl-driver-32/share/vulkan/icd.d/radeon_icd.i686.json" --prefix XDG_DATA_DIRS : "/run/opengl-driver/share:/run/opengl-driver-32/share"''
     else
       "";
 
@@ -94,6 +94,7 @@ in
     # AMD RDNA 3 Optimizations
     RADV_PERFTEST = "gpl"; # Graphics Pipeline Library - reduces stuttering
     AMD_VULKAN_ICD = "radv"; # Ensure Mesa driver is used over AMDVLK
+    NODEVICE_SELECT = "1"; # Fix crash on RDNA 4 (disable VK_LAYER_MESA_device_select)
   };
 
   nixpkgs.config = {
