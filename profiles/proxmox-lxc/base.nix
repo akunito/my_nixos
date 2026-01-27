@@ -35,6 +35,14 @@
 
   nixpkgs.config.allowUnfree = true;
 
+  # Disable documentation to reduce build time (no man pages, no NixOS manual)
+  documentation.enable = false;
+  documentation.nixos.enable = false;
+  documentation.man.enable = false;
+
+  # Disable command-not-found (rebuilds package index, heavy)
+  programs.command-not-found.enable = false;
+
   # Networking
   networking.hostName = systemSettings.hostname;
   networking.networkmanager.enable = systemSettings.networkManager;

@@ -7,6 +7,9 @@
     profile = "proxmox-lxc";
     gpuType = "none";
 
+    # Disable font injection (no GUI needed)
+    fonts = [ ];
+
     # Kernel modules are not normally needed in LXC (managed by host)
     kernelModules = [ ];
 
@@ -42,7 +45,7 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPp/10TlSOte830j6ofuEQ21YKxFD34iiyY55yl6sW7V diego88aku@gmail.com" # Laptop
     ];
 
-    # System packages (Minimal CLI set)
+    # System packages (Minimal CLI set - no atuin for lightweight profile)
     systemPackages =
       pkgs: pkgs-unstable: with pkgs; [
         vim
@@ -53,9 +56,8 @@
         btop
         fzf
         tldr
-        atuin
         home-manager
-        nfs-utils
+        # nfs-utils removed since nfsClientEnable = false
       ];
 
     # Swap file (Disabled in LXC, managed by Proxmox)
@@ -78,6 +80,10 @@
 
     theme = "io";
     wm = "none"; # Server profile
+
+    # Override terminal/font settings (no GUI needed)
+    term = "bash";
+    font = "";
 
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";

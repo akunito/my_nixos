@@ -12,11 +12,31 @@
 
   programs.home-manager.enable = true;
 
-  imports = [
-    ../../user/shell/sh.nix
-    ../../user/app/ranger/ranger.nix
-    ../../user/app/git/git.nix
-  ];
+  # Minimal shell configuration (no heavy packages like lolcat, cowsay, etc.)
+  programs.zsh = {
+    enable = true;
+    autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
+    enableCompletion = true;
+    initExtra = userSettings.zshinitContent;
+  };
+
+  programs.bash = {
+    enable = true;
+    enableCompletion = true;
+  };
+
+  # Git without libsecret (SSH key auth only, avoids dbus/gnome-keyring deps)
+  programs.git = {
+    enable = true;
+    userName = userSettings.gitUser;
+    userEmail = userSettings.gitEmail;
+    extraConfig = {
+      init.defaultBranch = "main";
+      pull.rebase = true;
+      color.ui = "auto";
+    };
+  };
 
   home.stateVersion = userSettings.homeStateVersion;
   home.packages = userSettings.homePackages;
