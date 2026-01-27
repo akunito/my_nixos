@@ -186,6 +186,8 @@ in
         export CUPS_SERVER=localhost:631
         export XDG_DATA_DIRS="/run/opengl-driver/share:/run/opengl-driver-32/share:$XDG_DATA_DIRS"
         export VK_ICD_FILENAMES="/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json:/run/opengl-driver-32/share/vulkan/icd.d/radeon_icd.i686.json"
+        export NODEVICE_SELECT="1"
+        export BOTTLES_IGNORE_SANDBOX="1"
       ''
       # Conditionally set theme variables if Stylix is enabled
       (lib.mkIf (systemSettings.stylixEnable == true) ''
@@ -300,7 +302,7 @@ in
           "${hyper}+m" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
           "${hyper}+B" =
-            "exec env ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles Bottles";
+            "exec env ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
           # SwayBG+ (wallpaper UI) - moved from hyper+s
           # "${hyper}+s" = "exec swaybgplus-gui";
           "${hyper}+s" =
@@ -427,11 +429,11 @@ in
         # If these variables aren't in systemd BEFORE activation, portal fails and no picker appears
         # XDG_DATA_DIRS and VK_ICD_FILENAMES are critical for Vulkan ICD discovery (Lutris, Wine, games)
         {
-          command = "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK XDG_DATA_DIRS VK_ICD_FILENAMES";
+          command = "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK XDG_DATA_DIRS VK_ICD_FILENAMES NODEVICE_SELECT BOTTLES_IGNORE_SANDBOX";
           always = true;
         }
         {
-          command = "${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK XDG_DATA_DIRS VK_ICD_FILENAMES";
+          command = "${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK XDG_DATA_DIRS VK_ICD_FILENAMES NODEVICE_SELECT BOTTLES_IGNORE_SANDBOX";
           always = true;
         }
         # Startup logging for workspace assignment debugging

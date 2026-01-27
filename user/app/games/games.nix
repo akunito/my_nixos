@@ -54,7 +54,7 @@ in
       pokefinder
     ])
     ++ (lib.optionals (userSettings.protongamesEnable == true) [
-      (pkgs-unstable.bottles.overrideAttrs (old: {
+      ((pkgs-unstable.bottles.override { removeWarningPopup = true; }).overrideAttrs (old: {
         nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
         buildCommand = ''
           ${old.buildCommand}
