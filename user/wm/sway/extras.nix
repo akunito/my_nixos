@@ -1,4 +1,11 @@
-{ config, pkgs, lib, userSettings, systemSettings, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  userSettings,
+  systemSettings,
+  ...
+}:
 
 {
   # Btop theme configuration (Stylix colors)
@@ -6,23 +13,28 @@
   # Stylix is disabled for Plasma 6 even if stylixEnable is true
   # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
   home.file.".config/btop/btop.conf" =
-    lib.mkIf (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
-      text = ''
-        # Btop Configuration
-        # Theme matching Stylix colors
+    lib.mkIf
+      (
+        systemSettings.stylixEnable == true
+        && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)
+      )
+      {
+        text = ''
+          # Btop Configuration
+          # Theme matching Stylix colors
 
-        theme_background = "#${config.lib.stylix.colors.base00}"
-        theme_text = "#${config.lib.stylix.colors.base07}"
-        theme_title = "#${config.lib.stylix.colors.base0D}"
-        theme_hi_fg = "#${config.lib.stylix.colors.base0A}"
-        theme_selected_bg = "#${config.lib.stylix.colors.base0D}"
-        theme_selected_fg = "#${config.lib.stylix.colors.base07}"
-        theme_cpu_box = "#${config.lib.stylix.colors.base0B}"
-        theme_mem_box = "#${config.lib.stylix.colors.base0E}"
-        theme_net_box = "#${config.lib.stylix.colors.base0C}"
-        theme_proc_box = "#${config.lib.stylix.colors.base09}"
-      '';
-    };
+          theme_background = "#${config.lib.stylix.colors.base00}"
+          theme_text = "#${config.lib.stylix.colors.base07}"
+          theme_title = "#${config.lib.stylix.colors.base0D}"
+          theme_hi_fg = "#${config.lib.stylix.colors.base0A}"
+          theme_selected_bg = "#${config.lib.stylix.colors.base0D}"
+          theme_selected_fg = "#${config.lib.stylix.colors.base07}"
+          theme_cpu_box = "#${config.lib.stylix.colors.base0B}"
+          theme_mem_box = "#${config.lib.stylix.colors.base0E}"
+          theme_net_box = "#${config.lib.stylix.colors.base0C}"
+          theme_proc_box = "#${config.lib.stylix.colors.base09}"
+        '';
+      };
 
   # Libinput-gestures configuration for SwayFX
   # 3-finger swipe for workspace navigation (matches keybindings: next_on_output/prev_on_output)
@@ -51,53 +63,74 @@
 
       # Convert 6-digit hex ("rrggbb") to rgba(r,g,b,1)
       # We keep alpha fixed at 1 because Swappy expects a single default color.
-      hexToRgbaSolid = hex:
+      hexToRgbaSolid =
+        hex:
         let
-          hexDigitToDec = d:
-            if d == "0" then 0
-            else if d == "1" then 1
-            else if d == "2" then 2
-            else if d == "3" then 3
-            else if d == "4" then 4
-            else if d == "5" then 5
-            else if d == "6" then 6
-            else if d == "7" then 7
-            else if d == "8" then 8
-            else if d == "9" then 9
-            else if d == "a" || d == "A" then 10
-            else if d == "b" || d == "B" then 11
-            else if d == "c" || d == "C" then 12
-            else if d == "d" || d == "D" then 13
-            else if d == "e" || d == "E" then 14
-            else if d == "f" || d == "F" then 15
-            else 0;
-          hexToDec = hexStr:
+          hexDigitToDec =
+            d:
+            if d == "0" then
+              0
+            else if d == "1" then
+              1
+            else if d == "2" then
+              2
+            else if d == "3" then
+              3
+            else if d == "4" then
+              4
+            else if d == "5" then
+              5
+            else if d == "6" then
+              6
+            else if d == "7" then
+              7
+            else if d == "8" then
+              8
+            else if d == "9" then
+              9
+            else if d == "a" || d == "A" then
+              10
+            else if d == "b" || d == "B" then
+              11
+            else if d == "c" || d == "C" then
+              12
+            else if d == "d" || d == "D" then
+              13
+            else if d == "e" || d == "E" then
+              14
+            else if d == "f" || d == "F" then
+              15
+            else
+              0;
+          hexToDec =
+            hexStr:
             let
               d1 = builtins.substring 0 1 hexStr;
               d2 = builtins.substring 1 1 hexStr;
             in
-              hexDigitToDec d1 * 16 + hexDigitToDec d2;
+            hexDigitToDec d1 * 16 + hexDigitToDec d2;
           r = hexToDec (builtins.substring 0 2 hex);
           g = hexToDec (builtins.substring 2 2 hex);
           b = hexToDec (builtins.substring 4 2 hex);
         in
-          "rgba(${toString r}, ${toString g}, ${toString b}, 1)";
+        "rgba(${toString r}, ${toString g}, ${toString b}, 1)";
 
       saveDir = "${config.home.homeDirectory}/Pictures/Screenshots";
-      fontName = if stylixAvailable then config.stylix.fonts.sansSerif.name else "JetBrainsMono Nerd Font";
+      fontName =
+        if stylixAvailable then config.stylix.fonts.sansSerif.name else "JetBrainsMono Nerd Font";
       accentHex = if stylixAvailable then config.lib.stylix.colors.base0D else "268bd2";
     in
-      lib.generators.toINI { } {
-        Default = {
-          save_dir = saveDir;
-          save_filename_format = "swappy-%Y%m%d-%H%M%S.png";
-          show_panel = false;
-          line_size = 5;
-          text_size = 20;
-          text_font = fontName;
-          custom_color = hexToRgbaSolid accentHex;
-        };
+    lib.generators.toINI { } {
+      Default = {
+        save_dir = saveDir;
+        save_filename_format = "swappy-%Y%m%d-%H%M%S.png";
+        show_panel = false;
+        line_size = 5;
+        text_size = 20;
+        text_font = fontName;
+        custom_color = hexToRgbaSolid accentHex;
       };
+    };
 
   # Ensure the default screenshots directory exists (used by Swappy save_dir).
   home.activation.ensureScreenshotsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -190,12 +223,10 @@
     executable = true;
   };
 
-
   home.file.".config/sway/scripts/swaysome-assign-groups.sh" = {
     source = ./scripts/swaysome-assign-groups.sh;
     executable = true;
   };
-
 
   home.file.".config/sway/scripts/workspace-utils.sh" = {
     source = ./scripts/workspace-utils.sh;
@@ -281,7 +312,6 @@
     blueman
     polkit_gnome
     pavucontrol # GUI audio mixer (referenced in waybar config)
+    gnome-themes-extra # Adwaita dark theme for GTK3 apps (fixes light mode fallback)
   ];
 }
-
-
