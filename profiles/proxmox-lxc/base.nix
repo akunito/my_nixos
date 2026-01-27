@@ -1,0 +1,81 @@
+{
+  lib,
+  pkgs,
+  systemSettings,
+  userSettings,
+  inputs,
+  modulesPath,
+  ...
+}:
+
+{
+  imports = [
+    (modulesPath + "/virtualisation/proxmox-lxc.nix")
+    ../../system/hardware/time.nix
+    ../../system/security/firewall.nix
+    ../../system/security/fail2ban.nix
+    ../../system/hardware/nfs_client.nix
+    ../../system/security/sudo.nix
+    ../../system/security/gpg.nix
+    ../../system/security/autoupgrade.nix
+    ../../system/security/restic.nix
+    ../../system/security/polkit.nix
+    (import ../../system/app/docker.nix {
+      storageDriver = "overlay2";
+      inherit pkgs userSettings lib;
+    })
+  ]
+  ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix;
+
+  # Ensure nix flakes are enabled
+  nix.package = pkgs.nixVersions.stable;
+  nix.extraOptions = ''
+    experimental-features = nix-command flakes
+  '';
+
+  nixpkgs.config.allowUnfree = true;
+
+  # Networking
+  networking.hostName = systemSettings.hostname;
+  networking.networkmanager.enable = systemSettings.networkManager;
+  networking.defaultGateway = lib.mkIf (
+    systemSettings.defaultGateway != null
+  ) systemSettings.defaultGateway;
+  networking.nameservers = systemSettings.nameServers;
+
+  # Timezone and locale
+  time.timeZone = systemSettings.timezone;
+  i18n.defaultLocale = systemSettings.locale;
+  i18n.extraLocaleSettings = {
+    LC_TIME = systemSettings.timeLocale;
+  };
+
+  # User account
+  users.users.${userSettings.username} = {
+    isNormalUser = true;
+    description = userSettings.name;
+    extraGroups = userSettings.extraGroups;
+    packages = [ ];
+    uid = 1000;
+  };
+
+  # System packages
+  environment.systemPackages = systemSettings.systemPackages;
+
+  programs.fuse.userAllowOther = true;
+
+  # Shell configuration
+  environment.shells = with pkgs; [ zsh ];
+  users.defaultUserShell = pkgs.zsh;
+  programs.zsh.enable = true;
+
+  # Swap file
+  swapDevices = lib.mkIf (systemSettings.swapFileEnable == true) [
+    {
+      device = "/swapfile";
+      size = systemSettings.swapFileSyzeGB * 1024;
+    }
+  ];
+
+  system.stateVersion = systemSettings.systemStateVersion;
+}

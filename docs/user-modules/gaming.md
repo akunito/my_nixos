@@ -72,6 +72,23 @@ See `amdWrapperArgs` in `user/app/games/games.nix`.
     winetricks vcrun2022 d3dcompiler_47 dxvk
     ```
 
+## Environment & D-Bus Activation
+
+Many gaming issues (especially with Flatpaks or apps launched via keybindings) are caused by environment variables not being propagated to the D-Bus activation environment.
+
+**Fix:**
+In `user/wm/sway/swayfx-config.nix`, we explicitly import critical variables into the D-Bus and systemd environments:
+```nix
+command = "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK XDG_DATA_DIRS VK_ICD_FILENAMES NODEVICE_SELECT BOTTLES_IGNORE_SANDBOX";
+```
+
+### "Unsupported Environment" (Bottles)
+If Bottles shows a warning about "Unsupported Environment" or "Sandboxed format", it can be silenced by overriding the package:
+```nix
+(pkgs.bottles.override { removeWarningPopup = true; })
+```
+We also set `BOTTLES_IGNORE_SANDBOX = "1"` in `home.sessionVariables` and the Sway session environment to ensure it runs correctly outside of Flatpak.
+
 ## AMDVLK vs RADV
 We explicitly use **RADV** (Mesa).
 - `amdvlk` package is deprecated/removed in Nixpkgs.

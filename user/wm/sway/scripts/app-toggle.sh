@@ -11,14 +11,6 @@ if [ -z "$APP_ID" ] || [ -z "$CMD" ]; then
     exit 1
 fi
 
-# Debug logging
-mkdir -p "$HOME/.local/state"
-LOGfile="$HOME/.local/state/app-toggle.log"
-echo "--- $(date) ---" >> "$LOGfile"
-echo "Args: $@" >> "$LOGfile"
-echo "APP_ID: $APP_ID" >> "$LOGfile"
-echo "CMD: $CMD" >> "$LOGfile"
-
 # Function to wait for window to appear after launch
 wait_for_window() {
     local app_id="$1"
@@ -88,25 +80,13 @@ if [ -z "$WINDOW_JSON" ] || [ "$WINDOW_JSON" = "[]" ]; then
     elif [[ "$APP_ID" =~ ^(org\.|com\.|io\.|net\.|de\.|app\.) ]]; then
         if flatpak info "$APP_ID" &>/dev/null 2>&1; then IS_FLATPAK=true; fi
     fi
-
-    # Determine if we should log output (especially for bottles to debug crash)
-    REDIRECT="/dev/null"
-    if [[ "$NORMALIZED_APP" == *"bottles"* ]] || [[ "$CMD" == *"bottles"* ]]; then
-        REDIRECT="$HOME/.local/state/bottles-launch.log"
-        echo "[$(date)] Starting bottles with redirection to $REDIRECT" >> "$LOGfile"
-    fi
-
-    REASON="Launching"
+    
     if [ "$IS_FLATPAK" = "true" ]; then
-        echo "[$(date)] Executing Flatpak: flatpak run $APP_ID" >> "$LOGfile"
-        flatpak run "$APP_ID" >"$REDIRECT" 2>&1 &
-        PID=$!
+        flatpak run "$APP_ID" >/dev/null 2>&1 &
     else
         CMD_FIRST=$(echo "$CMD" | cut -d' ' -f1)
         if command -v "$CMD_FIRST" &>/dev/null; then
-            echo "[$(date)] Executing Binary: $CMD" >> "$LOGfile"
-            eval "$CMD" >"$REDIRECT" 2>&1 &
-            PID=$!
+            $CMD >/dev/null 2>&1 &
         else
             # NixOS/Nix Profile Fallbacks
             NIX_PROFILE_BIN="$HOME/.nix-profile/bin/$CMD_FIRST"
@@ -118,27 +98,18 @@ if [ -z "$WINDOW_JSON" ] || [ "$WINDOW_JSON" = "[]" ]; then
             fi
             
             if [ -n "$FOUND_BIN" ]; then
-                echo "[$(date)] Executing Found Binary: $FOUND_BIN" >> "$LOGfile"
                 CMD_ARGS=$(echo "$CMD" | cut -d' ' -f2-)
-                "$FOUND_BIN" $CMD_ARGS >"$REDIRECT" 2>&1 &
-                PID=$!
+                if [ -n "$CMD_ARGS" ]; then
+                    "$FOUND_BIN" $CMD_ARGS >/dev/null 2>&1 &
+                else
+                    "$FOUND_BIN" >/dev/null 2>&1 &
+                fi
             else
-                echo "[$(date)] Falling back to raw CMD: $CMD" >> "$LOGfile"
-                $CMD >"$REDIRECT" 2>&1 &
-                PID=$!
+                $CMD >/dev/null 2>&1 &
             fi
         fi
     fi
     
-    # Check if process dies immediately
-    sleep 0.5
-    if ! kill -0 "$PID" 2>/dev/null; then
-        echo "[$(date)] ERROR: Process $PID exited immediately after launch!" >> "$LOGfile"
-        wait "$PID"
-        EXIT_CODE=$?
-        echo "[$(date)] Exit code: $EXIT_CODE" >> "$LOGfile"
-    fi
-
     if wait_for_window "$APP_ID"; then apply_window_properties "$APP_ID"; fi
     exit 0
 fi
