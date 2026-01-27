@@ -47,6 +47,11 @@ in
       (pkgs-unstable.bottles.override { removeWarningPopup = true; })
       pkgs-unstable.lutris
       pkgs-unstable.protonup-qt
+      # Wine and debugging tools
+      pkgs.wineWowPackages.stagingFull # Wine with 32/64-bit support + wine-mono
+      pkgs.winetricks # Wine helper tool
+      pkgs.vulkan-tools # Provides vulkaninfo, vkcube
+      pkgs.mesa-demos # OpenGL debugging (glxinfo, eglinfo)
     ])
     ++ (lib.optionals (userSettings.GOGlauncherEnable == true) [
       pkgs-unstable.heroic
@@ -65,6 +70,8 @@ in
     # AMD RDNA 3 Optimizations
     RADV_PERFTEST = "gpl"; # Graphics Pipeline Library - reduces stuttering
     AMD_VULKAN_ICD = "radv"; # Ensure Mesa driver is used over AMDVLK
+    # Fix Lutris protobuf crash: "Google protobuf could not be loaded"
+    PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION = "python";
   };
 
   nixpkgs.config = {
