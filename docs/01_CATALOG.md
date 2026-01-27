@@ -43,10 +43,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:* `systemSettings.gamemodeEnable == true`
 - **system/app/grafana.nix**: environment.etc."nginx/certs/akunito.org.es.cert".source = /home/akunito/.nginx/nginx-certs/akunito.org.es.crt;
+- **system/app/portals.nix**: XDG Desktop Portal Configuration
 - **system/app/prismlauncher.nix**: System module: prismlauncher.nix
+- **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
 - **system/app/samba.nix**: System module: samba.nix
-- **system/app/starcitizen.nix**: To install the launcher, use flatpak instructions:
-- **system/app/steam.nix**: hardware.graphics.enable32Bit = true; # already in opengl.nix
+- **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`
+- **system/app/steam.nix**: Steam configuration *Enabled when:* `userSettings.steamPackEnable == true`
 - **system/app/virtualization.nix**: Virt-manager doc > https://nixos.wiki/wiki/Virt-manager *Enabled when:*
    - `userSettings.virtualizationEnable == true`
    - `userSettings.qemuGuestAddition == true`
@@ -167,7 +169,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/doom-emacs/doom.nix**: This block from https://github.com/znewman01/dotfiles/blob/be9f3a24c517a4ff345f213bf1cf7633713c9278/emacs/default.nix#L12-L34
 - **user/app/file-manager/file-manager.nix**: File manager configuration module
 - **user/app/flatpak/flatpak.nix**: services.flatpak.enable = true;
-- **user/app/games/games.nix**: Games
+- **user/app/games/games.nix**: Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery *Enabled when:* `userSettings.protongamesEnable == true`
 - **user/app/gaming/mangohud.nix**: MangoHud Configuration
 - **user/app/git/git.nix**: https://nixos.wiki/wiki/Git
 - **user/app/keepass/keepass.nix**: nixpkgs.overlays = [
@@ -216,7 +218,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/style/stylix.nix**: CRITICAL: Remove trailing newline from URL and SHA256 to prevent malformed URLs *Enabled when:*
    - `userSettings.wm != "plasma6"`
    - `userSettings.wm == "plasma6" && systemSettings.enableSwayForDESK == false`
-   - `userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == false`
+   - `userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true`
 
 ### Wm
 
@@ -314,6 +316,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### User-Modules
 
 - **docs/user-modules/doom-emacs.md**: Doom Emacs user module and config layout, including Stylix theme templates and profile integration.
+- **docs/user-modules/gaming.md**: Implementation details for Gaming on NixOS, covering Lutris/Bottles wrappers, Vulkan/RDNA 4 driver fixes, and Wine troubleshooting.
 - **docs/user-modules/lmstudio.md**: LM Studio user module, including MCP server setup templates and web-search tooling integration guidance.
 - **docs/user-modules/nixvim-beginners-guide.md**: Beginner's guide to using NixVim and Avante, including Vim navigation basics for users new to Vim/Neovim.
 - **docs/user-modules/nixvim.md**: NixVim configuration module providing a Cursor IDE-like Neovim experience with AI-powered features (Avante + Supermaven), LSP intelligence, and modern editor UX.
@@ -330,5 +333,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/swww.md**: Robust wallpapers for SwayFX via swww (daemon + oneshot restore; rebuild/reboot safe; no polling/flicker).
 - **docs/user-modules/tmux-persistent-sessions.md**: Complete guide to tmux persistent sessions with automatic save/restore across reboots using tmux-continuum and tmux-resurrect plugins
 - **docs/user-modules/tmux.md**: Tmux terminal multiplexer module with custom keybindings, SSH smart launcher, and Stylix integration for modern terminal workflow.
+- **docs/user-modules/unified-dark-theme-portals.md**: **ID:** `user-modules.unified-dark-theme-portals`
 - **docs/user-modules/windows11-qxl-setup.md**: Complete guide for setting up QXL display drivers in Windows 11 VMs with SPICE for bidirectional clipboard and dynamic resolution support. Includes troubleshooting for resolution issues and driver installation.
 - **docs/user-modules/xmonad.md**: XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo.
