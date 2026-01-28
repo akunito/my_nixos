@@ -34,24 +34,19 @@ A **modular, hierarchical** NixOS configuration system with **centralized softwa
     │ (Desktop)  │         │(Server)│          │LXC_tmpl │
     └──────┬─────┘         └────────┘          └─────────┘
            │
-           ├──────────────┐
-           ▼              ▼
-       ┌────────┐    ┌──────────┐
-       │DESK_AGA│    │DESK_VMDESK│
-       │ (Desk) │    │   (VM)    │
-       └────────┘    └──────────┘
-
-    ┌──────────┐
-    │  LAPTOP  │
-    │   Base   │
-    └─────┬────┘
-          │
-          ├─────────────┬─────────────┐
-          ▼             ▼             ▼
-      ┌────────┐  ┌────────────┐  ┌─────────┐
-      │LAPTOP  │  │  LAPTOP    │  │LAPTOP   │
-      │  L15   │  │  YOGAAKU   │  │  AGA    │
-      └────────┘  └────────────┘  └─────────┘
+           ├──────────────┬──────────────┐
+           ▼              ▼              ▼
+       ┌────────┐    ┌──────────┐  ┌──────────┐
+       │DESK_AGA│    │DESK_VMDESK│ │  LAPTOP  │
+       │ (Desk) │    │   (VM)    │ │   Base   │
+       └────────┘    └──────────┘  └─────┬────┘
+                                         │
+                                         ├─────────────┬─────────────┐
+                                         ▼             ▼             ▼
+                                     ┌────────┐  ┌────────────┐  ┌─────────┐
+                                     │LAPTOP  │  │  LAPTOP    │  │LAPTOP   │
+                                     │  L15   │  │  YOGAAKU   │  │  AGA    │
+                                     └────────┘  └────────────┘  └─────────┘
 
 Legend:
   └──► Inherits from
@@ -114,9 +109,10 @@ Legend:
 ## 🎯 Core Principles
 
 ### 1. Hierarchical Configuration
-- **Base profiles** define common settings (LAPTOP-base.nix, LXC-base-config.nix)
+- **Base profiles** define common settings (DESK as desktop base, LAPTOP-base.nix for laptop-specific, LXC-base-config.nix for containers)
 - **Specific profiles** inherit and override only what's unique
 - **Global defaults** in `lib/defaults.nix` provide sensible starting points
+- **LAPTOP Base inherits from DESK** - laptops get desktop features + laptop-specific settings (TLP, battery, etc.)
 
 ### 2. Centralized Software Control
 All software is controlled through **centralized flag sections**:
@@ -141,9 +137,10 @@ Full-featured desktop/laptop configurations with GUI applications:
 - **DESK** - Primary desktop (AMD GPU, gaming, development, AI)
   - **DESK_AGA** - Secondary desktop (inherits from DESK, simplified - no development/AI, limited gaming)
   - **DESK_VMDESK** - VM desktop (inherits from DESK, development enabled, no gaming/AI, Sway + Plasma6)
-- **LAPTOP_L15** - Intel laptop with development tools
-- **LAPTOP_YOGAAKU** - Older laptop, reduced features
-- **LAPTOP_AGA** - Minimal laptop with basic tools
+  - **LAPTOP Base** - Laptop common settings (inherits from DESK + adds TLP, battery management, laptop-specific features)
+    - **LAPTOP_L15** - Intel laptop with development tools
+    - **LAPTOP_YOGAAKU** - Older laptop, reduced features
+    - **LAPTOP_AGA** - Minimal laptop with basic tools
 
 #### Server Profiles
 Headless server configurations:
