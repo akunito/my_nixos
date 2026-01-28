@@ -43,10 +43,10 @@ A **modular, hierarchical** NixOS configuration system with **centralized softwa
         │
         ├─────────────┬─────────────┐
         ▼             ▼             ▼
-    ┌────────┐  ┌──────────┐  ┌─────────┐
-    │LAPTOP  │  │ YOGAAKU  │  │LAPTOP   │
-    │  L15   │  │ (Older)  │  │  AGA    │
-    └────────┘  └──────────┘  └─────────┘
+    ┌────────┐  ┌────────────┐  ┌─────────┐
+    │LAPTOP  │  │  LAPTOP    │  │LAPTOP   │
+    │  L15   │  │  YOGAAKU   │  │  AGA    │
+    └────────┘  └────────────┘  └─────────┘
 
 Legend:
   └──► Inherits from
