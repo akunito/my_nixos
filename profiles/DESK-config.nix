@@ -37,6 +37,7 @@ in
     profile = "personal";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK -s -u";
     gpuType = "amd";
+    enableDesktopPerformance = true; # Enable desktop-optimized I/O scheduler and performance tuning
     amdLACTdriverEnable = true;
 
     # Wallpapers (Sway/SwayFX): use swww (daemon + oneshot restore; robust across reboot + HM rebuilds)

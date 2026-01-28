@@ -20,6 +20,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **flake.VMHOME.nix**: Profile-specific flake configuration
 - **flake.WSL.nix**: Profile-specific flake configuration
 - **flake.YOGAAKU.nix**: Profile-specific flake configuration
+- **flake.LXC.nix**: Profile-specific flake configuration
+- **flake.LXCplane.nix**: Profile-specific flake configuration
+- **flake.LXCtemplate.nix**: Profile-specific flake configuration
 - **flake.nix**: Profile-specific flake configuration
 
 ## Profiles
@@ -27,8 +30,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/AGA-config.nix**: AGA Profile Configuration
 - **profiles/AGADESK-config.nix**: AGADESK Profile Configuration
 - **profiles/DESK-config.nix**: DESK Profile Configuration
-- **profiles/HOME-config.nix**: HOME Profile Configuration
-- **profiles/LAPTOP-config.nix**: LAPTOP Profile Configuration
+- **profiles/LAPTOP-config.nix**: LAPTOP Profile Configuration (nixolaptopaku)
+- **profiles/LXC-base-config.nix**: LXC Base Profile Configuration
+- **profiles/LXCplane-config.nix**: LXC Default Profile Configuration
+- **profiles/LXCtemplate-config.nix**: LXC Default Profile Configuration
 - **profiles/VMDESK-config.nix**: VMDESK Profile Configuration
 - **profiles/VMHOME-config.nix**: VMHOME Profile Configuration
 - **profiles/WSL-config.nix**: WSL Profile Configuration
@@ -79,8 +84,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.gpuType == "intel"`
    - `systemSettings.gpuType != "amd" && systemSettings.gpuType != "intel"`
 - **system/hardware/io-scheduler.nix**: Consolidated I/O scheduler optimization for all profile types *Enabled when:*
-   - `systemSettings.hostname == "nixosaku" || systemSettings.hostname == "nixosaga"`
-   - `systemSettings.hostname == "nixolaptopaku" || systemSettings.hostname == "yogaaku"`
+   - `better than none for modern NVMe`
+   - `same as desktop - good for interactive workloads`
    - `systemSettings.profile == "homelab"`
 - **system/hardware/kernel.nix**: System module: kernel.nix
 - **system/hardware/keychron.nix**: Grant access to Keychron keyboards for the Keychron Launcher / VIA
@@ -88,8 +93,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
 - **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:* `systemSettings.amdLACTdriverEnable == true`
 - **system/hardware/performance.nix**: Consolidated performance optimizations for all profile types *Enabled when:*
-   - `systemSettings.hostname == "nixosaku" || systemSettings.hostname == "nixosaga"`
-   - `systemSettings.hostname == "nixolaptopaku" || systemSettings.hostname == "yogaaku"`
+   - `desktop-optimized`
+   - `battery-focused`
    - `systemSettings.profile == "homelab"`
 - **system/hardware/power.nix**: Overriding to disable power-profiles-daemon *Enabled when:*
    - `systemSettings.TLP_ENABLE == true`
@@ -99,7 +104,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.servicePrinting == true`
    - `systemSettings.networkPrinters == true`
    - `systemSettings.sharePrinter == true`
-- **system/hardware/systemd.nix**: System module: systemd.nix
+- **system/hardware/systemd.nix**: Journald limits - prevent disk thrashing and limit log size
 - **system/hardware/time.nix**: System module: time.nix
 - **system/hardware/xbox.nix**: NOTE you might need to add xpad as Kernel Module on your flake.nix
 
@@ -211,7 +216,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Shell
 
 - **user/shell/cli-collection.nix**: Collection of useful CLI apps
-- **user/shell/sh.nix**: My shell aliases
+- **user/shell/sh.nix**: Basic aliases that don't depend on external packages
 
 ### Style
 
@@ -256,6 +261,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/README.md**: This directory contains temporary documentation for planning, analysis, design ideas, recommendations, bug fixes, and other topics that are under consideration and may be deleted after implementati...
 - **docs/future/debug-instrumentation-analysis.md**: **Date**: 2026-01-XX
 - **docs/future/debug-instrumentation-removal-plan.md**: **Date**: 2026-01-XX
+- **docs/future/desk-to-laptop-migration-improved.md**: **Status: IMPLEMENTED** (2026-01-28)
 - **docs/future/fix-home-manager-deprecated-install-warning.md**: During home-manager activation, you see this warning:
 - **docs/future/fix-mnt-ext-mount-error.md**: The error occurs during NixOS configuration switch when systemd tries to stop `mnt-EXT.mount` from the previous generation, but the unit doesn't exist in the new generation (because we disabled dis...
 - **docs/future/flake-refactoring-migration.md**: The flake profile refactoring has been successfully implemented to eliminate code duplication across multiple `flake.*.nix` files. The new structure reduces each profile file from ~750 lines to ~30...
@@ -271,6 +277,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/sov-dependency-analysis.md**: **Date**: 2026-01-07
 - **docs/future/sway-daemon-relog-notes-2026-01-08.md**: This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
 - **docs/future/vmhome-migration-test.md**: **Date**: 2025-01-XX
+- **docs/future/vmhome-to-lxc-migration-plan.md**: Migrate the VMHOME VM to an LXC container (`LXCHOME`) while preserving all functionality (Docker, NFS, services) and optimizing for LXC. Must not impact existing `LXC*-config.nix` profiles.
 - **docs/future/waybar-drawer-and-idle-toggle.md**: Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX.
 - **docs/future/waybar-sov-debug-analysis.md**: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).
 
@@ -289,7 +296,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/00_INDEX.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/00_ROUTER.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/01_CATALOG.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
-- **docs/agent-context.md**: How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md) and a reusable template for other projects.
+- **docs/agent-context.md**: How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md + Claude Code) and a reusable template for other projects.
 - **docs/configuration.md**: Complete guide to understanding and customizing the NixOS configuration system.
 - **docs/hardware.md**: Complete guide to hardware-specific configurations and optimizations.
 - **docs/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
@@ -300,6 +307,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/patches.md**: Guide to understanding and using Nixpkgs patches in this configuration.
 - **docs/profile-feature-flags.md**: Guide to creating and using feature flags for profile-specific module enabling. Explains the pattern of setting defaults to false and enabling features only in specific profiles.
 - **docs/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.
+- **docs/proxmox-lxc.md**: Guide to managing Proxmox LXC containers using a Base + Override pattern. Explains how to create and install new container profiles while keeping configuration DRY.
 - **docs/scripts.md**: Complete reference for all shell scripts in this repository.
 - **docs/security.md**: Complete guide to security configurations and features in this NixOS setup.
 - **docs/system-modules.md**: Complete reference for system-level NixOS modules in this configuration.

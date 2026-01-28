@@ -1,3 +1,13 @@
+---
+id: docs.proxmox-lxc
+summary: Guide to managing Proxmox LXC containers using a Base + Override pattern. Explains how to create and install new container profiles while keeping configuration DRY.
+tags: [proxmox, lxc, virtualization, profiles, modularity, dry]
+related_files:
+  - profiles/LXC-base-config.nix
+  - profiles/proxmox-lxc/**
+  - flake.LXC.nix
+---
+
 # Proxmox LXC Profiles
 
 This repository supports a modular configuration for NixOS LXC containers on Proxmox. It uses a **Base + Override** pattern to keep configurations DRY while allowing multiple containers to have different hostnames and specific settings.

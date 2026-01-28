@@ -1,10 +1,12 @@
 ---
 id: user-modules.gaming
 summary: Implementation details for Gaming on NixOS, covering Lutris/Bottles wrappers, Vulkan/RDNA 4 driver fixes, and Wine troubleshooting.
-tags: [gaming, lutris, bottles, wine, vulkan, amd, rdna4, wrappers]
+tags: [gaming, lutris, bottles, wine, vulkan, amd, rdna4, wrappers, antimicrox, controllers]
 related_files:
   - user/app/games/games.nix
   - system/hardware/opengl.nix
+  - system/app/proton.nix
+  - system/app/starcitizen.nix
 ---
 
 # Gaming on NixOS
@@ -93,3 +95,17 @@ We also set `BOTTLES_IGNORE_SANDBOX = "1"` in `home.sessionVariables` and the Sw
 We explicitly use **RADV** (Mesa).
 - `amdvlk` package is deprecated/removed in Nixpkgs.
 - `AMD_VULKAN_ICD="radv"` enforces this preference.
+
+## Controller Mapping (antimicrox)
+
+For mapping game controllers (joysticks, gamepads) to keyboard/mouse inputs (useful for older PC games that lack controller support):
+
+- **Package**: `antimicrox` (installed via Home Manager in `user/app/games/games.nix`)
+- **Use case**: Map controller buttons to keyboard keys for games without native controller support
+- **Launch**: Run `antimicrox` from terminal or app launcher to configure mappings
+
+**Example mappings:**
+- D-pad → Arrow keys
+- Analog stick → WASD
+- Triggers → Mouse buttons
+- Face buttons → Game-specific keys (Space, Enter, etc.)

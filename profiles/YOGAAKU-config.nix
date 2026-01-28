@@ -1,11 +1,14 @@
 # YOGAAKU Profile Configuration
-# Only profile-specific overrides - defaults are in lib/defaults.nix
+# Inherits from LAPTOP-base.nix with machine-specific overrides (older Lenovo Yoga laptop)
 
+let
+  base = import ./LAPTOP-base.nix;
+in
 {
   # Flag to use rust-overlay
   useRustOverlay = false;
 
-  systemSettings = {
+  systemSettings = base.systemSettings // {
     hostname = "yogaaku";
     profile = "personal";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles YOGAAKU -s -u";
@@ -23,39 +26,7 @@
     # pkiCertificates = [ /home/akunito/.certificates/ca.cert.pem ];
     sudoTimestampTimeoutMinutes = 180;
 
-    # Polkit
-    polkitEnable = true;
-    polkitRules = ''
-      polkit.addRule(function(action, subject) {
-        if (
-          subject.isInGroup("users") && (
-            // Allow reboot and power-off actions
-            action.id == "org.freedesktop.login1.reboot" ||
-            action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-            action.id == "org.freedesktop.login1.power-off" ||
-            action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-            action.id == "org.freedesktop.login1.suspend" ||
-            action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
-            action.id == "org.freedesktop.login1.logout" ||
-            action.id == "org.freedesktop.login1.logout-multiple-sessions" ||
-
-            // Allow managing specific systemd units
-            (action.id == "org.freedesktop.systemd1.manage-units" &&
-              action.lookup("verb") == "start" &&
-              action.lookup("unit") == "mnt-NFS_Backups.mount") ||
-
-            // Allow running rsync and restic
-            (action.id == "org.freedesktop.policykit.exec" &&
-              (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
-              action.lookup("command") == "/run/current-system/sw/bin/restic"))
-          )
-        ) {
-          return polkit.Result.YES;
-        }
-      });
-    '';
-
-    # Backups
+    # Backups - disabled on this machine
     homeBackupEnable = false;
 
     # Network
@@ -65,14 +36,13 @@
       "192.168.8.1"
       "192.168.8.1"
     ];
-    wifiPowerSave = true;
     resolvedEnable = false;
 
     # Firewall
     allowedTCPPorts = [ ];
     allowedUDPPorts = [ ];
 
-    # NFS client
+    # NFS client - disabled by default on this machine
     nfsClientEnable = false;
     nfsMounts = [
       {
@@ -128,129 +98,42 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPp/10TlSOte830j6ofuEQ21YKxFD34iiyY55yl6sW7V diego88aku@gmail.com" # Laptop
     ];
 
-    # Printer
+    # Printer - disabled on this machine
     servicePrinting = false;
     networkPrinters = false;
 
-    # Power management
-    # Power management
-    powerManagement_ENABLE = false; # TLP handles power management
-    power-profiles-daemon_ENABLE = false; # Disabled in favor of TLP
-    TLP_ENABLE = true;
+    # System packages - use base packages plus tldr
+    systemPackages = pkgs: pkgs-unstable:
+      (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
+        pkgs.tldr
+      ];
 
-    # Battery thresholds (Health preservation)
-    START_CHARGE_THRESH_BAT0 = 75;
-    STOP_CHARGE_THRESH_BAT0 = 80;
-
-    # System packages - will be evaluated in flake-base.nix
-    systemPackages = pkgs: pkgs-unstable: [
-      pkgs.vim
-      pkgs.wget
-      pkgs.nmap
-      pkgs.zsh
-      pkgs.git
-      pkgs.cryptsetup
-      pkgs.home-manager
-      pkgs.wpa_supplicant
-      pkgs.traceroute
-      pkgs.iproute2
-      pkgs.dnsutils
-      pkgs.fzf
-      pkgs.tldr
-      pkgs.rsync
-      pkgs.nfs-utils
-      pkgs.restic
-      pkgs.qt5.qtbase
-      pkgs-unstable.sunshine
-      # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
-    ];
-
+    # Disable features not needed on this older machine
     starCitizenModules = false;
     vivaldiPatch = false;
     sambaEnable = false;
     sunshineEnable = false;
-    wireguardEnable = true;
     xboxControllerEnable = true;
-    appImageEnable = true;
-    nextcloudEnable = true;
 
-    # Fonts - uses nerdfonts (not nerd-fonts.jetbrains-mono)
-    fonts = [
-      pkgs.nerdfonts
-      pkgs.powerline
-    ];
-
-    systemStable = false;
+    # Fonts: use default computation in flake-base.nix
+    # (nerdfonts/powerline for stable, nerd-fonts.jetbrains-mono for unstable)
   };
 
-  userSettings = {
+  userSettings = base.userSettings // {
     username = "akunito";
     name = "akunito";
     email = "";
     dotfilesDir = "/home/akunito/.dotfiles";
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "input"
-      "dialout"
-    ];
 
+    # Different theme for YOGAAKU
     theme = "io";
-    wm = "plasma6";
-    wmEnableHyprland = false;
-
-    gitUser = "akunito";
-    gitEmail = "diego88aku@gmail.com";
-
-    browser = "vivaldi";
-    spawnBrowser = "vivaldi";
-    defaultRoamDir = "Personal.p";
-    term = "kitty";
-    font = "Intel One Mono";
 
     dockerEnable = false;
     virtualizationEnable = true;
     qemuGuestAddition = true; # VM
 
-    # Home packages - will be evaluated in flake-base.nix
-    homePackages = pkgs: pkgs-unstable: [
-      pkgs.zsh
-      pkgs.kitty
-      pkgs.git
-      pkgs.syncthing
-      pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.vscode
-      pkgs-unstable.obsidian
-      pkgs-unstable.spotify
-      pkgs-unstable.vlc
-      pkgs-unstable.candy-icons
-      pkgs.calibre
-      pkgs-unstable.libreoffice
-      pkgs-unstable.telegram-desktop
-      pkgs-unstable.qbittorrent
-      pkgs-unstable.nextcloud-client
-      pkgs-unstable.wireguard-tools
-      pkgs-unstable.bitwarden-desktop
-      pkgs-unstable.moonlight-qt
-      pkgs-unstable.discord
-      pkgs-unstable.kdePackages.kcalc
-      pkgs-unstable.gnome-calculator
-    ];
-
-    zshinitContent = ''
-      PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
-      %F{green}→%f "
-      RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
-      [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
-    '';
-
-    sshExtraConfig = ''
-      # sshd.nix -> programs.ssh.extraConfig
-      Host github.com
-        HostName github.com
-        User akunito
-        IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
-        AddKeysToAgent yes
-    '';
+    # Home packages - use base packages (no extensions needed)
+    homePackages = pkgs: pkgs-unstable:
+      base.userSettings.homePackages pkgs pkgs-unstable;
   };
 }

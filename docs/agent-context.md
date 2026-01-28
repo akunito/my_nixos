@@ -1,18 +1,24 @@
 ---
 id: docs.agent-context
-summary: How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md) and a reusable template for other projects.
-tags: [cursor, agents, docs, routing, rules]
+summary: How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md + Claude Code) and a reusable template for other projects.
+tags: [cursor, claude-code, agents, docs, routing, rules]
 related_files:
   - docs/00_ROUTER.md
   - docs/01_CATALOG.md
   - scripts/generate_docs_index.py
   - AGENTS.md
+  - CLAUDE.md
   - .cursor/rules/**
+  - .claude/agents/**
 ---
 
 # Agent context system (Router/Catalog + Rules)
 
 This repo is designed to keep AI context **scoped, fast, and predictable** as documentation grows.
+
+**Supported AI Tools:**
+- **Cursor**: Uses `AGENTS.md` + `.cursor/rules/*.mdc`
+- **Claude Code**: Uses `CLAUDE.md` + `.claude/agents/`
 
 ## How it works (quick)
 
@@ -75,11 +81,21 @@ Outputs:
 ### Minimal directory layout
 
 ```text
+# For Cursor
 AGENTS.md
 .cursor/
   rules/
     project-invariants.mdc
     docs-maintenance.mdc
+
+# For Claude Code
+CLAUDE.md
+.claude/
+  agents/
+    README.md
+    domain-context.md
+
+# Shared
 docs/
   00_ROUTER.md
   01_CATALOG.md
@@ -112,6 +128,45 @@ Primary Path should usually be `related_files[0]` (or fallback to the doc path).
 ### Example project rule (Cursor)
 
 Create `.cursor/rules/<name>.mdc` with frontmatter globs and short, scoped guidance.
+
+## Claude Code Setup
+
+Claude Code uses a different but parallel structure:
+
+### Directory Layout
+
+```text
+CLAUDE.md                    # Main project instructions (auto-read by Claude Code)
+.claude/
+  agents/
+    README.md                # Agent system overview
+    nixos-context.md         # NixOS/flake agent context
+    docs-context.md          # Documentation agent context
+    sway-context.md          # Sway/Wayland agent context
+```
+
+### CLAUDE.md
+
+The `CLAUDE.md` file at the root is automatically read by Claude Code. It contains:
+- Project overview and critical invariants
+- Router-first retrieval protocol
+- Domain-specific rules (consolidated from `.cursor/rules/*.mdc`)
+
+### .claude/agents/
+
+Claude Code doesn't have glob-based automatic rule activation like Cursor. Instead:
+- Domain contexts are stored in `.claude/agents/` as reference documentation
+- The main instructions are consolidated in `CLAUDE.md`
+- Sub-agents spawned via the Task tool can reference domain-specific context files
+
+### Key Differences from Cursor
+
+| Aspect | Cursor | Claude Code |
+|--------|--------|-------------|
+| Main file | `AGENTS.md` | `CLAUDE.md` |
+| Scoped rules | `.cursor/rules/*.mdc` with globs | Consolidated in `CLAUDE.md` |
+| Agent contexts | Implicit via globs | Explicit in `.claude/agents/` |
+| Auto-loading | Glob-based activation | `CLAUDE.md` always loaded |
 
 ## Migration Guide (for other projects)
 

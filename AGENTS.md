@@ -44,6 +44,12 @@ Before answering any architectural or implementation question:
 ## Deprecation note
 
 Legacy `.cursorrules` is being replaced by:
-- `AGENTS.md` (this file)
-- `.cursor/rules/*.mdc` (scoped project rules)
+- `AGENTS.md` (this file) - for Cursor
+- `.cursor/rules/*.mdc` (scoped project rules) - for Cursor
+
+## Claude Code support
+
+For Claude Code users, see:
+- `CLAUDE.md` (root file) - main project instructions
+- `.claude/agents/` - domain-specific agent contexts
 

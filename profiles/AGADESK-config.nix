@@ -10,6 +10,7 @@
     profile = "personal";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles AGADESK -s -u";
     gpuType = "amd";
+    enableDesktopPerformance = true; # Enable desktop-optimized I/O scheduler and performance tuning
     amdLACTdriverEnable = true;
 
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil

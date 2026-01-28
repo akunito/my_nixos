@@ -1,11 +1,14 @@
-# LAPTOP Profile Configuration
-# Only profile-specific overrides - defaults are in lib/defaults.nix
+# LAPTOP Profile Configuration (nixolaptopaku)
+# Inherits from LAPTOP-base.nix with machine-specific overrides
 
+let
+  base = import ./LAPTOP-base.nix;
+in
 {
   # Flag to use rust-overlay
   useRustOverlay = true;
 
-  systemSettings = {
+  systemSettings = base.systemSettings // {
     hostname = "nixolaptopaku";
     profile = "personal";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP -s -u";
@@ -17,44 +20,11 @@
     # Security
     fuseAllowOther = false;
     pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
-    # Sudo UX: keep sudo authentication cached longer (minutes)
     sudoTimestampTimeoutMinutes = 180;
-
-    # Polkit
-    polkitEnable = true;
-    polkitRules = ''
-      polkit.addRule(function(action, subject) {
-        if (
-          subject.isInGroup("users") && (
-            // Allow reboot and power-off actions
-            action.id == "org.freedesktop.login1.reboot" ||
-            action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-            action.id == "org.freedesktop.login1.power-off" ||
-            action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-            action.id == "org.freedesktop.login1.suspend" ||
-            action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
-            action.id == "org.freedesktop.login1.logout" ||
-            action.id == "org.freedesktop.login1.logout-multiple-sessions" ||
-
-            // Allow managing specific systemd units
-            (action.id == "org.freedesktop.systemd1.manage-units" &&
-              action.lookup("verb") == "start" &&
-              action.lookup("unit") == "mnt-NFS_Backups.mount") ||
-
-            // Allow running rsync and restic
-            (action.id == "org.freedesktop.policykit.exec" &&
-              (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
-              action.lookup("command") == "/run/current-system/sw/bin/restic"))
-          )
-        ) {
-          return polkit.Result.YES;
-        }
-      });
-    '';
 
     # Backups
     homeBackupEnable = true;
-    homeBackupOnCalendar = "0/6:00:00"; # Every 6 hours
+    homeBackupOnCalendar = "0/6:00:00";
     homeBackupCallNextEnabled = false;
 
     # Network
@@ -64,7 +34,6 @@
       "192.168.8.1"
       "192.168.8.1"
     ];
-    wifiPowerSave = true; # Laptop specific
     resolvedEnable = false;
 
     # Firewall
@@ -125,130 +94,51 @@
     servicePrinting = true;
     networkPrinters = true;
 
-    # Power management - Laptop specific
-    # Power management - Laptop specific
-    powerManagement_ENABLE = false; # TLP handles power management
-    power-profiles-daemon_ENABLE = false; # Disabled in favor of TLP
-    TLP_ENABLE = true;
-
-    # Battery thresholds (Health preservation)
-    START_CHARGE_THRESH_BAT0 = 75;
-    STOP_CHARGE_THRESH_BAT0 = 80;
-
+    # Lid behavior - ignore for docked usage
     lidSwitch = "ignore";
     lidSwitchExternalPower = "ignore";
     lidSwitchDocked = "ignore";
     powerKey = "ignore";
 
-    # System packages - will be evaluated in flake-base.nix
-    systemPackages = pkgs: pkgs-unstable: [
-      pkgs.vim
-      pkgs.wget
-      pkgs.nmap
-      pkgs.zsh
-      pkgs.git
-      pkgs.cryptsetup
-      pkgs.home-manager
-      pkgs.wpa_supplicant
-      pkgs.traceroute
-      pkgs.iproute2
-      pkgs.dnsutils
-      pkgs.fzf
-      pkgs.rsync
-      pkgs.nfs-utils
-      pkgs.restic
-      pkgs.clinfo
-      pkgs.dialog
-      pkgs.gparted
-      pkgs.lm_sensors
-      pkgs.sshfs
-      pkgs.qt5.qtbase
-      pkgs-unstable.sunshine
-      # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
-    ];
+    # System packages - extend base with LAPTOP-specific packages
+    systemPackages = pkgs: pkgs-unstable:
+      (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
+        pkgs.clinfo
+        pkgs.dialog
+        pkgs.gparted
+        pkgs.lm_sensors
+        pkgs.sshfs
+      ];
 
-    starCitizenModules = false;
-    sambaEnable = false;
+    # Additional features
     sunshineEnable = true;
-    wireguardEnable = true;
     xboxControllerEnable = true;
-    appImageEnable = true;
-    aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
-    nextcloudEnable = true;
-    nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
-
-    systemStable = false;
+    aichatEnable = true;
+    nixvimEnabled = true;
   };
 
-  userSettings = {
+  userSettings = base.userSettings // {
     username = "akunito";
     name = "akunito";
     email = "diego88aku@gmail.com";
     dotfilesDir = "/home/akunito/.dotfiles";
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "input"
-      "dialout"
-    ];
 
-    theme = "miramare";
-    wm = "plasma6";
-    wmEnableHyprland = false; # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
+    # Home packages - extend base with LAPTOP-specific packages
+    homePackages = pkgs: pkgs-unstable:
+      (base.userSettings.homePackages pkgs pkgs-unstable) ++ [
+        pkgs-unstable.mission-center
+        pkgs-unstable.windsurf
+        pkgs-unstable.code-cursor
+        pkgs.kdePackages.dolphin
+        pkgs-unstable.vivaldi
+      ];
 
-    gitUser = "akunito";
-    gitEmail = "diego88aku@gmail.com";
-
-    browser = "vivaldi";
-    spawnBrowser = "vivaldi";
-    defaultRoamDir = "Personal.p";
-    term = "kitty";
-    font = "Intel One Mono";
-
-    # Home packages - will be evaluated in flake-base.nix
-    homePackages = pkgs: pkgs-unstable: [
-      pkgs.zsh
-      pkgs.kitty
-      pkgs.git
-      pkgs.syncthing
-      pkgs-unstable.mission-center
-      pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.vscode
-      pkgs-unstable.windsurf
-      pkgs-unstable.code-cursor
-      pkgs-unstable.obsidian
-      pkgs-unstable.spotify
-      pkgs-unstable.vlc
-      pkgs-unstable.candy-icons
-      pkgs.calibre
-      pkgs.kdePackages.dolphin
-      pkgs-unstable.libreoffice
-      pkgs-unstable.telegram-desktop
-      pkgs-unstable.qbittorrent
-      pkgs-unstable.nextcloud-client
-      pkgs-unstable.wireguard-tools
-      pkgs-unstable.bitwarden-desktop
-      pkgs-unstable.moonlight-qt
-      pkgs-unstable.discord
-      pkgs-unstable.kdePackages.kcalc
-      pkgs-unstable.gnome-calculator
-      pkgs-unstable.vivaldi
-    ];
-
+    # Different prompt color for LAPTOP
     zshinitContent = ''
       PROMPT=" ◉ %U%F{cyan}%n%f%u@%U%F{cyan}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "
       RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
       [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
-    '';
-
-    sshExtraConfig = ''
-      # sshd.nix -> programs.ssh.extraConfig
-      Host github.com
-        HostName github.com
-        User akunito
-        IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
-        AddKeysToAgent yes
     '';
   };
 }

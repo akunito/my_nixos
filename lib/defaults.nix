@@ -217,6 +217,11 @@
     powerManagement_ENABLE = false;
     power-profiles-daemon_ENABLE = false;
 
+    # Performance profile flags (for io-scheduler.nix and performance.nix)
+    # Enable ONE of these based on hardware type - they are mutually exclusive
+    enableDesktopPerformance = false; # Aggressive settings for maximum performance on desktop systems
+    enableLaptopPerformance = false;  # Conservative settings for battery life while maintaining responsiveness
+
     # Feature flags defaults
     starCitizenModules = false;
     starcitizenEnable = false;
