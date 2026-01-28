@@ -20,8 +20,8 @@
     # Kernel defaults
     kernelPackages = pkgs.linuxPackages_latest;
     kernelModules = [
-      "i2c-dev"
-      "i2c-piix4"
+      # i2c modules removed - not needed in VMs/containers
+      # Physical machines can add back if needed for lm-sensors, OpenRGB, or ddcutil
     ];
 
     # Security defaults
@@ -87,6 +87,7 @@
 
     # Network defaults
     networkManager = true;
+    useNetworkd = false; # Use systemd-networkd instead of NetworkManager (for headless servers)
     defaultGateway = null;
     nameServers = [
       "192.168.8.1"
@@ -94,6 +95,15 @@
     ];
     wifiPowerSave = true;
     resolvedEnable = false;
+
+    # Service defaults
+    havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant
+    fail2banEnable = true; # Can disable for systems behind firewall
+
+    # Journald defaults (applied to all profiles)
+    journaldMaxUse = "100M";
+    journaldMaxRetentionSec = "14day";
+    journaldCompress = true;
 
     # Firewall defaults
     firewall = true;

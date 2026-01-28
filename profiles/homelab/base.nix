@@ -14,7 +14,6 @@
     ../../system/hardware/time.nix # Network time sync
     ../../system/hardware/nfs_server.nix # NFS share directories over network
     ../../system/security/firewall.nix
-    ../../system/security/fail2ban.nix # Fail2ban config to be set up
     ../../system/hardware/nfs_client.nix # NFS share directories over network
     ../../system/security/sudo.nix
     ../../system/security/gpg.nix
@@ -26,6 +25,7 @@
       inherit pkgs userSettings lib;
     })
   ]
+  ++ lib.optional systemSettings.fail2banEnable ../../system/security/fail2ban.nix # Conditional fail2ban
   ++ lib.optional systemSettings.gpuMonitoringEnable ../../system/hardware/gpu-monitoring.nix # GPU monitoring tools
   ++ lib.optional systemSettings.grafanaEnable ../../system/app/grafana.nix # monitoring tools
   ++ lib.optional userSettings.virtualizationEnable ../../system/app/virtualization.nix # qemu, virt-manager
@@ -54,6 +54,9 @@
     experimental-features = nix-command flakes
   '';
 
+  # Nix store optimization - save disk space via hard-linking identical files
+  nix.settings.auto-optimise-store = true;
+
   # I'm sorry Stallman-taichou
   nixpkgs.config.allowUnfree = true;
 
@@ -65,6 +68,8 @@
     "vm.overcommit_memory" = 1;
     # Allows system to allocate more memory than physically available
     # Useful for applications that allocate but don't use all memory
+    "vm.swappiness" = 10; # Reduce swap pressure (good for servers, especially VMs)
+    "kernel.nmi_watchdog" = 0; # Disable NMI watchdog (saves CPU, hypervisor handles crashes)
     # Syncthing optimizations
     "net.core.rmem_max" = 8388608; # Maximum receive socket buffer size (8MB)
     "net.core.wmem_max" = 8388608; # Maximum send socket buffer size (8MB)
@@ -89,12 +94,29 @@
 
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
-  networking.networkmanager.enable = systemSettings.networkManager; # Use networkmanager
-  networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
+  # Use NetworkManager unless useNetworkd is enabled
+  networking.networkmanager.enable = lib.mkIf (!systemSettings.useNetworkd) systemSettings.networkManager;
+  networking.networkmanager.wifi.powersave = lib.mkIf (!systemSettings.useNetworkd) systemSettings.wifiPowerSave;
+  # Enable systemd-networkd when useNetworkd is true
+  networking.useNetworkd = lib.mkDefault systemSettings.useNetworkd;
+  systemd.network.enable = lib.mkDefault systemSettings.useNetworkd;
   networking.defaultGateway = lib.mkIf (
     systemSettings.defaultGateway != null
   ) systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
+
+  # systemd-networkd DHCP configuration (when useNetworkd is enabled)
+  systemd.network.networks."10-lan" = lib.mkIf systemSettings.useNetworkd {
+    matchConfig.Name = "en*"; # Match ethernet interfaces (ens18, enp0s3, etc.)
+    networkConfig = {
+      DHCP = "yes";
+      IPv6AcceptRA = true;
+    };
+    dhcpV4Config = {
+      UseDNS = true;
+      UseRoutes = true;
+    };
+  };
 
   # Timezone and locale
   time.timeZone = systemSettings.timezone; # time zone
@@ -145,7 +167,15 @@
 
   programs.fuse.userAllowOther = true;
 
-  services.haveged.enable = true;
+  # Haveged - entropy daemon (can be disabled on modern kernels 5.4+)
+  services.haveged.enable = systemSettings.havegedEnable;
+
+  # Journald limits - prevent disk thrashing and limit log size
+  services.journald.extraConfig = ''
+    SystemMaxUse=${systemSettings.journaldMaxUse}
+    MaxRetentionSec=${systemSettings.journaldMaxRetentionSec}
+    Compress=${if systemSettings.journaldCompress then "yes" else "no"}
+  '';
 
   # I use zsh btw
   environment.shells = with pkgs; [ zsh ];
@@ -153,6 +183,9 @@
   programs.zsh.enable = true;
 
   security.pki.certificateFiles = systemSettings.pkiCertificates;
+
+  # Disable audit subsystem - reduces context switches and overhead
+  security.audit.enable = false;
 
   # Enable swap file
   swapDevices = lib.mkIf (systemSettings.swapFileEnable == true) [

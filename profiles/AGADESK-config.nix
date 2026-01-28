@@ -12,9 +12,8 @@
     gpuType = "amd";
     amdLACTdriverEnable = true;
 
+    # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
     kernelModules = [
-      "i2c-dev"
-      "i2c-piix4"
       "xpadneo" # xbox controller
     ];
 

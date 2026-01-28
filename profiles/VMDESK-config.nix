@@ -12,9 +12,8 @@
     gpuType = "amd";
     amdLACTdriverEnable = false;
     
-    kernelModules = [ 
-      "i2c-dev" 
-      "i2c-piix4" 
+    # VM optimization - no i2c modules needed
+    kernelModules = [
       "cpufreq_powersave"
     ];
     

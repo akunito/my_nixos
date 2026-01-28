@@ -17,10 +17,8 @@
     grafanaEnable = false;
     gpuMonitoringEnable = false;
 
-    kernelModules = [
-      "i2c-dev"
-      "i2c-piix4"
-    ];
+    # VM optimization - no i2c modules needed (no physical hardware access)
+    kernelModules = [ ];
 
     # Security
     fuseAllowOther = false;
@@ -29,12 +27,18 @@
     # Polkit
     polkitEnable = false;
 
-    # Network
+    # Network - use lightweight systemd-networkd with DHCP
+    useNetworkd = true;
+    networkManager = false;
     ipAddress = "192.168.8.80";
     wifiIpAddress = "192.168.8.81";
     nameServers = [ "192.168.8.1" ];
     wifiPowerSave = false;
-    resolvedEnable = true;
+    resolvedEnable = false; # DHCP provides DNS
+
+    # VM optimizations - disable services not needed in VMs
+    havegedEnable = false; # Redundant on modern kernels (5.4+)
+    fail2banEnable = false; # Behind firewall, nginx in Docker makes fail2ban complex
 
     # Firewall - unifi controller ports
     allowedTCPPorts = [
@@ -154,8 +158,8 @@
     servicePrinting = false;
     networkPrinters = false;
 
-    # Power management
-    TLP_ENABLE = true;
+    # Power management - TLP disabled (hypervisor manages power in VMs)
+    TLP_ENABLE = false;
     powerManagement_ENABLE = false;
     power-profiles-daemon_ENABLE = false;
 

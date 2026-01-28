@@ -11,10 +11,8 @@
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP -s -u";
     gpuType = "intel";
     
-    kernelModules = [ 
-      "i2c-dev" 
-      "i2c-piix4" 
-    ];
+    # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
+    kernelModules = [ ];
     
     # Security
     fuseAllowOther = false;

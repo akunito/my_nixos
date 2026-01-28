@@ -13,9 +13,8 @@
     grubDevice = "/dev/";
     gpuType = "intel";
     
-    kernelModules = [ 
-      "i2c-dev" 
-      "i2c-piix4" 
+    # WSL - no i2c modules needed (no physical hardware)
+    kernelModules = [
       "cpufreq_powersave"
     ];
     
