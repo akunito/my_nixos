@@ -263,7 +263,6 @@ in
       pkgs.wget
       pkgs.nmap
       pkgs.zsh
-      # pkgs.git
       pkgs.cryptsetup
       pkgs.home-manager
       pkgs.wpa_supplicant
@@ -271,11 +270,9 @@ in
       pkgs.iproute2
       pkgs.dnsutils
       pkgs.nettools
-      pkgs.fzf
       pkgs.rsync
       pkgs.nfs-utils
       pkgs.restic
-      pkgs.clinfo
       pkgs.dialog
       pkgs.gparted
       pkgs.lm_sensors
@@ -284,9 +281,10 @@ in
       pkgs.python3Minimal
       pkgs.qt5.qtbase
       pkgs-unstable.sunshine
-      pkgs-unstable.lmstudio
-      pkgs.easyeffects
+      pkgs-unstable.wireguard-tools
+      pkgs.cups-filters
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
+      # Moved to homePackages: fzf, clinfo, lmstudio, easyeffects (user-level tools)
     ];
 
     sambaEnable = true;
@@ -400,6 +398,7 @@ in
     GOGlauncherEnable = true;
     dolphinEmulatorPrimehackEnable = true;
     steamPackEnable = true;
+    rpcs3Enable = true;
 
     fileManager = "dolphin"; # Explicitly set Dolphin as file manager (overrides default "ranger")
 
@@ -416,9 +415,7 @@ in
     # Home packages - will be evaluated in flake-base.nix
     # Use function that receives pkgs and pkgs-unstable
     homePackages = pkgs: pkgs-unstable: [
-      pkgs.zsh
-      pkgs.kitty
-      pkgs.git
+      # Removed duplicates: zsh (in system), git (in git.nix), kitty (in kitty.nix)
       pkgs.syncthing
       pkgs-unstable.mission-center
       pkgs-unstable.ungoogled-chromium
@@ -433,7 +430,6 @@ in
       pkgs-unstable.telegram-desktop
       pkgs-unstable.qbittorrent
       pkgs-unstable.nextcloud-client
-      pkgs-unstable.wireguard-tools
       pkgs-unstable.bitwarden-desktop
       pkgs-unstable.moonlight-qt
       # Discord - works in Plasma, will work in Sway after portal fix
@@ -443,16 +439,21 @@ in
       pkgs-unstable.kdePackages.kcalc
       pkgs-unstable.gnome-calculator
       # pkgs.vivaldi  # Removed: Vivaldi is now handled by user/app/browser/vivaldi.nix with KWallet support
-      pkgs-unstable.rpcs3
-      # pkgs-unstable.dolphin-emu # Replaced by dolphinEmulatorPrimehackEnable or standard installation if needed
-      # CUPS client packages for printer access in Sway
-      pkgs.cups-filters
+      # Gaming/emulator packages moved to user/app/games/games.nix (controlled by gaming flags):
+      # - rpcs3 (rpcs3Enable), dolphin-emu (dolphinEmulatorPrimehackEnable)
+      # User-level tools (moved from systemPackages):
+      pkgs.fzf
+      pkgs.clinfo
+      pkgs-unstable.lmstudio
+      pkgs.easyeffects
+      # System printer tools
       pkgs.system-config-printer
       pkgs-unstable.teams-for-linux
       pkgs-unstable.thunderbolt
       pkgs-unstable.ollama-rocm
       # Development tools moved to user/app/development/development.nix (controlled by developmentToolsEnable flag):
       # - vscode, git-crypt, drawio, cloudflared, code-cursor, opencode, powershell, azure-cli, claude-code, qwen-code, antigravity, dbeaver-bin
+      # System-level tools moved to systemPackages: wireguard-tools, cups-filters
 
     ];
 

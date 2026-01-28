@@ -370,6 +370,7 @@
     GOGlauncherEnable = false;
     dolphinEmulatorPrimehackEnable = false;
     steamPackEnable = false;
+    rpcs3Enable = false;
 
     # Git defaults
     gitUser = "akunito";

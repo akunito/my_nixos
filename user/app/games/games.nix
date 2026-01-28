@@ -86,6 +86,9 @@ in
     ])
     ++ (lib.optionals (userSettings.starcitizenEnable == true) [
       inputs.nix-citizen.packages.${pkgs.system}.rsi-launcher
+    ])
+    ++ (lib.optionals (userSettings.rpcs3Enable == true) [
+      pkgs-unstable.rpcs3
     ]);
 
   # Session variable to suppress Bottles warning (User Session Scope)

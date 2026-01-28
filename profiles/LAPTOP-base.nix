@@ -74,20 +74,21 @@
       pkgs.wget
       pkgs.nmap
       pkgs.zsh
-      pkgs.git
       pkgs.cryptsetup
       pkgs.home-manager
       pkgs.wpa_supplicant
       pkgs.traceroute
       pkgs.iproute2
       pkgs.dnsutils
-      pkgs.fzf
       pkgs.rsync
       pkgs.nfs-utils
       pkgs.restic
       pkgs.qt5.qtbase
       pkgs-unstable.sunshine
+      pkgs-unstable.wireguard-tools
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
+      # Moved to homePackages: fzf (user-level tool)
+      # Removed: git (handled by git.nix module)
     ];
 
     systemStable = false;
@@ -118,9 +119,7 @@
 
     # Common home packages for laptops
     homePackages = pkgs: pkgs-unstable: [
-      pkgs.zsh
-      pkgs.kitty
-      pkgs.git
+      # Removed duplicates: zsh (in system), git (in git.nix), kitty (in kitty.nix)
       pkgs.syncthing
       pkgs-unstable.ungoogled-chromium
       pkgs-unstable.obsidian
@@ -132,14 +131,16 @@
       pkgs-unstable.telegram-desktop
       pkgs-unstable.qbittorrent
       pkgs-unstable.nextcloud-client
-      pkgs-unstable.wireguard-tools
       pkgs-unstable.bitwarden-desktop
       pkgs-unstable.moonlight-qt
       pkgs-unstable.discord
       pkgs-unstable.kdePackages.kcalc
       pkgs-unstable.gnome-calculator
+      # User-level tool (moved from systemPackages):
+      pkgs.fzf
       # Development tools moved to user/app/development/development.nix (controlled by developmentToolsEnable flag):
       # - vscode
+      # System-level tool moved to systemPackages: wireguard-tools
     ];
 
     zshinitContent = ''
