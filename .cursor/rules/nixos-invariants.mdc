@@ -1,0 +1,24 @@
+---
+description: NixOS/flake invariants for this repo (purity, workflow, and safe operational guidance).
+globs:
+  - "**/*.nix"
+  - "flake.nix"
+  - "flake.*.nix"
+  - "flake.lock"
+---
+
+## NixOS / flake invariants (always follow)
+
+- **Immutability**: never suggest editing `/nix/store` or running imperative package managers (`nix-env`, `nix-channel`, `apt`, `yum`).
+- **Source of truth**: `flake.nix` + `inputs` control dependencies; use Nix options/modules, not ad-hoc system changes.
+- **Apply workflow**: apply changes via `install.sh` (or `phoenix sync`), not manual `systemctl enable`/`systemctl start`.
+- **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths in Nix expressions.
+- **System vs user**:
+  - system-wide packages: `environment.systemPackages`
+  - per-user: `home.packages`
+  - system services: `services.*`
+  - user services/programs: `systemd.user.*` / `programs.*` (Home Manager)
+
+## When unsure
+
+- Use `docs/00_ROUTER.md` to pick the right doc node, then read only the relevant docs/code.

@@ -1,0 +1,24 @@
+---
+description: Documentation maintenance rules (frontmatter routing + router/catalog regeneration).
+globs:
+  - "docs/**"
+  - "scripts/generate_docs_index.py"
+---
+
+## Docs maintenance (Router/Catalog)
+
+- **Frontmatter required for key docs**: when editing or creating major docs, include YAML frontmatter:
+  - `id` (stable unique ID)
+  - `summary` (1-line)
+  - `tags` (keyword list)
+  - `related_files` (globs/paths this doc governs; if omitted, router falls back to doc path)
+- **Index generation**: after reorganizing docs or adding major modules/docs, regenerate:
+  - `python3 scripts/generate_docs_index.py`
+  - This produces:
+    - `docs/00_ROUTER.md` (routing table)
+    - `docs/01_CATALOG.md` (full catalog)
+    - `docs/00_INDEX.md` (shim)
+
+## Retrieval protocol (short)
+
+- Read `docs/00_ROUTER.md` first, choose node(s), then open only the referenced docs/code.

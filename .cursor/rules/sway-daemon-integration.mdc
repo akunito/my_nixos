@@ -1,0 +1,17 @@
+---
+description: Sway daemon integration rules (systemd-first default, single lifecycle manager, and safe patterns).
+globs:
+  - "user/wm/sway/**"
+  - "docs/user-modules/sway-daemon-integration.md"
+---
+
+## Sway daemon integration (critical)
+
+- **Read first**: `docs/user-modules/sway-daemon-integration.md`
+- **Systemd-first**: Sway session services are managed by systemd user units bound to `sway-session.target`.
+- **Single lifecycle manager**: do not start the same service via both Sway startup `exec` and systemd; pick one (prefer systemd user services).
+- **DRY**: treat `user/wm/sway/default.nix` as the source of truth; keep service wiring there.
+
+## Safety constraints (do not regress)
+
+- Avoid adding startup sleeps/delays unless strictly necessary; timing is sensitive in Wayland sessions.

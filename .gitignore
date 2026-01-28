@@ -32,8 +32,9 @@
 *.ORIGINAL.nix
 
 # Nix files
-flake.lock
-hardware-configuration.nix
+# flake.lock - SHOULD be tracked for reproducibility (removed from ignore)
+# Note: flake.lock is currently tracked and should remain tracked
+hardware-configuration.nix  # Machine-specific, managed per-profile
 
 # Local/custom files (user-specific, not in repo)
 local/
@@ -50,7 +51,13 @@ local/
 .settings/
 *.sublime-project
 *.sublime-workspace
-.cursor/
+# .cursor/ - TRACK: Contains valuable rules, plans, and debugging scripts
+# Only ignore temporary debug logs in .cursor/
+.cursor/debug.log
+.cursor/*.log
+# .claude/ - TRACK: Contains project configuration and agents
+# Only ignore local settings
+.claude/settings.local.json
 *.code-workspace
 
 # OS files
