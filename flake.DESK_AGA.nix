@@ -1,10 +1,10 @@
 {
-  description = "Flake for my Desktop";
+  description = "Flake of DESK_AGA Desktop (nixosaga)";
 
   outputs = inputs@{ self, ... }:
     let
       base = import ./lib/flake-base.nix;
-      profileConfig = import ./profiles/AGADESK-config.nix;
+      profileConfig = import ./profiles/DESK_AGA-config.nix;
     in
       base { inherit inputs self profileConfig; };
 

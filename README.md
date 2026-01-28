@@ -32,21 +32,26 @@ A **modular, hierarchical** NixOS configuration system with **centralized softwa
     ┌────────────┐         ┌────────┐          ┌─────────┐
     │   DESK     │         │VMHOME  │          │LXC_plane│
     │ (Desktop)  │         │(Server)│          │LXC_tmpl │
-    └────────────┘         └────────┘          └─────────┘
-         │
-         ├────────────────────┬──────────────┐
-         ▼                    ▼              ▼
-    ┌────────┐           ┌───────┐    ┌─────────┐
-    │LAPTOP  │           │AGADESK│    │ VMDESK  │
-    │  Base  │           │(Desk) │    │  (VM)   │
-    └───┬────┘           └───────┘    └─────────┘
-        │
-        ├─────────────┬─────────────┐
-        ▼             ▼             ▼
-    ┌────────┐  ┌────────────┐  ┌─────────┐
-    │LAPTOP  │  │  LAPTOP    │  │LAPTOP   │
-    │  L15   │  │  YOGAAKU   │  │  AGA    │
-    └────────┘  └────────────┘  └─────────┘
+    └──────┬─────┘         └────────┘          └─────────┘
+           │
+           ├──────────────┐
+           ▼              ▼
+       ┌────────┐    ┌─────────┐
+       │DESK_AGA│    │ VMDESK  │
+       │ (Desk) │    │  (VM)   │
+       └────────┘    └─────────┘
+
+    ┌──────────┐
+    │  LAPTOP  │
+    │   Base   │
+    └─────┬────┘
+          │
+          ├─────────────┬─────────────┐
+          ▼             ▼             ▼
+      ┌────────┐  ┌────────────┐  ┌─────────┐
+      │LAPTOP  │  │  LAPTOP    │  │LAPTOP   │
+      │  L15   │  │  YOGAAKU   │  │  AGA    │
+      └────────┘  └────────────┘  └─────────┘
 
 Legend:
   └──► Inherits from
@@ -134,10 +139,10 @@ Software organized into **4 core package modules**:
 #### Personal Profiles
 Full-featured desktop/laptop configurations with GUI applications:
 - **DESK** - Primary desktop (AMD GPU, gaming, development, AI)
+  - **DESK_AGA** - Secondary desktop (inherits from DESK, simplified - no development/AI, limited gaming)
 - **LAPTOP_L15** - Intel laptop with development tools
 - **LAPTOP_YOGAAKU** - Older laptop, reduced features
-- **AGA** - Minimal laptop with basic tools
-- **AGADESK** - Secondary desktop with gaming
+- **LAPTOP_AGA** - Minimal laptop with basic tools
 
 #### Server Profiles
 Headless server configurations:
