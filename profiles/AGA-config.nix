@@ -98,25 +98,17 @@
 
     # System packages - will be evaluated in flake-base.nix
     systemPackages = pkgs: pkgs-unstable: [
-      pkgs.vim
-      pkgs.wget
-      pkgs.nmap
-      pkgs.zsh
-      pkgs.git
-      pkgs.cryptsetup
-      pkgs.home-manager
-      pkgs.wpa_supplicant
-      pkgs.fzf
+      # NOTE: Basic tools moved to system/packages/system-basic-tools.nix (systemBasicToolsEnable)
+      # NOTE: Networking tools moved to system/packages/system-network-tools.nix (systemNetworkToolsEnable)
+
+      # === AGA-specific packages ===
       pkgs.tldr
-      pkgs.rsync
-      pkgs.nfs-utils
-      pkgs.restic
-      pkgs.vivaldi
-      pkgs.qt5.qtbase
-      pkgs-unstable.sunshine
-      pkgs-unstable.wireguard-tools
+
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
+
+    # Package module flags
+    systemNetworkToolsEnable = true; # Enable advanced networking tools
 
     starCitizenModules = false;
     vivaldiPatch = true;
@@ -167,30 +159,15 @@
 
     # Home packages - will be evaluated in flake-base.nix
     homePackages = pkgs: pkgs-unstable: [
-      pkgs.zsh
-      pkgs.kitty
-      pkgs.git
-      pkgs.syncthing
-      pkgs-unstable.mission-center
-      pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.obsidian
-      pkgs-unstable.spotify
-      pkgs-unstable.vlc
-      pkgs-unstable.candy-icons
-      pkgs.calibre
-      pkgs-unstable.libreoffice
-      pkgs-unstable.telegram-desktop
-      pkgs-unstable.qbittorrent
-      pkgs-unstable.nextcloud-client
-      pkgs-unstable.wireguard-tools
-      pkgs-unstable.bitwarden-desktop
-      pkgs-unstable.moonlight-qt
-      pkgs-unstable.discord
-      pkgs-unstable.kdePackages.kcalc
-      pkgs-unstable.gnome-calculator
-      pkgs-unstable.vivaldi
-      # Development tools moved to user/app/development/development.nix
-      # To enable: set developmentToolsEnable = true in systemSettings
+      # NOTE: zsh, git, kitty are handled by system/modules (not listed here to avoid duplication)
+      # NOTE: Basic packages moved to user/packages/user-basic-pkgs.nix (userBasicPkgsEnable)
+
+      # === AGA-specific packages ===
+      pkgs-unstable.kdePackages.kcalc # AGA-specific calculator
+      pkgs-unstable.vivaldi # AGA-specific browser
+
+      # === Development Tools ===
+      # Handled by user/app/development/development.nix (controlled by developmentToolsEnable flag)
     ];
 
     zshinitContent = ''

@@ -7,6 +7,8 @@
   imports =
     [ ../work/configuration.nix # Personal is essentially work system + games.
       ../../system/hardware-configuration.nix
+      ../../system/packages/system-basic-tools.nix # Basic system packages (vim, rsync, cryptsetup, etc.)
+      ../../system/packages/system-network-tools.nix # Advanced networking tools (nmap, traceroute, etc.)
       ../../system/app/gamemode.nix # GameMode for performance tuning (This is breaking my system, probably AMDGPU driver related)
       ../../system/app/steam.nix
       ../../system/app/proton.nix

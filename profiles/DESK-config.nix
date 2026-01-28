@@ -259,33 +259,13 @@ in
     # System packages - will be evaluated in flake-base.nix
     # Use function that receives pkgs and pkgs-unstable
     systemPackages = pkgs: pkgs-unstable: [
-      pkgs.vim
-      pkgs.wget
-      pkgs.nmap
-      pkgs.zsh
-      pkgs.cryptsetup
-      pkgs.home-manager
-      pkgs.wpa_supplicant
-      pkgs.traceroute
-      pkgs.iproute2
-      pkgs.dnsutils
-      pkgs.nettools
-      pkgs.rsync
-      pkgs.nfs-utils
-      pkgs.restic
-      pkgs.dialog
-      pkgs.gparted
-      pkgs.lm_sensors
-      pkgs.sshfs
-      pkgs.openssl
-      pkgs.python3Minimal
-      pkgs.qt5.qtbase
-      pkgs-unstable.sunshine
-      pkgs-unstable.wireguard-tools
-      pkgs.cups-filters
+      # NOTE: Basic tools moved to system/packages/system-basic-tools.nix (systemBasicToolsEnable)
+      # NOTE: Networking tools moved to system/packages/system-network-tools.nix (systemNetworkToolsEnable)
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
-      # Moved to homePackages: fzf, clinfo, lmstudio, easyeffects (user-level tools)
     ];
+
+    # Package module flags
+    systemNetworkToolsEnable = true; # Enable advanced networking tools
 
     sambaEnable = true;
     sunshineEnable = true;
@@ -393,6 +373,9 @@ in
     wm = "plasma6";
     wmEnableHyprland = false; # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
 
+    # Package module flags
+    userAiPkgsEnable = true; # Enable AI & ML packages
+
     protongamesEnable = true;
     starcitizenEnable = true;
     GOGlauncherEnable = true;
@@ -415,45 +398,22 @@ in
     # Home packages - will be evaluated in flake-base.nix
     # Use function that receives pkgs and pkgs-unstable
     homePackages = pkgs: pkgs-unstable: [
-      # Removed duplicates: zsh (in system), git (in git.nix), kitty (in kitty.nix)
-      pkgs.syncthing
-      pkgs-unstable.mission-center
-      pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.obsidian
-      pkgs-unstable.spotify
-      pkgs-unstable.vlc
-      pkgs-unstable.candy-icons
-      pkgs.calibre
-      # pkgs.kdePackages.dolphin # Removed: Configured via fileManager settings
+      # NOTE: zsh, git, kitty are handled by system/modules (not listed here to avoid duplication)
+      # NOTE: Basic packages moved to user/packages/user-basic-pkgs.nix (userBasicPkgsEnable)
+      # NOTE: AI & ML packages moved to user/packages/user-ai-pkgs.nix (userAiPkgsEnable)
 
-      pkgs-unstable.libreoffice
-      pkgs-unstable.telegram-desktop
-      pkgs-unstable.qbittorrent
-      pkgs-unstable.nextcloud-client
-      pkgs-unstable.bitwarden-desktop
-      pkgs-unstable.moonlight-qt
-      # Discord - works in Plasma, will work in Sway after portal fix
-      pkgs-unstable.discord
-      # Vesktop - alternative with native Wayland support
-      pkgs-unstable.vesktop
-      pkgs-unstable.kdePackages.kcalc
-      pkgs-unstable.gnome-calculator
-      # pkgs.vivaldi  # Removed: Vivaldi is now handled by user/app/browser/vivaldi.nix with KWallet support
-      # Gaming/emulator packages moved to user/app/games/games.nix (controlled by gaming flags):
+      # === Advanced Tools ===
+      pkgs.clinfo # OpenCL diagnostics
+
+      # === Development Tools ===
+      # Handled by user/app/development/development.nix (controlled by developmentToolsEnable flag):
+      # - vscode, git-crypt, drawio, cloudflared, code-cursor, opencode, powershell
+      # - azure-cli, claude-code, qwen-code, antigravity, dbeaver-bin
+
+      # === Gaming & Emulators ===
+      # Handled by user/app/games/games.nix (controlled by gaming flags):
       # - rpcs3 (rpcs3Enable), dolphin-emu (dolphinEmulatorPrimehackEnable)
-      # User-level tools (moved from systemPackages):
-      pkgs.fzf
-      pkgs.clinfo
-      pkgs-unstable.lmstudio
-      pkgs.easyeffects
-      # System printer tools
-      pkgs.system-config-printer
-      pkgs-unstable.teams-for-linux
-      pkgs-unstable.thunderbolt
-      pkgs-unstable.ollama-rocm
-      # Development tools moved to user/app/development/development.nix (controlled by developmentToolsEnable flag):
-      # - vscode, git-crypt, drawio, cloudflared, code-cursor, opencode, powershell, azure-cli, claude-code, qwen-code, antigravity, dbeaver-bin
-      # System-level tools moved to systemPackages: wireguard-tools, cups-filters
+      # - lutris, bottles, heroic, etc (protongamesEnable, GOGlauncherEnable)
 
     ];
 

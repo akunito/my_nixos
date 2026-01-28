@@ -155,33 +155,17 @@
 
     # System packages - will be evaluated in flake-base.nix
     systemPackages = pkgs: pkgs-unstable: [
-      pkgs.vim
-      pkgs.wget
-      pkgs.nmap
-      pkgs.zsh
-      pkgs.git
-      pkgs.cryptsetup
-      pkgs.home-manager
-      pkgs.wpa_supplicant
-      pkgs.traceroute
-      pkgs.iproute2
-      pkgs.dnsutils
-      pkgs.nettools
-      pkgs.fzf
-      pkgs.rsync
-      pkgs.nfs-utils
-      pkgs.restic
-      pkgs.clinfo
-      pkgs.dialog
-      pkgs.gparted
-      pkgs.lm_sensors
-      pkgs.sshfs
-      pkgs.openssl
-      pkgs.python313Full
-      pkgs.qt5.qtbase
-      pkgs-unstable.sunshine
+      # NOTE: Basic tools moved to system/packages/system-basic-tools.nix (systemBasicToolsEnable)
+      # NOTE: Networking tools moved to system/packages/system-network-tools.nix (systemNetworkToolsEnable)
+
+      # === AGADESK-specific packages ===
+      pkgs.python313Full # Full Python instead of minimal
+
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
+
+    # Package module flags
+    systemNetworkToolsEnable = true; # Enable advanced networking tools
 
     starCitizenModules = false;
     vivaldiPatch = false;
@@ -224,31 +208,16 @@
 
     # Home packages - will be evaluated in flake-base.nix
     homePackages = pkgs: pkgs-unstable: [
-      pkgs.zsh
-      pkgs.kitty
-      pkgs.git
-      pkgs.syncthing
-      pkgs-unstable.mission-center
-      pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.obsidian
-      pkgs-unstable.spotify
-      pkgs-unstable.vlc
-      pkgs-unstable.candy-icons
-      pkgs.calibre
-      pkgs.kdePackages.dolphin
-      pkgs-unstable.libreoffice
-      pkgs-unstable.telegram-desktop
-      pkgs-unstable.qbittorrent
-      pkgs-unstable.nextcloud-client
-      pkgs-unstable.wireguard-tools
-      pkgs-unstable.bitwarden-desktop
-      pkgs-unstable.moonlight-qt
-      pkgs-unstable.discord
-      pkgs-unstable.kdePackages.kcalc
-      pkgs-unstable.gnome-calculator
-      # Development tools moved to user/app/development/development.nix
-      # To enable: set developmentToolsEnable = true in systemSettings
-      # Includes: vscode, git-crypt, drawio, cloudflared, code-cursor, etc.
+      # NOTE: zsh, git, kitty are handled by system/modules (not listed here to avoid duplication)
+      # NOTE: Basic packages moved to user/packages/user-basic-pkgs.nix (userBasicPkgsEnable)
+
+      # === AGADESK-specific packages ===
+      pkgs-unstable.kdePackages.kcalc # AGADESK-specific calculator
+      pkgs.clinfo # OpenCL diagnostics
+      pkgs.kdePackages.dolphin # AGADESK-specific file manager
+
+      # === Development Tools ===
+      # Handled by user/app/development/development.nix (controlled by developmentToolsEnable flag)
     ];
 
     zshinitContent = ''

@@ -85,21 +85,36 @@
     
     # System packages - will be evaluated in flake-base.nix
     systemPackages = pkgs: pkgs-unstable: [
+      # === Basic CLI Tools ===
       pkgs.vim
       pkgs.wget
-      pkgs.nmap
+
+      # === Shell ===
       pkgs.zsh
-      pkgs.git
-      pkgs.cryptsetup
+
+      # === System Management ===
       pkgs.home-manager
+      pkgs.cryptsetup
+
+      # === Networking Tools (Advanced) ===
+      pkgs.nmap
       pkgs.dnsutils
-      pkgs.fzf
+      pkgs-unstable.wireguard-tools
+
+      # === Backup & Sync ===
       pkgs.rsync
       pkgs.restic
+
+      # === System Utilities ===
       pkgs.lm_sensors
       pkgs.sshfs
+
+      # === Libraries & Dependencies ===
       pkgs.qt5.qtbase
+
+      # === Remote Access & Streaming ===
       pkgs-unstable.sunshine
+
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
     
@@ -140,23 +155,37 @@
     
     # Home packages - will be evaluated in flake-base.nix
     homePackages = pkgs: pkgs-unstable: [
-      pkgs.zsh
-      pkgs.kitty
-      pkgs.git
+      # NOTE: zsh, git, kitty are handled by system/modules (not listed here to avoid duplication)
+
+      # === Basic User Tools ===
+      pkgs.fzf # Fuzzy finder
+
+      # === Cloud & Sync ===
       pkgs.syncthing
+      pkgs-unstable.nextcloud-client
+
+      # === Browsers ===
       pkgs-unstable.ungoogled-chromium
+
+      # === Communication & Messaging ===
+      pkgs-unstable.telegram-desktop
+
+      # === Productivity & Office ===
       pkgs-unstable.obsidian
+      pkgs-unstable.libreoffice
+      pkgs.calibre # eBook manager
+      pkgs-unstable.qbittorrent
+
+      # === Media & Entertainment ===
       pkgs-unstable.spotify
       pkgs-unstable.vlc
+
+      # === Theming & Appearance ===
       pkgs-unstable.candy-icons
-      pkgs.calibre
-      pkgs-unstable.libreoffice
-      pkgs-unstable.telegram-desktop
-      pkgs-unstable.qbittorrent
-      pkgs-unstable.nextcloud-client
-      pkgs-unstable.wireguard-tools
-      # Development tools moved to user/app/development/development.nix
-      # To enable: set developmentToolsEnable = true in systemSettings
+
+      # === Development Tools ===
+      # Handled by user/app/development/development.nix (controlled by developmentToolsEnable flag)
+
     ];
     
     zshinitContent = ''

@@ -70,25 +70,37 @@
 
     # Common system packages for laptops
     systemPackages = pkgs: pkgs-unstable: [
+      # === Basic CLI Tools ===
       pkgs.vim
       pkgs.wget
-      pkgs.nmap
+
+      # === Shell ===
       pkgs.zsh
-      pkgs.cryptsetup
+
+      # === System Management ===
       pkgs.home-manager
+      pkgs.cryptsetup
+
+      # === Networking Tools (Advanced) ===
+      pkgs.nmap
       pkgs.wpa_supplicant
       pkgs.traceroute
       pkgs.iproute2
       pkgs.dnsutils
+      pkgs-unstable.wireguard-tools
+
+      # === Backup & Sync ===
       pkgs.rsync
       pkgs.nfs-utils
       pkgs.restic
+
+      # === Libraries & Dependencies ===
       pkgs.qt5.qtbase
+
+      # === Remote Access & Streaming ===
       pkgs-unstable.sunshine
-      pkgs-unstable.wireguard-tools
+
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
-      # Moved to homePackages: fzf (user-level tool)
-      # Removed: git (handled by git.nix module)
     ];
 
     systemStable = false;
@@ -119,28 +131,47 @@
 
     # Common home packages for laptops
     homePackages = pkgs: pkgs-unstable: [
-      # Removed duplicates: zsh (in system), git (in git.nix), kitty (in kitty.nix)
-      pkgs.syncthing
-      pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.obsidian
-      pkgs-unstable.spotify
-      pkgs-unstable.vlc
-      pkgs-unstable.candy-icons
-      pkgs.calibre
-      pkgs-unstable.libreoffice
-      pkgs-unstable.telegram-desktop
-      pkgs-unstable.qbittorrent
-      pkgs-unstable.nextcloud-client
-      pkgs-unstable.bitwarden-desktop
-      pkgs-unstable.moonlight-qt
-      pkgs-unstable.discord
+      # NOTE: zsh, git, kitty are handled by system/modules (not listed here to avoid duplication)
+
+      # === Basic User Tools ===
+      pkgs.fzf # Fuzzy finder
       pkgs-unstable.kdePackages.kcalc
       pkgs-unstable.gnome-calculator
-      # User-level tool (moved from systemPackages):
-      pkgs.fzf
-      # Development tools moved to user/app/development/development.nix (controlled by developmentToolsEnable flag):
-      # - vscode
-      # System-level tool moved to systemPackages: wireguard-tools
+
+      # === Security & Privacy ===
+      pkgs-unstable.bitwarden-desktop
+
+      # === Cloud & Sync ===
+      pkgs.syncthing
+      pkgs-unstable.nextcloud-client
+
+      # === Browsers ===
+      pkgs-unstable.ungoogled-chromium
+
+      # === Communication & Messaging ===
+      pkgs-unstable.telegram-desktop
+      pkgs-unstable.discord
+
+      # === Productivity & Office ===
+      pkgs-unstable.obsidian
+      pkgs-unstable.libreoffice
+      pkgs.calibre # eBook manager
+      pkgs-unstable.qbittorrent
+
+      # === Media & Entertainment ===
+      pkgs-unstable.spotify
+      pkgs-unstable.vlc
+
+      # === Remote Access & Streaming ===
+      pkgs-unstable.moonlight-qt
+
+      # === Theming & Appearance ===
+      pkgs-unstable.candy-icons
+
+      # === Development Tools ===
+      # Handled by user/app/development/development.nix (controlled by developmentToolsEnable flag):
+      # - vscode, etc.
+
     ];
 
     zshinitContent = ''

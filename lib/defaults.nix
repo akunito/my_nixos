@@ -261,6 +261,10 @@
     # Development tools feature flags
     developmentToolsEnable = false; # Enable development IDEs and cloud tools (Cursor, Claude Code, Azure CLI, etc.)
 
+    # Package module feature flags
+    systemBasicToolsEnable = true; # Enable basic system tools (vim, wget, rsync, cryptsetup, etc.)
+    systemNetworkToolsEnable = false; # Enable advanced networking tools (nmap, traceroute, dnsutils, etc.)
+
     # Homelab feature flags
     grafanaEnable = true; # Enable Grafana/Prometheus monitoring stack
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
@@ -371,6 +375,10 @@
     dolphinEmulatorPrimehackEnable = false;
     steamPackEnable = false;
     rpcs3Enable = false;
+
+    # Package module feature flags
+    userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
+    userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
 
     # Git defaults
     gitUser = "akunito";

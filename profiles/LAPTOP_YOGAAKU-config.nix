@@ -109,6 +109,9 @@ in
         pkgs.tldr
       ];
 
+    # Package module flags
+    systemNetworkToolsEnable = true; # Enable advanced networking tools
+
     # Disable features not needed on this older machine
     starCitizenModules = false;
     vivaldiPatch = false;

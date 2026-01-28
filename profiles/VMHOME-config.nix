@@ -166,26 +166,23 @@
     # System packages - will be evaluated in flake-base.nix
     systemPackages =
       pkgs: pkgs-unstable: with pkgs; [
-        vim
-        wget
-        zsh
-        git
-        rclone
-        cryptsetup
+        # NOTE: Basic tools moved to system/packages/system-basic-tools.nix (systemBasicToolsEnable)
+        # NOTE: vim, wget, zsh, home-manager, cryptsetup, restic, nfs-utils, openssl in system-basic-tools.nix
+        # NOTE: traceroute, iproute2 available in system-network-tools.nix (set systemNetworkToolsEnable = true if needed)
+
+        # === VMHOME-specific packages ===
+        tldr
         gocryptfs
-        traceroute
-        iproute2
-        openssl
-        restic
-        zim-tools
-        p7zip
-        nfs-utils
+        traceroute # Keeping for now (not enabling systemNetworkToolsEnable)
+        iproute2 # Keeping for now (not enabling systemNetworkToolsEnable)
+        rclone
         btop
         fzf
-        tldr
-        atuin
-        home-manager
-        # kitty removed - headless server
+        p7zip
+        zim-tools
+
+        # Note: kitty removed - headless server
+        # Note: atuin removed - handled by sh.nix module
       ];
 
     starCitizenModules = false;
@@ -231,10 +228,11 @@
     qemuGuestAddition = true; # VM
 
     # Home packages - will be evaluated in flake-base.nix
+    # Headless server - minimal user packages
     homePackages =
       pkgs: pkgs-unstable: with pkgs; [
-        zsh
-        git
+        # NOTE: zsh (in system), git (in git.nix) - not duplicated here
+        # Headless server needs no GUI packages
       ];
 
     zshinitContent = ''

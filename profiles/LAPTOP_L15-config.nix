@@ -101,14 +101,14 @@ in
     powerKey = "ignore";
 
     # System packages - extend base with LAPTOP-specific packages
+    # NOTE: All previous packages moved to system-basic-tools.nix module
     systemPackages = pkgs: pkgs-unstable:
       (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
-        pkgs.clinfo
-        pkgs.dialog
-        pkgs.gparted
-        pkgs.lm_sensors
-        pkgs.sshfs
+        # No additional packages needed - all in modules
       ];
+
+    # Package module flags
+    systemNetworkToolsEnable = true; # Enable advanced networking tools
 
     # Additional features
     sunshineEnable = true;
@@ -127,9 +127,9 @@ in
     # Home packages - extend base with LAPTOP-specific packages
     homePackages = pkgs: pkgs-unstable:
       (base.userSettings.homePackages pkgs pkgs-unstable) ++ [
-        pkgs-unstable.mission-center
-        pkgs.kdePackages.dolphin
-        pkgs-unstable.vivaldi
+        # NOTE: mission-center moved to user-basic-pkgs.nix module
+        pkgs.kdePackages.dolphin # LAPTOP-specific file manager
+        # NOTE: vivaldi is provided by user/app/browser/vivaldi.nix module (with KWallet support)
         # Development tools moved to user/app/development/development.nix (controlled by developmentToolsEnable flag):
         # - code-cursor, windsurf (removed)
       ];
