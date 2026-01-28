@@ -173,7 +173,6 @@
       pkgs.syncthing
       pkgs-unstable.mission-center
       pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.vscode
       pkgs-unstable.obsidian
       pkgs-unstable.spotify
       pkgs-unstable.vlc
@@ -190,6 +189,8 @@
       pkgs-unstable.kdePackages.kcalc
       pkgs-unstable.gnome-calculator
       pkgs-unstable.vivaldi
+      # Development tools moved to user/app/development/development.nix
+      # To enable: set developmentToolsEnable = true in systemSettings
     ];
 
     zshinitContent = ''

@@ -115,6 +115,7 @@ in
     xboxControllerEnable = true;
     aichatEnable = true;
     nixvimEnabled = true;
+    developmentToolsEnable = true; # Enable development IDEs and cloud tools
   };
 
   userSettings = base.userSettings // {
@@ -127,10 +128,10 @@ in
     homePackages = pkgs: pkgs-unstable:
       (base.userSettings.homePackages pkgs pkgs-unstable) ++ [
         pkgs-unstable.mission-center
-        pkgs-unstable.windsurf
-        pkgs-unstable.code-cursor
         pkgs.kdePackages.dolphin
         pkgs-unstable.vivaldi
+        # Development tools moved to user/app/development/development.nix (controlled by developmentToolsEnable flag):
+        # - code-cursor, windsurf (removed)
       ];
 
     # Different prompt color for LAPTOP

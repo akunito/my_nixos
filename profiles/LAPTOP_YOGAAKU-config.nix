@@ -13,6 +13,7 @@ in
     profile = "personal";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_YOGAAKU -s -u";
     bootMode = "bios";
+    grubDevice = "/dev/sda"; # BIOS boot requires GRUB device (adjust to actual boot disk)
     gpuType = "intel";
 
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
@@ -114,6 +115,7 @@ in
     sambaEnable = false;
     sunshineEnable = false;
     xboxControllerEnable = true;
+    developmentToolsEnable = true; # Enable development IDEs and cloud tools
 
     # Fonts: use default computation in flake-base.nix
     # (nerdfonts/powerline for stable, nerd-fonts.jetbrains-mono for unstable)

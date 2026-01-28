@@ -258,6 +258,9 @@
     # Hyprland feature flags
     hyprprofilesEnable = false; # Enable hyprprofiles for Hyprland
 
+    # Development tools feature flags
+    developmentToolsEnable = false; # Enable development IDEs and cloud tools (Cursor, Claude Code, Azure CLI, etc.)
+
     # Homelab feature flags
     grafanaEnable = true; # Enable Grafana/Prometheus monitoring stack
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)

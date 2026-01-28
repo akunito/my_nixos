@@ -145,7 +145,6 @@
       pkgs.git
       pkgs.syncthing
       pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.vscode
       pkgs-unstable.obsidian
       pkgs-unstable.spotify
       pkgs-unstable.vlc
@@ -156,6 +155,8 @@
       pkgs-unstable.qbittorrent
       pkgs-unstable.nextcloud-client
       pkgs-unstable.wireguard-tools
+      # Development tools moved to user/app/development/development.nix
+      # To enable: set developmentToolsEnable = true in systemSettings
     ];
     
     zshinitContent = ''

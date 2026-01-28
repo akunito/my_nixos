@@ -101,7 +101,7 @@
       "dialout"
     ];
 
-    theme = "miramare";
+    theme = "ashes";
     wm = "plasma6";
     wmEnableHyprland = false;
 
@@ -110,6 +110,8 @@
     defaultRoamDir = "Personal.p";
     term = "kitty";
     font = "Intel One Mono";
+
+    fileManager = "dolphin"; # Explicitly set Dolphin as file manager (overrides default "ranger")
 
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";
@@ -121,7 +123,6 @@
       pkgs.git
       pkgs.syncthing
       pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.vscode
       pkgs-unstable.obsidian
       pkgs-unstable.spotify
       pkgs-unstable.vlc
@@ -137,6 +138,8 @@
       pkgs-unstable.discord
       pkgs-unstable.kdePackages.kcalc
       pkgs-unstable.gnome-calculator
+      # Development tools moved to user/app/development/development.nix (controlled by developmentToolsEnable flag):
+      # - vscode
     ];
 
     zshinitContent = ''

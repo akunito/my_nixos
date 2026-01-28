@@ -298,6 +298,7 @@ in
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
+    developmentToolsEnable = true; # Enable development IDEs and cloud tools
     enableSwayForDESK = true; # Enable SwayFX as second WM option alongside Plasma6
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.
     swayPrimaryMonitor = monitors.samsungMain.criteria;
@@ -418,13 +419,9 @@ in
       pkgs.zsh
       pkgs.kitty
       pkgs.git
-      pkgs.git-crypt
       pkgs.syncthing
       pkgs-unstable.mission-center
       pkgs-unstable.ungoogled-chromium
-      pkgs-unstable.vscode
-      pkgs-unstable.code-cursor
-      pkgs-unstable.opencode
       pkgs-unstable.obsidian
       pkgs-unstable.spotify
       pkgs-unstable.vlc
@@ -434,7 +431,6 @@ in
 
       pkgs-unstable.libreoffice
       pkgs-unstable.telegram-desktop
-      pkgs-unstable.drawio
       pkgs-unstable.qbittorrent
       pkgs-unstable.nextcloud-client
       pkgs-unstable.wireguard-tools
@@ -447,9 +443,6 @@ in
       pkgs-unstable.kdePackages.kcalc
       pkgs-unstable.gnome-calculator
       # pkgs.vivaldi  # Removed: Vivaldi is now handled by user/app/browser/vivaldi.nix with KWallet support
-      pkgs-unstable.powershell
-      pkgs.azure-cli
-      pkgs-unstable.cloudflared
       pkgs-unstable.rpcs3
       # pkgs-unstable.dolphin-emu # Replaced by dolphinEmulatorPrimehackEnable or standard installation if needed
       # CUPS client packages for printer access in Sway
@@ -458,10 +451,8 @@ in
       pkgs-unstable.teams-for-linux
       pkgs-unstable.thunderbolt
       pkgs-unstable.ollama-rocm
-      pkgs-unstable.claude-code
-      pkgs-unstable.qwen-code
-      pkgs-unstable.antigravity
-      pkgs-unstable.dbeaver-bin # Database management tool
+      # Development tools moved to user/app/development/development.nix (controlled by developmentToolsEnable flag):
+      # - vscode, git-crypt, drawio, cloudflared, code-cursor, opencode, powershell, azure-cli, claude-code, qwen-code, antigravity, dbeaver-bin
 
     ];
 
