@@ -5,6 +5,38 @@ Migrate the VMHOME VM to an LXC container (`LXCHOME`) while preserving all funct
 
 ---
 
+## Storage Architecture Overview
+
+### Current Storage Flow
+```
+┌─────────────┐     iSCSI      ┌─────────────┐    passthrough   ┌─────────────┐
+│  TrueNAS    │ ──────────────►│   Proxmox   │ ────────────────►│   VMHOME    │
+│  (Storage)  │                │   (Host)    │                  │   (VM)      │
+└─────────────┘                └─────────────┘                  └─────────────┘
+      │                              │                                │
+      │ NFS exports                  │ (currently unused)             │ NFS client
+      │                              │                                │
+      └──────────────────────────────┼────────────────────────────────┘
+                                     │
+                                     ▼
+                          Direct NFS mount in VM
+```
+
+### Target Storage Flow (LXCHOME)
+```
+┌─────────────┐     iSCSI      ┌─────────────┐   bind mount    ┌─────────────┐
+│  TrueNAS    │ ──────────────►│   Proxmox   │ ───────────────►│  LXCHOME    │
+│  (Storage)  │                │   (Host)    │                 │   (LXC)     │
+│             │                │             │                 │             │
+│  192.168.   │     NFS        │  mounts     │   bind mount    │  sees same  │
+│  20.200     │ ──────────────►│  NFS here   │ ───────────────►│  paths      │
+└─────────────┘                └─────────────┘                 └─────────────┘
+```
+
+**Key Change**: NFS mounts move from inside the VM to Proxmox host level, then passed to LXC via bind mounts.
+
+---
+
 ## Current Architecture Analysis
 
 ### VMHOME (VM)
@@ -45,6 +77,163 @@ Migrate the VMHOME VM to an LXC container (`LXCHOME`) while preserving all funct
 
 ---
 
+## Pre-Migration: Proxmox Storage Setup
+
+### CRITICAL: This section must be completed BEFORE creating the LXC container
+
+### Step P1: Configure NFS Mounts on Proxmox Host
+
+The NFS shares from TrueNAS (192.168.20.200) will be mounted on Proxmox, then bind-mounted into the LXC.
+
+**P1.1: Install NFS client on Proxmox (if not present)**
+```bash
+apt update && apt install nfs-common -y
+```
+
+**P1.2: Create mount points on Proxmox**
+```bash
+mkdir -p /mnt/pve/NFS_media
+mkdir -p /mnt/pve/NFS_library
+mkdir -p /mnt/pve/NFS_emulators
+```
+
+**P1.3: Test NFS mounts manually first**
+```bash
+# Test each mount
+mount -t nfs4 192.168.20.200:/mnt/hddpool/media /mnt/pve/NFS_media
+mount -t nfs4 192.168.20.200:/mnt/ssdpool/library /mnt/pve/NFS_library
+mount -t nfs4 192.168.20.200:/mnt/ssdpool/emulators /mnt/pve/NFS_emulators
+
+# Verify access
+ls -la /mnt/pve/NFS_media
+ls -la /mnt/pve/NFS_library
+ls -la /mnt/pve/NFS_emulators
+
+# Unmount after testing
+umount /mnt/pve/NFS_media
+umount /mnt/pve/NFS_library
+umount /mnt/pve/NFS_emulators
+```
+
+**P1.4: Add persistent NFS mounts to Proxmox `/etc/fstab`**
+```bash
+# Add to /etc/fstab on Proxmox host
+192.168.20.200:/mnt/hddpool/media    /mnt/pve/NFS_media     nfs4  defaults,noatime,nofail,x-systemd.device-timeout=10s  0 0
+192.168.20.200:/mnt/ssdpool/library  /mnt/pve/NFS_library   nfs4  defaults,noatime,nofail,x-systemd.device-timeout=10s  0 0
+192.168.20.200:/mnt/ssdpool/emulators /mnt/pve/NFS_emulators nfs4  defaults,noatime,nofail,x-systemd.device-timeout=10s  0 0
+```
+
+**P1.5: Mount all and verify**
+```bash
+mount -a
+df -h | grep NFS
+```
+
+### Step P2: iSCSI Drive Considerations (/mnt/DATA_4TB)
+
+**Current Setup:**
+- TrueNAS exports an iSCSI LUN
+- Proxmox connects as iSCSI initiator
+- Drive appears as a block device on Proxmox
+- Currently passed through to VMHOME VM
+
+**Key Considerations for LXC Migration:**
+
+1. **No re-partitioning needed**: The drive is already formatted (ext4) with existing data
+2. **No data migration needed**: Same data, just different access method
+3. **Proxmox must mount the filesystem** (not pass raw block device to LXC)
+
+**P2.1: Verify current iSCSI mount on Proxmox**
+```bash
+# Check if DATA_4TB is already mounted on Proxmox host
+lsblk
+mount | grep DATA_4TB
+```
+
+**P2.2: If NOT already mounted on Proxmox, add to fstab**
+
+First, identify the iSCSI device:
+```bash
+# List iSCSI devices
+iscsiadm -m session -P 3 | grep -E "Target|disk"
+ls -la /dev/disk/by-id/ | grep iscsi
+```
+
+Then add to Proxmox `/etc/fstab`:
+```bash
+# Example - adjust device path based on your setup
+# Using by-id is more reliable than /dev/sdX
+/dev/disk/by-id/scsi-XXXXX  /mnt/pve/DATA_4TB  ext4  defaults,nofail,x-systemd.device-timeout=30s  0 0
+```
+
+**P2.3: Create mount point and mount**
+```bash
+mkdir -p /mnt/pve/DATA_4TB
+mount -a
+ls -la /mnt/pve/DATA_4TB
+```
+
+**IMPORTANT**: If the iSCSI drive is currently in use by VMHOME:
+- Option A: Shut down VMHOME first, then mount on Proxmox
+- Option B: Run both in parallel temporarily (risky - can cause data corruption if both write)
+- **Recommended**: Shut down VMHOME before mounting on Proxmox to avoid dual-mount issues
+
+### Step P3: Verify All Proxmox Mounts Before Proceeding
+
+```bash
+# Final verification
+df -h
+
+# Expected output should show:
+# /mnt/pve/DATA_4TB      (iSCSI drive)
+# /mnt/pve/NFS_media     (NFS from TrueNAS)
+# /mnt/pve/NFS_library   (NFS from TrueNAS)
+# /mnt/pve/NFS_emulators (NFS from TrueNAS)
+```
+
+---
+
+## Migration Impact Analysis
+
+### What Does NOT Need Migration (Data Already Accessible)
+
+If your service data is stored on `/mnt/DATA_4TB`, these require **no migration**:
+
+| Data | Location | Migration Needed? |
+|------|----------|-------------------|
+| Docker volumes | `/mnt/DATA_4TB/docker/` | ❌ No - same path in LXCHOME |
+| Nginx configs | `/mnt/DATA_4TB/nginx/` | ❌ No - same path |
+| Unifi data | `/mnt/DATA_4TB/unifi/` | ❌ No - same path |
+| Syncthing data | `/mnt/DATA_4TB/syncthing/` | ❌ No - same path |
+| Media files | `/mnt/NFS_media/` | ❌ No - NFS bind mount |
+| Library files | `/mnt/NFS_library/` | ❌ No - NFS bind mount |
+| Emulator files | `/mnt/NFS_emulators/` | ❌ No - NFS bind mount |
+
+### What DOES Need Migration/Setup
+
+| Data | Current Location | Action Required |
+|------|------------------|-----------------|
+| Docker images | `/var/lib/docker/` (VM root) | Export → Import OR rebuild |
+| Docker socket | `/var/run/docker.sock` | Recreated on container start |
+| System configs | `/etc/` (VM root) | Nix-managed, auto-generated |
+| User home | `/home/akunito/` (VM root) | Sync `.dotfiles`, rest is Nix |
+| SSH keys | `/home/akunito/.ssh/` | Copy or regenerate |
+| Restic repos | Depends on config | Verify repo paths point to DATA_4TB |
+
+### Recommendation: Keep Service Data on /mnt/DATA_4TB
+
+If not already, move Docker data directory to the iSCSI drive:
+```nix
+# In docker config, set data root to persistent storage
+virtualisation.docker.daemon.settings = {
+  data-root = "/mnt/DATA_4TB/docker";
+};
+```
+
+This eliminates Docker image migration entirely.
+
+---
+
 ## Migration Strategy
 
 ### Approach: Extend LXC-base-config.nix
@@ -70,6 +259,8 @@ profiles/
 
 ## Phase 1: Proxmox LXC Container Setup
 
+> **Prerequisites**: Complete all steps in "Pre-Migration: Proxmox Storage Setup" section first!
+
 ### 1.1 Create LXC Container in Proxmox
 
 ```bash
@@ -90,23 +281,52 @@ pct create <VMID> local:vztmpl/nixos-<version>.tar.xz \
 - `fuse=1` - Required for gocryptfs/FUSE mounts
 - `unprivileged=0` (privileged) - Easier for Docker/NFS, can try unprivileged later
 
-### 1.2 Bind Mounts (Replace fstab/drives.nix)
+### 1.2 Configure Bind Mounts for Storage
 
-In Proxmox GUI or `/etc/pve/lxc/<VMID>.conf`:
-```
-# Local drive passthrough
+Edit `/etc/pve/lxc/<VMID>.conf` (or use Proxmox GUI → Container → Resources → Add Mount Point):
+
+```bash
+# iSCSI drive from TrueNAS (via Proxmox mount)
 mp0: /mnt/pve/DATA_4TB,mp=/mnt/DATA_4TB
 
-# NFS from host (if TrueNAS NFS is mounted on Proxmox host)
+# NFS shares from TrueNAS (via Proxmox mount)
 mp1: /mnt/pve/NFS_media,mp=/mnt/NFS_media
 mp2: /mnt/pve/NFS_library,mp=/mnt/NFS_library
 mp3: /mnt/pve/NFS_emulators,mp=/mnt/NFS_emulators
 ```
 
-**Alternative: NFS client inside LXC**
-If NFS must be mounted inside the container (not via Proxmox bind mounts):
+**Why this approach?**
+- NFS is mounted once on Proxmox, shared to LXC via bind mounts
+- No NFS client needed inside LXC (simpler, fewer permissions)
+- iSCSI drive mounted on Proxmox, passed as directory (not block device)
+- LXC sees the same paths as VMHOME did → **no application config changes**
+
+### 1.3 Verify Bind Mounts After Container Creation
+
+```bash
+# Start the container
+pct start <VMID>
+
+# Enter the container
+pct enter <VMID>
+
+# Verify mounts are accessible
+ls -la /mnt/DATA_4TB
+ls -la /mnt/NFS_media
+ls -la /mnt/NFS_library
+ls -la /mnt/NFS_emulators
+
+# Check disk space
+df -h
+```
+
+### 1.4 Alternative: NFS Client Inside LXC (NOT RECOMMENDED)
+
+Only use this if you need different NFS mount options per-container:
 - Requires privileged container OR AppArmor profile adjustment
 - Add to LXC config: `lxc.apparmor.profile: unconfined`
+- More complex, more permissions needed
+- **Use Proxmox bind mounts instead (section 1.2)**
 
 ---
 
@@ -150,16 +370,18 @@ in
 
     # Drives - use bind mounts configured in Proxmox
     # Disable drives.nix mounts (handled by Proxmox mp0, mp1, etc.)
+    # The iSCSI drive and NFS shares are mounted on Proxmox and passed via bind mounts
     mount2ndDrives = false;
+    disk1_enabled = false;  # /mnt/DATA_4TB handled by Proxmox mp0
+    disk3_enabled = false;  # /mnt/NFS_media handled by Proxmox mp1
+    disk4_enabled = false;  # /mnt/NFS_emulators handled by Proxmox mp2
+    disk5_enabled = false;  # /mnt/NFS_library handled by Proxmox mp3
 
-    # NFS client - OPTION A: disabled, use Proxmox bind mounts
+    # NFS client - DISABLED (using Proxmox bind mounts instead)
+    # This simplifies the LXC config and avoids NFS permission issues
     nfsClientEnable = false;
     nfsMounts = [];
     nfsAutoMounts = [];
-
-    # NFS client - OPTION B: enabled, mount inside container
-    # nfsClientEnable = true;
-    # nfsMounts = [ ... ];  # Same as VMHOME
 
     # Optimizations (same as VMHOME)
     havegedEnable = false;
@@ -266,28 +488,103 @@ The `proxmox-lxc/base.nix` already uses `overlay2`:
 
 ---
 
-## Phase 5: Data Migration
+## Phase 5: Data Migration (Minimal)
 
-### 5.1 Docker Volumes/Data
+Since the iSCSI drive and NFS shares are passed through via Proxmox bind mounts, **most data does NOT need migration**.
+
+### 5.1 Pre-Migration: Verify Data Locations on VMHOME
+
+Before shutting down VMHOME, verify where your data actually lives:
+
 ```bash
-# On VMHOME
-docker save <images> > /mnt/DATA_4TB/docker-images.tar
-rsync -avz /var/lib/docker/volumes/ /mnt/DATA_4TB/docker-volumes/
+# On VMHOME - check where Docker stores data
+docker info | grep "Docker Root Dir"
 
-# On LXCHOME (after setup)
-docker load < /mnt/DATA_4TB/docker-images.tar
-rsync -avz /mnt/DATA_4TB/docker-volumes/ /var/lib/docker/volumes/
+# Check where docker-compose files live
+find /mnt/DATA_4TB -name "docker-compose*.yml" 2>/dev/null
+find /home/akunito -name "docker-compose*.yml" 2>/dev/null
+
+# Check Syncthing config location
+ls -la /home/akunito/.config/syncthing/ 2>/dev/null
+ls -la /mnt/DATA_4TB/syncthing/ 2>/dev/null
+
+# Check restic repo locations
+grep -r "repository" /home/akunito/.config/restic* 2>/dev/null
 ```
 
-### 5.2 Service Configuration
-- Copy docker-compose files
-- Copy nginx configs
-- Copy unifi data
-- Copy syncthing config
+### 5.2 Scenario A: Docker Data on /mnt/DATA_4TB (Best Case)
 
-### 5.3 DNS/IP Update
-- Update pfsense DHCP reservation for new LXCHOME MAC
-- Update any DNS records pointing to VMHOME
+If Docker data-root is already `/mnt/DATA_4TB/docker/`:
+
+**Migration needed**: Almost nothing
+```bash
+# Only copy SSH keys and any local configs
+scp -r akunito@vmhome:/home/akunito/.ssh/ /home/akunito/.ssh/
+```
+
+**On LXCHOME**: Docker will find existing data at same path.
+
+### 5.3 Scenario B: Docker Data on VM Root (Migration Required)
+
+If Docker uses default `/var/lib/docker/`:
+
+**Option B1: Export/Import images (quick, loses layers)**
+```bash
+# On VMHOME before shutdown
+docker save $(docker images -q) > /mnt/DATA_4TB/docker-images.tar
+
+# On LXCHOME after setup
+docker load < /mnt/DATA_4TB/docker-images.tar
+```
+
+**Option B2: Move Docker root to DATA_4TB (recommended)**
+```bash
+# On VMHOME - stop Docker and move data
+systemctl stop docker
+mv /var/lib/docker /mnt/DATA_4TB/docker
+```
+
+Then configure LXCHOME to use `/mnt/DATA_4TB/docker` as data-root (see Phase 2).
+
+### 5.4 Copy User-Specific Data
+
+```bash
+# SSH keys (important!)
+mkdir -p /home/akunito/.ssh
+scp -r akunito@vmhome:/home/akunito/.ssh/* /home/akunito/.ssh/
+chmod 700 /home/akunito/.ssh
+chmod 600 /home/akunito/.ssh/id_*
+
+# Any local configs not on DATA_4TB
+scp -r akunito@vmhome:/home/akunito/.config/syncthing/ /home/akunito/.config/ 2>/dev/null || echo "Syncthing config on DATA_4TB - skipping"
+```
+
+### 5.5 DNS/IP Update
+
+```bash
+# Update pfsense DHCP reservation
+# New LXCHOME will have different MAC address
+# Either:
+# - Keep same IP (192.168.8.80) by updating DHCP reservation
+# - Use new IP during testing, then swap
+
+# Update any DNS records pointing to VMHOME
+# - Internal DNS (pfsense/TrueNAS)
+# - External DNS (if applicable)
+```
+
+### 5.6 Migration Summary Checklist
+
+| Item | Location | Action |
+|------|----------|--------|
+| Docker images/volumes | `/mnt/DATA_4TB/docker/` | ✅ Already accessible |
+| Docker images/volumes | `/var/lib/docker/` (VM) | ⚠️ Export or move to DATA_4TB |
+| docker-compose files | `/mnt/DATA_4TB/` | ✅ Already accessible |
+| docker-compose files | `/home/akunito/` (VM) | ⚠️ Copy to DATA_4TB |
+| SSH keys | `/home/akunito/.ssh/` | 📋 Copy to LXCHOME |
+| NFS media/library | `/mnt/NFS_*` | ✅ Bind mount from Proxmox |
+| Syncthing data | Check location | Likely on DATA_4TB |
+| Restic repos | Check location | Likely on DATA_4TB |
 
 ---
 
@@ -326,15 +623,29 @@ rsync -avz /mnt/DATA_4TB/docker-volumes/ /var/lib/docker/volumes/
 
 ## Questions to Decide Before Implementation
 
-1. **NFS Server**: Do you need NFS server in LXCHOME, or can TrueNAS/Proxmox host handle exports?
+### Decided ✅
 
-2. **NFS Client**: Use Proxmox bind mounts (simpler) or mount NFS inside container (more flexible)?
+1. **NFS Client**: ✅ **Use Proxmox bind mounts** - NFS mounted on Proxmox, passed to LXC via bind mounts. Simpler and avoids NFS permissions in LXC.
 
-3. **Privileged vs Unprivileged**: Start privileged (easier), optimize to unprivileged later?
+2. **iSCSI Drive**: ✅ **Mount on Proxmox, bind mount to LXC** - Same approach as NFS. No migration needed for data on `/mnt/DATA_4TB`.
 
-4. **IP Address**: Keep same IP (.80) or new IP for LXCHOME during testing?
+3. **Privileged vs Unprivileged**: ✅ **Start privileged** - Easier for Docker. Can optimize later.
 
-5. **Timeline**: Run both in parallel during testing, or hard cutover?
+### Still To Decide ⏳
+
+4. **NFS Server**: Do you need NFS server in LXCHOME, or can TrueNAS handle all exports?
+   - If LXCHOME currently re-exports data to other machines, need to decide if TrueNAS should take over
+
+5. **IP Address**: Keep same IP (192.168.8.80) or new IP for LXCHOME during testing?
+   - Same IP: Simpler, but can't run both in parallel
+   - New IP: Can test with both running, then swap
+
+6. **Timeline**: Run both in parallel during testing, or hard cutover?
+   - Parallel: Safer, but iSCSI drive can only be mounted by one at a time
+   - **Recommendation**: Shut down VMHOME, mount iSCSI on Proxmox, start LXCHOME
+
+7. **Docker data-root**: Is Docker currently using `/mnt/DATA_4TB/docker/` or default `/var/lib/docker/`?
+   - Check before migration - affects how much data needs to be moved
 
 ---
 
@@ -351,10 +662,31 @@ rsync -avz /mnt/DATA_4TB/docker-volumes/ /var/lib/docker/volumes/
 
 ## Next Steps
 
-1. Answer decision questions above
-2. Review and approve this plan
-3. Create Proxmox LXC container
-4. Implement LXCHOME-config.nix
-5. Test incrementally
-6. Migrate data
-7. Cutover
+### Pre-Migration (On Proxmox Host)
+1. ☐ **Answer remaining questions** (NFS server, IP address, timeline)
+2. ☐ **Verify data locations on VMHOME** - Run Phase 5.1 commands to check Docker data-root
+3. ☐ **Install NFS client on Proxmox** (Step P1.1)
+4. ☐ **Create NFS mount points** (Step P1.2)
+5. ☐ **Test NFS mounts manually** (Step P1.3)
+6. ☐ **Add NFS to Proxmox fstab** (Step P1.4)
+7. ☐ **Shut down VMHOME** (required for iSCSI handover)
+8. ☐ **Configure iSCSI mount on Proxmox** (Step P2.1-P2.3)
+9. ☐ **Verify all Proxmox mounts** (Step P3)
+
+### LXC Setup
+10. ☐ **Create LXC container** (Phase 1.1)
+11. ☐ **Configure bind mounts** (Phase 1.2)
+12. ☐ **Verify bind mounts inside LXC** (Phase 1.3)
+
+### NixOS Configuration
+13. ☐ **Create LXCHOME-config.nix** (Phase 2)
+14. ☐ **Add LXCHOME to flake.nix**
+15. ☐ **nixos-rebuild switch --flake .#LXCHOME**
+
+### Data & Testing
+16. ☐ **Copy SSH keys** (Phase 5.4)
+17. ☐ **Run testing checklist** (Phase 6)
+18. ☐ **Update DNS/DHCP** (Phase 5.5)
+
+### Cutover
+19. ☐ **Delete or archive VMHOME** (after successful testing)

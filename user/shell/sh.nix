@@ -44,7 +44,7 @@ in
         syntaxHighlighting.enable = true;
         enableCompletion = true;
         shellAliases = basicAliases;
-        initContent = userSettings.zshinitContent + "\n" + "disfetch";
+        initContent = userSettings.zshinitContent + "\n" + "clear && disfetch";
       }
     else
       {
@@ -55,7 +55,7 @@ in
         syntaxHighlighting.enable = true;
         enableCompletion = true;
         shellAliases = basicAliases;
-        initContent = userSettings.zshinitContent + "\n" + "disfetch";
+        initContent = userSettings.zshinitContent + "\n" + "clear && disfetch";
       };
 
   programs.bash = {

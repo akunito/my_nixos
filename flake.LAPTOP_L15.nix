@@ -1,13 +1,12 @@
 {
-  description = "Flake for LXC template";
+  description = "Flake for my laptop";
 
-  outputs =
-    inputs@{ self, ... }:
+  outputs = inputs@{ self, ... }:
     let
       base = import ./lib/flake-base.nix;
-      profileConfig = import ./profiles/LXCtemplate-config.nix;
+      profileConfig = import ./profiles/LAPTOP_L15-config.nix;
     in
-    base { inherit inputs self profileConfig; };
+      base { inherit inputs self profileConfig; };
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -18,6 +17,18 @@
 
     home-manager-stable.url = "github:nix-community/home-manager/release-25.11";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
+
+    hyprland = {
+      url = "github:hyprwm/Hyprland/main?submodules=true";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    rust-overlay.url = "github:oxalica/rust-overlay";
+
+    stylix = {
+      url = "github:danth/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";

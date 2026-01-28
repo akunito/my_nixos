@@ -7,7 +7,7 @@ in
 {
   systemSettings = base.systemSettings // {
     hostname = "planePROD-nixos";
-    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXCplane -s -u";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_plane -s -u";
     systemStateVersion = "25.11";
   };
 

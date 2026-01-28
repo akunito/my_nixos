@@ -1,35 +1,37 @@
-# LAPTOP Profile Configuration (nixolaptopaku)
-# Inherits from LAPTOP-base.nix with machine-specific overrides
+# YOGAAKU Profile Configuration
+# Inherits from LAPTOP-base.nix with machine-specific overrides (older Lenovo Yoga laptop)
 
 let
   base = import ./LAPTOP-base.nix;
 in
 {
   # Flag to use rust-overlay
-  useRustOverlay = true;
+  useRustOverlay = false;
 
   systemSettings = base.systemSettings // {
-    hostname = "nixolaptopaku";
+    hostname = "nixosyogaaku";
     profile = "personal";
-    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP -s -u";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_YOGAAKU -s -u";
+    bootMode = "bios";
     gpuType = "intel";
 
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
-    kernelModules = [ ];
+    kernelModules = [
+      "cpufreq_powersave"
+      "xpadneo" # xbox controller
+    ];
 
     # Security
     fuseAllowOther = false;
-    pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
+    # pkiCertificates = [ /home/akunito/.certificates/ca.cert.pem ];
     sudoTimestampTimeoutMinutes = 180;
 
-    # Backups
-    homeBackupEnable = true;
-    homeBackupOnCalendar = "0/6:00:00";
-    homeBackupCallNextEnabled = false;
+    # Backups - disabled on this machine
+    homeBackupEnable = false;
 
     # Network
-    ipAddress = "192.168.8.92";
-    wifiIpAddress = "192.168.8.93";
+    ipAddress = "192.168.8.xxx"; # ip to be reserved on router by mac (manually)
+    wifiIpAddress = "192.168.8.xxx"; # ip to be reserved on router by mac (manually)
     nameServers = [
       "192.168.8.1"
       "192.168.8.1"
@@ -40,43 +42,49 @@ in
     allowedTCPPorts = [ ];
     allowedUDPPorts = [ ];
 
-    # NFS client
-    nfsClientEnable = true;
+    # NFS client - disabled by default on this machine
+    nfsClientEnable = false;
     nfsMounts = [
       {
-        what = "192.168.20.200:/mnt/hddpool/media";
-        where = "/mnt/NFS_media";
+        what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Books";
+        where = "/mnt/NFS_Books";
         type = "nfs";
         options = "noatime";
       }
       {
-        what = "192.168.20.200:/mnt/ssdpool/library";
-        where = "/mnt/NFS_library";
+        what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/downloads";
+        where = "/mnt/NFS_downloads";
         type = "nfs";
         options = "noatime";
       }
       {
-        what = "192.168.20.200:/mnt/ssdpool/emulators";
-        where = "/mnt/NFS_emulators";
+        what = "192.168.8.80:/mnt/DATA_4TB/Warehouse/Media";
+        where = "/mnt/NFS_Media";
+        type = "nfs";
+        options = "noatime";
+      }
+      {
+        what = "192.168.8.80:/mnt/DATA_4TB/backups/akunitoLaptop";
+        where = "/mnt/NFS_Backups";
         type = "nfs";
         options = "noatime";
       }
     ];
     nfsAutoMounts = [
       {
-        where = "/mnt/NFS_media";
+        where = "/mnt/NFS_Books";
         automountConfig = {
           TimeoutIdleSec = "600";
         };
       }
       {
-        where = "/mnt/NFS_library";
+        where = "/mnt/NFS_Media";
         automountConfig = {
           TimeoutIdleSec = "600";
         };
       }
       {
-        where = "/mnt/NFS_emulators";
+        where = "/mnt/NFS_Backups";
         automountConfig = {
           TimeoutIdleSec = "600";
         };
@@ -90,55 +98,42 @@ in
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPp/10TlSOte830j6ofuEQ21YKxFD34iiyY55yl6sW7V diego88aku@gmail.com" # Laptop
     ];
 
-    # Printer
-    servicePrinting = true;
-    networkPrinters = true;
+    # Printer - disabled on this machine
+    servicePrinting = false;
+    networkPrinters = false;
 
-    # Lid behavior - ignore for docked usage
-    lidSwitch = "ignore";
-    lidSwitchExternalPower = "ignore";
-    lidSwitchDocked = "ignore";
-    powerKey = "ignore";
-
-    # System packages - extend base with LAPTOP-specific packages
+    # System packages - use base packages plus tldr
     systemPackages = pkgs: pkgs-unstable:
       (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
-        pkgs.clinfo
-        pkgs.dialog
-        pkgs.gparted
-        pkgs.lm_sensors
-        pkgs.sshfs
+        pkgs.tldr
       ];
 
-    # Additional features
-    sunshineEnable = true;
+    # Disable features not needed on this older machine
+    starCitizenModules = false;
+    vivaldiPatch = false;
+    sambaEnable = false;
+    sunshineEnable = false;
     xboxControllerEnable = true;
-    aichatEnable = true;
-    nixvimEnabled = true;
+
+    # Fonts: use default computation in flake-base.nix
+    # (nerdfonts/powerline for stable, nerd-fonts.jetbrains-mono for unstable)
   };
 
   userSettings = base.userSettings // {
     username = "akunito";
     name = "akunito";
-    email = "diego88aku@gmail.com";
+    email = "";
     dotfilesDir = "/home/akunito/.dotfiles";
 
-    # Home packages - extend base with LAPTOP-specific packages
-    homePackages = pkgs: pkgs-unstable:
-      (base.userSettings.homePackages pkgs pkgs-unstable) ++ [
-        pkgs-unstable.mission-center
-        pkgs-unstable.windsurf
-        pkgs-unstable.code-cursor
-        pkgs.kdePackages.dolphin
-        pkgs-unstable.vivaldi
-      ];
+    # Different theme for YOGAAKU
+    theme = "io";
 
-    # Different prompt color for LAPTOP
-    zshinitContent = ''
-      PROMPT=" ◉ %U%F{cyan}%n%f%u@%U%F{cyan}%m%f%u:%F{yellow}%~%f
-      %F{green}→%f "
-      RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
-      [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
-    '';
+    dockerEnable = false;
+    virtualizationEnable = true;
+    qemuGuestAddition = true; # VM
+
+    # Home packages - use base packages (no extensions needed)
+    homePackages = pkgs: pkgs-unstable:
+      base.userSettings.homePackages pkgs pkgs-unstable;
   };
 }

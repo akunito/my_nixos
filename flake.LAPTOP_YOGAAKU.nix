@@ -1,10 +1,10 @@
 {
-  description = "Flake for my VM Desktop";
+  description = "Flake for YOGAAKU laptop";
 
   outputs = inputs@{ self, ... }:
     let
       base = import ./lib/flake-base.nix;
-      profileConfig = import ./profiles/YOGAAKU-config.nix;
+      profileConfig = import ./profiles/LAPTOP_YOGAAKU-config.nix;
     in
       base { inherit inputs self profileConfig; };
 

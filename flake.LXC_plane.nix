@@ -5,7 +5,7 @@
     inputs@{ self, ... }:
     let
       base = import ./lib/flake-base.nix;
-      profileConfig = import ./profiles/LXCplane-config.nix;
+      profileConfig = import ./profiles/LXC_plane-config.nix;
     in
     base { inherit inputs self profileConfig; };
 

@@ -7,7 +7,7 @@ in
 {
   systemSettings = base.systemSettings // {
     hostname = "lxc-nixos";
-    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC -s -u";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_template -s -u";
     systemStateVersion = "25.11";
   };
 
