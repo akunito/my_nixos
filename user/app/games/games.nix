@@ -49,6 +49,7 @@ in
       superTux
       superTuxKart
       gamepad-tool
+      antimicrox
     ])
     ++ (with pkgs-stable; [
       pokefinder
