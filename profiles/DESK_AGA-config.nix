@@ -40,7 +40,7 @@ in
     # Disable Sway/SwayFX - DESK_AGA uses Plasma6 only
     enableSwayForDESK = false;
     swwwEnable = false;
-    # stylixEnable inherits true from DESK (for theming)
+    stylixEnable = false; # Override - Plasma6 only, no Stylix (Plasma has its own theming)
 
     # SDDM multi-monitor fixes - inherit from DESK (won't break anything if monitors don't match)
 
