@@ -106,10 +106,10 @@ let
   # Add SDDM theme override if using plasma6 (which uses SDDM).
   # This needs to be done after backgroundPackage is computed.
   #
-  # DESK-specific (hostname: nixosaku):
-  # - Force password focus (helps, but not sufficient alone for multi-monitor focus loss)
+  # SDDM theme configuration (controlled by feature flags)
+  # - sddmForcePasswordFocus: Force password field focus (fixes multi-monitor focus issues)
   # - Keep the background image (Breeze "dark mode" via solid color was too aggressive)
-  sddmThemeConfig = if systemSettings.hostname == "nixosaku"
+  sddmThemeConfig = if systemSettings.sddmForcePasswordFocus
     then ''
       [General]
       background = ${toString backgroundPackage}

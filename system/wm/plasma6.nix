@@ -53,15 +53,15 @@
     programs.xwayland.enable = lib.mkIf (userSettings.wm == "plasma6") true;
   }
 
-  # Use patched Breeze SDDM theme on nixosaku to keep password focus stable on multi-monitor
-  (lib.mkIf ((userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.hostname == "nixosaku") {
+  # Use patched Breeze SDDM theme (controlled by sddmBreezePatchedTheme flag)
+  # Helps with password focus stability on multi-monitor setups
+  (lib.mkIf ((userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.sddmBreezePatchedTheme) {
     environment.systemPackages = [
       (import ../dm/sddm-breeze-patched-theme.nix { inherit pkgs; })
     ];
 
-    # IMPORTANT: Use X11 greeter on nixosaku so `setupScript` runs (xrandr rotation)
-    # Wayland greeter won't execute the xrandr-based setup script.
-    services.displayManager.sddm.wayland.enable = lib.mkForce false;
+    # IMPORTANT: Use X11 greeter when setup script is enabled (xrandr doesn't work with Wayland greeter)
+    services.displayManager.sddm.wayland.enable = lib.mkIf (systemSettings.sddmSetupScript != null) (lib.mkForce false);
 
     services.displayManager.sddm.settings = {
       Theme = {
@@ -70,99 +70,12 @@
     };
   })
   
-  # SDDM setup script for monitor rotation (DESK profile only)
+  # SDDM setup script for monitor configuration (controlled by sddmSetupScript flag)
   # This runs BEFORE SDDM shows the session selector, so it applies to both Plasma and SwayFX sessions
-  # Rotates the NSL DP-2-RGB-27QHDS monitor to portrait (90 degrees, right orientation)
-  # Uses EDID/model name matching with fallback to port identifier (DP-2)
-  # Only enabled on DESK system (hostname: nixosaku) to avoid unnecessary execution on other systems
-  (lib.mkIf ((userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.hostname == "nixosaku") {
-    services.displayManager.sddm.setupScript = ''
-      # Redirect all output to log file for debugging
-      # #region agent log
-      LOGFILE="/tmp/sddm-rotation.log"
-      exec >"$LOGFILE" 2>&1
-      set -x  # Enable verbose mode to see all commands
-      
-      echo "=== SDDM Monitor Rotation Script Started ==="
-      echo "Timestamp: $(date)"
-      echo "Hostname check: $(hostname)"
-      echo "XRANDR path will be: ${pkgs.xorg.xrandr}/bin/xrandr"
-      
-      # Test if xrandr binary exists
-      XRANDR="${pkgs.xorg.xrandr}/bin/xrandr"
-      if [ ! -f "$XRANDR" ]; then
-        echo "ERROR: xrandr binary not found at $XRANDR"
-        echo "Attempting to find xrandr in system..."
-        which xrandr || echo "xrandr not in PATH"
-        exit 1
-      fi
-      echo "xrandr binary found: $XRANDR"
-      echo "xrandr version: $($XRANDR --version 2>&1 || echo 'version check failed')"
-      
-      # NOTE: Avoid `xrandr --auto` here.
-      # It can trigger a cascade of mode-sets while SDDM is starting, which often
-      # causes the Breeze greeter to lose keyboard focus on multi-monitor setups.
-
-      # Dump xrandr output for debugging
-      echo "=== Full xrandr --query output (initial) ==="
-      $XRANDR --query 2>&1 || echo "xrandr --query failed"
-
-      # We expect the portrait monitor to be on DP-2 on nixosaku
-      MONITOR="DP-2"
-
-      # Wait a bit for the output to show up as connected (hotplug / MST / wake-up delays)
-      echo "Waiting for $MONITOR to become connected..."
-      for i in $(seq 1 40); do
-        if $XRANDR --query | grep -q "^$MONITOR connected"; then
-          echo "$MONITOR is connected."
-          break
-        fi
-        sleep 0.25
-      done
-
-      if ! $XRANDR --query | grep -q "^$MONITOR connected"; then
-        echo "WARNING: $MONITOR still not connected after timeout."
-        echo "Available monitors:"
-        $XRANDR --query | grep " connected" || echo "No connected outputs found"
-      fi
-      
-      # Verify monitor exists before rotating
-      echo "Checking if monitor $MONITOR exists..."
-      if $XRANDR --query | grep -q "^$MONITOR"; then
-        echo "Monitor $MONITOR found in xrandr output"
-      else
-        echo "WARNING: Monitor $MONITOR not found in xrandr --query output"
-        echo "Available monitors:"
-        $XRANDR --query | grep " connected" || echo "No connected outputs found"
-      fi
-      
-      # Rotate the monitor (90 degrees clockwise = portrait right)
-      echo "Rotating monitor $MONITOR to portrait (right)..."
-      ROTATE_OUTPUT=$($XRANDR --output "$MONITOR" --rotate right 2>&1)
-      ROTATE_EXIT=$?
-      echo "Rotation command exit code: $ROTATE_EXIT"
-      echo "Rotation command output: $ROTATE_OUTPUT"
-      
-      if [ $ROTATE_EXIT -eq 0 ]; then
-        echo "Rotation successful for $MONITOR"
-        # Apply again shortly after to win races against late mode-sets.
-        sleep 0.25
-        $XRANDR --output "$MONITOR" --rotate right 2>&1 || true
-        # Verify rotation
-        CURRENT_ROTATION=$($XRANDR --query | grep "^$MONITOR" | grep -o "right\|left\|inverted\|normal" | head -1)
-        echo "Current rotation for $MONITOR: $CURRENT_ROTATION"
-        # Small delay to let SDDM stabilize after monitor rotation
-        sleep 0.5
-      else
-        echo "ERROR: Rotation failed for $MONITOR (exit code: $ROTATE_EXIT)"
-        # List all available outputs for debugging
-        echo "Available outputs:"
-        $XRANDR --query | grep " connected" || echo "No connected outputs found"
-      fi
-      
-      echo "=== SDDM Monitor Rotation Script Completed ==="
-      # #endregion
-    '';
+  # Set sddmSetupScript in profile config to a script string for custom monitor rotation/configuration
+  # Example use case: Rotate portrait monitors before SDDM login screen appears
+  (lib.mkIf ((userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.sddmSetupScript != null) {
+    services.displayManager.sddm.setupScript = systemSettings.sddmSetupScript;
   })
   
   # SDDM overlay to patch Login.qml for password field focus (DESK profile only)

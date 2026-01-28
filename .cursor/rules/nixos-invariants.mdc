@@ -19,6 +19,28 @@ globs:
   - system services: `services.*`
   - user services/programs: `systemd.user.*` / `programs.*` (Home Manager)
 
+## Modular Configuration (CRITICAL)
+
+**NEVER** hardcode hostname or profile checks in modules. Use feature flags instead.
+
+### ❌ BAD (hardcoded):
+```nix
+lib.mkIf (systemSettings.hostname == "nixosaku") { ... }
+lib.mkIf (systemSettings.profile == "personal") { ... }
+```
+
+### ✅ GOOD (feature flags):
+```nix
+lib.mkIf systemSettings.sddmBreezePatchedTheme { ... }
+lib.mkIf (systemSettings.gpuType == "amd") { ... }
+```
+
+### Rules:
+1. **All conditional features must use flags** defined in `lib/defaults.nix`
+2. **Flags default to `false`** (or safe value) - profiles explicitly enable
+3. **GPU-specific code** must check `systemSettings.gpuType`
+4. **Profile configs set flags** - modules just consume them
+
 ## When unsure
 
 - Use `docs/00_ROUTER.md` to pick the right doc node, then read only the relevant docs/code.

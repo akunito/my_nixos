@@ -12,9 +12,10 @@
   };
 
   # OpenGL (renamed to graphics)
-  hardware.graphics.extraPackages = with pkgs; [
+  # AMD-specific: ROCm OpenCL runtime for compute workloads
+  hardware.graphics.extraPackages = lib.mkIf (systemSettings.gpuType == "amd") (with pkgs; [
     rocmPackages.clr.icd
-  ];
+  ]);
 
   hardware.graphics.extraPackages32 = with pkgs; [
   ];

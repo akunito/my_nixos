@@ -17,6 +17,9 @@
     bootMountPath = "/boot";
     grubDevice = "";
 
+    # GPU defaults
+    gpuType = "intel"; # Options: "amd", "intel", "nvidia", "none" (for VMs/containers)
+
     # Kernel defaults
     kernelPackages = pkgs.linuxPackages_latest;
     kernelModules = [
@@ -240,6 +243,20 @@
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
     swayPrimaryMonitor = null; # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
+
+    # GPU-related feature flags
+    amdLACTdriverEnable = false; # Enable LACT (Linux AMD GPU Control Application) for AMD GPU management
+
+    # SDDM feature flags (display manager customization)
+    sddmForcePasswordFocus = false; # Force password field focus (fixes multi-monitor focus issues)
+    sddmBreezePatchedTheme = false; # Use patched Breeze theme with custom settings
+    sddmSetupScript = null; # Custom SDDM setup script (e.g., for monitor rotation). Set to string with script content.
+
+    # Shell feature flags
+    atuinAutoSync = false; # Enable Atuin shell history cloud sync
+
+    # Hyprland feature flags
+    hyprprofilesEnable = false; # Enable hyprprofiles for Hyprland
 
     # Homelab feature flags
     grafanaEnable = true; # Enable Grafana/Prometheus monitoring stack

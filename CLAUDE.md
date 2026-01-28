@@ -54,6 +54,13 @@ Before answering any architectural or implementation question:
   - per-user: `home.packages`
   - system services: `services.*`
   - user services/programs: `systemd.user.*` / `programs.*` (Home Manager)
+- **Modular configuration (CRITICAL)**:
+  - **NEVER** hardcode hostname or profile checks in modules (e.g., `hostname == "nixosaku"`)
+  - Use feature flags defined in `lib/defaults.nix` instead
+  - Flags default to `false` (or safe value) - profiles explicitly enable what they need
+  - GPU-specific code must check `systemSettings.gpuType` ("amd", "intel", "nvidia", "none")
+  - Profile configs set flags - modules just consume them
+  - Example flags: `gpuType`, `enableDesktopPerformance`, `sddmBreezePatchedTheme`, `atuinAutoSync`
 
 ### Documentation maintenance (applies to: `docs/**`, `scripts/generate_docs_index.py`)
 

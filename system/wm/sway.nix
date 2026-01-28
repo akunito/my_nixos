@@ -42,18 +42,19 @@
     userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true
   ) "sway";
 
-  # CRITICAL: Force Electron apps to native Wayland mode and set Vulkan ICD paths
-  # VK_ICD_FILENAMES: Explicitly point to RADV drivers for Vulkan discovery (fixes Lutris "Found no drivers" error)
+  # CRITICAL: Force Electron apps to native Wayland mode
   # This must be at system level because extraSessionCommands don't reliably propagate to all processes
-  environment.variables =
-    lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true)
-      {
-        NIXOS_OZONE_WL = "1";
-        # Vulkan ICD discovery for AMD GPUs (RADV)
-        VK_ICD_FILENAMES = "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json:/run/opengl-driver-32/share/vulkan/icd.d/radeon_icd.i686.json";
-        # AMD Vulkan ICD selection (force RADV over any AMDVLK if installed)
-        AMD_VULKAN_ICD = "RADV";
-      };
+  environment.variables = lib.mkMerge [
+    # Base Wayland settings for all GPUs
+    (lib.mkIf (userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) {
+      NIXOS_OZONE_WL = "1";
+    })
+    # AMD-specific: Vulkan ICD paths and driver selection (fixes Lutris "Found no drivers" error)
+    (lib.mkIf ((userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) && systemSettings.gpuType == "amd") {
+      VK_ICD_FILENAMES = "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json:/run/opengl-driver-32/share/vulkan/icd.d/radeon_icd.i686.json";
+      AMD_VULKAN_ICD = "RADV"; # Force RADV over any AMDVLK if installed
+    })
+  ];
 
   # CRITICAL: xdg-desktop-portal-wlr systemd service
   # The xdg.portal.wlr.enable option doesn't create the service properly

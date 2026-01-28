@@ -40,6 +40,30 @@ in
     enableDesktopPerformance = true; # Enable desktop-optimized I/O scheduler and performance tuning
     amdLACTdriverEnable = true;
 
+    # SDDM multi-monitor fixes (DESK has 4 monitors including portrait)
+    sddmForcePasswordFocus = true; # Force password field focus on multi-monitor
+    sddmBreezePatchedTheme = true; # Use patched Breeze theme
+    # SDDM setup script for portrait monitor rotation (DP-2)
+    sddmSetupScript = ''
+      LOGFILE="/tmp/sddm-rotation.log"
+      exec >"$LOGFILE" 2>&1
+      set -x
+      echo "=== SDDM Monitor Rotation Script ==="
+      XRANDR="$(command -v xrandr 2>/dev/null || echo /run/current-system/sw/bin/xrandr)"
+      MONITOR="DP-2"
+      for i in $(seq 1 40); do
+        $XRANDR --query | grep -q "^$MONITOR connected" && break
+        sleep 0.25
+      done
+      $XRANDR --output "$MONITOR" --rotate right 2>&1 || true
+      sleep 0.25
+      $XRANDR --output "$MONITOR" --rotate right 2>&1 || true
+      echo "=== SDDM Monitor Rotation Complete ==="
+    '';
+
+    # Shell features
+    atuinAutoSync = true; # Enable Atuin cloud sync for shell history
+
     # Wallpapers (Sway/SwayFX): use swww (daemon + oneshot restore; robust across reboot + HM rebuilds)
     swwwEnable = true;
     swaybgPlusEnable = false;

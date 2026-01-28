@@ -8,6 +8,9 @@
     # Performance profile for laptops
     enableLaptopPerformance = true;
 
+    # Shell features
+    atuinAutoSync = true; # Enable Atuin cloud sync for shell history
+
     # Sway/SwayFX integration (same flag as DESK - no renaming)
     enableSwayForDESK = true;
 

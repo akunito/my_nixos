@@ -84,13 +84,12 @@ in
   programs.direnv.enableZshIntegration = true;
   programs.direnv.nix-direnv.enable = true;
 
-  # Atuin shell history sync
+  # Atuin shell history sync (controlled by atuinAutoSync flag)
   programs.atuin = {
     enable = true;
     enableZshIntegration = true;
     settings = {
-      auto_sync =
-        if (systemSettings.profile == "personal" || systemSettings.profile == "work") then true else false;
+      auto_sync = systemSettings.atuinAutoSync;
       sync_frequency = "5m";
       sync_address = "https://api.atuin.sh";
       enter_accept = true;

@@ -10,7 +10,7 @@ in
     })
     ../input/nihongo.nix
   ] ++
-  (if (systemSettings.profile == "personal") then
+  (if systemSettings.hyprprofilesEnable then
     [ (import ./hyprprofiles/hyprprofiles.nix {
         dmenuCmd = "fuzzel -d"; inherit config lib pkgs; })]
   else
