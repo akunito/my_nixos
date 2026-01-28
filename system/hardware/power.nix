@@ -1,7 +1,7 @@
 { systemSettings, lib, ... }:
 
 {
-  # Overriding to disable power-profiles-daemon 
+  # Overriding to disable power-profiles-daemon
   # as it cannot work together with "tlp"
   services.power-profiles-daemon.enable = systemSettings.power-profiles-daemon_ENABLE;
 
@@ -9,11 +9,11 @@
   services.tlp = lib.mkIf (systemSettings.TLP_ENABLE == true) {
     enable = true;
     settings = {
-      CPU_SCALING_GOVERNOR_ON_AC = systemSettings.PROFILE_ON_AC;
-      CPU_SCALING_GOVERNOR_ON_BAT = systemSettings.PROFILE_ON_BAT;
+      CPU_SCALING_GOVERNOR_ON_AC = systemSettings.CPU_SCALING_GOVERNOR_ON_AC;
+      CPU_SCALING_GOVERNOR_ON_BAT = systemSettings.CPU_SCALING_GOVERNOR_ON_BAT;
 
-      CPU_ENERGY_PERF_POLICY_ON_AC = systemSettings.PROFILE_ON_AC;
-      CPU_ENERGY_PERF_POLICY_ON_BAT = systemSettings.PROFILE_ON_BAT;
+      CPU_ENERGY_PERF_POLICY_ON_AC = systemSettings.CPU_ENERGY_PERF_POLICY_ON_AC;
+      CPU_ENERGY_PERF_POLICY_ON_BAT = systemSettings.CPU_ENERGY_PERF_POLICY_ON_BAT;
 
       CPU_DRIVER_OPMODE_ON_AC = "active";
       CPU_DRIVER_OPMODE_ON_BAT = "active";
@@ -28,8 +28,8 @@
       CPU_HWP_DYN_BOOST_ON_AC = 1;
       CPU_HWP_DYN_BOOST_ON_BAT = 0;
 
-      START_CHARGE_THRESH_BAT0 = 75;
-      STOP_CHARGE_THRESH_BAT0 = 80;
+      START_CHARGE_THRESH_BAT0 = systemSettings.START_CHARGE_THRESH_BAT0;
+      STOP_CHARGE_THRESH_BAT0 = systemSettings.STOP_CHARGE_THRESH_BAT0;
 
       MEM_SLEEP_ON_AC = "deep";
       MEM_SLEEP_ON_BAT = "deep";
@@ -52,7 +52,7 @@
       INTEL_GPU_MIN_FREQ_ON_BAT = systemSettings.INTEL_GPU_MIN_FREQ_ON_BAT;
     };
   };
-  
+
   powerManagement.enable = systemSettings.powerManagement_ENABLE;
 
   # LOGIND

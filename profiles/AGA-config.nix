@@ -4,18 +4,18 @@
 {
   # Flag to use rust-overlay
   useRustOverlay = false;
-  
+
   systemSettings = {
     hostname = "nixosaga";
     profile = "personal";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles AGA -s -u";
     gpuType = "intel";
-    
+
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
     kernelModules = [
       "cpufreq_powersave"
     ];
-    
+
     # Security
     fuseAllowOther = false;
     pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
@@ -26,44 +26,76 @@
       }
       {
         command = "/run/current-system/sw/bin/restic";
-        options = [ "NOPASSWD" "SETENV" ];
+        options = [
+          "NOPASSWD"
+          "SETENV"
+        ];
       }
       {
         command = "/run/current-system/sw/bin/rsync";
-        options = [ "NOPASSWD" "SETENV" ];
+        options = [
+          "NOPASSWD"
+          "SETENV"
+        ];
       }
     ];
-    
+
     # Polkit
     polkitEnable = false;
-    
+
     # Network
     ipAddress = "192.168.0.77";
     wifiIpAddress = "192.168.0.78";
-    nameServers = [ "192.168.8.1" "192.168.8.1" ];
+    nameServers = [
+      "192.168.8.1"
+      "192.168.8.1"
+    ];
     wifiPowerSave = true;
     resolvedEnable = false;
-    
+
     # Firewall - sunshine ports
-    allowedTCPPorts = [ 
-      47984 47989 47990 48010 # sunshine
+    allowedTCPPorts = [
+      47984
+      47989
+      47990
+      48010 # sunshine
     ];
-    allowedUDPPorts = [ 
-      47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 # sunshine
+    allowedUDPPorts = [
+      47998
+      47999
+      48000
+      8000
+      8001
+      8002
+      8003
+      8004
+      8005
+      8006
+      8007
+      8008
+      8009
+      8010 # sunshine
     ];
-    
+
     # Printer
-    servicePrinting = false; 
+    servicePrinting = false;
     networkPrinters = false;
-    
+
     # Power management - Laptop with suspend on lid close
-    powerManagement_ENABLE = true;
-    power-profiles-daemon_ENABLE = true;
+    # Power management - Laptop with suspend on lid close
+    powerManagement_ENABLE = false; # TLP handles power management
+    power-profiles-daemon_ENABLE = false; # Disabled in favor of TLP
+    TLP_ENABLE = true;
+
+    # Battery thresholds (Health preservation)
+    START_CHARGE_THRESH_BAT0 = 75;
+    STOP_CHARGE_THRESH_BAT0 = 80;
+
     lidSwitch = "suspend";
     lidSwitchExternalPower = "ignore";
     lidSwitchDocked = "ignore";
     powerKey = "suspend";
-    
+
     # System packages - will be evaluated in flake-base.nix
     systemPackages = pkgs: pkgs-unstable: [
       pkgs.vim
@@ -85,7 +117,7 @@
       pkgs-unstable.wireguard-tools
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
-    
+
     starCitizenModules = false;
     vivaldiPatch = true;
     sambaEnable = false;
@@ -93,41 +125,46 @@
     wireguardEnable = true;
     xboxControllerEnable = false;
     appImageEnable = false;
-    aichatEnable = false;  # Enable aichat CLI tool with OpenRouter support
+    aichatEnable = false; # Enable aichat CLI tool with OpenRouter support
     nextcloudEnable = true;
-    
+
     # Auto update - uses aga user
     autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoSystemUpdate.sh";
     autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoUserUpdate.sh";
     autoUserUpdateUser = "aga";
-    
+
     systemStable = false;
   };
-  
+
   userSettings = {
     username = "aga";
     name = "aga";
     email = "";
     dotfilesDir = "/home/aga/.dotfiles";
-    extraGroups = [ "networkmanager" "wheel" "input" "dialout" ];
-    
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "input"
+      "dialout"
+    ];
+
     theme = "io";
     wm = "plasma6";
     wmEnableHyprland = false;
-    
+
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";
-    
+
     browser = "vivaldi";
     spawnBrowser = "vivaldi";
     defaultRoamDir = "Personal.p";
     term = "kitty";
     font = "Intel One Mono";
-    
+
     dockerEnable = false;
     virtualizationEnable = true;
     qemuGuestAddition = false;
-    
+
     # Home packages - will be evaluated in flake-base.nix
     homePackages = pkgs: pkgs-unstable: [
       pkgs.zsh
@@ -154,14 +191,14 @@
       pkgs-unstable.gnome-calculator
       pkgs-unstable.vivaldi
     ];
-    
+
     zshinitContent = ''
       PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "
       RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
       [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
     '';
-    
+
     sshExtraConfig = ''
       # sshd.nix -> programs.ssh.extraConfig
       Host github.com
@@ -172,4 +209,3 @@
     '';
   };
 }
-

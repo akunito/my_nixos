@@ -197,6 +197,16 @@
     PROFILE_ON_AC = "performance";
     WIFI_PWR_ON_AC = "off";
     WIFI_PWR_ON_BAT = "off";
+    # Battery charge thresholds (default: full charge)
+    START_CHARGE_THRESH_BAT0 = 95;
+    STOP_CHARGE_THRESH_BAT0 = 100;
+    # CPU Energy Performance Policy (default: balance performance/power)
+    CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+    CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
+    # CPU Scaling Governor (default: powersave is usually best for modern Intel CPUs)
+    CPU_SCALING_GOVERNOR_ON_AC = "performance";
+    CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+
     INTEL_GPU_MIN_FREQ_ON_AC = 300;
     INTEL_GPU_MIN_FREQ_ON_BAT = 300;
     LOGIND_ENABLE = false;
