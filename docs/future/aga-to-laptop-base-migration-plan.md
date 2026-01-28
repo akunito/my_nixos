@@ -7,6 +7,12 @@ This document outlines the plan to migrate AGA from a standalone profile under P
 **Current State**: `AGA-config.nix` → standalone under Personal Profile
 **Target State**: `LAPTOP_AGA-config.nix` → inherits from `LAPTOP-base.nix`
 
+**Configuration Changes**:
+- AGA will adopt `theme = "ashes"` from base (previously "io")
+- AGA will adopt `polkitEnable = true` from base (previously used sudoCommands)
+- AGA will keep Sway/SwayFX disabled (override base's enableSwayForDESK)
+- Conflicts reduced from 5 to 3 (Sway, AppImage, Username)
+
 ## Architecture Change
 
 ### Current Hierarchy
@@ -84,8 +90,8 @@ lib/defaults.nix
 4. **GPU**: `gpuType = "intel"`
 5. **Kernel Modules**: `kernelModules = ["cpufreq_powersave"]`
 6. **PKI Certificates**: `pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ]`
-7. **Sudo Commands**: Specific sudo configuration for suspend, restic, rsync with NOPASSWD
-8. **Polkit Override**: `polkitEnable = false` (overrides base's true)
+7. ~~**Sudo Commands**: Specific sudo configuration for suspend, restic, rsync with NOPASSWD~~ **REMOVED** - Will use polkit rules from base instead
+8. ~~**Polkit Override**: `polkitEnable = false` (overrides base's true)~~ **REMOVED** - Will use base's polkitEnable = true
 9. **Network**:
    - `ipAddress = "192.168.0.77"`
    - `wifiIpAddress = "192.168.0.78"`
@@ -114,7 +120,7 @@ lib/defaults.nix
 2. **Name**: `name = "aga"`
 3. **Email**: `email = ""` (empty)
 4. **Dotfiles Dir**: `dotfilesDir = "/home/aga/.dotfiles"`
-5. **Theme Override**: `theme = "io"` (overrides base's "ashes")
+5. ~~**Theme Override**: `theme = "io"` (overrides base's "ashes")~~ **REMOVED** - Will use base's "ashes" theme
 6. **Docker**: `dockerEnable = false`
 7. **Virtualization**: `virtualizationEnable = true`, `qemuGuestAddition = false`
 8. **Home Packages**: kdePackages.kcalc, vivaldi
@@ -123,6 +129,12 @@ lib/defaults.nix
     - `userAiPkgsEnable = false`
 
 ## Critical Conflicts & Resolutions
+
+**Note**: Originally identified 5 conflicts. After review, 2 have been resolved by accepting base defaults:
+- ~~Polkit~~ - **RESOLVED**: AGA will use `polkitEnable = true` from base (LAPTOP-base polkit rules already cover suspend, rsync, restic)
+- ~~Theme~~ - **RESOLVED**: AGA will use `theme = "ashes"` from base instead of "io"
+
+**Remaining conflicts: 3**
 
 ### Conflict 1: Sway/SwayFX Integration
 **Issue**: LAPTOP-base has `enableSwayForDESK = true`, but AGA only uses plasma6.
@@ -135,17 +147,7 @@ swwwEnable = false;         # Sway-specific wallpaper daemon
 
 **Impact**: AGA won't have Sway installed or configured.
 
-### Conflict 2: Polkit
-**Issue**: LAPTOP-base has `polkitEnable = true` with rules, AGA has `false`.
-
-**Resolution**: Keep override in LAPTOP_AGA-config.nix:
-```nix
-polkitEnable = false;  # AGA uses sudo instead
-```
-
-**Why**: AGA relies on sudoCommands configuration (suspend, restic, rsync with NOPASSWD). Changing to polkit would require rewriting these permissions.
-
-### Conflict 3: AppImage Support
+### Conflict 2: AppImage Support
 **Issue**: LAPTOP-base has `appImageEnable = true`, AGA has `false`.
 
 **Resolution**: Keep override in LAPTOP_AGA-config.nix:
@@ -153,15 +155,7 @@ polkitEnable = false;  # AGA uses sudo instead
 appImageEnable = false;  # Not needed on AGA
 ```
 
-### Conflict 4: Theme
-**Issue**: LAPTOP-base has `theme = "ashes"`, AGA has `theme = "io"`.
-
-**Resolution**: Override in LAPTOP_AGA-config.nix:
-```nix
-theme = "io";  # AGA-specific theme preference
-```
-
-### Conflict 5: Username
+### Conflict 3: Username
 **Issue**: AGA uses username "aga", not "akunito".
 
 **Resolution**: Specify full user config in LAPTOP_AGA-config.nix:
@@ -274,9 +268,9 @@ dotfilesDir = "/home/aga/.dotfiles";
 - [ ] Lid suspend works
 - [ ] Network configuration correct (IP addresses)
 - [ ] Firewall rules applied (sunshine ports)
-- [ ] Sudo commands work (suspend, restic, rsync)
+- [ ] Polkit permissions work (suspend, restic, rsync without password)
 - [ ] Auto-update scripts work
-- [ ] Theme is "io" (not "ashes")
+- [ ] Theme is "ashes" (from base)
 - [ ] User "aga" settings correct
 - [ ] Home packages installed (kcalc, vivaldi)
 
@@ -368,9 +362,9 @@ sudo nixos-rebuild switch --rollback --profile-name <generation-number>
 **Symptom**: Auto-update timers don't run or fail
 **Solution**: Verify paths are correct for "aga" user, not "akunito".
 
-### Issue 5: Polkit Permissions Break Sudo
+### Issue 5: Polkit Permissions Not Working
 **Symptom**: Suspend/restic/rsync commands require password
-**Solution**: Ensure `polkitEnable = false` override is present and sudoCommands are configured.
+**Solution**: Verify polkit rules are loaded correctly. Check with `pkaction` and test with user "aga". LAPTOP-base polkit rules should cover these actions.
 
 ## Special Considerations
 
@@ -418,9 +412,9 @@ Since AGA uses "aga" username (not "akunito"), ensure all user-specific paths ar
 - [ ] SSH works
 - [ ] User "aga" can log in
 - [ ] Home directory is correct
-- [ ] Sudo works for: suspend, restic, rsync (without password)
+- [ ] Polkit works for: suspend, restic, rsync (without password)
 - [ ] Auto-update timers exist and run
-- [ ] Theme is "io" (not "ashes")
+- [ ] Theme is "ashes" (from base)
 - [ ] Browser (vivaldi) works
 - [ ] Terminal (kitty) works
 - [ ] Calculator (kcalc) installed
@@ -446,7 +440,7 @@ cat /sys/class/power_supply/BAT0/charge_control_end_threshold
 
 # Check theme
 ls ~/.config/stylix/
-# Should contain "io" theme files
+# Should contain "ashes" theme files (from base)
 ```
 
 ## Timeline & Execution
