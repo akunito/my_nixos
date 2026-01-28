@@ -26,9 +26,9 @@ A **modular, hierarchical** NixOS configuration system with **centralized softwa
     │ Profile │           │ Profile  │          │  Base    │
     └────┬────┘           └─────┬────┘          └────┬─────┘
          │                      │                    │
-         │  ┌───────────────────┤                    │
-         │  │                   │                    │
-         ▼  ▼                   ▼                    ▼
+         │                      │                    │
+         │                      │                    │
+         ▼                      ▼                    ▼
     ┌────────────┐         ┌────────┐          ┌─────────┐
     │   DESK     │         │VMHOME  │          │LXC_plane│
     │ (Desktop)  │         │(Server)│          │LXC_tmpl │
