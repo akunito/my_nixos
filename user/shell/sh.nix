@@ -14,9 +14,11 @@ let
     ll = "ls -la";
     ".." = "cd ..";
     tre = "eza --long --tree";
+    tre1 = "eza --long --tree --level=1";
     tre2 = "eza --long --tree --level=2";
     tre3 = "eza --long --tree --level=3";
     tra = "eza -a --long --tree";
+    tra1 = "eza -a --long --tree --level=1";
     tra2 = "eza -a --long --tree --level=2";
     tra3 = "eza -a --long --tree --level=3";
     gl = "git log --graph";
