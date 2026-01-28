@@ -1,352 +1,556 @@
 ---
 author: Akunito
 title: NixOS Configuration Repository
-description: Comprehensive NixOS dotfiles configuration for multiple systems and use cases
+description: Modular, hierarchical NixOS configuration with centralized software management
 ---
 
 # NixOS Configuration Repository
 
-A comprehensive, modular NixOS configuration repository forked from Librephoenix's setup, enhanced with additional features for different use cases including homelab servers, family laptops, development machines, and more.
+A **modular, hierarchical** NixOS configuration system with **centralized software management** and profile inheritance. Built on Nix flakes for reproducible, declarative system configuration across desktops, laptops, servers, and containers.
 
-## Table of Contents
+## 📐 Architecture Overview
 
-- [Overview](#overview)
-- [Quick Start](#quick-start)
-- [Documentation Structure](#documentation-structure)
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Getting Help](#getting-help)
+### Configuration Hierarchy & Inheritance
 
-## Overview
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        lib/defaults.nix                                   │
+│                   (Global defaults & feature flags)                       │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+         ┌───────────────────────┼───────────────────────┐
+         │                       │                       │
+         ▼                       ▼                       ▼
+    ┌─────────┐           ┌──────────┐          ┌──────────┐
+    │Personal │           │ Homelab  │          │   LXC    │
+    │ Profile │           │ Profile  │          │  Base    │
+    └────┬────┘           └─────┬────┘          └────┬─────┘
+         │                      │                    │
+         │  ┌───────────────────┤                    │
+         │  │                   │                    │
+         ▼  ▼                   ▼                    ▼
+    ┌────────────┐         ┌────────┐          ┌─────────┐
+    │   DESK     │         │VMHOME  │          │LXC_plane│
+    │ (Desktop)  │         │(Server)│          │LXC_tmpl │
+    └────────────┘         └────────┘          └─────────┘
+         │
+         ├─────────────────┬──────────────┬──────────────┐
+         ▼                 ▼              ▼              ▼
+    ┌────────┐       ┌─────────┐    ┌───────┐    ┌─────────┐
+    │LAPTOP  │       │   AGA   │    │AGADESK│    │ VMDESK  │
+    │  Base  │       │(Minimal)│    │(Desk) │    │  (VM)   │
+    └───┬────┘       └─────────┘    └───────┘    └─────────┘
+        │
+        ├─────────────┐
+        ▼             ▼
+    ┌────────┐  ┌──────────┐
+    │LAPTOP  │  │ YOGAAKU  │
+    │  L15   │  │ (Older)  │
+    └────────┘  └──────────┘
 
-This repository contains a complete NixOS configuration system that supports multiple profiles, system types, and use cases. It uses a modular architecture where system-level and user-level configurations are separated, allowing for easy customization and maintenance across different machines.
+Legend:
+  └──► Inherits from
+  │    Profile hierarchy
+  ┌──┐ Specific machine configuration
+```
 
-### Key Concepts
+### Centralized Software Management
 
-- **Profiles**: Pre-configured system templates for different use cases (personal, work, homelab, etc.)
-- **System Modules**: Low-level system configuration (hardware, security, services)
-- **User Modules**: User-level applications and configurations managed via Home Manager
-- **Flakes**: Modern Nix package management with reproducible builds
-- **Themes**: 55+ base16 themes with system-wide theming via Stylix
+```
+┌────────────────────────────────────────────────────────────────┐
+│              Profile Configuration File                         │
+│              (e.g., DESK-config.nix)                           │
+├────────────────────────────────────────────────────────────────┤
+│  systemSettings = {                                            │
+│    hostname = "nixosaku";                                      │
+│    systemPackages = [...];  # Profile-specific only            │
+│                                                                 │
+│    ╔════════════════════════════════════════════════════╗      │
+│    ║ SOFTWARE & FEATURE FLAGS - Centralized Control    ║      │
+│    ╠════════════════════════════════════════════════════╣      │
+│    ║ # Package Modules                                  ║      │
+│    ║ systemBasicToolsEnable = true;                     ║      │
+│    ║ systemNetworkToolsEnable = true;                   ║      │
+│    ║                                                     ║      │
+│    ║ # Desktop & Theming                                ║      │
+│    ║ enableSwayForDESK = true;                          ║      │
+│    ║ stylixEnable = true;                               ║      │
+│    ║                                                     ║      │
+│    ║ # System Services                                  ║      │
+│    ║ sambaEnable = true;                                ║      │
+│    ║ sunshineEnable = true;                             ║      │
+│    ║ wireguardEnable = true;                            ║      │
+│    ║                                                     ║      │
+│    ║ # Development & AI                                 ║      │
+│    ║ developmentToolsEnable = true;                     ║      │
+│    ║ aichatEnable = true;                               ║      │
+│    ╚════════════════════════════════════════════════════╝      │
+│  };                                                             │
+│                                                                 │
+│  userSettings = {                                              │
+│    homePackages = [...];  # Profile-specific only              │
+│                                                                 │
+│    ╔════════════════════════════════════════════════════╗      │
+│    ║ SOFTWARE & FEATURE FLAGS (USER) - Centralized      ║      │
+│    ╠════════════════════════════════════════════════════╣      │
+│    ║ # Package Modules (User)                           ║      │
+│    ║ userBasicPkgsEnable = true;                        ║      │
+│    ║ userAiPkgsEnable = true;   # DESK only             ║      │
+│    ║                                                     ║      │
+│    ║ # Gaming & Entertainment                           ║      │
+│    ║ protongamesEnable = true;                          ║      │
+│    ║ starcitizenEnable = true;                          ║      │
+│    ║ steamPackEnable = true;                            ║      │
+│    ╚════════════════════════════════════════════════════╝      │
+│  };                                                             │
+└────────────────────────────────────────────────────────────────┘
+```
 
-## Quick Start
+## 🎯 Core Principles
+
+### 1. Hierarchical Configuration
+- **Base profiles** define common settings (LAPTOP-base.nix, LXC-base-config.nix)
+- **Specific profiles** inherit and override only what's unique
+- **Global defaults** in `lib/defaults.nix` provide sensible starting points
+
+### 2. Centralized Software Control
+All software is controlled through **centralized flag sections**:
+- Grouped by topic (Package Modules, Desktop, Services, Development, Gaming)
+- Single source of truth per profile
+- Easy to see exactly what's enabled at a glance
+
+### 3. Modular Package System
+Software organized into **4 core package modules**:
+
+| Module | Flag | Contents |
+|--------|------|----------|
+| `system/packages/system-basic-tools.nix` | `systemBasicToolsEnable` | vim, wget, zsh, rsync, cryptsetup, etc. |
+| `system/packages/system-network-tools.nix` | `systemNetworkToolsEnable` | nmap, traceroute, dnsutils, etc. |
+| `user/packages/user-basic-pkgs.nix` | `userBasicPkgsEnable` | Browsers, office, communication apps |
+| `user/packages/user-ai-pkgs.nix` | `userAiPkgsEnable` | lmstudio, ollama-rocm |
+
+### 4. Profile Types
+
+#### Personal Profiles
+Full-featured desktop/laptop configurations with GUI applications:
+- **DESK** - Primary desktop (AMD GPU, gaming, development, AI)
+- **LAPTOP_L15** - Intel laptop with development tools
+- **LAPTOP_YOGAAKU** - Older laptop, reduced features
+- **AGA** - Minimal laptop with basic tools
+- **AGADESK** - Secondary desktop with gaming
+
+#### Server Profiles
+Headless server configurations:
+- **VMHOME** - Homelab server (Docker, NFS, no GUI)
+- **VMDESK** - VM desktop for remote access
+
+#### Container Profiles
+LXC containers for Proxmox:
+- **LXC-base-config.nix** - Common container settings
+- **LXC_plane**, **LXC_template** - Specific services
+
+#### Specialized Profiles
+- **WSL** - Windows Subsystem for Linux minimal setup
+- **Work** - Work-focused configuration (no games/personal tools)
+
+## 🚀 Quick Start
 
 ### Installation
 
-For a complete installation guide, see [Installation Documentation](docs/installation.md).
+```bash
+# Clone repository
+git clone https://github.com/akunito/nixos-config.git ~/.dotfiles
+cd ~/.dotfiles
 
-**Quick install:**
-```sh
-# Interactive mode
-./install.sh ~/.dotfiles "PROFILE"
+# Interactive installation
+./install.sh ~/.dotfiles PROFILE
 
-# Silent mode
-./install.sh ~/.dotfiles "PROFILE" -s
+# Silent installation
+./install.sh ~/.dotfiles PROFILE -s
+
+# With user sync
+./install.sh ~/.dotfiles PROFILE -s -u
 ```
 
-Where `PROFILE` corresponds to a flake file like `flake.HOME.nix`, `flake.DESK.nix`, etc.
+**Available Profiles:**
+- `DESK` - Primary desktop
+- `LAPTOP_L15` - Intel laptop
+- `LAPTOP_YOGAAKU` - Older laptop
+- `AGA` - Minimal laptop
+- `AGADESK` - Secondary desktop
+- `VMHOME` - Homelab server
+- `VMDESK` - VM desktop
+- `WSL` - Windows Subsystem for Linux
+- `LXC_plane`, `LXC_template` - LXC containers
 
-### Basic Usage
+### Daily Usage
 
-After installation, use the `phoenix` wrapper script for common operations:
+```bash
+# Synchronize system and user
+phoenix sync
 
-```sh
-phoenix sync          # Synchronize system and home-manager
-phoenix sync system   # Only synchronize system
-phoenix sync user     # Only synchronize home-manager
-phoenix update        # Update flake inputs
-phoenix upgrade       # Update and synchronize
-phoenix gc            # Garbage collect old generations
+# Update flake inputs
+phoenix update
+
+# Update and synchronize
+phoenix upgrade
+
+# Garbage collect
+phoenix gc        # Interactive selection
+phoenix gc 30d    # Delete >30 days old
+phoenix gc full   # Delete everything unused
 ```
 
-For complete script documentation, see [Scripts Reference](docs/scripts.md).
+## 📋 Configuration Examples
 
-## Documentation Structure
+### Example 1: Creating a New Desktop Profile
 
-This repository uses a 3-level documentation structure:
+```nix
+# profiles/MYDESK-config.nix
+{
+  systemSettings = {
+    hostname = "mydesk";
+    profile = "personal";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles MYDESK -s -u";
+    gpuType = "nvidia";
 
-## Navigating Documentation
+    systemPackages = pkgs: pkgs-unstable: [
+      # Add profile-specific packages here
+    ];
 
-This repo uses a **Router + Catalog** system to help you find documentation quickly:
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
 
-- **Router (quick lookup):** `docs/00_ROUTER.md` - Compact table for finding specific topics
-- **Catalog (browse all):** `docs/01_CATALOG.md` - Complete listing of all modules and docs
-- **Navigation guide:** [`docs/navigation.md`](docs/navigation.md) - **Start here** to learn how to use the Router/Catalog system
+    # === Package Modules ===
+    systemBasicToolsEnable = true;
+    systemNetworkToolsEnable = true;
 
-**Quick start**: Open [`docs/navigation.md`](docs/navigation.md) to learn how to efficiently find the documentation you need.
+    # === Desktop Environment & Theming ===
+    stylixEnable = true;
 
-## AI agent context (Cursor / other coding agents)
+    # === System Services & Features ===
+    sambaEnable = false;
+    sunshineEnable = false;
+    wireguardEnable = true;
 
-This repo uses a **Router + Catalog** system to keep AI context scoped as docs grow:
+    # === Development Tools & AI ===
+    developmentToolsEnable = true;
+  };
 
-- **Router (small, fast):** `docs/00_ROUTER.md` (pick relevant IDs first)
-- **Catalog (full listing):** `docs/01_CATALOG.md`
-- **How it works / template:** `docs/agent-context.md`
-- **Agent instructions:** `AGENTS.md` + scoped `.cursor/rules/*.mdc`
+  userSettings = {
+    username = "myuser";
+    theme = "ashes";
+    wm = "plasma6";
 
-### Level 1: Top-Level (This File)
-- Overview and quick start
-- Navigation to major topics
-- Project structure overview
+    homePackages = pkgs: pkgs-unstable: [
+      # Add user-specific packages here
+    ];
 
-### Level 2: Major Topics
-Located in the `docs/` directory:
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ============================================================================
 
-- **[Installation](docs/installation.md)** - Complete installation guide, manual and automated procedures
-- **[Configuration](docs/configuration.md)** - Flake management, variables, and configuration structure
-- **[Profiles](docs/profiles.md)** - Available profiles and how to use them
-- **[System Modules](docs/system-modules.md)** - System-level configuration modules
-- **[User Modules](docs/user-modules.md)** - User-level applications and configurations
-- **[Maintenance & Scripts](docs/maintenance.md)** - Maintenance tasks, scripts, and automation
-- **[Scripts Reference](docs/scripts.md)** - Complete documentation for all shell scripts
-- **[Keybindings](docs/keybindings.md)** - Complete reference for all keybindings
-- **[Security](docs/security.md)** - Security configurations, SSH, encryption, backups
-- **[Hardware](docs/hardware.md)** - Hardware-specific configurations, drives, power management
-- **[Themes](docs/themes.md)** - Theme system and customization
-- **[Patches](docs/patches.md)** - Nixpkgs patches and customizations
+    # === Package Modules (User) ===
+    userBasicPkgsEnable = true;
+    userAiPkgsEnable = false;
 
-### Level 3: Specific Documentation
-Detailed guides for specific topics:
+    # === Gaming & Entertainment ===
+    protongamesEnable = false;
+    steamPackEnable = false;
+  };
+}
+```
 
-**Security**:
-- **[LUKS Encryption & Remote Unlocking](docs/security/luks-encryption.md)** - Setting up encrypted drives with SSH unlock
-- **[Restic Backups](docs/security/restic-backups.md)** - Automated backup system configuration
-- **[Sudo Configuration](docs/security/sudo.md)** - Sudo setup and best practices
-- **[Polkit Configuration](docs/security/polkit.md)** - Polkit rules and permissions
+### Example 2: Creating a Laptop Profile with Base Inheritance
 
-**Hardware**:
-- **[CPU Power Management](docs/hardware/cpu-power-management.md)** - Kernel modules and CPU governors
-- **[Drive Management](docs/hardware/drive-management.md)** - Mounting and managing drives
-- **[GPU Monitoring](docs/hardware/gpu-monitoring.md)** - GPU monitoring tools and configuration
+```nix
+# profiles/MYLAPTOP-config.nix
+let
+  base = import ./LAPTOP-base.nix;
+in
+{
+  systemSettings = base.systemSettings // {
+    hostname = "mylaptop";
+    profile = "personal";
+    gpuType = "intel";
 
-**Keybindings**:
-- **[Sway Keybindings](docs/keybindings/sway.md)** - Complete SwayFX keybindings reference
-- **[Hyprland Keybindings](docs/keybindings/hyprland.md)** - Complete Hyprland keybindings reference
+    systemPackages = pkgs: pkgs-unstable: [
+      pkgs.tldr  # Add laptop-specific tool
+    ];
 
-**User Modules**:
-- **[Plasma 6 Desktop](docs/user-modules/plasma6.md)** - KDE Plasma 6 configuration
-- **[Doom Emacs](docs/user-modules/doom-emacs.md)** - Doom Emacs setup
-- **[Ranger](docs/user-modules/ranger.md)** - Terminal file manager
-- **[XMonad](docs/user-modules/xmonad.md)** - Tiling window manager
-- **[Picom](docs/user-modules/picom.md)** - X11 compositor
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
+    systemBasicToolsEnable = true;
+    systemNetworkToolsEnable = true;
+    sunshineEnable = false;  # Disable on laptop
+    developmentToolsEnable = true;
+  };
 
-And more in respective subdirectories.
+  userSettings = base.userSettings // {
+    username = "myuser";
 
-**Note**: README.md files are now available in subdirectories alongside the code. Original README.org files are preserved for historical reference. Comprehensive documentation is available in `docs/`.
+    homePackages = pkgs: pkgs-unstable: [
+      pkgs.kdePackages.dolphin
+    ];
 
-## Features
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ============================================================================
+    userBasicPkgsEnable = true;
+    userAiPkgsEnable = false;  # No AI on laptop
+  };
+}
+```
 
-### Desktop Environment
-- **Plasma 6** - Primary desktop environment (configurable)
-- **Hyprland** - Wayland compositor support (alternative)
-- **XMonad** - Tiling window manager support
+### Example 3: Creating an LXC Container Profile
 
-### System Features
-- **SSH Server on Boot** - Remote LUKS disk unlocking
-- **Automated System Maintenance** - Generation cleanup and optimization
-- **Docker Container Management** - Automated handling during system updates
-- **QEMU Virtualization** - Full virtualization support with remote management
-- **Network Bridge Configuration** - For VM networking
-- **Printer Support** - Brother Laser printer drivers and network printing
-- **NFS Client/Server** - Network file system support
-- **Automated Backups** - Restic-based backup system with SystemD timers
-- **Keyboard Remapping** - keyd service for Caps Lock to Hyper key remapping (see [System Modules - keyd](docs/system-modules.md#keyd-systemwmkeydnix))
+```nix
+# profiles/LXC_myservice-config.nix
+let
+  base = import ./LXC-base-config.nix;
+in
+{
+  systemSettings = base.systemSettings // {
+    hostname = "lxc-myservice";
+    ipAddress = "192.168.1.100";
 
-### Security Features
-- **LUKS Encryption** - Full disk encryption with remote unlock capability
-- **Firewall Configuration** - Customizable firewall rules
-- **SSH Key Management** - Centralized SSH key configuration
-- **Polkit Rules** - Fine-grained permission management
-- **Sudo/Doas Configuration** - Flexible privilege escalation
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
+    systemBasicToolsEnable = true;
+    systemNetworkToolsEnable = false;  # Minimal container
+    # All services disabled
+  };
 
-### Development & Tools
-- **Multiple Programming Languages** - Python, Rust, Go, and more
-- **Doom Emacs** - Fully configured Emacs distribution
-- **Git Configuration** - Pre-configured git settings
-- **Terminal Emulators** - Alacritty and Kitty configurations
-- **CLI Tools** - Curated collection of command-line utilities
+  userSettings = base.userSettings // {
+    # Inherit all user settings from base
+  };
+}
+```
 
-### Theming
-- **55+ Base16 Themes** - System-wide theming via Stylix
-- **Dynamic Theme Switching** - Switch themes on-the-fly
-- **Consistent Styling** - Unified look across all applications
+## 🔧 Software Management
 
-## Project Structure
+### How It Works
+
+1. **Package modules** contain grouped software (basic tools, networking, user apps, AI)
+2. **Feature flags** enable/disable entire modules
+3. **Centralized sections** in profile configs control all software
+4. **Profile-specific packages** added to systemPackages/homePackages lists
+
+### Enabling/Disabling Software
+
+Edit your profile config file (e.g., `profiles/DESK-config.nix`):
+
+```nix
+# In systemSettings section:
+# ============================================================================
+# SOFTWARE & FEATURE FLAGS - Centralized Control
+# ============================================================================
+
+# Enable/disable package modules
+systemBasicToolsEnable = true;      # Keep basic tools
+systemNetworkToolsEnable = false;   # Disable networking tools
+
+# Enable/disable system services
+sambaEnable = true;                 # Enable Samba
+sunshineEnable = false;             # Disable game streaming
+
+# In userSettings section:
+# ============================================================================
+# SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+# ============================================================================
+
+userBasicPkgsEnable = true;         # Keep user apps
+userAiPkgsEnable = false;           # Disable AI packages
+
+protongamesEnable = false;          # Disable gaming
+```
+
+### Adding Custom Packages
+
+```nix
+# In profile config
+systemSettings = {
+  systemPackages = pkgs: pkgs-unstable: [
+    # Profile-specific system packages
+    pkgs.my-custom-tool
+  ];
+};
+
+userSettings = {
+  homePackages = pkgs: pkgs-unstable: [
+    # Profile-specific user packages
+    pkgs-unstable.my-custom-app
+  ];
+};
+```
+
+## 📚 Documentation
+
+### Quick Navigation
+
+- **Installation Guide**: [docs/installation.md](docs/installation.md)
+- **Profile Details**: [docs/profiles.md](docs/profiles.md)
+- **System Modules**: [docs/system-modules.md](docs/system-modules.md)
+- **User Modules**: [docs/user-modules.md](docs/user-modules.md)
+- **Scripts Reference**: [docs/scripts.md](docs/scripts.md)
+- **Keybindings**: [docs/keybindings.md](docs/keybindings.md)
+
+### Documentation System
+
+This repository uses a **Router + Catalog** system:
+
+- **Router (quick lookup)**: [`docs/00_ROUTER.md`](docs/00_ROUTER.md) - Find topics fast
+- **Catalog (browse all)**: [`docs/01_CATALOG.md`](docs/01_CATALOG.md) - Complete listing
+- **Navigation guide**: [`docs/navigation.md`](docs/navigation.md) - **Start here**
+
+## 🏗️ Project Structure
 
 ```
 .dotfiles/
-├── README.md                 # This file (Level 1)
-├── docs/                     # Level 2 documentation
-│   ├── installation.md
-│   ├── configuration.md
-│   ├── profiles.md
-│   ├── system-modules.md
-│   ├── user-modules.md
-│   ├── maintenance.md
-│   ├── security/
-│   ├── hardware/
+├── flake.nix                 # Main flake (imports specific profile flakes)
+├── flake.*.nix               # Profile-specific flakes (DESK, LAPTOP_L15, etc.)
+├── lib/
+│   └── defaults.nix          # Global defaults and feature flags
+├── profiles/
+│   ├── personal/             # Personal profile templates
+│   │   ├── configuration.nix # System config (imports work/configuration.nix)
+│   │   └── home.nix          # User config (imports work/home.nix)
+│   ├── work/                 # Work profile templates
+│   ├── homelab/              # Server profile templates
+│   ├── DESK-config.nix       # Desktop configuration
+│   ├── LAPTOP-base.nix       # Laptop base (inherited by L15, YOGAAKU)
+│   ├── LAPTOP_L15-config.nix # Specific laptop config
+│   ├── LXC-base-config.nix   # LXC container base
 │   └── ...
-├── flake.nix                 # Main flake (template)
-├── flake.*.nix               # Profile-specific flakes
-├── install.sh                # Installation script
-├── maintenance.sh            # Maintenance automation
-├── profiles/                 # System profiles
-│   ├── personal/
-│   ├── work/
-│   ├── homelab/
-│   ├── worklab/
-│   ├── wsl/
-│   └── nix-on-droid/
-├── system/                   # System-level modules
-│   ├── app/                  # System applications
+├── system/
+│   ├── app/                  # System-level applications
 │   ├── hardware/             # Hardware configuration
-│   ├── security/             # Security settings
-│   ├── wm/                   # Window manager setup
-│   └── bin/                  # System scripts (phoenix)
-├── user/                     # User-level modules
+│   ├── packages/             # Package modules
+│   │   ├── system-basic-tools.nix
+│   │   └── system-network-tools.nix
+│   ├── security/             # Security modules
+│   └── wm/                   # Window manager system config
+├── user/
 │   ├── app/                  # User applications
-│   ├── lang/                 # Programming languages
+│   │   ├── development/      # Development tools
+│   │   └── games/            # Gaming applications
+│   ├── packages/             # User package modules
+│   │   ├── user-basic-pkgs.nix
+│   │   └── user-ai-pkgs.nix
 │   ├── shell/                # Shell configurations
-│   ├── wm/                   # Window manager configs
-│   └── style/                # User styling
-├── themes/                   # Base16 themes
-├── patches/                  # Nixpkgs patches
-└── assets/                   # Static assets (wallpapers, etc.)
+│   ├── wm/                   # Window manager user config
+│   └── style/                # Theming and styling
+├── themes/                   # 55+ base16 themes
+├── docs/                     # Comprehensive documentation
+└── scripts/                  # Utility scripts
 ```
 
-## Documentation Standards
+## ✨ Features
 
-This repository follows a **3-level documentation structure** with comprehensive guidelines. See [`.cursorrules`](.cursorrules) for complete documentation standards, including:
+### Desktop Environments
+- **Plasma 6** - KDE Plasma with Wayland
+- **SwayFX** - Wayland compositor with effects
+- **Hyprland** - Dynamic tiling Wayland compositor
+- **Stylix** - System-wide theming with 55+ base16 themes
 
-- Documentation structure and organization
-- Cross-referencing guidelines
-- README.org to Markdown conversion
-- Temporary documentation handling (`docs/future/`)
+### System Features
+- **Automated Maintenance** - Generation cleanup, Docker container handling
+- **Remote LUKS Unlock** - SSH server on boot for encrypted drives
+- **NFS Client/Server** - Network file system support
+- **QEMU/KVM Virtualization** - Full VM support with bridged networking
+- **Automated Backups** - Restic-based with SystemD timers
+- **Power Management** - Profile-specific TLP configurations
 
-## Getting Help
+### Development Tools
+- **NixVim** - Neovim configured like Cursor IDE
+- **Multiple IDEs** - VSCode, Cursor, Windsurf
+- **AI Tools** - LM Studio, Ollama, aichat CLI
+- **Cloud Tools** - Azure CLI, Cloudflare Tunnel
+- **Languages** - Rust, Python, Go, Node.js
 
-### Common Issues
+### Gaming Support
+- **Steam** - Native Steam client
+- **Proton** - Lutris, Bottles, Heroic launcher
+- **Emulators** - Dolphin (Primehack), RPCS3
+- **Star Citizen** - Kernel optimizations
 
-1. **Installation fails** - Check [Installation Documentation](docs/installation.md) for troubleshooting
-2. **Docker containers break boot** - See [Maintenance Documentation](docs/maintenance.md#docker-handling)
-3. **SSH unlock not working** - See [LUKS Encryption Guide](docs/security/luks-encryption.md)
-4. **Theme not applying** - Check [Themes Documentation](docs/themes.md)
+## 🛠️ Maintenance
 
-### Resources
+### Common Tasks
 
-- **Original Documentation**: See the "Original Document from Librephoenix" section below for historical context
-- **NixOS Wiki**: [nixos.wiki](https://nixos.wiki)
-- **Home Manager Manual**: [nix-community.github.io/home-manager](https://nix-community.github.io/home-manager)
+```bash
+# Update system
+phoenix upgrade
+
+# Clean old generations
+phoenix gc 30d
+
+# Refresh themes and daemons
+phoenix refresh
+
+# Pull upstream changes
+phoenix pull
+```
+
+### Troubleshooting
+
+**Build fails:**
+- Check `flake.lock` is up to date: `phoenix update`
+- Verify profile config syntax: `nix flake check`
+
+**Software not appearing:**
+- Check flag is enabled in profile config
+- Verify module imported in personal/configuration.nix or personal/home.nix
+- Rebuild: `phoenix sync`
+
+**Theme not applying:**
+- Run: `phoenix refresh`
+- Check `stylixEnable = true` in profile config
+
+## 🔐 Security Notes
+
+- **SSH Keys**: Change default SSH keys in profile configs before deploying servers
+- **LUKS Encryption**: See [docs/security/luks-encryption.md](docs/security/luks-encryption.md)
+- **Backups**: Configure Restic in profile config, see [docs/security/restic-backups.md](docs/security/restic-backups.md)
+
+## 📄 License
+
+This configuration is provided as-is for personal use. Based on [Librephoenix's dotfiles](https://github.com/librephoenix/nixos-config).
+
+## 🙏 Credits
+
+Forked from [Librephoenix's NixOS configuration](https://github.com/librephoenix/nixos-config), significantly enhanced with:
+- Hierarchical profile inheritance system
+- Centralized software management
+- Modular package organization
+- Extensive documentation
+- Multiple machine type support (desktops, laptops, servers, containers)
 
 ---
 
-## Original Document from Librephoenix
+## Additional Resources
 
-The following section contains the original documentation from Librephoenix's repository, preserved for historical context and reference.
+### Detailed Documentation
+- **[Configuration Guide](docs/configuration.md)** - Flake management and variables
+- **[Maintenance Guide](docs/maintenance.md)** - System maintenance and automation
+- **[Security Guide](docs/security.md)** - SSH, encryption, backups
+- **[Hardware Guide](docs/hardware.md)** - Drives, GPU, power management
+- **[Themes Guide](docs/themes.md)** - Theme system and customization
+- **[Patches Guide](docs/patches.md)** - Nixpkgs patches
 
-### What is this repository?
+### Specific Topics
+- **[LUKS Encryption](docs/security/luks-encryption.md)** - Encrypted drives with remote unlock
+- **[Restic Backups](docs/security/restic-backups.md)** - Automated backup configuration
+- **[CPU Power Management](docs/hardware/cpu-power-management.md)** - Governors and performance
+- **[Sway Keybindings](docs/keybindings/sway.md)** - Complete SwayFX keybinding reference
+- **[Plasma 6 Setup](docs/user-modules/plasma6.md)** - KDE configuration
+- **[Gaming Setup](docs/user-modules/gaming.md)** - Gaming platform configuration
 
-These are my dotfiles (configuration files) for my NixOS setup(s).
-
-### My Themes
-
-[Stylix](https://github.com/danth/stylix#readme) (and [base16.nix](https://github.com/SenchoPens/base16.nix#readme), of course) is amazing, allowing you to theme your entire system with base16-themes.
-
-Using this I have [55+ themes](./themes) (I add more sometimes) I can switch between on-the-fly. Visit the [themes directory](./themes) for more info and screenshots!
-
-### Install
-
-I wrote some reinstall notes for myself [here (install.md)](./install.md).
-
-TLDR: You should be able to install these dotfiles to a fresh NixOS system. See [Installation Documentation](docs/installation.md) for current installation methods.
-
-**Note**: The original installation command from LibrePhoenix's repository is no longer applicable as this is a fork. Use the installation methods described in the documentation.
-
-Disclaimer: Ultimately, I can't guarantee this will work for anyone other than myself, so *use this at your own discretion*. Also my dotfiles are *highly* opinionated, which you will discover immediately if you try them out.
-
-Potential Errors: I've only tested it working on UEFI with the default EFI mount point of `/boot`. I've added experimental legacy (BIOS) boot support, but it does rely on a quick and dirty script to find the grub device. If you are testing it using some weird boot configuration for whatever reason, try modifying `bootMountPath` (UEFI) or `grubDevice` (legacy BIOS) in `flake.nix` before install, or else it will complain about not being able to install the bootloader.
-
-Note: If you're installing this to a VM, Hyprland won't work unless 3D acceleration is enabled.
-
-Security Disclaimer: If you install or copy my `homelab` or `worklab` profiles, *CHANGE THE PUBLIC SSH KEYS UNLESS YOU WANT ME TO BE ABLE TO SSH INTO YOUR SERVER. YOU CAN CHANGE OR REMOVE THE SSH KEY IN THE RELEVANT CONFIGURATION.NIX*:
-
-- [configuration.nix](./profiles/homelab/configuration.nix) for homelab profile
-- [configuration.nix](./profiles/worklab/configuration.nix) for worklab profile
-
-### Modules
-
-Separate Nix files can be imported as modules using an import block:
-
-```nix
-imports = [ ./import1.nix
-            ./import2.nix
-            ...
-          ];
-```
-
-This conveniently allows configurations to be (*cough cough) *modular* (ba dum, tssss).
-
-I have my modules separated into two groups:
-
-- System-level - stored in the [system directory](./system)
-  - System-level modules are imported into configuration.nix, which is what is sourced into [my flake (flake.nix)](./flake.nix)
-- User-level - stored in the [user directory](./user) (managed by home-manager)
-  - User-level modules are imported into home.nix, which is also sourced into [my flake (flake.nix)](./flake.nix)
-
-More detailed information on these specific modules are in the [system directory](./system) and [user directory](./user) respectively.
-
-### Patches
-
-In some cases, since I use `nixpgs-unstable`, I must patch nixpkgs. This can be done inside of a flake via:
-
-```nix
-nixpkgs-patched = (import nixpkgs { inherit system; }).applyPatches {
-  name = "nixpkgs-patched";
-  src = nixpkgs;
-  patches = [ ./example-patch.nix ];
-};
-
-# configure pkgs
-pkgs = import nixpkgs-patched { inherit system; };
-
-# configure lib
-lib = nixpkgs.lib;
-```
-
-Patches can either be local or remote, so you can even import unmerged pull requests by using `fetchpatch` and the raw patch url, i.e: <https://github.com/NixOS/nixpkgs/pull/example.patch>.
-
-I currently curate patches local to this repo in the [patches](./patches) directory.
-
-### Profiles
-
-I separate my configurations into [profiles](./profiles) (essentially system templates), i.e:
-
-- [Personal](./profiles/personal) - What I would run on a personal laptop/desktop
-- [Work](./profiles/work) - What I would run on a work laptop/desktop (if they let me bring my own OS :P)
-- [Homelab](./profiles/homelab) - What I would run on a server or homelab
-- [WSL](./profiles/wsl) - What I would run underneath Windows Subsystem for Linux
-
-My profile can be conveniently selected in [my flake.nix](./flake.nix) by setting the `profile` variable.
-
-More detailed information on these profiles is in the [profiles directory](./profiles).
-
-### Nix Wrapper Script
-
-Some Nix commands are confusing, really long to type out, or require me to be in the directory with my dotfiles. To solve this, I wrote a [wrapper script called phoenix](./system/bin/phoenix.nix), which calls various scripts in the root of this directory.
-
-TLDR:
-
-- `phoenix sync` - Synchronize system and home-manager state with config files (essentially `nixos-rebuild switch` + `home-manager switch`)
-  - `phoenix sync system` - Only synchronize system state (essentially `nixos-rebuild switch`)
-  - `phoenix sync user` - Only synchronize home-manager state (essentially `home-manager switch`)
-- `phoenix update` - Update all flake inputs without synchronizing system and home-manager states
-- `phoenix upgrade` - Update flake.lock and synchronize system and home-manager states (`phoenix update` + `phoenix sync`)
-- `phoenix refresh` - Call synchronization posthooks (mainly to refresh stylix and some dependent daemons)
-- `phoenix pull` - Pull changes from upstream git and attempt to merge local changes (I use this to update systems other than my main system)
-- `phoenix harden` - Ensure that all "system-level" files cannot be edited by an unprivileged user
-- `phoenix soften` - Relax permissions so all dotfiles can be edited by a normal user (use temporarily for git or other operations)
-- `phoenix gc` - Garbage collect the system and user nix stores
-  - `phoenix gc full` - Delete everything not currently in use
-  - `phoenix gc 15d` - Delete everything older than 15 days
-  - `phoenix gc 30d` - Delete everything older than 30 days
-  - `phoenix gc Xd` - Delete everything older than X days
+### External Resources
+- **[NixOS Manual](https://nixos.org/manual/nixos/stable/)** - Official NixOS documentation
+- **[Home Manager Manual](https://nix-community.github.io/home-manager/)** - User environment management
+- **[Nix Pills](https://nixos.org/guides/nix-pills/)** - Deep dive into Nix
+- **[NixOS Wiki](https://nixos.wiki)** - Community documentation

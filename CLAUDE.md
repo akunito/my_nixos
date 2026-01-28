@@ -8,10 +8,150 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 - **Source of truth**: `flake.nix` and its `inputs` define dependencies.
 - **Application workflow**: apply changes via `install.sh` (or `phoenix sync`), not manual systemd enable/start.
 - **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths inside Nix.
-- **LXC Container Modularity**: For Proxmox LXC containers, use the **Base + Override** pattern:
-  - Common settings in `profiles/LXC-base-config.nix`.
-  - Hostname/specific overrides in `profiles/<NAME>-config.nix`.
-  - Point `flake.<NAME>.nix` to the override.
+
+## Profile Architecture Principles (CRITICAL)
+
+This repository follows a **hierarchical, modular, and centralized** profile architecture:
+
+### 1. Base + Override Pattern
+- **Base profiles** (`LAPTOP-base.nix`, `LXC-base-config.nix`) contain common settings
+- **Specific profiles** (`LAPTOP_L15-config.nix`, `LXC_plane-config.nix`) override only what's unique
+- Each flake file (`flake.LAPTOP_L15.nix`) points to the specific profile config
+
+### 2. Profile Type Inheritance Hierarchy
+
+```
+lib/defaults.nix (global defaults)
+    │
+    ├─► personal/configuration.nix ◄─── work/configuration.nix
+    │        │
+    │        ├─► DESK-config.nix
+    │        ├─► LAPTOP-base.nix ◄─── LAPTOP_L15-config.nix
+    │        │                    ◄─── LAPTOP_YOGAAKU-config.nix
+    │        ├─► AGA-config.nix
+    │        └─► AGADESK-config.nix
+    │
+    ├─► homelab/configuration.nix
+    │        │
+    │        └─► VMHOME-config.nix
+    │
+    └─► LXC-base-config.nix ◄─── LXC_plane-config.nix
+                             ◄─── LXC_template-config.nix
+```
+
+### 3. Centralized Software Management (CRITICAL)
+
+All software-related flags MUST be grouped in **two centralized sections**:
+
+#### A. System Settings Section (in systemSettings)
+```nix
+# ============================================================================
+# SOFTWARE & FEATURE FLAGS - Centralized Control
+# ============================================================================
+
+# === Package Modules ===
+systemBasicToolsEnable = true;      # Basic system tools
+systemNetworkToolsEnable = true;    # Advanced networking tools
+
+# === Desktop Environment & Theming ===
+enableSwayForDESK = true;
+stylixEnable = true;
+swwwEnable = true;
+
+# === System Services & Features ===
+sambaEnable = true;
+sunshineEnable = true;
+wireguardEnable = true;
+xboxControllerEnable = true;
+appImageEnable = true;
+gamemodeEnable = true;
+
+# === Development Tools & AI ===
+developmentToolsEnable = true;
+aichatEnable = true;
+nixvimEnabled = true;
+lmstudioEnabled = true;
+```
+
+#### B. User Settings Section (in userSettings)
+```nix
+# ============================================================================
+# SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+# ============================================================================
+
+# === Package Modules (User) ===
+userBasicPkgsEnable = true;         # Basic user packages (browsers, office, etc.)
+userAiPkgsEnable = true;            # AI & ML packages (lmstudio, ollama-rocm)
+
+# === Gaming & Entertainment ===
+protongamesEnable = true;
+starcitizenEnable = true;
+GOGlauncherEnable = true;
+steamPackEnable = true;
+dolphinEmulatorPrimehackEnable = true;
+rpcs3Enable = true;
+```
+
+### 4. Package Module System
+
+Software is organized into **4 core package modules**:
+
+**System Level:**
+- `system/packages/system-basic-tools.nix` (systemBasicToolsEnable)
+  - Essential CLI tools: vim, wget, zsh, rsync, cryptsetup, etc.
+- `system/packages/system-network-tools.nix` (systemNetworkToolsEnable)
+  - Advanced networking: nmap, traceroute, dnsutils, etc.
+
+**User Level:**
+- `user/packages/user-basic-pkgs.nix` (userBasicPkgsEnable)
+  - Standard applications: browsers, office, communication, etc.
+- `user/packages/user-ai-pkgs.nix` (userAiPkgsEnable)
+  - AI/ML tools: lmstudio, ollama-rocm
+
+### 5. Profile Configuration Rules
+
+**MUST follow:**
+- Software flags MUST be in centralized sections (after systemPackages/homePackages)
+- Flags MUST be grouped by topic with clear headers
+- Each flag MUST have a descriptive comment
+- Base profiles define NO software flags (only common settings)
+- Specific profiles explicitly enable what they need
+- NEVER duplicate flags across profile and base
+
+**Example Profile Structure:**
+```nix
+{
+  systemSettings = {
+    hostname = "nixosaku";
+    profile = "personal";
+    # ... network, security, etc ...
+
+    systemPackages = pkgs: pkgs-unstable: [
+      # Profile-specific packages only
+    ];
+
+    # ========================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ========================================================================
+    systemBasicToolsEnable = true;
+    # ... all system software flags grouped here ...
+  };
+
+  userSettings = {
+    # ... user config ...
+
+    homePackages = pkgs: pkgs-unstable: [
+      # Profile-specific packages only
+    ];
+
+    # ========================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ========================================================================
+    userBasicPkgsEnable = true;
+    # ... all user software flags grouped here ...
+  };
+}
+```
 
 ## Home Manager updates
 

@@ -51,13 +51,13 @@
       fsType = "ntfs3";
     };
 
-  fileSystems."/mnt/NFS_media" =
-    { device = "192.168.20.200:/mnt/hddpool/media";
+  fileSystems."/mnt/NFS_library" =
+    { device = "192.168.20.200:/mnt/ssdpool/library";
       fsType = "nfs4";
     };
 
-  fileSystems."/mnt/NFS_library" =
-    { device = "192.168.20.200:/mnt/ssdpool/library";
+  fileSystems."/mnt/NFS_media" =
+    { device = "192.168.20.200:/mnt/hddpool/media";
       fsType = "nfs4";
     };
 
