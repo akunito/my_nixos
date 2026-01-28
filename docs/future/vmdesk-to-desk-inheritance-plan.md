@@ -392,56 +392,70 @@ sshExtraConfig = ''
 '';
 ```
 
-## Questions for User to Resolve
+## Questions for User to Resolve - ✅ RESOLVED
 
-Before implementation, please clarify:
+All questions have been answered by the user. Here are the decisions:
 
 ### Critical Questions (Package Redundancy)
 
-1. **🚨 System Packages Redundancy**: VMDESK manually lists vim, wget, zsh, nmap, sunshine, etc. These are already covered by flags (`systemBasicToolsEnable`, `systemNetworkToolsEnable`, `sunshineEnable`). Should we:
-   - A) Remove all redundant packages, rely on flags (recommended - DRY)
-   - B) Keep manual list as override (not recommended - duplicate management)
+1. **🚨 System Packages Redundancy**: VMDESK manually lists vim, wget, zsh, nmap, sunshine, etc. These are already covered by flags.
+   - ✅ **RESOLVED**: Remove all redundant packages, rely on flags (DRY principle)
 
-2. **🚨 User Packages Redundancy**: VMDESK manually lists browsers, office, communication apps, etc. These are likely covered by `userBasicPkgsEnable`. Should we:
-   - A) Review user-basic-pkgs.nix and remove redundant packages (recommended)
-   - B) Keep manual list if VMDESK needs specific versions/variants
-   - C) Identify which packages are VM-specific and keep only those
+2. **🚨 User Packages Redundancy**: VMDESK manually lists browsers, office, communication apps, etc. These are likely covered by `userBasicPkgsEnable`.
+   - ✅ **RESOLVED**: Reduce homePackages to only VM-specific packages not covered by flags
 
 ### VM Configuration Questions
 
-3. **AMD LACT Driver**: Confirm VM doesn't need physical GPU control? (amdLACTdriverEnable = false)
+3. **GPU Type & LACT Driver**: VM GPU configuration
+   - ✅ **RESOLVED**: `gpuType = "none"` for VM, `amdLACTdriverEnable = false` (not needed)
 
 4. **Sudo Timeout**: Should VMDESK inherit DESK's 180-minute timeout or keep default?
+   - ✅ **RESOLVED**: Yes, inherit 180 minutes from DESK
 
-5. **Certificates**: Does VMDESK need CA certificates? Keep empty or inherit DESK's?
+5. **Certificates**: Does VMDESK need CA certificates?
+   - ✅ **RESOLVED**: Keep empty (inherit from DESK's empty override)
 
 6. **FUSE Allow Other**: Keep VMDESK more restrictive (false) or adopt DESK's true?
+   - ✅ **RESOLVED**: Keep false (more restrictive for VM)
 
-7. **Stylix**: Should VMDESK enable Stylix for theming, or keep disabled?
+7. **Sway + Plasma6**: Should VMDESK have Sway alongside Plasma6?
+   - ✅ **RESOLVED**: Yes, enable Sway for DESK_VMDESK (enableSwayForDESK = true, stylixEnable = true, swwwEnable = true)
 
 ### Services & Features Questions
 
-8. **Samba**: Does VMDESK need Samba file sharing? Currently false.
+8. **Samba**: Does VMDESK need Samba file sharing?
+   - ✅ **RESOLVED**: No, disable Samba (sambaEnable = false)
 
-9. **AppImage**: Does VMDESK need AppImage support? Currently false.
+9. **AppImage**: Does VMDESK need AppImage support?
+   - ✅ **RESOLVED**: No, disable AppImage (appImageEnable = false)
 
-10. **Atuin Sync**: Should VMDESK have shell history sync enabled? Currently false.
+10. **Atuin Sync**: Should VMDESK have shell history sync enabled?
+    - ✅ **RESOLVED**: No, disable sync (atuinAutoSync = false)
 
-11. **Home Backup**: Should VMDESK have automated backups enabled? Currently false.
+11. **Home Backup**: Should VMDESK have automated backups enabled?
+    - ✅ **RESOLVED**: No, disable backups (homeBackupEnable = false or not set)
 
-12. **Sunshine Firewall**: VMDESK has Sunshine ports enabled. Should DESK also enable them? (DESK has them commented out)
+12. **Sunshine Firewall**: VMDESK has Sunshine ports enabled. Should DESK also enable them?
+    - ✅ **RESOLVED**: Keep enabled for VMDESK only, don't modify DESK
+
+13. **Gamemode**: Should gamemode be enabled?
+    - ✅ **RESOLVED**: No, explicitly disable (gamemodeEnable = false)
 
 ### Development & Software Questions
 
-13. **Development Tools**: Is VMDESK used for development? Should dev tools be enabled? Currently false.
+14. **Development Tools**: Is VMDESK used for development?
+    - ✅ **RESOLVED**: Yes, enable all dev tools (developmentToolsEnable = true, aichatEnable = true, nixvimEnabled = true, lmstudioEnabled = true)
 
-14. **AI Packages**: Should VMDESK have AI packages enabled? Currently false.
+15. **AI Packages**: Should VMDESK have AI packages enabled?
+    - ✅ **RESOLVED**: No, disable AI packages (userAiPkgsEnable = false)
 
-15. **Gaming**: Is VMDESK used for gaming? Should any gaming features be enabled? Currently all false.
+16. **Gaming**: Is VMDESK used for gaming?
+    - ✅ **RESOLVED**: No, disable all gaming features (gamesEnable = false, all gaming flags false)
 
 ### Appearance Questions
 
-16. **Theme**: Should VMDESK adopt "ashes" for consistency with DESK, or keep "io" for visual distinction (VM vs physical)?
+17. **Theme**: Should VMDESK adopt "ashes" for consistency with DESK?
+    - ✅ **RESOLVED**: Yes, use "ashes" theme (consistent with DESK)
 
 ## Migration Procedure
 
@@ -567,16 +581,77 @@ VMDESK currently has significant package redundancy:
 
 Same as previous migrations - git rollback, generation rollback, or restore from backup branch.
 
+## Final Configuration Decisions Summary
+
+Based on user input, DESK_VMDESK will:
+
+### ✅ Adopt from DESK (Inherits)
+- `gpuType = "none"` (VM - override from DESK's "amd")
+- `theme = "ashes"` (consistent theming)
+- `sudoTimestampTimeoutMinutes = 180` (convenient sudo timeout)
+- `fuseAllowOther = false` (more restrictive - override from DESK's true)
+- `pkiCertificates = []` (no certs - override from DESK's cert)
+- Basic desktop features (polkit, power management, printing)
+
+### ✅ Enable Sway + Plasma6 (Like DESK)
+- `enableSwayForDESK = true` (Sway + Plasma6 dual setup)
+- `stylixEnable = true` (system theming)
+- `swwwEnable = true` (wallpaper daemon)
+- Inherits DESK's Sway configuration (will work in VM)
+
+### ✅ Override from DESK (VM-Specific)
+- `hostname = "nixosdesk"`
+- `ipAddress = "192.168.8.88"`, `wifiIpAddress = "192.168.8.89"`
+- `amdLACTdriverEnable = false` (VM doesn't need GPU control)
+- `kernelModules = ["cpufreq_powersave"]` (VM CPU optimization)
+- `virtualizationEnable = true`, `qemuGuestAddition = true` (VM guest tools)
+- `atuinAutoSync = false` (no shell sync)
+- `homeBackupEnable = false` (no auto backup)
+- NFS disabled (no mounts)
+- Firewall: Sunshine ports enabled (TCP/UDP for remote streaming)
+- ZSH prompt with cyan hostname (VM visual distinction)
+- SSH: `~/.ssh/ed25519_github` key path
+
+### ✅ Services Configuration
+- `sambaEnable = false` (no file sharing)
+- `appImageEnable = false` (not needed)
+- `xboxControllerEnable = false` (no controllers)
+- `gamemodeEnable = false` (explicitly disabled)
+- `sunshineEnable = true` (inherit from DESK)
+
+### ✅ Development Tools - ENABLED
+- `developmentToolsEnable = true`
+- `aichatEnable = true`
+- `nixvimEnabled = true`
+- `lmstudioEnabled = true`
+
+### ✅ Gaming - DISABLED
+- `gamesEnable = false`
+- `protongamesEnable = false`
+- `starcitizenEnable = false`
+- All other gaming flags: false
+
+### ✅ AI & Other Packages - DISABLED
+- `userAiPkgsEnable = false` (no AI packages)
+
+### ✅ Packages - DRY Principle Applied
+- **System packages**: Empty list (rely on flags)
+  - All redundant packages removed (vim, wget, zsh, nmap, sunshine, etc.)
+  - Managed via `systemBasicToolsEnable`, `systemNetworkToolsEnable`, `sunshineEnable`
+- **Home packages**: Only VM-specific packages not covered by flags
+  - Most packages removed (browsers, office, communication covered by `userBasicPkgsEnable`)
+  - Keep only: `fzf` (if not in user-basic-pkgs)
+
 ## Sign-off
 
-**Plan Status**: ⏳ Awaiting User Input on Questions
+**Plan Status**: ✅ READY FOR IMPLEMENTATION
 
-**Questions to Resolve**: 16 items listed above (including 2 critical package redundancy questions)
-**Reviewed By**: [User]
-**Approved By**: [User]
-**Executed By**: [Agent/User]
-**Date**: [YYYY-MM-DD]
+**Questions to Resolve**: 17 items - All resolved
+**Reviewed By**: User (akunito)
+**Approved By**: User (akunito)
+**Executed By**: [Pending implementation]
+**Date**: 2026-01-28
 
 ---
 
-**Note**: This plan requires user decisions on configuration choices and CRITICAL resolution of package redundancy issues before implementation can proceed.
+**Note**: All user configuration decisions have been collected and documented. Ready to implement.
