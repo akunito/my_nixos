@@ -1,10 +1,10 @@
 {
-  description = "Flake for my VM Desktop";
+  description = "Flake of DESK_VMDESK VM Desktop (nixosdesk)";
 
   outputs = inputs@{ self, ... }:
     let
       base = import ./lib/flake-base.nix;
-      profileConfig = import ./profiles/VMDESK-config.nix;
+      profileConfig = import ./profiles/DESK_VMDESK-config.nix;
     in
       base { inherit inputs self profileConfig; };
 
