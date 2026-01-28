@@ -1,14 +1,17 @@
-# AGA Profile Configuration
-# Only profile-specific overrides - defaults are in lib/defaults.nix
+# LAPTOP_AGA Profile Configuration (nixosaga)
+# Inherits from LAPTOP-base.nix with machine-specific overrides
 
+let
+  base = import ./LAPTOP-base.nix;
+in
 {
   # Flag to use rust-overlay
   useRustOverlay = false;
 
-  systemSettings = {
+  systemSettings = base.systemSettings // {
     hostname = "nixosaga";
     profile = "personal";
-    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles AGA -s -u";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_AGA -s -u";
     gpuType = "intel";
 
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
@@ -16,32 +19,13 @@
       "cpufreq_powersave"
     ];
 
+    # Sway/SwayFX - Override base (AGA uses plasma6 only)
+    enableSwayForDESK = false; # Disable Sway (AGA uses plasma6 only)
+    swwwEnable = false;        # Disable Sway wallpaper daemon
+
     # Security
     fuseAllowOther = false;
     pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
-    sudoCommands = [
-      {
-        command = "/run/current-system/sw/bin/systemctl suspend";
-        options = [ "NOPASSWD" ];
-      }
-      {
-        command = "/run/current-system/sw/bin/restic";
-        options = [
-          "NOPASSWD"
-          "SETENV"
-        ];
-      }
-      {
-        command = "/run/current-system/sw/bin/rsync";
-        options = [
-          "NOPASSWD"
-          "SETENV"
-        ];
-      }
-    ];
-
-    # Polkit
-    polkitEnable = false;
 
     # Network
     ipAddress = "192.168.0.77";
@@ -50,7 +34,6 @@
       "192.168.8.1"
       "192.168.8.1"
     ];
-    wifiPowerSave = true;
     resolvedEnable = false;
 
     # Firewall - sunshine ports
@@ -81,16 +64,7 @@
     servicePrinting = false;
     networkPrinters = false;
 
-    # Power management - Laptop with suspend on lid close
-    # Power management - Laptop with suspend on lid close
-    powerManagement_ENABLE = false; # TLP handles power management
-    power-profiles-daemon_ENABLE = false; # Disabled in favor of TLP
-    TLP_ENABLE = true;
-
-    # Battery thresholds (Health preservation)
-    START_CHARGE_THRESH_BAT0 = 75;
-    STOP_CHARGE_THRESH_BAT0 = 80;
-
+    # Power management - Lid behavior (suspend on close)
     lidSwitch = "suspend";
     lidSwitchExternalPower = "ignore";
     lidSwitchDocked = "ignore";
@@ -117,7 +91,7 @@
     sunshineEnable = true; # Enable Sunshine game streaming
     wireguardEnable = true; # Enable WireGuard VPN
     nextcloudEnable = true; # Enable Nextcloud client
-    appImageEnable = false; # Disable AppImage support
+    appImageEnable = false; # Disable AppImage support (override base)
     xboxControllerEnable = false; # Disable Xbox controller support
 
     # === Development Tools & AI ===
@@ -135,30 +109,14 @@
     systemStable = false;
   };
 
-  userSettings = {
+  userSettings = base.userSettings // {
     username = "aga";
     name = "aga";
     email = "";
     dotfilesDir = "/home/aga/.dotfiles";
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "input"
-      "dialout"
-    ];
 
-    theme = "io";
-    wm = "plasma6";
-    wmEnableHyprland = false;
-
-    gitUser = "akunito";
-    gitEmail = "diego88aku@gmail.com";
-
-    browser = "vivaldi";
-    spawnBrowser = "vivaldi";
-    defaultRoamDir = "Personal.p";
-    term = "kitty";
-    font = "Intel One Mono";
+    # Theme inherited from base ("ashes")
+    # wm, wmEnableHyprland, browser, term, font, etc. inherited from base
 
     dockerEnable = false;
     virtualizationEnable = true;
@@ -181,20 +139,6 @@
     userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
 
-    zshinitContent = ''
-      PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
-      %F{green}→%f "
-      RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
-      [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
-    '';
-
-    sshExtraConfig = ''
-      # sshd.nix -> programs.ssh.extraConfig
-      Host github.com
-        HostName github.com
-        User akunito
-        IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
-        AddKeysToAgent yes
-    '';
+    # zshinitContent and sshExtraConfig inherited from base
   };
 }

@@ -1,10 +1,10 @@
 {
-  description = "Flake of Aga on T580";
+  description = "Flake of AGA Laptop (T580)";
 
   outputs = inputs@{ self, ... }:
     let
       base = import ./lib/flake-base.nix;
-      profileConfig = import ./profiles/AGA-config.nix;
+      profileConfig = import ./profiles/LAPTOP_AGA-config.nix;
     in
       base { inherit inputs self profileConfig; };
 
