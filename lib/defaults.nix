@@ -216,6 +216,10 @@
     nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
     swayPrimaryMonitor = null; # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
 
+    # Homelab feature flags
+    grafanaEnable = true; # Enable Grafana/Prometheus monitoring stack
+    gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
+
     # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)
     # Profiles can override/populate this and then build `swayKanshiSettings` from it.
     swayMonitorInventory = { };

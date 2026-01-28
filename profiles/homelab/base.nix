@@ -1,34 +1,51 @@
-{ lib, pkgs, systemSettings, userSettings, inputs, ... }:
+{
+  lib,
+  pkgs,
+  systemSettings,
+  userSettings,
+  inputs,
+  ...
+}:
 
 {
-  imports =
-    [ ../../system/hardware-configuration.nix
-      ../../system/hardware/power.nix # Power management
-      ../../system/hardware/time.nix # Network time sync
-      ../../system/hardware/gpu-monitoring.nix # GPU monitoring tools
-      ../../system/hardware/nfs_server.nix # NFS share directories over network
-      ../../system/security/firewall.nix
-      ../../system/security/fail2ban.nix # Fail2ban config to be set up
-      ../../system/hardware/nfs_client.nix # NFS share directories over network
-      ../../system/security/sudo.nix
-      ../../system/security/gpg.nix
-      ../../system/security/autoupgrade.nix # auto upgrade
-      ../../system/security/restic.nix # Manage backups
-      ../../system/security/polkit.nix # Security rules
-      # ../../system/security/openvpn.nix # Not configured yet
-      ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
-      ../../system/app/grafana.nix # monitoring tools
-      ( import ../../system/app/docker.nix {storageDriver = null; inherit pkgs userSettings lib;} )
-      ../../system/wm/gnome-keyring.nix # gnome keyring
-    ] ++ lib.optional systemSettings.sambaEnable ../../system/app/samba.nix # Samba config
-    ++ lib.optional systemSettings.appImageEnable ../../system/app/appimage.nix # AppImage support
-    ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix; # Mount drives
+  imports = [
+    ../../system/hardware-configuration.nix
+    ../../system/hardware/power.nix # Power management
+    ../../system/hardware/time.nix # Network time sync
+    ../../system/hardware/nfs_server.nix # NFS share directories over network
+    ../../system/security/firewall.nix
+    ../../system/security/fail2ban.nix # Fail2ban config to be set up
+    ../../system/hardware/nfs_client.nix # NFS share directories over network
+    ../../system/security/sudo.nix
+    ../../system/security/gpg.nix
+    ../../system/security/autoupgrade.nix # auto upgrade
+    ../../system/security/restic.nix # Manage backups
+    ../../system/security/polkit.nix # Security rules
+    (import ../../system/app/docker.nix {
+      storageDriver = null;
+      inherit pkgs userSettings lib;
+    })
+  ]
+  ++ lib.optional systemSettings.gpuMonitoringEnable ../../system/hardware/gpu-monitoring.nix # GPU monitoring tools
+  ++ lib.optional systemSettings.grafanaEnable ../../system/app/grafana.nix # monitoring tools
+  ++ lib.optional userSettings.virtualizationEnable ../../system/app/virtualization.nix # qemu, virt-manager
+  ++ lib.optional (userSettings.wm != "none") ../../system/wm/gnome-keyring.nix # gnome keyring (only for GUI)
+  ++ lib.optional systemSettings.sambaEnable ../../system/app/samba.nix # Samba config
+  ++ lib.optional systemSettings.appImageEnable ../../system/app/appimage.nix # AppImage support
+  ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix; # Mount drives
+
+  # Disable documentation to reduce build time (headless servers)
+  documentation.enable = lib.mkDefault false;
+  documentation.nixos.enable = lib.mkDefault false;
+  documentation.man.enable = lib.mkDefault false;
+  programs.command-not-found.enable = lib.mkDefault false;
 
   # Fix nix path
-  nix.nixPath = [ "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
-                  "nixos-config=$HOME/dotfiles/system/configuration.nix"
-                  "/nix/var/nix/profiles/per-user/root/channels"
-                ];
+  nix.nixPath = [
+    "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
+    "nixos-config=$HOME/dotfiles/system/configuration.nix"
+    "/nix/var/nix/profiles/per-user/root/channels"
+  ];
 
   # Ensure nix flakes are enabled
   nix.package = pkgs.nixVersions.stable; # if using stable version
@@ -45,20 +62,21 @@
 
   # Added for homelab services performance and adviced as we got warning on different service's logs
   boot.kernel.sysctl = {
-    "vm.overcommit_memory" = 1;     # Allows system to allocate more memory than physically available
-                                    # Useful for applications that allocate but don't use all memory
+    "vm.overcommit_memory" = 1;
+    # Allows system to allocate more memory than physically available
+    # Useful for applications that allocate but don't use all memory
     # Syncthing optimizations
-    "net.core.rmem_max" = 8388608;  # Maximum receive socket buffer size (8MB)
-    "net.core.wmem_max" = 8388608;  # Maximum send socket buffer size (8MB)
+    "net.core.rmem_max" = 8388608; # Maximum receive socket buffer size (8MB)
+    "net.core.wmem_max" = 8388608; # Maximum send socket buffer size (8MB)
 
-    "net.ipv4.tcp_rmem" = "4096 87380 8388608";  # TCP receive buffer sizes:
-                                                # min (4KB), default (85KB), max (8MB)
+    "net.ipv4.tcp_rmem" = "4096 87380 8388608"; # TCP receive buffer sizes:
+    # min (4KB), default (85KB), max (8MB)
 
-    "net.ipv4.tcp_wmem" = "4096 87380 8388608";  # TCP send buffer sizes:
-                                                # min (4KB), default (85KB), max (8MB)
-    "net.ipv4.tcp_window_scaling" = 1;      # Enables window scaling for better throughput
-    "net.core.netdev_max_backlog" = 5000;   # Increases queue length for incoming packets
-    "net.ipv4.tcp_timestamps" = 1;          # Enables TCP timestamps for better RTT estimation
+    "net.ipv4.tcp_wmem" = "4096 87380 8388608"; # TCP send buffer sizes:
+    # min (4KB), default (85KB), max (8MB)
+    "net.ipv4.tcp_window_scaling" = 1; # Enables window scaling for better throughput
+    "net.core.netdev_max_backlog" = 5000; # Increases queue length for incoming packets
+    "net.ipv4.tcp_timestamps" = 1; # Enables TCP timestamps for better RTT estimation
   };
 
   # Bootloader
@@ -73,7 +91,9 @@
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
   networking.networkmanager.enable = systemSettings.networkManager; # Use networkmanager
   networking.networkmanager.wifi.powersave = systemSettings.wifiPowerSave; # Enable wifi powersave
-  networking.defaultGateway = lib.mkIf (systemSettings.defaultGateway != null) systemSettings.defaultGateway; # Define your default gateway
+  networking.defaultGateway = lib.mkIf (
+    systemSettings.defaultGateway != null
+  ) systemSettings.defaultGateway; # Define your default gateway
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
 
   # Timezone and locale
@@ -88,7 +108,7 @@
     LC_NUMERIC = systemSettings.locale;
     LC_PAPER = systemSettings.locale;
     LC_TELEPHONE = systemSettings.locale;
-    LC_TIME = systemSettings.timeLocale;  # Use timeLocale for Monday as first day of week
+    LC_TIME = systemSettings.timeLocale; # Use timeLocale for Monday as first day of week
   };
 
   # User account
@@ -96,7 +116,7 @@
     isNormalUser = true;
     description = userSettings.name;
     extraGroups = userSettings.extraGroups;
-    packages = [];
+    packages = [ ];
     uid = 1000;
   };
 
@@ -116,10 +136,10 @@
   #   uid = userSettings.username3uid;
   # };
 
-  users.groups.www-data = { 
+  users.groups.www-data = {
     gid = 33;
   };
-  
+
   # System packages
   environment.systemPackages = systemSettings.systemPackages;
 
@@ -135,11 +155,13 @@
   security.pki.certificateFiles = systemSettings.pkiCertificates;
 
   # Enable swap file
-  swapDevices = lib.mkIf (systemSettings.swapFileEnable == true) [{
-    device = "/swapfile";
-    size = systemSettings.swapFileSyzeGB * 1024; # 32GB
-  }];
-  
+  swapDevices = lib.mkIf (systemSettings.swapFileEnable == true) [
+    {
+      device = "/swapfile";
+      size = systemSettings.swapFileSyzeGB * 1024; # 32GB
+    }
+  ];
+
   # It is ok to leave this unchanged for compatibility purposes
   system.stateVersion = systemSettings.systemStateVersion;
 

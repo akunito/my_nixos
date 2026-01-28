@@ -1,21 +1,28 @@
-{ config, pkgs, userSettings, systemSettings, lib, ... }:
+{
+  config,
+  pkgs,
+  userSettings,
+  systemSettings,
+  lib,
+  ...
+}:
 
 {
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
   home.username = userSettings.username;
-  home.homeDirectory = "/home/"+userSettings.username;
+  home.homeDirectory = "/home/" + userSettings.username;
 
   programs.home-manager.enable = true;
 
   imports = [
-              ../../user/shell/sh.nix # My zsh and bash config
-              ../../user/shell/cli-collection.nix # Useful CLI apps
-              # ../../user/app/doom-emacs/doom.nix # My doom emacs config
-              ../../user/app/ranger/ranger.nix # My ranger file manager config
-              ../../user/app/git/git.nix # My git config
-              # ../../user/style/stylix.nix # Styling and themes for my apps
-            ];
+    ../../user/shell/sh.nix # My zsh and bash config
+    ../../user/shell/cli-collection.nix # Useful CLI apps
+    # ../../user/app/doom-emacs/doom.nix # My doom emacs config
+    ../../user/app/ranger/ranger.nix # My ranger file manager config
+    ../../user/app/git/git.nix # My git config
+    # ../../user/style/stylix.nix # Styling and themes for my apps
+  ];
 
   home.stateVersion = userSettings.homeStateVersion; # Please read the comment before changing.
 

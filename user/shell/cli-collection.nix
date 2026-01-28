@@ -3,7 +3,8 @@
   # Collection of useful CLI apps
   home.packages = with pkgs; [
     # Command Line
-    disfetch lolcat cowsay
+    lolcat
+    cowsay
     starfetch
     cava
     killall
@@ -11,7 +12,11 @@
     timer
     brightnessctl
     gnugrep
-    bat eza fd bottom ripgrep
+    bat
+    eza
+    fd
+    bottom
+    ripgrep
     rsync
     unzip
     w3m
@@ -30,6 +35,7 @@
           nmcli n on
       fi
     '')
-    vim neovim
+    vim
+    neovim
   ];
 }

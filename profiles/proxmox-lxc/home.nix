@@ -18,7 +18,7 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     enableCompletion = true;
-    initExtra = userSettings.zshinitContent;
+    initContent = userSettings.zshinitContent;
   };
 
   programs.bash = {
@@ -38,6 +38,19 @@
     };
   };
 
+  # Atuin shell history sync (Auto-sync disabled for LXC)
+  programs.atuin = {
+    enable = true;
+    enableZshIntegration = true;
+    settings = {
+      auto_sync = false;
+      sync_frequency = "5m";
+      sync_address = "https://api.atuin.sh";
+      enter_accept = true;
+      records = true;
+    };
+  };
+
   home.stateVersion = userSettings.homeStateVersion;
-  home.packages = userSettings.homePackages;
+  home.packages = userSettings.homePackages ++ [ pkgs.atuin ];
 }

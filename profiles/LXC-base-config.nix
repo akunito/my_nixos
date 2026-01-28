@@ -10,6 +10,8 @@
     # Disable font injection (no GUI needed)
     fonts = [ ];
 
+    # Shell module feature flags (lightweight LXC)
+
     # Kernel modules are not normally needed in LXC (managed by host)
     kernelModules = [ ];
 
