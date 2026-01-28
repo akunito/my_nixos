@@ -66,7 +66,6 @@
     wireguardEnable = true;
     appImageEnable = true;
     nextcloudEnable = true;
-    gamemodeEnable = true;
 
     systemStable = false;
   };

@@ -379,6 +379,7 @@
     # Package module feature flags
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
+    gamesEnable = false; # Enable gaming packages and tools (Lutris, Bottles, RetroArch, etc.)
 
     # Git defaults
     gitUser = "akunito";

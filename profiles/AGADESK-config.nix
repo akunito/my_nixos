@@ -229,6 +229,7 @@
     userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
 
     # === Gaming & Entertainment ===
+    gamesEnable = true; # Enable gaming packages (RetroArch, Pegasus, etc.)
     steamPackEnable = true; # Enable Steam gaming platform
 
     zshinitContent = ''
