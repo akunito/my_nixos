@@ -422,29 +422,79 @@ cd /home/aga/.dotfiles
 ./install.sh /home/aga/.dotfiles DESK_AGA -s -u
 ```
 
-## Questions for User to Resolve
+## Questions for User to Resolve - ✓ RESOLVED
 
 Before implementation, please clarify:
 
 1. **useRustOverlay = true** - Does AGADESK actually need Rust overlay? Can we use false like DESK?
+   - ✅ **RESOLVED**: Use `false` (follow DESK)
 
 2. **fuseAllowOther = false** - Why is AGADESK false while DESK is true? Security preference or no need?
+   - ✅ **RESOLVED**: Keep `false` (DESK_AGA override)
 
 3. **pkiCertificates = []** - Does AGADESK need CA certificates? Can stay empty?
+   - ✅ **RESOLVED**: Keep `[]` (empty - no certificates needed)
 
 4. **sudoTimestampTimeoutMinutes** - Should AGADESK inherit DESK's 180-minute timeout for convenience?
+   - ✅ **RESOLVED**: Inherit from DESK (180 minutes)
 
 5. **atuinAutoSync = true** - Should AGADESK have shell history sync enabled like DESK?
+   - ✅ **RESOLVED**: Override to `false` for DESK_AGA
 
 6. **homeBackupEnable = true** - Should AGADESK have automated backups enabled like DESK?
+   - ✅ **RESOLVED**: Don't enable (not needed for DESK_AGA)
 
 7. **NFS mount options** - Should AGADESK use DESK's optimized NFS settings (rsize=1048576, wsize=1048576, etc.) or keep simple "noatime"?
+   - ✅ **RESOLVED**: Disable NFS completely for DESK_AGA (no NFS mounts)
 
 8. **theme = "miramare"** - Keep AGADESK's theme or adopt DESK's "ashes" for consistency?
+   - ✅ **RESOLVED**: Use `"ashes"` (adopt DESK theme)
 
 9. **Network IPs** - What are the actual IP addresses for AGADESK? (currently "192.168.8.xxx" placeholders)
+   - ⏳ **PENDING**: User needs to provide actual IPs (keep placeholders for now)
 
 10. **stylixEnable** - Should AGADESK disable Stylix since it doesn't use Sway? Or keep it for theming?
+    - ✅ **RESOLVED**: Keep enabled for theming (inherit from DESK)
+
+## Final Configuration Decisions Summary
+
+Based on user input, DESK_AGA will:
+
+### ✅ Adopt from DESK (Inherits)
+- `useRustOverlay = false` (no Rust overlay needed)
+- `theme = "ashes"` (consistent theming)
+- `sudoTimestampTimeoutMinutes = 180` (convenient sudo timeout)
+- Sway/SwayFX disabled (override `enableSwayForDESK = false`)
+- Stylix enabled (for theming)
+- Empty system packages (no python313Full needed)
+- Development tools disabled (all dev flags false)
+- AI packages disabled (`userAiPkgsEnable = false`)
+
+### ✅ Override from DESK (Machine-Specific)
+- `hostname = "nixosaga"`
+- `username = "aga"`, `dotfilesDir = "/home/aga/.dotfiles"`
+- `ipAddress/wifiIpAddress` (TBD - placeholders for now)
+- `atuinAutoSync = false` (no shell sync)
+- `fuseAllowOther = false` (security)
+- `pkiCertificates = []` (no certs)
+- `homeBackupEnable` not set (no auto backup)
+- **NFS disabled** (no disk3/4/5 mounts)
+- `authorizedKeys` (3 keys including RSA)
+- ZSH prompt with blue hostname
+
+### ✅ Gaming Configuration
+- `gamesEnable = true`
+- `protongamesEnable = true` ✓ (Lutris, Bottles enabled)
+- `steamPackEnable = true`
+- `starcitizenEnable = false`
+- `GOGlauncherEnable = false`
+- `dolphinEmulatorPrimehackEnable = false`
+- `rpcs3Enable = false`
+
+### ✅ Packages Removed
+- `python313Full` → removed (not needed)
+- `kdePackages.kcalc` → removed (gnome-calculator in module)
+- Keep: `clinfo`, `dolphin`
 
 ## Benefits of Migration
 
