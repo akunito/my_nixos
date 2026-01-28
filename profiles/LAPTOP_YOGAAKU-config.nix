@@ -103,22 +103,31 @@ in
     servicePrinting = false;
     networkPrinters = false;
 
-    # System packages - use base packages plus tldr
-    systemPackages = pkgs: pkgs-unstable:
-      (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
-        pkgs.tldr
-      ];
+    # System packages
+    systemPackages = pkgs: pkgs-unstable: [
+      # YOGAAKU-specific packages
+      pkgs.tldr
+    ];
 
-    # Package module flags
-    systemNetworkToolsEnable = true; # Enable advanced networking tools
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
 
-    # Disable features not needed on this older machine
-    starCitizenModules = false;
-    vivaldiPatch = false;
-    sambaEnable = false;
-    sunshineEnable = false;
-    xboxControllerEnable = true;
+    # === Package Modules ===
+    systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
+    systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
+
+    # === System Services & Features ===
+    sambaEnable = false; # Disable Samba file sharing
+    sunshineEnable = false; # Disable Sunshine game streaming (older machine)
+    xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
+
+    # === Development Tools ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
+
+    # === Features Disabled (older machine) ===
+    starCitizenModules = false; # Disable Star Citizen optimizations
+    vivaldiPatch = false; # Disable Vivaldi patches
 
     # Fonts: use default computation in flake-base.nix
     # (nerdfonts/powerline for stable, nerd-fonts.jetbrains-mono for unstable)
@@ -137,8 +146,17 @@ in
     virtualizationEnable = true;
     qemuGuestAddition = true; # VM
 
-    # Home packages - use base packages (no extensions needed)
-    homePackages = pkgs: pkgs-unstable:
-      base.userSettings.homePackages pkgs pkgs-unstable;
+    # Home packages
+    homePackages = pkgs: pkgs-unstable: [
+      # No additional YOGAAKU-specific packages
+    ];
+
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ============================================================================
+
+    # === Package Modules (User) ===
+    userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
+    userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
   };
 }

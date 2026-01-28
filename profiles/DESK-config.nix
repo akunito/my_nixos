@@ -63,10 +63,6 @@ in
 
     # Shell features
     atuinAutoSync = true; # Enable Atuin cloud sync for shell history
-
-    # Wallpapers (Sway/SwayFX): use swww (daemon + oneshot restore; robust across reboot + HM rebuilds)
-    swwwEnable = true;
-    swaybgPlusEnable = false;
     nextcloudEnable = true; # To startup with Sway daemon
 
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
@@ -256,31 +252,43 @@ in
     powerManagement_ENABLE = true;
     power-profiles-daemon_ENABLE = true;
 
-    # System packages - will be evaluated in flake-base.nix
-    # Use function that receives pkgs and pkgs-unstable
+    # System packages
     systemPackages = pkgs: pkgs-unstable: [
-      # NOTE: Basic tools moved to system/packages/system-basic-tools.nix (systemBasicToolsEnable)
-      # NOTE: Networking tools moved to system/packages/system-network-tools.nix (systemNetworkToolsEnable)
+      # No additional DESK-specific system packages
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
 
-    # Package module flags
-    systemNetworkToolsEnable = true; # Enable advanced networking tools
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
 
-    sambaEnable = true;
-    sunshineEnable = true;
-    wireguardEnable = true;
-    xboxControllerEnable = true;
-    appImageEnable = true;
-    gamemodeEnable = true;
+    # === Package Modules ===
+    systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
+    systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
+
+    # === Desktop Environment & Theming ===
+    enableSwayForDESK = true; # Enable SwayFX as second WM option alongside Plasma6
+    stylixEnable = true; # Enable Stylix for system-wide theming
+    swwwEnable = true; # Enable swww wallpaper daemon for Sway (robust across reboot + HM rebuilds)
+    swaybgPlusEnable = false; # Disable swaybg+ (using swww instead)
+
+    # === System Services & Features ===
+    sambaEnable = true; # Enable Samba file sharing
+    sunshineEnable = true; # Enable Sunshine game streaming
+    wireguardEnable = true; # Enable WireGuard VPN
+    appImageEnable = true; # Enable AppImage support
+    gamemodeEnable = true; # Enable GameMode for performance optimization
+    xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
+
+    # === Development Tools & AI ===
+    developmentToolsEnable = true; # Enable development IDEs and cloud tools
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
-    developmentToolsEnable = true; # Enable development IDEs and cloud tools
-    enableSwayForDESK = true; # Enable SwayFX as second WM option alongside Plasma6
+
+    # === Monitor Configuration (Sway/SwayFX) ===
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.
     swayPrimaryMonitor = monitors.samsungMain.criteria;
-    stylixEnable = true; # Enable Stylix for theming
 
     # Monitor inventory (data-only); used to build DESK kanshi settings.
     swayMonitorInventory = monitors;
@@ -373,16 +381,6 @@ in
     wm = "plasma6";
     wmEnableHyprland = false; # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
 
-    # Package module flags
-    userAiPkgsEnable = true; # Enable AI & ML packages
-
-    protongamesEnable = true;
-    starcitizenEnable = true;
-    GOGlauncherEnable = true;
-    dolphinEmulatorPrimehackEnable = true;
-    steamPackEnable = true;
-    rpcs3Enable = true;
-
     fileManager = "dolphin"; # Explicitly set Dolphin as file manager (overrides default "ranger")
 
     gitUser = "akunito";
@@ -395,27 +393,30 @@ in
     font = "Intel One Mono";
     # fontPkg will be set in flake-base.nix based on font name
 
-    # Home packages - will be evaluated in flake-base.nix
-    # Use function that receives pkgs and pkgs-unstable
+    # Home packages
     homePackages = pkgs: pkgs-unstable: [
-      # NOTE: zsh, git, kitty are handled by system/modules (not listed here to avoid duplication)
-      # NOTE: Basic packages moved to user/packages/user-basic-pkgs.nix (userBasicPkgsEnable)
-      # NOTE: AI & ML packages moved to user/packages/user-ai-pkgs.nix (userAiPkgsEnable)
-
-      # === Advanced Tools ===
+      # DESK-specific packages
       pkgs.clinfo # OpenCL diagnostics
 
-      # === Development Tools ===
-      # Handled by user/app/development/development.nix (controlled by developmentToolsEnable flag):
-      # - vscode, git-crypt, drawio, cloudflared, code-cursor, opencode, powershell
-      # - azure-cli, claude-code, qwen-code, antigravity, dbeaver-bin
-
-      # === Gaming & Emulators ===
-      # Handled by user/app/games/games.nix (controlled by gaming flags):
-      # - rpcs3 (rpcs3Enable), dolphin-emu (dolphinEmulatorPrimehackEnable)
-      # - lutris, bottles, heroic, etc (protongamesEnable, GOGlauncherEnable)
-
+      # NOTE: Development tools in user/app/development/development.nix (controlled by developmentToolsEnable flag)
+      # NOTE: Gaming & emulators in user/app/games/games.nix (controlled by gaming flags)
     ];
+
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ============================================================================
+
+    # === Package Modules (User) ===
+    userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
+    userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm) - DESK only
+
+    # === Gaming & Entertainment ===
+    protongamesEnable = true; # Enable Proton games support (Lutris, Bottles, Heroic)
+    starcitizenEnable = true; # Enable Star Citizen support and optimizations
+    GOGlauncherEnable = true; # Enable Heroic Games Launcher for GOG games
+    steamPackEnable = true; # Enable Steam gaming platform
+    dolphinEmulatorPrimehackEnable = true; # Enable Dolphin Emulator with Primehack
+    rpcs3Enable = true; # Enable RPCS3 PS3 emulator
 
     zshinitContent = ''
       PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f

@@ -100,22 +100,27 @@ in
     lidSwitchDocked = "ignore";
     powerKey = "ignore";
 
-    # System packages - extend base with LAPTOP-specific packages
-    # NOTE: All previous packages moved to system-basic-tools.nix module
-    systemPackages = pkgs: pkgs-unstable:
-      (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
-        # No additional packages needed - all in modules
-      ];
+    # System packages
+    systemPackages = pkgs: pkgs-unstable: [
+      # No additional LAPTOP_L15-specific packages needed - all in modules
+    ];
 
-    # Package module flags
-    systemNetworkToolsEnable = true; # Enable advanced networking tools
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
 
-    # Additional features
-    sunshineEnable = true;
-    xboxControllerEnable = true;
-    aichatEnable = true;
-    nixvimEnabled = true;
+    # === Package Modules ===
+    systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
+    systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
+
+    # === System Services & Features ===
+    sunshineEnable = true; # Enable Sunshine game streaming
+    xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
+
+    # === Development Tools & AI ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
+    aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
+    nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
   };
 
   userSettings = base.userSettings // {
@@ -124,15 +129,21 @@ in
     email = "diego88aku@gmail.com";
     dotfilesDir = "/home/akunito/.dotfiles";
 
-    # Home packages - extend base with LAPTOP-specific packages
-    homePackages = pkgs: pkgs-unstable:
-      (base.userSettings.homePackages pkgs pkgs-unstable) ++ [
-        # NOTE: mission-center moved to user-basic-pkgs.nix module
-        pkgs.kdePackages.dolphin # LAPTOP-specific file manager
-        # NOTE: vivaldi is provided by user/app/browser/vivaldi.nix module (with KWallet support)
-        # Development tools moved to user/app/development/development.nix (controlled by developmentToolsEnable flag):
-        # - code-cursor, windsurf (removed)
-      ];
+    # Home packages
+    homePackages = pkgs: pkgs-unstable: [
+      # LAPTOP_L15-specific packages
+      pkgs.kdePackages.dolphin # LAPTOP-specific file manager
+      # NOTE: vivaldi is provided by user/app/browser/vivaldi.nix module (with KWallet support)
+      # NOTE: Development tools in user/app/development/development.nix (controlled by developmentToolsEnable flag)
+    ];
+
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ============================================================================
+
+    # === Package Modules (User) ===
+    userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
+    userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
 
     # Different prompt color for LAPTOP
     zshinitContent = ''

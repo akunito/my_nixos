@@ -117,15 +117,26 @@
 
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
-    
-    starCitizenModules = false;
-    sambaEnable = false;
-    sunshineEnable = true;
-    wireguardEnable = true;
-    xboxControllerEnable = false;
-    appImageEnable = false;
-    nextcloudEnable = true;
-    
+
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
+
+    # === Package Modules ===
+    systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
+    systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
+
+    # === System Services & Features ===
+    sambaEnable = false; # Disable Samba file sharing
+    sunshineEnable = true; # Enable Sunshine game streaming
+    wireguardEnable = true; # Enable WireGuard VPN
+    nextcloudEnable = true; # Enable Nextcloud client
+    appImageEnable = false; # Disable AppImage support
+    xboxControllerEnable = false; # Disable Xbox controller support
+
+    # === Other Features ===
+    starCitizenModules = false; # Disable Star Citizen optimizations
+
     systemStable = false;
   };
   
@@ -183,11 +194,17 @@
       # === Theming & Appearance ===
       pkgs-unstable.candy-icons
 
-      # === Development Tools ===
-      # Handled by user/app/development/development.nix (controlled by developmentToolsEnable flag)
-
+      # NOTE: Development tools in user/app/development/development.nix (controlled by developmentToolsEnable flag)
     ];
-    
+
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ============================================================================
+
+    # === Package Modules (User) ===
+    userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
+    userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
+
     zshinitContent = ''
       PROMPT=" ◉ %U%F{cyan}%n%f%u@%U%F{cyan}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "

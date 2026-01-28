@@ -53,7 +53,7 @@
     powerManagement_ENABLE = false;
     power-profiles-daemon_ENABLE = false;
     
-    # System packages - will be evaluated in flake-base.nix
+    # System packages
     systemPackages = pkgs: pkgs-unstable: with pkgs; [
       vim
       wget
@@ -62,14 +62,23 @@
       kitty
       home-manager
     ];
-    
-    starCitizenModules = false;
-    sambaEnable = false;
-    sunshineEnable = false;
-    wireguardEnable = false;
-    xboxControllerEnable = false;
-    appImageEnable = false;
-    
+
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
+
+    # === Package Modules ===
+    systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
+    systemNetworkToolsEnable = false; # Disable advanced networking tools (WSL environment)
+
+    # === System Services & Features (ALL DISABLED - WSL Environment) ===
+    sambaEnable = false; # Disable Samba file sharing
+    sunshineEnable = false; # Disable Sunshine game streaming
+    wireguardEnable = false; # Disable WireGuard VPN
+    xboxControllerEnable = false; # Disable Xbox controller support
+    appImageEnable = false; # Disable AppImage support
+    starCitizenModules = false; # Disable Star Citizen optimizations
+
     systemStable = true; # WSL uses stable
   };
   
@@ -95,12 +104,20 @@
     dockerEnable = true;
     virtualizationEnable = false; # WSL doesn't support nested virtualization
     
-    # Home packages - will be evaluated in flake-base.nix
+    # Home packages
     homePackages = pkgs: pkgs-unstable: with pkgs; [
       zsh
       git
     ];
-    
+
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ============================================================================
+
+    # === Package Modules (User) - DISABLED (WSL Minimal Environment) ===
+    userBasicPkgsEnable = false; # Disable user packages (WSL minimal)
+    userAiPkgsEnable = false; # Disable AI & ML packages
+
     zshinitContent = ''
       PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "

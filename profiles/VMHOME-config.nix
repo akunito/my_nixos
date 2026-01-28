@@ -163,14 +163,10 @@
     powerManagement_ENABLE = false;
     power-profiles-daemon_ENABLE = false;
 
-    # System packages - will be evaluated in flake-base.nix
+    # System packages
     systemPackages =
       pkgs: pkgs-unstable: with pkgs; [
-        # NOTE: Basic tools moved to system/packages/system-basic-tools.nix (systemBasicToolsEnable)
-        # NOTE: vim, wget, zsh, home-manager, cryptsetup, restic, nfs-utils, openssl in system-basic-tools.nix
-        # NOTE: traceroute, iproute2 available in system-network-tools.nix (set systemNetworkToolsEnable = true if needed)
-
-        # === VMHOME-specific packages ===
+        # VMHOME-specific packages (headless server)
         tldr
         gocryptfs
         traceroute # Keeping for now (not enabling systemNetworkToolsEnable)
@@ -185,12 +181,21 @@
         # Note: atuin removed - handled by sh.nix module
       ];
 
-    starCitizenModules = false;
-    sambaEnable = false;
-    sunshineEnable = false;
-    wireguardEnable = false;
-    xboxControllerEnable = false;
-    appImageEnable = false;
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
+
+    # === Package Modules ===
+    systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
+    systemNetworkToolsEnable = false; # Disable advanced networking tools (using minimal tools above)
+
+    # === System Services & Features (ALL DISABLED - Headless Server) ===
+    sambaEnable = false; # Disable Samba file sharing
+    sunshineEnable = false; # Disable Sunshine game streaming
+    wireguardEnable = false; # Disable WireGuard VPN
+    xboxControllerEnable = false; # Disable Xbox controller support
+    appImageEnable = false; # Disable AppImage support
+    starCitizenModules = false; # Disable Star Citizen optimizations
 
     # Swap file
     swapFileEnable = true;
@@ -227,13 +232,21 @@
     virtualizationEnable = false;
     qemuGuestAddition = true; # VM
 
-    # Home packages - will be evaluated in flake-base.nix
+    # Home packages
     # Headless server - minimal user packages
     homePackages =
       pkgs: pkgs-unstable: with pkgs; [
         # NOTE: zsh (in system), git (in git.nix) - not duplicated here
         # Headless server needs no GUI packages
       ];
+
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ============================================================================
+
+    # === Package Modules (User) - ALL DISABLED (Headless Server) ===
+    userBasicPkgsEnable = false; # Disable user packages (headless server)
+    userAiPkgsEnable = false; # Disable AI & ML packages
 
     zshinitContent = ''
       PROMPT=" ◉ %U%F{red}%n%f%u@%U%F{red}%m%f%u:%F{yellow}%~%f

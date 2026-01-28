@@ -96,29 +96,36 @@
     lidSwitchDocked = "ignore";
     powerKey = "suspend";
 
-    # System packages - will be evaluated in flake-base.nix
+    # System packages
     systemPackages = pkgs: pkgs-unstable: [
-      # NOTE: Basic tools moved to system/packages/system-basic-tools.nix (systemBasicToolsEnable)
-      # NOTE: Networking tools moved to system/packages/system-network-tools.nix (systemNetworkToolsEnable)
-
-      # === AGA-specific packages ===
+      # AGA-specific packages
       pkgs.tldr
 
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
 
-    # Package module flags
-    systemNetworkToolsEnable = true; # Enable advanced networking tools
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS - Centralized Control
+    # ============================================================================
 
-    starCitizenModules = false;
-    vivaldiPatch = true;
-    sambaEnable = false;
-    sunshineEnable = true;
-    wireguardEnable = true;
-    xboxControllerEnable = false;
-    appImageEnable = false;
-    aichatEnable = false; # Enable aichat CLI tool with OpenRouter support
-    nextcloudEnable = true;
+    # === Package Modules ===
+    systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
+    systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
+
+    # === System Services & Features ===
+    sambaEnable = false; # Disable Samba file sharing
+    sunshineEnable = true; # Enable Sunshine game streaming
+    wireguardEnable = true; # Enable WireGuard VPN
+    nextcloudEnable = true; # Enable Nextcloud client
+    appImageEnable = false; # Disable AppImage support
+    xboxControllerEnable = false; # Disable Xbox controller support
+
+    # === Development Tools & AI ===
+    aichatEnable = false; # Disable aichat CLI tool
+
+    # === Other Features ===
+    starCitizenModules = false; # Disable Star Citizen optimizations
+    vivaldiPatch = true; # Enable Vivaldi patches
 
     # Auto update - uses aga user
     autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoSystemUpdate.sh";
@@ -157,18 +164,22 @@
     virtualizationEnable = true;
     qemuGuestAddition = false;
 
-    # Home packages - will be evaluated in flake-base.nix
+    # Home packages
     homePackages = pkgs: pkgs-unstable: [
-      # NOTE: zsh, git, kitty are handled by system/modules (not listed here to avoid duplication)
-      # NOTE: Basic packages moved to user/packages/user-basic-pkgs.nix (userBasicPkgsEnable)
-
-      # === AGA-specific packages ===
+      # AGA-specific packages
       pkgs-unstable.kdePackages.kcalc # AGA-specific calculator
       pkgs-unstable.vivaldi # AGA-specific browser
 
-      # === Development Tools ===
-      # Handled by user/app/development/development.nix (controlled by developmentToolsEnable flag)
+      # NOTE: Development tools in user/app/development/development.nix (controlled by developmentToolsEnable flag)
     ];
+
+    # ============================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ============================================================================
+
+    # === Package Modules (User) ===
+    userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
+    userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
 
     zshinitContent = ''
       PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
