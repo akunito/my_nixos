@@ -316,7 +316,7 @@ PROFILE_ON_AC = "balanced";
 1. Check if module is loaded: `lsmod | grep cpufreq`
 2. Verify module is in kernelModules
 3. Check CPU support: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_available_governors`
-4. Rebuild system: `phoenix sync system`
+4. Rebuild system: `aku sync system`
 
 ### High Power Consumption
 

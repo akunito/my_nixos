@@ -14,7 +14,7 @@ key_files:
   - profiles/DESK-config.nix
 activation_hints:
   - If wallpaper does not restore after reboot
-  - If wallpaper disappears after phoenix sync user / home-manager switch
+  - If wallpaper disappears after aku sync user / home-manager switch
   - If swww-daemon is running but swww img fails
 ---
 
@@ -28,7 +28,7 @@ This repo supports **swww** as the wallpaper backend for **SwayFX**. The key pro
 - Restores wallpaper via a **oneshot** `swww-restore.service` once both are ready:
   - Sway IPC (`SWAYSOCK` + `swaymsg -t get_outputs`)
   - `swww` socket (`$XDG_RUNTIME_DIR/swww.socket` / `swww query`)
-- Re-triggers restore once after Home-Manager reloads `systemd --user` (covers `phoenix sync user`).
+- Re-triggers restore once after Home-Manager reloads `systemd --user` (covers `aku sync user`).
 - Preserves Stylix containment: it **does not** set global theme env vars.
 
 ## Enable (DESK profile)
@@ -69,7 +69,7 @@ If no state file exists yet:
     - `systemctl --user status swww-restore.service`
     - `journalctl --user -u swww-restore.service -b --no-pager -n 200`
 
-- **Wallpaper disappears after `phoenix sync user`**
+- **Wallpaper disappears after `aku sync user`**
   - This is usually `reloadSystemd` killing background processes.
   - This repo triggers `systemctl --user start swww-restore.service` once after HM’s `reloadSystemd` when in a real Sway session.
   - Inspect:

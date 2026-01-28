@@ -6,7 +6,7 @@ This context applies when working with NixOS/flake files: `**/*.nix`, `flake.nix
 
 - **Immutability**: never suggest editing `/nix/store` or running imperative package managers (`nix-env`, `nix-channel`, `apt`, `yum`).
 - **Source of truth**: `flake.nix` + `inputs` control dependencies; use Nix options/modules, not ad-hoc system changes.
-- **Apply workflow**: apply changes via `install.sh` (or `phoenix sync`), not manual `systemctl enable`/`systemctl start`.
+- **Apply workflow**: apply changes via `install.sh` (or `aku sync`), not manual `systemctl enable`/`systemctl start`.
 - **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths in Nix expressions.
 
 ## System vs User Boundaries

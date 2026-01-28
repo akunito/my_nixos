@@ -332,7 +332,7 @@ All scratchpads are configured with:
 
 ### Refresh
 
-- **`SUPER+CTRL+R`** → Phoenix refresh (phoenix refresh)
+- **`SUPER+CTRL+R`** → Phoenix refresh (aku refresh)
 
 ### OBS Studio Pass-Through
 

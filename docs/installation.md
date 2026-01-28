@@ -178,19 +178,19 @@ This makes system-level configuration files read-only for unprivileged users.
 
 3. **Test Phoenix Wrapper**
    ```sh
-   phoenix sync
+   aku sync
    ```
 
 ### First Steps
 
 1. **Update System**
    ```sh
-   phoenix upgrade
+   aku upgrade
    ```
 
 2. **Configure SSH Keys** (if needed)
    - Edit `authorizedKeys` in your flake file
-   - Rebuild: `phoenix sync system`
+   - Rebuild: `aku sync system`
 
 3. **Set Up Backups** (if enabled)
    - See [Restic Backups Documentation](security/restic-backups.md)

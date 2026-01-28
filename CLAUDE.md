@@ -6,7 +6,7 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 
 - **Immutability**: never suggest editing `/nix/store` or using `nix-env`, `nix-channel`, `apt`, `yum`.
 - **Source of truth**: `flake.nix` and its `inputs` define dependencies.
-- **Application workflow**: apply changes via `install.sh` (or `phoenix sync`), not manual systemd enable/start.
+- **Application workflow**: apply changes via `install.sh` (or `aku sync`), not manual systemd enable/start.
 - **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths inside Nix.
 
 ## Profile Architecture Principles (CRITICAL)
@@ -187,7 +187,7 @@ Before answering any architectural or implementation question:
 
 - **Immutability**: never suggest editing `/nix/store` or running imperative package managers (`nix-env`, `nix-channel`, `apt`, `yum`).
 - **Source of truth**: `flake.nix` + `inputs` control dependencies; use Nix options/modules, not ad-hoc system changes.
-- **Apply workflow**: apply changes via `install.sh` (or `phoenix sync`), not manual `systemctl enable`/`systemctl start`.
+- **Apply workflow**: apply changes via `install.sh` (or `aku sync`), not manual `systemctl enable`/`systemctl start`.
 - **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths in Nix expressions.
 - **System vs user**:
   - system-wide packages: `environment.systemPackages`

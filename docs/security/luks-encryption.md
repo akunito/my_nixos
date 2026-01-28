@@ -111,7 +111,7 @@ To add additional encrypted drives:
 
 3. **Rebuild system**:
    ```sh
-   phoenix sync system
+   aku sync system
    ```
 
 4. **Reboot and unlock**:
@@ -219,7 +219,7 @@ Complete setup process:
 
 7. **Rebuild and test**:
    ```sh
-   phoenix sync system
+   aku sync system
    sudo reboot
    ```
 

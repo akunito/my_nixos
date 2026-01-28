@@ -394,7 +394,7 @@ in
        bind=SUPER,I,exec,networkmanager_dmenu
        bind=SUPER,P,exec,keepmenu
        bind=SUPERSHIFT,P,exec,hyprprofile-dmenu
-       bind=SUPERCTRL,R,exec,phoenix refresh
+       bind=SUPERCTRL,R,exec,aku refresh
 
        # 3 monitor setup
        monitor = , 1920x1080@60, auto, 1

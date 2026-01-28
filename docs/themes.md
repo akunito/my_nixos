@@ -177,10 +177,10 @@ After changing theme:
 
 ```sh
 # Rebuild home-manager
-phoenix sync user
+aku sync user
 
 # Or refresh posthooks
-phoenix refresh
+aku refresh
 ```
 
 ### Dynamic Switching
@@ -370,8 +370,8 @@ Can use Stylix colors directly or use `hyprland_noStylix.nix` for manual theming
 **Problem**: Theme changes don't appear.
 
 **Solutions**:
-1. Rebuild home-manager: `phoenix sync user`
-2. Refresh posthooks: `phoenix refresh`
+1. Rebuild home-manager: `aku sync user`
+2. Refresh posthooks: `aku refresh`
 3. Restart applications
 4. Check theme name spelling
 5. Verify theme file exists
@@ -393,7 +393,7 @@ Can use Stylix colors directly or use `hyprland_noStylix.nix` for manual theming
 **Solutions**:
 1. Verify theme YAML format
 2. Check base16 color definitions
-3. Rebuild: `phoenix sync user`
+3. Rebuild: `aku sync user`
 4. Clear application caches
 5. Restart applications
 
@@ -422,7 +422,7 @@ Can use Stylix colors directly or use `hyprland_noStylix.nix` for manual theming
    };
    ```
 2. Check gsettings: `gsettings get org.gnome.desktop.interface color-scheme` (should be "prefer-dark")
-3. Rebuild: `phoenix sync user`
+3. Rebuild: `aku sync user`
 4. Restart the application
 
 ### Qt Applications Not Themed
@@ -434,7 +434,7 @@ Can use Stylix colors directly or use `hyprland_noStylix.nix` for manual theming
 2. Check `QT_QPA_PLATFORMTHEME` environment variable: `env | grep QT_QPA_PLATFORMTHEME` (should be "qt5ct" for qtct platform)
 3. Verify qt5ct config exists: `ls ~/.config/qt5ct/colors/` (Stylix generates this automatically)
 4. On Wayland: Ensure `dbus-update-activation-environment` includes `QT_QPA_PLATFORMTHEME` in Sway startup
-5. Rebuild: `phoenix sync user`
+5. Rebuild: `aku sync user`
 6. Restart the application
 
 ### Dolphin Styling Issues in Plasma 6
@@ -462,7 +462,7 @@ Can use Stylix colors directly or use `hyprland_noStylix.nix` for manual theming
      - Check if files were restored: `journalctl --user -t restore-qt5ct`
      - Try selecting color scheme in Dolphin: Settings → Window Color Scheme → "Breeze Dark"
      - Check Plasma 6 system settings: System Settings → Appearance → Application Style
-     - Rebuild: `phoenix sync user`
+     - Rebuild: `aku sync user`
      - Restart Dolphin
 
 3. **Debug Steps**:

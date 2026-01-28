@@ -13,7 +13,7 @@ My system-level Nix modules are organized into this directory:
 
 - [hardware-configuration.nix](./hardware-configuration.nix) - Default hardware config generated for my system
 - [bin](./bin) - My own scripts
-  - [phoenix](./bin/phoenix.nix) - My nix command wrapper
+  - [aku](./bin/aku.nix) - My nix command wrapper
 - [app](./app) - Necessary system-level configuration to get various apps working
 - [hardware](./hardware) - Hardware configurations I may need to use
 - [security](./security) - System-level security stuff

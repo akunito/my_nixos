@@ -16,7 +16,7 @@ Complete reference for all shell scripts in this repository.
 
 ## Overview
 
-This repository contains shell scripts for automating common tasks, system maintenance, and configuration management. Scripts are located in the repository root and can be run directly or via the `phoenix` wrapper command.
+This repository contains shell scripts for automating common tasks, system maintenance, and configuration management. Scripts are located in the repository root and can be run directly or via the `aku` wrapper command.
 
 ### Script Categories
 
@@ -210,8 +210,8 @@ sudo systemctl stop mnt-NFS_media.mount
 **Usage**:
 ```sh
 ./sync.sh
-# Or via phoenix
-phoenix sync
+# Or via aku
+aku sync
 ```
 
 **What It Does**:
@@ -229,8 +229,8 @@ phoenix sync
 **Usage**:
 ```sh
 ./sync-system.sh
-# Or via phoenix
-phoenix sync system
+# Or via aku
+aku sync system
 ```
 
 **What It Does**:
@@ -249,8 +249,8 @@ sudo nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
 **Usage**:
 ```sh
 ./sync-user.sh
-# Or via phoenix
-phoenix sync user
+# Or via aku
+aku sync user
 ```
 
 **What It Does**:
@@ -285,8 +285,8 @@ home-manager switch --flake $SCRIPT_DIR#user --show-trace
 **Usage**:
 ```sh
 ./update.sh
-# Or via phoenix
-phoenix update
+# Or via aku
+aku update
 ```
 
 **What It Does**:
@@ -329,8 +329,8 @@ sudo nix flake update --flake "$SCRIPT_DIR"
 **Usage**:
 ```sh
 ./pull.sh
-# Or via phoenix
-phoenix pull
+# Or via aku
+aku pull
 ```
 
 **What It Does**:
@@ -480,8 +480,8 @@ systemd.services.auto-user-update = {
 **Usage**:
 ```sh
 sudo ./harden.sh [path]
-# Or via phoenix
-phoenix harden
+# Or via aku
+aku harden
 ```
 
 **Parameters**:
@@ -510,8 +510,8 @@ phoenix harden
 **Usage**:
 ```sh
 sudo ./soften.sh [path]
-# Or via phoenix
-phoenix soften
+# Or via aku
+aku soften
 ```
 
 **Parameters**:
@@ -862,17 +862,17 @@ chmod 600 ~/.config/kwallet/password.gpg
 
 **Regular Updates**:
 ```sh
-phoenix upgrade
+aku upgrade
 ```
 
 **Quick Sync**:
 ```sh
-phoenix sync
+aku sync
 ```
 
 **Maintenance**:
 ```sh
-phoenix gc 30d
+aku gc 30d
 ./maintenance.sh
 ```
 
@@ -881,15 +881,15 @@ phoenix gc 30d
 | Script | Purpose | Usage | Requires Sudo |
 |--------|---------|-------|---------------|
 | `install.sh` | Main installation | `./install.sh <path> <profile> [-s]` | Yes |
-| `sync.sh` | Sync system + user | `./sync.sh` or `phoenix sync` | Yes (system) |
-| `sync-system.sh` | Sync system only | `./sync-system.sh` or `phoenix sync system` | Yes |
-| `sync-user.sh` | Sync user only | `./sync-user.sh` or `phoenix sync user` | No |
-| `update.sh` | Update flake.lock | `./update.sh` or `phoenix update` | Yes |
-| `upgrade.sh` | Update + sync | `./upgrade.sh [path] [profile] [-s]` or `phoenix upgrade` | Yes |
-| `pull.sh` | Pull from git | `./pull.sh` or `phoenix pull` | Yes (temporarily) |
+| `sync.sh` | Sync system + user | `./sync.sh` or `aku sync` | Yes (system) |
+| `sync-system.sh` | Sync system only | `./sync-system.sh` or `aku sync system` | Yes |
+| `sync-user.sh` | Sync user only | `./sync-user.sh` or `aku sync user` | No |
+| `update.sh` | Update flake.lock | `./update.sh` or `aku update` | Yes |
+| `upgrade.sh` | Update + sync | `./upgrade.sh [path] [profile] [-s]` or `aku upgrade` | Yes |
+| `pull.sh` | Pull from git | `./pull.sh` or `aku pull` | Yes (temporarily) |
 | `maintenance.sh` | System cleanup | `./maintenance.sh [-s]` | Yes (some tasks) |
-| `harden.sh` | Secure files | `sudo ./harden.sh [path]` or `phoenix harden` | Yes |
-| `soften.sh` | Relax permissions | `sudo ./soften.sh [path]` or `phoenix soften` | Yes |
+| `harden.sh` | Secure files | `sudo ./harden.sh [path]` or `aku harden` | Yes |
+| `soften.sh` | Relax permissions | `sudo ./soften.sh [path]` or `aku soften` | Yes |
 | `handle_docker.sh` | Stop containers | Called automatically | No |
 | `cleanIPTABLESrules.sh` | Clear firewall | `sudo ./cleanIPTABLESrules.sh` | Yes |
 | `stop_external_drives.sh` | Stop mounts | Called automatically | Yes |
@@ -938,9 +938,9 @@ upgrade.sh
 
 ## Best Practices
 
-### 1. Use Phoenix Wrapper
+### 1. Use Aku Wrapper
 
-Prefer using `phoenix` commands over direct script execution:
+Prefer using `aku` commands over direct script execution:
 - Consistent interface
 - Error handling
 - Logging
@@ -1085,5 +1085,5 @@ Most scripts accept optional parameters:
 - [Maintenance Guide](maintenance.md) - Maintenance tasks and automation
 - [Installation Guide](installation.md) - Installation procedures
 - [Configuration Guide](configuration.md) - Configuration management
-- [Phoenix Wrapper](maintenance.md#phoenix-wrapper) - Command wrapper documentation
+- [Aku Wrapper](maintenance.md#aku-wrapper) - Command wrapper documentation
 

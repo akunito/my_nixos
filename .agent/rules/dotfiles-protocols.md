@@ -30,7 +30,7 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 
 - **Immutability**: Never suggest editing `/nix/store` or using `nix-env`, `nix-channel`, `apt`, `yum`
 - **Source of truth**: `flake.nix` and its `inputs` define dependencies
-- **Application workflow**: Apply changes via `install.sh` (or `phoenix sync`), not manual systemd enable/start
+- **Application workflow**: Apply changes via `install.sh` (or `aku sync`), not manual systemd enable/start
 - **Flake purity**: Prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths inside Nix
 
 ## Home Manager Updates

@@ -187,18 +187,18 @@ cd ~/.dotfiles
 
 ```bash
 # Synchronize system and user
-phoenix sync
+aku sync
 
 # Update flake inputs
-phoenix update
+aku update
 
 # Update and synchronize
-phoenix upgrade
+aku upgrade
 
 # Garbage collect
-phoenix gc        # Interactive selection
-phoenix gc 30d    # Delete >30 days old
-phoenix gc full   # Delete everything unused
+aku gc        # Interactive selection
+aku gc 30d    # Delete >30 days old
+aku gc full   # Delete everything unused
 ```
 
 ## 📋 Configuration Examples
@@ -483,31 +483,31 @@ This repository uses a **Router + Catalog** system:
 
 ```bash
 # Update system
-phoenix upgrade
+aku upgrade
 
 # Clean old generations
-phoenix gc 30d
+aku gc 30d
 
 # Refresh themes and daemons
-phoenix refresh
+aku refresh
 
 # Pull upstream changes
-phoenix pull
+aku pull
 ```
 
 ### Troubleshooting
 
 **Build fails:**
-- Check `flake.lock` is up to date: `phoenix update`
+- Check `flake.lock` is up to date: `aku update`
 - Verify profile config syntax: `nix flake check`
 
 **Software not appearing:**
 - Check flag is enabled in profile config
 - Verify module imported in personal/configuration.nix or personal/home.nix
-- Rebuild: `phoenix sync`
+- Rebuild: `aku sync`
 
 **Theme not applying:**
-- Run: `phoenix refresh`
+- Run: `aku refresh`
 - Check `stylixEnable = true` in profile config
 
 ## 🔐 Security Notes

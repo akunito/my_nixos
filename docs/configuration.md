@@ -67,7 +67,7 @@ The `install.sh` script automatically switches profiles:
 
 ```sh
 cp flake.DESK.nix flake.nix
-phoenix sync
+aku sync
 ```
 
 ## Variables and Settings
@@ -399,7 +399,7 @@ iwlwifiDisablePowerSave = true;
 After making changes:
 1. Test syntax: `nix flake check`
 2. Build dry-run: `nixos-rebuild build --flake .#system`
-3. Apply: `phoenix sync`
+3. Apply: `aku sync`
 
 ### 6. Version Control
 

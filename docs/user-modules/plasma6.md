@@ -237,7 +237,7 @@ This is what `plasma6.nix` does automatically.
 1. Check symlinks: `ls -la ~/.config/kwinrc`
 2. Verify source directory exists
 3. Check username matches: `echo $USER`
-4. Rebuild home-manager: `phoenix sync user`
+4. Rebuild home-manager: `aku sync user`
 
 ### Symlinks Broken
 

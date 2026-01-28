@@ -91,7 +91,7 @@ git clone <your-repo-url> /your/custom/directory
 
 **Note**: Replace `<your-repo-url>` with your actual repository URL. This is a fork, not the original LibrePhoenix repository.
 
-If you install to a custom directory, make sure to edit the `userSettings.dotfilesDir`{.verbatim} in the beginning [flake.nix](./flake.nix), or else my [phoenix wrapper script](./system/bin/phoenix.nix) won\'t work.
+If you install to a custom directory, make sure to edit the `userSettings.dotfilesDir`{.verbatim} in the beginning [flake.nix](./flake.nix), or else my [aku wrapper script](./system/bin/aku.nix) won\'t work.
 
 ```nix
 ...

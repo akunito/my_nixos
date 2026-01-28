@@ -6,7 +6,7 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 
 - **Immutability**: never suggest editing `/nix/store` or using `nix-env`, `nix-channel`, `apt`, `yum`.
 - **Source of truth**: `flake.nix` and its `inputs` define dependencies.
-- **Application workflow**: apply changes via `install.sh` (or `phoenix sync`), not manual systemd enable/start.
+- **Application workflow**: apply changes via `install.sh` (or `aku sync`), not manual systemd enable/start.
 - **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths inside Nix.
 - **LXC Container Modularity**: For Proxmox LXC containers, use the **Base + Override** pattern:
   - Common settings in `profiles/LXC-base-config.nix`.

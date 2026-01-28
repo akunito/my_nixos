@@ -5,7 +5,7 @@ Complete guide to maintaining your NixOS configuration and using the provided sc
 ## Table of Contents
 
 - [Overview](#overview)
-- [Phoenix Wrapper](#phoenix-wrapper)
+- [Aku Wrapper](#aku-wrapper)
 - [Maintenance Script](#maintenance-script)
 - [Installation Scripts](#installation-scripts)
 - [Sync Scripts](#sync-scripts)
@@ -16,48 +16,48 @@ Complete guide to maintaining your NixOS configuration and using the provided sc
 
 ## Overview
 
-This configuration includes several scripts to automate common tasks and maintain system health. All scripts are located in the repository root and can be run directly or via the `phoenix` wrapper.
+This configuration includes several scripts to automate common tasks and maintain system health. All scripts are located in the repository root and can be run directly or via the `aku` wrapper.
 
 **For complete script documentation**, see [Scripts Reference](scripts.md) which provides detailed information about all scripts, their parameters, usage patterns, and customization options.
 
-## Phoenix Wrapper
+## Aku Wrapper
 
-The `phoenix` command is a wrapper script that simplifies common NixOS operations.
+The `aku` command is a wrapper script that simplifies common NixOS operations.
 
 ### Installation
 
-The phoenix wrapper is automatically installed as part of the system configuration in `system/bin/phoenix.nix`.
+The aku wrapper is automatically installed as part of the system configuration in `system/bin/aku.nix`.
 
 ### Available Commands
 
 #### Sync Commands
 
 ```sh
-phoenix sync          # Synchronize system and home-manager
-phoenix sync system   # Only synchronize system (nixos-rebuild switch)
-phoenix sync user     # Only synchronize home-manager
+aku sync          # Synchronize system and home-manager
+aku sync system   # Only synchronize system (nixos-rebuild switch)
+aku sync user     # Only synchronize home-manager
 ```
 
 **What it does**:
-- `phoenix sync` runs `sync.sh` which calls both `sync-system.sh` and `sync-user.sh`
+- `aku sync` runs `sync.sh` which calls both `sync-system.sh` and `sync-user.sh`
 - Applies configuration changes to the system
 - Equivalent to `nixos-rebuild switch` + `home-manager switch`
 
 #### Update Commands
 
 ```sh
-phoenix update         # Update flake inputs (flake.lock)
-phoenix upgrade        # Update and synchronize (update + sync)
+aku update         # Update flake inputs (flake.lock)
+aku upgrade        # Update and synchronize (update + sync)
 ```
 
 **What it does**:
-- `phoenix update` runs `update.sh` to update `flake.lock`
-- `phoenix upgrade` runs `upgrade.sh` which updates and then syncs
+- `aku update` runs `update.sh` to update `flake.lock`
+- `aku upgrade` runs `upgrade.sh` which updates and then syncs
 
 #### Refresh Command
 
 ```sh
-phoenix refresh        # Refresh posthooks (stylix, daemons)
+aku refresh        # Refresh posthooks (stylix, daemons)
 ```
 
 **What it does**:
@@ -68,7 +68,7 @@ phoenix refresh        # Refresh posthooks (stylix, daemons)
 #### Pull Command
 
 ```sh
-phoenix pull           # Pull from git and merge local changes
+aku pull           # Pull from git and merge local changes
 ```
 
 **What it does**:
@@ -80,11 +80,11 @@ phoenix pull           # Pull from git and merge local changes
 #### Garbage Collection
 
 ```sh
-phoenix gc             # Garbage collect (interactive)
-phoenix gc full        # Delete everything not in use
-phoenix gc 15d         # Delete everything older than 15 days
-phoenix gc 30d         # Delete everything older than 30 days
-phoenix gc Xd          # Delete everything older than X days
+aku gc             # Garbage collect (interactive)
+aku gc full        # Delete everything not in use
+aku gc 15d         # Delete everything older than 15 days
+aku gc 30d         # Delete everything older than 30 days
+aku gc Xd          # Delete everything older than X days
 ```
 
 **What it does**:
@@ -96,8 +96,8 @@ phoenix gc Xd          # Delete everything older than X days
 #### Security Commands
 
 ```sh
-phoenix harden         # Make system files read-only
-phoenix soften        # Relax file permissions (for editing)
+aku harden         # Make system files read-only
+aku soften        # Relax file permissions (for editing)
 ```
 
 **What it does**:
@@ -373,7 +373,7 @@ docker stop $(docker ps -q)
 Run maintenance script regularly:
 ```sh
 # Weekly
-phoenix gc 7d
+aku gc 7d
 ./maintenance.sh
 ```
 
@@ -381,10 +381,10 @@ phoenix gc 7d
 
 ```sh
 # Update and rebuild
-phoenix upgrade
+aku upgrade
 
 # Clean up old generations
-phoenix gc 30d
+aku gc 30d
 ```
 
 ### 3. After Configuration Changes
@@ -394,10 +394,10 @@ phoenix gc 30d
 nixos-rebuild build --flake .#system
 
 # Then apply
-phoenix sync
+aku sync
 
 # Harden files
-phoenix harden
+aku harden
 ```
 
 ### 4. Disk Space Management
@@ -408,7 +408,7 @@ Monitor disk usage:
 du -sh /nix/store
 
 # Garbage collect
-phoenix gc 30d
+aku gc 30d
 
 # Check generations
 nix-env --list-generations -p /nix/var/nix/profiles/system
@@ -456,13 +456,13 @@ tail -f maintenance.log
 2. Run commands manually to identify issue
 3. Check disk space: `df -h`
 
-### Phoenix Command Not Found
+### Aku Command Not Found
 
-**Problem**: `phoenix` command doesn't work.
+**Problem**: `aku` command doesn't work.
 
 **Solution**:
 1. Rebuild system: `sudo nixos-rebuild switch --flake .#system`
-2. Check if phoenix is installed: `which phoenix`
+2. Check if aku is installed: `which aku`
 3. Source shell configuration: `source ~/.zshrc` or `source ~/.bashrc`
 
 ## Related Documentation

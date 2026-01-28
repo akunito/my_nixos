@@ -221,7 +221,7 @@ in {
       system = systemSettingsWithFonts.system;
       modules = [
         (self + "/profiles" + ("/" + systemSettingsWithFonts.profile) + "/configuration.nix")
-        (self + "/system/bin/phoenix.nix")
+        (self + "/system/bin/aku.nix")
       ];
       specialArgs = {
         inherit pkgs-stable;

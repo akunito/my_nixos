@@ -34,7 +34,7 @@ This ensures that when `blueman-manager` is launched (either from the desktop fi
 
 ## Testing
 
-After rebuilding with `phoenix sync user`:
+After rebuilding with `aku sync user`:
 1. Restart blueman-applet: `systemctl --user restart blueman-applet`
 2. Launch blueman-manager (from applet or desktop)
 3. Verify it shows dark mode

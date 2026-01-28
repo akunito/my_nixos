@@ -226,7 +226,7 @@ Edit `profiles/MYPROFILE/configuration.nix` and `profiles/MYPROFILE/home.nix` to
 
 ```sh
 cp flake.MYPROFILE.nix flake.nix
-phoenix sync
+aku sync
 ```
 
 ## Switching Profiles
@@ -248,7 +248,7 @@ This automatically:
 cp flake.MYPROFILE.nix flake.nix
 
 # 2. Rebuild
-phoenix sync
+aku sync
 ```
 
 ## Profile Comparison

@@ -60,7 +60,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Bin
 
-- **system/bin/phoenix.nix**: TODO make this work on nix-on-droid!
+- **system/bin/aku.nix**: TODO make this work on nix-on-droid!
 
 ### Dm
 

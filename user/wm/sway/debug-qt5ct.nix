@@ -90,7 +90,7 @@ let
       # If files still don't exist after restore attempt, log error but don't prevent Sway from starting
       # This allows Sway to start even if Stylix hasn't generated files yet (user can rebuild)
       if [ ! -f "$QT5CT_CONF" ] || [ ! -f "$QT5CT_COLOR_CONF" ]; then
-        log "ERROR: qt5ct files missing and no backup available. Stylix should generate these files. Please rebuild with 'phoenix sync user' or 'home-manager switch'. Dolphin may not theme correctly until files are generated." "err"
+        log "ERROR: qt5ct files missing and no backup available. Stylix should generate these files. Please rebuild with 'aku sync user' or 'home-manager switch'. Dolphin may not theme correctly until files are generated." "err"
         # #region agent log
         log_debug "H3" "restore-qt5ct-files:files_missing_final" "Files still missing after restore attempt" "{\"qt5ct_conf_exists\":$([ -f "$QT5CT_CONF" ] && echo true || echo false),\"color_conf_exists\":$([ -f "$QT5CT_COLOR_CONF" ] && echo true || echo false)}"
         # #endregion

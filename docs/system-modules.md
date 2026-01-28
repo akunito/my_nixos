@@ -708,19 +708,19 @@ KDE System Settings provides a GUI for SDDM configuration:
 
 ## Utility Modules
 
-### Phoenix (`system/bin/phoenix.nix`)
+### Phoenix (`system/bin/aku.nix`)
 
 **Purpose**: Nix command wrapper script
 
 **Features**:
-- `phoenix sync` - Synchronize system and home-manager
-- `phoenix update` - Update flake inputs
-- `phoenix upgrade` - Update and synchronize
-- `phoenix gc` - Garbage collection
-- `phoenix harden` - Secure system files
-- `phoenix soften` - Relax file permissions
+- `aku sync` - Synchronize system and home-manager
+- `aku update` - Update flake inputs
+- `aku upgrade` - Update and synchronize
+- `aku gc` - Garbage collection
+- `aku harden` - Secure system files
+- `aku soften` - Relax file permissions
 
-**Documentation**: See [Maintenance Guide](maintenance.md#phoenix-wrapper)
+**Documentation**: See [Maintenance Guide](maintenance.md#aku-wrapper)
 
 ## Using Modules
 

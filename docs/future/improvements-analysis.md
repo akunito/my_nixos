@@ -31,7 +31,7 @@ This document analyzes the current NixOS configuration repository workflow, focu
 
 3. **Key Scripts**:
    - `install.sh` - Main installation/update script
-   - `phoenix` wrapper - Convenience commands
+   - `aku` wrapper - Convenience commands
    - Various helper scripts for specific tasks
 
 ## Identified Issues
