@@ -106,6 +106,17 @@ in
     autoUserUpdateBranch = "release-25.11"; # Stable home-manager branch
 
     # ============================================================================
+    # EMAIL NOTIFICATIONS (Auto-update failure alerts)
+    # ============================================================================
+    notificationOnFailureEnable = true; # Enable email notifications on auto-update failure
+    notificationSmtpHost = "192.168.8.89"; # SMTP relay (rewrites sender to nixos@akunito.com)
+    notificationSmtpPort = 25; # Standard SMTP relay port
+    notificationSmtpAuth = false; # No auth needed for relay
+    notificationSmtpTls = false; # No TLS for local relay
+    notificationFromEmail = "nixos@akunito.com"; # Sender email (relay will use this)
+    notificationToEmail = "diego88aku@gmail.com"; # Final delivery address
+
+    # ============================================================================
     # HOMELAB DOCKER STACKS (Start on boot)
     # ============================================================================
     homelabDockerEnable = true; # Enable systemd service to start docker-compose stacks on boot

@@ -20,6 +20,7 @@
     };
     unitConfig = {
       OnSuccess = systemSettings.autoSystemUpdateCallNext;
+      OnFailure = lib.mkIf (systemSettings.notificationOnFailureEnable or false) "notify-failure@autoSystemUpdate.service";
     };
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
@@ -48,6 +49,9 @@
       Environment = "PATH=/run/current-system/sw/bin:/usr/bin:/bin";
       StandardOutput = "journal";
       StandardError = "journal";
+    };
+    unitConfig = {
+      OnFailure = lib.mkIf (systemSettings.notificationOnFailureEnable or false) "notify-failure@autoUserUpdate.service";
     };
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];

@@ -356,6 +356,17 @@
     # Homelab docker stacks - start docker-compose stacks on boot
     homelabDockerEnable = false; # Enable systemd service for homelab docker stacks
 
+    # Email notifications for auto-update failures
+    notificationOnFailureEnable = false; # Enable email notifications on auto-update failure
+    notificationSmtpHost = ""; # SMTP relay host (e.g., "192.168.8.1")
+    notificationSmtpPort = 25; # SMTP port (25 for relay, 587 for submission)
+    notificationSmtpAuth = false; # Enable SMTP authentication
+    notificationSmtpTls = false; # Enable TLS/STARTTLS
+    notificationSmtpUser = ""; # SMTP username (if auth enabled)
+    notificationSmtpPasswordFile = ""; # Path to file containing SMTP password
+    notificationFromEmail = "noreply@localhost"; # From email address
+    notificationToEmail = ""; # Recipient email address
+
     # Profile install invocation (used by Waybar update button)
     # Each profile should override this with the exact install.sh invocation for that profile.
     # Example: "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK -s"
