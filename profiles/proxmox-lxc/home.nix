@@ -29,9 +29,9 @@
   # Git without libsecret (SSH key auth only, avoids dbus/gnome-keyring deps)
   programs.git = {
     enable = true;
-    userName = userSettings.gitUser;
-    userEmail = userSettings.gitEmail;
-    extraConfig = {
+    settings = {
+      user.name = userSettings.gitUser;
+      user.email = userSettings.gitEmail;
       init.defaultBranch = "main";
       pull.rebase = true;
       color.ui = "auto";

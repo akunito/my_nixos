@@ -130,7 +130,11 @@ in
     qemuGuestAddition = false; # Not a VM - LXC container
 
     # Home packages
-    homePackages = pkgs: pkgs-unstable: [ ];
+    homePackages = pkgs: pkgs-unstable: [
+      pkgs.zsh
+      pkgs.git
+      pkgs-unstable.claude-code
+    ];
 
     # ============================================================================
     # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control

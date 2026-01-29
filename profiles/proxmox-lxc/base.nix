@@ -27,6 +27,10 @@
   ]
   ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix;
 
+  # LXC containers don't need bootloaders - explicitly disable
+  boot.loader.systemd-boot.enable = false;
+  boot.loader.grub.enable = false;
+
   # Ensure nix flakes are enabled
   nix.package = pkgs.nixVersions.stable;
   nix.extraOptions = ''
