@@ -39,7 +39,8 @@
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
   nix.nixPath = [ "nixpkgs=flake:nixpkgs" ];
-  nix.registry.nixpkgs.flake = lib.mkForce inputs.nixpkgs;
+  # Note: nix.registry.nixpkgs.flake removed - NixOS 25.11 modules conflict with each other
+  # The registry is automatically configured by nixpkgs-flake.nix module
 
   nixpkgs.config.allowUnfree = true;
 
