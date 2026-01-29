@@ -117,6 +117,10 @@ in
     systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
     systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
 
+    # === Hardware Optimizations ===
+    thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
+    thinkpadModel = "lenovo-thinkpad-x280"; # X380 Yoga → X280 (same generation)
+
     # === System Services & Features ===
     sambaEnable = false; # Disable Samba file sharing
     sunshineEnable = false; # Disable Sunshine game streaming (older machine)

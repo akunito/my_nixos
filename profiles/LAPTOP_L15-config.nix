@@ -113,6 +113,10 @@ in
     systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
     systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
 
+    # === Hardware Optimizations ===
+    thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
+    thinkpadModel = "lenovo-thinkpad-l14-intel"; # L15 → L14 Intel (closest match)
+
     # === System Services & Features ===
     sunshineEnable = true; # Enable Sunshine game streaming
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)

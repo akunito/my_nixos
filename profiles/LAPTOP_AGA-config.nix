@@ -86,6 +86,10 @@ in
     systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
     systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
 
+    # === Hardware Optimizations ===
+    thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
+    thinkpadModel = "lenovo-thinkpad-t490"; # T580 → T490 (next generation, same family)
+
     # === System Services & Features ===
     sambaEnable = false; # Disable Samba file sharing
     sunshineEnable = true; # Enable Sunshine game streaming

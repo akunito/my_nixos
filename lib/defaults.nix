@@ -245,6 +245,10 @@
     nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
     swayPrimaryMonitor = null; # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
 
+    # Thinkpad hardware optimizations (via nixos-hardware)
+    thinkpadEnable = false; # Enable Lenovo Thinkpad hardware optimizations
+    thinkpadModel = ""; # Thinkpad model (e.g., "lenovo-thinkpad-l14-intel", "lenovo-thinkpad-x280", "lenovo-thinkpad-t490")
+
     # GPU-related feature flags
     amdLACTdriverEnable = false; # Enable LACT (Linux AMD GPU Control Application) for AMD GPU management
 
