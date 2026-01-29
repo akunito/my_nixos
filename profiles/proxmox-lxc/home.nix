@@ -23,6 +23,21 @@
   # Keep the custom prompt from userSettings.zshinitContent
   programs.zsh.initContent = lib.mkForce userSettings.zshinitContent;
 
+  # Atuin shell history - override sh.nix config to ensure it works in LXC
+  # Note: sh.nix already includes atuin package in home.packages
+  programs.atuin = {
+    enable = true;
+    enableZshIntegration = true;
+    enableBashIntegration = true;
+    settings = {
+      auto_sync = false;  # Disable cloud sync for LXC containers
+      sync_frequency = "5m";
+      sync_address = "https://api.atuin.sh";
+      enter_accept = true;
+      records = true;
+    };
+  };
+
   # Git without libsecret (SSH key auth only, avoids dbus/gnome-keyring deps)
   programs.git = {
     enable = true;
@@ -35,9 +50,9 @@
     };
   };
 
-  # Note: atuin, zsh, bash are configured by sh.nix
-  # atuinAutoSync defaults to false (from lib/defaults.nix) so no cloud sync in LXC
+  # Note: zsh, bash, and shell packages (bat, eza, etc.) are configured by sh.nix
+  # atuin package comes from sh.nix, but we configure it here to ensure proper integration
 
   home.stateVersion = userSettings.homeStateVersion;
-  home.packages = userSettings.homePackages;  # sh.nix already includes atuin
+  home.packages = userSettings.homePackages;  # Merged with sh.nix packages
 }
