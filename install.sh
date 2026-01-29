@@ -20,11 +20,12 @@ RESET='\033[0m'
 
 #
 # Argument parsing
-# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent] [-u|--update]
-# - Also supports -s/--silent and -u/--update anywhere without breaking positional parsing.
+# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick]
+# - Also supports -s/--silent, -u/--update, and -q/--quick anywhere without breaking positional parsing.
 #
 SILENT_MODE=false
 UPDATE_FLAKE_LOCK=false
+QUICK_MODE=false
 POSITIONAL_ARGS=()
 for arg in "$@"; do
     case "$arg" in
@@ -33,6 +34,9 @@ for arg in "$@"; do
             ;;
         -u|--update)
             UPDATE_FLAKE_LOCK=true
+            ;;
+        -q|--quick)
+            QUICK_MODE=true
             ;;
         *)
             POSITIONAL_ARGS+=("$arg")
@@ -108,8 +112,9 @@ if [ ${#POSITIONAL_ARGS[@]} -gt 1 ]; then
     PROFILE="${POSITIONAL_ARGS[1]}"
 else
     echo -e "${RED}Error: PROFILE parameter is required${RESET}"
-    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent] [-u|--update]"
+    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick]"
     echo "Example: $0 /path/to/repo HOME -s -u"
+    echo "  -q|--quick: Skip docker handling and hardware-config generation (for quick updates)"
     echo "Where HOME indicates the right flake to use, in this case: flake.HOME.nix"
     echo ""
     list_available_profiles "$SCRIPT_DIR"
@@ -881,12 +886,22 @@ generate_root_ssh_keys_for_ssh_server_on_boot $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 update_flake_lock $SCRIPT_DIR $SILENT_MODE $UPDATE_FLAKE_LOCK
 
 # Handle Docker containers (generate_hardware_config must be executed after this !)
-handle_docker $SCRIPT_DIR $SILENT_MODE
+# Skip in quick mode to avoid stopping containers during updates
+if [ "$QUICK_MODE" = true ]; then
+    echo -e "${CYAN}Quick mode: Skipping Docker handling${RESET}"
+else
+    handle_docker $SCRIPT_DIR $SILENT_MODE
+fi
 
 # Generate hardware config and check boot mode
-generate_hardware_config $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
+# Skip in quick mode to avoid issues with docker volumes and faster updates
+if [ "$QUICK_MODE" = true ]; then
+    echo -e "${CYAN}Quick mode: Skipping hardware-configuration.nix generation${RESET}"
+else
+    generate_hardware_config $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
+    open_hardware_configuration_nix $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
+fi
 check_boot_mode $SCRIPT_DIR
-open_hardware_configuration_nix $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 
 # Hardening files to Rebuild system
 hardening_files $SCRIPT_DIR $SUDO_CMD
