@@ -93,17 +93,17 @@ case $hostname in
         # sudo mount UUID=0904cd17-7be1-433a-a21b-2c34f969550f /mnt/DATA_4TB # this is the zVOL iSCSI mounted on DATA_4TB directory  
            # not mounted because it's managed dynamically now
 
-        echo -e "Checking zvol_services on DATA_4TB directory"
-        ls -la /mnt/DATA_4TB
-        sleep 2
-        echo -e "Checking HDD_4TB directory"
-        ls -la /mnt/HDD_4TB
-        sleep 2
+ #       echo -e "Checking zvol_services on DATA_4TB directory"
+ #       ls -la /mnt/DATA_4TB
+ #       sleep 2
+ #       echo -e "Checking HDD_4TB directory"
+ #       ls -la /mnt/HDD_4TB
+ #       sleep 2
 
-        echo -e "Starting NFS drives..."
-        sudo systemctl start mnt-NFS_media.mount
-        sudo systemctl start mnt-NFS_library.mount
-        sudo systemctl start mnt-NFS_emulators.mount
+#        echo -e "Starting NFS drives..."
+#        sudo systemctl start mnt-NFS_media.mount
+#        sudo systemctl start mnt-NFS_library.mount
+#        sudo systemctl start mnt-NFS_emulators.mount
 
         # echo -e "Decrypting NFS drives..."
         # echo -e "Mounting NFS_services, please introduce the password..."
