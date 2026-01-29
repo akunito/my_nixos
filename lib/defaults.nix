@@ -16,6 +16,7 @@
     bootMode = "uefi";
     bootMountPath = "/boot";
     grubDevice = "";
+    grubEnableCryptodisk = false; # Enable GRUB cryptodisk support for encrypted /boot (LUKS)
 
     # GPU defaults
     gpuType = "intel"; # Options: "amd", "intel", "nvidia", "none" (for VMs/containers)

@@ -14,6 +14,7 @@ in
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_YOGAAKU -s -u";
     bootMode = "bios";
     grubDevice = "/dev/sda"; # BIOS boot requires GRUB device (adjust to actual boot disk)
+    grubEnableCryptodisk = true; # Enable GRUB cryptodisk support for encrypted disk (LUKS)
     gpuType = "intel";
 
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil

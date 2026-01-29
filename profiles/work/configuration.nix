@@ -113,6 +113,7 @@
   boot.loader.efi.efiSysMountPoint = systemSettings.bootMountPath; # does nothing if running bios rather than uefi
   boot.loader.grub.enable = if (systemSettings.bootMode == "uefi") then false else true;
   boot.loader.grub.device = systemSettings.grubDevice; # does nothing if running uefi rather than bios
+  boot.loader.grub.enableCryptodisk = systemSettings.grubEnableCryptodisk; # Enable cryptodisk for encrypted /boot (LUKS)
 
   # Networking
   networking.hostName = systemSettings.hostname; # Define your hostname on flake.nix
