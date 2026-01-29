@@ -130,11 +130,7 @@ in
     qemuGuestAddition = false; # Not a VM - LXC container
 
     # Home packages
-    homePackages = pkgs: pkgs-unstable:
-      with pkgs; [
-        # NOTE: zsh (in system), git (in git.nix) - not duplicated here
-        # Headless server needs no GUI packages
-      ];
+    homePackages = pkgs: pkgs-unstable: [ ];
 
     # ============================================================================
     # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control

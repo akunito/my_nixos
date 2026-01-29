@@ -95,11 +95,11 @@
     qemuGuestAddition = false;
 
     # Home packages
-    homePackages =
-      pkgs: pkgs-unstable: with pkgs; [
-        zsh
-        git
-      ];
+    homePackages = pkgs: pkgs-unstable: [
+      pkgs.zsh
+      pkgs.git
+      pkgs-unstable.claude-code
+    ];
 
     zshinitContent = ''
       PROMPT=" ◉ %U%F{cyan}%n%f%u@%U%F{cyan}%m%f%u:%F{yellow}%~%f
