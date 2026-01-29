@@ -18,6 +18,8 @@
     home-manager-stable.url = "github:nix-community/home-manager/release-25.11";
     home-manager-stable.inputs.nixpkgs.follows = "nixpkgs-stable";
 
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";
       flake = false;

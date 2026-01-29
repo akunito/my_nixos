@@ -33,6 +33,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
     blocklist-hosts = {
       url = "github:StevenBlack/hosts";
       flake = false;

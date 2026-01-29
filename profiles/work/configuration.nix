@@ -62,7 +62,11 @@
   ++ lib.optional systemSettings.starCitizenModules ../../system/app/starcitizen.nix # Star Citizen support
   ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix # Mount drives
   ++ lib.optional (userSettings.wmEnableHyprland == true) ../../system/wm/hyprland.nix # Hyprland (if enabled)
-  ++ lib.optional (systemSettings.enableSwayForDESK == true) ../../system/wm/sway.nix; # SwayFX (if enabled for DESK profile)
+  ++ lib.optional (systemSettings.enableSwayForDESK == true) ../../system/wm/sway.nix # SwayFX (if enabled for DESK profile)
+  # nixos-hardware: Laptop-specific hardware optimizations
+  ++ lib.optional (inputs ? nixos-hardware && systemSettings.hostname == "nixolaptopaku") inputs.nixos-hardware.nixosModules.lenovo-thinkpad-l14-intel # LAPTOP_L15 → L14 Intel (closest match)
+  ++ lib.optional (inputs ? nixos-hardware && systemSettings.hostname == "nixosyogaaku") inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x280 # LAPTOP_YOGAAKU (X380 Yoga) → X280
+  ++ lib.optional (inputs ? nixos-hardware && systemSettings.hostname == "nixosaga") inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t490; # LAPTOP_AGA (T580) → T490
 
   # Fix nix path
   nix.nixPath = [

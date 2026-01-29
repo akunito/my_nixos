@@ -6,7 +6,7 @@ let
 in
 {
   # Flag to use rust-overlay
-  useRustOverlay = true;
+  useRustOverlay = false;
 
   systemSettings = base.systemSettings // {
     hostname = "nixolaptopaku";
