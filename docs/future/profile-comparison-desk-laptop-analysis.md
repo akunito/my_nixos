@@ -35,7 +35,7 @@ LAPTOP-base.nix (laptop-specific settings)
 |----------|------|------------|----------------|
 | **Machine Type** | Desktop | Modern Laptop | Older Laptop (Lenovo Yoga) |
 | **Hostname** | nixosaku | nixolaptopaku | nixosyogaaku |
-| **GPU** | AMD (RX 7800 XT) | Intel | Intel |
+| **GPU** | AMD (RX 9700XT) | Intel | Intel |
 | **Boot Mode** | UEFI | UEFI | BIOS (legacy) |
 | **Rust Overlay** | false | true | false |
 | **Performance Profile** | Desktop (aggressive) | Laptop (conservative) | Laptop (conservative) |
@@ -61,7 +61,7 @@ LAPTOP-base.nix (laptop-specific settings)
 
 #### DESK
 - **Hostname**: `nixosaku`
-- **GPU Type**: `amd` (RX 7800 XT with LACT driver)
+- **GPU Type**: `amd` (RX 9700XT with LACT driver)
 - **Boot Mode**: UEFI
 - **Performance**: `enableDesktopPerformance = true` (aggressive I/O, CPU scheduling)
 - **Power Management**: `power-profiles-daemon` (desktop profiles)
@@ -673,7 +673,7 @@ userAiPkgsEnable = true/false;      # lmstudio, ollama-rocm
 - Home automation hub
 
 **Hardware Requirements**:
-- Powerful GPU (AMD RX 7800 XT)
+- Powerful GPU (AMD RX 9700XT)
 - Multiple monitors
 - Large storage (local + NFS)
 - Always-on availability

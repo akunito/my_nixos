@@ -136,7 +136,7 @@ in
     # Home packages
     homePackages = pkgs: pkgs-unstable: [
       # LAPTOP_L15-specific packages
-      pkgs.kdePackages.dolphin # LAPTOP-specific file manager
+      
       # NOTE: vivaldi is provided by user/app/browser/vivaldi.nix module (with KWallet support)
       # NOTE: Development tools in user/app/development/development.nix (controlled by developmentToolsEnable flag)
     ];
