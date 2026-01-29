@@ -140,7 +140,7 @@ in
     dotfilesDir = "/home/akunito/.dotfiles";
 
     # Different theme for YOGAAKU
-    theme = "io";
+    theme = "ashes";
 
     dockerEnable = false;
     virtualizationEnable = true;
@@ -158,5 +158,13 @@ in
     # === Package Modules (User) ===
     userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
+
+    # Different prompt color for LAPTOP
+    zshinitContent = ''
+      PROMPT=" ◉ %U%F{cyan}%n%f%u@%U%F{cyan}%m%f%u:%F{yellow}%~%f
+      %F{green}→%f "
+      RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
+      [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
+    '';
   };
 }
