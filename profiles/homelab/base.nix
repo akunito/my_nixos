@@ -48,7 +48,7 @@
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
   nix.nixPath = [ "nixpkgs=flake:nixpkgs" ];
-  nix.registry.nixpkgs.flake = inputs.nixpkgs;
+  nix.registry.nixpkgs.flake = lib.mkForce inputs.nixpkgs;
 
   # Nix store optimization - save disk space via hard-linking identical files
   nix.settings.auto-optimise-store = true;

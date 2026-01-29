@@ -73,7 +73,7 @@
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
   nix.nixPath = [ "nixpkgs=flake:nixpkgs" ];
-  nix.registry.nixpkgs.flake = inputs.nixpkgs;
+  nix.registry.nixpkgs.flake = lib.mkForce inputs.nixpkgs;
   nixpkgs.overlays = [
     (final: prev: {
       logseq = prev.logseq.overrideAttrs (oldAttrs: {
