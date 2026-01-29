@@ -7,24 +7,21 @@
 }:
 
 {
+  # Import full shell configuration (sh.nix) for better UX
+  # Provides: bat, eza, bottom, fd, direnv, and colored aliases
+  # All packages have zero idle overhead (only consume resources when actively used)
+  imports = [
+    ../../user/shell/sh.nix
+  ];
+
   home.username = userSettings.username;
   home.homeDirectory = "/home/" + userSettings.username;
 
   programs.home-manager.enable = true;
 
-  # Minimal shell configuration (no heavy packages like lolcat, cowsay, etc.)
-  programs.zsh = {
-    enable = true;
-    autosuggestion.enable = true;
-    syntaxHighlighting.enable = true;
-    enableCompletion = true;
-    initContent = userSettings.zshinitContent;
-  };
-
-  programs.bash = {
-    enable = true;
-    enableCompletion = true;
-  };
+  # Override: Skip disfetch on shell startup for faster SSH logins
+  # Keep the custom prompt from userSettings.zshinitContent
+  programs.zsh.initContent = lib.mkForce userSettings.zshinitContent;
 
   # Git without libsecret (SSH key auth only, avoids dbus/gnome-keyring deps)
   programs.git = {
@@ -38,19 +35,9 @@
     };
   };
 
-  # Atuin shell history sync (Auto-sync disabled for LXC)
-  programs.atuin = {
-    enable = true;
-    enableZshIntegration = true;
-    settings = {
-      auto_sync = false;
-      sync_frequency = "5m";
-      sync_address = "https://api.atuin.sh";
-      enter_accept = true;
-      records = true;
-    };
-  };
+  # Note: atuin, zsh, bash are configured by sh.nix
+  # atuinAutoSync defaults to false (from lib/defaults.nix) so no cloud sync in LXC
 
   home.stateVersion = userSettings.homeStateVersion;
-  home.packages = userSettings.homePackages ++ [ pkgs.atuin ];
+  home.packages = userSettings.homePackages;  # sh.nix already includes atuin
 }

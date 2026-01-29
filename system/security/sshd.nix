@@ -12,6 +12,8 @@
     };
     extraConfig = ''
       # sshd.nix -> services.openssh.extraConfig
+      # Accept TERM and COLORTERM from SSH clients for proper color/cursor support
+      AcceptEnv LANG LC_* TERM COLORTERM
     '';
   };
 
