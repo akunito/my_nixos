@@ -65,19 +65,15 @@
   ++ lib.optional (systemSettings.enableSwayForDESK == true) ../../system/wm/sway.nix # SwayFX (if enabled for DESK profile)
   ++ lib.optional systemSettings.thinkpadEnable ../../system/hardware/thinkpad.nix; # Lenovo Thinkpad hardware optimizations
 
-  # Fix nix path
-  nix.nixPath = [
-    "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
-    "nixos-config=$HOME/dotfiles/system/configuration.nix"
-    "/nix/var/nix/profiles/per-user/root/channels"
-  ];
-
   # Ensure nix flakes are enabled
-  nix.package = pkgs.nixVersions.stable; # if using stable version
-  # nix.package = pkgs.nixFlakes; # if using unstable version
+  nix.package = pkgs.nixVersions.stable;
   nix.extraOptions = ''
     experimental-features = nix-command flakes
   '';
+
+  # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
+  nix.nixPath = [ "nixpkgs=flake:nixpkgs" ];
+  nix.registry.nixpkgs.flake = inputs.nixpkgs;
   nixpkgs.overlays = [
     (final: prev: {
       logseq = prev.logseq.overrideAttrs (oldAttrs: {

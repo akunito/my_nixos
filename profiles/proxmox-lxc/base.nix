@@ -37,6 +37,10 @@
     experimental-features = nix-command flakes
   '';
 
+  # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
+  nix.nixPath = [ "nixpkgs=flake:nixpkgs" ];
+  nix.registry.nixpkgs.flake = inputs.nixpkgs;
+
   nixpkgs.config.allowUnfree = true;
 
   # Disable documentation to reduce build time (no man pages, no NixOS manual)

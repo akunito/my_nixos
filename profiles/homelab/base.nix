@@ -40,19 +40,15 @@
   documentation.man.enable = lib.mkDefault false;
   programs.command-not-found.enable = lib.mkDefault false;
 
-  # Fix nix path
-  nix.nixPath = [
-    "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
-    "nixos-config=$HOME/dotfiles/system/configuration.nix"
-    "/nix/var/nix/profiles/per-user/root/channels"
-  ];
-
   # Ensure nix flakes are enabled
-  nix.package = pkgs.nixVersions.stable; # if using stable version
-  # nix.package = pkgs.nixFlakes; # if using unstable version
+  nix.package = pkgs.nixVersions.stable;
   nix.extraOptions = ''
     experimental-features = nix-command flakes
   '';
+
+  # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
+  nix.nixPath = [ "nixpkgs=flake:nixpkgs" ];
+  nix.registry.nixpkgs.flake = inputs.nixpkgs;
 
   # Nix store optimization - save disk space via hard-linking identical files
   nix.settings.auto-optimise-store = true;
