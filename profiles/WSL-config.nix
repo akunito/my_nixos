@@ -79,6 +79,15 @@
     appImageEnable = false; # Disable AppImage support
     starCitizenModules = false; # Disable Star Citizen optimizations
 
+    # ============================================================================
+    # AUTO-UPGRADE SETTINGS (Stable Profile - Weekly Saturday 07:10)
+    # ============================================================================
+    autoSystemUpdateEnable = true;
+    autoUserUpdateEnable = true;
+    autoSystemUpdateOnCalendar = "Sat *-*-* 07:10:00";
+    autoUpgradeRestartDocker = false; # No docker on WSL
+    autoUserUpdateBranch = "release-25.11"; # Stable home-manager branch
+
     systemStable = true; # WSL uses stable
   };
   

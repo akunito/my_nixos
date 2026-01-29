@@ -9,6 +9,15 @@ in
     hostname = "lxc-nixos";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_template -s -u";
     systemStateVersion = "25.11";
+
+    # ============================================================================
+    # AUTO-UPGRADE SETTINGS (Stable Profile - Weekly Saturday 07:20)
+    # ============================================================================
+    autoSystemUpdateEnable = true;
+    autoUserUpdateEnable = true;
+    autoSystemUpdateOnCalendar = "Sat *-*-* 07:20:00";
+    autoUpgradeRestartDocker = false;
+    autoUserUpdateBranch = "release-25.11"; # Stable home-manager branch
   };
 
   userSettings = base.userSettings // {

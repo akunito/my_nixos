@@ -105,7 +105,10 @@ in
     starCitizenModules = false; # Disable Star Citizen optimizations
     vivaldiPatch = true; # Enable Vivaldi patches
 
-    # Auto update - uses aga user
+    # Auto update - DISABLED (unstable profile)
+    # Custom paths kept for reference if manually enabled
+    autoSystemUpdateEnable = false;
+    autoUserUpdateEnable = false;
     autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoSystemUpdate.sh";
     autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoUserUpdate.sh";
     autoUserUpdateUser = "aga";

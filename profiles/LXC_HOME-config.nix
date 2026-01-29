@@ -96,6 +96,15 @@ in
     # Swap file (Disabled in LXC, managed by Proxmox)
     swapFileEnable = false;
 
+    # ============================================================================
+    # AUTO-UPGRADE SETTINGS (Stable Profile - Weekly Saturday 07:00)
+    # ============================================================================
+    autoSystemUpdateEnable = true;
+    autoUserUpdateEnable = true;
+    autoSystemUpdateOnCalendar = "Sat *-*-* 07:00:00";
+    autoUpgradeRestartDocker = true; # Restart docker after rebuild
+    autoUserUpdateBranch = "release-25.11"; # Stable home-manager branch
+
     systemStable = true; # LXC_HOME uses stable
   };
 

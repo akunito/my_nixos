@@ -201,6 +201,15 @@
     swapFileEnable = true;
     swapFileSyzeGB = 16; # Reduced from 32GB
 
+    # ============================================================================
+    # AUTO-UPGRADE SETTINGS (Stable Profile - Weekly Saturday 07:05)
+    # ============================================================================
+    autoSystemUpdateEnable = true;
+    autoUserUpdateEnable = true;
+    autoSystemUpdateOnCalendar = "Sat *-*-* 07:05:00";
+    autoUpgradeRestartDocker = true; # Restart docker after rebuild
+    autoUserUpdateBranch = "release-25.11"; # Stable home-manager branch
+
     systemStable = true; # VMHOME uses stable
   };
 

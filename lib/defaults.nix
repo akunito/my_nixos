@@ -334,18 +334,24 @@
     systemStable = false;
 
     # Update defaults
-    autoSystemUpdateEnable = true;
+    autoSystemUpdateEnable = false; # Disabled by default - stable profiles explicitly enable
     autoSystemUpdateDescription = "Auto Update System service";
     autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/autoSystemUpdate.sh";
     autoSystemUpdateUser = "root";
     autoSystemUpdateTimerDescription = "Auto Update System timer";
-    autoSystemUpdateOnCalendar = "06:00:00";
+    autoSystemUpdateOnCalendar = "Sat *-*-* 07:00:00"; # Weekly Saturday default
     autoSystemUpdateCallNext = [ "autoUserUpdate.service" ];
 
-    autoUserUpdateEnable = true;
+    autoUserUpdateEnable = false; # Disabled by default - stable profiles explicitly enable
     autoUserUpdateDescription = "Auto User Update";
     autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/autoUserUpdate.sh";
     autoUserUpdateUser = "akunito";
+
+    # Restart docker containers after successful rebuild
+    autoUpgradeRestartDocker = false;
+
+    # Home-manager branch for auto-update (stable = release-25.11, unstable = master)
+    autoUserUpdateBranch = "master"; # Default unstable, stable profiles override to "release-25.11"
 
     # Profile install invocation (used by Waybar update button)
     # Each profile should override this with the exact install.sh invocation for that profile.
