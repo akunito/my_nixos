@@ -353,6 +353,9 @@
     # Home-manager branch for auto-update (stable = release-25.11, unstable = master)
     autoUserUpdateBranch = "master"; # Default unstable, stable profiles override to "release-25.11"
 
+    # Homelab docker stacks - start docker-compose stacks on boot
+    homelabDockerEnable = false; # Enable systemd service for homelab docker stacks
+
     # Profile install invocation (used by Waybar update button)
     # Each profile should override this with the exact install.sh invocation for that profile.
     # Example: "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK -s"

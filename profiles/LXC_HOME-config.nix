@@ -105,6 +105,11 @@ in
     autoUpgradeRestartDocker = true; # Restart docker after rebuild
     autoUserUpdateBranch = "release-25.11"; # Stable home-manager branch
 
+    # ============================================================================
+    # HOMELAB DOCKER STACKS (Start on boot)
+    # ============================================================================
+    homelabDockerEnable = true; # Enable systemd service to start docker-compose stacks on boot
+
     systemStable = true; # LXC_HOME uses stable
   };
 

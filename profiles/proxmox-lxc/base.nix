@@ -18,6 +18,7 @@
     ../../system/security/sudo.nix
     ../../system/security/gpg.nix
     ../../system/security/autoupgrade.nix
+    ../../system/app/homelab-docker.nix
     ../../system/security/restic.nix
     ../../system/security/polkit.nix
     (import ../../system/app/docker.nix {
