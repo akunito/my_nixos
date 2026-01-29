@@ -21,7 +21,8 @@
 
   # Override: Skip disfetch on shell startup for faster SSH logins
   # Keep the custom prompt from userSettings.zshinitContent
-  programs.zsh.initContent = lib.mkForce userSettings.zshinitContent;
+  # Use mkAfter to preserve atuin integration hooks (runs after atuin setup)
+  programs.zsh.initContent = lib.mkAfter userSettings.zshinitContent;
 
   # Atuin shell history - override sh.nix config to ensure it works in LXC
   # Note: sh.nix already includes atuin package in home.packages
