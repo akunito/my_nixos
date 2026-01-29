@@ -32,8 +32,11 @@
 *.ORIGINAL.nix
 
 # Nix files
-# flake.lock - SHOULD be tracked for reproducibility (removed from ignore)
-# Note: flake.lock is currently tracked and should remain tracked
+# Device-specific flake files (generated from profile flakes like flake.LAPTOP_L15.nix)
+# Each device copies its profile's flake to flake.nix during install
+# Tracking these causes conflicts when syncing between devices
+flake.nix
+flake.lock
 hardware-configuration.nix  # Machine-specific, managed per-profile
 
 # Local/custom files (user-specific, not in repo)
