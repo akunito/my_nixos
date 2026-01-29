@@ -432,6 +432,17 @@
 
     # ZSH prompt defaults
     zshinitContent = ''
+      # Keybindings for special keys
+      bindkey '\e[H' beginning-of-line      # Home key
+      bindkey '\e[F' end-of-line            # End key
+      bindkey '\eOH' beginning-of-line      # Home key (application mode)
+      bindkey '\eOF' end-of-line            # End key (application mode)
+      bindkey '\e[1~' beginning-of-line     # Home key (alternative)
+      bindkey '\e[4~' end-of-line           # End key (alternative)
+      bindkey '\e[3~' delete-char           # Delete key
+      bindkey '\e[1;5C' forward-word        # Ctrl+Right
+      bindkey '\e[1;5D' backward-word       # Ctrl+Left
+
       PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "
       RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
