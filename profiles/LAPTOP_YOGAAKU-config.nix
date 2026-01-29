@@ -13,7 +13,7 @@ in
     profile = "personal";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_YOGAAKU -s -u";
     bootMode = "bios";
-    grubDevice = "/dev/sda"; # BIOS boot requires GRUB device (adjust to actual boot disk)
+    grubDevice = "/dev/nvme0n1"; # BIOS boot on NVMe (Samsung MZVLB256HBHQ)
     grubEnableCryptodisk = true; # Enable GRUB cryptodisk support for encrypted disk (LUKS)
     gpuType = "intel";
 
