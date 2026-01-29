@@ -1,7 +1,7 @@
 # VMHOME to LXC Migration Plan
 
 ## Goal
-Migrate the VMHOME VM to an LXC container (`LXCHOME`) while preserving all functionality (Docker, NFS, services) and optimizing for LXC. Must not impact existing `LXC*-config.nix` profiles.
+Migrate the VMHOME VM to an LXC container (`LXC_HOME`) while preserving all functionality (Docker, NFS, services) and optimizing for LXC. Must not impact existing `LXC*-config.nix` profiles.
 
 ---
 
@@ -22,10 +22,10 @@ Migrate the VMHOME VM to an LXC container (`LXCHOME`) while preserving all funct
                           Direct NFS mount in VM
 ```
 
-### Target Storage Flow (LXCHOME)
+### Target Storage Flow (LXC_HOME)
 ```
 ┌─────────────┐     iSCSI      ┌─────────────┐   bind mount    ┌─────────────┐
-│  TrueNAS    │ ──────────────►│   Proxmox   │ ───────────────►│  LXCHOME    │
+│  TrueNAS    │ ──────────────►│   Proxmox   │ ───────────────►│  LXC_HOME    │
 │  (Storage)  │                │   (Host)    │                 │   (LXC)     │
 │             │                │             │                 │             │
 │  192.168.   │     NFS        │  mounts     │   bind mount    │  sees same  │
@@ -62,7 +62,7 @@ Migrate the VMHOME VM to an LXC container (`LXCHOME`) while preserving all funct
 
 ## Key Differences: VM vs LXC
 
-| Feature | VM (VMHOME) | LXC (LXCHOME) |
+| Feature | VM (VMHOME) | LXC (LXC_HOME) |
 |---------|-------------|---------------|
 | Kernel | Own kernel, modules | Host kernel (no modules needed) |
 | Boot | systemd-boot/grub | Container init |
@@ -129,54 +129,145 @@ mount -a
 df -h | grep NFS
 ```
 
-### Step P2: iSCSI Drive Considerations (/mnt/DATA_4TB)
+### Step P2: iSCSI Drive Setup (/mnt/DATA_4TB)
 
 **Current Setup:**
-- TrueNAS exports an iSCSI LUN
-- Proxmox connects as iSCSI initiator
-- Drive appears as a block device on Proxmox
+- TrueNAS exports iSCSI LUN: `iqn.2005-10.org.freenas.ctl:proxmox-pve`
+- Proxmox connects via your boot script (manual login)
+- Drive appears as `/dev/sdb` (2TB)
 - Currently passed through to VMHOME VM
+- Filesystem: ext4, UUID: `0904cd17-7be1-433a-a21b-2c34f969550f`
 
 **Key Considerations for LXC Migration:**
 
 1. **No re-partitioning needed**: The drive is already formatted (ext4) with existing data
 2. **No data migration needed**: Same data, just different access method
 3. **Proxmox must mount the filesystem** (not pass raw block device to LXC)
+4. **Must shut down VMHOME first** to avoid dual-mount corruption
 
-**P2.1: Verify current iSCSI mount on Proxmox**
+---
+
+**P2.1: Verify and Make iSCSI Login Automatic (On Proxmox)**
+
+Your boot script sets authentication credentials - these are **already persistent** in `/etc/iscsi/nodes/` once set. You only need to:
+
+1. **Verify auth credentials are saved** (from your previous script runs):
 ```bash
-# Check if DATA_4TB is already mounted on Proxmox host
-lsblk
-mount | grep DATA_4TB
+# Check the stored configuration
+iscsiadm -m node -T iqn.2005-10.org.freenas.ctl:proxmox-pve -p 192.168.20.200:3260 -o show | grep -E "node.session.auth"
+
+# Should show:
+# node.session.auth.username = asdf
+# node.session.auth.password = asdf
+# node.session.auth.username_in = asdf
+# node.session.auth.password_in = asdf
 ```
 
-**P2.2: If NOT already mounted on Proxmox, add to fstab**
-
-First, identify the iSCSI device:
+2. **If credentials are missing** (first time setup), run your auth script once:
 ```bash
-# List iSCSI devices
+# Only needed if credentials are NOT shown above
+iscsiadm -m node -T iqn.2005-10.org.freenas.ctl:proxmox-pve -p 192.168.20.200:3260 --op update -n node.session.auth.username -v "asdf"
+iscsiadm -m node -T iqn.2005-10.org.freenas.ctl:proxmox-pve -p 192.168.20.200:3260 --op update -n node.session.auth.password -v "asdf"
+iscsiadm -m node -T iqn.2005-10.org.freenas.ctl:proxmox-pve -p 192.168.20.200:3260 --op update -n node.session.auth.username_in -v "asdf"
+iscsiadm -m node -T iqn.2005-10.org.freenas.ctl:proxmox-pve -p 192.168.20.200:3260 --op update -n node.session.auth.password_in -v "asdf"
+```
+
+3. **Enable automatic login on boot** (this is what's missing):
+```bash
+# Make the target auto-login at boot (this is the key change!)
+iscsiadm -m node -T iqn.2005-10.org.freenas.ctl:proxmox-pve -p 192.168.20.200:3260 --op update -n node.startup -v automatic
+
+# Verify it's set to automatic
+iscsiadm -m node -T iqn.2005-10.org.freenas.ctl:proxmox-pve -p 192.168.20.200:3260 -o show | grep "node.startup"
+# Should show: node.startup = automatic
+```
+
+**What this does:**
+- Auth credentials are stored in: `/etc/iscsi/nodes/iqn.2005-10.org.freenas.ctl:proxmox-pve/192.168.20.200,3260,1/default`
+- Setting `node.startup = automatic` makes the iSCSI service automatically login using the stored credentials on boot
+- **After this, you won't need your boot script anymore** - it will connect automatically
+
+**P2.2: Shut Down VMHOME (CRITICAL - Do this first!)**
+
+```bash
+# On Proxmox - shut down VMHOME to release the iSCSI drive
+qm shutdown 410  # Adjust VM ID if different
+
+# Wait for shutdown, then verify it's stopped
+qm status 410
+```
+
+**P2.3: Verify iSCSI Device and UUID (On Proxmox)**
+
+```bash
+# Verify the iSCSI session is active
 iscsiadm -m session -P 3 | grep -E "Target|disk"
-ls -la /dev/disk/by-id/ | grep iscsi
+# Should show: Target: iqn.2005-10.org.freenas.ctl:proxmox-pve
+# Should show: Attached scsi disk sdb
+
+# Check the device
+lsblk -f /dev/sdb
+# Should show: ext4 filesystem
+
+# Verify UUID matches VMHOME's UUID
+blkid /dev/sdb | grep 0904cd17
+# Should output: UUID="0904cd17-7be1-433a-a21b-2c34f969550f"
 ```
 
-Then add to Proxmox `/etc/fstab`:
-```bash
-# Example - adjust device path based on your setup
-# Using by-id is more reliable than /dev/sdX
-/dev/disk/by-id/scsi-XXXXX  /mnt/pve/DATA_4TB  ext4  defaults,nofail,x-systemd.device-timeout=30s  0 0
-```
+**P2.4: Create Mount Point and Add to fstab (On Proxmox)**
 
-**P2.3: Create mount point and mount**
 ```bash
+# Create mount point
 mkdir -p /mnt/pve/DATA_4TB
-mount -a
-ls -la /mnt/pve/DATA_4TB
+
+# Add to /etc/fstab (using UUID for reliability)
+cat >> /etc/fstab << 'EOF'
+
+# iSCSI drive from TrueNAS for LXC containers
+UUID=0904cd17-7be1-433a-a21b-2c34f969550f  /mnt/pve/DATA_4TB  ext4  defaults,nofail,x-systemd.device-timeout=30s,_netdev  0 0
+EOF
+
+# Note: _netdev tells systemd this is a network device, wait for network before mounting
 ```
 
-**IMPORTANT**: If the iSCSI drive is currently in use by VMHOME:
-- Option A: Shut down VMHOME first, then mount on Proxmox
-- Option B: Run both in parallel temporarily (risky - can cause data corruption if both write)
-- **Recommended**: Shut down VMHOME before mounting on Proxmox to avoid dual-mount issues
+**P2.5: Mount and Verify (On Proxmox)**
+
+```bash
+# Mount the filesystem
+mount -a
+
+# Verify it mounted successfully
+df -h | grep DATA_4TB
+# Should show: UUID=0904cd17... mounted on /mnt/pve/DATA_4TB
+
+# Check contents (should see your existing data)
+ls -la /mnt/pve/DATA_4TB
+
+# Verify you can read files
+ls -la /mnt/pve/DATA_4TB/docker 2>/dev/null || echo "Docker dir not found - may be elsewhere"
+```
+
+**P2.6: Test Reboot Persistence (Optional but Recommended)**
+
+```bash
+# Reboot Proxmox to verify everything comes up automatically
+reboot
+
+# After reboot, verify:
+# 1. iSCSI session reconnects automatically
+iscsiadm -m session
+
+# 2. DATA_4TB mounts automatically
+df -h | grep DATA_4TB
+```
+
+---
+
+**IMPORTANT NOTES:**
+
+- **DO NOT start VMHOME again** until you've completed the LXC migration
+- The iSCSI drive can only be mounted by ONE system at a time
+- If you need to go back to VMHOME, unmount from Proxmox first: `umount /mnt/pve/DATA_4TB`
 
 ### Step P3: Verify All Proxmox Mounts Before Proceeding
 
@@ -193,6 +284,134 @@ df -h
 
 ---
 
+## COMPLETED ✅ (After running commands above)
+
+```
+root@pve:~# df -h
+/dev/sdb                                     2.0T  517G  1.4T  28% /mnt/pve/DATA_4TB
+192.168.20.200:/mnt/ssdpool/library          800G  414G  387G  52% /mnt/pve/NFS_library
+192.168.20.200:/mnt/ssdpool/emulators        100G   55G   46G  55% /mnt/pve/NFS_emulators
+192.168.20.200:/mnt/hddpool/media             10T  5.3T  4.8T  53% /mnt/pve/NFS_media
+
+root@pve:~# iscsiadm -m session
+tcp: [1] 192.168.20.200:3260,1 iqn.2005-10.org.freenas.ctl:proxmox-pve (non-flash)
+```
+
+**Status**: iSCSI auto-login and NFS mounts working, VMHOME (VM 410) stopped.
+
+---
+
+## Impact on Other Profiles (NFS Access)
+
+### NFS Architecture: Direct to TrueNAS ✅
+
+**All profiles connect directly to TrueNAS (192.168.20.200)** - VMHOME was never an NFS gateway.
+
+```
+┌─────────────┐
+│  TrueNAS    │  192.168.20.200
+│  (Storage)  │
+└──────┬──────┘
+       │ NFS exports directly to all clients
+       │
+       ├──────────────► DESK (192.168.8.96)
+       │                  └─ /mnt/NFS_media, /mnt/NFS_library, /mnt/NFS_emulators
+       │
+       ├──────────────► LAPTOP_L15 (192.168.8.92)
+       │                  └─ /mnt/NFS_media, /mnt/NFS_library, /mnt/NFS_emulators
+       │
+       ├──────────────► Proxmox (host)
+       │                  └─ /mnt/pve/NFS_* → bind mount to LXC_HOME
+       │
+       └──────────────► (VMHOME was here - now deprecated)
+```
+
+### Verified NFS Configuration in Profiles
+
+| Profile | NFS Mounts | Target | Status |
+|---------|------------|--------|--------|
+| **DESK** | `/mnt/NFS_media`, `/mnt/NFS_library`, `/mnt/NFS_emulators` | `192.168.20.200` (TrueNAS) | ✅ Correct |
+| **LAPTOP_L15** | `/mnt/NFS_media`, `/mnt/NFS_library`, `/mnt/NFS_emulators` | `192.168.20.200` (TrueNAS) | ✅ Correct |
+| **VMHOME** | Same mounts | `192.168.20.200` (TrueNAS) | 🗑️ Deprecated |
+| **LXC_HOME** | None (bind mounts from Proxmox) | N/A | ✅ No NFS client needed |
+| **DESK_AGA** | NFS disabled | N/A | ✅ No changes |
+| **DESK_VMDESK** | NFS disabled | N/A | ✅ No changes |
+| **LAPTOP_YOGAAKU** | NFS disabled | N/A | ✅ No changes |
+
+### Conclusion: No Profile Changes Required
+
+**All profiles are already correctly configured:**
+- DESK → TrueNAS directly (192.168.20.200) ✅
+- LAPTOP_L15 → TrueNAS directly (192.168.20.200) ✅
+- LXC_HOME → Uses Proxmox bind mounts (no NFS client) ✅
+
+### NFS Server Ports in VMHOME (Can Be Removed)
+
+VMHOME had NFS server ports open (111, 2049, 4000-4002) but was **not acting as an NFS server** for other machines. These ports are **not needed in LXC_HOME**.
+
+The LXC_HOME firewall config should only include:
+- 22 (SSH)
+- 8043 (nginx)
+- 22000, 21027 (syncthing)
+- 8443, 8080, 8843, 8880, 6789 (unifi controller)
+- 3478, 10001, 1900, 5514 (unifi UDP)
+
+---
+
+## LXC_HOME Boot Safety (CRITICAL)
+
+### Why LXC_HOME Won't Hang on Boot
+
+The LXC_HOME configuration is designed to **never hang** waiting for storage:
+
+1. **No NFS Client**: `nfsClientEnable = false`
+   - NixOS won't try to mount NFS inside the container
+   - No systemd mount units waiting for network storage
+
+2. **No drives.nix mounts**: `mount2ndDrives = false`, `disk*_enabled = false`
+   - NixOS won't create any fstab entries for drives
+   - No mount timeouts that could block boot
+
+3. **Bind Mounts from Proxmox**:
+   - Storage is mounted on Proxmox host BEFORE the LXC starts
+   - LXC sees directories that already exist - no waiting
+   - If Proxmox storage fails, LXC won't start (Proxmox handles this)
+
+### Comparison: VMHOME vs LXC_HOME Boot Behavior
+
+| Scenario | VMHOME (old) | LXC_HOME (new) |
+|----------|--------------|---------------|
+| TrueNAS offline | Hangs waiting for NFS (timeout) | Proxmox handles - LXC may not start but won't hang |
+| iSCSI offline | Hangs waiting for device | Proxmox handles - LXC may not start but won't hang |
+| NFS mount fails | systemd retry loop, slow boot | No NFS mounts - instant boot |
+| Network delayed | Waits for network + NFS | Bind mounts already available |
+
+### Proxmox LXC Startup Order
+
+Proxmox ensures proper startup order:
+1. Proxmox boot → iSCSI login (automatic)
+2. Proxmox mounts fstab entries (NFS, iSCSI filesystem)
+3. LXC container starts → bind mounts already available
+
+### Verification: LXC_HOME Config Disables All Remote Mounts
+
+In `LXC_HOME-config.nix` (from Phase 2):
+```nix
+# These settings ensure no boot hangs:
+mount2ndDrives = false;
+disk1_enabled = false;  # /mnt/DATA_4TB handled by Proxmox
+disk3_enabled = false;  # /mnt/NFS_media handled by Proxmox
+disk4_enabled = false;  # /mnt/NFS_emulators handled by Proxmox
+disk5_enabled = false;  # /mnt/NFS_library handled by Proxmox
+nfsClientEnable = false;
+nfsMounts = [];
+nfsAutoMounts = [];
+```
+
+**Result**: NixOS in LXC_HOME has ZERO remote mount dependencies. Boot is instant.
+
+---
+
 ## Migration Impact Analysis
 
 ### What Does NOT Need Migration (Data Already Accessible)
@@ -201,7 +420,7 @@ If your service data is stored on `/mnt/DATA_4TB`, these require **no migration*
 
 | Data | Location | Migration Needed? |
 |------|----------|-------------------|
-| Docker volumes | `/mnt/DATA_4TB/docker/` | ❌ No - same path in LXCHOME |
+| Docker volumes | `/mnt/DATA_4TB/docker/` | ❌ No - same path in LXC_HOME |
 | Nginx configs | `/mnt/DATA_4TB/nginx/` | ❌ No - same path |
 | Unifi data | `/mnt/DATA_4TB/unifi/` | ❌ No - same path |
 | Syncthing data | `/mnt/DATA_4TB/syncthing/` | ❌ No - same path |
@@ -238,7 +457,7 @@ This eliminates Docker image migration entirely.
 
 ### Approach: Extend LXC-base-config.nix
 
-Create `LXCHOME-config.nix` that:
+Create `LXC_HOME-config.nix` that:
 1. Imports `LXC-base-config.nix` as base
 2. Adds VMHOME-specific features via overrides
 3. Does NOT modify shared `LXC-base-config.nix` or `proxmox-lxc/base.nix`
@@ -249,10 +468,150 @@ profiles/
 ├── LXC-base-config.nix          # Unchanged (shared by all LXC)
 ├── LXCtemplate-config.nix       # Unchanged
 ├── LXCplane-config.nix          # Unchanged
-├── LXCHOME-config.nix           # NEW - extends LXC-base for homelab
+├── LXC_HOME-config.nix           # NEW - extends LXC-base for homelab
 └── proxmox-lxc/
     ├── base.nix                 # May need minor conditionals
     └── configuration.nix        # Unchanged
+```
+
+---
+
+## Root Disk Strategy
+
+### VMHOME vs LXC_HOME Root Filesystem
+
+| | VMHOME (VM) | LXC_HOME (LXC) |
+|--|-------------|---------------|
+| **Root disk** | `nixosHomelab-vm--410--disk--0` (500GB) | New LXC rootfs (32GB) |
+| **Type** | Full VM disk (qcow2/raw) | Container filesystem |
+| **Contains** | NixOS system, `/var/lib/docker`, `/home` | NixOS system only |
+| **Reusable?** | ❌ Not directly compatible | ✅ Fresh install |
+
+### Why Create a Fresh LXC Rootfs?
+
+1. **VM disks ≠ LXC rootfs**: LXC uses a different filesystem structure
+2. **NixOS is declarative**: System is rebuilt from config, no migration needed
+3. **Small footprint**: LXC rootfs only needs ~16-32GB for NixOS
+4. **Service data on DATA_4TB**: The important data is on the iSCSI drive, not the root disk
+
+### Docker Data Location (CRITICAL)
+
+Based on `ls /mnt/pve/DATA_4TB`:
+```
+backups/
+myServices/
+Warehouse/
+```
+
+**No `/docker` directory visible** → Docker data is likely on VMHOME's root disk (`/var/lib/docker`).
+
+**Before proceeding, we need to decide:**
+
+| Option | Description | Pros | Cons |
+|--------|-------------|------|------|
+| **A: Migrate Docker data** | Export images, copy volumes to DATA_4TB | Preserves everything | Requires starting VMHOME briefly |
+| **B: Rebuild containers** | Fresh Docker, re-pull images, restore volumes from backups | Clean start | May lose some state |
+| **C: Move Docker root before migration** | Start VMHOME, move `/var/lib/docker` to `/mnt/DATA_4TB/docker`, stop VMHOME | Best for future | Requires VMHOME restart |
+
+**Decision**: Option D - Mount VMHOME disk as secondary and migrate data after LXC is running.
+
+### Option D: Mount VMHOME Disk for Migration (CHOSEN)
+
+Mount the old VMHOME root disk on Proxmox, then bind mount to LXC_HOME for data migration.
+
+**What needs to be migrated from VMHOME root disk:**
+- `/home/akunito/.ssh/` - SSH keys (CRITICAL)
+- `/home/akunito/.config/` - Application configs (syncthing, etc.)
+- Other important files in `/home/akunito/`
+
+**What does NOT need migration:**
+- ✅ Docker volumes - Already on `/mnt/DATA_4TB`
+- ✅ Service data - Already on `/mnt/DATA_4TB/myServices/`
+- ✅ NixOS system - Rebuilt from flake config
+
+**Step D1: Identify VMHOME Disk (On Proxmox)**
+
+```bash
+# The VMHOME disk is an LVM volume
+lvs | grep 410
+
+# Should show something like:
+# vm--410--disk--0  nixosHomelab ...
+```
+
+**Step D2: Mount VMHOME Disk on Proxmox**
+
+```bash
+# Create mount point
+mkdir -p /mnt/vmhome-migration
+
+# Find the correct LVM path
+ls -la /dev/nixosHomelab/ | grep 410
+
+# Mount the disk (read-only for safety)
+# Note: VMHOME might have used LUKS encryption - check first
+lsblk -f /dev/nixosHomelab/vm--410--disk--0
+
+# If NOT encrypted:
+mount -o ro /dev/nixosHomelab/vm--410--disk--0 /mnt/vmhome-migration
+
+# If encrypted (LUKS):
+cryptsetup luksOpen /dev/nixosHomelab/vm--410--disk--0 vmhome-crypt
+mount -o ro /dev/mapper/vmhome-crypt /mnt/vmhome-migration
+
+# Verify contents
+ls -la /mnt/vmhome-migration/
+ls -la /mnt/vmhome-migration/home/akunito/
+```
+
+**Step D3: Add Bind Mount to LXC Config**
+
+After creating the LXC, add temporary bind mount for migration:
+
+```bash
+# Add to /etc/pve/lxc/<VMID>.conf
+mp4: /mnt/vmhome-migration,mp=/mnt/vmhome-old,ro=1
+```
+
+**Step D4: Migrate User Data Inside LXC**
+
+```bash
+# Create target directories if needed
+mkdir -p /home/akunito/.ssh
+mkdir -p /home/akunito/.config
+
+# SSH keys (CRITICAL)
+cp -a /mnt/vmhome-old/home/akunito/.ssh/* /home/akunito/.ssh/
+chmod 700 /home/akunito/.ssh
+chmod 600 /home/akunito/.ssh/id_*
+chown -R akunito:users /home/akunito/.ssh
+
+# Config files (syncthing, restic, etc.)
+cp -a /mnt/vmhome-old/home/akunito/.config/syncthing /home/akunito/.config/ 2>/dev/null
+cp -a /mnt/vmhome-old/home/akunito/.config/restic /home/akunito/.config/ 2>/dev/null
+# Add other .config directories as needed
+
+# Fix ownership
+chown -R akunito:users /home/akunito/.config
+
+# List what else might be important
+ls -la /mnt/vmhome-old/home/akunito/
+```
+
+**Note:** Docker volumes are already on DATA_4TB - no Docker migration needed!
+
+**Step D5: Cleanup After Migration**
+
+```bash
+# Remove temporary bind mount from LXC config
+# Edit /etc/pve/lxc/<VMID>.conf and remove mp4 line
+
+# On Proxmox: unmount
+umount /mnt/vmhome-migration
+cryptsetup luksClose vmhome-crypt  # if encrypted
+
+# Keep VMHOME disk until you're sure everything works!
+# Later: delete VM 410 to free space
 ```
 
 ---
@@ -330,12 +689,12 @@ Only use this if you need different NFS mount options per-container:
 
 ---
 
-## Phase 2: Create LXCHOME-config.nix
+## Phase 2: Create LXC_HOME-config.nix
 
 ### 2.1 New Configuration File
 
 ```nix
-# LXCHOME Profile Configuration
+# LXC_HOME Profile Configuration
 # Homelab services in LXC container
 # Extends LXC-base-config.nix with VMHOME functionality
 
@@ -346,27 +705,27 @@ in
   systemSettings = base.systemSettings // {
     hostname = "lxchome";
     profile = "proxmox-lxc";  # Use LXC profile base
-    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXCHOME -s -u";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_HOME -s -u";
     systemStateVersion = "24.11";
 
     # Network - LXC uses Proxmox-managed networking
     # networkManager handled by proxmox-lxc profile
     resolvedEnable = true;
 
-    # Firewall ports (same as VMHOME)
+    # Firewall ports (cleaned up - no NFS server needed)
     allowedTCPPorts = [
-      22
-      443
+      22        # SSH
+      443       # HTTPS
       8043      # nginx
       22000     # syncthing
-      111 4000 4001 4002 2049  # NFS server (if enabled)
       8443 8080 8843 8880 6789  # unifi controller
     ];
     allowedUDPPorts = [
       22000 21027  # syncthing
-      111 4000 4001 4002  # NFS server (if enabled)
       3478 10001 1900 5514  # unifi controller
     ];
+    # NOTE: NFS server ports (111, 2049, 4000-4002) removed - not needed
+    # All clients connect directly to TrueNAS (192.168.20.200)
 
     # Drives - use bind mounts configured in Proxmox
     # Disable drives.nix mounts (handled by Proxmox mp0, mp1, etc.)
@@ -429,7 +788,7 @@ in
 
 ### 2.2 Update proxmox-lxc/base.nix (Optional Enhancements)
 
-Add conditionals for LXCHOME-specific features without breaking other LXC profiles:
+Add conditionals for LXC_HOME-specific features without breaking other LXC profiles:
 
 ```nix
 # Add to imports (conditional)
@@ -453,7 +812,7 @@ nix.settings.auto-optimise-store = true;
 ### Option A: No NFS Server in LXC (Recommended)
 - Simpler setup
 - Use Proxmox host or TrueNAS for NFS exports
-- LXCHOME is just a client
+- LXC_HOME is just a client
 
 ### Option B: NFS Server in LXC
 - Requires privileged container
@@ -463,7 +822,7 @@ nix.settings.auto-optimise-store = true;
   lxc.apparmor.profile: unconfined
   lxc.cap.drop:
   ```
-- Add `nfsServerEnable = true` to LXCHOME-config.nix
+- Add `nfsServerEnable = true` to LXC_HOME-config.nix
 - Add conditional import in proxmox-lxc/base.nix
 
 ---
@@ -522,7 +881,7 @@ If Docker data-root is already `/mnt/DATA_4TB/docker/`:
 scp -r akunito@vmhome:/home/akunito/.ssh/ /home/akunito/.ssh/
 ```
 
-**On LXCHOME**: Docker will find existing data at same path.
+**On LXC_HOME**: Docker will find existing data at same path.
 
 ### 5.3 Scenario B: Docker Data on VM Root (Migration Required)
 
@@ -533,7 +892,7 @@ If Docker uses default `/var/lib/docker/`:
 # On VMHOME before shutdown
 docker save $(docker images -q) > /mnt/DATA_4TB/docker-images.tar
 
-# On LXCHOME after setup
+# On LXC_HOME after setup
 docker load < /mnt/DATA_4TB/docker-images.tar
 ```
 
@@ -544,7 +903,7 @@ systemctl stop docker
 mv /var/lib/docker /mnt/DATA_4TB/docker
 ```
 
-Then configure LXCHOME to use `/mnt/DATA_4TB/docker` as data-root (see Phase 2).
+Then configure LXC_HOME to use `/mnt/DATA_4TB/docker` as data-root (see Phase 2).
 
 ### 5.4 Copy User-Specific Data
 
@@ -563,7 +922,7 @@ scp -r akunito@vmhome:/home/akunito/.config/syncthing/ /home/akunito/.config/ 2>
 
 ```bash
 # Update pfsense DHCP reservation
-# New LXCHOME will have different MAC address
+# New LXC_HOME will have different MAC address
 # Either:
 # - Keep same IP (192.168.8.80) by updating DHCP reservation
 # - Use new IP during testing, then swap
@@ -581,7 +940,7 @@ scp -r akunito@vmhome:/home/akunito/.config/syncthing/ /home/akunito/.config/ 2>
 | Docker images/volumes | `/var/lib/docker/` (VM) | ⚠️ Export or move to DATA_4TB |
 | docker-compose files | `/mnt/DATA_4TB/` | ✅ Already accessible |
 | docker-compose files | `/home/akunito/` (VM) | ⚠️ Copy to DATA_4TB |
-| SSH keys | `/home/akunito/.ssh/` | 📋 Copy to LXCHOME |
+| SSH keys | `/home/akunito/.ssh/` | 📋 Copy to LXC_HOME |
 | NFS media/library | `/mnt/NFS_*` | ✅ Bind mount from Proxmox |
 | Syncthing data | Check location | Likely on DATA_4TB |
 | Restic repos | Check location | Likely on DATA_4TB |
@@ -591,7 +950,7 @@ scp -r akunito@vmhome:/home/akunito/.config/syncthing/ /home/akunito/.config/ 2>
 ## Phase 6: Testing Checklist
 
 - [ ] LXC container boots successfully
-- [ ] NixOS rebuild works: `nixos-rebuild switch --flake .#LXCHOME`
+- [ ] NixOS rebuild works: `nixos-rebuild switch --flake .#LXC_HOME`
 - [ ] SSH access works
 - [ ] Docker starts and runs containers
 - [ ] Bind mounts accessible (`/mnt/DATA_4TB`, `/mnt/NFS_*`)
@@ -606,16 +965,16 @@ scp -r akunito@vmhome:/home/akunito/.config/syncthing/ /home/akunito/.config/ 2>
 
 | File | Action | Impact |
 |------|--------|--------|
-| `profiles/LXCHOME-config.nix` | CREATE | New file |
+| `profiles/LXC_HOME-config.nix` | CREATE | New file |
 | `profiles/proxmox-lxc/base.nix` | MODIFY (optional) | Add journald, nix optimize |
-| `flake.nix` | MODIFY | Add LXCHOME output |
+| `flake.nix` | MODIFY | Add LXC_HOME output |
 | `LXC-base-config.nix` | NO CHANGE | Preserve for other LXC profiles |
 
 ---
 
 ## Rollback Plan
 
-1. Keep VMHOME running until LXCHOME is fully tested
+1. Keep VMHOME running until LXC_HOME is fully tested
 2. If issues: revert DNS/IP to VMHOME
 3. VMHOME configuration remains unchanged
 
@@ -633,16 +992,16 @@ scp -r akunito@vmhome:/home/akunito/.config/syncthing/ /home/akunito/.config/ 2>
 
 ### Still To Decide ⏳
 
-4. **NFS Server**: Do you need NFS server in LXCHOME, or can TrueNAS handle all exports?
-   - If LXCHOME currently re-exports data to other machines, need to decide if TrueNAS should take over
+4. **NFS Server**: Do you need NFS server in LXC_HOME, or can TrueNAS handle all exports?
+   - If LXC_HOME currently re-exports data to other machines, need to decide if TrueNAS should take over
 
-5. **IP Address**: Keep same IP (192.168.8.80) or new IP for LXCHOME during testing?
+5. **IP Address**: Keep same IP (192.168.8.80) or new IP for LXC_HOME during testing?
    - Same IP: Simpler, but can't run both in parallel
    - New IP: Can test with both running, then swap
 
 6. **Timeline**: Run both in parallel during testing, or hard cutover?
    - Parallel: Safer, but iSCSI drive can only be mounted by one at a time
-   - **Recommendation**: Shut down VMHOME, mount iSCSI on Proxmox, start LXCHOME
+   - **Recommendation**: Shut down VMHOME, mount iSCSI on Proxmox, start LXC_HOME
 
 7. **Docker data-root**: Is Docker currently using `/mnt/DATA_4TB/docker/` or default `/var/lib/docker/`?
    - Check before migration - affects how much data needs to be moved
@@ -651,7 +1010,7 @@ scp -r akunito@vmhome:/home/akunito/.config/syncthing/ /home/akunito/.config/ 2>
 
 ## Estimated Resource Savings (VM → LXC)
 
-| Resource | VMHOME (VM) | LXCHOME (LXC) | Savings |
+| Resource | VMHOME (VM) | LXC_HOME (LXC) | Savings |
 |----------|-------------|---------------|---------|
 | RAM overhead | ~512MB (hypervisor) | ~50MB | ~460MB |
 | Disk (OS) | ~10GB | ~5GB | ~5GB |
@@ -662,31 +1021,35 @@ scp -r akunito@vmhome:/home/akunito/.config/syncthing/ /home/akunito/.config/ 2>
 
 ## Next Steps
 
-### Pre-Migration (On Proxmox Host)
-1. ☐ **Answer remaining questions** (NFS server, IP address, timeline)
-2. ☐ **Verify data locations on VMHOME** - Run Phase 5.1 commands to check Docker data-root
-3. ☐ **Install NFS client on Proxmox** (Step P1.1)
-4. ☐ **Create NFS mount points** (Step P1.2)
-5. ☐ **Test NFS mounts manually** (Step P1.3)
-6. ☐ **Add NFS to Proxmox fstab** (Step P1.4)
-7. ☐ **Shut down VMHOME** (required for iSCSI handover)
-8. ☐ **Configure iSCSI mount on Proxmox** (Step P2.1-P2.3)
-9. ☐ **Verify all Proxmox mounts** (Step P3)
+### Pre-Migration (On Proxmox Host) - COMPLETED ✅
+1. ✅ **Answer remaining questions** (NFS server, IP address, timeline)
+2. ☐ **Verify data locations on VMHOME** - Check Docker data-root (can't check - VM stopped)
+3. ✅ **Install NFS client on Proxmox** (Step P1.1)
+4. ✅ **Create NFS mount points** (Step P1.2)
+5. ✅ **Test NFS mounts manually** (Step P1.3)
+6. ✅ **Add NFS to Proxmox fstab** (Step P1.4)
+7. ✅ **Shut down VMHOME** (VM 410 stopped)
+8. ✅ **Configure iSCSI auto-login** (Step P2.1)
+9. ✅ **Configure iSCSI mount on Proxmox** (Step P2.3-P2.5)
+10. ✅ **Verify all Proxmox mounts** (Step P3) - Confirmed after reboot
+11. ☐ **Verify NFS server question** - Was VMHOME exporting anything via NFS?
 
-### LXC Setup
-10. ☐ **Create LXC container** (Phase 1.1)
-11. ☐ **Configure bind mounts** (Phase 1.2)
-12. ☐ **Verify bind mounts inside LXC** (Phase 1.3)
+### LXC Setup - NEXT
+12. ☐ **Create LXC container** (Phase 1.1)
+13. ☐ **Configure bind mounts** (Phase 1.2)
+14. ☐ **Verify bind mounts inside LXC** (Phase 1.3)
 
 ### NixOS Configuration
-13. ☐ **Create LXCHOME-config.nix** (Phase 2)
-14. ☐ **Add LXCHOME to flake.nix**
-15. ☐ **nixos-rebuild switch --flake .#LXCHOME**
+15. ☐ **Create LXC_HOME-config.nix** (Phase 2)
+16. ☐ **Create flake.LXC_HOME.nix**
+17. ☐ **Add LXC_HOME to flake.nix**
+18. ☐ **nixos-rebuild switch --flake .#LXC_HOME**
 
 ### Data & Testing
-16. ☐ **Copy SSH keys** (Phase 5.4)
-17. ☐ **Run testing checklist** (Phase 6)
-18. ☐ **Update DNS/DHCP** (Phase 5.5)
+19. ☐ **Copy SSH keys** (Phase 5.4)
+20. ☐ **Start Docker services** (verify they find data on /mnt/DATA_4TB)
+21. ☐ **Run testing checklist** (Phase 6)
+22. ☐ **Update DNS/DHCP** (Phase 5.5)
 
 ### Cutover
-19. ☐ **Delete or archive VMHOME** (after successful testing)
+23. ☐ **Delete or archive VMHOME** (after successful testing)
