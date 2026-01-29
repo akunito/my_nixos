@@ -229,6 +229,7 @@
     starCitizenModules = false;
     starcitizenEnable = false;
     protongamesEnable = false;
+    gamemodeEnable = false; # Enable GameMode for performance optimization during gaming
     vivaldiPatch = false;
     sambaEnable = false;
     sunshineEnable = false;
