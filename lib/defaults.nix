@@ -319,6 +319,9 @@
       "pl"
     ];
 
+    # Sway/SwayFX idle configuration
+    swayIdleDisableMonitorPowerOff = false; # Disable monitor power-off timeout (useful for monitors with DPMS wake issues)
+
     # Font defaults - will be computed based on systemStable in flake-base.nix
     # This is just a placeholder
     fonts = [ ];

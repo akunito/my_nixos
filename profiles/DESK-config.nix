@@ -271,6 +271,7 @@ in
     stylixEnable = true; # Enable Stylix for system-wide theming
     swwwEnable = true; # Enable swww wallpaper daemon for Sway (robust across reboot + HM rebuilds)
     swaybgPlusEnable = false; # Disable swaybg+ (using swww instead)
+    swayIdleDisableMonitorPowerOff = true; # Disable monitor power-off (Samsung Odyssey G70NC DPMS wake issue)
 
     # === System Services & Features ===
     sambaEnable = true; # Enable Samba file sharing

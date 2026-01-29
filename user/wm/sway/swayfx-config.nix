@@ -145,21 +145,26 @@ in
   # Timeouts are ABSOLUTE from last user activity, not incremental
   services.swayidle = {
     enable = true;
-    timeouts = [
-      {
-        timeout = 720; # 12 minutes - lock screen (with 4-second grace period)
-        command = "${swaylock-with-grace}/bin/swaylock-with-grace";
-      }
-      {
-        timeout = 900; # 15 minutes - turn off displays (12 + 3)
-        command = "${pkgs.sway}/bin/swaymsg 'output * power off'";
-        resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * power on'";
-      }
-      {
-        timeout = 3600; # 60 minutes - suspend system (1 hour)
-        command = "${pkgs.systemd}/bin/systemctl suspend";
-      }
-    ];
+    timeouts =
+      [
+        {
+          timeout = 720; # 12 minutes - lock screen (with 4-second grace period)
+          command = "${swaylock-with-grace}/bin/swaylock-with-grace";
+        }
+      ]
+      ++ lib.optionals (systemSettings.swayIdleDisableMonitorPowerOff != true) [
+        {
+          timeout = 900; # 15 minutes - turn off displays (12 + 3)
+          command = "${pkgs.sway}/bin/swaymsg 'output * power off'";
+          resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * power on'";
+        }
+      ]
+      ++ [
+        {
+          timeout = 3600; # 60 minutes - suspend system (1 hour)
+          command = "${pkgs.systemd}/bin/systemctl suspend";
+        }
+      ];
     events = [
       {
         event = "before-sleep";
