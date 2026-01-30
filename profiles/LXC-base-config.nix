@@ -54,6 +54,7 @@
         wget
         zsh
         git
+        git-crypt # Required for dotfiles repo encryption
         rclone
         btop
         fzf
