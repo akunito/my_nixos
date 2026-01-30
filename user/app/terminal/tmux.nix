@@ -198,7 +198,7 @@ in
     prefix = "C-o";  # Ctrl+O as prefix
     baseIndex = 1;
     escapeTime = 0;
-    terminal = "tmux-256color";  # Better UTF-8 and true color support
+    terminal = "xterm-256color";  # Better key sequence support (Home/End keys)
     
     plugins = with pkgs.tmuxPlugins; [
       sensible     # Sensible defaults
@@ -421,17 +421,7 @@ in
       
       # SSH session management
       set -g default-command "${pkgs.zsh}/bin/zsh -l"
-
-      # Terminal overrides for true color and Unicode/Nerd Font support
-      set -ga terminal-overrides ",*256col*:Tc"
-      set -ga terminal-overrides ",tmux-256color:Tc"
-      set -ga terminal-overrides ",xterm-kitty:Tc"
-
-      # CRITICAL: Allow passthrough of extended Unicode characters (Nerd Fonts)
-      set -g allow-passthrough on
-
-      # Force UTF-8
-      set -gq status-utf8 on
+      set -ga terminal-overrides ",xterm-256color:Tc"
     '';
   };
 

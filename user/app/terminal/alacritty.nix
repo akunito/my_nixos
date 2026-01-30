@@ -4,8 +4,7 @@ let
   # Wrapper script to auto-start tmux with alacritty session
   # Robust fail-safe strategy: start-server → wait for restore → attach/new-session → shell fallback
   alacritty-tmux = pkgs.writeShellScriptBin "alacritty-tmux" ''
-    # Use -u flag to force UTF-8 mode for Nerd Font icon support
-    TMUX="${pkgs.tmux}/bin/tmux -u"
+    TMUX="${pkgs.tmux}/bin/tmux"
     ZSH="${pkgs.zsh}/bin/zsh"
     DATE="${pkgs.coreutils}/bin/date"
     MKDIR="${pkgs.coreutils}/bin/mkdir"
