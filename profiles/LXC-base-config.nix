@@ -116,6 +116,9 @@
       export TERM=''${TERM:-xterm-256color}
       export COLORTERM=truecolor
 
+      # Explicitly set HOST for zsh %m expansion (LXC containers need this)
+      export HOST=$(hostname)
+
       PROMPT=" ◉ %U%F{cyan}%n%f%u@%U%F{cyan}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "
       RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
