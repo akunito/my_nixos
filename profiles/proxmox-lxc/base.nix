@@ -56,7 +56,11 @@
 
   # Networking
   networking.hostName = systemSettings.hostname;
-  networking.networkmanager.enable = systemSettings.networkManager;
+  # Use NetworkManager unless useNetworkd is enabled (prevents dual DHCP clients)
+  networking.networkmanager.enable = lib.mkIf (!systemSettings.useNetworkd) systemSettings.networkManager;
+  # Enable systemd-networkd when useNetworkd is true
+  networking.useNetworkd = lib.mkDefault systemSettings.useNetworkd;
+  systemd.network.enable = lib.mkDefault systemSettings.useNetworkd;
   networking.defaultGateway = lib.mkIf (
     systemSettings.defaultGateway != null
   ) systemSettings.defaultGateway;

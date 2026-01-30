@@ -21,6 +21,10 @@
 
     # Network
     resolvedEnable = true;
+    # LXC containers rely on Proxmox-managed networking (disable both network managers)
+    # Proxmox handles DHCP at the container level - no internal DHCP clients needed
+    networkManager = false;
+    useNetworkd = false;
 
     # Firewall - web apps ports + standard services
     allowedTCPPorts = [
@@ -76,7 +80,7 @@
     email = "diego88aku@gmail.com";
     dotfilesDir = "/home/akunito/.dotfiles";
     extraGroups = [
-      "networkmanager"
+      # "networkmanager"  # Removed - NetworkManager disabled in LXC
       "wheel"
       "docker"
     ];

@@ -131,7 +131,7 @@ in
     dotfilesDir = "/home/akunito/.dotfiles";
 
     extraGroups = [
-      "networkmanager"
+      # "networkmanager"  # Removed - NetworkManager disabled in LXC
       "wheel"
       "docker"
       "nscd"
