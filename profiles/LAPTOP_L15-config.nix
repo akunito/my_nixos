@@ -151,6 +151,11 @@ in
 
     # Different prompt color for LAPTOP
     zshinitContent = ''
+      # Keybindings for Home/End/Delete keys
+      bindkey '\e[1~' beginning-of-line     # Home key
+      bindkey '\e[4~' end-of-line           # End key
+      bindkey '\e[3~' delete-char           # Delete key
+
       PROMPT=" ◉ %U%F{cyan}%n%f%u@%U%F{cyan}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "
       RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"

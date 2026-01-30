@@ -421,6 +421,15 @@ in
     rpcs3Enable = true; # Enable RPCS3 PS3 emulator
 
     zshinitContent = ''
+      # Keybindings for Home/End/Delete keys
+      bindkey '\e[1~' beginning-of-line     # Home key
+      bindkey '\e[4~' end-of-line           # End key
+      bindkey '\e[3~' delete-char           # Delete key
+      # Ctrl+Arrow word navigation (using $'...' ANSI-C quoting)
+      bindkey ''$'\e[1;5C' forward-word   # Ctrl+Right - move word right
+      bindkey ''$'\e[1;5D' backward-word  # Ctrl+Left - move word left
+      # Note: Ctrl+Up/Down handled by tmux for scrolling
+
       PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "
       RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"

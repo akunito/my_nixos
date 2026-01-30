@@ -170,6 +170,11 @@ in
     userAiPkgsEnable = false; # Disable AI & ML packages
 
     zshinitContent = ''
+      # Keybindings for Home/End/Delete keys
+      bindkey '\e[1~' beginning-of-line     # Home key
+      bindkey '\e[4~' end-of-line           # End key
+      bindkey '\e[3~' delete-char           # Delete key
+
       # Ensure proper terminal type for colors and cursor visibility
       export TERM=''${TERM:-xterm-256color}
       export COLORTERM=truecolor

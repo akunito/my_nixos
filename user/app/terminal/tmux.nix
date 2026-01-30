@@ -198,7 +198,7 @@ in
     prefix = "C-o";  # Ctrl+O as prefix
     baseIndex = 1;
     escapeTime = 0;
-    terminal = "screen-256color";  # 256-color support
+    terminal = "xterm-256color";  # Better key sequence support (Home/End keys)
     
     plugins = with pkgs.tmuxPlugins; [
       sensible     # Sensible defaults
@@ -220,6 +220,9 @@ in
       # Modern copy mode
       bind-key -T copy-mode-vi v send-keys -X begin-selection
       bind-key -T copy-mode-vi r send-keys -X rectangle-toggle
+      # Ctrl+Up/Down scrolling in copy mode
+      bind-key -T copy-mode-vi C-Up send-keys -X scroll-up
+      bind-key -T copy-mode-vi C-Down send-keys -X scroll-down
       
       # ============================================================================
       # BASIC NAVIGATION (with Ctrl+O prefix)
@@ -291,6 +294,9 @@ in
       # Scrolling
       bind -n C-M-d copy-mode
       bind -n C-M-s copy-mode -u
+      # Ctrl+Up/Down for scrolling (enter copy mode and scroll)
+      bind -n C-Up copy-mode \; send-keys -X scroll-up
+      bind -n C-Down copy-mode \; send-keys -X scroll-down
       
       # Copy mode and paste
       bind -n C-M-[ copy-mode
