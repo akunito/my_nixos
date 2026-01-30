@@ -39,6 +39,7 @@
   ++ lib.optional systemSettings.nixvimEnabled ../../user/app/nixvim/nixvim.nix # NixVim (Cursor IDE-like experience)
   ++ lib.optional systemSettings.aichatEnable ../../user/app/ai/aichat.nix # Aichat/OpenRouter support
   ++ lib.optional systemSettings.lmstudioEnabled ../../user/app/lmstudio/lmstudio.nix # LM Studio configuration and MCP server support
+  ++ lib.optional userSettings.starshipEnable ../../user/shell/starship.nix # Starship prompt with Nerd Font symbols
   ;
 
   home.stateVersion = userSettings.homeStateVersion; # Please read the comment before changing.

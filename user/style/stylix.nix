@@ -150,20 +150,19 @@ if systemSettings.stylixEnable == true then
 
     stylix.fonts = {
       monospace = {
-        # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
-        # This matches the fix we applied to Alacritty and Rofi
-        name = "JetBrainsMono Nerd Font";
+        # CRITICAL: Use "JetBrainsMono Nerd Font Mono" (the Mono variant) for terminals
+        # The non-Mono variant is proportional and lacks proper Nerd Font glyph support
+        name = "JetBrainsMono Nerd Font Mono";
         package = pkgs.nerd-fonts.jetbrains-mono;
       };
       serif = {
-        # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
-        name = "JetBrainsMono Nerd Font";
+        # Use JetBrainsMono Nerd Font Mono for consistency across Stylix targets
+        name = "JetBrainsMono Nerd Font Mono";
         package = pkgs.nerd-fonts.jetbrains-mono;
       };
       sansSerif = {
-        # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
-        # This is used by Waybar and other applications
-        name = "JetBrainsMono Nerd Font";
+        # Use JetBrainsMono Nerd Font Mono for consistency (used by Waybar and other apps)
+        name = "JetBrainsMono Nerd Font Mono";
         package = pkgs.nerd-fonts.jetbrains-mono;
       };
       emoji = {
@@ -341,10 +340,11 @@ if systemSettings.stylixEnable == true then
       # CRITICAL: Qt target is now conditionally enabled, so qt5ct config is only generated for Sway, not Plasma 6
     };
     fonts.fontconfig.defaultFonts = {
-      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
-      monospace = [ "JetBrainsMono Nerd Font" ];
-      sansSerif = [ "JetBrainsMono Nerd Font" ];
-      serif = [ "JetBrainsMono Nerd Font" ];
+      # CRITICAL: Use "JetBrainsMono Nerd Font Mono" (the Mono variant) for terminals
+      # Add "Symbols Nerd Font Mono" as fallback for any missing glyphs
+      monospace = [ "JetBrainsMono Nerd Font Mono" "Symbols Nerd Font Mono" ];
+      sansSerif = [ "JetBrainsMono Nerd Font Mono" "Symbols Nerd Font Mono" ];
+      serif = [ "JetBrainsMono Nerd Font Mono" "Symbols Nerd Font Mono" ];
     };
 
     # CRITICAL: qt5ct/qt6ct File Management Strategy

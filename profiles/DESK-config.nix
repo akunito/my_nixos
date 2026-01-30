@@ -3,6 +3,9 @@
 # Note: Package lists will be evaluated in flake-base.nix where pkgs is available
 
 let
+  # Starship enable flag (used in zshinitContent)
+  starshipEnable = true;
+
   monitors = {
     samsungMain = {
       criteria = "Samsung Electric Company Odyssey G70NC H1AK500000";
@@ -391,7 +394,7 @@ in
     spawnBrowser = "vivaldi";
     defaultRoamDir = "Personal.p";
     term = "kitty";
-    font = "Intel One Mono";
+    font = "JetBrainsMono Nerd Font Mono";
     # fontPkg will be set in flake-base.nix based on font name
 
     # Home packages
@@ -420,22 +423,31 @@ in
     dolphinEmulatorPrimehackEnable = true; # Enable Dolphin Emulator with Primehack
     rpcs3Enable = true; # Enable RPCS3 PS3 emulator
 
-    zshinitContent = ''
-      # Keybindings for Home/End/Delete keys
-      bindkey '\e[1~' beginning-of-line     # Home key
-      bindkey '\e[4~' end-of-line           # End key
-      bindkey '\e[3~' delete-char           # Delete key
-      # Ctrl+Arrow word navigation (using $'...' ANSI-C quoting)
-      bindkey ''$'\e[1;5C' forward-word   # Ctrl+Right - move word right
-      bindkey ''$'\e[1;5D' backward-word  # Ctrl+Left - move word left
-      # Note: Ctrl+Up/Down handled by tmux for scrolling
+    # === Shell Customization ===
+    starshipEnable = true; # Enable Starship prompt with Nerd Font symbols
 
-      PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
-      %F{green}→%f "
-      RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
-      [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
+    zshinitContent =
+      # Common keybindings for all shells
+      ''
+        # Keybindings for Home/End/Delete keys
+        bindkey '\e[1~' beginning-of-line     # Home key
+        bindkey '\e[4~' end-of-line           # End key
+        bindkey '\e[3~' delete-char           # Delete key
+        # Ctrl+Arrow word navigation
+        bindkey ''$'\e[1;5C' forward-word   # Ctrl+Right
+        bindkey ''$'\e[1;5D' backward-word  # Ctrl+Left
+      ''
+      # Add custom PROMPT only if Starship is disabled
+      + (if (!starshipEnable) then ''
 
-    '';
+        PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
+        %F{green}→%f "
+        # RPROMPT removed - was causing visual issues with excess spacing
+        [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
+      '' else ''
+        # Starship prompt is enabled - no custom PROMPT needed
+        [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
+      '');
 
     sshExtraConfig = ''
       # sshd.nix -> programs.ssh.extraConfig

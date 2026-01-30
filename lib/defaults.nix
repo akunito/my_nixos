@@ -410,6 +410,9 @@
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
     gamesEnable = false; # Enable gaming packages and tools (Lutris, Bottles, RetroArch, etc.)
 
+    # === Shell Customization ===
+    starshipEnable = false; # Enable Starship cross-shell prompt with Nerd Font symbols
+
     # Git defaults
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";

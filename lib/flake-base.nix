@@ -42,11 +42,13 @@ let
                   then fontsFromConfig
                   else if systemStable
                        then [
-                         tempPkgsStable.nerdfonts
+                         tempPkgsStable.nerd-fonts.jetbrains-mono
+                         tempPkgsStable.nerd-fonts.symbols-only
                          tempPkgsStable.powerline
                        ]
                        else [
                          tempPkgsUnstable.nerd-fonts.jetbrains-mono
+                         tempPkgsUnstable.nerd-fonts.symbols-only
                          tempPkgsUnstable.powerline
                        ];
   
@@ -81,6 +83,8 @@ let
   # Set fontPkg based on font name if not already set
   fontPkgMap = {
     "Intel One Mono" = pkgs.intel-one-mono;
+    "JetBrainsMono Nerd Font" = pkgs.nerd-fonts.jetbrains-mono;
+    "JetBrainsMono Nerd Font Mono" = pkgs.nerd-fonts.jetbrains-mono;
     # Add more font mappings as needed
   };
   userSettingsWithFontPkg = userSettings // {

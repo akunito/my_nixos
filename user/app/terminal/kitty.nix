@@ -5,7 +5,8 @@ let
   # Robust fail-safe strategy: start-server → wait for restore → attach/new-session → shell fallback
   # This ensures the user always gets a working terminal, even if systemd service fails
   kitty-tmux = pkgs.writeShellScriptBin "kitty-tmux" ''
-    TMUX="${pkgs.tmux}/bin/tmux"
+    # Use -u flag to force UTF-8 mode for Nerd Font icon support
+    TMUX="${pkgs.tmux}/bin/tmux -u"
     ZSH="${pkgs.zsh}/bin/zsh"
     DATE="${pkgs.coreutils}/bin/date"
     MKDIR="${pkgs.coreutils}/bin/mkdir"

@@ -19,19 +19,19 @@ in
   stylix.base16Scheme = ./. + themePath;
   stylix.fonts = {
     monospace = {
-      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
-      # This matches the fix we applied to user-level Stylix, Alacritty, and Rofi
-      name = "JetBrainsMono Nerd Font";
+      # CRITICAL: Use "JetBrainsMono Nerd Font Mono" (the Mono variant) for terminals
+      # The non-Mono variant is proportional and lacks proper Nerd Font glyph support
+      name = "JetBrainsMono Nerd Font Mono";
       package = pkgs.nerd-fonts.jetbrains-mono;
     };
     serif = {
-      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
-      name = "JetBrainsMono Nerd Font";
+      # Use JetBrainsMono Nerd Font Mono for consistency across Stylix targets
+      name = "JetBrainsMono Nerd Font Mono";
       package = pkgs.nerd-fonts.jetbrains-mono;
     };
     sansSerif = {
-      # Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
-      name = "JetBrainsMono Nerd Font";
+      # Use JetBrainsMono Nerd Font Mono for consistency (used by system apps)
+      name = "JetBrainsMono Nerd Font Mono";
       package = pkgs.nerd-fonts.jetbrains-mono;
     };
     emoji = {
@@ -56,5 +56,15 @@ in
   # CRITICAL: Do NOT set QT_QPA_PLATFORMTHEME at system level - let user-level control it
   # User-level (Home Manager) sets this via Stylix or home.sessionVariables
   # System-level should only set base variables, not application-specific theming
+
+  # CRITICAL: Override system-level fontconfig defaults
+  # This sets the default monospace font for fc-match and all applications
+  # Without this, NixOS defaults to "Hack" for monospace
+  fonts.fontconfig.defaultFonts = {
+    monospace = [ "JetBrainsMono Nerd Font Mono" "Symbols Nerd Font Mono" ];
+    sansSerif = [ "Noto Sans" "Symbols Nerd Font Mono" ];
+    serif = [ "Noto Serif" "Symbols Nerd Font Mono" ];
+    emoji = [ "Noto Color Emoji" ];
+  };
 
 }
