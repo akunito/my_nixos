@@ -14,14 +14,14 @@
     add_newline = true
     format = "$username$hostname $directory$python$rust$nodejs$golang$java$c$lua$docker_context$nix_shell$git_branch$git_status$fill$cmd_duration$time\n$character"
 
-    # Username - no brackets, bold cyan
+    # Username - bold cyan
     [username]
     show_always = true
     format = "[$user]($style)"
     style_user = "bold cyan"
     style_root = "bold red"
 
-    # Hostname - no brackets, with @ prefix
+    # Hostname - with @ prefix
     [hostname]
     ssh_only = false
     ssh_symbol = "\uf489 "
@@ -29,24 +29,24 @@
     style = "bold cyan"
     disabled = false
 
-    # Directory - bracketed
+    # Directory - just the path
     [directory]
     format = "[$path]($style)[$read_only]($read_only_style) "
-    style = "bold cyan"
+    style = "bold red"
     truncation_length = 3
     truncate_to_repo = true
     read_only = " \uf023"
     read_only_style = "red"
 
-    # Git branch - bracketed with icon U+E0A0
+    # Git branch - with icon U+E0A0
     [git_branch]
     format = "[\ue0a0 $branch]($style) "
-    style = "bold green"
+    style = "bold cyan"
 
     # Git status
     [git_status]
     format = "([$all_status$ahead_behind]($style) )"
-    style = "bold yellow"
+    style = "bold red"
     conflicted = "="
     ahead = "\uf062"
     behind = "\uf063"

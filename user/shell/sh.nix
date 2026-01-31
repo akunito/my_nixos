@@ -34,6 +34,12 @@ let
   };
 in
 {
+  # ============================================================================
+  # STARSHIP PROMPT (controlled by starshipEnable flag)
+  # Import starship module - config is in separate file for modularity
+  # ============================================================================
+  imports = lib.optional userSettings.starshipEnable ./starship.nix;
+
   programs.zsh =
     if (systemSettings.systemStable == false) then
       {
