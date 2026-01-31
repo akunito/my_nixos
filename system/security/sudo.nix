@@ -3,6 +3,7 @@
 {
   security.sudo = {
     enable = systemSettings.sudoEnable;
+    wheelNeedsPassword = systemSettings.wheelNeedsPassword;
     extraRules = lib.mkIf (systemSettings.sudoNOPASSWD == true) [{
       users = [ "${userSettings.username}" ];
       # groups = [ "wheel" ];

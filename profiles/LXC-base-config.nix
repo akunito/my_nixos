@@ -74,29 +74,17 @@
     systemStable = true; # LXC containers use stable for servers
 
     # Passwordless sudo for automated deployments
-    # Overrides defaults.nix to add install.sh, nixos-rebuild, and nix commands
+    # LXC containers use ALL for simplicity - install.sh calls many different sudo commands
+    # (soften.sh, harden.sh, nixos-rebuild, nix, mkdir, test, etc.)
     sudoCommands = [
       {
-        command = "/run/current-system/sw/bin/systemctl suspend";
-        options = [ "NOPASSWD" ];
-      }
-      {
-        command = "/run/current-system/sw/bin/restic";
-        options = [ "NOPASSWD" "SETENV" ];
-      }
-      {
-        command = "/home/akunito/.dotfiles/install.sh";
-        options = [ "NOPASSWD" "SETENV" ];
-      }
-      {
-        command = "/run/current-system/sw/bin/nixos-rebuild";
-        options = [ "NOPASSWD" "SETENV" ];
-      }
-      {
-        command = "/run/current-system/sw/bin/nix";
+        command = "ALL";
         options = [ "NOPASSWD" "SETENV" ];
       }
     ];
+
+    # Make wheel group fully passwordless (needed for sudo -v in install.sh)
+    wheelNeedsPassword = false;
   };
 
   userSettings = {

@@ -10,34 +10,42 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **flake.nix**: Main flake entry point defining inputs and outputs
 - **lib/flake-base.nix**: Base flake module shared by all profiles
 - **lib/defaults.nix**: Default system and user settings
-- **flake.AGA.nix**: Profile-specific flake configuration
-- **flake.AGADESK.nix**: Profile-specific flake configuration
 - **flake.DESK.nix**: Profile-specific flake configuration
 - **flake.HOME.nix**: Profile-specific flake configuration
-- **flake.LAPTOP.nix**: Profile-specific flake configuration
-- **flake.ORIGINAL.nix**: Profile-specific flake configuration
-- **flake.VMDESK.nix**: Profile-specific flake configuration
 - **flake.VMHOME.nix**: Profile-specific flake configuration
 - **flake.WSL.nix**: Profile-specific flake configuration
-- **flake.YOGAAKU.nix**: Profile-specific flake configuration
 - **flake.LXC.nix**: Profile-specific flake configuration
-- **flake.LXCplane.nix**: Profile-specific flake configuration
-- **flake.LXCtemplate.nix**: Profile-specific flake configuration
+- **flake.LXC_template.nix**: Profile-specific flake configuration
+- **flake.LXC_plane.nix**: Profile-specific flake configuration
+- **flake.ORIGINAL.nix**: Profile-specific flake configuration
+- **flake.DESK_AGA.nix**: Profile-specific flake configuration
+- **flake.DESK_VMDESK.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_L15.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_YOGAAKU.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_AGA.nix**: Profile-specific flake configuration
+- **flake.LXC_HOME.nix**: Profile-specific flake configuration
+- **flake.LXC_liftcraftTEST.nix**: Profile-specific flake configuration
+- **flake.LXC_portfolioprod.nix**: Profile-specific flake configuration
+- **flake.LXC_mailer.nix**: Profile-specific flake configuration
 - **flake.nix**: Profile-specific flake configuration
 
 ## Profiles
 
-- **profiles/AGA-config.nix**: AGA Profile Configuration
-- **profiles/AGADESK-config.nix**: AGADESK Profile Configuration
 - **profiles/DESK-config.nix**: DESK Profile Configuration
-- **profiles/LAPTOP-config.nix**: LAPTOP Profile Configuration (nixolaptopaku)
+- **profiles/DESK_AGA-config.nix**: DESK_AGA Profile Configuration (nixosaga)
+- **profiles/DESK_VMDESK-config.nix**: DESK_VMDESK Profile Configuration (nixosdesk)
+- **profiles/LAPTOP_AGA-config.nix**: LAPTOP_AGA Profile Configuration (nixosaga)
+- **profiles/LAPTOP_L15-config.nix**: LAPTOP Profile Configuration (nixolaptopaku)
+- **profiles/LAPTOP_YOGAAKU-config.nix**: YOGAAKU Profile Configuration
 - **profiles/LXC-base-config.nix**: LXC Base Profile Configuration
-- **profiles/LXCplane-config.nix**: LXC Default Profile Configuration
-- **profiles/LXCtemplate-config.nix**: LXC Default Profile Configuration
-- **profiles/VMDESK-config.nix**: VMDESK Profile Configuration
+- **profiles/LXC_HOME-config.nix**: LXC_HOME Profile Configuration
+- **profiles/LXC_liftcraftTEST-config.nix**: LXC liftcraftTEST Profile Configuration
+- **profiles/LXC_mailer-config.nix**: LXC mailer Profile Configuration
+- **profiles/LXC_plane-config.nix**: LXC Default Profile Configuration
+- **profiles/LXC_portfolioprod-config.nix**: LXC portfolioprod Profile Configuration
+- **profiles/LXC_template-config.nix**: LXC Default Profile Configuration
 - **profiles/VMHOME-config.nix**: VMHOME Profile Configuration
 - **profiles/WSL-config.nix**: WSL Profile Configuration
-- **profiles/YOGAAKU-config.nix**: YOGAAKU Profile Configuration
 
 ## System Modules
 
@@ -48,6 +56,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:* `systemSettings.gamemodeEnable == true`
 - **system/app/grafana.nix**: environment.etc."nginx/certs/akunito.org.es.cert".source = /home/akunito/.nginx/nginx-certs/akunito.org.es.crt;
+- **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:* `systemSettings.homelabDockerEnable or false`
 - **system/app/portals.nix**: XDG Desktop Portal Configuration
 - **system/app/prismlauncher.nix**: System module: prismlauncher.nix
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
@@ -91,7 +100,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/hardware/keychron.nix**: Grant access to Keychron keyboards for the Keychron Launcher / VIA
 - **system/hardware/nfs_client.nix**: You need to install pkgs.nfs-utils *Enabled when:* `systemSettings.nfsClientEnable == true`
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
-- **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:* `systemSettings.amdLACTdriverEnable == true`
+- **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:*
+   - `systemSettings.gpuType == "amd"`
+   - `systemSettings.amdLACTdriverEnable == true`
 - **system/hardware/performance.nix**: Consolidated performance optimizations for all profile types *Enabled when:*
    - `desktop-optimized`
    - `battery-focused`
@@ -105,6 +116,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.networkPrinters == true`
    - `systemSettings.sharePrinter == true`
 - **system/hardware/systemd.nix**: Journald limits - prevent disk thrashing and limit log size
+- **system/hardware/thinkpad.nix**: Lenovo Thinkpad hardware optimizations via nixos-hardware
 - **system/hardware/time.nix**: System module: time.nix
 - **system/hardware/xbox.nix**: NOTE you might need to add xpad as Kernel Module on your flake.nix
 
@@ -112,11 +124,17 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **system/hardware-configuration.nix**: Do not modify this file!  It was generated by ‘nixos-generate-config’
 
+### Packages
+
+- **system/packages/system-basic-tools.nix**: === Basic CLI Tools === *Enabled when:* `systemSettings.systemBasicToolsEnable or true`
+- **system/packages/system-network-tools.nix**: === Networking Tools (Advanced) === *Enabled when:* `systemSettings.systemNetworkToolsEnable or false`
+
 ### Security
 
 - **system/security/automount.nix**: System module: automount.nix
 - **system/security/autoupgrade.nix**: ====================== Auto System Update ====================== *Enabled when:*
    - `systemSettings.autoSystemUpdateEnable == true`
+   - `systemSettings.notificationOnFailureEnable or false`
    - `systemSettings.autoUserUpdateEnable == true`
 - **system/security/blocklist.nix**: networking.extraHosts = ''
 - **system/security/fail2ban.nix**: Global settings
@@ -134,10 +152,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/security/sudo.nix**: groups = [ "wheel" ]; *Enabled when:*
    - `systemSettings.sudoNOPASSWD == true`
    - `systemSettings.wrappSudoToDoas == true`
+- **system/security/update-failure-notification.nix**: Email notification service for auto-update failures *Enabled when:* `systemSettings.notificationOnFailureEnable or false`
 
 ### Style
 
-- **system/style/stylix.nix**: Use JetBrainsMono Nerd Font instead of userSettings.font (Intel One Mono) which is not available
+- **system/style/stylix.nix**: CRITICAL: Use "JetBrainsMono Nerd Font Mono" (the Mono variant) for terminals
 
 ### Wm
 
@@ -152,9 +171,13 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true`
    - `userSettings.wm == "plasma6" && !(systemSettings.enableSwayForDESK or false)`
    - `userSettings.wm == "plasma6"`
-   - `(userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.hostname == "nixosaku"`
+   - `(userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.sddmBreezePatchedTheme`
+   - `systemSettings.sddmSetupScript != null`
+   - `(userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.sddmSetupScript != null`
    - `systemSettings.hostname == "nixosaku"`
-- **system/wm/sway.nix**: Import shared dependencies *Enabled when:* `userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true`
+- **system/wm/sway.nix**: Import shared dependencies *Enabled when:*
+   - `userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true`
+   - `(userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) && systemSettings.gpuType == "amd"`
 - **system/wm/wayland.nix**: environment.systemPackages = with pkgs;
 - **system/wm/x11.nix**: Configure X11
 - **system/wm/xmonad.nix**: import X11 config
@@ -170,6 +193,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/qute-containers.nix**: User module: qute-containers.nix
 - **user/app/browser/qutebrowser.nix**: bindings from doom emacs
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
+- **user/app/development/development.nix**: Development tools and IDEs
 - **user/app/dmenu-scripts/networkmanager-dmenu.nix**: gui_if_available = <True or False> (Default: True)
 - **user/app/doom-emacs/doom.nix**: This block from https://github.com/znewman01/dotfiles/blob/be9f3a24c517a4ff345f213bf1cf7633713c9278/emacs/default.nix#L12-L34
 - **user/app/file-manager/file-manager.nix**: File manager configuration module
@@ -206,6 +230,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/lang/python/python.nix**: Python setup
 - **user/lang/rust/rust.nix**: Rust setup
 
+### Packages
+
+- **user/packages/user-ai-pkgs.nix**: === AI & Machine Learning === *Enabled when:* `userSettings.userAiPkgsEnable or false`
+- **user/packages/user-basic-pkgs.nix**: === Basic User Packages === *Enabled when:* `userSettings.userBasicPkgsEnable or true`
+
 ### Pkgs
 
 - **user/pkgs/pokemon-colorscripts.nix**: User module: pokemon-colorscripts.nix
@@ -217,6 +246,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **user/shell/cli-collection.nix**: Collection of useful CLI apps
 - **user/shell/sh.nix**: Basic aliases that don't depend on external packages
+- **user/shell/starship.nix**: Write starship.toml directly with proper Unicode escapes for Nerd Font icons
 
 ### Style
 
@@ -259,9 +289,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Future
 
 - **docs/future/README.md**: This directory contains temporary documentation for planning, analysis, design ideas, recommendations, bug fixes, and other topics that are under consideration and may be deleted after implementati...
+- **docs/future/aga-to-laptop-base-migration-plan.md**: This document outlines the plan to migrate AGA from a standalone profile under Personal Profile to inherit from LAPTOP-base.nix, following the same pattern as LAPTOP_L15 and LAPTOP_YOGAAKU.
+- **docs/future/agadesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate AGADESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as LAPTOP profiles inherit from LAPTO...
 - **docs/future/debug-instrumentation-analysis.md**: **Date**: 2026-01-XX
 - **docs/future/debug-instrumentation-removal-plan.md**: **Date**: 2026-01-XX
 - **docs/future/desk-to-laptop-migration-improved.md**: **Status: IMPLEMENTED** (2026-01-28)
+- **docs/future/desk-vs-laptop-packages.md**: Complete package and feature comparison between DESK and LAPTOP_L15 profiles
 - **docs/future/fix-home-manager-deprecated-install-warning.md**: During home-manager activation, you see this warning:
 - **docs/future/fix-mnt-ext-mount-error.md**: The error occurs during NixOS configuration switch when systemd tries to stop `mnt-EXT.mount` from the previous generation, but the unit doesn't exist in the new generation (because we disabled dis...
 - **docs/future/flake-refactoring-migration.md**: The flake profile refactoring has been successfully implemented to eliminate code duplication across multiple `flake.*.nix` files. The new structure reduces each profile file from ~750 lines to ~30...
@@ -270,14 +303,22 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/improvements-implemented.md**: **Date**: 2025-01-XX
 - **docs/future/improvements-summary.md**: **Date**: 2025-01-XX
 - **docs/future/incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08.md**: Waybar delayed 2–4 minutes after fast relog in Sway due to xdg-desktop-portal-gtk failures + systemd start-limit lockout; fixed via portal-gtk drop-in (UnsetEnvironment=DISPLAY + no start-limit + restart).
+- **docs/future/lxc-shell-improvements-implementation.md**: **Date:** 2026-01-29
+- **docs/future/lxc-shell-improvements.md**: **Created:** 2026-01-29
 - **docs/future/migration-verification-results.md**: **Date**: 2025-01-02
+- **docs/future/phoenix-to-aku-rename-plan.md**: This document outlines the plan to replace all "phoenix" command references with "aku" throughout the dotfiles repository. The rename affects 33 files with 128 total occurrences.
+- **docs/future/profile-comparison-desk-laptop-analysis.md**: This document provides a comprehensive analysis of the differences between three key profiles in the NixOS configuration hierarchy:
 - **docs/future/profile-migration-status.md**: **Date**: 2025-01-02
 - **docs/future/router-drift-audit-2026-01-08.md**: Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system).
 - **docs/future/sov-crash-analysis.md**: **Date**: 2026-01-07
 - **docs/future/sov-dependency-analysis.md**: **Date**: 2026-01-07
+- **docs/future/stylix-verification-and-fix.md**: Verified that **all Stylix configurations are properly controlled by the `stylixEnable` flag**. Found one issue: **DESK_AGA** should disable Stylix but currently inherits it enabled from DESK.
 - **docs/future/sway-daemon-relog-notes-2026-01-08.md**: This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
+- **docs/future/syncthing-nextcloud-integration.md**: The Syncthing to Nextcloud integration was not working. Files synced from phones via Syncthing were not appearing in Nextcloud's web interface or mobile apps.
+- **docs/future/terraform-proxmox-integration-plan.md**: **Created:** 2026-01-29
+- **docs/future/vmdesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate VMDESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as DESK_AGA.
 - **docs/future/vmhome-migration-test.md**: **Date**: 2025-01-XX
-- **docs/future/vmhome-to-lxc-migration-plan.md**: Migrate the VMHOME VM to an LXC container (`LXCHOME`) while preserving all functionality (Docker, NFS, services) and optimizing for LXC. Must not impact existing `LXC*-config.nix` profiles.
+- **docs/future/vmhome-to-lxc-migration-plan.md**: Migrate the VMHOME VM to an LXC container (`LXC_HOME`) while preserving all functionality (Docker, NFS, services) and optimizing for LXC. Must not impact existing `LXC*-config.nix` profiles.
 - **docs/future/waybar-drawer-and-idle-toggle.md**: Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX.
 - **docs/future/waybar-sov-debug-analysis.md**: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).
 
@@ -301,6 +342,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/hardware.md**: Complete guide to hardware-specific configurations and optimizations.
 - **docs/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
 - **docs/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
+- **docs/lxc-deployment.md**: Centralized deployment script for managing multiple LXC containers
 - **docs/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
 - **docs/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
 - **docs/nix-quote-escaping.md**: Guide to properly escaping quotes and special characters in Nix strings to avoid common syntax errors.

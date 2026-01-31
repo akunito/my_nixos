@@ -23,26 +23,26 @@ SERVERS=(
 
 DOTFILES_DIR="/home/akunito/.dotfiles"
 SSH_USER="akunito"
-SSH_OPTS="-o ConnectTimeout=10 -o BatchMode=yes"
+SSH_OPTS="-A -o ConnectTimeout=10 -o BatchMode=yes"
 
 # === Colors and Icons ===
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-DIM='\033[2m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[0;33m'
+BLUE=$'\033[0;34m'
+CYAN=$'\033[0;36m'
+DIM=$'\033[2m'
+BOLD=$'\033[1m'
+NC=$'\033[0m' # No Color
 
-# Nerd Font icons (fallback to ASCII if not available)
-ICON_SERVER=""
-ICON_CHECK=""
-ICON_EMPTY=""
-ICON_SYNC=""
-ICON_SUCCESS=""
-ICON_FAIL=""
-ICON_GIT=""
+# Icons (using widely supported unicode)
+ICON_SERVER="■"
+ICON_CHECK="[x]"
+ICON_EMPTY="[ ]"
+ICON_SYNC="⟳"
+ICON_SUCCESS="✓"
+ICON_FAIL="✗"
+ICON_GIT="⎇"
 ICON_ARROW=">"
 
 # === State ===
@@ -96,16 +96,14 @@ count_selected() {
 
 print_header() {
   clear
-  echo -e "${CYAN}${BOLD}"
-  echo "+-----------------------------------------+"
+  echo "${CYAN}${BOLD}+-----------------------------------------+"
   echo "|   ${ICON_SERVER} LXC Deploy Manager                   |"
-  echo "+-----------------------------------------+"
-  echo -e "${NC}"
+  echo "+-----------------------------------------+${NC}"
   echo ""
 }
 
 print_menu() {
-  echo -e "  ${DIM}Select servers to deploy (Space=toggle, Enter=deploy):${NC}"
+  echo "  ${DIM}Select servers to deploy (Space=toggle, Enter=deploy):${NC}"
   echo ""
 
   for i in "${!SERVERS[@]}"; do
@@ -115,13 +113,11 @@ print_menu() {
     local desc=$(get_desc "$server")
 
     local prefix="  "
-    local color=""
     local checkbox=""
 
     # Current selection cursor
     if [[ $i -eq $CURRENT_INDEX ]]; then
       prefix="${CYAN}${ICON_ARROW} ${NC}"
-      color="${CYAN}"
     fi
 
     # Checkbox state
@@ -131,12 +127,12 @@ print_menu() {
       checkbox="${DIM}${ICON_EMPTY}${NC}"
     fi
 
-    printf "  %s %b %-20s ${DIM}%-15s${NC} %s\n" \
-      "$prefix" "$checkbox" "$profile" "$ip" "$desc"
+    # Print the line - all colors are already expanded in variables
+    echo "  ${prefix} ${checkbox} $(printf '%-20s' "$profile") ${DIM}$(printf '%-15s' "$ip")${NC} $desc"
   done
 
   echo ""
-  echo -e "  ${DIM}[a] Select all  [n] Select none  [q] Quit${NC}"
+  echo "  ${DIM}[a] Select all  [n] Select none  [q] Quit${NC}"
   echo ""
 }
 
@@ -153,42 +149,42 @@ deploy_server() {
   local desc=$3
 
   echo ""
-  echo -e "${CYAN}${BOLD}${ICON_SYNC} Deploying ${profile} (${ip})...${NC}"
-  echo -e "${DIM}   ${desc}${NC}"
+  echo "${CYAN}${BOLD}${ICON_SYNC} Deploying ${profile} (${ip})...${NC}"
+  echo "${DIM}   ${desc}${NC}"
   echo ""
 
   # Check SSH connection
-  echo -e "   ${ICON_ARROW} Checking SSH connection..."
+  echo "   ${ICON_ARROW} Checking SSH connection..."
   if ! check_ssh_connection "$ip"; then
-    echo -e "   ${RED}${ICON_FAIL} Cannot connect to ${ip}${NC}"
+    echo "   ${RED}${ICON_FAIL} Cannot connect to ${ip}${NC}"
     return 1
   fi
-  echo -e "   ${GREEN}${ICON_SUCCESS} SSH connection OK${NC}"
+  echo "   ${GREEN}${ICON_SUCCESS} SSH connection OK${NC}"
 
   # Git fetch
-  echo -e "   ${ICON_GIT} Fetching latest changes..."
+  echo "   ${ICON_GIT} Fetching latest changes..."
   if ! ssh $SSH_OPTS "${SSH_USER}@${ip}" "cd ${DOTFILES_DIR} && git fetch origin" 2>&1; then
-    echo -e "   ${RED}${ICON_FAIL} Git fetch failed${NC}"
+    echo "   ${RED}${ICON_FAIL} Git fetch failed${NC}"
     return 1
   fi
-  echo -e "   ${GREEN}${ICON_SUCCESS} Git fetch complete${NC}"
+  echo "   ${GREEN}${ICON_SUCCESS} Git fetch complete${NC}"
 
   # Git reset
-  echo -e "   ${ICON_GIT} Resetting to origin/main..."
+  echo "   ${ICON_GIT} Resetting to origin/main..."
   if ! ssh $SSH_OPTS "${SSH_USER}@${ip}" "cd ${DOTFILES_DIR} && git reset --hard origin/main" 2>&1; then
-    echo -e "   ${RED}${ICON_FAIL} Git reset failed${NC}"
+    echo "   ${RED}${ICON_FAIL} Git reset failed${NC}"
     return 1
   fi
-  echo -e "   ${GREEN}${ICON_SUCCESS} Git reset complete${NC}"
+  echo "   ${GREEN}${ICON_SUCCESS} Git reset complete${NC}"
 
-  # Run install.sh
-  echo -e "   ${ICON_SYNC} Running install.sh..."
-  echo -e "   ${DIM}(This may take a while...)${NC}"
-  if ! ssh $SSH_OPTS -t "${SSH_USER}@${ip}" "cd ${DOTFILES_DIR} && sudo ./install.sh ${DOTFILES_DIR} ${profile} -s -u -q" 2>&1; then
-    echo -e "   ${RED}${ICON_FAIL} install.sh failed${NC}"
+  # Run install.sh (don't wrap in sudo - script uses sudo internally where needed)
+  echo "   ${ICON_SYNC} Running install.sh..."
+  echo "   ${DIM}(This may take a while...)${NC}"
+  if ! ssh $SSH_OPTS -t "${SSH_USER}@${ip}" "cd ${DOTFILES_DIR} && ./install.sh ${DOTFILES_DIR} ${profile} -s -u -q" 2>&1; then
+    echo "   ${RED}${ICON_FAIL} install.sh failed${NC}"
     return 1
   fi
-  echo -e "   ${GREEN}${ICON_SUCCESS} Deployment complete${NC}"
+  echo "   ${GREEN}${ICON_SUCCESS} Deployment complete${NC}"
 
   return 0
 }
@@ -197,12 +193,12 @@ run_deployments() {
   local selected_count=$(count_selected)
 
   if [[ $selected_count -eq 0 ]]; then
-    echo -e "${YELLOW}No servers selected. Nothing to deploy.${NC}"
+    echo "${YELLOW}No servers selected. Nothing to deploy.${NC}"
     return
   fi
 
   echo ""
-  echo -e "${CYAN}${BOLD}Starting deployment to ${selected_count} server(s)...${NC}"
+  echo "${CYAN}${BOLD}Starting deployment to ${selected_count} server(s)...${NC}"
   echo ""
 
   RESULTS=()
@@ -228,17 +224,17 @@ run_deployments() {
 
   # Print summary
   echo ""
-  echo -e "${CYAN}${BOLD}+-----------------------------------------+${NC}"
-  echo -e "${CYAN}${BOLD}|              Deployment Summary         |${NC}"
-  echo -e "${CYAN}${BOLD}+-----------------------------------------+${NC}"
+  echo "${CYAN}${BOLD}+-----------------------------------------+${NC}"
+  echo "${CYAN}${BOLD}|              Deployment Summary         |${NC}"
+  echo "${CYAN}${BOLD}+-----------------------------------------+${NC}"
   echo ""
 
   for result in "${RESULTS[@]}"; do
-    echo -e "  $result"
+    echo "  $result"
   done
 
   echo ""
-  echo -e "  ${GREEN}Successful: ${success_count}${NC}  ${RED}Failed: ${fail_count}${NC}"
+  echo "  ${GREEN}Successful: ${success_count}${NC}  ${RED}Failed: ${fail_count}${NC}"
   echo ""
 }
 
@@ -246,11 +242,11 @@ run_deployments() {
 
 read_key() {
   local key
-  IFS= read -rsn1 key 2>/dev/null
+  IFS= read -rsn1 key 2>/dev/null || true
 
   # Handle escape sequences (arrow keys)
   if [[ $key == $'\x1b' ]]; then
-    read -rsn2 -t 0.1 key 2>/dev/null
+    read -rsn2 -t 0.1 key 2>/dev/null || true
     case "$key" in
       '[A') echo "UP" ;;
       '[B') echo "DOWN" ;;
@@ -266,6 +262,9 @@ read_key() {
 }
 
 run_interactive() {
+  # Disable strict mode for interactive menu (read commands return non-zero on timeouts/escapes)
+  set +e
+
   init_selection
 
   # Hide cursor
@@ -298,7 +297,7 @@ run_interactive() {
         # Restore cursor before deployment
         tput cnorm 2>/dev/null || true
         run_deployments
-        echo -e "${DIM}Press any key to continue...${NC}"
+        echo "${DIM}Press any key to continue...${NC}"
         read -rsn1
         # Hide cursor again for menu
         tput civis 2>/dev/null || true
@@ -311,7 +310,7 @@ run_interactive() {
         ;;
       q|Q)
         tput cnorm 2>/dev/null || true
-        echo -e "${DIM}Goodbye!${NC}"
+        echo "${DIM}Goodbye!${NC}"
         exit 0
         ;;
     esac

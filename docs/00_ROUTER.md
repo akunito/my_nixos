@@ -6,6 +6,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
+| desk-vs-laptop-packages | Complete package and feature comparison between DESK and LAPTOP_L15 profiles | packages, profiles, comparison, DESK, LAPTOP | docs/future/desk-vs-laptop-packages.md |
 | docs.agent-context | How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md + Claude Code) and a reusable template for other projects. | cursor, claude-code, agents, docs, routing, rules | docs/00_ROUTER.md |
 | docs.navigation | User guide for navigating this repository's documentation using the Router and Catalog system. | docs, navigation, router, catalog, user-guide | docs/00_ROUTER.md |
 | docs.nix-quote-escaping | Guide to properly escaping quotes and special characters in Nix strings to avoid common syntax errors. | nix, nixos, home-manager, syntax, escaping, quotes, strings, troubleshooting | docs/nix-quote-escaping.md |
@@ -17,6 +18,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | future.waybar-sov-debug-analysis-2026-01-07 | Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical). | waybar, sov, sway, swayfx, debug, incident, deprecated, daemon-manager | user/wm/sway/** |
 | keybindings.mouse-button-mapping | Quick guide to mapping mouse side buttons to modifier keys using keyd. | keyd, mouse, keybindings, modifiers | system/wm/keyd.nix |
 | keybindings.sway | SwayFX keybindings reference, including unified rofi launcher and window overview. | sway, swayfx, keybindings, rofi, wayland | user/wm/sway/swayfx-config.nix |
+| lxc-deployment | Centralized deployment script for managing multiple LXC containers | lxc, deployment, automation, proxmox, containers | deploy-lxc.sh |
 | user-modules.doom-emacs | Doom Emacs user module and config layout, including Stylix theme templates and profile integration. | emacs, doom-emacs, editor, stylix, user-modules | user/app/doom-emacs/** |
 | user-modules.gaming | Implementation details for Gaming on NixOS, covering Lutris/Bottles wrappers, Vulkan/RDNA 4 driver fixes, and Wine troubleshooting. | gaming, lutris, bottles, wine, vulkan, amd, rdna4, wrappers, antimicrox, controllers | user/app/games/games.nix |
 | user-modules.lmstudio | LM Studio user module, including MCP server setup templates and web-search tooling integration guidance. | lmstudio, mcp, ai, user-modules | user/app/lmstudio/** |

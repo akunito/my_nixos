@@ -35,6 +35,7 @@
     DOASnoPass = false;
     wrappSudoToDoas = false;
     sudoNOPASSWD = true;
+    wheelNeedsPassword = true; # Set to false for fully passwordless sudo (including sudo -v)
     # Sudo timestamp timeout (minutes). When set, applies as:
     #   Defaults:<user> timestamp_timeout=<minutes>
     # Keep null to use system default.

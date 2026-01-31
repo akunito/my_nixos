@@ -147,9 +147,10 @@ Headless server configurations:
 - **VMHOME** - Homelab server (Docker, NFS, no GUI)
 
 #### Container Profiles
-LXC containers for Proxmox:
-- **LXC-base-config.nix** - Common container settings
-- **LXC_plane**, **LXC_template** - Specific services
+LXC containers for Proxmox with centralized deployment:
+- **LXC-base-config.nix** - Common container settings (passwordless sudo, Docker, SSH)
+- **LXC_HOME**, **LXC_plane**, **LXC_portfolioprod**, **LXC_mailer**, **LXC_liftcraftTEST** - Production services
+- **Centralized deployment** via `deploy-lxc.sh` interactive script
 
 #### Specialized Profiles
 - **WSL** - Windows Subsystem for Linux minimal setup
@@ -202,6 +203,29 @@ aku gc        # Interactive selection
 aku gc 30d    # Delete >30 days old
 aku gc full   # Delete everything unused
 ```
+
+### LXC Container Deployment
+
+Deploy NixOS configurations to multiple Proxmox LXC containers from a single command:
+
+```bash
+# Interactive menu - select containers with arrow keys
+./deploy-lxc.sh
+
+# Deploy to all containers at once
+./deploy-lxc.sh --all
+
+# Deploy to specific containers
+./deploy-lxc.sh --profile LXC_HOME --profile LXC_plane
+```
+
+**Interactive Controls:**
+- `↑/↓` Navigate servers
+- `Space` Toggle selection
+- `Enter` Deploy to selected
+- `a` Select all | `n` Deselect all | `q` Quit
+
+The script automatically syncs each container with the main branch and runs the install script with passwordless sudo. See [docs/lxc-deployment.md](docs/lxc-deployment.md) for full documentation.
 
 ## 📋 Configuration Examples
 
@@ -465,6 +489,7 @@ This repository uses a **Router + Catalog** system:
 - **QEMU/KVM Virtualization** - Full VM support with bridged networking
 - **Automated Backups** - Restic-based with SystemD timers
 - **Power Management** - Profile-specific TLP configurations
+- **LXC Centralized Deployment** - Deploy to multiple containers with one command
 
 ### Development Tools
 - **NixVim** - Neovim configured like Cursor IDE
@@ -544,6 +569,7 @@ Forked from [Librephoenix's NixOS configuration](https://github.com/librephoenix
 - **[Patches Guide](docs/patches.md)** - Nixpkgs patches
 
 ### Specific Topics
+- **[LXC Deployment](docs/lxc-deployment.md)** - Centralized container deployment
 - **[LUKS Encryption](docs/security/luks-encryption.md)** - Encrypted drives with remote unlock
 - **[Restic Backups](docs/security/restic-backups.md)** - Automated backup configuration
 - **[CPU Power Management](docs/hardware/cpu-power-management.md)** - Governors and performance
