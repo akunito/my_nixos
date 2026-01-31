@@ -169,8 +169,8 @@ in
     userBasicPkgsEnable = false; # Disable user packages (headless server)
     userAiPkgsEnable = false; # Disable AI & ML packages
 
-    # === Shell Features ===
-    starshipEnable = true; # Enable Starship prompt with Nerd Font symbols
+    # === Shell Customization ===
+    starshipHostStyle = "bold red"; # Red for LXC_HOME
 
     zshinitContent = ''
       # Keybindings for Home/End/Delete keys

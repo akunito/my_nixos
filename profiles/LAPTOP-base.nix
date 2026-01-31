@@ -93,6 +93,9 @@
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";
 
+    # === Shell Customization ===
+    starshipHostStyle = "bold green"; # Green for LAPTOP profiles
+
     zshinitContent = ''
       # Keybindings for Home/End/Delete keys
       bindkey '\e[1~' beginning-of-line     # Home key

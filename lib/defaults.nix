@@ -411,7 +411,8 @@
     gamesEnable = false; # Enable gaming packages and tools (Lutris, Bottles, RetroArch, etc.)
 
     # === Shell Customization ===
-    starshipEnable = false; # Enable Starship cross-shell prompt with Nerd Font symbols
+    starshipEnable = true; # Enable Starship cross-shell prompt with Nerd Font symbols
+    starshipHostStyle = "bold white"; # Color for username@hostname in starship prompt (per-profile customization)
 
     # Git defaults
     gitUser = "akunito";

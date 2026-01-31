@@ -9,24 +9,25 @@
 
   # Write starship.toml directly with proper Unicode escapes for Nerd Font icons
   # This avoids issues with Nix string handling of Unicode characters
+  # Uses userSettings.starshipHostStyle for per-profile username/hostname color
   xdg.configFile."starship.toml".text = ''
     "$schema" = "https://starship.rs/config-schema.json"
     add_newline = true
     format = "$username$hostname $directory$python$rust$nodejs$golang$java$c$lua$docker_context$nix_shell$git_branch$git_status$fill$cmd_duration$time\n$character"
 
-    # Username - bold cyan
+    # Username - style from userSettings.starshipHostStyle
     [username]
     show_always = true
     format = "[$user]($style)"
-    style_user = "bold cyan"
+    style_user = "${userSettings.starshipHostStyle}"
     style_root = "bold red"
 
-    # Hostname - with @ prefix
+    # Hostname - style from userSettings.starshipHostStyle
     [hostname]
     ssh_only = false
     ssh_symbol = "\uf489 "
     format = "[@$hostname]($style)"
-    style = "bold cyan"
+    style = "${userSettings.starshipHostStyle}"
     disabled = false
 
     # Directory - just the path

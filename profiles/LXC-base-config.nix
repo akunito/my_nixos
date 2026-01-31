@@ -106,6 +106,9 @@
       pkgs-unstable.claude-code
     ];
 
+    # === Shell Customization ===
+    starshipHostStyle = "bold #FFA500"; # Orange for LXC containers
+
     zshinitContent = ''
       # Keybindings for Home/End/Delete keys
       bindkey '\e[1~' beginning-of-line     # Home key

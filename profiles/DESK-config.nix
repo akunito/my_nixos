@@ -424,7 +424,8 @@ in
     rpcs3Enable = true; # Enable RPCS3 PS3 emulator
 
     # === Shell Customization ===
-    starshipEnable = true; # Enable Starship prompt with Nerd Font symbols
+    # starshipEnable = true is now the default in lib/defaults.nix
+    starshipHostStyle = "bold cyan"; # Cyan for DESK
 
     zshinitContent =
       # Common keybindings for all shells
