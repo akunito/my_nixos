@@ -169,6 +169,9 @@ in
     userBasicPkgsEnable = false; # Disable user packages (headless server)
     userAiPkgsEnable = false; # Disable AI & ML packages
 
+    # === Shell Features ===
+    starshipEnable = true; # Enable Starship prompt with Nerd Font symbols
+
     zshinitContent = ''
       # Keybindings for Home/End/Delete keys
       bindkey '\e[1~' beginning-of-line     # Home key
