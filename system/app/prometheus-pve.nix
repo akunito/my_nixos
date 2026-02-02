@@ -23,32 +23,35 @@ let
 in
 lib.mkIf (systemSettings.prometheusPveExporterEnable or false) {
   # PVE Exporter runs as a systemd service
+  # Uses environment variables for authentication (more secure than config file)
   systemd.services.prometheus-pve-exporter = {
     description = "Prometheus PVE Exporter";
     wantedBy = [ "multi-user.target" ];
     after = [ "network.target" ];
+    environment = {
+      PVE_USER = pveUser;
+      PVE_TOKEN_NAME = pveTokenName;
+      PVE_VERIFY_SSL = "false";
+    };
     serviceConfig = {
       Type = "simple";
-      ExecStart = "${pkgs.prometheus-pve-exporter}/bin/pve_exporter /etc/prometheus-pve-exporter/pve.yml";
+      ExecStart = "${pkgs.prometheus-pve-exporter}/bin/pve_exporter --config.file /etc/prometheus-pve-exporter/pve.yml";
       Restart = "always";
       RestartSec = "10s";
       User = "prometheus";
       Group = "prometheus";
+      # Load token from file as environment variable
+      EnvironmentFile = pveTokenFile;
     };
   };
 
   # Note: prometheus user/group is already created by services.prometheus module
 
-  # Configuration file (token read at runtime from file)
+  # Minimal config file (auth via environment variables)
   environment.etc."prometheus-pve-exporter/pve.yml" = {
-    mode = "0640";
-    user = "prometheus";
-    group = "prometheus";
+    mode = "0644";
     text = ''
       default:
-        user: ${pveUser}
-        token_name: ${pveTokenName}
-        token_value: "@${pveTokenFile}"
         verify_ssl: false
     '';
   };
