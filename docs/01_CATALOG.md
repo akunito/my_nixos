@@ -28,6 +28,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **flake.LXC_portfolioprod.nix**: Profile-specific flake configuration
 - **flake.LXC_mailer.nix**: Profile-specific flake configuration
 - **flake.nix**: Profile-specific flake configuration
+- **flake.LXC_monitoring.nix**: Profile-specific flake configuration
 
 ## Profiles
 
@@ -41,6 +42,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/LXC_HOME-config.nix**: LXC_HOME Profile Configuration
 - **profiles/LXC_liftcraftTEST-config.nix**: LXC liftcraftTEST Profile Configuration
 - **profiles/LXC_mailer-config.nix**: LXC mailer Profile Configuration
+- **profiles/LXC_monitoring-config.nix**: LXC_monitoring Profile Configuration
 - **profiles/LXC_plane-config.nix**: LXC Default Profile Configuration
 - **profiles/LXC_portfolioprod-config.nix**: LXC portfolioprod Profile Configuration
 - **profiles/LXC_template-config.nix**: LXC Default Profile Configuration
@@ -55,10 +57,13 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/docker.nix**: Allow dockerd to be restarted without affecting running container. *Enabled when:* `userSettings.dockerEnable == true`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:* `systemSettings.gamemodeEnable == true`
-- **system/app/grafana.nix**: environment.etc."nginx/certs/akunito.org.es.cert".source = /home/akunito/.nginx/nginx-certs/akunito.org.es.crt;
+- **system/app/grafana.nix**: Grafana & Prometheus Monitoring Stack
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:* `systemSettings.homelabDockerEnable or false`
 - **system/app/portals.nix**: XDG Desktop Portal Configuration
 - **system/app/prismlauncher.nix**: System module: prismlauncher.nix
+- **system/app/prometheus-exporters.nix**: Prometheus Exporters Module *Enabled when:*
+   - `systemSettings.prometheusExporterEnable or false`
+   - `systemSettings.prometheusExporterCadvisorEnable or false`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
 - **system/app/samba.nix**: System module: samba.nix
 - **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`

@@ -24,9 +24,10 @@ in
     # Firewall ports
     allowedTCPPorts = [
       22    # SSH
-      3002  # Grafana
-      8043  # nginx HTTPS
-      9090  # Prometheus
+      80    # HTTP (redirect to HTTPS)
+      443   # HTTPS (nginx)
+      3002  # Grafana (internal)
+      9090  # Prometheus (internal)
     ];
     allowedUDPPorts = [ ];
 

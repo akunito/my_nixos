@@ -121,8 +121,8 @@ in
   # Nginx reverse proxy with SSL
   services.nginx = {
     enable = true;
-    defaultHTTPListenPort = 8040;
-    defaultSSLListenPort = 8043;
+    defaultHTTPListenPort = 80;
+    defaultSSLListenPort = 443;
 
     virtualHosts = {
       # Grafana - main monitoring UI
