@@ -22,8 +22,17 @@ in
     enabledCollectors = [
       "systemd"
       "processes"
+      "textfile"  # Custom metrics from textfiles (e.g., auto-update status)
+    ];
+    extraFlags = [
+      "--collector.textfile.directory=/var/lib/prometheus-node-exporter/textfile"
     ];
   };
+
+  # Create textfile directory for custom metrics
+  systemd.tmpfiles.rules = lib.mkIf (systemSettings.prometheusExporterEnable or false) [
+    "d /var/lib/prometheus-node-exporter/textfile 0755 root root -"
+  ];
 
   # cAdvisor - Docker container metrics
   services.cadvisor = lib.mkIf (systemSettings.prometheusExporterCadvisorEnable or false) {

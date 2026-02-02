@@ -32,7 +32,7 @@ let
     }];
   }) remoteTargets;
 
-  # Build scrape configs for remote cAdvisors
+  # Build scrape configs for remote cAdvisors (filter out targets with null cadvisorPort)
   remoteCadvisorScrapeConfigs = map (target: {
     job_name = "${target.name}_docker";
     static_configs = [{
@@ -42,7 +42,7 @@ let
         container = target.name;
       };
     }];
-  }) remoteTargets;
+  }) (builtins.filter (t: t.cadvisorPort != null) remoteTargets);
 
   # Local scrape configs (for the monitoring server itself)
   localScrapeConfigs = [
@@ -69,6 +69,20 @@ in
         protocol = "http";
         domain = "monitor.akunito.org.es";
         enforce_domain = true;
+      };
+
+      # SMTP configuration for alerts (uses local postfix relay at pve-290)
+      smtp = {
+        enabled = true;
+        host = "192.168.8.89:25";
+        from_address = "alerts@akunito.com";
+        from_name = "Grafana Monitoring";
+        skip_verify = true;  # Local relay, no TLS
+      };
+
+      # Unified alerting (Grafana 9+) - replaces legacy alerting
+      unified_alerting = {
+        enabled = true;
       };
     };
   };

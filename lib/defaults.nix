@@ -287,6 +287,23 @@
       # { name = "lxc_home"; host = "192.168.8.80"; nodePort = 9100; cadvisorPort = 9092; }
     ];
 
+    # === Blackbox Exporter (for HTTP/HTTPS and ICMP probes) ===
+    prometheusBlackboxEnable = false;
+    prometheusBlackboxHttpTargets = [];   # [{name, url, module}]
+    prometheusBlackboxIcmpTargets = [];   # [{name, host}]
+
+    # === PVE Exporter (Proxmox metrics) ===
+    prometheusPveExporterEnable = false;
+    prometheusPveHost = "";
+    prometheusPveUser = "prometheus@pve";
+    prometheusPveTokenName = "prometheus";
+    prometheusPveTokenFile = "";  # Path to file containing API token
+
+    # === SNMP Exporter (pfSense/network devices) ===
+    prometheusSnmpExporterEnable = false;
+    prometheusSnmpCommunity = "";  # SNMP community string
+    prometheusSnmpTargets = [];    # [{name, host, module}]
+
     # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)
     # Profiles can override/populate this and then build `swayKanshiSettings` from it.
     swayMonitorInventory = { };

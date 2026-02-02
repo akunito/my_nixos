@@ -49,7 +49,33 @@ if nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure; then
     echo -e "Running Maintenance script"
     DOTFILES_OWNER=$(stat -c '%U' "$SCRIPT_DIR")
     runuser -u "$DOTFILES_OWNER" -- $SCRIPT_DIR/maintenance.sh -s || true
+
+    # Write Prometheus metrics for auto-update tracking
+    TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile"
+    if [ -d "$TEXTFILE_DIR" ]; then
+        HOSTNAME=$(hostname)
+        TIMESTAMP=$(date +%s)
+        cat > "$TEXTFILE_DIR/autoupdate_system.prom" << EOF
+# HELP nixos_autoupdate_system_last_success Unix timestamp of last successful system update
+# TYPE nixos_autoupdate_system_last_success gauge
+nixos_autoupdate_system_last_success{hostname="$HOSTNAME"} $TIMESTAMP
+# HELP nixos_autoupdate_system_status Status of last system update (1=success)
+# TYPE nixos_autoupdate_system_status gauge
+nixos_autoupdate_system_status{hostname="$HOSTNAME"} 1
+EOF
+        echo -e "Prometheus metrics written to $TEXTFILE_DIR/autoupdate_system.prom"
+    fi
 else
     echo -e "Rebuild failed!"
+    # Write failure metric if textfile directory exists
+    TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile"
+    if [ -d "$TEXTFILE_DIR" ]; then
+        HOSTNAME=$(hostname)
+        cat > "$TEXTFILE_DIR/autoupdate_system.prom" << EOF
+# HELP nixos_autoupdate_system_status Status of last system update (1=success, 0=failure)
+# TYPE nixos_autoupdate_system_status gauge
+nixos_autoupdate_system_status{hostname="$HOSTNAME"} 0
+EOF
+    fi
     exit 1
 fi

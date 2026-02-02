@@ -59,11 +59,73 @@ in
 
     # === Remote Targets for Prometheus Scraping ===
     prometheusRemoteTargets = [
-      { name = "lxc_home";      host = "192.168.8.80"; nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_plane";     host = "192.168.8.86"; nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_liftcraft"; host = "192.168.8.87"; nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_portfolio"; host = "192.168.8.88"; nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_mailer";    host = "192.168.8.89"; nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_home";       host = "192.168.8.80";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_cloudflared"; host = "192.168.8.102"; nodePort = 9100; cadvisorPort = null; }
+      { name = "lxc_plane";      host = "192.168.8.86";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_liftcraft";  host = "192.168.8.87";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_portfolio";  host = "192.168.8.88";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_mailer";     host = "192.168.8.89";  nodePort = 9100; cadvisorPort = 9092; }
+    ];
+
+    # === Blackbox Exporter (HTTP/HTTPS and ICMP probes) ===
+    prometheusBlackboxEnable = true;
+
+    prometheusBlackboxHttpTargets = [
+      # Local services (.org.es)
+      { name = "jellyfin_local"; url = "https://jellyfin.akunito.org.es"; }
+      { name = "jellyseerr_local"; url = "https://jellyseerr.akunito.org.es"; }
+      { name = "nextcloud_local"; url = "https://nextcloud.akunito.org.es"; }
+      { name = "radarr_local"; url = "https://radarr.akunito.org.es"; }
+      { name = "sonarr_local"; url = "https://sonarr.akunito.org.es"; }
+      { name = "bazarr_local"; url = "https://bazarr.akunito.org.es"; }
+      { name = "prowlarr_local"; url = "https://prowlarr.akunito.org.es"; }
+      { name = "syncthing_local"; url = "https://syncthing.akunito.org.es"; }
+      { name = "calibre_local"; url = "https://calibre.akunito.org.es"; }
+      { name = "emulators_local"; url = "https://emulators.akunito.org.es"; }
+      { name = "emulatorsmanager_local"; url = "https://emulatorsmanager.akunito.org.es"; }
+      { name = "unifi"; url = "https://192.168.8.206:8443/"; }
+
+      # Global services (.com)
+      { name = "jellyfin_global"; url = "https://jellyfin.akunito.com"; }
+      { name = "jellyseerr_global"; url = "https://jellyseerr.akunito.com"; }
+      { name = "nextcloud_global"; url = "https://nextcloud.akunito.com"; }
+      { name = "calibre_global"; url = "https://calibre.akunito.com"; }
+      { name = "emulators_global"; url = "https://emulators.akunito.com"; }
+      { name = "emulatorsmanager_global"; url = "https://emulatorsmanager.akunito.com"; }
+      { name = "plane_global"; url = "https://plane.akunito.com"; }
+      { name = "leftyworkout_test"; url = "https://leftyworkout-test.akunito.com"; }
+      { name = "portfolio"; url = "https://info.akunito.com"; }
+      { name = "status_external"; url = "https://status.akunito.com"; }
+      { name = "wgui"; url = "https://wgui.akunito.com"; }
+      { name = "grafana"; url = "https://monitor.akunito.org.es"; }
+      { name = "prometheus"; url = "https://portal.akunito.org.es"; }
+
+      # Local-only (no SSL)
+      { name = "kuma_local"; url = "http://192.168.8.89:3001"; module = "http_2xx_nossl"; }
+    ];
+
+    prometheusBlackboxIcmpTargets = [
+      { name = "truenas"; host = "192.168.20.200"; }
+      { name = "guest_wifi_ap"; host = "192.168.9.2"; }
+      { name = "personal_wifi_ap"; host = "192.168.8.2"; }
+      { name = "switch_usw_24_g2"; host = "192.168.8.181"; }
+      { name = "switch_usw_aggregation"; host = "192.168.8.180"; }
+      { name = "vps"; host = "91.211.27.37"; }
+      { name = "wireguard_tunnel"; host = "172.26.5.155"; }
+    ];
+
+    # === PVE Exporter (Proxmox metrics) ===
+    prometheusPveExporterEnable = true;
+    prometheusPveHost = "192.168.8.82";
+    prometheusPveUser = "prometheus@pve";
+    prometheusPveTokenName = "prometheus";
+    prometheusPveTokenFile = "/etc/secrets/pve-token";
+
+    # === SNMP Exporter (pfSense) ===
+    prometheusSnmpExporterEnable = true;
+    prometheusSnmpCommunity = "payphone-acetone-varied-appraiser-charting-problem-deuce-crumpet-ferocious-agreeing-grub-flyaway-silicon-curable-radio";
+    prometheusSnmpTargets = [
+      { name = "pfsense"; host = "192.168.8.1"; module = "pfsense"; }
     ];
 
     # === Package Modules ===
