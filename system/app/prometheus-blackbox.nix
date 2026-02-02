@@ -22,7 +22,7 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
       modules:
         http_2xx:
           prober: http
-          timeout: 10s
+          timeout: 15s
           http:
             valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
             valid_status_codes: [200, 301, 302, 401, 403]
@@ -30,6 +30,8 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
             follow_redirects: true
             fail_if_ssl: false
             fail_if_not_ssl: false
+            headers:
+              User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             tls_config:
               insecure_skip_verify: true
         http_2xx_nossl:
@@ -38,6 +40,8 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
           http:
             valid_status_codes: [200, 301, 302]
             method: GET
+            headers:
+              User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         icmp:
           prober: icmp
           timeout: 5s

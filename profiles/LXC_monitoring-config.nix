@@ -71,7 +71,7 @@ in
     prometheusBlackboxEnable = true;
 
     prometheusBlackboxHttpTargets = [
-      # Local services (.org.es)
+      # Local services (.org.es) - direct access within LAN
       { name = "jellyfin_local"; url = "https://jellyfin.akunito.org.es"; }
       { name = "jellyseerr_local"; url = "https://jellyseerr.akunito.org.es"; }
       { name = "nextcloud_local"; url = "https://nextcloud.akunito.org.es"; }
@@ -80,22 +80,19 @@ in
       { name = "bazarr_local"; url = "https://bazarr.akunito.org.es"; }
       { name = "prowlarr_local"; url = "https://prowlarr.akunito.org.es"; }
       { name = "syncthing_local"; url = "https://syncthing.akunito.org.es"; }
-      { name = "calibre_local"; url = "https://calibre.akunito.org.es"; }
+      { name = "calibre_local"; url = "https://books.akunito.org.es"; }
       { name = "emulators_local"; url = "https://emulators.akunito.org.es"; }
-      { name = "emulatorsmanager_local"; url = "https://emulatorsmanager.akunito.org.es"; }
       { name = "unifi"; url = "https://192.168.8.206:8443/"; }
 
-      # Global services (.com)
+      # Global services (.com) - via Cloudflare tunnel
       { name = "jellyfin_global"; url = "https://jellyfin.akunito.com"; }
       { name = "jellyseerr_global"; url = "https://jellyseerr.akunito.com"; }
       { name = "nextcloud_global"; url = "https://nextcloud.akunito.com"; }
       { name = "calibre_global"; url = "https://calibre.akunito.com"; }
       { name = "emulators_global"; url = "https://emulators.akunito.com"; }
-      { name = "emulatorsmanager_global"; url = "https://emulatorsmanager.akunito.com"; }
       { name = "plane_global"; url = "https://plane.akunito.com"; }
       { name = "leftyworkout_test"; url = "https://leftyworkout-test.akunito.com"; }
       { name = "portfolio"; url = "https://info.akunito.com"; }
-      { name = "status_external"; url = "https://status.akunito.com"; }
       { name = "wgui"; url = "https://wgui.akunito.com"; }
       { name = "grafana"; url = "https://monitor.akunito.org.es"; }
       { name = "prometheus"; url = "https://portal.akunito.org.es"; }
