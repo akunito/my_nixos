@@ -124,7 +124,6 @@ in
 
     extraGroups = [
       "wheel"
-      "docker"
     ];
 
     theme = "io";
@@ -139,7 +138,7 @@ in
     term = "";
     font = "";
 
-    dockerEnable = true; # Docker for potential future monitoring containers
+    dockerEnable = false; # No Docker needed on monitoring server
     virtualizationEnable = false;
     qemuGuestAddition = false;
 

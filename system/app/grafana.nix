@@ -4,7 +4,6 @@
 # - Grafana (web UI) on port 3002
 # - Prometheus (metrics database) on port 9090
 # - Local Node Exporter on port 9091 (for monitoring the monitoring server itself)
-# - Local cAdvisor on port 9092 (if Docker containers exist locally)
 #
 # Remote targets are configured via systemSettings.prometheusRemoteTargets:
 # [
@@ -57,16 +56,6 @@ let
         };
       }];
     }
-    {
-      job_name = "monitoring_docker";
-      static_configs = [{
-        targets = [ "127.0.0.1:9092" ];
-        labels = {
-          instance = "monitoring";
-          container = "monitoring";
-        };
-      }];
-    }
   ];
 
 in
@@ -82,17 +71,6 @@ in
         enforce_domain = true;
       };
     };
-  };
-
-  # Local cAdvisor for monitoring the monitoring server's Docker containers
-  environment.systemPackages = with pkgs; [
-    cadvisor
-  ];
-
-  services.cadvisor = {
-    enable = true;
-    port = 9092;
-    listenAddress = "127.0.0.1"; # Local only - this is the monitoring server
   };
 
   services.prometheus = {
