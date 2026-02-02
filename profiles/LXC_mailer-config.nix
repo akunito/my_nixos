@@ -19,6 +19,8 @@ in
       443   # HTTPS
       3000  # Web apps
       3001  # Kuma monitoring
+      9100  # Prometheus Node Exporter
+      9092  # cAdvisor (Docker metrics)
     ];
 
     # ============================================================================

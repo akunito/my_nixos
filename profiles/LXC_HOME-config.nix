@@ -28,6 +28,8 @@ in
       8043 # nginx
       22000 # syncthing
       8443 8080 8843 8880 6789 # unifi controller
+      9100 # Prometheus Node Exporter
+      9092 # cAdvisor (Docker metrics)
     ];
     allowedUDPPorts = [
       22000 21027 # syncthing

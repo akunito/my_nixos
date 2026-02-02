@@ -19,6 +19,7 @@ SERVERS=(
   "LXC_portfolioprod:192.168.8.88:Portfolio service"
   "LXC_mailer:192.168.8.89:Mail & monitoring"
   "LXC_liftcraftTEST:192.168.8.87:Test environment"
+  "LXC_monitoring:192.168.8.85:Prometheus & Grafana monitoring"
 )
 
 DOTFILES_DIR="/home/akunito/.dotfiles"

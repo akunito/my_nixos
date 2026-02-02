@@ -1,17 +1,82 @@
+# Grafana & Prometheus Monitoring Stack
+#
+# This module configures a centralized monitoring server with:
+# - Grafana (web UI) on port 3002
+# - Prometheus (metrics database) on port 9090
+# - Local Node Exporter on port 9091 (for monitoring the monitoring server itself)
+# - Local cAdvisor on port 9092 (if Docker containers exist locally)
+#
+# Remote targets are configured via systemSettings.prometheusRemoteTargets:
+# [
+#   { name = "lxc_home"; host = "192.168.8.80"; nodePort = 9100; cadvisorPort = 9092; }
+#   ...
+# ]
+#
+# Accessed via nginx reverse proxy with SSL:
+# - Grafana: https://monitor.akunito.org.es (port 8043)
+# - Prometheus: https://portal.akunito.org.es (port 8043, with basic auth)
+
 { pkgs, lib, systemSettings, config, ... }:
 
-{
-  # environment.etc."nginx/certs/akunito.org.es.cert".source = /home/akunito/.nginx/nginx-certs/akunito.org.es.crt;
-  # environment.etc."nginx/certs/akunito.org.es.key".source = /home/akunito/.nginx/nginx-certs/akunito.org.es.key;
-  # environment.etc."nginx/certs/akunito.org.es.cert".mode = "0644";
-  # environment.etc."nginx/certs/akunito.org.es.key".mode = "0600";
+let
+  remoteTargets = systemSettings.prometheusRemoteTargets or [];
 
+  # Build scrape configs for remote Node Exporters
+  remoteNodeScrapeConfigs = map (target: {
+    job_name = "${target.name}_node";
+    static_configs = [{
+      targets = [ "${target.host}:${toString target.nodePort}" ];
+      labels = {
+        instance = target.name;
+        container = target.name;
+      };
+    }];
+  }) remoteTargets;
+
+  # Build scrape configs for remote cAdvisors
+  remoteCadvisorScrapeConfigs = map (target: {
+    job_name = "${target.name}_docker";
+    static_configs = [{
+      targets = [ "${target.host}:${toString target.cadvisorPort}" ];
+      labels = {
+        instance = target.name;
+        container = target.name;
+      };
+    }];
+  }) remoteTargets;
+
+  # Local scrape configs (for the monitoring server itself)
+  localScrapeConfigs = [
+    {
+      job_name = "monitoring_node";
+      static_configs = [{
+        targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ];
+        labels = {
+          instance = "monitoring";
+          container = "monitoring";
+        };
+      }];
+    }
+    {
+      job_name = "monitoring_docker";
+      static_configs = [{
+        targets = [ "127.0.0.1:9092" ];
+        labels = {
+          instance = "monitoring";
+          container = "monitoring";
+        };
+      }];
+    }
+  ];
+
+in
+{
   services.grafana = {
     enable = true;
     settings = {
       server = {
-        http_addr = "127.0.0.1"; # Listening Address
-        http_port = 3002; # Listening Port
+        http_addr = "127.0.0.1";
+        http_port = 3002;
         protocol = "http";
         domain = "monitor.akunito.org.es";
         enforce_domain = true;
@@ -19,14 +84,15 @@
     };
   };
 
+  # Local cAdvisor for monitoring the monitoring server's Docker containers
   environment.systemPackages = with pkgs; [
     cadvisor
   ];
+
   services.cadvisor = {
     enable = true;
     port = 9092;
-    listenAddress = "127.0.0.1";
-
+    listenAddress = "127.0.0.1"; # Local only - this is the monitoring server
   };
 
   services.prometheus = {
@@ -34,56 +100,33 @@
     port = 9090;
     listenAddress = "127.0.0.1";
     webExternalUrl = "https://portal.akunito.org.es";
-    globalConfig.scrape_interval = "10s"; # "1m"
+    globalConfig.scrape_interval = "15s";
+
+    # Local Node Exporter for monitoring server system metrics
     exporters = {
       node = {
         enable = true;
         enabledCollectors = [
           "systemd"
+          "processes"
         ];
-        # extraFlags = [ "--collector.ethtool" "--collector.softirqs" "--collector.tcpstat" "--collector.wifi" ];
-        port = 9091;
+        port = 9091; # Different port from remote exporters to avoid confusion
       };
     };
-    scrapeConfigs = [
-      {
-        job_name = "homelab_node";
-        static_configs = [{
-          targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ];
-        }];
-      }
-      {
-        job_name = "docker";
-        static_configs = [{
-          targets = [ "127.0.0.1:9092" ];
-        }];
-      }
-    ];
+
+    # Combine local + remote scrape configs
+    scrapeConfigs = localScrapeConfigs ++ remoteNodeScrapeConfigs ++ remoteCadvisorScrapeConfigs;
   };
 
-  # environment.systemPackages = with pkgs;
-  #   [ netdata ];
-  # services.netdata.package = pkgs.netdata.override {
-  #   withCloudUi = true;
-  # };
-  # services.netdata = {
-  #   enable = true;
-  #   config = {
-  #     global = {
-  #       "memory mode" = "ram";
-  #       "debug log" = "none";
-  #       "access log" = "none";
-  #       "error log" = "syslog";
-  #     };
-  #   };
-  # };
-
+  # Nginx reverse proxy with SSL
   services.nginx = {
     enable = true;
     defaultHTTPListenPort = 8040;
     defaultSSLListenPort = 8043;
-    virtualHosts = { 
-      "${toString config.services.grafana.settings.server.domain}" = {
+
+    virtualHosts = {
+      # Grafana - main monitoring UI
+      "${config.services.grafana.settings.server.domain}" = {
         onlySSL = true;
         sslCertificate = "/etc/nginx/certs/akunito.org.es.crt";
         sslCertificateKey = "/etc/nginx/certs/akunito.org.es.key";
@@ -93,14 +136,9 @@
           proxyWebsockets = true;
           recommendedProxySettings = true;
         };
-        # # TODO: Enable client certificate verification fixing issues with self-signed certificates
-        # extraConfig = ''
-        #   ssl_verify_client on;
-        #   ssl_client_certificate /etc/nginx/certs/akunito.org.es.crt;
-        # '';
       };
-    };
-    virtualHosts = { 
+
+      # Prometheus - metrics API (protected with basic auth)
       "portal.akunito.org.es" = {
         onlySSL = true;
         sslCertificate = "/etc/nginx/certs/akunito.org.es.crt";

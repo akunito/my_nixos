@@ -26,19 +26,25 @@
     networkManager = false;
     useNetworkd = false;
 
-    # Firewall - web apps ports + standard services
+    # Firewall - web apps ports + standard services + monitoring exporters
     allowedTCPPorts = [
       22
       80
       443
       3000
       3001 # Web apps
+      9100 # Prometheus Node Exporter
+      9092 # cAdvisor (Docker metrics)
       # 22000 # syncthing
     ];
     allowedUDPPorts = [
       # 22000
       # 21027 # syncthing
     ];
+
+    # === Prometheus Exporters (enabled by default for all LXC containers) ===
+    prometheusExporterEnable = true; # Node Exporter for system metrics
+    prometheusExporterCadvisorEnable = true; # cAdvisor for Docker container metrics
 
     # NFS client (Disabled in LXC, easier to bind mount from host)
     nfsClientEnable = false;

@@ -22,12 +22,14 @@
     ../../system/app/homelab-docker.nix
     ../../system/security/restic.nix
     ../../system/security/polkit.nix
+    ../../system/app/prometheus-exporters.nix
     (import ../../system/app/docker.nix {
       storageDriver = "overlay2";
       inherit pkgs userSettings lib;
     })
   ]
-  ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix;
+  ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix
+  ++ lib.optional (systemSettings.grafanaEnable or false) ../../system/app/grafana.nix;
 
   # LXC containers don't need bootloaders - explicitly disable
   boot.loader.systemd-boot.enable = false;

@@ -273,8 +273,19 @@
     systemNetworkToolsEnable = false; # Enable advanced networking tools (nmap, traceroute, dnsutils, etc.)
 
     # Homelab feature flags
-    grafanaEnable = true; # Enable Grafana/Prometheus monitoring stack
+    grafanaEnable = false; # Enable Grafana/Prometheus monitoring stack (only on monitoring server)
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
+
+    # === Prometheus Exporters (for monitored nodes) ===
+    prometheusExporterEnable = false; # Enable Node Exporter on this host
+    prometheusExporterCadvisorEnable = false; # Enable cAdvisor for Docker metrics on this host
+    prometheusNodeExporterPort = 9100; # Port for Node Exporter
+    prometheusCadvisorPort = 9092; # Port for cAdvisor
+    # Remote targets for Prometheus scraping (used by monitoring server only)
+    prometheusRemoteTargets = [
+      # Example:
+      # { name = "lxc_home"; host = "192.168.8.80"; nodePort = 9100; cadvisorPort = 9092; }
+    ];
 
     # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)
     # Profiles can override/populate this and then build `swayKanshiSettings` from it.
