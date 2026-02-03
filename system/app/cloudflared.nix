@@ -27,7 +27,7 @@ lib.mkIf (systemSettings.cloudflaredEnable or false) {
       Type = "simple";
       User = "cloudflared";
       Group = "cloudflared";
-      ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $(cat /etc/secrets/cloudflared-token)'";
+      ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token-file /etc/secrets/cloudflared-token";
       Restart = "on-failure";
       RestartSec = "5s";
       NoNewPrivileges = true;
