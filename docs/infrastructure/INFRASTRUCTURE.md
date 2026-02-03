@@ -295,18 +295,115 @@ All traffic encrypted end-to-end, no ports exposed to internet.
 ### Local Access (*.local.akunito.com)
 
 ```
-Browser → pfSense DNS → NPM (192.168.8.102:443) → nginx-proxy (192.168.8.80:443) → Service
-                ↓                    ↓                        ↓
-           Resolves to          HTTPS/TLS              Host-based routing
-          192.168.8.102     (Let's Encrypt)           via VIRTUAL_HOST
+┌─────────────┐     ┌─────────────┐     ┌─────────────────────┐     ┌───────────────────┐
+│   Browser   │────►│   pfSense   │────►│     LXC_proxy       │────►│     LXC_HOME      │
+│             │     │    DNS      │     │  NPM (192.168.8.102)│     │ nginx-proxy :443  │
+└─────────────┘     └─────────────┘     └─────────────────────┘     └─────────┬─────────┘
+                           │                      │                            │
+                           ▼                      ▼                            ▼
+                    Resolves domain        SSL termination             VIRTUAL_HOST
+                   *.local.akunito.com    (Let's Encrypt cert)         routing to
+                    → 192.168.8.102        from shared mount           service container
 ```
 
 ### External Access (*.akunito.com)
 
 ```
-Browser → Cloudflare → cloudflared tunnel → NPM → nginx-proxy → Service
-                ↓
-          CDN caching + WAF
+┌─────────────┐     ┌─────────────┐     ┌─────────────────────┐     ┌───────────────────┐
+│  Internet   │────►│  Cloudflare │────►│   cloudflared       │────►│   Application     │
+│   Client    │     │   CDN/WAF   │     │   (LXC_proxy)       │     │   Container       │
+└─────────────┘     └─────────────┘     └─────────────────────┘     └───────────────────┘
+                           │
+                           ▼
+                    - DDoS protection
+                    - CDN caching
+                    - SSL certificate
+                    - Access policies
+```
+
+---
+
+## Service Catalog
+
+### All Services by Access Method
+
+| Service | Container | Local Domain | External Domain | Port |
+|---------|-----------|--------------|-----------------|------|
+| **Homelab Stack** |||||
+| Nextcloud | LXC_HOME | nextcloud.local.akunito.com | - | 443 |
+| Syncthing | LXC_HOME | syncthing.local.akunito.com | - | 443 |
+| FreshRSS | LXC_HOME | freshrss.local.akunito.com | - | 443 |
+| Calibre-Web | LXC_HOME | books.local.akunito.com | - | 443 |
+| EmulatorJS | LXC_HOME | emulators.local.akunito.com | - | 443 |
+| **Media Stack** |||||
+| Jellyfin | LXC_HOME | jellyfin.local.akunito.com | - | 443 |
+| Jellyseerr | LXC_HOME | jellyseerr.local.akunito.com | - | 443 |
+| Sonarr | LXC_HOME | sonarr.local.akunito.com | - | 443 |
+| Radarr | LXC_HOME | radarr.local.akunito.com | - | 443 |
+| Prowlarr | LXC_HOME | prowlarr.local.akunito.com | - | 443 |
+| Bazarr | LXC_HOME | bazarr.local.akunito.com | - | 443 |
+| qBittorrent | LXC_HOME | qbittorrent.local.akunito.com | - | 443 |
+| **Network & Management** |||||
+| UniFi Controller | LXC_HOME | 192.168.8.206:8443 | - | 8443 |
+| NPM Admin | LXC_proxy | 192.168.8.102:81 | - | 81 |
+| **Monitoring** |||||
+| Grafana | LXC_monitoring | - | monitor.akunito.org.es | 443 |
+| Prometheus | LXC_monitoring | - | portal.akunito.org.es | 443 |
+| Uptime Kuma (Internal) | LXC_mailer | 192.168.8.89:3001 | - | 3001 |
+| **Applications** |||||
+| Plane | LXC_plane | 192.168.8.86:3000 | plane.akunito.com | 3000 |
+| Portfolio | LXC_portfolioprod | 192.168.8.88:3000 | info.akunito.com | 3000 |
+| LeftyWorkout | LXC_liftcraftTEST | 192.168.8.87:3000/3001 | leftyworkout-test.akunito.com | 3000 |
+| **External (VPS)** |||||
+| WireGuard UI | VPS | - | wgui.akunito.com | 443 |
+| Uptime Kuma (External) | VPS | - | status.akunito.com | 443 |
+
+---
+
+## Docker Network Isolation
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            LXC_HOME (192.168.8.80)                              │
+│                                                                                 │
+│  ┌────────────────────────────────────────────────────────────────────────────┐ │
+│  │                        homelab_home-net (172.18.0.0/16)                    │ │
+│  │                                                                            │ │
+│  │   ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐        │ │
+│  │   │nextcloud │ │syncthing │ │ freshrss │ │ calibre  │ │emulatorjs│        │ │
+│  │   │ .9       │ │ .2       │ │ .6       │ │ .7       │ │ .5       │        │ │
+│  │   └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘        │ │
+│  │                                    │                                       │ │
+│  │                           ┌────────┴────────┐                              │ │
+│  │                           │  nginx-proxy    │                              │ │
+│  │                           │  .11 (gateway)  │                              │ │
+│  │                           └────────┬────────┘                              │ │
+│  └────────────────────────────────────┼───────────────────────────────────────┘ │
+│                                       │ (cross-network)                         │
+│  ┌────────────────────────────────────┼───────────────────────────────────────┐ │
+│  │                        media_mediarr-net (172.21.0.0/16)                   │ │
+│  │                                    │                                       │ │
+│  │   ┌──────────┐ ┌──────────┐ ┌──────┴───┐ ┌──────────┐ ┌──────────┐        │ │
+│  │   │ jellyfin │ │jellyseerr│ │  sonarr  │ │  radarr  │ │ prowlarr │        │ │
+│  │   │ .4       │ │ .8       │ │ .7       │ │ .6       │ │ .5       │        │ │
+│  │   └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘        │ │
+│  │                                                                            │ │
+│  │   ┌──────────┐ ┌──────────┐ ┌──────────────────────────────────────┐      │ │
+│  │   │  bazarr  │ │flaresolve│ │          gluetun (.2)                │      │ │
+│  │   │ .9       │ │ .3       │ │    ┌─────────────────────────┐       │      │ │
+│  │   └──────────┘ └──────────┘ │    │   qbittorrent           │       │      │ │
+│  │                              │    │   (VPN-tunneled)        │       │      │ │
+│  │                              │    └─────────────────────────┘       │      │ │
+│  │                              └──────────────────────────────────────┘      │ │
+│  └────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                 │
+│  ┌────────────────────────────────────────────────────────────────────────────┐ │
+│  │                        unifi_macvlan (192.168.8.206)                       │ │
+│  │   ┌──────────────────────────────────────────────────────────────┐        │ │
+│  │   │         unifi-network-application (direct LAN access)        │        │ │
+│  │   └──────────────────────────────────────────────────────────────┘        │ │
+│  └────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---

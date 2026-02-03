@@ -249,6 +249,26 @@ Before answering any architectural or implementation question:
 - **starcitizen.nix**: Kernel tweaks for Star Citizen performance
 - **games.nix**: User-level packages (Lutris, Bottles, Heroic, antimicrox) with AMD/Vulkan wrappers
 
+### Infrastructure documentation (applies to: `docs/infrastructure/**`, `profiles/LXC*-config.nix`)
+
+- **Read first**: `docs/infrastructure/INFRASTRUCTURE.md` (public) and `docs/infrastructure/INFRASTRUCTURE_INTERNAL.md` (encrypted)
+- **Update on changes**: When modifying LXC profiles, docker-compose files, or monitoring configs, update the relevant infrastructure docs
+- **SSH audit**: When adding/removing services, SSH to the affected container to verify actual state
+- **Key locations per container**:
+  - LXC_HOME (192.168.8.80): `~/.homelab/` (homelab, media, nginx-proxy, unifi docker-compose files)
+  - LXC_proxy (192.168.8.102): `~/npm/` (NPM config), cloudflared via NixOS
+  - LXC_mailer (192.168.8.89): `~/homelab-watcher/` (postfix, kuma)
+  - LXC_monitoring (192.168.8.85): NixOS native (grafana.nix, prometheus-*.nix)
+  - LXC_plane (192.168.8.86): `~/PLANE/`
+  - LXC_portfolioprod (192.168.8.88): `~/portfolioPROD/`
+  - LXC_liftcraftTEST (192.168.8.87): `~/leftyworkout_TEST/`
+  - VPS (ssh -p 56777 root@172.26.5.155): `/opt/wireguard-ui/`, `/opt/postfix-relay/`, `/etc/nginx/sites-enabled/`
+- **Verify commands**:
+  - Docker containers: `docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Networks}}'`
+  - Docker networks: `docker network ls` and `docker network inspect <network>`
+  - Prometheus targets: `curl -s http://192.168.8.85:9090/api/v1/targets | jq`
+- **Service-specific docs**: See `docs/infrastructure/services/` for detailed service documentation
+
 ### Secrets management (applies to: `secrets/*.nix`, `profiles/*-config.nix`, `system/**/*.nix`)
 
 - **Read first**: `docs/security/git-crypt.md`
