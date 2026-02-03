@@ -24,7 +24,8 @@ let
   snmpCommunity = systemSettings.prometheusSnmpCommunity or "public";
 
   # Generate snmp.yml with actual community string
-  # Note: New snmp_exporter format - lookups/overrides are generator-only, not runtime config
+  # IMPORTANT: snmp_exporter requires NUMERIC OIDs, not MIB names
+  # MIB names like "ifDescr" don't work at runtime - use generator or numeric OIDs
   snmpConfig = pkgs.writeText "snmp.yml" ''
     auths:
       pfsense_v2:
@@ -33,39 +34,41 @@ let
 
     modules:
       # Standard interface MIB - works on most network devices
+      # Using numeric OIDs (IF-MIB and IF-MIB extensions)
       if_mib:
         walk:
-          - ifDescr
-          - ifType
-          - ifSpeed
-          - ifAdminStatus
-          - ifOperStatus
-          - ifInOctets
-          - ifInUcastPkts
-          - ifInErrors
-          - ifInDiscards
-          - ifOutOctets
-          - ifOutUcastPkts
-          - ifOutErrors
-          - ifOutDiscards
-          - ifHCInOctets
-          - ifHCOutOctets
+          - 1.3.6.1.2.1.2.2.1.2      # ifDescr
+          - 1.3.6.1.2.1.2.2.1.3      # ifType
+          - 1.3.6.1.2.1.2.2.1.5      # ifSpeed
+          - 1.3.6.1.2.1.2.2.1.7      # ifAdminStatus
+          - 1.3.6.1.2.1.2.2.1.8      # ifOperStatus
+          - 1.3.6.1.2.1.2.2.1.10     # ifInOctets
+          - 1.3.6.1.2.1.2.2.1.11     # ifInUcastPkts
+          - 1.3.6.1.2.1.2.2.1.13     # ifInDiscards
+          - 1.3.6.1.2.1.2.2.1.14     # ifInErrors
+          - 1.3.6.1.2.1.2.2.1.16     # ifOutOctets
+          - 1.3.6.1.2.1.2.2.1.17     # ifOutUcastPkts
+          - 1.3.6.1.2.1.2.2.1.19     # ifOutDiscards
+          - 1.3.6.1.2.1.2.2.1.20     # ifOutErrors
+          - 1.3.6.1.2.1.31.1.1.1.6   # ifHCInOctets (64-bit)
+          - 1.3.6.1.2.1.31.1.1.1.10  # ifHCOutOctets (64-bit)
 
       # pfSense specific - PF firewall stats + interface metrics
       pfsense:
         walk:
-          - ifDescr
-          - ifType
-          - ifSpeed
-          - ifAdminStatus
-          - ifOperStatus
-          - ifInOctets
-          - ifOutOctets
-          - ifHCInOctets
-          - ifHCOutOctets
-          - ifInErrors
-          - ifOutErrors
-          # pfSense/PF specific OIDs
+          # Interface metrics (IF-MIB)
+          - 1.3.6.1.2.1.2.2.1.2      # ifDescr
+          - 1.3.6.1.2.1.2.2.1.3      # ifType
+          - 1.3.6.1.2.1.2.2.1.5      # ifSpeed
+          - 1.3.6.1.2.1.2.2.1.7      # ifAdminStatus
+          - 1.3.6.1.2.1.2.2.1.8      # ifOperStatus
+          - 1.3.6.1.2.1.2.2.1.10     # ifInOctets
+          - 1.3.6.1.2.1.2.2.1.14     # ifInErrors
+          - 1.3.6.1.2.1.2.2.1.16     # ifOutOctets
+          - 1.3.6.1.2.1.2.2.1.20     # ifOutErrors
+          - 1.3.6.1.2.1.31.1.1.1.6   # ifHCInOctets (64-bit)
+          - 1.3.6.1.2.1.31.1.1.1.10  # ifHCOutOctets (64-bit)
+          # pfSense/PF specific OIDs (BEGEMOT-PF-MIB)
           - 1.3.6.1.4.1.12325.1.200.1.1    # pfStatus
           - 1.3.6.1.4.1.12325.1.200.1.2    # pfCounters
           - 1.3.6.1.4.1.12325.1.200.1.3    # pfStateTable
