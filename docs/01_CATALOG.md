@@ -140,6 +140,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Security
 
+- **system/security/acme.nix**: ACME Certificate Management (Let's Encrypt) *Enabled when:* `systemSettings.acmeEnable or false`
 - **system/security/automount.nix**: System module: automount.nix
 - **system/security/autoupgrade.nix**: ====================== Auto System Update ====================== *Enabled when:*
    - `systemSettings.autoSystemUpdateEnable == true`
@@ -367,6 +368,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Security
 
+- **docs/security/git-crypt.md**: Git-crypt encryption for sensitive configuration data (domains, IPs, credentials)
 - **docs/security/luks-encryption.md**: Complete guide to setting up LUKS disk encryption with SSH remote unlock capability.
 - **docs/security/polkit.md**: Guide to configuring Polkit for fine-grained permission management.
 - **docs/security/restic-backups.md**: Complete guide to setting up and configuring automated backups using Restic.

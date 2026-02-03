@@ -249,6 +249,36 @@ Before answering any architectural or implementation question:
 - **starcitizen.nix**: Kernel tweaks for Star Citizen performance
 - **games.nix**: User-level packages (Lutris, Bottles, Heroic, antimicrox) with AMD/Vulkan wrappers
 
+### Secrets management (applies to: `secrets/*.nix`, `profiles/*-config.nix`, `system/**/*.nix`)
+
+- **Read first**: `docs/security/git-crypt.md`
+- **Encrypted secrets**: `secrets/domains.nix` contains sensitive data (domains, IPs, SNMP, emails)
+- **Public template**: `secrets/domains.nix.template` shows structure without real values
+- **Import pattern for profiles**:
+  ```nix
+  let
+    secrets = import ../secrets/domains.nix;
+  in
+  {
+    systemSettings = {
+      notificationToEmail = secrets.alertEmail;
+      prometheusSnmpCommunity = secrets.snmpCommunity;
+    };
+  }
+  ```
+- **Import pattern for system modules**:
+  ```nix
+  let
+    secrets = import ../../secrets/domains.nix;
+  in
+  {
+    services.grafana.settings.server.domain = "monitor.${secrets.localDomain}";
+  }
+  ```
+- **Key location**: `~/.git-crypt/dotfiles-key`
+- **Unlock on fresh clone**: `git-crypt unlock ~/.git-crypt/dotfiles-key`
+- **NEVER commit**: git-crypt keys, plaintext secrets, or credentials
+
 ## Multi-agent instructions
 
 For complex tasks, see `.claude/agents/` for agent-specific context and patterns.

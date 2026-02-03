@@ -5,6 +5,7 @@ Complete guide to security configurations and features in this NixOS setup.
 ## Table of Contents
 
 - [Overview](#overview)
+- [Git-Crypt Secrets](#git-crypt-secrets)
 - [SSH Configuration](#ssh-configuration)
 - [LUKS Encryption](#luks-encryption)
 - [Firewall](#firewall)
@@ -17,6 +18,41 @@ Complete guide to security configurations and features in this NixOS setup.
 ## Overview
 
 This configuration includes comprehensive security features including disk encryption, SSH management, firewall configuration, and automated backups.
+
+## Git-Crypt Secrets
+
+Sensitive configuration data (domains, IPs, credentials) is encrypted using git-crypt.
+
+### Encrypted Files
+
+- `secrets/domains.nix` - Domain names, external IPs, SNMP credentials, email addresses
+
+### Quick Usage
+
+```nix
+# In profile configs
+let
+  secrets = import ../secrets/domains.nix;
+in
+{
+  systemSettings = {
+    notificationToEmail = secrets.alertEmail;
+    prometheusSnmpCommunity = secrets.snmpCommunity;
+  };
+}
+```
+
+### Key Management
+
+```bash
+# Unlock repository (required after fresh clone)
+git-crypt unlock ~/.git-crypt/dotfiles-key
+
+# Check encryption status
+git-crypt status secrets/
+```
+
+**Documentation**: See [Git-Crypt Secrets](security/git-crypt.md) for complete guide.
 
 ## SSH Configuration
 
@@ -346,6 +382,7 @@ sudo chmod 600 ~/Sync/.maintenance/passwords/restic.key
 
 ## Related Documentation
 
+- [Git-Crypt Secrets](security/git-crypt.md) - Encrypted secrets management
 - [LUKS Encryption](security/luks-encryption.md) - Detailed encryption setup
 - [Restic Backups](security/restic-backups.md) - Backup system configuration
 - [Sudo Configuration](security/sudo.md) - Sudo setup details
