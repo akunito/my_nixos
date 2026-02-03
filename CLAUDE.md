@@ -35,8 +35,13 @@ lib/defaults.nix (global defaults)
     │        │
     │        └─► VMHOME-config.nix
     │
-    └─► LXC-base-config.nix ◄─── LXC_plane-config.nix
-                             ◄─── LXC_template-config.nix
+    └─► LXC-base-config.nix ◄─── LXC_HOME-config.nix
+                             ◄─── LXC_plane-config.nix
+                             ◄─── LXC_portfolioprod-config.nix
+                             ◄─── LXC_mailer-config.nix
+                             ◄─── LXC_liftcraftTEST-config.nix
+                             ◄─── LXC_monitoring-config.nix
+                             ◄─── LXC_proxy-config.nix
 ```
 
 ### 3. Centralized Software Management (CRITICAL)

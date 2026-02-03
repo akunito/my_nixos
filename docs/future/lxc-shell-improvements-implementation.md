@@ -119,7 +119,11 @@ zshinitContent = ''
 
 ### ✅ Inherited Updates (Automatic)
 - `profiles/LXC_plane-config.nix` - Inherits from LXC-base-config.nix
-- `profiles/LXC_template-config.nix` - Inherits from LXC-base-config.nix
+- `profiles/LXC_portfolioprod-config.nix` - Inherits from LXC-base-config.nix
+- `profiles/LXC_mailer-config.nix` - Inherits from LXC-base-config.nix
+- `profiles/LXC_liftcraftTEST-config.nix` - Inherits from LXC-base-config.nix
+- `profiles/LXC_monitoring-config.nix` - Inherits from LXC-base-config.nix
+- `profiles/LXC_proxy-config.nix` - Inherits from LXC-base-config.nix
 
 ### ✅ Not Affected (No Changes)
 - Desktop profiles (DESK, LAPTOP, AGA) - Already use full sh.nix
@@ -217,7 +221,7 @@ cat ~/.zshrc  # Should show syntax-highlighted output (bat)
 ### 5. Verify Prompt Colors
 ```bash
 pwd  # Prompt should show:
-     # Cyan user@host (LXC_template, LXC_plane)
+     # Cyan user@host (LXC_plane, LXC_portfolioprod, etc.)
      # Red user@host (LXC_HOME)
      # Yellow path
      # Green arrow
@@ -264,7 +268,11 @@ profiles/LXC-base-config.nix
   └─ Adds: TERM export in zshinitContent
   ↓ inherited by
 ├─ profiles/LXC_plane-config.nix
-├─ profiles/LXC_template-config.nix
+├─ profiles/LXC_portfolioprod-config.nix
+├─ profiles/LXC_mailer-config.nix
+├─ profiles/LXC_liftcraftTEST-config.nix
+├─ profiles/LXC_monitoring-config.nix
+├─ profiles/LXC_proxy-config.nix
 └─ (overridden by) profiles/LXC_HOME-config.nix
     └─ Adds: TERM export in zshinitContent (red prompt)
 ```

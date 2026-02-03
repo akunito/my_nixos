@@ -15,7 +15,11 @@ This document explores integrating Terraform with the existing NixOS-based LXC c
 - `LXC-base-config.nix` - Base configuration for all LXC containers
 - `LXC_HOME-config.nix` - Homelab services (nixosLabaku)
 - `LXC_plane-config.nix` - Production plane service (planePROD-nixos)
-- `LXC_template-config.nix` - Template for new containers
+- `LXC_portfolioprod-config.nix` - Portfolio production service
+- `LXC_mailer-config.nix` - Mail service container
+- `LXC_liftcraftTEST-config.nix` - LiftCraft test environment
+- `LXC_monitoring-config.nix` - Monitoring stack (Prometheus, Grafana)
+- `LXC_proxy-config.nix` - Reverse proxy service
 
 ### Current Workflow
 
@@ -381,7 +385,7 @@ terraform apply
 # 3. Deploy NixOS config
 ssh root@test-container
 cd /home/akunito/.dotfiles
-./install.sh /home/akunito/.dotfiles LXC_template -s -u
+./install.sh /home/akunito/.dotfiles LXC_plane -s -u
 
 # 4. Validate everything works
 
@@ -761,7 +765,7 @@ in {
 ### If Choosing Terraform
 
 1. Create `infrastructure/` directory
-2. Write Terraform configs for LXC_template (simplest)
+2. Write Terraform configs for LXC_plane (simplest)
 3. Test create/destroy cycle
 4. Import existing containers
 5. Document workflow in infrastructure/README.md
@@ -771,7 +775,7 @@ in {
 
 1. Create `infrastructure/proxmox-containers.nix`
 2. Generate deployment scripts
-3. Test with LXC_template
+3. Test with LXC_plane
 4. Add error handling and validation
 5. Document workflow
 6. Consider creating NixOS module for reusability

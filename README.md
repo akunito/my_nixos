@@ -29,17 +29,23 @@ A **modular, hierarchical** NixOS configuration system with **centralized softwa
          │                      │                    │
          │                      │                    │
          ▼                      ▼                    ▼
-    ┌────────────┐         ┌────────┐          ┌─────────┐
-    │   DESK     │         │VMHOME  │          │LXC_plane│
-    │ (Desktop)  │         │(Server)│          │LXC_tmpl │
-    └──────┬─────┘         └────────┘          └─────────┘
+    ┌────────────┐         ┌────────┐     ┌────────────────────┐
+    │   DESK     │         │VMHOME  │     │ LXC_HOME           │
+    │ (Desktop)  │         │(Server)│     │ LXC_plane          │
+    └──────┬─────┘         └────────┘     │ LXC_portfolioprod  │
+           │                              │ LXC_mailer         │
+           │                              │ LXC_liftcraftTEST  │
+           │                              │ LXC_monitoring     │
+           │                              │ LXC_proxy          │
+           │                              └────────────────────┘
            │
-           ├──────────────┬──────────────┐
-           ▼              ▼              ▼
-       ┌────────┐    ┌──────────┐  ┌──────────┐
-       │DESK_AGA│    │DESK_VMDESK│ │  LAPTOP  │
-       │ (Desk) │    │   (VM)    │ │   Base   │
-       └────────┘    └──────────┘  └─────┬────┘
+    ┌──────┴───────────────┬──────────────┐
+    │                      │              │
+    ▼                      ▼              ▼
+┌────────┐          ┌──────────┐    ┌──────────┐
+│DESK_AGA│          │DESK_VMDESK│   │  LAPTOP  │
+│ (Desk) │          │   (VM)    │   │   Base   │
+└────────┘          └──────────┘    └─────┬────┘
                                          │
                                          ├─────────────┬─────────────┐
                                          ▼             ▼             ▼
@@ -184,7 +190,7 @@ cd ~/.dotfiles
 - `VMHOME` - Homelab server
 - `VMDESK` - VM desktop
 - `WSL` - Windows Subsystem for Linux
-- `LXC_plane`, `LXC_template` - LXC containers
+- `LXC_HOME`, `LXC_plane`, `LXC_portfolioprod`, `LXC_mailer`, `LXC_liftcraftTEST`, `LXC_monitoring`, `LXC_proxy` - LXC containers
 
 ### Daily Usage
 

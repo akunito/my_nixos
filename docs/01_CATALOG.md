@@ -15,7 +15,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **flake.VMHOME.nix**: Profile-specific flake configuration
 - **flake.WSL.nix**: Profile-specific flake configuration
 - **flake.LXC.nix**: Profile-specific flake configuration
-- **flake.LXC_template.nix**: Profile-specific flake configuration
 - **flake.LXC_plane.nix**: Profile-specific flake configuration
 - **flake.ORIGINAL.nix**: Profile-specific flake configuration
 - **flake.DESK_AGA.nix**: Profile-specific flake configuration
@@ -27,8 +26,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **flake.LXC_liftcraftTEST.nix**: Profile-specific flake configuration
 - **flake.LXC_portfolioprod.nix**: Profile-specific flake configuration
 - **flake.LXC_mailer.nix**: Profile-specific flake configuration
-- **flake.nix**: Profile-specific flake configuration
 - **flake.LXC_monitoring.nix**: Profile-specific flake configuration
+- **flake.LXC_proxy.nix**: Profile-specific flake configuration
+- **flake.nix**: Profile-specific flake configuration
 
 ## Profiles
 
@@ -45,7 +45,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/LXC_monitoring-config.nix**: LXC_monitoring Profile Configuration
 - **profiles/LXC_plane-config.nix**: LXC Default Profile Configuration
 - **profiles/LXC_portfolioprod-config.nix**: LXC portfolioprod Profile Configuration
-- **profiles/LXC_template-config.nix**: LXC Default Profile Configuration
+- **profiles/LXC_proxy-config.nix**: LXC_proxy Profile Configuration
 - **profiles/VMHOME-config.nix**: VMHOME Profile Configuration
 - **profiles/WSL-config.nix**: WSL Profile Configuration
 
@@ -54,6 +54,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### App
 
 - **system/app/appimage.nix**: System module: appimage.nix
+- **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
 - **system/app/docker.nix**: Allow dockerd to be restarted without affecting running container. *Enabled when:* `userSettings.dockerEnable == true`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:* `systemSettings.gamemodeEnable == true`
@@ -61,9 +62,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:* `systemSettings.homelabDockerEnable or false`
 - **system/app/portals.nix**: XDG Desktop Portal Configuration
 - **system/app/prismlauncher.nix**: System module: prismlauncher.nix
+- **system/app/prometheus-blackbox.nix**: Blackbox Exporter for HTTP/HTTPS probes and ICMP ping checks *Enabled when:* `systemSettings.prometheusBlackboxEnable or false`
 - **system/app/prometheus-exporters.nix**: Prometheus Exporters Module *Enabled when:*
    - `systemSettings.prometheusExporterEnable or false`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
+- **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
+- **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
 - **system/app/samba.nix**: System module: samba.nix
 - **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`
@@ -367,6 +371,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/security/polkit.md**: Guide to configuring Polkit for fine-grained permission management.
 - **docs/security/restic-backups.md**: Complete guide to setting up and configuring automated backups using Restic.
 - **docs/security/sudo.md**: Guide to configuring sudo for remote SSH connections and specific commands.
+
+### Setup
+
+- **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack at `https://monitor.akunito.org.es`.
+- **docs/setup/ubuntu-node-exporter.md**: This guide documents how to install and configure Prometheus Node Exporter on Ubuntu LXC containers (like cloudflared at 192.168.8.102) for monitoring with the homelab Prometheus/Grafana stack.
 
 ### User-Modules
 
