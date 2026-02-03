@@ -23,24 +23,13 @@ in
 
     # Firewall ports (cleaned up - no NFS server needed)
     allowedTCPPorts = [
-      22    # SSH
-      443   # HTTPS
-      8043  # nginx
+      22 # SSH
+      443 # HTTPS
+      8043 # nginx
       22000 # syncthing
       8443 8080 8843 8880 6789 # unifi controller
-      9100  # Prometheus Node Exporter
-      9092  # cAdvisor (Docker metrics)
-      # Services proxied by NPM (192.168.8.102)
-      8082  # freshrss
-      8083  # calibre
-      8384  # syncthing GUI
-      3000  # emulatorjs
-      8096  # jellyfin
-      6767  # bazarr
-      5055  # jellyseerr
-      9696  # prowlarr
-      7878  # radarr
-      8989  # sonarr
+      9100 # Prometheus Node Exporter
+      9092 # cAdvisor (Docker metrics)
     ];
     allowedUDPPorts = [
       22000 21027 # syncthing
