@@ -40,12 +40,12 @@ in
     # === ACME Certificates (Let's Encrypt via Cloudflare DNS) ===
     acmeEnable = true;
     acmeEmail = "diego88aku@gmail.com";
-    # Certs stored at /var/lib/acme/local.akunito.com/ and copied to /srv/certs/
+    # Certs stored at /var/lib/acme/local.akunito.com/ and copied to /mnt/shared-certs/
     # Setup: echo 'CF_DNS_API_TOKEN=xxx' | sudo tee /etc/secrets/cloudflare-acme
 
     # === NPM runs in Docker (enabled via base) ===
     # Docker is enabled by default in LXC-base-config.nix (userSettings.dockerEnable = true)
-    # Mount /srv/certs in NPM docker-compose for SSL certificates
+    # Certs available at /mnt/shared-certs/ (Proxmox shared mount for all LXC containers)
 
     # === Prometheus Exporters (enabled from base) ===
     # prometheusExporterEnable = true (from base)

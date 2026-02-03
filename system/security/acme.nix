@@ -27,20 +27,15 @@ lib.mkIf (systemSettings.acmeEnable or false) {
       credentialsFile = "/etc/secrets/cloudflare-acme";
       # Allow docker group to read certs (for NPM)
       group = "docker";
-      # Copy certs to /srv/certs for easier NPM volume mount
+      # Copy certs to /mnt/shared-certs (Proxmox shared mount for all LXC containers)
       postRun = ''
-        mkdir -p /srv/certs
-        cp /var/lib/acme/local.akunito.com/fullchain.pem /srv/certs/local.akunito.com.crt
-        cp /var/lib/acme/local.akunito.com/key.pem /srv/certs/local.akunito.com.key
-        chmod 644 /srv/certs/local.akunito.com.crt
-        chmod 640 /srv/certs/local.akunito.com.key
-        chown root:docker /srv/certs/local.akunito.com.key
+        mkdir -p /mnt/shared-certs
+        cp /var/lib/acme/local.akunito.com/fullchain.pem /mnt/shared-certs/local.akunito.com.crt
+        cp /var/lib/acme/local.akunito.com/key.pem /mnt/shared-certs/local.akunito.com.key
+        chmod 644 /mnt/shared-certs/local.akunito.com.crt
+        chmod 640 /mnt/shared-certs/local.akunito.com.key
+        chown root:docker /mnt/shared-certs/local.akunito.com.key
       '';
     };
   };
-
-  # Ensure /srv/certs directory exists
-  systemd.tmpfiles.rules = [
-    "d /srv/certs 0755 root docker -"
-  ];
 }
