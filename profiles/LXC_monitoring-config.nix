@@ -69,6 +69,14 @@ in
       { name = "vps_wireguard";  host = "172.26.5.155";  nodePort = 9100; cadvisorPort = null; }  # VPS via WireGuard tunnel
     ];
 
+    # === Application Metrics (Exportarr for *arr stack) ===
+    prometheusAppTargets = [
+      { name = "sonarr";   host = "192.168.8.80"; port = 9707; }
+      { name = "radarr";   host = "192.168.8.80"; port = 9708; }
+      { name = "prowlarr"; host = "192.168.8.80"; port = 9709; }
+      { name = "bazarr";   host = "192.168.8.80"; port = 9710; }
+    ];
+
     # === Blackbox Exporter (HTTP/HTTPS and ICMP probes) ===
     prometheusBlackboxEnable = true;
 

@@ -20,6 +20,7 @@
 let
   secrets = import ../../secrets/domains.nix;
   remoteTargets = systemSettings.prometheusRemoteTargets or [];
+  appTargets = systemSettings.prometheusAppTargets or [];
 
   # Build scrape configs for remote Node Exporters
   remoteNodeScrapeConfigs = map (target: {
@@ -58,6 +59,18 @@ let
       }];
     }
   ];
+
+  # Build scrape configs for application exporters (exportarr, etc.)
+  appScrapeConfigs = map (target: {
+    job_name = "${target.name}_app";
+    static_configs = [{
+      targets = [ "${target.host}:${toString target.port}" ];
+      labels = {
+        instance = target.name;
+        app = target.name;
+      };
+    }];
+  }) appTargets;
 
 in
 {
@@ -107,8 +120,8 @@ in
       };
     };
 
-    # Combine local + remote scrape configs
-    scrapeConfigs = localScrapeConfigs ++ remoteNodeScrapeConfigs ++ remoteCadvisorScrapeConfigs;
+    # Combine local + remote + app scrape configs
+    scrapeConfigs = localScrapeConfigs ++ remoteNodeScrapeConfigs ++ remoteCadvisorScrapeConfigs ++ appScrapeConfigs;
 
     # Alert rules for infrastructure monitoring
     ruleFiles = [
@@ -306,6 +319,77 @@ in
                 annotations = {
                   summary = "Backup repository unhealthy on {{ $labels.instance }}";
                   description = "Cannot access backup repository on {{ $labels.instance }} - check restic configuration";
+                };
+              }
+            ];
+          }
+          {
+            name = "arr_alerts";
+            rules = [
+              # Sonarr queue stuck (items in queue for too long)
+              {
+                alert = "SonarrQueueStuck";
+                expr = ''sonarr_queue_total > 0 and increase(sonarr_episode_downloaded_total[6h]) == 0'';
+                "for" = "6h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Sonarr queue appears stuck";
+                  description = "Sonarr has {{ $value }} items in queue but no downloads completed in 6 hours";
+                };
+              }
+              # Radarr queue stuck
+              {
+                alert = "RadarrQueueStuck";
+                expr = ''radarr_queue_total > 0 and increase(radarr_movie_downloaded_total[6h]) == 0'';
+                "for" = "6h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Radarr queue appears stuck";
+                  description = "Radarr has {{ $value }} items in queue but no downloads completed in 6 hours";
+                };
+              }
+              # Sonarr health issues
+              {
+                alert = "SonarrHealthIssue";
+                expr = ''sonarr_system_health_issues > 0'';
+                "for" = "30m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Sonarr has health issues";
+                  description = "Sonarr is reporting {{ $value }} health issues - check the Sonarr UI";
+                };
+              }
+              # Radarr health issues
+              {
+                alert = "RadarrHealthIssue";
+                expr = ''radarr_system_health_issues > 0'';
+                "for" = "30m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Radarr has health issues";
+                  description = "Radarr is reporting {{ $value }} health issues - check the Radarr UI";
+                };
+              }
+              # Prowlarr health issues
+              {
+                alert = "ProwlarrHealthIssue";
+                expr = ''prowlarr_system_health_issues > 0'';
+                "for" = "30m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Prowlarr has health issues";
+                  description = "Prowlarr is reporting {{ $value }} health issues - check the Prowlarr UI";
+                };
+              }
+              # Exportarr target down
+              {
+                alert = "ExportarrTargetDown";
+                expr = ''up{job=~".*_app"} == 0'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Exportarr target {{ $labels.instance }} is down";
+                  description = "Cannot scrape metrics from {{ $labels.instance }} - check if the app and exporter are running";
                 };
               }
             ];

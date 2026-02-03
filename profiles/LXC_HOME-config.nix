@@ -33,6 +33,7 @@ in
       22000 # syncthing
       9100 # Prometheus Node Exporter
       9092 # cAdvisor (Docker metrics)
+      9707 9708 9709 9710 # Exportarr (*arr metrics)
     ];
     allowedUDPPorts = [
       22000 21027 # syncthing
