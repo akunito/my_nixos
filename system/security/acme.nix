@@ -16,7 +16,11 @@ lib.mkIf (systemSettings.acmeEnable or false) {
   # Accept Let's Encrypt terms
   security.acme = {
     acceptTerms = true;
-    defaults.email = systemSettings.acmeEmail or "admin@example.com";
+    defaults = {
+      email = systemSettings.acmeEmail or "admin@example.com";
+      # Use Let's Encrypt production server (not staging/test)
+      server = "https://acme-v02.api.letsencrypt.org/directory";
+    };
 
     # Wildcard certificate for local.akunito.com
     certs."local.akunito.com" = {
@@ -25,6 +29,8 @@ lib.mkIf (systemSettings.acmeEnable or false) {
       dnsProvider = "cloudflare";
       dnsPropagationCheck = true;
       credentialsFile = "/etc/secrets/cloudflare-acme";
+      # Ensure lego is used (not minica)
+      webroot = null;
       # Allow docker group to read certs (for NPM)
       group = "docker";
       # Copy certs to /mnt/shared-certs (Proxmox shared mount for all LXC containers)
