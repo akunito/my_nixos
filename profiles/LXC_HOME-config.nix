@@ -24,6 +24,7 @@ in
     # Firewall ports (cleaned up - no NFS server needed)
     allowedTCPPorts = [
       22 # SSH
+      80 # HTTP (redirect to HTTPS)
       443 # HTTPS
       8043 # nginx
       22000 # syncthing
