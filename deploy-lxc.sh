@@ -15,6 +15,7 @@ set -euo pipefail
 # Server definitions: PROFILE:IP:DESCRIPTION
 SERVERS=(
   "LXC_HOME:192.168.8.80:Homelab services"
+  "LXC_proxy:192.168.8.102:Cloudflare tunnel & NPM"
   "LXC_plane:192.168.8.86:Production container"
   "LXC_portfolioprod:192.168.8.88:Portfolio service"
   "LXC_mailer:192.168.8.89:Mail & monitoring"
