@@ -39,11 +39,11 @@ LOG_FILE="$SCRIPT_DIR/maintenance.log"
 # Goal: avoid running nix-collect-garbage on every dev rebuild (which can delete unrooted
 # store paths like `nix run home-manager/...` and cause repeated downloads/builds).
 #
-# Policy: run GC at most once per interval. Default: 3 days.
+# Policy: run GC at most once per interval. Default: 9 days.
 #
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles-maintenance"
 GC_STAMP_FILE="$STATE_DIR/last_gc_success_epoch"
-GC_MIN_INTERVAL_SECONDS=$((3 * 24 * 60 * 60)) # 3 days
+GC_MIN_INTERVAL_SECONDS=$((9 * 24 * 60 * 60)) # 9 days
 
 ensure_state_dir() {
     mkdir -p "$STATE_DIR" 2>/dev/null || true
