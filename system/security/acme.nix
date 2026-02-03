@@ -50,6 +50,9 @@ lib.mkIf (systemSettings.acmeEnable or false) {
         # Make certs readable by all LXC containers (local LAN only)
         chmod 644 /mnt/shared-certs/local.akunito.com.crt
         chmod 644 /mnt/shared-certs/local.akunito.com.key
+        # Create default cert symlinks for nginx-proxy (auto-HTTPS for all services)
+        ln -sf local.akunito.com.crt /mnt/shared-certs/default.crt
+        ln -sf local.akunito.com.key /mnt/shared-certs/default.key
         echo "Certificates copied to /mnt/shared-certs/"
       '';
     };
