@@ -47,9 +47,9 @@ lib.mkIf (systemSettings.acmeEnable or false) {
         mkdir -p /mnt/shared-certs
         cp /var/lib/acme/local.akunito.com/fullchain.pem /mnt/shared-certs/local.akunito.com.crt
         cp /var/lib/acme/local.akunito.com/key.pem /mnt/shared-certs/local.akunito.com.key
+        # Make certs readable by all LXC containers (local LAN only)
         chmod 644 /mnt/shared-certs/local.akunito.com.crt
-        chmod 640 /mnt/shared-certs/local.akunito.com.key
-        chown root:docker /mnt/shared-certs/local.akunito.com.key
+        chmod 644 /mnt/shared-certs/local.akunito.com.key
         echo "Certificates copied to /mnt/shared-certs/"
       '';
     };
