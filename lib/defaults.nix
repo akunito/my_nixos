@@ -274,6 +274,8 @@
 
     # Homelab feature flags
     cloudflaredEnable = false; # Enable Cloudflare tunnel service (remotely-managed, token at /etc/secrets/cloudflared-token)
+    acmeEnable = false; # Enable ACME (Let's Encrypt) certificate management
+    acmeEmail = "admin@example.com"; # Email for Let's Encrypt notifications
     grafanaEnable = false; # Enable Grafana/Prometheus monitoring stack (only on monitoring server)
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
 

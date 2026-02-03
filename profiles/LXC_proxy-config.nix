@@ -1,11 +1,12 @@
 # LXC_proxy Profile Configuration
-# Cloudflare Tunnel (native) + Nginx Proxy Manager (Docker)
+# Cloudflare Tunnel (native) + Nginx Proxy Manager (Docker) + ACME Certs
 #
 # Extends LXC-base-config.nix
 #
 # Services:
 #   - cloudflared: Native NixOS service for Cloudflare Tunnel (*.akunito.com)
-#   - NPM: Docker container for local reverse proxy (*.akunito.org.es)
+#   - NPM: Docker container for local reverse proxy (*.local.akunito.com)
+#   - ACME: Let's Encrypt wildcard cert for *.local.akunito.com
 #
 # Migration from Debian cloudflared container (192.168.8.102)
 
@@ -36,8 +37,15 @@ in
     # === Cloudflare Tunnel (Native Service) ===
     cloudflaredEnable = true;
 
+    # === ACME Certificates (Let's Encrypt via Cloudflare DNS) ===
+    acmeEnable = true;
+    acmeEmail = "diego88aku@gmail.com";
+    # Certs stored at /var/lib/acme/local.akunito.com/ and copied to /srv/certs/
+    # Setup: echo 'CF_DNS_API_TOKEN=xxx' | sudo tee /etc/secrets/cloudflare-acme
+
     # === NPM runs in Docker (enabled via base) ===
     # Docker is enabled by default in LXC-base-config.nix (userSettings.dockerEnable = true)
+    # Mount /srv/certs in NPM docker-compose for SSL certificates
 
     # === Prometheus Exporters (enabled from base) ===
     # prometheusExporterEnable = true (from base)
