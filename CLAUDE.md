@@ -262,7 +262,11 @@ Before answering any architectural or implementation question:
   - LXC_plane (192.168.8.86): `~/PLANE/`
   - LXC_portfolioprod (192.168.8.88): `~/portfolioPROD/`
   - LXC_liftcraftTEST (192.168.8.87): `~/leftyworkout_TEST/`
-  - VPS (ssh -p 56777 root@172.26.5.155): `/opt/wireguard-ui/`, `/opt/postfix-relay/`, `/etc/nginx/sites-enabled/`
+  - VPS (ssh -p 56777 root@172.26.5.155):
+    - Repository: `/root/vps_wg/` (git-crypt encrypted, `git@github.com:akunito/vps_wg.git`)
+    - Git-crypt key: `/root/.git-crypt-key`
+    - Unlock: `git-crypt unlock /root/.git-crypt-key`
+    - Services: `/opt/wireguard-ui/`, `/opt/postfix-relay/`, `/etc/nginx/sites-enabled/`
 - **Verify commands**:
   - Docker containers: `docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Networks}}'`
   - Docker networks: `docker network ls` and `docker network inspect <network>`

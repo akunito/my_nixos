@@ -22,6 +22,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | infrastructure.services.media | Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent | infrastructure, media, docker, jellyfin, arr, plex-alternative | profiles/LXC_HOME-config.nix |
 | infrastructure.services.monitoring | Monitoring stack - Prometheus, Grafana, exporters, alerting | infrastructure, monitoring, prometheus, grafana, alerting | profiles/LXC_monitoring-config.nix |
 | infrastructure.services.proxy | Proxy stack - NPM, cloudflared, ACME certificates | infrastructure, proxy, nginx, cloudflare, ssl, certificates | profiles/LXC_proxy-config.nix |
+| infrastructure.services.vps | VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring | infrastructure, vps, wireguard, vpn, cloudflare, nginx, monitoring | system/app/prometheus-node-exporter.nix |
 | keybindings.mouse-button-mapping | Quick guide to mapping mouse side buttons to modifier keys using keyd. | keyd, mouse, keybindings, modifiers | system/wm/keyd.nix |
 | keybindings.sway | SwayFX keybindings reference, including unified rofi launcher and window overview. | sway, swayfx, keybindings, rofi, wayland | user/wm/sway/swayfx-config.nix |
 | lxc-deployment | Centralized deployment script for managing multiple LXC containers | lxc, deployment, automation, proxmox, containers | deploy-lxc.sh |

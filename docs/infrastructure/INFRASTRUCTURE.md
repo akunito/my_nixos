@@ -272,21 +272,76 @@ Isolated network for guest devices:
 
 ## External Access
 
-### VPN (WireGuard)
+### VPS WireGuard Server
 
-- External VPS acts as WireGuard hub
-- Home network accessible via tunnel (172.26.5.0/24)
-- Remote access to all internal services
+External VPS (Hetzner, Ubuntu 24.04) acts as the central VPN hub:
+
+```
+                              INTERNET
+                                  │
+          ┌───────────────────────┴───────────────────────┐
+          │                                               │
+          ▼                                               ▼
+  ┌───────────────┐                            ┌───────────────────┐
+  │  Cloudflare   │                            │   VPS (Hetzner)   │
+  │    Tunnel     │                            │   172.26.5.155    │
+  └───────┬───────┘                            └─────────┬─────────┘
+          │                                              │
+          │ Zero-trust access                            │ WireGuard :51820
+          │ wgui.akunito.com                             │
+          │ status.akunito.com                           │
+          ▼                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            VPS Services                                     │
+│                                                                             │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │  WireGuard  │ │    WGUI     │ │ Uptime Kuma │ │ node_exporter│          │
+│  │   Server    │ │  (mgmt UI)  │ │  (external) │ │  (metrics)  │           │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘           │
+│                                                                             │
+│  ┌─────────────┐ ┌─────────────┐                                           │
+│  │    nginx    │ │ cloudflared │                                           │
+│  │   reverse   │ │   tunnel    │                                           │
+│  └─────────────┘ └─────────────┘                                           │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │
+                                  │ WireGuard Tunnel (172.26.5.0/24)
+                                  ▼
+                    ┌─────────────────────────────┐
+                    │   pfSense (192.168.8.1)     │
+                    │   WireGuard Peer            │
+                    │   Allowed: 192.168.8.0/24   │
+                    └─────────────────────────────┘
+```
+
+**VPS Services**:
+| Service | Purpose | Access |
+|---------|---------|--------|
+| WireGuard Server | VPN hub for remote access | Port 51820/udp |
+| WireGuard UI (WGUI) | Peer management interface | https://wgui.akunito.com |
+| Uptime Kuma | External service monitoring | https://status.akunito.com |
+| nginx | SSL termination & reverse proxy | Let's Encrypt certs |
+| Node Exporter | Prometheus metrics | Via WireGuard (172.26.5.155:9100) |
+| Postfix Relay | SMTP for VPS alerts | localhost only |
+
+**WireGuard Peers**:
+- pfSense (home gateway) - routes to 192.168.8.0/24
+- Mobile devices - direct VPN access
+- Remote workstations - development access
 
 ### Cloudflare Tunnel
 
-Selected services exposed via Cloudflare:
-- Plane (project management)
-- LeftyWorkout (training app)
-- Portfolio (personal website)
-- WireGuard UI
+**Homelab Services** (via LXC_proxy):
+- Plane (plane.akunito.com)
+- LeftyWorkout (leftyworkout-test.akunito.com)
+- Portfolio (info.akunito.com)
+- Grafana (monitor.akunito.org.es)
 
-All traffic encrypted end-to-end, no ports exposed to internet.
+**VPS Services** (via VPS cloudflared):
+- WireGuard UI (wgui.akunito.com)
+- Uptime Kuma (status.akunito.com)
+
+All traffic encrypted end-to-end, no ports exposed to internet (except WireGuard UDP).
 
 ---
 
@@ -481,3 +536,4 @@ Updates are staggered to prevent simultaneous service disruption.
 - [Grafana & Alerting](../setup/grafana-dashboards-alerting.md) - Monitoring configuration
 - [Git-Crypt Secrets](../security/git-crypt.md) - Secrets management
 - [Profile Feature Flags](../profile-feature-flags.md) - NixOS profile configuration
+- [VPS WireGuard Server](./services/vps-wireguard.md) - External VPS documentation
