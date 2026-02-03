@@ -33,6 +33,7 @@
   ++ lib.optional (systemSettings.prometheusBlackboxEnable or false) ../../system/app/prometheus-blackbox.nix
   ++ lib.optional (systemSettings.prometheusPveExporterEnable or false) ../../system/app/prometheus-pve.nix
   ++ lib.optional (systemSettings.prometheusSnmpExporterEnable or false) ../../system/app/prometheus-snmp.nix
+  ++ lib.optional (systemSettings.prometheusGraphiteEnable or false) ../../system/app/prometheus-graphite.nix
   ++ lib.optional (systemSettings.cloudflaredEnable or false) ../../system/app/cloudflared.nix
   ++ lib.optional (systemSettings.acmeEnable or false) ../../system/security/acme.nix;
 

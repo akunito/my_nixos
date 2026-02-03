@@ -334,7 +334,16 @@ External VPS (Hetzner, Ubuntu 24.04) acts as the central VPN hub:
 
 ### Cloudflare Tunnel
 
-**Homelab Services** (via LXC_proxy):
+**Homelab Services** (via LXC_proxy cloudflared → NPM → LXC_HOME):
+- Nextcloud (nextcloud.akunito.com)
+- Jellyfin (jellyfin.akunito.com)
+- Jellyseerr (jellyseerr.akunito.com)
+- FreshRSS (freshrss.akunito.com)
+- Calibre (calibre.akunito.com)
+- Emulators (emulators.akunito.com)
+- Obsidian (obsidian.akunito.com)
+
+**Application Services** (via LXC_proxy cloudflared → direct):
 - Plane (plane.akunito.com)
 - LeftyWorkout (leftyworkout-test.akunito.com)
 - Portfolio (info.akunito.com)

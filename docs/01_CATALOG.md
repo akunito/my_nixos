@@ -68,6 +68,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/prometheus-exporters.nix**: Prometheus Exporters Module *Enabled when:*
    - `systemSettings.prometheusExporterEnable or false`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
+- **system/app/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
 - **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
@@ -156,10 +157,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/security/gpg.nix**: Some programs need SUID wrappers, can be configured further or are
 - **system/security/openvpn.nix**: System module: openvpn.nix
 - **system/security/polkit.nix**: System module: polkit.nix
-- **system/security/restic.nix**: ====================== Wrappers ====================== *Enabled when:*
+- **system/security/restic.nix**: Script to export backup metrics for Prometheus textfile collector *Enabled when:*
    - `systemSettings.resticWrapper == true`
    - `systemSettings.homeBackupEnable == true`
    - `systemSettings.remoteBackupEnable == true`
+   - `systemSettings.backupMonitoringEnable or false`
 - **system/security/sshd.nix**: Enable incoming ssh
 - **system/security/sudo.nix**: groups = [ "wheel" ]; *Enabled when:*
    - `systemSettings.sudoNOPASSWD == true`

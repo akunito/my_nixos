@@ -85,12 +85,26 @@ NoNewPrivileges=true
 ```
 
 **Exposed Services** (via Cloudflare Zero Trust):
+
+*Homelab Services* (routed through NPM → LXC_HOME nginx-proxy):
+| Service | Domain |
+|---------|--------|
+| Nextcloud | nextcloud.akunito.com |
+| Jellyfin | jellyfin.akunito.com |
+| Jellyseerr | jellyseerr.akunito.com |
+| FreshRSS | freshrss.akunito.com |
+| Calibre | calibre.akunito.com |
+| Emulators | emulators.akunito.com |
+| Obsidian | obsidian.akunito.com |
+
+*Application Services* (routed directly to containers):
 | Service | Domain |
 |---------|--------|
 | Plane | plane.akunito.com |
 | Portfolio | info.akunito.com |
 | LeftyWorkout | leftyworkout-test.akunito.com |
-| WireGuard UI | wgui.akunito.com |
+
+**Note**: All homelab services route to `http://localhost:80` (NPM) which then forwards to LXC_HOME's nginx-proxy with the appropriate `Host` header rewrite.
 
 ---
 
@@ -116,6 +130,8 @@ NoNewPrivileges=true
 
 ### NPM Proxy Rules
 
+#### Local Access (*.local.akunito.com)
+
 All local services forward to nginx-proxy on LXC_HOME (192.168.8.80:443):
 
 | Domain | Backend | SSL Mode |
@@ -132,6 +148,26 @@ All local services forward to nginx-proxy on LXC_HOME (192.168.8.80:443):
 | bazarr.local.akunito.com | 192.168.8.80:443 | HTTPS |
 | qbittorrent.local.akunito.com | 192.168.8.80:443 | HTTPS |
 | emulators.local.akunito.com | 192.168.8.80:443 | HTTPS |
+
+#### External Access (*.akunito.com via Cloudflare Tunnel)
+
+Public domains route through cloudflared → NPM → LXC_HOME nginx-proxy:
+
+| Public Domain | Host Header Rewrite | Backend |
+|---------------|---------------------|---------|
+| nextcloud.akunito.com | nextcloud.local.akunito.com | 192.168.8.80:443 |
+| jellyfin.akunito.com | jellyfin.local.akunito.com | 192.168.8.80:443 |
+| jellyseerr.akunito.com | jellyseerr.local.akunito.com | 192.168.8.80:443 |
+| freshrss.akunito.com | freshrss.local.akunito.com | 192.168.8.80:443 |
+| calibre.akunito.com | books.local.akunito.com | 192.168.8.80:443 |
+| emulators.akunito.com | emulators.local.akunito.com | 192.168.8.80:443 |
+| obsidian.akunito.com | obsidian.local.akunito.com | 192.168.8.80:443 |
+
+**NPM Advanced Config** (for each public domain proxy host):
+```nginx
+proxy_set_header Host <local-domain>;
+```
+**Important**: "Force SSL" must be **disabled** for public domains to avoid redirect loops (Cloudflare handles external SSL).
 
 ---
 
@@ -223,6 +259,25 @@ This allows local devices to resolve local domains to NPM for SSL termination.
 4. cloudflared (LXC_proxy): Routes to Plane (192.168.8.86:3000)
 5. Response flows back through tunnel
 ```
+
+### External Client Accessing Nextcloud (Homelab Service)
+
+```
+1. Browser: https://nextcloud.akunito.com
+2. Cloudflare: SSL termination, CDN, WAF
+3. Cloudflare Tunnel: Encrypted tunnel to cloudflared
+4. cloudflared (LXC_proxy): Routes to http://localhost:80 (NPM)
+5. NPM: Rewrites Host header to nextcloud.local.akunito.com
+6. NPM: Forwards to 192.168.8.80:443 (nginx-proxy)
+7. nginx-proxy (LXC_HOME): Routes via VIRTUAL_HOST to nextcloud container
+8. Response flows back through the same path
+```
+
+**Key Configuration Points**:
+- Cloudflare tunnel routes to `http://localhost:80` (not HTTPS)
+- NPM rewrites Host header from public to local domain
+- NPM has "Force SSL" disabled for public domains
+- LXC_HOME containers need both domains in VIRTUAL_HOST (e.g., `nextcloud.local.akunito.com,nextcloud.akunito.com`)
 
 ---
 
