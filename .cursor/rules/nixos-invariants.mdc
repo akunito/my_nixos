@@ -41,6 +41,25 @@ lib.mkIf (systemSettings.gpuType == "amd") { ... }
 3. **GPU-specific code** must check `systemSettings.gpuType`
 4. **Profile configs set flags** - modules just consume them
 
+## Secrets Management
+
+Sensitive configuration (domains, IPs, credentials) is stored in `secrets/domains.nix` (encrypted with git-crypt).
+
+### Import pattern:
+```nix
+# In profile configs
+let secrets = import ../secrets/domains.nix; in { ... }
+
+# In system modules
+let secrets = import ../../secrets/domains.nix; in { ... }
+```
+
+### NEVER:
+- Hardcode domains, external IPs, or credentials in modules
+- Commit git-crypt keys or plaintext secrets
+
+See `docs/security/git-crypt.md` for details.
+
 ## When unsure
 
 - Use `docs/00_ROUTER.md` to pick the right doc node, then read only the relevant docs/code.

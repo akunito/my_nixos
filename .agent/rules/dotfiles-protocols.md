@@ -32,6 +32,7 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 - **Source of truth**: `flake.nix` and its `inputs` define dependencies
 - **Application workflow**: Apply changes via `install.sh` (or `aku sync`), not manual systemd enable/start
 - **Flake purity**: Prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths inside Nix
+- **Secrets management**: Sensitive data (domains, IPs, credentials) is in `secrets/domains.nix` (encrypted with git-crypt). Import via `let secrets = import ../secrets/domains.nix;`
 
 ## Home Manager Updates
 
