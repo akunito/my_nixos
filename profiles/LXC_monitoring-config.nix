@@ -61,11 +61,12 @@ in
     # === Remote Targets for Prometheus Scraping ===
     prometheusRemoteTargets = [
       { name = "lxc_home";       host = "192.168.8.80";  nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_proxy"; host = "192.168.8.102"; nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_proxy";      host = "192.168.8.102"; nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_plane";      host = "192.168.8.86";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_liftcraft";  host = "192.168.8.87";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_portfolio";  host = "192.168.8.88";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_mailer";     host = "192.168.8.89";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "vps_wireguard";  host = "172.26.5.155";  nodePort = 9100; cadvisorPort = null; }  # VPS via WireGuard tunnel
     ];
 
     # === Blackbox Exporter (HTTP/HTTPS and ICMP probes) ===
