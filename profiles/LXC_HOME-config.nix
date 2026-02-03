@@ -161,6 +161,7 @@ in
     homePackages = pkgs: pkgs-unstable: [
       pkgs.zsh
       pkgs.git
+      pkgs.git-crypt
       pkgs-unstable.claude-code
     ];
 
