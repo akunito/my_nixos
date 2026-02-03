@@ -273,6 +273,7 @@
     systemNetworkToolsEnable = false; # Enable advanced networking tools (nmap, traceroute, dnsutils, etc.)
 
     # Homelab feature flags
+    cloudflaredEnable = false; # Enable Cloudflare tunnel service (remotely-managed, token at /etc/secrets/cloudflared-token)
     grafanaEnable = false; # Enable Grafana/Prometheus monitoring stack (only on monitoring server)
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
 

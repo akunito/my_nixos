@@ -32,7 +32,8 @@
   ++ lib.optional (systemSettings.grafanaEnable or false) ../../system/app/grafana.nix
   ++ lib.optional (systemSettings.prometheusBlackboxEnable or false) ../../system/app/prometheus-blackbox.nix
   ++ lib.optional (systemSettings.prometheusPveExporterEnable or false) ../../system/app/prometheus-pve.nix
-  ++ lib.optional (systemSettings.prometheusSnmpExporterEnable or false) ../../system/app/prometheus-snmp.nix;
+  ++ lib.optional (systemSettings.prometheusSnmpExporterEnable or false) ../../system/app/prometheus-snmp.nix
+  ++ lib.optional (systemSettings.cloudflaredEnable or false) ../../system/app/cloudflared.nix;
 
   # LXC containers don't need bootloaders - explicitly disable
   boot.loader.systemd-boot.enable = false;

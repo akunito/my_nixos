@@ -60,7 +60,7 @@ in
     # === Remote Targets for Prometheus Scraping ===
     prometheusRemoteTargets = [
       { name = "lxc_home";       host = "192.168.8.80";  nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_cloudflared"; host = "192.168.8.102"; nodePort = 9100; cadvisorPort = null; }
+      { name = "lxc_proxy"; host = "192.168.8.102"; nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_plane";      host = "192.168.8.86";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_liftcraft";  host = "192.168.8.87";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_portfolio";  host = "192.168.8.88";  nodePort = 9100; cadvisorPort = 9092; }
@@ -72,36 +72,33 @@ in
 
     prometheusBlackboxHttpTargets = [
       # Local services (.org.es) - direct access within LAN
-      { name = "jellyfin_local"; url = "https://jellyfin.akunito.org.es"; }
-      { name = "jellyseerr_local"; url = "https://jellyseerr.akunito.org.es"; }
-      { name = "nextcloud_local"; url = "https://nextcloud.akunito.org.es"; }
-      { name = "radarr_local"; url = "https://radarr.akunito.org.es"; }
-      { name = "sonarr_local"; url = "https://sonarr.akunito.org.es"; }
-      { name = "bazarr_local"; url = "https://bazarr.akunito.org.es"; }
-      { name = "prowlarr_local"; url = "https://prowlarr.akunito.org.es"; }
-      { name = "syncthing_local"; url = "https://syncthing.akunito.org.es"; }
-      { name = "calibre_local"; url = "https://books.akunito.org.es"; }
-      { name = "emulators_local"; url = "https://emulators.akunito.org.es"; }
+      # These are reliable checks - if local is up, global (via Cloudflare) works too
+      { name = "jellyfin"; url = "https://jellyfin.akunito.org.es"; }
+      { name = "jellyseerr"; url = "https://jellyseerr.akunito.org.es"; }
+      { name = "nextcloud"; url = "https://nextcloud.akunito.org.es"; }
+      { name = "radarr"; url = "https://radarr.akunito.org.es"; }
+      { name = "sonarr"; url = "https://sonarr.akunito.org.es"; }
+      { name = "bazarr"; url = "https://bazarr.akunito.org.es"; }
+      { name = "prowlarr"; url = "https://prowlarr.akunito.org.es"; }
+      { name = "syncthing"; url = "https://syncthing.akunito.org.es"; }
+      { name = "calibre"; url = "https://books.akunito.org.es"; }
+      { name = "emulators"; url = "https://emulators.akunito.org.es"; }
       { name = "unifi"; url = "https://192.168.8.206:8443/"; }
-
-      # Global services (.com) - via Cloudflare tunnel
-      { name = "jellyfin_global"; url = "https://jellyfin.akunito.com"; }
-      { name = "jellyseerr_global"; url = "https://jellyseerr.akunito.com"; }
-      { name = "nextcloud_global"; url = "https://nextcloud.akunito.com"; }
-      { name = "calibre_global"; url = "https://calibre.akunito.com"; }
-      { name = "emulators_global"; url = "https://emulators.akunito.com"; }
-      { name = "plane_global"; url = "https://plane.akunito.com"; }
-      { name = "leftyworkout_test"; url = "https://leftyworkout-test.akunito.com"; }
-      { name = "portfolio"; url = "https://info.akunito.com"; }
-      { name = "wgui"; url = "https://wgui.akunito.com"; }
       { name = "grafana"; url = "https://monitor.akunito.org.es"; }
       { name = "prometheus"; url = "https://portal.akunito.org.es"; }
 
+      # Services only accessible via Cloudflare (no local equivalent)
+      { name = "plane"; url = "https://plane.akunito.com"; }
+      { name = "leftyworkout"; url = "https://leftyworkout-test.akunito.com"; }
+      { name = "portfolio"; url = "https://info.akunito.com"; }
+      { name = "wgui"; url = "https://wgui.akunito.com"; }
+
       # Local-only (no SSL)
-      { name = "kuma_local"; url = "http://192.168.8.89:3001"; module = "http_2xx_nossl"; }
+      { name = "kuma"; url = "http://192.168.8.89:3001"; module = "http_2xx_nossl"; }
     ];
 
     prometheusBlackboxIcmpTargets = [
+      { name = "proxy"; host = "192.168.8.102"; }  # Cloudflare tunnel + NPM container
       { name = "truenas"; host = "192.168.20.200"; }
       { name = "guest_wifi_ap"; host = "192.168.9.2"; }
       { name = "personal_wifi_ap"; host = "192.168.8.2"; }
