@@ -94,8 +94,8 @@ in
       { name = "calibre"; url = "https://books.${secrets.localDomain}"; }
       { name = "emulators"; url = "https://emulators.${secrets.localDomain}"; }
       { name = "unifi"; url = "https://192.168.8.206:8443/"; }
-      { name = "grafana"; url = "https://monitor.${secrets.localDomain}"; }
-      { name = "prometheus"; url = "https://portal.${secrets.localDomain}"; }
+      { name = "grafana"; url = "https://grafana.${secrets.wildcardLocal}"; }
+      { name = "prometheus"; url = "https://prometheus.${secrets.wildcardLocal}"; }
 
       # Services only accessible via Cloudflare (no local equivalent)
       { name = "plane"; url = "https://plane.${secrets.publicDomain}"; }
@@ -123,8 +123,8 @@ in
     prometheusBlackboxTlsTargets = [
       # Local wildcard certificate (*.local.akunito.com)
       { name = "local_wildcard"; host = "nextcloud.${secrets.wildcardLocal}"; port = 443; }
-      # Grafana/Prometheus cert (*.akunito.org.es)
-      { name = "monitoring_cert"; host = "monitor.${secrets.localDomain}"; port = 443; }
+      # Grafana/Prometheus cert (*.local.akunito.com - same as local_wildcard)
+      { name = "monitoring_cert"; host = "grafana.${secrets.wildcardLocal}"; port = 443; }
     ];
 
     # === PVE Exporter (Proxmox metrics) ===

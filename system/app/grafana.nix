@@ -12,8 +12,8 @@
 # ]
 #
 # Accessed via nginx reverse proxy with SSL:
-# - Grafana: https://monitor.akunito.org.es (port 8043)
-# - Prometheus: https://portal.akunito.org.es (port 8043, with basic auth)
+# - Grafana: https://grafana.local.akunito.com (port 443)
+# - Prometheus: https://prometheus.local.akunito.com (port 443, with basic auth)
 
 { pkgs, lib, systemSettings, config, ... }:
 
@@ -81,7 +81,7 @@ in
         http_addr = "127.0.0.1";
         http_port = 3002;
         protocol = "http";
-        domain = "monitor.${secrets.localDomain}";
+        domain = "grafana.${secrets.wildcardLocal}";
         enforce_domain = true;
       };
 
@@ -105,7 +105,7 @@ in
     enable = true;
     port = 9090;
     listenAddress = "127.0.0.1";
-    webExternalUrl = "https://portal.${secrets.localDomain}";
+    webExternalUrl = "https://prometheus.${secrets.wildcardLocal}";
     globalConfig.scrape_interval = "15s";
 
     # Local Node Exporter for monitoring server system metrics
@@ -409,9 +409,9 @@ in
       # Grafana - main monitoring UI
       "${config.services.grafana.settings.server.domain}" = {
         onlySSL = true;
-        sslCertificate = "/etc/nginx/certs/${secrets.localDomain}.crt";
-        sslCertificateKey = "/etc/nginx/certs/${secrets.localDomain}.key";
-        sslTrustedCertificate = "/etc/nginx/certs/${secrets.localDomain}.crt";
+        sslCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
+        sslCertificateKey = "/mnt/shared-certs/${secrets.wildcardLocal}.key";
+        sslTrustedCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
           proxyWebsockets = true;
@@ -420,11 +420,11 @@ in
       };
 
       # Prometheus - metrics API (protected with basic auth + IP whitelist)
-      "portal.${secrets.localDomain}" = {
+      "prometheus.${secrets.wildcardLocal}" = {
         onlySSL = true;
-        sslCertificate = "/etc/nginx/certs/${secrets.localDomain}.crt";
-        sslCertificateKey = "/etc/nginx/certs/${secrets.localDomain}.key";
-        sslTrustedCertificate = "/etc/nginx/certs/${secrets.localDomain}.crt";
+        sslCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
+        sslCertificateKey = "/mnt/shared-certs/${secrets.wildcardLocal}.key";
+        sslTrustedCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
         basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd";
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString config.services.prometheus.port}";
