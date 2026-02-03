@@ -338,6 +338,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/hardware/drive-management.md**: Complete guide to managing drives, LUKS encryption, and automatic mounting.
 - **docs/hardware/gpu-monitoring.md**: Complete guide to GPU monitoring tools and their configuration for different GPU types.
 
+### Infrastructure
+
+- **docs/infrastructure/INFRASTRUCTURE.md**: Public infrastructure overview with architecture diagram and component descriptions
+- **docs/infrastructure/INFRASTRUCTURE_INTERNAL.md**: Complete internal infrastructure documentation with sensitive details (ENCRYPTED)
+
 ### Keybindings
 
 - **docs/keybindings/hyprland.md**: Complete reference for all Hyprland keybindings in this NixOS configuration.

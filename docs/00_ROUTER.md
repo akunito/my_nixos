@@ -16,6 +16,8 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | future.router-drift-audit-2026-01-08 | Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system). | router, catalog, audit, docs, drift | docs/00_ROUTER.md |
 | future.waybar-drawer-and-idle-toggle | Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX. | waybar, sway, swayfx, keybindings, systemd-user | user/wm/sway/waybar.nix |
 | future.waybar-sov-debug-analysis-2026-01-07 | Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical). | waybar, sov, sway, swayfx, debug, incident, deprecated, daemon-manager | user/wm/sway/** |
+| infrastructure.internal | Complete internal infrastructure documentation with sensitive details (ENCRYPTED) | infrastructure, audit, security, monitoring, proxmox, lxc, secrets | profiles/LXC*-config.nix |
+| infrastructure.overview | Public infrastructure overview with architecture diagram and component descriptions | infrastructure, architecture, proxmox, lxc, monitoring, homelab | profiles/LXC*-config.nix |
 | keybindings.mouse-button-mapping | Quick guide to mapping mouse side buttons to modifier keys using keyd. | keyd, mouse, keybindings, modifiers | system/wm/keyd.nix |
 | keybindings.sway | SwayFX keybindings reference, including unified rofi launcher and window overview. | sway, swayfx, keybindings, rofi, wayland | user/wm/sway/swayfx-config.nix |
 | lxc-deployment | Centralized deployment script for managing multiple LXC containers | lxc, deployment, automation, proxmox, containers | deploy-lxc.sh |
