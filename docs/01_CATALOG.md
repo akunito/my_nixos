@@ -62,7 +62,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:* `systemSettings.homelabDockerEnable or false`
 - **system/app/portals.nix**: XDG Desktop Portal Configuration
 - **system/app/prismlauncher.nix**: System module: prismlauncher.nix
-- **system/app/prometheus-blackbox.nix**: Blackbox Exporter for HTTP/HTTPS probes and ICMP ping checks *Enabled when:* `systemSettings.prometheusBlackboxEnable or false`
+- **system/app/prometheus-blackbox.nix**: Blackbox Exporter for HTTP/HTTPS probes, ICMP ping checks, and TLS certificate monitoring *Enabled when:*
+   - `systemSettings.prometheusBlackboxEnable or false`
+   - `tlsTargets != [] || httpTargets != []`
 - **system/app/prometheus-exporters.nix**: Prometheus Exporters Module *Enabled when:*
    - `systemSettings.prometheusExporterEnable or false`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
@@ -382,6 +384,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Security
 
 - **docs/security/git-crypt.md**: Git-crypt encryption for sensitive configuration data (domains, IPs, credentials)
+- **docs/security/hardening.md**: Security hardening guidelines for NixOS homelab infrastructure
+- **docs/security/incident-response.md**: Security incident response procedures for NixOS homelab infrastructure
 - **docs/security/luks-encryption.md**: Complete guide to setting up LUKS disk encryption with SSH remote unlock capability.
 - **docs/security/polkit.md**: Guide to configuring Polkit for fine-grained permission management.
 - **docs/security/restic-backups.md**: Complete guide to setting up and configuring automated backups using Restic.

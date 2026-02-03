@@ -131,7 +131,7 @@ in
         };
       };
 
-      # Prometheus - metrics API (protected with basic auth)
+      # Prometheus - metrics API (protected with basic auth + IP whitelist)
       "portal.${secrets.localDomain}" = {
         onlySSL = true;
         sslCertificate = "/etc/nginx/certs/${secrets.localDomain}.crt";
@@ -142,6 +142,13 @@ in
           proxyPass = "http://127.0.0.1:${toString config.services.prometheus.port}";
           proxyWebsockets = true;
           recommendedProxySettings = true;
+          # IP whitelist: Only allow access from local LAN and WireGuard tunnel
+          extraConfig = ''
+            allow 192.168.8.0/24;   # Main LAN
+            allow 172.26.5.0/24;    # WireGuard tunnel
+            allow 127.0.0.1;        # Localhost
+            deny all;
+          '';
         };
       };
     };

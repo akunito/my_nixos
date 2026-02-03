@@ -1,18 +1,24 @@
-# Blackbox Exporter for HTTP/HTTPS probes and ICMP ping checks
+# Blackbox Exporter for HTTP/HTTPS probes, ICMP ping checks, and TLS certificate monitoring
 #
 # Feature flags (from profile config):
 #   - prometheusBlackboxEnable: Enable Blackbox Exporter
 #   - prometheusBlackboxHttpTargets: List of HTTP/HTTPS targets [{name, url, module}]
 #   - prometheusBlackboxIcmpTargets: List of ICMP targets [{name, host}]
+#   - prometheusBlackboxTlsTargets: List of TLS targets [{name, host, port}] for cert expiry monitoring
 #
 # Usage: Add targets in profile config, then scrape from Prometheus
 # HTTP targets can specify a module (default: http_2xx, or http_2xx_nossl for plain HTTP)
+# TLS targets are for dedicated certificate expiry monitoring
+#
+# Alert: probe_ssl_earliest_cert_expiry metric can be used to alert on certificate expiry
+# Example alert rule: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 14
 
 { pkgs, lib, systemSettings, config, ... }:
 
 let
   httpTargets = systemSettings.prometheusBlackboxHttpTargets or [];
   icmpTargets = systemSettings.prometheusBlackboxIcmpTargets or [];
+  tlsTargets = systemSettings.prometheusBlackboxTlsTargets or [];
 in
 lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
   services.prometheus.exporters.blackbox = {
@@ -47,6 +53,13 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
           timeout: 5s
           icmp:
             preferred_ip_protocol: ip4
+        tls_connect:
+          prober: tcp
+          timeout: 10s
+          tcp:
+            tls: true
+            tls_config:
+              insecure_skip_verify: false
     '';
   };
 
@@ -85,5 +98,60 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
           host = target.host;
         };
       }];
-    }) icmpTargets);
+    }) icmpTargets)
+    ++
+    # TLS certificate expiry monitoring
+    (map (target: {
+      job_name = "blackbox_tls_${target.name}";
+      metrics_path = "/probe";
+      params = {
+        module = [ "tls_connect" ];
+        target = [ "${target.host}:${toString (target.port or 443)}" ];
+      };
+      static_configs = [{
+        targets = [ "127.0.0.1:9115" ];
+        labels = {
+          instance = target.name;
+          host = target.host;
+        };
+      }];
+      relabel_configs = [
+        { source_labels = ["__param_target"]; target_label = "target"; }
+      ];
+    }) tlsTargets);
+
+  # Prometheus alert rules for SSL certificate expiry
+  services.prometheus.rules = lib.mkIf (tlsTargets != [] || httpTargets != []) [
+    (builtins.toJSON {
+      groups = [{
+        name = "ssl_expiry";
+        rules = [
+          {
+            alert = "SSLCertExpiringSoon";
+            expr = "(probe_ssl_earliest_cert_expiry - time()) / 86400 < 14";
+            "for" = "1h";
+            labels = {
+              severity = "warning";
+            };
+            annotations = {
+              summary = "SSL certificate expires in less than 14 days";
+              description = "Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}";
+            };
+          }
+          {
+            alert = "SSLCertExpiryCritical";
+            expr = "(probe_ssl_earliest_cert_expiry - time()) / 86400 < 7";
+            "for" = "1h";
+            labels = {
+              severity = "critical";
+            };
+            annotations = {
+              summary = "SSL certificate expires in less than 7 days";
+              description = "Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}";
+            };
+          }
+        ];
+      }];
+    })
+  ];
 }

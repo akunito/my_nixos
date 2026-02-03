@@ -23,19 +23,19 @@ in
     resolvedEnable = true;
 
     # Firewall ports (cleaned up - no NFS server needed)
+    # NOTE: UniFi ports removed - UniFi controller uses macvlan (192.168.8.206)
+    # for direct LAN access and doesn't route through LXC_HOME firewall
     allowedTCPPorts = [
       22 # SSH
       80 # HTTP (redirect to HTTPS)
       443 # HTTPS
       8043 # nginx
       22000 # syncthing
-      8443 8080 8843 8880 6789 # unifi controller
       9100 # Prometheus Node Exporter
       9092 # cAdvisor (Docker metrics)
     ];
     allowedUDPPorts = [
       22000 21027 # syncthing
-      3478 10001 1900 5514 # unifi controller
     ];
     # NOTE: NFS server ports (111, 2049, 4000-4002) removed - not needed
     # All clients connect directly to TrueNAS (192.168.20.200)

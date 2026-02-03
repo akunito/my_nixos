@@ -110,6 +110,15 @@ in
       { name = "wireguard_tunnel"; host = "172.26.5.155"; }
     ];
 
+    # === TLS Certificate Expiry Monitoring ===
+    # Dedicated certificate expiry checks (also extracted from HTTP probes)
+    prometheusBlackboxTlsTargets = [
+      # Local wildcard certificate (*.local.akunito.com)
+      { name = "local_wildcard"; host = "nextcloud.${secrets.wildcardLocal}"; port = 443; }
+      # Grafana/Prometheus cert (*.akunito.org.es)
+      { name = "monitoring_cert"; host = "monitor.${secrets.localDomain}"; port = 443; }
+    ];
+
     # === PVE Exporter (Proxmox metrics) ===
     prometheusPveExporterEnable = true;
     prometheusPveHost = "192.168.8.82";

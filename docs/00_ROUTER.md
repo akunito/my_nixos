@@ -27,6 +27,8 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | keybindings.sway | SwayFX keybindings reference, including unified rofi launcher and window overview. | sway, swayfx, keybindings, rofi, wayland | user/wm/sway/swayfx-config.nix |
 | lxc-deployment | Centralized deployment script for managing multiple LXC containers | lxc, deployment, automation, proxmox, containers | deploy-lxc.sh |
 | security.git-crypt | Git-crypt encryption for sensitive configuration data (domains, IPs, credentials) | git-crypt, secrets, encryption, security, domains, credentials | secrets/*.nix |
+| security.hardening | Security hardening guidelines for NixOS homelab infrastructure | security, hardening, firewall, services, credentials | system/app/*.nix |
+| security.incident-response | Security incident response procedures for NixOS homelab infrastructure | security, incident-response, credentials, rotation, recovery | secrets/*.nix |
 | user-modules.doom-emacs | Doom Emacs user module and config layout, including Stylix theme templates and profile integration. | emacs, doom-emacs, editor, stylix, user-modules | user/app/doom-emacs/** |
 | user-modules.gaming | Implementation details for Gaming on NixOS, covering Lutris/Bottles wrappers, Vulkan/RDNA 4 driver fixes, and Wine troubleshooting. | gaming, lutris, bottles, wine, vulkan, amd, rdna4, wrappers, antimicrox, controllers | user/app/games/games.nix |
 | user-modules.lmstudio | LM Studio user module, including MCP server setup templates and web-search tooling integration guidance. | lmstudio, mcp, ai, user-modules | user/app/lmstudio/** |
