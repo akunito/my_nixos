@@ -45,6 +45,7 @@ Centralized monitoring running on LXC_monitoring (192.168.8.85) using NixOS nati
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │                          Nginx (443)                                 │   │
 │  │              SSL termination for Grafana & Prometheus                │   │
+│  │         Cert: /mnt/shared-certs/local.akunito.com.*                 │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -55,8 +56,10 @@ Centralized monitoring running on LXC_monitoring (192.168.8.85) using NixOS nati
 
 | Service | URL | Auth |
 |---------|-----|------|
-| Grafana | https://monitor.akunito.org.es | Admin login |
-| Prometheus | https://portal.akunito.org.es | Basic auth |
+| Grafana | https://grafana.local.akunito.com | Admin login |
+| Prometheus | https://prometheus.local.akunito.com | Basic auth + IP whitelist |
+
+**SSL Certificate**: Uses `*.local.akunito.com` wildcard certificate from LXC_proxy ACME, mounted at `/mnt/shared-certs/` via Proxmox bind mount.
 
 ---
 

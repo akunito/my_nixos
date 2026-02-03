@@ -162,8 +162,9 @@ Client-facing entry point for all services:
 **Key Features**:
 - Cloudflare Tunnel for zero-trust external access
 - NPM for local access with Let's Encrypt SSL
-- Wildcard certificate via DNS-01 challenge
-- Certificates shared to other containers via Proxmox bind mount
+- Wildcard certificate (`*.local.akunito.com`) via DNS-01 challenge
+- Certificates shared to other containers via Proxmox bind mount:
+  - LXC_monitoring: `/mnt/shared-certs/` (Grafana & Prometheus SSL)
 
 ---
 
@@ -207,8 +208,10 @@ Centralized monitoring for the entire infrastructure:
 │  └────────────────────────────────────────────────────────────┘ │
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │                       Nginx                                 │ │
+│  │                       Nginx (443)                           │ │
 │  │            SSL termination + reverse proxy                  │ │
+│  │     Cert: /mnt/shared-certs/local.akunito.com.*            │ │
+│  │     (bind mount from LXC_proxy ACME)                        │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -335,7 +338,6 @@ External VPS (Hetzner, Ubuntu 24.04) acts as the central VPN hub:
 - Plane (plane.akunito.com)
 - LeftyWorkout (leftyworkout-test.akunito.com)
 - Portfolio (info.akunito.com)
-- Grafana (monitor.akunito.org.es)
 
 **VPS Services** (via VPS cloudflared):
 - WireGuard UI (wgui.akunito.com)
@@ -402,8 +404,8 @@ All traffic encrypted end-to-end, no ports exposed to internet (except WireGuard
 | UniFi Controller | LXC_HOME | 192.168.8.206:8443 | - | 8443 |
 | NPM Admin | LXC_proxy | 192.168.8.102:81 | - | 81 |
 | **Monitoring** |||||
-| Grafana | LXC_monitoring | - | monitor.akunito.org.es | 443 |
-| Prometheus | LXC_monitoring | - | portal.akunito.org.es | 443 |
+| Grafana | LXC_monitoring | grafana.local.akunito.com | - | 443 |
+| Prometheus | LXC_monitoring | prometheus.local.akunito.com | - | 443 |
 | Uptime Kuma (Internal) | LXC_mailer | 192.168.8.89:3001 | - | 3001 |
 | **Applications** |||||
 | Plane | LXC_plane | 192.168.8.86:3000 | plane.akunito.com | 3000 |
