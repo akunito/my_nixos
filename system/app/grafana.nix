@@ -109,6 +109,172 @@ in
 
     # Combine local + remote scrape configs
     scrapeConfigs = localScrapeConfigs ++ remoteNodeScrapeConfigs ++ remoteCadvisorScrapeConfigs;
+
+    # Alert rules for infrastructure monitoring
+    ruleFiles = [
+      (pkgs.writeText "container-alerts.yml" (builtins.toJSON {
+        groups = [
+          {
+            name = "container_alerts";
+            rules = [
+              # Container memory usage approaching limit
+              {
+                alert = "ContainerMemoryHigh";
+                expr = ''(container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) * 100 > 85'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Container {{ $labels.name }} memory usage high";
+                  description = "Container {{ $labels.name }} on {{ $labels.instance }} is using {{ $value | printf \"%.1f\" }}% of its memory limit";
+                };
+              }
+              # Container memory critical (>95%)
+              {
+                alert = "ContainerMemoryCritical";
+                expr = ''(container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) * 100 > 95'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Container {{ $labels.name }} memory critical";
+                  description = "Container {{ $labels.name }} on {{ $labels.instance }} is using {{ $value | printf \"%.1f\" }}% of its memory limit - OOM risk";
+                };
+              }
+              # Container CPU throttling
+              {
+                alert = "ContainerCPUThrottling";
+                expr = ''rate(container_cpu_cfs_throttled_seconds_total{name!=""}[5m]) > 0.5'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Container {{ $labels.name }} CPU throttled";
+                  description = "Container {{ $labels.name }} on {{ $labels.instance }} is being CPU throttled";
+                };
+              }
+              # Container restarting frequently
+              {
+                alert = "ContainerRestarting";
+                expr = ''increase(container_restart_count{name!=""}[1h]) > 3'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Container {{ $labels.name }} restarting";
+                  description = "Container {{ $labels.name }} on {{ $labels.instance }} has restarted {{ $value | printf \"%.0f\" }} times in the last hour";
+                };
+              }
+              # Container down (not running)
+              {
+                alert = "ContainerDown";
+                expr = ''absent(container_memory_usage_bytes{name=~".+"}) or (container_last_seen{name!=""} < (time() - 60))'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Container {{ $labels.name }} is down";
+                  description = "Container {{ $labels.name }} on {{ $labels.instance }} has been down for more than 2 minutes";
+                };
+              }
+            ];
+          }
+          {
+            name = "node_alerts";
+            rules = [
+              # High memory usage on host
+              {
+                alert = "HostMemoryHigh";
+                expr = ''(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} memory high";
+                  description = "Host {{ $labels.instance }} memory usage is {{ $value | printf \"%.1f\" }}%";
+                };
+              }
+              # High CPU usage on host
+              {
+                alert = "HostCPUHigh";
+                expr = ''100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} CPU high";
+                  description = "Host {{ $labels.instance }} CPU usage is {{ $value | printf \"%.1f\" }}%";
+                };
+              }
+              # Disk space low
+              {
+                alert = "HostDiskSpaceLow";
+                expr = ''(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 < 15'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} disk space low";
+                  description = "Host {{ $labels.instance }} filesystem {{ $labels.mountpoint }} has only {{ $value | printf \"%.1f\" }}% free";
+                };
+              }
+              # Disk space critical
+              {
+                alert = "HostDiskSpaceCritical";
+                expr = ''(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 < 5'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} disk space critical";
+                  description = "Host {{ $labels.instance }} filesystem {{ $labels.mountpoint }} has only {{ $value | printf \"%.1f\" }}% free";
+                };
+              }
+              # Host down (node exporter not responding)
+              {
+                alert = "HostDown";
+                expr = ''up{job=~".*_node"} == 0'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} is down";
+                  description = "Node exporter on {{ $labels.instance }} has been unreachable for more than 2 minutes";
+                };
+              }
+            ];
+          }
+          {
+            name = "wireguard_alerts";
+            rules = [
+              # WireGuard interface down
+              {
+                alert = "WireGuardInterfaceDown";
+                expr = ''wireguard_interface_up == 0'';
+                "for" = "1m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "WireGuard interface down on {{ $labels.instance }}";
+                  description = "WireGuard interface wg0 is not running on {{ $labels.instance }}";
+                };
+              }
+              # pfSense tunnel disconnected (main home connection)
+              {
+                alert = "WireGuardPfSenseDisconnected";
+                expr = ''wireguard_pfsense_connected == 0'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "WireGuard pfSense tunnel disconnected";
+                  description = "The WireGuard tunnel to pfSense (home network) has been down for more than 2 minutes";
+                };
+              }
+              # No active WireGuard peers
+              {
+                alert = "WireGuardNoPeers";
+                expr = ''wireguard_active_peers == 0'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "No active WireGuard peers on {{ $labels.instance }}";
+                  description = "WireGuard has no active peer connections for more than 5 minutes";
+                };
+              }
+            ];
+          }
+        ];
+      }))
+    ];
   };
 
   # Nginx reverse proxy with SSL

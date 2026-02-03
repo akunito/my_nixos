@@ -57,34 +57,49 @@ Procedures for responding to security incidents and performing credential rotati
 
 **Steps:**
 
-1. Log into SMTP2GO dashboard
+1. Log into SMTP2GO dashboard (https://app.smtp2go.com)
 2. Navigate to Settings > Users
 3. Generate new API key or reset password
-4. Update secrets:
+4. Update dotfiles secrets:
    ```bash
+   cd ~/.dotfiles
+   git-crypt unlock ~/.git-crypt/dotfiles-key
    vim secrets/domains.nix
-   # Update smtp2goUser and smtp2goPassword
+   # Update smtp2goPassword value
+   git add secrets/domains.nix && git commit -m "chore: rotate SMTP2GO credentials"
    ```
 
-5. Update LXC_mailer docker-compose.yml:
+5. Update LXC_mailer .env (git-crypt encrypted):
    ```bash
    ssh akunito@192.168.8.89
    cd ~/homelab-watcher
-   # Update environment variables to use new credentials
-   docker-compose down && docker-compose up -d
+   git-crypt unlock ~/.keys/homelab-watcher.key
+   vim .env
+   # Update SMTP2GO_PASSWORD value
+   git add .env && git commit -m "chore: rotate SMTP2GO credentials"
+   docker compose down && docker compose up -d
    ```
 
-6. Update VPS postfix-relay:
+6. Update VPS postfix-relay .env (git-crypt encrypted):
    ```bash
    ssh -p 56777 root@172.26.5.155
    cd /opt/postfix-relay
-   # Update docker-compose.yml with new credentials
-   docker-compose down && docker-compose up -d
+   git-crypt unlock /root/.keys/postfix-relay.key
+   vim .env
+   # Update SMTP_PASSWORD value
+   git add .env && git commit -m "chore: rotate SMTP2GO credentials"
+   docker compose down && docker compose up -d
    ```
 
 7. Test email delivery:
    ```bash
-   echo "Test" | mail -s "Credential rotation test" your-email@example.com
+   # On LXC_mailer
+   curl --url "smtp://localhost:25" \
+     --mail-from "nixos@akunito.com" \
+     --mail-rcpt "diego88aku@gmail.com" \
+     --upload-file - <<< "Subject: Credential Rotation Test
+
+   SMTP2GO credentials rotated successfully."
    ```
 
 ---
