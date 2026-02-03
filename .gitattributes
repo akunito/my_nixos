@@ -14,3 +14,12 @@
 # merge=ours: During merge, always use our version (ignore incoming changes)
 flake.nix merge=ours
 flake.lock merge=ours
+
+# ============================================================================
+# Git-Crypt Encrypted Files
+# ============================================================================
+# Secrets directory - all .nix files encrypted
+secrets/*.nix filter=git-crypt diff=git-crypt
+
+# Exclude template files from encryption (they're public)
+secrets/*.template !filter !diff

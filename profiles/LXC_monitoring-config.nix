@@ -6,6 +6,7 @@
 
 let
   base = import ./LXC-base-config.nix;
+  secrets = import ../secrets/domains.nix;
 in
 {
   # Flag to use rust-overlay
@@ -71,27 +72,27 @@ in
     prometheusBlackboxEnable = true;
 
     prometheusBlackboxHttpTargets = [
-      # Local services (.org.es) - direct access within LAN
+      # Local services - direct access within LAN
       # These are reliable checks - if local is up, global (via Cloudflare) works too
-      { name = "jellyfin"; url = "https://jellyfin.akunito.org.es"; }
-      { name = "jellyseerr"; url = "https://jellyseerr.akunito.org.es"; }
-      { name = "nextcloud"; url = "https://nextcloud.akunito.org.es"; }
-      { name = "radarr"; url = "https://radarr.akunito.org.es"; }
-      { name = "sonarr"; url = "https://sonarr.akunito.org.es"; }
-      { name = "bazarr"; url = "https://bazarr.akunito.org.es"; }
-      { name = "prowlarr"; url = "https://prowlarr.akunito.org.es"; }
-      { name = "syncthing"; url = "https://syncthing.akunito.org.es"; }
-      { name = "calibre"; url = "https://books.akunito.org.es"; }
-      { name = "emulators"; url = "https://emulators.akunito.org.es"; }
+      { name = "jellyfin"; url = "https://jellyfin.${secrets.localDomain}"; }
+      { name = "jellyseerr"; url = "https://jellyseerr.${secrets.localDomain}"; }
+      { name = "nextcloud"; url = "https://nextcloud.${secrets.localDomain}"; }
+      { name = "radarr"; url = "https://radarr.${secrets.localDomain}"; }
+      { name = "sonarr"; url = "https://sonarr.${secrets.localDomain}"; }
+      { name = "bazarr"; url = "https://bazarr.${secrets.localDomain}"; }
+      { name = "prowlarr"; url = "https://prowlarr.${secrets.localDomain}"; }
+      { name = "syncthing"; url = "https://syncthing.${secrets.localDomain}"; }
+      { name = "calibre"; url = "https://books.${secrets.localDomain}"; }
+      { name = "emulators"; url = "https://emulators.${secrets.localDomain}"; }
       { name = "unifi"; url = "https://192.168.8.206:8443/"; }
-      { name = "grafana"; url = "https://monitor.akunito.org.es"; }
-      { name = "prometheus"; url = "https://portal.akunito.org.es"; }
+      { name = "grafana"; url = "https://monitor.${secrets.localDomain}"; }
+      { name = "prometheus"; url = "https://portal.${secrets.localDomain}"; }
 
       # Services only accessible via Cloudflare (no local equivalent)
-      { name = "plane"; url = "https://plane.akunito.com"; }
-      { name = "leftyworkout"; url = "https://leftyworkout-test.akunito.com"; }
-      { name = "portfolio"; url = "https://info.akunito.com"; }
-      { name = "wgui"; url = "https://wgui.akunito.com"; }
+      { name = "plane"; url = "https://plane.${secrets.publicDomain}"; }
+      { name = "leftyworkout"; url = "https://leftyworkout-test.${secrets.publicDomain}"; }
+      { name = "portfolio"; url = "https://info.${secrets.publicDomain}"; }
+      { name = "wgui"; url = "https://wgui.${secrets.publicDomain}"; }
 
       # Local-only (no SSL)
       { name = "kuma"; url = "http://192.168.8.89:3001"; module = "http_2xx_nossl"; }
@@ -104,7 +105,7 @@ in
       { name = "personal_wifi_ap"; host = "192.168.8.2"; }
       { name = "switch_usw_24_g2"; host = "192.168.8.181"; }
       { name = "switch_usw_aggregation"; host = "192.168.8.180"; }
-      { name = "vps"; host = "91.211.27.37"; }
+      { name = "vps"; host = secrets.vpsExternalIp; }
       { name = "wireguard_tunnel"; host = "172.26.5.155"; }
     ];
 
@@ -117,7 +118,7 @@ in
 
     # === SNMP Exporter (pfSense) ===
     prometheusSnmpExporterEnable = true;
-    prometheusSnmpCommunity = "payphone-acetone-varied-appraiser-charting-problem-deuce-crumpet-ferocious-agreeing-grub-flyaway-silicon-curable-radio";
+    prometheusSnmpCommunity = secrets.snmpCommunity;
     prometheusSnmpTargets = [
       { name = "pfsense"; host = "192.168.8.1"; module = "pfsense"; }
     ];
@@ -161,8 +162,8 @@ in
     notificationSmtpPort = 25;
     notificationSmtpAuth = false;
     notificationSmtpTls = false;
-    notificationFromEmail = "nixos@akunito.com";
-    notificationToEmail = "diego88aku@gmail.com";
+    notificationFromEmail = secrets.notificationFrom;
+    notificationToEmail = secrets.alertEmail;
 
     # ============================================================================
     # HOMELAB DOCKER STACKS (Disabled - no Docker stacks on monitoring server)

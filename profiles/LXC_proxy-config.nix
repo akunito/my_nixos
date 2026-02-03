@@ -12,6 +12,7 @@
 
 let
   base = import ./LXC-base-config.nix;
+  secrets = import ../secrets/domains.nix;
 in
 {
   systemSettings = base.systemSettings // {
@@ -39,7 +40,7 @@ in
 
     # === ACME Certificates (Let's Encrypt via Cloudflare DNS) ===
     acmeEnable = true;
-    acmeEmail = "diego88aku@gmail.com";
+    acmeEmail = secrets.acmeEmail;
     # Certs stored at /var/lib/acme/local.akunito.com/ and copied to /mnt/shared-certs/
     # Setup: echo 'CF_DNS_API_TOKEN=xxx' | sudo tee /etc/secrets/cloudflare-acme
 

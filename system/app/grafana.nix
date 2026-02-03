@@ -18,6 +18,7 @@
 { pkgs, lib, systemSettings, config, ... }:
 
 let
+  secrets = import ../../secrets/domains.nix;
   remoteTargets = systemSettings.prometheusRemoteTargets or [];
 
   # Build scrape configs for remote Node Exporters
@@ -67,7 +68,7 @@ in
         http_addr = "127.0.0.1";
         http_port = 3002;
         protocol = "http";
-        domain = "monitor.akunito.org.es";
+        domain = "monitor.${secrets.localDomain}";
         enforce_domain = true;
       };
 
@@ -75,7 +76,7 @@ in
       smtp = {
         enabled = true;
         host = "192.168.8.89:25";
-        from_address = "alerts@akunito.com";
+        from_address = secrets.grafanaAlertsFrom;
         from_name = "Grafana Monitoring";
         skip_verify = true;  # Local relay, no TLS
       };
@@ -91,7 +92,7 @@ in
     enable = true;
     port = 9090;
     listenAddress = "127.0.0.1";
-    webExternalUrl = "https://portal.akunito.org.es";
+    webExternalUrl = "https://portal.${secrets.localDomain}";
     globalConfig.scrape_interval = "15s";
 
     # Local Node Exporter for monitoring server system metrics
@@ -120,9 +121,9 @@ in
       # Grafana - main monitoring UI
       "${config.services.grafana.settings.server.domain}" = {
         onlySSL = true;
-        sslCertificate = "/etc/nginx/certs/akunito.org.es.crt";
-        sslCertificateKey = "/etc/nginx/certs/akunito.org.es.key";
-        sslTrustedCertificate = "/etc/nginx/certs/akunito.org.es.crt";
+        sslCertificate = "/etc/nginx/certs/${secrets.localDomain}.crt";
+        sslCertificateKey = "/etc/nginx/certs/${secrets.localDomain}.key";
+        sslTrustedCertificate = "/etc/nginx/certs/${secrets.localDomain}.crt";
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
           proxyWebsockets = true;
@@ -131,11 +132,11 @@ in
       };
 
       # Prometheus - metrics API (protected with basic auth)
-      "portal.akunito.org.es" = {
+      "portal.${secrets.localDomain}" = {
         onlySSL = true;
-        sslCertificate = "/etc/nginx/certs/akunito.org.es.crt";
-        sslCertificateKey = "/etc/nginx/certs/akunito.org.es.key";
-        sslTrustedCertificate = "/etc/nginx/certs/akunito.org.es.crt";
+        sslCertificate = "/etc/nginx/certs/${secrets.localDomain}.crt";
+        sslCertificateKey = "/etc/nginx/certs/${secrets.localDomain}.key";
+        sslTrustedCertificate = "/etc/nginx/certs/${secrets.localDomain}.crt";
         basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd";
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString config.services.prometheus.port}";

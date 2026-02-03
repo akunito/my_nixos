@@ -4,6 +4,7 @@
 
 let
   base = import ./LXC-base-config.nix;
+  secrets = import ../secrets/domains.nix;
 in
 {
   # Flag to use rust-overlay
@@ -116,8 +117,8 @@ in
     notificationSmtpPort = 25; # Standard SMTP relay port
     notificationSmtpAuth = false; # No auth needed for relay
     notificationSmtpTls = false; # No TLS for local relay
-    notificationFromEmail = "nixos@akunito.com"; # Sender email (relay will use this)
-    notificationToEmail = "diego88aku@gmail.com"; # Final delivery address
+    notificationFromEmail = secrets.notificationFrom; # Sender email (relay will use this)
+    notificationToEmail = secrets.alertEmail; # Final delivery address
 
     # ============================================================================
     # HOMELAB DOCKER STACKS (Start on boot)

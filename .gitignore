@@ -99,8 +99,13 @@ result-*
 *.key
 *.pem
 *.cert
-secrets/
 *.secret
+
+# Secrets directory - allow encrypted nix files and templates only
+# The *.nix files are encrypted with git-crypt, templates are public
+secrets/*
+!secrets/*.nix
+!secrets/*.template
 
 # Plasma configuration (managed separately)
 .dotfiles-plasma-config/

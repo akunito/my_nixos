@@ -12,6 +12,10 @@
 
 { pkgs, lib, systemSettings, ... }:
 
+let
+  secrets = import ../../secrets/domains.nix;
+in
+
 lib.mkIf (systemSettings.acmeEnable or false) {
   # Accept Let's Encrypt terms
   security.acme = {
@@ -22,10 +26,10 @@ lib.mkIf (systemSettings.acmeEnable or false) {
       server = "https://acme-v02.api.letsencrypt.org/directory";
     };
 
-    # Wildcard certificate for local.akunito.com
-    certs."local.akunito.com" = {
-      domain = "*.local.akunito.com";
-      extraDomainNames = [ "local.akunito.com" ];
+    # Wildcard certificate for local domain
+    certs."${secrets.wildcardLocal}" = {
+      domain = "*.${secrets.wildcardLocal}";
+      extraDomainNames = [ secrets.wildcardLocal ];
       dnsProvider = "cloudflare";
       dnsPropagationCheck = true;
       credentialsFile = "/etc/secrets/cloudflare-acme";
@@ -45,19 +49,19 @@ lib.mkIf (systemSettings.acmeEnable or false) {
       Type = "oneshot";
       ExecStart = pkgs.writeShellScript "copy-acme-certs" ''
         mkdir -p /mnt/shared-certs
-        cp /var/lib/acme/local.akunito.com/fullchain.pem /mnt/shared-certs/local.akunito.com.crt
-        cp /var/lib/acme/local.akunito.com/key.pem /mnt/shared-certs/local.akunito.com.key
+        cp /var/lib/acme/${secrets.wildcardLocal}/fullchain.pem /mnt/shared-certs/${secrets.wildcardLocal}.crt
+        cp /var/lib/acme/${secrets.wildcardLocal}/key.pem /mnt/shared-certs/${secrets.wildcardLocal}.key
         # Make certs readable by all LXC containers (local LAN only)
-        chmod 644 /mnt/shared-certs/local.akunito.com.crt
-        chmod 644 /mnt/shared-certs/local.akunito.com.key
+        chmod 644 /mnt/shared-certs/${secrets.wildcardLocal}.crt
+        chmod 644 /mnt/shared-certs/${secrets.wildcardLocal}.key
         # Create default cert symlinks for nginx-proxy (auto-HTTPS for all services)
-        ln -sf local.akunito.com.crt /mnt/shared-certs/default.crt
-        ln -sf local.akunito.com.key /mnt/shared-certs/default.key
+        ln -sf ${secrets.wildcardLocal}.crt /mnt/shared-certs/default.crt
+        ln -sf ${secrets.wildcardLocal}.key /mnt/shared-certs/default.key
         echo "Certificates copied to /mnt/shared-certs/"
       '';
     };
     # Also run on boot to ensure certs are in place
     wantedBy = [ "multi-user.target" ];
-    after = [ "acme-local.akunito.com.service" ];
+    after = [ "acme-${secrets.wildcardLocal}.service" ];
   };
 }
