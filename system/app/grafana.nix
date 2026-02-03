@@ -272,6 +272,44 @@ in
               }
             ];
           }
+          {
+            name = "backup_alerts";
+            rules = [
+              # Backup too old (more than 25 hours - allows for daily backup window)
+              {
+                alert = "BackupTooOld";
+                expr = ''backup_age_seconds{repo="home"} > 90000'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Backup is too old on {{ $labels.instance }}";
+                  description = "Last backup on {{ $labels.instance }} was {{ $value | humanizeDuration }} ago";
+                };
+              }
+              # Backup critically old (more than 48 hours)
+              {
+                alert = "BackupCriticallyOld";
+                expr = ''backup_age_seconds{repo="home"} > 172800'';
+                "for" = "1h";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Backup is critically old on {{ $labels.instance }}";
+                  description = "Last backup on {{ $labels.instance }} was {{ $value | humanizeDuration }} ago - immediate attention required";
+                };
+              }
+              # Backup repository unhealthy
+              {
+                alert = "BackupRepositoryUnhealthy";
+                expr = ''backup_repository_healthy == 0'';
+                "for" = "15m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Backup repository unhealthy on {{ $labels.instance }}";
+                  description = "Cannot access backup repository on {{ $labels.instance }} - check restic configuration";
+                };
+              }
+            ];
+          }
         ];
       }))
     ];

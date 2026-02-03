@@ -125,6 +125,14 @@ in
     # ============================================================================
     homelabDockerEnable = true; # Enable systemd service to start docker-compose stacks on boot
 
+    # ============================================================================
+    # BACKUP MONITORING (Prometheus textfile collector)
+    # ============================================================================
+    backupMonitoringEnable = true;
+    backupMonitoringOnCalendar = "hourly"; # Check backup status every hour
+    backupMonitoringRepo = "/mnt/DATA_4TB/backups/NixOS_homelab/Home.restic/";
+    backupMonitoringPasswordFile = "/home/akunito/myScripts/restic.key";
+
     systemStable = true; # LXC_HOME uses stable
   };
 
