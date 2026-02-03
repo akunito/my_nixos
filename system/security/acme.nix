@@ -33,15 +33,28 @@ lib.mkIf (systemSettings.acmeEnable or false) {
       webroot = null;
       # Allow docker group to read certs (for NPM)
       group = "docker";
-      # Copy certs to /mnt/shared-certs (Proxmox shared mount for all LXC containers)
-      postRun = ''
+      # Trigger copy service after renewal
+      reloadServices = [ "acme-copy-certs" ];
+    };
+  };
+
+  # Service to copy certs to shared mount after ACME renewal
+  systemd.services.acme-copy-certs = {
+    description = "Copy ACME certs to shared mount";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "copy-acme-certs" ''
         mkdir -p /mnt/shared-certs
         cp /var/lib/acme/local.akunito.com/fullchain.pem /mnt/shared-certs/local.akunito.com.crt
         cp /var/lib/acme/local.akunito.com/key.pem /mnt/shared-certs/local.akunito.com.key
         chmod 644 /mnt/shared-certs/local.akunito.com.crt
         chmod 640 /mnt/shared-certs/local.akunito.com.key
         chown root:docker /mnt/shared-certs/local.akunito.com.key
+        echo "Certificates copied to /mnt/shared-certs/"
       '';
     };
+    # Also run on boot to ensure certs are in place
+    wantedBy = [ "multi-user.target" ];
+    after = [ "acme-local.akunito.com.service" ];
   };
 }
