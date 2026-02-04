@@ -101,10 +101,17 @@ let
           pool = "\${2}";
         };
       }
-      # Catch-all for unmapped metrics
+      # Catch-all for unmapped metrics (using single * wildcards)
       {
-        match = "servers.*.**";
-        name = "truenas_\${2}";
+        match = "servers.*.*.*";
+        name = "truenas_\${2}_\${3}";
+        labels = {
+          host = "\${1}";
+        };
+      }
+      {
+        match = "servers.*.*.*.*";
+        name = "truenas_\${2}_\${3}_\${4}";
         labels = {
           host = "\${1}";
         };
