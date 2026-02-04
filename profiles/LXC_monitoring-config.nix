@@ -119,13 +119,9 @@ in
     ];
 
     # === TLS Certificate Expiry Monitoring ===
-    # Dedicated certificate expiry checks (also extracted from HTTP probes)
-    prometheusBlackboxTlsTargets = [
-      # Local wildcard certificate (*.local.akunito.com)
-      { name = "local_wildcard"; host = "nextcloud.${secrets.wildcardLocal}"; port = 443; }
-      # Grafana/Prometheus cert (*.local.akunito.com - same as local_wildcard)
-      { name = "monitoring_cert"; host = "grafana.${secrets.wildcardLocal}"; port = 443; }
-    ];
+    # Certificate expiry is already monitored via HTTP probes (probe_ssl_earliest_cert_expiry)
+    # No dedicated TLS targets needed - they were redundant with HTTP checks
+    prometheusBlackboxTlsTargets = [];
 
     # === PVE Exporter (Proxmox metrics) ===
     prometheusPveExporterEnable = true;
