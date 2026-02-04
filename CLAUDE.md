@@ -353,6 +353,25 @@ Before answering any architectural or implementation question:
 - **Config backup**: `/conf/config.xml` (full configuration)
 - **Sensitive data**: WireGuard keys and external IPs in `INFRASTRUCTURE_INTERNAL.md`
 
+### Infrastructure audits (applies to: `docs/infrastructure/audits/`)
+
+- **Audit reports**: Stored in `docs/infrastructure/audits/` with date-stamped filenames
+- **Latest pfSense audit**: `docs/infrastructure/audits/pfsense-audit-2026-02-04.md`
+  - Security score: 7/10 (SNMPv2c and DNSSEC are main concerns)
+  - Performance score: 9/10 (excellent headroom)
+  - Reliability score: 7/10 (backup automation needed)
+- **Open remediations** (pfSense):
+  1. **High**: SEC-001 - Upgrade SNMP to SNMPv3
+  2. **Medium**: REL-001 - Configure AutoConfigBackup
+  3. **Medium**: SEC-002 - Enable DNSSEC
+  4. **Medium**: REL-002 - Enable unbound-control
+  5. **Low**: SEC-003 - Restrict anti-lockout rule to admin IPs
+- **Performance baseline** (2026-02-04):
+  - State table: 770 / 1.6M (0.05% usage)
+  - DNS cold query: 33ms, cached: 0ms
+  - CPU load: 0.17, Memory free: 14GB
+  - pfBlockerNG IPs: 16,242, Rules: 168
+
 ## Multi-agent instructions
 
 For complex tasks, see `.claude/agents/` for agent-specific context and patterns.

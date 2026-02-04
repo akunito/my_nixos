@@ -10,25 +10,25 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **flake.nix**: Main flake entry point defining inputs and outputs
 - **lib/flake-base.nix**: Base flake module shared by all profiles
 - **lib/defaults.nix**: Default system and user settings
-- **flake.nix**: Profile-specific flake configuration
-- **flake.LAPTOP_YOGAAKU.nix**: Profile-specific flake configuration
-- **flake.LXC_liftcraftTEST.nix**: Profile-specific flake configuration
-- **flake.LXC_HOME.nix**: Profile-specific flake configuration
-- **flake.DESK_AGA.nix**: Profile-specific flake configuration
-- **flake.LXC_plane.nix**: Profile-specific flake configuration
-- **flake.DESK_VMDESK.nix**: Profile-specific flake configuration
-- **flake.VMHOME.nix**: Profile-specific flake configuration
-- **flake.LXC_mailer.nix**: Profile-specific flake configuration
-- **flake.HOME.nix**: Profile-specific flake configuration
-- **flake.LAPTOP_L15.nix**: Profile-specific flake configuration
-- **flake.ORIGINAL.nix**: Profile-specific flake configuration
-- **flake.LXC.nix**: Profile-specific flake configuration
 - **flake.DESK.nix**: Profile-specific flake configuration
-- **flake.LAPTOP_AGA.nix**: Profile-specific flake configuration
-- **flake.LXC_proxy.nix**: Profile-specific flake configuration
+- **flake.HOME.nix**: Profile-specific flake configuration
+- **flake.VMHOME.nix**: Profile-specific flake configuration
 - **flake.WSL.nix**: Profile-specific flake configuration
-- **flake.LXC_monitoring.nix**: Profile-specific flake configuration
+- **flake.LXC.nix**: Profile-specific flake configuration
+- **flake.LXC_plane.nix**: Profile-specific flake configuration
+- **flake.ORIGINAL.nix**: Profile-specific flake configuration
+- **flake.DESK_AGA.nix**: Profile-specific flake configuration
+- **flake.DESK_VMDESK.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_L15.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_YOGAAKU.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_AGA.nix**: Profile-specific flake configuration
+- **flake.LXC_HOME.nix**: Profile-specific flake configuration
+- **flake.LXC_liftcraftTEST.nix**: Profile-specific flake configuration
 - **flake.LXC_portfolioprod.nix**: Profile-specific flake configuration
+- **flake.LXC_mailer.nix**: Profile-specific flake configuration
+- **flake.LXC_monitoring.nix**: Profile-specific flake configuration
+- **flake.LXC_proxy.nix**: Profile-specific flake configuration
+- **flake.nix**: Profile-specific flake configuration
 
 ## Profiles
 
@@ -324,6 +324,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/profile-comparison-desk-laptop-analysis.md**: This document provides a comprehensive analysis of the differences between three key profiles in the NixOS configuration hierarchy:
 - **docs/future/profile-migration-status.md**: **Date**: 2025-01-02
 - **docs/future/router-drift-audit-2026-01-08.md**: Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system).
+- **docs/future/slow-rebuild-investigation.md**: NixOS rebuild via `install.sh` is extremely slow on LAPTOP_L15.
 - **docs/future/sov-crash-analysis.md**: **Date**: 2026-01-07
 - **docs/future/sov-dependency-analysis.md**: **Date**: 2026-01-07
 - **docs/future/stylix-verification-and-fix.md**: Verified that **all Stylix configurations are properly controlled by the `stylixEnable` flag**. Found one issue: **DESK_AGA** should disable Stylix but currently inherits it enabled from DESK.
@@ -346,6 +347,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/infrastructure/INFRASTRUCTURE.md**: Public infrastructure overview with architecture diagram and component descriptions
 - **docs/infrastructure/INFRASTRUCTURE_INTERNAL.md**: Complete internal infrastructure documentation with sensitive details (ENCRYPTED)
+
+### Infrastructure / Audits
+
+- **docs/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
 
 ### Infrastructure / Services
 
