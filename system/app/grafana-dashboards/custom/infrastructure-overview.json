@@ -67,7 +67,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 24,
         "x": 0,
         "y": 0
@@ -181,8 +181,21 @@
           "refId": "H"
         }
       ],
-      "title": "Infrastructure Latency",
+      "title": "",
       "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      },
+      "id": 110,
+      "panels": [],
+      "title": "Proxmox VE",
+      "type": "row"
     },
     {
       "datasource": {
@@ -220,8 +233,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 3,
+        "h": 4,
+        "w": 2,
         "x": 0,
         "y": 4
       },
@@ -255,7 +268,82 @@
           "refId": "A"
         }
       ],
-      "title": "PVE CPU",
+      "title": "CPU",
+      "transparent": true,
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Proxmox VE memory usage with used/total",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 2,
+        "y": 4
+      },
+      "id": 52,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(pve_memory_usage_bytes{id=\"node/pve\"} / pve_memory_size_bytes{id=\"node/pve\"}) * 100",
+          "legendFormat": "Memory",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Memory",
       "transparent": true,
       "type": "gauge"
     },
@@ -295,9 +383,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 4,
-        "x": 3,
+        "h": 4,
+        "w": 8,
+        "x": 4,
         "y": 4
       },
       "id": 55,
@@ -330,7 +418,7 @@
           "refId": "A"
         }
       ],
-      "title": "PVE Storage",
+      "title": "Storage",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -342,335 +430,6 @@
       ],
       "transparent": true,
       "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "Proxmox disk temperatures from node exporter",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 40
-              },
-              {
-                "color": "red",
-                "value": 50
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 5,
-        "x": 7,
-        "y": 4
-      },
-      "id": 108,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "node_hwmon_temp_celsius{job=\"monitoring_node\", chip=~\"nvme_nvme.*\", sensor=\"temp1\"}",
-          "legendFormat": "{{chip}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "PVE Disk Temperatures",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "nvme_(nvme[0-9]+)",
-            "renamePattern": "$1"
-          }
-        }
-      ],
-      "transparent": true,
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "TrueNAS CPU usage",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 3,
-        "x": 12,
-        "y": 4
-      },
-      "id": 106,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "100 - truenas_system_cpu_idle{job=\"truenas_graphite\"}",
-          "legendFormat": "CPU",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "TrueNAS CPU",
-      "transparent": true,
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "TrueNAS storage usage per pool",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 4,
-        "x": 15,
-        "y": 4
-      },
-      "id": 105,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "(truenas_zfspool_hddpool_used{job=\"truenas_graphite\", pool=\"hddpool\"} / truenas_zfspool_hddpool_size{job=\"truenas_graphite\", pool=\"hddpool\"}) * 100",
-          "legendFormat": "hddpool",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "(truenas_zfspool_ssdpool_used{job=\"truenas_graphite\", pool=\"ssdpool\"} / truenas_zfspool_ssdpool_size{job=\"truenas_graphite\", pool=\"ssdpool\"}) * 100",
-          "legendFormat": "ssdpool",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "TrueNAS storage",
-      "transparent": true,
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "TrueNAS disk temperatures",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 40
-              },
-              {
-                "color": "red",
-                "value": 50
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 5,
-        "x": 19,
-        "y": 4
-      },
-      "id": 23,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "{__name__=~\"servers_truenas_smart_log_smart_disktemp.*\",job=\"truenas_graphite\"}",
-          "legendFormat": "{{__name__}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "TrueNAS Disk Temperatures",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "servers_truenas_smart_log_smart_disktemp_([^_]+)_.*",
-            "renamePattern": "$1"
-          }
-        }
-      ],
-      "transparent": true,
-      "type": "stat"
     },
     {
       "datasource": {
@@ -708,10 +467,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 5,
-        "x": 7,
-        "y": 7
+        "h": 4,
+        "w": 9,
+        "x": 12,
+        "y": 4
       },
       "id": 13,
       "options": {
@@ -763,7 +522,104 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Proxmox VE memory usage with used/total",
+      "description": "Proxmox disk temperatures from node exporter",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 21,
+        "y": 4
+      },
+      "id": 108,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "node_hwmon_temp_celsius{job=\"monitoring_node\", chip=~\"nvme_nvme.*\", sensor=\"temp1\"}",
+          "legendFormat": "{{chip}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Disk Temperatures",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "nvme_(nvme[0-9]+)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 109,
+      "panels": [],
+      "title": "TrueNAS",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "TrueNAS CPU usage",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -794,12 +650,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 3,
+        "h": 4,
+        "w": 2,
         "x": 0,
         "y": 9
       },
-      "id": 52,
+      "id": 106,
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
@@ -823,13 +679,13 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(pve_memory_usage_bytes{id=\"node/pve\"} / pve_memory_size_bytes{id=\"node/pve\"}) * 100",
-          "legendFormat": "Memory",
+          "expr": "100 - truenas_system_cpu_idle{job=\"truenas_graphite\"}",
+          "legendFormat": "CPU",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "PVE memory",
+      "title": "CPU",
       "transparent": true,
       "type": "gauge"
     },
@@ -869,9 +725,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 3,
-        "x": 12,
+        "h": 4,
+        "w": 2,
+        "x": 2,
         "y": 9
       },
       "id": 107,
@@ -904,7 +760,93 @@
           "refId": "A"
         }
       ],
-      "title": "TrueNAS memory",
+      "title": "Memory",
+      "transparent": true,
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "TrueNAS storage usage per pool",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 4,
+        "y": 9
+      },
+      "id": 105,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(truenas_zfspool_hddpool_used{job=\"truenas_graphite\", pool=\"hddpool\"} / truenas_zfspool_hddpool_size{job=\"truenas_graphite\", pool=\"hddpool\"}) * 100",
+          "legendFormat": "hddpool",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(truenas_zfspool_ssdpool_used{job=\"truenas_graphite\", pool=\"ssdpool\"} / truenas_zfspool_ssdpool_size{job=\"truenas_graphite\", pool=\"ssdpool\"}) * 100",
+          "legendFormat": "ssdpool",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Storage",
       "transparent": true,
       "type": "gauge"
     },
@@ -954,10 +896,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
+        "h": 4,
         "w": 5,
-        "x": 19,
-        "y": 11
+        "x": 9,
+        "y": 9
       },
       "id": 22,
       "options": {
@@ -1022,6 +964,90 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "TrueNAS disk temperatures",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 14,
+        "y": 9
+      },
+      "id": 23,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "{__name__=~\"servers_truenas_smart_log_smart_disktemp.*\",job=\"truenas_graphite\"}",
+          "legendFormat": "{{__name__}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Disk Temperatures",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "servers_truenas_smart_log_smart_disktemp_([^_]+)_.*",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "description": "HTTP/HTTPS service response time - individual tiles with latency",
       "fieldConfig": {
         "defaults": {
@@ -1054,7 +1080,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 13
       },
       "id": 30,
       "options": {
