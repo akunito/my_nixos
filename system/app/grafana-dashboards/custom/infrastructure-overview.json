@@ -603,22 +603,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(truenas_zfspool_hddpool_used / truenas_zfspool_hddpool_size) * 100",
-          "legendFormat": "{{id}}",
+          "expr": "(truenas_zfspool_hddpool_used{job=\"truenas_graphite\"} / truenas_zfspool_hddpool_size{job=\"truenas_graphite\"}) * 100",
+          "legendFormat": "hddpool",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(truenas_zfspool_ssdpool_used{job=\"truenas_graphite\"} / truenas_zfspool_ssdpool_size{job=\"truenas_graphite\"}) * 100",
+          "legendFormat": "ssdpool",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "TrueNAS storage",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "storage/pve/(.*)",
-            "renamePattern": "$1"
-          }
-        }
-      ],
+      "transformations": [],
       "transparent": true,
       "type": "gauge"
     },

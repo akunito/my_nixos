@@ -105,6 +105,14 @@ let
           pool = "\${2}";
         };
       }
+      # ZFS pool usage (custom script - truenas.zfspool.<pool>.<stat>)
+      {
+        match = "truenas.zfspool.*.*";
+        name = "truenas_zfspool_\${1}_\${2}";
+        labels = {
+          pool = "\${1}";
+        };
+      }
       # Catch-all for unmapped metrics (using single * wildcards)
       {
         match = "servers.*.*.*";
