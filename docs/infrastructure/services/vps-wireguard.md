@@ -17,7 +17,7 @@ External VPS acting as WireGuard VPN hub and hosting external monitoring service
 |----------|-------|
 | **OS** | Ubuntu 24.04 LTS (Linux 6.8.0-55-generic) |
 | **Provider** | Hetzner |
-| **SSH Access** | `ssh -p 56777 root@172.26.5.155` |
+| **SSH Access** | `ssh -A -p 56777 root@172.26.5.155` (use -A for git ops) |
 | **WireGuard IP** | 172.26.5.155/24 (server) |
 | **Repository** | `git@github.com:akunito/vps_wg.git` |
 | **Git-crypt Key** | `/root/.git-crypt-key` |
@@ -79,7 +79,8 @@ External VPS acting as WireGuard VPN hub and hosting external monitoring service
 - **Interface**: wg0
 - **Server IP**: 172.26.5.155/24, fd86:ea04:1111::155/64 (dual-stack)
 - **Listen Port**: 51820/udp
-- **MTU**: 1280
+- **MTU**: 1420
+- **PersistentKeepalive**: 25s (to pfSense)
 
 **Connected Peers**:
 
@@ -90,11 +91,52 @@ External VPS acting as WireGuard VPN hub and hosting external monitoring service
 | Diego Phone | 172.26.5.95/32 | Mobile device |
 | Nixos VM Desk | 172.26.5.78/32 | Test VM |
 
-**Sysctl Optimizations**:
-```
+**Sysctl Optimizations** (`/etc/sysctl.d/99-wireguard.conf`):
+```bash
+# IP forwarding (required)
 net.ipv4.ip_forward = 1
 net.ipv4.conf.all.src_valid_mark = 1
+
+# Conntrack for NAT handling (increased from default 8192)
+net.netfilter.nf_conntrack_max = 65536
+
+# Network buffer optimization (reduces TX dropped packets)
+net.core.netdev_max_backlog = 5000
+net.core.netdev_budget = 600
+net.core.netdev_budget_usecs = 4000
+
+# UDP buffer tuning
+net.core.rmem_max = 26214400
+net.core.wmem_max = 26214400
+
+# TCP MTU probing (helps with path MTU discovery)
+net.ipv4.tcp_mtu_probing = 1
+
+# Reduce TCP keepalive for faster dead connection detection
+net.ipv4.tcp_keepalive_time = 600
+net.ipv4.tcp_keepalive_intvl = 60
+net.ipv4.tcp_keepalive_probes = 5
 ```
+
+**Queue Discipline** (for traffic burst handling):
+```bash
+# Applied via /etc/network/interfaces post-up or manually
+tc qdisc replace dev wg0 root fq_codel limit 2048 target 5ms interval 100ms
+```
+
+---
+
+### Tunnel Auto-Recovery
+
+**Purpose**: Automatically detect and restart failed WireGuard tunnel
+
+**Script**: `/opt/wireguard-ui/wg-tunnel-monitor.sh`
+
+**Cron**: `*/5 * * * * /opt/wireguard-ui/wg-tunnel-monitor.sh`
+
+**Log**: `/var/log/wg-tunnel-monitor.log`
+
+The monitor script checks handshake age and restarts WireGuard if the tunnel appears down (no handshake for 5+ minutes).
 
 ---
 
@@ -334,6 +376,20 @@ git-crypt unlock /root/.git-crypt-key
 wg show                        # Show WireGuard status
 systemctl status wg-quick@wg0  # Check service status
 wg-quick down wg0 && wg-quick up wg0  # Restart WireGuard
+ip -s link show wg0            # Check interface stats (TX dropped, errors)
+
+# Verify kernel tuning
+sysctl net.netfilter.nf_conntrack_max
+sysctl net.ipv4.tcp_mtu_probing
+sysctl net.core.netdev_max_backlog
+
+# Check queue discipline
+tc qdisc show dev wg0
+
+# Tunnel monitor
+/opt/wireguard-ui/wg-tunnel-monitor.sh  # Manual run
+cat /var/log/wg-tunnel-monitor.log       # Check logs
+crontab -l | grep tunnel-monitor         # Verify cron
 
 # WireGuard UI
 systemctl status wireguard-ui-daemon
@@ -387,6 +443,21 @@ curl http://localhost:9100/metrics | head -50
 2. **Verify firewall**: UFW must allow 9100 from WireGuard subnet
 3. **Check Prometheus targets**: `curl http://192.168.8.85:9090/api/v1/targets`
 
+### TX Dropped Packets / Performance Issues
+
+1. **Check interface stats**: `ip -s link show wg0`
+2. **Verify kernel tuning**: `sysctl net.netfilter.nf_conntrack_max` (should be 65536)
+3. **Check qdisc**: `tc qdisc show dev wg0` (should show fq_codel)
+4. **Check conntrack usage**: `cat /proc/sys/net/netfilter/nf_conntrack_count`
+5. **Run optimization script**: Copy from dotfiles `scripts/vps-wireguard-optimize.sh`
+
+### Tunnel Auto-Recovery Issues
+
+1. **Check monitor log**: `cat /var/log/wg-tunnel-monitor.log`
+2. **Verify cron**: `crontab -l | grep tunnel-monitor`
+3. **Manual test**: `/opt/wireguard-ui/wg-tunnel-monitor.sh`
+4. **Check handshake age**: `wg show wg0 latest-handshakes`
+
 ---
 
 ## Recovery Procedures
@@ -437,6 +508,19 @@ curl http://localhost:9100/metrics | head -50
    # Install cloudflared
    # Configure tunnel token in systemd service
    systemctl enable --now cloudflared
+   ```
+
+8. **Apply WireGuard optimizations**:
+   ```bash
+   # Copy script from dotfiles repo
+   scp -P 56777 scripts/vps-wireguard-optimize.sh root@172.26.5.155:/tmp/
+   # Or paste content directly on VPS
+
+   # Run on VPS
+   ssh -p 56777 root@172.26.5.155
+   chmod +x /tmp/vps-wireguard-optimize.sh
+   /tmp/vps-wireguard-optimize.sh          # Dry-run first
+   /tmp/vps-wireguard-optimize.sh --apply  # Apply changes
    ```
 
 ### Restore from Backup

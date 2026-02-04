@@ -8,6 +8,10 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 - **Source of truth**: `flake.nix` and its `inputs` define dependencies.
 - **Application workflow**: apply changes via `install.sh` (or `aku sync`), not manual systemd enable/start.
 - **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths inside Nix.
+- **SSH agent forwarding**: Always use `-A` flag when connecting to remote machines where git operations may be needed. This forwards your local SSH keys to the remote machine.
+  ```bash
+  ssh -A user@host    # Enables git push/pull on remote without copying keys
+  ```
 
 ## Profile Architecture Principles (CRITICAL)
 
@@ -272,6 +276,19 @@ Before answering any architectural or implementation question:
   - Docker networks: `docker network ls` and `docker network inspect <network>`
   - Prometheus targets: `curl -s http://192.168.8.85:9090/api/v1/targets | jq`
 - **Service-specific docs**: See `docs/infrastructure/services/` for detailed service documentation
+
+### VPS WireGuard troubleshooting (applies to: VPS server, `scripts/vps-wireguard-optimize.sh`)
+
+- **VPS access**: `ssh -A -p 56777 root@172.26.5.155`
+- **VPS repo location**: The git repo is at `/root/vps_wg/` (git-crypt encrypted)
+- **Tunnel diagnostics checklist**:
+  1. Check handshake: `wg show` (look for latest-handshakes timestamp)
+  2. Check interface stats: `ip -s link show wg0` (TX dropped = problem)
+  3. Check kernel tuning: `sysctl net.netfilter.nf_conntrack_max` (should be 65536)
+  4. Check qdisc: `tc qdisc show dev wg0` (should show fq_codel)
+  5. Check monitor logs: `cat /var/log/wg-tunnel-monitor.log`
+- **Optimization script**: Use `scripts/vps-wireguard-optimize.sh` for applying performance tuning
+- **pfSense peer key**: `hWv3ipsMkY6HA2fRe/hO7UI4oWeYmfke4qX6af/5SjY=`
 
 ### Secrets management (applies to: `secrets/*.nix`, `profiles/*-config.nix`, `system/**/*.nix`)
 
