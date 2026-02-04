@@ -352,6 +352,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/infrastructure/services/homelab-stack.md**: Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS
 - **docs/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
 - **docs/infrastructure/services/monitoring-stack.md**: Monitoring stack - Prometheus, Grafana, exporters, alerting
+- **docs/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 - **docs/infrastructure/services/proxy-stack.md**: Proxy stack - NPM, cloudflared, ACME certificates
 - **docs/infrastructure/services/vps-wireguard.md**: VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring
 

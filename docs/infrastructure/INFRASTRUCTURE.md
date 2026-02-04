@@ -1,8 +1,8 @@
 ---
 id: infrastructure.overview
 summary: Public infrastructure overview with architecture diagram and component descriptions
-tags: [infrastructure, architecture, proxmox, lxc, monitoring, homelab]
-related_files: [profiles/LXC*-config.nix, system/app/*.nix, docs/proxmox-lxc.md]
+tags: [infrastructure, architecture, proxmox, lxc, monitoring, homelab, pfsense, gateway]
+related_files: [profiles/LXC*-config.nix, system/app/*.nix, docs/proxmox-lxc.md, docs/infrastructure/services/pfsense.md]
 ---
 
 # Infrastructure Overview
@@ -43,6 +43,38 @@ This document describes the homelab infrastructure architecture, including netwo
 │     HOME      │      │    GUEST      │      │   STORAGE     │
 └───────────────┘      └───────────────┘      └───────────────┘
 ```
+
+---
+
+## pfSense Firewall (192.168.8.1)
+
+Central network gateway providing routing, firewall, DNS, DHCP, VPN, and ad blocking.
+
+| Service | Description |
+|---------|-------------|
+| **Routing** | Inter-VLAN routing (Main LAN, Guest, Storage) |
+| **DNS Resolver** | Unbound with local overrides (`*.local.akunito.com` → 192.168.8.102) |
+| **DHCP Server** | IP assignment for all VLANs |
+| **Firewall** | Stateful packet filtering, NAT, policy-based routing |
+| **WireGuard VPN** | Site-to-site tunnel with VPS (172.26.5.0/24) |
+| **OpenVPN Client** | Commercial privacy VPN for specific devices |
+| **pfBlockerNG** | DNS blocklists (~17M domains), IP blocklists (~16K IPs) |
+| **SNMP** | Metrics export for Prometheus monitoring |
+
+**Key DNS Override**: `*.local.akunito.com` → `192.168.8.102` (LXC_proxy NPM)
+
+**Network Interfaces**:
+
+| Interface | Description | Subnet |
+|-----------|-------------|--------|
+| ix0 (LAN) | Main LAN | 192.168.8.0/24 |
+| igc0 (WAN) | Internet uplink | 192.168.1.x |
+| ix0.200 (Guest) | Guest VLAN | 192.168.9.0/24 |
+| lagg0 (NAS) | Storage LACP | 192.168.20.0/24 |
+| tun_wg0 (WG_VPS) | WireGuard tunnel | 172.26.5.0/24 |
+| ovpnc1 | OpenVPN client | 10.100.0.0/21 |
+
+See [pfSense Documentation](./services/pfsense.md) for detailed configuration.
 
 ---
 
@@ -542,6 +574,7 @@ Updates are staggered to prevent simultaneous service disruption.
 
 ## Related Documentation
 
+- [pfSense Firewall](./services/pfsense.md) - Gateway, DNS, VPN, and firewall configuration
 - [Proxmox LXC Guide](../proxmox-lxc.md) - LXC container setup on Proxmox
 - [LXC Deployment](../lxc-deployment.md) - Deploying NixOS to LXC
 - [Grafana & Alerting](../setup/grafana-dashboards-alerting.md) - Monitoring configuration

@@ -320,6 +320,39 @@ Before answering any architectural or implementation question:
 - **Unlock on fresh clone**: `git-crypt unlock ~/.git-crypt/dotfiles-key`
 - **NEVER commit**: git-crypt keys, plaintext secrets, or credentials
 
+### Documentation encryption (applies to: `docs/**/*.md`, `.gitattributes`)
+
+- **Public docs are OK for**: Internal IPs (192.168.x.x, 172.x.x.x, 10.x.x.x), email addresses, service descriptions, interface names
+- **MUST encrypt**: Public IPs, WireGuard keys, passwords, API tokens, SNMP community strings
+- **Encryption methods**:
+  1. Add sensitive content to `docs/infrastructure/INFRASTRUCTURE_INTERNAL.md` (already encrypted)
+  2. Or add new file to `.gitattributes` with `filter=git-crypt diff=git-crypt`
+- **Template pattern**: For encrypted docs with complex structure, create a `.template` version showing structure without real values
+- **Verify encryption**: Run `git-crypt status` to confirm files are encrypted before pushing
+
+### pfSense troubleshooting (applies to: pfSense, `docs/infrastructure/services/pfsense.md`)
+
+- **SSH access**: `ssh admin@192.168.8.1`
+- **Web GUI**: https://192.168.8.1
+- **Key services**:
+  - DNS Resolver (Unbound): `*.local.akunito.com` → 192.168.8.102
+  - WireGuard: VPS tunnel (172.26.5.0/24)
+  - SNMP: Prometheus monitoring target
+  - pfBlockerNG: DNS and IP blocklists
+  - OpenVPN Client: Privacy VPN for browsing
+- **Diagnostic commands**:
+  - `pfctl -sr` - Show firewall rules
+  - `pfctl -sn` - Show NAT rules
+  - `pfctl -ss | wc -l` - Count active states
+  - `wg show` - WireGuard tunnel status
+  - `unbound-control status` - DNS resolver status
+  - `unbound-control stats_noreset` - DNS cache statistics
+  - `cat /var/db/pfblockerng/dnsbl/dnsbl.log | tail -20` - Recent DNSBL blocks
+  - `pfctl -sT` - Show all firewall tables
+  - `pfctl -t pfB_PRI1_v4 -T show | wc -l` - Count blocked IPs
+- **Config backup**: `/conf/config.xml` (full configuration)
+- **Sensitive data**: WireGuard keys and external IPs in `INFRASTRUCTURE_INTERNAL.md`
+
 ## Multi-agent instructions
 
 For complex tasks, see `.claude/agents/` for agent-specific context and patterns.
