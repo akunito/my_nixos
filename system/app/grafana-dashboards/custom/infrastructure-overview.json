@@ -348,49 +348,13 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "LXC container disk usage over time",
+      "description": "Proxmox disk temperatures from node exporter",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
+            "mode": "thresholds"
           },
           "mappings": [],
-          "max": 100,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -400,41 +364,41 @@
               },
               {
                 "color": "yellow",
-                "value": 70
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 50
               }
             ]
           },
-          "unit": "percent"
+          "unit": "celsius"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 7,
+        "h": 3,
+        "w": 5,
         "x": 7,
         "y": 4
       },
-      "id": 13,
+      "id": 108,
       "options": {
-        "legend": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
           "calcs": [
             "lastNotNull"
           ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.3.2",
       "targets": [
@@ -444,24 +408,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(pve_disk_usage_bytes{id=~\"lxc/.*\"} / pve_disk_size_bytes{id=~\"lxc/.*\"}) * 100",
-          "legendFormat": "{{id}}",
+          "expr": "node_hwmon_temp_celsius{job=\"monitoring_node\", chip=~\"nvme_nvme.*\", sensor=\"temp1\"}",
+          "legendFormat": "{{chip}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "LXC Disk Usage",
+      "title": "PVE Disk Temperatures",
       "transformations": [
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "lxc/(.*)",
+            "regex": "nvme_(nvme[0-9]+)",
             "renamePattern": "$1"
           }
         }
       ],
       "transparent": true,
-      "type": "timeseries"
+      "type": "stat"
     },
     {
       "datasource": {
@@ -501,7 +465,7 @@
       "gridPos": {
         "h": 5,
         "w": 3,
-        "x": 14,
+        "x": 12,
         "y": 4
       },
       "id": 106,
@@ -576,7 +540,7 @@
       "gridPos": {
         "h": 10,
         "w": 4,
-        "x": 17,
+        "x": 15,
         "y": 4
       },
       "id": 105,
@@ -621,7 +585,6 @@
         }
       ],
       "title": "TrueNAS storage",
-      "transformations": [],
       "transparent": true,
       "type": "gauge"
     },
@@ -659,9 +622,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 3,
-        "x": 21,
+        "h": 7,
+        "w": 5,
+        "x": 19,
         "y": 4
       },
       "id": 23,
@@ -696,12 +659,98 @@
           "refId": "A"
         }
       ],
-      "title": "Disk Temperatures",
+      "title": "TrueNAS Disk Temperatures",
       "transformations": [
         {
           "id": "renameByRegex",
           "options": {
             "regex": "servers_truenas_smart_log_smart_disktemp_([^_]+)_.*",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "LXC container disk usage over time",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 5,
+        "x": 7,
+        "y": 7
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(pve_disk_usage_bytes{id=~\"lxc/.*\"} / pve_disk_size_bytes{id=~\"lxc/.*\"}) * 100",
+          "legendFormat": "{{id}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "LXC Disk Usage",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "lxc/(.*)",
             "renamePattern": "$1"
           }
         }
@@ -822,7 +871,7 @@
       "gridPos": {
         "h": 5,
         "w": 3,
-        "x": 14,
+        "x": 12,
         "y": 9
       },
       "id": 107,
@@ -906,8 +955,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 7,
-        "x": 7,
+        "w": 5,
+        "x": 19,
         "y": 11
       },
       "id": 22,
