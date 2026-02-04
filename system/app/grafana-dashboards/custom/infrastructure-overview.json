@@ -57,12 +57,8 @@
                 "value": 0
               },
               {
-                "color": "yellow",
-                "value": 0.05
-              },
-              {
                 "color": "red",
-                "value": 0.1
+                "value": 80
               }
             ]
           },
@@ -71,15 +67,15 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
+        "h": 4,
         "w": 24,
         "x": 0,
         "y": 0
       },
       "id": 2,
       "options": {
-        "colorMode": "background",
-        "graphMode": "area",
+        "colorMode": "value",
+        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
         "percentChangeColorMode": "standard",
@@ -91,7 +87,7 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "wideLayout": true
       },
       "pluginVersion": "12.3.2",
@@ -186,7 +182,6 @@
         }
       ],
       "title": "Infrastructure Latency",
-      "transparent": true,
       "type": "stat"
     },
     {
@@ -228,7 +223,7 @@
         "h": 5,
         "w": 3,
         "x": 0,
-        "y": 3
+        "y": 4
       },
       "id": 50,
       "options": {
@@ -303,7 +298,7 @@
         "h": 10,
         "w": 4,
         "x": 3,
-        "y": 3
+        "y": 4
       },
       "id": 55,
       "options": {
@@ -421,7 +416,7 @@
         "h": 7,
         "w": 7,
         "x": 7,
-        "y": 3
+        "y": 4
       },
       "id": 13,
       "options": {
@@ -507,7 +502,7 @@
         "h": 5,
         "w": 3,
         "x": 14,
-        "y": 3
+        "y": 4
       },
       "id": 106,
       "options": {
@@ -582,7 +577,7 @@
         "h": 10,
         "w": 4,
         "x": 17,
-        "y": 3
+        "y": 4
       },
       "id": 105,
       "options": {
@@ -664,7 +659,7 @@
         "h": 10,
         "w": 3,
         "x": 21,
-        "y": 3
+        "y": 4
       },
       "id": 23,
       "options": {
@@ -750,7 +745,7 @@
         "h": 5,
         "w": 3,
         "x": 0,
-        "y": 8
+        "y": 9
       },
       "id": 52,
       "options": {
@@ -825,7 +820,7 @@
         "h": 5,
         "w": 3,
         "x": 14,
-        "y": 8
+        "y": 9
       },
       "id": 107,
       "options": {
@@ -910,7 +905,7 @@
         "h": 3,
         "w": 7,
         "x": 7,
-        "y": 10
+        "y": 11
       },
       "id": 22,
       "options": {
@@ -1004,15 +999,15 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 3,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 14
       },
       "id": 30,
       "options": {
-        "colorMode": "background",
-        "graphMode": "area",
+        "colorMode": "value",
+        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
         "percentChangeColorMode": "standard",
@@ -1024,6 +1019,9 @@
           "values": false
         },
         "showPercentChange": false,
+        "text": {
+          "titleSize": 13
+        },
         "textMode": "auto",
         "wideLayout": true
       },
@@ -1042,7 +1040,6 @@
         }
       ],
       "title": "Services",
-      "transparent": true,
       "type": "stat"
     }
   ],
