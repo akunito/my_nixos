@@ -440,6 +440,7 @@ in
     "grafana-dashboards/custom/pfsense.json".source = ./grafana-dashboards/custom/pfsense.json;
     "grafana-dashboards/custom/media-stack.json".source = ./grafana-dashboards/custom/media-stack.json;
     "grafana-dashboards/custom/infrastructure-status.json".source = ./grafana-dashboards/custom/infrastructure-status.json;
+    "grafana-dashboards/custom/infrastructure-overview.json".source = ./grafana-dashboards/custom/infrastructure-overview.json;
     # Community dashboards
     "grafana-dashboards/community/node-exporter-full.json".source = ./grafana-dashboards/community/node-exporter-full.json;
     "grafana-dashboards/community/docker-cadvisor.json".source = ./grafana-dashboards/community/docker-cadvisor.json;
