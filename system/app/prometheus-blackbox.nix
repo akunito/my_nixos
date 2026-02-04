@@ -30,6 +30,7 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
           prober: http
           timeout: 15s
           http:
+            preferred_ip_protocol: ip4
             valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
             valid_status_codes: [200, 301, 302, 401, 403]
             method: GET
@@ -44,6 +45,7 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
           prober: http
           timeout: 10s
           http:
+            preferred_ip_protocol: ip4
             valid_status_codes: [200, 301, 302]
             method: GET
             headers:
@@ -57,6 +59,7 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
           prober: tcp
           timeout: 10s
           tcp:
+            preferred_ip_protocol: ip4
             tls: true
             tls_config:
               insecure_skip_verify: false
