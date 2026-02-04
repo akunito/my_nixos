@@ -567,7 +567,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(truenas_zfspool_hddpool_used{job=\"truenas_graphite\"} / truenas_zfspool_hddpool_size{job=\"truenas_graphite\"}) * 100",
+          "expr": "(truenas_zfspool_hddpool_used{job=\"truenas_graphite\", pool=\"hddpool\"} / truenas_zfspool_hddpool_size{job=\"truenas_graphite\", pool=\"hddpool\"}) * 100",
           "legendFormat": "hddpool",
           "range": true,
           "refId": "A"
@@ -578,7 +578,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(truenas_zfspool_ssdpool_used{job=\"truenas_graphite\"} / truenas_zfspool_ssdpool_size{job=\"truenas_graphite\"}) * 100",
+          "expr": "(truenas_zfspool_ssdpool_used{job=\"truenas_graphite\", pool=\"ssdpool\"} / truenas_zfspool_ssdpool_size{job=\"truenas_graphite\", pool=\"ssdpool\"}) * 100",
           "legendFormat": "ssdpool",
           "range": true,
           "refId": "B"
