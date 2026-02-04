@@ -148,6 +148,10 @@ in
         enabledCollectors = [
           "systemd"
           "processes"
+          "textfile"  # Custom metrics from textfiles (auto-update status, backup status)
+        ];
+        extraFlags = [
+          "--collector.textfile.directory=/var/lib/prometheus-node-exporter/textfile"
         ];
         port = 9091; # Different port from remote exporters to avoid confusion
       };
@@ -427,10 +431,91 @@ in
               }
             ];
           }
+          {
+            name = "autoupdate_alerts";
+            rules = [
+              # NixOS system auto-update failed
+              {
+                alert = "NixOSAutoUpdateFailed";
+                expr = ''nixos_autoupdate_system_status == 0'';
+                "for" = "15m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "NixOS auto-update failed on {{ $labels.hostname }}";
+                  description = "System auto-update failed on {{ $labels.hostname }} - check logs with 'journalctl -u nixos-autoupgrade'";
+                };
+              }
+              # NixOS system auto-update stale (no update in 8+ days)
+              {
+                alert = "NixOSAutoUpdateStale";
+                expr = ''(time() - nixos_autoupdate_system_last_success) > 691200'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "NixOS auto-update stale on {{ $labels.hostname }}";
+                  description = "Last successful system update on {{ $labels.hostname }} was {{ $value | humanizeDuration }} ago";
+                };
+              }
+              # Home-manager auto-update failed
+              {
+                alert = "HomeManagerAutoUpdateFailed";
+                expr = ''nixos_autoupdate_user_status == 0'';
+                "for" = "15m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Home-manager auto-update failed on {{ $labels.hostname }}";
+                  description = "User auto-update failed on {{ $labels.hostname }} - check logs with 'journalctl -u home-manager-autoupgrade'";
+                };
+              }
+            ];
+          }
+          {
+            name = "pve_backup_alerts";
+            rules = [
+              # PVE backup failed
+              {
+                alert = "PVEBackupFailed";
+                expr = ''pve_backup_status == 0'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Proxmox backup failed for {{ $labels.name }}";
+                  description = "Most recent backup for VM/LXC {{ $labels.name }} ({{ $labels.vmid }}) failed";
+                };
+              }
+              # PVE backup too old (more than 7 days)
+              {
+                alert = "PVEBackupTooOld";
+                expr = ''pve_backup_age_seconds > 604800'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Proxmox backup too old for {{ $labels.name }}";
+                  description = "Last successful backup for {{ $labels.name }} ({{ $labels.vmid }}) was {{ $value | humanizeDuration }} ago";
+                };
+              }
+              # PVE backup critically old (more than 14 days)
+              {
+                alert = "PVEBackupCriticallyOld";
+                expr = ''pve_backup_age_seconds > 1209600'';
+                "for" = "1h";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Proxmox backup critically old for {{ $labels.name }}";
+                  description = "Last successful backup for {{ $labels.name }} ({{ $labels.vmid }}) was {{ $value | humanizeDuration }} ago - immediate attention required";
+                };
+              }
+            ];
+          }
         ];
       }))
     ];
   };
+
+  # Create textfile directory for custom metrics (auto-update status, backup status)
+  systemd.tmpfiles.rules = [
+    "d /var/lib/prometheus-node-exporter/textfile 0755 root root -"
+  ];
 
   # Copy dashboard JSON files to /etc/grafana-dashboards for provisioning
   environment.etc = {

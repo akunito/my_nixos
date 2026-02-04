@@ -131,6 +131,9 @@ in
     prometheusPveTokenName = "prometheus";
     prometheusPveTokenFile = "/etc/secrets/pve-token";
 
+    # === PVE Backup Monitoring (queries Proxmox API for backup status) ===
+    prometheusPveBackupEnable = true;
+
     # === SNMP Exporter (pfSense) ===
     prometheusSnmpExporterEnable = true;
     prometheusSnmpCommunity = secrets.snmpCommunity;

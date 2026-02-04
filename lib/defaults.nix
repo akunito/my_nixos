@@ -302,10 +302,18 @@
     prometheusPveTokenName = "prometheus";
     prometheusPveTokenFile = "";  # Path to file containing API token
 
+    # === PVE Backup Monitoring (queries Proxmox API for backup status) ===
+    prometheusPveBackupEnable = false;
+
     # === SNMP Exporter (pfSense/network devices) ===
     prometheusSnmpExporterEnable = false;
     prometheusSnmpCommunity = "";  # SNMP community string
     prometheusSnmpTargets = [];    # [{name, host, module}]
+
+    # === Graphite Exporter (TrueNAS pushes metrics here) ===
+    prometheusGraphiteEnable = false;
+    prometheusGraphitePort = 9109;       # Prometheus scrape port
+    prometheusGraphiteInputPort = 2003;  # Graphite input port
 
     # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)
     # Profiles can override/populate this and then build `swayKanshiSettings` from it.
