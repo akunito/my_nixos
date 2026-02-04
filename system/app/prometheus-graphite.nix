@@ -127,17 +127,11 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
   # Graphite exporter service
   services.prometheus.exporters.graphite = {
     enable = true;
-    port = webPort;               # Prometheus scrape port (HTTP)
-    openFirewall = true;          # Opens webPort for Prometheus
+    port = webPort;                    # Prometheus scrape port (HTTP) - default 9108
+    graphitePort = graphiteInputPort;  # Graphite input from TrueNAS - default 9109
+    openFirewall = true;               # Opens both ports
     mappingSettings = mappingConfig;
-    extraFlags = [
-      # Override graphite input port (default would conflict with webPort)
-      "--graphite.listen-address=:${toString graphiteInputPort}"
-    ];
   };
-
-  # Also open the Graphite input port for TrueNAS
-  networking.firewall.allowedTCPPorts = [ graphiteInputPort ];
 
   # Prometheus scrape config for graphite exporter
   services.prometheus.scrapeConfigs = [
