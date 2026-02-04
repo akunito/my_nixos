@@ -354,8 +354,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(ifHCInOctets{job=\"snmp_pfsense\", ifDescr=~\"WAN.*|em0.*|igb0.*\"}[5m])",
-          "legendFormat": "{{ifDescr}} In",
+          "expr": "rate(ifHCInOctets{job=\"snmp_pfsense\", ifDescr=\"igc0\"}[5m])",
+          "legendFormat": "WAN In",
           "range": true,
           "refId": "A"
         },
@@ -365,13 +365,13 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(ifHCOutOctets{job=\"snmp_pfsense\", ifDescr=~\"WAN.*|em0.*|igb0.*\"}[5m])",
-          "legendFormat": "{{ifDescr}} Out",
+          "expr": "rate(ifHCOutOctets{job=\"snmp_pfsense\", ifDescr=\"igc0\"}[5m])",
+          "legendFormat": "WAN Out",
           "range": true,
           "refId": "B"
         }
       ],
-      "title": "WAN Interface Traffic",
+      "title": "WAN Traffic (igc0)",
       "type": "timeseries"
     },
     {
@@ -470,8 +470,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(ifHCInOctets{job=\"snmp_pfsense\", ifDescr=~\"LAN.*|em1.*|igb1.*\"}[5m])",
-          "legendFormat": "{{ifDescr}} In",
+          "expr": "rate(ifHCInOctets{job=\"snmp_pfsense\", ifDescr=\"ix0\"}[5m])",
+          "legendFormat": "LAN In",
           "range": true,
           "refId": "A"
         },
@@ -481,13 +481,361 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(ifHCOutOctets{job=\"snmp_pfsense\", ifDescr=~\"LAN.*|em1.*|igb1.*\"}[5m])",
-          "legendFormat": "{{ifDescr}} Out",
+          "expr": "rate(ifHCOutOctets{job=\"snmp_pfsense\", ifDescr=\"ix0\"}[5m])",
+          "legendFormat": "LAN Out",
           "range": true,
           "refId": "B"
         }
       ],
-      "title": "LAN Interface Traffic",
+      "title": "LAN Traffic (ix0)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Out.*"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 12
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(ifHCInOctets{job=\"snmp_pfsense\", ifDescr=\"ix0.200\"}[5m])",
+          "legendFormat": "GUEST In",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(ifHCOutOctets{job=\"snmp_pfsense\", ifDescr=\"ix0.200\"}[5m])",
+          "legendFormat": "GUEST Out",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "GUEST Traffic (ix0.200)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Out.*"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 12
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(ifHCInOctets{job=\"snmp_pfsense\", ifDescr=\"tun_wg0\"}[5m])",
+          "legendFormat": "WG_VPS In",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(ifHCOutOctets{job=\"snmp_pfsense\", ifDescr=\"tun_wg0\"}[5m])",
+          "legendFormat": "WG_VPS Out",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "WG_VPS Traffic (tun_wg0)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Out.*"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(ifHCInOctets{job=\"snmp_pfsense\", ifDescr=\"lagg0\"}[5m])",
+          "legendFormat": "NAS In",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(ifHCOutOctets{job=\"snmp_pfsense\", ifDescr=\"lagg0\"}[5m])",
+          "legendFormat": "NAS Out",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "NAS Traffic (lagg0)",
       "type": "timeseries"
     },
     {
@@ -554,7 +902,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 20
       },
       "id": 6,
       "options": {
@@ -657,7 +1005,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 20
       },
       "id": 7,
       "options": {
