@@ -99,6 +99,33 @@ in
         enabled = true;
       };
     };
+
+    # Dashboard and data source provisioning
+    provision = {
+      enable = true;
+
+      # Data source provisioning (fixed UID for dashboard references)
+      datasources.settings.datasources = [{
+        name = "Prometheus";
+        type = "prometheus";
+        url = "http://127.0.0.1:${toString config.services.prometheus.port}";
+        isDefault = true;
+        editable = false;
+        uid = "prometheus";
+      }];
+
+      # Dashboard provisioning from /etc/grafana-dashboards
+      dashboards.settings.providers = [{
+        name = "Infrastructure";
+        type = "file";
+        disableDeletion = false;
+        allowUiUpdates = false;
+        options = {
+          path = "/etc/grafana-dashboards";
+          foldersFromFilesStructure = true;
+        };
+      }];
+    };
   };
 
   services.prometheus = {
@@ -397,6 +424,20 @@ in
         ];
       }))
     ];
+  };
+
+  # Copy dashboard JSON files to /etc/grafana-dashboards for provisioning
+  environment.etc = {
+    # Custom dashboards
+    "grafana-dashboards/custom/wireguard.json".source = ./grafana-dashboards/custom/wireguard.json;
+    "grafana-dashboards/custom/truenas.json".source = ./grafana-dashboards/custom/truenas.json;
+    "grafana-dashboards/custom/pfsense.json".source = ./grafana-dashboards/custom/pfsense.json;
+    "grafana-dashboards/custom/media-stack.json".source = ./grafana-dashboards/custom/media-stack.json;
+    # Community dashboards
+    "grafana-dashboards/community/node-exporter-full.json".source = ./grafana-dashboards/community/node-exporter-full.json;
+    "grafana-dashboards/community/docker-cadvisor.json".source = ./grafana-dashboards/community/docker-cadvisor.json;
+    "grafana-dashboards/community/blackbox-exporter.json".source = ./grafana-dashboards/community/blackbox-exporter.json;
+    "grafana-dashboards/community/proxmox-ve.json".source = ./grafana-dashboards/community/proxmox-ve.json;
   };
 
   # Nginx reverse proxy with SSL
