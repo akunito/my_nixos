@@ -21,6 +21,10 @@ let
   tlsTargets = systemSettings.prometheusBlackboxTlsTargets or [];
 in
 lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
+  # Allow unprivileged ICMP for blackbox exporter
+  # This sets the GID range that can use ICMP sockets without CAP_NET_RAW
+  boot.kernel.sysctl."net.ipv4.ping_group_range" = "0 65534";
+
   services.prometheus.exporters.blackbox = {
     enable = true;
     port = 9115;
