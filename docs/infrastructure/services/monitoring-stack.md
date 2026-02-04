@@ -152,14 +152,33 @@ Running on LXC_monitoring:
    - Container CPU, memory, network
    - Container health status
 
-3. **Blackbox Exporter**
+3. **Blackbox Exporter** (HTTP/TLS services)
    - HTTP response times
    - SSL certificate expiry
-   - Service availability
+   - Service availability (Jellyfin, Nextcloud, *arr, etc.)
 
-4. **Proxmox VE**
+4. **Infrastructure Status** (ICMP network devices) *Custom*
+   - Network device ping status (switches, APs, NAS, VPS)
+   - Latency monitoring
+   - Quick status overview grid
+
+5. **Proxmox VE**
    - VM/LXC resource usage
    - Cluster health
+
+6. **pfSense Firewall** *Custom*
+   - PF status and state table
+   - Interface traffic (WAN, LAN, GUEST, WG_VPS, NAS)
+   - Interface errors
+
+7. **TrueNAS** *Custom*
+   - ZFS pool status and ARC stats
+   - CPU, memory, disk I/O
+   - Network traffic
+
+8. **Media Stack** *Custom*
+   - Sonarr/Radarr queue status
+   - Health issues monitoring
 
 ---
 

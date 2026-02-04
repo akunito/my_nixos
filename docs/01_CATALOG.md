@@ -10,25 +10,25 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **flake.nix**: Main flake entry point defining inputs and outputs
 - **lib/flake-base.nix**: Base flake module shared by all profiles
 - **lib/defaults.nix**: Default system and user settings
-- **flake.DESK.nix**: Profile-specific flake configuration
-- **flake.HOME.nix**: Profile-specific flake configuration
-- **flake.VMHOME.nix**: Profile-specific flake configuration
-- **flake.WSL.nix**: Profile-specific flake configuration
-- **flake.LXC.nix**: Profile-specific flake configuration
-- **flake.LXC_plane.nix**: Profile-specific flake configuration
-- **flake.ORIGINAL.nix**: Profile-specific flake configuration
-- **flake.DESK_AGA.nix**: Profile-specific flake configuration
-- **flake.DESK_VMDESK.nix**: Profile-specific flake configuration
-- **flake.LAPTOP_L15.nix**: Profile-specific flake configuration
-- **flake.LAPTOP_YOGAAKU.nix**: Profile-specific flake configuration
-- **flake.LAPTOP_AGA.nix**: Profile-specific flake configuration
-- **flake.LXC_HOME.nix**: Profile-specific flake configuration
-- **flake.LXC_liftcraftTEST.nix**: Profile-specific flake configuration
-- **flake.LXC_portfolioprod.nix**: Profile-specific flake configuration
-- **flake.LXC_mailer.nix**: Profile-specific flake configuration
-- **flake.LXC_monitoring.nix**: Profile-specific flake configuration
-- **flake.LXC_proxy.nix**: Profile-specific flake configuration
 - **flake.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_YOGAAKU.nix**: Profile-specific flake configuration
+- **flake.LXC_liftcraftTEST.nix**: Profile-specific flake configuration
+- **flake.LXC_HOME.nix**: Profile-specific flake configuration
+- **flake.DESK_AGA.nix**: Profile-specific flake configuration
+- **flake.LXC_plane.nix**: Profile-specific flake configuration
+- **flake.DESK_VMDESK.nix**: Profile-specific flake configuration
+- **flake.VMHOME.nix**: Profile-specific flake configuration
+- **flake.LXC_mailer.nix**: Profile-specific flake configuration
+- **flake.HOME.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_L15.nix**: Profile-specific flake configuration
+- **flake.ORIGINAL.nix**: Profile-specific flake configuration
+- **flake.LXC.nix**: Profile-specific flake configuration
+- **flake.DESK.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_AGA.nix**: Profile-specific flake configuration
+- **flake.LXC_proxy.nix**: Profile-specific flake configuration
+- **flake.WSL.nix**: Profile-specific flake configuration
+- **flake.LXC_monitoring.nix**: Profile-specific flake configuration
+- **flake.LXC_portfolioprod.nix**: Profile-specific flake configuration
 
 ## Profiles
 

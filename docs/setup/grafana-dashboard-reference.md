@@ -29,12 +29,13 @@ This document provides a comprehensive reference for all Grafana dashboards in t
 |---|-----------|------------|----------------|---------|
 | 1 | Node Exporter Full | 1860 | node_exporter | 8 hosts |
 | 2 | Docker Container Monitoring | 893 | cAdvisor | 6 LXC hosts |
-| 3 | Blackbox Exporter | 7587 | blackbox | 17 HTTP, 8 ICMP, 2 TLS |
-| 4 | Proxmox VE | 10347 | pve_exporter | 1 hypervisor |
-| 5 | WireGuard | *Custom* | node_exporter (textfile) | 1 VPS |
-| 6 | TrueNAS | *Custom* | graphite_exporter | 1 NAS |
-| 7 | pfSense | *Custom* | snmp_exporter | 1 firewall |
-| 8 | Media Stack (*arr) | *Custom* | exportarr | 4 apps |
+| 3 | Blackbox Exporter | 7587 | blackbox | 17 HTTP, 2 TLS |
+| 4 | Infrastructure Status | *Custom* | blackbox (ICMP) | 8 network devices |
+| 5 | Proxmox VE | 10347 | pve_exporter | 1 hypervisor |
+| 6 | WireGuard | *Custom* | node_exporter (textfile) | 1 VPS |
+| 7 | TrueNAS | *Custom* | graphite_exporter | 1 NAS |
+| 8 | pfSense | *Custom* | snmp_exporter | 1 firewall |
+| 9 | Media Stack (*arr) | *Custom* | exportarr | 4 apps |
 
 ---
 
@@ -185,11 +186,12 @@ curl -s 'http://127.0.0.1:9090/api/v1/query?query=container_memory_usage_bytes{n
 ## 3. Blackbox Exporter (ID: 7587)
 
 ### Purpose
-Service availability monitoring via HTTP/HTTPS probes, ICMP ping checks, and TLS certificate expiry monitoring.
+Service availability monitoring via HTTP/HTTPS probes and TLS certificate expiry monitoring. ICMP probes are displayed in the separate Infrastructure Status dashboard.
 
 ### Data Source
 - **Exporter**: Blackbox Exporter (port 9115)
-- **Jobs**: `blackbox_http_*`, `blackbox_icmp_*`, `blackbox_tls_*`
+- **Jobs**: `blackbox_http_*`, `blackbox_tls_*`
+- **Variable Filter**: Only shows HTTP/TLS targets (ICMP filtered out)
 
 ### HTTP/HTTPS Probes (17 targets)
 
@@ -275,7 +277,61 @@ curl -s 'http://127.0.0.1:9090/api/v1/query?query=(probe_ssl_earliest_cert_expir
 
 ---
 
-## 4. Proxmox VE (ID: 10347)
+## 4. Infrastructure Status (Custom)
+
+### Purpose
+Network infrastructure ICMP ping monitoring for switches, access points, NAS, VPS, and WireGuard tunnel. Provides a quick status overview separate from HTTP service monitoring.
+
+### Data Source
+- **Exporter**: Blackbox Exporter (port 9115)
+- **Jobs**: `blackbox_icmp_*`
+
+### ICMP Probes (8 targets)
+
+| Instance | Host | Description |
+|----------|------|-------------|
+| proxy | 192.168.8.102 | Cloudflare tunnel + NPM |
+| truenas | 192.168.20.200 | TrueNAS NAS |
+| guest_wifi_ap | 192.168.9.2 | Guest WiFi AP |
+| personal_wifi_ap | 192.168.8.2 | Personal WiFi AP |
+| switch_usw_24_g2 | 192.168.8.181 | UniFi Switch 24 |
+| switch_usw_aggregation | 192.168.8.180 | UniFi Aggregation Switch |
+| vps | (external IP) | VPS external |
+| wireguard_tunnel | 172.26.5.155 | VPS via WireGuard |
+
+### Key Metrics
+
+| Metric | Description |
+|--------|-------------|
+| `probe_success` | 1 if ping succeeded, 0 otherwise |
+| `probe_duration_seconds` | Ping latency |
+
+### Panels
+
+| Panel | Metric/Query | Visualization |
+|-------|--------------|---------------|
+| Status Overview | `probe_success{job=~"blackbox_icmp_.*"}` | Stat (colored UP/DOWN) |
+| Status Over Time | `probe_success{job=~"blackbox_icmp_.*"}` | Time series (step) |
+| Ping Response Time | `probe_duration_seconds{job=~"blackbox_icmp_.*"}` | Time series |
+| Current Latency | `probe_duration_seconds{job=~"blackbox_icmp_.*"}` | Stat with sparkline |
+| Details Table | `probe_success` + `probe_duration_seconds` | Table (merged) |
+
+### Dashboard File
+- **Path**: `system/app/grafana-dashboards/custom/infrastructure-status.json`
+- **UID**: `infrastructure-status`
+
+### Verification
+```bash
+# Test ICMP probes
+curl -s 'http://127.0.0.1:9115/probe?module=icmp&target=192.168.20.200' | grep probe_success
+
+# Check all ICMP targets
+curl -s 'http://127.0.0.1:9090/api/v1/query?query=probe_success{job=~"blackbox_icmp_.*"}' | jq '.data.result[] | {instance: .metric.instance, status: .value[1]}'
+```
+
+---
+
+## 5. Proxmox VE (ID: 10347)
 
 ### Purpose
 Proxmox hypervisor and VM/LXC monitoring.
@@ -323,7 +379,7 @@ curl -s 'http://127.0.0.1:9090/api/v1/targets' | jq '.data.activeTargets[] | sel
 
 ---
 
-## 5. WireGuard Dashboard (Custom)
+## 6. WireGuard Dashboard (Custom)
 
 ### Purpose
 VPN tunnel status and peer monitoring for the VPS WireGuard server.
@@ -384,7 +440,7 @@ curl -s 'http://127.0.0.1:9090/api/v1/query?query=wireguard_interface_up' | jq
 
 ---
 
-## 6. TrueNAS Dashboard (Custom)
+## 7. TrueNAS Dashboard (Custom)
 
 ### Purpose
 NAS storage health, ZFS pool status, disk temperatures, and filesystem usage monitoring.
@@ -400,33 +456,45 @@ NAS storage health, ZFS pool status, disk temperatures, and filesystem usage mon
 |----------|------------|----------|
 | truenas | 192.168.20.200 | Graphite (push) |
 
-### Key Metrics
+### Key Metrics (Graphite naming convention)
 
-| Metric | Labels | Description |
-|--------|--------|-------------|
-| `truenas_cpu_percent` | host, cpu, mode | CPU usage per mode |
-| `truenas_memory_bytes` | host, type | Memory (used, free, cached) |
-| `truenas_disk_temperature_celsius` | host, disk | Disk temperatures |
-| `truenas_filesystem_bytes` | host, filesystem, type | Filesystem (used, free) |
-| `truenas_interface_bytes` | host, interface, direction | Network traffic |
-| `truenas_zfs_arc` | host, stat | ZFS ARC statistics |
-| `truenas_zfs_pool` | host, pool | ZFS pool metrics |
+| Metric | Description |
+|--------|-------------|
+| `truenas_system_cpu_user` | CPU user time |
+| `truenas_system_cpu_system` | CPU system time |
+| `truenas_system_ram_used` | RAM used (bytes) |
+| `truenas_system_ram_free` | RAM free (bytes) |
+| `truenas_zfs_actual_hits_hits` | ZFS ARC hits |
+| `truenas_zfs_actual_hits_misses` | ZFS ARC misses |
+| `truenas_zfspool_state_{pool}_online` | ZFS pool online status |
+| `truenas_zfs_arc_size_size` | ZFS ARC size (bytes) |
+| `truenas_system_net_received` | Network bytes received |
+| `truenas_system_net_sent` | Network bytes sent |
+| `truenas_cputemp_temperatures_{cpu}` | CPU temperature |
+| `truenas_system_load_load1/5/15` | System load averages |
+| `truenas_system_io_in/out` | Disk I/O |
 
-### Recommended Panels
+### Dashboard Panels
 
 | Panel | Metric/Query | Visualization |
 |-------|--------------|---------------|
-| CPU Usage | `sum by (mode) (truenas_cpu_percent)` | Time series (stacked) |
-| Memory Usage | `truenas_memory_bytes` | Gauge |
-| Filesystem Usage | `truenas_filesystem_bytes{type="used"} / (used + free) * 100` | Bar gauge |
-| Disk Temperatures | `truenas_disk_temperature_celsius` | Gauge with thresholds |
-| Network Traffic | `rate(truenas_interface_bytes[5m])` | Time series |
-| ZFS ARC Hit Rate | `truenas_zfs_arc{stat="hits"} / (hits + misses) * 100` | Stat |
+| CPU Usage | `truenas_system_cpu_user + truenas_system_cpu_system` | Gauge (%) |
+| Memory Usage | `truenas_system_ram_used / (used + free) * 100` | Gauge (%) |
+| ZFS ARC Hit Rate | `truenas_zfs_actual_hits_hits / (hits + misses) * 100` | Gauge (%) |
+| ZFS Pool Status | `truenas_zfspool_state_{pool}_online` | Stat (ONLINE/OFFLINE) |
+| ZFS ARC Size | `truenas_zfs_arc_size_size` | Stat (bytes) |
+| Memory Over Time | `truenas_system_ram_used/free` | Time series (stacked) |
+| Network Traffic | `truenas_system_net_received/sent` | Time series |
+| CPU Temperature | `truenas_cputemp_temperatures_*` | Stat with thresholds |
+| System Load | `truenas_system_load_load1/5/15` | Time series |
+| Disk I/O | `truenas_system_io_in/out` | Time series |
+
+### Dashboard File
+- **Path**: `system/app/grafana-dashboards/custom/truenas.json`
+- **UID**: `truenas-graphite`
 
 ### Variables
-- `filesystem`: ZFS dataset selector (label_values)
-- `disk`: Physical disk selector (label_values)
-- `interface`: Network interface selector (label_values)
+- `datasource`: Prometheus data source selector
 
 ### Associated Alerts
 
@@ -460,7 +528,7 @@ curl -s 'http://127.0.0.1:9090/api/v1/query?query=truenas_disk_temperature_celsi
 
 ---
 
-## 7. pfSense Dashboard (Custom)
+## 8. pfSense Dashboard (Custom)
 
 ### Purpose
 Firewall status, interface traffic, and connection tracking monitoring.
@@ -490,20 +558,34 @@ Firewall status, interface traffic, and connection tracking monitoring.
 | `pfCounterMatch` | 1.3.6.1.4.1.12325.1.200.1.2.* | Matched packets |
 | `pfStateTableCount` | 1.3.6.1.4.1.12325.1.200.1.3.* | Active connections |
 
-### Recommended Panels
+### Interface Mappings
+
+| Logical Name | Interface | Description |
+|--------------|-----------|-------------|
+| WAN | igc0 | Internet uplink |
+| LAN | ix0 | Main LAN (192.168.8.0/24) |
+| GUEST | ix0.200 | Guest VLAN 200 (192.168.9.0/24) |
+| WG_VPS | tun_wg0 | WireGuard tunnel to VPS |
+| NAS | lagg0 | TrueNAS LAGG interface |
+
+### Dashboard Panels
 
 | Panel | Metric/Query | Visualization |
 |-------|--------------|---------------|
-| PF Status | `pfStatusRunning` | Stat (green/red) |
-| Active Connections | `pfStateTableCount` | Gauge |
-| Interface Status | `ifOperStatus` | Status grid |
-| WAN Traffic | `rate(ifHCInOctets{ifDescr="WAN"}[5m])` | Time series |
-| LAN Traffic | `rate(ifHCInOctets{ifDescr="LAN"}[5m])` | Time series |
+| PF Status | `pfStatusRunning{job="snmp_pfsense"}` | Stat (RUNNING/DISABLED) |
+| Active Connections | `pfStateTableCount{job="snmp_pfsense"}` | Gauge (0-200k) |
+| Interface Status | `ifOperStatus{job="snmp_pfsense"}` | Stat grid (UP/DOWN) |
+| WAN Traffic | `rate(ifHCInOctets{ifDescr="igc0"}[5m])` | Time series (In/Out) |
+| LAN Traffic | `rate(ifHCInOctets{ifDescr="ix0"}[5m])` | Time series (In/Out) |
+| GUEST Traffic | `rate(ifHCInOctets{ifDescr="ix0.200"}[5m])` | Time series (In/Out) |
+| WG_VPS Traffic | `rate(ifHCInOctets{ifDescr="tun_wg0"}[5m])` | Time series (In/Out) |
+| NAS Traffic | `rate(ifHCInOctets{ifDescr="lagg0"}[5m])` | Time series (In/Out) |
 | Interface Errors | `rate(ifInErrors[5m]) + rate(ifOutErrors[5m])` | Time series |
-| Matched Packets | `rate(pfCounterMatch[5m])` | Time series |
+| State Table History | `pfStateTableCount{job="snmp_pfsense"}` | Time series |
 
 ### Variables
-- `interface`: Interface selector (by ifDescr)
+- `interface`: Interface selector (from `ifOperStatus` labels)
+- `datasource`: Prometheus data source selector
 
 ### Recommended Alerts (future)
 
@@ -531,7 +613,7 @@ curl -s 'http://127.0.0.1:9090/api/v1/targets' | jq '.data.activeTargets[] | sel
 
 ---
 
-## 8. Media Stack Dashboard (Custom) - *arr Applications
+## 9. Media Stack Dashboard (Custom) - *arr Applications
 
 ### Purpose
 Monitor Sonarr, Radarr, Prowlarr, and Bazarr for queue status, download progress, and health issues.
