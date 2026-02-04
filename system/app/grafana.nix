@@ -135,6 +135,12 @@ in
     webExternalUrl = "https://prometheus.${secrets.wildcardLocal}";
     globalConfig.scrape_interval = "15s";
 
+    # Enable admin API for deleting stale time series
+    extraFlags = [
+      "--web.enable-admin-api"
+      "--web.enable-lifecycle"
+    ];
+
     # Local Node Exporter for monitoring server system metrics
     exporters = {
       node = {
