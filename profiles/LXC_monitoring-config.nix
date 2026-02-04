@@ -108,17 +108,15 @@ in
     ];
 
     prometheusBlackboxIcmpTargets = [
-      # WAN latency monitoring (external)
-      { name = "wan_cloudflare"; host = "1.1.1.1"; }  # Cloudflare DNS - WAN latency indicator
-      # Internal infrastructure
-      { name = "proxy"; host = "192.168.8.102"; }  # Cloudflare tunnel + NPM container
-      { name = "truenas"; host = "192.168.20.200"; }
-      { name = "guest_wifi_ap"; host = "192.168.9.2"; }
-      { name = "personal_wifi_ap"; host = "192.168.8.2"; }
-      { name = "switch_usw_24_g2"; host = "192.168.8.181"; }
-      { name = "switch_usw_aggregation"; host = "192.168.8.180"; }
-      { name = "vps"; host = secrets.vpsExternalIp; }
-      { name = "wireguard_tunnel"; host = "172.26.5.155"; }
+      # Infrastructure latency monitoring (ordered for dashboard display)
+      { name = "wireguard_tunnel"; host = "172.26.5.155"; }   # VPS WireGuard tunnel
+      { name = "wan"; host = "1.1.1.1"; }                     # WAN latency (Cloudflare DNS)
+      { name = "pfsense"; host = "192.168.8.1"; }             # pfSense router
+      { name = "switch_usw_aggr"; host = "192.168.8.180"; }   # UniFi Aggregation Switch
+      { name = "switch_usw_24"; host = "192.168.8.181"; }     # UniFi 24-port Switch
+      { name = "pve"; host = "192.168.8.82"; }                # Proxmox VE host
+      { name = "lan_wifi"; host = "192.168.8.2"; }            # LAN WiFi AP
+      { name = "guest_wifi"; host = "192.168.9.2"; }          # Guest WiFi AP
     ];
 
     # === TLS Certificate Expiry Monitoring ===

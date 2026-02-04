@@ -53,7 +53,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Internet connectivity latency to Cloudflare DNS (1.1.1.1)",
+      "description": "ICMP latency for core infrastructure devices",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -83,11 +83,11 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
+        "w": 24,
         "x": 0,
         "y": 1
       },
-      "id": 1,
+      "id": 2,
       "options": {
         "colorMode": "background",
         "graphMode": "area",
@@ -110,81 +110,87 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan_cloudflare\"}",
-          "legendFormat": "WAN",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wireguard_tunnel\"}",
+          "legendFormat": "WG Tunnel",
           "range": true,
           "refId": "A"
-        }
-      ],
-      "title": "WAN Latency",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "Current ICMP latency for all monitored infrastructure devices",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.05
-              },
-              {
-                "color": "red",
-                "value": 0.1
-              }
-            ]
-          },
-          "unit": "s"
         },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 20,
-        "x": 4,
-        "y": 1
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.0.0",
-      "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=~\"blackbox_icmp_.*\", job!=\"blackbox_icmp_wan_cloudflare\"}",
-          "legendFormat": "{{instance}}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan\"}",
+          "legendFormat": "WAN",
           "range": true,
-          "refId": "A"
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pfsense\"}",
+          "legendFormat": "pfSense",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_aggr\"}",
+          "legendFormat": "Switch Aggr",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_24\"}",
+          "legendFormat": "Switch 24",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pve\"}",
+          "legendFormat": "PVE",
+          "range": true,
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_lan_wifi\"}",
+          "legendFormat": "LAN WiFi",
+          "range": true,
+          "refId": "G"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_guest_wifi\"}",
+          "legendFormat": "Guest WiFi",
+          "range": true,
+          "refId": "H"
         }
       ],
       "title": "Infrastructure Latency",
