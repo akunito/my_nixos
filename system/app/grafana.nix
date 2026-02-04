@@ -445,6 +445,7 @@ in
     "grafana-dashboards/community/docker-cadvisor.json".source = ./grafana-dashboards/community/docker-cadvisor.json;
     "grafana-dashboards/community/blackbox-exporter.json".source = ./grafana-dashboards/community/blackbox-exporter.json;
     "grafana-dashboards/community/proxmox-ve.json".source = ./grafana-dashboards/community/proxmox-ve.json;
+    "grafana-dashboards/community/docker-system-monitoring.json".source = ./grafana-dashboards/community/docker-system-monitoring.json;
   };
 
   # Nginx reverse proxy with SSL
