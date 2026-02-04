@@ -31,12 +31,17 @@ let
     TEXTFILE="${textfileDir}/pve_backup.prom"
     TEMP_FILE=$(mktemp)
 
-    # Read the API token
+    # Read the API token (supports both raw token and KEY=VALUE format)
     if [ ! -f "$PVE_TOKEN_FILE" ]; then
       echo "Error: PVE token file not found: $PVE_TOKEN_FILE" >&2
       exit 1
     fi
-    PVE_TOKEN=$(cat "$PVE_TOKEN_FILE")
+    # Source the file to get environment variables
+    set -a
+    source "$PVE_TOKEN_FILE"
+    set +a
+    # Use PVE_TOKEN_VALUE if set, otherwise use file content directly
+    PVE_TOKEN="''${PVE_TOKEN_VALUE:-$(cat "$PVE_TOKEN_FILE")}"
 
     # Get the node name (usually 'pve')
     NODE=$(${pkgs.curl}/bin/curl -sk \
