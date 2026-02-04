@@ -108,6 +108,9 @@ in
     ];
 
     prometheusBlackboxIcmpTargets = [
+      # WAN latency monitoring (external)
+      { name = "wan_cloudflare"; host = "1.1.1.1"; }  # Cloudflare DNS - WAN latency indicator
+      # Internal infrastructure
       { name = "proxy"; host = "192.168.8.102"; }  # Cloudflare tunnel + NPM container
       { name = "truenas"; host = "192.168.20.200"; }
       { name = "guest_wifi_ap"; host = "192.168.9.2"; }
