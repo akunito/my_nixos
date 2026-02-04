@@ -119,9 +119,7 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
     port = graphitePort;          # Prometheus scrape port
     openFirewall = true;          # Allow Graphite input from TrueNAS
     mappingSettings = mappingConfig;
-    extraFlags = [
-      "--graphite.mapping-strict-match=false"
-    ];
+    # Note: strict-match defaults to false, no extra flags needed
   };
 
   # Prometheus scrape config for graphite exporter
