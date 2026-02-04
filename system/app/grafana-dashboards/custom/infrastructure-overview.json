@@ -38,19 +38,6 @@
   ],
   "panels": [
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 100,
-      "panels": [],
-      "title": "Network Connectivity",
-      "type": "row"
-    },
-    {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -87,7 +74,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 1
+        "y": 0
       },
       "id": 2,
       "options": {
@@ -199,20 +186,8 @@
         }
       ],
       "title": "Infrastructure Latency",
+      "transparent": true,
       "type": "stat"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 4
-      },
-      "id": 102,
-      "panels": [],
-      "title": "Resources",
-      "type": "row"
     },
     {
       "datasource": {
@@ -253,7 +228,7 @@
         "h": 5,
         "w": 3,
         "x": 0,
-        "y": 5
+        "y": 3
       },
       "id": 50,
       "options": {
@@ -285,7 +260,8 @@
           "refId": "A"
         }
       ],
-      "title": "Current CPU",
+      "title": "PVE CPU",
+      "transparent": true,
       "type": "gauge"
     },
     {
@@ -327,7 +303,7 @@
         "h": 10,
         "w": 4,
         "x": 3,
-        "y": 5
+        "y": 3
       },
       "id": 55,
       "options": {
@@ -359,7 +335,7 @@
           "refId": "A"
         }
       ],
-      "title": "Storage usage",
+      "title": "PVE Storage",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -369,6 +345,7 @@
           }
         }
       ],
+      "transparent": true,
       "type": "gauge"
     },
     {
@@ -441,10 +418,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 7,
         "w": 7,
         "x": 7,
-        "y": 5
+        "y": 3
       },
       "id": 13,
       "options": {
@@ -488,6 +465,7 @@
           }
         }
       ],
+      "transparent": true,
       "type": "timeseries"
     },
     {
@@ -495,7 +473,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Proxmox VE memory usage with used/total",
+      "description": "TrueNAS CPU usage",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -528,10 +506,10 @@
       "gridPos": {
         "h": 5,
         "w": 3,
-        "x": 0,
-        "y": 10
+        "x": 14,
+        "y": 3
       },
-      "id": 52,
+      "id": 106,
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
@@ -555,13 +533,98 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(pve_memory_usage_bytes{id=\"node/pve\"} / pve_memory_size_bytes{id=\"node/pve\"}) * 100",
-          "legendFormat": "Memory",
+          "expr": "100 - truenas_system_cpu_idle{job=\"truenas_graphite\"}",
+          "legendFormat": "CPU",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Current memory",
+      "title": "TrueNAS CPU",
+      "transparent": true,
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "TrueNAS storage usage per pool",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 4,
+        "x": 17,
+        "y": 3
+      },
+      "id": 105,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(truenas_zfspool_hddpool_used / truenas_zfspool_hddpool_size) * 100",
+          "legendFormat": "{{id}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "TrueNAS storage",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "storage/pve/(.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "transparent": true,
       "type": "gauge"
     },
     {
@@ -598,10 +661,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 7,
-        "x": 7,
-        "y": 11
+        "h": 10,
+        "w": 3,
+        "x": 21,
+        "y": 3
       },
       "id": 23,
       "options": {
@@ -645,7 +708,158 @@
           }
         }
       ],
+      "transparent": true,
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Proxmox VE memory usage with used/total",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 0,
+        "y": 8
+      },
+      "id": 52,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(pve_memory_usage_bytes{id=\"node/pve\"} / pve_memory_size_bytes{id=\"node/pve\"}) * 100",
+          "legendFormat": "Memory",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "PVE memory",
+      "transparent": true,
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "TrueNAS memory usage with used/total",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 14,
+        "y": 8
+      },
+      "id": 107,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "truenas_system_ram_used / (truenas_system_ram_used + truenas_system_ram_free + truenas_system_ram_buffers + truenas_system_ram_cached) * 100",
+          "legendFormat": "Memory",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "TrueNAS memory",
+      "transparent": true,
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -696,7 +910,7 @@
         "h": 3,
         "w": 7,
         "x": 7,
-        "y": 15
+        "y": 10
       },
       "id": 22,
       "options": {
@@ -753,20 +967,8 @@
         }
       ],
       "title": "ZFS Pools",
+      "transparent": true,
       "type": "stat"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 103,
-      "panels": [],
-      "title": "Services Status",
-      "type": "row"
     },
     {
       "datasource": {
@@ -805,7 +1007,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 13
       },
       "id": 30,
       "options": {
@@ -840,20 +1042,8 @@
         }
       ],
       "title": "Services",
+      "transparent": true,
       "type": "stat"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 25
-      },
-      "id": 104,
-      "panels": [],
-      "title": "Detailed Metrics",
-      "type": "row"
     }
   ],
   "preload": false,
