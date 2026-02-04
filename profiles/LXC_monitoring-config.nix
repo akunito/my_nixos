@@ -99,8 +99,8 @@ in
 
       # Services only accessible via Cloudflare (no local equivalent)
       { name = "plane"; url = "https://plane.${secrets.publicDomain}"; }
-      { name = "leftyworkout"; url = "https://leftyworkout-test.${secrets.publicDomain}"; }
-      { name = "portfolio"; url = "https://info.${secrets.publicDomain}"; }
+      { name = "leftyworkout_test"; url = "https://leftyworkout-test.${secrets.publicDomain}"; }
+      { name = "portfolio"; url = "https://${secrets.publicDomain}"; }
       { name = "wgui"; url = "https://wgui.${secrets.publicDomain}"; }
 
       # Local-only (no SSL)
