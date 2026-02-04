@@ -143,9 +143,10 @@ in
 
     # === Graphite Exporter (TrueNAS) ===
     # TrueNAS pushes Graphite metrics to this exporter
-    # Configure TrueNAS: System > Reporting > Remote Graphite Server: 192.168.8.85:9109
+    # Configure TrueNAS: Destination IP: 192.168.8.85, Port: 2003
     prometheusGraphiteEnable = true;
-    prometheusGraphitePort = 9109;
+    prometheusGraphitePort = 9109;       # Prometheus scrape port
+    prometheusGraphiteInputPort = 2003;  # Graphite input from TrueNAS
 
     # === Package Modules ===
     systemBasicToolsEnable = false; # Minimal server - packages defined above

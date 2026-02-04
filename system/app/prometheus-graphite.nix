@@ -5,13 +5,14 @@
 #
 # Feature flags (from profile config):
 #   - prometheusGraphiteEnable: Enable Graphite Exporter
-#   - prometheusGraphitePort: Port for Graphite input (default 9109)
+#   - prometheusGraphitePort: Prometheus scrape port (default 9109)
+#   - prometheusGraphiteInputPort: Graphite input port for TrueNAS (default 2003)
 #
 # TrueNAS Configuration:
 #   1. Go to System > Reporting (TrueNAS SCALE) or System > Reporting > Graphite (CORE)
 #   2. Enable Remote Graphite Server
 #   3. Set Graphite Server: 192.168.8.85 (monitoring server IP)
-#   4. Set Graph Age and Port settings as needed
+#   4. Set Graphite Port: 2003 (or value of prometheusGraphiteInputPort)
 #   5. Save and test
 #
 # Metrics exposed (examples from TrueNAS):
@@ -29,7 +30,10 @@
 { pkgs, lib, systemSettings, config, ... }:
 
 let
-  graphitePort = systemSettings.prometheusGraphitePort or 9109;
+  # Port for Prometheus to scrape metrics from
+  webPort = systemSettings.prometheusGraphitePort or 9109;
+  # Port for TrueNAS to send Graphite data to (must be different from webPort)
+  graphiteInputPort = systemSettings.prometheusGraphiteInputPort or 2003;
 
   # Mapping configuration for TrueNAS Graphite metrics
   # Converts dot-separated Graphite names to labeled Prometheus metrics
@@ -123,18 +127,24 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
   # Graphite exporter service
   services.prometheus.exporters.graphite = {
     enable = true;
-    port = graphitePort;          # Prometheus scrape port
-    openFirewall = true;          # Allow Graphite input from TrueNAS
+    port = webPort;               # Prometheus scrape port (HTTP)
+    openFirewall = true;          # Opens webPort for Prometheus
     mappingSettings = mappingConfig;
-    # Note: strict-match defaults to false, no extra flags needed
+    extraFlags = [
+      # Override graphite input port (default would conflict with webPort)
+      "--graphite.listen-address=:${toString graphiteInputPort}"
+    ];
   };
+
+  # Also open the Graphite input port for TrueNAS
+  networking.firewall.allowedTCPPorts = [ graphiteInputPort ];
 
   # Prometheus scrape config for graphite exporter
   services.prometheus.scrapeConfigs = [
     {
       job_name = "truenas_graphite";
       static_configs = [{
-        targets = [ "127.0.0.1:${toString graphitePort}" ];
+        targets = [ "127.0.0.1:${toString webPort}" ];
         labels = {
           instance = "truenas";
         };
