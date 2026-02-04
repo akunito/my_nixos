@@ -885,48 +885,36 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "HTTP/HTTPS service availability - compact grid view",
+      "description": "HTTP/HTTPS service response time - individual tiles with latency",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 1,
-                  "text": "DOWN"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 0,
-                  "text": "UP"
-                }
-              },
-              "type": "value"
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
-                "color": "green",
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
                 "value": 1
               }
             ]
           },
-          "unit": "none"
+          "unit": "s"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 18
@@ -934,16 +922,16 @@
       "id": 30,
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
-        "orientation": "horizontal",
+        "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "value_and_name",
+        "textMode": "auto",
         "wideLayout": true
       },
       "pluginVersion": "11.0.0",
@@ -954,7 +942,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_success{job=~\"blackbox_http_.*\"}",
+          "expr": "probe_duration_seconds{job=~\"blackbox_http_.*\"}",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -969,7 +957,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 26
       },
       "id": 104,
       "panels": [],
@@ -1037,7 +1025,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 27
       },
       "id": 40,
       "options": {
@@ -1136,7 +1124,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 25
+        "y": 27
       },
       "id": 41,
       "options": {
@@ -1229,7 +1217,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 35
       },
       "id": 42,
       "options": {
