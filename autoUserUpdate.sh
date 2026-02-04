@@ -22,15 +22,19 @@ if nix run home-manager/$HM_BRANCH --extra-experimental-features nix-command --e
     if [ -d "$TEXTFILE_DIR" ]; then
         HOSTNAME=$(hostname)
         TIMESTAMP=$(date +%s)
-        # Need sudo to write to system directory
-        sudo tee "$TEXTFILE_DIR/autoupdate_user.prom" > /dev/null << EOF
-# HELP nixos_autoupdate_user_last_success Unix timestamp of last successful user update
+        METRICS_CONTENT="# HELP nixos_autoupdate_user_last_success Unix timestamp of last successful user update
 # TYPE nixos_autoupdate_user_last_success gauge
-nixos_autoupdate_user_last_success{hostname="$HOSTNAME"} $TIMESTAMP
+nixos_autoupdate_user_last_success{hostname=\"$HOSTNAME\"} $TIMESTAMP
 # HELP nixos_autoupdate_user_status Status of last user update (1=success)
 # TYPE nixos_autoupdate_user_status gauge
-nixos_autoupdate_user_status{hostname="$HOSTNAME"} 1
-EOF
+nixos_autoupdate_user_status{hostname=\"$HOSTNAME\"} 1"
+        # Directory should be group-writable by wheel group
+        # Try direct write first, fall back to sudo if needed
+        if [ -w "$TEXTFILE_DIR" ]; then
+            echo "$METRICS_CONTENT" > "$TEXTFILE_DIR/autoupdate_user.prom"
+        else
+            echo "$METRICS_CONTENT" | sudo tee "$TEXTFILE_DIR/autoupdate_user.prom" > /dev/null
+        fi
         echo -e "Prometheus metrics written to $TEXTFILE_DIR/autoupdate_user.prom"
     fi
 else
@@ -39,11 +43,14 @@ else
     TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile"
     if [ -d "$TEXTFILE_DIR" ]; then
         HOSTNAME=$(hostname)
-        sudo tee "$TEXTFILE_DIR/autoupdate_user.prom" > /dev/null << EOF
-# HELP nixos_autoupdate_user_status Status of last user update (1=success, 0=failure)
+        METRICS_CONTENT="# HELP nixos_autoupdate_user_status Status of last user update (1=success, 0=failure)
 # TYPE nixos_autoupdate_user_status gauge
-nixos_autoupdate_user_status{hostname="$HOSTNAME"} 0
-EOF
+nixos_autoupdate_user_status{hostname=\"$HOSTNAME\"} 0"
+        if [ -w "$TEXTFILE_DIR" ]; then
+            echo "$METRICS_CONTENT" > "$TEXTFILE_DIR/autoupdate_user.prom"
+        else
+            echo "$METRICS_CONTENT" | sudo tee "$TEXTFILE_DIR/autoupdate_user.prom" > /dev/null
+        fi
     fi
     exit 1
 fi

@@ -30,8 +30,9 @@ in
   };
 
   # Create textfile directory for custom metrics
+  # Mode 0775 allows group write access for user update scripts (wheel group)
   systemd.tmpfiles.rules = lib.mkIf (systemSettings.prometheusExporterEnable or false) [
-    "d /var/lib/prometheus-node-exporter/textfile 0755 root root -"
+    "d /var/lib/prometheus-node-exporter/textfile 0775 root wheel -"
   ];
 
   # cAdvisor - Docker container metrics
