@@ -461,7 +461,7 @@
           },
           "targets": [
             {
-              "expr": "node_load1{instance=~\"$server\"} / count by(job, instance)(count by(job, instance, cpu)(node_cpu_seconds_total{instance=~\"$server\"}))",
+              "expr": "node_load1{instance=~\"$server\"} / count without(cpu, mode) (node_cpu_seconds_total{instance=~\"$server\", mode=\"idle\"})",
               "intervalFactor": 2,
               "refId": "A",
               "step": 1800
@@ -759,7 +759,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "node_load1{instance=~\"$server\"} / count by(job, instance)(count by(job, instance, cpu)(node_cpu_seconds_total{instance=~\"$server\"}))",
+              "expr": "node_load1{instance=~\"$server\"} / count without(cpu, mode) (node_cpu_seconds_total{instance=~\"$server\", mode=\"idle\"})",
               "intervalFactor": 2,
               "refId": "A",
               "step": 600
