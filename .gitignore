@@ -15,6 +15,10 @@
 #
 # ============================================================================
 
+# Local profile state (never tracked - each machine has its own)
+.active-profile
+flake.nix
+
 # Obsidian files
 .obsidian/
 

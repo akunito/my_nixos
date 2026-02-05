@@ -606,6 +606,10 @@ switch_flake_profile_nix() {
     cp "$SCRIPT_DIR/flake.$PROFILE.nix" "$SCRIPT_DIR/flake.nix"
     echo -e "${GREEN}✓ Switched to profile: $PROFILE${RESET}"
     echo -e "${CYAN}  Using flake file: flake.$PROFILE.nix${RESET}"
+
+    # Save active profile name for auto-update scripts
+    echo "$PROFILE" > "$SCRIPT_DIR/.active-profile"
+    echo -e "${GREEN}✓ Saved active profile: $PROFILE${RESET}"
 }
 
 update_flake_lock() {

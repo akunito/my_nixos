@@ -13,6 +13,15 @@ else
 fi
 HM_BRANCH=${2:-master}
 
+# Sync flake.nix with active profile (ensures correct profile after git operations)
+if [ -f "$SCRIPT_DIR/.active-profile" ]; then
+    ACTIVE_PROFILE=$(cat "$SCRIPT_DIR/.active-profile")
+    if [ -f "$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix" ]; then
+        cp "$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix" "$SCRIPT_DIR/flake.nix"
+        echo -e "Using active profile: $ACTIVE_PROFILE"
+    fi
+fi
+
 echo -e "Running home-manager switch (branch: $HM_BRANCH)"
 if nix run home-manager/$HM_BRANCH --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace; then
     echo -e "Home-manager switch successful"

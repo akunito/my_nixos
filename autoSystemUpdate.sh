@@ -13,6 +13,20 @@ else
 fi
 RESTART_DOCKER=${2:-false}
 
+# Determine active profile flake
+FLAKE_PATH=""
+if [ -f "$SCRIPT_DIR/.active-profile" ]; then
+    ACTIVE_PROFILE=$(cat "$SCRIPT_DIR/.active-profile")
+    if [ -f "$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix" ]; then
+        FLAKE_PATH="$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix"
+        echo -e "Using active profile: $ACTIVE_PROFILE"
+    fi
+fi
+if [ -z "$FLAKE_PATH" ]; then
+    FLAKE_PATH="$SCRIPT_DIR/flake.nix"
+    echo -e "Using fallback: flake.nix"
+fi
+
 # Mark the dotfiles directory as safe for git (required when running as root)
 # This is needed because the directory is owned by a non-root user
 echo -e "Configuring git safe.directory for $SCRIPT_DIR"
@@ -23,6 +37,12 @@ echo -e "Configuring git safe.directory for $SCRIPT_DIR"
 
 echo -e "Updating flake.lock"
 $SCRIPT_DIR/update.sh
+
+# Sync flake.nix with profile flake (ensures correct profile after git operations)
+if [ "$FLAKE_PATH" != "$SCRIPT_DIR/flake.nix" ]; then
+    cp "$FLAKE_PATH" "$SCRIPT_DIR/flake.nix"
+    echo -e "Synced flake.nix from $FLAKE_PATH"
+fi
 
 echo -e "Rebuilding system"
 if nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure; then
