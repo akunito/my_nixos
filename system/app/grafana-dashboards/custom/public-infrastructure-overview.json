@@ -40,7 +40,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "ICMP latency for core infrastructure devices",
       "fieldConfig": {
@@ -95,7 +95,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_wireguard_tunnel\"}",
@@ -106,7 +106,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan\"}",
@@ -117,7 +117,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_pfsense\"}",
@@ -128,7 +128,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_aggr\"}",
@@ -139,7 +139,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_24\"}",
@@ -150,7 +150,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_pve\"}",
@@ -161,7 +161,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_lan_wifi\"}",
@@ -172,7 +172,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_guest_wifi\"}",
@@ -200,7 +200,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Proxmox VE CPU usage",
       "fieldConfig": {
@@ -259,7 +259,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "pve_cpu_usage_ratio{id=\"node/pve\"} * 100",
@@ -275,7 +275,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Proxmox VE memory usage with used/total",
       "fieldConfig": {
@@ -334,7 +334,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(pve_memory_usage_bytes{id=\"node/pve\"} / pve_memory_size_bytes{id=\"node/pve\"}) * 100",
@@ -350,7 +350,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Proxmox storage usage per pool",
       "fieldConfig": {
@@ -409,7 +409,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(pve_disk_usage_bytes{id=~\"storage/pve/.*\"} / pve_disk_size_bytes{id=~\"storage/pve/.*\"}) * 100",
@@ -434,7 +434,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "LXC container disk usage over time",
       "fieldConfig": {
@@ -495,7 +495,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(pve_disk_usage_bytes{id=~\"lxc/.*\"} / pve_disk_size_bytes{id=~\"lxc/.*\"}) * 100",
@@ -520,7 +520,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Proxmox disk temperatures from node exporter",
       "fieldConfig": {
@@ -579,7 +579,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "node_hwmon_temp_celsius{job=\"monitoring_node\", chip=~\"nvme_nvme.*\", sensor=\"temp1\"}",
@@ -617,7 +617,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "TrueNAS CPU usage",
       "fieldConfig": {
@@ -676,7 +676,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "100 - truenas_system_cpu_idle{job=\"truenas_graphite\"}",
@@ -692,7 +692,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "TrueNAS memory usage with used/total",
       "fieldConfig": {
@@ -751,7 +751,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "truenas_system_ram_used / (truenas_system_ram_used + truenas_system_ram_free + truenas_system_ram_buffers + truenas_system_ram_cached) * 100",
@@ -767,7 +767,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "TrueNAS storage usage per pool",
       "fieldConfig": {
@@ -826,7 +826,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(truenas_zfspool_hddpool_used{job=\"truenas_graphite\", pool=\"hddpool\"} / truenas_zfspool_hddpool_size{job=\"truenas_graphite\", pool=\"hddpool\"}) * 100",
@@ -837,7 +837,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(truenas_zfspool_ssdpool_used{job=\"truenas_graphite\", pool=\"ssdpool\"} / truenas_zfspool_ssdpool_size{job=\"truenas_graphite\", pool=\"ssdpool\"}) * 100",
@@ -853,7 +853,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "ZFS pool health status",
       "fieldConfig": {
@@ -924,7 +924,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "truenas_zfspool_state_hddpool_online{job=\"truenas_graphite\"}",
@@ -935,7 +935,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "truenas_zfspool_state_ssdpool_online{job=\"truenas_graphite\"}",
@@ -946,7 +946,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "truenas_zfspool_state_boot_pool_online{job=\"truenas_graphite\"}",
@@ -962,7 +962,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "TrueNAS disk temperatures",
       "fieldConfig": {
@@ -1021,7 +1021,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "{__name__=~\"servers_truenas_smart_log_smart_disktemp.*\",job=\"truenas_graphite\"}",
@@ -1046,7 +1046,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "HTTP/HTTPS service response time - individual tiles with latency",
       "fieldConfig": {
@@ -1106,7 +1106,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=~\"blackbox_http_.*\"}",
@@ -1134,7 +1134,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "CPU usage for all LXC guests on Proxmox",
       "fieldConfig": {
@@ -1231,7 +1231,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "((pve_cpu_usage_ratio{instance=\"proxmox\"} / pve_cpu_usage_limit{instance=\"proxmox\"}) * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) * 100 and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
@@ -1247,7 +1247,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Memory usage for all LXC guests on Proxmox",
       "fieldConfig": {
@@ -1343,7 +1343,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(pve_memory_usage_bytes{instance=\"proxmox\"} / pve_memory_size_bytes{instance=\"proxmox\"} * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) * 100 and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
@@ -1359,7 +1359,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -1454,7 +1454,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "expr": "((rate(pve_disk_write_bytes{instance=\"proxmox\"}[5m]) + rate(pve_disk_read_bytes{instance=\"proxmox\"}[5m])) * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
           "format": "time_series",
@@ -1471,7 +1471,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -1578,7 +1578,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "expr": "(rate(pve_network_receive_bytes{instance=\"proxmox\"}[5m]) * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
           "format": "time_series",
@@ -1595,7 +1595,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -1702,7 +1702,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(rate(pve_network_transmit_bytes{instance=\"proxmox\"}[5m]) * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
@@ -1733,7 +1733,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1824,7 +1824,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "expr": "sum(rate(container_cpu_usage_seconds_total{name=~\".+\"}[5m])) by (name) * 100",
           "hide": false,
@@ -1838,7 +1838,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1927,7 +1927,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "expr": "sum(container_memory_rss{name=~\".+\"}) by (name)",
           "hide": false,
@@ -1941,7 +1941,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -2030,7 +2030,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "expr": "sum(container_memory_cache{name=~\".+\"}) by (name)",
           "hide": false,
@@ -2044,7 +2044,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -2135,7 +2135,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "expr": "sum(rate(container_network_receive_bytes_total{name=~\".+\"}[5m])) by (name)",
           "hide": false,
@@ -2149,7 +2149,7 @@
     },
     {
       "datasource": {
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -2243,7 +2243,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "expr": "sum(rate(container_network_transmit_bytes_total{name=~\".+\"}[5m])) by (name)",
           "interval": "",
@@ -2270,7 +2270,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Days since last successful NixOS system update",
       "fieldConfig": {
@@ -2330,7 +2330,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(time() - nixos_autoupdate_system_last_success) / 86400",
@@ -2346,7 +2346,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Days since last successful NixOS system update",
       "fieldConfig": {
@@ -2406,7 +2406,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(time() - nixos_autoupdate_user_last_success) / 86400",
@@ -2435,7 +2435,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Current age of most recent backup for each VM/LXC",
       "fieldConfig": {
@@ -2499,7 +2499,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "min by (name)(pve_backup_age_seconds) / 86400",
@@ -2514,7 +2514,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Timeline showing when backups occurred for each VM/LXC. Green = backup completed at that time.",
       "fieldConfig": {
@@ -2602,7 +2602,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "max by (name)(changes(pve_backup_last_success[10m]))",
@@ -2624,22 +2624,7 @@
     "custom"
   ],
   "templating": {
-    "list": [
-      {
-        "current": {
-          "text": "Prometheus",
-          "value": "prometheus"
-        },
-        "includeAll": false,
-        "label": "Data Source",
-        "name": "datasource",
-        "options": [],
-        "query": "prometheus",
-        "refresh": 1,
-        "regex": "",
-        "type": "datasource"
-      }
-    ]
+    "list": []
   },
   "time": {
     "from": "now-6h",
