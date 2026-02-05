@@ -2316,7 +2316,7 @@
       },
       "id": 131,
       "options": {
-        "colorMode": "background",
+        "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
@@ -2330,7 +2330,7 @@
         },
         "showPercentChange": false,
         "text": {
-          "titleSize": 16
+          "titleSize": 14
         },
         "textMode": "auto",
         "wideLayout": true
@@ -2385,12 +2385,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": 0
               },
               {
-                "color": "green",
-                "value": 1
+                "color": "red",
+                "value": 80
               }
             ]
           },
@@ -2406,7 +2406,7 @@
       },
       "id": 132,
       "options": {
-        "colorMode": "background",
+        "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
@@ -2419,6 +2419,9 @@
           "values": false
         },
         "showPercentChange": false,
+        "text": {
+          "titleSize": 14
+        },
         "textMode": "auto",
         "wideLayout": true
       },
@@ -2477,7 +2480,7 @@
               },
               {
                 "color": "red",
-                "value": 14
+                "value": 10
               }
             ]
           },
@@ -2493,7 +2496,7 @@
       },
       "id": 133,
       "options": {
-        "alignValue": "left",
+        "alignValue": "right",
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
@@ -2504,7 +2507,7 @@
         "showValue": "auto",
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
