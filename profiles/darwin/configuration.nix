@@ -13,10 +13,7 @@
   ];
 
   # Nix configuration
-  # Note: nix.enable = false because we're using Determinate Systems Nix installer
-  # which manages its own daemon (conflicts with nix-darwin's Nix management)
   nix = {
-    enable = false;  # Disable nix-darwin's Nix management (using Determinate)
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       trusted-users = [ "root" userSettings.username ];
@@ -38,6 +35,14 @@
   # Create /etc/zshrc that loads nix-darwin environment
   programs.zsh.enableCompletion = true;
   programs.zsh.enableBashCompletion = true;
+
+  # Source Nix environment in system shell
+  programs.zsh.interactiveShellInit = ''
+    # Nix
+    if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+      source '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+    fi
+  '';
 
   # Set hostname
   networking.hostName = systemSettings.hostname;

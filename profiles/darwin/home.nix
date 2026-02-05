@@ -34,6 +34,9 @@
 
     # === File Manager (Portable) ===
     ../../user/app/ranger/ranger.nix
+
+    # === Keyboard Remapping (macOS only) ===
+    ../../user/app/karabiner/karabiner.nix
   ]
   # === Conditional Imports ===
   # Note: starship is already conditionally imported by sh.nix based on userSettings.starshipEnable

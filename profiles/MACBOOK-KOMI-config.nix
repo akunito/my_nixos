@@ -36,6 +36,7 @@ in
         "kitty"
         "raycast"
         "1password"
+        "karabiner-elements" # CapsLock → Hyperkey remapping
       ];
     };
 

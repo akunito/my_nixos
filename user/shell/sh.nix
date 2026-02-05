@@ -45,7 +45,6 @@ in
       {
         # UNSTABLE SYSTEM
         enable = true;
-        dotDir = "${config.home.homeDirectory}/.zsh";
         autosuggestion.enable = true;
         syntaxHighlighting.enable = true;
         enableCompletion = true;
@@ -56,7 +55,6 @@ in
       {
         # STABLE SYSTEM
         enable = true;
-        dotDir = "${config.home.homeDirectory}/.zsh";
         autosuggestion.enable = true;
         syntaxHighlighting.enable = true;
         enableCompletion = true;
