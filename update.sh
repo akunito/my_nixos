@@ -5,6 +5,9 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+# Ensure flake.nix is staged so Nix can see it (required for flakes even if gitignored)
+git -C "$SCRIPT_DIR" add -f flake.nix 2>/dev/null || true
+
 # Attempt to update using flake, suppressing error messages
 if ! sudo nix flake update --flake "$SCRIPT_DIR" 2>/dev/null; then
     # If the command fails, update without --flake

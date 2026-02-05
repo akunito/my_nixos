@@ -21,6 +21,8 @@ if [ -f "$SCRIPT_DIR/.active-profile" ]; then
         echo -e "Using active profile: $ACTIVE_PROFILE"
     fi
 fi
+# Stage flake.nix so Nix can see it (required for flakes even if gitignored)
+git -C "$SCRIPT_DIR" add -f flake.nix 2>/dev/null || true
 
 echo -e "Running home-manager switch (branch: $HM_BRANCH)"
 if nix run home-manager/$HM_BRANCH --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace; then

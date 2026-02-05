@@ -604,6 +604,8 @@ switch_flake_profile_nix() {
     
     # Copy profile flake to active flake
     cp "$SCRIPT_DIR/flake.$PROFILE.nix" "$SCRIPT_DIR/flake.nix"
+    # Stage flake.nix so Nix can see it (required for flakes even if gitignored)
+    git -C "$SCRIPT_DIR" add -f flake.nix 2>/dev/null || true
     echo -e "${GREEN}✓ Switched to profile: $PROFILE${RESET}"
     echo -e "${CYAN}  Using flake file: flake.$PROFILE.nix${RESET}"
 

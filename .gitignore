@@ -15,9 +15,8 @@
 #
 # ============================================================================
 
-# Local profile state (never tracked - each machine has its own)
+# Local profile state (each machine maintains its own)
 .active-profile
-flake.nix
 
 # Obsidian files
 .obsidian/

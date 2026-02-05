@@ -13,6 +13,8 @@ if [ -f "$SCRIPT_DIR/.active-profile" ]; then
         cp "$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix" "$SCRIPT_DIR/flake.nix"
     fi
 fi
+# Stage flake.nix so Nix can see it (required for flakes even if gitignored)
+git -C "$SCRIPT_DIR" add -f flake.nix 2>/dev/null || true
 
 # Install and build home-manager configuration
 home-manager switch --flake $SCRIPT_DIR#user --show-trace;

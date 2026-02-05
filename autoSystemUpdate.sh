@@ -43,6 +43,8 @@ if [ "$FLAKE_PATH" != "$SCRIPT_DIR/flake.nix" ]; then
     cp "$FLAKE_PATH" "$SCRIPT_DIR/flake.nix"
     echo -e "Synced flake.nix from $FLAKE_PATH"
 fi
+# Stage flake.nix so Nix can see it (required for flakes even if gitignored)
+/run/current-system/sw/bin/git -C "$SCRIPT_DIR" add -f flake.nix 2>/dev/null || true
 
 echo -e "Rebuilding system"
 if nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure; then
