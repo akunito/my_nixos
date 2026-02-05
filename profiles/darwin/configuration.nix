@@ -13,7 +13,10 @@
   ];
 
   # Nix configuration
+  # Note: nix.enable = false because we're using Determinate Systems Nix installer
+  # which manages its own daemon (conflicts with nix-darwin's Nix management)
   nix = {
+    enable = false;  # Disable nix-darwin's Nix management (using Determinate)
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       trusted-users = [ "root" userSettings.username ];
