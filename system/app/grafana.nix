@@ -143,7 +143,7 @@ in
         }];
       };
 
-      # Alert notification policies (route alerts to contact points)
+      # Alert notification policies (route all alerts to email contact point)
       alerting.policies.settings = {
         apiVersion = 1;
         policies = [{
@@ -153,13 +153,6 @@ in
           group_wait = "30s";
           group_interval = "5m";
           repeat_interval = "4h";
-          routes = [{
-            receiver = "email-alerts";
-            object_matchers = [["severity" "=" "critical"]];
-            group_wait = "0s";
-            group_interval = "0s";
-            repeat_interval = "1h";
-          }];
         }];
       };
     };
