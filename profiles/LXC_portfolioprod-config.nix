@@ -23,5 +23,10 @@ in
 
   userSettings = base.userSettings // {
     homeStateVersion = "25.11";
+
+    # Home packages
+    homePackages = pkgs: pkgs-unstable: [
+      pkgs.python3Packages.uptime-kuma-api # Python wrapper for Uptime Kuma API
+    ];
   };
 }

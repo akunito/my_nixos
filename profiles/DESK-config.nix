@@ -401,6 +401,7 @@ in
     homePackages = pkgs: pkgs-unstable: [
       # DESK-specific packages
       pkgs.clinfo # OpenCL diagnostics
+      pkgs.python3Packages.uptime-kuma-api # Python wrapper for Uptime Kuma API
 
       # NOTE: Development tools in user/app/development/development.nix (controlled by developmentToolsEnable flag)
       # NOTE: Gaming & emulators in user/app/games/games.nix (controlled by gaming flags)
