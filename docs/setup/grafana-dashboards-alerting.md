@@ -1,6 +1,6 @@
 # Grafana Dashboards and Alerting Setup
 
-This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack at `https://monitor.akunito.org.es`.
+This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack at `https://grafana.local.akunito.com`.
 
 ## Prerequisites
 
@@ -10,43 +10,89 @@ This guide documents how to configure Grafana dashboards and alerting for the ho
 
 ---
 
-## 1. Verify Prometheus Data Source
+## Current Configuration State (Declarative)
 
-Before importing dashboards, ensure Prometheus is configured as a data source:
+As of 2026-02-05, the following components are **provisioned declaratively** via `grafana.nix`:
 
-1. Go to **Connections** → **Data sources** (left sidebar)
-2. If Prometheus is not listed:
-   - Click **"+ Add new data source"**
-   - Select **Prometheus**
-   - Configure:
-     - **Name**: `Prometheus`
-     - **URL**: `http://localhost:9090`
-   - Click **"Save & test"**
-3. If Prometheus exists, click on it and note the **Name** (usually "Prometheus")
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Prometheus datasource | ✅ Provisioned | UID: `prometheus`, not editable in UI |
+| Email contact point | ✅ Provisioned | Name: `email-alerts` |
+| Notification policy | ✅ Provisioned | Routes all alerts to `email-alerts` |
+| 11 Dashboards | ✅ Provisioned | Editable in UI (`allowUiUpdates = true`) |
+| 20+ Alert rules | ✅ Provisioned | Defined in Prometheus rule files |
+
+**You do NOT need to manually configure contact points or notification policies** - they are automatically created on deployment.
 
 ---
 
-## 2. Configure Email Contact Point
+## 1. Verify Prometheus Data Source (Provisioned)
 
+The Prometheus data source is **automatically provisioned** with:
+- **Name**: `Prometheus`
+- **UID**: `prometheus` (fixed for dashboard references)
+- **URL**: `http://127.0.0.1:9090`
+- **Editable**: No (cannot modify in UI)
+
+To verify:
+1. Go to **Connections** → **Data sources**
+2. Confirm `Prometheus` is listed and shows "provisioned" badge
+3. Click to verify connection status
+
+---
+
+## 2. Email Contact Point (Provisioned)
+
+The email contact point is **automatically provisioned** in `grafana.nix`:
+
+```nix
+alerting.contactPoints.settings = {
+  contactPoints = [{
+    name = "email-alerts";
+    receivers = [{
+      type = "email";
+      settings = {
+        addresses = secrets.alertEmail;  # From secrets/domains.nix
+        singleEmail = true;
+      };
+    }];
+  }];
+};
+```
+
+To verify or test:
 1. Navigate to: **Alerting** → **Contact points**
-2. Click **"+ Add contact point"**
-3. Configure:
-   - **Name**: `Email Alerts`
-   - **Integration**: Select `Email`
-   - **Addresses**: `diego88aku@gmail.com`
-   - **Optional settings**:
-     - Check **"Single email"** to group multiple alerts in one email
-4. Click **"Test"** to verify SMTP works
-5. Click **"Save contact point"**
+2. Confirm `email-alerts` is listed with "provisioned" badge
+3. Click **Test** to send a test email
+
+**Note**: You cannot edit provisioned contact points in the UI. To change the email address, update `secrets/domains.nix` and redeploy.
 
 ---
 
-## 3. Set Default Notification Policy
+## 3. Notification Policy (Provisioned)
 
+The notification policy is **automatically provisioned**:
+
+```nix
+alerting.policies.settings = {
+  policies = [{
+    receiver = "email-alerts";
+    group_by = ["alertname" "severity"];
+    group_wait = "30s";
+    group_interval = "5m";
+    repeat_interval = "4h";
+  }];
+};
+```
+
+**Behavior**:
+- All alerts are routed to `email-alerts`
+- Alerts are grouped by `alertname` and `severity`
+- First notification after 30s, then every 5m while firing, repeat every 4h
+
+To verify:
 1. Go to: **Alerting** → **Notification policies**
-2. Click **"..."** on the Default policy → **Edit**
-3. Set **Default contact point** to `Email Alerts`
-4. Click **"Update default policy"**
+2. Confirm the default policy shows `email-alerts` as receiver
 
 ---
 
@@ -466,9 +512,86 @@ rate(container_network_transmit_bytes_total{name!=""}[5m])
 
 ---
 
+## 9. Dashboard Persistence Workflow
+
+Dashboards are provisioned from JSON files in the repository. Since `allowUiUpdates = true`, you can edit them in the Grafana UI, but **changes are NOT automatically saved to the repo**.
+
+### Persisting Dashboard Changes
+
+1. **Edit the dashboard** in Grafana UI
+2. **Save the dashboard** (Ctrl+S or Save button)
+3. **Export the JSON**:
+   - Click dashboard settings (⚙️ gear icon)
+   - Go to **JSON Model** tab
+   - Copy the JSON content
+4. **Save to repository**:
+   ```bash
+   # Create/update the JSON file
+   vim ~/.dotfiles/system/app/grafana-dashboards/custom/<dashboard-name>.json
+   # Paste the JSON content
+
+   # If this is a NEW dashboard, add it to grafana.nix:
+   vim ~/.dotfiles/system/app/grafana.nix
+   # Add to environment.etc section:
+   # "grafana-dashboards/custom/<dashboard-name>.json".source = ./grafana-dashboards/custom/<dashboard-name>.json;
+   ```
+5. **Commit and deploy**:
+   ```bash
+   cd ~/.dotfiles
+   git add system/app/grafana-dashboards/custom/<dashboard-name>.json
+   git add system/app/grafana.nix  # If modified
+   git commit -m "feat: update <dashboard-name> dashboard"
+   git push
+
+   # Deploy to monitoring server
+   ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+   ```
+
+### Dashboard File Locations
+
+| Type | Path | Registration |
+|------|------|--------------|
+| Custom dashboards | `system/app/grafana-dashboards/custom/` | Must add to `environment.etc` in grafana.nix |
+| Community dashboards | `system/app/grafana-dashboards/community/` | Must add to `environment.etc` in grafana.nix |
+
+### Bulk Export Script
+
+To export all dashboards from the running Grafana instance:
+
+```bash
+ssh -A 192.168.8.85
+
+# Set credentials
+GRAFANA_URL="http://localhost:3002"
+AUTH="admin:YOUR_PASSWORD"
+
+# Export each dashboard
+curl -s "$GRAFANA_URL/api/search?type=dash-db" -u "$AUTH" | \
+  jq -r '.[].uid' | while read uid; do
+    filename=$(curl -s "$GRAFANA_URL/api/dashboards/uid/$uid" -u "$AUTH" | \
+      jq -r '.meta.slug')
+    curl -s "$GRAFANA_URL/api/dashboards/uid/$uid" -u "$AUTH" | \
+      jq '.dashboard' > "$filename.json"
+    echo "Exported: $filename.json"
+  done
+```
+
+### Migration Checklist
+
+When migrating to a new machine:
+1. ✅ All dashboards are automatically provisioned from JSON files
+2. ✅ Contact points and notification policies are automatically created
+3. ✅ Prometheus datasource is automatically configured
+4. ⚠️ Admin password may need to be reset (or set via environment variable)
+5. ⚠️ UI-only dashboards (not in repo) will be lost - export them first!
+
+---
+
 ## Related Documentation
 
 - [Ubuntu Node Exporter Setup](./ubuntu-node-exporter.md)
+- [Monitoring Stack Overview](../infrastructure/services/monitoring-stack.md)
+- [Grafana Dashboard Reference](./grafana-dashboard-reference.md)
 - [NixOS Monitoring Configuration](../system-modules.md)
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/)

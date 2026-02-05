@@ -69,6 +69,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.prometheusExporterEnable or false`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
 - **system/app/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
+- **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
 - **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
@@ -402,7 +403,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Setup
 
 - **docs/setup/grafana-dashboard-reference.md**: Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures.
-- **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack at `https://monitor.akunito.org.es`.
+- **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack at `https://grafana.local.akunito.com`.
 - **docs/setup/ubuntu-node-exporter.md**: This guide documents how to install and configure Prometheus Node Exporter on Ubuntu LXC containers (like cloudflared at 192.168.8.102) for monitoring with the homelab Prometheus/Grafana stack.
 
 ### User-Modules

@@ -23,6 +23,32 @@ related_files:
 
 This document provides a comprehensive reference for all Grafana dashboards in the homelab monitoring stack, including available metrics, panel specifications, alert rules, and verification procedures.
 
+## Declarative Configuration
+
+All Grafana configuration is managed declaratively via NixOS (`system/app/grafana.nix`). This includes:
+
+| Component | Provisioning Method | Editable in UI |
+|-----------|-------------------|----------------|
+| **Dashboards** | JSON files in `system/app/grafana-dashboards/` | ✅ Yes (`allowUiUpdates = true`) |
+| **Datasources** | `provision.datasources.settings` | ❌ No |
+| **Contact Points** | `provision.alerting.contactPoints.settings` | ❌ No |
+| **Notification Policies** | `provision.alerting.policies.settings` | ❌ No |
+| **Alert Rules** | Prometheus `ruleFiles` in grafana.nix | ❌ No |
+
+### Dashboard Persistence
+
+Dashboards can be edited in the UI, but changes are **stored in SQLite only**. To persist changes to git:
+
+1. Edit dashboard in UI → Save
+2. Export JSON: Dashboard Settings (⚙️) → JSON Model → Copy
+3. Save to: `~/.dotfiles/system/app/grafana-dashboards/custom/<name>.json`
+4. Register in `grafana.nix` environment.etc section
+5. Commit, push, and redeploy
+
+See [Grafana Dashboards and Alerting Setup](./grafana-dashboards-alerting.md#9-dashboard-persistence-workflow) for detailed workflow.
+
+---
+
 ## Quick Reference
 
 | # | Dashboard | Grafana ID | Metrics Source | Targets |
@@ -36,6 +62,7 @@ This document provides a comprehensive reference for all Grafana dashboards in t
 | 7 | TrueNAS | *Custom* | graphite_exporter | 1 NAS |
 | 8 | pfSense | *Custom* | snmp_exporter | 1 firewall |
 | 9 | Media Stack (*arr) | *Custom* | exportarr | 4 apps |
+| 10 | Infrastructure Overview | *Custom* | mixed | All |
 
 ---
 

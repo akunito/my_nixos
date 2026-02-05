@@ -372,6 +372,56 @@ Before answering any architectural or implementation question:
   - CPU load: 0.17, Memory free: 14GB
   - pfBlockerNG IPs: 16,242, Rules: 168
 
+### Grafana/Prometheus monitoring (applies to: `system/app/grafana.nix`, `system/app/prometheus-*.nix`, `system/app/grafana-dashboards/**`)
+
+- **Read first**: `docs/infrastructure/services/monitoring-stack.md`
+- **Declarative provisioning**: All Grafana config is managed in `grafana.nix`:
+  - **Dashboards**: JSON files in `system/app/grafana-dashboards/` (custom/ and community/)
+  - **Datasources**: `provision.datasources.settings` (Prometheus with fixed UID)
+  - **Contact points**: `provision.alerting.contactPoints.settings` (email-alerts)
+  - **Notification policies**: `provision.alerting.policies.settings`
+  - **Alert rules**: Prometheus `ruleFiles` (NOT Grafana UI)
+- **Dashboard workflow**:
+  1. Edit dashboard in Grafana UI (enabled via `allowUiUpdates = true`)
+  2. Export JSON: Dashboard Settings (⚙️) → JSON Model → Copy
+  3. Save to `system/app/grafana-dashboards/custom/<name>.json`
+  4. Register in `environment.etc` section of `grafana.nix`
+  5. Commit, push, deploy: `ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"`
+- **Alert rules format**: Use Prometheus-style rules in `ruleFiles`, NOT Grafana alerting UI
+  ```nix
+  ruleFiles = [(pkgs.writeText "alerts.yml" (builtins.toJSON {
+    groups = [{ name = "alerts"; rules = [{ alert = "..."; expr = "..."; }]; }];
+  }))];
+  ```
+- **Contact point format**: For Grafana 12+, use this structure:
+  ```nix
+  alerting.contactPoints.settings = {
+    apiVersion = 1;
+    contactPoints = [{
+      orgId = 1;
+      name = "email-alerts";
+      receivers = [{ uid = "..."; type = "email"; settings = { addresses = "..."; }; }];
+    }];
+  };
+  ```
+- **Notification policy format**: Keep it simple (avoid nested routes):
+  ```nix
+  alerting.policies.settings = {
+    apiVersion = 1;
+    policies = [{
+      orgId = 1;
+      receiver = "email-alerts";
+      group_by = ["alertname" "severity"];
+    }];
+  };
+  ```
+- **Deployment**: `ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"`
+- **Verification commands**:
+  - Check service: `systemctl status grafana prometheus`
+  - Check provisioning: `journalctl -u grafana | grep provision`
+  - Check targets: `curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets | length'`
+  - Test contact point: Grafana UI → Alerting → Contact points → Test
+
 ## Multi-agent instructions
 
 For complex tasks, see `.claude/agents/` for agent-specific context and patterns.
