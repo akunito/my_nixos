@@ -17,8 +17,8 @@
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       trusted-users = [ "root" userSettings.username ];
-      auto-optimise-store = true;
     };
+    optimise.automatic = true;
     gc = {
       automatic = true;
       interval = { Weekday = 0; Hour = 3; Minute = 0; };
@@ -38,6 +38,10 @@
 
   # Set hostname
   networking.hostName = systemSettings.hostname;
+
+  # Set primary user for system.defaults options
+  # Required for nix-darwin to apply user-specific system defaults
+  system.primaryUser = userSettings.username;
 
   # User configuration
   users.users.${userSettings.username} = {

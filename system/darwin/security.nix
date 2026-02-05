@@ -10,18 +10,16 @@ in
 {
   # Enable Touch ID for sudo authentication
   # This allows using fingerprint instead of password for sudo commands
-  security.pam.enableSudoTouchIdAuth = darwin.touchIdSudo;
+  # Updated for nix-darwin compatibility
+  security.pam.services.sudo_local.touchIdAuth = darwin.touchIdSudo;
 
   # Firewall configuration
-  system.defaults.alf = {
-    # 0 = disabled, 1 = enabled, 2 = block all incoming except essential
-    globalstate = 1;
-    # Allow signed apps to receive incoming connections
-    allowsignedenabled = 1;
-    # Allow downloaded signed apps
-    allowdownloadsignedenabled = 1;
-    # Stealth mode (don't respond to ICMP ping)
-    stealthenabled = 0;
+  # Updated to use new networking.applicationFirewall options
+  networking.applicationFirewall = {
+    enable = true;
+    allowSigned = true;
+    allowSignedApp = true;
+    enableStealthMode = false;
   };
 
   # Gatekeeper settings
