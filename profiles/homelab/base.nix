@@ -54,6 +54,13 @@
   # Nix store optimization - save disk space via hard-linking identical files
   nix.settings.auto-optimise-store = true;
 
+  # Automatic garbage collection - prevent disk bloat
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 8d";
+  };
+
   # I'm sorry Stallman-taichou
   nixpkgs.config.allowUnfree = true;
 

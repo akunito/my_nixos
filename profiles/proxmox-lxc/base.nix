@@ -53,6 +53,13 @@
   # Note: nix.registry.nixpkgs.flake removed - NixOS 25.11 modules conflict with each other
   # The registry is automatically configured by nixpkgs-flake.nix module
 
+  # Automatic garbage collection - prevent disk bloat on LXC containers
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 8d";
+  };
+
   nixpkgs.config.allowUnfree = true;
 
   # Disable documentation to reduce build time (no man pages, no NixOS manual)
