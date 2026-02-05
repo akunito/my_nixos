@@ -44,10 +44,16 @@ in
     nixvimEnabled = true;
     aichatEnable = true;
     developmentToolsEnable = true;
+
+    # === Styling & Theming ===
+    stylixEnable = true;
   };
 
   userSettings = base.userSettings // {
     username = "komi";
+
+    # === Theme ===
+    theme = "ashes"; # Warm, muted base16 palette matching DESK
 
     # === Hammerspoon (Window Management & App Switching) ===
     hammerspoonEnable = true;
@@ -99,11 +105,6 @@ in
       bindkey '\e[H' beginning-of-line
       bindkey '\e[F' end-of-line
       bindkey '\e[3~' delete-char
-
-      PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}komi%f%u:%F{yellow}%~%f
-      %F{green}→%f "
-      RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
-      [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
     '';
   };
 }

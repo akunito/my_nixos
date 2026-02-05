@@ -70,6 +70,9 @@
   userSettings = {
     extraGroups = [ "admin" "staff" ];
 
+    # === Window Manager ===
+    wm = "quartz"; # macOS native window manager (not plasma6)
+
     # === Terminal & Shell ===
     term = "kitty";
     editor = "nvim";

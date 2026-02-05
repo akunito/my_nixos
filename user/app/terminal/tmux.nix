@@ -234,7 +234,7 @@ in
       # ============================================================================
       
       # Show keybindings menu
-      ${if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then ''
+      ${if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)) then ''
         bind h display-menu -T "#[align=centre fg=#${config.lib.stylix.colors.base0D}]Keybindings" \
           "Split Vertical" "e" "split-window -h -c '#{pane_current_path}'" \
           "Split Horizontal" "r" "split-window -v -c '#{pane_current_path}'" \
@@ -315,7 +315,7 @@ in
       bind -n C-M-a run-shell "${ssh-smart-tmux}/bin/ssh-smart-tmux"
       
       # Fast navigation menu
-      ${if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then ''
+      ${if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)) then ''
         bind -n C-M-H display-menu -T "#[align=centre fg=#${config.lib.stylix.colors.base0D}]Fast Navigation" \
           "Split Vertical" "C-M-e" "split-window -h" \
           "Split Horizontal" "C-M-r" "split-window -v" \
@@ -369,7 +369,7 @@ in
       # CRITICAL: Check if Stylix is actually available (not just enabled)
       # Stylix is disabled for Plasma 6 even if stylixEnable is true
       # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
-      ${lib.optionalString (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) ''
+      ${lib.optionalString (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)) ''
         set -g status-style "bg=#${config.lib.stylix.colors.base00},fg=#${config.lib.stylix.colors.base07}"
         set -g status-left-length 40
         set -g status-right-length 80

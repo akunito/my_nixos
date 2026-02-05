@@ -43,6 +43,7 @@
   ++ lib.optional (systemSettings.nixvimEnabled == true) ../../user/app/nixvim/nixvim.nix
   ++ lib.optional (systemSettings.aichatEnable == true) ../../user/app/ai/aichat.nix
   ++ lib.optional (userSettings.hammerspoonEnable == true) ../../user/app/hammerspoon/hammerspoon.nix
+  ++ lib.optional (systemSettings.stylixEnable == true) ../../user/style/stylix.nix
   ;
 
   # Home packages from profile config

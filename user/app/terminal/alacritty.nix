@@ -178,7 +178,7 @@ in
     # CRITICAL: Check if Stylix is actually available (not just enabled)
     # Stylix is disabled for Plasma 6 even if stylixEnable is true
     # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
-    (lib.mkIf (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
+    (lib.mkIf (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)) {
       # Stylix color integration
       colors = {
         primary = {
