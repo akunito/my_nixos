@@ -11,9 +11,10 @@
 #   ...
 # ]
 #
-# Accessed via nginx reverse proxy with SSL:
-# - Grafana: https://grafana.local.akunito.com (port 443)
-# - Prometheus: https://prometheus.local.akunito.com (port 443, with basic auth)
+# Accessed via nginx reverse proxy:
+# - Grafana (local): https://grafana.local.akunito.com (port 443, SSL)
+# - Grafana (public): https://grafana.akunito.com (via Cloudflare Tunnel, port 80 → nginx)
+# - Prometheus: https://prometheus.local.akunito.com (port 443, SSL, with basic auth + IP whitelist)
 
 { pkgs, lib, systemSettings, config, ... }:
 
@@ -82,7 +83,8 @@ in
         http_port = 3002;
         protocol = "http";
         domain = "grafana.${secrets.wildcardLocal}";
-        enforce_domain = true;
+        # Allow both local and public domains (local via nginx SSL, public via Cloudflare Tunnel)
+        enforce_domain = false;
       };
 
       # SMTP configuration for alerts (uses local postfix relay at pve-290)
@@ -572,12 +574,21 @@ in
     defaultSSLListenPort = 443;
 
     virtualHosts = {
-      # Grafana - main monitoring UI
+      # Grafana - main monitoring UI (local access with SSL)
       "${config.services.grafana.settings.server.domain}" = {
         onlySSL = true;
         sslCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
         sslCertificateKey = "/mnt/shared-certs/${secrets.wildcardLocal}.key";
         sslTrustedCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
+        locations."/" = {
+          proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
+          proxyWebsockets = true;
+          recommendedProxySettings = true;
+        };
+      };
+
+      # Grafana - public access via Cloudflare Tunnel (HTTP - TLS terminated by Cloudflare)
+      "grafana.${secrets.publicDomain}" = {
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
           proxyWebsockets = true;
