@@ -10,6 +10,7 @@ in
     hostname = "mailerwatcher";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_mailer -s -u";
     systemStateVersion = "25.11";
+    serverEnv = "PROD"; # Production environment
 
     # Firewall - Add SMTP port for mail service
     allowedTCPPorts = [

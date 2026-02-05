@@ -19,6 +19,7 @@ in
     hostname = "proxy";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_proxy -s -u";
     systemStateVersion = "25.11";
+    serverEnv = "PROD"; # Production environment
 
     # Firewall ports
     allowedTCPPorts = [

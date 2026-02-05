@@ -16,6 +16,7 @@ in
     hostname = "monitoring";
     profile = "proxmox-lxc";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_monitoring -s -u";
+    serverEnv = "PROD"; # Production environment
 
     # Network - LXC uses Proxmox-managed networking
     ipAddress = "192.168.8.85";

@@ -366,6 +366,9 @@
     # This is just a placeholder
     fonts = [ ];
 
+    # Server environment (DEV, TEST, PROD) - used by applications/docker to detect environment
+    serverEnv = "DEV"; # Default to DEV, profiles override as needed
+
     # System defaults
     swapFileEnable = false;
     swapFileSyzeGB = 32;

@@ -14,6 +14,7 @@ in
     hostname = "nixosLabaku";
     profile = "proxmox-lxc"; # Use LXC profile base
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_HOME -s -u";
+    serverEnv = "PROD"; # Production environment
 
     # Network - LXC uses Proxmox-managed networking
     # networkManager handled by proxmox-lxc profile

@@ -101,6 +101,10 @@
   # System packages
   environment.systemPackages = systemSettings.systemPackages;
 
+  # Server environment variable (DEV, TEST, PROD) for applications/docker to detect environment
+  environment.sessionVariables.SERVER_ENV = systemSettings.serverEnv;
+  environment.variables.SERVER_ENV = systemSettings.serverEnv;
+
   programs.fuse.userAllowOther = true;
 
   # Shell configuration

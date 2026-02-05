@@ -9,6 +9,7 @@ in
     hostname = "leftyworkoutTEST";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_liftcraftTEST -s -u";
     systemStateVersion = "25.11";
+    serverEnv = "TEST"; # Test environment
 
     # ============================================================================
     # AUTO-UPGRADE SETTINGS (Stable Profile - Weekly Saturday 07:25)

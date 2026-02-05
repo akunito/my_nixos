@@ -9,6 +9,7 @@ in
     hostname = "planePROD-nixos";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_plane -s -u";
     systemStateVersion = "25.11";
+    serverEnv = "PROD"; # Production environment
 
     # ============================================================================
     # AUTO-UPGRADE SETTINGS (Stable Profile - Weekly Saturday 07:15)

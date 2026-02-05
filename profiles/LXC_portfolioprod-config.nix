@@ -9,6 +9,7 @@ in
     hostname = "portfolioprod";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_portfolioprod -s -u";
     systemStateVersion = "25.11";
+    serverEnv = "PROD"; # Production environment
 
     # ============================================================================
     # AUTO-UPGRADE SETTINGS (Stable Profile - Weekly Saturday 07:30)
