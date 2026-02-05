@@ -51,9 +51,9 @@
   xdg.enable = true;
 
   # Session variables (matching work/home.nix)
+  # Note: TERM should NOT be set here - let the terminal emulator set it
   home.sessionVariables = {
     EDITOR = userSettings.editor;
-    TERM = userSettings.term;
     BROWSER = userSettings.browser;
   };
 }
