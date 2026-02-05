@@ -100,6 +100,18 @@ in
       unified_alerting = {
         enabled = true;
       };
+
+      # Enable public dashboards feature (Grafana 9.1+)
+      # Allows creating shareable, read-only versions of specific dashboards
+      # without exposing the full Grafana instance
+      feature_toggles = {
+        publicDashboards = true;
+      };
+
+      # Security settings for embedding dashboards in external sites (e.g., portfolio)
+      security = {
+        allow_embedding = true;
+      };
     };
 
     # Dashboard and data source provisioning
