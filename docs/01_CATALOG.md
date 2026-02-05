@@ -28,6 +28,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **flake.LXC_mailer.nix**: Profile-specific flake configuration
 - **flake.LXC_monitoring.nix**: Profile-specific flake configuration
 - **flake.LXC_proxy.nix**: Profile-specific flake configuration
+- **flake.MACBOOK-KOMI.nix**: Profile-specific flake configuration
 - **flake.nix**: Profile-specific flake configuration
 
 ## Profiles
@@ -46,6 +47,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/LXC_plane-config.nix**: LXC Default Profile Configuration
 - **profiles/LXC_portfolioprod-config.nix**: LXC portfolioprod Profile Configuration
 - **profiles/LXC_proxy-config.nix**: LXC_proxy Profile Configuration
+- **profiles/MACBOOK-KOMI-config.nix**: MACBOOK-KOMI Configuration
 - **profiles/VMHOME-config.nix**: VMHOME Profile Configuration
 - **profiles/WSL-config.nix**: WSL Profile Configuration
 
@@ -83,6 +85,13 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Bin
 
 - **system/bin/aku.nix**: TODO make this work on nix-on-droid!
+
+### Darwin
+
+- **system/darwin/defaults.nix**: macOS System Defaults Configuration
+- **system/darwin/homebrew.nix**: Homebrew Configuration for macOS *Enabled when:* `repositories`
+- **system/darwin/keyboard.nix**: Keyboard Configuration for macOS
+- **system/darwin/security.nix**: Security Configuration for macOS
 
 ### Dm
 
@@ -216,10 +225,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/games/games.nix**: Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery *Enabled when:* `userSettings.protongamesEnable == true`
 - **user/app/gaming/mangohud.nix**: MangoHud Configuration
 - **user/app/git/git.nix**: https://nixos.wiki/wiki/Git
+- **user/app/hammerspoon/hammerspoon.nix**: Hammerspoon Configuration Module for macOS *Enabled when:* `systemSettings.osType == "darwin" && userSettings.hammerspoonEnable`
 - **user/app/keepass/keepass.nix**: nixpkgs.overlays = [
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
-- **user/app/ranger/ranger.nix**: this lets my copy and paste images and/or plaintext of files directly out of ranger
+- **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
 - **user/app/swaybgplus/swaybgplus.nix**: !/bin/sh *Enabled when:* `systemSettings.swaybgPlusEnable or false`
 - **user/app/swww/swww.nix**: !/bin/sh *Enabled when:*
    - `wallpaper backend for SwayFX`
@@ -228,7 +238,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/terminal/alacritty.nix**: Wrapper script to auto-start tmux with alacritty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/fix-terminals.nix**: Python script to configure VS Code and Cursor terminal keybindings
 - **user/app/terminal/kitty.nix**: Wrapper script to auto-start tmux with kitty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
-- **user/app/terminal/tmux.nix**: ssh-smart script: reads hosts from .ssh/config and provides interactive selection
+- **user/app/terminal/tmux.nix**: Clipboard command differs between macOS (pbcopy) and Linux (wl-copy) *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
 
 ### Hardware
@@ -259,7 +269,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Shell
 
-- **user/shell/cli-collection.nix**: Collection of useful CLI apps
+- **user/shell/cli-collection.nix**: Collection of useful CLI apps (cross-platform)
 - **user/shell/sh.nix**: Basic aliases that don't depend on external packages
 - **user/shell/starship.nix**: Write starship.toml directly with proper Unicode escapes for Nerd Font icons
 
@@ -356,6 +366,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Infrastructure / Services
 
 - **docs/infrastructure/services/homelab-stack.md**: Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS
+- **docs/infrastructure/services/kuma.md**: Uptime Kuma monitoring - local homelab and public VPS status pages with API integration
 - **docs/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
 - **docs/infrastructure/services/monitoring-stack.md**: Monitoring stack - Prometheus, Grafana, exporters, alerting
 - **docs/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
@@ -377,6 +388,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
 - **docs/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
 - **docs/lxc-deployment.md**: Centralized deployment script for managing multiple LXC containers
+- **docs/macos-installation.md**: This guide covers installing and configuring this dotfiles repository on macOS using nix-darwin and Home Manager.
+- **docs/macos-komi-migration.md**: This guide helps you migrate from your current ko-mi/macos-setup to the new Nix-managed dotfiles. You can use Claude Code to help with any step.
 - **docs/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
 - **docs/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
 - **docs/nix-quote-escaping.md**: Guide to properly escaping quotes and special characters in Nix strings to avoid common syntax errors.

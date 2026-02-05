@@ -430,6 +430,37 @@ Before answering any architectural or implementation question:
   - Check targets: `curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets | length'`
   - Test contact point: Grafana UI → Alerting → Contact points → Test
 
+### Uptime Kuma troubleshooting (applies to: `docs/infrastructure/services/kuma.md`, LXC_mailer, VPS)
+
+- **Read first**: `docs/infrastructure/services/kuma.md`
+- **Two instances**:
+  1. **Kuma 1 (Local)**: `http://192.168.8.89:3001` on LXC_mailer
+     - SSH: `ssh -A akunito@192.168.8.89`
+     - Repo: `~/homelab-watcher/`
+     - Auth: Username/password (no 2FA)
+  2. **Kuma 2 (Public)**: `https://status.akunito.com` on VPS
+     - SSH: `ssh -A -p 56777 root@172.26.5.155`
+     - Repo: `/opt/postfix-relay/`
+     - Auth: JWT token (2FA enabled)
+- **Quick health check**:
+  ```bash
+  # Kuma 1
+  curl -s http://192.168.8.89:3001/api/status-page/globalservices | jq '.ok'
+  # Kuma 2
+  curl -s -o /dev/null -w '%{http_code}' https://status.akunito.com
+  ```
+- **API integration**: Uses `uptime-kuma-api` Python library
+  - Portfolio project scripts: `/home/akunito/Nextcloud/git_repos/myProjects/portfolio/scripts/kuma/`
+  - Password auth (Kuma 1): `api.login(username, password)`
+  - JWT auth (Kuma 2): `api.login_by_token(jwt_token)` (token from browser localStorage)
+- **Credentials**: Stored in `secrets/domains.nix` (kuma1Username, kuma1Password, kuma2JwtToken)
+- **Common issues**:
+  - Container not running: Check `docker ps`, restart with `docker compose up -d uptime-kuma`
+  - JWT expired (Kuma 2): Re-extract from browser DevTools after 2FA login
+  - CSS not applying: Run portfolio scripts with `--force` flag
+- **Iframe embedding**: Requires `UPTIME_KUMA_DISABLE_FRAME_SAMEORIGIN=true` in docker-compose
+- **Prometheus monitoring**: Kuma 1 monitored via blackbox exporter (http_2xx_nossl module)
+
 ### Darwin/macOS rules (applies to: `profiles/darwin/**`, `system/darwin/**`, `profiles/MACBOOK*-config.nix`, `flake.MACBOOK*.nix`)
 
 - **Read first**: `docs/macos-installation.md` and `docs/macos-komi-migration.md`
