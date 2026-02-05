@@ -150,11 +150,15 @@ in
           orgId = 1;
           receiver = "email-alerts";
           group_by = ["alertname" "severity"];
+          group_wait = "30s";
+          group_interval = "5m";
+          repeat_interval = "4h";
           routes = [{
             receiver = "email-alerts";
-            matchers = ["severity = critical"];
+            object_matchers = [["severity" "=" "critical"]];
             group_wait = "0s";
             group_interval = "0s";
+            repeat_interval = "1h";
           }];
         }];
       };
