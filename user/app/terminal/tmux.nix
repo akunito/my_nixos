@@ -1,6 +1,11 @@
 { config, pkgs, lib, systemSettings, userSettings, ... }:
 
 let
+  # Clipboard command differs between macOS (pbcopy) and Linux (wl-copy)
+  clipboardCmd = if pkgs.stdenv.isDarwin
+    then "pbcopy"
+    else "${pkgs.wl-clipboard}/bin/wl-copy";
+
   # ssh-smart script: reads hosts from .ssh/config and provides interactive selection
   ssh-smart = pkgs.writeShellScriptBin "ssh-smart" ''
     #!/usr/bin/env bash
@@ -212,10 +217,10 @@ in
       # CRITICAL: Mouse support
       set -g mouse on
       
-      # CRITICAL: Clipboard integration with wl-clipboard
+      # CRITICAL: Clipboard integration (pbcopy on macOS, wl-copy on Linux)
       set -g set-clipboard on
-      bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "wl-copy"
-      bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "wl-copy"
+      bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "${clipboardCmd}"
+      bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "${clipboardCmd}"
       
       # Modern copy mode
       bind-key -T copy-mode-vi v send-keys -X begin-selection
@@ -425,25 +430,40 @@ in
     '';
   };
 
-  # Systemd user service to start tmux server at login
+  # Systemd user service to start tmux server at login (Linux only)
   # This ensures the server is running before terminals open, allowing continuum to restore sessions
-  systemd.user.services.tmux-server = {
-    Unit = {
-      Description = "Tmux server";
-      After = [ "sway-session.target" "graphical-session.target" ];
+  systemd.user.services = lib.mkIf (!pkgs.stdenv.isDarwin) {
+    tmux-server = {
+      Unit = {
+        Description = "Tmux server";
+        After = [ "sway-session.target" "graphical-session.target" ];
+      };
+      Service = {
+        Type = "forking";
+        Environment = [
+          "TMUX_TMPDIR=%t"
+          "PATH=${lib.makeBinPath [ pkgs.tmux pkgs.coreutils pkgs.procps pkgs.gnugrep pkgs.gnused pkgs.gawk pkgs.util-linux pkgs.bash pkgs.nettools pkgs.gnutar ]}"
+        ];
+        ExecStartPre = [ "${tmux-resurrect-fix-last}/bin/tmux-resurrect-fix-last" ];
+        ExecStart = "${pkgs.tmux}/bin/tmux -f %h/.config/tmux/tmux.conf start-server";
+        Restart = "on-failure";
+      };
+      Install = {
+        WantedBy = [ "sway-session.target" "graphical-session.target" ];
+      };
     };
-    Service = {
-      Type = "forking";
-      Environment = [
-        "TMUX_TMPDIR=%t"
-        "PATH=${lib.makeBinPath [ pkgs.tmux pkgs.coreutils pkgs.procps pkgs.gnugrep pkgs.gnused pkgs.gawk pkgs.util-linux pkgs.bash pkgs.nettools pkgs.gnutar ]}"
-      ];
-      ExecStartPre = [ "${tmux-resurrect-fix-last}/bin/tmux-resurrect-fix-last" ];
-      ExecStart = "${pkgs.tmux}/bin/tmux -f %h/.config/tmux/tmux.conf start-server";
-      Restart = "on-failure";
-    };
-    Install = {
-      WantedBy = [ "sway-session.target" "graphical-session.target" ];
+  };
+
+  # Launchd agent for tmux server on macOS
+  launchd.agents = lib.mkIf pkgs.stdenv.isDarwin {
+    tmux-server = {
+      enable = true;
+      config = {
+        Label = "org.tmux.server";
+        ProgramArguments = [ "${pkgs.tmux}/bin/tmux" "start-server" ];
+        RunAtLoad = true;
+        KeepAlive = false;
+      };
     };
   };
 }

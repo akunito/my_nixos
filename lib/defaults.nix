@@ -9,6 +9,9 @@
     # System architecture - most profiles use x86_64-linux
     system = "x86_64-linux";
 
+    # Operating system type - "linux" (NixOS) or "darwin" (macOS)
+    osType = "linux";
+
     # Common defaults (profile-specific values will override)
     timezone = "Europe/Warsaw";
     locale = "en_US.UTF-8";
@@ -420,6 +423,55 @@
 
     # Background package - handled in flake-base.nix with proper self reference
     # Profiles can override this if needed
+
+    # ============================================================================
+    # DARWIN (macOS) SETTINGS
+    # ============================================================================
+    # These settings only apply when osType = "darwin"
+
+    darwin = {
+      # === Homebrew Configuration ===
+      homebrewEnable = true; # Enable Homebrew for GUI apps (casks)
+      homebrewCasks = [ ]; # GUI apps to install via Homebrew (e.g., "firefox", "discord")
+      homebrewFormulas = [ ]; # CLI tools to install via Homebrew (prefer Nix when possible)
+      homebrewOnActivation = {
+        autoUpdate = false; # Don't auto-update Homebrew on nix-darwin activation
+        cleanup = "zap"; # Remove unlisted casks/formulas (keep system clean)
+        upgrade = true; # Upgrade outdated packages on activation
+      };
+
+      # === Dock Preferences ===
+      dockAutohide = true; # Automatically hide the Dock
+      dockAutohideDelay = 0.0; # Delay before Dock appears (0 = instant)
+      dockOrientation = "bottom"; # Dock position: "bottom", "left", "right"
+      dockShowRecents = false; # Don't show recent apps in Dock
+      dockMinimizeToApplication = true; # Minimize windows into app icon
+      dockTileSize = 48; # Icon size in pixels
+
+      # === Finder Preferences ===
+      finderShowExtensions = true; # Show file extensions
+      finderShowHiddenFiles = true; # Show hidden files (dotfiles)
+      finderShowPathBar = true; # Show path bar at bottom
+      finderShowStatusBar = true; # Show status bar at bottom
+      finderDefaultViewStyle = "Nlsv"; # Default view: "icnv" (icon), "Nlsv" (list), "clmv" (column), "glyv" (gallery)
+      finderAppleShowAllFiles = true; # Show all files including system files
+
+      # === Keyboard Preferences ===
+      keyboardInitialKeyRepeat = 15; # Delay before key repeat (lower = faster)
+      keyboardKeyRepeat = 2; # Key repeat rate (lower = faster)
+      keyboardFnState = true; # Use F1, F2, etc. as standard function keys
+
+      # === Trackpad Preferences ===
+      trackpadTapToClick = true; # Enable tap to click
+      trackpadSecondaryClick = true; # Enable right-click via two-finger tap
+
+      # === Security & Privacy ===
+      touchIdSudo = true; # Enable Touch ID for sudo authentication
+
+      # === General UI Preferences ===
+      darkMode = true; # Enable dark mode
+      scrollDirection = true; # Natural scrolling (true = natural, false = traditional)
+    };
   };
 
   userSettings = {
@@ -505,5 +557,25 @@
 
     # Editor spawn command - computed from editor and term
     spawnEditor = "exec kitty -e nano"; # Will be computed
+
+    # ============================================================================
+    # DARWIN (macOS) USER SETTINGS
+    # ============================================================================
+    # These settings only apply when systemSettings.osType = "darwin"
+
+    # === Hammerspoon (macOS window manager & automation) ===
+    hammerspoonEnable = false; # Enable Hammerspoon configuration management
+    hammerspoonConfig = "default"; # Config variant: "default", "komi", or custom
+    # Hyperkey bindings (Cmd+Ctrl+Alt+Shift) for app launching
+    # Format: { key = "s"; app = "Spotify"; } or { key = "1"; action = "cycleApp"; apps = ["Arc" "Cursor"]; }
+    hammerspoonAppBindings = [ ];
+    # Window management bindings
+    hammerspoonWindowBindings = {
+      maximize = "m";
+      minimize = "h";
+      moveLeft = "Left";
+      moveRight = "Right";
+      reload = "r";
+    };
   };
 }

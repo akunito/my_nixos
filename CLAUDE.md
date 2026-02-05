@@ -39,13 +39,17 @@ lib/defaults.nix (global defaults)
     │        │
     │        └─► VMHOME-config.nix
     │
-    └─► LXC-base-config.nix ◄─── LXC_HOME-config.nix
-                             ◄─── LXC_plane-config.nix
-                             ◄─── LXC_portfolioprod-config.nix
-                             ◄─── LXC_mailer-config.nix
-                             ◄─── LXC_liftcraftTEST-config.nix
-                             ◄─── LXC_monitoring-config.nix
-                             ◄─── LXC_proxy-config.nix
+    ├─► LXC-base-config.nix ◄─── LXC_HOME-config.nix
+    │                        ◄─── LXC_plane-config.nix
+    │                        ◄─── LXC_portfolioprod-config.nix
+    │                        ◄─── LXC_mailer-config.nix
+    │                        ◄─── LXC_liftcraftTEST-config.nix
+    │                        ◄─── LXC_monitoring-config.nix
+    │                        ◄─── LXC_proxy-config.nix
+    │
+    └─► darwin/configuration.nix (macOS/nix-darwin)
+             │
+             └─► MACBOOK-base.nix ◄─── MACBOOK-KOMI-config.nix
 ```
 
 ### 3. Centralized Software Management (CRITICAL)
@@ -425,6 +429,31 @@ Before answering any architectural or implementation question:
   - Check provisioning: `journalctl -u grafana | grep provision`
   - Check targets: `curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets | length'`
   - Test contact point: Grafana UI → Alerting → Contact points → Test
+
+### Darwin/macOS rules (applies to: `profiles/darwin/**`, `system/darwin/**`, `profiles/MACBOOK*-config.nix`, `flake.MACBOOK*.nix`)
+
+- **Read first**: `docs/macos-installation.md` and `docs/macos-komi-migration.md`
+- **nix-darwin + Home Manager**: macOS uses nix-darwin for system config, Home Manager for user config (same as NixOS pattern)
+- **Homebrew for GUI apps**: Use `systemSettings.darwin.homebrewCasks` for GUI apps (e.g., Arc, Discord), Nix for CLI tools
+- **Touch ID**: Enabled via `security.pam.enableSudoTouchIdAuth` in `system/darwin/security.nix`
+- **Hammerspoon**: Window management and app switching managed via `user/app/hammerspoon/hammerspoon.nix`
+- **Profile pattern**: Same as Linux - `MACBOOK-base.nix` contains shared settings, specific profiles inherit and override
+- **osType flag**: Darwin profiles MUST set `systemSettings.osType = "darwin"` and `system = "aarch64-darwin"` (or x86_64-darwin for Intel)
+- **Apply workflow**: `darwin-rebuild switch --flake .#system` (not install.sh after initial setup)
+- **Cross-platform modules**: When making modules work on both Linux and macOS:
+  - Use `pkgs.stdenv.isDarwin` for platform detection
+  - Use `lib.mkIf (!pkgs.stdenv.isDarwin)` for Linux-only config (e.g., systemd services)
+  - Use `lib.mkIf pkgs.stdenv.isDarwin` for macOS-only config (e.g., launchd agents)
+  - Never break existing Linux functionality when adding darwin support
+- **Key darwin settings** (in `systemSettings.darwin.*`):
+  - `homebrewCasks`: List of GUI apps to install via Homebrew
+  - `dockAutohide`, `dockOrientation`: Dock preferences
+  - `finderShowExtensions`, `finderShowHiddenFiles`: Finder preferences
+  - `touchIdSudo`: Enable Touch ID for sudo
+  - `keyboardKeyRepeat`, `keyboardInitialKeyRepeat`: Fast keyboard settings
+- **Verification after darwin changes**:
+  - Test darwin profile: `nix build .#darwinConfigurations.system.system`
+  - Test existing Linux profiles still work (see task #11 verification)
 
 ## Multi-agent instructions
 
