@@ -7,7 +7,7 @@
       lolcat
       cowsay
       starfetch
-      cava
+      # cava  # Disabled: build fails on macOS with C++ compilation errors
       killall
       timer
       gnugrep
