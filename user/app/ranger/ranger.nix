@@ -1,18 +1,26 @@
-{ config, pkgs, ... }:
-let myCbxScript = ''
-  #!/bin/sh
+{ config, pkgs, lib, ... }:
+let
+  # Cross-platform clipboard script for ranger
+  # Supports: macOS (pbcopy), Wayland (wl-copy), X11 (xclip)
+  myCbxScript = ''
+    #!/bin/sh
 
-  # this lets my copy and paste images and/or plaintext of files directly out of ranger
-  if [ "$#" -le "2" ]; then
-    if [ "$1" = "copy" -o "$1" = "cut" ]; then
-      if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
-        wl-copy < $2;
-      else
-        # xclip -selection clipboard -t $(file -b --mime-type $2) -i $2;
-        xclip -selection clipboard -t image/png -i $2;
+    # this lets my copy and paste images and/or plaintext of files directly out of ranger
+    if [ "$#" -le "2" ]; then
+      if [ "$1" = "copy" -o "$1" = "cut" ]; then
+        # Detect platform and use appropriate clipboard command
+        if [ "$(uname)" = "Darwin" ]; then
+          # macOS: use pbcopy (note: pbcopy doesn't support images directly)
+          pbcopy < "$2"
+        elif [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+          # Linux Wayland: use wl-copy
+          wl-copy < "$2"
+        else
+          # Linux X11: use xclip
+          xclip -selection clipboard -t image/png -i "$2"
+        fi
       fi
     fi
-  fi
   '';
 in
 {

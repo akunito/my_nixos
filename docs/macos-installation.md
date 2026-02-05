@@ -92,10 +92,27 @@ darwin-rebuild switch --flake ~/.dotfiles#system
 
 ## What Gets Installed
 
+### Terminal & Shell Setup (Matching DESK Profile)
+
+The darwin profile uses the **same terminal modules** as the DESK (Linux) profile:
+
+| Module | Description | Cross-Platform |
+|--------|-------------|----------------|
+| `sh.nix` | zsh/bash config, direnv, atuin, starship | Yes |
+| `tmux.nix` | tmux with session persistence | Yes (pbcopy on macOS) |
+| `kitty.nix` | kitty terminal with tmux auto-start | Yes |
+| `alacritty.nix` | alacritty terminal with tmux auto-start | Yes |
+| `cli-collection.nix` | fd, bat, eza, ripgrep, fzf, jq, etc. | Yes (Linux-only tools excluded) |
+| `ranger.nix` | ranger file manager | Yes (pbcopy on macOS) |
+| `git.nix` | git configuration | Yes |
+| `nixvim.nix` | NixVim (Cursor-like IDE) | Yes (conditional) |
+| `aichat.nix` | AI chat CLI tool | Yes (conditional) |
+
 ### Via Nix (CLI tools)
 - zsh, starship, tmux
 - git, neovim (nixvim)
-- fd, bat, eza, ripgrep
+- fd, bat, eza, ripgrep, fzf, jq
+- ranger file manager
 - Development tools
 
 ### Via Homebrew Casks (GUI apps)
