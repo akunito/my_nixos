@@ -169,6 +169,10 @@
   # System packages
   environment.systemPackages = systemSettings.systemPackages;
 
+  # Server environment variable (DEV, TEST, PROD) for applications/docker to detect environment
+  environment.sessionVariables.SERVER_ENV = systemSettings.serverEnv;
+  environment.variables.SERVER_ENV = systemSettings.serverEnv;
+
   programs.fuse.userAllowOther = true;
 
   # Haveged - entropy daemon (can be disabled on modern kernels 5.4+)

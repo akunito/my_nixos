@@ -94,6 +94,10 @@ in
   # System packages
   environment.systemPackages = systemSettings.systemPackages;
 
+  # Server environment variable (DEV, TEST, PROD) for applications/docker to detect environment
+  environment.sessionVariables.SERVER_ENV = systemSettings.serverEnv;
+  environment.variables.SERVER_ENV = systemSettings.serverEnv;
+
   # I use zsh btw
   environment.shells = with pkgs; [ zsh ];
   users.defaultUserShell = pkgs.zsh;
