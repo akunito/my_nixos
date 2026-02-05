@@ -403,7 +403,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Setup
 
 - **docs/setup/grafana-dashboard-reference.md**: Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures.
-- **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack at `https://grafana.local.akunito.com`.
+- **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack.
 - **docs/setup/ubuntu-node-exporter.md**: This guide documents how to install and configure Prometheus Node Exporter on Ubuntu LXC containers (like cloudflared at 192.168.8.102) for monitoring with the homelab Prometheus/Grafana stack.
 
 ### User-Modules

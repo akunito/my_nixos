@@ -375,6 +375,10 @@ Before answering any architectural or implementation question:
 ### Grafana/Prometheus monitoring (applies to: `system/app/grafana.nix`, `system/app/prometheus-*.nix`, `system/app/grafana-dashboards/**`)
 
 - **Read first**: `docs/infrastructure/services/monitoring-stack.md`
+- **Access URLs**:
+  - Local: `https://grafana.local.akunito.com` (nginx SSL on port 443)
+  - Public: `https://grafana.akunito.com` (Cloudflare Tunnel → nginx HTTP on port 80)
+  - Prometheus: `https://prometheus.local.akunito.com` (local only, basic auth + IP whitelist)
 - **Declarative provisioning**: All Grafana config is managed in `grafana.nix`:
   - **Dashboards**: JSON files in `system/app/grafana-dashboards/` (custom/ and community/)
   - **Datasources**: `provision.datasources.settings` (Prometheus with fixed UID)

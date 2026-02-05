@@ -380,6 +380,9 @@ External VPS (Hetzner, Ubuntu 24.04) acts as the central VPN hub:
 - LeftyWorkout (leftyworkout-test.akunito.com)
 - Portfolio (info.akunito.com)
 
+**Monitoring Services** (via Cloudflare Tunnel → LXC_monitoring nginx):
+- Grafana (grafana.akunito.com)
+
 **VPS Services** (via VPS cloudflared):
 - WireGuard UI (wgui.akunito.com)
 - Uptime Kuma (status.akunito.com)
@@ -445,7 +448,7 @@ All traffic encrypted end-to-end, no ports exposed to internet (except WireGuard
 | UniFi Controller | LXC_HOME | 192.168.8.206:8443 | - | 8443 |
 | NPM Admin | LXC_proxy | 192.168.8.102:81 | - | 81 |
 | **Monitoring** |||||
-| Grafana | LXC_monitoring | grafana.local.akunito.com | - | 443 |
+| Grafana | LXC_monitoring | grafana.local.akunito.com | grafana.akunito.com | 443 |
 | Prometheus | LXC_monitoring | prometheus.local.akunito.com | - | 443 |
 | Uptime Kuma (Internal) | LXC_mailer | 192.168.8.89:3001 | - | 3001 |
 | **Applications** |||||

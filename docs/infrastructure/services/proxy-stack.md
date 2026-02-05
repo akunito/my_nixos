@@ -104,7 +104,12 @@ NoNewPrivileges=true
 | Portfolio | info.akunito.com |
 | LeftyWorkout | leftyworkout-test.akunito.com |
 
-**Note**: All homelab services route to `http://localhost:80` (NPM) which then forwards to LXC_HOME's nginx-proxy with the appropriate `Host` header rewrite.
+*Monitoring Services* (routed directly to LXC_monitoring nginx):
+| Service | Domain |
+|---------|--------|
+| Grafana | grafana.akunito.com |
+
+**Note**: Homelab services route to `http://localhost:80` (NPM) which then forwards to LXC_HOME's nginx-proxy. Monitoring services route directly to LXC_monitoring (192.168.8.85:80).
 
 ---
 

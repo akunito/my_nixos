@@ -1,6 +1,10 @@
 # Grafana Dashboards and Alerting Setup
 
-This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack at `https://grafana.local.akunito.com`.
+This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack.
+
+**Access URLs**:
+- Local: `https://grafana.local.akunito.com`
+- Public: `https://grafana.akunito.com` (via Cloudflare Tunnel)
 
 ## Prerequisites
 

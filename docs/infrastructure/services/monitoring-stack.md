@@ -43,9 +43,12 @@ Centralized monitoring running on LXC_monitoring (192.168.8.85) using NixOS nati
 │                                    │                                        │
 │                                    ▼                                        │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                          Nginx (443)                                 │   │
+│  │                          Nginx (80 + 443)                            │   │
 │  │              SSL termination for Grafana & Prometheus                │   │
 │  │         Cert: /mnt/shared-certs/local.akunito.com.*                 │   │
+│  │                                                                      │   │
+│  │    Port 443: grafana.local.akunito.com (HTTPS, local access)        │   │
+│  │    Port 80:  grafana.akunito.com (HTTP, Cloudflare Tunnel)          │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -54,12 +57,14 @@ Centralized monitoring running on LXC_monitoring (192.168.8.85) using NixOS nati
 
 ## Access URLs
 
-| Service | URL | Auth |
-|---------|-----|------|
-| Grafana | https://grafana.local.akunito.com | Admin login |
-| Prometheus | https://prometheus.local.akunito.com | Basic auth + IP whitelist |
+| Service | Local URL | Public URL | Auth |
+|---------|-----------|------------|------|
+| Grafana | https://grafana.local.akunito.com | https://grafana.akunito.com | Admin login |
+| Prometheus | https://prometheus.local.akunito.com | - | Basic auth + IP whitelist |
 
-**SSL Certificate**: Uses `*.local.akunito.com` wildcard certificate from LXC_proxy ACME, mounted at `/mnt/shared-certs/` via Proxmox bind mount.
+**Access Methods**:
+- **Local**: Uses `*.local.akunito.com` wildcard certificate from LXC_proxy ACME, mounted at `/mnt/shared-certs/`
+- **Public (Grafana only)**: Via Cloudflare Tunnel → LXC_monitoring nginx (HTTP port 80) - TLS terminated by Cloudflare
 
 ---
 
