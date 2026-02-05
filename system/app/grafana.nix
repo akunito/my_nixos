@@ -119,12 +119,45 @@ in
         name = "Infrastructure";
         type = "file";
         disableDeletion = false;
-        allowUiUpdates = false;
+        allowUiUpdates = true;  # Allow editing provisioned dashboards in UI (export to repo to persist)
         options = {
           path = "/etc/grafana-dashboards";
           foldersFromFilesStructure = true;
         };
       }];
+
+      # Alert contact points provisioning (email notifications)
+      alerting.contactPoints.settings = {
+        apiVersion = 1;
+        contactPoints = [{
+          orgId = 1;
+          name = "email-alerts";
+          receivers = [{
+            uid = "email-receiver";
+            type = "email";
+            settings = {
+              addresses = secrets.alertEmail;
+              singleEmail = true;
+            };
+          }];
+        }];
+      };
+
+      # Alert notification policies (route alerts to contact points)
+      alerting.policies.settings = {
+        apiVersion = 1;
+        policies = [{
+          orgId = 1;
+          receiver = "email-alerts";
+          group_by = ["alertname" "severity"];
+          routes = [{
+            receiver = "email-alerts";
+            matchers = ["severity = critical"];
+            group_wait = "0s";
+            group_interval = "0s";
+          }];
+        }];
+      };
     };
   };
 
