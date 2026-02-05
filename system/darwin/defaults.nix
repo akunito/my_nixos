@@ -99,7 +99,7 @@ in
 
   # Activity Monitor settings
   system.defaults.ActivityMonitor = {
-    ShowCategory = 0; # Show all processes
+    ShowCategory = 100; # 100=My Processes, 101=System, 102=Other User, 103=Active, 104=Inactive, 105=Windowed, 106=Selected, 107=All
     IconType = 5; # Show CPU usage in Dock icon
   };
 
