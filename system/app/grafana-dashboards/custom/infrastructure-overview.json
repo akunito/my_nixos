@@ -1077,7 +1077,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
+        "h": 5,
         "w": 24,
         "x": 0,
         "y": 13
@@ -1097,9 +1097,7 @@
           "values": false
         },
         "showPercentChange": false,
-        "text": {
-          "titleSize": 13
-        },
+        "text": {},
         "textMode": "auto",
         "wideLayout": true
       },
@@ -1126,7 +1124,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 18
       },
       "id": 111,
       "panels": [],
@@ -1203,22 +1201,23 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 16,
-        "w": 8,
+        "h": 5,
+        "w": 24,
         "x": 0,
-        "y": 17
+        "y": 19
       },
       "id": 112,
       "options": {
         "legend": {
           "calcs": [
+            "lastNotNull",
             "mean",
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true,
-          "sortBy": "Mean",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -1315,23 +1314,22 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 16,
-        "w": 8,
-        "x": 8,
-        "y": 17
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 24
       },
       "id": 113,
       "options": {
         "legend": {
           "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true,
-          "sortBy": "Mean",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -1425,22 +1423,25 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 16,
-        "w": 8,
-        "x": 16,
-        "y": 17
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 29
       },
       "id": 116,
       "options": {
         "legend": {
           "calcs": [
-            "max",
+            "lastNotNull",
             "mean",
-            "lastNotNull"
+            "max",
+            "sum"
           ],
           "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1546,18 +1547,18 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 5,
+        "w": 24,
         "x": 0,
-        "y": 33
+        "y": 34
       },
       "id": 115,
       "options": {
         "legend": {
           "calcs": [
-            "max",
-            "mean",
             "lastNotNull",
+            "mean",
+            "max",
             "sum"
           ],
           "displayMode": "table",
@@ -1670,18 +1671,18 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 33
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 39
       },
       "id": 143,
       "options": {
         "legend": {
           "calcs": [
-            "max",
-            "mean",
             "lastNotNull",
+            "mean",
+            "max",
             "sum"
           ],
           "displayMode": "table",
@@ -1723,7 +1724,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 44
       },
       "id": 114,
       "panels": [],
@@ -1792,24 +1793,25 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 13,
-        "w": 8,
+        "h": 5,
+        "w": 24,
         "x": 0,
-        "y": 42
+        "y": 45
       },
       "id": 117,
       "options": {
         "alertThreshold": true,
         "legend": {
           "calcs": [
+            "lastNotNull",
             "mean",
             "max",
-            "lastNotNull"
+            "sum"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true,
-          "sortBy": "Mean",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -1896,24 +1898,23 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 13,
-        "w": 8,
-        "x": 8,
-        "y": 42
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 50
       },
       "id": 118,
       "options": {
         "alertThreshold": true,
         "legend": {
           "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true,
-          "sortBy": "Mean",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -2000,24 +2001,23 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 13,
-        "w": 8,
-        "x": 16,
-        "y": 42
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 55
       },
       "id": 119,
       "options": {
         "alertThreshold": true,
         "legend": {
           "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true,
-          "sortBy": "Mean",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -2104,23 +2104,26 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
+        "h": 5,
+        "w": 24,
         "x": 0,
-        "y": 55
+        "y": 60
       },
       "id": 120,
       "options": {
         "alertThreshold": true,
         "legend": {
           "calcs": [
+            "lastNotNull",
             "mean",
             "max",
-            "lastNotNull"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -2209,24 +2212,25 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 55
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 65
       },
       "id": 121,
       "options": {
         "alertThreshold": true,
         "legend": {
           "calcs": [
+            "lastNotNull",
             "mean",
             "max",
-            "lastNotNull"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Mean",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -2256,7 +2260,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 64
+        "y": 70
       },
       "id": 130,
       "panels": [],
@@ -2301,7 +2305,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 71
       },
       "id": 133,
       "options": {
@@ -2377,7 +2381,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 74
       },
       "id": 144,
       "options": {
@@ -2421,112 +2425,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 71
+        "y": 77
       },
       "id": 140,
       "panels": [],
       "title": "Proxmox Backup Status",
       "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "Timeline showing when backups occurred for each VM/LXC. Green = backup completed at that time.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "fillOpacity": 70,
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 0
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "transparent",
-                  "index": 0,
-                  "text": ""
-                }
-              },
-              "type": "value"
-            },
-            {
-              "options": {
-                "from": 1,
-                "result": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "Backup"
-                },
-                "to": 100
-              },
-              "type": "range"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "transparent",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 72
-      },
-      "id": 142,
-      "options": {
-        "alignValue": "center",
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "mergeValues": true,
-        "rowHeight": 0.8,
-        "showValue": "auto",
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by (name)(changes(pve_backup_last_success[10m]))",
-          "legendFormat": "{{name}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Backup Timeline",
-      "transparent": true,
-      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -2539,13 +2443,14 @@
           "color": {
             "mode": "thresholds"
           },
+          "decimals": 1,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -2569,7 +2474,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 80
+        "y": 78
       },
       "id": 145,
       "options": {
@@ -2604,8 +2509,110 @@
         }
       ],
       "title": "Current Backup Age",
-      "transparent": true,
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Timeline showing when backups occurred for each VM/LXC. Green = backup completed at that time.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "transparent",
+                  "index": 0,
+                  "text": ""
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 1,
+                "result": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "Backup"
+                },
+                "to": 100
+              },
+              "type": "range"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 81
+      },
+      "id": 142,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.8,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (name)(changes(pve_backup_last_success[10m]))",
+          "legendFormat": "{{name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Backup Timeline",
+      "type": "state-timeline"
     }
   ],
   "preload": false,
@@ -2642,5 +2649,5 @@
   "timezone": "browser",
   "title": "Infrastructure Overview",
   "uid": "infrastructure-overview",
-  "version": 19
+  "version": 22
 }
