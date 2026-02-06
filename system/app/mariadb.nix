@@ -129,10 +129,8 @@ lib.mkIf cfg.enable {
   services.prometheus.exporters.mysqld = lib.mkIf (systemSettings.prometheusMariadbExporterEnable or false) {
     enable = true;
     port = systemSettings.prometheusMariadbExporterPort or 9104;
-    # Use socket authentication (requires user with PROCESS, REPLICATION CLIENT grants)
-    extraArgs = [
-      "--mysqld.address=localhost:${toString cfg.port}"
-    ];
+    # Run as local superuser to use socket auth
+    runAsLocalSuperUser = true;
   };
 
   # Open firewall ports
