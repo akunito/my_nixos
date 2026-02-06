@@ -76,12 +76,30 @@ lib.mkIf cfg.enable {
   };
 
   # Prometheus redis_exporter for monitoring
+  # Note: Password is passed via --redis.password flag in a wrapper script
+  # since --redis.password-file expects JSON format
   services.prometheus.exporters.redis = lib.mkIf (systemSettings.prometheusRedisExporterEnable or false) {
     enable = true;
     port = systemSettings.prometheusRedisExporterPort or 9121;
     extraFlags = [
       "--redis.addr=redis://127.0.0.1:${toString cfg.port}"
-    ] ++ lib.optional (cfg.passwordFile != "") "--redis.password-file=${cfg.passwordFile}";
+    ];
+  };
+
+  # Override ExecStart to read password from file and pass to exporter
+  systemd.services.prometheus-redis-exporter = lib.mkIf (systemSettings.prometheusRedisExporterEnable or false) {
+    serviceConfig.ExecStart = lib.mkForce (
+      if cfg.passwordFile != "" then
+        "${pkgs.writeShellScript "redis-exporter-start" ''
+          REDIS_PASSWORD=$(cat ${cfg.passwordFile})
+          exec ${pkgs.prometheus-redis-exporter}/bin/redis_exporter \
+            -web.listen-address 0.0.0.0:${toString (systemSettings.prometheusRedisExporterPort or 9121)} \
+            --redis.addr=redis://127.0.0.1:${toString cfg.port} \
+            --redis.password="$REDIS_PASSWORD"
+        ''}"
+      else
+        "${pkgs.prometheus-redis-exporter}/bin/redis_exporter -web.listen-address 0.0.0.0:${toString (systemSettings.prometheusRedisExporterPort or 9121)} --redis.addr=redis://127.0.0.1:${toString cfg.port}"
+    );
   };
 
   # Open firewall ports
