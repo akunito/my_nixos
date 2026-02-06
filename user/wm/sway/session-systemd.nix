@@ -15,7 +15,6 @@
     # Stylix containment: services read session-scoped vars from %t/sway-session.env written by Sway.
     systemd.user.targets."sway-session" = {
       Unit = {
-        Description = "Sway session target for session-scoped services";
         BindsTo = [ "graphical-session.target" ];
         After = [ "graphical-session.target" ];
         # Stop the target when no services require it (helps with cleanup on logout)
