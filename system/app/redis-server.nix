@@ -63,13 +63,7 @@ lib.mkIf cfg.enable {
       # Logging
       loglevel = "notice";
 
-      # Security - disable dangerous commands
-      rename-command = [
-        "FLUSHALL" ""
-        "FLUSHDB" ""
-        "CONFIG" ""
-        "DEBUG" ""
-      ];
+      # Note: rename-command is handled via extraConfig below (not supported in settings)
 
       # Performance
       tcp-keepalive = 300;
