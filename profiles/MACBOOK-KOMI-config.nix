@@ -38,6 +38,13 @@ in
         "1password"
         "karabiner-elements" # CapsLock → Hyperkey remapping
       ];
+
+      # CLI tools via Homebrew formulas
+      homebrewFormulas = [
+        "docker"
+        "docker-compose"
+        "colima"
+      ];
     };
 
     # === Feature Flags ===
