@@ -23,7 +23,10 @@ let
   cfg = {
     enable = systemSettings.postgresqlServerEnable or false;
     port = systemSettings.postgresqlServerPort or 5432;
-    package = systemSettings.postgresqlServerPackage or pkgs.postgresql_17;
+    # Use postgresql_17 if package is null or not set
+    package = if (systemSettings.postgresqlServerPackage or null) == null
+              then pkgs.postgresql_17
+              else systemSettings.postgresqlServerPackage;
     databases = systemSettings.postgresqlServerDatabases or [];
     users = systemSettings.postgresqlServerUsers or [];
     extraAuth = systemSettings.postgresqlServerAuthentication or "";
