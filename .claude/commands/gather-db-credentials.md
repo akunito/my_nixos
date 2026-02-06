@@ -25,7 +25,7 @@ Use this skill to:
 
 | Container | Service | SSH Target | Config Location |
 |-----------|---------|------------|-----------------|
-| LXC_HOME | Nextcloud | 192.168.8.80 | ~/.homelab/env/homelab/env/nextcloud-db.env |
+| LXC_HOME | Nextcloud | 192.168.8.80 | Docker container env (inspect) |
 
 ### Redis/Valkey
 
@@ -41,10 +41,7 @@ Use this skill to:
 ### 1. LiftCraft PostgreSQL (LXC_liftcraftTEST)
 
 ```bash
-# Get full env file
-ssh -A akunito@192.168.8.87 "cat ~/leftyworkout_TEST/.env.prod 2>/dev/null || cat ~/leftyworkout_TEST/.env"
-
-# Extract just database credentials
+# Get database credentials
 ssh -A akunito@192.168.8.87 "grep -E '^(POSTGRES_|DB_|DATABASE_)' ~/leftyworkout_TEST/.env.prod 2>/dev/null || grep -E '^(POSTGRES_|DB_|DATABASE_)' ~/leftyworkout_TEST/.env"
 ```
 
@@ -58,11 +55,8 @@ POSTGRES_DB=rails_database_prod
 ### 2. Plane PostgreSQL (LXC_plane)
 
 ```bash
-# Get full env file
-ssh -A akunito@192.168.8.86 "cat ~/PLANE/.env"
-
-# Extract just database credentials
-ssh -A akunito@192.168.8.86 "grep -E '^(POSTGRES_|REDIS_|RABBITMQ_)' ~/PLANE/.env"
+# Get database credentials
+ssh -A akunito@192.168.8.86 "grep -E '^(POSTGRES_|PGUSER_SUPERUSER_PASSWORD)' ~/PLANE/.env"
 ```
 
 Expected format:
@@ -75,16 +69,14 @@ POSTGRES_DB=plane
 ### 3. Nextcloud MariaDB (LXC_HOME)
 
 ```bash
-# Get database env file
-ssh -A akunito@192.168.8.80 "cat ~/.homelab/env/homelab/env/nextcloud-db.env"
+# Get password from running container (most reliable)
+ssh -A akunito@192.168.8.80 "docker inspect nextcloud-db 2>/dev/null | grep -E 'MYSQL_ROOT_PASSWORD|MYSQL_PASSWORD' | head -3"
 ```
 
 Expected format:
 ```
-MYSQL_ROOT_PASSWORD=<root_password>
-MYSQL_DATABASE=nextcloud
-MYSQL_USER=nextcloud
-MYSQL_PASSWORD=<password>
+"MYSQL_ROOT_PASSWORD=<root_password>",
+"MYSQL_PASSWORD=<password>",
 ```
 
 ### 4. Redis/Valkey Config
@@ -105,15 +97,15 @@ Run this to gather all credentials at once:
 
 ```bash
 echo "=== LiftCraft (LXC_liftcraftTEST - 192.168.8.87) ==="
-ssh -A -o ConnectTimeout=10 akunito@192.168.8.87 "grep -E '^(POSTGRES_|DB_|DATABASE_)' ~/leftyworkout_TEST/.env.prod 2>/dev/null || grep -E '^(POSTGRES_|DB_|DATABASE_)' ~/leftyworkout_TEST/.env" 2>/dev/null
+ssh -A -o ConnectTimeout=10 akunito@192.168.8.87 "grep -E 'POSTGRES_PASSWORD' ~/leftyworkout_TEST/.env.prod 2>/dev/null || grep -E 'POSTGRES_PASSWORD' ~/leftyworkout_TEST/.env" 2>/dev/null
 
 echo ""
 echo "=== Plane (LXC_plane - 192.168.8.86) ==="
-ssh -A -o ConnectTimeout=10 akunito@192.168.8.86 "grep -E '^(POSTGRES_|REDIS_URL)' ~/PLANE/.env" 2>/dev/null
+ssh -A -o ConnectTimeout=10 akunito@192.168.8.86 "grep -E 'POSTGRES_PASSWORD' ~/PLANE/.env" 2>/dev/null
 
 echo ""
-echo "=== Nextcloud (LXC_HOME - 192.168.8.80) ==="
-ssh -A -o ConnectTimeout=10 akunito@192.168.8.80 "cat ~/.homelab/env/homelab/env/nextcloud-db.env" 2>/dev/null
+echo "=== Nextcloud MariaDB (LXC_HOME - 192.168.8.80) ==="
+ssh -A -o ConnectTimeout=10 akunito@192.168.8.80 "docker inspect nextcloud-db 2>/dev/null | grep 'MYSQL_PASSWORD' | head -1"
 
 echo ""
 echo "=== Current secrets/domains.nix database section ==="
@@ -122,15 +114,34 @@ grep -A 15 "CENTRALIZED DATABASE SERVER" secrets/domains.nix | head -20
 
 ---
 
-## Secrets File Location
+## Secrets Architecture
 
-All gathered credentials should be stored in:
-- `secrets/domains.nix` (git-crypt encrypted)
-- `secrets/domains.nix.template` (public template without real values)
+### File Locations
+
+| File | Purpose | Encryption |
+|------|---------|------------|
+| `secrets/domains.nix` | Actual credentials | git-crypt encrypted |
+| `secrets/domains.nix.template` | Structure reference | Public (no real values) |
+| `system/app/database-secrets.nix` | Deployment module | Public |
+
+### How Secrets Get Deployed
+
+1. **Gather credentials** from source containers (this skill)
+2. **Update secrets/domains.nix** with the credentials
+3. **Commit and push** to git repository
+4. **Deploy to LXC_database** with `nixos-rebuild switch`
+
+The `database-secrets.nix` module reads from `secrets/domains.nix` and creates:
+- `/etc/secrets/db-plane-password` (PostgreSQL)
+- `/etc/secrets/db-liftcraft-password` (PostgreSQL)
+- `/etc/secrets/db-nextcloud-password` (MariaDB)
+- `/etc/secrets/redis-password` (Redis)
 
 ### Current Secret Variables
 
 ```nix
+# In secrets/domains.nix (encrypted):
+
 # PostgreSQL
 dbPlanePassword = "...";
 dbLiftcraftPassword = "...";
@@ -144,18 +155,49 @@ redisServerPassword = "...";
 
 ---
 
-## Verification After Update
+## Update Workflow
+
+After gathering credentials:
 
 ```bash
-# Verify secrets file is encrypted
-git-crypt status secrets/domains.nix
+# 1. Edit secrets/domains.nix with new values
+vim secrets/domains.nix
 
-# Test syntax
+# 2. Update template (structure only, no real values)
+vim secrets/domains.nix.template
+
+# 3. Verify encryption
+git-crypt status secrets/domains.nix
+# Expected: encrypted: secrets/domains.nix
+
+# 4. Test syntax
 nix-instantiate --parse secrets/domains.nix
 
-# Compare with template
-diff <(grep -oE '\w+Password|Password\w+' secrets/domains.nix | sort -u) \
-     <(grep -oE '\w+Password|Password\w+' secrets/domains.nix.template | sort -u)
+# 5. Commit and push
+git add secrets/domains.nix secrets/domains.nix.template
+git commit -m "chore: update database credentials"
+git push
+
+# 6. Deploy to LXC_database
+ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+```
+
+---
+
+## Verification After Deployment
+
+```bash
+# On LXC_database - verify password files exist
+ssh -A akunito@192.168.8.103 "sudo ls -la /etc/secrets/"
+
+# Verify PostgreSQL can authenticate
+ssh -A akunito@192.168.8.103 "sudo -u postgres psql -c '\du'"
+
+# Verify MariaDB users
+ssh -A akunito@192.168.8.103 "sudo mysql -e 'SELECT User, Host FROM mysql.user;'"
+
+# Verify Redis password
+ssh -A akunito@192.168.8.103 "redis-cli -a \$(sudo cat /etc/secrets/redis-password) ping"
 ```
 
 ---
@@ -168,25 +210,26 @@ When reporting gathered credentials, use this format:
 ## Database Credentials Report - [DATE]
 
 ### PostgreSQL
-| Service | User | Database | Password Source |
-|---------|------|----------|-----------------|
-| Plane | plane | plane | LXC_plane/.env |
-| LiftCraft | liftcraft | rails_database_prod | LXC_liftcraftTEST/.env.prod |
+| Service | User | Database | Password Verified |
+|---------|------|----------|-------------------|
+| Plane | plane | plane | ✓ |
+| LiftCraft | liftcraft | rails_database_prod | ✓ |
 
 ### MariaDB
-| Service | User | Database | Password Source |
-|---------|------|----------|-----------------|
-| Nextcloud | nextcloud | nextcloud | LXC_HOME/nextcloud-db.env |
+| Service | User | Database | Password Verified |
+|---------|------|----------|-------------------|
+| Nextcloud | nextcloud | nextcloud | ✓ |
 
 ### Redis
 | Service | Has Password | Database Number |
 |---------|--------------|-----------------|
-| Plane | No | db0 |
-| Nextcloud | No | db1 |
-| LiftCraft | No | db2 |
+| Plane | Yes (new) | db0 |
+| Nextcloud | Yes (new) | db1 |
+| LiftCraft | Yes (new) | db2 |
 
-### Actions Needed
-- [ ] Update secrets/domains.nix with new passwords
-- [ ] Verify git-crypt encryption
-- [ ] Update template file
+### Actions Taken
+- [x] Updated secrets/domains.nix
+- [x] Verified git-crypt encryption
+- [x] Updated template file
+- [x] Deployed to LXC_database
 ```

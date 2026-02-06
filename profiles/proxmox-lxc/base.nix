@@ -42,7 +42,9 @@
   ++ lib.optional (systemSettings.mariadbServerEnable or false) ../../system/app/mariadb.nix
   ++ lib.optional (systemSettings.pgBouncerEnable or false) ../../system/app/pgbouncer.nix
   ++ lib.optional (systemSettings.redisServerEnable or false) ../../system/app/redis-server.nix
-  ++ lib.optional ((systemSettings.postgresqlBackupEnable or false) || (systemSettings.mariadbBackupEnable or false)) ../../system/app/database-backup.nix;
+  ++ lib.optional ((systemSettings.postgresqlBackupEnable or false) || (systemSettings.mariadbBackupEnable or false)) ../../system/app/database-backup.nix
+  # Database secrets deployment (from git-crypt encrypted secrets/domains.nix)
+  ++ lib.optional ((systemSettings.postgresqlServerEnable or false) || (systemSettings.mariadbServerEnable or false) || (systemSettings.redisServerEnable or false)) ../../system/app/database-secrets.nix;
 
   # LXC containers don't need bootloaders - explicitly disable
   boot.loader.systemd-boot.enable = false;
