@@ -1,21 +1,22 @@
 # Database Secrets Module
 #
-# Deploys database credentials from git-crypt encrypted secrets/domains.nix
-# to /etc/secrets/ directory for use by PostgreSQL, MariaDB, Redis, and PgBouncer.
+# Deploys database credentials from systemSettings to /etc/secrets/ directory
+# for use by PostgreSQL, MariaDB, Redis, and PgBouncer.
 #
-# This module reads passwords from the centralized secrets file and creates
-# properly permissioned files that database services can read.
+# Secrets are passed through systemSettings (loaded from git-crypt encrypted
+# secrets/domains.nix in the profile config).
 #
 # Configuration via systemSettings:
 # - postgresqlServerEnable: Creates PostgreSQL user password files
 # - mariadbServerEnable: Creates MariaDB user password files
 # - redisServerEnable: Creates Redis password file
+# - dbPlanePassword, dbLiftcraftPassword: PostgreSQL passwords
+# - dbNextcloudPassword: MariaDB password
+# - redisServerPassword: Redis password
 
 { pkgs, lib, systemSettings, config, ... }:
 
 let
-  secrets = import ../../secrets/domains.nix;
-
   # Check if any database service is enabled
   anyDatabaseEnabled = (systemSettings.postgresqlServerEnable or false)
                     || (systemSettings.mariadbServerEnable or false)
@@ -31,15 +32,18 @@ lib.mkIf anyDatabaseEnabled {
   # Deploy PostgreSQL password files
   environment.etc = lib.mkMerge [
     # PostgreSQL passwords
-    (lib.mkIf (systemSettings.postgresqlServerEnable or false) {
+    (lib.mkIf ((systemSettings.postgresqlServerEnable or false) && (systemSettings.dbPlanePassword or "") != "") {
       "secrets/db-plane-password" = {
-        text = secrets.dbPlanePassword;
+        text = systemSettings.dbPlanePassword;
         mode = "0440";
         user = "root";
         group = "postgres";
       };
+    })
+
+    (lib.mkIf ((systemSettings.postgresqlServerEnable or false) && (systemSettings.dbLiftcraftPassword or "") != "") {
       "secrets/db-liftcraft-password" = {
-        text = secrets.dbLiftcraftPassword;
+        text = systemSettings.dbLiftcraftPassword;
         mode = "0440";
         user = "root";
         group = "postgres";
@@ -47,9 +51,9 @@ lib.mkIf anyDatabaseEnabled {
     })
 
     # MariaDB passwords
-    (lib.mkIf (systemSettings.mariadbServerEnable or false) {
+    (lib.mkIf ((systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != "") {
       "secrets/db-nextcloud-password" = {
-        text = secrets.dbNextcloudPassword;
+        text = systemSettings.dbNextcloudPassword;
         mode = "0440";
         user = "root";
         group = "mysql";
@@ -57,9 +61,9 @@ lib.mkIf anyDatabaseEnabled {
     })
 
     # Redis password
-    (lib.mkIf (systemSettings.redisServerEnable or false) {
+    (lib.mkIf ((systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != "") {
       "secrets/redis-password" = {
-        text = secrets.redisServerPassword;
+        text = systemSettings.redisServerPassword;
         mode = "0444";  # Redis exporter needs to read this
         user = "root";
         group = "root";

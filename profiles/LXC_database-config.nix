@@ -23,6 +23,13 @@ in
 
   systemSettings = base.systemSettings // {
     hostname = "database";
+
+    # Database credentials (from git-crypt encrypted secrets/domains.nix)
+    # These are passed to database-secrets.nix module for deployment to /etc/secrets/
+    dbPlanePassword = secrets.dbPlanePassword;
+    dbLiftcraftPassword = secrets.dbLiftcraftPassword;
+    dbNextcloudPassword = secrets.dbNextcloudPassword;
+    redisServerPassword = secrets.redisServerPassword;
     profile = "proxmox-lxc";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_database -s -u";
     serverEnv = "PROD"; # Production environment
