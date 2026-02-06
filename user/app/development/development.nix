@@ -36,8 +36,4 @@
     pkgs-unstable.antigravity      # Development automation and tooling
   ];
 
-  nixpkgs.config = {
-    allowUnfree = true;
-    allowUnfreePredicate = (_: true);
-  };
 }

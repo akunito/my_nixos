@@ -44,6 +44,7 @@
   ++ lib.optional (systemSettings.aichatEnable == true) ../../user/app/ai/aichat.nix
   ++ lib.optional (userSettings.hammerspoonEnable == true) ../../user/app/hammerspoon/hammerspoon.nix
   ++ lib.optional (systemSettings.stylixEnable == true) ../../user/style/stylix.nix
+  ++ lib.optional (systemSettings.developmentToolsEnable == true) ../../user/app/development/development.nix
   ;
 
   # Home packages from profile config

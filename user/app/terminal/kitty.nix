@@ -105,6 +105,9 @@ in
   programs.kitty.settings = lib.mkMerge [
     {
       background_opacity = lib.mkForce "0.85";
+      # macOS background blur (0-64, higher = more blur)
+      # Blurs content behind terminal while keeping transparency aesthetic
+      background_blur = lib.mkIf pkgs.stdenv.isDarwin 50;
       modify_font = "cell_width 90%";
       # Window decorations - match Alacritty (default shows decorations, window manager handles styling)
       hide_window_decorations = "no"; # Show window decorations like Alacritty
