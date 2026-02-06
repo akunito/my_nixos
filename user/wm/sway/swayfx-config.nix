@@ -18,6 +18,7 @@ let
   set-sway-systemd-session-vars = scripts.setSwaySystemdSessionVars;
   write-sway-portal-env = scripts.writeSwayPortalEnv;
   sway-session-start = scripts.swaySessionStart;
+  sway-session-refresh-env = scripts.swaySessionRefreshEnv;
   sway-start-plasma-kwallet-pam = scripts.swayStartPlasmaKwalletPam;
   restore-qt5ct-files = scripts.restoreQt5ctFiles;
   desk-startup-apps-init = scripts.deskStartupAppsInit;
@@ -485,8 +486,14 @@ in
           always = true;
         }
         # Start the Sway session target; services are ordered and restarted by systemd
+        # CRITICAL: always = false prevents target restart on config reload (fixes duplicate waybar)
         {
           command = "${sway-session-start}/bin/sway-session-start";
+          always = false;
+        }
+        # Refresh session env on reload (safe: only updates env file, no target restart)
+        {
+          command = "${sway-session-refresh-env}/bin/sway-session-refresh-env";
           always = true;
         }
       ]

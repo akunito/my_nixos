@@ -156,6 +156,18 @@ let
     exec ${pkgs.systemd}/bin/systemctl --user start sway-session.target
   '';
 
+  # Refresh session environment without restarting the target.
+  # Safe to run on config reload - only updates env file if session is already active.
+  # This prevents duplicate waybar instances caused by target restart on every reload.
+  sway-session-refresh-env = pkgs.writeShellScriptBin "sway-session-refresh-env" ''
+    #!/bin/sh
+    # Only refresh env if session already active (safe for reload)
+    if ! ${pkgs.systemd}/bin/systemctl --user is-active sway-session.target >/dev/null 2>&1; then
+      exit 0
+    fi
+    "${write-sway-session-env}/bin/write-sway-session-env" >/dev/null 2>&1 || true
+  '';
+
   # Rebuild KDE system configuration cache to populate Dolphin menus
   # This ensures Dolphin's "Open With" dialog shows installed applications
   rebuild-ksycoca = pkgs.writeShellScriptBin "rebuild-ksycoca" ''
@@ -176,6 +188,7 @@ in
   user.wm.sway._internal.scripts.writeSwaySessionEnv = write-sway-session-env;
   user.wm.sway._internal.scripts.writeSwayPortalEnv = write-sway-portal-env;
   user.wm.sway._internal.scripts.swaySessionStart = sway-session-start;
+  user.wm.sway._internal.scripts.swaySessionRefreshEnv = sway-session-refresh-env;
   user.wm.sway._internal.scripts.rebuildKsycoCa = rebuild-ksycoca;
 
   # Portal configuration is now handled at system level in system/wm/sway.nix
