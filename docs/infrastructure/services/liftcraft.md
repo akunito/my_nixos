@@ -22,7 +22,7 @@ LiftCraft is a full-stack web application for athletes and coaches to manage tra
 | Branch | `Test` |
 | Framework | Rails 8 + React + TypeScript |
 | Database | PostgreSQL (LXC_database, 192.168.8.103) |
-| Cache/WebSockets | Redis (LXC_database, 192.168.8.103:6379/2) |
+| Cache/WebSockets | Redis (LXC_database, 192.168.8.103:6379/2 for TEST, /3 for PROD) |
 
 ---
 
@@ -36,7 +36,7 @@ LiftCraft is a full-stack web application for athletes and coaches to manage tra
 | Port | 3000 |
 | Environment | `test` (RAILS_ENV) |
 | Database | `rails_database_test` on 192.168.8.103 |
-| Redis DB | 2 (db0=Plane, db1=Nextcloud) |
+| Redis DB | 2 (TEST), 3 (PROD) |
 
 ### Frontend (React SPA)
 
@@ -60,14 +60,30 @@ LiftCraft is a full-stack web application for athletes and coaches to manage tra
 ### Redis (Centralized)
 
 - **Host**: 192.168.8.103:6379 (LXC_database)
-- **Database**: db2 (shared server)
 - **Password**: Stored in `secrets/domains.nix` as `redisServerPassword`
-- **URL Format**: `redis://:PASSWORD%3D@192.168.8.103:6379/2`
-  - Note: `=` in password is URL-encoded as `%3D`
+
+**Database Allocation** (to avoid cache key collisions):
+
+| Environment | Redis DB | URL Suffix |
+|-------------|----------|------------|
+| Plane | db0 | /0 |
+| Nextcloud | db1 | /1 |
+| LiftCraft TEST | db2 | /2 |
+| LiftCraft PROD | db3 | /3 |
 
 **Redis Usage**:
 - Action Cable (WebSockets) for real-time updates
 - Rails cache store for caching
+
+**Fallback Mode**:
+When Redis is unavailable, the app gracefully falls back to:
+- `async` adapter for Action Cable (single-process only)
+- `memory_store` for caching (per-process, not shared)
+
+Check fallback status via `/health` endpoint:
+```json
+{"status":"ok","redis":{"connected":true,"mode":"redis"},"database":{"connected":true}}
+```
 
 ---
 
