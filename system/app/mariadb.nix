@@ -125,12 +125,27 @@ lib.mkIf cfg.enable {
     ${setPasswordSQL}
   '';
 
+  # Prometheus mysqld_exporter config file for socket authentication
+  # This uses Unix socket auth as the mysql user
+  environment.etc."prometheus-mysqld-exporter.cnf" = lib.mkIf (systemSettings.prometheusMariadbExporterEnable or false) {
+    text = ''
+      [client]
+      user = exporter
+      socket = /run/mysqld/mysqld.sock
+    '';
+    mode = "0440";
+    user = "mysql";
+    group = "mysql";
+  };
+
   # Prometheus mysqld_exporter for monitoring
   services.prometheus.exporters.mysqld = lib.mkIf (systemSettings.prometheusMariadbExporterEnable or false) {
     enable = true;
     port = systemSettings.prometheusMariadbExporterPort or 9104;
-    # Run as local superuser to use socket auth
+    # Run as mysql user for socket authentication
     runAsLocalSuperUser = true;
+    # Config file with socket connection settings
+    configFile = "/etc/prometheus-mysqld-exporter.cnf";
   };
 
   # Open firewall ports
