@@ -112,12 +112,14 @@ lib.mkIf cfg.enable {
 
   # Create password files and set user passwords via postStart
   # This is a workaround since NixOS postgresql module doesn't natively support password files
+  # Note: We use "|| true" because ensureUsers creates users in the same postStart phase,
+  # and our code might run before the users exist. The password will be set on the next restart.
   systemd.services.postgresql.postStart = let
     # Generate SQL to set passwords for users with passwordFile defined
     setPasswordSQL = lib.concatMapStrings (user:
       if user ? passwordFile && user.passwordFile != "" then ''
         password=$(cat "${user.passwordFile}")
-        $PSQL -c "ALTER USER \"${user.name}\" WITH PASSWORD '$password';"
+        $PSQL -c "ALTER USER \"${user.name}\" WITH PASSWORD '$password';" || true
       '' else ""
     ) cfg.users;
   in lib.mkAfter ''
