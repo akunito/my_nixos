@@ -361,6 +361,18 @@
     prometheusRedisExporterEnable = false;
     prometheusRedisExporterPort = 9121;
 
+    # === Database Client Credentials (for workstations) ===
+    # Generate ~/.pgpass and ~/.my.cnf for CLI tools and DBeaver
+    dbCredentialsEnable = false;
+    # Database server host (LXC_database)
+    dbCredentialsHost = "192.168.8.103";
+    # PostgreSQL credentials (plane, liftcraft databases)
+    dbCredentialsPostgres = []; # List of { database, user, password }
+    # MariaDB credentials (nextcloud database)
+    dbCredentialsMariadb = []; # List of { database, user, password }
+    # Redis credentials
+    dbCredentialsRedisPassword = "";
+
     # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)
     # Profiles can override/populate this and then build `swayKanshiSettings` from it.
     swayMonitorInventory = { };

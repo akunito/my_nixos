@@ -3,6 +3,9 @@
 # Note: Package lists will be evaluated in flake-base.nix where pkgs is available
 
 let
+  # Import secrets for database credentials
+  secrets = import ../secrets/domains.nix;
+
   # Starship enable flag (used in zshinitContent)
   starshipEnable = true;
 
@@ -289,6 +292,19 @@ in
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
+
+    # === Database Client Credentials ===
+    # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
+    dbCredentialsEnable = true;
+    dbCredentialsHost = "192.168.8.103"; # LXC_database server
+    dbCredentialsPostgres = [
+      { database = "plane"; user = "plane"; password = secrets.dbPlanePassword; }
+      { database = "rails_database_prod"; user = "liftcraft"; password = secrets.dbLiftcraftPassword; }
+    ];
+    dbCredentialsMariadb = [
+      { database = "nextcloud"; user = "nextcloud"; password = secrets.dbNextcloudPassword; }
+    ];
+    dbCredentialsRedisPassword = secrets.redisServerPassword;
 
     # === Monitor Configuration (Sway/SwayFX) ===
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.

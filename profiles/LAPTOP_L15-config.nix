@@ -3,6 +3,8 @@
 
 let
   base = import ./LAPTOP-base.nix;
+  # Import secrets for database credentials
+  secrets = import ../secrets/domains.nix;
 in
 {
   # Flag to use rust-overlay
@@ -125,6 +127,19 @@ in
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
+
+    # === Database Client Credentials ===
+    # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
+    dbCredentialsEnable = true;
+    dbCredentialsHost = "192.168.8.103"; # LXC_database server
+    dbCredentialsPostgres = [
+      { database = "plane"; user = "plane"; password = secrets.dbPlanePassword; }
+      { database = "rails_database_prod"; user = "liftcraft"; password = secrets.dbLiftcraftPassword; }
+    ];
+    dbCredentialsMariadb = [
+      { database = "nextcloud"; user = "nextcloud"; password = secrets.dbNextcloudPassword; }
+    ];
+    dbCredentialsRedisPassword = secrets.redisServerPassword;
   };
 
   userSettings = base.userSettings // {
