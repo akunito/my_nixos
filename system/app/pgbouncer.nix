@@ -48,19 +48,19 @@ lib.mkIf cfg.enable {
   services.pgbouncer = {
     enable = true;
 
-    # Listen on all interfaces for LAN access
-    listenAddress = "0.0.0.0";
-    listenPort = cfg.port;
-
-    # Database configuration - proxy to local PostgreSQL
-    databases = lib.listToAttrs (map (db: {
-      name = db;
-      value = "host=127.0.0.1 port=${toString pgPort} dbname=${db}";
-    }) pgDatabases);
-
     # Connection pooling settings
     settings = {
+      # Database configuration - proxy to local PostgreSQL (moved from top-level)
+      databases = lib.listToAttrs (map (db: {
+        name = db;
+        value = "host=127.0.0.1 port=${toString pgPort} dbname=${db}";
+      }) pgDatabases);
+
       pgbouncer = {
+        # Listen on all interfaces for LAN access (moved from top-level)
+        listen_addr = "0.0.0.0";
+        listen_port = cfg.port;
+
         # Pool mode: transaction is best for web apps
         pool_mode = cfg.poolMode;
 

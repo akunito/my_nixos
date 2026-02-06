@@ -46,7 +46,6 @@ lib.mkIf cfg.enable {
   services.postgresql = {
     enable = true;
     package = cfg.package;
-    port = cfg.port;
 
     # Listen on all interfaces for LAN access
     enableTCPIP = true;
@@ -59,6 +58,9 @@ lib.mkIf cfg.enable {
 
     # PostgreSQL configuration
     settings = {
+      # Port setting (moved from top-level to settings)
+      port = cfg.port;
+
       # Performance tuning for centralized database server
       shared_buffers = "2GB";
       effective_cache_size = "6GB";
