@@ -70,6 +70,8 @@
         fzf
         tldr
         home-manager
+        jq # JSON processing for scripts and API responses
+        python3 # Scripting and automation
         # nfs-utils removed since nfsClientEnable = false
       ];
 
