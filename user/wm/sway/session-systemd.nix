@@ -66,7 +66,8 @@
         # Kill orphans and wait for IPC before starting
         ExecStartPre = "${check-sway-ready}";
         # Ensure all child processes are killed on stop (prevents orphans)
-        KillMode = "control-group";
+        # mkForce needed to override HM's default "mixed"
+        KillMode = lib.mkForce "control-group";
         # Don't wait forever for graceful shutdown
         TimeoutStopSec = "5s";
       };
