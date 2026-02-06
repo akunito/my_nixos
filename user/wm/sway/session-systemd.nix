@@ -58,8 +58,8 @@
       Unit = {
         PartOf = [ "sway-session.target" ];
         After = [ "sway-session.target" "graphical-session.target" ];
-        # Don't start without SWAYSOCK environment variable
-        ConditionEnvironment = "SWAYSOCK";
+        # Note: HM already sets ConditionEnvironment=WAYLAND_DISPLAY
+        # ExecStartPre checks for SWAYSOCK socket readiness
       };
       Service = {
         EnvironmentFile = [ "-%t/sway-session.env" ];
