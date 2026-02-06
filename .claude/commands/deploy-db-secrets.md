@@ -69,8 +69,8 @@ git push
 ### 3. Deploy to LXC_database
 
 ```bash
-# SSH to container and deploy
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+# SSH to container and deploy using install.sh
+ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git reset --hard HEAD && git pull && ./install.sh ~/.dotfiles LXC_database -s -u -q 2>&1"
 ```
 
 ### 4. Verify Deployment
@@ -96,7 +96,7 @@ Quick deploy command (run from dotfiles directory):
 git add secrets/domains.nix && \
 git commit -m "chore: update database credentials" && \
 git push && \
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git reset --hard HEAD && git pull && ./install.sh ~/.dotfiles LXC_database -s -u -q 2>&1"
 ```
 
 ---

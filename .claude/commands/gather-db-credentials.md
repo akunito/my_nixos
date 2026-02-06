@@ -179,7 +179,7 @@ git commit -m "chore: update database credentials"
 git push
 
 # 6. Deploy to LXC_database
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git reset --hard HEAD && git pull && ./install.sh ~/.dotfiles LXC_database -s -u -q 2>&1"
 ```
 
 ---
