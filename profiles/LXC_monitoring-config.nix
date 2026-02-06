@@ -67,15 +67,20 @@ in
       { name = "lxc_liftcraft";  host = "192.168.8.87";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_portfolio";  host = "192.168.8.88";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_mailer";     host = "192.168.8.89";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_database";   host = "192.168.8.103"; nodePort = 9100; cadvisorPort = null; }  # Centralized database server (no Docker)
       { name = "vps_wireguard";  host = "172.26.5.155";  nodePort = 9100; cadvisorPort = null; }  # VPS via WireGuard tunnel
     ];
 
-    # === Application Metrics (Exportarr for *arr stack) ===
+    # === Application Metrics (Exportarr for *arr stack + Database exporters) ===
     prometheusAppTargets = [
-      { name = "sonarr";   host = "192.168.8.80"; port = 9707; }
-      { name = "radarr";   host = "192.168.8.80"; port = 9708; }
-      { name = "prowlarr"; host = "192.168.8.80"; port = 9709; }
-      { name = "bazarr";   host = "192.168.8.80"; port = 9710; }
+      { name = "sonarr";     host = "192.168.8.80";  port = 9707; }
+      { name = "radarr";     host = "192.168.8.80";  port = 9708; }
+      { name = "prowlarr";   host = "192.168.8.80";  port = 9709; }
+      { name = "bazarr";     host = "192.168.8.80";  port = 9710; }
+      # Centralized database exporters (LXC_database)
+      { name = "postgresql"; host = "192.168.8.103"; port = 9187; }
+      { name = "mariadb";    host = "192.168.8.103"; port = 9104; }
+      { name = "redis";      host = "192.168.8.103"; port = 9121; }
     ];
 
     # === Blackbox Exporter (HTTP/HTTPS and ICMP probes) ===

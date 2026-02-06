@@ -36,7 +36,13 @@
   ++ lib.optional (systemSettings.prometheusGraphiteEnable or false) ../../system/app/prometheus-graphite.nix
   ++ lib.optional (systemSettings.prometheusPveBackupEnable or false) ../../system/app/prometheus-pve-backup.nix
   ++ lib.optional (systemSettings.cloudflaredEnable or false) ../../system/app/cloudflared.nix
-  ++ lib.optional (systemSettings.acmeEnable or false) ../../system/security/acme.nix;
+  ++ lib.optional (systemSettings.acmeEnable or false) ../../system/security/acme.nix
+  # Centralized database server modules
+  ++ lib.optional (systemSettings.postgresqlServerEnable or false) ../../system/app/postgresql.nix
+  ++ lib.optional (systemSettings.mariadbServerEnable or false) ../../system/app/mariadb.nix
+  ++ lib.optional (systemSettings.pgBouncerEnable or false) ../../system/app/pgbouncer.nix
+  ++ lib.optional (systemSettings.redisServerEnable or false) ../../system/app/redis-server.nix
+  ++ lib.optional ((systemSettings.postgresqlBackupEnable or false) || (systemSettings.mariadbBackupEnable or false)) ../../system/app/database-backup.nix;
 
   # LXC containers don't need bootloaders - explicitly disable
   boot.loader.systemd-boot.enable = false;

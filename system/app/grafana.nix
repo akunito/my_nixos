@@ -551,6 +551,120 @@ in
               }
             ];
           }
+          {
+            name = "database_alerts";
+            rules = [
+              # PostgreSQL exporter down
+              {
+                alert = "PostgreSQLDown";
+                expr = ''up{job="postgresql_app"} == 0'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "PostgreSQL exporter is down";
+                  description = "Cannot scrape PostgreSQL metrics from {{ $labels.instance }} - database server may be down";
+                };
+              }
+              # PostgreSQL too many connections
+              {
+                alert = "PostgreSQLConnectionsHigh";
+                expr = ''(pg_stat_activity_count / pg_settings_max_connections) * 100 > 80'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "PostgreSQL connections high";
+                  description = "PostgreSQL is using {{ $value | printf \"%.1f\" }}% of max connections";
+                };
+              }
+              # PostgreSQL replication lag (if replicas exist)
+              {
+                alert = "PostgreSQLReplicationLag";
+                expr = ''pg_replication_lag > 30'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "PostgreSQL replication lag";
+                  description = "PostgreSQL replication is {{ $value | printf \"%.0f\" }} seconds behind";
+                };
+              }
+              # MariaDB exporter down
+              {
+                alert = "MariaDBDown";
+                expr = ''up{job="mariadb_app"} == 0'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "MariaDB exporter is down";
+                  description = "Cannot scrape MariaDB metrics from {{ $labels.instance }} - database server may be down";
+                };
+              }
+              # MariaDB too many connections
+              {
+                alert = "MariaDBConnectionsHigh";
+                expr = ''(mysql_global_status_threads_connected / mysql_global_variables_max_connections) * 100 > 80'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "MariaDB connections high";
+                  description = "MariaDB is using {{ $value | printf \"%.1f\" }}% of max connections";
+                };
+              }
+              # Redis exporter down
+              {
+                alert = "RedisDown";
+                expr = ''up{job="redis_app"} == 0'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Redis exporter is down";
+                  description = "Cannot scrape Redis metrics from {{ $labels.instance }} - Redis server may be down";
+                };
+              }
+              # Redis memory usage high
+              {
+                alert = "RedisMemoryHigh";
+                expr = ''(redis_memory_used_bytes / redis_memory_max_bytes) * 100 > 90'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Redis memory usage high";
+                  description = "Redis is using {{ $value | printf \"%.1f\" }}% of max memory";
+                };
+              }
+              # Redis connected clients high
+              {
+                alert = "RedisClientsHigh";
+                expr = ''redis_connected_clients > 500'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Redis connected clients high";
+                  description = "Redis has {{ $value | printf \"%.0f\" }} connected clients";
+                };
+              }
+              # Database backup failed (from textfile exporter)
+              {
+                alert = "PostgreSQLBackupFailed";
+                expr = ''postgresql_backup_status == 0'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "PostgreSQL backup failed";
+                  description = "PostgreSQL backup job failed on the database server";
+                };
+              }
+              {
+                alert = "MariaDBBackupFailed";
+                expr = ''mariadb_backup_status == 0'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "MariaDB backup failed";
+                  description = "MariaDB backup job failed on the database server";
+                };
+              }
+            ];
+          }
         ];
       }))
     ];

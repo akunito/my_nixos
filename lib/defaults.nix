@@ -318,6 +318,49 @@
     prometheusGraphitePort = 9109;       # Prometheus scrape port
     prometheusGraphiteInputPort = 2003;  # Graphite input port
 
+    # === Centralized Database Server (LXC_database) ===
+    # PostgreSQL server configuration
+    postgresqlServerEnable = false;
+    postgresqlServerPort = 5432;
+    postgresqlServerPackage = null; # Set to specific package version (e.g., pkgs.postgresql_17)
+    postgresqlServerDatabases = []; # List of database names to create
+    postgresqlServerUsers = []; # List of { name, passwordFile, ensureDBOwnership } records
+    postgresqlServerAuthentication = ""; # Extra pg_hba.conf entries
+
+    # MariaDB server configuration
+    mariadbServerEnable = false;
+    mariadbServerPort = 3306;
+    mariadbServerDatabases = []; # List of database names to create
+    mariadbServerUsers = []; # List of { name, passwordFile, privileges } records
+
+    # PgBouncer connection pooler
+    pgBouncerEnable = false;
+    pgBouncerPort = 6432;
+    pgBouncerPoolMode = "transaction";
+    pgBouncerMaxClientConn = 1000;
+    pgBouncerDefaultPoolSize = 20;
+
+    # Redis server configuration
+    redisServerEnable = false;
+    redisServerPort = 6379;
+    redisServerMaxMemory = "1gb";
+    redisServerPasswordFile = ""; # Path to file containing Redis password
+
+    # Database backup configuration
+    postgresqlBackupEnable = false;
+    mariadbBackupEnable = false;
+    databaseBackupLocation = "/var/backup/databases";
+    databaseBackupStartAt = "*-*-* 02:00:00"; # Daily at 2 AM
+    databaseBackupRetainDays = 7;
+
+    # Database monitoring exporters
+    prometheusPostgresExporterEnable = false;
+    prometheusPostgresExporterPort = 9187;
+    prometheusMariadbExporterEnable = false;
+    prometheusMariadbExporterPort = 9104;
+    prometheusRedisExporterEnable = false;
+    prometheusRedisExporterPort = 9121;
+
     # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)
     # Profiles can override/populate this and then build `swayKanshiSettings` from it.
     swayMonitorInventory = { };

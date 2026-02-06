@@ -21,6 +21,7 @@ SERVERS=(
   "LXC_mailer:192.168.8.89:Mail & monitoring"
   "LXC_liftcraftTEST:192.168.8.87:Test environment"
   "LXC_monitoring:192.168.8.85:Prometheus & Grafana monitoring"
+  "LXC_database:192.168.8.103:Centralized PostgreSQL, MariaDB & Redis"
 )
 
 DOTFILES_DIR="/home/akunito/.dotfiles"
