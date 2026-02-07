@@ -47,9 +47,7 @@ let
 
   # Generate snmp.yml with auth config and metric definitions
   # snmp_exporter requires explicit metric definitions to convert OIDs to Prometheus metrics
-  snmpConfig = pkgs.writeText "snmp.yml" (''
-    auths:
-  '' + (if useSnmpv3 then ''
+  authConfig = if useSnmpv3 then ''
       pfsense_v3:
         version: 3
         security_level: authPriv
@@ -62,7 +60,11 @@ let
       pfsense_v2:
         community: ${snmpCommunity}
         version: 2
-  '') + ''
+  '';
+
+  snmpConfig = pkgs.writeText "snmp.yml" ''
+    auths:
+    ${authConfig}
     modules:
       # pfSense specific - PF firewall stats + interface metrics
       pfsense:
