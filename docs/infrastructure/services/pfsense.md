@@ -361,14 +361,92 @@ SNMP is enabled for Prometheus monitoring from LXC_monitoring.
 
 | Setting | Value |
 |---------|-------|
-| **Daemon** | bsnmpd |
+| **Daemon** | NET-SNMP (snmpd) |
 | **Bind Address** | 192.168.8.1:161 |
-| **Protocol** | SNMPv2c |
+| **Protocol** | SNMPv3 (authPriv) |
+| **Auth Protocol** | SHA |
+| **Privacy Protocol** | AES |
 | **Modules** | mibII, netgraph, pf, hostres, ucd, regex |
 
-**Note**: SNMP community string is stored in `secrets/domains.nix` (encrypted).
+**Credentials**: Stored in `secrets/domains.nix` (git-crypt encrypted):
+- `snmpv3User` - SNMPv3 username
+- `snmpv3AuthPass` - Authentication password
+- `snmpv3PrivPass` - Privacy password
 
 **Firewall rule**: Allow SNMP (UDP 161) from 192.168.8.85 (LXC_monitoring) only.
+
+---
+
+## REST API
+
+The pfSense REST API package provides programmatic access for automation and auditing.
+
+### Installation
+
+```bash
+# Via SSH (pfSense 2.7.2)
+ssh admin@192.168.8.1
+pkg-static add https://github.com/pfrest/pfSense-pkg-RESTAPI/releases/download/v2.4.3/pfSense-2.7.2-pkg-RESTAPI.pkg
+```
+
+**Note**: Check [GitHub releases](https://github.com/pfrest/pfSense-pkg-RESTAPI/releases) for your pfSense version. The package must be reinstalled after pfSense updates.
+
+### Configuration
+
+| Setting | Value |
+|---------|-------|
+| **Enable** | Yes |
+| **Allowed Interfaces** | LAN, Localhost |
+| **Authentication Methods** | Key |
+| **Read Only** | No |
+| **Login Protection** | Enabled |
+
+### API Key Authentication
+
+**Create API key** (GUI):
+1. Navigate to **System → REST API → Keys**
+2. Click **Add**
+3. Configure:
+   - **Name**: Descriptive name (e.g., "claude-connection")
+   - **Hash Algorithm**: SHA-512
+   - **Length**: 64 bytes
+4. Save and **copy the key immediately** (shown only once)
+
+**Credentials**: Stored in `secrets/domains.nix` (git-crypt encrypted):
+- `pfsenseApiKey` - API key value
+- `pfsenseApiKeyName` - Key name/client-id
+- `pfsenseHost` - pfSense IP address
+
+### API Usage
+
+**Header format**: `x-api-key: <key-value>`
+
+**Example request**:
+```bash
+curl -sk -H "x-api-key: <api-key>" https://192.168.8.1/api/v2/status/system
+```
+
+**Common endpoints**:
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/status/system` | GET | System status (CPU, memory, uptime) |
+| `/api/v2/status/interface` | GET | Interface status and statistics |
+| `/api/v2/firewall/rule` | GET | Firewall rules |
+| `/api/v2/firewall/alias` | GET | Firewall aliases |
+| `/api/v2/services/unbound` | GET | DNS resolver configuration |
+| `/api/v2/system/config` | GET | Full system configuration |
+| `/api/v2/diagnostics/arp` | GET | ARP table |
+
+**API documentation**: https://192.168.8.1/api/v2/documentation (Swagger UI)
+
+### Security Considerations
+
+- API keys should only be created when needed
+- Use descriptive names to track key usage
+- Store keys in encrypted secrets (`secrets/domains.nix`)
+- Restrict allowed interfaces to LAN and Localhost only
+- Enable Login Protection to prevent brute force attacks
+- Consider enabling Read Only mode for audit-only access
 
 ---
 

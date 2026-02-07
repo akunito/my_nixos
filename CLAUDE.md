@@ -407,6 +407,32 @@ Before answering any architectural or implementation question:
 - **Config backup**: `/conf/config.xml` (full configuration)
 - **Sensitive data**: WireGuard keys and external IPs in `INFRASTRUCTURE_INTERNAL.md`
 
+### pfSense REST API (applies to: pfSense automation and auditing)
+
+- **Read first**: `docs/infrastructure/services/pfsense.md` (REST API section)
+- **API documentation**: https://192.168.8.1/api/v2/documentation (Swagger UI)
+- **Authentication header**: `x-api-key: <key-value>` (NOT `X-API-Key` or `Authorization`)
+- **Credentials location**: `secrets/domains.nix` (git-crypt encrypted)
+  - `pfsenseApiKey` - API key value
+  - `pfsenseApiKeyName` - Key name (client-id)
+  - `pfsenseHost` - pfSense IP address
+- **Example API call**:
+  ```bash
+  curl -sk -H "x-api-key: $(grep pfsenseApiKey secrets/domains.nix | cut -d'"' -f2)" \
+    https://192.168.8.1/api/v2/status/system
+  ```
+- **Common endpoints**:
+  - `GET /api/v2/status/system` - System status (CPU, memory, uptime)
+  - `GET /api/v2/status/interface` - Interface status
+  - `GET /api/v2/firewall/rule` - Firewall rules
+  - `GET /api/v2/firewall/alias` - Firewall aliases
+  - `GET /api/v2/services/unbound` - DNS resolver config
+  - `GET /api/v2/system/config` - Full configuration
+- **Package management**:
+  - Install: `pkg-static add https://github.com/pfrest/pfSense-pkg-RESTAPI/releases/download/v2.4.3/pfSense-2.7.2-pkg-RESTAPI.pkg`
+  - Must reinstall after pfSense updates (unofficial package)
+  - Check [releases](https://github.com/pfrest/pfSense-pkg-RESTAPI/releases) for version compatibility
+
 ### Infrastructure audits (applies to: `docs/infrastructure/audits/`)
 
 - **Audit reports**: Stored in `docs/infrastructure/audits/` with date-stamped filenames
