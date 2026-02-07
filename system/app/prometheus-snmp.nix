@@ -47,10 +47,9 @@ let
 
   # Generate snmp.yml with auth config and metric definitions
   # snmp_exporter requires explicit metric definitions to convert OIDs to Prometheus metrics
-  snmpConfig = pkgs.writeText "snmp.yml" ''
+  snmpConfig = pkgs.writeText "snmp.yml" (''
     auths:
-      ${if useSnmpv3 then ''
-      # SNMPv3 with SHA authentication and AES encryption
+  '' + (if useSnmpv3 then ''
       pfsense_v3:
         version: 3
         security_level: authPriv
@@ -59,12 +58,11 @@ let
         auth_passphrase: ${snmpv3AuthPass}
         priv_protocol: AES
         priv_passphrase: ${snmpv3PrivPass}
-      '' else ''
-      # SNMPv2c with community string
+  '' else ''
       pfsense_v2:
         community: ${snmpCommunity}
         version: 2
-      ''}
+  '') + ''
     modules:
       # pfSense specific - PF firewall stats + interface metrics
       pfsense:
@@ -242,7 +240,7 @@ let
           - name: pfStateTableRemovals
             oid: 1.3.6.1.4.1.12325.1.200.1.3.4
             type: counter
-  '';
+  '');
 in
 lib.mkIf (systemSettings.prometheusSnmpExporterEnable or false) {
   services.prometheus.exporters.snmp = {
