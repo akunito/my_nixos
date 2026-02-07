@@ -37,9 +37,10 @@ let
     };
   }) cfg.users;
 
-  # Add exporter user if monitoring is enabled
+  # Grant monitoring permissions to mysql user for the exporter (uses socket auth)
+  # The exporter runs as OS user 'mysql' and connects via unix socket
   exporterUser = lib.optional (systemSettings.prometheusMariadbExporterEnable or false) {
-    name = "exporter";
+    name = "mysql";
     ensurePermissions = {
       "*.*" = "PROCESS, REPLICATION CLIENT, SELECT";
     };
@@ -126,11 +127,11 @@ lib.mkIf cfg.enable {
   '';
 
   # Prometheus mysqld_exporter config file for socket authentication
-  # This uses Unix socket auth as the mysql user
+  # Uses mysql OS user via unix socket (OS user must match MySQL user)
   environment.etc."prometheus-mysqld-exporter.cnf" = lib.mkIf (systemSettings.prometheusMariadbExporterEnable or false) {
     text = ''
       [client]
-      user = exporter
+      user = mysql
       socket = /run/mysqld/mysqld.sock
     '';
     mode = "0440";
