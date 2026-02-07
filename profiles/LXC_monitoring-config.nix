@@ -135,6 +135,11 @@ in
 
     # === SNMP Exporter (pfSense) ===
     prometheusSnmpExporterEnable = true;
+    # SNMPv3 credentials (preferred - requires NET-SNMP package on pfSense)
+    prometheusSnmpv3User = secrets.snmpv3User;
+    prometheusSnmpv3AuthPass = secrets.snmpv3AuthPass;
+    prometheusSnmpv3PrivPass = secrets.snmpv3PrivPass;
+    # SNMPv2c fallback (keep for transition period)
     prometheusSnmpCommunity = secrets.snmpCommunity;
     prometheusSnmpTargets = [
       { name = "pfsense"; host = "192.168.8.1"; module = "pfsense"; }

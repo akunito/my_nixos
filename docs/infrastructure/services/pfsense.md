@@ -591,7 +591,17 @@ ls /usr/local/etc/rc.d/
    ps aux | grep snmpd
    ```
 
-2. Test locally:
+2. Test SNMPv3 (preferred):
+   ```bash
+   # From LXC_monitoring or any host with net-snmp-utils
+   snmpwalk -v3 -l authPriv \
+     -u prometheus \
+     -a SHA -A "<auth-password>" \
+     -x AES -X "<priv-password>" \
+     192.168.8.1 system
+   ```
+
+3. Test SNMPv2c (fallback):
    ```bash
    snmpwalk -v2c -c <community> 192.168.8.1 system
    ```
@@ -614,6 +624,71 @@ The complete pfSense configuration is stored in `/conf/config.xml`.
 - Before any configuration changes
 - Weekly automated backup via GUI
 - Store backups in encrypted location (git-crypt repo)
+
+---
+
+## Maintenance
+
+### System Updates
+
+pfSense updates are **manual by design** for stability.
+
+**Pre-update checklist**:
+1. Backup config: **Diagnostics → Backup & Restore → Download configuration**
+2. Check release notes for breaking changes at https://docs.netgate.com/pfsense/en/latest/releases/
+3. Verify AutoConfigBackup has recent backup (if enabled)
+4. Plan maintenance window (expect brief network outage during reboot)
+
+**Update steps**:
+1. Navigate to **System → Update**
+2. Review available updates
+3. Click "Confirm" to install
+4. System will reboot automatically
+
+**Post-update verification**:
+```bash
+# SSH to pfSense
+ssh admin@192.168.8.1
+
+# Check version
+cat /etc/version
+
+# Verify critical services
+wg show                    # WireGuard tunnel
+pfctl -si                  # Firewall state
+ps aux | grep unbound      # DNS resolver
+ps aux | grep snmpd        # SNMP (if enabled)
+```
+
+### SNMPv3 Configuration
+
+pfSense requires the **NET-SNMP package** for SNMPv3 support.
+
+**Installation**:
+```bash
+# Via SSH
+ssh admin@192.168.8.1
+pkg install -y pfSense-pkg-Net-SNMP
+```
+
+**Configuration** (via GUI):
+1. **Services → SNMP** - Disable built-in bsnmpd (uncheck "Enable")
+2. **Services → SNMP (NET-SNMP)** - Configure:
+   - **General**: Enable SNMP Service
+   - **Host Information**: Set contact and location
+   - **Users**: Create SNMPv3 user:
+     - Username: `prometheus`
+     - Entry Type: User entry (USM)
+     - Auth Type: SHA
+     - Auth Password: (from secrets/domains.nix)
+     - Privacy Protocol: AES
+     - Privacy Password: (from secrets/domains.nix)
+     - Min Security Level: Private (Encryption Required)
+
+**Credentials**: Stored in `secrets/domains.nix` (git-crypt encrypted):
+- `snmpv3User`
+- `snmpv3AuthPass`
+- `snmpv3PrivPass`
 
 ---
 

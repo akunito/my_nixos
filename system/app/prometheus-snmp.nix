@@ -2,10 +2,21 @@
 #
 # Feature flags (from profile config):
 #   - prometheusSnmpExporterEnable: Enable SNMP Exporter
-#   - prometheusSnmpCommunity: SNMP community string
+#   - prometheusSnmpCommunity: SNMP community string (v2c fallback)
+#   - prometheusSnmpv3User: SNMPv3 username (preferred)
+#   - prometheusSnmpv3AuthPass: SNMPv3 auth password (SHA)
+#   - prometheusSnmpv3PrivPass: SNMPv3 privacy password (AES)
 #   - prometheusSnmpTargets: List of targets [{name, host, module}]
 #
 # Prerequisites:
+#   For SNMPv3 (recommended):
+#   1. Install NET-SNMP package on pfSense: System > Package Manager
+#   2. Disable built-in SNMP: Services > SNMP (uncheck enable)
+#   3. Configure NET-SNMP: Services > SNMP (NET-SNMP)
+#   4. Create SNMPv3 user with SHA auth and AES privacy
+#   5. Add firewall rule: LAN pass UDP 161 from monitoring server to Self
+#
+#   For SNMPv2c (fallback):
 #   1. Enable SNMP on pfSense: Services > SNMP
 #   2. Set community string (use long random string)
 #   3. Bind to LAN interface only
@@ -21,16 +32,39 @@
 
 let
   snmpTargets = systemSettings.prometheusSnmpTargets or [];
+
+  # SNMPv3 credentials (preferred)
+  snmpv3User = systemSettings.prometheusSnmpv3User or null;
+  snmpv3AuthPass = systemSettings.prometheusSnmpv3AuthPass or null;
+  snmpv3PrivPass = systemSettings.prometheusSnmpv3PrivPass or null;
+
+  # SNMPv2c credentials (fallback)
   snmpCommunity = systemSettings.prometheusSnmpCommunity or "public";
 
-  # Generate snmp.yml with actual community string and metric definitions
+  # Use SNMPv3 if all credentials are provided
+  useSnmpv3 = snmpv3User != null && snmpv3AuthPass != null && snmpv3PrivPass != null;
+  authName = if useSnmpv3 then "pfsense_v3" else "pfsense_v2";
+
+  # Generate snmp.yml with auth config and metric definitions
   # snmp_exporter requires explicit metric definitions to convert OIDs to Prometheus metrics
   snmpConfig = pkgs.writeText "snmp.yml" ''
     auths:
+      ${if useSnmpv3 then ''
+      # SNMPv3 with SHA authentication and AES encryption
+      pfsense_v3:
+        version: 3
+        security_level: authPriv
+        username: ${snmpv3User}
+        auth_protocol: SHA
+        auth_passphrase: ${snmpv3AuthPass}
+        priv_protocol: AES
+        priv_passphrase: ${snmpv3PrivPass}
+      '' else ''
+      # SNMPv2c with community string
       pfsense_v2:
         community: ${snmpCommunity}
         version: 2
-
+      ''}
     modules:
       # pfSense specific - PF firewall stats + interface metrics
       pfsense:
@@ -223,7 +257,7 @@ lib.mkIf (systemSettings.prometheusSnmpExporterEnable or false) {
     scrape_interval = "30s";
     scrape_timeout = "25s";
     params = {
-      auth = [ "pfsense_v2" ];
+      auth = [ authName ];  # Uses pfsense_v3 if SNMPv3 configured, otherwise pfsense_v2
       module = [ (target.module or "pfsense") ];
       target = [ target.host ];
     };
