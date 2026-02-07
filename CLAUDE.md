@@ -270,6 +270,7 @@ Before answering any architectural or implementation question:
   - LXC_plane (192.168.8.86): `~/PLANE/`
   - LXC_portfolioprod (192.168.8.88): `~/portfolioPROD/`
   - LXC_liftcraftTEST (192.168.8.87): `~/leftyworkout_TEST/`
+  - LXC_database (192.168.8.103): PostgreSQL + Redis (NixOS native services)
   - VPS (ssh -p 56777 root@172.26.5.155):
     - Repository: `/root/vps_wg/` (git-crypt encrypted, `git@github.com:akunito/vps_wg.git`)
     - Git-crypt key: `/root/.git-crypt-key`
@@ -280,6 +281,55 @@ Before answering any architectural or implementation question:
   - Docker networks: `docker network ls` and `docker network inspect <network>`
   - Prometheus targets: `curl -s http://192.168.8.85:9090/api/v1/targets | jq`
 - **Service-specific docs**: See `docs/infrastructure/services/` for detailed service documentation
+
+### Docker-based projects (applies to: Portfolio, LiftCraft, Plane, and other containerized apps)
+
+- **Use wrapper scripts**: Projects with docker-compose use wrapper scripts (`./docker-compose.sh`, `./docker-compose.dev.sh`). NEVER run `npm`, `yarn`, or `bundle` directly on the host - use the wrapper to execute inside the container.
+  ```bash
+  # WRONG - host doesn't have node_modules
+  npm install ioredis
+
+  # CORRECT - runs inside container
+  ./docker-compose.sh exec portfolio npm install ioredis
+  ./docker-compose.sh exec backend bundle install
+  ```
+- **Config file locations**: Container configs are typically mounted from the host. Changes persist across restarts:
+  - Nextcloud: `/mnt/DATA_4TB/myServices/nextcloud-data/config/config.php`
+  - Portfolio: `.env.dev`, `.env.prod` in project root
+  - LiftCraft: `.env.test`, `.env.prod` in project root
+  - Plane: `.env` in `~/PLANE/`
+- **Restart patterns**: For config changes to take effect:
+  ```bash
+  # Simple restart (keeps volumes)
+  ./docker-compose.sh restart service-name
+
+  # Full recreate (reloads everything)
+  ./docker-compose.sh stop service-name && ./docker-compose.sh rm -f service-name && ./docker-compose.sh up -d service-name
+  ```
+- **Environment variables**: Pass through docker-compose.yml `environment` section. Secrets should be in `.env.*` files (gitignored).
+- **Health checks**: Many projects have `/api/health` endpoints to verify service status including external dependencies like Redis.
+- **Disk cleanup**: If builds fail with "no space left", run NixOS garbage collection and Docker prune:
+  ```bash
+  sudo nix-collect-garbage -d && docker system prune -af --volumes
+  ```
+
+### Redis database allocation (applies to: all services using centralized Redis on LXC_database)
+
+- **Centralized Redis**: All services connect to `192.168.8.103:6379` with database separation
+- **Database allocation**:
+  | db | Service | Config Key |
+  |----|---------|------------|
+  | 0 | Plane | (default, no explicit config) |
+  | 1 | Nextcloud | `'dbindex' => 1` in config.php |
+  | 2 | LiftCraft | `/2` in REDIS_URL |
+  | 3 | Portfolio | `/3` in REDIS_URL |
+- **Connection URL format**: `redis://:PASSWORD@192.168.8.103:6379/DB_NUMBER`
+- **Password location**: `secrets/domains.nix` (git-crypt encrypted)
+- **Troubleshooting**: Use `check-redis` skill or connect via LXC_HOME's redis-local container:
+  ```bash
+  ssh -A akunito@192.168.8.80
+  docker exec redis-local redis-cli -h 192.168.8.103 -a 'PASSWORD' -n 3 KEYS '*'
+  ```
 
 ### VPS WireGuard troubleshooting (applies to: VPS server, `scripts/vps-wireguard-optimize.sh`)
 

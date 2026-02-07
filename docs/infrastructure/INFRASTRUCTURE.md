@@ -99,14 +99,14 @@ The Proxmox server hosts all LXC containers running NixOS:
 │  │ • UniFi     │ │             │ │             │ │             │           │
 │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘           │
 │                                                                             │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐                           │
-│  │  LXC_plane  │ │LXC_liftcraft│ │LXC_portfolio│                           │
-│  │192.168.8.86 │ │192.168.8.87 │ │192.168.8.88 │                           │
-│  │             │ │             │ │             │                           │
-│  │ • Plane     │ │ • LeftyWork │ │ • Portfolio │                           │
-│  │   (project  │ │   out Test  │ │   Website   │                           │
-│  │   mgmt)     │ │             │ │             │                           │
-│  └─────────────┘ └─────────────┘ └─────────────┘                           │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │  LXC_plane  │ │LXC_liftcraft│ │LXC_portfolio│ │LXC_database │           │
+│  │192.168.8.86 │ │192.168.8.87 │ │192.168.8.88 │ │192.168.8.103│           │
+│  │             │ │             │ │             │ │             │           │
+│  │ • Plane     │ │ • LeftyWork │ │ • Portfolio │ │ • PostgreSQL│           │
+│  │   (project  │ │   out Test  │ │   Website   │ │ • Redis     │           │
+│  │   mgmt)     │ │             │ │             │ │   (central) │           │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘           │
 │                                                                             │
 │  Storage: LUKS-encrypted LVM pools + NFS mounts from TrueNAS               │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -280,6 +280,30 @@ Centralized monitoring for the entire infrastructure:
 | LXC_plane | 192.168.8.86 | Plane project management (Jira/Linear alternative) | External |
 | LXC_liftcraftTEST | 192.168.8.87 | LeftyWorkout test environment (training app) | External |
 | LXC_portfolioprod | 192.168.8.88 | Personal portfolio website (Next.js) | External |
+| LXC_database | 192.168.8.103 | Centralized PostgreSQL & Redis | Internal |
+
+---
+
+### LXC_database (192.168.8.103) - Centralized Database & Cache
+
+Provides centralized PostgreSQL and Redis for all application containers.
+
+**PostgreSQL Databases**:
+| Database | Client Container |
+|----------|------------------|
+| plane | LXC_plane (192.168.8.86) |
+| nextcloud | LXC_HOME (192.168.8.80) |
+| liftcraft_test | LXC_liftcraftTEST (192.168.8.87) |
+
+**Redis Database Allocation**:
+| DB | Service | Purpose |
+|----|---------|---------|
+| db0 | Plane | Session cache, job queue |
+| db1 | Nextcloud | Distributed cache, file locking |
+| db2 | LiftCraft TEST | Rails cache, Action Cable |
+| db3 | Portfolio | Next.js page cache |
+
+See [Database & Redis Documentation](./services/database-redis.md) for connection details and troubleshooting.
 
 ---
 
@@ -524,7 +548,8 @@ lib/defaults.nix (global defaults)
                 ├─► LXC_plane-config.nix
                 ├─► LXC_liftcraftTEST-config.nix
                 ├─► LXC_portfolioprod-config.nix
-                └─► LXC_mailer-config.nix
+                ├─► LXC_mailer-config.nix
+                └─► LXC_database-config.nix
 ```
 
 **Base Configuration** (inherited by all):
@@ -584,3 +609,4 @@ Updates are staggered to prevent simultaneous service disruption.
 - [Git-Crypt Secrets](../security/git-crypt.md) - Secrets management
 - [Profile Feature Flags](../profile-feature-flags.md) - NixOS profile configuration
 - [VPS WireGuard Server](./services/vps-wireguard.md) - External VPS documentation
+- [Database & Redis](./services/database-redis.md) - Centralized PostgreSQL and Redis services
