@@ -24,10 +24,18 @@ let
 
 in
 lib.mkIf anyDatabaseEnabled {
-  # Create /etc/secrets directory with proper permissions
-  systemd.tmpfiles.rules = [
-    "d /etc/secrets 0700 root root -"
-  ];
+  # Set /etc/secrets directory permissions after etc files are created
+  # Mode 0755 allows traversal by all users (needed for postgres/mysql postStart scripts)
+  # while individual files remain protected with 0440 and appropriate group ownership
+  # Using activationScripts because tmpfiles runs before environment.etc creates the directory
+  system.activationScripts.secretsPermissions = {
+    text = ''
+      if [ -d /etc/secrets ]; then
+        chmod 755 /etc/secrets
+      fi
+    '';
+    deps = [ "etc" ];
+  };
 
   # Deploy PostgreSQL password files
   environment.etc = lib.mkMerge [
