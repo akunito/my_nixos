@@ -177,16 +177,22 @@ ssh -A akunito@192.168.8.86 "docker run --rm redis:alpine redis-cli -h 192.168.8
 ## Backup Status Check
 
 ```bash
-# Check backup timers
-ssh -A akunito@192.168.8.103 "systemctl list-timers postgresql-backup mariadb-backup --no-pager"
+# Check backup timers (daily and hourly)
+ssh -A akunito@192.168.8.103 "systemctl list-timers 'postgresql-backup*' 'mariadb-backup*' --no-pager"
 
-# Check last backup
-ssh -A akunito@192.168.8.103 "ls -lah /var/backup/databases/postgresql/ 2>/dev/null | tail -5"
-ssh -A akunito@192.168.8.103 "ls -lah /var/backup/databases/mariadb/ 2>/dev/null | tail -5"
+# Check last daily backups (stored on NFS mount /mnt/backups)
+ssh -A akunito@192.168.8.103 "ls -lah /mnt/backups/postgresql/daily/ 2>/dev/null | tail -5"
+ssh -A akunito@192.168.8.103 "ls -lah /mnt/backups/mariadb/daily/ 2>/dev/null | tail -5"
 
-# Check backup metrics (for Prometheus)
-ssh -A akunito@192.168.8.103 "cat /var/lib/prometheus-node-exporter/textfile/postgresql_backup.prom 2>/dev/null"
-ssh -A akunito@192.168.8.103 "cat /var/lib/prometheus-node-exporter/textfile/mariadb_backup.prom 2>/dev/null"
+# Check last hourly backups
+ssh -A akunito@192.168.8.103 "ls -lah /mnt/backups/postgresql/hourly/ 2>/dev/null | tail -5"
+ssh -A akunito@192.168.8.103 "ls -lah /mnt/backups/mariadb/hourly/ 2>/dev/null | tail -5"
+
+# Check backup metrics (for Prometheus) - daily and hourly
+ssh -A akunito@192.168.8.103 "cat /var/lib/prometheus-node-exporter/textfile/postgresql_backup_daily.prom 2>/dev/null"
+ssh -A akunito@192.168.8.103 "cat /var/lib/prometheus-node-exporter/textfile/postgresql_backup_hourly.prom 2>/dev/null"
+ssh -A akunito@192.168.8.103 "cat /var/lib/prometheus-node-exporter/textfile/mariadb_backup_daily.prom 2>/dev/null"
+ssh -A akunito@192.168.8.103 "cat /var/lib/prometheus-node-exporter/textfile/mariadb_backup_hourly.prom 2>/dev/null"
 ```
 
 ---

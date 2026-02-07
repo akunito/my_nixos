@@ -115,9 +115,23 @@ in
     # === Database Backups (ENABLED) ===
     postgresqlBackupEnable = true;
     mariadbBackupEnable = true;
-    databaseBackupLocation = "/var/backup/databases";
+
+    # Backup location (NFS mount from TrueNAS via Proxmox bind mount)
+    # Proxmox LXC config: mp0: /mnt/pve/proxmox_backups/database-backups,mp=/mnt/backups
+    databaseBackupLocation = "/mnt/backups";
+
+    # Daily backups (7 days retention, custom + SQL formats)
     databaseBackupStartAt = "*-*-* 02:00:00"; # Daily at 2 AM
     databaseBackupRetainDays = 7;
+
+    # Hourly backups (3 days retention, custom format only for speed)
+    databaseBackupHourlyEnable = true;
+    databaseBackupHourlySchedule = "*:00:00"; # Every hour at :00
+    databaseBackupHourlyRetainCount = 72; # 72 hourly backups = 3 days
+
+    # Redis BGSAVE before backups (ensures cache consistency)
+    redisBgsaveBeforeBackup = true;
+    redisBgsaveTimeout = 60;
 
     # === Prometheus Exporters (ENABLED for monitoring) ===
     prometheusExporterEnable = true; # Node Exporter for system metrics

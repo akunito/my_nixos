@@ -643,24 +643,46 @@ in
                 };
               }
               # Database backup failed (from textfile exporter)
+              # Daily backups - alert if failed or stale (>26 hours since last success)
               {
-                alert = "PostgreSQLBackupFailed";
-                expr = ''postgresql_backup_status == 0'';
-                "for" = "1h";
+                alert = "PostgreSQLDailyBackupFailed";
+                expr = ''postgresql_backup_daily_status == 0 or (time() - postgresql_backup_daily_last_success_timestamp) > 93600'';
+                "for" = "30m";
                 labels.severity = "warning";
                 annotations = {
-                  summary = "PostgreSQL backup failed";
-                  description = "PostgreSQL backup job failed on the database server";
+                  summary = "PostgreSQL daily backup failed or stale";
+                  description = "PostgreSQL daily backup job failed or hasn't run in over 26 hours";
                 };
               }
               {
-                alert = "MariaDBBackupFailed";
-                expr = ''mariadb_backup_status == 0'';
-                "for" = "1h";
+                alert = "MariaDBDailyBackupFailed";
+                expr = ''mariadb_backup_daily_status == 0 or (time() - mariadb_backup_daily_last_success_timestamp) > 93600'';
+                "for" = "30m";
                 labels.severity = "warning";
                 annotations = {
-                  summary = "MariaDB backup failed";
-                  description = "MariaDB backup job failed on the database server";
+                  summary = "MariaDB daily backup failed or stale";
+                  description = "MariaDB daily backup job failed or hasn't run in over 26 hours";
+                };
+              }
+              # Hourly backups - alert if stale (>2 hours since last success)
+              {
+                alert = "PostgreSQLHourlyBackupStale";
+                expr = ''(time() - postgresql_backup_hourly_last_success_timestamp) > 7200'';
+                "for" = "30m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "PostgreSQL hourly backup stale";
+                  description = "PostgreSQL hourly backup hasn't run in over 2 hours";
+                };
+              }
+              {
+                alert = "MariaDBHourlyBackupStale";
+                expr = ''(time() - mariadb_backup_hourly_last_success_timestamp) > 7200'';
+                "for" = "30m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "MariaDB hourly backup stale";
+                  description = "MariaDB hourly backup hasn't run in over 2 hours";
                 };
               }
             ];

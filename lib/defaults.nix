@@ -353,6 +353,15 @@
     databaseBackupStartAt = "*-*-* 02:00:00"; # Daily at 2 AM
     databaseBackupRetainDays = 7;
 
+    # Hourly backup configuration (in addition to daily)
+    databaseBackupHourlyEnable = false; # Enable hourly backups (custom format only, 3-day retention)
+    databaseBackupHourlySchedule = "*:00:00"; # Every hour at :00
+    databaseBackupHourlyRetainCount = 72; # Keep 72 most recent (3 days of hourly backups)
+
+    # Redis BGSAVE before backups (ensures Redis data consistency)
+    redisBgsaveBeforeBackup = false; # Trigger Redis BGSAVE before database backups
+    redisBgsaveTimeout = 60; # Seconds to wait for BGSAVE completion
+
     # Database monitoring exporters
     prometheusPostgresExporterEnable = false;
     prometheusPostgresExporterPort = 9187;
