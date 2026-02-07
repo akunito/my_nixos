@@ -349,7 +349,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "up{instance=\"192.168.8.103:9100\"}",
+          "expr": "up{job=\"lxc_database_node\"}",
           "legendFormat": "Node",
           "range": true,
           "refId": "A"
