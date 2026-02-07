@@ -10,7 +10,7 @@
 # - postgresqlServerEnable: Creates PostgreSQL user password files
 # - mariadbServerEnable: Creates MariaDB user password files
 # - redisServerEnable: Creates Redis password file
-# - dbPlanePassword, dbLiftcraftPassword: PostgreSQL passwords
+# - dbPlanePassword, dbLiftcraftPassword, dbMatrixPassword: PostgreSQL passwords
 # - dbNextcloudPassword: MariaDB password
 # - redisServerPassword: Redis password
 
@@ -52,6 +52,15 @@ lib.mkIf anyDatabaseEnabled {
     (lib.mkIf ((systemSettings.postgresqlServerEnable or false) && (systemSettings.dbLiftcraftPassword or "") != "") {
       "secrets/db-liftcraft-password" = {
         text = systemSettings.dbLiftcraftPassword;
+        mode = "0440";
+        user = "root";
+        group = "postgres";
+      };
+    })
+
+    (lib.mkIf ((systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMatrixPassword or "") != "") {
+      "secrets/db-matrix-password" = {
+        text = systemSettings.dbMatrixPassword;
         mode = "0440";
         user = "root";
         group = "postgres";

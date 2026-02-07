@@ -1,0 +1,17 @@
+# Claude Matrix Bot Dependencies
+# Install: pip install -r requirements.txt
+
+# Matrix client library (async)
+matrix-nio[e2e]>=0.24.0
+
+# Async SQLite for session management
+aiosqlite>=0.19.0
+
+# HTTP client for health checks
+aiohttp>=3.9.0
+
+# YAML configuration parsing
+pyyaml>=6.0
+
+# Logging with structured output
+structlog>=24.1.0

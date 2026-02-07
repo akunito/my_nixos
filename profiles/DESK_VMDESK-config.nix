@@ -14,6 +14,7 @@ in
     # MACHINE IDENTITY - Override Required
     # ============================================================================
     hostname = "nixosdesk";
+    envProfile = "DESK_VMDESK"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK_VMDESK -s -u";
 
     # Network - VM-specific IPs

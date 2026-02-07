@@ -11,6 +11,7 @@ in
   systemSettings = base.systemSettings // {
     hostname = "nixosaga";
     profile = "personal";
+    envProfile = "LAPTOP_AGA"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_AGA -s -u";
     gpuType = "intel";
 

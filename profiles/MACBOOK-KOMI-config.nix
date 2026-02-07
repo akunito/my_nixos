@@ -8,6 +8,7 @@ in
 {
   systemSettings = base.systemSettings // {
     hostname = "komi-macbook";
+    envProfile = "MACBOOK_KOMI"; # Environment profile for Claude Code context awareness
 
     darwin = base.systemSettings.darwin // {
       # Komi's Homebrew casks (GUI apps)

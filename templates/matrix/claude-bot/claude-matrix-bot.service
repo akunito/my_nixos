@@ -1,0 +1,40 @@
+# Claude Matrix Bot Systemd Service
+#
+# Install as user service:
+#   mkdir -p ~/.config/systemd/user/
+#   cp claude-matrix-bot.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable claude-matrix-bot
+#   systemctl --user start claude-matrix-bot
+#
+# View logs:
+#   journalctl --user -u claude-matrix-bot -f
+
+[Unit]
+Description=Claude Matrix Bot - AI assistant via Matrix chat
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/akunito/.claude-matrix-bot/venv/bin/python /home/akunito/.claude-matrix-bot/bot.py --config /home/akunito/.claude-matrix-bot/config.yaml
+WorkingDirectory=/home/akunito/.claude-matrix-bot
+Restart=always
+RestartSec=10
+
+# Environment
+Environment="PATH=/home/akunito/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin"
+Environment="HOME=/home/akunito"
+Environment="ENV_PROFILE=LXC_matrix"
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=100%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=claude-matrix-bot
+
+[Install]
+WantedBy=default.target

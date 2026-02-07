@@ -15,6 +15,7 @@ in
   systemSettings = base.systemSettings // {
     hostname = "monitoring";
     profile = "proxmox-lxc";
+    envProfile = "LXC_monitoring"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_monitoring -s -u";
     serverEnv = "PROD"; # Production environment
 
@@ -61,6 +62,7 @@ in
       { name = "lxc_portfolio";  host = "192.168.8.88";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_mailer";     host = "192.168.8.89";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_database";   host = "192.168.8.103"; nodePort = 9100; cadvisorPort = null; }  # Centralized database server (no Docker)
+      { name = "lxc_matrix";     host = "192.168.8.104"; nodePort = 9100; cadvisorPort = 9092; }  # Matrix Synapse + Element + Claude Bot
       { name = "vps_wireguard";  host = "172.26.5.155";  nodePort = 9100; cadvisorPort = null; }  # VPS via WireGuard tunnel
     ];
 
@@ -74,6 +76,8 @@ in
       { name = "postgresql"; host = "192.168.8.103"; port = 9187; }
       { name = "mariadb";    host = "192.168.8.103"; port = 9104; }
       { name = "redis";      host = "192.168.8.103"; port = 9121; }
+      # Matrix Synapse metrics (LXC_matrix)
+      { name = "synapse";    host = "192.168.8.104"; port = 9000; }
     ];
 
     # === Blackbox Exporter (HTTP/HTTPS and ICMP probes) ===
@@ -101,6 +105,10 @@ in
       { name = "leftyworkout_test"; url = "https://leftyworkout-test.${secrets.publicDomain}"; }
       { name = "portfolio"; url = "https://${secrets.publicDomain}"; }
       { name = "wgui"; url = "https://wgui.${secrets.publicDomain}"; }
+
+      # Matrix/Element (local and public)
+      { name = "matrix"; url = "https://matrix.${secrets.localDomain}/_matrix/client/versions"; }
+      { name = "element"; url = "https://element.${secrets.localDomain}"; }
 
       # Local-only (no SSL)
       { name = "kuma"; url = "http://192.168.8.89:3001"; module = "http_2xx_nossl"; }
@@ -132,6 +140,11 @@ in
 
     # === PVE Backup Monitoring (queries Proxmox API for backup status) ===
     prometheusPveBackupEnable = true;
+
+    # === pfSense Backup Monitoring (checks backup files on Proxmox NFS) ===
+    prometheusPfsenseBackupEnable = true;
+    prometheusPfsenseBackupProxmoxHost = "192.168.8.82";
+    prometheusPfsenseBackupPath = "/mnt/pve/proxmox_backups/pfsense";
 
     # === SNMP Exporter (pfSense) ===
     prometheusSnmpExporterEnable = true;

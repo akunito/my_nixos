@@ -7,6 +7,7 @@ in
 {
   systemSettings = base.systemSettings // {
     hostname = "leftyworkoutTEST";
+    envProfile = "LXC_liftcraftTEST"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_liftcraftTEST -s -u";
     systemStateVersion = "25.11";
     serverEnv = "TEST"; # Test environment

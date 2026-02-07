@@ -3,9 +3,9 @@
 # All services run as NixOS native modules (no Docker)
 #
 # Database numbering:
-# - PostgreSQL: plane, liftcraft (via PgBouncer on 6432 or direct on 5432)
+# - PostgreSQL: plane, liftcraft, matrix (via PgBouncer on 6432 or direct on 5432)
 # - MariaDB: nextcloud (port 3306)
-# - Redis: db0=Plane, db1=Nextcloud, db2=LiftCraft (port 6379)
+# - Redis: db0=Plane, db1=Nextcloud, db2=LiftCraft, db3=Portfolio, db4=Matrix (port 6379)
 #
 # Container specs:
 # - IP: 192.168.8.103
@@ -23,11 +23,13 @@ in
 
   systemSettings = base.systemSettings // {
     hostname = "database";
+    envProfile = "LXC_database"; # Environment profile for Claude Code context awareness
 
     # Database credentials (from git-crypt encrypted secrets/domains.nix)
     # These are passed to database-secrets.nix module for deployment to /etc/secrets/
     dbPlanePassword = secrets.dbPlanePassword;
     dbLiftcraftPassword = secrets.dbLiftcraftPassword;
+    dbMatrixPassword = secrets.dbMatrixPassword;
     dbNextcloudPassword = secrets.dbNextcloudPassword;
     redisServerPassword = secrets.redisServerPassword;
     profile = "proxmox-lxc";
@@ -73,7 +75,7 @@ in
     # PostgreSQL 17 Server
     postgresqlServerEnable = true;
     postgresqlServerPort = 5432;
-    postgresqlServerDatabases = [ "plane" "rails_database_prod" ];
+    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" ];
     postgresqlServerUsers = [
       {
         name = "plane";
@@ -84,6 +86,11 @@ in
         name = "liftcraft";
         passwordFile = "/etc/secrets/db-liftcraft-password";
         ensureDBOwnership = false; # rails_database_prod owned separately
+      }
+      {
+        name = "matrix";
+        passwordFile = "/etc/secrets/db-matrix-password";
+        ensureDBOwnership = true;
       }
     ];
 

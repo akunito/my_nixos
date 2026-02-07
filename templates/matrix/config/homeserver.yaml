@@ -1,0 +1,242 @@
+# Matrix Synapse Homeserver Configuration
+# Deploy to: ~/.homelab/matrix/config/homeserver.yaml on LXC_matrix
+#
+# Documentation: https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html
+#
+# IMPORTANT: Replace ${VARIABLE} placeholders with actual values from .env or secrets/domains.nix
+
+# =============================================================================
+# SERVER IDENTITY
+# =============================================================================
+
+# The public-facing domain that identifies this Matrix server
+# Users will have addresses like @user:akunito.com
+server_name: "akunito.com"
+
+# The URL that clients use to access this homeserver
+# This is the local domain; external access goes through Cloudflare
+public_baseurl: "https://matrix.local.akunito.com/"
+
+# Path to the signing key (generated on first run)
+signing_key_path: "/data/akunito.com.signing.key"
+
+# Trusted key servers for verifying other servers' signatures
+trusted_key_servers:
+  - server_name: "matrix.org"
+
+# =============================================================================
+# NETWORK & LISTENERS
+# =============================================================================
+
+listeners:
+  # Main client/federation listener
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true  # Trust X-Forwarded-For from reverse proxy
+    bind_addresses: ['0.0.0.0']
+    resources:
+      - names: [client, federation]
+        compress: false
+
+  # Prometheus metrics endpoint
+  - port: 9000
+    type: metrics
+    bind_addresses: ['0.0.0.0']
+
+# =============================================================================
+# DATABASE (PostgreSQL on LXC_database)
+# =============================================================================
+
+database:
+  name: psycopg2
+  txn_limit: 10000
+  args:
+    host: "192.168.8.103"
+    port: 5432
+    database: "matrix"
+    user: "matrix"
+    password: "${POSTGRES_PASSWORD}"  # Replace with actual password
+    cp_min: 5
+    cp_max: 10
+
+# =============================================================================
+# REDIS (Session cache on LXC_database, db4)
+# =============================================================================
+
+redis:
+  enabled: true
+  host: "192.168.8.103"
+  port: 6379
+  dbid: 4
+  password: "${REDIS_PASSWORD}"  # Replace with actual password
+
+# =============================================================================
+# MEDIA STORAGE
+# =============================================================================
+
+media_store_path: "/data/media_store"
+max_upload_size: 100M
+url_preview_enabled: true
+
+# URL preview blocklist (privacy)
+url_preview_ip_range_blacklist:
+  - '127.0.0.0/8'
+  - '10.0.0.0/8'
+  - '172.16.0.0/12'
+  - '192.168.0.0/16'
+  - '100.64.0.0/10'
+  - '169.254.0.0/16'
+  - '::1/128'
+  - 'fe80::/64'
+  - 'fc00::/7'
+
+# =============================================================================
+# REGISTRATION & AUTHENTICATION
+# =============================================================================
+
+# Disable open registration (create users manually)
+enable_registration: false
+enable_registration_without_verification: false
+
+# Registration shared secret (for admin user creation)
+# Generate with: openssl rand -hex 32
+registration_shared_secret: "${REGISTRATION_SHARED_SECRET}"
+
+# Password configuration
+password_config:
+  enabled: true
+  localdb_enabled: true
+  pepper: ""  # Optional additional password security
+
+# Session configuration
+session_lifetime: "24h"
+refresh_token_lifetime: "24h"
+
+# =============================================================================
+# EMAIL (via LXC_mailer postfix relay)
+# =============================================================================
+
+email:
+  smtp_host: "192.168.8.89"
+  smtp_port: 25
+  notif_from: "Matrix <matrix@akunito.com>"
+  enable_notifs: true
+  notif_for_new_users: true
+  client_base_url: "https://element.local.akunito.com"
+
+# =============================================================================
+# FEDERATION
+# =============================================================================
+
+# Allow federation with any server (no whitelist)
+# To restrict, add: federation_domain_whitelist: ["matrix.org", "example.com"]
+
+# Federation certificates (Let's Encrypt via reverse proxy handles this)
+federation_verify_certificates: true
+
+# Federation rate limiting
+federation_rr_transactions_per_room_per_second: 50
+
+# =============================================================================
+# RATE LIMITING
+# =============================================================================
+
+rc_message:
+  per_second: 0.2
+  burst_count: 10
+
+rc_registration:
+  per_second: 0.17
+  burst_count: 3
+
+rc_login:
+  address:
+    per_second: 0.17
+    burst_count: 3
+  account:
+    per_second: 0.17
+    burst_count: 3
+  failed_attempts:
+    per_second: 0.17
+    burst_count: 3
+
+# =============================================================================
+# LOGGING
+# =============================================================================
+
+log_config: "/data/log.config"
+
+# =============================================================================
+# METRICS & MONITORING
+# =============================================================================
+
+enable_metrics: true
+report_stats: false
+
+# =============================================================================
+# CACHING
+# =============================================================================
+
+caches:
+  global_factor: 0.5
+  per_cache_factors:
+    get_users_in_room: 2.0
+
+# Event cache size
+event_cache_size: 10K
+
+# =============================================================================
+# ROOM SETTINGS
+# =============================================================================
+
+# Default room version for new rooms
+default_room_version: "10"
+
+# Room complexity limits (prevents resource exhaustion)
+limit_remote_rooms:
+  enabled: true
+  complexity: 1.0
+  complexity_error: "This room is too complex for this server."
+
+# =============================================================================
+# RETENTION & CLEANUP
+# =============================================================================
+
+# Retention policy (optional - uncomment to enable)
+# retention:
+#   enabled: true
+#   default_policy:
+#     min_lifetime: 1d
+#     max_lifetime: 1y
+#   allowed_lifetime_min: 1d
+#   allowed_lifetime_max: 1y
+#   purge_jobs:
+#     - longest_max_lifetime: 3d
+#       interval: 12h
+#     - shortest_max_lifetime: 3d
+#       interval: 1d
+
+# =============================================================================
+# SECURITY
+# =============================================================================
+
+# Require users to verify their account with email
+require_auth_for_profile_requests: true
+
+# Block non-admin users from searching user directory
+user_directory:
+  enabled: true
+  search_all_users: false
+
+# CAPTCHA (optional - for registration if enabled)
+# recaptcha_public_key: ""
+# recaptcha_private_key: ""
+
+# =============================================================================
+# EXPERIMENTAL FEATURES
+# =============================================================================
+
+experimental_features:
+  # Enable spaces
+  msc3266_enabled: true

@@ -25,6 +25,7 @@ Centralized database infrastructure providing PostgreSQL and Redis for all homel
 | `plane` | Plane (Project Management) | 5432 | LXC_plane (192.168.8.86) |
 | `nextcloud` | Nextcloud | 5432 | LXC_HOME (192.168.8.80) |
 | `liftcraft_test` | LiftCraft TEST | 5432 | LXC_liftcraftTEST (192.168.8.87) |
+| `matrix` | Matrix Synapse | 5432 | LXC_matrix (192.168.8.104) |
 
 ### Connection String Format
 
@@ -44,6 +45,7 @@ Redis uses database numbers (0-15) to separate data for different services.
 | **db1** | Nextcloud | LXC_HOME (192.168.8.80) | Distributed cache, file locking |
 | **db2** | LiftCraft TEST | LXC_liftcraftTEST (192.168.8.87) | Rails cache, Action Cable |
 | **db3** | Portfolio | LXC_portfolioprod (192.168.8.88) | Next.js page cache |
+| **db4** | Matrix Synapse | LXC_matrix (192.168.8.104) | Sessions, presence |
 
 ### Redis Connection URL Format
 
@@ -104,6 +106,23 @@ REDIS_URL=redis://:REDIS_PASSWORD@192.168.8.103:6379/3
 
 The Next.js app uses a custom Redis client (`lib/cache/redis.ts`) with automatic fallback to in-memory cache.
 
+### Matrix Synapse (db4)
+
+In `~/.homelab/matrix/config/homeserver.yaml`:
+```yaml
+redis:
+  enabled: true
+  host: 192.168.8.103
+  port: 6379
+  dbid: 4
+  password: "REDIS_PASSWORD"
+```
+
+Redis is used for:
+- User presence tracking
+- Session synchronization
+- Push notification queue
+
 ## Troubleshooting
 
 ### Check Redis Connectivity
@@ -126,7 +145,7 @@ docker exec redis-local redis-cli -h 192.168.8.103 -a 'PASSWORD' -n 3 TTL 'key_n
 ### Check All Database Sizes
 
 ```bash
-for db in 0 1 2 3; do
+for db in 0 1 2 3 4; do
   echo "db$db: $(docker exec redis-local redis-cli -h 192.168.8.103 -a 'PASSWORD' -n $db DBSIZE 2>/dev/null)"
 done
 ```
@@ -170,3 +189,4 @@ docker exec leftyworkout_test-backend-1 bin/rails runner "puts Rails.cache.class
 - [Monitoring Stack](./monitoring-stack.md) - Prometheus metrics for database/Redis
 - [LiftCraft Service](./liftcraft.md) - Rails application setup
 - [Homelab Stack](./homelab-stack.md) - Nextcloud and other services
+- [Matrix Server](./matrix.md) - Matrix Synapse + Element + Claude Bot

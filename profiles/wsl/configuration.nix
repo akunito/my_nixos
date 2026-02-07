@@ -11,6 +11,7 @@ in
 {
   imports =
     [ nixos-wsl.nixosModules.wsl
+      ../../system/shell/env-profile.nix
       ../../system/hardware/kernel.nix # Kernel config
       ../../system/hardware/systemd.nix # systemd config
       ../../system/hardware/time.nix # Network time sync

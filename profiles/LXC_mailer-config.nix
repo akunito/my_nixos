@@ -8,6 +8,7 @@ in
 {
   systemSettings = base.systemSettings // {
     hostname = "mailerwatcher";
+    envProfile = "LXC_mailer"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_mailer -s -u";
     systemStateVersion = "25.11";
     serverEnv = "PROD"; # Production environment

@@ -11,6 +11,7 @@ in
   systemSettings = base.systemSettings // {
     hostname = "nixosyogaaku";
     profile = "personal";
+    envProfile = "LAPTOP_YOGAAKU"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_YOGAAKU -s -u";
     bootMode = "bios";
     grubDevice = "/dev/nvme0n1"; # BIOS boot on NVMe (Samsung MZVLB256HBHQ)

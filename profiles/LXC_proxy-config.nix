@@ -17,6 +17,7 @@ in
 {
   systemSettings = base.systemSettings // {
     hostname = "proxy";
+    envProfile = "LXC_proxy"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_proxy -s -u";
     systemStateVersion = "25.11";
     serverEnv = "PROD"; # Production environment

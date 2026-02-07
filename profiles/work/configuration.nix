@@ -15,6 +15,7 @@
 {
   imports = [
     ../../system/hardware-configuration.nix
+    ../../system/shell/env-profile.nix
     ../../system/hardware/systemd.nix # systemd config / journald parameters (logs)
     ../../system/hardware/kernel.nix # Kernel config using xanmod
     ../../system/hardware/power.nix # Power management

@@ -8,6 +8,7 @@
   systemSettings = {
     hostname = "nixosdiego";
     profile = "wsl";
+    envProfile = "WSL"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles WSL -s -u";
     bootMode = "bios";
     grubDevice = "/dev/";

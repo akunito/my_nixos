@@ -1,0 +1,54 @@
+# Claude Matrix Bot Configuration
+# Deploy to: ~/.claude-matrix-bot/config.yaml on LXC_matrix
+
+# Matrix server connection
+matrix:
+  homeserver: "https://matrix.local.akunito.com"
+  bot_user: "@claudebot:akunito.com"
+  # Access token file (create with: register_new_matrix_user + login API)
+  access_token_file: "/home/akunito/.claude-matrix-bot/access_token"
+
+# Access control - who can use the bot
+access:
+  allowed_users:
+    - "@akunito:akunito.com"
+  # Optional: restrict to specific rooms (leave empty to allow DMs)
+  allowed_rooms: []
+
+# Claude Code integration
+claude:
+  # Default working directory for Claude Code sessions
+  working_directory: "/home/akunito/.dotfiles"
+  # Session timeout (hours) - sessions older than this are cleaned up
+  session_timeout_hours: 24
+  # Maximum response length before truncation
+  max_response_length: 4000
+  # Command timeout (seconds)
+  command_timeout: 300
+  # Skip permission prompts (use with caution)
+  dangerously_skip_permissions: false
+
+# Mobile-optimized response settings
+response:
+  # Prepend this context to every message
+  context_preamble: |
+    [MATRIX MOBILE INTERFACE]
+    You are responding via Matrix chat, likely on a mobile device.
+    RESPONSE RULES:
+    - Keep responses CONCISE (under 500 chars when possible)
+    - Use bullet points for lists
+    - SUMMARIZE file contents instead of showing full files
+    - For code changes, say "I made the change to X" - don't show full diffs
+    - If output would be long, ask "Want details?" instead
+    - No verbose explanations unless asked
+  # Truncation message
+  truncation_suffix: "\n\n... [Response truncated. Ask for specific parts if needed]"
+
+# Logging
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  file: "/home/akunito/.claude-matrix-bot/bot.log"
+
+# Session database
+database:
+  path: "/home/akunito/.claude-matrix-bot/sessions.db"

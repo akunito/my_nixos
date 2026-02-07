@@ -14,6 +14,7 @@ in
 {
   imports = [
     (modulesPath + "/virtualisation/proxmox-lxc.nix")
+    ../../system/shell/env-profile.nix
     ../../system/hardware/time.nix
     ../../system/security/firewall.nix
     ../../system/security/fail2ban.nix
@@ -38,6 +39,7 @@ in
   ++ lib.optional (systemSettings.prometheusSnmpExporterEnable or false) ../../system/app/prometheus-snmp.nix
   ++ lib.optional (systemSettings.prometheusGraphiteEnable or false) ../../system/app/prometheus-graphite.nix
   ++ lib.optional (systemSettings.prometheusPveBackupEnable or false) ../../system/app/prometheus-pve-backup.nix
+  ++ lib.optional (systemSettings.prometheusPfsenseBackupEnable or false) ../../system/app/prometheus-pfsense-backup.nix
   ++ lib.optional (systemSettings.cloudflaredEnable or false) ../../system/app/cloudflared.nix
   ++ lib.optional (systemSettings.acmeEnable or false) ../../system/security/acme.nix
   # Centralized database server modules
@@ -47,7 +49,9 @@ in
   ++ lib.optional (systemSettings.redisServerEnable or false) ../../system/app/redis-server.nix
   ++ lib.optional ((systemSettings.postgresqlBackupEnable or false) || (systemSettings.mariadbBackupEnable or false)) ../../system/app/database-backup.nix
   # Database secrets deployment (from git-crypt encrypted secrets/domains.nix)
-  ++ lib.optional ((systemSettings.postgresqlServerEnable or false) || (systemSettings.mariadbServerEnable or false) || (systemSettings.redisServerEnable or false)) ../../system/app/database-secrets.nix;
+  ++ lib.optional ((systemSettings.postgresqlServerEnable or false) || (systemSettings.mariadbServerEnable or false) || (systemSettings.redisServerEnable or false)) ../../system/app/database-secrets.nix
+  # Tailscale/Headscale mesh VPN
+  ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix;
 
   # LXC containers don't need bootloaders - explicitly disable
   boot.loader.systemd-boot.enable = false;

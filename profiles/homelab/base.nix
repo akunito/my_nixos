@@ -13,6 +13,7 @@ in
 {
   imports = [
     ../../system/hardware-configuration.nix
+    ../../system/shell/env-profile.nix
     ../../system/hardware/power.nix # Power management
     ../../system/hardware/time.nix # Network time sync
     ../../system/hardware/nfs_server.nix # NFS share directories over network

@@ -13,6 +13,7 @@ in
   systemSettings = base.systemSettings // {
     hostname = "nixosLabaku";
     profile = "proxmox-lxc"; # Use LXC profile base
+    envProfile = "LXC_HOME"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_HOME -s -u";
     serverEnv = "PROD"; # Production environment
 
@@ -131,6 +132,13 @@ in
     backupMonitoringOnCalendar = "hourly"; # Check backup status every hour
     backupMonitoringRepo = "/mnt/DATA_4TB/backups/NixOS_homelab/Home.restic/";
     backupMonitoringPasswordFile = "/home/akunito/myScripts/restic.key";
+
+    # ============================================================================
+    # PFSENSE BACKUP (Daily config backup via SSH)
+    # ============================================================================
+    pfsenseBackupEnable = true;
+    pfsenseBackupOnCalendar = "daily"; # Daily backup
+    pfsenseBackupDir = "/mnt/DATA_4TB/backups/pfsense";
 
     systemStable = true; # LXC_HOME uses stable
   };

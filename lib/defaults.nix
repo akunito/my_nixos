@@ -308,6 +308,11 @@
     # === PVE Backup Monitoring (queries Proxmox API for backup status) ===
     prometheusPveBackupEnable = false;
 
+    # === pfSense Backup Monitoring (checks backup files on Proxmox NFS) ===
+    prometheusPfsenseBackupEnable = false;
+    prometheusPfsenseBackupProxmoxHost = "192.168.8.82";
+    prometheusPfsenseBackupPath = "/mnt/pve/proxmox_backups/pfsense";
+
     # === SNMP Exporter (pfSense/network devices) ===
     prometheusSnmpExporterEnable = false;
     prometheusSnmpCommunity = "";  # SNMP community string
@@ -440,6 +445,10 @@
 
     # Server environment (DEV, TEST, PROD) - used by applications/docker to detect environment
     serverEnv = "DEV"; # Default to DEV, profiles override as needed
+
+    # Environment profile variable - used by Claude Code for context awareness
+    # This identifies which profile/machine is running, enabling remote operations
+    envProfile = "unknown"; # Default, overridden per profile (e.g., "DESK", "LXC_HOME")
 
     # System defaults
     swapFileEnable = false;
@@ -600,8 +609,12 @@
     # Home packages - empty by default, profiles specify their own
     homePackages = [ ];
 
-    # Tailscale
-    tailscaleEnabled = false;
+    # Tailscale/Headscale mesh networking
+    tailscaleEnable = false; # Enable Tailscale client
+    tailscaleAdvertiseRoutes = []; # Subnets to advertise as exit routes (e.g., ["192.168.8.0/24"])
+    tailscaleLoginServer = ""; # Custom login server URL (for Headscale, e.g., "https://headscale.example.com")
+    tailscaleExitNode = false; # Act as exit node for internet traffic
+    tailscaleAcceptRoutes = false; # Accept advertised routes from other nodes
 
     # ZSH prompt defaults
     zshinitContent = ''

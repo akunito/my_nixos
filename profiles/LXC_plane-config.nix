@@ -7,6 +7,7 @@ in
 {
   systemSettings = base.systemSettings // {
     hostname = "planePROD-nixos";
+    envProfile = "LXC_plane"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_plane -s -u";
     systemStateVersion = "25.11";
     serverEnv = "PROD"; # Production environment

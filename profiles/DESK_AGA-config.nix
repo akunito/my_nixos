@@ -14,6 +14,7 @@ in
     # MACHINE IDENTITY - Override Required
     # ============================================================================
     hostname = "nixosaga";
+    envProfile = "DESK_AGA"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK_AGA -s -u";
 
     # Network - keep placeholders until actual IPs provided

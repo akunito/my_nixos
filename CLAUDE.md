@@ -46,6 +46,7 @@ lib/defaults.nix (global defaults)
     │                        ◄─── LXC_liftcraftTEST-config.nix
     │                        ◄─── LXC_monitoring-config.nix
     │                        ◄─── LXC_proxy-config.nix
+    │                        ◄─── LXC_tailscale-config.nix
     │
     └─► darwin/configuration.nix (macOS/nix-darwin)
              │
@@ -271,6 +272,8 @@ Before answering any architectural or implementation question:
   - LXC_portfolioprod (192.168.8.88): `~/portfolioPROD/`
   - LXC_liftcraftTEST (192.168.8.87): `~/leftyworkout_TEST/`
   - LXC_database (192.168.8.103): PostgreSQL + Redis (NixOS native services)
+  - LXC_matrix (192.168.8.104): `~/.homelab/matrix/` (Synapse, Element), `~/.claude-matrix-bot/` (Claude bot)
+  - LXC_tailscale (192.168.8.105): Tailscale subnet router (NixOS native services)
   - VPS (ssh -p 56777 root@172.26.5.155):
     - Repository: `/root/vps_wg/` (git-crypt encrypted, `git@github.com:akunito/vps_wg.git`)
     - Git-crypt key: `/root/.git-crypt-key`
@@ -323,6 +326,7 @@ Before answering any architectural or implementation question:
   | 1 | Nextcloud | `'dbindex' => 1` in config.php |
   | 2 | LiftCraft | `/2` in REDIS_URL |
   | 3 | Portfolio | `/3` in REDIS_URL |
+  | 4 | Matrix Synapse | `dbid: 4` in homeserver.yaml |
 - **Connection URL format**: `redis://:PASSWORD@192.168.8.103:6379/DB_NUMBER`
 - **Password location**: `secrets/domains.nix` (git-crypt encrypted)
 - **Troubleshooting**: Use `check-redis` skill or connect via LXC_HOME's redis-local container:
@@ -432,6 +436,86 @@ Before answering any architectural or implementation question:
   - Install: `pkg-static add https://github.com/pfrest/pfSense-pkg-RESTAPI/releases/download/v2.4.3/pfSense-2.7.2-pkg-RESTAPI.pkg`
   - Must reinstall after pfSense updates (unofficial package)
   - Check [releases](https://github.com/pfrest/pfSense-pkg-RESTAPI/releases) for version compatibility
+
+### Environment Awareness (CRITICAL - applies to: all profiles, remote operations)
+
+- **ENV_PROFILE variable**: Every profile sets `envProfile` in `systemSettings`, which gets exported as `ENV_PROFILE`
+- **Check before changes**: Before making ANY changes, determine the current environment:
+  ```bash
+  echo $ENV_PROFILE
+  ```
+- **Profile identification**:
+  | ENV_PROFILE | Machine | Type | IP |
+  |-------------|---------|------|-----|
+  | DESK | nixosaku | Desktop | 192.168.8.96 |
+  | LAPTOP_L15 | nixolaptopaku | Laptop | 192.168.8.92 |
+  | LXC_HOME | nixosLabaku | LXC Container | 192.168.8.80 |
+  | LXC_database | database | LXC Container | 192.168.8.103 |
+  | LXC_monitoring | monitoring | LXC Container | 192.168.8.85 |
+  | LXC_proxy | proxy | LXC Container | 192.168.8.102 |
+  | LXC_matrix | matrix | LXC Container | 192.168.8.104 |
+  | LXC_tailscale | tailscale | LXC Container | 192.168.8.105 |
+  | VMHOME | nixosLabaku | VM | 192.168.8.80 |
+
+- **Remote operations**: When working from a remote node (e.g., LXC_matrix via Matrix bot):
+  ```bash
+  # SSH to other nodes for operations
+  ssh -A akunito@192.168.8.50  # DESK
+  ssh -A akunito@192.168.8.80  # LXC_HOME
+  ssh -A akunito@192.168.8.103 # LXC_database
+  ssh -A root@192.168.8.82     # Proxmox
+  ```
+- **Context-aware behavior**:
+  - If `ENV_PROFILE == "LXC_matrix"`: Use SSH for operations on other nodes
+  - If `ENV_PROFILE == "DESK"` or `"LAPTOP_*"`: Direct access to local files
+  - Always verify profile before destructive operations
+
+### Matrix Server (applies to: `profiles/LXC_matrix-config.nix`, `docs/infrastructure/services/matrix.md`)
+
+- **Read first**: `docs/infrastructure/services/matrix.md`
+- **SSH access**: `ssh -A akunito@192.168.8.104`
+- **Services**:
+  - Matrix Synapse: 8008 (homeserver)
+  - Element Web: 8080 (client)
+  - Claude Bot: Systemd user service
+- **Database**: PostgreSQL `matrix` on LXC_database:5432
+- **Redis**: db4 on LXC_database:6379
+- **Docker compose location**: `~/.homelab/matrix/`
+- **Verify services**:
+  ```bash
+  docker ps  # Synapse + Element containers
+  systemctl --user status claude-matrix-bot  # Bot service
+  curl http://localhost:8008/_matrix/client/versions  # Synapse health
+  ```
+
+### Tailscale/Headscale mesh VPN (applies to: `profiles/LXC_tailscale-config.nix`, `system/app/tailscale.nix`, `docs/infrastructure/services/tailscale-headscale.md`)
+
+- **Read first**: `docs/infrastructure/services/tailscale-headscale.md`
+- **Use skill**: `/manage-tailscale` for operations
+- **Components**:
+  - **Headscale (VPS)**: Coordination server at `https://headscale.akunito.com`
+  - **LXC_tailscale**: Subnet router at 192.168.8.105 (CTID 205)
+- **SSH access**:
+  - Headscale: `ssh -A -p 56777 root@172.26.5.155`
+  - Subnet router: `ssh -A akunito@192.168.8.105`
+- **Advertised routes**: 192.168.8.0/24 (LAN), 192.168.20.0/24 (Storage)
+- **Key commands**:
+  ```bash
+  # Check Headscale nodes
+  docker exec headscale headscale nodes list
+  # Check routes
+  docker exec headscale headscale routes list
+  # Enable a route
+  docker exec headscale headscale routes enable -r <id>
+  # Check Tailscale status on subnet router
+  ssh -A akunito@192.168.8.105 "tailscale status"
+  ```
+- **NixOS configuration flags**:
+  - `tailscaleEnable`: Enable Tailscale client
+  - `tailscaleLoginServer`: Headscale URL
+  - `tailscaleAdvertiseRoutes`: Subnets to advertise
+  - `tailscaleExitNode`: Act as exit node
+  - `tailscaleAcceptRoutes`: Accept routes from other nodes
 
 ### Infrastructure audits (applies to: `docs/infrastructure/audits/`)
 

@@ -35,6 +35,8 @@ ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard orig
 | LXC_liftcraftTEST | 192.168.8.87 | Test environment |
 | LXC_monitoring | 192.168.8.85 | Prometheus & Grafana |
 | LXC_database | 192.168.8.103 | PostgreSQL, MariaDB & Redis |
+| LXC_matrix | 192.168.8.104 | Matrix Synapse, Element & Claude Bot |
+| LXC_tailscale | 192.168.8.105 | Tailscale subnet router (mesh VPN) |
 
 ## Examples
 
@@ -48,6 +50,18 @@ ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git fetch origin && git reset --
 
 ```bash
 ssh -A akunito@192.168.8.85 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_monitoring -s -u -q"
+```
+
+### Deploy to LXC_matrix
+
+```bash
+ssh -A akunito@192.168.8.104 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_matrix -s -u -q"
+```
+
+### Deploy to LXC_tailscale
+
+```bash
+ssh -A akunito@192.168.8.105 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_tailscale -s -u -q"
 ```
 
 ### Deploy to Multiple Containers

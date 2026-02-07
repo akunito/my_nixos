@@ -7,6 +7,7 @@
 {
   imports = [
     ../../system/darwin/defaults.nix
+    ../../system/darwin/env-profile.nix
     ../../system/darwin/homebrew.nix
     ../../system/darwin/keyboard.nix
     ../../system/darwin/security.nix

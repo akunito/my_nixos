@@ -1,0 +1,94 @@
+# Matrix Synapse + Element Web Docker Compose
+# Deploy to: ~/.homelab/matrix/docker-compose.yml on LXC_matrix (192.168.8.104)
+#
+# Prerequisites:
+# 1. Generate signing key: docker run --rm -v ./data:/data matrixdotorg/synapse:latest generate
+# 2. Create .env file with credentials (see .env.template)
+# 3. Ensure PostgreSQL database 'matrix' exists on LXC_database
+# 4. Ensure Redis db4 is available on LXC_database
+
+version: "3.8"
+
+services:
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: synapse
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+      - ./config/homeserver.yaml:/data/homeserver.yaml:ro
+      - ./config/log.config:/data/log.config:ro
+    environment:
+      - SYNAPSE_SERVER_NAME=${SYNAPSE_SERVER_NAME:-matrix.local.akunito.com}
+      - SYNAPSE_REPORT_STATS=${SYNAPSE_REPORT_STATS:-no}
+      - TZ=Europe/Madrid
+    ports:
+      - "8008:8008"   # Client-Server API
+      - "9000:9000"   # Prometheus metrics
+    networks:
+      - matrix-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/_matrix/client/versions"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      - redis-check
+
+  element-web:
+    image: vectorim/element-web:latest
+    container_name: element-web
+    restart: unless-stopped
+    volumes:
+      - ./element-config/config.json:/app/config.json:ro
+    environment:
+      - TZ=Europe/Madrid
+    ports:
+      - "8080:80"
+    networks:
+      - matrix-net
+    depends_on:
+      synapse:
+        condition: service_healthy
+
+  # Redis connectivity check (ensures LXC_database Redis is reachable)
+  redis-check:
+    image: redis:alpine
+    container_name: redis-check
+    command: >
+      sh -c "until redis-cli -h ${REDIS_HOST:-192.168.8.103} -a ${REDIS_PASSWORD} -n 4 PING 2>/dev/null | grep -q PONG; do
+        echo 'Waiting for Redis...';
+        sleep 2;
+      done;
+      echo 'Redis is ready!'"
+    environment:
+      - REDIS_HOST=${REDIS_HOST:-192.168.8.103}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - matrix-net
+    restart: "no"
+
+  # cAdvisor for container metrics (scraped by Prometheus on LXC_monitoring)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "9092:8080"
+    networks:
+      - matrix-net
+
+networks:
+  matrix-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16

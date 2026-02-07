@@ -552,6 +552,55 @@ in
             ];
           }
           {
+            name = "matrix_alerts";
+            rules = [
+              # Synapse down
+              {
+                alert = "SynapseDown";
+                expr = ''up{job="synapse_app"} == 0'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Matrix Synapse is down";
+                  description = "Cannot scrape Synapse metrics - Matrix server may be down";
+                };
+              }
+              # Synapse high memory usage
+              {
+                alert = "SynapseHighMemory";
+                expr = ''synapse_process_resident_memory_bytes > 2e9'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Synapse using high memory";
+                  description = "Matrix Synapse is using {{ $value | humanize1024 }} of memory";
+                };
+              }
+              # Federation queue backing up
+              {
+                alert = "SynapseFederationQueueHigh";
+                expr = ''synapse_federation_send_events_queue > 1000'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Federation queue backing up";
+                  description = "Matrix federation queue has {{ $value }} events pending";
+                };
+              }
+              # High request latency
+              {
+                alert = "SynapseHighLatency";
+                expr = ''histogram_quantile(0.99, rate(synapse_http_server_response_time_seconds_bucket[5m])) > 5'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Synapse request latency high";
+                  description = "99th percentile request latency is {{ $value | printf \"%.2f\" }} seconds";
+                };
+              }
+            ];
+          }
+          {
             name = "database_alerts";
             rules = [
               # PostgreSQL exporter down

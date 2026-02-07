@@ -322,6 +322,8 @@ For containers with encrypted root, the unlock script is at:
 | 89 | LXC_mailer | 192.168.8.89 | Postfix/Kuma |
 | 102 | LXC_proxy | 192.168.8.102 | NPM/Cloudflared |
 | 204 | LXC_database | 192.168.8.103 | PostgreSQL/MariaDB/Redis |
+| 251 | LXC_matrix | 192.168.8.104 | Matrix Synapse/Element/Claude Bot |
+| 205 | LXC_tailscale | 192.168.8.105 | Tailscale subnet router |
 | 285 | Template | - | NixOS template (encrypted) |
 
 ---

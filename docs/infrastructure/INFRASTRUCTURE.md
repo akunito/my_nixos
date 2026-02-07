@@ -108,6 +108,15 @@ The Proxmox server hosts all LXC containers running NixOS:
 │  │   mgmt)     │ │             │ │             │ │   (central) │           │
 │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘           │
 │                                                                             │
+│  ┌─────────────┐                                                            │
+│  │ LXC_matrix  │                                                            │
+│  │192.168.8.104│                                                            │
+│  │             │                                                            │
+│  │ • Synapse   │                                                            │
+│  │ • Element   │                                                            │
+│  │ • Claude Bot│                                                            │
+│  └─────────────┘                                                            │
+│                                                                             │
 │  Storage: LUKS-encrypted LVM pools + NFS mounts from TrueNAS               │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -281,6 +290,7 @@ Centralized monitoring for the entire infrastructure:
 | LXC_liftcraftTEST | 192.168.8.87 | LeftyWorkout test environment (training app) | External |
 | LXC_portfolioprod | 192.168.8.88 | Personal portfolio website (Next.js) | External |
 | LXC_database | 192.168.8.103 | Centralized PostgreSQL & Redis | Internal |
+| LXC_matrix | 192.168.8.104 | Matrix Synapse, Element Web, Claude Bot | Both |
 
 ---
 
@@ -294,6 +304,7 @@ Provides centralized PostgreSQL and Redis for all application containers.
 | plane | LXC_plane (192.168.8.86) |
 | nextcloud | LXC_HOME (192.168.8.80) |
 | liftcraft_test | LXC_liftcraftTEST (192.168.8.87) |
+| matrix | LXC_matrix (192.168.8.104) |
 
 **Redis Database Allocation**:
 | DB | Service | Purpose |
@@ -302,6 +313,7 @@ Provides centralized PostgreSQL and Redis for all application containers.
 | db1 | Nextcloud | Distributed cache, file locking |
 | db2 | LiftCraft TEST | Rails cache, Action Cable |
 | db3 | Portfolio | Next.js page cache |
+| db4 | Matrix Synapse | Sessions, presence |
 
 See [Database & Redis Documentation](./services/database-redis.md) for connection details and troubleshooting.
 
@@ -479,6 +491,9 @@ All traffic encrypted end-to-end, no ports exposed to internet (except WireGuard
 | Plane | LXC_plane | 192.168.8.86:3000 | plane.akunito.com | 3000 |
 | Portfolio | LXC_portfolioprod | 192.168.8.88:3000 | info.akunito.com | 3000 |
 | LeftyWorkout | LXC_liftcraftTEST | 192.168.8.87:3000/3001 | leftyworkout-test.akunito.com | 3000 |
+| **Communication** |||||
+| Matrix Synapse | LXC_matrix | matrix.local.akunito.com | matrix.akunito.com | 8008 |
+| Element Web | LXC_matrix | element.local.akunito.com | element.akunito.com | 8080 |
 | **External (VPS)** |||||
 | WireGuard UI | VPS | - | wgui.akunito.com | 443 |
 | Uptime Kuma (External) | VPS | - | status.akunito.com | 443 |
@@ -549,7 +564,8 @@ lib/defaults.nix (global defaults)
                 ├─► LXC_liftcraftTEST-config.nix
                 ├─► LXC_portfolioprod-config.nix
                 ├─► LXC_mailer-config.nix
-                └─► LXC_database-config.nix
+                ├─► LXC_database-config.nix
+                └─► LXC_matrix-config.nix
 ```
 
 **Base Configuration** (inherited by all):
@@ -589,12 +605,14 @@ All containers update Saturday mornings (UTC):
 
 | Time | Container |
 |------|-----------|
+| 06:55 | LXC_database |
 | 07:00 | LXC_HOME, LXC_monitoring |
 | 07:05 | LXC_proxy |
 | 07:15 | LXC_plane |
 | 07:25 | LXC_liftcraftTEST |
 | 07:30 | LXC_portfolioprod |
 | 07:35 | LXC_mailer |
+| 07:40 | LXC_matrix |
 
 Updates are staggered to prevent simultaneous service disruption.
 
@@ -610,3 +628,4 @@ Updates are staggered to prevent simultaneous service disruption.
 - [Profile Feature Flags](../profile-feature-flags.md) - NixOS profile configuration
 - [VPS WireGuard Server](./services/vps-wireguard.md) - External VPS documentation
 - [Database & Redis](./services/database-redis.md) - Centralized PostgreSQL and Redis services
+- [Matrix Server](./services/matrix.md) - Matrix Synapse, Element, and Claude Bot

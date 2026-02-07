@@ -8,6 +8,7 @@
   systemSettings = {
     hostname = "nixosLabaku";
     profile = "homelab";
+    envProfile = "VMHOME"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles VMHOME -s -u";
     gpuType = "amd";
     amdLACTdriverEnable = false;

@@ -41,6 +41,7 @@ in
   systemSettings = {
     hostname = "nixosaku";
     profile = "personal";
+    envProfile = "DESK"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK -s -u";
     gpuType = "amd";
     enableDesktopPerformance = true; # Enable desktop-optimized I/O scheduler and performance tuning

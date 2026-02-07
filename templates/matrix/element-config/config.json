@@ -1,0 +1,88 @@
+{
+    "default_server_config": {
+        "m.homeserver": {
+            "base_url": "https://matrix.local.akunito.com",
+            "server_name": "akunito.com"
+        },
+        "m.identity_server": {
+            "base_url": "https://vector.im"
+        }
+    },
+    "brand": "Element",
+    "integrations_ui_url": "",
+    "integrations_rest_url": "",
+    "integrations_widgets_urls": [],
+    "bug_report_endpoint_url": "",
+    "show_labs_settings": true,
+    "features": {
+        "feature_mjolnir": true,
+        "feature_spotlight": true,
+        "feature_video_rooms": true,
+        "feature_element_call_video_rooms": true,
+        "feature_group_calls": true
+    },
+    "room_directory": {
+        "servers": [
+            "akunito.com",
+            "matrix.org"
+        ]
+    },
+    "setting_defaults": {
+        "breadcrumbs": true,
+        "showTwelveHourTimestamps": false,
+        "alwaysShowTimestamps": true,
+        "showTypingNotifications": true,
+        "showReadReceipts": true,
+        "showJoinLeaves": false,
+        "showAvatarChanges": false,
+        "showDisplaynameChanges": false,
+        "showImages": true,
+        "urlPreviewsEnabled": true,
+        "autoplayGifs": false,
+        "autoplayVideo": false,
+        "MessageComposerInput.autoReplaceEmoji": true,
+        "sendTypingNotifications": true,
+        "MessageComposerInput.showStickersButton": true,
+        "MessageComposerInput.insertTrailingColon": true,
+        "Pill.shouldShowPillAvatar": true,
+        "TextualBody.enableBigEmoji": true,
+        "TagPanel.enableTagPanel": true,
+        "enableWidgetScreenshots": false,
+        "RoomList.backgroundImage": null,
+        "promptBeforeInviteUnknownUsers": true,
+        "showHiddenEventsInTimeline": false,
+        "lowBandwidth": false,
+        "fallbackICEServerAllowed": false,
+        "showNicknameChanges": false,
+        "developerMode": false,
+        "UIFeature.urlPreviews": true,
+        "UIFeature.widgets": true,
+        "UIFeature.voip": true,
+        "UIFeature.feedback": false,
+        "UIFeature.registration": false,
+        "UIFeature.passwordReset": true,
+        "UIFeature.shareQrCode": true,
+        "UIFeature.shareSocial": false,
+        "UIFeature.identityServer": true,
+        "UIFeature.thirdPartyId": true,
+        "UIFeature.flair": true,
+        "UIFeature.communities": false,
+        "UIFeature.advancedSettings": true,
+        "UIFeature.roomHistorySettings": true,
+        "UIFeature.TimelineEnableRelativeDates": true,
+        "UIFeature.BulkUnverifiedSessionsReminder": true
+    },
+    "default_theme": "dark",
+    "default_country_code": "ES",
+    "sso_redirect_options": {
+        "immediate": false
+    },
+    "posthog": {
+        "project_api_key": "",
+        "api_host": ""
+    },
+    "privacy_policy_url": "",
+    "terms_and_conditions_links": [],
+    "embeddedPages": {},
+    "map_style_url": "https://api.maptiler.com/maps/streets/style.json?key=fU3vlMsMn4Jb6dnEIFsx"
+}

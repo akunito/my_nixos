@@ -7,6 +7,7 @@ in
 {
   systemSettings = base.systemSettings // {
     hostname = "portfolioprod";
+    envProfile = "LXC_portfolioprod"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LXC_portfolioprod -s -u";
     systemStateVersion = "25.11";
     serverEnv = "PROD"; # Production environment

@@ -13,6 +13,7 @@ in
   systemSettings = base.systemSettings // {
     hostname = "nixolaptopaku";
     profile = "personal";
+    envProfile = "LAPTOP_L15"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_L15 -s -u";
     gpuType = "intel";
 
