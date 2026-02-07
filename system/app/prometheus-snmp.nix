@@ -53,9 +53,9 @@ let
     "    security_level: authPriv\n" +
     "    username: ${snmpv3User}\n" +
     "    auth_protocol: SHA\n" +
-    "    auth_passphrase: ${snmpv3AuthPass}\n" +
+    "    password: ${snmpv3AuthPass}\n" +
     "    priv_protocol: AES\n" +
-    "    priv_passphrase: ${snmpv3PrivPass}\n"
+    "    priv_password: ${snmpv3PrivPass}\n"
   else
     "  pfsense_v2:\n" +
     "    community: ${snmpCommunity}\n" +
