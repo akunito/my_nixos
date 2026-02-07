@@ -147,6 +147,12 @@ lib.mkIf cfg.enable {
     runAsLocalSuperUser = true;
     # Config file with socket connection settings
     configFile = "/etc/prometheus-mysqld-exporter.cnf";
+    # Enable per-database metrics collectors
+    extraFlags = [
+      "--collect.info_schema.tables"
+      "--collect.info_schema.innodb_tablespaces"
+      "--collect.info_schema.processlist"
+    ];
   };
 
   # Open firewall ports
