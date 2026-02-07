@@ -242,7 +242,7 @@ let
           - name: pfStateTableRemovals
             oid: 1.3.6.1.4.1.12325.1.200.1.3.4
             type: counter
-  '');
+  '';
 in
 lib.mkIf (systemSettings.prometheusSnmpExporterEnable or false) {
   services.prometheus.exporters.snmp = {
