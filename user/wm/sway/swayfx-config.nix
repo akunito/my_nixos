@@ -157,7 +157,8 @@ in
         {
           timeout = 900; # 15 minutes - turn off displays (12 + 3)
           command = "${pkgs.sway}/bin/swaymsg 'output * power off'";
-          resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * power on'";
+          # Restore outputs AND wallpaper when monitors wake from power-off
+          resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * power on' && ${pkgs.systemd}/bin/systemctl --user start swww-restore.service";
         }
       ]
       ++ [

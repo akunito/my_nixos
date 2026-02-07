@@ -7,7 +7,9 @@ set -euo pipefail
 GRACE_PERIOD=4
 
 # Show notification that lock is coming
-notify-send -u critical -t 4000 "Screen Locking" "Locking in ${GRACE_PERIOD} seconds... (move mouse to cancel)" -h string:x-canonical-private-synchronous:screenlock
+# Use -u normal (not critical) so the timeout actually works in swaync
+# Critical notifications ignore timeout and stay until dismissed
+notify-send -u normal -t 5000 "Screen Locking" "Locking in ${GRACE_PERIOD} seconds... (move mouse to cancel)" -h string:x-canonical-private-synchronous:screenlock
 
 # Get initial idle time (in milliseconds) from Sway
 get_idle_time() {

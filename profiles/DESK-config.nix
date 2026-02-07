@@ -353,8 +353,10 @@ in
           ];
           # CRITICAL: Initialize swaysome daemon (workspace groups starting at 1).
           # Workspace-to-output assignments are now handled declaratively in swayfx-config.nix.
+          # Restore wallpaper when kanshi applies this profile (monitor connect/reconnect/wake).
           exec = [
             "$HOME/.nix-profile/bin/swaysome init 1"
+            "systemctl --user start swww-restore.service"
           ];
         };
       }
@@ -375,8 +377,10 @@ in
               }
             )
           ];
+          # Restore wallpaper when kanshi applies this profile (monitor connect/reconnect/wake).
           exec = [
             "$HOME/.nix-profile/bin/swaysome init 1"
+            "systemctl --user start swww-restore.service"
           ];
         };
       }

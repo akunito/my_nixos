@@ -186,6 +186,22 @@
       };
     };
 
+    # Swayidle: bind to sway-session.target with proper environment.
+    # Home Manager's services.swayidle uses graphical-session.target without WAYLAND_DISPLAY,
+    # causing "Unable to connect to compositor" errors.
+    systemd.user.services.swayidle = {
+      Unit = {
+        PartOf = [ "sway-session.target" ];
+        After = [ "sway-session.target" ];
+      };
+      Service = {
+        EnvironmentFile = [ "-%t/sway-session.env" ];
+      };
+      Install = {
+        WantedBy = lib.mkForce [ "sway-session.target" ];
+      };
+    };
+
     systemd.user.services."libinput-gestures" = lib.mkIf (
       lib.hasInfix "laptop" (lib.toLower systemSettings.hostname) ||
       lib.hasInfix "yoga" (lib.toLower systemSettings.hostname)
