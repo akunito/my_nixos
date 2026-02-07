@@ -53,22 +53,15 @@ in
     ];
     allowedUDPPorts = [ ];
 
-    # System packages (minimal - database services are NixOS modules)
+    # System packages (extends base with database-specific packages)
     systemPackages = pkgs: pkgs-unstable:
-      with pkgs; [
-        vim
-        wget
-        zsh
-        git
-        git-crypt
-        btop
-        fzf
-        tldr
-        curl # For healthchecks
+      (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
+        pkgs.curl # For healthchecks
         # Database CLI tools
-        postgresql_17
-        mariadb
-        redis
+        pkgs.postgresql_17
+        pkgs.mariadb
+        pkgs.redis
+        # Note: vim, wget, zsh, git, git-crypt, rclone, btop, fzf, tldr, home-manager, jq, python3 already in base
       ];
 
     # ============================================================================

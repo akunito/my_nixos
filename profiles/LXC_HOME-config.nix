@@ -61,23 +61,20 @@ in
     havegedEnable = false; # Redundant on modern kernels
     fail2banEnable = false; # Behind firewall, nginx in Docker
 
-    # System packages (VMHOME set + extras for homelab)
+    # System packages (extends base with LXC_HOME-specific packages)
     systemPackages = pkgs: pkgs-unstable:
-      with pkgs; [
+      (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
         # LXC_HOME-specific packages (headless server)
-        rclone
-        cryptsetup
-        gocryptfs
-        traceroute
-        iproute2
-        openssl
-        restic
-        zim-tools
-        p7zip
-        nfs-utils # Keep for debugging NFS issues
-        btop
-        fzf
-        tldr
+        pkgs.cryptsetup
+        pkgs.gocryptfs
+        pkgs.traceroute
+        pkgs.iproute2
+        pkgs.openssl
+        pkgs.restic
+        pkgs.zim-tools
+        pkgs.p7zip
+        pkgs.nfs-utils # Keep for debugging NFS issues
+        # Note: vim, wget, zsh, git, git-crypt, rclone, btop, fzf, tldr, home-manager, jq, python3 already in base
       ];
 
     # ============================================================================

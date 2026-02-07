@@ -33,18 +33,11 @@ in
     ];
     allowedUDPPorts = [ ];
 
-    # System packages (minimal - monitoring services are NixOS modules)
+    # System packages (extends base with monitoring-specific packages)
     systemPackages = pkgs: pkgs-unstable:
-      with pkgs; [
-        vim
-        wget
-        zsh
-        git
-        git-crypt
-        btop
-        fzf
-        tldr
-        curl # For healthchecks
+      (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
+        pkgs.curl # For healthchecks
+        # Note: vim, wget, zsh, git, git-crypt, rclone, btop, fzf, tldr, home-manager, jq, python3 already in base
       ];
 
     # ============================================================================
