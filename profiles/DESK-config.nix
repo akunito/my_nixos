@@ -279,6 +279,11 @@ in
     swaybgPlusEnable = false; # Disable swaybg+ (using swww instead)
     swayIdleDisableMonitorPowerOff = true; # Disable monitor power-off (Samsung Odyssey G70NC DPMS wake issue)
 
+    # === Monitor Management (Imperative GUI) ===
+    nwgDisplaysEnable = true; # Visual monitor layout GUI (Hyper+Shift+D)
+    workspaceGroupsGuiEnable = true; # Workspace groups assignment GUI (Hyper+`)
+    # kanshiImperativeMode = false; # Keep declarative mode for DESK (kanshi config in Nix)
+
     # === System Services & Features ===
     sambaEnable = true; # Enable Samba file sharing
     sunshineEnable = true; # Enable Sunshine game streaming

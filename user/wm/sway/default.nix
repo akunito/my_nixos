@@ -34,6 +34,8 @@
     ./session-env.nix
     ./session-systemd.nix
     ./kanshi.nix
+    ./nwg-displays.nix
+    ./workspace-groups-gui.nix
     ./startup-apps.nix
     ./swayfx-config.nix
     ./extras.nix

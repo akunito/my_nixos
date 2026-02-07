@@ -420,6 +420,11 @@
     # Sway/SwayFX idle configuration
     swayIdleDisableMonitorPowerOff = false; # Disable monitor power-off timeout (useful for monitors with DPMS wake issues)
 
+    # Monitor management (imperative GUI approach)
+    nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config
+    workspaceGroupsGuiEnable = false;    # Install workspace groups GUI
+    kanshiImperativeMode = false;        # User-managed kanshi config (not Nix)
+
     # Font defaults - will be computed based on systemStable in flake-base.nix
     # This is just a placeholder
     fonts = [ ];
@@ -456,6 +461,11 @@
 
     # Homelab docker stacks - start docker-compose stacks on boot
     homelabDockerEnable = false; # Enable systemd service for homelab docker stacks
+
+    # pfSense backup configuration
+    pfsenseBackupEnable = false; # Enable daily pfSense config backup
+    pfsenseBackupOnCalendar = "daily"; # Backup schedule (systemd calendar format)
+    pfsenseBackupDir = "/mnt/DATA_4TB/backups/pfsense"; # Backup directory
 
     # Email notifications for auto-update failures
     notificationOnFailureEnable = false; # Enable email notifications on auto-update failure

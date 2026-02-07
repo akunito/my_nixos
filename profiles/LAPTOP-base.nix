@@ -18,6 +18,11 @@
     stylixEnable = true;
     swwwEnable = true;
 
+    # === Monitor Management (Imperative GUI) ===
+    nwgDisplaysEnable = true; # Visual monitor layout GUI (Hyper+Shift+D)
+    workspaceGroupsGuiEnable = true; # Workspace groups assignment GUI (Hyper+`)
+    kanshiImperativeMode = true; # User-managed kanshi config for laptops (more flexibility)
+
     # Power management - TLP handles everything for laptops
     powerManagement_ENABLE = false;
     power-profiles-daemon_ENABLE = false;

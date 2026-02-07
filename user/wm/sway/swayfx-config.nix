@@ -389,6 +389,12 @@ in
           # Power menu
           "${hyper}+Shift+BackSpace" = "exec rofi -show power -show-icons";
 
+          # Monitor management GUIs (when enabled)
+          # nwg-displays: Visual monitor layout, position, scale, resolution
+          "${hyper}+Shift+d" = "exec nwg-displays";
+          # workspace-groups-gui: Assign swaysome workspace groups to monitors
+          "${hyper}+grave" = "exec workspace-groups-gui";
+
           # Toggle SwayFX default bar (swaybar) - disabled by default, can be toggled manually
           "${hyper}+Shift+Home" = "exec ${config.home.homeDirectory}/.config/sway/scripts/swaybar-toggle.sh";
 
@@ -914,6 +920,11 @@ in
       # CRITICAL: Alt key for Plasma-like window manipulation
       # Alt+drag moves windows, Alt+right-drag resizes windows
       floating_modifier Mod1
+
+      # Include user-managed output configuration (from nwg-displays)
+      # These files are optional - Sway continues if they don't exist
+      include ~/.config/sway/outputs
+      include ~/.config/sway/workspaces
 
       # Output layout is managed dynamically by kanshi (official wlroots/Sway output profile manager).
       # This avoids phantom pointer/workspace regions on monitors that are usually OFF.
