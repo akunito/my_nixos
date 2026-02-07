@@ -414,12 +414,13 @@ Before answering any architectural or implementation question:
   - Security score: 7/10 (SNMPv2c and DNSSEC are main concerns)
   - Performance score: 9/10 (excellent headroom)
   - Reliability score: 7/10 (backup automation needed)
+- **Completed remediations** (pfSense - 2026-02-07):
+  1. ✅ **High**: SEC-001 - Upgraded SNMP to SNMPv3 (NET-SNMP + NixOS config)
+  2. ✅ **Medium**: SEC-002 - DNSSEC enabled in DNS Resolver
+  3. ✅ **Medium**: REL-002 - unbound-control enabled via custom options
 - **Open remediations** (pfSense):
-  1. **High**: SEC-001 - Upgrade SNMP to SNMPv3
-  2. **Medium**: REL-001 - Configure AutoConfigBackup
-  3. **Medium**: SEC-002 - Enable DNSSEC
-  4. **Medium**: REL-002 - Enable unbound-control
-  5. **Low**: SEC-003 - Restrict anti-lockout rule to admin IPs
+  1. **Medium**: REL-001 - Configure AutoConfigBackup (not in CE, use local backup script)
+  2. **Low**: SEC-003 - Restrict anti-lockout rule to admin IPs
 - **Performance baseline** (2026-02-04):
   - State table: 770 / 1.6M (0.05% usage)
   - DNS cold query: 33ms, cached: 0ms
