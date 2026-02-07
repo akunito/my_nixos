@@ -110,7 +110,8 @@ case $hostname in
         # gocryptfs -o allow_other /mnt/NFS_services/crypt /mnt/NFS_services/plain
 
         echo -e "Starting services"
-        docker-compose -f /home/akunito/.homelab/homelab/docker-compose.yml up -d nextcloud-db nextcloud-redis nextcloud-app nextcloud-cron syncthing-app freshrss obsidian-remote calibre-web-automated 
+        # Note: nextcloud-db and nextcloud-redis removed - now hosted on LXC_database (192.168.8.103)
+        docker-compose -f /home/akunito/.homelab/homelab/docker-compose.yml up -d nextcloud-app nextcloud-cron syncthing-app freshrss obsidian-remote calibre-web-automated emulatorjs redis-local 
         docker-compose -f /home/akunito/.homelab/media/docker-compose.yml up -d
         docker-compose -f /home/akunito/.homelab/nginx-proxy/docker-compose.yml up -d
         docker-compose -f /home/akunito/.homelab/unifi/docker-compose.yml up -d
