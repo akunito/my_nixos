@@ -7,6 +7,9 @@
   ...
 }:
 
+let
+  secrets = import ../../secrets/domains.nix;
+in
 {
   imports = [
     ../../system/hardware-configuration.nix
@@ -44,6 +47,7 @@
   nix.package = pkgs.nixVersions.stable;
   nix.extraOptions = ''
     experimental-features = nix-command flakes
+    access-tokens = github.com=${secrets.githubAccessToken}
   '';
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
