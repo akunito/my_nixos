@@ -45,25 +45,27 @@ let
   useSnmpv3 = snmpv3User != null && snmpv3AuthPass != null && snmpv3PrivPass != null;
   authName = if useSnmpv3 then "pfsense_v3" else "pfsense_v2";
 
+  # Auth configuration - use explicit string to preserve exact indentation
+  # (Nix multiline strings strip common leading whitespace, breaking YAML indentation)
+  authConfig = if useSnmpv3 then
+    "  pfsense_v3:\n" +
+    "    version: 3\n" +
+    "    security_level: authPriv\n" +
+    "    username: ${snmpv3User}\n" +
+    "    auth_protocol: SHA\n" +
+    "    auth_passphrase: ${snmpv3AuthPass}\n" +
+    "    priv_protocol: AES\n" +
+    "    priv_passphrase: ${snmpv3PrivPass}\n"
+  else
+    "  pfsense_v2:\n" +
+    "    community: ${snmpCommunity}\n" +
+    "    version: 2\n";
+
   # Generate snmp.yml with auth config and metric definitions
   # snmp_exporter requires explicit metric definitions to convert OIDs to Prometheus metrics
-  snmpConfig = pkgs.writeText "snmp.yml" (''
+  snmpConfig = pkgs.writeText "snmp.yml" ''
 auths:
-'' + (if useSnmpv3 then ''
-  pfsense_v3:
-    version: 3
-    security_level: authPriv
-    username: ${snmpv3User}
-    auth_protocol: SHA
-    auth_passphrase: ${snmpv3AuthPass}
-    priv_protocol: AES
-    priv_passphrase: ${snmpv3PrivPass}
-'' else ''
-  pfsense_v2:
-    community: ${snmpCommunity}
-    version: 2
-'') + ''
-modules:
+${authConfig}modules:
   # pfSense specific - PF firewall stats + interface metrics
   pfsense:
     timeout: 20s
