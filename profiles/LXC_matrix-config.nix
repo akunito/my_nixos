@@ -58,6 +58,12 @@ in
         pkgs.python311Packages.aiohttp
         pkgs.python311Packages.aiosqlite
         # Note: matrix-nio installed via pip in bot virtualenv
+        # E2E encryption dependencies
+        pkgs.olm # libolm for E2E encryption
+        pkgs.cmake # Build tools for python-olm
+        pkgs.gnumake
+        pkgs.gcc
+        pkgs.pkg-config
       ];
 
     # ============================================================================
