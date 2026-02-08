@@ -606,15 +606,44 @@ fn render_node_stacks(node: &str, host: &str, stacks: &[ComposeStack]) -> String
             </div>
         </div>
 
-        <!-- Action Result Area -->
-        <div id="action-result" class="mb-6"></div>
-
         <!-- Stacks/Projects -->
         <div class="space-y-6">
             {stacks_html}
         </div>
 
-        <div id="logs-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <!-- Floating Console Panel -->
+        <div id="console-panel" class="fixed bottom-0 right-4 w-[500px] z-50 transition-all duration-300">
+            <!-- Console Header (always visible) -->
+            <div id="console-header"
+                 onclick="toggleConsole()"
+                 class="bg-gray-900 border border-gray-600 border-b-0 rounded-t-lg px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-gray-800">
+                <div class="flex items-center gap-2">
+                    <span id="console-indicator" class="w-2 h-2 rounded-full bg-gray-500"></span>
+                    <span class="font-semibold text-sm">Console</span>
+                    <span id="console-badge" class="hidden px-2 py-0.5 bg-blue-600 rounded-full text-xs">new</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="event.stopPropagation(); clearConsole()"
+                            class="text-gray-400 hover:text-white text-xs px-2 py-1">
+                        Clear
+                    </button>
+                    <svg id="console-chevron" class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                </div>
+            </div>
+            <!-- Console Body (collapsible) -->
+            <div id="console-body" class="bg-gray-900 border border-gray-600 border-t-0 rounded-b-lg overflow-hidden transition-all duration-300 max-h-0">
+                <div id="console-content" class="p-4 max-h-64 overflow-auto text-sm font-mono space-y-2">
+                    <p class="text-gray-500 italic">No actions yet...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden target for htmx responses -->
+        <div id="action-result" class="hidden"></div>
+
+        <div id="logs-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
             <div class="bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-auto">
                 <div id="logs-content"></div>
                 <button onclick="document.getElementById('logs-modal').classList.add('hidden')"
@@ -626,6 +655,79 @@ fn render_node_stacks(node: &str, host: &str, stacks: &[ComposeStack]) -> String
     </main>
 
     <script>
+        let consoleOpen = false;
+        let hasNewContent = false;
+
+        function toggleConsole() {{
+            consoleOpen = !consoleOpen;
+            const body = document.getElementById('console-body');
+            const chevron = document.getElementById('console-chevron');
+            const badge = document.getElementById('console-badge');
+
+            if (consoleOpen) {{
+                body.style.maxHeight = '16rem';
+                chevron.style.transform = 'rotate(180deg)';
+                badge.classList.add('hidden');
+                hasNewContent = false;
+                // Scroll to bottom
+                const content = document.getElementById('console-content');
+                content.scrollTop = content.scrollHeight;
+            }} else {{
+                body.style.maxHeight = '0';
+                chevron.style.transform = 'rotate(0deg)';
+            }}
+        }}
+
+        function openConsole() {{
+            if (!consoleOpen) {{
+                toggleConsole();
+            }}
+        }}
+
+        function clearConsole() {{
+            document.getElementById('console-content').innerHTML = '<p class="text-gray-500 italic">No actions yet...</p>';
+            document.getElementById('console-indicator').className = 'w-2 h-2 rounded-full bg-gray-500';
+        }}
+
+        function addToConsole(html, status) {{
+            const content = document.getElementById('console-content');
+            const indicator = document.getElementById('console-indicator');
+            const badge = document.getElementById('console-badge');
+            const time = new Date().toLocaleTimeString('en-US', {{ hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }});
+
+            // Remove "no actions" message
+            const noActions = content.querySelector('.italic');
+            if (noActions) noActions.remove();
+
+            // Add new entry
+            const entry = document.createElement('div');
+            entry.className = 'border-l-2 pl-3 py-1 ' + (status === 'success' ? 'border-green-500' : status === 'error' ? 'border-red-500' : 'border-blue-500');
+            entry.innerHTML = '<span class="text-gray-400 text-xs">' + time + '</span> ' + html;
+            content.appendChild(entry);
+
+            // Update indicator
+            indicator.className = 'w-2 h-2 rounded-full ' + (status === 'success' ? 'bg-green-500' : status === 'error' ? 'bg-red-500' : 'bg-blue-500');
+
+            // Show badge if closed
+            if (!consoleOpen) {{
+                badge.classList.remove('hidden');
+                hasNewContent = true;
+            }}
+
+            // Auto-open and scroll
+            openConsole();
+            content.scrollTop = content.scrollHeight;
+        }}
+
+        // Intercept htmx responses to action-result
+        document.body.addEventListener('htmx:afterSwap', function(evt) {{
+            if (evt.detail.target.id === 'action-result') {{
+                const html = evt.detail.target.innerHTML;
+                const status = html.includes('bg-green') ? 'success' : html.includes('bg-red') ? 'error' : 'info';
+                addToConsole(html, status);
+            }}
+        }});
+
         function showLogs(node, container) {{
             document.getElementById('logs-modal').classList.remove('hidden');
             htmx.ajax('GET', '/docker/' + node + '/' + container + '/logs', '#logs-content');
