@@ -77,6 +77,21 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
     pkgs.trayscale  # GTK systray GUI for Tailscale
   ];
 
+  # XDG autostart for trayscale GUI (for Plasma 6, GNOME, etc.)
+  environment.etc."xdg/autostart/trayscale.desktop" = lib.mkIf (systemSettings.tailscaleGuiAutostart or false) {
+    text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Trayscale
+      Comment=Tailscale system tray GUI
+      Exec=${pkgs.trayscale}/bin/trayscale --hide-window
+      Icon=trayscale
+      Categories=Network;
+      StartupNotify=false
+      X-GNOME-Autostart-enabled=true
+    '';
+  };
+
   # Helper script for connecting with the configured settings
   environment.etc."tailscale/connect.sh" = {
     mode = "0755";

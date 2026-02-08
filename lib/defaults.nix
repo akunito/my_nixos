@@ -530,6 +530,7 @@
     tailscaleAcceptDns = true; # Accept DNS from Tailscale (set false if always on LAN)
     tailscaleLanAutoToggle = false; # Auto-toggle accept-routes/dns based on LAN presence (for roaming laptops)
     tailscaleLanGateway = "192.168.8.1"; # Gateway IP to detect home LAN (ping target for auto-toggle)
+    tailscaleGuiAutostart = false; # Auto-start Tailscale GUI (trayscale) with desktop session
 
     # ============================================================================
     # DARWIN (macOS) SETTINGS

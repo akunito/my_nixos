@@ -116,10 +116,11 @@ in
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable Tailscale client
     tailscaleLoginServer = "https://${headscaleDomain}"; # Self-hosted Headscale
-    tailscaleAcceptRoutes = true; # Accept routes from subnet router (overridden by auto-toggle)
-    tailscaleAcceptDns = true; # Accept DNS from Tailscale (overridden by auto-toggle)
-    tailscaleLanAutoToggle = true; # Auto-toggle based on LAN presence
-    tailscaleLanGateway = "192.168.8.1"; # Home LAN gateway for detection
+    tailscaleAcceptRoutes = true; # Accept routes from subnet router (LAN access)
+    tailscaleAcceptDns = true; # Accept DNS from Tailscale
+    tailscaleLanAutoToggle = false; # Disabled - user controls manually
+    tailscaleLanGateway = "192.168.8.1"; # Not used (auto-toggle disabled)
+    tailscaleGuiAutostart = true; # Start trayscale GUI with Plasma 6
 
     # === Development Tools & AI ===
     aichatEnable = false; # Disable aichat CLI tool
