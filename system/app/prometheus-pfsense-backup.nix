@@ -20,8 +20,8 @@ let
 
   # Script to check pfSense backup status via SSH to Proxmox
   pfsenseBackupScript = pkgs.writeShellScript "pfsense-backup-metrics" ''
-    #!/bin/bash
     set -euo pipefail
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.gawk pkgs.openssh ]}:$PATH"
 
     PROXMOX_HOST="${proxmoxHost}"
     BACKUP_PATH="${backupPath}"
@@ -29,7 +29,7 @@ let
     TEMP_FILE=$(mktemp)
 
     # Check backup files via SSH
-    BACKUP_INFO=$(${pkgs.openssh}/bin/ssh -o ConnectTimeout=10 -o BatchMode=yes \
+    BACKUP_INFO=$(ssh -o ConnectTimeout=10 -o BatchMode=yes \
       "root@$PROXMOX_HOST" \
       "ls -lt --time-style=+%s ${backupPath}/pfsense-full-backup-*.tar.gz 2>/dev/null | head -1" \
       2>/dev/null || echo "")
@@ -53,7 +53,7 @@ METRICS
       SIZE=$(echo "$BACKUP_INFO" | awk '{print $5}')
 
       # Get backup count
-      COUNT=$(${pkgs.openssh}/bin/ssh -o ConnectTimeout=10 -o BatchMode=yes \
+      COUNT=$(ssh -o ConnectTimeout=10 -o BatchMode=yes \
         "root@$PROXMOX_HOST" \
         "ls -1 ${backupPath}/pfsense-full-backup-*.tar.gz 2>/dev/null | wc -l" \
         2>/dev/null || echo "0")
