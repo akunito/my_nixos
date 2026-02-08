@@ -25,6 +25,8 @@
 
       # Security & Privacy
       pkgs-unstable.bitwarden-desktop
+      pkgs.git-crypt # Git transparent encryption
+      pkgs.bfg # Git history cleaner (BFG Repo-Cleaner)
 
       # Cloud & Sync
       pkgs.syncthing

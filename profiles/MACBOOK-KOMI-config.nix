@@ -71,7 +71,7 @@ in
     hammerspoonAppBindings = [
       # Single-app launchers
       { key = "s"; app = "Spotify"; }
-      { key = "t"; app = "kitty"; }
+      { key = "t"; app = "Terminal"; }
       { key = "c"; app = "Cursor"; }
       { key = "d"; app = "Telegram"; }
       { key = "w"; app = "WhatsApp"; }
@@ -80,9 +80,12 @@ in
       { key = "l"; app = "Linear"; }
       { key = "g"; app = "System Preferences"; }
       { key = "p"; app = "Passwords"; }
-      { key = "q"; app = "Calculator"; }
+      { key = "q"; app = "Claude"; }
       { key = "n"; app = "Notes"; }
       { key = "x"; app = "Calendar"; }
+      { key = "f"; app = "Finder"; }
+      { key = "u"; app = "Calculator"; }
+      { key = "v"; app = "kitty"; }
 
       # Window cycling (multiple apps on number keys)
       { key = "1"; action = "cycleApp"; apps = [ "Arc" ]; }

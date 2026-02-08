@@ -31,6 +31,10 @@ let
     tra1 = "eza -a --long --tree --level=1";
     tra2 = "eza -a --long --tree --level=2";
     tra3 = "eza -a --long --tree --level=3";
+
+    # Darwin rebuild shortcuts
+    rebuild = "cd ~/.dotfiles && sudo darwin-rebuild switch --flake .#system";
+    rebuild-test = "cd ~/.dotfiles && darwin-rebuild build --flake .#system";
   };
 in
 {

@@ -46,7 +46,7 @@
       # Keyboard - fast repeat
       keyboardInitialKeyRepeat = 15;
       keyboardKeyRepeat = 2;
-      keyboardFnState = true;
+      keyboardFnState = false; # F1-F12 = special features by default (volume, brightness), Fn+F1-F12 = function keys
 
       # Trackpad
       trackpadTapToClick = true;

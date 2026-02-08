@@ -33,23 +33,31 @@ local hyper = {"cmd", "ctrl", "alt", "shift"}
 
 local apps = {
     S = "Spotify",
-    T = "kitty",              -- Fixed: was "Terminal"
+    T = "Terminal",
     C = "Cursor",
     D = "Telegram",
     W = "WhatsApp",
     A = "Arc",
     O = "Obsidian",
     L = "Linear",
-    G = "System Settings",    -- Fixed: was "Settings"
-    P = "Passwords",          -- User preference: macOS Passwords app
-    Q = "Calculator",
+    G = "System Settings",
+    P = "Passwords",
+    Q = "Claude",             -- One-handed access near CapsLock
     N = "Notes",
-    X = "Calendar"
+    X = "Calendar",
+    F = "Finder",
+    U = "Calculator",
+    V = "kitty"
 }
 
 -- ============================================================================
 -- ADVANCED LAUNCH OR FOCUS
 -- ============================================================================
+
+-- Apps that should NOT have Cmd+N triggered (to avoid unwanted behavior)
+local appsExcludedFromCmdN = {
+    ["WhatsApp"] = true,  -- Cmd+N opens new chat dropdown
+}
 
 -- Function to launch or focus an app
 -- Un-minimizes windows if they're minimized, or creates new window if needed
@@ -81,7 +89,7 @@ local function launchOrFocus(appName)
         app:activate()
 
         -- If no visible windows exist after activation, try to create one
-        if not hasVisibleWindow then
+        if not hasVisibleWindow and not appsExcludedFromCmdN[appName] then
             -- Wait a moment for app to activate, then try creating a new window
             hs.timer.doAfter(0.1, function()
                 -- Try common menu items for creating new windows
@@ -103,26 +111,8 @@ local function launchOrFocus(appName)
 end
 
 -- ============================================================================
--- APP LAUNCHERS (Hyperkey + Key)
--- ============================================================================
-
--- Bind all app shortcuts
-for key, appName in pairs(apps) do
-    hs.hotkey.bind(hyper, key, function()
-        launchOrFocus(appName)
-    end)
-end
-
--- ============================================================================
 -- WINDOW SWITCHING CONFIGURATION
 -- ============================================================================
-
-local windowSwitchApps = {
-    A = "Arc",
-    C = "Cursor",
-    T = "kitty",      -- Fixed: was "Terminal"
-    O = "Obsidian"
-}
 
 -- Function to switch between windows of the same app
 -- Uses hs.window.filter for better compatibility with Electron apps
@@ -191,6 +181,47 @@ local function switchWindows(appName)
         nextWin:screen():name():sub(1, 15)), 0.5)
 end
 
+-- Function to launch app if not running, or cycle windows if running
+local function launchOrCycle(appName)
+    local app = hs.application.find(appName)
+    if not app then
+        -- App not running, launch it using advanced function
+        launchOrFocus(appName)
+    else
+        -- App is running, check if there are minimized windows to restore
+        local wf = hs.window.filter.new(false)
+        wf:setAppFilter(appName, {})
+        local windows = wf:getWindows()
+        local hasMinimizedWindow = false
+
+        for _, win in ipairs(windows) do
+            if win:isMinimized() then
+                hasMinimizedWindow = true
+                break
+            end
+        end
+
+        if hasMinimizedWindow then
+            -- Use advanced launch/focus to un-minimize
+            launchOrFocus(appName)
+        else
+            -- No minimized windows, just cycle through visible ones
+            switchWindows(appName)
+        end
+    end
+end
+
+-- ============================================================================
+-- APP LAUNCHERS (Hyperkey + Key)
+-- ============================================================================
+
+-- Bind all app shortcuts to launch or cycle behavior
+for key, appName in pairs(apps) do
+    hs.hotkey.bind(hyper, key, function()
+        launchOrCycle(appName)
+    end)
+end
+
 -- ============================================================================
 -- WINDOW CYCLING (Hyperkey + Number)
 -- ============================================================================
@@ -198,7 +229,7 @@ end
 -- Hyper + 1/2/3/4 to switch Arc/Cursor/kitty/Obsidian windows
 hs.hotkey.bind(hyper, "1", function() switchWindows("Arc") end)
 hs.hotkey.bind(hyper, "2", function() switchWindows("Cursor") end)
-hs.hotkey.bind(hyper, "3", function() switchWindows("kitty") end)  -- Fixed: was "Terminal"
+hs.hotkey.bind(hyper, "3", function() switchWindows("kitty") end)  -- kitty is now on V, Terminal is on T
 hs.hotkey.bind(hyper, "4", function() switchWindows("Obsidian") end)
 
 -- ============================================================================
