@@ -107,6 +107,21 @@ impl Config {
     pub fn get_ssh_user<'a>(&'a self, node: &'a DockerNode) -> &'a str {
         node.user.as_deref().unwrap_or(&self.ssh.default_user)
     }
+
+    /// Get the host IP for a profile (for SSH connections)
+    pub fn get_profile_host(&self, profile_name: &str) -> Option<String> {
+        // First check if there's a docker node with the same name
+        if let Some(node) = self.get_docker_node(profile_name) {
+            return Some(node.host.clone());
+        }
+
+        // Otherwise look up the profile's IP
+        if let Some(profile) = self.get_profile(profile_name) {
+            return profile.ip.clone();
+        }
+
+        None
+    }
 }
 
 impl Default for ServerConfig {

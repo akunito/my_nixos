@@ -145,7 +145,7 @@ impl SshPool {
         Ok(AgentClient::connect(stream))
     }
 
-    /// Execute a command on a node
+    /// Execute a command on a node (by docker node name)
     pub async fn execute(&mut self, node_name: &str, command: &str) -> Result<CommandOutput, AppError> {
         let node = self
             .config
@@ -160,6 +160,36 @@ impl SshPool {
 
         // Execute command
         Self::run_command(&conn, command).await
+    }
+
+    /// Execute a command on a profile (looks up IP from profile or docker node)
+    pub async fn execute_on_profile(&mut self, profile_name: &str, command: &str) -> Result<CommandOutput, AppError> {
+        // First try as a docker node
+        if let Some(node) = self.config.get_docker_node(profile_name) {
+            let node = node.clone();
+            let user = self.config.get_ssh_user(&node).to_string();
+            let conn = self.get_or_create_connection(&node, &user).await?;
+            return Self::run_command(&conn, command).await;
+        }
+
+        // Otherwise get the profile's IP and create a temporary connection
+        let host = self.config.get_profile_host(profile_name)
+            .ok_or_else(|| AppError::NodeNotFound(format!("Profile {} not found or has no IP", profile_name)))?;
+
+        let user = self.config.ssh.default_user.clone();
+
+        // Create a temporary DockerNode for this connection
+        let temp_node = crate::config::DockerNode {
+            name: profile_name.to_string(),
+            host,
+            ctid: 0,
+            user: Some(user.clone()),
+        };
+
+        // For profiles not in docker_nodes, we create a one-off connection
+        let connection = self.connect(&temp_node, &user).await?;
+        let conn_mutex = Arc::new(Mutex::new(Some(connection)));
+        Self::run_command(&conn_mutex, command).await
     }
 
     /// Get an existing connection or create a new one

@@ -8,7 +8,7 @@ use chrono::Utc;
 /// Perform a dry-run build for validation
 pub async fn dry_run(
     ssh_pool: &mut SshPool,
-    node_name: &str,
+    _node_name: &str,
     profile: &str,
     dotfiles_path: &str,
 ) -> Result<DeploymentStatus, AppError> {
@@ -20,7 +20,7 @@ pub async fn dry_run(
         dotfiles_path, profile
     );
 
-    let output = ssh_pool.execute(node_name, &command).await?;
+    let output = ssh_pool.execute_on_profile(profile, &command).await?;
 
     let status = if output.success() {
         DeploymentStatus {
@@ -46,21 +46,21 @@ pub async fn dry_run(
 /// Deploy changes to a node
 pub async fn deploy(
     ssh_pool: &mut SshPool,
-    node_name: &str,
-    _profile: &str,
+    _node_name: &str,
+    profile: &str,
     dotfiles_path: &str,
 ) -> Result<DeploymentStatus, AppError> {
     let started_at = Utc::now();
-    let profile = _profile.to_string();
+    let profile_name = profile.to_string();
 
     // Step 1: Pull latest changes
-    tracing::info!("Pulling latest changes on {}", node_name);
+    tracing::info!("Pulling latest changes on {}", profile);
     let pull_cmd = format!("cd {} && git pull", dotfiles_path);
-    let pull_output = ssh_pool.execute(node_name, &pull_cmd).await?;
+    let pull_output = ssh_pool.execute_on_profile(profile, &pull_cmd).await?;
 
     if !pull_output.success() {
         return Ok(DeploymentStatus {
-            profile,
+            profile: profile_name,
             status: DeployState::Failed,
             message: format!("Git pull failed: {}", pull_output.combined()),
             started_at: Some(started_at),
@@ -69,17 +69,17 @@ pub async fn deploy(
     }
 
     // Step 2: Build and switch
-    tracing::info!("Building and switching on {}", node_name);
+    tracing::info!("Building and switching on {}", profile);
     let switch_cmd = format!(
         "cd {} && sudo nixos-rebuild switch --flake .#system 2>&1",
         dotfiles_path
     );
 
-    let switch_output = ssh_pool.execute(node_name, &switch_cmd).await?;
+    let switch_output = ssh_pool.execute_on_profile(profile, &switch_cmd).await?;
 
     let status = if switch_output.success() {
         DeploymentStatus {
-            profile,
+            profile: profile_name,
             status: DeployState::Success,
             message: "Deployment successful".to_string(),
             started_at: Some(started_at),
@@ -87,7 +87,7 @@ pub async fn deploy(
         }
     } else {
         DeploymentStatus {
-            profile,
+            profile: profile_name,
             status: DeployState::Failed,
             message: format!("Deployment failed: {}", switch_output.combined()),
             started_at: Some(started_at),
@@ -101,7 +101,7 @@ pub async fn deploy(
 /// Get deployment log (last N lines of journal)
 pub async fn get_deployment_log(
     ssh_pool: &mut SshPool,
-    node_name: &str,
+    profile: &str,
     lines: u32,
 ) -> Result<String, AppError> {
     let command = format!(
@@ -109,17 +109,17 @@ pub async fn get_deployment_log(
         lines
     );
 
-    let output = ssh_pool.execute(node_name, &command).await?;
+    let output = ssh_pool.execute_on_profile(profile, &command).await?;
     Ok(output.combined())
 }
 
-/// Check if a node is reachable and NixOS
+/// Check if a profile is reachable and NixOS
 pub async fn check_node_health(
     ssh_pool: &mut SshPool,
-    node_name: &str,
+    profile: &str,
 ) -> Result<bool, AppError> {
     let command = "nixos-version 2>/dev/null || echo 'not-nixos'";
-    let output = ssh_pool.execute(node_name, command).await?;
+    let output = ssh_pool.execute_on_profile(profile, command).await?;
 
     Ok(output.success() && !output.stdout.contains("not-nixos"))
 }
