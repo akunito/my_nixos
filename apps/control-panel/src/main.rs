@@ -61,8 +61,8 @@ async fn main() -> anyhow::Result<()> {
 
     // Build router
     let app = Router::new()
-        // Root redirect
-        .route("/", get(|| async { axum::response::Redirect::to("/infra") }))
+        // Home/overview page
+        .route("/", get(infra::routes::home))
 
         // Docker routes (Phase 1)
         .route("/docker", get(docker::routes::dashboard))

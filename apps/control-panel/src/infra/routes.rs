@@ -12,6 +12,168 @@ use crate::error::AppError;
 use crate::infra::{deploy, git, graph, monitoring};
 use crate::AppState;
 
+/// Home/overview page showing system summary
+pub async fn home(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
+    let profile_count = state.config.profiles.len();
+    let docker_node_count = state.config.docker_nodes.len();
+    let lxc_count = state.config.profiles.iter().filter(|p| p.profile_type == "lxc").count();
+    let desktop_count = state.config.profiles.iter().filter(|p| p.profile_type == "desktop").count();
+    let laptop_count = state.config.profiles.iter().filter(|p| p.profile_type == "laptop").count();
+
+    let html = format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NixOS Control Panel</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {{ background-color: #1a1a2e; color: #eee; }}
+        .card {{ transition: all 0.2s; }}
+        .card:hover {{ transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }}
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-blue-400">NixOS Control Panel</h1>
+            <div class="flex gap-4">
+                <a href="/docker" class="text-gray-400 hover:text-gray-300">Docker</a>
+                <a href="/infra" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
+                <a href="/proxmox" class="text-gray-400 hover:text-gray-300">Proxmox</a>
+                <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
+                <a href="/editor" class="text-gray-400 hover:text-gray-300">Editor</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold mb-2">Welcome to NixOS Control Panel</h2>
+            <p class="text-gray-400">Manage your entire NixOS infrastructure from one place</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                <p class="text-3xl font-bold text-blue-400">{profile_count}</p>
+                <p class="text-gray-400 text-sm">Total Profiles</p>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                <p class="text-3xl font-bold text-green-400">{lxc_count}</p>
+                <p class="text-gray-400 text-sm">LXC Containers</p>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                <p class="text-3xl font-bold text-indigo-400">{desktop_count}</p>
+                <p class="text-gray-400 text-sm">Desktops</p>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                <p class="text-3xl font-bold text-sky-400">{laptop_count}</p>
+                <p class="text-gray-400 text-sm">Laptops</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <a href="/docker" class="card bg-gray-800 rounded-lg p-6 border border-gray-700 block">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M13 3v2h-2V3h2zm4 0v2h-2V3h2zm0 4v2h-2V7h2zm-4 0v2h-2V7h2zm-4 0v2H7V7h2zm8 4v2h-2v-2h2zm-4 0v2h-2v-2h2zm-4 0v2H7v-2h2zm-4 0v2H3v-2h2zm16 0v2h-2v-2h2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Docker</h3>
+                        <p class="text-gray-400 text-sm">{docker_node_count} nodes</p>
+                    </div>
+                </div>
+                <p class="text-gray-400 text-sm">Manage containers across all Docker nodes</p>
+            </a>
+
+            <a href="/infra" class="card bg-gray-800 rounded-lg p-6 border border-gray-700 block">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Infrastructure</h3>
+                        <p class="text-gray-400 text-sm">{profile_count} profiles</p>
+                    </div>
+                </div>
+                <p class="text-gray-400 text-sm">View profile graph, deploy changes, git operations</p>
+            </a>
+
+            <a href="/proxmox" class="card bg-gray-800 rounded-lg p-6 border border-gray-700 block">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-amber-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Proxmox</h3>
+                        <p class="text-gray-400 text-sm">{proxmox_host}</p>
+                    </div>
+                </div>
+                <p class="text-gray-400 text-sm">Start, stop, restart LXC containers and VMs</p>
+            </a>
+
+            <a href="/monitoring" class="card bg-gray-800 rounded-lg p-6 border border-gray-700 block">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Monitoring</h3>
+                        <p class="text-gray-400 text-sm">Grafana dashboards</p>
+                    </div>
+                </div>
+                <p class="text-gray-400 text-sm">View embedded Grafana dashboards</p>
+            </a>
+        </div>
+
+        <!-- Recent Activity / Status -->
+        <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                <div class="space-y-2">
+                    <a href="/editor" class="flex items-center gap-2 text-blue-400 hover:text-blue-300">
+                        <span>→</span> Edit profile configurations
+                    </a>
+                    <a href="/infra/git/status" hx-get="/infra/git/status" hx-target="#git-quick" class="flex items-center gap-2 text-blue-400 hover:text-blue-300">
+                        <span>→</span> Check git status
+                    </a>
+                    <a href="/monitoring?uid=infrastructure-overview" class="flex items-center gap-2 text-blue-400 hover:text-blue-300">
+                        <span>→</span> Infrastructure Overview dashboard
+                    </a>
+                </div>
+            </div>
+
+            <div id="git-quick" class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <h3 class="text-lg font-semibold mb-4">Git Status</h3>
+                <p class="text-gray-400 text-sm">Click "Check git status" to load</p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>"##,
+        profile_count = profile_count,
+        docker_node_count = docker_node_count,
+        lxc_count = lxc_count,
+        desktop_count = desktop_count,
+        laptop_count = laptop_count,
+        proxmox_host = state.config.proxmox.host
+    );
+
+    Ok(Html(html))
+}
+
 /// Infrastructure dashboard with profile graph
 pub async fn dashboard(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
     let graph_data = graph::generate_graph_data(&state.config);
