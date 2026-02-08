@@ -2437,7 +2437,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Current age of most recent backup for each VM/LXC",
+      "description": "Current age of most recent backup for each VM/LXC and pfSense",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2506,6 +2506,17 @@
           "legendFormat": "{{name}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "pfsense_backup_age_seconds / 86400",
+          "legendFormat": "pfSense",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "Current Backup Age",
@@ -2516,7 +2527,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Timeline showing when backups occurred for each VM/LXC. Green = backup completed at that time.",
+      "description": "Timeline showing when backups occurred for each VM/LXC and pfSense. Green = backup completed at that time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2609,6 +2620,17 @@
           "legendFormat": "{{name}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "changes(pfsense_backup_last_success[10m])",
+          "legendFormat": "pfSense",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "Backup Timeline",
