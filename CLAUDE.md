@@ -483,6 +483,7 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
   |-------------|---------|------|-----|
   | DESK | nixosaku | Desktop | 192.168.8.96 |
   | LAPTOP_L15 | nixolaptopaku | Laptop | 192.168.8.92 |
+  | LAPTOP_AGA | nixosaga | Laptop | 192.168.8.78 |
   | LXC_HOME | nixosLabaku | LXC Container | 192.168.8.80 |
   | LXC_database | database | LXC Container | 192.168.8.103 |
   | LXC_monitoring | monitoring | LXC Container | 192.168.8.85 |

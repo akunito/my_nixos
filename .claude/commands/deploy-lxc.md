@@ -23,6 +23,27 @@ git push origin main
 ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -q"
 ```
 
+## Important: LXC vs Physical Machines
+
+**LXC containers** have passwordless sudo configured (see `sudoCommands` in `profiles/LXC-base-config.nix`), so they can be deployed non-interactively via SSH.
+
+**Physical machines (laptops/desktops)** require sudo password authentication. These CANNOT be deployed non-interactively from Claude Code. The user must run the deployment manually:
+
+```bash
+ssh -A <user>@<IP>
+cd ~/.dotfiles
+git fetch origin && git reset --hard origin/main
+./install.sh ~/.dotfiles <PROFILE> -s -u
+```
+
+## Laptop/Desktop Reference
+
+| Profile | IP | User | Description |
+|---------|-----|------|-------------|
+| DESK | 192.168.8.96 | akunito | Main desktop |
+| LAPTOP_L15 | 192.168.8.92 | akunito | ThinkPad L15 laptop |
+| LAPTOP_AGA | 192.168.8.78 | aga | AGA's laptop |
+
 ## Container Reference
 
 | Profile | IP | Description |
@@ -62,6 +83,15 @@ ssh -A akunito@192.168.8.104 "cd ~/.dotfiles && git fetch origin && git reset --
 
 ```bash
 ssh -A akunito@192.168.8.105 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_tailscale -s -u -q"
+```
+
+### Deploy to LAPTOP_AGA (Manual - requires password)
+
+```bash
+ssh -A aga@192.168.8.78
+cd ~/.dotfiles
+git fetch origin && git reset --hard origin/main
+./install.sh ~/.dotfiles LAPTOP_AGA -s -u
 ```
 
 ### Deploy to Multiple Containers

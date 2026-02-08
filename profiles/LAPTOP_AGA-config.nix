@@ -3,7 +3,8 @@
 
 let
   base = import ./LAPTOP-base.nix;
-  secrets = import ../secrets/domains.nix;
+  # Headscale domain is public, no need for git-crypt on this machine
+  headscaleDomain = "headscale.akunito.com";
 in
 {
   # Flag to use rust-overlay
@@ -102,7 +103,7 @@ in
 
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable Tailscale client
-    tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
+    tailscaleLoginServer = "https://${headscaleDomain}"; # Self-hosted Headscale
     tailscaleAcceptRoutes = true; # Accept routes from subnet router
 
     # === Development Tools & AI ===
