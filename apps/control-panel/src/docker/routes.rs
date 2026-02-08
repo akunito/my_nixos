@@ -7,7 +7,7 @@ use axum::{
 use std::sync::Arc;
 
 use crate::docker::commands;
-use crate::docker::{Container, ContainerStatus, NodeSummary};
+use crate::docker::{ComposeStack, Container, ContainerStatus, NodeSummary};
 use crate::error::AppError;
 use crate::AppState;
 
@@ -44,7 +44,7 @@ pub async fn dashboard(State(state): State<Arc<AppState>>) -> Result<Html<String
     Ok(Html(html))
 }
 
-/// Show containers for a specific node
+/// Show containers for a specific node (grouped by compose stack)
 pub async fn node_containers(
     State(state): State<Arc<AppState>>,
     Path(node): Path<String>,
@@ -57,7 +57,10 @@ pub async fn node_containers(
     let mut ssh_pool = state.ssh_pool.write().await;
     let containers = commands::list_containers(&mut ssh_pool, &node).await?;
 
-    let html = render_node_containers(&node, &node_config.host, &containers);
+    // Group containers by compose project/stack
+    let stacks = commands::group_by_stack(containers);
+
+    let html = render_node_stacks(&node, &node_config.host, &stacks);
     Ok(Html(html))
 }
 
@@ -252,6 +255,129 @@ pub async fn disk_usage(
     )))
 }
 
+// ============================================================================
+// Stack/Compose Project Routes
+// ============================================================================
+
+/// Start all containers in a compose stack
+pub async fn stack_up(
+    State(state): State<Arc<AppState>>,
+    Path((node, project)): Path<(String, String)>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::stack_up(&mut ssh_pool, &node, &project).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Stack '{}' started</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        project,
+        html_escape(&output)
+    )))
+}
+
+/// Stop all containers in a compose stack
+pub async fn stack_down(
+    State(state): State<Arc<AppState>>,
+    Path((node, project)): Path<(String, String)>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::stack_down(&mut ssh_pool, &node, &project).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Stack '{}' stopped</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        project,
+        html_escape(&output)
+    )))
+}
+
+/// Pull latest images for a compose stack
+pub async fn stack_pull(
+    State(state): State<Arc<AppState>>,
+    Path((node, project)): Path<(String, String)>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::stack_pull(&mut ssh_pool, &node, &project).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-blue-900 border border-blue-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Pulled images for stack '{}'</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        project,
+        html_escape(&output)
+    )))
+}
+
+/// Rebuild a compose stack (pull + up --build --force-recreate)
+pub async fn stack_rebuild(
+    State(state): State<Arc<AppState>>,
+    Path((node, project)): Path<(String, String)>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::stack_rebuild(&mut ssh_pool, &node, &project).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-purple-900 border border-purple-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Rebuilt stack '{}'</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        project,
+        html_escape(&output)
+    )))
+}
+
+/// Restart a compose stack
+pub async fn stack_restart(
+    State(state): State<Arc<AppState>>,
+    Path((node, project)): Path<(String, String)>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::stack_restart(&mut ssh_pool, &node, &project).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Restarted stack '{}'</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        project,
+        html_escape(&output)
+    )))
+}
+
+/// Get logs for a compose stack
+pub async fn stack_logs(
+    State(state): State<Arc<AppState>>,
+    Path((node, project)): Path<(String, String)>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let logs = commands::stack_logs(&mut ssh_pool, &node, &project, 100).await?;
+
+    let html = format!(
+        r##"<div class="logs-container">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Logs: Stack '{project}'</h3>
+                <button hx-get="/docker/{node}/stack/{project}/logs"
+                        hx-target="#logs-content"
+                        hx-swap="innerHTML"
+                        class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                    Refresh
+                </button>
+            </div>
+            <pre id="logs-content" class="bg-gray-900 p-4 rounded overflow-auto max-h-96 text-sm font-mono">{logs}</pre>
+        </div>"##,
+        project = project,
+        node = node,
+        logs = html_escape(&logs)
+    );
+
+    Ok(Html(html))
+}
+
 // Template rendering functions
 
 fn render_dashboard(summaries: &[NodeSummary]) -> String {
@@ -367,10 +493,10 @@ fn render_node_card(summary: &NodeSummary) -> String {
     )
 }
 
-fn render_node_containers(node: &str, host: &str, containers: &[Container]) -> String {
-    let containers_html: String = containers
+fn render_node_stacks(node: &str, host: &str, stacks: &[ComposeStack]) -> String {
+    let stacks_html: String = stacks
         .iter()
-        .map(|c| render_container_row(node, c))
+        .map(|s| render_stack_section(node, s))
         .collect::<Vec<_>>()
         .join("\n");
 
@@ -386,6 +512,8 @@ fn render_node_containers(node: &str, host: &str, containers: &[Container]) -> S
     <style>
         body {{ background-color: #1a1a2e; color: #eee; }}
         .htmx-request {{ opacity: 0.5; }}
+        .stack-section {{ transition: all 0.2s; }}
+        .stack-section:hover {{ border-color: #4b5563; }}
     </style>
 </head>
 <body class="min-h-screen">
@@ -463,25 +591,13 @@ fn render_node_containers(node: &str, host: &str, containers: &[Container]) -> S
         <!-- Action Result Area -->
         <div id="action-result" class="mb-6"></div>
 
-        <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-            <table class="w-full">
-                <thead class="bg-gray-900">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Image</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Ports</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-700">
-                    {containers_html}
-                </tbody>
-            </table>
+        <!-- Stacks/Projects -->
+        <div class="space-y-6">
+            {stacks_html}
         </div>
 
-        <div id="logs-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div class="bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-screen-80 overflow-auto">
+        <div id="logs-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-auto">
                 <div id="logs-content"></div>
                 <button onclick="document.getElementById('logs-modal').classList.add('hidden')"
                         class="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded">
@@ -496,11 +612,120 @@ fn render_node_containers(node: &str, host: &str, containers: &[Container]) -> S
             document.getElementById('logs-modal').classList.remove('hidden');
             htmx.ajax('GET', '/docker/' + node + '/' + container + '/logs', '#logs-content');
         }}
+        function showStackLogs(node, project) {{
+            document.getElementById('logs-modal').classList.remove('hidden');
+            htmx.ajax('GET', '/docker/' + node + '/stack/' + project + '/logs', '#logs-content');
+        }}
     </script>
 </body>
 </html>"##,
         node = node,
         host = host,
+        stacks_html = stacks_html
+    )
+}
+
+fn render_stack_section(node: &str, stack: &ComposeStack) -> String {
+    let is_standalone = stack.name == "standalone";
+    let status_color = if stack.running_count == stack.total_count {
+        "bg-green-600"
+    } else if stack.running_count == 0 {
+        "bg-red-600"
+    } else {
+        "bg-yellow-600"
+    };
+
+    let containers_html: String = stack.containers
+        .iter()
+        .map(|c| render_container_row(node, c))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    // Stack actions - only for compose stacks, not standalone
+    let stack_actions = if !is_standalone {
+        format!(
+            r##"<div class="flex gap-2">
+                <button hx-post="/docker/{node}/stack/{project}/up"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm">
+                    Start All
+                </button>
+                <button hx-post="/docker/{node}/stack/{project}/down"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        hx-confirm="Stop all containers in '{project}'?"
+                        class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
+                    Stop All
+                </button>
+                <button hx-post="/docker/{node}/stack/{project}/restart"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-sm">
+                    Restart
+                </button>
+                <button hx-post="/docker/{node}/stack/{project}/pull"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                    Pull
+                </button>
+                <button hx-post="/docker/{node}/stack/{project}/rebuild"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        hx-confirm="Rebuild '{project}'? This will pull and recreate all containers."
+                        class="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-sm">
+                    Rebuild
+                </button>
+                <button onclick="showStackLogs('{node}', '{project}')"
+                        class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">
+                    Logs
+                </button>
+            </div>"##,
+            node = node,
+            project = stack.name
+        )
+    } else {
+        String::new()
+    };
+
+    let stack_title = if is_standalone {
+        "Standalone Containers".to_string()
+    } else {
+        format!("Stack: {}", stack.name)
+    };
+
+    format!(
+        r##"<div class="stack-section bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+            <div class="bg-gray-900 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <h3 class="font-semibold text-lg">{stack_title}</h3>
+                    <span class="px-2 py-1 {status_color} rounded text-xs">
+                        {running}/{total} running
+                    </span>
+                </div>
+                {stack_actions}
+            </div>
+            <table class="w-full">
+                <thead class="bg-gray-850">
+                    <tr>
+                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Name</th>
+                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Image</th>
+                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Ports</th>
+                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {containers_html}
+                </tbody>
+            </table>
+        </div>"##,
+        stack_title = stack_title,
+        status_color = status_color,
+        running = stack.running_count,
+        total = stack.total_count,
+        stack_actions = stack_actions,
         containers_html = containers_html
     )
 }

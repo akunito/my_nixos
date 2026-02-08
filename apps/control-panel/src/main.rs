@@ -78,6 +78,13 @@ async fn main() -> anyhow::Result<()> {
         .route("/docker/{node}/prune/volumes", post(docker::routes::volume_prune))
         .route("/docker/{node}/prune/images", post(docker::routes::image_prune))
         .route("/docker/{node}/disk-usage", get(docker::routes::disk_usage))
+        // Docker compose stack routes
+        .route("/docker/{node}/stack/{project}/up", post(docker::routes::stack_up))
+        .route("/docker/{node}/stack/{project}/down", post(docker::routes::stack_down))
+        .route("/docker/{node}/stack/{project}/pull", post(docker::routes::stack_pull))
+        .route("/docker/{node}/stack/{project}/rebuild", post(docker::routes::stack_rebuild))
+        .route("/docker/{node}/stack/{project}/restart", post(docker::routes::stack_restart))
+        .route("/docker/{node}/stack/{project}/logs", get(docker::routes::stack_logs))
 
         // Infrastructure routes (Phase 2)
         .route("/infra", get(infra::routes::dashboard))

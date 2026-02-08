@@ -1,16 +1,17 @@
 //! Docker command execution via SSH
 
-use crate::docker::{Container, ContainerStatus, NodeSummary};
+use crate::docker::{ComposeStack, Container, ContainerStatus, NodeSummary};
 use crate::error::AppError;
 use crate::ssh::SshPool;
+use std::collections::HashMap;
 
 /// List all containers on a node
 pub async fn list_containers(
     ssh_pool: &mut SshPool,
     node_name: &str,
 ) -> Result<Vec<Container>, AppError> {
-    // Use docker ps with custom format for easier parsing
-    let format = "{{.ID}}|{{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}|{{.CreatedAt}}";
+    // Use docker ps with custom format including compose project label
+    let format = "{{.ID}}|{{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}|{{.CreatedAt}}|{{.Label \"com.docker.compose.project\"}}";
     let command = format!("docker ps -a --format '{}'", format);
 
     let output = ssh_pool.execute(node_name, &command).await?;
@@ -43,6 +44,12 @@ fn parse_container_line(line: &str) -> Result<Container, AppError> {
         )));
     }
 
+    let project = if parts.len() > 6 && !parts[6].is_empty() {
+        Some(parts[6].to_string())
+    } else {
+        None
+    };
+
     Ok(Container {
         id: parts[0].to_string(),
         name: parts[1].to_string(),
@@ -50,7 +57,42 @@ fn parse_container_line(line: &str) -> Result<Container, AppError> {
         status: ContainerStatus::from_str(parts[3]),
         ports: parts[4].to_string(),
         created: parts[5].to_string(),
+        project,
     })
+}
+
+/// Group containers by compose project/stack
+pub fn group_by_stack(containers: Vec<Container>) -> Vec<ComposeStack> {
+    let mut stacks: HashMap<String, Vec<Container>> = HashMap::new();
+
+    for container in containers {
+        let project_name = container.project.clone().unwrap_or_else(|| "standalone".to_string());
+        stacks.entry(project_name).or_default().push(container);
+    }
+
+    let mut result: Vec<ComposeStack> = stacks
+        .into_iter()
+        .map(|(name, containers)| {
+            let running_count = containers.iter().filter(|c| c.status == ContainerStatus::Running).count();
+            let total_count = containers.len();
+            ComposeStack {
+                name,
+                path: None,
+                containers,
+                running_count,
+                total_count,
+            }
+        })
+        .collect();
+
+    // Sort stacks by name, but put "standalone" last
+    result.sort_by(|a, b| {
+        if a.name == "standalone" { std::cmp::Ordering::Greater }
+        else if b.name == "standalone" { std::cmp::Ordering::Less }
+        else { a.name.cmp(&b.name) }
+    });
+
+    result
 }
 
 /// Start a container
@@ -274,6 +316,146 @@ pub async fn disk_usage(
 ) -> Result<String, AppError> {
     let command = "docker system df 2>&1";
     let output = ssh_pool.execute(node_name, command).await?;
+
+    Ok(output.combined())
+}
+
+// ============================================================================
+// Docker Compose Stack Commands
+// ============================================================================
+
+/// Find the docker-compose directory for a project
+async fn find_compose_dir(
+    ssh_pool: &mut SshPool,
+    node_name: &str,
+    project: &str,
+) -> Result<String, AppError> {
+    // Get the working dir from a running container in this project
+    let command = format!(
+        "docker inspect --format '{{{{index .Config.Labels \"com.docker.compose.project.working_dir\"}}}}' \
+         $(docker ps -q --filter 'label=com.docker.compose.project={}' | head -1) 2>/dev/null || \
+         echo ''",
+        project
+    );
+
+    let output = ssh_pool.execute(node_name, &command).await?;
+    let dir = output.stdout.trim().to_string();
+
+    if dir.is_empty() {
+        // Try common locations
+        let common_paths = [
+            format!("~/.homelab/{}", project),
+            format!("~/{}", project),
+            format!("~/docker/{}", project),
+            format!("/opt/{}", project),
+        ];
+
+        for path in &common_paths {
+            let check_cmd = format!("test -f {}/docker-compose.yml && echo '{}'", path, path);
+            let check = ssh_pool.execute(node_name, &check_cmd).await?;
+            if !check.stdout.trim().is_empty() {
+                return Ok(check.stdout.trim().to_string());
+            }
+        }
+
+        return Err(AppError::Docker(format!(
+            "Could not find docker-compose directory for project: {}",
+            project
+        )));
+    }
+
+    Ok(dir)
+}
+
+/// Start a compose stack
+pub async fn stack_up(
+    ssh_pool: &mut SshPool,
+    node_name: &str,
+    project: &str,
+) -> Result<String, AppError> {
+    let dir = find_compose_dir(ssh_pool, node_name, project).await?;
+
+    let command = format!("cd {} && docker-compose up -d 2>&1", dir);
+    let output = ssh_pool.execute(node_name, &command).await?;
+
+    tracing::info!("Started stack {} on {}", project, node_name);
+    Ok(output.combined())
+}
+
+/// Stop a compose stack
+pub async fn stack_down(
+    ssh_pool: &mut SshPool,
+    node_name: &str,
+    project: &str,
+) -> Result<String, AppError> {
+    let dir = find_compose_dir(ssh_pool, node_name, project).await?;
+
+    let command = format!("cd {} && docker-compose down 2>&1", dir);
+    let output = ssh_pool.execute(node_name, &command).await?;
+
+    tracing::info!("Stopped stack {} on {}", project, node_name);
+    Ok(output.combined())
+}
+
+/// Pull latest images for a compose stack
+pub async fn stack_pull(
+    ssh_pool: &mut SshPool,
+    node_name: &str,
+    project: &str,
+) -> Result<String, AppError> {
+    let dir = find_compose_dir(ssh_pool, node_name, project).await?;
+
+    let command = format!("cd {} && docker-compose pull 2>&1", dir);
+    let output = ssh_pool.execute(node_name, &command).await?;
+
+    tracing::info!("Pulled images for stack {} on {}", project, node_name);
+    Ok(output.combined())
+}
+
+/// Rebuild a compose stack (pull + up --build)
+pub async fn stack_rebuild(
+    ssh_pool: &mut SshPool,
+    node_name: &str,
+    project: &str,
+) -> Result<String, AppError> {
+    let dir = find_compose_dir(ssh_pool, node_name, project).await?;
+
+    let command = format!(
+        "cd {} && docker-compose pull && docker-compose up -d --build --force-recreate 2>&1",
+        dir
+    );
+    let output = ssh_pool.execute(node_name, &command).await?;
+
+    tracing::info!("Rebuilt stack {} on {}", project, node_name);
+    Ok(output.combined())
+}
+
+/// Restart a compose stack
+pub async fn stack_restart(
+    ssh_pool: &mut SshPool,
+    node_name: &str,
+    project: &str,
+) -> Result<String, AppError> {
+    let dir = find_compose_dir(ssh_pool, node_name, project).await?;
+
+    let command = format!("cd {} && docker-compose restart 2>&1", dir);
+    let output = ssh_pool.execute(node_name, &command).await?;
+
+    tracing::info!("Restarted stack {} on {}", project, node_name);
+    Ok(output.combined())
+}
+
+/// Get logs for a compose stack
+pub async fn stack_logs(
+    ssh_pool: &mut SshPool,
+    node_name: &str,
+    project: &str,
+    tail: u32,
+) -> Result<String, AppError> {
+    let dir = find_compose_dir(ssh_pool, node_name, project).await?;
+
+    let command = format!("cd {} && docker-compose logs --tail {} 2>&1", dir, tail);
+    let output = ssh_pool.execute(node_name, &command).await?;
 
     Ok(output.combined())
 }

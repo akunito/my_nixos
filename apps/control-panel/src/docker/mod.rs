@@ -14,6 +14,17 @@ pub struct Container {
     pub status: ContainerStatus,
     pub ports: String,
     pub created: String,
+    pub project: Option<String>,  // docker-compose project name
+}
+
+/// Docker compose stack/project
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComposeStack {
+    pub name: String,
+    pub path: Option<String>,  // path to docker-compose.yml if known
+    pub containers: Vec<Container>,
+    pub running_count: usize,
+    pub total_count: usize,
 }
 
 /// Container status
