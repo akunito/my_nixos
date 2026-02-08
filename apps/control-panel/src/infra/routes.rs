@@ -386,7 +386,7 @@ pub async fn git_status(State(state): State<Arc<AppState>>) -> Result<Html<Strin
                 {modified_list}
             </ul>
             {untracked_list}
-            <div class="mt-4 flex gap-2">
+            <div class="mt-4 flex flex-wrap gap-2">
                 <button hx-get="/infra/git/diff"
                         hx-target="#diff-output"
                         class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">
@@ -397,8 +397,24 @@ pub async fn git_status(State(state): State<Arc<AppState>>) -> Result<Html<Strin
                         class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
                     Pull
                 </button>
+                <button hx-post="/infra/git/push"
+                        hx-target="#git-result"
+                        class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm">
+                    Push
+                </button>
             </div>
             <div id="diff-output" class="mt-4"></div>
+            <div id="git-result" class="mt-2"></div>
+
+            <!-- Commit Form -->
+            <form hx-post="/infra/git/commit" hx-target="#git-result" class="mt-4 space-y-2">
+                <input type="text" name="message" placeholder="Commit message..."
+                       class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-sm"
+                       required>
+                <button type="submit" class="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-sm">
+                    Commit Staged
+                </button>
+            </form>
         </div>"##,
         branch = status.branch,
         ahead_behind = if status.ahead > 0 || status.behind > 0 {
@@ -432,6 +448,73 @@ pub async fn git_diff(State(state): State<Arc<AppState>>) -> Result<Html<String>
 pub async fn git_pull(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
     git::pull(&state.config.dotfiles.path)?;
     git_status(State(state)).await
+}
+
+/// Git commit request body
+#[derive(Debug, Deserialize)]
+pub struct GitCommitRequest {
+    pub message: String,
+    #[serde(default)]
+    pub files: Vec<String>,
+}
+
+/// Commit staged changes
+pub async fn git_commit(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<GitCommitRequest>,
+) -> Result<Html<String>, AppError> {
+    let dotfiles_path = &state.config.dotfiles.path;
+
+    // Stage files if specified, otherwise use already staged
+    if !req.files.is_empty() {
+        git::stage_files(dotfiles_path, &req.files)?;
+    }
+
+    // Create commit
+    git::commit(dotfiles_path, &req.message)?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-3">
+            <p class="text-sm">Committed: {}</p>
+        </div>"##,
+        req.message
+    )))
+}
+
+/// Push to remote
+pub async fn git_push(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
+    git::push(&state.config.dotfiles.path)?;
+
+    Ok(Html(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-3">
+            <p class="text-sm">Pushed to remote successfully</p>
+        </div>"##.to_string()
+    ))
+}
+
+/// Auto-commit to feature branch and push
+#[derive(Debug, Deserialize)]
+pub struct AutoCommitRequest {
+    pub message: String,
+    pub files: Vec<String>,
+}
+
+pub async fn git_auto_commit(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<AutoCommitRequest>,
+) -> Result<Html<String>, AppError> {
+    let branch = git::auto_commit_to_branch(
+        &state.config.dotfiles.path,
+        &req.files,
+        &req.message,
+    )?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-3">
+            <p class="text-sm">Created branch and pushed: <code class="bg-gray-800 px-1 rounded">{}</code></p>
+        </div>"##,
+        branch
+    )))
 }
 
 #[derive(Debug, Deserialize)]

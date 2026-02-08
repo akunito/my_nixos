@@ -32,6 +32,9 @@ pub enum AppError {
 
     #[error("Not implemented: {0}")]
     NotImplemented(String),
+
+    #[error("Validation error: {0}")]
+    Validation(String),
 }
 
 impl IntoResponse for AppError {
@@ -45,6 +48,7 @@ impl IntoResponse for AppError {
             AppError::Config(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg.clone()),
             AppError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg.clone()),
             AppError::NotImplemented(msg) => (StatusCode::NOT_IMPLEMENTED, msg.clone()),
+            AppError::Validation(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
         };
 
         tracing::error!("Application error: {}", self);

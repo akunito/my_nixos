@@ -5,9 +5,10 @@ use axum::{
     response::Html,
     Json,
 };
+use serde::Deserialize;
 use std::sync::Arc;
 
-use crate::editor::{parser, ConfigEntry, EntryType, ProfileConfig};
+use crate::editor::{duplicate, parser, writer, ConfigEntry, EntryType, ProfileConfig};
 use crate::error::AppError;
 use crate::AppState;
 
@@ -150,10 +151,18 @@ pub async fn profile_editor(
     </nav>
 
     <main class="container mx-auto px-6 py-8">
-        <div class="flex items-center gap-4 mb-6">
-            <a href="/editor" class="text-blue-400 hover:text-blue-300">&larr; Back</a>
-            <h2 class="text-xl font-semibold">{profile}</h2>
-            <span class="text-gray-400 text-sm">{path}</span>
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-4">
+                <a href="/editor" class="text-blue-400 hover:text-blue-300">&larr; Back</a>
+                <h2 class="text-xl font-semibold">{profile}</h2>
+                <span class="text-gray-400 text-sm">{path}</span>
+            </div>
+            <div class="flex gap-2">
+                <a href="/editor/{profile}/duplicate"
+                   class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm">
+                    Duplicate Profile
+                </a>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -333,4 +342,216 @@ pub async fn profile_json(
 ) -> Result<Json<ProfileConfig>, AppError> {
     let config = parser::parse_profile(&profile, &state.config.dotfiles.path)?;
     Ok(Json(config))
+}
+
+// ============================================================================
+// Profile Duplication Routes
+// ============================================================================
+
+/// Duplicate profile request
+#[derive(Debug, Deserialize)]
+pub struct DuplicateRequest {
+    pub new_name: String,
+    pub new_hostname: String,
+}
+
+/// Show duplicate profile form
+pub async fn duplicate_form(
+    State(_state): State<Arc<AppState>>,
+    Path(profile): Path<String>,
+) -> Result<Html<String>, AppError> {
+    let html = format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duplicate {profile}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {{ background-color: #1a1a2e; color: #eee; }}
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-blue-400">NixOS Control Panel</h1>
+            <div class="flex gap-4">
+                <a href="/editor" class="text-blue-400 hover:text-blue-300">Editor</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-8 max-w-lg">
+        <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
+            <h2 class="text-xl font-semibold mb-6">Duplicate Profile: {profile}</h2>
+
+            <form hx-post="/editor/{profile}/duplicate"
+                  hx-target="#result"
+                  class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">New Profile Name</label>
+                    <input type="text" name="new_name"
+                           placeholder="e.g., DESK2"
+                           pattern="[A-Za-z0-9_-]+"
+                           class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded"
+                           required>
+                    <p class="text-xs text-gray-500 mt-1">Letters, numbers, underscores, dashes only</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">New Hostname</label>
+                    <input type="text" name="new_hostname"
+                           placeholder="e.g., nixosaku2"
+                           pattern="[a-z0-9-]+"
+                           class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded"
+                           required>
+                    <p class="text-xs text-gray-500 mt-1">Lowercase letters, numbers, dashes only</p>
+                </div>
+
+                <div class="flex gap-2 pt-4">
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded">
+                        Duplicate Profile
+                    </button>
+                    <a href="/editor/{profile}"
+                       class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+
+            <div id="result" class="mt-4"></div>
+        </div>
+    </main>
+</body>
+</html>"##,
+        profile = profile
+    );
+
+    Ok(Html(html))
+}
+
+/// Duplicate a profile
+pub async fn duplicate_profile(
+    State(state): State<Arc<AppState>>,
+    Path(profile): Path<String>,
+    Json(req): Json<DuplicateRequest>,
+) -> Result<Html<String>, AppError> {
+    let result = duplicate::duplicate_profile(
+        &profile,
+        &req.new_name,
+        &req.new_hostname,
+        &state.config.dotfiles.path,
+    )?;
+
+    let flake_msg = if result.flake_created {
+        format!("<p class=\"text-sm\">Flake file created: {}</p>", result.flake_path.unwrap_or_default())
+    } else {
+        "<p class=\"text-sm text-yellow-400\">Note: No flake file was created (source didn't have one)</p>".to_string()
+    };
+
+    let html = format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-4">
+            <h3 class="font-semibold mb-2">Profile Duplicated Successfully!</h3>
+            <p class="text-sm">Created: {}</p>
+            {}
+            <div class="mt-4">
+                <a href="/editor/{}"
+                   class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                    Edit New Profile
+                </a>
+            </div>
+        </div>"##,
+        result.profile_path,
+        flake_msg,
+        result.profile_name
+    );
+
+    Ok(Html(html))
+}
+
+// ============================================================================
+// Package Management Routes
+// ============================================================================
+
+/// Add package request
+#[derive(Debug, Deserialize)]
+pub struct PackageRequest {
+    pub package: String,
+    pub section: String, // "systemPackages" or "homePackages"
+}
+
+/// Add a package to a profile
+pub async fn add_package(
+    State(state): State<Arc<AppState>>,
+    Path(profile): Path<String>,
+    Json(req): Json<PackageRequest>,
+) -> Result<Html<String>, AppError> {
+    writer::add_package(
+        &profile,
+        &state.config.dotfiles.path,
+        &req.section,
+        &req.package,
+    )?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-2 text-sm">
+            Added {} to {}
+        </div>"##,
+        req.package, req.section
+    )))
+}
+
+/// Remove a package from a profile
+pub async fn remove_package(
+    State(state): State<Arc<AppState>>,
+    Path(profile): Path<String>,
+    Json(req): Json<PackageRequest>,
+) -> Result<Html<String>, AppError> {
+    writer::remove_package(
+        &profile,
+        &state.config.dotfiles.path,
+        &req.section,
+        &req.package,
+    )?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-2 text-sm">
+            Removed {} from {}
+        </div>"##,
+        req.package, req.section
+    )))
+}
+
+// ============================================================================
+// Value Setting Routes
+// ============================================================================
+
+/// Set value request
+#[derive(Debug, Deserialize)]
+pub struct SetValueRequest {
+    pub value: String,
+}
+
+/// Set a string value in a profile
+pub async fn set_value(
+    State(state): State<Arc<AppState>>,
+    Path((profile, key)): Path<(String, String)>,
+    Json(req): Json<SetValueRequest>,
+) -> Result<Html<String>, AppError> {
+    // Try as number first, then as string
+    if let Ok(num) = req.value.parse::<i64>() {
+        writer::set_number_value(&profile, &state.config.dotfiles.path, &key, num)?;
+    } else {
+        writer::set_string_value(&profile, &state.config.dotfiles.path, &key, &req.value)?;
+    }
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-2 text-sm">
+            Set {} = {}
+        </div>"##,
+        key, req.value
+    )))
 }

@@ -80,6 +80,9 @@ async fn main() -> anyhow::Result<()> {
         .route("/infra/git/status", get(infra::routes::git_status))
         .route("/infra/git/diff", get(infra::routes::git_diff))
         .route("/infra/git/pull", post(infra::routes::git_pull))
+        .route("/infra/git/commit", post(infra::routes::git_commit))
+        .route("/infra/git/push", post(infra::routes::git_push))
+        .route("/infra/git/auto-commit", post(infra::routes::git_auto_commit))
         .route("/infra/deploy/{profile}/dry-run", post(infra::routes::deploy_dry_run))
         .route("/infra/deploy/{profile}", post(infra::routes::deploy_profile))
 
@@ -99,6 +102,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/editor/{profile}", get(editor::routes::profile_editor))
         .route("/editor/{profile}/toggle/{flag}", post(editor::routes::toggle_flag))
         .route("/editor/{profile}/json", get(editor::routes::profile_json))
+        .route("/editor/{profile}/duplicate", get(editor::routes::duplicate_form))
+        .route("/editor/{profile}/duplicate", post(editor::routes::duplicate_profile))
+        .route("/editor/{profile}/add-package", post(editor::routes::add_package))
+        .route("/editor/{profile}/remove-package", post(editor::routes::remove_package))
+        .route("/editor/{profile}/set/{key}", post(editor::routes::set_value))
 
         // Health check (no auth required)
         .route("/health", get(|| async { "OK" }))

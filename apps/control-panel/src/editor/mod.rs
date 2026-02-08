@@ -5,8 +5,10 @@
 //! - Manage packages
 //! - Duplicate profiles
 
+pub mod duplicate;
 pub mod parser;
 pub mod routes;
+pub mod writer;
 
 use serde::{Deserialize, Serialize};
 
