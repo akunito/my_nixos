@@ -156,6 +156,7 @@ fn render_dashboard(summaries: &[NodeSummary]) -> String {
             <div class="flex gap-4">
                 <a href="/docker" class="text-blue-400 hover:text-blue-300">Docker</a>
                 <a href="/infra" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
+                <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
                 <a href="/editor" class="text-gray-400 hover:text-gray-300">Editor</a>
             </div>
         </div>
@@ -266,6 +267,7 @@ fn render_node_containers(node: &str, host: &str, containers: &[Container]) -> S
             <div class="flex gap-4">
                 <a href="/docker" class="text-blue-400 hover:text-blue-300">Docker</a>
                 <a href="/infra" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
+                <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
                 <a href="/editor" class="text-gray-400 hover:text-gray-300">Editor</a>
             </div>
         </div>
