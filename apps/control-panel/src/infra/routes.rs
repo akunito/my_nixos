@@ -383,3 +383,41 @@ pub async fn graph_data(State(state): State<Arc<AppState>>) -> Json<graph::Graph
     let data = graph::generate_graph_data(&state.config);
     Json(data)
 }
+
+/// Health check for all profiles - returns status for each
+pub async fn health_check(State(state): State<Arc<AppState>>) -> Json<std::collections::HashMap<String, String>> {
+    use std::collections::HashMap;
+
+    let mut statuses = HashMap::new();
+
+    // Check each profile that has an IP
+    for profile in &state.config.profiles {
+        if let Some(ip) = &profile.ip {
+            // Quick ping check (1 second timeout)
+            let status = match tokio::time::timeout(
+                tokio::time::Duration::from_secs(1),
+                check_host_reachable(ip),
+            )
+            .await
+            {
+                Ok(Ok(true)) => "online",
+                Ok(Ok(false)) | Ok(Err(_)) => "offline",
+                Err(_) => "offline", // timeout
+            };
+            statuses.insert(profile.name.clone(), status.to_string());
+        } else {
+            statuses.insert(profile.name.clone(), "unknown".to_string());
+        }
+    }
+
+    Json(statuses)
+}
+
+/// Check if a host is reachable via TCP port 22
+async fn check_host_reachable(host: &str) -> Result<bool, std::io::Error> {
+    let addr = format!("{}:22", host);
+    match tokio::net::TcpStream::connect(&addr).await {
+        Ok(_) => Ok(true),
+        Err(_) => Ok(false),
+    }
+}

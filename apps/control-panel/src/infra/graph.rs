@@ -274,6 +274,36 @@ function showNodeDetails(node) {{
         htmx.ajax('GET', '/infra/profile/' + node.id, '#details-panel');
     }}
 }}
+
+// Periodically update node status
+async function updateNodeStatus() {{
+    try {{
+        const response = await fetch('/infra/health');
+        const statuses = await response.json();
+
+        // Update each node's status indicator
+        node.selectAll('circle').filter((d, i) => i === 1)
+            .attr('fill', d => {{
+                const status = statuses[d.id] || 'unknown';
+                return getStatusColor(status);
+            }});
+
+        // Also update the data for tooltips
+        graphData.nodes.forEach(n => {{
+            if (statuses[n.id]) {{
+                n.status = statuses[n.id];
+            }}
+        }});
+    }} catch (e) {{
+        console.error('Failed to fetch health status:', e);
+    }}
+}}
+
+// Initial health check after graph loads
+setTimeout(updateNodeStatus, 1000);
+
+// Update every 30 seconds
+setInterval(updateNodeStatus, 30000);
 "##,
         json_data = json_data
     )

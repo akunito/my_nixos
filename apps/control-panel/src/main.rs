@@ -76,6 +76,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/infra", get(infra::routes::dashboard))
         .route("/infra/profile/{profile}", get(infra::routes::profile_details))
         .route("/infra/graph/data", get(infra::routes::graph_data))
+        .route("/infra/health", get(infra::routes::health_check))
         .route("/infra/git/status", get(infra::routes::git_status))
         .route("/infra/git/diff", get(infra::routes::git_diff))
         .route("/infra/git/pull", post(infra::routes::git_pull))
