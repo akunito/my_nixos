@@ -382,7 +382,22 @@ pub async fn stack_up(
     Ok(output.combined())
 }
 
-/// Stop a compose stack
+/// Stop a compose stack (containers remain, can restart)
+pub async fn stack_stop(
+    ssh_pool: &mut SshPool,
+    node_name: &str,
+    project: &str,
+) -> Result<String, AppError> {
+    let dir = find_compose_dir(ssh_pool, node_name, project).await?;
+
+    let command = format!("cd {} && docker-compose stop 2>&1", dir);
+    let output = ssh_pool.execute(node_name, &command).await?;
+
+    tracing::info!("Stopped stack {} on {}", project, node_name);
+    Ok(output.combined())
+}
+
+/// Remove a compose stack (containers are removed)
 pub async fn stack_down(
     ssh_pool: &mut SshPool,
     node_name: &str,
@@ -393,7 +408,7 @@ pub async fn stack_down(
     let command = format!("cd {} && docker-compose down 2>&1", dir);
     let output = ssh_pool.execute(node_name, &command).await?;
 
-    tracing::info!("Stopped stack {} on {}", project, node_name);
+    tracing::info!("Removed stack {} on {}", project, node_name);
     Ok(output.combined())
 }
 

@@ -277,7 +277,25 @@ pub async fn stack_up(
     )))
 }
 
-/// Stop all containers in a compose stack
+/// Stop all containers in a compose stack (keeps containers, can restart)
+pub async fn stack_stop(
+    State(state): State<Arc<AppState>>,
+    Path((node, project)): Path<(String, String)>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::stack_stop(&mut ssh_pool, &node, &project).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Stack '{}' stopped</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        project,
+        html_escape(&output)
+    )))
+}
+
+/// Remove all containers in a compose stack (containers are removed)
 pub async fn stack_down(
     State(state): State<Arc<AppState>>,
     Path((node, project)): Path<(String, String)>,
@@ -286,8 +304,8 @@ pub async fn stack_down(
     let output = commands::stack_down(&mut ssh_pool, &node, &project).await?;
 
     Ok(Html(format!(
-        r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-3 text-sm">
-            <p class="font-semibold mb-2">Stack '{}' stopped</p>
+        r##"<div class="bg-red-900 border border-red-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Stack '{}' removed</p>
             <pre class="text-xs overflow-auto max-h-32">{}</pre>
         </div>"##,
         project,
@@ -649,19 +667,19 @@ fn render_stack_section(node: &str, stack: &ComposeStack) -> String {
                         hx-target="#action-result"
                         hx-swap="innerHTML"
                         class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm">
-                    Start All
+                    Start
                 </button>
-                <button hx-post="/docker/{node}/stack/{project}/down"
+                <button hx-post="/docker/{node}/stack/{project}/stop"
                         hx-target="#action-result"
                         hx-swap="innerHTML"
                         hx-confirm="Stop all containers in '{project}'?"
-                        class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
-                    Stop All
+                        class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-sm">
+                    Stop
                 </button>
                 <button hx-post="/docker/{node}/stack/{project}/restart"
                         hx-target="#action-result"
                         hx-swap="innerHTML"
-                        class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-sm">
+                        class="px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded text-sm">
                     Restart
                 </button>
                 <button hx-post="/docker/{node}/stack/{project}/pull"
@@ -676,6 +694,13 @@ fn render_stack_section(node: &str, stack: &ComposeStack) -> String {
                         hx-confirm="Rebuild '{project}'? This will pull and recreate all containers."
                         class="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-sm">
                     Rebuild
+                </button>
+                <button hx-post="/docker/{node}/stack/{project}/down"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        hx-confirm="REMOVE stack '{project}'? Containers will be deleted and disappear from this list!"
+                        class="px-3 py-1 bg-red-700 hover:bg-red-800 rounded text-sm">
+                    Remove
                 </button>
                 <button onclick="showStackLogs('{node}', '{project}')"
                         class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">
