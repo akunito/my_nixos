@@ -108,6 +108,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/proxmox/{ctid}/stop", post(infra::routes::proxmox_stop))
         .route("/proxmox/{ctid}/restart", post(infra::routes::proxmox_restart))
         .route("/proxmox/{ctid}/status", get(infra::routes::proxmox_status))
+        .route("/proxmox/backup/{job_id}/run", post(infra::routes::proxmox_backup_run))
 
         // Monitoring routes
         .route("/monitoring", get(infra::routes::monitoring_dashboard))

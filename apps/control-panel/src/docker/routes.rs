@@ -1118,7 +1118,7 @@ fn render_container_row(node: &str, container: &Container) -> String {
 }
 
 /// Escape HTML special characters
-fn html_escape(s: &str) -> String {
+pub fn html_escape(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")

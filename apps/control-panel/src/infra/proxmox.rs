@@ -147,3 +147,128 @@ pub async fn is_container_running(ssh_pool: &mut SshPool, ctid: u32) -> Result<b
     let status = get_container_status(ssh_pool, ctid).await?;
     Ok(status == "running")
 }
+
+// ============================================================================
+// Backup Functions
+// ============================================================================
+
+/// Backup job information
+#[derive(Debug, Clone, Serialize)]
+pub struct BackupJob {
+    pub id: String,
+    pub schedule: String,
+    pub storage: String,
+    pub vmids: String,
+    pub enabled: bool,
+    pub mode: String,
+    pub comment: Option<String>,
+}
+
+/// List all backup jobs
+pub async fn list_backup_jobs(ssh_pool: &mut SshPool) -> Result<Vec<BackupJob>, AppError> {
+    // Read vzdump.cron and /etc/pve/jobs.cfg for scheduled backups
+    let command = "cat /etc/pve/jobs.cfg 2>/dev/null || echo ''";
+    let output = ssh_pool.execute_on_proxmox(command).await?;
+
+    let mut jobs = Vec::new();
+    let mut current_job: Option<BackupJob> = None;
+
+    for line in output.stdout.lines() {
+        let line = line.trim();
+
+        if line.starts_with("vzdump:") {
+            // Save previous job if exists
+            if let Some(job) = current_job.take() {
+                jobs.push(job);
+            }
+            // Start new job
+            let id = line.trim_start_matches("vzdump:").trim().to_string();
+            current_job = Some(BackupJob {
+                id,
+                schedule: String::new(),
+                storage: String::new(),
+                vmids: String::new(),
+                enabled: true,
+                mode: "snapshot".to_string(),
+                comment: None,
+            });
+        } else if let Some(ref mut job) = current_job {
+            if let Some((key, value)) = line.split_once(' ') {
+                match key {
+                    "schedule" => job.schedule = value.to_string(),
+                    "storage" => job.storage = value.to_string(),
+                    "vmid" | "pool" | "all" => job.vmids = if key == "all" { "all".to_string() } else { value.to_string() },
+                    "enabled" => job.enabled = value != "0",
+                    "mode" => job.mode = value.to_string(),
+                    "comment" => job.comment = Some(value.to_string()),
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    // Don't forget the last job
+    if let Some(job) = current_job {
+        jobs.push(job);
+    }
+
+    Ok(jobs)
+}
+
+/// Run a backup job manually
+pub async fn run_backup_job(ssh_pool: &mut SshPool, job_id: &str) -> Result<String, AppError> {
+    // Trigger the vzdump job
+    let command = format!("pvesh create /cluster/backup/{}/run", job_id);
+    let output = ssh_pool.execute_on_proxmox(&command).await?;
+
+    if !output.success() {
+        return Err(AppError::SshCommand(format!(
+            "Failed to run backup job {}: {}",
+            job_id,
+            output.combined()
+        )));
+    }
+
+    tracing::info!("Started backup job {} on Proxmox", job_id);
+    Ok(output.combined())
+}
+
+/// Backup a specific container/VM immediately
+#[allow(dead_code)]
+pub async fn backup_container(
+    ssh_pool: &mut SshPool,
+    ctid: u32,
+    storage: &str,
+    mode: &str,
+) -> Result<String, AppError> {
+    let command = format!("vzdump {} --storage {} --mode {} --compress zstd", ctid, storage, mode);
+    let output = ssh_pool.execute_on_proxmox(&command).await?;
+
+    if !output.success() {
+        return Err(AppError::SshCommand(format!(
+            "Failed to backup container {}: {}",
+            ctid,
+            output.combined()
+        )));
+    }
+
+    tracing::info!("Started backup for container {} on Proxmox", ctid);
+    Ok(output.combined())
+}
+
+/// List recent backups for a container/VM
+#[allow(dead_code)]
+pub async fn list_backups(ssh_pool: &mut SshPool, storage: &str) -> Result<Vec<String>, AppError> {
+    let command = format!("pvesm list {} --content backup 2>/dev/null | tail -20", storage);
+    let output = ssh_pool.execute_on_proxmox(&command).await?;
+
+    let backups: Vec<String> = output
+        .stdout
+        .lines()
+        .skip(1) // Skip header
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| l.to_string())
+        .collect();
+
+    Ok(backups)
+}

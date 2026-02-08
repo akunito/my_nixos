@@ -680,6 +680,7 @@ pub async fn proxmox_dashboard(State(state): State<Arc<AppState>>) -> Result<Htm
 
     let containers = proxmox::list_containers(&mut ssh_pool).await.unwrap_or_default();
     let vms = proxmox::list_vms(&mut ssh_pool).await.unwrap_or_default();
+    let backup_jobs = proxmox::list_backup_jobs(&mut ssh_pool).await.unwrap_or_default();
 
     let containers_html: String = containers
         .iter()
@@ -692,6 +693,14 @@ pub async fn proxmox_dashboard(State(state): State<Arc<AppState>>) -> Result<Htm
         .map(|v| render_proxmox_row(v, "vm"))
         .collect::<Vec<_>>()
         .join("\n");
+
+    let backups_html: String = backup_jobs
+        .iter()
+        .map(|b| render_backup_job_row(b))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let proxmox_url = format!("https://{}", state.config.proxmox.host);
 
     let html = format!(
         r##"<!DOCTYPE html>
@@ -725,6 +734,14 @@ pub async fn proxmox_dashboard(State(state): State<Arc<AppState>>) -> Result<Htm
             <h2 class="text-xl font-semibold">Proxmox Virtual Environment</h2>
             <div class="flex items-center gap-4">
                 <span class="text-gray-400 text-sm">Host: {proxmox_host}</span>
+                <a href="{proxmox_url}:8006"
+                   target="_blank"
+                   class="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    Open Proxmox
+                </a>
                 <button hx-get="/proxmox"
                         hx-target="body"
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded">
@@ -733,26 +750,31 @@ pub async fn proxmox_dashboard(State(state): State<Arc<AppState>>) -> Result<Htm
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Action Result Area -->
+        <div id="proxmox-result" class="mb-6"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <!-- LXC Containers -->
             <div class="bg-gray-800 rounded-lg border border-gray-700 p-4">
                 <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
                     <span class="w-3 h-3 bg-green-500 rounded-full"></span>
                     LXC Containers ({container_count})
                 </h3>
-                <table class="w-full">
-                    <thead>
-                        <tr class="text-left text-gray-400 text-sm">
-                            <th class="pb-2">CTID</th>
-                            <th class="pb-2">Name</th>
-                            <th class="pb-2">Status</th>
-                            <th class="pb-2">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-700">
-                        {containers_html}
-                    </tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-gray-400 text-sm">
+                                <th class="pb-2">CTID</th>
+                                <th class="pb-2">Name</th>
+                                <th class="pb-2">Status</th>
+                                <th class="pb-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="containers-body" class="divide-y divide-gray-700">
+                            {containers_html}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- VMs -->
@@ -761,32 +783,58 @@ pub async fn proxmox_dashboard(State(state): State<Arc<AppState>>) -> Result<Htm
                     <span class="w-3 h-3 bg-amber-500 rounded-full"></span>
                     Virtual Machines ({vm_count})
                 </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-gray-400 text-sm">
+                                <th class="pb-2">VMID</th>
+                                <th class="pb-2">Name</th>
+                                <th class="pb-2">Status</th>
+                                <th class="pb-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vms-body" class="divide-y divide-gray-700">
+                            {vms_html}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backup Jobs -->
+        <div class="bg-gray-800 rounded-lg border border-gray-700 p-4">
+            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
+                Backup Jobs ({backup_count})
+            </h3>
+            <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead>
                         <tr class="text-left text-gray-400 text-sm">
-                            <th class="pb-2">VMID</th>
-                            <th class="pb-2">Name</th>
+                            <th class="pb-2">Job ID</th>
+                            <th class="pb-2">Schedule</th>
+                            <th class="pb-2">Storage</th>
+                            <th class="pb-2">VMs/CTs</th>
+                            <th class="pb-2">Mode</th>
                             <th class="pb-2">Status</th>
                             <th class="pb-2">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-700">
-                        {vms_html}
+                        {backups_html}
                     </tbody>
                 </table>
             </div>
+            {no_backups_msg}
         </div>
     </main>
-
-    <script>
-        // Auto-refresh every 30 seconds
-        setInterval(() => htmx.ajax('GET', '/proxmox/containers', '#containers-body'), 30000);
-    </script>
 </body>
 </html>"##,
         proxmox_host = state.config.proxmox.host,
+        proxmox_url = proxmox_url,
         container_count = containers.len(),
         vm_count = vms.len(),
+        backup_count = backup_jobs.len(),
         containers_html = if containers_html.is_empty() {
             "<tr><td colspan=\"4\" class=\"py-4 text-gray-500 text-center\">No containers found</td></tr>".to_string()
         } else {
@@ -796,10 +844,53 @@ pub async fn proxmox_dashboard(State(state): State<Arc<AppState>>) -> Result<Htm
             "<tr><td colspan=\"4\" class=\"py-4 text-gray-500 text-center\">No VMs found</td></tr>".to_string()
         } else {
             vms_html
+        },
+        backups_html = backups_html,
+        no_backups_msg = if backup_jobs.is_empty() {
+            "<p class=\"text-gray-500 text-center py-4\">No backup jobs configured. Configure backups in Proxmox web UI.</p>"
+        } else {
+            ""
         }
     );
 
     Ok(Html(html))
+}
+
+fn render_backup_job_row(job: &proxmox::BackupJob) -> String {
+    let status_class = if job.enabled { "bg-green-500" } else { "bg-gray-500" };
+    let status_text = if job.enabled { "Enabled" } else { "Disabled" };
+
+    format!(
+        r##"<tr class="hover:bg-gray-700">
+            <td class="py-2 font-mono text-sm">{id}</td>
+            <td class="py-2 text-sm">{schedule}</td>
+            <td class="py-2 text-sm">{storage}</td>
+            <td class="py-2 text-sm">{vmids}</td>
+            <td class="py-2 text-sm">{mode}</td>
+            <td class="py-2">
+                <span class="inline-flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full {status_class}"></span>
+                    {status_text}
+                </span>
+            </td>
+            <td class="py-2">
+                <button hx-post="/proxmox/backup/{id}/run"
+                        hx-target="#proxmox-result"
+                        hx-swap="innerHTML"
+                        hx-confirm="Run backup job '{id}' now?"
+                        class="px-2 py-1 text-xs rounded bg-purple-600 hover:bg-purple-700">
+                    Run Now
+                </button>
+            </td>
+        </tr>"##,
+        id = job.id,
+        schedule = if job.schedule.is_empty() { "Not scheduled" } else { &job.schedule },
+        storage = if job.storage.is_empty() { "Default" } else { &job.storage },
+        vmids = if job.vmids.is_empty() { "None" } else { &job.vmids },
+        mode = job.mode,
+        status_class = status_class,
+        status_text = status_text,
+    )
 }
 
 fn render_proxmox_row(info: &proxmox::ContainerInfo, _vm_type: &str) -> String {
@@ -954,4 +1045,44 @@ pub async fn proxmox_status(
         "ctid": ctid,
         "status": status
     })))
+}
+
+/// Run a backup job manually
+pub async fn proxmox_backup_run(
+    State(state): State<Arc<AppState>>,
+    Path(job_id): Path<String>,
+) -> Result<Html<String>, AppError> {
+    use tokio::time::{timeout, Duration};
+
+    let result = timeout(Duration::from_secs(30), async {
+        let mut ssh_pool = state.ssh_pool.write().await;
+        proxmox::run_backup_job(&mut ssh_pool, &job_id).await
+    }).await;
+
+    match result {
+        Ok(Ok(output)) => Ok(Html(format!(
+            r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Backup job '{}' started</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+                <p class="text-xs text-gray-400 mt-2">Check Proxmox UI for backup progress.</p>
+            </div>"##,
+            job_id,
+            crate::docker::routes::html_escape(&output)
+        ))),
+        Ok(Err(e)) => Ok(Html(format!(
+            r##"<div class="bg-red-900 border border-red-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Failed to start backup job '{}'</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+            </div>"##,
+            job_id,
+            crate::docker::routes::html_escape(&e.to_string())
+        ))),
+        Err(_) => Ok(Html(format!(
+            r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Backup job '{}' triggered (timeout waiting for confirmation)</p>
+                <p class="text-xs">The backup is likely running. Check Proxmox UI for status.</p>
+            </div>"##,
+            job_id
+        ))),
+    }
 }
