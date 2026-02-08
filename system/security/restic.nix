@@ -127,4 +127,27 @@ in
       Persistent = true;
     };
   };
+
+  # ====================== pfSense Backup ======================
+  # Daily backup of pfSense configuration
+  systemd.services.pfsense-backup = lib.mkIf (systemSettings.pfsenseBackupEnable or false) {
+    description = "Backup pfSense configuration";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${userSettings.dotfilesDir}/scripts/pfsense-backup.sh";
+      User = userSettings.username;
+    };
+    # Ensure backup directory is accessible
+    path = [ pkgs.openssh pkgs.gzip pkgs.findutils pkgs.coreutils ];
+  };
+
+  systemd.timers.pfsense-backup = lib.mkIf (systemSettings.pfsenseBackupEnable or false) {
+    description = "Timer for pfSense backup";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = systemSettings.pfsenseBackupOnCalendar or "daily";
+      Persistent = true;
+      RandomizedDelaySec = "1h"; # Spread backups to avoid thundering herd
+    };
+  };
 }

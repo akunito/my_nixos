@@ -688,20 +688,100 @@ ls /usr/local/etc/rc.d/
 
 ## Backup
 
-### Configuration Backup
+### Automated Backup to Proxmox NFS
+
+pfSense is configured with automated daily backups to Proxmox NFS storage at `/mnt/pve/proxmox_backups/pfsense/`.
+
+| Setting | Value |
+|---------|-------|
+| **Script Location** | `/root/backup-to-proxmox.sh` |
+| **Schedule** | Daily at 02:00 (via cron) |
+| **Destination** | `root@192.168.8.82:/mnt/pve/proxmox_backups/pfsense/` |
+| **Retention** | 30 days |
+| **Monitoring** | Prometheus metrics via LXC_monitoring |
+
+#### Files Backed Up
+
+| File/Directory | Description |
+|----------------|-------------|
+| `/conf/config.xml` | Full pfSense configuration |
+| `/root/.ssh/` | SSH keys (for automation) |
+| `/root/*.sh` | Custom scripts (backup, maintenance) |
+| `/var/db/rrd/*.rrd` | RRD data (historical graphs) |
+
+#### Backup Script
+
+The backup script (`/root/backup-to-proxmox.sh`) performs:
+1. Creates timestamped tar.gz archive of all important files
+2. Transfers to Proxmox via SCP (SSH key authentication)
+3. Cleans up backups older than 30 days
+4. Writes Prometheus-compatible metrics file
+
+```bash
+# View backup script
+ssh admin@192.168.8.1 "cat /root/backup-to-proxmox.sh"
+
+# Run manual backup
+ssh admin@192.168.8.1 "/root/backup-to-proxmox.sh"
+
+# Check backup files on Proxmox
+ssh root@192.168.8.82 "ls -la /mnt/pve/proxmox_backups/pfsense/"
+```
+
+#### Cron Configuration
+
+Configured via **pfSense GUI** → Services → Cron (requires pfSense-pkg-Cron):
+
+| Setting | Value |
+|---------|-------|
+| **Minute** | 0 |
+| **Hour** | 2 |
+| **Day of Month** | * |
+| **Month** | * |
+| **Day of Week** | * |
+| **User** | root |
+| **Command** | `/root/backup-to-proxmox.sh` |
+
+#### SSH Key Setup
+
+pfSense uses SSH key authentication to transfer backups to Proxmox:
+
+```bash
+# Generate key on pfSense (if not exists)
+ssh admin@192.168.8.1 "ssh-keygen -t ed25519 -f /root/.ssh/id_ed25519 -N ''"
+
+# Copy public key to Proxmox authorized_keys
+ssh admin@192.168.8.1 "cat /root/.ssh/id_ed25519.pub" >> /root/.ssh/authorized_keys
+```
+
+### Prometheus Monitoring
+
+Backup status is monitored via `prometheus-pfsense-backup` service on LXC_monitoring.
+
+**Metrics exposed**:
+| Metric | Description |
+|--------|-------------|
+| `pfsense_backup_last_success` | Unix timestamp of last backup |
+| `pfsense_backup_age_seconds` | Age of most recent backup in seconds |
+| `pfsense_backup_count` | Total number of backup files |
+| `pfsense_backup_size_bytes` | Size of most recent backup |
+
+**Grafana dashboard**: Infrastructure Overview → "Current Backup Age" and "Backup Timeline" panels include pfSense.
+
+### Configuration Backup (Manual)
 
 The complete pfSense configuration is stored in `/conf/config.xml`.
 
-**Backup methods**:
+**Manual backup methods**:
 1. **GUI**: Diagnostics → Backup & Restore → Download configuration
 2. **SSH**: `cat /conf/config.xml > /tmp/pfsense-backup.xml`
-3. **AutoConfigBackup**: Encrypted backups to Netgate (if configured)
+3. **REST API**: `curl -sk -H "x-api-key: <key>" https://192.168.8.1/api/v2/system/config`
 
 ### Recommended Backup Schedule
 
-- Before any configuration changes
-- Weekly automated backup via GUI
-- Store backups in encrypted location (git-crypt repo)
+- **Automated**: Daily backup to Proxmox NFS (configured above)
+- **Before changes**: Manual backup before significant configuration changes
+- **Off-site**: Consider periodic backup to cloud storage for disaster recovery
 
 ---
 

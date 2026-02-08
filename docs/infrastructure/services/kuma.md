@@ -191,7 +191,7 @@ api.save_status_page(
 Dark mode CSS templates are maintained in the portfolio project:
 
 ```
-/home/akunito/Nextcloud/git_repos/myProjects/portfolio/scripts/kuma/
+~/Projects/portfolio/scripts/kuma/
 ├── css_templates.py    # Dark mode CSS + service icon mapping
 ├── config.py           # Credential loading
 ├── client.py           # API wrapper
@@ -201,7 +201,7 @@ Dark mode CSS templates are maintained in the portfolio project:
 ### Apply Custom CSS
 
 ```bash
-cd /home/akunito/Nextcloud/git_repos/myProjects/portfolio
+cd ~/Projects/portfolio
 
 # Test connection
 python -m scripts.kuma.update_status_pages --test

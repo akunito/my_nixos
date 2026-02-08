@@ -2,33 +2,57 @@
 id: audits.pfsense.2026-02-04
 summary: Security, performance, and reliability audit of pfSense firewall
 tags: [audit, security, performance, pfsense, firewall]
+last_updated: 2026-02-08
 ---
 
 # pfSense Security, Performance & Reliability Audit
 
-**Date**: 2026-02-04
+**Initial Date**: 2026-02-04
+**Last Updated**: 2026-02-08
 **Auditor**: Claude Code
 **System**: pfSense 2.7.2-RELEASE (FreeBSD 14.0-CURRENT)
 **IP Address**: 192.168.8.1
-**Uptime at audit**: 15+ hours (since 2026-02-04 01:16)
+
+---
+
+## Update Log
+
+| Date | Changes |
+|------|---------|
+| 2026-02-08 | SEC-004 (console password) completed via API; REL-001 (backup automation) completed with Proxmox NFS; Grafana monitoring added |
+| 2026-02-07 | API audit performed; REST API reinstalled; new API key created |
+| 2026-02-04 | Initial audit; SEC-001 (SNMPv3), SEC-002 (DNSSEC), REL-002 (unbound-control) completed |
 
 ---
 
 ## Executive Summary
 
-Overall, the pfSense firewall is **well-configured** with good security practices. The system is operating efficiently with **excellent performance margins**. Key areas for improvement include:
+Overall, the pfSense firewall is **well-configured** with good security practices. The system is operating efficiently with **excellent performance margins**.
 
-- **High Priority**: SNMP uses cleartext SNMPv2c protocol
-- **Medium Priority**: DNSSEC disabled, no automated config backup, unbound-control disabled
-- **Low Priority**: Anti-lockout rule could be more restrictive, review default LAN allow rule
+### Current Status (as of 2026-02-07)
+
+**Completed Remediations:**
+- **SEC-001**: SNMPv3 with authentication and encryption - **DONE**
+- **SEC-002**: DNSSEC enabled - **DONE**
+- **REL-002**: unbound-control enabled - **DONE**
+- **SEC-004**: Console password protection - **DONE** (2026-02-07, via REST API)
+- **REL-001**: Automated backup to Proxmox NFS - **DONE** (2026-02-07)
+  - Full backup (config.xml, SSH keys, scripts, RRD data) daily at 2:30 AM
+  - Stored at: `proxmox:/mnt/pve/proxmox_backups/pfsense/`
+  - 30-day retention, ~2.6MB per backup
+  - Monitored via Prometheus/Grafana
+
+**Pending Items:**
+- **NEW-001**: System updates check (MEDIUM) - pfSense GUI required
+- **SEC-003**: Anti-lockout restriction (LOW) - pfSense GUI required
 
 ### Score Summary
 
 | Category | Score | Notes |
 |----------|-------|-------|
-| **Security** | 7/10 | Good baseline, SNMPv2c and DNSSEC are concerns |
+| **Security** | 9/10 | SNMPv3 + DNSSEC + console protection completed |
 | **Performance** | 9/10 | Excellent - massive headroom on all metrics |
-| **Reliability** | 7/10 | Good but backup automation needed |
+| **Reliability** | 8/10 | Local backup automated, AutoConfigBackup pending |
 
 ---
 
@@ -36,15 +60,45 @@ Overall, the pfSense firewall is **well-configured** with good security practice
 
 | ID | Severity | Category | Finding | Status |
 |----|----------|----------|---------|--------|
-| SEC-001 | **High** | Security | SNMPv2c cleartext protocol | Open |
-| SEC-002 | **Medium** | Security | DNSSEC disabled | Open |
+| SEC-001 | **High** | Security | SNMPv2c cleartext protocol | **COMPLETED** (2026-02-04) |
+| SEC-002 | **Medium** | Security | DNSSEC disabled | **COMPLETED** (2026-02-04) |
 | SEC-003 | **Low** | Security | Anti-lockout allows any LAN source | Open |
-| SEC-004 | **Info** | Security | sshguard table empty (0 entries) | Verified OK |
+| SEC-004 | **High** | Security | Console password protection disabled | **COMPLETED** (2026-02-07) |
+| SEC-005 | **Info** | Security | sshguard table empty (0 entries) | Verified OK |
+| SEC-006 | **Medium** | Security | Kernel PTI/MDS mitigations disabled | Info (see notes) |
 | REL-001 | **Medium** | Reliability | No AutoConfigBackup configured | Open |
-| REL-002 | **Medium** | Reliability | unbound-control disabled | Open |
+| REL-002 | **Medium** | Reliability | unbound-control disabled | **COMPLETED** (2026-02-04) |
 | REL-003 | **Low** | Reliability | DNS operates as recursive resolver | Info |
+| NEW-001 | **Medium** | Maintenance | Check for system updates | Open |
+| NEW-002 | **Medium** | Reliability | Local backup automation | **COMPLETED** (2026-02-07) |
 | PERF-001 | **Info** | Performance | lagg0 has 6 TX errors | Minor |
 | PERF-002 | **Info** | Performance | ix1 interface unused | Info |
+
+### 2026-02-07 API Audit Findings
+
+Fresh audit performed via REST API on 2026-02-07:
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| Version | pfSense 2.7.2-RELEASE | Check for updates |
+| CPU | Intel i3-12100T (8 cores) | Excellent |
+| CPU Usage | 1.5% | Excellent |
+| Memory Usage | 7% | Excellent |
+| Disk Usage | 1% | Excellent |
+| Temperature | 27.9C | Cool |
+| Uptime | 3+ days | Stable |
+| mbuf Usage | 4% | Good |
+| Console Password | Enabled | ✅ Fixed (2026-02-08) |
+| Kernel PTI | Disabled | Review (12th gen has HW mitigations) |
+| MDS Mitigation | Inactive | Review (12th gen has HW mitigations) |
+| SSH Auth | Key-only | Good |
+
+**Packages Installed:**
+- NET-SNMP 0.1.5_11
+- pfBlockerNG-devel 3.2.0_20
+- WireGuard 0.2.1
+- RESTAPI v2.4.3
+- Cron 1.0 (for automated backups)
 
 ---
 
@@ -419,37 +473,49 @@ Interrupts are well-distributed across CPU cores with no single core being overl
 
 ## Remediation Plan
 
-### High Priority (Immediate)
+### Completed Items
 
-1. **SEC-001: Upgrade SNMP to v3**
-   - Navigate to Services → SNMP
-   - Enable SNMPv3 with authentication (SHA) and encryption (AES)
-   - Update LXC_monitoring Prometheus configuration for SNMPv3
-   - Test with: `snmpwalk -v3 -l authPriv -u <user> -a SHA -A <authpass> -x AES -X <privpass> 192.168.8.1 system`
+| ID | Item | Completion Date | Notes |
+|----|------|-----------------|-------|
+| SEC-001 | Upgrade SNMP to v3 | 2026-02-04 | NET-SNMP + NixOS config |
+| SEC-002 | Enable DNSSEC | 2026-02-04 | DNS Resolver custom options |
+| REL-002 | Enable unbound-control | 2026-02-04 | DNS Resolver custom options |
+| NEW-002 | Local backup automation | 2026-02-07 | scripts/pfsense-backup.sh + systemd timer |
 
-### Medium Priority (This Week)
+### High Priority (Requires pfSense GUI)
+
+1. **SEC-004: Enable Console Password Protection**
+   - API audit revealed: `passwd_protect_console: false`
+   - Navigate to System → Advanced → Admin Access
+   - Check "Password protect the console menu"
+   - Verify via API: `curl -sk -H "x-api-key: $API_KEY" https://192.168.8.1/api/v2/system/console | jq '.data.passwd_protect_console'`
+
+### Medium Priority (Requires pfSense GUI)
 
 2. **REL-001: Configure AutoConfigBackup**
-   - Diagnostics → Backup & Restore
-   - Enable AutoConfigBackup with Netgate account
-   - Or: Set up cron job to backup to NAS
+   - Diagnostics → Backup & Restore → AutoConfigBackup tab
+   - Create Netgate account (free)
+   - Set encryption password (store in password manager)
+   - Enable "Automatically backup on config change"
 
-3. **SEC-002: Enable DNSSEC**
-   - Services → DNS Resolver → Advanced
-   - Set "DNSSEC" to enabled
-   - Test with: `dig @192.168.8.1 dnssec-failed.org` (should fail)
-
-4. **REL-002: Enable unbound-control**
-   - Services → DNS Resolver → Advanced Settings
-   - Enable "Enable Remote Control"
-   - Verify with: `unbound-control status`
+3. **NEW-001: Check for System Updates**
+   - System → Update
+   - pfSense 2.7.2 is from March 2024 - check for newer releases
+   - Note: pfSense does NOT support automatic updates by design
+   - Before updating: backup config, review release notes, plan maintenance window
 
 ### Low Priority (Backlog)
 
-5. **SEC-003: Restrict anti-lockout rule**
+4. **SEC-003: Restrict anti-lockout rule**
    - Create alias "AdminDevices" with your workstation IPs
    - System → Advanced → Admin Access
    - Consider using custom anti-lockout with specific IPs
+
+5. **SEC-006: Kernel Security Mitigations (Info Only)**
+   - Kernel PTI and MDS mitigations are disabled
+   - Intel i3-12100T (12th gen) has hardware mitigations for Spectre/Meltdown
+   - Low priority - software mitigations have 5-30% performance impact
+   - Decision: Leave as-is for home network firewall
 
 6. **Documentation Updates**
    - Document ix1 interface purpose (future expansion?)
@@ -519,15 +585,23 @@ table-entries hard limit   400000
 
 ## Audit Conclusion
 
-The pfSense firewall is **well-configured** and **operating efficiently**. The main areas requiring attention are:
+The pfSense firewall is **well-configured** and **operating efficiently**.
 
-1. **SNMP security** - Upgrade to SNMPv3 (highest priority)
-2. **DNS security** - Enable DNSSEC
-3. **Backup automation** - Configure automatic backups
-4. **Monitoring capabilities** - Enable unbound-control
+### Completed (as of 2026-02-07)
+- SNMPv3 with authentication and encryption
+- DNSSEC validation enabled
+- unbound-control for DNS monitoring
+- Local backup automation (daily, 30-day retention)
 
-No critical security vulnerabilities were found. The system has excellent performance margins and should handle significant traffic increases without concern.
+### Remaining Items (pfSense GUI required)
+- Enable console password protection (HIGH)
+- Configure AutoConfigBackup (MEDIUM)
+- Check for system updates (MEDIUM)
+- Restrict anti-lockout rule (LOW)
+
+The system has excellent performance margins and should handle significant traffic increases without concern.
 
 ---
 
-*Audit completed: 2026-02-04 16:51 CET*
+*Initial audit: 2026-02-04 16:51 CET*
+*Last updated: 2026-02-07*
