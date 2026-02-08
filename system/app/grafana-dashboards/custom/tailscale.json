@@ -108,7 +108,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_up{instance=~\".*tailscale.*|192.168.8.105.*\"}",
+          "expr": "tailscale_up{instance=\"lxc_tailscale\"}",
           "legendFormat": "Tailscale",
           "refId": "A"
         }
@@ -189,7 +189,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_backend_running{instance=~\".*tailscale.*|192.168.8.105.*\"}",
+          "expr": "tailscale_backend_running{instance=\"lxc_tailscale\"}",
           "legendFormat": "Backend",
           "refId": "A"
         }
@@ -250,7 +250,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_peers{instance=~\".*tailscale.*|192.168.8.105.*\"}",
+          "expr": "tailscale_peers{instance=\"lxc_tailscale\"}",
           "legendFormat": "Peers",
           "refId": "A"
         }
@@ -311,7 +311,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_peers_direct{instance=~\".*tailscale.*|192.168.8.105.*\"}",
+          "expr": "tailscale_peers_direct{instance=\"lxc_tailscale\"}",
           "legendFormat": "Direct",
           "refId": "A"
         }
@@ -376,7 +376,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_peers_relay{instance=~\".*tailscale.*|192.168.8.105.*\"}",
+          "expr": "tailscale_peers_relay{instance=\"lxc_tailscale\"}",
           "legendFormat": "Relay",
           "refId": "A"
         }
@@ -495,7 +495,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_receive_bytes_total{instance=~\".*tailscale.*|192.168.8.105.*\",device=\"tailscale0\"}[5m]) * 8",
+          "expr": "rate(node_network_receive_bytes_total{instance=\"lxc_tailscale\",device=\"tailscale0\"}[5m]) * 8",
           "legendFormat": "RX (in)",
           "refId": "A"
         },
@@ -505,7 +505,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_transmit_bytes_total{instance=~\".*tailscale.*|192.168.8.105.*\",device=\"tailscale0\"}[5m]) * 8",
+          "expr": "rate(node_network_transmit_bytes_total{instance=\"lxc_tailscale\",device=\"tailscale0\"}[5m]) * 8",
           "legendFormat": "TX (out)",
           "refId": "B"
         }
@@ -600,7 +600,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "100 - (avg(rate(node_cpu_seconds_total{instance=~\".*tailscale.*|192.168.8.105.*\",mode=\"idle\"}[5m])) * 100)",
+          "expr": "100 - (avg(rate(node_cpu_seconds_total{instance=\"lxc_tailscale\",mode=\"idle\"}[5m])) * 100)",
           "legendFormat": "CPU %",
           "refId": "A"
         },
@@ -610,7 +610,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(1 - (node_memory_MemAvailable_bytes{instance=~\".*tailscale.*|192.168.8.105.*\"} / node_memory_MemTotal_bytes{instance=~\".*tailscale.*|192.168.8.105.*\"})) * 100",
+          "expr": "(1 - (node_memory_MemAvailable_bytes{instance=\"lxc_tailscale\"} / node_memory_MemTotal_bytes{instance=\"lxc_tailscale\"})) * 100",
           "legendFormat": "Memory %",
           "refId": "B"
         }
@@ -718,7 +718,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_peers{instance=~\".*tailscale.*|192.168.8.105.*\"}",
+          "expr": "tailscale_peers{instance=\"lxc_tailscale\"}",
           "legendFormat": "Total Peers",
           "refId": "A"
         },
@@ -728,7 +728,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_peers_direct{instance=~\".*tailscale.*|192.168.8.105.*\"}",
+          "expr": "tailscale_peers_direct{instance=\"lxc_tailscale\"}",
           "legendFormat": "Direct",
           "refId": "B"
         },
@@ -738,7 +738,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_peers_relay{instance=~\".*tailscale.*|192.168.8.105.*\"}",
+          "expr": "tailscale_peers_relay{instance=\"lxc_tailscale\"}",
           "legendFormat": "Relay",
           "refId": "C"
         }

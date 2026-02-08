@@ -92,25 +92,25 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
     serviceConfig = {
       Type = "oneshot";
       ExecStart = pkgs.writeShellScript "tailscale-metrics" ''
-        mkdir -p /var/lib/node_exporter/textfile_collector
+        mkdir -p /var/lib/prometheus-node-exporter/textfile
 
         # Get Tailscale status
         STATUS=$(${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null)
 
         if [ $? -eq 0 ] && [ -n "$STATUS" ]; then
           # Tailscale is running and responding
-          echo "tailscale_up 1" > /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp
+          echo "tailscale_up 1" > /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
 
           # Count connected peers
           PEERS=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '.Peer | length // 0')
-          echo "tailscale_peers $PEERS" >> /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp
+          echo "tailscale_peers $PEERS" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
 
           # Check if we're connected to coordination server
           BACKEND_STATE=$(echo "$STATUS" | ${pkgs.jq}/bin/jq -r '.BackendState // "Unknown"')
           if [ "$BACKEND_STATE" = "Running" ]; then
-            echo "tailscale_backend_running 1" >> /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp
+            echo "tailscale_backend_running 1" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
           else
-            echo "tailscale_backend_running 0" >> /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp
+            echo "tailscale_backend_running 0" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
           fi
 
           # Check direct vs relay connections (from peer data)
@@ -124,17 +124,17 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
               RELAY=$((RELAY + 1))
             fi
           done
-          echo "tailscale_peers_direct $DIRECT" >> /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp
-          echo "tailscale_peers_relay $RELAY" >> /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp
+          echo "tailscale_peers_direct $DIRECT" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
+          echo "tailscale_peers_relay $RELAY" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
 
           # Atomic move
-          mv /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp /var/lib/node_exporter/textfile_collector/tailscale.prom
+          mv /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp /var/lib/prometheus-node-exporter/textfile/tailscale.prom
         else
           # Tailscale is not running or not responding
-          echo "tailscale_up 0" > /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp
-          echo "tailscale_peers 0" >> /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp
-          echo "tailscale_backend_running 0" >> /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp
-          mv /var/lib/node_exporter/textfile_collector/tailscale.prom.tmp /var/lib/node_exporter/textfile_collector/tailscale.prom
+          echo "tailscale_up 0" > /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
+          echo "tailscale_peers 0" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
+          echo "tailscale_backend_running 0" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
+          mv /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp /var/lib/prometheus-node-exporter/textfile/tailscale.prom
         fi
       '';
     };
