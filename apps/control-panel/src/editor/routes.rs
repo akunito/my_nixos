@@ -61,7 +61,13 @@ pub async fn profile_list(State(state): State<Arc<AppState>>) -> Result<Html<Str
     </nav>
 
     <main class="container mx-auto px-6 py-8">
-        <h2 class="text-xl font-semibold mb-6">Profile Editor</h2>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold">Profile Editor</h2>
+            <a href="/editor/packages"
+               class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm">
+                Browse Packages
+            </a>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {profile_cards}
         </div>
@@ -333,6 +339,74 @@ fn render_packages_section(config: &ProfileConfig) -> String {
             "".to_string()
         }
     )
+}
+
+/// Package browser - embeds NixOS package search
+pub async fn package_browser() -> Html<String> {
+    Html(r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel - Package Browser</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #1a1a2e; color: #eee; }
+        .package-frame {
+            width: 100%;
+            height: calc(100vh - 180px);
+            border: 1px solid #374151;
+            border-radius: 8px;
+            background: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-blue-400">NixOS Control Panel</h1>
+            <div class="flex gap-4">
+                <a href="/docker" class="text-gray-400 hover:text-gray-300">Docker</a>
+                <a href="/infra" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
+                <a href="/proxmox" class="text-gray-400 hover:text-gray-300">Proxmox</a>
+                <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
+                <a href="/editor" class="text-blue-400 hover:text-blue-300">Editor</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-4">
+                <a href="/editor" class="text-blue-400 hover:text-blue-300">&larr; Back to Editor</a>
+                <h2 class="text-xl font-semibold">Package Browser</h2>
+            </div>
+            <div class="flex gap-2">
+                <a href="https://search.nixos.org/packages?channel=unstable" target="_blank"
+                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    Open in New Tab
+                </a>
+            </div>
+        </div>
+
+        <p class="text-gray-400 text-sm mb-4">
+            Search for packages below, then copy the package name to add it to your profile.
+        </p>
+
+        <iframe
+            class="package-frame"
+            src="https://search.nixos.org/packages?channel=unstable"
+            title="NixOS Package Search"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        ></iframe>
+    </main>
+</body>
+</html>"##.to_string())
 }
 
 /// Get profile config as JSON

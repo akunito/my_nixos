@@ -99,6 +99,7 @@ async fn main() -> anyhow::Result<()> {
 
         // Editor routes (Phase 3)
         .route("/editor", get(editor::routes::profile_list))
+        .route("/editor/packages", get(editor::routes::package_browser))
         .route("/editor/{profile}", get(editor::routes::profile_editor))
         .route("/editor/{profile}/toggle/{flag}", post(editor::routes::toggle_flag))
         .route("/editor/{profile}/json", get(editor::routes::profile_json))
