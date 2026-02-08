@@ -20,6 +20,7 @@
       ../../system/security/gpg.nix
       ../../system/security/blocklist.nix
       ../../system/security/firewall.nix
+      ../../system/app/control-panel.nix # NixOS infrastructure control panel
     ];
 
 
