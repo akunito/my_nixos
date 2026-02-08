@@ -152,17 +152,38 @@ pub async fn pull_container(
     State(state): State<Arc<AppState>>,
     Path((node, container)): Path<(String, String)>,
 ) -> Result<Html<String>, AppError> {
-    let mut ssh_pool = state.ssh_pool.write().await;
-    let output = commands::pull_container(&mut ssh_pool, &node, &container).await?;
+    use tokio::time::{timeout, Duration};
 
-    Ok(Html(format!(
-        r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
-            <p class="font-semibold mb-2">Pull complete for {}</p>
-            <pre class="text-xs overflow-auto max-h-32">{}</pre>
-        </div>"##,
-        container,
-        html_escape(&output)
-    )))
+    let result = timeout(Duration::from_secs(120), async {
+        let mut ssh_pool = state.ssh_pool.write().await;
+        commands::pull_container(&mut ssh_pool, &node, &container).await
+    }).await;
+
+    match result {
+        Ok(Ok(output)) => Ok(Html(format!(
+            r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Pull complete for {}</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+            </div>"##,
+            container,
+            html_escape(&output)
+        ))),
+        Ok(Err(e)) => Ok(Html(format!(
+            r##"<div class="bg-red-900 border border-red-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Failed to pull {}</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+            </div>"##,
+            container,
+            html_escape(&e.to_string())
+        ))),
+        Err(_) => Ok(Html(format!(
+            r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Pull timeout for {} (2 min)</p>
+                <p class="text-xs">Operation may still be running. Check manually or refresh later.</p>
+            </div>"##,
+            container
+        ))),
+    }
 }
 
 /// Recreate a container (pull + restart)
@@ -170,17 +191,38 @@ pub async fn recreate_container(
     State(state): State<Arc<AppState>>,
     Path((node, container)): Path<(String, String)>,
 ) -> Result<Html<String>, AppError> {
-    let mut ssh_pool = state.ssh_pool.write().await;
-    let output = commands::recreate_container(&mut ssh_pool, &node, &container).await?;
+    use tokio::time::{timeout, Duration};
 
-    Ok(Html(format!(
-        r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
-            <p class="font-semibold mb-2">Recreated {}</p>
-            <pre class="text-xs overflow-auto max-h-32">{}</pre>
-        </div>"##,
-        container,
-        html_escape(&output)
-    )))
+    let result = timeout(Duration::from_secs(180), async {
+        let mut ssh_pool = state.ssh_pool.write().await;
+        commands::recreate_container(&mut ssh_pool, &node, &container).await
+    }).await;
+
+    match result {
+        Ok(Ok(output)) => Ok(Html(format!(
+            r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Recreated {}</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+            </div>"##,
+            container,
+            html_escape(&output)
+        ))),
+        Ok(Err(e)) => Ok(Html(format!(
+            r##"<div class="bg-red-900 border border-red-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Failed to recreate {}</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+            </div>"##,
+            container,
+            html_escape(&e.to_string())
+        ))),
+        Err(_) => Ok(Html(format!(
+            r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Recreate timeout for {} (3 min)</p>
+                <p class="text-xs">Operation may still be running. Check manually or refresh later.</p>
+            </div>"##,
+            container
+        ))),
+    }
 }
 
 // ============================================================================
@@ -318,17 +360,38 @@ pub async fn stack_pull(
     State(state): State<Arc<AppState>>,
     Path((node, project)): Path<(String, String)>,
 ) -> Result<Html<String>, AppError> {
-    let mut ssh_pool = state.ssh_pool.write().await;
-    let output = commands::stack_pull(&mut ssh_pool, &node, &project).await?;
+    use tokio::time::{timeout, Duration};
 
-    Ok(Html(format!(
-        r##"<div class="bg-blue-900 border border-blue-700 rounded p-3 text-sm">
-            <p class="font-semibold mb-2">Pulled images for stack '{}'</p>
-            <pre class="text-xs overflow-auto max-h-32">{}</pre>
-        </div>"##,
-        project,
-        html_escape(&output)
-    )))
+    let result = timeout(Duration::from_secs(120), async {
+        let mut ssh_pool = state.ssh_pool.write().await;
+        commands::stack_pull(&mut ssh_pool, &node, &project).await
+    }).await;
+
+    match result {
+        Ok(Ok(output)) => Ok(Html(format!(
+            r##"<div class="bg-blue-900 border border-blue-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Pulled images for stack '{}'</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+            </div>"##,
+            project,
+            html_escape(&output)
+        ))),
+        Ok(Err(e)) => Ok(Html(format!(
+            r##"<div class="bg-red-900 border border-red-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Failed to pull stack '{}'</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+            </div>"##,
+            project,
+            html_escape(&e.to_string())
+        ))),
+        Err(_) => Ok(Html(format!(
+            r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Pull timeout for stack '{}' (2 min)</p>
+                <p class="text-xs">The operation is likely still running on the server. Check manually or refresh later.</p>
+            </div>"##,
+            project
+        ))),
+    }
 }
 
 /// Rebuild a compose stack (pull + up --build --force-recreate)
@@ -336,17 +399,38 @@ pub async fn stack_rebuild(
     State(state): State<Arc<AppState>>,
     Path((node, project)): Path<(String, String)>,
 ) -> Result<Html<String>, AppError> {
-    let mut ssh_pool = state.ssh_pool.write().await;
-    let output = commands::stack_rebuild(&mut ssh_pool, &node, &project).await?;
+    use tokio::time::{timeout, Duration};
 
-    Ok(Html(format!(
-        r##"<div class="bg-purple-900 border border-purple-700 rounded p-3 text-sm">
-            <p class="font-semibold mb-2">Rebuilt stack '{}'</p>
-            <pre class="text-xs overflow-auto max-h-32">{}</pre>
-        </div>"##,
-        project,
-        html_escape(&output)
-    )))
+    let result = timeout(Duration::from_secs(180), async {
+        let mut ssh_pool = state.ssh_pool.write().await;
+        commands::stack_rebuild(&mut ssh_pool, &node, &project).await
+    }).await;
+
+    match result {
+        Ok(Ok(output)) => Ok(Html(format!(
+            r##"<div class="bg-purple-900 border border-purple-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Rebuilt stack '{}'</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+            </div>"##,
+            project,
+            html_escape(&output)
+        ))),
+        Ok(Err(e)) => Ok(Html(format!(
+            r##"<div class="bg-red-900 border border-red-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Failed to rebuild stack '{}'</p>
+                <pre class="text-xs overflow-auto max-h-32">{}</pre>
+            </div>"##,
+            project,
+            html_escape(&e.to_string())
+        ))),
+        Err(_) => Ok(Html(format!(
+            r##"<div class="bg-yellow-900 border border-yellow-700 rounded p-3 text-sm">
+                <p class="font-semibold mb-2">Rebuild timeout for stack '{}' (3 min)</p>
+                <p class="text-xs">The operation is likely still running on the server. Check manually or refresh later.</p>
+            </div>"##,
+            project
+        ))),
+    }
 }
 
 /// Restart a compose stack
