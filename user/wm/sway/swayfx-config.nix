@@ -311,8 +311,8 @@ in
           # "${hyper}+s" = "exec swaybgplus-gui";
           "${hyper}+s" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
-          # Waypaper (wallpaper GUI) - Hyper+Shift+S
-          "${hyper}+Shift+s" = lib.mkIf (systemSettings.waypaperEnable or false) "exec waypaper";
+          # Waypaper (wallpaper GUI) - Hyper+Shift+r
+          "${hyper}+Shift+r" = lib.mkIf (systemSettings.waypaperEnable or false) "exec waypaper";
 
           # Workspace navigation with auto-creation and wrapping (Option B)
           # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
