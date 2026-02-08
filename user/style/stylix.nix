@@ -161,8 +161,9 @@ if systemSettings.stylixEnable == true then
         package = pkgs.nerd-fonts.jetbrains-mono;
       };
       sansSerif = {
-        # Use JetBrainsMono Nerd Font Mono for consistency (used by Waybar and other apps)
-        name = "JetBrainsMono Nerd Font Mono";
+        # Use proportional JetBrainsMono Nerd Font for Waybar and UI elements
+        # The Mono variant causes icons to render smaller (fixed-width cells)
+        name = "JetBrainsMono Nerd Font";
         package = pkgs.nerd-fonts.jetbrains-mono;
       };
       emoji = {
@@ -341,9 +342,10 @@ if systemSettings.stylixEnable == true then
     };
     fonts.fontconfig.defaultFonts = {
       # CRITICAL: Use "JetBrainsMono Nerd Font Mono" (the Mono variant) for terminals
+      # Use proportional variant for sansSerif (Waybar icons render at natural size)
       # Add "Symbols Nerd Font Mono" as fallback for any missing glyphs
       monospace = [ "JetBrainsMono Nerd Font Mono" "Symbols Nerd Font Mono" ];
-      sansSerif = [ "JetBrainsMono Nerd Font Mono" "Symbols Nerd Font Mono" ];
+      sansSerif = [ "JetBrainsMono Nerd Font" "Symbols Nerd Font Mono" ];
       serif = [ "JetBrainsMono Nerd Font Mono" "Symbols Nerd Font Mono" ];
     };
 
