@@ -144,6 +144,114 @@ pub async fn container_logs(
     Ok(Html(html))
 }
 
+/// Pull latest image for a container
+pub async fn pull_container(
+    State(state): State<Arc<AppState>>,
+    Path((node, container)): Path<(String, String)>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::pull_container(&mut ssh_pool, &node, &container).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Pull complete for {}</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        container,
+        html_escape(&output)
+    )))
+}
+
+/// Recreate a container (pull + restart)
+pub async fn recreate_container(
+    State(state): State<Arc<AppState>>,
+    Path((node, container)): Path<(String, String)>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::recreate_container(&mut ssh_pool, &node, &container).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Recreated {}</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        container,
+        html_escape(&output)
+    )))
+}
+
+// ============================================================================
+// Cleanup Routes
+// ============================================================================
+
+/// System prune - remove unused data
+pub async fn system_prune(
+    State(state): State<Arc<AppState>>,
+    Path(node): Path<String>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::system_prune(&mut ssh_pool, &node).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">System Prune Complete</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        html_escape(&output)
+    )))
+}
+
+/// Volume prune - remove unused volumes
+pub async fn volume_prune(
+    State(state): State<Arc<AppState>>,
+    Path(node): Path<String>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::volume_prune(&mut ssh_pool, &node).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Volume Prune Complete</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        html_escape(&output)
+    )))
+}
+
+/// Image prune - remove unused images
+pub async fn image_prune(
+    State(state): State<Arc<AppState>>,
+    Path(node): Path<String>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::image_prune(&mut ssh_pool, &node).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-green-900 border border-green-700 rounded p-3 text-sm">
+            <p class="font-semibold mb-2">Image Prune Complete</p>
+            <pre class="text-xs overflow-auto max-h-32">{}</pre>
+        </div>"##,
+        html_escape(&output)
+    )))
+}
+
+/// Get disk usage stats
+pub async fn disk_usage(
+    State(state): State<Arc<AppState>>,
+    Path(node): Path<String>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let output = commands::disk_usage(&mut ssh_pool, &node).await?;
+
+    Ok(Html(format!(
+        r##"<div class="bg-gray-900 rounded p-3">
+            <p class="font-semibold mb-2">Disk Usage</p>
+            <pre class="text-xs overflow-auto">{}</pre>
+        </div>"##,
+        html_escape(&output)
+    )))
+}
+
 // Template rendering functions
 
 fn render_dashboard(summaries: &[NodeSummary]) -> String {
@@ -299,17 +407,61 @@ fn render_node_containers(node: &str, host: &str, containers: &[Container]) -> S
             <a href="/docker" class="text-blue-400 hover:text-blue-300">&larr; Back</a>
             <h2 class="text-xl font-semibold">{node}</h2>
             <span class="text-gray-400">({host})</span>
-            <button hx-get="/docker/{node}"
-                    hx-target="body"
-                    hx-swap="innerHTML"
-                    class="ml-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                Refresh
-            </button>
+            <div class="ml-auto flex gap-2">
+                <button hx-get="/docker/{node}/disk-usage"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm">
+                    Disk Usage
+                </button>
+                <button hx-get="/docker/{node}"
+                        hx-target="body"
+                        hx-swap="innerHTML"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
         </div>
+
+        <!-- Cleanup Actions -->
+        <div class="bg-gray-800 rounded-lg border border-gray-700 p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold">Cleanup Actions</h3>
+                    <p class="text-gray-400 text-sm">Remove unused Docker resources to free up disk space</p>
+                </div>
+                <div class="flex gap-2">
+                    <button hx-post="/docker/{node}/prune/images"
+                            hx-target="#action-result"
+                            hx-swap="innerHTML"
+                            hx-confirm="Remove all unused images?"
+                            class="px-3 py-2 bg-orange-600 hover:bg-orange-700 rounded text-sm">
+                        Prune Images
+                    </button>
+                    <button hx-post="/docker/{node}/prune/volumes"
+                            hx-target="#action-result"
+                            hx-swap="innerHTML"
+                            hx-confirm="Remove all unused volumes? This may delete data!"
+                            class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded text-sm">
+                        Prune Volumes
+                    </button>
+                    <button hx-post="/docker/{node}/prune/system"
+                            hx-target="#action-result"
+                            hx-swap="innerHTML"
+                            hx-confirm="Run system prune? This removes unused containers, networks, and images."
+                            class="px-3 py-2 bg-red-700 hover:bg-red-800 rounded text-sm">
+                        System Prune
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Result Area -->
+        <div id="action-result" class="mb-6"></div>
 
         <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
             <table class="w-full">
@@ -376,6 +528,19 @@ fn render_container_row(node: &str, container: &Container) -> String {
                        hx-swap="outerHTML"
                        class="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs mr-1">
                 Restart
+            </button>
+            <button hx-post="/docker/{node}/{name}/pull"
+                       hx-target="#action-result"
+                       hx-swap="innerHTML"
+                       class="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs mr-1">
+                Pull
+            </button>
+            <button hx-post="/docker/{node}/{name}/recreate"
+                       hx-target="#action-result"
+                       hx-swap="innerHTML"
+                       hx-confirm="Recreate {name}? This will pull latest image and restart."
+                       class="px-2 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs mr-1">
+                Recreate
             </button>"##,
             node = node,
             name = container.name
@@ -387,6 +552,12 @@ fn render_container_row(node: &str, container: &Container) -> String {
                        hx-swap="outerHTML"
                        class="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs mr-1">
                 Start
+            </button>
+            <button hx-post="/docker/{node}/{name}/pull"
+                       hx-target="#action-result"
+                       hx-swap="innerHTML"
+                       class="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs mr-1">
+                Pull
             </button>"##,
             node = node,
             name = container.name

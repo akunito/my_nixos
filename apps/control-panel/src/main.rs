@@ -71,6 +71,13 @@ async fn main() -> anyhow::Result<()> {
         .route("/docker/{node}/{container}/stop", post(docker::routes::stop_container))
         .route("/docker/{node}/{container}/restart", post(docker::routes::restart_container))
         .route("/docker/{node}/{container}/logs", get(docker::routes::container_logs))
+        .route("/docker/{node}/{container}/pull", post(docker::routes::pull_container))
+        .route("/docker/{node}/{container}/recreate", post(docker::routes::recreate_container))
+        // Docker cleanup routes
+        .route("/docker/{node}/prune/system", post(docker::routes::system_prune))
+        .route("/docker/{node}/prune/volumes", post(docker::routes::volume_prune))
+        .route("/docker/{node}/prune/images", post(docker::routes::image_prune))
+        .route("/docker/{node}/disk-usage", get(docker::routes::disk_usage))
 
         // Infrastructure routes (Phase 2)
         .route("/infra", get(infra::routes::dashboard))
