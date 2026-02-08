@@ -37,14 +37,55 @@ pub fn generate_graph_data(config: &Config) -> GraphData {
     let mut nodes = Vec::new();
     let mut links = Vec::new();
 
-    // Add base profile nodes (virtual nodes representing base configs)
-    let base_profiles = vec![
-        ("LXC-base-config", "LXC Base"),
-        ("LAPTOP-base", "Laptop Base"),
-        ("MACBOOK-base", "MacBook Base"),
+    // Add central root node - everything connects to this
+    nodes.push(GraphNode {
+        id: "_root".to_string(),
+        label: "Infrastructure".to_string(),
+        group: "root".to_string(),
+        color: "#3b82f6".to_string(), // blue
+        hostname: "".to_string(),
+        ip: None,
+        ctid: None,
+        status: "root".to_string(),
+    });
+
+    // Add category nodes for visual hierarchy
+    let categories = vec![
+        ("_cat_desktop", "Desktops", "#4f46e5", "desktop"),    // indigo
+        ("_cat_laptop", "Laptops", "#0ea5e9", "laptop"),       // sky
+        ("_cat_lxc", "LXC Containers", "#22c55e", "lxc"),      // green
+        ("_cat_vm", "Virtual Machines", "#f59e0b", "vm"),      // amber
+        ("_cat_darwin", "macOS", "#8b5cf6", "darwin"),         // violet
     ];
 
-    for (id, label) in &base_profiles {
+    for (id, label, color, group) in &categories {
+        nodes.push(GraphNode {
+            id: id.to_string(),
+            label: label.to_string(),
+            group: format!("category-{}", group),
+            color: color.to_string(),
+            hostname: "".to_string(),
+            ip: None,
+            ctid: None,
+            status: "category".to_string(),
+        });
+
+        // Link category to root
+        links.push(GraphLink {
+            source: "_root".to_string(),
+            target: id.to_string(),
+            value: 2,
+        });
+    }
+
+    // Add base profile nodes (virtual nodes representing base configs)
+    let base_profiles = vec![
+        ("LXC-base-config", "LXC Base", "_cat_lxc"),
+        ("LAPTOP-base", "Laptop Base", "_cat_laptop"),
+        ("MACBOOK-base", "MacBook Base", "_cat_darwin"),
+    ];
+
+    for (id, label, parent) in &base_profiles {
         nodes.push(GraphNode {
             id: id.to_string(),
             label: label.to_string(),
@@ -54,6 +95,13 @@ pub fn generate_graph_data(config: &Config) -> GraphData {
             ip: None,
             ctid: None,
             status: "base".to_string(),
+        });
+
+        // Link base to its category
+        links.push(GraphLink {
+            source: parent.to_string(),
+            target: id.to_string(),
+            value: 1,
         });
     }
 
@@ -80,15 +128,18 @@ pub fn generate_graph_data(config: &Config) -> GraphData {
                 target: profile.name.clone(),
                 value: 1,
             });
-        }
-    }
-
-    // Add hierarchy links based on profile type
-    // LXC profiles inherit from LXC-base-config
-    for profile in &config.profiles {
-        if profile.profile_type == "lxc" && profile.base_profile.is_none() {
+        } else {
+            // Link directly to category if no base profile
+            let category = match profile.profile_type.as_str() {
+                "desktop" => "_cat_desktop",
+                "laptop" => "_cat_laptop",
+                "lxc" => "_cat_lxc",
+                "vm" => "_cat_vm",
+                "darwin" => "_cat_darwin",
+                _ => "_root",
+            };
             links.push(GraphLink {
-                source: "LXC-base-config".to_string(),
+                source: category.to_string(),
                 target: profile.name.clone(),
                 value: 1,
             });
@@ -138,12 +189,25 @@ svg.call(d3.zoom().on('zoom', (event) => {{
     g.attr('transform', event.transform);
 }}));
 
-// Create force simulation
+// Create force simulation with hierarchy-aware distances
 const simulation = d3.forceSimulation(graphData.nodes)
-    .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(100))
-    .force('charge', d3.forceManyBody().strength(-300))
+    .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(d => {{
+        // Shorter links for category-to-root, longer for profiles
+        if (d.source.id === '_root' || d.target.id === '_root') return 120;
+        if (d.source.id?.startsWith('_cat_') || d.target.id?.startsWith('_cat_')) return 80;
+        return 60;
+    }}))
+    .force('charge', d3.forceManyBody().strength(d => {{
+        if (d.id === '_root') return -500;
+        if (d.id?.startsWith('_cat_')) return -400;
+        return -200;
+    }}))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide().radius(40));
+    .force('collision', d3.forceCollide().radius(d => {{
+        if (d.id === '_root') return 50;
+        if (d.id?.startsWith('_cat_')) return 40;
+        return 30;
+    }}));
 
 // Draw links
 const link = g.append('g')
@@ -166,9 +230,14 @@ const node = g.append('g')
         .on('drag', dragged)
         .on('end', dragended));
 
-// Node circles
+// Node circles - different sizes for hierarchy
 node.append('circle')
-    .attr('r', d => d.group === 'base' ? 15 : 25)
+    .attr('r', d => {{
+        if (d.group === 'root') return 35;
+        if (d.group.startsWith('category-')) return 25;
+        if (d.group === 'base') return 15;
+        return 20;
+    }})
     .attr('fill', d => d.color)
     .attr('stroke', '#fff')
     .attr('stroke-width', 2)
