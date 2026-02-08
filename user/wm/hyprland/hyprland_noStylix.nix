@@ -24,7 +24,7 @@ in
 
   wayland.windowManager.hyprland = {
     enable = true;
-    package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
     plugins = [ ];
     settings = { };
     extraConfig = ''
@@ -484,7 +484,7 @@ in
     wl-clipboard
     hyprland-protocols
     hyprpicker
-    inputs.hyprlock.packages.${pkgs.system}.default
+    inputs.hyprlock.packages.${pkgs.stdenv.hostPlatform.system}.default
     hypridle
     hyprpaper
     fnott

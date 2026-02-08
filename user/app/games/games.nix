@@ -85,7 +85,7 @@ in
       pkgs-unstable.dolphin-emu-primehack
     ])
     ++ (lib.optionals (userSettings.starcitizenEnable == true) [
-      inputs.nix-citizen.packages.${pkgs.system}.rsi-launcher
+      inputs.nix-citizen.packages.${pkgs.stdenv.hostPlatform.system}.rsi-launcher
     ])
     ++ (lib.optionals (userSettings.rpcs3Enable == true) [
       pkgs-unstable.rpcs3

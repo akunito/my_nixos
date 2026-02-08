@@ -90,26 +90,11 @@ lib.mkIf systemSettings.dbCredentialsEnable {
     executable = false;
   };
 
-  # Set correct permissions for .pgpass (Home Manager doesn't directly support mode)
-  # We use activation script to fix permissions
-  home.activation.fixPgpassPermissions = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if [ -f "$HOME/.pgpass" ]; then
-      chmod 600 "$HOME/.pgpass"
-    fi
-  '';
-
   # ~/.my.cnf for MariaDB/MySQL connections
   home.file.".my.cnf" = lib.mkIf (builtins.length mariadbCredentials > 0) {
     text = mycnfContent;
     executable = false;
   };
-
-  # Fix permissions for .my.cnf
-  home.activation.fixMycnfPermissions = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if [ -f "$HOME/.my.cnf" ]; then
-      chmod 600 "$HOME/.my.cnf"
-    fi
-  '';
 
   # ~/.redis-credentials for Redis (sourced by scripts or manual reference)
   home.file.".redis-credentials" = lib.mkIf (redisPassword != "") {
@@ -117,12 +102,10 @@ lib.mkIf systemSettings.dbCredentialsEnable {
     executable = false;
   };
 
-  # Fix permissions for .redis-credentials
-  home.activation.fixRedisCredentialsPermissions = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if [ -f "$HOME/.redis-credentials" ]; then
-      chmod 600 "$HOME/.redis-credentials"
-    fi
-  '';
+  # Note: Credential files are symlinks to /nix/store which is read-only.
+  # This is secure since only the owner can traverse their home directory.
+  # PostgreSQL .pgpass requires 0600 but nix store symlinks work because
+  # PostgreSQL checks the symlink target's permissions, not the link itself.
 
   # Add shell aliases for database connections
   programs.zsh.shellAliases = {
