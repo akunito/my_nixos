@@ -1,20 +1,36 @@
 //! SSH connection pool and command execution
+//!
+//! Supports two authentication methods:
+//! 1. Direct key file (unencrypted)
+//! 2. SSH agent (for encrypted keys)
 
 use anyhow::Result;
+use russh::keys::agent::client::AgentClient;
 use russh::keys::decode_secret_key;
 use russh::{client, ChannelMsg};
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
+use tokio::net::UnixStream;
 use tokio::sync::Mutex;
 
 use crate::config::{Config, DockerNode};
 use crate::error::AppError;
 
+/// Authentication method for SSH connections
+#[derive(Clone)]
+enum AuthMethod {
+    /// Direct private key
+    Key(Arc<ssh_key::PrivateKey>),
+    /// Use SSH agent
+    Agent,
+}
+
 /// SSH connection pool for managing connections to multiple nodes
 pub struct SshPool {
     config: Config,
-    private_key: Arc<ssh_key::PrivateKey>,
+    key_path: PathBuf,
+    auth_method: Option<AuthMethod>,
     connections: HashMap<String, Arc<Mutex<Option<SshConnection>>>>,
 }
 
@@ -41,10 +57,33 @@ impl client::Handler for SshClient {
 
 impl SshPool {
     /// Create a new SSH connection pool
+    ///
+    /// Tries to load the key file directly first. If that fails (e.g., key is encrypted),
+    /// checks if SSH agent is available and uses that instead.
     pub fn new(config: &Config) -> Result<Self> {
-        let key_path = Path::new(&config.ssh.private_key_path);
-        let key_content = std::fs::read_to_string(key_path)?;
-        let private_key = decode_secret_key(&key_content, None)?;
+        let key_path = PathBuf::from(&config.ssh.private_key_path);
+
+        // Try to load the key directly first
+        let auth_method = match Self::try_load_key(&key_path) {
+            Ok(key) => {
+                tracing::info!("SSH key loaded successfully from file");
+                Some(AuthMethod::Key(Arc::new(key)))
+            }
+            Err(e) => {
+                tracing::warn!("Failed to load SSH key from file: {}", e);
+
+                // Check if SSH agent is available
+                if std::env::var("SSH_AUTH_SOCK").is_ok() {
+                    tracing::info!("SSH agent detected, will use agent authentication");
+                    Some(AuthMethod::Agent)
+                } else {
+                    tracing::warn!(
+                        "No SSH agent available. SSH operations will fail until key is available."
+                    );
+                    None
+                }
+            }
+        };
 
         let mut connections = HashMap::new();
         for node in &config.docker_nodes {
@@ -53,9 +92,57 @@ impl SshPool {
 
         Ok(Self {
             config: config.clone(),
-            private_key: Arc::new(private_key),
+            key_path,
+            auth_method,
             connections,
         })
+    }
+
+    /// Try to load the SSH key from file
+    fn try_load_key(key_path: &PathBuf) -> Result<ssh_key::PrivateKey, String> {
+        let key_content = std::fs::read_to_string(key_path)
+            .map_err(|e| format!("Failed to read key file: {}", e))?;
+
+        decode_secret_key(&key_content, None)
+            .map_err(|e| format!("Failed to decode key: {}", e))
+    }
+
+    /// Get the authentication method, trying to initialize if not already set
+    fn get_auth_method(&mut self) -> Result<AuthMethod, AppError> {
+        if let Some(ref method) = self.auth_method {
+            return Ok(method.clone());
+        }
+
+        // Try to load the key again
+        if let Ok(key) = Self::try_load_key(&self.key_path) {
+            let method = AuthMethod::Key(Arc::new(key));
+            self.auth_method = Some(method.clone());
+            return Ok(method);
+        }
+
+        // Check for SSH agent
+        if std::env::var("SSH_AUTH_SOCK").is_ok() {
+            let method = AuthMethod::Agent;
+            self.auth_method = Some(method.clone());
+            return Ok(method);
+        }
+
+        Err(AppError::SshConnection(
+            "No SSH authentication available. Either provide an unencrypted key or run with SSH agent (ssh-agent with key added via ssh-add).".to_string()
+        ))
+    }
+
+    /// Connect to SSH agent
+    async fn connect_agent() -> Result<AgentClient<UnixStream>, AppError> {
+        let socket_path = std::env::var("SSH_AUTH_SOCK").map_err(|_| {
+            AppError::SshConnection("SSH_AUTH_SOCK not set".to_string())
+        })?;
+
+        let stream = UnixStream::connect(&socket_path).await.map_err(|e| {
+            AppError::SshConnection(format!("Failed to connect to SSH agent: {}", e))
+        })?;
+
+        Ok(AgentClient::connect(stream))
     }
 
     /// Execute a command on a node
@@ -100,7 +187,9 @@ impl SshPool {
     }
 
     /// Create a new SSH connection
-    async fn connect(&self, node: &DockerNode, user: &str) -> Result<SshConnection, AppError> {
+    async fn connect(&mut self, node: &DockerNode, user: &str) -> Result<SshConnection, AppError> {
+        let auth_method = self.get_auth_method()?;
+
         let config = client::Config::default();
         let config = Arc::new(config);
 
@@ -111,11 +200,51 @@ impl SshPool {
             .await
             .map_err(|e| AppError::SshConnection(format!("Failed to connect to {}: {}", node.host, e)))?;
 
-        // Authenticate with key
-        let auth_result = session
-            .authenticate_publickey(user, Arc::new((*self.private_key).clone()))
-            .await
-            .map_err(|e| AppError::SshConnection(format!("Authentication failed: {}", e)))?;
+        // Authenticate based on method
+        let auth_result = match auth_method {
+            AuthMethod::Key(key) => {
+                tracing::debug!("Authenticating with key file");
+                session
+                    .authenticate_publickey(user, Arc::new((*key).clone()))
+                    .await
+                    .map_err(|e| AppError::SshConnection(format!("Key authentication failed: {}", e)))?
+            }
+            AuthMethod::Agent => {
+                tracing::debug!("Authenticating with SSH agent");
+                let mut agent = Self::connect_agent().await?;
+
+                // Get identities from agent
+                let identities = agent.request_identities().await.map_err(|e| {
+                    AppError::SshConnection(format!("Failed to get identities from agent: {}", e))
+                })?;
+
+                if identities.is_empty() {
+                    return Err(AppError::SshConnection(
+                        "No keys available in SSH agent. Run: ssh-add".to_string(),
+                    ));
+                }
+
+                // Try each key from the agent
+                let mut authenticated = false;
+                for identity in identities {
+                    match session
+                        .authenticate_publickey_with(user, identity.clone(), &mut agent)
+                        .await
+                    {
+                        Ok(true) => {
+                            authenticated = true;
+                            break;
+                        }
+                        Ok(false) => continue,
+                        Err(e) => {
+                            tracing::debug!("Agent key failed: {}", e);
+                            continue;
+                        }
+                    }
+                }
+                authenticated
+            }
+        };
 
         if !auth_result {
             return Err(AppError::SshConnection("Authentication rejected".to_string()));
