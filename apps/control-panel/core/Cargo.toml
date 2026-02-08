@@ -1,0 +1,42 @@
+[package]
+name = "control-panel-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Core library for NixOS Infrastructure Control Panel"
+
+[dependencies]
+# Async runtime
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+tokio-stream = "0.1"
+
+# SSH
+russh = { workspace = true }
+russh-keys = { workspace = true }
+ssh-key = { workspace = true }
+
+# Config & serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Time
+chrono = { workspace = true }
+
+# Nix parsing
+rnix = { workspace = true }
+
+# HTTP client (for health checks)
+reqwest = { workspace = true }
+
+# Encoding
+base64 = { workspace = true }

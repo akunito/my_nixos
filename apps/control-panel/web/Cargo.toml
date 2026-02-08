@@ -1,0 +1,42 @@
+[package]
+name = "control-panel-web"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Web server for NixOS Infrastructure Control Panel"
+
+[[bin]]
+name = "control-panel-web"
+path = "src/main.rs"
+
+[dependencies]
+control-panel-core = { path = "../core" }
+
+# Web framework
+axum = { version = "0.8", features = ["macros"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["fs", "cors", "trace"] }
+
+# Templates
+askama = "0.12"
+askama_axum = "0.4"
+
+# Async runtime
+tokio = { workspace = true }
+tokio-stream = "0.1"
+
+# Config & serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Encoding
+base64 = { workspace = true }

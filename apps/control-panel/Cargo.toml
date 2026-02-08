@@ -1,48 +1,52 @@
-[package]
-name = "control-panel"
-version = "0.1.0"
+# NixOS Infrastructure Control Panel - Workspace
+#
+# This is a Cargo workspace with three crates:
+# - core: Shared library with SSH, config, docker, proxmox, infra, editor logic
+# - native: egui desktop application with Sway IPC integration
+# - web: Axum web server (fallback for mobile/remote access)
+
+[workspace]
+members = ["core", "native", "web"]
+resolver = "2"
+
+[workspace.package]
+version = "0.2.0"
 edition = "2021"
 authors = ["akunito"]
 description = "NixOS Infrastructure Control Panel"
 
-[dependencies]
-# Web framework
-axum = { version = "0.8", features = ["macros"] }
+[workspace.dependencies]
+# Async runtime
 tokio = { version = "1", features = ["full"] }
-tower = "0.5"
-tower-http = { version = "0.6", features = ["fs", "cors", "trace"] }
+async-trait = "0.1"
+futures = "0.3"
 
 # SSH
 russh = "0.48"
 russh-keys = "0.48"
 ssh-key = "0.6"
 
-# Templates
-askama = "0.12"
-askama_axum = "0.4"
-
-# Nix parsing (Phase 3)
-rnix = "0.11"
-
-# Config
+# Config & serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.8"
-
-# Async
-futures = "0.3"
-tokio-stream = "0.1"
-async-trait = "0.1"
 
 # Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
-# Utilities
-chrono = { version = "0.4", features = ["serde"] }
+# Error handling
 thiserror = "2"
 anyhow = "1"
-base64 = "0.22"
 
-# HTTP client (for health checks)
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Nix parsing (Phase 3)
+rnix = "0.11"
+
+# HTTP client
 reqwest = { version = "0.12", features = ["json"] }
+
+# Encoding
+base64 = "0.22"

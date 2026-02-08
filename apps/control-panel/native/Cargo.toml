@@ -1,0 +1,45 @@
+[package]
+name = "control-panel-native"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Native desktop app for NixOS Infrastructure Control Panel"
+
+[[bin]]
+name = "control-panel"
+path = "src/main.rs"
+
+[dependencies]
+control-panel-core = { path = "../core" }
+
+# GUI framework
+eframe = "0.30"
+egui = "0.30"
+egui_extras = { version = "0.30", features = ["all_loaders"] }
+
+# Sway IPC
+swayipc = "3.0"
+
+# Async runtime bridge
+tokio = { workspace = true }
+
+# Config
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Time
+chrono = { workspace = true }
+
+# System utilities
+open = "5"  # For opening URLs in browser
+
+# Image loading (for icons)
+image = { version = "0.25", default-features = false, features = ["png"] }
