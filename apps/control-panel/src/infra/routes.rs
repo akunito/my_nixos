@@ -38,6 +38,7 @@ pub async fn dashboard(State(state): State<Arc<AppState>>) -> Result<Html<String
             <div class="flex gap-4">
                 <a href="/docker" class="text-gray-400 hover:text-gray-300">Docker</a>
                 <a href="/infra" class="text-blue-400 hover:text-blue-300">Infrastructure</a>
+                <a href="/proxmox" class="text-gray-400 hover:text-gray-300">Proxmox</a>
                 <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
                 <a href="/editor" class="text-gray-400 hover:text-gray-300">Editor</a>
             </div>
@@ -420,4 +421,292 @@ async fn check_host_reachable(host: &str) -> Result<bool, std::io::Error> {
         Ok(_) => Ok(true),
         Err(_) => Ok(false),
     }
+}
+
+// ============================================================================
+// Proxmox Routes
+// ============================================================================
+
+use crate::infra::proxmox;
+
+/// Proxmox dashboard showing all containers and VMs
+pub async fn proxmox_dashboard(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+
+    let containers = proxmox::list_containers(&mut ssh_pool).await.unwrap_or_default();
+    let vms = proxmox::list_vms(&mut ssh_pool).await.unwrap_or_default();
+
+    let containers_html: String = containers
+        .iter()
+        .map(|c| render_proxmox_row(c, "lxc"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let vms_html: String = vms
+        .iter()
+        .map(|v| render_proxmox_row(v, "vm"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let html = format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel - Proxmox</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {{ background-color: #1a1a2e; color: #eee; }}
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-blue-400">NixOS Control Panel</h1>
+            <div class="flex gap-4">
+                <a href="/docker" class="text-gray-400 hover:text-gray-300">Docker</a>
+                <a href="/infra" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
+                <a href="/proxmox" class="text-blue-400 hover:text-blue-300">Proxmox</a>
+                <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
+                <a href="/editor" class="text-gray-400 hover:text-gray-300">Editor</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold">Proxmox Virtual Environment</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-400 text-sm">Host: {proxmox_host}</span>
+                <button hx-get="/proxmox"
+                        hx-target="body"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded">
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- LXC Containers -->
+            <div class="bg-gray-800 rounded-lg border border-gray-700 p-4">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                    LXC Containers ({container_count})
+                </h3>
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left text-gray-400 text-sm">
+                            <th class="pb-2">CTID</th>
+                            <th class="pb-2">Name</th>
+                            <th class="pb-2">Status</th>
+                            <th class="pb-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {containers_html}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- VMs -->
+            <div class="bg-gray-800 rounded-lg border border-gray-700 p-4">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <span class="w-3 h-3 bg-amber-500 rounded-full"></span>
+                    Virtual Machines ({vm_count})
+                </h3>
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left text-gray-400 text-sm">
+                            <th class="pb-2">VMID</th>
+                            <th class="pb-2">Name</th>
+                            <th class="pb-2">Status</th>
+                            <th class="pb-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {vms_html}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Auto-refresh every 30 seconds
+        setInterval(() => htmx.ajax('GET', '/proxmox/containers', '#containers-body'), 30000);
+    </script>
+</body>
+</html>"##,
+        proxmox_host = state.config.proxmox.host,
+        container_count = containers.len(),
+        vm_count = vms.len(),
+        containers_html = if containers_html.is_empty() {
+            "<tr><td colspan=\"4\" class=\"py-4 text-gray-500 text-center\">No containers found</td></tr>".to_string()
+        } else {
+            containers_html
+        },
+        vms_html = if vms_html.is_empty() {
+            "<tr><td colspan=\"4\" class=\"py-4 text-gray-500 text-center\">No VMs found</td></tr>".to_string()
+        } else {
+            vms_html
+        }
+    );
+
+    Ok(Html(html))
+}
+
+fn render_proxmox_row(info: &proxmox::ContainerInfo, vm_type: &str) -> String {
+    let status_class = if info.status == "running" {
+        "bg-green-500"
+    } else {
+        "bg-red-500"
+    };
+
+    let can_start = info.status != "running";
+    let can_stop = info.status == "running";
+
+    format!(
+        r##"<tr id="pve-{ctid}" class="hover:bg-gray-700">
+            <td class="py-2 font-mono text-sm">{ctid}</td>
+            <td class="py-2">{name}</td>
+            <td class="py-2">
+                <span class="inline-flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full {status_class}"></span>
+                    {status}
+                </span>
+            </td>
+            <td class="py-2">
+                <div class="flex gap-1">
+                    <button hx-post="/proxmox/{ctid}/start"
+                            hx-target="#pve-{ctid}"
+                            hx-swap="outerHTML"
+                            class="px-2 py-1 text-xs rounded {start_class}"
+                            {start_disabled}>
+                        Start
+                    </button>
+                    <button hx-post="/proxmox/{ctid}/stop"
+                            hx-target="#pve-{ctid}"
+                            hx-swap="outerHTML"
+                            hx-confirm="Stop {name}?"
+                            class="px-2 py-1 text-xs rounded {stop_class}"
+                            {stop_disabled}>
+                        Stop
+                    </button>
+                    <button hx-post="/proxmox/{ctid}/restart"
+                            hx-target="#pve-{ctid}"
+                            hx-swap="outerHTML"
+                            hx-confirm="Restart {name}?"
+                            class="px-2 py-1 text-xs rounded bg-yellow-600 hover:bg-yellow-700">
+                        Restart
+                    </button>
+                </div>
+            </td>
+        </tr>"##,
+        ctid = info.ctid,
+        name = info.name,
+        status = info.status,
+        status_class = status_class,
+        start_class = if can_start { "bg-green-600 hover:bg-green-700" } else { "bg-gray-600 cursor-not-allowed" },
+        stop_class = if can_stop { "bg-red-600 hover:bg-red-700" } else { "bg-gray-600 cursor-not-allowed" },
+        start_disabled = if can_start { "" } else { "disabled" },
+        stop_disabled = if can_stop { "" } else { "disabled" },
+    )
+}
+
+/// Get containers list (for AJAX refresh)
+pub async fn proxmox_containers(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let containers = proxmox::list_containers(&mut ssh_pool).await.unwrap_or_default();
+
+    let html: String = containers
+        .iter()
+        .map(|c| render_proxmox_row(c, "lxc"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    Ok(Html(html))
+}
+
+/// Start a Proxmox container
+pub async fn proxmox_start(
+    State(state): State<Arc<AppState>>,
+    Path(ctid): Path<u32>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    proxmox::start_container(&mut ssh_pool, ctid).await?;
+
+    // Get updated status
+    let status = proxmox::get_container_status(&mut ssh_pool, ctid).await?;
+    let containers = proxmox::list_containers(&mut ssh_pool).await.unwrap_or_default();
+    let info = containers.iter().find(|c| c.ctid == ctid);
+
+    if let Some(info) = info {
+        Ok(Html(render_proxmox_row(info, "lxc")))
+    } else {
+        Ok(Html(format!(
+            r##"<tr id="pve-{ctid}"><td colspan="4" class="py-2 text-green-400">Started (status: {status})</td></tr>"##,
+            ctid = ctid,
+            status = status
+        )))
+    }
+}
+
+/// Stop a Proxmox container
+pub async fn proxmox_stop(
+    State(state): State<Arc<AppState>>,
+    Path(ctid): Path<u32>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    proxmox::stop_container(&mut ssh_pool, ctid).await?;
+
+    // Get updated status
+    let containers = proxmox::list_containers(&mut ssh_pool).await.unwrap_or_default();
+    let info = containers.iter().find(|c| c.ctid == ctid);
+
+    if let Some(info) = info {
+        Ok(Html(render_proxmox_row(info, "lxc")))
+    } else {
+        Ok(Html(format!(
+            r##"<tr id="pve-{ctid}"><td colspan="4" class="py-2 text-red-400">Stopped</td></tr>"##,
+            ctid = ctid
+        )))
+    }
+}
+
+/// Restart a Proxmox container
+pub async fn proxmox_restart(
+    State(state): State<Arc<AppState>>,
+    Path(ctid): Path<u32>,
+) -> Result<Html<String>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    proxmox::restart_container(&mut ssh_pool, ctid).await?;
+
+    // Get updated status
+    let containers = proxmox::list_containers(&mut ssh_pool).await.unwrap_or_default();
+    let info = containers.iter().find(|c| c.ctid == ctid);
+
+    if let Some(info) = info {
+        Ok(Html(render_proxmox_row(info, "lxc")))
+    } else {
+        Ok(Html(format!(
+            r##"<tr id="pve-{ctid}"><td colspan="4" class="py-2 text-yellow-400">Restarted</td></tr>"##,
+            ctid = ctid
+        )))
+    }
+}
+
+/// Get status of a specific container
+pub async fn proxmox_status(
+    State(state): State<Arc<AppState>>,
+    Path(ctid): Path<u32>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let mut ssh_pool = state.ssh_pool.write().await;
+    let status = proxmox::get_container_status(&mut ssh_pool, ctid).await?;
+
+    Ok(Json(serde_json::json!({
+        "ctid": ctid,
+        "status": status
+    })))
 }

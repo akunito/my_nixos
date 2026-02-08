@@ -52,6 +52,7 @@ pub async fn profile_list(State(state): State<Arc<AppState>>) -> Result<Html<Str
             <div class="flex gap-4">
                 <a href="/docker" class="text-gray-400 hover:text-gray-300">Docker</a>
                 <a href="/infra" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
+                <a href="/proxmox" class="text-gray-400 hover:text-gray-300">Proxmox</a>
                 <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
                 <a href="/editor" class="text-blue-400 hover:text-blue-300">Editor</a>
             </div>
@@ -141,6 +142,7 @@ pub async fn profile_editor(
             <div class="flex gap-4">
                 <a href="/docker" class="text-gray-400 hover:text-gray-300">Docker</a>
                 <a href="/infra" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
+                <a href="/proxmox" class="text-gray-400 hover:text-gray-300">Proxmox</a>
                 <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
                 <a href="/editor" class="text-blue-400 hover:text-blue-300">Editor</a>
             </div>

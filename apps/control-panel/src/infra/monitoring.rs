@@ -86,6 +86,7 @@ pub fn render_monitoring_page(
             <div class="flex gap-4">
                 <a href="/docker" class="text-gray-400 hover:text-gray-300">Docker</a>
                 <a href="/infra" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
+                <a href="/proxmox" class="text-gray-400 hover:text-gray-300">Proxmox</a>
                 <a href="/monitoring" class="text-blue-400 hover:text-blue-300">Monitoring</a>
                 <a href="/editor" class="text-gray-400 hover:text-gray-300">Editor</a>
             </div>

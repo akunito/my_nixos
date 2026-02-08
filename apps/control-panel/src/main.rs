@@ -83,6 +83,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/infra/deploy/{profile}/dry-run", post(infra::routes::deploy_dry_run))
         .route("/infra/deploy/{profile}", post(infra::routes::deploy_profile))
 
+        // Proxmox routes
+        .route("/proxmox", get(infra::routes::proxmox_dashboard))
+        .route("/proxmox/containers", get(infra::routes::proxmox_containers))
+        .route("/proxmox/{ctid}/start", post(infra::routes::proxmox_start))
+        .route("/proxmox/{ctid}/stop", post(infra::routes::proxmox_stop))
+        .route("/proxmox/{ctid}/restart", post(infra::routes::proxmox_restart))
+        .route("/proxmox/{ctid}/status", get(infra::routes::proxmox_status))
+
         // Monitoring routes
         .route("/monitoring", get(infra::routes::monitoring_dashboard))
 

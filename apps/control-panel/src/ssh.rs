@@ -192,6 +192,24 @@ impl SshPool {
         Self::run_command(&conn_mutex, command).await
     }
 
+    /// Execute a command on Proxmox host
+    pub async fn execute_on_proxmox(&mut self, command: &str) -> Result<CommandOutput, AppError> {
+        let host = self.config.proxmox.host.clone();
+        let user = self.config.proxmox.user.clone();
+
+        // Create a temporary node for Proxmox
+        let temp_node = crate::config::DockerNode {
+            name: "proxmox".to_string(),
+            host,
+            ctid: 0,
+            user: Some(user.clone()),
+        };
+
+        let connection = self.connect(&temp_node, &user).await?;
+        let conn_mutex = Arc::new(Mutex::new(Some(connection)));
+        Self::run_command(&conn_mutex, command).await
+    }
+
     /// Get an existing connection or create a new one
     async fn get_or_create_connection(
         &mut self,
