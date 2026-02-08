@@ -277,7 +277,7 @@ in
     enableSwayForDESK = false; # Not needed when wm = "sway" (no dual-WM setup)
     stylixEnable = true; # Enable Stylix for system-wide theming
     swwwEnable = true; # Enable swww wallpaper daemon for Sway (robust across reboot + HM rebuilds)
-    swaybgPlusEnable = false; # Disable swaybg+ (using swww instead)
+    swaybgPlusEnable = false; # Enable SwayBG+ GUI wallpaper picker (uses swww backend)
     swayIdleDisableMonitorPowerOff = true; # Disable monitor power-off (Samsung Odyssey G70NC DPMS wake issue)
 
     # === Monitor Management (Imperative GUI) ===

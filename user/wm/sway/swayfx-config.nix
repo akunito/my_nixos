@@ -392,6 +392,10 @@ in
           # workspace-groups-gui: Assign swaysome workspace groups to monitors
           "${hyper}+grave" = "exec workspace-groups-gui";
 
+          # Trayscale: Tailscale GUI manager
+          "${hyper}+Shift+t" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh dev.deedles.Trayscale trayscale";
+
           # Toggle SwayFX default bar (swaybar) - disabled by default, can be toggled manually
           "${hyper}+Shift+Home" = "exec ${config.home.homeDirectory}/.config/sway/scripts/swaybar-toggle.sh";
 
@@ -655,6 +659,22 @@ in
           {
             criteria = {
               app_id = "org.gnome.Calculator";
+            };
+            command = "floating enable, sticky enable";
+          }
+
+          # nwg-displays: Monitor management GUI - floating + sticky
+          {
+            criteria = {
+              app_id = "nwg-displays";
+            };
+            command = "floating enable, sticky enable";
+          }
+
+          # Trayscale: Tailscale GUI - floating + sticky
+          {
+            criteria = {
+              app_id = "dev.deedles.Trayscale";
             };
             command = "floating enable, sticky enable";
           }
@@ -1050,6 +1070,10 @@ in
       for_window [app_id="org.pulseaudio.pavucontrol"] floating enable, sticky enable
       # GNOME Calculator: floating + sticky
       for_window [app_id="org.gnome.Calculator"] floating enable, sticky enable
+      # nwg-displays: Monitor management GUI - floating + sticky
+      for_window [app_id="nwg-displays"] floating enable, sticky enable
+      # Trayscale: Tailscale GUI - floating + sticky
+      for_window [app_id="dev.deedles.Trayscale"] floating enable, sticky enable
       for_window [app_id="nm-connection-editor"] floating enable
       for_window [app_id=".blueman-manager-wrapped"] floating enable, sticky enable
       for_window [app_id="swappy"] floating enable, sticky enable
