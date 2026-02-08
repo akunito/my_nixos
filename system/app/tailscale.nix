@@ -56,8 +56,11 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
     allowedUDPPorts = [ config.services.tailscale.port ];
   };
 
-  # Environment packages for CLI access
-  environment.systemPackages = [ pkgs.tailscale ];
+  # Environment packages for CLI and GUI access
+  environment.systemPackages = [
+    pkgs.tailscale
+    pkgs.trayscale  # GTK systray GUI for Tailscale
+  ];
 
   # Helper script for connecting with the configured settings
   environment.etc."tailscale/connect.sh" = {
