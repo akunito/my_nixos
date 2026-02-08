@@ -93,48 +93,121 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
       Type = "oneshot";
       ExecStart = pkgs.writeShellScript "tailscale-metrics" ''
         mkdir -p /var/lib/prometheus-node-exporter/textfile
+        PROM_FILE="/var/lib/prometheus-node-exporter/textfile/tailscale.prom"
 
         # Get Tailscale status
         STATUS=$(${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null)
 
         if [ $? -eq 0 ] && [ -n "$STATUS" ]; then
-          # Tailscale is running and responding
-          echo "tailscale_up 1" > /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
+          {
+            # Global metrics
+            echo "# HELP tailscale_up Tailscale daemon status (1=up, 0=down)"
+            echo "# TYPE tailscale_up gauge"
+            echo "tailscale_up 1"
 
-          # Count connected peers
-          PEERS=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '.Peer | length // 0')
-          echo "tailscale_peers $PEERS" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
-
-          # Check if we're connected to coordination server
-          BACKEND_STATE=$(echo "$STATUS" | ${pkgs.jq}/bin/jq -r '.BackendState // "Unknown"')
-          if [ "$BACKEND_STATE" = "Running" ]; then
-            echo "tailscale_backend_running 1" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
-          else
-            echo "tailscale_backend_running 0" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
-          fi
-
-          # Check direct vs relay connections (from peer data)
-          DIRECT=0
-          RELAY=0
-          for peer in $(echo "$STATUS" | ${pkgs.jq}/bin/jq -r '.Peer | keys[]' 2>/dev/null); do
-            DIRECT_CONN=$(echo "$STATUS" | ${pkgs.jq}/bin/jq -r ".Peer[\"$peer\"].CurAddr" 2>/dev/null)
-            if [ -n "$DIRECT_CONN" ] && [ "$DIRECT_CONN" != "null" ]; then
-              DIRECT=$((DIRECT + 1))
+            echo "# HELP tailscale_backend_running Headscale connection status (1=connected, 0=disconnected)"
+            echo "# TYPE tailscale_backend_running gauge"
+            BACKEND_STATE=$(echo "$STATUS" | ${pkgs.jq}/bin/jq -r '.BackendState // "Unknown"')
+            if [ "$BACKEND_STATE" = "Running" ]; then
+              echo "tailscale_backend_running 1"
             else
-              RELAY=$((RELAY + 1))
+              echo "tailscale_backend_running 0"
             fi
-          done
-          echo "tailscale_peers_direct $DIRECT" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
-          echo "tailscale_peers_relay $RELAY" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
 
-          # Atomic move
-          mv /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp /var/lib/prometheus-node-exporter/textfile/tailscale.prom
+            # Count peers and connection types
+            PEERS=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '.Peer | length // 0')
+            echo "# HELP tailscale_peers Total number of peers"
+            echo "# TYPE tailscale_peers gauge"
+            echo "tailscale_peers $PEERS"
+
+            # Per-peer metrics
+            echo "# HELP tailscale_peer_online Peer online status (1=online, 0=offline)"
+            echo "# TYPE tailscale_peer_online gauge"
+            echo "# HELP tailscale_peer_direct Peer using direct connection (1=direct, 0=relay)"
+            echo "# TYPE tailscale_peer_direct gauge"
+            echo "# HELP tailscale_peer_rx_bytes Bytes received from peer"
+            echo "# TYPE tailscale_peer_rx_bytes counter"
+            echo "# HELP tailscale_peer_tx_bytes Bytes transmitted to peer"
+            echo "# TYPE tailscale_peer_tx_bytes counter"
+            echo "# HELP tailscale_peer_last_seen_seconds Seconds since peer was last seen"
+            echo "# TYPE tailscale_peer_last_seen_seconds gauge"
+
+            DIRECT_COUNT=0
+            RELAY_COUNT=0
+
+            # Process each peer
+            echo "$STATUS" | ${pkgs.jq}/bin/jq -r '.Peer | to_entries[] | @base64' | while read -r peer_b64; do
+              PEER=$(echo "$peer_b64" | base64 -d)
+
+              HOSTNAME=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.HostName // "unknown"' | tr -d '"' | tr ' ' '_')
+              OS=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.OS // "unknown"')
+              ONLINE=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.Online // false')
+              RX_BYTES=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.RxBytes // 0')
+              TX_BYTES=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.TxBytes // 0')
+              CUR_ADDR=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.CurAddr // ""')
+              LAST_SEEN=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.LastSeen // "0001-01-01T00:00:00Z"')
+
+              # Sanitize hostname for Prometheus label
+              HOSTNAME=$(echo "$HOSTNAME" | sed 's/[^a-zA-Z0-9_-]/_/g')
+              [ -z "$HOSTNAME" ] && HOSTNAME="unknown"
+
+              # Online status
+              if [ "$ONLINE" = "true" ]; then
+                echo "tailscale_peer_online{hostname=\"$HOSTNAME\",os=\"$OS\"} 1"
+              else
+                echo "tailscale_peer_online{hostname=\"$HOSTNAME\",os=\"$OS\"} 0"
+              fi
+
+              # Direct connection status
+              if [ -n "$CUR_ADDR" ] && [ "$CUR_ADDR" != "" ] && [ "$CUR_ADDR" != "null" ]; then
+                echo "tailscale_peer_direct{hostname=\"$HOSTNAME\",os=\"$OS\"} 1"
+              else
+                echo "tailscale_peer_direct{hostname=\"$HOSTNAME\",os=\"$OS\"} 0"
+              fi
+
+              # Traffic stats
+              echo "tailscale_peer_rx_bytes{hostname=\"$HOSTNAME\",os=\"$OS\"} $RX_BYTES"
+              echo "tailscale_peer_tx_bytes{hostname=\"$HOSTNAME\",os=\"$OS\"} $TX_BYTES"
+
+              # Last seen (convert to seconds since epoch if not zero date)
+              if [ "$LAST_SEEN" != "0001-01-01T00:00:00Z" ] && [ -n "$LAST_SEEN" ]; then
+                LAST_SEEN_EPOCH=$(${pkgs.coreutils}/bin/date -d "$LAST_SEEN" +%s 2>/dev/null || echo "0")
+                NOW=$(${pkgs.coreutils}/bin/date +%s)
+                if [ "$LAST_SEEN_EPOCH" -gt 0 ]; then
+                  SECONDS_AGO=$((NOW - LAST_SEEN_EPOCH))
+                  echo "tailscale_peer_last_seen_seconds{hostname=\"$HOSTNAME\",os=\"$OS\"} $SECONDS_AGO"
+                fi
+              fi
+            done
+
+            # Summary counts
+            DIRECT_COUNT=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '[.Peer | to_entries[] | select(.value.CurAddr != "" and .value.CurAddr != null)] | length')
+            RELAY_COUNT=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '[.Peer | to_entries[] | select(.value.CurAddr == "" or .value.CurAddr == null)] | length')
+
+            echo "# HELP tailscale_peers_direct Number of peers with direct connections"
+            echo "# TYPE tailscale_peers_direct gauge"
+            echo "tailscale_peers_direct $DIRECT_COUNT"
+            echo "# HELP tailscale_peers_relay Number of peers using relay"
+            echo "# TYPE tailscale_peers_relay gauge"
+            echo "tailscale_peers_relay $RELAY_COUNT"
+
+          } > "$PROM_FILE.tmp"
+
+          mv "$PROM_FILE.tmp" "$PROM_FILE"
         else
-          # Tailscale is not running or not responding
-          echo "tailscale_up 0" > /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
-          echo "tailscale_peers 0" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
-          echo "tailscale_backend_running 0" >> /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp
-          mv /var/lib/prometheus-node-exporter/textfile/tailscale.prom.tmp /var/lib/prometheus-node-exporter/textfile/tailscale.prom
+          # Tailscale is not running
+          {
+            echo "# HELP tailscale_up Tailscale daemon status (1=up, 0=down)"
+            echo "# TYPE tailscale_up gauge"
+            echo "tailscale_up 0"
+            echo "# HELP tailscale_peers Total number of peers"
+            echo "# TYPE tailscale_peers gauge"
+            echo "tailscale_peers 0"
+            echo "# HELP tailscale_backend_running Headscale connection status"
+            echo "# TYPE tailscale_backend_running gauge"
+            echo "tailscale_backend_running 0"
+          } > "$PROM_FILE.tmp"
+          mv "$PROM_FILE.tmp" "$PROM_FILE"
         fi
       '';
     };
