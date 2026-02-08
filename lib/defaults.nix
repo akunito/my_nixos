@@ -43,6 +43,11 @@
     #   Defaults:<user> timestamp_timeout=<minutes>
     # Keep null to use system default.
     sudoTimestampTimeoutMinutes = null;
+    # SSH agent authentication for sudo (allows passwordless sudo over SSH with agent forwarding)
+    # When enabled, sudo authenticates via forwarded SSH agent (-A flag)
+    # Local sessions without agent still require password
+    sshAgentSudoEnable = false;
+    sshAgentSudoAuthorizedKeysFiles = [ "/etc/ssh/authorized_keys.d/%u" ];
     sudoCommands = [
       {
         command = "/run/current-system/sw/bin/systemctl suspend";

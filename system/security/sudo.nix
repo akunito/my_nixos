@@ -18,6 +18,14 @@
     '';
   };
 
+  # SSH agent authentication for sudo
+  # Allows passwordless sudo when connected via SSH with agent forwarding (-A)
+  # Local sessions without SSH agent still require password
+  security.pam.sshAgentAuth = lib.mkIf (systemSettings.sshAgentSudoEnable or false) {
+    enable = true;
+    authorizedKeysFiles = systemSettings.sshAgentSudoAuthorizedKeysFiles or [ "/etc/ssh/authorized_keys.d/%u" ];
+  };
+
   # security.doas.enable = systemSettings.doasEnable;
   # security.doas.extraRules = [{
   #   users = [ "${userSettings.username}" ];
