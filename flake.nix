@@ -40,13 +40,11 @@
           # ====================================================================
           # Homelab Profiles
           # ====================================================================
-          HOME = ./profiles/HOME-config.nix;
           VMHOME = ./profiles/VMHOME-config.nix;
 
           # ====================================================================
           # LXC Container Profiles
           # ====================================================================
-          LXC = ./profiles/LXC-config.nix;
           LXC_HOME = ./profiles/LXC_HOME-config.nix;
           LXC_database = ./profiles/LXC_database-config.nix;
           LXC_liftcraftTEST = ./profiles/LXC_liftcraftTEST-config.nix;

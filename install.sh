@@ -53,26 +53,24 @@ fi
 
 # ======================================== Profile Management ======================================== #
 
-# List available profiles
+# List available profiles (reads from unified flake.nix profiles map)
 list_available_profiles() {
     local SCRIPT_DIR=$1
     echo -e "${CYAN}Available profiles:${RESET}"
-    ls -1 "$SCRIPT_DIR"/flake.*.nix 2>/dev/null | \
-        sed 's/.*flake\.\(.*\)\.nix/\1/' | \
-        sed 's/^/  - /' | \
-        grep -v "^  - nix$" | \
-        grep -v "^  - nix\.bak$" || echo "  (no profiles found)"
+    # Extract profile names from flake.nix profiles map
+    grep -E '^\s+[A-Za-z][A-Za-z0-9_-]+ = \./profiles/' "$SCRIPT_DIR/flake.nix" 2>/dev/null | \
+        sed 's/^\s*\([A-Za-z][A-Za-z0-9_-]*\).*/  - \1/' || echo "  (no profiles found)"
 }
 
-# Validate profile exists
+# Validate profile exists in unified flake.nix
 validate_profile() {
     local SCRIPT_DIR=$1
     local PROFILE=$2
-    
-    if [ ! -f "$SCRIPT_DIR/flake.$PROFILE.nix" ]; then
-        echo -e "${RED}Error: Profile flake file not found: flake.$PROFILE.nix${RESET}"
+
+    # Check if profile is defined in unified flake.nix profiles map
+    if ! grep -qE "^\s+${PROFILE} = \./profiles/" "$SCRIPT_DIR/flake.nix" 2>/dev/null; then
+        echo -e "${RED}Error: Profile not found in flake.nix: ${PROFILE}${RESET}"
         echo -e "${YELLOW}Current directory: $SCRIPT_DIR${RESET}"
-        echo -e "${YELLOW}Looking for: flake.$PROFILE.nix${RESET}"
         echo ""
         list_available_profiles "$SCRIPT_DIR"
         exit 1
@@ -239,12 +237,12 @@ pre_install_checks() {
         echo -e "${GREEN}✓ Nix is installed${RESET}"
     fi
     
-    # Check flake file exists (already validated, but double-check)
-    if [ ! -f "$SCRIPT_DIR/flake.$PROFILE.nix" ]; then
-        echo -e "${RED}✗ Error: Profile flake file not found: flake.$PROFILE.nix${RESET}"
+    # Check profile exists in unified flake.nix
+    if ! grep -qE "^\s+${PROFILE} = \./profiles/" "$SCRIPT_DIR/flake.nix" 2>/dev/null; then
+        echo -e "${RED}✗ Error: Profile not found in flake.nix: ${PROFILE}${RESET}"
         ERRORS=$((ERRORS + 1))
     else
-        echo -e "${GREEN}✓ Profile flake file found: flake.$PROFILE.nix${RESET}"
+        echo -e "${GREEN}✓ Profile found in flake.nix: ${PROFILE}${RESET}"
     fi
     
     # Check profile directory exists
@@ -581,37 +579,25 @@ git_fetch_and_reset_dotfiles_by_remote() {
     fi
 }
 
-# Update flake.nix with the selected profile
+# Set active profile (unified flake.nix workflow)
+# The unified flake.nix contains all profiles, so we just need to record which one to use
 switch_flake_profile_nix() {
     local SCRIPT_DIR=$1
     local PROFILE=$2
-    
-    # Validate profile file exists
-    if [ ! -f "$SCRIPT_DIR/flake.$PROFILE.nix" ]; then
-        echo -e "${RED}Error: Profile flake not found: flake.$PROFILE.nix${RESET}"
+
+    # Validate profile exists in unified flake.nix
+    if ! grep -qE "^\s+${PROFILE} = \./profiles/" "$SCRIPT_DIR/flake.nix" 2>/dev/null; then
+        echo -e "${RED}Error: Profile not found in flake.nix: ${PROFILE}${RESET}"
         echo -e "${YELLOW}Current directory: $SCRIPT_DIR${RESET}"
-        echo -e "${YELLOW}Looking for: flake.$PROFILE.nix${RESET}"
         list_available_profiles "$SCRIPT_DIR"
         exit 1
     fi
-    
-    # Backup existing flake.nix if it exists
-    if [ -f "$SCRIPT_DIR/flake.nix" ]; then
-        rm "$SCRIPT_DIR/flake.nix.bak" 2>/dev/null
-        mv "$SCRIPT_DIR/flake.nix" "$SCRIPT_DIR/flake.nix.bak"
-        echo -e "${GREEN}✓ Backed up existing flake.nix to flake.nix.bak${RESET}"
-    fi
-    
-    # Copy profile flake to active flake
-    cp "$SCRIPT_DIR/flake.$PROFILE.nix" "$SCRIPT_DIR/flake.nix"
-    # Stage flake.nix so Nix can see it (required for flakes even if gitignored)
-    git -C "$SCRIPT_DIR" add -f flake.nix 2>/dev/null || true
-    echo -e "${GREEN}✓ Switched to profile: $PROFILE${RESET}"
-    echo -e "${CYAN}  Using flake file: flake.$PROFILE.nix${RESET}"
 
-    # Save active profile name for auto-update scripts
+    # Save active profile name for backward compatibility and auto-update scripts
+    # This enables --flake .#system alias to work
     echo "$PROFILE" > "$SCRIPT_DIR/.active-profile"
-    echo -e "${GREEN}✓ Saved active profile: $PROFILE${RESET}"
+    echo -e "${GREEN}✓ Active profile set: $PROFILE${RESET}"
+    echo -e "${CYAN}  Will build: nixosConfigurations.${PROFILE}${RESET}"
 }
 
 update_flake_lock() {
@@ -942,10 +928,10 @@ debug_log() {
 }
 export DEBUG_RUN_ID="${DEBUG_RUN_ID:-pre-fix}"
 debug_log "A_parse_quote" "install.sh:rebuild" "preRebuildGeneration" "{\"generation\":\"$PRE_REBUILD_GENERATION\"}"
-debug_log "A_parse_quote" "install.sh:rebuild" "nixos-rebuild starting" "{\"flake\":\"$SCRIPT_DIR#system\"}"
+debug_log "A_parse_quote" "install.sh:rebuild" "nixos-rebuild starting" "{\"flake\":\"$SCRIPT_DIR#$PROFILE\"}"
 # #endregion
 
-$SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure || REBUILD_EXIT_CODE=$?
+$SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#$PROFILE --show-trace --impure || REBUILD_EXIT_CODE=$?
 
 # #region agent log
 debug_log "A_parse_quote" "install.sh:rebuild" "nixos-rebuild finished" "{\"exitCode\":$REBUILD_EXIT_CODE}"
@@ -1030,7 +1016,7 @@ PRE_HOME_MANAGER_GENERATION=$(get_current_home_manager_generation)
 # Strategy: Trust exit code 0 as complete success. For non-zero codes, verify if a new
 # generation was created to distinguish between complete failures and partial successes.
 HOME_MANAGER_EXIT_CODE=0
-nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace || HOME_MANAGER_EXIT_CODE=$?
+nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#$PROFILE --show-trace || HOME_MANAGER_EXIT_CODE=$?
 
 # Determine home-manager switch success based on exit code and generation check
 if [ "$HOME_MANAGER_EXIT_CODE" -eq 0 ]; then

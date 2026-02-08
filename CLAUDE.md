@@ -7,6 +7,7 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 - **Immutability**: never suggest editing `/nix/store` or using `nix-env`, `nix-channel`, `apt`, `yum`.
 - **Source of truth**: `flake.nix` and its `inputs` define dependencies.
 - **Application workflow**: apply changes via `install.sh` (or `aku sync`), not manual systemd enable/start.
+- **Unified flake**: use `nixos-rebuild switch --flake .#PROFILE` (e.g., `.#DESK`, `.#LXC_monitoring`). The `#system` alias uses `.active-profile` for backward compatibility.
 - **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths inside Nix.
 - **SSH agent forwarding**: Always use `-A` flag when connecting to remote machines where git operations may be needed. This forwards your local SSH keys to the remote machine.
   ```bash
@@ -20,7 +21,7 @@ This repository follows a **hierarchical, modular, and centralized** profile arc
 ### 1. Base + Override Pattern
 - **Base profiles** (`LAPTOP-base.nix`, `LXC-base-config.nix`) contain common settings
 - **Specific profiles** (`LAPTOP_L15-config.nix`, `LXC_plane-config.nix`) override only what's unique
-- Each flake file (`flake.LAPTOP_L15.nix`) points to the specific profile config
+- The unified `flake.nix` contains all profile outputs (e.g., `nixosConfigurations.LAPTOP_L15`)
 
 ### 2. Profile Type Inheritance Hierarchy
 
@@ -197,7 +198,40 @@ Before answering any architectural or implementation question:
 
 ## Domain-specific rules
 
-### NixOS / flake invariants (applies to: `**/*.nix`, `flake.nix`, `flake.*.nix`, `flake.lock`)
+### Unified Flake Architecture
+
+This repository uses a **unified flake.nix** with all profiles and inputs defined in one place:
+
+```
+flake.nix                    # Unified flake with all profiles and inputs
+├── lib/flake-unified.nix    # Generates nixosConfigurations/darwinConfigurations
+├── lib/flake-base.nix       # Profile builder (unchanged)
+└── profiles/*-config.nix    # Profile configurations (unchanged)
+```
+
+**Key benefits:**
+- No more `flake.PROFILE.nix` → `flake.nix` copy workflow
+- Single `flake.lock` for atomic dependency updates
+- Direct rebuild: `nixos-rebuild switch --flake .#DESK`
+- Backward compat: `.#system` alias reads `.active-profile`
+
+**Usage:**
+```bash
+# Rebuild specific profile
+sudo nixos-rebuild switch --flake .#DESK --impure
+sudo nixos-rebuild switch --flake .#LXC_monitoring --impure
+
+# Backward compatible (uses .active-profile)
+sudo nixos-rebuild switch --flake .#system --impure
+
+# List available profiles
+nix eval .#nixosConfigurations --apply 'x: builtins.attrNames x'
+
+# darwin (macOS)
+darwin-rebuild switch --flake .#MACBOOK-KOMI
+```
+
+### NixOS / flake invariants (applies to: `**/*.nix`, `flake.nix`, `flake.lock`)
 
 - **Immutability**: never suggest editing `/nix/store` or running imperative package managers (`nix-env`, `nix-channel`, `apt`, `yum`).
 - **Source of truth**: `flake.nix` + `inputs` control dependencies; use Nix options/modules, not ad-hoc system changes.
@@ -555,7 +589,7 @@ Before answering any architectural or implementation question:
   2. Export JSON: Dashboard Settings (⚙️) → JSON Model → Copy
   3. Save to `system/app/grafana-dashboards/custom/<name>.json`
   4. Register in `environment.etc` section of `grafana.nix`
-  5. Commit, push, deploy: `ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"`
+  5. Commit, push, deploy: `ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_monitoring"`
 - **Alert rules format**: Use Prometheus-style rules in `ruleFiles`, NOT Grafana alerting UI
   ```nix
   ruleFiles = [(pkgs.writeText "alerts.yml" (builtins.toJSON {
@@ -584,7 +618,7 @@ Before answering any architectural or implementation question:
     }];
   };
   ```
-- **Deployment**: `ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"`
+- **Deployment**: `ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_monitoring"`
 - **Verification commands**:
   - Check service: `systemctl status grafana prometheus`
   - Check provisioning: `journalctl -u grafana | grep provision`
@@ -611,7 +645,7 @@ Before answering any architectural or implementation question:
   curl -s -o /dev/null -w '%{http_code}' https://status.akunito.com
   ```
 - **API integration**: Uses `uptime-kuma-api` Python library
-  - Portfolio project scripts: `/home/akunito/Nextcloud/git_repos/myProjects/portfolio/scripts/kuma/`
+  - Portfolio project scripts: `~/Projects/portfolio/scripts/kuma/`
   - Password auth (Kuma 1): `api.login(username, password)`
   - JWT auth (Kuma 2): `api.login_by_token(jwt_token)` (token from browser localStorage)
 - **Credentials**: Stored in `secrets/domains.nix` (kuma1Username, kuma1Password, kuma2JwtToken)
