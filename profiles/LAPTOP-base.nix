@@ -17,6 +17,7 @@
     # Theming
     stylixEnable = true;
     swwwEnable = true;
+    waypaperEnable = true; # Enable Waypaper GUI wallpaper manager (Hyper+Shift+S)
 
     # === Monitor Management (Imperative GUI) ===
     nwgDisplaysEnable = true; # Visual monitor layout GUI (Hyper+Shift+D)

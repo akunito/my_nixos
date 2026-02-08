@@ -29,6 +29,7 @@
     ../../app/ai/aichat.nix
     ../../app/swaybgplus/swaybgplus.nix
     ../../app/swww/swww.nix
+    ../../app/waypaper/waypaper.nix
     ../../shell/sh.nix
 
     ./session-env.nix

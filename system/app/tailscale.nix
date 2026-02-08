@@ -24,6 +24,7 @@ let
   isExitNode = systemSettings.tailscaleExitNode or false;
   hasLoginServer = (systemSettings.tailscaleLoginServer or "") != "";
   acceptRoutes = systemSettings.tailscaleAcceptRoutes or false;
+  acceptDns = systemSettings.tailscaleAcceptDns or true;  # Default true (Tailscale default)
 
   # Build the tailscale up command for the helper script
   tailscaleUpCmd = lib.concatStringsSep " " (
@@ -32,6 +33,7 @@ let
     ++ lib.optional isSubnetRouter "--advertise-routes=${lib.concatStringsSep "," systemSettings.tailscaleAdvertiseRoutes}"
     ++ lib.optional isExitNode "--advertise-exit-node"
     ++ lib.optional acceptRoutes "--accept-routes"
+    ++ lib.optional (!acceptDns) "--accept-dns=false"
   );
 in
 lib.mkIf (systemSettings.tailscaleEnable or false) {

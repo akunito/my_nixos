@@ -250,7 +250,8 @@
     aichatEnable = false; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = false; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = false; # Enable LM Studio configuration and MCP server support
-    swaybgPlusEnable = false; # Enable SwayBG+ (GUI/CLI wallpaper manager) and disable Stylix swaybg service when active
+    swaybgPlusEnable = false; # [DEPRECATED] Enable SwayBG+ (GUI/CLI wallpaper manager) - use waypaperEnable instead
+    waypaperEnable = false; # Enable Waypaper GUI wallpaper manager (requires swwwEnable)
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
     swayPrimaryMonitor = null; # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
@@ -625,6 +626,7 @@
     tailscaleLoginServer = ""; # Custom login server URL (for Headscale, e.g., "https://headscale.example.com")
     tailscaleExitNode = false; # Act as exit node for internet traffic
     tailscaleAcceptRoutes = false; # Accept advertised routes from other nodes
+    tailscaleAcceptDns = true; # Accept DNS from Tailscale (set false if always on LAN)
 
     # ZSH prompt defaults
     zshinitContent = ''

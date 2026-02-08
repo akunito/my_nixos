@@ -311,6 +311,8 @@ in
           # "${hyper}+s" = "exec swaybgplus-gui";
           "${hyper}+s" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
+          # Waypaper (wallpaper GUI) - Hyper+Shift+S
+          "${hyper}+Shift+s" = lib.mkIf (systemSettings.waypaperEnable or false) "exec waypaper";
 
           # Workspace navigation with auto-creation and wrapping (Option B)
           # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
@@ -677,6 +679,14 @@ in
               app_id = "dev.deedles.Trayscale";
             };
             command = "floating enable, sticky enable";
+          }
+
+          # Waypaper: Wallpaper GUI - floating, centered, sized
+          {
+            criteria = {
+              app_id = "waypaper";
+            };
+            command = "floating enable, resize set 1200 800";
           }
 
           # XWayland apps (use class)
@@ -1074,6 +1084,8 @@ in
       for_window [app_id="nwg-displays"] floating enable, sticky enable
       # Trayscale: Tailscale GUI - floating + sticky
       for_window [app_id="dev.deedles.Trayscale"] floating enable, sticky enable
+      # Waypaper: Wallpaper GUI - floating, centered, sized
+      for_window [app_id="waypaper"] floating enable, resize set 1200 800
       for_window [app_id="nm-connection-editor"] floating enable
       for_window [app_id=".blueman-manager-wrapped"] floating enable, sticky enable
       for_window [app_id="swappy"] floating enable, sticky enable

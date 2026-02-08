@@ -1,3 +1,22 @@
+# ============================================================================
+# DEPRECATED: SwayBG+ Wallpaper Manager
+# ============================================================================
+# This module is deprecated in favor of Waypaper (user/app/waypaper/waypaper.nix).
+# Use waypaperEnable instead of swaybgPlusEnable in your profile configuration.
+#
+# Reason for deprecation:
+# - SwayBG+ has documentation inaccuracies (claims swww but uses swaybg)
+# - Waypaper is actively maintained and better integrated with swww
+# - Waypaper is lighter (315 KB) and simpler to maintain
+#
+# Migration:
+# - Set waypaperEnable = true in your profile
+# - Keep swwwEnable = true (Waypaper uses swww backend)
+# - Remove swaybgPlusEnable = false (it's now default)
+#
+# This module is kept for reference and backward compatibility.
+# ============================================================================
+
 { config, lib, pkgs, systemSettings, ... }:
 
 let

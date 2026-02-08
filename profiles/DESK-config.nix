@@ -277,7 +277,8 @@ in
     enableSwayForDESK = false; # Not needed when wm = "sway" (no dual-WM setup)
     stylixEnable = true; # Enable Stylix for system-wide theming
     swwwEnable = true; # Enable swww wallpaper daemon for Sway (robust across reboot + HM rebuilds)
-    swaybgPlusEnable = false; # Enable SwayBG+ GUI wallpaper picker (uses swww backend)
+    waypaperEnable = true; # Enable Waypaper GUI wallpaper manager (Hyper+Shift+S)
+    swaybgPlusEnable = false; # [DEPRECATED] Use waypaperEnable instead
     swayIdleDisableMonitorPowerOff = true; # Disable monitor power-off (Samsung Odyssey G70NC DPMS wake issue)
 
     # === Monitor Management (Imperative GUI) ===
@@ -296,7 +297,9 @@ in
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable Tailscale client
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
-    tailscaleAcceptRoutes = true; # Accept routes from subnet router
+    # DESK is always on LAN - don't override local routes/DNS with Tailscale
+    tailscaleAcceptRoutes = false; # Don't accept routes (already on LAN)
+    tailscaleAcceptDns = false; # Don't override DNS (use pfSense directly)
 
     # === Development Tools & AI ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
