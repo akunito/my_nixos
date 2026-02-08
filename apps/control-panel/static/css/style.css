@@ -1,0 +1,101 @@
+/* Custom styles for NixOS Control Panel */
+/* Most styling is done via TailwindCSS CDN */
+
+body {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Loading states */
+.htmx-request {
+    opacity: 0.5;
+    transition: opacity 200ms ease-in-out;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+
+.htmx-indicator {
+    display: none;
+}
+
+/* Tooltip styling */
+.tooltip {
+    pointer-events: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Graph container */
+#graph-container svg {
+    background: #111827;
+    border-radius: 0.5rem;
+}
+
+/* Log viewer */
+.logs-container pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* Card hover effects */
+.node-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.node-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Button animations */
+button {
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* Status indicators */
+.status-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1f2937;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+}
+
+/* Table row hover */
+table tbody tr:hover {
+    background-color: rgba(55, 65, 81, 0.5);
+}

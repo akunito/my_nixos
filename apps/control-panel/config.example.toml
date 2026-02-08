@@ -1,0 +1,180 @@
+# NixOS Control Panel Configuration
+# Copy this to config.toml and adjust for your environment
+
+[server]
+host = "0.0.0.0"
+port = 3100
+
+[auth]
+username = "admin"
+password = "change-me-in-production"
+
+[ssh]
+private_key_path = "/home/akunito/.ssh/id_ed25519"
+default_user = "akunito"
+
+[proxmox]
+host = "192.168.8.82"
+user = "root"
+
+[dotfiles]
+path = "/home/akunito/.dotfiles"
+
+# Docker nodes - LXC containers with Docker
+[[docker_nodes]]
+name = "LXC_HOME"
+host = "192.168.8.80"
+ctid = 100
+
+[[docker_nodes]]
+name = "LXC_proxy"
+host = "192.168.8.102"
+ctid = 102
+
+[[docker_nodes]]
+name = "LXC_matrix"
+host = "192.168.8.104"
+ctid = 204
+
+[[docker_nodes]]
+name = "LXC_plane"
+host = "192.168.8.86"
+ctid = 186
+
+[[docker_nodes]]
+name = "LXC_liftcraftTEST"
+host = "192.168.8.87"
+ctid = 187
+
+[[docker_nodes]]
+name = "LXC_portfolioprod"
+host = "192.168.8.88"
+ctid = 188
+
+[[docker_nodes]]
+name = "LXC_mailer"
+host = "192.168.8.89"
+ctid = 189
+
+# Profile configurations
+[[profiles]]
+name = "DESK"
+type = "desktop"
+hostname = "nixosaku"
+ip = "192.168.8.96"
+
+[[profiles]]
+name = "LAPTOP_L15"
+type = "laptop"
+hostname = "nixolaptopaku"
+ip = "192.168.8.92"
+
+[[profiles]]
+name = "LXC_HOME"
+type = "lxc"
+hostname = "nixosLabaku"
+ip = "192.168.8.80"
+ctid = 100
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "LXC_monitoring"
+type = "lxc"
+hostname = "monitoring"
+ip = "192.168.8.85"
+ctid = 185
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "LXC_database"
+type = "lxc"
+hostname = "database"
+ip = "192.168.8.103"
+ctid = 103
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "LXC_proxy"
+type = "lxc"
+hostname = "proxy"
+ip = "192.168.8.102"
+ctid = 102
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "LXC_matrix"
+type = "lxc"
+hostname = "matrix"
+ip = "192.168.8.104"
+ctid = 204
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "LXC_tailscale"
+type = "lxc"
+hostname = "tailscale"
+ip = "192.168.8.105"
+ctid = 205
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "LXC_plane"
+type = "lxc"
+hostname = "plane"
+ip = "192.168.8.86"
+ctid = 186
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "LXC_liftcraftTEST"
+type = "lxc"
+hostname = "liftcraft-test"
+ip = "192.168.8.87"
+ctid = 187
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "LXC_portfolioprod"
+type = "lxc"
+hostname = "portfolio-prod"
+ip = "192.168.8.88"
+ctid = 188
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "LXC_mailer"
+type = "lxc"
+hostname = "mailer"
+ip = "192.168.8.89"
+ctid = 189
+base_profile = "LXC-base-config"
+
+[[profiles]]
+name = "VMHOME"
+type = "vm"
+hostname = "nixosLabaku"
+ip = "192.168.8.80"
+
+[[profiles]]
+name = "MACBOOK-KOMI"
+type = "darwin"
+hostname = "komi-macbook"
+
+# Grafana configuration (optional)
+[grafana]
+base_url = "https://grafana.local.akunito.com"
+
+[[grafana.dashboards]]
+name = "Infrastructure Overview"
+uid = "infra-overview"
+slug = "infrastructure"
+
+[[grafana.dashboards]]
+name = "Public Infrastructure"
+uid = "public-infra"
+slug = "public-infrastructure"
+
+[[grafana.dashboards]]
+name = "Docker Containers"
+uid = "docker"
+slug = "docker-containers"

@@ -1,0 +1,11 @@
+# Rust build artifacts
+/target/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local config (use config.example.toml as template)
+config.toml

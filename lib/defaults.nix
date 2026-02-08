@@ -282,6 +282,11 @@
     grafanaEnable = false; # Enable Grafana/Prometheus monitoring stack (only on monitoring server)
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
 
+    # === Control Panel (Web-based infrastructure management) ===
+    controlPanelEnable = false; # Enable NixOS Control Panel service
+    controlPanelPort = 3100; # Port for control panel web UI
+    dotfilesPath = "/home/akunito/.dotfiles"; # Path to dotfiles repository
+
     # === Prometheus Exporters (for monitored nodes) ===
     prometheusExporterEnable = false; # Enable Node Exporter on this host
     prometheusExporterCadvisorEnable = false; # Enable cAdvisor for Docker metrics on this host
