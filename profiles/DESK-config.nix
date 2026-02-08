@@ -293,6 +293,11 @@ in
     gamemodeEnable = true; # Enable GameMode for performance optimization
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
 
+    # === Tailscale Mesh VPN ===
+    tailscaleEnable = true; # Enable Tailscale client
+    tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
+    tailscaleAcceptRoutes = true; # Accept routes from subnet router
+
     # === Development Tools & AI ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support

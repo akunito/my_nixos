@@ -129,6 +129,11 @@ in
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
 
+    # === Tailscale Mesh VPN ===
+    tailscaleEnable = true; # Enable Tailscale client
+    tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
+    tailscaleAcceptRoutes = true; # Accept routes from subnet router
+
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
     dbCredentialsEnable = true;

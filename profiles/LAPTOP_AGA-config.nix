@@ -3,6 +3,7 @@
 
 let
   base = import ./LAPTOP-base.nix;
+  secrets = import ../secrets/domains.nix;
 in
 {
   # Flag to use rust-overlay
@@ -98,6 +99,11 @@ in
     nextcloudEnable = true; # Enable Nextcloud client
     appImageEnable = false; # Disable AppImage support (override base)
     xboxControllerEnable = false; # Disable Xbox controller support
+
+    # === Tailscale Mesh VPN ===
+    tailscaleEnable = true; # Enable Tailscale client
+    tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
+    tailscaleAcceptRoutes = true; # Accept routes from subnet router
 
     # === Development Tools & AI ===
     aichatEnable = false; # Disable aichat CLI tool
