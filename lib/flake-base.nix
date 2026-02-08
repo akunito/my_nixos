@@ -134,7 +134,7 @@ let
     else "";
 
   systemPackagesEvaluated = systemPackagesEvaluatedBase ++
-    lib.optional (isLinux && userSettings.wm == "plasma6") (
+    lib.optional (isLinux && systemSettings.sddmBreezePatchedTheme or false) (
       pkgs.writeTextDir "share/sddm/themes/breeze-patched/theme.conf.user" sddmThemeConfig
     );
 
