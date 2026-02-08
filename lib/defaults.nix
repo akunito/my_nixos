@@ -289,7 +289,8 @@
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
 
     # === Control Panel (Web-based infrastructure management) ===
-    controlPanelEnable = false; # Enable NixOS Control Panel service
+    controlPanelEnable = false; # Enable NixOS Control Panel web service
+    controlPanelNativeEnable = false; # Enable NixOS Control Panel native desktop app
     controlPanelPort = 3100; # Port for control panel web UI
     dotfilesPath = "/home/akunito/.dotfiles"; # Path to dotfiles repository
 

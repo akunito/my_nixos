@@ -3,10 +3,10 @@
 let
   secrets = import ../../secrets/control-panel.nix;
 
-  # Build the control panel from source
+  # Build the control panel web server from workspace
   controlPanel = pkgs.rustPlatform.buildRustPackage {
-    pname = "control-panel";
-    version = "0.1.0";
+    pname = "control-panel-web";
+    version = "0.2.0";
     src = ../../apps/control-panel;
 
     cargoLock = {
@@ -14,6 +14,9 @@ let
       # Allow fetching from network for dependencies
       allowBuiltinFetchGit = true;
     };
+
+    # Build only the web crate
+    cargoBuildFlags = [ "-p" "control-panel-web" ];
 
     nativeBuildInputs = with pkgs; [
       pkg-config
@@ -110,7 +113,7 @@ in
           echo "Warning: No SSH agent socket found. SSH operations may fail for encrypted keys."
         fi
 
-        exec ${controlPanel}/bin/control-panel
+        exec ${controlPanel}/bin/control-panel-web
       '';
 
       serviceConfig = {
