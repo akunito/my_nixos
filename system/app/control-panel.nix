@@ -88,9 +88,33 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
 
+      # Set SSH_AUTH_SOCK dynamically based on user ID
+      # This enables SSH agent authentication when using encrypted keys
+      script = ''
+        # Try to find SSH agent socket for the configured user
+        USER_ID=$(id -u ${systemSettings.username or "akunito"})
+        AGENT_SOCK="/run/user/$USER_ID/ssh-agent"
+        GNOME_SOCK="/run/user/$USER_ID/keyring/ssh"
+        GPG_SOCK="/run/user/$USER_ID/gnupg/S.gpg-agent.ssh"
+
+        if [ -S "$AGENT_SOCK" ]; then
+          export SSH_AUTH_SOCK="$AGENT_SOCK"
+          echo "Using SSH agent at $AGENT_SOCK"
+        elif [ -S "$GNOME_SOCK" ]; then
+          export SSH_AUTH_SOCK="$GNOME_SOCK"
+          echo "Using GNOME keyring SSH agent at $GNOME_SOCK"
+        elif [ -S "$GPG_SOCK" ]; then
+          export SSH_AUTH_SOCK="$GPG_SOCK"
+          echo "Using GPG agent SSH at $GPG_SOCK"
+        else
+          echo "Warning: No SSH agent socket found. SSH operations may fail for encrypted keys."
+        fi
+
+        exec ${controlPanel}/bin/control-panel
+      '';
+
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${controlPanel}/bin/control-panel";
         Environment = [
           "CONFIG_PATH=${configFile}"
           "RUST_LOG=info"
