@@ -396,7 +396,7 @@ let
         "Control Panel Menu")
           # Run in terminal to show progress
           # Change to script directory first to ensure dependencies are found, use zsh for proper environment
-          ${pkgs.kitty}/bin/kitty --title "Control Panel Menu" -e ${pkgs.zsh}/bin/zsh -lc "cd ''$HOME/Nextcloud/git_repos/mySCRIPTS/ControlPanel && if ./menu.sh; then echo \"Control Panel menu completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"Control Panel menu failed. Check the output above for details.\"; exec ${pkgs.zsh}/bin/zsh; fi" &
+          ${pkgs.kitty}/bin/kitty --title "Control Panel Menu" -e ${pkgs.zsh}/bin/zsh -lc "cd ''$HOME/Projects/mySCRIPTS/ControlPanel && if ./menu.sh; then echo \"Control Panel menu completed successfully. Bye bye!\"; sleep 3; exit 0; else echo \"Control Panel menu failed. Check the output above for details.\"; exec ${pkgs.zsh}/bin/zsh; fi" &
           ;;
         *)
           echo "Unknown selection: $SELECTION"

@@ -18,6 +18,12 @@ if pgrep .waybar-wrapped &> /dev/null; then
   # In Sway, Waybar is managed by systemd --user (waybar.service). Killing waybar and spawning a new
   # instance here causes duplicates: systemd restarts the service, and this script also launches one.
   if systemctl --user is-active --quiet waybar.service 2>/dev/null; then
+    # Kill kded6 if running - it claims StatusNotifierWatcher but doesn't implement it properly
+    if pgrep -x kded6 &>/dev/null; then
+      echo "Killing kded6 (conflicts with waybar SNI)"
+      pkill -x kded6 2>/dev/null || true
+      sleep 0.3
+    fi
     echo "Restarting waybar.service (systemd-managed)"
     systemctl --user restart waybar.service
     # Kill any stray non-systemd waybar instances (keep the service MainPID)
@@ -27,6 +33,14 @@ if pgrep .waybar-wrapped &> /dev/null; then
         [ "$pid" = "$MAINPID" ] || kill "$pid" 2>/dev/null || true
       done
     fi
+    # Restart tray apps so they re-register with new waybar SNI host
+    sleep 1.5  # Wait for waybar to initialize SNI host
+    for svc in nm-applet blueman-applet nextcloud-client sunshine; do
+      if systemctl --user is-active --quiet "$svc.service" 2>/dev/null; then
+        echo "Restarting $svc.service (re-register tray icon)"
+        systemctl --user restart "$svc.service"
+      fi
+    done
   else
     echo "Restarting waybar (manually launched)"
     killall .waybar-wrapped &> /dev/null || true

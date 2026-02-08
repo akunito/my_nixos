@@ -11,7 +11,7 @@
     safe.directory = [ 
       ("/home/" + userSettings.username + "/.dotfiles/.git")
       ("/home/" + userSettings.username + "/.dotfiles")
-      ("/home/" + userSettings.username + "/Nextcloud/git_repos")
+      ("/home/" + userSettings.username + "/Projects")
     ];
     credential.helper = "${ # this enable libsecret to store passwords and logins
       pkgs.git.override { withLibsecret = true; }
