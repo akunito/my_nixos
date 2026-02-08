@@ -13,6 +13,115 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
   ssh -A user@host    # Enables git push/pull on remote without copying keys
   ```
 
+## Documentation Standards (CRITICAL)
+
+### Mandatory Documentation Practices
+
+**ALL documentation MUST follow these rules across all repositories:**
+
+#### 1. Documentation Location (STRICT)
+
+**README.md Exception (ALLOWED):**
+- ✅ README.md in project root - project overview
+- ✅ README.md in ANY subdirectory - explains what that folder contains
+- ✅ Examples: `src/README.md`, `lib/components/README.md`, `apps/web/README.md`
+
+**All Other Documentation (MUST be in docs/):**
+- ❌ **NEVER** create other .md files in project root or subdirectories
+- ❌ **NEVER** create random documentation (audits, summaries, analyses) outside docs/
+- ✅ **ALWAYS** use `docs/` directory for comprehensive documentation
+- ✅ **ALWAYS** follow router/catalog system (00_ROUTER.md + 01_CATALOG.md)
+
+**Examples:**
+```
+✅ CORRECT:
+  README.md                    # Project overview
+  src/README.md                # Explains src/ directory structure
+  lib/utils/README.md          # Explains utility functions
+  docs/ARCHITECTURE.md         # System architecture
+  docs/DEPLOYMENT.md           # Deployment guide
+  docs/security/audit-2026.md  # Security audit report
+
+❌ WRONG:
+  ARCHITECTURE.md              # Should be docs/ARCHITECTURE.md
+  implementation-summary.md    # Should be docs/IMPLEMENTATION.md or update existing doc
+  audit-report.md              # Should be docs/security/audit-YYYY-MM-DD.md
+  src/design-decisions.md      # Should be docs/ARCHITECTURE.md or docs/DESIGN_DECISIONS.md
+  notes.md                     # Should be in docs/ or update existing doc
+```
+
+#### 2. Documentation Structure (REQUIRED)
+```
+<project>/docs/
+├── 00_ROUTER.md          # Navigation index (REQUIRED)
+├── 01_CATALOG.md         # Metadata catalog (REQUIRED)
+├── ARCHITECTURE.md       # System design
+├── ENVIRONMENT_SETUP.md  # Development setup
+├── DEPLOYMENT.md         # Deployment procedures
+├── API.md                # API reference (if applicable)
+├── TROUBLESHOOTING.md    # Common issues
+└── scripts/
+    └── generate_docs_index.py  # Index generator
+```
+
+#### 3. Frontmatter (MANDATORY)
+Every documentation file MUST have YAML frontmatter:
+```yaml
+---
+id: category.subcategory.identifier  # Stable, unique ID
+summary: One-line description         # Concise summary
+tags: [tag1, tag2]                   # Lowercase tags
+related_files: [path/**]             # File globs (optional)
+date: YYYY-MM-DD                     # ISO date
+status: draft | published            # Document status
+---
+```
+
+#### 4. Incremental Updates (CRITICAL)
+- **UPDATE existing docs** when adding features/changes - don't create new files
+- **APPEND** to existing sections rather than duplicating content
+- **REGENERATE** router after changes: `cd docs/scripts && python3 generate_docs_index.py`
+- **PRESERVE** document IDs - they are stable identifiers and NEVER change
+
+#### 5. When Creating New Documentation
+1. **Check first:** Does a relevant doc already exist? Update it instead.
+2. **Use skill:** Run `/setup-project-docs <project>` to initialize structure
+3. **Add frontmatter:** Every doc needs proper YAML frontmatter
+4. **Register in router:** Add entry to 00_ROUTER.md or regenerate
+5. **Commit properly:** Include docs in commits with descriptive messages
+
+#### 6. Documentation Workflow
+```bash
+# Initialize documentation structure (first time only)
+/setup-project-docs ~/projects/<project-name>
+
+# When adding/updating docs:
+1. Edit/create file in docs/ directory
+2. Add/update frontmatter
+3. Regenerate router: cd docs/scripts && python3 generate_docs_index.py
+4. Commit: git add docs/ && git commit -m "docs: <description>"
+```
+
+#### 7. Prohibited Practices
+- ❌ Creating .md files in project root (except README.md for project overview)
+- ❌ Creating .md files in subdirectories (except README.md to explain that folder)
+- ❌ Creating documentation files outside docs/ (audits, summaries, analyses, etc.)
+- ❌ Creating duplicate documentation on same topic
+- ❌ Documentation in docs/ without proper frontmatter
+- ❌ Changing document IDs after creation
+- ❌ Creating docs without updating router/catalog
+
+**Allowed Exceptions:**
+- ✅ README.md anywhere (explains directory contents)
+- ✅ LICENSE, CHANGELOG.md, CONTRIBUTING.md in root (standard files)
+- ✅ Package-specific docs (package.json, Cargo.toml, pyproject.toml comments)
+
+#### 8. Reference Implementations
+- **Best practice:** `~/projects/lefty_workout/docs/` (reference implementation)
+- **Also see:** `~/.dotfiles/docs/` (dotfiles documentation system)
+
+---
+
 ## Profile Architecture Principles (CRITICAL)
 
 This repository follows a **hierarchical, modular, and centralized** profile architecture:

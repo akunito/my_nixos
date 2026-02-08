@@ -19,14 +19,14 @@ Use this skill to:
 cd ~/.dotfiles && sudo darwin-rebuild switch --flake .#system
 ```
 
-**Alias**: `rebuild`
+**Alias**: `darwin-rebuild`
 
 ### Test Build (No Apply)
 ```bash
 cd ~/.dotfiles && darwin-rebuild build --flake .#system
 ```
 
-**Alias**: `rebuild-test`
+**Alias**: `darwin-rebuild-test`
 
 ---
 
@@ -46,7 +46,7 @@ Use this skill after modifying:
 ### 1. Apply Configuration Changes
 ```bash
 # Standard rebuild (applies changes)
-rebuild
+darwin-rebuild
 
 # Or manually:
 cd ~/.dotfiles && sudo darwin-rebuild switch --flake .#system
@@ -55,10 +55,10 @@ cd ~/.dotfiles && sudo darwin-rebuild switch --flake .#system
 ### 2. Test Before Applying
 ```bash
 # Build configuration without applying (test for errors)
-rebuild-test
+darwin-rebuild-test
 
 # If successful, then apply:
-rebuild
+darwin-rebuild
 ```
 
 ### 3. List Generations
@@ -120,7 +120,7 @@ cd ~/.dotfiles && nix flake update
 nix flake lock --update-input nixpkgs
 
 # Then rebuild
-rebuild
+darwin-rebuild
 ```
 
 ---
