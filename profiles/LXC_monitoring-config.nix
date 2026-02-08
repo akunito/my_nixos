@@ -63,6 +63,7 @@ in
       { name = "lxc_mailer";     host = "192.168.8.89";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_database";   host = "192.168.8.103"; nodePort = 9100; cadvisorPort = null; }  # Centralized database server (no Docker)
       { name = "lxc_matrix";     host = "192.168.8.104"; nodePort = 9100; cadvisorPort = 9092; }  # Matrix Synapse + Element + Claude Bot
+      { name = "lxc_tailscale";  host = "192.168.8.105"; nodePort = 9100; cadvisorPort = null; }  # Tailscale subnet router (no Docker)
       { name = "vps_wireguard";  host = "172.26.5.155";  nodePort = 9100; cadvisorPort = null; }  # VPS via WireGuard tunnel
     ];
 
@@ -117,6 +118,7 @@ in
     prometheusBlackboxIcmpTargets = [
       # Infrastructure latency monitoring (ordered for dashboard display)
       { name = "wireguard_tunnel"; host = "172.26.5.155"; }   # VPS WireGuard tunnel
+      { name = "tailscale"; host = "192.168.8.105"; }         # Tailscale subnet router
       { name = "wan"; host = "1.1.1.1"; }                     # WAN latency (Cloudflare DNS)
       { name = "pfsense"; host = "192.168.8.1"; }             # pfSense router
       { name = "switch_usw_aggr"; host = "192.168.8.180"; }   # UniFi Aggregation Switch

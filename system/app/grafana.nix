@@ -759,6 +759,7 @@ in
     "grafana-dashboards/custom/public-infrastructure-overview.json".source = ./grafana-dashboards/custom/public-infrastructure-overview.json;
     "grafana-dashboards/custom/database-overview.json".source = ./grafana-dashboards/custom/database-overview.json;
     "grafana-dashboards/custom/database-deep-dive.json".source = ./grafana-dashboards/custom/database-deep-dive.json;
+    "grafana-dashboards/custom/tailscale.json".source = ./grafana-dashboards/custom/tailscale.json;
     # Community dashboards
     "grafana-dashboards/community/node-exporter-full.json".source = ./grafana-dashboards/community/node-exporter-full.json;
     "grafana-dashboards/community/docker-cadvisor.json".source = ./grafana-dashboards/community/docker-cadvisor.json;
