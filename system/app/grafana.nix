@@ -108,9 +108,20 @@ in
         publicDashboards = true;
       };
 
-      # Security settings for embedding dashboards in external sites (e.g., portfolio)
+      # Security settings for embedding dashboards in external sites (e.g., portfolio, control panel)
       security = {
         allow_embedding = true;
+        # Allow cookies to work in iframes (required for authentication in embedded dashboards)
+        cookie_samesite = "none";
+        cookie_secure = true;
+      };
+
+      # Anonymous access for embedded dashboard viewing (read-only)
+      # Users are already authenticated via control panel's HTTP Basic Auth
+      "auth.anonymous" = {
+        enabled = true;
+        org_name = "Main Org.";
+        org_role = "Viewer";  # Read-only access
       };
     };
 
