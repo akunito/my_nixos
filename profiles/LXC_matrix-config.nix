@@ -53,17 +53,13 @@ in
     systemPackages = pkgs: pkgs-unstable:
       (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
         pkgs.curl # For healthchecks
-        # Python for Claude bot
+        # Python for Claude bot with E2E encryption support
         pkgs.python311
         pkgs.python311Packages.aiohttp
         pkgs.python311Packages.aiosqlite
-        # Note: matrix-nio installed via pip in bot virtualenv
-        # E2E encryption dependencies
-        pkgs.olm # libolm for E2E encryption
-        pkgs.cmake # Build tools for python-olm
-        pkgs.gnumake
-        pkgs.gcc
-        pkgs.pkg-config
+        pkgs.python311Packages.matrix-nio # Matrix client with E2E support built-in
+        pkgs.python311Packages.python-olm # Python bindings for olm
+        pkgs.olm # libolm library
       ];
 
     # ============================================================================
