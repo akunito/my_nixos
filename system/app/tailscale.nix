@@ -142,7 +142,23 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
             echo "$STATUS" | ${pkgs.jq}/bin/jq -r '.Peer | to_entries[] | @base64' | while read -r peer_b64; do
               PEER=$(echo "$peer_b64" | base64 -d)
 
-              HOSTNAME=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.HostName // "unknown"' | tr -d '"' | tr ' ' '_')
+              # Use DNSName (Headscale-assigned name) instead of HostName (device-reported)
+              # DNSName is like "android-aga.tailnet.akunito.com." - extract the first part
+              DNSNAME=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.DNSName // ""')
+              if [ -n "$DNSNAME" ] && [ "$DNSNAME" != "null" ]; then
+                # Extract first part of DNS name (before first dot)
+                HOSTNAME=$(echo "$DNSNAME" | cut -d'.' -f1)
+              else
+                # Fallback to HostName if DNSName not available
+                HOSTNAME=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.HostName // "unknown"' | tr -d '"' | tr ' ' '_')
+              fi
+
+              # Get Tailscale IP as additional label
+              TAILSCALE_IP=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.TailscaleIPs[0] // ""')
+
+              # Get user info (from UserID)
+              USER_ID=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.UserID // 0')
+
               OS=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.OS // "unknown"')
               ONLINE=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.Online // false')
               RX_BYTES=$(echo "$PEER" | ${pkgs.jq}/bin/jq -r '.value.RxBytes // 0')
@@ -154,23 +170,30 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
               HOSTNAME=$(echo "$HOSTNAME" | sed 's/[^a-zA-Z0-9_-]/_/g')
               [ -z "$HOSTNAME" ] && HOSTNAME="unknown"
 
+              # Build labels string with optional tailscale_ip
+              if [ -n "$TAILSCALE_IP" ] && [ "$TAILSCALE_IP" != "null" ]; then
+                LABELS="hostname=\"$HOSTNAME\",os=\"$OS\",tailscale_ip=\"$TAILSCALE_IP\""
+              else
+                LABELS="hostname=\"$HOSTNAME\",os=\"$OS\""
+              fi
+
               # Online status
               if [ "$ONLINE" = "true" ]; then
-                echo "tailscale_peer_online{hostname=\"$HOSTNAME\",os=\"$OS\"} 1"
+                echo "tailscale_peer_online{$LABELS} 1"
               else
-                echo "tailscale_peer_online{hostname=\"$HOSTNAME\",os=\"$OS\"} 0"
+                echo "tailscale_peer_online{$LABELS} 0"
               fi
 
               # Direct connection status
               if [ -n "$CUR_ADDR" ] && [ "$CUR_ADDR" != "" ] && [ "$CUR_ADDR" != "null" ]; then
-                echo "tailscale_peer_direct{hostname=\"$HOSTNAME\",os=\"$OS\"} 1"
+                echo "tailscale_peer_direct{$LABELS} 1"
               else
-                echo "tailscale_peer_direct{hostname=\"$HOSTNAME\",os=\"$OS\"} 0"
+                echo "tailscale_peer_direct{$LABELS} 0"
               fi
 
               # Traffic stats
-              echo "tailscale_peer_rx_bytes{hostname=\"$HOSTNAME\",os=\"$OS\"} $RX_BYTES"
-              echo "tailscale_peer_tx_bytes{hostname=\"$HOSTNAME\",os=\"$OS\"} $TX_BYTES"
+              echo "tailscale_peer_rx_bytes{$LABELS} $RX_BYTES"
+              echo "tailscale_peer_tx_bytes{$LABELS} $TX_BYTES"
 
               # Last seen (convert to seconds since epoch if not zero date)
               if [ "$LAST_SEEN" != "0001-01-01T00:00:00Z" ] && [ -n "$LAST_SEEN" ]; then
@@ -178,7 +201,7 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
                 NOW=$(${pkgs.coreutils}/bin/date +%s)
                 if [ "$LAST_SEEN_EPOCH" -gt 0 ]; then
                   SECONDS_AGO=$((NOW - LAST_SEEN_EPOCH))
-                  echo "tailscale_peer_last_seen_seconds{hostname=\"$HOSTNAME\",os=\"$OS\"} $SECONDS_AGO"
+                  echo "tailscale_peer_last_seen_seconds{$LABELS} $SECONDS_AGO"
                 fi
               fi
             done
