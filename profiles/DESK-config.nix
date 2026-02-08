@@ -308,7 +308,8 @@ in
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
 
     # === Control Panel ===
-    controlPanelEnable = false; # Enable NixOS infrastructure control panel (disabled - build issues)
+    controlPanelEnable = true; # Enable NixOS infrastructure control panel (web server)
+    controlPanelNativeEnable = true; # Enable NixOS infrastructure control panel (native desktop app)
 
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
