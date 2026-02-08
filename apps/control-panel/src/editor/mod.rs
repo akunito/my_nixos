@@ -61,6 +61,7 @@ impl ConfigValue {
         }
     }
 
+    #[allow(dead_code)]
     pub fn as_string(&self) -> Option<&str> {
         match self {
             ConfigValue::String(s) => Some(s),

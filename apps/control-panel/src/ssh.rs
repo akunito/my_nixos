@@ -355,6 +355,7 @@ impl SshPool {
     }
 
     /// Close connection to a specific node (useful for reconnecting)
+    #[allow(dead_code)]
     pub async fn close_connection(&mut self, node_name: &str) {
         if let Some(conn) = self.connections.get(node_name) {
             let mut guard = conn.lock().await;

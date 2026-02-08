@@ -60,7 +60,7 @@ pub fn generate_graph_data(config: &Config) -> GraphData {
     // Add profile nodes
     for profile in &config.profiles {
         let profile_type = ProfileType::from_str(&profile.profile_type);
-        let status = NodeStatus::Unknown; // Will be updated by health checks
+        let _status = NodeStatus::Unknown; // Will be updated by health checks
 
         nodes.push(GraphNode {
             id: profile.name.clone(),
@@ -99,6 +99,7 @@ pub fn generate_graph_data(config: &Config) -> GraphData {
 }
 
 /// Convert profiles to ProfileNode list
+#[allow(dead_code)]
 pub fn get_profile_nodes(config: &Config) -> Vec<ProfileNode> {
     config
         .profiles

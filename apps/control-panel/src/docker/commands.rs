@@ -164,6 +164,7 @@ pub async fn get_node_summary(
 }
 
 /// Check if a container exists on a node
+#[allow(dead_code)]
 pub async fn container_exists(
     ssh_pool: &mut SshPool,
     node_name: &str,

@@ -47,6 +47,7 @@ impl ContainerStatus {
     }
 
     /// Get CSS class for status badge
+    #[allow(dead_code)]
     pub fn css_class(&self) -> &'static str {
         match self {
             ContainerStatus::Running => "bg-green-600",

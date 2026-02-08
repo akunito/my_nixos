@@ -73,6 +73,7 @@ pub enum NodeStatus {
 }
 
 impl NodeStatus {
+    #[allow(dead_code)]
     pub fn css_class(&self) -> &'static str {
         match self {
             NodeStatus::Online => "bg-green-500",

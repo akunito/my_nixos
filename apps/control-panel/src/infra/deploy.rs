@@ -99,6 +99,7 @@ pub async fn deploy(
 }
 
 /// Get deployment log (last N lines of journal)
+#[allow(dead_code)]
 pub async fn get_deployment_log(
     ssh_pool: &mut SshPool,
     profile: &str,
@@ -114,6 +115,7 @@ pub async fn get_deployment_log(
 }
 
 /// Check if a profile is reachable and NixOS
+#[allow(dead_code)]
 pub async fn check_node_health(
     ssh_pool: &mut SshPool,
     profile: &str,

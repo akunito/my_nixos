@@ -719,7 +719,7 @@ pub async fn proxmox_dashboard(State(state): State<Arc<AppState>>) -> Result<Htm
     Ok(Html(html))
 }
 
-fn render_proxmox_row(info: &proxmox::ContainerInfo, vm_type: &str) -> String {
+fn render_proxmox_row(info: &proxmox::ContainerInfo, _vm_type: &str) -> String {
     let status_class = if info.status == "running" {
         "bg-green-500"
     } else {

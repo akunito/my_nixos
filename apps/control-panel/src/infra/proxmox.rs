@@ -90,6 +90,7 @@ pub async fn list_containers(ssh_pool: &mut SshPool) -> Result<Vec<ContainerInfo
 }
 
 /// List all VMs on Proxmox
+#[allow(dead_code)]
 pub async fn list_vms(ssh_pool: &mut SshPool) -> Result<Vec<ContainerInfo>, AppError> {
     let command = "qm list";
     let output = ssh_pool.execute_on_proxmox(command).await?;
@@ -141,6 +142,7 @@ fn parse_qm_list_line(line: &str) -> Option<ContainerInfo> {
 }
 
 /// Check if a container is running
+#[allow(dead_code)]
 pub async fn is_container_running(ssh_pool: &mut SshPool, ctid: u32) -> Result<bool, AppError> {
     let status = get_container_status(ssh_pool, ctid).await?;
     Ok(status == "running")

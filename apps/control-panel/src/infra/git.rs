@@ -99,6 +99,7 @@ pub fn get_diff(dotfiles_path: &str) -> Result<String, AppError> {
 }
 
 /// Stage files for commit
+#[allow(dead_code)]
 pub fn stage_files(dotfiles_path: &str, files: &[String]) -> Result<(), AppError> {
     let mut args = vec!["add", "--"];
     let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
@@ -121,6 +122,7 @@ pub fn stage_files(dotfiles_path: &str, files: &[String]) -> Result<(), AppError
 }
 
 /// Create a commit
+#[allow(dead_code)]
 pub fn commit(dotfiles_path: &str, message: &str) -> Result<(), AppError> {
     let full_message = format!(
         "{}\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>",
@@ -145,6 +147,7 @@ pub fn commit(dotfiles_path: &str, message: &str) -> Result<(), AppError> {
 }
 
 /// Push to remote
+#[allow(dead_code)]
 pub fn push(dotfiles_path: &str) -> Result<(), AppError> {
     let output = Command::new("git")
         .args(["push"])
@@ -164,6 +167,7 @@ pub fn push(dotfiles_path: &str) -> Result<(), AppError> {
 }
 
 /// Create a new branch and switch to it
+#[allow(dead_code)]
 pub fn create_branch(dotfiles_path: &str, branch_name: &str) -> Result<(), AppError> {
     let output = Command::new("git")
         .args(["checkout", "-b", branch_name])
@@ -183,6 +187,7 @@ pub fn create_branch(dotfiles_path: &str, branch_name: &str) -> Result<(), AppEr
 }
 
 /// Auto-commit to a feature branch
+#[allow(dead_code)]
 pub fn auto_commit_to_branch(
     dotfiles_path: &str,
     files: &[String],
@@ -219,6 +224,7 @@ pub fn auto_commit_to_branch(
 }
 
 /// Pull latest changes
+#[allow(dead_code)]
 pub fn pull(dotfiles_path: &str) -> Result<(), AppError> {
     let output = Command::new("git")
         .args(["pull"])
