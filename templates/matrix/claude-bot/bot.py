@@ -27,7 +27,15 @@ from nio import (
     LoginResponse,
     MatrixRoom,
     RoomMessageText,
+    RoomEncryptedEvent,
     InviteMemberEvent,
+    MegolmEvent,
+    ToDeviceError,
+    KeyVerificationEvent,
+    KeyVerificationStart,
+    KeyVerificationCancel,
+    KeyVerificationKey,
+    KeyVerificationMac,
 )
 
 from claude_cli import ClaudeCLI
@@ -116,7 +124,7 @@ class ClaudeMatrixBot:
             max_limit_exceeded=0,
             max_timeouts=0,
             store_sync_tokens=True,
-            encryption_enabled=False,  # Disable E2EE for simplicity
+            encryption_enabled=True,  # Enable E2EE for secure messaging
         )
 
         self.client = AsyncClient(
@@ -141,6 +149,10 @@ class ClaudeMatrixBot:
         # Register event callbacks
         self.client.add_event_callback(self._on_message, RoomMessageText)
         self.client.add_event_callback(self._on_invite, InviteMemberEvent)
+        self.client.add_event_callback(self._on_encrypted_message, MegolmEvent)
+
+        # Auto-trust devices from allowed users for E2E encryption
+        await self._setup_encryption_trust()
 
         # Start sync loop
         self._running = True
@@ -160,6 +172,59 @@ class ClaudeMatrixBot:
         if self.session_manager:
             await self.session_manager.close()
         log.info("Bot stopped")
+
+    async def _setup_encryption_trust(self):
+        """Set up automatic device trust for allowed users.
+
+        This enables seamless E2E encryption by trusting all devices of
+        allowed users. For a more secure setup, implement interactive
+        key verification instead.
+        """
+        log.info("Setting up E2E encryption trust for allowed users")
+        allowed_users = self.config.get("access", {}).get("allowed_users", [])
+
+        for user_id in allowed_users:
+            log.info("Trusting devices for user", user=user_id)
+            # Trust all known devices for this user
+            devices = self.client.device_store.active_user_devices(user_id)
+            for device_id, device in devices.items():
+                if not device.trust_state.is_verified():
+                    self.client.verify_device(device)
+                    log.info("Trusted device", user=user_id, device=device_id)
+
+    async def _on_encrypted_message(self, room: MatrixRoom, event: MegolmEvent):
+        """Handle encrypted messages that couldn't be decrypted.
+
+        If a MegolmEvent reaches this callback, it means decryption failed.
+        This typically happens when:
+        - The encryption keys are missing
+        - The session has expired
+        - Device keys need to be shared
+
+        Successfully decrypted messages go to _on_message as RoomMessageText.
+        """
+        log.warning(
+            "Failed to decrypt message",
+            room=room.room_id,
+            sender=event.sender,
+            session_id=event.session_id,
+            reason="Missing session keys"
+        )
+
+        # Try to request keys from the sender's device
+        if event.sender != self.client.user_id:
+            try:
+                await self.client.request_room_key(event)
+                log.info("Requested room key from sender", sender=event.sender)
+            except Exception as e:
+                log.error("Failed to request room key", error=str(e))
+
+            # Notify the user that we couldn't decrypt their message
+            await self._send_message(
+                room,
+                "I couldn't decrypt your message. This may be a session key issue. "
+                "Try sending your message again, or use `/help` for commands."
+            )
 
     def _is_allowed_user(self, user_id: str) -> bool:
         """Check if user is allowed to use the bot."""
@@ -220,13 +285,21 @@ class ClaudeMatrixBot:
 
         elif command == "/status":
             session = await self.session_manager.get_session(sender)
+            status = "**Session Status**\n"
             if session:
-                status = f"**Session Status**\n"
                 status += f"- Session ID: `{session['session_id'][:8]}...`\n"
                 status += f"- Working Dir: `{session['working_dir']}`\n"
-                status += f"- Last Active: {session['last_active']}"
+                status += f"- Last Active: {session['last_active']}\n"
             else:
-                status = "No active session. Send any message to start one."
+                status += "- Session: None (send any message to start)\n"
+
+            # Add encryption status
+            status += f"\n**Encryption**\n"
+            status += f"- Room Encrypted: {'Yes' if room.encrypted else 'No'}\n"
+            if room.encrypted:
+                devices = self.client.device_store.active_user_devices(sender)
+                verified = sum(1 for d in devices.values() if d.trust_state.is_verified())
+                status += f"- Your Verified Devices: {verified}/{len(devices)}"
             await self._send_message(room, status)
 
         elif command == "/cd":
@@ -240,14 +313,30 @@ class ClaudeMatrixBot:
             else:
                 await self._send_message(room, "Usage: `/cd <path>`")
 
+        elif command == "/trust":
+            # Trust all devices for the sender (for encrypted rooms)
+            devices = self.client.device_store.active_user_devices(sender)
+            trusted = 0
+            for device_id, device in devices.items():
+                if not device.trust_state.is_verified():
+                    self.client.verify_device(device)
+                    trusted += 1
+            if trusted > 0:
+                await self._send_message(room, f"Trusted {trusted} new device(s) for your account.")
+            else:
+                await self._send_message(room, "All your devices are already trusted.")
+
         elif command == "/help":
             help_text = """**Claude Bot Commands**
 - `/new` - Start fresh session (clear context)
-- `/status` - Show current session info
+- `/status` - Show current session info & encryption status
 - `/cd <path>` - Change working directory
+- `/trust` - Trust all your devices for E2E encryption
 - `/help` - Show this help message
 
-Send any other message to interact with Claude Code."""
+Send any other message to interact with Claude Code.
+
+*Note: Messages in encrypted rooms are end-to-end encrypted.*"""
             await self._send_message(room, help_text)
 
         else:
@@ -303,8 +392,16 @@ Send any other message to interact with Claude Code."""
             await self.client.room_typing(room.room_id, typing_state=False)
 
     async def _send_message(self, room: MatrixRoom, message: str):
-        """Send a message to a room."""
-        await self.client.room_send(
+        """Send a message to a room, encrypted if required."""
+        # Check if room is encrypted and share keys if needed
+        if room.encrypted:
+            try:
+                # Ensure we've shared room keys with all members
+                await self._share_room_keys(room)
+            except Exception as e:
+                log.warning("Failed to share room keys", error=str(e))
+
+        result = await self.client.room_send(
             room.room_id,
             message_type="m.room.message",
             content={
@@ -314,6 +411,24 @@ Send any other message to interact with Claude Code."""
                 "formatted_body": self._markdown_to_html(message),
             },
         )
+
+        if isinstance(result, ToDeviceError):
+            log.error("Failed to send encrypted message", error=str(result))
+
+    async def _share_room_keys(self, room: MatrixRoom):
+        """Share encryption keys with all room members.
+
+        This ensures new devices can decrypt our messages.
+        """
+        members = await self.client.joined_members(room.room_id)
+        for member in members.members:
+            # Get and trust devices for room members
+            devices = self.client.device_store.active_user_devices(member.user_id)
+            for device_id, device in devices.items():
+                if not device.trust_state.is_verified():
+                    # Auto-verify devices for allowed users only
+                    if self._is_allowed_user(member.user_id):
+                        self.client.verify_device(device)
 
     def _markdown_to_html(self, text: str) -> str:
         """Convert basic markdown to HTML for Matrix."""

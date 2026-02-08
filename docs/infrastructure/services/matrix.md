@@ -169,8 +169,30 @@ The Claude bot runs as a Python service that wraps Claude Code CLI.
 |---------|--------|
 | (any message) | Send to Claude Code in current session |
 | `/new` | Start fresh session (clear context) |
-| `/status` | Show current session info |
+| `/status` | Show current session info & encryption status |
 | `/cd <path>` | Change working directory |
+| `/trust` | Trust all your devices for E2E encryption |
+| `/help` | Show available commands |
+
+### End-to-End Encryption (E2EE)
+
+The Claude bot supports Matrix E2E encryption for secure messaging.
+
+**How it works:**
+- Encryption is automatically enabled for encrypted rooms
+- The bot auto-trusts devices of allowed users on startup
+- Use `/trust` to explicitly trust new devices
+- Use `/status` to check encryption status
+
+**Dependencies (installed via NixOS profile):**
+- `matrix-nio[e2e]` - Matrix client with encryption support
+- `python-olm` - Python bindings for libolm
+- `olm` - Olm cryptographic library (marked as insecure but required)
+
+**Troubleshooting decryption failures:**
+- If the bot can't decrypt your message, try `/trust` then resend
+- Check `/status` to verify your devices are trusted
+- Restart the bot to refresh encryption keys: `systemctl --user restart claude-matrix-bot`
 
 ### Access Control
 ```yaml
