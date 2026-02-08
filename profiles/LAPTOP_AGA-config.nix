@@ -156,7 +156,7 @@ in
     homePackages = pkgs: pkgs-unstable: [
       # AGA-specific packages
       pkgs-unstable.kdePackages.kcalc # AGA-specific calculator
-      pkgs-unstable.vivaldi # AGA-specific browser
+      # NOTE: Vivaldi is added by user/app/browser/vivaldi.nix with KWallet wrapper
 
       # NOTE: Development tools in user/app/development/development.nix (controlled by developmentToolsEnable flag)
     ];
