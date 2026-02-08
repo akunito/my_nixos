@@ -1,5 +1,6 @@
-# DESK Profile Configuration
-# Only profile-specific overrides - defaults are in lib/defaults.nix
+# DESKold Profile Configuration (Backup of DESK with Plasma 6 + ungoogled-chromium)
+# Created for rollback purposes when testing new optimized DESK config
+# This preserves: Plasma 6 as WM, enableSwayForDESK dual-WM setup
 # Note: Package lists will be evaluated in flake-base.nix where pkgs is available
 
 let
@@ -41,8 +42,8 @@ in
   systemSettings = {
     hostname = "nixosaku";
     profile = "personal";
-    envProfile = "DESK"; # Environment profile for Claude Code context awareness
-    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK -s -u";
+    envProfile = "DESKold"; # Environment profile for Claude Code context awareness
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESKold -s -u";
     gpuType = "amd";
     enableDesktopPerformance = true; # Enable desktop-optimized I/O scheduler and performance tuning
     amdLACTdriverEnable = true;
@@ -274,7 +275,7 @@ in
     systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
 
     # === Desktop Environment & Theming ===
-    enableSwayForDESK = false; # Not needed when wm = "sway" (no dual-WM setup)
+    enableSwayForDESK = true; # Enable SwayFX as second WM option alongside Plasma6
     stylixEnable = true; # Enable Stylix for system-wide theming
     swwwEnable = true; # Enable swww wallpaper daemon for Sway (robust across reboot + HM rebuilds)
     swaybgPlusEnable = false; # Disable swaybg+ (using swww instead)
@@ -416,8 +417,8 @@ in
     ];
 
     theme = "ashes";
-    wm = "sway";  # Switched from plasma6 for faster builds (no KDE compilation)
-    wmEnableHyprland = false;
+    wm = "plasma6";
+    wmEnableHyprland = false; # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
 
     fileManager = "dolphin"; # Explicitly set Dolphin as file manager (overrides default "ranger")
 

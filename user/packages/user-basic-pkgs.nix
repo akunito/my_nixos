@@ -53,8 +53,9 @@
       # Remote Access & Streaming
       pkgs-unstable.moonlight-qt
 
-      # Browsers
-      pkgs-unstable.ungoogled-chromium
+      # Browsers (pre-built from binary cache - no source compilation)
+      pkgs-unstable.chromium
+      pkgs-unstable.brave
     ];
   };
 }

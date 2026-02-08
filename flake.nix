@@ -27,6 +27,7 @@
           # Desktop Profiles
           # ====================================================================
           DESK = ./profiles/DESK-config.nix;
+          DESKold = ./profiles/DESKold-config.nix;  # Backup: Plasma 6 + ungoogled-chromium
           DESK_AGA = ./profiles/DESK_AGA-config.nix;
           DESK_VMDESK = ./profiles/DESK_VMDESK-config.nix;
 
