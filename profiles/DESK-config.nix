@@ -283,7 +283,7 @@ in
     # === Monitor Management (Imperative GUI) ===
     nwgDisplaysEnable = true; # Visual monitor layout GUI (Hyper+Shift+D)
     workspaceGroupsGuiEnable = true; # Workspace groups assignment GUI (Hyper+`)
-    # kanshiImperativeMode = false; # Keep declarative mode for DESK (kanshi config in Nix)
+    kanshiImperativeMode = true; # Use nwg-displays to manage monitors (config in ~/.config/kanshi/config)
 
     # === System Services & Features ===
     sambaEnable = true; # Enable Samba file sharing
@@ -330,75 +330,81 @@ in
     # Sway/SwayFX: kanshi output layout (DESK-only).
     # Other profiles keep default behavior by leaving this as null (see lib/defaults.nix).
     #
+    # NOTE: Disabled for imperative mode - use nwg-displays (Hyper+Shift+D) to configure
+    # Monitor config is saved to ~/.config/kanshi/config
+    #
     # NOTE: On this setup, kanshi transform values map inversely to what Sway reports:
     # - kanshi transform "270" => Sway reports transform 90 (desired portrait rotation).
-    swayKanshiSettings = [
-      # If the Philips/TV output is present, enable and configure it.
-      # NOTE: Ordering matters: kanshi picks the first matching profile.
-      {
-        profile = {
-          name = "desk-tv";
-          outputs = [
-            # CRITICAL: Use full hardware IDs as criteria (anti-drift).
-            # Ordering matters: Samsung is first so swaysome stabilizes Group 1 on it.
-            (monitors.samsungMain // { position = "0,0"; })
-            (monitors.nslVertical // { position = "2400,-876"; })
+    swayKanshiSettings = null; # Disabled - using imperative nwg-displays instead
 
-            # HDMI-A-1 (Philips): enable at 1920x1080@60 and place to the right of DP-2.
-            # DP-2 logical width is 1152 (1440 / 1.25) so x = 2400 + 1152 = 3552
-            # Explicitly enable the output (it may be disabled by the fallback profile).
-            (
-              monitors.philipsTv
-              // {
-                status = "enable";
-                position = "3552,-876";
-              }
-            )
-
-            # BNQ (Group 4 -> workspaces 41-50): enable and place to the LEFT of Samsung.
-            # Best available mode observed: 1920x1080@60Hz. Keep scale default 1.0.
-            (
-              monitors.bnqLeft
-              // {
-                status = "enable";
-                position = "-1920,0";
-              }
-            )
-          ];
-          # CRITICAL: Initialize swaysome daemon (workspace groups starting at 1).
-          # Workspace-to-output assignments are now handled declaratively in swayfx-config.nix.
-          # Restore wallpaper when kanshi applies this profile (monitor connect/reconnect/wake).
-          exec = [
-            "$HOME/.nix-profile/bin/swaysome init 1"
-            "systemctl --user start swww-restore.service"
-          ];
-        };
-      }
-
-      # Fallback: no TV output, keep usually-OFF outputs disabled.
-      {
-        profile = {
-          name = "desk";
-          outputs = [
-            (monitors.samsungMain // { position = "0,0"; })
-            (monitors.nslVertical // { position = "2400,-876"; })
-            (monitors.philipsTv // { status = "disable"; })
-            (
-              monitors.bnqLeft
-              // {
-                status = "enable";
-                position = "-1920,0";
-              }
-            )
-          ];
-          # Restore wallpaper when kanshi applies this profile (monitor connect/reconnect/wake).
-          exec = [
-            "$HOME/.nix-profile/bin/swaysome init 1"
-            "systemctl --user start swww-restore.service"
-          ];
-        };
-      }
-    ];
+    # DEPRECATED declarative config (kept for reference):
+    # swayKanshiSettings = [
+    #   # If the Philips/TV output is present, enable and configure it.
+    #   # NOTE: Ordering matters: kanshi picks the first matching profile.
+    #   {
+    #     profile = {
+    #       name = "desk-tv";
+    #       outputs = [
+    #         # CRITICAL: Use full hardware IDs as criteria (anti-drift).
+    #         # Ordering matters: Samsung is first so swaysome stabilizes Group 1 on it.
+    #         (monitors.samsungMain // { position = "0,0"; })
+    #         (monitors.nslVertical // { position = "2400,-876"; })
+    #
+    #         # HDMI-A-1 (Philips): enable at 1920x1080@60 and place to the right of DP-2.
+    #         # DP-2 logical width is 1152 (1440 / 1.25) so x = 2400 + 1152 = 3552
+    #         # Explicitly enable the output (it may be disabled by the fallback profile).
+    #         (
+    #           monitors.philipsTv
+    #           // {
+    #             status = "enable";
+    #             position = "3552,-876";
+    #           }
+    #         )
+    #
+    #         # BNQ (Group 4 -> workspaces 41-50): enable and place to the LEFT of Samsung.
+    #         # Best available mode observed: 1920x1080@60Hz. Keep scale default 1.0.
+    #         (
+    #           monitors.bnqLeft
+    #           // {
+    #             status = "enable";
+    #             position = "-1920,0";
+    #           }
+    #         )
+    #       ];
+    #       # CRITICAL: Initialize swaysome daemon (workspace groups starting at 1).
+    #       # Workspace-to-output assignments are now handled declaratively in swayfx-config.nix.
+    #       # Restore wallpaper when kanshi applies this profile (monitor connect/reconnect/wake).
+    #       exec = [
+    #         "$HOME/.nix-profile/bin/swaysome init 1"
+    #         "systemctl --user start swww-restore.service"
+    #       ];
+    #     };
+    #   }
+    #
+    #   # Fallback: no TV output, keep usually-OFF outputs disabled.
+    #   {
+    #     profile = {
+    #       name = "desk";
+    #       outputs = [
+    #         (monitors.samsungMain // { position = "0,0"; })
+    #         (monitors.nslVertical // { position = "2400,-876"; })
+    #         (monitors.philipsTv // { status = "disable"; })
+    #         (
+    #           monitors.bnqLeft
+    #           // {
+    #             status = "enable";
+    #             position = "-1920,0";
+    #           }
+    #         )
+    #       ];
+    #       # Restore wallpaper when kanshi applies this profile (monitor connect/reconnect/wake).
+    #       exec = [
+    #         "$HOME/.nix-profile/bin/swaysome init 1"
+    #         "systemctl --user start swww-restore.service"
+    #       ];
+    #     };
+    #   }
+    # ];
 
     systemStable = false;
   };
