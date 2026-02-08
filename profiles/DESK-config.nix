@@ -304,6 +304,9 @@ in
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
 
+    # === Control Panel ===
+    controlPanelEnable = true; # Enable NixOS infrastructure control panel
+
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
     dbCredentialsEnable = true;

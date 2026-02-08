@@ -129,6 +129,9 @@ in
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
 
+    # === Control Panel ===
+    controlPanelEnable = true; # Enable NixOS infrastructure control panel
+
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable Tailscale client
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
