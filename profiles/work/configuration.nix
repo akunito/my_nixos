@@ -166,7 +166,7 @@
 
   fonts.fontDir.enable = true;
 
-  services.tailscale.enable = userSettings.tailscaleEnabled;
+  services.tailscale.enable = systemSettings.tailscaleEnable or false;
 
   # Remote control
   services.sunshine = lib.mkIf (systemSettings.sunshineEnable == true) {
