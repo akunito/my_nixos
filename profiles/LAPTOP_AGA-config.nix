@@ -43,7 +43,7 @@ in
     ];
 
     # Network
-    ipAddress = "192.168.0.77";
+    ipAddress = "192.168.8.77"; # or .78 depending on wifi/eth (pfSense DHCP)
     wifiIpAddress = "192.168.0.78";
     nameServers = [
       "192.168.8.1"
