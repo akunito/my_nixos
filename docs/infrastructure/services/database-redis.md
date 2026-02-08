@@ -45,7 +45,9 @@ Redis uses database numbers (0-15) to separate data for different services.
 | **db1** | Nextcloud | LXC_HOME (192.168.8.80) | Distributed cache, file locking |
 | **db2** | LiftCraft TEST | LXC_liftcraftTEST (192.168.8.87) | Rails cache, Action Cable |
 | **db3** | Portfolio | LXC_portfolioprod (192.168.8.88) | Next.js page cache |
-| **db4** | Matrix Synapse | LXC_matrix (192.168.8.104) | Sessions, presence |
+| **db4** | *(Reserved)* | - | Available for future use |
+
+**Note**: Matrix Synapse uses a local Redis container (`matrix-redis`) on LXC_matrix instead of the centralized Redis, for better resilience and independence.
 
 ### Redis Connection URL Format
 
@@ -106,22 +108,33 @@ REDIS_URL=redis://:REDIS_PASSWORD@192.168.8.103:6379/3
 
 The Next.js app uses a custom Redis client (`lib/cache/redis.ts`) with automatic fallback to in-memory cache.
 
-### Matrix Synapse (db4)
+### Matrix Synapse (Local Redis)
+
+Matrix Synapse uses a **local Redis container** (`matrix-redis`) on LXC_matrix for improved resilience:
 
 In `~/.homelab/matrix/config/homeserver.yaml`:
 ```yaml
 redis:
   enabled: true
-  host: 192.168.8.103
+  host: "matrix-redis"  # Local Docker container
   port: 6379
-  dbid: 4
-  password: "REDIS_PASSWORD"
+  dbid: 0
+  # No password - local container only
+```
+
+The local Redis is configured in `docker-compose.yml`:
+```yaml
+services:
+  redis:
+    image: redis:alpine
+    container_name: matrix-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
 ```
 
 Redis is used for:
 - User presence tracking
 - Session synchronization
-- Push notification queue
+- Pubsub replication streams
 
 ## Troubleshooting
 
@@ -145,9 +158,13 @@ docker exec redis-local redis-cli -h 192.168.8.103 -a 'PASSWORD' -n 3 TTL 'key_n
 ### Check All Database Sizes
 
 ```bash
-for db in 0 1 2 3 4; do
+# Check centralized Redis databases (0-3)
+for db in 0 1 2 3; do
   echo "db$db: $(docker exec redis-local redis-cli -h 192.168.8.103 -a 'PASSWORD' -n $db DBSIZE 2>/dev/null)"
 done
+
+# Check Matrix local Redis (on LXC_matrix)
+ssh akunito@192.168.8.104 "docker exec matrix-redis redis-cli DBSIZE"
 ```
 
 ### Common Issues

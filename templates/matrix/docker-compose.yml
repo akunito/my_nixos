@@ -5,11 +5,27 @@
 # 1. Generate signing key: docker run --rm -v ./data:/data matrixdotorg/synapse:latest generate
 # 2. Create .env file with credentials (see .env.template)
 # 3. Ensure PostgreSQL database 'matrix' exists on LXC_database
-# 4. Ensure Redis db4 is available on LXC_database
-
-version: "3.8"
+#
+# Note: cAdvisor runs natively via NixOS (port 9092), not as a Docker container
+# Note: Local Redis is used for Synapse caching (independent of LXC_database)
 
 services:
+  # Local Redis for Synapse caching (more resilient than remote)
+  redis:
+    image: redis:alpine
+    container_name: matrix-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - matrix-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   synapse:
     image: matrixdotorg/synapse:latest
     container_name: synapse
@@ -34,7 +50,8 @@ services:
       retries: 3
       start_period: 60s
     depends_on:
-      - redis-check
+      redis:
+        condition: service_healthy
 
   element-web:
     image: vectorim/element-web:latest
@@ -52,43 +69,13 @@ services:
       synapse:
         condition: service_healthy
 
-  # Redis connectivity check (ensures LXC_database Redis is reachable)
-  redis-check:
-    image: redis:alpine
-    container_name: redis-check
-    command: >
-      sh -c "until redis-cli -h ${REDIS_HOST:-192.168.8.103} -a ${REDIS_PASSWORD} -n 4 PING 2>/dev/null | grep -q PONG; do
-        echo 'Waiting for Redis...';
-        sleep 2;
-      done;
-      echo 'Redis is ready!'"
-    environment:
-      - REDIS_HOST=${REDIS_HOST:-192.168.8.103}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-    networks:
-      - matrix-net
-    restart: "no"
-
-  # cAdvisor for container metrics (scraped by Prometheus on LXC_monitoring)
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: cadvisor
-    restart: unless-stopped
-    privileged: true
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    ports:
-      - "9092:8080"
-    networks:
-      - matrix-net
-
 networks:
   matrix-net:
     driver: bridge
     ipam:
       config:
         - subnet: 172.30.0.0/16
+
+volumes:
+  redis-data:
+    driver: local

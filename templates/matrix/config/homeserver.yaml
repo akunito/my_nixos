@@ -61,15 +61,16 @@ database:
     cp_max: 10
 
 # =============================================================================
-# REDIS (Session cache on LXC_database, db4)
+# REDIS (Local container for Synapse caching - more resilient)
 # =============================================================================
+# Using local Redis container (matrix-redis) instead of remote LXC_database
+# This makes Matrix independent and more resilient to network issues
 
 redis:
   enabled: true
-  host: "192.168.8.103"
+  host: "matrix-redis"  # Local container name (no password needed)
   port: 6379
-  dbid: 4
-  password: "${REDIS_PASSWORD}"  # Replace with actual password
+  dbid: 0  # Local instance, no need for db separation
 
 # =============================================================================
 # MEDIA STORAGE

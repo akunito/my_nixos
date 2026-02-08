@@ -153,6 +153,8 @@ All local services forward to nginx-proxy on LXC_HOME (192.168.8.80:443):
 | bazarr.local.akunito.com | 192.168.8.80:443 | HTTPS |
 | qbittorrent.local.akunito.com | 192.168.8.80:443 | HTTPS |
 | emulators.local.akunito.com | 192.168.8.80:443 | HTTPS |
+| matrix.local.akunito.com | 192.168.8.104:8008 | HTTP |
+| element.local.akunito.com | 192.168.8.104:8080 | HTTP |
 
 #### External Access (*.akunito.com via Cloudflare Tunnel)
 
