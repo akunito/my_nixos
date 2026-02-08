@@ -78,6 +78,12 @@ in
 
   nixpkgs.config.allowUnfree = true;
 
+  # Allow insecure packages (olm for Matrix E2E encryption)
+  # Note: olm is deprecated but still needed for matrix-nio E2E support
+  nixpkgs.config.permittedInsecurePackages = [
+    "olm-3.2.16"
+  ];
+
   # Disable documentation to reduce build time (no man pages, no NixOS manual)
   documentation.enable = false;
   documentation.nixos.enable = false;

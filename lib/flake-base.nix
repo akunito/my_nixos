@@ -165,6 +165,10 @@ let
     config = {
       allowUnfree = true;
       allowUnfreePredicate = (_: true);
+      # Allow insecure packages needed by some profiles (olm for Matrix E2E)
+      permittedInsecurePackages = [
+        "olm-3.2.16"
+      ];
     };
   };
 
@@ -179,6 +183,9 @@ let
     config = {
       allowUnfree = true;
       allowUnfreePredicate = (_: true);
+      permittedInsecurePackages = [
+        "olm-3.2.16"
+      ];
     };
     overlays = lib.optional useRustOverlay rustOverlay;
   };
