@@ -135,7 +135,10 @@ in
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable Tailscale client
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
-    tailscaleAcceptRoutes = true; # Accept routes from subnet router
+    tailscaleAcceptRoutes = true; # Accept routes from subnet router (overridden by auto-toggle)
+    tailscaleAcceptDns = true; # Accept DNS from Tailscale (overridden by auto-toggle)
+    tailscaleLanAutoToggle = true; # Auto-toggle based on LAN presence
+    tailscaleLanGateway = "192.168.8.1"; # Home LAN gateway for detection
 
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver

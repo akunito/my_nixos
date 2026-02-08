@@ -519,6 +519,18 @@
     # Profiles can override this if needed
 
     # ============================================================================
+    # TAILSCALE/HEADSCALE MESH VPN
+    # ============================================================================
+    tailscaleEnable = false; # Enable Tailscale client
+    tailscaleAdvertiseRoutes = []; # Subnets to advertise as exit routes (e.g., ["192.168.8.0/24"])
+    tailscaleLoginServer = ""; # Custom login server URL (for Headscale, e.g., "https://headscale.example.com")
+    tailscaleExitNode = false; # Act as exit node for internet traffic
+    tailscaleAcceptRoutes = false; # Accept advertised routes from other nodes
+    tailscaleAcceptDns = true; # Accept DNS from Tailscale (set false if always on LAN)
+    tailscaleLanAutoToggle = false; # Auto-toggle accept-routes/dns based on LAN presence (for roaming laptops)
+    tailscaleLanGateway = "192.168.8.1"; # Gateway IP to detect home LAN (ping target for auto-toggle)
+
+    # ============================================================================
     # DARWIN (macOS) SETTINGS
     # ============================================================================
     # These settings only apply when osType = "darwin"
@@ -619,14 +631,6 @@
 
     # Home packages - empty by default, profiles specify their own
     homePackages = [ ];
-
-    # Tailscale/Headscale mesh networking
-    tailscaleEnable = false; # Enable Tailscale client
-    tailscaleAdvertiseRoutes = []; # Subnets to advertise as exit routes (e.g., ["192.168.8.0/24"])
-    tailscaleLoginServer = ""; # Custom login server URL (for Headscale, e.g., "https://headscale.example.com")
-    tailscaleExitNode = false; # Act as exit node for internet traffic
-    tailscaleAcceptRoutes = false; # Accept advertised routes from other nodes
-    tailscaleAcceptDns = true; # Accept DNS from Tailscale (set false if always on LAN)
 
     # ZSH prompt defaults
     zshinitContent = ''

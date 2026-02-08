@@ -9,6 +9,15 @@
 #   systemSettings.tailscaleAdvertiseRoutes = ["192.168.8.0/24"];  # Subnets to advertise
 #   systemSettings.tailscaleExitNode = false;        # Act as exit node
 #   systemSettings.tailscaleAcceptRoutes = false;    # Accept advertised routes
+#   systemSettings.tailscaleAcceptDns = true;        # Accept DNS from Tailscale
+#   systemSettings.tailscaleLanAutoToggle = false;   # Auto-toggle routes/dns based on LAN
+#   systemSettings.tailscaleLanGateway = "192.168.8.1";  # Gateway IP for LAN detection
+#
+# LAN Auto-Toggle (for laptops that roam):
+#   When tailscaleLanAutoToggle = true, a systemd service periodically checks if the
+#   device is on the home LAN (by pinging the gateway). If on LAN, it disables
+#   accept-routes and accept-dns to use local network directly. When remote, it enables
+#   them to route through the Tailscale subnet router.
 #
 # After deployment, authenticate with:
 #   tailscale up --login-server=https://headscale.example.com --advertise-routes=192.168.8.0/24
@@ -25,6 +34,10 @@ let
   hasLoginServer = (systemSettings.tailscaleLoginServer or "") != "";
   acceptRoutes = systemSettings.tailscaleAcceptRoutes or false;
   acceptDns = systemSettings.tailscaleAcceptDns or true;  # Default true (Tailscale default)
+
+  # LAN auto-toggle settings (for laptops that roam between LAN and remote)
+  lanAutoToggle = systemSettings.tailscaleLanAutoToggle or false;
+  lanGateway = systemSettings.tailscaleLanGateway or "192.168.8.1";  # Gateway IP to detect home LAN
 
   # Build the tailscale up command for the helper script
   tailscaleUpCmd = lib.concatStringsSep " " (
@@ -248,6 +261,87 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
     timerConfig = {
       OnBootSec = "30s";
       OnUnitActiveSec = "60s";
+    };
+  };
+
+  # ============================================================================
+  # LAN AUTO-TOGGLE SERVICE
+  # ============================================================================
+  # For laptops that roam between home LAN and remote locations:
+  # - On LAN: Disable accept-routes and accept-dns (use local network directly)
+  # - Remote: Enable accept-routes and accept-dns (use Tailscale subnet router)
+  #
+  # Detection method: Check if home gateway (e.g., 192.168.8.1) is reachable via ping
+
+  systemd.services.tailscale-lan-toggle = lib.mkIf lanAutoToggle {
+    description = "Auto-toggle Tailscale routes/DNS based on LAN presence";
+    after = [ "network-online.target" "tailscaled.service" ];
+    wants = [ "network-online.target" ];
+    path = [ pkgs.iputils pkgs.tailscale pkgs.coreutils ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "tailscale-lan-toggle" ''
+        #!/bin/sh
+        # Tailscale LAN Auto-Toggle Script
+        # Detects if device is on home LAN and adjusts Tailscale settings
+
+        GATEWAY="${lanGateway}"
+        LOG_TAG="tailscale-lan-toggle"
+        STATE_FILE="/run/tailscale-lan-state"
+
+        # Get current Tailscale status
+        TS_STATUS=$(${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null)
+        if [ $? -ne 0 ] || [ -z "$TS_STATUS" ]; then
+          echo "[$LOG_TAG] Tailscale not running or not connected, skipping"
+          exit 0
+        fi
+
+        # Check if we're on the home LAN by pinging the gateway
+        # Use a short timeout to avoid blocking
+        if ${pkgs.iputils}/bin/ping -c 1 -W 1 "$GATEWAY" >/dev/null 2>&1; then
+          ON_LAN="true"
+        else
+          ON_LAN="false"
+        fi
+
+        # Read previous state to avoid unnecessary tailscale set calls
+        PREV_STATE=""
+        if [ -f "$STATE_FILE" ]; then
+          PREV_STATE=$(cat "$STATE_FILE")
+        fi
+
+        # Only apply changes if state changed
+        if [ "$ON_LAN" = "$PREV_STATE" ]; then
+          echo "[$LOG_TAG] State unchanged ($ON_LAN), skipping"
+          exit 0
+        fi
+
+        if [ "$ON_LAN" = "true" ]; then
+          echo "[$LOG_TAG] Home LAN detected (gateway $GATEWAY reachable)"
+          echo "[$LOG_TAG] Disabling accept-routes and accept-dns (use local network)"
+          ${pkgs.tailscale}/bin/tailscale set --accept-routes=false --accept-dns=false
+        else
+          echo "[$LOG_TAG] Remote network detected (gateway $GATEWAY not reachable)"
+          echo "[$LOG_TAG] Enabling accept-routes and accept-dns (use Tailscale routing)"
+          ${pkgs.tailscale}/bin/tailscale set --accept-routes=true --accept-dns=true
+        fi
+
+        # Save state
+        echo "$ON_LAN" > "$STATE_FILE"
+        echo "[$LOG_TAG] State saved: $ON_LAN"
+      '';
+    };
+  };
+
+  # Timer to check LAN status periodically
+  systemd.timers.tailscale-lan-toggle = lib.mkIf lanAutoToggle {
+    description = "Timer for Tailscale LAN auto-toggle";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      # Check shortly after boot (allow network to stabilize)
+      OnBootSec = "30s";
+      # Re-check every 30 seconds (quick detection of network changes)
+      OnUnitActiveSec = "30s";
     };
   };
 }
