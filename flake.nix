@@ -76,6 +76,9 @@
     nix-citizen.url = "github:LovingMelody/nix-citizen";
     nix-citizen.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Hardware support
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
     # macOS support
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
