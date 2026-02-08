@@ -879,11 +879,12 @@
             },
             "indexByName": {
               "hostname": 0,
-              "os": 1,
-              "Value #Online": 2,
-              "Value #Direct": 3,
-              "Value #RX": 4,
-              "Value #TX": 5
+              "tailscale_ip": 1,
+              "os": 2,
+              "Value #Online": 3,
+              "Value #Direct": 4,
+              "Value #RX": 5,
+              "Value #TX": 6
             },
             "renameByName": {
               "Value #Direct": "Connection",
@@ -891,6 +892,7 @@
               "Value #RX": "RX",
               "Value #TX": "TX",
               "hostname": "Hostname",
+              "tailscale_ip": "IP",
               "os": "OS"
             }
           }
