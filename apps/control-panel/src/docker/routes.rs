@@ -741,6 +741,7 @@ fn render_node_stacks(node: &str, host: &str, stacks: &[ComposeStack]) -> String
     <script>
         let consoleOpen = false;
         let hasNewContent = false;
+        let pendingOperations = new Set();
 
         function toggleConsole() {{
             consoleOpen = !consoleOpen;
@@ -773,7 +774,7 @@ fn render_node_stacks(node: &str, host: &str, stacks: &[ComposeStack]) -> String
             document.getElementById('console-indicator').className = 'w-2 h-2 rounded-full bg-gray-500';
         }}
 
-        function addToConsole(html, status) {{
+        function addToConsole(html, status, id) {{
             const content = document.getElementById('console-content');
             const indicator = document.getElementById('console-indicator');
             const badge = document.getElementById('console-badge');
@@ -783,14 +784,28 @@ fn render_node_stacks(node: &str, host: &str, stacks: &[ComposeStack]) -> String
             const noActions = content.querySelector('.italic');
             if (noActions) noActions.remove();
 
+            // If id provided, try to update existing entry
+            if (id) {{
+                const existing = document.getElementById('console-entry-' + id);
+                if (existing) {{
+                    existing.className = 'border-l-2 pl-3 py-1 ' + (status === 'success' ? 'border-green-500' : status === 'error' ? 'border-red-500' : status === 'warning' ? 'border-yellow-500' : 'border-blue-500');
+                    existing.innerHTML = '<span class="text-gray-400 text-xs">' + time + '</span> ' + html;
+                    content.scrollTop = content.scrollHeight;
+                    // Update indicator
+                    indicator.className = 'w-2 h-2 rounded-full ' + (status === 'success' ? 'bg-green-500' : status === 'error' ? 'bg-red-500' : status === 'warning' ? 'bg-yellow-500' : 'bg-blue-500');
+                    return;
+                }}
+            }}
+
             // Add new entry
             const entry = document.createElement('div');
-            entry.className = 'border-l-2 pl-3 py-1 ' + (status === 'success' ? 'border-green-500' : status === 'error' ? 'border-red-500' : 'border-blue-500');
+            entry.className = 'border-l-2 pl-3 py-1 ' + (status === 'success' ? 'border-green-500' : status === 'error' ? 'border-red-500' : status === 'warning' ? 'border-yellow-500' : 'border-blue-500');
+            if (id) entry.id = 'console-entry-' + id;
             entry.innerHTML = '<span class="text-gray-400 text-xs">' + time + '</span> ' + html;
             content.appendChild(entry);
 
             // Update indicator
-            indicator.className = 'w-2 h-2 rounded-full ' + (status === 'success' ? 'bg-green-500' : status === 'error' ? 'bg-red-500' : 'bg-blue-500');
+            indicator.className = 'w-2 h-2 rounded-full animate-pulse ' + (status === 'success' ? 'bg-green-500' : status === 'error' ? 'bg-red-500' : status === 'warning' ? 'bg-yellow-500' : 'bg-blue-500');
 
             // Show badge if closed
             if (!consoleOpen) {{
@@ -803,12 +818,82 @@ fn render_node_stacks(node: &str, host: &str, stacks: &[ComposeStack]) -> String
             content.scrollTop = content.scrollHeight;
         }}
 
+        // Intercept htmx before request to show "Starting..." message
+        document.body.addEventListener('htmx:beforeRequest', function(evt) {{
+            const target = evt.detail.target;
+            if (target && target.id === 'action-result') {{
+                const path = evt.detail.pathInfo.requestPath;
+                const opId = Date.now().toString();
+                evt.detail.opId = opId;
+
+                // Parse action from path
+                let actionName = 'Operation';
+                if (path.includes('/pull')) actionName = 'Pulling';
+                else if (path.includes('/rebuild')) actionName = 'Rebuilding';
+                else if (path.includes('/restart')) actionName = 'Restarting';
+                else if (path.includes('/stop')) actionName = 'Stopping';
+                else if (path.includes('/up')) actionName = 'Starting';
+                else if (path.includes('/down')) actionName = 'Removing';
+                else if (path.includes('/prune')) actionName = 'Pruning';
+                else if (path.includes('/recreate')) actionName = 'Recreating';
+
+                // Extract target name from path
+                const parts = path.split('/');
+                let targetName = parts[parts.length - 2] || 'containers';
+
+                // Store operation ID on the element
+                evt.detail.elt.dataset.opId = opId;
+                pendingOperations.add(opId);
+
+                // Disable button
+                evt.detail.elt.disabled = true;
+                evt.detail.elt.classList.add('opacity-50', 'cursor-wait');
+
+                addToConsole(
+                    '<span class="animate-pulse">' + actionName + ' <strong>' + targetName + '</strong>...</span>',
+                    'pending',
+                    opId
+                );
+            }}
+        }});
+
         // Intercept htmx responses to action-result
-        document.body.addEventListener('htmx:afterSwap', function(evt) {{
-            if (evt.detail.target.id === 'action-result') {{
-                const html = evt.detail.target.innerHTML;
-                const status = html.includes('bg-green') ? 'success' : html.includes('bg-red') ? 'error' : 'info';
-                addToConsole(html, status);
+        document.body.addEventListener('htmx:afterRequest', function(evt) {{
+            const target = evt.detail.target;
+            if (target && target.id === 'action-result') {{
+                const opId = evt.detail.elt.dataset.opId;
+
+                // Re-enable button
+                evt.detail.elt.disabled = false;
+                evt.detail.elt.classList.remove('opacity-50', 'cursor-wait');
+
+                if (pendingOperations.has(opId)) {{
+                    pendingOperations.delete(opId);
+                    const html = target.innerHTML;
+                    const status = html.includes('bg-green') ? 'success' : html.includes('bg-red') ? 'error' : html.includes('bg-yellow') ? 'warning' : 'info';
+                    addToConsole(html, status, opId);
+                }}
+            }}
+        }});
+
+        // Handle request errors
+        document.body.addEventListener('htmx:responseError', function(evt) {{
+            const target = evt.detail.target;
+            if (target && target.id === 'action-result') {{
+                const opId = evt.detail.elt.dataset.opId;
+
+                // Re-enable button
+                evt.detail.elt.disabled = false;
+                evt.detail.elt.classList.remove('opacity-50', 'cursor-wait');
+
+                if (pendingOperations.has(opId)) {{
+                    pendingOperations.delete(opId);
+                    addToConsole(
+                        '<div class="bg-red-900 border border-red-700 rounded p-2 text-sm">Request failed: ' + evt.detail.error + '</div>',
+                        'error',
+                        opId
+                    );
+                }}
             }}
         }});
 
