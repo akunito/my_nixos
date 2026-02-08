@@ -833,20 +833,22 @@ fn render_stack_section(node: &str, stack: &ComposeStack) -> String {
                 </div>
                 {stack_actions}
             </div>
-            <table class="w-full">
-                <thead class="bg-gray-850">
-                    <tr>
-                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Name</th>
-                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Image</th>
-                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
-                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Ports</th>
-                        <th class="px-6 py-2 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-700">
-                    {containers_html}
-                </tbody>
-            </table>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[900px]">
+                    <thead class="bg-gray-850">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Name</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Image</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Ports</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {containers_html}
+                    </tbody>
+                </table>
+            </div>
         </div>"##,
         stack_title = stack_title,
         status_color = status_color,
@@ -918,22 +920,22 @@ fn render_container_row(node: &str, container: &Container) -> String {
 
     format!(
         r##"<tr id="container-{name}" class="hover:bg-gray-700">
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-4 py-3 whitespace-nowrap">
                 <div class="font-medium">{name}</div>
                 <div class="text-xs text-gray-400">{short_id}</div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{image}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-4 py-3 whitespace-nowrap">
                 <span class="px-2 py-1 {status_class} rounded text-xs">{status_text}</span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{ports}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <td class="px-4 py-3 whitespace-nowrap text-sm">
                 {action_buttons}
                 <button onclick="showLogs('{node}', '{name}')"
                         class="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs">
                     Logs
                 </button>
             </td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300 max-w-xs truncate" title="{image}">{image}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{ports}</td>
         </tr>"##,
         name = container.name,
         short_id = short_id,
