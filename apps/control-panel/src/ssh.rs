@@ -236,6 +236,8 @@ impl SshPool {
 
     /// Create a new SSH connection
     async fn connect(&mut self, node: &DockerNode, user: &str) -> Result<SshConnection, AppError> {
+        use tokio::time::{timeout, Duration};
+
         let auth_method = self.get_auth_method()?;
 
         let config = client::Config::default();
@@ -244,9 +246,15 @@ impl SshPool {
         let addr = format!("{}:22", node.host);
         tracing::info!("Connecting to {} as {}", addr, user);
 
-        let mut session = client::connect(config, &addr, SshClient)
-            .await
-            .map_err(|e| AppError::SshConnection(format!("Failed to connect to {}: {}", node.host, e)))?;
+        // Add 10 second connection timeout
+        let mut session = match timeout(
+            Duration::from_secs(10),
+            client::connect(config, &addr, SshClient)
+        ).await {
+            Ok(Ok(session)) => session,
+            Ok(Err(e)) => return Err(AppError::SshConnection(format!("Failed to connect to {}: {}", node.host, e))),
+            Err(_) => return Err(AppError::SshConnection(format!("Connection timeout to {}", node.host))),
+        };
 
         // Authenticate based on method
         let auth_result = match auth_method {

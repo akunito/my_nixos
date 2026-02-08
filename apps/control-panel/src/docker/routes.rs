@@ -13,11 +13,30 @@ use crate::AppState;
 
 /// Dashboard showing all nodes with container summaries
 pub async fn dashboard(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
+    use tokio::time::{timeout, Duration};
+
     let mut summaries = Vec::new();
 
     for node in &state.config.docker_nodes {
-        let mut ssh_pool = state.ssh_pool.write().await;
-        let summary = commands::get_node_summary(&mut ssh_pool, &node.name, &node.host).await;
+        // Wrap SSH operations in a 5-second timeout
+        let summary = match timeout(Duration::from_secs(5), async {
+            let mut ssh_pool = state.ssh_pool.write().await;
+            commands::get_node_summary(&mut ssh_pool, &node.name, &node.host).await
+        }).await {
+            Ok(s) => s,
+            Err(_) => {
+                // Timeout - return offline status
+                tracing::warn!("Timeout connecting to node {}", node.name);
+                NodeSummary {
+                    name: node.name.clone(),
+                    host: node.host.clone(),
+                    total: 0,
+                    running: 0,
+                    stopped: 0,
+                    online: false,
+                }
+            }
+        };
         summaries.push(summary);
     }
 
