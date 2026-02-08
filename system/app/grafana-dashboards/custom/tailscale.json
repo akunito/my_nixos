@@ -875,7 +875,10 @@
               "job 4": true,
               "os 1": true,
               "os 2": true,
-              "os 3": true
+              "os 3": true,
+              "tailscale_ip 1": true,
+              "tailscale_ip 2": true,
+              "tailscale_ip 3": true
             },
             "indexByName": {
               "hostname": 0,
