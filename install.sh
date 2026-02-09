@@ -1053,7 +1053,7 @@ else
 fi
 
 # Run maintenance script
-# maintenance_script $SCRIPT_DIR $SILENT_MODE # DISABLED TEMPORARILY
+maintenance_script $SCRIPT_DIR $SILENT_MODE
 echo "  " # To clean up color codes
 
 # Flatpak reconciliation (optional, profile baseline-driven)

@@ -33,23 +33,35 @@ in
     ];
   };
 
-  # Display Manager configuration
-  # greetd is configured in ../dm/greetd.nix (enabled via systemSettings.greetdEnable)
-  # SDDM is configured below for profiles that don't use greetd
+  # ============================================================================
+  # Display Manager (SDDM) - Sway-specific configuration
+  # ============================================================================
+  # Applied when: wm=sway AND greetdEnable=false
+  # Profiles: DESK, LAPTOP_L15, LAPTOP_YOGAAKU
+  #
+  # Theme: sddm-astronaut (Qt6 modern theme with animations)
+  # Greeter: X11 (NOT Wayland) — Weston compositor fails on multi-monitor setups
+  # Session: Once logged in, Sway runs in pure Wayland (greeter backend doesn't affect session)
+  # ============================================================================
   services.displayManager.sddm = lib.mkIf (swayEnabled && !(systemSettings.greetdEnable or false)) (lib.mkMerge [
     # Base SDDM settings
     {
       enable = true;
-      # Weston (SDDM Wayland compositor) fails on multi-monitor setups — use X11 greeter
+      # CRITICAL: Use X11 greeter, NOT Wayland
+      # Weston (SDDM's Wayland compositor) crashes on 4-monitor DESK setup
+      # X11 greeter renders the Qt6 theme identically, just uses X11 as display backend
+      # Once logged in, Sway session runs in pure Wayland mode (not affected by greeter choice)
       wayland.enable = false;
     }
     # Astronaut theme (Qt6 modern theme for all Sway profiles without breeze-patched)
-    # All Qt6 deps MUST be in extraPackages — SDDM greeter only sees packages wired through wrapQtAppsHook
     (lib.mkIf (!(systemSettings.sddmBreezePatchedTheme or false)) {
       theme = "sddm-astronaut-theme";
+      # CRITICAL: Qt6 QML deps MUST be in extraPackages
+      # The SDDM greeter only sees packages wired through wrapQtAppsHook (extraPackages)
+      # These get added to QML_IMPORT_PATH and QT_PLUGIN_PATH for the greeter process
       extraPackages = [
         pkgs.sddm-astronaut
-        pkgs.kdePackages.qtmultimedia
+        pkgs.kdePackages.qtmultimedia  # Required by theme: QtMultimedia QML module
       ];
       settings = {
         Users = {
@@ -75,14 +87,18 @@ in
   # Set Sway as default session for display manager
   services.displayManager.defaultSession = lib.mkIf swayEnabled "sway";
 
-  # SDDM theme packages (must be in systemPackages for theme files to land in /run/current-system/sw/share/sddm/themes/)
+  # SDDM theme files (must be in systemPackages to install to /run/current-system/sw/share/sddm/themes/)
+  # Note: extraPackages only affects wrapper environment (QML paths), NOT theme file installation
+  # SDDM searches for themes in system profile's share/sddm/themes/ directory
   environment.systemPackages = lib.mkIf swayEnabled (
     if (systemSettings.sddmBreezePatchedTheme or false)
     then [
+      # Breeze-patched theme (legacy - for multi-monitor password focus fix)
       (import ../dm/sddm-breeze-patched-theme.nix { inherit pkgs; })
     ]
     else if !(systemSettings.greetdEnable or false)
     then [
+      # Astronaut theme files (theme must be in BOTH systemPackages AND extraPackages)
       pkgs.sddm-astronaut
     ]
     else []
