@@ -2,7 +2,7 @@
 id: infrastructure.services.truenas
 summary: TrueNAS storage server operations, monitoring, and maintenance
 tags: [infrastructure, storage, truenas, zfs, monitoring, nas]
-related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-exporter.sh, .claude/skills/unlock-truenas.md]
+related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-exporter.sh, .claude/skills/unlock-truenas.md, scripts/truenas-zfs-replicate.sh]
 ---
 
 # TrueNAS Storage Server
@@ -212,6 +212,7 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 | **Snapshots (library)** | Daily, 1:00 AM | 7 days | Point-in-time recovery |
 | **Snapshots (emulators)** | Weekly Sunday, 2:00 AM | 4 weeks | Point-in-time recovery |
 | **Custom ZFS Metrics** | Every 5 minutes | N/A | Prometheus monitoring |
+| **ZFS Local Replication** | Daily, 4:00 AM | 2 snapshots/dataset | ssdpool → hddpool/ssd_data_backups |
 
 ### Manual Operations
 
@@ -269,6 +270,55 @@ curl -X POST https://192.168.20.200/api/v2.0/config/save \
 ssh truenas_admin@192.168.20.200 'midclt call service.restart nfs'
 ssh truenas_admin@192.168.20.200 'midclt call service.restart cifs'
 ssh truenas_admin@192.168.20.200 'midclt call service.restart iscsitarget'
+```
+
+### ZFS Local Replication (ssdpool → hddpool)
+
+**Script**: `scripts/truenas-zfs-replicate.sh` (deployed to `/home/truenas_admin/` on TrueNAS)
+**Schedule**: Daily at 4:00 AM via TrueNAS cron job (runs as root)
+**Log**: `/var/log/zfs-replicate.log` on TrueNAS
+
+**Replication Map**:
+
+| Source | Destination | Type | Size |
+|--------|-------------|------|------|
+| `ssdpool/library` | `hddpool/ssd_data_backups/library` | Dataset (ebooks) | ~413 GB |
+| `ssdpool/emulators` | `hddpool/ssd_data_backups/emulators` | Dataset (ROMs) | ~55 GB |
+| `ssdpool/myservices` | `hddpool/ssd_data_backups/services` | Zvol (iSCSI) | ~2 TB |
+
+**Snapshot Strategy**:
+- Prefix: `autoreplica-YYYYMMDD-HHMMSS`
+- Retention: 2 per dataset (current + previous for incremental base)
+- Encryption: Destination inherits from `hddpool/ssd_data_backups` encryption root
+
+**Manual Operations**:
+```bash
+# Dry-run (show what would happen)
+ssh truenas_admin@192.168.20.200 'sudo /home/truenas_admin/truenas-zfs-replicate.sh --dry-run'
+
+# Incremental replication (daily mode)
+ssh truenas_admin@192.168.20.200 'sudo /home/truenas_admin/truenas-zfs-replicate.sh'
+
+# Full re-sync (destroys destination, use if out of sync)
+ssh truenas_admin@192.168.20.200 'sudo /home/truenas_admin/truenas-zfs-replicate.sh --init'
+
+# Check replication snapshots
+ssh truenas_admin@192.168.20.200 'zfs list -t snapshot -r ssdpool | grep autoreplica'
+
+# Check destination sizes
+ssh truenas_admin@192.168.20.200 'zfs list -r hddpool/ssd_data_backups'
+
+# Check log
+ssh truenas_admin@192.168.20.200 'tail -50 /var/log/zfs-replicate.log'
+
+# Verify encryption inheritance
+ssh truenas_admin@192.168.20.200 'zfs get encryptionroot hddpool/ssd_data_backups/library'
+```
+
+**Deploy/Update Script**:
+```bash
+scp scripts/truenas-zfs-replicate.sh truenas_admin@192.168.20.200:/home/truenas_admin/
+ssh truenas_admin@192.168.20.200 'chmod 755 /home/truenas_admin/truenas-zfs-replicate.sh'
 ```
 
 ---
