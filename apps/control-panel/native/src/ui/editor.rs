@@ -8,22 +8,39 @@ use std::sync::Arc;
 #[derive(Default)]
 pub struct EditorPanelState {
     /// Available profiles
-    profiles: Vec<String>,
+    pub profiles: Vec<String>,
     /// Selected profile
-    selected_profile: Option<String>,
+    pub selected_profile: Option<String>,
     /// Parsed profile config
-    profile_config: Option<control_panel_core::ProfileConfig>,
+    pub profile_config: Option<control_panel_core::ProfileConfig>,
     /// Loading state
-    loading: bool,
+    pub loading: bool,
     /// Error message
-    error: Option<String>,
+    pub error: Option<String>,
+    /// Success message
+    pub success: Option<String>,
     /// Search filter for settings
-    search_filter: String,
+    pub search_filter: String,
+    /// Duplicate dialog state
+    pub duplicate_dialog: DuplicateDialogState,
+}
+
+/// State for the duplicate profile dialog
+#[derive(Default)]
+pub struct DuplicateDialogState {
+    /// Whether the dialog is open
+    pub open: bool,
+    /// New profile name
+    pub new_name: String,
+    /// New hostname
+    pub new_hostname: String,
+    /// Error message
+    pub error: Option<String>,
 }
 
 /// Render the Editor panel
 pub fn render(
-    _ctx: &Context,
+    ctx: &Context,
     ui: &mut Ui,
     state: &mut EditorPanelState,
     config: &Arc<Config>,
@@ -61,6 +78,7 @@ pub fn render(
                         state.profile_config = None;
                         state.loading = true;
                         state.error = None;
+                        state.success = None;
 
                         // Load profile
                         match control_panel_core::editor::parse_profile(
@@ -85,8 +103,12 @@ pub fn render(
         }
     });
 
+    // Status messages
     if let Some(ref error) = state.error {
         ui.colored_label(crate::theme::colors::OFFLINE, format!("⚠️ {}", error));
+    }
+    if let Some(ref success) = state.success {
+        ui.colored_label(crate::theme::colors::ONLINE, format!("✓ {}", success));
     }
 
     ui.add_space(12.0);
@@ -147,17 +169,21 @@ pub fn render(
                         Ok(config) => {
                             state.profile_config = Some(config);
                             state.error = None;
+                            state.success = Some("Profile reloaded".to_string());
                         }
                         Err(e) => {
                             state.error = Some(format!("Failed to reload: {}", e));
+                            state.success = None;
                         }
                     }
                 }
             }
 
             if ui.button("📄 Duplicate Profile").clicked() {
-                // TODO: Show duplication dialog
-                tracing::info!("Duplicate profile requested");
+                state.duplicate_dialog.open = true;
+                state.duplicate_dialog.new_name.clear();
+                state.duplicate_dialog.new_hostname.clear();
+                state.duplicate_dialog.error = None;
             }
         });
     } else if state.selected_profile.is_some() && !state.loading {
@@ -165,6 +191,101 @@ pub fn render(
     } else {
         ui.label("Select a profile to view and edit its configuration");
     }
+
+    // Render duplicate dialog
+    render_duplicate_dialog(ctx, state, config);
+}
+
+/// Render the duplicate profile dialog
+fn render_duplicate_dialog(ctx: &Context, state: &mut EditorPanelState, config: &Arc<Config>) {
+    if !state.duplicate_dialog.open {
+        return;
+    }
+
+    let source_profile = match &state.selected_profile {
+        Some(p) => p.clone(),
+        None => {
+            state.duplicate_dialog.open = false;
+            return;
+        }
+    };
+
+    egui::Window::new("Duplicate Profile")
+        .collapsible(false)
+        .resizable(false)
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+        .show(ctx, |ui| {
+            ui.label(format!("Create a copy of profile: {}", source_profile));
+            ui.add_space(12.0);
+
+            ui.horizontal(|ui| {
+                ui.label("New Profile Name:");
+                ui.text_edit_singleline(&mut state.duplicate_dialog.new_name);
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("New Hostname:    ");
+                ui.text_edit_singleline(&mut state.duplicate_dialog.new_hostname);
+            });
+
+            if let Some(ref error) = state.duplicate_dialog.error {
+                ui.add_space(8.0);
+                ui.colored_label(crate::theme::colors::OFFLINE, error);
+            }
+
+            ui.add_space(12.0);
+
+            ui.horizontal(|ui| {
+                if ui.button("Cancel").clicked() {
+                    state.duplicate_dialog.open = false;
+                }
+
+                let can_create = !state.duplicate_dialog.new_name.is_empty()
+                    && !state.duplicate_dialog.new_hostname.is_empty();
+
+                ui.add_enabled_ui(can_create, |ui| {
+                    if ui.button("Create").clicked() {
+                        match control_panel_core::editor::duplicate_profile(
+                            &source_profile,
+                            &state.duplicate_dialog.new_name,
+                            &state.duplicate_dialog.new_hostname,
+                            &config.dotfiles.path,
+                        ) {
+                            Ok(result) => {
+                                state.duplicate_dialog.open = false;
+                                state.success = Some(format!(
+                                    "Created profile: {} (flake: {})",
+                                    result.profile_name,
+                                    if result.flake_created { "yes" } else { "no" }
+                                ));
+                                state.error = None;
+                                // Reload profile list
+                                if let Ok(profiles) =
+                                    control_panel_core::editor::list_profiles(&config.dotfiles.path)
+                                {
+                                    state.profiles = profiles;
+                                }
+                                // Select the new profile
+                                state.selected_profile = Some(result.profile_name);
+                                // Load the new profile
+                                if let Some(ref profile) = state.selected_profile {
+                                    if let Ok(config_data) = control_panel_core::editor::parse_profile(
+                                        profile,
+                                        &config.dotfiles.path,
+                                    ) {
+                                        state.profile_config = Some(config_data);
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                state.duplicate_dialog.error =
+                                    Some(format!("Failed to duplicate: {}", e));
+                            }
+                        }
+                    }
+                });
+            });
+        });
 }
 
 /// Render a settings section
@@ -221,8 +342,7 @@ fn render_settings_section(
 
             // Description tooltip
             if let Some(ref desc) = entry.description {
-                ui.label(format!("// {}", desc))
-                    .on_hover_text(desc);
+                ui.label(format!("// {}", desc)).on_hover_text(desc);
             }
         });
     }

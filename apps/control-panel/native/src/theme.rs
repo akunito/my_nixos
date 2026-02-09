@@ -88,8 +88,11 @@ pub mod colors {
     pub const DARWIN: Color32 = Color32::from_rgb(139, 92, 246); // violet-500
 
     // UI colors
+    #[allow(dead_code)]
     pub const ACCENT: Color32 = Color32::from_rgb(59, 130, 246); // blue-500
+    #[allow(dead_code)]
     pub const ACCENT_HOVER: Color32 = Color32::from_rgb(37, 99, 235); // blue-600
     pub const MUTED: Color32 = Color32::from_rgb(156, 163, 175); // gray-400
+    #[allow(dead_code)]
     pub const BORDER: Color32 = Color32::from_rgb(55, 65, 81); // gray-700
 }

@@ -1,23 +1,24 @@
 //! Proxmox panel - LXC container and VM management
 
+use crate::app::{AsyncCommand, CommandSender};
 use control_panel_core::Config;
 use egui::{Context, Ui};
 use std::sync::Arc;
-use tokio::runtime::Runtime;
 
 /// State for the Proxmox panel
 #[derive(Default)]
 pub struct ProxmoxPanelState {
     /// Container list from Proxmox
-    containers: Vec<control_panel_core::ProxmoxContainer>,
+    pub containers: Vec<control_panel_core::ProxmoxContainer>,
     /// Backup jobs
-    backup_jobs: Vec<control_panel_core::BackupJob>,
+    pub backup_jobs: Vec<control_panel_core::BackupJob>,
     /// Loading state
-    loading: bool,
+    pub loading: bool,
     /// Error message
-    error: Option<String>,
+    pub error: Option<String>,
     /// Selected container for details
-    selected_ctid: Option<u32>,
+    #[allow(dead_code)]
+    pub selected_ctid: Option<u32>,
 }
 
 /// Render the Proxmox panel
@@ -26,7 +27,7 @@ pub fn render(
     ui: &mut Ui,
     state: &mut ProxmoxPanelState,
     config: &Arc<Config>,
-    _runtime: &Runtime,
+    command_tx: &CommandSender,
 ) {
     ui.heading("📦 Proxmox Container Management");
     ui.add_space(8.0);
@@ -41,8 +42,8 @@ pub fn render(
         if ui.button("🔄 Refresh").clicked() {
             state.loading = true;
             state.error = None;
+            let _ = command_tx.send(AsyncCommand::RefreshProxmox);
             tracing::info!("Proxmox refresh requested");
-            // TODO: Trigger async refresh
         }
 
         if state.loading {
@@ -69,7 +70,10 @@ pub fn render(
                     if let Some(ctid) = profile.ctid {
                         ui.horizontal(|ui| {
                             ui.colored_label(crate::theme::colors::UNKNOWN, "○");
-                            ui.label(format!("CTID {}: {} ({})", ctid, profile.name, profile.hostname));
+                            ui.label(format!(
+                                "CTID {}: {} ({})",
+                                ctid, profile.name, profile.hostname
+                            ));
                         });
                     }
                 }
@@ -83,7 +87,7 @@ pub fn render(
                 .max_height(300.0)
                 .show(ui, |ui| {
                     for container in &containers {
-                        render_container_row(ui, state, container);
+                        render_container_row(ui, state, container, command_tx);
                     }
                 });
         }
@@ -99,7 +103,7 @@ pub fn render(
         if state.backup_jobs.is_empty() {
             ui.label("No backup jobs loaded. Click Refresh.");
         } else {
-            for job in &state.backup_jobs {
+            for job in state.backup_jobs.clone() {
                 ui.horizontal(|ui| {
                     let status_color = if job.enabled {
                         crate::theme::colors::ONLINE
@@ -115,7 +119,9 @@ pub fn render(
 
                     if ui.small_button("▶ Run Now").clicked() {
                         tracing::info!("Run backup job: {}", job.id);
-                        // TODO: Trigger async backup run
+                        let _ = command_tx.send(AsyncCommand::RunBackupJob {
+                            job_id: job.id.clone(),
+                        });
                     }
                 });
             }
@@ -132,14 +138,11 @@ pub fn render(
         ui.horizontal_wrapped(|ui| {
             if ui.button("🔄 Refresh All Status").clicked() {
                 state.loading = true;
+                let _ = command_tx.send(AsyncCommand::RefreshProxmox);
             }
 
-            if ui.button("📊 View Cluster Status").clicked() {
-                tracing::info!("View cluster status");
-            }
-
-            if ui.button("💾 List Recent Backups").clicked() {
-                tracing::info!("List recent backups");
+            if ui.button("📋 Refresh Backup Jobs").clicked() {
+                let _ = command_tx.send(AsyncCommand::RefreshBackupJobs);
             }
         });
     });
@@ -148,8 +151,9 @@ pub fn render(
 /// Render a single container row
 fn render_container_row(
     ui: &mut Ui,
-    state: &mut ProxmoxPanelState,
+    _state: &mut ProxmoxPanelState,
     container: &control_panel_core::ProxmoxContainer,
+    command_tx: &CommandSender,
 ) {
     ui.horizontal(|ui| {
         // Status indicator
@@ -171,24 +175,26 @@ fn render_container_row(
                 "running" => {
                     if ui.small_button("⏹ Stop").clicked() {
                         tracing::info!("Stop container CTID {}", container.ctid);
-                        // TODO: Trigger async stop
+                        let _ = command_tx.send(AsyncCommand::ProxmoxStop {
+                            ctid: container.ctid,
+                        });
                     }
                     if ui.small_button("🔄 Restart").clicked() {
                         tracing::info!("Restart container CTID {}", container.ctid);
-                        // TODO: Trigger async restart
+                        let _ = command_tx.send(AsyncCommand::ProxmoxRestart {
+                            ctid: container.ctid,
+                        });
                     }
                 }
                 "stopped" => {
                     if ui.small_button("▶ Start").clicked() {
                         tracing::info!("Start container CTID {}", container.ctid);
-                        // TODO: Trigger async start
+                        let _ = command_tx.send(AsyncCommand::ProxmoxStart {
+                            ctid: container.ctid,
+                        });
                     }
                 }
                 _ => {}
-            }
-
-            if ui.small_button("ℹ Details").clicked() {
-                state.selected_ctid = Some(container.ctid);
             }
         });
     });

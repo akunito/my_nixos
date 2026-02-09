@@ -1,30 +1,31 @@
 //! Docker panel - Container management across LXC nodes
 
+use crate::app::{AsyncCommand, CommandSender};
 use control_panel_core::Config;
 use egui::{Context, Ui};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::runtime::Runtime;
 
 /// State for the Docker panel
 #[derive(Default)]
 pub struct DockerPanelState {
     /// Selected node
-    selected_node: Option<String>,
+    pub selected_node: Option<String>,
     /// Container data per node
-    containers: HashMap<String, Vec<control_panel_core::Container>>,
+    pub containers: HashMap<String, Vec<control_panel_core::Container>>,
     /// Node summaries
-    node_summaries: Vec<control_panel_core::NodeSummary>,
+    pub node_summaries: Vec<control_panel_core::NodeSummary>,
     /// Loading state
-    loading: bool,
+    pub loading: bool,
     /// Last error
-    error: Option<String>,
+    pub error: Option<String>,
     /// Selected container for logs
-    selected_container: Option<(String, String)>, // (node, container_name)
+    pub selected_container: Option<(String, String)>, // (node, container_name)
     /// Container logs
-    logs: String,
+    pub logs: String,
     /// Last refresh time
-    last_refresh: Option<std::time::Instant>,
+    #[allow(dead_code)]
+    pub last_refresh: Option<std::time::Instant>,
 }
 
 /// Render the Docker panel
@@ -33,7 +34,7 @@ pub fn render(
     ui: &mut Ui,
     state: &mut DockerPanelState,
     config: &Arc<Config>,
-    _runtime: &Runtime,
+    command_tx: &CommandSender,
 ) {
     ui.heading("🐳 Docker Container Management");
     ui.add_space(8.0);
@@ -43,8 +44,8 @@ pub fn render(
         if ui.button("🔄 Refresh").clicked() {
             state.loading = true;
             state.error = None;
-            // TODO: Trigger async refresh
-            tracing::info!("Refresh requested");
+            let _ = command_tx.send(AsyncCommand::RefreshDocker);
+            tracing::info!("Docker refresh requested");
         }
 
         if state.loading {
@@ -145,7 +146,7 @@ pub fn render(
                         .max_height(400.0)
                         .show(ui, |ui| {
                             for container in &containers {
-                                render_container_row(ui, state, &node_name, container);
+                                render_container_row(ui, state, &node_name, container, command_tx);
                             }
                         });
                 }
@@ -161,6 +162,12 @@ pub fn render(
         ui.group(|ui| {
             ui.horizontal(|ui| {
                 ui.heading(format!("Logs: {} ({})", container, node));
+                if ui.button("🔄 Refresh Logs").clicked() {
+                    let _ = command_tx.send(AsyncCommand::FetchLogs {
+                        node: node.clone(),
+                        container: container.clone(),
+                    });
+                }
                 if ui.button("✕ Close").clicked() {
                     state.selected_container = None;
                     state.logs.clear();
@@ -190,6 +197,7 @@ fn render_container_row(
     state: &mut DockerPanelState,
     node_name: &str,
     container: &control_panel_core::Container,
+    command_tx: &CommandSender,
 ) {
     ui.horizontal(|ui| {
         // Status indicator
@@ -222,24 +230,36 @@ fn render_container_row(
             if ui.small_button("📋 Logs").clicked() {
                 state.selected_container = Some((node_name.to_string(), container.name.clone()));
                 state.logs = "Loading logs...".to_string();
-                // TODO: Trigger async log fetch
+                let _ = command_tx.send(AsyncCommand::FetchLogs {
+                    node: node_name.to_string(),
+                    container: container.name.clone(),
+                });
             }
 
             match container.status {
                 control_panel_core::ContainerStatus::Running => {
                     if ui.small_button("⏹ Stop").clicked() {
                         tracing::info!("Stop container: {}", container.name);
-                        // TODO: Trigger async stop
+                        let _ = command_tx.send(AsyncCommand::StopContainer {
+                            node: node_name.to_string(),
+                            container: container.name.clone(),
+                        });
                     }
                     if ui.small_button("🔄 Restart").clicked() {
                         tracing::info!("Restart container: {}", container.name);
-                        // TODO: Trigger async restart
+                        let _ = command_tx.send(AsyncCommand::RestartContainer {
+                            node: node_name.to_string(),
+                            container: container.name.clone(),
+                        });
                     }
                 }
                 _ => {
                     if ui.small_button("▶ Start").clicked() {
                         tracing::info!("Start container: {}", container.name);
-                        // TODO: Trigger async start
+                        let _ = command_tx.send(AsyncCommand::StartContainer {
+                            node: node_name.to_string(),
+                            container: container.name.clone(),
+                        });
                     }
                 }
             }

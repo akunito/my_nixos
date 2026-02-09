@@ -1,27 +1,28 @@
 //! Infrastructure panel - Git operations and deployments
 
+use crate::app::{AsyncCommand, CommandSender};
 use control_panel_core::Config;
 use egui::{Context, Ui};
 use std::sync::Arc;
-use tokio::runtime::Runtime;
 
 /// State for the Infrastructure panel
 #[derive(Default)]
 pub struct InfraPanelState {
     /// Git status
-    git_status: Option<control_panel_core::GitStatus>,
+    pub git_status: Option<control_panel_core::GitStatus>,
     /// Git diff output
-    git_diff: String,
+    pub git_diff: String,
     /// Deployment status per profile
-    deployment_status: std::collections::HashMap<String, control_panel_core::DeploymentStatus>,
+    pub deployment_status:
+        std::collections::HashMap<String, control_panel_core::DeploymentStatus>,
     /// Selected profile for deployment
-    selected_profile: Option<String>,
+    pub selected_profile: Option<String>,
     /// Loading state
-    loading: bool,
+    pub loading: bool,
     /// Error message
-    error: Option<String>,
+    pub error: Option<String>,
     /// Commit message input
-    commit_message: String,
+    pub commit_message: String,
 }
 
 /// Render the Infrastructure panel
@@ -30,7 +31,7 @@ pub fn render(
     ui: &mut Ui,
     state: &mut InfraPanelState,
     config: &Arc<Config>,
-    _runtime: &Runtime,
+    command_tx: &CommandSender,
 ) {
     ui.heading("🏗️ Infrastructure Management");
     ui.add_space(8.0);
@@ -41,7 +42,7 @@ pub fn render(
             state.loading = true;
             state.error = None;
 
-            // Load git status synchronously for now
+            // Load git status synchronously for now (local operation)
             match control_panel_core::infra::git::get_status(&config.dotfiles.path) {
                 Ok(status) => {
                     state.git_status = Some(status);
@@ -173,12 +174,14 @@ pub fn render(
         ui.horizontal_wrapped(|ui| {
             if ui.button("📥 Pull").clicked() {
                 tracing::info!("Git pull requested");
-                // TODO: Async git pull
+                state.loading = true;
+                let _ = command_tx.send(AsyncCommand::GitPull);
             }
 
             if ui.button("📤 Push").clicked() {
                 tracing::info!("Git push requested");
-                // TODO: Async git push
+                state.loading = true;
+                let _ = command_tx.send(AsyncCommand::GitPush);
             }
 
             let can_commit = state
@@ -191,7 +194,11 @@ pub fn render(
             ui.add_enabled_ui(can_commit, |ui| {
                 if ui.button("✓ Commit & Push").clicked() {
                     tracing::info!("Commit: {}", state.commit_message);
-                    // TODO: Async commit and push
+                    state.loading = true;
+                    let _ = command_tx.send(AsyncCommand::GitCommit {
+                        message: state.commit_message.clone(),
+                        files: vec![], // Empty = stage all changes
+                    });
                 }
             });
         });
@@ -238,34 +245,44 @@ pub fn render(
                 if ui.button("🔍 Dry Run").clicked() {
                     if let Some(ref profile) = state.selected_profile {
                         tracing::info!("Dry run for profile: {}", profile);
-                        // TODO: Async dry run
+                        state.loading = true;
+                        let _ = command_tx.send(AsyncCommand::DeployDryRun {
+                            profile: profile.clone(),
+                        });
                     }
                 }
 
                 if ui.button("🚀 Deploy").clicked() {
                     if let Some(ref profile) = state.selected_profile {
                         tracing::info!("Deploy to profile: {}", profile);
-                        // TODO: Async deployment
+                        state.loading = true;
+                        let _ = command_tx.send(AsyncCommand::Deploy {
+                            profile: profile.clone(),
+                        });
                     }
                 }
             });
         });
 
         // Show deployment status
-        for (profile, status) in &state.deployment_status {
-            ui.horizontal(|ui| {
-                let color = if status.status.is_success() {
-                    crate::theme::colors::ONLINE
-                } else if status.status.is_failed() {
-                    crate::theme::colors::OFFLINE
-                } else {
-                    crate::theme::colors::DEPLOYING
-                };
+        if !state.deployment_status.is_empty() {
+            ui.add_space(8.0);
+            ui.label("Deployment Status:");
+            for (profile, status) in &state.deployment_status {
+                ui.horizontal(|ui| {
+                    let color = if status.status.is_success() {
+                        crate::theme::colors::ONLINE
+                    } else if status.status.is_failed() {
+                        crate::theme::colors::OFFLINE
+                    } else {
+                        crate::theme::colors::DEPLOYING
+                    };
 
-                ui.colored_label(color, "●");
-                ui.label(profile);
-                ui.label(&status.message);
-            });
+                    ui.colored_label(color, "●");
+                    ui.label(profile);
+                    ui.label(&status.message);
+                });
+            }
         }
     });
 
