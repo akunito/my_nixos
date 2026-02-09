@@ -48,17 +48,8 @@ in
     amdLACTdriverEnable = true;
 
     # Display Manager Configuration
-    greetdEnable = true; # Use greetd + ReGreet (modern Wayland-native display manager)
-    sddmEnable = false; # Disable SDDM (replaced by greetd)
-
-    # Sway output configuration for the greeter session (replaces xrandr-based sddmSetupScript).
-    # Sway natively handles per-monitor rotation, scale, and positioning.
-    greetdSwayExtraConfig = ''
-      output "${monitors.samsungMain.criteria}" mode ${monitors.samsungMain.mode} scale ${toString monitors.samsungMain.scale} pos 0 0
-      output "${monitors.nslVertical.criteria}" mode ${monitors.nslVertical.mode} scale ${toString monitors.nslVertical.scale} transform 90 pos 2400 -876
-      output "${monitors.philipsTv.criteria}" mode ${monitors.philipsTv.mode} scale ${toString monitors.philipsTv.scale} pos 3552 -876
-      output "${monitors.bnqLeft.criteria}" mode ${monitors.bnqLeft.mode} scale ${toString monitors.bnqLeft.scale} pos -1920 0
-    '';
+    greetdEnable = false;
+    sddmEnable = true;
 
     # Shell features
     atuinAutoSync = true; # Enable Atuin cloud sync for shell history

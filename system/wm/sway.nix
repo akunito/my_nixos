@@ -43,8 +43,10 @@ in
       # Use X11 greeter when setup script is enabled (xrandr doesn't work with Wayland greeter)
       wayland.enable = !(systemSettings.sddmSetupScript or null != null);
     }
-    # Default theme configuration (Qt6-compatible, no external dependencies)
+    # Astronaut theme (Qt6 modern theme for all Sway profiles without breeze-patched)
     (lib.mkIf (!(systemSettings.sddmBreezePatchedTheme or false)) {
+      theme = "sddm-astronaut-theme";
+      extraPackages = [ pkgs.sddm-astronaut ];
       settings = {
         Users = {
           # Hide system/wrapper users from login screen
@@ -69,11 +71,21 @@ in
   # Set Sway as default session for display manager
   services.displayManager.defaultSession = lib.mkIf swayEnabled "sway";
 
-  # Use patched Breeze SDDM theme (controlled by sddmBreezePatchedTheme flag)
-  # Helps with password focus stability on multi-monitor setups
-  environment.systemPackages = lib.mkIf (swayEnabled && (systemSettings.sddmBreezePatchedTheme or false)) [
-    (import ../dm/sddm-breeze-patched-theme.nix { inherit pkgs; })
-  ];
+  # SDDM theme packages
+  environment.systemPackages = lib.mkIf swayEnabled (
+    if (systemSettings.sddmBreezePatchedTheme or false)
+    then [
+      # Patched Breeze SDDM theme (legacy - helps with password focus on multi-monitor)
+      (import ../dm/sddm-breeze-patched-theme.nix { inherit pkgs; })
+    ]
+    else if !(systemSettings.greetdEnable or false)
+    then [
+      # Astronaut SDDM theme + Qt6 multimedia dependency
+      pkgs.sddm-astronaut
+      pkgs.kdePackages.qtmultimedia
+    ]
+    else []
+  );
 
   # CRITICAL: Force Electron apps to native Wayland mode
   # This must be at system level because extraSessionCommands don't reliably propagate to all processes
