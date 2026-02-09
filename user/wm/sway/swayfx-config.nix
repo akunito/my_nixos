@@ -273,6 +273,8 @@ in
           "${hyper}+Shift+c" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh area";
           "Print" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh area";
           "Shift+Print" = "exec ${config.home.homeDirectory}/.config/sway/scripts/screenshot.sh clipboard";
+          # Copy last screenshot path to clipboard (for pasting into Claude Code)
+          "Ctrl+Alt+c" = "exec sh -c 'cat /tmp/last-screenshot-path 2>/dev/null | ${pkgs.wl-clipboard}/bin/wl-copy --type text/plain'";
 
           # Application keybindings (using app-toggle.sh script)
           # Note: Using different keys to avoid conflicts with window management bindings

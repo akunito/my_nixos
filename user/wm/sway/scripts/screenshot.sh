@@ -53,6 +53,14 @@ copy_on_exit() {
     # Best-effort fallback: copy the last saved/captured file
     wl-copy --type image/png < "$TMP_FILE"
   fi
+
+  # Save the path of the most recently saved screenshot for Ctrl+Alt+C keybinding
+  # This allows copying the file path to clipboard (useful for Claude Code)
+  SCREENSHOT_DIR="$HOME/Pictures/Screenshots"
+  LATEST_SCREENSHOT=$(ls -t "$SCREENSHOT_DIR"/*.png 2>/dev/null | head -n 1)
+  if [ -n "$LATEST_SCREENSHOT" ]; then
+    echo "$LATEST_SCREENSHOT" > /tmp/last-screenshot-path
+  fi
 }
 
 capture
