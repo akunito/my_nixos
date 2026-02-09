@@ -1,12 +1,12 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   # KDE companion apps and MIME associations for Sway session
   #
   # When running Sway without Plasma 6, Dolphin's "Choose Application" dialog
-  # is empty because kservice (Plasma's MIME handler) is not running.
-  # This module installs KDE apps and sets XDG MIME defaults so files open
-  # correctly from Dolphin and other file pickers.
+  # is empty because kservice's ksycoca6 cache is never built.
+  # This module installs KDE apps, sets XDG MIME defaults, and rebuilds the
+  # ksycoca6 cache so Dolphin can discover applications.
 
   home.packages = with pkgs.kdePackages; [
     gwenview     # Image viewer
@@ -15,6 +15,15 @@
     okular       # PDF/document viewer
     kate         # Text editor (for "Open With" from Dolphin)
   ];
+
+  # Rebuild KDE service cache after Home Manager activation.
+  # Without Plasma 6, nothing triggers kbuildsycoca6, so Dolphin's
+  # "Choose Application" dialog stays empty.
+  home.activation.rebuildKSycoca = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if command -v kbuildsycoca6 >/dev/null 2>&1; then
+      kbuildsycoca6 --noincremental 2>/dev/null || true
+    fi
+  '';
 
   xdg.mimeApps.defaultApplications = {
     # Images → Gwenview
