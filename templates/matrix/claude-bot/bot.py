@@ -118,7 +118,7 @@ class ClaudeMatrixBot:
             max_limit_exceeded=0,
             max_timeouts=0,
             store_sync_tokens=True,
-            encryption_enabled=True,  # Enable E2EE for secure messaging
+            encryption_enabled=False,  # Disable E2EE - requires proper login flow with device ID
         )
 
         self.client = AsyncClient(
@@ -128,18 +128,14 @@ class ClaudeMatrixBot:
             store_path=str(Path.home() / ".claude-matrix-bot" / "store"),
         )
 
-        # Load access token and initialize encryption store
+        # Load access token
         token_file = matrix_config.get("access_token_file")
         if token_file and Path(token_file).exists():
             with open(token_file) as f:
                 access_token = f.read().strip()
             self.client.access_token = access_token
             self.client.user_id = bot_user
-
-            # Load encryption store (required for E2E to work)
-            # This loads saved olm account, session keys, etc.
-            self.client.load_store()
-            log.info("Loaded access token and encryption store", user=bot_user)
+            log.info("Loaded access token", user=bot_user)
         else:
             log.error("Access token file not found", path=token_file)
             sys.exit(1)
@@ -152,13 +148,6 @@ class ClaudeMatrixBot:
         # Start sync loop
         self._running = True
         log.info("Bot started, syncing...")
-
-        # Do initial sync to populate device store before setting up trust
-        log.info("Performing initial sync...")
-        await self.client.sync(timeout=30000, full_state=True)
-
-        # Auto-trust devices from allowed users for E2E encryption
-        await self._setup_encryption_trust()
 
         try:
             await self.client.sync_forever(timeout=30000, full_state=True)
