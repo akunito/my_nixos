@@ -42,6 +42,16 @@ capture() {
   fi
 }
 
+save_screenshot() {
+  # Save screenshot to permanent location before opening Swappy
+  # This ensures we always have a file path for Ctrl+Alt+C, regardless of Swappy save behavior
+  SCREENSHOT_DIR="$HOME/Pictures/Screenshots"
+  mkdir -p "$SCREENSHOT_DIR"
+  SAVED_FILE="$SCREENSHOT_DIR/swappy-$(date +%Y%m%d-%H%M%S).png"
+  cp "$TMP_FILE" "$SAVED_FILE"
+  echo "$SAVED_FILE" > /tmp/last-screenshot-path
+}
+
 copy_on_exit() {
   # Hybrid approach:
   # - Load from file (-f) so Swappy behaves normally (Ctrl+C works inside Swappy)
@@ -53,16 +63,9 @@ copy_on_exit() {
     # Best-effort fallback: copy the last saved/captured file
     wl-copy --type image/png < "$TMP_FILE"
   fi
-
-  # Save the path of the most recently saved screenshot for Ctrl+Alt+C keybinding
-  # This allows copying the file path to clipboard (useful for Claude Code)
-  SCREENSHOT_DIR="$HOME/Pictures/Screenshots"
-  LATEST_SCREENSHOT=$(ls -t "$SCREENSHOT_DIR"/*.png 2>/dev/null | head -n 1)
-  if [ -n "$LATEST_SCREENSHOT" ]; then
-    echo "$LATEST_SCREENSHOT" > /tmp/last-screenshot-path
-  fi
 }
 
 capture
+save_screenshot
 copy_on_exit
 
