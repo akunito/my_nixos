@@ -40,13 +40,17 @@ in
     # Base SDDM settings
     {
       enable = true;
-      # Use X11 greeter when setup script is enabled (xrandr doesn't work with Wayland greeter)
-      wayland.enable = !(systemSettings.sddmSetupScript or null != null);
+      # Weston (SDDM Wayland compositor) fails on multi-monitor setups — use X11 greeter
+      wayland.enable = false;
     }
     # Astronaut theme (Qt6 modern theme for all Sway profiles without breeze-patched)
+    # All Qt6 deps MUST be in extraPackages — SDDM greeter only sees packages wired through wrapQtAppsHook
     (lib.mkIf (!(systemSettings.sddmBreezePatchedTheme or false)) {
       theme = "sddm-astronaut-theme";
-      extraPackages = [ pkgs.sddm-astronaut ];
+      extraPackages = [
+        pkgs.sddm-astronaut
+        pkgs.kdePackages.qtmultimedia
+      ];
       settings = {
         Users = {
           # Hide system/wrapper users from login screen
@@ -71,18 +75,15 @@ in
   # Set Sway as default session for display manager
   services.displayManager.defaultSession = lib.mkIf swayEnabled "sway";
 
-  # SDDM theme packages
+  # SDDM theme packages (must be in systemPackages for theme files to land in /run/current-system/sw/share/sddm/themes/)
   environment.systemPackages = lib.mkIf swayEnabled (
     if (systemSettings.sddmBreezePatchedTheme or false)
     then [
-      # Patched Breeze SDDM theme (legacy - helps with password focus on multi-monitor)
       (import ../dm/sddm-breeze-patched-theme.nix { inherit pkgs; })
     ]
     else if !(systemSettings.greetdEnable or false)
     then [
-      # Astronaut SDDM theme + Qt6 multimedia dependency
       pkgs.sddm-astronaut
-      pkgs.kdePackages.qtmultimedia
     ]
     else []
   );
