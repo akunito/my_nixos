@@ -108,7 +108,7 @@ let
       # ZFS pool usage (custom script - truenas.zfspool.<pool>.<stat>)
       {
         match = "truenas.zfspool.*.*";
-        name = "truenas_zfspool_\${1}_\${2}";
+        name = "truenas_zfspool_\${2}";
         labels = {
           pool = "\${1}";
         };
