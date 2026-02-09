@@ -280,6 +280,25 @@
         WantedBy = [ "sway-session.target" ];
       };
     };
+
+    # Trayscale: Tailscale GUI for manual VPN control (Sway-only)
+    systemd.user.services."trayscale" = lib.mkIf (systemSettings.trayscaleGuiEnable == true) {
+      Unit = {
+        Description = "Trayscale - Tailscale GUI";
+        PartOf = [ "sway-session.target" ];
+        Wants = [ "waybar.service" ];
+        After = [ "sway-session.target" "waybar.service" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.trayscale}/bin/trayscale --hide-window";
+        Restart = "on-failure";
+        RestartSec = "2s";
+        EnvironmentFile = [ "-%t/sway-session.env" ];
+      };
+      Install = {
+        WantedBy = [ "sway-session.target" ];
+      };
+    };
 }
 
 

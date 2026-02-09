@@ -71,8 +71,11 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
     allowedUDPPorts = [ config.services.tailscale.port ];
   };
 
-  # Environment packages for CLI and GUI access
-  environment.systemPackages = [
+  # Install Trayscale GUI if either service is enabled OR GUI-only mode is enabled
+  environment.systemPackages = lib.mkIf (
+    (systemSettings.tailscaleEnable or false) ||
+    (systemSettings.trayscaleGuiEnable or false)
+  ) [
     pkgs.tailscale
     pkgs.trayscale  # GTK systray GUI for Tailscale
   ];

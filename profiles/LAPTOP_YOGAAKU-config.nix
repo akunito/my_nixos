@@ -131,6 +131,13 @@ in
     sunshineEnable = false; # Disable Sunshine game streaming (older machine)
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
 
+    # === Tailscale Mesh VPN ===
+    tailscaleEnable = false; # Disable service - use Trayscale GUI for manual control
+    # trayscaleGuiEnable inherited from LAPTOP-base.nix (true)
+    tailscaleLoginServer = "https://headscale.akunito.com"; # Self-hosted Headscale (no secrets on this machine)
+    tailscaleAcceptRoutes = true; # Accept routes from subnet router (for manual connection)
+    tailscaleAcceptDns = true; # Accept DNS from Tailscale (for manual connection)
+
     # === Development Tools ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
 

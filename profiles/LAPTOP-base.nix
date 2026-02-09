@@ -19,6 +19,9 @@
     swwwEnable = true;
     waypaperEnable = true; # Enable Waypaper GUI wallpaper manager (Hyper+Shift+S)
 
+    # Trayscale GUI for manual Tailscale control (Sway tray app)
+    trayscaleGuiEnable = true;
+
     # === Monitor Management (Imperative GUI) ===
     nwgDisplaysEnable = true; # Visual monitor layout GUI (Hyper+Shift+D)
     workspaceGroupsGuiEnable = true; # Workspace groups assignment GUI (Hyper+`)

@@ -300,7 +300,8 @@ in
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
 
     # === Tailscale Mesh VPN ===
-    tailscaleEnable = true; # Enable Tailscale client
+    tailscaleEnable = false; # Disable service - use Trayscale GUI for manual control
+    trayscaleGuiEnable = true; # Enable GUI tray app with Sway
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
     # DESK is always on LAN - don't override local routes/DNS with Tailscale
     tailscaleAcceptRoutes = false; # Don't accept routes (already on LAN)
