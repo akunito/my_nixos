@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, systemSettings, ... }:
 
 {
   # KDE companion apps and MIME associations for Sway session
@@ -15,6 +15,21 @@
     okular       # PDF/document viewer
     kate         # Text editor (for "Open With" from Dolphin)
   ];
+
+  # Force dark mode for viewer apps (fixes Gwenview/Okular light mode issue)
+  # These apps have KDE Framework-specific color scheme resolution that may not
+  # respect qt6ct/kdeglobals properly without explicit ColorScheme setting
+  home.file = lib.mkIf (systemSettings.enableSwayForDESK == true) {
+    ".config/gwenviewrc".text = ''
+      [General]
+      ColorScheme=BreezeDark
+    '';
+
+    ".config/okularrc".text = ''
+      [General]
+      ColorScheme=BreezeDark
+    '';
+  };
 
   # Append MIME associations to kdeglobals after Stylix creates it.
   # Stylix creates kdeglobals for Qt theming via .source (template), so we can't use .text to merge.
@@ -98,18 +113,25 @@ EOF
     fi
   '';
 
-  # Rebuild KDE service cache after Home Manager activation.
-  # Without Plasma 6, nothing triggers kbuildsycoca6, so Dolphin's
-  # "Choose Application" dialog stays empty. We reference the binary
-  # directly from the kservice package since it's not in PATH.
-  home.activation.rebuildKSycoca = lib.hm.dag.entryAfter [ "appendKdeglobalsMimeAssociations" ] ''
+  # Rebuild desktop database and KDE service cache after Home Manager activation.
+  # Without Plasma 6, Dolphin's "Choose Application" dialog is empty.
+  # We need both update-desktop-database (freedesktop) and kbuildsycoca6 (KDE).
+  # NOTE: xdg.mimeApps creates writable mimeapps.list by default, so we don't need
+  # the makesMimeappsWritable activation script anymore.
+  home.activation.rebuildDesktopDatabase = lib.hm.dag.entryAfter [ "appendKdeglobalsMimeAssociations" ] ''
+    # Update freedesktop.org desktop database
+    ${pkgs.desktop-file-utils}/bin/update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+
+    # Rebuild KDE service cache
     ${pkgs.kdePackages.kservice}/bin/kbuildsycoca6 --noincremental 2>/dev/null || true
   '';
 
   # Populate both [Default Applications] and [Added Associations] sections.
   # Dolphin reads [Added Associations] to populate "Choose Application" dialog.
   # When you click "Remember", Dolphin writes to [Added Associations].
-  xdg.mimeApps.defaultApplications = {
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
     # Images → Gwenview
     "image/png" = "org.kde.gwenview.desktop";
     "image/jpeg" = "org.kde.gwenview.desktop";
@@ -179,8 +201,8 @@ EOF
     "application/xml" = "org.kde.kate.desktop";
   };
 
-  # Also populate [Added Associations] section (this is what Dolphin reads/writes)
-  xdg.mimeApps.associations.added = {
+    # Also populate [Added Associations] section (this is what Dolphin reads/writes)
+    associations.added = {
     # Images
     "image/png" = "org.kde.gwenview.desktop";
     "image/jpeg" = "org.kde.gwenview.desktop";
@@ -248,5 +270,6 @@ EOF
     "application/x-yaml" = "org.kde.kate.desktop";
     "application/toml" = "org.kde.kate.desktop";
     "application/xml" = "org.kde.kate.desktop";
+    };
   };
 }

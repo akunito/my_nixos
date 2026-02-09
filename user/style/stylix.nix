@@ -328,6 +328,7 @@ if systemSettings.stylixEnable == true then
       ++ lib.optionals (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) [
         pkgs.adwaita-qt # Adwaita style for Qt5
         pkgs.adwaita-qt6 # Adwaita style for Qt6
+        pkgs.kdePackages.breeze # Breeze color schemes for KDE apps (fixes Gwenview/Okular dark mode)
       ];
 
     qt = lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) {

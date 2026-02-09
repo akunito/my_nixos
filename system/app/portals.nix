@@ -43,9 +43,10 @@
       };
     };
 
-    # CRITICAL: Force xdg-open to use portal
-    # This ensures GTK apps like Bottles will use the portal
-    xdgOpenUsePortal = true;
+    # CRITICAL: Do NOT force xdg-open to use portal
+    # This causes file opening to fail because the portal doesn't read mimeapps.list
+    # GTK apps will still use the portal for file chooser dialogs, but xdg-open will work directly
+    xdgOpenUsePortal = false;
   };
 
   # Ensure KDE frameworks are available for the portal
