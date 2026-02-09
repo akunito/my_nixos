@@ -128,14 +128,18 @@ class ClaudeMatrixBot:
             store_path=str(Path.home() / ".claude-matrix-bot" / "store"),
         )
 
-        # Load access token
+        # Load access token and initialize encryption store
         token_file = matrix_config.get("access_token_file")
         if token_file and Path(token_file).exists():
             with open(token_file) as f:
                 access_token = f.read().strip()
             self.client.access_token = access_token
             self.client.user_id = bot_user
-            log.info("Loaded access token", user=bot_user)
+
+            # Load encryption store (required for E2E to work)
+            # This loads saved olm account, session keys, etc.
+            self.client.load_store()
+            log.info("Loaded access token and encryption store", user=bot_user)
         else:
             log.error("Access token file not found", path=token_file)
             sys.exit(1)
