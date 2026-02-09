@@ -93,21 +93,28 @@ extraConfig = ''
 
 ### 5. XTerm Configuration
 
-Location: `~/.Xresources` (manual file, not managed by Nix)
+Location: `user/app/terminal/xterm.nix`
 
-```
-! Shift+Enter keybinding for multi-line input
-XTerm*VT100.translations: #override \n\
-	Shift <Key>Return: string(0x1b) string("[13;2u")
+```nix
+xresources.properties = {
+  # Dark mode colors
+  "XTerm*background" = "#1c1c1c";
+  "XTerm*foreground" = "#d0d0d0";
+  # ... (see xterm.nix for full color scheme)
+
+  # Font settings
+  "XTerm*faceName" = "JetBrainsMono Nerd Font Mono";
+  "XTerm*faceSize" = 12;
+};
+
+xresources.extraConfig = ''
+  ! Shift+Enter keybinding for multi-line input
+  XTerm*VT100.translations: #override \n\
+  	Shift <Key>Return: string(0x1b) string("[13;2u")
+'';
 ```
 
-**To apply:**
-```bash
-xrdb ~/.Xresources
-# Then open a new xterm window
-```
-
-**Note:** XTerm requires manual X resources configuration. This file is not managed by NixOS/Home Manager.
+**Note:** XTerm configuration is managed declaratively by Home Manager. The `~/.Xresources` file is automatically generated and loaded.
 
 ## Usage
 
@@ -204,4 +211,8 @@ Modified files:
 - `user/app/terminal/kitty.nix` - Added Shift+Enter keybinding
 - `user/app/terminal/alacritty.nix` - Added Shift+Enter keybinding
 - `user/app/terminal/tmux.nix` - Added extended-keys support
-- `~/.Xresources` - Manual XTerm configuration (not tracked in git)
+- `user/app/terminal/xterm.nix` - New module for declarative XTerm configuration
+- `user/wm/sway/default.nix` - Import xterm.nix module
+- `docs/user-modules/shell-multiline-input.md` - Full documentation
+
+**Note:** XTerm configuration is now fully declarative via Home Manager. The `~/.Xresources` file is automatically generated from `xterm.nix`.
