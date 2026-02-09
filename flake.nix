@@ -74,7 +74,8 @@
     };
 
     nix-citizen.url = "github:LovingMelody/nix-citizen";
-    nix-citizen.inputs.nixpkgs.follows = "nixpkgs";
+    # Note: NOT using follows for nixpkgs - nix-citizen's wine-astral requires
+    # its own compatible nixpkgs version (wine base.nix API changed upstream)
 
     # Hardware support
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
