@@ -282,10 +282,12 @@
     # GPU-related feature flags
     amdLACTdriverEnable = false; # Enable LACT (Linux AMD GPU Control Application) for AMD GPU management
 
-    # SDDM feature flags (display manager customization)
+    # Display Manager feature flags
+    greetdEnable = false; # Enable greetd + ReGreet (modern Wayland-native display manager)
+    sddmEnable = true; # Enable SDDM (default display manager for non-greetd profiles)
     sddmForcePasswordFocus = false; # Force password field focus (fixes multi-monitor focus issues)
     sddmBreezePatchedTheme = false; # Use patched Breeze theme with custom settings
-    sddmSetupScript = null; # Custom SDDM setup script (e.g., for monitor rotation). Set to string with script content.
+    sddmSetupScript = null; # Custom SDDM/greetd setup script (e.g., for monitor rotation). Set to string with script content.
 
     # Shell feature flags
     atuinAutoSync = false; # Enable Atuin shell history cloud sync

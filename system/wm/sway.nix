@@ -17,7 +17,8 @@ in
     ./pipewire.nix
     ./fonts.nix
     ./dbus.nix
-    ../dm/sddm.nix # Shared SDDM configuration (KWallet PAM)
+    ../dm/sddm.nix # Shared SDDM configuration (KWallet PAM) - used by non-greetd profiles
+    ../dm/greetd.nix # greetd + ReGreet configuration - modern Wayland-native display manager
     ./keyd.nix # Keyboard remapping (Caps Lock to Hyper)
   ];
 
@@ -32,8 +33,10 @@ in
     ];
   };
 
-  # SDDM session configuration
-  services.displayManager.sddm = lib.mkIf swayEnabled (lib.mkMerge [
+  # Display Manager configuration
+  # greetd is configured in ../dm/greetd.nix (enabled via systemSettings.greetdEnable)
+  # SDDM is configured below for profiles that don't use greetd
+  services.displayManager.sddm = lib.mkIf (swayEnabled && !(systemSettings.greetdEnable or false)) (lib.mkMerge [
     # Base SDDM settings
     {
       enable = true;
@@ -63,7 +66,7 @@ in
     })
   ]);
 
-  # Set Sway as default SDDM session
+  # Set Sway as default session for display manager
   services.displayManager.defaultSession = lib.mkIf swayEnabled "sway";
 
   # Use patched Breeze SDDM theme (controlled by sddmBreezePatchedTheme flag)

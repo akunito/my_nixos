@@ -47,15 +47,17 @@ in
     enableDesktopPerformance = true; # Enable desktop-optimized I/O scheduler and performance tuning
     amdLACTdriverEnable = true;
 
-    # SDDM multi-monitor fixes (DESK has 4 monitors including portrait)
-    sddmForcePasswordFocus = true; # Force password field focus on multi-monitor
-    sddmBreezePatchedTheme = false; # Disabled - using Chili theme (Breeze requires Plasma dependencies)
-    # SDDM setup script for portrait monitor rotation (DP-2)
+    # Display Manager Configuration
+    greetdEnable = true; # Use greetd + ReGreet (modern Wayland-native display manager)
+    sddmEnable = false; # Disable SDDM (replaced by greetd)
+
+    # Monitor rotation setup script for greetd (portrait monitor DP-2)
+    # This script is executed before ReGreet starts (see greetd.nix)
     sddmSetupScript = ''
-      LOGFILE="/tmp/sddm-rotation.log"
+      LOGFILE="/tmp/greetd-rotation.log"
       exec >"$LOGFILE" 2>&1
       set -x
-      echo "=== SDDM Monitor Rotation Script ==="
+      echo "=== greetd Monitor Rotation Script ==="
       XRANDR="$(command -v xrandr 2>/dev/null || echo /run/current-system/sw/bin/xrandr)"
       MONITOR="DP-2"
       for i in $(seq 1 40); do
@@ -65,7 +67,7 @@ in
       $XRANDR --output "$MONITOR" --rotate right 2>&1 || true
       sleep 0.25
       $XRANDR --output "$MONITOR" --rotate right 2>&1 || true
-      echo "=== SDDM Monitor Rotation Complete ==="
+      echo "=== greetd Monitor Rotation Complete ==="
     '';
 
     # Shell features
