@@ -53,4 +53,23 @@
     XTerm*VT100.translations: #override \n\
     	Shift <Key>Return: string(0x1b) string("[13;2u")
   '';
+
+  # Load .Xresources on Wayland session startup
+  # On Wayland (Sway), there is no display manager to run xrdb automatically,
+  # so we use a systemd user service bound to graphical-session.target
+  systemd.user.services = lib.mkIf (!pkgs.stdenv.isDarwin) {
+    xrdb-load = {
+      Unit = {
+        Description = "Load X resources for XWayland applications";
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.xorg.xrdb}/bin/xrdb -merge ${config.home.homeDirectory}/.Xresources";
+      };
+      Install = {
+        WantedBy = [ "graphical-session.target" ];
+      };
+    };
+  };
 }

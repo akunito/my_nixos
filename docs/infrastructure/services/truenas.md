@@ -277,8 +277,10 @@ ssh truenas_admin@192.168.20.200 'midclt call service.restart iscsitarget'
 ### ZFS Local Replication (ssdpool → hddpool)
 
 **Script**: `scripts/truenas-zfs-replicate.sh` (deployed to `/home/truenas_admin/` on TrueNAS)
-**Schedule**: Daily at 4:00 AM via TrueNAS cron job (runs as root)
+**Schedule**: Daily at 4:00 AM via TrueNAS cron job (ID: 3, runs as root)
+**Cron command**: `bash /home/truenas_admin/truenas-zfs-replicate.sh >> /var/log/zfs-replicate.log 2>&1`
 **Log**: `/var/log/zfs-replicate.log` on TrueNAS
+**Note**: `/home` is mounted `noexec` on TrueNAS, so cron must use `bash /path/to/script` (not direct execution)
 
 **Replication Map**:
 
@@ -293,28 +295,28 @@ ssh truenas_admin@192.168.20.200 'midclt call service.restart iscsitarget'
 - Retention: 2 per dataset (current + previous for incremental base)
 - Encryption: Uses `zfs recv -x encryption` so destination inherits from `hddpool/ssd_data_backups` encryption root
 
-**Manual Operations**:
+**Manual Operations** (via sudo, requires interactive password):
 ```bash
 # Dry-run (show what would happen)
-ssh truenas_admin@192.168.20.200 'sudo /home/truenas_admin/truenas-zfs-replicate.sh --dry-run'
+ssh -t truenas_admin@192.168.20.200 'sudo bash /home/truenas_admin/truenas-zfs-replicate.sh --dry-run'
 
 # Incremental replication (daily mode)
-ssh truenas_admin@192.168.20.200 'sudo /home/truenas_admin/truenas-zfs-replicate.sh'
+ssh -t truenas_admin@192.168.20.200 'sudo bash /home/truenas_admin/truenas-zfs-replicate.sh'
 
 # Full re-sync (destroys destination, use if out of sync)
-ssh truenas_admin@192.168.20.200 'sudo /home/truenas_admin/truenas-zfs-replicate.sh --init'
+ssh -t truenas_admin@192.168.20.200 'sudo bash /home/truenas_admin/truenas-zfs-replicate.sh --init'
 
 # Check replication snapshots
-ssh truenas_admin@192.168.20.200 'zfs list -t snapshot -r ssdpool | grep autoreplica'
+ssh truenas_admin@192.168.20.200 'sudo zfs list -t snapshot -r ssdpool | grep autoreplica'
 
 # Check destination sizes
-ssh truenas_admin@192.168.20.200 'zfs list -r hddpool/ssd_data_backups'
+ssh truenas_admin@192.168.20.200 'sudo zfs list -r hddpool/ssd_data_backups'
 
 # Check log
 ssh truenas_admin@192.168.20.200 'tail -50 /var/log/zfs-replicate.log'
 
 # Verify encryption inheritance
-ssh truenas_admin@192.168.20.200 'zfs get encryptionroot hddpool/ssd_data_backups/library'
+ssh truenas_admin@192.168.20.200 'sudo zfs get encryptionroot hddpool/ssd_data_backups/library'
 ```
 
 **Deploy/Update Script**:

@@ -309,7 +309,7 @@ replicate_incremental() {
     local src_prev="${src}@${prev_snap}"
     local src_new="${src}@${new_snap}"
     log "Incremental send: $src_prev -> $src_new into $dst"
-    if zfs send -i "$src_prev" "$src_new" | zfs recv "$dst"; then
+    if zfs send -i "$src_prev" "$src_new" | zfs recv -F "$dst"; then
         log "Incremental replication complete: $src -> $dst"
     else
         log_error "Incremental replication FAILED: $src -> $dst"

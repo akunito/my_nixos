@@ -218,9 +218,13 @@ in
       set -g mouse on
 
       # CRITICAL: Enable extended keys (tmux 3.2+) for proper Shift+Enter handling
-      # This allows tmux to pass through CSI u encoded sequences
+      # This allows tmux to understand and forward CSI u encoded sequences
       set -s extended-keys on
       set -as terminal-features 'xterm*:extkeys'
+
+      # Multi-line input: Forward Shift+Enter as CSI u sequence to the pane
+      # Without this, tmux may consume the Shift+Enter key event
+      bind -n S-Enter send-keys Escape '[13;2u'
 
       # CRITICAL: Clipboard integration (pbcopy on macOS, wl-copy on Linux)
       set -g set-clipboard on
