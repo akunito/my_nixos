@@ -2,7 +2,11 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ ... }:
+{
+  lib,
+  systemSettings,
+  ...
+}:
 {
   imports =
     [ ../work/configuration.nix # Personal is essentially work system + games.
@@ -22,8 +26,7 @@
       ../../system/security/firewall.nix
       ../../system/app/control-panel.nix # NixOS infrastructure control panel (web)
       ../../system/app/control-panel-native.nix # NixOS infrastructure control panel (native desktop app)
-    ];
-
-
+    ]
+    ++ lib.optional (systemSettings.networkBondingEnable or false) ../../system/hardware/network-bonding.nix; # Network bonding (LACP)
 }
 

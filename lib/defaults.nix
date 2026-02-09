@@ -109,6 +109,16 @@
     wifiPowerSave = true;
     resolvedEnable = false;
 
+    # Network bonding (LACP link aggregation)
+    networkBondingEnable = false; # Enable network bonding (requires switch LAG configuration)
+    networkBondingMode = "802.3ad"; # Bonding mode: "802.3ad" (LACP), "balance-rr", "active-backup", etc.
+    networkBondingInterfaces = []; # List of interfaces to bond (e.g., ["enp11s0f0" "enp11s0f1"])
+    networkBondingDhcp = true; # Use DHCP for bond interface
+    networkBondingStaticIp = null; # Static IP config: { address = "192.168.8.96/24"; gateway = "192.168.8.1"; }
+    networkBondingLacpRate = "fast"; # LACP rate: "fast" (1s) or "slow" (30s)
+    networkBondingMiimon = "100"; # Link check interval in milliseconds
+    networkBondingXmitHashPolicy = "layer3+4"; # Hash policy: "layer2", "layer3+4", "encap3+4"
+
     # Service defaults
     havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant
     fail2banEnable = true; # Can disable for systems behind firewall

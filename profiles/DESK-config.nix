@@ -128,6 +128,14 @@ in
     ];
     resolvedEnable = false;
 
+    # Network Bonding (10GbE LACP aggregation)
+    # Prerequisites: Configure LAG on UniFi switch before enabling
+    # Both Intel 82599ES 10GbE interfaces bonded for 20Gbps aggregate + failover
+    networkBondingEnable = true;
+    networkBondingMode = "802.3ad"; # LACP
+    networkBondingInterfaces = [ "enp11s0f0" "enp11s0f1" ];
+    networkBondingDhcp = true; # Get IP from pfSense DHCP
+
     # Firewall
     allowedTCPPorts = [
       # 47984 47989 47990 48010 # sunshine
