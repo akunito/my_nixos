@@ -145,12 +145,16 @@ class ClaudeMatrixBot:
         self.client.add_event_callback(self._on_invite, InviteMemberEvent)
         self.client.add_event_callback(self._on_encrypted_message, MegolmEvent)
 
-        # Auto-trust devices from allowed users for E2E encryption
-        await self._setup_encryption_trust()
-
         # Start sync loop
         self._running = True
         log.info("Bot started, syncing...")
+
+        # Do initial sync to populate device store before setting up trust
+        log.info("Performing initial sync...")
+        await self.client.sync(timeout=30000, full_state=True)
+
+        # Auto-trust devices from allowed users for E2E encryption
+        await self._setup_encryption_trust()
 
         try:
             await self.client.sync_forever(timeout=30000, full_state=True)
