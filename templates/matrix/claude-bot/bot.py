@@ -128,14 +128,31 @@ class ClaudeMatrixBot:
             store_path=str(Path.home() / ".claude-matrix-bot" / "store"),
         )
 
-        # Load access token
+        # Load access token and restore login
         token_file = matrix_config.get("access_token_file")
+        device_id_file = Path.home() / ".claude-matrix-bot" / "device_id"
+
         if token_file and Path(token_file).exists():
             with open(token_file) as f:
                 access_token = f.read().strip()
-            self.client.access_token = access_token
-            self.client.user_id = bot_user
-            log.info("Loaded access token", user=bot_user)
+
+            # Load saved device_id or use a default
+            if device_id_file.exists():
+                with open(device_id_file) as f:
+                    device_id = f.read().strip()
+            else:
+                device_id = "CLAUDEBOT"
+                # Save it for future use
+                with open(device_id_file, "w") as f:
+                    f.write(device_id)
+
+            # Restore login state (required for newer matrix-nio)
+            self.client.restore_login(
+                user_id=bot_user,
+                device_id=device_id,
+                access_token=access_token,
+            )
+            log.info("Restored login", user=bot_user, device=device_id)
         else:
             log.error("Access token file not found", path=token_file)
             sys.exit(1)
