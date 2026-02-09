@@ -17,7 +17,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/home/akunito/.claude-matrix-bot/venv/bin/python /home/akunito/.claude-matrix-bot/bot.py --config /home/akunito/.claude-matrix-bot/config.yaml
+ExecStart=/run/current-system/sw/bin/python3.11 /home/akunito/.claude-matrix-bot/bot.py --config /home/akunito/.claude-matrix-bot/config.yaml
 WorkingDirectory=/home/akunito/.claude-matrix-bot
 Restart=always
 RestartSec=10

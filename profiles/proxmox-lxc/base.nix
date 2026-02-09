@@ -76,6 +76,9 @@ in
     options = "--delete-older-than 8d";
   };
 
+  # Trust wheel users for nix-copy-closure from build machines
+  nix.settings.trusted-users = [ "root" "@wheel" ];
+
   nixpkgs.config.allowUnfree = true;
 
   # Allow insecure packages (olm for Matrix E2E encryption)
