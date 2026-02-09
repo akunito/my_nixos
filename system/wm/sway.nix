@@ -40,7 +40,16 @@ in
       # Use X11 greeter when setup script is enabled (xrandr doesn't work with Wayland greeter)
       wayland.enable = !(systemSettings.sddmSetupScript or null != null);
     }
-    # Theme settings (controlled by sddmBreezePatchedTheme flag)
+    # Default theme configuration (Qt6-compatible, no external dependencies)
+    (lib.mkIf (!(systemSettings.sddmBreezePatchedTheme or false)) {
+      settings = {
+        Users = {
+          # Hide system/wrapper users from login screen
+          HideUsers = "restic";
+        };
+      };
+    })
+    # Breeze-patched theme configuration (legacy - requires Plasma dependencies)
     (lib.mkIf (systemSettings.sddmBreezePatchedTheme or false) {
       settings = {
         Theme = {

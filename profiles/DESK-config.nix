@@ -49,7 +49,7 @@ in
 
     # SDDM multi-monitor fixes (DESK has 4 monitors including portrait)
     sddmForcePasswordFocus = true; # Force password field focus on multi-monitor
-    sddmBreezePatchedTheme = true; # Use patched Breeze theme
+    sddmBreezePatchedTheme = false; # Disabled - using Chili theme (Breeze requires Plasma dependencies)
     # SDDM setup script for portrait monitor rotation (DP-2)
     sddmSetupScript = ''
       LOGFILE="/tmp/sddm-rotation.log"
