@@ -166,39 +166,50 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
         {
           name = "truenas_alerts";
           rules = [
-            # Filesystem capacity warning (>80%)
-            # Uses df_complex metrics from TrueNAS collectd
+            # Pool capacity warning (>80%)
+            # Uses custom truenas-zfs-exporter.sh metrics
             {
-              alert = "TrueNASFilesystemCapacityWarning";
+              alert = "TrueNASPoolCapacityWarning";
               expr = ''
                 (
-                  sum by (filesystem) (truenas_filesystem_bytes{type="used"})
+                  truenas_zfspool_allocated
                   /
-                  (sum by (filesystem) (truenas_filesystem_bytes{type="used"}) + sum by (filesystem) (truenas_filesystem_bytes{type="free"}))
+                  truenas_zfspool_size
                 ) * 100 > 80
               '';
               "for" = "5m";
               labels.severity = "warning";
               annotations = {
-                summary = "TrueNAS filesystem {{ $labels.filesystem }} capacity warning";
-                description = "Filesystem {{ $labels.filesystem }} is at {{ $value | printf \"%.1f\" }}% capacity";
+                summary = "TrueNAS pool {{ $labels.pool }} capacity warning";
+                description = "Pool {{ $labels.pool }} is at {{ $value | printf \"%.1f\" }}% capacity";
               };
             }
-            # Filesystem capacity critical (>90%)
+            # Pool capacity critical (>90%)
             {
-              alert = "TrueNASFilesystemCapacityCritical";
+              alert = "TrueNASPoolCapacityCritical";
               expr = ''
                 (
-                  sum by (filesystem) (truenas_filesystem_bytes{type="used"})
+                  truenas_zfspool_allocated
                   /
-                  (sum by (filesystem) (truenas_filesystem_bytes{type="used"}) + sum by (filesystem) (truenas_filesystem_bytes{type="free"}))
+                  truenas_zfspool_size
                 ) * 100 > 90
               '';
               "for" = "5m";
               labels.severity = "critical";
               annotations = {
-                summary = "TrueNAS filesystem {{ $labels.filesystem }} capacity critical";
-                description = "Filesystem {{ $labels.filesystem }} is at {{ $value | printf \"%.1f\" }}% capacity - immediate attention required";
+                summary = "TrueNAS pool {{ $labels.pool }} capacity critical";
+                description = "Pool {{ $labels.pool }} is at {{ $value | printf \"%.1f\" }}% capacity - immediate attention required";
+              };
+            }
+            # Pool unhealthy (ZFS pool status not ONLINE)
+            {
+              alert = "TrueNASPoolUnhealthy";
+              expr = ''truenas_zfspool_healthy == 0'';
+              "for" = "2m";
+              labels.severity = "critical";
+              annotations = {
+                summary = "TrueNAS pool {{ $labels.pool }} unhealthy";
+                description = "Pool {{ $labels.pool }} is reporting unhealthy status - check pool status immediately";
               };
             }
             # Disk temperature warning (>45°C)

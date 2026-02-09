@@ -1,45 +1,12 @@
 {
-  description = "Unified NixOS/Darwin Flake - All Profiles";
+  description = "Flake for my Desktop";
 
   outputs = inputs@{ self, ... }:
     let
-      mkUnified = import ./lib/flake-unified.nix;
+      base = import ./lib/flake-base.nix;
+      profileConfig = import ./profiles/DESK-config.nix;
     in
-      mkUnified {
-        inherit inputs self;
-        profiles = {
-          # === Desktop Systems ===
-          DESK = ./profiles/DESK-config.nix;
-          DESK_AGA = ./profiles/DESK_AGA-config.nix;
-          DESK_VMDESK = ./profiles/DESK_VMDESK-config.nix;
-
-          # === Laptops ===
-          LAPTOP_L15 = ./profiles/LAPTOP_L15-config.nix;
-          LAPTOP_AGA = ./profiles/LAPTOP_AGA-config.nix;
-          LAPTOP_YOGAAKU = ./profiles/LAPTOP_YOGAAKU-config.nix;
-
-          # === LXC Containers ===
-          LXC_HOME = ./profiles/LXC_HOME-config.nix;
-          LXC_database = ./profiles/LXC_database-config.nix;
-          LXC_monitoring = ./profiles/LXC_monitoring-config.nix;
-          LXC_proxy = ./profiles/LXC_proxy-config.nix;
-          LXC_mailer = ./profiles/LXC_mailer-config.nix;
-          LXC_matrix = ./profiles/LXC_matrix-config.nix;
-          LXC_plane = ./profiles/LXC_plane-config.nix;
-          LXC_portfolioprod = ./profiles/LXC_portfolioprod-config.nix;
-          LXC_liftcraftTEST = ./profiles/LXC_liftcraftTEST-config.nix;
-          LXC_tailscale = ./profiles/LXC_tailscale-config.nix;
-
-          # === Virtual Machines ===
-          VMHOME = ./profiles/VMHOME-config.nix;
-
-          # === macOS (Darwin) ===
-          MACBOOK-KOMI = ./profiles/MACBOOK-KOMI-config.nix;
-
-          # === WSL ===
-          WSL = ./profiles/WSL-config.nix;
-        };
-      };
+      base { inherit inputs self profileConfig; };
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -74,16 +41,6 @@
     };
 
     nix-citizen.url = "github:LovingMelody/nix-citizen";
-    # Note: NOT using follows for nixpkgs - nix-citizen's wine-astral requires
-    # its own compatible nixpkgs version (wine base.nix API changed upstream)
-
-    # Hardware support
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-
-    # macOS support
-    nix-darwin.url = "github:LnL7/nix-darwin";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
-
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    nix-citizen.inputs.nixpkgs.follows = "nixpkgs";
   };
 }
