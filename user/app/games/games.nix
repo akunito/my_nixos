@@ -93,13 +93,18 @@ in
 
   # Session variable to suppress Bottles warning (User Session Scope)
   # Also adding Gaming Optimizations for AMD
-  home.sessionVariables = lib.mkIf (userSettings.protongamesEnable == true) {
-    BOTTLES_IGNORE_SANDBOX = "1";
-    # AMD RDNA 4 Optimizations (9700XT)
-    RADV_PERFTEST = "gpl"; # Graphics Pipeline Library - reduces stuttering
-    AMD_VULKAN_ICD = "radv"; # Ensure Mesa driver is used over AMDVLK
-    NODEVICE_SELECT = "1"; # Fix crash on RDNA 4 (disable VK_LAYER_MESA_device_select)
-  };
+  home.sessionVariables = lib.mkMerge [
+    (lib.mkIf (userSettings.protongamesEnable == true) {
+      BOTTLES_IGNORE_SANDBOX = "1";
+      # AMD RDNA 4 Optimizations (9700XT)
+      RADV_PERFTEST = "gpl"; # Graphics Pipeline Library - reduces stuttering
+      AMD_VULKAN_ICD = "radv"; # Ensure Mesa driver is used over AMDVLK
+      NODEVICE_SELECT = "1"; # Fix crash on RDNA 4 (disable VK_LAYER_MESA_device_select)
+    })
+    (lib.mkIf (userSettings.steamUIScale != null) {
+      STEAM_FORCE_DESKTOPUI_SCALING = userSettings.steamUIScale; # Fix blurry Steam UI on fractional-scaled displays
+    })
+  ];
 
   nixpkgs.config = {
     allowUnfree = true;
