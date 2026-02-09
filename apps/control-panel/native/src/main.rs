@@ -48,6 +48,7 @@ fn main() -> Result<()> {
     // Run the native GUI
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
+            .with_app_id("control-panel")
             .with_title("NixOS Control Panel")
             .with_inner_size([1280.0, 800.0])
             .with_min_inner_size([800.0, 600.0]),
