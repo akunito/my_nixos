@@ -96,7 +96,10 @@
       "id": 1,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -213,7 +216,9 @@
         "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -284,7 +289,9 @@
         "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -366,7 +373,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -381,8 +390,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_zfspool_state_hddpool_online{job=\"truenas_graphite\"}",
-          "legendFormat": "hddpool",
+          "expr": "truenas_zfspool_healthy{pool=\"boot-pool\",job=\"truenas_graphite\"}",
+          "legendFormat": "boot-pool",
           "range": true,
           "refId": "A"
         },
@@ -392,8 +401,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_zfspool_state_ssdpool_online{job=\"truenas_graphite\"}",
-          "legendFormat": "ssdpool",
+          "expr": "truenas_zfspool_healthy{pool=\"hddpool\",job=\"truenas_graphite\"}",
+          "legendFormat": "hddpool",
           "range": true,
           "refId": "B"
         },
@@ -403,8 +412,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_zfspool_state_boot_pool_online{job=\"truenas_graphite\"}",
-          "legendFormat": "boot-pool",
+          "expr": "truenas_zfspool_healthy{pool=\"ssdpool\",job=\"truenas_graphite\"}",
+          "legendFormat": "ssdpool",
           "range": true,
           "refId": "C"
         }
@@ -477,7 +486,10 @@
       "id": 5,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -591,7 +603,10 @@
       "id": 6,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -729,7 +744,10 @@
       "id": 7,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -840,7 +858,10 @@
       "id": 8,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -965,7 +986,10 @@
       "id": 9,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -1092,7 +1116,10 @@
       "id": 10,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -1129,11 +1156,97 @@
       ],
       "title": "Disk I/O",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 38
+      },
+      "id": 11,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(truenas_zfspool_allocated{job=\"truenas_graphite\"} / truenas_zfspool_size{job=\"truenas_graphite\"}) * 100",
+          "legendFormat": "{{pool}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS Pool Capacity",
+      "type": "bargauge"
     }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
-  "tags": ["truenas", "nas", "storage", "zfs", "custom"],
+  "tags": [
+    "truenas",
+    "nas",
+    "storage",
+    "zfs",
+    "custom"
+  ],
   "templating": {
     "list": [
       {
