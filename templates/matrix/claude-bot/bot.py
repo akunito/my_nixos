@@ -27,15 +27,9 @@ from nio import (
     LoginResponse,
     MatrixRoom,
     RoomMessageText,
-    RoomEncryptedEvent,
     InviteMemberEvent,
     MegolmEvent,
     ToDeviceError,
-    KeyVerificationEvent,
-    KeyVerificationStart,
-    KeyVerificationCancel,
-    KeyVerificationKey,
-    KeyVerificationMac,
 )
 
 from claude_cli import ClaudeCLI
