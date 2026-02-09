@@ -17,10 +17,12 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | future.router-drift-audit-2026-01-08 | Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system). | router, catalog, audit, docs, drift | docs/00_ROUTER.md |
 | future.waybar-drawer-and-idle-toggle | Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX. | waybar, sway, swayfx, keybindings, systemd-user | user/wm/sway/waybar.nix |
 | future.waybar-sov-debug-analysis-2026-01-07 | Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical). | waybar, sov, sway, swayfx, debug, incident, deprecated, daemon-manager | user/wm/sway/** |
+| infrastructure.database-redis | Centralized PostgreSQL and Redis services on LXC_database | infrastructure, database, redis, postgresql, lxc, caching | profiles/LXC_database-config.nix |
 | infrastructure.internal | Complete internal infrastructure documentation with sensitive details (ENCRYPTED) | infrastructure, audit, security, monitoring, proxmox, lxc, secrets | profiles/LXC*-config.nix |
 | infrastructure.overview | Public infrastructure overview with architecture diagram and component descriptions | infrastructure, architecture, proxmox, lxc, monitoring, homelab, pfsense, gateway | profiles/LXC*-config.nix |
 | infrastructure.services.homelab | Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS | infrastructure, homelab, docker, nextcloud, syncthing | profiles/LXC_HOME-config.nix |
 | infrastructure.services.kuma | Uptime Kuma monitoring - local homelab and public VPS status pages with API integration | infrastructure, kuma, uptime-kuma, monitoring, status-pages, lxc_mailer, vps, docker | profiles/LXC_mailer-config.nix |
+| infrastructure.services.liftcraft | LiftCraft (LeftyWorkout) - Training plan management Rails application | infrastructure, liftcraft, leftyworkout, rails, docker, redis | profiles/LXC_liftcraftTEST-config.nix |
 | infrastructure.services.media | Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent | infrastructure, media, docker, jellyfin, arr, plex-alternative | profiles/LXC_HOME-config.nix |
 | infrastructure.services.monitoring | Monitoring stack - Prometheus, Grafana, exporters, alerting | infrastructure, monitoring, prometheus, grafana, alerting | profiles/LXC_monitoring-config.nix |
 | infrastructure.services.pfsense | pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP | infrastructure, pfsense, firewall, gateway, wireguard, dns, dhcp, snmp, pfblockerng, openvpn | docs/infrastructure/INFRASTRUCTURE.md |
@@ -33,6 +35,8 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | security.hardening | Security hardening guidelines for NixOS homelab infrastructure | security, hardening, firewall, services, credentials | system/app/*.nix |
 | security.incident-response | Security incident response procedures for NixOS homelab infrastructure | security, incident-response, credentials, rotation, recovery | secrets/*.nix |
 | setup.grafana-dashboards | Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures. | grafana, prometheus, dashboards, monitoring, alerting, metrics, truenas, wireguard, pfsense, exportarr | system/app/grafana.nix |
+| tailscale-headscale | Tailscale mesh VPN with self-hosted Headscale coordination server | tailscale, headscale, vpn, mesh, networking, wireguard | profiles/LXC_tailscale-config.nix |
+| user-modules.db-credentials | Home Manager module for database credential files (pgpass, my.cnf, redis) | database, credentials, postgresql, mariadb, redis, dbeaver, home-manager | user/app/database/db-credentials.nix |
 | user-modules.doom-emacs | Doom Emacs user module and config layout, including Stylix theme templates and profile integration. | emacs, doom-emacs, editor, stylix, user-modules | user/app/doom-emacs/** |
 | user-modules.gaming | Implementation details for Gaming on NixOS, covering Lutris/Bottles wrappers, Vulkan/RDNA 4 driver fixes, and Wine troubleshooting. | gaming, lutris, bottles, wine, vulkan, amd, rdna4, wrappers, antimicrox, controllers | user/app/games/games.nix |
 | user-modules.lmstudio | LM Studio user module, including MCP server setup templates and web-search tooling integration guidance. | lmstudio, mcp, ai, user-modules | user/app/lmstudio/** |
@@ -52,6 +56,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | user-modules.tmux-persistent-sessions | Complete guide to tmux persistent sessions with automatic save/restore across reboots using tmux-continuum and tmux-resurrect plugins | tmux, persistent, sessions, restore, reboot, systemd, continuum, resurrect | user/app/terminal/tmux.nix |
 | user-modules.windows11-qxl-setup | Complete guide for setting up QXL display drivers in Windows 11 VMs with SPICE for bidirectional clipboard and dynamic resolution support. Includes troubleshooting for resolution issues and driver installation. | virtualization, windows11, qxl, spice, vm, qemu, kvm, virt-manager, display, resolution, clipboard | system/app/virtualization.nix |
 | user-modules.xmonad | XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo. | xmonad, x11, window-manager, haskell, user-modules | user/wm/xmonad/** |
+| waypaper | Waypaper GUI wallpaper manager for Sway (swww backend) | waypaper, wallpaper, sway, swww, gui | user/app/waypaper/waypaper.nix |
 
 ## Notes
 

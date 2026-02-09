@@ -149,19 +149,59 @@ metrics_port: 9000
 
 ## Claude Bot
 
-The Claude bot runs as a Python service that wraps Claude Code CLI.
+The Claude bot runs as a systemd user service that wraps Claude Code CLI, enabling remote Claude assistance via Matrix chat.
+
+### Architecture
+
+```
+┌─────────────────────┐
+│   Matrix Client     │
+│   (Element/etc)     │
+└─────────┬───────────┘
+          │ Messages
+          ▼
+┌─────────────────────┐      ┌─────────────────────┐
+│   Claude Matrix     │      │    Claude Code      │
+│   Bot (Python)      │─────►│    CLI              │
+│   - matrix-nio      │      │    (claude --print) │
+│   - session mgmt    │      └─────────────────────┘
+└─────────────────────┘
+          │
+          ▼
+┌─────────────────────┐
+│   SQLite DB         │
+│   (sessions.db)     │
+└─────────────────────┘
+```
 
 ### Bot Location
 ```
 ~/.claude-matrix-bot/
-├── bot.py                 # Main entry, Matrix client
+├── bot.py                 # Main entry, Matrix client (matrix-nio)
 ├── claude_cli.py          # Claude Code subprocess wrapper
 ├── session_manager.py     # Session persistence (SQLite)
-├── message_queue.py       # Request queue (one at a time)
 ├── config.yaml            # Bot configuration
-├── requirements.txt       # matrix-nio, aiosqlite
-└── systemd/
-    └── claude-matrix-bot.service
+├── access_token           # Matrix access token (chmod 600)
+├── device_id              # Persistent device ID for sessions
+├── sessions.db            # SQLite session database
+├── store/                 # matrix-nio crypto store (E2EE keys)
+└── bot.log                # Application logs
+```
+
+### Systemd Service
+
+The bot runs as a user service:
+```bash
+# Location
+~/.config/systemd/user/claude-matrix-bot.service
+
+# Management
+systemctl --user status claude-matrix-bot
+systemctl --user restart claude-matrix-bot
+journalctl --user -u claude-matrix-bot -f
+
+# Enable on login
+systemctl --user enable claude-matrix-bot
 ```
 
 ### Bot Commands
@@ -174,45 +214,115 @@ The Claude bot runs as a Python service that wraps Claude Code CLI.
 | `/trust` | Trust all your devices for E2E encryption |
 | `/help` | Show available commands |
 
-### End-to-End Encryption (E2EE)
-
-The Claude bot supports Matrix E2E encryption for secure messaging.
-
-**How it works:**
-- Encryption is automatically enabled for encrypted rooms
-- The bot auto-trusts devices of allowed users on startup
-- Use `/trust` to explicitly trust new devices
-- Use `/status` to check encryption status
-
-**Dependencies (installed via NixOS profile):**
-- `matrix-nio[e2e]` - Matrix client with encryption support
-- `python-olm` - Python bindings for libolm
-- `olm` - Olm cryptographic library (marked as insecure but required)
-
-**Troubleshooting decryption failures:**
-- If the bot can't decrypt your message, try `/trust` then resend
-- Check `/status` to verify your devices are trusted
-- Restart the bot to refresh encryption keys: `systemctl --user restart claude-matrix-bot`
-
-### Access Control
+### Configuration
 ```yaml
-# config.yaml
+# ~/.claude-matrix-bot/config.yaml
 matrix:
   homeserver: "https://matrix.local.akunito.com"
-  bot_user: "@claudebot:matrix.local.akunito.com"
-  access_token_file: "/run/secrets/matrix-bot-token"
+  bot_user: "@claudebot2:akunito.com"
+  access_token_file: "/home/akunito/.claude-matrix-bot/access_token"
+  device_name: "ClaudeBot"
 
 access:
   allowed_users:
-    - "@akunito:matrix.local.akunito.com"
-  allowed_rooms:
-    - "!claude-room:matrix.local.akunito.com"
+    - "@akunito:akunito.com"
+  allowed_rooms: []  # Empty = all rooms allowed
 
 claude:
   working_directory: "/home/akunito/.dotfiles"
   session_timeout_hours: 24
-  max_response_length: 2000
+  max_response_length: 4000
+  skip_permissions: false
+
+logging:
+  level: "DEBUG"
+  file: "/home/akunito/.claude-matrix-bot/bot.log"
 ```
+
+### End-to-End Encryption (E2EE)
+
+**Current Status:** E2EE is disabled in the bot due to complexity. Use unencrypted rooms for bot communication.
+
+**Dependencies (installed via NixOS profile):**
+```nix
+# In profiles/LXC_matrix-config.nix
+(pkgs.python311.withPackages (ps: with ps; [
+  aiohttp aiosqlite matrix-nio python-olm
+  pyyaml structlog cachetools peewee atomicwrites pycryptodome
+]))
+```
+
+**Why E2EE is complex:**
+- Requires proper device login flow with persistent device_id
+- Session keys need to be exchanged before messages can be decrypted
+- The bot must maintain a crypto store across restarts
+- New devices joining rooms need key sharing
+
+**Workaround:** Create an unencrypted room for bot communication.
+
+### Access Token Management
+
+Access tokens expire after 24 hours (Synapse default). To regenerate:
+
+```bash
+# 1. Create temp admin if needed
+ssh -A akunito@192.168.8.104
+docker exec synapse register_new_matrix_user -c /data/homeserver.yaml -u tempAdmin -p TempPass123 -a
+
+# 2. Login as admin to get token
+curl -s -X POST "http://localhost:8008/_matrix/client/v3/login" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"m.login.password","user":"tempAdmin","password":"TempPass123"}'
+
+# 3. Reset bot password via admin API
+curl -s -X PUT "http://localhost:8008/_synapse/admin/v2/users/@claudebot2:akunito.com" \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"password":"NewBotPassword"}'
+
+# 4. Login as bot to get new token
+curl -s -X POST "http://localhost:8008/_matrix/client/v3/login" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"m.login.password","user":"claudebot2","password":"NewBotPassword","device_id":"CLAUDEBOT"}'
+
+# 5. Save new token
+echo "NEW_ACCESS_TOKEN" > ~/.claude-matrix-bot/access_token
+chmod 600 ~/.claude-matrix-bot/access_token
+
+# 6. Restart bot
+systemctl --user restart claude-matrix-bot
+```
+
+### Claude Code CLI Authentication
+
+The bot calls `claude --print` which requires a valid Claude Code login on LXC_matrix:
+
+```bash
+# Check Claude CLI status
+ssh -A akunito@192.168.8.104
+claude --version
+
+# If OAuth token expired, re-authenticate
+claude /login
+```
+
+### Troubleshooting
+
+**Bot not responding:**
+1. Check bot service: `systemctl --user status claude-matrix-bot`
+2. Check logs: `journalctl --user -u claude-matrix-bot --since "5 minutes ago"`
+3. Test Claude CLI: `claude --print "hello"` (check for OAuth errors)
+
+**"Error from Claude:" message:**
+- Claude CLI OAuth token expired → Run `claude /login` on LXC_matrix
+
+**Can't decrypt messages:**
+- Room is encrypted but E2EE disabled on bot
+- Solution: Create unencrypted room via bot (or Matrix admin API)
+
+**Access token expired:**
+- Error: `M_UNKNOWN_TOKEN: Access token has expired`
+- Solution: Regenerate token (see Access Token Management above)
 
 ## Reverse Proxy (NPM on LXC_proxy)
 

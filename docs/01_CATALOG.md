@@ -11,24 +11,27 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **lib/flake-base.nix**: Base flake module shared by all profiles
 - **lib/defaults.nix**: Default system and user settings
 - **flake.DESK.nix**: Profile-specific flake configuration
-- **flake.HOME.nix**: Profile-specific flake configuration
-- **flake.VMHOME.nix**: Profile-specific flake configuration
-- **flake.WSL.nix**: Profile-specific flake configuration
-- **flake.LXC.nix**: Profile-specific flake configuration
-- **flake.LXC_plane.nix**: Profile-specific flake configuration
-- **flake.ORIGINAL.nix**: Profile-specific flake configuration
 - **flake.DESK_AGA.nix**: Profile-specific flake configuration
 - **flake.DESK_VMDESK.nix**: Profile-specific flake configuration
+- **flake.HOME.nix**: Profile-specific flake configuration
+- **flake.LAPTOP_AGA.nix**: Profile-specific flake configuration
 - **flake.LAPTOP_L15.nix**: Profile-specific flake configuration
 - **flake.LAPTOP_YOGAAKU.nix**: Profile-specific flake configuration
-- **flake.LAPTOP_AGA.nix**: Profile-specific flake configuration
+- **flake.LXC.nix**: Profile-specific flake configuration
 - **flake.LXC_HOME.nix**: Profile-specific flake configuration
+- **flake.LXC_database.nix**: Profile-specific flake configuration
 - **flake.LXC_liftcraftTEST.nix**: Profile-specific flake configuration
-- **flake.LXC_portfolioprod.nix**: Profile-specific flake configuration
 - **flake.LXC_mailer.nix**: Profile-specific flake configuration
 - **flake.LXC_monitoring.nix**: Profile-specific flake configuration
+- **flake.LXC_plane.nix**: Profile-specific flake configuration
+- **flake.LXC_portfolioprod.nix**: Profile-specific flake configuration
 - **flake.LXC_proxy.nix**: Profile-specific flake configuration
 - **flake.MACBOOK-KOMI.nix**: Profile-specific flake configuration
+- **flake.ORIGINAL.nix**: Profile-specific flake configuration
+- **flake.VMHOME.nix**: Profile-specific flake configuration
+- **flake.WSL.nix**: Profile-specific flake configuration
+- **flake.LXC_matrix.nix**: Profile-specific flake configuration
+- **flake.LXC_tailscale.nix**: Profile-specific flake configuration
 - **flake.nix**: Profile-specific flake configuration
 
 ## Profiles
@@ -36,17 +39,21 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/DESK-config.nix**: DESK Profile Configuration
 - **profiles/DESK_AGA-config.nix**: DESK_AGA Profile Configuration (nixosaga)
 - **profiles/DESK_VMDESK-config.nix**: DESK_VMDESK Profile Configuration (nixosdesk)
+- **profiles/DESKold-config.nix**: DESKold Profile Configuration (Backup of DESK with Plasma 6 + ungoogled-chromium)
 - **profiles/LAPTOP_AGA-config.nix**: LAPTOP_AGA Profile Configuration (nixosaga)
 - **profiles/LAPTOP_L15-config.nix**: LAPTOP Profile Configuration (nixolaptopaku)
 - **profiles/LAPTOP_YOGAAKU-config.nix**: YOGAAKU Profile Configuration
 - **profiles/LXC-base-config.nix**: LXC Base Profile Configuration
 - **profiles/LXC_HOME-config.nix**: LXC_HOME Profile Configuration
+- **profiles/LXC_database-config.nix**: LXC_database Profile Configuration
 - **profiles/LXC_liftcraftTEST-config.nix**: LXC liftcraftTEST Profile Configuration
 - **profiles/LXC_mailer-config.nix**: LXC mailer Profile Configuration
+- **profiles/LXC_matrix-config.nix**: LXC_matrix Profile Configuration
 - **profiles/LXC_monitoring-config.nix**: LXC_monitoring Profile Configuration
 - **profiles/LXC_plane-config.nix**: LXC Default Profile Configuration
 - **profiles/LXC_portfolioprod-config.nix**: LXC portfolioprod Profile Configuration
 - **profiles/LXC_proxy-config.nix**: LXC_proxy Profile Configuration
+- **profiles/LXC_tailscale-config.nix**: LXC_tailscale Profile Configuration
 - **profiles/MACBOOK-KOMI-config.nix**: MACBOOK-KOMI Configuration
 - **profiles/VMHOME-config.nix**: VMHOME Profile Configuration
 - **profiles/WSL-config.nix**: WSL Profile Configuration
@@ -57,12 +64,35 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **system/app/appimage.nix**: System module: appimage.nix
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
+- **system/app/control-panel-native.nix**: Build the native control panel from workspace *Enabled when:* `systemSettings.controlPanelNativeEnable or false`
+- **system/app/control-panel.nix**: Build the control panel web server from workspace *Enabled when:* `systemSettings.controlPanelEnable or false`
+- **system/app/database-backup.nix**: Database Backup Module *Enabled when:*
+   - `lib.mkIf cfg.postgresqlEnable { systemd.services.postgresql-backup = { description = "PostgreSQL Database Daily Backup"; after = [ "postgresql.service" ] ++ lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; wants = lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; requires = [ "postgresql.service" ]; serviceConfig = { Type = "oneshot"; ExecStart = postgresqlBackupScript; User = "root"; Group = "root"; # Security hardening PrivateTmp = true; ProtectSystem = "strict"; ReadWritePaths = [ cfg.location "/var/lib/prometheus-node-exporter" ]; }; }; systemd.timers.postgresql-backup = { description = "PostgreSQL Database Daily Backup Timer"; wantedBy = [ "timers.target" ]; timerConfig = { OnCalendar = cfg.startAt; Persistent = true; RandomizedDelaySec = "5m"; }; }; # Create backup directory systemd.tmpfiles.rules = [ "d ${cfg.location}/postgresql/daily 0750 root root -" ]; }`
+   - `cfg.postgresqlEnable && cfg.hourlyEnable`
+   - `lib.mkIf (cfg.mariadbEnable && cfg.hourlyEnable) { systemd.services.mariadb-backup-hourly = { description = "MariaDB Database Hourly Backup"; after = [ "mysql.service" ] ++ lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; wants = lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; requires = [ "mysql.service" ]; serviceConfig = { Type = "oneshot"; ExecStart = mariadbBackupHourlyScript; User = "root"; Group = "root"; # Security hardening PrivateTmp = true; ProtectSystem = "strict"; ReadWritePaths = [ cfg.location "/var/lib/prometheus-node-exporter" ]; }; }; systemd.timers.mariadb-backup-hourly = { description = "MariaDB Database Hourly Backup Timer"; wantedBy = [ "timers.target" ]; timerConfig = { OnCalendar = cfg.hourlySchedule; Persistent = true; RandomizedDelaySec = "2m"; }; }; # Create hourly backup directory systemd.tmpfiles.rules = [ "d ${cfg.location}/mariadb/hourly 0750 root root -" ]; }`
+   - `cfg.postgresqlEnable || cfg.mariadbEnable`
+- **system/app/database-secrets.nix**: Database Secrets Module *Enabled when:*
+   - `needed for postgres/mysql postStart scripts`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbPlanePassword or "") != ""`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbLiftcraftPassword or "") != ""`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMatrixPassword or "") != ""`
+   - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
+   - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
 - **system/app/docker.nix**: Allow dockerd to be restarted without affecting running container. *Enabled when:* `userSettings.dockerEnable == true`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:* `systemSettings.gamemodeEnable == true`
 - **system/app/grafana.nix**: Grafana & Prometheus Monitoring Stack
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:* `systemSettings.homelabDockerEnable or false`
+- **system/app/mariadb.nix**: MariaDB Server Module *Enabled when:*
+   - `including exporter user if monitoring enabled`
+   - `systemSettings.prometheusMariadbExporterEnable or false`
+- **system/app/pgbouncer.nix**: PgBouncer Connection Pooler Module *Enabled when:*
+   - `moved from top-level`
+   - `systemSettings.postgresqlServerEnable or false`
 - **system/app/portals.nix**: XDG Desktop Portal Configuration
+- **system/app/postgresql.nix**: PostgreSQL Server Module *Enabled when:*
+   - `moved from top-level to settings`
+   - `systemSettings.prometheusPostgresExporterEnable or false`
 - **system/app/prismlauncher.nix**: System module: prismlauncher.nix
 - **system/app/prometheus-blackbox.nix**: Blackbox Exporter for HTTP/HTTPS probes, ICMP ping checks, and TLS certificate monitoring *Enabled when:*
    - `systemSettings.prometheusBlackboxEnable or false`
@@ -71,13 +101,24 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.prometheusExporterEnable or false`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
 - **system/app/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
+- **system/app/prometheus-pfsense-backup.nix**: pfSense Backup Monitoring *Enabled when:* `systemSettings.prometheusPfsenseBackupEnable or false`
 - **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
 - **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
+- **system/app/redis-server.nix**: Redis Server Module *Enabled when:*
+   - `allows multiple instances if needed`
+   - `systemSettings.prometheusRedisExporterEnable or false`
 - **system/app/samba.nix**: System module: samba.nix
 - **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`
 - **system/app/steam.nix**: Steam configuration *Enabled when:* `userSettings.steamPackEnable == true`
+- **system/app/tailscale.nix**: Tailscale/Headscale Mesh VPN Service *Enabled when:*
+   - `systemSettings.tailscaleEnable or false`
+   - `isSubnetRouter || isExitNode`
+   - `systemSettings.tailscaleGuiAutostart or false`
+   - `config.services.prometheus.exporters.node.enable or false`
+   - `${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null`
+   - `allow network to stabilize`
 - **system/app/virtualization.nix**: Virt-manager doc > https://nixos.wiki/wiki/Virt-manager *Enabled when:*
    - `userSettings.virtualizationEnable == true`
    - `userSettings.qemuGuestAddition == true`
@@ -89,6 +130,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Darwin
 
 - **system/darwin/defaults.nix**: macOS System Defaults Configuration
+- **system/darwin/env-profile.nix**: Environment Profile Variable Module (Darwin/macOS)
 - **system/darwin/homebrew.nix**: Homebrew Configuration for macOS *Enabled when:* `repositories`
 - **system/darwin/keyboard.nix**: Keyboard Configuration for macOS
 - **system/darwin/security.nix**: Security Configuration for macOS
@@ -120,6 +162,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.profile == "homelab"`
 - **system/hardware/kernel.nix**: System module: kernel.nix
 - **system/hardware/keychron.nix**: Grant access to Keychron keyboards for the Keychron Launcher / VIA
+- **system/hardware/network-bonding.nix**: Network bonding (LACP link aggregation) module *Enabled when:*
+   - `bondingEnabled && interfaces != []`
+   - `staticIp != null && !useDhcp`
+   - `cfg.networkManager or true`
 - **system/hardware/nfs_client.nix**: You need to install pkgs.nfs-utils *Enabled when:* `systemSettings.nfsClientEnable == true`
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
 - **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:*
@@ -172,11 +218,17 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.homeBackupEnable == true`
    - `systemSettings.remoteBackupEnable == true`
    - `systemSettings.backupMonitoringEnable or false`
+   - `systemSettings.pfsenseBackupEnable or false`
 - **system/security/sshd.nix**: Enable incoming ssh
 - **system/security/sudo.nix**: groups = [ "wheel" ]; *Enabled when:*
    - `systemSettings.sudoNOPASSWD == true`
+   - `systemSettings.sshAgentSudoEnable or false`
    - `systemSettings.wrappSudoToDoas == true`
 - **system/security/update-failure-notification.nix**: Email notification service for auto-update failures *Enabled when:* `systemSettings.notificationOnFailureEnable or false`
+
+### Shell
+
+- **system/shell/env-profile.nix**: Environment Profile Variable Module (NixOS)
 
 ### Style
 
@@ -199,9 +251,16 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.sddmSetupScript != null`
    - `(userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.sddmSetupScript != null`
    - `systemSettings.hostname == "nixosaku"`
-- **system/wm/sway.nix**: Import shared dependencies *Enabled when:*
-   - `userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true`
-   - `(userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true) && systemSettings.gpuType == "amd"`
+- **system/wm/sway.nix**: Helper: is Sway enabled (either as primary WM or as dual-WM with Plasma) *Enabled when:*
+   - `lib.mkMerge [ # Base SDDM settings { enable = true; # Use X11 greeter when setup script is enabled (xrandr doesn't work with Wayland greeter) wayland.enable = !(systemSettings.sddmSetupScript or null != null); } # Theme settings (controlled by sddmBreezePatchedTheme flag) (lib.mkIf (systemSettings.sddmBreezePatchedTheme or false) { settings = { Theme = { Current = "breeze-patched"; }; }; }) # Setup script for monitor configuration (e.g., portrait rotation) (lib.mkIf ((systemSettings.sddmSetupScript or null) != null) { setupScript = systemSettings.sddmSetupScript; }) ]`
+   - `controlled by sddmBreezePatchedTheme flag`
+   - `swayEnabled && (systemSettings.sddmBreezePatchedTheme or false)`
+   - `fixes Lutris "Found no drivers" error`
+   - `swayEnabled && systemSettings.gpuType == "amd"`
+   - `wlroots implementation`
+   - `Sway-specific`
+   - `English/Spanish`
+   - `AltGr Dead Keys`
 - **system/wm/wayland.nix**: environment.systemPackages = with pkgs;
 - **system/wm/x11.nix**: Configure X11
 - **system/wm/xmonad.nix**: import X11 config
@@ -217,6 +276,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/qute-containers.nix**: User module: qute-containers.nix
 - **user/app/browser/qutebrowser.nix**: bindings from doom emacs
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
+- **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:*
+   - `builtins.length postgresCredentials > 0`
+   - `builtins.length mariadbCredentials > 0`
+   - `redisPassword != ""`
 - **user/app/development/development.nix**: Development tools and IDEs
 - **user/app/dmenu-scripts/networkmanager-dmenu.nix**: gui_if_available = <True or False> (Default: True)
 - **user/app/doom-emacs/doom.nix**: This block from https://github.com/znewman01/dotfiles/blob/be9f3a24c517a4ff345f213bf1cf7633713c9278/emacs/default.nix#L12-L34
@@ -230,7 +293,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
 - **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
-- **user/app/swaybgplus/swaybgplus.nix**: !/bin/sh *Enabled when:* `systemSettings.swaybgPlusEnable or false`
+- **user/app/swaybgplus/swaybgplus.nix**: ============================================================================ *Enabled when:* `systemSettings.swaybgPlusEnable or false`
 - **user/app/swww/swww.nix**: !/bin/sh *Enabled when:*
    - `wallpaper backend for SwayFX`
    - `SwayFX`
@@ -240,6 +303,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/terminal/kitty.nix**: Wrapper script to auto-start tmux with kitty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/tmux.nix**: Clipboard command differs between macOS (pbcopy) and Linux (wl-copy) *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
+- **user/app/waypaper/waypaper.nix**: Waypaper wrapper script for Sway session restoration *Enabled when:* `systemSettings.waypaperEnable or false`
 
 ### Hardware
 
@@ -293,7 +357,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/debug/relog-instrumentation.nix**: NDJSON sink for this repo (debug-mode compatible).
 - **user/wm/sway/default.nix**: Internal cross-module wiring (kept minimal).
 - **user/wm/sway/extras.nix**: Btop theme configuration (Stylix colors) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
-- **user/wm/sway/kanshi.nix**: Official/standard dynamic output configuration for Sway/SwayFX (wlroots): kanshi. *Enabled when:* `wlroots`
+- **user/wm/sway/kanshi.nix**: Declarative mode: Nix manages kanshi config *Enabled when:*
+   - `lib.mkIf declarativeMode { services.kanshi.settings = systemSettings.swayKanshiSettings; # Ensure Home Manager owns kanshi config robustly xdg.configFile."kanshi/config".force = true; }`
+   - `dirname "$KANSHI_CONFIG"`
+- **user/wm/sway/nwg-displays.nix**: User module: nwg-displays.nix
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
 - **user/wm/sway/session-env.nix**: Script to sync theme variables with D-Bus activation environment
 - **user/wm/sway/session-systemd.nix**: Volume/brightness OSD (matches Hyprland behavior) *Enabled when:*
@@ -305,8 +372,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/sway.nix**: User module: sway.nix
 - **user/wm/sway/swayfx-config.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
    - `systemSettings.stylixEnable == true`
+   - `systemSettings.waypaperEnable or false`
    - `systemSettings.gamemodeEnable == true`
 - **user/wm/sway/waybar.nix**: Some GPU tooling is optional depending on hardware / nixpkgs settings.
+- **user/wm/sway/workspace-groups-gui.nix**: Python with GTK dependencies
 - **user/wm/xmonad/xmonad.nix**: User module: xmonad.nix
 
 ## Documentation
@@ -365,12 +434,16 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Infrastructure / Services
 
+- **docs/infrastructure/services/database-redis.md**: Centralized PostgreSQL and Redis services on LXC_database
 - **docs/infrastructure/services/homelab-stack.md**: Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS
 - **docs/infrastructure/services/kuma.md**: Uptime Kuma monitoring - local homelab and public VPS status pages with API integration
+- **docs/infrastructure/services/liftcraft.md**: LiftCraft (LeftyWorkout) - Training plan management Rails application
+- **docs/infrastructure/services/matrix.md**: Self-hosted Matrix server with Element web client and Claude bot integration.
 - **docs/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
 - **docs/infrastructure/services/monitoring-stack.md**: Monitoring stack - Prometheus, Grafana, exporters, alerting
 - **docs/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 - **docs/infrastructure/services/proxy-stack.md**: Proxy stack - NPM, cloudflared, ACME certificates
+- **docs/infrastructure/services/tailscale-headscale.md**: Tailscale mesh VPN with self-hosted Headscale coordination server
 - **docs/infrastructure/services/vps-wireguard.md**: VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring
 
 ### Keybindings
@@ -421,6 +494,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### User-Modules
 
+- **docs/user-modules/db-credentials.md**: Home Manager module for database credential files (pgpass, my.cnf, redis)
 - **docs/user-modules/doom-emacs.md**: Doom Emacs user module and config layout, including Stylix theme templates and profile integration.
 - **docs/user-modules/gaming.md**: Implementation details for Gaming on NixOS, covering Lutris/Bottles wrappers, Vulkan/RDNA 4 driver fixes, and Wine troubleshooting.
 - **docs/user-modules/lmstudio.md**: LM Studio user module, including MCP server setup templates and web-search tooling integration guidance.
@@ -440,5 +514,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/tmux-persistent-sessions.md**: Complete guide to tmux persistent sessions with automatic save/restore across reboots using tmux-continuum and tmux-resurrect plugins
 - **docs/user-modules/tmux.md**: Tmux terminal multiplexer module with custom keybindings, SSH smart launcher, and Stylix integration for modern terminal workflow.
 - **docs/user-modules/unified-dark-theme-portals.md**: **ID:** `user-modules.unified-dark-theme-portals`
+- **docs/user-modules/waypaper.md**: Waypaper GUI wallpaper manager for Sway (swww backend)
 - **docs/user-modules/windows11-qxl-setup.md**: Complete guide for setting up QXL display drivers in Windows 11 VMs with SPICE for bidirectional clipboard and dynamic resolution support. Includes troubleshooting for resolution issues and driver installation.
 - **docs/user-modules/xmonad.md**: XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo.

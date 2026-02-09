@@ -352,6 +352,66 @@ ssh -A akunito@192.168.8.104 "curl -s -H 'Authorization: Bearer BOT_TOKEN' \
   http://localhost:8008/_matrix/client/v3/joined_rooms | jq"
 ```
 
+### Claude CLI OAuth Token Expired
+
+If bot logs show "OAuth token has expired" error:
+
+```bash
+# Re-authenticate Claude on LXC_matrix
+ssh -A akunito@192.168.8.104
+claude /login
+# Follow the web auth flow, then restart bot
+systemctl --user restart claude-matrix-bot
+```
+
+### Matrix Bot Access Token Expired
+
+If bot logs show "M_UNKNOWN_TOKEN" error (tokens expire after 24h):
+
+```bash
+# Quick regeneration flow
+ssh -A akunito@192.168.8.104
+
+# 1. Create temp admin (ignore if exists)
+docker exec synapse register_new_matrix_user -c /data/homeserver.yaml -u tempAdmin -p TempPass123 -a 2>&1 || true
+
+# 2. Get admin token
+ADMIN_TOKEN=$(curl -s -X POST "http://localhost:8008/_matrix/client/v3/login" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"m.login.password","user":"tempAdmin","password":"TempPass123"}' | jq -r '.access_token')
+
+# 3. Reset bot password
+curl -s -X PUT "http://localhost:8008/_synapse/admin/v2/users/@claudebot2:akunito.com" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"password":"NewBotPass123"}'
+
+# 4. Get new bot token
+NEW_TOKEN=$(curl -s -X POST "http://localhost:8008/_matrix/client/v3/login" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"m.login.password","user":"claudebot2","password":"NewBotPass123","device_id":"CLAUDEBOT"}' | jq -r '.access_token')
+
+# 5. Save and restart
+echo "$NEW_TOKEN" > ~/.claude-matrix-bot/access_token
+chmod 600 ~/.claude-matrix-bot/access_token
+systemctl --user restart claude-matrix-bot
+```
+
+### Bot Can't Decrypt Messages (E2EE)
+
+E2EE is currently disabled on the bot. Create unencrypted rooms instead:
+
+```bash
+# From LXC_matrix, using bot token
+ssh -A akunito@192.168.8.104
+BOT_TOKEN=$(cat ~/.claude-matrix-bot/access_token)
+
+curl -s -X POST "http://localhost:8008/_matrix/client/v3/createRoom" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $BOT_TOKEN" \
+  -d '{"name":"Claude Bot (Unencrypted)","preset":"private_chat","invite":["@akunito:akunito.com"]}'
+```
+
 ---
 
 ## Backup & Recovery
