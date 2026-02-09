@@ -307,9 +307,11 @@ in
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
           "${hyper}+B" =
             "exec env ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
-          # SwayBG+ (wallpaper UI) - moved from hyper+s
-          # "${hyper}+s" = "exec swaybgplus-gui";
+          # Control Panel (NixOS Infrastructure Management) - hyper+S
           "${hyper}+s" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh control-panel control-panel";
+          # Pavucontrol (Audio mixer) - hyper+Shift+a (A for Audio)
+          "${hyper}+Shift+a" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
           # Waypaper (wallpaper GUI) - Hyper+Shift+b (b for background)
           "${hyper}+Shift+b" = lib.mkIf (systemSettings.waypaperEnable or false) "exec waypaper";
@@ -347,7 +349,7 @@ in
           # Note: Removed "${hyper}+l" to avoid conflict with "${hyper}+L" (telegram)
           "${hyper}+f" = "fullscreen toggle";
           "${hyper}+Shift+space" = "floating toggle";
-          # Note: "${hyper}+s" is used for pavucontrol (see application bindings above)
+          # Note: "${hyper}+s" is used for control-panel (see application bindings above)
           # Note: "${hyper}+w" is used for workspace next_on_output (see Workspace navigation above)
           # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (dolphin file explorer)
           # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (blueman-manager)
@@ -1107,6 +1109,10 @@ in
 
       # Mission Center - Floating, Sticky, Resized
       for_window [app_id="io.missioncenter.MissionCenter"] floating enable, sticky enable, resize set 800 600
+
+      # Control Panel (NixOS Infrastructure Management) - Floating, Sticky
+      for_window [app_id="control-panel"] floating enable, sticky enable
+      for_window [title="NixOS Control Panel"] floating enable, sticky enable
 
       # KWallet - Force to Primary Monitor, Workspace 1 (Floating, Sticky)
       # Multiple rules to catch all KWallet variants (kwalletd5, kwalletd6, kwallet-query, etc.)
