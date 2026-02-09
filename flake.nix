@@ -62,8 +62,8 @@
       flake = false;
     };
 
+    # nix-citizen uses its own nixpkgs pin (wine-astral is incompatible with latest nixpkgs-unstable)
     nix-citizen.url = "github:LovingMelody/nix-citizen";
-    nix-citizen.inputs.nixpkgs.follows = "nixpkgs";
 
     # Darwin (macOS) support
     darwin = {
