@@ -85,7 +85,7 @@
     rsyncWrapper = true;
     homeBackupEnable = false;
     homeBackupDescription = "Backup Home Directory with Restic";
-    homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup.sh";
+    homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/scripts/backup-manager.sh --auto --target nfs --job home";
     homeBackupUser = "akunito";
     homeBackupTimerDescription = "Timer for home_backup service";
     homeBackupOnCalendar = "0/6:00:00";
@@ -97,6 +97,15 @@
     remoteBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/myScripts/personal_backup_remote.sh";
     remoteBackupUser = "akunito";
     remoteBackupTimerDescription = "Timer for remote_backup service";
+
+    vpsBackupEnable = false;
+    vpsBackupDescription = "Backup VPS Configuration with Restic";
+    vpsBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/scripts/backup-manager.sh --auto --target nfs --job vps";
+    vpsBackupUser = "akunito";
+    vpsBackupTimerDescription = "Timer for vps_backup service";
+    vpsBackupOnCalendar = "weekly";
+
+    nfsBackupEnable = false; # Documentation flag - actual NFS mount configured via nfsMounts
 
     # Network defaults
     networkManager = true;

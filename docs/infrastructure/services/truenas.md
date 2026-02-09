@@ -35,6 +35,7 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 **hddpool** (bulk storage):
 - `hddpool/media` - Jellyfin media library (movies, TV shows)
 - `hddpool/proxmox_backups` - Proxmox VM/LXC backup storage
+- `hddpool/workstation_backups` - Workstation restic backups (DESK, LAPTOP_L15, VPS)
 
 **ssdpool** (performance storage):
 - `ssdpool/library` - Calibre ebook library
@@ -54,8 +55,9 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 | /mnt/ssdpool/library | ssdpool/library | LXC_HOME | Ebook library (Calibre-Web) |
 | /mnt/hddpool/proxmox_backups | hddpool/proxmox_backups | Proxmox | VM/LXC backup target |
 | /mnt/ssdpool/ssd_data_backups | ssdpool/ssd_data_backups | Proxmox | Fast backup storage |
+| /mnt/hddpool/workstation_backups | hddpool/workstation_backups | 192.168.8.96, 192.168.8.92 | Workstation restic backups (NFS-based unified backup system) |
 
-**Access**: NFSv4, no_root_squash for Proxmox, all_squash for LXC containers
+**Access**: NFSv4, no_root_squash for Proxmox, all_squash (mapall_user=akunito) for workstations and LXC containers
 
 ### SMB Shares (Desktop Access)
 | Share | Dataset | Purpose |
@@ -289,7 +291,7 @@ ssh truenas_admin@192.168.20.200 'midclt call service.restart iscsitarget'
 **Snapshot Strategy**:
 - Prefix: `autoreplica-YYYYMMDD-HHMMSS`
 - Retention: 2 per dataset (current + previous for incremental base)
-- Encryption: Destination inherits from `hddpool/ssd_data_backups` encryption root
+- Encryption: Uses `zfs recv -x encryption` so destination inherits from `hddpool/ssd_data_backups` encryption root
 
 **Manual Operations**:
 ```bash

@@ -118,6 +118,8 @@ in
     # Backups
     homeBackupEnable = true;
     homeBackupCallNextEnabled = false;
+    vpsBackupEnable = true;
+    nfsBackupEnable = true;
 
     # Network
     ipAddress = "192.168.8.96";
@@ -231,6 +233,12 @@ in
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
       }
+      {
+        what = "192.168.20.200:/mnt/hddpool/workstation_backups";
+        where = "/mnt/NFS_Backups";
+        type = "nfs";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
+      }
     ];
     nfsAutoMounts = [
       {
@@ -247,6 +255,12 @@ in
       }
       {
         where = "/mnt/NFS_emulators";
+        automountConfig = {
+          TimeoutIdleSec = "600";
+        };
+      }
+      {
+        where = "/mnt/NFS_Backups";
         automountConfig = {
           TimeoutIdleSec = "600";
         };

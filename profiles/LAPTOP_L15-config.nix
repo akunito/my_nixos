@@ -29,6 +29,7 @@ in
     homeBackupEnable = true;
     homeBackupOnCalendar = "0/6:00:00";
     homeBackupCallNextEnabled = false;
+    nfsBackupEnable = true;
 
     # Network
     ipAddress = "192.168.8.92";
@@ -64,6 +65,12 @@ in
         type = "nfs";
         options = "noatime";
       }
+      {
+        what = "192.168.20.200:/mnt/hddpool/workstation_backups";
+        where = "/mnt/NFS_Backups";
+        type = "nfs";
+        options = "noatime";
+      }
     ];
     nfsAutoMounts = [
       {
@@ -80,6 +87,12 @@ in
       }
       {
         where = "/mnt/NFS_emulators";
+        automountConfig = {
+          TimeoutIdleSec = "600";
+        };
+      }
+      {
+        where = "/mnt/NFS_Backups";
         automountConfig = {
           TimeoutIdleSec = "600";
         };

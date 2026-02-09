@@ -7,6 +7,7 @@ let
     TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile"
     METRICS_FILE="$TEXTFILE_DIR/backup.prom"
     TEMP_FILE="$TEXTFILE_DIR/backup.prom.tmp"
+    HOSTNAME=$(hostname)
 
     # Ensure directory exists
     mkdir -p "$TEXTFILE_DIR"
@@ -21,36 +22,58 @@ let
     echo "# HELP backup_repository_healthy Whether the repository is accessible (1=yes, 0=no)" >> "$TEMP_FILE"
     echo "# TYPE backup_repository_healthy gauge" >> "$TEMP_FILE"
 
-    # Check restic repository
-    export RESTIC_REPOSITORY="${systemSettings.backupMonitoringRepo or "/mnt/DATA_4TB/backups/NixOS_homelab/Home.restic/"}"
     export RESTIC_PASSWORD_FILE="${systemSettings.backupMonitoringPasswordFile or "/home/${userSettings.username}/myScripts/restic.key"}"
-
     NOW=$(date +%s)
 
-    # Try to get snapshots info
-    if SNAPSHOTS=$(/run/wrappers/bin/restic snapshots --json 2>/dev/null); then
-      SNAPSHOT_COUNT=$(echo "$SNAPSHOTS" | ${pkgs.jq}/bin/jq 'length')
-      LAST_BACKUP=$(echo "$SNAPSHOTS" | ${pkgs.jq}/bin/jq -r 'sort_by(.time) | last | .time // empty')
+    # Function to check a repository
+    check_repo() {
+      local repo_path="$1"
+      local repo_label="$2"
 
-      if [ -n "$LAST_BACKUP" ]; then
-        LAST_TIMESTAMP=$(date -d "$LAST_BACKUP" +%s 2>/dev/null || echo "0")
-        AGE_SECONDS=$((NOW - LAST_TIMESTAMP))
-
-        echo "backup_last_success_timestamp{repo=\"home\"} $LAST_TIMESTAMP" >> "$TEMP_FILE"
-        echo "backup_age_seconds{repo=\"home\"} $AGE_SECONDS" >> "$TEMP_FILE"
-      else
-        echo "backup_last_success_timestamp{repo=\"home\"} 0" >> "$TEMP_FILE"
-        echo "backup_age_seconds{repo=\"home\"} 999999999" >> "$TEMP_FILE"
+      if [ ! -d "$repo_path" ]; then
+        echo "backup_last_success_timestamp{repo=\"$repo_label\"} 0" >> "$TEMP_FILE"
+        echo "backup_age_seconds{repo=\"$repo_label\"} 999999999" >> "$TEMP_FILE"
+        echo "backup_snapshots_total{repo=\"$repo_label\"} 0" >> "$TEMP_FILE"
+        echo "backup_repository_healthy{repo=\"$repo_label\"} 0" >> "$TEMP_FILE"
+        return
       fi
 
-      echo "backup_snapshots_total{repo=\"home\"} $SNAPSHOT_COUNT" >> "$TEMP_FILE"
-      echo "backup_repository_healthy{repo=\"home\"} 1" >> "$TEMP_FILE"
-    else
-      echo "backup_last_success_timestamp{repo=\"home\"} 0" >> "$TEMP_FILE"
-      echo "backup_age_seconds{repo=\"home\"} 999999999" >> "$TEMP_FILE"
-      echo "backup_snapshots_total{repo=\"home\"} 0" >> "$TEMP_FILE"
-      echo "backup_repository_healthy{repo=\"home\"} 0" >> "$TEMP_FILE"
+      export RESTIC_REPOSITORY="$repo_path"
+
+      # Try to get snapshots info
+      if SNAPSHOTS=$(/run/wrappers/bin/restic snapshots --json 2>/dev/null); then
+        SNAPSHOT_COUNT=$(echo "$SNAPSHOTS" | ${pkgs.jq}/bin/jq 'length')
+        LAST_BACKUP=$(echo "$SNAPSHOTS" | ${pkgs.jq}/bin/jq -r 'sort_by(.time) | last | .time // empty')
+
+        if [ -n "$LAST_BACKUP" ]; then
+          LAST_TIMESTAMP=$(date -d "$LAST_BACKUP" +%s 2>/dev/null || echo "0")
+          AGE_SECONDS=$((NOW - LAST_TIMESTAMP))
+
+          echo "backup_last_success_timestamp{repo=\"$repo_label\"} $LAST_TIMESTAMP" >> "$TEMP_FILE"
+          echo "backup_age_seconds{repo=\"$repo_label\"} $AGE_SECONDS" >> "$TEMP_FILE"
+        else
+          echo "backup_last_success_timestamp{repo=\"$repo_label\"} 0" >> "$TEMP_FILE"
+          echo "backup_age_seconds{repo=\"$repo_label\"} 999999999" >> "$TEMP_FILE"
+        fi
+
+        echo "backup_snapshots_total{repo=\"$repo_label\"} $SNAPSHOT_COUNT" >> "$TEMP_FILE"
+        echo "backup_repository_healthy{repo=\"$repo_label\"} 1" >> "$TEMP_FILE"
+      else
+        echo "backup_last_success_timestamp{repo=\"$repo_label\"} 0" >> "$TEMP_FILE"
+        echo "backup_age_seconds{repo=\"$repo_label\"} 999999999" >> "$TEMP_FILE"
+        echo "backup_snapshots_total{repo=\"$repo_label\"} 0" >> "$TEMP_FILE"
+        echo "backup_repository_healthy{repo=\"$repo_label\"} 0" >> "$TEMP_FILE"
+      fi
+    }
+
+    # Check NFS-based repos if NFS is mounted
+    if mountpoint -q /mnt/NFS_Backups 2>/dev/null; then
+      check_repo "/mnt/NFS_Backups/$HOSTNAME/home.restic" "home_nfs"
+      check_repo "/mnt/NFS_Backups/shared/vps.restic" "vps_nfs"
     fi
+
+    # Check legacy repo (fallback to systemSettings or default)
+    check_repo "${systemSettings.backupMonitoringRepo or "/mnt/DATA_4TB/backups/NixOS_homelab/Home.restic/"}" "home_legacy"
 
     # Atomically move temp file to final location
     mv "$TEMP_FILE" "$METRICS_FILE"
@@ -105,6 +128,26 @@ in
       ExecStart = systemSettings.remoteBackupExecStart;
       User = systemSettings.remoteBackupUser;
       Environment = "PATH=/run/current-system/sw/bin:/usr/bin:/bin";
+    };
+  };
+
+  # ====================== VPS Backup settings ======================
+  # Weekly backup of VPS configuration via SSHFS
+  systemd.services.vps_backup = lib.mkIf (systemSettings.vpsBackupEnable == true) {
+    description = systemSettings.vpsBackupDescription;
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = systemSettings.vpsBackupExecStart;
+      User = systemSettings.vpsBackupUser;
+      Environment = "PATH=/run/current-system/sw/bin:/usr/bin:/bin";
+    };
+  };
+  systemd.timers.vps_backup = lib.mkIf (systemSettings.vpsBackupEnable == true) {
+    description = systemSettings.vpsBackupTimerDescription;
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = systemSettings.vpsBackupOnCalendar;
+      Persistent = true;
     };
   };
 
