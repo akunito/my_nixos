@@ -43,11 +43,8 @@ capture() {
 }
 
 save_screenshot() {
-  # Save screenshot to permanent location before opening Swappy
-  # This ensures we always have a file path for Ctrl+Alt+C, regardless of Swappy save behavior
-  SCREENSHOT_DIR="$HOME/Pictures/Screenshots"
-  mkdir -p "$SCREENSHOT_DIR"
-  SAVED_FILE="$SCREENSHOT_DIR/swappy-$(date +%Y%m%d-%H%M%S).png"
+  # Save screenshot to /tmp for Ctrl+Alt+C path copying (auto-cleaned on reboot)
+  SAVED_FILE="/tmp/screenshot-$(date +%Y%m%d-%H%M%S).png"
   cp "$TMP_FILE" "$SAVED_FILE"
   echo "$SAVED_FILE" > /tmp/last-screenshot-path
 }
