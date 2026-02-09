@@ -1,12 +1,34 @@
 {
-  description = "Flake for my Desktop";
+  description = "Unified NixOS/nix-darwin flake for all profiles";
 
   outputs = inputs@{ self, ... }:
     let
-      base = import ./lib/flake-base.nix;
-      profileConfig = import ./profiles/DESK-config.nix;
+      mkUnified = import ./lib/flake-unified.nix;
     in
-      base { inherit inputs self profileConfig; };
+      mkUnified {
+        inherit inputs self;
+        profiles = {
+          DESK = ./profiles/DESK-config.nix;
+          DESK_AGA = ./profiles/DESK_AGA-config.nix;
+          DESK_VMDESK = ./profiles/DESK_VMDESK-config.nix;
+          LAPTOP_L15 = ./profiles/LAPTOP_L15-config.nix;
+          LAPTOP_AGA = ./profiles/LAPTOP_AGA-config.nix;
+          LAPTOP_YOGAAKU = ./profiles/LAPTOP_YOGAAKU-config.nix;
+          VMHOME = ./profiles/VMHOME-config.nix;
+          WSL = ./profiles/WSL-config.nix;
+          LXC_HOME = ./profiles/LXC_HOME-config.nix;
+          LXC_proxy = ./profiles/LXC_proxy-config.nix;
+          LXC_plane = ./profiles/LXC_plane-config.nix;
+          LXC_mailer = ./profiles/LXC_mailer-config.nix;
+          LXC_liftcraftTEST = ./profiles/LXC_liftcraftTEST-config.nix;
+          LXC_portfolioprod = ./profiles/LXC_portfolioprod-config.nix;
+          LXC_database = ./profiles/LXC_database-config.nix;
+          LXC_tailscale = ./profiles/LXC_tailscale-config.nix;
+          LXC_monitoring = ./profiles/LXC_monitoring-config.nix;
+          LXC_matrix = ./profiles/LXC_matrix-config.nix;
+          MACBOOK-KOMI = ./profiles/MACBOOK-KOMI-config.nix;
+        };
+      };
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -42,5 +64,14 @@
 
     nix-citizen.url = "github:LovingMelody/nix-citizen";
     nix-citizen.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Darwin (macOS) support
+    darwin = {
+      url = "github:lnl7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Hardware-specific configurations (used by LAPTOP profiles)
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
   };
 }

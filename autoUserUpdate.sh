@@ -13,19 +13,17 @@ else
 fi
 HM_BRANCH=${2:-master}
 
-# Sync flake.nix with active profile (ensures correct profile after git operations)
+# Read active profile
 if [ -f "$SCRIPT_DIR/.active-profile" ]; then
     ACTIVE_PROFILE=$(cat "$SCRIPT_DIR/.active-profile")
-    if [ -f "$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix" ]; then
-        cp "$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix" "$SCRIPT_DIR/flake.nix"
-        echo -e "Using active profile: $ACTIVE_PROFILE"
-    fi
+    echo -e "Using active profile: $ACTIVE_PROFILE"
+else
+    echo -e "Error: .active-profile not found. Run install.sh first."
+    exit 1
 fi
-# Stage flake.nix so Nix can see it (required for flakes even if gitignored)
-git -C "$SCRIPT_DIR" add -f flake.nix 2>/dev/null || true
 
 echo -e "Running home-manager switch (branch: $HM_BRANCH)"
-if nix run home-manager/$HM_BRANCH --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#user --show-trace; then
+if nix run home-manager/$HM_BRANCH --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace; then
     echo -e "Home-manager switch successful"
 
     # Write Prometheus metrics for auto-update tracking

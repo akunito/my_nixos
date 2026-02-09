@@ -131,7 +131,7 @@ To enable NixVim for additional profiles:
 
 ### Flake Input
 
-NixVim is added as a flake input in `flake.DESK.nix`:
+NixVim is added as a flake input in `flake.nix`:
 
 ```nix
 nixvim = {
@@ -671,7 +671,7 @@ The module is located at:
 
 - **Module File**: `user/app/nixvim/nixvim.nix`
 - **Import Path**: `../../user/app/nixvim/nixvim.nix` (from `profiles/work/home.nix`)
-- **Flake Input**: `inputs.nixvim` in `flake.DESK.nix`
+- **Flake Input**: `inputs.nixvim` in `flake.nix`
 
 ### Dependencies
 

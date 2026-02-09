@@ -54,7 +54,7 @@ sudo blkid
 boot.initrd.luks.devices."DATA_4TB".device = "/dev/disk/by-uuid/YOUR-UUID";
 ```
 
-This is now done in `flake.PROFILE.nix` by variables together with `drives.nix`.
+This is now done in `your profile config (`profiles/PROFILE-config.nix`)` by variables together with `drives.nix`.
 
 #### Step 2: Run Install Script and Reboot
 
@@ -95,7 +95,7 @@ When you run `install.sh` again, the device is added automatically to `hardware-
 
 ### Using Flake Variables
 
-Configure drives via flake variables in `flake.PROFILE.nix`:
+Configure drives via flake variables in `your profile config (`profiles/PROFILE-config.nix`)`:
 
 ```nix
 systemSettings = {

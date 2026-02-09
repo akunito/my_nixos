@@ -22,7 +22,10 @@ If you’re using Cursor or another coding agent, start with `docs/00_ROUTER.md`
 The configuration uses a modular architecture:
 
 ```
-flake.nix (or flake.PROFILE.nix)
+flake.nix (unified, all profiles)
+├── lib/flake-unified.nix (generates configs for all profiles)
+├── lib/flake-base.nix (per-profile builder)
+├── profiles/*-config.nix (profile settings)
 ├── System Configuration (configuration.nix)
 │   └── system/ modules
 └── User Configuration (home.nix)
@@ -31,9 +34,9 @@ flake.nix (or flake.PROFILE.nix)
 
 ### Flake Files
 
-- **`flake.nix`** - Active configuration (copied from profile-specific flake)
-- **`flake.*.nix`** - Profile-specific configurations (e.g., `flake.DESK.nix`, `flake.HOME.nix`)
-- **`flake.lock`** - Locked dependency versions
+- **`flake.nix`** - Unified flake containing all profiles and inputs
+- **`flake.lock`** - Locked dependency versions (shared by all profiles)
+- **`.active-profile`** - Per-machine file recording active profile name (gitignored)
 
 ### Configuration Files
 
@@ -44,30 +47,41 @@ flake.nix (or flake.PROFILE.nix)
 
 ## Flake Management
 
-### Profile-Specific Flakes
+### Unified Flake
 
-Each machine/profile has its own flake file:
+All profiles are defined in a single `flake.nix` using the `lib/flake-unified.nix` builder. Each profile maps to a `profiles/*-config.nix` file:
 
-- `flake.DESK.nix` - Desktop computer
-- `flake.HOME.nix` - Home server
-- `flake.LAPTOP.nix` - Laptop
-- `flake.WSL.nix` - WSL installation
-- etc.
+```nix
+# In flake.nix
+profiles = {
+  DESK = ./profiles/DESK-config.nix;
+  LAPTOP_L15 = ./profiles/LAPTOP_L15-config.nix;
+  LXC_monitoring = ./profiles/LXC_monitoring-config.nix;
+  MACBOOK-KOMI = ./profiles/MACBOOK-KOMI-config.nix;
+  # ...
+};
+```
 
 ### Switching Profiles
 
-The `install.sh` script automatically switches profiles:
+The `install.sh` script records the active profile:
 
 ```sh
 ./install.sh ~/.dotfiles "DESK"
-# Copies flake.DESK.nix → flake.nix
+# Records DESK in .active-profile, builds nixosConfigurations.DESK
 ```
 
 ### Manual Profile Switch
 
 ```sh
-cp flake.DESK.nix flake.nix
-aku sync
+echo "DESK" > .active-profile
+sudo nixos-rebuild switch --flake .#DESK --impure
+```
+
+### Listing Available Profiles
+
+```sh
+nix eval .#nixosConfigurations --apply 'x: builtins.attrNames x'
 ```
 
 ## Variables and Settings
@@ -376,7 +390,7 @@ home.username = "akunito";
 
 ### 2. Keep Profile-Specific Settings in Flake Files
 
-Profile-specific configurations should be in `flake.PROFILE.nix`, not in modules.
+Profile-specific configurations should be in `profiles/PROFILE-config.nix`, not in modules.
 
 ### 3. Use Conditional Enabling
 
@@ -398,7 +412,7 @@ iwlwifiDisablePowerSave = true;
 
 After making changes:
 1. Test syntax: `nix flake check`
-2. Build dry-run: `nixos-rebuild build --flake .#system`
+2. Build dry-run: `nixos-rebuild build --flake .#DESK` (replace with your profile)
 3. Apply: `aku sync`
 
 ### 6. Version Control

@@ -115,7 +115,7 @@ Configure sudo to allow Restic to run without password prompts.
 
 ### Step 1: Add to Flake Configuration
 
-Add Restic to sudo commands in `flake.PROFILE.nix`:
+Add Restic to sudo commands in `your profile config (`profiles/PROFILE-config.nix`)`:
 
 ```nix
 systemSettings = {
@@ -187,7 +187,7 @@ Create a SystemD service and timer for automated backups.
 
 ### Step 1: Add Variables to Flake
 
-Add backup configuration to `flake.PROFILE.nix`:
+Add backup configuration to `your profile config (`profiles/PROFILE-config.nix`)`:
 
 ```nix
 systemSettings = {

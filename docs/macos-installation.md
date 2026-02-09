@@ -71,23 +71,22 @@ git clone https://github.com/akunito/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 ```
 
-### 4. Link Profile Flake
+### 4. Set Active Profile
 
 ```bash
-# Choose your profile
-ln -sf flake.MACBOOK-KOMI.nix flake.nix
+echo "MACBOOK-KOMI" > .active-profile
 ```
 
 ### 5. Bootstrap nix-darwin
 
 ```bash
-nix run nix-darwin -- switch --flake .#system
+nix run nix-darwin -- switch --flake .#MACBOOK-KOMI
 ```
 
 ### 6. Rebuild After Changes
 
 ```bash
-darwin-rebuild switch --flake ~/.dotfiles#system
+darwin-rebuild switch --flake ~/.dotfiles#MACBOOK-KOMI
 ```
 
 ## What Gets Installed
@@ -202,16 +201,16 @@ darwin-rebuild switch --flake .#system
    - `homebrewCasks` (your GUI apps)
    - `hammerspoonAppBindings` (your shortcuts)
 
-3. Create the flake entry point:
-   ```bash
-   cp flake.MACBOOK-KOMI.nix flake.MACBOOK-MYNAME.nix
-   # Edit to import your new profile config
+3. Register in unified `flake.nix`:
+   ```nix
+   # Add to the profiles map in flake.nix:
+   MACBOOK-MYNAME = ./profiles/MACBOOK-MYNAME-config.nix;
    ```
 
 4. Deploy:
    ```bash
-   ln -sf flake.MACBOOK-MYNAME.nix flake.nix
-   darwin-rebuild switch --flake .#system
+   echo "MACBOOK-MYNAME" > .active-profile
+   darwin-rebuild switch --flake .#MACBOOK-MYNAME
    ```
 
 ## Architecture

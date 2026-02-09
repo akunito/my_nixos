@@ -10,7 +10,7 @@ My guides: Create LUKS Ext4 partition
 My guides: Format drive bigger than 2Tb
 
 1. Add the UUID to the boot.initrd.luks.devices to your configuration.nix (drives.nix module).
-    This is now done on flake.PROFILE.nix by variables. Adjust it accordingly together with drives.nix
+    This is now done in your profile config (`profiles/PROFILE-config.nix`) by variables. Adjust it accordingly together with drives.nix
 
     ```sh
     # To get general info

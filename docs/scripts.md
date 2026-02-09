@@ -51,14 +51,13 @@ This repository contains shell scripts for automating common tasks, system maint
 
 **What It Does**:
 1. Fetches and resets repository to latest remote commit
-2. Switches flake profile (`flake.PROFILE.nix` → `flake.nix`)
+2. Records active profile in `.active-profile`
 3. Sets up environment files (`set_environment.sh`)
 4. Generates SSH keys for boot-time SSH (if enabled)
 5. Updates flake.lock
 6. Handles Docker containers (only prompts if there are running containers; can stop them automatically)
 7. Generates hardware configuration
-8. Detects boot mode (UEFI/BIOS) and updates flake
-9. Hardens system files
+8. Hardens system files
 10. Rebuilds NixOS system
 11. Installs Home Manager configuration
 12. Runs maintenance script automatically (quiet) and waits for completion (see `maintenance.log`; run `./maintenance.sh` manually for interactive mode)
@@ -218,9 +217,9 @@ aku sync
 - Calls `sync-system.sh`
 - Calls `sync-user.sh`
 
-**Equivalent To**:
-- `nixos-rebuild switch --flake .#system`
-- `home-manager switch --flake .#user`
+**Equivalent To** (where `$ACTIVE_PROFILE` is read from `.active-profile`):
+- `nixos-rebuild switch --flake .#$ACTIVE_PROFILE`
+- `home-manager switch --flake .#$ACTIVE_PROFILE`
 
 ### sync-system.sh
 
@@ -239,7 +238,7 @@ aku sync system
 
 **Command**:
 ```sh
-sudo nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace
+sudo nixos-rebuild switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace
 ```
 
 ### sync-user.sh
@@ -260,7 +259,7 @@ aku sync user
 
 **Command**:
 ```sh
-home-manager switch --flake $SCRIPT_DIR#user --show-trace
+home-manager switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace
 ```
 
 ### sync-posthook.sh

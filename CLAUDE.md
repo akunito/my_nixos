@@ -657,7 +657,7 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
 - **Iframe embedding**: Requires `UPTIME_KUMA_DISABLE_FRAME_SAMEORIGIN=true` in docker-compose
 - **Prometheus monitoring**: Kuma 1 monitored via blackbox exporter (http_2xx_nossl module)
 
-### Darwin/macOS rules (applies to: `profiles/darwin/**`, `system/darwin/**`, `profiles/MACBOOK*-config.nix`, `flake.MACBOOK*.nix`)
+### Darwin/macOS rules (applies to: `profiles/darwin/**`, `system/darwin/**`, `profiles/MACBOOK*-config.nix`)
 
 - **Read first**: `docs/macos-installation.md` and `docs/macos-komi-migration.md`
 - **nix-darwin + Home Manager**: macOS uses nix-darwin for system config, Home Manager for user config (same as NixOS pattern)
@@ -666,7 +666,7 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
 - **Hammerspoon**: Window management and app switching managed via `user/app/hammerspoon/hammerspoon.nix`
 - **Profile pattern**: Same as Linux - `MACBOOK-base.nix` contains shared settings, specific profiles inherit and override
 - **osType flag**: Darwin profiles MUST set `systemSettings.osType = "darwin"` and `system = "aarch64-darwin"` (or x86_64-darwin for Intel)
-- **Apply workflow**: `darwin-rebuild switch --flake .#system` (not install.sh after initial setup)
+- **Apply workflow**: `darwin-rebuild switch --flake .#MACBOOK-KOMI` (not install.sh after initial setup)
 - **Cross-platform modules**: When making modules work on both Linux and macOS:
   - Use `pkgs.stdenv.isDarwin` for platform detection
   - Use `lib.mkIf (!pkgs.stdenv.isDarwin)` for Linux-only config (e.g., systemd services)

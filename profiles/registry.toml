@@ -1,65 +1,118 @@
 # Profile Registry
-# This file contains metadata about available profiles and their corresponding flake files.
-# Used by install.sh for validation and profile discovery.
+# This file contains metadata about available profiles.
+# All profiles are defined in the unified flake.nix.
+# Used for documentation and reference purposes.
 
 [profiles.DESK]
-flake_file = "flake.DESK.nix"
+config_file = "profiles/DESK-config.nix"
 profile_dir = "personal"
 hostname = "nixosaku"
-description = "Desktop computer configuration"
+description = "Primary desktop (AMD GPU, gaming, development, AI)"
 
-[profiles.HOME]
-flake_file = "flake.HOME.nix"
-profile_dir = "homelab"
-hostname = "nixosLabaku"
-description = "Home server / homelab configuration"
-
-[profiles.LAPTOP]
-flake_file = "flake.LAPTOP.nix"
+[profiles.DESK_AGA]
+config_file = "profiles/DESK_AGA-config.nix"
 profile_dir = "personal"
-hostname = "nixolaptopaku"
-description = "Laptop computer configuration"
+hostname = "nixosaga"
+description = "Secondary desktop (simplified, limited gaming)"
 
-[profiles.WSL]
-flake_file = "flake.WSL.nix"
-profile_dir = "wsl"
-hostname = "nixosdiego"
-description = "Windows Subsystem for Linux configuration"
-
-[profiles.VMDESK]
-flake_file = "flake.VMDESK.nix"
+[profiles.DESK_VMDESK]
+config_file = "profiles/DESK_VMDESK-config.nix"
 profile_dir = "personal"
 hostname = "nixosdesk"
-description = "Virtual machine desktop configuration"
+description = "VM desktop (development, Sway + Plasma6)"
 
-[profiles.VMHOME]
-flake_file = "flake.VMHOME.nix"
-profile_dir = "homelab"
-hostname = "nixosLabaku"
-description = "Virtual machine homelab configuration"
+[profiles.LAPTOP_L15]
+config_file = "profiles/LAPTOP_L15-config.nix"
+profile_dir = "personal"
+hostname = "nixolaptopaku"
+description = "Intel laptop with development tools"
 
-[profiles.AGA]
-flake_file = "flake.AGA.nix"
+[profiles.LAPTOP_AGA]
+config_file = "profiles/LAPTOP_AGA-config.nix"
 profile_dir = "personal"
 hostname = "nixosaga"
-description = "Aga's system configuration"
+description = "Minimal laptop with basic tools"
 
-[profiles.AGADESK]
-flake_file = "flake.AGADESK.nix"
-profile_dir = "personal"
-hostname = "nixosaga"
-description = "Aga's desktop configuration"
-
-[profiles.YOGAAKU]
-flake_file = "flake.YOGAAKU.nix"
+[profiles.LAPTOP_YOGAAKU]
+config_file = "profiles/LAPTOP_YOGAAKU-config.nix"
 profile_dir = "personal"
 hostname = "yogaaku"
-description = "Yoga laptop configuration"
+description = "Older laptop, reduced features"
 
-# Note: ORIGINAL is kept for historical reference but may not be actively used
-[profiles.ORIGINAL]
-flake_file = "flake.ORIGINAL.nix"
-profile_dir = "personal"
-hostname = "snowfire"
-description = "Original configuration (historical reference)"
+[profiles.VMHOME]
+config_file = "profiles/VMHOME-config.nix"
+profile_dir = "homelab"
+hostname = "nixosLabaku"
+description = "Homelab server (Docker, NFS, no GUI)"
 
+[profiles.WSL]
+config_file = "profiles/WSL-config.nix"
+profile_dir = "wsl"
+hostname = "nixosdiego"
+description = "Windows Subsystem for Linux"
+
+[profiles.LXC_HOME]
+config_file = "profiles/LXC_HOME-config.nix"
+profile_dir = "homelab"
+hostname = "nixosLabaku"
+description = "LXC container - homelab services"
+
+[profiles.LXC_proxy]
+config_file = "profiles/LXC_proxy-config.nix"
+profile_dir = "homelab"
+hostname = "proxy"
+description = "LXC container - reverse proxy"
+
+[profiles.LXC_plane]
+config_file = "profiles/LXC_plane-config.nix"
+profile_dir = "homelab"
+hostname = "plane"
+description = "LXC container - Plane project management"
+
+[profiles.LXC_mailer]
+config_file = "profiles/LXC_mailer-config.nix"
+profile_dir = "homelab"
+hostname = "mailer"
+description = "LXC container - mail and monitoring"
+
+[profiles.LXC_liftcraftTEST]
+config_file = "profiles/LXC_liftcraftTEST-config.nix"
+profile_dir = "homelab"
+hostname = "liftcraft-test"
+description = "LXC container - LiftCraft test environment"
+
+[profiles.LXC_portfolioprod]
+config_file = "profiles/LXC_portfolioprod-config.nix"
+profile_dir = "homelab"
+hostname = "portfolio-prod"
+description = "LXC container - portfolio production"
+
+[profiles.LXC_database]
+config_file = "profiles/LXC_database-config.nix"
+profile_dir = "homelab"
+hostname = "database"
+description = "LXC container - PostgreSQL and Redis"
+
+[profiles.LXC_tailscale]
+config_file = "profiles/LXC_tailscale-config.nix"
+profile_dir = "homelab"
+hostname = "tailscale"
+description = "LXC container - Tailscale subnet router"
+
+[profiles.LXC_monitoring]
+config_file = "profiles/LXC_monitoring-config.nix"
+profile_dir = "homelab"
+hostname = "monitoring"
+description = "LXC container - Grafana and Prometheus"
+
+[profiles.LXC_matrix]
+config_file = "profiles/LXC_matrix-config.nix"
+profile_dir = "homelab"
+hostname = "matrix"
+description = "LXC container - Matrix Synapse and Element"
+
+[profiles.MACBOOK-KOMI]
+config_file = "profiles/MACBOOK-KOMI-config.nix"
+profile_dir = "darwin"
+hostname = "komi"
+description = "macOS laptop (nix-darwin)"

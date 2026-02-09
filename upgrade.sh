@@ -12,11 +12,13 @@ for arg in "$@"; do
     fi
 done
 
-# if given parameters ($1 = local repo path, $2 = PROFILE on flake.PROFILE.nix)
+# if given parameters ($1 = local repo path, $2 = PROFILE name)
 if [ $# -gt 0 ]; then
     SCRIPT_DIR=$1
-    rm $1/flake.nix.bak && mv $1/flake.nix $1/flake.nix.bak
-    cp $1/flake.$2.nix $1/flake.nix
+    # If a profile name is given, record it as the active profile
+    if [ -n "${2:-}" ]; then
+        echo "$2" > "$SCRIPT_DIR/.active-profile"
+    fi
 else
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 fi

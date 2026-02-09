@@ -197,25 +197,15 @@ cp profiles/personal/configuration.nix profiles/MYPROFILE/
 cp profiles/personal/home.nix profiles/MYPROFILE/
 ```
 
-### Step 3: Create Flake File
+### Step 3: Register in Unified flake.nix
 
-Create `flake.MYPROFILE.nix`:
+Add the new profile to the `profiles` map in `flake.nix`:
 
 ```nix
-{
-  description = "Flake for MYPROFILE";
-
-  outputs = inputs@{ self, ... }:
-    let
-      systemSettings = {
-        profile = "MYPROFILE";  # Must match directory name
-        # ... your settings
-      };
-      # ... rest of flake configuration
-    in {
-      # ... outputs
-    };
-}
+profiles = {
+  # ... existing profiles ...
+  MYPROFILE = ./profiles/MYPROFILE-config.nix;
+};
 ```
 
 ### Step 4: Customize Configuration
@@ -225,8 +215,8 @@ Edit `profiles/MYPROFILE/configuration.nix` and `profiles/MYPROFILE/home.nix` to
 ### Step 5: Test Profile
 
 ```sh
-cp flake.MYPROFILE.nix flake.nix
-aku sync
+echo "MYPROFILE" > .active-profile
+sudo nixos-rebuild switch --flake .#MYPROFILE --impure
 ```
 
 ## Switching Profiles
@@ -238,17 +228,18 @@ aku sync
 ```
 
 This automatically:
-1. Copies `flake.MYPROFILE.nix` → `flake.nix`
-2. Rebuilds the system
+1. Records `MYPROFILE` in `.active-profile`
+2. Validates profile exists in unified `flake.nix`
+3. Rebuilds the system
 
 ### Manual Switch
 
 ```sh
-# 1. Copy flake file
-cp flake.MYPROFILE.nix flake.nix
+# 1. Set active profile
+echo "MYPROFILE" > .active-profile
 
 # 2. Rebuild
-aku sync
+sudo nixos-rebuild switch --flake .#MYPROFILE --impure
 ```
 
 ## Profile Comparison

@@ -13,18 +13,13 @@ else
 fi
 RESTART_DOCKER=${2:-false}
 
-# Determine active profile flake
-FLAKE_PATH=""
+# Read active profile
 if [ -f "$SCRIPT_DIR/.active-profile" ]; then
     ACTIVE_PROFILE=$(cat "$SCRIPT_DIR/.active-profile")
-    if [ -f "$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix" ]; then
-        FLAKE_PATH="$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix"
-        echo -e "Using active profile: $ACTIVE_PROFILE"
-    fi
-fi
-if [ -z "$FLAKE_PATH" ]; then
-    FLAKE_PATH="$SCRIPT_DIR/flake.nix"
-    echo -e "Using fallback: flake.nix"
+    echo -e "Using active profile: $ACTIVE_PROFILE"
+else
+    echo -e "Error: .active-profile not found. Run install.sh first."
+    exit 1
 fi
 
 # Mark the dotfiles directory as safe for git (required when running as root)
@@ -38,16 +33,8 @@ echo -e "Configuring git safe.directory for $SCRIPT_DIR"
 echo -e "Updating flake.lock"
 $SCRIPT_DIR/update.sh
 
-# Sync flake.nix with profile flake (ensures correct profile after git operations)
-if [ "$FLAKE_PATH" != "$SCRIPT_DIR/flake.nix" ]; then
-    cp "$FLAKE_PATH" "$SCRIPT_DIR/flake.nix"
-    echo -e "Synced flake.nix from $FLAKE_PATH"
-fi
-# Stage flake.nix so Nix can see it (required for flakes even if gitignored)
-/run/current-system/sw/bin/git -C "$SCRIPT_DIR" add -f flake.nix 2>/dev/null || true
-
 echo -e "Rebuilding system"
-if nixos-rebuild switch --flake $SCRIPT_DIR#system --show-trace --impure; then
+if nixos-rebuild switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace --impure; then
     echo -e "Rebuild successful"
 
     # Restart docker containers if requested (non-interactive)

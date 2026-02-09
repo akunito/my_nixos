@@ -43,11 +43,11 @@ The fastest way to install is using the automated installation script:
 ./install.sh ~/.dotfiles "PROFILE" -s
 ```
 
-Where `PROFILE` corresponds to a flake file:
-- `HOME` → uses `flake.HOME.nix`
-- `DESK` → uses `flake.DESK.nix`
-- `LAPTOP` → uses `flake.LAPTOP.nix`
-- etc.
+Where `PROFILE` is a profile name defined in the unified `flake.nix`:
+- `DESK` - Desktop computer
+- `LAPTOP_L15` - Intel laptop
+- `LXC_monitoring` - LXC container
+- etc. (run `grep -E '^\s+\w+ = \./profiles/' flake.nix` to list all)
 
 ## Interactive Installation
 
@@ -58,8 +58,8 @@ The interactive installation script guides you through the process:
    - If it exists, it will fetch and reset to the latest remote version
 
 2. **Select Profile**
-   - Choose the appropriate flake profile file
-   - The script will copy `flake.PROFILE.nix` to `flake.nix`
+   - Choose the profile name (must exist in `flake.nix` profiles map)
+   - The script records it in `.active-profile`
 
 3. **Environment Setup**
    - Optionally set up additional environment files
@@ -78,7 +78,6 @@ The interactive installation script guides you through the process:
 
 7. **Hardware Configuration**
    - Generates `hardware-configuration.nix` if needed
-   - Detects boot mode (UEFI/BIOS)
 
 8. **System Rebuild**
    - Rebuilds NixOS system configuration
@@ -119,15 +118,15 @@ cd ~/.dotfiles
 
 ### 2. Select Profile
 
-Copy the appropriate flake file:
+Set the active profile (must exist in `flake.nix` profiles map):
 
 ```sh
-cp flake.PROFILE.nix flake.nix
+echo "DESK" > .active-profile
 ```
 
 ### 3. Edit Configuration
 
-Edit `flake.nix` and update:
+Edit `profiles/DESK-config.nix` (or your profile config) and update:
 - `username` - Your username
 - `name` - Your name/identifier
 - `hostname` - System hostname
@@ -145,13 +144,13 @@ sudo nixos-generate-config --show-hardware-config > system/hardware-configuratio
 ### 5. Rebuild System
 
 ```sh
-sudo nixos-rebuild switch --flake ~/.dotfiles#system
+sudo nixos-rebuild switch --flake ~/.dotfiles#DESK --impure
 ```
 
 ### 6. Install Home Manager
 
 ```sh
-nix run home-manager/master -- switch --flake ~/.dotfiles#user
+nix run home-manager/master -- switch --flake ~/.dotfiles#DESK
 ```
 
 ### 7. Harden System Files (Optional)
@@ -207,7 +206,7 @@ This makes system-level configuration files read-only for unprivileged users.
 **Problem**: Installation fails with bootloader-related errors.
 
 **Solutions**:
-- Check boot mode in `flake.nix`:
+- Check boot mode in your profile config (`profiles/PROFILE-config.nix`):
   - UEFI: Set `bootMode = "uefi"` and `bootMountPath = "/boot"`
   - BIOS: Set `bootMode = "bios"` and `grubDevice = "/dev/sda"` (or your device)
 - Verify EFI partition is mounted at `/boot` for UEFI systems
@@ -224,8 +223,8 @@ rm ~/.gtkrc-2.0
 rm ~/.config/Trolltech.conf
 # ... remove other conflicting files as listed
 
-# Retry installation
-nix run home-manager/master -- switch --flake ~/.dotfiles#user
+# Retry installation (replace DESK with your profile name)
+nix run home-manager/master -- switch --flake ~/.dotfiles#DESK
 ```
 
 #### Docker Issues
@@ -255,7 +254,7 @@ More information: [NixOS Discourse Discussion](https://discourse.nixos.org/t/doc
    ```sh
    ./themes/background-test.sh
    ```
-2. Select a theme with a working background in `flake.nix`
+2. Select a theme with a working background in your profile config
 3. Retry installation
 
 #### Partial Install (Missing Applications)
@@ -291,7 +290,7 @@ You can install to any directory:
 ./install.sh /custom/path "PROFILE"
 ```
 
-Make sure to update `dotfilesDir` in `flake.nix`:
+Make sure to update `dotfilesDir` in your profile config:
 
 ```nix
 dotfilesDir = "/custom/path";
@@ -311,7 +310,8 @@ To install only Home Manager configuration on a non-NixOS Linux system:
 1. Install Nix package manager
 2. Install Home Manager
 3. Clone this repository
-4. Run: `nix run home-manager/master -- switch --flake ~/.dotfiles#user`
+4. Set active profile: `echo "DESK" > .active-profile`
+5. Run: `nix run home-manager/master -- switch --flake ~/.dotfiles#DESK`
 
 Note: Some features require NixOS system configuration and won't work.
 

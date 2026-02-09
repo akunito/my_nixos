@@ -181,16 +181,17 @@ cd ~/.dotfiles
 ./install.sh ~/.dotfiles PROFILE -s -u
 ```
 
-**Available Profiles:**
-- `DESK` - Primary desktop
+**Available Profiles** (defined in unified `flake.nix`):
+- `DESK` - Primary desktop (AMD GPU, gaming, development, AI)
+- `DESK_AGA` - Secondary desktop
+- `DESK_VMDESK` - VM desktop
 - `LAPTOP_L15` - Intel laptop
+- `LAPTOP_AGA` - Minimal laptop
 - `LAPTOP_YOGAAKU` - Older laptop
-- `AGA` - Minimal laptop
-- `AGADESK` - Secondary desktop
 - `VMHOME` - Homelab server
-- `VMDESK` - VM desktop
 - `WSL` - Windows Subsystem for Linux
-- `LXC_HOME`, `LXC_plane`, `LXC_portfolioprod`, `LXC_mailer`, `LXC_liftcraftTEST`, `LXC_monitoring`, `LXC_proxy` - LXC containers
+- `LXC_HOME`, `LXC_plane`, `LXC_portfolioprod`, `LXC_mailer`, `LXC_liftcraftTEST`, `LXC_monitoring`, `LXC_proxy`, `LXC_database`, `LXC_tailscale`, `LXC_matrix` - LXC containers
+- `MACBOOK-KOMI` - macOS (nix-darwin)
 
 ### Daily Usage
 
@@ -442,10 +443,13 @@ This repository uses a **Router + Catalog** system:
 
 ```
 .dotfiles/
-├── flake.nix                 # Main flake (imports specific profile flakes)
-├── flake.*.nix               # Profile-specific flakes (DESK, LAPTOP_L15, etc.)
+├── flake.nix                 # Unified flake with all profiles and inputs
+├── flake.lock                # Locked dependency versions (shared by all profiles)
+├── .active-profile           # Per-machine active profile name (gitignored)
 ├── lib/
-│   └── defaults.nix          # Global defaults and feature flags
+│   ├── defaults.nix          # Global defaults and feature flags
+│   ├── flake-unified.nix     # Generates configurations for all profiles
+│   └── flake-base.nix        # Profile builder (per-profile output generation)
 ├── profiles/
 │   ├── personal/             # Personal profile templates
 │   │   ├── configuration.nix # System config (imports work/configuration.nix)

@@ -211,7 +211,7 @@ Synchronizes system configuration only.
 ```
 
 **What it does**:
-- Runs `nixos-rebuild switch --flake .#system`
+- Runs `nixos-rebuild switch --flake .#$ACTIVE_PROFILE`
 - Applies system-level changes
 
 ### sync-user.sh
@@ -224,7 +224,7 @@ Synchronizes home-manager configuration only.
 ```
 
 **What it does**:
-- Runs `home-manager switch --flake .#user`
+- Runs `home-manager switch --flake .#$ACTIVE_PROFILE`
 - Applies user-level changes
 
 ### sync-posthook.sh
@@ -391,7 +391,7 @@ aku gc 30d
 
 ```sh
 # Test build first
-nixos-rebuild build --flake .#system
+nixos-rebuild build --flake .#DESK  # Replace DESK with your profile
 
 # Then apply
 aku sync
@@ -461,7 +461,7 @@ tail -f maintenance.log
 **Problem**: `aku` command doesn't work.
 
 **Solution**:
-1. Rebuild system: `sudo nixos-rebuild switch --flake .#system`
+1. Rebuild system: `sudo nixos-rebuild switch --flake .#DESK --impure` (replace DESK with your profile)
 2. Check if aku is installed: `which aku`
 3. Source shell configuration: `source ~/.zshrc` or `source ~/.bashrc`
 

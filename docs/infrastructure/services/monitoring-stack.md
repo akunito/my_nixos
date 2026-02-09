@@ -226,7 +226,7 @@ Since `allowUiUpdates = true`, you can edit provisioned dashboards in the Grafan
    git add system/app/grafana-dashboards/custom/<name>.json system/app/grafana.nix
    git commit -m "feat: update <name> dashboard"
    git push
-   ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+   ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_monitoring --impure"
    ```
 
 #### API Export Script (Bulk Export)

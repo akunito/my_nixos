@@ -26,6 +26,7 @@ RESET='\033[0m'
 SILENT_MODE=false
 UPDATE_FLAKE_LOCK=false
 QUICK_MODE=false
+FORCE_MODE=false
 POSITIONAL_ARGS=()
 for arg in "$@"; do
     case "$arg" in
@@ -37,6 +38,9 @@ for arg in "$@"; do
             ;;
         -q|--quick)
             QUICK_MODE=true
+            ;;
+        -f|--force)
+            FORCE_MODE=true
             ;;
         *)
             POSITIONAL_ARGS+=("$arg")
@@ -77,23 +81,12 @@ validate_profile() {
     fi
 }
 
-# Get profile directory from flake file
+# Get profile directory from profile config file
 get_profile_dir_from_flake() {
     local SCRIPT_DIR=$1
     local PROFILE=$2
-    local FLAKE_FILE="$SCRIPT_DIR/flake.$PROFILE.nix"
     local PROFILE_CONFIG_FILE="$SCRIPT_DIR/profiles/${PROFILE}-config.nix"
-    
-    if [ -f "$FLAKE_FILE" ]; then
-        # Try to extract profile directory from flake file (old structure)
-        local PROFILE_DIR=$(grep -oP 'profile = "\K[^"]+' "$FLAKE_FILE" | head -1)
-        if [ -n "$PROFILE_DIR" ]; then
-            echo "$PROFILE_DIR"
-            return
-        fi
-    fi
-    
-    # Try to extract from profile config file (new refactored structure)
+
     if [ -f "$PROFILE_CONFIG_FILE" ]; then
         local PROFILE_DIR=$(grep -oP 'profile = "\K[^"]+' "$PROFILE_CONFIG_FILE" | head -1)
         if [ -n "$PROFILE_DIR" ]; then
@@ -101,8 +94,25 @@ get_profile_dir_from_flake() {
             return
         fi
     fi
-    
+
     echo ""
+}
+
+# Safety check: verify current machine matches requested profile
+verify_profile_machine_match() {
+    local PROFILE=$1
+
+    local CURRENT_ENV_PROFILE="${ENV_PROFILE:-}"
+
+    # If ENV_PROFILE is set, it MUST match the requested profile
+    if [ -n "$CURRENT_ENV_PROFILE" ] && [ "$CURRENT_ENV_PROFILE" != "$PROFILE" ]; then
+        echo -e "${RED}ERROR: Profile mismatch!${RESET}"
+        echo -e "  Requested profile: ${YELLOW}$PROFILE${RESET}"
+        echo -e "  Current ENV_PROFILE: ${YELLOW}$CURRENT_ENV_PROFILE${RESET}"
+        echo -e "${RED}Refusing to deploy $PROFILE on a machine configured as $CURRENT_ENV_PROFILE${RESET}"
+        echo -e "${CYAN}If this is intentional (e.g., first install), use --force${RESET}"
+        exit 1
+    fi
 }
 
 # Set PROFILE based on second positional parameter, if missing, stop script
@@ -110,10 +120,11 @@ if [ ${#POSITIONAL_ARGS[@]} -gt 1 ]; then
     PROFILE="${POSITIONAL_ARGS[1]}"
 else
     echo -e "${RED}Error: PROFILE parameter is required${RESET}"
-    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick]"
-    echo "Example: $0 /path/to/repo HOME -s -u"
+    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick] [-f|--force]"
+    echo "Example: $0 /path/to/repo DESK -s -u"
     echo "  -q|--quick: Skip docker handling and hardware-config generation (for quick updates)"
-    echo "Where HOME indicates the right flake to use, in this case: flake.HOME.nix"
+    echo "  -f|--force: Bypass ENV_PROFILE safety check (for first-time installs)"
+    echo "Where DESK is a profile name defined in flake.nix"
     echo ""
     list_available_profiles "$SCRIPT_DIR"
     exit 1
@@ -713,18 +724,6 @@ open_hardware_configuration_nix() {
     esac
 }
 
-# Check if UEFI or BIOS
-check_boot_mode() {
-    local SCRIPT_DIR=$1
-    if [ -d /sys/firmware/efi/efivars ]; then
-        sed -i "0,/bootMode.*=.*\".*\";/s//bootMode = \"uefi\";/" $SCRIPT_DIR/flake.nix
-    else
-        sed -i "0,/bootMode.*=.*\".*\";/s//bootMode = \"bios\";/" $SCRIPT_DIR/flake.nix
-        grubDevice=$(findmnt / | awk -F' ' '{ print $2 }' | sed 's/\[.*\]//g' | tail -n 1 | lsblk -no pkname | tail -n 1)
-        sed -i "0,/grubDevice.*=.*\".*\";/s//grubDevice = \"\/dev\/$grubDevice\";/" $SCRIPT_DIR/flake.nix
-    fi
-}
-
 # Generate SSH keys for SSH on BOOT
 # SSH on boot is used to unlock encrypted drives by SSH
 generate_root_ssh_keys_for_ssh_server_on_boot() {
@@ -837,6 +836,13 @@ UPDATE_STATUS=$?
 # Validate profile before starting
 validate_profile "$SCRIPT_DIR" "$PROFILE"
 
+# Safety check: prevent deploying wrong profile to wrong machine
+if [ "$FORCE_MODE" = true ]; then
+    echo -e "${YELLOW}Force mode: Skipping ENV_PROFILE safety check${RESET}"
+else
+    verify_profile_machine_match "$PROFILE"
+fi
+
 # Run pre-installation checks
 pre_install_checks "$SCRIPT_DIR" "$PROFILE"
 
@@ -893,7 +899,6 @@ else
     generate_hardware_config $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
     open_hardware_configuration_nix $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 fi
-check_boot_mode $SCRIPT_DIR
 
 # Hardening files to Rebuild system
 hardening_files $SCRIPT_DIR $SUDO_CMD

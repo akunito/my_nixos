@@ -7,16 +7,15 @@ title: Install script
 
 ## Interactive Install Script
 
-Read the comments in `./install.sh` for more info Basically to use the script, you have to create a copy of `flake.nix` to ie: `flake.PERSONAL.nix` or `flake.HOMELAB.nix`, and adjust the variables there. You can use as example any of `my flake.{PROFILES}.nix` 
-Then you can run the script like this:
+Read the comments in `./install.sh` for more info. All profiles are defined in the unified `flake.nix`. Create your profile config in `profiles/MYPROFILE-config.nix` and add it to the `profiles` map in `flake.nix`.
 
 ```sh
 # In case you want interactive mode:
-./install.sh ~/.dotfiles "HOME"
+./install.sh ~/.dotfiles "DESK"
 # In case you want to run silently:
-./install.sh ~/.dotfiles "HOME" -s
+./install.sh ~/.dotfiles "DESK" -s
 
-# where $1 is the path to your ~/.dotfiles and $2 is PROFILE on flake.PROFILE.nix
+# where $1 is the path to your ~/.dotfiles and $2 is a profile name from flake.nix
 ```
 
 ## Note
@@ -48,10 +47,10 @@ The script will ask for sudo permissions at certain points, *but you should not 
 **Note**: This section describes the original LibrePhoenix installation process, which has been significantly updated in this fork. 
 
 The current installation process:
-- Uses profile-based flakes (`flake.PROFILE.nix`)
+- Uses a unified `flake.nix` with all profiles defined in a single file
+- Profile settings are in `profiles/PROFILE-config.nix`
 - Supports custom directories
 - Supports both UEFI and BIOS boot modes
-- Does not require editing `flake.nix` during installation (configure your profile flake beforehand)
 
 For current installation instructions, see [Installation Documentation](docs/installation.md).
 

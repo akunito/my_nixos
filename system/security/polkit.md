@@ -1,6 +1,6 @@
 We can allow certain groups or users to perform specific actions without being asked for password when higher rights are needed.
 
-# Add the rules to flake.PROFILE.nix
+# Add the rules to your profile config (`profiles/PROFILE-config.nix`)
 Sample:
 ```sh
         polkitEnable = true;

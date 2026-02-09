@@ -5,7 +5,7 @@ tags: [tailscale, headscale, vpn, mesh, networking, wireguard]
 related_files:
   - profiles/LXC_tailscale-config.nix
   - system/app/tailscale.nix
-  - flake.LXC_tailscale.nix
+  - flake.nix
 ---
 
 # Tailscale/Headscale Mesh VPN
@@ -170,7 +170,7 @@ pct start 205
 
 ```bash
 # Commit and push the new profile
-git add profiles/LXC_tailscale-config.nix flake.LXC_tailscale.nix system/app/tailscale.nix
+git add profiles/LXC_tailscale-config.nix flake.nix system/app/tailscale.nix
 git commit -m "feat(tailscale): add LXC_tailscale profile and Tailscale module"
 git push origin main
 

@@ -6,13 +6,11 @@
 #
 # ============================================================================
 
-# Device-specific flake files: Always keep local version during pulls/merges
-# Each device has its own flake.nix (copied from profile flake like flake.LAPTOP_L15.nix)
-# and flake.lock (generated from that flake). We track them for Nix purity,
-# but never merge changes from remote to avoid cross-device conflicts.
+# Unified flake files: keep local flake.lock during pulls/merges to avoid
+# conflicts between machines running different Nix versions.
+# flake.nix is now a unified file shared across all profiles.
 #
 # merge=ours: During merge, always use our version (ignore incoming changes)
-flake.nix merge=ours
 flake.lock merge=ours
 
 # ============================================================================

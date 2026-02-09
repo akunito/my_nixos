@@ -111,11 +111,12 @@ in
 }
 ```
 
-### 2. Create Flake File
+### 2. Register in Unified flake.nix
+
+Add the new profile to the `profiles` map in `flake.nix`:
 
 ```nix
-# flake.LXC_myservice.nix
-# Copy from an existing LXC flake and update the profile import
+LXC_myservice = ./profiles/LXC_myservice-config.nix;
 ```
 
 ### 3. Add to Deploy Script

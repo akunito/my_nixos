@@ -5,7 +5,7 @@ tags: [proxmox, lxc, virtualization, profiles, modularity, dry]
 related_files:
   - profiles/LXC-base-config.nix
   - profiles/proxmox-lxc/**
-  - flake.LXC.nix
+  - flake.nix
 ---
 
 # Proxmox LXC Profiles

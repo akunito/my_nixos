@@ -1,22 +1,18 @@
 #!/bin/sh
 
-# Script to synchronize system state
-# with configuration files for nixos system
-# and home-manager
+# Script to synchronize user (home-manager) configuration
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# Sync flake.nix with active profile
+# Read active profile
 if [ -f "$SCRIPT_DIR/.active-profile" ]; then
     ACTIVE_PROFILE=$(cat "$SCRIPT_DIR/.active-profile")
-    if [ -f "$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix" ]; then
-        cp "$SCRIPT_DIR/flake.$ACTIVE_PROFILE.nix" "$SCRIPT_DIR/flake.nix"
-    fi
+else
+    echo "Error: .active-profile not found. Run install.sh first."
+    exit 1
 fi
-# Stage flake.nix so Nix can see it (required for flakes even if gitignored)
-git -C "$SCRIPT_DIR" add -f flake.nix 2>/dev/null || true
 
 # Install and build home-manager configuration
-home-manager switch --flake $SCRIPT_DIR#user --show-trace;
+home-manager switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace;
 
 $SCRIPT_DIR/sync-posthook.sh

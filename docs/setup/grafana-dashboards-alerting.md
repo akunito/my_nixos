@@ -548,7 +548,7 @@ Dashboards are provisioned from JSON files in the repository. Since `allowUiUpda
    git push
 
    # Deploy to monitoring server
-   ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+   ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_monitoring --impure"
    ```
 
 ### Dashboard File Locations

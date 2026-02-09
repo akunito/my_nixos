@@ -166,7 +166,7 @@ dbNewdbPassword = "generated-secure-password";
 ### 3. Deploy to LXC_database
 
 ```bash
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_database --impure"
 ```
 
 ### 4. Update Workstation Profiles

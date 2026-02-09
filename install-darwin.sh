@@ -108,20 +108,21 @@ bootstrap_darwin() {
 
   cd "$DOTFILES_DIR"
 
-  # Link the profile-specific flake
-  FLAKE_FILE="flake.${PROFILE}.nix"
-  if [[ ! -f "$FLAKE_FILE" ]]; then
-    log_error "Profile flake not found: $FLAKE_FILE"
+  # Validate profile exists in unified flake.nix
+  if ! grep -qE "^\s+${PROFILE} = \./profiles/" flake.nix 2>/dev/null; then
+    log_error "Profile not found in flake.nix: $PROFILE"
     log_info "Available profiles:"
-    ls -1 flake.*.nix 2>/dev/null || echo "  None found"
+    grep -E '^\s+[A-Za-z][A-Za-z0-9_-]+ = \./profiles/' flake.nix 2>/dev/null | \
+        sed 's/^\s*\([A-Za-z][A-Za-z0-9_-]*\).*/  - \1/' || echo "  None found"
     exit 1
   fi
 
-  ln -sf "$FLAKE_FILE" flake.nix
-  log_info "Linked $FLAKE_FILE -> flake.nix"
+  # Save active profile
+  echo "$PROFILE" > .active-profile
+  log_info "Active profile set: $PROFILE"
 
   # Bootstrap nix-darwin
-  nix run nix-darwin -- switch --flake ".#system"
+  nix run nix-darwin -- switch --flake ".#$PROFILE"
 
   log_success "nix-darwin bootstrapped successfully"
 }
@@ -152,19 +153,12 @@ migrate_homebrew() {
 deploy_profile() {
   cd "$DOTFILES_DIR"
 
-  FLAKE_FILE="flake.${PROFILE}.nix"
-  if [[ ! -f "$FLAKE_FILE" ]]; then
-    log_error "Profile flake not found: $FLAKE_FILE"
-    exit 1
-  fi
-
-  # Symlink profile-specific flake
-  ln -sf "$FLAKE_FILE" flake.nix
-  log_success "Linked $FLAKE_FILE -> flake.nix"
+  # Save active profile
+  echo "$PROFILE" > .active-profile
 
   # Build and switch
   log_info "Building and switching to profile: $PROFILE"
-  darwin-rebuild switch --flake ".#system"
+  darwin-rebuild switch --flake ".#$PROFILE"
 
   log_success "Darwin configuration applied"
 }
@@ -258,7 +252,7 @@ main() {
     echo "  3. Test Touch ID for sudo: sudo -v"
     echo ""
     echo "To rebuild after config changes:"
-    echo "  darwin-rebuild switch --flake ~/.dotfiles#system"
+    echo "  darwin-rebuild switch --flake ~/.dotfiles#$PROFILE"
     echo ""
   else
     log_error "Setup completed with errors. Please check the output above."

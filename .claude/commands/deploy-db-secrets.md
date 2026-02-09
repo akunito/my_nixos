@@ -248,7 +248,7 @@ dbNewServicePassword = "your-newservice-db-password";
 
 ```bash
 git add -A && git commit -m "feat: add newservice database credentials" && git push
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_database --impure"
 ```
 
 ---
@@ -269,5 +269,5 @@ openssl rand -base64 32
 
 # After updating secrets/domains.nix
 git add secrets/domains.nix && git commit -m "security: rotate database passwords" && git push
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#system"
+ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_database --impure"
 ```

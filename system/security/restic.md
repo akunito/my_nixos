@@ -12,7 +12,7 @@ NixOS Wiki for SystemD https://nixos.wiki/wiki/Systemd/Timers
 
 # Installation
 #### 1. Add restic package to system packages
-In our project we add these on `flake.PROFILE.nix`
+In our project we add these on `your profile config (`profiles/PROFILE-config.nix`)`
 
 ```sh
 	systemSettings = {
@@ -75,7 +75,7 @@ So we don't have to use sudo password when our user uses our Restic command.
 
 > We don't need to grant it for the Restic wrapper
 
-#### 1. Adjust the commands for sudo on `flake.PROFILE.nix` 
+#### 1. Adjust the commands for sudo on `your profile config (`profiles/PROFILE-config.nix`)` 
 
 ```sh
 	systemSettings = {
@@ -130,7 +130,7 @@ ll $FULLPATH
 # SystemD service
 Create a service that periodically run a script to perform the backup
 
-##### 1. Add the variables to `flake.PROFILE.nix` 
+##### 1. Add the variables to `your profile config (`profiles/PROFILE-config.nix`)` 
 Using flake profiles we can adjust our setup to different computers / users, while our nix module remains the same and usable for everyone.
 
 In our example we create a service that:
