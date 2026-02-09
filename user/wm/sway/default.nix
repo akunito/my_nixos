@@ -25,6 +25,7 @@
     ../../app/terminal/alacritty.nix
     ../../app/terminal/kitty.nix
     ../../app/terminal/tmux.nix
+    ../../app/terminal/xterm.nix
     ../../app/gaming/mangohud.nix
     ../../app/ai/aichat.nix
     ../../app/swaybgplus/swaybgplus.nix

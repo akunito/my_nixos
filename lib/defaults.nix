@@ -651,6 +651,23 @@
       bindkey '\e[4~' end-of-line           # End key
       bindkey '\e[3~' delete-char           # Delete key
 
+      # Multi-line editing with Shift+Enter
+      # Create a custom widget to insert a literal newline
+      insert-newline() {
+        LBUFFER="$LBUFFER"$'\n'
+      }
+      zle -N insert-newline
+
+      # Bind Shift+Enter to insert newline (various terminal escape sequences)
+      bindkey '^[[13;2u' insert-newline    # Kitty, Alacritty, WezTerm (CSI u mode)
+      bindkey '^[[27;2;13~' insert-newline # Some other terminals
+      bindkey '^[OM' insert-newline        # Alternative sequence
+
+      # For tmux: enable focus events and extended keys
+      if [[ -n "$TMUX" ]]; then
+        bindkey '^[[13;2u' insert-newline
+      fi
+
       PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
       %F{green}→%f "
       RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"

@@ -216,12 +216,17 @@ in
     extraConfig = ''
       # CRITICAL: Mouse support
       set -g mouse on
-      
+
+      # CRITICAL: Enable extended keys (tmux 3.2+) for proper Shift+Enter handling
+      # This allows tmux to pass through CSI u encoded sequences
+      set -s extended-keys on
+      set -as terminal-features 'xterm*:extkeys'
+
       # CRITICAL: Clipboard integration (pbcopy on macOS, wl-copy on Linux)
       set -g set-clipboard on
       bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "${clipboardCmd}"
       bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "${clipboardCmd}"
-      
+
       # Modern copy mode
       bind-key -T copy-mode-vi v send-keys -X begin-selection
       bind-key -T copy-mode-vi r send-keys -X rectangle-toggle

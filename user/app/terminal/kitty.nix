@@ -115,18 +115,24 @@ in
       # This matches the fix applied to Alacritty
       # Intel One Mono may not be available or correctly named in fontconfig
       font_family = "JetBrainsMono Nerd Font Mono";
-      
+
       # CRITICAL: Disable audio bell
       enable_audio_bell = false;
-      
+
       # CRITICAL: Ensure Alt keys pass through to applications (Tmux)
       # Do not define any keybindings that capture Alt combinations
       # Let Alt keys pass through to Tmux for Alt+Arrow navigation
-      
+
+      # CRITICAL: Enable keyboard protocol for proper Shift+Enter handling
+      # This makes Kitty send CSI u encoded sequences for modified keys
+      # Allows Shift+Enter to send a distinct escape sequence (\e[13;2u)
+      # Reference: https://sw.kovidgoyal.net/kitty/keyboard-protocol/
+      kitty_mod = "ctrl+shift";
+
       # Socket listener for automation
       allow_remote_control = "yes";
       listen_on = "unix:/tmp/mykitty";
-      
+
       # Auto-start tmux with persistent session
       # Attach to "kitty" session if it exists, otherwise create it
       # Use the wrapper script that execs tmux, replacing the shell
@@ -174,5 +180,7 @@ in
     "ctrl+shift+c" = "send_text all \\x03";  # Always send SIGINT (original Ctrl+C - interrupt process)
     "ctrl+shift+x" = "send_text all \\x18";  # Original Ctrl+X
     "ctrl+shift+v" = "send_text all \\x16";  # Original Ctrl+V
+    # Multi-line input: Shift+Enter sends CSI u encoded escape sequence
+    "shift+enter" = "send_text all \\x1b[13;2u";
   };
 }

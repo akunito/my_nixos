@@ -490,6 +490,18 @@ in
         # Ctrl+Arrow word navigation
         bindkey ''$'\e[1;5C' forward-word   # Ctrl+Right
         bindkey ''$'\e[1;5D' backward-word  # Ctrl+Left
+
+        # Multi-line editing with Shift+Enter
+        # Create a custom widget to insert a literal newline
+        insert-newline() {
+          LBUFFER="$LBUFFER"$'\n'
+        }
+        zle -N insert-newline
+
+        # Bind Shift+Enter to insert newline (various terminal escape sequences)
+        bindkey '\e[13;2u' insert-newline    # Kitty, Alacritty (CSI u mode)
+        bindkey '\e[27;2;13~' insert-newline # Some other terminals
+        bindkey '\eOM' insert-newline        # Alternative sequence
       ''
       # Add custom PROMPT only if Starship is disabled
       + (if (!starshipEnable) then ''

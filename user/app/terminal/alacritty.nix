@@ -159,19 +159,22 @@ in
           # Standard Copy/Paste
           { key = "C"; mods = "Control"; action = "Copy"; }  # Copy
           { key = "V"; mods = "Control"; action = "Paste"; } # Paste
-          
+
           # Send original control characters via Ctrl+Shift
           # We use builtins.fromJSON because Nix strings don't support \u escape sequences directly,
           # but JSON does. This generates the raw control character which Home Manager serializes correctly to TOML.
-          
+
           # Ctrl+Shift+C -> SIGINT (ASCII 0x03)
           { key = "C"; mods = "Control|Shift"; chars = builtins.fromJSON ''"\u0003"''; }
-          
+
           # Ctrl+Shift+X -> CAN (ASCII 0x18)
           { key = "X"; mods = "Control|Shift"; chars = builtins.fromJSON ''"\u0018"''; }
-          
+
           # Ctrl+Shift+V -> SYN (ASCII 0x16)
           { key = "V"; mods = "Control|Shift"; chars = builtins.fromJSON ''"\u0016"''; }
+
+          # Multi-line input: Shift+Enter sends CSI u encoded escape sequence
+          { key = "Return"; mods = "Shift"; chars = "\\u001b[13;2u"; }
         ];
       };
     }
