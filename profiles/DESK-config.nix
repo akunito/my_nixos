@@ -51,23 +51,13 @@ in
     greetdEnable = true; # Use greetd + ReGreet (modern Wayland-native display manager)
     sddmEnable = false; # Disable SDDM (replaced by greetd)
 
-    # Monitor rotation setup script for greetd (portrait monitor DP-2)
-    # This script is executed before ReGreet starts (see greetd.nix)
-    sddmSetupScript = ''
-      LOGFILE="/tmp/greetd-rotation.log"
-      exec >"$LOGFILE" 2>&1
-      set -x
-      echo "=== greetd Monitor Rotation Script ==="
-      XRANDR="$(command -v xrandr 2>/dev/null || echo /run/current-system/sw/bin/xrandr)"
-      MONITOR="DP-2"
-      for i in $(seq 1 40); do
-        $XRANDR --query | grep -q "^$MONITOR connected" && break
-        sleep 0.25
-      done
-      $XRANDR --output "$MONITOR" --rotate right 2>&1 || true
-      sleep 0.25
-      $XRANDR --output "$MONITOR" --rotate right 2>&1 || true
-      echo "=== greetd Monitor Rotation Complete ==="
+    # Sway output configuration for the greeter session (replaces xrandr-based sddmSetupScript).
+    # Sway natively handles per-monitor rotation, scale, and positioning.
+    greetdSwayExtraConfig = ''
+      output "${monitors.samsungMain.criteria}" mode ${monitors.samsungMain.mode} scale ${toString monitors.samsungMain.scale} pos 0 0
+      output "${monitors.nslVertical.criteria}" mode ${monitors.nslVertical.mode} scale ${toString monitors.nslVertical.scale} transform 90 pos 2400 -876
+      output "${monitors.philipsTv.criteria}" mode ${monitors.philipsTv.mode} scale ${toString monitors.philipsTv.scale} pos 3552 -876
+      output "${monitors.bnqLeft.criteria}" mode ${monitors.bnqLeft.mode} scale ${toString monitors.bnqLeft.scale} pos -1920 0
     '';
 
     # Shell features

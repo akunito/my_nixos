@@ -284,6 +284,7 @@
 
     # Display Manager feature flags
     greetdEnable = false; # Enable greetd + ReGreet (modern Wayland-native display manager)
+    greetdSwayExtraConfig = ""; # Extra Sway config for greeter (e.g., output rotation/scale directives)
     sddmEnable = true; # Enable SDDM (default display manager for non-greetd profiles)
     sddmForcePasswordFocus = false; # Force password field focus (fixes multi-monitor focus issues)
     sddmBreezePatchedTheme = false; # Use patched Breeze theme with custom settings

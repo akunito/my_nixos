@@ -1,26 +1,41 @@
 { config, lib, pkgs, systemSettings, ... }:
 
+let
+  greetdEnabled = systemSettings.greetdEnable or false;
+  extraConfig = systemSettings.greetdSwayExtraConfig or "";
+
+  # Minimal Sway config for the greeter session.
+  # Sway supports per-output rotation/scale/position — cage does not.
+  swayGreeterConfig = pkgs.writeText "greetd-sway-config" ''
+    # Per-profile output directives (rotation, scale, position)
+    ${extraConfig}
+
+    # Launch ReGreet, then exit Sway when it's done
+    exec "regreet; swaymsg exit"
+  '';
+in
 {
   # KWallet PAM integration for automatic wallet unlocking on login
   # This enables KWallet to unlock automatically when logging in through greetd
-  security.pam.services = lib.mkIf (systemSettings.greetdEnable or false) {
+  security.pam.services = lib.mkIf greetdEnabled {
     login.enableKwallet = true;   # Unlock wallet on TTY/login
     greetd.enableKwallet = true;  # Unlock wallet on greetd login (primary for graphical sessions)
   };
 
   # greetd display manager
-  services.greetd = lib.mkIf (systemSettings.greetdEnable or false) {
+  services.greetd = lib.mkIf greetdEnabled {
     enable = true;
-    # NOTE: Do NOT set services.greetd.settings.default_session.command here!
-    # programs.regreet.enable automatically configures:
-    #   dbus-run-session cage -s -- regreet
-    # Overriding it breaks ReGreet (launches without Wayland compositor → black screen).
+    # Override the cage-based command set by programs.regreet with Sway.
+    # Sway handles multi-monitor output configuration (rotation, scale, position)
+    # which cage cannot do — cage spans one window across the bounding box of all outputs.
+    settings.default_session.command = lib.mkForce
+      "dbus-run-session sway --config ${swayGreeterConfig}";
   };
 
-  # ReGreet greeter program (GTK4 greeter running inside cage compositor)
-  # This automatically sets greetd's default_session.command to:
-  #   dbus-run-session cage -s -- regreet
-  programs.regreet = lib.mkIf (systemSettings.greetdEnable or false) {
+  # ReGreet greeter program (GTK4 greeter)
+  # programs.regreet sets greetd's command to cage by default (mkDefault),
+  # which we override above with mkForce to use Sway instead.
+  programs.regreet = lib.mkIf greetdEnabled {
     enable = true;
     settings = {
       background = {
@@ -34,7 +49,7 @@
   };
 
   # CSS theming
-  environment.etc."greetd/regreet.css" = lib.mkIf (systemSettings.greetdEnable or false) {
+  environment.etc."greetd/regreet.css" = lib.mkIf greetdEnabled {
     text = ''
       /* ReGreet CSS Theming */
       window {
