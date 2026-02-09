@@ -256,7 +256,7 @@ replicate_init() {
     # Full send/recv
     local src_snap="${src}@${snap_name}"
     log "Full send: $src_snap -> $dst"
-    if zfs send "$src_snap" | zfs recv -o encryption=inherit "$dst"; then
+    if zfs send "$src_snap" | zfs recv -x encryption "$dst"; then
         log "Full replication complete: $src -> $dst"
     else
         log_error "Full replication FAILED: $src -> $dst"
@@ -355,11 +355,11 @@ main() {
 
         if [[ "$INIT_MODE" == true ]]; then
             if ! replicate_init "$src" "$dst"; then
-                (( failures++ ))
+                failures=$((failures + 1))
             fi
         else
             if ! replicate_incremental "$src" "$dst"; then
-                (( failures++ ))
+                failures=$((failures + 1))
             fi
         fi
         echo ""

@@ -412,8 +412,8 @@ show_status() {
   local repos=(
     "$NFS_BASE/$HOSTNAME/home.restic:home_nfs"
     "$NFS_BASE/shared/vps.restic:vps_nfs"
-    "$NFS_BASE/$HOSTNAME/homelab_DATA.restic:homelab_nfs"
     "$USB_MOUNT/restic/$HOSTNAME/home.restic:home_usb"
+    "$USB_MOUNT/restic/$HOSTNAME/homelab_DATA.restic:homelab_usb"
   )
 
   export RESTIC_PASSWORD_FILE
@@ -481,15 +481,15 @@ init_repos() {
 
     ensure_repo_initialized "$NFS_BASE/$HOSTNAME/home.restic" "home_nfs"
     ensure_repo_initialized "$NFS_BASE/shared/vps.restic" "vps_nfs"
-    ensure_repo_initialized "$NFS_BASE/$HOSTNAME/homelab_DATA.restic" "homelab_nfs"
 
-    log_success "All NFS repositories initialized"
+    log_success "NFS repositories initialized (home, vps)"
   elif [ "$target" = "usb" ]; then
     ensure_usb_mount || exit 1
 
     ensure_repo_initialized "$USB_MOUNT/restic/$HOSTNAME/home.restic" "home_usb"
+    ensure_repo_initialized "$USB_MOUNT/restic/$HOSTNAME/homelab_DATA.restic" "homelab_usb"
 
-    log_success "USB repositories initialized"
+    log_success "USB repositories initialized (home, homelab)"
     cleanup_usb
   else
     log_error "Unknown target: $target (use 'nfs' or 'usb')"
@@ -703,12 +703,12 @@ parse_args() {
           backup_vps "$repo_path" "$dry_run"
           ;;
         homelab)
-          repo_path="$NFS_BASE/$HOSTNAME/homelab_DATA.restic"
-          ensure_repo_initialized "$repo_path" "homelab_nfs"
-          backup_homelab "$repo_path" "$dry_run"
+          log_error "Homelab backups are not supported on NFS target (use USB for homelab)"
+          log_error "Reason: TrueNAS already has ZFS snapshots of homelab DATA_4TB"
+          exit 1
           ;;
         *)
-          log_error "Unknown job: $job (use home, vps, or homelab)"
+          log_error "Unknown job: $job (use home or vps for NFS, homelab only on USB)"
           exit 1
           ;;
       esac
@@ -721,8 +721,13 @@ parse_args() {
           ensure_repo_initialized "$repo_path" "home_usb"
           backup_home "$repo_path" "$dry_run"
           ;;
+        homelab)
+          repo_path="$USB_MOUNT/restic/$HOSTNAME/homelab_DATA.restic"
+          ensure_repo_initialized "$repo_path" "homelab_usb"
+          backup_homelab "$repo_path" "$dry_run"
+          ;;
         *)
-          log_error "USB target only supports 'home' job"
+          log_error "USB target supports 'home' and 'homelab' jobs (vps only on NFS)"
           exit 1
           ;;
       esac
