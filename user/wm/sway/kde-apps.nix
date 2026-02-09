@@ -18,11 +18,10 @@
 
   # Rebuild KDE service cache after Home Manager activation.
   # Without Plasma 6, nothing triggers kbuildsycoca6, so Dolphin's
-  # "Choose Application" dialog stays empty.
+  # "Choose Application" dialog stays empty. We reference the binary
+  # directly from the kservice package since it's not in PATH.
   home.activation.rebuildKSycoca = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if command -v kbuildsycoca6 >/dev/null 2>&1; then
-      kbuildsycoca6 --noincremental 2>/dev/null || true
-    fi
+    ${pkgs.kdePackages.kservice}/bin/kbuildsycoca6 --noincremental 2>/dev/null || true
   '';
 
   xdg.mimeApps.defaultApplications = {
