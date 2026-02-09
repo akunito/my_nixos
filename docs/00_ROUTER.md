@@ -27,6 +27,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | infrastructure.services.monitoring | Monitoring stack - Prometheus, Grafana, exporters, alerting | infrastructure, monitoring, prometheus, grafana, alerting | profiles/LXC_monitoring-config.nix |
 | infrastructure.services.pfsense | pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP | infrastructure, pfsense, firewall, gateway, wireguard, dns, dhcp, snmp, pfblockerng, openvpn | docs/infrastructure/INFRASTRUCTURE.md |
 | infrastructure.services.proxy | Proxy stack - NPM, cloudflared, ACME certificates | infrastructure, proxy, nginx, cloudflare, ssl, certificates | profiles/LXC_proxy-config.nix |
+| infrastructure.services.truenas | TrueNAS storage server operations, monitoring, and maintenance | infrastructure, storage, truenas, zfs, monitoring, nas | system/app/prometheus-graphite.nix |
 | infrastructure.services.vps | VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring | infrastructure, vps, wireguard, vpn, cloudflare, nginx, monitoring | system/app/prometheus-node-exporter.nix |
 | keybindings.mouse-button-mapping | Quick guide to mapping mouse side buttons to modifier keys using keyd. | keyd, mouse, keybindings, modifiers | system/wm/keyd.nix |
 | keybindings.sway | SwayFX keybindings reference, including unified rofi launcher and window overview. | sway, swayfx, keybindings, rofi, wayland | user/wm/sway/swayfx-config.nix |

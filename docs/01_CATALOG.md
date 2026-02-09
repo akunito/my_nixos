@@ -427,6 +427,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/infrastructure/INFRASTRUCTURE.md**: Public infrastructure overview with architecture diagram and component descriptions
 - **docs/infrastructure/INFRASTRUCTURE_INTERNAL.md**: Complete internal infrastructure documentation with sensitive details (ENCRYPTED)
+- **docs/infrastructure/truenas-migration-complete.md**: Successfully migrated TrueNAS SCALE from failing Patriot Burst Elite 120GB SSD to mirrored Samsung 970 EVO Plus NVMe drives.
 
 ### Infrastructure / Audits
 
@@ -444,6 +445,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 - **docs/infrastructure/services/proxy-stack.md**: Proxy stack - NPM, cloudflared, ACME certificates
 - **docs/infrastructure/services/tailscale-headscale.md**: Tailscale mesh VPN with self-hosted Headscale coordination server
+- **docs/infrastructure/services/truenas.md**: TrueNAS storage server operations, monitoring, and maintenance
 - **docs/infrastructure/services/vps-wireguard.md**: VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring
 
 ### Keybindings
