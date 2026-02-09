@@ -18,8 +18,9 @@ flake.lock merge=ours
 # ============================================================================
 # Git-Crypt Encrypted Files
 # ============================================================================
-# Secrets directory - all .nix files encrypted
+# Secrets directory - all .nix and .txt files encrypted
 secrets/*.nix filter=git-crypt diff=git-crypt
+secrets/*.txt filter=git-crypt diff=git-crypt
 
 # Exclude template files from encryption (they're public)
 secrets/*.template !filter !diff

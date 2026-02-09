@@ -104,10 +104,11 @@ result-*
 *.cert
 *.secret
 
-# Secrets directory - allow encrypted nix files and templates only
-# The *.nix files are encrypted with git-crypt, templates are public
+# Secrets directory - allow encrypted nix/txt files and templates only
+# The *.nix and *.txt files are encrypted with git-crypt, templates are public
 secrets/*
 !secrets/*.nix
+!secrets/*.txt
 !secrets/*.template
 
 # Plasma configuration (managed separately)
