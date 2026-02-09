@@ -8,25 +8,18 @@
     greetd.enableKwallet = true;  # Unlock wallet on greetd login (primary for graphical sessions)
   };
 
+  # greetd display manager
   services.greetd = lib.mkIf (systemSettings.greetdEnable or false) {
     enable = true;
-    settings = {
-      default_session = let
-        # If there's a setup script (e.g., monitor rotation), wrap ReGreet with it
-        hasSetupScript = (systemSettings.sddmSetupScript or null) != null;
-        rotationScript = pkgs.writeShellScript "greetd-rotation" ''
-          ${systemSettings.sddmSetupScript or ""}
-          exec ${pkgs.greetd.regreet}/bin/regreet
-        '';
-      in {
-        command = if hasSetupScript
-                  then "${rotationScript}"
-                  else "${pkgs.regreet}/bin/regreet";
-      };
-    };
+    # NOTE: Do NOT set services.greetd.settings.default_session.command here!
+    # programs.regreet.enable automatically configures:
+    #   dbus-run-session cage -s -- regreet
+    # Overriding it breaks ReGreet (launches without Wayland compositor → black screen).
   };
 
-  # ReGreet greeter program
+  # ReGreet greeter program (GTK4 greeter running inside cage compositor)
+  # This automatically sets greetd's default_session.command to:
+  #   dbus-run-session cage -s -- regreet
   programs.regreet = lib.mkIf (systemSettings.greetdEnable or false) {
     enable = true;
     settings = {
