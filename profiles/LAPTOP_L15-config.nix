@@ -125,6 +125,9 @@ in
     # SOFTWARE & FEATURE FLAGS - Centralized Control
     # ============================================================================
 
+    # === Desktop Environment ===
+    enableSwayForDESK = false; # Not needed when wm = "sway" (no dual-WM setup)
+
     # === Package Modules ===
     systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
     systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
@@ -172,6 +175,7 @@ in
     name = "akunito";
     email = "diego88aku@gmail.com";
     dotfilesDir = "/home/akunito/.dotfiles";
+    wm = "sway"; # Switched from plasma6 for Sway-only setup (no KDE compilation)
 
     # Home packages
     homePackages = pkgs: pkgs-unstable: [

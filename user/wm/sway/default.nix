@@ -41,6 +41,7 @@
     ./startup-apps.nix
     ./swayfx-config.nix
     ./extras.nix
+    ./kde-apps.nix
   ];
 }
 
