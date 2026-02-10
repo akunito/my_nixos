@@ -136,7 +136,7 @@ let
   };
 in
 {
-  # Set XDG_MENU_PREFIX for KDE applications (Dolphin menu database)
+  # Set XDG_MENU_PREFIX for KDE applications (Okular, Ark, etc. menu database)
   # Using home.sessionVariables (safe method that doesn't break DBus/networking)
   home.sessionVariables = {
     XDG_MENU_PREFIX = "plasma-";
@@ -285,7 +285,7 @@ in
           "${hyper}+L" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram";
           "${hyper}+E" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh nemo nemo";
           "${hyper}+U" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
           "${hyper}+A" =
@@ -353,7 +353,7 @@ in
           "${hyper}+Shift+space" = "floating toggle";
           # Note: "${hyper}+s" is used for control-panel (see application bindings above)
           # Note: "${hyper}+w" is used for workspace next_on_output (see Workspace navigation above)
-          # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (dolphin file explorer)
+          # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (nemo file manager)
           # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (blueman-manager)
           # Note: Removed "${hyper}+u" to avoid conflict with "${hyper}+U" (dbeaver)
 
@@ -466,7 +466,7 @@ in
           command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
           always = false; # Only run on initial startup, not on config reload
         }
-        # Rebuild KDE menu database for Dolphin (must run after XDG_MENU_PREFIX is set via home.sessionVariables)
+        # Rebuild KDE menu database for KDE apps (must run after XDG_MENU_PREFIX is set via home.sessionVariables)
         {
           command = "${rebuild-ksycoca}/bin/rebuild-ksycoca";
           always = false; # Run only on initial login, not on reload
@@ -708,13 +708,7 @@ in
           }
           {
             criteria = {
-              class = "Dolphin";
-            };
-            command = "floating enable";
-          }
-          {
-            criteria = {
-              class = "dolphin";
+              app_id = "nemo";
             };
             command = "floating enable";
           }
@@ -749,13 +743,6 @@ in
             command = "floating enable, sticky enable";
           }
 
-          # Dolphin on Wayland (use app_id)
-          {
-            criteria = {
-              app_id = "org.kde.dolphin";
-            };
-            command = "floating enable";
-          }
 
           # Sticky windows - visible on all workspaces of their monitor
           {
@@ -814,25 +801,13 @@ in
           }
           {
             criteria = {
-              app_id = "org.kde.dolphin";
+              app_id = "nemo";
             };
             command = "sticky enable";
           }
           {
             criteria = {
               class = "SwayBG+";
-            };
-            command = "sticky enable";
-          }
-          {
-            criteria = {
-              class = "Dolphin";
-            };
-            command = "sticky enable";
-          }
-          {
-            criteria = {
-              class = "dolphin";
             };
             command = "sticky enable";
           }
@@ -1060,9 +1035,7 @@ in
       for_window [app_id="bitwarden-desktop"] floating enable
       for_window [app_id="Bitwarden"] floating enable
       for_window [app_id="com.usebottles.bottles"] floating enable
-      for_window [app_id="org.kde.dolphin"] floating enable
-      for_window [class="Dolphin"] floating enable
-      for_window [class="dolphin"] floating enable
+      for_window [app_id="nemo"] floating enable
       for_window [app_id="rofi"] floating enable
       for_window [app_id="swayfx-settings"] floating enable
 

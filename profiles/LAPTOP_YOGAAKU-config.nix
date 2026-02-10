@@ -3,6 +3,7 @@
 
 let
   base = import ./LAPTOP-base.nix;
+  secrets = import ../secrets/domains.nix;
 in
 {
   # Flag to use rust-overlay
