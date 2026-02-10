@@ -29,39 +29,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 50,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "mode": "thresholds"
           },
           "mappings": [],
           "max": 100,
@@ -95,123 +63,6 @@
       },
       "id": 1,
       "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "11.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_system_cpu_user{job=\"truenas_graphite\"}",
-          "legendFormat": "user",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_system_cpu_system{job=\"truenas_graphite\"}",
-          "legendFormat": "system",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_system_cpu_iowait{job=\"truenas_graphite\"}",
-          "legendFormat": "iowait",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_system_cpu_irq{job=\"truenas_graphite\"}",
-          "legendFormat": "irq",
-          "range": true,
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_system_cpu_softirq{job=\"truenas_graphite\"}",
-          "legendFormat": "softirq",
-          "range": true,
-          "refId": "E"
-        }
-      ],
-      "title": "CPU Usage",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -234,14 +85,78 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(truenas_system_ram_used{job=\"truenas_graphite\"} / (truenas_system_ram_used{job=\"truenas_graphite\"} + truenas_system_ram_free{job=\"truenas_graphite\"} + truenas_system_ram_cached{job=\"truenas_graphite\"} + truenas_system_ram_buffers{job=\"truenas_graphite\"})) * 100",
-          "legendFormat": "Memory Used",
+          "expr": "truenas_truenas_cpu_usage_cpu_cpu{host=\"truenas\",job=\"truenas_graphite\"}",
+          "legendFormat": "CPU Usage",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Memory Usage",
+      "title": "CPU Usage",
       "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "vector(0)",
+          "legendFormat": "Memory metrics not available",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Usage (No Data)",
+      "transparent": true,
+      "type": "stat"
     },
     {
       "datasource": {
@@ -478,7 +393,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 12,
         "x": 0,
         "y": 8
@@ -507,32 +422,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_zfs_arc_size_arcsz{job=\"truenas_graphite\"} * 1048576",
+          "expr": "truenas_truenas_arcstats_size_size{host=\"truenas\",job=\"truenas_graphite\"}",
           "legendFormat": "ARC Size",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_zfs_arc_size_target{job=\"truenas_graphite\"} * 1048576",
-          "legendFormat": "ARC Target",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_zfs_arc_size_max__high_water_{job=\"truenas_graphite\"} * 1048576",
-          "legendFormat": "ARC Max",
-          "range": true,
-          "refId": "C"
         }
       ],
       "title": "ZFS ARC Size",
@@ -590,12 +483,12 @@
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 12,
         "x": 12,
         "y": 8
@@ -624,46 +517,13 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_ram_used{job=\"truenas_graphite\"} * 1048576",
-          "legendFormat": "Used",
+          "expr": "truenas_truenas_cpu_usage_cpu_cpu{host=\"truenas\",job=\"truenas_graphite\"}",
+          "legendFormat": "CPU Usage",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_system_ram_cached{job=\"truenas_graphite\"} * 1048576",
-          "legendFormat": "Cached",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_system_ram_buffers{job=\"truenas_graphite\"} * 1048576",
-          "legendFormat": "Buffers",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_system_ram_free{job=\"truenas_graphite\"} * 1048576",
-          "legendFormat": "Free",
-          "range": true,
-          "refId": "D"
         }
       ],
-      "title": "Memory Usage Over Time",
+      "title": "CPU Usage Over Time",
       "type": "timeseries"
     },
     {
@@ -739,7 +599,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 16
       },
       "id": 7,
       "options": {
@@ -765,7 +625,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_net_received{job=\"truenas_graphite\"} * 1024",
+          "expr": "truenas_system_net_received{host=\"truenas\",job=\"truenas_graphite\"}",
           "legendFormat": "received",
           "range": true,
           "refId": "A"
@@ -776,7 +636,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_net_sent{job=\"truenas_graphite\"} * 1024",
+          "expr": "truenas_system_net_sent{host=\"truenas\",job=\"truenas_graphite\"}",
           "legendFormat": "sent",
           "range": true,
           "refId": "B"
@@ -853,7 +713,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 24
       },
       "id": 8,
       "options": {
@@ -879,7 +739,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_cputemp_temperatures_0{job=\"truenas_graphite\"}",
+          "expr": "truenas_cputemp_temperatures_cpu{host=\"truenas\",job=\"truenas_graphite\",cpu=\"0\"}",
           "legendFormat": "CPU Core 0",
           "range": true,
           "refId": "A"
@@ -890,7 +750,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_cputemp_temperatures_1{job=\"truenas_graphite\"}",
+          "expr": "truenas_cputemp_temperatures_cpu{host=\"truenas\",job=\"truenas_graphite\",cpu=\"1\"}",
           "legendFormat": "CPU Core 1",
           "range": true,
           "refId": "B"
@@ -901,7 +761,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_cputemp_temperatures_2{job=\"truenas_graphite\"}",
+          "expr": "truenas_cputemp_temperatures_cpu{host=\"truenas\",job=\"truenas_graphite\",cpu=\"2\"}",
           "legendFormat": "CPU Core 2",
           "range": true,
           "refId": "C"
@@ -912,7 +772,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_cputemp_temperatures_3{job=\"truenas_graphite\"}",
+          "expr": "truenas_cputemp_temperatures_cpu{host=\"truenas\",job=\"truenas_graphite\",cpu=\"3\"}",
           "legendFormat": "CPU Core 3",
           "range": true,
           "refId": "D"
@@ -981,7 +841,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 24
       },
       "id": 9,
       "options": {
@@ -1007,7 +867,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_load_load1{job=\"truenas_graphite\"}",
+          "expr": "truenas_system_load_load1{host=\"truenas\",job=\"truenas_graphite\"}",
           "legendFormat": "1 min",
           "range": true,
           "refId": "A"
@@ -1018,7 +878,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_load_load5{job=\"truenas_graphite\"}",
+          "expr": "truenas_system_load_load5{host=\"truenas\",job=\"truenas_graphite\"}",
           "legendFormat": "5 min",
           "range": true,
           "refId": "B"
@@ -1029,7 +889,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_load_load15{job=\"truenas_graphite\"}",
+          "expr": "truenas_system_load_load15{host=\"truenas\",job=\"truenas_graphite\"}",
           "legendFormat": "15 min",
           "range": true,
           "refId": "C"
@@ -1111,7 +971,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 32
       },
       "id": 10,
       "options": {
@@ -1137,7 +997,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_io_in{job=\"truenas_graphite\"}",
+          "expr": "truenas_system_io_in{host=\"truenas\",job=\"truenas_graphite\"}",
           "legendFormat": "read",
           "range": true,
           "refId": "A"
@@ -1148,7 +1008,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_io_out{job=\"truenas_graphite\"}",
+          "expr": "truenas_system_io_out{host=\"truenas\",job=\"truenas_graphite\"}",
           "legendFormat": "write",
           "range": true,
           "refId": "B"
@@ -1199,7 +1059,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 40
       },
       "id": 11,
       "options": {
@@ -1236,6 +1096,101 @@
       ],
       "title": "ZFS Pool Capacity",
       "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 48
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(truenas_zfspool_fragmentation{job=\"truenas_graphite\"} / 100)",
+          "legendFormat": "{{pool}} fragmentation",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS Pool Fragmentation",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
