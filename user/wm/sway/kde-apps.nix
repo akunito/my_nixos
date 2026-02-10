@@ -1,4 +1,4 @@
-{ pkgs, lib, systemSettings, ... }:
+{ pkgs, lib, systemSettings, userSettings, ... }:
 
 {
   # KDE companion apps and MIME associations for Sway session
@@ -18,18 +18,46 @@
 
   # Force dark mode for viewer apps (fixes Gwenview/Okular light mode issue)
   # These apps have KDE Framework-specific color scheme resolution that may not
-  # respect qt6ct/kdeglobals properly without explicit ColorScheme setting
-  home.file = lib.mkIf (systemSettings.enableSwayForDESK == true) {
-    ".config/gwenviewrc".text = ''
-      [General]
-      ColorScheme=BreezeDark
-    '';
+  # respect qt6ct/kdeglobals properly without explicit ColorScheme setting.
+  # We use an activation script to add ColorScheme to [General] section if missing.
+  home.activation.setKdeAppColorScheme = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    # Only run when Sway is enabled (either as primary WM or alongside Plasma)
+    if [ "${toString (systemSettings.enableSwayForDESK or false)}" = "true" ] || [ "${toString (userSettings.wm == "sway")}" = "true" ]; then
+      # Function to add ColorScheme to [General] section if not present
+      add_color_scheme() {
+        local config_file="$1"
 
-    ".config/okularrc".text = ''
-      [General]
-      ColorScheme=BreezeDark
-    '';
-  };
+        # Create file with [General] section if it doesn't exist
+        if [ ! -f "$config_file" ]; then
+          echo "[General]" > "$config_file"
+          echo "ColorScheme=BreezeDark" >> "$config_file"
+          echo "Added ColorScheme to new $config_file"
+          return
+        fi
+
+        # Check if ColorScheme is already set
+        if grep -q "^ColorScheme=" "$config_file"; then
+          echo "ColorScheme already set in $config_file"
+          return
+        fi
+
+        # Check if [General] section exists
+        if grep -q "^\[General\]" "$config_file"; then
+          # Add ColorScheme right after [General] line
+          ${pkgs.gnused}/bin/sed -i '/^\[General\]/a ColorScheme=BreezeDark' "$config_file"
+          echo "Added ColorScheme to existing [General] in $config_file"
+        else
+          # Prepend [General] section with ColorScheme
+          echo -e "[General]\nColorScheme=BreezeDark\n$(cat "$config_file")" > "$config_file"
+          echo "Added [General] section with ColorScheme to $config_file"
+        fi
+      }
+
+      # Apply to Gwenview and Okular
+      add_color_scheme "$HOME/.config/gwenviewrc"
+      add_color_scheme "$HOME/.config/okularrc"
+    fi
+  '';
 
   # Append MIME associations to kdeglobals after Stylix creates it.
   # Stylix creates kdeglobals for Qt theming via .source (template), so we can't use .text to merge.
