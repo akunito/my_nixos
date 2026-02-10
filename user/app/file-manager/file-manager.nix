@@ -2,19 +2,20 @@
 
 {
   # File manager configuration module
-  # Handles both Ranger and Dolphin, setting the default based on userSettings.fileManager
-  # 
+  # Handles Ranger, Dolphin, and Nemo, setting the default based on userSettings.fileManager
+  #
   # This module:
   #   - Enables XDG MIME configuration for proper file manager associations
   #   - Sets the default file manager for directories (inode/directory MIME type)
   #   - Automatically installs Dolphin if selected (Ranger is installed via user/app/ranger/ranger.nix)
+  #   - Nemo is installed via user/wm/sway/kde-apps.nix
   #
   # Usage:
   #   To switch file managers, override userSettings.fileManager in your profile config file
   #   (e.g., profiles/PROFILE-config.nix or in flake.PROFILE.nix):
   #
   #   userSettings = {
-  #     fileManager = "dolphin";  # or "ranger" (default)
+  #     fileManager = "nemo";  # or "ranger" (default) or "dolphin"
   #   };
   #
   #   Default is "ranger" (defined in lib/defaults.nix)
@@ -26,9 +27,11 @@
   xdg.mimeApps.enable = true;
 
   # Set default file manager for directories based on userSettings.fileManager
-  xdg.mimeApps.defaultApplications = 
+  xdg.mimeApps.defaultApplications =
     if userSettings.fileManager == "dolphin" then {
       "inode/directory" = "org.kde.dolphin.desktop";
+    } else if userSettings.fileManager == "nemo" then {
+      "inode/directory" = "nemo.desktop";
     } else {
       # Default to ranger
       "inode/directory" = "ranger.desktop";
@@ -36,8 +39,6 @@
 
   # Automatically add Dolphin to packages if it's selected as the file manager
   # Ranger is already included via user/app/ranger/ranger.nix
-  #
-  # Standard Dolphin installation
-  # Theming is now handled globally via Stylix and adwaita-qt in user/style/stylix.nix
+  # Nemo is installed via user/wm/sway/kde-apps.nix
   home.packages = lib.optional (userSettings.fileManager == "dolphin") pkgs.kdePackages.dolphin;
 }

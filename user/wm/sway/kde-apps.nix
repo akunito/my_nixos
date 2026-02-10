@@ -18,6 +18,13 @@
     pkgs.swayimg # Sway-native image viewer (keyboard-driven, lightweight)
   ];
 
+  # Nemo tree view: enable expandable folders in list view
+  dconf.settings = {
+    "org/nemo/list-view" = {
+      use-tree-view = true;
+    };
+  };
+
   # Force dark mode for viewer apps (fixes Gwenview/Okular light mode issue)
   # These apps have KDE Framework-specific color scheme resolution that may not
   # respect qt6ct/kdeglobals properly without explicit ColorScheme setting.
@@ -133,8 +140,6 @@
     "application/toml" = "org.kde.kate.desktop";
     "application/xml" = "org.kde.kate.desktop";
 
-    # File manager → Nemo
-    "inode/directory" = "nemo.desktop";
   };
 
     # Also populate [Added Associations] section

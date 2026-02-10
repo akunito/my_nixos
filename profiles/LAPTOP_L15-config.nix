@@ -191,6 +191,7 @@ in
     # === Package Modules (User) ===
     userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
+    rangerFullPreviewEnable = true; # Full ranger preview (fonts, ebooks, spreadsheets, etc.)
 
     # Different prompt color for LAPTOP
     zshinitContent = ''

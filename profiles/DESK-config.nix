@@ -448,7 +448,7 @@ in
     wm = "sway";  # Switched from plasma6 for faster builds (no KDE compilation)
     wmEnableHyprland = false;
 
-    fileManager = "dolphin"; # Explicitly set Dolphin as file manager (overrides default "ranger")
+    fileManager = "nemo"; # Nemo file manager with tree view (GTK, no KDE deps)
 
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";
@@ -477,6 +477,7 @@ in
     # === Package Modules (User) ===
     userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm) - DESK only
+    rangerFullPreviewEnable = true; # Full ranger preview (fonts, ebooks, spreadsheets, etc.)
 
     # === Gaming & Entertainment ===
     gamesEnable = true; # Enable gaming packages (RetroArch, Pegasus, etc.)

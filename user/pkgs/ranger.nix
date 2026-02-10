@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, userSettings, ... }:
 
 {
   nixpkgs.overlays = [
@@ -8,7 +8,7 @@
         preConfigure = ''
           substituteInPlace ranger/__init__.py \
             --replace "DEFAULT_PAGER = 'less'" "DEFAULT_PAGER = '${lib.getBin pkgs.bat}/bin/bat'"
-      
+
           # give image previews out of the box when building with w3m
           substituteInPlace ranger/config/rc.conf \
             --replace "set preview_images false" "set preview_images true"
@@ -30,10 +30,28 @@
       }
     )
   ];
-  home.packages = with pkgs; [
-    # poppler-utils # temporary disabled due to build issues in VMHOME flake
-    librsvg
-    ffmpegthumbnailer
-  ];
-
+  home.packages = with pkgs;
+    # === Core preview dependencies (always installed) ===
+    [
+      poppler-utils        # PDF preview (pdftotext, pdftoppm)
+      librsvg              # SVG rendering
+      ffmpegthumbnailer    # Video thumbnails
+      atool                # Archive listing
+      imagemagick          # Image EXIF auto-rotation (convert, identify)
+      mediainfo            # Audio/video metadata
+      exiftool             # EXIF metadata
+      odt2txt              # OpenDocument text conversion
+      catdoc               # DOC/RTF/XLS preview
+      file                 # MIME type detection
+      chafa                # Terminal image previewer (works in any terminal+tmux)
+    ]
+    # === Heavy preview dependencies (gated by feature flag) ===
+    ++ lib.optionals (userSettings.rangerFullPreviewEnable or false) [
+      djvulibre            # DjVu document support
+      fontforge            # Font file preview (fontimage)
+      calibre              # Ebook cover extraction (ebook-meta)
+      python3Packages.xlsx2csv  # Excel spreadsheet preview
+      transmission_4       # Torrent file info (transmission-show)
+      sqlite-interactive   # SQLite database inspection
+    ];
 }

@@ -97,7 +97,7 @@
     term = "kitty";
     font = "Intel One Mono";
 
-    fileManager = "dolphin"; # Explicitly set Dolphin as file manager (overrides default "ranger")
+    fileManager = "nemo"; # Nemo file manager with tree view (GTK, no KDE deps)
 
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";

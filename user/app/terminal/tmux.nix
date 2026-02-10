@@ -436,6 +436,10 @@ in
       # SSH session management
       set -g default-command "${pkgs.zsh}/bin/zsh -l"
       set -ga terminal-overrides ",xterm-256color:Tc"
+
+      # Enable kitty image protocol passthrough for ranger previews
+      set -g allow-passthrough on
+      set -ga terminal-overrides ',xterm-kitty:Tc'
     '';
   };
 

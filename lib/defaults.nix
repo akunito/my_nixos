@@ -634,6 +634,7 @@
     # Package module feature flags
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
+    rangerFullPreviewEnable = false; # Enable heavy ranger preview deps (fontforge, djvulibre, calibre, etc.)
     gamesEnable = false; # Enable gaming packages and tools (Lutris, Bottles, RetroArch, etc.)
 
     # === Shell Customization ===
@@ -652,7 +653,7 @@
     font = "Intel One Mono";
     fontPkg = pkgs.intel-one-mono;
     editor = "nano";
-    fileManager = "ranger"; # "ranger" or "dolphin"
+    fileManager = "ranger"; # "ranger", "dolphin", or "nemo"
 
     # Home packages - empty by default, profiles specify their own
     homePackages = [ ];
