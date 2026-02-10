@@ -181,6 +181,13 @@ in
     dotfilesDir = "/home/akunito/.dotfiles";
     wm = "sway"; # Switched from plasma6 for Sway-only setup (no KDE compilation)
 
+    # Different theme for YOGAAKU
+    theme = "ashes";
+
+    dockerEnable = true;
+    virtualizationEnable = false;
+    qemuGuestAddition = false; # VM
+
     # Home packages
     homePackages = pkgs: pkgs-unstable: [
       # LAPTOP_L15-specific packages

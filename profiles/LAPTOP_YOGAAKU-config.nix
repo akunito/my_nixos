@@ -158,16 +158,16 @@ in
   userSettings = base.userSettings // {
     username = "akunito";
     name = "akunito";
-    email = "";
+    email = "diego88aku@gmail.com";
     dotfilesDir = "/home/akunito/.dotfiles";
     wm = "sway"; # Switched from plasma6 for Sway-only setup (no KDE compilation)
 
     # Different theme for YOGAAKU
     theme = "ashes";
 
-    dockerEnable = false;
-    virtualizationEnable = true;
-    qemuGuestAddition = true; # VM
+    dockerEnable = true;
+    virtualizationEnable = false;
+    qemuGuestAddition = false; # VM
 
     # Home packages
     homePackages = pkgs: pkgs-unstable: [
