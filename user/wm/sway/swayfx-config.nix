@@ -1088,6 +1088,9 @@ in
       for_window [class="Discover"] floating enable, sticky enable
       for_window [title="Discover"] floating enable, sticky enable
 
+      # Gamescope: always fullscreen (prevents losing fullscreen on alt-tab)
+      for_window [app_id="gamescope"] fullscreen enable
+
       # Mission Center - Floating, Sticky, Resized
       for_window [app_id="io.missioncenter.MissionCenter"] floating enable, sticky enable, resize set 800 600
 

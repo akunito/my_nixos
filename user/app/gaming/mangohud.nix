@@ -28,7 +28,6 @@
     background_alpha=0.4
     toggle_hud=Shift_R+F12
     toggle_hud_position=Shift_R+F11
-    no_display
   '';
 }
 
