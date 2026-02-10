@@ -11,6 +11,11 @@
 #   networkBondingInterfaces = [ "enp11s0f0" "enp11s0f1" ];
 #   networkBondingDhcp = true;
 #
+# To disable on profiles without bonding hardware:
+#   networkBondingEnable = false;  # (default in lib/defaults.nix)
+#
+# Documentation: docs/system-modules/network-bonding.md
+#
 # Verification after applying:
 #   cat /proc/net/bonding/bond0
 #   ip addr show bond0

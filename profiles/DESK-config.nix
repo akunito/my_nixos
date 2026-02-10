@@ -113,13 +113,26 @@ in
     ];
     resolvedEnable = false;
 
+    # ========================================================================
     # Network Bonding (10GbE LACP aggregation)
-    # Prerequisites: Configure LAG on UniFi switch before enabling
-    # Both Intel 82599ES 10GbE interfaces bonded for 20Gbps aggregate + failover
+    # ========================================================================
+    # Hardware: 2x Intel 82599ES 10GbE NICs (enp11s0f0, enp11s0f1)
+    # Switch: UniFi 24-port PoE Pro, ports 5-6 in LACP LAG
+    # Result: 20Gbps aggregate bandwidth + automatic failover
+    #
+    # TO DISABLE (e.g., when copying profile to different hardware):
+    #   Set networkBondingEnable = false; (all other options ignored)
+    #
+    # Prerequisites before enabling:
+    #   1. Configure LAG/LACP on switch for both ports
+    #   2. Verify interface names: ip link show
+    #   3. Reserve IP in pfSense DHCP (or use static IP)
+    #
+    # See: docs/system-modules/network-bonding.md
     networkBondingEnable = true;
-    networkBondingMode = "802.3ad"; # LACP
+    networkBondingMode = "802.3ad"; # LACP (requires switch support)
     networkBondingInterfaces = [ "enp11s0f0" "enp11s0f1" ];
-    networkBondingDhcp = true; # Get IP from pfSense DHCP
+    networkBondingDhcp = true; # Get IP from pfSense DHCP (192.168.8.96 reserved)
 
     # Firewall
     allowedTCPPorts = [
