@@ -71,15 +71,19 @@ in
     boot.kernelModules = [ "bonding" ];
 
     # Configure the bond interface (kernel-level bond creation)
-    networking.bonds.bond0 = {
-      interfaces = interfaces;
-      driverOptions = {
-        mode = mode;
-        miimon = miimon;
-      } // lib.optionalAttrs (mode == "802.3ad") {
-        # LACP-specific options
-        lacp_rate = lacpRate;
-        xmit_hash_policy = xmitHashPolicy;
+    # Only use networking.bonds when systemd-networkd is managing networking
+    # When NetworkManager is active, it will create the bond via connection profiles
+    networking.bonds = lib.mkIf useNetworkd {
+      bond0 = {
+        interfaces = interfaces;
+        driverOptions = {
+          mode = mode;
+          miimon = miimon;
+        } // lib.optionalAttrs (mode == "802.3ad") {
+          # LACP-specific options
+          lacp_rate = lacpRate;
+          xmit_hash_policy = xmitHashPolicy;
+        };
       };
     };
 
