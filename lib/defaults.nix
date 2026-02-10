@@ -628,7 +628,6 @@
     GOGlauncherEnable = false;
     dolphinEmulatorPrimehackEnable = false;
     steamPackEnable = false;
-    steamUIScale = null; # Steam UI DPI scale override (e.g., "1.6" for 4K at 1.6x). null = auto-detect.
     rpcs3Enable = false;
 
     # Package module feature flags

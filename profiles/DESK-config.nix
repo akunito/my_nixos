@@ -485,7 +485,6 @@ in
     starcitizenEnable = true; # Enable Star Citizen support and optimizations
     GOGlauncherEnable = true; # Enable Heroic Games Launcher for GOG games
     steamPackEnable = true; # Enable Steam gaming platform
-    steamUIScale = "1.6"; # Match Samsung 4K monitor scale for crisp Steam UI
     dolphinEmulatorPrimehackEnable = true; # Enable Dolphin Emulator with Primehack
     rpcs3Enable = true; # Enable RPCS3 PS3 emulator
 
