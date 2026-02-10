@@ -30,12 +30,17 @@ in
     # pkiCertificates = [ /home/akunito/.certificates/ca.cert.pem ];
     sudoTimestampTimeoutMinutes = 180;
 
+    # SSH agent sudo authentication
+    # Allows passwordless sudo when connected via SSH with agent forwarding (-A)
+    # Local sessions without SSH agent still require password
+    sshAgentSudoEnable = true;
+
     # Backups - disabled on this machine
     homeBackupEnable = false;
 
     # Network
-    ipAddress = "192.168.8.xxx"; # ip to be reserved on router by mac (manually)
-    wifiIpAddress = "192.168.8.xxx"; # ip to be reserved on router by mac (manually)
+    ipAddress = "192.168.8.101"; # ip to be reserved on router by mac (manually)
+    wifiIpAddress = "192.168.8.102"; # ip to be reserved on router by mac (manually)
     nameServers = [
       "192.168.8.1"
       "192.168.8.1"

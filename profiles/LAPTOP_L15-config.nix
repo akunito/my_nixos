@@ -25,6 +25,11 @@ in
     pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
     sudoTimestampTimeoutMinutes = 180;
 
+    # SSH agent sudo authentication
+    # Allows passwordless sudo when connected via SSH with agent forwarding (-A)
+    # Local sessions without SSH agent still require password
+    sshAgentSudoEnable = true;
+
     # Backups
     homeBackupEnable = true;
     homeBackupOnCalendar = "0/6:00:00";
