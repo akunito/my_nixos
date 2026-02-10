@@ -136,7 +136,7 @@ in
     # trayscaleGuiEnable inherited from LAPTOP-base.nix (true)
     tailscaleLoginServer = "https://headscale.akunito.com"; # Self-hosted Headscale (no secrets on this machine)
     tailscaleAcceptRoutes = true; # Accept routes from subnet router (when connected)
-    tailscaleAcceptDns = true; # Accept DNS from Tailscale (when connected)
+    tailscaleAcceptDns = false; # Use pfSense DNS (not Tailscale) for local resolution
 
     # === Development Tools ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools

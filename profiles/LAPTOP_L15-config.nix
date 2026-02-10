@@ -153,7 +153,7 @@ in
     # trayscaleGuiEnable inherited from LAPTOP-base.nix (true)
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
     tailscaleAcceptRoutes = true; # Accept routes from subnet router (when connected)
-    tailscaleAcceptDns = true; # Accept DNS from Tailscale (when connected)
+    tailscaleAcceptDns = false; # Use pfSense DNS (not Tailscale) for local resolution
     tailscaleLanAutoToggle = false; # Disabled - manual control via GUI
     tailscaleLanGateway = "192.168.8.1"; # Home LAN gateway (not used with manual control)
 

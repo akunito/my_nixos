@@ -316,8 +316,8 @@ in
     tailscaleEnable = true; # Enable daemon (but don't auto-connect - manual via Trayscale GUI)
     trayscaleGuiEnable = true; # Enable GUI tray app with Sway for manual control
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
-    # DESK is always on LAN - don't override local routes/DNS with Tailscale
-    tailscaleAcceptRoutes = false; # Don't accept routes (already on LAN)
+    # DESK is always on LAN - override local routes/DNS with Tailscale
+    tailscaleAcceptRoutes = true; # Accept routes (already on LAN)
     tailscaleAcceptDns = false; # Don't override DNS (use pfSense directly)
 
     # === Development Tools & AI ===
