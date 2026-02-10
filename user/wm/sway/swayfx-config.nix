@@ -284,8 +284,8 @@ in
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Alacritty alacritty";
           "${hyper}+L" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram";
-          "${hyper}+E" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh nemo nemo";
+          "${hyper}+e" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh kitty-ranger 'kitty --class kitty-ranger ranger'";
           "${hyper}+U" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
           "${hyper}+A" =
@@ -353,7 +353,7 @@ in
           "${hyper}+Shift+space" = "floating toggle";
           # Note: "${hyper}+s" is used for control-panel (see application bindings above)
           # Note: "${hyper}+w" is used for workspace next_on_output (see Workspace navigation above)
-          # Note: Removed "${hyper}+e" to avoid conflict with "${hyper}+E" (nemo file manager)
+          # Note: Removed "${hyper}+e" layout toggle (now used for ranger file manager)
           # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (blueman-manager)
           # Note: Removed "${hyper}+u" to avoid conflict with "${hyper}+U" (dbeaver)
 
@@ -405,8 +405,14 @@ in
           # Toggle SwayFX default bar (swaybar) - disabled by default, can be toggled manually
           "${hyper}+Shift+Home" = "exec ${config.home.homeDirectory}/.config/sway/scripts/swaybar-toggle.sh";
 
-          # Hide window (move to scratchpad)
-          "${hyper}+Shift+e" = "move scratchpad";
+          # Dolphin file manager (KDE, tabs restore)
+          "${hyper}+Shift+e" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
+
+          # Hide window (move to scratchpad) - Previously: hyper+Shift+e
+          # Commented out to avoid conflict with Dolphin keybinding above
+          # To manually move windows to scratchpad, use: hyper+Shift+minus
+          # "${hyper}+Shift+e" = "move scratchpad";
 
           # Exit Sway
           "${hyper}+Shift+End" =
@@ -542,6 +548,12 @@ in
           {
             criteria = {
               app_id = "kitty";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "kitty-ranger";
             };
             command = "floating enable";
           }
@@ -708,12 +720,6 @@ in
           }
           {
             criteria = {
-              app_id = "nemo";
-            };
-            command = "floating enable";
-          }
-          {
-            criteria = {
               class = "lact";
             };
             command = "floating enable, sticky enable";
@@ -748,6 +754,12 @@ in
           {
             criteria = {
               app_id = "kitty";
+            };
+            command = "sticky enable";
+          }
+          {
+            criteria = {
+              app_id = "kitty-ranger";
             };
             command = "sticky enable";
           }
@@ -796,12 +808,6 @@ in
           {
             criteria = {
               app_id = "Bitwarden";
-            };
-            command = "sticky enable";
-          }
-          {
-            criteria = {
-              app_id = "nemo";
             };
             command = "sticky enable";
           }
@@ -1029,13 +1035,13 @@ in
       # Additional SwayFX configuration
       # Floating window rules (duplicate from config.window.commands for reliability)
       for_window [app_id="kitty"] floating enable
+      for_window [app_id="kitty-ranger"] floating enable, sticky enable
       for_window [app_id="org.telegram.desktop"] floating enable
       for_window [app_id="telegram-desktop"] floating enable
       for_window [app_id="bitwarden"] floating enable
       for_window [app_id="bitwarden-desktop"] floating enable
       for_window [app_id="Bitwarden"] floating enable
       for_window [app_id="com.usebottles.bottles"] floating enable
-      for_window [app_id="nemo"] floating enable
       for_window [app_id="rofi"] floating enable
       for_window [app_id="swayfx-settings"] floating enable
 
