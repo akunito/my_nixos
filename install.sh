@@ -20,13 +20,14 @@ RESET='\033[0m'
 
 #
 # Argument parsing
-# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick]
-# - Also supports -s/--silent, -u/--update, and -q/--quick anywhere without breaking positional parsing.
+# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick] [-n|--no-git-update]
+# - Also supports -s/--silent, -u/--update, -q/--quick, -n/--no-git-update anywhere without breaking positional parsing.
 #
 SILENT_MODE=false
 UPDATE_FLAKE_LOCK=false
 QUICK_MODE=false
 FORCE_MODE=false
+NO_GIT_UPDATE=false
 POSITIONAL_ARGS=()
 for arg in "$@"; do
     case "$arg" in
@@ -41,6 +42,9 @@ for arg in "$@"; do
             ;;
         -f|--force)
             FORCE_MODE=true
+            ;;
+        -n|--no-git-update)
+            NO_GIT_UPDATE=true
             ;;
         *)
             POSITIONAL_ARGS+=("$arg")
@@ -120,10 +124,13 @@ if [ ${#POSITIONAL_ARGS[@]} -gt 1 ]; then
     PROFILE="${POSITIONAL_ARGS[1]}"
 else
     echo -e "${RED}Error: PROFILE parameter is required${RESET}"
-    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick] [-f|--force]"
+    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick] [-f|--force] [-n|--no-git-update]"
     echo "Example: $0 /path/to/repo DESK -s -u"
+    echo "  -s|--silent: Silent mode (skip prompts, use defaults)"
+    echo "  -u|--update: Update flake.lock"
     echo "  -q|--quick: Skip docker handling and hardware-config generation (for quick updates)"
     echo "  -f|--force: Bypass ENV_PROFILE safety check (for first-time installs)"
+    echo "  -n|--no-git-update: Skip repository update/fetch (useful after git-crypt unlock)"
     echo "Where DESK is a profile name defined in flake.nix"
     echo ""
     list_available_profiles "$SCRIPT_DIR"
@@ -828,8 +835,14 @@ ending_menu() {
 # ======================================== Main Execution ======================================== #
 
 # Check and update repository if needed (before validation to prevent conflicts)
-check_and_update_repository "$SCRIPT_DIR" "$SILENT_MODE"
-UPDATE_STATUS=$?
+# Skip if --no-git-update flag is set (useful after git-crypt unlock)
+if [ "$NO_GIT_UPDATE" = true ]; then
+    echo -e "${CYAN}Skipping repository update (--no-git-update flag set)${RESET}"
+    UPDATE_STATUS=1
+else
+    check_and_update_repository "$SCRIPT_DIR" "$SILENT_MODE"
+    UPDATE_STATUS=$?
+fi
 # Continue with installation regardless of update status
 # (update is optional, installation should proceed)
 
