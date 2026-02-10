@@ -18,6 +18,7 @@
     extraPortals = with pkgs; [
       kdePackages.xdg-desktop-portal-kde
       xdg-desktop-portal-gtk # Keep as fallback
+      xdg-desktop-portal-wlr # Sway ScreenCast/Screenshot
     ];
 
     # Configure portal preferences
@@ -34,6 +35,8 @@
         default = lib.mkForce "kde";
         "org.freedesktop.impl.portal.FileChooser" = lib.mkForce "kde"; # Dolphin-style picker
         "org.freedesktop.impl.portal.Settings" = lib.mkForce "gtk"; # Dark mode from GTK/dconf
+        "org.freedesktop.impl.portal.ScreenCast" = lib.mkForce "wlr"; # wlroots native
+        "org.freedesktop.impl.portal.Screenshot" = lib.mkForce "wlr"; # wlroots native
       };
       # Fallback for any other desktop
       common = {
