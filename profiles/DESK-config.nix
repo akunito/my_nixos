@@ -448,7 +448,7 @@ in
     wm = "sway";  # Switched from plasma6 for faster builds (no KDE compilation)
     wmEnableHyprland = false;
 
-    fileManager = "nemo"; # Nemo file manager with tree view (GTK, no KDE deps)
+    fileManager = "dolphin";
 
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";

@@ -97,7 +97,7 @@
     term = "kitty";
     font = "Intel One Mono";
 
-    fileManager = "nemo"; # Nemo file manager with tree view (GTK, no KDE deps)
+    fileManager = "dolphin";
 
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";

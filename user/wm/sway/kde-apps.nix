@@ -13,17 +13,28 @@
     okular       # PDF/document viewer
     kate         # Text editor (for "Open With" from file manager)
   ] ++ [
-    pkgs.nemo  # File manager (GTK, no KDE deps, Dolphin replacement)
     pkgs.loupe   # GNOME image viewer (GTK4/libadwaita, auto dark mode via dconf)
     pkgs.swayimg # Sway-native image viewer (keyboard-driven, lightweight)
   ];
 
-  # Nemo tree view: enable expandable folders in list view
-  dconf.settings = {
-    "org/nemo/list-view" = {
-      use-tree-view = true;
-    };
-  };
+  # Minimal plasma-applications.menu for kbuildsycoca6.
+  # Without this file, Dolphin's "Open With" dialog is empty under Sway.
+  # The full file normally comes from plasma-workspace, but we only need the
+  # bare minimum to make kbuildsycoca6 discover all installed .desktop files.
+  xdg.configFile."menus/plasma-applications.menu".text = ''
+    <!DOCTYPE Menu PUBLIC "-//freedesktop//DTD Menu 1.0//EN"
+      "http://www.freedesktop.org/standards/menu-spec/1.0/menu.dtd">
+    <Menu>
+      <Name>Applications</Name>
+      <DefaultAppDirs/>
+      <DefaultDirectoryDirs/>
+      <DefaultMergeDirs/>
+      <DefaultLayout>
+        <Merge type="menus"/>
+        <Merge type="files"/>
+      </DefaultLayout>
+    </Menu>
+  '';
 
   # Force dark mode for viewer apps (fixes Gwenview/Okular light mode issue)
   # These apps have KDE Framework-specific color scheme resolution that may not

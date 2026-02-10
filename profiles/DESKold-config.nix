@@ -420,7 +420,7 @@ in
     wm = "plasma6";
     wmEnableHyprland = false; # No longer needed - XKB fix in plasma6.nix resolves XWayland issues
 
-    fileManager = "nemo"; # Nemo file manager with tree view (GTK, no KDE deps)
+    fileManager = "dolphin";
 
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";
