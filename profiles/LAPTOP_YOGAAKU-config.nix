@@ -134,9 +134,9 @@ in
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable daemon (but don't auto-connect - manual via Trayscale GUI)
     # trayscaleGuiEnable inherited from LAPTOP-base.nix (true)
-    tailscaleLoginServer = "https://headscale.akunito.com"; # Self-hosted Headscale (no secrets on this machine)
-    tailscaleAcceptRoutes = true; # Accept routes from subnet router (when connected)
-    tailscaleAcceptDns = false; # Use pfSense DNS (not Tailscale) for local resolution
+    tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
+    tailscaleAcceptRoutes = false; # Accept routes (already on LAN)
+    tailscaleAcceptDns = false; # Don't override DNS (use pfSense directly)
 
     # === Development Tools ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools

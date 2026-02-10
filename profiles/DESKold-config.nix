@@ -297,7 +297,7 @@ in
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable Tailscale client
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
-    tailscaleAcceptRoutes = true; # Accept routes from subnet router
+    tailscaleAcceptRoutes = false; # Accept routes from subnet router
 
     # === Development Tools & AI ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools

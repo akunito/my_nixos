@@ -317,7 +317,7 @@ in
     trayscaleGuiEnable = true; # Enable GUI tray app with Sway for manual control
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
     # DESK is always on LAN - override local routes/DNS with Tailscale
-    tailscaleAcceptRoutes = true; # Accept routes (already on LAN)
+    tailscaleAcceptRoutes = false; # Accept routes (already on LAN)
     tailscaleAcceptDns = false; # Don't override DNS (use pfSense directly)
 
     # === Development Tools & AI ===
