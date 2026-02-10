@@ -149,13 +149,13 @@ in
     controlPanelEnable = true; # Enable NixOS infrastructure control panel
 
     # === Tailscale Mesh VPN ===
-    tailscaleEnable = false; # Disable service - use Trayscale GUI for manual control
+    tailscaleEnable = true; # Enable daemon (but don't auto-connect - manual via Trayscale GUI)
     # trayscaleGuiEnable inherited from LAPTOP-base.nix (true)
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
-    tailscaleAcceptRoutes = true; # Accept routes from subnet router (for manual connection)
-    tailscaleAcceptDns = true; # Accept DNS from Tailscale (for manual connection)
-    tailscaleLanAutoToggle = false; # Disabled when service is disabled
-    tailscaleLanGateway = "192.168.8.1"; # Home LAN gateway for detection
+    tailscaleAcceptRoutes = true; # Accept routes from subnet router (when connected)
+    tailscaleAcceptDns = true; # Accept DNS from Tailscale (when connected)
+    tailscaleLanAutoToggle = false; # Disabled - manual control via GUI
+    tailscaleLanGateway = "192.168.8.1"; # Home LAN gateway (not used with manual control)
 
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver

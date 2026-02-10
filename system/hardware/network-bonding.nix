@@ -117,8 +117,9 @@ in
     # ========================================================================
     # NetworkManager configuration (when networkManager = true)
     # ========================================================================
-    # Mark slave interfaces as unmanaged so NetworkManager doesn't try to use them directly
-    networking.networkmanager.unmanaged = lib.mkIf useNetworkManager interfaces;
+    # NOTE: We do NOT mark slave interfaces as unmanaged because NetworkManager
+    # needs to manage them in order to enslave them to the bond.
+    # The slave connection profiles handle this properly.
 
     # Create NetworkManager connection files directly in /etc
     environment.etc = lib.mkIf useNetworkManager ({
