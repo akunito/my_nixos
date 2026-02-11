@@ -59,65 +59,68 @@ local appsExcludedFromCmdN = {
     ["WhatsApp"] = true,  -- Cmd+N opens new chat dropdown
 }
 
--- Function to launch or focus an app
--- Un-minimizes windows if they're minimized, or creates new window if needed
+-- Function to launch or focus an app (simplified and more reliable)
 local function launchOrFocus(appName)
     local app = hs.application.find(appName)
-    if app then
-        -- First, unhide the app if it's hidden (Cmd+H)
-        if app:isHidden() then
-            app:unhide()
-        end
 
-        -- Try to detect and un-minimize windows using permissive filter
-        local wf = hs.window.filter.new(false)
-        wf:setAppFilter(appName, {})
-        local windows = wf:getWindows()
+    -- Case 1: App not running at all - launch it
+    if not app then
+        hs.application.launchOrFocus(appName)
+        hs.alert.show("Launching " .. appName, 0.5)
+        return
+    end
 
-        -- Un-minimize any minimized windows and focus the first one
-        local hasVisibleWindow = false
-        local unminimizedWindow = nil
-        for _, win in ipairs(windows) do
-            if win:isMinimized() then
-                win:unminimize()
-                if not unminimizedWindow then
-                    unminimizedWindow = win
-                end
-                hasVisibleWindow = true
-            elseif not win:isMinimized() then
-                hasVisibleWindow = true
-            end
-        end
+    -- Case 2: App is running - unhide if hidden
+    if app:isHidden() then
+        app:unhide()
+    end
 
-        -- Activate the app (brings to front)
+    -- Get all windows for this app
+    local allWindows = app:allWindows()
+
+    -- If no windows at all, activate app and try to create a window
+    if #allWindows == 0 then
         app:activate()
-
-        -- If we un-minimized a window, explicitly focus it after a brief delay
-        if unminimizedWindow then
-            hs.timer.doAfter(0.1, function()
-                unminimizedWindow:focus()
-            end)
-        end
-
-        -- If no visible windows exist after activation, try to create one
-        if not hasVisibleWindow and not appsExcludedFromCmdN[appName] then
-            -- Wait a moment for app to activate, then try creating a new window
-            hs.timer.doAfter(0.1, function()
-                -- Try common menu items for creating new windows
-                if app:selectMenuItem({"File", "New Window"}) then
-                    return
-                elseif app:selectMenuItem({"Window", "Show"}) then
-                    return
-                elseif app:selectMenuItem({"Window", "Main Window"}) then
-                    return
-                end
-                -- If no menu item worked, simulate Cmd+N (new window)
+        if not appsExcludedFromCmdN[appName] then
+            hs.timer.doAfter(0.2, function()
                 hs.eventtap.keyStroke({"cmd"}, "n", 0, app)
             end)
         end
-    else
-        -- App not running, launch it
-        hs.application.launchOrFocus(appName)
+        return
+    end
+
+    -- Separate windows into minimized and visible
+    local minimizedWindows = {}
+    local visibleWindows = {}
+
+    for _, win in ipairs(allWindows) do
+        if win:isMinimized() then
+            table.insert(minimizedWindows, win)
+        else
+            table.insert(visibleWindows, win)
+        end
+    end
+
+    -- Case 3: Has minimized windows - restore and focus the first one
+    if #minimizedWindows > 0 then
+        local win = minimizedWindows[1]
+        win:unminimize()
+        -- Wait for unminimize animation, then activate and focus
+        hs.timer.doAfter(0.15, function()
+            app:activate()
+            win:focus()
+            win:raise()
+        end)
+        hs.alert.show("Restoring " .. appName, 0.5)
+        return
+    end
+
+    -- Case 4: Only visible windows - just activate and focus
+    if #visibleWindows > 0 then
+        app:activate()
+        visibleWindows[1]:focus()
+        visibleWindows[1]:raise()
+        return
     end
 end
 
@@ -192,31 +195,50 @@ local function switchWindows(appName)
         nextWin:screen():name():sub(1, 15)), 0.5)
 end
 
--- Function to launch app if not running, or cycle windows if running
+-- Function to launch app if not running, focus if minimized, or cycle windows
 local function launchOrCycle(appName)
     local app = hs.application.find(appName)
+
+    -- App not running - launch it
     if not app then
-        -- App not running, launch it using advanced function
+        launchOrFocus(appName)
+        return
+    end
+
+    -- App is running - check window states
+    local allWindows = app:allWindows()
+
+    -- No windows - activate and try to create one
+    if #allWindows == 0 then
+        launchOrFocus(appName)
+        return
+    end
+
+    -- Check for minimized windows
+    local hasMinimized = false
+    local hasVisible = false
+
+    for _, win in ipairs(allWindows) do
+        if win:isMinimized() then
+            hasMinimized = true
+        else
+            hasVisible = true
+        end
+    end
+
+    -- If there are minimized windows, restore them
+    if hasMinimized then
+        launchOrFocus(appName)
+        return
+    end
+
+    -- All windows are visible - check if we should cycle or just focus
+    if not app:isFrontmost() then
+        -- App not in front - just bring it forward
         launchOrFocus(appName)
     else
-        -- App is running, check if there are minimized windows to restore
-        local wf = hs.window.filter.new(false)
-        wf:setAppFilter(appName, {})
-        local windows = wf:getWindows()
-        local hasMinimizedWindow = false
-
-        for _, win in ipairs(windows) do
-            if win:isMinimized() then
-                hasMinimizedWindow = true
-                break
-            end
-        end
-
-        if hasMinimizedWindow then
-            -- Use advanced launch/focus to un-minimize
-            launchOrFocus(appName)
-        else
-            -- No minimized windows, just cycle through visible ones
+        -- App is already focused - cycle to next window if multiple windows
+        if #allWindows > 1 then
             switchWindows(appName)
         end
     end
