@@ -28,6 +28,7 @@ in
         "obsidian"
         "linear-linear"
         "notion"
+        "granola" # AI meeting notes app
 
         # === Media ===
         "spotify"
@@ -58,6 +59,11 @@ in
 
   userSettings = base.userSettings // {
     username = "komi";
+
+    # ========================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ========================================================================
+    userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm, openai-whisper)
 
     # === Theme ===
     theme = "ashes"; # Warm, muted base16 palette matching DESK
