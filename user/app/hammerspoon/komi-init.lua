@@ -81,11 +81,29 @@ local function launchOrFocus(appName)
     -- If no windows at all, activate app and try to create a window
     if #allWindows == 0 then
         app:activate()
-        if not appsExcludedFromCmdN[appName] then
-            hs.timer.doAfter(0.2, function()
+        hs.alert.show("Opening " .. appName .. " window", 0.5)
+
+        -- Wait for app to fully activate, then try multiple methods to create a window
+        hs.timer.doAfter(0.3, function()
+            -- Try menu items first (most reliable)
+            if app:selectMenuItem({"File", "New Window"}) then
+                return
+            end
+            if app:selectMenuItem({"Window", "Show"}) then
+                return
+            end
+            if app:selectMenuItem({"Window", "Main Window"}) then
+                return
+            end
+
+            -- If menu items didn't work and app allows Cmd+N, try that
+            if not appsExcludedFromCmdN[appName] then
                 hs.eventtap.keyStroke({"cmd"}, "n", 0, app)
-            end)
-        end
+            else
+                -- For excluded apps (like WhatsApp), try clicking on Dock icon
+                hs.execute("open -a '" .. appName .. "'")
+            end
+        end)
         return
     end
 
