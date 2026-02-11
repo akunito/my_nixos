@@ -43,8 +43,10 @@ in
       # CLI tools via Homebrew formulas
       homebrewFormulas = [
         "docker"
+        "docker-completion"  # Docker shell completion
         "docker-compose"
         "colima"
+        "lima"               # Linux VMs (colima backend)
       ];
     };
 
