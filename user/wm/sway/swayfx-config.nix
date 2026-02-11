@@ -665,6 +665,14 @@ in
             command = "floating enable, sticky enable";
           }
 
+          # Dolphin: floating + sticky (KDE file manager)
+          {
+            criteria = {
+              app_id = "org.kde.dolphin";
+            };
+            command = "floating enable, sticky enable";
+          }
+
           # Blueman-manager: floating + sticky (Bluetooth Manager - NixOS wrapped)
           {
             criteria = {
@@ -1061,6 +1069,8 @@ in
       # Additional floating window rules
       # Pavucontrol: floating + sticky (correct app_id)
       for_window [app_id="org.pulseaudio.pavucontrol"] floating enable, sticky enable
+      # Dolphin: floating + sticky (KDE file manager)
+      for_window [app_id="org.kde.dolphin"] floating enable, sticky enable
       # GNOME Calculator: floating + sticky
       for_window [app_id="org.gnome.Calculator"] floating enable, sticky enable
       # nwg-displays: Monitor management GUI - floating + sticky
