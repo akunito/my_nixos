@@ -15,7 +15,7 @@ pub mod proxmox;
 use serde::{Deserialize, Serialize};
 
 // Re-export commonly used types
-pub use deploy::{DeployState, DeploymentStatus};
+pub use deploy::{DeployState, DeployStepResult, DeploymentStatus};
 pub use git::GitStatus;
 pub use graph::{GraphData, GraphLink, GraphNode};
 pub use monitoring::get_dashboard_url;

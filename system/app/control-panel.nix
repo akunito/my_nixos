@@ -24,11 +24,28 @@ let
 
     buildInputs = with pkgs; [
       openssl
+      # Workspace includes tauri-app which pulls in GTK/WebKit deps at resolution time
+      webkitgtk_4_1
+      gtk3
+      glib
+      cairo
+      pango
+      gdk-pixbuf
+      libsoup_3
     ];
 
     # Set OPENSSL env vars for building
     OPENSSL_NO_VENDOR = 1;
-    PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+    PKG_CONFIG_PATH = lib.makeSearchPath "lib/pkgconfig" [
+      pkgs.openssl.dev
+      pkgs.webkitgtk_4_1.dev
+      pkgs.gtk3.dev
+      pkgs.glib.dev
+      pkgs.cairo.dev
+      pkgs.pango.dev
+      pkgs.gdk-pixbuf.dev
+      pkgs.libsoup_3.dev
+    ];
   };
 
   # Generate TOML config from secrets

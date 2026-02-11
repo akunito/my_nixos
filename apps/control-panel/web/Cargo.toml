@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 description = "Web server for NixOS Infrastructure Control Panel"
 
+[lib]
+name = "control_panel_web"
+path = "src/lib.rs"
+
 [[bin]]
 name = "control-panel-web"
 path = "src/main.rs"
@@ -37,6 +41,9 @@ tracing-subscriber = { workspace = true }
 # Error handling
 thiserror = { workspace = true }
 anyhow = { workspace = true }
+
+# Time
+chrono = { workspace = true }
 
 # Encoding
 base64 = { workspace = true }

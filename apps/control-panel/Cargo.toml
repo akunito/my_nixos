@@ -2,11 +2,11 @@
 #
 # This is a Cargo workspace with three crates:
 # - core: Shared library with SSH, config, docker, proxmox, infra, editor logic
-# - native: egui desktop application with Sway IPC integration
-# - web: Axum web server (fallback for mobile/remote access)
+# - web: Axum web server (primary UI)
+# - tauri-app: Tauri desktop wrapper around the web server
 
 [workspace]
-members = ["core", "native", "web"]
+members = ["core", "web", "tauri-app"]
 resolver = "2"
 
 [workspace.package]

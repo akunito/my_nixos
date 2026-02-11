@@ -156,3 +156,150 @@ pub async fn check_node_health(
 
     Ok(output.success() && !output.stdout.contains("not-nixos"))
 }
+
+// ============================================================================
+// deploy-lxc.sh Workflow
+// ============================================================================
+
+/// Result of a single deploy step
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeployStepResult {
+    pub step: String,
+    pub success: bool,
+    pub output: String,
+}
+
+/// Deploy an LXC node using the deploy-lxc.sh workflow:
+/// 1. SSH connectivity check
+/// 2. git fetch origin
+/// 3. git reset --hard origin/main
+/// 4. ./install.sh {dotfiles_path} {profile} -s -u -q
+pub async fn deploy_lxc_node(
+    ssh_pool: &mut SshPool,
+    profile: &str,
+    dotfiles_path: &str,
+) -> Result<Vec<DeployStepResult>, AppError> {
+    let mut results = Vec::new();
+
+    // Step 1: SSH connectivity check (implicit via first command)
+    let check_cmd = "echo ok";
+    let check_output = ssh_pool.execute_on_profile(profile, check_cmd).await;
+    match check_output {
+        Ok(out) if out.success() => {
+            results.push(DeployStepResult {
+                step: "ssh_check".to_string(),
+                success: true,
+                output: "SSH connection OK".to_string(),
+            });
+        }
+        Ok(out) => {
+            results.push(DeployStepResult {
+                step: "ssh_check".to_string(),
+                success: false,
+                output: format!("SSH check failed: {}", out.combined()),
+            });
+            return Ok(results);
+        }
+        Err(e) => {
+            results.push(DeployStepResult {
+                step: "ssh_check".to_string(),
+                success: false,
+                output: format!("SSH connection failed: {}", e),
+            });
+            return Ok(results);
+        }
+    }
+
+    // Step 2: git fetch origin
+    tracing::info!("deploy-lxc: git fetch on {}", profile);
+    let fetch_cmd = format!("cd {} && git fetch origin 2>&1", dotfiles_path);
+    let fetch_output = ssh_pool.execute_on_profile(profile, &fetch_cmd).await;
+    match fetch_output {
+        Ok(out) if out.success() || out.exit_code == 0 => {
+            results.push(DeployStepResult {
+                step: "git_fetch".to_string(),
+                success: true,
+                output: out.combined(),
+            });
+        }
+        Ok(out) => {
+            results.push(DeployStepResult {
+                step: "git_fetch".to_string(),
+                success: false,
+                output: format!("Git fetch failed: {}", out.combined()),
+            });
+            return Ok(results);
+        }
+        Err(e) => {
+            results.push(DeployStepResult {
+                step: "git_fetch".to_string(),
+                success: false,
+                output: format!("Git fetch error: {}", e),
+            });
+            return Ok(results);
+        }
+    }
+
+    // Step 3: git reset --hard origin/main
+    tracing::info!("deploy-lxc: git reset on {}", profile);
+    let reset_cmd = format!("cd {} && git reset --hard origin/main 2>&1", dotfiles_path);
+    let reset_output = ssh_pool.execute_on_profile(profile, &reset_cmd).await;
+    match reset_output {
+        Ok(out) if out.success() => {
+            results.push(DeployStepResult {
+                step: "git_reset".to_string(),
+                success: true,
+                output: out.combined(),
+            });
+        }
+        Ok(out) => {
+            results.push(DeployStepResult {
+                step: "git_reset".to_string(),
+                success: false,
+                output: format!("Git reset failed: {}", out.combined()),
+            });
+            return Ok(results);
+        }
+        Err(e) => {
+            results.push(DeployStepResult {
+                step: "git_reset".to_string(),
+                success: false,
+                output: format!("Git reset error: {}", e),
+            });
+            return Ok(results);
+        }
+    }
+
+    // Step 4: ./install.sh
+    tracing::info!("deploy-lxc: install.sh on {}", profile);
+    let install_cmd = format!(
+        "cd {} && ./install.sh {} {} -s -u -q 2>&1",
+        dotfiles_path, dotfiles_path, profile
+    );
+    let install_output = ssh_pool.execute_on_profile(profile, &install_cmd).await;
+    match install_output {
+        Ok(out) if out.success() => {
+            results.push(DeployStepResult {
+                step: "install".to_string(),
+                success: true,
+                output: out.combined(),
+            });
+        }
+        Ok(out) => {
+            results.push(DeployStepResult {
+                step: "install".to_string(),
+                success: false,
+                output: format!("install.sh failed: {}", out.combined()),
+            });
+        }
+        Err(e) => {
+            results.push(DeployStepResult {
+                step: "install".to_string(),
+                success: false,
+                output: format!("install.sh error: {}", e),
+            });
+        }
+    }
+
+    Ok(results)
+}

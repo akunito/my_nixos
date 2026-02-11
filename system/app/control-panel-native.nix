@@ -3,9 +3,9 @@
 let
   secrets = import ../../secrets/control-panel.nix;
 
-  # Build the native control panel from workspace
-  controlPanelNative = pkgs.rustPlatform.buildRustPackage {
-    pname = "control-panel-native";
+  # Build the web control panel (standalone server binary)
+  controlPanelWeb = pkgs.rustPlatform.buildRustPackage {
+    pname = "control-panel-web";
     version = "0.2.0";
     src = ../../apps/control-panel;
 
@@ -14,8 +14,8 @@ let
       allowBuiltinFetchGit = true;
     };
 
-    # Build only the native crate
-    cargoBuildFlags = [ "-p" "control-panel-native" ];
+    # Build only the web crate
+    cargoBuildFlags = [ "-p" "control-panel-web" ];
 
     nativeBuildInputs = with pkgs; [
       pkg-config
@@ -24,31 +24,83 @@ let
 
     buildInputs = with pkgs; [
       openssl
-      # GUI dependencies
-      wayland
-      wayland-protocols
-      libxkbcommon
-      # For Vulkan/GL rendering
-      libGL
-      vulkan-loader
+      # Workspace includes tauri-app which pulls in GTK/WebKit deps at resolution time
+      webkitgtk_4_1
+      gtk3
+      glib
+      cairo
+      pango
+      gdk-pixbuf
+      libsoup_3
     ];
 
-    # Link against system libraries
     OPENSSL_NO_VENDOR = 1;
     PKG_CONFIG_PATH = lib.makeSearchPath "lib/pkgconfig" [
       pkgs.openssl.dev
-      pkgs.wayland.dev
-      pkgs.libxkbcommon.dev
+      pkgs.webkitgtk_4_1.dev
+      pkgs.gtk3.dev
+      pkgs.glib.dev
+      pkgs.cairo.dev
+      pkgs.pango.dev
+      pkgs.gdk-pixbuf.dev
+      pkgs.libsoup_3.dev
+    ];
+  };
+
+  # Build the Tauri desktop app (wraps the web server in a native window)
+  controlPanelDesktop = pkgs.rustPlatform.buildRustPackage {
+    pname = "control-panel-desktop";
+    version = "0.2.0";
+    src = ../../apps/control-panel;
+
+    cargoLock = {
+      lockFile = ../../apps/control-panel/Cargo.lock;
+      allowBuiltinFetchGit = true;
+    };
+
+    # Build the Tauri crate
+    cargoBuildFlags = [ "-p" "control-panel-desktop" ];
+
+    nativeBuildInputs = with pkgs; [
+      pkg-config
+      makeWrapper
     ];
 
-    # Runtime library path for GUI
+    buildInputs = with pkgs; [
+      openssl
+      # Tauri/WebKitGTK dependencies
+      webkitgtk_4_1
+      gtk3
+      glib
+      cairo
+      pango
+      gdk-pixbuf
+      libsoup_3
+      # Wayland support
+      wayland
+      libxkbcommon
+    ];
+
+    OPENSSL_NO_VENDOR = 1;
+    PKG_CONFIG_PATH = lib.makeSearchPath "lib/pkgconfig" [
+      pkgs.openssl.dev
+      pkgs.webkitgtk_4_1.dev
+      pkgs.gtk3.dev
+      pkgs.glib.dev
+      pkgs.cairo.dev
+      pkgs.pango.dev
+      pkgs.gdk-pixbuf.dev
+      pkgs.libsoup_3.dev
+    ];
+
+    # Runtime library path for WebKitGTK
     postInstall = ''
-      wrapProgram $out/bin/control-panel \
+      wrapProgram $out/bin/control-panel-desktop \
         --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [
+          pkgs.webkitgtk_4_1
+          pkgs.gtk3
           pkgs.wayland
           pkgs.libxkbcommon
-          pkgs.libGL
-          pkgs.vulkan-loader
         ]}
     '';
   };
@@ -110,7 +162,7 @@ let
     desktopName = "NixOS Control Panel";
     genericName = "Infrastructure Management";
     comment = "Manage NixOS infrastructure, Docker containers, and deployments";
-    exec = "${controlPanelNative}/bin/control-panel";
+    exec = "${controlPanelDesktop}/bin/control-panel-desktop";
     icon = "preferences-system";
     categories = [ "Settings" "System" ];
     terminal = false;
@@ -119,9 +171,10 @@ let
 in
 {
   config = lib.mkIf (systemSettings.controlPanelNativeEnable or false) {
-    # Install the native app and desktop entry
+    # Install the desktop app and web server
     environment.systemPackages = [
-      controlPanelNative
+      controlPanelDesktop
+      controlPanelWeb
       desktopItem
     ];
 

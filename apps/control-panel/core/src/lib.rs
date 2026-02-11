@@ -25,7 +25,7 @@ pub use docker::{ComposeStack, Container, ContainerStatus, NodeSummary};
 pub use editor::{ConfigEntry, ConfigValue, EntryType, ProfileConfig};
 pub use error::AppError;
 pub use infra::{
-    BackupJob, ContainerInfo as ProxmoxContainer, DeployState, DeploymentStatus, GitStatus,
-    GraphData, GraphLink, GraphNode, NodeStatus, ProfileNode, ProfileType,
+    BackupJob, ContainerInfo as ProxmoxContainer, DeployState, DeployStepResult, DeploymentStatus,
+    GitStatus, GraphData, GraphLink, GraphNode, NodeStatus, ProfileNode, ProfileType,
 };
 pub use ssh::{CommandOutput, SshPool};

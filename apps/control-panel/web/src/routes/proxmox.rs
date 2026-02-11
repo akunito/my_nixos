@@ -10,6 +10,50 @@ use crate::AppState;
 
 /// Proxmox dashboard
 pub async fn dashboard(State(state): State<Arc<AppState>>) -> Html<String> {
+    Html(format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxmox - Control Panel</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body {{ background-color: #1a1a2e; color: #eee; }}</style>
+</head>
+<body class="min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-blue-400">NixOS Control Panel</h1>
+            <div class="flex gap-4">
+                <a href="/" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
+                <a href="/docker" class="text-gray-400 hover:text-gray-300">Docker</a>
+                <a href="/proxmox" class="text-green-400">Proxmox</a>
+                <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
+                <a href="/editor" class="text-gray-400 hover:text-gray-300">Editor</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-8">
+        <h2 class="text-xl font-semibold mb-6">Proxmox Container Management</h2>
+
+        <div class="mb-4 text-gray-400">
+            Host: {host}
+        </div>
+
+        <div id="proxmox-containers" hx-get="/proxmox/containers" hx-trigger="load, every 60s" hx-swap="innerHTML">
+            <div class="text-gray-500">Loading containers...</div>
+        </div>
+    </main>
+</body>
+</html>"##,
+        host = state.config.proxmox.host
+    ))
+}
+
+/// Proxmox containers list fragment (auto-refreshed)
+pub async fn containers_fragment(State(state): State<Arc<AppState>>) -> Html<String> {
     let mut ssh_pool = state.ssh_pool.write().await;
 
     let containers = control_panel_core::infra::proxmox::list_containers(&mut ssh_pool)
@@ -44,44 +88,8 @@ pub async fn dashboard(State(state): State<Arc<AppState>>) -> Html<String> {
         .join("\n");
 
     Html(format!(
-        r##"<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proxmox - Control Panel</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>body {{ background-color: #1a1a2e; color: #eee; }}</style>
-</head>
-<body class="min-h-screen">
-    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4">
-        <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold text-blue-400">NixOS Control Panel</h1>
-            <div class="flex gap-4">
-                <a href="/" class="text-gray-400 hover:text-gray-300">Infrastructure</a>
-                <a href="/docker" class="text-gray-400 hover:text-gray-300">Docker</a>
-                <a href="/proxmox" class="text-green-400">Proxmox</a>
-                <a href="/monitoring" class="text-gray-400 hover:text-gray-300">Monitoring</a>
-                <a href="/editor" class="text-gray-400 hover:text-gray-300">Editor</a>
-            </div>
-        </div>
-    </nav>
-
-    <main class="container mx-auto px-6 py-8">
-        <h2 class="text-xl font-semibold mb-6">📦 Proxmox Container Management</h2>
-
-        <div class="mb-4 text-gray-400">
-            Host: {}
-        </div>
-
-        <div class="space-y-4">
-            {}
-        </div>
-    </main>
-</body>
-</html>"##,
-        state.config.proxmox.host, containers_html
+        r##"<div class="space-y-4">{}</div>"##,
+        containers_html
     ))
 }
 

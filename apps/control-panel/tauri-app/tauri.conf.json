@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicegui/nicegui/refs/heads/main/nicegui/static/tauri/tauri-schema-v2.json",
+  "productName": "NixOS Control Panel",
+  "version": "0.2.0",
+  "identifier": "com.akunito.control-panel",
+  "build": {
+    "frontendDist": "../web/static",
+    "devUrl": "http://localhost:3100"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "NixOS Control Panel",
+        "width": 1400,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false,
+        "url": "http://localhost:3100"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": []
+  }
+}
