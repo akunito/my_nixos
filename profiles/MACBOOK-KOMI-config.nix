@@ -17,6 +17,7 @@ in
 
         # === Development ===
         "cursor"
+        "github"        # GitHub Desktop
         "hammerspoon"
 
         # === Communication ===
@@ -28,16 +29,19 @@ in
         "obsidian"
         "linear-linear"
         "notion"
-        "granola" # AI meeting notes app
+        "granola"       # AI meeting notes app
+        "claude"        # Claude desktop app
 
         # === Media ===
         "spotify"
+        "openemu"       # Game emulator
 
         # === Utilities ===
         "kitty"
         "raycast"
         "1password"
         "karabiner-elements" # CapsLock → Hyperkey remapping
+        "nordvpn"            # VPN client
       ];
 
       # CLI tools via Homebrew formulas
