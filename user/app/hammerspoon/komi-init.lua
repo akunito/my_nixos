@@ -74,11 +74,15 @@ local function launchOrFocus(appName)
         wf:setAppFilter(appName, {})
         local windows = wf:getWindows()
 
-        -- Un-minimize any minimized windows
+        -- Un-minimize any minimized windows and focus the first one
         local hasVisibleWindow = false
+        local unminimizedWindow = nil
         for _, win in ipairs(windows) do
             if win:isMinimized() then
                 win:unminimize()
+                if not unminimizedWindow then
+                    unminimizedWindow = win
+                end
                 hasVisibleWindow = true
             elseif not win:isMinimized() then
                 hasVisibleWindow = true
@@ -87,6 +91,13 @@ local function launchOrFocus(appName)
 
         -- Activate the app (brings to front)
         app:activate()
+
+        -- If we un-minimized a window, explicitly focus it after a brief delay
+        if unminimizedWindow then
+            hs.timer.doAfter(0.1, function()
+                unminimizedWindow:focus()
+            end)
+        end
 
         -- If no visible windows exist after activation, try to create one
         if not hasVisibleWindow and not appsExcludedFromCmdN[appName] then
