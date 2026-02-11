@@ -12,6 +12,7 @@
 use anyhow::Result;
 use control_panel_core::Config;
 use control_panel_web::{build_router, AppState};
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::Manager;
@@ -121,7 +122,11 @@ async fn start_web_server(port: u16) -> Result<()> {
     tracing::info!("Embedded web server listening on {}", bind);
 
     let listener = tokio::net::TcpListener::bind(&bind).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
 
     Ok(())
 }

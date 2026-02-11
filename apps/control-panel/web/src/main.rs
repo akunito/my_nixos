@@ -6,6 +6,7 @@
 use anyhow::Result;
 use control_panel_core::Config;
 use control_panel_web::{build_router, AppState};
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -59,7 +60,11 @@ async fn main() -> Result<()> {
     tracing::info!("Listening on {}", bind_addr);
 
     let listener = tokio::net::TcpListener::bind(&bind_addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
 
     Ok(())
 }

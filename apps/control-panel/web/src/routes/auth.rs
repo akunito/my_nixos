@@ -2,22 +2,36 @@
 
 use axum::{
     body::Body,
-    extract::State,
+    extract::{ConnectInfo, State},
     http::{Request, StatusCode},
     middleware::Next,
     response::Response,
 };
 use base64::{engine::general_purpose::STANDARD, Engine};
+use std::net::SocketAddr;
 use std::sync::Arc;
 
 use crate::AppState;
 
-/// Basic auth middleware
+/// Basic auth middleware.
+/// Localhost connections bypass auth (for Tauri desktop app and local browser access).
+/// Remote connections require HTTP Basic Auth credentials.
 pub async fn basic_auth_middleware(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
+    // Skip auth for localhost connections (Tauri desktop app, local browser)
+    let is_localhost = request
+        .extensions()
+        .get::<ConnectInfo<SocketAddr>>()
+        .map(|ci| ci.0.ip().is_loopback())
+        .unwrap_or(false);
+
+    if is_localhost {
+        return Ok(next.run(request).await);
+    }
+
     // Check for Authorization header
     let auth_header = request
         .headers()
