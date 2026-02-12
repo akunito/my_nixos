@@ -168,7 +168,7 @@ in
         }
       ];
     events = {
-      before-sleep = "${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
+      before-sleep = "${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono'";
     };
   };
 
@@ -257,7 +257,7 @@ in
 
           # Lock screen (Meta/Super + l)
           "Mod4+l" =
-            "exec ${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033";
+            "exec ${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono'";
 
           # Media keys (volume)
           # Uses swayosd-client to both adjust volume and show an on-screen display.
@@ -1098,8 +1098,17 @@ in
       for_window [class="Discover"] floating enable, sticky enable
       for_window [title="Discover"] floating enable, sticky enable
 
-      # Gamescope: always fullscreen (prevents losing fullscreen on alt-tab)
-      for_window [app_id="gamescope"] fullscreen enable
+      # Gamescope: always fullscreen, inhibit idle, no border
+      for_window [app_id="gamescope"] fullscreen enable, inhibit_idle fullscreen
+      no_focus [app_id="mako"]
+      no_focus [app_id="swaync"]
+      no_focus [app_id="dunst"]
+
+      # Steam/Proton games: inhibit idle, fullscreen (XWayland class="steam_app_*")
+      for_window [class="^steam_app_"] inhibit_idle focus, fullscreen enable
+      # ModOrganizer2 (Wildlander/Wabbajack modlists): float so it's usable
+      for_window [class="ModOrganizer"] floating enable
+      for_window [title="Mod Organizer"] floating enable
 
       # Mission Center - Floating, Sticky, Resized
       for_window [app_id="io.missioncenter.MissionCenter"] floating enable, sticky enable, resize set 800 600

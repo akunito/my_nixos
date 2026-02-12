@@ -51,11 +51,13 @@ let
                          tempPkgsStable.nerd-fonts.jetbrains-mono
                          tempPkgsStable.nerd-fonts.symbols-only
                          tempPkgsStable.powerline
+                         tempPkgsStable.noto-fonts
                        ]
                        else [
                          tempPkgsUnstable.nerd-fonts.jetbrains-mono
                          tempPkgsUnstable.nerd-fonts.symbols-only
                          tempPkgsUnstable.powerline
+                         tempPkgsUnstable.noto-fonts
                        ];
 
   # Compute derived userSettings values first
