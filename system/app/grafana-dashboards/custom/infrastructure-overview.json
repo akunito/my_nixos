@@ -2517,6 +2517,17 @@
           "legendFormat": "pfSense",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds / 86400",
+          "legendFormat": "TrueNAS {{dataset}}",
+          "range": true,
+          "refId": "C"
         }
       ],
       "title": "Current Backup Age",
@@ -2631,6 +2642,17 @@
           "legendFormat": "pfSense",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "changes(truenas_backup_last_success[10m])",
+          "legendFormat": "TrueNAS {{dataset}}",
+          "range": true,
+          "refId": "C"
         }
       ],
       "title": "Backup Timeline",

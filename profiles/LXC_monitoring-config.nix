@@ -148,6 +148,9 @@ in
     prometheusPfsenseBackupProxmoxHost = "192.168.8.82";
     prometheusPfsenseBackupPath = "/mnt/pve/proxmox_backups/pfsense";
 
+    # === TrueNAS Backup Monitoring (checks ZFS replication snapshots via SSH) ===
+    prometheusTruenasBackupEnable = true;
+
     # === SNMP Exporter (pfSense) ===
     prometheusSnmpExporterEnable = true;
     # SNMPv3 credentials (preferred - requires NET-SNMP package on pfSense)

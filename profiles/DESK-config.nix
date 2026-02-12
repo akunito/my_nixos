@@ -133,6 +133,9 @@ in
     networkBondingMode = "802.3ad"; # LACP (requires switch support)
     networkBondingInterfaces = [ "enp11s0f0" "enp11s0f1" ];
     networkBondingDhcp = true; # Get IP from pfSense DHCP (192.168.8.96 reserved)
+    networkBondingVlans = [
+      { id = 100; name = "storage"; address = "192.168.20.96/24"; }
+    ];
 
     # Firewall
     allowedTCPPorts = [

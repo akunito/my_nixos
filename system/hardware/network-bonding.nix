@@ -32,6 +32,7 @@ let
   lacpRate = cfg.networkBondingLacpRate or "fast";
   miimon = cfg.networkBondingMiimon or "100";
   xmitHashPolicy = cfg.networkBondingXmitHashPolicy or "layer3+4";
+  vlans = cfg.networkBondingVlans or [];
 
   # Detect which network manager is active
   useNetworkManager = cfg.networkManager or false;
@@ -69,11 +70,35 @@ let
     slave-type=bond
     autoconnect=true
   '';
+
+  # Generate NetworkManager VLAN connection file for a bond VLAN overlay
+  nmVlanConnection = vlan: let
+    vlanId = toString vlan.id;
+    # Extract address and prefix from CIDR notation (e.g., "192.168.20.96/24")
+    address = vlan.address;
+  in ''
+    [connection]
+    id=bond0-vlan${vlanId}
+    type=vlan
+    interface-name=bond0.${vlanId}
+    autoconnect=true
+
+    [vlan]
+    parent=bond0
+    id=${vlanId}
+
+    [ipv4]
+    method=manual
+    address1=${address}
+
+    [ipv6]
+    method=disabled
+  '';
 in
 {
   config = lib.mkIf (bondingEnabled && interfaces != []) {
-    # Load bonding kernel module
-    boot.kernelModules = [ "bonding" ];
+    # Load bonding and 802.1Q VLAN kernel modules
+    boot.kernelModules = [ "bonding" ] ++ lib.optional (vlans != []) "8021q";
 
     # Configure the bond interface (kernel-level bond creation)
     # Only use networking.bonds when systemd-networkd is managing networking
@@ -142,7 +167,13 @@ in
         text = nmSlaveConnection iface;
         mode = "0600";
       };
-    }) interfaces));
+    }) interfaces) // lib.listToAttrs (map (vlan: {
+      name = "NetworkManager/system-connections/bond0-vlan${toString vlan.id}.nmconnection";
+      value = {
+        text = nmVlanConnection vlan;
+        mode = "0600";
+      };
+    }) vlans));
 
     # Reload NetworkManager after activation to pick up new connection files
     system.activationScripts.reloadNetworkManager = lib.mkIf useNetworkManager (

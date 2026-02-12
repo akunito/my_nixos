@@ -127,6 +127,7 @@
     networkBondingLacpRate = "fast"; # LACP rate: "fast" (1s) or "slow" (30s)
     networkBondingMiimon = "100"; # Link check interval in milliseconds
     networkBondingXmitHashPolicy = "layer3+4"; # Hash policy: "layer2", "layer3+4", "encap3+4"
+    networkBondingVlans = []; # VLAN overlays on bond: [{ id = 20; name = "storage"; address = "192.168.20.96/24"; }]
 
     # Service defaults
     havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant
@@ -356,6 +357,11 @@
     prometheusGraphiteEnable = false;
     prometheusGraphitePort = 9109;       # Prometheus scrape port
     prometheusGraphiteInputPort = 2003;  # Graphite input port
+
+    # === TrueNAS Backup Monitoring (checks ZFS replication snapshots via SSH) ===
+    prometheusTruenasBackupEnable = false;
+    prometheusTruenasBackupHost = "192.168.20.200"; # TrueNAS storage IP
+    prometheusTruenasBackupUser = "truenas_admin";  # SSH user for snapshot queries
 
     # === Centralized Database Server (LXC_database) ===
     # PostgreSQL server configuration
