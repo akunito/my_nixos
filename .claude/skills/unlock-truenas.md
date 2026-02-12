@@ -34,6 +34,14 @@ If no pool name is provided, unlocks all locked pools.
 - Encryption passphrase
 - TrueNAS API access
 
+## Network Access
+
+TrueNAS is on VLAN 100 (Storage), accessible from:
+- **DESK**: via bond0.100 (192.168.20.96) — direct L2
+- **Proxmox**: via vmbr10.100 (192.168.20.82) — direct L2
+- **pfSense**: via ix0.100 (192.168.20.1) — VLAN gateway
+- **LXC containers**: via Proxmox host (bind mount NFS shares)
+
 ## Example Output
 
 ```

@@ -115,6 +115,8 @@ All options are defined in `lib/defaults.nix` and can be overridden per profile:
 | `networkBondingLacpRate` | string | `"fast"` | LACP rate: `"fast"` (1s) or `"slow"` (30s) |
 | `networkBondingMiimon` | string | `"100"` | Link monitoring interval (ms) |
 | `networkBondingXmitHashPolicy` | string | `"layer3+4"` | Traffic distribution policy |
+| `networkBondingVlans` | list | `[]` | VLAN overlays on bond (see VLAN section) |
+| `networkBondingRingBufferSize` | int\|null | `null` | NIC ring buffer size (e.g., 4096). Also enables TCP tuning |
 
 ### Bonding Modes
 
@@ -207,6 +209,102 @@ sudo nmcli connection down bond0 && sudo nmcli connection up bond0
 - Check LACP rate matches switch config (fast vs slow)
 - Ensure both cables connected to same switch (cross-switch requires MLAG)
 
+## VLAN Overlays
+
+The module supports 802.1Q VLAN sub-interfaces on the bond. This is used to create isolated storage networks (e.g., VLAN 100 for TrueNAS direct L2 access).
+
+### Configuration
+
+```nix
+systemSettings = {
+  networkBondingEnable = true;
+  networkBondingInterfaces = [ "enp11s0f0" "enp11s0f1" ];
+  networkBondingDhcp = true;
+
+  # VLAN overlay: creates bond0.100 with static IP
+  networkBondingVlans = [
+    { id = 100; name = "storage"; address = "192.168.20.96/24"; }
+  ];
+};
+```
+
+### What Gets Generated
+
+For each VLAN entry, the module:
+1. Loads the `8021q` kernel module
+2. Creates `/etc/NetworkManager/system-connections/bond0-vlan<id>.nmconnection`
+3. NetworkManager creates `bond0.<id>` interface on activation
+
+### Verification
+
+```bash
+# Check VLAN interface exists
+ip addr show bond0.100
+# Should show: inet 192.168.20.96/24
+
+# Check 8021q module loaded
+lsmod | grep 8021q
+
+# Check NM connection active
+nmcli connection show --active | grep vlan
+
+# If not active after rebuild, reload:
+sudo nmcli connection reload
+sudo nmcli connection up bond0-vlan100
+```
+
+---
+
+## NIC Ring Buffer & TCP Tuning
+
+For 10GbE links, the default NIC ring buffer size (typically 512) can cause packet drops under load. Setting `networkBondingRingBufferSize` increases ring buffers and also enables TCP buffer tuning.
+
+### Configuration
+
+```nix
+systemSettings = {
+  networkBondingEnable = true;
+  networkBondingInterfaces = [ "enp11s0f0" "enp11s0f1" ];
+
+  # Increase ring buffers (default 512, max 8192 for Intel 82599)
+  networkBondingRingBufferSize = 4096;
+};
+```
+
+### What Gets Generated
+
+When `networkBondingRingBufferSize` is set:
+1. **Systemd service** (`bond-ring-buffers`): runs `ethtool -G <iface> rx <size> tx <size>` on boot
+2. **Sysctl tuning**: TCP buffer sizes optimized for high-bandwidth links:
+   - `net.core.rmem_max` = 16 MB
+   - `net.core.wmem_max` = 16 MB
+   - `net.ipv4.tcp_rmem` = "4096 1048576 16777216"
+   - `net.ipv4.tcp_wmem` = "4096 1048576 16777216"
+   - `net.core.netdev_max_backlog` = 10000
+
+### Verification
+
+```bash
+# Check ring buffers (look at "Current hardware settings")
+nix-shell -p ethtool --run 'ethtool -g enp11s0f0'
+
+# Check TCP tuning
+sysctl net.core.rmem_max net.core.wmem_max
+
+# Check systemd service
+systemctl status bond-ring-buffers
+```
+
+### Diagnosing Ring Buffer Issues
+
+```bash
+# Check for rx_missed_errors (packets dropped by NIC)
+nix-shell -p ethtool --run 'ethtool -S enp11s0f0 | grep rx_missed'
+# Non-zero = NIC can't process fast enough, increase ring buffers
+```
+
+---
+
 ## Known Issues
 
 ### NetworkManager vs systemd-networkd Conflict
@@ -246,7 +344,7 @@ watch -n 1 'cat /proc/net/dev | grep enp11s0f'
 
 ## Example: DESK Profile
 
-The DESK workstation uses 2x Intel 82599ES 10GbE NICs bonded for 20Gbps aggregate:
+The DESK workstation uses 2x Intel 82599ES 10GbE NICs bonded for 20Gbps aggregate, with VLAN 100 overlay for direct TrueNAS access:
 
 ```nix
 # profiles/DESK-config.nix
@@ -259,10 +357,18 @@ systemSettings = {
   networkBondingMode = "802.3ad";
   networkBondingInterfaces = [ "enp11s0f0" "enp11s0f1" ];
   networkBondingDhcp = true;
+
+  # VLAN 100 for direct TrueNAS access (bypasses pfSense)
+  networkBondingVlans = [
+    { id = 100; name = "storage"; address = "192.168.20.96/24"; }
+  ];
+
+  # Ring buffer tuning for 10GbE (default 512, max 8192)
+  networkBondingRingBufferSize = 4096;
 };
 ```
 
-**Switch config**: USW Aggregation (192.168.8.180), SFP+ ports 7-8 in LACP LAG. See `docs/infrastructure/services/network-switching.md`.
+**Switch config**: USW Aggregation (192.168.8.180), SFP+ ports 7-8 in LACP LAG, trunk: LAN + VLAN 100. See `docs/infrastructure/services/network-switching.md`.
 
 **To disable bonding** (e.g., when running on different hardware):
 ```nix

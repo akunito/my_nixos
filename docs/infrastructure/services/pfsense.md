@@ -33,14 +33,18 @@ pfSense serves as the central network gateway for the homelab infrastructure, pr
 | Interface | Description | IP Address | Type | Speed | Status |
 |-----------|-------------|------------|------|-------|--------|
 | **ix0** | LAN | 192.168.8.1/24 | Intel 10G | 10Gbase-Twinax | Active |
-| **ix1** | Unused | - | Intel 10G | - | No carrier |
+| **ix1** | (Free) | - | Intel 10G | - | No carrier |
 | **igc0** | WAN | 192.168.1.4/24 | Intel 1G | 1000baseT | Active |
-| **ix2** | LAGG member | - | Intel 10G | 10Gbase-Twinax | Active |
-| **ix3** | LAGG member | - | Intel 10G | 10Gbase-Twinax | Active |
-| **lagg0** | NAS (LACP) | 192.168.20.1/24 | Link aggregation | 20G combined | Active |
-| **ix0.200** | GUEST | 192.168.9.1/24 | VLAN 200 | 10G | Active |
+| **ix2** | Switch_24G2 | - | Intel 10G | Bridge member (STP) | Active |
+| **ix3** | LAPTOP_10G | - | Intel 10G | Bridge member (STP) | Active |
+| **ix0.100** | STORAGE_VLAN | 192.168.20.1/24 | VLAN 100 on ix0 | 10G | Active |
+| **ix0.200** | GUEST | 192.168.9.1/24 | VLAN 200 on ix0 | 10G | Active |
 | **tun_wg0** | WG_VPS | 172.26.5.1/24 | WireGuard | MTU 1420 | Active |
 | **ovpnc1** | OpenVPN Client | 10.100.0.2/21 | OpenVPN | MTU 1500 | Active |
+
+**Removed interfaces**: `lagg0` (was LACP bond to TrueNAS via ix2+ix3) — removed after TrueNAS moved to USW Aggregation switch.
+
+**Bridge**: ix2 (Switch_24G2) and ix3 (LAPTOP_10G) are bridged to LAN (ix0) with STP enabled. This provides L2 connectivity for devices connected directly to pfSense SFP+ ports. Note: ix2/ix3 are 10G SFP+ (Intel 82599) and cannot negotiate with 1G SFP devices directly.
 
 ### Interface Architecture
 
@@ -60,14 +64,14 @@ pfSense serves as the central network gateway for the homelab infrastructure, pr
     │                       pfSense                               │
     │                     192.168.8.1                             │
     │                              │                              │
-    └──────┬───────────────┬───────┴───────┬───────────────┬──────┘
-           │               │               │               │
-           ▼               ▼               ▼               ▼
-    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-    │   ix0    │    │ ix0.200  │    │  lagg0   │    │ tun_wg0  │
-    │  (LAN)   │    │ (GUEST)  │    │  (NAS)   │    │(WG_VPS)  │
-    │192.168.8 │    │192.168.9 │    │192.168.20│    │172.26.5  │
-    └──────────┘    └──────────┘    └──────────┘    └──────────┘
+    └──────┬──────────┬──────────┬──────┴──────┬──────────┬──────┘
+           │          │          │             │          │
+           ▼          ▼          ▼             ▼          ▼
+    ┌─────────┐┌─────────┐┌─────────┐  ┌─────────┐┌─────────┐
+    │  ix0    ││ ix0.100 ││ ix0.200 │  │ tun_wg0 ││ bridge  │
+    │ (LAN)  ││(STORAGE)││ (GUEST) │  │(WG_VPS) ││ix2+ix3  │
+    │192.168.8││192.168.20│192.168.9│  │172.26.5 ││ (STP)   │
+    └─────────┘└─────────┘└─────────┘  └─────────┘└─────────┘
 ```
 
 ---
@@ -77,8 +81,8 @@ pfSense serves as the central network gateway for the homelab infrastructure, pr
 | VLAN ID | Name | Interface | Subnet | Purpose |
 |---------|------|-----------|--------|---------|
 | - | Main LAN | ix0 | 192.168.8.0/24 | Primary network (servers, workstations) |
+| 100 | Storage (VLAN-NAS) | ix0.100 | 192.168.20.0/24 | TrueNAS storage network (direct L2 via switch) |
 | 200 | Guest | ix0.200 | 192.168.9.0/24 | Guest network (isolated, internet only) |
-| - | Storage | lagg0 | 192.168.20.0/24 | TrueNAS storage network (LACP) |
 
 ---
 
@@ -104,7 +108,7 @@ pfSense serves as the central network gateway for the homelab infrastructure, pr
 | default | 192.168.1.1 | igc0 (WAN) |
 | 192.168.8.0/24 | direct | ix0 (LAN) |
 | 192.168.9.0/24 | direct | ix0.200 (Guest) |
-| 192.168.20.0/24 | direct | lagg0 (NAS) |
+| 192.168.20.0/24 | direct | ix0.100 (Storage VLAN) |
 | 172.26.5.0/24 | direct | tun_wg0 (WireGuard) |
 | 10.100.0.0/21 | direct | ovpnc1 (OpenVPN) |
 

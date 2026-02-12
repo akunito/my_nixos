@@ -18,17 +18,17 @@ This document describes the physical switching layer, SFP+ port assignments, LAC
                     │      USW Aggregation (192.168.8.180)         │
                     │              8x SFP+ 10G                     │
                     │                                              │
-                    │  SFP+ 1: ──┐                                 │
-                    │  SFP+ 2: ──┤ LACP bond → pfSense (VLAN-tagged)│
+                    │  SFP+ 1: ──── USW-24-G2 uplink (1G)           │
+                    │  SFP+ 2: ──── pfSense ix0 (10G single link)  │
                     │  SFP+ 3: ──┐                                 │
                     │  SFP+ 4: ──┤ LACP bond → Proxmox            │
-                    │  SFP+ 5: ──── USW-24-G2 uplink (1G)         │
-                    │  SFP+ 6: ──── (DAC present, link down)      │
+                    │  SFP+ 5: ──┐                                 │
+                    │  SFP+ 6: ──┤ LACP bond → TrueNAS (VLAN 100) │
                     │  SFP+ 7: ──┐                                 │
                     │  SFP+ 8: ──┤ LACP bond → DESK               │
                     └─────────────────────┬────────────────────────┘
                                           │
-                               SFP+ 5 ◄──┘ 1G uplink
+                               SFP+ 1 ◄──┘ 1G uplink
                                           │
                     ┌─────────────────────┴────────────────┐
                     │        USW-24-G2 (192.168.8.181)     │
@@ -50,14 +50,14 @@ This document describes the physical switching layer, SFP+ port assignments, LAC
 
 | Port | Speed | Connection | Notes |
 |------|-------|------------|-------|
-| SFP+ 1 | 10G | pfSense ix0 (LAN) | LACP bond, VLAN-tagged (Mellanox MCP2104-X001B) |
-| SFP+ 2 | 10G | pfSense ix0 (LAN) | LACP bond, VLAN-tagged (Mellanox MCP2104-X001B) |
-| SFP+ 3 | 10G | Proxmox enp4s0f0 | LACP bond (OFS-DAC-10G-2M) |
-| SFP+ 4 | 10G | Proxmox enp4s0f1 | LACP bond (OFS-DAC-10G-2M) |
-| SFP+ 5 | 1G | USW-24-G2 SFP 2 | Inter-switch uplink (OFS-DAC-10G-1M, limited by 24-G2 1G SFP) |
-| SFP+ 6 | — | (link down) | DAC present (OFS-DAC-10G-1M), no active connection |
-| SFP+ 7 | 10G | DESK enp11s0f0 | LACP bond (OFS-DAC-10G-3M) |
-| SFP+ 8 | 10G | DESK enp11s0f1 | LACP bond (OFS-DAC-10G-3M) |
+| SFP+ 1 | 1G | USW-24-G2 SFP 2 | Inter-switch uplink (OFS-DAC-10G-1M, limited by 24-G2 1G SFP) |
+| SFP+ 2 | 10G | pfSense ix0 (LAN) | Single link, VLAN trunk: LAN + VLAN 100 + VLAN 200 (Mellanox MCP2104-X001B) |
+| SFP+ 3 | 10G | Proxmox enp4s0f0 | LACP bond, trunk: LAN + VLAN 100 (OFS-DAC-10G-2M) |
+| SFP+ 4 | 10G | Proxmox enp4s0f1 | LACP bond, trunk: LAN + VLAN 100 (OFS-DAC-10G-2M) |
+| SFP+ 5 | 10G | TrueNAS enp8s0f0 | LACP bond, VLAN-NAS 100 access mode (OFS-DAC-10G-1M) |
+| SFP+ 6 | 10G | TrueNAS enp8s0f1 | LACP bond, VLAN-NAS 100 access mode (OFS-DAC-10G-1M) |
+| SFP+ 7 | 10G | DESK enp11s0f0 | LACP bond, trunk: LAN + VLAN 100 (OFS-DAC-10G-3M) |
+| SFP+ 8 | 10G | DESK enp11s0f1 | LACP bond, trunk: LAN + VLAN 100 (OFS-DAC-10G-3M) |
 
 ### USW-24-G2 (192.168.8.181)
 
@@ -73,12 +73,26 @@ This document describes the physical switching layer, SFP+ port assignments, LAC
 
 | Bond | Switch Ports | Host | Host Interfaces | Aggregate BW |
 |------|-------------|------|-----------------|--------------|
-| pfSense LAN | SFP+ 1 + 2 | pfSense | ix0 (LACP, VLAN-tagged) | 20 Gbps |
 | Proxmox | SFP+ 3 + 4 | Proxmox VE | enp4s0f0 + enp4s0f1 | 20 Gbps |
+| TrueNAS | SFP+ 5 + 6 | TrueNAS | enp8s0f0 + enp8s0f1 | 20 Gbps |
 | DESK | SFP+ 7 + 8 | nixosaku (DESK) | enp11s0f0 + enp11s0f1 | 20 Gbps |
-| pfSense NAS | (on pfSense lagg0) | TrueNAS | LACP bond, VLAN-tagged (Storage VLAN 192.168.20.0/24) | 2 Gbps (LACP) |
+
+pfSense uses a single 10G link (SFP+ 2, ix0) — LACP bond was removed when TrueNAS moved to switch.
 
 All bonds use IEEE 802.3ad (LACP) mode. Both ends must be configured - switch LAG group AND host bonding.
+
+### VLAN Configuration
+
+| VLAN ID | Name | Tagged Ports | Access Ports | Subnet |
+|---------|------|-------------|--------------|--------|
+| 1 (native) | LAN | SFP+ 2, 3+4, 7+8 | SFP+ 1 | 192.168.8.0/24 |
+| 100 | VLAN-NAS (Storage) | SFP+ 2, 3+4, 7+8 | SFP+ 5+6 | 192.168.20.0/24 |
+| 200 | Guest | SFP+ 2 | — | 192.168.9.0/24 |
+
+**VLAN 100 traffic paths** (direct L2, no pfSense routing):
+- DESK ↔ TrueNAS: bond0.100 → switch → TrueNAS bond0 (~6.8 Gbps/stream)
+- Proxmox ↔ TrueNAS: vmbr10.100 → switch → TrueNAS bond0 (~6.8 Gbps/stream)
+- pfSense ↔ TrueNAS: ix0.100 → switch → TrueNAS bond0 (10G single link)
 
 ---
 
@@ -88,9 +102,10 @@ All connections use SFP+ passive DAC (Direct Attach Copper) cables:
 
 | Ports | Cable Model | Length | Connection |
 |-------|-------------|--------|------------|
-| SFP+ 1+2 | Mellanox MCP2104-X001B | 1m | pfSense LACP bond |
+| SFP+ 1 | OFS-DAC-10G-1M | 1m | USW-24-G2 inter-switch uplink |
+| SFP+ 2 | Mellanox MCP2104-X001B | 1m | pfSense single link |
 | SFP+ 3+4 | OFS-DAC-10G-2M | 2m | Proxmox LACP bond |
-| SFP+ 5+6 | OFS-DAC-10G-1M | 1m | Inter-switch uplink (5) / unused (6) |
+| SFP+ 5+6 | OFS-DAC-10G-1M | 1m | TrueNAS LACP bond (moved from pfSense ix2+ix3) |
 | SFP+ 7+8 | OFS-DAC-10G-3M | 3m | DESK LACP bond |
 
 ---
@@ -164,13 +179,19 @@ ip neigh show 192.168.8.82
 
 | Path | Protocol | Streams | Bandwidth | Notes |
 |------|----------|---------|-----------|-------|
-| DESK → Proxmox | TCP | 1 | 6.84 Gbps | Single stream, direct 10G |
-| DESK → Proxmox | TCP | 4 | ~9.4 Gbps | Multi-stream saturates bond |
-| DESK → LXC_HOME | TCP | 1 | ~6.8 Gbps | LXC_HOME on vmbr10 |
-| DESK → TrueNAS | TCP | 1 | ~940 Mbps | 1G bottleneck (pfSense lagg0) |
-| LXC_HOME → Proxmox | TCP | 1 | ~9.4 Gbps | Local bridge, minimal overhead |
+| DESK → Proxmox | TCP | 1 | 6.84 Gbps | LAN, single 10G link |
+| DESK → Proxmox | TCP | 4 | ~9.4 Gbps | Layer3+4 hash across bond |
+| DESK → TrueNAS (VLAN 100) | TCP | 1 | 6.81 Gbps | Direct L2, no pfSense |
+| DESK → TrueNAS (VLAN 100) | TCP | 4 | ~6.7 Gbps | Same src/dst IP pair = 1 link |
+| Proxmox → TrueNAS (VLAN 100) | TCP | 1 | 6.82 Gbps | Direct L2 |
+| Proxmox → TrueNAS (VLAN 100) | TCP | 4 | ~6.8 Gbps | Direct L2 |
+| DESK → LXC_HOME | TCP | 1 | 6.83 Gbps | Via Proxmox vmbr10 bridge |
+| DESK → LXC_HOME | TCP | 4 | ~6.7 Gbps | Via Proxmox vmbr10 bridge |
+| LXC_HOME → Proxmox | TCP | 1 | ~9.4 Gbps | Local veth bridge |
 
-**Baseline established after**: LXC_HOME migration from vmbr0 → vmbr10, ARP flux fix, Proxmox bond0 creation.
+**Previous (before VLAN 100 migration)**: DESK → TrueNAS was ~940 Mbps (routed through pfSense lagg0, 1G bottleneck).
+
+**Baseline established after**: TrueNAS switch migration, VLAN 100 setup, ring buffer tuning (4096), TCP buffer optimization.
 
 ---
 

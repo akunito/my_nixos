@@ -69,8 +69,10 @@ Central network gateway providing routing, firewall, DNS, DHCP, VPN, and ad bloc
 |-----------|-------------|--------|
 | ix0 (LAN) | Main LAN | 192.168.8.0/24 |
 | igc0 (WAN) | Internet uplink | 192.168.1.x |
-| ix0.200 (Guest) | Guest VLAN | 192.168.9.0/24 |
-| lagg0 (NAS) | Storage LACP | 192.168.20.0/24 |
+| ix0.100 (STORAGE_VLAN) | Storage VLAN 100 | 192.168.20.0/24 |
+| ix0.200 (Guest) | Guest VLAN 200 | 192.168.9.0/24 |
+| ix2 (Switch_24G2) | Bridge member (STP) | — |
+| ix3 (LAPTOP_10G) | Bridge member (STP) | — |
 | tun_wg0 (WG_VPS) | WireGuard tunnel | 172.26.5.0/24 |
 | ovpnc1 | OpenVPN client | 10.100.0.0/21 |
 
@@ -136,9 +138,10 @@ The Proxmox server hosts all LXC containers running NixOS.
 ```
   USW Aggregation (10G)          USW-24-G2 (1G)
   ┌──────────────────┐           ┌──────────────────┐
-  │ SFP+ 1+2 → pfSense (LACP) │ RJ45 1-24 → LAN  │
-  │ SFP+ 3+4 → Proxmox (LACP) │ SFP 2 ◄──────────┤ 1G uplink
-  │ SFP+ 5   ────────────────► │                    │
+  │ SFP+ 1   ────────────────► │ SFP 2 (1G uplink) │
+  │ SFP+ 2   → pfSense (10G)  │ RJ45 1-24 → LAN   │
+  │ SFP+ 3+4 → Proxmox (LACP) │                    │
+  │ SFP+ 5+6 → TrueNAS (LACP) │                    │
   │ SFP+ 7+8 → DESK (LACP)    │                    │
   └──────────────────┘           └──────────────────┘
 ```
@@ -146,15 +149,19 @@ The Proxmox server hosts all LXC containers running NixOS.
 **LACP Bond Groups**:
 | Bond | Switch Ports | Host | Bandwidth |
 |------|-------------|------|-----------|
-| pfSense LAN | SFP+ 1+2 | pfSense (VLAN-tagged) | 20 Gbps |
 | Proxmox | SFP+ 3+4 | Proxmox VE | 20 Gbps |
+| TrueNAS | SFP+ 5+6 | TrueNAS (VLAN 100 access) | 20 Gbps |
 | DESK | SFP+ 7+8 | nixosaku Desktop | 20 Gbps |
 
-**DAC Cables**: Mellanox MCP2104-X001B (1m, pfSense), OFS-DAC-10G-2M (2m, Proxmox), OFS-DAC-10G-3M (3m, DESK), OFS-DAC-10G-1M (1m, inter-switch)
+pfSense uses single 10G link (SFP+ 2). LACP bond removed after TrueNAS moved to switch.
+
+**DAC Cables**: Mellanox MCP2104-X001B (1m, pfSense), OFS-DAC-10G-2M (2m, Proxmox), OFS-DAC-10G-1M (1m, TrueNAS + inter-switch), OFS-DAC-10G-3M (3m, DESK)
 
 **Known bottleneck**: USW Aggregation ↔ USW-24-G2 uplink is 1G (USW-24-G2 only has 1G SFP ports). Devices on USW-24-G2 cannot exceed 1 Gbps to 10G devices.
 
-**Performance baselines** (2026-02-12): DESK → Proxmox 6.84 Gbps (single stream), ~9.4 Gbps (4 streams). See [Network Switching](./services/network-switching.md).
+**VLAN 100 (Storage)**: TrueNAS (192.168.20.200) on VLAN-NAS 100 access mode. DESK (192.168.20.96) and Proxmox (192.168.20.82) access TrueNAS via direct L2 on VLAN 100 — no pfSense routing. Previous path through pfSense lagg0 was limited to ~940 Mbps.
+
+**Performance baselines** (2026-02-12): DESK → Proxmox 6.84 Gbps (1 stream), ~9.4 Gbps (4 streams). DESK → TrueNAS (VLAN 100) 6.81 Gbps. See [Network Switching](./services/network-switching.md).
 
 ---
 
@@ -353,8 +360,17 @@ Network Attached Storage providing NFS shares:
 - Media storage (movies, TV, music)
 - Emulator ROMs
 - Book library
+- Proxmox VM/CT backups
 
-Mounted to LXC_HOME via Proxmox bind mounts.
+**Network**: 2x 10GbE LACP bond (enp8s0f0 + enp8s0f1) → USW Aggregation SFP+ 5+6 (VLAN-NAS 100, access mode). Gateway: 192.168.20.1 (pfSense ix0.100).
+
+**Access paths**:
+- DESK: bond0.100 (192.168.20.96) → switch L2 → TrueNAS (~6.8 Gbps)
+- Proxmox: vmbr10.100 (192.168.20.82) → switch L2 → TrueNAS (~6.8 Gbps)
+- LXC containers: via Proxmox NFS bind mounts (same path as Proxmox)
+- pfSense: ix0.100 (192.168.20.1) → switch VLAN 100 → TrueNAS (10G)
+
+Mounted to LXC_HOME and other containers via Proxmox bind mounts.
 
 ---
 

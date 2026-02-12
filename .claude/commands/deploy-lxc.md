@@ -46,18 +46,20 @@ git fetch origin && git reset --hard origin/main
 
 ## Container Reference
 
-| Profile | IP | Description |
-|---------|-----|-------------|
-| LXC_HOME | 192.168.8.80 | Homelab services |
-| LXC_proxy | 192.168.8.102 | Cloudflare tunnel & NPM |
-| LXC_plane | 192.168.8.86 | Production container |
-| LXC_portfolioprod | 192.168.8.88 | Portfolio service |
-| LXC_mailer | 192.168.8.89 | Mail & monitoring |
-| LXC_liftcraftTEST | 192.168.8.87 | Test environment |
-| LXC_monitoring | 192.168.8.85 | Prometheus & Grafana |
-| LXC_database | 192.168.8.103 | PostgreSQL, MariaDB & Redis |
-| LXC_matrix | 192.168.8.104 | Matrix Synapse, Element & Claude Bot |
-| LXC_tailscale | 192.168.8.105 | Tailscale subnet router (mesh VPN) |
+| Profile | IP | Bridge | Description |
+|---------|-----|--------|-------------|
+| LXC_HOME | 192.168.8.80 | vmbr10 | Homelab services |
+| LXC_proxy | 192.168.8.102 | vmbr10 | Cloudflare tunnel & NPM |
+| LXC_plane | 192.168.8.86 | vmbr10 | Production container |
+| LXC_portfolioprod | 192.168.8.88 | vmbr10 | Portfolio service |
+| LXC_mailer | 192.168.8.89 | vmbr10 | Mail & monitoring |
+| LXC_liftcraftTEST | 192.168.8.87 | vmbr10 | Test environment |
+| LXC_monitoring | 192.168.8.85 | vmbr10 | Prometheus & Grafana |
+| LXC_database | 192.168.8.103 | vmbr10 | PostgreSQL, MariaDB & Redis |
+| LXC_matrix | 192.168.8.104 | vmbr10 | Matrix Synapse, Element & Claude Bot |
+| LXC_tailscale | 192.168.8.105 | vmbr10 | Tailscale subnet router (mesh VPN) |
+
+All containers use vmbr10 (bond0 LACP 2x10G → USW Aggregation SFP+ 3+4).
 
 ## Examples
 

@@ -572,21 +572,29 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
   - CPU load: 0.17, Memory free: 14GB
   - pfBlockerNG IPs: 16,242, Rules: 168
 
-### Network switching & 10GbE (applies to: `profiles/DESK-config.nix`, `system/hardware/networking.nix`, `docs/infrastructure/services/network-switching.md`)
+### Network switching & 10GbE (applies to: `profiles/DESK-config.nix`, `system/hardware/network-bonding.nix`, `docs/infrastructure/services/network-switching.md`)
 
 - **Read first**: `docs/infrastructure/services/network-switching.md`
-- **Use command**: `/network-performance` for testing and diagnostics
+- **Use commands**: `/network-performance` for testing, `/manage-truenas` for TrueNAS, `/manage-pfsense` for pfSense
 - **Physical topology**:
   - **USW Aggregation** (192.168.8.180): 8x SFP+ 10G switch
   - **USW-24-G2** (192.168.8.181): 24x 1G RJ45 + 2x 1G SFP
-  - Inter-switch uplink: 1G (bottleneck for USW-24-G2 devices accessing 10G)
+  - Inter-switch uplink: SFP+ 1 → USW-24-G2 SFP 2 (1G bottleneck)
 - **LACP bonds**:
   - DESK: SFP+ 7+8 → enp11s0f0 + enp11s0f1 (NixOS `networkBondingEnable`)
   - Proxmox: SFP+ 3+4 → enp4s0f0 + enp4s0f1 (bond0 → vmbr10)
+  - TrueNAS: SFP+ 5+6 → enp8s0f0 + enp8s0f1 (VLAN-NAS 100 access mode)
+  - pfSense: SFP+ 2 → ix0 (single 10G link, VLAN trunk)
+- **VLAN 100 (Storage)**: 192.168.20.0/24 — direct L2 between DESK, Proxmox, and TrueNAS (bypasses pfSense)
+  - DESK: bond0.100 = 192.168.20.96 (NixOS `networkBondingVlans`)
+  - Proxmox: vmbr10.100 = 192.168.20.82
+  - TrueNAS: bond0 = 192.168.20.200 (access mode, untagged)
+  - pfSense: ix0.100 = 192.168.20.1 (gateway)
 - **ARP flux warning**: Proxmox dual-bridge (vmbr0 1G + vmbr10 10G) causes ARP flux without sysctl fix. Symptoms: 940 Mbps instead of 6.8 Gbps. Fix is on Proxmox (`/etc/sysctl.d/99-arp-fix.conf`), not NixOS
-- **Performance baselines** (2026-02-12): DESK → Proxmox 6.84 Gbps (1 stream), ~9.4 Gbps (4 streams)
+- **Performance baselines** (2026-02-12): DESK → Proxmox 6.84 Gbps (1 stream), ~9.4 Gbps (4 streams). DESK → TrueNAS (VLAN 100) 6.81 Gbps. DESK → LXC_HOME 6.83 Gbps
+- **NIC tuning**: Ring buffers (4096) and TCP buffers (16 MB) configured declaratively via `networkBondingRingBufferSize` in `network-bonding.nix`
 - **UniFi Controller**: https://192.168.8.206:8443 (2FA enabled, use `unifises` session cookie from `secrets/domains.nix`)
-- **DAC cables**: Mellanox MCP2104-X001B (1m, pfSense), OFS-DAC-10G-2M (2m, Proxmox), OFS-DAC-10G-3M (3m, DESK), OFS-DAC-10G-1M (1m, inter-switch)
+- **DAC cables**: Mellanox MCP2104-X001B (1m, pfSense), OFS-DAC-10G-2M (2m, Proxmox), OFS-DAC-10G-1M (1m, TrueNAS + inter-switch), OFS-DAC-10G-3M (3m, DESK)
 
 ### Grafana/Prometheus monitoring (applies to: `system/app/grafana.nix`, `system/app/prometheus-*.nix`, `system/app/grafana-dashboards/**`)
 

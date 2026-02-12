@@ -83,6 +83,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
 - **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
+- **system/app/prometheus-truenas-backup.nix**: TrueNAS ZFS Replication Backup Monitoring *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
 - **system/app/redis-server.nix**: Redis Server Module *Enabled when:*
    - `allows multiple instances if needed`
@@ -150,8 +151,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `mode == "802.3ad"`
    - `lib.listToAttrs (map (iface: { name = iface; value = { useDHCP = false; }; }) interfaces) // { # Configure bond0 IP addressing bond0 = if useDhcp then { useDHCP = true; } else if staticIp != null then { useDHCP = false; ipv4.addresses = [{ address = lib.head (lib.splitString "/" staticIp.address); prefixLength = lib.toInt (lib.last (lib.splitString "/" staticIp.address)); }]; } else { useDHCP = true; # Fallback to DHCP }; }`
    - `useNetworkd && staticIp != null && !useDhcp`
-   - `{ "NetworkManager/system-connections/bond0.nmconnection" = { text = nmBondConnection; mode = "0600"; }; } // lib.listToAttrs (map (iface: { name = "NetworkManager/system-connections/bond0-slave-${iface}.nmconnection"; value = { text = nmSlaveConnection iface; mode = "0600"; }; }) interfaces)`
+   - `{ "NetworkManager/system-connections/bond0.nmconnection" = { text = nmBondConnection; mode = "0600"; }; } // lib.listToAttrs (map (iface: { name = "NetworkManager/system-connections/bond0-slave-${iface}.nmconnection"; value = { text = nmSlaveConnection iface; mode = "0600"; }; }) interfaces) // lib.listToAttrs (map (vlan: { name = "NetworkManager/system-connections/bond0-vlan${toString vlan.id}.nmconnection"; value = { text = nmVlanConnection vlan; mode = "0600"; }; }) vlans)`
    - `lib.stringAfter [ "etc" ] '' if systemctl is-active --quiet NetworkManager; then ${pkgs.networkmanager}/bin/nmcli connection reload || true fi ''`
+   - `ringBufferSize != null`
 - **system/hardware/nfs_client.nix**: You need to install pkgs.nfs-utils *Enabled when:* `systemSettings.nfsClientEnable == true`
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
 - **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:*

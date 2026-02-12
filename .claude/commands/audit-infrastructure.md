@@ -114,7 +114,34 @@ ssh -p 56777 root@172.26.5.155 "ss -tlnp | grep -E ':(80|443|3001|5000|51820|567
 
 ## Cross-Reference Verification
 
-### 7. Compare with Monitoring
+### 7. Verify VLAN 100 Storage Network
+
+```bash
+# Check DESK bond0.100
+ip addr show bond0.100
+# Should show 192.168.20.96/24
+
+# Check Proxmox vmbr10.100
+ssh -A root@192.168.8.82 "ip addr show vmbr10.100"
+# Should show 192.168.20.82/24
+
+# Check pfSense ix0.100
+ssh admin@192.168.8.1 "ifconfig ix0.100"
+# Should show 192.168.20.1/24
+
+# Check TrueNAS bond0
+ssh truenas_admin@192.168.20.200 "ip addr show bond0"
+# Should show 192.168.20.200/24
+
+# Verify direct L2 paths (no pfSense routing)
+ping -c 1 192.168.20.200  # DESK → TrueNAS
+ssh -A root@192.168.8.82 "ping -c 1 192.168.20.200"  # Proxmox → TrueNAS
+
+# Check all LXC containers bridge to vmbr10 (10G)
+ssh -A root@192.168.8.82 "for ct in \$(pct list | tail -n+2 | awk '{print \$1}'); do echo \"CT \$ct: \$(pct config \$ct | grep net0 | grep -o 'bridge=[^ ,]*')\"; done"
+```
+
+### 8. Compare with Monitoring
 
 ```bash
 # Check Uptime Kuma monitors (internal)

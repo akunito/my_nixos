@@ -308,9 +308,43 @@ ssh -A root@192.168.8.82 "ethtool -g enp4s0f1"
 ssh -A root@192.168.8.82 "for ct in \$(pct list | tail -n+2 | awk '{print \$1}'); do echo \"CT \$ct: \$(pct config \$ct | grep net0 | grep -o 'bridge=[^ ,]*')\"; done"
 ```
 
+### VLAN 100 Storage Network
+
+Proxmox has a VLAN 100 sub-interface on vmbr10 for direct L2 access to TrueNAS:
+
+```bash
+# Check VLAN 100 interface
+ssh -A root@192.168.8.82 "ip addr show vmbr10.100"
+# Should show 192.168.20.82/24
+
+# Test direct path to TrueNAS
+ssh -A root@192.168.8.82 "ping -c 2 192.168.20.200"
+
+# Config location: /etc/network/interfaces
+# Backup: /etc/network/interfaces.bak-pre-vlan100
+```
+
+LXC containers access TrueNAS NFS via Proxmox bind mounts — the VLAN 100 path is handled at the Proxmox host level. No per-container VLAN config needed.
+
 ### Known Issues
 
 **ARP Flux**: When Proxmox has both vmbr0 (1G) and vmbr10 (10G bond) on the same subnet, Linux may send ARP replies from the wrong interface, causing 10G clients to route traffic over 1G. Fixed via sysctl (`/etc/sysctl.d/99-arp-fix.conf`) and route metric on vmbr0. See `docs/infrastructure/services/network-switching.md`.
+
+**Proxmox TCP/ring buffer tuning**: Currently runtime-only. To make persistent:
+```bash
+# Ring buffers (add to /etc/network/interfaces post-up)
+ssh -A root@192.168.8.82 "ethtool -G enp4s0f0 rx 4096 tx 4096; ethtool -G enp4s0f1 rx 4096 tx 4096"
+
+# TCP tuning
+ssh -A root@192.168.8.82 "cat > /etc/sysctl.d/99-tcp-tuning.conf << 'EOF'
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.ipv4.tcp_rmem = 4096 1048576 16777216
+net.ipv4.tcp_wmem = 4096 1048576 16777216
+net.core.netdev_max_backlog = 10000
+EOF
+sysctl --system"
+```
 
 ---
 
@@ -359,19 +393,21 @@ For containers with encrypted root, the unlock script is at:
 
 ## Container Inventory
 
-| CTID | Name | IP | Purpose |
-|------|------|-----|---------|
-| 80 | LXC_HOME | 192.168.8.80 | Media/Homelab services |
-| 85 | LXC_monitoring | 192.168.8.85 | Grafana/Prometheus |
-| 86 | LXC_plane | 192.168.8.86 | Plane project management |
-| 87 | LXC_liftcraftTEST | 192.168.8.87 | LiftCraft test |
-| 88 | LXC_portfolioprod | 192.168.8.88 | Portfolio production |
-| 89 | LXC_mailer | 192.168.8.89 | Postfix/Kuma |
-| 102 | LXC_proxy | 192.168.8.102 | NPM/Cloudflared |
-| 204 | LXC_database | 192.168.8.103 | PostgreSQL/MariaDB/Redis |
-| 251 | LXC_matrix | 192.168.8.104 | Matrix Synapse/Element/Claude Bot |
-| 205 | LXC_tailscale | 192.168.8.105 | Tailscale subnet router |
-| 285 | Template | - | NixOS template (encrypted) |
+| CTID | Name | IP | Bridge | Purpose |
+|------|------|-----|--------|---------|
+| 80 | LXC_HOME | 192.168.8.80 | vmbr10 | Media/Homelab services |
+| 85 | LXC_monitoring | 192.168.8.85 | vmbr10 | Grafana/Prometheus |
+| 86 | LXC_plane | 192.168.8.86 | vmbr10 | Plane project management |
+| 87 | LXC_liftcraftTEST | 192.168.8.87 | vmbr10 | LiftCraft test |
+| 88 | LXC_portfolioprod | 192.168.8.88 | vmbr10 | Portfolio production |
+| 89 | LXC_mailer | 192.168.8.89 | vmbr10 | Postfix/Kuma |
+| 102 | LXC_proxy | 192.168.8.102 | vmbr10 | NPM/Cloudflared |
+| 204 | LXC_database | 192.168.8.103 | vmbr10 | PostgreSQL/MariaDB/Redis |
+| 251 | LXC_matrix | 192.168.8.104 | vmbr10 | Matrix Synapse/Element/Claude Bot |
+| 205 | LXC_tailscale | 192.168.8.105 | vmbr10 | Tailscale subnet router |
+| 285 | Template | - | - | NixOS template (encrypted) |
+
+**All containers use vmbr10** (backed by bond0 LACP 2x10G → USW Aggregation SFP+ 3+4), providing up to 20G aggregate bandwidth to the switch.
 
 ---
 
