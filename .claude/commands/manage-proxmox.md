@@ -267,6 +267,53 @@ ssh -A root@192.168.8.82 "pct exec <CTID> -- ip addr"
 
 ---
 
+## Network Management
+
+### Bond Status
+
+```bash
+# Check Proxmox bond0 (LACP to USW Aggregation SFP+ 3+4)
+ssh -A root@192.168.8.82 "cat /proc/net/bonding/bond0"
+
+# Key fields: MII Status (up/down), Partner Mac, Aggregator ID (both same = OK)
+```
+
+### ARP Flux Verification
+
+```bash
+# Check ARP sysctl settings (all should be non-zero)
+ssh -A root@192.168.8.82 "sysctl net.ipv4.conf.all.arp_filter net.ipv4.conf.all.arp_ignore net.ipv4.conf.all.arp_announce"
+
+# Expected:
+# net.ipv4.conf.all.arp_filter = 1
+# net.ipv4.conf.all.arp_ignore = 1
+# net.ipv4.conf.all.arp_announce = 2
+
+# Check route metrics (vmbr0 should have metric 200, vmbr10 default/lower)
+ssh -A root@192.168.8.82 "ip route show default"
+```
+
+### NIC Ring Buffers
+
+```bash
+# Check ring buffer sizes (if current << max, consider increasing)
+ssh -A root@192.168.8.82 "ethtool -g enp4s0f0"
+ssh -A root@192.168.8.82 "ethtool -g enp4s0f1"
+```
+
+### Container Bridge Assignments
+
+```bash
+# List which bridge each container uses
+ssh -A root@192.168.8.82 "for ct in \$(pct list | tail -n+2 | awk '{print \$1}'); do echo \"CT \$ct: \$(pct config \$ct | grep net0 | grep -o 'bridge=[^ ,]*')\"; done"
+```
+
+### Known Issues
+
+**ARP Flux**: When Proxmox has both vmbr0 (1G) and vmbr10 (10G bond) on the same subnet, Linux may send ARP replies from the wrong interface, causing 10G clients to route traffic over 1G. Fixed via sysctl (`/etc/sysctl.d/99-arp-fix.conf`) and route metric on vmbr0. See `docs/infrastructure/services/network-switching.md`.
+
+---
+
 ## LUKS Encryption (LXC_database)
 
 The LXC_database container uses LUKS encryption managed at the LVM level.

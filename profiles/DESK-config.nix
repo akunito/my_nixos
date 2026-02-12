@@ -117,7 +117,7 @@ in
     # Network Bonding (10GbE LACP aggregation)
     # ========================================================================
     # Hardware: 2x Intel 82599ES 10GbE NICs (enp11s0f0, enp11s0f1)
-    # Switch: UniFi 24-port PoE Pro, ports 5-6 in LACP LAG
+    # Switch: USW Aggregation (192.168.8.180), SFP+ ports 7-8 in LACP LAG
     # Result: 20Gbps aggregate bandwidth + automatic failover
     #
     # TO DISABLE (e.g., when copying profile to different hardware):

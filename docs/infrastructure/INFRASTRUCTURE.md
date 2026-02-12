@@ -82,7 +82,9 @@ See [pfSense Documentation](./services/pfsense.md) for detailed configuration.
 
 ### Proxmox VE Hypervisor (192.168.8.82)
 
-The Proxmox server hosts all LXC containers running NixOS:
+The Proxmox server hosts all LXC containers running NixOS.
+
+**Network**: Two bridges - vmbr0 (1G fallback, eno1) and vmbr10 (10G LACP bond0 via USW Aggregation SFP+ 3+4). Most containers use vmbr10 for 10G connectivity. ARP flux prevention via sysctl + route metrics. See [Network Switching](./services/network-switching.md).
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -126,9 +128,32 @@ The Proxmox server hosts all LXC containers running NixOS:
 | Device | IP | Description |
 |--------|-----|-------------|
 | Personal WiFi AP | 192.168.8.2 | UniFi AP for main network |
-| USW-Aggregation | 192.168.8.180 | 10G aggregation switch |
-| USW-24-G2 | 192.168.8.181 | 24-port managed switch |
-| nixosaku Desktop | DHCP | Primary workstation |
+| USW Aggregation | 192.168.8.180 | 8-port SFP+ 10G aggregation switch |
+| USW-24-G2 | 192.168.8.181 | 24-port 1G managed switch + 2x SFP |
+| nixosaku Desktop | 192.168.8.96 | Primary workstation (10G LACP bond) |
+
+**Switch Topology**:
+```
+  USW Aggregation (10G)          USW-24-G2 (1G)
+  ┌──────────────────┐           ┌──────────────────┐
+  │ SFP+ 3+4 → Proxmox (LACP)  │ RJ45 1-24 → LAN  │
+  │ SFP+ 5   → pfSense         │ SFP 1 ◄──────────┤ 1G uplink
+  │ SFP+ 6   ────────────────► │                    │
+  │ SFP+ 7+8 → DESK (LACP)    │                    │
+  └──────────────────┘           └──────────────────┘
+```
+
+**LACP Bond Groups**:
+| Bond | Switch Ports | Host | Bandwidth |
+|------|-------------|------|-----------|
+| DESK | SFP+ 7+8 | nixosaku Desktop | 20 Gbps |
+| Proxmox | SFP+ 3+4 | Proxmox VE | 20 Gbps |
+
+**DAC Cables**: OFS-DAC-10G-2M (SFP+ passive, 2m)
+
+**Known bottleneck**: USW Aggregation ↔ USW-24-G2 uplink is 1G (USW-24-G2 only has 1G SFP ports). Devices on USW-24-G2 cannot exceed 1 Gbps to 10G devices.
+
+**Performance baselines** (2026-02-12): DESK → Proxmox 6.84 Gbps (single stream), ~9.4 Gbps (4 streams). See [Network Switching](./services/network-switching.md).
 
 ---
 
@@ -629,3 +654,4 @@ Updates are staggered to prevent simultaneous service disruption.
 - [VPS WireGuard Server](./services/vps-wireguard.md) - External VPS documentation
 - [Database & Redis](./services/database-redis.md) - Centralized PostgreSQL and Redis services
 - [Matrix Server](./services/matrix.md) - Matrix Synapse, Element, and Claude Bot
+- [Network Switching](./services/network-switching.md) - 10GbE switching layer, LACP bonds, ARP flux

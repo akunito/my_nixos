@@ -42,7 +42,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **system/app/appimage.nix**: System module: appimage.nix
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
-- **system/app/control-panel-native.nix**: Build the native control panel from workspace *Enabled when:* `systemSettings.controlPanelNativeEnable or false`
+- **system/app/control-panel-native.nix**: Build the web control panel (standalone server binary) *Enabled when:* `systemSettings.controlPanelNativeEnable or false`
 - **system/app/control-panel.nix**: Build the control panel web server from workspace *Enabled when:* `systemSettings.controlPanelEnable or false`
 - **system/app/database-backup.nix**: Database Backup Module *Enabled when:*
    - `lib.mkIf cfg.postgresqlEnable { systemd.services.postgresql-backup = { description = "PostgreSQL Database Daily Backup"; after = [ "postgresql.service" ] ++ lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; wants = lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; requires = [ "postgresql.service" ]; serviceConfig = { Type = "oneshot"; ExecStart = postgresqlBackupScript; User = "root"; Group = "root"; # Security hardening PrivateTmp = true; ProtectSystem = "strict"; ReadWritePaths = [ cfg.location "/var/lib/prometheus-node-exporter" ]; }; }; systemd.timers.postgresql-backup = { description = "PostgreSQL Database Daily Backup Timer"; wantedBy = [ "timers.target" ]; timerConfig = { OnCalendar = cfg.startAt; Persistent = true; RandomizedDelaySec = "5m"; }; }; # Create backup directory systemd.tmpfiles.rules = [ "d ${cfg.location}/postgresql/daily 0750 root root -" ]; }`
@@ -89,10 +89,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.prometheusRedisExporterEnable or false`
 - **system/app/samba.nix**: System module: samba.nix
 - **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`
-- **system/app/steam.nix**: Steam configuration *Enabled when:* `userSettings.steamPackEnable == true`
+- **system/app/steam.nix**: /bin/bash compatibility symlink *Enabled when:* `userSettings.steamPackEnable == true`
 - **system/app/tailscale.nix**: Tailscale/Headscale Mesh VPN Service *Enabled when:*
    - `systemSettings.tailscaleEnable or false`
    - `isSubnetRouter || isExitNode`
+   - `(systemSettings.tailscaleEnable or false) || (systemSettings.trayscaleGuiEnable or false)`
    - `systemSettings.tailscaleGuiAutostart or false`
    - `config.services.prometheus.exporters.node.enable or false`
    - `${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null`
@@ -115,6 +116,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Dm
 
+- **system/dm/greetd.nix**: KWallet PAM integration for automatic wallet unlocking on login *Enabled when:*
+   - `primary for graphical sessions`
+   - `GTK4 greeter`
+   - `30, 30, 46, 0.95`
 - **system/dm/sddm-breeze-patched-theme.nix**: Copy upstream Breeze SDDM theme from Plasma Desktop
 - **system/dm/sddm.nix**: KWallet PAM integration for automatic wallet unlocking on login *Enabled when:* `primary for graphical sessions`
 
@@ -142,8 +147,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/hardware/keychron.nix**: Grant access to Keychron keyboards for the Keychron Launcher / VIA
 - **system/hardware/network-bonding.nix**: Network bonding (LACP link aggregation) module *Enabled when:*
    - `bondingEnabled && interfaces != []`
-   - `staticIp != null && !useDhcp`
-   - `cfg.networkManager or true`
+   - `mode == "802.3ad"`
+   - `lib.listToAttrs (map (iface: { name = iface; value = { useDHCP = false; }; }) interfaces) // { # Configure bond0 IP addressing bond0 = if useDhcp then { useDHCP = true; } else if staticIp != null then { useDHCP = false; ipv4.addresses = [{ address = lib.head (lib.splitString "/" staticIp.address); prefixLength = lib.toInt (lib.last (lib.splitString "/" staticIp.address)); }]; } else { useDHCP = true; # Fallback to DHCP }; }`
+   - `useNetworkd && staticIp != null && !useDhcp`
+   - `{ "NetworkManager/system-connections/bond0.nmconnection" = { text = nmBondConnection; mode = "0600"; }; } // lib.listToAttrs (map (iface: { name = "NetworkManager/system-connections/bond0-slave-${iface}.nmconnection"; value = { text = nmSlaveConnection iface; mode = "0600"; }; }) interfaces)`
+   - `lib.stringAfter [ "etc" ] '' if systemctl is-active --quiet NetworkManager; then ${pkgs.networkmanager}/bin/nmcli connection reload || true fi ''`
 - **system/hardware/nfs_client.nix**: You need to install pkgs.nfs-utils *Enabled when:* `systemSettings.nfsClientEnable == true`
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
 - **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:*
@@ -195,6 +203,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.resticWrapper == true`
    - `systemSettings.homeBackupEnable == true`
    - `systemSettings.remoteBackupEnable == true`
+   - `systemSettings.vpsBackupEnable == true`
    - `systemSettings.backupMonitoringEnable or false`
    - `systemSettings.pfsenseBackupEnable or false`
 - **system/security/sshd.nix**: Enable incoming ssh
@@ -230,12 +239,15 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.sddmSetupScript != null`
    - `systemSettings.hostname == "nixosaku"`
 - **system/wm/sway.nix**: Helper: is Sway enabled (either as primary WM or as dual-WM with Plasma) *Enabled when:*
-   - `lib.mkMerge [ # Base SDDM settings { enable = true; # Use X11 greeter when setup script is enabled (xrandr doesn't work with Wayland greeter) wayland.enable = !(systemSettings.sddmSetupScript or null != null); } # Theme settings (controlled by sddmBreezePatchedTheme flag) (lib.mkIf (systemSettings.sddmBreezePatchedTheme or false) { settings = { Theme = { Current = "breeze-patched"; }; }; }) # Setup script for monitor configuration (e.g., portrait rotation) (lib.mkIf ((systemSettings.sddmSetupScript or null) != null) { setupScript = systemSettings.sddmSetupScript; }) ]`
-   - `controlled by sddmBreezePatchedTheme flag`
-   - `swayEnabled && (systemSettings.sddmBreezePatchedTheme or false)`
+   - `SDDM`
+   - `swayEnabled && !(systemSettings.greetdEnable or false)`
+   - `!(systemSettings.sddmBreezePatchedTheme or false)`
+   - `systemSettings.sddmBreezePatchedTheme or false`
+   - `(systemSettings.sddmSetupScript or null) != null`
+   - `must be in systemPackages to install to /run/current-system/sw/share/sddm/themes/`
+   - `if (systemSettings.sddmBreezePatchedTheme or false) then [ # Breeze-patched theme (legacy - for multi-monitor password focus fix) (import ../dm/sddm-breeze-patched-theme.nix { inherit pkgs; }) ] else if !(systemSettings.greetdEnable or false) then [ # Astronaut theme files (theme must be in BOTH systemPackages AND extraPackages) pkgs.sddm-astronaut ] else []`
    - `fixes Lutris "Found no drivers" error`
    - `swayEnabled && systemSettings.gpuType == "amd"`
-   - `wlroots implementation`
    - `Sway-specific`
    - `English/Spanish`
    - `AltGr Dead Keys`
@@ -280,6 +292,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/terminal/fix-terminals.nix**: Python script to configure VS Code and Cursor terminal keybindings
 - **user/app/terminal/kitty.nix**: Wrapper script to auto-start tmux with kitty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/tmux.nix**: Clipboard command differs between macOS (pbcopy) and Linux (wl-copy) *Enabled when:* `!pkgs.stdenv.isDarwin`
+- **user/app/terminal/xterm.nix**: XTerm configuration via X resources *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
 - **user/app/waypaper/waypaper.nix**: Waypaper wrapper script for Sway session restoration *Enabled when:* `systemSettings.waypaperEnable or false`
 
@@ -330,14 +343,13 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/input/nihongo.nix**: Enumerate when press trigger key repeatedly
 - **user/wm/picom/picom.nix**: User module: picom.nix
 - **user/wm/plasma6/plasma6.nix**: ++ lib.optional userSettings.wmEnableHyprland (./. + "/../hyprland/hyprland_noStylix.nix")
-- **user/wm/sway/debug-qt5ct.nix**: Debug logging function for NDJSON format
-- **user/wm/sway/debug-relog.nix**: Keep logging implementation centralized via existing helper script.
 - **user/wm/sway/debug/relog-instrumentation.nix**: NDJSON sink for this repo (debug-mode compatible).
 - **user/wm/sway/default.nix**: Internal cross-module wiring (kept minimal).
 - **user/wm/sway/extras.nix**: Btop theme configuration (Stylix colors) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/wm/sway/kanshi.nix**: Declarative mode: Nix manages kanshi config *Enabled when:*
    - `lib.mkIf declarativeMode { services.kanshi.settings = systemSettings.swayKanshiSettings; # Ensure Home Manager owns kanshi config robustly xdg.configFile."kanshi/config".force = true; }`
    - `dirname "$KANSHI_CONFIG"`
+- **user/wm/sway/kde-apps.nix**: KDE companion apps, Wayland-native viewers, and MIME associations for Sway session.
 - **user/wm/sway/nwg-displays.nix**: User module: nwg-displays.nix
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
 - **user/wm/sway/session-env.nix**: Script to sync theme variables with D-Bus activation environment
@@ -346,6 +358,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.sunshineEnable == true`
    - `systemSettings.stylixEnable == true && (systemSettings.swaybgPlusEnable or false) != true && (systemSettings.swwwEnable or false) != true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
    - `systemSettings.nextcloudEnable == true`
+   - `systemSettings.trayscaleGuiEnable == true`
 - **user/wm/sway/startup-apps.nix**: CRITICAL: Restore qt5ct files on Sway startup to ensure correct content
 - **user/wm/sway/sway.nix**: User module: sway.nix
 - **user/wm/sway/swayfx-config.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
@@ -420,6 +433,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/infrastructure/services/matrix.md**: Self-hosted Matrix server with Element web client and Claude bot integration.
 - **docs/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
 - **docs/infrastructure/services/monitoring-stack.md**: Monitoring stack - Prometheus, Grafana, exporters, alerting
+- **docs/infrastructure/services/network-switching.md**: Physical switching layer documentation - USW Aggregation, USW-24-G2, 10GbE LACP bonds, ARP flux
 - **docs/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 - **docs/infrastructure/services/proxy-stack.md**: Proxy stack - NPM, cloudflared, ACME certificates
 - **docs/infrastructure/services/tailscale-headscale.md**: Tailscale mesh VPN with self-hosted Headscale coordination server
@@ -472,6 +486,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack.
 - **docs/setup/ubuntu-node-exporter.md**: This guide documents how to install and configure Prometheus Node Exporter on Ubuntu LXC containers (like cloudflared at 192.168.8.102) for monitoring with the homelab Prometheus/Grafana stack.
 
+### System-Modules
+
+- **docs/system-modules/network-bonding.md**: Network bonding (LACP link aggregation) for increased bandwidth and failover
+
 ### User-Modules
 
 - **docs/user-modules/db-credentials.md**: Home Manager module for database credential files (pgpass, my.cnf, redis)
@@ -485,6 +503,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/ranger-guide.md**: Ranger is a minimalistic TUI (Terminal User Interface) file manager controlled with vim keybindings, making it extremely efficient for file management tasks.
 - **docs/user-modules/ranger.md**: Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo.
 - **docs/user-modules/rofi.md**: Rofi configuration (Stylix-templated theme, unified combi launcher, power script-mode, and grouped window overview).
+- **docs/user-modules/shell-multiline-input.md**: Multi-line shell input with Shift+Enter configuration
 - **docs/user-modules/stylix-containment.md**: Stylix theming containment in this repo (Sway gets Stylix; Plasma 6 does not) via env isolation + session-scoped systemd.
 - **docs/user-modules/sway-daemon-integration.md**: Sway session services are managed via systemd --user units bound to sway-session.target (official/systemd approach; no custom daemon-manager).
 - **docs/user-modules/sway-output-layout-kanshi.md**: Complete Sway/SwayFX output management with kanshi (monitor config) + swaysome (workspaces), ensuring stability across reloads/rebuilds.

@@ -262,7 +262,7 @@ systemSettings = {
 };
 ```
 
-**Switch config**: UniFi 24-port PoE Pro, ports 5-6 in LACP LAG.
+**Switch config**: USW Aggregation (192.168.8.180), SFP+ ports 7-8 in LACP LAG. See `docs/infrastructure/services/network-switching.md`.
 
 **To disable bonding** (e.g., when running on different hardware):
 ```nix

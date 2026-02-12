@@ -572,6 +572,22 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
   - CPU load: 0.17, Memory free: 14GB
   - pfBlockerNG IPs: 16,242, Rules: 168
 
+### Network switching & 10GbE (applies to: `profiles/DESK-config.nix`, `system/hardware/networking.nix`, `docs/infrastructure/services/network-switching.md`)
+
+- **Read first**: `docs/infrastructure/services/network-switching.md`
+- **Use command**: `/network-performance` for testing and diagnostics
+- **Physical topology**:
+  - **USW Aggregation** (192.168.8.180): 8x SFP+ 10G switch
+  - **USW-24-G2** (192.168.8.181): 24x 1G RJ45 + 2x 1G SFP
+  - Inter-switch uplink: 1G (bottleneck for USW-24-G2 devices accessing 10G)
+- **LACP bonds**:
+  - DESK: SFP+ 7+8 → enp11s0f0 + enp11s0f1 (NixOS `networkBondingEnable`)
+  - Proxmox: SFP+ 3+4 → enp4s0f0 + enp4s0f1 (bond0 → vmbr10)
+- **ARP flux warning**: Proxmox dual-bridge (vmbr0 1G + vmbr10 10G) causes ARP flux without sysctl fix. Symptoms: 940 Mbps instead of 6.8 Gbps. Fix is on Proxmox (`/etc/sysctl.d/99-arp-fix.conf`), not NixOS
+- **Performance baselines** (2026-02-12): DESK → Proxmox 6.84 Gbps (1 stream), ~9.4 Gbps (4 streams)
+- **UniFi Controller**: https://192.168.8.206:8443 (LXC_HOME Docker macvlan, credentials in `secrets/domains.nix`)
+- **DAC cables**: OFS-DAC-10G-2M (SFP+ passive, 2m)
+
 ### Grafana/Prometheus monitoring (applies to: `system/app/grafana.nix`, `system/app/prometheus-*.nix`, `system/app/grafana-dashboards/**`)
 
 - **Read first**: `docs/infrastructure/services/monitoring-stack.md`
