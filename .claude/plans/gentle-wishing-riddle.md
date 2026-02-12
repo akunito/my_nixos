@@ -1,169 +1,283 @@
-# TrueNAS Pools Performance & Configuration Audit
+# TrueNAS Audit Remediation Plan
 
 ## Context
 
-TrueNAS SCALE 25.04.2.6 (192.168.20.200) serves as the central storage server with two encrypted pools: **ssdpool** (3.6TB, 4x SSD mirror) and **hddpool** (21.8TB, 4x HDD mirror). Connected via 2x 10GbE LACP bond through USW Aggregation switch. Current network baselines show ~6.8 Gbps single-stream throughput. The goal is to audit pool performance, identify latency/throughput improvements, and review the general TrueNAS setup.
+The TrueNAS performance audit (2026-02-12) scored 8/10 and identified 16 findings across critical, high, medium, and low severities. This plan addresses all findings in order: **MEDIUM first**, then **HIGH/CRITICAL**.
 
-## Approach
-
-Run a comprehensive read-only audit via SSH (`truenas_admin@192.168.20.200`) and API, collecting metrics across 7 areas. Produce a scored audit document following the pfSense audit format at `docs/infrastructure/audits/truenas-audit-2026-02-12.md`.
+SEC-001 (NFS exports open to `*`) is deprioritized to LOW because TrueNAS is isolated on VLAN 100 (192.168.20.0/24) where only DESK, Proxmox, and pfSense have access.
 
 ---
 
-## Phase 1: System Baseline (5 min)
+## Part 1: MEDIUM Findings
 
-Collect system info, memory breakdown, service status, uptime.
+### 1.1 MON-001 — Backup age metrics file missing on LXC_monitoring
 
-**Commands:**
-- `midclt call system.info` - version, cores, uptime
-- `free -h` + `/proc/meminfo` - RAM usage, swap (swap should be 0)
-- `midclt call service.query` - verify NFS, SMB, iSCSI, SMART all running
+**Problem**: `/var/lib/prometheus-node-exporter/textfile/truenas_backup.prom` not found. The SSH-based backup checker may not have SSH key access.
 
----
+**Action** (SSH diagnostic + fix):
+```bash
+# Check service status on LXC_monitoring
+ssh -A akunito@192.168.8.85 "sudo systemctl status prometheus-truenas-backup.timer"
+ssh -A akunito@192.168.8.85 "sudo systemctl status prometheus-truenas-backup.service"
+ssh -A akunito@192.168.8.85 "sudo journalctl -u prometheus-truenas-backup.service --no-pager -n 20"
 
-## Phase 2: ZFS Pool Performance (10 min)
+# Test SSH from root@monitoring → truenas_admin@TrueNAS
+ssh -A akunito@192.168.8.85 "sudo ssh -o StrictHostKeyChecking=no truenas_admin@192.168.20.200 'echo OK'"
 
-### 2.1 Pool Health & Fragmentation
-- `zpool list -o name,size,alloc,free,frag,cap,health`
-- `zpool status` - errors, scrub history, device status
-- Thresholds: frag <20% good, >50% critical
+# If SSH fails, set up key:
+ssh -A akunito@192.168.8.85 "sudo ssh-keygen -t ed25519 -f /root/.ssh/id_ed25519 -N '' -q 2>/dev/null; sudo cat /root/.ssh/id_ed25519.pub"
+# Then add that public key to truenas_admin's authorized_keys via TrueNAS API
+```
 
-### 2.2 Dataset Recordsize Tuning
-- `zfs list -o name,used,avail,recordsize,compression,compressratio -r hddpool ssdpool`
-- Key check: media datasets at 128K default should be 1M (30-50% sequential throughput gain on HDD)
-
-### 2.3 Compression Analysis
-- `zfs get compressratio,compression -r hddpool ssdpool`
-- Verify lz4 enabled everywhere; check if any datasets have compression=off
-
-### 2.4 ZFS ARC Efficiency
-- `/proc/spl/kstat/zfs/arcstats` - hit rate, size vs max
-- With 62GB RAM, ARC should be ~50GB. Hit rate >90% = good, <70% = critical
-
-### 2.5 L2ARC/SLOG Assessment
-- Check if cache/log vdevs exist
-- Evaluate need based on ARC hit rate and sync write volume (ZIL stats)
-
-### 2.6 Snapshot Space
-- `zfs list -t snapshot -o name,used -r hddpool ssdpool`
-- Check for snapshot bloat (>10% of dataset size)
+**Files**: No code changes needed — just SSH key setup and service verification.
 
 ---
 
-## Phase 3: Network Performance (10 min)
+### 1.2 ZFS-001 — Recordsize 1M for media/backup datasets
 
-### 3.1 Bond Health
-- `/proc/net/bonding/bond0` - LACP status, both slaves up, same aggregator ID
+**Problem**: `hddpool/media` (5.3TB video) and `hddpool/proxmox_backups` (95GB archives) at 128K default. 1M is optimal for large sequential files.
 
-### 3.2 NIC Tuning
-- `ethtool -g enp8s0f0` - ring buffers (should be 4096, not default 512)
-- `ethtool -S enp8s0f0 | grep error` - zero errors expected
-- `ethtool -i enp8s0f0` - driver/firmware version
+**Action** (TrueNAS CLI via SSH):
+```bash
+ssh truenas_admin@192.168.20.200 "sudo zfs set recordsize=1M hddpool/media"
+ssh truenas_admin@192.168.20.200 "sudo zfs set recordsize=1M hddpool/proxmox_backups"
+```
 
-### 3.3 MTU Analysis
-- `ip link show bond0 | grep mtu` - check if 1500 or 9000
-- Evaluate jumbo frames feasibility (all L2 endpoints must match)
-
-### 3.4 TCP Buffers
-- `sysctl net.core.rmem_max net.core.wmem_max` - should be 16MB for 10GbE
-- `sysctl net.ipv4.tcp_congestion_control` - bbr preferred
-- `sysctl net.core.netdev_max_backlog` - should be >=10000
-
-### 3.5 NFS Tuning
-- `midclt call nfs.config` - version, thread count (>=16 recommended), protocols
-- `nfsstat -s` - RPC stats, retransmits
-
-### 3.6 SMB Tuning
-- `midclt call smb.config` - multichannel status, SMB1 disabled, protocol version
-
-### 3.7 iperf3 Benchmarks
-- Single/multi-stream from DESK (192.168.20.96) and Proxmox (192.168.20.82) to TrueNAS
-- Compare against 6.8 Gbps baseline
+**Note**: Only affects newly written data. Existing data remains at 128K blocks.
 
 ---
 
-## Phase 4: Disk I/O (10 min)
+### 1.3 SMB-001 — Enable SMB multichannel
 
-### 4.1 SMART Health
-- `smartctl -a` for all 8 drives (4 HDD + 4 SSD) + 2 NVMe
-- Key attributes: Reallocated_Sector_Ct=0, Temperature<45C, Wear_Leveling>50%
+**Problem**: Multichannel disabled, SMB limited to single bond link.
 
-### 4.2 I/O Latency
-- `iostat -xz 1 5` - avg latency per device
-- HDD <10ms good, SSD <1ms good
+**Action** (TrueNAS API):
+```bash
+API_KEY=$(cat secrets/truenas-api-key.txt | tr -d '[:space:]')
+curl -sk -X PUT -H "Authorization: Bearer $API_KEY" -H "Content-Type: application/json" \
+  -d '{"multichannel": true}' "https://192.168.20.200/api/v2.0/smb"
+```
 
-### 4.3 Throughput Benchmarks (optional, causes load)
-- `dd` sequential read/write on each pool
-- Expected: hddpool ~300MB/s read, ssdpool ~1000MB/s read
-
----
-
-## Phase 5: iSCSI Review (5 min)
-
-- `midclt call iscsi.extent.query` - blocksize, zvol path
-- `zfs get volblocksize,sync,logbias ssdpool/myservices` - alignment check
-- Proxmox-side: `iscsiadm -m session -P 3` - MaxRecvDataSegmentLength, queue depth
+**Verify**: `midclt call smb.config | grep multichannel` → should show `true`
 
 ---
 
-## Phase 6: General Setup Review (5 min)
+### 1.4 SCRUB-001 — Run missed February scrubs
 
-- ZFS module params: `zfs_arc_max`, `zfs_prefetch_disable`, vdev queue depths
-- `zfs get atime,xattr,dnodesize` - atime=off for media, xattr=sa
-- Snapshot tasks: `midclt call pool.snapshottask.query`
-- Replication log: `/var/log/zfs-replicate.log`
-- Email alerts: `midclt call mail.config`
-- Update status: `midclt call update.check_available`
+**Problem**: Last scrubs were Jan 18. February scrubs likely missed during migration.
 
----
+**Action** (TrueNAS CLI — run sequentially to avoid I/O contention):
+```bash
+ssh truenas_admin@192.168.20.200 "sudo zpool scrub hddpool"
+# Wait for hddpool scrub to finish (~6 hours for 6.3TB), then:
+ssh truenas_admin@192.168.20.200 "sudo zpool scrub ssdpool"
+```
 
-## Phase 7: Monitoring Gaps (5 min)
-
-Verify Graphite metrics flowing to Prometheus on LXC_monitoring:
-- `curl localhost:9109/metrics | grep truenas_` - all metric families present
-- Identify gaps: iSCSI session alerts, ARC hit rate alert, NFS health, fragmentation trend
+**Verify**: `sudo zpool status | grep scan`
 
 ---
 
-## Phase 8: Compile Results
+### 1.5 ZFS-002 — Pool feature upgrade
 
-### Output Document
-- **Path**: `docs/infrastructure/audits/truenas-audit-2026-02-12.md`
-- **Format**: Same as `docs/infrastructure/audits/pfsense-audit-2026-02-04.md`
-- **Sections**: Executive summary, score table (ZFS/Network/Disk/iSCSI/Setup/Monitoring), findings table with IDs, detailed per-phase results, remediation plan, performance baselines
+**Problem**: Pools report "Some supported features are not enabled."
 
-### Expected Recommendation Categories
+**Action** (TrueNAS CLI — one-way operation):
+```bash
+ssh truenas_admin@192.168.20.200 "sudo zpool upgrade hddpool"
+ssh truenas_admin@192.168.20.200 "sudo zpool upgrade ssdpool"
+```
 
-| ID Prefix | Area | Example |
-|-----------|------|---------|
-| ZFS-xxx | Pool tuning | Recordsize 1M for media, compression check |
-| NET-xxx | Network | Ring buffers, TCP buffers, jumbo frames, SMB multichannel |
-| NFS-xxx | NFS | Thread count, NFSv4, export restrictions |
-| ISCSI-xxx | iSCSI | Block size alignment, queue depth |
-| MON-xxx | Monitoring | New alerts (iSCSI, ARC, fragmentation) |
-| BAK-xxx | Backups | Replication coverage |
-| SEC-xxx | Security | NFS export ACLs, iSCSI portal binding |
-
-### Post-Audit Updates
-- Update `docs/infrastructure/services/truenas.md` with new baselines
-- Add new alert rules to `system/app/prometheus-graphite.nix` if needed
-- Run `python3 scripts/generate_docs_index.py`
+**Warning**: Once upgraded, pools cannot be imported by older ZFS versions. This is safe on a dedicated TrueNAS system.
 
 ---
 
-## Critical Files
+### 1.6 NFS-001 — Increase NFS threads to 16
 
-| File | Purpose |
-|------|---------|
-| `docs/infrastructure/audits/pfsense-audit-2026-02-04.md` | Format template |
-| `docs/infrastructure/services/truenas.md` | Primary TrueNAS docs (update post-audit) |
-| `system/app/prometheus-graphite.nix` | Alert rules (may add new ones) |
-| `.claude/commands/manage-truenas.md` | Diagnostic commands reference |
-| `secrets/truenas-api-key.txt` | API auth for any API calls |
+**Problem**: 12 threads for a 12-core system with 10GbE. Should be 16+.
+
+**Action** (TrueNAS API):
+```bash
+API_KEY=$(cat secrets/truenas-api-key.txt | tr -d '[:space:]')
+curl -sk -X PUT -H "Authorization: Bearer $API_KEY" -H "Content-Type: application/json" \
+  -d '{"servers": 16}' "https://192.168.20.200/api/v2.0/nfs"
+```
+
+**Verify**: `cat /proc/fs/nfsd/threads` → should show 16
+
+---
+
+### 1.7 ISCSI-001 — Bind portal to storage VLAN only
+
+**Problem**: iSCSI portal on 0.0.0.0:3260. Should be 192.168.20.200 only.
+
+**Action** (TrueNAS API):
+```bash
+API_KEY=$(cat secrets/truenas-api-key.txt | tr -d '[:space:]')
+curl -sk -X PUT -H "Authorization: Bearer $API_KEY" -H "Content-Type: application/json" \
+  -d '{"listen": [{"ip": "192.168.20.200", "port": 3260}]}' \
+  "https://192.168.20.200/api/v2.0/iscsi/portal/id/1"
+```
+
+**Verify**: `midclt call iscsi.portal.query` → listen should show 192.168.20.200
+
+**Risk**: If Proxmox connects from a different IP, iSCSI will break. Verify Proxmox iSCSI initiator connects via 192.168.20.82 (VLAN 100 IP) first:
+```bash
+ssh -A root@192.168.8.82 "iscsiadm -m session -P 1 | grep 'Current Portal'"
+```
+
+---
+
+## Part 2: HIGH & CRITICAL Findings
+
+### 2.1 NIC-001 (CRITICAL) — Ring buffers to 8192 on TrueNAS
+
+**Problem**: `enp8s0f0` has 4.5M rx_missed_errors. Ring buffers at 4096, max is 8192.
+
+**Action** (TrueNAS CLI — immediate + persistent):
+```bash
+# Immediate fix
+ssh truenas_admin@192.168.20.200 "sudo ethtool -G enp8s0f0 rx 8192 tx 8192"
+ssh truenas_admin@192.168.20.200 "sudo ethtool -G enp8s0f1 rx 8192 tx 8192"
+
+# Reset error counter baseline
+ssh truenas_admin@192.168.20.200 "sudo ethtool -S enp8s0f0 | grep rx_missed_errors"
+```
+
+**Persistence**: Create TrueNAS init script via cron @reboot:
+```bash
+ssh truenas_admin@192.168.20.200 "cat > ~/ring-buffer-init.sh << 'SCRIPT'
+#!/bin/bash
+sleep 10
+/usr/sbin/ethtool -G enp8s0f0 rx 8192 tx 8192
+/usr/sbin/ethtool -G enp8s0f1 rx 8192 tx 8192
+logger 'Ring buffers set to 8192 for enp8s0f0 and enp8s0f1'
+SCRIPT
+chmod +x ~/ring-buffer-init.sh"
+```
+Then add cron via TrueNAS API:
+```bash
+API_KEY=$(cat secrets/truenas-api-key.txt | tr -d '[:space:]')
+curl -sk -X POST -H "Authorization: Bearer $API_KEY" -H "Content-Type: application/json" \
+  -d '{"user":"root","command":"bash /home/truenas_admin/ring-buffer-init.sh","description":"Set NIC ring buffers to 8192 on boot","schedule":{"minute":"@reboot"}, "enabled": true, "stdout": false, "stderr": true}' \
+  "https://192.168.20.200/api/v2.0/cronjob"
+```
+
+**Also update DESK NixOS** ring buffers (same NIC type):
+- **File**: `profiles/DESK-config.nix` line 139
+- **Change**: `networkBondingRingBufferSize = 4096;` → `networkBondingRingBufferSize = 8192;`
+
+---
+
+### 2.2 NIC-001 bonus — Also increase ring buffer max on DESK
+
+**File to modify**: `profiles/DESK-config.nix`
+```
+networkBondingRingBufferSize = 4096;  →  networkBondingRingBufferSize = 8192;
+```
+
+**Deployment**: `cd ~/.dotfiles && sudo nixos-rebuild switch --flake .#DESK --impure`
+
+---
+
+### 2.3 DISK-001 (HIGH) — Monitor SSDs with pending sectors
+
+**Problem**: sdb (S5Y4R020A077805) and sdc (S5Y4R020A077806) each have 1 Current_Pending_Sector.
+
+**Action**: No immediate fix. Add monitoring command to manage-truenas skill and document weekly check.
+
+**File to update**: `.claude/commands/manage-truenas.md`
+Add section:
+```
+### SMART Sector Watch (sdb + sdc)
+ssh truenas_admin@192.168.20.200 "sudo smartctl -A /dev/sdb | grep -E 'Reallocated|Current_Pending|Offline_Uncorrectable'"
+ssh truenas_admin@192.168.20.200 "sudo smartctl -A /dev/sdc | grep -E 'Reallocated|Current_Pending|Offline_Uncorrectable'"
+# Baseline (2026-02-12): sdb=1/1/0, sdc=1/1/0. If pending > 5, plan replacement.
+```
+
+---
+
+## Part 3: ECC Memory BIOS Fix
+
+**Finding**: RAM is Micron `18ASF4G72AZ-3G2F1` (72-bit width = ECC UDIMM), but BIOS reports `Error Correction Type: None`. ECC hardware is present but not enabled.
+
+**Action** (manual BIOS change):
+1. Reboot TrueNAS, enter BIOS (DEL key)
+2. Navigate to: **Advanced → AMD CBS → NBIO Common Options → ECC Mode** (or similar)
+3. Set ECC to **Enabled**
+4. Save and reboot
+
+**Verify after BIOS change**:
+```bash
+ssh truenas_admin@192.168.20.200 "sudo dmidecode -t memory | grep 'Error Correction'"
+# Should show: Error Correction Type: Multi-bit ECC
+```
+
+**Note**: Requires physical access or IPMI/BMC. Schedule during maintenance window.
+
+---
+
+## Part 4: Documentation Updates
+
+### 4.1 Update `docs/infrastructure/services/truenas.md`
+- Add link to audit report
+- Pool stats already updated (done during audit)
+- CPU corrected to AMD Ryzen 5 5600G (done during audit)
+- Add "Audit Remediations" section documenting what was changed and when
+
+### 4.2 Update `.claude/commands/manage-truenas.md`
+- Add SMART sector watch commands for sdb/sdc
+- Add ring buffer check/set commands
+- Add scrub and pool upgrade commands
+
+### 4.3 Update audit document
+- `docs/infrastructure/audits/truenas-audit-2026-02-12.md`
+- Mark completed items in findings table as remediation progresses
+
+---
+
+## Execution Order
+
+1. **MON-001**: Diagnose + fix backup monitoring SSH key (non-destructive)
+2. **ZFS-001**: Set recordsize=1M on media/proxmox_backups
+3. **SMB-001**: Enable multichannel
+4. **NFS-001**: Increase threads to 16
+5. **ISCSI-001**: Bind portal to 192.168.20.200 (verify Proxmox first!)
+6. **ZFS-002**: Pool feature upgrade
+7. **SCRUB-001**: Start hddpool scrub (runs in background ~6h)
+8. **NIC-001**: Set ring buffers to 8192 + create persistence script
+9. **DESK config**: Update networkBondingRingBufferSize to 8192
+10. **DISK-001**: Add monitoring commands to manage-truenas.md
+11. **Documentation**: Update all docs and mark findings completed
+
+---
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `profiles/DESK-config.nix` | `networkBondingRingBufferSize = 4096` → `8192` |
+| `.claude/commands/manage-truenas.md` | Add SMART watch, ring buffer, scrub commands |
+| `docs/infrastructure/services/truenas.md` | Add remediation log section |
+| `docs/infrastructure/audits/truenas-audit-2026-02-12.md` | Mark findings as completed |
 
 ## Verification
 
-1. All SSH commands execute successfully against 192.168.20.200
-2. Audit document is complete with scores, findings, and remediation plan
-3. Performance baselines are recorded for future comparison
-4. Any new monitoring alerts proposed are validated against existing prometheus-graphite.nix
+After all remediations:
+```bash
+# Ring buffers
+ssh truenas_admin@192.168.20.200 "sudo ethtool -g enp8s0f0 | grep -A4 'Current'"
+# NFS threads
+ssh truenas_admin@192.168.20.200 "midclt call nfs.config | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"servers\"])'"
+# SMB multichannel
+ssh truenas_admin@192.168.20.200 "midclt call smb.config | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"multichannel\"])'"
+# Recordsize
+ssh truenas_admin@192.168.20.200 "sudo zfs get recordsize hddpool/media hddpool/proxmox_backups"
+# iSCSI portal
+ssh truenas_admin@192.168.20.200 "midclt call iscsi.portal.query | python3 -c 'import json,sys;print(json.load(sys.stdin)[0][\"listen\"])'"
+# Pool upgrade
+ssh truenas_admin@192.168.20.200 "sudo zpool status | grep -E 'features|action'"
+# Backup monitoring
+ssh -A akunito@192.168.8.85 "cat /var/lib/prometheus-node-exporter/textfile/truenas_backup.prom"
+# ECC (after BIOS change)
+ssh truenas_admin@192.168.20.200 "sudo dmidecode -t memory | grep 'Error Correction'"
+```

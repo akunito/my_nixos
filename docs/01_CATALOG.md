@@ -425,6 +425,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Infrastructure / Audits
 
 - **docs/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
+- **docs/infrastructure/audits/truenas-audit-2026-02-12.md**: Performance, reliability, and configuration audit of TrueNAS storage server
 
 ### Infrastructure / Services
 

@@ -76,9 +76,9 @@ ssh -A akunito@192.168.8.80 "ping -c 2 192.168.20.200"
 ```bash
 # Check current ring buffer sizes
 ssh truenas_admin@192.168.20.200 "ethtool -g enp8s0f0"
-# If RX/TX < 4096, increase:
-ssh truenas_admin@192.168.20.200 "sudo ethtool -G enp8s0f0 rx 4096 tx 4096; sudo ethtool -G enp8s0f1 rx 4096 tx 4096"
-# Note: runtime only, lost on reboot. Needs TrueNAS init script for persistence.
+# If RX/TX < 8192, increase to max:
+ssh truenas_admin@192.168.20.200 "sudo ethtool -G enp8s0f0 rx 8192 tx 8192; sudo ethtool -G enp8s0f1 rx 8192 tx 8192"
+# Persisted via TrueNAS POSTINIT script: /home/truenas_admin/ring-buffer-init.sh
 ```
 
 ### TCP Buffer Tuning
@@ -140,20 +140,42 @@ nfsstat -c
 ### Check Pool Status
 
 ```bash
-ssh truenas_admin@192.168.20.200 "zpool status"
-ssh truenas_admin@192.168.20.200 "zpool list"
+ssh truenas_admin@192.168.20.200 "sudo zpool status"
+ssh truenas_admin@192.168.20.200 "sudo zpool list -o name,size,alloc,free,frag,cap,health"
+```
+
+### Run Manual Scrub
+
+```bash
+# Run scrubs sequentially to avoid I/O contention (hddpool ~6h, ssdpool ~1h)
+ssh truenas_admin@192.168.20.200 "sudo zpool scrub hddpool"
+# Wait for completion, then:
+ssh truenas_admin@192.168.20.200 "sudo zpool scrub ssdpool"
+# Check progress:
+ssh truenas_admin@192.168.20.200 "sudo zpool status | grep scan"
 ```
 
 ### Check Disk Health
 
 ```bash
-ssh truenas_admin@192.168.20.200 "smartctl -a /dev/sdX"  # Replace X
+ssh truenas_admin@192.168.20.200 "sudo smartctl -a /dev/sdX"  # Replace X
 ```
 
-### Check iSCSI (if still configured)
+### SMART Sector Watch (sdb + sdc have pending sectors)
 
 ```bash
-ssh truenas_admin@192.168.20.200 "targetcli ls"
+# Baseline (2026-02-12): sdb=Reallocated:1/Pending:1/Uncorrectable:0, sdc=same
+ssh truenas_admin@192.168.20.200 "sudo smartctl -A /dev/sdb | grep -E 'Reallocated|Current_Pending|Offline_Uncorrectable'"
+ssh truenas_admin@192.168.20.200 "sudo smartctl -A /dev/sdc | grep -E 'Reallocated|Current_Pending|Offline_Uncorrectable'"
+# If pending > 5, plan drive replacement under mirror redundancy
+```
+
+### Check iSCSI
+
+```bash
+ssh truenas_admin@192.168.20.200 "midclt call iscsi.target.query"
+# Verify session from Proxmox:
+ssh -A root@192.168.8.82 "iscsiadm -m session -P 1"
 ```
 
 ---

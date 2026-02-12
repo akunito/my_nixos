@@ -17,8 +17,9 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 
 ### Hardware
 - **Host**: Custom build
-- **CPU**: Intel (4 cores)
-- **RAM**: 62GB
+- **CPU**: AMD Ryzen 5 5600G (6 cores / 12 threads, up to 4.46 GHz)
+- **RAM**: 62GB (non-ECC)
+- **Motherboard**: Gigabyte B550 AORUS ELITE V2
 - **Network**: 2x 10GbE LACP bond (bond0: enp8s0f0 + enp8s0f1)
 - **Boot Devices**: 2x Samsung 970 EVO Plus 250GB NVMe (mirrored)
 
@@ -26,9 +27,11 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 
 | Pool | Size | Used | Type | Encryption | Fragmentation | Health |
 |------|------|------|------|------------|---------------|--------|
-| boot-pool | 232GB | 5.97GB (2.4%) | 2x NVMe mirror | No | 0% | ✅ ONLINE |
-| hddpool | 21.8TB | 5.81TB (26.7%) | 4x HDD, 2x mirror vdevs | Passphrase | 3% | ✅ ONLINE |
-| ssdpool | 3.6TB | 996GB (27.6%) | 4x SSD, 2x mirror vdevs | Passphrase | 19% | ✅ ONLINE |
+| boot-pool | 232GB | 5.58GB (2%) | 2x NVMe mirror | No | 0% | ✅ ONLINE |
+| hddpool | 21.8TB | 6.34TB (29%) | 4x HDD, 2x mirror vdevs | Passphrase | 3% | ✅ ONLINE |
+| ssdpool | 3.62TB | 1004GB (27%) | 4x SSD, 2x mirror vdevs | Passphrase | 20% | ✅ ONLINE |
+
+> **Latest Audit**: [2026-02-12](../audits/truenas-audit-2026-02-12.md) - Score 8/10. Key findings: NIC rx_missed_errors, 2 SSDs with pending sectors, NFS exports too open.
 
 ### Key Datasets
 
