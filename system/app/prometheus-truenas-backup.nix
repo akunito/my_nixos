@@ -60,12 +60,12 @@ HEADER
 
     for dataset in $DATASETS; do
       # Get the short name for the label (last path component)
-      short_name=$(echo "$dataset" | ${pkgs.coreutils}/bin/basename)
+      short_name=$(${pkgs.coreutils}/bin/basename "$dataset")
 
       # Query TrueNAS for the newest autoreplica-* snapshot on this dataset
       # zfs list -t snapshot -o name,creation -s creation -r <dataset> | grep autoreplica | tail -1
       SNAPSHOT_INFO=$(${pkgs.openssh}/bin/ssh $SSH_OPTS "$TRUENAS_USER@$TRUENAS_HOST" \
-        "zfs list -t snapshot -o name,creation -Hp -s creation -r $dataset 2>/dev/null | grep autoreplica | tail -1" 2>/dev/null || echo "")
+        "sudo zfs list -t snapshot -o name,creation -Hp -s creation -r $dataset 2>/dev/null | grep autoreplica | tail -1" 2>/dev/null || echo "")
 
       if [ -n "$SNAPSHOT_INFO" ]; then
         # Extract creation timestamp (second column, -Hp gives unix timestamp)
