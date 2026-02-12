@@ -128,6 +128,7 @@
     networkBondingMiimon = "100"; # Link check interval in milliseconds
     networkBondingXmitHashPolicy = "layer3+4"; # Hash policy: "layer2", "layer3+4", "encap3+4"
     networkBondingVlans = []; # VLAN overlays on bond: [{ id = 20; name = "storage"; address = "192.168.20.96/24"; }]
+    networkBondingRingBufferSize = null; # NIC ring buffer size (e.g., 4096). null = driver default. Max depends on NIC (typically 8192 for Intel 82599).
 
     # Service defaults
     havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant

@@ -33,6 +33,7 @@ let
   miimon = cfg.networkBondingMiimon or "100";
   xmitHashPolicy = cfg.networkBondingXmitHashPolicy or "layer3+4";
   vlans = cfg.networkBondingVlans or [];
+  ringBufferSize = cfg.networkBondingRingBufferSize or null;
 
   # Detect which network manager is active
   useNetworkManager = cfg.networkManager or false;
@@ -183,5 +184,30 @@ in
         fi
       ''
     );
+
+    # ========================================================================
+    # NIC ring buffer tuning (for 10GbE performance)
+    # ========================================================================
+    systemd.services.bond-ring-buffers = lib.mkIf (ringBufferSize != null) {
+      description = "Set NIC ring buffer sizes for bonded 10GbE interfaces";
+      after = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = lib.concatMapStringsSep " ; " (iface:
+          "${pkgs.ethtool}/bin/ethtool -G ${iface} rx ${toString ringBufferSize} tx ${toString ringBufferSize}"
+        ) interfaces;
+      };
+    };
+
+    # TCP buffer tuning for high-bandwidth 10GbE links
+    boot.kernel.sysctl = lib.mkIf (ringBufferSize != null) {
+      "net.core.rmem_max" = lib.mkDefault 16777216;
+      "net.core.wmem_max" = lib.mkDefault 16777216;
+      "net.ipv4.tcp_rmem" = lib.mkDefault "4096 1048576 16777216";
+      "net.ipv4.tcp_wmem" = lib.mkDefault "4096 1048576 16777216";
+      "net.core.netdev_max_backlog" = lib.mkDefault 10000;
+    };
   };
 }

@@ -136,6 +136,7 @@ in
     networkBondingVlans = [
       { id = 100; name = "storage"; address = "192.168.20.96/24"; }
     ];
+    networkBondingRingBufferSize = 4096; # Increase NIC ring buffers for 10GbE (default 512, max 8192)
 
     # Firewall
     allowedTCPPorts = [
