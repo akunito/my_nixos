@@ -195,14 +195,13 @@ ssh -A root@192.168.8.82 "ethtool enp4s0f1 | grep Speed"
 ### Via UniFi Controller API
 
 ```bash
-# Get session cookie (UniFi Controller on LXC_HOME)
-# Credentials in secrets/domains.nix (unifiUsername, unifiPassword)
-COOKIE=$(curl -sk -c - -X POST https://192.168.8.206:8443/api/login \
-  -H 'Content-Type: application/json' \
-  -d '{"username":"USERNAME","password":"PASSWORD"}' | grep -o 'unifises=[^;]*')
+# Read session cookie from secrets (2FA enabled, cannot use login endpoint directly)
+# Cookie stored in secrets/domains.nix (unifiSessionCookie)
+# To refresh: Login to https://192.168.8.206:8443 with 2FA, extract 'unifises' cookie from browser DevTools
+COOKIE=$(grep unifiSessionCookie secrets/domains.nix | cut -d'"' -f2)
 
-# Get device details for USW Aggregation (MAC from UniFi)
-curl -sk -b "$COOKIE" https://192.168.8.206:8443/api/s/default/stat/device | \
+# Get device details for USW Aggregation
+curl -sk -b "unifises=$COOKIE" https://192.168.8.206:8443/api/s/default/stat/device | \
   python3 -c "import sys,json; devs=json.load(sys.stdin)['data']
 for d in devs:
   if 'Aggregation' in d.get('name','') or 'aggregation' in d.get('model',''):

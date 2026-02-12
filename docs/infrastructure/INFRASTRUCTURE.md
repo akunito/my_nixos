@@ -136,9 +136,9 @@ The Proxmox server hosts all LXC containers running NixOS.
 ```
   USW Aggregation (10G)          USW-24-G2 (1G)
   ┌──────────────────┐           ┌──────────────────┐
-  │ SFP+ 3+4 → Proxmox (LACP)  │ RJ45 1-24 → LAN  │
-  │ SFP+ 5   → pfSense         │ SFP 1 ◄──────────┤ 1G uplink
-  │ SFP+ 6   ────────────────► │                    │
+  │ SFP+ 1+2 → pfSense (LACP) │ RJ45 1-24 → LAN  │
+  │ SFP+ 3+4 → Proxmox (LACP) │ SFP 2 ◄──────────┤ 1G uplink
+  │ SFP+ 5   ────────────────► │                    │
   │ SFP+ 7+8 → DESK (LACP)    │                    │
   └──────────────────┘           └──────────────────┘
 ```
@@ -146,10 +146,11 @@ The Proxmox server hosts all LXC containers running NixOS.
 **LACP Bond Groups**:
 | Bond | Switch Ports | Host | Bandwidth |
 |------|-------------|------|-----------|
-| DESK | SFP+ 7+8 | nixosaku Desktop | 20 Gbps |
+| pfSense LAN | SFP+ 1+2 | pfSense (VLAN-tagged) | 20 Gbps |
 | Proxmox | SFP+ 3+4 | Proxmox VE | 20 Gbps |
+| DESK | SFP+ 7+8 | nixosaku Desktop | 20 Gbps |
 
-**DAC Cables**: OFS-DAC-10G-2M (SFP+ passive, 2m)
+**DAC Cables**: Mellanox MCP2104-X001B (1m, pfSense), OFS-DAC-10G-2M (2m, Proxmox), OFS-DAC-10G-3M (3m, DESK), OFS-DAC-10G-1M (1m, inter-switch)
 
 **Known bottleneck**: USW Aggregation ↔ USW-24-G2 uplink is 1G (USW-24-G2 only has 1G SFP ports). Devices on USW-24-G2 cannot exceed 1 Gbps to 10G devices.
 

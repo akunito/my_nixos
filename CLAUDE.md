@@ -585,8 +585,8 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
   - Proxmox: SFP+ 3+4 → enp4s0f0 + enp4s0f1 (bond0 → vmbr10)
 - **ARP flux warning**: Proxmox dual-bridge (vmbr0 1G + vmbr10 10G) causes ARP flux without sysctl fix. Symptoms: 940 Mbps instead of 6.8 Gbps. Fix is on Proxmox (`/etc/sysctl.d/99-arp-fix.conf`), not NixOS
 - **Performance baselines** (2026-02-12): DESK → Proxmox 6.84 Gbps (1 stream), ~9.4 Gbps (4 streams)
-- **UniFi Controller**: https://192.168.8.206:8443 (LXC_HOME Docker macvlan, credentials in `secrets/domains.nix`)
-- **DAC cables**: OFS-DAC-10G-2M (SFP+ passive, 2m)
+- **UniFi Controller**: https://192.168.8.206:8443 (2FA enabled, use `unifises` session cookie from `secrets/domains.nix`)
+- **DAC cables**: Mellanox MCP2104-X001B (1m, pfSense), OFS-DAC-10G-2M (2m, Proxmox), OFS-DAC-10G-3M (3m, DESK), OFS-DAC-10G-1M (1m, inter-switch)
 
 ### Grafana/Prometheus monitoring (applies to: `system/app/grafana.nix`, `system/app/prometheus-*.nix`, `system/app/grafana-dashboards/**`)
 

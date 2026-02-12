@@ -14,28 +14,28 @@ This document describes the physical switching layer, SFP+ port assignments, LAC
 ## Physical Topology
 
 ```
-                    ┌──────────────────────────────────────┐
-                    │      USW Aggregation (192.168.8.180) │
-                    │              8x SFP+ 10G             │
-                    │                                      │
-                    │  SFP+ 1: ──── (available)            │
-                    │  SFP+ 2: ──── (available)            │
-                    │  SFP+ 3: ──┐                         │
-                    │  SFP+ 4: ──┤ LACP bond → Proxmox    │
-                    │  SFP+ 5: ──── pfSense ix0 (LAN)     │
-                    │  SFP+ 6: ──── USW-24-G2 uplink (1G) │
-                    │  SFP+ 7: ──┐                         │
-                    │  SFP+ 8: ──┤ LACP bond → DESK       │
-                    └─────────────────────┬────────────────┘
+                    ┌──────────────────────────────────────────────┐
+                    │      USW Aggregation (192.168.8.180)         │
+                    │              8x SFP+ 10G                     │
+                    │                                              │
+                    │  SFP+ 1: ──┐                                 │
+                    │  SFP+ 2: ──┤ LACP bond → pfSense (VLAN-tagged)│
+                    │  SFP+ 3: ──┐                                 │
+                    │  SFP+ 4: ──┤ LACP bond → Proxmox            │
+                    │  SFP+ 5: ──── USW-24-G2 uplink (1G)         │
+                    │  SFP+ 6: ──── (DAC present, link down)      │
+                    │  SFP+ 7: ──┐                                 │
+                    │  SFP+ 8: ──┤ LACP bond → DESK               │
+                    └─────────────────────┬────────────────────────┘
                                           │
-                               SFP+ 6 ◄──┘ 1G uplink
+                               SFP+ 5 ◄──┘ 1G uplink
                                           │
                     ┌─────────────────────┴────────────────┐
                     │        USW-24-G2 (192.168.8.181)     │
                     │           24x 1G RJ45 + 2x SFP       │
                     │                                      │
-                    │  SFP 1:  ──── USW Aggregation (1G)   │
-                    │  SFP 2:  ──── (available)            │
+                    │  SFP 1:  ──── (empty)                │
+                    │  SFP 2:  ──── USW Aggregation (1G)   │
                     │  RJ45 1-24: Various 1G devices       │
                     │     • WiFi AP (192.168.8.2)          │
                     │     • Various LAN devices             │
@@ -50,21 +50,21 @@ This document describes the physical switching layer, SFP+ port assignments, LAC
 
 | Port | Speed | Connection | Notes |
 |------|-------|------------|-------|
-| SFP+ 1 | 10G | Available | |
-| SFP+ 2 | 10G | Available | |
-| SFP+ 3 | 10G | Proxmox enp4s0f0 | LACP bond (LAG group) |
-| SFP+ 4 | 10G | Proxmox enp4s0f1 | LACP bond (LAG group) |
-| SFP+ 5 | 10G | pfSense ix0 (LAN) | Single link, main LAN |
-| SFP+ 6 | 1G | USW-24-G2 SFP 1 | Inter-switch uplink (copper SFP) |
-| SFP+ 7 | 10G | DESK enp11s0f0 | LACP bond (LAG group) |
-| SFP+ 8 | 10G | DESK enp11s0f1 | LACP bond (LAG group) |
+| SFP+ 1 | 10G | pfSense ix0 (LAN) | LACP bond, VLAN-tagged (Mellanox MCP2104-X001B) |
+| SFP+ 2 | 10G | pfSense ix0 (LAN) | LACP bond, VLAN-tagged (Mellanox MCP2104-X001B) |
+| SFP+ 3 | 10G | Proxmox enp4s0f0 | LACP bond (OFS-DAC-10G-2M) |
+| SFP+ 4 | 10G | Proxmox enp4s0f1 | LACP bond (OFS-DAC-10G-2M) |
+| SFP+ 5 | 1G | USW-24-G2 SFP 2 | Inter-switch uplink (OFS-DAC-10G-1M, limited by 24-G2 1G SFP) |
+| SFP+ 6 | — | (link down) | DAC present (OFS-DAC-10G-1M), no active connection |
+| SFP+ 7 | 10G | DESK enp11s0f0 | LACP bond (OFS-DAC-10G-3M) |
+| SFP+ 8 | 10G | DESK enp11s0f1 | LACP bond (OFS-DAC-10G-3M) |
 
 ### USW-24-G2 (192.168.8.181)
 
 | Port | Speed | Connection | Notes |
 |------|-------|------------|-------|
-| SFP 1 | 1G | USW Aggregation SFP+ 6 | Inter-switch uplink |
-| SFP 2 | 1G | Available | |
+| SFP 1 | — | Empty | No SFP module inserted |
+| SFP 2 | 1G | USW Aggregation SFP+ 5 | Inter-switch uplink (1G hardware limit) |
 | RJ45 1-24 | 1G | Various LAN devices | WiFi APs, IoT, etc. |
 
 ---
@@ -73,9 +73,10 @@ This document describes the physical switching layer, SFP+ port assignments, LAC
 
 | Bond | Switch Ports | Host | Host Interfaces | Aggregate BW |
 |------|-------------|------|-----------------|--------------|
-| DESK bond | SFP+ 7 + 8 | nixosaku (DESK) | enp11s0f0 + enp11s0f1 | 20 Gbps |
-| Proxmox bond | SFP+ 3 + 4 | Proxmox VE | enp4s0f0 + enp4s0f1 | 20 Gbps |
-| pfSense NAS | (on pfSense) | TrueNAS | via pfSense lagg0 | 2 Gbps (LACP) |
+| pfSense LAN | SFP+ 1 + 2 | pfSense | ix0 (LACP, VLAN-tagged) | 20 Gbps |
+| Proxmox | SFP+ 3 + 4 | Proxmox VE | enp4s0f0 + enp4s0f1 | 20 Gbps |
+| DESK | SFP+ 7 + 8 | nixosaku (DESK) | enp11s0f0 + enp11s0f1 | 20 Gbps |
+| pfSense NAS | (on pfSense lagg0) | TrueNAS | LACP bond, VLAN-tagged (Storage VLAN 192.168.20.0/24) | 2 Gbps (LACP) |
 
 All bonds use IEEE 802.3ad (LACP) mode. Both ends must be configured - switch LAG group AND host bonding.
 
@@ -83,23 +84,30 @@ All bonds use IEEE 802.3ad (LACP) mode. Both ends must be configured - switch LA
 
 ## DAC Cables
 
-All 10G connections use OFS DAC (Direct Attach Copper) cables:
-- **Model**: OFS-DAC-10G-2M
-- **Length**: 2 meters
-- **Type**: SFP+ passive DAC
-- **Quantity**: 5 in use (2 DESK, 2 Proxmox, 1 pfSense)
+All connections use SFP+ passive DAC (Direct Attach Copper) cables:
+
+| Ports | Cable Model | Length | Connection |
+|-------|-------------|--------|------------|
+| SFP+ 1+2 | Mellanox MCP2104-X001B | 1m | pfSense LACP bond |
+| SFP+ 3+4 | OFS-DAC-10G-2M | 2m | Proxmox LACP bond |
+| SFP+ 5+6 | OFS-DAC-10G-1M | 1m | Inter-switch uplink (5) / unused (6) |
+| SFP+ 7+8 | OFS-DAC-10G-3M | 3m | DESK LACP bond |
 
 ---
 
 ## Inter-Switch Uplink Bottleneck
 
 The connection between USW Aggregation and USW-24-G2 is limited to **1 Gbps** because:
-- USW-24-G2 has only 1G SFP ports (not SFP+)
-- The SFP module in use is a 1G copper SFP
+- USW-24-G2 (model **USL24B**) has only 1G SFP ports (not SFP+)
+- API confirms `speed_caps: 1048608` = no 10G capability on SFP ports
+- The OFS-DAC-10G-1M cable is 10G-capable but the port caps it at 1G
+- This is a **hardware limitation** — cannot be fixed via configuration
 
 **Impact**: Any device connected to USW-24-G2 (WiFi APs, 1G RJ45 devices) can only reach 10G devices at 1 Gbps maximum.
 
 **Workaround**: Devices needing 10G connectivity must connect directly to USW Aggregation via SFP+.
+
+**Upgrade path**: Replace USW-24-G2 with an SFP+ capable switch (e.g., USW-Pro-24, ~$300-400) for 10G uplink.
 
 ---
 
@@ -171,8 +179,12 @@ ip neigh show 192.168.8.82
 - **URL**: https://192.168.8.206:8443
 - **Authentication**: Username/password + 2FA (TOTP)
 - **Hosted on**: LXC_HOME (Docker macvlan network)
-- **API access**: Session cookie method (see `/network-performance` command)
-- **Credentials**: Stored in `secrets/domains.nix` (unifiUsername, unifiPassword)
+- **Credentials**: Stored in `secrets/domains.nix` (unifiEmail, unifiPassword)
+- **API authentication**: Session cookie (`unifises`) — required because controller has 2FA
+- **Get cookie**: Login to UniFi UI with 2FA, extract `unifises` cookie from browser DevTools
+- **Cookie stored in**: `secrets/domains.nix` (`unifiSessionCookie`)
+- **Usage**: `curl -sk -b "unifises=COOKIE_VALUE" https://192.168.8.206:8443/api/s/default/stat/device`
+- **Expiry**: Cookie expires after session timeout; re-extract from browser when needed
 
 ---
 
