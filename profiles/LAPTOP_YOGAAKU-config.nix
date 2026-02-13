@@ -131,6 +131,7 @@ in
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = "lenovo-thinkpad-x280"; # X380 Yoga → X280 (same generation)
+    thunderboltEnable = true; # Enable Thunderbolt dock/device support (TB3 port)
 
     # === System Services & Features ===
     sambaEnable = false; # Disable Samba file sharing
