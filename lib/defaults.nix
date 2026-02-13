@@ -235,10 +235,10 @@
     # Power management defaults
     iwlwifiDisablePowerSave = false;
     TLP_ENABLE = false;
-    PROFILE_ON_BAT = "performance";
+    PROFILE_ON_BAT = "low-power";
     PROFILE_ON_AC = "performance";
     WIFI_PWR_ON_AC = "off";
-    WIFI_PWR_ON_BAT = "off";
+    WIFI_PWR_ON_BAT = "on";
     # Battery charge thresholds (default: full charge)
     START_CHARGE_THRESH_BAT0 = 95;
     STOP_CHARGE_THRESH_BAT0 = 100;
@@ -505,6 +505,23 @@
     hibernateEnable = false;            # Enable hibernate/suspend-then-hibernate
     hibernateSwapLuksUUID = null;       # LUKS UUID of encrypted swap partition
     hibernateDelaySec = 600;            # Seconds of suspend before auto-hibernate (10 min)
+
+    # Laptop power tuning (idle power reduction)
+    laptopPowerTuningEnable = false;       # Master gate for laptop-power-tuning.nix
+    laptopPowerTuningAggressive = false;   # Aggressive tier (PCIe ASPM force, powertop auto-tune)
+
+    # Bluetooth power-on-boot override
+    bluetoothPowerOnBoot = true;           # Default preserves current behavior
+
+    # Intel GPU power tuning
+    intelGpuFbcEnable = false;             # i915 framebuffer compression
+    intelGpuPsrEnable = false;             # i915 panel self-refresh
+
+    # Intel thermal daemon
+    thermaldEnable = false;                # Intel proactive thermal management
+
+    # SwayFX battery effect reduction
+    swayBatteryReduceEffects = false;      # Disable blur/shadows on battery
 
     # Monitor management (imperative GUI approach)
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config

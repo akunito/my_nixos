@@ -191,6 +191,15 @@ let
 
   # Power state monitor: restarts swayidle when AC/battery state changes
   sway-power-monitor = pkgs.writeShellScript "sway-power-monitor" ''
+    ${lib.optionalString (systemSettings.swayBatteryReduceEffects or false) ''
+    # Set initial SwayFX effects based on current power state
+    INIT_BAT=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+    if [ "$INIT_BAT" = "Discharging" ]; then
+      ${pkgs.sway}/bin/swaymsg blur disable 2>/dev/null || true
+      ${pkgs.sway}/bin/swaymsg shadows disable 2>/dev/null || true
+      ${pkgs.sway}/bin/swaymsg default_dim_inactive 0.0 2>/dev/null || true
+    fi
+    ''}
     LAST_STATE=""
     while true; do
       BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
@@ -206,6 +215,18 @@ let
         else
           ${pkgs.libnotify}/bin/notify-send -t 3000 "Power" "On battery - shorter idle timeouts" -h string:x-canonical-private-synchronous:power-state
         fi
+        ${lib.optionalString (systemSettings.swayBatteryReduceEffects or false) ''
+        # Toggle SwayFX effects based on power state
+        if [ "$CURRENT" = "ac" ]; then
+          ${pkgs.sway}/bin/swaymsg blur enable 2>/dev/null || true
+          ${pkgs.sway}/bin/swaymsg shadows enable 2>/dev/null || true
+          ${pkgs.sway}/bin/swaymsg default_dim_inactive 0.1 2>/dev/null || true
+        else
+          ${pkgs.sway}/bin/swaymsg blur disable 2>/dev/null || true
+          ${pkgs.sway}/bin/swaymsg shadows disable 2>/dev/null || true
+          ${pkgs.sway}/bin/swaymsg default_dim_inactive 0.0 2>/dev/null || true
+        fi
+        ''}
       fi
       LAST_STATE="$CURRENT"
       sleep 5

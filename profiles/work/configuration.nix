@@ -73,7 +73,8 @@ in
   ++ lib.optional (systemSettings.suspendDebugEnable or false) ../../system/hardware/suspend-debug.nix # Suspend/resume instrumentation
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix # Tailscale mesh VPN
   ++ lib.optional ((systemSettings.hibernateEnable or false)
-    && (systemSettings.hibernateSwapLuksUUID or null) != null) ../../system/hardware/hibernate.nix; # Hibernation with LUKS-encrypted swap
+    && (systemSettings.hibernateSwapLuksUUID or null) != null) ../../system/hardware/hibernate.nix # Hibernation with LUKS-encrypted swap
+  ++ lib.optional (systemSettings.laptopPowerTuningEnable or false) ../../system/hardware/laptop-power-tuning.nix; # Laptop idle power reduction
 
   # Ensure nix flakes are enabled
   nix.package = pkgs.nixVersions.stable;

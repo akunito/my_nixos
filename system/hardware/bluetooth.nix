@@ -1,11 +1,11 @@
-{ ... }:
+{ systemSettings, ... }:
 
 {
   # Bluetooth
   # hardware.bluetooth.enable = true;
   hardware.bluetooth = {
     enable = true;
-    powerOnBoot = true;
+    powerOnBoot = systemSettings.bluetoothPowerOnBoot or true;
     settings.General = {
       experimental = true; # show battery
 

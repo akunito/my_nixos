@@ -136,6 +136,13 @@ in
     thinkpadModel = "lenovo-thinkpad-x280"; # X380 Yoga → X280 (same generation)
     thunderboltEnable = true; # Enable Thunderbolt dock/device support (TB3 port)
 
+    # Intel GPU power tuning (Intel UHD 620)
+    intelGpuFbcEnable = true; # Framebuffer compression
+    intelGpuPsrEnable = true; # Panel self-refresh
+
+    # Intel thermal daemon (8th gen Kaby Lake R)
+    thermaldEnable = true;
+
     # === System Services & Features ===
     sambaEnable = false; # Disable Samba file sharing
     sunshineEnable = false; # Disable Sunshine game streaming (older machine)

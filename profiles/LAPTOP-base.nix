@@ -83,6 +83,15 @@
     # Hibernation: auto-hibernate after 10 min suspend on battery
     hibernateEnable = true;
 
+    # Laptop power tuning: idle power reduction
+    laptopPowerTuningEnable = true;
+
+    # Bluetooth: start radio off (saves ~0.3 W, enable via blueman when needed)
+    bluetoothPowerOnBoot = false;
+
+    # SwayFX: disable blur/shadows on battery (saves GPU power)
+    swayBatteryReduceEffects = true;
+
     # Common laptop features
     wireguardEnable = true;
     appImageEnable = true;

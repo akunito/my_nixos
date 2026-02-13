@@ -50,6 +50,9 @@
 
       INTEL_GPU_MIN_FREQ_ON_AC = systemSettings.INTEL_GPU_MIN_FREQ_ON_AC;
       INTEL_GPU_MIN_FREQ_ON_BAT = systemSettings.INTEL_GPU_MIN_FREQ_ON_BAT;
+
+      USB_AUTOSUSPEND = 1;
+      USB_AUTOSUSPEND_DISABLE_ON_SHUTDOWN = 1;
     };
   };
 
