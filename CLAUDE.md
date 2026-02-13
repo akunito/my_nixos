@@ -596,6 +596,20 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
 - **UniFi Controller**: https://192.168.8.206:8443 (2FA enabled, use `unifises` session cookie from `secrets/domains.nix`)
 - **DAC cables**: Mellanox MCP2104-X001B (1m, pfSense), OFS-DAC-10G-2M (2m, Proxmox), OFS-DAC-10G-1M (1m, TrueNAS + inter-switch), OFS-DAC-10G-3M (3m, DESK)
 
+### Thunderbolt dock & 10GbE (applies to: `system/hardware/thunderbolt.nix`, `system/hardware/thinkpad.nix`, `profiles/LAPTOP_L15-config.nix`)
+
+- **Read first**: `docs/user-modules/thunderbolt-dock.md`
+- **LAPTOP_L15 ports**: 1x USB-C 3.2 Gen 1 + 1x Thunderbolt 4 (only ONE port is TB4)
+- **OWC Thunderbolt Dock 96W**: Connected via TB4 port, operates in USB mode
+  - Dock ethernet: `enp0s13f0u3u4u5`, MAC `00:23:a4:0b:02:d6`, DHCP lease 192.168.8.92
+  - WiFi fallback: `wlp9s0` at 192.168.8.91
+- **ATTO ThunderLink NS 3102 (TLNS-3102-D00): NOT Linux compatible**
+  - Requires proprietary ATTO driver for TB PCIe tunneling (macOS/Windows only)
+  - On Linux: only USB management endpoint (`065d:0015`) appears, NIC never enumerates
+  - No Linux driver available for 10GbE ThunderLink models
+- **PS/2 keyboard/touchpad fix (kernel 6.19+)**: `thinkpad.nix` adds `i8042`/`atkbd` to initrd, `psmouse` to boot modules, `i8042.reset=1`/`i8042.nomux=1` kernel params
+- **NixOS feature flags**: `thunderboltEnable`, `thinkpadEnable` in profile config
+
 ### Grafana/Prometheus monitoring (applies to: `system/app/grafana.nix`, `system/app/prometheus-*.nix`, `system/app/grafana-dashboards/**`)
 
 - **Read first**: `docs/infrastructure/services/monitoring-stack.md`

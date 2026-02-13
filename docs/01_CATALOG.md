@@ -173,6 +173,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.sharePrinter == true`
 - **system/hardware/systemd.nix**: Journald limits - prevent disk thrashing and limit log size
 - **system/hardware/thinkpad.nix**: Lenovo Thinkpad hardware optimizations via nixos-hardware
+- **system/hardware/thunderbolt.nix**: Thunderbolt support: bolt daemon, auto-authorization, and diagnostic tools *Enabled when:* `systemSettings.thunderboltEnable or false`
 - **system/hardware/time.nix**: System module: time.nix
 - **system/hardware/xbox.nix**: NOTE you might need to add xpad as Kernel Module on your flake.nix
 
@@ -513,6 +514,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/sway-to-hyprland-migration.md**: Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions.
 - **docs/user-modules/swaybgplus.md**: GUI multi-monitor wallpapers for SwayFX/Wayland via SwayBG+ (Home-Manager/NixOS-safe; no Stylix/Plasma conflicts).
 - **docs/user-modules/swww.md**: Robust wallpapers for SwayFX via swww (daemon + oneshot restore; rebuild/reboot safe; no polling/flicker).
+- **docs/user-modules/thunderbolt-dock.md**: Thunderbolt dock setup, OWC Dock 96W, ATTO ThunderLink NS 3102 (Linux incompatible), PS/2 keyboard/touchpad fixes
 - **docs/user-modules/tmux-persistent-sessions.md**: Complete guide to tmux persistent sessions with automatic save/restore across reboots using tmux-continuum and tmux-resurrect plugins
 - **docs/user-modules/tmux.md**: Tmux terminal multiplexer module with custom keybindings, SSH smart launcher, and Stylix integration for modern terminal workflow.
 - **docs/user-modules/unified-dark-theme-portals.md**: **ID:** `user-modules.unified-dark-theme-portals`
