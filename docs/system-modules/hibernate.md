@@ -171,6 +171,8 @@ lib/defaults.nix          hibernateEnable = false, hibernateSwapLuksUUID = null
     │   │                     thermaldEnable = true
     │   │
     │   └── LAPTOP_AGA        (Plasma 6, no Sway power-aware idle)
+    │                        intelGpuFbcEnable = true, intelGpuPsrEnable = true
+    │                        thermaldEnable = true
     │
     └── DESK-config.nix       hibernateEnable = true, hibernateSwapLuksUUID = "6439621e-..."
                               powerKey = "suspend"
@@ -484,6 +486,58 @@ Check:
 2. Logind `lidSwitch` must be `"ignore"` (Sway handles it via `bindswitch`)
 3. No external monitors must be connected for suspend to trigger
 4. Must be on battery (AC + no ext = intentional no-op for safety)
+
+## Plasma 6 Laptops (LAPTOP_AGA)
+
+LAPTOP_AGA uses Plasma 6, not Sway. Sway-specific features (`swayIdlePowerAwareEnable`, `swayBatteryReduceEffects`, `swaySmartLidEnable`) are gated by `enableSwayForDESK` and have no effect on Plasma 6.
+
+**What AGA does get from `LAPTOP-base.nix`:**
+- `laptopPowerTuningEnable = true` — audio codec power save, NMI watchdog disable, writeback timer
+- `bluetoothPowerOnBoot = false` — start radio off, enable via blueman/bluedevil when needed
+- TLP battery fixes: `PROFILE_ON_BAT = "low-power"`, `WIFI_PWR_ON_BAT = "on"`, USB autosuspend
+
+**AGA-specific Intel optimizations:**
+- `intelGpuFbcEnable = true` — i915 framebuffer compression (Intel UHD 620)
+- `intelGpuPsrEnable = true` — i915 panel self-refresh
+- `thermaldEnable = true` — Intel proactive thermal management
+
+**What AGA does NOT get (Plasma handles these):**
+- Screen dimming on idle (Plasma PowerDevil)
+- Suspend-on-idle (Plasma PowerDevil)
+- Effects reduction on battery (KWin has its own GPU management)
+- Lid behavior (Plasma's logind integration or PowerDevil)
+
+### Energy Verification (All Laptops)
+
+```bash
+# Audio power save
+cat /sys/module/snd_hda_intel/parameters/power_save        # → 1
+
+# NMI watchdog
+cat /proc/sys/kernel/nmi_watchdog                           # → 0
+
+# Writeback timer
+cat /proc/sys/vm/dirty_writeback_centisecs                  # → 1500
+
+# Platform profile (unplug AC first)
+cat /sys/firmware/acpi/platform_profile                     # → low-power
+
+# WiFi power save (unplug AC)
+iwconfig 2>/dev/null | grep "Power Management"              # → on
+
+# Bluetooth
+bluetoothctl show | grep Powered                            # → no
+
+# i915 FBC (Intel GPUs only: YOGAAKU, AGA)
+cat /sys/kernel/debug/dri/0/i915_fbc_status                 # → enabled
+
+# thermald (Intel CPUs only: YOGAAKU, AGA)
+systemctl is-active thermald                                # → active
+
+# Sway dimming (Sway laptops only: L15, YOGAAKU)
+systemctl --user status swayidle.service                    # → active (running)
+# Command line should include: timeout 60 sway-idle-dim
+```
 
 ## Related Documentation
 
