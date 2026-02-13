@@ -1,10 +1,17 @@
 # Deploy to LXC Container
 
-Skill for deploying NixOS configurations to LXC containers.
+Skill for deploying NixOS configurations to LXC containers and other machines.
+
+## CRITICAL: Always Use install.sh — NEVER Bare nixos-rebuild
+
+**NEVER** run `git pull && sudo nixos-rebuild switch` on remote machines. This will break because:
+- `hardware-configuration.nix` is machine-specific; `git pull` overwrites it with another machine's UUIDs
+- `install.sh` handles hardware-config regeneration, file hardening, docker handling, and rollback
+- Use `deploy.sh` or the `git fetch && git reset --hard && ./install.sh` pattern ALWAYS
 
 ## Usage
 
-Deploy changes to a specific LXC container after committing and pushing.
+Deploy changes to a specific machine after committing and pushing.
 
 ## Deployment Steps
 
@@ -16,10 +23,13 @@ git commit -m "message"
 git push origin main
 ```
 
-### 2. Deploy to Container
+### 2. Deploy
 
 ```bash
-# Single container deployment
+# Option A: Use deploy.sh (preferred — handles IP probing, git fetch+reset, install.sh)
+./deploy.sh --profile <PROFILE>
+
+# Option B: Single LXC container via SSH (passwordless sudo)
 ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -q"
 ```
 

@@ -14,6 +14,33 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
   ssh -A user@host    # Enables git push/pull on remote without copying keys
   ```
 
+### Remote Deployment (CRITICAL — NEVER skip)
+
+**NEVER** run bare `git pull && nixos-rebuild switch` on remote machines. This breaks because:
+- `hardware-configuration.nix` is machine-specific; `git pull` may overwrite it with another machine's UUIDs
+- `install.sh` handles hardware-config regeneration, file hardening/softening, docker handling, and rollback
+
+**Always use `deploy.sh` or the `install.sh` pattern:**
+
+```bash
+# Option A: Use deploy.sh from the local machine (preferred)
+./deploy.sh --profile LAPTOP_L15
+
+# Option B: For LXC containers (passwordless sudo) — single SSH command
+ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -q"
+
+# Option C: For physical machines (laptops/desktops) — requires sudo password
+# Tell the user to run on the target machine:
+cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u
+```
+
+**Key points:**
+- `git fetch origin && git reset --hard origin/main` (NOT `git pull`) ensures clean state
+- `install.sh` regenerates `hardware-configuration.nix` for the current machine
+- `-q` (quick mode) skips docker handling and hardware-config regeneration (safe for LXC/quick updates)
+- Physical machines (DESK, LAPTOP_*) need sudo password — ask user to run manually or provide password
+- See `deploy-servers.conf` for the full server inventory and IP addresses
+
 ## Profile Architecture Principles (CRITICAL)
 
 This repository follows a **hierarchical, modular, and centralized** profile architecture:
