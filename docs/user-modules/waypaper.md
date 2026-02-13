@@ -37,6 +37,7 @@ When `waypaperEnable = true`, the wallpaper restore ownership transfers from sww
 │  swwwRestoreAfterSwitch ── disabled (HM hook removed)       │
 │                                                             │
 │  waypaper-restore.service ── ACTIVE (WantedBy sway-session) │
+│  waypaper-output-watch.service ── hot-plug watcher (long)   │
 │  waypaperRestore ── ACTIVE (HM activation hook)             │
 │  sway-resume-monitors ── calls waypaper-restore.service     │
 │                                                             │
@@ -59,7 +60,8 @@ When `waypaperEnable = true`, the wallpaper restore ownership transfers from sww
 | Scenario | waypaperEnable=true | waypaperEnable=false |
 |---|---|---|
 | Boot / login | waypaper-restore.service | swww-restore.service |
-| Monitor wake | waypaper-restore.service | swww-restore.service |
+| Monitor wake (power off/on) | waypaper-restore.service | swww-restore.service |
+| Monitor hot-plug | waypaper-output-watch → waypaper-restore | (not handled) |
 | HM switch / sync-user.sh | waypaperRestore hook | swwwRestoreAfterSwitch hook |
 | Manual restore | `systemctl --user start waypaper-restore` | `systemctl --user start swww-restore` |
 
@@ -86,6 +88,32 @@ The restore wrapper (`waypaper.nix`) incorporates the same robust wait logic as 
 1. `waypaper-restore` starts → waits for daemon + outputs
 2. Reads existing `~/.config/waypaper/config.ini` (user's imperative choice)
 3. Runs `waypaper --restore` → wallpaper appears
+
+## Monitor Hot-Plug
+
+A long-running `waypaper-output-watch.service` subscribes to Sway output events (`swaymsg -t subscribe '["output"]'`). When a new monitor is connected, it waits 2 seconds (debounce for docks that bring up multiple outputs) then triggers `waypaper-restore.service`.
+
+### How `monitors = All` Works
+
+Waypaper's `--restore` iterates over `zip(monitors, wallpapers)` from `config.ini`. With the default `monitors = All`, swww's `img` command targets **all currently connected outputs** — including any newly hot-plugged monitor. This means:
+
+- **`monitors = All`** (default): Every monitor gets the same wallpaper. Hot-plug works automatically.
+- **Per-monitor configs** (e.g., `monitors = DP-1\neDP-1`): Only listed monitors get wallpaper. A new unlisted monitor would remain blank.
+
+**Recommendation**: Keep `monitors = All` unless you need different wallpapers per monitor. If using per-monitor configs, set wallpapers for all expected monitors via the Waypaper GUI.
+
+### Verifying the Watcher
+
+```bash
+# Check watcher is running
+systemctl --user status waypaper-output-watch.service
+
+# Watch logs in real-time while plugging/unplugging monitors
+journalctl --user -u waypaper-output-watch.service -f
+
+# Expected on hot-plug:
+# "new output detected, restoring wallpaper in 2s"
+```
 
 ## Configuration
 
