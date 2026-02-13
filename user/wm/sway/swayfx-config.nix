@@ -118,24 +118,23 @@ let
   '';
 
   # Smart lid handler: context-aware lid close behavior
-  # On AC (docked): always disable internal display only
-  # On battery + external monitors: disable internal display only
-  # On battery + no external monitors: suspend
+  # External monitor(s) present → disable internal display only
+  # No external monitors + on battery → suspend
+  # No external monitors + on AC → do nothing (safety: never black out the only display)
   sway-lid-handler = pkgs.writeShellScript "sway-lid-handler" ''
-    BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+    EXT_COUNT=$(${pkgs.sway}/bin/swaymsg -t get_outputs -r | \
+      ${pkgs.jq}/bin/jq '[.[] | select(.name != "eDP-1" and .active == true)] | length')
 
-    if [ "$BAT_STATUS" != "Discharging" ]; then
-      # On AC power (docked): just disable internal display
+    if [ "$EXT_COUNT" -gt 0 ]; then
+      # External monitor(s) connected: safe to disable internal display
       ${pkgs.sway}/bin/swaymsg output eDP-1 disable
     else
-      # On battery: check for external monitors
-      EXT_COUNT=$(${pkgs.sway}/bin/swaymsg -t get_outputs -r | \
-        ${pkgs.jq}/bin/jq '[.[] | select(.name != "eDP-1" and .active == true)] | length')
-      if [ "$EXT_COUNT" -gt 0 ]; then
-        ${pkgs.sway}/bin/swaymsg output eDP-1 disable
-      else
+      # No external monitors: only suspend if on battery
+      BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+      if [ "$BAT_STATUS" = "Discharging" ]; then
         ${pkgs.systemd}/bin/systemctl suspend
       fi
+      # On AC with no external monitors: do nothing (lid close ignored)
     fi
   '';
 
