@@ -382,6 +382,21 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
 - **Optimization script**: Use `scripts/vps-wireguard-optimize.sh` for applying performance tuning
 - **pfSense peer key**: `hWv3ipsMkY6HA2fRe/hO7UI4oWeYmfke4qX6af/5SjY=`
 
+### LUKS swap encryption & hibernation (applies to: `system/hardware/hibernate.nix`, `profiles/*-config.nix`)
+
+- **Manual prerequisite**: Encrypting a swap partition requires running commands on the target machine **before** deploying NixOS config. Claude cannot run `sudo cryptsetup` — always provide the commands to the user.
+- **Steps for encrypting swap on a new machine**:
+  1. `sudo swapoff -a`
+  2. `sudo cryptsetup luksFormat --type luks2 /dev/<swap-partition>` — **use the SAME passphrase as root LUKS** (enables `reusePassphrases` auto-unlock)
+  3. `sudo cryptsetup luksDump /dev/<swap-partition> | grep UUID` — note the UUID
+  4. `sudo cryptsetup luksOpen /dev/<swap-partition> luks-swap && sudo mkswap /dev/mapper/luks-swap && sudo cryptsetup luksClose luks-swap`
+  5. Set `hibernateSwapLuksUUID = "<UUID>"` in the profile config
+  6. `sudo nixos-rebuild switch --flake .#<PROFILE> --impure && sudo reboot`
+- **After reboot**: Enter root LUKS passphrase once — swap auto-unlocks via `reusePassphrases` (no second prompt)
+- **hardware-configuration.nix**: Must be regenerated (`sudo nixos-generate-config`) after encrypting swap, as the old unencrypted swap UUID becomes invalid. However, `hibernate.nix` uses `swapDevices = lib.mkForce` which overrides hardware-configuration.nix anyway.
+- **Feature flags**: `hibernateEnable` (opt-in per profile), `hibernateSwapLuksUUID` (per-machine), `hibernateDelaySec` (default 600s)
+- **Desktop vs laptop behavior**: On desktops (no battery), hibernate is on-demand only (`systemctl hibernate`). On laptops, idle/lid actions use `suspend-then-hibernate` on battery.
+
 ### Secrets management (applies to: `secrets/*.nix`, `profiles/*-config.nix`, `system/**/*.nix`)
 
 - **Read first**: `docs/security/git-crypt.md`

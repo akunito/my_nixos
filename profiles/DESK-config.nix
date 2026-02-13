@@ -280,6 +280,13 @@ in
     # Power management
     powerManagement_ENABLE = true;
     power-profiles-daemon_ENABLE = true;
+    powerKey = "suspend"; # Power button suspends (overridden by hibernate.nix acpid when UUID is set)
+
+    # Hibernation: on-demand only (no auto suspend-then-hibernate — no battery)
+    hibernateEnable = true;
+    # LUKS UUID of encrypted swap partition (from: sudo cryptsetup luksDump /dev/nvme1n1p3)
+    # Set to null until swap is encrypted — hibernate module won't load without a valid UUID
+    hibernateSwapLuksUUID = "6439621e-01dc-4710-adb8-8894fc6ce585";
 
     # System packages
     systemPackages = pkgs: pkgs-unstable: [
