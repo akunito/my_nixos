@@ -565,6 +565,10 @@ deploy_server() {
   fi
   echo "   ${GREEN}${ICON_SUCCESS} Git fetch complete${NC}"
 
+  # Soften files before git reset (hardened files are owned by root, git can't overwrite them)
+  echo "   ${ICON_GIT} Softening files for git..."
+  ssh "${ssh_opts[@]}" "${user}@${ip}" "cd ${DOTFILES_DIR} && sudo ./soften.sh ${DOTFILES_DIR}" 2>&1 || true
+
   # Git reset
   echo "   ${ICON_GIT} Resetting to origin/main..."
   if ! ssh "${ssh_opts[@]}" "${user}@${ip}" "cd ${DOTFILES_DIR} && git reset --hard origin/main" 2>&1; then
