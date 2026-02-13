@@ -147,6 +147,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.profile == "homelab"`
 - **system/hardware/kernel.nix**: System module: kernel.nix
 - **system/hardware/keychron.nix**: Grant access to Keychron keyboards for the Keychron Launcher / VIA
+- **system/hardware/laptop-power-tuning.nix**: Laptop power tuning — idle power reduction
 - **system/hardware/network-bonding.nix**: Network bonding (LACP link aggregation) module *Enabled when:*
    - `bondingEnabled && interfaces != []`
    - `mode == "802.3ad"`

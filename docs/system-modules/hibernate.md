@@ -5,9 +5,12 @@ tags: [hibernation, suspend, luks, swap, encryption, power, laptop, desktop, swa
 related_files:
   - system/hardware/hibernate.nix
   - system/hardware/power.nix
+  - system/hardware/laptop-power-tuning.nix
+  - system/hardware/bluetooth.nix
   - lib/defaults.nix
   - profiles/LAPTOP-base.nix
   - profiles/LAPTOP_L15-config.nix
+  - profiles/LAPTOP_YOGAAKU-config.nix
   - profiles/DESK-config.nix
   - user/wm/sway/swayfx-config.nix
 ---
@@ -18,11 +21,12 @@ related_files:
 
 This document covers the **complete power management system** for Sway devices in this repo: idle timeouts, suspend, hibernate, lid behavior, and the power button. It is the single reference for setting up a new Desktop or Laptop with Sway.
 
-Three layers work together:
+Four layers work together:
 
 1. **system/hardware/power.nix** — TLP power saving, logind lid/power-button policy, sleep mode
 2. **system/hardware/hibernate.nix** — LUKS-encrypted swap, resume device, acpid, polkit
-3. **user/wm/sway/swayfx-config.nix** — swayidle (screen lock, monitor off, suspend), lid handler
+3. **system/hardware/laptop-power-tuning.nix** — Audio/NMI/writeback/i915/thermald power tuning
+4. **user/wm/sway/swayfx-config.nix** — swayidle (dim, lock, monitor off, suspend), lid handler, SwayFX effects toggle
 
 ## Sway Power System Architecture
 
@@ -60,6 +64,7 @@ Three layers work together:
      │     swayfx-config.nix (user-level)   │
      │                                      │
      │  sway-power-swayidle ─► swayidle     │
+     │    ├─ dim (brightnessctl, battery)   │
      │    ├─ lock (swaylock-with-grace)     │
      │    ├─ monitors off                   │
      │    └─ sway-idle-suspend ─►           │
@@ -78,6 +83,8 @@ Three layers work together:
      │    └─ AC↔battery change →            │
      │        restart swayidle.service      │
      │        (applies new timeouts)        │
+     │        restore brightness (on AC)    │
+     │        toggle SwayFX effects         │
      └─────────────────────────────────────┘
 ```
 
@@ -108,9 +115,28 @@ Three layers work together:
 | `swayIdleDisableMonitorPowerOff` | `false` | Skip monitor-off step (for DPMS-broken monitors) |
 | `swaySmartLidEnable` | `false` | Context-aware lid: disable display if docked, suspend if not |
 | `swayIdlePowerAwareEnable` | `false` | Different timeouts for AC vs battery |
+| `swayIdleDimTimeoutBat` | `60` | Battery: dim screen after 1 min (brightnessctl) |
+| `swayIdleDimPercent` | `30` | Dim brightness percentage (0-100) |
 | `swayIdleLockTimeoutBat` | `180` | Battery: lock after 3 min |
 | `swayIdleMonitorOffTimeoutBat` | `210` | Battery: monitors off after 3.5 min |
 | `swayIdleSuspendTimeoutBat` | `480` | Battery: suspend after 8 min |
+| `swayBatteryReduceEffects` | `false` | Disable SwayFX blur/shadows on battery (GPU power) |
+
+#### Laptop Power Tuning (lib/defaults.nix → laptop-power-tuning.nix)
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `laptopPowerTuningEnable` | `false` | Master gate for laptop-power-tuning.nix |
+| `laptopPowerTuningAggressive` | `false` | Aggressive tier (PCIe ASPM, powertop auto-tune) |
+| `bluetoothPowerOnBoot` | `true` | Start bluetooth radio at boot (false saves ~0.3W) |
+| `intelGpuFbcEnable` | `false` | i915 framebuffer compression (Intel GPUs only) |
+| `intelGpuPsrEnable` | `false` | i915 panel self-refresh (Intel GPUs only) |
+| `thermaldEnable` | `false` | Intel thermal daemon (Intel CPUs only) |
+
+When `laptopPowerTuningEnable` is true, the module applies:
+- **Safe tier**: Audio codec power save, NMI watchdog disable, writeback timer 15s
+- **Moderate tier**: i915 FBC/PSR (via sub-flags), thermald (via sub-flag)
+- **Aggressive tier** (requires `laptopPowerTuningAggressive`): PCIe ASPM powersupersave, powertop auto-tune
 
 #### Hibernate (lib/defaults.nix → hibernate.nix + swayfx-config.nix)
 
@@ -127,16 +153,24 @@ The hibernate module is **gated** by both flags: `hibernateEnable && hibernateSw
 ```
 lib/defaults.nix          hibernateEnable = false, hibernateSwapLuksUUID = null
     │                     powerKey = "ignore", swayIdlePowerAwareEnable = false
+    │                     laptopPowerTuningEnable = false
     │
     ├── LAPTOP-base.nix       hibernateEnable = true
     │   │                     powerKey = "suspend"
     │   │                     swayIdlePowerAwareEnable = true
     │   │                     swaySmartLidEnable = true
+    │   │                     laptopPowerTuningEnable = true
+    │   │                     bluetoothPowerOnBoot = false
+    │   │                     swayBatteryReduceEffects = true
     │   │
     │   ├── LAPTOP_L15        hibernateSwapLuksUUID = "a3d7d48f-..."
     │   │                     MEM_SLEEP = "s2idle" (Tiger Lake — no S3)
     │   │
-    │   └── LAPTOP_YOGAAKU    (set UUID after encrypting swap)
+    │   ├── LAPTOP_YOGAAKU    hibernateSwapLuksUUID = "..."
+    │   │                     intelGpuFbcEnable = true, intelGpuPsrEnable = true
+    │   │                     thermaldEnable = true
+    │   │
+    │   └── LAPTOP_AGA        (Plasma 6, no Sway power-aware idle)
     │
     └── DESK-config.nix       hibernateEnable = true, hibernateSwapLuksUUID = "6439621e-..."
                               powerKey = "suspend"
