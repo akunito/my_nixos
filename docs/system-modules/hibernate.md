@@ -407,7 +407,7 @@ journalctl --user -u swayidle --since "1 min ago"
 |---------|---------------|-----------|-----------|--------|
 | DESK | `/dev/nvme1n1p3` | 39.1 GB | `6439621e-01dc-4710-adb8-8894fc6ce585` | Active |
 | LAPTOP_L15 | `/dev/nvme0n1p3` | 15.6 GB | `a3d7d48f-c0eb-4655-9a30-6ea9f580ec0d` | Active |
-| LAPTOP_YOGAAKU | — | — | — | Not configured |
+| LAPTOP_YOGAAKU | `/dev/nvme0n1p2` | 16.7 GB | `1fbdeb58-e07a-4c7b-81db-d72067ae12cb` | Active |
 
 ## Troubleshooting
 

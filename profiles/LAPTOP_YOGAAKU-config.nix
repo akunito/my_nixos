@@ -111,6 +111,9 @@ in
     servicePrinting = false;
     networkPrinters = false;
 
+    # LUKS UUID of encrypted swap partition (from: sudo cryptsetup luksDump /dev/nvme0n1p2)
+    hibernateSwapLuksUUID = "1fbdeb58-e07a-4c7b-81db-d72067ae12cb";
+
     # System packages
     systemPackages = pkgs: pkgs-unstable: [
       # YOGAAKU-specific packages
