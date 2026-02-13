@@ -71,6 +71,9 @@
       });
     '';
 
+    # Smart lid behavior: suspend if no ext monitor, disable display if docked
+    swaySmartLidEnable = true;
+
     # Common laptop features
     wireguardEnable = true;
     appImageEnable = true;

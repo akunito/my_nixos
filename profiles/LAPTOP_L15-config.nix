@@ -115,11 +115,15 @@ in
     servicePrinting = true;
     networkPrinters = true;
 
-    # Lid behavior - ignore for docked usage
-    lidSwitch = "ignore";
-    lidSwitchExternalPower = "ignore";
-    lidSwitchDocked = "ignore";
-    powerKey = "ignore";
+    # Lid behavior: managed by swaySmartLidEnable (from LAPTOP-base.nix)
+    # Logind lid/powerKey default to "ignore" in defaults.nix
+
+    # Sleep mode: Tiger Lake L15 Gen 2 only supports s2idle (no S3 deep sleep)
+    MEM_SLEEP_ON_AC = "s2idle";
+    MEM_SLEEP_ON_BAT = "s2idle";
+
+    # Suspend/resume debug instrumentation
+    suspendDebugEnable = true;
 
     # System packages
     systemPackages = pkgs: pkgs-unstable: [

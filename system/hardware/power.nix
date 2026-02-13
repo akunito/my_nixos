@@ -31,8 +31,8 @@
       START_CHARGE_THRESH_BAT0 = systemSettings.START_CHARGE_THRESH_BAT0;
       STOP_CHARGE_THRESH_BAT0 = systemSettings.STOP_CHARGE_THRESH_BAT0;
 
-      MEM_SLEEP_ON_AC = "deep";
-      MEM_SLEEP_ON_BAT = "deep";
+      MEM_SLEEP_ON_AC = systemSettings.MEM_SLEEP_ON_AC;
+      MEM_SLEEP_ON_BAT = systemSettings.MEM_SLEEP_ON_BAT;
 
       PLATFORM_PROFILE_ON_AC = systemSettings.PROFILE_ON_AC;
       PLATFORM_PROFILE_ON_BAT = systemSettings.PROFILE_ON_BAT;

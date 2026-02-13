@@ -243,11 +243,13 @@
 
     INTEL_GPU_MIN_FREQ_ON_AC = 300;
     INTEL_GPU_MIN_FREQ_ON_BAT = 300;
-    LOGIND_ENABLE = false;
+    LOGIND_ENABLE = true;
     lidSwitch = "ignore";
     lidSwitchExternalPower = "ignore";
     lidSwitchDocked = "ignore";
     powerKey = "ignore";
+    MEM_SLEEP_ON_AC = "deep";
+    MEM_SLEEP_ON_BAT = "deep";
     powerManagement_ENABLE = false;
     power-profiles-daemon_ENABLE = false;
 
@@ -255,6 +257,9 @@
     # Enable ONE of these based on hardware type - they are mutually exclusive
     enableDesktopPerformance = false; # Aggressive settings for maximum performance on desktop systems
     enableLaptopPerformance = false;  # Conservative settings for battery life while maintaining responsiveness
+
+    # Suspend/resume debug instrumentation (logs timestamps, battery, network state)
+    suspendDebugEnable = false;
 
     # Feature flags defaults
     starCitizenModules = false;
@@ -476,7 +481,11 @@
     ];
 
     # Sway/SwayFX idle configuration
+    swayIdleLockTimeout = 720;         # Seconds before locking screen (default: 12 min)
+    swayIdleMonitorOffTimeout = 900;   # Seconds before turning off monitors (default: 15 min)
+    swayIdleSuspendTimeout = 3600;     # Seconds before suspending system (default: 60 min)
     swayIdleDisableMonitorPowerOff = false; # Disable monitor power-off timeout (useful for monitors with DPMS wake issues)
+    swaySmartLidEnable = false; # Context-aware lid: suspend if no ext monitor, disable display if docked
 
     # Monitor management (imperative GUI approach)
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config

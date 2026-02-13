@@ -107,6 +107,24 @@ let
     text = builtins.readFile ./scripts/swaylock-with-grace.sh;
   };
 
+  # Resume monitors and restore wallpaper (wraps multi-command sequence for swayidle)
+  sway-resume-monitors = pkgs.writeShellScript "sway-resume-monitors" ''
+    ${pkgs.sway}/bin/swaymsg 'output * power on'
+    ${pkgs.systemd}/bin/systemctl --user start swww-restore.service
+  '';
+
+  # Smart lid handler: suspend if no external monitor, disable internal display if docked
+  sway-lid-handler = pkgs.writeShellScript "sway-lid-handler" ''
+    EXT_COUNT=$(${pkgs.sway}/bin/swaymsg -t get_outputs -r | \
+      ${pkgs.jq}/bin/jq '[.[] | select(.name != "eDP-1" and .active == true)] | length')
+
+    if [ "$EXT_COUNT" -gt 0 ]; then
+      ${pkgs.sway}/bin/swaymsg output eDP-1 disable
+    else
+      ${pkgs.systemd}/bin/systemctl suspend
+    fi
+  '';
+
   # Keyboard layout switching script
   keyboard-layout-switch = pkgs.writeShellApplication {
     name = "keyboard-layout-switch";
@@ -149,21 +167,21 @@ in
     timeouts =
       [
         {
-          timeout = 720; # 12 minutes - lock screen (with 4-second grace period)
+          timeout = systemSettings.swayIdleLockTimeout; # Lock screen (with 4-second grace period)
           command = "${swaylock-with-grace}/bin/swaylock-with-grace";
         }
       ]
       ++ lib.optionals (systemSettings.swayIdleDisableMonitorPowerOff != true) [
         {
-          timeout = 900; # 15 minutes - turn off displays (12 + 3)
+          timeout = systemSettings.swayIdleMonitorOffTimeout; # Turn off displays
           command = "${pkgs.sway}/bin/swaymsg 'output * power off'";
           # Restore outputs AND wallpaper when monitors wake from power-off
-          resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * power on' && ${pkgs.systemd}/bin/systemctl --user start swww-restore.service";
+          resumeCommand = "${sway-resume-monitors}";
         }
       ]
       ++ [
         {
-          timeout = 3600; # 60 minutes - suspend system (1 hour)
+          timeout = systemSettings.swayIdleSuspendTimeout; # Suspend system
           command = "${pkgs.systemd}/bin/systemctl suspend";
         }
       ];
@@ -1168,6 +1186,12 @@ in
 
       # Mouse warping
       mouse_warping output
+    ''
+    + lib.optionalString (systemSettings.swaySmartLidEnable or false) ''
+
+      # Smart lid handler: suspend if no external monitor, disable internal display if docked
+      bindswitch --reload --locked lid:on exec ${sway-lid-handler}
+      bindswitch --reload --locked lid:off exec ${pkgs.sway}/bin/swaymsg output eDP-1 enable
     '';
   };
 
