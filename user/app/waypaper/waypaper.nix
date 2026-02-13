@@ -15,6 +15,58 @@ let
   waypaperConfigFile = "${config.xdg.configHome}/waypaper/config.ini";
   fallbackImage = if systemSettings.stylixEnable == true then config.stylix.image else null;
 
+  JQ = lib.getExe pkgs.jq;
+
+  # Watch for hot-plugged monitors and trigger wallpaper restore.
+  # Subscribes to Sway output events, debounces (2s) for docks that add multiple outputs at once.
+  waypaper-output-watch = pkgs.writeShellScriptBin "waypaper-output-watch" ''
+    #!/bin/sh
+    set -eu
+
+    export PATH="${lib.makeBinPath [ pkgs.coreutils ]}:$PATH"
+
+    SWAYMSG='${SWAYMSG}'
+    JQ='${JQ}'
+
+    RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    ENV_FILE="$RUNTIME_DIR/sway-session.env"
+
+    if [ -r "$ENV_FILE" ]; then
+      # shellcheck disable=SC1090
+      . "$ENV_FILE"
+    fi
+
+    if [ -z "''${SWAYSOCK:-}" ] || [ ! -S "''${SWAYSOCK:-}" ]; then
+      CAND="$(ls -t "$RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -n1 || true)"
+      if [ -n "$CAND" ] && [ -S "$CAND" ]; then
+        export SWAYSOCK="$CAND"
+      fi
+    fi
+
+    if [ -z "''${SWAYSOCK:-}" ] || [ ! -S "''${SWAYSOCK:-}" ]; then
+      echo "waypaper-output-watch: no SWAYSOCK found; exiting" >&2
+      exit 1
+    fi
+
+    echo "waypaper-output-watch: listening for output events on $SWAYSOCK" >&2
+
+    LAST_TRIGGER=0
+
+    "$SWAYMSG" -t subscribe '["output"]' -m | while read -r event; do
+      CHANGE="$(echo "$event" | "$JQ" -r '.change // empty' 2>/dev/null || true)"
+      if [ "$CHANGE" = "new" ]; then
+        NOW="$(date +%s)"
+        ELAPSED=$((NOW - LAST_TRIGGER))
+        if [ "$ELAPSED" -ge 2 ]; then
+          echo "waypaper-output-watch: new output detected, restoring wallpaper in 2s" >&2
+          sleep 2
+          ${pkgs.systemd}/bin/systemctl --user start waypaper-restore.service >/dev/null 2>&1 || true
+          LAST_TRIGGER="$(date +%s)"
+        fi
+      fi
+    done
+  '';
+
   # Robust waypaper restore: resolves SWAYSOCK, waits for Sway outputs + swww-daemon,
   # generates Stylix fallback config on first run, then calls `waypaper --restore`.
   waypaper-restore-wrapper = pkgs.writeShellScriptBin "waypaper-restore-wrapper" ''
@@ -126,6 +178,27 @@ in
       terminal = false;
       categories = [ "Settings" "DesktopSettings" "Utility" ];
       icon = "preferences-desktop-wallpaper";
+    };
+
+    # Long-running watcher: triggers wallpaper restore when a new monitor is hot-plugged
+    systemd.user.services.waypaper-output-watch = {
+      Unit = {
+        Description = "Watch for new Sway outputs and restore wallpaper";
+        PartOf = [ "sway-session.target" ];
+        After = [ "swww-daemon.service" "sway-session.target" "graphical-session.target" ];
+      };
+
+      Service = {
+        Type = "simple";
+        ExecStart = "${waypaper-output-watch}/bin/waypaper-output-watch";
+        Restart = "on-failure";
+        RestartSec = "5s";
+        EnvironmentFile = [ "-%t/sway-session.env" ];
+      };
+
+      Install = {
+        WantedBy = [ "sway-session.target" ];
+      };
     };
 
     # Systemd service for wallpaper restoration
