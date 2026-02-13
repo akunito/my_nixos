@@ -100,6 +100,7 @@ let
     runtimeInputs = with pkgs; [
       coreutils
       sway
+      swayidle
       jq
       libnotify
       swaylock-effects

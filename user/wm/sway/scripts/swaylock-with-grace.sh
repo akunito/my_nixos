@@ -1,39 +1,45 @@
 #!/usr/bin/env bash
 # Swaylock wrapper with 4-second grace period
-# If user provides input (mouse/keyboard) during the grace period, lock is cancelled
+# If user provides input (mouse/keyboard) during the grace period, lock is cancelled.
+# Uses a background swayidle instance to detect when idle ends (user becomes active).
 
 set -euo pipefail
 
 GRACE_PERIOD=4
 
 # Show notification that lock is coming
-# Use -u normal (not critical) so the timeout actually works in swaync
-# Critical notifications ignore timeout and stay until dismissed
 notify-send -u normal -t 5000 "Screen Locking" "Locking in ${GRACE_PERIOD} seconds... (move mouse to cancel)" -h string:x-canonical-private-synchronous:screenlock
 
-# Get initial idle time (in milliseconds) from Sway
-get_idle_time() {
-  swaymsg -t get_seats -r 2>/dev/null | jq -r '.[0].idle_time // 0' 2>/dev/null || echo 0
-}
+# Create a temp file that the background swayidle will touch when user becomes active.
+CANCEL_FLAG=$(mktemp /tmp/swaylock-grace.XXXXXX)
+rm -f "$CANCEL_FLAG"
 
-INITIAL_IDLE=$(get_idle_time)
+# Spawn a short-lived swayidle that fires a 1-second timeout.
+# When user provides input, swayidle's resume command creates the cancel flag.
+# The trick: set timeout=1 so it fires almost immediately (we're already idle),
+# then the resume command (triggered by any user input) sets the cancel flag.
+swayidle -w timeout 1 "touch ${CANCEL_FLAG}.armed" resume "touch ${CANCEL_FLAG}" &
+IDLE_PID=$!
 
-# Monitor for input during grace period (check every 0.5 seconds)
+# Wait for the grace period, checking for cancellation
 ELAPSED=0
-CHECK_INTERVAL=0.5
-
 while (( $(echo "$ELAPSED < $GRACE_PERIOD" | bc -l) )); do
-  sleep "$CHECK_INTERVAL"
-  ELAPSED=$(echo "$ELAPSED + $CHECK_INTERVAL" | bc -l)
-  
-  CURRENT_IDLE=$(get_idle_time)
-  
-  # If idle time decreased (user provided input), cancel lock
-  if (( CURRENT_IDLE < INITIAL_IDLE )); then
+  sleep 0.5
+  ELAPSED=$(echo "$ELAPSED + 0.5" | bc -l)
+
+  if [ -f "$CANCEL_FLAG" ]; then
     notify-send -u normal -t 2000 "Lock Cancelled" "User activity detected" -h string:x-canonical-private-synchronous:screenlock
+    kill "$IDLE_PID" 2>/dev/null || true
+    wait "$IDLE_PID" 2>/dev/null || true
+    rm -f "$CANCEL_FLAG" "${CANCEL_FLAG}.armed"
     exit 0
   fi
 done
+
+# Clean up the background swayidle
+kill "$IDLE_PID" 2>/dev/null || true
+wait "$IDLE_PID" 2>/dev/null || true
+rm -f "$CANCEL_FLAG" "${CANCEL_FLAG}.armed"
 
 # No input detected during grace period - proceed with lock
 # --daemonize: fork so swayidle's -w flag doesn't block subsequent timeouts (monitor off, suspend)
