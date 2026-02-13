@@ -37,6 +37,7 @@ lib.mkIf (systemSettings.suspendDebugEnable or false) {
     description = "Suspend debug logging (post-resume)";
     after = [ "sleep.target" ];
     wantedBy = [ "sleep.target" ];
+    conflicts = [ "shutdown.target" ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = resumeScript;
