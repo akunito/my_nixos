@@ -348,7 +348,7 @@ in
     Unit = {
       Description = "Monitor AC/battery state and restart swayidle on change";
       PartOf = [ "sway-session.target" ];
-      After = [ "swayidle.service" ];
+      After = [ "sway-session.target" ];
     };
     Service = {
       Type = "simple";
