@@ -8,68 +8,36 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "nvme" "sdhci_pci" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" ];
+  boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/mapper/luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
+    { device = "/dev/mapper/luks-03d52ee1-4a95-408a-91c4-c71bae65e54c";
       fsType = "btrfs";
       options = [ "subvol=@" ];
     };
 
-  boot.initrd.luks.devices."luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c".device = "/dev/disk/by-uuid/9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
+  boot.initrd.luks.devices."luks-03d52ee1-4a95-408a-91c4-c71bae65e54c".device = "/dev/disk/by-uuid/03d52ee1-4a95-408a-91c4-c71bae65e54c";
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/7620-B197";
+    { device = "/dev/disk/by-uuid/E6AD-A12C";
       fsType = "vfat";
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
   fileSystems."/home" =
-    { device = "/dev/mapper/luks-a40d2e06-e814-4344-99c8-c2e00546beb3";
+    { device = "/dev/mapper/luks-be0c94de-2f0f-4bd5-8af7-0320558b84ff";
       fsType = "btrfs";
     };
 
-  boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
-
-  fileSystems."/mnt/2nd_NVME" =
-    { device = "/dev/mapper/2nd_NVME";
-      fsType = "ext4";
-    };
-
-  boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
-
-  fileSystems."/mnt/DATA" =
-    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
-      fsType = "ntfs3";
-    };
-
-  fileSystems."/mnt/DATA_SATA3" =
-    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
-      fsType = "ntfs3";
-    };
-
-  fileSystems."/mnt/NFS_library" =
-    { device = "192.168.20.200:/mnt/ssdpool/library";
-      fsType = "nfs4";
-    };
-
-  fileSystems."/mnt/NFS_media" =
-    { device = "192.168.20.200:/mnt/hddpool/media";
-      fsType = "nfs4";
-    };
-
-  fileSystems."/mnt/NFS_emulators" =
-    { device = "192.168.20.200:/mnt/ssdpool/emulators";
-      fsType = "nfs4";
-    };
+  boot.initrd.luks.devices."luks-be0c94de-2f0f-4bd5-8af7-0320558b84ff".device = "/dev/disk/by-uuid/be0c94de-2f0f-4bd5-8af7-0320558b84ff";
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/ffa522b1-04ad-4280-a332-c229cb58fed5"; }
+    [ { device = "/dev/disk/by-uuid/e1203457-f8f6-4dd4-b845-4c3d23cbab1f"; }
     ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }
