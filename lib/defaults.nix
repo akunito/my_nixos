@@ -281,6 +281,9 @@
     thinkpadEnable = false; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = ""; # Thinkpad model (e.g., "lenovo-thinkpad-l14-intel", "lenovo-thinkpad-x280", "lenovo-thinkpad-t490")
 
+    # Thunderbolt support (bolt daemon, auto-authorization, diagnostic tools)
+    thunderboltEnable = false; # Enable Thunderbolt/bolt daemon for dock and device support
+
     # GPU-related feature flags
     amdLACTdriverEnable = false; # Enable LACT (Linux AMD GPU Control Application) for AMD GPU management
 

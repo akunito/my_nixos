@@ -69,6 +69,7 @@ in
   ++ lib.optional (userSettings.wmEnableHyprland == true) ../../system/wm/hyprland.nix # Hyprland (if enabled)
   ++ lib.optional (systemSettings.enableSwayForDESK == true) ../../system/wm/sway.nix # SwayFX (if enabled for DESK profile)
   ++ lib.optional systemSettings.thinkpadEnable ../../system/hardware/thinkpad.nix # Lenovo Thinkpad hardware optimizations
+  ++ lib.optional (systemSettings.thunderboltEnable or false) ../../system/hardware/thunderbolt.nix # Thunderbolt dock/device support
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix; # Tailscale mesh VPN
 
   # Ensure nix flakes are enabled

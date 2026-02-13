@@ -140,6 +140,7 @@ in
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = "lenovo-thinkpad-l14-intel"; # L15 → L14 Intel (closest match)
+    thunderboltEnable = true; # Enable Thunderbolt dock/device support (OWC dock + 10GbE adapter)
 
     # === System Services & Features ===
     sunshineEnable = true; # Enable Sunshine game streaming
