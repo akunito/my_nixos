@@ -125,6 +125,12 @@ in
     # Suspend/resume debug instrumentation
     suspendDebugEnable = true;
 
+    # TEMPORARY: Short swayidle timeouts for testing suspend/wake fixes
+    # Revert to defaults (720/900/3600) after testing
+    swayIdleLockTimeout = 30;          # 30 seconds
+    swayIdleMonitorOffTimeout = 60;    # 1 minute
+    swayIdleSuspendTimeout = 120;      # 2 minutes
+
     # System packages
     systemPackages = pkgs: pkgs-unstable: [
       # No additional LAPTOP_L15-specific packages needed - all in modules
