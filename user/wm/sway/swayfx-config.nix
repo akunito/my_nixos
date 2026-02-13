@@ -1038,6 +1038,7 @@ in
         tap enabled
         natural_scroll enabled
         middle_emulation enabled
+        accel_profile adaptive
         pointer_accel 0.5
       }
 
