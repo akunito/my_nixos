@@ -223,7 +223,7 @@ Self-contained module, gated by `hibernateEnable && hibernateSwapLuksUUID != nul
 3. **Resume device**: `boot.resumeDevice = "/dev/mapper/luks-swap"` — tells the kernel where to find the hibernate image
 4. **Sleep config**: `HibernateDelaySec` for suspend-then-hibernate timing
 5. **acpid**: Power-aware power button handler (battery → hibernate, AC → suspend)
-6. **logind override**: `services.logind.powerKey = lib.mkForce "ignore"` — lets acpid handle the power button instead
+6. **logind override**: `services.logind.settings.Login.HandlePowerKey = lib.mkForce "ignore"` — lets acpid handle the power button instead
 7. **Polkit**: Allows `users` group to trigger hibernate without password
 
 ### Sway Scripts (swayfx-config.nix)

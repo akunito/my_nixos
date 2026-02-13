@@ -73,7 +73,7 @@ in
       }))
       pkgs-unstable.protonup-qt
       # Wine and debugging tools
-      pkgs.wineWowPackages.stagingFull # Wine with 32/64-bit support + wine-mono
+      pkgs.wineWow64Packages.stagingFull # Wine 64-bit with WoW64 32-bit support (binary cached)
       pkgs.winetricks # Wine helper tool
       pkgs.vulkan-tools # Provides vulkaninfo, vkcube
       pkgs.mesa-demos # OpenGL debugging (glxinfo, eglinfo)

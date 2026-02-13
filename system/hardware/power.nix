@@ -60,10 +60,12 @@
 
   # LOGIND
   services.logind = lib.mkIf (systemSettings.LOGIND_ENABLE == true) {
-    lidSwitch = systemSettings.lidSwitch;
-    lidSwitchExternalPower = systemSettings.lidSwitchExternalPower;
-    lidSwitchDocked = systemSettings.lidSwitchDocked;
-    powerKey = systemSettings.powerKey;
+    settings.Login = {
+      HandleLidSwitch = systemSettings.lidSwitch;
+      HandleLidSwitchExternalPower = systemSettings.lidSwitchExternalPower;
+      HandleLidSwitchDocked = systemSettings.lidSwitchDocked;
+      HandlePowerKey = systemSettings.powerKey;
+    };
   };
 
   # Disable wifi powersave for Intel Network Adapter (to avoid disconnect wifi when closing the lid)

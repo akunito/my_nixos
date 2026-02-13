@@ -38,7 +38,7 @@ lib.mkIf ((systemSettings.hibernateEnable or false)
   '';
 
   # logind: ignore power button (acpid handles it conditionally)
-  services.logind.powerKey = lib.mkForce "ignore";
+  services.logind.settings.Login.HandlePowerKey = lib.mkForce "ignore";
 
   # acpid: battery → hibernate, AC → suspend
   services.acpid = {

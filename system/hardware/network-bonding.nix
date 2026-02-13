@@ -191,6 +191,7 @@ in
     systemd.services.bond-ring-buffers = lib.mkIf (ringBufferSize != null) {
       description = "Set NIC ring buffer sizes for bonded 10GbE interfaces";
       after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
