@@ -140,6 +140,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.gpuType == "amd"`
    - `systemSettings.gpuType == "intel"`
    - `systemSettings.gpuType != "amd" && systemSettings.gpuType != "intel"`
+- **system/hardware/hibernate.nix**: Hibernation support for laptops with LUKS-encrypted swap *Enabled when:* `(systemSettings.hibernateEnable or false) && (systemSettings.hibernateSwapLuksUUID or null) != null`
 - **system/hardware/io-scheduler.nix**: Consolidated I/O scheduler optimization for all profile types *Enabled when:*
    - `better than none for modern NVMe`
    - `same as desktop - good for interactive workloads`
@@ -171,6 +172,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.servicePrinting == true`
    - `systemSettings.networkPrinters == true`
    - `systemSettings.sharePrinter == true`
+- **system/hardware/suspend-debug.nix**: Suspend/resume debug instrumentation *Enabled when:* `systemSettings.suspendDebugEnable or false`
 - **system/hardware/systemd.nix**: Journald limits - prevent disk thrashing and limit log size
 - **system/hardware/thinkpad.nix**: Lenovo Thinkpad hardware optimizations via nixos-hardware
 - **system/hardware/thunderbolt.nix**: Thunderbolt support: bolt daemon, auto-authorization, and diagnostic tools *Enabled when:* `systemSettings.thunderboltEnable or false`
@@ -290,14 +292,15 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/swww/swww.nix**: !/bin/sh *Enabled when:*
    - `wallpaper backend for SwayFX`
    - `SwayFX`
-   - `lib.hm.dag.entryAfter [ "reloadSystemd" ] '' RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" ENV_FILE="$RUNTIME_DIR/sway-session.env" if [ -r "$ENV_FILE" ]; then # shellcheck disable=SC1090 . "$ENV_FILE" fi if [ -n "''${SWAYSOCK:-}" ] && [ -S "''${SWAYSOCK:-}" ]; then ${pkgs.systemd}/bin/systemctl --user start swww-restore.service >/dev/null 2>&1 || true else CAND="$(ls -t "$RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -n1 || true)" if [ -n "$CAND" ] && [ -S "$CAND" ]; then ${pkgs.systemd}/bin/systemctl --user start swww-restore.service >/dev/null 2>&1 || true fi fi ''`
+   - `!waypaperTakesOver`
+   - `cfgEnable && !waypaperTakesOver`
 - **user/app/terminal/alacritty.nix**: Wrapper script to auto-start tmux with alacritty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/fix-terminals.nix**: Python script to configure VS Code and Cursor terminal keybindings
 - **user/app/terminal/kitty.nix**: Wrapper script to auto-start tmux with kitty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
 - **user/app/terminal/tmux.nix**: Clipboard command differs between macOS (pbcopy) and Linux (wl-copy) *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/terminal/xterm.nix**: XTerm configuration via X resources *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
-- **user/app/waypaper/waypaper.nix**: Waypaper wrapper script for Sway session restoration *Enabled when:* `systemSettings.waypaperEnable or false`
+- **user/app/waypaper/waypaper.nix**: Watch for hot-plugged monitors and trigger wallpaper restore. *Enabled when:* `swww/swaybg`
 
 ### Hardware
 
@@ -365,6 +368,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/startup-apps.nix**: CRITICAL: Restore qt5ct files on Sway startup to ensure correct content
 - **user/wm/sway/sway.nix**: User module: sway.nix
 - **user/wm/sway/swayfx-config.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
+   - `systemSettings.swayIdlePowerAwareEnable or false`
    - `systemSettings.stylixEnable == true`
    - `systemSettings.waypaperEnable or false`
    - `systemSettings.gamemodeEnable == true`
@@ -492,6 +496,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### System-Modules
 
+- **docs/system-modules/hibernate.md**: Hibernation with LUKS-encrypted swap for laptops and desktops
 - **docs/system-modules/network-bonding.md**: Network bonding (LACP link aggregation) for increased bandwidth and failover
 
 ### User-Modules
@@ -518,6 +523,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/tmux-persistent-sessions.md**: Complete guide to tmux persistent sessions with automatic save/restore across reboots using tmux-continuum and tmux-resurrect plugins
 - **docs/user-modules/tmux.md**: Tmux terminal multiplexer module with custom keybindings, SSH smart launcher, and Stylix integration for modern terminal workflow.
 - **docs/user-modules/unified-dark-theme-portals.md**: **ID:** `user-modules.unified-dark-theme-portals`
-- **docs/user-modules/waypaper.md**: Waypaper GUI wallpaper manager for Sway (swww backend)
+- **docs/user-modules/waypaper.md**: Waypaper GUI wallpaper manager — single source of truth for wallpaper restore in Sway (swww backend)
 - **docs/user-modules/windows11-qxl-setup.md**: Complete guide for setting up QXL display drivers in Windows 11 VMs with SPICE for bidirectional clipboard and dynamic resolution support. Includes troubleshooting for resolution issues and driver installation.
 - **docs/user-modules/xmonad.md**: XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo.
