@@ -54,6 +54,14 @@
         options = [ "NOPASSWD" ];
       }
       {
+        command = "/run/current-system/sw/bin/systemctl suspend-then-hibernate";
+        options = [ "NOPASSWD" ];
+      }
+      {
+        command = "/run/current-system/sw/bin/systemctl hibernate";
+        options = [ "NOPASSWD" ];
+      }
+      {
         command = "/run/current-system/sw/bin/restic";
         options = [
           "NOPASSWD"
@@ -492,6 +500,11 @@
     swayIdleLockTimeoutBat = 180;           # Battery: 3 min lock
     swayIdleMonitorOffTimeoutBat = 210;     # Battery: 3.5 min monitors off
     swayIdleSuspendTimeoutBat = 480;        # Battery: 8 min suspend
+
+    # Hibernation (suspend-then-hibernate for laptops with LUKS-encrypted swap)
+    hibernateEnable = false;            # Enable hibernate/suspend-then-hibernate
+    hibernateSwapLuksUUID = null;       # LUKS UUID of encrypted swap partition
+    hibernateDelaySec = 600;            # Seconds of suspend before auto-hibernate (10 min)
 
     # Monitor management (imperative GUI approach)
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config

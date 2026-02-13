@@ -80,6 +80,9 @@
     # Power-aware idle: shorter timeouts on battery, normal on AC
     swayIdlePowerAwareEnable = true;
 
+    # Hibernation: auto-hibernate after 10 min suspend on battery
+    hibernateEnable = true;
+
     # Common laptop features
     wireguardEnable = true;
     appImageEnable = true;

@@ -71,7 +71,9 @@ in
   ++ lib.optional systemSettings.thinkpadEnable ../../system/hardware/thinkpad.nix # Lenovo Thinkpad hardware optimizations
   ++ lib.optional (systemSettings.thunderboltEnable or false) ../../system/hardware/thunderbolt.nix # Thunderbolt dock/device support
   ++ lib.optional (systemSettings.suspendDebugEnable or false) ../../system/hardware/suspend-debug.nix # Suspend/resume instrumentation
-  ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix; # Tailscale mesh VPN
+  ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix # Tailscale mesh VPN
+  ++ lib.optional ((systemSettings.hibernateEnable or false)
+    && (systemSettings.hibernateSwapLuksUUID or null) != null) ../../system/hardware/hibernate.nix; # Hibernation with LUKS-encrypted swap
 
   # Ensure nix flakes are enabled
   nix.package = pkgs.nixVersions.stable;

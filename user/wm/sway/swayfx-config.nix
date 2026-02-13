@@ -132,7 +132,9 @@ let
       # No external monitors: only suspend if on battery
       BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
       if [ "$BAT_STATUS" = "Discharging" ]; then
-        ${pkgs.systemd}/bin/systemctl suspend
+        ${if (systemSettings.hibernateEnable or false)
+          then "${pkgs.systemd}/bin/systemctl suspend-then-hibernate"
+          else "${pkgs.systemd}/bin/systemctl suspend"}
       fi
       # On AC with no external monitors: do nothing (lid close ignored)
     fi
@@ -144,7 +146,16 @@ let
   '';
 
   sway-idle-suspend = pkgs.writeShellScript "sway-idle-suspend" ''
-    ${pkgs.systemd}/bin/systemctl suspend
+    ${if (systemSettings.hibernateEnable or false) then ''
+      BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+      if [ "$BAT_STATUS" = "Discharging" ]; then
+        ${pkgs.systemd}/bin/systemctl suspend-then-hibernate
+      else
+        ${pkgs.systemd}/bin/systemctl suspend
+      fi
+    '' else ''
+      ${pkgs.systemd}/bin/systemctl suspend
+    ''}
   '';
 
   sway-idle-before-sleep = pkgs.writeShellScript "sway-idle-before-sleep" ''

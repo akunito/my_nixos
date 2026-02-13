@@ -123,6 +123,10 @@ in
     MEM_SLEEP_ON_AC = "s2idle";
     MEM_SLEEP_ON_BAT = "s2idle";
 
+    # LUKS UUID of encrypted swap partition (from: sudo cryptsetup luksDump /dev/nvme0n1p3)
+    # Set to null until swap is encrypted — hibernate module won't load without a valid UUID
+    hibernateSwapLuksUUID = null;
+
     # Suspend/resume debug instrumentation
     suspendDebugEnable = true;
 
