@@ -98,22 +98,34 @@ git fetch origin && git reset --hard origin/main
 
 ### Deploy to Multiple Containers
 
-Use the interactive deploy script:
+Use the unified deploy script (interactive TUI):
 
 ```bash
-./deploy-lxc.sh
+./deploy.sh
 ```
 
 Or deploy to all:
 
 ```bash
-./deploy-lxc.sh --all
+./deploy.sh --all
 ```
 
 Or deploy to specific profiles:
 
 ```bash
-./deploy-lxc.sh --profile LXC_database --profile LXC_monitoring
+./deploy.sh --profile LXC_database --profile LXC_monitoring
+```
+
+Or deploy an entire group:
+
+```bash
+./deploy.sh --group "LXC Containers"
+```
+
+Or preview what would be deployed:
+
+```bash
+./deploy.sh --dry-run --all
 ```
 
 ## Install Script Flags

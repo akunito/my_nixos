@@ -2,7 +2,7 @@
 id: lxc-deployment
 summary: Centralized deployment script for managing multiple LXC containers
 tags: [lxc, deployment, automation, proxmox, containers]
-related_files: [deploy-lxc.sh, profiles/LXC-base-config.nix]
+related_files: [deploy.sh, deploy-servers.conf, profiles/LXC-base-config.nix]
 ---
 
 # LXC Centralized Deployment
@@ -11,44 +11,74 @@ This repository includes a centralized deployment system for managing multiple P
 
 ## Overview
 
-The `deploy-lxc.sh` script provides an interactive menu to deploy NixOS configurations to multiple LXC containers simultaneously. Combined with passwordless sudo configuration, this enables fully automated deployments.
+The unified `deploy.sh` script provides a grouped interactive TUI to deploy NixOS configurations to LXC containers, laptops, and other machines. Server inventory is stored in `deploy-servers.conf` and can be edited from the TUI. Combined with passwordless sudo configuration, this enables fully automated deployments for LXC containers.
 
 ## Quick Start
 
 ```bash
-# Interactive mode - select containers with arrow keys
-./deploy-lxc.sh
+# Interactive TUI mode - grouped servers with Nerd Font icons
+./deploy.sh
 
-# Deploy to all containers
-./deploy-lxc.sh --all
+# Deploy to all servers
+./deploy.sh --all
 
 # Deploy to specific containers
-./deploy-lxc.sh --profile LXC_HOME --profile LXC_plane
+./deploy.sh --profile LXC_HOME --profile LXC_plane
+
+# Deploy an entire group
+./deploy.sh --group "LXC Containers"
+
+# Preview what would be deployed
+./deploy.sh --dry-run --all
+
+# List server inventory
+./deploy.sh --list
 ```
 
 ## Components
 
-### 1. Deploy Script (`deploy-lxc.sh`)
+### 1. Deploy Script (`deploy.sh`)
 
-Interactive deployment script with:
+Unified interactive deployment script with:
+- Grouped TUI with Nerd Font icons (JetBrainsMono Nerd Font)
 - Arrow key navigation and space to toggle selection
+- Group toggle (press `g` then group number)
+- Inline editing of server config (press `e`)
+- Multi-IP probing for machines with multiple network interfaces
 - Parallel-safe SSH connections with agent forwarding
 - Git fetch + reset to sync with main branch
-- Automatic install.sh execution with proper flags
+- Per-server deploy command from config file
+- Dry-run mode for previewing deployments
 
-**Features:**
+**TUI Keys:**
 - `[Space]` - Toggle server selection
 - `[Enter]` - Deploy to selected servers
 - `[a]` - Select all servers
 - `[n]` - Deselect all servers
+- `[g]` - Toggle entire group
+- `[e]` - Edit highlighted server
 - `[q]` - Quit
 
 **CLI Options:**
 ```bash
-./deploy-lxc.sh --all              # Deploy to all without menu
-./deploy-lxc.sh --profile NAME     # Deploy to specific profile(s)
-./deploy-lxc.sh --help             # Show help
+./deploy.sh --all                        # Deploy to all without menu
+./deploy.sh --profile NAME              # Deploy to specific profile(s)
+./deploy.sh --group "LXC Containers"    # Deploy entire group
+./deploy.sh --list                      # Show server inventory
+./deploy.sh --dry-run --all             # Preview all deployments
+./deploy.sh --config FILE              # Use alternative config file
+./deploy.sh --help                     # Show help
 ```
+
+### 1b. Server Inventory (`deploy-servers.conf`)
+
+Pipe-delimited config file with group headers and server definitions:
+```
+@GROUP_NAME|ICON
+PROFILE|USER|IPS|DESCRIPTION|COMMAND|SSH_TIMEOUT
+```
+
+Editable from the TUI (press `e`) or directly with a text editor.
 
 ### 2. LXC Base Configuration (`profiles/LXC-base-config.nix`)
 
@@ -119,16 +149,15 @@ Add the new profile to the `profiles` map in `flake.nix`:
 LXC_myservice = ./profiles/LXC_myservice-config.nix;
 ```
 
-### 3. Add to Deploy Script
+### 3. Add to Deploy Config
 
-Edit `deploy-lxc.sh` and add to the SERVERS array:
+Add a line to `deploy-servers.conf` under the appropriate group:
 
-```bash
-SERVERS=(
-  # ... existing servers ...
-  "LXC_myservice:192.168.8.XX:My service description"
-)
 ```
+LXC_myservice|akunito|192.168.8.XX|My service description|./install.sh {DIR} {PROFILE} -s -u -q|10
+```
+
+Or use the TUI: run `./deploy.sh`, navigate to a nearby server, press `e` to see the format, then edit the config file.
 
 ### 4. Initial Deployment
 
@@ -138,7 +167,7 @@ For the first deployment, you'll need to manually deploy with password:
 ssh -A akunito@192.168.8.XX "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_myservice -s -u -q"
 ```
 
-After this, the passwordless sudo config will be active and future deployments via `deploy-lxc.sh` will work without password prompts.
+After this, the passwordless sudo config will be active and future deployments via `deploy.sh` will work without password prompts.
 
 ## Deployment Workflow
 
