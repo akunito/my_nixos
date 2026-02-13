@@ -1,59 +1,91 @@
 ---
 id: waypaper
-summary: Waypaper GUI wallpaper manager for Sway (swww backend)
-tags: [waypaper, wallpaper, sway, swww, gui]
+summary: Waypaper GUI wallpaper manager — single source of truth for wallpaper restore in Sway (swww backend)
+tags: [waypaper, wallpaper, sway, swww, gui, stylix, systemd-user]
 related_files:
   - user/app/waypaper/waypaper.nix
   - user/app/swww/swww.nix
+  - user/wm/sway/swayfx-config.nix
   - profiles/DESK-config.nix
   - profiles/LAPTOP-base.nix
+  - lib/defaults.nix
 ---
 
-# Waypaper - GUI Wallpaper Manager for Sway
+# Waypaper — GUI Wallpaper Manager (Single Source of Truth)
 
-Waypaper is a lightweight GUI wallpaper manager that integrates with the swww wallpaper daemon for SwayFX. It provides a visual interface for selecting wallpapers with multi-monitor support and automatic restoration.
+Waypaper is a lightweight GUI wallpaper manager that integrates with the swww daemon for SwayFX. When enabled (`waypaperEnable = true`), it becomes the **single source of truth** for wallpaper restore — replacing swww-restore on boot, monitor wake, and Home-Manager rebuild.
 
 ## Overview
 
 - **Backend**: swww (Wayland Animated Wallpaper Daemon)
-- **Frontend**: Waypaper GUI (315 KB)
-- **Keybinding**: Hyper+Shift+S (Ctrl+Alt+Super+Shift+S)
-- **Storage**: `~/.config/waypaper/` (wallpaper config and state)
+- **Frontend**: Waypaper GUI
+- **Keybinding**: Hyper+Shift+B (Ctrl+Alt+Super+Shift+B)
+- **Config**: `~/.config/waypaper/config.ini` (imperative, user-managed)
+- **State model**: User sets wallpaper via GUI → config.ini updated → `waypaper --restore` reads it
 
-## Features
+## Wallpaper Restore Architecture
 
-- Multi-monitor wallpaper configuration
-- Per-monitor wallpaper selection
-- Automatic restoration on login
-- Restoration after Home-Manager rebuild
-- Native `waypaper --restore` command
-- Minimal footprint (315 KB)
-- Actively maintained
-
-## Architecture
+When `waypaperEnable = true`, the wallpaper restore ownership transfers from swww to Waypaper:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Sway Session Startup                     │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ├─► swww-daemon.service (backend)
-                     │   └─► Manages wallpaper rendering
-                     │
-                     └─► waypaper-restore.service (restoration)
-                         ├─► After: swww-daemon.service
-                         └─► ExecStart: waypaper --restore
+│                 waypaperEnable = true                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  swww-daemon.service  ── still runs (backend, unchanged)    │
+│  swww-restore.service ── disabled (no WantedBy)             │
+│  swwwRestoreAfterSwitch ── disabled (HM hook removed)       │
+│                                                             │
+│  waypaper-restore.service ── ACTIVE (WantedBy sway-session) │
+│  waypaperRestore ── ACTIVE (HM activation hook)             │
+│  sway-resume-monitors ── calls waypaper-restore.service     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
-│                User Interaction (Hyper+Shift+S)             │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     └─► waypaper (GUI)
-                         ├─► Select wallpapers per monitor
-                         ├─► Preview in GUI
-                         ├─► Apply via swww backend
-                         └─► Save config to ~/.config/waypaper/
+│                 waypaperEnable = false (backward compat)     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  swww-daemon.service  ── runs (backend)                     │
+│  swww-restore.service ── ACTIVE (WantedBy sway-session)     │
+│  swwwRestoreAfterSwitch ── ACTIVE (HM activation hook)      │
+│  sway-resume-monitors ── calls swww-restore.service         │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+### Behavior by Scenario
+
+| Scenario | waypaperEnable=true | waypaperEnable=false |
+|---|---|---|
+| Boot / login | waypaper-restore.service | swww-restore.service |
+| Monitor wake | waypaper-restore.service | swww-restore.service |
+| HM switch / sync-user.sh | waypaperRestore hook | swwwRestoreAfterSwitch hook |
+| Manual restore | `systemctl --user start waypaper-restore` | `systemctl --user start swww-restore` |
+
+## waypaper-restore-wrapper
+
+The restore wrapper (`waypaper.nix`) incorporates the same robust wait logic as swww-restore:
+
+1. **Source `sway-session.env`** — picks up SWAYSOCK and WAYLAND_DISPLAY
+2. **Resolve SWAYSOCK** — falls back to scanning `$XDG_RUNTIME_DIR/sway-ipc.*.sock`
+3. **Wait for Sway outputs** — polls `swaymsg -t get_outputs` up to 30s
+4. **Wait for swww-daemon** — polls `swww query` up to 30s
+5. **Stylix fallback** — if `~/.config/waypaper/config.ini` doesn't exist and `stylixEnable = true`, generates a default config pointing to `config.stylix.image`
+6. **Run `waypaper --restore`**
+
+### First-Run Flow (No Waypaper Config Yet)
+
+1. `waypaper-restore` starts → waits for daemon + outputs
+2. Detects no `~/.config/waypaper/config.ini`
+3. Generates default config from Stylix image path (`/nix/store/...`)
+4. Runs `waypaper --restore` → wallpaper appears
+
+### Normal Flow (Waypaper Configured)
+
+1. `waypaper-restore` starts → waits for daemon + outputs
+2. Reads existing `~/.config/waypaper/config.ini` (user's imperative choice)
+3. Runs `waypaper --restore` → wallpaper appears
 
 ## Configuration
 
@@ -63,17 +95,17 @@ Waypaper is a lightweight GUI wallpaper manager that integrates with the swww wa
 ```nix
 # profiles/DESK-config.nix
 systemSettings = {
-  swwwEnable = true;        # Backend daemon
-  waypaperEnable = true;    # GUI frontend
+  swwwEnable = true;        # Backend daemon (required)
+  waypaperEnable = true;    # GUI frontend + restore ownership
 };
 ```
 
 **For Laptops:**
 ```nix
-# profiles/LAPTOP-base.nix (inherited by LAPTOP_L15, LAPTOP_YOGAAKU)
+# profiles/LAPTOP-base.nix (inherited by LAPTOP_L15, LAPTOP_AGA, LAPTOP_YOGAAKU)
 systemSettings = {
-  swwwEnable = true;        # Backend daemon
-  waypaperEnable = true;    # GUI frontend
+  swwwEnable = true;        # Backend daemon (required)
+  waypaperEnable = true;    # GUI frontend + restore ownership
 };
 ```
 
@@ -90,74 +122,18 @@ systemSettings = {
 
 ### Launch GUI
 
-- **Keybinding**: Hyper+Shift+S (Ctrl+Alt+Super+Shift+S)
+- **Keybinding**: Hyper+Shift+B (Ctrl+Alt+Super+Shift+B)
 - **Command**: `waypaper`
 - **Application Launcher**: Search for "Waypaper" in Rofi
 
 ### GUI Workflow
 
-1. Press Hyper+Shift+S to launch Waypaper
-2. GUI opens as a floating window (1200x800px, centered)
+1. Press Hyper+Shift+B to launch Waypaper
+2. GUI opens as a floating window (1200x800px)
 3. Select monitor from dropdown (if multi-monitor)
 4. Browse wallpapers from selected folder
-5. Click wallpaper to preview
-6. Click "Apply" to set wallpaper
-7. Repeat for each monitor
-8. Close GUI - wallpapers are saved automatically
-
-### Multi-Monitor Setup (DESK Example)
-
-**DESK has 4 monitors:**
-1. Samsung Odyssey G70NC (3840x2160@120Hz, scale 1.6) - Primary
-2. NSL RGB-27QHDS (2560x1440@144Hz, scale 1.25, portrait)
-3. Philips FTV (1920x1080@60Hz)
-4. BNQ ZOWIE XL (1920x1080@60Hz)
-
-**Workflow:**
-1. Launch Waypaper (Hyper+Shift+S)
-2. Select "Samsung Odyssey G70NC" from monitor dropdown
-3. Choose wallpaper, click Apply
-4. Select "NSL RGB-27QHDS" from dropdown
-5. Choose different wallpaper, click Apply
-6. Repeat for Philips and BNQ
-7. Close GUI
-
-Waypaper saves configuration to `~/.config/waypaper/config.ini` with per-monitor settings.
-
-## Restoration
-
-### On Login
-
-Wallpapers are restored automatically when Sway starts via systemd service:
-
-```nix
-systemd.user.services.waypaper-restore = {
-  Unit = {
-    Description = "Waypaper Wallpaper Restoration";
-    After = [ "swww-daemon.service" ];
-    PartOf = [ "sway-session.target" ];
-  };
-  Service = {
-    Type = "oneshot";
-    ExecStart = "waypaper --restore";
-  };
-  Install = {
-    WantedBy = [ "sway-session.target" ];
-  };
-};
-```
-
-### After Home-Manager Rebuild
-
-Home-Manager activation hook automatically restores wallpapers after `home-manager switch`:
-
-```nix
-home.activation.waypaperRestore = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-  if systemctl --user is-active sway-session.target >/dev/null 2>&1; then
-    run waypaper --restore
-  fi
-'';
-```
+5. Click wallpaper to apply
+6. Close GUI — config.ini is saved automatically
 
 ### Manual Restoration
 
@@ -166,164 +142,138 @@ home.activation.waypaperRestore = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
 waypaper --restore
 
 # Or via systemd service
-systemctl --user restart waypaper-restore.service
+systemctl --user start waypaper-restore.service
+
+# Check logs
+journalctl --user -u waypaper-restore.service -b --no-pager
 ```
 
 ## Configuration Files
 
 ### Config Location
 ```
-~/.config/waypaper/
-├── config.ini           # Waypaper settings (backend, folder, fill mode)
-└── wallpaper.ini        # Per-monitor wallpaper assignments
+~/.config/waypaper/config.ini    # All settings + wallpaper path (single file)
 ```
 
 ### Example config.ini
 ```ini
 [Settings]
-backend = swww
 folder = /home/akunito/Pictures/Wallpapers
+wallpaper = /home/akunito/Pictures/Wallpapers/mountains.jpg
+backend = swww
+monitors = All
 fill = fill
-monitors = all
-```
-
-### Example wallpaper.ini
-```ini
-[Wallpapers]
-Samsung Electric Company Odyssey G70NC H1AK500000 = /home/akunito/Pictures/Wallpapers/mountains.jpg
-NSL RGB-27QHDS    Unknown = /home/akunito/Pictures/Wallpapers/forest.png
+sort = name
+color = #ffffff
+subfolders = False
+number_of_columns = 3
+post_command =
+swww_transition_type = any
+swww_transition_step = 90
+swww_transition_angle = 0
+swww_transition_duration = 2
+swww_transition_fps = 60
 ```
 
 ## Troubleshooting
 
 ### Wallpapers Not Restored on Login
 
-**Check swww daemon:**
 ```bash
+# 1. Check swww daemon
 systemctl --user status swww-daemon.service
-```
 
-**Check waypaper-restore service:**
-```bash
+# 2. Check waypaper-restore service
 systemctl --user status waypaper-restore.service
-journalctl --user -u waypaper-restore.service
+journalctl --user -u waypaper-restore.service -b --no-pager
+
+# 3. Verify swww-restore is NOT auto-starting (when waypaperEnable=true)
+systemctl --user status swww-restore.service
+# Expected: inactive, no WantedBy in unit file
 ```
 
-**Manual restore:**
+### Wallpaper Reverts After Boot / Monitor Wake
+
+This was the original race condition. If you still see it:
+
+1. Verify `waypaperEnable = true` in your profile
+2. Confirm swww-restore has no `[Install]` section:
+   ```bash
+   systemctl --user cat swww-restore.service | grep -A1 Install
+   # Should show nothing (no WantedBy)
+   ```
+3. Confirm waypaper-restore is the active restore service:
+   ```bash
+   systemctl --user cat waypaper-restore.service | grep WantedBy
+   # Should show: WantedBy=sway-session.target
+   ```
+
+### Blank Background on First Run
+
+The Stylix fallback should handle this. If it doesn't:
+
 ```bash
-waypaper --restore
+# Check if config was generated
+cat ~/.config/waypaper/config.ini
+
+# If missing and Stylix is enabled, manually trigger
+systemctl --user start waypaper-restore.service
+journalctl --user -u waypaper-restore.service -b --no-pager
+# Look for: "no config found, generating default from Stylix image"
 ```
 
 ### GUI Doesn't Launch
 
-**Check if Waypaper is installed:**
 ```bash
 which waypaper
-waypaper --version
+waypaper  # Launch manually to see errors
 ```
 
-**Check keybinding in Sway:**
+## Verification After Deploy
+
 ```bash
-swaymsg -t get_binding_state
-```
+# 1. swww-restore should NOT auto-start (when waypaperEnable=true)
+systemctl --user status swww-restore.service  # expect: inactive
 
-**Launch manually:**
-```bash
-waypaper
-```
+# 2. waypaper-restore should have run successfully
+systemctl --user status waypaper-restore.service
+journalctl --user -u waypaper-restore.service -b --no-pager
 
-### Wrong Monitor Names
+# 3. Test Stylix fallback (first-run simulation)
+mv ~/.config/waypaper/config.ini ~/.config/waypaper/config.ini.bak
+swww clear
+systemctl --user start waypaper-restore.service
+cat ~/.config/waypaper/config.ini  # Should contain Stylix image path
+mv ~/.config/waypaper/config.ini.bak ~/.config/waypaper/config.ini
 
-Waypaper uses the same hardware IDs as Sway. Check with:
-```bash
-swaymsg -t get_outputs
-```
+# 4. Test imperative persistence
+# Open Waypaper GUI, set a new wallpaper, then:
+systemctl --user start waypaper-restore.service
+# Wallpaper should match what you set in GUI
 
-Output includes `make`, `model`, `serial` - Waypaper concatenates these.
-
-### Wallpapers Disappear After Home-Manager Rebuild
-
-This should be fixed by the activation hook. If it persists:
-
-1. Check activation hook ran:
-```bash
-journalctl --user -n 100 | grep waypaper
-```
-
-2. Manually trigger:
-```bash
-waypaper --restore
-```
-
-3. Verify config exists:
-```bash
-cat ~/.config/waypaper/wallpaper.ini
+# 5. Monitor wake test
+# Lock screen / let monitors power off, then wake → wallpaper should restore
 ```
 
 ## Migration from SwayBG+
 
-SwayBG+ is deprecated in favor of Waypaper. Migration is automatic:
+SwayBG+ is deprecated in favor of Waypaper:
 
-**Old config:**
 ```nix
 systemSettings = {
   swwwEnable = true;
-  swaybgPlusEnable = true;  # DEPRECATED
+  waypaperEnable = true;    # Replaces swaybgPlusEnable
+  swaybgPlusEnable = false; # DEPRECATED
 };
 ```
-
-**New config:**
-```nix
-systemSettings = {
-  swwwEnable = true;
-  waypaperEnable = true;    # Use this instead
-};
-```
-
-**Migration steps:**
-1. Update profile: `waypaperEnable = true`, `swaybgPlusEnable = false`
-2. Rebuild: `sudo nixos-rebuild switch --flake .#DESK`
-3. Launch Waypaper: Hyper+Shift+S
-4. Re-select wallpapers (SwayBG+ and Waypaper use different config formats)
-
-**Differences:**
-- SwayBG+ uses swaybg backend (conflicts with swww)
-- Waypaper uses swww backend (same as swww-restore.service)
-- Waypaper is lighter (315 KB vs several MB)
-- Waypaper has native `--restore` command
-
-## Technical Details
-
-### swww Backend Integration
-
-Waypaper communicates with swww daemon via IPC:
-
-```bash
-# Waypaper internally runs commands like:
-swww img /path/to/wallpaper.jpg --outputs MONITOR_NAME --transition-type fade
-```
-
-### Window Rules
-
-Waypaper window is configured to float and resize:
-
-```nix
-# swayfx-config.nix
-for_window [app_id="waypaper"] floating enable, resize set 1200 800
-```
-
-### Dependencies
-
-- **swww**: Wallpaper rendering backend (systemSettings.swwwEnable)
-- **waypaper**: GUI frontend (from nixpkgs)
-- **systemd**: Service management for restoration
 
 ## Related Documentation
 
-- `docs/user-modules/swww.md` - swww daemon configuration
-- `docs/user-modules/sway-daemon-integration.md` - Sway systemd services
-- `user/app/waypaper/waypaper.nix` - Waypaper module implementation
-- `user/app/swww/swww.nix` - swww daemon implementation
+- `docs/user-modules/swww.md` — swww daemon and swww-restore (backward compat)
+- `docs/user-modules/sway-daemon-integration.md` — Sway systemd services
+- `user/app/waypaper/waypaper.nix` — Waypaper module implementation
+- `user/app/swww/swww.nix` — swww module (daemon + conditional restore)
+- `user/wm/sway/swayfx-config.nix` — Monitor wake restore dispatch
 
 ## See Also
 

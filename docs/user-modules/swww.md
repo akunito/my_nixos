@@ -31,10 +31,16 @@ This repo supports **swww** as the wallpaper backend for **SwayFX**. The key pro
 - Re-triggers restore once after Home-Manager reloads `systemd --user` (covers `aku sync user`).
 - Preserves Stylix containment: it **does not** set global theme env vars.
 
+> **Note**: When `waypaperEnable = true`, Waypaper takes over wallpaper restore ownership.
+> `swww-restore.service` auto-start and its HM activation hook are disabled.
+> The swww **daemon** still runs (Waypaper uses it as backend).
+> See `docs/user-modules/waypaper.md` for the consolidated architecture.
+
 ## Enable (DESK profile)
 
 - `systemSettings.swwwEnable = true;`
-- `systemSettings.swaybgPlusEnable = false;` (avoid multiple wallpaper owners)
+- `systemSettings.waypaperEnable = true;` (recommended — Waypaper becomes restore owner)
+- `systemSettings.swaybgPlusEnable = false;` (deprecated)
 
 ## Usage (CLI)
 
