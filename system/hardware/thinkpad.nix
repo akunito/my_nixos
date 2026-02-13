@@ -30,4 +30,14 @@ in
     lib.optional
       (systemSettings.thinkpadEnable && selectedModule == null)
       "thinkpadEnable is true but thinkpadModel '${systemSettings.thinkpadModel}' is not recognized. Available models: ${lib.concatStringsSep ", " (lib.attrNames thinkpadModules)}";
+
+  # PS/2 keyboard and touchpad support for ThinkPads
+  # i8042/atkbd in initrd: needed for built-in keyboard at LUKS password prompt
+  # psmouse: PS/2 touchpad driver (not autoloaded on some kernels)
+  # i8042.reset: fixes AUX port not initializing on kernel 6.19+
+  boot.initrd.availableKernelModules = lib.mkIf systemSettings.thinkpadEnable [
+    "i8042" "atkbd"
+  ];
+  boot.kernelModules = lib.mkIf systemSettings.thinkpadEnable [ "psmouse" ];
+  boot.kernelParams = lib.mkIf systemSettings.thinkpadEnable [ "i8042.reset=1" "i8042.nomux=1" ];
 }
