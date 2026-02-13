@@ -106,6 +106,11 @@ in
     thinkpadModel = "lenovo-thinkpad-t490"; # T580 → T490 (next generation, same family)
     thunderboltEnable = true; # Enable Thunderbolt dock/device support (TB3 port)
 
+    # === Intel GPU & Thermal Power Tuning (T490 = 8th gen Intel UHD 620) ===
+    intelGpuFbcEnable = true; # i915 framebuffer compression
+    intelGpuPsrEnable = true; # i915 panel self-refresh
+    thermaldEnable = true; # Intel thermal daemon
+
     # === System Services & Features ===
     sambaEnable = false; # Disable Samba file sharing
     sunshineEnable = true; # Enable Sunshine game streaming
