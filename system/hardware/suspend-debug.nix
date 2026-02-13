@@ -21,15 +21,25 @@ let
   '';
 in
 lib.mkIf (systemSettings.suspendDebugEnable or false) {
-  systemd.services."suspend-debug" = {
-    description = "Suspend/resume debug logging";
+  # Pre-sleep: log before system suspends
+  systemd.services."suspend-debug-pre" = {
+    description = "Suspend debug logging (pre-sleep)";
     before = [ "sleep.target" ];
     wantedBy = [ "sleep.target" ];
     serviceConfig = {
       Type = "oneshot";
-      RemainAfterExit = true;
       ExecStart = suspendScript;
-      ExecStop = resumeScript;
+    };
+  };
+
+  # Post-resume: log after system wakes
+  systemd.services."suspend-debug-post" = {
+    description = "Suspend debug logging (post-resume)";
+    after = [ "sleep.target" ];
+    wantedBy = [ "sleep.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = resumeScript;
     };
   };
 }

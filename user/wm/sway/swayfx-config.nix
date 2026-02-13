@@ -98,6 +98,7 @@ let
   swaylock-with-grace = pkgs.writeShellApplication {
     name = "swaylock-with-grace";
     runtimeInputs = with pkgs; [
+      coreutils
       sway
       jq
       libnotify
@@ -188,7 +189,11 @@ in
         }
       ];
     events = {
-      before-sleep = "${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono'";
+      # Use --color instead of --screenshots for before-sleep: monitors may be powered off,
+      # causing screencopy to fail and leaving the session unlocked after resume.
+      before-sleep = "${pkgs.swaylock-effects}/bin/swaylock --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono' --color 000000";
+      # Ensure monitors are powered on after resume (safety net — timeout resumeCommand may not fire)
+      after-resume = "${sway-resume-monitors}";
     };
   };
 
