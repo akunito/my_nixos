@@ -110,7 +110,9 @@ let
   # Resume monitors and restore wallpaper (wraps multi-command sequence for swayidle)
   sway-resume-monitors = pkgs.writeShellScript "sway-resume-monitors" ''
     ${pkgs.sway}/bin/swaymsg 'output * power on'
-    ${pkgs.systemd}/bin/systemctl --user start swww-restore.service
+    ${if (systemSettings.waypaperEnable or false)
+      then "${pkgs.systemd}/bin/systemctl --user start waypaper-restore.service"
+      else "${pkgs.systemd}/bin/systemctl --user start swww-restore.service"}
   '';
 
   # Smart lid handler: suspend if no external monitor, disable internal display if docked

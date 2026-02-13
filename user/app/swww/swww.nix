@@ -2,6 +2,7 @@
 
 let
   cfgEnable = (systemSettings.swwwEnable or false);
+  waypaperTakesOver = (systemSettings.waypaperEnable or false);
 
   SWWW = lib.getExe pkgs.swww;
   JQ = lib.getExe pkgs.jq;
@@ -187,13 +188,15 @@ in
       EnvironmentFile = [ "-%t/sway-session.env" ];
     };
     Install = {
-      WantedBy = [ "sway-session.target" ];
+      # When Waypaper is enabled it takes over wallpaper restore; don't auto-start this service.
+      WantedBy = lib.mkIf (!waypaperTakesOver) [ "sway-session.target" ];
     };
   };
 
   # Home-Manager activation can reload systemd --user and disrupt wallpaper processes.
   # Re-trigger restore once after reloadSystemd, but only if a real Sway IPC socket exists.
-  home.activation.swwwRestoreAfterSwitch = lib.mkIf cfgEnable (lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+  # When Waypaper is enabled, waypaper.nix provides its own activation hook instead.
+  home.activation.swwwRestoreAfterSwitch = lib.mkIf (cfgEnable && !waypaperTakesOver) (lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
     RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
     ENV_FILE="$RUNTIME_DIR/sway-session.env"
     if [ -r "$ENV_FILE" ]; then
