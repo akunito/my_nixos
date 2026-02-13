@@ -5,7 +5,7 @@ Skill for deploying NixOS configurations to LXC containers and other machines.
 ## CRITICAL: Always Use install.sh — NEVER Bare nixos-rebuild
 
 **NEVER** run `git pull && sudo nixos-rebuild switch` on remote machines. This will break because:
-- `hardware-configuration.nix` is machine-specific and gitignored; `git pull` could overwrite it with another machine's UUIDs
+- `hardware-configuration.nix` is machine-specific; `git reset --hard` overwrites it, but `install.sh` regenerates it for the target machine before building
 - `install.sh` handles hardware-config regeneration, file hardening, docker handling, and rollback
 - Use `deploy.sh` or the `git fetch && git reset --hard && ./install.sh` pattern ALWAYS
 

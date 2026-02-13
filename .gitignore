@@ -37,7 +37,9 @@
 # Nix files
 # flake.lock - SHOULD be tracked for reproducibility (removed from ignore)
 # Note: flake.lock is currently tracked and should remain tracked
-**/hardware-configuration.nix  # Machine-specific, managed per-profile
+## NOTE: hardware-configuration.nix is tracked in git (required by flake).
+## install.sh regenerates it for the target machine before building.
+## Do NOT use -h/--skip-hardware flag for physical machines (laptops/desktops).
 
 # Local/custom files (user-specific, not in repo)
 local/
