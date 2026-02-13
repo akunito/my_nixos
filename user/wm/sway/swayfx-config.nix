@@ -141,6 +141,16 @@ let
   '';
 
   # Idle action scripts (used by power-aware swayidle wrapper)
+  sway-idle-dim = pkgs.writeShellScript "sway-idle-dim" ''
+    # Save current brightness and dim to configured percentage
+    ${pkgs.brightnessctl}/bin/brightnessctl -s set ${toString (systemSettings.swayIdleDimPercent or 30)}%
+  '';
+
+  sway-idle-undim = pkgs.writeShellScript "sway-idle-undim" ''
+    # Restore previous brightness
+    ${pkgs.brightnessctl}/bin/brightnessctl -r
+  '';
+
   sway-idle-monitor-off = pkgs.writeShellScript "sway-idle-monitor-off" ''
     ${pkgs.sway}/bin/swaymsg 'output * power off'
   '';
@@ -167,16 +177,25 @@ let
     BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
 
     if [ "$BAT_STATUS" = "Discharging" ]; then
+      DIM_TIMEOUT=${toString (systemSettings.swayIdleDimTimeoutBat or 60)}
       LOCK_TIMEOUT=${toString (systemSettings.swayIdleLockTimeoutBat or 180)}
       MONITOR_OFF_TIMEOUT=${toString (systemSettings.swayIdleMonitorOffTimeoutBat or 210)}
       SUSPEND_TIMEOUT=${toString (systemSettings.swayIdleSuspendTimeoutBat or 480)}
+      ON_BATTERY=true
     else
+      DIM_TIMEOUT=0
       LOCK_TIMEOUT=${toString systemSettings.swayIdleLockTimeout}
       MONITOR_OFF_TIMEOUT=${toString systemSettings.swayIdleMonitorOffTimeout}
       SUSPEND_TIMEOUT=${toString systemSettings.swayIdleSuspendTimeout}
+      ON_BATTERY=false
     fi
 
     ARGS=(-w)
+    # Dim screen on battery before lock (restore on activity)
+    if [ "$ON_BATTERY" = true ] && [ "$DIM_TIMEOUT" -gt 0 ]; then
+      ARGS+=(timeout "$DIM_TIMEOUT" '${sway-idle-dim}')
+      ARGS+=(resume '${sway-idle-undim}')
+    fi
     ARGS+=(timeout "$LOCK_TIMEOUT" '${swaylock-with-grace}/bin/swaylock-with-grace')
     ${lib.optionalString (systemSettings.swayIdleDisableMonitorPowerOff != true) ''
     ARGS+=(timeout "$MONITOR_OFF_TIMEOUT" '${sway-idle-monitor-off}')
@@ -211,6 +230,8 @@ let
       if [ -n "$LAST_STATE" ] && [ "$CURRENT" != "$LAST_STATE" ]; then
         ${pkgs.systemd}/bin/systemctl --user restart swayidle.service
         if [ "$CURRENT" = "ac" ]; then
+          # Restore brightness in case screen was dimmed on battery
+          ${pkgs.brightnessctl}/bin/brightnessctl -r 2>/dev/null || true
           ${pkgs.libnotify}/bin/notify-send -t 3000 "Power" "AC connected - extended idle timeouts" -h string:x-canonical-private-synchronous:power-state
         else
           ${pkgs.libnotify}/bin/notify-send -t 3000 "Power" "On battery - shorter idle timeouts" -h string:x-canonical-private-synchronous:power-state

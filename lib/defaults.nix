@@ -497,6 +497,8 @@
 
     # Power-aware idle: different timeouts for AC vs battery (laptops)
     swayIdlePowerAwareEnable = false;       # Enable power-aware swayidle (AC/battery detection)
+    swayIdleDimTimeoutBat = 60;             # Battery: 1 min dim screen to 30%
+    swayIdleDimPercent = 30;                # Dim brightness percentage (0-100)
     swayIdleLockTimeoutBat = 180;           # Battery: 3 min lock
     swayIdleMonitorOffTimeoutBat = 210;     # Battery: 3.5 min monitors off
     swayIdleSuspendTimeoutBat = 480;        # Battery: 8 min suspend
