@@ -333,6 +333,9 @@ EOF
     # Touchpad gestures
     libinput-gestures
 
+    # Media control
+    playerctl # MPRIS media player control (play/pause/next/prev)
+
     # System tools
     networkmanagerapplet
     blueman
