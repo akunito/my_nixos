@@ -27,7 +27,7 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 ./deploy.sh --profile LAPTOP_L15
 
 # Option B: For LXC containers (passwordless sudo) — single SSH command
-ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -q"
+ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -d -h"
 
 # Option C: For physical machines (laptops/desktops) — requires sudo password
 # Tell the user to run on the target machine:
@@ -37,9 +37,14 @@ cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.
 **Key points:**
 - `git fetch origin && git reset --hard origin/main` (NOT `git pull`) ensures clean state
 - `install.sh` regenerates `hardware-configuration.nix` for the current machine
-- `-q` (quick mode) skips docker handling and hardware-config regeneration (safe for LXC/quick updates)
+- `-d` (skip docker) keeps containers running — use for LXC containers with running services
+- `-h` (skip hardware) skips hardware-config generation — use for LXC containers (no hardware changes)
+- `-q` (quick) is shorthand for `-d -h` (backward compatibility)
+- **LXC containers**: use `-d -h` (skip docker + skip hardware)
+- **Laptops/Desktops**: do NOT use `-d` or `-h` — hardware-config MUST be regenerated on physical machines
 - Physical machines (DESK, LAPTOP_*) need sudo password — ask user to run manually or provide password
 - See `deploy-servers.conf` for the full server inventory and IP addresses
+- `hardware-configuration.nix` is gitignored — each machine generates its own at deploy time
 
 ## Profile Architecture Principles (CRITICAL)
 

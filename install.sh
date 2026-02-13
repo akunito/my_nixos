@@ -20,12 +20,13 @@ RESET='\033[0m'
 
 #
 # Argument parsing
-# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick] [-n|--no-git-update]
-# - Also supports -s/--silent, -u/--update, -q/--quick, -n/--no-git-update anywhere without breaking positional parsing.
+# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-d|--skip-docker] [-h|--skip-hardware] [-q|--quick] [-n|--no-git-update]
+# - Also supports flags anywhere without breaking positional parsing.
 #
 SILENT_MODE=false
 UPDATE_FLAKE_LOCK=false
-QUICK_MODE=false
+SKIP_DOCKER=false
+SKIP_HARDWARE=false
 FORCE_MODE=false
 NO_GIT_UPDATE=false
 POSITIONAL_ARGS=()
@@ -37,8 +38,16 @@ for arg in "$@"; do
         -u|--update)
             UPDATE_FLAKE_LOCK=true
             ;;
+        -d|--skip-docker)
+            SKIP_DOCKER=true
+            ;;
+        -h|--skip-hardware)
+            SKIP_HARDWARE=true
+            ;;
         -q|--quick)
-            QUICK_MODE=true
+            # Backward compatibility: -q sets both -d and -h
+            SKIP_DOCKER=true
+            SKIP_HARDWARE=true
             ;;
         -f|--force)
             FORCE_MODE=true
@@ -124,11 +133,13 @@ if [ ${#POSITIONAL_ARGS[@]} -gt 1 ]; then
     PROFILE="${POSITIONAL_ARGS[1]}"
 else
     echo -e "${RED}Error: PROFILE parameter is required${RESET}"
-    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-q|--quick] [-f|--force] [-n|--no-git-update]"
+    echo "Usage: $0 <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-d|--skip-docker] [-h|--skip-hardware] [-q|--quick] [-f|--force] [-n|--no-git-update]"
     echo "Example: $0 /path/to/repo DESK -s -u"
     echo "  -s|--silent: Silent mode (skip prompts, use defaults)"
     echo "  -u|--update: Update flake.lock"
-    echo "  -q|--quick: Skip docker handling and hardware-config generation (for quick updates)"
+    echo "  -d|--skip-docker: Skip docker container handling (keeps containers running)"
+    echo "  -h|--skip-hardware: Skip hardware-configuration.nix generation"
+    echo "  -q|--quick: Shorthand for -d -h (backward compatibility)"
     echo "  -f|--force: Bypass ENV_PROFILE safety check (for first-time installs)"
     echo "  -n|--no-git-update: Skip repository update/fetch (useful after git-crypt unlock)"
     echo "Where DESK is a profile name defined in flake.nix"
@@ -897,17 +908,17 @@ generate_root_ssh_keys_for_ssh_server_on_boot $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 update_flake_lock $SCRIPT_DIR $SILENT_MODE $UPDATE_FLAKE_LOCK
 
 # Handle Docker containers (generate_hardware_config must be executed after this !)
-# Skip in quick mode to avoid stopping containers during updates
-if [ "$QUICK_MODE" = true ]; then
-    echo -e "${CYAN}Quick mode: Skipping Docker handling${RESET}"
+# Skip with -d/--skip-docker to keep containers running during updates
+if [ "$SKIP_DOCKER" = true ]; then
+    echo -e "${CYAN}Skipping Docker handling (-d flag)${RESET}"
 else
     handle_docker $SCRIPT_DIR $SILENT_MODE
 fi
 
 # Generate hardware config and check boot mode
-# Skip in quick mode to avoid issues with docker volumes and faster updates
-if [ "$QUICK_MODE" = true ]; then
-    echo -e "${CYAN}Quick mode: Skipping hardware-configuration.nix generation${RESET}"
+# Skip with -h/--skip-hardware to avoid issues with docker volumes or when not needed
+if [ "$SKIP_HARDWARE" = true ]; then
+    echo -e "${CYAN}Skipping hardware-configuration.nix generation (-h flag)${RESET}"
 else
     generate_hardware_config $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
     open_hardware_configuration_nix $SCRIPT_DIR $SUDO_CMD $SILENT_MODE

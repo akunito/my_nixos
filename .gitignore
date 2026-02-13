@@ -37,7 +37,7 @@
 # Nix files
 # flake.lock - SHOULD be tracked for reproducibility (removed from ignore)
 # Note: flake.lock is currently tracked and should remain tracked
-hardware-configuration.nix  # Machine-specific, managed per-profile
+**/hardware-configuration.nix  # Machine-specific, managed per-profile
 
 # Local/custom files (user-specific, not in repo)
 local/

@@ -5,9 +5,13 @@ Skill for deploying NixOS configurations to LXC containers and other machines.
 ## CRITICAL: Always Use install.sh — NEVER Bare nixos-rebuild
 
 **NEVER** run `git pull && sudo nixos-rebuild switch` on remote machines. This will break because:
-- `hardware-configuration.nix` is machine-specific; `git pull` overwrites it with another machine's UUIDs
+- `hardware-configuration.nix` is machine-specific and gitignored; `git pull` could overwrite it with another machine's UUIDs
 - `install.sh` handles hardware-config regeneration, file hardening, docker handling, and rollback
 - Use `deploy.sh` or the `git fetch && git reset --hard && ./install.sh` pattern ALWAYS
+
+**Flag rules for deploy-servers.conf:**
+- **LXC containers**: Use `-d -h` (skip docker + skip hardware — no docker overlay issues, no hardware changes)
+- **Laptops/Desktops**: Use NO skip flags — hardware-config MUST be regenerated on physical machines
 
 ## Usage
 
@@ -30,7 +34,7 @@ git push origin main
 ./deploy.sh --profile <PROFILE>
 
 # Option B: Single LXC container via SSH (passwordless sudo)
-ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -q"
+ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -d -h"
 ```
 
 ## Important: LXC vs Physical Machines
@@ -76,25 +80,25 @@ All containers use vmbr10 (bond0 LACP 2x10G → USW Aggregation SFP+ 3+4).
 ### Deploy to LXC_database
 
 ```bash
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_database -s -u -q"
+ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_database -s -u -d -h"
 ```
 
 ### Deploy to LXC_monitoring
 
 ```bash
-ssh -A akunito@192.168.8.85 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_monitoring -s -u -q"
+ssh -A akunito@192.168.8.85 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_monitoring -s -u -d -h"
 ```
 
 ### Deploy to LXC_matrix
 
 ```bash
-ssh -A akunito@192.168.8.104 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_matrix -s -u -q"
+ssh -A akunito@192.168.8.104 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_matrix -s -u -d -h"
 ```
 
 ### Deploy to LXC_tailscale
 
 ```bash
-ssh -A akunito@192.168.8.105 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_tailscale -s -u -q"
+ssh -A akunito@192.168.8.105 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_tailscale -s -u -d -h"
 ```
 
 ### Deploy to LAPTOP_AGA (Manual - requires password)
@@ -141,8 +145,12 @@ Or preview what would be deployed:
 ## Install Script Flags
 
 - `-s` / `--silent`: Silent mode (no startup services)
-- `-u` / `--update`: Update mode
-- `-q` / `--quick`: Quick mode (skip docker handling and hardware-config generation)
+- `-u` / `--update`: Update flake.lock
+- `-d` / `--skip-docker`: Skip docker container handling (keeps containers running)
+- `-h` / `--skip-hardware`: Skip hardware-configuration.nix generation
+- `-q` / `--quick`: Shorthand for `-d -h` (backward compatibility)
+- `-f` / `--force`: Bypass ENV_PROFILE safety check (for first-time installs)
+- `-n` / `--no-git-update`: Skip repository update/fetch (useful after git-crypt unlock)
 
 ## Troubleshooting
 
