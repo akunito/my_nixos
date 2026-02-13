@@ -487,6 +487,12 @@
     swayIdleDisableMonitorPowerOff = false; # Disable monitor power-off timeout (useful for monitors with DPMS wake issues)
     swaySmartLidEnable = false; # Context-aware lid: suspend if no ext monitor, disable display if docked
 
+    # Power-aware idle: different timeouts for AC vs battery (laptops)
+    swayIdlePowerAwareEnable = false;       # Enable power-aware swayidle (AC/battery detection)
+    swayIdleLockTimeoutBat = 180;           # Battery: 3 min lock
+    swayIdleMonitorOffTimeoutBat = 210;     # Battery: 3.5 min monitors off
+    swayIdleSuspendTimeoutBat = 480;        # Battery: 8 min suspend
+
     # Monitor management (imperative GUI approach)
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config
     workspaceGroupsGuiEnable = false;    # Install workspace groups GUI

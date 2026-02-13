@@ -74,6 +74,12 @@
     # Smart lid behavior: suspend if no ext monitor, disable display if docked
     swaySmartLidEnable = true;
 
+    # Power button suspends (laptops only — DESK keeps "ignore" from defaults.nix)
+    powerKey = "suspend";
+
+    # Power-aware idle: shorter timeouts on battery, normal on AC
+    swayIdlePowerAwareEnable = true;
+
     # Common laptop features
     wireguardEnable = true;
     appImageEnable = true;

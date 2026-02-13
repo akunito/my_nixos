@@ -117,16 +117,89 @@ let
       else "${pkgs.systemd}/bin/systemctl --user start swww-restore.service"}
   '';
 
-  # Smart lid handler: suspend if no external monitor, disable internal display if docked
+  # Smart lid handler: context-aware lid close behavior
+  # On AC (docked): always disable internal display only
+  # On battery + external monitors: disable internal display only
+  # On battery + no external monitors: suspend
   sway-lid-handler = pkgs.writeShellScript "sway-lid-handler" ''
-    EXT_COUNT=$(${pkgs.sway}/bin/swaymsg -t get_outputs -r | \
-      ${pkgs.jq}/bin/jq '[.[] | select(.name != "eDP-1" and .active == true)] | length')
+    BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
 
-    if [ "$EXT_COUNT" -gt 0 ]; then
+    if [ "$BAT_STATUS" != "Discharging" ]; then
+      # On AC power (docked): just disable internal display
       ${pkgs.sway}/bin/swaymsg output eDP-1 disable
     else
-      ${pkgs.systemd}/bin/systemctl suspend
+      # On battery: check for external monitors
+      EXT_COUNT=$(${pkgs.sway}/bin/swaymsg -t get_outputs -r | \
+        ${pkgs.jq}/bin/jq '[.[] | select(.name != "eDP-1" and .active == true)] | length')
+      if [ "$EXT_COUNT" -gt 0 ]; then
+        ${pkgs.sway}/bin/swaymsg output eDP-1 disable
+      else
+        ${pkgs.systemd}/bin/systemctl suspend
+      fi
     fi
+  '';
+
+  # Idle action scripts (used by power-aware swayidle wrapper)
+  sway-idle-monitor-off = pkgs.writeShellScript "sway-idle-monitor-off" ''
+    ${pkgs.sway}/bin/swaymsg 'output * power off'
+  '';
+
+  sway-idle-suspend = pkgs.writeShellScript "sway-idle-suspend" ''
+    ${pkgs.systemd}/bin/systemctl suspend
+  '';
+
+  sway-idle-before-sleep = pkgs.writeShellScript "sway-idle-before-sleep" ''
+    ${pkgs.swaylock-effects}/bin/swaylock --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono' --color 000000
+  '';
+
+  # Power-aware swayidle launcher: selects timeouts based on AC/battery state
+  sway-power-swayidle = pkgs.writeShellScript "sway-power-swayidle" ''
+    BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+
+    if [ "$BAT_STATUS" = "Discharging" ]; then
+      LOCK_TIMEOUT=${toString (systemSettings.swayIdleLockTimeoutBat or 180)}
+      MONITOR_OFF_TIMEOUT=${toString (systemSettings.swayIdleMonitorOffTimeoutBat or 210)}
+      SUSPEND_TIMEOUT=${toString (systemSettings.swayIdleSuspendTimeoutBat or 480)}
+    else
+      LOCK_TIMEOUT=${toString systemSettings.swayIdleLockTimeout}
+      MONITOR_OFF_TIMEOUT=${toString systemSettings.swayIdleMonitorOffTimeout}
+      SUSPEND_TIMEOUT=${toString systemSettings.swayIdleSuspendTimeout}
+    fi
+
+    ARGS=(-w)
+    ARGS+=(timeout "$LOCK_TIMEOUT" '${swaylock-with-grace}/bin/swaylock-with-grace')
+    ${lib.optionalString (systemSettings.swayIdleDisableMonitorPowerOff != true) ''
+    ARGS+=(timeout "$MONITOR_OFF_TIMEOUT" '${sway-idle-monitor-off}')
+    ARGS+=(resume '${sway-resume-monitors}')
+    ''}
+    ARGS+=(timeout "$SUSPEND_TIMEOUT" '${sway-idle-suspend}')
+    ARGS+=(before-sleep '${sway-idle-before-sleep}')
+    ARGS+=(after-resume '${sway-resume-monitors}')
+
+    exec ${pkgs.swayidle}/bin/swayidle "''${ARGS[@]}"
+  '';
+
+  # Power state monitor: restarts swayidle when AC/battery state changes
+  sway-power-monitor = pkgs.writeShellScript "sway-power-monitor" ''
+    LAST_STATE=""
+    while true; do
+      BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+      if [ "$BAT_STATUS" = "Discharging" ]; then
+        CURRENT="battery"
+      else
+        CURRENT="ac"
+      fi
+      if [ -n "$LAST_STATE" ] && [ "$CURRENT" != "$LAST_STATE" ]; then
+        ${pkgs.systemd}/bin/systemctl --user restart swayidle.service
+        if [ "$CURRENT" = "ac" ]; then
+          ${pkgs.libnotify}/bin/notify-send -t 3000 "Power" "AC connected - extended idle timeouts" -h string:x-canonical-private-synchronous:power-state
+        else
+          ${pkgs.libnotify}/bin/notify-send -t 3000 "Power" "On battery - shorter idle timeouts" -h string:x-canonical-private-synchronous:power-state
+        fi
+      fi
+      LAST_STATE="$CURRENT"
+      sleep 5
+    done
   '';
 
   # Keyboard layout switching script
@@ -166,8 +239,9 @@ in
 
   # CRITICAL: Idle daemon with swaylock-effects
   # Timeouts are ABSOLUTE from last user activity, not incremental
+  # When power-aware mode is enabled (laptops), this is disabled and replaced by custom systemd services
   services.swayidle = {
-    enable = true;
+    enable = !(systemSettings.swayIdlePowerAwareEnable or false);
     timeouts =
       [
         {
@@ -195,6 +269,43 @@ in
       before-sleep = "${pkgs.swaylock-effects}/bin/swaylock --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono' --color 000000";
       # Ensure monitors are powered on after resume (safety net — timeout resumeCommand may not fire)
       after-resume = "${sway-resume-monitors}";
+    };
+  };
+
+  # Power-aware swayidle: custom systemd services (replaces HM swayidle when enabled)
+  # Detects AC/battery state and uses different idle timeouts accordingly
+  systemd.user.services.swayidle = lib.mkIf (systemSettings.swayIdlePowerAwareEnable or false) {
+    Unit = {
+      Description = "Power-aware idle manager for Wayland";
+      PartOf = [ "sway-session.target" ];
+      After = [ "sway-session.target" ];
+    };
+    Service = {
+      Type = "simple";
+      ExecStart = "${sway-power-swayidle}";
+      Restart = "on-failure";
+      RestartSec = "2";
+    };
+    Install = {
+      WantedBy = [ "sway-session.target" ];
+    };
+  };
+
+  # Monitors power state changes and restarts swayidle with correct timeouts
+  systemd.user.services.swayidle-power-monitor = lib.mkIf (systemSettings.swayIdlePowerAwareEnable or false) {
+    Unit = {
+      Description = "Monitor AC/battery state and restart swayidle on change";
+      PartOf = [ "sway-session.target" ];
+      After = [ "swayidle.service" ];
+    };
+    Service = {
+      Type = "simple";
+      ExecStart = "${sway-power-monitor}";
+      Restart = "on-failure";
+      RestartSec = "5";
+    };
+    Install = {
+      WantedBy = [ "sway-session.target" ];
     };
   };
 

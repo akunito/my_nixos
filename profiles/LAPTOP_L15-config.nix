@@ -116,7 +116,8 @@ in
     networkPrinters = true;
 
     # Lid behavior: managed by swaySmartLidEnable (from LAPTOP-base.nix)
-    # Logind lid/powerKey default to "ignore" in defaults.nix
+    # Power button: suspend (from LAPTOP-base.nix)
+    # Logind lid settings: "ignore" (handled by Sway bindswitch)
 
     # Sleep mode: Tiger Lake L15 Gen 2 only supports s2idle (no S3 deep sleep)
     MEM_SLEEP_ON_AC = "s2idle";
@@ -124,12 +125,6 @@ in
 
     # Suspend/resume debug instrumentation
     suspendDebugEnable = true;
-
-    # TEMPORARY: Short swayidle timeouts for testing suspend/wake fixes
-    # Revert to defaults (720/900/3600) after testing
-    swayIdleLockTimeout = 30;          # 30 seconds
-    swayIdleMonitorOffTimeout = 60;    # 1 minute
-    swayIdleSuspendTimeout = 120;      # 2 minutes
 
     # System packages
     systemPackages = pkgs: pkgs-unstable: [
