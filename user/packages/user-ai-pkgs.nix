@@ -12,7 +12,7 @@
     home.packages = [
       # === AI & Machine Learning ===
       pkgs-unstable.lmstudio
-      pkgs-unstable.ollama-rocm
+      pkgs-unstable.ollama
     ];
   };
 }
