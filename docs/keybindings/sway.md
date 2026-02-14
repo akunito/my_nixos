@@ -100,9 +100,22 @@ The Hyper key is the primary modifier for all Sway keybindings. It's configured 
 - **`XF86AudioLowerVolume`** → Lower volume (OSD via `swayosd-client`)
 - **`XF86AudioRaiseVolume`** → Raise volume (OSD via `swayosd-client`)
 - **`XF86AudioMute`** → Mute toggle (OSD via `swayosd-client`)
+- **`XF86AudioMicMute`** → Mic mute toggle (OSD via `swayosd-client`) — ThinkPad Fn+F4
 - **`${hyper}+XF86AudioMute`** → Toggle **custom idle inhibit** (systemd user `idle-inhibit.service`)
   - Shows a desktop notification with ON/OFF status
-  - This is intentionally separate from Waybar’s built-in `idle_inhibitor` while testing
+  - This is intentionally separate from Waybar's built-in `idle_inhibitor` while testing
+
+### Brightness
+
+- **`XF86MonBrightnessDown`** → Lower brightness (OSD via `swayosd-client`) — ThinkPad Fn+F5
+- **`XF86MonBrightnessUp`** → Raise brightness (OSD via `swayosd-client`) — ThinkPad Fn+F6
+
+### Player Control (MPRIS)
+
+- **`XF86AudioPlay`** → Play/pause (via `playerctl`) — ThinkPad Fn+F10
+- **`XF86AudioStop`** → Stop (via `playerctl`)
+- **`XF86AudioPrev`** → Previous track (via `playerctl`) — ThinkPad Fn+F11
+- **`XF86AudioNext`** → Next track (via `playerctl`) — ThinkPad Fn+F12
 
 ## Workspace Navigation
 
