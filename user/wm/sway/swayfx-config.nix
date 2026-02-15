@@ -550,6 +550,8 @@ in
           "${hyper}+k" = "focus up";
           # Note: Removed "${hyper}+l" to avoid conflict with "${hyper}+L" (telegram)
           "${hyper}+f" = "fullscreen toggle";
+          # Force gamescope back to fullscreen (gaming recovery keybinding)
+          "${hyper}+F9" = "exec swaymsg '[app_id=gamescope] fullscreen enable' 2>/dev/null; swaymsg '[class=gamescope] fullscreen enable' 2>/dev/null; swaymsg '[class=Gamescope] fullscreen enable' 2>/dev/null";
           "${hyper}+Shift+space" = "floating toggle";
           # Note: "${hyper}+s" is used for control-panel (see application bindings above)
           # Note: "${hyper}+w" is used for workspace next_on_output (see Workspace navigation above)
@@ -1137,6 +1139,12 @@ in
         position bottom
       }
 
+      # Prevent popups/dialogs from breaking fullscreen (e.g., during gaming)
+      popup_during_fullscreen ignore
+
+      # Prevent other windows from stealing focus (only mark as urgent)
+      focus_on_window_activation urgent
+
       # CRITICAL: Alt key for Plasma-like window manipulation
       # Alt+drag moves windows, Alt+right-drag resizes windows
       floating_modifier Mod1
@@ -1300,8 +1308,13 @@ in
       for_window [class="Discover"] floating enable, sticky enable
       for_window [title="Discover"] floating enable, sticky enable
 
-      # Gamescope: always fullscreen, inhibit idle, no border
-      for_window [app_id="gamescope"] fullscreen enable, inhibit_idle fullscreen
+      # Gamescope: always fullscreen, inhibit idle
+      # Match both app_id (Wayland) and class (XWayland fallback) since gamescope
+      # can present as either depending on backend. Use inhibit_idle focus (not fullscreen)
+      # because gamescope -f on Wayland creates borderless, not true fullscreen.
+      for_window [app_id="gamescope"] fullscreen enable, inhibit_idle focus
+      for_window [class="gamescope"] fullscreen enable, inhibit_idle focus
+      for_window [class="Gamescope"] fullscreen enable, inhibit_idle focus
       no_focus [app_id="mako"]
       no_focus [app_id="swaync"]
       no_focus [app_id="dunst"]
