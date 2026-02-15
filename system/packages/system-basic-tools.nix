@@ -36,7 +36,7 @@
 
       # === Libraries & Dependencies ===
       openssl
-      python3Minimal
+      python3
       qt5.qtbase
 
       # === Remote Access & Streaming ===
