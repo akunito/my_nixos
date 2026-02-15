@@ -31,6 +31,10 @@ let
     tra1 = "eza -a --long --tree --level=1";
     tra2 = "eza -a --long --tree --level=2";
     tra3 = "eza -a --long --tree --level=3";
+
+    # Darwin rebuild shortcuts
+    darwin-rebuild = "cd ~/.dotfiles && sudo darwin-rebuild switch --flake .#system";
+    darwin-rebuild-test = "cd ~/.dotfiles && darwin-rebuild build --flake .#system";
   };
 in
 {
@@ -45,7 +49,6 @@ in
       {
         # UNSTABLE SYSTEM
         enable = true;
-        dotDir = "${config.home.homeDirectory}/.zsh";
         autosuggestion.enable = true;
         syntaxHighlighting.enable = true;
         enableCompletion = true;
@@ -56,7 +59,6 @@ in
       {
         # STABLE SYSTEM
         enable = true;
-        dotDir = "${config.home.homeDirectory}/.zsh";
         autosuggestion.enable = true;
         syntaxHighlighting.enable = true;
         enableCompletion = true;

@@ -112,6 +112,10 @@ secrets/*
 !secrets/*.nix
 !secrets/*.txt
 !secrets/*.template
+!secrets/komi/
+secrets/komi/*
+!secrets/komi/*.nix
+!secrets/komi/*.template
 
 # Plasma configuration (managed separately)
 .dotfiles-plasma-config/

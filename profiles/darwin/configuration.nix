@@ -18,8 +18,8 @@
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       trusted-users = [ "root" userSettings.username ];
-      auto-optimise-store = true;
     };
+    optimise.automatic = true;
     gc = {
       automatic = true;
       interval = { Weekday = 0; Hour = 3; Minute = 0; };
@@ -37,8 +37,20 @@
   programs.zsh.enableCompletion = true;
   programs.zsh.enableBashCompletion = true;
 
+  # Source Nix environment in system shell
+  programs.zsh.interactiveShellInit = ''
+    # Nix
+    if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+      source '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+    fi
+  '';
+
   # Set hostname
   networking.hostName = systemSettings.hostname;
+
+  # Set primary user for system.defaults options
+  # Required for nix-darwin to apply user-specific system defaults
+  system.primaryUser = userSettings.username;
 
   # User configuration
   users.users.${userSettings.username} = {

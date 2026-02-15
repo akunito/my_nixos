@@ -246,6 +246,7 @@ let
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "before-hm";
             home-manager.extraSpecialArgs = {
               inherit pkgs-stable;
               inherit pkgs-unstable;

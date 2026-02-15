@@ -1,5 +1,5 @@
 -- Komi's Hammerspoon Configuration
--- Based on ko-mi/macos-setup
+-- Migrated from ko-mi/macos-setup with enhancements
 -- Hyperkey = Cmd + Ctrl + Alt + Shift
 
 -- ============================================================================
@@ -19,229 +19,333 @@ function reloadConfig(files)
 end
 
 hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig):start()
-hs.alert.show("Hammerspoon Config Loaded")
 
 -- ============================================================================
 -- HYPERKEY SETUP
 -- ============================================================================
 
--- Create a modal hotkey for the hyperkey
-hyper = hs.hotkey.modal.new({}, nil)
-
-function hyper:entered() end
-function hyper:exited() end
-
--- Bind the hyperkey to Cmd+Ctrl+Alt+Shift held together
--- We use a "trigger" key approach - hold the modifiers and press a key
-local hyperMods = {"cmd", "ctrl", "alt", "shift"}
-
--- Alternative: Use F18 as hyperkey (requires Karabiner-Elements to map Caps Lock to F18)
--- hs.hotkey.bind({}, "F18", function() hyper:enter() end, function() hyper:exit() end)
+-- Define the hyperkey (Cmd+Ctrl+Alt+Shift)
+local hyper = {"cmd", "ctrl", "alt", "shift"}
 
 -- ============================================================================
--- HELPER FUNCTIONS
+-- APP LAUNCH CONFIGURATION
 -- ============================================================================
 
--- Launch or focus an application
-function launchOrFocus(appName)
-  local app = hs.application.get(appName)
-  if app then
-    app:activate()
-  else
-    hs.application.launchOrFocus(appName)
-  end
+local apps = {
+    S = "Spotify",
+    T = "Terminal",
+    C = "Cursor",
+    D = "Telegram",
+    W = "WhatsApp",
+    A = "Arc",
+    O = "Obsidian",
+    L = "Linear",
+    G = "System Settings",
+    P = "Passwords",
+    Q = "Claude",             -- One-handed access near CapsLock
+    N = "Notes",
+    X = "Calendar",
+    F = "Finder",
+    U = "Calculator",
+    V = "kitty"
+}
+
+-- ============================================================================
+-- ADVANCED LAUNCH OR FOCUS
+-- ============================================================================
+
+-- Apps that should NOT have Cmd+N triggered (to avoid unwanted behavior)
+local appsExcludedFromCmdN = {
+    ["WhatsApp"] = true,  -- Cmd+N opens new chat dropdown
+}
+
+-- Function to launch or focus an app
+-- Un-minimizes windows if they're minimized, or creates new window if needed
+local function launchOrFocus(appName)
+    local app = hs.application.find(appName)
+    if app then
+        -- First, unhide the app if it's hidden (Cmd+H)
+        if app:isHidden() then
+            app:unhide()
+        end
+
+        -- Try to detect and un-minimize windows using permissive filter
+        local wf = hs.window.filter.new(false)
+        wf:setAppFilter(appName, {})
+        local windows = wf:getWindows()
+
+        -- Un-minimize any minimized windows
+        local hasVisibleWindow = false
+        for _, win in ipairs(windows) do
+            if win:isMinimized() then
+                win:unminimize()
+                hasVisibleWindow = true
+            elseif not win:isMinimized() then
+                hasVisibleWindow = true
+            end
+        end
+
+        -- Activate the app (brings to front)
+        app:activate()
+
+        -- If no visible windows exist after activation, try to create one
+        if not hasVisibleWindow and not appsExcludedFromCmdN[appName] then
+            -- Wait a moment for app to activate, then try creating a new window
+            hs.timer.doAfter(0.1, function()
+                -- Try common menu items for creating new windows
+                if app:selectMenuItem({"File", "New Window"}) then
+                    return
+                elseif app:selectMenuItem({"Window", "Show"}) then
+                    return
+                elseif app:selectMenuItem({"Window", "Main Window"}) then
+                    return
+                end
+                -- If no menu item worked, simulate Cmd+N (new window)
+                hs.eventtap.keyStroke({"cmd"}, "n", 0, app)
+            end)
+        end
+    else
+        -- App not running, launch it
+        hs.application.launchOrFocus(appName)
+    end
 end
 
--- Cycle through windows of specified apps
-function cycleApp(appNames)
-  local frontApp = hs.application.frontmostApplication()
-  local frontAppName = frontApp:name()
+-- ============================================================================
+-- WINDOW SWITCHING CONFIGURATION
+-- ============================================================================
 
-  -- Find current app index in the list
-  local currentIndex = 0
-  for i, name in ipairs(appNames) do
-    if name == frontAppName then
-      currentIndex = i
-      break
+-- Function to switch between windows of the same app
+-- Uses hs.window.filter for better compatibility with Electron apps
+local function switchWindows(appName)
+    local app = hs.application.find(appName)
+    if not app then
+        hs.alert.show(appName .. " is not running")
+        return
     end
-  end
 
-  -- Cycle to next app or first if not in list/at end
-  local nextIndex = currentIndex % #appNames + 1
-  launchOrFocus(appNames[nextIndex])
+    -- Get all windows without focus-based sorting (use stable order by window ID)
+    local wf = hs.window.filter.new(false)
+    wf:setAppFilter(appName, {})
+    local windows = wf:getWindows()
+
+    if #windows == 0 then
+        hs.alert.show("No windows found for " .. appName)
+        return
+    end
+
+    -- Filter out minimized windows and sort by window ID for stable order
+    local visibleWindows = {}
+    for _, win in ipairs(windows) do
+        if not win:isMinimized() then
+            table.insert(visibleWindows, win)
+        end
+    end
+
+    -- Sort by window ID to maintain consistent order
+    table.sort(visibleWindows, function(a, b) return a:id() < b:id() end)
+
+    if #visibleWindows == 0 then
+        hs.alert.show("No visible windows for " .. appName)
+        return
+    end
+
+    if #visibleWindows == 1 then
+        visibleWindows[1]:focus()
+        return
+    end
+
+    -- Get the currently focused window
+    local focusedWindow = hs.window.focusedWindow()
+    local currentIndex = nil
+
+    -- Find current window index in our stable-sorted list
+    for i, win in ipairs(visibleWindows) do
+        if focusedWindow and win:id() == focusedWindow:id() then
+            currentIndex = i
+            break
+        end
+    end
+
+    -- If current window not found (e.g., different app focused), start at beginning
+    if not currentIndex then
+        currentIndex = 0
+    end
+
+    -- Focus next window (cycle back to 1 if at end)
+    local nextIndex = (currentIndex % #visibleWindows) + 1
+    visibleWindows[nextIndex]:focus()
+
+    -- Show brief notification with window info
+    local nextWin = visibleWindows[nextIndex]
+    hs.alert.show(string.format("%d/%d: %s", nextIndex, #visibleWindows,
+        nextWin:screen():name():sub(1, 15)), 0.5)
+end
+
+-- Function to launch app if not running, or cycle windows if running
+local function launchOrCycle(appName)
+    local app = hs.application.find(appName)
+    if not app then
+        -- App not running, launch it using advanced function
+        launchOrFocus(appName)
+    else
+        -- App is running, check if there are minimized windows to restore
+        local wf = hs.window.filter.new(false)
+        wf:setAppFilter(appName, {})
+        local windows = wf:getWindows()
+        local hasMinimizedWindow = false
+
+        for _, win in ipairs(windows) do
+            if win:isMinimized() then
+                hasMinimizedWindow = true
+                break
+            end
+        end
+
+        if hasMinimizedWindow then
+            -- Use advanced launch/focus to un-minimize
+            launchOrFocus(appName)
+        else
+            -- No minimized windows, just cycle through visible ones
+            switchWindows(appName)
+        end
+    end
 end
 
 -- ============================================================================
 -- APP LAUNCHERS (Hyperkey + Key)
 -- ============================================================================
 
--- Using direct hotkey bindings with hyperkey modifiers
--- Format: hs.hotkey.bind(hyperMods, key, function)
-
--- S - Spotify
-hs.hotkey.bind(hyperMods, "s", function() launchOrFocus("Spotify") end)
-
--- T - Terminal (kitty)
-hs.hotkey.bind(hyperMods, "t", function() launchOrFocus("kitty") end)
-
--- C - Cursor (IDE)
-hs.hotkey.bind(hyperMods, "c", function() launchOrFocus("Cursor") end)
-
--- D - Telegram
-hs.hotkey.bind(hyperMods, "d", function() launchOrFocus("Telegram") end)
-
--- W - WhatsApp
-hs.hotkey.bind(hyperMods, "w", function() launchOrFocus("WhatsApp") end)
-
--- A - Arc Browser
-hs.hotkey.bind(hyperMods, "a", function() launchOrFocus("Arc") end)
-
--- O - Obsidian
-hs.hotkey.bind(hyperMods, "o", function() launchOrFocus("Obsidian") end)
-
--- L - Linear
-hs.hotkey.bind(hyperMods, "l", function() launchOrFocus("Linear") end)
-
--- G - System Settings (was System Preferences)
-hs.hotkey.bind(hyperMods, "g", function() launchOrFocus("System Settings") end)
-
--- P - Passwords (1Password or Keychain Access)
-hs.hotkey.bind(hyperMods, "p", function() launchOrFocus("1Password") end)
-
--- Q - Calculator
-hs.hotkey.bind(hyperMods, "q", function() launchOrFocus("Calculator") end)
-
--- N - Notes
-hs.hotkey.bind(hyperMods, "n", function() launchOrFocus("Notes") end)
-
--- X - Calendar
-hs.hotkey.bind(hyperMods, "x", function() launchOrFocus("Calendar") end)
+-- Bind all app shortcuts to launch or cycle behavior
+for key, appName in pairs(apps) do
+    hs.hotkey.bind(hyper, key, function()
+        launchOrCycle(appName)
+    end)
+end
 
 -- ============================================================================
 -- WINDOW CYCLING (Hyperkey + Number)
 -- ============================================================================
 
--- 1 - Cycle Arc windows
-hs.hotkey.bind(hyperMods, "1", function() cycleApp({"Arc"}) end)
-
--- 2 - Cycle Cursor windows
-hs.hotkey.bind(hyperMods, "2", function() cycleApp({"Cursor"}) end)
-
--- 3 - Cycle kitty windows
-hs.hotkey.bind(hyperMods, "3", function() cycleApp({"kitty"}) end)
-
--- 4 - Cycle Obsidian windows
-hs.hotkey.bind(hyperMods, "4", function() cycleApp({"Obsidian"}) end)
+-- Hyper + 1/2/3/4 to switch Arc/Cursor/kitty/Obsidian windows
+hs.hotkey.bind(hyper, "1", function() switchWindows("Arc") end)
+hs.hotkey.bind(hyper, "2", function() switchWindows("Cursor") end)
+hs.hotkey.bind(hyper, "3", function() switchWindows("kitty") end)  -- kitty is now on V, Terminal is on T
+hs.hotkey.bind(hyper, "4", function() switchWindows("Obsidian") end)
 
 -- ============================================================================
--- WINDOW MANAGEMENT (Hyperkey + Arrow/Letter)
+-- WINDOW MANAGEMENT - MONITORS
 -- ============================================================================
 
--- Move window to previous monitor (left arrow)
-hs.hotkey.bind(hyperMods, "Left", function()
-  local win = hs.window.focusedWindow()
-  if win then
-    local screen = win:screen()
-    local prevScreen = screen:previous()
-    if prevScreen then
-      win:moveToScreen(prevScreen)
+-- Hyper + Left Arrow: Move window to previous monitor
+hs.hotkey.bind(hyper, "Left", function()
+    local win = hs.window.focusedWindow()
+    if win then
+        win:moveToScreen(win:screen():previous())
+        hs.alert.show("Moved to " .. win:screen():name())
     end
-  end
 end)
 
--- Move window to next monitor (right arrow)
-hs.hotkey.bind(hyperMods, "Right", function()
-  local win = hs.window.focusedWindow()
-  if win then
-    local screen = win:screen()
-    local nextScreen = screen:next()
-    if nextScreen then
-      win:moveToScreen(nextScreen)
+-- Hyper + Right Arrow: Move window to next monitor
+hs.hotkey.bind(hyper, "Right", function()
+    local win = hs.window.focusedWindow()
+    if win then
+        win:moveToScreen(win:screen():next())
+        hs.alert.show("Moved to " .. win:screen():name())
     end
-  end
-end)
-
--- Maximize window (M)
-hs.hotkey.bind(hyperMods, "m", function()
-  local win = hs.window.focusedWindow()
-  if win then
-    win:maximize()
-  end
-end)
-
--- Minimize window (H for hide)
-hs.hotkey.bind(hyperMods, "h", function()
-  local win = hs.window.focusedWindow()
-  if win then
-    win:minimize()
-  end
-end)
-
--- Reload Hammerspoon config (R)
-hs.hotkey.bind(hyperMods, "r", function()
-  hs.reload()
 end)
 
 -- ============================================================================
--- WINDOW POSITIONING (Optional - Hyperkey + IJKL for tiling)
+-- WINDOW MANAGEMENT - SIZE
+-- ============================================================================
+
+-- Hyper + M: Maximize window on current screen
+hs.hotkey.bind(hyper, "M", function()
+    local win = hs.window.focusedWindow()
+    if win then
+        win:maximize()
+    end
+end)
+
+-- Hyper + H: Minimize window (like clicking yellow button)
+hs.hotkey.bind(hyper, "H", function()
+    local win = hs.window.focusedWindow()
+    if win then
+        win:minimize()
+    end
+end)
+
+-- ============================================================================
+-- WINDOW TILING (Hyperkey + J/;/K/I)
 -- ============================================================================
 
 -- Left half of screen
-hs.hotkey.bind(hyperMods, "j", function()
-  local win = hs.window.focusedWindow()
-  if win then
-    local f = win:frame()
-    local screen = win:screen()
-    local max = screen:frame()
-    f.x = max.x
-    f.y = max.y
-    f.w = max.w / 2
-    f.h = max.h
-    win:setFrame(f)
-  end
+hs.hotkey.bind(hyper, "j", function()
+    local win = hs.window.focusedWindow()
+    if win then
+        local f = win:frame()
+        local screen = win:screen()
+        local max = screen:frame()
+        f.x = max.x
+        f.y = max.y
+        f.w = max.w / 2
+        f.h = max.h
+        win:setFrame(f)
+    end
 end)
 
 -- Right half of screen
-hs.hotkey.bind(hyperMods, ";", function()
-  local win = hs.window.focusedWindow()
-  if win then
-    local f = win:frame()
-    local screen = win:screen()
-    local max = screen:frame()
-    f.x = max.x + (max.w / 2)
-    f.y = max.y
-    f.w = max.w / 2
-    f.h = max.h
-    win:setFrame(f)
-  end
+hs.hotkey.bind(hyper, ";", function()
+    local win = hs.window.focusedWindow()
+    if win then
+        local f = win:frame()
+        local screen = win:screen()
+        local max = screen:frame()
+        f.x = max.x + (max.w / 2)
+        f.y = max.y
+        f.w = max.w / 2
+        f.h = max.h
+        win:setFrame(f)
+    end
 end)
 
 -- Top half of screen
-hs.hotkey.bind(hyperMods, "k", function()
-  local win = hs.window.focusedWindow()
-  if win then
-    local f = win:frame()
-    local screen = win:screen()
-    local max = screen:frame()
-    f.x = max.x
-    f.y = max.y
-    f.w = max.w
-    f.h = max.h / 2
-    win:setFrame(f)
-  end
+hs.hotkey.bind(hyper, "k", function()
+    local win = hs.window.focusedWindow()
+    if win then
+        local f = win:frame()
+        local screen = win:screen()
+        local max = screen:frame()
+        f.x = max.x
+        f.y = max.y
+        f.w = max.w
+        f.h = max.h / 2
+        win:setFrame(f)
+    end
 end)
 
 -- Bottom half of screen
-hs.hotkey.bind(hyperMods, "i", function()
-  local win = hs.window.focusedWindow()
-  if win then
-    local f = win:frame()
-    local screen = win:screen()
-    local max = screen:frame()
-    f.x = max.x
-    f.y = max.y + (max.h / 2)
-    f.w = max.w
-    f.h = max.h / 2
-    win:setFrame(f)
-  end
+hs.hotkey.bind(hyper, "i", function()
+    local win = hs.window.focusedWindow()
+    if win then
+        local f = win:frame()
+        local screen = win:screen()
+        local max = screen:frame()
+        f.x = max.x
+        f.y = max.y + (max.h / 2)
+        f.w = max.w
+        f.h = max.h / 2
+        win:setFrame(f)
+    end
 end)
+
+-- ============================================================================
+-- SYSTEM
+-- ============================================================================
+
+-- Reload config
+hs.hotkey.bind(hyper, "R", function()
+    hs.reload()
+end)
+
+-- Show notification on successful load
+hs.alert.show("Hammerspoon config loaded!", 1.5)

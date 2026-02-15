@@ -42,13 +42,13 @@ if systemSettings.stylixEnable == true then
         ".stylix-debug.log".text = ''
           stylixEnabled: ${toString systemSettings.stylixEnable}
           userSettings.wm: ${userSettings.wm}
-          systemSettings.enableSwayForDESK: ${toString systemSettings.enableSwayForDESK}
+          systemSettings.enableSwayForDESK: ${toString (systemSettings.enableSwayForDESK or false)}
           stylix.targets.qt.enable: ${
-            toString (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)
+            toString (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)
           }
           stylix.targets.gtk.enable: true
           qt5ctFilesRemoved: ${
-            toString (userSettings.wm == "plasma6" && systemSettings.enableSwayForDESK == false)
+            toString (userSettings.wm == "plasma6" && (systemSettings.enableSwayForDESK or false) == false)
           }
         '';
         ".local/share/pixmaps/nixos-snowflake-stylix.svg".source = config.lib.stylix.colors {
@@ -98,7 +98,7 @@ if systemSettings.stylixEnable == true then
       # When enableSwayForDESK = true, files must exist for Sway sessions, but Plasma 6 won't read them
       # because QT_QPA_PLATFORMTHEME is unset (containment approach)
       # When enableSwayForDESK = false, remove files completely to prevent any interference
-      (lib.mkIf (userSettings.wm == "plasma6" && systemSettings.enableSwayForDESK == false) {
+      (lib.mkIf (userSettings.wm == "plasma6" && (systemSettings.enableSwayForDESK or false) == false) {
         ".config/qt5ct/qt5ct.conf".text = "";
         ".config/qt5ct/colors/oomox-current.conf".text = "";
       })
@@ -106,7 +106,7 @@ if systemSettings.stylixEnable == true then
       # CRITICAL: Manually generate qt6ct configuration for Dolphin in Sway
       # Stylix doesn't auto-generate qt6ct configs yet, so we map it to use the same colors as qt5ct
       # We use the generated oomox-current.conf from qt5ct (which Stylix creates)
-      (lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) {
+      (lib.mkIf (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true) {
         ".config/qt6ct/qt6ct.conf".text = ''
           [Appearance]
           color_scheme_path=${config.home.homeDirectory}/.config/qt6ct/colors/oomox-current.conf
@@ -196,7 +196,7 @@ if systemSettings.stylixEnable == true then
     # CRITICAL: Only enable QT target when NOT in Plasma 6 (or when Sway is enabled for DESK)
     # Plasma 6 has its own Qt theming system and qt5ct config files interfere with Dolphin and other KDE apps
     # Sway needs qt5ct config files for Qt theming, so enable when Sway is available
-    stylix.targets.qt.enable = userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true;
+    stylix.targets.qt.enable = userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true;
     stylix.targets.qt.platform = "qtct"; # Use qtct for custom Stylix colors (Stylix generates qt5ct config automatically)
     stylix.targets.rofi.enable = if (userSettings.wmType == "x11") then true else false;
 
@@ -207,7 +207,7 @@ if systemSettings.stylixEnable == true then
     # In Plasma 6, this means GTK apps will use Adwaita-Dark (Stylix theme) instead of Breeze
     # This is acceptable as it fixes the light mode issue
     # Only enable GTK module when NOT in Plasma 6 to avoid unnecessary config generation
-    gtk = lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) {
+    gtk = lib.mkIf (!pkgs.stdenv.isDarwin && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)) {
       enable = true;
       gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
       gtk2.extraConfig = ''
@@ -295,7 +295,7 @@ if systemSettings.stylixEnable == true then
     # NOTE: This is only applied when NOT in Plasma 6 to prevent locking Plasma settings
     # Plasma 6 has its own theming system and doesn't use Stylix
     dconf.settings =
-      lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)
+      lib.mkIf (!pkgs.stdenv.isDarwin && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true))
         {
           "org/gnome/desktop/interface" = {
             color-scheme = if config.stylix.polarity == "dark" then "prefer-dark" else "default";
@@ -306,7 +306,8 @@ if systemSettings.stylixEnable == true then
     # CRITICAL: Force GTK_THEME for xdg-desktop-portal-gtk service
     # This ensures the portal process itself knows to use dark mode, fixing light mode issues
     systemd.user.services.xdg-desktop-portal-gtk.Service.Environment = lib.mkIf (
-      userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true
+      !pkgs.stdenv.isDarwin
+      && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)
     ) (lib.mkForce [ "GTK_THEME=Adwaita-dark" ]);
 
     stylix.targets.feh.enable = if (userSettings.wmType == "x11") then true else false;
@@ -325,13 +326,13 @@ if systemSettings.stylixEnable == true then
       [
         pkgs.noto-fonts-monochrome-emoji
       ]
-      ++ lib.optionals (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) [
+      ++ lib.optionals (!pkgs.stdenv.isDarwin && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)) [
         pkgs.adwaita-qt # Adwaita style for Qt5
         pkgs.adwaita-qt6 # Adwaita style for Qt6
         pkgs.kdePackages.breeze # Breeze color schemes for KDE apps (fixes Gwenview/Okular dark mode)
       ];
 
-    qt = lib.mkIf (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true) {
+    qt = lib.mkIf (!pkgs.stdenv.isDarwin && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)) {
       enable = true;
       # style.package and style.name are optional - qt5ct can work without them
       # If breeze package becomes available, uncomment these lines:
@@ -368,7 +369,7 @@ if systemSettings.stylixEnable == true then
     # Protection against Plasma 6 modifications is provided by restoration on Sway startup
     home.activation.backupAndProtectQt5ct = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       # Only run when enableSwayForDESK = true (files are needed for Sway)
-      if [ "${toString (systemSettings.enableSwayForDESK == true)}" = "true" ]; then
+      if [ "${toString ((systemSettings.enableSwayForDESK or false) == true)}" = "true" ]; then
         QT5CT_DIR="$HOME/.config/qt5ct"
         QT6CT_DIR="$HOME/.config/qt6ct"
         QT5CT_BACKUP_DIR="$HOME/.config/qt5ct-backup"

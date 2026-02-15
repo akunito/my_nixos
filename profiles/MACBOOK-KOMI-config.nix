@@ -18,6 +18,7 @@ in
 
         # === Development ===
         "cursor"
+        "github"        # GitHub Desktop
         "hammerspoon"
 
         # === Communication ===
@@ -29,14 +30,28 @@ in
         "obsidian"
         "linear-linear"
         "notion"
+        "granola"       # AI meeting notes app
+        "claude"        # Claude desktop app
 
         # === Media ===
         "spotify"
+        "openemu"       # Game emulator
 
         # === Utilities ===
         "kitty"
         "raycast"
         "1password"
+        "karabiner-elements" # CapsLock → Hyperkey remapping
+        "nordvpn"            # VPN client
+      ];
+
+      # CLI tools via Homebrew formulas
+      homebrewFormulas = [
+        "docker"
+        "docker-completion"  # Docker shell completion
+        "docker-compose"
+        "colima"
+        "lima"               # Linux VMs (colima backend)
       ];
     };
 
@@ -44,10 +59,22 @@ in
     nixvimEnabled = true;
     aichatEnable = true;
     developmentToolsEnable = true;
+    developmentFullRuntimesEnable = true; # Node.js, Python, Go, Rust
+
+    # === Styling & Theming ===
+    stylixEnable = true;
   };
 
   userSettings = base.userSettings // {
     username = "komi";
+
+    # ========================================================================
+    # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
+    # ========================================================================
+    userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm, openai-whisper)
+
+    # === Theme ===
+    theme = "ashes"; # Warm, muted base16 palette matching DESK
 
     # === Hammerspoon (Window Management & App Switching) ===
     hammerspoonEnable = true;
@@ -58,7 +85,7 @@ in
     hammerspoonAppBindings = [
       # Single-app launchers
       { key = "s"; app = "Spotify"; }
-      { key = "t"; app = "kitty"; }
+      { key = "t"; app = "Terminal"; }
       { key = "c"; app = "Cursor"; }
       { key = "d"; app = "Telegram"; }
       { key = "w"; app = "WhatsApp"; }
@@ -67,9 +94,12 @@ in
       { key = "l"; app = "Linear"; }
       { key = "g"; app = "System Preferences"; }
       { key = "p"; app = "Passwords"; }
-      { key = "q"; app = "Calculator"; }
+      { key = "q"; app = "Claude"; }
       { key = "n"; app = "Notes"; }
       { key = "x"; app = "Calendar"; }
+      { key = "f"; app = "Finder"; }
+      { key = "u"; app = "Calculator"; }
+      { key = "v"; app = "kitty"; }
 
       # Window cycling (multiple apps on number keys)
       { key = "1"; action = "cycleApp"; apps = [ "Arc" ]; }
@@ -99,11 +129,6 @@ in
       bindkey '\e[H' beginning-of-line
       bindkey '\e[F' end-of-line
       bindkey '\e[3~' delete-char
-
-      PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}komi%f%u:%F{yellow}%~%f
-      %F{green}→%f "
-      RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
-      [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
     '';
   };
 }

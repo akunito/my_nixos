@@ -316,6 +316,7 @@
 
     # Development tools feature flags
     developmentToolsEnable = false; # Enable development IDEs and cloud tools (Cursor, Claude Code, Azure CLI, etc.)
+    developmentFullRuntimesEnable = false; # Enable full development runtimes (Node.js, Python, Go, Rust)
 
     # Package module feature flags
     systemBasicToolsEnable = true; # Enable basic system tools (vim, wget, rsync, cryptsetup, etc.)

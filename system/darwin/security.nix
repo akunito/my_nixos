@@ -8,20 +8,25 @@ let
   darwin = systemSettings.darwin;
 in
 {
-  # Enable Touch ID for sudo authentication
-  # This allows using fingerprint instead of password for sudo commands
-  security.pam.enableSudoTouchIdAuth = darwin.touchIdSudo;
+  # Enable Touch ID for sudo authentication with pam_reattach
+  # pam_reattach allows Touch ID to work in tmux, Kitty, and other terminal emulators
+  # Without it, Touch ID only works in Terminal.app
+  security.pam.services.sudo_local = {
+    touchIdAuth = darwin.touchIdSudo;
+    text = lib.mkIf darwin.touchIdSudo ''
+      # Enable pam_reattach to make Touch ID work in tmux and other terminal emulators
+      auth       optional       ${pkgs.pam-reattach}/lib/pam/pam_reattach.so
+      auth       sufficient     pam_tid.so
+    '';
+  };
 
   # Firewall configuration
-  system.defaults.alf = {
-    # 0 = disabled, 1 = enabled, 2 = block all incoming except essential
-    globalstate = 1;
-    # Allow signed apps to receive incoming connections
-    allowsignedenabled = 1;
-    # Allow downloaded signed apps
-    allowdownloadsignedenabled = 1;
-    # Stealth mode (don't respond to ICMP ping)
-    stealthenabled = 0;
+  # Updated to use new networking.applicationFirewall options
+  networking.applicationFirewall = {
+    enable = true;
+    allowSigned = true;
+    allowSignedApp = true;
+    enableStealthMode = false;
   };
 
   # Gatekeeper settings

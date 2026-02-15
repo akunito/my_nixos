@@ -7,7 +7,6 @@
       lolcat
       cowsay
       starfetch
-      cava
       killall
       timer
       gnugrep
@@ -29,6 +28,7 @@
     ]
     # === Linux-only CLI tools ===
     ++ lib.optionals (!pkgs.stdenv.isDarwin) [
+      cava               # Audio visualizer (Linux only — build fails on macOS)
       libnotify      # Linux notification system
       brightnessctl  # Linux brightness control
       hwinfo         # Linux hardware info

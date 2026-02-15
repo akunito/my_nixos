@@ -105,6 +105,9 @@ in
   programs.kitty.settings = lib.mkMerge [
     {
       background_opacity = lib.mkForce "0.85";
+      # macOS background blur (0-64, higher = more blur)
+      # Blurs content behind terminal while keeping transparency aesthetic
+      background_blur = lib.mkIf pkgs.stdenv.isDarwin 50;
       modify_font = "cell_width 90%";
       # Window decorations - match Alacritty (default shows decorations, window manager handles styling)
       hide_window_decorations = "no"; # Show window decorations like Alacritty
@@ -141,7 +144,7 @@ in
     # CRITICAL: Check if Stylix is actually available (not just enabled)
     # Stylix is disabled for Plasma 6 even if stylixEnable is true
     # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
-    (lib.mkIf (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) {
+    (lib.mkIf (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)) {
       # Stylix color integration (matching Alacritty)
       foreground = "#${config.lib.stylix.colors.base07}";
       background = "#${config.lib.stylix.colors.base00}";

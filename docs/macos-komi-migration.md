@@ -171,7 +171,7 @@ You can use Claude Code for any changes:
 | O | Obsidian |
 | L | Linear |
 | G | System Settings |
-| P | 1Password |
+| P | Passwords |
 | Q | Calculator |
 | N | Notes |
 | X | Calendar |

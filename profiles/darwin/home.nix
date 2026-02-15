@@ -34,12 +34,17 @@
 
     # === File Manager (Portable) ===
     ../../user/app/ranger/ranger.nix
+
+    # === Keyboard Remapping (macOS only) ===
+    ../../user/app/karabiner/karabiner.nix
   ]
   # === Conditional Imports ===
   # Note: starship is already conditionally imported by sh.nix based on userSettings.starshipEnable
   ++ lib.optional (systemSettings.nixvimEnabled == true) ../../user/app/nixvim/nixvim.nix
   ++ lib.optional (systemSettings.aichatEnable == true) ../../user/app/ai/aichat.nix
   ++ lib.optional (userSettings.hammerspoonEnable == true) ../../user/app/hammerspoon/hammerspoon.nix
+  ++ lib.optional (systemSettings.stylixEnable == true) ../../user/style/stylix.nix
+  ++ lib.optional (systemSettings.developmentToolsEnable == true) ../../user/app/development/development.nix
   ;
 
   # Home packages from profile config
@@ -51,9 +56,9 @@
   xdg.enable = true;
 
   # Session variables (matching work/home.nix)
+  # Note: TERM should NOT be set here - let the terminal emulator set it
   home.sessionVariables = {
     EDITOR = userSettings.editor;
-    TERM = userSettings.term;
     BROWSER = userSettings.browser;
   };
 }

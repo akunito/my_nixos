@@ -26,10 +26,8 @@ lib.mkIf darwin.homebrewEnable {
     };
 
     # Homebrew taps (repositories)
-    taps = [
-      "homebrew/bundle"
-      "homebrew/services"
-    ];
+    # Note: homebrew/bundle and homebrew/services are deprecated and migrated to core
+    taps = [ ];
 
     # CLI formulas (prefer Nix when possible)
     brews = darwin.homebrewFormulas;

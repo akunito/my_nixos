@@ -23,5 +23,13 @@ secrets/*.txt filter=git-crypt diff=git-crypt
 # Exclude template files from encryption (they're public)
 secrets/*.template !filter !diff
 
+# Komi's personal secrets (separate git-crypt key)
+# To initialize: git-crypt init --key-name komi
+# To export key: git-crypt export-key --key-name komi ~/komi-git-crypt-key
+secrets/komi/** filter=git-crypt-komi diff=git-crypt-komi
+
+# Exclude komi template files from encryption
+secrets/komi/*.template !filter !diff
+
 # Infrastructure internal documentation (sensitive details)
 docs/infrastructure/INFRASTRUCTURE_INTERNAL.md filter=git-crypt diff=git-crypt
