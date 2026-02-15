@@ -79,7 +79,7 @@ fileSystems."/mnt/NFS_library" =
 
 ## Related Documentation
 
-For comprehensive documentation, see [docs/system-modules.md](../docs/system-modules.md).
+For comprehensive documentation, see [docs/system-modules/](../docs/system-modules/README.md).
 
 **Note**: The original [README.org](./README.org) file is preserved for historical reference.
 

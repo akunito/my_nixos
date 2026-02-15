@@ -29,11 +29,11 @@ There are 2 main files in this directory:
 
 ## Integration
 
-The Picom module is integrated into the user configuration. See [User Modules Guide](../user-modules.md) for details.
+The Picom module is integrated into the user configuration. See [User Modules Guide](README.md) for details.
 
 ## Related Documentation
 
-- [User Modules Guide](../user-modules.md) - User-level modules overview
+- [User Modules Guide](README.md) - User-level modules overview
 
 **Related Documentation**: See [user/wm/picom/README.md](../../../user/wm/picom/README.md) for directory-level documentation.
 

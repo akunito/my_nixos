@@ -426,9 +426,9 @@ userSettings = {
 
 - **Installation Guide**: [docs/installation.md](docs/installation.md)
 - **Profile Details**: [docs/profiles.md](docs/profiles.md)
-- **System Modules**: [docs/system-modules.md](docs/system-modules.md)
-- **User Modules**: [docs/user-modules.md](docs/user-modules.md)
-- **Scripts Reference**: [docs/scripts.md](docs/scripts.md)
+- **System Modules**: [docs/system-modules/](docs/system-modules/README.md)
+- **User Modules**: [docs/user-modules/](docs/user-modules/README.md)
+- **Scripts Reference**: [docs/scripts/](docs/scripts/README.md)
 - **Keybindings**: [docs/akunito/keybindings.md](docs/akunito/keybindings.md)
 
 ### Documentation System

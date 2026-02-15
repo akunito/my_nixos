@@ -50,12 +50,12 @@ The full config is a [literate org document (xmonad.org)](./xmonad.org).
 
 ## Integration
 
-The XMonad module is integrated into both system and user configurations. See [User Modules Guide](../user-modules.md) and [System Modules Guide](../system-modules.md) for details.
+The XMonad module is integrated into both system and user configurations. See [User Modules Guide](README.md) and [System Modules Guide](../system-modules/README.md) for details.
 
 ## Related Documentation
 
-- [User Modules Guide](../user-modules.md) - User-level modules overview
-- [System Modules Guide](../system-modules.md) - System-level modules overview
+- [User Modules Guide](README.md) - User-level modules overview
+- [System Modules Guide](../system-modules/README.md) - System-level modules overview
 - [Themes Guide](../themes.md) - Stylix theme integration
 
 **Related Documentation**: See [user/wm/xmonad/README.md](../../../user/wm/xmonad/README.md) for directory-level documentation.

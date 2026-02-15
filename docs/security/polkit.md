@@ -253,5 +253,5 @@ Available results:
 
 - [Security Guide](../security.md) - Overall security configuration
 - [Sudo Configuration](sudo.md) - Alternative for CLI operations
-- [System Modules](../system-modules.md) - Polkit module details
+- [System Modules](../system-modules/security-wm-utils.md) - Polkit module details
 

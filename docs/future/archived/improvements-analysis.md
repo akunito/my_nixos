@@ -522,5 +522,5 @@ These improvements will significantly enhance the maintainability, reliability, 
 - [Installation Guide](../installation.md)
 - [Profiles Guide](../profiles.md)
 - [Configuration Guide](../configuration.md)
-- [Scripts Reference](../scripts.md)
+- [Scripts Reference](../scripts/README.md)
 

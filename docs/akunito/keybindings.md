@@ -152,7 +152,7 @@ fix-terminals
 
 **Module**: `user/app/terminal/fix-terminals.nix`
 
-**Documentation**: See [Scripts Reference](scripts.md#fix-terminals) for complete usage.
+**Documentation**: See [Scripts Reference](scripts/utility.md#fix-terminals) for complete usage.
 
 ### Terminal Emulator Keybindings
 
@@ -252,7 +252,7 @@ Window decorations match Alacritty styling.
 ## Related Documentation
 
 - [Mouse Button Mapping Guide](keybindings/mouse-button-mapping.md) - Quick guide for mapping mouse buttons to modifiers
-- [Scripts Reference](scripts.md) - Complete script documentation including `fix-terminals`
-- [User Modules](user-modules.md) - Terminal and application modules
-- [System Modules](system-modules.md) - Keyd configuration (`system/wm/keyd.nix`)
+- [Scripts Reference](scripts/README.md) - Complete script documentation including `fix-terminals`
+- [User Modules](user-modules/README.md) - Terminal and application modules
+- [System Modules](system-modules/security-wm-utils.md) - Keyd configuration (`system/wm/keyd.nix`)
 

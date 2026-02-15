@@ -660,7 +660,7 @@ The configuration includes Wayland clipboard support:
 
 ## Related Documentation
 
-- [User Modules Guide](../user-modules.md) - Overview of all user modules
+- [User Modules Guide](README.md) - Overview of all user modules
 - [Configuration Guide](../configuration.md) - Understanding configuration structure
 - [NixVim Documentation](https://nix-community.github.io/nixvim/) - Official NixVim documentation
 - [Neovim Documentation](https://neovim.io/doc/) - Official Neovim documentation

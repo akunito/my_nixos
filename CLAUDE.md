@@ -108,6 +108,14 @@ status: draft | published            # Document status
 - **REGENERATE** router after changes: `cd docs/scripts && python3 generate_docs_index.py`
 - **PRESERVE** document IDs - they are stable identifiers and NEVER change
 
+#### 5. Document Size (RECOMMENDED)
+- Keep individual docs **under 300 lines** (~4,500 tokens)
+- If a doc grows beyond 300 lines, split into topic-specific files in a subdirectory
+- Create a `README.md` index in the subdirectory that links to each sub-doc
+- Sub-doc IDs follow `<parent-id>.<subtopic>` naming (e.g., `scripts.installation`)
+- The index file keeps the original frontmatter `id:`
+- This reduces Claude Code token consumption by ~70% per targeted doc read
+
 ## Profile Architecture Principles (CRITICAL)
 
 This repository follows a **hierarchical, modular, and centralized** profile architecture:
@@ -427,30 +435,12 @@ For operational details, **read the service doc first** before SSH-ing or making
 
 ### Service index
 
-| Service | Access | Doc |
-|---------|--------|-----|
-| pfSense | `ssh admin@192.168.8.1` | `docs/akunito/infrastructure/services/pfsense.md` |
-| VPS / WireGuard | `ssh -A -p 56777 root@172.26.5.155` | `docs/akunito/infrastructure/services/vps-wireguard.md` |
-| Grafana / Prometheus | LXC_monitoring `192.168.8.85` | `docs/akunito/infrastructure/services/monitoring-stack.md` |
-| Matrix | `ssh -A akunito@192.168.8.104` | `docs/akunito/infrastructure/services/matrix.md` |
-| Tailscale / Headscale | `ssh -A akunito@192.168.8.105` | `docs/akunito/infrastructure/services/tailscale-headscale.md` |
-| Uptime Kuma (local) | `http://192.168.8.89:3001` | `docs/akunito/infrastructure/services/kuma.md` |
-| Uptime Kuma (public) | `https://status.akunito.com` | `docs/akunito/infrastructure/services/kuma.md` |
-| Database / Redis | `ssh -A akunito@192.168.8.103` | `docs/akunito/infrastructure/services/database-redis.md` |
-| Network / 10GbE | USW Agg `192.168.8.180` | `docs/akunito/infrastructure/services/network-switching.md` |
-| Proxy / Tunnel | `ssh -A akunito@192.168.8.102` | `docs/akunito/infrastructure/services/proxy-stack.md` |
-| Infrastructure overview | (all containers, IPs) | `docs/akunito/infrastructure/INFRASTRUCTURE.md` |
-| Infrastructure audits | (date-stamped reports) | `docs/akunito/infrastructure/audits/` |
+Full table with SSH access + IPs: `docs/akunito/infrastructure/INFRASTRUCTURE.md` (Section: Container Inventory)
+Quick lookup by tag: `docs/00_ROUTER.md` (filter by `infrastructure` tag)
 
 ### Module & hardware reference
 
-| Topic | Doc |
-|-------|-----|
-| Sway session services | `docs/user-modules/sway-daemon-integration.md` |
-| Gaming (Proton, Steam, SC) | `docs/user-modules/gaming.md` |
-| Power / TLP / Hibernate | `docs/akunito/hardware/cpu-power-management.md`, `docs/akunito/system-modules/hibernate.md` |
-| Thunderbolt dock / 10GbE | `docs/user-modules/thunderbolt-dock.md` |
-| Docker-based projects | `docs/akunito/infrastructure/docker-projects.md` |
+Quick lookup by tag: `docs/00_ROUTER.md` (filter by `hardware`, `gaming`, `user-modules` tags)
 
 ## Darwin/macOS Reference
 

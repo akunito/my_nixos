@@ -603,6 +603,6 @@ On Wayland (Sway, Hyprland), always include `dbus-update-activation-environment`
 
 - [Stylix Documentation](https://github.com/danth/stylix#readme)
 - [Base16 Documentation](https://github.com/chriskempson/base16)
-- [User Modules Guide](user-modules.md) - Application theming
+- [User Modules Guide](user-modules/README.md) - Application theming
 - [Configuration Guide](configuration.md) - Configuration management
 

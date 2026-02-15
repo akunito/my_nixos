@@ -125,6 +125,6 @@ keyboards.mouse2 = {
 ## Related Documentation
 
 - [Keybindings Reference](../keybindings.md#mouse-button-mapping) - Complete keybindings documentation
-- [System Modules](../../system-modules.md#keyd-systemwmkkeydnix) - Keyd module documentation
+- [System Modules](../../system-modules/security-wm-utils.md) - Keyd module documentation
 - [Keyd Configuration](../../../system/wm/keyd.nix) - Source configuration file
 

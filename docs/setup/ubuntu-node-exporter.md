@@ -115,4 +115,4 @@ Ensure required collectors are enabled in `/etc/default/prometheus-node-exporter
 ## Related Documentation
 
 - [Prometheus Node Exporter](https://github.com/prometheus/node_exporter)
-- [NixOS Prometheus Exporters](../system-modules.md#prometheus-exporters)
+- [NixOS Prometheus Exporters](../system-modules/README.md)

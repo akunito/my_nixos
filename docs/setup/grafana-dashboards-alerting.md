@@ -596,6 +596,6 @@ When migrating to a new machine:
 - [Ubuntu Node Exporter Setup](./ubuntu-node-exporter.md)
 - [Monitoring Stack Overview](../infrastructure/services/monitoring-stack.md)
 - [Grafana Dashboard Reference](./grafana-dashboard-reference.md)
-- [NixOS Monitoring Configuration](../system-modules.md)
+- [NixOS Monitoring Configuration](../system-modules/README.md)
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/)

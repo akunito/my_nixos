@@ -297,7 +297,7 @@ This is what `plasma6.nix` does automatically.
 
 ## Related Documentation
 
-- [User Modules Guide](../user-modules.md) - User-level modules
+- [User Modules Guide](README.md) - User-level modules
 - [Configuration Guide](../configuration.md) - Configuration management
 - [Plasma 6 README](../../user/wm/plasma6/readme.md) - Original documentation
 

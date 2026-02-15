@@ -2,7 +2,7 @@
 id: user-modules.windows11-qxl-setup
 summary: Complete guide for setting up QXL display drivers in Windows 11 VMs with SPICE for bidirectional clipboard and dynamic resolution support. Includes troubleshooting for resolution issues and driver installation.
 tags: [virtualization, windows11, qxl, spice, vm, qemu, kvm, virt-manager, display, resolution, clipboard]
-related_files: [system/app/virtualization.nix, docs/system-modules.md]
+related_files: [system/app/virtualization.nix, docs/system-modules/app-modules.md]
 ---
 
 # Windows 11 VM QXL Display Setup Guide
@@ -238,8 +238,8 @@ Here's a complete video/graphics section for reference:
 
 ## Related Documentation
 
-- [System Modules - Virtualization](../system-modules.md#virtualization-systemappvirtualizationnix)
-- [Virtualization Configuration](../system-modules.md)
+- [System Modules - Virtualization](../system-modules/app-modules.md#virtualization-systemappvirtualizationnix)
+- [Virtualization Configuration](../system-modules/app-modules.md)
 
 ## Notes
 

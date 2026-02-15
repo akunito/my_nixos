@@ -497,10 +497,16 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/patches.md**: Guide to understanding and using Nixpkgs patches in this configuration.
 - **docs/profile-feature-flags.md**: Guide to creating and using feature flags for profile-specific module enabling. Explains the pattern of setting defaults to false and enabling features only in specific profiles.
 - **docs/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.
-- **docs/scripts.md**: Complete reference for all shell scripts in this repository.
-- **docs/system-modules.md**: Complete reference for system-level NixOS modules in this configuration.
 - **docs/themes.md**: Complete guide to the theming system and available themes.
-- **docs/user-modules.md**: Complete reference for user-level Home Manager modules in this configuration.
+
+### Scripts
+
+- **docs/scripts/README.md**: Complete reference for all shell scripts — installation, sync, update, maintenance, security, and utilities
+- **docs/scripts/installation.md**: Installation and deployment scripts — install.sh, deploy.sh, set_environment.sh, flatpak-reconcile.sh
+- **docs/scripts/maintenance.md**: Maintenance and automated update scripts — maintenance.sh, autoSystemUpdate.sh, autoUserUpdate.sh
+- **docs/scripts/security.md**: Security scripts — harden.sh, soften.sh, cleanIPTABLESrules.sh for file permissions and firewall management
+- **docs/scripts/sync-update.md**: Synchronization and update scripts — sync.sh, sync-system.sh, sync-user.sh, update.sh, upgrade.sh, pull.sh
+- **docs/scripts/utility.md**: Utility and helper scripts — fix-terminals, generate_docs_index.py, handle_docker.sh, Plasma/Sway/Ranger helpers
 
 ### Security
 
@@ -519,8 +525,16 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack.
 - **docs/setup/ubuntu-node-exporter.md**: This guide documents how to install and configure Prometheus Node Exporter on Ubuntu LXC containers (like cloudflared at 192.168.8.102) for monitoring with the homelab Prometheus/Grafana stack.
 
+### System-Modules
+
+- **docs/system-modules/README.md**: Complete reference for system-level NixOS modules — app, hardware, security, WM, and utility modules
+- **docs/system-modules/app-modules.md**: System application modules — Docker, Virtualization (QEMU/KVM/SPICE), Flatpak, Steam, Gamemode, Samba, AppImage
+- **docs/system-modules/hardware-modules.md**: System hardware modules — drives, power, kernel, Bluetooth, printing, OpenGL, Xbox, NFS, SystemD, time
+- **docs/system-modules/security-wm-utils.md**: Security, window manager, and utility modules — SSH, firewall, sudo, Polkit, Restic, WMs, keyd, aku wrapper
+
 ### User-Modules
 
+- **docs/user-modules/README.md**: Complete reference for user-level Home Manager modules — applications, shells, window managers, theming, and packages
 - **docs/user-modules/db-credentials.md**: Home Manager module for database credential files (pgpass, my.cnf, redis)
 - **docs/user-modules/doom-emacs.md**: Doom Emacs user module and config layout, including Stylix theme templates and profile integration.
 - **docs/user-modules/gaming.md**: Implementation details for Gaming on NixOS, covering Lutris/Bottles wrappers, Vulkan/RDNA 4 driver fixes, and Wine troubleshooting.

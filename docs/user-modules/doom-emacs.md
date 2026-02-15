@@ -42,11 +42,11 @@ The full config is a [literate org document (doom.org)](./doom.org).
 
 ## Integration
 
-The Doom Emacs module is integrated into the user configuration and can be enabled in profiles. See [User Modules Guide](../user-modules.md) for details.
+The Doom Emacs module is integrated into the user configuration and can be enabled in profiles. See [User Modules Guide](README.md) for details.
 
 ## Related Documentation
 
-- [User Modules Guide](../user-modules.md) - User-level modules overview
+- [User Modules Guide](README.md) - User-level modules overview
 - [Themes Guide](../themes.md) - Stylix theme integration
 
 **Related Documentation**: See [user/app/doom-emacs/README.md](../../../user/app/doom-emacs/README.md) for directory-level documentation.

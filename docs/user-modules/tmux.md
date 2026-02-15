@@ -153,11 +153,11 @@ You can also manually save/restore sessions:
 
 ## Integration
 
-The Tmux module is integrated into the user configuration and can be enabled in profiles. See [User Modules Guide](../user-modules.md) for details.
+The Tmux module is integrated into the user configuration and can be enabled in profiles. See [User Modules Guide](README.md) for details.
 
 ## Related Documentation
 
-- [User Modules Guide](../user-modules.md) - User-level modules overview
+- [User Modules Guide](README.md) - User-level modules overview
 - [Keybindings Guide](../keybindings.md) - General keybinding reference
 
 **Related Documentation**: See [user/app/terminal/tmux.nix](../../../user/app/terminal/tmux.nix) for the complete NixOS/Home Manager configuration.

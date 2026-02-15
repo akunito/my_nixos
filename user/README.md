@@ -51,7 +51,7 @@ I use this to pass a few attribute sets:
 
 ## Related Documentation
 
-For comprehensive documentation, see [docs/user-modules.md](../docs/user-modules.md).
+For comprehensive documentation, see [docs/user-modules/](../docs/user-modules/README.md).
 
 **Note**: The original [README.org](./README.org) file is preserved for historical reference.
 

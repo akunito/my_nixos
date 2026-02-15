@@ -469,6 +469,6 @@ pkgs.writeShellApplication {
 
 - [Installation Guide](installation.md) - Setting up the configuration
 - [Profiles Guide](profiles.md) - Understanding profiles
-- [System Modules](system-modules.md) - System-level modules
-- [User Modules](user-modules.md) - User-level modules
+- [System Modules](system-modules/README.md) - System-level modules
+- [User Modules](user-modules/README.md) - User-level modules
 

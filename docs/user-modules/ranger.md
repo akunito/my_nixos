@@ -53,11 +53,11 @@ Ranger configuration is located in `user/app/ranger/` and includes:
 
 ## Integration
 
-The Ranger module is integrated into the user configuration. See [User Modules Guide](../user-modules.md) for details.
+The Ranger module is integrated into the user configuration. See [User Modules Guide](README.md) for details.
 
 ## Related Documentation
 
-- [User Modules Guide](../user-modules.md) - User-level modules overview
+- [User Modules Guide](README.md) - User-level modules overview
 
 **Related Documentation**: See [user/app/ranger/README.md](../../../user/app/ranger/README.md) for directory-level documentation.
 

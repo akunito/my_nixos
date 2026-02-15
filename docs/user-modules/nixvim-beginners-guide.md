@@ -558,7 +558,7 @@ NIXVIM FEATURES:
 ## Related Documentation
 
 - [NixVim Module Documentation](./nixvim.md) - Complete NixVim reference
-- [User Modules Guide](../user-modules.md) - Overview of all user modules
+- [User Modules Guide](README.md) - Overview of all user modules
 - [Vim Adventures](https://vim-adventures.com/) - Interactive Vim tutorial (external)
 - [OpenRouter Documentation](https://openrouter.ai/docs) - API documentation
 

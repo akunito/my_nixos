@@ -317,7 +317,7 @@ Note: Some features require NixOS system configuration and won't work.
 
 ## Related Documentation
 
-- [Scripts Documentation](scripts.md) - Detailed script reference
+- [Scripts Documentation](scripts/README.md) - Detailed script reference
 - [Configuration Guide](configuration.md) - Understanding and customizing configuration
 - [Profiles Guide](profiles.md) - Available profiles and their purposes
 - [Maintenance Guide](maintenance.md) - Ongoing maintenance tasks

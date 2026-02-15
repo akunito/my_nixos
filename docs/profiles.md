@@ -296,6 +296,6 @@ Keep all profiles in version control so you can:
 
 - [Configuration Guide](configuration.md) - Understanding configuration structure
 - [Installation Guide](installation.md) - Installing with a specific profile
-- [System Modules](system-modules.md) - Available system modules
-- [User Modules](user-modules.md) - Available user modules
+- [System Modules](system-modules/README.md) - Available system modules
+- [User Modules](user-modules/README.md) - Available user modules
 

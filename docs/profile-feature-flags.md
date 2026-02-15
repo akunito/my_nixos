@@ -398,5 +398,5 @@ systemSettings = {
 
 - [Configuration Guide](configuration.md) - General configuration patterns
 - [Profiles Documentation](profiles.md) - Profile system overview
-- [User Modules Guide](user-modules.md) - Creating user-level modules
-- [System Modules Guide](system-modules.md) - Creating system-level modules
+- [User Modules Guide](user-modules/README.md) - Creating user-level modules
+- [System Modules Guide](system-modules/README.md) - Creating system-level modules

@@ -18,7 +18,7 @@ Complete guide to maintaining your NixOS configuration and using the provided sc
 
 This configuration includes several scripts to automate common tasks and maintain system health. All scripts are located in the repository root and can be run directly or via the `aku` wrapper.
 
-**For complete script documentation**, see [Scripts Reference](scripts.md) which provides detailed information about all scripts, their parameters, usage patterns, and customization options.
+**For complete script documentation**, see [Scripts Reference](scripts/README.md) which provides detailed information about all scripts, their parameters, usage patterns, and customization options.
 
 ## Aku Wrapper
 
@@ -467,7 +467,7 @@ tail -f maintenance.log
 
 ## Related Documentation
 
-- [Scripts Documentation](scripts.md) - Complete reference for all shell scripts
+- [Scripts Documentation](scripts/README.md) - Complete reference for all shell scripts
 - [Installation Guide](installation.md) - Initial setup
 - [Configuration Guide](configuration.md) - Configuration management
 - [README](../README.md) - Project overview
