@@ -125,4 +125,20 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
 | `secrets/komi/secrets.nix.template` | Template for your encrypted secrets |
 | `.gitattributes` | git-crypt-komi filter for your secrets |
 
+## Docs reorganization (2026-02-15)
+
+The `docs/` directory has been restructured with user-specific folders:
+
+- **`docs/komi/`** — Your docs (you're reading one now!)
+  - `macos-installation.md` — Installing dotfiles on macOS with nix-darwin
+  - `macos-komi-migration.md` — Migration from standalone macos-setup
+  - `komi-onboarding.md` — This file
+  - `komi-proxmox-guide.md` — Proxmox basics
+
+- **`docs/akunito/`** — akunito's NixOS infrastructure docs (hardware, gaming, keybindings, LXC, etc.)
+
+- **Shared docs** stay at `docs/` root — `security/`, `setup/`, `user-modules/`, `profiles.md`, `configuration.md`, etc.
+
+This means you no longer need to wade through 50+ infrastructure docs to find your files. Everything komi-specific is in `docs/komi/`.
+
 That's it! Keep doing what you're doing on the `komi` branch and we'll merge periodically.
