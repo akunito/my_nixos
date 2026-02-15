@@ -660,6 +660,31 @@ Updates are staggered to prevent simultaneous service disruption.
 
 ---
 
+## Quick Reference: Container Working Directories
+
+Key file locations per container for SSH troubleshooting:
+
+| Container | IP | Working Directory | Contents |
+|-----------|-----|-------------------|----------|
+| LXC_HOME | 192.168.8.80 | `~/.homelab/` | homelab, media, nginx-proxy, unifi docker-compose files |
+| LXC_proxy | 192.168.8.102 | `~/npm/` | NPM config; cloudflared via NixOS |
+| LXC_mailer | 192.168.8.89 | `~/homelab-watcher/` | postfix, kuma |
+| LXC_monitoring | 192.168.8.85 | (NixOS native) | grafana.nix, prometheus-*.nix |
+| LXC_plane | 192.168.8.86 | `~/PLANE/` | Plane project management |
+| LXC_portfolioprod | 192.168.8.88 | `~/portfolioPROD/` | Portfolio website |
+| LXC_liftcraftTEST | 192.168.8.87 | `~/leftyworkout_TEST/` | LiftCraft test environment |
+| LXC_database | 192.168.8.103 | (NixOS native) | PostgreSQL + Redis services |
+| LXC_matrix | 192.168.8.104 | `~/.homelab/matrix/` | Synapse, Element; `~/.claude-matrix-bot/` (Claude bot) |
+| LXC_tailscale | 192.168.8.105 | (NixOS native) | Tailscale subnet router |
+| VPS | `ssh -p 56777 root@172.26.5.155` | `/root/vps_wg/` | git-crypt encrypted; `/opt/wireguard-ui/`, `/opt/postfix-relay/` |
+
+**Verify commands**:
+- Docker containers: `docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Networks}}'`
+- Docker networks: `docker network ls` and `docker network inspect <network>`
+- Prometheus targets: `curl -s http://192.168.8.85:9090/api/v1/targets | jq`
+
+---
+
 ## Related Documentation
 
 - [pfSense Firewall](./services/pfsense.md) - Gateway, DNS, VPN, and firewall configuration
@@ -672,3 +697,4 @@ Updates are staggered to prevent simultaneous service disruption.
 - [Database & Redis](./services/database-redis.md) - Centralized PostgreSQL and Redis services
 - [Matrix Server](./services/matrix.md) - Matrix Synapse, Element, and Claude Bot
 - [Network Switching](./services/network-switching.md) - 10GbE switching layer, LACP bonds, ARP flux
+- [Docker Projects](./docker-projects.md) - Docker-based project conventions

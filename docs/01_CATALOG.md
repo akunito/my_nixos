@@ -285,6 +285,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/gaming/mangohud.nix**: MangoHud Configuration
 - **user/app/git/git.nix**: https://nixos.wiki/wiki/Git
 - **user/app/hammerspoon/hammerspoon.nix**: Hammerspoon Configuration Module for macOS *Enabled when:* `systemSettings.osType == "darwin" && userSettings.hammerspoonEnable`
+- **user/app/karabiner/karabiner.nix**: Karabiner-Elements Configuration
 - **user/app/keepass/keepass.nix**: nixpkgs.overlays = [
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
@@ -295,9 +296,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `SwayFX`
    - `!waypaperTakesOver`
    - `cfgEnable && !waypaperTakesOver`
-- **user/app/terminal/alacritty.nix**: Wrapper script to auto-start tmux with alacritty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/app/terminal/alacritty.nix**: Wrapper script to auto-start tmux with alacritty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)`
 - **user/app/terminal/fix-terminals.nix**: Python script to configure VS Code and Cursor terminal keybindings
-- **user/app/terminal/kitty.nix**: Wrapper script to auto-start tmux with kitty session *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/app/terminal/kitty.nix**: Wrapper script to auto-start tmux with kitty session *Enabled when:*
+   - `default shows decorations, window manager handles styling`
+   - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)`
 - **user/app/terminal/tmux.nix**: Clipboard command differs between macOS (pbcopy) and Linux (wl-copy) *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/terminal/xterm.nix**: XTerm configuration via X resources *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
@@ -339,8 +342,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **user/style/stylix.nix**: CRITICAL: Remove trailing newline from URL and SHA256 to prevent malformed URLs *Enabled when:*
    - `userSettings.wm != "plasma6"`
-   - `userSettings.wm == "plasma6" && systemSettings.enableSwayForDESK == false`
-   - `userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true`
+   - `userSettings.wm == "plasma6" && (systemSettings.enableSwayForDESK or false) == false`
+   - `userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true`
+   - `!pkgs.stdenv.isDarwin && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)`
 
 ### Wm
 
@@ -416,6 +420,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/waybar-drawer-and-idle-toggle.md**: Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX.
 - **docs/future/waybar-sov-debug-analysis.md**: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).
 
+### Gaming
+
+- **docs/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
+- **docs/gaming/skyrim-linux-setup.md**: This guide documents the complete process for installing and running modded Skyrim (LoreRim, Wildlander, etc.) on NixOS using Jackify, Proton, and Gamescope under Sway/Wayland.
+
 ### Hardware
 
 - **docs/hardware/cpu-power-management.md**: Complete guide to CPU frequency governors and power management.
@@ -426,6 +435,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/infrastructure/INFRASTRUCTURE.md**: Public infrastructure overview with architecture diagram and component descriptions
 - **docs/infrastructure/INFRASTRUCTURE_INTERNAL.md**: Complete internal infrastructure documentation with sensitive details (ENCRYPTED)
+- **docs/infrastructure/docker-projects.md**: Docker-based project conventions - wrapper scripts, config locations, restart patterns
+- **docs/infrastructure/komi-proxmox-guide.md**: - **Machine**: Laptop running as headless server (lid closed)
 - **docs/infrastructure/truenas-migration-complete.md**: Successfully migrated TrueNAS SCALE from failing Patriot Burst Elite 120GB SSD to mirrored Samsung 970 EVO Plus NVMe drives.
 
 ### Infrastructure / Audits
@@ -463,10 +474,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/hardware.md**: Complete guide to hardware-specific configurations and optimizations.
 - **docs/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
 - **docs/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
+- **docs/komi-onboarding.md**: Quick guide for ko-mi on the multi-user branch setup and what changed
 - **docs/lxc-deployment.md**: Centralized deployment script for managing multiple LXC containers
 - **docs/macos-installation.md**: This guide covers installing and configuring this dotfiles repository on macOS using nix-darwin and Home Manager.
 - **docs/macos-komi-migration.md**: This guide helps you migrate from your current ko-mi/macos-setup to the new Nix-managed dotfiles. You can use Claude Code to help with any step.
 - **docs/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
+- **docs/multi-user-workflow.md**: Multi-user branch management workflow for akunito (main) and ko-mi (komi)
 - **docs/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
 - **docs/nix-quote-escaping.md**: Guide to properly escaping quotes and special characters in Nix strings to avoid common syntax errors.
 - **docs/patches.md**: Guide to understanding and using Nixpkgs patches in this configuration.
@@ -491,6 +504,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Setup
 
+- **docs/setup/claude-code-setup.md**: Claude Code CLI configuration guide — permissions, hooks, and MCP servers
 - **docs/setup/grafana-dashboard-reference.md**: Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures.
 - **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack.
 - **docs/setup/ubuntu-node-exporter.md**: This guide documents how to install and configure Prometheus Node Exporter on Ubuntu LXC containers (like cloudflared at 192.168.8.102) for monitoring with the homelab Prometheus/Grafana stack.
@@ -508,6 +522,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/lmstudio.md**: LM Studio user module, including MCP server setup templates and web-search tooling integration guidance.
 - **docs/user-modules/nixvim-beginners-guide.md**: Beginner's guide to using NixVim and Avante, including Vim navigation basics for users new to Vim/Neovim.
 - **docs/user-modules/nixvim.md**: NixVim configuration module providing a Cursor IDE-like Neovim experience with AI-powered features (Avante + Supermaven), LSP intelligence, and modern editor UX.
+- **docs/user-modules/ollama.md**: Ollama local LLM server configuration, RDNA4 Vulkan backend workaround, and model recommendations for RX 9070 XT.
 - **docs/user-modules/picom.md**: Picom compositor module overview and where its config and Nix module live.
 - **docs/user-modules/plasma6.md**: Plasma 6 configuration integration for NixOS/Home Manager with export/import and symlink-based mutability.
 - **docs/user-modules/ranger-guide.md**: Ranger is a minimalistic TUI (Terminal User Interface) file manager controlled with vim keybindings, making it extremely efficient for file management tasks.

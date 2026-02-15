@@ -356,6 +356,50 @@ systemctl reload prometheus
 
 ---
 
+## Grafana 12+ Nix Provisioning Patterns
+
+When writing Grafana provisioning in NixOS (`grafana.nix`), use these exact structures for Grafana 12+:
+
+### Alert Rules Format
+
+Use Prometheus-style rules in `ruleFiles`, **NOT** the Grafana alerting UI:
+
+```nix
+ruleFiles = [(pkgs.writeText "alerts.yml" (builtins.toJSON {
+  groups = [{ name = "alerts"; rules = [{ alert = "..."; expr = "..."; }]; }];
+}))];
+```
+
+### Contact Point Format
+
+```nix
+alerting.contactPoints.settings = {
+  apiVersion = 1;
+  contactPoints = [{
+    orgId = 1;
+    name = "email-alerts";
+    receivers = [{ uid = "..."; type = "email"; settings = { addresses = "..."; }; }];
+  }];
+};
+```
+
+### Notification Policy Format
+
+Keep it simple (avoid nested routes):
+
+```nix
+alerting.policies.settings = {
+  apiVersion = 1;
+  policies = [{
+    orgId = 1;
+    receiver = "email-alerts";
+    group_by = ["alertname" "severity"];
+  }];
+};
+```
+
+---
+
 ## Related Documentation
 
 - [grafana-dashboards-alerting.md](../../setup/grafana-dashboards-alerting.md) - Detailed setup guide

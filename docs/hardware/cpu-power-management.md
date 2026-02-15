@@ -338,6 +338,42 @@ PROFILE_ON_AC = "balanced";
 3. Check CPU frequency scaling
 4. Monitor CPU usage
 
+## Profile-Specific Power Settings
+
+Each NixOS profile type has different TLP/power requirements:
+
+### VMs (VMHOME)
+
+- **Disable TLP** — hypervisor manages power
+- `TLP_ENABLE = false;`
+
+### Desktops (DESK)
+
+- **May disable TLP** if no battery
+- Use `power-profiles-daemon` instead for manual switching
+- `TLP_ENABLE = false;`
+
+### Laptops (LAPTOP_L15, LAPTOP_AGA, LAPTOP_YOGAAKU)
+
+- **Enable TLP** with appropriate thresholds
+- `TLP_ENABLE = true;`
+
+**Key settings in profile configs**:
+
+| Setting | Description | Example Values |
+|---------|-------------|----------------|
+| `TLP_ENABLE` | Enable/disable TLP power management | `true` / `false` |
+| `CPU_SCALING_GOVERNOR_ON_AC` | CPU governor on AC power | `performance`, `schedutil` |
+| `CPU_SCALING_GOVERNOR_ON_BAT` | CPU governor on battery | `powersave`, `schedutil` |
+| `START_CHARGE_THRESH_BAT0` | Start charging below this % | `40` |
+| `STOP_CHARGE_THRESH_BAT0` | Stop charging above this % | `80` |
+| `PROFILE_ON_AC` | Platform power profile on AC | `performance`, `balanced` |
+| `PROFILE_ON_BAT` | Platform power profile on battery | `low-power`, `balanced` |
+
+**Battery charge thresholds** help with battery longevity — keep the battery between 40-80% for daily use.
+
+---
+
 ## Related Documentation
 
 - [Hardware Guide](../hardware.md) - General hardware configuration

@@ -543,6 +543,20 @@ The git repository contains all configuration. Key files to restore manually:
 
 ---
 
+## Quick Diagnostics Checklist
+
+When troubleshooting the WireGuard tunnel, run these checks in order:
+
+1. **Check handshake**: `wg show` (look for `latest-handshakes` timestamp — stale = tunnel down)
+2. **Check interface stats**: `ip -s link show wg0` (TX dropped > 0 = problem)
+3. **Check kernel tuning**: `sysctl net.netfilter.nf_conntrack_max` (should be 65536)
+4. **Check qdisc**: `tc qdisc show dev wg0` (should show `fq_codel`)
+5. **Check monitor logs**: `cat /var/log/wg-tunnel-monitor.log`
+
+**Optimization script**: Use `scripts/vps-wireguard-optimize.sh` from the dotfiles repo for applying performance tuning to the VPS.
+
+---
+
 ## Related Documentation
 
 - [INFRASTRUCTURE.md](../INFRASTRUCTURE.md) - Overall infrastructure

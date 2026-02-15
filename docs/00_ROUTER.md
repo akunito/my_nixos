@@ -8,6 +8,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 |---|---|---|---|
 | audits.pfsense.2026-02-04 | Security, performance, and reliability audit of pfSense firewall | audit, security, performance, pfsense, firewall | docs/infrastructure/audits/pfsense-audit-2026-02-04.md |
 | audits.truenas.2026-02-12 | Performance, reliability, and configuration audit of TrueNAS storage server | audit, performance, truenas, zfs, storage, network, iscsi | docs/infrastructure/audits/truenas-audit-2026-02-12.md |
+| claude-code-setup | Claude Code CLI configuration guide — permissions, hooks, and MCP servers | claude-code, setup, permissions, hooks, mcp, tooling | ~/.claude/settings.json |
 | desk-vs-laptop-packages | Complete package and feature comparison between DESK and LAPTOP_L15 profiles | packages, profiles, comparison, DESK, LAPTOP | docs/future/desk-vs-laptop-packages.md |
 | docs.agent-context | How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md + Claude Code) and a reusable template for other projects. | cursor, claude-code, agents, docs, routing, rules | docs/00_ROUTER.md |
 | docs.navigation | User guide for navigating this repository's documentation using the Router and Catalog system. | docs, navigation, router, catalog, user-guide | docs/00_ROUTER.md |
@@ -21,6 +22,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | hardware.thunderbolt-dock | Thunderbolt dock setup, OWC Dock 96W, ATTO ThunderLink NS 3102 (Linux incompatible), PS/2 keyboard/touchpad fixes | thunderbolt, dock, owc, atto, 10gbe, thinkpad, keyboard, touchpad, ps2, hardware | system/hardware/thunderbolt.nix |
 | hibernate | Hibernation with LUKS-encrypted swap for laptops and desktops | hibernation, suspend, luks, swap, encryption, power, laptop, desktop, sway, idle, lid, acpid | system/hardware/hibernate.nix |
 | infrastructure.database-redis | Centralized PostgreSQL and Redis services on LXC_database | infrastructure, database, redis, postgresql, lxc, caching | profiles/LXC_database-config.nix |
+| infrastructure.docker-projects | Docker-based project conventions - wrapper scripts, config locations, restart patterns | infrastructure, docker, projects, portfolio, liftcraft, plane | profiles/LXC_portfolioprod-config.nix |
 | infrastructure.internal | Complete internal infrastructure documentation with sensitive details (ENCRYPTED) | infrastructure, audit, security, monitoring, proxmox, lxc, secrets | profiles/LXC*-config.nix |
 | infrastructure.overview | Public infrastructure overview with architecture diagram and component descriptions | infrastructure, architecture, proxmox, lxc, monitoring, homelab, pfsense, gateway | profiles/LXC*-config.nix |
 | infrastructure.services.homelab | Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS | infrastructure, homelab, docker, nextcloud, syncthing | profiles/LXC_HOME-config.nix |
@@ -49,6 +51,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | user-modules.lmstudio | LM Studio user module, including MCP server setup templates and web-search tooling integration guidance. | lmstudio, mcp, ai, user-modules | user/app/lmstudio/** |
 | user-modules.nixvim | NixVim configuration module providing a Cursor IDE-like Neovim experience with AI-powered features (Avante + Supermaven), LSP intelligence, and modern editor UX. | nixvim, neovim, editor, ai, lsp, cursor-ide, user-modules | user/app/nixvim/** |
 | user-modules.nixvim-beginners-guide | Beginner's guide to using NixVim and Avante, including Vim navigation basics for users new to Vim/Neovim. | nixvim, neovim, vim, beginners, tutorial, avante, user-modules | user/app/nixvim/** |
+| user-modules.ollama | Ollama local LLM server configuration, RDNA4 Vulkan backend workaround, and model recommendations for RX 9070 XT. | ollama, ai, vulkan, rocm, rdna4, gpu, llm, user-modules | user/packages/user-ai-pkgs.nix |
 | user-modules.picom | Picom compositor module overview and where its config and Nix module live. | picom, compositor, x11, animations, user-modules | user/wm/picom/** |
 | user-modules.plasma6 | Plasma 6 configuration integration for NixOS/Home Manager with export/import and symlink-based mutability. | plasma6, kde, desktop, home-manager, configuration | user/wm/plasma6/** |
 | user-modules.ranger | Ranger TUI file manager module overview, keybindings, and where configuration lives in this repo. | ranger, tui, file-manager, user-modules | user/app/ranger/** |
@@ -64,6 +67,8 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | user-modules.windows11-qxl-setup | Complete guide for setting up QXL display drivers in Windows 11 VMs with SPICE for bidirectional clipboard and dynamic resolution support. Includes troubleshooting for resolution issues and driver installation. | virtualization, windows11, qxl, spice, vm, qemu, kvm, virt-manager, display, resolution, clipboard | system/app/virtualization.nix |
 | user-modules.xmonad | XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo. | xmonad, x11, window-manager, haskell, user-modules | user/wm/xmonad/** |
 | waypaper | Waypaper GUI wallpaper manager — single source of truth for wallpaper restore in Sway (swww backend) | waypaper, wallpaper, sway, swww, gui, stylix, systemd-user | user/app/waypaper/waypaper.nix |
+| workflow.komi-onboarding | Quick guide for ko-mi on the multi-user branch setup and what changed | komi, onboarding, multi-user, darwin | docs/komi-onboarding.md |
+| workflow.multi-user | Multi-user branch management workflow for akunito (main) and ko-mi (komi) | git, workflow, multi-user, branches, merge | profiles/MACBOOK-KOMI-config.nix |
 
 ## Notes
 
