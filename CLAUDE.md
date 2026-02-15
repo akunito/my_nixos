@@ -817,6 +817,40 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
   - Test darwin profile: `nix build .#darwinConfigurations.system.system`
   - Test existing Linux profiles still work (see task #11 verification)
 
+### Multi-user context awareness (CRITICAL — applies to: all profiles, all branches)
+
+This repo is shared between two users on separate branches:
+- **akunito** (main branch): NixOS infrastructure, desktops, laptops, LXC containers
+- **ko-mi** (komi branch): macOS/darwin profiles
+
+**Read first**: `docs/multi-user-workflow.md`
+
+**Auto-detection:** Check `$ENV_PROFILE` and `git branch --show-current` to determine context:
+
+| ENV_PROFILE | Branch | User | Allowed file scopes |
+|-------------|--------|------|---------------------|
+| DESK, LAPTOP_*, LXC_*, VMHOME | main | akunito | All except secrets/komi/, MACBOOK-KOMI-config.nix |
+| MACBOOK_KOMI | komi | ko-mi | profiles/MACBOOK-*, profiles/darwin/*, system/darwin/*, user/app/hammerspoon/komi-*, secrets/komi/, .claude/commands/ |
+
+**Rules for ko-mi (komi branch):**
+- CAN freely modify: darwin-specific files, MACBOOK-KOMI profile, komi-init.lua
+- CAN add darwin guards to shared modules (lib.mkIf isDarwin / lib.optionals !isDarwin)
+- MUST NOT modify: secrets/domains.nix, LXC profiles, system/app/ services, flake.nix
+- MUST NOT remove Linux functionality from shared modules
+- MUST use feature flags for new features (default false in lib/defaults.nix)
+
+**Rules for akunito (main branch):**
+- CAN freely modify: all Linux/NixOS infrastructure
+- MUST NOT modify: secrets/komi/, MACBOOK-KOMI-config.nix, komi-init.lua
+- SHOULD test darwin eval after touching shared modules
+
+**Shared module changes:** When modifying files under user/, lib/, or system/ (not system/darwin/):
+- Always use platform guards: `lib.mkIf (!pkgs.stdenv.isDarwin)` for Linux-only
+- Never comment out packages globally — use `lib.optionals` with platform check
+- Use feature flags for optional features (default false, each profile enables)
+
+**Merge skill:** Use `/merge-branches` to safely merge between branches
+
 ## Multi-agent instructions
 
 For complex tasks, see `.claude/agents/` for agent-specific context and patterns.
