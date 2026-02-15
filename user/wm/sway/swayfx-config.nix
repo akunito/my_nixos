@@ -1300,11 +1300,8 @@ in
       for_window [class="Discover"] floating enable, sticky enable
       for_window [title="Discover"] floating enable, sticky enable
 
-      # Gamescope: dedicated workspace, always fullscreen, inhibit idle
-      # Assign to workspace 10 so other windows can't share the same workspace
-      assign [app_id="gamescope"] workspace number 10
-      for_window [app_id="gamescope"] fullscreen enable, inhibit_idle open, border none
-      # Prevent notifications from stealing focus during gaming
+      # Gamescope: always fullscreen, inhibit idle, no border
+      for_window [app_id="gamescope"] fullscreen enable, inhibit_idle fullscreen
       no_focus [app_id="mako"]
       no_focus [app_id="swaync"]
       no_focus [app_id="dunst"]
