@@ -289,7 +289,7 @@ in
 
     # System packages
     systemPackages = pkgs: pkgs-unstable: [
-      # No additional DESK-specific system packages
+      pkgs.hdparm # Disk parameter utility (ATA secure erase, etc.)
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
 
