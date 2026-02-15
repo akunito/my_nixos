@@ -377,6 +377,6 @@ Each NixOS profile type has different TLP/power requirements:
 ## Related Documentation
 
 - [Hardware Guide](../hardware.md) - General hardware configuration
-- [Kernel Modules Documentation](../../kernelModules.md) - Kernel module details
-- [Configuration Guide](../configuration.md) - Configuration management
+- [Kernel Modules Documentation](../../../kernelModules.md) - Kernel module details
+- [Configuration Guide](../../configuration.md) - Configuration management
 

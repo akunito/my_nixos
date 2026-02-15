@@ -550,4 +550,4 @@ The Graphite exporter is receiving raw metrics in `servers_truenas_*` format rat
 
 ## Appendix: Corrected Documentation
 
-The existing `docs/infrastructure/services/truenas.md` lists the CPU as "Intel (4 cores)". The actual hardware is **AMD Ryzen 5 5600G (6 cores, 12 threads)**. This should be corrected.
+The existing `docs/akunito/infrastructure/services/truenas.md` lists the CPU as "Intel (4 cores)". The actual hardware is **AMD Ryzen 5 5600G (6 cores, 12 threads)**. This should be corrected.

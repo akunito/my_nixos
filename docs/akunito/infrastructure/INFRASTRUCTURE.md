@@ -2,7 +2,7 @@
 id: infrastructure.overview
 summary: Public infrastructure overview with architecture diagram and component descriptions
 tags: [infrastructure, architecture, proxmox, lxc, monitoring, homelab, pfsense, gateway]
-related_files: [profiles/LXC*-config.nix, system/app/*.nix, docs/proxmox-lxc.md, docs/infrastructure/services/pfsense.md]
+related_files: [profiles/LXC*-config.nix, system/app/*.nix, docs/akunito/proxmox-lxc.md, docs/akunito/infrastructure/services/pfsense.md]
 ---
 
 # Infrastructure Overview
@@ -690,9 +690,9 @@ Key file locations per container for SSH troubleshooting:
 - [pfSense Firewall](./services/pfsense.md) - Gateway, DNS, VPN, and firewall configuration
 - [Proxmox LXC Guide](../proxmox-lxc.md) - LXC container setup on Proxmox
 - [LXC Deployment](../lxc-deployment.md) - Deploying NixOS to LXC
-- [Grafana & Alerting](../setup/grafana-dashboards-alerting.md) - Monitoring configuration
-- [Git-Crypt Secrets](../security/git-crypt.md) - Secrets management
-- [Profile Feature Flags](../profile-feature-flags.md) - NixOS profile configuration
+- [Grafana & Alerting](../../setup/grafana-dashboards-alerting.md) - Monitoring configuration
+- [Git-Crypt Secrets](../../security/git-crypt.md) - Secrets management
+- [Profile Feature Flags](../../profile-feature-flags.md) - NixOS profile configuration
 - [VPS WireGuard Server](./services/vps-wireguard.md) - External VPS documentation
 - [Database & Redis](./services/database-redis.md) - Centralized PostgreSQL and Redis services
 - [Matrix Server](./services/matrix.md) - Matrix Synapse, Element, and Claude Bot

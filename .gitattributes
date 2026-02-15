@@ -32,4 +32,7 @@ secrets/komi/** filter=git-crypt-komi diff=git-crypt-komi
 secrets/komi/*.template !filter !diff
 
 # Infrastructure internal documentation (sensitive details)
-docs/infrastructure/INFRASTRUCTURE_INTERNAL.md filter=git-crypt diff=git-crypt
+docs/akunito/infrastructure/INFRASTRUCTURE_INTERNAL.md filter=git-crypt diff=git-crypt
+
+# TrueNAS migration doc contains iSCSI CHAP credentials
+docs/akunito/infrastructure/truenas-migration-complete.md filter=git-crypt diff=git-crypt

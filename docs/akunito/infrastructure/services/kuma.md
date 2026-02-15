@@ -2,7 +2,7 @@
 id: infrastructure.services.kuma
 summary: Uptime Kuma monitoring - local homelab and public VPS status pages with API integration
 tags: [infrastructure, kuma, uptime-kuma, monitoring, status-pages, lxc_mailer, vps, docker]
-related_files: [profiles/LXC_mailer-config.nix, docs/infrastructure/INFRASTRUCTURE_INTERNAL.md, .claude/commands/check-kuma.md]
+related_files: [profiles/LXC_mailer-config.nix, docs/akunito/infrastructure/INFRASTRUCTURE_INTERNAL.md, .claude/commands/check-kuma.md]
 ---
 
 # Uptime Kuma Status Monitoring
@@ -339,5 +339,5 @@ For embedding status pages in web applications:
 
 - [Monitoring Stack](./monitoring-stack.md) - Prometheus/Grafana integration
 - [INFRASTRUCTURE_INTERNAL.md](../INFRASTRUCTURE_INTERNAL.md) - Credentials and detailed config
-- [LXC_mailer Profile](../../../profiles/LXC_mailer-config.nix) - Container NixOS config
+- [LXC_mailer Profile](../../../../profiles/LXC_mailer-config.nix) - Container NixOS config
 - [VPS WireGuard](./vps-wireguard.md) - VPS infrastructure

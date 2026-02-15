@@ -157,16 +157,16 @@ ssh akunito@192.168.8.85 "curl -s http://localhost:9090/api/v1/targets | jq '.da
 
 After gathering data, update these files as needed:
 
-1. **`docs/infrastructure/INFRASTRUCTURE_INTERNAL.md`** (encrypted)
+1. **`docs/akunito/infrastructure/INFRASTRUCTURE_INTERNAL.md`** (encrypted)
    - Docker network IPs if changed
    - Service ports if changed
    - New/removed containers
 
-2. **`docs/infrastructure/INFRASTRUCTURE.md`** (public)
+2. **`docs/akunito/infrastructure/INFRASTRUCTURE.md`** (public)
    - Service catalog if services added/removed
    - Architecture diagrams if topology changed
 
-3. **`docs/infrastructure/services/*.md`**
+3. **`docs/akunito/infrastructure/services/*.md`**
    - Update specific service docs with new info
 
 4. **Regenerate router**:

@@ -541,6 +541,6 @@ systemctl --user status swayidle.service                    # → active (runnin
 
 ## Related Documentation
 
-- [LUKS Encryption & Remote Unlocking](../security/luks-encryption.md)
-- [Power Management](../../system/hardware/power.md)
-- [Sway Daemon Integration](../user-modules/sway-daemon-integration.md)
+- [LUKS Encryption & Remote Unlocking](../../security/luks-encryption.md)
+- [Power Management](../../../system/hardware/power.md)
+- [Sway Daemon Integration](../../user-modules/sway-daemon-integration.md)

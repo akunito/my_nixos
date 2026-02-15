@@ -2,7 +2,7 @@
 id: infrastructure.services.pfsense
 summary: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 tags: [infrastructure, pfsense, firewall, gateway, wireguard, dns, dhcp, snmp, pfblockerng, openvpn]
-related_files: [docs/infrastructure/INFRASTRUCTURE.md, docs/infrastructure/services/vps-wireguard.md, profiles/LXC_monitoring-config.nix]
+related_files: [docs/akunito/infrastructure/INFRASTRUCTURE.md, docs/akunito/infrastructure/services/vps-wireguard.md, profiles/LXC_monitoring-config.nix]
 ---
 
 # pfSense Firewall & Gateway

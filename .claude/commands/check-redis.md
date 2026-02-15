@@ -158,5 +158,5 @@ ssh -A akunito@192.168.8.80 "docker exec redis-local redis-cli -h 192.168.8.103 
 
 ## Related Documentation
 
-- [Database & Redis Services](../../docs/infrastructure/services/database-redis.md)
+- [Database & Redis Services](../../docs/akunito/infrastructure/services/database-redis.md)
 - [Check Database](./check-database.md) - PostgreSQL/MariaDB health checks

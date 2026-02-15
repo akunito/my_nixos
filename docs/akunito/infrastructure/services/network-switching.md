@@ -2,7 +2,7 @@
 id: infrastructure.services.network-switching
 summary: Physical switching layer documentation - USW Aggregation, USW-24-G2, 10GbE LACP bonds, ARP flux
 tags: [infrastructure, network, switching, 10gbe, lacp, sfp, aggregation, arp]
-related_files: [profiles/DESK-config.nix, docs/system-modules/network-bonding.md, system/hardware/networking.nix]
+related_files: [profiles/DESK-config.nix, docs/akunito/system-modules/network-bonding.md, system/hardware/networking.nix]
 ---
 
 # Network Switching & 10GbE Infrastructure
@@ -212,6 +212,6 @@ ip neigh show 192.168.8.82
 ## Related Documentation
 
 - [Network Bonding (NixOS)](../../system-modules/network-bonding.md) - NixOS bond configuration
-- [DESK Profile](../../../profiles/DESK-config.nix) - Desktop 10GbE bond settings
+- [DESK Profile](../../../../profiles/DESK-config.nix) - Desktop 10GbE bond settings
 - [Infrastructure Overview](../INFRASTRUCTURE.md) - Full infrastructure diagram
 - [Infrastructure Internal](../INFRASTRUCTURE_INTERNAL.md) - Proxmox network config details

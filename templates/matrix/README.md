@@ -131,6 +131,6 @@ Prometheus targets (LXC_monitoring):
 
 ## Related Documentation
 
-- [Matrix Service Documentation](../docs/infrastructure/services/matrix.md)
-- [Database Redis Allocation](../docs/infrastructure/services/database-redis.md)
+- [Matrix Service Documentation](../docs/akunito/infrastructure/services/matrix.md)
+- [Database Redis Allocation](../docs/akunito/infrastructure/services/database-redis.md)
 - [Manage Matrix Skill](../.claude/commands/manage-matrix.md)

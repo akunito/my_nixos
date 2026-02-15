@@ -328,7 +328,7 @@ LXC containers access TrueNAS NFS via Proxmox bind mounts — the VLAN 100 path 
 
 ### Known Issues
 
-**ARP Flux**: When Proxmox has both vmbr0 (1G) and vmbr10 (10G bond) on the same subnet, Linux may send ARP replies from the wrong interface, causing 10G clients to route traffic over 1G. Fixed via sysctl (`/etc/sysctl.d/99-arp-fix.conf`) and route metric on vmbr0. See `docs/infrastructure/services/network-switching.md`.
+**ARP Flux**: When Proxmox has both vmbr0 (1G) and vmbr10 (10G bond) on the same subnet, Linux may send ARP replies from the wrong interface, causing 10G clients to route traffic over 1G. Fixed via sysctl (`/etc/sysctl.d/99-arp-fix.conf`) and route metric on vmbr0. See `docs/akunito/infrastructure/services/network-switching.md`.
 
 **Proxmox TCP/ring buffer tuning**: Currently runtime-only. To make persistent:
 ```bash

@@ -35,7 +35,7 @@ SwayFX is a fork of Sway with additional visual effects (blur, shadows, rounded 
 
 **Hyper Key Notation**: `${hyper}` = Mod4+Control+Mod1 (CapsLock via keyd)
 
-**Reference**: See [Keyd Configuration](../../system/wm/keyd.nix) for Hyper key setup.
+**Reference**: See [Keyd Configuration](../../../system/wm/keyd.nix) for Hyper key setup.
 
 ## Hyper Key
 
@@ -271,6 +271,6 @@ The following keybindings were intentionally removed to avoid conflicts:
 ## Related Documentation
 
 - [Main Keybindings Reference](../keybindings.md) - Overview and common keybindings
-- [SwayFX Daemon Integration](../user-modules/sway-daemon-integration.md) - Daemon management system
-- [Keyd Configuration](../../system/wm/keyd.nix) - Hyper key setup
+- [SwayFX Daemon Integration](../../user-modules/sway-daemon-integration.md) - Daemon management system
+- [Keyd Configuration](../../../system/wm/keyd.nix) - Hyper key setup
 

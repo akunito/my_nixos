@@ -232,7 +232,7 @@ Deploy NixOS configurations to multiple Proxmox LXC containers from a single com
 - `Enter` Deploy to selected
 - `a` Select all | `n` Deselect all | `q` Quit
 
-The script automatically syncs each container with the main branch and runs the install script with passwordless sudo. See [docs/lxc-deployment.md](docs/lxc-deployment.md) for full documentation.
+The script automatically syncs each container with the main branch and runs the install script with passwordless sudo. See [docs/akunito/lxc-deployment.md](docs/akunito/lxc-deployment.md) for full documentation.
 
 ## 📋 Configuration Examples
 
@@ -429,7 +429,7 @@ userSettings = {
 - **System Modules**: [docs/system-modules.md](docs/system-modules.md)
 - **User Modules**: [docs/user-modules.md](docs/user-modules.md)
 - **Scripts Reference**: [docs/scripts.md](docs/scripts.md)
-- **Keybindings**: [docs/keybindings.md](docs/keybindings.md)
+- **Keybindings**: [docs/akunito/keybindings.md](docs/akunito/keybindings.md)
 
 ### Documentation System
 
@@ -573,17 +573,17 @@ Forked from [Librephoenix's NixOS configuration](https://github.com/librephoenix
 ### Detailed Documentation
 - **[Configuration Guide](docs/configuration.md)** - Flake management and variables
 - **[Maintenance Guide](docs/maintenance.md)** - System maintenance and automation
-- **[Security Guide](docs/security.md)** - SSH, encryption, backups
-- **[Hardware Guide](docs/hardware.md)** - Drives, GPU, power management
+- **[Security Guide](docs/akunito/security.md)** - SSH, encryption, backups
+- **[Hardware Guide](docs/akunito/hardware.md)** - Drives, GPU, power management
 - **[Themes Guide](docs/themes.md)** - Theme system and customization
 - **[Patches Guide](docs/patches.md)** - Nixpkgs patches
 
 ### Specific Topics
-- **[LXC Deployment](docs/lxc-deployment.md)** - Centralized container deployment
+- **[LXC Deployment](docs/akunito/lxc-deployment.md)** - Centralized container deployment
 - **[LUKS Encryption](docs/security/luks-encryption.md)** - Encrypted drives with remote unlock
 - **[Restic Backups](docs/security/restic-backups.md)** - Automated backup configuration
-- **[CPU Power Management](docs/hardware/cpu-power-management.md)** - Governors and performance
-- **[Sway Keybindings](docs/keybindings/sway.md)** - Complete SwayFX keybinding reference
+- **[CPU Power Management](docs/akunito/hardware/cpu-power-management.md)** - Governors and performance
+- **[Sway Keybindings](docs/akunito/keybindings/sway.md)** - Complete SwayFX keybinding reference
 - **[Plasma 6 Setup](docs/user-modules/plasma6.md)** - KDE configuration
 - **[Gaming Setup](docs/user-modules/gaming.md)** - Gaming platform configuration
 

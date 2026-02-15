@@ -803,7 +803,7 @@ in {
 
 ### Related Documentation
 
-- `docs/proxmox-lxc.md` - Current LXC documentation
+- `docs/akunito/proxmox-lxc.md` - Current LXC documentation
 - `profiles/LXC-base-config.nix` - Base LXC profile
 - `docs/profiles.md` - Profile architecture
 

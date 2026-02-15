@@ -104,8 +104,8 @@ Brief checklist of missing SwayFX features for future DESK profile implementatio
 ## Related Documentation
 
 - [SwayFX to Hyprland Migration Guide](../../../../docs/user-modules/sway-to-hyprland-migration.md) - Complete migration documentation
-- [SwayFX Keybindings Reference](../../../../docs/keybindings/sway.md) - SwayFX keybinding reference
-- [Hyprland Keybindings Reference](../../../../docs/keybindings/hyprland.md) - Hyprland keybinding reference
+- [SwayFX Keybindings Reference](../../../../docs/akunito/keybindings/sway.md) - SwayFX keybinding reference
+- [Hyprland Keybindings Reference](../../../../docs/akunito/keybindings/hyprland.md) - Hyprland keybinding reference
 - [User Modules Guide](../../../../docs/user-modules.md) - Window manager modules overview
-- [Main Keybindings Reference](../../../../docs/keybindings.md) - Common keybindings across WMs
+- [Main Keybindings Reference](../../../../docs/akunito/keybindings.md) - Common keybindings across WMs
 

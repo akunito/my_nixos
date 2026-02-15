@@ -452,11 +452,11 @@ ssh truenas_admin@192.168.20.200 'midclt call iscsi.target.query'
 
 ## Related Documentation
 
-- [TrueNAS Migration Complete Report](docs/infrastructure/truenas-migration-complete.md)
+- [TrueNAS Migration Complete Report](../truenas-migration-complete.md)
 - [Boot Pool Analysis (2026-02-09)](~/Nextcloud/myLibrary/MySecurity/TrueNAS/boot-pool-analysis-2026-02-09.md)
 - [Unlock TrueNAS Skill](.claude/skills/unlock-truenas.md)
-- [Infrastructure Internal](docs/infrastructure/INFRASTRUCTURE_INTERNAL.md)
-- [Monitoring Stack](docs/infrastructure/services/monitoring-stack.md)
+- [Infrastructure Internal](../INFRASTRUCTURE_INTERNAL.md)
+- [Monitoring Stack](./monitoring-stack.md)
 
 ---
 

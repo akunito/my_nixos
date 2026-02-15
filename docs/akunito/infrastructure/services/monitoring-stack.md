@@ -402,6 +402,6 @@ alerting.policies.settings = {
 
 ## Related Documentation
 
-- [grafana-dashboards-alerting.md](../../setup/grafana-dashboards-alerting.md) - Detailed setup guide
+- [grafana-dashboards-alerting.md](../../../setup/grafana-dashboards-alerting.md) - Detailed setup guide
 - [INFRASTRUCTURE_INTERNAL.md](../INFRASTRUCTURE_INTERNAL.md) - All monitoring targets
 - [proxy-stack.md](./proxy-stack.md) - SSL termination for monitoring

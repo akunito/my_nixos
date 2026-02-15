@@ -479,6 +479,6 @@ ssh -A akunito@192.168.8.104 "cd ~/.homelab/matrix && docker compose restart syn
 
 ## Related Documentation
 
-- [Matrix Service Documentation](../docs/infrastructure/services/matrix.md)
-- [Database Redis Allocation](../docs/infrastructure/services/database-redis.md)
-- [Monitoring Stack](../docs/infrastructure/services/monitoring-stack.md)
+- [Matrix Service Documentation](../docs/akunito/infrastructure/services/matrix.md)
+- [Database Redis Allocation](../docs/akunito/infrastructure/services/database-redis.md)
+- [Monitoring Stack](../docs/akunito/infrastructure/services/monitoring-stack.md)

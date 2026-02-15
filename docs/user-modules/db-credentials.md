@@ -229,6 +229,6 @@ cd ~/.dotfiles && ./install.sh ~/.dotfiles DESK -s -u
 
 ## Related Documentation
 
-- [Centralized Database Server](/docs/infrastructure/services/database-server.md)
+- [Centralized Database Server](/docs/akunito/infrastructure/services/database-redis.md)
 - [Git-Crypt Secrets](/docs/security/git-crypt.md)
 - [Profile Feature Flags](/docs/profile-feature-flags.md)

@@ -24,9 +24,9 @@ Hyprland is a dynamic tiling Wayland compositor. All keybindings use the **main 
 
 **Main Modifier**: `$mainMod` = SUPERCTRLALT (same as Hyper)
 
-**Reference**: See [Keyd Configuration](../../system/wm/keyd.nix) for Hyper key setup.
+**Reference**: See [Keyd Configuration](../../../system/wm/keyd.nix) for Hyper key setup.
 
-**Migration Note**: This configuration includes scripts that replicate SwayFX functionality. See [SwayFX to Hyprland Migration Guide](../user-modules/sway-to-hyprland-migration.md) for details.
+**Migration Note**: This configuration includes scripts that replicate SwayFX functionality. See [SwayFX to Hyprland Migration Guide](../../user-modules/sway-to-hyprland-migration.md) for details.
 
 ## Main Modifier
 
@@ -91,7 +91,7 @@ Direct workspace access using `workspace-controller.sh` (Swaysome replacement):
 
 **Script**: `workspace-controller.sh` - Calculates target workspace as `(MonitorID * 10) + Index`
 
-**CRITICAL**: Uses `workspace` dispatcher (NOT `focusworkspaceoncurrentmonitor`) to preserve per-monitor workspace groups. See [SwayFX to Hyprland Migration Guide](../user-modules/sway-to-hyprland-migration.md) for details.
+**CRITICAL**: Uses `workspace` dispatcher (NOT `focusworkspaceoncurrentmonitor`) to preserve per-monitor workspace groups. See [SwayFX to Hyprland Migration Guide](../../user-modules/sway-to-hyprland-migration.md) for details.
 
 ### Workspace Navigation (Alternative)
 
@@ -215,7 +215,7 @@ Applications use the `app-toggle.sh` script which toggles applications (focus if
 - **Running & In Special Workspace**: Toggle special workspace and focus
 - **Running & Visible (Unfocused)**: Focus window
 
-**See Also**: [TODO.md](../../user/wm/hyprland/scripts/TODO.md) for missing app toggles (R, L, U, A, Y, N, P, M, B)
+**See Also**: [TODO.md](../../../user/wm/hyprland/scripts/TODO.md) for missing app toggles (R, L, U, A, Y, N, P, M, B)
 
 ### Special Workspace Applications
 
@@ -305,7 +305,7 @@ All scratchpads are configured with:
 - **`$mainMod+Shift+v`** → Clipboard history (cliphist + rofi)
   - Opens rofi with clipboard history
   - Selected item is copied to clipboard
-  - **Note**: Not yet implemented, see [TODO.md](../../user/wm/hyprland/scripts/TODO.md)
+  - **Note**: Not yet implemented, see [TODO.md](../../../user/wm/hyprland/scripts/TODO.md)
 
 ### Scratchpad
 
@@ -346,17 +346,17 @@ All scratchpads are configured with:
 ### Power Menu
 
 - **`$mainMod+Shift+BackSpace`** → Power menu script
-  - **Note**: Not yet implemented, see [TODO.md](../../user/wm/hyprland/scripts/TODO.md)
+  - **Note**: Not yet implemented, see [TODO.md](../../../user/wm/hyprland/scripts/TODO.md)
 
 ### Configuration Reload
 
 - **`$mainMod+Shift+r`** → Reload Hyprland configuration (`hyprctl reload`)
-  - **Note**: Not yet implemented, see [TODO.md](../../user/wm/hyprland/scripts/TODO.md)
+  - **Note**: Not yet implemented, see [TODO.md](../../../user/wm/hyprland/scripts/TODO.md)
 
 ### Exit Hyprland
 
 - **`$mainMod+Shift+End`** → Exit Hyprland (with confirmation dialog)
-  - **Note**: Not yet implemented, see [TODO.md](../../user/wm/hyprland/scripts/TODO.md)
+  - **Note**: Not yet implemented, see [TODO.md](../../../user/wm/hyprland/scripts/TODO.md)
 
 ## Mouse Bindings
 
@@ -375,7 +375,7 @@ Replaces `swaysome` workspace group mapping. Calculates target workspace based o
 - **Index**: 1-10 (workspace index within monitor group)
 - **Logic**: `Target = (MonitorID * 10) + Index`
 
-**See Also**: [SwayFX to Hyprland Migration Guide](../user-modules/sway-to-hyprland-migration.md)
+**See Also**: [SwayFX to Hyprland Migration Guide](../../user-modules/sway-to-hyprland-migration.md)
 
 ### window-move.sh
 
@@ -385,7 +385,7 @@ Conditional window movement (floating vs tiled):
 - **Floating**: Moves by 5% of screen size (calculated dynamically)
 - **Tiled**: Swaps position in direction
 
-**See Also**: [SwayFX to Hyprland Migration Guide](../user-modules/sway-to-hyprland-migration.md)
+**See Also**: [SwayFX to Hyprland Migration Guide](../../user-modules/sway-to-hyprland-migration.md)
 
 ### app-toggle.sh
 
@@ -393,7 +393,7 @@ Application toggle with launch/focus/hide logic:
 - **Usage**: `app-toggle.sh <app_class> <launch_command...>`
 - **Features**: Flatpak detection, special workspace support, window cycling
 
-**See Also**: [SwayFX to Hyprland Migration Guide](../user-modules/sway-to-hyprland-migration.md)
+**See Also**: [SwayFX to Hyprland Migration Guide](../../user-modules/sway-to-hyprland-migration.md)
 
 ## Keybinding Conflicts Avoided
 
@@ -411,8 +411,8 @@ The following keybindings were intentionally removed to avoid conflicts:
 
 - [Main Keybindings Reference](../keybindings.md) - Overview and common keybindings
 - [SwayFX Keybindings Reference](sway.md) - SwayFX keybinding reference (for comparison)
-- [SwayFX to Hyprland Migration Guide](../user-modules/sway-to-hyprland-migration.md) - Complete migration documentation
-- [Keyd Configuration](../../system/wm/keyd.nix) - Hyper key setup
-- [Hyprland Configuration](../../user/wm/hyprland/hyprland.nix) - Complete Hyprland configuration
-- [Hyprland Scripts TODO](../../user/wm/hyprland/scripts/TODO.md) - Missing features checklist
+- [SwayFX to Hyprland Migration Guide](../../user-modules/sway-to-hyprland-migration.md) - Complete migration documentation
+- [Keyd Configuration](../../../system/wm/keyd.nix) - Hyper key setup
+- [Hyprland Configuration](../../../user/wm/hyprland/hyprland.nix) - Complete Hyprland configuration
+- [Hyprland Scripts TODO](../../../user/wm/hyprland/scripts/TODO.md) - Missing features checklist
 

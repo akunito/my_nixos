@@ -504,5 +504,5 @@ No manual import needed in individual profile configs.
 
 - [Hardware Guide](../hardware.md) - General hardware configuration
 - [GPU Configuration](../hardware.md#gpu-configuration) - GPU type configuration
-- [System Modules](../system-modules.md) - System module documentation
+- [System Modules](../../system-modules.md) - System module documentation
 

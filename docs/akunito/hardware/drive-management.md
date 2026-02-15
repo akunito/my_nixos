@@ -23,7 +23,7 @@ This configuration supports multiple drive types including:
 
 ### How to Unlock LUKS Drives on Boot by SSH
 
-See [LUKS Encryption Documentation](../security/luks-encryption.md) for remote unlocking setup.
+See [LUKS Encryption Documentation](../../security/luks-encryption.md) for remote unlocking setup.
 
 **Reference**: [NixOS Wiki - Remote Disk Unlocking](https://nixos.wiki/wiki/Remote_disk_unlocking)
 
@@ -370,7 +370,7 @@ After adding or modifying drives:
 
 ## Related Documentation
 
-- [LUKS Encryption](../security/luks-encryption.md) - Encryption setup
+- [LUKS Encryption](../../security/luks-encryption.md) - Encryption setup
 - [Hardware Guide](../hardware.md) - General hardware configuration
 - [NixOS Wiki - File Systems](https://nixos.wiki/wiki/File_systems)
 

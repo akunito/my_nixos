@@ -56,7 +56,7 @@ The Router is a Markdown table with four columns:
 4. **Note** the `ID` (e.g., `user-modules.sway-daemon-integration`)
 5. **Find** the documentation file that matches the ID pattern:
    - `user-modules.*` → `docs/user-modules/*.md`
-   - `keybindings.*` → `docs/keybindings.md` or specific guides
+   - `keybindings.*` → `docs/akunito/keybindings.md` or specific guides
    - `docs.*` → `docs/*.md`
 6. **Read** the documentation file
 7. **Check** the `Primary Path` to find related code files

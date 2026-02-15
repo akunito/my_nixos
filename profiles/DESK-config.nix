@@ -128,7 +128,7 @@ in
     #   2. Verify interface names: ip link show
     #   3. Reserve IP in pfSense DHCP (or use static IP)
     #
-    # See: docs/system-modules/network-bonding.md
+    # See: docs/akunito/system-modules/network-bonding.md
     networkBondingEnable = true;
     networkBondingMode = "802.3ad"; # LACP (requires switch support)
     networkBondingInterfaces = [ "enp11s0f0" "enp11s0f1" ];

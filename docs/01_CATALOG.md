@@ -383,101 +383,113 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ## Documentation
 
+### Akunito
+
+- **docs/akunito/README.md**: NixOS infrastructure documentation specific to akunito's environment.
+- **docs/akunito/hardware.md**: Complete guide to hardware-specific configurations and optimizations.
+- **docs/akunito/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
+- **docs/akunito/lxc-deployment.md**: Centralized deployment script for managing multiple LXC containers
+- **docs/akunito/proxmox-lxc.md**: Guide to managing Proxmox LXC containers using a Base + Override pattern. Explains how to create and install new container profiles while keeping configuration DRY.
+- **docs/akunito/security.md**: Complete guide to security configurations and features in this NixOS setup.
+
+### Akunito / Gaming
+
+- **docs/akunito/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
+- **docs/akunito/gaming/skyrim-linux-setup.md**: This guide documents the complete process for installing and running modded Skyrim (LoreRim, Wildlander, etc.) on NixOS using Jackify, Proton, and Gamescope under Sway/Wayland.
+
+### Akunito / Hardware
+
+- **docs/akunito/hardware/cpu-power-management.md**: Complete guide to CPU frequency governors and power management.
+- **docs/akunito/hardware/drive-management.md**: Complete guide to managing drives, LUKS encryption, and automatic mounting.
+- **docs/akunito/hardware/gpu-monitoring.md**: Complete guide to GPU monitoring tools and their configuration for different GPU types.
+
+### Akunito / Infrastructure
+
+- **docs/akunito/infrastructure/INFRASTRUCTURE.md**: Public infrastructure overview with architecture diagram and component descriptions
+- **docs/akunito/infrastructure/INFRASTRUCTURE_INTERNAL.md**: Complete internal infrastructure documentation with sensitive details (ENCRYPTED)
+- **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
+- **docs/akunito/infrastructure/audits/truenas-audit-2026-02-12.md**: Performance, reliability, and configuration audit of TrueNAS storage server
+- **docs/akunito/infrastructure/docker-projects.md**: Docker-based project conventions - wrapper scripts, config locations, restart patterns
+- **docs/akunito/infrastructure/services/database-redis.md**: Centralized PostgreSQL and Redis services on LXC_database
+- **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS
+- **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma monitoring - local homelab and public VPS status pages with API integration
+- **docs/akunito/infrastructure/services/liftcraft.md**: LiftCraft (LeftyWorkout) - Training plan management Rails application
+- **docs/akunito/infrastructure/services/matrix.md**: Self-hosted Matrix server with Element web client and Claude bot integration.
+- **docs/akunito/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
+- **docs/akunito/infrastructure/services/monitoring-stack.md**: Monitoring stack - Prometheus, Grafana, exporters, alerting
+- **docs/akunito/infrastructure/services/network-switching.md**: Physical switching layer documentation - USW Aggregation, USW-24-G2, 10GbE LACP bonds, ARP flux
+- **docs/akunito/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
+- **docs/akunito/infrastructure/services/proxy-stack.md**: Proxy stack - NPM, cloudflared, ACME certificates
+- **docs/akunito/infrastructure/services/tailscale-headscale.md**: Tailscale mesh VPN with self-hosted Headscale coordination server
+- **docs/akunito/infrastructure/services/truenas.md**: TrueNAS storage server operations, monitoring, and maintenance
+- **docs/akunito/infrastructure/services/vps-wireguard.md**: VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring
+- **docs/akunito/infrastructure/truenas-migration-complete.md**: Successfully migrated TrueNAS SCALE from failing Patriot Burst Elite 120GB SSD to mirrored Samsung 970 EVO Plus NVMe drives.
+
+### Akunito / Keybindings
+
+- **docs/akunito/keybindings/hyprland.md**: Complete reference for all Hyprland keybindings in this NixOS configuration.
+- **docs/akunito/keybindings/mouse-button-mapping.md**: Quick guide to mapping mouse side buttons to modifier keys using keyd.
+- **docs/akunito/keybindings/sway.md**: SwayFX keybindings reference, including unified rofi launcher and window overview.
+
+### Akunito / System-Modules
+
+- **docs/akunito/system-modules/hibernate.md**: Hibernation with LUKS-encrypted swap for laptops and desktops
+- **docs/akunito/system-modules/network-bonding.md**: Network bonding (LACP link aggregation) for increased bandwidth and failover
+
 ### Future
 
 - **docs/future/README.md**: This directory contains temporary documentation for planning, analysis, design ideas, recommendations, bug fixes, and other topics that are under consideration and may be deleted after implementati...
-- **docs/future/aga-to-laptop-base-migration-plan.md**: This document outlines the plan to migrate AGA from a standalone profile under Personal Profile to inherit from LAPTOP-base.nix, following the same pattern as LAPTOP_L15 and LAPTOP_YOGAAKU.
-- **docs/future/agadesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate AGADESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as LAPTOP profiles inherit from LAPTO...
-- **docs/future/debug-instrumentation-analysis.md**: **Date**: 2026-01-XX
-- **docs/future/debug-instrumentation-removal-plan.md**: **Date**: 2026-01-XX
-- **docs/future/desk-to-laptop-migration-improved.md**: **Status: IMPLEMENTED** (2026-01-28)
-- **docs/future/desk-vs-laptop-packages.md**: Complete package and feature comparison between DESK and LAPTOP_L15 profiles
-- **docs/future/fix-home-manager-deprecated-install-warning.md**: During home-manager activation, you see this warning:
-- **docs/future/fix-mnt-ext-mount-error.md**: The error occurs during NixOS configuration switch when systemd tries to stop `mnt-EXT.mount` from the previous generation, but the unit doesn't exist in the new generation (because we disabled dis...
-- **docs/future/flake-refactoring-migration.md**: The flake profile refactoring has been successfully implemented to eliminate code duplication across multiple `flake.*.nix` files. The new structure reduces each profile file from ~750 lines to ~30...
-- **docs/future/flake-scalability-analysis.md**: **Date**: 2025-01-XX
-- **docs/future/improvements-analysis.md**: **Date**: 2025-01-XX
-- **docs/future/improvements-implemented.md**: **Date**: 2025-01-XX
-- **docs/future/improvements-summary.md**: **Date**: 2025-01-XX
-- **docs/future/incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08.md**: Waybar delayed 2–4 minutes after fast relog in Sway due to xdg-desktop-portal-gtk failures + systemd start-limit lockout; fixed via portal-gtk drop-in (UnsetEnvironment=DISPLAY + no start-limit + restart).
-- **docs/future/lxc-shell-improvements-implementation.md**: **Date:** 2026-01-29
-- **docs/future/lxc-shell-improvements.md**: **Created:** 2026-01-29
-- **docs/future/migration-verification-results.md**: **Date**: 2025-01-02
-- **docs/future/phoenix-to-aku-rename-plan.md**: This document outlines the plan to replace all "phoenix" command references with "aku" throughout the dotfiles repository. The rename affects 33 files with 128 total occurrences.
-- **docs/future/profile-comparison-desk-laptop-analysis.md**: This document provides a comprehensive analysis of the differences between three key profiles in the NixOS configuration hierarchy:
-- **docs/future/profile-migration-status.md**: **Date**: 2025-01-02
-- **docs/future/router-drift-audit-2026-01-08.md**: Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system).
-- **docs/future/slow-rebuild-investigation.md**: NixOS rebuild via `install.sh` is extremely slow on LAPTOP_L15.
-- **docs/future/sov-crash-analysis.md**: **Date**: 2026-01-07
-- **docs/future/sov-dependency-analysis.md**: **Date**: 2026-01-07
-- **docs/future/stylix-verification-and-fix.md**: Verified that **all Stylix configurations are properly controlled by the `stylixEnable` flag**. Found one issue: **DESK_AGA** should disable Stylix but currently inherits it enabled from DESK.
-- **docs/future/sway-daemon-relog-notes-2026-01-08.md**: This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
 - **docs/future/syncthing-nextcloud-integration.md**: The Syncthing to Nextcloud integration was not working. Files synced from phones via Syncthing were not appearing in Nextcloud's web interface or mobile apps.
 - **docs/future/terraform-proxmox-integration-plan.md**: **Created:** 2026-01-29
-- **docs/future/vmdesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate VMDESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as DESK_AGA.
-- **docs/future/vmhome-migration-test.md**: **Date**: 2025-01-XX
-- **docs/future/vmhome-to-lxc-migration-plan.md**: Migrate the VMHOME VM to an LXC container (`LXC_HOME`) while preserving all functionality (Docker, NFS, services) and optimizing for LXC. Must not impact existing `LXC*-config.nix` profiles.
 - **docs/future/waybar-drawer-and-idle-toggle.md**: Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX.
-- **docs/future/waybar-sov-debug-analysis.md**: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).
 
-### Gaming
+### Future / Archived
 
-- **docs/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
-- **docs/gaming/skyrim-linux-setup.md**: This guide documents the complete process for installing and running modded Skyrim (LoreRim, Wildlander, etc.) on NixOS using Jackify, Proton, and Gamescope under Sway/Wayland.
+- **docs/future/archived/aga-to-laptop-base-migration-plan.md**: This document outlines the plan to migrate AGA from a standalone profile under Personal Profile to inherit from LAPTOP-base.nix, following the same pattern as LAPTOP_L15 and LAPTOP_YOGAAKU.
+- **docs/future/archived/agadesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate AGADESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as LAPTOP profiles inherit from LAPTO...
+- **docs/future/archived/debug-instrumentation-analysis.md**: **Date**: 2026-01-XX
+- **docs/future/archived/debug-instrumentation-removal-plan.md**: **Date**: 2026-01-XX
+- **docs/future/archived/desk-to-laptop-migration-improved.md**: **Status: IMPLEMENTED** (2026-01-28)
+- **docs/future/archived/desk-vs-laptop-packages.md**: Complete package and feature comparison between DESK and LAPTOP_L15 profiles
+- **docs/future/archived/fix-home-manager-deprecated-install-warning.md**: During home-manager activation, you see this warning:
+- **docs/future/archived/fix-mnt-ext-mount-error.md**: The error occurs during NixOS configuration switch when systemd tries to stop `mnt-EXT.mount` from the previous generation, but the unit doesn't exist in the new generation (because we disabled dis...
+- **docs/future/archived/flake-refactoring-migration.md**: The flake profile refactoring has been successfully implemented to eliminate code duplication across multiple `flake.*.nix` files. The new structure reduces each profile file from ~750 lines to ~30...
+- **docs/future/archived/flake-scalability-analysis.md**: **Date**: 2025-01-XX
+- **docs/future/archived/improvements-analysis.md**: **Date**: 2025-01-XX
+- **docs/future/archived/improvements-implemented.md**: **Date**: 2025-01-XX
+- **docs/future/archived/improvements-summary.md**: **Date**: 2025-01-XX
+- **docs/future/archived/incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08.md**: Waybar delayed 2–4 minutes after fast relog in Sway due to xdg-desktop-portal-gtk failures + systemd start-limit lockout; fixed via portal-gtk drop-in (UnsetEnvironment=DISPLAY + no start-limit + restart).
+- **docs/future/archived/lxc-shell-improvements-implementation.md**: **Date:** 2026-01-29
+- **docs/future/archived/lxc-shell-improvements.md**: **Created:** 2026-01-29
+- **docs/future/archived/migration-verification-results.md**: **Date**: 2025-01-02
+- **docs/future/archived/phoenix-to-aku-rename-plan.md**: This document outlines the plan to replace all "phoenix" command references with "aku" throughout the dotfiles repository. The rename affects 33 files with 128 total occurrences.
+- **docs/future/archived/profile-comparison-desk-laptop-analysis.md**: This document provides a comprehensive analysis of the differences between three key profiles in the NixOS configuration hierarchy:
+- **docs/future/archived/profile-migration-status.md**: **Date**: 2025-01-02
+- **docs/future/archived/router-drift-audit-2026-01-08.md**: Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system).
+- **docs/future/archived/slow-rebuild-investigation.md**: NixOS rebuild via `install.sh` is extremely slow on LAPTOP_L15.
+- **docs/future/archived/sov-crash-analysis.md**: **Date**: 2026-01-07
+- **docs/future/archived/sov-dependency-analysis.md**: **Date**: 2026-01-07
+- **docs/future/archived/stylix-verification-and-fix.md**: Verified that **all Stylix configurations are properly controlled by the `stylixEnable` flag**. Found one issue: **DESK_AGA** should disable Stylix but currently inherits it enabled from DESK.
+- **docs/future/archived/sway-daemon-relog-notes-2026-01-08.md**: This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
+- **docs/future/archived/vmdesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate VMDESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as DESK_AGA.
+- **docs/future/archived/vmhome-migration-test.md**: **Date**: 2025-01-XX
+- **docs/future/archived/vmhome-to-lxc-migration-plan.md**: Migrate the VMHOME VM to an LXC container (`LXC_HOME`) while preserving all functionality (Docker, NFS, services) and optimizing for LXC. Must not impact existing `LXC*-config.nix` profiles.
+- **docs/future/archived/waybar-sov-debug-analysis.md**: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).
 
-### Hardware
+### Komi
 
-- **docs/hardware/cpu-power-management.md**: Complete guide to CPU frequency governors and power management.
-- **docs/hardware/drive-management.md**: Complete guide to managing drives, LUKS encryption, and automatic mounting.
-- **docs/hardware/gpu-monitoring.md**: Complete guide to GPU monitoring tools and their configuration for different GPU types.
-
-### Infrastructure
-
-- **docs/infrastructure/INFRASTRUCTURE.md**: Public infrastructure overview with architecture diagram and component descriptions
-- **docs/infrastructure/INFRASTRUCTURE_INTERNAL.md**: Complete internal infrastructure documentation with sensitive details (ENCRYPTED)
-- **docs/infrastructure/docker-projects.md**: Docker-based project conventions - wrapper scripts, config locations, restart patterns
-- **docs/infrastructure/komi-proxmox-guide.md**: - **Machine**: Laptop running as headless server (lid closed)
-- **docs/infrastructure/truenas-migration-complete.md**: Successfully migrated TrueNAS SCALE from failing Patriot Burst Elite 120GB SSD to mirrored Samsung 970 EVO Plus NVMe drives.
-
-### Infrastructure / Audits
-
-- **docs/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
-- **docs/infrastructure/audits/truenas-audit-2026-02-12.md**: Performance, reliability, and configuration audit of TrueNAS storage server
-
-### Infrastructure / Services
-
-- **docs/infrastructure/services/database-redis.md**: Centralized PostgreSQL and Redis services on LXC_database
-- **docs/infrastructure/services/homelab-stack.md**: Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS
-- **docs/infrastructure/services/kuma.md**: Uptime Kuma monitoring - local homelab and public VPS status pages with API integration
-- **docs/infrastructure/services/liftcraft.md**: LiftCraft (LeftyWorkout) - Training plan management Rails application
-- **docs/infrastructure/services/matrix.md**: Self-hosted Matrix server with Element web client and Claude bot integration.
-- **docs/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
-- **docs/infrastructure/services/monitoring-stack.md**: Monitoring stack - Prometheus, Grafana, exporters, alerting
-- **docs/infrastructure/services/network-switching.md**: Physical switching layer documentation - USW Aggregation, USW-24-G2, 10GbE LACP bonds, ARP flux
-- **docs/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
-- **docs/infrastructure/services/proxy-stack.md**: Proxy stack - NPM, cloudflared, ACME certificates
-- **docs/infrastructure/services/tailscale-headscale.md**: Tailscale mesh VPN with self-hosted Headscale coordination server
-- **docs/infrastructure/services/truenas.md**: TrueNAS storage server operations, monitoring, and maintenance
-- **docs/infrastructure/services/vps-wireguard.md**: VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring
-
-### Keybindings
-
-- **docs/keybindings/hyprland.md**: Complete reference for all Hyprland keybindings in this NixOS configuration.
-- **docs/keybindings/mouse-button-mapping.md**: Quick guide to mapping mouse side buttons to modifier keys using keyd.
-- **docs/keybindings/sway.md**: SwayFX keybindings reference, including unified rofi launcher and window overview.
+- **docs/komi/README.md**: macOS/darwin documentation specific to komi's environment.
+- **docs/komi/komi-onboarding.md**: Quick guide for ko-mi on the multi-user branch setup and what changed
+- **docs/komi/komi-proxmox-guide.md**: - **Machine**: Laptop running as headless server (lid closed)
+- **docs/komi/macos-installation.md**: This guide covers installing and configuring this dotfiles repository on macOS using nix-darwin and Home Manager.
+- **docs/komi/macos-komi-migration.md**: This guide helps you migrate from your current ko-mi/macos-setup to the new Nix-managed dotfiles. You can use Claude Code to help with any step.
 
 - **docs/00_INDEX.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/00_ROUTER.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/01_CATALOG.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/agent-context.md**: How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md + Claude Code) and a reusable template for other projects.
 - **docs/configuration.md**: Complete guide to understanding and customizing the NixOS configuration system.
-- **docs/hardware.md**: Complete guide to hardware-specific configurations and optimizations.
 - **docs/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
-- **docs/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
-- **docs/komi-onboarding.md**: Quick guide for ko-mi on the multi-user branch setup and what changed
-- **docs/lxc-deployment.md**: Centralized deployment script for managing multiple LXC containers
-- **docs/macos-installation.md**: This guide covers installing and configuring this dotfiles repository on macOS using nix-darwin and Home Manager.
-- **docs/macos-komi-migration.md**: This guide helps you migrate from your current ko-mi/macos-setup to the new Nix-managed dotfiles. You can use Claude Code to help with any step.
 - **docs/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
 - **docs/multi-user-workflow.md**: Multi-user branch management workflow for akunito (main) and ko-mi (komi)
 - **docs/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
@@ -485,9 +497,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/patches.md**: Guide to understanding and using Nixpkgs patches in this configuration.
 - **docs/profile-feature-flags.md**: Guide to creating and using feature flags for profile-specific module enabling. Explains the pattern of setting defaults to false and enabling features only in specific profiles.
 - **docs/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.
-- **docs/proxmox-lxc.md**: Guide to managing Proxmox LXC containers using a Base + Override pattern. Explains how to create and install new container profiles while keeping configuration DRY.
 - **docs/scripts.md**: Complete reference for all shell scripts in this repository.
-- **docs/security.md**: Complete guide to security configurations and features in this NixOS setup.
 - **docs/system-modules.md**: Complete reference for system-level NixOS modules in this configuration.
 - **docs/themes.md**: Complete guide to the theming system and available themes.
 - **docs/user-modules.md**: Complete reference for user-level Home Manager modules in this configuration.
@@ -508,11 +518,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/setup/grafana-dashboard-reference.md**: Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures.
 - **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack.
 - **docs/setup/ubuntu-node-exporter.md**: This guide documents how to install and configure Prometheus Node Exporter on Ubuntu LXC containers (like cloudflared at 192.168.8.102) for monitoring with the homelab Prometheus/Grafana stack.
-
-### System-Modules
-
-- **docs/system-modules/hibernate.md**: Hibernation with LUKS-encrypted swap for laptops and desktops
-- **docs/system-modules/network-bonding.md**: Network bonding (LACP link aggregation) for increased bandwidth and failover
 
 ### User-Modules
 

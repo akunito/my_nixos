@@ -42,7 +42,7 @@ phase1_kernel_tuning() {
     echo "========================================"
 
     SYSCTL_CONTENT='# WireGuard Optimizations - Created by vps-wireguard-optimize.sh
-# See: docs/infrastructure/services/vps-wireguard.md
+# See: docs/akunito/infrastructure/services/vps-wireguard.md
 
 # IP forwarding (required)
 net.ipv4.ip_forward = 1

@@ -14,7 +14,7 @@
 # To disable on profiles without bonding hardware:
 #   networkBondingEnable = false;  # (default in lib/defaults.nix)
 #
-# Documentation: docs/system-modules/network-bonding.md
+# Documentation: docs/akunito/system-modules/network-bonding.md
 #
 # Verification after applying:
 #   cat /proc/net/bonding/bond0

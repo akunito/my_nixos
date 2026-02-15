@@ -414,7 +414,7 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
 - **Public docs are OK for**: Internal IPs (192.168.x.x, 172.x.x.x, 10.x.x.x), email addresses, service descriptions, interface names
 - **MUST encrypt**: Public IPs, WireGuard keys, passwords, API tokens, SNMP community strings
 - **Encryption methods**:
-  1. Add sensitive content to `docs/infrastructure/INFRASTRUCTURE_INTERNAL.md` (already encrypted)
+  1. Add sensitive content to `docs/akunito/infrastructure/INFRASTRUCTURE_INTERNAL.md` (already encrypted)
   2. Or add new file to `.gitattributes` with `filter=git-crypt diff=git-crypt`
 - **Template pattern**: For encrypted docs with complex structure, create a `.template` version showing structure without real values
 - **Verify encryption**: Run `git-crypt status` to confirm files are encrypted before pushing
@@ -429,18 +429,18 @@ For operational details, **read the service doc first** before SSH-ing or making
 
 | Service | Access | Doc |
 |---------|--------|-----|
-| pfSense | `ssh admin@192.168.8.1` | `docs/infrastructure/services/pfsense.md` |
-| VPS / WireGuard | `ssh -A -p 56777 root@172.26.5.155` | `docs/infrastructure/services/vps-wireguard.md` |
-| Grafana / Prometheus | LXC_monitoring `192.168.8.85` | `docs/infrastructure/services/monitoring-stack.md` |
-| Matrix | `ssh -A akunito@192.168.8.104` | `docs/infrastructure/services/matrix.md` |
-| Tailscale / Headscale | `ssh -A akunito@192.168.8.105` | `docs/infrastructure/services/tailscale-headscale.md` |
-| Uptime Kuma (local) | `http://192.168.8.89:3001` | `docs/infrastructure/services/kuma.md` |
-| Uptime Kuma (public) | `https://status.akunito.com` | `docs/infrastructure/services/kuma.md` |
-| Database / Redis | `ssh -A akunito@192.168.8.103` | `docs/infrastructure/services/database-redis.md` |
-| Network / 10GbE | USW Agg `192.168.8.180` | `docs/infrastructure/services/network-switching.md` |
-| Proxy / Tunnel | `ssh -A akunito@192.168.8.102` | `docs/infrastructure/services/proxy-stack.md` |
-| Infrastructure overview | (all containers, IPs) | `docs/infrastructure/INFRASTRUCTURE.md` |
-| Infrastructure audits | (date-stamped reports) | `docs/infrastructure/audits/` |
+| pfSense | `ssh admin@192.168.8.1` | `docs/akunito/infrastructure/services/pfsense.md` |
+| VPS / WireGuard | `ssh -A -p 56777 root@172.26.5.155` | `docs/akunito/infrastructure/services/vps-wireguard.md` |
+| Grafana / Prometheus | LXC_monitoring `192.168.8.85` | `docs/akunito/infrastructure/services/monitoring-stack.md` |
+| Matrix | `ssh -A akunito@192.168.8.104` | `docs/akunito/infrastructure/services/matrix.md` |
+| Tailscale / Headscale | `ssh -A akunito@192.168.8.105` | `docs/akunito/infrastructure/services/tailscale-headscale.md` |
+| Uptime Kuma (local) | `http://192.168.8.89:3001` | `docs/akunito/infrastructure/services/kuma.md` |
+| Uptime Kuma (public) | `https://status.akunito.com` | `docs/akunito/infrastructure/services/kuma.md` |
+| Database / Redis | `ssh -A akunito@192.168.8.103` | `docs/akunito/infrastructure/services/database-redis.md` |
+| Network / 10GbE | USW Agg `192.168.8.180` | `docs/akunito/infrastructure/services/network-switching.md` |
+| Proxy / Tunnel | `ssh -A akunito@192.168.8.102` | `docs/akunito/infrastructure/services/proxy-stack.md` |
+| Infrastructure overview | (all containers, IPs) | `docs/akunito/infrastructure/INFRASTRUCTURE.md` |
+| Infrastructure audits | (date-stamped reports) | `docs/akunito/infrastructure/audits/` |
 
 ### Module & hardware reference
 
@@ -448,15 +448,15 @@ For operational details, **read the service doc first** before SSH-ing or making
 |-------|-----|
 | Sway session services | `docs/user-modules/sway-daemon-integration.md` |
 | Gaming (Proton, Steam, SC) | `docs/user-modules/gaming.md` |
-| Power / TLP / Hibernate | `docs/hardware/cpu-power-management.md`, `docs/system-modules/hibernate.md` |
+| Power / TLP / Hibernate | `docs/akunito/hardware/cpu-power-management.md`, `docs/akunito/system-modules/hibernate.md` |
 | Thunderbolt dock / 10GbE | `docs/user-modules/thunderbolt-dock.md` |
-| Docker-based projects | `docs/infrastructure/docker-projects.md` |
+| Docker-based projects | `docs/akunito/infrastructure/docker-projects.md` |
 
 ## Darwin/macOS Reference
 
 > **Audience**: komi (macOS/darwin). akunito: skip this section unless touching shared modules.
 
-- **Read first**: `docs/macos-installation.md` and `docs/macos-komi-migration.md`
+- **Read first**: `docs/komi/macos-installation.md` and `docs/komi/macos-komi-migration.md`
 - **Cross-platform modules**: When modifying `user/`, `lib/`, or `system/`:
   - Use `pkgs.stdenv.isDarwin` / `lib.mkIf (!pkgs.stdenv.isDarwin)` for platform guards
   - Never break existing Linux functionality when adding darwin support
@@ -472,7 +472,7 @@ own CLAUDE.md with project-specific conventions. When working in those repos:
 
 - The project's CLAUDE.md takes precedence for project-specific rules
 - This dotfiles CLAUDE.md governs NixOS infrastructure and profile configuration
-- Docker-based project conventions: `docs/infrastructure/docker-projects.md`
+- Docker-based project conventions: `docs/akunito/infrastructure/docker-projects.md`
 - Connection details and secrets: use this repo's secrets management patterns
 
 ## Multi-agent instructions
