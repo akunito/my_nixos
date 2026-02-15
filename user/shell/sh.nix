@@ -49,6 +49,7 @@ in
       {
         # UNSTABLE SYSTEM
         enable = true;
+        dotDir = "${config.xdg.configHome}/zsh";
         autosuggestion.enable = true;
         syntaxHighlighting.enable = true;
         enableCompletion = true;
@@ -59,6 +60,7 @@ in
       {
         # STABLE SYSTEM
         enable = true;
+        dotDir = "${config.xdg.configHome}/zsh";
         autosuggestion.enable = true;
         syntaxHighlighting.enable = true;
         enableCompletion = true;

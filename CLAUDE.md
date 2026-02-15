@@ -13,6 +13,18 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
   ```bash
   ssh -A user@host    # Enables git push/pull on remote without copying keys
   ```
+- **System vs user** (applies to: `**/*.nix`):
+  - system-wide packages: `environment.systemPackages`
+  - per-user: `home.packages`
+  - system services: `services.*`
+  - user services/programs: `systemd.user.*` / `programs.*` (Home Manager)
+- **Modular configuration (CRITICAL)**:
+  - **NEVER** hardcode hostname or profile checks in modules (e.g., `hostname == "nixosaku"`)
+  - Use feature flags defined in `lib/defaults.nix` instead
+  - Flags default to `false` (or safe value) - profiles explicitly enable what they need
+  - GPU-specific code must check `systemSettings.gpuType` ("amd", "intel", "nvidia", "none")
+  - Profile configs set flags - modules just consume them
+  - Example flags: `gpuType`, `enableDesktopPerformance`, `sddmBreezePatchedTheme`, `atuinAutoSync`
 
 ### Remote Deployment (CRITICAL — NEVER skip)
 
@@ -113,23 +125,29 @@ lib/defaults.nix (global defaults)
     ├─► personal/configuration.nix ◄─── work/configuration.nix
     │        │
     │        ├─► DESK-config.nix
+    │        │        ├─► DESK_AGA-config.nix
+    │        │        └─► DESK_VMDESK-config.nix
+    │        │
     │        ├─► LAPTOP-base.nix ◄─── LAPTOP_L15-config.nix
     │        │                    ◄─── LAPTOP_YOGAAKU-config.nix
-    │        ├─► AGA-config.nix
-    │        └─► AGADESK-config.nix
+    │        │                    ◄─── LAPTOP_AGA-config.nix
     │
     ├─► homelab/configuration.nix
     │        │
     │        └─► VMHOME-config.nix
     │
     ├─► LXC-base-config.nix ◄─── LXC_HOME-config.nix
+    │                        ◄─── LXC_database-config.nix
+    │                        ◄─── LXC_liftcraftTEST-config.nix
+    │                        ◄─── LXC_mailer-config.nix
+    │                        ◄─── LXC_matrix-config.nix
+    │                        ◄─── LXC_monitoring-config.nix
     │                        ◄─── LXC_plane-config.nix
     │                        ◄─── LXC_portfolioprod-config.nix
-    │                        ◄─── LXC_mailer-config.nix
-    │                        ◄─── LXC_liftcraftTEST-config.nix
-    │                        ◄─── LXC_monitoring-config.nix
     │                        ◄─── LXC_proxy-config.nix
     │                        ◄─── LXC_tailscale-config.nix
+    │
+    ├─► WSL-config.nix (standalone)
     │
     └─► darwin/configuration.nix (macOS/nix-darwin)
              │
@@ -273,11 +291,6 @@ Before answering any architectural or implementation question:
 3) Only then read the related source files (prefer the `Primary Path` scopes from the Router).
 4) Only if still needed: search, but keep it scoped to the selected node's directories.
 
-## Docs index maintenance
-
-- The router/catalog are auto-generated. After adding major docs/modules or restructuring docs, run:
-  - `python3 scripts/generate_docs_index.py`
-
 ## Domain-specific rules
 
 ### Unified Flake Architecture
@@ -312,39 +325,6 @@ nix eval .#nixosConfigurations --apply 'x: builtins.attrNames x'
 # darwin (macOS)
 darwin-rebuild switch --flake .#MACBOOK-KOMI
 ```
-
-### NixOS / flake invariants (applies to: `**/*.nix`, `flake.nix`, `flake.lock`)
-
-- **Immutability**: never suggest editing `/nix/store` or running imperative package managers (`nix-env`, `nix-channel`, `apt`, `yum`).
-- **Source of truth**: `flake.nix` + `inputs` control dependencies; use Nix options/modules, not ad-hoc system changes.
-- **Apply workflow**: apply changes via `install.sh` (or `aku sync`), not manual `systemctl enable`/`systemctl start`.
-- **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths in Nix expressions.
-- **System vs user**:
-  - system-wide packages: `environment.systemPackages`
-  - per-user: `home.packages`
-  - system services: `services.*`
-  - user services/programs: `systemd.user.*` / `programs.*` (Home Manager)
-- **Modular configuration (CRITICAL)**:
-  - **NEVER** hardcode hostname or profile checks in modules (e.g., `hostname == "nixosaku"`)
-  - Use feature flags defined in `lib/defaults.nix` instead
-  - Flags default to `false` (or safe value) - profiles explicitly enable what they need
-  - GPU-specific code must check `systemSettings.gpuType` ("amd", "intel", "nvidia", "none")
-  - Profile configs set flags - modules just consume them
-  - Example flags: `gpuType`, `enableDesktopPerformance`, `sddmBreezePatchedTheme`, `atuinAutoSync`
-
-### Documentation maintenance (applies to: `docs/**`, `scripts/generate_docs_index.py`)
-
-- **Frontmatter required for key docs**: when editing or creating major docs, include YAML frontmatter:
-  - `id` (stable unique ID)
-  - `summary` (1-line)
-  - `tags` (keyword list)
-  - `related_files` (globs/paths this doc governs; if omitted, router falls back to doc path)
-- **Index generation**: after reorganizing docs or adding major modules/docs, regenerate:
-  - `python3 scripts/generate_docs_index.py`
-  - This produces:
-    - `docs/00_ROUTER.md` (routing table)
-    - `docs/01_CATALOG.md` (full catalog)
-    - `docs/00_INDEX.md` (shim)
 
 ### Sway daemon integration (applies to: `user/wm/sway/**`)
 
@@ -652,22 +632,7 @@ darwin-rebuild switch --flake .#MACBOOK-KOMI
 ### Infrastructure audits (applies to: `docs/infrastructure/audits/`)
 
 - **Audit reports**: Stored in `docs/infrastructure/audits/` with date-stamped filenames
-- **Latest pfSense audit**: `docs/infrastructure/audits/pfsense-audit-2026-02-04.md`
-  - Security score: 7/10 (SNMPv2c and DNSSEC are main concerns)
-  - Performance score: 9/10 (excellent headroom)
-  - Reliability score: 7/10 (backup automation needed)
-- **Completed remediations** (pfSense - 2026-02-07):
-  1. ✅ **High**: SEC-001 - Upgraded SNMP to SNMPv3 (NET-SNMP + NixOS config)
-  2. ✅ **Medium**: SEC-002 - DNSSEC enabled in DNS Resolver
-  3. ✅ **Medium**: REL-002 - unbound-control enabled via custom options
-- **Open remediations** (pfSense):
-  1. **Medium**: REL-001 - Configure AutoConfigBackup (not in CE, use local backup script)
-  2. **Low**: SEC-003 - Restrict anti-lockout rule to admin IPs
-- **Performance baseline** (2026-02-04):
-  - State table: 770 / 1.6M (0.05% usage)
-  - DNS cold query: 33ms, cached: 0ms
-  - CPU load: 0.17, Memory free: 14GB
-  - pfBlockerNG IPs: 16,242, Rules: 168
+- **Check the directory** for latest reports on pfSense, network, and other infrastructure
 
 ### Network switching & 10GbE (applies to: `profiles/DESK-config.nix`, `system/hardware/network-bonding.nix`, `docs/infrastructure/services/network-switching.md`)
 

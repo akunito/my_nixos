@@ -32,6 +32,7 @@
       dialog
       gparted
       lm_sensors
+      smartmontools
       sshfs
 
       # === Libraries & Dependencies ===

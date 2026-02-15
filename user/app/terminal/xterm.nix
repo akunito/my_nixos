@@ -65,7 +65,7 @@
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${pkgs.xorg.xrdb}/bin/xrdb -merge ${config.home.homeDirectory}/.Xresources";
+        ExecStart = "${pkgs.xrdb}/bin/xrdb -merge ${config.home.homeDirectory}/.Xresources";
       };
       Install = {
         WantedBy = [ "graphical-session.target" ];
