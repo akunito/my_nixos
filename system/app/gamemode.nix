@@ -23,4 +23,9 @@
       # Process and I/O priority optimizations are enabled by default (safe)
     };
   };
+
+  # AMD GPU gaming optimizations
+  boot.kernelParams = lib.mkIf (systemSettings.gpuType == "amd") [
+    "split_lock_detect=off"  # Prevent kernel from penalizing Wine/Proton split-lock instructions (RDNA 4)
+  ];
 }

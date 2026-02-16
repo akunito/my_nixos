@@ -181,7 +181,7 @@ This disables async pipeline compilation which is problematic on some AMD driver
 Add to Steam → Skyrim → Properties → Launch Options:
 
 ```
-RADV_PERFTEST=gpl MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 3840 -H 2160 -w 2560 -h 1440 -F fsr -f --mangoapp --rt -- %command%
+RADV_PERFTEST=gpl MANGOHUD=0 ENABLE_LAYER_MESA_ANTI_LAG=1 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
 ```
 
 ### 5.2 Explanation of Options
@@ -190,10 +190,10 @@ RADV_PERFTEST=gpl MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 3840
 |--------|---------|
 | `RADV_PERFTEST=gpl` | Graphics Pipeline Library — scoped to this game only (not session-wide) |
 | `MANGOHUD=0` | Prevents global MangoHud from injecting (gamescope uses `--mangoapp` instead) |
+| `ENABLE_LAYER_MESA_ANTI_LAG=1` | AMD Anti-Lag via Mesa's implicit Vulkan layer — reduces input latency by pacing CPU-GPU sync (requires Mesa 25.3+) |
 | `gamescope-wrapper.sh` | Wrapper script that sets `STEAM_COMPAT_MOUNTS` and launches gamescope |
-| `-W 3840 -H 2160` | Outer resolution (your monitor resolution) |
-| `-w 2560 -h 1440` | Inner/game resolution (lower for FSR upscaling) |
-| `-F fsr` | AMD FidelityFX Super Resolution upscaling |
+| `-W 2560 -H 1440` | Outer resolution (your monitor resolution) |
+| `-w 2560 -h 1440` | Inner/game resolution (native 1440p, no upscaling) |
 | `-f` | Fullscreen |
 | `--mangoapp` | MangoHud as gamescope-native overlay (no duplicate injection) |
 | `--rt` | Realtime scheduling for gamescope threads (prevents GPU clock oscillation) |
@@ -202,6 +202,13 @@ RADV_PERFTEST=gpl MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 3840
 **Removed options** (cause system-wide lag):
 - `-r <rate>` — causes FSR upscale spam when game FPS < target rate (issue #1479)
 - `--force-grab-cursor` — causes extreme lag spikes on gamescope 3.16.x (issue #1851); use SSEDisplayTweaks `LockCursor=true` instead
+- `-F fsr` — not needed when running at native resolution; adds compositor overhead
+
+**Alternative: Test without gamescope** (if native 1440p with no FSR):
+```
+RADV_PERFTEST=gpl MANGOHUD=1 ENABLE_LAYER_MESA_ANTI_LAG=1 %command%
+```
+If performance improves without gamescope, the compositor overhead isn't worth it at native resolution.
 
 ### 5.3 Adjusting for Different Monitors
 
@@ -298,3 +305,8 @@ You should have approximately **175 files** (mix of `cc*.esl`, `cc*.bsa`, and `c
 2. ENB is the biggest performance factor — try a lighter preset
 3. Grass mods (`iMinGrassSize`, `iGrassCellRadius`) can be tuned in `skyrimprefs.ini`
 4. Disable ENB depth of field and ambient occlusion for significant FPS gains
+5. Disable `EnableSunGlare` and `EnableUnderwaterShader` in ENB `enbseries.ini` — both are broken/problematic on Linux
+6. Lower `FramerateLimit` in SSEDisplayTweaks to match achievable FPS (e.g., 60) to reduce Havok physics overhead
+7. Verify `split_lock_detect=off` is in kernel params (`cat /proc/cmdline`) — prevents Wine/Proton penalty on RDNA 4
+8. Use `ENABLE_LAYER_MESA_ANTI_LAG=1` in launch options for AMD Anti-Lag (Mesa 25.3+)
+9. If running at native resolution without FSR, test without gamescope to eliminate compositor overhead
