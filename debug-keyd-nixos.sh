@@ -7,7 +7,11 @@ echo "keyd Debugging Script for NixOS"
 echo "=========================================="
 echo ""
 
-KEYD_BIN="/nix/store/820fi6f0wylfjsl08r2hrjhw3ws7ddxc-keyd-2.6.0/bin/keyd"
+KEYD_BIN="$(command -v keyd 2>/dev/null)"
+if [ -z "$KEYD_BIN" ]; then
+  # On NixOS the binary is typically not in user PATH; extract from the systemd unit
+  KEYD_BIN="$(systemctl show keyd --property=ExecStart 2>/dev/null | grep -oP 'path=\K[^ ;]+')"
+fi
 
 # Step 1: Check keyd service status
 echo "[STEP 1] Checking keyd service status..."
@@ -44,7 +48,7 @@ fi
 echo ""
 echo "[STEP 3] Validating configuration syntax..."
 
-if [ -f "$KEYD_BIN" ]; then
+if [ -n "$KEYD_BIN" ]; then
   VALIDATION_OUTPUT=$($KEYD_BIN check /etc/keyd/default.conf 2>&1)
   VALIDATION_EXIT=$?
   
@@ -55,7 +59,7 @@ if [ -f "$KEYD_BIN" ]; then
     echo "$VALIDATION_OUTPUT" | sed 's/^/    /'
   fi
 else
-  echo "✗ keyd binary not found at $KEYD_BIN"
+  echo "✗ keyd binary not found in PATH"
 fi
 
 # Step 4: Check keyd logs for device matching
@@ -79,7 +83,7 @@ echo "  This will show what keyd sees when you press keys."
 echo "  Press Caps Lock on the keyboard, then press Ctrl+C to stop."
 echo ""
 
-if [ -f "$KEYD_BIN" ]; then
+if [ -n "$KEYD_BIN" ]; then
   echo "Running: sudo $KEYD_BIN monitor"
   echo ""
   sudo "$KEYD_BIN" monitor 2>&1 | while IFS= read -r line; do
