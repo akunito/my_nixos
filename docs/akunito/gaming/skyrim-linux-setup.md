@@ -1,3 +1,12 @@
+---
+id: gaming.skyrim-linux-setup
+summary: Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning
+tags: [gaming, skyrim, enb, gamescope, proton, amd, performance, wayland]
+related_files: [system/app/gamemode.nix, user/app/games/games.nix]
+date: 2026-02-16
+status: published
+---
+
 # Skyrim Modded Setup on NixOS/Linux — Setup Guide
 
 This guide documents the complete process for installing and running modded Skyrim (LoreRim, Wildlander, etc.) on NixOS using Jackify, Proton, and Gamescope under Sway/Wayland.
@@ -9,7 +18,7 @@ This guide documents the complete process for installing and running modded Skyr
 1. [Prerequisites](#1-prerequisites)
 2. [Jackify Installation on NixOS](#2-jackify-installation-on-nixos)
 3. [Modlist Installation Process](#3-modlist-installation-process)
-4. [Post-Installation Fixes](#4-post-installation-fixes)
+4. [Post-Installation Fixes](#4-post-installation-fixes) (ENB, Gamescope, Mouse, DXVK, ENB Effects, Framerate, Kernel, VRAM Leak)
 5. [Steam Launch Options](#5-steam-launch-options)
 6. [Anniversary Edition CC Content](#6-anniversary-edition-cc-content)
 7. [Key Paths Reference](#7-key-paths-reference)
@@ -157,20 +166,103 @@ Instead, let Sway's monitor refresh rate and SSEDisplayTweaks handle frame timin
 
 Use `LockCursor=true` in SSEDisplayTweaks INI for cursor confinement instead of `--force-grab-cursor`, which causes extreme lag spikes on gamescope 3.16.x (issue #1851).
 
-### 4.4 DXVK AMD Pipeline Fix
+### 4.4 DXVK Config: GPL Fix + VRAM Cap (CRITICAL)
 
-On AMD GPUs, DXVK's graphics pipeline library can cause shader compilation stuttering or crashes. Create/edit:
+On AMD GPUs, DXVK and RADV can both enable Graphics Pipeline Library (GPL) simultaneously — DXVK via `dxvk.enableGraphicsPipelineLibrary = True` and RADV via `RADV_PERFTEST=gpl` in launch options. This **double GPL** creates duplicate pipeline objects causing unbounded VRAM growth.
 
+Additionally, RADV has a catastrophic performance cliff when VRAM fills completely (Mesa issue #3698): GPU utilization drops to 0%, frametime spikes to 398ms, FPS drops to 3. Unlike the Windows AMD driver, RADV cannot gracefully overflow to system RAM. Capping reported VRAM prevents reaching this cliff.
+
+Create/edit:
 ```
 <modlist>/Stock Game/dxvk.conf
 ```
 
 Add:
-```
+```ini
 dxvk.enableGraphicsPipelineLibrary = False
+
+dxgi.maxDeviceMemory = 8192
+dxgi.maxSharedMemory = 8192
 ```
 
-This disables async pipeline compilation which is problematic on some AMD driver versions.
+- **GPL = False**: RADV handles GPL via `RADV_PERFTEST=gpl` in launch options; DXVK must NOT also enable it
+- **VRAM cap = 8GB**: Prevents DXVK/Skyrim from allocating beyond ~8GB, keeping headroom for driver/compositor; avoids RADV's catastrophic overflow behavior
+
+### 4.5 ENB Linux-Problematic Effects (IMPORTANT)
+
+Disable these effects in the ENB preset's `enbseries.ini` (`[EFFECT]` section) — they are broken or cause stutter on Linux/Proton:
+
+```ini
+EnableSunGlare=false        # Causes brightness stutter on Linux
+EnableUnderwaterShader=false # Known broken on Linux/Proton
+```
+
+File location:
+```
+<modlist>/mods/<ENB Preset Name>/Root/enbseries.ini
+```
+
+### 4.6 SSEDisplayTweaks Framerate Limit
+
+Set `FramerateLimit` to match your achievable FPS, not your monitor's refresh rate. If your game runs at 39-45 FPS with ENB, a 120 FPS limit wastes CPU cycles and causes Havok physics to calculate for 120 FPS headroom.
+
+```ini
+FramerateLimit = 60
+```
+
+File location:
+```
+<modlist>/mods/LoreRim - MCM and INI Settings/SKSE/Plugins/SSEDisplayTweaks.ini
+```
+
+### 4.7 AMD Kernel Optimizations (NixOS)
+
+For AMD GPUs (RDNA 4 / 9700XT), the `split_lock_detect=off` kernel parameter prevents the kernel from penalizing Wine/Proton split-lock instructions, which can cause micro-stutters. This is set automatically via `system/app/gamemode.nix` when `gpuType = "amd"`.
+
+Verify after reboot:
+```bash
+cat /proc/cmdline | grep split_lock_detect
+```
+
+### 4.8 VRAM Leak Prevention (AMD 16GB GPUs)
+
+Modded Skyrim on Linux suffers progressive VRAM exhaustion: VRAM climbs to 15.7/16 GB over ~10 minutes regardless of ENB status, then RADV's poor overflow handling stalls the GPU. The leak persists after closing the game (gamescope holds the VRAM). This does NOT happen on Windows.
+
+**Root causes and mitigations (ordered by impact):**
+
+| # | Issue | Fix | Section |
+|---|-------|-----|---------|
+| 1 | Double GPL (DXVK + RADV) creating duplicate pipelines | `dxvk.enableGraphicsPipelineLibrary = False` + VRAM caps in dxvk.conf | 4.4 |
+| 2 | `radv_zero_vram` overhead (kernel 6.2+ regression) | Add `radv_zero_vram=false` to launch options | Below |
+| 3 | AMD Anti-Lag frame pacing issues | Remove `ENABLE_LAYER_MESA_ANTI_LAG=1` | Below |
+| 4 | GPL itself causing memory bloat | `RADV_DEBUG=nogpl` (disables GPL entirely) | Below |
+| 5 | Gamescope Wayland backend holding VRAM | `env -u WAYLAND_DISPLAY` before gamescope | Below |
+
+**Test methodology:** Each test isolates one variable. Play 10+ minutes traversing cells, monitor MangoHud VRAM. Only proceed to next test if VRAM still leaks.
+
+**Test 2 launch options** (add `radv_zero_vram=false`):
+```
+RADV_PERFTEST=gpl radv_zero_vram=false MANGOHUD=0 ENABLE_LAYER_MESA_ANTI_LAG=1 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
+```
+
+**Test 3 launch options** (remove Anti-Lag):
+```
+RADV_PERFTEST=gpl radv_zero_vram=false MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
+```
+
+**Test 4 launch options** (disable GPL entirely):
+```
+RADV_DEBUG=nogpl radv_zero_vram=false MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
+```
+
+**Test 5 launch options** (force gamescope off Wayland):
+```
+env -u WAYLAND_DISPLAY radv_zero_vram=false MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
+```
+
+**Optional:** Install [Skyrim AE Memory Leak Fix](https://www.nexusmods.com/skyrimspecialedition/mods/169302) via MO2 — addresses Skyrim's own memory leak in Anniversary Edition.
+
+**Success criteria:** VRAM stabilizes under ~10GB and frametimes remain stable after 10+ minutes.
 
 ---
 
@@ -299,6 +391,16 @@ You should have approximately **175 files** (mix of `cc*.esl`, `cc*.bsa`, and `c
 1. Verify `STEAM_COMPAT_MOUNTS` includes the drive where Skyrim is installed
 2. Check that the modlist's `ModOrganizer.ini` points to the correct game path
 3. The Stock Game folder inside the modlist should contain a copy of the Skyrim executables
+
+### VRAM leak / progressive performance degradation (AMD GPUs)
+1. Check `dxvk.conf` has `dxvk.enableGraphicsPipelineLibrary = False` — double GPL (DXVK + RADV) creates duplicate pipeline objects
+2. Check `dxvk.conf` has `dxgi.maxDeviceMemory = 8192` and `dxgi.maxSharedMemory = 8192` — prevents RADV catastrophic overflow at 16GB
+3. Try `radv_zero_vram=false` in launch options — default zeroing has overhead on kernel 6.2+
+4. Remove `ENABLE_LAYER_MESA_ANTI_LAG=1` to rule out Anti-Lag frame pacing issues
+5. Try `RADV_DEBUG=nogpl` to disable GPL entirely (replaces `RADV_PERFTEST=gpl`)
+6. Try `env -u WAYLAND_DISPLAY` before gamescope to force X11 backend
+7. Install [Skyrim AE Memory Leak Fix](https://www.nexusmods.com/skyrimspecialedition/mods/169302) mod via MO2
+8. See section 4.8 for the full ordered test methodology
 
 ### Performance issues
 1. Check that MangoHUD shows expected GPU/CPU usage

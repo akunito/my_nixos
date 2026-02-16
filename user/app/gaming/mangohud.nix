@@ -26,8 +26,8 @@
     text_color=FFFFFF
     round_corners=10
     background_alpha=0.4
-    toggle_hud=Shift_R+F12
-    toggle_hud_position=Shift_R+F11
+    toggle_hud=Shift_R+F8
+    toggle_hud_position=Shift_R+F9
   '';
 }
 

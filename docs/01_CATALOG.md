@@ -58,7 +58,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
 - **system/app/docker.nix**: Allow dockerd to be restarted without affecting running container. *Enabled when:* `userSettings.dockerEnable == true`
 - **system/app/flatpak.nix**: Need some flatpaks
-- **system/app/gamemode.nix**: Feral GameMode *Enabled when:* `systemSettings.gamemodeEnable == true`
+- **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
+   - `systemSettings.gamemodeEnable == true`
+   - `systemSettings.gpuType == "amd"`
 - **system/app/grafana.nix**: Grafana & Prometheus Monitoring Stack
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:* `systemSettings.homelabDockerEnable or false`
 - **system/app/mariadb.nix**: MariaDB Server Module *Enabled when:*
@@ -395,7 +397,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Akunito / Gaming
 
 - **docs/akunito/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
-- **docs/akunito/gaming/skyrim-linux-setup.md**: This guide documents the complete process for installing and running modded Skyrim (LoreRim, Wildlander, etc.) on NixOS using Jackify, Proton, and Gamescope under Sway/Wayland.
+- **docs/akunito/gaming/skyrim-linux-setup.md**: Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning
 
 ### Akunito / Hardware
 
