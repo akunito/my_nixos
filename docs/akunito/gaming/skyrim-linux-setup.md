@@ -386,6 +386,32 @@ You should have approximately **175 files** (mix of `cc*.esl`, `cc*.bsa`, and `c
 4. Check `dxvk.conf` has `dxgi.maxDeviceMemory = 8192` and `dxgi.maxSharedMemory = 8192` — safety cap against RADV catastrophic overflow at 16GB
 5. Optionally install [Skyrim AE Memory Leak Fix](https://www.nexusmods.com/skyrimspecialedition/mods/169302) mod via MO2
 
+### World map invisible / shows only sky (FWMF flat map broken on Linux)
+
+**Symptom**: Pressing M shows a purple/blue sky background with map markers floating in space. A sliver of map texture may be visible at the screen edge. Local maps work fine.
+
+**Cause**: Flat World Map Framework (FWMF) renders the world map as a 2D plane. On Linux/Proton, the FWMF SKSE plugin (`FlatMapMarkersSSE.dll`) and/or the flat map mesh don't render correctly, leaving the camera looking at empty sky instead of the map plane. INI fixes (`fMapWorldMaxPitch`, blur settings, focal depth) do not resolve the issue — the flat plane simply doesn't display properly under Proton/DXVK.
+
+**Fix**: Disable FWMF and all paper map mods in MO2, reverting to the vanilla 3D world map.
+
+In `profiles/<profile>/modlist.txt`, change `+` to `-` for:
+- `Flat World Map Framework (FWMF)`
+- `Skyrim Paper Map by Caro Tuts for FWMF`
+- All area-specific paper maps (`Vigilant Paper Map for FWMF`, `Duncan's Paper Maps for FWMF`, `Solstheim and Baan Malur Paper Map for FWMF`, etc.)
+
+In `profiles/<profile>/plugins.txt`, remove the `*` prefix from:
+- `FWMF for Fantasy Paper Maps.esp`
+- `DLC1MapMarkerEnabler.esp`
+- `FWMF - Ultimate Patch.esp`
+
+**What was tried and didn't work**:
+1. Adjusting `[MapMenu]` in `skyrim.ini` (`fMapWorldMaxPitch=20`, `fMapWorldYawRange=10`, blur settings) — no effect
+2. Applying all 16 FWMF recommended INI values (zoom speed, focal depth, height adjustment force) — no effect
+3. Toggling ENB on/off (Shift+F12) while on map — no effect
+4. Manual camera adjustment (scroll wheel, right-click drag) — flat plane not visible at any angle
+
+**Note**: `RUSTIC MAPS` is NOT related — it retextures decorative in-world maps (`textures/dlc02/clutter/`), not the world map. Keep it enabled.
+
 ### Performance issues
 1. Check that MangoHUD shows expected GPU/CPU usage
 2. ENB is the biggest performance factor — try a lighter preset
