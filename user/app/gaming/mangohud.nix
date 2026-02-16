@@ -5,7 +5,7 @@
 
   home.file.".config/MangoHud/MangoHud.conf".text = ''
     # MangoHud Configuration
-    # Toggle: Right_Shift+F12 | Cycle layout: Right_Shift+F11
+    # Toggle: Shift_L+F8 | Cycle layout: Shift_L+F11
 
     # Metrics
     fps
@@ -26,8 +26,8 @@
     text_color=FFFFFF
     round_corners=10
     background_alpha=0.4
-    toggle_hud=Shift_R+F8
-    toggle_hud_position=Shift_R+F9
+    toggle_hud=Shift_L+F8
+    toggle_hud_position=Shift_L+F11
   '';
 }
 

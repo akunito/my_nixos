@@ -224,45 +224,30 @@ Verify after reboot:
 cat /proc/cmdline | grep split_lock_detect
 ```
 
-### 4.8 VRAM Leak Prevention (AMD 16GB GPUs)
+### 4.8 VRAM Leak Prevention (AMD 16GB GPUs) — SOLVED
 
 Modded Skyrim on Linux suffers progressive VRAM exhaustion: VRAM climbs to 15.7/16 GB over ~10 minutes regardless of ENB status, then RADV's poor overflow handling stalls the GPU. The leak persists after closing the game (gamescope holds the VRAM). This does NOT happen on Windows.
 
-**Root causes and mitigations (ordered by impact):**
+**Root cause: Gamescope Wayland backend.** When gamescope inherits `WAYLAND_DISPLAY` from Sway, it uses the Wayland backend which leaks VRAM progressively. Forcing gamescope to use X11/Xwayland via `env -u WAYLAND_DISPLAY` eliminates the leak entirely.
 
-| # | Issue | Fix | Section |
-|---|-------|-----|---------|
-| 1 | Double GPL (DXVK + RADV) creating duplicate pipelines | `dxvk.enableGraphicsPipelineLibrary = False` + VRAM caps in dxvk.conf | 4.4 |
-| 2 | `radv_zero_vram` overhead (kernel 6.2+ regression) | Add `radv_zero_vram=false` to launch options | Below |
-| 3 | AMD Anti-Lag frame pacing issues | Remove `ENABLE_LAYER_MESA_ANTI_LAG=1` | Below |
-| 4 | GPL itself causing memory bloat | `RADV_DEBUG=nogpl` (disables GPL entirely) | Below |
-| 5 | Gamescope Wayland backend holding VRAM | `env -u WAYLAND_DISPLAY` before gamescope | Below |
-
-**Test methodology:** Each test isolates one variable. Play 10+ minutes traversing cells, monitor MangoHud VRAM. Only proceed to next test if VRAM still leaks.
-
-**Test 2 launch options** (add `radv_zero_vram=false`):
+**Fix applied:**
 ```
-RADV_PERFTEST=gpl radv_zero_vram=false MANGOHUD=0 ENABLE_LAYER_MESA_ANTI_LAG=1 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
+env -u WAYLAND_DISPLAY radv_zero_vram=false MANGOHUD=0 ENABLE_LAYER_MESA_ANTI_LAG=1 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
 ```
 
-**Test 3 launch options** (remove Anti-Lag):
-```
-RADV_PERFTEST=gpl radv_zero_vram=false MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
-```
+**Additional config** (in `dxvk.conf` — see section 4.4):
+- `dxvk.enableGraphicsPipelineLibrary = False` — prevents double GPL with RADV
+- `dxgi.maxDeviceMemory = 8192` / `dxgi.maxSharedMemory = 8192` — safety cap against RADV overflow
 
-**Test 4 launch options** (disable GPL entirely):
-```
-RADV_DEBUG=nogpl radv_zero_vram=false MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
-```
+**Test results (2026-02-16):**
 
-**Test 5 launch options** (force gamescope off Wayland):
-```
-env -u WAYLAND_DISPLAY radv_zero_vram=false MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
-```
+| Test | Launch options change | Result |
+|------|---------------------|--------|
+| 1 | dxvk.conf fixes only (GPL=False + VRAM caps) | VRAM still leaked |
+| 2 | + `radv_zero_vram=false` | VRAM still leaked |
+| 3 | + `env -u WAYLAND_DISPLAY` | **Stable 30-40 min, no leak** |
 
 **Optional:** Install [Skyrim AE Memory Leak Fix](https://www.nexusmods.com/skyrimspecialedition/mods/169302) via MO2 — addresses Skyrim's own memory leak in Anniversary Edition.
-
-**Success criteria:** VRAM stabilizes under ~10GB and frametimes remain stable after 10+ minutes.
 
 ---
 
@@ -273,14 +258,15 @@ env -u WAYLAND_DISPLAY radv_zero_vram=false MANGOHUD=0 ~/.config/sway/scripts/ga
 Add to Steam → Skyrim → Properties → Launch Options:
 
 ```
-RADV_PERFTEST=gpl MANGOHUD=0 ENABLE_LAYER_MESA_ANTI_LAG=1 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
+env -u WAYLAND_DISPLAY radv_zero_vram=false MANGOHUD=0 ENABLE_LAYER_MESA_ANTI_LAG=1 ~/.config/sway/scripts/gamescope-wrapper.sh -W 2560 -H 1440 -w 2560 -h 1440 -f --mangoapp --rt -- %command%
 ```
 
 ### 5.2 Explanation of Options
 
 | Option | Purpose |
 |--------|---------|
-| `RADV_PERFTEST=gpl` | Graphics Pipeline Library — scoped to this game only (not session-wide) |
+| `env -u WAYLAND_DISPLAY` | Forces gamescope to use X11/Xwayland backend — **prevents VRAM leak** on Wayland (see 4.8) |
+| `radv_zero_vram=false` | Disables RADV zero-fill on VRAM allocations — reduces overhead on kernel 6.2+ |
 | `MANGOHUD=0` | Prevents global MangoHud from injecting (gamescope uses `--mangoapp` instead) |
 | `ENABLE_LAYER_MESA_ANTI_LAG=1` | AMD Anti-Lag via Mesa's implicit Vulkan layer — reduces input latency by pacing CPU-GPU sync (requires Mesa 25.3+) |
 | `gamescope-wrapper.sh` | Wrapper script that sets `STEAM_COMPAT_MOUNTS` and launches gamescope |
@@ -291,14 +277,15 @@ RADV_PERFTEST=gpl MANGOHUD=0 ENABLE_LAYER_MESA_ANTI_LAG=1 ~/.config/sway/scripts
 | `--rt` | Realtime scheduling for gamescope threads (prevents GPU clock oscillation) |
 | `-- %command%` | Pass through to the actual game executable |
 
-**Removed options** (cause system-wide lag):
+**Removed options** (cause issues):
+- `RADV_PERFTEST=gpl` — GPL not needed; dxvk.conf has GPL disabled and VRAM caps handle overflow
 - `-r <rate>` — causes FSR upscale spam when game FPS < target rate (issue #1479)
 - `--force-grab-cursor` — causes extreme lag spikes on gamescope 3.16.x (issue #1851); use SSEDisplayTweaks `LockCursor=true` instead
 - `-F fsr` — not needed when running at native resolution; adds compositor overhead
 
 **Alternative: Test without gamescope** (if native 1440p with no FSR):
 ```
-RADV_PERFTEST=gpl MANGOHUD=1 ENABLE_LAYER_MESA_ANTI_LAG=1 %command%
+radv_zero_vram=false MANGOHUD=1 ENABLE_LAYER_MESA_ANTI_LAG=1 %command%
 ```
 If performance improves without gamescope, the compositor overhead isn't worth it at native resolution.
 
@@ -393,14 +380,11 @@ You should have approximately **175 files** (mix of `cc*.esl`, `cc*.bsa`, and `c
 3. The Stock Game folder inside the modlist should contain a copy of the Skyrim executables
 
 ### VRAM leak / progressive performance degradation (AMD GPUs)
-1. Check `dxvk.conf` has `dxvk.enableGraphicsPipelineLibrary = False` — double GPL (DXVK + RADV) creates duplicate pipeline objects
-2. Check `dxvk.conf` has `dxgi.maxDeviceMemory = 8192` and `dxgi.maxSharedMemory = 8192` — prevents RADV catastrophic overflow at 16GB
-3. Try `radv_zero_vram=false` in launch options — default zeroing has overhead on kernel 6.2+
-4. Remove `ENABLE_LAYER_MESA_ANTI_LAG=1` to rule out Anti-Lag frame pacing issues
-5. Try `RADV_DEBUG=nogpl` to disable GPL entirely (replaces `RADV_PERFTEST=gpl`)
-6. Try `env -u WAYLAND_DISPLAY` before gamescope to force X11 backend
-7. Install [Skyrim AE Memory Leak Fix](https://www.nexusmods.com/skyrimspecialedition/mods/169302) mod via MO2
-8. See section 4.8 for the full ordered test methodology
+1. **Most likely fix**: Add `env -u WAYLAND_DISPLAY` before gamescope — forces X11/Xwayland backend, prevents gamescope Wayland backend VRAM leak (see 4.8)
+2. Add `radv_zero_vram=false` to launch options — reduces VRAM allocation overhead on kernel 6.2+
+3. Check `dxvk.conf` has `dxvk.enableGraphicsPipelineLibrary = False` — prevents double GPL with RADV
+4. Check `dxvk.conf` has `dxgi.maxDeviceMemory = 8192` and `dxgi.maxSharedMemory = 8192` — safety cap against RADV catastrophic overflow at 16GB
+5. Optionally install [Skyrim AE Memory Leak Fix](https://www.nexusmods.com/skyrimspecialedition/mods/169302) mod via MO2
 
 ### Performance issues
 1. Check that MangoHUD shows expected GPU/CPU usage
