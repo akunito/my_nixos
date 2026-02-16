@@ -96,11 +96,12 @@ in
   home.sessionVariables = lib.mkIf (userSettings.protongamesEnable == true) {
     BOTTLES_IGNORE_SANDBOX = "1";
     # AMD RDNA 4 Optimizations (9700XT)
-    RADV_PERFTEST = "gpl"; # Graphics Pipeline Library - reduces stuttering
+    # RADV_PERFTEST=gpl is scoped per-game via Steam launch options instead of session-wide
+    # to avoid wasting VRAM on non-game Vulkan apps (Sway, Chromium, etc.)
     AMD_VULKAN_ICD = "radv"; # Ensure Mesa driver is used over AMDVLK
     NODEVICE_SELECT = "1"; # Fix crash on RDNA 4 (disable VK_LAYER_MESA_device_select)
-    # MangoHud FPS overlay (toggle in-game with Right_Shift+F12)
-    MANGOHUD = "1";
+    # MangoHud is scoped per-game via gamescope --mangoapp instead of session-wide
+    # to avoid duplicate injection (gamescope compositor + game)
   };
 
   nixpkgs.config = {

@@ -279,29 +279,8 @@ EOF
     executable = true;
   };
 
-  # Generate swaybar-toggle script with proper package paths
-  home.file.".config/sway/scripts/swaybar-toggle.sh" = {
-    text = ''
-      #!/bin/sh
-      # Toggle SwayFX's default bar (swaybar) visibility
-      # The bar is disabled by default in the config (mode invisible)
-      # This script allows manual toggling when needed
-
-      # Get current bar mode
-      CURRENT_MODE=$(${pkgs.swayfx}/bin/swaymsg -t get_bar_config bar-0 | ${pkgs.jq}/bin/jq -r '.mode' 2>/dev/null)
-
-      if [ "$CURRENT_MODE" = "invisible" ] || [ -z "$CURRENT_MODE" ]; then
-        # Bar is invisible or doesn't exist - show it
-        ${pkgs.swayfx}/bin/swaymsg bar bar-0 mode dock
-        # Optional notification (fails gracefully if libnotify not available)
-        command -v notify-send >/dev/null 2>&1 && notify-send -t 2000 "Swaybar" "Bar enabled (dock mode)" || true
-      else
-        # Bar is visible - hide it
-        ${pkgs.swayfx}/bin/swaymsg bar bar-0 mode invisible
-        # Optional notification (fails gracefully if libnotify not available)
-        command -v notify-send >/dev/null 2>&1 && notify-send -t 2000 "Swaybar" "Bar disabled (invisible mode)" || true
-      fi
-    '';
+  home.file.".config/sway/scripts/gamescope-wrapper.sh" = {
+    source = ./scripts/gamescope-wrapper.sh;
     executable = true;
   };
 

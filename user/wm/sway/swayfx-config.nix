@@ -604,9 +604,6 @@ in
           "${hyper}+Shift+t" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh dev.deedles.Trayscale trayscale";
 
-          # Toggle SwayFX default bar (swaybar) - disabled by default, can be toggled manually
-          "${hyper}+Shift+Home" = "exec ${config.home.homeDirectory}/.config/sway/scripts/swaybar-toggle.sh";
-
           # Dolphin file manager (KDE, tabs restore)
           "${hyper}+Shift+e" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
@@ -1312,9 +1309,9 @@ in
       # Match both app_id (Wayland) and class (XWayland fallback) since gamescope
       # can present as either depending on backend. Use inhibit_idle focus (not fullscreen)
       # because gamescope -f on Wayland creates borderless, not true fullscreen.
-      for_window [app_id="gamescope"] fullscreen enable, inhibit_idle focus
-      for_window [class="gamescope"] fullscreen enable, inhibit_idle focus
-      for_window [class="Gamescope"] fullscreen enable, inhibit_idle focus
+      for_window [app_id="gamescope"] fullscreen enable, inhibit_idle focus, blur disable, shadows disable
+      for_window [class="gamescope"] fullscreen enable, inhibit_idle focus, blur disable, shadows disable
+      for_window [class="Gamescope"] fullscreen enable, inhibit_idle focus, blur disable, shadows disable
       no_focus [app_id="mako"]
       no_focus [app_id="swaync"]
       no_focus [app_id="dunst"]

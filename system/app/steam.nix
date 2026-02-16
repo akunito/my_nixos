@@ -23,7 +23,7 @@
     remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
     dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
     localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
-    gamescopeSession.enable = true; # Gamescope compositor session (Steam Deck-like from login screen)
+    gamescopeSession.enable = false; # Disabled: designed for Steam Deck DRM sessions, conflicts with nested Wayland gamescope under Sway
     extraPackages = with pkgs; [
       gamescope # Nested Wayland compositor for per-game scaling
       mangohud # FPS/performance overlay

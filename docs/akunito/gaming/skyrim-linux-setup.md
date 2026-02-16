@@ -147,19 +147,15 @@ LinuxVersion=true
 
 Both files must have this setting. The ENB Local Override takes priority for engine settings, but the preset's enblocal.ini also gets loaded.
 
-### 4.2 Gamescope Sway Crash Fix
+### 4.2 Gamescope Frame Pacing (IMPORTANT)
 
-Without the `-r` (refresh rate) flag, gamescope can crash the Sway compositor when alt-tabbing or on resolution changes.
+**Do NOT use `-r <rate>` with gamescope on Wayland.** Setting a refresh rate limiter (e.g., `-r 120`) causes gamescope to repeatedly upscale frames via FSR when the game renders below that rate, wasting GPU resources and causing system-wide lag (including secondary monitors). This is a known issue on the Wayland backend (gamescope issue #1479).
 
-Add `-r 120` to gamescope launch options (adjust to your monitor's refresh rate).
+Instead, let Sway's monitor refresh rate and SSEDisplayTweaks handle frame timing.
 
 ### 4.3 Mouse/Window Grab Fix
 
-Under Sway/Wayland, the game window may not properly capture the mouse. Add:
-```
--g --force-grab-cursor
-```
-to gamescope launch options.
+Use `LockCursor=true` in SSEDisplayTweaks INI for cursor confinement instead of `--force-grab-cursor`, which causes extreme lag spikes on gamescope 3.16.x (issue #1851).
 
 ### 4.4 DXVK AMD Pipeline Fix
 
@@ -185,28 +181,34 @@ This disables async pipeline compilation which is problematic on some AMD driver
 Add to Steam → Skyrim → Properties → Launch Options:
 
 ```
-MANGOHUD=0 STEAM_COMPAT_MOUNTS="/mnt/2nd_NVME/SteamLibrary:/mnt/DATA/SteamLibrary:/mnt/2nd_NVME" gamescope -W 3840 -H 2160 -w 3840 -h 2160 -f -r 120 -g --force-grab-cursor -- %command%
+RADV_PERFTEST=gpl MANGOHUD=0 ~/.config/sway/scripts/gamescope-wrapper.sh -W 3840 -H 2160 -w 2560 -h 1440 -F fsr -f --mangoapp --rt -- %command%
 ```
 
 ### 5.2 Explanation of Options
 
 | Option | Purpose |
 |--------|---------|
-| `MANGOHUD=0` | Disable MangoHUD overlay (set to 1 to enable FPS counter) |
-| `STEAM_COMPAT_MOUNTS="..."` | Make additional drives visible to Proton (critical for mods on secondary drives) |
-| `gamescope` | Wayland-native game compositor (avoids Sway window management issues) |
+| `RADV_PERFTEST=gpl` | Graphics Pipeline Library — scoped to this game only (not session-wide) |
+| `MANGOHUD=0` | Prevents global MangoHud from injecting (gamescope uses `--mangoapp` instead) |
+| `gamescope-wrapper.sh` | Wrapper script that sets `STEAM_COMPAT_MOUNTS` and launches gamescope |
 | `-W 3840 -H 2160` | Outer resolution (your monitor resolution) |
-| `-w 3840 -h 2160` | Inner/game resolution |
+| `-w 2560 -h 1440` | Inner/game resolution (lower for FSR upscaling) |
+| `-F fsr` | AMD FidelityFX Super Resolution upscaling |
 | `-f` | Fullscreen |
-| `-r 120` | Refresh rate limit (prevents Sway crash, match your monitor) |
-| `-g --force-grab-cursor` | Properly grab mouse cursor in game window |
+| `--mangoapp` | MangoHud as gamescope-native overlay (no duplicate injection) |
+| `--rt` | Realtime scheduling for gamescope threads (prevents GPU clock oscillation) |
 | `-- %command%` | Pass through to the actual game executable |
+
+**Removed options** (cause system-wide lag):
+- `-r <rate>` — causes FSR upscale spam when game FPS < target rate (issue #1479)
+- `--force-grab-cursor` — causes extreme lag spikes on gamescope 3.16.x (issue #1851); use SSEDisplayTweaks `LockCursor=true` instead
 
 ### 5.3 Adjusting for Different Monitors
 
-- **1440p 165Hz**: `-W 2560 -H 1440 -w 2560 -h 1440 -f -r 165`
-- **1080p 60Hz**: `-W 1920 -H 1080 -w 1920 -h 1080 -f -r 60`
-- **Ultrawide 3440x1440**: `-W 3440 -H 1440 -w 3440 -h 1440 -f -r 144`
+- **4K with FSR**: `-W 3840 -H 2160 -w 2560 -h 1440 -F fsr -f`
+- **1440p native**: `-W 2560 -H 1440 -w 2560 -h 1440 -f`
+- **1080p native**: `-W 1920 -H 1080 -w 1920 -h 1080 -f`
+- **Ultrawide 3440x1440**: `-W 3440 -H 1440 -w 3440 -h 1440 -f`
 
 ---
 
@@ -271,13 +273,15 @@ You should have approximately **175 files** (mix of `cc*.esl`, `cc*.bsa`, and `c
 3. Check if Proton version matches what the modlist expects
 
 ### Mouse doesn't work properly
-1. Add `--force-grab-cursor` to gamescope options
-2. Ensure `-g` flag is present
-3. If using multiple monitors, gamescope `-f` should focus the correct one
+1. Set `LockCursor=true` in SSEDisplayTweaks INI (preferred over `--force-grab-cursor`)
+2. If using multiple monitors, gamescope `-f` should focus the correct one
 
-### Sway crashes when alt-tabbing
-1. Add `-r <refresh_rate>` to gamescope options
-2. This is a known gamescope/Sway interaction bug
+### System-wide lag during gameplay (secondary monitors stutter)
+1. Remove `-r <rate>` from gamescope options — causes FSR upscale spam on Wayland
+2. Remove `--force-grab-cursor` — causes lag spikes on gamescope 3.16.x
+3. Ensure `RADV_PERFTEST` and `MANGOHUD` are NOT set session-wide (check `echo $RADV_PERFTEST`)
+4. Use `--mangoapp` instead of `MANGOHUD=1` with gamescope
+5. Verify SwayFX blur/shadows are disabled for gamescope window (check sway config)
 
 ### Winetricks/DXVK install fails during modlist setup
 1. Ensure `run-jackify.sh` has applied the winetricks patches (check console output)
