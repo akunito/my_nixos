@@ -11,9 +11,10 @@
   config = lib.mkIf (userSettings.userAiPkgsEnable or false) {
     home.packages = [
       # === AI & Machine Learning ===
-      # pkgs-unstable.lmstudio  # Marked as broken on macOS
       pkgs-unstable.ollama
       pkgs-unstable.openai-whisper
+    ] ++ lib.optionals (!pkgs.stdenv.isDarwin) [
+      pkgs-unstable.lmstudio  # Not available on macOS
     ];
   };
 }
