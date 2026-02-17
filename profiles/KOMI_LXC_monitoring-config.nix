@@ -3,7 +3,7 @@
 # Scrapes metrics from all KOMI_LXC containers
 #
 # Container specs:
-# - IP: 192.168.8.12
+# - IP: 192.168.1.12
 # - RAM: 2048 MB
 # - vCPU: 2
 # - Disk: 20 GB
@@ -29,8 +29,8 @@ in
     grafanaAlertsFrom = secrets.notificationFromEmail; # Komi uses notification email for alerts
 
     # Network - LXC uses Proxmox-managed networking
-    ipAddress = "192.168.8.12";
-    nameServers = [ "192.168.8.1" ];
+    ipAddress = "192.168.1.12";
+    nameServers = [ "192.168.1.1" ];
     resolvedEnable = true;
 
     # Firewall ports
@@ -62,16 +62,16 @@ in
 
     # === Remote Targets for Prometheus Scraping (Komi's containers) ===
     prometheusRemoteTargets = [
-      { name = "komi_database";   host = "192.168.8.10"; nodePort = 9100; cadvisorPort = null; }
-      { name = "komi_mailer";     host = "192.168.8.11"; nodePort = 9100; cadvisorPort = 9092; }
-      { name = "komi_proxy";      host = "192.168.8.13"; nodePort = 9100; cadvisorPort = 9092; }
-      { name = "komi_tailscale";  host = "192.168.8.14"; nodePort = 9100; cadvisorPort = null; }
+      { name = "komi_database";   host = "192.168.1.10"; nodePort = 9100; cadvisorPort = null; }
+      { name = "komi_mailer";     host = "192.168.1.11"; nodePort = 9100; cadvisorPort = 9092; }
+      { name = "komi_proxy";      host = "192.168.1.13"; nodePort = 9100; cadvisorPort = 9092; }
+      { name = "komi_tailscale";  host = "192.168.1.14"; nodePort = 9100; cadvisorPort = null; }
     ];
 
     # === Application Metrics (Database exporters) ===
     prometheusAppTargets = [
-      { name = "postgresql"; host = "192.168.8.10"; port = 9187; }
-      { name = "redis";      host = "192.168.8.10"; port = 9121; }
+      { name = "postgresql"; host = "192.168.1.10"; port = 9187; }
+      { name = "redis";      host = "192.168.1.10"; port = 9121; }
     ];
 
     # === Blackbox Exporter (HTTP/HTTPS and ICMP probes) ===
@@ -79,19 +79,19 @@ in
 
     # Komi will add HTTP targets as she deploys services
     prometheusBlackboxHttpTargets = [
-      { name = "kuma"; url = "http://192.168.8.11:3001"; module = "http_2xx_nossl"; }
+      { name = "kuma"; url = "http://192.168.1.11:3001"; module = "http_2xx_nossl"; }
     ];
 
     prometheusBlackboxIcmpTargets = [
-      { name = "router";   host = "192.168.8.1"; }
-      { name = "proxmox";  host = "192.168.8.3"; }
+      { name = "router";   host = "192.168.1.1"; }
+      { name = "proxmox";  host = "192.168.1.3"; }
     ];
 
     prometheusBlackboxTlsTargets = [];
 
     # === PVE Exporter (DISABLED until PVE API token is created) ===
     prometheusPveExporterEnable = false;
-    prometheusPveHost = "192.168.8.3";
+    prometheusPveHost = "192.168.1.3";
     prometheusPveUser = "prometheus@pve";
     prometheusPveTokenName = "prometheus";
     prometheusPveTokenFile = "/etc/secrets/pve-token";
@@ -141,7 +141,7 @@ in
     # EMAIL NOTIFICATIONS (Auto-update failure alerts)
     # ============================================================================
     notificationOnFailureEnable = true;
-    notificationSmtpHost = "192.168.8.11"; # Komi's mailer
+    notificationSmtpHost = "192.168.1.11"; # Komi's mailer
     notificationSmtpPort = 25;
     notificationSmtpAuth = false;
     notificationSmtpTls = false;

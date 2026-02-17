@@ -47,8 +47,8 @@ In the tunnel settings → Public Hostname tab, add routes:
 
 | Subdomain | Type | URL |
 |-----------|------|-----|
-| `grafana.yourdomain.com` | HTTP | `http://192.168.8.13:80` |
-| `kuma.yourdomain.com` | HTTP | `http://192.168.8.13:80` |
+| `grafana.yourdomain.com` | HTTP | `http://192.168.1.13:80` |
+| `kuma.yourdomain.com` | HTTP | `http://192.168.1.13:80` |
 
 All traffic goes through NPM on the proxy container, which handles internal routing.
 
@@ -63,7 +63,7 @@ When you add public hostnames in the tunnel config, Cloudflare automatically cre
 For local access without going through Cloudflare, configure your router (pfSense/other) with DNS overrides:
 
 ```
-*.local.yourdomain.com → 192.168.8.13
+*.local.yourdomain.com → 192.168.1.13
 ```
 
 This allows local devices to access services directly through NPM without the Cloudflare round-trip.
@@ -80,7 +80,7 @@ For automatic SSL certificate generation:
 
 Deploy to proxy container:
 ```bash
-ssh admin@192.168.8.13
+ssh admin@192.168.1.13
 echo "CF_DNS_API_TOKEN=your-token" | sudo tee /etc/secrets/cloudflare-acme
 sudo chmod 600 /etc/secrets/cloudflare-acme
 ```

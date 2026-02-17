@@ -11,7 +11,7 @@ status: published
 
 ## Overview
 
-KOMI_LXC_mailer (192.168.8.11, CTID 111) provides:
+KOMI_LXC_mailer (192.168.1.11, CTID 111) provides:
 - **Postfix relay**: Docker container relaying mail through SMTP2GO
 - **Uptime Kuma**: Docker container for uptime monitoring dashboard
 
@@ -50,7 +50,7 @@ KOMI_LXC_mailer (192.168.8.11, CTID 111) provides:
 ### Postfix Relay
 
 ```bash
-ssh admin@192.168.8.11
+ssh admin@192.168.1.11
 mkdir -p ~/homelab-watcher
 cat > ~/homelab-watcher/docker-compose.yml << 'EOF'
 version: '3.8'
@@ -96,24 +96,24 @@ docker ps
 echo "Test from komi-mailer" | mail -s "Test" your-email@example.com
 
 # Access Kuma
-# Navigate to http://192.168.8.11:3001
+# Navigate to http://192.168.1.11:3001
 ```
 
 ## Configure Uptime Kuma
 
-1. Access `http://192.168.8.11:3001`
+1. Access `http://192.168.1.11:3001`
 2. Create admin account on first visit
 3. Add monitors for Komi's services:
-   - `http://192.168.8.10:5432` (PostgreSQL - TCP)
-   - `http://192.168.8.10:6379` (Redis - TCP)
-   - `http://192.168.8.12:3002` (Grafana - HTTP)
-   - `http://192.168.8.13:81` (NPM Admin - HTTP)
+   - `http://192.168.1.10:5432` (PostgreSQL - TCP)
+   - `http://192.168.1.10:6379` (Redis - TCP)
+   - `http://192.168.1.12:3002` (Grafana - HTTP)
+   - `http://192.168.1.13:81` (NPM Admin - HTTP)
 
 ## NixOS Notification Integration
 
 All KOMI_LXC containers have notification settings pointing to this mailer:
 ```nix
-notificationSmtpHost = "192.168.8.11";
+notificationSmtpHost = "192.168.1.11";
 notificationSmtpPort = 25;
 ```
 

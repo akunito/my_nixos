@@ -2,7 +2,7 @@
 # Cloudflare Tunnel (native) + Nginx Proxy Manager (Docker) + ACME Certs
 #
 # Container specs:
-# - IP: 192.168.8.13
+# - IP: 192.168.1.13
 # - RAM: 1024 MB
 # - vCPU: 1
 # - Disk: 10 GB
@@ -28,8 +28,8 @@ in
     wildcardLocal = secrets.wildcardLocal;
 
     # Network
-    ipAddress = "192.168.8.13";
-    nameServers = [ "192.168.8.1" ];
+    ipAddress = "192.168.1.13";
+    nameServers = [ "192.168.1.1" ];
 
     # Firewall ports
     allowedTCPPorts = [
@@ -70,7 +70,7 @@ in
     # EMAIL NOTIFICATIONS (Auto-update failure alerts)
     # ============================================================================
     notificationOnFailureEnable = true;
-    notificationSmtpHost = "192.168.8.11"; # Komi's mailer
+    notificationSmtpHost = "192.168.1.11"; # Komi's mailer
     notificationSmtpPort = 25;
     notificationSmtpAuth = false;
     notificationSmtpTls = false;

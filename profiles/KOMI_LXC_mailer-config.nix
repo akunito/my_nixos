@@ -3,7 +3,7 @@
 # Hosts docker containers for mail services and kuma monitoring
 #
 # Container specs:
-# - IP: 192.168.8.11
+# - IP: 192.168.1.11
 # - RAM: 1024 MB
 # - vCPU: 1
 # - Disk: 10 GB
@@ -21,8 +21,8 @@ in
     serverEnv = "PROD"; # Production environment
 
     # Network
-    ipAddress = "192.168.8.11";
-    nameServers = [ "192.168.8.1" ];
+    ipAddress = "192.168.1.11";
+    nameServers = [ "192.168.1.1" ];
 
     # Firewall - Add SMTP port for mail service
     allowedTCPPorts = [
@@ -49,7 +49,7 @@ in
     # EMAIL NOTIFICATIONS (Auto-update failure alerts)
     # ============================================================================
     notificationOnFailureEnable = true;
-    notificationSmtpHost = "192.168.8.11"; # Self (this IS the mailer)
+    notificationSmtpHost = "192.168.1.11"; # Self (this IS the mailer)
     notificationSmtpPort = 25;
     notificationSmtpAuth = false;
     notificationSmtpTls = false;

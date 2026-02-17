@@ -3,7 +3,7 @@
 # All services run as NixOS native modules (no Docker)
 #
 # Container specs:
-# - IP: 192.168.8.10
+# - IP: 192.168.1.10
 # - RAM: 4096 MB
 # - vCPU: 2
 # - Disk: 30 GB
@@ -23,8 +23,8 @@ in
     serverEnv = "PROD"; # Production environment
 
     # Network - LXC uses Proxmox-managed networking
-    ipAddress = "192.168.8.10";
-    nameServers = [ "192.168.8.1" ];
+    ipAddress = "192.168.1.10";
+    nameServers = [ "192.168.1.1" ];
     resolvedEnable = true;
 
     # Database credentials (from git-crypt encrypted secrets/komi/secrets.nix)
@@ -130,7 +130,7 @@ in
     # EMAIL NOTIFICATIONS (Auto-update failure alerts)
     # ============================================================================
     notificationOnFailureEnable = true;
-    notificationSmtpHost = "192.168.8.11"; # Komi's mailer
+    notificationSmtpHost = "192.168.1.11"; # Komi's mailer
     notificationSmtpPort = 25;
     notificationSmtpAuth = false;
     notificationSmtpTls = false;

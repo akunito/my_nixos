@@ -11,7 +11,7 @@ status: published
 
 ## Architecture
 
-Komi's infrastructure runs on a Proxmox host (192.168.8.3) with 8 cores, 16 GB RAM, and ~404 GB encrypted LUKS storage. Five LXC containers provide core services.
+Komi's infrastructure runs on a Proxmox host (192.168.1.3) with 8 cores, 16 GB RAM, and ~404 GB encrypted LUKS storage. Five LXC containers provide core services.
 
 ```
                     Internet
@@ -19,7 +19,7 @@ Komi's infrastructure runs on a Proxmox host (192.168.8.3) with 8 cores, 16 GB R
                  [Cloudflare Tunnel]
                        │
               ┌────────┴────────┐
-              │  komi-proxy     │  192.168.8.13  (CTID 113)
+              │  komi-proxy     │  192.168.1.13  (CTID 113)
               │  NPM + ACME    │
               └───────┬────────┘
                       │ reverse proxy
@@ -34,7 +34,7 @@ Komi's infrastructure runs on a Proxmox host (192.168.8.3) with 8 cores, 16 GB R
 
    ┌────────────┐
    │ komi-      │
-   │ tailscale  │  192.168.8.14  (CTID 114)
+   │ tailscale  │  192.168.1.14  (CTID 114)
    │ (mesh VPN) │
    └────────────┘
 ```
@@ -43,11 +43,11 @@ Komi's infrastructure runs on a Proxmox host (192.168.8.3) with 8 cores, 16 GB R
 
 Deploy in this order (dependencies first):
 
-1. **KOMI_LXC_database** (192.168.8.10) — No dependencies, other services need it
-2. **KOMI_LXC_mailer** (192.168.8.11) — Email notifications for all services
-3. **KOMI_LXC_proxy** (192.168.8.13) — Cloudflare tunnel + reverse proxy
-4. **KOMI_LXC_monitoring** (192.168.8.12) — Needs all targets running to scrape
-5. **KOMI_LXC_tailscale** (192.168.8.14) — Independent, deploy anytime
+1. **KOMI_LXC_database** (192.168.1.10) — No dependencies, other services need it
+2. **KOMI_LXC_mailer** (192.168.1.11) — Email notifications for all services
+3. **KOMI_LXC_proxy** (192.168.1.13) — Cloudflare tunnel + reverse proxy
+4. **KOMI_LXC_monitoring** (192.168.1.12) — Needs all targets running to scrape
+5. **KOMI_LXC_tailscale** (192.168.1.14) — Independent, deploy anytime
 
 ## Container Details
 
@@ -77,17 +77,17 @@ Deploy in this order (dependencies first):
 - **Services**: Tailscale subnet router (native)
 - **Ports**: 41641/UDP (Tailscale), 9100 (exporter)
 - **Resources**: 1 core, 1 GB RAM, 8 GB disk
-- **Routes**: Advertises 192.168.8.0/24 (will change to 192.168.1.0/24)
+- **Routes**: Advertises 192.168.1.0/24 (will change to 192.168.1.0/24)
 
 ## SSH Access
 
 All containers use user `admin`:
 ```bash
-ssh admin@192.168.8.10  # database
-ssh admin@192.168.8.11  # mailer
-ssh admin@192.168.8.12  # monitoring
-ssh admin@192.168.8.13  # proxy
-ssh admin@192.168.8.14  # tailscale
+ssh admin@192.168.1.10  # database
+ssh admin@192.168.1.11  # mailer
+ssh admin@192.168.1.12  # monitoring
+ssh admin@192.168.1.13  # proxy
+ssh admin@192.168.1.14  # tailscale
 ```
 
 ## LUKS & Autostart
@@ -95,30 +95,30 @@ ssh admin@192.168.8.14  # tailscale
 All containers live on encrypted LUKS storage. They do **not** have Proxmox `onboot` enabled. After a reboot, run the LUKS unlock script on the Proxmox host:
 
 ```bash
-ssh root@192.168.8.3
+ssh root@192.168.1.3
 /root/scripts/unlock_luks.sh
 ```
 
 This unlocks the LUKS volume and starts containers 110-114.
 
-## Network Migration: 192.168.8.x → 192.168.1.x
+## Network Migration: 192.168.1.x → 192.168.1.x
 
-Once all containers are set up and working on akunito's network (192.168.8.x), Komi will move the Proxmox to her home network (192.168.1.x). This is the migration checklist:
+Once all containers are set up and working on akunito's network (192.168.1.x), Komi will move the Proxmox to her home network (192.168.1.x). This is the migration checklist:
 
 ### IP Mapping
 
-| Current (192.168.8.x) | Target (192.168.1.x) | Host |
+| Current (192.168.1.x) | Target (192.168.1.x) | Host |
 |------------------------|----------------------|------|
-| 192.168.8.3 | 192.168.1.3 | Proxmox host |
-| 192.168.8.10 | 192.168.1.10 | komi-database |
-| 192.168.8.11 | 192.168.1.11 | komi-mailer |
-| 192.168.8.12 | 192.168.1.12 | komi-monitoring |
-| 192.168.8.13 | 192.168.1.13 | komi-proxy |
-| 192.168.8.14 | 192.168.1.14 | komi-tailscale |
+| 192.168.1.3 | 192.168.1.3 | Proxmox host |
+| 192.168.1.10 | 192.168.1.10 | komi-database |
+| 192.168.1.11 | 192.168.1.11 | komi-mailer |
+| 192.168.1.12 | 192.168.1.12 | komi-monitoring |
+| 192.168.1.13 | 192.168.1.13 | komi-proxy |
+| 192.168.1.14 | 192.168.1.14 | komi-tailscale |
 
 ### Files to Update
 
-1. **Proxmox host** (`/etc/network/interfaces` on 192.168.8.3):
+1. **Proxmox host** (`/etc/network/interfaces` on 192.168.1.3):
    - Change `address` to `192.168.1.3/24`
    - Change `gateway` to `192.168.1.1`
 
@@ -126,7 +126,7 @@ Once all containers are set up and working on akunito's network (192.168.8.x), K
    - Change nameserver to `192.168.1.1`
 
 3. **Container configs** (`/etc/pve/lxc/11{0-4}.conf`):
-   - Change `ip=192.168.8.X/24,gw=192.168.8.1` to `ip=192.168.1.X/24,gw=192.168.1.1`
+   - Change `ip=192.168.1.X/24,gw=192.168.1.1` to `ip=192.168.1.X/24,gw=192.168.1.1`
 
 4. **NixOS profiles** (in this repo):
    - `profiles/KOMI_LXC_database-config.nix`: ipAddress, nameServers
@@ -139,13 +139,13 @@ Once all containers are set up and working on akunito's network (192.168.8.x), K
 
 6. **Documentation**: Update IPs in all `docs/komi/infrastructure/` files
 
-7. **Notification targets**: All profiles reference mailer at `192.168.8.11` → `192.168.1.11`
+7. **Notification targets**: All profiles reference mailer at `192.168.1.11` → `192.168.1.11`
 
 ### Migration Steps
 
 ```bash
 # 1. SSH to Proxmox while on akunito's network
-ssh root@192.168.8.3
+ssh root@192.168.1.3
 
 # 2. Update Proxmox host networking
 nano /etc/network/interfaces  # Change to 192.168.1.3
@@ -183,5 +183,5 @@ cd ~/.dotfiles
 ./deploy.sh --komi --list
 
 # Manual single-container deploy
-ssh -A admin@192.168.8.10 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_database -s -u -d -h"
+ssh -A admin@192.168.1.10 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_database -s -u -d -h"
 ```

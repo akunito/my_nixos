@@ -2,13 +2,13 @@
 # Tailscale Subnet Router for Komi's home network mesh access
 #
 # Container specs:
-# - IP: 192.168.8.14
+# - IP: 192.168.1.14
 # - RAM: 1024 MB
 # - vCPU: 1
 # - Disk: 8 GB
 #
 # Purpose:
-#   - Subnet router advertising 192.168.8.0/24 (temporary, will change to 192.168.1.0/24)
+#   - Subnet router advertising 192.168.1.0/24 (temporary, will change to 192.168.1.0/24)
 #   - Enables direct mesh connectivity to home services from remote locations
 #
 # After deployment:
@@ -29,8 +29,8 @@ in
     serverEnv = "PROD"; # Production infrastructure
 
     # Network
-    ipAddress = "192.168.8.14";
-    nameServers = [ "192.168.8.1" ];
+    ipAddress = "192.168.1.14";
+    nameServers = [ "192.168.1.1" ];
 
     # Firewall ports
     allowedTCPPorts = [
@@ -49,7 +49,7 @@ in
     tailscaleEnable = true;
     tailscaleLoginServer = "https://${secrets.headscaleDomain}";
     tailscaleAdvertiseRoutes = [
-      "192.168.8.0/24"   # Current LAN (will change to 192.168.1.0/24 after network migration)
+      "192.168.1.0/24"   # Current LAN (will change to 192.168.1.0/24 after network migration)
     ];
     tailscaleExitNode = false;
     tailscaleAcceptRoutes = false;
@@ -70,7 +70,7 @@ in
     # EMAIL NOTIFICATIONS (Auto-update failure alerts)
     # ============================================================================
     notificationOnFailureEnable = true;
-    notificationSmtpHost = "192.168.8.11"; # Komi's mailer
+    notificationSmtpHost = "192.168.1.11"; # Komi's mailer
     notificationSmtpPort = 25;
     notificationSmtpAuth = false;
     notificationSmtpTls = false;

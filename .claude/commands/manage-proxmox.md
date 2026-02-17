@@ -18,7 +18,7 @@ Use this skill to:
 | Host | SSH Command | Repository |
 |------|-------------|------------|
 | Proxmox VE (akunito) | `ssh -A root@192.168.8.82` | `/root/` |
-| Proxmox VE (komi) | `ssh -A root@192.168.8.3` | `/root/` |
+| Proxmox VE (komi) | `ssh -A root@192.168.1.3` | `/root/` |
 
 **Important**: Always use `-A` flag for SSH agent forwarding.
 
@@ -404,28 +404,28 @@ For containers with encrypted root, the unlock script is at:
 | 87 | LXC_liftcraftTEST | 192.168.8.87 | vmbr10 | LiftCraft test |
 | 88 | LXC_portfolioprod | 192.168.8.88 | vmbr10 | Portfolio production |
 | 89 | LXC_mailer | 192.168.8.89 | vmbr10 | Postfix/Kuma |
-| 102 | LXC_proxy | 192.168.8.102 | vmbr10 | NPM/Cloudflared |
-| 204 | LXC_database | 192.168.8.103 | vmbr10 | PostgreSQL/MariaDB/Redis |
-| 251 | LXC_matrix | 192.168.8.104 | vmbr10 | Matrix Synapse/Element/Claude Bot |
-| 205 | LXC_tailscale | 192.168.8.105 | vmbr10 | Tailscale subnet router |
+| 102 | LXC_proxy | 192.168.1.102 | vmbr10 | NPM/Cloudflared |
+| 204 | LXC_database | 192.168.1.103 | vmbr10 | PostgreSQL/MariaDB/Redis |
+| 251 | LXC_matrix | 192.168.1.104 | vmbr10 | Matrix Synapse/Element/Claude Bot |
+| 205 | LXC_tailscale | 192.168.1.105 | vmbr10 | Tailscale subnet router |
 | 285 | Template | - | - | NixOS template (encrypted) |
 
 **All containers use vmbr10** (backed by bond0 LACP 2x10G → USW Aggregation SFP+ 3+4), providing up to 20G aggregate bandwidth to the switch.
 
-### Komi's Proxmox (192.168.8.3)
+### Komi's Proxmox (192.168.1.3)
 
 | CTID | Name | IP | Bridge | Purpose |
 |------|------|-----|--------|---------|
 | 102 | (template) | DHCP | vmbr0 | Clone source — do NOT start |
-| 110 | KOMI_LXC_database | 192.168.8.10 | vmbr0 | PostgreSQL & Redis |
-| 111 | KOMI_LXC_mailer | 192.168.8.11 | vmbr0 | SMTP relay & Uptime Kuma |
-| 112 | KOMI_LXC_monitoring | 192.168.8.12 | vmbr0 | Grafana & Prometheus |
-| 113 | KOMI_LXC_proxy | 192.168.8.13 | vmbr0 | Cloudflare tunnel & NPM |
-| 114 | KOMI_LXC_tailscale | 192.168.8.14 | vmbr0 | Tailscale subnet router |
+| 110 | KOMI_LXC_database | 192.168.1.10 | vmbr0 | PostgreSQL & Redis |
+| 111 | KOMI_LXC_mailer | 192.168.1.11 | vmbr0 | SMTP relay & Uptime Kuma |
+| 112 | KOMI_LXC_monitoring | 192.168.1.12 | vmbr0 | Grafana & Prometheus |
+| 113 | KOMI_LXC_proxy | 192.168.1.13 | vmbr0 | Cloudflare tunnel & NPM |
+| 114 | KOMI_LXC_tailscale | 192.168.1.14 | vmbr0 | Tailscale subnet router |
 
-**SSH user**: `admin` for all Komi containers. **SSH**: `ssh -A root@192.168.8.3`
+**SSH user**: `admin` for all Komi containers. **SSH**: `ssh -A root@192.168.1.3`
 
-All Komi containers use LUKS-encrypted storage. After reboot: `ssh root@192.168.8.3 /root/scripts/unlock_luks.sh`
+All Komi containers use LUKS-encrypted storage. After reboot: `ssh root@192.168.1.3 /root/scripts/unlock_luks.sh`
 
 ---
 

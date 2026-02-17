@@ -11,7 +11,7 @@ status: published
 
 ## Overview
 
-KOMI_LXC_proxy (192.168.8.13, CTID 113) provides:
+KOMI_LXC_proxy (192.168.1.13, CTID 113) provides:
 - **cloudflared**: Native NixOS service for Cloudflare Tunnel (public access)
 - **NPM**: Nginx Proxy Manager (Docker) for local reverse proxy
 - **ACME**: Let's Encrypt wildcard certificates via Cloudflare DNS
@@ -33,7 +33,7 @@ Before setting up the proxy, complete:
 ### 2. Configure Cloudflare Tunnel Token
 
 ```bash
-ssh admin@192.168.8.13
+ssh admin@192.168.1.13
 sudo mkdir -p /etc/secrets
 # Paste your tunnel token (from Cloudflare Dashboard → Networks → Tunnels)
 echo "your-tunnel-token" | sudo tee /etc/secrets/cloudflared-token
@@ -53,7 +53,7 @@ sudo chmod 600 /etc/secrets/cloudflare-acme
 Create the docker-compose file:
 
 ```bash
-ssh admin@192.168.8.13
+ssh admin@192.168.1.13
 mkdir -p ~/npm
 cat > ~/npm/docker-compose.yml << 'EOF'
 version: '3.8'
@@ -76,7 +76,7 @@ cd ~/npm && docker compose up -d
 
 ### 5. Access NPM Admin UI
 
-Navigate to `http://192.168.8.13:81`
+Navigate to `http://192.168.1.13:81`
 
 Default credentials:
 - Email: `admin@example.com`
@@ -90,7 +90,7 @@ For each service you want to expose:
 
 1. Go to NPM → Proxy Hosts → Add Proxy Host
 2. **Domain Names**: `service.local.yourdomain.com`
-3. **Forward Hostname/IP**: Container IP (e.g., `192.168.8.12` for Grafana)
+3. **Forward Hostname/IP**: Container IP (e.g., `192.168.1.12` for Grafana)
 4. **Forward Port**: Service port (e.g., `3002` for Grafana)
 5. **SSL**: Use ACME wildcard cert from `/mnt/shared-certs/`
 
@@ -100,15 +100,15 @@ Configure in Cloudflare Dashboard → Networks → Tunnels → Your Tunnel → P
 
 | Subdomain | Service | URL |
 |-----------|---------|-----|
-| `grafana.yourdomain.com` | HTTP | `http://192.168.8.13:80` |
-| `kuma.yourdomain.com` | HTTP | `http://192.168.8.13:80` |
+| `grafana.yourdomain.com` | HTTP | `http://192.168.1.13:80` |
+| `kuma.yourdomain.com` | HTTP | `http://192.168.1.13:80` |
 
 NPM handles the internal routing to the correct container based on hostname.
 
 ## Verify Services
 
 ```bash
-ssh admin@192.168.8.13
+ssh admin@192.168.1.13
 # Check cloudflared
 sudo systemctl status cloudflared
 # Check NPM container

@@ -1,5 +1,5 @@
 # KOMI_LXC Base Profile Configuration
-# Contains common settings for Komi's Proxmox LXC containers (192.168.8.3)
+# Contains common settings for Komi's Proxmox LXC containers (192.168.1.3)
 # Mirrors LXC-base-config.nix but with Komi's identity and credentials
 
 let

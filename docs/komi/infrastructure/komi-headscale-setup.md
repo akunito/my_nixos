@@ -104,7 +104,7 @@ docker exec headscale headscale users create komi
 ### 2. Authenticate on the Container
 
 ```bash
-ssh admin@192.168.8.14
+ssh admin@192.168.1.14
 sudo tailscale up --login-server=https://headscale.yourdomain.com
 ```
 
@@ -131,7 +131,7 @@ docker exec headscale headscale routes enable -r <route-id>
 sudo tailscale status
 
 # From remote device (after joining the network)
-ping 192.168.8.10  # Should reach komi-database via tailscale
+ping 192.168.1.10  # Should reach komi-database via tailscale
 ```
 
 ## Register Client Devices

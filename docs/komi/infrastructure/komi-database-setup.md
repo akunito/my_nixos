@@ -11,7 +11,7 @@ status: published
 
 ## Overview
 
-KOMI_LXC_database (192.168.8.10, CTID 110) runs PostgreSQL 17 and Redis as native NixOS services. No Docker.
+KOMI_LXC_database (192.168.1.10, CTID 110) runs PostgreSQL 17 and Redis as native NixOS services. No Docker.
 
 ## First-Time Setup
 
@@ -26,7 +26,7 @@ KOMI_LXC_database (192.168.8.10, CTID 110) runs PostgreSQL 17 and Redis as nativ
 Create password files on the container:
 
 ```bash
-ssh admin@192.168.8.10
+ssh admin@192.168.1.10
 sudo mkdir -p /etc/secrets
 echo "your-db-password" | sudo tee /etc/secrets/db-main-password
 echo "your-redis-password" | sudo tee /etc/secrets/redis-password
@@ -36,7 +36,7 @@ sudo chmod 600 /etc/secrets/*
 ### 3. Verify Services
 
 ```bash
-ssh admin@192.168.8.10
+ssh admin@192.168.1.10
 sudo systemctl status postgresql
 sudo systemctl status redis
 ```
@@ -117,12 +117,12 @@ Prometheus exporters are enabled:
 - PostgreSQL Exporter: port 9187
 - Redis Exporter: port 9121
 
-These are scraped by KOMI_LXC_monitoring (192.168.8.12).
+These are scraped by KOMI_LXC_monitoring (192.168.1.12).
 
 ## Connection from Other Containers
 
 Other Komi containers connect to this database server at:
-- PostgreSQL: `192.168.8.10:5432`
-- Redis: `192.168.8.10:6379`
+- PostgreSQL: `192.168.1.10:5432`
+- Redis: `192.168.1.10:6379`
 
-Ensure firewall allows connections from Komi's container IPs (192.168.8.10-14).
+Ensure firewall allows connections from Komi's container IPs (192.168.1.10-14).

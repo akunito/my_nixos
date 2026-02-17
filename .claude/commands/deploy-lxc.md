@@ -63,36 +63,36 @@ git fetch origin && git reset --hard origin/main
 | Profile | IP | Bridge | Description |
 |---------|-----|--------|-------------|
 | LXC_HOME | 192.168.8.80 | vmbr10 | Homelab services |
-| LXC_proxy | 192.168.8.102 | vmbr10 | Cloudflare tunnel & NPM |
+| LXC_proxy | 192.168.1.102 | vmbr10 | Cloudflare tunnel & NPM |
 | LXC_plane | 192.168.8.86 | vmbr10 | Production container |
 | LXC_portfolioprod | 192.168.8.88 | vmbr10 | Portfolio service |
 | LXC_mailer | 192.168.8.89 | vmbr10 | Mail & monitoring |
 | LXC_liftcraftTEST | 192.168.8.87 | vmbr10 | Test environment |
 | LXC_monitoring | 192.168.8.85 | vmbr10 | Prometheus & Grafana |
-| LXC_database | 192.168.8.103 | vmbr10 | PostgreSQL, MariaDB & Redis |
-| LXC_matrix | 192.168.8.104 | vmbr10 | Matrix Synapse, Element & Claude Bot |
-| LXC_tailscale | 192.168.8.105 | vmbr10 | Tailscale subnet router (mesh VPN) |
+| LXC_database | 192.168.1.103 | vmbr10 | PostgreSQL, MariaDB & Redis |
+| LXC_matrix | 192.168.1.104 | vmbr10 | Matrix Synapse, Element & Claude Bot |
+| LXC_tailscale | 192.168.1.105 | vmbr10 | Tailscale subnet router (mesh VPN) |
 
 All akunito containers use vmbr10 (bond0 LACP 2x10G → USW Aggregation SFP+ 3+4).
 
-## Komi Container Reference (Proxmox 192.168.8.3)
+## Komi Container Reference (Proxmox 192.168.1.3)
 
 | Profile | IP | User | Description |
 |---------|-----|------|-------------|
-| KOMI_LXC_database | 192.168.8.10 | admin | PostgreSQL & Redis (Komi) |
-| KOMI_LXC_mailer | 192.168.8.11 | admin | Mail & monitoring (Komi) |
-| KOMI_LXC_monitoring | 192.168.8.12 | admin | Prometheus & Grafana (Komi) |
-| KOMI_LXC_proxy | 192.168.8.13 | admin | Cloudflare & NPM (Komi) |
-| KOMI_LXC_tailscale | 192.168.8.14 | admin | Tailscale router (Komi) |
+| KOMI_LXC_database | 192.168.1.10 | admin | PostgreSQL & Redis (Komi) |
+| KOMI_LXC_mailer | 192.168.1.11 | admin | Mail & monitoring (Komi) |
+| KOMI_LXC_monitoring | 192.168.1.12 | admin | Prometheus & Grafana (Komi) |
+| KOMI_LXC_proxy | 192.168.1.13 | admin | Cloudflare & NPM (Komi) |
+| KOMI_LXC_tailscale | 192.168.1.14 | admin | Tailscale router (Komi) |
 
-All Komi containers use vmbr0 on Komi's Proxmox (192.168.8.3).
+All Komi containers use vmbr0 on Komi's Proxmox (192.168.1.3).
 
 ## Examples
 
 ### Deploy to LXC_database
 
 ```bash
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_database -s -u -d -h"
+ssh -A akunito@192.168.1.103 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_database -s -u -d -h"
 ```
 
 ### Deploy to LXC_monitoring
@@ -104,13 +104,13 @@ ssh -A akunito@192.168.8.85 "cd ~/.dotfiles && git fetch origin && git reset --h
 ### Deploy to LXC_matrix
 
 ```bash
-ssh -A akunito@192.168.8.104 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_matrix -s -u -d -h"
+ssh -A akunito@192.168.1.104 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_matrix -s -u -d -h"
 ```
 
 ### Deploy to LXC_tailscale
 
 ```bash
-ssh -A akunito@192.168.8.105 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_tailscale -s -u -d -h"
+ssh -A akunito@192.168.1.105 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_tailscale -s -u -d -h"
 ```
 
 ### Deploy to LAPTOP_AGA (Manual - requires password)
@@ -125,31 +125,31 @@ git fetch origin && git reset --hard origin/main
 ### Deploy to KOMI_LXC_database
 
 ```bash
-ssh -A admin@192.168.8.10 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_database -s -u -d -h"
+ssh -A admin@192.168.1.10 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_database -s -u -d -h"
 ```
 
 ### Deploy to KOMI_LXC_mailer
 
 ```bash
-ssh -A admin@192.168.8.11 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_mailer -s -u -d -h"
+ssh -A admin@192.168.1.11 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_mailer -s -u -d -h"
 ```
 
 ### Deploy to KOMI_LXC_monitoring
 
 ```bash
-ssh -A admin@192.168.8.12 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_monitoring -s -u -d -h"
+ssh -A admin@192.168.1.12 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_monitoring -s -u -d -h"
 ```
 
 ### Deploy to KOMI_LXC_proxy
 
 ```bash
-ssh -A admin@192.168.8.13 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_proxy -s -u -d -h"
+ssh -A admin@192.168.1.13 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_proxy -s -u -d -h"
 ```
 
 ### Deploy to KOMI_LXC_tailscale
 
 ```bash
-ssh -A admin@192.168.8.14 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_tailscale -s -u -d -h"
+ssh -A admin@192.168.1.14 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_tailscale -s -u -d -h"
 ```
 
 ### Deploy to Multiple Containers

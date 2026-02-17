@@ -12,14 +12,14 @@
 
 ## Network
 
-The server is currently configured for the **192.168.8.0/24** network:
+The server is currently configured for the **192.168.1.0/24** network:
 
 | What | Current Value |
 |------|---------------|
-| Proxmox IP | 192.168.8.3 |
-| Gateway | 192.168.8.1 |
+| Proxmox IP | 192.168.1.3 |
+| Gateway | 192.168.1.1 |
 | Bridge | vmbr0 (on enp0s31f6) |
-| Container 102 | DHCP (currently 192.168.8.201) |
+| Container 102 | DHCP (currently 192.168.1.201) |
 
 ### Changing the network for your home (IMPORTANT)
 
@@ -70,7 +70,7 @@ pct exec 102 -- sh -c 'export PATH=/run/current-system/sw/bin:$PATH; ip addr sho
 ┌──────────────────────────────────────────────────┐
 │  Proxmox VE 8.3 (Debian Bookworm)               │
 │  Kernel: 6.8.12-18-pve                           │
-│  IP: 192.168.8.3 (change for your network)       │
+│  IP: 192.168.1.3 (change for your network)       │
 │                                                   │
 │  ┌─────────────────────────────────────────────┐ │
 │  │  NVMe 512 GB                                │ │
@@ -95,11 +95,11 @@ pct exec 102 -- sh -c 'export PATH=/run/current-system/sw/bin:$PATH; ip addr sho
 | CTID | Profile | IP | Cores | RAM | Disk | Purpose |
 |------|---------|-----|-------|-----|------|---------|
 | 102 | (template) | DHCP | - | - | 24 GB | Clone source — do NOT start |
-| 110 | KOMI_LXC_database | 192.168.8.10 | 2 | 4 GB | 30 GB | PostgreSQL & Redis |
-| 111 | KOMI_LXC_mailer | 192.168.8.11 | 1 | 1 GB | 10 GB | SMTP relay & Uptime Kuma |
-| 112 | KOMI_LXC_monitoring | 192.168.8.12 | 2 | 2 GB | 20 GB | Grafana & Prometheus |
-| 113 | KOMI_LXC_proxy | 192.168.8.13 | 1 | 1 GB | 10 GB | Cloudflare tunnel & NPM |
-| 114 | KOMI_LXC_tailscale | 192.168.8.14 | 1 | 1 GB | 8 GB | Tailscale subnet router |
+| 110 | KOMI_LXC_database | 192.168.1.10 | 2 | 4 GB | 30 GB | PostgreSQL & Redis |
+| 111 | KOMI_LXC_mailer | 192.168.1.11 | 1 | 1 GB | 10 GB | SMTP relay & Uptime Kuma |
+| 112 | KOMI_LXC_monitoring | 192.168.1.12 | 2 | 2 GB | 20 GB | Grafana & Prometheus |
+| 113 | KOMI_LXC_proxy | 192.168.1.13 | 1 | 1 GB | 10 GB | Cloudflare tunnel & NPM |
+| 114 | KOMI_LXC_tailscale | 192.168.1.14 | 1 | 1 GB | 8 GB | Tailscale subnet router |
 
 **Total resources**: 7 cores, ~9 GB RAM, 78 GB disk (leaves 1 core + ~7 GB for Proxmox host)
 

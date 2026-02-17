@@ -312,11 +312,11 @@ This command updates the Home Manager configuration and applies changes without 
 | LXC_matrix | matrix (192.168.8.104) | akunito | main |
 | LXC_tailscale | tailscale (192.168.8.105) | akunito | main |
 | VMHOME | nixosLabaku (192.168.8.80) | akunito | main |
-| KOMI_LXC_database | komi-database (192.168.8.10) | admin | komi |
-| KOMI_LXC_mailer | komi-mailer (192.168.8.11) | admin | komi |
-| KOMI_LXC_monitoring | komi-monitoring (192.168.8.12) | admin | komi |
-| KOMI_LXC_proxy | komi-proxy (192.168.8.13) | admin | komi |
-| KOMI_LXC_tailscale | komi-tailscale (192.168.8.14) | admin | komi |
+| KOMI_LXC_database | komi-database (192.168.1.10) | admin | komi |
+| KOMI_LXC_mailer | komi-mailer (192.168.1.11) | admin | komi |
+| KOMI_LXC_monitoring | komi-monitoring (192.168.1.12) | admin | komi |
+| KOMI_LXC_proxy | komi-proxy (192.168.1.13) | admin | komi |
+| KOMI_LXC_tailscale | komi-tailscale (192.168.1.14) | admin | komi |
 | MACBOOK_KOMI | (macOS) | komi | komi |
 
 **Step 2**: Route to the right reference:
