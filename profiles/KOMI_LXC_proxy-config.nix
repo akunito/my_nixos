@@ -46,11 +46,11 @@ in
     # SOFTWARE & FEATURE FLAGS - Centralized Control
     # ============================================================================
 
-    # === Cloudflare Tunnel (Native Service) ===
-    cloudflaredEnable = true;
+    # === Cloudflare Tunnel (DISABLED until token is created at /etc/secrets/cloudflared-token) ===
+    cloudflaredEnable = false;
 
-    # === ACME Certificates (Let's Encrypt via Cloudflare DNS) ===
-    acmeEnable = true;
+    # === ACME Certificates (DISABLED until Cloudflare DNS is configured) ===
+    acmeEnable = false;
     acmeEmail = secrets.acmeEmail;
 
     # === Prometheus Exporters (enabled from base) ===
