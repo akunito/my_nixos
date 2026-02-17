@@ -89,15 +89,15 @@ in
 
     prometheusBlackboxTlsTargets = [];
 
-    # === PVE Exporter (Komi's Proxmox metrics) ===
-    prometheusPveExporterEnable = true;
+    # === PVE Exporter (DISABLED until PVE API token is created) ===
+    prometheusPveExporterEnable = false;
     prometheusPveHost = "192.168.8.3";
     prometheusPveUser = "prometheus@pve";
     prometheusPveTokenName = "prometheus";
     prometheusPveTokenFile = "/etc/secrets/pve-token";
 
-    # === PVE Backup Monitoring ===
-    prometheusPveBackupEnable = true;
+    # === PVE Backup Monitoring (DISABLED until PVE API token is created) ===
+    prometheusPveBackupEnable = false;
 
     # === SNMP Exporter (DISABLED initially - Komi can enable if she has SNMP devices) ===
     prometheusSnmpExporterEnable = false;
