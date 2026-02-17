@@ -1502,7 +1502,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(pve_disk_usage_bytes{id=~\"storage/pve/.*\"} / pve_disk_size_bytes{id=~\"storage/pve/.*\"}) * 100",
+          "expr": "(pve_disk_usage_bytes{id=~\"storage/pve/.*\"} / pve_disk_size_bytes{id=~\"storage/pve/.*\"}) * 100 and pve_disk_size_bytes{id=~\"storage/pve/.*\"} > 0",
           "legendFormat": "{{id}}",
           "range": true,
           "refId": "A"
@@ -2265,7 +2265,7 @@
           "refId": "A"
         }
       ],
-      "title": "Keys per Database",
+      "title": "Redis Keys",
       "type": "bargauge"
     },
     {
