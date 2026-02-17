@@ -79,6 +79,15 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | user-modules.windows11-qxl-setup | Complete guide for setting up QXL display drivers in Windows 11 VMs with SPICE for bidirectional clipboard and dynamic resolution support. Includes troubleshooting for resolution issues and driver installation. | virtualization, windows11, qxl, spice, vm, qemu, kvm, virt-manager, display, resolution, clipboard | system/app/virtualization.nix |
 | user-modules.xmonad | XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo. | xmonad, x11, window-manager, haskell, user-modules | user/wm/xmonad/** |
 | waypaper | Waypaper GUI wallpaper manager — single source of truth for wallpaper restore in Sway (swww backend) | waypaper, wallpaper, sway, swww, gui, stylix, systemd-user | user/app/waypaper/waypaper.nix |
+| komi.infrastructure.index | Index of all Komi infrastructure documentation | komi, infrastructure, index | docs/komi/infrastructure/README.md |
+| komi.infrastructure.lxc-overview | Master overview of Komi's LXC infrastructure | komi, infrastructure, lxc, proxmox, overview | docs/komi/infrastructure/komi-lxc-overview.md |
+| komi.infrastructure.database-setup | PostgreSQL and Redis setup for Komi's database container | komi, infrastructure, database, postgresql, redis | profiles/KOMI_LXC_database-config.nix |
+| komi.infrastructure.proxy-setup | Cloudflare tunnel, NPM, and ACME setup for Komi | komi, infrastructure, proxy, cloudflare, npm, acme | profiles/KOMI_LXC_proxy-config.nix |
+| komi.infrastructure.mailer-setup | SMTP2GO relay and Uptime Kuma setup for Komi | komi, infrastructure, mailer, smtp, kuma | profiles/KOMI_LXC_mailer-config.nix |
+| komi.infrastructure.monitoring-setup | Grafana and Prometheus setup for Komi's monitoring | komi, infrastructure, monitoring, grafana, prometheus | profiles/KOMI_LXC_monitoring-config.nix |
+| komi.infrastructure.headscale-setup | VPS headscale deployment and client registration for Komi | komi, infrastructure, headscale, tailscale, vpn | profiles/KOMI_LXC_tailscale-config.nix |
+| komi.infrastructure.cloudflare-guide | Domain purchase, Cloudflare setup, and DNS configuration for Komi | komi, infrastructure, cloudflare, domain, dns, tunnel | profiles/KOMI_LXC_proxy-config.nix |
+| komi.infrastructure.deployment-plan | Full deployment plan for Komi's LXC infrastructure | komi, infrastructure, deployment, plan | docs/komi/infrastructure/komi-lxc-deployment-plan.md |
 | workflow.komi-onboarding | Quick guide for ko-mi on the multi-user branch setup and what changed | komi, onboarding, multi-user, darwin | docs/komi/komi-onboarding.md |
 | workflow.multi-user | Multi-user branch management workflow for akunito (main) and ko-mi (komi) | git, workflow, multi-user, branches, merge | profiles/MACBOOK-KOMI-config.nix |
 

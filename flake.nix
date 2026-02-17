@@ -26,6 +26,11 @@
           LXC_tailscale = ./profiles/LXC_tailscale-config.nix;
           LXC_monitoring = ./profiles/LXC_monitoring-config.nix;
           LXC_matrix = ./profiles/LXC_matrix-config.nix;
+          KOMI_LXC_database = ./profiles/KOMI_LXC_database-config.nix;
+          KOMI_LXC_mailer = ./profiles/KOMI_LXC_mailer-config.nix;
+          KOMI_LXC_monitoring = ./profiles/KOMI_LXC_monitoring-config.nix;
+          KOMI_LXC_proxy = ./profiles/KOMI_LXC_proxy-config.nix;
+          KOMI_LXC_tailscale = ./profiles/KOMI_LXC_tailscale-config.nix;
           MACBOOK-KOMI = ./profiles/MACBOOK-KOMI-config.nix;
         };
       };

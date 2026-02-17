@@ -155,6 +155,12 @@ lib/defaults.nix (global defaults)
     │                        ◄─── LXC_proxy-config.nix
     │                        ◄─── LXC_tailscale-config.nix
     │
+    ├─► KOMI_LXC-base-config.nix ◄─── KOMI_LXC_database-config.nix
+    │                             ◄─── KOMI_LXC_mailer-config.nix
+    │                             ◄─── KOMI_LXC_monitoring-config.nix
+    │                             ◄─── KOMI_LXC_proxy-config.nix
+    │                             ◄─── KOMI_LXC_tailscale-config.nix
+    │
     ├─► WSL-config.nix (standalone)
     │
     └─► darwin/configuration.nix (macOS/nix-darwin)
@@ -306,12 +312,17 @@ This command updates the Home Manager configuration and applies changes without 
 | LXC_matrix | matrix (192.168.8.104) | akunito | main |
 | LXC_tailscale | tailscale (192.168.8.105) | akunito | main |
 | VMHOME | nixosLabaku (192.168.8.80) | akunito | main |
+| KOMI_LXC_database | komi-database (192.168.8.10) | admin | komi |
+| KOMI_LXC_mailer | komi-mailer (192.168.8.11) | admin | komi |
+| KOMI_LXC_monitoring | komi-monitoring (192.168.8.12) | admin | komi |
+| KOMI_LXC_proxy | komi-proxy (192.168.8.13) | admin | komi |
+| KOMI_LXC_tailscale | komi-tailscale (192.168.8.14) | admin | komi |
 | MACBOOK_KOMI | (macOS) | komi | komi |
 
 **Step 2**: Route to the right reference:
 
 - **akunito** (DESK, LAPTOP_*, LXC_*, VMHOME): use the **Infrastructure & Service Reference** section below for operational docs
-- **komi** (MACBOOK_KOMI): use the **Darwin/macOS Reference** section below; skip infrastructure sections
+- **komi/admin** (MACBOOK_KOMI, KOMI_LXC_*): use the **Darwin/macOS Reference** for macOS, or `docs/komi/infrastructure/` for LXC infra
 
 **Step 3**: For any architectural or implementation question, follow the Router-first protocol:
 1. Read `docs/00_ROUTER.md` and select the most relevant ID(s)
@@ -332,12 +343,13 @@ ssh -A root@192.168.8.82     # Proxmox
 | Context | Allowed file scopes |
 |---------|---------------------|
 | akunito (main) | All except `secrets/komi/`, `MACBOOK-KOMI-config.nix`, `komi-init.lua` |
-| komi (komi) | `profiles/MACBOOK-*`, `profiles/darwin/*`, `system/darwin/*`, `user/app/hammerspoon/komi-*`, `secrets/komi/`, `.claude/commands/` |
+| komi (komi) | `profiles/MACBOOK-*`, `profiles/darwin/*`, `profiles/KOMI_LXC*`, `system/darwin/*`, `user/app/hammerspoon/komi-*`, `secrets/komi/`, `.claude/commands/`, `docs/komi/` |
 
 **Rules for komi:**
-- CAN freely modify: darwin-specific files, MACBOOK-KOMI profile, komi-init.lua
+- CAN freely modify: darwin-specific files, MACBOOK-KOMI profile, **KOMI_LXC_* profiles**, **KOMI_LXC-base-config.nix**, komi-init.lua
+- CAN add KOMI_LXC_* entries to `flake.nix` (but not modify existing entries)
 - CAN add darwin guards to shared modules (`lib.mkIf isDarwin` / `lib.optionals !isDarwin`)
-- MUST NOT modify: `secrets/domains.nix`, LXC profiles, `system/app/` services, `flake.nix`
+- MUST NOT modify: `secrets/domains.nix`, akunito's LXC profiles (`LXC_*` without `KOMI_` prefix), `system/app/` services, existing flake entries
 - MUST NOT remove Linux functionality from shared modules
 
 **Rules for akunito:**

@@ -1,10 +1,10 @@
-{ pkgs, systemSettings, lib, ... }:
+{ pkgs, systemSettings, userSettings, lib, ... }:
 
 # Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot
 # Enable with homelabDockerEnable = true in profile config
 
 let
-  homelabDir = "/home/akunito/.homelab";
+  homelabDir = "/home/${userSettings.username}/.homelab";
 
   # Script to start all homelab docker stacks with proper ordering
   startScript = pkgs.writeShellScript "homelab-docker-start" ''

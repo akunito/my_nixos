@@ -77,8 +77,8 @@
 
   users.users.${userSettings.username}.extraGroups = lib.mkIf (userSettings.virtualizationEnable == true) [ "qemu-libvirtd" "libvirtd" ];
   # Allow VM management
-  users.groups.libvirtd.members = [ "akunito" ];
-  users.groups.kvm.members = [ "akunito" ];
+  users.groups.libvirtd.members = [ userSettings.username ];
+  users.groups.kvm.members = [ userSettings.username ];
 
   # # redirect ports for printer to be tested
   virtualisation.spiceUSBRedirection.enable = true; 

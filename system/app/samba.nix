@@ -1,4 +1,4 @@
-{ config, pkgs, lib, systemSettings, ... }:
+{ config, pkgs, lib, systemSettings, userSettings, ... }:
 
 {
 
@@ -21,8 +21,8 @@
                 "browseable" = "yes";
                 "read only" = "no";
                 "guest ok" = "no"; # It's generally safer to disable guest access on private shares
-                "valid users" = "akunito"; # Specify which users can access this share
-                "force user" = "akunito";
+                "valid users" = userSettings.username; # Specify which users can access this share
+                "force user" = userSettings.username;
                 "create mask" = "0664";
                 "directory mask" = "0775";
             };
@@ -31,8 +31,8 @@
                 "browseable" = "yes";
                 "read only" = "no";
                 "guest ok" = "no";
-                "valid users" = "akunito";
-                "force user" = "akunito";
+                "valid users" = userSettings.username;
+                "force user" = userSettings.username;
                 "create mask" = "0664";
                 "directory mask" = "0775";
             };

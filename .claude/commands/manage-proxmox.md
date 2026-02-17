@@ -393,6 +393,8 @@ For containers with encrypted root, the unlock script is at:
 
 ## Container Inventory
 
+### Akunito's Proxmox (192.168.8.82)
+
 | CTID | Name | IP | Bridge | Purpose |
 |------|------|-----|--------|---------|
 | 80 | LXC_HOME | 192.168.8.80 | vmbr10 | Media/Homelab services |
@@ -408,6 +410,21 @@ For containers with encrypted root, the unlock script is at:
 | 285 | Template | - | - | NixOS template (encrypted) |
 
 **All containers use vmbr10** (backed by bond0 LACP 2x10G → USW Aggregation SFP+ 3+4), providing up to 20G aggregate bandwidth to the switch.
+
+### Komi's Proxmox (192.168.8.3)
+
+| CTID | Name | IP | Bridge | Purpose |
+|------|------|-----|--------|---------|
+| 102 | (template) | DHCP | vmbr0 | Clone source — do NOT start |
+| 110 | KOMI_LXC_database | 192.168.8.10 | vmbr0 | PostgreSQL & Redis |
+| 111 | KOMI_LXC_mailer | 192.168.8.11 | vmbr0 | SMTP relay & Uptime Kuma |
+| 112 | KOMI_LXC_monitoring | 192.168.8.12 | vmbr0 | Grafana & Prometheus |
+| 113 | KOMI_LXC_proxy | 192.168.8.13 | vmbr0 | Cloudflare tunnel & NPM |
+| 114 | KOMI_LXC_tailscale | 192.168.8.14 | vmbr0 | Tailscale subnet router |
+
+**SSH user**: `admin` for all Komi containers. **SSH**: `ssh -A root@192.168.8.3`
+
+All Komi containers use LUKS-encrypted storage. After reboot: `ssh root@192.168.8.3 /root/scripts/unlock_luks.sh`
 
 ---
 

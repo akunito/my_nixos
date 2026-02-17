@@ -73,7 +73,19 @@ git fetch origin && git reset --hard origin/main
 | LXC_matrix | 192.168.8.104 | vmbr10 | Matrix Synapse, Element & Claude Bot |
 | LXC_tailscale | 192.168.8.105 | vmbr10 | Tailscale subnet router (mesh VPN) |
 
-All containers use vmbr10 (bond0 LACP 2x10G → USW Aggregation SFP+ 3+4).
+All akunito containers use vmbr10 (bond0 LACP 2x10G → USW Aggregation SFP+ 3+4).
+
+## Komi Container Reference (Proxmox 192.168.8.3)
+
+| Profile | IP | User | Description |
+|---------|-----|------|-------------|
+| KOMI_LXC_database | 192.168.8.10 | admin | PostgreSQL & Redis (Komi) |
+| KOMI_LXC_mailer | 192.168.8.11 | admin | Mail & monitoring (Komi) |
+| KOMI_LXC_monitoring | 192.168.8.12 | admin | Prometheus & Grafana (Komi) |
+| KOMI_LXC_proxy | 192.168.8.13 | admin | Cloudflare & NPM (Komi) |
+| KOMI_LXC_tailscale | 192.168.8.14 | admin | Tailscale router (Komi) |
+
+All Komi containers use vmbr0 on Komi's Proxmox (192.168.8.3).
 
 ## Examples
 
@@ -110,6 +122,12 @@ git fetch origin && git reset --hard origin/main
 ./install.sh ~/.dotfiles LAPTOP_AGA -s -u
 ```
 
+### Deploy to KOMI_LXC_database
+
+```bash
+ssh -A admin@192.168.8.10 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_database -s -u -d -h"
+```
+
 ### Deploy to Multiple Containers
 
 Use the unified deploy script (interactive TUI):
@@ -134,6 +152,15 @@ Or deploy an entire group:
 
 ```bash
 ./deploy.sh --group "LXC Containers"
+./deploy.sh --group "Komi LXC Containers"
+```
+
+Or filter by user:
+
+```bash
+./deploy.sh --aku --all      # Deploy all akunito servers
+./deploy.sh --komi --all     # Deploy all Komi servers
+./deploy.sh --komi --list    # List Komi's servers
 ```
 
 Or preview what would be deployed:

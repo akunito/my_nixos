@@ -723,6 +723,7 @@ parse_args() {
   local profiles_to_deploy=()
   local groups_to_deploy=()
   local do_list=false
+  local user_filter=""
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -745,6 +746,23 @@ parse_args() {
           shift 2
         else
           echo "Error: --group requires a value"
+          exit 1
+        fi
+        ;;
+      --aku)
+        user_filter="akunito"
+        shift
+        ;;
+      --komi)
+        user_filter="admin"
+        shift
+        ;;
+      --user)
+        if [[ -n "${2:-}" ]]; then
+          user_filter="$2"
+          shift 2
+        else
+          echo "Error: --user requires a value"
           exit 1
         fi
         ;;
@@ -772,6 +790,9 @@ parse_args() {
         echo "  --all              Deploy to all servers"
         echo "  --profile PROFILE  Deploy to specific profile (repeatable)"
         echo "  --group \"NAME\"     Deploy entire group by name (repeatable)"
+        echo "  --aku              Filter to akunito's servers only"
+        echo "  --komi             Filter to Komi's servers only"
+        echo "  --user USER        Filter to servers with specific SSH user"
         echo "  --list             Print server inventory and exit"
         echo "  --dry-run          Show what would be deployed, don't execute"
         echo "  --config FILE      Use alternative config file"
@@ -782,6 +803,9 @@ parse_args() {
         echo "Examples:"
         echo "  $0                                    # Interactive mode"
         echo "  $0 --all                              # Deploy everything"
+        echo "  $0 --aku --all                         # Deploy all akunito servers"
+        echo "  $0 --komi --all                        # Deploy all Komi servers"
+        echo "  $0 --komi --list                       # List Komi's servers"
         echo "  $0 --profile LXC_monitoring            # Deploy single profile"
         echo "  $0 --group \"LXC Containers\"            # Deploy all LXC"
         echo "  $0 --dry-run --all                     # Preview all deployments"
@@ -803,8 +827,54 @@ parse_args() {
   fi
   load_config "$CONFIG_FILE"
 
+  # Apply user filter (--aku, --komi, --user) — removes non-matching servers from inventory
+  if [[ -n "$user_filter" ]]; then
+    local filtered_count=0
+    for (( si=0; si<SERVER_COUNT; si++ )); do
+      if [[ "${SRV_USER[$si]}" != "$user_filter" ]]; then
+        # Mark for exclusion by clearing profile (filter applied during selection)
+        SRV_PROFILE[$si]=""
+      else
+        filtered_count=$((filtered_count + 1))
+      fi
+    done
+    if [[ $filtered_count -eq 0 ]]; then
+      echo "${YELLOW}Warning: No servers found for user '${user_filter}'${NC}"
+      exit 0
+    fi
+  fi
+
   if $do_list; then
-    print_list
+    # If user filter is active, only print matching servers
+    if [[ -n "$user_filter" ]]; then
+      echo ""
+      echo "${CYAN}${BOLD}${ICON_SERVER}  Server Inventory${NC}  ${DIM}(filtered: ${user_filter})${NC}"
+      echo ""
+      for gi in "${!GROUP_NAMES[@]}"; do
+        local start="${GROUP_START[$gi]}"
+        local count="${GROUP_COUNT[$gi]}"
+        local has_match=false
+        for (( si=start; si < start+count; si++ )); do
+          if [[ -n "${SRV_PROFILE[$si]}" ]]; then
+            has_match=true
+            break
+          fi
+        done
+        if $has_match; then
+          echo "  ${BOLD}${GROUP_ICONS[$gi]}  ${GROUP_NAMES[$gi]}${NC}"
+          echo "  ${DIM}────────────────────────────────────────────────────${NC}"
+          for (( si=start; si < start+count; si++ )); do
+            if [[ -n "${SRV_PROFILE[$si]}" ]]; then
+              printf "    %-20s ${DIM}%-18s${NC} %s@... ${DIM}[timeout:%ss]${NC}\n" \
+                "${SRV_PROFILE[$si]}" "${SRV_IPS[$si]}" "${SRV_USER[$si]}" "${SRV_TIMEOUT[$si]}"
+            fi
+          done
+          echo ""
+        fi
+      done
+    else
+      print_list
+    fi
     exit 0
   fi
 
@@ -813,7 +883,16 @@ parse_args() {
     init_selection
 
     if $deploy_all; then
-      select_all
+      # With user filter, only select matching servers
+      if [[ -n "$user_filter" ]]; then
+        for (( si=0; si<SERVER_COUNT; si++ )); do
+          if [[ -n "${SRV_PROFILE[$si]}" ]]; then
+            SELECTED[$si]=1
+          fi
+        done
+      else
+        select_all
+      fi
     fi
 
     for profile in "${profiles_to_deploy[@]}"; do

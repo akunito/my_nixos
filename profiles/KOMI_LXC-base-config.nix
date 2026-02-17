@@ -1,0 +1,156 @@
+# KOMI_LXC Base Profile Configuration
+# Contains common settings for Komi's Proxmox LXC containers (192.168.8.3)
+# Mirrors LXC-base-config.nix but with Komi's identity and credentials
+
+let
+  secrets = import ../secrets/komi/secrets.nix;
+in
+{
+  systemSettings = {
+    hostname = "komi-lxc";
+    profile = "proxmox-lxc";
+    gpuType = "none";
+
+    # Disable font injection (no GUI needed)
+    fonts = [ ];
+
+    # Shell module feature flags (lightweight LXC)
+
+    # Kernel modules are not normally needed in LXC (managed by host)
+    kernelModules = [ ];
+
+    # Security
+    fuseAllowOther = true;
+    pkiCertificates = [ ];
+
+    # Network
+    resolvedEnable = true;
+    # LXC containers rely on Proxmox-managed networking (disable both network managers)
+    # Proxmox handles DHCP at the container level - no internal DHCP clients needed
+    networkManager = false;
+    useNetworkd = false;
+
+    # Firewall - web apps ports + standard services + monitoring exporters
+    allowedTCPPorts = [
+      22
+      80
+      443
+      3000
+      3001 # Web apps
+      9100 # Prometheus Node Exporter
+      9092 # cAdvisor (Docker metrics)
+    ];
+    allowedUDPPorts = [ ];
+
+    # === Prometheus Exporters (enabled by default for all LXC containers) ===
+    prometheusExporterEnable = true; # Node Exporter for system metrics
+    prometheusExporterCadvisorEnable = true; # cAdvisor for Docker container metrics
+
+    # NFS client (Disabled in LXC, easier to bind mount from host)
+    nfsClientEnable = false;
+    nfsMounts = [ ];
+
+    # SSH keys (Komi's MacBook + akunito's Desktop for admin access)
+    authorizedKeys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICNuaNKI7wjrI10olCOkRO/Y2RT+G6c+IkzvvRO1wSsX komi@Ms-Macbook.local"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com"
+    ];
+
+    # System packages (Minimal CLI set)
+    systemPackages =
+      pkgs: pkgs-unstable: with pkgs; [
+        vim
+        wget
+        zsh
+        git
+        git-crypt # Required for dotfiles repo encryption
+        rclone
+        btop
+        fzf
+        tldr
+        home-manager
+        jq # JSON processing for scripts and API responses
+        python3 # Scripting and automation
+      ];
+
+    # Swap file (Disabled in LXC, managed by Proxmox)
+    swapFileEnable = false;
+    swapFileSyzeGB = 4;
+
+    systemStable = true; # LXC containers use stable for servers
+
+    # Passwordless sudo for automated deployments
+    sudoCommands = [
+      {
+        command = "ALL";
+        options = [ "NOPASSWD" "SETENV" ];
+      }
+    ];
+
+    # Make wheel group fully passwordless (needed for sudo -v in install.sh)
+    wheelNeedsPassword = false;
+  };
+
+  userSettings = {
+    username = "admin";
+    name = "admin";
+    email = secrets.gitEmail;
+    dotfilesDir = "/home/admin/.dotfiles";
+    extraGroups = [
+      "wheel"
+      "docker"
+    ];
+
+    theme = "io";
+    wm = "none"; # Server profile
+
+    # Override terminal/font settings (no GUI needed)
+    term = "bash";
+    font = "";
+
+    gitUser = "ko-mi";
+    gitEmail = secrets.gitEmail;
+
+    dockerEnable = true;
+    virtualizationEnable = false;
+    qemuGuestAddition = false;
+
+    # Home packages
+    homePackages = pkgs: pkgs-unstable: [
+      pkgs.zsh
+      pkgs.git
+      pkgs-unstable.claude-code
+    ];
+
+    # === Shell Customization ===
+    starshipHostStyle = "bold magenta"; # Magenta for Komi's LXC containers
+
+    zshinitContent = ''
+      # Keybindings for Home/End/Delete keys
+      bindkey '\e[1~' beginning-of-line     # Home key
+      bindkey '\e[4~' end-of-line           # End key
+      bindkey '\e[3~' delete-char           # Delete key
+
+      # Ensure proper terminal type for colors and cursor visibility
+      export TERM=''${TERM:-xterm-256color}
+      export COLORTERM=truecolor
+
+      # Explicitly set HOST for zsh %m expansion (LXC containers need this)
+      export HOST=$(hostname)
+
+      PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{magenta}%m%f%u:%F{yellow}%~%f
+      %F{green}→%f "
+      RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
+      [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
+    '';
+
+    sshExtraConfig = ''
+      # sshd.nix -> programs.ssh.extraConfig
+      Host github.com
+        HostName github.com
+        User ko-mi
+        IdentityFile ~/.ssh/id_ed25519
+        AddKeysToAgent yes
+    '';
+  };
+}

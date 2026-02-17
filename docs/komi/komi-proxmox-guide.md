@@ -90,6 +90,23 @@ pct exec 102 -- sh -c 'export PATH=/run/current-system/sw/bin:$PATH; ip addr sho
 └──────────────────────────────────────────────────┘
 ```
 
+## Container Inventory
+
+| CTID | Profile | IP | Cores | RAM | Disk | Purpose |
+|------|---------|-----|-------|-----|------|---------|
+| 102 | (template) | DHCP | - | - | 24 GB | Clone source — do NOT start |
+| 110 | KOMI_LXC_database | 192.168.8.10 | 2 | 4 GB | 30 GB | PostgreSQL & Redis |
+| 111 | KOMI_LXC_mailer | 192.168.8.11 | 1 | 1 GB | 10 GB | SMTP relay & Uptime Kuma |
+| 112 | KOMI_LXC_monitoring | 192.168.8.12 | 2 | 2 GB | 20 GB | Grafana & Prometheus |
+| 113 | KOMI_LXC_proxy | 192.168.8.13 | 1 | 1 GB | 10 GB | Cloudflare tunnel & NPM |
+| 114 | KOMI_LXC_tailscale | 192.168.8.14 | 1 | 1 GB | 8 GB | Tailscale subnet router |
+
+**Total resources**: 7 cores, ~9 GB RAM, 78 GB disk (leaves 1 core + ~7 GB for Proxmox host)
+
+SSH user for all containers: `admin`
+
+For detailed setup guides, see `docs/komi/infrastructure/`.
+
 ## Daily Operations
 
 ### After every reboot: Unlock encrypted storage
@@ -104,7 +121,7 @@ ssh root@<PROXMOX_IP>
 Enter your LUKS passphrase when prompted. The script will:
 1. Unlock the LUKS volume
 2. Activate the LVM volume group
-3. Start container 102
+3. Start containers 110-114 (NOT CT 102, which is a template)
 
 ### Access the Proxmox Web UI
 
