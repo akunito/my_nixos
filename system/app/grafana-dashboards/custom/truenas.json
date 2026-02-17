@@ -15,10 +15,10 @@
       }
     ]
   },
-  "editable": false,
+  "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
+  "id": 7,
   "links": [],
   "panels": [
     {
@@ -39,7 +39,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -77,7 +77,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -111,16 +111,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "yellow",
+                "value": 0
               },
               {
-                "color": "yellow",
-                "value": 70
+                "color": "green",
+                "value": 60
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 95
               }
             ]
           },
@@ -140,6 +140,7 @@
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -147,10 +148,11 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -158,14 +160,13 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_ram_used{job=\"truenas_graphite\"} / (truenas_system_ram_used{job=\"truenas_graphite\"} + truenas_system_ram_free{job=\"truenas_graphite\"} + truenas_system_ram_cached{job=\"truenas_graphite\"} + truenas_system_ram_buffers{job=\"truenas_graphite\"}) * 100",
+          "expr": "(1 - truenas_truenas_meminfo_available_available{job=\"truenas_graphite\"} /  truenas_truenas_meminfo_total_total{job=\"truenas_graphite\"}) * 100",
           "legendFormat": "RAM Used %",
           "range": true,
           "refId": "A"
         }
       ],
       "title": "Memory Usage",
-      "transparent": false,
       "type": "stat"
     },
     {
@@ -186,7 +187,7 @@
             "steps": [
               {
                 "color": "red",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -224,7 +225,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -232,7 +233,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(truenas_zfs_actual_hits_rate_hits{job=\"truenas_graphite\"} / (truenas_zfs_actual_hits_rate_hits{job=\"truenas_graphite\"} + truenas_zfs_actual_hits_rate_misses{job=\"truenas_graphite\"} + 1)) * 100",
+          "expr": "(truenas_truenas_arcstats_ddhit_ddhit{job=\"truenas_graphite\"} + truenas_truenas_arcstats_dmhit_dmhit{job=\"truenas_graphite\"}) / (truenas_truenas_arcstats_ddhit_ddhit{job=\"truenas_graphite\"} + truenas_truenas_arcstats_dmhit_dmhit{job=\"truenas_graphite\"} + truenas_truenas_arcstats_ddmis_ddmis{job=\"truenas_graphite\"} + truenas_truenas_arcstats_dmmis_dmmis{job=\"truenas_graphite\"}) * 100",
           "legendFormat": "ARC Hit Rate",
           "range": true,
           "refId": "A"
@@ -254,15 +255,15 @@
           "mappings": [
             {
               "options": {
-                "1": {
-                  "color": "green",
-                  "index": 0,
-                  "text": "ONLINE"
-                },
                 "0": {
                   "color": "red",
                   "index": 1,
                   "text": "OFFLINE"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "ONLINE"
                 }
               },
               "type": "value"
@@ -273,7 +274,7 @@
             "steps": [
               {
                 "color": "red",
-                "value": null
+                "value": 0
               },
               {
                 "color": "green",
@@ -297,6 +298,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -304,10 +306,11 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -363,6 +366,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
@@ -379,6 +383,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -394,7 +399,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -420,11 +425,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -458,6 +464,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
@@ -474,6 +481,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -489,7 +497,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -515,11 +523,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -553,6 +562,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
@@ -569,6 +579,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -584,7 +595,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -623,11 +634,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -672,6 +684,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -688,6 +701,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -703,7 +717,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -737,11 +751,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -775,6 +790,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
@@ -791,6 +807,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -806,7 +823,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -832,11 +849,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -892,6 +910,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "none",
@@ -908,6 +927,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -923,7 +943,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -962,11 +982,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -974,7 +995,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_io_in{job=\"truenas_graphite\"}",
+          "expr": "sum({__name__=~\"truenas_truenas_disk_stats__serial_.*_reads\", job=\"truenas_graphite\"})",
           "legendFormat": "read",
           "range": true,
           "refId": "A"
@@ -985,7 +1006,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_io_out{job=\"truenas_graphite\"}",
+          "expr": "sum({__name__=~\"truenas_truenas_disk_stats__serial_.*_writes\", job=\"truenas_graphite\"})",
           "legendFormat": "write",
           "range": true,
           "refId": "B"
@@ -1012,7 +1033,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -1041,6 +1062,12 @@
       "id": 11,
       "options": {
         "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
         "maxVizHeight": 300,
         "minVizHeight": 16,
         "minVizWidth": 8,
@@ -1057,7 +1084,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1091,6 +1118,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -1107,6 +1135,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1122,7 +1151,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -1148,11 +1177,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1201,7 +1231,7 @@
             "steps": [
               {
                 "color": "red",
-                "value": null
+                "value": 0
               },
               {
                 "color": "green",
@@ -1225,6 +1255,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1232,10 +1263,11 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1270,7 +1302,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -1295,6 +1327,12 @@
       "id": 14,
       "options": {
         "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
         "maxVizHeight": 300,
         "minVizHeight": 16,
         "minVizWidth": 8,
@@ -1311,7 +1349,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1329,8 +1367,9 @@
       "type": "bargauge"
     }
   ],
+  "preload": false,
   "refresh": "30s",
-  "schemaVersion": 39,
+  "schemaVersion": 42,
   "tags": [
     "truenas",
     "nas",
@@ -1342,21 +1381,16 @@
     "list": [
       {
         "current": {
-          "selected": false,
           "text": "Prometheus",
           "value": "prometheus"
         },
-        "hide": 0,
         "includeAll": false,
         "label": "Data Source",
-        "multi": false,
         "name": "datasource",
         "options": [],
         "query": "prometheus",
-        "queryValue": "",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "type": "datasource"
       }
     ]
@@ -1369,6 +1403,5 @@
   "timezone": "browser",
   "title": "TrueNAS",
   "uid": "truenas-storage",
-  "version": 1,
-  "weekStart": ""
+  "version": 5
 }
