@@ -128,6 +128,30 @@ git fetch origin && git reset --hard origin/main
 ssh -A admin@192.168.8.10 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_database -s -u -d -h"
 ```
 
+### Deploy to KOMI_LXC_mailer
+
+```bash
+ssh -A admin@192.168.8.11 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_mailer -s -u -d -h"
+```
+
+### Deploy to KOMI_LXC_monitoring
+
+```bash
+ssh -A admin@192.168.8.12 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_monitoring -s -u -d -h"
+```
+
+### Deploy to KOMI_LXC_proxy
+
+```bash
+ssh -A admin@192.168.8.13 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_proxy -s -u -d -h"
+```
+
+### Deploy to KOMI_LXC_tailscale
+
+```bash
+ssh -A admin@192.168.8.14 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_tailscale -s -u -d -h"
+```
+
 ### Deploy to Multiple Containers
 
 Use the unified deploy script (interactive TUI):

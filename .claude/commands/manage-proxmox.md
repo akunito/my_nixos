@@ -17,7 +17,8 @@ Use this skill to:
 
 | Host | SSH Command | Repository |
 |------|-------------|------------|
-| Proxmox VE | `ssh -A root@192.168.8.82` | `/root/` |
+| Proxmox VE (akunito) | `ssh -A root@192.168.8.82` | `/root/` |
+| Proxmox VE (komi) | `ssh -A root@192.168.8.3` | `/root/` |
 
 **Important**: Always use `-A` flag for SSH agent forwarding.
 
