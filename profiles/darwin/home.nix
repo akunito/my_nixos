@@ -37,6 +37,9 @@
 
     # === Keyboard Remapping (macOS only) ===
     ../../user/app/karabiner/karabiner.nix
+
+    # === Package Modules (Conditional) ===
+    ../../user/packages/user-ai-pkgs.nix
   ]
   # === Conditional Imports ===
   # Note: starship is already conditionally imported by sh.nix based on userSettings.starshipEnable

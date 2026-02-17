@@ -32,6 +32,9 @@ let
     tra2 = "eza -a --long --tree --level=2";
     tra3 = "eza -a --long --tree --level=3";
 
+    # JL Engine CLI menu
+    cvmenu = "cd ~/projects/jl-engine && ./docker-compose.dev.sh run -it --rm engine python /app/manage.py --profile komi menu";
+
     # Darwin rebuild shortcuts
     darwin-rebuild = "cd ~/.dotfiles && sudo darwin-rebuild switch --flake .#system";
     darwin-rebuild-test = "cd ~/.dotfiles && darwin-rebuild build --flake .#system";
