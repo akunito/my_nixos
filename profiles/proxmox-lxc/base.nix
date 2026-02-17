@@ -8,9 +8,6 @@
   ...
 }:
 
-let
-  secrets = import ../../secrets/domains.nix;
-in
 {
   imports = [
     (modulesPath + "/virtualisation/proxmox-lxc.nix")
@@ -62,7 +59,7 @@ in
   nix.package = pkgs.nixVersions.stable;
   nix.extraOptions = ''
     experimental-features = nix-command flakes
-    access-tokens = github.com=${secrets.githubAccessToken}
+    access-tokens = github.com=${systemSettings.githubAccessToken or ""}
   '';
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels

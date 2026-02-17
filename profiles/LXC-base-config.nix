@@ -1,6 +1,9 @@
 # LXC Base Profile Configuration
 # Contains common settings for Proxmox LXC containers
 
+let
+  secrets = import ../secrets/domains.nix;
+in
 {
   systemSettings = {
     hostname = "lxc-nixos";
@@ -92,6 +95,9 @@
 
     # Make wheel group fully passwordless (needed for sudo -v in install.sh)
     wheelNeedsPassword = false;
+
+    # GitHub access token for nix flake fetches (passed to proxmox-lxc/base.nix)
+    githubAccessToken = secrets.githubAccessToken;
   };
 
   userSettings = {
