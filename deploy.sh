@@ -6,8 +6,10 @@
 # editing, and multi-IP probing.
 #
 # Usage: ./deploy.sh [OPTIONS]
-#   (no args)            Interactive TUI mode
+#   (no args)            Interactive TUI mode (user selection menu)
 #   --all                Deploy to every server
+#   --aku                Filter to akunito's servers (interactive or batch)
+#   --komi               Filter to Komi's servers (interactive or batch)
 #   --profile PROFILE    Deploy specific profile(s) (repeatable)
 #   --group "NAME"       Deploy entire group by name
 #   --list               Print server inventory and exit
@@ -70,6 +72,11 @@ declare -A RESOLVED_IPS=()
 CURRENT_ROW=0
 DRY_RUN=false
 SERVER_COUNT=0
+
+# Visibility (user filter)
+USER_FILTER=""
+declare -a SRV_VISIBLE=()
+VISIBLE_COUNT=0
 
 # ============================================================================
 # Config parser
@@ -164,17 +171,112 @@ save_config() {
 }
 
 # ============================================================================
+# Visibility system (user filter)
+# ============================================================================
+
+init_visibility() {
+  SRV_VISIBLE=()
+  VISIBLE_COUNT=0
+  for (( i=0; i<SERVER_COUNT; i++ )); do
+    SRV_VISIBLE+=(1)
+  done
+  VISIBLE_COUNT=$SERVER_COUNT
+}
+
+matches_user_filter() {
+  local user="$1"
+  if [[ "$USER_FILTER" == "akunito" ]]; then
+    # Aku group includes akunito + aga
+    [[ "$user" == "akunito" || "$user" == "aga" ]]
+  else
+    [[ "$user" == "$USER_FILTER" ]]
+  fi
+}
+
+apply_user_filter() {
+  if [[ -z "$USER_FILTER" ]]; then return; fi
+  VISIBLE_COUNT=0
+  for (( si=0; si<SERVER_COUNT; si++ )); do
+    if matches_user_filter "${SRV_USER[$si]}"; then
+      SRV_VISIBLE[$si]=1
+      VISIBLE_COUNT=$(( VISIBLE_COUNT + 1 ))
+    else
+      SRV_VISIBLE[$si]=0
+    fi
+  done
+  if [[ $VISIBLE_COUNT -eq 0 ]]; then
+    echo "${YELLOW}Warning: No servers found for user '${USER_FILTER}'${NC}"
+    exit 0
+  fi
+}
+
+show_user_menu() {
+  # Count servers per group: Aku (akunito), Komi (admin), total
+  local aku_count=0
+  local komi_count=0
+  for (( si=0; si<SERVER_COUNT; si++ )); do
+    case "${SRV_USER[$si]}" in
+      akunito|aga) aku_count=$(( aku_count + 1 )) ;;
+      admin)       komi_count=$(( komi_count + 1 )) ;;
+    esac
+  done
+
+  clear
+  echo ""
+  echo "  ${CYAN}${BOLD}┌─────────────────────────────────────────────────────┐"
+  echo "  │   ${ICON_SERVER}  NixOS Deploy Manager — Select User              │"
+  echo "  └─────────────────────────────────────────────────────┘${NC}"
+  echo ""
+  echo "  [1] Aku   ${DIM}(${aku_count} servers)${NC}"
+  echo "  [2] Komi  ${DIM}(${komi_count} servers)${NC}"
+  echo "  [3] All   ${DIM}(${SERVER_COUNT} servers)${NC}"
+  echo ""
+  echo "  ${DIM}[q] Quit${NC}"
+  echo ""
+  printf "  Select: "
+
+  tput cnorm 2>/dev/null || true
+  local key
+  read -rsn1 key
+  tput civis 2>/dev/null || true
+
+  case "$key" in
+    1) USER_FILTER="akunito" ;;
+    2) USER_FILTER="admin" ;;
+    3) ;; # All — USER_FILTER stays empty
+    q|Q)
+      tput cnorm 2>/dev/null || true
+      echo ""
+      echo "${DIM}Goodbye!${NC}"
+      exit 0
+      ;;
+  esac
+}
+
+# ============================================================================
 # Display map builder
 # ============================================================================
 
 build_display_map() {
   DISPLAY_MAP=()
   for gi in "${!GROUP_NAMES[@]}"; do
-    DISPLAY_MAP+=("G:$gi")
+    # Check if any server in this group is visible
     local start="${GROUP_START[$gi]}"
     local count="${GROUP_COUNT[$gi]}"
+    local has_visible=false
     for (( si=start; si < start+count; si++ )); do
-      DISPLAY_MAP+=("S:$si")
+      if [[ ${SRV_VISIBLE[$si]} -eq 1 ]]; then
+        has_visible=true
+        break
+      fi
+    done
+    if ! $has_visible; then continue; fi
+
+    DISPLAY_MAP+=("G:$gi")
+    for (( si=start; si < start+count; si++ )); do
+      if [[ ${SRV_VISIBLE[$si]} -eq 1 ]]; then
+        DISPLAY_MAP+=("S:$si")
+      fi
     done
   done
 }
@@ -212,32 +314,46 @@ toggle_selection() {
 }
 
 select_all() {
-  for i in "${!SELECTED[@]}"; do SELECTED[$i]=1; done
+  for i in "${!SELECTED[@]}"; do
+    if [[ ${SRV_VISIBLE[$i]} -eq 1 ]]; then
+      SELECTED[$i]=1
+    fi
+  done
 }
 
 select_none() {
-  for i in "${!SELECTED[@]}"; do SELECTED[$i]=0; done
+  for i in "${!SELECTED[@]}"; do
+    if [[ ${SRV_VISIBLE[$i]} -eq 1 ]]; then
+      SELECTED[$i]=0
+    fi
+  done
 }
 
 toggle_group() {
   local gi=$1
   local start="${GROUP_START[$gi]}"
   local count="${GROUP_COUNT[$gi]}"
-  # If any unselected in group → select all, else deselect all
+  # If any visible+unselected in group → select all visible, else deselect all visible
   local any_off=false
   for (( si=start; si < start+count; si++ )); do
-    [[ ${SELECTED[$si]} -eq 0 ]] && any_off=true && break
+    [[ ${SRV_VISIBLE[$si]} -eq 1 && ${SELECTED[$si]} -eq 0 ]] && any_off=true && break
   done
   local val=0
   $any_off && val=1
   for (( si=start; si < start+count; si++ )); do
-    SELECTED[$si]=$val
+    if [[ ${SRV_VISIBLE[$si]} -eq 1 ]]; then
+      SELECTED[$si]=$val
+    fi
   done
 }
 
 count_selected() {
   local count=0
-  for s in "${SELECTED[@]}"; do (( count += s )); done
+  for i in "${!SELECTED[@]}"; do
+    if [[ ${SRV_VISIBLE[$i]} -eq 1 && ${SELECTED[$i]} -eq 1 ]]; then
+      count=$(( count + 1 ))
+    fi
+  done
   echo $count
 }
 
@@ -247,9 +363,24 @@ count_group_selected() {
   local count="${GROUP_COUNT[$gi]}"
   local sel=0
   for (( si=start; si < start+count; si++ )); do
-    (( sel += SELECTED[si] ))
+    if [[ ${SRV_VISIBLE[$si]} -eq 1 && ${SELECTED[$si]} -eq 1 ]]; then
+      sel=$(( sel + 1 ))
+    fi
   done
   echo $sel
+}
+
+count_group_visible() {
+  local gi=$1
+  local start="${GROUP_START[$gi]}"
+  local count="${GROUP_COUNT[$gi]}"
+  local vis=0
+  for (( si=start; si < start+count; si++ )); do
+    if [[ ${SRV_VISIBLE[$si]} -eq 1 ]]; then
+      vis=$(( vis + 1 ))
+    fi
+  done
+  echo $vis
 }
 
 # ============================================================================
@@ -296,9 +427,10 @@ print_menu() {
       # Group header
       local gsel
       gsel=$(count_group_selected "$idx")
-      local gcnt="${GROUP_COUNT[$idx]}"
+      local gvis
+      gvis=$(count_group_visible "$idx")
       echo ""
-      echo "  ${BOLD}${GROUP_ICONS[$idx]}  ${GROUP_NAMES[$idx]}${NC}  ${DIM}[${gsel}/${gcnt}]${NC}"
+      echo "  ${BOLD}${GROUP_ICONS[$idx]}  ${GROUP_NAMES[$idx]}${NC}  ${DIM}[${gsel}/${gvis}]${NC}"
       echo "  ${DIM}────────────────────────────────────────────────────${NC}"
     else
       # Server row
@@ -327,7 +459,7 @@ print_menu() {
   echo "  ${DIM}[a] All  [n] None  [g] Group  [e] Edit  [Enter] Deploy  [q] Quit${NC}"
   local sel
   sel=$(count_selected)
-  echo "  ${BOLD}Selected: ${sel}/${SERVER_COUNT}${NC}"
+  echo "  ${BOLD}Selected: ${sel}/${VISIBLE_COUNT}${NC}"
 }
 
 # ============================================================================
@@ -451,15 +583,31 @@ run_edit_mode() {
 run_group_select() {
   if [[ ${#GROUP_NAMES[@]} -eq 0 ]]; then return; fi
 
+  # Build list of groups that have visible servers
+  local visible_groups=()
+  for gi in "${!GROUP_NAMES[@]}"; do
+    local gvis
+    gvis=$(count_group_visible "$gi")
+    if [[ $gvis -gt 0 ]]; then
+      visible_groups+=("$gi")
+    fi
+  done
+
+  if [[ ${#visible_groups[@]} -eq 0 ]]; then return; fi
+
   tput cnorm 2>/dev/null || true
   clear
   echo ""
   echo "  ${CYAN}${BOLD}Toggle group:${NC}"
   echo ""
-  for gi in "${!GROUP_NAMES[@]}"; do
+  local menu_idx=1
+  for gi in "${visible_groups[@]}"; do
     local gsel
     gsel=$(count_group_selected "$gi")
-    echo "  [$(( gi + 1 ))] ${GROUP_ICONS[$gi]}  ${GROUP_NAMES[$gi]}  ${DIM}[${gsel}/${GROUP_COUNT[$gi]}]${NC}"
+    local gvis
+    gvis=$(count_group_visible "$gi")
+    echo "  [${menu_idx}] ${GROUP_ICONS[$gi]}  ${GROUP_NAMES[$gi]}  ${DIM}[${gsel}/${gvis}]${NC}"
+    (( menu_idx++ ))
   done
   echo ""
   echo "  ${DIM}Press group number or ESC to cancel${NC}"
@@ -469,9 +617,9 @@ run_group_select() {
   case "$key" in
     ESC) ;;
     [1-9])
-      local gi=$(( key - 1 ))
-      if [[ $gi -lt ${#GROUP_NAMES[@]} ]]; then
-        toggle_group "$gi"
+      local choice=$(( key - 1 ))
+      if [[ $choice -lt ${#visible_groups[@]} ]]; then
+        toggle_group "${visible_groups[$choice]}"
       fi
       ;;
   esac
@@ -615,14 +763,14 @@ run_deployments() {
   local fail_count=0
 
   for (( si=0; si<SERVER_COUNT; si++ )); do
-    if [[ ${SELECTED[$si]} -eq 1 ]]; then
+    if [[ ${SELECTED[$si]} -eq 1 && ${SRV_VISIBLE[$si]} -eq 1 ]]; then
       if deploy_server "$si"; then
         local resolved="${RESOLVED_IPS[${SRV_PROFILE[$si]}]:-unknown}"
         RESULTS+=("${GREEN}${ICON_SUCCESS} ${SRV_PROFILE[$si]} (${resolved}): Success${NC}")
-        (( success_count++ ))
+        success_count=$(( success_count + 1 ))
       else
         RESULTS+=("${RED}${ICON_FAIL} ${SRV_PROFILE[$si]} (${SRV_IPS[$si]}): Failed${NC}")
-        (( fail_count++ ))
+        fail_count=$(( fail_count + 1 ))
       fi
     fi
   done
@@ -649,18 +797,28 @@ run_deployments() {
 
 print_list() {
   echo ""
-  echo "${CYAN}${BOLD}${ICON_SERVER}  Server Inventory${NC}  ${DIM}(${CONFIG_FILE})${NC}"
+  if [[ -n "$USER_FILTER" ]]; then
+    echo "${CYAN}${BOLD}${ICON_SERVER}  Server Inventory${NC}  ${DIM}(filtered: ${USER_FILTER})${NC}"
+  else
+    echo "${CYAN}${BOLD}${ICON_SERVER}  Server Inventory${NC}  ${DIM}(${CONFIG_FILE})${NC}"
+  fi
   echo ""
 
   for gi in "${!GROUP_NAMES[@]}"; do
-    echo "  ${BOLD}${GROUP_ICONS[$gi]}  ${GROUP_NAMES[$gi]}${NC}  ${DIM}(${GROUP_COUNT[$gi]} servers)${NC}"
+    local gvis
+    gvis=$(count_group_visible "$gi")
+    if [[ $gvis -eq 0 ]]; then continue; fi
+
+    echo "  ${BOLD}${GROUP_ICONS[$gi]}  ${GROUP_NAMES[$gi]}${NC}  ${DIM}(${gvis} servers)${NC}"
     echo "  ${DIM}────────────────────────────────────────────────────${NC}"
 
     local start="${GROUP_START[$gi]}"
     local count="${GROUP_COUNT[$gi]}"
     for (( si=start; si < start+count; si++ )); do
-      printf "    %-20s ${DIM}%-18s${NC} %s@... ${DIM}[timeout:%ss]${NC}\n" \
-        "${SRV_PROFILE[$si]}" "${SRV_IPS[$si]}" "${SRV_USER[$si]}" "${SRV_TIMEOUT[$si]}"
+      if [[ ${SRV_VISIBLE[$si]} -eq 1 ]]; then
+        printf "    %-20s ${DIM}%-18s${NC} %s@... ${DIM}[timeout:%ss]${NC}\n" \
+          "${SRV_PROFILE[$si]}" "${SRV_IPS[$si]}" "${SRV_USER[$si]}" "${SRV_TIMEOUT[$si]}"
+      fi
     done
     echo ""
   done
@@ -723,7 +881,6 @@ parse_args() {
   local profiles_to_deploy=()
   local groups_to_deploy=()
   local do_list=false
-  local user_filter=""
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -750,16 +907,16 @@ parse_args() {
         fi
         ;;
       --aku)
-        user_filter="akunito"
+        USER_FILTER="akunito"
         shift
         ;;
       --komi)
-        user_filter="admin"
+        USER_FILTER="admin"
         shift
         ;;
       --user)
         if [[ -n "${2:-}" ]]; then
-          user_filter="$2"
+          USER_FILTER="$2"
           shift 2
         else
           echo "Error: --user requires a value"
@@ -798,14 +955,16 @@ parse_args() {
         echo "  --config FILE      Use alternative config file"
         echo "  -h, --help         Show this help message"
         echo ""
-        echo "Without options, runs in interactive TUI mode."
+        echo "Without options, shows a user selection menu, then interactive TUI."
         echo ""
         echo "Examples:"
-        echo "  $0                                    # Interactive mode"
+        echo "  $0                                    # User menu → interactive TUI"
+        echo "  $0 --aku                              # TUI filtered to akunito's servers"
+        echo "  $0 --komi                             # TUI filtered to Komi's servers"
         echo "  $0 --all                              # Deploy everything"
-        echo "  $0 --aku --all                         # Deploy all akunito servers"
-        echo "  $0 --komi --all                        # Deploy all Komi servers"
-        echo "  $0 --komi --list                       # List Komi's servers"
+        echo "  $0 --aku --all                        # Deploy all akunito servers"
+        echo "  $0 --komi --all                       # Deploy all Komi servers"
+        echo "  $0 --komi --list                      # List Komi's servers"
         echo "  $0 --profile LXC_monitoring            # Deploy single profile"
         echo "  $0 --group \"LXC Containers\"            # Deploy all LXC"
         echo "  $0 --dry-run --all                     # Preview all deployments"
@@ -820,85 +979,37 @@ parse_args() {
     esac
   done
 
-  # Load config (may have been changed by --config)
-  if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo "Error: Config file not found: ${CONFIG_FILE}"
-    exit 1
-  fi
-  load_config "$CONFIG_FILE"
-
-  # Apply user filter (--aku, --komi, --user) — removes non-matching servers from inventory
-  if [[ -n "$user_filter" ]]; then
-    local filtered_count=0
-    for (( si=0; si<SERVER_COUNT; si++ )); do
-      if [[ "${SRV_USER[$si]}" != "$user_filter" ]]; then
-        # Mark for exclusion by clearing profile (filter applied during selection)
-        SRV_PROFILE[$si]=""
-      else
-        filtered_count=$((filtered_count + 1))
-      fi
-    done
-    if [[ $filtered_count -eq 0 ]]; then
-      echo "${YELLOW}Warning: No servers found for user '${user_filter}'${NC}"
-      exit 0
+  # Non-interactive paths need config loaded here
+  if $do_list || $deploy_all || [[ ${#profiles_to_deploy[@]} -gt 0 ]] || [[ ${#groups_to_deploy[@]} -gt 0 ]]; then
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+      echo "Error: Config file not found: ${CONFIG_FILE}"
+      exit 1
     fi
+    load_config "$CONFIG_FILE"
+    init_visibility
+    apply_user_filter
   fi
 
+  # --list: print inventory and exit
   if $do_list; then
-    # If user filter is active, only print matching servers
-    if [[ -n "$user_filter" ]]; then
-      echo ""
-      echo "${CYAN}${BOLD}${ICON_SERVER}  Server Inventory${NC}  ${DIM}(filtered: ${user_filter})${NC}"
-      echo ""
-      for gi in "${!GROUP_NAMES[@]}"; do
-        local start="${GROUP_START[$gi]}"
-        local count="${GROUP_COUNT[$gi]}"
-        local has_match=false
-        for (( si=start; si < start+count; si++ )); do
-          if [[ -n "${SRV_PROFILE[$si]}" ]]; then
-            has_match=true
-            break
-          fi
-        done
-        if $has_match; then
-          echo "  ${BOLD}${GROUP_ICONS[$gi]}  ${GROUP_NAMES[$gi]}${NC}"
-          echo "  ${DIM}────────────────────────────────────────────────────${NC}"
-          for (( si=start; si < start+count; si++ )); do
-            if [[ -n "${SRV_PROFILE[$si]}" ]]; then
-              printf "    %-20s ${DIM}%-18s${NC} %s@... ${DIM}[timeout:%ss]${NC}\n" \
-                "${SRV_PROFILE[$si]}" "${SRV_IPS[$si]}" "${SRV_USER[$si]}" "${SRV_TIMEOUT[$si]}"
-            fi
-          done
-          echo ""
-        fi
-      done
-    else
-      print_list
-    fi
+    print_list
     exit 0
   fi
 
-  # Non-interactive deployments
+  # Non-interactive deployments (--all, --profile, --group)
   if $deploy_all || [[ ${#profiles_to_deploy[@]} -gt 0 ]] || [[ ${#groups_to_deploy[@]} -gt 0 ]]; then
     init_selection
 
     if $deploy_all; then
-      # With user filter, only select matching servers
-      if [[ -n "$user_filter" ]]; then
-        for (( si=0; si<SERVER_COUNT; si++ )); do
-          if [[ -n "${SRV_PROFILE[$si]}" ]]; then
-            SELECTED[$si]=1
-          fi
-        done
-      else
-        select_all
-      fi
+      select_all
     fi
 
     for profile in "${profiles_to_deploy[@]}"; do
       local found=false
       for (( si=0; si<SERVER_COUNT; si++ )); do
         if [[ "${SRV_PROFILE[$si]}" == "$profile" ]]; then
+          # Explicit --profile overrides visibility (user asked for it by name)
+          SRV_VISIBLE[$si]=1
           SELECTED[$si]=1
           found=true
         fi
@@ -924,6 +1035,8 @@ parse_args() {
     run_deployments
     exit $?
   fi
+
+  # Interactive mode: just return, main() handles the rest
 }
 
 # ============================================================================
@@ -933,12 +1046,13 @@ parse_args() {
 main() {
   parse_args "$@"
 
-  # No CLI args triggered an exit — load config and run interactive mode
+  # Interactive mode — load config and run TUI
   if [[ ! -f "$CONFIG_FILE" ]]; then
     echo "Error: Config file not found: ${CONFIG_FILE}"
     exit 1
   fi
   load_config "$CONFIG_FILE"
+  init_visibility
 
   # Interactive mode requires a terminal
   if [[ ! -t 0 ]]; then
@@ -946,6 +1060,12 @@ main() {
     echo "Use --all, --profile, or --group for non-interactive deployment."
     exit 1
   fi
+
+  # Show user selection menu if no --aku/--komi/--user was provided
+  if [[ -z "$USER_FILTER" ]]; then
+    show_user_menu
+  fi
+  apply_user_filter
 
   run_interactive
 }
