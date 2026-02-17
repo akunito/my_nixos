@@ -59,7 +59,8 @@
   nix.package = pkgs.nixVersions.stable;
   nix.extraOptions = ''
     experimental-features = nix-command flakes
-    access-tokens = github.com=${systemSettings.githubAccessToken or ""}
+  '' + lib.optionalString ((systemSettings.githubAccessToken or "") != "") ''
+    access-tokens = github.com=${systemSettings.githubAccessToken}
   '';
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels

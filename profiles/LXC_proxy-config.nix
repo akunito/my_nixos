@@ -22,6 +22,9 @@ in
     systemStateVersion = "25.11";
     serverEnv = "PROD"; # Production environment
 
+    # Domain settings (passed to acme.nix)
+    wildcardLocal = secrets.wildcardLocal;
+
     # Firewall ports
     allowedTCPPorts = [
       22    # SSH

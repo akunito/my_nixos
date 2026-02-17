@@ -24,6 +24,9 @@ in
     systemStateVersion = "25.11";
     serverEnv = "PROD"; # Production environment
 
+    # Domain settings (passed to acme.nix)
+    wildcardLocal = secrets.wildcardLocal;
+
     # Network
     ipAddress = "192.168.8.13";
     nameServers = [ "192.168.8.1" ];

@@ -23,6 +23,11 @@ in
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles KOMI_LXC_monitoring -s -u";
     serverEnv = "PROD"; # Production environment
 
+    # Domain settings (passed to grafana.nix, acme.nix)
+    wildcardLocal = secrets.wildcardLocal;
+    publicDomain = secrets.publicDomain;
+    grafanaAlertsFrom = secrets.notificationFromEmail; # Komi uses notification email for alerts
+
     # Network - LXC uses Proxmox-managed networking
     ipAddress = "192.168.8.12";
     nameServers = [ "192.168.8.1" ];

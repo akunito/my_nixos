@@ -13,7 +13,8 @@
 { pkgs, lib, systemSettings, ... }:
 
 let
-  secrets = import ../../secrets/domains.nix;
+  # Domain secrets are passed through systemSettings by each profile
+  wildcardLocal = systemSettings.wildcardLocal or "local.example.com";
 in
 
 lib.mkIf (systemSettings.acmeEnable or false) {
@@ -27,9 +28,9 @@ lib.mkIf (systemSettings.acmeEnable or false) {
     };
 
     # Wildcard certificate for local domain
-    certs."${secrets.wildcardLocal}" = {
-      domain = "*.${secrets.wildcardLocal}";
-      extraDomainNames = [ secrets.wildcardLocal ];
+    certs."${wildcardLocal}" = {
+      domain = "*.${wildcardLocal}";
+      extraDomainNames = [ wildcardLocal ];
       dnsProvider = "cloudflare";
       dnsPropagationCheck = true;
       credentialsFile = "/etc/secrets/cloudflare-acme";
@@ -49,19 +50,19 @@ lib.mkIf (systemSettings.acmeEnable or false) {
       Type = "oneshot";
       ExecStart = pkgs.writeShellScript "copy-acme-certs" ''
         mkdir -p /mnt/shared-certs
-        cp /var/lib/acme/${secrets.wildcardLocal}/fullchain.pem /mnt/shared-certs/${secrets.wildcardLocal}.crt
-        cp /var/lib/acme/${secrets.wildcardLocal}/key.pem /mnt/shared-certs/${secrets.wildcardLocal}.key
+        cp /var/lib/acme/${wildcardLocal}/fullchain.pem /mnt/shared-certs/${wildcardLocal}.crt
+        cp /var/lib/acme/${wildcardLocal}/key.pem /mnt/shared-certs/${wildcardLocal}.key
         # Make certs readable by all LXC containers (local LAN only)
-        chmod 644 /mnt/shared-certs/${secrets.wildcardLocal}.crt
-        chmod 644 /mnt/shared-certs/${secrets.wildcardLocal}.key
+        chmod 644 /mnt/shared-certs/${wildcardLocal}.crt
+        chmod 644 /mnt/shared-certs/${wildcardLocal}.key
         # Create default cert symlinks for nginx-proxy (auto-HTTPS for all services)
-        ln -sf ${secrets.wildcardLocal}.crt /mnt/shared-certs/default.crt
-        ln -sf ${secrets.wildcardLocal}.key /mnt/shared-certs/default.key
+        ln -sf ${wildcardLocal}.crt /mnt/shared-certs/default.crt
+        ln -sf ${wildcardLocal}.key /mnt/shared-certs/default.key
         echo "Certificates copied to /mnt/shared-certs/"
       '';
     };
     # Also run on boot to ensure certs are in place
     wantedBy = [ "multi-user.target" ];
-    after = [ "acme-${secrets.wildcardLocal}.service" ];
+    after = [ "acme-${wildcardLocal}.service" ];
   };
 }

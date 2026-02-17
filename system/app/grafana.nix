@@ -19,7 +19,11 @@
 { pkgs, lib, systemSettings, config, ... }:
 
 let
-  secrets = import ../../secrets/domains.nix;
+  # Domain secrets are passed through systemSettings by each profile
+  wildcardLocal = systemSettings.wildcardLocal or "local.example.com";
+  publicDomain = systemSettings.publicDomain or "example.com";
+  grafanaAlertsFrom = systemSettings.grafanaAlertsFrom or systemSettings.notificationFromEmail or "alerts@example.com";
+  alertEmail = systemSettings.notificationToEmail or "admin@example.com";
   remoteTargets = systemSettings.prometheusRemoteTargets or [];
   appTargets = systemSettings.prometheusAppTargets or [];
 
@@ -82,7 +86,7 @@ in
         http_addr = "127.0.0.1";
         http_port = 3002;
         protocol = "http";
-        domain = "grafana.${secrets.wildcardLocal}";
+        domain = "grafana.${wildcardLocal}";
         # Allow both local and public domains (local via nginx SSL, public via Cloudflare Tunnel)
         enforce_domain = false;
       };
@@ -91,7 +95,7 @@ in
       smtp = {
         enabled = true;
         host = "192.168.8.89:25";
-        from_address = secrets.grafanaAlertsFrom;
+        from_address = grafanaAlertsFrom;
         from_name = "Grafana Monitoring";
         skip_verify = true;  # Local relay, no TLS
       };
@@ -161,7 +165,7 @@ in
             uid = "email-receiver";
             type = "email";
             settings = {
-              addresses = secrets.alertEmail;
+              addresses = alertEmail;
               singleEmail = true;
             };
           }];
@@ -187,7 +191,7 @@ in
     enable = true;
     port = 9090;
     listenAddress = "127.0.0.1";
-    webExternalUrl = "https://prometheus.${secrets.wildcardLocal}";
+    webExternalUrl = "https://prometheus.${wildcardLocal}";
     globalConfig.scrape_interval = "15s";
 
     # Enable admin API for deleting stale time series
@@ -789,9 +793,9 @@ in
       # Grafana - main monitoring UI (local access with SSL)
       "${config.services.grafana.settings.server.domain}" = {
         onlySSL = true;
-        sslCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
-        sslCertificateKey = "/mnt/shared-certs/${secrets.wildcardLocal}.key";
-        sslTrustedCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
+        sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+        sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
+        sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
           proxyWebsockets = true;
@@ -800,7 +804,7 @@ in
       };
 
       # Grafana - public access via Cloudflare Tunnel (HTTP - TLS terminated by Cloudflare)
-      "grafana.${secrets.publicDomain}" = {
+      "grafana.${publicDomain}" = {
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
           proxyWebsockets = true;
@@ -809,11 +813,11 @@ in
       };
 
       # Prometheus - metrics API (protected with basic auth + IP whitelist)
-      "prometheus.${secrets.wildcardLocal}" = {
+      "prometheus.${wildcardLocal}" = {
         onlySSL = true;
-        sslCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
-        sslCertificateKey = "/mnt/shared-certs/${secrets.wildcardLocal}.key";
-        sslTrustedCertificate = "/mnt/shared-certs/${secrets.wildcardLocal}.crt";
+        sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+        sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
+        sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
         basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd";
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString config.services.prometheus.port}";
