@@ -58,6 +58,7 @@ in
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
     kernelModules = [
       "xpadneo" # xbox controller
+      "hid_nintendo" # Joy-Con controller
     ];
 
     # Security
@@ -321,6 +322,7 @@ in
     appImageEnable = true; # Enable AppImage support
     gamemodeEnable = true; # Enable GameMode for performance optimization
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
+    joycondEnable = true; # Enable Joy-Con controller support (joycond daemon)
 
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable daemon (but don't auto-connect - manual via Trayscale GUI)

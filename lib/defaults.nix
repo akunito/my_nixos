@@ -281,6 +281,7 @@
     wireguardEnable = false;
     stylixEnable = false;
     xboxControllerEnable = false;
+    joycondEnable = false; # Joy-Con controller support (joycond daemon + hid_nintendo)
     appImageEnable = false;
     aichatEnable = false; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = false; # Enable NixVim configuration (Cursor IDE-like experience)
