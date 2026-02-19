@@ -226,6 +226,7 @@
     # SSH defaults
     authorizedKeys = [ ];
     hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
+    sshHostsManaged = false; # Enable Nix-managed ~/.ssh/config (shared SSH host definitions)
 
     # Printer defaults
     servicePrinting = false;

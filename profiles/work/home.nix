@@ -39,6 +39,7 @@
   ++ lib.optional systemSettings.nixvimEnabled ../../user/app/nixvim/nixvim.nix # NixVim (Cursor IDE-like experience)
   ++ lib.optional systemSettings.aichatEnable ../../user/app/ai/aichat.nix # Aichat/OpenRouter support
   ++ lib.optional systemSettings.lmstudioEnabled ../../user/app/lmstudio/lmstudio.nix # LM Studio configuration and MCP server support
+  ++ lib.optional (systemSettings.sshHostsManaged or false) ../../user/app/ssh-hosts.nix # Nix-managed ~/.ssh/config (shared SSH host definitions)
   # NOTE: Starship is now integrated into sh.nix (controlled by userSettings.starshipEnable)
   ;
 
