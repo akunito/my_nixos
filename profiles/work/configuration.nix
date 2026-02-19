@@ -74,7 +74,8 @@ in
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix # Tailscale mesh VPN
   ++ lib.optional ((systemSettings.hibernateEnable or false)
     && (systemSettings.hibernateSwapLuksUUID or null) != null) ../../system/hardware/hibernate.nix # Hibernation with LUKS-encrypted swap
-  ++ lib.optional (systemSettings.laptopPowerTuningEnable or false) ../../system/hardware/laptop-power-tuning.nix; # Laptop idle power reduction
+  ++ lib.optional (systemSettings.laptopPowerTuningEnable or false) ../../system/hardware/laptop-power-tuning.nix # Laptop idle power reduction
+  ++ lib.optional (systemSettings.fprintdEnable or false) ../../system/hardware/fingerprint.nix; # Fingerprint reader support
 
   # Ensure nix flakes are enabled
   nix.package = pkgs.nixVersions.stable;

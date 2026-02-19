@@ -12,6 +12,7 @@
           DESK_AGA = ./profiles/DESK_AGA-config.nix;
           DESK_VMDESK = ./profiles/DESK_VMDESK-config.nix;
           LAPTOP_L15 = ./profiles/LAPTOP_L15-config.nix;
+          LAPTOP_X13 = ./profiles/LAPTOP_X13-config.nix;
           LAPTOP_AGA = ./profiles/LAPTOP_AGA-config.nix;
           LAPTOP_YOGAAKU = ./profiles/LAPTOP_YOGAAKU-config.nix;
           VMHOME = ./profiles/VMHOME-config.nix;

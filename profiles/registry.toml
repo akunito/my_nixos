@@ -27,6 +27,12 @@ profile_dir = "personal"
 hostname = "nixolaptopaku"
 description = "Intel laptop with development tools"
 
+[profiles.LAPTOP_X13]
+config_file = "profiles/LAPTOP_X13-config.nix"
+profile_dir = "personal"
+hostname = "nixosx13aku"
+description = "AMD laptop with development tools (replaces L15)"
+
 [profiles.LAPTOP_AGA]
 config_file = "profiles/LAPTOP_AGA-config.nix"
 profile_dir = "personal"

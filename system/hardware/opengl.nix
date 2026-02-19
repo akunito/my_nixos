@@ -14,7 +14,10 @@
   # OpenGL (renamed to graphics)
   # AMD-specific: ROCm OpenCL runtime for compute workloads
   hardware.graphics.extraPackages = lib.mkIf (systemSettings.gpuType == "amd") (with pkgs; [
-    rocmPackages.clr.icd
+    rocmPackages.clr.icd    # ROCm OpenCL runtime
+    libva                    # VA-API library (hardware video decode)
+    libva-vdpau-driver       # VDPAU backend for VA-API
+    libvdpau-va-gl           # OpenGL-based VDPAU fallback
   ]);
 
   hardware.graphics.extraPackages32 = with pkgs; [

@@ -70,6 +70,12 @@ hostname = "nixolaptopaku"
 ip = "192.168.8.92"
 
 [[profiles]]
+name = "LAPTOP_X13"
+type = "laptop"
+hostname = "nixosx13aku"
+ip = "192.168.8.92"
+
+[[profiles]]
 name = "LXC_HOME"
 type = "lxc"
 hostname = "nixosLabaku"

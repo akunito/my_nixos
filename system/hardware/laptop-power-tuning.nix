@@ -39,7 +39,11 @@
     # i915 panel self-refresh (~0.3-0.5 W, Intel GPU only)
     ++ lib.optionals (systemSettings.intelGpuPsrEnable or false) [ "i915.enable_psr=1" ]
     # PCIe ASPM powersupersave (~0.3-1 W, may affect NVMe/WiFi stability)
-    ++ lib.optionals (systemSettings.laptopPowerTuningAggressive or false) [ "pcie_aspm.policy=powersupersave" ];
+    ++ lib.optionals (systemSettings.laptopPowerTuningAggressive or false) [ "pcie_aspm.policy=powersupersave" ]
+    # AMD P-State EPP driver (Zen 2+, kernel 6.3+, ~0.5-2 W savings)
+    ++ lib.optionals (systemSettings.amdPstateEnable or false) [ "amd_pstate=active" ]
+    # Backlight: native ACPI on AMD ThinkPads (fixes brightness control)
+    ++ lib.optionals ((systemSettings.gpuType == "amd") && (systemSettings.thinkpadEnable or false)) [ "acpi_backlight=native" ];
 
   # ── Tier 2: Services ─────────────────────────────────────────────────
 

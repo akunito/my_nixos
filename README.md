@@ -145,6 +145,7 @@ Full-featured desktop/laptop configurations with GUI applications:
   - **DESK_VMDESK** - VM desktop (inherits from DESK, development enabled, no gaming/AI, Sway + Plasma6)
   - **LAPTOP Base** - Laptop common settings (inherits from DESK + adds TLP, battery management, laptop-specific features)
     - **LAPTOP_L15** - Intel laptop with development tools
+    - **LAPTOP_X13** - AMD laptop with development tools (replaces L15)
     - **LAPTOP_YOGAAKU** - Older laptop, reduced features
     - **LAPTOP_AGA** - Minimal laptop with basic tools
 
@@ -186,6 +187,7 @@ cd ~/.dotfiles
 - `DESK_AGA` - Secondary desktop
 - `DESK_VMDESK` - VM desktop
 - `LAPTOP_L15` - Intel laptop
+- `LAPTOP_X13` - AMD laptop
 - `LAPTOP_AGA` - Minimal laptop
 - `LAPTOP_YOGAAKU` - Older laptop
 - `VMHOME` - Homelab server

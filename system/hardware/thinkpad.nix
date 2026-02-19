@@ -13,6 +13,7 @@ let
     "lenovo-thinkpad-l14-intel" = inputs.nixos-hardware.nixosModules.lenovo-thinkpad-l14-intel;
     "lenovo-thinkpad-x280" = inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x280;
     "lenovo-thinkpad-t490" = inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t490;
+    "lenovo-thinkpad-x13-amd" = inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x13-amd;
   };
 
   # Get the module based on thinkpadModel setting

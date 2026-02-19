@@ -137,6 +137,7 @@ lib/defaults.nix (global defaults)
     │        │        └─► DESK_VMDESK-config.nix
     │        │
     │        ├─► LAPTOP-base.nix ◄─── LAPTOP_L15-config.nix
+    │        │                    ◄─── LAPTOP_X13-config.nix
     │        │                    ◄─── LAPTOP_YOGAAKU-config.nix
     │        │                    ◄─── LAPTOP_AGA-config.nix
     │
@@ -304,6 +305,7 @@ This command updates the Home Manager configuration and applies changes without 
 |-------------|---------|------|--------|
 | DESK | nixosaku (192.168.8.96) | akunito | main |
 | LAPTOP_L15 | nixolaptopaku (192.168.8.92) | akunito | main |
+| LAPTOP_X13 | nixosx13aku (192.168.8.92) | akunito | main |
 | LAPTOP_AGA | nixosaga (192.168.8.78) | akunito | main |
 | LXC_HOME | nixosLabaku (192.168.8.80) | akunito | main |
 | LXC_database | database (192.168.8.103) | akunito | main |

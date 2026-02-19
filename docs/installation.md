@@ -46,6 +46,7 @@ The fastest way to install is using the automated installation script:
 Where `PROFILE` is a profile name defined in the unified `flake.nix`:
 - `DESK` - Desktop computer
 - `LAPTOP_L15` - Intel laptop
+- `LAPTOP_X13` - AMD laptop
 - `LXC_monitoring` - LXC container
 - etc. (run `grep -E '^\s+\w+ = \./profiles/' flake.nix` to list all)
 

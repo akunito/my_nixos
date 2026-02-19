@@ -297,6 +297,9 @@
     # Thunderbolt support (bolt daemon, auto-authorization, diagnostic tools)
     thunderboltEnable = false; # Enable Thunderbolt/bolt daemon for dock and device support
 
+    # Fingerprint reader (fprintd)
+    fprintdEnable = false; # Enable fingerprint reader support
+
     # GPU-related feature flags
     amdLACTdriverEnable = false; # Enable LACT (Linux AMD GPU Control Application) for AMD GPU management
 
@@ -522,6 +525,9 @@
 
     # Intel thermal daemon
     thermaldEnable = false;                # Intel proactive thermal management
+
+    # AMD P-State driver (Zen 2+ CPUs, requires kernel 6.3+)
+    amdPstateEnable = false;               # Enable amd_pstate=active kernel parameter
 
     # SwayFX battery effect reduction
     swayBatteryReduceEffects = false;      # Disable blur/shadows on battery

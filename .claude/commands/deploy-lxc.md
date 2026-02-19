@@ -56,6 +56,7 @@ git fetch origin && git reset --hard origin/main
 |---------|-----|------|-------------|
 | DESK | 192.168.8.96 | akunito | Main desktop |
 | LAPTOP_L15 | 192.168.8.92 | akunito | ThinkPad L15 laptop |
+| LAPTOP_X13 | 192.168.8.92 | akunito | ThinkPad X13 AMD laptop |
 | LAPTOP_AGA | 192.168.8.78 | aga | AGA's laptop |
 
 ## Container Reference
