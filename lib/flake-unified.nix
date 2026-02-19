@@ -11,7 +11,7 @@
 #         inherit inputs self;
 #         profiles = {
 #           DESK = ./profiles/DESK-config.nix;
-#           LAPTOP_L15 = ./profiles/LAPTOP_L15-config.nix;
+#           LAPTOP_X13 = ./profiles/LAPTOP_X13-config.nix;
 #           # ...
 #         };
 #       };
@@ -105,13 +105,13 @@ let
   nixpkgsFor = forAllSystems (system: import inputs.nixpkgs { inherit system; });
 
 in {
-  # All NixOS configurations (DESK, LAPTOP_L15, LXC_monitoring, etc. + "system" alias)
+  # All NixOS configurations (DESK, LAPTOP_X13, LXC_monitoring, etc. + "system" alias)
   nixosConfigurations = nixosConfigsWithAlias;
 
   # All Darwin configurations (MACBOOK-KOMI, etc. + "system" alias)
   darwinConfigurations = darwinConfigsWithAlias;
 
-  # All Home Manager configurations (DESK, LAPTOP_L15, etc. + "user" alias)
+  # All Home Manager configurations (DESK, LAPTOP_X13, etc. + "user" alias)
   homeConfigurations = homeConfigsWithAlias;
 
   # Packages (install script)

@@ -2,7 +2,7 @@
 id: user-modules.db-credentials
 summary: Home Manager module for database credential files (pgpass, my.cnf, redis)
 tags: [database, credentials, postgresql, mariadb, redis, dbeaver, home-manager]
-related_files: [user/app/database/db-credentials.nix, profiles/DESK-config.nix, profiles/LAPTOP_L15-config.nix]
+related_files: [user/app/database/db-credentials.nix, profiles/DESK-config.nix, profiles/LAPTOP_X13-config.nix]
 ---
 
 # Database Credentials Module
@@ -20,7 +20,7 @@ The module generates:
 
 ### Profile Settings
 
-Enable in profile config (`profiles/DESK-config.nix`, `profiles/LAPTOP_L15-config.nix`):
+Enable in profile config (`profiles/DESK-config.nix`, `profiles/LAPTOP_X13-config.nix`):
 
 ```nix
 let

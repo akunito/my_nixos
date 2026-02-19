@@ -353,7 +353,7 @@ Each NixOS profile type has different TLP/power requirements:
 - Use `power-profiles-daemon` instead for manual switching
 - `TLP_ENABLE = false;`
 
-### Laptops (LAPTOP_L15, LAPTOP_AGA, LAPTOP_YOGAAKU)
+### Laptops (LAPTOP_X13, LAPTOP_A, LAPTOP_YOGA)
 
 - **Enable TLP** with appropriate thresholds
 - `TLP_ENABLE = true;`

@@ -14,8 +14,8 @@ in
     # MACHINE IDENTITY - Override Required
     # ============================================================================
     hostname = "nixosaga";
-    envProfile = "DESK_AGA"; # Environment profile for Claude Code context awareness
-    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK_AGA -s -u";
+    envProfile = "DESK_A"; # Environment profile for Claude Code context awareness
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK_A -s -u";
 
     # Network - keep placeholders until actual IPs provided
     ipAddress = "192.168.8.xxx"; # ip to be reserved on router by mac (manually)

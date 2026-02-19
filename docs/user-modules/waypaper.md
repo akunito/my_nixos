@@ -130,7 +130,7 @@ systemSettings = {
 
 **For Laptops:**
 ```nix
-# profiles/LAPTOP-base.nix (inherited by LAPTOP_L15, LAPTOP_AGA, LAPTOP_YOGAAKU)
+# profiles/LAPTOP-base.nix (inherited by LAPTOP_X13, LAPTOP_A, LAPTOP_YOGA)
 systemSettings = {
   swwwEnable = true;        # Backend daemon (required)
   waypaperEnable = true;    # GUI frontend + restore ownership

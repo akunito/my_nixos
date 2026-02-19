@@ -43,7 +43,7 @@ A **modular, hierarchical** NixOS configuration system with **centralized softwa
     │                      │              │
     ▼                      ▼              ▼
 ┌────────┐          ┌──────────┐    ┌──────────┐
-│DESK_AGA│          │DESK_VMDESK│   │  LAPTOP  │
+│DESK_A │          │DESK_VMDESK│   │  LAPTOP  │
 │ (Desk) │          │   (VM)    │   │   Base   │
 └────────┘          └──────────┘    └─────┬────┘
                                          │
@@ -51,7 +51,7 @@ A **modular, hierarchical** NixOS configuration system with **centralized softwa
                                          ▼             ▼             ▼
                                      ┌────────┐  ┌────────────┐  ┌─────────┐
                                      │LAPTOP  │  │  LAPTOP    │  │LAPTOP   │
-                                     │  L15   │  │  YOGAAKU   │  │  AGA    │
+                                     │  X13   │  │   YOGA     │  │   A     │
                                      └────────┘  └────────────┘  └─────────┘
 
 Legend:
@@ -141,13 +141,12 @@ Software organized into **4 core package modules**:
 #### Personal Profiles
 Full-featured desktop/laptop configurations with GUI applications:
 - **DESK** - Primary desktop (AMD GPU, gaming, development, AI)
-  - **DESK_AGA** - Secondary desktop (inherits from DESK, simplified - no development/AI, limited gaming)
+  - **DESK_A** - Secondary desktop (inherits from DESK, simplified - no development/AI, limited gaming)
   - **DESK_VMDESK** - VM desktop (inherits from DESK, development enabled, no gaming/AI, Sway + Plasma6)
   - **LAPTOP Base** - Laptop common settings (inherits from DESK + adds TLP, battery management, laptop-specific features)
-    - **LAPTOP_L15** - Intel laptop with development tools
-    - **LAPTOP_X13** - AMD laptop with development tools (replaces L15)
-    - **LAPTOP_YOGAAKU** - Older laptop, reduced features
-    - **LAPTOP_AGA** - Minimal laptop with basic tools
+    - **LAPTOP_X13** - AMD laptop with development tools
+    - **LAPTOP_YOGA** - Older laptop, reduced features
+    - **LAPTOP_A** - Minimal laptop with basic tools
 
 #### Server Profiles
 Headless server configurations:
@@ -184,12 +183,11 @@ cd ~/.dotfiles
 
 **Available Profiles** (defined in unified `flake.nix`):
 - `DESK` - Primary desktop (AMD GPU, gaming, development, AI)
-- `DESK_AGA` - Secondary desktop
+- `DESK_A` - Secondary desktop
 - `DESK_VMDESK` - VM desktop
-- `LAPTOP_L15` - Intel laptop
 - `LAPTOP_X13` - AMD laptop
-- `LAPTOP_AGA` - Minimal laptop
-- `LAPTOP_YOGAAKU` - Older laptop
+- `LAPTOP_A` - Minimal laptop
+- `LAPTOP_YOGA` - Older laptop
 - `VMHOME` - Homelab server
 - `WSL` - Windows Subsystem for Linux
 - `LXC_HOME`, `LXC_plane`, `LXC_portfolioprod`, `LXC_mailer`, `LXC_liftcraftTEST`, `LXC_monitoring`, `LXC_proxy`, `LXC_database`, `LXC_tailscale`, `LXC_matrix` - LXC containers
@@ -459,8 +457,8 @@ This repository uses a **Router + Catalog** system:
 │   ├── work/                 # Work profile templates
 │   ├── homelab/              # Server profile templates
 │   ├── DESK-config.nix       # Desktop configuration
-│   ├── LAPTOP-base.nix       # Laptop base (inherited by L15, YOGAAKU)
-│   ├── LAPTOP_L15-config.nix # Specific laptop config
+│   ├── LAPTOP-base.nix       # Laptop base (inherited by X13, YOGA)
+│   ├── LAPTOP_X13-config.nix # Specific laptop config
 │   ├── LXC-base-config.nix   # LXC container base
 │   └── ...
 ├── system/

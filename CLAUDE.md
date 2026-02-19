@@ -36,7 +36,7 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 
 ```bash
 # Option A: Use deploy.sh from the local machine (preferred)
-./deploy.sh --profile LAPTOP_L15
+./deploy.sh --profile LAPTOP_X13
 
 # Option B: For LXC containers (passwordless sudo) — single SSH command
 ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -d -h"
@@ -122,8 +122,8 @@ This repository follows a **hierarchical, modular, and centralized** profile arc
 
 ### 1. Base + Override Pattern
 - **Base profiles** (`LAPTOP-base.nix`, `LXC-base-config.nix`) contain common settings
-- **Specific profiles** (`LAPTOP_L15-config.nix`, `LXC_plane-config.nix`) override only what's unique
-- The unified `flake.nix` contains all profile outputs (e.g., `nixosConfigurations.LAPTOP_L15`)
+- **Specific profiles** (`LAPTOP_X13-config.nix`, `LXC_plane-config.nix`) override only what's unique
+- The unified `flake.nix` contains all profile outputs (e.g., `nixosConfigurations.LAPTOP_X13`)
 
 ### 2. Profile Type Inheritance Hierarchy
 
@@ -133,13 +133,12 @@ lib/defaults.nix (global defaults)
     ├─► personal/configuration.nix ◄─── work/configuration.nix
     │        │
     │        ├─► DESK-config.nix
-    │        │        ├─► DESK_AGA-config.nix
+    │        │        ├─► DESK_A-config.nix
     │        │        └─► DESK_VMDESK-config.nix
     │        │
-    │        ├─► LAPTOP-base.nix ◄─── LAPTOP_L15-config.nix
-    │        │                    ◄─── LAPTOP_X13-config.nix
-    │        │                    ◄─── LAPTOP_YOGAAKU-config.nix
-    │        │                    ◄─── LAPTOP_AGA-config.nix
+    │        ├─► LAPTOP-base.nix ◄─── LAPTOP_X13-config.nix
+    │        │                    ◄─── LAPTOP_YOGA-config.nix
+    │        │                    ◄─── LAPTOP_A-config.nix
     │
     ├─► homelab/configuration.nix
     │        │
@@ -304,9 +303,9 @@ This command updates the Home Manager configuration and applies changes without 
 | ENV_PROFILE | Machine | User | Branch |
 |-------------|---------|------|--------|
 | DESK | nixosaku (192.168.8.96) | akunito | main |
-| LAPTOP_L15 | nixolaptopaku (192.168.8.92) | akunito | main |
 | LAPTOP_X13 | nixosx13aku (192.168.8.92) | akunito | main |
-| LAPTOP_AGA | nixosaga (192.168.8.78) | akunito | main |
+| LAPTOP_YOGA | nixosyogaaga (192.168.8.100) | aga | main |
+| LAPTOP_A | nixosaga (192.168.8.78) | akunito | main |
 | LXC_HOME | nixosLabaku (192.168.8.80) | akunito | main |
 | LXC_database | database (192.168.8.103) | akunito | main |
 | LXC_monitoring | monitoring (192.168.8.85) | akunito | main |

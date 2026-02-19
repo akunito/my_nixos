@@ -44,7 +44,7 @@ Run these evaluations to confirm no breakage:
 ```bash
 # Linux profiles
 nix eval .#nixosConfigurations.DESK.config.system.stateVersion
-nix eval .#nixosConfigurations.LAPTOP_L15.config.system.stateVersion
+nix eval .#nixosConfigurations.LAPTOP_X13.config.system.stateVersion
 nix eval .#nixosConfigurations.LXC_monitoring.config.system.stateVersion
 
 # Darwin profile

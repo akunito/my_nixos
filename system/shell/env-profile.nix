@@ -8,7 +8,7 @@
 # - Profile-specific behavior in scripts
 #
 # Usage in profile config:
-#   systemSettings.envProfile = "DESK";  # or "LXC_HOME", "LAPTOP_L15", etc.
+#   systemSettings.envProfile = "DESK";  # or "LXC_HOME", "LAPTOP_X13", etc.
 #
 # For macOS/darwin, use system/darwin/env-profile.nix instead.
 

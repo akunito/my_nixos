@@ -37,7 +37,7 @@ in
   # Display Manager (SDDM) - Sway-specific configuration
   # ============================================================================
   # Applied when: wm=sway AND greetdEnable=false
-  # Profiles: DESK, LAPTOP_L15, LAPTOP_YOGAAKU
+  # Profiles: DESK, LAPTOP_X13, LAPTOP_YOGA
   #
   # Theme: sddm-astronaut (Qt6 modern theme with animations)
   # Greeter: X11 (NOT Wayland) — Weston compositor fails on multi-monitor setups

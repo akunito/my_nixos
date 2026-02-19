@@ -171,7 +171,7 @@ ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild s
 
 ### 4. Update Workstation Profiles
 
-Add credentials to `profiles/DESK-config.nix` and `profiles/LAPTOP_L15-config.nix`:
+Add credentials to `profiles/DESK-config.nix` and `profiles/LAPTOP_X13-config.nix`:
 
 ```nix
 dbCredentialsPostgres = [
@@ -186,7 +186,7 @@ dbCredentialsPostgres = [
 # DESK
 cd ~/.dotfiles && ./sync-user.sh
 
-# LAPTOP_L15
+# LAPTOP_X13
 ssh -A akunito@192.168.8.92 "cd ~/.dotfiles && git pull && ./sync-user.sh"
 ```
 
@@ -293,6 +293,6 @@ redis-db          # Connect to Redis
 - `secrets/domains.nix` - Database passwords (git-crypt encrypted)
 - `profiles/LXC_database-config.nix` - Centralized database server configuration
 - `profiles/DESK-config.nix` - DESK workstation profile (includes dbCredentials)
-- `profiles/LAPTOP_L15-config.nix` - Laptop profile (includes dbCredentials)
+- `profiles/LAPTOP_X13-config.nix` - Laptop profile (includes dbCredentials)
 - `user/app/database/db-credentials.nix` - Home Manager module for credential files
 - `~/.local/share/DBeaverData/workspace6/General/.dbeaver/data-sources.json` - DBeaver connections

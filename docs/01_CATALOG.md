@@ -15,12 +15,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ## Profiles
 
 - **profiles/DESK-config.nix**: DESK Profile Configuration
-- **profiles/DESK_AGA-config.nix**: DESK_AGA Profile Configuration (nixosaga)
+- **profiles/DESK_A-config.nix**: DESK_A Profile Configuration (nixosaga)
 - **profiles/DESK_VMDESK-config.nix**: DESK_VMDESK Profile Configuration (nixosdesk)
 - **profiles/DESKold-config.nix**: DESKold Profile Configuration (Backup of DESK with Plasma 6 + ungoogled-chromium)
-- **profiles/LAPTOP_AGA-config.nix**: LAPTOP_AGA Profile Configuration (nixosaga)
-- **profiles/LAPTOP_L15-config.nix**: LAPTOP Profile Configuration (nixolaptopaku)
-- **profiles/LAPTOP_YOGAAKU-config.nix**: YOGAAKU Profile Configuration
+- **profiles/LAPTOP_A-config.nix**: LAPTOP_A Profile Configuration (nixosaga)
+- **profiles/LAPTOP_X13-config.nix**: LAPTOP Profile Configuration (nixolaptopaku)
+- **profiles/LAPTOP_YOGA-config.nix**: YOGAAKU Profile Configuration
 - **profiles/LXC-base-config.nix**: LXC Base Profile Configuration
 - **profiles/LXC_HOME-config.nix**: LXC_HOME Profile Configuration
 - **profiles/LXC_database-config.nix**: LXC_database Profile Configuration
@@ -447,12 +447,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Future / Archived
 
-- **docs/future/archived/aga-to-laptop-base-migration-plan.md**: This document outlines the plan to migrate AGA from a standalone profile under Personal Profile to inherit from LAPTOP-base.nix, following the same pattern as LAPTOP_L15 and LAPTOP_YOGAAKU.
+- **docs/future/archived/aga-to-laptop-base-migration-plan.md**: This document outlines the plan to migrate AGA from a standalone profile under Personal Profile to inherit from LAPTOP-base.nix, following the same pattern as LAPTOP_X13 and LAPTOP_YOGA.
 - **docs/future/archived/agadesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate AGADESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as LAPTOP profiles inherit from LAPTO...
 - **docs/future/archived/debug-instrumentation-analysis.md**: **Date**: 2026-01-XX
 - **docs/future/archived/debug-instrumentation-removal-plan.md**: **Date**: 2026-01-XX
 - **docs/future/archived/desk-to-laptop-migration-improved.md**: **Status: IMPLEMENTED** (2026-01-28)
-- **docs/future/archived/desk-vs-laptop-packages.md**: Complete package and feature comparison between DESK and LAPTOP_L15 profiles
+- **docs/future/archived/desk-vs-laptop-packages.md**: Complete package and feature comparison between DESK and LAPTOP_X13 profiles
 - **docs/future/archived/fix-home-manager-deprecated-install-warning.md**: During home-manager activation, you see this warning:
 - **docs/future/archived/fix-mnt-ext-mount-error.md**: The error occurs during NixOS configuration switch when systemd tries to stop `mnt-EXT.mount` from the previous generation, but the unit doesn't exist in the new generation (because we disabled dis...
 - **docs/future/archived/flake-refactoring-migration.md**: The flake profile refactoring has been successfully implemented to eliminate code duplication across multiple `flake.*.nix` files. The new structure reduces each profile file from ~750 lines to ~30...
@@ -468,12 +468,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/archived/profile-comparison-desk-laptop-analysis.md**: This document provides a comprehensive analysis of the differences between three key profiles in the NixOS configuration hierarchy:
 - **docs/future/archived/profile-migration-status.md**: **Date**: 2025-01-02
 - **docs/future/archived/router-drift-audit-2026-01-08.md**: Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system).
-- **docs/future/archived/slow-rebuild-investigation.md**: NixOS rebuild via `install.sh` is extremely slow on LAPTOP_L15.
+- **docs/future/archived/slow-rebuild-investigation.md**: NixOS rebuild via `install.sh` is extremely slow on LAPTOP_X13.
 - **docs/future/archived/sov-crash-analysis.md**: **Date**: 2026-01-07
 - **docs/future/archived/sov-dependency-analysis.md**: **Date**: 2026-01-07
-- **docs/future/archived/stylix-verification-and-fix.md**: Verified that **all Stylix configurations are properly controlled by the `stylixEnable` flag**. Found one issue: **DESK_AGA** should disable Stylix but currently inherits it enabled from DESK.
+- **docs/future/archived/stylix-verification-and-fix.md**: Verified that **all Stylix configurations are properly controlled by the `stylixEnable` flag**. Found one issue: **DESK_A** should disable Stylix but currently inherits it enabled from DESK.
 - **docs/future/archived/sway-daemon-relog-notes-2026-01-08.md**: This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
-- **docs/future/archived/vmdesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate VMDESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as DESK_AGA.
+- **docs/future/archived/vmdesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate VMDESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as DESK_A.
 - **docs/future/archived/vmhome-migration-test.md**: **Date**: 2025-01-XX
 - **docs/future/archived/vmhome-to-lxc-migration-plan.md**: Migrate the VMHOME VM to an LXC container (`LXC_HOME`) while preserving all functionality (Docker, NFS, services) and optimizing for LXC. Must not impact existing `LXC*-config.nix` profiles.
 - **docs/future/archived/waybar-sov-debug-analysis.md**: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).

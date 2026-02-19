@@ -13,8 +13,8 @@ in
   systemSettings = base.systemSettings // {
     hostname = "nixosaga";
     profile = "personal";
-    envProfile = "LAPTOP_AGA"; # Environment profile for Claude Code context awareness
-    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_AGA -s -u";
+    envProfile = "LAPTOP_A"; # Environment profile for Claude Code context awareness
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_A -s -u";
     gpuType = "intel";
 
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil

@@ -38,7 +38,7 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 **hddpool** (bulk storage):
 - `hddpool/media` - Jellyfin media library (movies, TV shows)
 - `hddpool/proxmox_backups` - Proxmox VM/LXC backup storage
-- `hddpool/workstation_backups` - Workstation restic backups (DESK, LAPTOP_L15, VPS)
+- `hddpool/workstation_backups` - Workstation restic backups (DESK, LAPTOP_X13, VPS)
 
 **ssdpool** (performance storage):
 - `ssdpool/library` - Calibre ebook library

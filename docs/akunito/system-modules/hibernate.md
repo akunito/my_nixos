@@ -9,8 +9,8 @@ related_files:
   - system/hardware/bluetooth.nix
   - lib/defaults.nix
   - profiles/LAPTOP-base.nix
-  - profiles/LAPTOP_L15-config.nix
-  - profiles/LAPTOP_YOGAAKU-config.nix
+  - profiles/LAPTOP_X13-config.nix
+  - profiles/LAPTOP_YOGA-config.nix
   - profiles/DESK-config.nix
   - user/wm/sway/swayfx-config.nix
 ---
@@ -163,14 +163,14 @@ lib/defaults.nix          hibernateEnable = false, hibernateSwapLuksUUID = null
     │   │                     bluetoothPowerOnBoot = false
     │   │                     swayBatteryReduceEffects = true
     │   │
-    │   ├── LAPTOP_L15        hibernateSwapLuksUUID = "a3d7d48f-..."
+    │   ├── LAPTOP_X13        hibernateSwapLuksUUID = "a3d7d48f-..."
     │   │                     MEM_SLEEP = "s2idle" (Tiger Lake — no S3)
     │   │
-    │   ├── LAPTOP_YOGAAKU    hibernateSwapLuksUUID = "..."
+    │   ├── LAPTOP_YOGA    hibernateSwapLuksUUID = "..."
     │   │                     intelGpuFbcEnable = true, intelGpuPsrEnable = true
     │   │                     thermaldEnable = true
     │   │
-    │   └── LAPTOP_AGA        (Plasma 6, no Sway power-aware idle)
+    │   └── LAPTOP_A        (Plasma 6, no Sway power-aware idle)
     │                        intelGpuFbcEnable = true, intelGpuPsrEnable = true
     │                        thermaldEnable = true
     │
@@ -198,7 +198,7 @@ Desktops have no battery. The acpid handler reads BAT0 status — no BAT0 file m
 - No `swayIdlePowerAwareEnable` — single set of AC timeouts used
 - No `swaySmartLidEnable` — no lid on desktops
 
-## Laptop Behavior (LAPTOP_L15, LAPTOP_YOGAAKU)
+## Laptop Behavior (LAPTOP_X13, LAPTOP_YOGA)
 
 Laptops have a battery. Scripts check `/sys/class/power_supply/BAT0/status` at runtime.
 
@@ -442,8 +442,8 @@ journalctl --user -u swayidle --since "1 min ago"
 | Machine | Swap Partition | Swap Size | LUKS UUID | Status |
 |---------|---------------|-----------|-----------|--------|
 | DESK | `/dev/nvme1n1p3` | 39.1 GB | `6439621e-01dc-4710-adb8-8894fc6ce585` | Active |
-| LAPTOP_L15 | `/dev/nvme0n1p3` | 15.6 GB | `a3d7d48f-c0eb-4655-9a30-6ea9f580ec0d` | Active |
-| LAPTOP_YOGAAKU | `/dev/nvme0n1p2` | 16.7 GB | `1fbdeb58-e07a-4c7b-81db-d72067ae12cb` | Active |
+| LAPTOP_X13 | `/dev/nvme0n1p3` | 15.6 GB | `a3d7d48f-c0eb-4655-9a30-6ea9f580ec0d` | Active |
+| LAPTOP_YOGA | `/dev/nvme0n1p2` | 16.7 GB | `1fbdeb58-e07a-4c7b-81db-d72067ae12cb` | Active |
 
 ## Troubleshooting
 
@@ -487,9 +487,9 @@ Check:
 3. No external monitors must be connected for suspend to trigger
 4. Must be on battery (AC + no ext = intentional no-op for safety)
 
-## Plasma 6 Laptops (LAPTOP_AGA)
+## Plasma 6 Laptops (LAPTOP_A)
 
-LAPTOP_AGA uses Plasma 6, not Sway. Sway-specific features (`swayIdlePowerAwareEnable`, `swayBatteryReduceEffects`, `swaySmartLidEnable`) are gated by `enableSwayForDESK` and have no effect on Plasma 6.
+LAPTOP_A uses Plasma 6, not Sway. Sway-specific features (`swayIdlePowerAwareEnable`, `swayBatteryReduceEffects`, `swaySmartLidEnable`) are gated by `enableSwayForDESK` and have no effect on Plasma 6.
 
 **What AGA does get from `LAPTOP-base.nix`:**
 - `laptopPowerTuningEnable = true` — audio codec power save, NMI watchdog disable, writeback timer

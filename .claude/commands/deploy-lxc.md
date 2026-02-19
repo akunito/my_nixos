@@ -55,9 +55,9 @@ git fetch origin && git reset --hard origin/main
 | Profile | IP | User | Description |
 |---------|-----|------|-------------|
 | DESK | 192.168.8.96 | akunito | Main desktop |
-| LAPTOP_L15 | 192.168.8.92 | akunito | ThinkPad L15 laptop |
+| LAPTOP_X13 | 192.168.8.92 | akunito | ThinkPad L15 laptop |
 | LAPTOP_X13 | 192.168.8.92 | akunito | ThinkPad X13 AMD laptop |
-| LAPTOP_AGA | 192.168.8.78 | aga | AGA's laptop |
+| LAPTOP_A | 192.168.8.78 | aga | AGA's laptop |
 
 ## Container Reference
 
@@ -114,13 +114,13 @@ ssh -A akunito@192.168.1.104 "cd ~/.dotfiles && git fetch origin && git reset --
 ssh -A akunito@192.168.1.105 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_tailscale -s -u -d -h"
 ```
 
-### Deploy to LAPTOP_AGA (Manual - requires password)
+### Deploy to LAPTOP_A (Manual - requires password)
 
 ```bash
 ssh -A aga@192.168.8.78
 cd ~/.dotfiles
 git fetch origin && git reset --hard origin/main
-./install.sh ~/.dotfiles LAPTOP_AGA -s -u
+./install.sh ~/.dotfiles LAPTOP_A -s -u
 ```
 
 ### Deploy to KOMI_LXC_database

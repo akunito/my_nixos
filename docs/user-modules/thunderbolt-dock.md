@@ -2,7 +2,7 @@
 id: hardware.thunderbolt-dock
 summary: Thunderbolt dock setup, OWC Dock 96W, ATTO ThunderLink NS 3102 (Linux incompatible), PS/2 keyboard/touchpad fixes
 tags: [thunderbolt, dock, owc, atto, 10gbe, thinkpad, keyboard, touchpad, ps2, hardware]
-related_files: [system/hardware/thunderbolt.nix, system/hardware/thinkpad.nix, profiles/LAPTOP_L15-config.nix, profiles/LAPTOP_YOGAAKU-config.nix, profiles/LAPTOP_AGA-config.nix]
+related_files: [system/hardware/thunderbolt.nix, system/hardware/thinkpad.nix, profiles/LAPTOP_X13-config.nix, profiles/LAPTOP_YOGA-config.nix, profiles/LAPTOP_A-config.nix]
 ---
 
 # Thunderbolt Dock & 10GbE Setup
@@ -15,9 +15,9 @@ All ThinkPad laptop profiles are configured for Thunderbolt dock support and PS/
 
 | Profile | Model | TB Version | `thinkpadEnable` | `thunderboltEnable` |
 |---------|-------|------------|-------------------|---------------------|
-| LAPTOP_L15 | ThinkPad L15 Gen 2 Intel (20X4) | TB4 | yes | yes |
-| LAPTOP_YOGAAKU | ThinkPad X380 Yoga | TB3 | yes | yes |
-| LAPTOP_AGA | ThinkPad T580 | TB3 | yes | yes |
+| LAPTOP_X13 | ThinkPad L15 Gen 2 Intel (20X4) | TB4 | yes | yes |
+| LAPTOP_YOGA | ThinkPad X380 Yoga | TB3 | yes | yes |
+| LAPTOP_A | ThinkPad T580 | TB3 | yes | yes |
 
 ## Hardware
 

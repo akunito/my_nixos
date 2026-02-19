@@ -154,7 +154,7 @@ which tmux
 ~/.dotfiles/profiles/
 ├── DESK-config.nix            # Desktop workstation
 ├── LAPTOP-base.nix            # Laptop base config
-├── LAPTOP_L15-config.nix      # ThinkPad L15
+├── LAPTOP_X13-config.nix      # ThinkPad L15
 └── AGA-config.nix             # Aga's machine
 ```
 

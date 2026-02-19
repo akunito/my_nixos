@@ -55,7 +55,7 @@ All profiles are defined in a single `flake.nix` using the `lib/flake-unified.ni
 # In flake.nix
 profiles = {
   DESK = ./profiles/DESK-config.nix;
-  LAPTOP_L15 = ./profiles/LAPTOP_L15-config.nix;
+  LAPTOP_X13 = ./profiles/LAPTOP_X13-config.nix;
   LAPTOP_X13 = ./profiles/LAPTOP_X13-config.nix;
   LXC_monitoring = ./profiles/LXC_monitoring-config.nix;
   MACBOOK-KOMI = ./profiles/MACBOOK-KOMI-config.nix;

@@ -968,7 +968,7 @@ parse_args() {
         echo "  $0 --profile LXC_monitoring            # Deploy single profile"
         echo "  $0 --group \"LXC Containers\"            # Deploy all LXC"
         echo "  $0 --dry-run --all                     # Preview all deployments"
-        echo "  $0 --profile LAPTOP_L15 --dry-run      # Preview laptop deploy"
+        echo "  $0 --profile LAPTOP_X13 --dry-run      # Preview laptop deploy"
         exit 0
         ;;
       *)
