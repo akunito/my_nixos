@@ -628,6 +628,13 @@
     tailscaleGuiAutostart = false; # Auto-start Tailscale GUI (trayscale) with desktop session
 
     # ============================================================================
+    # VPS-SPECIFIC FLAGS
+    # ============================================================================
+    headscaleEnable = false; # Enable Headscale coordination server (VPS only)
+    wireguardServerEnable = false; # Enable WireGuard point-to-point backup tunnel (VPS <-> pfSense)
+    vpsBackupSyncEnable = false; # Enable rsync database/nextcloud backups to TrueNAS over Tailscale
+
+    # ============================================================================
     # DARWIN (macOS) SETTINGS
     # ============================================================================
     # These settings only apply when osType = "darwin"
@@ -693,6 +700,7 @@
 
     # Feature flags
     dockerEnable = true;
+    dockerRootlessEnable = false; # Rootless Docker (VPS); mutually exclusive with dockerEnable
     virtualizationEnable = true;
     qemuGuestAddition = false;
 

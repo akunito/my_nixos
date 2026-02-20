@@ -161,6 +161,8 @@ lib/defaults.nix (global defaults)
     │                             ◄─── KOMI_LXC_proxy-config.nix
     │                             ◄─── KOMI_LXC_tailscale-config.nix
     │
+    ├─► VPS-base-config.nix ◄─── VPS_PROD-config.nix
+    │
     ├─► WSL-config.nix (standalone)
     │
     └─► darwin/configuration.nix (macOS/nix-darwin)
@@ -312,6 +314,7 @@ This command updates the Home Manager configuration and applies changes without 
 | LXC_proxy | proxy (192.168.8.102) | akunito | main |
 | LXC_matrix | matrix (192.168.8.104) | akunito | main |
 | LXC_tailscale | tailscale (192.168.8.105) | akunito | main |
+| VPS_PROD | vps-prod (159.195.32.28) | akunito | main |
 | VMHOME | nixosLabaku (192.168.8.80) | akunito | main |
 | KOMI_LXC_database | komi-database (192.168.1.10) | admin | komi |
 | KOMI_LXC_mailer | komi-mailer (192.168.1.11) | admin | komi |
@@ -322,7 +325,7 @@ This command updates the Home Manager configuration and applies changes without 
 
 **Step 2**: Route to the right reference:
 
-- **akunito** (DESK, LAPTOP_*, LXC_*, VMHOME): use the **Infrastructure & Service Reference** section below for operational docs
+- **akunito** (DESK, LAPTOP_*, LXC_*, VPS_*, VMHOME): use the **Infrastructure & Service Reference** section below for operational docs
 - **komi/admin** (MACBOOK_KOMI, KOMI_LXC_*): use the **Darwin/macOS Reference** for macOS, or `docs/komi/infrastructure/` for LXC infra
 
 **Step 3**: For any architectural or implementation question, follow the Router-first protocol:
@@ -337,6 +340,7 @@ ssh -A akunito@192.168.8.96  # DESK
 ssh -A akunito@192.168.8.80  # LXC_HOME
 ssh -A akunito@192.168.8.103 # LXC_database
 ssh -A root@192.168.8.82     # Proxmox
+ssh -A akunito@159.195.32.28 # VPS_PROD
 ```
 
 ### Multi-user file scoping
