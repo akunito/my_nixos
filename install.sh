@@ -330,11 +330,9 @@ pre_install_checks() {
 
 # Get current system generation for rollback
 get_current_generation() {
-    if [ -d /nix/var/nix/profiles/system ]; then
-        nix-env --list-generations --profile /nix/var/nix/profiles/system 2>/dev/null | tail -1 | awk '{print $1}' || echo ""
-    else
-        echo ""
-    fi
+    # Use ls instead of nix-env to avoid needing sudo for the lock file
+    local latest=$(ls /nix/var/nix/profiles/system-*-link 2>/dev/null | sort -V | tail -1 | grep -oP 'system-\K\d+' || echo "")
+    echo "$latest"
 }
 
 # Get current home-manager generation for verification

@@ -202,6 +202,7 @@ in
     disk6_options = [
       "nofail"
       "x-systemd.device-timeout=3s"
+      "force"
       "uid=1000"
       "gid=1000"
     ];
