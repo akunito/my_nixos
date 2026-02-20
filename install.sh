@@ -976,27 +976,17 @@ if [ "$REBUILD_EXIT_CODE" -eq 0 ]; then
     debug_log "A_parse_quote" "install.sh:rebuild" "rebuildSuccess" "{\"postGeneration\":\"$POST_REBUILD_GENERATION\"}"
     # #endregion
 elif [ "$REBUILD_EXIT_CODE" -eq 4 ]; then
-    # Exit code 4 = known partial success case (system installed, services may have failed)
-    # Verify by checking if generation was created
-    if check_rebuild_success "$PRE_REBUILD_GENERATION"; then
-        POST_REBUILD_GENERATION=$(get_current_generation)
-        echo -e "\n${YELLOW}⚠ System rebuild completed with warnings${RESET}"
-        echo -e "${YELLOW}  Some services may have failed to start, but the system configuration was applied${RESET}"
-        echo -e "${GREEN}  New generation created: $POST_REBUILD_GENERATION${RESET}"
-        echo -e "${CYAN}  Review service logs if needed: journalctl -p err${RESET}"
-        # #region agent log
-        debug_log "A_parse_quote" "install.sh:rebuild" "rebuildPartialSuccess" "{\"exitCode\":$REBUILD_EXIT_CODE,\"postGeneration\":\"$POST_REBUILD_GENERATION\"}"
-        # #endregion
-    else
-        # Exit code 4 but no new generation - actual failure
-        echo -e "\n${RED}System rebuild failed!${RESET}"
-        echo -e "${RED}  Exit code: $REBUILD_EXIT_CODE (no new generation was created)${RESET}"
-        # #region agent log
-        debug_log "A_parse_quote" "install.sh:rebuild" "rebuildFailureNoGeneration" "{\"exitCode\":$REBUILD_EXIT_CODE}"
-        # #endregion
-        rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
-        exit 1
-    fi
+    # Exit code 4 = switch-to-configuration ran but some units failed to start/restart
+    # The system configuration IS applied regardless (generation may or may not increment
+    # if the closure is identical to the current one)
+    POST_REBUILD_GENERATION=$(get_current_generation)
+    echo -e "\n${YELLOW}⚠ System rebuild completed with warnings${RESET}"
+    echo -e "${YELLOW}  Some services may have failed to start, but the system configuration was applied${RESET}"
+    echo -e "${GREEN}  Current generation: $POST_REBUILD_GENERATION${RESET}"
+    echo -e "${CYAN}  Review service logs if needed: journalctl -p err${RESET}"
+    # #region agent log
+    debug_log "A_parse_quote" "install.sh:rebuild" "rebuildPartialSuccess" "{\"exitCode\":$REBUILD_EXIT_CODE,\"postGeneration\":\"$POST_REBUILD_GENERATION\"}"
+    # #endregion
 else
     # Other exit codes (1, 243, etc.) - check if generation was created
     # This handles cases where rebuild partially succeeded despite non-zero exit code
