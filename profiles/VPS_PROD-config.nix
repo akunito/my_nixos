@@ -3,8 +3,8 @@
 #
 # Extends VPS-base-config.nix
 #
-# Phase 1: Minimal — just Tailscale for connectivity
-# Later phases will enable: PostgreSQL, Redis, Docker services, monitoring, etc.
+# Phase 1: Tailscale, Headscale, WireGuard (complete)
+# Phase 2a: PostgreSQL, MariaDB, Redis, PgBouncer (empty, ready to receive data)
 
 let
   base = import ./VPS-base-config.nix;
@@ -15,6 +15,15 @@ in
     hostname = "vps-prod";
     envProfile = "VPS_PROD";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles VPS_PROD -s -u -d";
+
+    # System packages (extends base with database CLI tools)
+    systemPackages = pkgs: pkgs-unstable:
+      (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
+        pkgs.postgresql_17
+        pkgs.mariadb
+        pkgs.redis
+        pkgs.curl  # For healthchecks
+      ];
 
     # ============================================================================
     # SOFTWARE & FEATURE FLAGS - Centralized Control
@@ -30,7 +39,7 @@ in
     systemBasicToolsEnable = true;
     systemNetworkToolsEnable = false;
 
-    # === System Services (ALL DISABLED — Phase 1 minimal) ===
+    # === System Services (ALL DISABLED — not needed on VPS) ===
     sambaEnable = false;
     sunshineEnable = false;
     wireguardEnable = false;
@@ -39,7 +48,7 @@ in
 
     # === VPN Services (Phase 1 — Headscale + WireGuard) ===
     headscaleEnable = true;
-    headscaleDomain = secrets.headscaleDomain; # "headscale.akunito.com"
+    headscaleDomain = secrets.headscaleDomain;
     headscalePort = 8080; # Internal; nginx terminates TLS on 443
     acmeEmail = secrets.acmeEmail; # For Let's Encrypt certificate
 
@@ -56,13 +65,93 @@ in
       }
     ];
 
+    # === Database Credentials (from git-crypt encrypted secrets/domains.nix) ===
+    dbPlanePassword = secrets.dbPlanePassword;
+    dbLiftcraftPassword = secrets.dbLiftcraftPassword;
+    dbMatrixPassword = secrets.dbMatrixPassword;
+    dbNextcloudPassword = secrets.dbNextcloudPassword;
+    redisServerPassword = secrets.redisServerPassword;
+
+    # === Centralized Database Server (Phase 2a — ENABLED) ===
+
+    # PostgreSQL 17 Server
+    postgresqlServerEnable = true;
+    postgresqlServerPort = 5432;
+    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" ];
+    postgresqlServerUsers = [
+      {
+        name = "plane";
+        passwordFile = "/etc/secrets/db-plane-password";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "liftcraft";
+        passwordFile = "/etc/secrets/db-liftcraft-password";
+        ensureDBOwnership = false; # rails_database_prod owned separately
+      }
+      {
+        name = "matrix";
+        passwordFile = "/etc/secrets/db-matrix-password";
+        ensureDBOwnership = true;
+      }
+    ];
+
+    # MariaDB Server
+    mariadbServerEnable = true;
+    mariadbServerPort = 3306;
+    mariadbServerDatabases = [ "nextcloud" ];
+    mariadbServerUsers = [
+      {
+        name = "nextcloud";
+        database = "nextcloud";
+        passwordFile = "/etc/secrets/db-nextcloud-password";
+      }
+    ];
+
+    # PgBouncer Connection Pooler
+    pgBouncerEnable = true;
+    pgBouncerPort = 6432;
+    pgBouncerPoolMode = "transaction";
+    pgBouncerMaxClientConn = 1000;
+    pgBouncerDefaultPoolSize = 20;
+
+    # Redis Server
+    redisServerEnable = true;
+    redisServerPort = 6379;
+    redisServerMaxMemory = "2gb";
+    redisServerPasswordFile = "/etc/secrets/redis-password";
+
+    # === Database Backups (Phase 2a — ENABLED) ===
+    postgresqlBackupEnable = true;
+    mariadbBackupEnable = true;
+
+    # Backup location (local disk — no NFS mount on VPS)
+    databaseBackupLocation = "/var/backups/databases";
+
+    # Daily backups (7 days retention, custom + SQL formats)
+    databaseBackupStartAt = "*-*-* 02:00:00"; # Daily at 2 AM
+    databaseBackupRetainDays = 7;
+
+    # Hourly backups (3 days retention, custom format only for speed)
+    databaseBackupHourlyEnable = true;
+    databaseBackupHourlySchedule = "*:00:00"; # Every hour at :00
+    databaseBackupHourlyRetainCount = 72; # 72 hourly backups = 3 days
+
+    # Redis BGSAVE before backups (ensures cache consistency)
+    redisBgsaveBeforeBackup = true;
+    redisBgsaveTimeout = 60;
+
+    # === Prometheus Database Exporters (Phase 2a — ENABLED) ===
+    prometheusPostgresExporterEnable = true;
+    prometheusPostgresExporterPort = 9187;
+    prometheusMariadbExporterEnable = true;
+    prometheusMariadbExporterPort = 9104;
+    prometheusRedisExporterEnable = true;
+    prometheusRedisExporterPort = 9121;
+
     # === Homelab Services (enabled incrementally per migration phases) ===
-    # postgresqlServerEnable = false;  # Phase 2
-    # mariadbServerEnable = false;     # Phase 2
-    # redisServerEnable = false;       # Phase 2
-    # pgBouncerEnable = false;         # Phase 2
-    # cloudflaredEnable = false;       # Phase 2
-    # grafanaEnable = false;           # Phase 2
+    # cloudflaredEnable = false;       # Phase 2b
+    # grafanaEnable = false;           # Phase 2d
     # homelabDockerEnable = false;     # Phase 3
 
     # ============================================================================
