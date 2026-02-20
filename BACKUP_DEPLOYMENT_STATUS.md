@@ -1,7 +1,7 @@
 # Unified Backup System - Deployment Status
 
-**Last Updated:** 2026-02-09 18:30 CET
-**Current Phase:** DESK Complete ✅ | LAPTOP_L15 Pending
+**Last Updated:** 2026-02-20 CET
+**Current Phase:** DESK Complete ✅ | LAPTOP_X13 Complete ✅
 
 ---
 
@@ -10,10 +10,9 @@
 ### Phase 1: TrueNAS Storage Setup ✅
 - [x] Created ZFS dataset: `hddpool/workstation_backups`
 - [x] Inherits AES-256-GCM encryption from hddpool
-- [x] NFS export (ID 33) configured for:
-  - 192.168.8.96 (DESK wired)
-  - 192.168.8.92 (LAPTOP_L15)
-  - 192.168.8.194 (DESK WiFi - added during troubleshooting)
+- [x] NFS export (ID 33) configured:
+  - Restrictions removed — subnet already isolated by pfSense
+  - Previously limited to: 192.168.8.96, 192.168.8.92, 192.168.8.194
 - [x] Set ownership to akunito:akunito (UID/GID 1000)
 - [x] Directory structure created:
   ```
@@ -34,7 +33,7 @@
 - [x] **profiles/DESK-config.nix**:
   - Added NFS_Backups mount + automount (TimeoutIdleSec=600)
   - Enabled vpsBackupEnable, nfsBackupEnable flags
-- [x] **profiles/LAPTOP_L15-config.nix**:
+- [x] **profiles/LAPTOP_X13-config.nix**:
   - Added NFS_Backups mount + automount
   - Enabled nfsBackupEnable flag
 
@@ -55,7 +54,7 @@
 **Updated backup strategy:**
 ```
 NFS (TrueNAS hddpool/workstation_backups):
-├── home_nfs     → DESK/LAPTOP_L15 home directories
+├── home_nfs     → DESK/LAPTOP_X13 home directories
 └── vps_nfs      → VPS configuration (/root/vps_wg, /opt/*, /etc/nginx)
 
 USB (LUKS Pendrive - offline backups):
@@ -90,49 +89,21 @@ USB (LUKS Pendrive - offline backups):
 
 ---
 
-## 📋 Remaining Phases
+### Phase 7: LAPTOP_X13 Deployment ✅
+- [x] LAPTOP_X13 profile configured with NFS mounts and backup flags
+- [x] System rebuilt on LAPTOP_X13
+- [x] Mount point created: `/mnt/NFS_Backups`
+- [x] NFS automount started and NFS accessible
+- [x] Restic key copied from DESK
+- [x] Repositories initialized: `nixosx13aku/home.restic`
+- [x] `home_backup.timer` active (6h interval)
+- [x] Dry-run tested successfully
 
-### Phase 7: LAPTOP_L15 Deployment (PENDING)
-
-**Prerequisites:**
-- LAPTOP_L15 must be on network (192.168.8.92)
-- SSH access: `ssh -A akunito@192.168.8.92`
-
-**Deployment steps:**
-```bash
-# 1. SSH to laptop
-ssh -A akunito@192.168.8.92
-
-# 2. Pull latest changes
-cd ~/.dotfiles && git pull
-
-# 3. Verify build
-nix build .#nixosConfigurations.LAPTOP_L15.config.system.build.toplevel --dry-run --impure
-
-# 4. Rebuild system
-sudo nixos-rebuild switch --flake .#LAPTOP_L15 --impure
-
-# 5. Verify NFS mount
-ls /mnt/NFS_Backups/  # Should trigger automount
-
-# 6. Initialize repositories (if not auto-created)
-~/.dotfiles/scripts/backup-manager.sh --init --target nfs
-
-# 7. Test with dry-run
-~/.dotfiles/scripts/backup-manager.sh --auto --target nfs --job home --dry-run
-
-# 8. Verify timers
-systemctl list-timers | grep backup
-
-# 9. Check status
-~/.dotfiles/scripts/backup-manager.sh --status
-```
-
-**Expected results:**
-- NFS mount at `/mnt/NFS_Backups` (automount working)
-- Directories: `nixolaptopaku/home.restic` created
-- Timers: `home_backup.timer` (6h interval)
-- Status: home_nfs initialized, vps_nfs shows "No backups" (VPS backup only runs from DESK)
+### Phase 8: Automount Persistence Fix ✅
+- [x] Fixed `system/hardware/nfs_client.nix`: added `wantedBy = ["multi-user.target"]` to all automount entries
+- [x] Previously automount units were `linked` but not `enabled`, causing them to be `inactive (dead)` after reboot
+- [x] Fix applies to all profiles using NFS (DESK, LAPTOP_X13, etc.)
+- [x] Takes effect after next `nixos-rebuild switch`
 
 ---
 
@@ -214,8 +185,10 @@ systemctl list-timers | grep backup
 ---
 
 ## Next Session Checklist
-- [ ] Deploy to LAPTOP_L15
-- [ ] Verify both machines backup successfully
+- [x] Deploy to LAPTOP_X13
+- [x] Fix automount persistence (wantedBy multi-user.target)
+- [x] Verify both machines backup successfully
+- [ ] Rebuild DESK and LAPTOP_X13 to apply automount persistence fix
 - [ ] Monitor first automated backup runs
 - [ ] Test USB backup workflow (when pendrive available)
 - [ ] Consider: Add monitoring alerts for backup failures

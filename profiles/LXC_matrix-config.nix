@@ -199,12 +199,22 @@ in
 
       # SSH config for cross-node access (Claude bot uses these)
       Host desk
-        HostName 192.168.8.50
+        HostName 192.168.8.96
+        User akunito
+        ForwardAgent yes
+
+      Host desk-bond
+        HostName 192.168.8.97
         User akunito
         ForwardAgent yes
 
       Host laptop
-        HostName 192.168.8.51
+        HostName 192.168.8.92
+        User akunito
+        ForwardAgent yes
+
+      Host laptop-alt
+        HostName 192.168.8.93
         User akunito
         ForwardAgent yes
 

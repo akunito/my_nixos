@@ -141,6 +141,7 @@
     # Service defaults
     havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant
     fail2banEnable = true; # Can disable for systems behind firewall
+    fail2banGiteaJailEnable = false; # Enable Gitea jail (requires /var/log/gitea/gitea.log)
 
     # Journald defaults (applied to all profiles)
     journaldMaxUse = "100M";
@@ -224,6 +225,7 @@
     nfsAutoMounts = [ ];
 
     # SSH defaults
+    sshPort = 22; # SSH port (used by sshd, fail2ban, and firewall)
     authorizedKeys = [ ];
     hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
     sshHostsManaged = false; # Enable Nix-managed ~/.ssh/config (shared SSH host definitions)
@@ -330,6 +332,7 @@
     # Homelab feature flags
     cloudflaredEnable = false; # Enable Cloudflare tunnel service (remotely-managed, token at /etc/secrets/cloudflared-token)
     acmeEnable = false; # Enable ACME (Let's Encrypt) certificate management
+    acmeCopyToSharedCerts = true; # Copy certs to /mnt/shared-certs (Proxmox shared mount; disable on VPS)
     acmeEmail = "admin@example.com"; # Email for Let's Encrypt notifications
     grafanaEnable = false; # Enable Grafana/Prometheus monitoring stack (only on monitoring server)
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
@@ -387,6 +390,9 @@
     prometheusTruenasBackupUser = "truenas_admin";  # SSH user for snapshot queries
 
     # === Centralized Database Server (LXC_database) ===
+    # Database bind address: "0.0.0.0" for LAN access (LXC), "127.0.0.1" for local-only (VPS)
+    databaseBindAddress = "0.0.0.0";
+
     # PostgreSQL server configuration
     postgresqlServerEnable = false;
     postgresqlServerPort = 5432;
@@ -587,6 +593,7 @@
 
     # Email notifications for auto-update failures
     notificationOnFailureEnable = false; # Enable email notifications on auto-update failure
+    smtpRelayHost = "192.168.8.89:25"; # Default SMTP relay host:port for Grafana/services
     notificationSmtpHost = ""; # SMTP relay host (e.g., "192.168.8.1")
     notificationSmtpPort = 25; # SMTP port (25 for relay, 587 for submission)
     notificationSmtpAuth = false; # Enable SMTP authentication

@@ -38,13 +38,14 @@ lib.mkIf (systemSettings.acmeEnable or false) {
       webroot = null;
       # Allow docker group to read certs (for NPM)
       group = "docker";
-      # Trigger copy service after renewal
-      reloadServices = [ "acme-copy-certs" ];
+      # Trigger copy service after renewal (only when shared cert copy is enabled)
+      reloadServices = lib.optionals (systemSettings.acmeCopyToSharedCerts or true) [ "acme-copy-certs" ];
     };
   };
 
   # Service to copy certs to shared mount after ACME renewal
-  systemd.services.acme-copy-certs = {
+  # Only enabled on Proxmox LXC where /mnt/shared-certs exists (not on VPS)
+  systemd.services.acme-copy-certs = lib.mkIf (systemSettings.acmeCopyToSharedCerts or true) {
     description = "Copy ACME certs to shared mount";
     serviceConfig = {
       Type = "oneshot";
@@ -52,9 +53,10 @@ lib.mkIf (systemSettings.acmeEnable or false) {
         mkdir -p /mnt/shared-certs
         cp /var/lib/acme/${wildcardLocal}/fullchain.pem /mnt/shared-certs/${wildcardLocal}.crt
         cp /var/lib/acme/${wildcardLocal}/key.pem /mnt/shared-certs/${wildcardLocal}.key
-        # Make certs readable by all LXC containers (local LAN only)
+        # Make cert readable by all LXC containers (local LAN only)
         chmod 644 /mnt/shared-certs/${wildcardLocal}.crt
-        chmod 644 /mnt/shared-certs/${wildcardLocal}.key
+        # Private key: group-readable only (640)
+        chmod 640 /mnt/shared-certs/${wildcardLocal}.key
         # Create default cert symlinks for nginx-proxy (auto-HTTPS for all services)
         ln -sf ${wildcardLocal}.crt /mnt/shared-certs/default.crt
         ln -sf ${wildcardLocal}.key /mnt/shared-certs/default.key

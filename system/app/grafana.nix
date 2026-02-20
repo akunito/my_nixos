@@ -91,10 +91,10 @@ in
         enforce_domain = false;
       };
 
-      # SMTP configuration for alerts (uses local postfix relay at pve-290)
+      # SMTP configuration for alerts (uses local postfix relay)
       smtp = {
         enabled = true;
-        host = "192.168.8.89:25";
+        host = systemSettings.smtpRelayHost or "192.168.8.89:25";
         from_address = grafanaAlertsFrom;
         from_name = "Grafana Monitoring";
         skip_verify = true;  # Local relay, no TLS
@@ -387,7 +387,7 @@ in
               # Backup too old (more than 25 hours - allows for daily backup window)
               {
                 alert = "BackupTooOld";
-                expr = ''backup_age_seconds{repo="home"} > 90000'';
+                expr = ''backup_age_seconds{repo=~"home_nfs|home_legacy"} > 90000'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
@@ -398,7 +398,7 @@ in
               # Backup critically old (more than 48 hours)
               {
                 alert = "BackupCriticallyOld";
-                expr = ''backup_age_seconds{repo="home"} > 172800'';
+                expr = ''backup_age_seconds{repo=~"home_nfs|home_legacy"} > 172800'';
                 "for" = "1h";
                 labels.severity = "critical";
                 annotations = {

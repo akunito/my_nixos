@@ -30,6 +30,7 @@ let
     databases = systemSettings.postgresqlServerDatabases or [];
     users = systemSettings.postgresqlServerUsers or [];
     extraAuth = systemSettings.postgresqlServerAuthentication or "";
+    bindAddress = systemSettings.databaseBindAddress or "0.0.0.0";
   };
 
   # Build ensureDatabases list
@@ -47,8 +48,7 @@ lib.mkIf cfg.enable {
     enable = true;
     package = cfg.package;
 
-    # Listen on all interfaces for LAN access
-    enableTCPIP = true;
+    # Listen address is controlled via settings.listen_addresses below
 
     # Create databases
     ensureDatabases = ensureDatabases;
@@ -60,6 +60,7 @@ lib.mkIf cfg.enable {
     settings = {
       # Port setting (moved from top-level to settings)
       port = cfg.port;
+      listen_addresses = lib.mkForce cfg.bindAddress;
 
       # Performance tuning for centralized database server
       shared_buffers = "2GB";

@@ -37,6 +37,10 @@ let
     hourlyEnable = systemSettings.databaseBackupHourlyEnable or false;
     hourlySchedule = systemSettings.databaseBackupHourlySchedule or "*:00:00";
     hourlyRetainCount = systemSettings.databaseBackupHourlyRetainCount or 72;
+    # PostgreSQL package (match the server's package version)
+    package = if (systemSettings.postgresqlServerPackage or null) == null
+              then pkgs.postgresql_17
+              else systemSettings.postgresqlServerPackage;
     # Redis BGSAVE settings
     redisBgsave = systemSettings.redisBgsaveBeforeBackup or false;
     redisBgsaveTimeout = systemSettings.redisBgsaveTimeout or 60;
@@ -101,14 +105,14 @@ let
     # Backup each database
     ${lib.concatMapStrings (db: ''
       echo "Backing up database: ${db}"
-      ${pkgs.sudo}/bin/sudo -u postgres ${pkgs.postgresql_17}/bin/pg_dump \
+      ${pkgs.sudo}/bin/sudo -u postgres ${cfg.package}/bin/pg_dump \
         --port=${toString pgPort} \
         --format=custom \
         --file="$BACKUP_DIR/${db}_$DATE.dump" \
         ${db}
 
       # Also create a plain SQL backup for easy inspection
-      ${pkgs.sudo}/bin/sudo -u postgres ${pkgs.postgresql_17}/bin/pg_dump \
+      ${pkgs.sudo}/bin/sudo -u postgres ${cfg.package}/bin/pg_dump \
         --port=${toString pgPort} \
         --format=plain \
         --file="$BACKUP_DIR/${db}_$DATE.sql" \
@@ -157,7 +161,7 @@ EOF
     # Backup each database (custom format only for speed)
     ${lib.concatMapStrings (db: ''
       echo "Backing up database: ${db}"
-      ${pkgs.sudo}/bin/sudo -u postgres ${pkgs.postgresql_17}/bin/pg_dump \
+      ${pkgs.sudo}/bin/sudo -u postgres ${cfg.package}/bin/pg_dump \
         --port=${toString pgPort} \
         --format=custom \
         --file="$BACKUP_DIR/${db}_$DATE.dump" \

@@ -23,6 +23,7 @@ let
     port = systemSettings.mariadbServerPort or 3306;
     databases = systemSettings.mariadbServerDatabases or [];
     users = systemSettings.mariadbServerUsers or [];
+    bindAddress = systemSettings.databaseBindAddress or "0.0.0.0";
   };
 
   # Build ensureDatabases list
@@ -61,8 +62,8 @@ lib.mkIf cfg.enable {
     # MariaDB configuration
     settings = {
       mysqld = {
-        # Network settings - bind to all interfaces for LAN access
-        bind-address = "0.0.0.0";
+        # Network settings - bind address from systemSettings
+        bind-address = cfg.bindAddress;
         port = cfg.port;
 
         # Performance tuning

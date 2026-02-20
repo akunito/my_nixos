@@ -29,6 +29,7 @@ let
     port = systemSettings.redisServerPort or 6379;
     maxMemory = systemSettings.redisServerMaxMemory or "1gb";
     passwordFile = systemSettings.redisServerPasswordFile or "";
+    bindAddress = systemSettings.databaseBindAddress or "0.0.0.0";
   };
 
 in
@@ -38,8 +39,8 @@ lib.mkIf cfg.enable {
     enable = true;
     port = cfg.port;
 
-    # Bind to all interfaces for LAN access
-    bind = "0.0.0.0";
+    # Bind address from systemSettings
+    bind = cfg.bindAddress;
 
     # Password authentication
     requirePassFile = if cfg.passwordFile != "" then cfg.passwordFile else null;
