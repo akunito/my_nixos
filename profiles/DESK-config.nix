@@ -66,7 +66,7 @@ in
     pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
     # GUI askpass: popup password dialog when sudo has no terminal (e.g., Claude Code)
     sudoAskpassEnable = true;
-    sudoTimestampTimeoutMinutes = 0; # Ask for password on every sudo command
+    sudoTimestampTimeoutMinutes = 180;
 
     # Polkit
     polkitEnable = true;

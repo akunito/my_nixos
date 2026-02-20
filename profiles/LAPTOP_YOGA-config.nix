@@ -36,7 +36,7 @@ in
 
     # GUI askpass: popup password dialog when sudo has no terminal (e.g., Claude Code)
     sudoAskpassEnable = true;
-    sudoTimestampTimeoutMinutes = 0; # Ask for password on every sudo command
+    sudoTimestampTimeoutMinutes = 180;
 
     # SSH agent sudo authentication
     # Allows passwordless sudo when connected via SSH with agent forwarding (-A)
