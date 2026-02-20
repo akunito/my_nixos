@@ -7,7 +7,7 @@ in
   # Enable incoming ssh
   services.openssh = {
     enable = true;
-    openFirewall = true;
+    openFirewall = !(systemSettings.sshVpnOnly or false);
     ports = [ (systemSettings.sshPort or 22) ];
     settings = {
       PasswordAuthentication = false;

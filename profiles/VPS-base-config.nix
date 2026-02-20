@@ -64,6 +64,7 @@ in
 
     # SSH
     sshPort = 56777; # VPN-only SSH (Tailscale/WireGuard trusted interfaces)
+    sshVpnOnly = true; # Don't open SSH port in public firewall (VPN trusted interfaces only)
     sshHardenEnable = true; # SEC-SSH-001/002: strict timeouts, ciphers, auth limits
 
     # SSH keys (same as LXC base)

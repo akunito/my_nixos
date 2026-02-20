@@ -248,6 +248,8 @@
     hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
     sshHostsManaged = false; # Enable Nix-managed ~/.ssh/config (shared SSH host definitions)
 
+    sshVpnOnly = false; # When true, SSH port is NOT opened in public firewall (VPN interfaces only)
+
     # SSH hardening (SEC-SSH-001 + SEC-SSH-002) — stricter settings for public-facing servers
     sshHardenEnable = false; # Enable SSH hardening (MaxAuthTries, ciphers, timeouts)
     sshMaxAuthTries = 3; # Default 6 — reduce brute-force window
