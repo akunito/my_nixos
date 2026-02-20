@@ -103,7 +103,7 @@ in
       { name = "syncthing"; url = "https://syncthing.${secrets.localDomain}"; }
       { name = "calibre"; url = "https://books.${secrets.localDomain}"; }
       { name = "emulators"; url = "https://emulators.${secrets.localDomain}"; }
-      { name = "unifi"; url = "https://192.168.8.206:8443/"; }
+      { name = "unifi"; url = "https://192.168.20.200:8443/"; }
       { name = "grafana"; url = "https://grafana.${secrets.wildcardLocal}"; }
       { name = "prometheus"; url = "https://prometheus.${secrets.wildcardLocal}"; }
 
