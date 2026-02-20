@@ -37,17 +37,33 @@ in
     xboxControllerEnable = false;
     appImageEnable = false;
 
+    # === VPN Services (Phase 1 — Headscale + WireGuard) ===
+    headscaleEnable = true;
+    headscaleDomain = secrets.headscaleDomain; # "headscale.akunito.com"
+    headscalePort = 8080; # Internal; nginx terminates TLS on 443
+    acmeEmail = secrets.acmeEmail; # For Let's Encrypt certificate
+
+    wireguardServerEnable = true;
+    wireguardServerPort = 51820;
+    wireguardServerIp = "172.26.5.155/24";
+    wireguardServerPrivateKeyFile = "/etc/secrets/wireguard/private.key";
+    wireguardServerPeers = [
+      {
+        publicKey = secrets.pfsenseWireguardPubkey;
+        presharedKeyFile = "/etc/secrets/wireguard/psk.key";
+        allowedIPs = [ "192.168.8.0/24" "172.26.5.1/32" ];
+        persistentKeepalive = 25;
+      }
+    ];
+
     # === Homelab Services (enabled incrementally per migration phases) ===
     # postgresqlServerEnable = false;  # Phase 2
     # mariadbServerEnable = false;     # Phase 2
     # redisServerEnable = false;       # Phase 2
     # pgBouncerEnable = false;         # Phase 2
     # cloudflaredEnable = false;       # Phase 2
-    # acmeEnable = false;              # Phase 2
     # grafanaEnable = false;           # Phase 2
     # homelabDockerEnable = false;     # Phase 3
-    # headscaleEnable = false;         # Phase 2
-    # wireguardServerEnable = false;   # Phase 2
 
     # ============================================================================
     # EMAIL NOTIFICATIONS (for future auto-update failures)

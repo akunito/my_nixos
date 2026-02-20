@@ -6,20 +6,24 @@
 # Configuration:
 #   systemSettings.headscaleEnable = true;
 #   systemSettings.headscaleDomain = secrets.headscaleDomain;  # e.g., "headscale.example.com"
-#   systemSettings.headscalePort = 443;
+#   systemSettings.headscalePort = 8080;  # Internal port (nginx handles TLS on 443)
+#   systemSettings.acmeEmail = secrets.acmeEmail;  # For Let's Encrypt certificate
 #
 # After deployment:
 #   1. Import migrated database: cp /tmp/headscale-state-backup.sqlite3 /var/lib/headscale/db.sqlite3
 #   2. Verify: headscale users list
 #   3. Verify: headscale nodes list
 #
+# TLS: nginx reverse proxy with ACME (Let's Encrypt) when headscaleDomain is set.
 # Database: SQLite at /var/lib/headscale/db.sqlite3 (migrated from old VPS Docker Headscale)
 
 { config, lib, pkgs, systemSettings, ... }:
 
 let
   domain = systemSettings.headscaleDomain or "";
-  port = systemSettings.headscalePort or 443;
+  port = systemSettings.headscalePort or 8080;
+  acmeEmail = systemSettings.acmeEmail or "admin@example.com";
+  hasDomain = domain != "";
 in
 lib.mkIf (systemSettings.headscaleEnable or false) {
   services.headscale = {
@@ -69,8 +73,28 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
     };
   };
 
-  # Firewall — allow Headscale port
-  networking.firewall.allowedTCPPorts = [ port ];
+  # === TLS termination via nginx + ACME (when domain is configured) ===
+  services.nginx = lib.mkIf hasDomain {
+    enable = true;
+    recommendedProxySettings = true;
+    recommendedTlsSettings = true;
+    virtualHosts.${domain} = {
+      forceSSL = true;
+      enableACME = true;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:${toString port}";
+        proxyWebsockets = true;
+      };
+    };
+  };
+
+  security.acme = lib.mkIf hasDomain {
+    acceptTerms = true;
+    defaults.email = acmeEmail;
+  };
+
+  # Firewall — port 80 (ACME challenge) + 443 (HTTPS) when nginx is active, otherwise raw port
+  networking.firewall.allowedTCPPorts = if hasDomain then [ 80 443 ] else [ port ];
 
   # Headplane (web UI) — DISABLED for now (not tested, security not reviewed)
   # Use CLI only: headscale users list, headscale nodes list, headscale routes list

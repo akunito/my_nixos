@@ -646,7 +646,7 @@
     # ============================================================================
     headscaleEnable = false; # Enable Headscale coordination server (VPS only)
     headscaleDomain = ""; # Public domain for Headscale (e.g., "headscale.example.com")
-    headscalePort = 443; # Headscale listen port
+    headscalePort = 8080; # Internal port (nginx handles TLS on 443)
     wireguardServerEnable = false; # Enable WireGuard point-to-point backup tunnel (VPS <-> pfSense)
     wireguardServerPort = 51820; # WireGuard listen port
     wireguardServerIp = "172.26.5.155/24"; # WireGuard tunnel IP
