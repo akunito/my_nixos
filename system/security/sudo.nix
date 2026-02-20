@@ -26,6 +26,16 @@
     authorizedKeysFiles = systemSettings.sshAgentSudoAuthorizedKeysFiles or [ "/etc/ssh/authorized_keys.d/%u" ];
   };
 
+  # GUI askpass for non-TTY sudo invocations (e.g., Claude Code)
+  # When sudo has no terminal, it automatically uses SUDO_ASKPASS to show a GUI dialog
+  environment.systemPackages = lib.mkIf (systemSettings.sudoAskpassEnable or false) [
+    pkgs.lxqt.lxqt-openssh-askpass
+  ];
+
+  environment.variables = lib.mkIf (systemSettings.sudoAskpassEnable or false) {
+    SUDO_ASKPASS = "${pkgs.lxqt.lxqt-openssh-askpass}/bin/lxqt-openssh-askpass";
+  };
+
   # security.doas.enable = systemSettings.doasEnable;
   # security.doas.extraRules = [{
   #   users = [ "${userSettings.username}" ];

@@ -64,8 +64,9 @@ in
     # Security
     fuseAllowOther = true;
     pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
-    # Sudo UX: keep sudo authentication cached longer (minutes)
-    sudoTimestampTimeoutMinutes = 180;
+    # GUI askpass: popup password dialog when sudo has no terminal (e.g., Claude Code)
+    sudoAskpassEnable = true;
+    sudoTimestampTimeoutMinutes = 0; # Ask for password on every sudo command
 
     # Polkit
     polkitEnable = true;

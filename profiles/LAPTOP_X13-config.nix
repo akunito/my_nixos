@@ -24,7 +24,9 @@ in
     # Security
     fuseAllowOther = false;
     pkiCertificates = [ ];
-    sudoTimestampTimeoutMinutes = 180;
+    # GUI askpass: popup password dialog when sudo has no terminal (e.g., Claude Code)
+    sudoAskpassEnable = true;
+    sudoTimestampTimeoutMinutes = 0; # Ask for password on every sudo command
 
     # SSH agent sudo authentication
     # Allows passwordless sudo when connected via SSH with agent forwarding (-A)
