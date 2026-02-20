@@ -60,7 +60,7 @@ in
 
     # === Remote Targets for Prometheus Scraping ===
     prometheusRemoteTargets = [
-      { name = "lxc_home";       host = "192.168.8.80";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "truenas";        host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; }  # TrueNAS (replaces LXC_HOME)
       { name = "lxc_proxy";      host = "192.168.8.102"; nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_plane";      host = "192.168.8.86";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_liftcraft";  host = "192.168.8.87";  nodePort = 9100; cadvisorPort = 9092; }
@@ -74,10 +74,11 @@ in
 
     # === Application Metrics (Exportarr for *arr stack + Database exporters) ===
     prometheusAppTargets = [
-      { name = "sonarr";     host = "192.168.8.80";  port = 9707; }
-      { name = "radarr";     host = "192.168.8.80";  port = 9708; }
-      { name = "prowlarr";   host = "192.168.8.80";  port = 9709; }
-      { name = "bazarr";     host = "192.168.8.80";  port = 9710; }
+      # *arr exporters disabled until exportarr containers are deployed on TrueNAS
+      # { name = "sonarr";     host = "192.168.8.200"; port = 9707; }
+      # { name = "radarr";     host = "192.168.8.200"; port = 9708; }
+      # { name = "prowlarr";   host = "192.168.8.200"; port = 9709; }
+      # { name = "bazarr";     host = "192.168.8.200"; port = 9710; }
       # Centralized database exporters (LXC_database)
       { name = "postgresql"; host = "192.168.8.103"; port = 9187; }
       { name = "mariadb";    host = "192.168.8.103"; port = 9104; }
