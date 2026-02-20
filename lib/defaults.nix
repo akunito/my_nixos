@@ -237,6 +237,13 @@
     hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
     sshHostsManaged = false; # Enable Nix-managed ~/.ssh/config (shared SSH host definitions)
 
+    # SSH hardening (SEC-SSH-001 + SEC-SSH-002) — stricter settings for public-facing servers
+    sshHardenEnable = false; # Enable SSH hardening (MaxAuthTries, ciphers, timeouts)
+    sshMaxAuthTries = 3; # Default 6 — reduce brute-force window
+    sshLoginGraceTime = 30; # Default 120s — reduce idle pre-auth connection window
+    sshClientAliveInterval = 300; # Disconnect idle sessions after interval × count
+    sshClientAliveCountMax = 3; # 300s × 3 = 15min idle timeout
+
     # Printer defaults
     servicePrinting = false;
     networkPrinters = false;
@@ -638,8 +645,15 @@
     # VPS-SPECIFIC FLAGS
     # ============================================================================
     headscaleEnable = false; # Enable Headscale coordination server (VPS only)
+    headscaleDomain = ""; # Public domain for Headscale (e.g., "headscale.example.com")
+    headscalePort = 443; # Headscale listen port
     wireguardServerEnable = false; # Enable WireGuard point-to-point backup tunnel (VPS <-> pfSense)
+    wireguardServerPort = 51820; # WireGuard listen port
+    wireguardServerIp = "172.26.5.155/24"; # WireGuard tunnel IP
+    wireguardServerPrivateKeyFile = "/etc/secrets/wireguard/private.key"; # Path to WG private key
+    wireguardServerPeers = [ ]; # List of WG peers: [{ publicKey, allowedIPs, persistentKeepalive? }]
     vpsBackupSyncEnable = false; # Enable rsync database/nextcloud backups to TrueNAS over Tailscale
+    egressAuditEnable = false; # Enable daily outbound connection audit (SEC-AUDIT-04)
 
     # ============================================================================
     # DARWIN (macOS) SETTINGS

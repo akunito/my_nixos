@@ -45,7 +45,10 @@
   ++ lib.optional (systemSettings.redisServerEnable or false) ../../system/app/redis-server.nix
   ++ lib.optional ((systemSettings.postgresqlBackupEnable or false) || (systemSettings.mariadbBackupEnable or false)) ../../system/app/database-backup.nix
   ++ lib.optional ((systemSettings.postgresqlServerEnable or false) || (systemSettings.mariadbServerEnable or false) || (systemSettings.redisServerEnable or false)) ../../system/app/database-secrets.nix
-  ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix;
+  ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix
+  ++ lib.optional (systemSettings.headscaleEnable or false) ../../system/app/headscale.nix
+  ++ lib.optional (systemSettings.wireguardServerEnable or false) ../../system/security/wireguard-server.nix
+  ++ lib.optional (systemSettings.egressAuditEnable or false) ../../system/security/egress-audit.nix;
 
   # ==========================================================================
   # Boot — real bootloader (not LXC)

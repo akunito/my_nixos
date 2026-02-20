@@ -65,6 +65,7 @@ in
 
     # SSH
     sshPort = 22; # Will change to 56777 after Tailscale is verified
+    sshHardenEnable = true; # SEC-SSH-001/002: strict timeouts, ciphers, auth limits
 
     # SSH keys (same as LXC base)
     authorizedKeys = [
@@ -75,6 +76,9 @@ in
     # Prometheus Exporters (enabled by default for monitoring)
     prometheusExporterEnable = true;
     prometheusExporterCadvisorEnable = true;
+
+    # Egress monitoring (SEC-AUDIT-04: visibility from day one)
+    egressAuditEnable = true;
 
     # NFS client (disabled on VPS)
     nfsClientEnable = false;

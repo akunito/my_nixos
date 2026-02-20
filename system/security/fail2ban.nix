@@ -1,4 +1,4 @@
-{ systemSettings, ... }:
+{ lib, systemSettings, ... }:
 
 let
   sshPort = toString (systemSettings.sshPort or 22);
@@ -21,6 +21,10 @@ in
       "192.168.8.97/32"           # DESK (bond)
       "192.168.8.92/32"           # LAPTOP_X13 (primary)
       "192.168.8.93/32"           # LAPTOP_X13 (alt)
+    ]
+    # Tailscale CGNAT range — prevent VPN connections from being banned
+    ++ lib.optionals (systemSettings.tailscaleEnable or false) [
+      "100.64.0.0/10"             # Tailscale CGNAT range
     ];
     bantime = "24h";            # Ban duration
     bantime-increment = {
