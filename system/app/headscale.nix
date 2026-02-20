@@ -17,7 +17,7 @@
 # TLS: nginx reverse proxy with ACME (Let's Encrypt) when headscaleDomain is set.
 # Database: SQLite at /var/lib/headscale/db.sqlite3 (migrated from old VPS Docker Headscale)
 
-{ config, lib, pkgs, systemSettings, ... }:
+{ config, lib, pkgs, pkgs-unstable, systemSettings, ... }:
 
 let
   domain = systemSettings.headscaleDomain or "";
@@ -28,6 +28,7 @@ in
 lib.mkIf (systemSettings.headscaleEnable or false) {
   services.headscale = {
     enable = true;
+    package = pkgs-unstable.headscale; # v0.28.0 — must match old VPS DB schema
     port = port;
 
     settings = {
@@ -100,5 +101,5 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
   # Use CLI only: headscale users list, headscale nodes list, headscale routes list
   # Re-evaluate Headplane after VPN migration is stable and security-audited
 
-  environment.systemPackages = [ pkgs.headscale ];
+  environment.systemPackages = [ pkgs-unstable.headscale ];
 }
