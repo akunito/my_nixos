@@ -72,8 +72,9 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
   # Firewall — allow Headscale port
   networking.firewall.allowedTCPPorts = [ port ];
 
-  # Headplane (web UI) — deployed as Docker container (Phase 2+)
-  # For now, use CLI: headscale users list, headscale nodes list, etc.
+  # Headplane (web UI) — DISABLED for now (not tested, security not reviewed)
+  # Use CLI only: headscale users list, headscale nodes list, headscale routes list
+  # Re-evaluate Headplane after VPN migration is stable and security-audited
 
   environment.systemPackages = [ pkgs.headscale ];
 }

@@ -10,6 +10,7 @@
 #   systemSettings.wireguardServerPrivateKeyFile = "/etc/secrets/wireguard/private.key";
 #   systemSettings.wireguardServerPeers = [{
 #     publicKey = "...";           # pfSense WG public key (from secrets)
+#     presharedKeyFile = "/etc/secrets/wireguard/psk.key";  # Optional PresharedKey file
 #     allowedIPs = [ "192.168.8.0/24" "172.26.5.1/32" ];
 #     persistentKeepalive = 25;
 #   }];
@@ -41,6 +42,9 @@ lib.mkIf (systemSettings.wireguardServerEnable or false) {
       publicKey = peer.publicKey;
       allowedIPs = peer.allowedIPs or [ "192.168.8.0/24" ];
       persistentKeepalive = peer.persistentKeepalive or 25;
+    }
+    // lib.optionalAttrs (peer ? presharedKeyFile) {
+      presharedKeyFile = peer.presharedKeyFile;
     }) peers;
   };
 

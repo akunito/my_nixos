@@ -651,7 +651,7 @@
     wireguardServerPort = 51820; # WireGuard listen port
     wireguardServerIp = "172.26.5.155/24"; # WireGuard tunnel IP
     wireguardServerPrivateKeyFile = "/etc/secrets/wireguard/private.key"; # Path to WG private key
-    wireguardServerPeers = [ ]; # List of WG peers: [{ publicKey, allowedIPs, persistentKeepalive? }]
+    wireguardServerPeers = [ ]; # List of WG peers: [{ publicKey, presharedKeyFile?, allowedIPs, persistentKeepalive? }]
     vpsBackupSyncEnable = false; # Enable rsync database/nextcloud backups to TrueNAS over Tailscale
     egressAuditEnable = false; # Enable daily outbound connection audit (SEC-AUDIT-04)
 
