@@ -213,6 +213,14 @@ in
     # disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
     # disk7_fsType = "ext4";
     # disk7_options = [ "nofail" "x-systemd.device-timeout=5s" "noatime" "nodiratime" ];
+    disk8_enabled = true;
+    disk8_name = "/mnt/NFS_Backups";
+    disk8_device = "192.168.20.200:/mnt/hddpool/workstation_backups";
+    disk8_fsType = "nfs4";
+    disk8_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
 
     # NFS client
     nfsClientEnable = true;

@@ -223,6 +223,14 @@
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
+    disk8_enabled = false;
+    disk8_name = "/mnt/NFS_Backups";
+    disk8_device = "192.168.20.200:/mnt/hddpool/workstation_backups";
+    disk8_fsType = "nfs4";
+    disk8_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
 
     # NFS defaults
     nfsServerEnable = false;
