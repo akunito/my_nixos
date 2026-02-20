@@ -126,6 +126,13 @@
     wifiPowerSave = true;
     resolvedEnable = false;
 
+    # VPS static networking (only used by VPS profiles, defaults are no-ops)
+    vpsStaticIp = "";
+    vpsStaticCidr = "";
+    vpsGateway = "";
+    vpsSubnetMask = "";
+    vpsInterface = "ens3";
+
     # Network bonding (LACP link aggregation)
     networkBondingEnable = false; # Enable network bonding (requires switch LAG configuration)
     networkBondingMode = "802.3ad"; # Bonding mode: "802.3ad" (LACP), "balance-rr", "active-backup", etc.

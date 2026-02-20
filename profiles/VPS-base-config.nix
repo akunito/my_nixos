@@ -42,6 +42,13 @@ in
     resolvedEnable = true;
     nameServers = [ "1.1.1.1" "9.9.9.9" ]; # Cloudflare + Quad9 (NOT pfSense)
 
+    # VPS static networking (from encrypted secrets)
+    vpsStaticIp = secrets.vpsNetcupIp;
+    vpsStaticCidr = "${secrets.vpsNetcupIp}/22";
+    vpsGateway = secrets.vpsNetcupGateway;
+    vpsSubnetMask = "255.255.252.0";               # /22
+    vpsInterface = "ens3";
+
     # Firewall — minimal surface for public-facing VPS
     # 22: SSH (temporary, will change to 56777 after Tailscale verified)
     # 2222: initrd SSH for LUKS unlock (must remain public)

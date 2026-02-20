@@ -22,6 +22,7 @@ set -euo pipefail
 # === Paths ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="${SCRIPT_DIR}/deploy-servers.conf"
+CONFIG_PRIVATE="${SCRIPT_DIR}/deploy-servers-private.conf"
 DOTFILES_DIR="/home/akunito/.dotfiles"
 
 # === Nerd Font Icons (UTF-8 glyphs, JetBrainsMono Nerd Font) ===
@@ -82,21 +83,10 @@ VISIBLE_COUNT=0
 # Config parser
 # ============================================================================
 
-load_config() {
+_parse_config_file() {
+  # Append entries from a single config file (does NOT reset arrays)
   local file="$1"
-  local current_group=-1
-
-  GROUP_NAMES=()
-  GROUP_ICONS=()
-  GROUP_START=()
-  GROUP_COUNT=()
-  SRV_PROFILE=()
-  SRV_USER=()
-  SRV_IPS=()
-  SRV_DESC=()
-  SRV_CMD=()
-  SRV_TIMEOUT=()
-  SRV_GROUP=()
+  local current_group=${2:--1}
 
   while IFS= read -r line || [[ -n "$line" ]]; do
     # Skip comments and blank lines
@@ -127,6 +117,30 @@ load_config() {
       fi
     fi
   done < "$file"
+}
+
+load_config() {
+  local file="$1"
+
+  GROUP_NAMES=()
+  GROUP_ICONS=()
+  GROUP_START=()
+  GROUP_COUNT=()
+  SRV_PROFILE=()
+  SRV_USER=()
+  SRV_IPS=()
+  SRV_DESC=()
+  SRV_CMD=()
+  SRV_TIMEOUT=()
+  SRV_GROUP=()
+
+  # Load main config
+  _parse_config_file "$file"
+
+  # Load encrypted private config (contains entries with public IPs)
+  if [[ -f "$CONFIG_PRIVATE" ]]; then
+    _parse_config_file "$CONFIG_PRIVATE"
+  fi
 
   SERVER_COUNT=${#SRV_PROFILE[@]}
 }

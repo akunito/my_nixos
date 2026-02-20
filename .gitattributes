@@ -19,6 +19,7 @@ flake.lock merge=ours
 # Secrets directory - all .nix and .txt files encrypted
 secrets/*.nix filter=git-crypt diff=git-crypt
 secrets/*.txt filter=git-crypt diff=git-crypt
+secrets/vps/** filter=git-crypt diff=git-crypt
 
 # Exclude template files from encryption (they're public)
 secrets/*.template !filter !diff
@@ -39,3 +40,6 @@ docs/komi/infrastructure/KOMI_INFRASTRUCTURE_INTERNAL.md filter=git-crypt-komi d
 
 # TrueNAS migration doc contains iSCSI CHAP credentials
 docs/akunito/infrastructure/truenas-migration-complete.md filter=git-crypt diff=git-crypt
+
+# Deploy config with public IPs (VPS entries)
+deploy-servers-private.conf filter=git-crypt diff=git-crypt

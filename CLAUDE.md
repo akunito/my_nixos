@@ -314,7 +314,7 @@ This command updates the Home Manager configuration and applies changes without 
 | LXC_proxy | proxy (192.168.8.102) | akunito | main |
 | LXC_matrix | matrix (192.168.8.104) | akunito | main |
 | LXC_tailscale | tailscale (192.168.8.105) | akunito | main |
-| VPS_PROD | vps-prod (159.195.32.28) | akunito | main |
+| VPS_PROD | vps-prod (see secrets.vpsNetcupIp) | akunito | main |
 | VMHOME | nixosLabaku (192.168.8.80) | akunito | main |
 | KOMI_LXC_database | komi-database (192.168.1.10) | admin | komi |
 | KOMI_LXC_mailer | komi-mailer (192.168.1.11) | admin | komi |
@@ -340,7 +340,7 @@ ssh -A akunito@192.168.8.96  # DESK
 ssh -A akunito@192.168.8.80  # LXC_HOME
 ssh -A akunito@192.168.8.103 # LXC_database
 ssh -A root@192.168.8.82     # Proxmox
-ssh -A akunito@159.195.32.28 # VPS_PROD
+ssh -A akunito@<VPS_IP>      # VPS_PROD (IP in secrets.vpsNetcupIp)
 ```
 
 ### Multi-user file scoping

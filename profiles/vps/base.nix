@@ -77,7 +77,7 @@
 
   # Static IP for initrd network (LUKS unlock phase)
   boot.kernelParams = [
-    "ip=159.195.32.28::159.195.32.1:255.255.252.0::ens3:none"
+    "ip=${systemSettings.vpsStaticIp}::${systemSettings.vpsGateway}:${systemSettings.vpsSubnetMask}::${systemSettings.vpsInterface}:none"
   ];
 
   # ==========================================================================
@@ -163,10 +163,10 @@
   networking.useNetworkd = lib.mkDefault systemSettings.useNetworkd;
   systemd.network.enable = lib.mkDefault systemSettings.useNetworkd;
 
-  systemd.network.networks."10-ens3" = {
-    matchConfig.Name = "ens3";
-    address = [ "159.195.32.28/22" ];
-    gateway = [ "159.195.32.1" ];
+  systemd.network.networks."10-${systemSettings.vpsInterface}" = {
+    matchConfig.Name = systemSettings.vpsInterface;
+    address = [ systemSettings.vpsStaticCidr ];
+    gateway = [ systemSettings.vpsGateway ];
     dns = systemSettings.nameServers;
   };
 
