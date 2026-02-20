@@ -48,8 +48,9 @@ lib.mkIf (systemSettings.wireguardServerEnable or false) {
     }) peers;
   };
 
-  # Firewall — allow WireGuard port
+  # Firewall — allow WireGuard port + trust WG interface for SSH/services
   networking.firewall.allowedUDPPorts = [ port ];
+  networking.firewall.trustedInterfaces = [ "wg0" ];
 
   # IP forwarding for routing through the tunnel
   boot.kernel.sysctl = {

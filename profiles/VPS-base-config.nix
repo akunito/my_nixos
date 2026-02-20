@@ -50,13 +50,12 @@ in
     vpsInterface = "ens3";
 
     # Firewall — minimal surface for public-facing VPS
-    # 22: SSH (temporary, will change to 56777 after Tailscale verified)
+    # SSH is VPN-only (accessible via tailscale0 and wg0 trusted interfaces)
     # 2222: initrd SSH for LUKS unlock (must remain public)
     # 41641: Tailscale direct connections
     # 51820: WireGuard backup tunnel
     allowedTCPPorts = [
-      22    # SSH (will change to 56777 after Tailscale)
-      2222  # initrd SSH (LUKS unlock)
+      2222  # initrd SSH (LUKS unlock — must remain public)
     ];
     allowedUDPPorts = [
       41641 # Tailscale direct connections
@@ -64,7 +63,7 @@ in
     ];
 
     # SSH
-    sshPort = 22; # Will change to 56777 after Tailscale is verified
+    sshPort = 56777; # VPN-only SSH (Tailscale/WireGuard trusted interfaces)
     sshHardenEnable = true; # SEC-SSH-001/002: strict timeouts, ciphers, auth limits
 
     # SSH keys (same as LXC base)
