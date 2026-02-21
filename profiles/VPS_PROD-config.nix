@@ -176,15 +176,12 @@ in
     notificationToEmail = secrets.alertEmail;
 
     # Remote targets for Prometheus scraping (via WireGuard tunnel to LAN)
+    # NOTE: lxc_plane, lxc_liftcraft, lxc_portfolio, lxc_matrix, lxc_tailscale
+    #       removed — services migrated to VPS (Phase 3B)
     prometheusRemoteTargets = [
       { name = "lxc_proxy";      host = "192.168.8.102"; nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_plane";      host = "192.168.8.86";  nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_liftcraft";  host = "192.168.8.87";  nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_portfolio";  host = "192.168.8.88";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_mailer";     host = "192.168.8.89";  nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_database";   host = "192.168.8.103"; nodePort = 9100; cadvisorPort = null; }
-      { name = "lxc_matrix";     host = "192.168.8.104"; nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_tailscale";  host = "192.168.8.105"; nodePort = 9100; cadvisorPort = null; }
     ];
 
     # Application metrics (local VPS databases + remote LXC databases)
@@ -197,8 +194,8 @@ in
       { name = "lxc_postgresql"; host = "192.168.8.103"; port = 9187; }
       { name = "lxc_mariadb";    host = "192.168.8.103"; port = 9104; }
       { name = "lxc_redis";      host = "192.168.8.103"; port = 9121; }
-      # Matrix Synapse metrics
-      { name = "synapse";        host = "192.168.8.104"; port = 9000; }
+      # Matrix Synapse metrics (now on VPS Docker)
+      { name = "synapse";        host = "127.0.0.1"; port = 9000; }
     ];
 
     # Blackbox exporter (HTTP probes for public services)
