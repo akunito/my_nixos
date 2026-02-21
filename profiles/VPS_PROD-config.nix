@@ -152,8 +152,62 @@ in
     # === Cloudflare Tunnel (Phase 2b — ENABLED) ===
     cloudflaredEnable = true;
 
+    # === Monitoring Stack (Phase 2d — ENABLED) ===
+    grafanaEnable = true;
+    grafanaLocalSslEnable = false; # No /mnt/shared-certs/ on VPS — use Cloudflare Tunnel for HTTPS
+    # Disable standalone node exporter — grafana.nix runs its own on port 9091
+    prometheusExporterEnable = false;
+    prometheusExporterCadvisorEnable = false;
+
+    # Domain settings (passed to grafana.nix for nginx virtual hosts)
+    wildcardLocal = secrets.wildcardLocal;
+    publicDomain = secrets.publicDomain;
+    grafanaAlertsFrom = secrets.grafanaAlertsFrom;
+
+    # Remote targets for Prometheus scraping (via WireGuard tunnel to LAN)
+    prometheusRemoteTargets = [
+      { name = "lxc_proxy";      host = "192.168.8.102"; nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_plane";      host = "192.168.8.86";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_liftcraft";  host = "192.168.8.87";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_portfolio";  host = "192.168.8.88";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_mailer";     host = "192.168.8.89";  nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_database";   host = "192.168.8.103"; nodePort = 9100; cadvisorPort = null; }
+      { name = "lxc_matrix";     host = "192.168.8.104"; nodePort = 9100; cadvisorPort = 9092; }
+      { name = "lxc_tailscale";  host = "192.168.8.105"; nodePort = 9100; cadvisorPort = null; }
+    ];
+
+    # Application metrics (local VPS databases + remote LXC databases)
+    prometheusAppTargets = [
+      # VPS local database exporters
+      { name = "vps_postgresql"; host = "127.0.0.1"; port = 9187; }
+      { name = "vps_mariadb";    host = "127.0.0.1"; port = 9104; }
+      { name = "vps_redis";      host = "127.0.0.1"; port = 9121; }
+      # LXC_database exporters (via WireGuard)
+      { name = "lxc_postgresql"; host = "192.168.8.103"; port = 9187; }
+      { name = "lxc_mariadb";    host = "192.168.8.103"; port = 9104; }
+      { name = "lxc_redis";      host = "192.168.8.103"; port = 9121; }
+      # Matrix Synapse metrics
+      { name = "synapse";        host = "192.168.8.104"; port = 9000; }
+    ];
+
+    # Blackbox exporter (HTTP probes for public services)
+    prometheusBlackboxEnable = true;
+    prometheusBlackboxHttpTargets = [
+      { name = "plane"; url = "https://plane.${secrets.publicDomain}"; }
+      { name = "portfolio"; url = "https://${secrets.publicDomain}"; }
+      { name = "leftyworkout_test"; url = "https://leftyworkout-test.${secrets.publicDomain}"; }
+      { name = "grafana"; url = "https://grafana.${secrets.publicDomain}"; }
+      { name = "matrix"; url = "https://matrix.${secrets.publicDomain}/_matrix/client/versions"; }
+      { name = "element"; url = "https://element.${secrets.publicDomain}"; }
+      { name = "headscale"; url = "https://${secrets.headscaleDomain}"; }
+    ];
+    prometheusBlackboxIcmpTargets = [
+      { name = "pfsense"; host = "192.168.8.1"; }
+      { name = "pve"; host = "192.168.8.82"; }
+      { name = "wan"; host = "1.1.1.1"; }
+    ];
+
     # === Homelab Services (enabled incrementally per migration phases) ===
-    # grafanaEnable = false;           # Phase 2d
     # homelabDockerEnable = false;     # Phase 3
 
     # ============================================================================

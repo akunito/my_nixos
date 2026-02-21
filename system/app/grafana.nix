@@ -26,6 +26,7 @@ let
   alertEmail = systemSettings.notificationToEmail or "admin@example.com";
   remoteTargets = systemSettings.prometheusRemoteTargets or [];
   appTargets = systemSettings.prometheusAppTargets or [];
+  localSslEnable = systemSettings.grafanaLocalSslEnable or true;
 
   # Build scrape configs for remote Node Exporters
   remoteNodeScrapeConfigs = map (target: {
@@ -789,49 +790,54 @@ in
     defaultHTTPListenPort = 80;
     defaultSSLListenPort = 443;
 
-    virtualHosts = {
-      # Grafana - main monitoring UI (local access with SSL)
-      "${config.services.grafana.settings.server.domain}" = {
-        onlySSL = true;
-        sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
-        sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
-        sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
-          proxyWebsockets = true;
-          recommendedProxySettings = true;
-        };
-      };
-
+    virtualHosts = lib.mkMerge [
       # Grafana - public access via Cloudflare Tunnel (HTTP - TLS terminated by Cloudflare)
-      "grafana.${publicDomain}" = {
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
-          proxyWebsockets = true;
-          recommendedProxySettings = true;
+      {
+        "grafana.${publicDomain}" = {
+          locations."/" = {
+            proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
+            proxyWebsockets = true;
+            recommendedProxySettings = true;
+          };
         };
-      };
+      }
 
-      # Prometheus - metrics API (protected with basic auth + IP whitelist)
-      "prometheus.${wildcardLocal}" = {
-        onlySSL = true;
-        sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
-        sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
-        sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
-        basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd";
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${toString config.services.prometheus.port}";
-          proxyWebsockets = true;
-          recommendedProxySettings = true;
-          # IP whitelist: Only allow access from local LAN and WireGuard tunnel
-          extraConfig = ''
-            allow 192.168.8.0/24;   # Main LAN
-            allow 172.26.5.0/24;    # WireGuard tunnel
-            allow 127.0.0.1;        # Localhost
-            deny all;
-          '';
+      # Local SSL vhosts (requires shared certs from Proxmox — not available on VPS)
+      (lib.mkIf localSslEnable {
+        # Grafana - main monitoring UI (local access with SSL)
+        "${config.services.grafana.settings.server.domain}" = {
+          onlySSL = true;
+          sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+          sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
+          sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+          locations."/" = {
+            proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
+            proxyWebsockets = true;
+            recommendedProxySettings = true;
+          };
         };
-      };
-    };
+
+        # Prometheus - metrics API (protected with basic auth + IP whitelist)
+        "prometheus.${wildcardLocal}" = {
+          onlySSL = true;
+          sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+          sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
+          sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+          basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd";
+          locations."/" = {
+            proxyPass = "http://127.0.0.1:${toString config.services.prometheus.port}";
+            proxyWebsockets = true;
+            recommendedProxySettings = true;
+            # IP whitelist: Only allow access from local LAN and WireGuard tunnel
+            extraConfig = ''
+              allow 192.168.8.0/24;   # Main LAN
+              allow 172.26.5.0/24;    # WireGuard tunnel
+              allow 127.0.0.1;        # Localhost
+              deny all;
+            '';
+          };
+        };
+      })
+    ];
   };
 }

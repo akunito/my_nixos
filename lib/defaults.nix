@@ -362,6 +362,7 @@
     acmeCopyToSharedCerts = true; # Copy certs to /mnt/shared-certs (Proxmox shared mount; disable on VPS)
     acmeEmail = "admin@example.com"; # Email for Let's Encrypt notifications
     grafanaEnable = false; # Enable Grafana/Prometheus monitoring stack (only on monitoring server)
+    grafanaLocalSslEnable = true; # Enable local SSL vhosts (requires /mnt/shared-certs/ from Proxmox)
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
 
     # === Control Panel (Web-based infrastructure management) ===
