@@ -28,12 +28,17 @@
 
   # GUI askpass for non-TTY sudo invocations (e.g., Claude Code)
   # When sudo has no terminal, it automatically uses SUDO_ASKPASS to show a GUI dialog
+  # Uses zenity --password for a proper GTK password entry dialog (Wayland-native)
   environment.systemPackages = lib.mkIf (systemSettings.sudoAskpassEnable or false) [
-    pkgs.lxqt.lxqt-openssh-askpass
+    pkgs.zenity
   ];
 
   environment.variables = lib.mkIf (systemSettings.sudoAskpassEnable or false) {
-    SUDO_ASKPASS = "${pkgs.lxqt.lxqt-openssh-askpass}/bin/lxqt-openssh-askpass";
+    SUDO_ASKPASS = let
+      askpass-script = pkgs.writeShellScript "sudo-askpass" ''
+        ${pkgs.zenity}/bin/zenity --password --title="sudo: Authentication Required"
+      '';
+    in "${askpass-script}";
   };
 
   # security.doas.enable = systemSettings.doasEnable;
