@@ -223,6 +223,9 @@ in
       { name = "plane"; path = "plane"; }
       { name = "matrix"; path = "matrix"; }
       { name = "freshrss"; path = "freshrss"; }
+      { name = "nextcloud"; path = "nextcloud"; }
+      { name = "syncthing"; path = "syncthing"; }
+      { name = "obsidian-remote"; path = "obsidian-remote"; }
     ];
 
     # ============================================================================
