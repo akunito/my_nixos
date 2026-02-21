@@ -212,8 +212,8 @@ in
       { name = "wan"; host = "1.1.1.1"; }
     ];
 
-    # === Docker Services (Phase 3 — ENABLED) ===
-    homelabDockerEnable = true;
+    # === Docker Services (Phase 3 — infrastructure ready, stacks added in Part B) ===
+    homelabDockerEnable = false; # Enable when first stack is added in Part B
     homelabDockerStacks = [
       # Add stacks as services are migrated in Part B
     ];
