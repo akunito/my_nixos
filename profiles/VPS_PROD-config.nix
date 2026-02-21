@@ -4,7 +4,10 @@
 # Extends VPS-base-config.nix
 #
 # Phase 1: Tailscale, Headscale, WireGuard (complete)
-# Phase 2a: PostgreSQL, MariaDB, Redis, PgBouncer (empty, ready to receive data)
+# Phase 2a: PostgreSQL, MariaDB, Redis, PgBouncer (complete — empty, ready to receive data)
+# Phase 2b: Cloudflared tunnel (complete)
+# Phase 2c: Email notifications via LXC_mailer (complete)
+# Phase 2d: Grafana + Prometheus monitoring (complete)
 
 let
   base = import ./VPS-base-config.nix;
@@ -212,9 +215,14 @@ in
     # homelabDockerEnable = false;     # Phase 3
 
     # ============================================================================
-    # EMAIL NOTIFICATIONS (for future auto-update failures)
+    # EMAIL NOTIFICATIONS (Phase 2c — via LXC_mailer Postfix relay)
     # ============================================================================
-    notificationOnFailureEnable = false; # Enable after SMTP relay is set up
+    notificationOnFailureEnable = true;
+    notificationSmtpHost = "192.168.8.89"; # LXC_mailer via WireGuard
+    notificationSmtpPort = 25;
+    notificationSmtpAuth = false;
+    notificationSmtpTls = false;
+    notificationFromEmail = secrets.notificationFrom;
   };
 
   userSettings = base.userSettings // {
