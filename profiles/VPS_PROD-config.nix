@@ -69,6 +69,12 @@ in
       }
     ];
 
+    # === Docker subnet access for rootless Docker containers ===
+    postgresqlServerAuthentication = ''
+      host    all             all             10.0.0.0/8              scram-sha-256
+      host    all             all             172.16.0.0/12           scram-sha-256
+    '';
+
     # === Database Credentials (from git-crypt encrypted secrets/domains.nix) ===
     dbPlanePassword = secrets.dbPlanePassword;
     dbLiftcraftPassword = secrets.dbLiftcraftPassword;

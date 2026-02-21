@@ -120,8 +120,10 @@ in
     # Server environment
     serverEnv = "PROD";
 
-    # Database bind address — local-only on VPS (no LAN access needed)
-    databaseBindAddress = "127.0.0.1";
+    # Database bind address — 0.0.0.0 so rootless Docker containers can reach databases
+    # Firewall blocks external access; only local/Docker traffic can reach database ports
+    databaseBindAddress = "0.0.0.0";
+    databaseFirewallOpen = false; # Don't open database ports in public firewall
 
     # ACME — no Proxmox shared mount on VPS
     acmeCopyToSharedCerts = false;

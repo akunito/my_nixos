@@ -116,6 +116,7 @@ lib.mkIf cfg.enable {
     $PSQL -c "GRANT SELECT ON pg_shadow TO pgbouncer;" || true
   '');
 
-  # Open firewall port
-  networking.firewall.allowedTCPPorts = [ cfg.port ];
+  # Open firewall port (gated by databaseFirewallOpen — false on VPS where only local access needed)
+  networking.firewall.allowedTCPPorts =
+    lib.optionals (systemSettings.databaseFirewallOpen or true) [ cfg.port ];
 }

@@ -420,6 +420,8 @@
     # === Centralized Database Server (LXC_database) ===
     # Database bind address: "0.0.0.0" for LAN access (LXC), "127.0.0.1" for local-only (VPS)
     databaseBindAddress = "0.0.0.0";
+    # Open database ports in firewall (true for LXC/LAN access, false for VPS where only local access needed)
+    databaseFirewallOpen = true;
 
     # PostgreSQL server configuration
     postgresqlServerEnable = false;

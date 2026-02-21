@@ -138,9 +138,10 @@ lib.mkIf cfg.enable {
     dataSourceName = "user=postgres host=/run/postgresql dbname=postgres";
   };
 
-  # Open firewall ports
-  networking.firewall.allowedTCPPorts = [
-    cfg.port
-  ] ++ lib.optional (systemSettings.prometheusPostgresExporterEnable or false)
-    (systemSettings.prometheusPostgresExporterPort or 9187);
+  # Open firewall ports (gated by databaseFirewallOpen — false on VPS where only local access needed)
+  networking.firewall.allowedTCPPorts =
+    lib.optionals (systemSettings.databaseFirewallOpen or true) [
+      cfg.port
+    ] ++ lib.optionals ((systemSettings.databaseFirewallOpen or true) && (systemSettings.prometheusPostgresExporterEnable or false))
+      [ (systemSettings.prometheusPostgresExporterPort or 9187) ];
 }

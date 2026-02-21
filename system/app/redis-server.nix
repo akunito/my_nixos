@@ -103,9 +103,10 @@ lib.mkIf cfg.enable {
     );
   };
 
-  # Open firewall ports
-  networking.firewall.allowedTCPPorts = [
-    cfg.port
-  ] ++ lib.optional (systemSettings.prometheusRedisExporterEnable or false)
-    (systemSettings.prometheusRedisExporterPort or 9121);
+  # Open firewall ports (gated by databaseFirewallOpen — false on VPS where only local access needed)
+  networking.firewall.allowedTCPPorts =
+    lib.optionals (systemSettings.databaseFirewallOpen or true) [
+      cfg.port
+    ] ++ lib.optionals ((systemSettings.databaseFirewallOpen or true) && (systemSettings.prometheusRedisExporterEnable or false))
+      [ (systemSettings.prometheusRedisExporterPort or 9121) ];
 }
