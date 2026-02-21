@@ -163,6 +163,7 @@ in
     wildcardLocal = secrets.wildcardLocal;
     publicDomain = secrets.publicDomain;
     grafanaAlertsFrom = secrets.grafanaAlertsFrom;
+    notificationToEmail = secrets.alertEmail;
 
     # Remote targets for Prometheus scraping (via WireGuard tunnel to LAN)
     prometheusRemoteTargets = [
