@@ -222,6 +222,7 @@ in
     homelabDockerEnable = true;
     homelabDockerStacks = [
       { name = "portfolio"; path = "portfolio"; }
+      { name = "liftcraft"; path = "liftcraft"; }
     ];
 
     # ============================================================================
