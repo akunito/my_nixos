@@ -686,9 +686,27 @@ generate_hardware_config() {
 
     run_script_to_stop_drives() {
         echo -e "Attempting to stop external drives ..."
-        $SUDO_CMD $SCRIPT_DIR/stop_external_drives.sh 
+        $SUDO_CMD $SCRIPT_DIR/stop_external_drives.sh
         echo "Generating hardware configuration file..."
         $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+        # Clean up autofs/NFS entries captured from running automounts.
+        # These mounts are managed by drives.nix + nfs_client.nix; having them
+        # in hardware-configuration.nix causes duplicate attribute errors.
+        local HW_CONFIG="$SCRIPT_DIR/system/hardware-configuration.nix"
+        if grep -q 'fsType = "autofs"' "$HW_CONFIG" 2>/dev/null; then
+            echo "Cleaning up autofs/NFS entries from hardware-configuration.nix..."
+            python3 -c "
+import re, sys
+with open('$HW_CONFIG', 'r') as f:
+    content = f.read()
+# Remove fileSystems blocks with autofs or nfs/nfs4 type (managed by drives.nix)
+content = re.sub(
+    r'\n  fileSystems\.\"[^\"]+\" =\n    \{ device = \"[^\"]*\";\n      fsType = \"(?:autofs|nfs4?)\";\n    \};\n',
+    '\n', content)
+with open('$HW_CONFIG', 'w') as f:
+    f.write(content)
+" 2>/dev/null || echo "Warning: Could not clean hardware-configuration.nix (python3 not available)"
+        fi
     }
 
     # Ask user if they want to generate hardware-configuration.nix
