@@ -223,6 +223,7 @@ in
     homelabDockerStacks = [
       { name = "portfolio"; path = "portfolio"; }
       { name = "liftcraft"; path = "liftcraft"; }
+      { name = "plane"; path = "plane"; }
     ];
 
     # ============================================================================
