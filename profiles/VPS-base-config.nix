@@ -102,6 +102,8 @@ in
         iproute2
         openssl
         traceroute
+        restic
+        rsync
       ];
 
     # Swap file (VPS has real disk, enable swap as safety net)

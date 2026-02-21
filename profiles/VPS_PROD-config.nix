@@ -64,7 +64,7 @@ in
       {
         publicKey = secrets.pfsenseWireguardPubkey;
         presharedKeyFile = "/etc/secrets/wireguard/psk.key";
-        allowedIPs = [ "192.168.8.0/24" "172.26.5.1/32" ];
+        allowedIPs = [ "192.168.8.0/24" "192.168.20.0/24" "172.26.5.1/32" ];
         persistentKeepalive = 25;
       }
     ];
