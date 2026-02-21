@@ -222,6 +222,7 @@ in
       { name = "liftcraft"; path = "liftcraft"; }
       { name = "plane"; path = "plane"; }
       { name = "matrix"; path = "matrix"; }
+      { name = "freshrss"; path = "freshrss"; }
     ];
 
     # ============================================================================
