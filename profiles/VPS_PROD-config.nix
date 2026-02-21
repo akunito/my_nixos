@@ -159,6 +159,21 @@ in
     prometheusRedisExporterEnable = true;
     prometheusRedisExporterPort = 9121;
 
+    # === SNMP Exporter (pfSense monitoring — migrated from LXC_monitoring) ===
+    prometheusSnmpExporterEnable = true;
+    prometheusSnmpCommunity = secrets.snmpCommunity;
+    prometheusSnmpv3User = secrets.snmpv3User;
+    prometheusSnmpv3AuthPass = secrets.snmpv3AuthPass;
+    prometheusSnmpv3PrivPass = secrets.snmpv3PrivPass;
+    prometheusSnmpTargets = [
+      { name = "pfsense"; host = "192.168.8.1"; module = "pfsense"; }
+    ];
+
+    # === Graphite Exporter (TrueNAS metrics — migrated from LXC_monitoring) ===
+    prometheusGraphiteEnable = true;
+    prometheusGraphitePort = 9109;
+    prometheusGraphiteInputPort = 2003;
+
     # === Cloudflare Tunnel (Phase 2b — ENABLED) ===
     cloudflaredEnable = true;
 
@@ -176,25 +191,21 @@ in
     notificationToEmail = secrets.alertEmail;
 
     # Remote targets for Prometheus scraping (via WireGuard tunnel to LAN)
-    # NOTE: lxc_plane, lxc_liftcraft, lxc_portfolio, lxc_matrix, lxc_tailscale
-    #       removed — services migrated to VPS (Phase 3B)
+    # NOTE: All LXC containers being decommissioned (Phase 4g)
+    # lxc_database already shut down; lxc_proxy/lxc_mailer pending shutdown
+    # TrueNAS monitored via Graphite exporter (port 2003), not node_exporter
     prometheusRemoteTargets = [
       { name = "lxc_proxy";      host = "192.168.8.102"; nodePort = 9100; cadvisorPort = 9092; }
       { name = "lxc_mailer";     host = "192.168.8.89";  nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_database";   host = "192.168.8.103"; nodePort = 9100; cadvisorPort = null; }
     ];
 
-    # Application metrics (local VPS databases + remote LXC databases)
+    # Application metrics (local VPS databases only — LXC_database decommissioned)
     prometheusAppTargets = [
       # VPS local database exporters
       { name = "vps_postgresql"; host = "127.0.0.1"; port = 9187; }
       { name = "vps_mariadb";    host = "127.0.0.1"; port = 9104; }
       { name = "vps_redis";      host = "127.0.0.1"; port = 9121; }
-      # LXC_database exporters (via WireGuard)
-      { name = "lxc_postgresql"; host = "192.168.8.103"; port = 9187; }
-      { name = "lxc_mariadb";    host = "192.168.8.103"; port = 9104; }
-      { name = "lxc_redis";      host = "192.168.8.103"; port = 9121; }
-      # Matrix Synapse metrics (now on VPS Docker)
+      # Matrix Synapse metrics (VPS Docker)
       { name = "synapse";        host = "127.0.0.1"; port = 9000; }
     ];
 
@@ -212,6 +223,7 @@ in
     prometheusBlackboxIcmpTargets = [
       { name = "pfsense"; host = "192.168.8.1"; }
       { name = "pve"; host = "192.168.8.82"; }
+      { name = "truenas"; host = "192.168.20.200"; }
       { name = "wan"; host = "1.1.1.1"; }
     ];
 
