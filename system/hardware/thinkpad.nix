@@ -39,6 +39,11 @@ in
   boot.initrd.availableKernelModules = lib.mkIf systemSettings.thinkpadEnable [
     "i8042" "atkbd"
   ];
-  boot.kernelModules = lib.mkIf systemSettings.thinkpadEnable [ "psmouse" ];
+  boot.kernelModules = lib.mkIf systemSettings.thinkpadEnable [ "psmouse" "thinkpad_acpi" ];
   boot.kernelParams = lib.mkIf systemSettings.thinkpadEnable [ "i8042.reset=1" "i8042.nomux=1" ];
+
+  # Enable fan control via thinkpad_acpi so the OS can set fan levels when needed
+  boot.extraModprobeConfig = lib.mkIf systemSettings.thinkpadEnable ''
+    options thinkpad_acpi fan_control=1
+  '';
 }
