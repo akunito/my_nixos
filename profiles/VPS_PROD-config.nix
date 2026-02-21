@@ -191,13 +191,9 @@ in
     notificationToEmail = secrets.alertEmail;
 
     # Remote targets for Prometheus scraping (via WireGuard tunnel to LAN)
-    # NOTE: All LXC containers being decommissioned (Phase 4g)
-    # lxc_database already shut down; lxc_proxy/lxc_mailer pending shutdown
+    # NOTE: All LXC containers decommissioned (Phase 4g complete)
     # TrueNAS monitored via Graphite exporter (port 2003), not node_exporter
-    prometheusRemoteTargets = [
-      { name = "lxc_proxy";      host = "192.168.8.102"; nodePort = 9100; cadvisorPort = 9092; }
-      { name = "lxc_mailer";     host = "192.168.8.89";  nodePort = 9100; cadvisorPort = 9092; }
-    ];
+    prometheusRemoteTargets = [];
 
     # Application metrics (local VPS databases only — LXC_database decommissioned)
     prometheusAppTargets = [
