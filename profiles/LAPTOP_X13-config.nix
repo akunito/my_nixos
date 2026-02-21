@@ -52,6 +52,40 @@ in
     allowedTCPPorts = [ ];
     allowedUDPPorts = [ ];
 
+    # NFS nofail safety net (prevents boot hang when TrueNAS is unreachable)
+    disk3_enabled = true;
+    disk3_name = "/mnt/NFS_media";
+    disk3_device = "192.168.20.200:/mnt/hddpool/media";
+    disk3_fsType = "nfs4";
+    disk3_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
+    disk4_enabled = true;
+    disk4_name = "/mnt/NFS_emulators";
+    disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
+    disk4_fsType = "nfs4";
+    disk4_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
+    disk5_enabled = true;
+    disk5_name = "/mnt/NFS_library";
+    disk5_device = "192.168.20.200:/mnt/ssdpool/library";
+    disk5_fsType = "nfs4";
+    disk5_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
+    disk8_enabled = true;
+    disk8_name = "/mnt/NFS_Backups";
+    disk8_device = "192.168.20.200:/mnt/hddpool/workstation_backups";
+    disk8_fsType = "nfs4";
+    disk8_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
+
     # NFS client
     nfsClientEnable = true;
     nfsMounts = [

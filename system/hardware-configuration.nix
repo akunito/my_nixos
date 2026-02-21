@@ -66,6 +66,11 @@
       fsType = "autofs";
     };
 
+  fileSystems."/mnt/DATA" =
+    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
+      fsType = "ntfs3";
+    };
+
   swapDevices =
     [ { device = "/dev/mapper/luks-swap"; }
     ];

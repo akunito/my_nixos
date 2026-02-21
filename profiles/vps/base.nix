@@ -236,6 +236,12 @@
     };
   };
 
+  # Allow rootless Docker containers to reach host services (databases, Redis, Postfix)
+  # via slirp4netns gateway at 10.0.2.2 (default is --disable-host-loopback for security)
+  systemd.user.services.docker = lib.mkIf (userSettings.dockerRootlessEnable or false) {
+    environment.DOCKERD_ROOTLESS_ROOTLESSKIT_DISABLE_HOST_LOOPBACK = "false";
+  };
+
   # ==========================================================================
   # Journald limits
   # ==========================================================================
