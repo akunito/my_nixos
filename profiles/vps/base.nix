@@ -231,6 +231,8 @@
     daemon.settings = {
       "log-driver" = "json-file";
       "log-opts" = { "max-size" = "10m"; "max-file" = "3"; };
+      # Explicit DNS — slirp4netns can't reach systemd-resolved stub at 127.0.0.53
+      "dns" = [ "1.1.1.1" "9.9.9.9" ];
     };
   };
 
