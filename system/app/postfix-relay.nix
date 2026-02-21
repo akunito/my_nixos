@@ -9,6 +9,10 @@
 
 { pkgs, lib, systemSettings, config, ... }:
 
+let
+  saslPasswdFile = pkgs.writeText "sasl_passwd"
+    "[mail.smtp2go.com]:587 ${systemSettings.postfixRelaySmtpUser}:${systemSettings.postfixRelaySmtpPassword}";
+in
 lib.mkIf (systemSettings.postfixRelayEnable or false) {
   services.postfix = {
     enable = true;
@@ -18,15 +22,10 @@ lib.mkIf (systemSettings.postfixRelayEnable or false) {
       mynetworks = [ "127.0.0.0/8" "[::1]/128" "172.16.0.0/12" "10.0.0.0/8" ];
       relayhost = [ "[mail.smtp2go.com]:587" ];
       smtp_sasl_auth_enable = "yes";
-      smtp_sasl_password_maps = "texthash:/etc/postfix/sasl_passwd";
+      smtp_sasl_password_maps = "hash:/etc/postfix/sasl_passwd";
       smtp_sasl_security_options = "noanonymous";
       smtp_tls_security_level = "encrypt";
     };
-  };
-
-  # Deploy SMTP2GO credentials
-  environment.etc."postfix/sasl_passwd" = {
-    text = "[mail.smtp2go.com]:587 ${systemSettings.postfixRelaySmtpUser}:${systemSettings.postfixRelaySmtpPassword}";
-    mode = "0600";
+    mapFiles.sasl_passwd = saslPasswdFile;
   };
 }
