@@ -25,14 +25,14 @@ in
     # Local/VNC sessions require password (see Phase 1 SEC notes)
     sshAgentSudoEnable = true;
     sshAgentSudoAuthorizedKeysFiles = [ "/etc/ssh/authorized_keys.d/%u" ];
-    wheelNeedsPassword = true; # Require password from console/VNC
-    sudoNOPASSWD = false; # No global NOPASSWD rules
+    wheelNeedsPassword = false; # VPS is headless — only accessed via SSH
+    sudoNOPASSWD = true; # Passwordless sudo (VPS is SSH-only, no local console)
 
-    # Sudo commands (minimal - SSH agent handles passwordless sudo)
+    # Sudo commands — NOPASSWD since VPS is headless
     sudoCommands = [
       {
         command = "ALL";
-        options = [ "SETENV" ]; # No NOPASSWD - handled by pam_ssh_agent_auth
+        options = [ "NOPASSWD" "SETENV" ];
       }
     ];
 
