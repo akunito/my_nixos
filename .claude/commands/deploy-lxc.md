@@ -11,7 +11,10 @@ Skill for deploying NixOS configurations to LXC containers and other machines.
 
 **Flag rules for deploy-servers.conf:**
 - **LXC containers**: Use `-d -h` (skip docker + skip hardware — no docker overlay issues, no hardware changes)
+- **VPS (VPS_PROD)**: Use `-d` only (skip docker). Do NOT use `-h` — hardware-config MUST be regenerated on VPS
 - **Laptops/Desktops**: Use NO skip flags — hardware-config MUST be regenerated on physical machines
+
+**ONLY `-h` may be used for LXC containers** — all other machine types (VPS, laptops, desktops) MUST regenerate hardware-config.
 
 ## Usage
 
@@ -37,9 +40,11 @@ git push origin main
 ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -d -h"
 ```
 
-## Important: LXC vs Physical Machines
+## Important: LXC vs VPS vs Physical Machines
 
-**LXC containers** have passwordless sudo configured (see `sudoCommands` in `profiles/LXC-base-config.nix`), so they can be deployed non-interactively via SSH.
+**LXC containers** have passwordless sudo configured (see `sudoCommands` in `profiles/LXC-base-config.nix`), so they can be deployed non-interactively via SSH. Use `-d -h` flags.
+
+**VPS (VPS_PROD)** has passwordless sudo via SSH agent forwarding. Can be deployed non-interactively via SSH. Use `-d` flag only — do NOT use `-h` because hardware-config MUST be regenerated on VPS (it's a real machine, not an LXC container).
 
 **Physical machines (laptops/desktops)** require sudo password authentication. These CANNOT be deployed non-interactively from Claude Code. The user must run the deployment manually:
 
@@ -49,6 +54,14 @@ cd ~/.dotfiles
 git fetch origin && git reset --hard origin/main
 ./install.sh ~/.dotfiles <PROFILE> -s -u
 ```
+
+## VPS Reference
+
+| Profile | IPs (VPN) | SSH Port | User | Description |
+|---------|-----------|----------|------|-------------|
+| VPS_PROD | 100.64.0.6 (TS), 172.26.5.155 (WG) | 56777 | akunito | Netcup RS 4000 G12 (Nuremberg) |
+
+**VPS SSH is VPN-only** — connect via Tailscale or WireGuard, never via public IP.
 
 ## Laptop/Desktop Reference
 
@@ -112,6 +125,14 @@ ssh -A akunito@192.168.1.104 "cd ~/.dotfiles && git fetch origin && git reset --
 
 ```bash
 ssh -A akunito@192.168.1.105 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_tailscale -s -u -d -h"
+```
+
+### Deploy to VPS_PROD (via Tailscale or WireGuard — NO -h flag!)
+
+```bash
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
+# Or via WireGuard:
+ssh -A -p 56777 akunito@172.26.5.155 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
 ```
 
 ### Deploy to LAPTOP_A (Manual - requires password)
