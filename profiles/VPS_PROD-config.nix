@@ -149,8 +149,10 @@ in
     prometheusRedisExporterEnable = true;
     prometheusRedisExporterPort = 9121;
 
+    # === Cloudflare Tunnel (Phase 2b — ENABLED) ===
+    cloudflaredEnable = true;
+
     # === Homelab Services (enabled incrementally per migration phases) ===
-    # cloudflaredEnable = false;       # Phase 2b
     # grafanaEnable = false;           # Phase 2d
     # homelabDockerEnable = false;     # Phase 3
 
