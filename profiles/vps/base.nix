@@ -48,7 +48,8 @@
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix
   ++ lib.optional (systemSettings.headscaleEnable or false) ../../system/app/headscale.nix
   ++ lib.optional (systemSettings.wireguardServerEnable or false) ../../system/security/wireguard-server.nix
-  ++ lib.optional (systemSettings.egressAuditEnable or false) ../../system/security/egress-audit.nix;
+  ++ lib.optional (systemSettings.egressAuditEnable or false) ../../system/security/egress-audit.nix
+  ++ lib.optional (systemSettings.postfixRelayEnable or false) ../../system/app/postfix-relay.nix;
 
   # ==========================================================================
   # Boot — real bootloader (not LXC)

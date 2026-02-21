@@ -8,6 +8,7 @@
 # Phase 2b: Cloudflared tunnel (complete)
 # Phase 2c: Email notifications via LXC_mailer (complete)
 # Phase 2d: Grafana + Prometheus monitoring (complete)
+# Phase 3a: Postfix relay + Docker infrastructure (complete)
 
 let
   base = import ./VPS-base-config.nix;
@@ -211,14 +212,25 @@ in
       { name = "wan"; host = "1.1.1.1"; }
     ];
 
-    # === Homelab Services (enabled incrementally per migration phases) ===
-    # homelabDockerEnable = false;     # Phase 3
+    # === Docker Services (Phase 3 — ENABLED) ===
+    homelabDockerEnable = true;
+    homelabDockerStacks = [
+      # Add stacks as services are migrated in Part B
+    ];
 
     # ============================================================================
-    # EMAIL NOTIFICATIONS (Phase 2c — via LXC_mailer Postfix relay)
+    # NATIVE POSTFIX RELAY (Phase 3 — via SMTP2GO, replaces LXC_mailer dependency)
+    # ============================================================================
+    postfixRelayEnable = true;
+    postfixRelaySmtpUser = secrets.smtp2goUser;
+    postfixRelaySmtpPassword = secrets.smtp2goPassword;
+
+    # ============================================================================
+    # EMAIL NOTIFICATIONS (Phase 3 — local Postfix relay)
     # ============================================================================
     notificationOnFailureEnable = true;
-    notificationSmtpHost = "192.168.8.89"; # LXC_mailer via WireGuard
+    smtpRelayHost = "localhost:25"; # Grafana uses local Postfix
+    notificationSmtpHost = "127.0.0.1"; # msmtp uses local Postfix
     notificationSmtpPort = 25;
     notificationSmtpAuth = false;
     notificationSmtpTls = false;

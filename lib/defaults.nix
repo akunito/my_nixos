@@ -613,6 +613,7 @@
 
     # Homelab docker stacks - start docker-compose stacks on boot
     homelabDockerEnable = false; # Enable systemd service for homelab docker stacks
+    homelabDockerStacks = []; # Configurable stacks: [{ name = "portfolio"; path = "portfolio"; }]
 
     # pfSense backup configuration
     pfsenseBackupEnable = false; # Enable daily pfSense config backup
@@ -668,6 +669,9 @@
     wireguardServerPeers = [ ]; # List of WG peers: [{ publicKey, presharedKeyFile?, allowedIPs, persistentKeepalive? }]
     vpsBackupSyncEnable = false; # Enable rsync database/nextcloud backups to TrueNAS over Tailscale
     egressAuditEnable = false; # Enable daily outbound connection audit (SEC-AUDIT-04)
+    postfixRelayEnable = false; # Native Postfix relay via SMTP2GO (VPS only)
+    postfixRelaySmtpUser = ""; # SMTP2GO username for Postfix relay
+    postfixRelaySmtpPassword = ""; # SMTP2GO password for Postfix relay
 
     # ============================================================================
     # DARWIN (macOS) SETTINGS
