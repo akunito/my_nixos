@@ -118,6 +118,11 @@
 
     nfsBackupEnable = false; # Documentation flag - actual NFS mount configured via nfsMounts
 
+    # VPS Restic backup to TrueNAS (via SFTP over Tailscale)
+    vpsResticBackupEnable = false;
+    vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
+    vpsResticTargetUser = "truenas_admin";
+
     # Network defaults
     networkManager = true;
     useNetworkd = false; # Use systemd-networkd instead of NetworkManager (for headless servers)

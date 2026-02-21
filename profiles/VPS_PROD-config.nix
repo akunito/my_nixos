@@ -257,6 +257,15 @@ in
     notificationSmtpAuth = false;
     notificationSmtpTls = false;
     notificationFromEmail = secrets.notificationFrom;
+
+    # ============================================================================
+    # RESTIC BACKUP TO TRUENAS (Phase 3f — via Tailscale SFTP)
+    # ============================================================================
+    # Repos: databases (03:00), services (03:30), nextcloud (04:00)
+    # Target: TrueNAS hddpool/vps-backups via Tailscale (100.64.0.9)
+    vpsResticBackupEnable = true;
+    vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
+    vpsResticTargetUser = "truenas_admin";
   };
 
   userSettings = base.userSettings // {
