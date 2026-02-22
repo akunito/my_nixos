@@ -35,7 +35,10 @@ in
 
         # === Media ===
         "spotify"
-        "openemu"       # Game emulator
+
+        # === Gaming ===
+        "steam"         # Steam client (native macOS app)
+        "openemu"       # Retro console emulator (NES, SNES, N64, PS1, etc.)
 
         # === Utilities ===
         "kitty"
@@ -46,12 +49,10 @@ in
       ];
 
       # CLI tools via Homebrew formulas
+      # Note: Docker/Colima managed via Nix (user/app/colima/colima.nix)
       homebrewFormulas = [
-        "docker"
-        "docker-completion"  # Docker shell completion
-        "docker-compose"
-        "colima"
-        "lima"               # Linux VMs (colima backend)
+        "docker-completion"  # Docker shell completion (Nix version has issues on macOS)
+        "displayplacer"      # Programmatic display resolution control (used by game-mode.sh)
       ];
     };
 
@@ -72,6 +73,9 @@ in
     # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
     # ========================================================================
     userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm, openai-whisper)
+
+    # === Gaming ===
+    gamesEnable = true; # macOS gaming packages (Whisky, Pegasus, controller tools, open-source games)
 
     # === Theme ===
     theme = "ashes"; # Warm, muted base16 palette matching DESK
@@ -130,5 +134,17 @@ in
       bindkey '\e[F' end-of-line
       bindkey '\e[3~' delete-char
     '';
+
+    # === Colima (Docker VM) ===
+    # Settings for the macOS Docker replacement
+    # Edit and run: darwin-rebuild switch --flake ~/.dotfiles#MACBOOK-KOMI
+    # Then: colima-restart
+    colima = {
+      cpu = 4;          # CPUs for VM
+      memory = 8;       # Memory in GiB (increased for jl-engine)
+      disk = 100;       # Disk size in GiB
+      vmType = "vz";    # vz (Virtualization.framework) or qemu
+      mountType = "virtiofs";  # virtiofs (fast) or sshfs (compatible)
+    };
   };
 }

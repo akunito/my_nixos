@@ -40,6 +40,9 @@
 
     # === Package Modules (Conditional) ===
     ../../user/packages/user-ai-pkgs.nix
+
+    # === Docker/Container Runtime (macOS) ===
+    ../../user/app/colima/colima.nix
   ]
   # === Conditional Imports ===
   # Note: starship is already conditionally imported by sh.nix based on userSettings.starshipEnable
@@ -48,6 +51,7 @@
   ++ lib.optional (userSettings.hammerspoonEnable == true) ../../user/app/hammerspoon/hammerspoon.nix
   ++ lib.optional (systemSettings.stylixEnable == true) ../../user/style/stylix.nix
   ++ lib.optional (systemSettings.developmentToolsEnable == true) ../../user/app/development/development-komi.nix
+  ++ lib.optional (userSettings.gamesEnable == true) ../../user/app/games/games-darwin.nix
   ;
 
   # Home packages from profile config
