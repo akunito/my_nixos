@@ -41,5 +41,8 @@ docs/komi/infrastructure/KOMI_INFRASTRUCTURE_INTERNAL.md filter=git-crypt-komi d
 # TrueNAS migration doc contains iSCSI CHAP credentials
 docs/akunito/infrastructure/truenas-migration-complete.md filter=git-crypt diff=git-crypt
 
+# Media stack documentation (service details, provider accounts, API structure)
+docs/akunito/infrastructure/services/media-stack.md filter=git-crypt diff=git-crypt
+
 # Deploy config with public IPs (VPS entries)
 deploy-servers-private.conf filter=git-crypt diff=git-crypt
