@@ -215,6 +215,7 @@ in
       { name = "matrix"; url = "https://matrix.${secrets.publicDomain}/_matrix/client/versions"; }
       { name = "element"; url = "https://element.${secrets.publicDomain}"; }
       { name = "headscale"; url = "https://${secrets.headscaleDomain}"; }
+      { name = "status"; url = "https://status.${secrets.publicDomain}"; }
     ];
     prometheusBlackboxIcmpTargets = [
       { name = "pfsense"; host = "192.168.8.1"; }
@@ -234,6 +235,7 @@ in
       { name = "nextcloud"; path = "nextcloud"; }
       { name = "syncthing"; path = "syncthing"; }
       { name = "obsidian-remote"; path = "obsidian-remote"; }
+      { name = "uptime-kuma"; path = "uptime-kuma"; }
     ];
 
     # ============================================================================
