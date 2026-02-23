@@ -73,8 +73,8 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
         level = "info";
       };
 
-      # Policy — ACL file (optional, deploy later)
-      # policy.path = "/etc/headscale/acl.hujson";
+      # Policy — ACL managed via database (headscale policy set --file)
+      policy.mode = "database";
     };
   };
 

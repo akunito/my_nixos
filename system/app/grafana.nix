@@ -342,6 +342,39 @@ in
                   description = "Node exporter on {{ $labels.instance }} has been unreachable for more than 2 minutes";
                 };
               }
+              # Host memory critically low (<1GB available)
+              {
+                alert = "HostMemoryCritical";
+                expr = ''node_memory_MemAvailable_bytes < 1073741824'';
+                "for" = "5m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} memory critically low";
+                  description = "Host {{ $labels.instance }} has less than 1GB available memory";
+                };
+              }
+              # TLS certificate expiring soon (<7 days)
+              {
+                alert = "TLSCertExpiringSoon";
+                expr = ''probe_ssl_earliest_cert_expiry - time() < 7 * 86400'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "TLS certificate expiring soon for {{ $labels.instance }}";
+                  description = "Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}";
+                };
+              }
+              # TLS certificate expiring critical (<3 days)
+              {
+                alert = "TLSCertExpiryCritical";
+                expr = ''probe_ssl_earliest_cert_expiry - time() < 3 * 86400'';
+                "for" = "30m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "TLS certificate expiring in <3 days for {{ $labels.instance }}";
+                  description = "Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }} - immediate renewal needed";
+                };
+              }
             ];
           }
           {
