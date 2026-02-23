@@ -147,12 +147,12 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
     enable = true;
     port = webPort;                    # Prometheus scrape port (HTTP)
     graphitePort = graphiteInputPort;  # Graphite input from TrueNAS
-    openFirewall = true;               # Opens web port only
+    openFirewall = false;              # VPN interfaces (wg0, tailscale0) accept all traffic; no need to open publicly
     mappingSettings = mappingConfig;
   };
 
-  # Explicitly open graphite input port (openFirewall only opens web port)
-  networking.firewall.allowedTCPPorts = [ graphiteInputPort ];
+  # Graphite input port NOT opened publicly — TrueNAS connects via Tailscale/WireGuard,
+  # and VPN interfaces (wg0, tailscale0) already accept all traffic in the NixOS firewall.
 
   # Prometheus scrape config for graphite exporter
   services.prometheus.scrapeConfigs = [

@@ -49,6 +49,10 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
       # DNS configuration pushed to clients
       dns = {
         nameservers.global = [ "1.1.1.1" "9.9.9.9" ];
+        # Split DNS: resolve local domains via pfSense (reachable via Tailscale subnet routing)
+        # Remote clients can access *.local.akunito.com when outside the home LAN
+        nameservers.split = systemSettings.headscaleDnsSplit or {};
+        search_domains = systemSettings.headscaleDnsSearchDomains or [];
         magic_dns = true;
         base_domain = "tailnet.${domain}";
       };
