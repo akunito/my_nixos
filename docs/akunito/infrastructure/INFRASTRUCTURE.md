@@ -685,6 +685,55 @@ Key file locations per container for SSH troubleshooting:
 
 ---
 
+## VPS Disaster Recovery (Netcup RS 4000 G12)
+
+### VNC Console Access
+
+1. Log into **Server Control Panel (SCP)** at `https://servercontrolpanel.de`
+2. Select server → Click **"Screen"** (left nav) → VNC console opens in popup
+3. Works during GRUB, LUKS passphrase prompt, and rescue mode
+
+### Rescue Mode (Grml Linux)
+
+1. SCP → **Control** → Shutdown (ACPI)
+2. SCP → **Media** → **Rescue System** tab → Toggle "Set boot mode to DVD?" ON → **Activate**
+3. **Write down the rescue root password** (shown on screen)
+4. Start server → boots into Grml rescue environment
+5. Connect via VNC or `ssh root@<VPS-PUBLIC-IP>` (port 22, rescue password)
+6. **CRITICAL**: Deactivate rescue mode in SCP before normal reboot, or it boots Grml again
+
+### LUKS Unlock (Normal Reboot)
+
+After reboot, VPS halts at LUKS passphrase prompt in initrd:
+```bash
+ssh -p 2222 root@<VPS-PUBLIC-IP>    # initrd SSH
+# Type LUKS passphrase at prompt
+```
+Or type passphrase directly in VNC console.
+
+### Full Recovery from Rescue Mode
+
+```bash
+# 1. Unlock LUKS
+cryptsetup luksOpen /dev/vda2 cryptroot
+
+# 2. Mount filesystems
+mount /dev/mapper/cryptroot /mnt
+mount /dev/vda1 /mnt/boot
+mount --bind /dev /mnt/dev && mount -t proc proc /mnt/proc && mount -t sysfs sys /mnt/sys
+
+# 3. Chroot and fix
+chroot /mnt /bin/sh
+# Roll back: ls /nix/var/nix/profiles/system-*-link
+# Switch: /nix/var/nix/profiles/system-<N>-link/bin/switch-to-configuration switch
+# Reinstall bootloader: NIXOS_INSTALL_BOOTLOADER=1 /nix/var/nix/profiles/system/bin/switch-to-configuration boot
+exit && umount -R /mnt && cryptsetup luksClose cryptroot
+```
+
+Deactivate rescue mode in SCP, then restart.
+
+---
+
 ## Related Documentation
 
 - [pfSense Firewall](./services/pfsense.md) - Gateway, DNS, VPN, and firewall configuration
