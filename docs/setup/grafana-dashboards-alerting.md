@@ -8,9 +8,9 @@ This guide documents how to configure Grafana dashboards and alerting for the ho
 
 ## Prerequisites
 
-- Grafana running on LXC_monitoring (192.168.8.85)
+- Grafana running on VPS (NixOS native service)
 - Prometheus configured as data source
-- SMTP configured in grafana.nix (relay via 192.168.8.89:25)
+- SMTP configured in grafana.nix (VPS Postfix relay on localhost:25)
 
 ---
 
@@ -444,7 +444,7 @@ Same options as Memory Usage panel
 
 ## 7. Verification Commands
 
-Run these on the monitoring server (192.168.8.85) to verify exporters are working:
+Run these on the VPS to verify exporters are working:
 
 ```bash
 # Check Blackbox Exporter
@@ -547,8 +547,8 @@ Dashboards are provisioned from JSON files in the repository. Since `allowUiUpda
    git commit -m "feat: update <dashboard-name> dashboard"
    git push
 
-   # Deploy to monitoring server
-   ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_monitoring --impure"
+   # Deploy to VPS
+   ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
    ```
 
 ### Dashboard File Locations
@@ -563,7 +563,7 @@ Dashboards are provisioned from JSON files in the repository. Since `allowUiUpda
 To export all dashboards from the running Grafana instance:
 
 ```bash
-ssh -A 192.168.8.85
+ssh -A -p 56777 akunito@100.64.0.6
 
 # Set credentials
 GRAFANA_URL="http://localhost:3002"
@@ -593,8 +593,7 @@ When migrating to a new machine:
 
 ## Related Documentation
 
-- [Ubuntu Node Exporter Setup](./ubuntu-node-exporter.md)
-- [Monitoring Stack Overview](../infrastructure/services/monitoring-stack.md)
+- [Monitoring Stack Overview](../akunito/infrastructure/services/monitoring-stack.md)
 - [Grafana Dashboard Reference](./grafana-dashboard-reference.md)
 - [NixOS Monitoring Configuration](../system-modules/README.md)
 - [Prometheus Documentation](https://prometheus.io/docs/)

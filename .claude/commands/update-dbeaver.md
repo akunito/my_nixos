@@ -1,11 +1,11 @@
 # Update DBeaver Configuration
 
-Skill for updating DBeaver database connections to match the centralized LXC_database server configuration.
+Skill for updating DBeaver database connections to match the VPS database server configuration.
 
 ## Purpose
 
 Use this skill to:
-- Add new database connections to DBeaver when databases are added to LXC_database
+- Add new database connections to DBeaver when databases are added to VPS
 - Sync DBeaver configuration with secrets/domains.nix credentials
 - Verify DBeaver can connect to all configured databases
 
@@ -21,9 +21,10 @@ Use this skill to:
 
 ### Source of Truth
 
-- **Database server:** LXC_database (192.168.8.103)
+- **Database server:** VPS (databases run on VPS localhost, accessed via Tailscale)
+- **DBeaver connects to:** 100.64.0.6 (VPS Tailscale IP)
 - **Credentials:** `secrets/domains.nix` (git-crypt encrypted)
-- **Profile configuration:** `profiles/LXC_database-config.nix`
+- **Profile configuration:** `profiles/VPS_PROD-config.nix`
 
 ---
 
@@ -35,12 +36,9 @@ Use this skill to:
 |----------|------|-------------------|
 | plane | plane | dbPlanePassword |
 | rails_database_prod | liftcraft | dbLiftcraftPassword |
-
-### MariaDB Databases (Port 3306)
-
-| Database | User | Password Variable |
-|----------|------|-------------------|
 | nextcloud | nextcloud | dbNextcloudPassword |
+| matrix | matrix | dbMatrixPassword |
+| freshrss | freshrss | dbFreshrssPassword |
 
 ### Redis (Port 6379)
 
@@ -49,6 +47,7 @@ Use this skill to:
 | db0 | Plane | redisServerPassword |
 | db1 | Nextcloud | redisServerPassword |
 | db2 | LiftCraft | redisServerPassword |
+| db4 | Matrix | redisServerPassword |
 
 ---
 
@@ -75,18 +74,18 @@ The DBeaver configuration is at:
 To add a new PostgreSQL database connection, add this to the `connections` object:
 
 ```json
-"postgres-jdbc-lxc-<name>-db": {
+"postgres-jdbc-vps-<name>-db": {
     "provider": "postgresql",
     "driver": "postgres-jdbc",
-    "name": "LXC_database - <Name> (PostgreSQL)",
+    "name": "VPS - <Name> (PostgreSQL)",
     "save-password": true,
-    "folder": "LXC_database",
+    "folder": "VPS",
     "configuration": {
-        "host": "192.168.8.103",
+        "host": "100.64.0.6",
         "port": "5432",
         "database": "<database_name>",
         "user": "<username>",
-        "url": "jdbc:postgresql://192.168.8.103:5432/<database_name>",
+        "url": "jdbc:postgresql://100.64.0.6:5432/<database_name>",
         "configurationType": "MANUAL",
         "type": "dev",
         "closeIdleConnection": true,
@@ -98,51 +97,28 @@ To add a new PostgreSQL database connection, add this to the `connections` objec
 }
 ```
 
-To add a new MariaDB database connection:
-
-```json
-"mariadb-jdbc-lxc-<name>-db": {
-    "provider": "mysql",
-    "driver": "mariaDB",
-    "name": "LXC_database - <Name> (MariaDB)",
-    "save-password": true,
-    "folder": "LXC_database",
-    "configuration": {
-        "host": "192.168.8.103",
-        "port": "3306",
-        "database": "<database_name>",
-        "user": "<username>",
-        "url": "jdbc:mariadb://192.168.8.103:3306/<database_name>",
-        "configurationType": "MANUAL",
-        "type": "dev",
-        "closeIdleConnection": true,
-        "auth-model": "native"
-    }
-}
-```
-
 ### Step 4: Restart DBeaver
 
 After updating the configuration:
 1. Close DBeaver completely
 2. Reopen DBeaver
-3. Navigate to the "LXC_database" folder in the Database Navigator
+3. Navigate to the "VPS" folder in the Database Navigator
 4. Double-click each new connection to test
 5. Enter password when prompted (check "Save password")
 
 ---
 
-## Adding a New Database to LXC_database
+## Adding a New Database to VPS
 
-When adding a new database to the centralized server:
+When adding a new database to the VPS database server:
 
-### 1. Update LXC_database Profile
+### 1. Update VPS_PROD Profile
 
-Edit `profiles/LXC_database-config.nix`:
+Edit `profiles/VPS_PROD-config.nix`:
 
 ```nix
 # Add to postgresqlServerDatabases
-postgresqlServerDatabases = [ "plane" "rails_database_prod" "new_database" ];
+postgresqlServerDatabases = [ "plane" "rails_database_prod" "nextcloud" "matrix" "freshrss" "new_database" ];
 
 # Add user
 postgresqlServerUsers = [
@@ -163,10 +139,11 @@ Edit `secrets/domains.nix`:
 dbNewdbPassword = "generated-secure-password";
 ```
 
-### 3. Deploy to LXC_database
+### 3. Deploy to VPS
 
 ```bash
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_database --impure"
+# IMPORTANT: Commit and push changes first, then deploy via install.sh
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
 ```
 
 ### 4. Update Workstation Profiles
@@ -202,18 +179,14 @@ Run this skill to add the new connection to DBeaver.
 
 ```bash
 # Using ~/.pgpass (passwordless after Home Manager rebuild)
-psql -h 192.168.8.103 -U plane -d plane -c 'SELECT 1;'
-psql -h 192.168.8.103 -U liftcraft -d rails_database_prod -c 'SELECT 1;'
+psql -h 100.64.0.6 -U plane -d plane -c 'SELECT 1;'
+psql -h 100.64.0.6 -U liftcraft -d rails_database_prod -c 'SELECT 1;'
+psql -h 100.64.0.6 -U nextcloud -d nextcloud -c 'SELECT 1;'
+psql -h 100.64.0.6 -U matrix -d matrix -c 'SELECT 1;'
+psql -h 100.64.0.6 -U freshrss -d freshrss -c 'SELECT 1;'
 
 # Via PgBouncer
-psql -h 192.168.8.103 -p 6432 -U plane -d plane -c 'SELECT 1;'
-```
-
-### Test MariaDB Connection
-
-```bash
-# Using ~/.my.cnf (passwordless after Home Manager rebuild)
-mysql -e 'SELECT 1;'
+psql -h 100.64.0.6 -p 6432 -U plane -d plane -c 'SELECT 1;'
 ```
 
 ### Test Redis Connection
@@ -229,7 +202,9 @@ redis-cli -h $REDIS_HOST -p $REDIS_PORT -a "$REDIS_PASSWORD" ping
 ```bash
 psql-plane        # Connect to Plane database
 psql-liftcraft    # Connect to LiftCraft database
-mysql-nextcloud   # Connect to Nextcloud database
+psql-nextcloud    # Connect to Nextcloud database
+psql-matrix       # Connect to Matrix database
+psql-freshrss     # Connect to FreshRSS database
 redis-db          # Connect to Redis
 ```
 
@@ -239,21 +214,26 @@ redis-db          # Connect to Redis
 
 ### DBeaver Can't Connect
 
-1. Verify LXC_database is running:
+1. Verify VPS database services are running:
    ```bash
-   ssh -A akunito@192.168.8.103 "systemctl status postgresql mysql redis-homelab"
+   ssh -A -p 56777 akunito@100.64.0.6 "systemctl status postgresql redis"
    ```
 
-2. Test network connectivity:
+2. Test network connectivity to VPS via Tailscale:
    ```bash
-   nc -zv 192.168.8.103 5432
-   nc -zv 192.168.8.103 3306
-   nc -zv 192.168.8.103 6379
+   nc -zv 100.64.0.6 5432
+   nc -zv 100.64.0.6 6379
    ```
 
-3. Check firewall:
+3. Check Tailscale connectivity:
    ```bash
-   ssh -A akunito@192.168.8.103 "sudo iptables -L -n | grep -E '5432|3306|6379'"
+   tailscale ping 100.64.0.6
+   tailscale status
+   ```
+
+4. Check VPS firewall:
+   ```bash
+   ssh -A -p 56777 akunito@100.64.0.6 "sudo iptables -L -n | grep -E '5432|6379'"
    ```
 
 ### Password Not Working
@@ -263,14 +243,14 @@ redis-db          # Connect to Redis
    cat ~/.dotfiles/secrets/domains.nix | grep dbPlanePassword
    ```
 
-2. Compare with deployed secret:
+2. Compare with deployed secret on VPS:
    ```bash
-   ssh -A akunito@192.168.8.103 "sudo cat /etc/secrets/db-plane-password"
+   ssh -A -p 56777 akunito@100.64.0.6 "sudo cat /etc/secrets/db-plane-password"
    ```
 
 3. Test directly:
    ```bash
-   PGPASSWORD='<password>' psql -h 192.168.8.103 -U plane -d plane -c 'SELECT 1;'
+   PGPASSWORD='<password>' psql -h 100.64.0.6 -U plane -d plane -c 'SELECT 1;'
    ```
 
 ### ~/.pgpass Not Working
@@ -291,7 +271,7 @@ redis-db          # Connect to Redis
 ## Related Files
 
 - `secrets/domains.nix` - Database passwords (git-crypt encrypted)
-- `profiles/LXC_database-config.nix` - Centralized database server configuration
+- `profiles/VPS_PROD-config.nix` - VPS database server configuration
 - `profiles/DESK-config.nix` - DESK workstation profile (includes dbCredentials)
 - `profiles/LAPTOP_X13-config.nix` - Laptop profile (includes dbCredentials)
 - `user/app/database/db-credentials.nix` - Home Manager module for credential files

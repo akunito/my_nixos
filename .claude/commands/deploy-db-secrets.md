@@ -1,11 +1,11 @@
 # Deploy Database Secrets
 
-Skill for deploying database credentials from git-crypt encrypted secrets to the LXC_database container.
+Skill for deploying database credentials from git-crypt encrypted secrets to the VPS.
 
 ## Purpose
 
 Use this skill to:
-- Deploy updated credentials to `/etc/secrets/` on LXC_database
+- Deploy updated credentials to `/etc/secrets/` on VPS_PROD
 - Verify secret files have correct permissions
 - Restart database services after credential changes
 - Troubleshoot credential deployment issues
@@ -15,8 +15,8 @@ Use this skill to:
 ## Architecture Overview
 
 ```
-secrets/domains.nix          →  database-secrets.nix  →  /etc/secrets/*
-(git-crypt encrypted)           (NixOS module)            (on LXC_database)
+secrets/domains.nix          ->  database-secrets.nix  ->  /etc/secrets/*
+(git-crypt encrypted)           (NixOS module)            (on VPS_PROD)
 ```
 
 ### Files Involved
@@ -25,7 +25,7 @@ secrets/domains.nix          →  database-secrets.nix  →  /etc/secrets/*
 |------|----------|---------|
 | `secrets/domains.nix` | dotfiles repo | Source of truth (encrypted) |
 | `system/app/database-secrets.nix` | dotfiles repo | Deployment module |
-| `/etc/secrets/db-*-password` | LXC_database | Password files for services |
+| `/etc/secrets/db-*-password` | VPS_PROD | Password files for services |
 
 ### Deployed Secret Files
 
@@ -34,6 +34,7 @@ secrets/domains.nix          →  database-secrets.nix  →  /etc/secrets/*
 | `/etc/secrets/db-plane-password` | PostgreSQL | 0440 | root:postgres |
 | `/etc/secrets/db-liftcraft-password` | PostgreSQL | 0440 | root:postgres |
 | `/etc/secrets/db-nextcloud-password` | MariaDB | 0440 | root:mysql |
+| `/etc/secrets/db-matrix-password` | PostgreSQL | 0440 | root:postgres |
 | `/etc/secrets/redis-password` | Redis | 0444 | root:root |
 
 ---
@@ -66,23 +67,24 @@ git commit -m "chore: update database credentials"
 git push
 ```
 
-### 3. Deploy to LXC_database
+### 3. Deploy to VPS_PROD
 
 ```bash
-# SSH to container and deploy using install.sh
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git reset --hard HEAD && git pull && ./install.sh ~/.dotfiles LXC_database -s -u -q 2>&1"
+# SSH to VPS and deploy using install.sh (NO -h flag — hardware-config must be regenerated)
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
 ```
 
 ### 4. Verify Deployment
 
 ```bash
 # Check secret files exist with correct permissions
-ssh -A akunito@192.168.8.103 "sudo ls -la /etc/secrets/"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo ls -la /etc/secrets/"
 
 # Expected output:
 # -rw-r----- root postgres db-plane-password
 # -rw-r----- root postgres db-liftcraft-password
 # -rw-r----- root mysql    db-nextcloud-password
+# -rw-r----- root postgres db-matrix-password
 # -rw-r--r-- root root     redis-password
 ```
 
@@ -96,7 +98,7 @@ Quick deploy command (run from dotfiles directory):
 git add secrets/domains.nix && \
 git commit -m "chore: update database credentials" && \
 git push && \
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git reset --hard HEAD && git pull && ./install.sh ~/.dotfiles LXC_database -s -u -q 2>&1"
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
 ```
 
 ---
@@ -106,15 +108,15 @@ ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git reset --hard HEAD && git pul
 ### Check PostgreSQL Users
 
 ```bash
-ssh -A akunito@192.168.8.103 "sudo -u postgres psql -c '\du'"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo -u postgres psql -c '\du'"
 ```
 
-Expected users: postgres, plane, liftcraft, pgbouncer
+Expected users: postgres, plane, liftcraft, matrix, nextcloud, freshrss, pgbouncer
 
 ### Check MariaDB Users
 
 ```bash
-ssh -A akunito@192.168.8.103 "sudo mysql -e 'SELECT User, Host FROM mysql.user;'"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo mysql -e 'SELECT User, Host FROM mysql.user;'"
 ```
 
 Expected users: nextcloud, root, exporter
@@ -122,7 +124,7 @@ Expected users: nextcloud, root, exporter
 ### Check Redis Auth
 
 ```bash
-ssh -A akunito@192.168.8.103 "redis-cli -a \$(sudo cat /etc/secrets/redis-password) ping"
+ssh -A -p 56777 akunito@100.64.0.6 "redis-cli -a \$(sudo cat /etc/secrets/redis-password) ping"
 ```
 
 Expected: PONG
@@ -131,16 +133,19 @@ Expected: PONG
 
 ```bash
 # Test plane user
-ssh -A akunito@192.168.8.103 "PGPASSWORD=\$(sudo cat /etc/secrets/db-plane-password) psql -h 127.0.0.1 -U plane -d plane -c '\conninfo'"
+ssh -A -p 56777 akunito@100.64.0.6 "PGPASSWORD=\$(sudo cat /etc/secrets/db-plane-password) psql -h 127.0.0.1 -U plane -d plane -c '\conninfo'"
 
 # Test liftcraft user
-ssh -A akunito@192.168.8.103 "PGPASSWORD=\$(sudo cat /etc/secrets/db-liftcraft-password) psql -h 127.0.0.1 -U liftcraft -d rails_database_prod -c '\conninfo'"
+ssh -A -p 56777 akunito@100.64.0.6 "PGPASSWORD=\$(sudo cat /etc/secrets/db-liftcraft-password) psql -h 127.0.0.1 -U liftcraft -d rails_database_prod -c '\conninfo'"
+
+# Test matrix user
+ssh -A -p 56777 akunito@100.64.0.6 "PGPASSWORD=\$(sudo cat /etc/secrets/db-matrix-password) psql -h 127.0.0.1 -U matrix -d matrix -c '\conninfo'"
 ```
 
 ### Test MariaDB Password
 
 ```bash
-ssh -A akunito@192.168.8.103 "mysql -h 127.0.0.1 -u nextcloud -p\$(sudo cat /etc/secrets/db-nextcloud-password) -e 'SELECT 1'"
+ssh -A -p 56777 akunito@100.64.0.6 "mysql -h 127.0.0.1 -u nextcloud -p\$(sudo cat /etc/secrets/db-nextcloud-password) -e 'SELECT 1'"
 ```
 
 ---
@@ -153,33 +158,33 @@ If `/etc/secrets/` is empty after deployment:
 
 ```bash
 # Check if module is loaded
-ssh -A akunito@192.168.8.103 "nixos-option services.postgresql.enable"
+ssh -A -p 56777 akunito@100.64.0.6 "nixos-option services.postgresql.enable"
 
 # Check systemd-tmpfiles ran
-ssh -A akunito@192.168.8.103 "sudo systemd-tmpfiles --create"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo systemd-tmpfiles --create"
 
 # Manual check of /etc generation
-ssh -A akunito@192.168.8.103 "ls -la /etc/static/secrets/ 2>/dev/null || echo 'No /etc/static/secrets'"
+ssh -A -p 56777 akunito@100.64.0.6 "ls -la /etc/static/secrets/ 2>/dev/null || echo 'No /etc/static/secrets'"
 ```
 
 ### Wrong Permissions
 
 ```bash
 # Fix PostgreSQL password permissions
-ssh -A akunito@192.168.8.103 "sudo chown root:postgres /etc/secrets/db-*-password && sudo chmod 440 /etc/secrets/db-*-password"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo chown root:postgres /etc/secrets/db-plane-password /etc/secrets/db-liftcraft-password /etc/secrets/db-matrix-password && sudo chmod 440 /etc/secrets/db-plane-password /etc/secrets/db-liftcraft-password /etc/secrets/db-matrix-password"
 
 # Fix MariaDB password permissions
-ssh -A akunito@192.168.8.103 "sudo chown root:mysql /etc/secrets/db-nextcloud-password && sudo chmod 440 /etc/secrets/db-nextcloud-password"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo chown root:mysql /etc/secrets/db-nextcloud-password && sudo chmod 440 /etc/secrets/db-nextcloud-password"
 ```
 
 ### Service Can't Read Password
 
 ```bash
 # Restart services to pick up new credentials
-ssh -A akunito@192.168.8.103 "sudo systemctl restart postgresql mysql redis-homelab"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo systemctl restart postgresql mysql redis-homelab"
 
 # Check service status
-ssh -A akunito@192.168.8.103 "systemctl status postgresql mysql redis-homelab"
+ssh -A -p 56777 akunito@100.64.0.6 "systemctl status postgresql mysql redis-homelab"
 ```
 
 ### Git-Crypt Unlocked Check
@@ -187,11 +192,11 @@ ssh -A akunito@192.168.8.103 "systemctl status postgresql mysql redis-homelab"
 If secrets appear garbled, git-crypt may not be unlocked:
 
 ```bash
-# On LXC_database
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git-crypt status secrets/domains.nix"
+# On VPS_PROD
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git-crypt status secrets/domains.nix"
 
 # If locked, unlock with:
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git-crypt unlock ~/.git-crypt/dotfiles-key"
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git-crypt unlock ~/.git-crypt/dotfiles-key"
 ```
 
 ---
@@ -223,7 +228,7 @@ Edit `system/app/database-secrets.nix`:
 
 ### 3. Reference in Profile Config
 
-Update `profiles/LXC_database-config.nix`:
+Update `profiles/VPS_PROD-config.nix`:
 
 ```nix
 postgresqlServerUsers = [
@@ -248,7 +253,7 @@ dbNewServicePassword = "your-newservice-db-password";
 
 ```bash
 git add -A && git commit -m "feat: add newservice database credentials" && git push
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_database --impure"
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
 ```
 
 ---
@@ -259,7 +264,7 @@ To rotate passwords:
 
 1. Generate new password
 2. Update `secrets/domains.nix`
-3. Deploy to LXC_database
+3. Deploy to VPS_PROD
 4. Update application configs to use new password
 5. Test connectivity
 
@@ -269,5 +274,5 @@ openssl rand -base64 32
 
 # After updating secrets/domains.nix
 git add secrets/domains.nix && git commit -m "security: rotate database passwords" && git push
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_database --impure"
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
 ```

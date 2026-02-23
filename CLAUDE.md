@@ -163,16 +163,17 @@ lib/defaults.nix (global defaults)
     │        │
     │        └─► VMHOME-config.nix
     │
-    ├─► LXC-base-config.nix ◄─── LXC_HOME-config.nix
-    │                        ◄─── LXC_database-config.nix
-    │                        ◄─── LXC_liftcraftTEST-config.nix
-    │                        ◄─── LXC_mailer-config.nix
-    │                        ◄─── LXC_matrix-config.nix
-    │                        ◄─── LXC_monitoring-config.nix
-    │                        ◄─── LXC_plane-config.nix
-    │                        ◄─── LXC_portfolioprod-config.nix
-    │                        ◄─── LXC_proxy-config.nix
-    │                        ◄─── LXC_tailscale-config.nix
+    ├─► LXC-base-config.nix  (akunito LXCs — ALL SHUT DOWN, profiles archived)
+    │                        ◄─── LXC_HOME-config.nix        (archived)
+    │                        ◄─── LXC_database-config.nix    (archived)
+    │                        ◄─── LXC_liftcraftTEST-config.nix (archived)
+    │                        ◄─── LXC_mailer-config.nix      (archived)
+    │                        ◄─── LXC_matrix-config.nix      (archived)
+    │                        ◄─── LXC_monitoring-config.nix  (archived)
+    │                        ◄─── LXC_plane-config.nix       (archived)
+    │                        ◄─── LXC_portfolioprod-config.nix (archived)
+    │                        ◄─── LXC_proxy-config.nix       (archived)
+    │                        ◄─── LXC_tailscale-config.nix   (archived)
     │
     ├─► KOMI_LXC-base-config.nix ◄─── KOMI_LXC_database-config.nix
     │                             ◄─── KOMI_LXC_mailer-config.nix
@@ -327,13 +328,7 @@ This command updates the Home Manager configuration and applies changes without 
 | LAPTOP_X13 | nixosx13aku (192.168.8.92) | akunito | main |
 | LAPTOP_YOGA | nixosyogaaga (192.168.8.100) | aga | main |
 | LAPTOP_A | nixosaga (192.168.8.78) | akunito | main |
-| LXC_HOME | nixosLabaku (192.168.8.80) | akunito | main |
-| LXC_tailscale | tailscale (192.168.8.105) | akunito | main |
-| ~~LXC_database~~ | ~~database (192.168.8.103)~~ | ~~akunito~~ | ~~STOPPED — migrated to VPS_PROD~~ |
-| ~~LXC_monitoring~~ | ~~monitoring (192.168.8.85)~~ | ~~akunito~~ | ~~STOPPED — migrated to VPS_PROD~~ |
-| ~~LXC_proxy~~ | ~~proxy (192.168.8.102)~~ | ~~akunito~~ | ~~STOPPED — migrated to TrueNAS NPM~~ |
-| ~~LXC_matrix~~ | ~~matrix (192.168.8.104)~~ | ~~akunito~~ | ~~STOPPED — migrated to VPS_PROD~~ |
-| VPS_PROD | vps-prod (see secrets.vpsNetcupIp) | akunito | main |
+| VPS_PROD | vps-prod (100.64.0.6 via Tailscale, SSH port 56777) | akunito | main |
 | VMHOME | nixosLabaku (192.168.8.80) | akunito | main |
 | KOMI_LXC_database | komi-database (192.168.1.10) | admin | komi |
 | KOMI_LXC_mailer | komi-mailer (192.168.1.11) | admin | komi |
@@ -344,7 +339,7 @@ This command updates the Home Manager configuration and applies changes without 
 
 **Step 2**: Route to the right reference:
 
-- **akunito** (DESK, LAPTOP_*, LXC_*, VPS_*, VMHOME): use the **Infrastructure & Service Reference** section below for operational docs
+- **akunito** (DESK, LAPTOP_*, VPS_*, VMHOME): use the **Infrastructure & Service Reference** section below for operational docs
 - **komi/admin** (MACBOOK_KOMI, KOMI_LXC_*): use the **Darwin/macOS Reference** for macOS, or `docs/komi/infrastructure/` for LXC infra
 
 **Step 3**: For any architectural or implementation question, follow the Router-first protocol:
@@ -353,13 +348,13 @@ This command updates the Home Manager configuration and applies changes without 
 3. Only then read the related source files
 4. Only if still needed: search, scoped to the selected node's directories
 
-**Step 4**: When working from a remote node (e.g., LXC_matrix via Matrix bot):
+**Step 4**: When working from a remote node (e.g., Matrix bot on VPS):
 ```bash
-ssh -A akunito@192.168.8.96  # DESK
-ssh -A akunito@192.168.8.80  # LXC_HOME
-ssh -A akunito@192.168.8.103 # LXC_database
-ssh -A root@192.168.8.82     # Proxmox
-ssh -A akunito@<VPS_IP>      # VPS_PROD (IP in secrets.vpsNetcupIp)
+ssh -A akunito@192.168.8.96                  # DESK
+ssh -A -p 56777 akunito@100.64.0.6           # VPS_PROD (via Tailscale)
+ssh -A -p 56777 akunito@172.26.5.155         # VPS_PROD (via WireGuard)
+ssh truenas_admin@192.168.20.200             # TrueNAS
+ssh admin@192.168.8.1                        # pfSense
 ```
 
 ### Multi-user file scoping
@@ -409,9 +404,9 @@ flake.nix                    # Unified flake with all profiles and inputs
 
 **Usage:**
 ```bash
-# Rebuild specific profile
+# Rebuild specific profile (local machine only — NEVER on remote!)
 sudo nixos-rebuild switch --flake .#DESK --impure
-sudo nixos-rebuild switch --flake .#LXC_monitoring --impure
+sudo nixos-rebuild switch --flake .#KOMI_LXC_database --impure
 
 # Backward compatible (uses .active-profile)
 sudo nixos-rebuild switch --flake .#system --impure
@@ -471,8 +466,14 @@ For operational details, **read the service doc first** before SSH-ing or making
 
 ### Service index
 
-Full table with SSH access + IPs: `docs/akunito/infrastructure/INFRASTRUCTURE.md` (Section: Container Inventory)
+Architecture overview: `docs/akunito/infrastructure/INFRASTRUCTURE.md`
 Quick lookup by tag: `docs/00_ROUTER.md` (filter by `infrastructure` tag)
+
+**Active infrastructure (Feb 2026):**
+- **VPS** (Netcup RS 4000 G12): 15 Docker containers + NixOS native services (DB, monitoring, VPN)
+- **TrueNAS** (192.168.20.200): 19 Docker containers (media, NPM, cloudflared, monitoring)
+- **pfSense** (192.168.8.1): Firewall, DNS, WireGuard — unchanged
+- **Proxmox**: SHUT DOWN (akunito). Komi's Proxmox (192.168.1.3) still active.
 
 ### Module & hardware reference
 
@@ -498,8 +499,8 @@ own CLAUDE.md with project-specific conventions. When working in those repos:
 
 - The project's CLAUDE.md takes precedence for project-specific rules
 - This dotfiles CLAUDE.md governs NixOS infrastructure and profile configuration
-- Docker-based project conventions: `docs/akunito/infrastructure/docker-projects.md`
 - Connection details and secrets: use this repo's secrets management patterns
+- Infrastructure overview: `docs/akunito/infrastructure/INFRASTRUCTURE.md`
 
 ## Multi-agent instructions
 

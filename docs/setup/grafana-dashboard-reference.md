@@ -15,7 +15,7 @@ tags:
 related_files:
   - system/app/grafana.nix
   - system/app/prometheus-*.nix
-  - profiles/LXC_monitoring-config.nix
+  - profiles/VPS_PROD-config.nix
   - docs/setup/grafana-dashboards-alerting.md
 ---
 
@@ -69,10 +69,10 @@ See [Grafana Dashboards and Alerting Setup](./grafana-dashboards-alerting.md#9-d
 ## Infrastructure Overview
 
 ### Monitoring Server
-- **Host**: LXC_monitoring (192.168.8.85)
-- **Grafana URL**: https://grafana.local.akunito.com
-- **Prometheus URL**: https://prometheus.local.akunito.com (basic auth required)
-- **SMTP Relay**: 192.168.8.89:25 (LXC_mailer)
+- **Host**: VPS (NixOS native services)
+- **Grafana URL**: https://grafana.akunito.com (via Cloudflare Tunnel)
+- **Prometheus URL**: VPS localhost:9090 (not publicly exposed)
+- **SMTP Relay**: VPS Postfix on localhost:25
 
 ### Prometheus Targets Summary
 
@@ -97,20 +97,14 @@ Comprehensive host-level system metrics monitoring for all Linux hosts.
 
 ### Data Source
 - **Exporter**: Node Exporter
-- **Jobs**: `monitoring_node`, `lxc_home_node`, `lxc_proxy_node`, `lxc_plane_node`, `lxc_liftcraft_node`, `lxc_portfolio_node`, `lxc_mailer_node`, `vps_wireguard_node`
+- **Jobs**: `vps_node`, `truenas_node`
 
 ### Monitored Hosts
 
 | Instance | IP Address | Port | Description |
 |----------|------------|------|-------------|
-| monitoring | 127.0.0.1 | 9091 | Monitoring server itself |
-| lxc_home | 192.168.8.80 | 9100 | Main homelab services |
-| lxc_proxy | 192.168.8.102 | 9100 | Cloudflare tunnel + NPM |
-| lxc_plane | 192.168.8.86 | 9100 | Plane project management |
-| lxc_liftcraft | 192.168.8.87 | 9100 | LeftyWorkout test |
-| lxc_portfolio | 192.168.8.88 | 9100 | Portfolio website |
-| lxc_mailer | 192.168.8.89 | 9100 | Email relay + Uptime Kuma |
-| vps_wireguard | 172.26.5.155 | 9100 | VPS (via WireGuard tunnel) |
+| vps | 127.0.0.1 | 9091 | VPS (Prometheus + Grafana host) |
+| truenas | 192.168.20.200 | 9100 | TrueNAS (via Tailscale/VLAN 100) |
 
 ### Key Panels
 - CPU Usage (all modes: user, system, iowait, idle)
@@ -138,7 +132,7 @@ Comprehensive host-level system metrics monitoring for all Linux hosts.
 ### Verification
 ```bash
 # Test node exporter connectivity
-curl -s http://192.168.8.80:9100/metrics | head -5
+curl -s http://192.168.20.200:9100/metrics | head -5  # TrueNAS
 
 # Check all node targets in Prometheus
 curl -s 'http://127.0.0.1:9090/api/v1/targets' | jq '.data.activeTargets[] | select(.labels.job | test("_node$")) | {job: .labels.job, health: .health}'
@@ -153,18 +147,14 @@ Container resource usage monitoring via cAdvisor metrics.
 
 ### Data Source
 - **Exporter**: cAdvisor
-- **Jobs**: `lxc_home_docker`, `lxc_proxy_docker`, `lxc_plane_docker`, `lxc_liftcraft_docker`, `lxc_portfolio_docker`, `lxc_mailer_docker`
+- **Jobs**: `vps_docker`, `truenas_docker`
 
 ### Monitored Hosts
 
 | Instance | IP Address | Port | Containers |
 |----------|------------|------|------------|
-| lxc_home | 192.168.8.80 | 9092 | Homelab stack (Jellyfin, Nextcloud, *arr, etc.) |
-| lxc_proxy | 192.168.8.102 | 9092 | NPM, Cloudflared |
-| lxc_plane | 192.168.8.86 | 9092 | Plane stack |
-| lxc_liftcraft | 192.168.8.87 | 9092 | LeftyWorkout stack |
-| lxc_portfolio | 192.168.8.88 | 9092 | Portfolio stack |
-| lxc_mailer | 192.168.8.89 | 9092 | Postfix, Uptime Kuma |
+| vps | 127.0.0.1 | 9092 | 15 containers (web services, databases, proxy, monitoring) |
+| truenas | 192.168.20.200 | 9092 | 19 containers (media stack, NPM, cloudflared, etc.) |
 
 ### Key Panels
 - Container CPU Usage (per container)
@@ -202,7 +192,7 @@ Container resource usage monitoring via cAdvisor metrics.
 ### Verification
 ```bash
 # Test cAdvisor connectivity
-curl -s http://192.168.8.80:9092/metrics | grep container_memory_usage_bytes | head -5
+curl -s http://192.168.20.200:9092/metrics | grep container_memory_usage_bytes | head -5  # TrueNAS cAdvisor
 
 # List all containers with metrics
 curl -s 'http://127.0.0.1:9090/api/v1/query?query=container_memory_usage_bytes{name!=""}' | jq '.data.result[] | .metric.name'
@@ -241,13 +231,12 @@ Service availability monitoring via HTTP/HTTPS probes and TLS certificate expiry
 | leftyworkout | https://leftyworkout-test.akunito.org.es | http_2xx |
 | portfolio | https://info.akunito.org.es | http_2xx |
 | wgui | https://wgui.akunito.org.es | http_2xx |
-| kuma | http://192.168.8.89:3001 | http_2xx_nossl |
+| kuma | http://192.168.20.200:3001 | http_2xx_nossl |
 
 ### ICMP Probes (8 targets)
 
 | Instance | Host | Description |
 |----------|------|-------------|
-| proxy | 192.168.8.102 | Cloudflare tunnel + NPM |
 | truenas | 192.168.20.200 | TrueNAS NAS |
 | guest_wifi_ap | 192.168.9.2 | Guest WiFi AP |
 | personal_wifi_ap | 192.168.8.2 | Personal WiFi AP |
@@ -261,7 +250,7 @@ Service availability monitoring via HTTP/HTTPS probes and TLS certificate expiry
 | Instance | Host | Purpose |
 |----------|------|---------|
 | local_wildcard | nextcloud.local.akunito.com:443 | Local wildcard cert |
-| monitoring_cert | grafana.local.akunito.com:443 | Monitoring cert |
+| public_wildcard | grafana.akunito.com:443 | Public cert (Cloudflare) |
 
 ### Key Metrics
 
@@ -313,11 +302,10 @@ Network infrastructure ICMP ping monitoring for switches, access points, NAS, VP
 - **Exporter**: Blackbox Exporter (port 9115)
 - **Jobs**: `blackbox_icmp_*`
 
-### ICMP Probes (8 targets)
+### ICMP Probes (7 targets)
 
 | Instance | Host | Description |
 |----------|------|-------------|
-| proxy | 192.168.8.102 | Cloudflare tunnel + NPM |
 | truenas | 192.168.20.200 | TrueNAS NAS |
 | guest_wifi_ap | 192.168.9.2 | Guest WiFi AP |
 | personal_wifi_ap | 192.168.8.2 | Personal WiFi AP |
@@ -537,7 +525,7 @@ NAS storage health, ZFS pool status, disk temperatures, and filesystem usage mon
 ### TrueNAS Configuration
 1. Go to **System > Reporting** (TrueNAS SCALE) or **System > Reporting > Graphite** (CORE)
 2. Enable **Remote Graphite Server**
-3. Set **Graphite Server**: `192.168.8.85`
+3. Set **Graphite Server**: VPS IP (via Tailscale, e.g. `100.64.0.6`)
 4. Set **Graphite Port**: `2003`
 5. Save and test
 
@@ -653,10 +641,10 @@ Monitor Sonarr, Radarr, Prowlarr, and Bazarr for queue status, download progress
 
 | Instance | IP Address | Port | Application |
 |----------|------------|------|-------------|
-| sonarr | 192.168.8.80 | 9707 | TV Shows |
-| radarr | 192.168.8.80 | 9708 | Movies |
-| prowlarr | 192.168.8.80 | 9709 | Indexer Manager |
-| bazarr | 192.168.8.80 | 9710 | Subtitles |
+| sonarr | 192.168.20.200 | 9707 | TV Shows |
+| radarr | 192.168.20.200 | 9708 | Movies |
+| prowlarr | 192.168.20.200 | 9709 | Indexer Manager |
+| bazarr | 192.168.20.200 | 9710 | Subtitles |
 
 ### Key Metrics
 
@@ -704,10 +692,10 @@ Monitor Sonarr, Radarr, Prowlarr, and Bazarr for queue status, download progress
 ### Verification
 ```bash
 # Test Exportarr endpoints
-curl -s http://192.168.8.80:9707/metrics | head -20  # Sonarr
-curl -s http://192.168.8.80:9708/metrics | head -20  # Radarr
-curl -s http://192.168.8.80:9709/metrics | head -20  # Prowlarr
-curl -s http://192.168.8.80:9710/metrics | head -20  # Bazarr
+curl -s http://192.168.20.200:9707/metrics | head -20  # Sonarr (TrueNAS)
+curl -s http://192.168.20.200:9708/metrics | head -20  # Radarr (TrueNAS)
+curl -s http://192.168.20.200:9709/metrics | head -20  # Prowlarr (TrueNAS)
+curl -s http://192.168.20.200:9710/metrics | head -20  # Bazarr (TrueNAS)
 
 # Check all app targets
 curl -s 'http://127.0.0.1:9090/api/v1/targets' | jq '.data.activeTargets[] | select(.labels.job | test("_app$"))'
@@ -740,7 +728,7 @@ All alert rules are defined in Prometheus (`grafana.nix` and exporter modules) a
 
 ### Contact Points
 - **Email**: Configured via `smtp` settings in `grafana.nix`
-- **Relay**: 192.168.8.89:25 (LXC_mailer postfix)
+- **Relay**: VPS Postfix on localhost:25
 - **From**: Configurable in secrets
 
 ---
@@ -871,7 +859,7 @@ truenas_disk_temperature_celsius
 
 ## Related Documentation
 
-- [Ubuntu Node Exporter Setup](./ubuntu-node-exporter.md)
 - [Grafana Dashboards and Alerting Setup](./grafana-dashboards-alerting.md)
-- [Infrastructure Overview](../infrastructure/INFRASTRUCTURE.md)
+- [Infrastructure Overview](../akunito/infrastructure/INFRASTRUCTURE.md)
+- [Monitoring Stack](../akunito/infrastructure/services/monitoring-stack.md)
 - [Monitoring Module (grafana.nix)](../../system/app/grafana.nix)

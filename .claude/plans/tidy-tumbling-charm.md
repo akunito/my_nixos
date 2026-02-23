@@ -1,521 +1,300 @@
-# Phase 3 Part B: Migrate Docker Services to VPS
+# LXC Decommissioning & TrueNAS Proxy Setup
 
 ## Context
 
-Phase 3a is complete — the VPS has rootless Docker, native Postfix relay (SMTP2GO port 2525), and the `homelabDockerStacks` infrastructure. The VPS also has local PostgreSQL, MariaDB, Redis, and PgBouncer databases (empty, created in Phase 2a). Cloudflare tunnel handles HTTPS termination.
+The VPS migration (Phases 1-3B) is complete. All public-facing services, databases, monitoring, and email relay now run on VPS_PROD. Four LXC containers are redundant and should be decommissioned: LXC_proxy, LXC_database, LXC_monitoring, LXC_mailer. Four already-migrated containers (LXC_plane, LXC_liftcraft, LXC_portfolio, LXC_matrix) are also stopped.
 
-Now we migrate Docker services **one at a time** in order: Portfolio → LiftCraft → Plane → Matrix. Each is tested before moving to the next. Matrix is migrated and stopped (no verification needed).
+The local reverse proxy (NPM) and Cloudflare tunnel for homelab services move to TrueNAS. Kuma local monitoring also moves to TrueNAS.
 
-**Deployment workflow**: All NixOS config changes are committed/pushed locally, then deployed to VPS via:
-```bash
-ssh -A -p 56777 akunito@VPS "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
-```
-NEVER use bare `nixos-rebuild switch` on the VPS. Docker files (docker-compose.yml, .env) are created directly on the VPS via SSH, not tracked in the dotfiles repo.
+**Remaining active LXC containers**: LXC_HOME, LXC_tailscale, LXC_database (temporary until Nextcloud migration).
 
 ---
 
-## Step 0: Database Connectivity for Rootless Docker
+## Phase 1: NixOS Config Changes
 
-**Problem**: VPS has `databaseBindAddress = "127.0.0.1"`. Rootless Docker uses slirp4netns with `--disable-host-loopback`, preventing containers from reaching host's loopback interface.
+### 1.1 VPS Postfix — add homelab LAN to mynetworks
 
-**Solution**: Change bind address to `0.0.0.0` but DON'T open firewall ports (firewall blocks external access while Docker containers can reach databases via local connections).
+**File**: `system/app/postfix-relay.nix` (line 22)
 
-### Files to modify
-
-**`lib/defaults.nix`** — Add new flag:
 ```nix
-databaseFirewallOpen = true;  # Open database ports in firewall (false for VPS)
+# Current:
+mynetworks = [ "127.0.0.0/8" "[::1]/128" "172.16.0.0/12" "10.0.0.0/8" ];
+
+# Change to:
+mynetworks = [ "127.0.0.0/8" "[::1]/128" "172.16.0.0/12" "10.0.0.0/8" "192.168.8.0/24" "192.168.20.0/24" ];
 ```
 
-**`profiles/VPS-base-config.nix`** — Change bind + add flag:
+Port 25 is NOT in VPS firewall allowedTCPPorts (not internet-exposed). Traffic from homelab arrives via WireGuard (`wg0`) which is a trusted interface — no firewall changes needed.
+
+### 1.2 LXC_HOME — point SMTP to VPS
+
+**File**: `profiles/LXC_HOME-config.nix` (line 116)
+
 ```nix
-databaseBindAddress = "0.0.0.0";  # Docker containers need non-loopback access
-databaseFirewallOpen = false;     # Firewall blocks external; Docker uses local connections
+# Current:
+notificationSmtpHost = "192.168.8.89";
+
+# Change to:
+notificationSmtpHost = "172.26.5.155"; # VPS Postfix via WireGuard
 ```
 
-**`system/app/postgresql.nix`** (line 142) — Wrap firewall with flag:
+### 1.3 VPS monitoring — update Prometheus remote targets
+
+**File**: `profiles/VPS_PROD-config.nix` (lines 181-185)
+
 ```nix
-networking.firewall.allowedTCPPorts = lib.optionals (systemSettings.databaseFirewallOpen or true) [
-  cfg.port
-] ++ lib.optionals ((systemSettings.databaseFirewallOpen or true) && (systemSettings.prometheusPostgresExporterEnable or false))
-  [ (systemSettings.prometheusPostgresExporterPort or 9187) ];
+# Replace prometheusRemoteTargets with:
+prometheusRemoteTargets = [
+  # LXC_database kept until Nextcloud migration completes
+  { name = "lxc_database";   host = "192.168.8.103"; nodePort = 9100; cadvisorPort = null; }
+  # Active infrastructure
+  { name = "truenas";        host = "192.168.20.200"; nodePort = 9100; cadvisorPort = null; }
+  { name = "lxc_home";       host = "192.168.8.80";  nodePort = 9100; cadvisorPort = 9092; }
+  { name = "lxc_tailscale";  host = "192.168.8.105"; nodePort = 9100; cadvisorPort = null; }
+];
 ```
 
-**`system/app/redis-server.nix`** (line 107) — Same pattern:
+### 1.4 VPS monitoring — add ICMP probes (from LXC_monitoring)
+
+**File**: `profiles/VPS_PROD-config.nix` (lines 212-216)
+
 ```nix
-networking.firewall.allowedTCPPorts = lib.optionals (systemSettings.databaseFirewallOpen or true) [
-  cfg.port
-] ++ ...;
+# Replace prometheusBlackboxIcmpTargets with:
+prometheusBlackboxIcmpTargets = [
+  { name = "pfsense"; host = "192.168.8.1"; }
+  { name = "pve"; host = "192.168.8.82"; }
+  { name = "truenas"; host = "192.168.20.200"; }
+  { name = "lxc_home"; host = "192.168.8.80"; }
+  { name = "lxc_tailscale"; host = "192.168.8.105"; }
+  { name = "switch_usw_aggr"; host = "192.168.8.180"; }
+  { name = "switch_usw_24"; host = "192.168.8.181"; }
+  { name = "wan"; host = "1.1.1.1"; }
+];
 ```
 
-**`system/app/mariadb.nix`** (line 160) — Same pattern.
+### 1.5 VPS monitoring — enable exporters migrated from LXC_monitoring
 
-**`system/app/pgbouncer.nix`** (line 120) — Same pattern:
+**File**: `profiles/VPS_PROD-config.nix` (add after line ~216)
+
 ```nix
-networking.firewall.allowedTCPPorts = lib.optionals (systemSettings.databaseFirewallOpen or true) [ cfg.port ];
+# === SNMP Exporter (pfSense — migrated from LXC_monitoring) ===
+prometheusSnmpExporterEnable = true;
+prometheusSnmpv3User = secrets.snmpv3User;
+prometheusSnmpv3AuthPass = secrets.snmpv3AuthPass;
+prometheusSnmpv3PrivPass = secrets.snmpv3PrivPass;
+prometheusSnmpCommunity = secrets.snmpCommunity;
+prometheusSnmpTargets = [
+  { name = "pfsense"; host = "192.168.8.1"; module = "pfsense"; }
+];
+
+# === Graphite Exporter (TrueNAS pushes metrics — migrated from LXC_monitoring) ===
+prometheusGraphiteEnable = true;
+prometheusGraphitePort = 9109;
+prometheusGraphiteInputPort = 2003;
+
+# === PVE Exporter (Proxmox metrics — migrated from LXC_monitoring) ===
+prometheusPveExporterEnable = true;
+prometheusPveHost = "192.168.8.82";
+prometheusPveUser = "prometheus@pve";
+prometheusPveTokenName = "prometheus";
+prometheusPveTokenFile = "/etc/secrets/pve-token";
+
+# === Backup Monitoring (migrated from LXC_monitoring) ===
+prometheusPveBackupEnable = true;
+prometheusTruenasBackupEnable = true;
+prometheusPfsenseBackupEnable = true;
+prometheusPfsenseBackupProxmoxHost = "192.168.8.82";
+prometheusPfsenseBackupPath = "/mnt/pve/proxmox_backups/pfsense";
 ```
 
-**`profiles/VPS_PROD-config.nix`** — Add pg_hba entries for Docker subnets:
+### 1.6 Grafana SMTP fallback — remove dead LXC_mailer reference
+
+**File**: `system/app/grafana.nix` (line 98)
+
 ```nix
-postgresqlServerAuthentication = ''
-  host    all             all             10.0.0.0/8              scram-sha-256
-  host    all             all             172.16.0.0/12           scram-sha-256
-'';
+# Current:
+host = systemSettings.smtpRelayHost or "192.168.8.89:25";
+
+# Change to:
+host = systemSettings.smtpRelayHost or "localhost:25";
 ```
 
-### Deploy & Verify
-```bash
-# 1. Commit & push NixOS changes from local machine
-git add -A && git commit && git push
+### 1.7 lib/defaults.nix — update smtpRelayHost default
 
-# 2. Deploy to VPS via install.sh (NEVER bare nixos-rebuild)
-ssh -A -p 56777 akunito@VPS "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
+**File**: `lib/defaults.nix` (line 627)
 
-# 3. Verify profiles still evaluate cleanly
-nix eval .#nixosConfigurations.VPS_PROD.config.system.build.toplevel --impure
-nix eval .#nixosConfigurations.LXC_database.config.system.build.toplevel --impure
-nix eval .#nixosConfigurations.DESK.config.system.build.toplevel --impure
+```nix
+# Current:
+smtpRelayHost = "192.168.8.89:25";
+
+# Change to:
+smtpRelayHost = "localhost:25"; # Profiles with Postfix use localhost; others override per-profile
 ```
-- Confirm firewall does NOT expose ports 5432, 6432, 6379, 3306 externally: `nmap -p 5432,6432,6379,3306 <VPS_PUBLIC_IP>`
-- Confirm databases still work locally on VPS
+
+### 1.8 SSH hosts — remove decommissioned entries
+
+**File**: `user/app/ssh-hosts.nix`
+
+Remove these matchBlocks:
+- `"planePROD-nixos"` (192.168.8.86)
+- `"mailerWatcher"` (192.168.8.89)
+- `"leftyworkoutTest"` (192.168.8.87)
+- `"portfolioprod"` (192.168.8.88)
+
+Keep: `homelab`, `vps`, `pve`, `aga-laptop`, `truenas`, `github.com`, `ssh-leftyworkout-test.akunito.com`
+
+### 1.9 flake.nix — comment out decommissioned profiles
+
+**File**: `flake.nix` (profiles section)
+
+Comment out:
+- `LXC_proxy`, `LXC_plane`, `LXC_mailer`, `LXC_liftcraftTEST`, `LXC_portfolioprod`, `LXC_monitoring`, `LXC_matrix`
+
+Keep active: `LXC_HOME`, `LXC_database` (temporary), `LXC_tailscale`
+
+### 1.10 deploy-servers.conf — remove decommissioned entries
+
+**File**: `deploy-servers.conf`
+
+Remove: LXC_proxy, LXC_plane, LXC_portfolioprod, LXC_mailer, LXC_liftcraftTEST, LXC_monitoring, LXC_matrix
+
+Keep: LXC_HOME, LXC_database (mark temporary), LXC_tailscale
+
+### 1.11 CLAUDE.md — update routing table and hierarchy
+
+**File**: `CLAUDE.md`
+
+- Remove LXC_proxy, LXC_monitoring from routing table
+- Remove LXC_mailer, LXC_plane, LXC_matrix, LXC_liftcraftTEST, LXC_portfolioprod if present
+- Mark LXC_database as temporary
+- Update profile hierarchy tree (remove decommissioned branches)
+- Update SSH section (remove LXC_database SSH example)
 
 ---
 
-## Step 1: Portfolio
+## Phase 2: Deploy NixOS Changes
 
-**Overview**: Single Next.js container, stateless, optional Redis cache (db3), Kuma API integration.
-**Currently on**: LXC_portfolioprod (192.168.8.88), port 3000.
-**VPS host port**: `127.0.0.1:3002:3000`
+### 2.1 Pre-deploy: VPS operational setup
 
-### Directory structure
+SSH to VPS and set up secrets for new exporters:
+```bash
+# PVE API token (copy from LXC_monitoring)
+echo '<token>' | sudo tee /etc/secrets/pve-token && sudo chmod 600 /etc/secrets/pve-token
+
+# SSH keys for backup monitoring (root SSH to Proxmox + TrueNAS)
+sudo ssh-keygen -t ed25519 -f /root/.ssh/id_ed25519 -N '' -q 2>/dev/null
+sudo cat /root/.ssh/id_ed25519.pub
+# Add public key to root@192.168.8.82 and truenas_admin@192.168.20.200
 ```
-~/.homelab/portfolio/
-├── docker-compose.yml    # VPS-specific
-└── .env                  # VPS-specific environment
-~/Projects/portfolio/     # git clone (build context)
+
+### 2.2 Deploy
+
+```bash
+# Commit and push from local machine
+git add -A && git commit -m "feat: prepare LXC decommissioning" && git push
+
+# Deploy to VPS
+ssh -A -p 56777 akunito@<VPS> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
+
+# Deploy to LXC_HOME
+ssh -A akunito@192.168.8.80 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_HOME -s -u -d -h"
 ```
 
-### docker-compose.yml
+### 2.3 Verify
+
+- Test SMTP from LXC_HOME to VPS: trigger test notification
+- Check VPS Prometheus targets page — new targets should be UP
+- Verify SNMP/PVE/backup exporters in Grafana
+
+---
+
+## Phase 3: TrueNAS Docker Setup (operational)
+
+### 3.1 Cloudflared tunnel
+
+User creates tunnel in Cloudflare dashboard. Set up Docker on TrueNAS:
+
 ```yaml
 services:
-  portfolio:
-    build:
-      context: /home/akunito/Projects/portfolio
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_GRAFANA_URL: ${NEXT_PUBLIC_GRAFANA_URL}
-        NEXT_PUBLIC_GRAFANA_DASHBOARD_ID: ${NEXT_PUBLIC_GRAFANA_DASHBOARD_ID}
-    container_name: portfolio
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:3002:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=production
-      - NEXT_TELEMETRY_DISABLED=1
+    command: tunnel --no-autoupdate run --token <TUNNEL_TOKEN>
+    network_mode: host
 ```
 
-### .env (key values)
-```bash
-KUMA_BASE_URL=https://kumahome.akunito.com   # Public URL, unchanged
-REDIS_URL=redis://:PASSWORD@host.docker.internal:6379/3
-NEXT_PUBLIC_GRAFANA_URL=https://grafana.akunito.com
-NEXT_PUBLIC_GRAFANA_DASHBOARD_ID=4ac52aa4554e4a9b9c4341bc1520b8b1
-# Copy remaining values from LXC_portfolioprod's .env.prod
-```
+Configure tunnel routes in Cloudflare dashboard for local services.
 
-### Migration steps
-1. SSH to VPS
-2. `git clone` portfolio repo to `~/Projects/portfolio`
-3. Create `~/.homelab/portfolio/docker-compose.yml` and `.env`
-4. Build and start: `docker compose -f ~/.homelab/portfolio/docker-compose.yml up -d --build`
-5. Test: `curl -I http://127.0.0.1:3002`
-6. Update Cloudflare tunnel: point portfolio route to `http://localhost:3002`
-7. Verify public URL works
-8. Stop old LXC_portfolioprod containers
+### 3.2 Kuma uptime monitoring
 
-### NixOS changes (VPS_PROD-config.nix)
-```nix
-homelabDockerEnable = true;
-homelabDockerStacks = [
-  { name = "portfolio"; path = "portfolio"; }
-];
-```
-
-### Deploy NixOS changes
-```bash
-# Commit & push locally, then deploy via install.sh
-ssh -A -p 56777 akunito@VPS "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
-```
-
----
-
-## Step 2: LiftCraft
-
-**Overview**: Rails backend + Vite frontend, uses PostgreSQL (`rails_database_prod`) + Redis (db2), SMTP.
-**Currently on**: LXC_liftcraftTEST (192.168.8.87), ports 3000 (backend) + 3001 (frontend).
-**VPS host ports**: `127.0.0.1:3000:3000` (backend), `127.0.0.1:3001:3001` (frontend)
-
-### Directory structure
-```
-~/.homelab/liftcraft/
-├── docker-compose.yml    # VPS-specific
-└── .env                  # VPS-specific environment
-~/Projects/leftyworkout/  # git clone (build context)
-```
-
-### docker-compose.yml
 ```yaml
 services:
-  backend:
-    build:
-      context: /home/akunito/Projects/leftyworkout
-      dockerfile: Dockerfile        # or Dockerfile.backend
-    container_name: liftcraft-backend
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3000:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    env_file:
-      - .env
-
-  frontend:
-    build:
-      context: /home/akunito/Projects/leftyworkout
-      dockerfile: Dockerfile.frontend   # adjust based on repo structure
-    container_name: liftcraft-frontend
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:3001:3001"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    env_file:
-      - .env
-    depends_on:
-      - backend
-```
-> Note: Exact Dockerfile names need verification from LXC_liftcraftTEST during implementation.
-
-### .env (key values)
-```bash
-RAILS_ENV=production
-RAILS_MASTER_KEY=<from LXC_liftcraftTEST .env.prod>
-NODE_ENV=production
-# Database: VPS local PostgreSQL via PgBouncer
-POSTGRES_USER=liftcraft
-POSTGRES_PASSWORD=<from secrets>
-POSTGRES_DB=rails_database_prod
-POSTGRES_HOST=host.docker.internal
-POSTGRES_PORT=6432
-DATABASE_URL=postgresql://liftcraft:PASSWORD@host.docker.internal:6432/rails_database_prod
-# Redis: VPS local
-REDIS_URL=redis://:PASSWORD@host.docker.internal:6379/2
-# SMTP: VPS local Postfix relay (replaces direct SMTP2GO)
-SMTP_ADDRESS=host.docker.internal
-SMTP_PORT=25
-SMTP_AUTHENTICATION=false
-SMTP_ENABLE_STARTTLS_AUTO=false
-MAIL_FROM_ADDRESS=liftcraft@akunito.com
-# Frontend URLs
-REACT_APP_API_URL=https://leftyworkout-test.DOMAIN/api
-FRONTEND_URL=https://leftyworkout-test.DOMAIN
+      - "3001:3001"
+    volumes:
+      - ./kuma-data:/app/data
 ```
 
-### Data migration
-```bash
-# On LXC_database (192.168.8.103):
-pg_dump -U postgres -Fc rails_database_prod > /tmp/rails_database_prod.dump
+Export/import monitors from old LXC_mailer Kuma.
 
-# Copy to VPS:
-scp -P 56777 /tmp/rails_database_prod.dump akunito@VPS:/tmp/
+### 3.3 NPM (Nginx Proxy Manager) for local reverse proxy
 
-# On VPS — restore into local PostgreSQL:
-sudo -u postgres pg_restore -d rails_database_prod /tmp/rails_database_prod.dump
-```
-> Redis data doesn't need migration (cache, auto-rebuilds).
-
-### Migration steps
-1. Migrate database (pg_dump/pg_restore as above)
-2. Clone leftyworkout repo to `~/Projects/leftyworkout`
-3. Create `~/.homelab/liftcraft/docker-compose.yml` and `.env`
-4. Build and start containers
-5. Run Rails migrations if needed: `docker exec liftcraft-backend rails db:migrate`
-6. Test: `curl -I http://127.0.0.1:3001` (frontend), `curl http://127.0.0.1:3000/api/health` (backend)
-7. Update Cloudflare tunnel: point leftyworkout-test route to `http://localhost:3001`
-8. Verify public URL works
-9. Stop old LXC_liftcraftTEST containers
-
-### NixOS changes (VPS_PROD-config.nix)
-```nix
-homelabDockerStacks = [
-  { name = "portfolio"; path = "portfolio"; }
-  { name = "liftcraft"; path = "liftcraft"; }
-];
-```
-
-### Deploy NixOS changes
-```bash
-ssh -A -p 56777 akunito@VPS "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
-```
-
----
-
-## Step 3: Plane
-
-**Overview**: Project management tool. AIO container + MinIO (file storage) + RabbitMQ (message broker). Uses PostgreSQL (`plane` db) + Redis (db0).
-**Currently on**: LXC_plane (192.168.8.86).
-**VPS host port**: `127.0.0.1:3003:8082` (adjust based on Plane AIO internal port)
-
-> Note: No Plane docker-compose template exists in the dotfiles. During implementation, inspect LXC_plane to gather the exact docker-compose.yml, .env, and port configuration.
-
-### Directory structure
-```
-~/.homelab/plane/
-├── docker-compose.yml
-└── .env
-```
-
-### docker-compose.yml (estimated — verify from LXC_plane)
 ```yaml
 services:
-  plane:
-    image: makeplane/plane-ce:latest    # or specific version from LXC_plane
-    container_name: plane
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: npm
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3003:80"            # adjust internal port
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    env_file:
-      - .env
+      - "80:80"
+      - "81:81"
+      - "443:443"
     volumes:
-      - plane-data:/data
-    depends_on:
-      - minio
-      - rabbitmq
-
-  minio:
-    image: minio/minio:latest
-    container_name: plane-minio
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    ports:
-      - "127.0.0.1:9002:9000"          # S3 API
-    volumes:
-      - minio-data:/data
-    environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: plane-rabbitmq
-    restart: unless-stopped
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-
-volumes:
-  plane-data:
-  minio-data:
-  rabbitmq-data:
+      - ./npm-data:/data
+      - ./npm-letsencrypt:/etc/letsencrypt
 ```
 
-### .env (key values — verify from LXC_plane)
-```bash
-DATABASE_URL=postgresql://plane:PASSWORD@host.docker.internal:6432/plane
-REDIS_URL=redis://:PASSWORD@host.docker.internal:6379/0
-MINIO_ROOT_USER=plane
-MINIO_ROOT_PASSWORD=<from LXC_plane>
-# Email: VPS local Postfix relay
-EMAIL_HOST=host.docker.internal
-EMAIL_PORT=25
-EMAIL_USE_TLS=false
-# Copy remaining Plane config from LXC_plane
-```
+NPM has built-in Let's Encrypt with Cloudflare DNS challenge for wildcard certs.
 
-### Data migration
-```bash
-# Database:
-pg_dump -U postgres -Fc plane > /tmp/plane.dump
-# Copy to VPS and pg_restore
+### 3.4 Post-setup
 
-# MinIO data (file uploads):
-# rsync from LXC_plane's MinIO volume to VPS
-rsync -avz --progress /path/to/minio-data/ akunito@VPS:/home/akunito/.homelab/plane/minio-data/
-```
-
-### Migration steps
-1. SSH to LXC_plane, inspect current docker-compose.yml and .env
-2. Migrate database (pg_dump/pg_restore)
-3. Migrate MinIO data (rsync)
-4. Create VPS docker-compose.yml and .env
-5. Start containers
-6. Test: `curl -I http://127.0.0.1:3003`
-7. Update Cloudflare tunnel: point plane route to `http://localhost:3003`
-8. Verify public URL works
-9. Stop old LXC_plane containers
-
-### NixOS changes (VPS_PROD-config.nix)
-```nix
-homelabDockerStacks = [
-  { name = "portfolio"; path = "portfolio"; }
-  { name = "liftcraft"; path = "liftcraft"; }
-  { name = "plane"; path = "plane"; }
-];
-```
-
-### Deploy NixOS changes
-```bash
-ssh -A -p 56777 akunito@VPS "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
-```
+- **pfSense DNS**: Change `*.local.akunito.com` override from `192.168.8.102` → TrueNAS IP
+- **TrueNAS Graphite**: Redirect reporting from `192.168.8.85` → `172.26.5.155` (VPS WireGuard)
+- **NPM config**: Migrate all proxy host entries from old LXC_proxy NPM
+- **Test**: Verify local service access via `*.local.akunito.com`
 
 ---
 
-## Step 4: Matrix (migrate & stop — no verification needed)
+## Phase 4: Decommission Containers
 
-**Overview**: Synapse homeserver + Element Web + local Redis. Uses PostgreSQL (`matrix` db). Has a signing key and media_store that MUST be preserved.
-**Currently on**: LXC_matrix (192.168.8.104), ports 8008/8080/9000.
-**Template**: `templates/matrix/docker-compose.yml` (already exists in repo)
-**VPS host ports**: `127.0.0.1:8008:8008`, `127.0.0.1:8080:80`, `127.0.0.1:9000:9000`
+Order matters — stop each, verify, then move on.
 
-### Directory structure
-```
-~/.homelab/matrix/
-├── docker-compose.yml       # Based on templates/matrix/docker-compose.yml
-├── .env
-├── config/
-│   ├── homeserver.yaml      # Copy from LXC_matrix
-│   └── log.config           # Copy from LXC_matrix
-├── element-config/
-│   └── config.json          # Copy from LXC_matrix
-└── data/
-    ├── .signing.key         # CRITICAL: copy from LXC_matrix
-    └── media_store/         # Copy from LXC_matrix
-```
+1. **LXC_proxy** — after TrueNAS proxy + tunnel verified
+2. **LXC_mailer** — after VPS SMTP + TrueNAS Kuma verified
+3. **LXC_monitoring** — after VPS monitoring fully verified
+4. **LXC_plane, LXC_liftcraft, LXC_portfolio, LXC_matrix** — already migrated
+5. **LXC_database** — LAST, after Nextcloud migration (separate session)
 
-### docker-compose.yml modifications (from template)
-- Add `127.0.0.1:` prefix to all port bindings
-- Add `extra_hosts: - "host.docker.internal:host-gateway"` to synapse service
-- Update homeserver.yaml PostgreSQL connection to use `host.docker.internal`
-
-### Data migration (CRITICAL)
-```bash
-# 1. STOP Matrix on LXC_matrix first (prevent data divergence)
-ssh akunito@192.168.8.104 "cd ~/.homelab/matrix && docker compose down"
-
-# 2. Database:
-ssh akunito@192.168.8.103 "pg_dump -U postgres -Fc matrix > /tmp/matrix.dump"
-scp akunito@192.168.8.103:/tmp/matrix.dump /tmp/
-scp -P 56777 /tmp/matrix.dump akunito@VPS:/tmp/
-ssh -p 56777 akunito@VPS "sudo -u postgres pg_restore -d matrix /tmp/matrix.dump"
-
-# 3. CRITICAL — Signing key:
-scp akunito@192.168.8.104:~/.homelab/matrix/data/.signing.key /tmp/
-scp -P 56777 /tmp/.signing.key akunito@VPS:~/.homelab/matrix/data/
-
-# 4. Media store:
-rsync -avz --progress akunito@192.168.8.104:~/.homelab/matrix/data/media_store/ \
-  akunito@VPS:~/.homelab/matrix/data/media_store/
-
-# 5. Config files:
-scp akunito@192.168.8.104:~/.homelab/matrix/config/* /tmp/matrix-config/
-scp akunito@192.168.8.104:~/.homelab/matrix/element-config/* /tmp/matrix-element/
-# Then copy to VPS
-```
-
-### NixOS changes (VPS_PROD-config.nix)
-```nix
-homelabDockerStacks = [
-  { name = "portfolio"; path = "portfolio"; }
-  { name = "liftcraft"; path = "liftcraft"; }
-  { name = "plane"; path = "plane"; }
-  { name = "matrix"; path = "matrix"; }
-];
-
-# Update Prometheus target from LXC to local
-# In prometheusAppTargets, change synapse entry:
-{ name = "synapse"; host = "127.0.0.1"; port = 9000; }
-```
-
-### Deploy NixOS changes
-```bash
-ssh -A -p 56777 akunito@VPS "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
-```
-
-### Post-migration
-- Matrix containers are set up but user said "don't need to verify by the moment"
-- LXC_matrix containers stopped
-- Cloudflare tunnel NOT updated yet (service stays down until verified later)
+Stop: `ssh root@192.168.8.82 "pct stop <CTID>"`
+Destroy (after 1-2 weeks): `ssh root@192.168.8.82 "pct destroy <CTID>"`
 
 ---
 
-## NixOS Configuration Summary
+## Files Modified Summary
 
-### VPS_PROD-config.nix changes (cumulative)
-```nix
-# Step 0: Database connectivity
-postgresqlServerAuthentication = ''
-  host    all             all             10.0.0.0/8              scram-sha-256
-  host    all             all             172.16.0.0/12           scram-sha-256
-'';
-
-# Steps 1-4: Docker stacks (added incrementally)
-homelabDockerEnable = true;
-homelabDockerStacks = [
-  { name = "portfolio"; path = "portfolio"; }
-  { name = "liftcraft"; path = "liftcraft"; }
-  { name = "plane"; path = "plane"; }
-  { name = "matrix"; path = "matrix"; }
-];
-
-# Step 4: Update Prometheus target
-# Change synapse target from 192.168.8.104 to 127.0.0.1
-
-# Remove LXC targets as containers are stopped (optional, can keep for monitoring)
-```
-
-### Monitoring updates after all migrations
-- Remove stopped LXC containers from `prometheusRemoteTargets` (lxc_plane, lxc_liftcraft, lxc_portfolio, lxc_matrix)
-- Update `prometheusAppTargets` synapse entry to local
-- Blackbox HTTP probes don't change (same public URLs)
-
----
-
-## Cloudflare Tunnel Updates
-
-The tunnel is remotely managed via Cloudflare dashboard. For each service:
-
-| Service | Route | Target (before) | Target (after) |
-|---------|-------|-----------------|-----------------|
-| Portfolio | `publicDomain` | LXC_proxy → LXC_portfolioprod:3000 | `http://localhost:3002` |
-| LiftCraft | `leftyworkout-test.publicDomain` | LXC_proxy → LXC_liftcraftTEST:3001 | `http://localhost:3001` |
-| Plane | `plane.publicDomain` | LXC_proxy → LXC_plane:3000 | `http://localhost:3003` |
-| Matrix | `matrix.publicDomain` | LXC_proxy → LXC_matrix:8008 | `http://localhost:8008` (later) |
-| Element | `element.publicDomain` | LXC_proxy → LXC_matrix:8080 | `http://localhost:8080` (later) |
-
----
-
-## Rollback Strategy
-
-Each service is independent. To rollback any single service:
-1. Revert Cloudflare tunnel route to point back to LXC_proxy
-2. Restart containers on original LXC
-3. Remove stack from `homelabDockerStacks`, commit/push, redeploy via:
-   ```bash
-   ssh -A -p 56777 akunito@VPS "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
-   ```
-
----
-
-## Verification (per service)
-
-For each service migration:
-1. `curl -I http://127.0.0.1:<PORT>` — returns 200
-2. Public URL via Cloudflare tunnel works
-3. Blackbox probe in Grafana stays green
-4. Old LXC container stopped
-5. NixOS config evaluates cleanly: `nix eval .#nixosConfigurations.VPS_PROD.config.system.build.toplevel --impure`
+| File | Change |
+|------|--------|
+| `system/app/postfix-relay.nix` | Add homelab LAN subnets to mynetworks |
+| `profiles/LXC_HOME-config.nix` | SMTP → VPS WireGuard IP |
+| `profiles/VPS_PROD-config.nix` | Update targets, add SNMP/PVE/Graphite/backup exporters |
+| `system/app/grafana.nix` | Fix SMTP fallback (remove dead IP) |
+| `lib/defaults.nix` | Update smtpRelayHost default |
+| `user/app/ssh-hosts.nix` | Remove 4 decommissioned host entries |
+| `flake.nix` | Comment out 7 decommissioned profiles |
+| `deploy-servers.conf` | Remove 7 decommissioned entries |
+| `CLAUDE.md` | Update routing table, hierarchy, SSH examples |

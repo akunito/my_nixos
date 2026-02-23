@@ -31,6 +31,7 @@ Starts Docker compose projects in the correct order:
 5. **homelab** - Calibre-web + EmulatorJS only (migrated services are excluded)
 6. **exporters** - Prometheus exportarr for *arr stack metrics
 7. **uptime-kuma** - Status monitoring
+8. **NPM network connections** - Connects NPM to `homelab_default`, `media_default`, `uptime-kuma_default` so it can reverse-proxy via Docker DNS names (NPM macvlan can't reach host-published ports)
 
 ### Services NOT started (migrated or decommissioned)
 

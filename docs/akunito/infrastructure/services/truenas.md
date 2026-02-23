@@ -22,6 +22,7 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 - **Motherboard**: Gigabyte B550 AORUS ELITE V2
 - **Network**: 2x 10GbE LACP bond (bond0: enp8s0f0 + enp8s0f1)
 - **Boot Devices**: 2x Samsung 970 EVO Plus 250GB NVMe (mirrored)
+- **Power**: S3 suspend schedule (23:00–11:00), RTC alarm wake
 
 ### Storage Pools
 
@@ -48,19 +49,56 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 
 ---
 
+## S3 Sleep Schedule
+
+TrueNAS suspends to RAM (S3) nightly to save power (~280W → 0W during sleep).
+
+| Event | Time | Method |
+|-------|------|--------|
+| Suspend | 23:00 | `systemctl suspend` via cron |
+| Wake | 11:00 | RTC alarm (`rtcwake -m no`) |
+
+- ZFS pools remain unlocked in RAM during S3
+- Docker services auto-resume on wake (systemd dependencies)
+- All backup jobs (restic, ZFS replication) scheduled within 11:00–23:00 window
+- WOL unreliable (r8169 driver limitation) — RTC alarm is the primary wake method
+
+---
+
+## Docker Services
+
+TrueNAS runs **19 Docker containers** across **7 compose projects** for media, local proxy, and monitoring.
+
+See [TrueNAS Docker Services](./truenas-services.md) for full details.
+
+**Key services**: Jellyfin, *arr stack (Sonarr/Radarr/Prowlarr/Bazarr), qBittorrent, Calibre-Web, EmulatorJS, NPM (macvlan 192.168.20.201), cloudflared, Uptime Kuma, Tailscale (subnet router), node-exporter, cAdvisor.
+
+**NPM Macvlan**: NPM runs on a macvlan network (`npm_macvlan`) with IP 192.168.20.201 on VLAN 100. pfSense DNS resolves `*.local.akunito.com` → 192.168.20.201.
+
+**Management**:
+```bash
+# Check all containers
+ssh truenas_admin@192.168.20.200 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
+
+# Restart a compose project
+ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && docker compose restart'
+```
+
+---
+
 ## Network Shares
 
 ### NFS Exports (Primary)
 | Share | Dataset | Clients | Purpose |
 |-------|---------|---------|---------|
-| /mnt/hddpool/media | hddpool/media | Proxmox, LXC_HOME | Media streaming (Jellyfin) |
-| /mnt/ssdpool/emulators | ssdpool/emulators | LXC_HOME | ROM collection (EmulatorJS) |
-| /mnt/ssdpool/library | ssdpool/library | LXC_HOME | Ebook library (Calibre-Web) |
-| /mnt/hddpool/proxmox_backups | hddpool/proxmox_backups | Proxmox | VM/LXC backup target |
-| /mnt/ssdpool/ssd_data_backups | ssdpool/ssd_data_backups | Proxmox | Fast backup storage |
+| /mnt/hddpool/media | hddpool/media | TrueNAS Docker (Jellyfin) | Media streaming |
+| /mnt/ssdpool/emulators | ssdpool/emulators | TrueNAS Docker (EmulatorJS) | ROM collection |
+| /mnt/ssdpool/library | ssdpool/library | TrueNAS Docker (Calibre-Web) | Ebook library |
+| /mnt/hddpool/proxmox_backups | hddpool/proxmox_backups | (unused — Proxmox shut down) | Was VM/LXC backup target |
+| /mnt/ssdpool/ssd_data_backups | ssdpool/ssd_data_backups | (unused — Proxmox shut down) | Was fast backup storage |
 | /mnt/hddpool/workstation_backups | hddpool/workstation_backups | 192.168.8.96, 192.168.8.92 | Workstation restic backups (NFS-based unified backup system) |
 
-**Access**: NFSv4, no_root_squash for Proxmox, all_squash (mapall_user=akunito) for workstations and LXC containers
+**Access**: NFSv4, all_squash (mapall_user=akunito) for workstations. Docker containers on TrueNAS access datasets via bind mounts (no NFS needed).
 
 ### SMB Shares (Desktop Access)
 | Share | Dataset | Purpose |
@@ -113,7 +151,7 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 ### Metrics Collection
 
 **1. Built-in Graphite Reporter** (TrueNAS → Prometheus Graphite Exporter)
-- **Target**: 192.168.8.85:2003 (LXC_monitoring)
+- **Target**: VPS Graphite Exporter (port 2003, via Tailscale 100.64.0.6)
 - **Protocol**: Graphite plaintext
 - **Interval**: 10 seconds
 - **Metrics Exported**:
@@ -184,16 +222,16 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 | TrueNASNotReporting | `absent(truenas_cpu_percent)` | No data >5min | warning | 5m |
 | TrueNASMemoryHigh | `(used / total) * 100` | >90% | warning | 10m |
 
-**Notification Channel**: Email (via LXC_mailer postfix relay)
+**Notification Channel**: Email (via VPS Postfix relay)
 
 ### Email Alerts (TrueNAS Native)
 
 **SMTP Configuration**:
-- **Server**: 192.168.8.89:25 (LXC_mailer postfix relay)
+- **Server**: VPS Postfix (100.64.0.6:25 via Tailscale)
 - **From**: truenas@akunito.com
 - **To**: diego88aku@gmail.com
-- **Security**: PLAIN (no TLS for local relay)
-- **Test Status**: ✅ Working (tested 2026-02-09)
+- **Security**: PLAIN (no TLS for internal relay)
+- **Test Status**: ✅ Working
 
 **Alert Levels**:
 - CRITICAL: Pool degradation, disk failures, scrub errors with errors
@@ -351,8 +389,8 @@ systemctl --user status truenas-zfs-exporter.timer
 # Manually run exporter
 ~/.local/bin/truenas-zfs-exporter.sh
 
-# Verify metrics in Prometheus
-curl -s http://192.168.8.85:9109/metrics | grep truenas_zfspool_healthy
+# Verify metrics in Prometheus (on VPS)
+ssh -A -p 56777 akunito@100.64.0.6 'curl -s http://localhost:9109/metrics | grep truenas_zfspool_healthy'
 ```
 
 ### Datasets Locked After Reboot
@@ -375,8 +413,8 @@ ssh truenas_admin@192.168.20.200 'midclt call pool.dataset.query | jq ".[] | sel
 **Symptoms**: No emails from TrueNAS despite alerts being triggered
 
 **Common Issues**:
-1. **SMTP relay not accessible** - Check if LXC_mailer (192.168.8.89) is running
-2. **Network not allowed** - Ensure storage network (192.168.20.0/24) is in postfix mynetworks
+1. **SMTP relay not accessible** - Check if VPS Postfix is running and reachable via Tailscale
+2. **Network not allowed** - Ensure TrueNAS Tailscale IP is in postfix mynetworks on VPS
 3. **Email configuration wrong** - Verify SMTP settings in TrueNAS System > Email
 
 **Verification**:
@@ -384,8 +422,8 @@ ssh truenas_admin@192.168.20.200 'midclt call pool.dataset.query | jq ".[] | sel
 # Test email from TrueNAS
 ssh truenas_admin@192.168.20.200 'midclt call mail.send "{\"subject\": \"Test\", \"text\": \"Test email\"}"'
 
-# Check postfix logs on mailer
-ssh akunito@192.168.8.89 'docker logs postfix-relay | tail -50'
+# Check postfix logs on VPS
+ssh -A -p 56777 akunito@100.64.0.6 'journalctl -u postfix --no-pager -n 50'
 ```
 
 ### NFS Mounts Stale on Proxmox/LXC
@@ -452,10 +490,11 @@ ssh truenas_admin@192.168.20.200 'midclt call iscsi.target.query'
 
 ## Related Documentation
 
+- [TrueNAS Docker Services](./truenas-services.md) - Full Docker container inventory and compose projects
 - [TrueNAS Migration Complete Report](../truenas-migration-complete.md)
 - [Boot Pool Analysis (2026-02-09)](~/Nextcloud/myLibrary/MySecurity/TrueNAS/boot-pool-analysis-2026-02-09.md)
 - [Unlock TrueNAS Skill](.claude/skills/unlock-truenas.md)
-- [Infrastructure Internal](../INFRASTRUCTURE_INTERNAL.md)
+- [Infrastructure Overview](../INFRASTRUCTURE.md)
 - [Monitoring Stack](./monitoring-stack.md)
 
 ---
@@ -485,10 +524,10 @@ curl -s https://192.168.20.200/api/v2.0/system/info -H "Authorization: Bearer $T
 ```
 
 **Monitoring URLs**:
-- Grafana Dashboard: https://grafana.local.akunito.com/d/truenas-storage/truenas
-- Prometheus Metrics: http://192.168.8.85:9109/metrics (search: `truenas_`)
-- Prometheus Alerts: http://192.168.8.85:9090/alerts (search: `TrueNAS`)
+- Grafana Dashboard: https://grafana.akunito.com/d/truenas-storage/truenas
+- Prometheus Metrics: VPS localhost:9109/metrics (search: `truenas_`)
+- Prometheus Alerts: VPS localhost:9090/alerts (search: `TrueNAS`)
 
 **Emergency Contacts**:
 - Email Alerts: diego88aku@gmail.com
-- Matrix Bot: @claudebot:akunito.com (on LXC_matrix)
+- Matrix Bot: @claudebot:akunito.com (on VPS)

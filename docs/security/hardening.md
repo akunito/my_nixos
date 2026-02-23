@@ -65,9 +65,9 @@ services.grafana.settings.server = {
 For Prometheus targets that need remote scraping, use firewall rules instead:
 
 ```nix
-# In profile config - restrict to monitoring server only
+# In profile config - restrict to VPS monitoring server only (Tailscale IP)
 networking.firewall.extraCommands = ''
-  iptables -A INPUT -p tcp --dport 9100 -s 192.168.8.85 -j ACCEPT
+  iptables -A INPUT -p tcp --dport 9100 -s 100.64.0.6 -j ACCEPT
   iptables -A INPUT -p tcp --dport 9100 -j DROP
 '';
 ```

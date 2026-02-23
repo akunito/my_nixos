@@ -57,14 +57,11 @@ ssh truenas_admin@192.168.20.200 "ip route show"
 # From DESK (VLAN 100 direct)
 ping -c 2 192.168.20.200
 
-# From Proxmox (VLAN 100 direct)
-ssh -A root@192.168.8.82 "ping -c 2 192.168.20.200"
-
 # From pfSense (VLAN 100 gateway)
 ssh admin@192.168.8.1 "ping -c 2 192.168.20.200"
 
-# From LXC container (via Proxmox NFS bind mount path)
-ssh -A akunito@192.168.8.80 "ping -c 2 192.168.20.200"
+# From VPS (via Tailscale)
+ssh -A -p 56777 akunito@100.64.0.6 "ping -c 2 192.168.20.200"
 ```
 
 ---

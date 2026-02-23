@@ -16,26 +16,33 @@ Use this skill to:
 ## Architecture Overview
 
 ```
-Remote Clients                    VPS (Headscale)                 Home Network
-     │                              │                                │
-     │                    ┌─────────┴─────────┐                      │
-     │                    │ Coordination Only │                      │
-     │                    │ - Key exchange    │                      │
-     │                    │ - IP assignment   │                      │
-     │                    │ - Peer discovery  │                      │
-     │                    └─────────┬─────────┘                      │
-     │                              │                                │
-     │◄─────────── DIRECT CONNECTION (NAT Traversal) ──────────────►│
-     │                                                               │
-   Clients                                                    LXC_tailscale
-   (laptops)                                                 (subnet router)
-                                                                     │
-                                                              ┌──────┴──────┐
-                                                              │ Home Subnets│
-                                                              │ 192.168.8.x │
-                                                              │ 192.168.20.x│
-                                                              └─────────────┘
+Remote Clients                    VPS (Headscale - NixOS native)      Home Network
+     |                              |                                    |
+     |                    +-------------------+                          |
+     |                    | Coordination Only |                          |
+     |                    | - Key exchange    |                          |
+     |                    | - IP assignment   |                          |
+     |                    | - Peer discovery  |                          |
+     |                    +-------------------+                          |
+     |                              |                                    |
+     |<----------- DIRECT CONNECTION (NAT Traversal) ------------------>|
+     |                                                                   |
+   Clients                                                     Subnet Routers
+   (laptops,                                              +--------------------+
+    phones)                                               |                    |
+                                                   TrueNAS Docker       pfSense pkg
+                                                   (PRIMARY)            (FALLBACK)
+                                                   192.168.20.200       192.168.8.1
+                                                        |                    |
+                                                   +----+----+         +----+----+
+                                                   | Subnets |         | Subnets |
+                                                   | 192.168.8.x  |   | 192.168.8.x  |
+                                                   | 192.168.20.x |   | 192.168.20.x |
+                                                   +--------------+   +--------------+
+                                                   Offline 23:00-11:00   Always on
 ```
+
+**Failover behavior**: TrueNAS is the primary subnet router but goes offline when TrueNAS sleeps (23:00-11:00). Headscale automatically fails over to the pfSense fallback router, which advertises the same subnets and is always on.
 
 ---
 
@@ -43,52 +50,54 @@ Remote Clients                    VPS (Headscale)                 Home Network
 
 | Component | Access | Purpose |
 |-----------|--------|---------|
-| Headscale (VPS) | `ssh -A -p 56777 root@172.26.5.155` | Coordination server |
-| LXC_tailscale | `ssh -A akunito@192.168.8.105` | Subnet router |
-| Headscale API | `https://headscale.akunito.com` | Web API |
+| Headscale (VPS) | `ssh -A -p 56777 akunito@100.64.0.6` | Coordination server (NixOS native) |
+| TrueNAS (subnet router) | `ssh truenas_admin@192.168.20.200` | Primary subnet router (Docker) |
+| pfSense (fallback router) | Web UI at `192.168.8.1` | Fallback subnet router (package) |
 
 ---
 
 ## Headscale Administration (VPS)
 
+Headscale runs as a **NixOS native service** on the VPS (not Docker). All `headscale` commands run directly on the VPS.
+
 ### Check Headscale Status
 
 ```bash
-ssh -A -p 56777 root@172.26.5.155 "docker ps | grep headscale && docker logs headscale --tail 10"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo systemctl status headscale"
 ```
 
 ### List Registered Nodes
 
 ```bash
-ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale nodes list"
+ssh -A -p 56777 akunito@100.64.0.6 "headscale nodes list"
 ```
 
 ### List Users
 
 ```bash
-ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale users list"
+ssh -A -p 56777 akunito@100.64.0.6 "headscale users list"
 ```
 
 ### Create New User
 
 ```bash
-ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale users create <username>"
+ssh -A -p 56777 akunito@100.64.0.6 "headscale users create <username>"
 ```
 
 ### Generate Pre-Auth Key
 
 ```bash
 # Single-use key (expires in 1 hour)
-ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale preauthkeys create --user <username>"
+ssh -A -p 56777 akunito@100.64.0.6 "headscale preauthkeys create --user <username>"
 
 # Reusable key (for multiple devices)
-ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale preauthkeys create --user <username> --reusable"
+ssh -A -p 56777 akunito@100.64.0.6 "headscale preauthkeys create --user <username> --reusable"
 ```
 
 ### List Pre-Auth Keys
 
 ```bash
-ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale preauthkeys list --user <username>"
+ssh -A -p 56777 akunito@100.64.0.6 "headscale preauthkeys list --user <username>"
 ```
 
 ---
@@ -98,61 +107,53 @@ ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale preauthkeys l
 ### List All Routes
 
 ```bash
-ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale routes list"
+ssh -A -p 56777 akunito@100.64.0.6 "headscale routes list"
 ```
 
 ### Enable a Route
 
 ```bash
-ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale routes enable -r <route-id>"
+ssh -A -p 56777 akunito@100.64.0.6 "headscale routes enable -r <route-id>"
 ```
 
 ### Disable a Route
 
 ```bash
-ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale routes disable -r <route-id>"
+ssh -A -p 56777 akunito@100.64.0.6 "headscale routes disable -r <route-id>"
 ```
 
 ---
 
-## Subnet Router (LXC_tailscale) Operations
+## Subnet Router Operations
 
-### Check Tailscale Status
+### TrueNAS (Primary Subnet Router)
 
-```bash
-ssh -A akunito@192.168.8.105 "tailscale status"
-```
-
-### Check Tailscale Detailed Status
+TrueNAS runs Tailscale as a Docker container that advertises home subnets.
 
 ```bash
-ssh -A akunito@192.168.8.105 "tailscale status --json | jq '.Self, .Peer | keys'"
+# Check Tailscale container status
+ssh truenas_admin@192.168.20.200 "docker ps | grep tailscale"
+
+# Check Tailscale logs
+ssh truenas_admin@192.168.20.200 "docker logs tailscale --tail 20"
+
+# Check advertised routes from inside the container
+ssh truenas_admin@192.168.20.200 "docker exec tailscale tailscale status"
 ```
 
-### Run Tailscale Connect Script
+**Advertised subnets**: 192.168.8.0/24, 192.168.20.0/24
 
-```bash
-# Uses configured settings from NixOS
-ssh -A akunito@192.168.8.105 "sudo /etc/tailscale/connect.sh"
-```
+**Availability**: Offline when TrueNAS sleeps (approximately 23:00-11:00). Headscale automatically fails over to pfSense.
 
-### Manual Connect with Routes
+### pfSense (Fallback Subnet Router)
 
-```bash
-ssh -A akunito@192.168.8.105 "tailscale up --login-server=https://headscale.akunito.com --advertise-routes=192.168.8.0/24,192.168.20.0/24"
-```
+pfSense runs the Tailscale package natively.
 
-### Check IP Forwarding
+- **Web UI**: `https://192.168.8.1`
+- **Advertised subnets**: 192.168.8.0/24, 192.168.20.0/24 (same as TrueNAS)
+- **Availability**: Always on
 
-```bash
-ssh -A akunito@192.168.8.105 "sysctl net.ipv4.ip_forward net.ipv6.conf.all.forwarding"
-```
-
-### Check Tailscale Interface
-
-```bash
-ssh -A akunito@192.168.8.105 "ip addr show tailscale0"
-```
+pfSense Tailscale is managed via the pfSense web UI under VPN > Tailscale. No SSH commands needed for routine operations.
 
 ---
 
@@ -183,24 +184,39 @@ tailscale netcheck
 
 ```bash
 # Ping a home service via Tailscale mesh
-tailscale ping 192.168.8.80
+tailscale ping 192.168.8.96
 ```
 
 ---
 
-## Monitoring
+## Headscale Configuration
 
-### Prometheus Metrics (LXC_tailscale)
+### NixOS Service Management
 
 ```bash
-# Check Tailscale metrics export
-ssh -A akunito@192.168.8.105 "cat /var/lib/node_exporter/textfile_collector/tailscale.prom"
+# Check service status
+ssh -A -p 56777 akunito@100.64.0.6 "sudo systemctl status headscale"
+
+# Restart Headscale
+ssh -A -p 56777 akunito@100.64.0.6 "sudo systemctl restart headscale"
+
+# View logs
+ssh -A -p 56777 akunito@100.64.0.6 "sudo journalctl -u headscale --no-pager --tail 50"
 ```
 
-### Check Node Exporter Target
+### Key Locations (VPS)
+
+| Path | Purpose |
+|------|---------|
+| `/var/lib/headscale/` | Headscale data directory (NixOS-managed) |
+| `/var/lib/headscale/db.sqlite3` | Headscale SQLite database |
+
+**Note**: Headscale configuration is managed declaratively through NixOS (`profiles/VPS_PROD-config.nix`). Do not edit config files directly on the VPS.
+
+### Backup Headscale Data
 
 ```bash
-curl -s http://192.168.8.85:9090/api/v1/targets | jq '.data.activeTargets[] | select(.labels.instance=="tailscale")'
+ssh -A -p 56777 akunito@100.64.0.6 "sudo cp /var/lib/headscale/db.sqlite3 /var/lib/headscale/db.sqlite3.backup-$(date +%Y%m%d)"
 ```
 
 ---
@@ -211,12 +227,12 @@ curl -s http://192.168.8.85:9090/api/v1/targets | jq '.data.activeTargets[] | se
 
 1. Check Headscale is running:
    ```bash
-   ssh -A -p 56777 root@172.26.5.155 "docker ps | grep headscale"
+   ssh -A -p 56777 akunito@100.64.0.6 "sudo systemctl status headscale"
    ```
 
 2. Check nginx reverse proxy:
    ```bash
-   ssh -A -p 56777 root@172.26.5.155 "nginx -t && systemctl status nginx"
+   ssh -A -p 56777 akunito@100.64.0.6 "sudo nginx -t && sudo systemctl status nginx"
    ```
 
 3. Test HTTPS endpoint:
@@ -226,24 +242,24 @@ curl -s http://192.168.8.85:9090/api/v1/targets | jq '.data.activeTargets[] | se
 
 ### Subnet Routes Not Working
 
-1. Verify routes are advertised:
+1. Check which subnet router is active:
    ```bash
-   ssh -A akunito@192.168.8.105 "tailscale status --json | jq '.Self.AllowedIPs'"
+   ssh -A -p 56777 akunito@100.64.0.6 "headscale routes list"
    ```
 
-2. Check routes are enabled on Headscale:
+2. Check TrueNAS Tailscale container:
    ```bash
-   ssh -A -p 56777 root@172.26.5.155 "docker exec headscale headscale routes list"
+   ssh truenas_admin@192.168.20.200 "docker ps | grep tailscale"
+   ssh truenas_admin@192.168.20.200 "docker exec tailscale tailscale status"
    ```
 
-3. Verify IP forwarding:
-   ```bash
-   ssh -A akunito@192.168.8.105 "sysctl net.ipv4.ip_forward"
-   ```
+3. If TrueNAS is sleeping (23:00-11:00), verify pfSense fallback is active:
+   - Check pfSense web UI > VPN > Tailscale > Status
+   - Routes should show as enabled on the pfSense node in Headscale
 
-4. Check firewall on subnet router:
+4. Verify routes are enabled on Headscale:
    ```bash
-   ssh -A akunito@192.168.8.105 "sudo iptables -L -n | head -20"
+   ssh -A -p 56777 akunito@100.64.0.6 "headscale routes list"
    ```
 
 ### Traffic Going Through Relay Instead of Direct
@@ -279,54 +295,28 @@ curl -s http://192.168.8.85:9090/api/v1/targets | jq '.data.activeTargets[] | se
 
 ### Common Commands
 
-| Task | Command |
-|------|---------|
-| List all nodes | `docker exec headscale headscale nodes list` |
-| List routes | `docker exec headscale headscale routes list` |
-| Enable route | `docker exec headscale headscale routes enable -r <id>` |
-| Check status | `tailscale status` |
-| NAT diagnostics | `tailscale netcheck` |
-| Ping via mesh | `tailscale ping <ip>` |
+| Task | Command (on VPS) |
+|------|-------------------|
+| List all nodes | `headscale nodes list` |
+| List routes | `headscale routes list` |
+| Enable route | `headscale routes enable -r <id>` |
+| Check status | `tailscale status` (on any client) |
+| NAT diagnostics | `tailscale netcheck` (on any client) |
+| Ping via mesh | `tailscale ping <ip>` (on any client) |
 
 ### Advertised Subnets
 
-| Subnet | Purpose |
-|--------|---------|
-| 192.168.8.0/24 | Main LAN (LXC containers, desktops) |
-| 192.168.20.0/24 | TrueNAS/Storage network |
+| Subnet | Purpose | Primary Router | Fallback Router |
+|--------|---------|----------------|-----------------|
+| 192.168.8.0/24 | Main LAN (desktops, services) | TrueNAS Docker | pfSense package |
+| 192.168.20.0/24 | TrueNAS/Storage network | TrueNAS Docker | pfSense package |
 
 ### Key Locations
 
-| File | Purpose |
-|------|---------|
-| `/etc/tailscale/connect.sh` | Auto-generated connect script (LXC_tailscale) |
-| `/root/vps_wg/headscale/` | Headscale docker-compose (VPS) |
-| `/root/vps_wg/headscale/config/config.yaml` | Headscale configuration (VPS) |
-
----
-
-## VPS Headscale Setup Reference
-
-### Docker Compose Location
-
-```
-/root/vps_wg/headscale/docker-compose.yml
-```
-
-### Restart Headscale
-
-```bash
-ssh -A -p 56777 root@172.26.5.155 "cd /root/vps_wg/headscale && docker compose restart"
-```
-
-### View Headscale Logs
-
-```bash
-ssh -A -p 56777 root@172.26.5.155 "docker logs headscale --tail 50 -f"
-```
-
-### Backup Headscale Data
-
-```bash
-ssh -A -p 56777 root@172.26.5.155 "cd /root/vps_wg/headscale && tar -czvf headscale-backup-$(date +%Y%m%d).tar.gz data/"
-```
+| Component | Location |
+|-----------|----------|
+| Headscale data | `/var/lib/headscale/` (VPS) |
+| Headscale database | `/var/lib/headscale/db.sqlite3` (VPS) |
+| Headscale NixOS config | `profiles/VPS_PROD-config.nix` |
+| TrueNAS Tailscale container | Docker on `truenas_admin@192.168.20.200` |
+| pfSense Tailscale | Web UI at `192.168.8.1` > VPN > Tailscale |
