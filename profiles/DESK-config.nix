@@ -358,7 +358,7 @@ in
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
     dbCredentialsEnable = true;
-    dbCredentialsHost = "192.168.8.103"; # LXC_database server
+    dbCredentialsHost = "100.64.0.6"; # VPS_PROD via Tailscale
     dbCredentialsPostgres = [
       { database = "plane"; user = "plane"; password = secrets.dbPlanePassword; }
       { database = "rails_database_prod"; user = "liftcraft"; password = secrets.dbLiftcraftPassword; }

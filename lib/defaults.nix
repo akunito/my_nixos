@@ -483,8 +483,8 @@
     # === Database Client Credentials (for workstations) ===
     # Generate ~/.pgpass and ~/.my.cnf for CLI tools and DBeaver
     dbCredentialsEnable = false;
-    # Database server host (LXC_database)
-    dbCredentialsHost = "192.168.8.103";
+    # Database server host (VPS via Tailscale)
+    dbCredentialsHost = "100.64.0.6";
     # PostgreSQL credentials (plane, liftcraft databases)
     dbCredentialsPostgres = []; # List of { database, user, password }
     # MariaDB credentials (nextcloud database)
