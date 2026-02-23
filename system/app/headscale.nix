@@ -57,12 +57,17 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
         base_domain = "tailnet.${domain}";
       };
 
-      # DERP (relay) — use Tailscale's public DERP servers
+      # DERP (relay) — self-hosted on VPS (removes dependency on Tailscale Inc's DERP)
       derp = {
         server = {
-          enabled = false; # Use external DERP; enable later if self-hosting
+          enabled = true;
+          region_id = 900;
+          region_code = "custom";
+          region_name = "VPS Self-Hosted";
+          stun_listen_addr = "0.0.0.0:3478";
+          automatically_add_embedded_derp_region = true;
         };
-        urls = [ "https://controlplane.tailscale.com/derpmap/default" ];
+        urls = [ "https://controlplane.tailscale.com/derpmap/default" ]; # Keep as fallback
         auto_update_enabled = true;
         update_frequency = "24h";
       };
@@ -100,6 +105,8 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
 
   # Firewall — port 80 (ACME challenge) + 443 (HTTPS) when nginx is active, otherwise raw port
   networking.firewall.allowedTCPPorts = if hasDomain then [ 80 443 ] else [ port ];
+  # STUN/DERP relay port for self-hosted DERP server
+  networking.firewall.allowedUDPPorts = [ 3478 ];
 
   # Headplane (web UI) — DISABLED for now (not tested, security not reviewed)
   # Use CLI only: headscale users list, headscale nodes list, headscale routes list
