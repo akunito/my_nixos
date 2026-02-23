@@ -329,6 +329,7 @@
     # Thinkpad hardware optimizations (via nixos-hardware)
     thinkpadEnable = false; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = ""; # Thinkpad model (e.g., "lenovo-thinkpad-l14-intel", "lenovo-thinkpad-x280", "lenovo-thinkpad-t490")
+    thinkfanEnable = false; # Enable thinkfan daemon for active fan curve management (requires thinkpadEnable)
 
     # Thunderbolt support (bolt daemon, auto-authorization, diagnostic tools)
     thunderboltEnable = false; # Enable Thunderbolt/bolt daemon for dock and device support

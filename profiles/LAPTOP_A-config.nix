@@ -107,6 +107,7 @@ in
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = "lenovo-thinkpad-t490"; # T580 → T490 (next generation, same family)
+    thinkfanEnable = true; # Active fan curve: quiet at idle, full speed at 80°C
     thunderboltEnable = true; # Enable Thunderbolt dock/device support (TB3 port)
 
     # === Intel GPU & Thermal Power Tuning (T490 = 8th gen Intel UHD 620) ===

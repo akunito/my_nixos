@@ -46,4 +46,42 @@ in
   boot.extraModprobeConfig = lib.mkIf systemSettings.thinkpadEnable ''
     options thinkpad_acpi fan_control=1
   '';
+
+  # Thinkfan daemon — active fan curve management
+  # Uses ThinkPad ACPI thermal zones and fan interface
+  # Requires fan_control=1 (set above) for userspace fan control
+  services.thinkfan = lib.mkIf (systemSettings.thinkpadEnable && (systemSettings.thinkfanEnable or false)) {
+    enable = true;
+
+    sensors = [
+      {
+        type = "tpacpi";
+        query = "/proc/acpi/ibm/thermal";
+      }
+    ];
+
+    fans = [
+      {
+        type = "tpacpi";
+        query = "/proc/acpi/ibm/fan";
+      }
+    ];
+
+    # Balanced fan curve: quiet at idle, progressive ramp, full speed at 80°C
+    # Format: [level  lower_temp  upper_temp]
+    # - Rising: next level when ANY sensor exceeds upper_temp
+    # - Falling: prev level when ALL sensors drop below lower_temp
+    # - 5°C hysteresis between levels prevents fan oscillation
+    levels = [
+      [0               0  48]     # Silent — idle, light browsing
+      [1              43  53]     # Whisper — light multitasking
+      [2              48  58]     # Low — video playback, moderate use
+      [3              53  63]     # Medium — compilation, heavy tabs
+      [4              58  68]     # Medium-high — sustained workload
+      [5              63  73]     # High — gaming, heavy compile
+      [6              68  77]     # Very high — intense sustained load
+      [7              72  80]     # Max firmware speed
+      ["level full-speed" 77 32767]  # Bypass firmware limit — kicks in at 80°C
+    ];
+  };
 }

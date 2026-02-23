@@ -117,6 +117,7 @@ in
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = "lenovo-thinkpad-x280"; # X380 Yoga → X280 (same generation)
+    thinkfanEnable = true; # Active fan curve: quiet at idle, full speed at 80°C
     thunderboltEnable = false; # X380 Yoga has no Thunderbolt 3
 
     # Intel GPU power tuning (Intel UHD 620)

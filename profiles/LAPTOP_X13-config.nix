@@ -184,6 +184,7 @@ in
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = "lenovo-thinkpad-x13-amd"; # X13 Gen 2 AMD
+    thinkfanEnable = true; # Active fan curve: quiet at idle, full speed at 80°C
     thunderboltEnable = false; # X13 AMD has no Thunderbolt
     amdPstateEnable = true; # AMD P-State EPP driver (Zen 3)
     fprintdEnable = true; # Fingerprint reader support
