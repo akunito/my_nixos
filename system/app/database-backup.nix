@@ -19,8 +19,9 @@
 # - databaseBackupStartAt: Systemd OnCalendar schedule (default: daily at 2 AM)
 # - databaseBackupRetainDays: Days to retain daily backups (default: 7)
 # - databaseBackupHourlyEnable: Enable hourly backups (default: false)
-# - databaseBackupHourlySchedule: Hourly schedule (default: "*:00:00")
+# - databaseBackupHourlySchedule: PostgreSQL hourly schedule (default: "*:00:00")
 # - databaseBackupHourlyRetainCount: Hourly backups to retain (default: 72)
+# - mariadbHourlySchedule: MariaDB periodic schedule (default: uses hourlySchedule)
 # - redisBgsaveBeforeBackup: Trigger Redis BGSAVE before backups (default: false)
 # - redisBgsaveTimeout: Seconds to wait for BGSAVE (default: 60)
 
@@ -36,6 +37,7 @@ let
     # Hourly backup settings
     hourlyEnable = systemSettings.databaseBackupHourlyEnable or false;
     hourlySchedule = systemSettings.databaseBackupHourlySchedule or "*:00:00";
+    mariadbHourlySchedule = systemSettings.mariadbHourlySchedule or cfg.hourlySchedule;
     hourlyRetainCount = systemSettings.databaseBackupHourlyRetainCount or 72;
     # PostgreSQL package (match the server's package version)
     package = if (systemSettings.postgresqlServerPackage or null) == null
@@ -438,11 +440,11 @@ lib.mkMerge [
     };
 
     systemd.timers.mariadb-backup-hourly = {
-      description = "MariaDB Database Hourly Backup Timer";
+      description = "MariaDB Database Periodic Backup Timer";
       wantedBy = [ "timers.target" ];
 
       timerConfig = {
-        OnCalendar = cfg.hourlySchedule;
+        OnCalendar = cfg.mariadbHourlySchedule;
         Persistent = true;
         RandomizedDelaySec = "2m";
       };

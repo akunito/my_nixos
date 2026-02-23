@@ -145,10 +145,11 @@ in
     databaseBackupStartAt = "*-*-* 02:00:00"; # Daily at 2 AM
     databaseBackupRetainDays = 7;
 
-    # Hourly backups (3 days retention, custom format only for speed)
+    # Periodic local backups (custom format only for speed)
     databaseBackupHourlyEnable = true;
-    databaseBackupHourlySchedule = "*:00:00"; # Every hour at :00
-    databaseBackupHourlyRetainCount = 72; # 72 hourly backups = 3 days
+    databaseBackupHourlySchedule = "*:00:00"; # PostgreSQL: every hour at :00
+    mariadbHourlySchedule = "*-*-* 00,06,12,18:00:00"; # MariaDB: every 6 hours
+    databaseBackupHourlyRetainCount = 72; # PostgreSQL: 72 hourly = 3 days; MariaDB: 72 x 6h = 18 days
 
     # Redis BGSAVE before backups (ensures cache consistency)
     redisBgsaveBeforeBackup = true;

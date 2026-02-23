@@ -2,9 +2,9 @@
 #
 # Automated backup of VPS data to TrueNAS (hddpool/vps-backups) via Tailscale SFTP.
 # Three separate repositories with independent schedules and retention policies:
-#   - databases: PostgreSQL + MariaDB dumps (daily at 03:00, keep 30 days)
-#   - services:  Docker configs, Headscale state, secrets (daily at 03:30, keep 30 days)
-#   - nextcloud: Nextcloud data directory (daily at 04:00, keep 14 days)
+#   - databases: PostgreSQL + MariaDB dumps (daily at 18:00, keep 30 days)
+#   - services:  Docker configs, Headscale state, secrets (daily at 19:00, keep 30 days)
+#   - nextcloud: Nextcloud data directory (weekly Sunday at 20:00, keep 14 days)
 #
 # Feature flag: vpsResticBackupEnable = true (in profile config)
 #
@@ -113,7 +113,7 @@ let
     repoSuffix = "databases.restic";
     backupPaths = [ "/var/backups/databases" ];
     tags = [ "databases" "postgresql" "mariadb" ];
-    schedule = "*-*-* 03:00:00";
+    schedule = "*-*-* 18:00:00";
     retentionDays = 30;
     retentionPolicy = "--keep-monthly 3";
     description = "PostgreSQL + MariaDB database dumps";
@@ -131,7 +131,7 @@ let
     ];
     excludes = [ "*.log" "*.tmp" "*.cache" ];
     tags = [ "services" "docker" "headscale" ];
-    schedule = "*-*-* 03:30:00";
+    schedule = "*-*-* 19:00:00";
     retentionDays = 30;
     retentionPolicy = "--keep-monthly 3";
     description = "Docker configs, Headscale state, secrets, Uptime Kuma data";
@@ -144,7 +144,7 @@ let
     backupPaths = [ "/var/lib/nextcloud-data" ];
     excludes = [ "*.log" "*.part" "upload_tmp/*" ];
     tags = [ "nextcloud" ];
-    schedule = "*-*-* 04:00:00";
+    schedule = "Sun *-*-* 20:00:00";
     retentionDays = 14;
     retentionPolicy = "--keep-monthly 2";
     description = "Nextcloud user data";
