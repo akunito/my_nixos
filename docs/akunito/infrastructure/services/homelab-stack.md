@@ -1,186 +1,89 @@
 ---
 id: infrastructure.services.homelab
-summary: Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS
-tags: [infrastructure, homelab, docker, nextcloud, syncthing]
-related_files: [profiles/LXC_HOME-config.nix]
+summary: "Homelab services: split between VPS and TrueNAS"
+tags: [infrastructure, homelab, nextcloud, syncthing, media]
+date: 2026-02-23
+status: published
 ---
 
 # Homelab Stack
 
-Core self-hosted services running on LXC_HOME (192.168.8.80) in the `homelab_home-net` Docker network.
+Services split between VPS and TrueNAS after migration (Feb 2026).
 
----
+## On VPS (Docker, rootless)
 
-## Network Configuration
+| Service | Domain | Notes |
+|---------|--------|-------|
+| Nextcloud | nextcloud.akunito.com | Cloud storage, ~200GB data |
+| Syncthing | syncthing.akunito.com | File sync |
+| Miniflux | freshrss.akunito.com | RSS reader (Go, PostgreSQL backend) |
+| miniflux-ai | — (internal) | AI news summaries via Gemini |
+| Obsidian-remote | obsidian.akunito.com | Remote Obsidian access |
+| UniFi | unifi.akunito.com | Network controller (MongoDB 4.4) |
+| Uptime Kuma | status.akunito.com | Public monitoring |
 
-- **Docker Network**: `homelab_home-net` (172.18.0.0/16)
-- **Reverse Proxy**: nginx-proxy (172.18.0.11)
-- **SSL Certificates**: Shared from LXC_proxy via `/mnt/shared-certs/`
+### Nextcloud
 
----
+- Database: MariaDB 11 on VPS localhost
+- Redis: db1 on VPS localhost
+- Cron: every 5 minutes via nextcloud-cron container
+- 2FA: TOTP enabled for all users
+- Brute-force protection enabled
+- Security headers via NPM
+- Previous: LXC_HOME → TrueNAS → VPS (migrated twice)
 
-## Services
+### UniFi
 
-### Nextcloud (Cloud Storage & Collaboration)
+- Image: linuxserver/unifi-network-application
+- MongoDB 4.4 sidecar container
+- Previous: TrueNAS Docker (kept as fallback, not started)
 
-| Property | Value |
-|----------|-------|
-| Container | nextcloud-app |
-| Internal IP | 172.18.0.9 |
-| Internal Port | 80 |
-| Domain | nextcloud.local.akunito.com |
-| Database | MariaDB (nextcloud-db, 172.18.0.4:3306) |
-| Cache | Redis (nextcloud-redis, 172.18.0.8:6379) |
-| Cron | nextcloud-cron (172.18.0.10) |
+## On TrueNAS (Docker)
 
-**Storage Mounts**:
-- `/mnt/DATA_4TB/nextcloud/data` - User files
-- `/mnt/DATA_4TB/nextcloud/config` - Configuration
+| Service | Domain | Data Location |
+|---------|--------|---------------|
+| Calibre-Web | calibre.local.akunito.com | ssdpool/library (~413GB) |
+| EmulatorJS | emulatorjs.local.akunito.com | ssdpool/emulators (~55GB) |
+| Uptime Kuma | uptime.local.akunito.com | Independent VPS watchdog |
 
-**Key Features**:
-- File sync and share
-- Calendar & contacts (CalDAV/CardDAV)
-- Collaborative document editing
-- Mobile app support
+These stay on TrueNAS because they access large local datasets (ebooks, ROMs) that don't need to be on the VPS.
 
----
+## Media Stack (TrueNAS only)
 
-### Syncthing (P2P File Sync)
+| Service | Domain | Port |
+|---------|--------|------|
+| Jellyfin | jellyfin.local.akunito.com | 8096 |
+| Sonarr | sonarr.local.akunito.com | 8989 |
+| Radarr | radarr.local.akunito.com | 7878 |
+| Bazarr | bazarr.local.akunito.com | 6767 |
+| Prowlarr | prowlarr.local.akunito.com | 9696 |
+| Jellyseerr | jellyseerr.local.akunito.com | 5055 |
+| qBittorrent | qbt.local.akunito.com | 8080 |
+| Gluetun | — | VPN for downloads |
+| FlareSolverr | — | 8191 |
 
-| Property | Value |
-|----------|-------|
-| Container | syncthing-app |
-| Internal IP | 172.18.0.2 |
-| Web UI Port | 8384 |
-| Sync Port | 22000 |
-| Domain | syncthing.local.akunito.com |
+### Unified /data Structure
 
-**Direct Ports** (bypassing proxy for sync traffic):
-- 22000/tcp - Sync protocol
-- 21027/udp - Discovery
+All media containers mount `hddpool/media` as `/data` — ONE ZFS dataset:
 
-**Storage**:
-- `/mnt/DATA_4TB/syncthing` - Synced folders
-
-**Key Features**:
-- Decentralized file sync
-- No cloud dependency
-- Device-to-device encryption
-
----
-
-### FreshRSS (RSS Reader)
-
-| Property | Value |
-|----------|-------|
-| Container | freshrss-app |
-| Internal IP | 172.18.0.6 |
-| Internal Port | 80 |
-| Domain | freshrss.local.akunito.com |
-
-**Storage**:
-- `/mnt/DATA_4TB/freshrss/data` - Database & config
-
-**Key Features**:
-- Self-hosted RSS aggregator
-- Multiple user support
-- API for mobile apps (Fever, Google Reader API)
-
----
-
-### Calibre-Web (E-Book Library)
-
-| Property | Value |
-|----------|-------|
-| Container | calibre-web-automated |
-| Internal IP | 172.18.0.7 |
-| Internal Port | 8083 |
-| Domain | books.local.akunito.com |
-
-**Storage Mounts**:
-- `/mnt/NFS_library/books` - Calibre library (from TrueNAS)
-- `/mnt/DATA_4TB/calibre-web/config` - Configuration
-
-**Key Features**:
-- Web-based e-book reader
-- OPDS catalog for e-readers
-- Send to Kindle functionality
-- Automatic metadata fetching
-
----
-
-### EmulatorJS (Browser-Based Emulators)
-
-| Property | Value |
-|----------|-------|
-| Container | emulatorjs |
-| Internal IP | 172.18.0.5 |
-| Internal Port | 3000 |
-| Domain | emulators.local.akunito.com |
-
-**Storage Mounts**:
-- `/mnt/NFS_emulators/roms` - ROM files (from TrueNAS)
-- `/mnt/DATA_4TB/emulatorjs/data` - Configuration & saves
-
-**Supported Systems**:
-- Nintendo (NES, SNES, N64, GB, GBA, DS)
-- Sony (PS1)
-- Sega (Genesis, Game Gear)
-- And many more via RetroArch cores
-
----
-
-## Obsidian Remote (Internal Only)
-
-| Property | Value |
-|----------|-------|
-| Container | obsidian-remote |
-| Internal IP | 172.18.0.3 |
-| Ports | 3000-3001 |
-| Domain | Not exposed (internal use) |
-
-**Purpose**: Remote Obsidian vault access for specific use cases.
-
----
-
-## Docker Compose Location
-
-All homelab services are defined in:
 ```
-LXC_HOME:~/.homelab/docker-compose.yml
+/mnt/hddpool/media/
+├── movies/          # Existing media
+├── tv/              # Existing media
+├── music/           # Existing media
+└── torrents/        # Downloads
+    ├── movies/
+    ├── tv/
+    └── music/
 ```
 
-Environment files (git-crypt encrypted):
-```
-LXC_HOME:~/.homelab/env/
-```
+**Hardlinks work** because torrents/ and media/ are on the same ZFS dataset. Sonarr/Radarr imports are instant (no copy, no extra disk space).
 
----
+### NOT Started on TrueNAS
 
-## Maintenance Commands
+These containers exist in homelab compose but are disabled (migrated to VPS):
+- nextcloud, syncthing, obsidian-remote, redis-local
 
-```bash
-# SSH to LXC_HOME
-ssh akunito@192.168.8.80
+## Previous Setup
 
-# View running containers
-docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-
-# View homelab network containers
-docker network inspect homelab_home-net --format '{{range .Containers}}{{.Name}}: {{.IPv4Address}}{{println}}{{end}}'
-
-# Restart all homelab services
-cd ~/.homelab && docker compose restart
-
-# View logs
-docker logs -f nextcloud-app
-docker logs -f syncthing-app
-```
-
----
-
-## Related Documentation
-
-- [INFRASTRUCTURE.md](../INFRASTRUCTURE.md) - Overall infrastructure
-- [INFRASTRUCTURE_INTERNAL.md](../INFRASTRUCTURE_INTERNAL.md) - Detailed internal docs
-- [proxy-stack.md](./proxy-stack.md) - Reverse proxy configuration
+All homelab services previously ran on LXC_HOME (192.168.8.80, Proxmox). Migrated to TrueNAS in Phase 0.5, then web services moved to VPS in Phase 3. LXC_HOME decommissioned.

@@ -82,6 +82,7 @@ in
     dbPlanePassword = secrets.dbPlanePassword;
     dbLiftcraftPassword = secrets.dbLiftcraftPassword;
     dbMatrixPassword = secrets.dbMatrixPassword;
+    dbMinifluxPassword = secrets.dbMinifluxPassword;
     dbNextcloudPassword = secrets.dbNextcloudPassword;
     redisServerPassword = secrets.redisServerPassword;
 
@@ -90,7 +91,7 @@ in
     # PostgreSQL 17 Server
     postgresqlServerEnable = true;
     postgresqlServerPort = 5432;
-    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" ];
+    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" "miniflux" ];
     postgresqlServerUsers = [
       {
         name = "plane";
@@ -105,6 +106,11 @@ in
       {
         name = "matrix";
         passwordFile = "/etc/secrets/db-matrix-password";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "miniflux";
+        passwordFile = "/etc/secrets/db-miniflux-password";
         ensureDBOwnership = true;
       }
     ];
@@ -207,6 +213,8 @@ in
       { name = "vps_redis";      host = "127.0.0.1"; port = 9121; }
       # Matrix Synapse metrics (VPS Docker)
       { name = "synapse";        host = "127.0.0.1"; port = 9000; }
+      # Miniflux RSS reader (exposes /metrics natively)
+      { name = "miniflux";      host = "127.0.0.1"; port = 8084; }
     ];
 
     # Blackbox exporter (HTTP probes for public services)
@@ -220,6 +228,7 @@ in
       { name = "element"; url = "https://element.${secrets.publicDomain}"; }
       { name = "headscale"; url = "https://${secrets.headscaleDomain}"; }
       { name = "status"; url = "https://status.${secrets.publicDomain}"; }
+      { name = "miniflux"; url = "https://freshrss.${secrets.publicDomain}"; }
     ];
     prometheusBlackboxIcmpTargets = [
       { name = "pfsense"; host = "192.168.8.1"; }
@@ -235,7 +244,9 @@ in
       { name = "liftcraft"; path = "liftcraft"; }
       { name = "plane"; path = "plane"; }
       { name = "matrix"; path = "matrix"; }
-      { name = "freshrss"; path = "freshrss"; }
+      { name = "freshrss"; path = "freshrss"; }       # Keep during migration, remove after 2 weeks
+      { name = "miniflux"; path = "miniflux"; }
+      { name = "miniflux-ai"; path = "miniflux-ai"; }
       { name = "nextcloud"; path = "nextcloud"; }
       { name = "syncthing"; path = "syncthing"; }
       { name = "obsidian-remote"; path = "obsidian-remote"; }
