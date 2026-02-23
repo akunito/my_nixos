@@ -244,6 +244,8 @@ in
     postfixRelayEnable = true;
     postfixRelaySmtpUser = secrets.smtp2goUser;
     postfixRelaySmtpPassword = secrets.smtp2goPassword;
+    # Rootless Docker containers connect via VPS public IP (slirp4netns NAT)
+    postfixRelayExtraNetworks = [ "${secrets.vpsNetcupIp}/32" ];
 
     # ============================================================================
     # EMAIL NOTIFICATIONS (Phase 3 — local Postfix relay)

@@ -2,6 +2,7 @@
 #
 # Provides local SMTP relay for VPS services (Grafana alerts, msmtp, Docker apps).
 # Listens on all interfaces but restricts mynetworks to localhost + Docker bridge subnets.
+# postfixRelayExtraNetworks allows profiles to add IPs (e.g., VPS public IP for rootless Docker).
 # Relays outbound via SMTP2GO with SASL authentication.
 #
 # Port 25 is NOT in allowedTCPPorts — not exposed to internet.
@@ -19,7 +20,8 @@ lib.mkIf (systemSettings.postfixRelayEnable or false) {
     settings.main = {
       myhostname = config.networking.hostName;
       inet_interfaces = "all"; # Docker containers reach via bridge gateway
-      mynetworks = [ "127.0.0.0/8" "[::1]/128" "172.16.0.0/12" "10.0.0.0/8" "100.64.0.0/10" ];
+      mynetworks = [ "127.0.0.0/8" "[::1]/128" "172.16.0.0/12" "10.0.0.0/8" "100.64.0.0/10" ]
+        ++ (systemSettings.postfixRelayExtraNetworks or []);
       relayhost = [ "[mail.smtp2go.com]:2525" ];
       smtp_sasl_auth_enable = "yes";
       smtp_sasl_password_maps = "hash:/etc/postfix/sasl_passwd";
