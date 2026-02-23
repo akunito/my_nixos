@@ -328,11 +328,11 @@ This command updates the Home Manager configuration and applies changes without 
 | LAPTOP_YOGA | nixosyogaaga (192.168.8.100) | aga | main |
 | LAPTOP_A | nixosaga (192.168.8.78) | akunito | main |
 | LXC_HOME | nixosLabaku (192.168.8.80) | akunito | main |
-| LXC_database | database (192.168.8.103) | akunito | main |
-| LXC_monitoring | monitoring (192.168.8.85) | akunito | main |
-| LXC_proxy | proxy (192.168.8.102) | akunito | main |
-| LXC_matrix | matrix (192.168.8.104) | akunito | main |
 | LXC_tailscale | tailscale (192.168.8.105) | akunito | main |
+| ~~LXC_database~~ | ~~database (192.168.8.103)~~ | ~~akunito~~ | ~~STOPPED — migrated to VPS_PROD~~ |
+| ~~LXC_monitoring~~ | ~~monitoring (192.168.8.85)~~ | ~~akunito~~ | ~~STOPPED — migrated to VPS_PROD~~ |
+| ~~LXC_proxy~~ | ~~proxy (192.168.8.102)~~ | ~~akunito~~ | ~~STOPPED — migrated to TrueNAS NPM~~ |
+| ~~LXC_matrix~~ | ~~matrix (192.168.8.104)~~ | ~~akunito~~ | ~~STOPPED — migrated to VPS_PROD~~ |
 | VPS_PROD | vps-prod (see secrets.vpsNetcupIp) | akunito | main |
 | VMHOME | nixosLabaku (192.168.8.80) | akunito | main |
 | KOMI_LXC_database | komi-database (192.168.1.10) | admin | komi |

@@ -7,6 +7,17 @@ related_files: [system/app/prometheus-node-exporter.nix]
 
 # VPS WireGuard Server
 
+> **DEPRECATED (2026-02):** This documents the OLD Hetzner VPS (Ubuntu 24.04). It has been
+> replaced by VPS_PROD on Netcup RS 4000 G12 (NixOS). The new VPS uses:
+> - NixOS declarative config: `profiles/VPS_PROD-config.nix`
+> - Headscale (replaces WireGuard UI) + self-hosted DERP relay
+> - Native Postfix (replaces Docker postfix-relay)
+> - Rootless Docker for all services
+> - Cloudflare Tunnel (managed via NixOS systemd service)
+> - Disaster recovery: `docs/akunito/infrastructure/INFRASTRUCTURE.md` § VPS Disaster Recovery
+>
+> **The old Hetzner VPS (91.211.27.37) is idle and pending cancellation.**
+
 External VPS acting as WireGuard VPN hub and hosting external monitoring services. Located on Hetzner infrastructure.
 
 ---

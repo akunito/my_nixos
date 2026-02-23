@@ -387,7 +387,7 @@ Isolated network for guest devices:
 
 ### VPS WireGuard Server
 
-External VPS (Hetzner, Ubuntu 24.04) acts as the central VPN hub:
+External VPS (Netcup RS 4000 G12, NixOS) acts as the central VPN hub:
 
 ```
                               INTERNET
@@ -396,7 +396,7 @@ External VPS (Hetzner, Ubuntu 24.04) acts as the central VPN hub:
           │                                               │
           ▼                                               ▼
   ┌───────────────┐                            ┌───────────────────┐
-  │  Cloudflare   │                            │   VPS (Hetzner)   │
+  │  Cloudflare   │                            │   VPS (Netcup)    │
   │    Tunnel     │                            │   172.26.5.155    │
   └───────┬───────┘                            └─────────┬─────────┘
           │                                              │
