@@ -125,6 +125,7 @@ let
     repoSuffix = "services.restic";
     backupPaths = [
       "/home/${username}/.homelab"
+      "/home/${username}/.local/share/docker/volumes/uptime-kuma_kuma_data/_data"
       "/var/lib/headscale"
       "/etc/secrets"
     ];
@@ -133,7 +134,7 @@ let
     schedule = "*-*-* 03:30:00";
     retentionDays = 30;
     retentionPolicy = "--keep-monthly 3";
-    description = "Docker configs, Headscale state, secrets";
+    description = "Docker configs, Headscale state, secrets, Uptime Kuma data";
   };
 
   nextcloudBackup = mkResticBackup {
