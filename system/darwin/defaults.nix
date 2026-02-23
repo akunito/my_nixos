@@ -65,6 +65,11 @@ in
     # Disable press-and-hold for keys in favor of key repeat
     ApplePressAndHoldEnabled = false;
 
+    # Disable window open/close animations (snappier feel)
+    NSAutomaticWindowAnimationsEnabled = false;
+    # Near-instant window resize
+    NSWindowResizeTime = 0.001;
+
     # Expand save panel by default
     NSNavPanelExpandedStateForSaveMode = true;
     NSNavPanelExpandedStateForSaveMode2 = true;
@@ -102,6 +107,11 @@ in
     ShowCategory = 100; # 100=My Processes, 101=System, 102=Other User, 103=Active, 104=Inactive, 105=Windowed, 106=Selected, 107=All
     IconType = 5; # Show CPU usage in Dock icon
   };
+
+  # Gaming performance: reduceMotion/reduceTransparency require Full Disk Access
+  # which nix-darwin cannot obtain. Apply manually instead:
+  #   System Settings → Accessibility → Display → Reduce motion ✓
+  #   System Settings → Accessibility → Display → Reduce transparency ✓
 
   # Note: TimeMachine settings are managed via macOS System Settings, not nix-darwin
 }

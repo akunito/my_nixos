@@ -4,6 +4,7 @@
 
 let
   base = import ./MACBOOK-base.nix;
+  secrets = import ../secrets/komi/secrets.nix;
 in
 {
   systemSettings = base.systemSettings // {
@@ -68,6 +69,7 @@ in
 
   userSettings = base.userSettings // {
     username = "komi";
+    planeApiKey = secrets.planeApiKey;
 
     # ========================================================================
     # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control

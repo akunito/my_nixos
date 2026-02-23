@@ -15,6 +15,7 @@
     pkgs-unstable.nodejs_22        # Node.js 22.x LTS (includes npm, npx)
     pkgs-unstable.python312        # Python 3.12 (includes pip)
     pkgs-unstable.python312Packages.pip # Ensure pip is available
+    pkgs-unstable.uv               # Python package manager (provides uvx for MCP servers)
     pkgs-unstable.go               # Go programming language
     pkgs-unstable.rustup           # Rust toolchain installer (provides cargo, rustc)
 

@@ -21,5 +21,10 @@
       # Note: upstream archived May 2025 (v2.3.5), but the Nix package works fine for old games.
       # If a future macOS update breaks it, consider CrossOver (commercial) or a community fork.
       whisky
-    ]);
+    ])
+    ++ [
+      # === Gaming Mode Toggle ===
+      # Pauses Spotlight indexing and Time Machine during gaming sessions
+      (pkgs.writeShellScriptBin "game-mode" (builtins.readFile ./game-mode-darwin.sh))
+    ];
 }

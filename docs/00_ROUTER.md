@@ -88,6 +88,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | komi.infrastructure.headscale-setup | VPS headscale deployment and client registration for Komi | komi, infrastructure, headscale, tailscale, vpn | profiles/KOMI_LXC_tailscale-config.nix |
 | komi.infrastructure.cloudflare-guide | Domain purchase, Cloudflare setup, and DNS configuration for Komi | komi, infrastructure, cloudflare, domain, dns, tunnel | profiles/KOMI_LXC_proxy-config.nix |
 | komi.infrastructure.deployment-plan | Full deployment plan for Komi's LXC infrastructure | komi, infrastructure, deployment, plan | docs/komi/infrastructure/komi-lxc-deployment-plan.md |
+| komi.gaming-performance | Gaming performance tuning for macOS (Whisky/Wine, Warblade) | komi, gaming, darwin, performance, whisky, wine | docs/komi/gaming-performance.md |
 | workflow.komi-onboarding | Quick guide for ko-mi on the multi-user branch setup and what changed | komi, onboarding, multi-user, darwin | docs/komi/komi-onboarding.md |
 | workflow.multi-user | Multi-user branch management workflow for akunito (main) and ko-mi (komi) | git, workflow, multi-user, branches, merge | profiles/MACBOOK-KOMI-config.nix |
 

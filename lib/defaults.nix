@@ -666,6 +666,7 @@
       # === General UI Preferences ===
       darkMode = true; # Enable dark mode
       scrollDirection = true; # Natural scrolling (true = natural, false = traditional)
+
     };
   };
 
