@@ -240,6 +240,7 @@ in
       { name = "syncthing"; path = "syncthing"; }
       { name = "obsidian-remote"; path = "obsidian-remote"; }
       { name = "uptime-kuma"; path = "uptime-kuma"; }
+      { name = "unifi"; path = "unifi"; }
     ];
 
     # ============================================================================
