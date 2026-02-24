@@ -36,8 +36,8 @@ lib.mkIf (systemSettings.acmeEnable or false) {
       credentialsFile = "/etc/secrets/cloudflare-acme";
       # Ensure lego is used (not minica)
       webroot = null;
-      # Allow docker group to read certs (for NPM)
-      group = "docker";
+      # Group for cert file access: "nginx" on VPS (nginx reads certs), "docker" on LXC (NPM reads certs)
+      group = if (systemSettings.nginxLocalEnable or false) then "nginx" else "docker";
       # Trigger copy service after renewal (only when shared cert copy is enabled)
       reloadServices = lib.optionals (systemSettings.acmeCopyToSharedCerts or true) [ "acme-copy-certs" ];
     };

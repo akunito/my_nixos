@@ -184,8 +184,30 @@ in
     prometheusGraphitePort = 9109;
     prometheusGraphiteInputPort = 2003;
 
+    # === ACME Wildcard Certificate (for *.local.akunito.com) ===
+    acmeEnable = true;
+    acmeCopyToSharedCerts = false; # No Proxmox shared mount on VPS
+
     # === Cloudflare Tunnel (Phase 2b — ENABLED) ===
     cloudflaredEnable = true;
+
+    # === Nginx Local Access (*.local.akunito.com via Tailscale — bypasses Cloudflare Access) ===
+    nginxLocalEnable = true;
+    nginxLocalListenAddress = "100.64.0.6"; # VPS Tailscale IP
+    nginxLocalServices = {
+      grafana    = { port = 3002; };
+      prometheus = { port = 9090; };
+      matrix     = { port = 8008; };
+      element    = { port = 8088; };
+      miniflux   = { port = 8084; };
+      nextcloud  = { port = 8089; };
+      syncthing  = { port = 8384; };
+      status     = { port = 3009; };
+      plane      = { port = 3003; };
+      obsidian   = { port = 3010; };
+      unifi      = { port = 8443; https = true; };
+      portfolio  = { port = 3005; };
+    };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
     grafanaEnable = true;

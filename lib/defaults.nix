@@ -369,6 +369,12 @@
     acmeEmail = "admin@example.com"; # Email for Let's Encrypt notifications
     grafanaEnable = false; # Enable Grafana/Prometheus monitoring stack (only on monitoring server)
     grafanaLocalSslEnable = true; # Enable local SSL vhosts (requires /mnt/shared-certs/ from Proxmox)
+
+    # === Nginx Local Access (*.local.akunito.com via Tailscale) ===
+    nginxLocalEnable = false; # Enable Tailscale-only nginx vhosts for local service access
+    nginxLocalListenAddress = "127.0.0.1"; # IP to bind local nginx vhosts (set to Tailscale IP on VPS)
+    nginxLocalServices = {}; # Attrset of services: { grafana = { port = 3002; }; status = { port = 3009; }; }
+
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
 
     # === Control Panel (Web-based infrastructure management) ===
