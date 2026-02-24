@@ -11,7 +11,9 @@
 let
   myRetroarch = pkgs.retroarch.withCores (
     cores: with pkgs.libretro; [
-      vba-m
+      # Handheld consoles
+      vba-m # Game Boy Advance
+      gambatte # Game Boy / Game Boy Color
       (desmume.overrideAttrs (oldAttrs: {
         preConfigure = ''
           sed -i 's/0009BF123456/0022AA067857/g' desmume/src/firmware.cpp;
@@ -23,11 +25,22 @@ let
           sed -i 's/outConfig.MACAddress\[5\] = 0x56/outConfig.MACAddress[5] = 0x57/g' desmume/src/firmware.cpp;
           sed -i 's/0x00, 0x09, 0xBF, 0x12, 0x34, 0x56/0x00, 0x22, 0xAA, 0x06, 0x78, 0x57/g' desmume/src/wifi.cpp;
         '';
-      }))
-      genesis-plus-gx
+      })) # Nintendo DS
+      beetle-ngp # Neo Geo Pocket / Neo Geo Pocket Color
+
+      # Home consoles
+      fceumm # NES / Famicom
+      snes9x # Super Nintendo
+      mupen64plus # Nintendo 64
+      genesis-plus-gx # Genesis / Mega Drive / Master System / Game Gear / SG-1000
+
       # Arcade emulators
-      mame
-      fbneo
+      mame # MAME - Multiple Arcade Machine Emulator
+      fbneo # FinalBurn Neo - CPS1/2/3, Neo Geo, etc.
+
+      # Atari systems
+      atari800 # Atari 5200 / 800 / XL / XE
+      virtualjaguar # Atari Jaguar
     ]
   );
 
