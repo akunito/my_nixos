@@ -221,7 +221,7 @@ in
       portfolio  = { port = 3005; };
       vault      = { port = 8222; };
       emulators  = { port = 8998; };
-      books      = { port = 8083; };
+      calibre    = { port = 8083; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
