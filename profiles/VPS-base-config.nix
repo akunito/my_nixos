@@ -58,6 +58,7 @@ in
       2222  # initrd SSH (LUKS unlock — must remain public)
     ];
     allowedUDPPorts = [
+      3478  # DERP STUN relay (Tailscale NAT traversal)
       41641 # Tailscale direct connections
       51820 # WireGuard backup tunnel
     ];
