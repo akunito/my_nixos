@@ -25,6 +25,9 @@ let
         '';
       }))
       genesis-plus-gx
+      # Arcade emulators
+      mame
+      fbneo
     ]
   );
 
