@@ -53,9 +53,9 @@ DECOMMISSIONED (Feb 2026):
 | NixOS Profile | VPS_PROD |
 | Encryption | LUKS full-disk, initrd SSH unlock on port 2222 |
 
-**Docker containers (17, rootless)**: portfolio, liftcraft, plane, matrix-synapse, element-web, matrix-redis, miniflux, miniflux-ai, nextcloud, nextcloud-cron, syncthing, obsidian-remote, uptime-kuma, unifi-network-app, unifi-mongodb, cloudflared, freshrss (transitional)
+**Docker containers (16, rootless)**: portfolio, liftcraft, plane, matrix-synapse, element-web, matrix-redis, miniflux, miniflux-ai, nextcloud, nextcloud-cron, syncthing, obsidian-remote, uptime-kuma, unifi-network-app, unifi-mongodb, cloudflared
 
-**NixOS native services**: PostgreSQL 17 (plane, liftcraft, matrix, miniflux), MariaDB 11, Redis 7, Prometheus, Grafana, Postfix relay, Headscale, fail2ban, node-exporter, blackbox-exporter, snmp-exporter, graphite-exporter, postgres-exporter, mysqld-exporter, redis-exporter
+**NixOS native services**: PostgreSQL 17 (plane, liftcraft, matrix, miniflux, vaultwarden), MariaDB 11, Redis 7, Vaultwarden, Prometheus, Grafana, Postfix relay, Headscale, fail2ban, node-exporter, blackbox-exporter, snmp-exporter, graphite-exporter, postgres-exporter, mysqld-exporter, redis-exporter
 
 ### TrueNAS SCALE (192.168.20.200)
 

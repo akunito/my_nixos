@@ -54,9 +54,10 @@ Reverse proxy on macvlan network (192.168.20.201). Ports 80/81/443. Connected to
 | Container | Port | Notes |
 |-----------|------|-------|
 | calibre-web-automated | 8083 | Ebook library (ssdpool/library ~413GB) |
-| emulatorjs | 3000 | Browser emulator (ssdpool/emulators ~55GB) |
+| romm | 8998 | ROM manager (ssdpool/emulators ~55GB) |
+| romm-db | 3307 | MariaDB for RomM |
 
-**NOT started**: nextcloud, syncthing, freshrss, obsidian-remote, redis-local (all migrated to VPS)
+**NOT started**: nextcloud, syncthing, obsidian-remote, redis-local (all migrated to VPS)
 
 ### 6. exporters (4 containers)
 

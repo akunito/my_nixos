@@ -279,7 +279,6 @@ in
       { name = "liftcraft"; path = "liftcraft"; }
       { name = "plane"; path = "plane"; }
       { name = "matrix"; path = "matrix"; }
-      { name = "freshrss"; path = "freshrss"; }       # Keep during migration, remove after 2 weeks
       { name = "miniflux"; path = "miniflux"; }
       { name = "miniflux-ai"; path = "miniflux-ai"; }
       { name = "nextcloud"; path = "nextcloud"; }

@@ -51,7 +51,7 @@ All monitoring runs on the VPS as NixOS native services.
 
 ### Blackbox HTTP Probes
 
-All public services: plane, portfolio, matrix, element, nextcloud, freshrss, grafana, headscale, liftcraft, syncthing, obsidian, unifi
+All public services: plane, portfolio, matrix, element, nextcloud, miniflux, grafana, headscale, liftcraft, syncthing, obsidian, unifi, vault, status
 
 ### Blackbox ICMP Probes
 

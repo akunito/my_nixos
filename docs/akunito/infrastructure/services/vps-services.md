@@ -38,7 +38,7 @@ Profile: `VPS_PROD` (VPS-base-config.nix → VPS_PROD-config.nix)
 
 Deploy: `ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"`
 
-## Docker Containers (17, rootless)
+## Docker Containers (16, rootless)
 
 All containers run as `akunito` user via rootless Docker. ALL ports bound to `127.0.0.1`.
 
@@ -50,7 +50,7 @@ All containers run as `akunito` user via rootless Docker. ALL ports bound to `12
 | matrix-synapse | matrix.akunito.com | 8008 | Federation server |
 | element-web | element.akunito.com | 8088 | Matrix web client |
 | matrix-redis | — | 6380 | Redis for Matrix |
-| miniflux | freshrss.akunito.com | 8084 | RSS reader (replaces FreshRSS) |
+| miniflux | freshrss.akunito.com | 8084 | RSS reader |
 | miniflux_ai | — (internal) | — | AI news summaries (Gemini) |
 | nextcloud | nextcloud.akunito.com | 8089 | Cloud storage |
 | nextcloud-cron | — | — | Background jobs |
@@ -60,18 +60,18 @@ All containers run as `akunito` user via rootless Docker. ALL ports bound to `12
 | unifi-network-app | unifi.akunito.com | — | Network controller |
 | unifi-mongodb | — | 27017 | MongoDB 4.4 for UniFi |
 | cloudflared | — | — | Cloudflare tunnel |
-| freshrss | — | 8082 | Transitional (remove after migration) |
 
 ## NixOS Native Services
 
 | Service | Port | Notes |
 |---------|------|-------|
-| PostgreSQL 17 | 5432 | plane, liftcraft, matrix, miniflux DBs |
+| PostgreSQL 17 | 5432 | plane, liftcraft, matrix, miniflux, vaultwarden DBs |
 | MariaDB 11 | 3306 | nextcloud DB |
 | Redis 7 | 6379 | 5 DB allocations |
 | Prometheus | 9090 | Metrics collection |
 | Grafana | 3000 | grafana.akunito.com |
 | Postfix | 25 | SMTP2GO relay |
+| Vaultwarden | 8222 | vault.akunito.com (password manager) |
 | Headscale | 8080 | headscale.akunito.com |
 | fail2ban | — | SSH + Nextcloud jails |
 | node-exporter | 9091 | Host metrics |
