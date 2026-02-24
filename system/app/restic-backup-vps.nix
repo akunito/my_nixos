@@ -2,12 +2,12 @@
 #
 # Automated backup of VPS data to TrueNAS (hddpool/vps-backups) via Tailscale SFTP.
 # Three separate repositories with independent schedules and retention policies:
-#   - databases:  PostgreSQL + MariaDB dumps (daily at 12:00, keep 30 days)
-#   - services:   Docker configs, Headscale, Vaultwarden, secrets (daily at 13:00, keep 30 days)
-#   - nextcloud:  Nextcloud data directory (weekly Sunday at 14:00, keep 14 days)
-#   - libraries:  RomM ROMs + Calibre books ~260GB (weekly Sunday at 15:00, keep 30 days)
+#   - databases:  PostgreSQL + MariaDB dumps (daily at 19:00, keep 30 days)
+#   - services:   Docker configs, Headscale, Vaultwarden, secrets (daily at 19:30, keep 30 days)
+#   - nextcloud:  Nextcloud data directory (weekly Sunday at 20:00, keep 14 days)
+#   - libraries:  RomM ROMs + Calibre books ~260GB (weekly Sunday at 20:30, keep 30 days)
 #
-# Schedule rationale: TrueNAS sleeps 23:00-11:00. Backups run 12:00-22:00 window.
+# Schedule rationale: TrueNAS sleeps 23:00-11:00. Backups run 19:00-22:00 window.
 #
 # Feature flag: vpsResticBackupEnable = true (in profile config)
 #
@@ -116,7 +116,7 @@ let
     repoSuffix = "databases.restic";
     backupPaths = [ "/var/backups/databases" ];
     tags = [ "databases" "postgresql" "mariadb" ];
-    schedule = "*-*-* 12:00:00";
+    schedule = "*-*-* 19:00:00";
     retentionDays = 30;
     retentionPolicy = "--keep-monthly 3";
     description = "PostgreSQL + MariaDB database dumps";
@@ -135,13 +135,13 @@ let
     ];
     excludes = [ "*.log" "*.tmp" "*.cache" ];
     tags = [ "services" "docker" "headscale" "vaultwarden" ];
-    schedule = "*-*-* 13:00:00";
+    schedule = "*-*-* 19:30:00";
     retentionDays = 30;
     retentionPolicy = "--keep-monthly 3";
     description = "Docker configs, Headscale state, secrets, Vaultwarden, Uptime Kuma";
   };
 
-  # Large media libraries — weekly Sunday after nextcloud (14:00)
+  # Large media libraries — weekly Sunday after nextcloud
   librariesBackup = mkResticBackup {
     name = "libraries";
     passwordFile = "/etc/secrets/restic-services";
@@ -152,7 +152,7 @@ let
     ];
     excludes = [ "*.log" "*.tmp" "*.cache" ];
     tags = [ "libraries" "romm" "calibre" ];
-    schedule = "Sun *-*-* 15:00:00";
+    schedule = "Sun *-*-* 20:30:00";
     retentionDays = 30;
     retentionPolicy = "--keep-monthly 3";
     description = "RomM ROMs + Calibre book library (~260GB)";
@@ -165,7 +165,7 @@ let
     backupPaths = [ "/var/lib/nextcloud-data" ];
     excludes = [ "*.log" "*.part" "upload_tmp/*" ];
     tags = [ "nextcloud" ];
-    schedule = "Sun *-*-* 14:00:00";
+    schedule = "Sun *-*-* 20:00:00";
     retentionDays = 14;
     retentionPolicy = "--keep-monthly 2";
     description = "Nextcloud user data";
