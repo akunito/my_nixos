@@ -1,8 +1,8 @@
 # Homelab stack - TrueNAS Docker
 # Active services only (migrated services removed)
 #
-# Active: calibre-web-automated, romm, romm-db
-# Migrated to VPS: nextcloud, syncthing, freshrss, obsidian-remote, redis-local
+# Active: calibre-web-automated
+# Migrated to VPS: nextcloud, syncthing, freshrss, obsidian-remote, redis-local, romm
 
 services:
   calibre-web-automated:
@@ -42,77 +42,6 @@ services:
         limits:
           memory: 4G
 
-  # === RomM (ROM Manager - replaces EmulatorJS) ===
-  romm-db:
-    image: mariadb:latest
-    container_name: romm-db
-    restart: unless-stopped
-    environment:
-      - MARIADB_ROOT_PASSWORD=${ROMM_DB_ROOT_PASSWORD}
-      - MARIADB_DATABASE=romm
-      - MARIADB_USER=romm-user
-      - MARIADB_PASSWORD=${ROMM_DB_PASSWORD}
-    volumes:
-      - ${DATA_PATH}/romm/mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      start_period: 30s
-      start_interval: 10s
-      interval: 30s
-      timeout: 5s
-      retries: 5
-    logging:
-      driver: json-file
-      options:
-        max-size: 50m
-        max-file: "2"
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-
-  romm:
-    image: rommapp/romm:latest
-    container_name: romm
-    restart: unless-stopped
-    environment:
-      - DB_HOST=romm-db
-      - DB_NAME=romm
-      - DB_USER=romm-user
-      - DB_PASSWD=${ROMM_DB_PASSWORD}
-      - ROMM_AUTH_SECRET_KEY=${ROMM_AUTH_SECRET}
-      - IGDB_CLIENT_ID=${IGDB_CLIENT_ID}
-      - IGDB_CLIENT_SECRET=${IGDB_CLIENT_SECRET}
-      - STEAMGRIDDB_API_KEY=${STEAMGRIDDB_API_KEY}
-      - SCREENSCRAPER_USER=${SCREENSCRAPER_USER}
-      - SCREENSCRAPER_PASSWORD=${SCREENSCRAPER_PASSWORD}
-    volumes:
-      - /mnt/ssdpool/emulators/romm-library:/romm/library
-      - ${DATA_PATH}/romm/assets:/romm/assets
-      - ${DATA_PATH}/romm/config:/romm/config
-      - romm_resources:/romm/resources
-      - romm_redis_data:/redis-data
-    ports:
-      - "3010:8080"
-    depends_on:
-      romm-db:
-        condition: service_healthy
-    logging:
-      driver: json-file
-      options:
-        max-size: 100m
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
-      interval: 60s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-
-volumes:
-  romm_resources:
-  romm_redis_data:
+  # === RomM — MIGRATED TO VPS (Feb 2026) ===
+  # romm-db and romm removed. ROMs copied to VPS NVMe.
+  # See VPS Docker stack: romm/docker-compose.yml

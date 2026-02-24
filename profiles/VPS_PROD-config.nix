@@ -220,6 +220,7 @@ in
       unifi      = { port = 8443; https = true; };
       portfolio  = { port = 3005; };
       vault      = { port = 8222; };
+      romm       = { port = 8998; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
@@ -286,6 +287,7 @@ in
       { name = "obsidian-remote"; path = "obsidian-remote"; }
       { name = "uptime-kuma"; path = "uptime-kuma"; }
       { name = "unifi"; path = "unifi"; }
+      { name = "romm"; path = "romm"; }
     ];
 
     # ============================================================================
