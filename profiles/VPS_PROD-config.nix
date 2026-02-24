@@ -315,7 +315,8 @@ in
     # ============================================================================
     # RESTIC BACKUP TO TRUENAS (Phase 3f — via Tailscale SFTP)
     # ============================================================================
-    # Repos: databases (03:00), services (03:30), nextcloud (04:00)
+    # Repos: databases (12:00), services (13:00), nextcloud (Sun 14:00)
+    # Window: 12:00-22:00 (TrueNAS sleeps 23:00-11:00)
     # Target: TrueNAS hddpool/vps-backups via Tailscale (100.64.0.9)
     vpsResticBackupEnable = true;
     vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
