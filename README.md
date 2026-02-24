@@ -6,56 +6,82 @@ description: Modular, hierarchical NixOS configuration with centralized software
 
 # NixOS Configuration Repository
 
-A **modular, hierarchical** NixOS configuration system with **centralized software management** and profile inheritance. Built on Nix flakes for reproducible, declarative system configuration across desktops, laptops, servers, and containers.
+A **modular, hierarchical** NixOS configuration system with **centralized software management** and profile inheritance. Built on Nix flakes for reproducible, declarative system configuration across desktops, laptops, VPS, containers, and macOS.
 
-## 📐 Architecture Overview
+## Architecture Overview
+
+### Infrastructure (Post-Migration Feb 2026)
+
+```
+                          ┌─────────────────────────────────────┐
+                          │          Cloudflare Tunnel           │
+                          │  *.akunito.com → VPS localhost       │
+                          └──────────────┬──────────────────────┘
+                                         │
+     ┌───────────────────────────────────┼───────────────────────────────┐
+     │                                   │                               │
+     ▼                                   ▼                               ▼
+┌─────────────┐                 ┌────────────────┐              ┌──────────────┐
+│  VPS_PROD   │                 │   TrueNAS      │              │   pfSense    │
+│  (Netcup)   │◄──Tailscale──► │  192.168.20.200 │              │ 192.168.8.1  │
+│ 100.64.0.6  │   + WireGuard  │  VLAN 100       │              │  Router/FW   │
+├─────────────┤                 ├────────────────┤              ├──────────────┤
+│ Headscale   │                 │ Media Stack    │              │ DNS Resolver │
+│ PostgreSQL  │   Restic/SFTP   │ (Sonarr, etc.) │              │ WireGuard    │
+│ Grafana     │ ──────────────► │ NPM Proxy      │              │ Tailscale    │
+│ Prometheus  │    Backups      │ Cloudflared    │              │ DHCP/NAT     │
+│ Docker x15  │                 │ Monitoring     │              │ Firewall     │
+│ Postfix     │                 │ Docker x19     │              └──────────────┘
+│ Cloudflared │                 └────────────────┘
+│ LUKS Encrypt│
+└─────────────┘
+     ▲
+     │ Tailscale Mesh
+     ▼
+┌──────────────────────────────────────────────────┐
+│  Client Devices: DESK, LAPTOP_X13, LAPTOP_YOGA,  │
+│  LAPTOP_A, Phone, MACBOOK-KOMI                    │
+└──────────────────────────────────────────────────┘
+```
 
 ### Configuration Hierarchy & Inheritance
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        lib/defaults.nix                                   │
-│                   (Global defaults & feature flags)                       │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-         ┌───────────────────────┼───────────────────────┐
-         │                       │                       │
-         ▼                       ▼                       ▼
-    ┌─────────┐           ┌──────────┐          ┌──────────┐
-    │Personal │           │ Homelab  │          │   LXC    │
-    │ Profile │           │ Profile  │          │  Base    │
-    └────┬────┘           └─────┬────┘          └────┬─────┘
-         │                      │                    │
-         │                      │                    │
-         │                      │                    │
-         ▼                      ▼                    ▼
-    ┌────────────┐         ┌────────┐     ┌────────────────────┐
-    │   DESK     │         │VMHOME  │     │ LXC_HOME           │
-    │ (Desktop)  │         │(Server)│     │ LXC_plane          │
-    └──────┬─────┘         └────────┘     │ LXC_portfolioprod  │
-           │                              │ LXC_mailer         │
-           │                              │ LXC_liftcraftTEST  │
-           │                              │ LXC_monitoring     │
-           │                              │ LXC_proxy          │
-           │                              └────────────────────┘
-           │
-    ┌──────┴───────────────┬──────────────┐
-    │                      │              │
-    ▼                      ▼              ▼
-┌────────┐          ┌──────────┐    ┌──────────┐
-│DESK_A │          │DESK_VMDESK│   │  LAPTOP  │
-│ (Desk) │          │   (VM)    │   │   Base   │
-└────────┘          └──────────┘    └─────┬────┘
-                                         │
-                                         ├─────────────┬─────────────┐
-                                         ▼             ▼             ▼
-                                     ┌────────┐  ┌────────────┐  ┌─────────┐
-                                     │LAPTOP  │  │  LAPTOP    │  │LAPTOP   │
-                                     │  X13   │  │   YOGA     │  │   A     │
-                                     └────────┘  └────────────┘  └─────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                        lib/defaults.nix                              │
+│                   (Global defaults & feature flags)                  │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+       ┌───────────────┬───────┼────────┬────────────────┬─────────────┐
+       │               │       │        │                │             │
+       ▼               ▼       ▼        ▼                ▼             ▼
+  ┌─────────┐   ┌──────────┐ ┌────┐ ┌────────┐  ┌───────────┐  ┌──────────┐
+  │Personal │   │ Homelab  │ │VPS │ │ KOMI   │  │  Darwin   │  │   WSL    │
+  │ Profile │   │ Profile  │ │Base│ │LXC Base│  │  (macOS)  │  │(Standalone)│
+  └────┬────┘   └────┬─────┘ └──┬─┘ └───┬────┘  └─────┬─────┘  └──────────┘
+       │              │          │       │              │
+       ▼              ▼          ▼       ▼              ▼
+  ┌────────┐    ┌────────┐  ┌────────┐ ┌──────────┐ ┌───────────┐
+  │  DESK  │    │VMHOME  │  │VPS_PROD│ │KOMI_LXC_ │ │MACBOOK-   │
+  │(Desktop)│   │(Server)│  │(Netcup)│ │database  │ │  KOMI     │
+  └───┬────┘    └────────┘  └────────┘ │mailer    │ └───────────┘
+      │                                 │monitoring│
+      ├──────────┬──────────┐           │proxy     │
+      ▼          ▼          ▼           │tailscale │
+  ┌──────┐ ┌─────────┐ ┌────────┐      └──────────┘
+  │DESK_A│ │DESK_    │ │ LAPTOP │
+  │      │ │ VMDESK  │ │  Base  │
+  └──────┘ └─────────┘ └───┬────┘
+                            │
+                ┌───────────┼───────────┐
+                ▼           ▼           ▼
+           ┌────────┐ ┌────────┐ ┌─────────┐
+           │LAPTOP  │ │LAPTOP  │ │ LAPTOP  │
+           │  X13   │ │  YOGA  │ │    A    │
+           └────────┘ └────────┘ └─────────┘
 
 Legend:
-  └──► Inherits from
+  └──> Inherits from
   │    Profile hierarchy
   ┌──┐ Specific machine configuration
 ```
@@ -64,58 +90,58 @@ Legend:
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│              Profile Configuration File                         │
+│              Profile Configuration File                        │
 │              (e.g., DESK-config.nix)                           │
 ├────────────────────────────────────────────────────────────────┤
 │  systemSettings = {                                            │
 │    hostname = "nixosaku";                                      │
 │    systemPackages = [...];  # Profile-specific only            │
-│                                                                 │
+│                                                                │
 │    ╔════════════════════════════════════════════════════╗      │
 │    ║ SOFTWARE & FEATURE FLAGS - Centralized Control    ║      │
 │    ╠════════════════════════════════════════════════════╣      │
-│    ║ # Package Modules                                  ║      │
-│    ║ systemBasicToolsEnable = true;                     ║      │
-│    ║ systemNetworkToolsEnable = true;                   ║      │
-│    ║                                                     ║      │
-│    ║ # Desktop & Theming                                ║      │
-│    ║ enableSwayForDESK = true;                          ║      │
-│    ║ stylixEnable = true;                               ║      │
-│    ║                                                     ║      │
-│    ║ # System Services                                  ║      │
-│    ║ sambaEnable = true;                                ║      │
-│    ║ sunshineEnable = true;                             ║      │
-│    ║ wireguardEnable = true;                            ║      │
-│    ║                                                     ║      │
-│    ║ # Development & AI                                 ║      │
-│    ║ developmentToolsEnable = true;                     ║      │
-│    ║ aichatEnable = true;                               ║      │
+│    ║ # Package Modules                                 ║      │
+│    ║ systemBasicToolsEnable = true;                    ║      │
+│    ║ systemNetworkToolsEnable = true;                  ║      │
+│    ║                                                   ║      │
+│    ║ # Desktop & Theming                               ║      │
+│    ║ enableSwayForDESK = true;                         ║      │
+│    ║ stylixEnable = true;                              ║      │
+│    ║                                                   ║      │
+│    ║ # System Services                                 ║      │
+│    ║ sambaEnable = true;                               ║      │
+│    ║ sunshineEnable = true;                            ║      │
+│    ║ wireguardEnable = true;                           ║      │
+│    ║                                                   ║      │
+│    ║ # Development & AI                                ║      │
+│    ║ developmentToolsEnable = true;                    ║      │
+│    ║ aichatEnable = true;                              ║      │
 │    ╚════════════════════════════════════════════════════╝      │
-│  };                                                             │
-│                                                                 │
+│  };                                                            │
+│                                                                │
 │  userSettings = {                                              │
 │    homePackages = [...];  # Profile-specific only              │
-│                                                                 │
+│                                                                │
 │    ╔════════════════════════════════════════════════════╗      │
-│    ║ SOFTWARE & FEATURE FLAGS (USER) - Centralized      ║      │
+│    ║ SOFTWARE & FEATURE FLAGS (USER) - Centralized     ║      │
 │    ╠════════════════════════════════════════════════════╣      │
-│    ║ # Package Modules (User)                           ║      │
-│    ║ userBasicPkgsEnable = true;                        ║      │
-│    ║ userAiPkgsEnable = true;   # DESK only             ║      │
-│    ║                                                     ║      │
-│    ║ # Gaming & Entertainment                           ║      │
-│    ║ protongamesEnable = true;                          ║      │
-│    ║ starcitizenEnable = true;                          ║      │
-│    ║ steamPackEnable = true;                            ║      │
+│    ║ # Package Modules (User)                          ║      │
+│    ║ userBasicPkgsEnable = true;                       ║      │
+│    ║ userAiPkgsEnable = true;   # DESK only            ║      │
+│    ║                                                   ║      │
+│    ║ # Gaming & Entertainment                          ║      │
+│    ║ protongamesEnable = true;                         ║      │
+│    ║ starcitizenEnable = true;                         ║      │
+│    ║ steamPackEnable = true;                           ║      │
 │    ╚════════════════════════════════════════════════════╝      │
-│  };                                                             │
+│  };                                                            │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-## 🎯 Core Principles
+## Core Principles
 
 ### 1. Hierarchical Configuration
-- **Base profiles** define common settings (DESK as desktop base, LAPTOP-base.nix for laptop-specific, LXC-base-config.nix for containers)
+- **Base profiles** define common settings (DESK for desktops, LAPTOP-base.nix for laptops, VPS-base-config.nix for VPS, KOMI_LXC-base-config.nix for Komi containers)
 - **Specific profiles** inherit and override only what's unique
 - **Global defaults** in `lib/defaults.nix` provide sensible starting points
 - **LAPTOP Base inherits from DESK** - laptops get desktop features + laptop-specific settings (TLP, battery, etc.)
@@ -141,9 +167,9 @@ Software organized into **4 core package modules**:
 #### Personal Profiles
 Full-featured desktop/laptop configurations with GUI applications:
 - **DESK** - Primary desktop (AMD GPU, gaming, development, AI)
-  - **DESK_A** - Secondary desktop (inherits from DESK, simplified - no development/AI, limited gaming)
-  - **DESK_VMDESK** - VM desktop (inherits from DESK, development enabled, no gaming/AI, Sway + Plasma6)
-  - **LAPTOP Base** - Laptop common settings (inherits from DESK + adds TLP, battery management, laptop-specific features)
+  - **DESK_A** - Secondary desktop (inherits from DESK, simplified)
+  - **DESK_VMDESK** - VM desktop (inherits from DESK, development enabled)
+  - **LAPTOP Base** - Laptop common settings (inherits from DESK + adds TLP, battery management)
     - **LAPTOP_X13** - AMD laptop with development tools
     - **LAPTOP_YOGA** - Older laptop, reduced features
     - **LAPTOP_A** - Minimal laptop with basic tools
@@ -152,17 +178,24 @@ Full-featured desktop/laptop configurations with GUI applications:
 Headless server configurations:
 - **VMHOME** - Homelab server (Docker, NFS, no GUI)
 
-#### Container Profiles
-LXC containers for Proxmox with centralized deployment:
-- **LXC-base-config.nix** - Common container settings (passwordless sudo, Docker, SSH)
-- **LXC_HOME**, **LXC_plane**, **LXC_portfolioprod**, **LXC_mailer**, **LXC_liftcraftTEST** - Production services
-- **Centralized deployment** via `deploy-lxc.sh` interactive script
+#### VPS Profile
+Production VPS with full-stack services:
+- **VPS_PROD** - Netcup RS 4000 G12 (Docker, PostgreSQL, Grafana, Prometheus, Headscale, Cloudflared, LUKS encryption, WireGuard)
+  - Inherits from **VPS-base-config.nix**
+
+#### Komi Container Profiles
+LXC containers on Komi's Proxmox (192.168.1.x):
+- **KOMI_LXC-base-config.nix** - Common container settings (passwordless sudo, Docker, SSH)
+- **KOMI_LXC_database**, **KOMI_LXC_mailer**, **KOMI_LXC_monitoring**, **KOMI_LXC_proxy**, **KOMI_LXC_tailscale**
+
+#### macOS / Darwin Profile
+- **MACBOOK-KOMI** - macOS with nix-darwin, Homebrew casks, Hammerspoon
 
 #### Specialized Profiles
 - **WSL** - Windows Subsystem for Linux minimal setup
 - **Work** - Work-focused configuration (no games/personal tools)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -174,10 +207,7 @@ cd ~/.dotfiles
 # Interactive installation
 ./install.sh ~/.dotfiles PROFILE
 
-# Silent installation
-./install.sh ~/.dotfiles PROFILE -s
-
-# With user sync
+# Silent installation with user sync
 ./install.sh ~/.dotfiles PROFILE -s -u
 ```
 
@@ -189,8 +219,9 @@ cd ~/.dotfiles
 - `LAPTOP_A` - Minimal laptop
 - `LAPTOP_YOGA` - Older laptop
 - `VMHOME` - Homelab server
+- `VPS_PROD` - Production VPS (Netcup)
 - `WSL` - Windows Subsystem for Linux
-- `LXC_HOME`, `LXC_plane`, `LXC_portfolioprod`, `LXC_mailer`, `LXC_liftcraftTEST`, `LXC_monitoring`, `LXC_proxy`, `LXC_database`, `LXC_tailscale`, `LXC_matrix` - LXC containers
+- `KOMI_LXC_database`, `KOMI_LXC_mailer`, `KOMI_LXC_monitoring`, `KOMI_LXC_proxy`, `KOMI_LXC_tailscale` - Komi LXC containers
 - `MACBOOK-KOMI` - macOS (nix-darwin)
 
 ### Daily Usage
@@ -211,30 +242,36 @@ aku gc 30d    # Delete >30 days old
 aku gc full   # Delete everything unused
 ```
 
-### LXC Container Deployment
+### Remote Deployment
 
-Deploy NixOS configurations to multiple Proxmox LXC containers from a single command:
+Deploy NixOS configurations to remote machines using `deploy.sh` or manual SSH:
 
 ```bash
-# Interactive menu - select containers with arrow keys
-./deploy-lxc.sh
+# TUI-based deployment manager (from local machine)
+./deploy.sh --profile VPS_PROD
 
-# Deploy to all containers at once
-./deploy-lxc.sh --all
+# Manual VPS deployment (passwordless sudo via SSH agent)
+ssh -A -p 56777 akunito@<VPS-IP> \
+  "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && \
+   ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
 
-# Deploy to specific containers
-./deploy-lxc.sh --profile LXC_HOME --profile LXC_plane
+# Komi LXC deployment (passwordless sudo)
+ssh -A admin@<LXC-IP> \
+  "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && \
+   ./install.sh ~/.dotfiles KOMI_LXC_database -s -u -d -h"
+
+# Physical machines (requires sudo password — run on target)
+cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && \
+  ./install.sh ~/.dotfiles LAPTOP_X13 -s -u
 ```
 
-**Interactive Controls:**
-- `↑/↓` Navigate servers
-- `Space` Toggle selection
-- `Enter` Deploy to selected
-- `a` Select all | `n` Deselect all | `q` Quit
+**Key flags:**
+- `-s` Silent mode (no prompts)
+- `-u` Include user/Home Manager sync
+- `-d` Skip Docker handling (keeps containers running)
+- `-h` Skip hardware-config regeneration (LXC only)
 
-The script automatically syncs each container with the main branch and runs the install script with passwordless sudo. See [docs/akunito/lxc-deployment.md](docs/akunito/lxc-deployment.md) for full documentation.
-
-## 📋 Configuration Examples
+## Configuration Examples
 
 ### Example 1: Creating a New Desktop Profile
 
@@ -337,33 +374,45 @@ in
 }
 ```
 
-### Example 3: Creating an LXC Container Profile
+### Example 3: Creating a VPS Profile
 
 ```nix
-# profiles/LXC_myservice-config.nix
+# profiles/MYVPS-config.nix
 let
-  base = import ./LXC-base-config.nix;
+  base = import ./VPS-base-config.nix;
+  secrets = import ../secrets/domains.nix;
 in
 {
   systemSettings = base.systemSettings // {
-    hostname = "lxc-myservice";
-    ipAddress = "192.168.1.100";
+    hostname = "myvps";
+    envProfile = "MYVPS";
+
+    systemPackages = pkgs: pkgs-unstable: [
+      pkgs.postgresql_17
+    ];
 
     # ============================================================================
     # SOFTWARE & FEATURE FLAGS - Centralized Control
     # ============================================================================
     systemBasicToolsEnable = true;
-    systemNetworkToolsEnable = false;  # Minimal container
-    # All services disabled
+    systemNetworkToolsEnable = true;
+    wireguardEnable = true;
+    tailscaleEnable = true;
+
+    # === Database & Services ===
+    postgresqlServerEnable = true;
+    grafanaEnable = true;
   };
 
   userSettings = base.userSettings // {
-    # Inherit all user settings from base
+    # Server profiles: minimal user settings
+    userBasicPkgsEnable = false;
+    userAiPkgsEnable = false;
   };
 }
 ```
 
-## 🔧 Software Management
+## Software Management
 
 ### How It Works
 
@@ -420,15 +469,46 @@ userSettings = {
 };
 ```
 
-## 📚 Documentation
+## Features
+
+### Desktop Environments
+- **Plasma 6** - KDE Plasma with Wayland
+- **SwayFX** - Wayland compositor with effects
+- **Hyprland** - Dynamic tiling Wayland compositor
+- **Stylix** - System-wide theming with 55+ base16 themes
+
+### System Features
+- **Rootless Docker** - Declarative Docker Compose stacks managed via NixOS
+- **Remote LUKS Unlock** - SSH server in initrd for encrypted drives (VPS)
+- **Tailscale Mesh VPN** - Self-hosted Headscale control server on VPS
+- **WireGuard VPN** - Site-to-site tunnel between home and VPS
+- **Declarative Monitoring** - Grafana + Prometheus with alerting
+- **Automated Backups** - Restic-based with systemd timers (VPS to TrueNAS via SFTP)
+- **Cloudflare Tunnel** - Zero-trust access to services via `*.akunito.com`
+- **NFS Client/Server** - Network file system support
+- **QEMU/KVM Virtualization** - Full VM support with bridged networking
+- **Power Management** - Profile-specific TLP configurations
+
+### Development Tools
+- **NixVim** - Neovim configured like Cursor IDE
+- **Multiple IDEs** - VSCode, Cursor, Windsurf
+- **AI Tools** - LM Studio, Ollama, aichat CLI
+- **Cloud Tools** - Azure CLI, Cloudflare Tunnel
+- **Languages** - Rust, Python, Go, Node.js
+
+### Gaming Support
+- **Steam** - Native Steam client
+- **Proton** - Lutris, Bottles, Heroic launcher
+- **Emulators** - Dolphin (Primehack), RPCS3, RomM
+- **Star Citizen** - Kernel optimizations
+
+## Documentation
 
 ### Quick Navigation
 
 - **Installation Guide**: [docs/installation.md](docs/installation.md)
 - **Profile Details**: [docs/profiles.md](docs/profiles.md)
-- **System Modules**: [docs/system-modules/](docs/system-modules/README.md)
-- **User Modules**: [docs/user-modules/](docs/user-modules/README.md)
-- **Scripts Reference**: [docs/scripts/](docs/scripts/README.md)
+- **Infrastructure Overview**: [docs/akunito/infrastructure/INFRASTRUCTURE.md](docs/akunito/infrastructure/INFRASTRUCTURE.md)
 - **Keybindings**: [docs/akunito/keybindings.md](docs/akunito/keybindings.md)
 
 ### Documentation System
@@ -437,9 +517,9 @@ This repository uses a **Router + Catalog** system:
 
 - **Router (quick lookup)**: [`docs/00_ROUTER.md`](docs/00_ROUTER.md) - Find topics fast
 - **Catalog (browse all)**: [`docs/01_CATALOG.md`](docs/01_CATALOG.md) - Complete listing
-- **Navigation guide**: [`docs/navigation.md`](docs/navigation.md) - **Start here**
+- **Navigation guide**: [`docs/navigation.md`](docs/navigation.md) - Start here
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 .dotfiles/
@@ -452,69 +532,34 @@ This repository uses a **Router + Catalog** system:
 │   └── flake-base.nix        # Profile builder (per-profile output generation)
 ├── profiles/
 │   ├── personal/             # Personal profile templates
-│   │   ├── configuration.nix # System config (imports work/configuration.nix)
-│   │   └── home.nix          # User config (imports work/home.nix)
 │   ├── work/                 # Work profile templates
 │   ├── homelab/              # Server profile templates
+│   ├── darwin/               # macOS/nix-darwin templates
 │   ├── DESK-config.nix       # Desktop configuration
-│   ├── LAPTOP-base.nix       # Laptop base (inherited by X13, YOGA)
-│   ├── LAPTOP_X13-config.nix # Specific laptop config
-│   ├── LXC-base-config.nix   # LXC container base
+│   ├── LAPTOP-base.nix       # Laptop base (inherited by X13, YOGA, A)
+│   ├── VPS-base-config.nix   # VPS base (inherited by VPS_PROD)
+│   ├── VPS_PROD-config.nix   # Production VPS configuration
+│   ├── KOMI_LXC-base-config.nix  # Komi LXC container base
 │   └── ...
 ├── system/
 │   ├── app/                  # System-level applications
 │   ├── hardware/             # Hardware configuration
 │   ├── packages/             # Package modules
-│   │   ├── system-basic-tools.nix
-│   │   └── system-network-tools.nix
 │   ├── security/             # Security modules
 │   └── wm/                   # Window manager system config
 ├── user/
 │   ├── app/                  # User applications
-│   │   ├── development/      # Development tools
-│   │   └── games/            # Gaming applications
 │   ├── packages/             # User package modules
-│   │   ├── user-basic-pkgs.nix
-│   │   └── user-ai-pkgs.nix
 │   ├── shell/                # Shell configurations
 │   ├── wm/                   # Window manager user config
 │   └── style/                # Theming and styling
 ├── themes/                   # 55+ base16 themes
 ├── docs/                     # Comprehensive documentation
+├── secrets/                  # Encrypted secrets (git-crypt)
 └── scripts/                  # Utility scripts
 ```
 
-## ✨ Features
-
-### Desktop Environments
-- **Plasma 6** - KDE Plasma with Wayland
-- **SwayFX** - Wayland compositor with effects
-- **Hyprland** - Dynamic tiling Wayland compositor
-- **Stylix** - System-wide theming with 55+ base16 themes
-
-### System Features
-- **Automated Maintenance** - Generation cleanup, Docker container handling
-- **Remote LUKS Unlock** - SSH server on boot for encrypted drives
-- **NFS Client/Server** - Network file system support
-- **QEMU/KVM Virtualization** - Full VM support with bridged networking
-- **Automated Backups** - Restic-based with SystemD timers
-- **Power Management** - Profile-specific TLP configurations
-- **LXC Centralized Deployment** - Deploy to multiple containers with one command
-
-### Development Tools
-- **NixVim** - Neovim configured like Cursor IDE
-- **Multiple IDEs** - VSCode, Cursor, Windsurf
-- **AI Tools** - LM Studio, Ollama, aichat CLI
-- **Cloud Tools** - Azure CLI, Cloudflare Tunnel
-- **Languages** - Rust, Python, Go, Node.js
-
-### Gaming Support
-- **Steam** - Native Steam client
-- **Proton** - Lutris, Bottles, Heroic launcher
-- **Emulators** - Dolphin (Primehack), RPCS3
-- **Star Citizen** - Kernel optimizations
-
-## 🛠️ Maintenance
+## Maintenance
 
 ### Common Tasks
 
@@ -547,48 +592,22 @@ aku pull
 - Run: `aku refresh`
 - Check `stylixEnable = true` in profile config
 
-## 🔐 Security Notes
+## Security Notes
 
 - **SSH Keys**: Change default SSH keys in profile configs before deploying servers
+- **Secrets**: Managed via git-crypt; see [docs/akunito/security.md](docs/akunito/security.md)
 - **LUKS Encryption**: See [docs/security/luks-encryption.md](docs/security/luks-encryption.md)
 - **Backups**: Configure Restic in profile config, see [docs/security/restic-backups.md](docs/security/restic-backups.md)
 
-## 📄 License
+## License
 
 This configuration is provided as-is for personal use. Based on [Librephoenix's dotfiles](https://github.com/librephoenix/nixos-config).
 
-## 🙏 Credits
+## Credits
 
 Forked from [Librephoenix's NixOS configuration](https://github.com/librephoenix/nixos-config), significantly enhanced with:
 - Hierarchical profile inheritance system
 - Centralized software management
-- Modular package organization
-- Extensive documentation
-- Multiple machine type support (desktops, laptops, servers, containers)
-
----
-
-## Additional Resources
-
-### Detailed Documentation
-- **[Configuration Guide](docs/configuration.md)** - Flake management and variables
-- **[Maintenance Guide](docs/maintenance.md)** - System maintenance and automation
-- **[Security Guide](docs/akunito/security.md)** - SSH, encryption, backups
-- **[Hardware Guide](docs/akunito/hardware.md)** - Drives, GPU, power management
-- **[Themes Guide](docs/themes.md)** - Theme system and customization
-- **[Patches Guide](docs/patches.md)** - Nixpkgs patches
-
-### Specific Topics
-- **[LXC Deployment](docs/akunito/lxc-deployment.md)** - Centralized container deployment
-- **[LUKS Encryption](docs/security/luks-encryption.md)** - Encrypted drives with remote unlock
-- **[Restic Backups](docs/security/restic-backups.md)** - Automated backup configuration
-- **[CPU Power Management](docs/akunito/hardware/cpu-power-management.md)** - Governors and performance
-- **[Sway Keybindings](docs/akunito/keybindings/sway.md)** - Complete SwayFX keybinding reference
-- **[Plasma 6 Setup](docs/user-modules/plasma6.md)** - KDE configuration
-- **[Gaming Setup](docs/user-modules/gaming.md)** - Gaming platform configuration
-
-### External Resources
-- **[NixOS Manual](https://nixos.org/manual/nixos/stable/)** - Official NixOS documentation
-- **[Home Manager Manual](https://nix-community.github.io/home-manager/)** - User environment management
-- **[Nix Pills](https://nixos.org/guides/nix-pills/)** - Deep dive into Nix
-- **[NixOS Wiki](https://nixos.wiki)** - Community documentation
+- Multi-architecture support (NixOS, nix-darwin, VPS, LXC)
+- Full-stack VPS deployment (Docker, databases, monitoring, VPN)
+- Comprehensive documentation with Router/Catalog system
