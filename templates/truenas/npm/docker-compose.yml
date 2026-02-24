@@ -1,0 +1,30 @@
+# NPM (Nginx Proxy Manager) - TrueNAS Docker
+# Reverse proxy on macvlan network (192.168.20.201)
+#
+# Post-startup, truenas-docker-startup.sh connects NPM to service networks
+# (homelab_default, media_default, uptime-kuma_default) so it can reverse-proxy
+# via Docker DNS names. NPM on macvlan can't reach host-published ports.
+
+services:
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    networks:
+      npm_macvlan:
+        ipv4_address: 192.168.20.201
+    ports: []
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    environment:
+      TZ: Europe/Warsaw
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  npm_macvlan:
+    external: true

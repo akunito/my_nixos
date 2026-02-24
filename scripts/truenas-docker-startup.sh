@@ -3,28 +3,33 @@
 # Starts all Docker services on TrueNAS in the correct order
 #
 # Usage:
-#   truenas-docker-startup.sh                  # Start all services
+#   truenas-docker-startup.sh                  # Sync compose files + start all
 #   truenas-docker-startup.sh --status         # Show status only
 #   truenas-docker-startup.sh --stop           # Stop all services (graceful)
+#   truenas-docker-startup.sh --no-sync        # Start without syncing compose files
 #
 # Compose projects and their start order:
 #   1. tailscale      - VPN connectivity (needed by other services)
 #   2. cloudflared    - Cloudflare tunnel (external access)
 #   3. npm            - Nginx Proxy Manager (reverse proxy, needs macvlan)
 #   4. media          - Media stack (jellyfin, *arr, gluetun)
-#   5. homelab        - Calibre-web, EmulatorJS only (migrated services excluded)
+#   5. homelab        - Calibre-web, RomM (migrated services removed from compose)
 #   6. exporters      - Prometheus exporters for *arr stack
 #   7. uptime-kuma    - Status monitoring
 #
-# NOT started (migrated to VPS or decommissioned):
-#   - unifi           - Running on VPS (unifi.akunito.com)
-#   - network/pihole  - Deleted
-#   - homelab migrated: nextcloud, syncthing, freshrss, obsidian-remote, redis-local
+# Compose files are tracked in the dotfiles repo under templates/truenas/
+# and synced to TrueNAS on startup (unless --no-sync is used).
 #
 set -euo pipefail
 
 COMPOSE_ROOT="/mnt/ssdpool/docker/compose"
 TRUENAS_HOST="192.168.20.200"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+TEMPLATES_DIR="$REPO_ROOT/templates/truenas"
+
+# Active compose projects (order matters for startup)
+PROJECTS=("tailscale" "cloudflared" "npm" "media" "homelab" "exporters" "uptime-kuma")
 
 # ============================================================================
 # Parse arguments
@@ -32,15 +37,18 @@ TRUENAS_HOST="192.168.20.200"
 
 STATUS_ONLY=false
 STOP_ALL=false
+NO_SYNC=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --status) STATUS_ONLY=true; shift ;;
         --stop) STOP_ALL=true; shift ;;
+        --no-sync) NO_SYNC=true; shift ;;
         --help|-h)
-            echo "Usage: $0 [--status] [--stop]"
-            echo "  --status  Show all container statuses"
-            echo "  --stop    Gracefully stop all services"
+            echo "Usage: $0 [--status] [--stop] [--no-sync]"
+            echo "  --status   Show all container statuses"
+            echo "  --stop     Gracefully stop all services"
+            echo "  --no-sync  Skip syncing compose files from repo"
             exit 0
             ;;
         *) echo "Unknown: $1"; exit 1 ;;
@@ -55,15 +63,64 @@ log() { echo "[$(date '+%H:%M:%S')] $*"; }
 log_ok() { echo "[$(date '+%H:%M:%S')] OK: $*"; }
 log_error() { echo "[$(date '+%H:%M:%S')] ERROR: $*" >&2; }
 
+is_local() {
+    [[ "$(hostname)" == *"truenas"* ]] || [[ -d "$COMPOSE_ROOT" ]]
+}
+
 # Run command on TrueNAS via SSH or locally
 run_cmd() {
-    if [[ "$(hostname)" == *"truenas"* ]] || [[ -d "$COMPOSE_ROOT" ]]; then
-        # Running on TrueNAS directly
+    if is_local; then
         eval "$@"
     else
-        # Running remotely via SSH
         ssh truenas_admin@${TRUENAS_HOST} "$@"
     fi
+}
+
+# ============================================================================
+# Sync compose files from repo to TrueNAS
+# ============================================================================
+
+sync_compose_files() {
+    if [[ ! -d "$TEMPLATES_DIR" ]]; then
+        log_error "Templates directory not found: $TEMPLATES_DIR"
+        return 1
+    fi
+
+    log "Syncing compose files from repo to TrueNAS..."
+
+    for project in "${PROJECTS[@]}"; do
+        local src="$TEMPLATES_DIR/$project/docker-compose.yml"
+        if [[ ! -f "$src" ]]; then
+            log "  SKIP $project (no template in repo)"
+            continue
+        fi
+
+        if is_local; then
+            # Running on TrueNAS — copy directly
+            local dest="$COMPOSE_ROOT/$project/docker-compose.yml"
+            if ! diff -q "$src" "$dest" >/dev/null 2>&1; then
+                cp "$src" "$dest"
+                log "  UPDATED $project"
+            else
+                log "  OK $project (unchanged)"
+            fi
+        else
+            # Running remotely — scp to TrueNAS
+            local dest="$COMPOSE_ROOT/$project/docker-compose.yml"
+            local remote_content
+            remote_content=$(ssh truenas_admin@${TRUENAS_HOST} "cat $dest 2>/dev/null" || echo "")
+            local local_content
+            local_content=$(cat "$src")
+            if [[ "$remote_content" != "$local_content" ]]; then
+                scp -q "$src" "truenas_admin@${TRUENAS_HOST}:$dest"
+                log "  UPDATED $project"
+            else
+                log "  OK $project (unchanged)"
+            fi
+        fi
+    done
+
+    log_ok "Compose files synced"
 }
 
 # ============================================================================
@@ -86,9 +143,13 @@ show_status() {
 stop_all() {
     log "Stopping all Docker services on TrueNAS..."
 
-    local projects=("uptime-kuma" "exporters" "homelab" "media" "npm" "cloudflared" "tailscale")
+    # Reverse order for shutdown
+    local reversed=()
+    for ((i=${#PROJECTS[@]}-1; i>=0; i--)); do
+        reversed+=("${PROJECTS[$i]}")
+    done
 
-    for project in "${projects[@]}"; do
+    for project in "${reversed[@]}"; do
         local compose_file="$COMPOSE_ROOT/$project/docker-compose.yml"
         if run_cmd "test -f $compose_file" 2>/dev/null; then
             log "Stopping $project..."
@@ -167,6 +228,12 @@ start_all() {
     echo "=========================================="
     echo ""
 
+    # Sync compose files from repo (unless --no-sync)
+    if [[ "$NO_SYNC" == false ]]; then
+        sync_compose_files
+        echo ""
+    fi
+
     # 1. Tailscale (VPN connectivity)
     start_project "tailscale" || ((failures++))
 
@@ -180,14 +247,8 @@ start_all() {
     # 4. Media stack (jellyfin, *arr, gluetun)
     start_project "media" || ((failures++))
 
-    # 5. Homelab (ONLY calibre-web and emulatorjs — migrated services excluded)
-    log "Starting homelab (calibre-web + emulatorjs only)..."
-    if run_cmd "cd $COMPOSE_ROOT/homelab && sudo docker compose up -d calibre-web-automated emulatorjs" 2>/dev/null; then
-        log_ok "homelab (calibre-web, emulatorjs) started"
-    else
-        log_error "homelab failed to start"
-        ((failures++))
-    fi
+    # 5. Homelab (calibre-web + RomM — compose only contains active services)
+    start_project "homelab" || ((failures++))
 
     # 6. Exporters (needs media network to be up)
     start_project "exporters" || ((failures++))

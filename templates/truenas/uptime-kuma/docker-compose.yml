@@ -1,0 +1,19 @@
+# Uptime Kuma - TrueNAS Docker
+# Status monitoring dashboard
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./data:/app/data
+    environment:
+      TZ: Europe/Warsaw
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

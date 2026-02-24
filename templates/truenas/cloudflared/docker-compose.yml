@@ -1,0 +1,17 @@
+# Cloudflared - TrueNAS Docker
+# Cloudflare Tunnel for external access to TrueNAS services
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    network_mode: host
+    environment:
+      TZ: Europe/Warsaw
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
