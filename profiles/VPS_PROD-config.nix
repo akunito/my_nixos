@@ -221,6 +221,7 @@ in
       portfolio  = { port = 3005; };
       vault      = { port = 8222; };
       emulators  = { port = 8998; };
+      books      = { port = 8083; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
@@ -288,6 +289,7 @@ in
       { name = "uptime-kuma"; path = "uptime-kuma"; }
       { name = "unifi"; path = "unifi"; }
       { name = "romm"; path = "romm"; }
+      { name = "calibre"; path = "calibre"; }
     ];
 
     # ============================================================================

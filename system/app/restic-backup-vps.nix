@@ -126,17 +126,18 @@ let
     backupPaths = [
       "/home/${username}/.homelab"
       "/home/${username}/romm-library"
+      "/home/${username}/calibre-library"
       "/home/${username}/.local/share/docker/volumes/uptime-kuma_kuma_data/_data"
       "/var/lib/headscale"
       "/var/lib/vaultwarden"
       "/etc/secrets"
     ];
     excludes = [ "*.log" "*.tmp" "*.cache" ];
-    tags = [ "services" "docker" "headscale" "vaultwarden" "romm" ];
+    tags = [ "services" "docker" "headscale" "vaultwarden" "romm" "calibre" ];
     schedule = "*-*-* 19:00:00";
     retentionDays = 30;
     retentionPolicy = "--keep-monthly 3";
-    description = "Docker configs, Headscale state, secrets, Vaultwarden, RomM, Uptime Kuma";
+    description = "Docker configs, Headscale state, secrets, Vaultwarden, RomM, Calibre, Uptime Kuma";
   };
 
   nextcloudBackup = mkResticBackup {
