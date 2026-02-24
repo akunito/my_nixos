@@ -49,11 +49,17 @@ in
         "nordvpn"            # VPN client
       ];
 
+      # Custom Homebrew taps
+      homebrewTaps = [
+        "human37/open-wispr" # Voice dictation using local Whisper (Metal GPU accelerated)
+      ];
+
       # CLI tools via Homebrew formulas
       # Note: Docker/Colima managed via Nix (user/app/colima/colima.nix)
       homebrewFormulas = [
         "docker-completion"  # Docker shell completion (Nix version has issues on macOS)
         "displayplacer"      # Programmatic display resolution control (used by game-mode.sh)
+        "human37/open-wispr/open-wispr" # Push-to-talk voice dictation (local Whisper, Metal accelerated)
       ];
     };
 
