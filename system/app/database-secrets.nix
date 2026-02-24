@@ -76,6 +76,15 @@ lib.mkIf anyDatabaseEnabled {
       };
     })
 
+    (lib.mkIf ((systemSettings.postgresqlServerEnable or false) && (systemSettings.dbVaultwardenPassword or "") != "") {
+      "secrets/db-vaultwarden-password" = {
+        text = systemSettings.dbVaultwardenPassword;
+        mode = "0440";
+        user = "root";
+        group = "postgres";
+      };
+    })
+
     # MariaDB passwords
     (lib.mkIf ((systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != "") {
       "secrets/db-nextcloud-password" = {

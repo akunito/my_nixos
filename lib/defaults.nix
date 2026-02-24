@@ -375,6 +375,11 @@
     nginxLocalListenAddress = "127.0.0.1"; # IP to bind local nginx vhosts (set to Tailscale IP on VPS)
     nginxLocalServices = {}; # Attrset of services: { grafana = { port = 3002; }; status = { port = 3009; }; }
 
+    # === Vaultwarden (password manager) ===
+    vaultwardenEnable = false; # Enable Vaultwarden NixOS native service
+    vaultwardenDomain = ""; # Public domain (e.g., "vault.akunito.com")
+    vaultwardenPort = 8222; # Internal port (localhost only)
+
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
 
     # === Control Panel (Web-based infrastructure management) ===

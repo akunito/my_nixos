@@ -83,6 +83,8 @@ in
     dbLiftcraftPassword = secrets.dbLiftcraftPassword;
     dbMatrixPassword = secrets.dbMatrixPassword;
     dbMinifluxPassword = secrets.dbMinifluxPassword;
+    dbVaultwardenPassword = secrets.dbVaultwardenPassword;
+    vaultwardenAdminToken = secrets.vaultwardenAdminToken;
     dbNextcloudPassword = secrets.dbNextcloudPassword;
     redisServerPassword = secrets.redisServerPassword;
 
@@ -91,7 +93,7 @@ in
     # PostgreSQL 17 Server
     postgresqlServerEnable = true;
     postgresqlServerPort = 5432;
-    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" "miniflux" ];
+    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" "miniflux" "vaultwarden" ];
     postgresqlServerUsers = [
       {
         name = "plane";
@@ -111,6 +113,11 @@ in
       {
         name = "miniflux";
         passwordFile = "/etc/secrets/db-miniflux-password";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "vaultwarden";
+        passwordFile = "/etc/secrets/db-vaultwarden-password";
         ensureDBOwnership = true;
       }
     ];
@@ -188,6 +195,11 @@ in
     acmeEnable = true;
     acmeCopyToSharedCerts = false; # No Proxmox shared mount on VPS
 
+    # === Vaultwarden (Password Manager — NixOS native, PostgreSQL backend) ===
+    vaultwardenEnable = true;
+    vaultwardenDomain = "vault.${secrets.publicDomain}";
+    vaultwardenPort = 8222;
+
     # === Cloudflare Tunnel (Phase 2b — ENABLED) ===
     cloudflaredEnable = true;
 
@@ -207,6 +219,7 @@ in
       obsidian   = { port = 3010; };
       unifi      = { port = 8443; https = true; };
       portfolio  = { port = 3005; };
+      vault      = { port = 8222; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
