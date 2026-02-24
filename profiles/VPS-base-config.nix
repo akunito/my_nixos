@@ -100,6 +100,7 @@ in
         home-manager
         jq
         python3
+        pkgs-unstable.uv
         iproute2
         openssl
         traceroute

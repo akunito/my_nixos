@@ -21,6 +21,9 @@
     # === Version Control Tools ===
     pkgs.git-crypt                 # Transparent file encryption in git
 
+    # === Python Tooling ===
+    pkgs-unstable.uv               # Fast Python package installer and runner (uvx)
+
     # === Shell and Cloud Tools ===
     pkgs-unstable.powershell       # PowerShell 7+
     pkgs.azure-cli                 # Azure command-line interface
