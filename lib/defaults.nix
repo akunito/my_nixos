@@ -198,7 +198,7 @@
     ];
     disk4_enabled = false;
     disk4_name = "/mnt/NFS_emulators";
-    disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
+    disk4_device = "100.64.0.6:/home/akunito/romm-library";
     disk4_fsType = "nfs4";
     disk4_options = [
       "nofail"

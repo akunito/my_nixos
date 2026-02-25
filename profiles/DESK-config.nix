@@ -181,7 +181,7 @@ in
     ];
     disk4_enabled = true;
     disk4_name = "/mnt/NFS_emulators";
-    disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
+    disk4_device = "100.64.0.6:/home/akunito/romm-library";
     disk4_fsType = "nfs4";
     disk4_options = [
       "nofail"
@@ -239,10 +239,10 @@ in
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
       }
       {
-        what = "192.168.20.200:/mnt/ssdpool/emulators";
+        what = "100.64.0.6:/home/akunito/romm-library";
         where = "/mnt/NFS_emulators";
         type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,timeo=150";
       }
       {
         what = "192.168.20.200:/mnt/hddpool/workstation_backups";

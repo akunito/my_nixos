@@ -195,6 +195,12 @@ in
     acmeEnable = true;
     acmeCopyToSharedCerts = false; # No Proxmox shared mount on VPS
 
+    # === NFS Server (romm-library export — Tailscale, LAN, TrueNAS) ===
+    nfsServerEnable = true;
+    nfsExports = ''
+      /home/akunito/romm-library  100.64.0.0/10(rw,sync,no_subtree_check,no_root_squash) 192.168.8.0/24(rw,sync,no_subtree_check,no_root_squash) 192.168.20.0/24(rw,sync,no_subtree_check,no_root_squash)
+    '';
+
     # === Vaultwarden (Password Manager — NixOS native, PostgreSQL backend) ===
     vaultwardenEnable = true;
     vaultwardenDomain = "vault.${secrets.publicDomain}";
