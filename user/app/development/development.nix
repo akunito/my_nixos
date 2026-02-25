@@ -26,7 +26,7 @@
 
     # === Shell and Cloud Tools ===
     pkgs-unstable.powershell       # PowerShell 7+
-    pkgs.azure-cli                 # Azure command-line interface
+    # pkgs.azure-cli               # Azure command-line interface - DISABLED: unstable broken (ModuleNotFoundError: azure.mgmt.web.v2024_11_01)
     pkgs-unstable.cloudflared      # Cloudflare tunnel client
 
     # === Database Management ===
