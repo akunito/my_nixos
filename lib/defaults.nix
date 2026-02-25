@@ -324,6 +324,7 @@
     waypaperEnable = false; # Enable Waypaper GUI wallpaper manager (requires swwwEnable)
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
+    voxtypeEnable = false; # Enable Voxtype local voice dictation (Whisper-based, hold-to-speak, works in Sway)
     swayPrimaryMonitor = null; # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
 
     # Thinkpad hardware optimizations (via nixos-hardware)

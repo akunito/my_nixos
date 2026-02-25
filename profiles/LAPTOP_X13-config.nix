@@ -200,6 +200,7 @@ in
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
+    voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)
 
     # === Control Panel ===
     controlPanelEnable = true; # Enable NixOS infrastructure control panel

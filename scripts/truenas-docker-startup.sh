@@ -17,6 +17,8 @@
 #   6. exporters      - Prometheus exporters for *arr stack
 #   7. uptime-kuma    - Status monitoring
 #
+# A VPN watchdog cron is deployed to auto-recover gluetun after suspend/resume.
+#
 # Compose files are tracked in the dotfiles repo under templates/truenas/
 # and synced to TrueNAS on startup (unless --no-sync is used).
 #
@@ -220,6 +222,36 @@ connect_npm_to_networks() {
     run_cmd "sudo docker exec nginx-proxy-manager nginx -s reload" 2>/dev/null || true
 }
 
+deploy_vpn_watchdog() {
+    local watchdog_src="$SCRIPT_DIR/truenas-vpn-watchdog.sh"
+    local watchdog_dest="/home/truenas_admin/vpn-watchdog.sh"
+    local cron_entry="*/5 * * * * /bin/bash $watchdog_dest >> /var/log/vpn-watchdog.log 2>&1"
+
+    if [[ ! -f "$watchdog_src" ]]; then
+        log "  SKIP VPN watchdog (script not found in repo)"
+        return 0
+    fi
+
+    # Deploy script
+    if is_local; then
+        cp "$watchdog_src" "$watchdog_dest"
+    else
+        scp -q "$watchdog_src" "truenas_admin@${TRUENAS_HOST}:$watchdog_dest"
+    fi
+    run_cmd "chmod +x $watchdog_dest"
+
+    # Install cron if not already present
+    local existing
+    existing=$(run_cmd "sudo crontab -l 2>/dev/null" || echo "")
+    if echo "$existing" | grep -q "vpn-watchdog"; then
+        log_ok "VPN watchdog cron already installed"
+    else
+        echo "${existing:+$existing
+}$cron_entry" | run_cmd "sudo crontab -"
+        log_ok "VPN watchdog cron installed (every 5 min)"
+    fi
+}
+
 start_all() {
     local failures=0
 
@@ -263,6 +295,9 @@ start_all() {
     # NPM runs on macvlan and can't reach host-published ports. It needs direct
     # Docker network access to proxy to containers by name.
     connect_npm_to_networks
+
+    # 9. Deploy VPN watchdog cron (auto-recovers gluetun after suspend/resume)
+    deploy_vpn_watchdog
 
     echo ""
     if [[ "$failures" -gt 0 ]]; then

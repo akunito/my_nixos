@@ -34,6 +34,7 @@ bash /home/akunito/.dotfiles/scripts/truenas-docker-startup.sh
    6. **exporters** - Prometheus exportarr for *arr stack metrics
    7. **uptime-kuma** - Status monitoring
    8. **NPM network connections** - Connects NPM to `homelab_default`, `media_default`, `uptime-kuma_default` so it can reverse-proxy via Docker DNS names
+   9. **VPN watchdog cron** - Deploys `vpn-watchdog.sh` and installs a cron job (every 5 min) that auto-recovers Gluetun + qBittorrent after suspend/resume
 
 ### Compose file management
 

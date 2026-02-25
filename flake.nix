@@ -74,5 +74,11 @@
 
     # Hardware-specific configurations (used by LAPTOP profiles)
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
+    # Voice dictation (Whisper-based, local)
+    voxtype = {
+      url = "github:peteonrails/voxtype";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }

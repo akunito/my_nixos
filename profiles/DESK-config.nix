@@ -350,6 +350,7 @@ in
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
+    voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)
 
     # === Control Panel ===
     controlPanelEnable = true; # Enable NixOS infrastructure control panel (web server)
