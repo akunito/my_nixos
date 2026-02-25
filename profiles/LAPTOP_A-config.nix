@@ -117,7 +117,7 @@ in
 
     # === System Services & Features ===
     sambaEnable = false; # Disable Samba file sharing
-    sunshineEnable = true; # Enable Sunshine game streaming
+    sunshineEnable = false; # Disabled: unstable package broken, stable substitution not working
     wireguardEnable = true; # Enable WireGuard VPN
     nextcloudEnable = true; # Enable Nextcloud client
     appImageEnable = false; # Disable AppImage support (override base)
