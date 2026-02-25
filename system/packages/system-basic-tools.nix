@@ -3,6 +3,7 @@
   lib,
   pkgs,
   pkgs-unstable,
+  pkgs-stable,
   systemSettings,
   ...
 }:
@@ -41,7 +42,7 @@
       qt5.qtbase
 
       # === Remote Access & Streaming ===
-      pkgs-unstable.sunshine
+      pkgs-stable.sunshine # Using stable due to unstable build failures (Boost download in sandbox)
 
       # === Printing ===
       cups-filters
