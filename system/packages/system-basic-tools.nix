@@ -41,11 +41,9 @@
       python3
       qt5.qtbase
 
-      # === Remote Access & Streaming ===
-      pkgs-stable.sunshine # Using stable due to unstable build failures (Boost download in sandbox)
-
       # === Printing ===
       cups-filters
-    ];
+    ]
+    ++ lib.optional (systemSettings.sunshineEnable or false) pkgs-stable.sunshine; # Using stable due to unstable build failures
   };
 }
