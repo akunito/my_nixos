@@ -3,7 +3,6 @@
   lib,
   pkgs,
   pkgs-unstable,
-  pkgs-stable,
   userSettings,
   systemSettings,
   ...
@@ -43,7 +42,7 @@
       # Productivity & Office
       pkgs-unstable.obsidian
       pkgs-unstable.libreoffice
-      pkgs-stable.calibre # eBook manager (using stable - unstable broken: missing qmake)
+      # pkgs.calibre # eBook manager - DISABLED: unstable broken (missing qmake), stable substitution not working
       pkgs-unstable.qbittorrent
 
       # Media & Entertainment

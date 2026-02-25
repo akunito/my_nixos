@@ -49,7 +49,7 @@
     ++ lib.optionals (userSettings.rangerFullPreviewEnable or false) [
       djvulibre            # DjVu document support
       fontforge            # Font file preview (fontimage)
-      calibre              # Ebook cover extraction (ebook-meta)
+      # calibre            # Ebook cover extraction (ebook-meta) - DISABLED: unstable broken (missing qmake), stable substitution not working
       python3Packages.xlsx2csv  # Excel spreadsheet preview
       transmission_4       # Torrent file info (transmission-show)
       sqlite-interactive   # SQLite database inspection
