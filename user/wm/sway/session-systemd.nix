@@ -1,4 +1,4 @@
-{ config, pkgs, lib, systemSettings, userSettings, pkgs-unstable ? pkgs, ... }:
+{ config, pkgs, lib, systemSettings, userSettings, pkgs-unstable ? pkgs, pkgs-stable ? pkgs, ... }:
 
 {
     # Volume/brightness OSD (matches Hyprland behavior)
@@ -230,7 +230,7 @@
         After = [ "sway-session.target" "waybar.service" ];
       };
       Service = {
-        ExecStart = "${pkgs.sunshine}/bin/sunshine";
+        ExecStart = "${pkgs-stable.sunshine}/bin/sunshine"; # Using stable due to unstable build failures
         Restart = "on-failure";
         RestartSec = "2s";
         EnvironmentFile = [ "-%t/sway-session.env" ];
