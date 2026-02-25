@@ -46,30 +46,15 @@
       fsType = "ntfs3";
     };
 
-  fileSystems."/mnt/NFS_Backups" =
-    { device = "systemd-1";
-      fsType = "autofs";
-    };
 
-  fileSystems."/mnt/NFS_emulators" =
-    { device = "systemd-1";
-      fsType = "autofs";
-    };
 
-  fileSystems."/mnt/NFS_library" =
-    { device = "systemd-1";
-      fsType = "autofs";
-    };
 
-  fileSystems."/mnt/NFS_media" =
-    { device = "systemd-1";
-      fsType = "autofs";
-    };
 
   fileSystems."/mnt/DATA" =
     { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
       fsType = "ntfs3";
     };
+
 
   swapDevices =
     [ { device = "/dev/mapper/luks-swap"; }
