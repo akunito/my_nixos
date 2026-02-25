@@ -52,7 +52,8 @@
   ++ lib.optional (systemSettings.wireguardServerEnable or false) ../../system/security/wireguard-server.nix
   ++ lib.optional (systemSettings.egressAuditEnable or false) ../../system/security/egress-audit.nix
   ++ lib.optional (systemSettings.postfixRelayEnable or false) ../../system/app/postfix-relay.nix
-  ++ lib.optional (systemSettings.vpsResticBackupEnable or false) ../../system/app/restic-backup-vps.nix;
+  ++ lib.optional (systemSettings.vpsResticBackupEnable or false) ../../system/app/restic-backup-vps.nix
+  ++ lib.optional (systemSettings.nfsServerEnable or false) ../../system/hardware/nfs_server.nix;
 
   # ==========================================================================
   # Boot — real bootloader (not LXC)
