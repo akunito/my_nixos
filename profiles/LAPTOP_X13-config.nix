@@ -190,7 +190,7 @@ in
     fprintdEnable = true; # Fingerprint reader support
 
     # === System Services & Features ===
-    sunshineEnable = true; # Enable Sunshine game streaming (using stable package)
+    sunshineEnable = false; # Enable Sunshine game streaming (DISABLED: troubleshooting build issue)
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
 
     # === SSH Configuration ===
