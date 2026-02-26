@@ -17,8 +17,9 @@
       Unit = {
         BindsTo = [ "graphical-session.target" ];
         After = [ "graphical-session.target" ];
-        # Stop the target when no services require it (helps with cleanup on logout)
-        StopWhenUnneeded = true;
+        # Note: Do NOT set StopWhenUnneeded here — it causes Home Manager's
+        # reloadSystemd to kill all sway services during deployment (NXD-150).
+        # BindsTo already ensures cleanup when graphical-session stops on logout.
       };
       Install = {
         WantedBy = [];
