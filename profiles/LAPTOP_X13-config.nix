@@ -257,6 +257,11 @@ in
     userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
     rangerFullPreviewEnable = true; # Full ranger preview (fonts, ebooks, spreadsheets, etc.)
 
+    # === Gaming & Entertainment ===
+    gamesEnable = true; # Master gate for gaming submodules
+    gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus
+    steamPackEnable = true; # Steam gaming platform
+
     # Different prompt color for LAPTOP
     zshinitContent = ''
       # Keybindings for Home/End/Delete keys

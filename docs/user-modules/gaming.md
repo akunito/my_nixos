@@ -4,6 +4,10 @@ summary: Implementation details for Gaming on NixOS, covering Lutris/Bottles wra
 tags: [gaming, lutris, bottles, wine, vulkan, amd, rdna4, wrappers, antimicrox, controllers]
 related_files:
   - user/app/games/games.nix
+  - user/app/games/games-light.nix
+  - user/app/games/games-heavy.nix
+  - system/app/steam.nix
+  - system/app/gamemode.nix
   - system/hardware/opengl.nix
   - system/app/proton.nix
   - system/app/starcitizen.nix
@@ -21,13 +25,48 @@ The gaming stack consists of:
 - **Mesa (RADV)**: The open-source Vulkan driver for AMD.
 - **Wrappers**: Custom `makeWrapper` logic injected into Lutris/Bottles to ensure correct driver discovery and environment variables.
 
+## Module Structure
+
+Gaming is split into 3 independent groups, each with its own flag:
+
+```
+user/app/games/
+  games.nix          # Dispatcher (imported when gamesEnable=true)
+  games-light.nix    # Light group (gamesLightEnable)
+  games-heavy.nix    # Heavy/Proton group (protongamesEnable)
+
+system/app/
+  steam.nix          # Steam (steamPackEnable) — system-level
+  gamemode.nix       # GameMode (gamemodeEnable) — system-level
+```
+
+### Flag Reference
+
+| Flag | Scope | Group | Contents |
+|------|-------|-------|----------|
+| `gamesEnable` | user | Master gate | Must be true for any gaming submodule |
+| `gamesLightEnable` | user | Light | RetroArch (15+ cores), pegasus, supertuxkart, antimicrox, airshipper, qjoypad, pokefinder |
+| `protongamesEnable` | user | Heavy | Bottles, Lutris, protonup-qt, Wine, Vulkan tools, AMD wrappers |
+| `steamPackEnable` | user | Steam | Steam + gamescope + mangohud (system-level via `system/app/steam.nix`) |
+| `gamemodeEnable` | system | System | Feral GameMode CPU/screensaver optimization |
+| `dolphinEmulatorPrimehackEnable` | user | Light sub-flag | Dolphin Emulator with Primehack |
+| `rpcs3Enable` | user | Light sub-flag | RPCS3 PS3 emulator |
+| `GOGlauncherEnable` | user | Heavy sub-flag | Heroic Games Launcher |
+| `starcitizenEnable` | user | Heavy sub-flag | RSI Launcher + kernel tweaks |
+
+### Profile Examples
+
+- **Full gaming (DESK)**: `gamesEnable + gamesLightEnable + protongamesEnable + steamPackEnable + gamemodeEnable`
+- **Light + Steam (LAPTOP_X13)**: `gamesEnable + gamesLightEnable + steamPackEnable`
+- **No gaming (VM/VPS)**: All flags false (defaults)
+
 ## RDNA 4 (RX 9000 Series) & Vulkan 1.4 Issues
 
 **Problem:**
 As of early 2026, Mesa's `radv` driver for RDNA 4 (gfx12) is functional but marks itself as "non-conformant/experimental". If `VK_LAYER_MESA_device_select` is active, it may crash applications or fail to find the driver entirely with `ERROR_INCOMPATIBLE_DRIVER`.
 
 **Fix:**
-We globally disable the device selection layer for gaming sessions in `user/app/games/games.nix`:
+We globally disable the device selection layer for gaming sessions in `user/app/games/games-heavy.nix`:
 
 ```nix
 home.sessionVariables = {
@@ -42,13 +81,13 @@ This variable is also reinforced in the Lutris/Bottles wrapper args.
 
 Standard NixOS packages for Lutris and Bottles sometimes fail to propagate `VK_ICD_FILENAMES` or `XDG_DATA_DIRS` correctly when launched via D-Bus/Rofi, or isolate them too strictly in their FHS environments.
 
-We wrap these binaries in `user/app/games/games.nix` to:
+We wrap these binaries in `user/app/games/games-heavy.nix` to:
 1.  **Inject ICD Paths**: Explicitly set `VK_ICD_FILENAMES` to point to `/run/opengl-driver/.../radeon_icd.*.json`.
 2.  **Fix Python Protocol Buffers**: Set `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION="python"` for Lutris.
 3.  **Logging**: Redirect wrapper debug output to `~/.local/state/lutris-wrapper.log` for troubleshooting.
 
 **Code Reference:**
-See `amdWrapperArgs` in `user/app/games/games.nix`.
+See `amdWrapperArgs` in `user/app/games/games-heavy.nix`.
 
 ## Wine Troubleshooting
 
@@ -100,7 +139,7 @@ We explicitly use **RADV** (Mesa).
 
 For mapping game controllers (joysticks, gamepads) to keyboard/mouse inputs (useful for older PC games that lack controller support):
 
-- **Package**: `antimicrox` (installed via Home Manager in `user/app/games/games.nix`)
+- **Package**: `antimicrox` (installed via Home Manager in `user/app/games/games-light.nix`)
 - **Use case**: Map controller buttons to keyboard keys for games without native controller support
 - **Launch**: Run `antimicrox` from terminal or app launcher to configure mappings
 

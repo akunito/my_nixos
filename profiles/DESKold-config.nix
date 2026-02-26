@@ -451,8 +451,9 @@ in
     userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm) - DESK only
 
     # === Gaming & Entertainment ===
-    gamesEnable = true; # Enable gaming packages (RetroArch, Pegasus, etc.)
-    protongamesEnable = true; # Enable Proton games support (Lutris, Bottles, Heroic)
+    gamesEnable = true; # Master gate for gaming submodules
+    gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus
+    protongamesEnable = true; # Heavy gaming: Wine, Bottles, Lutris, Proton
     starcitizenEnable = true; # Enable Star Citizen support and optimizations
     GOGlauncherEnable = true; # Enable Heroic Games Launcher for GOG games
     steamPackEnable = true; # Enable Steam gaming platform

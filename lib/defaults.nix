@@ -769,12 +769,13 @@
     dolphinEmulatorPrimehackEnable = false;
     steamPackEnable = false;
     rpcs3Enable = false;
+    gamesLightEnable = false; # Light gaming: RetroArch, emulators, light games, pegasus launcher
 
     # Package module feature flags
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
     rangerFullPreviewEnable = false; # Enable heavy ranger preview deps (fontforge, djvulibre, calibre, etc.)
-    gamesEnable = false; # Enable gaming packages and tools (Lutris, Bottles, RetroArch, etc.)
+    gamesEnable = false; # Master gate for gaming submodules (must be true for any gaming packages)
 
     # === Shell Customization ===
     starshipEnable = true; # Enable Starship cross-shell prompt with Nerd Font symbols

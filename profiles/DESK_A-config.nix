@@ -111,10 +111,11 @@ in
     userAiPkgsEnable = false; # Override - No AI packages for DESK_AGA
 
     # ============================================================================
-    # GAMING & ENTERTAINMENT - Limited Gaming Set
+    # GAMING & ENTERTAINMENT
     # ============================================================================
-    gamesEnable = true; # Enable basic gaming packages
-    protongamesEnable = true; # Enable Proton games support (Lutris, Bottles, Heroic)
+    gamesEnable = true; # Master gate for gaming submodules
+    gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus
+    protongamesEnable = true; # Heavy gaming: Wine, Bottles, Lutris, Proton
     steamPackEnable = true; # Enable Steam
     # Disable advanced gaming features
     starcitizenEnable = false;
