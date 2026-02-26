@@ -318,6 +318,45 @@ This command updates the Home Manager configuration and applies changes without 
 - User window manager settings
 - Any changes in `user/` directory
 
+## Plane Ticket Management (MANDATORY)
+
+**Workspace**: `akuworkspace` | **URL**: https://plane.akunito.com
+
+### Workflow (every session)
+
+1. **Search first**: `search_work_items` for related tickets before starting work
+2. **Create or update**: Create ticket if none exists; move existing to "In Progress"
+3. **Comment on progress**: Add comments for significant decisions/findings
+4. **Close on completion**: Update state to "Done" or "In Review"; add summary comment
+5. **Reference in commits**: Include ticket ID (e.g., `IAKU-42: fix DNS split`)
+
+### Project routing (akunito)
+
+| ID | Project | Scope |
+|----|---------|-------|
+| IAKU | Infrastructure Aku | NixOS, Sway, homelab, networking, VPS, TrueNAS, pfSense, profiles, theming, gaming |
+| CAL | Career & Learning | Certifications, interview prep, AI exploration |
+
+### Project routing (other / shared)
+
+| ID | Project | Scope |
+|----|---------|-------|
+| INF | Infrastructure & DevOps | Komi cross-cutting infra, CI/CD |
+| LW | Liftcraft | Rails training app |
+| JLE | JL Engine | CV generation engine |
+| PWS | KOMI Portfolio | Komi's portfolio site |
+| AKU | AKU Portfolio | Akunito's portfolio site |
+| ISG | Inventory Simulator | Game project |
+| N8N | n8n Workflows | Automation workflows |
+
+### Rules
+
+- **Ticket titles**: Imperative mood, concise (e.g., "Fix split DNS circular dependency")
+- **Priority**: `urgent` / `high` / `medium` / `low` / `none`
+- **States**: Backlog | Icebox | Todo → In Progress → In Review → Done | Cancelled
+- **State IDs differ per project** — always fetch via `list_states` before updating
+- **Agent details**: `.claude/agents/plane-context.md`
+
 ## Context-aware routing (CRITICAL — read before any work)
 
 **Step 1**: Determine context — check `$ENV_PROFILE` and `git branch --show-current`.

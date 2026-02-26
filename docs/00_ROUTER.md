@@ -39,7 +39,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | infrastructure.overview | Public infrastructure overview with architecture diagram and component descriptions | infrastructure, architecture, proxmox, lxc, monitoring, homelab, pfsense, gateway | profiles/LXC*-config.nix |
 | infrastructure.overview | Infrastructure overview: VPS + TrueNAS + pfSense architecture | infrastructure, architecture, vps, truenas, pfsense, docker | docs/akunito/infrastructure/INFRASTRUCTURE.md |
 | infrastructure.services.database | Database services: PostgreSQL, MariaDB, Redis on VPS | infrastructure, database, vps, postgresql, redis | docs/akunito/infrastructure/services/database-redis.md |
-| infrastructure.services.homelab | Homelab stack services - Nextcloud, Syncthing, Calibre-Web, RomM (archived LXC) | infrastructure, homelab, docker, nextcloud, syncthing | profiles/LXC_HOME-config.nix |
+| infrastructure.services.homelab | Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS | infrastructure, homelab, docker, nextcloud, syncthing | profiles/LXC_HOME-config.nix |
 | infrastructure.services.homelab | Homelab services: split between VPS and TrueNAS | infrastructure, homelab, nextcloud, syncthing, media | docs/akunito/infrastructure/services/homelab-stack.md |
 | infrastructure.services.kuma | Uptime Kuma monitoring - local homelab and public VPS status pages with API integration | infrastructure, kuma, uptime-kuma, monitoring, status-pages, lxc_mailer, vps, docker | profiles/LXC_mailer-config.nix |
 | infrastructure.services.kuma | Uptime Kuma: monitoring on VPS and TrueNAS | infrastructure, monitoring, kuma, vps, truenas | docs/akunito/infrastructure/services/kuma.md |
@@ -80,6 +80,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | security.hardening | Security hardening guidelines for NixOS homelab infrastructure | security, hardening, firewall, services, credentials | system/app/*.nix |
 | security.incident-response | Security incident response procedures for NixOS homelab infrastructure | security, incident-response, credentials, rotation, recovery | secrets/*.nix |
 | setup.grafana-dashboards | Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures. | grafana, prometheus, dashboards, monitoring, alerting, metrics, truenas, wireguard, pfsense, exportarr | system/app/grafana.nix |
+| setup.plane-integration | Plane project management MCP integration for Claude Code workflows | plane, mcp, project-management, claude-code, setup, tooling | .claude/agents/plane-context.md |
 | shell-multiline-input | Multi-line shell input with Shift+Enter configuration | shell, zsh, terminal, keyboard, keybindings | lib/defaults.nix |
 | system-modules | Complete reference for system-level NixOS modules — app, hardware, security, WM, and utility modules | system-modules, nixos, configuration, modules | system/**/*.nix |
 | system-modules.app | System application modules — Docker, Virtualization (QEMU/KVM/SPICE), Flatpak, Steam, Gamemode, Samba, AppImage | system-modules, docker, virtualization, flatpak, steam, gamemode, samba, appimage | system/app/*.nix |

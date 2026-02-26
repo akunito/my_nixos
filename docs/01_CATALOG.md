@@ -62,6 +62,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbPlanePassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbLiftcraftPassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMatrixPassword or "") != ""`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMinifluxPassword or "") != ""`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbVaultwardenPassword or "") != ""`
    - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
 - **system/app/docker.nix**: Allow dockerd to be restarted without affecting running container. *Enabled when:* `userSettings.dockerEnable == true`
@@ -77,6 +79,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/mariadb.nix**: MariaDB Server Module *Enabled when:*
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
+- **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
 - **system/app/pgbouncer.nix**: PgBouncer Connection Pooler Module *Enabled when:*
    - `moved from top-level`
    - `systemSettings.postgresqlServerEnable or false`
@@ -114,6 +117,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `config.services.prometheus.exporters.node.enable or false`
    - `${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null`
    - `allow network to stabilize`
+- **system/app/vaultwarden.nix**: Vaultwarden — Self-hosted Bitwarden-compatible password manager *Enabled when:* `systemSettings.vaultwardenEnable or false`
 - **system/app/virtualization.nix**: Virt-manager doc > https://nixos.wiki/wiki/Virt-manager *Enabled when:*
    - `userSettings.virtualizationEnable == true`
    - `userSettings.qemuGuestAddition == true`
@@ -306,7 +310,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/doom-emacs/doom.nix**: This block from https://github.com/znewman01/dotfiles/blob/be9f3a24c517a4ff345f213bf1cf7633713c9278/emacs/default.nix#L12-L34
 - **user/app/file-manager/file-manager.nix**: File manager configuration module
 - **user/app/flatpak/flatpak.nix**: services.flatpak.enable = true;
-- **user/app/games/games.nix**: Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery *Enabled when:* `userSettings.protongamesEnable == true`
+- **user/app/games/games-heavy.nix**: Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery *Enabled when:* `userSettings.protongamesEnable or false`
+- **user/app/games/games-light.nix**: Handheld consoles *Enabled when:* `userSettings.gamesLightEnable or false`
+- **user/app/games/games.nix**: Gaming module dispatcher *Enabled when:* `gamesLightEnable`
 - **user/app/gaming/mangohud.nix**: MangoHud Configuration
 - **user/app/git/git.nix**: https://nixos.wiki/wiki/Git
 - **user/app/hammerspoon/hammerspoon.nix**: Hammerspoon Configuration Module for macOS *Enabled when:* `systemSettings.osType == "darwin" && userSettings.hammerspoonEnable`
@@ -330,6 +336,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/terminal/tmux.nix**: Clipboard command differs between macOS (pbcopy) and Linux (wl-copy) *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/terminal/xterm.nix**: XTerm configuration via X resources *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
+- **user/app/voxtype/voxtype.nix**: Voxtype - Local voice dictation for Sway *Enabled when:* `userSettings.wm == "sway"`
 - **user/app/waypaper/waypaper.nix**: Watch for hot-plugged monitors and trigger wallpaper restore. *Enabled when:* `swww/swaybg`
 
 ### Hardware
@@ -583,6 +590,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/setup/claude-code-setup.md**: Claude Code CLI configuration guide — permissions, hooks, and MCP servers
 - **docs/setup/grafana-dashboard-reference.md**: Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures.
 - **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack.
+- **docs/setup/plane-integration.md**: Plane project management MCP integration for Claude Code workflows
 
 ### System-Modules
 
