@@ -24,6 +24,18 @@ let
   port = systemSettings.headscalePort or 8080;
   acmeEmail = systemSettings.acmeEmail or "admin@example.com";
   hasDomain = domain != "";
+
+  # Generate extra DNS records from nginxLocalServices so Tailscale clients
+  # resolve *.local.akunito.com directly (no split DNS query to pfSense needed).
+  # This makes remote access work even when the phone can't reach pfSense.
+  nginxLocalServices = systemSettings.nginxLocalServices or {};
+  nginxLocalListenAddress = systemSettings.nginxLocalListenAddress or "";
+  wildcardLocal = systemSettings.wildcardLocal or "";
+  extraDnsRecords = lib.mapAttrsToList (name: _: {
+    name = "${name}.${wildcardLocal}";
+    type = "A";
+    value = nginxLocalListenAddress;
+  }) nginxLocalServices;
 in
 lib.mkIf (systemSettings.headscaleEnable or false) {
   services.headscale = {
@@ -49,12 +61,15 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
       # DNS configuration pushed to clients
       dns = {
         nameservers.global = [ "1.1.1.1" "9.9.9.9" ];
-        # Split DNS: resolve local domains via pfSense (reachable via Tailscale subnet routing)
-        # Remote clients can access *.local.akunito.com when outside the home LAN
+        # Split DNS: resolve local domains via pfSense (fallback for non-VPS services)
         nameservers.split = systemSettings.headscaleDnsSplit or {};
         search_domains = systemSettings.headscaleDnsSearchDomains or [];
         magic_dns = true;
         base_domain = "tailnet.${domain}";
+        # Push A records for VPS nginx-local services directly to all clients.
+        # Clients resolve these locally — no DNS query to pfSense needed.
+        # Records auto-generated from systemSettings.nginxLocalServices.
+        extra_records = extraDnsRecords;
       };
 
       # DERP (relay) — self-hosted on VPS (removes dependency on Tailscale Inc's DERP)
