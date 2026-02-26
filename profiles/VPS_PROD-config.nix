@@ -56,7 +56,8 @@ in
     headscalePort = 8080; # Internal; nginx terminates TLS on 443
     acmeEmail = secrets.acmeEmail; # For Let's Encrypt certificate
     # Split DNS: remote Tailscale clients resolve *.local.akunito.com via pfSense
-    headscaleDnsSplit = { "${secrets.wildcardLocal}" = [ "192.168.8.1" ]; };
+    # Uses pfSense Tailscale IP (100.64.0.7) so DNS works over mesh without subnet routing
+    headscaleDnsSplit = { "${secrets.wildcardLocal}" = [ "100.64.0.7" ]; };
     headscaleDnsSearchDomains = [ secrets.wildcardLocal ];
 
     wireguardServerEnable = true;

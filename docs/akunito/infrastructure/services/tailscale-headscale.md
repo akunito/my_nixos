@@ -2,7 +2,7 @@
 id: infrastructure.services.tailscale
 summary: "Headscale on VPS, Tailscale mesh topology"
 tags: [infrastructure, tailscale, headscale, vpn, vps]
-date: 2026-02-23
+date: 2026-02-26
 status: published
 ---
 
@@ -10,13 +10,13 @@ status: published
 
 ## Architecture
 
-| Component | Location | Role |
-|-----------|----------|------|
-| Headscale | VPS (NixOS native) | Coordination server |
-| Tailscale | VPS | Client node |
-| Tailscale | TrueNAS (Docker) | Primary subnet router |
-| Tailscale | pfSense (package) | Fallback subnet router |
-| Tailscale | DESK, laptops, phones | Client nodes |
+| Component | Location | Tailscale IP | Role |
+|-----------|----------|-------------|------|
+| Headscale | VPS (NixOS native) | 100.64.0.6 | Coordination server |
+| Tailscale | VPS | 100.64.0.6 | Client node |
+| Tailscale | pfSense (package) | 100.64.0.7 | Primary subnet router (always on) |
+| Tailscale | TrueNAS (Docker) | 100.64.0.10 | Secondary subnet router (sleeps 23:00-11:00) |
+| Tailscale | DESK, laptops, phones | 100.64.0.x | Client nodes |
 
 ## Headscale
 
@@ -29,19 +29,21 @@ status: published
 ### DNS Push
 
 Headscale pushes DNS settings to all Tailscale clients:
-- Nameservers: 192.168.8.1 (pfSense)
+- Nameservers: 100.64.0.7 (pfSense Tailscale IP)
 - Domains: local.akunito.com (split DNS)
-- Enables remote clients to resolve `*.local.akunito.com` via pfSense
+- Enables remote clients to resolve `*.local.akunito.com` via pfSense over Tailscale mesh
+- Uses pfSense's Tailscale IP (not LAN IP) to avoid circular dependency: DNS queries work without subnet routing, so `acceptRoutes` can be `false` and DNS still works
+- Resolved addresses (e.g. 100.64.0.6 for VPS nginx-local) are Tailscale IPs — services work entirely over mesh
 
 ## Mesh Topology
 
 ```
-[VPS] ←→ Tailscale mesh (100.x.x.x) ←→ [TrueNAS] (subnet router)
-  |                                           |
-  |                                    192.168.8.0/24
-  |                                    192.168.20.0/24
+[VPS 100.64.0.6] ←→ Tailscale mesh ←→ [pfSense 100.64.0.7] (primary subnet router)
+  |                                         |
+  |                                  192.168.8.0/24
+  |                                  192.168.20.0/24
   |
-  ←→ [pfSense] (fallback subnet router)
+  ←→ [TrueNAS 100.64.0.10] (secondary subnet router, sleeps 23:00-11:00)
   ←→ [DESK], [laptops], [phones]
 ```
 
@@ -49,10 +51,12 @@ Headscale pushes DNS settings to all Tailscale clients:
 
 | Router | Advertised Subnets | Status |
 |--------|-------------------|--------|
-| TrueNAS | 192.168.8.0/24, 192.168.20.0/24 | Primary (offline during sleep) |
-| pfSense | 192.168.8.0/24, 192.168.20.0/24 | Fallback (always on) |
+| pfSense | 192.168.8.0/24, 192.168.20.0/24 | Primary (always on, 24/7) |
+| TrueNAS | 192.168.8.0/24, 192.168.20.0/24 | Secondary (sleeps 23:00-11:00) |
 
-When TrueNAS sleeps (23:00-11:00), Headscale routes through pfSense automatically.
+pfSense serves as primary subnet router. TrueNAS routes are approved but not serving while pfSense is primary.
+
+**Client `acceptRoutes` behavior**: Subnet routing (direct LAN IP access) only works when client has `acceptRoutes=true`. DNS and `*.local.akunito.com` services work regardless because they use Tailscale IPs exclusively.
 
 ## WireGuard Backup Tunnel
 
