@@ -33,6 +33,24 @@ This file is loaded on-demand when agents need detailed Plane integration info.
 
 All tools are lazy-loaded via `ToolSearch` with `+plane <keyword>`.
 
+### Performance: Avoiding Large Responses
+
+**CRITICAL**: `list_work_items` returns full `description_html` for every item. With 50 items this can consume ~15k tokens. Always use the `fields` parameter to limit response size:
+
+```
+# Browsing/searching — lightweight fields only
+list_work_items(project_id=<UUID>, per_page=50, fields="id,name,state,sequence_id,priority,created_at")
+
+# Then fetch full details for a specific item
+retrieve_work_item(project_id=<UUID>, work_item_id=<UUID>)
+```
+
+**Rules:**
+- When listing/browsing: always pass `fields="id,name,state,sequence_id,priority,created_at"`
+- When searching by name: prefer `search_work_items(query=...)` first (lighter)
+- Only omit `fields` when you specifically need descriptions of all items
+- Use `per_page=20` instead of 50 when possible
+
 ## State Transition Pattern
 
 State UUIDs differ per project. Always resolve at runtime:
