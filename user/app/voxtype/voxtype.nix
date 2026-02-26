@@ -8,7 +8,7 @@
 
   # Install voxtype and required dependencies
   home.packages = [
-    inputs.voxtype.packages.${pkgs.system}.default
+    inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.wtype # Text injection for Wayland (recommended by voxtype)
   ];
 

@@ -62,13 +62,13 @@ in
       libfaketime
       airshipper
       qjoypad
-      superTux
-      superTuxKart
+      supertuxkart
       gamepad-tool
       antimicrox
     ])
     ++ (with pkgs-stable; [
       pokefinder
+      supertux # stable: unstable has broken boost dependency
     ])
     ++ (lib.optionals (userSettings.protongamesEnable == true) [
       ((pkgs-unstable.bottles.override { removeWarningPopup = true; }).overrideAttrs (old: {
