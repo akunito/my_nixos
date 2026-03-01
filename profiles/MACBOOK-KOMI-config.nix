@@ -36,6 +36,8 @@ in
 
         # === Media ===
         "spotify"
+        "vlc"
+        "qbittorrent"
 
         # === Gaming ===
         "steam"         # Steam client (native macOS app)
@@ -76,6 +78,10 @@ in
   userSettings = base.userSettings // {
     username = "komi";
     planeApiKey = secrets.planeApiKey;
+
+    homePackages = pkgs: pkgs-unstable: [
+      pkgs.python3Packages.subliminal # CLI subtitle downloader
+    ];
 
     # ========================================================================
     # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
