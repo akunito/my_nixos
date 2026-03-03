@@ -110,7 +110,7 @@ in
           findtime = "600";       # 10 minute window
           maxretry = 5;           # 5 connections before ban
           logpath = minecraftLogPath;
-          backend = "auto";
+          backend = "polling";  # Must use polling for file-based logs (auto prefers systemd)
         };
       };
     };
