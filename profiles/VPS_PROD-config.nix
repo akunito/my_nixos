@@ -229,6 +229,7 @@ in
       vault      = { port = 8222; };
       emulators  = { port = 8998; };
       calibre    = { port = 8083; };
+      books      = { port = 8083; };  # alias for calibre
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
