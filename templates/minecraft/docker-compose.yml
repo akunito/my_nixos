@@ -34,6 +34,7 @@ services:
 
       # === Offline / Cracked Mode ===
       ONLINE_MODE: "FALSE"
+      ENFORCE_SECURE_PROFILE: "FALSE"
 
       # === Performance ===
       MEMORY: "${MC_MEMORY:-4G}"
@@ -63,7 +64,7 @@ services:
         easyauth
         flan
         supplementaries
-        farmers-delight-fabric
+        moonlight
 
       # === Timezone ===
       TZ: "Europe/Madrid"
