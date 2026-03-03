@@ -1,10 +1,33 @@
-{ lib, systemSettings, ... }:
+{ lib, pkgs, systemSettings, userSettings, ... }:
 
 let
   sshPort = toString (systemSettings.sshPort or 22);
+  username = userSettings.username or "akunito";
+  minecraftLogPath = "/home/${username}/.homelab/minecraft/data/logs/latest.log";
+
+  # Custom fail2ban filter for Minecraft — detects rapid reconnections
+  # (brute-force EasyAuth login or bot scanning on offline-mode servers)
+  minecraftFilter = pkgs.writeText "minecraft.conf" ''
+    [INCLUDES]
+    before = common.conf
+
+    [Definition]
+    # Match connection lines containing IP: PlayerName[/1.2.3.4:12345] logged in
+    failregex = ^\[.*\] \[Server thread/INFO\]:.*\[/<HOST>:\d+\] logged in
+    ignoreregex =
+
+    [Init]
+    # Minecraft latest.log uses [HH:MM:SS] with no date — use file mtime
+    datepattern = \[%%H:%%M:%%S\]
+  '';
 in
 
 {
+  # Install custom Minecraft fail2ban filter
+  environment.etc."fail2ban/filter.d/minecraft.conf" = lib.mkIf (systemSettings.fail2banMinecraftJailEnable or false) {
+    source = minecraftFilter;
+  };
+
   services.fail2ban = {
     enable = systemSettings.fail2banEnable or false;
 
@@ -76,6 +99,18 @@ in
           findtime = "600";
           maxretry = 5;
           logpath = "/var/log/gitea/gitea.log";
+        };
+      };
+
+      minecraft = {
+        settings = {
+          enabled = systemSettings.fail2banMinecraftJailEnable or false;
+          port = "25565";
+          filter = "minecraft";
+          findtime = "600";       # 10 minute window
+          maxretry = 5;           # 5 connections before ban
+          logpath = minecraftLogPath;
+          backend = "auto";
         };
       };
     };

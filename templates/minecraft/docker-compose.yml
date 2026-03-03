@@ -1,0 +1,88 @@
+# Minecraft Fabric Server (1.21.1) — Offline Mode with EasyAuth
+# Deploy to: ~/.homelab/minecraft/docker-compose.yml on VPS_PROD
+#
+# Prerequisites:
+# 1. Copy .env.example to .env and set MC_RCON_PASSWORD
+# 2. mkdir -p ~/.homelab/minecraft/data
+#
+# Usage (on-demand, NOT auto-started):
+#   docker compose up -d      # start server
+#   docker compose logs -f    # watch logs
+#   docker compose down       # stop server
+#
+# Post-first-boot:
+# 1. Configure EasyAuth: data/config/EasyAuth/config.json
+# 2. Configure Flan claims: data/config/flan/
+# 3. Players register in-game: /auth register <password>
+
+services:
+  minecraft:
+    image: itzg/minecraft-server:latest
+    container_name: minecraft
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    ports:
+      - "25565:25565"
+      # RCON — localhost only (use: docker exec minecraft rcon-cli)
+      - "127.0.0.1:25575:25575"
+    environment:
+      # === Server Type ===
+      TYPE: "FABRIC"
+      VERSION: "1.21.1"
+      EULA: "TRUE"
+
+      # === Offline / Cracked Mode ===
+      ONLINE_MODE: "FALSE"
+
+      # === Performance ===
+      MEMORY: "${MC_MEMORY:-4G}"
+      USE_AIKAR_FLAGS: "true"
+
+      # === Server Properties ===
+      SERVER_NAME: "${MC_SERVER_NAME:-AkuCraft}"
+      MOTD: "${MC_MOTD:-AkuCraft — Fabric 1.21.1}"
+      DIFFICULTY: "${MC_DIFFICULTY:-hard}"
+      MAX_PLAYERS: "${MC_MAX_PLAYERS:-10}"
+      VIEW_DISTANCE: "${MC_VIEW_DISTANCE:-12}"
+      SIMULATION_DISTANCE: "${MC_SIMULATION_DISTANCE:-8}"
+      SPAWN_PROTECTION: "0"
+      ALLOW_FLIGHT: "true"
+      ENABLE_COMMAND_BLOCK: "true"
+      PVP: "true"
+
+      # === RCON ===
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${MC_RCON_PASSWORD}"
+      RCON_PORT: "25575"
+
+      # === Mods via Modrinth auto-download ===
+      MODRINTH_PROJECTS: |
+        fabric-api
+        lithium
+        easyauth
+        flan
+        supplementaries
+        farmers-delight-fabric
+
+      # === Timezone ===
+      TZ: "Europe/Madrid"
+
+    volumes:
+      - ./data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+        reservations:
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "mc-health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+networks:
+  default:
+    driver: bridge

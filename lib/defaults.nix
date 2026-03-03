@@ -157,6 +157,8 @@
     havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant
     fail2banEnable = true; # Can disable for systems behind firewall
     fail2banGiteaJailEnable = false; # Enable Gitea jail (requires /var/log/gitea/gitea.log)
+    fail2banMinecraftJailEnable = false; # Enable Minecraft EasyAuth jail (requires ~/.homelab/minecraft/data/logs/)
+    minecraftRateLimitEnable = false; # Enable iptables rate limiting on port 25565
 
     # Journald defaults (applied to all profiles)
     journaldMaxUse = "100M";
