@@ -56,7 +56,6 @@ in
     # 51820: WireGuard backup tunnel
     allowedTCPPorts = [
       2222  # initrd SSH (LUKS unlock — must remain public)
-      25565 # Minecraft server (Fabric 1.21.1, offline mode + EasyAuth)
     ];
     allowedUDPPorts = [
       3478  # DERP STUN relay (Tailscale NAT traversal)
@@ -117,8 +116,6 @@ in
 
     # Fail2ban (public-facing VPS needs this)
     fail2banEnable = true;
-    fail2banMinecraftJailEnable = true; # Minecraft EasyAuth login brute-force protection
-    minecraftRateLimitEnable = true; # Rate limit port 25565 (10 new conn/min per IP)
 
     # Journald limits (more generous than LXC - VPS has 1TB disk)
     journaldMaxUse = "2G";

@@ -1,4 +1,4 @@
-{ systemSettings, lib, ... }:
+{ systemSettings, ... }:
 
 {
   # Firewall settings
@@ -6,20 +6,6 @@
     enable = true;
     allowedTCPPorts = systemSettings.allowedTCPPorts;
     allowedUDPPorts = systemSettings.allowedUDPPorts;
-
-    # Minecraft port 25565 rate limiting (10 new conn/minute per IP, burst 15)
-    extraCommands = lib.mkIf (systemSettings.minecraftRateLimitEnable or false) ''
-      iptables -I nixos-fw -p tcp --dport 25565 -m conntrack --ctstate NEW \
-        -m hashlimit --hashlimit-above 10/minute --hashlimit-burst 15 \
-        --hashlimit-mode srcip --hashlimit-name minecraft \
-        --hashlimit-htable-expire 60000 -j DROP
-    '';
-    extraStopCommands = lib.mkIf (systemSettings.minecraftRateLimitEnable or false) ''
-      iptables -D nixos-fw -p tcp --dport 25565 -m conntrack --ctstate NEW \
-        -m hashlimit --hashlimit-above 10/minute --hashlimit-burst 15 \
-        --hashlimit-mode srcip --hashlimit-name minecraft \
-        --hashlimit-htable-expire 60000 -j DROP 2>/dev/null || true
-    '';
 
     # extraCommands = ''
     #   # ================== General rules ==================
