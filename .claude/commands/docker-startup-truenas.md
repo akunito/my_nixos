@@ -30,11 +30,12 @@ bash /home/akunito/.dotfiles/scripts/truenas-docker-startup.sh
    2. **cloudflared** - Cloudflare tunnel for external access
    3. **npm** - Nginx Proxy Manager (creates macvlan network if missing)
    4. **media** - Jellyfin, Sonarr, Radarr, Bazarr, Prowlarr, Jellyseerr, qBittorrent, Gluetun, Solvearr
-   5. **homelab** - Calibre-web, RomM + MariaDB
+   5. **homelab** - (all migrated to VPS, compose kept for NPM network)
    6. **exporters** - Prometheus exportarr for *arr stack metrics
    7. **uptime-kuma** - Status monitoring
    8. **NPM network connections** - Connects NPM to `homelab_default`, `media_default`, `uptime-kuma_default` so it can reverse-proxy via Docker DNS names
-   9. **VPN watchdog cron** - Deploys `vpn-watchdog.sh` and installs a cron job (every 5 min) that auto-recovers Gluetun + qBittorrent after suspend/resume
+   9. **VPN watchdog cron** - Deploys `vpn-watchdog.sh` and installs a cron job (every 5 min) that auto-recovers Gluetun + qBittorrent after non-suspend VPN drops
+   10. **Suspend/resume hook** - Deploys `docker-suspend-hook.sh` to `/usr/lib/systemd/system-sleep/` so containers are gracefully stopped before S3 suspend and restarted in order after wake
 
 ### Compose file management
 

@@ -10,7 +10,7 @@ status: published
 
 ## Overview
 
-TrueNAS SCALE runs 19 Docker containers across 7 compose projects at `/mnt/ssdpool/docker/compose/`.
+TrueNAS SCALE runs 15 Docker containers across 6 compose projects at `/mnt/ssdpool/docker/compose/`.
 
 | Property | Value |
 |----------|-------|
@@ -31,7 +31,7 @@ Cloudflare tunnel for remote access to `*.local.akunito.com` services. Token in 
 
 ### 3. npm (Nginx Proxy Manager)
 
-Reverse proxy on macvlan network (192.168.20.201). Ports 80/81/443. Connected to `homelab_default`, `media_default`, `uptime-kuma_default` Docker networks for container DNS resolution.
+Reverse proxy on macvlan network (192.168.20.201). Ports 80/81/443. Connected to `homelab_default`, `media_default` Docker networks for container DNS resolution.
 
 ### 4. media (9 containers)
 
@@ -49,23 +49,15 @@ Reverse proxy on macvlan network (192.168.20.201). Ports 80/81/443. Connected to
 
 **Storage**: All media containers mount `hddpool/media` as `/data` — ONE ZFS dataset with both media and torrents as plain dirs. Hardlinks work for Sonarr/Radarr imports.
 
-### 5. homelab (2 of 8 enabled)
+### 5. homelab (0 of 8 enabled — all migrated to VPS)
 
-| Container | Port | Notes |
-|-----------|------|-------|
-| calibre-web-automated | 8083 | Ebook library (ssdpool/library ~413GB) |
-| romm | 8998 | ROM manager (ssdpool/emulators ~55GB) |
-| romm-db | 3307 | MariaDB for RomM |
+All services migrated to VPS. Compose project kept for NPM `homelab_default` network connectivity.
 
-**NOT started**: nextcloud, syncthing, obsidian-remote, redis-local (all migrated to VPS)
+**Migrated**: calibre-web (Mar 2026), romm (Feb 2026), nextcloud, syncthing, obsidian-remote, redis-local
 
 ### 6. exporters (4 containers)
 
 Exportarr instances for Sonarr, Radarr, Prowlarr, Bazarr. Scraped by VPS Prometheus via Tailscale.
-
-### 7. uptime-kuma
-
-Port 3001. Independent home monitoring — watches VPS services from outside. SMTP via VPS Tailscale (100.64.0.6:25).
 
 ## NOT Started
 
@@ -95,7 +87,10 @@ Port 3001. Independent home monitoring — watches VPS services from outside. SM
 - **Awake**: 11:00 - 23:00 (cron ID=8: suspend at 23:00, RTC wake at 11:00)
 - **Suspended**: 23:00 - 11:00 (S3 suspend-to-RAM)
 - Pools stay unlocked during S3
-- Docker services auto-resume after wake
+- **Pre-suspend**: systemd service (`docker-pre-suspend.service`) gracefully stops all containers (prevents stale state)
+- **Post-resume**: systemd service (`docker-post-resume.service`) starts all containers in order (10s network settle delay)
+- Script: `/home/truenas_admin/docker-suspend-hook.sh` (deployed by startup script)
+- Log: `/var/log/docker-suspend-hook.log`
 - All backups scheduled within 11:00-23:00 window
 
 ## Management

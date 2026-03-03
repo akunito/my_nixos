@@ -13,11 +13,12 @@
 #   2. cloudflared    - Cloudflare tunnel (external access)
 #   3. npm            - Nginx Proxy Manager (reverse proxy, needs macvlan)
 #   4. media          - Media stack (jellyfin, *arr, gluetun)
-#   5. homelab        - Calibre-web, RomM (migrated services removed from compose)
+#   5. homelab        - (all services migrated to VPS, compose kept for NPM network)
 #   6. exporters      - Prometheus exporters for *arr stack
-#   7. uptime-kuma    - Status monitoring
 #
-# A VPN watchdog cron is deployed to auto-recover gluetun after suspend/resume.
+# A suspend/resume hook is deployed to /usr/lib/systemd/system-sleep/ to
+# gracefully stop containers before S3 suspend and restart them after wake.
+# A VPN watchdog cron is deployed to auto-recover gluetun after non-suspend VPN drops.
 #
 # Compose files are tracked in the dotfiles repo under templates/truenas/
 # and synced to TrueNAS on startup (unless --no-sync is used).
@@ -31,7 +32,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMPLATES_DIR="$REPO_ROOT/templates/truenas"
 
 # Active compose projects (order matters for startup)
-PROJECTS=("tailscale" "cloudflared" "npm" "media" "homelab" "exporters" "uptime-kuma")
+PROJECTS=("tailscale" "cloudflared" "npm" "media" "homelab" "exporters")
 
 # ============================================================================
 # Parse arguments
@@ -210,7 +211,7 @@ start_project() {
 
 connect_npm_to_networks() {
     log "Connecting NPM to service networks..."
-    local networks=("homelab_default" "media_default" "uptime-kuma_default")
+    local networks=("homelab_default" "media_default")
     for net in "${networks[@]}"; do
         if run_cmd "sudo docker network connect $net nginx-proxy-manager" 2>/dev/null; then
             log_ok "NPM connected to $net"
@@ -220,6 +221,64 @@ connect_npm_to_networks() {
     done
     # Reload nginx to pick up new DNS entries
     run_cmd "sudo docker exec nginx-proxy-manager nginx -s reload" 2>/dev/null || true
+}
+
+deploy_suspend_hook() {
+    local hook_src="$SCRIPT_DIR/truenas-docker-suspend-hook.sh"
+    local hook_dest="/home/truenas_admin/docker-suspend-hook.sh"
+
+    if [[ ! -f "$hook_src" ]]; then
+        log "  SKIP suspend hook (script not found in repo)"
+        return 0
+    fi
+
+    # Deploy script
+    if is_local; then
+        cp "$hook_src" "$hook_dest"
+    else
+        scp -q "$hook_src" "truenas_admin@${TRUENAS_HOST}:$hook_dest"
+    fi
+    run_cmd "chmod +x $hook_dest"
+
+    # Install systemd services for sleep.target (survives TrueNAS updates)
+    # TrueNAS root is read-only (/usr/lib/), but /etc/systemd/system/ is writable
+    local pre_unit="docker-pre-suspend.service"
+    local post_unit="docker-post-resume.service"
+
+    run_cmd "sudo tee /etc/systemd/system/$pre_unit > /dev/null" << 'UNIT_EOF'
+[Unit]
+Description=Stop Docker containers before suspend
+Before=sleep.target
+StopWhenUnneeded=yes
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /home/truenas_admin/docker-suspend-hook.sh pre suspend
+TimeoutStartSec=120
+
+[Install]
+WantedBy=sleep.target
+UNIT_EOF
+
+    run_cmd "sudo tee /etc/systemd/system/$post_unit > /dev/null" << 'UNIT_EOF'
+[Unit]
+Description=Start Docker containers after resume
+After=sleep.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /home/truenas_admin/docker-suspend-hook.sh post suspend
+TimeoutStartSec=180
+
+[Install]
+WantedBy=sleep.target
+UNIT_EOF
+
+    run_cmd "sudo systemctl daemon-reload"
+    run_cmd "sudo systemctl enable $pre_unit $post_unit" 2>/dev/null
+
+    log_ok "Docker suspend/resume hook deployed (systemd services)"
 }
 
 deploy_vpn_watchdog() {
@@ -282,22 +341,22 @@ start_all() {
     # cause empty /data inside containers. Force-recreate ensures fresh mounts.
     start_project "media" "--force-recreate" || ((failures++))
 
-    # 5. Homelab (calibre-web + RomM — compose only contains active services)
+    # 5. Homelab (all migrated to VPS — compose has no active services)
     start_project "homelab" || ((failures++))
 
     # 6. Exporters (needs media network to be up)
     start_project "exporters" || ((failures++))
 
-    # 7. Uptime Kuma
-    start_project "uptime-kuma" || ((failures++))
-
-    # 8. Connect NPM to service networks (for reverse proxying via Docker DNS)
+    # 7. Connect NPM to service networks (for reverse proxying via Docker DNS)
     # NPM runs on macvlan and can't reach host-published ports. It needs direct
     # Docker network access to proxy to containers by name.
     connect_npm_to_networks
 
-    # 9. Deploy VPN watchdog cron (auto-recovers gluetun after suspend/resume)
+    # 8. Deploy VPN watchdog cron (auto-recovers gluetun after non-suspend VPN drops)
     deploy_vpn_watchdog
+
+    # 9. Deploy suspend/resume hook (stops containers before S3, restarts after wake)
+    deploy_suspend_hook
 
     echo ""
     if [[ "$failures" -gt 0 ]]; then

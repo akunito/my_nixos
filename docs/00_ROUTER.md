@@ -42,7 +42,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | infrastructure.services.homelab | Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS | infrastructure, homelab, docker, nextcloud, syncthing | profiles/LXC_HOME-config.nix |
 | infrastructure.services.homelab | Homelab services: split between VPS and TrueNAS | infrastructure, homelab, nextcloud, syncthing, media | docs/akunito/infrastructure/services/homelab-stack.md |
 | infrastructure.services.kuma | Uptime Kuma monitoring - local homelab and public VPS status pages with API integration | infrastructure, kuma, uptime-kuma, monitoring, status-pages, lxc_mailer, vps, docker | profiles/LXC_mailer-config.nix |
-| infrastructure.services.kuma | Uptime Kuma: monitoring on VPS and TrueNAS | infrastructure, monitoring, kuma, vps, truenas | docs/akunito/infrastructure/services/kuma.md |
+| infrastructure.services.kuma | Uptime Kuma: consolidated monitoring on VPS | infrastructure, monitoring, kuma, vps | docs/akunito/infrastructure/services/kuma.md |
 | infrastructure.services.liftcraft | LiftCraft (LeftyWorkout) - Training plan management Rails application | infrastructure, liftcraft, leftyworkout, rails, docker, redis | profiles/LXC_liftcraftTEST-config.nix |
 | infrastructure.services.matrix | Matrix Synapse + Element on VPS | infrastructure, matrix, vps, docker | docs/akunito/infrastructure/services/matrix.md |
 | infrastructure.services.media | Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent | infrastructure, media, docker, jellyfin, arr, plex-alternative, truenas | profiles/LXC_HOME-config.nix |

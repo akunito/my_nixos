@@ -42,11 +42,9 @@ Services split between VPS and TrueNAS after migration (Feb 2026).
 
 | Service | Domain | Data Location |
 |---------|--------|---------------|
-| Calibre-Web | calibre.local.akunito.com | ssdpool/library (~413GB) |
-| RomM | romm.local.akunito.com | ssdpool/emulators (~55GB) |
 | Uptime Kuma | uptime.local.akunito.com | Independent VPS watchdog |
 
-These stay on TrueNAS because they access large local datasets (ebooks, ROMs) that don't need to be on the VPS. RomM uses its own MariaDB sidecar container.
+**Migrated to VPS**: Calibre-Web (Mar 2026), RomM (Feb 2026). Data accessed via NFS or copied to VPS NVMe.
 
 ## Media Stack (TrueNAS only)
 

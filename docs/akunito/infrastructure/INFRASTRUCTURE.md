@@ -25,7 +25,7 @@ INTERNET
     +---> [pfSense 192.168.8.1]  (firewall, DNS, WireGuard peer)
               |
               +---> [TrueNAS 192.168.20.200]  (storage + media Docker)
-              |       19 containers, 7 compose projects
+              |       15 containers, 6 compose projects
               |       Sleep: 23:00-11:00 (S3 suspend, RTC wake)
               |
               +---> [DESK 192.168.8.96]  (workstation)

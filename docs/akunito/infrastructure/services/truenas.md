@@ -59,7 +59,12 @@ TrueNAS suspends to RAM (S3) nightly to save power (~280W → 0W during sleep).
 | Wake | 11:00 | RTC alarm (`rtcwake -m no`) |
 
 - ZFS pools remain unlocked in RAM during S3
-- Docker services auto-resume on wake (systemd dependencies)
+- **Docker lifecycle**: Two systemd services (`docker-pre-suspend.service`, `docker-post-resume.service`) bound to `sleep.target` handle graceful stop/start of all Docker containers around suspend
+- **Pre-suspend**: Stops all compose projects in reverse order (30s timeout per project)
+- **Post-resume**: Waits 10s for networking, then starts projects in order (media force-recreated for fresh mounts)
+- **Script**: `/home/truenas_admin/docker-suspend-hook.sh` (deployed by startup script)
+- **Log**: `/var/log/docker-suspend-hook.log`
+- **IMPORTANT**: TrueNAS root is read-only (`/usr/lib/`), so services go in `/etc/systemd/system/`. TrueNAS updates may reset `/etc/systemd/` — re-run `truenas-docker-startup.sh` to redeploy
 - All backup jobs (restic, ZFS replication) scheduled within 11:00–23:00 window
 - WOL unreliable (r8169 driver limitation) — RTC alarm is the primary wake method
 
@@ -67,11 +72,11 @@ TrueNAS suspends to RAM (S3) nightly to save power (~280W → 0W during sleep).
 
 ## Docker Services
 
-TrueNAS runs **19 Docker containers** across **7 compose projects** for media, local proxy, and monitoring.
+TrueNAS runs **15 Docker containers** across **6 compose projects** for media, local proxy, and monitoring exporters.
 
 See [TrueNAS Docker Services](./truenas-services.md) for full details.
 
-**Key services**: Jellyfin, *arr stack (Sonarr/Radarr/Prowlarr/Bazarr), qBittorrent, Calibre-Web, EmulatorJS, NPM (macvlan 192.168.20.201), cloudflared, Uptime Kuma, Tailscale (subnet router), node-exporter, cAdvisor.
+**Key services**: Jellyfin, *arr stack (Sonarr/Radarr/Prowlarr/Bazarr), qBittorrent, NPM (macvlan 192.168.20.201), cloudflared, Tailscale (subnet router), exportarr instances.
 
 **NPM Macvlan**: NPM runs on a macvlan network (`npm_macvlan`) with IP 192.168.20.201 on VLAN 100. pfSense DNS resolves `*.local.akunito.com` → 192.168.20.201.
 

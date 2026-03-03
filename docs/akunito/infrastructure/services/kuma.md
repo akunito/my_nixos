@@ -1,46 +1,41 @@
 ---
 id: infrastructure.services.kuma
-summary: "Uptime Kuma: monitoring on VPS and TrueNAS"
-tags: [infrastructure, monitoring, kuma, vps, truenas]
-date: 2026-02-23
+summary: "Uptime Kuma: consolidated monitoring on VPS"
+tags: [infrastructure, monitoring, kuma, vps]
+date: 2026-03-03
 status: published
 ---
 
 # Uptime Kuma
 
-Two independent instances for resilient monitoring.
+Single consolidated instance on VPS for 24/7 monitoring.
 
-## Instances
+## Instance
 
-| Instance | Location | Domain | Port | Purpose |
-|----------|----------|--------|------|---------|
-| Public | VPS (Docker) | status.akunito.com | 3009 | Monitors all public services |
-| Home | TrueNAS (Docker) | uptime.local.akunito.com | 3001 | Monitors VPS from outside |
+| Property | Value |
+|----------|-------|
+| Location | VPS (rootless Docker) |
+| Domain | status.akunito.com |
+| Port | 127.0.0.1:3009 (behind cloudflared) |
+| Local | status.local.akunito.com (Tailscale nginx-local) |
+| SMTP | localhost:25 (VPS Postfix relay) |
+| Auth | JWT with 2FA |
 
-## VPS Kuma (Public)
+## Monitors
 
-- Container: `uptime-kuma` (rootless Docker)
-- Port: 127.0.0.1:3009 (behind cloudflared)
-- SMTP: localhost:25 (VPS Postfix relay)
-- Monitors: all *.akunito.com services, VPS health
-
-## TrueNAS Kuma (Home)
-
-- Container: `uptime-kuma` in compose project `uptime-kuma`
-- Port: 3001
-- SMTP: 100.64.0.6:25 (VPS Tailscale IP, Postfix relay)
-- Auth: none (Postfix trusts Tailscale subnet)
-- Monitors: VPS public endpoints, VPS SSH, DNS resolution
-
-**Why separate**: If VPS goes down, TrueNAS Kuma still detects the outage and sends alerts independently. VPS Kuma can't alert about its own downtime.
+40 monitors covering:
+- **Global services**: *.akunito.com public endpoints
+- **Local services**: *.local.akunito.com via Tailscale
+- **Infrastructure**: pfSense, TrueNAS, DESK, switches, APs (via pfSense Tailscale subnet routing)
+- **LXC legacy**: Ping monitors for archived LXC containers
 
 ## Email Configuration
 
-Both instances send via VPS Postfix relay (SMTP2GO):
-- Host: `100.64.0.6` (Tailscale) or `localhost` (VPS)
+Notifications via VPS Postfix relay (SMTP2GO):
+- Host: localhost
 - Port: 25
-- No authentication (trusted subnets in Postfix mynetworks)
+- No authentication (trusted localhost in Postfix mynetworks)
 
 ## Previous Setup
 
-Uptime Kuma previously ran on LXC_mailerWatcher (192.168.8.89) alongside a postfix-relay container. Both decommissioned Feb 2026.
+Previously two independent instances (VPS + TrueNAS). TrueNAS Kuma decommissioned Mar 2026 — monitoring consolidated to VPS for 24/7 coverage (TrueNAS sleeps 12h/day).

@@ -171,8 +171,8 @@ suspend_truenas() {
         done
     " 2>/dev/null
 
-    # Suspend with RTC safety net
-    ssh truenas_admin@"$TRUENAS_HOST" "sudo rtcwake -m mem -s $seconds" &
+    # Set RTC alarm (no suspend yet), then suspend via systemctl so sleep hooks fire
+    ssh truenas_admin@"$TRUENAS_HOST" "sudo rtcwake -m no -s $seconds && sudo systemctl suspend" &
     local ssh_pid=$!
 
     sleep 5
@@ -221,8 +221,8 @@ suspend_until_morning() {
         done
     " 2>/dev/null
 
-    # Suspend with absolute RTC wake time
-    ssh truenas_admin@"$TRUENAS_HOST" "sudo rtcwake -m mem -t $wake_time" &
+    # Set RTC alarm (no suspend yet), then suspend via systemctl so sleep hooks fire
+    ssh truenas_admin@"$TRUENAS_HOST" "sudo rtcwake -m no -t $wake_time && sudo systemctl suspend" &
 
     sleep 8
     if ! is_reachable; then

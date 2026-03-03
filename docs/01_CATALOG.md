@@ -453,7 +453,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/migration/post-migration-tasks.md**: Post-migration documentation and operational updates
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
 - **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS
-- **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: monitoring on VPS and TrueNAS
+- **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: consolidated monitoring on VPS
 - **docs/akunito/infrastructure/services/matrix.md**: Matrix Synapse + Element on VPS
 - **docs/akunito/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
 - **docs/akunito/infrastructure/services/monitoring-stack.md**: Monitoring: Prometheus + Grafana on VPS
