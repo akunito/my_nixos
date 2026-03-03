@@ -26,11 +26,10 @@ services:
       DB_POSTGRESDB_USER: n8n
       DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD}
 
-      # Webhook & proxy (Cloudflare tunnel for external webhooks)
+      # Webhook & proxy (behind Cloudflare tunnel — n8n runs HTTP internally)
+      # HTTPS termination is handled by Cloudflare/nginx, not n8n
       WEBHOOK_URL: https://n8n.${PUBLIC_DOMAIN}/
-      N8N_PROTOCOL: https
       N8N_HOST: n8n.${PUBLIC_DOMAIN}
-      N8N_PORT: "443"
       N8N_PROXY_HOPS: "1"
 
       # Encryption key for stored credentials (CRITICAL — never lose this)
