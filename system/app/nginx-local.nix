@@ -25,11 +25,13 @@ let
   wildcardLocal = systemSettings.wildcardLocal or "local.example.com";
 
   # Generate a vhost for each service
+  # Optional per-service attrs: https (bool), basicAuthFile (path)
   mkVhost = name: cfg: {
     "${name}.${wildcardLocal}" = {
       listenAddresses = [ listenAddr ];
       forceSSL = true;
       useACMEHost = wildcardLocal; # Uses cert from acme.nix
+      basicAuthFile = cfg.basicAuthFile or null;
       locations."/" = {
         proxyPass =
           if cfg.https or false

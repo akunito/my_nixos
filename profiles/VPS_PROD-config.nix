@@ -215,7 +215,7 @@ in
     nginxLocalListenAddress = "100.64.0.6"; # VPS Tailscale IP
     nginxLocalServices = {
       grafana    = { port = 3002; };
-      prometheus = { port = 9090; };
+      prometheus = { port = 9090; basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd"; };
       matrix     = { port = 8008; };
       element    = { port = 8088; };
       miniflux   = { port = 8084; };
@@ -234,6 +234,7 @@ in
     # === Monitoring Stack (Phase 2d — ENABLED) ===
     grafanaEnable = true;
     grafanaLocalSslEnable = false; # No /mnt/shared-certs/ on VPS — use Cloudflare Tunnel for HTTPS
+    prometheusBasicAuthHtpasswd = secrets.prometheusHtpasswd; # HTTP Basic Auth for prometheus.local.akunito.com
     # Disable standalone node exporter — grafana.nix runs its own on port 9091
     prometheusExporterEnable = false;
     prometheusExporterCadvisorEnable = false;

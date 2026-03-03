@@ -370,6 +370,7 @@
     acmeEmail = "admin@example.com"; # Email for Let's Encrypt notifications
     grafanaEnable = false; # Enable Grafana/Prometheus monitoring stack (only on monitoring server)
     grafanaLocalSslEnable = true; # Enable local SSL vhosts (requires /mnt/shared-certs/ from Proxmox)
+    prometheusBasicAuthHtpasswd = null; # htpasswd content for Prometheus nginx auth (null = no auth)
 
     # === Nginx Local Access (*.local.akunito.com via Tailscale) ===
     nginxLocalEnable = false; # Enable Tailscale-only nginx vhosts for local service access

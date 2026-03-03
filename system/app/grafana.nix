@@ -797,7 +797,15 @@ in
   ];
 
   # Copy dashboard JSON files to /etc/grafana-dashboards for provisioning
+  # Also provisions Prometheus htpasswd if basic auth is configured
   environment.etc = {
+    # Prometheus HTTP Basic Auth (for nginx-local vhost)
+    "nginx/auth/prometheus.htpasswd" = lib.mkIf ((systemSettings.prometheusBasicAuthHtpasswd or null) != null) {
+      text = systemSettings.prometheusBasicAuthHtpasswd;
+      mode = "0640";
+      user = "root";
+      group = config.services.nginx.group;
+    };
     # Custom dashboards
     "grafana-dashboards/custom/wireguard.json".source = ./grafana-dashboards/custom/wireguard.json;
     "grafana-dashboards/custom/truenas.json".source = ./grafana-dashboards/custom/truenas.json;
