@@ -85,6 +85,15 @@ lib.mkIf anyDatabaseEnabled {
       };
     })
 
+    (lib.mkIf ((systemSettings.postgresqlServerEnable or false) && (systemSettings.dbN8nPassword or "") != "") {
+      "secrets/db-n8n-password" = {
+        text = systemSettings.dbN8nPassword;
+        mode = "0440";
+        user = "root";
+        group = "postgres";
+      };
+    })
+
     # MariaDB passwords
     (lib.mkIf ((systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != "") {
       "secrets/db-nextcloud-password" = {

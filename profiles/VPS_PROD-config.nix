@@ -84,6 +84,7 @@ in
     dbLiftcraftPassword = secrets.dbLiftcraftPassword;
     dbMatrixPassword = secrets.dbMatrixPassword;
     dbMinifluxPassword = secrets.dbMinifluxPassword;
+    dbN8nPassword = secrets.dbN8nPassword;
     dbVaultwardenPassword = secrets.dbVaultwardenPassword;
     vaultwardenAdminToken = secrets.vaultwardenAdminToken;
     dbNextcloudPassword = secrets.dbNextcloudPassword;
@@ -94,7 +95,7 @@ in
     # PostgreSQL 17 Server
     postgresqlServerEnable = true;
     postgresqlServerPort = 5432;
-    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" "miniflux" "vaultwarden" ];
+    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" "miniflux" "vaultwarden" "n8n" ];
     postgresqlServerUsers = [
       {
         name = "plane";
@@ -119,6 +120,11 @@ in
       {
         name = "vaultwarden";
         passwordFile = "/etc/secrets/db-vaultwarden-password";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "n8n";
+        passwordFile = "/etc/secrets/db-n8n-password";
         ensureDBOwnership = true;
       }
     ];
@@ -229,6 +235,7 @@ in
       vault      = { port = 8222; };
       emulators  = { port = 8998; };
       calibre    = { port = 8083; };
+      n8n        = { port = 5678; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
@@ -298,6 +305,7 @@ in
       { name = "unifi"; path = "unifi"; }
       { name = "romm"; path = "romm"; }
       { name = "calibre"; path = "calibre"; }
+      { name = "n8n"; path = "n8n"; }
     ];
 
     # ============================================================================
