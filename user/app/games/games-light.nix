@@ -53,6 +53,7 @@ in
         airshipper
         qjoypad
         supertuxkart
+        supertux
         gamepad-tool
         antimicrox
       ])
