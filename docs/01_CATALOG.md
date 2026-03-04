@@ -64,6 +64,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMatrixPassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMinifluxPassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbVaultwardenPassword or "") != ""`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbN8nPassword or "") != ""`
    - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
 - **system/app/docker.nix**: Allow dockerd to be restarted without affecting running container. *Enabled when:* `userSettings.dockerEnable == true`
@@ -71,7 +72,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
    - `systemSettings.gamemodeEnable == true`
    - `systemSettings.gpuType == "amd"`
-- **system/app/grafana.nix**: Grafana & Prometheus Monitoring Stack *Enabled when:* `local access with SSL`
+- **system/app/grafana.nix**: Grafana & Prometheus Monitoring Stack *Enabled when:*
+   - `(systemSettings.prometheusBasicAuthHtpasswd or null) != null`
+   - `local access with SSL`
 - **system/app/headscale.nix**: Headscale — Self-hosted Tailscale Coordination Server *Enabled when:*
    - `systemSettings.headscaleEnable or false`
    - `ACME challenge`
@@ -100,7 +103,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
 - **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
-- **system/app/prometheus-truenas-backup.nix**: TrueNAS ZFS Replication Backup Monitoring *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
+- **system/app/prometheus-truenas-backup.nix**: TrueNAS ZFS Replication Backup Monitoring (DEPRECATED — hddpool removed, IAKU-247) *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
 - **system/app/redis-server.nix**: Redis Server Module *Enabled when:*
    - `allows multiple instances if needed`
@@ -458,6 +461,16 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
 - **docs/akunito/infrastructure/services/monitoring-stack.md**: Monitoring: Prometheus + Grafana on VPS
 - **docs/akunito/infrastructure/services/network-switching.md**: Physical switching layer documentation - USW Aggregation, USW-24-G2, 10GbE LACP bonds, ARP flux
+- **docs/akunito/infrastructure/services/openclaw/README.md**: OpenClaw AI personal assistant: architecture, integrations, and VPS deployment
+- **docs/akunito/infrastructure/services/openclaw/architecture.md**: OpenClaw gateway architecture, deployment modes, and filesystem layout
+- **docs/akunito/infrastructure/services/openclaw/audio-tts.md**: OpenClaw voice transcription, text-to-speech, and voice wake
+- **docs/akunito/infrastructure/services/openclaw/automation.md**: OpenClaw automation: cron jobs, webhooks, hooks, and Gmail PubSub
+- **docs/akunito/infrastructure/services/openclaw/channels.md**: OpenClaw messaging channel integrations: 23+ platforms, configuration, and policies
+- **docs/akunito/infrastructure/services/openclaw/docker-deployment.md**: OpenClaw Docker deployment for VPS_PROD with rootless Docker
+- **docs/akunito/infrastructure/services/openclaw/integrations.md**: OpenClaw integrations with existing VPS services: Plane, Matrix, n8n, Calendar, Postfix
+- **docs/akunito/infrastructure/services/openclaw/security.md**: OpenClaw security: authentication, sandboxing, secrets, and hardening
+- **docs/akunito/infrastructure/services/openclaw/skills-plugins.md**: OpenClaw skills, MCP servers, plugins, and the community ecosystem
+- **docs/akunito/infrastructure/services/openclaw/tools.md**: OpenClaw tools: browser automation, exec, Lobster workflows, sub-agents
 - **docs/akunito/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 - **docs/akunito/infrastructure/services/proxy-stack.md**: Proxy stack: NPM on TrueNAS, cloudflared on VPS and TrueNAS
 - **docs/akunito/infrastructure/services/tailscale-headscale.md**: Headscale on VPS, Tailscale mesh topology
