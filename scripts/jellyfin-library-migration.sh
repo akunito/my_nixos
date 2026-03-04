@@ -22,7 +22,7 @@
 set -euo pipefail
 
 # --- Configuration ---
-MEDIA_ROOT="/mnt/hddpool/media/Media"
+MEDIA_ROOT="/mnt/ssdpool/media/Media"
 COMPOSE_DIR="/mnt/ssdpool/docker/compose/media"
 SONARR_DB="/mnt/ssdpool/docker/mediarr/sonarr/sonarr.db"
 RADARR_DB="/mnt/ssdpool/docker/mediarr/radarr/radarr.db"

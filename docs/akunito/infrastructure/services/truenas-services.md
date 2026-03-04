@@ -47,7 +47,7 @@ Reverse proxy on macvlan network (192.168.20.201). Ports 80/81/443. Connected to
 | gluetun | — | VPN tunnel for downloads |
 | flaresolverr | 8191 | Captcha solver |
 
-**Storage**: All media containers mount `hddpool/media` as `/data` — ONE ZFS dataset with both media and torrents as plain dirs. Hardlinks work for Sonarr/Radarr imports.
+**Storage**: All media containers mount `ssdpool/media` as `/data` — ONE ZFS dataset with both media and torrents as plain dirs. Hardlinks work for Sonarr/Radarr imports.
 
 ### 5. homelab (0 of 8 enabled — all migrated to VPS)
 
@@ -79,8 +79,11 @@ Exportarr instances for Sonarr, Radarr, Prowlarr, Bazarr. Scraped by VPS Prometh
 | ssdpool/docker/tailscale | Tailscale state |
 | ssdpool/library | Ebooks (~413GB) |
 | ssdpool/emulators | ROMs (~55GB) |
-| hddpool/media | Movies, TV, music + torrents (~5.3TB) |
-| hddpool/vps-backups | VPS restic repos |
+| ssdpool/media | Movies, TV, music + torrents |
+| ssdpool/vps-backups | VPS restic databases (critical) |
+| ssdpool/workstation_backups | Workstation restic backups |
+| extpool/downloads | Game downloads |
+| extpool/vps-backups | VPS restic services, libraries, nextcloud |
 
 ## Sleep Schedule
 

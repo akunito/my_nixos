@@ -8,15 +8,15 @@
 ## ✅ Completed Phases
 
 ### Phase 1: TrueNAS Storage Setup ✅
-- [x] Created ZFS dataset: `hddpool/workstation_backups`
-- [x] Inherits AES-256-GCM encryption from hddpool
+- [x] Created ZFS dataset: `ssdpool/workstation_backups`
+- [x] Inherits AES-256-GCM encryption from ssdpool
 - [x] NFS export (ID 33) configured:
   - Restrictions removed — subnet already isolated by pfSense
   - Previously limited to: 192.168.8.96, 192.168.8.92, 192.168.8.194
 - [x] Set ownership to akunito:akunito (UID/GID 1000)
 - [x] Directory structure created:
   ```
-  /mnt/hddpool/workstation_backups/
+  /mnt/ssdpool/workstation_backups/
   ├── nixosaku/home.restic
   ├── shared/vps.restic
   └── (removed: nixosaku/homelab_DATA.restic - see strategy update)
@@ -53,7 +53,7 @@
 
 **Updated backup strategy:**
 ```
-NFS (TrueNAS hddpool/workstation_backups):
+NFS (TrueNAS ssdpool/workstation_backups):
 ├── home_nfs     → DESK/LAPTOP_X13 home directories
 └── vps_nfs      → VPS configuration (/root/vps_wg, /opt/*, /etc/nginx)
 
@@ -70,7 +70,7 @@ USB (LUKS Pendrive - offline backups):
 
 ### Phase 5: Documentation ✅
 - [x] Updated `docs/infrastructure/services/truenas.md`:
-  - Added hddpool/workstation_backups to Key Datasets
+  - Added ssdpool/workstation_backups to Key Datasets
   - Added NFS export to Network Shares table
   - Documented access pattern (mapall_user=akunito)
 
@@ -115,7 +115,7 @@ USB (LUKS Pendrive - offline backups):
 
 ### TrueNAS Configuration
 - **API Access**: `secrets/truenas-api-key.txt` (git-crypt encrypted)
-- **Dataset**: `hddpool/workstation_backups` (encrypted, unlocked)
+- **Dataset**: `ssdpool/workstation_backups` (encrypted, unlocked)
 - **NFS Export ID**: 33
 - **Ownership**: 1000:1000 (akunito:akunito via mapall_user)
 

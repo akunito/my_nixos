@@ -333,7 +333,8 @@ in
     # ============================================================================
     # Repos: databases (19:00), services (19:30), nextcloud (Sun 20:00), libraries (Sun 20:30)
     # Window: 19:00-22:00 (TrueNAS sleeps 23:00-11:00)
-    # Target: TrueNAS hddpool/vps-backups via Tailscale (100.64.0.10)
+    # Target: TrueNAS via Tailscale (100.64.0.10)
+    # databases → ssdpool/vps-backups (critical), services+libraries+nextcloud → extpool/vps-backups
     vpsResticBackupEnable = true;
     vpsResticTarget = "100.64.0.10";      # TrueNAS Tailscale IP
     vpsResticTargetUser = "truenas_admin";

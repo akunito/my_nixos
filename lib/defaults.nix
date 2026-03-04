@@ -190,7 +190,7 @@
     ];
     disk3_enabled = false;
     disk3_name = "/mnt/NFS_media";
-    disk3_device = "192.168.20.200:/mnt/hddpool/media";
+    disk3_device = "192.168.20.200:/mnt/ssdpool/media";
     disk3_fsType = "nfs4";
     disk3_options = [
       "nofail"
@@ -206,7 +206,7 @@
     ];
     disk5_enabled = false;
     disk5_name = "/mnt/NFS_library";
-    disk5_device = "192.168.20.200:/mnt/ssdpool/library";
+    disk5_device = "100.64.0.6:/home/akunito/calibre-library";
     disk5_fsType = "nfs4";
     disk5_options = [
       "nofail"
@@ -230,7 +230,7 @@
     ];
     disk8_enabled = false;
     disk8_name = "/mnt/NFS_Backups";
-    disk8_device = "192.168.20.200:/mnt/hddpool/workstation_backups";
+    disk8_device = "192.168.20.200:/mnt/ssdpool/workstation_backups";
     disk8_fsType = "nfs4";
     disk8_options = [
       "nofail"
@@ -419,7 +419,7 @@
     # === pfSense Backup Monitoring (checks backup files on Proxmox NFS) ===
     prometheusPfsenseBackupEnable = false;
     prometheusPfsenseBackupProxmoxHost = "192.168.8.82";
-    prometheusPfsenseBackupPath = "/mnt/pve/proxmox_backups/pfsense";
+    prometheusPfsenseBackupPath = "/mnt/ssdpool/pfsense-backups";
 
     # === SNMP Exporter (pfSense/network devices) ===
     prometheusSnmpExporterEnable = false;

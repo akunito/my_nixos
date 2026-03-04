@@ -1,11 +1,11 @@
 # VPS Restic Backup to TrueNAS via SFTP
 #
-# Automated backup of VPS data to TrueNAS (hddpool/vps-backups) via Tailscale SFTP.
-# Three separate repositories with independent schedules and retention policies:
-#   - databases:  PostgreSQL + MariaDB dumps (daily at 19:00, keep 30 days)
-#   - services:   Docker configs, Headscale, Vaultwarden, secrets (daily at 19:30, keep 30 days)
-#   - nextcloud:  Nextcloud data directory (weekly Sunday at 20:00, keep 14 days)
-#   - libraries:  RomM ROMs + Calibre books ~260GB (weekly Sunday at 20:30, keep 30 days)
+# Automated backup of VPS data to TrueNAS via Tailscale SFTP.
+# Four separate backup jobs with independent schedules and retention policies:
+#   - databases:  PostgreSQL + MariaDB dumps (daily at 19:00, keep 30 days) → ssdpool (critical)
+#   - services:   Docker configs, Headscale, Vaultwarden, secrets (daily at 19:30, keep 30 days) → extpool
+#   - nextcloud:  Nextcloud data directory (weekly Sunday at 20:00, keep 14 days) → extpool
+#   - libraries:  RomM ROMs + Calibre books ~260GB (weekly Sunday at 20:30, keep 30 days) → extpool
 #
 # Schedule rationale: TrueNAS sleeps 23:00-11:00. Backups run 19:00-22:00 window.
 #
@@ -14,7 +14,10 @@
 # Prerequisites:
 #   - SSH key at /home/<user>/.ssh/id_ed25519_restic (passwordless, for truenas_admin)
 #   - Password files at /etc/secrets/restic-{databases,services,nextcloud}
-#   - Restic repos initialized on TrueNAS at /mnt/hddpool/vps-backups/*.restic
+#   - Restic repos initialized on TrueNAS:
+#     - /mnt/ssdpool/vps-backups/databases.restic (critical)
+#     - /mnt/extpool/vps-backups/services.restic (re-downloadable)
+#     - /mnt/extpool/vps-backups/nextcloud.restic (re-downloadable)
 #   - TrueNAS reachable via Tailscale at vpsResticTarget IP
 
 { lib, pkgs, systemSettings, userSettings, ... }:
@@ -25,13 +28,15 @@ let
   targetUser = systemSettings.vpsResticTargetUser or "truenas_admin";
   sshKey = "/home/${username}/.ssh/id_ed25519_restic";
   sftpCommand = "ssh -i ${sshKey} ${targetUser}@${target} -s sftp";
-  repoBase = "sftp:${targetUser}@${target}:/mnt/hddpool/vps-backups";
+  repoBaseSsd = "sftp:${targetUser}@${target}:/mnt/ssdpool/vps-backups";
+  repoBaseExt = "sftp:${targetUser}@${target}:/mnt/extpool/vps-backups";
 
   # Helper to create a restic backup service + timer
   mkResticBackup = {
     name,           # Service name suffix (e.g., "databases")
     passwordFile,   # Path to restic password file
     repoSuffix,     # Repo directory name (e.g., "databases.restic")
+    repoBase ? repoBaseSsd, # Base path (ssdpool for critical, extpool for bulk)
     backupPaths,    # List of paths to back up
     excludes ? [],  # List of --exclude patterns
     tags ? [],      # List of --tag values
@@ -126,6 +131,7 @@ let
     name = "services";
     passwordFile = "/etc/secrets/restic-services";
     repoSuffix = "services.restic";
+    repoBase = repoBaseExt;
     backupPaths = [
       "/home/${username}/.homelab"
       "/home/${username}/.local/share/docker/volumes/uptime-kuma_kuma_data/_data"
@@ -146,6 +152,7 @@ let
     name = "libraries";
     passwordFile = "/etc/secrets/restic-services";
     repoSuffix = "services.restic";
+    repoBase = repoBaseExt;
     backupPaths = [
       "/home/${username}/romm-library"
       "/home/${username}/calibre-library"
@@ -162,6 +169,7 @@ let
     name = "nextcloud";
     passwordFile = "/etc/secrets/restic-nextcloud";
     repoSuffix = "nextcloud.restic";
+    repoBase = repoBaseExt;
     backupPaths = [ "/var/lib/nextcloud-data" ];
     excludes = [ "*.log" "*.part" "upload_tmp/*" ];
     tags = [ "nextcloud" ];

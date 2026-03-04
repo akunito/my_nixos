@@ -12,7 +12,7 @@ bash /home/akunito/.dotfiles/scripts/truenas-unlock-pools.sh
 
 ### Arguments
 
-- If the user specifies a pool name (e.g., `/unlock-truenas hddpool`), pass it: `--pool hddpool`
+- If the user specifies a pool name (e.g., `/unlock-truenas ssdpool`), pass it: `--pool ssdpool`
 - If the user asks for status only, pass `--status`
 - If the user asks for a dry run, pass `--dry-run`
 
@@ -48,13 +48,11 @@ curl -sk -X POST "https://192.168.20.200/api/v2.0/pool/dataset/unlock" \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d "{
-    \"id\": \"hddpool\",
+    \"id\": \"ssdpool\",
     \"unlock_options\": {
       \"recursive\": true,
       \"datasets\": [
-        {\"name\": \"hddpool/media\", \"passphrase\": \"$PASSPHRASE\"},
-        {\"name\": \"hddpool/proxmox_backups\", \"passphrase\": \"$PASSPHRASE\"},
-        {\"name\": \"hddpool/ssd_data_backups\", \"passphrase\": \"$PASSPHRASE\"}
+        {\"name\": \"ssdpool\", \"passphrase\": \"$PASSPHRASE\"}
       ]
     }
   }"
@@ -75,4 +73,4 @@ Note: On TrueNAS the secrets paths won't exist, so the script is designed to run
 
 - [TrueNAS Service Docs](../../docs/akunito/infrastructure/services/truenas.md)
 - [Manage TrueNAS](./manage-truenas.md) - General TrueNAS management
-- [ZFS Replication Script](../../scripts/truenas-zfs-replicate.sh)
+- [Unlock Pools Script](../../scripts/truenas-unlock-pools.sh)

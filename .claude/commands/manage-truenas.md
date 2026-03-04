@@ -144,10 +144,10 @@ ssh truenas_admin@192.168.20.200 "sudo zpool list -o name,size,alloc,free,frag,c
 ### Run Manual Scrub
 
 ```bash
-# Run scrubs sequentially to avoid I/O contention (hddpool ~6h, ssdpool ~1h)
-ssh truenas_admin@192.168.20.200 "sudo zpool scrub hddpool"
-# Wait for completion, then:
+# Run scrubs (ssdpool ~1h, extpool ~30min)
 ssh truenas_admin@192.168.20.200 "sudo zpool scrub ssdpool"
+# Wait for completion, then:
+ssh truenas_admin@192.168.20.200 "sudo zpool scrub extpool"
 # Check progress:
 ssh truenas_admin@192.168.20.200 "sudo zpool status | grep scan"
 ```
@@ -158,21 +158,12 @@ ssh truenas_admin@192.168.20.200 "sudo zpool status | grep scan"
 ssh truenas_admin@192.168.20.200 "sudo smartctl -a /dev/sdX"  # Replace X
 ```
 
-### SMART Sector Watch (sdb + sdc have pending sectors)
+### SMART Check (SSDs)
 
 ```bash
-# Baseline (2026-02-12): sdb=Reallocated:1/Pending:1/Uncorrectable:0, sdc=same
-ssh truenas_admin@192.168.20.200 "sudo smartctl -A /dev/sdb | grep -E 'Reallocated|Current_Pending|Offline_Uncorrectable'"
-ssh truenas_admin@192.168.20.200 "sudo smartctl -A /dev/sdc | grep -E 'Reallocated|Current_Pending|Offline_Uncorrectable'"
-# If pending > 5, plan drive replacement under mirror redundancy
-```
-
-### Check iSCSI
-
-```bash
-ssh truenas_admin@192.168.20.200 "midclt call iscsi.target.query"
-# Verify session from Proxmox:
-ssh -A root@192.168.8.82 "iscsiadm -m session -P 1"
+# Check SSD health (SMART for NVMe/SATA SSDs)
+ssh truenas_admin@192.168.20.200 "sudo smartctl -a /dev/sdX"  # Replace X with SSD device
+# Note: SMART may not work through USB adapter for extpool NVMe — check via zpool status instead
 ```
 
 ---
@@ -248,14 +239,10 @@ showmount -e 192.168.20.200
 sudo umount -f /mnt/truenas-share
 ```
 
-### iSCSI LUN issues (Proxmox DATA_4TB)
+### extpool (USB NVMe) not importing after reboot
 
 ```bash
-# Check iSCSI session on Proxmox
-ssh -A root@192.168.8.82 "iscsiadm -m session -P 3"
-
-# Check filesystem
-ssh -A root@192.168.8.82 "e2fsck -n /dev/sdb"
-
-# If dirty disconnect: stop containers using the mount, umount, e2fsck -y, remount
+# USB NVMe may not be ready at boot — manually import
+ssh truenas_admin@192.168.20.200 "sudo zpool import extpool"
+# Then unlock encryption if needed
 ```

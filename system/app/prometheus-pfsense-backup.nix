@@ -15,7 +15,7 @@
 
 let
   proxmoxHost = systemSettings.prometheusPfsenseBackupProxmoxHost or "192.168.8.82";
-  backupPath = systemSettings.prometheusPfsenseBackupPath or "/mnt/pve/proxmox_backups/pfsense";
+  backupPath = systemSettings.prometheusPfsenseBackupPath or "/mnt/ssdpool/pfsense-backups";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
 
   # Script to check pfSense backup status via SSH to Proxmox

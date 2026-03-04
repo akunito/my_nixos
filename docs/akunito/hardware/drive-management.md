@@ -182,7 +182,7 @@ fileSystems."/mnt/DATA" = {
 
 # NFS mount
 fileSystems."/mnt/NFS_media" = {
-  device = "192.168.20.200:/mnt/hddpool/media";
+  device = "192.168.20.200:/mnt/ssdpool/media";
   fsType = "nfs4";
   options = [ "nofail" "x-systemd.device-timeout=5s" ];
 };
@@ -199,7 +199,7 @@ systemSettings = {
   nfsClientEnable = true;
   nfsMounts = [
     {
-      what = "192.168.20.200:/mnt/hddpool/media";
+      what = "192.168.20.200:/mnt/ssdpool/media";
       where = "/mnt/NFS_media";
       type = "nfs";
       options = "noatime";

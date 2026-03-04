@@ -102,7 +102,7 @@ post_resume() {
     ensure_macvlan
     start_project "npm"
 
-    # Force-recreate media: encrypted hddpool mounts may be stale
+    # Force-recreate media: encrypted ssdpool mounts may be stale
     start_project "media" "--force-recreate"
 
     start_project "homelab"

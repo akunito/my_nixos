@@ -101,7 +101,7 @@ redis-cli -a "$(sudo cat /etc/secrets/redis-password)" -n 0  # Plane
 
 | Schedule | Repo | Retention |
 |----------|------|-----------|
-| Every 2h (18:00-22:30) | sftp:truenas:/mnt/hddpool/vps-backups/databases.restic | 7 daily, 4 weekly, 1 monthly |
+| Every 2h (18:00-22:30) | sftp:truenas:/mnt/ssdpool/vps-backups/databases.restic | 7 daily, 4 weekly, 1 monthly |
 
 ### Integrity Checks
 

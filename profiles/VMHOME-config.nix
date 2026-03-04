@@ -82,7 +82,7 @@
     ];
     disk3_enabled = true;
     disk3_name = "/mnt/NFS_media";
-    disk3_device = "192.168.20.200:/mnt/hddpool/media";
+    disk3_device = "192.168.20.200:/mnt/ssdpool/media";
     disk3_fsType = "nfs4";
     disk3_options = [
       "nofail"
@@ -98,7 +98,7 @@
     ];
     disk5_enabled = true;
     disk5_name = "/mnt/NFS_library";
-    disk5_device = "192.168.20.200:/mnt/ssdpool/library";
+    disk5_device = "100.64.0.6:/home/akunito/calibre-library";
     disk5_fsType = "nfs4";
     disk5_options = [
       "nofail"
@@ -109,13 +109,13 @@
     nfsClientEnable = true;
     nfsMounts = [
       {
-        what = "192.168.20.200:/mnt/hddpool/media";
+        what = "192.168.20.200:/mnt/ssdpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
         options = "noatime";
       }
       {
-        what = "192.168.20.200:/mnt/ssdpool/library";
+        what = "100.64.0.6:/home/akunito/calibre-library";
         where = "/mnt/NFS_library";
         type = "nfs";
         options = "noatime";

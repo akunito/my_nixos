@@ -55,7 +55,7 @@ in
     # NFS nofail safety net (prevents boot hang when TrueNAS is unreachable)
     disk3_enabled = true;
     disk3_name = "/mnt/NFS_media";
-    disk3_device = "192.168.20.200:/mnt/hddpool/media";
+    disk3_device = "192.168.20.200:/mnt/ssdpool/media";
     disk3_fsType = "nfs4";
     disk3_options = [
       "nofail"
@@ -71,7 +71,7 @@ in
     ];
     disk5_enabled = true;
     disk5_name = "/mnt/NFS_library";
-    disk5_device = "192.168.20.200:/mnt/ssdpool/library";
+    disk5_device = "100.64.0.6:/home/akunito/calibre-library";
     disk5_fsType = "nfs4";
     disk5_options = [
       "nofail"
@@ -79,7 +79,7 @@ in
     ];
     disk8_enabled = true;
     disk8_name = "/mnt/NFS_Backups";
-    disk8_device = "192.168.20.200:/mnt/hddpool/workstation_backups";
+    disk8_device = "192.168.20.200:/mnt/ssdpool/workstation_backups";
     disk8_fsType = "nfs4";
     disk8_options = [
       "nofail"
@@ -90,16 +90,16 @@ in
     nfsClientEnable = true;
     nfsMounts = [
       {
-        what = "192.168.20.200:/mnt/hddpool/media";
+        what = "192.168.20.200:/mnt/ssdpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
         options = "noatime";
       }
       {
-        what = "192.168.20.200:/mnt/ssdpool/library";
+        what = "100.64.0.6:/home/akunito/calibre-library";
         where = "/mnt/NFS_library";
         type = "nfs";
-        options = "noatime";
+        options = "noatime,soft,timeo=150";
       }
       {
         what = "100.64.0.6:/home/akunito/romm-library";
@@ -108,7 +108,7 @@ in
         options = "noatime,soft,timeo=150";
       }
       {
-        what = "192.168.20.200:/mnt/hddpool/workstation_backups";
+        what = "192.168.20.200:/mnt/ssdpool/workstation_backups";
         where = "/mnt/NFS_Backups";
         type = "nfs";
         options = "noatime";

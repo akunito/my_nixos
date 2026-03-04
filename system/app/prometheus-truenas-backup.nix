@@ -1,8 +1,8 @@
-# TrueNAS ZFS Replication Backup Monitoring
+# TrueNAS ZFS Replication Backup Monitoring (DEPRECATED — hddpool removed, IAKU-247)
 #
-# Monitors ZFS replication tasks (ssdpool → hddpool/ssd_data_backups) by
-# SSHing to TrueNAS and checking the age of the newest autoreplica-* snapshot
-# on each destination dataset.
+# Previously monitored ZFS replication tasks (ssdpool → hddpool/ssd_data_backups).
+# hddpool has been eliminated. This module is disabled by default (prometheusTruenasBackupEnable = false)
+# and no profile enables it. Kept for reference; can be repurposed to monitor ssdpool snapshot age.
 #
 # Metrics exposed (via textfile collector):
 #   truenas_backup_age_seconds{dataset} - Seconds since last replication snapshot

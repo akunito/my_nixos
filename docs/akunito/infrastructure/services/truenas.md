@@ -2,7 +2,7 @@
 id: infrastructure.services.truenas
 summary: TrueNAS storage server operations, monitoring, and maintenance
 tags: [infrastructure, storage, truenas, zfs, monitoring, nas]
-related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-exporter.sh, .claude/skills/unlock-truenas.md, scripts/truenas-zfs-replicate.sh]
+related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-exporter.sh, .claude/skills/unlock-truenas.md]
 ---
 
 # TrueNAS Storage Server
@@ -26,26 +26,28 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 
 ### Storage Pools
 
-| Pool | Size | Used | Type | Encryption | Fragmentation | Health |
-|------|------|------|------|------------|---------------|--------|
-| boot-pool | 232GB | 5.58GB (2%) | 2x NVMe mirror | No | 0% | ✅ ONLINE |
-| hddpool | 21.8TB | 6.34TB (29%) | 4x HDD, 2x mirror vdevs | Passphrase | 3% | ✅ ONLINE |
-| ssdpool | 3.62TB | 1004GB (27%) | 4x SSD, 2x mirror vdevs | Passphrase | 20% | ✅ ONLINE |
+| Pool | Size | Type | Encryption | Health |
+|------|------|------|------------|--------|
+| boot-pool | 232GB | 2x NVMe mirror | No | ✅ ONLINE |
+| ssdpool | ~5.4TB | RAIDZ1, 4x 2TB SSD | Passphrase | ✅ ONLINE |
+| extpool | ~4TB | Single USB NVMe | No | ✅ ONLINE |
+
+> **Pool migration (Mar 2026)**: hddpool (4x HDD, 2x mirror vdevs) removed. All data consolidated to ssdpool (rebuilt as RAIDZ1 with 4x 2TB SSDs). ZFS replication (ssdpool->hddpool) eliminated. New extpool added for game downloads via USB NVMe.
 
 > **Latest Audit**: [2026-02-12](../audits/truenas-audit-2026-02-12.md) - Score 8/10. Key findings: NIC rx_missed_errors, 2 SSDs with pending sectors, NFS exports too open.
 
 ### Key Datasets
 
-**hddpool** (bulk storage):
-- `hddpool/media` - Jellyfin media library (movies, TV shows)
-- `hddpool/proxmox_backups` - Proxmox VM/LXC backup storage
-- `hddpool/workstation_backups` - Workstation restic backups (DESK, LAPTOP_X13, VPS)
-
-**ssdpool** (performance storage):
+**ssdpool** (primary storage — RAIDZ1, 4x 2TB SSD):
+- `ssdpool/media` - Jellyfin media library (movies, TV shows)
 - `ssdpool/library` - Calibre ebook library
-- `ssdpool/myservices` - iSCSI zvol (DATA_4TB for Proxmox)
 - `ssdpool/emulators` - RetroArch ROM collection
-- `ssdpool/ssd_data_backups` - High-priority backup storage
+- `ssdpool/workstation_backups` - Workstation restic backups (DESK, LAPTOP_X13)
+- `ssdpool/vps-backups` - VPS restic databases (critical)
+
+**extpool** (USB NVMe, ~4TB, no redundancy):
+- `extpool/downloads` - Game downloads
+- `extpool/vps-backups` - VPS restic services, libraries, nextcloud (re-downloadable)
 
 ---
 
@@ -65,7 +67,7 @@ TrueNAS suspends to RAM (S3) nightly to save power (~280W → 0W during sleep).
 - **Script**: `/home/truenas_admin/docker-suspend-hook.sh` (deployed by startup script)
 - **Log**: `/var/log/docker-suspend-hook.log`
 - **IMPORTANT**: TrueNAS root is read-only (`/usr/lib/`), so services go in `/etc/systemd/system/`. TrueNAS updates may reset `/etc/systemd/` — re-run `truenas-docker-startup.sh` to redeploy
-- All backup jobs (restic, ZFS replication) scheduled within 11:00–23:00 window
+- All backup jobs (restic) scheduled within 11:00–23:00 window
 - WOL unreliable (r8169 driver limitation) — RTC alarm is the primary wake method
 
 ---
@@ -96,27 +98,20 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
 ### NFS Exports (Primary)
 | Share | Dataset | Clients | Purpose |
 |-------|---------|---------|---------|
-| /mnt/hddpool/media | hddpool/media | TrueNAS Docker (Jellyfin) | Media streaming |
+| /mnt/ssdpool/media | ssdpool/media | TrueNAS Docker (Jellyfin) | Media streaming |
 | /mnt/ssdpool/emulators | ssdpool/emulators | TrueNAS Docker (EmulatorJS) | ROM collection |
 | /mnt/ssdpool/library | ssdpool/library | TrueNAS Docker (Calibre-Web) | Ebook library |
-| /mnt/hddpool/proxmox_backups | hddpool/proxmox_backups | (unused — Proxmox shut down) | Was VM/LXC backup target |
-| /mnt/ssdpool/ssd_data_backups | ssdpool/ssd_data_backups | (unused — Proxmox shut down) | Was fast backup storage |
-| /mnt/hddpool/workstation_backups | hddpool/workstation_backups | 192.168.8.96, 192.168.8.92 | Workstation restic backups (NFS-based unified backup system) |
+| /mnt/ssdpool/workstation_backups | ssdpool/workstation_backups | 192.168.8.96, 192.168.8.92 | Workstation restic backups (NFS-based unified backup system) |
 
 **Access**: NFSv4, all_squash (mapall_user=akunito) for workstations. Docker containers on TrueNAS access datasets via bind mounts (no NFS needed).
 
 ### SMB Shares (Desktop Access)
 | Share | Dataset | Purpose |
 |-------|---------|---------|
-| media | hddpool/media | Direct desktop access for management |
+| media | ssdpool/media | Direct desktop access for management |
 | library | ssdpool/library | Direct desktop access for book management |
 
-### iSCSI Targets
-| Target IQN | Zvol | Size | Connected To | Purpose |
-|------------|------|------|--------------|---------|
-| iqn.2005-10.org.freenas.ctl:proxmox-pve | ssdpool/myservices | 1TB | Proxmox | DATA_4TB LVM (Docker volumes, service data) |
-
-**CHAP Authentication**: Enabled (credentials in secrets/domains.nix)
+> **Removed**: iSCSI targets (was for Proxmox, now shut down). Proxmox backup NFS exports removed.
 
 ---
 
@@ -139,8 +134,8 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
 
 ### Encryption
 **Dataset Encryption**:
-- **hddpool datasets**: AES-256-GCM (passphrase-based)
 - **ssdpool datasets**: AES-256-GCM (passphrase-based)
+- **extpool**: Not encrypted
 - **Passphrase Storage**: `secrets/truenas-encryption-passphrase.txt` (git-crypt encrypted)
 - **Unlock Method**: Manual after reboot (API call via `/unlock-truenas` skill)
 
@@ -178,7 +173,7 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
   - `truenas.zfspool.<pool>.free` - Available space (bytes)
   - `truenas.zfspool.<pool>.fragmentation` - Pool fragmentation percentage
   - `truenas.zfspool.<pool>.healthy` - Pool health (1=ONLINE, 0=DEGRADED/OFFLINE)
-- **Pools Covered**: boot-pool, hddpool, ssdpool
+- **Pools Covered**: boot-pool, ssdpool, extpool
 
 **Prometheus Mapping** (in `prometheus-graphite.nix`):
 ```nix
@@ -251,8 +246,8 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
 
 | Task | Schedule | Retention | Purpose |
 |------|----------|-----------|---------|
-| **ZFS Scrub (hddpool)** | 1st Sunday, 2:00 AM | N/A | Data integrity check |
-| **ZFS Scrub (ssdpool)** | 2nd Sunday, 2:00 AM | N/A | Data integrity check |
+| **ZFS Scrub (ssdpool)** | 1st Sunday, 2:00 AM | N/A | Data integrity check |
+| **ZFS Scrub (extpool)** | 2nd Sunday, 2:00 AM | N/A | Data integrity check |
 | **SMART Short Test** | Every Saturday, 4:00 AM | N/A | Quick drive health check |
 | **SMART Long Test** | 15th of month, 3:00 AM | N/A | Comprehensive drive test |
 | **Config Backup** | Every Sunday, 3:00 AM | 30 days | System configuration export |
@@ -260,7 +255,6 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
 | **Snapshots (library)** | Daily, 1:00 AM | 7 days | Point-in-time recovery |
 | **Snapshots (emulators)** | Weekly Sunday, 2:00 AM | 4 weeks | Point-in-time recovery |
 | **Custom ZFS Metrics** | Every 5 minutes | N/A | Prometheus monitoring |
-| **ZFS Local Replication** | Daily, 4:00 AM | 2 snapshots/dataset | ssdpool → hddpool/ssd_data_backups |
 
 ### Manual Operations
 
@@ -274,10 +268,10 @@ curl -X POST https://192.168.20.200/api/v2.0/pool/dataset/unlock \
   -H "Authorization: Bearer $(cat secrets/truenas-api-key.txt)" \
   -H "Content-Type: application/json" \
   -d '{
-    "id": "hddpool",
+    "id": "ssdpool",
     "unlock_options": {
       "datasets": [
-        {"name": "hddpool/media", "passphrase": "YOUR_PASSPHRASE"}
+        {"name": "ssdpool/media", "passphrase": "YOUR_PASSPHRASE"}
       ]
     }
   }'
@@ -291,7 +285,7 @@ ssh truenas_admin@192.168.20.200 'zpool list'
 
 **Manual Scrub**:
 ```bash
-ssh truenas_admin@192.168.20.200 'midclt call pool.scrub "hddpool" "START"'
+ssh truenas_admin@192.168.20.200 'midclt call pool.scrub "ssdpool" "START"'
 ```
 
 **Check SMART Status**:
@@ -317,59 +311,11 @@ curl -X POST https://192.168.20.200/api/v2.0/config/save \
 ```bash
 ssh truenas_admin@192.168.20.200 'midclt call service.restart nfs'
 ssh truenas_admin@192.168.20.200 'midclt call service.restart cifs'
-ssh truenas_admin@192.168.20.200 'midclt call service.restart iscsitarget'
 ```
 
-### ZFS Local Replication (ssdpool → hddpool)
+### ZFS Local Replication (ELIMINATED)
 
-**Script**: `scripts/truenas-zfs-replicate.sh` (deployed to `/home/truenas_admin/` on TrueNAS)
-**Schedule**: Daily at 4:00 AM via TrueNAS cron job (ID: 3, runs as root)
-**Cron command**: `bash /home/truenas_admin/truenas-zfs-replicate.sh >> /var/log/zfs-replicate.log 2>&1`
-**Log**: `/var/log/zfs-replicate.log` on TrueNAS
-**Note**: `/home` is mounted `noexec` on TrueNAS, so cron must use `bash /path/to/script` (not direct execution)
-
-**Replication Map**:
-
-| Source | Destination | Type | Size |
-|--------|-------------|------|------|
-| `ssdpool/library` | `hddpool/ssd_data_backups/library` | Dataset (ebooks) | ~413 GB |
-| `ssdpool/emulators` | `hddpool/ssd_data_backups/emulators` | Dataset (ROMs) | ~55 GB |
-| `ssdpool/myservices` | `hddpool/ssd_data_backups/services` | Zvol (iSCSI) | ~2 TB |
-
-**Snapshot Strategy**:
-- Prefix: `autoreplica-YYYYMMDD-HHMMSS`
-- Retention: 2 per dataset (current + previous for incremental base)
-- Encryption: Uses `zfs recv -x encryption` so destination inherits from `hddpool/ssd_data_backups` encryption root
-
-**Manual Operations** (via sudo, requires interactive password):
-```bash
-# Dry-run (show what would happen)
-ssh -t truenas_admin@192.168.20.200 'sudo bash /home/truenas_admin/truenas-zfs-replicate.sh --dry-run'
-
-# Incremental replication (daily mode)
-ssh -t truenas_admin@192.168.20.200 'sudo bash /home/truenas_admin/truenas-zfs-replicate.sh'
-
-# Full re-sync (destroys destination, use if out of sync)
-ssh -t truenas_admin@192.168.20.200 'sudo bash /home/truenas_admin/truenas-zfs-replicate.sh --init'
-
-# Check replication snapshots
-ssh truenas_admin@192.168.20.200 'sudo zfs list -t snapshot -r ssdpool | grep autoreplica'
-
-# Check destination sizes
-ssh truenas_admin@192.168.20.200 'sudo zfs list -r hddpool/ssd_data_backups'
-
-# Check log
-ssh truenas_admin@192.168.20.200 'tail -50 /var/log/zfs-replicate.log'
-
-# Verify encryption inheritance
-ssh truenas_admin@192.168.20.200 'sudo zfs get encryptionroot hddpool/ssd_data_backups/library'
-```
-
-**Deploy/Update Script**:
-```bash
-scp scripts/truenas-zfs-replicate.sh truenas_admin@192.168.20.200:/home/truenas_admin/
-ssh truenas_admin@192.168.20.200 'chmod 755 /home/truenas_admin/truenas-zfs-replicate.sh'
-```
+> **Removed (Mar 2026)**: ZFS replication from ssdpool to hddpool was eliminated when hddpool was decommissioned. All data now resides on ssdpool (RAIDZ1). The replication script `scripts/truenas-zfs-replicate.sh` is no longer deployed or scheduled.
 
 ---
 
@@ -400,7 +346,7 @@ ssh -A -p 56777 akunito@100.64.0.6 'curl -s http://localhost:9109/metrics | grep
 
 ### Datasets Locked After Reboot
 
-**Symptoms**: NFS/SMB shares unavailable, iSCSI target offline, services report "Dataset not found"
+**Symptoms**: NFS/SMB shares unavailable, services report "Dataset not found"
 
 **Root Cause**: Encrypted datasets require manual passphrase entry after reboot
 
@@ -448,25 +394,6 @@ ssh truenas_admin@192.168.20.200 'midclt call service.query | jq ".[] | select(.
 
 # Restart NFS if needed
 ssh truenas_admin@192.168.20.200 'midclt call service.restart nfs'
-```
-
-### iSCSI Target Disconnected
-
-**Symptoms**: Proxmox loses access to DATA_4TB LVM, VMs using that storage fail
-
-**Solutions**:
-```bash
-# On Proxmox - check iSCSI session
-iscsiadm -m session
-
-# Restart iSCSI initiator
-systemctl restart iscsid open-iscsi
-
-# Re-login to target
-iscsiadm -m node --login
-
-# Check target status on TrueNAS
-ssh truenas_admin@192.168.20.200 'midclt call iscsi.target.query'
 ```
 
 ---
@@ -519,7 +446,7 @@ zpool list
 midclt call pool.dataset.query | jq '.[] | select(.encrypted) | {name, locked}'
 
 # Service status
-midclt call service.query | jq '.[] | select(.service | test("nfs|cifs|iscsitarget")) | {service, state}'
+midclt call service.query | jq '.[] | select(.service | test("nfs|cifs")) | {service, state}'
 
 # System info
 midclt call system.info | jq '{version, uptime_seconds, hostname}'

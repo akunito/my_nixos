@@ -692,15 +692,17 @@ ls /usr/local/etc/rc.d/
 
 ## Backup
 
-### Automated Backup to Proxmox NFS
+### Automated Backup (Historical)
 
-pfSense is configured with automated daily backups to Proxmox NFS storage at `/mnt/pve/proxmox_backups/pfsense/`.
+> **Note (Mar 2026)**: Proxmox has been shut down. The previous automated backup to `/mnt/pve/proxmox_backups/pfsense/` via SCP to Proxmox (192.168.8.82) is no longer operational. A new backup destination should be configured (e.g., TrueNAS ssdpool or VPS).
+
+Previously, pfSense was configured with automated daily backups to Proxmox NFS storage.
 
 | Setting | Value |
 |---------|-------|
 | **Script Location** | `/root/backup-to-proxmox.sh` |
 | **Schedule** | Daily at 02:00 (via cron) |
-| **Destination** | `root@192.168.8.82:/mnt/pve/proxmox_backups/pfsense/` |
+| **Destination** | ~~`root@192.168.8.82:/mnt/pve/proxmox_backups/pfsense/`~~ (Proxmox shut down) |
 | **Retention** | 30 days |
 | **Monitoring** | Prometheus metrics via LXC_monitoring |
 
@@ -717,7 +719,7 @@ pfSense is configured with automated daily backups to Proxmox NFS storage at `/m
 
 The backup script (`/root/backup-to-proxmox.sh`) performs:
 1. Creates timestamped tar.gz archive of all important files
-2. Transfers to Proxmox via SCP (SSH key authentication)
+2. Transfers to Proxmox via SCP (SSH key authentication) -- **no longer operational (Proxmox shut down)**
 3. Cleans up backups older than 30 days
 4. Writes Prometheus-compatible metrics file
 
@@ -725,11 +727,8 @@ The backup script (`/root/backup-to-proxmox.sh`) performs:
 # View backup script
 ssh admin@192.168.8.1 "cat /root/backup-to-proxmox.sh"
 
-# Run manual backup
+# Run manual backup (will fail — Proxmox destination no longer available)
 ssh admin@192.168.8.1 "/root/backup-to-proxmox.sh"
-
-# Check backup files on Proxmox
-ssh root@192.168.8.82 "ls -la /mnt/pve/proxmox_backups/pfsense/"
 ```
 
 #### Cron Configuration
@@ -783,7 +782,7 @@ The complete pfSense configuration is stored in `/conf/config.xml`.
 
 ### Recommended Backup Schedule
 
-- **Automated**: Daily backup to Proxmox NFS (configured above)
+- **Automated**: Previous Proxmox NFS target is offline. Needs new destination (TrueNAS ssdpool or VPS).
 - **Before changes**: Manual backup before significant configuration changes
 - **Off-site**: Consider periodic backup to cloud storage for disaster recovery
 

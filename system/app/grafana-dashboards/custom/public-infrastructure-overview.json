@@ -851,8 +851,8 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "truenas_zfspool_healthy{pool=\"hddpool\",job=\"truenas_graphite\"}",
-          "legendFormat": "hddpool",
+          "expr": "truenas_zfspool_healthy{pool=\"extpool\",job=\"truenas_graphite\"}",
+          "legendFormat": "extpool",
           "range": true,
           "refId": "B"
         },

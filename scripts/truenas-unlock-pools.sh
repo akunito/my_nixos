@@ -4,8 +4,8 @@
 #
 # Usage:
 #   truenas-unlock-pools.sh                        # Unlock all locked datasets
-#   truenas-unlock-pools.sh --pool hddpool         # Unlock only hddpool datasets
 #   truenas-unlock-pools.sh --pool ssdpool         # Unlock only ssdpool datasets
+#   truenas-unlock-pools.sh --pool extpool         # Unlock only extpool datasets
 #   truenas-unlock-pools.sh --status               # Show lock status only
 #   truenas-unlock-pools.sh --dry-run              # Show what would be unlocked
 #   truenas-unlock-pools.sh --force                # Force unlock attempt even if all appear unlocked
@@ -32,7 +32,7 @@ API_KEY_FILE="${DOTFILES_DIR}/secrets/truenas-api-key.txt"
 PASSPHRASE_FILE="${DOTFILES_DIR}/secrets/truenas-encryption-passphrase.txt"
 
 # Pools to unlock (parent datasets — children are unlocked recursively)
-POOLS=("hddpool" "ssdpool")
+POOLS=("ssdpool" "extpool")
 
 # ============================================================================
 # Parse arguments
@@ -64,7 +64,7 @@ while [[ $# -gt 0 ]]; do
         --help|-h)
             echo "Usage: $0 [--pool POOL] [--status] [--dry-run] [--force]"
             echo ""
-            echo "  --pool POOL  Only unlock datasets in POOL (e.g., hddpool, ssdpool)"
+            echo "  --pool POOL  Only unlock datasets in POOL (e.g., ssdpool, extpool)"
             echo "  --status     Show lock status without unlocking"
             echo "  --dry-run    Show what would be unlocked without doing it"
             echo "  --force      Force unlock attempt even if detection says all unlocked"

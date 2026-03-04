@@ -62,10 +62,10 @@ Services split between VPS and TrueNAS after migration (Feb 2026).
 
 ### Unified /data Structure
 
-All media containers mount `hddpool/media` as `/data` — ONE ZFS dataset:
+All media containers mount `ssdpool/media` as `/data` — ONE ZFS dataset:
 
 ```
-/mnt/hddpool/media/
+/mnt/ssdpool/media/
 ├── movies/          # Existing media
 ├── tv/              # Existing media
 ├── music/           # Existing media

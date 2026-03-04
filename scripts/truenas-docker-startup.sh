@@ -336,7 +336,7 @@ start_all() {
     start_project "npm" || ((failures++))
 
     # 4. Media stack (jellyfin, *arr, gluetun)
-    # Force recreate: media stack mounts hddpool (encrypted) which may not have
+    # Force recreate: media stack mounts ssdpool (encrypted) which may not have
     # been available when containers auto-started on boot. Stale bind mounts
     # cause empty /data inside containers. Force-recreate ensures fresh mounts.
     start_project "media" "--force-recreate" || ((failures++))

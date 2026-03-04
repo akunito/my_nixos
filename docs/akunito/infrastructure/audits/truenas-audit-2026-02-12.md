@@ -548,6 +548,10 @@ The Graphite exporter is receiving raw metrics in `servers_truenas_*` format rat
 
 ---
 
+## Post-Audit Update: Pool Consolidation (Mar 2026, IAKU-247)
+
+> **Note**: After this audit, hddpool was removed and all data consolidated to ssdpool (RAIDZ1). A new extpool (~4TB USB NVMe, no redundancy) was added for game downloads. ZFS replication and iSCSI were eliminated. Findings related to hddpool (ZFS-001 recordsize, SCRUB-001 hddpool scrub, replication tasks, iSCSI configuration) are now historical only.
+
 ## Appendix: Corrected Documentation
 
 The existing `docs/akunito/infrastructure/services/truenas.md` lists the CPU as "Intel (4 cores)". The actual hardware is **AMD Ryzen 5 5600G (6 cores, 12 threads)**. This should be corrected.

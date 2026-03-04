@@ -64,7 +64,7 @@ DECOMMISSIONED (Feb 2026):
 | RAM | 62GB DDR4 ECC UDIMM |
 | CPU | AMD Ryzen 5 5600G |
 | NICs | 2x Intel X520 SFP+ (bond0 LACP), 1x RTL8125B 2.5GbE (WOL) |
-| Pools | ssdpool (2x 1TB NVMe), hddpool (2x 8TB HDD mirror) |
+| Pools | ssdpool (RAIDZ1, 4x 2TB SSD), extpool (~4TB USB NVMe) |
 | VLAN 20 | 192.168.20.200 (bond0) |
 | LAN | 192.168.8.200 (enp10s0) |
 | NPM macvlan | 192.168.20.201 |
@@ -137,11 +137,10 @@ DECOMMISSIONED (Feb 2026):
 | Job | Schedule | Source | Target |
 |-----|----------|--------|--------|
 | DB dumps (pg/mysql/redis) | Hourly | VPS /var/backup/ | VPS local |
-| Restic databases | Every 2h (18:00-22:30) | VPS dumps | TrueNAS hddpool |
-| Restic services | Daily 09:00 | VPS Docker volumes | TrueNAS hddpool |
-| Restic nextcloud | Daily 10:00 | VPS nextcloud data | TrueNAS hddpool |
+| Restic databases | Every 2h (18:00-22:30) | VPS dumps | TrueNAS ssdpool |
+| Restic services | Daily 09:00 | VPS Docker volumes | TrueNAS ssdpool |
+| Restic nextcloud | Daily 10:00 | VPS nextcloud data | TrueNAS ssdpool |
 | TrueNAS→VPS config | Daily 18:30 | TrueNAS configs | VPS |
-| ZFS replication | Daily 21:00 | ssdpool | hddpool |
 | TrueNAS suspend | Daily 23:00 | — | RTC wake at 11:00 |
 
 ## Sleep Schedule

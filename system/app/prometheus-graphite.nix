@@ -272,39 +272,7 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
                 description = "TrueNAS memory usage is at {{ $value | printf \"%.1f\" }}%";
               };
             }
-            # ZFS replication backup stale (>26 hours - daily task should run within 24h)
-            {
-              alert = "TrueNASBackupStale";
-              expr = ''truenas_backup_age_seconds > 93600'';
-              "for" = "30m";
-              labels.severity = "warning";
-              annotations = {
-                summary = "TrueNAS backup stale for {{ $labels.dataset }}";
-                description = "Dataset {{ $labels.dataset }} last replication was {{ $value | humanizeDuration }} ago";
-              };
-            }
-            # ZFS replication backup critical (>50 hours)
-            {
-              alert = "TrueNASBackupCritical";
-              expr = ''truenas_backup_age_seconds > 180000'';
-              "for" = "30m";
-              labels.severity = "critical";
-              annotations = {
-                summary = "TrueNAS backup critical for {{ $labels.dataset }}";
-                description = "Dataset {{ $labels.dataset }} last replication was {{ $value | humanizeDuration }} ago - check replication tasks immediately";
-              };
-            }
-            # ZFS replication backup failed (no snapshot found)
-            {
-              alert = "TrueNASBackupFailed";
-              expr = ''truenas_backup_status == 0'';
-              "for" = "1h";
-              labels.severity = "critical";
-              annotations = {
-                summary = "TrueNAS backup failed for {{ $labels.dataset }}";
-                description = "No autoreplica snapshot found for dataset {{ $labels.dataset }} - replication may have never run or snapshots were deleted";
-              };
-            }
+            # ZFS replication backup alerts removed — hddpool eliminated, no more cross-pool replication
           ];
         }
       ];
