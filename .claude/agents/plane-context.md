@@ -7,6 +7,7 @@ This file is loaded on-demand when agents need detailed Plane integration info.
 | Identifier | Project Name | UUID |
 |------------|-------------|------|
 | IAKU | Infrastructure Aku | `ea5c0b30-a3ab-4ab3-bd11-a4b47d3d7171` |
+| AWN | AKU - Work Notes | `ec30de69-c749-4506-9441-9690753391f5` |
 | CAL | Career & Learning | `cb002098-d738-4598-8a95-87affe9cd4d5` |
 | INF | Infrastructure & DevOps | `4ec09847-9c12-4a0a-854e-a50ceafa9ea9` |
 | LW | Liftcraft | `3a917926-76e4-420f-b729-3dfbb76b4602` |
@@ -101,6 +102,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 | NixOS, Sway, Waybar, theming, profiles | IAKU |
 | Homelab, pfSense, TrueNAS, Docker, VLANs | IAKU |
 | VPS, monitoring, networking, gaming | IAKU |
+| Work notes (Schenker, BEAM, Bee360, PowerBI, SQL, AD) | AWN |
 | Azure certs, Kubernetes, interview prep, AI exploration | CAL |
 | Cross-cutting infra, CI/CD (Komi) | INF |
 | Rails workout app | LW |

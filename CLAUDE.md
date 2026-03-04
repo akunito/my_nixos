@@ -335,6 +335,7 @@ This command updates the Home Manager configuration and applies changes without 
 | ID | Project | Scope |
 |----|---------|-------|
 | IAKU | Infrastructure Aku | NixOS, Sway, homelab, networking, VPS, TrueNAS, pfSense, profiles, theming, gaming |
+| AWN | AKU - Work Notes | Work documentation (Schenker, BEAM, Bee360, PowerBI, SQL, AD, ServiceNow) |
 | CAL | Career & Learning | Certifications, interview prep, AI exploration |
 
 ### Project routing (other / shared)

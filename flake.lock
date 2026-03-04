@@ -104,11 +104,11 @@
     "blocklist-hosts": {
       "flake": false,
       "locked": {
-        "lastModified": 1772037176,
-        "narHash": "sha256-cR93EaYXZ0pgEipNvO7T3axL0aYy36AdBR2+GR1t2hc=",
+        "lastModified": 1772109759,
+        "narHash": "sha256-oDvjJI28hpxlDizAc1pkXnRVpDO+U16ajWt81kuepwo=",
         "owner": "StevenBlack",
         "repo": "hosts",
-        "rev": "588550252c26c8b9b4286f0d655d349030610ddb",
+        "rev": "df123eca64b94d7a1e54004cb57d423e907b16c7",
         "type": "github"
       },
       "original": {
@@ -445,11 +445,11 @@
         "xdph": "xdph"
       },
       "locked": {
-        "lastModified": 1772063653,
-        "narHash": "sha256-QeOMTu5PoHzbqAONu4t3MYAFQUQZREG2SEAyRGndIjo=",
+        "lastModified": 1772107319,
+        "narHash": "sha256-qdeeNrWmUe1P2FsnNU1ngoZl8UxczEMJBziwm78V42I=",
         "owner": "hyprwm",
         "repo": "Hyprland",
-        "rev": "1e06ab464ff1aa1e8d3f79b4aa702cab101edfb0",
+        "rev": "c71fbd854dfdedaae011f4b8b1fdb81f8054b309",
         "type": "github"
       },
       "original": {
