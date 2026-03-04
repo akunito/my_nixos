@@ -326,7 +326,7 @@ in
     kanshiImperativeMode = true; # Use nwg-displays to manage monitors (config in ~/.config/kanshi/config)
 
     # === System Services & Features ===
-    sambaEnable = true; # Enable Samba file sharing
+    sambaEnable = false; # Samba file sharing disabled (not currently needed)
     sunshineEnable = true; # Enable Sunshine game streaming
     wireguardEnable = true; # Enable WireGuard VPN
     appImageEnable = true; # Enable AppImage support
