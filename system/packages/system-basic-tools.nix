@@ -44,6 +44,6 @@
       # === Printing ===
       cups-filters
     ]
-    ++ lib.optional (systemSettings.sunshineEnable or false) pkgs-stable.sunshine; # Using stable due to unstable build failures
+    ++ lib.optional (systemSettings.sunshineEnable or false) pkgs-unstable.sunshine;
   };
 }

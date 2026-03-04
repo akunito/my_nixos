@@ -327,7 +327,7 @@ in
 
     # === System Services & Features ===
     sambaEnable = true; # Enable Samba file sharing
-    sunshineEnable = false; # Disabled: unstable package broken, stable substitution not working
+    sunshineEnable = true; # Enable Sunshine game streaming
     wireguardEnable = true; # Enable WireGuard VPN
     appImageEnable = true; # Enable AppImage support
     gamemodeEnable = true; # Enable GameMode for performance optimization
