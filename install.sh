@@ -1082,6 +1082,11 @@ else
     fi
 fi
 
+# Run post-sync hooks (restart desktop services like waybar, tray apps, etc.)
+# The posthook self-detects the desktop environment; no-ops on headless/server profiles.
+echo -e "\n${CYAN}Running post-sync hooks...${RESET}"
+$SCRIPT_DIR/sync-posthook.sh
+
 # Run maintenance script
 maintenance_script $SCRIPT_DIR $SILENT_MODE
 echo "  " # To clean up color codes

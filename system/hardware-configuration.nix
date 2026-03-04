@@ -8,7 +8,7 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
@@ -31,19 +31,19 @@
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
-  fileSystems."/mnt/2nd_NVME" =
-    { device = "/dev/mapper/2nd_NVME";
-      fsType = "ext4";
-    };
-
-  boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
-
   fileSystems."/home" =
     { device = "/dev/mapper/luks-a40d2e06-e814-4344-99c8-c2e00546beb3";
       fsType = "btrfs";
     };
 
   boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
+
+  fileSystems."/mnt/2nd_NVME" =
+    { device = "/dev/mapper/2nd_NVME";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
 
   fileSystems."/mnt/DATA" =
     { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
@@ -54,8 +54,6 @@
     { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
       fsType = "ntfs3";
     };
-
-
 
   swapDevices =
     [ { device = "/dev/mapper/luks-swap"; }
