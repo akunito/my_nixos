@@ -40,10 +40,10 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 
 **ssdpool** (primary storage — RAIDZ1, 4x 2TB SSD):
 - `ssdpool/media` - Jellyfin media library (movies, TV shows)
-- `ssdpool/library` - Calibre ebook library
-- `ssdpool/emulators` - RetroArch ROM collection
 - `ssdpool/workstation_backups` - Workstation restic backups (DESK, LAPTOP_X13)
 - `ssdpool/vps-backups` - VPS restic databases (critical)
+
+> **Removed (IAKU-247)**: `ssdpool/library` and `ssdpool/emulators` datasets removed. Data lives on VPS with restic backups.
 
 **extpool** (USB NVMe, ~4TB, no redundancy):
 - `extpool/downloads` - Game downloads
@@ -99,8 +99,6 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
 | Share | Dataset | Clients | Purpose |
 |-------|---------|---------|---------|
 | /mnt/ssdpool/media | ssdpool/media | TrueNAS Docker (Jellyfin) | Media streaming |
-| /mnt/ssdpool/emulators | ssdpool/emulators | TrueNAS Docker (EmulatorJS) | ROM collection |
-| /mnt/ssdpool/library | ssdpool/library | TrueNAS Docker (Calibre-Web) | Ebook library |
 | /mnt/ssdpool/workstation_backups | ssdpool/workstation_backups | 192.168.8.96, 192.168.8.92 | Workstation restic backups (NFS-based unified backup system) |
 
 **Access**: NFSv4, all_squash (mapall_user=akunito) for workstations. Docker containers on TrueNAS access datasets via bind mounts (no NFS needed).
@@ -109,9 +107,8 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
 | Share | Dataset | Purpose |
 |-------|---------|---------|
 | media | ssdpool/media | Direct desktop access for management |
-| library | ssdpool/library | Direct desktop access for book management |
 
-> **Removed**: iSCSI targets (was for Proxmox, now shut down). Proxmox backup NFS exports removed.
+> **Removed (IAKU-247)**: library and emulators NFS/SMB shares (datasets removed), iSCSI targets (Proxmox shut down), Proxmox backup NFS exports.
 
 ---
 
@@ -252,8 +249,6 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
 | **SMART Long Test** | 15th of month, 3:00 AM | N/A | Comprehensive drive test |
 | **Config Backup** | Every Sunday, 3:00 AM | 30 days | System configuration export |
 | **Snapshots (media)** | Daily, 1:00 AM | 7 days | Point-in-time recovery |
-| **Snapshots (library)** | Daily, 1:00 AM | 7 days | Point-in-time recovery |
-| **Snapshots (emulators)** | Weekly Sunday, 2:00 AM | 4 weeks | Point-in-time recovery |
 | **Custom ZFS Metrics** | Every 5 minutes | N/A | Prometheus monitoring |
 
 ### Manual Operations
