@@ -32,10 +32,9 @@ bash /home/akunito/.dotfiles/scripts/truenas-docker-startup.sh
    4. **media** - Jellyfin, Sonarr, Radarr, Bazarr, Prowlarr, Jellyseerr, qBittorrent, Gluetun, Solvearr
    5. **homelab** - (all migrated to VPS, compose kept for NPM network)
    6. **exporters** - Prometheus exportarr for *arr stack metrics
-   7. **uptime-kuma** - Status monitoring
-   8. **NPM network connections** - Connects NPM to `homelab_default`, `media_default`, `uptime-kuma_default` so it can reverse-proxy via Docker DNS names
-   9. **VPN watchdog cron** - Deploys `vpn-watchdog.sh` and installs a cron job (every 5 min) that auto-recovers Gluetun + qBittorrent after non-suspend VPN drops
-   10. **Suspend/resume hook** - Deploys `docker-suspend-hook.sh` to `/usr/lib/systemd/system-sleep/` so containers are gracefully stopped before S3 suspend and restarted in order after wake
+   7. **NPM network connections** - Connects NPM to `homelab_default`, `media_default` so it can reverse-proxy via Docker DNS names
+   8. **VPN watchdog cron** - Deploys `vpn-watchdog.sh` and installs a cron job (every 5 min) that auto-recovers Gluetun + qBittorrent after non-suspend VPN drops
+   9. **Suspend/resume hook** - Deploys `docker-suspend-hook.sh` as systemd services for sleep.target so containers are gracefully stopped before S3 suspend and restarted in order after wake
 
 ### Compose file management
 
@@ -47,7 +46,7 @@ bash /home/akunito/.dotfiles/scripts/truenas-docker-startup.sh
 
 ### Post-startup verification
 
-After starting, check that all 20 containers are healthy:
+After starting, check that all 18 containers are healthy:
 ```bash
 ssh truenas_admin@192.168.20.200 "sudo docker ps --format 'table {{.Names}}\t{{.Status}}' | sort"
 ```
