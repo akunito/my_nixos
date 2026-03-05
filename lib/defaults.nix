@@ -199,6 +199,8 @@
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
+    # disk4 (emulators) and disk5 (library) deprecated — TrueNAS datasets removed,
+    # data lives exclusively on VPS. No profile should enable these. See IAKU-247.
     disk4_enabled = false;
     disk4_name = "/mnt/NFS_emulators";
     disk4_device = "100.64.0.6:/home/akunito/romm-library";

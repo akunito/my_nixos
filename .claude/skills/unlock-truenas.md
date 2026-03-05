@@ -46,13 +46,13 @@ TrueNAS is on VLAN 100 (Storage), accessible from:
 
 ```
 Locked datasets found:
-- ssdpool/library
 - ssdpool/media
+- ssdpool/docker
 - extpool
 
 Unlocking ssdpool...
-✓ ssdpool/library unlocked
 ✓ ssdpool/media unlocked
+✓ ssdpool/docker unlocked
 
 Unlocking extpool...
 ✓ extpool unlocked

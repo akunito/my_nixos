@@ -168,22 +168,10 @@ in
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
-    disk4_enabled = true;
-    disk4_name = "/mnt/NFS_emulators";
-    disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
-    disk4_fsType = "nfs4";
-    disk4_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
-    disk5_enabled = true;
-    disk5_name = "/mnt/NFS_library";
-    disk5_device = "100.64.0.6:/home/akunito/calibre-library";
-    disk5_fsType = "nfs4";
-    disk5_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
+    # disk4 (emulators) and disk5 (library) removed — datasets no longer exist on TrueNAS,
+    # data lives on VPS (romm-library, calibre-library). See IAKU-247.
+    disk4_enabled = false;
+    disk5_enabled = false;
     disk6_enabled = true;
     disk6_name = "/mnt/DATA";
     disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
@@ -212,18 +200,7 @@ in
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
       }
-      {
-        what = "100.64.0.6:/home/akunito/calibre-library";
-        where = "/mnt/NFS_library";
-        type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
-      }
-      {
-        what = "192.168.20.200:/mnt/ssdpool/emulators";
-        where = "/mnt/NFS_emulators";
-        type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
-      }
+      # library and emulators NFS mounts removed — datasets no longer exist (IAKU-247)
     ];
     nfsAutoMounts = [
       {
@@ -232,18 +209,7 @@ in
           TimeoutIdleSec = "600";
         };
       }
-      {
-        where = "/mnt/NFS_library";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
-      {
-        where = "/mnt/NFS_emulators";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
+      # NFS_library and NFS_emulators automounts removed (IAKU-247)
     ];
 
     # SSH
