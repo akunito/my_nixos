@@ -248,6 +248,7 @@ services:
     volumes:
       - ${DATA_PATH}/mediarr/qbittorrent:/config
       - ${MEDIA_PATH}/downloads:/data/downloads
+      - /mnt/extpool/downloads:/data/game-downloads
     restart: unless-stopped
     logging:
       driver: json-file
