@@ -33,9 +33,7 @@ lib.mkIf ((systemSettings.hibernateEnable or false)
   boot.resumeDevice = "/dev/mapper/luks-swap";
 
   # Auto-hibernate delay for suspend-then-hibernate
-  systemd.sleep.extraConfig = ''
-    HibernateDelaySec=${toString systemSettings.hibernateDelaySec}
-  '';
+  systemd.sleep.settings.Sleep.HibernateDelaySec = systemSettings.hibernateDelaySec;
 
   # logind: ignore power button (acpid handles it conditionally)
   services.logind.settings.Login.HandlePowerKey = lib.mkForce "ignore";
