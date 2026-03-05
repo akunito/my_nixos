@@ -49,7 +49,11 @@ HOME_EXCLUDES=(
   ".local/share/Steam"
   ".local/share/bottles"
   ".local/share/containers"
+  ".local/share/suyu"
+  ".var"
+  ".lmstudio/models"
   "Downloads"
+  "Games"
   "tmp"
 )
 

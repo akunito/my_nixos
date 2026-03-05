@@ -114,19 +114,22 @@ openclaw plugins install @openclaw/matrix
 {
   "channels": {
     "matrix": {
-      "homeserverUrl": "http://host.docker.internal:8008",
+      "homeserver": "http://host.docker.internal:8008",
       "userId": "@bot:matrix.example.com",
       "accessToken": "ACCESS_TOKEN",
-      "dmPolicy": "pairing",
-      "autoJoin": true,
+      "dm": { "policy": "pairing" },
+      "autoJoin": "allowlist",
       "autoJoinAllowlist": ["@user:matrix.example.com"],
-      "groupPolicy": "allowlist"
+      "groupPolicy": "allowlist",
+      "encryption": true
     }
   }
 }
 ```
 
-Features: Federation, E2EE (Rust crypto SDK, requires verification), threads, reactions, rich media. For self-hosted Synapse: connect via `host.docker.internal:8008` (localhost, no external traffic).
+**Note**: Matrix plugin uses `homeserver` (not `homeserverUrl`), `dm.policy` (nested), `autoJoin` as enum (`"always"`, `"allowlist"`, `"off"`).
+
+Features: Federation, E2EE via `encryption: true` (Rust crypto SDK, requires verification), threads, reactions, rich media, multi-account support. For self-hosted Synapse: connect via `host.docker.internal:8008` (localhost, no external traffic).
 
 ## WhatsApp Setup
 

@@ -136,23 +136,27 @@ docker compose --profile cli run --rm -T openclaw-cli plugins install @openclaw/
 {
   "channels": {
     "matrix": {
-      "homeserverUrl": "http://host.docker.internal:8008",
+      "homeserver": "http://host.docker.internal:8008",
       "userId": "@openclaw-bot:matrix.akunito.com",
       "accessToken": "TOKEN",
-      "dmPolicy": "pairing",
-      "autoJoin": true,
+      "dm": { "policy": "pairing" },
+      "autoJoin": "allowlist",
       "autoJoinAllowlist": ["@akunito:matrix.akunito.com"],
-      "groupPolicy": "allowlist"
+      "groupPolicy": "allowlist",
+      "encryption": true
     }
   }
 }
 ```
 
+**Note**: Matrix plugin uses `homeserver` (not `homeserverUrl`), `dm.policy` (nested object, not flat), and `autoJoin` is an enum (`"always"`, `"allowlist"`, `"off"`).
+
 ### Features
 
-- E2EE support (Rust crypto SDK, requires verification from Element)
+- E2EE support via `encryption: true` (Rust crypto SDK, requires device verification from Element)
 - Federation (can interact with other Matrix servers)
 - Threads, reactions, rich media
+- Multi-account support via `channels.matrix.accounts`
 - DM from Element: `@openclaw-bot:matrix.akunito.com`
 
 ---

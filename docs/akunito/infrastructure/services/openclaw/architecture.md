@@ -115,7 +115,7 @@ OpenClaw supports multiple AI providers simultaneously with fallback chains:
         "api": "openai-completions",
         "models": [
           { "id": "qwen3.5-plus", "name": "Qwen 3.5 Plus",
-            "contextWindow": 131072, "maxTokens": 8192 }
+            "contextWindow": 1000000, "maxTokens": 8192 }
         ]
       }
     }

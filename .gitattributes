@@ -46,3 +46,19 @@ docs/akunito/infrastructure/services/media-stack.md filter=git-crypt diff=git-cr
 
 # Deploy config with public IPs (VPS entries)
 deploy-servers-private.conf filter=git-crypt diff=git-crypt
+
+# OpenClaw AI assistant (encrypted personality files, MCP wrappers with hardcoded IDs/tokens)
+templates/openclaw/workspace/IDENTITY.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/SOUL.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/AGENTS.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/USER.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/HEARTBEAT.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/MEMORY.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/VAULTKEEPER_IDENTITY.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/VAULTKEEPER_SOUL.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/skills/infra-monitor/SKILL.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/skills/plane/SKILL.md filter=git-crypt diff=git-crypt
+templates/openclaw/prometheus-readonly-mcp.py filter=git-crypt diff=git-crypt
+templates/openclaw/plane-vaultkeeper-mcp.py filter=git-crypt diff=git-crypt
+templates/openclaw/gmail-restricted-mcp.py filter=git-crypt diff=git-crypt
+templates/openclaw/miniflux-readonly-mcp.py filter=git-crypt diff=git-crypt

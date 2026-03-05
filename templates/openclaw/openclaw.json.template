@@ -1,0 +1,197 @@
+{
+  "gateway": {
+    "bind": "lan",
+    "port": 18789,
+    "auth": { "mode": "token", "token": "REPLACE_WITH_RANDOM_TOKEN" }
+  },
+
+  "session": {
+    "dmScope": "per-channel-peer",
+    "compaction": {
+      "enabled": true,
+      "preserveSystemMessages": true,
+      "minRetainedMessages": 20
+    }
+  },
+
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "modelstudio": {
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "apiKey": "${MODELSTUDIO_API_KEY}",
+        "api": "openai-completions",
+        "models": [
+          { "id": "qwen3.5-plus", "name": "Qwen 3.5 Plus", "reasoning": false,
+            "input": ["text"], "contextWindow": 1000000, "maxTokens": 8192 },
+          { "id": "qwen3-coder-plus", "name": "Qwen 3 Coder Plus", "reasoning": false,
+            "input": ["text"], "contextWindow": 1000000, "maxTokens": 8192 }
+        ]
+      }
+    }
+  },
+
+  "agents": {
+    "defaults": {
+      "model": { "primary": "modelstudio/qwen3.5-plus" },
+      "envelopeTimezone": "Europe/Madrid",
+      "userTimezone": "Europe/Madrid",
+      "timeFormat": "24"
+    },
+    "entries": {
+      "alfred": {
+        "tools": {
+          "allow": ["group:web", "mcp:plane-restricted", "mcp:prometheus-readonly",
+                    "mcp:github", "mcp:leftyworkout-readonly", "mcp:gmail-restricted"],
+          "deny": ["http", "mcp:jellyseerr", "mcp:plane-vaultkeeper"]
+        }
+      },
+      "vaultkeeper": {
+        "tools": {
+          "allow": ["mcp:plane-vaultkeeper", "mcp:miniflux"],
+          "deny": ["http", "group:web", "mcp:plane-restricted", "mcp:prometheus-readonly",
+                   "mcp:github", "mcp:jellyseerr", "mcp:leftyworkout-readonly",
+                   "mcp:gmail-restricted"]
+        }
+      },
+      "scout": {
+        "tools": {
+          "allow": ["mcp:jellyseerr", "mcp:miniflux"],
+          "deny": ["http", "group:web", "mcp:plane-restricted", "mcp:plane-vaultkeeper",
+                   "mcp:prometheus-readonly", "mcp:github", "mcp:leftyworkout-readonly",
+                   "mcp:gmail-restricted"]
+        }
+      }
+    }
+  },
+
+  "tools": {
+    "profile": "messaging",
+    "deny": ["group:automation", "group:runtime", "sessions_spawn", "sessions_send", "http"],
+    "fs": { "workspaceOnly": true },
+    "exec": { "security": "deny", "ask": "always" },
+    "elevated": { "enabled": false },
+    "media": {
+      "audio": {
+        "enabled": true,
+        "maxBytes": 20971520,
+        "echoTranscript": true,
+        "echoFormat": "Transcript: \"{transcript}\"",
+        "models": [
+          { "provider": "openai-compatible", "model": "Systran/faster-whisper-large-v3",
+            "baseUrl": "http://host.docker.internal:8787/v1" }
+        ]
+      }
+    }
+  },
+
+  "channels": {
+    "telegram": {
+      "dmPolicy": "allowlist",
+      "allowFrom": ["YOUR_TELEGRAM_USER_ID"],
+      "groups": {
+        "ALFRED_GROUP_CHAT_ID": { "agent": "alfred", "requireMention": false },
+        "VAULTKEEPER_GROUP_CHAT_ID": { "agent": "vaultkeeper", "requireMention": false },
+        "SCOUT_GROUP_CHAT_ID": { "agent": "scout", "requireMention": false },
+        "*": { "policy": "ignore" }
+      }
+    }
+  },
+
+  "skills": {
+    "entries": {
+      "gog": { "enabled": true, "config": { "services": ["calendar", "drive", "sheets"] } },
+      "weather": { "enabled": true },
+      "summarize": { "enabled": true },
+      "session-logs": { "enabled": true },
+      "model-usage": { "enabled": true }
+    }
+  },
+
+  "mcpServers": {
+    "plane-restricted": {
+      "command": "python3",
+      "args": ["/home/node/.openclaw/mcp/plane-restricted-mcp.py"],
+      "env": {
+        "PLANE_API_TOKEN": "${PLANE_OPENCLAW_TOKEN}",
+        "PLANE_API_URL": "http://host.docker.internal:3003",
+        "PLANE_WORKSPACE_SLUG": "akuworkspace"
+      }
+    },
+    "plane-vaultkeeper": {
+      "command": "python3",
+      "args": ["/home/node/.openclaw/mcp/plane-vaultkeeper-mcp.py"],
+      "env": {
+        "PLANE_API_TOKEN": "${PLANE_OPENCLAW_TOKEN}",
+        "PLANE_API_URL": "http://host.docker.internal:3003",
+        "PLANE_WORKSPACE_SLUG": "akuworkspace"
+      }
+    },
+    "prometheus-readonly": {
+      "command": "python3",
+      "args": ["/home/node/.openclaw/mcp/prometheus-readonly-mcp.py"],
+      "env": {
+        "PROMETHEUS_URL": "http://host.docker.internal:9090"
+      }
+    },
+    "jellyseerr": {
+      "command": "python3",
+      "args": ["/home/node/.openclaw/mcp/jellyseerr-mcp.py"],
+      "env": {
+        "JELLYSEERR_URL": "${JELLYSEERR_URL}",
+        "JELLYSEERR_API_KEY": "${JELLYSEERR_OPENCLAW_KEY}"
+      }
+    },
+    "github": {
+      "command": "python3",
+      "args": ["/home/node/.openclaw/mcp/github-mcp.py"],
+      "env": { "GITHUB_OPENCLAW_TOKEN": "${GITHUB_OPENCLAW_TOKEN}" }
+    },
+    "leftyworkout-readonly": {
+      "command": "python3",
+      "args": ["/home/node/.openclaw/mcp/leftyworkout-readonly-mcp.py"],
+      "env": { "LEFTYWORKOUT_DB_URL": "${LEFTYWORKOUT_DB_URL}" }
+    },
+    "miniflux": {
+      "command": "python3",
+      "args": ["/home/node/.openclaw/mcp/miniflux-readonly-mcp.py"],
+      "env": {
+        "MINIFLUX_API_URL": "http://host.docker.internal:8080",
+        "MINIFLUX_API_KEY": "${MINIFLUX_OPENCLAW_KEY}"
+      }
+    },
+    "gmail-restricted": {
+      "command": "python3",
+      "args": ["/home/node/.openclaw/mcp/gmail-restricted-mcp.py"],
+      "env": {
+        "GMAIL_CREDENTIALS_PATH": "/home/node/.openclaw/credentials/google/",
+        "GMAIL_ACCOUNT": "alfred.openclaw@gmail.com"
+      }
+    }
+  },
+
+  "hooks": {
+    "enabled": true,
+    "tokenFile": "/run/secrets/hooks_token",
+    "path": "/hooks",
+    "allowedAgentIds": ["hooks"],
+    "allowRequestSessionKey": false,
+    "allowedSessionKeyPrefixes": ["hook:"],
+    "presets": ["session-memory", "command-logger", "boot-md"]
+  },
+
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 1,
+    "sessionRetention": "24h",
+    "retry": {
+      "maxAttempts": 3,
+      "backoffMs": [60000, 120000, 300000],
+      "retryOn": ["rate_limit", "network", "server_error"]
+    },
+    "runLog": { "maxBytes": "2mb", "keepLines": 2000 }
+  },
+
+  "discovery": { "mdns": { "mode": "off" } },
+  "logging": { "redactSensitive": "tools" }
+}

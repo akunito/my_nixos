@@ -199,6 +199,10 @@ in
     extraFlags = [
       "--web.enable-admin-api"
       "--web.enable-lifecycle"
+      "--storage.tsdb.retention.time=90d"
+      "--query.timeout=10s"
+      "--query.max-samples=5000000"
+      "--query.max-concurrency=4"
     ];
 
     # Local Node Exporter for monitoring server system metrics

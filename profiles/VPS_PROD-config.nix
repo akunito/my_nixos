@@ -236,6 +236,7 @@ in
       emulators  = { port = 8998; };
       calibre    = { port = 8083; };
       n8n        = { port = 5678; };
+      openclaw   = { port = 18789; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
@@ -289,6 +290,9 @@ in
       { name = "wan"; host = "1.1.1.1"; }
     ];
 
+    # === OpenClaw Sanitizers (CSV + memory file injection stripping) ===
+    openclawSanitizersEnable = true;
+
     # === Docker Services (Phase 3B — service migration) ===
     homelabDockerEnable = true;
     homelabDockerStacks = [
@@ -306,6 +310,7 @@ in
       { name = "romm"; path = "romm"; }
       { name = "calibre"; path = "calibre"; }
       { name = "n8n"; path = "n8n"; }
+      { name = "openclaw"; path = "openclaw"; }
     ];
 
     # ============================================================================

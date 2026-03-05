@@ -118,6 +118,9 @@
 
     nfsBackupEnable = false; # Documentation flag - actual NFS mount configured via nfsMounts
 
+    # OpenClaw sanitizer timers (CSV + memory file sanitizers)
+    openclawSanitizersEnable = false;
+
     # VPS Restic backup to TrueNAS (via SFTP over Tailscale)
     vpsResticBackupEnable = false;
     vpsResticTarget = "100.64.0.10";      # TrueNAS Tailscale IP

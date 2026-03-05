@@ -181,7 +181,7 @@ openclaw secrets apply --dry-run     # Preview changes
 - [x] Run `openclaw security audit --deep` after config changes
 - [x] Set file permissions: 600 (config), 700 (directories)
 - [ ] Enable sandbox mode once stable (`sandbox.mode: "non-main"`)
-- [ ] Audit community skills before install (ClawHavoc: 341+ malicious)
+- [ ] Audit community skills before install (ClawHavoc: 1,184+ malicious — 12 author IDs, `hightower6eu` = 677 packages)
 
 ## Trust Model
 

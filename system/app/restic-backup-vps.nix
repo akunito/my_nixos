@@ -134,17 +134,31 @@ let
     repoBase = repoBaseExt;
     backupPaths = [
       "/home/${username}/.homelab"
+      "/home/${username}/.openclaw"
       "/home/${username}/.local/share/docker/volumes/uptime-kuma_kuma_data/_data"
       "/var/lib/headscale"
       "/var/lib/vaultwarden"
       "/etc/secrets"
     ];
-    excludes = [ "*.log" "*.tmp" "*.cache" ];
-    tags = [ "services" "docker" "headscale" "vaultwarden" ];
+    excludes = [
+      "*.log" "*.tmp" "*.cache"
+      # SQLite WAL files — backed up via safe dump in preScript
+      "*/finance/data/vaultkeeper.db-wal"
+      "*/finance/data/vaultkeeper.db-shm"
+    ];
+    tags = [ "services" "docker" "headscale" "vaultwarden" "openclaw" ];
     schedule = "*-*-* 19:30:00";
     retentionDays = 30;
     retentionPolicy = "--keep-monthly 3";
-    description = "Docker configs, Headscale state, secrets, Vaultwarden, Uptime Kuma";
+    preScript = ''
+      # Safe SQLite dump of Vaultkeeper finance DB (avoids backing up locked WAL)
+      VAULTKEEPER_DB="/home/${username}/.openclaw/workspace/finance/data/vaultkeeper.db"
+      if [ -f "$VAULTKEEPER_DB" ]; then
+        log "Dumping Vaultkeeper SQLite database..."
+        ${pkgs.sqlite}/bin/sqlite3 "$VAULTKEEPER_DB" ".backup /home/${username}/.openclaw/workspace/finance/data/vaultkeeper-backup.db" 2>&1 || log "WARNING: Vaultkeeper DB dump failed (non-fatal)"
+      fi
+    '';
+    description = "Docker configs, Headscale state, secrets, Vaultwarden, Uptime Kuma, OpenClaw";
   };
 
   # Large media libraries — weekly Sunday after nextcloud

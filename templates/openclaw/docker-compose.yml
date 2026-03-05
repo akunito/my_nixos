@@ -1,0 +1,127 @@
+services:
+  openclaw-gateway:
+    image: ghcr.io/openclaw/openclaw:v2026.3-stable
+    container_name: openclaw-gateway
+    init: true
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    ports:
+      - "127.0.0.1:18789:18789"
+      - "127.0.0.1:18790:18790"   # Bridge port (Nodes, mobile)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Resolves to actual host IP on Linux Docker
+    tmpfs:
+      - /tmp:noexec,nosuid,size=256m
+      - /home/node/.npm:size=128m
+    environment:
+      - HOME=/home/node
+      - TERM=xterm-256color
+      - OPENCLAW_GATEWAY_PORT=18789
+      - MODELSTUDIO_API_KEY=${MODELSTUDIO_API_KEY}
+      # NOTE: OPENCLAW_HOOKS_TOKEN is NOT in env — loaded from file at runtime by OpenClaw
+      # gateway config (see openclaw.json "hooks.tokenFile"). This prevents MCP subprocesses
+      # from reading the webhook token via environment inspection.
+      - PLANE_OPENCLAW_TOKEN=${PLANE_OPENCLAW_TOKEN}
+      - JELLYSEERR_URL=https://jellyseerr.local.akunito.com
+      - JELLYSEERR_OPENCLAW_KEY=${JELLYSEERR_OPENCLAW_KEY}
+      - GITHUB_OPENCLAW_TOKEN=${GITHUB_OPENCLAW_TOKEN}
+      - LEFTYWORKOUT_DB_URL=${LEFTYWORKOUT_DB_URL}
+      - MINIFLUX_OPENCLAW_KEY=${MINIFLUX_OPENCLAW_KEY}
+      - GITHUB_ALLOWED_OWNERS=akunito
+      - GENERIC_TIMEZONE=Europe/Madrid
+      - TZ=Europe/Madrid
+    volumes:
+      - ${HOME}/.openclaw:/home/node/.openclaw
+      - openclaw_workspace:/home/node/.openclaw/workspace
+      - ${HOME}/.openclaw/credentials:/home/node/.openclaw/credentials:ro  # OAuth tokens read-only — prevents overwrite on container compromise
+      - ${HOME}/.homelab/openclaw/hooks-token:/run/secrets/hooks_token:ro  # Webhook token as file — not in env
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:18789/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  openclaw-cli:
+    image: ghcr.io/openclaw/openclaw:v2026.3-stable
+    container_name: openclaw-cli
+    network_mode: "service:openclaw-gateway"
+    profiles: ["cli"]
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:noexec,nosuid,size=256m
+      - /home/node/.npm:size=128m
+    environment:
+      - HOME=/home/node
+      - TERM=xterm-256color
+    volumes:
+      - ${HOME}/.openclaw:/home/node/.openclaw
+    entrypoint: ["openclaw"]
+
+  faster-whisper:
+    # CRITICAL: Pin to specific release — never use :latest (supply chain risk)
+    # Check https://github.com/fedirz/faster-whisper-server/releases before deploying
+    image: fedirz/faster-whisper-server:v0.3.2-cpu
+    container_name: faster-whisper
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:noexec,nosuid,size=512m
+    ports:
+      - "127.0.0.1:8787:8000"
+    environment:
+      - WHISPER__MODEL=Systran/faster-whisper-large-v3
+      - WHISPER__COMPUTE_TYPE=int8           # CPU-optimized quantization
+      - WHISPER__DEVICE=cpu
+      - WHISPER__VAD_FILTER=true             # Silero VAD — eliminates silence hallucinations
+    volumes:
+      - whisper_models:/root/.cache/huggingface   # Model cache (persists across restarts)
+    deploy:
+      resources:
+        limits:
+          cpus: "6.0"                         # Cap at 6 cores — leaves 6 for other services during transcription spikes
+          memory: 2G                          # large-v3 needs ~1.5GB for int8
+        reservations:
+          memory: 512M
+    healthcheck:
+      # Use python3 instead of curl — slim images may not include curl/wget
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\" || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s                      # Model download + load on first boot
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "2"
+
+volumes:
+  openclaw_workspace:
+    driver: local
+  whisper_models:
+    driver: local

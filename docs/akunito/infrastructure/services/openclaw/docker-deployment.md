@@ -29,7 +29,8 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
-      - "127.0.0.1:18789:18789"        # Localhost only
+      - "127.0.0.1:18789:18789"        # Gateway (localhost only)
+      - "127.0.0.1:18790:18790"        # Bridge (Nodes/mobile integration)
     extra_hosts:
       - "host.docker.internal:10.0.2.2" # slirp4netns host gateway
     environment:
@@ -37,6 +38,7 @@ services:
       - TERM=xterm-256color
       - OPENCLAW_GATEWAY_PORT=18789
       - MODELSTUDIO_API_KEY=${MODELSTUDIO_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
       - OPENCLAW_HOOKS_TOKEN=${OPENCLAW_HOOKS_TOKEN}
       - TZ=Europe/Madrid
     volumes:
@@ -49,7 +51,7 @@ services:
         reservations:
           memory: 256M
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18789/healthz || exit 1"]
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:18789/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
       interval: 60s
       timeout: 15s
       retries: 3

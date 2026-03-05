@@ -65,7 +65,7 @@ Disable: `tools.media.audio.enabled: false`
 | Local Whisper | `base` (74M) | 95% | 5-15s/min on CPU | Free |
 | Local Whisper | `small` (244M) | 96% | 20-30s/min on CPU | Free |
 
-**Recommendation for VPS**: Groq (free, fast) as primary → OpenAI as fallback → local Whisper as last resort.
+**Recommendation for VPS**: Groq (free tier, <300ms) as primary → OpenAI ($0.006/min, <1s) as fallback → local Whisper (free, 5-15s/min CPU) as last resort. Groq free tier requires `GROQ_API_KEY` from https://console.groq.com (no credit card). 25MB max file size on free tier. Paid tier: $0.111/hour with higher rate limits.
 
 ### Limits & Behavior
 

@@ -82,7 +82,7 @@ Notable categories:
 - **Monitoring & Observability** (agent-metrics, agent-watcher)
 - **Infrastructure** (agentic-devops — Docker, process management)
 
-**SECURITY WARNING**: The ClawHavoc campaign identified 341+ malicious skills in the registry. **Always audit skills before installing.** Only use skills from the official `openclaw/skills` repository or thoroughly reviewed community packages.
+**SECURITY WARNING**: The ClawHavoc campaign identified 1,184+ malicious skills in the registry (12 author IDs; `hightower6eu` alone published 677 malicious packages). Skills masquerade as crypto trading tools and steal exchange API keys, wallet private keys, SSH credentials, and browser passwords. They also target OpenClaw's persistent memory files (SOUL.md, MEMORY.md) to permanently alter agent behavior. **Always audit skills before installing.** Only use skills from the official `openclaw/skills` repository or thoroughly reviewed community packages.
 
 ---
 
