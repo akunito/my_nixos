@@ -60,7 +60,7 @@
   },
 
   "tools": {
-    "profile": "messaging",
+    "profile": "full",
     "deny": ["group:automation", "group:runtime", "sessions_spawn", "sessions_send", "http"],
     "fs": { "workspaceOnly": true },
     "exec": { "security": "deny", "ask": "always" },

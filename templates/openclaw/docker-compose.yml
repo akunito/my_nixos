@@ -82,6 +82,58 @@ services:
       - ${HOME}/.openclaw:/home/node/.openclaw
     entrypoint: ["node", "/app/openclaw.mjs"]
 
+  api-proxy:
+    # HTTP proxy sidecar — wraps Plane/Jellyseerr/GitHub/Miniflux/Prometheus/LeftyWorkout APIs.
+    # Tokens stay in env vars, never exposed to the LLM. Rate-limited writes.
+    # Accessible from gateway at http://127.0.0.1:18795/
+    image: ghcr.io/openclaw/openclaw:2026.2.26
+    container_name: openclaw-api-proxy
+    network_mode: "service:openclaw-gateway"
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    environment:
+      - HOME=/home/node
+      - PYTHONPATH=/home/node/.openclaw/mcp-packages
+      - API_PROXY_PORT=18795
+      - PLANE_OPENCLAW_TOKEN=${PLANE_OPENCLAW_TOKEN}
+      - PLANE_API_URL=https://plane.akunito.com
+      - PLANE_WORKSPACE_SLUG=akuworkspace
+      - JELLYSEERR_URL=https://jellyseerr.local.akunito.com
+      - JELLYSEERR_OPENCLAW_KEY=${JELLYSEERR_OPENCLAW_KEY}
+      - GITHUB_OPENCLAW_TOKEN=${GITHUB_OPENCLAW_TOKEN}
+      - GITHUB_ALLOWED_OWNERS=akunito
+      - MINIFLUX_URL=https://miniflux.local.akunito.com
+      - MINIFLUX_OPENCLAW_KEY=${MINIFLUX_OPENCLAW_KEY}
+      - PROMETHEUS_URL=${PROMETHEUS_URL}
+      - LEFTYWORKOUT_DB_URL=${LEFTYWORKOUT_DB_URL}
+    volumes:
+      - ${HOME}/.openclaw/mcp:/home/node/.openclaw/mcp:ro
+      - ${HOME}/.openclaw/mcp-packages:/home/node/.openclaw/mcp-packages:ro
+    entrypoint: ["python3", "/home/node/.openclaw/mcp/api-proxy.py"]
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 32M
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:18795/health')\" || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
   faster-whisper:
     # CRITICAL: Pin to specific release — never use :latest (supply chain risk)
     # Check https://github.com/fedirz/faster-whisper-server/releases before deploying
