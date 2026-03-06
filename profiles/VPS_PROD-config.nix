@@ -73,10 +73,22 @@ in
       }
     ];
 
-    # === Docker subnet access for rootless Docker containers ===
+    # === Docker subnet access for rootless Docker containers (SEC-DOCKER-DB-001) ===
+    # Per-user-per-database ACLs — each container can only reach its own database.
+    # 10.0.0.0/8 covers slirp4netns NAT (rootless Docker); 172.16.0.0/12 covers Docker bridge networks.
     postgresqlServerAuthentication = ''
-      host    all             all             10.0.0.0/8              scram-sha-256
-      host    all             all             172.16.0.0/12           scram-sha-256
+      host    plane              plane           10.0.0.0/8        scram-sha-256
+      host    plane              plane           172.16.0.0/12     scram-sha-256
+      host    rails_database_prod liftcraft      10.0.0.0/8        scram-sha-256
+      host    rails_database_prod liftcraft      172.16.0.0/12     scram-sha-256
+      host    matrix             matrix          10.0.0.0/8        scram-sha-256
+      host    matrix             matrix          172.16.0.0/12     scram-sha-256
+      host    miniflux           miniflux        10.0.0.0/8        scram-sha-256
+      host    miniflux           miniflux        172.16.0.0/12     scram-sha-256
+      host    vaultwarden        vaultwarden     10.0.0.0/8        scram-sha-256
+      host    vaultwarden        vaultwarden     172.16.0.0/12     scram-sha-256
+      host    n8n                n8n             10.0.0.0/8        scram-sha-256
+      host    n8n                n8n             172.16.0.0/12     scram-sha-256
     '';
 
     # === Database Credentials (from git-crypt encrypted secrets/domains.nix) ===

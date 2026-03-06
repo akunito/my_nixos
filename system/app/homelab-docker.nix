@@ -104,6 +104,16 @@ in
         TimeoutStopSec = "2min";
       } // lib.optionalAttrs isRootless {
         Environment = rootlessEnv;
+        # SEC-DOCKER-HARD-002: Systemd hardening for rootless Docker service
+        ProtectSystem = "strict";
+        ReadWritePaths = [ homelabDir "/run/user/1000" "/home/${userSettings.username}/.local/share/docker" "/home/${userSettings.username}/.config/docker" "/tmp" ];
+        PrivateTmp = true;
+        NoNewPrivileges = true;
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        ProtectControlGroups = true;
+        LockPersonality = true;
+        RestrictRealtime = true;
       };
     };
   };

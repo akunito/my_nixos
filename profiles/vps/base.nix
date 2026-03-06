@@ -185,6 +185,23 @@
   networking.firewall.logRefusedConnections = true;
   networking.firewall.logReversePathDrops = true;
 
+  # SEC-DOCKER-DB-003: Defense-in-depth — explicit DROP for database ports on public interface.
+  # These ports are already absent from allowedTCPPorts, but explicit DROP prevents accidental
+  # exposure if firewall rules change. Only blocks traffic on ens3 (public); localhost, Tailscale
+  # (tailscale0), and WireGuard (wg0) remain unaffected.
+  networking.firewall.extraCommands = ''
+    iptables -A INPUT -i ${systemSettings.vpsInterface} -p tcp --dport 5432 -j DROP
+    iptables -A INPUT -i ${systemSettings.vpsInterface} -p tcp --dport 3306 -j DROP
+    iptables -A INPUT -i ${systemSettings.vpsInterface} -p tcp --dport 6379 -j DROP
+    iptables -A INPUT -i ${systemSettings.vpsInterface} -p tcp --dport 6432 -j DROP
+  '';
+  networking.firewall.extraStopCommands = ''
+    iptables -D INPUT -i ${systemSettings.vpsInterface} -p tcp --dport 5432 -j DROP || true
+    iptables -D INPUT -i ${systemSettings.vpsInterface} -p tcp --dport 3306 -j DROP || true
+    iptables -D INPUT -i ${systemSettings.vpsInterface} -p tcp --dport 6379 -j DROP || true
+    iptables -D INPUT -i ${systemSettings.vpsInterface} -p tcp --dport 6432 -j DROP || true
+  '';
+
   # ==========================================================================
   # Timezone and locale
   # ==========================================================================

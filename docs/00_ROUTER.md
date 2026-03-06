@@ -6,6 +6,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
+| audits.docker-security.2026-03-06 | VPS Docker container security audit — network isolation, database access, secrets, hardening | audit, security, docker, vps, containers, networking, secrets | profiles/VPS*-config.nix |
 | audits.migration-plan.2026-02-19 | Comprehensive audit of Proxmox-to-VPS+TrueNAS migration plan | audit, migration, vps, truenas, security, backups, performance, networking | profiles/VPS*-config.nix |
 | audits.migration-plan.network-security.2026-02-19 | Network architecture, VPS hardening, and Nextcloud security audit of the Proxmox-to-VPS migration plan | audit, security, network, vps, nextcloud, tailscale, wireguard, cloudflare, firewall, dns | docs/akunito/infrastructure/audits/migration-plan-network-security-audit-2026-02-19.md |
 | audits.pfsense.2026-02-04 | Security, performance, and reliability audit of pfSense firewall | audit, security, performance, pfsense, firewall | docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md |

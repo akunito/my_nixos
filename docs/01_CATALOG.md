@@ -67,6 +67,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbN8nPassword or "") != ""`
    - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
+   - `(systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != ""`
 - **system/app/docker.nix**: Allow dockerd to be restarted without affecting running container. *Enabled when:* `userSettings.dockerEnable == true`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
@@ -83,6 +84,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
 - **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
+- **system/app/openclaw.nix**: OpenClaw Sanitizer Services
 - **system/app/pgbouncer.nix**: PgBouncer Connection Pooler Module *Enabled when:*
    - `moved from top-level`
    - `systemSettings.postgresqlServerEnable or false`
@@ -441,6 +443,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/akunito/infrastructure/INFRASTRUCTURE.md**: Infrastructure overview: VPS + TrueNAS + pfSense architecture
 - **docs/akunito/infrastructure/INFRASTRUCTURE_INTERNAL.md**: Complete internal infrastructure documentation with sensitive details (ENCRYPTED)
+- **docs/akunito/infrastructure/audits/docker-security-audit-2026-03-06.md**: VPS Docker container security audit — network isolation, database access, secrets, hardening
 - **docs/akunito/infrastructure/audits/migration-plan-audit-2026-02-19.md**: Comprehensive audit of Proxmox-to-VPS+TrueNAS migration plan
 - **docs/akunito/infrastructure/audits/migration-plan-network-security-audit-2026-02-19.md**: Network architecture, VPS hardening, and Nextcloud security audit of the Proxmox-to-VPS migration plan
 - **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
