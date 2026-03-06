@@ -568,44 +568,6 @@ in
             ];
           }
           {
-            name = "pve_backup_alerts";
-            rules = [
-              # PVE backup failed
-              {
-                alert = "PVEBackupFailed";
-                expr = ''pve_backup_status == 0'';
-                "for" = "1h";
-                labels.severity = "warning";
-                annotations = {
-                  summary = "Proxmox backup failed for {{ $labels.name }}";
-                  description = "Most recent backup for VM/LXC {{ $labels.name }} ({{ $labels.vmid }}) failed";
-                };
-              }
-              # PVE backup too old (more than 7 days)
-              {
-                alert = "PVEBackupTooOld";
-                expr = ''pve_backup_age_seconds > 604800'';
-                "for" = "1h";
-                labels.severity = "warning";
-                annotations = {
-                  summary = "Proxmox backup too old for {{ $labels.name }}";
-                  description = "Last successful backup for {{ $labels.name }} ({{ $labels.vmid }}) was {{ $value | humanizeDuration }} ago";
-                };
-              }
-              # PVE backup critically old (more than 14 days)
-              {
-                alert = "PVEBackupCriticallyOld";
-                expr = ''pve_backup_age_seconds > 1209600'';
-                "for" = "1h";
-                labels.severity = "critical";
-                annotations = {
-                  summary = "Proxmox backup critically old for {{ $labels.name }}";
-                  description = "Last successful backup for {{ $labels.name }} ({{ $labels.vmid }}) was {{ $value | humanizeDuration }} ago - immediate attention required";
-                };
-              }
-            ];
-          }
-          {
             name = "matrix_alerts";
             rules = [
               # Synapse down
@@ -826,7 +788,6 @@ in
     "grafana-dashboards/community/node-exporter-full.json".source = ./grafana-dashboards/community/node-exporter-full.json;
     "grafana-dashboards/community/docker-cadvisor.json".source = ./grafana-dashboards/community/docker-cadvisor.json;
     "grafana-dashboards/community/blackbox-exporter.json".source = ./grafana-dashboards/community/blackbox-exporter.json;
-    "grafana-dashboards/community/proxmox-ve.json".source = ./grafana-dashboards/community/proxmox-ve.json;
     "grafana-dashboards/community/docker-system-monitoring.json".source = ./grafana-dashboards/community/docker-system-monitoring.json;
   };
 

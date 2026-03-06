@@ -257,7 +257,7 @@ in
     prometheusBasicAuthHtpasswd = secrets.prometheusHtpasswd; # HTTP Basic Auth for prometheus.local.akunito.com
     # Disable standalone node exporter — grafana.nix runs its own on port 9091
     prometheusExporterEnable = false;
-    prometheusExporterCadvisorEnable = false;
+    prometheusExporterCadvisorEnable = true;
 
     # Domain settings (passed to grafana.nix for nginx virtual hosts)
     wildcardLocal = secrets.wildcardLocal;
@@ -273,13 +273,18 @@ in
     # Application metrics (local VPS databases only — LXC_database decommissioned)
     prometheusAppTargets = [
       # VPS local database exporters
-      { name = "vps_postgresql"; host = "127.0.0.1"; port = 9187; }
-      { name = "vps_mariadb";    host = "127.0.0.1"; port = 9104; }
-      { name = "vps_redis";      host = "127.0.0.1"; port = 9121; }
+      { name = "postgresql"; host = "127.0.0.1"; port = 9187; }
+      { name = "mariadb";    host = "127.0.0.1"; port = 9104; }
+      { name = "redis";      host = "127.0.0.1"; port = 9121; }
       # Matrix Synapse metrics (VPS Docker)
-      { name = "synapse";        host = "127.0.0.1"; port = 9000; }
+      { name = "synapse";   host = "127.0.0.1"; port = 9000; }
       # Miniflux RSS reader (exposes /metrics natively)
-      { name = "miniflux";      host = "127.0.0.1"; port = 8084; }
+      { name = "miniflux";  host = "127.0.0.1"; port = 8084; }
+      # TrueNAS exportarr targets (via Tailscale)
+      { name = "sonarr";    host = "100.64.0.10"; port = 9707; }
+      { name = "radarr";    host = "100.64.0.10"; port = 9708; }
+      { name = "prowlarr";  host = "100.64.0.10"; port = 9709; }
+      { name = "bazarr";    host = "100.64.0.10"; port = 9710; }
     ];
 
     # Blackbox exporter (HTTP probes for public services)
@@ -297,7 +302,6 @@ in
     ];
     prometheusBlackboxIcmpTargets = [
       { name = "pfsense"; host = "192.168.8.1"; }
-      { name = "pve"; host = "192.168.8.82"; }
       { name = "truenas"; host = "192.168.20.200"; }
       { name = "wan"; host = "1.1.1.1"; }
     ];

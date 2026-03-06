@@ -93,6 +93,11 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
         level = "info";
       };
 
+      # Metrics endpoint for Prometheus scraping
+      metrics = {
+        listen_addr = "127.0.0.1:9191";
+      };
+
       # Policy — ACL managed via database (headscale policy set --file)
       policy.mode = "database";
     };
@@ -126,6 +131,15 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
   # Headplane (web UI) — DISABLED for now (not tested, security not reviewed)
   # Use CLI only: headscale users list, headscale nodes list, headscale routes list
   # Re-evaluate Headplane after VPN migration is stable and security-audited
+
+  # Prometheus scrape config for Headscale metrics
+  services.prometheus.scrapeConfigs = [{
+    job_name = "headscale";
+    static_configs = [{
+      targets = [ "127.0.0.1:9191" ];
+      labels = { instance = "headscale"; };
+    }];
+  }];
 
   environment.systemPackages = [ pkgs-unstable.headscale ];
 }
