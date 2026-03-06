@@ -12,6 +12,7 @@ import asyncio
 import json
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -33,6 +34,8 @@ class ClaudeCLI:
         self.working_directory = working_directory or str(Path.home())
         self.timeout = timeout
         self.skip_permissions = skip_permissions
+        self.claude_path = shutil.which("claude") or "claude"
+        log.info("Claude CLI path resolved", path=self.claude_path)
 
     async def send_message(
         self,
@@ -59,7 +62,7 @@ class ClaudeCLI:
             full_message = f"{context_preamble}\n\nUser: {message}"
 
         # Build command
-        cmd = ["claude", "--print"]
+        cmd = [self.claude_path, "--print"]
 
         if session_id:
             cmd.extend(["--resume", session_id])
@@ -88,14 +91,24 @@ class ClaudeCLI:
 
             # Handle errors
             if result.get("returncode", 0) != 0:
-                error_msg = result.get("stderr", "Unknown error")
-                log.error("Claude CLI error", error=error_msg)
+                stderr_msg = result.get("stderr", "").strip()
+                stdout_msg = result.get("stdout", "").strip()
+                # Claude Code often outputs errors to stdout, not stderr
+                error_msg = stderr_msg or stdout_msg or f"Exit code {result.get('returncode')}"
 
-                # Check for specific error types
-                if "permission" in error_msg.lower():
+                log.error("Claude CLI error",
+                         returncode=result.get("returncode"),
+                         stderr_preview=stderr_msg[:200] if stderr_msg else "(empty)",
+                         stdout_preview=stdout_msg[:200] if stdout_msg else "(empty)")
+
+                # Check for specific error types in both streams
+                error_combined = (stderr_msg + " " + stdout_msg).lower()
+                if "permission" in error_combined:
                     response_text = "Permission prompt required. Use `/new` to start a fresh session with --dangerously-skip-permissions if needed."
-                elif "rate limit" in error_msg.lower():
+                elif "rate limit" in error_combined:
                     response_text = "Rate limited. Please wait a moment and try again."
+                elif "authentication" in error_combined or "expired" in error_combined or "401" in error_combined:
+                    response_text = "Authentication error — Claude OAuth token may have expired. Credential sync needed."
                 else:
                     response_text = f"Error from Claude: {error_msg[:500]}"
 
@@ -123,6 +136,7 @@ class ClaudeCLI:
         env = os.environ.copy()
         env["TERM"] = "dumb"  # Disable color codes
         env["NO_COLOR"] = "1"  # Alternative no-color flag
+        env.setdefault("HOME", str(Path.home()))
 
         proc = await asyncio.create_subprocess_exec(
             *cmd,
@@ -162,14 +176,24 @@ class ClaudeCLI:
         try:
             result = await asyncio.wait_for(
                 self._run_subprocess(
-                    ["claude", "--version"],
+                    [self.claude_path, "--version"],
                     "",
                     self.working_directory,
                 ),
                 timeout=10,
             )
-            return result.get("returncode", 1) == 0
-        except Exception:
+            healthy = result.get("returncode", 1) == 0
+            version = result.get("stdout", "").strip()
+            if healthy:
+                log.info("Claude CLI health check passed", version=version)
+            else:
+                log.error("Claude CLI health check failed",
+                         returncode=result.get("returncode"),
+                         stdout=result.get("stdout", "")[:200],
+                         stderr=result.get("stderr", "")[:200])
+            return healthy
+        except Exception as e:
+            log.error("Claude CLI health check exception", error=str(e))
             return False
 
 

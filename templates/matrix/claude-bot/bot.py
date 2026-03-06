@@ -110,6 +110,11 @@ class ClaudeMatrixBot:
             skip_permissions=claude_config.get("dangerously_skip_permissions", False),
         )
 
+        # Run startup health check on Claude CLI
+        health_ok = await self.claude_cli.check_health()
+        if not health_ok:
+            log.warning("Claude CLI health check failed at startup — bot will start but Claude commands may fail")
+
         # Initialize Matrix client
         matrix_config = self.config.get("matrix", {})
         homeserver = matrix_config.get("homeserver")
