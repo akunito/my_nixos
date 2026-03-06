@@ -93,10 +93,8 @@ lib.mkIf (systemSettings.headscaleEnable or false) {
         level = "info";
       };
 
-      # Metrics endpoint for Prometheus scraping
-      metrics = {
-        listen_addr = "127.0.0.1:9191";
-      };
+      # Metrics endpoint for Prometheus scraping (flat key — headscale v0.28 format)
+      metrics_listen_addr = "127.0.0.1:9191";
 
       # Policy — ACL managed via database (headscale policy set --file)
       policy.mode = "database";
