@@ -369,6 +369,11 @@
     planeApiToken = ""; # Plane API token for MCP server (set from secrets/domains.nix in profiles)
     planeApiUrl = ""; # Plane instance URL (e.g., "https://plane.akunito.com")
     planeWorkspaceSlug = ""; # Plane workspace slug (e.g., "akuworkspace")
+    grafanaMcpToken = ""; # Grafana service account token for MCP server (Viewer role)
+    grafanaMcpUrl = ""; # Grafana instance URL (e.g., "https://grafana.akunito.com")
+    dbClaudeReadonlyConnStr = ""; # PostgreSQL connection string for read-only MCP (e.g., "postgresql://claude_readonly:pass@host:5432/plane")
+    n8nMcpApiKey = ""; # n8n API key for MCP server
+    n8nMcpUrl = ""; # n8n instance URL (e.g., "https://n8n.akunito.com")
 
     # Package module feature flags
     systemBasicToolsEnable = true; # Enable basic system tools (vim, wget, rsync, cryptsetup, etc.)

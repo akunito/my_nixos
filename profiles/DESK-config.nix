@@ -317,6 +317,11 @@ in
     planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
     planeApiUrl = "https://plane.${secrets.publicDomain}";
     planeWorkspaceSlug = "akuworkspace";
+    grafanaMcpToken = secrets.grafanaMcpToken; # Grafana MCP (read-only dashboards + PromQL)
+    grafanaMcpUrl = "https://grafana.${secrets.publicDomain}";
+    dbClaudeReadonlyConnStr = "postgresql://claude_readonly:${secrets.dbClaudeReadonlyPassword}@100.64.0.6:5432/plane";
+    n8nMcpApiKey = secrets.n8nApiKey; # n8n MCP (workflow automation)
+    n8nMcpUrl = "https://n8n.${secrets.publicDomain}";
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support

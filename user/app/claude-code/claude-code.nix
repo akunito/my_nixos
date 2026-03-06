@@ -34,6 +34,17 @@ let
   planeApiUrl = systemSettings.planeApiUrl or "";
   planeWorkspaceSlug = systemSettings.planeWorkspaceSlug or "";
 
+  # Grafana MCP credentials
+  grafanaMcpToken = systemSettings.grafanaMcpToken or "";
+  grafanaMcpUrl = systemSettings.grafanaMcpUrl or "";
+
+  # PostgreSQL MCP credentials (read-only)
+  dbClaudeReadonlyConnStr = systemSettings.dbClaudeReadonlyConnStr or "";
+
+  # n8n MCP credentials
+  n8nMcpApiKey = systemSettings.n8nMcpApiKey or "";
+  n8nMcpUrl = systemSettings.n8nMcpUrl or "";
+
   # Build the settings.json structure
   # NOTE: MCP servers are NOT configured here — Claude Code reads them from
   # .mcp.json (project-scoped) or ~/.claude.json (user-scoped), NOT settings.json.
@@ -51,6 +62,11 @@ let
 
         # MCP tools — Plane project management
         "mcp__plane__*"
+
+        # MCP tools — Infrastructure monitoring & automation
+        "mcp__grafana__*"
+        "mcp__postgres__*"
+        "mcp__n8n__*"
 
         # Safe Bash patterns — read-only system inspection
         "Bash(ls *)"
@@ -308,6 +324,17 @@ in
       PLANE_API_KEY = planeApiToken;
       PLANE_BASE_URL = planeApiUrl;
       PLANE_WORKSPACE_SLUG = planeWorkspaceSlug;
+    }
+    // lib.optionalAttrs (grafanaMcpToken != "") {
+      GRAFANA_URL = grafanaMcpUrl;
+      GRAFANA_API_KEY = grafanaMcpToken;
+    }
+    // lib.optionalAttrs (dbClaudeReadonlyConnStr != "") {
+      POSTGRES_MCP_CONNECTION_STRING = dbClaudeReadonlyConnStr;
+    }
+    // lib.optionalAttrs (n8nMcpApiKey != "") {
+      N8N_MCP_API_KEY = n8nMcpApiKey;
+      N8N_MCP_BASE_URL = n8nMcpUrl;
     };
 
   # Generate env file for systemd services (e.g., claude-matrix-bot) that need MCP credentials.
@@ -318,6 +345,11 @@ in
       ++ lib.optional (planeApiToken != "") "PLANE_API_KEY=${planeApiToken}"
       ++ lib.optional (planeApiUrl != "") "PLANE_BASE_URL=${planeApiUrl}"
       ++ lib.optional (planeWorkspaceSlug != "") "PLANE_WORKSPACE_SLUG=${planeWorkspaceSlug}"
+      ++ lib.optional (grafanaMcpToken != "") "GRAFANA_URL=${grafanaMcpUrl}"
+      ++ lib.optional (grafanaMcpToken != "") "GRAFANA_API_KEY=${grafanaMcpToken}"
+      ++ lib.optional (dbClaudeReadonlyConnStr != "") "POSTGRES_MCP_CONNECTION_STRING=${dbClaudeReadonlyConnStr}"
+      ++ lib.optional (n8nMcpApiKey != "") "N8N_MCP_API_KEY=${n8nMcpApiKey}"
+      ++ lib.optional (n8nMcpUrl != "") "N8N_MCP_BASE_URL=${n8nMcpUrl}"
     ) + "\n";
     force = true;
   };
