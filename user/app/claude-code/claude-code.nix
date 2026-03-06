@@ -42,8 +42,8 @@ let
         command = "uvx";
         args = [ "plane-mcp-server" "stdio" ];
         env = {
-          PLANE_API_TOKEN = planeApiToken;
-          PLANE_API_URL = planeApiUrl;
+          PLANE_API_KEY = planeApiToken;
+          PLANE_BASE_URL = planeApiUrl;
           PLANE_WORKSPACE_SLUG = planeWorkspaceSlug;
         };
       } else null;
