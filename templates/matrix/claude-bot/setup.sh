@@ -40,7 +40,9 @@ python3 -m venv "$BOT_DIR/venv"
 
 # Install dependencies (with libolm build paths for E2E encryption)
 echo "Installing Python dependencies..."
-export C_INCLUDE_PATH="/run/current-system/sw/include"
+# Resolve libolm nix store path for headers (not symlinked to /run/current-system/sw/include)
+OLM_STORE_PATH="$(readlink -f /run/current-system/sw/lib/libolm.so | sed 's|/lib/libolm.so||')"
+export C_INCLUDE_PATH="${OLM_STORE_PATH}/include"
 export LIBRARY_PATH="/run/current-system/sw/lib"
 "$BOT_DIR/venv/bin/pip" install --upgrade pip
 "$BOT_DIR/venv/bin/pip" install -r "$BOT_DIR/requirements.txt"
