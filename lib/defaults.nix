@@ -363,6 +363,7 @@
     # Development tools feature flags
     developmentToolsEnable = false; # Enable development IDEs and cloud tools (Cursor, Claude Code, Azure CLI, etc.)
     developmentFullRuntimesEnable = false; # Enable full development runtimes (Node.js, Python, Go, Rust)
+    claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
     claudeCodeReadOnly = false; # When true, deny Edit/Write tools in Claude Code settings.json
     perplexityApiKey = ""; # Perplexity API key for MCP server (set from secrets/domains.nix in profiles)
 

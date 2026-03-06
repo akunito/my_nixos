@@ -44,6 +44,10 @@ in
     systemBasicToolsEnable = true;
     systemNetworkToolsEnable = false;
 
+    # === Development Tools & AI ===
+    claudeCodeEnable = true; # Lightweight Claude Code (CLI + settings + MCP) for Matrix bot interface
+    perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for MCP server
+
     # === System Services (ALL DISABLED — not needed on VPS) ===
     sambaEnable = false;
     sunshineEnable = false;

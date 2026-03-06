@@ -12,7 +12,9 @@
   # All packages have zero idle overhead (only consume resources when actively used)
   imports = [
     ../../user/shell/sh.nix
-  ];
+  ]
+  # Claude Code settings.json + MCP (standalone mode for VPS — no full dev IDEs)
+  ++ lib.optional (systemSettings.claudeCodeEnable or false) ../../user/app/claude-code/claude-code.nix;
 
   home.username = userSettings.username;
   home.homeDirectory = "/home/" + userSettings.username;

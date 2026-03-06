@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-unstable,
   lib,
   systemSettings,
   userSettings,
@@ -9,6 +10,8 @@
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isDesktop = systemSettings.developmentToolsEnable or false;
+  # Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
+  isStandalone = (systemSettings.claudeCodeEnable or false) && !isDesktop;
   dotfilesPath = systemSettings.dotfilesPath or "/home/${userSettings.username}/.dotfiles";
 
   # Notification command: notify-send on desktop, no-op on headless
@@ -243,9 +246,17 @@ let
 
 in
 {
+  # Standalone mode: install claude-code + nodejs (for npx/MCP) without full dev IDEs
+  home.packages = lib.optionals isStandalone [
+    pkgs-unstable.claude-code      # Claude Code CLI
+    pkgs.nodejs_22                 # Node.js for npx (required by MCP servers)
+    pkgs.git-crypt                 # Transparent file encryption in git
+  ];
+
   # Declaratively manage ~/.claude/settings.json
   home.file.".claude/settings.json" = {
     text = builtins.toJSON settingsJson;
+    force = true; # Overwrite existing non-HM-managed file
   };
 
   # Set Perplexity API key as environment variable for MCP server
