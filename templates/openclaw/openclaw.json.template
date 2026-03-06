@@ -82,6 +82,21 @@
       "agentId": "scout",
       "comment": "Scout agent — Telegram group",
       "match": { "channel": "telegram", "peer": { "kind": "group", "id": "SCOUT_GROUP_CHAT_ID" } }
+    },
+    {
+      "agentId": "alfred",
+      "comment": "Alfred agent — Matrix room (primary channel)",
+      "match": { "channel": "matrix", "account": "alfred", "peer": { "kind": "group", "id": "ALFRED_MATRIX_ROOM_ID" } }
+    },
+    {
+      "agentId": "vaultkeeper",
+      "comment": "Vaultkeeper agent — Matrix room (primary channel)",
+      "match": { "channel": "matrix", "account": "vaultkeeper", "peer": { "kind": "group", "id": "VAULTKEEPER_MATRIX_ROOM_ID" } }
+    },
+    {
+      "agentId": "scout",
+      "comment": "Scout agent — Matrix room (primary channel)",
+      "match": { "channel": "matrix", "account": "scout", "peer": { "kind": "group", "id": "SCOUT_MATRIX_ROOM_ID" } }
     }
   ],
 
@@ -94,6 +109,42 @@
         "ALFRED_GROUP_CHAT_ID": { "requireMention": false },
         "VAULTKEEPER_GROUP_CHAT_ID": { "requireMention": false },
         "SCOUT_GROUP_CHAT_ID": { "requireMention": false }
+      }
+    },
+    "matrix": {
+      "enabled": true,
+      "homeserver": "https://matrix.local.akunito.com",
+      "encryption": true,
+      "dm": { "policy": "allowlist", "allowFrom": ["@akunito:akunito.com"] },
+      "groupPolicy": "allowlist",
+      "groupAllowFrom": ["@akunito:akunito.com"],
+      "autoJoin": "allowlist",
+      "autoJoinAllowlist": ["@akunito:akunito.com"],
+      "accounts": {
+        "alfred": {
+          "userId": "@alfredbot:akunito.com",
+          "accessToken": "REPLACE_WITH_ALFRED_MATRIX_TOKEN",
+          "deviceName": "OPENCLAW_ALFRED",
+          "rooms": {
+            "ALFRED_MATRIX_ROOM_ID": { "requireMention": false }
+          }
+        },
+        "vaultkeeper": {
+          "userId": "@vaultkeeperbot:akunito.com",
+          "accessToken": "REPLACE_WITH_VAULTKEEPER_MATRIX_TOKEN",
+          "deviceName": "OPENCLAW_VAULTKEEPER",
+          "rooms": {
+            "VAULTKEEPER_MATRIX_ROOM_ID": { "requireMention": false }
+          }
+        },
+        "scout": {
+          "userId": "@scoutbot:akunito.com",
+          "accessToken": "REPLACE_WITH_SCOUT_MATRIX_TOKEN",
+          "deviceName": "OPENCLAW_SCOUT",
+          "rooms": {
+            "SCOUT_MATRIX_ROOM_ID": { "requireMention": false }
+          }
+        }
       }
     }
   },
