@@ -519,7 +519,7 @@ in
           "${hyper}+Shift+b" = lib.mkIf (systemSettings.waypaperEnable or false) "exec waypaper";
           # Element (Matrix client) - hyper+o
           "${hyper}+o" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh element element-desktop";
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh element element-desktop --password-store=kwallet5";
 
           # Workspace navigation with auto-creation and wrapping (Option B)
           # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
