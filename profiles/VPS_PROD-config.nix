@@ -266,10 +266,11 @@ in
     grafanaAlertsFrom = secrets.grafanaAlertsFrom;
     notificationToEmail = secrets.alertEmail;
 
-    # Remote targets for Prometheus scraping (via WireGuard tunnel to LAN)
-    # NOTE: All LXC containers decommissioned (Phase 4g complete)
-    # TrueNAS monitored via Graphite exporter (port 2003), not node_exporter
-    prometheusRemoteTargets = [];
+    # Remote targets for Prometheus scraping (via WireGuard/Tailscale tunnel to LAN)
+    # TrueNAS: node-exporter (9100) + cadvisor (8081) on rootless Docker
+    prometheusRemoteTargets = [
+      { name = "truenas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; }
+    ];
 
     # Application metrics (local VPS databases only — LXC_database decommissioned)
     prometheusAppTargets = [
@@ -354,10 +355,10 @@ in
     # ============================================================================
     # Repos: databases (19:00), services (19:30), nextcloud (Sun 20:00), libraries (Sun 20:30)
     # Window: 19:00-22:00 (TrueNAS sleeps 23:00-11:00)
-    # Target: TrueNAS via Tailscale (100.64.0.10)
+    # Target: TrueNAS via Tailscale (100.64.0.9)
     # databases → ssdpool/vps-backups (critical), services+libraries+nextcloud → extpool/vps-backups
     vpsResticBackupEnable = true;
-    vpsResticTarget = "100.64.0.10";      # TrueNAS Tailscale IP
+    vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
     vpsResticTargetUser = "truenas_admin";
   };
 

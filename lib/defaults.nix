@@ -123,7 +123,7 @@
 
     # VPS Restic backup to TrueNAS (via SFTP over Tailscale)
     vpsResticBackupEnable = false;
-    vpsResticTarget = "100.64.0.10";      # TrueNAS Tailscale IP
+    vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
     vpsResticTargetUser = "truenas_admin";
 
     # Network defaults
