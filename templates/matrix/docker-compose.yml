@@ -58,6 +58,8 @@ services:
     cap_add:
       - SETUID
       - SETGID
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./data:/data
       - ./config/homeserver.yaml:/data/homeserver.yaml:ro
