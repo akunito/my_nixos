@@ -43,6 +43,7 @@ services:
       - LEFTYWORKOUT_USER_ID=${LEFTYWORKOUT_USER_ID:-1}
       - MINIFLUX_OPENCLAW_KEY=${MINIFLUX_OPENCLAW_KEY}
       - GITHUB_ALLOWED_OWNERS=akunito
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
       - GENERIC_TIMEZONE=Europe/Madrid
       - TZ=Europe/Madrid
       # MCP server env vars (mcporter subprocesses inherit these)

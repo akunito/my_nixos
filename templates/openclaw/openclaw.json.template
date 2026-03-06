@@ -64,7 +64,8 @@
     "deny": ["group:automation", "group:runtime", "sessions_spawn", "sessions_send", "http"],
     "fs": { "workspaceOnly": true },
     "exec": { "security": "deny", "ask": "always" },
-    "elevated": { "enabled": false }
+    "elevated": { "enabled": false },
+    "web": { "search": { "provider": "perplexity" } }
   },
 
   "bindings": [
@@ -118,6 +119,7 @@
       "dm": { "policy": "allowlist", "allowFrom": ["@akunito:akunito.com"] },
       "groupPolicy": "allowlist",
       "groupAllowFrom": ["@akunito:akunito.com"],
+      "threadReplies": "inbound",
       "autoJoin": "allowlist",
       "autoJoinAllowlist": ["@akunito:akunito.com"],
       "accounts": {
