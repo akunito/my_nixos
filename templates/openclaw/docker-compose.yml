@@ -21,6 +21,7 @@ services:
       # from public DNS, but VPS nginx serves these on Tailscale IP (100.64.0.6)
       - "miniflux.local.akunito.com:100.64.0.6"
       - "prometheus.local.akunito.com:100.64.0.6"
+      - "matrix.local.akunito.com:100.64.0.6"
     tmpfs:
       - /tmp:noexec,nosuid,size=256m
       - /home/node/.npm:size=128m
