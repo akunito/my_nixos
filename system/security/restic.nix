@@ -81,10 +81,6 @@ let
 in
 {
   # ====================== Wrappers ======================
-  # Create restic user
-  users.users.restic = lib.mkIf (systemSettings.resticWrapper == true) {
-    isNormalUser = true;
-  };
   # Wrapper for restic
   security.wrappers.restic = lib.mkIf (systemSettings.resticWrapper == true) {
     source = "/run/current-system/sw/bin/restic";

@@ -209,6 +209,7 @@ in
     exporters = {
       node = {
         enable = true;
+        listenAddress = "127.0.0.1";
         enabledCollectors = [
           "systemd"
           "processes"
@@ -837,7 +838,6 @@ in
 
     # Security headers for all vhosts (SEC-AUDIT-001)
     appendHttpConfig = ''
-      add_header X-Content-Type-Options "nosniff" always;
       add_header X-Frame-Options "SAMEORIGIN" always;
       add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     '';
