@@ -20,6 +20,9 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - SETUID
+      - SETGID
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis-data:/data
@@ -52,6 +55,9 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - SETUID
+      - SETGID
     volumes:
       - ./data:/data
       - ./config/homeserver.yaml:/data/homeserver.yaml:ro
@@ -95,6 +101,11 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+      - CHOWN          # nginx needs to chown pid/cache files
+      - NET_BIND_SERVICE  # nginx binds port 80 inside container
     volumes:
       - ./element-config/config.json:/app/config.json:ro
     tmpfs:
