@@ -1,7 +1,7 @@
 #!/bin/bash
 # Claude Matrix Bot Setup Script
 #
-# Run on LXC_matrix to install and configure the Claude Matrix bot.
+# Run on VPS_PROD to install and configure the Claude Matrix bot.
 #
 # Prerequisites:
 # 1. Python 3.11+ installed (via NixOS profile)
@@ -38,8 +38,10 @@ fi
 echo "Creating Python virtual environment..."
 python3 -m venv "$BOT_DIR/venv"
 
-# Install dependencies
+# Install dependencies (with libolm build paths for E2E encryption)
 echo "Installing Python dependencies..."
+export C_INCLUDE_PATH="/run/current-system/sw/include"
+export LIBRARY_PATH="/run/current-system/sw/lib"
 "$BOT_DIR/venv/bin/pip" install --upgrade pip
 "$BOT_DIR/venv/bin/pip" install -r "$BOT_DIR/requirements.txt"
 

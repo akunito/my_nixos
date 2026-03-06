@@ -8,7 +8,7 @@ Supports session persistence, access control, and mobile-optimized responses.
 Usage:
     python bot.py [--config CONFIG_PATH]
 
-Deploy to: ~/.claude-matrix-bot/bot.py on LXC_matrix
+Deploy to: ~/.claude-matrix-bot/bot.py on VPS_PROD
 """
 
 import asyncio
@@ -118,7 +118,7 @@ class ClaudeMatrixBot:
             max_limit_exceeded=0,
             max_timeouts=0,
             store_sync_tokens=True,
-            encryption_enabled=False,  # Disable E2EE - requires proper login flow with device ID
+            encryption_enabled=True,  # E2EE enabled - requires libolm (pkgs.olm) on system
         )
 
         self.client = AsyncClient(
@@ -162,12 +162,19 @@ class ClaudeMatrixBot:
         self.client.add_event_callback(self._on_invite, InviteMemberEvent)
         self.client.add_event_callback(self._on_encrypted_message, MegolmEvent)
 
+        # Initial sync to populate device lists for E2E encryption
+        log.info("Performing initial sync...")
+        await self.client.sync(timeout=30000, full_state=True)
+
+        # Set up E2E encryption trust for allowed users
+        await self._setup_encryption_trust()
+
         # Start sync loop
         self._running = True
         log.info("Bot started, syncing...")
 
         try:
-            await self.client.sync_forever(timeout=30000, full_state=True)
+            await self.client.sync_forever(timeout=30000)
         except Exception as e:
             log.error("Sync error", error=str(e))
             raise

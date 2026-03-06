@@ -5,7 +5,7 @@ Claude CLI Wrapper
 Wraps the Claude Code CLI for subprocess execution with session management.
 Handles timeouts, error handling, and response parsing.
 
-Deploy to: ~/.claude-matrix-bot/claude_cli.py on LXC_matrix
+Deploy to: ~/.claude-matrix-bot/claude_cli.py on VPS_PROD
 """
 
 import asyncio

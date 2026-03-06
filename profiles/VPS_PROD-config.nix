@@ -27,6 +27,7 @@ in
         pkgs.mariadb
         pkgs.redis
         pkgs.curl  # For healthchecks
+        pkgs.olm  # libolm for Matrix bot E2E encryption
       ];
 
     # ============================================================================

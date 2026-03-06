@@ -17,7 +17,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/run/current-system/sw/bin/python3.11 /home/akunito/.claude-matrix-bot/bot.py --config /home/akunito/.claude-matrix-bot/config.yaml
+ExecStart=/home/akunito/.claude-matrix-bot/venv/bin/python3 /home/akunito/.claude-matrix-bot/bot.py --config /home/akunito/.claude-matrix-bot/config.yaml
 WorkingDirectory=/home/akunito/.claude-matrix-bot
 Restart=always
 RestartSec=10
@@ -25,7 +25,8 @@ RestartSec=10
 # Environment
 Environment="PATH=/home/akunito/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin"
 Environment="HOME=/home/akunito"
-Environment="ENV_PROFILE=LXC_matrix"
+Environment="ENV_PROFILE=VPS_PROD"
+Environment="LD_LIBRARY_PATH=/run/current-system/sw/lib"
 
 # Resource limits
 MemoryMax=512M

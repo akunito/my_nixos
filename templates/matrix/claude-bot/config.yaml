@@ -1,5 +1,5 @@
 # Claude Matrix Bot Configuration
-# Deploy to: ~/.claude-matrix-bot/config.yaml on LXC_matrix
+# Deploy to: ~/.claude-matrix-bot/config.yaml on VPS_PROD
 
 # Matrix server connection
 matrix:
