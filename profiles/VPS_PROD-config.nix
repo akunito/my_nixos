@@ -318,6 +318,9 @@ in
     # === OpenClaw Sanitizers (CSV + memory file injection stripping) ===
     openclawSanitizersEnable = true;
 
+    # === OpenClaw Matrix Bridge (E2E encrypted Matrix channels + Telegram fallback) ===
+    openclawMatrixBridgeEnable = true;
+
     # === Docker Services (Phase 3B — service migration) ===
     homelabDockerEnable = true;
     homelabDockerStacks = [

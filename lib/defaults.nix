@@ -121,6 +121,9 @@
     # OpenClaw sanitizer timers (CSV + memory file sanitizers)
     openclawSanitizersEnable = false;
 
+    # OpenClaw Matrix bridge (E2E encrypted Matrix channels for agents + Telegram fallback)
+    openclawMatrixBridgeEnable = false;
+
     # VPS Restic backup to TrueNAS (via SFTP over Tailscale)
     vpsResticBackupEnable = false;
     vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
