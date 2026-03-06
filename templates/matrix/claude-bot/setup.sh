@@ -45,6 +45,7 @@ OLM_STORE_PATH="$(readlink -f /run/current-system/sw/lib/libolm.so | sed 's|/lib
 nix-shell -p gnumake gcc cmake pkg-config --run "
   export C_INCLUDE_PATH='${OLM_STORE_PATH}/include'
   export LIBRARY_PATH='/run/current-system/sw/lib'
+  export CMAKE_POLICY_VERSION_MINIMUM=3.5
   '$BOT_DIR/venv/bin/pip' install --upgrade pip
   '$BOT_DIR/venv/bin/pip' install -r '$BOT_DIR/requirements.txt'
 "
