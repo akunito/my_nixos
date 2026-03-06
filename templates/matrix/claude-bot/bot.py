@@ -31,6 +31,7 @@ from nio import (
     MegolmEvent,
     ToDeviceError,
 )
+from nio.crypto import TrustState
 
 from claude_cli import ClaudeCLI
 from session_manager import SessionManager
@@ -203,7 +204,7 @@ class ClaudeMatrixBot:
             # Trust all known devices for this user
             devices = list(self.client.device_store.active_user_devices(user_id))
             for device in devices:
-                if not device.trust_state.is_verified():
+                if not device.trust_state == TrustState.verified:
                     self.client.verify_device(device)
                     log.info("Trusted device", user=user_id, device=device.device_id)
 
@@ -333,7 +334,7 @@ class ClaudeMatrixBot:
             devices = list(self.client.device_store.active_user_devices(sender))
             trusted = 0
             for device in devices:
-                if not device.trust_state.is_verified():
+                if not device.trust_state == TrustState.verified:
                     self.client.verify_device(device)
                     trusted += 1
             if trusted > 0:
@@ -440,7 +441,7 @@ Send any other message to interact with Claude Code.
             # Get and trust devices for room members
             devices = list(self.client.device_store.active_user_devices(member.user_id))
             for device in devices:
-                if not device.trust_state.is_verified():
+                if not device.trust_state == TrustState.verified:
                     # Auto-verify devices for allowed users only
                     if self._is_allowed_user(member.user_id):
                         self.client.verify_device(device)
