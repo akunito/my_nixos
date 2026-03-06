@@ -49,6 +49,9 @@ let
         "WebFetch"
         "WebSearch"
 
+        # MCP tools — Plane project management
+        "mcp__plane__*"
+
         # Safe Bash patterns — read-only system inspection
         "Bash(ls *)"
         "Bash(cat *)"
