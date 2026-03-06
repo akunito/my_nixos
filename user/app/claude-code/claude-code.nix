@@ -279,4 +279,16 @@ in
       PLANE_BASE_URL = planeApiUrl;
       PLANE_WORKSPACE_SLUG = planeWorkspaceSlug;
     };
+
+  # Generate env file for systemd services (e.g., claude-matrix-bot) that need MCP credentials.
+  # Systemd user services don't inherit shell sessionVariables, so they need an EnvironmentFile.
+  home.file.".claude/mcp-env" = {
+    text = lib.concatStringsSep "\n" (
+      lib.optional (perplexityApiKey != "") "PERPLEXITY_API_KEY=${perplexityApiKey}"
+      ++ lib.optional (planeApiToken != "") "PLANE_API_KEY=${planeApiToken}"
+      ++ lib.optional (planeApiUrl != "") "PLANE_BASE_URL=${planeApiUrl}"
+      ++ lib.optional (planeWorkspaceSlug != "") "PLANE_WORKSPACE_SLUG=${planeWorkspaceSlug}"
+    ) + "\n";
+    force = true;
+  };
 }
