@@ -8,6 +8,10 @@
 }:
 
 {
+  imports = [
+    ../claude-code/claude-code.nix # Claude Code settings.json, hooks, and security rules
+  ];
+
   # Development tools and IDEs
   # Controlled by systemSettings.developmentToolsEnable flag
   home.packages = lib.optionals (systemSettings.developmentToolsEnable == true) [

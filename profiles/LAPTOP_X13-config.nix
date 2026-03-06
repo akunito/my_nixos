@@ -164,6 +164,7 @@ in
 
     # === Development Tools & AI ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
+    perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for Claude Code MCP
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
     voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)
