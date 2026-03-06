@@ -114,6 +114,7 @@ services:
       - /tmp:noexec,nosuid,size=64m
       - /var/run:size=16m
       - /var/cache/nginx:size=64m
+      - /etc/nginx/conf.d:size=8m  # nginx entrypoint generates config from templates
     environment:
       - TZ=Europe/Madrid
     ports:
