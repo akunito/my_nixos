@@ -408,7 +408,7 @@ claude mcp add --transport stdio plane -- \
 
 # PostgreSQL database
 claude mcp add --transport stdio db -- \
-  npx -y @bytebase/dbhub --dsn "postgresql://user:pass@host:5432/dbname"
+  npx -y @bytebase/dbhub --dsn "postgresql://user:<password>@host:5432/dbname"
 
 # Playwright browser automation
 claude mcp add --transport stdio playwright -- \
