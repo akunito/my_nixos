@@ -59,7 +59,7 @@ services:
       - SETUID
       - SETGID
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:10.0.2.2"  # slirp4netns gateway (rootless Docker host access)
     volumes:
       - ./data:/data
       - ./config/homeserver.yaml:/data/homeserver.yaml:ro
