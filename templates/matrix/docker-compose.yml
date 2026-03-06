@@ -117,7 +117,7 @@ services:
     environment:
       - TZ=Europe/Madrid
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8088:80"  # 8088 to avoid Headscale on 8080; matches nginxLocalServices
     networks:
       - matrix-net
     depends_on:
