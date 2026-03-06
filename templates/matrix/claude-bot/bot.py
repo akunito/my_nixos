@@ -201,11 +201,11 @@ class ClaudeMatrixBot:
         for user_id in allowed_users:
             log.info("Trusting devices for user", user=user_id)
             # Trust all known devices for this user
-            devices = self.client.device_store.active_user_devices(user_id)
-            for device_id, device in devices.items():
+            devices = list(self.client.device_store.active_user_devices(user_id))
+            for device in devices:
                 if not device.trust_state.is_verified():
                     self.client.verify_device(device)
-                    log.info("Trusted device", user=user_id, device=device_id)
+                    log.info("Trusted device", user=user_id, device=device.device_id)
 
     async def _on_encrypted_message(self, room: MatrixRoom, event: MegolmEvent):
         """Handle encrypted messages that couldn't be decrypted.
@@ -312,8 +312,8 @@ class ClaudeMatrixBot:
             status += f"\n**Encryption**\n"
             status += f"- Room Encrypted: {'Yes' if room.encrypted else 'No'}\n"
             if room.encrypted:
-                devices = self.client.device_store.active_user_devices(sender)
-                verified = sum(1 for d in devices.values() if d.trust_state.is_verified())
+                devices = list(self.client.device_store.active_user_devices(sender))
+                verified = sum(1 for d in devices if d.trust_state.is_verified())
                 status += f"- Your Verified Devices: {verified}/{len(devices)}"
             await self._send_message(room, status)
 
@@ -330,9 +330,9 @@ class ClaudeMatrixBot:
 
         elif command == "/trust":
             # Trust all devices for the sender (for encrypted rooms)
-            devices = self.client.device_store.active_user_devices(sender)
+            devices = list(self.client.device_store.active_user_devices(sender))
             trusted = 0
-            for device_id, device in devices.items():
+            for device in devices:
                 if not device.trust_state.is_verified():
                     self.client.verify_device(device)
                     trusted += 1
@@ -438,8 +438,8 @@ Send any other message to interact with Claude Code.
         members = await self.client.joined_members(room.room_id)
         for member in members.members:
             # Get and trust devices for room members
-            devices = self.client.device_store.active_user_devices(member.user_id)
-            for device_id, device in devices.items():
+            devices = list(self.client.device_store.active_user_devices(member.user_id))
+            for device in devices:
                 if not device.trust_state.is_verified():
                     # Auto-verify devices for allowed users only
                     if self._is_allowed_user(member.user_id):
