@@ -44,9 +44,9 @@ services:
       - "8081:8080"
     volumes:
       - /:/rootfs:ro
-      - /run/user/1000:/var/run:ro
+      - /run/user/950:/var/run:ro
       - /sys:/sys:ro
-      - /home/truenas_admin/.local/share/docker/:/var/lib/docker:ro
+      - /home/truenas_admin/.local/share/docker:/var/lib/docker:ro
     restart: unless-stopped
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]

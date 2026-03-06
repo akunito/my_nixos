@@ -26,8 +26,8 @@ ROOT_PROJECTS=("tailscale" "vpn-media")
 # Rootless Docker projects (run as truenas_admin)
 ROOTLESS_PROJECTS=("cloudflared" "npm" "media" "homelab" "exporters" "monitoring")
 
-# UID for rootless Docker socket
-TRUENAS_UID=1000
+# UID for rootless Docker socket (truenas_admin = 950 on TrueNAS SCALE)
+TRUENAS_UID=950
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG"; }
 
