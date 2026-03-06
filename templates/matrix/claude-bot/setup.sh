@@ -39,13 +39,15 @@ echo "Creating Python virtual environment..."
 python3 -m venv "$BOT_DIR/venv"
 
 # Install dependencies (with libolm build paths for E2E encryption)
-echo "Installing Python dependencies..."
-# Resolve libolm nix store path for headers (not symlinked to /run/current-system/sw/include)
+# python-olm needs make, gcc, cmake to build CFFI bindings against system libolm
+echo "Installing Python dependencies (via nix-shell for build tools)..."
 OLM_STORE_PATH="$(readlink -f /run/current-system/sw/lib/libolm.so | sed 's|/lib/libolm.so||')"
-export C_INCLUDE_PATH="${OLM_STORE_PATH}/include"
-export LIBRARY_PATH="/run/current-system/sw/lib"
-"$BOT_DIR/venv/bin/pip" install --upgrade pip
-"$BOT_DIR/venv/bin/pip" install -r "$BOT_DIR/requirements.txt"
+nix-shell -p gnumake gcc cmake pkg-config --run "
+  export C_INCLUDE_PATH='${OLM_STORE_PATH}/include'
+  export LIBRARY_PATH='/run/current-system/sw/lib'
+  '$BOT_DIR/venv/bin/pip' install --upgrade pip
+  '$BOT_DIR/venv/bin/pip' install -r '$BOT_DIR/requirements.txt'
+"
 
 # Create store directory for Matrix client
 mkdir -p "$BOT_DIR/store"
