@@ -35,19 +35,11 @@ let
   planeWorkspaceSlug = systemSettings.planeWorkspaceSlug or "";
 
   # Build the settings.json structure
+  # NOTE: MCP servers are NOT configured here — Claude Code reads them from
+  # .mcp.json (project-scoped) or ~/.claude.json (user-scoped), NOT settings.json.
+  # Plane MCP is configured in .mcp.json with env var references; the actual
+  # credentials are set via home.sessionVariables below.
   settingsJson = {
-    # MCP servers (only include servers with valid credentials)
-    mcpServers = lib.filterAttrs (_: v: v != null) {
-      plane = if planeApiToken != "" then {
-        command = "uvx";
-        args = [ "plane-mcp-server" "stdio" ];
-        env = {
-          PLANE_API_KEY = planeApiToken;
-          PLANE_BASE_URL = planeApiUrl;
-          PLANE_WORKSPACE_SLUG = planeWorkspaceSlug;
-        };
-      } else null;
-    };
     permissions = {
       allow = [
         # Read-only tools (always safe)
@@ -277,8 +269,14 @@ in
     force = true; # Overwrite existing non-HM-managed file
   };
 
-  # Set Perplexity API key as environment variable for MCP server
-  home.sessionVariables = lib.mkIf (perplexityApiKey != "") {
-    PERPLEXITY_API_KEY = perplexityApiKey;
-  };
+  # Set API keys as environment variables for MCP servers (referenced in .mcp.json)
+  home.sessionVariables =
+    lib.optionalAttrs (perplexityApiKey != "") {
+      PERPLEXITY_API_KEY = perplexityApiKey;
+    }
+    // lib.optionalAttrs (planeApiToken != "") {
+      PLANE_API_KEY = planeApiToken;
+      PLANE_BASE_URL = planeApiUrl;
+      PLANE_WORKSPACE_SLUG = planeWorkspaceSlug;
+    };
 }
