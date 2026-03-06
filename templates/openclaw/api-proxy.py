@@ -32,12 +32,27 @@ MINIFLUX_URL = os.environ.get("MINIFLUX_URL", "https://miniflux.local.akunito.co
 MINIFLUX_KEY = os.environ.get("MINIFLUX_OPENCLAW_KEY", "")
 
 # --- Prometheus config ---
-# Prometheus is behind nginx basic auth; use PROMETHEUS_URL with embedded credentials
+# Prometheus is behind nginx basic auth; PROMETHEUS_URL contains embedded credentials
 # e.g. https://user:pass@prometheus.local.akunito.com
-PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", "")
+# urllib can't handle embedded creds, so we parse them out for Basic Auth header.
+_PROMETHEUS_RAW_URL = os.environ.get("PROMETHEUS_URL", "")
+PROMETHEUS_URL = ""
+_PROMETHEUS_AUTH_HEADER = ""
+if _PROMETHEUS_RAW_URL:
+    _prom_parsed = urllib.parse.urlparse(_PROMETHEUS_RAW_URL)
+    if _prom_parsed.username:
+        import base64 as _b64
+        _creds = f"{_prom_parsed.username}:{_prom_parsed.password or ''}"
+        _PROMETHEUS_AUTH_HEADER = "Basic " + _b64.b64encode(_creds.encode()).decode()
+        PROMETHEUS_URL = _prom_parsed._replace(
+            netloc=_prom_parsed.hostname + (f":{_prom_parsed.port}" if _prom_parsed.port else "")
+        ).geturl()
+    else:
+        PROMETHEUS_URL = _PROMETHEUS_RAW_URL
 
 # --- LeftyWorkout config ---
 LEFTYWORKOUT_DB_URL = os.environ.get("LEFTYWORKOUT_DB_URL", "")
+LEFTYWORKOUT_USER_ID = int(os.environ.get("LEFTYWORKOUT_USER_ID", "1"))
 
 # --- Input validation ---
 _UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
@@ -96,7 +111,7 @@ socket.getaddrinfo = _patched_getaddrinfo
 # --- HTTP helpers ---
 def _fetch(url, method="GET", body=None, headers=None, timeout=30):
     data = json.dumps(body).encode() if body else None
-    hdrs = {"Content-Type": "application/json"}
+    hdrs = {"Content-Type": "application/json", "User-Agent": "OpenClaw-ApiProxy/1.0"}
     if headers:
         hdrs.update(headers)
     req = urllib.request.Request(url, data=data, method=method, headers=hdrs)
@@ -304,6 +319,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
     def _prometheus_get(self, parts, params):
         if not parts:
             raise ValueError("Specify: query, query_range, targets, alerts, series")
+        h = {"Authorization": _PROMETHEUS_AUTH_HEADER} if _PROMETHEUS_AUTH_HEADER else {}
         if parts[0] == "query":
             q = params.get("q", "")
             if not q or not self._SAFE_PROMQL_RE.match(q):
@@ -311,7 +327,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
             url = f"{PROMETHEUS_URL}/api/v1/query?query={urllib.parse.quote(q)}"
             if "time" in params:
                 url += f"&time={urllib.parse.quote(params['time'])}"
-            return _fetch(url, timeout=15)
+            return _fetch(url, headers=h, timeout=15)
         if parts[0] == "query_range":
             q = params.get("q", "")
             if not q or not self._SAFE_PROMQL_RE.match(q):
@@ -324,37 +340,62 @@ class ProxyHandler(BaseHTTPRequestHandler):
             url = (f"{PROMETHEUS_URL}/api/v1/query_range?"
                    f"query={urllib.parse.quote(q)}&start={urllib.parse.quote(start)}"
                    f"&end={urllib.parse.quote(end)}&step={urllib.parse.quote(step)}")
-            return _fetch(url, timeout=30)
+            return _fetch(url, headers=h, timeout=30)
         if parts[0] == "targets":
-            return _fetch(f"{PROMETHEUS_URL}/api/v1/targets", timeout=10)
+            return _fetch(f"{PROMETHEUS_URL}/api/v1/targets", headers=h, timeout=10)
         if parts[0] == "alerts":
-            return _fetch(f"{PROMETHEUS_URL}/api/v1/alerts", timeout=10)
+            return _fetch(f"{PROMETHEUS_URL}/api/v1/alerts", headers=h, timeout=10)
         if parts[0] == "series":
             match = params.get("match", "")
             if not match:
                 raise ValueError("match parameter required (e.g. match=up)")
-            return _fetch(f"{PROMETHEUS_URL}/api/v1/series?match[]={urllib.parse.quote(match)}", timeout=10)
+            return _fetch(f"{PROMETHEUS_URL}/api/v1/series?match[]={urllib.parse.quote(match)}", headers=h, timeout=10)
         raise ValueError(f"Unknown Prometheus route: /prometheus/{'/'.join(parts)}")
 
     # --- LeftyWorkout GET (read-only, predefined queries) ---
+    # Schema: routines (user sessions) → routine_rounds → routine_items (sets with kg/reps)
+    # All queries filtered by LEFTYWORKOUT_USER_ID for data isolation.
     _LW_QUERIES = {
-        "workouts": """SELECT w.id, w.name, w.performed_at, w.duration_minutes,
-                       COUNT(we.id) as exercise_count
-                       FROM workouts w LEFT JOIN workout_exercises we ON we.workout_id = w.id
-                       GROUP BY w.id ORDER BY w.performed_at DESC LIMIT 20""",
-        "exercises": """SELECT id, name, muscle_group, equipment
-                       FROM exercises ORDER BY name LIMIT 100""",
-        "stats": """SELECT COUNT(DISTINCT w.id) as total_workouts,
-                    COUNT(DISTINCT DATE(w.performed_at)) as total_days,
-                    ROUND(AVG(w.duration_minutes)::numeric, 1) as avg_duration,
-                    MAX(w.performed_at) as last_workout
-                    FROM workouts w""",
-        "recent_sets": """SELECT w.performed_at, e.name as exercise, ws.sets, ws.reps, ws.weight_kg
-                         FROM workout_sets ws
-                         JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                         JOIN workouts w ON we.workout_id = w.id
-                         JOIN exercises e ON we.exercise_id = e.id
-                         ORDER BY w.performed_at DESC, we.position LIMIT 50""",
+        "routines": (
+            """SELECT r.id, r.name, cd.date, r.status, r.comment,
+                      COUNT(ri.id) as item_count
+               FROM routines r
+               LEFT JOIN calendar_dates cd ON cd.id = r.calendar_date_id
+               LEFT JOIN routine_rounds rr ON rr.routine_id = r.id
+               LEFT JOIN routine_items ri ON ri.routine_round_id = rr.id
+               WHERE r.user_id = %s AND r.archived IS NOT TRUE
+               GROUP BY r.id, cd.date
+               ORDER BY r.created_at DESC LIMIT 20""",
+            (LEFTYWORKOUT_USER_ID,),
+        ),
+        "exercises": (
+            """SELECT id, name, biggroup, "group", exercise_type, equipment
+               FROM exercises
+               WHERE creator_id = %s OR public = TRUE
+               ORDER BY name LIMIT 100""",
+            (LEFTYWORKOUT_USER_ID,),
+        ),
+        "stats": (
+            """SELECT COUNT(DISTINCT r.id) as total_routines,
+                      COUNT(DISTINCT cd.date) as total_days,
+                      MAX(cd.date) as last_session
+               FROM routines r
+               LEFT JOIN calendar_dates cd ON cd.id = r.calendar_date_id
+               WHERE r.user_id = %s AND r.archived IS NOT TRUE""",
+            (LEFTYWORKOUT_USER_ID,),
+        ),
+        "recent_sets": (
+            """SELECT cd.date, r.name as routine_name, e.name as exercise,
+                      ri.kg, ri.reps, ri.time_seconds, ri.calories, ri.order
+               FROM routine_items ri
+               JOIN routine_rounds rr ON rr.id = ri.routine_round_id
+               JOIN routines r ON r.id = rr.routine_id
+               JOIN exercises e ON e.id = ri.exercise_id
+               LEFT JOIN calendar_dates cd ON cd.id = r.calendar_date_id
+               WHERE r.user_id = %s AND ri.archived IS NOT TRUE
+               ORDER BY r.created_at DESC, rr.order, ri.order LIMIT 50""",
+            (LEFTYWORKOUT_USER_ID,),
+        ),
     }
 
     def _leftyworkout_get(self, parts, params):
@@ -370,8 +411,9 @@ class ProxyHandler(BaseHTTPRequestHandler):
             raise ValueError("psycopg2 not installed in mcp-packages")
         conn = psycopg2.connect(LEFTYWORKOUT_DB_URL)
         try:
+            sql, query_params = self._LW_QUERIES[query_name]
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute(self._LW_QUERIES[query_name])
+                cur.execute(sql, query_params)
                 rows = cur.fetchall()
                 return {"query": query_name, "count": len(rows), "results": rows}
         finally:

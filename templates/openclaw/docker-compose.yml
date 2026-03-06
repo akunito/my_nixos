@@ -31,10 +31,11 @@ services:
       # gateway config (see openclaw.json "hooks.token"). This prevents MCP subprocesses
       # from reading the webhook token via environment inspection.
       - PLANE_OPENCLAW_TOKEN=${PLANE_OPENCLAW_TOKEN}
-      - JELLYSEERR_URL=https://jellyseerr.local.akunito.com
+      - JELLYSEERR_URL=http://192.168.20.200:5055
       - JELLYSEERR_OPENCLAW_KEY=${JELLYSEERR_OPENCLAW_KEY}
       - GITHUB_OPENCLAW_TOKEN=${GITHUB_OPENCLAW_TOKEN}
       - LEFTYWORKOUT_DB_URL=${LEFTYWORKOUT_DB_URL}
+      - LEFTYWORKOUT_USER_ID=${LEFTYWORKOUT_USER_ID:-1}
       - MINIFLUX_OPENCLAW_KEY=${MINIFLUX_OPENCLAW_KEY}
       - GITHUB_ALLOWED_OWNERS=akunito
       - GENERIC_TIMEZONE=Europe/Madrid
@@ -104,7 +105,7 @@ services:
       - PLANE_OPENCLAW_TOKEN=${PLANE_OPENCLAW_TOKEN}
       - PLANE_API_URL=https://plane.akunito.com
       - PLANE_WORKSPACE_SLUG=akuworkspace
-      - JELLYSEERR_URL=https://jellyseerr.local.akunito.com
+      - JELLYSEERR_URL=http://192.168.20.200:5055
       - JELLYSEERR_OPENCLAW_KEY=${JELLYSEERR_OPENCLAW_KEY}
       - GITHUB_OPENCLAW_TOKEN=${GITHUB_OPENCLAW_TOKEN}
       - GITHUB_ALLOWED_OWNERS=akunito
@@ -112,6 +113,7 @@ services:
       - MINIFLUX_OPENCLAW_KEY=${MINIFLUX_OPENCLAW_KEY}
       - PROMETHEUS_URL=${PROMETHEUS_URL}
       - LEFTYWORKOUT_DB_URL=${LEFTYWORKOUT_DB_URL}
+      - LEFTYWORKOUT_USER_ID=${LEFTYWORKOUT_USER_ID:-1}
     volumes:
       - ${HOME}/.openclaw/mcp:/home/node/.openclaw/mcp:ro
       - ${HOME}/.openclaw/mcp-packages:/home/node/.openclaw/mcp-packages:ro
