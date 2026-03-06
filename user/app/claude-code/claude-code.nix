@@ -266,11 +266,38 @@ in
     pkgs.git-crypt                 # Transparent file encryption in git
   ];
 
-  # Declaratively manage ~/.claude/settings.json
-  home.file.".claude/settings.json" = {
+  # Generate settings JSON as a base reference file (for the activation script to copy from)
+  # This is NOT the actual settings.json — it's a template stored in ~/.config/
+  xdg.configFile."claude-settings-base.json" = {
     text = builtins.toJSON settingsJson;
-    force = true; # Overwrite existing non-HM-managed file
   };
+
+  # Copy settings.json as a writable file (not a symlink) so Claude Code can modify it
+  # (e.g., "don't ask again" permissions). Only writes on first setup or migration from symlink.
+  # To force-regenerate: rm ~/.claude/settings.json && sync-user.sh
+  home.activation.claudeCodeSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    settings_file="$HOME/.claude/settings.json"
+    base_file="$HOME/.config/claude-settings-base.json"
+
+    if [ -L "$settings_file" ]; then
+      # Migration: replace Nix store symlink with a writable copy
+      echo "Claude Code: Migrating settings.json from symlink to writable file"
+      cp -L "$settings_file" "$settings_file.bak"
+      rm "$settings_file"
+      cp "$base_file" "$settings_file"
+      chmod 644 "$settings_file"
+      echo "Claude Code: Backup saved to settings.json.bak"
+    elif [ ! -f "$settings_file" ]; then
+      # First-time setup: create from base
+      mkdir -p "$HOME/.claude"
+      cp "$base_file" "$settings_file"
+      chmod 644 "$settings_file"
+      echo "Claude Code: Generated writable settings.json"
+    else
+      # Already a regular file: don't touch it (preserve user changes)
+      echo "Claude Code: settings.json exists (preserving user changes)"
+    fi
+  '';
 
   # Set API keys as environment variables for MCP servers (referenced in .mcp.json)
   home.sessionVariables =
