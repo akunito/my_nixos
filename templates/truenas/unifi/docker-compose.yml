@@ -1,0 +1,64 @@
+# UniFi Network Application - TrueNAS Docker (FALLBACK)
+# NOT auto-started. Manual use only when VPS UniFi is unavailable.
+# Start: cd /mnt/ssdpool/docker/compose/unifi && sudo docker compose up -d
+# Stop:  cd /mnt/ssdpool/docker/compose/unifi && sudo docker compose down
+
+services:
+  unifi-mongodb:
+    image: mongo:4.4
+    container_name: unifi-mongodb
+    restart: unless-stopped
+    volumes:
+      - ./mongodb/data:/data/db
+      - ./mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    environment:
+      TZ: Europe/Warsaw
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  unifi-network-app:
+    image: lscr.io/linuxserver/unifi-network-application:latest
+    container_name: unifi-network-app
+    depends_on:
+      - unifi-mongodb
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - MONGO_HOST=unifi-mongodb
+      - MONGO_PORT=27017
+      - MONGO_DBNAME=unifi
+      - MONGO_USER=unifi
+      - MONGO_PASS=${UNIFI_MONGO_PASS}
+    ports:
+      - "8443:8443"       # Web UI (HTTPS)
+      - "3478:3478/udp"   # STUN
+      - "10001:10001/udp" # AP discovery
+      - "8080:8080"       # Device inform
+    volumes:
+      - ./config:/config
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "2"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -kf https://localhost:8443 || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G

@@ -131,26 +131,27 @@ The DNS Resolver uses Unbound with local host overrides and pfBlockerNG integrat
 
 ### Host Overrides
 
-Most `*.local.akunito.com` domains resolve to **192.168.20.201** (TrueNAS NPM macvlan):
+Most `*.local.akunito.com` domains resolve to **192.168.20.200** (TrueNAS NPM, bridge networking):
 
-> **Updated Feb 2026**: DNS overrides changed from 192.168.8.102 (old LXC_proxy, decommissioned) to 192.168.20.201 (TrueNAS NPM on macvlan).
+> **Updated Mar 2026**: DNS overrides changed from 192.168.20.201 (macvlan) to 192.168.20.200 (bridge) as part of rootless Docker migration. Previously changed from 192.168.8.102 (old LXC_proxy) in Feb 2026.
 
 | Domain | IP | Service |
 |--------|-----|---------|
-| `jellyfin.local.akunito.com` | 192.168.20.201 | Jellyfin (TrueNAS) |
-| `sonarr.local.akunito.com` | 192.168.20.201 | Sonarr (TrueNAS) |
-| `radarr.local.akunito.com` | 192.168.20.201 | Radarr (TrueNAS) |
-| `prowlarr.local.akunito.com` | 192.168.20.201 | Prowlarr (TrueNAS) |
-| `bazarr.local.akunito.com` | 192.168.20.201 | Bazarr (TrueNAS) |
-| `jellyseerr.local.akunito.com` | 192.168.20.201 | Jellyseerr (TrueNAS) |
-| `calibre.local.akunito.com` | 192.168.20.201 | Calibre-Web (TrueNAS) |
-| `emulatorjs.local.akunito.com` | 192.168.20.201 | EmulatorJS (TrueNAS) |
-| `uptime.local.akunito.com` | 192.168.20.201 | Uptime Kuma (TrueNAS) |
-| `qbt.local.akunito.com` | 192.168.20.201 | qBittorrent (TrueNAS) |
-| `grafana.local.akunito.com` | 192.168.20.201 | Grafana (VPS, proxied via TrueNAS NPM) |
-| `prometheus.local.akunito.com` | 192.168.20.201 | Prometheus (VPS, proxied via TrueNAS NPM) |
+| `jellyfin.local.akunito.com` | 192.168.20.200 | Jellyfin (TrueNAS) |
+| `sonarr.local.akunito.com` | 192.168.20.200 | Sonarr (TrueNAS) |
+| `radarr.local.akunito.com` | 192.168.20.200 | Radarr (TrueNAS) |
+| `prowlarr.local.akunito.com` | 192.168.20.200 | Prowlarr (TrueNAS) |
+| `bazarr.local.akunito.com` | 192.168.20.200 | Bazarr (TrueNAS) |
+| `jellyseerr.local.akunito.com` | 192.168.20.200 | Jellyseerr (TrueNAS) |
+| `calibre.local.akunito.com` | 192.168.20.200 | Calibre-Web (TrueNAS) |
+| `emulatorjs.local.akunito.com` | 192.168.20.200 | EmulatorJS (TrueNAS) |
+| `uptime.local.akunito.com` | 192.168.20.200 | Uptime Kuma (TrueNAS) |
+| `qbt.local.akunito.com` | 192.168.20.200 | qBittorrent (TrueNAS) |
+| `grafana.local.akunito.com` | 192.168.20.200 | Grafana (VPS, proxied via TrueNAS NPM) |
+| `prometheus.local.akunito.com` | 192.168.20.200 | Prometheus (VPS, proxied via TrueNAS NPM) |
+| `truenas.local.akunito.com` | 192.168.20.200 | TrueNAS Web UI (port 9443) |
 
-**Pattern**: `*.local.akunito.com` → `192.168.20.201` (TrueNAS NPM macvlan)
+**Pattern**: `*.local.akunito.com` → `192.168.20.200` (TrueNAS NPM, bridge networking)
 **Note**: Monitoring services (Grafana, Prometheus) run on VPS but are accessed locally via TrueNAS NPM reverse proxy.
 
 ---

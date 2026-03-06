@@ -13,7 +13,7 @@
 #
 set -euo pipefail
 
-COMPOSE_DIR="/mnt/ssdpool/docker/compose/media"
+COMPOSE_DIR="/mnt/ssdpool/docker/compose/vpn-media"
 CONTAINER="gluetun"
 DEPENDENT="qbittorrent"
 COOLDOWN_FILE="/tmp/vpn-watchdog-last-restart"

@@ -10,7 +10,7 @@ status: published
 
 ## Overview
 
-TrueNAS SCALE runs 15 Docker containers across 6 compose projects at `/mnt/ssdpool/docker/compose/`.
+TrueNAS SCALE runs ~21 Docker containers using a hybrid root + rootless Docker setup at `/mnt/ssdpool/docker/compose/`.
 
 | Property | Value |
 |----------|-------|
@@ -21,49 +21,68 @@ TrueNAS SCALE runs 15 Docker containers across 6 compose projects at `/mnt/ssdpo
 
 ## Compose Projects (Startup Order)
 
-### 1. tailscale
+### Root Docker (sudo docker — NET_ADMIN required)
 
-VPN subnet router (`--net=host`). Advertises 192.168.8.0/24 + 192.168.20.0/24 to Headscale mesh.
+#### 1. tailscale
 
-### 2. cloudflared
+VPN subnet router (`--net=host`, NET_ADMIN). Advertises 192.168.8.0/24 + 192.168.20.0/24 to Headscale mesh.
 
-Cloudflare tunnel for remote access to `*.local.akunito.com` services. Token in `.env`.
-
-### 3. npm (Nginx Proxy Manager)
-
-Reverse proxy on macvlan network (192.168.20.201). Ports 80/81/443. Connected to `homelab_default`, `media_default` Docker networks for container DNS resolution.
-
-### 4. media (9 containers)
+#### 2. vpn-media (2 containers)
 
 | Container | Port | Notes |
 |-----------|------|-------|
-| jellyfin | 8096 | Media server, /data:ro |
+| gluetun | — | VPN tunnel (NET_ADMIN + /dev/net/tun) |
+| qbittorrent | 8085 | Via gluetun network namespace |
+
+### Rootless Docker (DOCKER_HOST=unix:///run/user/1000/docker.sock)
+
+#### 3. cloudflared
+
+Cloudflare tunnel for remote access to `*.local.akunito.com` services. Token in `.env`. Outbound-only — no host network needed.
+
+#### 4. npm (Nginx Proxy Manager)
+
+Reverse proxy on bridge networking (192.168.20.200). Ports 80/81/443. Connected to `media_default` Docker network for container DNS resolution.
+
+> **Migrated Mar 2026**: Previously used macvlan (192.168.20.201). Moved to bridge as part of rootless Docker migration.
+
+#### 5. media (7 containers)
+
+| Container | Port | Notes |
+|-----------|------|-------|
+| jellyfin | 8096 | Media server, /data:ro, GPU passthrough |
 | sonarr | 8989 | TV automation |
 | radarr | 7878 | Movie automation |
 | bazarr | 6767 | Subtitles |
 | prowlarr | 9696 | Indexer management |
 | jellyseerr | 5055 | Request management |
-| qbittorrent | 8080 | Via gluetun VPN |
-| gluetun | — | VPN tunnel for downloads |
-| flaresolverr | 8191 | Captcha solver |
+| solvearr | 8191 | Captcha solver |
 
 **Storage**: All media containers mount `ssdpool/media` as `/data` — ONE ZFS dataset with both media and torrents as plain dirs. Hardlinks work for Sonarr/Radarr imports.
 
-### 5. homelab (0 of 8 enabled — all migrated to VPS)
+#### 6. homelab (0 of 8 enabled — all migrated to VPS)
 
 All services migrated to VPS. Compose project kept for NPM `homelab_default` network connectivity.
 
 **Migrated**: calibre-web (Mar 2026), romm (Feb 2026), nextcloud, syncthing, obsidian-remote, redis-local
 
-### 6. exporters (4 containers)
+#### 7. exporters (4 containers)
 
 Exportarr instances for Sonarr, Radarr, Prowlarr, Bazarr. Scraped by VPS Prometheus via Tailscale.
 
-## NOT Started
+#### 8. monitoring (2 containers)
 
-- **unifi** — running on VPS (unifi.akunito.com)
+| Container | Port | Notes |
+|-----------|------|-------|
+| node-exporter | 9100 | Host metrics for Prometheus |
+| cadvisor | 8081 | Rootless Docker container metrics |
+
+Scraped by VPS Prometheus via Tailscale/WireGuard.
+
+## NOT Auto-Started
+
+- **unifi** — fallback controller (manual start only, VPS runs primary)
 - **pihole** — deleted
-- **monitoring** — legacy, replaced by VPS Prometheus
 - **gameservers** — not deployed
 
 ## Storage Layout

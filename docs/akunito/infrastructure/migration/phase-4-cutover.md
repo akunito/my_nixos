@@ -26,20 +26,20 @@ Before shutting down LXC_monitoring, VPS monitoring was verified fully operation
 
 ## Phase 4b: NPM on TrueNAS
 
-Deployed Nginx Proxy Manager on TrueNAS with macvlan networking for `*.local.akunito.com`:
+Deployed Nginx Proxy Manager on TrueNAS for `*.local.akunito.com`:
 
 | Setting | Value |
 |---------|-------|
-| Network | macvlan (npm_macvlan), parent=bond0 |
-| IP | 192.168.20.201 |
+| Network | Bridge (rootless Docker) — was macvlan, migrated Mar 2026 |
+| Host IP | 192.168.20.200 |
 | Ports | 80, 81 (admin), 443 |
 | Compose | /mnt/ssdpool/docker/compose/npm/ |
 
 **NPM connected to Docker service networks** for direct container DNS resolution:
-- `homelab_default`, `media_default`, `uptime-kuma_default`
+- `media_default`
 - Nginx reloaded after network connections to pick up DNS entries
 
-**pfSense DNS updated**: `*.local.akunito.com` → 192.168.20.201 (was 192.168.8.102 / old LXC_proxy)
+**pfSense DNS updated**: `*.local.akunito.com` → 192.168.20.200 (was .201 macvlan Mar 2026; was 192.168.8.102 / old LXC_proxy Feb 2026)
 
 **Proxy hosts configured** on TrueNAS NPM:
 
@@ -60,7 +60,7 @@ VPS services forwarded to VPS Tailscale IP (100.64.0.6) via NPM proxy hosts.
 
 **SSL**: Wildcard cert `*.local.akunito.com` via DNS-01 Cloudflare API.
 
-**macvlan-shim**: POSTINIT script (ID 3) creates shim interface for host ↔ NPM communication.
+**Note**: macvlan-shim POSTINIT script (ID 3) is no longer needed — removed as part of bridge migration (Mar 2026).
 
 ## Phase 4c: Cloudflare Tunnel on TrueNAS
 
@@ -97,7 +97,7 @@ All TrueNAS services route email through VPS Postfix relay:
 All Cloudflare tunnel routes verified for VPS services:
 - plane, matrix, element, nextcloud, freshrss, grafana, headscale, portfolio, liftcraft, syncthing, obsidian, unifi
 
-pfSense DNS: `*.local.akunito.com` → 192.168.20.201 (TrueNAS NPM)
+pfSense DNS: `*.local.akunito.com` → 192.168.20.200 (TrueNAS NPM, bridge networking)
 
 ## Phase 4g: LXC Shutdown Sequence
 

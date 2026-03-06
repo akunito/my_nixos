@@ -2,7 +2,7 @@
 id: infrastructure.services.proxy
 summary: "Proxy stack: NPM on TrueNAS, cloudflared on VPS and TrueNAS"
 tags: [infrastructure, proxy, npm, cloudflare, truenas, vps]
-date: 2026-02-23
+date: 2026-03-06
 status: published
 ---
 
@@ -15,7 +15,7 @@ Two-tier proxy setup:
 | Tier | Location | Domains | Method |
 |------|----------|---------|--------|
 | Public | VPS | *.akunito.com | cloudflared → NPM (127.0.0.1) → service |
-| Local | TrueNAS | *.local.akunito.com | pfSense DNS → NPM (macvlan 192.168.20.201) → service |
+| Local | TrueNAS | *.local.akunito.com | pfSense DNS → NPM (bridge 192.168.20.200) → service |
 
 ## Traffic Flows
 
@@ -23,7 +23,7 @@ Two-tier proxy setup:
 
 **External → TrueNAS service**: Internet → Cloudflare CDN → TrueNAS cloudflared → localhost service
 
-**Local → TrueNAS service**: Client → pfSense DNS (*.local.akunito.com → 192.168.20.201) → TrueNAS NPM → backend
+**Local → TrueNAS service**: Client → pfSense DNS (*.local.akunito.com → 192.168.20.200) → TrueNAS NPM → backend
 
 **Local → VPS service**: Client → *.akunito.com → Cloudflare → VPS (~22ms added, acceptable)
 
@@ -36,22 +36,20 @@ Two-tier proxy setup:
 
 ## TrueNAS Proxy
 
-### NPM (macvlan)
+### NPM (bridge networking)
 
 | Setting | Value |
 |---------|-------|
-| Network | npm_macvlan, driver=macvlan, parent=bond0 |
-| IP | 192.168.20.201 |
-| Subnet | 192.168.20.0/24 |
-| Gateway | 192.168.20.1 |
+| Network | Default bridge (rootless Docker) |
+| Host IP | 192.168.20.200 |
 | Ports | 80, 81 (admin), 443 |
 | Compose | /mnt/ssdpool/docker/compose/npm/ |
 
-NPM is connected to Docker service networks for direct container access:
-- `homelab_default`, `media_default`, `uptime-kuma_default`
-- Allows NPM to proxy to containers by name (Docker DNS)
+NPM runs on the same rootless Docker daemon as media containers, sharing the Docker network.
+NPM is connected to `media_default` for Docker DNS resolution to media containers.
 
-**macvlan-shim**: POSTINIT script (ID 3) creates a shim interface for host ↔ NPM communication.
+> **Migrated Mar 2026**: Previously used macvlan (192.168.20.201). Moved to bridge networking
+> as part of rootless Docker migration. pfSense DNS updated from .201 → .200.
 
 ### SSL Certificates
 
@@ -71,6 +69,7 @@ Wildcard cert `*.local.akunito.com` via DNS-01 challenge with Cloudflare API tok
 | emulatorjs.local.akunito.com | emulatorjs | 3000 |
 | uptime.local.akunito.com | uptime-kuma | 3001 |
 | qbt.local.akunito.com | gluetun | 8080 |
+| truenas.local.akunito.com | https://192.168.20.200:9443 | 9443 |
 
 VPS services also proxied via NPM, forwarding to VPS Tailscale IP (100.64.0.6).
 
@@ -83,7 +82,7 @@ Provides remote access to `*.local.akunito.com` via Cloudflare tunnel:
 
 ## pfSense DNS
 
-`*.local.akunito.com` → 192.168.20.201 (was 192.168.8.102 / old LXC_proxy, updated Feb 2026)
+`*.local.akunito.com` → 192.168.20.200 (was .201 macvlan, updated Mar 2026; was 192.168.8.102 / old LXC_proxy, updated Feb 2026)
 
 ## Previous Setup
 

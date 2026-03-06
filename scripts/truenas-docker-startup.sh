@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# TrueNAS Docker Startup Script
+# TrueNAS Docker Startup Script (Hybrid: Root + Rootless)
 # Starts all Docker services on TrueNAS in the correct order
 #
 # Usage:
@@ -8,15 +8,20 @@
 #   truenas-docker-startup.sh --stop           # Stop all services (graceful)
 #   truenas-docker-startup.sh --no-sync        # Start without syncing compose files
 #
-# Compose projects and their start order:
-#   1. tailscale      - VPN connectivity (needed by other services)
-#   2. cloudflared    - Cloudflare tunnel (external access)
-#   3. npm            - Nginx Proxy Manager (reverse proxy, needs macvlan)
-#   4. media          - Media stack (jellyfin, *arr, gluetun)
-#   5. homelab        - (all services migrated to VPS, compose kept for NPM network)
-#   6. exporters      - Prometheus exporters for *arr stack
+# Architecture:
+#   ROOT Docker (sudo docker):
+#     1. tailscale      - VPN subnet router (NET_ADMIN on host netns)
+#     2. vpn-media      - gluetun + qbittorrent (NET_ADMIN + /dev/net/tun)
 #
-# A suspend/resume hook is deployed to /usr/lib/systemd/system-sleep/ to
+#   ROOTLESS Docker (docker with DOCKER_HOST):
+#     3. cloudflared    - Cloudflare tunnel (outbound-only)
+#     4. npm            - Nginx Proxy Manager (bridge, ports 80/443/81)
+#     5. media          - Media stack (jellyfin, *arr)
+#     6. homelab        - (all services migrated to VPS, compose kept for NPM network)
+#     7. exporters      - Prometheus exporters for *arr stack
+#     8. monitoring     - node-exporter + cadvisor
+#
+# A suspend/resume hook is deployed to /etc/systemd/system/ to
 # gracefully stop containers before S3 suspend and restart them after wake.
 # A VPN watchdog cron is deployed to auto-recover gluetun after non-suspend VPN drops.
 #
@@ -31,8 +36,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMPLATES_DIR="$REPO_ROOT/templates/truenas"
 
-# Active compose projects (order matters for startup)
-PROJECTS=("tailscale" "cloudflared" "npm" "media" "homelab" "exporters")
+# Root Docker projects (require NET_ADMIN / host netns)
+ROOT_PROJECTS=("tailscale" "vpn-media")
+
+# Rootless Docker projects (no host namespace requirements)
+ROOTLESS_PROJECTS=("cloudflared" "npm" "media" "homelab" "exporters" "monitoring")
+
+# All projects for sync (includes non-auto-started projects like unifi)
+ALL_TEMPLATE_PROJECTS=("tailscale" "vpn-media" "cloudflared" "npm" "media" "homelab" "exporters" "monitoring" "unifi")
 
 # ============================================================================
 # Parse arguments
@@ -80,6 +91,34 @@ run_cmd() {
 }
 
 # ============================================================================
+# Docker command helpers
+# ============================================================================
+
+# Run a root Docker command (sudo docker)
+root_docker() {
+    run_cmd "sudo docker $*"
+}
+
+# Run a root Docker Compose command in a project directory
+root_compose() {
+    local project="$1"
+    shift
+    run_cmd "cd $COMPOSE_ROOT/$project && sudo docker compose $*"
+}
+
+# Run a rootless Docker command (user's Docker daemon)
+rootless_docker() {
+    run_cmd "DOCKER_HOST=unix:///run/user/\$(id -u)/docker.sock docker $*"
+}
+
+# Run a rootless Docker Compose command in a project directory
+rootless_compose() {
+    local project="$1"
+    shift
+    run_cmd "cd $COMPOSE_ROOT/$project && DOCKER_HOST=unix:///run/user/\$(id -u)/docker.sock docker compose $*"
+}
+
+# ============================================================================
 # Sync compose files from repo to TrueNAS
 # ============================================================================
 
@@ -91,7 +130,7 @@ sync_compose_files() {
 
     log "Syncing compose files from repo to TrueNAS..."
 
-    for project in "${PROJECTS[@]}"; do
+    for project in "${ALL_TEMPLATE_PROJECTS[@]}"; do
         local src="$TEMPLATES_DIR/$project/docker-compose.yml"
         if [[ ! -f "$src" ]]; then
             log "  SKIP $project (no template in repo)"
@@ -100,7 +139,9 @@ sync_compose_files() {
 
         if is_local; then
             # Running on TrueNAS — copy directly
-            local dest="$COMPOSE_ROOT/$project/docker-compose.yml"
+            local dest_dir="$COMPOSE_ROOT/$project"
+            local dest="$dest_dir/docker-compose.yml"
+            mkdir -p "$dest_dir"
             if ! diff -q "$src" "$dest" >/dev/null 2>&1; then
                 cp "$src" "$dest"
                 log "  UPDATED $project"
@@ -110,6 +151,7 @@ sync_compose_files() {
         else
             # Running remotely — scp to TrueNAS
             local dest="$COMPOSE_ROOT/$project/docker-compose.yml"
+            run_cmd "mkdir -p $COMPOSE_ROOT/$project"
             local remote_content
             remote_content=$(ssh truenas_admin@${TRUENAS_HOST} "cat $dest 2>/dev/null" || echo "")
             local local_content
@@ -133,10 +175,17 @@ sync_compose_files() {
 show_status() {
     log "Docker container status on TrueNAS:"
     echo ""
-    run_cmd "sudo docker ps -a --format 'table {{.Names}}\t{{.Status}}' | sort"
+    echo "=== Root Docker containers ==="
+    root_docker "ps -a --format 'table {{.Names}}\t{{.Status}}'" 2>/dev/null | sort || echo "(root Docker not available)"
+    echo ""
+    echo "=== Rootless Docker containers ==="
+    rootless_docker "ps -a --format 'table {{.Names}}\t{{.Status}}'" 2>/dev/null | sort || echo "(rootless Docker not available)"
     echo ""
     log "Compose projects:"
-    run_cmd "sudo docker compose ls -a"
+    echo "  Root:"
+    root_docker "compose ls -a" 2>/dev/null || echo "  (none)"
+    echo "  Rootless:"
+    rootless_docker "compose ls -a" 2>/dev/null || echo "  (none)"
 }
 
 # ============================================================================
@@ -146,17 +195,25 @@ show_status() {
 stop_all() {
     log "Stopping all Docker services on TrueNAS..."
 
-    # Reverse order for shutdown
-    local reversed=()
-    for ((i=${#PROJECTS[@]}-1; i>=0; i--)); do
-        reversed+=("${PROJECTS[$i]}")
-    done
-
-    for project in "${reversed[@]}"; do
+    # Stop rootless first (reverse order)
+    log "--- Stopping rootless containers ---"
+    for ((i=${#ROOTLESS_PROJECTS[@]}-1; i>=0; i--)); do
+        local project="${ROOTLESS_PROJECTS[$i]}"
         local compose_file="$COMPOSE_ROOT/$project/docker-compose.yml"
         if run_cmd "test -f $compose_file" 2>/dev/null; then
-            log "Stopping $project..."
-            run_cmd "cd $COMPOSE_ROOT/$project && sudo docker compose down" 2>/dev/null || true
+            log "Stopping $project (rootless)..."
+            rootless_compose "$project" "down" 2>/dev/null || true
+        fi
+    done
+
+    # Stop root containers (reverse order)
+    log "--- Stopping root containers ---"
+    for ((i=${#ROOT_PROJECTS[@]}-1; i>=0; i--)); do
+        local project="${ROOT_PROJECTS[$i]}"
+        local compose_file="$COMPOSE_ROOT/$project/docker-compose.yml"
+        if run_cmd "test -f $compose_file" 2>/dev/null; then
+            log "Stopping $project (root)..."
+            root_compose "$project" "down" 2>/dev/null || true
         fi
     done
 
@@ -164,33 +221,10 @@ stop_all() {
 }
 
 # ============================================================================
-# Ensure macvlan network exists for NPM
-# ============================================================================
-
-ensure_macvlan() {
-    local exists
-    exists=$(run_cmd "sudo docker network ls --format '{{.Name}}' | grep -c '^npm_macvlan$'" 2>/dev/null || echo "0")
-
-    if [[ "$exists" -eq 0 ]]; then
-        log "Creating macvlan network for NPM..."
-        run_cmd "sudo docker network create \
-            --driver=macvlan \
-            --subnet=192.168.20.0/24 \
-            --gateway=192.168.20.1 \
-            --ip-range=192.168.20.201/32 \
-            -o parent=bond0 \
-            npm_macvlan" 2>/dev/null
-        log_ok "macvlan network created"
-    else
-        log_ok "macvlan network already exists"
-    fi
-}
-
-# ============================================================================
 # Start services
 # ============================================================================
 
-start_project() {
+start_root_project() {
     local name="$1"
     local extra_args="${2:-}"
 
@@ -200,27 +234,46 @@ start_project() {
         return 1
     fi
 
-    log "Starting $name..."
-    if run_cmd "cd $COMPOSE_ROOT/$name && sudo docker compose up -d $extra_args" 2>/dev/null; then
-        log_ok "$name started"
+    log "Starting $name (root)..."
+    if root_compose "$name" "up -d $extra_args" 2>/dev/null; then
+        log_ok "$name started (root)"
     else
-        log_error "$name failed to start"
+        log_error "$name failed to start (root)"
+        return 1
+    fi
+}
+
+start_rootless_project() {
+    local name="$1"
+    local extra_args="${2:-}"
+
+    local compose_file="$COMPOSE_ROOT/$name/docker-compose.yml"
+    if ! run_cmd "test -f $compose_file" 2>/dev/null; then
+        log_error "$name: compose file not found ($compose_file)"
+        return 1
+    fi
+
+    log "Starting $name (rootless)..."
+    if rootless_compose "$name" "up -d $extra_args" 2>/dev/null; then
+        log_ok "$name started (rootless)"
+    else
+        log_error "$name failed to start (rootless)"
         return 1
     fi
 }
 
 connect_npm_to_networks() {
     log "Connecting NPM to service networks..."
-    local networks=("homelab_default" "media_default")
+    local networks=("media_default")
     for net in "${networks[@]}"; do
-        if run_cmd "sudo docker network connect $net nginx-proxy-manager" 2>/dev/null; then
+        if rootless_docker "network connect $net nginx-proxy-manager" 2>/dev/null; then
             log_ok "NPM connected to $net"
         else
             log "NPM already connected to $net (or network not found)"
         fi
     done
     # Reload nginx to pick up new DNS entries
-    run_cmd "sudo docker exec nginx-proxy-manager nginx -s reload" 2>/dev/null || true
+    rootless_docker "exec nginx-proxy-manager nginx -s reload" 2>/dev/null || true
 }
 
 deploy_suspend_hook() {
@@ -316,6 +369,7 @@ start_all() {
 
     echo "=========================================="
     echo " TrueNAS Docker Services Startup"
+    echo " (Hybrid: Root + Rootless)"
     echo "=========================================="
     echo ""
 
@@ -325,37 +379,48 @@ start_all() {
         echo ""
     fi
 
+    # === ROOT DOCKER ===
+    log "--- Starting root Docker containers ---"
+
     # 1. Tailscale (VPN connectivity)
-    start_project "tailscale" || ((failures++))
+    start_root_project "tailscale" || ((failures++))
 
-    # 2. Cloudflared (Cloudflare tunnel)
-    start_project "cloudflared" || ((failures++))
+    # 2. VPN-media (gluetun + qbittorrent)
+    start_root_project "vpn-media" || ((failures++))
 
-    # 3. NPM (needs macvlan network)
-    ensure_macvlan
-    start_project "npm" || ((failures++))
+    echo ""
 
-    # 4. Media stack (jellyfin, *arr, gluetun)
+    # === ROOTLESS DOCKER ===
+    log "--- Starting rootless Docker containers ---"
+
+    # 3. Cloudflared (Cloudflare tunnel)
+    start_rootless_project "cloudflared" || ((failures++))
+
+    # 4. NPM (bridge networking, ports 80/443/81)
+    start_rootless_project "npm" || ((failures++))
+
+    # 5. Media stack (jellyfin, *arr)
     # Force recreate: media stack mounts ssdpool (encrypted) which may not have
     # been available when containers auto-started on boot. Stale bind mounts
     # cause empty /data inside containers. Force-recreate ensures fresh mounts.
-    start_project "media" "--force-recreate" || ((failures++))
+    start_rootless_project "media" "--force-recreate" || ((failures++))
 
-    # 5. Homelab (all migrated to VPS — compose has no active services)
-    start_project "homelab" || ((failures++))
+    # 6. Homelab (all migrated to VPS — compose has no active services)
+    start_rootless_project "homelab" || ((failures++))
 
-    # 6. Exporters (needs media network to be up)
-    start_project "exporters" || ((failures++))
+    # 7. Exporters (needs media network to be up)
+    start_rootless_project "exporters" || ((failures++))
 
-    # 7. Connect NPM to service networks (for reverse proxying via Docker DNS)
-    # NPM runs on macvlan and can't reach host-published ports. It needs direct
-    # Docker network access to proxy to containers by name.
+    # 8. Monitoring (node-exporter + cadvisor)
+    start_rootless_project "monitoring" || ((failures++))
+
+    # 9. Connect NPM to media network (for reverse proxying via Docker DNS)
     connect_npm_to_networks
 
-    # 8. Deploy VPN watchdog cron (auto-recovers gluetun after non-suspend VPN drops)
+    # 10. Deploy VPN watchdog cron (auto-recovers gluetun after non-suspend VPN drops)
     deploy_vpn_watchdog
 
-    # 9. Deploy suspend/resume hook (stops containers before S3, restarts after wake)
+    # 11. Deploy suspend/resume hook (stops containers before S3, restarts after wake)
     deploy_suspend_hook
 
     echo ""

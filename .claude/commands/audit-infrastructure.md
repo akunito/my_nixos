@@ -47,11 +47,11 @@ ssh -A -p 56777 akunito@100.64.0.6 "free -h && echo '---' && uptime"
 # List running Docker containers (19 expected)
 ssh truenas_admin@192.168.20.200 "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
 
-# Docker networks (check macvlan for NPM)
-ssh truenas_admin@192.168.20.200 "docker network ls"
+# Docker networks (rootless + root)
+ssh truenas_admin@192.168.20.200 "docker network ls && echo '--- Root ---' && sudo docker network ls"
 
-# Check NPM macvlan IP (192.168.20.201)
-ssh truenas_admin@192.168.20.200 "docker inspect npm --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'" 2>/dev/null
+# Check NPM is accessible on bridge (port 81)
+ssh truenas_admin@192.168.20.200 "curl -sf http://localhost:81 > /dev/null && echo 'NPM OK' || echo 'NPM FAIL'"
 
 # Check Tailscale subnet router
 ssh truenas_admin@192.168.20.200 "docker ps --filter 'name=tailscale' --format 'table {{.Names}}\t{{.Status}}'"

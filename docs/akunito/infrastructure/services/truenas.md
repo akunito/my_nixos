@@ -78,9 +78,9 @@ TrueNAS runs **15 Docker containers** across **6 compose projects** for media, l
 
 See [TrueNAS Docker Services](./truenas-services.md) for full details.
 
-**Key services**: Jellyfin, *arr stack (Sonarr/Radarr/Prowlarr/Bazarr), qBittorrent, NPM (macvlan 192.168.20.201), cloudflared, Tailscale (subnet router), exportarr instances.
+**Key services**: Jellyfin, *arr stack (Sonarr/Radarr/Prowlarr/Bazarr), qBittorrent, NPM (bridge on 192.168.20.200), cloudflared, Tailscale (subnet router), exportarr instances, node-exporter, cadvisor.
 
-**NPM Macvlan**: NPM runs on a macvlan network (`npm_macvlan`) with IP 192.168.20.201 on VLAN 100. pfSense DNS resolves `*.local.akunito.com` → 192.168.20.201.
+**NPM**: NPM runs on bridge networking (rootless Docker) with ports 80/443/81 on host 192.168.20.200. pfSense DNS resolves `*.local.akunito.com` → 192.168.20.200.
 
 **Management**:
 ```bash

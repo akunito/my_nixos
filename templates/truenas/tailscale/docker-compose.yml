@@ -1,5 +1,5 @@
-# Tailscale - TrueNAS Docker
-# Subnet router for Headscale mesh VPN
+# Tailscale - TrueNAS Docker (ROOT daemon)
+# Subnet router for Headscale mesh VPN — requires NET_ADMIN on host netns.
 # Advertises 192.168.8.0/24 (LAN) and 192.168.20.0/24 (VLAN 100)
 #
 # State is bind-mounted to ssdpool so it persists across container
@@ -27,3 +27,13 @@ services:
       options:
         max-size: 10m
         max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "tailscale status --json | jq -e .Self.Online"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M

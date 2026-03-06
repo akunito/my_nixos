@@ -67,16 +67,21 @@ DECOMMISSIONED (Feb 2026):
 | Pools | ssdpool (RAIDZ1, 4x 2TB SSD), extpool (~4TB USB NVMe) |
 | VLAN 20 | 192.168.20.200 (bond0) |
 | LAN | 192.168.8.200 (enp10s0) |
-| NPM macvlan | 192.168.20.201 |
+| NPM | Bridge on 192.168.20.200 (ports 80/443/81) |
 
-**Docker containers (19, 7 compose projects)**:
+**Docker containers (21, hybrid root + rootless)**:
+
+Root Docker (3 containers, 2 compose projects):
 1. **tailscale** — subnet router (192.168.8.0/24 + 192.168.20.0/24)
-2. **cloudflared** — remote access to *.local.akunito.com
-3. **npm** — reverse proxy (macvlan 192.168.20.201)
-4. **media** (9): jellyfin, sonarr, radarr, bazarr, prowlarr, jellyseerr, qbittorrent, gluetun, flaresolverr
-5. **homelab** (2): calibre-web-automated, emulatorjs
-6. **exporters** (4): exportarr-sonarr/radarr/prowlarr/bazarr
-7. **uptime-kuma** — home monitoring
+2. **vpn-media** (2): gluetun, qbittorrent (NET_ADMIN required)
+
+Rootless Docker (~18 containers, 6 compose projects):
+3. **cloudflared** — remote access to *.local.akunito.com
+4. **npm** — reverse proxy (bridge, ports 80/443/81 on 192.168.20.200)
+5. **media** (7): jellyfin, sonarr, radarr, bazarr, prowlarr, jellyseerr, solvearr
+6. **homelab** (2): calibre-web-automated, emulatorjs
+7. **exporters** (4): exportarr-sonarr/radarr/prowlarr/bazarr
+8. **monitoring** (2): node-exporter, cadvisor
 
 **Sleep schedule**: Awake 11:00-23:00, Suspended 23:00-11:00 (S3 + RTC alarm)
 
@@ -86,7 +91,7 @@ DECOMMISSIONED (Feb 2026):
 - LAN (ix0), STORAGE_VLAN (ix0.100 = 192.168.20.0/24), GUEST (ix0.200)
 - Bridge: ix2 + ix3 to LAN (STP enabled)
 - WireGuard backup tunnel to VPS (172.26.5.0/24)
-- DNS: `*.local.akunito.com` → 192.168.20.201
+- DNS: `*.local.akunito.com` → 192.168.20.200
 
 ## Service Catalog
 
@@ -128,7 +133,7 @@ DECOMMISSIONED (Feb 2026):
 
 **External access**: Internet → Cloudflare → cloudflared (VPS or TrueNAS) → localhost service
 
-**Local access**: Client → pfSense DNS → TrueNAS NPM (192.168.20.201) → service
+**Local access**: Client → pfSense DNS → TrueNAS NPM (192.168.20.200) → service
 
 **VPN**: Tailscale mesh (primary) + WireGuard tunnel (backup, VPS ↔ pfSense)
 
