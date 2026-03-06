@@ -280,11 +280,11 @@ in
       { name = "synapse";   host = "127.0.0.1"; port = 9000; }
       # Miniflux RSS reader (exposes /metrics natively)
       { name = "miniflux";  host = "127.0.0.1"; port = 8084; }
-      # TrueNAS exportarr targets (via Tailscale)
-      { name = "sonarr";    host = "100.64.0.10"; port = 9707; }
-      { name = "radarr";    host = "100.64.0.10"; port = 9708; }
-      { name = "prowlarr";  host = "100.64.0.10"; port = 9709; }
-      { name = "bazarr";    host = "100.64.0.10"; port = 9710; }
+      # TrueNAS exportarr targets (via WireGuard tunnel to LAN)
+      { name = "sonarr";    host = "192.168.20.200"; port = 9707; }
+      { name = "radarr";    host = "192.168.20.200"; port = 9708; }
+      { name = "prowlarr";  host = "192.168.20.200"; port = 9709; }
+      { name = "bazarr";    host = "192.168.20.200"; port = 9710; }
     ];
 
     # Blackbox exporter (HTTP probes for public services)
