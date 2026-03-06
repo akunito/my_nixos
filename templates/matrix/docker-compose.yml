@@ -99,15 +99,9 @@ services:
     container_name: element-web
     restart: unless-stopped
     read_only: true
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - SETUID
-      - SETGID
-      - CHOWN          # nginx needs to chown pid/cache files
-      - NET_BIND_SERVICE  # nginx binds port 80 inside container
+    # Note: no-new-privileges and cap_drop omitted — nginx entrypoint requires
+    # root→nginx user switch via su-exec and NET_BIND_SERVICE for port 80.
+    # read_only: true is the primary hardening for this static file server.
     volumes:
       - ./element-config/config.json:/app/config.json:ro
     tmpfs:
