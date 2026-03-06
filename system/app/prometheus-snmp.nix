@@ -248,6 +248,7 @@ lib.mkIf (systemSettings.prometheusSnmpExporterEnable or false) {
   services.prometheus.exporters.snmp = {
     enable = true;
     port = 9116;
+    listenAddress = "127.0.0.1";
     configurationPath = snmpConfig;
   };
 

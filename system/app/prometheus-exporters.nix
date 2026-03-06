@@ -18,7 +18,7 @@ in
   services.prometheus.exporters.node = lib.mkIf (systemSettings.prometheusExporterEnable or false) {
     enable = true;
     port = nodeExporterPort;
-    listenAddress = "0.0.0.0"; # Allow remote scraping from Prometheus server
+    listenAddress = if systemSettings.prometheusExporterLocalOnly or false then "127.0.0.1" else "0.0.0.0";
     enabledCollectors = [
       "systemd"
       "processes"
@@ -39,7 +39,7 @@ in
   services.cadvisor = lib.mkIf (systemSettings.prometheusExporterCadvisorEnable or false) {
     enable = true;
     port = cadvisorPort;
-    listenAddress = "0.0.0.0"; # Allow remote scraping from Prometheus server
+    listenAddress = if systemSettings.prometheusExporterLocalOnly or false then "127.0.0.1" else "0.0.0.0";
   };
 
   # Add cAdvisor package when enabled

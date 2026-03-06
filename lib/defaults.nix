@@ -398,6 +398,7 @@
     # === Prometheus Exporters (for monitored nodes) ===
     prometheusExporterEnable = false; # Enable Node Exporter on this host
     prometheusExporterCadvisorEnable = false; # Enable cAdvisor for Docker metrics on this host
+    prometheusExporterLocalOnly = false; # Bind exporters to 127.0.0.1 (true on VPS, false on remote nodes)
     prometheusNodeExporterPort = 9100; # Port for Node Exporter
     prometheusCadvisorPort = 9092; # Port for cAdvisor
     # Remote targets for Prometheus scraping (used by monitoring server only)

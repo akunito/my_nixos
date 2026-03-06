@@ -130,10 +130,14 @@ lib.mkIf cfg.enable {
     ${setPasswordSQL}
   '';
 
+  # Restrict postgres user to nologin shell (SEC-AUDIT-001)
+  users.users.postgres.shell = lib.mkForce "${pkgs.shadow}/bin/nologin";
+
   # Prometheus postgres_exporter for monitoring
   services.prometheus.exporters.postgres = lib.mkIf (systemSettings.prometheusPostgresExporterEnable or false) {
     enable = true;
     port = systemSettings.prometheusPostgresExporterPort or 9187;
+    listenAddress = "127.0.0.1";
     runAsLocalSuperUser = true;
     dataSourceName = "user=postgres host=/run/postgresql dbname=postgres";
   };

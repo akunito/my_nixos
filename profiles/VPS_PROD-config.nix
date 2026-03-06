@@ -182,6 +182,7 @@ in
     prometheusMariadbExporterPort = 9104;
     prometheusRedisExporterEnable = true;
     prometheusRedisExporterPort = 9121;
+    prometheusExporterLocalOnly = true; # Bind all exporters to 127.0.0.1 (SEC-AUDIT-001)
 
     # === SNMP Exporter (pfSense monitoring — migrated from LXC_monitoring) ===
     prometheusSnmpExporterEnable = true;
@@ -205,7 +206,7 @@ in
     # === NFS Server (romm-library export — Tailscale, LAN, TrueNAS) ===
     nfsServerEnable = true;
     nfsExports = ''
-      /home/akunito/romm-library  100.64.0.0/10(rw,sync,no_subtree_check,no_root_squash) 192.168.8.0/24(rw,sync,no_subtree_check,no_root_squash) 192.168.20.0/24(rw,sync,no_subtree_check,no_root_squash)
+      /home/akunito/romm-library  100.64.0.0/10(rw,sync,no_subtree_check,root_squash) 192.168.8.0/24(rw,sync,no_subtree_check,root_squash) 192.168.20.0/24(rw,sync,no_subtree_check,root_squash)
     '';
 
     # === Vaultwarden (Password Manager — NixOS native, PostgreSQL backend) ===
@@ -229,7 +230,6 @@ in
       syncthing  = { port = 8384; };
       status     = { port = 3009; };
       plane      = { port = 3003; };
-      obsidian   = { port = 3010; };
       unifi      = { port = 8443; https = true; };
       portfolio  = { port = 3005; };
       vault      = { port = 8222; };
@@ -304,7 +304,6 @@ in
       { name = "miniflux-ai"; path = "miniflux-ai"; }
       { name = "nextcloud"; path = "nextcloud"; }
       { name = "syncthing"; path = "syncthing"; }
-      { name = "obsidian-remote"; path = "obsidian-remote"; }
       { name = "uptime-kuma"; path = "uptime-kuma"; }
       { name = "unifi"; path = "unifi"; }
       { name = "romm"; path = "romm"; }

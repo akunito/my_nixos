@@ -835,10 +835,18 @@ in
     defaultHTTPListenPort = 80;
     defaultSSLListenPort = 443;
 
+    # Security headers for all vhosts (SEC-AUDIT-001)
+    appendHttpConfig = ''
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    '';
+
     virtualHosts = lib.mkMerge [
       # Grafana - public access via Cloudflare Tunnel (HTTP - TLS terminated by Cloudflare)
       {
         "grafana.${publicDomain}" = {
+          listenAddresses = [ "127.0.0.1" ]; # Only cloudflared reaches this (SEC-AUDIT-001)
           locations."/" = {
             proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
             proxyWebsockets = true;

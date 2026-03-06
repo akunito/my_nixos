@@ -94,12 +94,12 @@ lib.mkIf cfg.enable {
         "${pkgs.writeShellScript "redis-exporter-start" ''
           REDIS_PASSWORD=$(cat ${cfg.passwordFile})
           exec ${pkgs.prometheus-redis-exporter}/bin/redis_exporter \
-            -web.listen-address 0.0.0.0:${toString (systemSettings.prometheusRedisExporterPort or 9121)} \
+            -web.listen-address 127.0.0.1:${toString (systemSettings.prometheusRedisExporterPort or 9121)} \
             --redis.addr=redis://127.0.0.1:${toString cfg.port} \
             --redis.password="$REDIS_PASSWORD"
         ''}"
       else
-        "${pkgs.prometheus-redis-exporter}/bin/redis_exporter -web.listen-address 0.0.0.0:${toString (systemSettings.prometheusRedisExporterPort or 9121)} --redis.addr=redis://127.0.0.1:${toString cfg.port}"
+        "${pkgs.prometheus-redis-exporter}/bin/redis_exporter -web.listen-address 127.0.0.1:${toString (systemSettings.prometheusRedisExporterPort or 9121)} --redis.addr=redis://127.0.0.1:${toString cfg.port}"
     );
   };
 
