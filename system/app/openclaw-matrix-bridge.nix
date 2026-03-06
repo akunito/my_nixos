@@ -39,8 +39,9 @@ in
       HOME = homeDir;
       ENV_PROFILE = "VPS_PROD";
       LD_LIBRARY_PATH = "/run/current-system/sw/lib";
-      PATH = "${homeDir}/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin";
     };
+
+    path = [ pkgs.coreutils ];
   };
 
   # ==========================================================================
@@ -65,7 +66,8 @@ in
       HOME = homeDir;
       ENV_PROFILE = "VPS_PROD";
       LD_LIBRARY_PATH = "/run/current-system/sw/lib";
-      PATH = "${homeDir}/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin";
     };
+
+    path = [ pkgs.coreutils ];
   };
 }
