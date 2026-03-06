@@ -136,6 +136,9 @@ let
       "/home/${username}/.homelab"
       "/home/${username}/.openclaw"
       "/home/${username}/.local/share/docker/volumes/uptime-kuma_kuma_data/_data"
+      "/home/${username}/.local/share/docker/volumes/unifi_unifi_app_config/_data"
+      "/home/${username}/.local/share/docker/volumes/n8n_n8n_data/_data"
+      "/home/${username}/.local/share/docker/volumes/plane_plane_uploads/_data"
       "/var/lib/headscale"
       "/var/lib/vaultwarden"
       "/etc/secrets"
@@ -145,8 +148,10 @@ let
       # SQLite WAL files — backed up via safe dump in preScript
       "*/finance/data/vaultkeeper.db-wal"
       "*/finance/data/vaultkeeper.db-shm"
+      # Calibre Web thumbnail cache (~11G, regenerable from library)
+      "*/calibre/data/config/thumbnails/*"
     ];
-    tags = [ "services" "docker" "headscale" "vaultwarden" "openclaw" ];
+    tags = [ "services" "docker" "headscale" "vaultwarden" "openclaw" "unifi" "n8n" "plane" ];
     schedule = "*-*-* 19:30:00";
     retentionDays = 30;
     retentionPolicy = "--keep-monthly 3";
@@ -158,7 +163,7 @@ let
         ${pkgs.sqlite}/bin/sqlite3 "$VAULTKEEPER_DB" ".backup /home/${username}/.openclaw/workspace/finance/data/vaultkeeper-backup.db" 2>&1 || log "WARNING: Vaultkeeper DB dump failed (non-fatal)"
       fi
     '';
-    description = "Docker configs, Headscale state, secrets, Vaultwarden, Uptime Kuma, OpenClaw";
+    description = "Docker configs, Headscale state, secrets, Vaultwarden, Uptime Kuma, OpenClaw, UniFi, n8n, Plane";
   };
 
   # Large media libraries — weekly Sunday after nextcloud
@@ -183,12 +188,27 @@ let
     passwordFile = "/etc/secrets/restic-nextcloud";
     repoSuffix = "nextcloud.restic";
     backupPaths = [ "/var/lib/nextcloud-data" ];
-    excludes = [ "*.log" "*.part" "upload_tmp/*" ];
+    excludes = [
+      "*.log" "*.part" "upload_tmp/*"
+      # Nextcloud app code (regenerated from Docker image / app store)
+      "*/3rdparty/*"
+      "*/apps/*"
+      "*/core/*"
+      "*/dist/*"
+      "*/lib/*"
+      "*/themes/*"
+      "*/vendor-bin/*"
+      # Nextcloud data caches and regenerable content
+      "*/files_trashbin/*"
+      "*/files_versions/*"
+      "*/appdata_*/preview/*"
+      "*/cache/*"
+    ];
     tags = [ "nextcloud" ];
     schedule = "Sun *-*-* 20:00:00";
     retentionDays = 14;
     retentionPolicy = "--keep-monthly 2";
-    description = "Nextcloud user data";
+    description = "Nextcloud user data + config";
   };
 
 in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
