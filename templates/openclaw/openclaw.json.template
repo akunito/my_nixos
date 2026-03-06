@@ -1,17 +1,15 @@
 {
   "gateway": {
-    "bind": "lan",
     "port": 18789,
-    "auth": { "mode": "token", "token": "REPLACE_WITH_RANDOM_TOKEN" }
+    "bind": "lan",
+    "auth": { "mode": "token", "token": "REPLACE_WITH_RANDOM_TOKEN" },
+    "controlUi": {
+      "allowedOrigins": ["https://openclaw.local.akunito.com"]
+    }
   },
 
   "session": {
-    "dmScope": "per-channel-peer",
-    "compaction": {
-      "enabled": true,
-      "preserveSystemMessages": true,
-      "minRetainedMessages": 20
-    }
+    "dmScope": "per-channel-peer"
   },
 
   "models": {
@@ -38,31 +36,27 @@
       "userTimezone": "Europe/Madrid",
       "timeFormat": "24"
     },
-    "entries": {
-      "alfred": {
+    "list": [
+      {
+        "id": "alfred",
+        "default": true,
         "tools": {
-          "allow": ["group:web", "mcp:plane-restricted", "mcp:prometheus-readonly",
-                    "mcp:github", "mcp:leftyworkout-readonly", "mcp:gmail-restricted"],
-          "deny": ["http", "mcp:jellyseerr", "mcp:plane-vaultkeeper"]
+          "allow": ["group:web"]
         }
       },
-      "vaultkeeper": {
+      {
+        "id": "vaultkeeper",
         "tools": {
-          "allow": ["mcp:plane-vaultkeeper", "mcp:miniflux"],
-          "deny": ["http", "group:web", "mcp:plane-restricted", "mcp:prometheus-readonly",
-                   "mcp:github", "mcp:jellyseerr", "mcp:leftyworkout-readonly",
-                   "mcp:gmail-restricted"]
+          "deny": ["group:web"]
         }
       },
-      "scout": {
+      {
+        "id": "scout",
         "tools": {
-          "allow": ["mcp:jellyseerr", "mcp:miniflux"],
-          "deny": ["http", "group:web", "mcp:plane-restricted", "mcp:plane-vaultkeeper",
-                   "mcp:prometheus-readonly", "mcp:github", "mcp:leftyworkout-readonly",
-                   "mcp:gmail-restricted"]
+          "allow": ["group:web"]
         }
       }
-    }
+    ]
   },
 
   "tools": {
@@ -70,37 +64,42 @@
     "deny": ["group:automation", "group:runtime", "sessions_spawn", "sessions_send", "http"],
     "fs": { "workspaceOnly": true },
     "exec": { "security": "deny", "ask": "always" },
-    "elevated": { "enabled": false },
-    "media": {
-      "audio": {
-        "enabled": true,
-        "maxBytes": 20971520,
-        "echoTranscript": true,
-        "echoFormat": "Transcript: \"{transcript}\"",
-        "models": [
-          { "provider": "openai-compatible", "model": "Systran/faster-whisper-large-v3",
-            "baseUrl": "http://host.docker.internal:8787/v1" }
-        ]
-      }
-    }
+    "elevated": { "enabled": false }
   },
+
+  "bindings": [
+    {
+      "agentId": "alfred",
+      "comment": "Alfred agent — Telegram group",
+      "match": { "channel": "telegram", "peer": { "kind": "group", "id": "ALFRED_GROUP_CHAT_ID" } }
+    },
+    {
+      "agentId": "vaultkeeper",
+      "comment": "Vaultkeeper agent — Telegram group",
+      "match": { "channel": "telegram", "peer": { "kind": "group", "id": "VAULTKEEPER_GROUP_CHAT_ID" } }
+    },
+    {
+      "agentId": "scout",
+      "comment": "Scout agent — Telegram group",
+      "match": { "channel": "telegram", "peer": { "kind": "group", "id": "SCOUT_GROUP_CHAT_ID" } }
+    }
+  ],
 
   "channels": {
     "telegram": {
+      "botToken": "REPLACE_WITH_TELEGRAM_BOT_TOKEN",
       "dmPolicy": "allowlist",
       "allowFrom": ["YOUR_TELEGRAM_USER_ID"],
       "groups": {
-        "ALFRED_GROUP_CHAT_ID": { "agent": "alfred", "requireMention": false },
-        "VAULTKEEPER_GROUP_CHAT_ID": { "agent": "vaultkeeper", "requireMention": false },
-        "SCOUT_GROUP_CHAT_ID": { "agent": "scout", "requireMention": false },
-        "*": { "policy": "ignore" }
+        "ALFRED_GROUP_CHAT_ID": { "requireMention": false },
+        "VAULTKEEPER_GROUP_CHAT_ID": { "requireMention": false },
+        "SCOUT_GROUP_CHAT_ID": { "requireMention": false }
       }
     }
   },
 
   "skills": {
     "entries": {
-      "gog": { "enabled": true, "config": { "services": ["calendar", "drive", "sheets"] } },
       "weather": { "enabled": true },
       "summarize": { "enabled": true },
       "session-logs": { "enabled": true },
@@ -108,71 +107,9 @@
     }
   },
 
-  "mcpServers": {
-    "plane-restricted": {
-      "command": "python3",
-      "args": ["/home/node/.openclaw/mcp/plane-restricted-mcp.py"],
-      "env": {
-        "PLANE_API_TOKEN": "${PLANE_OPENCLAW_TOKEN}",
-        "PLANE_API_URL": "http://host.docker.internal:3003",
-        "PLANE_WORKSPACE_SLUG": "akuworkspace"
-      }
-    },
-    "plane-vaultkeeper": {
-      "command": "python3",
-      "args": ["/home/node/.openclaw/mcp/plane-vaultkeeper-mcp.py"],
-      "env": {
-        "PLANE_API_TOKEN": "${PLANE_OPENCLAW_TOKEN}",
-        "PLANE_API_URL": "http://host.docker.internal:3003",
-        "PLANE_WORKSPACE_SLUG": "akuworkspace"
-      }
-    },
-    "prometheus-readonly": {
-      "command": "python3",
-      "args": ["/home/node/.openclaw/mcp/prometheus-readonly-mcp.py"],
-      "env": {
-        "PROMETHEUS_URL": "http://host.docker.internal:9090"
-      }
-    },
-    "jellyseerr": {
-      "command": "python3",
-      "args": ["/home/node/.openclaw/mcp/jellyseerr-mcp.py"],
-      "env": {
-        "JELLYSEERR_URL": "${JELLYSEERR_URL}",
-        "JELLYSEERR_API_KEY": "${JELLYSEERR_OPENCLAW_KEY}"
-      }
-    },
-    "github": {
-      "command": "python3",
-      "args": ["/home/node/.openclaw/mcp/github-mcp.py"],
-      "env": { "GITHUB_OPENCLAW_TOKEN": "${GITHUB_OPENCLAW_TOKEN}" }
-    },
-    "leftyworkout-readonly": {
-      "command": "python3",
-      "args": ["/home/node/.openclaw/mcp/leftyworkout-readonly-mcp.py"],
-      "env": { "LEFTYWORKOUT_DB_URL": "${LEFTYWORKOUT_DB_URL}" }
-    },
-    "miniflux": {
-      "command": "python3",
-      "args": ["/home/node/.openclaw/mcp/miniflux-readonly-mcp.py"],
-      "env": {
-        "MINIFLUX_API_URL": "http://host.docker.internal:8080",
-        "MINIFLUX_API_KEY": "${MINIFLUX_OPENCLAW_KEY}"
-      }
-    },
-    "gmail-restricted": {
-      "command": "python3",
-      "args": ["/home/node/.openclaw/mcp/gmail-restricted-mcp.py"],
-      "env": {
-        "GMAIL_CREDENTIALS_PATH": "/home/node/.openclaw/credentials/google/",
-        "GMAIL_ACCOUNT": "alfred.openclaw@gmail.com"
-      }
-    }
-  },
-
   "hooks": {
     "enabled": true,
-    "tokenFile": "/run/secrets/hooks_token",
+    "token": "REPLACE_WITH_HOOKS_TOKEN",
     "path": "/hooks",
     "allowedAgentIds": ["hooks"],
     "allowRequestSessionKey": false,
@@ -184,11 +121,6 @@
     "enabled": true,
     "maxConcurrentRuns": 1,
     "sessionRetention": "24h",
-    "retry": {
-      "maxAttempts": 3,
-      "backoffMs": [60000, 120000, 300000],
-      "retryOn": ["rate_limit", "network", "server_error"]
-    },
     "runLog": { "maxBytes": "2mb", "keepLines": 2000 }
   },
 

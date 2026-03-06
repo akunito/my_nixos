@@ -1,10 +1,12 @@
 services:
   openclaw-gateway:
-    image: ghcr.io/openclaw/openclaw:v2026.3-stable
+    image: ghcr.io/openclaw/openclaw:2026.2.26
     container_name: openclaw-gateway
     init: true
     restart: unless-stopped
-    user: "1000:1000"
+    # NOTE: Do NOT set user: "1000:1000" — rootless Docker remaps UIDs via /etc/subuid.
+    # Container UID 1000 maps to host UID 101000, breaking bind mount access.
+    # The image's default user (node) is correctly mapped by rootless Docker.
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -21,10 +23,12 @@ services:
     environment:
       - HOME=/home/node
       - TERM=xterm-256color
+      - NODE_OPTIONS=--max-old-space-size=768
+      - PYTHONPATH=/home/node/.openclaw/mcp-packages
       - OPENCLAW_GATEWAY_PORT=18789
       - MODELSTUDIO_API_KEY=${MODELSTUDIO_API_KEY}
       # NOTE: OPENCLAW_HOOKS_TOKEN is NOT in env — loaded from file at runtime by OpenClaw
-      # gateway config (see openclaw.json "hooks.tokenFile"). This prevents MCP subprocesses
+      # gateway config (see openclaw.json "hooks.token"). This prevents MCP subprocesses
       # from reading the webhook token via environment inspection.
       - PLANE_OPENCLAW_TOKEN=${PLANE_OPENCLAW_TOKEN}
       - JELLYSEERR_URL=https://jellyseerr.local.akunito.com
@@ -43,9 +47,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 1536M
         reservations:
-          memory: 256M
+          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:18789/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
       interval: 60s
@@ -59,7 +63,7 @@ services:
         max-file: "3"
 
   openclaw-cli:
-    image: ghcr.io/openclaw/openclaw:v2026.3-stable
+    image: ghcr.io/openclaw/openclaw:2026.2.26
     container_name: openclaw-cli
     network_mode: "service:openclaw-gateway"
     profiles: ["cli"]
@@ -76,12 +80,12 @@ services:
       - TERM=xterm-256color
     volumes:
       - ${HOME}/.openclaw:/home/node/.openclaw
-    entrypoint: ["openclaw"]
+    entrypoint: ["node", "/app/openclaw.mjs"]
 
   faster-whisper:
     # CRITICAL: Pin to specific release — never use :latest (supply chain risk)
     # Check https://github.com/fedirz/faster-whisper-server/releases before deploying
-    image: fedirz/faster-whisper-server:v0.3.2-cpu
+    image: fedirz/faster-whisper-server:0.6.0-rc.3-cpu
     container_name: faster-whisper
     restart: unless-stopped
     read_only: true
