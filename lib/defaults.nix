@@ -366,6 +366,9 @@
     claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
     claudeCodeReadOnly = false; # When true, deny Edit/Write tools in Claude Code settings.json
     perplexityApiKey = ""; # Perplexity API key for MCP server (set from secrets/domains.nix in profiles)
+    planeApiToken = ""; # Plane API token for MCP server (set from secrets/domains.nix in profiles)
+    planeApiUrl = ""; # Plane instance URL (e.g., "https://plane.akunito.com")
+    planeWorkspaceSlug = ""; # Plane workspace slug (e.g., "akuworkspace")
 
     # Package module feature flags
     systemBasicToolsEnable = true; # Enable basic system tools (vim, wget, rsync, cryptsetup, etc.)

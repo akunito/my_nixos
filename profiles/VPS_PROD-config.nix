@@ -47,6 +47,9 @@ in
     # === Development Tools & AI ===
     claudeCodeEnable = true; # Lightweight Claude Code (CLI + settings + MCP) for Matrix bot interface
     perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for MCP server
+    planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
+    planeApiUrl = "https://plane.${secrets.publicDomain}";
+    planeWorkspaceSlug = "akuworkspace";
 
     # === System Services (ALL DISABLED — not needed on VPS) ===
     sambaEnable = false;

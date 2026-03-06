@@ -29,8 +29,25 @@ let
   # Claude Code read-only mode (deny edit/write tools)
   claudeCodeReadOnly = systemSettings.claudeCodeReadOnly or false;
 
+  # Plane MCP credentials
+  planeApiToken = systemSettings.planeApiToken or "";
+  planeApiUrl = systemSettings.planeApiUrl or "";
+  planeWorkspaceSlug = systemSettings.planeWorkspaceSlug or "";
+
   # Build the settings.json structure
   settingsJson = {
+    # MCP servers (only include servers with valid credentials)
+    mcpServers = lib.filterAttrs (_: v: v != null) {
+      plane = if planeApiToken != "" then {
+        command = "uvx";
+        args = [ "plane-mcp-server" "stdio" ];
+        env = {
+          PLANE_API_TOKEN = planeApiToken;
+          PLANE_API_URL = planeApiUrl;
+          PLANE_WORKSPACE_SLUG = planeWorkspaceSlug;
+        };
+      } else null;
+    };
     permissions = {
       allow = [
         # Read-only tools (always safe)
@@ -249,7 +266,8 @@ in
   # Standalone mode: install claude-code + nodejs (for npx/MCP) without full dev IDEs
   home.packages = lib.optionals isStandalone [
     pkgs-unstable.claude-code      # Claude Code CLI
-    pkgs.nodejs_22                 # Node.js for npx (required by MCP servers)
+    pkgs.nodejs_22                 # Node.js for npx (required by Perplexity MCP)
+    pkgs-unstable.uv               # Python package runner (uvx, required by Plane MCP)
     pkgs.git-crypt                 # Transparent file encryption in git
   ];
 
