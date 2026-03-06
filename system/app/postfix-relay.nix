@@ -7,6 +7,7 @@
 #
 # Port 25 is NOT in allowedTCPPorts — not exposed to internet.
 # SMTP2GO credentials deployed to /etc/secrets/ via database-secrets.nix (SEC-DOCKER-SEC-001).
+# The preStart copies to /var/lib/postfix/conf/ (writable) and runs postmap there.
 
 { pkgs, lib, systemSettings, config, ... }:
 
@@ -23,16 +24,19 @@ lib.mkIf (systemSettings.postfixRelayEnable or false) {
         ++ (systemSettings.postfixRelayExtraNetworks or []);
       relayhost = [ "[mail.smtp2go.com]:2525" ];
       smtp_sasl_auth_enable = "yes";
-      # SEC-DOCKER-SEC-001: Credentials from /etc/secrets/ (0600 root:root)
-      # instead of world-readable /nix/store/ via pkgs.writeText
-      smtp_sasl_password_maps = "hash:/etc/secrets/smtp2go-credentials";
+      # SEC-DOCKER-SEC-001: Credentials sourced from /etc/secrets/ (0600 root:root),
+      # copied to writable /var/lib/postfix/conf/ for postmap hash generation.
+      smtp_sasl_password_maps = "hash:/var/lib/postfix/conf/sasl_passwd";
       smtp_sasl_security_options = "noanonymous";
       smtp_tls_security_level = "encrypt";
     };
   };
 
-  # Generate postmap hash database from the credential file
+  # Copy credential from /etc/secrets/ to writable postfix conf dir and generate hash map.
+  # /etc/secrets/ is read-only on NixOS; /var/lib/postfix/conf/ is writable by postfix.
   systemd.services.postfix.preStart = lib.mkAfter ''
-    ${pkgs.postfix}/bin/postmap /etc/secrets/smtp2go-credentials
+    cp /etc/secrets/smtp2go-credentials /var/lib/postfix/conf/sasl_passwd
+    chmod 0600 /var/lib/postfix/conf/sasl_passwd
+    ${pkgs.postfix}/bin/postmap /var/lib/postfix/conf/sasl_passwd
   '';
 }
