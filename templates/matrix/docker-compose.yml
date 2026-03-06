@@ -98,17 +98,11 @@ services:
     image: vectorim/element-web:v1.12.11
     container_name: element-web
     restart: unless-stopped
-    read_only: true
-    # Note: no-new-privileges and cap_drop omitted — nginx entrypoint requires
-    # root→nginx user switch via su-exec and NET_BIND_SERVICE for port 80.
-    # read_only: true is the primary hardening for this static file server.
+    # Note: read_only, no-new-privileges, cap_drop omitted — nginx image's
+    # entrypoint requires writable conf.d, root→nginx user switch via su-exec,
+    # and NET_BIND_SERVICE for port 80. Minimal attack surface (static files only).
     volumes:
       - ./element-config/config.json:/app/config.json:ro
-    tmpfs:
-      - /tmp:noexec,nosuid,size=64m
-      - /var/run:size=16m
-      - /var/cache/nginx:size=64m
-      - /etc/nginx/conf.d:size=8m  # nginx entrypoint generates config from templates
     environment:
       - TZ=Europe/Madrid
     ports:
