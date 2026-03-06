@@ -17,6 +17,10 @@ services:
       - "127.0.0.1:18790:18790"   # Bridge port (Nodes, mobile)
     extra_hosts:
       - "host.docker.internal:host-gateway"  # Resolves to actual host IP on Linux Docker
+      # DNS overrides for MCP servers (mcporter) — *.local.akunito.com resolves to home LAN
+      # from public DNS, but VPS nginx serves these on Tailscale IP (100.64.0.6)
+      - "miniflux.local.akunito.com:100.64.0.6"
+      - "prometheus.local.akunito.com:100.64.0.6"
     tmpfs:
       - /tmp:noexec,nosuid,size=256m
       - /home/node/.npm:size=128m
@@ -40,6 +44,15 @@ services:
       - GITHUB_ALLOWED_OWNERS=akunito
       - GENERIC_TIMEZONE=Europe/Madrid
       - TZ=Europe/Madrid
+      # MCP server env vars (mcporter subprocesses inherit these)
+      # Direct access to Plane via rootless Docker gateway — bypasses Cloudflare User-Agent block
+      - PLANE_API_URL=http://10.0.2.2:3003
+      - PLANE_API_TOKEN=${PLANE_OPENCLAW_TOKEN}
+      - PLANE_WORKSPACE_SLUG=akuworkspace
+      - JELLYSEERR_API_KEY=${JELLYSEERR_OPENCLAW_KEY}
+      - MINIFLUX_API_URL=https://miniflux.local.akunito.com
+      - MINIFLUX_API_KEY=${MINIFLUX_OPENCLAW_KEY}
+      - PROMETHEUS_URL=${PROMETHEUS_URL}
     volumes:
       - ${HOME}/.openclaw:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
