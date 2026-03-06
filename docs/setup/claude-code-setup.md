@@ -470,16 +470,46 @@ in {
 
 ### Profile Wiring
 
+Two modes of enabling Claude Code:
+
 ```nix
+# Option A: Full development tools (desktop machines — includes VSCode, Cursor, DBeaver, etc.)
 # In profile config (e.g., DESK-config.nix)
 let secrets = import ../secrets/domains.nix;
 in {
   systemSettings = {
-    developmentToolsEnable = true;  # Enables the module
+    developmentToolsEnable = true;  # Enables ALL dev tools + Claude Code module
+    perplexityApiKey = secrets.perplexityApiKey;
+  };
+}
+
+# Option B: Standalone Claude Code (headless servers like VPS — just CLI + settings + MCP)
+# In profile config (e.g., VPS_PROD-config.nix)
+let secrets = import ../secrets/domains.nix;
+in {
+  systemSettings = {
+    claudeCodeEnable = true;  # Installs only: claude-code, nodejs (for MCP), git-crypt
     perplexityApiKey = secrets.perplexityApiKey;
   };
 }
 ```
+
+For standalone mode, the VPS/server `home.nix` needs a conditional import:
+
+```nix
+imports = [ ../../user/shell/sh.nix ]
+  ++ lib.optional (systemSettings.claudeCodeEnable or false)
+     ../../user/app/claude-code/claude-code.nix;
+```
+
+### Feature Flags
+
+| Flag | Default | Purpose |
+|------|---------|---------|
+| `developmentToolsEnable` | `false` | Full dev suite (imports claude-code.nix via development.nix) |
+| `claudeCodeEnable` | `false` | Standalone Claude Code only (CLI + settings.json + nodejs for MCP) |
+| `claudeCodeReadOnly` | `false` | Deny Edit/Write tools (observation-only mode) |
+| `perplexityApiKey` | `""` | Perplexity API key for MCP server (from encrypted secrets) |
 
 ### Applying Changes
 
