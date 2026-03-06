@@ -34,6 +34,7 @@
       pkgs-unstable.nextcloud-client
 
       # Communication & Messaging
+      pkgs-unstable.element-desktop # Matrix client (matrix.akunito.com)
       pkgs-unstable.telegram-desktop
       pkgs-unstable.discord
       pkgs-unstable.vesktop # Alternative Discord with Wayland support
@@ -60,5 +61,18 @@
       pkgs-unstable.chromium
       pkgs-unstable.brave
     ];
+
+    # Element (Matrix) — pre-configure default homeserver (no credentials)
+    home.file.".config/Element/config.json".text = builtins.toJSON {
+      default_server_config = {
+        "m.homeserver" = {
+          base_url = "https://matrix.akunito.com";
+          server_name = "matrix.akunito.com";
+        };
+      };
+      room_directory = {
+        servers = [ "matrix.akunito.com" ];
+      };
+    };
   };
 }
