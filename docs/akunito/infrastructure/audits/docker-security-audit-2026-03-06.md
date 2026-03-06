@@ -250,19 +250,30 @@ iptables -L INPUT -n --line-numbers | grep -E "(5432|3306|6379|6432)"
 
 **Fix**:
 - Pinned images: `matrixdotorg/synapse:v1.148.0`, `vectorim/element-web:v1.12.11`, `redis:7-alpine`
-- Added `security_opt: [no-new-privileges:true]` to all services
-- Added `cap_drop: [ALL]` to all services
+- Synapse & Redis: `security_opt: [no-new-privileges:true]`, `cap_drop: [ALL]`, `cap_add: [SETUID, SETGID]`
+- Redis: `read_only: true` with tmpfs for `/tmp`
+- Element: no `read_only`/`cap_drop`/`no-new-privileges` — nginx entrypoint requires writable `conf.d`, su-exec user switching, and `NET_BIND_SERVICE` for port 80 (minimal attack surface: static files only)
+- Synapse: `extra_hosts: ["host.docker.internal:10.0.2.2"]` for rootless Docker host access
 - Resource limits: Synapse 2G, Element 256M, Redis 512M
-- Ports bound to `127.0.0.1`
-- `read_only: true` for Redis and Element (static web app)
+- All ports bound to `127.0.0.1` (Element on 8088 to avoid Headscale conflict on 8080)
 - Logging limits: 50m x 3 files
+- Custom bridge network `172.30.0.0/16` for inter-container communication
 
-**Verification** (after deploying to VPS):
+**Deployment lessons**:
+- `cap_drop: ALL` removes SETUID/SETGID needed by Redis/Synapse su-exec — must add back via `cap_add`
+- `host-gateway` resolves to Docker bridge (172.17.0.1) in rootless Docker, not slirp4netns (10.0.2.2) — use explicit IP
+- Pinning Synapse from `:latest` to `v1.148.0` triggered DB migrations requiring `ALTER TABLE OWNER TO matrix`
+- Element/nginx entrypoint is incompatible with `read_only`, `no-new-privileges`, and `cap_drop`
+
+**Verified on VPS** (2026-03-06):
 ```bash
 docker inspect synapse --format '{{.HostConfig.SecurityOpt}}'
-# Expected: [no-new-privileges:true]
+# [no-new-privileges:true]
 docker inspect synapse --format '{{json .HostConfig.CapDrop}}'
-# Expected: ["ALL"]
+# ["ALL"]
+docker inspect synapse --format '{{.HostConfig.Memory}}'
+# 2147483648
+# All 3 containers (redis, synapse, element-web): healthy
 ```
 
 ---
