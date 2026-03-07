@@ -66,7 +66,7 @@ def _validate_uuid(val, name):
 RATE_LIMITS = {
     "plane_create_work_item":         {"max": 10, "window": 3600},
     "plane_create_comment":           {"max": 30, "window": 3600},
-    "jellyseerr_request":             {"max": 5,  "window": 3600},
+    "jellyseerr_request":             {"max": 20, "window": 3600},
 }
 _RATE_FILE = Path(os.environ.get("RATE_LIMIT_DIR", "/tmp")) / ".ratelimit-api-proxy.json"
 
