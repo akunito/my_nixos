@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Jellyseerr MCP server for OpenClaw.
-Exposes: search, trending, discover, request media, watch history.
+"""Jellyseerr + Jellyfin MCP server for OpenClaw.
+Exposes: search, trending, discover, request media, watch history (Jellyfin).
 Blocks: user management, settings, admin operations.
 Rate-limited: request_media (20/hour). Rate state persists to disk.
 """
@@ -10,10 +10,16 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
+# --- Jellyseerr config ---
 BASE_URL = os.environ["JELLYSEERR_URL"]
 API_KEY = os.environ["JELLYSEERR_API_KEY"]
 ALLOWED_PATH_PREFIXES = ("/search", "/media", "/trending", "/discover", "/request", "/tv", "/movie")
 BLOCKED_PATH_PREFIXES = ("/user", "/admin", "/settings", "/auth", "/notification")
+
+# --- Jellyfin config (optional — watch history) ---
+JELLYFIN_URL = os.environ.get("JELLYFIN_URL", "")
+JELLYFIN_KEY = os.environ.get("JELLYFIN_API_KEY", "")
+JELLYFIN_USER_ID = os.environ.get("JELLYFIN_USER_ID", "")
 
 # --- Persistent rate limiter (file-backed, survives process restarts) ---
 RATE_LIMITS = {"request_media": {"max": 20, "window": 3600}}
@@ -51,6 +57,7 @@ def _check_rate(op: str) -> str | None:
 server = Server("jellyseerr")
 
 def _api(method: str, path: str, body: dict | None = None) -> dict:
+    """Call Jellyseerr API."""
     path_base = path.split("?")[0]
     if any(path_base.startswith(b) for b in BLOCKED_PATH_PREFIXES):
         raise ValueError(f"Blocked path: {path_base}")
@@ -61,6 +68,17 @@ def _api(method: str, path: str, body: dict | None = None) -> dict:
     req = urllib.request.Request(url, data=data, method=method, headers={
         "X-Api-Key": API_KEY, "Content-Type": "application/json",
     })
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read())
+
+
+def _jellyfin_api(path: str) -> dict:
+    """Call Jellyfin API (read-only)."""
+    if not JELLYFIN_URL or not JELLYFIN_KEY:
+        raise ValueError("Jellyfin not configured (JELLYFIN_URL / JELLYFIN_API_KEY missing)")
+    sep = "&" if "?" in path else "?"
+    url = f"{JELLYFIN_URL}{path}{sep}api_key={JELLYFIN_KEY}"
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read())
 
@@ -122,9 +140,16 @@ async def list_tools():
                  "media_id": {"type": "integer", "description": "TMDB ID. Only use if you got this from search_media results. Do NOT guess or memorize IDs."},
                  "seasons": {"type": "array", "items": {"type": "integer"}, "description": "Season numbers to request. Auto-populated for TV if omitted."}
              }, "required": ["media_type"]}),
-        Tool(name="get_watch_history", description="Get recently watched/added media",
+        Tool(name="get_watch_history",
+             description="Get Aku's watch history from Jellyfin — movies and TV shows that have been watched. Use type to filter by 'Movie' or 'Series'.",
              inputSchema={"type": "object", "properties": {
-                 "take": {"type": "integer", "default": 20}
+                 "type": {"type": "string", "enum": ["Movie", "Series", "Movie,Series"], "default": "Movie,Series", "description": "Media type to filter: Movie, Series, or both"},
+                 "limit": {"type": "integer", "default": 20, "description": "Number of results (max 50)"}
+             }}),
+        Tool(name="get_library_recent",
+             description="Get recently added media to the Jellyfin library (not necessarily watched).",
+             inputSchema={"type": "object", "properties": {
+                 "limit": {"type": "integer", "default": 20, "description": "Number of results (max 50)"}
              }}),
     ]
 
@@ -200,7 +225,49 @@ async def call_tool(name: str, arguments: dict):
             return [TextContent(type="text", text=f"{info}\n\n{json.dumps(r, indent=2, default=str)}")]
 
         case "get_watch_history":
-            r = _api("GET", f"/media?take={arguments.get('take', 20)}&sort=added&filter=available")
+            if not JELLYFIN_USER_ID:
+                return [TextContent(type="text", text="ERROR: JELLYFIN_USER_ID not configured")]
+            item_type = arguments.get("type", "Movie,Series")
+            limit = min(int(arguments.get("limit", 20)), 50)
+            r = _jellyfin_api(
+                f"/Users/{JELLYFIN_USER_ID}/Items"
+                f"?IsPlayed=true&IncludeItemTypes={item_type}"
+                f"&SortBy=DatePlayed&SortOrder=Descending&Limit={limit}&Recursive=true"
+                f"&Fields=DateLastMediaAdded,Overview,Genres,CommunityRating"
+            )
+            # Simplify response for the LLM
+            items = []
+            for i in r.get("Items", []):
+                items.append({
+                    "name": i.get("Name"),
+                    "year": i.get("ProductionYear"),
+                    "type": i.get("Type"),
+                    "genres": i.get("Genres", []),
+                    "rating": i.get("CommunityRating"),
+                    "overview": (i.get("Overview") or "")[:200],
+                })
+            r = {"totalWatched": r.get("TotalRecordCount"), "showing": len(items), "items": items}
+
+        case "get_library_recent":
+            if not JELLYFIN_USER_ID:
+                return [TextContent(type="text", text="ERROR: JELLYFIN_USER_ID not configured")]
+            limit = min(int(arguments.get("limit", 20)), 50)
+            r = _jellyfin_api(
+                f"/Users/{JELLYFIN_USER_ID}/Items/Latest?Limit={limit}"
+                f"&IncludeItemTypes=Movie,Series&Fields=Overview,Genres,CommunityRating"
+            )
+            # Simplify response
+            items = []
+            for i in (r if isinstance(r, list) else r.get("Items", [])):
+                items.append({
+                    "name": i.get("Name"),
+                    "year": i.get("ProductionYear"),
+                    "type": i.get("Type"),
+                    "genres": i.get("Genres", []),
+                    "rating": i.get("CommunityRating"),
+                })
+            r = {"count": len(items), "items": items}
+
         case _:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]
     return [TextContent(type="text", text=json.dumps(r, indent=2, default=str))]
