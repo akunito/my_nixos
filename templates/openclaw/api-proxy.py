@@ -68,7 +68,7 @@ RATE_LIMITS = {
     "plane_create_comment":           {"max": 30, "window": 3600},
     "jellyseerr_request":             {"max": 5,  "window": 3600},
 }
-_RATE_FILE = Path(os.environ.get("HOME", "/home/node")) / ".openclaw/mcp/.ratelimit-api-proxy.json"
+_RATE_FILE = Path(os.environ.get("RATE_LIMIT_DIR", "/tmp")) / ".ratelimit-api-proxy.json"
 
 def _check_rate(op):
     if op not in RATE_LIMITS:
@@ -90,7 +90,13 @@ def _check_rate(op):
             f.seek(0); f.truncate()
             f.write(json.dumps(data))
     except (json.JSONDecodeError, OSError) as e:
-        return f"RATE LIMITED: rate state corrupted ({type(e).__name__}). Delete {_RATE_FILE}"
+        # Corrupted or missing state — reset and allow the request
+        try:
+            _RATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(_RATE_FILE, "w") as f:
+                json.dump({op: [now]}, f)
+        except OSError:
+            pass  # write failed — allow anyway, rate limiting is best-effort
     return None
 
 # --- Custom DNS: route *.local.* through Docker host gateway (nginx) ---
