@@ -25,7 +25,17 @@ echo "Copying bot files..."
 cp "$TEMPLATES_DIR/bot.py" "$BOT_DIR/"
 cp "$TEMPLATES_DIR/claude_cli.py" "$BOT_DIR/"
 cp "$TEMPLATES_DIR/session_manager.py" "$BOT_DIR/"
+cp "$TEMPLATES_DIR/permission_manager.py" "$BOT_DIR/"
 cp "$TEMPLATES_DIR/requirements.txt" "$BOT_DIR/"
+
+# Copy and install Node.js bridge
+echo "Setting up Node.js bridge..."
+mkdir -p "$BOT_DIR/bridge"
+cp "$TEMPLATES_DIR/bridge/package.json" "$BOT_DIR/bridge/"
+cp "$TEMPLATES_DIR/bridge/bridge.mjs" "$BOT_DIR/bridge/"
+(cd "$BOT_DIR/bridge" && npm install --production 2>&1) || {
+    echo "WARNING: npm install failed — bridge will be unavailable, falling back to legacy mode"
+}
 
 # Copy config if not exists
 if [ ! -f "$BOT_DIR/config.yaml" ]; then

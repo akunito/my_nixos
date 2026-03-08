@@ -1,0 +1,11 @@
+{
+  "name": "claude-matrix-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Node.js bridge between Matrix bot and Claude Code SDK",
+  "main": "bridge.mjs",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.0"
+  }
+}
