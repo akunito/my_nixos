@@ -28,13 +28,19 @@ let
 
   # === Configurable stacks mode ===
   configStartScript = pkgs.writeShellScript "homelab-docker-start" ''
-    set -e
     echo "Starting homelab docker stacks..."
+    FAILED=""
     ${lib.concatMapStringsSep "\n" (stack: ''
       echo "Starting ${stack.name} stack..."
-      ${dockerCompose} -f ${homelabDir}/${stack.path}/docker-compose.yml up -d
+      if ! ${dockerCompose} -f ${homelabDir}/${stack.path}/docker-compose.yml up -d; then
+        echo "WARNING: ${stack.name} stack failed to start"
+        FAILED="$FAILED ${stack.name}"
+      fi
     '') configStacks}
-    echo "All homelab docker stacks started."
+    if [ -n "$FAILED" ]; then
+      echo "WARNING: These stacks failed to start:$FAILED"
+    fi
+    echo "All homelab docker stacks processed."
   '';
 
   configStopScript = pkgs.writeShellScript "homelab-docker-stop" ''
