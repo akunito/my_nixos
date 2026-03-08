@@ -246,6 +246,7 @@ in
       matrix     = { port = 8008; };
       element    = { port = 8088; };
       miniflux   = { port = 8084; };
+      freshrss   = { port = 8084; };
       nextcloud  = { port = 8089; };
       syncthing  = { port = 8384; };
       status     = { port = 3009; };
