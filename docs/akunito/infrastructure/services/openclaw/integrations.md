@@ -3,36 +3,70 @@ id: infrastructure.services.openclaw.integrations
 summary: "OpenClaw integrations with existing VPS services: Plane, Matrix, n8n, Calendar, Postfix"
 tags: [openclaw, integrations, plane, matrix, n8n, calendar, postfix, vps]
 related_files: [profiles/VPS_PROD-config.nix, templates/openclaw/**]
-date: 2026-03-04
+date: 2026-03-09
 status: published
 ---
 
 # OpenClaw Integrations (VPS_PROD)
 
-## Google Calendar (gog Skill)
+## Google Calendar (calendar-restricted MCP)
 
-### Setup
+### Architecture
 
-1. Google Cloud Console → create project `openclaw-calendar`
-2. Enable **Google Calendar API** only
-3. OAuth consent screen: External, test user = your email
-4. Create OAuth 2.0 Client ID (Desktop app type)
-5. Scopes: `https://www.googleapis.com/auth/calendar` only
+Same pattern as Gmail MCP: code-level RBAC wrapper around Google Calendar API.
+OAuth token reused from n8n Google Calendar credential (same OAuth app, same scopes).
+Credentials stored in `secrets/domains.nix`, token file at `~/.openclaw/credentials/calendar_mcp_token.json`.
+
+### Tools (6 total)
+
+| Tool | Description | Rate Limit |
+|------|-------------|------------|
+| `list_calendars` | List accessible calendars | — |
+| `list_events` | List events by date range | — |
+| `get_event` | Get event details by ID | — |
+| `create_event` | Create new event | 10/hour |
+| `update_event` | Update event time/title/description | 5/hour |
+| `delete_event` | Delete event | 3/hour |
+
+### Security
+
+- OAuth scope: `calendar` + `calendar.events`
+- Credentials volume mounted `:ro` — token refresh writes to `/tmp` (tmpfs)
+- Input validation: max 50KB per field
+- Rate limiting: persistent file-backed, fail-closed on corruption
+- NOT implemented: ACL management, calendar creation/deletion, settings, freebusy
 
 ### Deploy Credentials
 
 ```bash
-scp -P 56777 client_secret_*.json akunito@100.64.0.6:~/.openclaw/credentials/google/
-docker compose --profile cli run --rm -T openclaw-cli \
-  gog auth credentials /home/node/.openclaw/credentials/google/client_secret_*.json
-docker compose --profile cli run --rm -T openclaw-cli \
-  gog auth add your-email@gmail.com --services calendar
+# 1. Create token file from n8n-extracted credentials (on VPS)
+cat > ~/.openclaw/credentials/calendar_mcp_token.json << 'EOF'
+{
+  "client_id": "<from secrets/domains.nix: googleCalendarClientId>",
+  "client_secret": "<from secrets/domains.nix: googleCalendarClientSecret>",
+  "refresh_token": "<from secrets/domains.nix: googleCalendarRefreshToken>",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "scopes": ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.com/auth/calendar.events"]
+}
+EOF
+chmod 600 ~/.openclaw/credentials/calendar_mcp_token.json
+
+# 2. Copy MCP script
+cp templates/openclaw/calendar-restricted-mcp.py ~/.openclaw/mcp/calendar-restricted-mcp.py
+
+# 3. Register in mcporter.json
+# Add: "calendar": {"command": "python3", "args": ["/home/node/.openclaw/mcp/calendar-restricted-mcp.py"]}
+
+# 4. Restart containers
+cd ~/.homelab/openclaw && docker compose up -d
 ```
 
-### Config
+### Env Vars (docker-compose.yml)
 
-```jsonc
-{ "skills": { "entries": { "gog": { "enabled": true, "config": { "services": ["calendar"] } } } } }
+```yaml
+- CALENDAR_CREDENTIALS_PATH=/home/node/.openclaw/credentials
+- CALENDAR_ACCOUNT=diego88aku@gmail.com
+- CALENDAR_TIMEZONE=Europe/Madrid
 ```
 
 ### Capabilities
@@ -42,12 +76,6 @@ docker compose --profile cli run --rm -T openclaw-cli \
 - "Am I free Thursday afternoon?"
 - "Move my 2pm to 4pm"
 - Multi-calendar support (work + personal)
-
-### Google Workspace MCP (Alternative)
-
-Package: `@presto-ai/google-workspace-mcp`
-Covers: Gmail (`search`, `get`, `send`, `createDraft`), Calendar (`list`, `listEvents`, `createEvent`), Drive, Docs, Sheets.
-One-time OAuth browser sign-in. Credentials at `~/.config/google-workspace-mcp`.
 
 ---
 

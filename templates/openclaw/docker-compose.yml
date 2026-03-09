@@ -53,6 +53,12 @@ services:
       - MINIFLUX_API_URL=https://miniflux.local.akunito.com
       - MINIFLUX_API_KEY=${MINIFLUX_OPENCLAW_KEY}
       - PROMETHEUS_URL=${PROMETHEUS_URL}
+      # Gmail/Calendar MCP env vars (credentials volume already mounted :ro)
+      - GMAIL_CREDENTIALS_PATH=/home/node/.openclaw/credentials
+      - GMAIL_ACCOUNT=diego88aku@gmail.com
+      - CALENDAR_CREDENTIALS_PATH=/home/node/.openclaw/credentials
+      - CALENDAR_ACCOUNT=diego88aku@gmail.com
+      - CALENDAR_TIMEZONE=Europe/Madrid
     volumes:
       - ${HOME}/.openclaw:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
