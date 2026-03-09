@@ -59,4 +59,25 @@ in
       MakeDirectory = true;
     };
   };
+
+  # ==========================================================================
+  # Gateway Session Reset — daily restart (clears stale/corrupted sessions)
+  # ==========================================================================
+  systemd.services.openclaw-gateway-restart = {
+    description = "OpenClaw: Restart gateway to clear stale sessions";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'cd ${homeDir}/.homelab/openclaw && ${pkgs.docker}/bin/docker compose restart openclaw-gateway'";
+      User = username;
+    };
+  };
+
+  systemd.timers.openclaw-gateway-restart = {
+    description = "Timer for OpenClaw gateway daily restart (04:00)";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* 04:00:00";
+      Persistent = true;
+    };
+  };
 }
