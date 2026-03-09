@@ -1,0 +1,31 @@
+[Unit]
+Description=OpenClaw Matrix Bridge - E2E encrypted Matrix channels for OpenClaw agents
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/akunito/.openclaw-matrix-bridge/venv/bin/python3 \
+  /home/akunito/.openclaw-matrix-bridge/bridge.py \
+  --config /home/akunito/.openclaw-matrix-bridge/config.yaml
+WorkingDirectory=/home/akunito/.openclaw-matrix-bridge
+Restart=always
+RestartSec=10
+
+# Environment
+Environment="PATH=/home/akunito/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin"
+Environment="HOME=/home/akunito"
+Environment="ENV_PROFILE=VPS_PROD"
+Environment="LD_LIBRARY_PATH=/run/current-system/sw/lib"
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=100%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openclaw-matrix-bridge
+
+[Install]
+WantedBy=default.target

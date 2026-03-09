@@ -1,0 +1,31 @@
+[Unit]
+Description=OpenClaw Matrix Fallback Monitor - Telegram notifications for unread Matrix messages
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/akunito/.openclaw-matrix-fallback/venv/bin/python3 \
+  /home/akunito/.openclaw-matrix-fallback/fallback-monitor.py \
+  --config /home/akunito/.openclaw-matrix-fallback/config.yaml
+WorkingDirectory=/home/akunito/.openclaw-matrix-fallback
+Restart=always
+RestartSec=30
+
+# Environment
+Environment="PATH=/home/akunito/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin"
+Environment="HOME=/home/akunito"
+Environment="ENV_PROFILE=VPS_PROD"
+Environment="LD_LIBRARY_PATH=/run/current-system/sw/lib"
+
+# Resource limits (lightweight monitor)
+MemoryMax=256M
+CPUQuota=50%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openclaw-matrix-fallback
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,41 @@
+matrix:
+  homeserver: "https://matrix.local.akunito.com"
+  bot_user: "@fallbackbot:akunito.com"
+  access_token_file: "/home/akunito/.homelab/openclaw/matrix-token-fallback"
+
+telegram:
+  bot_token_file: "/home/akunito/.homelab/openclaw/telegram-bot-token"
+
+rooms:
+  "!REPLACE_ALFRED_ROOM_ID:akunito.com":
+    agent_name: "Alfred"
+    telegram_group_id: "ALFRED_GROUP_CHAT_ID"
+  "!REPLACE_VAULTKEEPER_ROOM_ID:akunito.com":
+    agent_name: "Vaultkeeper"
+    telegram_group_id: "VAULTKEEPER_GROUP_CHAT_ID"
+  "!REPLACE_SCOUT_ROOM_ID:akunito.com":
+    agent_name: "Scout"
+    telegram_group_id: "SCOUT_GROUP_CHAT_ID"
+
+# Bot users to recognize as "bot messages" (for tracking purposes)
+agents_bots:
+  - "@alfredbot:akunito.com"
+  - "@vaultkeeperbot:akunito.com"
+  - "@scoutbot:akunito.com"
+
+fallback:
+  timeout_hours: 12
+  check_interval_minutes: 30
+  active_hours:
+    start: 8
+    end: 22
+  timezone: "Europe/Madrid"
+
+allowed_users:
+  - "@akunito:akunito.com"
+
+state_file: "/home/akunito/.openclaw-matrix-fallback/state.json"
+
+logging:
+  level: INFO
+  file: "/home/akunito/.openclaw-matrix-fallback/fallback.log"

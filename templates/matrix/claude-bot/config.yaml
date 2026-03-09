@@ -25,8 +25,18 @@ claude:
   max_response_length: 4000
   # Command timeout (seconds)
   command_timeout: 300
-  # Skip permission prompts (use with caution)
+  # Skip permission prompts (use with caution — legacy mode only)
   dangerously_skip_permissions: false
+
+# Claude Code SDK Bridge (Node.js)
+# When available, provides interactive permissions (/yes /no) and streaming.
+# Falls back to legacy claude --print mode if bridge is unavailable.
+bridge:
+  path: "/home/akunito/.claude-matrix-bot/bridge/bridge.mjs"
+  # Timeout for permission prompts (seconds) — auto-deny after this
+  permission_timeout: 300
+  # Minimum interval between streaming message edits (milliseconds)
+  stream_debounce_ms: 500
 
 # Mobile-optimized response settings
 response:

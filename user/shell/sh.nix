@@ -58,6 +58,12 @@ in
         enableCompletion = true;
         shellAliases = basicAliases;
         initContent = userSettings.zshinitContent + "\n" + "clear && disfetch";
+        # Force reload session vars so new terminals pick up changes after sync-user.sh
+        # without requiring a full re-login (the WM inherits a stale guard from login)
+        envExtra = ''
+          unset __HM_SESS_VARS_SOURCED
+          . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+        '';
       }
     else
       {
@@ -69,6 +75,12 @@ in
         enableCompletion = true;
         shellAliases = basicAliases;
         initContent = userSettings.zshinitContent + "\n" + "clear && disfetch";
+        # Force reload session vars so new terminals pick up changes after sync-user.sh
+        # without requiring a full re-login (the WM inherits a stale guard from login)
+        envExtra = ''
+          unset __HM_SESS_VARS_SOURCED
+          . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+        '';
       };
 
   programs.bash = {
