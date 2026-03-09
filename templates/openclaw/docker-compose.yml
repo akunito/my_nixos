@@ -54,15 +54,15 @@ services:
       - JELLYSEERR_API_KEY=${JELLYSEERR_OPENCLAW_KEY}
       - JELLYFIN_URL=http://192.168.20.200:8096
       - JELLYFIN_API_KEY=${JELLYFIN_OPENCLAW_KEY}
-      - JELLYFIN_USER_ID=${JELLYFIN_USER_ID:-66c994c4563c485c97f9959ecbff2cd2}
+      - JELLYFIN_USER_ID=${JELLYFIN_USER_ID}
       - MINIFLUX_API_URL=https://miniflux.local.akunito.com
       - MINIFLUX_API_KEY=${MINIFLUX_OPENCLAW_KEY}
       - PROMETHEUS_URL=${PROMETHEUS_URL}
       # Gmail/Calendar MCP env vars (credentials volume already mounted :ro)
       - GMAIL_CREDENTIALS_PATH=/home/node/.openclaw/credentials
-      - GMAIL_ACCOUNT=diego88aku@gmail.com
+      - GMAIL_ACCOUNT=${GMAIL_ACCOUNT}
       - CALENDAR_CREDENTIALS_PATH=/home/node/.openclaw/credentials
-      - CALENDAR_ACCOUNT=diego88aku@gmail.com
+      - CALENDAR_ACCOUNT=${CALENDAR_ACCOUNT}
       - CALENDAR_TIMEZONE=Europe/Madrid
     volumes:
       - ${HOME}/.openclaw:/home/node/.openclaw

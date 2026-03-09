@@ -45,13 +45,7 @@ def _check_rate(op: str) -> str | None:
             f.seek(0); f.truncate()
             f.write(json.dumps(data))
     except (json.JSONDecodeError, OSError) as e:
-        # Corrupted or missing state — reset and allow the request
-        try:
-            _RATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-            with open(_RATE_FILE, "w") as f:
-                json.dump({op: [now]}, f)
-        except OSError:
-            pass  # write failed — allow anyway, rate limiting is best-effort
+        return f"RATE LIMITED: {op} denied — rate state file corrupted ({type(e).__name__}). Manual fix: delete {_RATE_FILE}"
     return None
 
 server = Server("jellyseerr")
@@ -76,9 +70,11 @@ def _jellyfin_api(path: str) -> dict:
     """Call Jellyfin API (read-only)."""
     if not JELLYFIN_URL or not JELLYFIN_KEY:
         raise ValueError("Jellyfin not configured (JELLYFIN_URL / JELLYFIN_API_KEY missing)")
-    sep = "&" if "?" in path else "?"
-    url = f"{JELLYFIN_URL}{path}{sep}api_key={JELLYFIN_KEY}"
-    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+    url = f"{JELLYFIN_URL}{path}"
+    req = urllib.request.Request(url, headers={
+        "Accept": "application/json",
+        "X-Emby-Token": JELLYFIN_KEY,
+    })
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read())
 
