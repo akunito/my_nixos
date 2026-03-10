@@ -1293,7 +1293,7 @@
           "editorMode": "code",
           "expr": "pfsense_backup_age_seconds / 86400",
           "hide": false,
-          "legendFormat": "pfSense config",
+          "legendFormat": "pfSense_Config (to VPS)",
           "range": true,
           "refId": "A"
         },
@@ -1303,9 +1303,21 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "truenas_backup_age_seconds / 86400",
+          "expr": "truenas_backup_age_seconds{dataset=\"desk_home\"} / 86400",
           "hide": false,
-          "legendFormat": "TrueNAS {{dataset}}",
+          "legendFormat": "DESK_Home (to NAS)",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"vps_databases\"} / 86400",
+          "hide": false,
+          "legendFormat": "VPS_Databases (to NAS)",
           "range": true,
           "refId": "C"
         },
@@ -1315,11 +1327,59 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(time() - truenas_offsite_backup_last_success) / 86400",
+          "expr": "truenas_backup_age_seconds{dataset=\"vps_nextcloud\"} / 86400",
           "hide": false,
-          "legendFormat": "Offsite {{exported_job}}",
+          "legendFormat": "VPS_Nextcloud (to NAS)",
           "range": true,
           "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"vps_services\"} / 86400",
+          "hide": false,
+          "legendFormat": "VPS_Services (to NAS)",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"x13_home\"} / 86400",
+          "hide": false,
+          "legendFormat": "X13_Home (to NAS)",
+          "range": true,
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"configs\"}) / 86400",
+          "hide": false,
+          "legendFormat": "NAS_Configs (to VPS)",
+          "range": true,
+          "refId": "G"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"data\"}) / 86400",
+          "hide": false,
+          "legendFormat": "NAS_Data (to VPS)",
+          "range": true,
+          "refId": "H"
         }
       ],
       "title": "Backups Age",
