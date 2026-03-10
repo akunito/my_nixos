@@ -164,6 +164,7 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
     path = [ pkgs.openssh pkgs.netcat-gnu pkgs.gawk ];
     serviceConfig = {
       Type = "oneshot";
+      TimeoutSec = 60;
       User = "akunito";
       ExecStart = pkgs.writeShellScript "truenas-zfs-exporter" ''
         set -euo pipefail
@@ -180,24 +181,28 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
           exit 1
         }
 
-        # Parse and send each pool's metrics
-        echo "$POOL_DATA" | while IFS=$'\t' read -r name size alloc free _ _ frag _ _ health _; do
-          # Skip empty lines
+        # Build all metrics, then send in one shot
+        METRICS=""
+        while IFS=$'\t' read -r name size alloc free _ _ frag _ _ health _; do
           [ -z "$name" ] && continue
-
-          # Determine healthy status (1=ONLINE, 0=anything else)
+          # Handle OFFLINE pools with null values
+          [ "$size" = "-" ] || [ -z "$size" ] && size=0
+          [ "$alloc" = "-" ] || [ -z "$alloc" ] && alloc=0
+          [ "$free" = "-" ] || [ -z "$free" ] && free=0
+          [ "$frag" = "-" ] || [ -z "$frag" ] && frag=0
           healthy=0
           [ "$health" = "ONLINE" ] && healthy=1
+          METRICS+="truenas.zfspool.$name.size $size $TIMESTAMP
+        truenas.zfspool.$name.allocated $alloc $TIMESTAMP
+        truenas.zfspool.$name.free $free $TIMESTAMP
+        truenas.zfspool.$name.fragmentation $frag $TIMESTAMP
+        truenas.zfspool.$name.healthy $healthy $TIMESTAMP
+        "
+        done <<< "$POOL_DATA"
 
-          # Send metrics in Graphite plaintext format
-          {
-            echo "truenas.zfspool.$name.size $size $TIMESTAMP"
-            echo "truenas.zfspool.$name.allocated $alloc $TIMESTAMP"
-            echo "truenas.zfspool.$name.free $free $TIMESTAMP"
-            echo "truenas.zfspool.$name.fragmentation $frag $TIMESTAMP"
-            echo "truenas.zfspool.$name.healthy $healthy $TIMESTAMP"
-          } | nc -w 5 "$GRAPHITE_HOST" "$GRAPHITE_PORT"
-        done
+        # Send all metrics at once (printf ensures no trailing newline issues)
+        printf '%s' "$METRICS" | nc -q 1 -w 5 "$GRAPHITE_HOST" "$GRAPHITE_PORT"
+        echo "Sent metrics for $(echo "$POOL_DATA" | wc -l) pools"
       '';
     };
   };
