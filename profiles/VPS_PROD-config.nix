@@ -378,6 +378,10 @@ in
     vpsResticBackupEnable = true;
     vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
     vpsResticTargetUser = "truenas_admin";
+
+    # === Backup Monitoring (pfSense config + TrueNAS restic repos) ===
+    prometheusPfsenseBackupEnable = true;
+    prometheusTruenasBackupEnable = true;
   };
 
   userSettings = base.userSettings // {

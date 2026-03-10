@@ -1,22 +1,24 @@
-# TrueNAS ZFS Replication Backup Monitoring (DEPRECATED — hddpool removed, IAKU-247)
+# TrueNAS Restic Backup Monitoring
 #
-# Previously monitored ZFS replication tasks (ssdpool → hddpool/ssd_data_backups).
-# hddpool has been eliminated. This module is disabled by default (prometheusTruenasBackupEnable = false)
-# and no profile enables it. Kept for reference; can be repurposed to monitor ssdpool snapshot age.
+# Monitors restic backup repositories on TrueNAS by checking the newest file
+# timestamp in each repo's snapshots/ directory (no restic password needed).
+#
+# Monitored repos:
+#   vps_databases  — /mnt/extpool/vps-backups/databases.restic
+#   vps_services   — /mnt/extpool/vps-backups/services.restic
+#   vps_nextcloud  — /mnt/extpool/vps-backups/nextcloud.restic
+#   desk_home      — /mnt/ssdpool/workstation_backups/nixosaku/home.restic
+#   x13_home       — /mnt/ssdpool/workstation_backups/nixosx13aku/home.restic
+#   desk_vps       — /mnt/ssdpool/workstation_backups/shared/vps.restic
 #
 # Metrics exposed (via textfile collector):
-#   truenas_backup_age_seconds{dataset} - Seconds since last replication snapshot
-#   truenas_backup_last_success{dataset} - Unix timestamp of last snapshot
-#   truenas_backup_status{dataset} - 1 = snapshot found, 0 = no snapshot found
+#   truenas_backup_age_seconds{dataset} - Seconds since newest snapshot file
+#   truenas_backup_last_success{dataset} - Unix timestamp of newest snapshot file
+#   truenas_backup_status{dataset} - 1 = files found, 0 = no files or unreachable
 #
-# Feature flags (from profile config):
-#   - prometheusTruenasBackupEnable: Enable TrueNAS backup monitoring
-#   - prometheusTruenasBackupHost: TrueNAS IP (default 192.168.20.200)
-#   - prometheusTruenasBackupUser: SSH user (default truenas_admin)
-#
-# Prerequisites:
-#   Root on LXC_monitoring must have SSH key access to truenas_admin@<host>
-#   ssh-copy-id -i /root/.ssh/id_ed25519.pub truenas_admin@192.168.20.200
+# Feature flag: prometheusTruenasBackupEnable
+# Runs as: User = "akunito" (has SSH key to truenas_admin)
+# Timer: daily at 13:00 (before pfSense backup at 14:00)
 
 { config, pkgs, lib, systemSettings, ... }:
 
@@ -25,89 +27,80 @@ let
   truenasUser = systemSettings.prometheusTruenasBackupUser or "truenas_admin";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
 
-  # Datasets to monitor (destination of daily replication tasks)
-  datasets = [
-    "hddpool/ssd_data_backups/library"
-    "hddpool/ssd_data_backups/emulators"
-    "hddpool/ssd_data_backups/services"
+  # Restic repos to monitor: { label, path }
+  repos = [
+    { label = "vps_databases"; path = "/mnt/extpool/vps-backups/databases.restic"; }
+    { label = "vps_services";  path = "/mnt/extpool/vps-backups/services.restic"; }
+    { label = "vps_nextcloud"; path = "/mnt/extpool/vps-backups/nextcloud.restic"; }
+    { label = "desk_home";     path = "/mnt/ssdpool/workstation_backups/nixosaku/home.restic"; }
+    { label = "x13_home";      path = "/mnt/ssdpool/workstation_backups/nixosx13aku/home.restic"; }
+    { label = "desk_vps";      path = "/mnt/ssdpool/workstation_backups/shared/vps.restic"; }
   ];
 
-  datasetsStr = lib.concatStringsSep " " datasets;
+  # Build shell-friendly repo list: "label|path label|path ..."
+  repoEntries = lib.concatMapStringsSep " " (r: "${r.label}|${r.path}") repos;
 
   truenasBackupScript = pkgs.writeShellScript "truenas-backup-metrics" ''
-    #!/bin/bash
-    set -euo pipefail
+    set -uo pipefail
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.openssh pkgs.findutils pkgs.gawk ]}:$PATH"
 
     TRUENAS_HOST="${truenasHost}"
     TRUENAS_USER="${truenasUser}"
     TEXTFILE="${textfileDir}/truenas_backup.prom"
     TEMP_FILE=$(mktemp)
     NOW=$(date +%s)
-
-    SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new"
+    SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new"
 
     # Write metric headers
     cat > "$TEMP_FILE" << 'HEADER'
-# HELP truenas_backup_age_seconds Seconds since last ZFS replication snapshot
+# HELP truenas_backup_age_seconds Seconds since newest restic snapshot file
 # TYPE truenas_backup_age_seconds gauge
-# HELP truenas_backup_last_success Unix timestamp of last replication snapshot
+# HELP truenas_backup_last_success Unix timestamp of newest restic snapshot file
 # TYPE truenas_backup_last_success gauge
-# HELP truenas_backup_status Whether a replication snapshot exists (1=ok, 0=no snapshot)
+# HELP truenas_backup_status Whether restic repo has snapshot files (1=ok, 0=missing)
 # TYPE truenas_backup_status gauge
 HEADER
 
-    DATASETS="${datasetsStr}"
+    REPOS="${repoEntries}"
 
-    for dataset in $DATASETS; do
-      # Get the short name for the label (last path component)
-      short_name=$(${pkgs.coreutils}/bin/basename "$dataset")
+    for entry in $REPOS; do
+      LABEL="''${entry%%|*}"
+      REPO_PATH="''${entry##*|}"
 
-      # Query TrueNAS for the newest autoreplica-* snapshot on this dataset
-      # zfs list -t snapshot -o name,creation -s creation -r <dataset> | grep autoreplica | tail -1
-      SNAPSHOT_INFO=$(${pkgs.openssh}/bin/ssh $SSH_OPTS "$TRUENAS_USER@$TRUENAS_HOST" \
-        "sudo zfs list -t snapshot -o name,creation -Hp -s creation -r $dataset 2>/dev/null | grep autoreplica | tail -1" 2>/dev/null || echo "")
+      # Find newest file timestamp in snapshots/ dir
+      NEWEST_TS=$(ssh $SSH_OPTS "$TRUENAS_USER@$TRUENAS_HOST" \
+        "find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1" \
+        2>/dev/null || echo "")
 
-      if [ -n "$SNAPSHOT_INFO" ]; then
-        # Extract creation timestamp (second column, -Hp gives unix timestamp)
-        SNAP_TIME=$(echo "$SNAPSHOT_INFO" | ${pkgs.gawk}/bin/awk '{print $2}')
-
-        if [ -n "$SNAP_TIME" ] && [ "$SNAP_TIME" -gt 0 ] 2>/dev/null; then
-          AGE=$((NOW - SNAP_TIME))
-          echo "truenas_backup_age_seconds{dataset=\"$short_name\"} $AGE" >> "$TEMP_FILE"
-          echo "truenas_backup_last_success{dataset=\"$short_name\"} $SNAP_TIME" >> "$TEMP_FILE"
-          echo "truenas_backup_status{dataset=\"$short_name\"} 1" >> "$TEMP_FILE"
-        else
-          # Snapshot found but couldn't parse timestamp
-          echo "truenas_backup_status{dataset=\"$short_name\"} 0" >> "$TEMP_FILE"
-        fi
+      if [ -n "$NEWEST_TS" ] && [ "''${NEWEST_TS%.*}" -gt 0 ] 2>/dev/null; then
+        NEWEST_INT="''${NEWEST_TS%.*}"
+        AGE=$((NOW - NEWEST_INT))
+        echo "truenas_backup_age_seconds{dataset=\"$LABEL\"} $AGE" >> "$TEMP_FILE"
+        echo "truenas_backup_last_success{dataset=\"$LABEL\"} $NEWEST_INT" >> "$TEMP_FILE"
+        echo "truenas_backup_status{dataset=\"$LABEL\"} 1" >> "$TEMP_FILE"
       else
-        # No autoreplica snapshot found
-        echo "truenas_backup_status{dataset=\"$short_name\"} 0" >> "$TEMP_FILE"
+        echo "truenas_backup_status{dataset=\"$LABEL\"} 0" >> "$TEMP_FILE"
       fi
     done
 
-    # Atomically move to final location
     mv "$TEMP_FILE" "$TEXTFILE"
     chmod 644 "$TEXTFILE"
-
     echo "TrueNAS backup metrics written to $TEXTFILE"
   '';
 
 in
 {
   config = lib.mkIf (systemSettings.prometheusTruenasBackupEnable or false) {
-    # Systemd service to collect backup metrics
+    # Systemd service
     systemd.services.prometheus-truenas-backup = {
-      description = "TrueNAS ZFS Replication Backup Metrics Collector";
+      description = "TrueNAS Restic Backup Metrics Collector";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
 
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${truenasBackupScript}";
-        User = "root";
-        Restart = "on-failure";
-        RestartSec = "60s";
+        User = "akunito";
       };
 
       preStart = ''
@@ -115,14 +108,13 @@ in
       '';
     };
 
-    # Timer to run every 30 minutes
+    # Timer: daily at 13:00
     systemd.timers.prometheus-truenas-backup = {
-      description = "TrueNAS ZFS Replication Backup Metrics Collection Timer";
+      description = "TrueNAS Backup Metrics Timer (daily 13:00)";
       wantedBy = [ "timers.target" ];
 
       timerConfig = {
-        OnBootSec = "5min";
-        OnUnitActiveSec = "30min";
+        OnCalendar = "*-*-* 13:00:00";
         RandomizedDelaySec = "5min";
         Persistent = true;
       };

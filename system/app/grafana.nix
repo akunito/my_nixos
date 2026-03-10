@@ -482,6 +482,72 @@ in
                   description = "Cannot access backup repository on {{ $labels.instance }} - check restic configuration";
                 };
               }
+              # pfSense backup stale (>36h)
+              {
+                alert = "PfsenseBackupStale";
+                expr = ''pfsense_backup_age_seconds > 129600'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "pfSense backup is stale";
+                  description = "pfSense config backup is {{ $value | humanizeDuration }} old (threshold: 36h)";
+                };
+              }
+              # pfSense backup critical (>72h)
+              {
+                alert = "PfsenseBackupCritical";
+                expr = ''pfsense_backup_age_seconds > 259200'';
+                "for" = "1h";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "pfSense backup is critically old";
+                  description = "pfSense config backup is {{ $value | humanizeDuration }} old (threshold: 72h) - immediate attention required";
+                };
+              }
+              # pfSense backup missing/failed
+              {
+                alert = "PfsenseBackupMissing";
+                expr = ''pfsense_backup_status == 0'';
+                "for" = "15m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "pfSense backup failed";
+                  description = "pfSense config backup job failed - check SSH connectivity to pfSense";
+                };
+              }
+              # TrueNAS VPS restic backup stale (>36h)
+              {
+                alert = "TruenasVpsBackupStale";
+                expr = ''truenas_backup_age_seconds{dataset=~"vps_.*"} > 129600'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "TrueNAS VPS backup stale: {{ $labels.dataset }}";
+                  description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 36h)";
+                };
+              }
+              # TrueNAS workstation restic backup stale (>30h)
+              {
+                alert = "TruenasWorkstationBackupStale";
+                expr = ''truenas_backup_age_seconds{dataset=~"desk_.*|x13_.*"} > 108000'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "TrueNAS workstation backup stale: {{ $labels.dataset }}";
+                  description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 30h)";
+                };
+              }
+              # TrueNAS backup missing (any repo)
+              {
+                alert = "TruenasBackupMissing";
+                expr = ''truenas_backup_status == 0'';
+                "for" = "15m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "TrueNAS backup repo missing: {{ $labels.dataset }}";
+                  description = "Cannot find snapshot files in restic repo {{ $labels.dataset }} on TrueNAS";
+                };
+              }
             ];
           }
           {

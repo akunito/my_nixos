@@ -436,10 +436,11 @@
     # === PVE Backup Monitoring (queries Proxmox API for backup status) ===
     prometheusPveBackupEnable = false;
 
-    # === pfSense Backup Monitoring (checks backup files on Proxmox NFS) ===
+    # === pfSense Backup Monitoring (SSH pull from pfSense + rsync to TrueNAS) ===
     prometheusPfsenseBackupEnable = false;
-    prometheusPfsenseBackupProxmoxHost = "192.168.8.82";
-    prometheusPfsenseBackupPath = "/mnt/ssdpool/pfsense-backups";
+    prometheusPfsenseBackupLocalDir = "/var/lib/pfsense-backups"; # Local backup dir on VPS
+    prometheusPfsenseBackupTruenasDir = "/mnt/ssdpool/pfsense-backups"; # Rsync target on TrueNAS
+    prometheusPfsenseBackupKeepDays = 30; # Retention in days
 
     # === SNMP Exporter (pfSense/network devices) ===
     prometheusSnmpExporterEnable = false;
