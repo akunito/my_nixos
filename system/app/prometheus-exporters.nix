@@ -54,9 +54,10 @@ in
         SYSTEM_TS=$(stat -c %Y /nix/var/nix/profiles/system 2>/dev/null || echo 0)
 
         # Home Manager rebuild timestamp (current user generation)
-        # Check common HM profile locations
+        # Check both legacy (/nix/var/nix/profiles/per-user/*/home-manager)
+        # and modern (~/.local/state/nix/profiles/home-manager) locations
         USER_TS=0
-        for hm_profile in /nix/var/nix/profiles/per-user/*/home-manager; do
+        for hm_profile in /nix/var/nix/profiles/per-user/*/home-manager /home/*/.local/state/nix/profiles/home-manager; do
           if [ -e "$hm_profile" ]; then
             ts=$(stat -c %Y "$hm_profile" 2>/dev/null || echo 0)
             [ "$ts" -gt "$USER_TS" ] && USER_TS=$ts
