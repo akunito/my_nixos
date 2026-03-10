@@ -1,8 +1,9 @@
-# OpenClaw Sanitizer Services
+# OpenClaw Services
 #
-# Systemd timers and path units for OpenClaw prompt injection defense:
+# Systemd timers and path units for OpenClaw:
 #   - CSV sanitizer: Daily timer strips injection patterns from Revolut CSV imports
 #   - Memory sanitizer: Path-triggered unit strips injection patterns from memory files
+#   - Finance market data: Daily + monthly timers fetch exchange rates and asset prices
 #
 # Feature flag: openclawSanitizersEnable = true (in profile config)
 
@@ -13,6 +14,9 @@ let
   homeDir = "/home/${username}";
   openclawDir = "${homeDir}/.openclaw";
   python = pkgs.python3;
+  pythonWithDeps = pkgs.python3.withPackages (ps: [
+    ps.requests
+  ]);
 in
 {
   # ==========================================================================
@@ -77,6 +81,50 @@ in
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnCalendar = "*-*-* 04:00:00";
+      Persistent = true;
+    };
+  };
+
+  # ==========================================================================
+  # Finance Market Data — daily timer (crypto prices + stock prices)
+  # ==========================================================================
+  systemd.services.openclaw-finance-market-daily = {
+    description = "OpenClaw: Fetch daily crypto/stock prices for Vaultkeeper";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pythonWithDeps}/bin/python3 ${homeDir}/.dotfiles/templates/openclaw/finance-market-data.py --mode daily";
+      User = username;
+      WorkingDirectory = homeDir;
+    };
+  };
+
+  systemd.timers.openclaw-finance-market-daily = {
+    description = "Timer for OpenClaw daily market data (06:00)";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* 06:00:00";
+      Persistent = true;
+    };
+  };
+
+  # ==========================================================================
+  # Finance Market Data — monthly timer (ECB fiat exchange rates)
+  # ==========================================================================
+  systemd.services.openclaw-finance-market-monthly = {
+    description = "OpenClaw: Fetch monthly ECB exchange rates for Vaultkeeper";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pythonWithDeps}/bin/python3 ${homeDir}/.dotfiles/templates/openclaw/finance-market-data.py --mode fiat";
+      User = username;
+      WorkingDirectory = homeDir;
+    };
+  };
+
+  systemd.timers.openclaw-finance-market-monthly = {
+    description = "Timer for OpenClaw monthly ECB rates (1st of month 07:00)";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-01 07:00:00";
       Persistent = true;
     };
   };
