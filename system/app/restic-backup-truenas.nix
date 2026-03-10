@@ -200,77 +200,55 @@ METRICS
     description = "Docker container data directories";
     rsyncScript = ''
       RSYNC_OPTS="-az --delete --timeout=120"
-      RSYNC_SSH="-e \"ssh ${sshOpts}\""
       EXCLUDES="--exclude='*.log' --exclude='*.tmp' --exclude='*.cache' --exclude='MediaCover/*' --exclude='Backups/*'"
 
+      # Create parent directory for all data rsyncs
+      mkdir -p "$STAGING/docker-data"
+
+      # Helper: rsync a directory, non-fatal on failure (some dirs may have permission issues)
+      rsync_dir() {
+        local src="$1" dst="$2" label="$3"
+        shift 3
+        log "Rsyncing $label..."
+        if ! rsync $RSYNC_OPTS -e "ssh ${sshOpts}" "$@" \
+          "${truenasUser}@${truenasHost}:$src" "$dst" 2>&1; then
+          log "WARNING: rsync $label had errors (non-fatal)"
+        fi
+      }
+
       # Mediarr stack (sonarr, radarr, prowlarr, bazarr, jellyseerr, qbittorrent)
-      log "Rsyncing mediarr data..."
-      rsync $RSYNC_OPTS -e "ssh ${sshOpts}" $EXCLUDES \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/mediarr/ \
-        "$STAGING/docker-data/mediarr/" 2>&1
+      rsync_dir /mnt/ssdpool/docker/mediarr/ "$STAGING/docker-data/mediarr/" "mediarr" $EXCLUDES
 
       # Jellyfin config
-      log "Rsyncing jellyfin config..."
-      rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-        --exclude='var-cache/*' --exclude='var-log/*' --exclude='*.log' --exclude='*.tmp' \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/jellyfin/etc/ \
-        "$STAGING/docker-data/jellyfin-etc/" 2>&1
+      rsync_dir /mnt/ssdpool/docker/jellyfin/etc/ "$STAGING/docker-data/jellyfin-etc/" "jellyfin config" \
+        --exclude='var-cache/*' --exclude='var-log/*' --exclude='*.log' --exclude='*.tmp'
 
       # Jellyfin library metadata
-      log "Rsyncing jellyfin library data..."
-      rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-        --exclude='*.log' --exclude='*.tmp' --exclude='*.cache' \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/jellyfin/var-lib/ \
-        "$STAGING/docker-data/jellyfin-var-lib/" 2>&1
+      rsync_dir /mnt/ssdpool/docker/jellyfin/var-lib/ "$STAGING/docker-data/jellyfin-var-lib/" "jellyfin data" \
+        --exclude='*.log' --exclude='*.tmp' --exclude='*.cache'
 
       # Gluetun VPN state
-      log "Rsyncing gluetun..."
-      rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/gluetun/ \
-        "$STAGING/docker-data/gluetun/" 2>&1
+      rsync_dir /mnt/ssdpool/docker/gluetun/ "$STAGING/docker-data/gluetun/" "gluetun"
 
-      # NPM data (ZFS dataset path)
-      log "Rsyncing npm..."
-      rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/npm/ \
-        "$STAGING/docker-data/npm/" 2>&1
+      # NPM data (ZFS dataset)
+      rsync_dir /mnt/ssdpool/docker/npm/ "$STAGING/docker-data/npm/" "npm"
 
       # NPM compose-relative data (if it exists)
-      ssh ${sshOpts} ${truenasUser}@${truenasHost} "test -d /mnt/ssdpool/docker/compose/npm/data" 2>/dev/null && {
-        log "Rsyncing npm compose-relative data..."
-        rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-          ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/compose/npm/data/ \
-          "$STAGING/docker-data/npm-compose-data/" 2>&1
-        rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-          ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/compose/npm/letsencrypt/ \
-          "$STAGING/docker-data/npm-compose-letsencrypt/" 2>&1
-      } || log "NPM compose-relative data not found (skipping)"
+      if ssh ${sshOpts} ${truenasUser}@${truenasHost} "test -d /mnt/ssdpool/docker/compose/npm/data" 2>/dev/null; then
+        rsync_dir /mnt/ssdpool/docker/compose/npm/data/ "$STAGING/docker-data/npm-compose-data/" "npm compose data"
+        rsync_dir /mnt/ssdpool/docker/compose/npm/letsencrypt/ "$STAGING/docker-data/npm-compose-letsencrypt/" "npm compose letsencrypt"
+      else
+        log "NPM compose-relative data not found (skipping)"
+      fi
 
       # Calibre-Web config
-      log "Rsyncing calibre-web..."
-      rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/calibre-web/ \
-        "$STAGING/docker-data/calibre-web/" 2>&1
+      rsync_dir /mnt/ssdpool/docker/calibre-web/ "$STAGING/docker-data/calibre-web/" "calibre-web"
 
       # EmulatorJS config
-      log "Rsyncing emulatorjs..."
-      rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/emulatorjs/ \
-        "$STAGING/docker-data/emulatorjs/" 2>&1
+      rsync_dir /mnt/ssdpool/docker/emulatorjs/ "$STAGING/docker-data/emulatorjs/" "emulatorjs"
 
-      # Tailscale VPN state
-      log "Rsyncing tailscale..."
-      rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-        --rsync-path="sudo rsync" \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/tailscale/ \
-        "$STAGING/docker-data/tailscale/" 2>&1
-
-      # qBittorrent config (ZFS dataset)
-      log "Rsyncing qbittorrent..."
-      rsync $RSYNC_OPTS -e "ssh ${sshOpts}" \
-        --exclude='*.log' --exclude='*.tmp' \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/qbittorrent/ \
-        "$STAGING/docker-data/qbittorrent/" 2>&1
+      # Note: tailscale config is inside compose/ (backed up by configs job)
+      # Note: qbittorrent is inside mediarr/ (backed up above)
     '';
   };
 
