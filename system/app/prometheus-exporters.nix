@@ -47,7 +47,7 @@ in
       ExecStart = pkgs.writeShellScript "nixos-update-metrics" ''
         set -euo pipefail
         TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile"
-        HOSTNAME=$(hostname)
+        HOSTNAME=$(cat /proc/sys/kernel/hostname)
         OUTFILE="$TEXTFILE_DIR/nixos_updates.prom"
 
         # System rebuild timestamp (current NixOS generation)
