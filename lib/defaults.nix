@@ -403,6 +403,7 @@
     dotfilesPath = "/home/akunito/.dotfiles"; # Path to dotfiles repository
 
     # === Prometheus Exporters (for monitored nodes) ===
+    prometheusWorkstationExporterEnable = false; # Lightweight node exporter for workstations (textfile + filesystem + diskstats only)
     prometheusExporterEnable = false; # Enable Node Exporter on this host
     prometheusExporterCadvisorEnable = false; # Enable cAdvisor for Docker metrics on this host
     prometheusExporterLocalOnly = false; # Bind exporters to 127.0.0.1 (true on VPS, false on remote nodes)

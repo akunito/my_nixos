@@ -49,7 +49,7 @@ in
     resolvedEnable = false;
 
     # Firewall
-    allowedTCPPorts = [ ];
+    allowedTCPPorts = [ 9100 ]; # prometheus workstation exporter
     allowedUDPPorts = [ ];
 
     # NFS nofail safety net (prevents boot hang when TrueNAS is unreachable)
@@ -176,6 +176,9 @@ in
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
     voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)
+
+    # === Monitoring ===
+    prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
 
     # === Control Panel ===
     controlPanelEnable = true; # Enable NixOS infrastructure control panel

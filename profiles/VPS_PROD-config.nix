@@ -280,6 +280,9 @@ in
     # TrueNAS: node-exporter (9100) + cadvisor (8081) on rootless Docker
     prometheusRemoteTargets = [
       { name = "truenas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; }
+      { name = "desk"; host = "192.168.8.96"; nodePort = 9100; cadvisorPort = null; }
+      { name = "x13"; host = "192.168.8.92"; nodePort = 9100; cadvisorPort = null; }
+      { name = "laptop_a"; host = "192.168.8.78"; nodePort = 9100; cadvisorPort = null; }
     ];
 
     # Application metrics (local VPS databases only — LXC_database decommissioned)

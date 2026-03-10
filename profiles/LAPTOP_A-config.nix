@@ -54,8 +54,9 @@ in
     ];
     resolvedEnable = false;
 
-    # Firewall - sunshine ports
+    # Firewall - sunshine ports + monitoring
     allowedTCPPorts = [
+      9100 # prometheus workstation exporter
       47984
       47989
       47990
@@ -134,6 +135,9 @@ in
 
     # === Development Tools & AI ===
     aichatEnable = false; # Disable aichat CLI tool
+
+    # === Monitoring ===
+    prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
 
     # === Other Features ===
     starCitizenModules = false; # Disable Star Citizen optimizations

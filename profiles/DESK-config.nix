@@ -141,6 +141,7 @@ in
 
     # Firewall
     allowedTCPPorts = [
+      9100 # prometheus workstation exporter
       # 47984 47989 47990 48010 # sunshine
     ];
     allowedUDPPorts = [
@@ -329,6 +330,9 @@ in
     # === Control Panel ===
     controlPanelEnable = true; # Enable NixOS infrastructure control panel (web server)
     controlPanelNativeEnable = true; # Enable NixOS infrastructure control panel (native desktop app)
+
+    # === Monitoring ===
+    prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
 
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver

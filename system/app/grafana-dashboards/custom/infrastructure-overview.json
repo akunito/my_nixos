@@ -1991,7 +1991,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(time() - nixos_last_update_system_timestamp{job=\"node_vps\"}) / 86400",
+          "expr": "(time() - nixos_last_update_system_timestamp) / 86400",
           "legendFormat": "{{hostname}}",
           "range": true,
           "refId": "A"
@@ -2067,7 +2067,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(time() - nixos_last_update_user_timestamp{job=\"node_vps\"}) / 86400",
+          "expr": "(time() - nixos_last_update_user_timestamp) / 86400",
           "legendFormat": "{{hostname}}",
           "range": true,
           "refId": "A"
