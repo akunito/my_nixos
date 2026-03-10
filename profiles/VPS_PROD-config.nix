@@ -314,6 +314,11 @@ in
       { name = "pfsense"; host = "192.168.8.1"; }
       { name = "truenas"; host = "192.168.20.200"; }
       { name = "wan"; host = "1.1.1.1"; }
+      { name = "wireguard_tunnel"; host = "172.26.5.155"; }   # VPS WireGuard tunnel (self-ping)
+      { name = "switch_usw_aggr"; host = "192.168.8.180"; }   # UniFi Aggregation Switch
+      { name = "switch_usw_24"; host = "192.168.8.181"; }     # UniFi 24-port Switch
+      { name = "lan_wifi"; host = "192.168.8.2"; }            # LAN WiFi AP
+      { name = "guest_wifi"; host = "192.168.9.2"; }          # Guest WiFi AP (offline)
     ];
 
     # === OpenClaw Sanitizers (CSV + memory file injection stripping) ===
