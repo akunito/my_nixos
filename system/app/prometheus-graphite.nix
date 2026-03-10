@@ -146,7 +146,7 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
   services.prometheus.exporters.graphite = {
     enable = true;
     port = webPort;                    # Prometheus scrape port (HTTP)
-    listenAddress = "127.0.0.1";
+    listenAddress = "0.0.0.0";          # Must listen on all interfaces so TrueNAS can send via Tailscale/WireGuard
     graphitePort = graphiteInputPort;  # Graphite input from TrueNAS
     openFirewall = false;              # VPN interfaces (wg0, tailscale0) accept all traffic; no need to open publicly
     mappingSettings = mappingConfig;

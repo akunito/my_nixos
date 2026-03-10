@@ -1410,7 +1410,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "truenas_truenas_cpu_usage_cpu_cpu{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_truenas_cpu_usage_cpu_cpu{job=\"truenas_graphite\"}",
           "legendFormat": "CPU",
           "range": true,
           "refId": "A"

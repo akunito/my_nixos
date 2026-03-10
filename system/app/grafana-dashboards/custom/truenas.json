@@ -85,7 +85,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_truenas_cpu_usage_cpu_cpu{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_truenas_cpu_usage_cpu_cpu{job=\"truenas_graphite\"}",
           "legendFormat": "CPU Usage",
           "range": true,
           "refId": "A"
@@ -438,7 +438,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_truenas_arcstats_size_size{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_truenas_arcstats_size_size{job=\"truenas_graphite\"}",
           "legendFormat": "ARC Size",
           "range": true,
           "refId": "A"
@@ -536,7 +536,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_truenas_cpu_usage_cpu_cpu{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_truenas_cpu_usage_cpu_cpu{job=\"truenas_graphite\"}",
           "legendFormat": "CPU Usage",
           "range": true,
           "refId": "A"
@@ -647,7 +647,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_net_received{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_net_bond0_received{job=\"truenas_graphite\"}",
           "legendFormat": "received",
           "range": true,
           "refId": "A"
@@ -658,7 +658,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_net_sent{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_net_bond0_sent{job=\"truenas_graphite\"}",
           "legendFormat": "sent",
           "range": true,
           "refId": "B"
@@ -862,7 +862,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_load_load1{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_system_load_load1{job=\"truenas_graphite\"}",
           "legendFormat": "1 min",
           "range": true,
           "refId": "A"
@@ -873,7 +873,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_load_load5{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_system_load_load5{job=\"truenas_graphite\"}",
           "legendFormat": "5 min",
           "range": true,
           "refId": "B"
@@ -884,7 +884,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_load_load15{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_system_load_load15{job=\"truenas_graphite\"}",
           "legendFormat": "15 min",
           "range": true,
           "refId": "C"
@@ -995,7 +995,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum({__name__=~\"truenas_truenas_disk_stats__serial_.*_reads\", job=\"truenas_graphite\"})",
+          "expr": "sum({__name__=~\"servers_truenas_truenas_disk_stats_ops__serial_.*_read_ops\", job=\"truenas_graphite\"})",
           "legendFormat": "read",
           "range": true,
           "refId": "A"
@@ -1006,7 +1006,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum({__name__=~\"truenas_truenas_disk_stats__serial_.*_writes\", job=\"truenas_graphite\"})",
+          "expr": "sum({__name__=~\"servers_truenas_truenas_disk_stats_ops__serial_.*_write_ops\", job=\"truenas_graphite\"})",
           "legendFormat": "write",
           "range": true,
           "refId": "B"
