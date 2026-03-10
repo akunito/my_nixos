@@ -783,6 +783,14 @@ in
     ];
   };
 
+  # Install frser-sqlite-datasource plugin if not present (community plugin, not in nixpkgs)
+  systemd.services.grafana.preStart = lib.mkAfter ''
+    PLUGIN_DIR="${config.services.grafana.dataDir}/plugins/frser-sqlite-datasource"
+    if [ ! -d "$PLUGIN_DIR" ]; then
+      ${config.services.grafana.package}/bin/grafana cli --pluginsDir "${config.services.grafana.dataDir}/plugins" plugins install frser-sqlite-datasource || true
+    fi
+  '';
+
   # Create textfile directory for custom metrics (auto-update status, backup status)
   # Mode 0775 allows group write access for user update scripts (wheel group)
   systemd.tmpfiles.rules = [

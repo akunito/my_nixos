@@ -11,7 +11,7 @@ import shutil
 import sys
 from pathlib import Path
 
-IMPORTS_DIR = Path.home() / ".openclaw/workspace/finance/imports"
+IMPORTS_DIR = Path.home() / ".openclaw/finance-imports"
 MAX_NOTE_LENGTH = 60
 # Allow only: letters, digits, spaces, currency symbols, basic punctuation
 ALLOWED_CHARS = re.compile(r"[^a-zA-Z0-9àáâãäåæçèéêëìíîïñòóôõöùúûüýÿ \t€£$.,;:!?'\"()/&@#%+-]")

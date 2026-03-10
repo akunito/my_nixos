@@ -68,6 +68,7 @@ services:
       - ${HOME}/.openclaw:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
       - ${HOME}/.openclaw/credentials:/home/node/.openclaw/credentials:ro  # OAuth tokens read-only — prevents overwrite on container compromise
+      - ${HOME}/.openclaw/finance-imports:/home/node/.openclaw/finance-imports:ro  # Syncthing CSV imports (read-only)
       - ${HOME}/.homelab/openclaw/hooks-token:/run/secrets/hooks_token:ro  # Webhook token as file — not in env
     deploy:
       resources:
