@@ -275,6 +275,8 @@ in
     publicDomain = secrets.publicDomain;
     grafanaAlertsFrom = secrets.grafanaAlertsFrom;
     notificationToEmail = secrets.alertEmail;
+    grafanaTelegramBotToken = secrets.grafanaTelegramBotToken or "";
+    grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";
 
     # Remote targets for Prometheus scraping (via WireGuard/Tailscale tunnel to LAN)
     # TrueNAS: node-exporter (9100) + cadvisor (8081) on rootless Docker

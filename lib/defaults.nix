@@ -365,6 +365,9 @@
     planeApiToken = ""; # Plane API token for MCP server (set from secrets/domains.nix in profiles)
     planeApiUrl = ""; # Plane instance URL (e.g., "https://plane.akunito.com")
     planeWorkspaceSlug = ""; # Plane workspace slug (e.g., "akuworkspace")
+    grafanaTelegramBotToken = ""; # Telegram bot token for Grafana alert notifications (from @BotFather)
+    grafanaTelegramChatId = ""; # Telegram chat ID for Grafana alert notifications
+
     grafanaMcpToken = ""; # Grafana service account token for MCP server (Viewer role)
     grafanaMcpUrl = ""; # Grafana instance URL (e.g., "https://grafana.akunito.com")
     dbClaudeReadonlyConnStr = ""; # PostgreSQL connection string for read-only MCP (e.g., "postgresql://claude_readonly:pass@host:5432/plane")

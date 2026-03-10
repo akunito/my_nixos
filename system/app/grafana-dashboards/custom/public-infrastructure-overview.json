@@ -1308,6 +1308,18 @@
           "legendFormat": "TrueNAS {{dataset}}",
           "range": true,
           "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "(time() - truenas_offsite_backup_last_success) / 86400",
+          "hide": false,
+          "legendFormat": "Offsite {{job}}",
+          "range": true,
+          "refId": "D"
         }
       ],
       "title": "Backups Age",

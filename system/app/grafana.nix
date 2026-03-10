@@ -27,6 +27,9 @@ let
   remoteTargets = systemSettings.prometheusRemoteTargets or [];
   appTargets = systemSettings.prometheusAppTargets or [];
   localSslEnable = systemSettings.grafanaLocalSslEnable or true;
+  telegramBotToken = systemSettings.grafanaTelegramBotToken or "";
+  telegramChatId = systemSettings.grafanaTelegramChatId or "";
+  telegramEnabled = telegramBotToken != "" && telegramChatId != "";
 
   # Build scrape configs for remote Node Exporters
   remoteNodeScrapeConfigs = map (target: {
@@ -196,10 +199,23 @@ in
               singleEmail = true;
             };
           }];
+        }] ++ lib.optionals telegramEnabled [{
+          orgId = 1;
+          name = "telegram-alerts";
+          receivers = [{
+            uid = "telegram-receiver";
+            type = "telegram";
+            settings = {
+              bottoken = telegramBotToken;
+              chatid = telegramChatId;
+              parse_mode = "HTML";
+            };
+          }];
         }];
       };
 
-      # Alert notification policies (route all alerts to email contact point)
+      # Alert notification policies
+      # Route critical alerts to both email + telegram, warnings to email only
       alerting.policies.settings = {
         apiVersion = 1;
         policies = [{
@@ -209,6 +225,14 @@ in
           group_wait = "30s";
           group_interval = "5m";
           repeat_interval = "4h";
+        }] ++ lib.optionals telegramEnabled [{
+          orgId = 1;
+          receiver = "telegram-alerts";
+          group_by = ["alertname" "severity"];
+          group_wait = "30s";
+          group_interval = "5m";
+          repeat_interval = "4h";
+          matchers = ["severity = critical"];
         }];
       };
     };
@@ -546,6 +570,77 @@ in
                 annotations = {
                   summary = "TrueNAS backup repo missing: {{ $labels.dataset }}";
                   description = "Cannot find snapshot files in restic repo {{ $labels.dataset }} on TrueNAS";
+                };
+              }
+              # TrueNAS offsite backup stale (VPS pulls from TrueNAS, >36h)
+              {
+                alert = "TruenasOffsiteBackupStale";
+                expr = ''(time() - truenas_offsite_backup_last_success) > 129600'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "TrueNAS offsite backup stale: {{ $labels.job }}";
+                  description = "TrueNAS→VPS offsite backup {{ $labels.job }} last succeeded {{ $value | humanizeDuration }} ago (threshold: 36h)";
+                };
+              }
+              # TrueNAS offsite backup failed
+              {
+                alert = "TruenasOffsiteBackupFailed";
+                expr = ''truenas_offsite_backup_status == 0'';
+                "for" = "15m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "TrueNAS offsite backup failed: {{ $labels.job }}";
+                  description = "TrueNAS→VPS offsite backup {{ $labels.job }} failed - check systemd journal for truenas-backup-{{ $labels.job }}";
+                };
+              }
+            ];
+          }
+          {
+            name = "infrastructure_alerts";
+            rules = [
+              # Systemd service failed on any monitored host
+              {
+                alert = "SystemdServiceFailed";
+                expr = ''node_systemd_unit_state{state="failed"} == 1'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Systemd unit failed on {{ $labels.instance }}";
+                  description = "Unit {{ $labels.name }} is in failed state on {{ $labels.instance }}";
+                };
+              }
+              # Blackbox HTTP probe failure
+              {
+                alert = "BlackboxProbeFailed";
+                expr = ''probe_success == 0'';
+                "for" = "5m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Probe failed: {{ $labels.instance }}";
+                  description = "HTTP/ICMP probe to {{ $labels.instance }} has been failing for 5 minutes";
+                };
+              }
+              # High swap usage (memory pressure indicator)
+              {
+                alert = "HostSwapUsageHigh";
+                expr = ''(node_memory_SwapTotal_bytes > 0) and ((node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes) / node_memory_SwapTotal_bytes * 100 > 50)'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} swap usage high";
+                  description = "Swap usage on {{ $labels.instance }} is {{ $value | printf \"%.1f\" }}% (threshold: 50%)";
+                };
+              }
+              # File descriptor exhaustion risk
+              {
+                alert = "HostFileDescriptorsHigh";
+                expr = ''node_filefd_allocated / node_filefd_maximum * 100 > 80'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} file descriptors high";
+                  description = "File descriptor usage on {{ $labels.instance }} is {{ $value | printf \"%.1f\" }}% (threshold: 80%)";
                 };
               }
             ];
