@@ -187,6 +187,45 @@ docker compose --profile cli run --rm -T openclaw-cli plugins install @openclaw/
 - Multi-account support via `channels.matrix.accounts`
 - DM from Element: `@openclaw-bot:matrix.akunito.com`
 
+### Multi-Account Agent Routing (CRITICAL)
+
+When using multiple Matrix accounts (one per agent), each account maps to a dedicated room. Bindings tell OpenClaw which agent handles which room.
+
+**Binding rules (all must be correct or routing silently falls to default agent):**
+
+1. **`peer.kind` must be `"channel"`** — OpenClaw classifies Matrix rooms as `kind: "channel"`, not `"group"`. Using `"group"` causes the binding to never match.
+2. **`peer.id` must match EXACT case** — Matrix room IDs are case-sensitive (e.g., `!ivCwPDzzvEUuIvPAYR:akunito.com`). Lowercase versions will NOT match.
+3. **Use `"accountId"`** (not `"account"`) — the field name is `accountId` in the match object.
+4. **Each bot should only be a member of its own room** — if multiple bots join the same room, the first to process creates a session under the wrong agent.
+
+**Correct binding example:**
+```jsonc
+{
+  "bindings": [
+    {
+      "agentId": "vaultkeeper",
+      "match": {
+        "channel": "matrix",
+        "accountId": "vaultkeeper",  // NOT "account"
+        "peer": {
+          "kind": "channel",         // NOT "group"
+          "id": "!ivCwPDzzvEUuIvPAYR:akunito.com"  // EXACT case from Matrix
+        }
+      }
+    }
+  ]
+}
+```
+
+**Troubleshooting misrouted messages:**
+1. Verify bindings: `docker exec openclaw-gateway node /app/openclaw.mjs agents bindings`
+2. Check lane in logs: `tail /tmp/openclaw/openclaw-YYYY-MM-DD.log | grep lane`
+   - Correct: `lane=session:agent:vaultkeeper:matrix:channel:!room_id`
+   - Wrong: `lane=session:agent:alfred:matrix:channel:!room_id` (fell to default)
+3. Purge stale sessions: delete entries from `agents/*/sessions/sessions.json` and their `.jsonl` files
+4. Restart: `docker compose restart openclaw-gateway` (bind-mounted config re-read on process restart)
+5. **Never run `openclaw doctor --fix` blindly** — it may create a phantom `default` Matrix account from top-level config values, which must be manually removed
+
 ---
 
 ## n8n (Workflow Automation)
