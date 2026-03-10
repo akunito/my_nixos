@@ -155,6 +155,63 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
   # Graphite input port NOT opened publicly — TrueNAS connects via Tailscale/WireGuard,
   # and VPN interfaces (wg0, tailscale0) already accept all traffic in the NixOS firewall.
 
+  # ZFS pool metrics exporter — SSHes to TrueNAS every 5 minutes and sends pool stats
+  # to Graphite. TrueNAS SCALE doesn't export ZFS pool capacity via its built-in reporter.
+  systemd.services.truenas-zfs-exporter = {
+    description = "TrueNAS ZFS Pool Metrics Exporter";
+    after = [ "network-online.target" "prometheus-graphite-exporter.service" ];
+    wants = [ "network-online.target" ];
+    path = [ pkgs.openssh pkgs.netcat-gnu pkgs.gawk ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "akunito";
+      ExecStart = pkgs.writeShellScript "truenas-zfs-exporter" ''
+        set -euo pipefail
+        TRUENAS_HOST="truenas_admin@192.168.20.200"
+        GRAPHITE_HOST="127.0.0.1"
+        GRAPHITE_PORT="${toString graphiteInputPort}"
+        TIMESTAMP=$(date +%s)
+
+        # Get pool stats via zpool list (-H = no header, -p = parseable/bytes)
+        # Columns: name, size, alloc, free, ckpoint, expandsz, frag%, cap%, dedup, health, altroot
+        POOL_DATA=$(ssh -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no \
+          "$TRUENAS_HOST" 'sudo zpool list -Hp' 2>/dev/null) || {
+          echo "Failed to SSH to TrueNAS" >&2
+          exit 1
+        }
+
+        # Parse and send each pool's metrics
+        echo "$POOL_DATA" | while IFS=$'\t' read -r name size alloc free _ _ frag _ _ health _; do
+          # Skip empty lines
+          [ -z "$name" ] && continue
+
+          # Determine healthy status (1=ONLINE, 0=anything else)
+          healthy=0
+          [ "$health" = "ONLINE" ] && healthy=1
+
+          # Send metrics in Graphite plaintext format
+          {
+            echo "truenas.zfspool.$name.size $size $TIMESTAMP"
+            echo "truenas.zfspool.$name.allocated $alloc $TIMESTAMP"
+            echo "truenas.zfspool.$name.free $free $TIMESTAMP"
+            echo "truenas.zfspool.$name.fragmentation $frag $TIMESTAMP"
+            echo "truenas.zfspool.$name.healthy $healthy $TIMESTAMP"
+          } | nc -w 5 "$GRAPHITE_HOST" "$GRAPHITE_PORT"
+        done
+      '';
+    };
+  };
+
+  systemd.timers.truenas-zfs-exporter = {
+    description = "TrueNAS ZFS Pool Metrics Exporter Timer";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2min";
+      OnUnitActiveSec = "5min";
+      RandomizedDelaySec = "30s";
+    };
+  };
+
   # Prometheus scrape config for graphite exporter
   services.prometheus.scrapeConfigs = [
     {
