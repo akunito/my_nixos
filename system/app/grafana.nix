@@ -188,34 +188,48 @@ in
       # Alert contact points provisioning (email notifications)
       alerting.contactPoints.settings = {
         apiVersion = 1;
-        contactPoints = [{
-          orgId = 1;
-          name = "email-alerts";
-          receivers = [{
-            uid = "email-receiver";
-            type = "email";
-            settings = {
-              addresses = alertEmail;
-              singleEmail = true;
-            };
-          }];
-        }] ++ lib.optionals telegramEnabled [{
-          orgId = 1;
-          name = "telegram-alerts";
-          receivers = [{
-            uid = "telegram-receiver";
-            type = "telegram";
-            settings = {
-              bottoken = telegramBotToken;
-              chatid = telegramChatId;
-              parse_mode = "HTML";
-            };
-          }];
-        }];
+        contactPoints = [
+          {
+            orgId = 1;
+            name = "email-alerts";
+            receivers = [{
+              uid = "email-receiver";
+              type = "email";
+              settings = {
+                addresses = alertEmail;
+                singleEmail = true;
+              };
+            }];
+          }
+        ] ++ lib.optionals telegramEnabled [
+          {
+            orgId = 1;
+            name = "critical-alerts";
+            receivers = [
+              {
+                uid = "critical-email-receiver";
+                type = "email";
+                settings = {
+                  addresses = alertEmail;
+                  singleEmail = true;
+                };
+              }
+              {
+                uid = "critical-telegram-receiver";
+                type = "telegram";
+                settings = {
+                  bottoken = telegramBotToken;
+                  chatid = telegramChatId;
+                  parse_mode = "HTML";
+                };
+              }
+            ];
+          }
+        ];
       };
 
       # Alert notification policies
-      # Route critical alerts to both email + telegram, warnings to email only
+      # Root: email for all alerts. Child route: critical → email + telegram.
       alerting.policies.settings = {
         apiVersion = 1;
         policies = [{
@@ -225,14 +239,10 @@ in
           group_wait = "30s";
           group_interval = "5m";
           repeat_interval = "4h";
-        }] ++ lib.optionals telegramEnabled [{
-          orgId = 1;
-          receiver = "telegram-alerts";
-          group_by = ["alertname" "severity"];
-          group_wait = "30s";
-          group_interval = "5m";
-          repeat_interval = "4h";
-          matchers = ["severity = critical"];
+          routes = lib.optionals telegramEnabled [{
+            receiver = "critical-alerts";
+            object_matchers = [["severity" "=" "critical"]];
+          }];
         }];
       };
     };
