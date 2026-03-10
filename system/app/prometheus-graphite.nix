@@ -161,7 +161,7 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
     description = "TrueNAS ZFS Pool Metrics Exporter";
     after = [ "network-online.target" "prometheus-graphite-exporter.service" ];
     wants = [ "network-online.target" ];
-    path = [ pkgs.openssh pkgs.netcat-gnu pkgs.gawk ];
+    path = [ pkgs.openssh ];
     serviceConfig = {
       Type = "oneshot";
       TimeoutSec = 60;
@@ -200,8 +200,10 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
         "
         done <<< "$POOL_DATA"
 
-        # Send all metrics at once (printf ensures no trailing newline issues)
-        printf '%s' "$METRICS" | nc -q 1 -w 5 "$GRAPHITE_HOST" "$GRAPHITE_PORT"
+        # Send all metrics at once via bash TCP (no nc dependency issues)
+        exec 3<>/dev/tcp/$GRAPHITE_HOST/$GRAPHITE_PORT
+        printf '%s' "$METRICS" >&3
+        exec 3>&-
         echo "Sent metrics for $(echo "$POOL_DATA" | wc -l) pools"
       '';
     };
