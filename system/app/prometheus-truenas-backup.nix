@@ -14,6 +14,7 @@
 #   truenas_backup_age_seconds{dataset} - Seconds since newest snapshot file
 #   truenas_backup_last_success{dataset} - Unix timestamp of newest snapshot file
 #   truenas_backup_status{dataset} - 1 = files found, 0 = no files or unreachable
+#   backup_repo_size_bytes{dataset,direction} - Size of backup repository in bytes
 #
 # Feature flag: prometheusTruenasBackupEnable
 # Runs as: User = "akunito" (has SSH key to truenas_admin)
@@ -26,17 +27,17 @@ let
   truenasUser = systemSettings.prometheusTruenasBackupUser or "truenas_admin";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
 
-  # Restic repos to monitor: { label, path }
+  # Restic repos to monitor: { label, path, direction }
   repos = [
-    { label = "vps_databases"; path = "/mnt/extpool/vps-backups/databases.restic"; }
-    { label = "vps_services";  path = "/mnt/extpool/vps-backups/services.restic"; }
-    { label = "vps_nextcloud"; path = "/mnt/extpool/vps-backups/nextcloud.restic"; }
-    { label = "desk_home";     path = "/mnt/ssdpool/workstation_backups/nixosaku/home.restic"; }
-    { label = "x13_home";      path = "/mnt/ssdpool/workstation_backups/nixosx13aku/home.restic"; }
+    { label = "vps_databases"; path = "/mnt/extpool/vps-backups/databases.restic"; direction = "vps_to_truenas"; }
+    { label = "vps_services";  path = "/mnt/extpool/vps-backups/services.restic"; direction = "vps_to_truenas"; }
+    { label = "vps_nextcloud"; path = "/mnt/extpool/vps-backups/nextcloud.restic"; direction = "vps_to_truenas"; }
+    { label = "desk_home";     path = "/mnt/ssdpool/workstation_backups/nixosaku/home.restic"; direction = "workstation_to_truenas"; }
+    { label = "x13_home";      path = "/mnt/ssdpool/workstation_backups/nixosx13aku/home.restic"; direction = "workstation_to_truenas"; }
   ];
 
-  # Build shell-friendly repo list: "label|path label|path ..."
-  repoEntries = lib.concatMapStringsSep " " (r: "${r.label}|${r.path}") repos;
+  # Build shell-friendly repo list: "label|path|direction label|path|direction ..."
+  repoEntries = lib.concatMapStringsSep " " (r: "${r.label}|${r.path}|${r.direction}") repos;
 
   truenasBackupScript = pkgs.writeShellScript "truenas-backup-metrics" ''
     set -uo pipefail
@@ -57,18 +58,24 @@ let
 # TYPE truenas_backup_last_success gauge
 # HELP truenas_backup_status Whether restic repo has snapshot files (1=ok, 0=missing)
 # TYPE truenas_backup_status gauge
+# HELP backup_repo_size_bytes Size of backup repository in bytes
+# TYPE backup_repo_size_bytes gauge
 HEADER
 
     REPOS="${repoEntries}"
 
     for entry in $REPOS; do
-      LABEL="''${entry%%|*}"
-      REPO_PATH="''${entry##*|}"
+      LABEL="$(echo "$entry" | cut -d'|' -f1)"
+      REPO_PATH="$(echo "$entry" | cut -d'|' -f2)"
+      DIRECTION="$(echo "$entry" | cut -d'|' -f3)"
 
-      # Find newest file timestamp in snapshots/ dir (sudo needed — repos owned by akunito, 700)
-      NEWEST_TS=$(ssh $SSH_OPTS "$TRUENAS_USER@$TRUENAS_HOST" \
-        "sudo find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1" \
+      # Get newest snapshot timestamp + repo size in one SSH call
+      RESULT=$(ssh $SSH_OPTS "$TRUENAS_USER@$TRUENAS_HOST" \
+        "echo NEWEST=\$(sudo find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1); echo SIZE=\$(sudo du -sb $REPO_PATH 2>/dev/null | cut -f1)" \
         2>/dev/null || echo "")
+
+      NEWEST_TS=$(echo "$RESULT" | grep '^NEWEST=' | cut -d= -f2)
+      REPO_SIZE=$(echo "$RESULT" | grep '^SIZE=' | cut -d= -f2)
 
       if [ -n "$NEWEST_TS" ] && [ "''${NEWEST_TS%.*}" -gt 0 ] 2>/dev/null; then
         NEWEST_INT="''${NEWEST_TS%.*}"
@@ -78,6 +85,21 @@ HEADER
         echo "truenas_backup_status{dataset=\"$LABEL\"} 1" >> "$TEMP_FILE"
       else
         echo "truenas_backup_status{dataset=\"$LABEL\"} 0" >> "$TEMP_FILE"
+      fi
+
+      if [ -n "$REPO_SIZE" ] && [ "$REPO_SIZE" -gt 0 ] 2>/dev/null; then
+        echo "backup_repo_size_bytes{dataset=\"$LABEL\",direction=\"$DIRECTION\"} $REPO_SIZE" >> "$TEMP_FILE"
+      fi
+    done
+
+    # VPS-local offsite repos (TrueNAS→VPS direction)
+    for LOCAL_REPO in configs data; do
+      LOCAL_PATH="/var/lib/truenas-backups/$LOCAL_REPO.restic"
+      if [ -d "$LOCAL_PATH" ]; then
+        LOCAL_SIZE=$(du -sb "$LOCAL_PATH" 2>/dev/null | cut -f1)
+        if [ -n "$LOCAL_SIZE" ] && [ "$LOCAL_SIZE" -gt 0 ] 2>/dev/null; then
+          echo "backup_repo_size_bytes{dataset=\"offsite_$LOCAL_REPO\",direction=\"truenas_to_vps\"} $LOCAL_SIZE" >> "$TEMP_FILE"
+        fi
       fi
     done
 

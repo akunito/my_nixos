@@ -589,8 +589,8 @@ in
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
-                  summary = "TrueNAS offsite backup stale: {{ $labels.job }}";
-                  description = "TrueNAS→VPS offsite backup {{ $labels.job }} last succeeded {{ $value | humanizeDuration }} ago (threshold: 36h)";
+                  summary = "TrueNAS offsite backup stale: {{ $labels.exported_job }}";
+                  description = "TrueNAS→VPS offsite backup {{ $labels.exported_job }} last succeeded {{ $value | humanizeDuration }} ago (threshold: 36h)";
                 };
               }
               # TrueNAS offsite backup failed
@@ -600,8 +600,8 @@ in
                 "for" = "15m";
                 labels.severity = "critical";
                 annotations = {
-                  summary = "TrueNAS offsite backup failed: {{ $labels.job }}";
-                  description = "TrueNAS→VPS offsite backup {{ $labels.job }} failed - check systemd journal for truenas-backup-{{ $labels.job }}";
+                  summary = "TrueNAS offsite backup failed: {{ $labels.exported_job }}";
+                  description = "TrueNAS→VPS offsite backup {{ $labels.exported_job }} failed - check systemd journal for truenas-backup-{{ $labels.exported_job }}";
                 };
               }
             ];

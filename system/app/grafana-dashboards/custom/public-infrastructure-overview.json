@@ -1317,7 +1317,7 @@
           "editorMode": "code",
           "expr": "(time() - truenas_offsite_backup_last_success) / 86400",
           "hide": false,
-          "legendFormat": "Offsite {{job}}",
+          "legendFormat": "Offsite {{exported_job}}",
           "range": true,
           "refId": "D"
         }
