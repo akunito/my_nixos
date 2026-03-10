@@ -25,6 +25,7 @@ let
   truenasUser = systemSettings.truenasResticBackupUser or "truenas_admin";
   localDir = systemSettings.truenasResticBackupLocalDir or "/var/lib/truenas-backups";
   apiKeyFile = systemSettings.truenasResticBackupApiKeyFile or "/etc/secrets/truenas-api-key";
+  truenasApiPort = toString (systemSettings.truenasResticBackupApiPort or 9443);
   sshKey = "/home/${username}/.ssh/id_ed25519_restic";
   sshOpts = "-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new -i ${sshKey}";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
@@ -174,7 +175,7 @@ METRICS
 
       if curl -sk --max-time 30 \
         -H "Authorization: Bearer $API_KEY" \
-        -X POST "https://${truenasHost}/api/v2.0/config/save" \
+        -X POST "https://${truenasHost}:${truenasApiPort}/api/v2.0/config/save" \
         -o "$CONFIG_FILE.tmp" 2>/dev/null; then
         if [ -s "$CONFIG_FILE.tmp" ]; then
           mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"

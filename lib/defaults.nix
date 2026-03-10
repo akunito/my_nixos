@@ -455,6 +455,7 @@
     truenasResticBackupHost = "192.168.20.200";       # TrueNAS storage IP
     truenasResticBackupUser = "truenas_admin";         # SSH user for rsync
     truenasResticBackupApiKeyFile = "/etc/secrets/truenas-api-key"; # TrueNAS API key for config export
+    truenasResticBackupApiPort = 9443;                             # TrueNAS web UI HTTPS port
     truenasResticBackupLocalDir = "/var/lib/truenas-backups";       # Local staging + restic repo dir
 
     # === Centralized Database Server (LXC_database) ===
