@@ -67,9 +67,9 @@ HEADER
       LABEL="''${entry%%|*}"
       REPO_PATH="''${entry##*|}"
 
-      # Find newest file timestamp in snapshots/ dir
+      # Find newest file timestamp in snapshots/ dir (sudo needed — repos owned by akunito, 700)
       NEWEST_TS=$(ssh $SSH_OPTS "$TRUENAS_USER@$TRUENAS_HOST" \
-        "find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1" \
+        "sudo find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1" \
         2>/dev/null || echo "")
 
       if [ -n "$NEWEST_TS" ] && [ "''${NEWEST_TS%.*}" -gt 0 ] 2>/dev/null; then
