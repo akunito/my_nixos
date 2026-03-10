@@ -40,6 +40,7 @@ OpenClaw (247k GitHub stars, MIT license) is a self-hosted AI gateway created by
 | [Audio & TTS](audio-tts.md) | Voice transcription, text-to-speech, voice wake |
 | [Tools](tools.md) | Browser automation, exec, Lobster workflows, sub-agents |
 | [Integrations](integrations.md) | Google Calendar, Plane, n8n, Matrix, Postfix |
+| [Finance System](finance-system.md) | Vaultkeeper finance: Revolut import, budgets, cycle reports |
 
 ## Deployment Plan
 
