@@ -9,7 +9,6 @@
 #   vps_nextcloud  — /mnt/extpool/vps-backups/nextcloud.restic
 #   desk_home      — /mnt/ssdpool/workstation_backups/nixosaku/home.restic
 #   x13_home       — /mnt/ssdpool/workstation_backups/nixosx13aku/home.restic
-#   desk_vps       — /mnt/ssdpool/workstation_backups/shared/vps.restic
 #
 # Metrics exposed (via textfile collector):
 #   truenas_backup_age_seconds{dataset} - Seconds since newest snapshot file
@@ -34,7 +33,6 @@ let
     { label = "vps_nextcloud"; path = "/mnt/extpool/vps-backups/nextcloud.restic"; }
     { label = "desk_home";     path = "/mnt/ssdpool/workstation_backups/nixosaku/home.restic"; }
     { label = "x13_home";      path = "/mnt/ssdpool/workstation_backups/nixosx13aku/home.restic"; }
-    { label = "desk_vps";      path = "/mnt/ssdpool/workstation_backups/shared/vps.restic"; }
   ];
 
   # Build shell-friendly repo list: "label|path label|path ..."

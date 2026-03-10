@@ -5,7 +5,6 @@
 # Usage:
 #   backup-manager.sh                                    # Interactive menu
 #   backup-manager.sh --auto --target nfs --job home     # Automated (systemd)
-#   backup-manager.sh --auto --target nfs --job vps      # Automated VPS
 #   backup-manager.sh --status                           # Show last snapshots
 #   backup-manager.sh --init --target nfs                # Initialize repos
 #   backup-manager.sh --dry-run --target nfs --job home  # Preview
@@ -26,12 +25,6 @@ LOG_SCRIPT="$HOME/myScripts/rotateLogFile.sh"
 NFS_BASE="/mnt/NFS_Backups"
 USB_MOUNT="/mnt/EXT"
 USB_UUID="7f2b8cd8-a8ec-4a38-949a-33fc13da926d"
-
-# VPS connection (for VPS backup job)
-VPS_USER="root"
-VPS_HOST="172.26.5.155"
-VPS_PORT="56777"
-VPS_PATHS="/root/vps_wg /opt/wireguard-ui /opt/postfix-relay /etc/nginx/sites-enabled"
 
 # Homelab connection (for homelab backup job)
 HOMELAB_USER="akunito"
@@ -59,7 +52,6 @@ HOME_EXCLUDES=(
 
 # Retention policies per job type
 RETENTION_HOME="--keep-daily 7 --keep-weekly 4 --keep-monthly 3"
-RETENTION_VPS="--keep-daily 7 --keep-weekly 4 --keep-monthly 6"
 RETENTION_HOMELAB="--keep-daily 5 --keep-weekly 2 --keep-monthly 1"
 
 # Color output (disabled in --auto mode)
@@ -293,67 +285,6 @@ backup_home() {
   fi
 }
 
-backup_vps() {
-  local repo_path="$1"
-  local dry_run="${2:-false}"
-
-  export RESTIC_REPOSITORY="$repo_path"
-  export RESTIC_PASSWORD_FILE
-
-  log "Starting VPS configuration backup"
-  log "Repository: $repo_path"
-
-  # Create SSHFS mount
-  local sshfs_mount="/tmp/vps_sshfs_$$"
-  mkdir -p "$sshfs_mount"
-
-  log "Mounting VPS via SSHFS"
-  if ! sshfs -p "$VPS_PORT" "$VPS_USER@$VPS_HOST:/" "$sshfs_mount" -o reconnect,ServerAliveInterval=15; then
-    log_error "Failed to mount VPS via SSHFS"
-    rmdir "$sshfs_mount"
-    return 1
-  fi
-
-  # Backup command
-  local backup_cmd=(
-    "$RESTIC_BIN" backup
-  )
-
-  # Add each VPS path
-  for path in $VPS_PATHS; do
-    backup_cmd+=("$sshfs_mount$path")
-  done
-
-  backup_cmd+=(
-    --tag "vps"
-    --tag "$HOSTNAME"
-    --host "$HOSTNAME"
-  )
-
-  if [ "$dry_run" = true ]; then
-    backup_cmd+=("--dry-run")
-  fi
-
-  local backup_result=0
-  if "${backup_cmd[@]}"; then
-    log_success "VPS configuration backup completed"
-
-    if [ "$dry_run" = false ]; then
-      run_retention "$repo_path" "$RETENTION_VPS"
-    fi
-  else
-    log_error "VPS configuration backup failed"
-    backup_result=1
-  fi
-
-  # Cleanup
-  log "Unmounting SSHFS"
-  fusermount -u "$sshfs_mount" 2>/dev/null || umount "$sshfs_mount" 2>/dev/null || true
-  rmdir "$sshfs_mount"
-
-  return $backup_result
-}
-
 backup_homelab() {
   local repo_path="$1"
   local dry_run="${2:-false}"
@@ -415,7 +346,6 @@ backup_homelab() {
 show_status() {
   local repos=(
     "$NFS_BASE/$HOSTNAME/home.restic:home_nfs"
-    "$NFS_BASE/shared/vps.restic:vps_nfs"
     "$USB_MOUNT/restic/$HOSTNAME/home.restic:home_usb"
     "$USB_MOUNT/restic/$HOSTNAME/homelab_DATA.restic:homelab_usb"
   )
@@ -484,9 +414,8 @@ init_repos() {
     ensure_nfs_mount || exit 1
 
     ensure_repo_initialized "$NFS_BASE/$HOSTNAME/home.restic" "home_nfs"
-    ensure_repo_initialized "$NFS_BASE/shared/vps.restic" "vps_nfs"
 
-    log_success "NFS repositories initialized (home, vps)"
+    log_success "NFS repositories initialized (home)"
   elif [ "$target" = "usb" ]; then
     ensure_usb_mount || exit 1
 
@@ -527,8 +456,8 @@ show_menu() {
   show_status
   echo ""
   echo "  Jobs:"
-  echo "    1) Home directory    2) VPS config"
-  echo "    3) Homelab DATA_4TB  4) All backups"
+  echo "    1) Home directory    2) Homelab DATA_4TB"
+  echo "    3) All backups"
   echo ""
   echo "  Target:"
   echo "    a) NFS ($NFS_BASE)  [$nfs_status]"
@@ -560,18 +489,14 @@ show_menu() {
       esac
       ;;
     2)
-      ensure_nfs_mount && backup_vps "$NFS_BASE/shared/vps.restic"
-      ;;
-    3)
       ensure_nfs_mount && backup_homelab "$NFS_BASE/$HOSTNAME/homelab_DATA.restic"
       ;;
-    4)
+    3)
       read -rp "Target (a=NFS, b=USB, c=Both): " target
       case "$target" in
         a)
           ensure_nfs_mount
           backup_home "$NFS_BASE/$HOSTNAME/home.restic"
-          backup_vps "$NFS_BASE/shared/vps.restic"
           backup_homelab "$NFS_BASE/$HOSTNAME/homelab_DATA.restic"
           ;;
         b)
@@ -582,7 +507,6 @@ show_menu() {
         c)
           ensure_nfs_mount
           backup_home "$NFS_BASE/$HOSTNAME/home.restic"
-          backup_vps "$NFS_BASE/shared/vps.restic"
           backup_homelab "$NFS_BASE/$HOSTNAME/homelab_DATA.restic"
           ensure_usb_mount
           backup_home "$USB_MOUNT/restic/$HOSTNAME/home.restic"
@@ -701,18 +625,13 @@ parse_args() {
           ensure_repo_initialized "$repo_path" "home_nfs"
           backup_home "$repo_path" "$dry_run"
           ;;
-        vps)
-          repo_path="$NFS_BASE/shared/vps.restic"
-          ensure_repo_initialized "$repo_path" "vps_nfs"
-          backup_vps "$repo_path" "$dry_run"
-          ;;
         homelab)
           log_error "Homelab backups are not supported on NFS target (use USB for homelab)"
           log_error "Reason: TrueNAS already has ZFS snapshots of homelab DATA_4TB"
           exit 1
           ;;
         *)
-          log_error "Unknown job: $job (use home or vps for NFS, homelab only on USB)"
+          log_error "Unknown job: $job (use home for NFS, homelab only on USB)"
           exit 1
           ;;
       esac

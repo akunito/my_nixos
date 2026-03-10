@@ -109,13 +109,6 @@
     remoteBackupUser = "akunito";
     remoteBackupTimerDescription = "Timer for remote_backup service";
 
-    vpsBackupEnable = false;
-    vpsBackupDescription = "Backup VPS Configuration with Restic";
-    vpsBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/scripts/backup-manager.sh --auto --target nfs --job vps";
-    vpsBackupUser = "akunito";
-    vpsBackupTimerDescription = "Timer for vps_backup service";
-    vpsBackupOnCalendar = "weekly";
-
     nfsBackupEnable = false; # Documentation flag - actual NFS mount configured via nfsMounts
 
     # OpenClaw sanitizer timers (CSV + memory file sanitizers)
@@ -656,11 +649,6 @@
     # Homelab docker stacks - start docker-compose stacks on boot
     homelabDockerEnable = false; # Enable systemd service for homelab docker stacks
     homelabDockerStacks = []; # Configurable stacks: [{ name = "portfolio"; path = "portfolio"; }]
-
-    # pfSense backup configuration
-    pfsenseBackupEnable = false; # Enable daily pfSense config backup
-    pfsenseBackupOnCalendar = "daily"; # Backup schedule (systemd calendar format)
-    pfsenseBackupDir = "/mnt/DATA_4TB/backups/pfsense"; # Backup directory
 
     # Email notifications for auto-update failures
     notificationOnFailureEnable = false; # Enable email notifications on auto-update failure

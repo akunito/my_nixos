@@ -69,7 +69,6 @@ let
     # Check NFS-based repos if NFS is mounted
     if mountpoint -q /mnt/NFS_Backups 2>/dev/null; then
       check_repo "/mnt/NFS_Backups/$HOSTNAME/home.restic" "home_nfs"
-      check_repo "/mnt/NFS_Backups/shared/vps.restic" "vps_nfs"
     fi
 
     # Check legacy repo (fallback to systemSettings or default)
@@ -127,26 +126,6 @@ in
     };
   };
 
-  # ====================== VPS Backup settings ======================
-  # Weekly backup of VPS configuration via SSHFS
-  systemd.services.vps_backup = lib.mkIf (systemSettings.vpsBackupEnable == true) {
-    description = systemSettings.vpsBackupDescription;
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = systemSettings.vpsBackupExecStart;
-      User = systemSettings.vpsBackupUser;
-      Environment = "PATH=/run/current-system/sw/bin:/usr/bin:/bin";
-    };
-  };
-  systemd.timers.vps_backup = lib.mkIf (systemSettings.vpsBackupEnable == true) {
-    description = systemSettings.vpsBackupTimerDescription;
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = systemSettings.vpsBackupOnCalendar;
-      Persistent = true;
-    };
-  };
-
   # ====================== Backup Monitoring ======================
   # Export backup metrics for Prometheus textfile collector
   systemd.services.backup-metrics = lib.mkIf (systemSettings.backupMonitoringEnable or false) {
@@ -167,26 +146,4 @@ in
     };
   };
 
-  # ====================== pfSense Backup ======================
-  # Daily backup of pfSense configuration
-  systemd.services.pfsense-backup = lib.mkIf (systemSettings.pfsenseBackupEnable or false) {
-    description = "Backup pfSense configuration";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${userSettings.dotfilesDir}/scripts/pfsense-backup.sh";
-      User = userSettings.username;
-    };
-    # Ensure backup directory is accessible
-    path = [ pkgs.openssh pkgs.gzip pkgs.findutils pkgs.coreutils ];
-  };
-
-  systemd.timers.pfsense-backup = lib.mkIf (systemSettings.pfsenseBackupEnable or false) {
-    description = "Timer for pfSense backup";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = systemSettings.pfsenseBackupOnCalendar or "daily";
-      Persistent = true;
-      RandomizedDelaySec = "1h"; # Spread backups to avoid thundering herd
-    };
-  };
 }

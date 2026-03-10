@@ -103,7 +103,6 @@ in
     # Backups
     homeBackupEnable = true;
     homeBackupCallNextEnabled = false;
-    vpsBackupEnable = true;
     nfsBackupEnable = true;
 
     # Network
