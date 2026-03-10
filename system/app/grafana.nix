@@ -16,7 +16,7 @@
 # - Grafana (public): https://grafana.akunito.com (via Cloudflare Tunnel, port 80 → nginx)
 # - Prometheus: https://prometheus.local.akunito.com (port 443, SSL, with basic auth + IP whitelist)
 
-{ pkgs, lib, systemSettings, config, ... }:
+{ pkgs, lib, systemSettings, userSettings, config, ... }:
 
 let
   # Domain secrets are passed through systemSettings by each profile
@@ -64,6 +64,16 @@ let
         };
       }];
     }
+  ] ++ lib.optionals (systemSettings.prometheusExporterCadvisorEnable or false) [
+    {
+      job_name = "vps_docker";
+      static_configs = [{
+        targets = [ "127.0.0.1:${toString (systemSettings.prometheusCadvisorPort or 9092)}" ];
+        labels = {
+          instance = "vps";
+        };
+      }];
+    }
   ];
 
   # Build scrape configs for application exporters (exportarr, etc.)
@@ -106,6 +116,11 @@ in
         enabled = true;
       };
 
+      # Allow unsigned community plugins (SQLite datasource for finance data)
+      plugins = {
+        allow_loading_unsigned_plugins = "frser-sqlite-datasource";
+      };
+
       # Enable public dashboards feature (Grafana 9.1+)
       # Allows creating shareable, read-only versions of specific dashboards
       # without exposing the full Grafana instance
@@ -135,14 +150,25 @@ in
       enable = true;
 
       # Data source provisioning (fixed UID for dashboard references)
-      datasources.settings.datasources = [{
-        name = "Prometheus";
-        type = "prometheus";
-        url = "http://127.0.0.1:${toString config.services.prometheus.port}";
-        isDefault = true;
-        editable = false;
-        uid = "prometheus";
-      }];
+      datasources.settings.datasources = [
+        {
+          name = "Prometheus";
+          type = "prometheus";
+          url = "http://127.0.0.1:${toString config.services.prometheus.port}";
+          isDefault = true;
+          editable = false;
+          uid = "prometheus";
+        }
+        {
+          name = "Finance SQLite";
+          type = "frser-sqlite-datasource";
+          jsonData = {
+            path = "/home/${userSettings.username}/.openclaw/finance-data/vaultkeeper.db";
+          };
+          editable = false;
+          uid = "finance-sqlite";
+        }
+      ];
 
       # Dashboard provisioning from /etc/grafana-dashboards
       dashboards.settings.providers = [{

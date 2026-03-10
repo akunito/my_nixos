@@ -47,8 +47,11 @@ services:
       - /run/user/950:/var/run:ro
       - /sys:/sys:ro
       - /home/truenas_admin/.local/share/docker:/var/lib/docker:ro
+    command:
+      # Rootless Docker: containerd socket is under the user runtime dir
+      - '-containerd=/var/run/docker/containerd/containerd.sock'
+      - '-docker_only'
     restart: unless-stopped
-    cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     read_only: true
     tmpfs: [/tmp]

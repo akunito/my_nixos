@@ -86,10 +86,19 @@ METRICS
   };
 
   # cAdvisor - Docker container metrics
+  # For rootless Docker, set prometheusCadvisorDockerSocket to the user socket path
+  # e.g., "unix:///run/user/1000/docker.sock"
+  # and prometheusCadvisorContainerdSocket to the containerd socket path
+  # e.g., "/run/user/1000/docker/containerd/containerd.sock"
   services.cadvisor = lib.mkIf (systemSettings.prometheusExporterCadvisorEnable or false) {
     enable = true;
     port = cadvisorPort;
     listenAddress = if systemSettings.prometheusExporterLocalOnly or false then "127.0.0.1" else "0.0.0.0";
+    extraOptions = lib.optionals ((systemSettings.prometheusCadvisorDockerSocket or null) != null) [
+      "-docker=${systemSettings.prometheusCadvisorDockerSocket}"
+      "-containerd=${systemSettings.prometheusCadvisorContainerdSocket or "/run/containerd/containerd.sock"}"
+      "-docker_only"
+    ];
   };
 
   # Add cAdvisor package when enabled

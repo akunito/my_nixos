@@ -267,6 +267,8 @@ in
     # Disable standalone node exporter — grafana.nix runs its own on port 9091
     prometheusExporterEnable = false;
     prometheusExporterCadvisorEnable = true;
+    prometheusCadvisorDockerSocket = "unix:///run/user/1000/docker.sock";  # Rootless Docker
+    prometheusCadvisorContainerdSocket = "/run/user/1000/docker/containerd/containerd.sock";
 
     # Domain settings (passed to grafana.nix for nginx virtual hosts)
     wildcardLocal = secrets.wildcardLocal;
