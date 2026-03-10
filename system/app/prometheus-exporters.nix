@@ -37,7 +37,8 @@ in
 
   # NixOS update timestamp exporter — writes last system/user rebuild time to textfile
   # Reads modification time of the current NixOS system profile and HM generation
-  systemd.services.nixos-update-metrics = lib.mkIf (systemSettings.prometheusExporterEnable or false) {
+  # Enabled when either standalone exporter or grafana stack is active (both use textfile collector)
+  systemd.services.nixos-update-metrics = lib.mkIf ((systemSettings.prometheusExporterEnable or false) || (systemSettings.grafanaEnable or false)) {
     description = "Export NixOS last update timestamps for Prometheus";
     after = [ "network.target" ];
     path = [ pkgs.coreutils ];
@@ -75,7 +76,7 @@ METRICS
     };
   };
 
-  systemd.timers.nixos-update-metrics = lib.mkIf (systemSettings.prometheusExporterEnable or false) {
+  systemd.timers.nixos-update-metrics = lib.mkIf ((systemSettings.prometheusExporterEnable or false) || (systemSettings.grafanaEnable or false)) {
     description = "Export NixOS update timestamps periodically";
     wantedBy = [ "timers.target" ];
     timerConfig = {
