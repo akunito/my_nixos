@@ -87,17 +87,17 @@
     {
       "agentId": "alfred",
       "comment": "Alfred agent — Matrix room (primary channel)",
-      "match": { "channel": "matrix", "account": "alfred", "peer": { "kind": "group", "id": "ALFRED_MATRIX_ROOM_ID" } }
+      "match": { "channel": "matrix", "accountId": "alfred", "peer": { "kind": "channel", "id": "ALFRED_MATRIX_ROOM_ID" } }
     },
     {
       "agentId": "vaultkeeper",
       "comment": "Vaultkeeper agent — Matrix room (primary channel)",
-      "match": { "channel": "matrix", "account": "vaultkeeper", "peer": { "kind": "group", "id": "VAULTKEEPER_MATRIX_ROOM_ID" } }
+      "match": { "channel": "matrix", "accountId": "vaultkeeper", "peer": { "kind": "channel", "id": "VAULTKEEPER_MATRIX_ROOM_ID" } }
     },
     {
       "agentId": "scout",
       "comment": "Scout agent — Matrix room (primary channel)",
-      "match": { "channel": "matrix", "account": "scout", "peer": { "kind": "group", "id": "SCOUT_MATRIX_ROOM_ID" } }
+      "match": { "channel": "matrix", "accountId": "scout", "peer": { "kind": "channel", "id": "SCOUT_MATRIX_ROOM_ID" } }
     }
   ],
 
