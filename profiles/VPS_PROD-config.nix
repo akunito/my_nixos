@@ -278,11 +278,12 @@ in
 
     # Remote targets for Prometheus scraping (via WireGuard/Tailscale tunnel to LAN)
     # TrueNAS: node-exporter (9100) + cadvisor (8081) on rootless Docker
+    # Laptops use Tailscale IPs (roaming — not always on LAN)
     prometheusRemoteTargets = [
       { name = "truenas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; }
       { name = "desk"; host = "192.168.8.96"; nodePort = 9100; cadvisorPort = null; }
-      { name = "x13"; host = "192.168.8.92"; nodePort = 9100; cadvisorPort = null; }
-      { name = "laptop_a"; host = "192.168.8.78"; nodePort = 9100; cadvisorPort = null; }
+      { name = "x13"; host = "100.64.0.8"; nodePort = 9100; cadvisorPort = null; }
+      { name = "laptop_a"; host = "100.64.0.4"; nodePort = 9100; cadvisorPort = null; }
     ];
 
     # Application metrics (local VPS databases only — LXC_database decommissioned)
