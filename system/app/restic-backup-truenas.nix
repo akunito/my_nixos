@@ -241,12 +241,7 @@ METRICS
         log "NPM compose-relative data not found (skipping)"
       fi
 
-      # Calibre-Web config
-      rsync_dir /mnt/ssdpool/docker/calibre-web/ "$STAGING/docker-data/calibre-web/" "calibre-web"
-
-      # EmulatorJS config
-      rsync_dir /mnt/ssdpool/docker/emulatorjs/ "$STAGING/docker-data/emulatorjs/" "emulatorjs"
-
+      # Note: calibre-web and emulatorjs are VPS services, not TrueNAS — not backed up here
       # Note: tailscale config is inside compose/ (backed up by configs job)
       # Note: qbittorrent is inside mediarr/ (backed up above)
     '';
