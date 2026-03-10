@@ -1,7 +1,10 @@
-# pfSense Config Backup + Sync + Monitoring
+# pfSense Full Backup + Sync + Monitoring
 #
-# 1. SSH to pfSense (admin@192.168.8.1 via WireGuard), pull /conf/config.xml
-# 2. Save as compressed .xml.gz in local backup dir on VPS
+# 1. SSH to pfSense (admin@192.168.8.1 via WireGuard), pull:
+#    - /conf/config.xml (main config — firewall, VPN keys, DHCP, DNS, etc.)
+#    - /conf/backup/ (pfSense auto-generated config history)
+#    - /var/db/tailscale/tailscaled.state (Tailscale node identity)
+# 2. Save as compressed .tar.gz in local backup dir on VPS
 # 3. Rotate old backups (configurable retention days)
 # 4. Rsync backup dir to TrueNAS (truenas_admin@192.168.20.200)
 # 5. Write textfile metrics for Prometheus
@@ -28,11 +31,12 @@ let
 
   pfsenseBackupScript = pkgs.writeShellScript "pfsense-backup" ''
     set -uo pipefail
-    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.openssh pkgs.rsync pkgs.gzip pkgs.findutils ]}:$PATH"
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.openssh pkgs.rsync pkgs.gzip pkgs.gnutar pkgs.findutils ]}:$PATH"
 
     BACKUP_DIR="${localDir}"
     TEXTFILE="${textfileDir}/pfsense_backup.prom"
     TEMP_FILE=$(mktemp)
+    STAGING_DIR=$(mktemp -d)
     NOW=$(date +%s)
     DATE=$(date +%Y%m%d-%H%M%S)
     SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new"
@@ -41,26 +45,53 @@ let
 
     mkdir -p "$BACKUP_DIR"
 
-    # --- Step 1: Pull config.xml from pfSense ---
-    BACKUP_FILE="$BACKUP_DIR/pfsense-config-$DATE.xml.gz"
+    # --- Step 1: Pull files from pfSense into staging dir ---
+    BACKUP_FILE="$BACKUP_DIR/pfsense-backup-$DATE.tar.gz"
 
-    if ssh $SSH_OPTS admin@192.168.8.1 "cat /conf/config.xml" 2>/dev/null | gzip > "$BACKUP_FILE.tmp"; then
-      # Verify the file is non-empty
-      if [ -s "$BACKUP_FILE.tmp" ]; then
+    # Create staging directory structure
+    mkdir -p "$STAGING_DIR/conf/backup" "$STAGING_DIR/tailscale"
+
+    # Pull config.xml (main config — contains firewall rules, VPN keys, etc.)
+    if ssh $SSH_OPTS admin@192.168.8.1 "cat /conf/config.xml" > "$STAGING_DIR/conf/config.xml" 2>/dev/null; then
+      echo "Pulled config.xml"
+    else
+      echo "ERROR: Failed to pull config.xml" >&2
+    fi
+
+    # Pull config history (pfSense auto-backups)
+    if ssh $SSH_OPTS admin@192.168.8.1 "tar cf - -C /conf backup/" 2>/dev/null | tar xf - -C "$STAGING_DIR/conf/" 2>/dev/null; then
+      echo "Pulled config history ($(ls "$STAGING_DIR/conf/backup/" 2>/dev/null | wc -l) files)"
+    else
+      echo "WARNING: Failed to pull config history (non-fatal)" >&2
+    fi
+
+    # Pull Tailscale node identity (irreplaceable — re-registration required without it)
+    if ssh $SSH_OPTS admin@192.168.8.1 "cat /var/db/tailscale/tailscaled.state" > "$STAGING_DIR/tailscale/tailscaled.state" 2>/dev/null; then
+      echo "Pulled tailscaled.state"
+    else
+      echo "WARNING: Failed to pull tailscaled.state (non-fatal)" >&2
+    fi
+
+    # Create tarball if config.xml was pulled successfully
+    if [ -s "$STAGING_DIR/conf/config.xml" ]; then
+      if tar czf "$BACKUP_FILE.tmp" -C "$STAGING_DIR" . 2>/dev/null; then
         mv "$BACKUP_FILE.tmp" "$BACKUP_FILE"
         BACKUP_OK=1
-        echo "pfSense config backup saved to $BACKUP_FILE"
+        echo "pfSense backup saved to $BACKUP_FILE"
       else
         rm -f "$BACKUP_FILE.tmp"
-        echo "ERROR: Downloaded config.xml is empty" >&2
+        echo "ERROR: Failed to create tarball" >&2
       fi
     else
-      rm -f "$BACKUP_FILE.tmp"
-      echo "ERROR: Failed to SSH to pfSense or pull config.xml" >&2
+      echo "ERROR: config.xml is empty or missing — aborting" >&2
     fi
+
+    rm -rf "$STAGING_DIR"
 
     # --- Step 2: Rotate old backups ---
     if [ "$BACKUP_OK" -eq 1 ]; then
+      find "$BACKUP_DIR" -name "pfsense-backup-*.tar.gz" -mtime +${keepDays} -delete 2>/dev/null || true
+      # Also clean up legacy single-file backups
       find "$BACKUP_DIR" -name "pfsense-config-*.xml.gz" -mtime +${keepDays} -delete 2>/dev/null || true
     fi
 
@@ -77,11 +108,11 @@ let
 
     # --- Step 4: Write metrics ---
     if [ "$BACKUP_OK" -eq 1 ]; then
-      # Find newest backup file timestamp
-      NEWEST=$(find "$BACKUP_DIR" -name "pfsense-config-*.xml.gz" -printf '%T@\n' | sort -n | tail -1)
+      # Find newest backup file timestamp (check both new tarball and legacy patterns)
+      NEWEST=$(find "$BACKUP_DIR" \( -name "pfsense-backup-*.tar.gz" -o -name "pfsense-config-*.xml.gz" \) -printf '%T@\n' | sort -n | tail -1)
       NEWEST_INT=''${NEWEST%.*}
       AGE=$((NOW - NEWEST_INT))
-      COUNT=$(find "$BACKUP_DIR" -name "pfsense-config-*.xml.gz" | wc -l)
+      COUNT=$(find "$BACKUP_DIR" \( -name "pfsense-backup-*.tar.gz" -o -name "pfsense-config-*.xml.gz" \) | wc -l)
 
       cat > "$TEMP_FILE" << METRICS
 # HELP pfsense_backup_last_success Unix timestamp of last successful backup
