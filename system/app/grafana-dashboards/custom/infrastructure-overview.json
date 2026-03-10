@@ -19,7 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 15,
+  "id": 9,
   "links": [
     {
       "asDropdown": true,
@@ -107,7 +107,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -208,6 +208,94 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "HTTP/HTTPS service response time - individual tiles with latency",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Offline"
+                },
+                "to": 0
+              },
+              "type": "range"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 14,
+        "x": 0,
+        "y": 4
+      },
+      "id": 30,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "probe_duration_seconds{job=~\"blackbox_http_.*\"} * probe_success{job=~\"blackbox_http_.*\"}",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Services",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -271,7 +359,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -356,7 +444,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -440,7 +528,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -525,7 +613,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -609,7 +697,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -678,7 +766,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -763,7 +851,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -800,94 +888,6 @@
         }
       ],
       "title": "ZFS Pool Status",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "HTTP/HTTPS service response time - individual tiles with latency",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [
-            {
-              "options": {
-                "from": 0,
-                "result": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "Offline"
-                },
-                "to": 0
-              },
-              "type": "range"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "#EAB839",
-                "value": 0.5
-              },
-              {
-                "color": "red",
-                "value": 2
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 13,
-        "w": 14,
-        "x": 0,
-        "y": 4
-      },
-      "id": 30,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "text": {},
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "probe_duration_seconds{job=~\"blackbox_http_.*\"} * probe_success{job=~\"blackbox_http_.*\"}",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Services",
       "type": "stat"
     },
     {
@@ -973,7 +973,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1060,7 +1060,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1147,7 +1147,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1234,7 +1234,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1243,180 +1243,6 @@
           },
           "editorMode": "code",
           "expr": "mariadb_backup_hourly_status",
-          "legendFormat": "Status",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "NAS Configs offsite backup (NAS→VPS)",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "displayName": "NAS_Configs (to VPS)",
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "FAILED"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "OK"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": 0
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 6,
-        "x": 0,
-        "y": 21
-      },
-      "id": 200,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_offsite_backup_status{exported_job=\"configs\"}",
-          "legendFormat": "Status",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "NAS Data offsite backup (NAS→VPS)",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "displayName": "NAS_Data (to VPS)",
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "FAILED"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "OK"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": 0
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 6,
-        "x": 6,
-        "y": 21
-      },
-      "id": 201,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_offsite_backup_status{exported_job=\"data\"}",
           "legendFormat": "Status",
           "range": true,
           "refId": "A"
@@ -1464,7 +1290,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 21
@@ -1487,7 +1313,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1630,7 +1456,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 29
       },
       "id": 207,
       "options": {
@@ -1657,7 +1483,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1746,7 +1572,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 35
       },
       "id": 202,
       "panels": [],
@@ -1793,7 +1619,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 34
+        "y": 36
       },
       "id": 205,
       "options": {
@@ -1811,7 +1637,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1870,7 +1696,7 @@
         "h": 4,
         "w": 3,
         "x": 3,
-        "y": 34
+        "y": 36
       },
       "id": 206,
       "options": {
@@ -1888,7 +1714,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1950,7 +1776,7 @@
         "h": 4,
         "w": 9,
         "x": 6,
-        "y": 34
+        "y": 36
       },
       "id": 203,
       "options": {
@@ -1977,7 +1803,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1985,7 +1811,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - node_filesystem_avail_bytes{instance=\"monitoring\", fstype!~\"tmpfs|overlay|devtmpfs\"} / node_filesystem_size_bytes{instance=\"monitoring\", fstype!~\"tmpfs|overlay|devtmpfs\"}) * 100",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"monitoring\", mountpoint=~\"/|/boot\"} / node_filesystem_size_bytes{instance=\"monitoring\", mountpoint=~\"/|/boot\"}) * 100",
           "legendFormat": "{{mountpoint}}",
           "range": true,
           "refId": "A"
@@ -1995,90 +1821,12 @@
       "type": "bargauge"
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "VPS free disk space",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 5368709120
-              },
-              {
-                "color": "yellow",
-                "value": 21474836480
-              },
-              {
-                "color": "green",
-                "value": 53687091200
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 9,
-        "x": 15,
-        "y": 34
-      },
-      "id": 204,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "node_filesystem_avail_bytes{instance=\"monitoring\", fstype!~\"tmpfs|overlay|devtmpfs\"}",
-          "legendFormat": "{{mountpoint}} free",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Free Space",
-      "type": "stat"
-    },
-    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 40
       },
       "id": 109,
       "panels": [],
@@ -2125,7 +1873,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 34
+        "y": 41
       },
       "id": 151,
       "options": {
@@ -2143,7 +1891,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2202,7 +1950,7 @@
         "h": 4,
         "w": 3,
         "x": 3,
-        "y": 34
+        "y": 41
       },
       "id": 152,
       "options": {
@@ -2220,7 +1968,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2282,7 +2030,7 @@
         "h": 4,
         "w": 7,
         "x": 6,
-        "y": 34
+        "y": 41
       },
       "id": 155,
       "options": {
@@ -2309,7 +2057,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2363,7 +2111,7 @@
         "h": 4,
         "w": 11,
         "x": 13,
-        "y": 34
+        "y": 41
       },
       "id": 23,
       "options": {
@@ -2383,7 +2131,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2416,7 +2164,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 45
       },
       "id": 208,
       "panels": [],
@@ -2434,9 +2182,9 @@
           "color": {
             "mode": "thresholds"
           },
+          "mappings": [],
           "max": 100,
           "min": 0,
-          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2463,10 +2211,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 8,
         "x": 0,
-        "y": 39
+        "y": 46
       },
       "id": 209,
       "options": {
@@ -2493,7 +2241,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2501,7 +2249,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs\"} / node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs\"}) * 100",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"} / node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}) * 100",
           "legendFormat": "{{mountpoint}}",
           "range": true,
           "refId": "A"
@@ -2521,9 +2269,9 @@
           "color": {
             "mode": "thresholds"
           },
+          "mappings": [],
           "max": 100,
           "min": 0,
-          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2550,10 +2298,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 8,
         "x": 8,
-        "y": 39
+        "y": 46
       },
       "id": 210,
       "options": {
@@ -2580,7 +2328,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2588,7 +2336,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - node_filesystem_avail_bytes{instance=\"x13\", fstype!~\"tmpfs|overlay|devtmpfs\"} / node_filesystem_size_bytes{instance=\"x13\", fstype!~\"tmpfs|overlay|devtmpfs\"}) * 100",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"} / node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}) * 100",
           "legendFormat": "{{mountpoint}}",
           "range": true,
           "refId": "A"
@@ -2608,9 +2356,9 @@
           "color": {
             "mode": "thresholds"
           },
+          "mappings": [],
           "max": 100,
           "min": 0,
-          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2637,10 +2385,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 8,
         "x": 16,
-        "y": 39
+        "y": 46
       },
       "id": 211,
       "options": {
@@ -2667,7 +2415,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2690,7 +2438,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 52
       },
       "id": 156,
       "panels": [],
@@ -2726,7 +2474,7 @@
         "h": 6,
         "w": 9,
         "x": 0,
-        "y": 39
+        "y": 53
       },
       "id": 157,
       "options": {
@@ -2753,7 +2501,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2799,7 +2547,7 @@
         "h": 6,
         "w": 9,
         "x": 9,
-        "y": 39
+        "y": 53
       },
       "id": 158,
       "options": {
@@ -2826,7 +2574,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2871,7 +2619,7 @@
         "h": 6,
         "w": 6,
         "x": 18,
-        "y": 39
+        "y": 53
       },
       "id": 163,
       "options": {
@@ -2898,7 +2646,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2921,7 +2669,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 59
       },
       "id": 130,
       "panels": [],
@@ -2966,7 +2714,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 60
       },
       "id": 133,
       "options": {
@@ -2986,7 +2734,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3042,7 +2790,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 49
+        "y": 63
       },
       "id": 144,
       "options": {
@@ -3062,7 +2810,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3086,7 +2834,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 66
       },
       "id": 146,
       "panels": [],
@@ -3224,23 +2972,15 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 67
       },
       "id": 147,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3376,7 +3116,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 86
+        "y": 74
       },
       "id": 114,
       "panels": [],
@@ -3448,7 +3188,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 87
+        "y": 75
       },
       "id": 117,
       "options": {
@@ -3472,7 +3212,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3553,7 +3293,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 92
+        "y": 80
       },
       "id": 118,
       "options": {
@@ -3575,7 +3315,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3656,7 +3396,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 97
+        "y": 85
       },
       "id": 119,
       "options": {
@@ -3678,7 +3418,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3759,7 +3499,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 102
+        "y": 90
       },
       "id": 120,
       "options": {
@@ -3783,7 +3523,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3867,7 +3607,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 107
+        "y": 95
       },
       "id": 121,
       "options": {
@@ -3891,7 +3631,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3941,5 +3681,5 @@
   "timezone": "browser",
   "title": "Infrastructure Overview",
   "uid": "infrastructure-overview",
-  "version": 25
+  "version": 10
 }
