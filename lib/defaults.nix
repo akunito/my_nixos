@@ -450,6 +450,13 @@
     prometheusTruenasBackupHost = "192.168.20.200"; # TrueNAS storage IP
     prometheusTruenasBackupUser = "truenas_admin";  # SSH user for snapshot queries
 
+    # === TrueNAS Offsite Backup (VPS pulls Docker data + configs from TrueNAS) ===
+    truenasResticBackupEnable = false;
+    truenasResticBackupHost = "192.168.20.200";       # TrueNAS storage IP
+    truenasResticBackupUser = "truenas_admin";         # SSH user for rsync
+    truenasResticBackupApiKeyFile = "/etc/secrets/truenas-api-key"; # TrueNAS API key for config export
+    truenasResticBackupLocalDir = "/var/lib/truenas-backups";       # Local staging + restic repo dir
+
     # === Centralized Database Server (LXC_database) ===
     # Database bind address: "0.0.0.0" for LAN access (LXC), "127.0.0.1" for local-only (VPS)
     databaseBindAddress = "0.0.0.0";

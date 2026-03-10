@@ -55,6 +55,7 @@
   ++ lib.optional (systemSettings.openclawSanitizersEnable or false) ../../system/app/openclaw.nix
   ++ lib.optional (systemSettings.openclawMatrixBridgeEnable or false) ../../system/app/openclaw-matrix-bridge.nix
   ++ lib.optional (systemSettings.vpsResticBackupEnable or false) ../../system/app/restic-backup-vps.nix
+  ++ lib.optional (systemSettings.truenasResticBackupEnable or false) ../../system/app/restic-backup-truenas.nix
   ++ lib.optional (systemSettings.nfsServerEnable or false) ../../system/hardware/nfs_server.nix;
 
   # ==========================================================================

@@ -382,6 +382,9 @@ in
     # === Backup Monitoring (pfSense config + TrueNAS restic repos) ===
     prometheusPfsenseBackupEnable = true;
     prometheusTruenasBackupEnable = true;
+
+    # === TrueNAS Offsite Backup (VPS pulls Docker data + configs daily) ===
+    truenasResticBackupEnable = true;
   };
 
   userSettings = base.userSettings // {
