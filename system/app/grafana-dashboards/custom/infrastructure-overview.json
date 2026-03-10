@@ -48,7 +48,20 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Offline"
+                },
+                "to": 0
+              },
+              "type": "range"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -57,8 +70,12 @@
                 "value": 0
               },
               {
+                "color": "#EAB839",
+                "value": 0.05
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 0.5
               }
             ]
           },
@@ -98,7 +115,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wireguard_tunnel\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wireguard_tunnel\"} * probe_success{job=\"blackbox_icmp_wireguard_tunnel\"}",
           "legendFormat": "WG Tunnel",
           "range": true,
           "refId": "A"
@@ -109,7 +126,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan\"} * probe_success{job=\"blackbox_icmp_wan\"}",
           "legendFormat": "WAN",
           "range": true,
           "refId": "B"
@@ -120,7 +137,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pfsense\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pfsense\"} * probe_success{job=\"blackbox_icmp_pfsense\"}",
           "legendFormat": "pfSense",
           "range": true,
           "refId": "C"
@@ -131,7 +148,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_aggr\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_aggr\"} * probe_success{job=\"blackbox_icmp_switch_usw_aggr\"}",
           "legendFormat": "Switch Aggr",
           "range": true,
           "refId": "D"
@@ -142,7 +159,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_24\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_24\"} * probe_success{job=\"blackbox_icmp_switch_usw_24\"}",
           "legendFormat": "Switch 24",
           "range": true,
           "refId": "E"
@@ -153,7 +170,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_lan_wifi\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_lan_wifi\"} * probe_success{job=\"blackbox_icmp_lan_wifi\"}",
           "legendFormat": "LAN WiFi",
           "range": true,
           "refId": "F"
@@ -164,7 +181,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_guest_wifi\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_guest_wifi\"} * probe_success{job=\"blackbox_icmp_guest_wifi\"}",
           "legendFormat": "Guest WiFi",
           "range": true,
           "refId": "G"
