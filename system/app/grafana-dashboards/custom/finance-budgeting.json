@@ -710,6 +710,166 @@
       ],
       "title": "Detailed Budget History (expand to view)",
       "type": "row"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 68 },
+      "id": 800,
+      "panels": [],
+      "title": "Per-Category Monthly Comparison",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyPLN",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "budget_limit" },
+            "properties": [
+              { "id": "custom.drawStyle", "value": "line" },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } },
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.showPoints", "value": "never" }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 69 },
+      "id": 50,
+      "maxPerRow": 2,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "repeat": "category",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent, COALESCE((SELECT monthly_limit FROM budget_targets WHERE category = '${category}'), 0) as budget_limit FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category = '${category}' GROUP BY substr(date,1,7) ORDER BY time",
+          "refId": "A",
+          "queryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent, COALESCE((SELECT monthly_limit FROM budget_targets WHERE category = '${category}'), 0) as budget_limit FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category = '${category}' GROUP BY substr(date,1,7) ORDER BY time"
+        }
+      ],
+      "title": "${category}",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 77 },
+      "id": 900,
+      "panels": [],
+      "title": "Transaction Explorer (by Category)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "amount" },
+            "properties": [
+              { "id": "unit", "value": "short" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red", "value": null },
+                    { "color": "green", "value": 0 }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": { "mode": "gradient", "type": "color-text" }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "amount_base" },
+            "properties": [
+              { "id": "unit", "value": "currencyPLN" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red", "value": null },
+                    { "color": "green", "value": 0 }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": { "mode": "gradient", "type": "color-text" }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "pct_of_budget" },
+            "properties": [
+              { "id": "unit", "value": "percent" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 50 },
+                    { "color": "red", "value": 80 }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": { "mode": "gradient", "type": "color-background" }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 78 },
+      "id": 51,
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "date" }],
+        "footer": {
+          "show": true,
+          "reducer": ["sum", "count"],
+          "fields": ["amount_base"]
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT t.date, t.description, t.amount, t.currency, ROUND(COALESCE(t.amount_base, t.amount), 2) as amount_base, t.category_group, t.category, CASE WHEN b.monthly_limit > 0 THEN ROUND(ABS(COALESCE(t.amount_base, t.amount)) / b.monthly_limit * 100, 1) ELSE NULL END as pct_of_budget FROM transactions t LEFT JOIN budget_targets b ON t.category = b.category WHERE t.tx_type='expense' AND t.date >= '${cycle}-07' AND t.date < date('${cycle}-07', '+1 month') AND t.category_group IN (${category_group:sqlstring}) AND t.category IN (${category:sqlstring}) ORDER BY t.date DESC, ABS(t.amount_base) DESC LIMIT 500",
+          "refId": "A",
+          "queryText": "SELECT t.date, t.description, t.amount, t.currency, ROUND(COALESCE(t.amount_base, t.amount), 2) as amount_base, t.category_group, t.category, CASE WHEN b.monthly_limit > 0 THEN ROUND(ABS(COALESCE(t.amount_base, t.amount)) / b.monthly_limit * 100, 1) ELSE NULL END as pct_of_budget FROM transactions t LEFT JOIN budget_targets b ON t.category = b.category WHERE t.tx_type='expense' AND t.date >= '${cycle}-07' AND t.date < date('${cycle}-07', '+1 month') AND t.category_group IN (${category_group:sqlstring}) AND t.category IN (${category:sqlstring}) ORDER BY t.date DESC, ABS(t.amount_base) DESC LIMIT 500"
+        }
+      ],
+      "title": "Transactions (filtered by Category)",
+      "type": "table"
     }
   ],
   "refresh": "",
