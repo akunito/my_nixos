@@ -84,9 +84,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT ROUND(SUM(COALESCE(amount_base, amount)), 2) as value FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type='income'",
+          "rawQueryText": "SELECT COALESCE(ROUND(SUM(COALESCE(amount_base, amount)), 2), 0) as value FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type='income'",
           "refId": "A",
-          "queryText": "SELECT ROUND(SUM(COALESCE(amount_base, amount)), 2) as value FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type='income'"
+          "queryText": "SELECT COALESCE(ROUND(SUM(COALESCE(amount_base, amount)), 2), 0) as value FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type='income'"
         }
       ],
       "title": "Cycle Income",
@@ -210,9 +210,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT ROUND((SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base, amount) ELSE 0 END) - SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base, amount)) ELSE 0 END)) / NULLIF(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base, amount) ELSE 0 END), 0) * 100, 1) as value FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type IN ('income', 'expense')",
+          "rawQueryText": "SELECT COALESCE(ROUND((SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base, amount) ELSE 0 END) - SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base, amount)) ELSE 0 END)) / NULLIF(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base, amount) ELSE 0 END), 0) * 100, 1), 0) as value FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type IN ('income', 'expense')",
           "refId": "A",
-          "queryText": "SELECT ROUND((SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base, amount) ELSE 0 END) - SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base, amount)) ELSE 0 END)) / NULLIF(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base, amount) ELSE 0 END), 0) * 100, 1) as value FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type IN ('income', 'expense')"
+          "queryText": "SELECT COALESCE(ROUND((SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base, amount) ELSE 0 END) - SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base, amount)) ELSE 0 END)) / NULLIF(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base, amount) ELSE 0 END), 0) * 100, 1), 0) as value FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type IN ('income', 'expense')"
         }
       ],
       "title": "Savings Rate",
@@ -453,9 +453,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND category_group IN (${category_group}) GROUP BY category ORDER BY total DESC",
+          "rawQueryText": "SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND category_group IN (${category_group:sqlstring}) GROUP BY category ORDER BY total DESC",
           "refId": "A",
-          "queryText": "SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND category_group IN (${category_group}) GROUP BY category ORDER BY total DESC"
+          "queryText": "SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND category_group IN (${category_group:sqlstring}) GROUP BY category ORDER BY total DESC"
         }
       ],
       "title": "Spending by Category",
@@ -605,9 +605,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT t.category, ROUND(SUM(ABS(COALESCE(t.amount_base, t.amount))), 2) as spent, COALESCE(b.monthly_limit, 0) as budget, CASE WHEN b.monthly_limit > 0 THEN ROUND(SUM(ABS(COALESCE(t.amount_base, t.amount))) / b.monthly_limit * 100, 1) ELSE NULL END as pct_used, COUNT(1) as count FROM transactions t LEFT JOIN budget_targets b ON t.category = b.category WHERE t.tx_type='expense' AND t.date >= '${cycle}-07' AND t.date < date('${cycle}-07', '+1 month') AND t.category_group IN (${category_group}) GROUP BY t.category ORDER BY spent DESC",
+          "rawQueryText": "SELECT t.category, ROUND(SUM(ABS(COALESCE(t.amount_base, t.amount))), 2) as spent, COALESCE(b.monthly_limit, 0) as budget, CASE WHEN b.monthly_limit > 0 THEN ROUND(SUM(ABS(COALESCE(t.amount_base, t.amount))) / b.monthly_limit * 100, 1) ELSE NULL END as pct_used, COUNT(1) as count FROM transactions t LEFT JOIN budget_targets b ON t.category = b.category WHERE t.tx_type='expense' AND t.date >= '${cycle}-07' AND t.date < date('${cycle}-07', '+1 month') AND t.category_group IN (${category_group:sqlstring}) GROUP BY t.category ORDER BY spent DESC",
           "refId": "A",
-          "queryText": "SELECT t.category, ROUND(SUM(ABS(COALESCE(t.amount_base, t.amount))), 2) as spent, COALESCE(b.monthly_limit, 0) as budget, CASE WHEN b.monthly_limit > 0 THEN ROUND(SUM(ABS(COALESCE(t.amount_base, t.amount))) / b.monthly_limit * 100, 1) ELSE NULL END as pct_used, COUNT(1) as count FROM transactions t LEFT JOIN budget_targets b ON t.category = b.category WHERE t.tx_type='expense' AND t.date >= '${cycle}-07' AND t.date < date('${cycle}-07', '+1 month') AND t.category_group IN (${category_group}) GROUP BY t.category ORDER BY spent DESC"
+          "queryText": "SELECT t.category, ROUND(SUM(ABS(COALESCE(t.amount_base, t.amount))), 2) as spent, COALESCE(b.monthly_limit, 0) as budget, CASE WHEN b.monthly_limit > 0 THEN ROUND(SUM(ABS(COALESCE(t.amount_base, t.amount))) / b.monthly_limit * 100, 1) ELSE NULL END as pct_used, COUNT(1) as count FROM transactions t LEFT JOIN budget_targets b ON t.category = b.category WHERE t.tx_type='expense' AND t.date >= '${cycle}-07' AND t.date < date('${cycle}-07', '+1 month') AND t.category_group IN (${category_group:sqlstring}) GROUP BY t.category ORDER BY spent DESC"
         }
       ],
       "title": "Category Spending vs Budget",
@@ -1076,9 +1076,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT date, description, amount, currency, ROUND(COALESCE(amount_base, amount), 2) as amount_base, tx_type, category_group, category FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type IN (${tx_type}) AND category_group IN (${category_group}) AND category IN (${category}) ORDER BY date DESC LIMIT 200",
+          "rawQueryText": "SELECT date, description, amount, currency, ROUND(COALESCE(amount_base, amount), 2) as amount_base, tx_type, category_group, category FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type IN (${tx_type:sqlstring}) AND category_group IN (${category_group:sqlstring}) AND category IN (${category:sqlstring}) ORDER BY date DESC LIMIT 200",
           "refId": "A",
-          "queryText": "SELECT date, description, amount, currency, ROUND(COALESCE(amount_base, amount), 2) as amount_base, tx_type, category_group, category FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type IN (${tx_type}) AND category_group IN (${category_group}) AND category IN (${category}) ORDER BY date DESC LIMIT 200"
+          "queryText": "SELECT date, description, amount, currency, ROUND(COALESCE(amount_base, amount), 2) as amount_base, tx_type, category_group, category FROM transactions WHERE date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND tx_type IN (${tx_type:sqlstring}) AND category_group IN (${category_group:sqlstring}) AND category IN (${category:sqlstring}) ORDER BY date DESC LIMIT 200"
         }
       ],
       "title": "Transaction Explorer",
