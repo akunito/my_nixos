@@ -1,0 +1,391 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["finance"],
+      "targetBlank": false,
+      "title": "Finance Dashboards",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "Savings KPIs",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0 },
+              { "color": "green", "value": 1000 }
+            ]
+          },
+          "unit": "currencyPLN"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 1 },
+      "id": 21,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT ROUND(AVG(savings), 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)",
+          "refId": "A",
+          "queryText": "SELECT ROUND(AVG(savings), 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)"
+        }
+      ],
+      "title": "Avg Monthly Savings (6mo)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0 },
+              { "color": "green", "value": 5000 }
+            ]
+          },
+          "unit": "currencyPLN"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 1 },
+      "id": 22,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT ROUND(AVG(savings) * 6, 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)",
+          "refId": "A",
+          "queryText": "SELECT ROUND(AVG(savings) * 6, 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)"
+        }
+      ],
+      "title": "Projected 6-Month Savings",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0 },
+              { "color": "green", "value": 10000 }
+            ]
+          },
+          "unit": "currencyPLN"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 1 },
+      "id": 23,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT ROUND(AVG(savings) * 12, 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)",
+          "refId": "A",
+          "queryText": "SELECT ROUND(AVG(savings) * 12, 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)"
+        }
+      ],
+      "title": "Projected 12-Month Savings",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 200,
+      "panels": [],
+      "title": "Savings History & Rate",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "currencyPLN",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "id": 24,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as savings FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
+          "refId": "A",
+          "queryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as savings FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
+        }
+      ],
+      "title": "Monthly Savings History",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "green", "value": 40 }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "always",
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "id": 31,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(CASE WHEN SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) > 0 THEN (SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) - SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base,amount)) ELSE 0 END)) / SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) * 100 ELSE 0 END, 1) as savings_rate FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
+          "refId": "A",
+          "queryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(CASE WHEN SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) > 0 THEN (SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) - SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base,amount)) ELSE 0 END)) / SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) * 100 ELSE 0 END, 1) as savings_rate FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
+        }
+      ],
+      "title": "Savings Rate Trend (12mo)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 300,
+      "panels": [],
+      "title": "Income & Expenses",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "currencyPLN",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "income" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "expenses" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "id": 32,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as income, ROUND(SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base,amount)) ELSE 0 END), 2) as expenses FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
+          "refId": "A",
+          "queryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as income, ROUND(SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base,amount)) ELSE 0 END), 2) as expenses FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
+        }
+      ],
+      "title": "Income vs Expenses (12mo)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "unit": "currencyPLN",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "gradientMode": "scheme"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "id": 33,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT time, SUM(savings) OVER (ORDER BY time) as cumulative_savings FROM (SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as savings FROM transactions WHERE tx_type IN ('income','expense') GROUP BY substr(date,1,7)) ORDER BY time",
+          "refId": "A",
+          "queryText": "SELECT time, SUM(savings) OVER (ORDER BY time) as cumulative_savings FROM (SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as savings FROM transactions WHERE tx_type IN ('income','expense') GROUP BY substr(date,1,7)) ORDER BY time"
+        }
+      ],
+      "title": "Cumulative Savings (All Time)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 400,
+      "panels": [],
+      "title": "Savings Projection",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyPLN",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "id": 34,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "WITH avg_savings AS (SELECT AVG(savings) as avg_save FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)), months(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM months WHERE n < 12) SELECT 'Month +' || m.n as period, ROUND(m.n * a.avg_save, 0) as projected_savings, ROUND(a.avg_save, 0) as monthly_rate FROM months m, avg_savings a",
+          "refId": "A",
+          "queryText": "WITH avg_savings AS (SELECT AVG(savings) as avg_save FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)), months(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM months WHERE n < 12) SELECT 'Month +' || m.n as period, ROUND(m.n * a.avg_save, 0) as projected_savings, ROUND(a.avg_save, 0) as monthly_rate FROM months m, avg_savings a"
+        }
+      ],
+      "title": "Projected Savings Timeline (based on 6mo avg)",
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": ["custom", "finance"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+        "definition": "SELECT DISTINCT substr(date,1,7) as m FROM transactions ORDER BY m DESC",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Cycle",
+        "multi": false,
+        "name": "cycle",
+        "options": [],
+        "query": "SELECT DISTINCT substr(date,1,7) as m FROM transactions ORDER BY m DESC",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-1y", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Finance Savings",
+  "uid": "finance-savings",
+  "version": 1,
+  "weekStart": ""
+}

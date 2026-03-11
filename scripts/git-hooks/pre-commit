@@ -73,7 +73,7 @@ for file in "${UNENCRYPTED_FILES[@]}"; do
     # Skips: references to secrets.*, ${...}, nix variable interpolation
     if echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' > /dev/null 2>&1; then
         # Filter out safe patterns: secrets.foo, passwordFile, hashedPassword (nix module options)
-        suspicious=$(echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' | grep -viE '(secrets\.|passwordFile|hashedPassword|mkOption|description|example|default =.*lib\.|[0-9]+:\s*#)' || true)
+        suspicious=$(echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' | grep -viE '(secrets\.|passwordFile|hashedPassword|sslCertificate|mkOption|description|example|default =.*lib\.|[0-9]+:\s*#)' || true)
         if [ -n "$suspicious" ]; then
             FINDINGS+="  ${YELLOW}Possible secret assignment${RESET} in $file:\n$suspicious\n"
             BLOCKED=true

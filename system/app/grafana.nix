@@ -1007,6 +1007,10 @@ in
     "grafana-dashboards/custom/database-deep-dive.json".source = ./grafana-dashboards/custom/database-deep-dive.json;
     "grafana-dashboards/custom/tailscale.json".source = ./grafana-dashboards/custom/tailscale.json;
     "grafana-dashboards/custom/finance-overview.json".source = ./grafana-dashboards/custom/finance-overview.json;
+    "grafana-dashboards/custom/finance-budgeting.json".source = ./grafana-dashboards/custom/finance-budgeting.json;
+    "grafana-dashboards/custom/finance-savings.json".source = ./grafana-dashboards/custom/finance-savings.json;
+    "grafana-dashboards/custom/finance-investments.json".source = ./grafana-dashboards/custom/finance-investments.json;
+    "grafana-dashboards/custom/finance-fire.json".source = ./grafana-dashboards/custom/finance-fire.json;
     # Community dashboards
     "grafana-dashboards/community/node-exporter-full.json".source = ./grafana-dashboards/community/node-exporter-full.json;
     "grafana-dashboards/community/docker-cadvisor.json".source = ./grafana-dashboards/community/docker-cadvisor.json;
