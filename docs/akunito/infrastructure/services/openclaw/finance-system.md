@@ -2,8 +2,8 @@
 id: infrastructure.services.openclaw.finance
 summary: "Vaultkeeper finance system: Revolut import, multi-currency budgeting, salary-cycle reports"
 tags: [openclaw, vaultkeeper, finance, revolut, budget, sqlite, matrix]
-related_files: [templates/openclaw/workspace/skills/finance/SKILL.md, templates/openclaw/workspace/VAULTKEEPER_IDENTITY.md, templates/openclaw/workspace/VAULTKEEPER_SOUL.md, templates/openclaw/finance-market-data.py, templates/openclaw/sanitize-csv.py, system/app/openclaw.nix]
-date: 2026-03-10
+related_files: [templates/openclaw/workspace/skills/finance/SKILL.md, templates/openclaw/workspace/skills/finance/PROCEDURES.md, templates/openclaw/workspace/VAULTKEEPER_IDENTITY.md, templates/openclaw/workspace/VAULTKEEPER_SOUL.md, templates/openclaw/finance-market-data.py, templates/openclaw/sanitize-csv.py, system/app/openclaw.nix]
+date: 2026-03-11
 status: published
 ---
 
@@ -117,13 +117,49 @@ Output: `finance/reports/YYYY-MM.md` + `finance/summary-latest.md` (in workspace
 - `/home/akunito/.openclaw/finance-data/generate-report.py` (report generator)
 - Source CSV: `/home/akunito/.openclaw/finance-imports/revolut-import.csv`
 
-### Known issues from bootstrap
+### Post-bootstrap refinement (2026-03-11)
 
-1. **Income severely underreported** (80.70 PLN for cycle 2026-02) — salary transfers classified as `internal_transfer` or `top_up` instead of `income`. User must tell Vaultkeeper which regular transfers are salary.
-2. **"Other" category too large** (1,393 PLN/cycle) — many merchants not matched by category regex. Need to expand keyword patterns or reclassify via Vaultkeeper chat.
-3. **Net worth is approximate** — computed from cumulative transaction sums, not from Revolut's Balance column (which wasn't imported into the DB). Actual Revolut balances may differ due to fees, rounding, or transactions outside the export period.
-4. **6 transactions missing amount_base** — EUR/USD transactions from March 2026 (ECB rates not yet published). Will auto-resolve when monthly timer runs.
-5. **Balance column from CSV not stored** — the import script used transaction amounts only. Future imports should also capture the Balance column for accurate per-row balance tracking.
+**Income reclassification (281 transactions):**
+- 137 salary deposits (`Top-up by 2268`) → `income/Salary`
+- 68 shop refunds (Allegro, Amazon, etc.) → `refund/Refund` (were falsely `income`)
+- 37 Walutomat exchanges → `exchange/Exchange`
+- 27 self-transfers (Diego Rueda Galán) → `internal_transfer/Savings`
+- 4 family transfers (sister, mother) → `income/Family`
+- 3 eBay sales → `income/Sales`
+- Monthly salary now tracked: avg ~10,800 PLN/month
+
+**Category reclassification (1,127 transactions):**
+- 42 rent payments identified: -1,250 PLN (Nov'23–Mar'25), -900 PLN (Dec'23–Sep'24), -750 PLN (Jun'21–Apr'22)
+- 16 partner food transfers: -160 EUR (Aug'22–Jul'23)
+- 73 Aplazame → Installments
+- 48+ merchant patterns mapped to: Groceries, Transport, Sports & Entertainment, Dining, Health, Travel, Telecom, Subscriptions, Shopping, Cash, Investment
+- "Other" reduced from 1,500 → 373 (long-tail merchants, 1–4 occurrences each)
+
+**New category distribution (expenses):**
+| Category | Count | Total PLN |
+|----------|-------|-----------|
+| Revolut Misc | 426 | -53,512 |
+| Other | 373 | -39,038 |
+| Shopping | 339 | -75,923 |
+| Groceries | 306 | -25,157 |
+| Transport | 135 | -4,680 |
+| Dining | 93 | -4,275 |
+| Sports & Entertainment | 77 | -1,163 |
+| Installments | 73 | -5,245 |
+| Telecom | 52 | -1,882 |
+| Rent | 42 | -42,400 |
+| Travel | 41 | -20,073 |
+| Cash | 37 | -5,758 |
+| Health | 34 | -5,142 |
+| Subscriptions | 17 | -1,950 |
+
+### Remaining known issues
+
+1. **Revolut Misc (426 tx)** — small variable-amount charges to "Revolut Bank UAB" with no description detail. Likely card payments where merchant resolved to Revolut's name. Cannot be further classified without Revolut app details.
+2. **Other (373 tx)** — long-tail merchants with 1–4 occurrences each. Not cost-effective to classify individually.
+3. **6 transactions missing amount_base** — March 2026 ECB rates not yet published.
+4. **Balance column from CSV not stored** — future imports should capture Balance for accurate per-row tracking.
+5. **Vaultkeeper cron jobs not deployed** — `revolut-analysis` and `budget-pulse` crons need to be added to openclaw.json and activated.
 
 ## Vaultkeeper Operating Instructions
 
@@ -182,6 +218,7 @@ See [integrations.md](integrations.md#multi-account-agent-routing-critical) for 
 | File | Purpose |
 |------|---------|
 | `templates/openclaw/workspace/skills/finance/SKILL.md` | Full skill specification |
+| `templates/openclaw/workspace/skills/finance/PROCEDURES.md` | Step-by-step exec commands for all operations |
 | `templates/openclaw/workspace/VAULTKEEPER_IDENTITY.md` | Agent identity & roles |
 | `templates/openclaw/workspace/VAULTKEEPER_SOUL.md` | Communication style & boundaries |
 | `templates/openclaw/finance-market-data.py` | Host-side market data fetcher |
