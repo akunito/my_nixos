@@ -49,16 +49,24 @@ BLOCKED=false
 FINDINGS=""
 
 for file in "${UNENCRYPTED_FILES[@]}"; do
+    # Skip template files (contain placeholder values, not real secrets)
+    case "$file" in
+        *.template) continue ;;
+    esac
+
     # Get staged content (not working tree content)
     CONTENT=$(git show ":$file" 2>/dev/null || true)
     [ -n "$CONTENT" ] || continue
 
     # --- Check 1: API key prefixes ---
     # GitHub PAT, OpenAI, Perplexity, Grafana SA, AWS, Hugging Face
+    # Skip placeholder patterns (your-, ghp_your-, pplx-your-)
     if echo "$CONTENT" | grep -nEi '(AIzaSy[0-9A-Za-z_-]{33}|sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|pplx-[a-f0-9]{48}|glsa_[a-zA-Z0-9]{32,}|AKIA[0-9A-Z]{16}|hskey-[a-zA-Z0-9]{20,})' > /dev/null 2>&1; then
-        matches=$(echo "$CONTENT" | grep -nEi '(AIzaSy[0-9A-Za-z_-]{33}|sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|pplx-[a-f0-9]{48}|glsa_[a-zA-Z0-9]{32,}|AKIA[0-9A-Z]{16}|hskey-[a-zA-Z0-9]{20,})')
-        FINDINGS+="  ${RED}API key pattern${RESET} in $file:\n$matches\n"
-        BLOCKED=true
+        matches=$(echo "$CONTENT" | grep -nEi '(AIzaSy[0-9A-Za-z_-]{33}|sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|pplx-[a-f0-9]{48}|glsa_[a-zA-Z0-9]{32,}|AKIA[0-9A-Z]{16}|hskey-[a-zA-Z0-9]{20,})' | grep -viE '(your-|placeholder|example)' || true)
+        if [ -n "$matches" ]; then
+            FINDINGS+="  ${RED}API key pattern${RESET} in $file:\n$matches\n"
+            BLOCKED=true
+        fi
     fi
 
     # --- Check 2: Private key headers ---
@@ -70,10 +78,12 @@ for file in "${UNENCRYPTED_FILES[@]}"; do
 
     # --- Check 3: High-entropy secret assignments ---
     # Matches: KEY|TOKEN|SECRET|PASSWORD = "value-at-least-12-chars"
-    # Skips: references to secrets.*, ${...}, nix variable interpolation
+    # Skips: references to secrets.*, ${...}, nix variable interpolation, placeholders
     if echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' > /dev/null 2>&1; then
-        # Filter out safe patterns: secrets.foo, passwordFile, hashedPassword (nix module options)
-        suspicious=$(echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' | grep -viE '(secrets\.|passwordFile|hashedPassword|sslCertificate|mkOption|description|example|default =.*lib\.|[0-9]+:\s*#)' || true)
+        # Filter out safe patterns: secrets.foo, passwordFile, hashedPassword, comments,
+        # placeholder values (your-*, generate-*, GENERATE_*), ssh key paths, documentation
+        suspicious=$(echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' \
+            | grep -viE '(secrets\.|passwordFile|hashedPassword|sslCertificate|sshKey|mkOption|description|example|default =.*lib\.|[0-9]+:\s*#|your-|placeholder|generate-|GENERATE_|\.ssh/)' || true)
         if [ -n "$suspicious" ]; then
             FINDINGS+="  ${YELLOW}Possible secret assignment${RESET} in $file:\n$suspicious\n"
             BLOCKED=true
@@ -81,9 +91,10 @@ for file in "${UNENCRYPTED_FILES[@]}"; do
     fi
 
     # --- Check 4: NixOS password literals ---
-    # Catches: password = "literal"; skips secrets.foo, ${var}, passwordFile, hashedPasswordFile
+    # Catches: password = "literal"; skips secrets.foo, ${var}, passwordFile, placeholders
     if echo "$CONTENT" | grep -nE 'password\s*=\s*"[^$\{"][^"]{3,}"' > /dev/null 2>&1; then
-        suspicious=$(echo "$CONTENT" | grep -nE 'password\s*=\s*"[^$\{"][^"]{3,}"' | grep -viE '(secrets\.|passwordFile|hashedPassword|mkOption|description|example|# )' || true)
+        suspicious=$(echo "$CONTENT" | grep -nE 'password\s*=\s*"[^$\{"][^"]{3,}"' \
+            | grep -viE '(secrets\.|passwordFile|hashedPassword|mkOption|description|example|# |your-|placeholder|generate-)' || true)
         if [ -n "$suspicious" ]; then
             FINDINGS+="  ${YELLOW}Literal password${RESET} in $file:\n$suspicious\n"
             BLOCKED=true
