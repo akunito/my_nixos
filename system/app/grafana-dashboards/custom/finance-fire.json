@@ -460,7 +460,21 @@
         }
       ],
       "title": "Net Worth vs FIRE Target",
-      "type": "timeseries"
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ]
     }
   ],
   "refresh": "",

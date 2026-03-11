@@ -466,7 +466,21 @@
         }
       ],
       "title": "Exchange Rate History",
-      "type": "timeseries"
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "collapsed": false,
@@ -529,7 +543,21 @@
         }
       ],
       "title": "Monthly Investment Contributions (12mo)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "collapsed": false,
@@ -595,7 +623,21 @@
         }
       ],
       "title": "Projected Portfolio Growth (${annual_return}% annual return, no contributions)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ]
     }
   ],
   "refresh": "",

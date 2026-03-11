@@ -487,6 +487,20 @@
         }
       ],
       "title": "Total Spend vs Total Budget (12mo)",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
@@ -842,6 +856,20 @@
         }
       ],
       "title": "${category}",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ],
       "type": "timeseries"
     }
   ],

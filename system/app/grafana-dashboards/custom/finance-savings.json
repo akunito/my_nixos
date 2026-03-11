@@ -305,7 +305,21 @@
         }
       ],
       "title": "Monthly Savings History",
-      "type": "timeseries"
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "datasource": {
@@ -376,7 +390,21 @@
         }
       ],
       "title": "Savings Rate Trend (12mo)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "collapsed": false,
@@ -471,7 +499,21 @@
         }
       ],
       "title": "Income vs Expenses (12mo)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "datasource": {
@@ -524,7 +566,21 @@
         }
       ],
       "title": "Cumulative Savings (All Time)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "time",
+                "destinationType": "time",
+                "dateFormat": "X"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "collapsed": false,
