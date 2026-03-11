@@ -146,6 +146,13 @@ status: draft | published            # Document status
 - The index file keeps the original frontmatter `id:`
 - This reduces Claude Code token consumption by ~70% per targeted doc read
 
+#### 6. Documentation Maintenance (during feature work)
+- **When adding/modifying a Nix module**: Check if a related doc exists (use Router or `related_files` frontmatter). Update it. If no doc exists for a user-facing module, create one in `docs/`.
+- **When adding/removing feature flags** in `lib/defaults.nix`: Update `docs/profile-feature-flags.md`.
+- **After any doc changes**: Run `python3 scripts/generate_docs_index.py` and stage the regenerated `docs/00_ROUTER.md` + `docs/01_CATALOG.md` alongside your doc changes.
+- **New .md files**: Must have YAML frontmatter (`id`, `summary`, `tags`, `date`, `status`). Must be in `docs/`.
+- **Periodic check**: Run `/docs-health` to find broken links and stale docs.
+
 ## Profile Architecture Principles (CRITICAL)
 
 This repository follows a **hierarchical, modular, and centralized** profile architecture:

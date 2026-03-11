@@ -48,3 +48,11 @@ Primary Path should usually be `related_files[0]` (or fallback to the doc path).
 ## Retrieval Protocol
 
 - Read `docs/00_ROUTER.md` first, choose node(s), then open only the referenced docs/code.
+
+## Pre-Commit Checklist (docs)
+
+When committing changes that include `.md` files:
+1. Run `python3 scripts/generate_docs_index.py`
+2. Stage regenerated `docs/00_ROUTER.md` and `docs/01_CATALOG.md`
+3. Include them in the same commit as the doc changes
+4. Delete `docs/00_INDEX.md` if regenerated (legacy shim, not needed)

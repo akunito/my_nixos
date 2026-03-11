@@ -28,6 +28,7 @@ in
         pkgs.redis
         pkgs.curl  # For healthchecks
         pkgs.olm  # libolm for Matrix bot E2E encryption
+        pkgs.gitleaks  # Secret scanning for repo audits
       ];
 
     # ============================================================================

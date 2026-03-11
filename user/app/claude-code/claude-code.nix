@@ -256,6 +256,16 @@ let
             }
           ];
         }
+        {
+          matcher = "Write|Edit";
+          hooks = [
+            {
+              type = "command";
+              command = "${dotfilesPath}/.claude/hooks/doc-update-reminder.sh";
+              timeout = 3;
+            }
+          ];
+        }
       ];
 
       Notification = [
