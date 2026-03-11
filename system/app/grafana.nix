@@ -166,8 +166,8 @@ in
           name = "Finance SQLite";
           type = "frser-sqlite-datasource";
           jsonData = {
-            path = "/home/${userSettings.username}/.openclaw/finance-data/vaultkeeper.db";
-            pathOptions = "immutable=1";  # Read-only access to WAL-mode DB without needing write permissions
+            # URI format with immutable=1 for read-only access to WAL-mode DB
+            path = "file:/home/${userSettings.username}/.openclaw/finance-data/vaultkeeper.db?immutable=1";
           };
           editable = false;
           uid = "finance-sqlite";
