@@ -11,10 +11,10 @@ NixOS infrastructure documentation specific to akunito's environment.
 - `keybindings/` — Sway, Hyprland, mouse button mapping
 - `hardware.md` — General hardware configuration reference
 - `keybindings.md` — Keybindings overview
-- `lxc-deployment.md` — LXC container deployment
-- `proxmox-lxc.md` — Proxmox LXC management
+- `lxc-deployment.md` — LXC container deployment (Komi's KOMI_LXC_* containers)
+- `proxmox-lxc.md` — Proxmox LXC management (Komi's Proxmox only; akunito's shut down Feb 2026)
 - `security.md` — Security configuration guide
 
 ## Scope
 
-These docs cover NixOS desktops (DESK, LAPTOP_*), homelab VMs (VMHOME), and LXC containers. For shared docs (security/, setup/, user-modules/), see the parent `docs/` directory.
+These docs cover NixOS desktops (DESK, LAPTOP_*), VPS (VPS_PROD), homelab VMs (VMHOME), and Komi's LXC containers. For shared docs (security/, setup/, user-modules/), see the parent `docs/` directory.

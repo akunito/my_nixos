@@ -27,7 +27,7 @@ Single consolidated instance on VPS for 24/7 monitoring.
 - **Global services**: *.akunito.com public endpoints
 - **Local services**: *.local.akunito.com via Tailscale
 - **Infrastructure**: pfSense, TrueNAS, DESK, switches, APs (via pfSense Tailscale subnet routing)
-- **LXC legacy**: Ping monitors for archived LXC containers
+- **LXC legacy [archived]**: Ping monitors for archived LXC containers (akunito's Proxmox shut down Feb 2026 -- these monitors should be removed)
 
 ## Email Configuration
 

@@ -41,9 +41,9 @@ secrets/
 Profile configuration files import secrets directly:
 
 ```nix
-# profiles/LXC_monitoring-config.nix
+# profiles/VPS_PROD-config.nix
 let
-  base = import ./LXC-base-config.nix;
+  base = import ./VPS-base-config.nix;
   secrets = import ../secrets/domains.nix;
 in
 {

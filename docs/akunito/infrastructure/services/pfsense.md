@@ -2,7 +2,7 @@
 id: infrastructure.services.pfsense
 summary: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 tags: [infrastructure, pfsense, firewall, gateway, wireguard, dns, dhcp, snmp, pfblockerng, openvpn]
-related_files: [docs/akunito/infrastructure/INFRASTRUCTURE.md, docs/akunito/infrastructure/services/vps-wireguard.md, profiles/LXC_monitoring-config.nix]
+related_files: [docs/akunito/infrastructure/INFRASTRUCTURE.md, docs/akunito/infrastructure/services/vps-wireguard.md, profiles/VPS_PROD-config.nix]
 ---
 
 # pfSense Firewall & Gateway
@@ -362,7 +362,7 @@ pfBlockerNG creates PF tables and rules:
 
 ## SNMP Monitoring
 
-SNMP is enabled for Prometheus monitoring from LXC_monitoring.
+SNMP is enabled for Prometheus monitoring from VPS_PROD.
 
 | Setting | Value |
 |---------|-------|
@@ -676,7 +676,7 @@ ls /usr/local/etc/rc.d/
 
 2. Test SNMPv3 (preferred):
    ```bash
-   # From LXC_monitoring or any host with net-snmp-utils
+   # From VPS_PROD or any host with net-snmp-utils
    snmpwalk -v3 -l authPriv \
      -u prometheus \
      -a SHA -A "<auth-password>" \
@@ -705,7 +705,7 @@ Previously, pfSense was configured with automated daily backups to Proxmox NFS s
 | **Schedule** | Daily at 02:00 (via cron) |
 | **Destination** | ~~`root@192.168.8.82:/mnt/pve/proxmox_backups/pfsense/`~~ (Proxmox shut down) |
 | **Retention** | 30 days |
-| **Monitoring** | Prometheus metrics via LXC_monitoring |
+| **Monitoring** | Prometheus metrics via VPS_PROD |
 
 #### Files Backed Up
 
@@ -760,7 +760,7 @@ ssh admin@192.168.8.1 "cat /root/.ssh/id_ed25519.pub" >> /root/.ssh/authorized_k
 
 ### Prometheus Monitoring
 
-Backup status is monitored via `prometheus-pfsense-backup` service on LXC_monitoring.
+Backup status is monitored via `prometheus-pfsense-backup` service on VPS_PROD.
 
 **Metrics exposed**:
 | Metric | Description |

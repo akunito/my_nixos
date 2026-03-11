@@ -158,8 +158,7 @@ locations."/" = {
 
 ### Certificate Management
 
-- Wildcard certs managed by acme.sh on LXC_proxy
-- Shared via Proxmox bind mount to other containers
+- Wildcard certs managed by Cloudflare tunnel (VPS) and NPM (TrueNAS)
 - Let's Encrypt for public-facing services
 
 ### Certificate Monitoring

@@ -53,6 +53,8 @@ status: published
 
 Python systemd service on VPS. Connects to Synapse via localhost API. Access token in secrets.
 
-## Previous Setup
+## Previous Setup [Archived]
+
+*(Archived: akunito's Proxmox LXC containers were shut down Feb 2026, services migrated to VPS_PROD)*
 
 Matrix ran on LXC_matrix (192.168.8.104). Migrated to VPS in Phase 3d. Signing key preserved. Federation verified post-migration.

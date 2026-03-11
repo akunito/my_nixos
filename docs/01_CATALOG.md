@@ -84,7 +84,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
 - **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
-- **system/app/openclaw.nix**: OpenClaw Sanitizer Services
+- **system/app/openclaw-matrix-bridge.nix**: OpenClaw Matrix Bridge + Fallback Monitor
+- **system/app/openclaw.nix**: OpenClaw Services
 - **system/app/pgbouncer.nix**: PgBouncer Connection Pooler Module *Enabled when:*
    - `moved from top-level`
    - `systemSettings.postgresqlServerEnable or false`
@@ -99,17 +100,20 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `tlsTargets != [] || httpTargets != []`
 - **system/app/prometheus-exporters.nix**: Prometheus Exporters Module *Enabled when:*
    - `systemSettings.prometheusExporterEnable or false`
+   - `(systemSettings.prometheusExporterEnable or false) || (systemSettings.grafanaEnable or false)`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
 - **system/app/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
-- **system/app/prometheus-pfsense-backup.nix**: pfSense Backup Monitoring *Enabled when:* `systemSettings.prometheusPfsenseBackupEnable or false`
+- **system/app/prometheus-pfsense-backup.nix**: pfSense Full Backup + Sync + Monitoring *Enabled when:* `systemSettings.prometheusPfsenseBackupEnable or false`
 - **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
 - **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
-- **system/app/prometheus-truenas-backup.nix**: TrueNAS ZFS Replication Backup Monitoring (DEPRECATED — hddpool removed, IAKU-247) *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
+- **system/app/prometheus-truenas-backup.nix**: TrueNAS Restic Backup Monitoring *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
+- **system/app/prometheus-workstation-exporter.nix**: Prometheus Workstation Exporter Module *Enabled when:* `(systemSettings.prometheusWorkstationExporterEnable or false) && !(systemSettings.prometheusExporterEnable or false)`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
 - **system/app/redis-server.nix**: Redis Server Module *Enabled when:*
    - `allows multiple instances if needed`
    - `systemSettings.prometheusRedisExporterEnable or false`
+- **system/app/restic-backup-truenas.nix**: TrueNAS Offsite Backup — VPS pulls Docker data + configs from TrueNAS *Enabled when:* `systemSettings.truenasResticBackupEnable or false`
 - **system/app/restic-backup-vps.nix**: VPS Restic Backup to TrueNAS via SFTP *Enabled when:* `systemSettings.vpsResticBackupEnable or false`
 - **system/app/samba.nix**: System module: samba.nix
 - **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`
@@ -181,7 +185,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `lib.listToAttrs (map (iface: { name = iface; value = { useDHCP = false; }; }) interfaces) // { # Configure bond0 IP addressing bond0 = if useDhcp then { useDHCP = true; } else if staticIp != null then { useDHCP = false; ipv4.addresses = [{ address = lib.head (lib.splitString "/" staticIp.address); prefixLength = lib.toInt (lib.last (lib.splitString "/" staticIp.address)); }]; } else { useDHCP = true; # Fallback to DHCP }; }`
    - `useNetworkd && staticIp != null && !useDhcp`
    - `{ "NetworkManager/system-connections/bond0.nmconnection" = { text = nmBondConnection; mode = "0600"; }; } // lib.listToAttrs (map (iface: { name = "NetworkManager/system-connections/bond0-slave-${iface}.nmconnection"; value = { text = nmSlaveConnection iface; mode = "0600"; }; }) interfaces) // lib.listToAttrs (map (vlan: { name = "NetworkManager/system-connections/bond0-vlan${toString vlan.id}.nmconnection"; value = { text = nmVlanConnection vlan; mode = "0600"; }; }) vlans)`
-   - `lib.stringAfter [ "etc" ] '' if systemctl is-active --quiet NetworkManager; then ${pkgs.networkmanager}/bin/nmcli connection reload || true fi ''`
+   - `lib.stringAfter [ "etc" ] '' if ${pkgs.systemd}/bin/systemctl is-active --quiet NetworkManager; then ${pkgs.networkmanager}/bin/nmcli connection reload || true fi ''`
    - `ringBufferSize != null`
 - **system/hardware/nfs_client.nix**: You need to install pkgs.nfs-utils *Enabled when:* `systemSettings.nfsClientEnable == true`
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
@@ -241,9 +245,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.resticWrapper == true`
    - `systemSettings.homeBackupEnable == true`
    - `systemSettings.remoteBackupEnable == true`
-   - `systemSettings.vpsBackupEnable == true`
    - `systemSettings.backupMonitoringEnable or false`
-   - `systemSettings.pfsenseBackupEnable or false`
 - **system/security/sshd.nix**: Enable incoming ssh
 - **system/security/sudo.nix**: groups = [ "wheel" ]; *Enabled when:*
    - `systemSettings.sudoNOPASSWD == true`
@@ -306,6 +308,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/qute-containers.nix**: User module: qute-containers.nix
 - **user/app/browser/qutebrowser.nix**: bindings from doom emacs
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
+- **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
 - **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:*
    - `builtins.length postgresCredentials > 0`
    - `builtins.length mariadbCredentials > 0`
@@ -443,20 +446,22 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/akunito/infrastructure/INFRASTRUCTURE.md**: Infrastructure overview: VPS + TrueNAS + pfSense architecture
 - **docs/akunito/infrastructure/INFRASTRUCTURE_INTERNAL.md**: Complete internal infrastructure documentation with sensitive details (ENCRYPTED)
+- **docs/akunito/infrastructure/archived/audits/migration-plan-audit-2026-02-19.md**: Comprehensive audit of Proxmox-to-VPS+TrueNAS migration plan
+- **docs/akunito/infrastructure/archived/audits/migration-plan-network-security-audit-2026-02-19.md**: Network architecture, VPS hardening, and Nextcloud security audit of the Proxmox-to-VPS migration plan
+- **docs/akunito/infrastructure/archived/audits/truenas-audit-2026-02-12.md**: Performance, reliability, and configuration audit of TrueNAS storage server
+- **docs/akunito/infrastructure/archived/migration/PORTFOLIO_SUMMARY.md**: Portfolio-ready migration summary for interviews
+- **docs/akunito/infrastructure/archived/migration/README.md**: VPS migration plan and execution docs
+- **docs/akunito/infrastructure/archived/migration/phase-0-preparation.md**: Migration preparation, LXC_HOME to TrueNAS, DB fallback
+- **docs/akunito/infrastructure/archived/migration/phase-1-vps-base.md**: VPS base setup: NixOS, LUKS, Tailscale, WireGuard
+- **docs/akunito/infrastructure/archived/migration/phase-2-foundation.md**: VPS foundation: databases, proxy, mailer, monitoring
+- **docs/akunito/infrastructure/archived/migration/phase-3-applications.md**: Application migration: Plane, Portfolio, Matrix, Nextcloud
+- **docs/akunito/infrastructure/archived/migration/phase-4-cutover.md**: DNS cutover, TrueNAS NPM/cloudflared, LXC decommission
+- **docs/akunito/infrastructure/archived/migration/phase-5-8-completion.md**: TrueNAS sleep, backups, hardening, decommission
+- **docs/akunito/infrastructure/archived/migration/post-migration-tasks.md**: Post-migration documentation and operational updates
+- **docs/akunito/infrastructure/archived/migration/truenas-migration-complete.md**: Successfully migrated TrueNAS SCALE from failing Patriot Burst Elite 120GB SSD to mirrored Samsung 970 EVO Plus NVMe drives.
 - **docs/akunito/infrastructure/audits/docker-security-audit-2026-03-06.md**: VPS Docker container security audit — network isolation, database access, secrets, hardening
-- **docs/akunito/infrastructure/audits/migration-plan-audit-2026-02-19.md**: Comprehensive audit of Proxmox-to-VPS+TrueNAS migration plan
-- **docs/akunito/infrastructure/audits/migration-plan-network-security-audit-2026-02-19.md**: Network architecture, VPS hardening, and Nextcloud security audit of the Proxmox-to-VPS migration plan
 - **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
-- **docs/akunito/infrastructure/audits/truenas-audit-2026-02-12.md**: Performance, reliability, and configuration audit of TrueNAS storage server
-- **docs/akunito/infrastructure/migration/PORTFOLIO_SUMMARY.md**: Portfolio-ready migration summary for interviews
-- **docs/akunito/infrastructure/migration/README.md**: VPS migration plan and execution docs
-- **docs/akunito/infrastructure/migration/phase-0-preparation.md**: Migration preparation, LXC_HOME to TrueNAS, DB fallback
-- **docs/akunito/infrastructure/migration/phase-1-vps-base.md**: VPS base setup: NixOS, LUKS, Tailscale, WireGuard
-- **docs/akunito/infrastructure/migration/phase-2-foundation.md**: VPS foundation: databases, proxy, mailer, monitoring
-- **docs/akunito/infrastructure/migration/phase-3-applications.md**: Application migration: Plane, Portfolio, Matrix, Nextcloud
-- **docs/akunito/infrastructure/migration/phase-4-cutover.md**: DNS cutover, TrueNAS NPM/cloudflared, LXC decommission
-- **docs/akunito/infrastructure/migration/phase-5-8-completion.md**: TrueNAS sleep, backups, hardening, decommission
-- **docs/akunito/infrastructure/migration/post-migration-tasks.md**: Post-migration documentation and operational updates
+- **docs/akunito/infrastructure/audits/truenas-docker-security-audit-2026-03-06.md**: TrueNAS Docker rootless migration and security hardening audit
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
 - **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS
 - **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: consolidated monitoring on VPS
@@ -470,6 +475,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/openclaw/automation.md**: OpenClaw automation: cron jobs, webhooks, hooks, and Gmail PubSub
 - **docs/akunito/infrastructure/services/openclaw/channels.md**: OpenClaw messaging channel integrations: 23+ platforms, configuration, and policies
 - **docs/akunito/infrastructure/services/openclaw/docker-deployment.md**: OpenClaw Docker deployment for VPS_PROD with rootless Docker
+- **docs/akunito/infrastructure/services/openclaw/finance-system.md**: Vaultkeeper finance system: Revolut import, multi-currency budgeting, salary-cycle reports
 - **docs/akunito/infrastructure/services/openclaw/integrations.md**: OpenClaw integrations with existing VPS services: Plane, Matrix, n8n, Calendar, Postfix
 - **docs/akunito/infrastructure/services/openclaw/security.md**: OpenClaw security: authentication, sandboxing, secrets, and hardening
 - **docs/akunito/infrastructure/services/openclaw/skills-plugins.md**: OpenClaw skills, MCP servers, plugins, and the community ecosystem
@@ -480,7 +486,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/truenas-services.md**: TrueNAS Docker services: media, NPM, monitoring
 - **docs/akunito/infrastructure/services/truenas.md**: TrueNAS storage server operations, monitoring, and maintenance
 - **docs/akunito/infrastructure/services/vps-services.md**: VPS services: Docker containers and NixOS native services
-- **docs/akunito/infrastructure/truenas-migration-complete.md**: Successfully migrated TrueNAS SCALE from failing Patriot Burst Elite 120GB SSD to mirrored Samsung 970 EVO Plus NVMe drives.
 
 ### Akunito / Keybindings
 
@@ -492,6 +497,21 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/akunito/system-modules/hibernate.md**: Hibernation with LUKS-encrypted swap for laptops and desktops
 - **docs/akunito/system-modules/network-bonding.md**: Network bonding (LACP link aggregation) for increased bandwidth and failover
+
+### Archived
+
+- **docs/archived/configuration.md**: Complete guide to understanding and customizing the NixOS configuration system.
+- **docs/archived/grafana-dashboard-reference.md**: Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures.
+- **docs/archived/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
+- **docs/archived/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
+- **docs/archived/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
+- **docs/archived/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.
+
+### Archived / Old-Root-Docs
+
+- **docs/archived/old-root-docs/BACKUP_DEPLOYMENT_STATUS.md**: **Last Updated:** 2026-02-20 CET
+- **docs/archived/old-root-docs/install.md**: > **Note**: This document contains historical installation notes from the original LibrePhoenix repository. Some sections are outdated. For current, up-to-date installation instructions, see [Insta...
+- **docs/archived/old-root-docs/kernelModules.md**: Certainly! Let\'s dive deeper into the comparison of the different CPU
 
 ### Future
 
@@ -567,19 +587,15 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/komi/infrastructure/komi-monitoring-setup.md**: Grafana and Prometheus setup for Komi's monitoring container
 - **docs/komi/infrastructure/komi-proxy-setup.md**: Cloudflare tunnel, NPM, and ACME certificate setup for Komi
 
-- **docs/00_INDEX.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/00_ROUTER.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/01_CATALOG.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
-- **docs/agent-context.md**: How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md + Claude Code) and a reusable template for other projects.
-- **docs/configuration.md**: Complete guide to understanding and customizing the NixOS configuration system.
-- **docs/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
-- **docs/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
+- **docs/agent-context.md**: How AI agents retrieve context in this repo (Router/Catalog protocol, index regeneration, key files).
+- **docs/daily-usage.md**: Daily aku commands, common operations, backup overview, maintenance, and script reference.
+- **docs/getting-started.md**: Installation, profile selection, configuration structure, and troubleshooting for new users.
 - **docs/multi-user-workflow.md**: Multi-user branch management workflow for akunito (main) and ko-mi (komi)
-- **docs/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
 - **docs/nix-quote-escaping.md**: Guide to properly escaping quotes and special characters in Nix strings to avoid common syntax errors.
 - **docs/patches.md**: Guide to understanding and using Nixpkgs patches in this configuration.
 - **docs/profile-feature-flags.md**: Guide to creating and using feature flags for profile-specific module enabling. Explains the pattern of setting defaults to false and enabling features only in specific profiles.
-- **docs/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.
 - **docs/themes.md**: Complete guide to the theming system and available themes.
 
 ### Scripts
@@ -603,8 +619,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Setup
 
-- **docs/setup/claude-code-setup.md**: Claude Code CLI configuration guide — permissions, hooks, and MCP servers
-- **docs/setup/grafana-dashboard-reference.md**: Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures.
+- **docs/setup/claude-code-setup.md**: Claude Code CLI configuration guide — security, permissions, hooks, MCP servers, and declarative sync
 - **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack.
 - **docs/setup/plane-integration.md**: Plane project management MCP integration for Claude Code workflows
 

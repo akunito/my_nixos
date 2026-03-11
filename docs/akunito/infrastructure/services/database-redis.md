@@ -114,6 +114,8 @@ Connect via SSH tunnel:
 1. SSH Host: 100.64.0.6, Port: 56777, User: akunito
 2. DB Host: 127.0.0.1, Port: 5432 (PostgreSQL) or 3306 (MariaDB)
 
-## Previous Setup
+## Previous Setup [Archived]
+
+*(Archived: akunito's Proxmox LXC containers were shut down Feb 2026, services migrated to VPS_PROD)*
 
 All databases previously ran on LXC_database (192.168.8.103, decommissioned Feb 2026). Data was dumped and restored on VPS during Phase 2 of migration.

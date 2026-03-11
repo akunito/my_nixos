@@ -82,8 +82,10 @@ Provides remote access to `*.local.akunito.com` via Cloudflare tunnel:
 
 ## pfSense DNS
 
-`*.local.akunito.com` → 192.168.20.200 (was .201 macvlan, updated Mar 2026; was 192.168.8.102 / old LXC_proxy, updated Feb 2026)
+`*.local.akunito.com` → 192.168.20.200 (was .201 macvlan, updated Mar 2026; was 192.168.8.102 / old LXC_proxy [archived], updated Feb 2026)
 
-## Previous Setup
+## Previous Setup [Archived]
+
+*(Archived: akunito's Proxmox LXC containers were shut down Feb 2026, services migrated to VPS_PROD)*
 
 LXC_proxy (192.168.8.102) ran NPM for all domains. Decommissioned Feb 2026 after TrueNAS NPM took over local domains and VPS handles public domains.

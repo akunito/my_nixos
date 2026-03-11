@@ -139,6 +139,41 @@ Rootless Docker (~18 containers, 6 compose projects):
 
 ## Backup Schedule
 
+```mermaid
+graph LR
+    subgraph VPS_PROD
+        DB[DB dumps<br/>hourly]
+        RESTIC_DB[Restic databases<br/>every 2h]
+        RESTIC_SVC[Restic services<br/>daily 09:00]
+        RESTIC_NC[Restic nextcloud<br/>daily 10:00]
+    end
+
+    subgraph TrueNAS
+        SSDPOOL[ssdpool<br/>VPS backups]
+        EXTPOOL[extpool<br/>overflow]
+        WS_BK[workstation_backups<br/>NFS share]
+        TN_CFG[TrueNAS configs]
+    end
+
+    subgraph Workstations
+        DESK_BK[DESK home dir<br/>every 6h]
+        X13_BK[LAPTOP_X13 home<br/>every 6h]
+    end
+
+    subgraph pfSense
+        PF_CFG[Config export<br/>tracked by Prometheus]
+    end
+
+    DB --> RESTIC_DB
+    RESTIC_DB -->|SFTP via Tailscale| SSDPOOL
+    RESTIC_SVC -->|SFTP via Tailscale| SSDPOOL
+    RESTIC_NC -->|SFTP via Tailscale| EXTPOOL
+    TN_CFG -->|daily 18:30 rsync| VPS_PROD
+    DESK_BK -->|NFS mount| WS_BK
+    X13_BK -->|NFS mount| WS_BK
+    PF_CFG -->|SNMP metrics| VPS_PROD
+```
+
 | Job | Schedule | Source | Target |
 |-----|----------|--------|--------|
 | DB dumps (pg/mysql/redis) | Hourly | VPS /var/backup/ | VPS local |

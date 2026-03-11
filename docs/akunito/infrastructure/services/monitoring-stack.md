@@ -10,6 +10,49 @@ status: published
 
 All monitoring runs on the VPS as NixOS native services.
 
+```mermaid
+graph TB
+    subgraph VPS_PROD
+        PROM[Prometheus<br/>localhost:9090]
+        GRAF[Grafana<br/>grafana.akunito.com]
+
+        subgraph Exporters
+            NODE[node-exporter]
+            PG[postgres-exporter]
+            MY[mysqld-exporter]
+            RD[redis-exporter]
+            BB[blackbox-exporter]
+            SNMP[snmp-exporter]
+            CADV[cadvisor]
+        end
+    end
+
+    subgraph TrueNAS
+        TN_NODE[node-exporter]
+        TN_CADV[cadvisor]
+        EXPARR[exportarr<br/>sonarr/radarr/prowlarr/bazarr]
+    end
+
+    subgraph pfSense
+        PF_SNMP[SNMPv3 agent]
+    end
+
+    NODE --> PROM
+    PG --> PROM
+    MY --> PROM
+    RD --> PROM
+    BB --> PROM
+    CADV --> PROM
+    TN_NODE -->|Tailscale| PROM
+    TN_CADV -->|Tailscale| PROM
+    EXPARR -->|Tailscale| PROM
+    PF_SNMP --> SNMP --> PROM
+    PROM --> GRAF
+
+    GRAF -->|Critical alerts| TG[Telegram bot]
+    GRAF -->|All alerts| EMAIL[Email via Postfix]
+```
+
 ## Components
 
 | Service | Port | Access |
@@ -61,7 +104,7 @@ pfSense (192.168.8.1), WAN gateway
 
 - Domain: grafana.akunito.com via Cloudflare tunnel
 - Alerting: Postfix relay (localhost:25)
-- Dashboards migrated from LXC_monitoring (Feb 2026)
+- Dashboards migrated from LXC_monitoring [archived] (Feb 2026)
 - Declarative provisioning via NixOS grafana.nix module
 
 ## Key Alerts
@@ -79,6 +122,8 @@ pfSense (192.168.8.1), WAN gateway
 
 4 exportarr containers on TrueNAS (compose project: exporters) provide *arr stack metrics. Scraped by VPS Prometheus via Tailscale.
 
-## Previous Setup
+## Previous Setup [Archived]
+
+*(Archived: akunito's Proxmox LXC containers were shut down Feb 2026, services migrated to VPS_PROD)*
 
 LXC_monitoring (192.168.8.85) ran Prometheus + Grafana + blackbox + PVE exporter + SNMP exporter. Decommissioned Feb 2026. PVE exporter dropped (Proxmox shut down).

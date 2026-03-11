@@ -160,7 +160,6 @@ In addition to Grafana alerting, systemd OnFailure handlers also send Telegram n
 | Node Exporter Full | `1860` | Detailed host metrics (CPU, memory, disk, network) | `DS_PROMETHEUS` |
 | Docker Container Monitoring | `893` | Container metrics from cAdvisor | `DS_PROMETHEUS` |
 | Blackbox Exporter | `7587` | HTTP/HTTPS and ICMP probe results | `DS_PROMETHEUS` |
-| Proxmox VE | `10347` | Proxmox host and VM metrics | `DS_PROMETHEUS` |
 
 ### Troubleshooting Dashboard Import
 
@@ -493,9 +492,6 @@ curl -s http://localhost:9115/metrics | head -5
 # Check SNMP Exporter
 curl -s http://localhost:9116/metrics | head -5
 
-# Check PVE Exporter
-curl -s http://localhost:9221/metrics | head -5
-
 # Test HTTP probe
 curl -s 'http://localhost:9115/probe?module=http_2xx&target=https://jellyfin.akunito.com' | grep probe_success
 
@@ -634,7 +630,4 @@ When migrating to a new machine:
 ## Related Documentation
 
 - [Monitoring Stack Overview](../akunito/infrastructure/services/monitoring-stack.md)
-- [Grafana Dashboard Reference](./grafana-dashboard-reference.md)
 - [NixOS Monitoring Configuration](../system-modules/README.md)
-- [Prometheus Documentation](https://prometheus.io/docs/)
-- [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/)
