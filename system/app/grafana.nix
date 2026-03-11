@@ -962,6 +962,13 @@ in
     fi
   '';
 
+  # Allow grafana to read the Vaultkeeper finance SQLite database
+  # Default systemd sandboxing (ProtectHome=yes) blocks access to /home/
+  systemd.services.grafana.serviceConfig = {
+    ProtectHome = lib.mkForce "tmpfs";
+    BindReadOnlyPaths = [ "/home/${userSettings.username}/.openclaw/finance-data" ];
+  };
+
   # Grant grafana traverse/read access to the Vaultkeeper finance SQLite database
   # Must run as root (activation script) since grafana user can't setfacl on other users' dirs
   system.activationScripts.grafana-finance-db-access = lib.stringAfter [ "users" ] ''
