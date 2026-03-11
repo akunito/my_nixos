@@ -4,6 +4,7 @@
 
 let
   base = import ./MACBOOK-base.nix;
+  secrets = import ../secrets/komi/secrets.nix;
 in
 {
   systemSettings = base.systemSettings // {
@@ -35,7 +36,12 @@ in
 
         # === Media ===
         "spotify"
-        "openemu"       # Game emulator
+        "vlc"
+        "qbittorrent"
+
+        # === Gaming ===
+        "steam"         # Steam client (native macOS app)
+        "openemu"       # Retro console emulator (NES, SNES, N64, PS1, etc.)
 
         # === Utilities ===
         "kitty"
@@ -45,13 +51,17 @@ in
         "nordvpn"            # VPN client
       ];
 
+      # Custom Homebrew taps
+      homebrewTaps = [
+        "human37/open-wispr" # Voice dictation using local Whisper (Metal GPU accelerated)
+      ];
+
       # CLI tools via Homebrew formulas
+      # Note: Docker/Colima managed via Nix (user/app/colima/colima.nix)
       homebrewFormulas = [
-        "docker"
-        "docker-completion"  # Docker shell completion
-        "docker-compose"
-        "colima"
-        "lima"               # Linux VMs (colima backend)
+        "docker-completion"  # Docker shell completion (Nix version has issues on macOS)
+        "displayplacer"      # Programmatic display resolution control (used by game-mode.sh)
+        "human37/open-wispr/open-wispr" # Push-to-talk voice dictation (local Whisper, Metal accelerated)
       ];
     };
 
@@ -67,11 +77,19 @@ in
 
   userSettings = base.userSettings // {
     username = "komi";
+    planeApiKey = secrets.planeApiKey;
+
+    homePackages = pkgs: pkgs-unstable: [
+      pkgs.python3Packages.subliminal # CLI subtitle downloader
+    ];
 
     # ========================================================================
     # SOFTWARE & FEATURE FLAGS (USER) - Centralized Control
     # ========================================================================
     userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm, openai-whisper)
+
+    # === Gaming ===
+    gamesEnable = true; # macOS gaming packages (Whisky, Pegasus, controller tools, open-source games)
 
     # === Theme ===
     theme = "ashes"; # Warm, muted base16 palette matching DESK
@@ -130,5 +148,17 @@ in
       bindkey '\e[F' end-of-line
       bindkey '\e[3~' delete-char
     '';
+
+    # === Colima (Docker VM) ===
+    # Settings for the macOS Docker replacement
+    # Edit and run: darwin-rebuild switch --flake ~/.dotfiles#MACBOOK-KOMI
+    # Then: colima-restart
+    colima = {
+      cpu = 4;          # CPUs for VM
+      memory = 8;       # Memory in GiB (increased for jl-engine)
+      disk = 100;       # Disk size in GiB
+      vmType = "vz";    # vz (Virtualization.framework) or qemu
+      mountType = "virtiofs";  # virtiofs (fast) or sshfs (compatible)
+    };
   };
 }

@@ -40,6 +40,9 @@
 
     # === Package Modules (Conditional) ===
     ../../user/packages/user-ai-pkgs.nix
+
+    # === Docker/Container Runtime (macOS) ===
+    ../../user/app/colima/colima.nix
   ]
   # === Conditional Imports ===
   # Note: starship is already conditionally imported by sh.nix based on userSettings.starshipEnable
@@ -47,7 +50,8 @@
   ++ lib.optional (systemSettings.aichatEnable == true) ../../user/app/ai/aichat.nix
   ++ lib.optional (userSettings.hammerspoonEnable == true) ../../user/app/hammerspoon/hammerspoon.nix
   ++ lib.optional (systemSettings.stylixEnable == true) ../../user/style/stylix.nix
-  ++ lib.optional (systemSettings.developmentToolsEnable == true) ../../user/app/development/development.nix
+  ++ lib.optional (systemSettings.developmentToolsEnable == true) ../../user/app/development/development-komi.nix
+  ++ lib.optional (userSettings.gamesEnable == true) ../../user/app/games/games-darwin.nix
   ;
 
   # Home packages from profile config
@@ -63,5 +67,14 @@
   home.sessionVariables = {
     EDITOR = userSettings.editor;
     BROWSER = userSettings.browser;
+  } // lib.optionalAttrs (userSettings ? planeApiKey && userSettings.planeApiKey != "") {
+    PLANE_API_KEY = userSettings.planeApiKey;
+  } // lib.optionalAttrs (userSettings.gamesEnable or false) {
+    # Disable all Wine debug output (significant performance gain)
+    WINEDEBUG = "-all";
+    # Enable MSync (macOS-native Mach semaphore synchronization, ~50% faster than ESync)
+    WINEMSYNC = "1";
+    # Enable DXVK async shader compilation (reduces stutter on first encounter)
+    DXVK_ASYNC = "1";
   };
 }

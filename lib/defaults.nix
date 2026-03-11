@@ -724,6 +724,7 @@
     darwin = {
       # === Homebrew Configuration ===
       homebrewEnable = true; # Enable Homebrew for GUI apps (casks)
+      homebrewTaps = [ ]; # Custom Homebrew taps (e.g., "human37/open-wispr")
       homebrewCasks = [ ]; # GUI apps to install via Homebrew (e.g., "firefox", "discord")
       homebrewFormulas = [ ]; # CLI tools to install via Homebrew (prefer Nix when possible)
       homebrewOnActivation = {
@@ -763,6 +764,7 @@
       # === General UI Preferences ===
       darkMode = true; # Enable dark mode
       scrollDirection = true; # Natural scrolling (true = natural, false = traditional)
+
     };
   };
 
