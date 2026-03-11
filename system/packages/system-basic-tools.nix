@@ -43,6 +43,9 @@
 
       # === Printing ===
       cups-filters
+
+      # === Security ===
+      gitleaks
     ]
     ++ lib.optional (systemSettings.sunshineEnable or false) pkgs-unstable.sunshine;
   };

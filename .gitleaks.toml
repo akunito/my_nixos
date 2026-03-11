@@ -1,0 +1,16 @@
+# Gitleaks configuration for dotfiles repo.
+# Allowlists git-crypt encrypted files to prevent false positives
+# from binary blobs that look like high-entropy secrets.
+
+[allowlist]
+  description = "Dotfiles repo allowlist — git-crypt encrypted files"
+  paths = [
+    '''secrets/.*''',
+    '''deploy-servers-private\.conf''',
+    '''docs/akunito/infrastructure/INFRASTRUCTURE_INTERNAL\.md''',
+    '''docs/komi/infrastructure/KOMI_INFRASTRUCTURE_INTERNAL\.md''',
+    '''docs/akunito/infrastructure/services/media-stack\.md''',
+    '''docs/akunito/infrastructure/services/openclaw/finance-system\.md''',
+    '''templates/openclaw/workspace/skills/finance/.*\.md''',
+    '''docs/akunito/infrastructure/truenas-migration-complete\.md''',
+  ]

@@ -51,3 +51,11 @@ docs/akunito/infrastructure/services/openclaw/finance-system.md filter=git-crypt
 
 # Deploy config with public IPs (VPS entries)
 deploy-servers-private.conf filter=git-crypt diff=git-crypt
+
+# ============================================================================
+# Belt-and-Suspenders: File types that must always be encrypted if tracked
+# ============================================================================
+*.p12 filter=git-crypt diff=git-crypt
+*.pfx filter=git-crypt diff=git-crypt
+*.keystore filter=git-crypt diff=git-crypt
+*.jks filter=git-crypt diff=git-crypt

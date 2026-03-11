@@ -1102,6 +1102,12 @@ if [ -f "$SCRIPT_DIR/scripts/flatpak-reconcile.sh" ]; then
     fi
 fi
 
+# Install git hooks (pre-commit secret scanner)
+if [ -f "$SCRIPT_DIR/scripts/setup-hooks.sh" ]; then
+    echo -e "\n${CYAN}Installing git hooks...${RESET}"
+    bash "$SCRIPT_DIR/scripts/setup-hooks.sh"
+fi
+
 # Ending menu
 ending_menu $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 
