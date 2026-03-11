@@ -955,14 +955,16 @@ in
   };
 
   # Install frser-sqlite-datasource plugin if not present (community plugin, not in nixpkgs)
-  # Also set ACLs so grafana user can traverse to the finance SQLite database
   systemd.services.grafana.preStart = lib.mkAfter ''
     PLUGIN_DIR="${config.services.grafana.dataDir}/plugins/frser-sqlite-datasource"
     if [ ! -d "$PLUGIN_DIR" ]; then
       ${config.services.grafana.package}/bin/grafana cli --pluginsDir "${config.services.grafana.dataDir}/plugins" plugins install frser-sqlite-datasource || true
     fi
+  '';
 
-    # Grant grafana traverse/read access to the Vaultkeeper finance database
+  # Grant grafana traverse/read access to the Vaultkeeper finance SQLite database
+  # Must run as root (activation script) since grafana user can't setfacl on other users' dirs
+  system.activationScripts.grafana-finance-db-access = lib.stringAfter [ "users" ] ''
     FINANCE_DB_DIR="/home/${userSettings.username}/.openclaw/finance-data"
     if [ -d "$FINANCE_DB_DIR" ]; then
       ${pkgs.acl}/bin/setfacl -m u:grafana:x /home/${userSettings.username} || true
