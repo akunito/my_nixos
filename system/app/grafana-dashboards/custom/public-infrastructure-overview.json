@@ -40,7 +40,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "ICMP latency for core infrastructure devices",
       "fieldConfig": {
@@ -112,7 +112,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_wireguard_tunnel\"} * probe_success{job=\"blackbox_icmp_wireguard_tunnel\"}",
@@ -123,7 +123,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan\"} * probe_success{job=\"blackbox_icmp_wan\"}",
@@ -134,7 +134,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_pfsense\"} * probe_success{job=\"blackbox_icmp_pfsense\"}",
@@ -145,7 +145,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_aggr\"} * probe_success{job=\"blackbox_icmp_switch_usw_aggr\"}",
@@ -156,7 +156,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_24\"} * probe_success{job=\"blackbox_icmp_switch_usw_24\"}",
@@ -167,7 +167,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_lan_wifi\"} * probe_success{job=\"blackbox_icmp_lan_wifi\"}",
@@ -178,7 +178,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox_icmp_guest_wifi\"} * probe_success{job=\"blackbox_icmp_guest_wifi\"}",
@@ -1241,7 +1241,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Current age of most recent backup for each VM/LXC and pfSense",
       "fieldConfig": {
@@ -1305,7 +1305,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "pfsense_backup_age_seconds / 86400",
@@ -1317,7 +1317,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "truenas_backup_age_seconds{dataset=\"desk_home\"} / 86400",
@@ -1329,7 +1329,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "truenas_backup_age_seconds{dataset=\"vps_databases\"} / 86400",
@@ -1341,7 +1341,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "truenas_backup_age_seconds{dataset=\"vps_nextcloud\"} / 86400",
@@ -1353,7 +1353,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "truenas_backup_age_seconds{dataset=\"vps_services\"} / 86400",
@@ -1365,7 +1365,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "truenas_backup_age_seconds{dataset=\"x13_home\"} / 86400",
@@ -1377,7 +1377,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"configs\"}) / 86400",
@@ -1389,7 +1389,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"data\"}) / 86400",
@@ -1405,7 +1405,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Size of each backup repository (restic repos on TrueNAS and VPS)",
       "fieldConfig": {
@@ -1475,7 +1475,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "backup_repo_size_bytes{dataset=\"desk_home\"}",
@@ -1486,7 +1486,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "backup_repo_size_bytes{dataset=\"x13_home\"}",
@@ -1497,7 +1497,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "backup_repo_size_bytes{dataset=\"vps_databases\"}",
@@ -1508,7 +1508,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "backup_repo_size_bytes{dataset=\"vps_nextcloud\"}",
@@ -1519,7 +1519,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "backup_repo_size_bytes{dataset=\"vps_services\"}",
@@ -1530,7 +1530,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "backup_repo_size_bytes{dataset=\"offsite_configs\"}",
@@ -1541,7 +1541,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "backup_repo_size_bytes{dataset=\"offsite_data\"}",
@@ -2138,7 +2138,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Days since last successful NixOS system update",
       "fieldConfig": {
@@ -2198,7 +2198,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(time() - nixos_last_update_system_timestamp) / 86400",
@@ -2214,7 +2214,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
       "description": "Days since last successful NixOS system update",
       "fieldConfig": {
@@ -2274,7 +2274,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "(time() - nixos_last_update_user_timestamp) / 86400",
