@@ -32,10 +32,10 @@ The Syncthing to Nextcloud integration was not working. Files synced from phones
 | AkuPhone_MyAlbums | Aku PhoneGT2 | `/nextcloud/data/akunito/files/myLibrary/MyPictures/Photos_Diego/MyPhoneSYNC/MyAlbums` |
 | AkuPhone_Android_Media | Aku PhoneGT2 | `/nextcloud/data/akunito/files/myLibrary/MyPictures/Photos_Diego/MyPhoneSYNC/Android_Media` |
 | My_Notes_Diego | Aku PhoneGT2 | `/nextcloud/data/akunito/files/myLibrary/MyDocuments/My_Notes_Diego` |
-| AgaPhone_DCIM | Aga Phone | `/nextcloud/data/Aga/files/MyMedia/AgaPhoneSYNC/DCIM` |
-| AgaPhone_Pictures | Aga Phone | `/nextcloud/data/Aga/files/MyMedia/AgaPhoneSYNC/Pictures` |
-| AgaPhone_Android_Media | Aga Phone | `/nextcloud/data/Aga/files/MyMedia/AgaPhoneSYNC/Android_Media` |
-| My_Notes_Aga | Aga Phone | `/nextcloud/data/Aga/files/MyDocuments/My_Notes_Aga` |
+| AgaPhone_DCIM | A's Phone | `/nextcloud/data/Aga/files/MyMedia/AgaPhoneSYNC/DCIM` |
+| AgaPhone_Pictures | A's Phone | `/nextcloud/data/Aga/files/MyMedia/AgaPhoneSYNC/Pictures` |
+| AgaPhone_Android_Media | A's Phone | `/nextcloud/data/Aga/files/MyMedia/AgaPhoneSYNC/Android_Media` |
+| My_Notes_Aga | A's Phone | `/nextcloud/data/Aga/files/MyDocuments/My_Notes_Aga` |
 | My_Notes_Family | Both | `/nextcloud/data/akunito/files/myLibrary/MyDocuments/My_Notes_Family` |
 
 ### Existing Scan Script

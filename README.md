@@ -29,7 +29,7 @@ graph TB
 
     subgraph Clients
         LA[LAPTOP_A / DESK_A<br/>Intel GPU, basic tools]
-        YOGA[LAPTOP_YOGA<br/>Aga's laptop]
+        YOGA[LAPTOP_YOGA<br/>A's laptop]
     end
 
     CF --> VPS

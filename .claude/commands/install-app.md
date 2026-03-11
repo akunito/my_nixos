@@ -155,7 +155,7 @@ which tmux
 ├── DESK-config.nix            # Desktop workstation
 ├── LAPTOP-base.nix            # Laptop base config
 ├── LAPTOP_X13-config.nix      # ThinkPad L15
-└── AGA-config.nix             # Aga's machine
+└── AGA-config.nix             # A's machine
 ```
 
 ### Linux LXC Containers

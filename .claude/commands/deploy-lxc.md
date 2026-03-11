@@ -72,7 +72,7 @@ git fetch origin && git reset --hard origin/main
 |---------|-----|------|-------------|
 | DESK | 192.168.8.96 | akunito | Main desktop |
 | LAPTOP_X13 | 192.168.8.92 | akunito | ThinkPad X13 AMD laptop |
-| LAPTOP_A | 192.168.8.78 | aga | AGA's laptop |
+| LAPTOP_A | 192.168.8.78 | aga | A's laptop |
 
 ## Komi Container Reference (Proxmox 192.168.1.3)
 
