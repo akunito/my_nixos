@@ -47,6 +47,7 @@ docs/akunito/infrastructure/services/media-stack.md filter=git-crypt diff=git-cr
 # OpenClaw finance skill (contains financial schema, category details, personal names, salary)
 templates/openclaw/workspace/skills/finance/SKILL.md filter=git-crypt diff=git-crypt
 templates/openclaw/workspace/skills/finance/PROCEDURES.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/skills/finance/CONTEXT.md filter=git-crypt diff=git-crypt
 docs/akunito/infrastructure/services/openclaw/finance-system.md filter=git-crypt diff=git-crypt
 
 # Deploy config with public IPs (VPS entries)
