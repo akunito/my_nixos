@@ -22,7 +22,8 @@ As of 2026-02-05, the following components are **provisioned declaratively** via
 |-----------|--------|-------|
 | Prometheus datasource | ✅ Provisioned | UID: `prometheus`, not editable in UI |
 | Email contact point | ✅ Provisioned | Name: `email-alerts` |
-| Notification policy | ✅ Provisioned | Routes all alerts to `email-alerts` |
+| Telegram contact point | ✅ Provisioned | Name: `critical-alerts`, bot: `@infra_alerts_aku_bot` |
+| Notification policy | ✅ Provisioned | severity=critical → Telegram+email, everything else → email-only |
 | 11 Dashboards | ✅ Provisioned | Editable in UI (`allowUiUpdates = true`) |
 | 20+ Alert rules | ✅ Provisioned | Defined in Prometheus rule files |
 
@@ -97,6 +98,45 @@ alerting.policies.settings = {
 To verify:
 1. Go to: **Alerting** → **Notification policies**
 2. Confirm the default policy shows `email-alerts` as receiver
+
+---
+
+## 3b. Telegram Contact Point (Provisioned)
+
+The Telegram contact point is **automatically provisioned** in `grafana.nix` for critical-severity alerts:
+
+- **Bot**: `@infra_alerts_aku_bot` ("Infra Alerts")
+- **Routing**: Only alerts with `severity=critical` are sent to Telegram (+ email). All other alerts go to email-only.
+- **Secrets**: `grafanaTelegramBotToken` and `grafanaTelegramChatId` from `secrets/domains.nix` → VPS_PROD profile → grafana.nix
+
+**Contact points**:
+- `email-alerts` — email only (all severities)
+- `critical-alerts` — email + Telegram (critical severity only)
+
+**Notification policy routing**:
+- Default → `email-alerts`
+- `severity=critical` → `critical-alerts`
+
+To test:
+1. Navigate to: **Alerting** → **Contact points**
+2. Find `critical-alerts` (should show Telegram + email receivers)
+3. Click **Test** to send a test notification to Telegram
+
+---
+
+## 3c. Systemd OnFailure Telegram Notifications
+
+In addition to Grafana alerting, systemd OnFailure handlers also send Telegram notifications when critical services fail. This is configured via `notificationTelegramOnFailureEnable = true` in the profile.
+
+**Services wired to `notify-failure@`**:
+| Service | File |
+|---------|------|
+| `autoSystemUpdate` | `system/security/autoupgrade.nix` |
+| `autoUserUpdate` | `system/security/autoupgrade.nix` |
+| VPS restic backups (4 jobs) | `system/app/restic-backup-vps.nix` |
+| TrueNAS offsite backups (2 jobs) | `system/app/restic-backup-truenas.nix` |
+
+**Test**: `sudo systemctl start notify-failure@test-service.service` — sends both email and Telegram.
 
 ---
 

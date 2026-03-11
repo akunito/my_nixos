@@ -156,6 +156,22 @@ Rootless Docker (~18 containers, 6 compose projects):
 - Docker services auto-resume after wake
 - WOL from S3 unreliable (r8169 driver limitation)
 
+## Notifications & Alerting
+
+| Channel | Scope | Destination |
+|---------|-------|-------------|
+| Grafana critical alerts | severity=critical (19 rules) | Telegram (`@infra_alerts_aku_bot`) + email |
+| Grafana non-critical alerts | warning/info | Email only |
+| Systemd OnFailure | Backup + auto-update failures | Telegram + email |
+| Uptime Kuma | HTTP/ICMP uptime checks | Email only |
+
+**Telegram bot**: `@infra_alerts_aku_bot` ("Infra Alerts" group)
+
+**Services wired to `notify-failure@`** (Telegram + email on failure):
+- `autoSystemUpdate`, `autoUserUpdate` (auto-upgrade)
+- `vps-restic-databases`, `vps-restic-services`, `vps-restic-libraries`, `vps-restic-nextcloud` (VPS backups)
+- `truenas-backup-configs`, `truenas-backup-data` (TrueNAS offsite backups)
+
 ## Related Docs
 
 - [VPS Services](services/vps-services.md)

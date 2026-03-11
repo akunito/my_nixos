@@ -138,7 +138,7 @@ METRICS
       unitConfig = {
         StartLimitBurst = 3;
         StartLimitIntervalSec = "30min";
-        OnFailure = lib.optional (systemSettings.notificationOnFailureEnable or false) "email-notification@%n.service";
+        OnFailure = lib.optional (systemSettings.notificationOnFailureEnable or false) "notify-failure@%n.service";
       };
     };
     timer = {

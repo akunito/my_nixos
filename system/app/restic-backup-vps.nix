@@ -101,7 +101,7 @@ let
         # Limit retries (must be in [Unit], not [Service])
         StartLimitBurst = 3;
         StartLimitIntervalSec = "30min";
-        OnFailure = lib.optional (systemSettings.notificationOnFailureEnable or false) "email-notification@%n.service";
+        OnFailure = lib.optional (systemSettings.notificationOnFailureEnable or false) "notify-failure@%n.service";
       };
     };
     timer = {

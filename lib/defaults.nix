@@ -664,6 +664,7 @@
 
     # Email notifications for auto-update failures
     notificationOnFailureEnable = false; # Enable email notifications on auto-update failure
+    notificationTelegramOnFailureEnable = false; # Enable Telegram notifications on service failure (requires grafanaTelegramBotToken + grafanaTelegramChatId)
     smtpRelayHost = "192.168.8.89:25"; # Default SMTP relay host:port for Grafana/services
     notificationSmtpHost = ""; # SMTP relay host (e.g., "192.168.8.1")
     notificationSmtpPort = 25; # SMTP port (25 for relay, 587 for submission)

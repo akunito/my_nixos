@@ -367,6 +367,7 @@ in
     # EMAIL NOTIFICATIONS (Phase 3 — local Postfix relay)
     # ============================================================================
     notificationOnFailureEnable = true;
+    notificationTelegramOnFailureEnable = true; # Send Telegram alerts on service failure (via @infra_alerts_aku_bot)
     smtpRelayHost = "localhost:25"; # Grafana uses local Postfix
     notificationSmtpHost = "127.0.0.1"; # msmtp uses local Postfix
     notificationSmtpPort = 25;
