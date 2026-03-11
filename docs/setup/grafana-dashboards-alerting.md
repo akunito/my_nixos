@@ -8,9 +8,9 @@ This guide documents how to configure Grafana dashboards and alerting for the ho
 
 ## Prerequisites
 
-- Grafana running on LXC_monitoring (192.168.8.85)
+- Grafana running on VPS (NixOS native service)
 - Prometheus configured as data source
-- SMTP configured in grafana.nix (relay via 192.168.8.89:25)
+- SMTP configured in grafana.nix (VPS Postfix relay on localhost:25)
 
 ---
 
@@ -22,7 +22,8 @@ As of 2026-02-05, the following components are **provisioned declaratively** via
 |-----------|--------|-------|
 | Prometheus datasource | ✅ Provisioned | UID: `prometheus`, not editable in UI |
 | Email contact point | ✅ Provisioned | Name: `email-alerts` |
-| Notification policy | ✅ Provisioned | Routes all alerts to `email-alerts` |
+| Telegram contact point | ✅ Provisioned | Name: `critical-alerts`, bot: `@infra_alerts_aku_bot` |
+| Notification policy | ✅ Provisioned | severity=critical → Telegram+email, everything else → email-only |
 | 11 Dashboards | ✅ Provisioned | Editable in UI (`allowUiUpdates = true`) |
 | 20+ Alert rules | ✅ Provisioned | Defined in Prometheus rule files |
 
@@ -100,6 +101,45 @@ To verify:
 
 ---
 
+## 3b. Telegram Contact Point (Provisioned)
+
+The Telegram contact point is **automatically provisioned** in `grafana.nix` for critical-severity alerts:
+
+- **Bot**: `@infra_alerts_aku_bot` ("Infra Alerts")
+- **Routing**: Only alerts with `severity=critical` are sent to Telegram (+ email). All other alerts go to email-only.
+- **Secrets**: `grafanaTelegramBotToken` and `grafanaTelegramChatId` from `secrets/domains.nix` → VPS_PROD profile → grafana.nix
+
+**Contact points**:
+- `email-alerts` — email only (all severities)
+- `critical-alerts` — email + Telegram (critical severity only)
+
+**Notification policy routing**:
+- Default → `email-alerts`
+- `severity=critical` → `critical-alerts`
+
+To test:
+1. Navigate to: **Alerting** → **Contact points**
+2. Find `critical-alerts` (should show Telegram + email receivers)
+3. Click **Test** to send a test notification to Telegram
+
+---
+
+## 3c. Systemd OnFailure Telegram Notifications
+
+In addition to Grafana alerting, systemd OnFailure handlers also send Telegram notifications when critical services fail. This is configured via `notificationTelegramOnFailureEnable = true` in the profile.
+
+**Services wired to `notify-failure@`**:
+| Service | File |
+|---------|------|
+| `autoSystemUpdate` | `system/security/autoupgrade.nix` |
+| `autoUserUpdate` | `system/security/autoupgrade.nix` |
+| VPS restic backups (4 jobs) | `system/app/restic-backup-vps.nix` |
+| TrueNAS offsite backups (2 jobs) | `system/app/restic-backup-truenas.nix` |
+
+**Test**: `sudo systemctl start notify-failure@test-service.service` — sends both email and Telegram.
+
+---
+
 ## 4. Import Community Dashboards
 
 ### How to Import
@@ -120,7 +160,6 @@ To verify:
 | Node Exporter Full | `1860` | Detailed host metrics (CPU, memory, disk, network) | `DS_PROMETHEUS` |
 | Docker Container Monitoring | `893` | Container metrics from cAdvisor | `DS_PROMETHEUS` |
 | Blackbox Exporter | `7587` | HTTP/HTTPS and ICMP probe results | `DS_PROMETHEUS` |
-| Proxmox VE | `10347` | Proxmox host and VM metrics | `DS_PROMETHEUS` |
 
 ### Troubleshooting Dashboard Import
 
@@ -444,7 +483,7 @@ Same options as Memory Usage panel
 
 ## 7. Verification Commands
 
-Run these on the monitoring server (192.168.8.85) to verify exporters are working:
+Run these on the VPS to verify exporters are working:
 
 ```bash
 # Check Blackbox Exporter
@@ -452,9 +491,6 @@ curl -s http://localhost:9115/metrics | head -5
 
 # Check SNMP Exporter
 curl -s http://localhost:9116/metrics | head -5
-
-# Check PVE Exporter
-curl -s http://localhost:9221/metrics | head -5
 
 # Test HTTP probe
 curl -s 'http://localhost:9115/probe?module=http_2xx&target=https://jellyfin.akunito.com' | grep probe_success
@@ -547,8 +583,8 @@ Dashboards are provisioned from JSON files in the repository. Since `allowUiUpda
    git commit -m "feat: update <dashboard-name> dashboard"
    git push
 
-   # Deploy to monitoring server
-   ssh -A 192.168.8.85 "cd ~/.dotfiles && git pull && sudo nixos-rebuild switch --flake .#LXC_monitoring --impure"
+   # Deploy to VPS
+   ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
    ```
 
 ### Dashboard File Locations
@@ -563,7 +599,7 @@ Dashboards are provisioned from JSON files in the repository. Since `allowUiUpda
 To export all dashboards from the running Grafana instance:
 
 ```bash
-ssh -A 192.168.8.85
+ssh -A -p 56777 akunito@100.64.0.6
 
 # Set credentials
 GRAFANA_URL="http://localhost:3002"
@@ -593,9 +629,5 @@ When migrating to a new machine:
 
 ## Related Documentation
 
-- [Ubuntu Node Exporter Setup](./ubuntu-node-exporter.md)
-- [Monitoring Stack Overview](../infrastructure/services/monitoring-stack.md)
-- [Grafana Dashboard Reference](./grafana-dashboard-reference.md)
+- [Monitoring Stack Overview](../akunito/infrastructure/services/monitoring-stack.md)
 - [NixOS Monitoring Configuration](../system-modules/README.md)
-- [Prometheus Documentation](https://prometheus.io/docs/)
-- [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/)

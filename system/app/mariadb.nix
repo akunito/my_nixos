@@ -23,6 +23,7 @@ let
     port = systemSettings.mariadbServerPort or 3306;
     databases = systemSettings.mariadbServerDatabases or [];
     users = systemSettings.mariadbServerUsers or [];
+    bindAddress = systemSettings.databaseBindAddress or "0.0.0.0";
   };
 
   # Build ensureDatabases list
@@ -61,8 +62,8 @@ lib.mkIf cfg.enable {
     # MariaDB configuration
     settings = {
       mysqld = {
-        # Network settings - bind to all interfaces for LAN access
-        bind-address = "0.0.0.0";
+        # Network settings - bind address from systemSettings
+        bind-address = cfg.bindAddress;
         port = cfg.port;
 
         # Performance tuning
@@ -109,14 +110,16 @@ lib.mkIf cfg.enable {
   # MariaDB ensureUsers doesn't set passwords, so we handle it here
   systemd.services.mysql.postStart = let
     # Generate SQL to set passwords and grant remote access
+    # Uses '%' as host pattern — firewall and bind address provide access control
+    # (LXC: firewall limits to LAN; VPS: firewall blocks external, Docker containers use local subnets)
     setPasswordSQL = lib.concatMapStrings (user:
       if user ? passwordFile && user.passwordFile != "" then ''
         password=$(cat "${user.passwordFile}")
-        # Create user for remote access from LAN if not exists
-        ${pkgs.mariadb}/bin/mysql -e "CREATE USER IF NOT EXISTS '${user.name}'@'192.168.8.%' IDENTIFIED BY '$password';"
-        ${pkgs.mariadb}/bin/mysql -e "ALTER USER '${user.name}'@'192.168.8.%' IDENTIFIED BY '$password';"
+        # Create user for remote access (any host — firewall provides access control)
+        ${pkgs.mariadb}/bin/mysql -e "CREATE USER IF NOT EXISTS '${user.name}'@'%' IDENTIFIED BY '$password';"
+        ${pkgs.mariadb}/bin/mysql -e "ALTER USER '${user.name}'@'%' IDENTIFIED BY '$password';"
         # Grant privileges
-        ${pkgs.mariadb}/bin/mysql -e "GRANT ALL PRIVILEGES ON ${user.database or "*"}.* TO '${user.name}'@'192.168.8.%';"
+        ${pkgs.mariadb}/bin/mysql -e "GRANT ALL PRIVILEGES ON ${user.database or "*"}.* TO '${user.name}'@'%';"
         # Also handle localhost
         ${pkgs.mariadb}/bin/mysql -e "ALTER USER IF EXISTS '${user.name}'@'localhost' IDENTIFIED BY '$password';"
         ${pkgs.mariadb}/bin/mysql -e "FLUSH PRIVILEGES;"
@@ -143,6 +146,7 @@ lib.mkIf cfg.enable {
   services.prometheus.exporters.mysqld = lib.mkIf (systemSettings.prometheusMariadbExporterEnable or false) {
     enable = true;
     port = systemSettings.prometheusMariadbExporterPort or 9104;
+    listenAddress = "127.0.0.1";
     # Run as mysql user for socket authentication
     runAsLocalSuperUser = true;
     # Config file with socket connection settings
@@ -155,9 +159,10 @@ lib.mkIf cfg.enable {
     ];
   };
 
-  # Open firewall ports
-  networking.firewall.allowedTCPPorts = [
-    cfg.port
-  ] ++ lib.optional (systemSettings.prometheusMariadbExporterEnable or false)
-    (systemSettings.prometheusMariadbExporterPort or 9104);
+  # Open firewall ports (gated by databaseFirewallOpen — false on VPS where only local access needed)
+  networking.firewall.allowedTCPPorts =
+    lib.optionals (systemSettings.databaseFirewallOpen or true) [
+      cfg.port
+    ] ++ lib.optionals ((systemSettings.databaseFirewallOpen or true) && (systemSettings.prometheusMariadbExporterEnable or false))
+      [ (systemSettings.prometheusMariadbExporterPort or 9104) ];
 }

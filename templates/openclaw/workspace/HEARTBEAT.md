@@ -1,0 +1,9 @@
+# Heartbeat Checklist
+
+## Every cycle (15 min)
+- Respond HEARTBEAT_OK immediately if nothing needs attention.
+- Do NOT run infrastructure checks (those are weekly cron).
+- Do NOT send messages to any channel unless responding to a user request.
+
+## Exception
+If a user has recently asked to "check infrastructure" or similar, you may use the prometheus-readonly MCP tools. Otherwise, stay silent.

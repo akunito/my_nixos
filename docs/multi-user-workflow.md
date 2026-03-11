@@ -15,8 +15,27 @@ This repo is shared between two users on separate branches:
 
 | User | Branch | Profiles | Focus |
 |------|--------|----------|-------|
-| **akunito** | `main` | DESK, LAPTOP_*, LXC_*, VMHOME | NixOS infrastructure, desktops, laptops, containers |
-| **ko-mi** | `komi` | MACBOOK-KOMI | macOS/darwin configuration |
+| **akunito** | `main` | DESK, DESK_A, LAPTOP_X13, LAPTOP_YOGA, LAPTOP_A, VPS_PROD, VMHOME | NixOS infrastructure, desktops, laptops, VPS |
+| **ko-mi** | `komi` | MACBOOK-KOMI, KOMI_LXC_* | macOS/darwin, Komi's LXC containers |
+
+```mermaid
+graph LR
+    subgraph "main branch (akunito)"
+        DESK2[DESK]
+        X132[LAPTOP_X13]
+        VPS2[VPS_PROD]
+        VMHOME2[VMHOME]
+        OTHER[DESK_A, LAPTOP_A<br/>LAPTOP_YOGA, WSL]
+    end
+
+    subgraph "komi branch (komi)"
+        MACBOOK[MACBOOK-KOMI<br/>macOS/nix-darwin]
+        KLXC[KOMI_LXC_*<br/>5 containers on<br/>Komi's Proxmox]
+    end
+
+    main -->|weekly merge| komi
+    komi -->|stable changes| main
+```
 
 ## Merge Cadence
 
@@ -31,6 +50,7 @@ Use the `/merge-branches` skill to automate the merge process.
 
 **CAN freely modify:**
 - Darwin-specific files: `profiles/darwin/`, `system/darwin/`, `MACBOOK-*`
+- Komi's LXC profiles: `profiles/KOMI_LXC*`, `profiles/KOMI_LXC-base-config.nix`
 - Komi's personal files: `komi-init.lua`, `secrets/komi/`
 - Claude Code skills: `.claude/commands/`
 
@@ -40,7 +60,7 @@ Use the `/merge-branches` skill to automate the merge process.
 
 **MUST NOT modify:**
 - `secrets/domains.nix`, `secrets/control-panel.nix`
-- LXC profiles (`profiles/LXC_*`)
+- Akunito's profiles (DESK, LAPTOP_*, VPS_*, VMHOME)
 - System services (`system/app/` except `system/darwin/`)
 - `flake.nix` (unified flake, managed on main)
 
@@ -70,7 +90,7 @@ Use the `/merge-branches` skill to automate the merge process.
 ```
 [ ] git diff main...komi -- no unexpected shared module changes
 [ ] nix eval .#nixosConfigurations.DESK.config.system.stateVersion
-[ ] nix eval .#nixosConfigurations.LXC_monitoring.config.system.stateVersion
+[ ] nix eval .#nixosConfigurations.VPS_PROD.config.system.stateVersion
 ```
 
 ### Before merging main -> komi

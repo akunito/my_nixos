@@ -19,7 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 15,
+  "id": 9,
   "links": [
     {
       "asDropdown": true,
@@ -48,7 +48,20 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Offline"
+                },
+                "to": 0
+              },
+              "type": "range"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -57,8 +70,12 @@
                 "value": 0
               },
               {
+                "color": "#EAB839",
+                "value": 0.05
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 0.5
               }
             ]
           },
@@ -90,7 +107,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -98,7 +115,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wireguard_tunnel\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wireguard_tunnel\"} * probe_success{job=\"blackbox_icmp_wireguard_tunnel\"}",
           "legendFormat": "WG Tunnel",
           "range": true,
           "refId": "A"
@@ -109,7 +126,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan\"} * probe_success{job=\"blackbox_icmp_wan\"}",
           "legendFormat": "WAN",
           "range": true,
           "refId": "B"
@@ -120,7 +137,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pfsense\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pfsense\"} * probe_success{job=\"blackbox_icmp_pfsense\"}",
           "legendFormat": "pfSense",
           "range": true,
           "refId": "C"
@@ -131,7 +148,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_aggr\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_aggr\"} * probe_success{job=\"blackbox_icmp_switch_usw_aggr\"}",
           "legendFormat": "Switch Aggr",
           "range": true,
           "refId": "D"
@@ -142,7 +159,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_24\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_24\"} * probe_success{job=\"blackbox_icmp_switch_usw_24\"}",
           "legendFormat": "Switch 24",
           "range": true,
           "refId": "E"
@@ -153,8 +170,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pve\"}",
-          "legendFormat": "PVE",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_lan_wifi\"} * probe_success{job=\"blackbox_icmp_lan_wifi\"}",
+          "legendFormat": "LAN WiFi",
           "range": true,
           "refId": "F"
         },
@@ -164,21 +181,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_lan_wifi\"}",
-          "legendFormat": "LAN WiFi",
-          "range": true,
-          "refId": "G"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_guest_wifi\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_guest_wifi\"} * probe_success{job=\"blackbox_icmp_guest_wifi\"}",
           "legendFormat": "Guest WiFi",
           "range": true,
-          "refId": "H"
+          "refId": "G"
         }
       ],
       "title": "",
@@ -196,6 +202,94 @@
       "panels": [],
       "title": "Services",
       "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "HTTP/HTTPS service response time - individual tiles with latency",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Offline"
+                },
+                "to": 0
+              },
+              "type": "range"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 14,
+        "x": 0,
+        "y": 4
+      },
+      "id": 30,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "probe_duration_seconds{job=~\"blackbox_http_.*\"} * probe_success{job=~\"blackbox_http_.*\"}",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Services",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -265,7 +359,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -350,7 +444,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -358,7 +452,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_up{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_up{instance=\"monitoring\"}",
           "legendFormat": "Tailscale",
           "refId": "A"
         }
@@ -434,7 +528,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -519,7 +613,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -527,7 +621,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_backend_running{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_backend_running{instance=\"monitoring\"}",
           "legendFormat": "Backend",
           "refId": "A"
         }
@@ -603,7 +697,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -672,7 +766,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -680,7 +774,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_peers_direct{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_peers_direct{instance=\"monitoring\"}",
           "legendFormat": "Direct",
           "refId": "A"
         }
@@ -757,7 +851,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -776,8 +870,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_zfspool_healthy{pool=\"hddpool\",job=\"truenas_graphite\"}",
-          "legendFormat": "hddpool",
+          "expr": "truenas_zfspool_healthy{pool=\"extpool\",job=\"truenas_graphite\"}",
+          "legendFormat": "extpool",
           "range": true,
           "refId": "B"
         },
@@ -794,81 +888,6 @@
         }
       ],
       "title": "ZFS Pool Status",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "HTTP/HTTPS service response time - individual tiles with latency",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 0.5
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 13,
-        "w": 14,
-        "x": 0,
-        "y": 4
-      },
-      "id": 30,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "text": {},
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "probe_duration_seconds{job=~\"blackbox_http_.*\"}",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Services",
       "type": "stat"
     },
     {
@@ -954,7 +973,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1041,7 +1060,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1128,7 +1147,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1215,7 +1234,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1271,7 +1290,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 21
@@ -1294,19 +1313,8 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "min by (name)(pve_backup_age_seconds) / 86400",
-          "legendFormat": "PVE {{name}}",
-          "range": true,
-          "refId": "A"
-        },
         {
           "datasource": {
             "type": "prometheus",
@@ -1315,7 +1323,19 @@
           "editorMode": "code",
           "expr": "pfsense_backup_age_seconds / 86400",
           "hide": false,
-          "legendFormat": "pfSense config",
+          "legendFormat": "pfSense_Config (to VPS)",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"desk_home\"} / 86400",
+          "hide": false,
+          "legendFormat": "DESK_Home (to NAS)",
           "range": true,
           "refId": "B"
         },
@@ -1325,245 +1345,120 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_backup_age_seconds / 86400",
+          "expr": "truenas_backup_age_seconds{dataset=\"vps_databases\"} / 86400",
           "hide": false,
-          "legendFormat": "TrueNAS {{dataset}}",
+          "legendFormat": "VPS_Databases (to NAS)",
           "range": true,
           "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"vps_nextcloud\"} / 86400",
+          "hide": false,
+          "legendFormat": "VPS_Nextcloud (to NAS)",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"vps_services\"} / 86400",
+          "hide": false,
+          "legendFormat": "VPS_Services (to NAS)",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"x13_home\"} / 86400",
+          "hide": false,
+          "legendFormat": "X13_Home (to NAS)",
+          "range": true,
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"configs\"}) / 86400",
+          "hide": false,
+          "legendFormat": "NAS_Configs (to VPS)",
+          "range": true,
+          "refId": "G"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"data\"}) / 86400",
+          "hide": false,
+          "legendFormat": "NAS_Data (to VPS)",
+          "range": true,
+          "refId": "H"
         }
       ],
       "title": "Backups Age",
       "type": "stat"
     },
     {
-      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Size of each backup repository (restic repos on TrueNAS and VPS)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 53687091200
+              },
+              {
+                "color": "orange",
+                "value": 107374182400
+              },
+              {
+                "color": "red",
+                "value": 214748364800
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
       "gridPos": {
-        "h": 1,
+        "h": 6,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 29
       },
-      "id": 110,
-      "panels": [],
-      "title": "Proxmox VE",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "CPU usage",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 3,
-        "x": 0,
-        "y": 28
-      },
-      "id": 50,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "pve_cpu_usage_ratio{id=\"node/pve\"} * 100",
-          "legendFormat": "CPU",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "(pve_memory_usage_bytes{id=\"node/pve\"} / pve_memory_size_bytes{id=\"node/pve\"}) * 100",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "RAM",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "",
-      "transparent": true,
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "Proxmox storage usage per pool",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 7,
-        "x": 3,
-        "y": 28
-      },
-      "id": 55,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "(pve_disk_usage_bytes{id=~\"storage/pve/.*\"} / pve_disk_size_bytes{id=~\"storage/pve/.*\"}) * 100 and pve_disk_size_bytes{id=~\"storage/pve/.*\"} > 0",
-          "legendFormat": "{{id}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "storage/pve/(.*)",
-            "renamePattern": "$1"
-          }
-        }
-      ],
-      "transparent": true,
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "LXC container disk usage",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "displayName": "Disk Usage",
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 10,
-        "x": 10,
-        "y": 28
-      },
-      "id": 13,
+      "id": 207,
       "options": {
         "displayMode": "gradient",
         "legend": {
@@ -1576,7 +1471,7 @@
         "minVizHeight": 16,
         "minVizWidth": 8,
         "namePlacement": "auto",
-        "orientation": "vertical",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1588,7 +1483,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1596,37 +1491,109 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(pve_disk_usage_bytes{id=~\"lxc/.*\"} / pve_disk_size_bytes{id=~\"lxc/.*\"}) * 100",
-          "legendFormat": "{{id}}",
+          "expr": "backup_repo_size_bytes{dataset=\"desk_home\"}",
+          "legendFormat": "DESK_Home (to NAS)",
           "range": true,
           "refId": "A"
-        }
-      ],
-      "title": "",
-      "transformations": [
+        },
         {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "lxc/(.*)",
-            "renamePattern": "$1"
-          }
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"x13_home\"}",
+          "legendFormat": "X13_Home (to NAS)",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"vps_databases\"}",
+          "legendFormat": "VPS_Databases (to NAS)",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"vps_nextcloud\"}",
+          "legendFormat": "VPS_Nextcloud (to NAS)",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"vps_services\"}",
+          "legendFormat": "VPS_Services (to NAS)",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"offsite_configs\"}",
+          "legendFormat": "NAS_Configs (to VPS)",
+          "range": true,
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"offsite_data\"}",
+          "legendFormat": "NAS_Data (to VPS)",
+          "range": true,
+          "refId": "G"
         }
       ],
-      "transparent": true,
+      "title": "Backup Repository Sizes",
       "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 202,
+      "panels": [],
+      "title": "VPS",
+      "type": "row"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Proxmox disk temperatures",
+      "description": "VPS CPU usage",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
+          "displayName": "CPU",
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1636,31 +1603,29 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 70
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 90
               }
             ]
           },
-          "unit": "celsius"
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 20,
-        "y": 28
+        "h": 4,
+        "w": 3,
+        "x": 0,
+        "y": 36
       },
-      "id": 108,
+      "id": 205,
       "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
+        "minVizHeight": 75,
+        "minVizWidth": 75,
         "orientation": "auto",
-        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1668,11 +1633,11 @@
           "fields": "",
           "values": false
         },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1680,24 +1645,180 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "node_hwmon_temp_celsius{job=\"monitoring_node\", chip=~\"nvme_nvme.*\", sensor=\"temp1\"}",
-          "legendFormat": "{{chip}}",
+          "exemplar": false,
+          "expr": "100 - (avg(irate(node_cpu_seconds_total{instance=\"monitoring\",mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU",
           "range": true,
           "refId": "A"
         }
       ],
       "title": "",
-      "transformations": [
+      "transparent": true,
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "VPS RAM usage",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "displayName": "RAM",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 3,
+        "y": 36
+      },
+      "id": 206,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.4",
+      "targets": [
         {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "nvme_(nvme[0-9]+)",
-            "renamePattern": "$1"
-          }
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "(1 - node_memory_MemAvailable_bytes{instance=\"monitoring\"} / node_memory_MemTotal_bytes{instance=\"monitoring\"}) * 100",
+          "legendFormat": "RAM",
+          "range": true,
+          "refId": "A"
         }
       ],
+      "title": "",
       "transparent": true,
-      "type": "stat"
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "VPS disk usage by filesystem",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 9,
+        "x": 6,
+        "y": 36
+      },
+      "id": 203,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"monitoring\", mountpoint=~\"/|/boot\"} / node_filesystem_size_bytes{instance=\"monitoring\", mountpoint=~\"/|/boot\"}) * 100",
+          "legendFormat": "{{mountpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Disk Usage",
+      "type": "bargauge"
     },
     {
       "collapsed": false,
@@ -1705,7 +1826,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 40
       },
       "id": 109,
       "panels": [],
@@ -1752,7 +1873,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 34
+        "y": 41
       },
       "id": 151,
       "options": {
@@ -1770,7 +1891,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1779,7 +1900,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "truenas_truenas_cpu_usage_cpu_cpu{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_truenas_cpu_usage_cpu_cpu{job=\"truenas_graphite\"}",
           "legendFormat": "CPU",
           "range": true,
           "refId": "A"
@@ -1829,7 +1950,7 @@
         "h": 4,
         "w": 3,
         "x": 3,
-        "y": 34
+        "y": 41
       },
       "id": 152,
       "options": {
@@ -1847,7 +1968,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1909,7 +2030,7 @@
         "h": 4,
         "w": 7,
         "x": 6,
-        "y": 34
+        "y": 41
       },
       "id": 155,
       "options": {
@@ -1936,7 +2057,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1990,7 +2111,7 @@
         "h": 4,
         "w": 11,
         "x": 13,
-        "y": 34
+        "y": 41
       },
       "id": 23,
       "options": {
@@ -2010,7 +2131,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2043,7 +2164,281 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 45
+      },
+      "id": 208,
+      "panels": [],
+      "title": "Workstations",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Disk usage on DESK (nixosaku)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 46
+      },
+      "id": 209,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"} / node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}) * 100",
+          "legendFormat": "{{mountpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "DESK Disk Usage",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Disk usage on X13 (nixosx13aku)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 46
+      },
+      "id": 210,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"} / node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}) * 100",
+          "legendFormat": "{{mountpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "X13 Disk Usage",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Disk usage on LAPTOP_A (nixosaga)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 46
+      },
+      "id": 211,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"} / node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}) * 100",
+          "legendFormat": "{{mountpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "LAPTOP_A Disk Usage",
+      "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 52
       },
       "id": 156,
       "panels": [],
@@ -2079,7 +2474,7 @@
         "h": 6,
         "w": 9,
         "x": 0,
-        "y": 39
+        "y": 53
       },
       "id": 157,
       "options": {
@@ -2106,7 +2501,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2152,7 +2547,7 @@
         "h": 6,
         "w": 9,
         "x": 9,
-        "y": 39
+        "y": 53
       },
       "id": 158,
       "options": {
@@ -2179,7 +2574,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2224,7 +2619,7 @@
         "h": 6,
         "w": 6,
         "x": 18,
-        "y": 39
+        "y": 53
       },
       "id": 163,
       "options": {
@@ -2251,7 +2646,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2274,7 +2669,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 59
       },
       "id": 130,
       "panels": [],
@@ -2316,10 +2711,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 24,
+        "h": 4,
+        "w": 12,
         "x": 0,
-        "y": 46
+        "y": 60
       },
       "id": 133,
       "options": {
@@ -2339,7 +2734,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2347,7 +2742,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(time() - nixos_autoupdate_system_last_success) / 86400",
+          "expr": "(time() - nixos_last_update_system_timestamp) / 86400",
           "legendFormat": "{{hostname}}",
           "range": true,
           "refId": "A"
@@ -2392,10 +2787,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 24,
-        "x": 0,
-        "y": 49
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 60
       },
       "id": 144,
       "options": {
@@ -2415,7 +2810,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2423,7 +2818,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(time() - nixos_autoupdate_user_last_success) / 86400",
+          "expr": "(time() - nixos_last_update_user_timestamp) / 86400",
           "legendFormat": "{{hostname}}",
           "range": true,
           "refId": "A"
@@ -2439,7 +2834,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 64
       },
       "id": 146,
       "panels": [],
@@ -2574,26 +2969,18 @@
         ]
       },
       "gridPos": {
-        "h": 7,
+        "h": 9,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 65
       },
       "id": 147,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2602,7 +2989,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "tailscale_peer_online{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_peer_online{instance=\"monitoring\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2616,7 +3003,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "tailscale_peer_direct{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_peer_direct{instance=\"monitoring\"}",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -2631,7 +3018,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "tailscale_peer_rx_bytes{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_peer_rx_bytes{instance=\"monitoring\"}",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -2646,7 +3033,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "tailscale_peer_tx_bytes{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_peer_tx_bytes{instance=\"monitoring\"}",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -2729,607 +3116,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 60
-      },
-      "id": 111,
-      "panels": [],
-      "title": "LXC Containers",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "CPU usage for all LXC guests on Proxmox",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 24,
-        "x": 0,
-        "y": 61
-      },
-      "id": 112,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "((pve_cpu_usage_ratio{instance=\"proxmox\"} / pve_cpu_usage_limit{instance=\"proxmox\"}) * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) * 100 and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
-          "legendFormat": "{{name}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Guests CPU usage",
-      "transparent": true,
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "Memory usage for all LXC guests on Proxmox",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 24,
-        "x": 0,
-        "y": 66
-      },
-      "id": 113,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "(pve_memory_usage_bytes{instance=\"proxmox\"} / pve_memory_size_bytes{instance=\"proxmox\"} * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) * 100 and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
-          "legendFormat": "{{name}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Guests memory usage",
-      "transparent": true,
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "links": [],
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 24,
-        "x": 0,
-        "y": 71
-      },
-      "id": 116,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "mean",
-            "max",
-            "sum"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "((rate(pve_disk_write_bytes{instance=\"proxmox\"}[5m]) + rate(pve_disk_read_bytes{instance=\"proxmox\"}[5m])) * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
-          "format": "time_series",
-          "interval": "",
-          "intervalFactor": 2,
-          "legendFormat": "{{name}} ({{type}})",
-          "refId": "A"
-        }
-      ],
-      "title": "Disk IO/s",
-      "transparent": true,
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "links": [],
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/RECV/"
-            },
-            "properties": [
-              {
-                "id": "custom.transform",
-                "value": "negative-Y"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 24,
-        "x": 0,
-        "y": 76
-      },
-      "id": 115,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "mean",
-            "max",
-            "sum"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "(rate(pve_network_receive_bytes{instance=\"proxmox\"}[5m]) * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
-          "format": "time_series",
-          "interval": "",
-          "intervalFactor": 3,
-          "legendFormat": "{{name}} RECV ({{type}})",
-          "refId": "A"
-        }
-      ],
-      "title": "Received Network Traffic",
-      "transparent": true,
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "links": [],
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/RECV/"
-            },
-            "properties": [
-              {
-                "id": "custom.transform",
-                "value": "negative-Y"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 24,
-        "x": 0,
-        "y": 81
-      },
-      "id": 143,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "mean",
-            "max",
-            "sum"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "(rate(pve_network_transmit_bytes{instance=\"proxmox\"}[5m]) * on(id, instance) group_left(name, type) pve_guest_info{instance=\"proxmox\"}) and on(id, instance) pve_up{instance=\"proxmox\"} == 1",
-          "format": "time_series",
-          "interval": "",
-          "intervalFactor": 3,
-          "legendFormat": "{{name}} SEND ({{type}})",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Sent Network Traffic",
-      "transparent": true,
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 86
+        "y": 74
       },
       "id": 114,
       "panels": [],
@@ -3401,7 +3188,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 87
+        "y": 75
       },
       "id": 117,
       "options": {
@@ -3425,7 +3212,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3506,7 +3293,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 92
+        "y": 80
       },
       "id": 118,
       "options": {
@@ -3528,7 +3315,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3609,7 +3396,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 97
+        "y": 85
       },
       "id": 119,
       "options": {
@@ -3631,7 +3418,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3712,7 +3499,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 102
+        "y": 90
       },
       "id": 120,
       "options": {
@@ -3736,7 +3523,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3820,7 +3607,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 107
+        "y": 95
       },
       "id": 121,
       "options": {
@@ -3844,7 +3631,7 @@
           "sort": "desc"
         }
       },
-      "pluginVersion": "12.3.2",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -3894,5 +3681,5 @@
   "timezone": "browser",
   "title": "Infrastructure Overview",
   "uid": "infrastructure-overview",
-  "version": 25
+  "version": 11
 }

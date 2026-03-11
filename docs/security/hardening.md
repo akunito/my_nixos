@@ -65,9 +65,9 @@ services.grafana.settings.server = {
 For Prometheus targets that need remote scraping, use firewall rules instead:
 
 ```nix
-# In profile config - restrict to monitoring server only
+# In profile config - restrict to VPS monitoring server only (Tailscale IP)
 networking.firewall.extraCommands = ''
-  iptables -A INPUT -p tcp --dport 9100 -s 192.168.8.85 -j ACCEPT
+  iptables -A INPUT -p tcp --dport 9100 -s 100.64.0.6 -j ACCEPT
   iptables -A INPUT -p tcp --dport 9100 -j DROP
 '';
 ```
@@ -158,8 +158,7 @@ locations."/" = {
 
 ### Certificate Management
 
-- Wildcard certs managed by acme.sh on LXC_proxy
-- Shared via Proxmox bind mount to other containers
+- Wildcard certs managed by Cloudflare tunnel (VPS) and NPM (TrueNAS)
 - Let's Encrypt for public-facing services
 
 ### Certificate Monitoring

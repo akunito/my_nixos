@@ -146,13 +146,78 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
   services.prometheus.exporters.graphite = {
     enable = true;
     port = webPort;                    # Prometheus scrape port (HTTP)
+    listenAddress = "0.0.0.0";          # Must listen on all interfaces so TrueNAS can send via Tailscale/WireGuard
     graphitePort = graphiteInputPort;  # Graphite input from TrueNAS
-    openFirewall = true;               # Opens web port only
+    openFirewall = false;              # VPN interfaces (wg0, tailscale0) accept all traffic; no need to open publicly
     mappingSettings = mappingConfig;
   };
 
-  # Explicitly open graphite input port (openFirewall only opens web port)
-  networking.firewall.allowedTCPPorts = [ graphiteInputPort ];
+  # Graphite input port NOT opened publicly — TrueNAS connects via Tailscale/WireGuard,
+  # and VPN interfaces (wg0, tailscale0) already accept all traffic in the NixOS firewall.
+
+  # ZFS pool metrics exporter — SSHes to TrueNAS every 5 minutes and sends pool stats
+  # to Graphite. TrueNAS SCALE doesn't export ZFS pool capacity via its built-in reporter.
+  systemd.services.truenas-zfs-exporter = {
+    description = "TrueNAS ZFS Pool Metrics Exporter";
+    after = [ "network-online.target" "prometheus-graphite-exporter.service" ];
+    wants = [ "network-online.target" ];
+    path = [ pkgs.openssh ];
+    serviceConfig = {
+      Type = "oneshot";
+      TimeoutSec = 60;
+      User = "akunito";
+      ExecStart = pkgs.writeShellScript "truenas-zfs-exporter" ''
+        set -euo pipefail
+        TRUENAS_HOST="truenas_admin@192.168.20.200"
+        GRAPHITE_HOST="127.0.0.1"
+        GRAPHITE_PORT="${toString graphiteInputPort}"
+        TIMESTAMP=$(date +%s)
+
+        # Get pool stats via zpool list (-H = no header, -p = parseable/bytes)
+        # Columns: name, size, alloc, free, ckpoint, expandsz, frag%, cap%, dedup, health, altroot
+        POOL_DATA=$(ssh -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no \
+          "$TRUENAS_HOST" 'sudo zpool list -Hp' 2>/dev/null) || {
+          echo "Failed to SSH to TrueNAS" >&2
+          exit 1
+        }
+
+        # Build all metrics, then send in one shot
+        METRICS=""
+        while IFS=$'\t' read -r name size alloc free _ _ frag _ _ health _; do
+          [ -z "$name" ] && continue
+          # Handle OFFLINE pools with null values
+          [ "$size" = "-" ] || [ -z "$size" ] && size=0
+          [ "$alloc" = "-" ] || [ -z "$alloc" ] && alloc=0
+          [ "$free" = "-" ] || [ -z "$free" ] && free=0
+          [ "$frag" = "-" ] || [ -z "$frag" ] && frag=0
+          healthy=0
+          [ "$health" = "ONLINE" ] && healthy=1
+          METRICS+="truenas.zfspool.$name.size $size $TIMESTAMP
+        truenas.zfspool.$name.allocated $alloc $TIMESTAMP
+        truenas.zfspool.$name.free $free $TIMESTAMP
+        truenas.zfspool.$name.fragmentation $frag $TIMESTAMP
+        truenas.zfspool.$name.healthy $healthy $TIMESTAMP
+        "
+        done <<< "$POOL_DATA"
+
+        # Send all metrics at once via bash TCP (no nc dependency issues)
+        exec 3<>/dev/tcp/$GRAPHITE_HOST/$GRAPHITE_PORT
+        printf '%s' "$METRICS" >&3
+        exec 3>&-
+        echo "Sent metrics for $(echo "$POOL_DATA" | wc -l) pools"
+      '';
+    };
+  };
+
+  systemd.timers.truenas-zfs-exporter = {
+    description = "TrueNAS ZFS Pool Metrics Exporter Timer";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2min";
+      OnUnitActiveSec = "5min";
+      RandomizedDelaySec = "30s";
+    };
+  };
 
   # Prometheus scrape config for graphite exporter
   services.prometheus.scrapeConfigs = [
@@ -272,39 +337,7 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
                 description = "TrueNAS memory usage is at {{ $value | printf \"%.1f\" }}%";
               };
             }
-            # ZFS replication backup stale (>26 hours - daily task should run within 24h)
-            {
-              alert = "TrueNASBackupStale";
-              expr = ''truenas_backup_age_seconds > 93600'';
-              "for" = "30m";
-              labels.severity = "warning";
-              annotations = {
-                summary = "TrueNAS backup stale for {{ $labels.dataset }}";
-                description = "Dataset {{ $labels.dataset }} last replication was {{ $value | humanizeDuration }} ago";
-              };
-            }
-            # ZFS replication backup critical (>50 hours)
-            {
-              alert = "TrueNASBackupCritical";
-              expr = ''truenas_backup_age_seconds > 180000'';
-              "for" = "30m";
-              labels.severity = "critical";
-              annotations = {
-                summary = "TrueNAS backup critical for {{ $labels.dataset }}";
-                description = "Dataset {{ $labels.dataset }} last replication was {{ $value | humanizeDuration }} ago - check replication tasks immediately";
-              };
-            }
-            # ZFS replication backup failed (no snapshot found)
-            {
-              alert = "TrueNASBackupFailed";
-              expr = ''truenas_backup_status == 0'';
-              "for" = "1h";
-              labels.severity = "critical";
-              annotations = {
-                summary = "TrueNAS backup failed for {{ $labels.dataset }}";
-                description = "No autoreplica snapshot found for dataset {{ $labels.dataset }} - replication may have never run or snapshots were deleted";
-              };
-            }
+            # ZFS replication backup alerts removed — hddpool eliminated, no more cross-pool replication
           ];
         }
       ];

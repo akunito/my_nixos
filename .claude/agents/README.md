@@ -17,6 +17,7 @@ All agents MUST follow the router-first retrieval protocol:
 - `docs-context.md` - Documentation maintenance agent instructions
 - `sway-context.md` - Sway/Wayland agent instructions
 - `gaming-context.md` - Gaming modules (Lutris, Bottles, Vulkan, controllers)
+- `plane-context.md` - Plane ticket management integration and MCP tool reference
 
 ## When to Use
 

@@ -1,0 +1,38 @@
+# NPM (Nginx Proxy Manager) - TrueNAS Docker (ROOTLESS daemon)
+# Reverse proxy on bridge network with port mapping on host 192.168.20.200
+#
+# Previously used macvlan (192.168.20.201) — migrated to bridge networking.
+# NPM shares the rootless Docker network with media containers,
+# so Docker DNS resolution works natively (no network connect needed).
+
+services:
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    environment:
+      TZ: Europe/Warsaw
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE, NET_BIND_SERVICE]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:81 || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M

@@ -17,20 +17,16 @@
           VMHOME = ./profiles/VMHOME-config.nix;
           WSL = ./profiles/WSL-config.nix;
           LXC_HOME = ./profiles/LXC_HOME-config.nix;
-          LXC_proxy = ./profiles/LXC_proxy-config.nix;
-          LXC_plane = ./profiles/LXC_plane-config.nix;
-          LXC_mailer = ./profiles/LXC_mailer-config.nix;
-          LXC_liftcraftTEST = ./profiles/LXC_liftcraftTEST-config.nix;
-          LXC_portfolioprod = ./profiles/LXC_portfolioprod-config.nix;
-          LXC_database = ./profiles/LXC_database-config.nix;
           LXC_tailscale = ./profiles/LXC_tailscale-config.nix;
-          LXC_monitoring = ./profiles/LXC_monitoring-config.nix;
-          LXC_matrix = ./profiles/LXC_matrix-config.nix;
+          # Archived (migrated to VPS_PROD / TrueNAS — profiles in profiles/archived/):
+          # LXC_proxy, LXC_database, LXC_monitoring, LXC_mailer,
+          # LXC_plane, LXC_matrix, LXC_liftcraftTEST, LXC_portfolioprod
           KOMI_LXC_database = ./profiles/KOMI_LXC_database-config.nix;
           KOMI_LXC_mailer = ./profiles/KOMI_LXC_mailer-config.nix;
           KOMI_LXC_monitoring = ./profiles/KOMI_LXC_monitoring-config.nix;
           KOMI_LXC_proxy = ./profiles/KOMI_LXC_proxy-config.nix;
           KOMI_LXC_tailscale = ./profiles/KOMI_LXC_tailscale-config.nix;
+          VPS_PROD = ./profiles/VPS_PROD-config.nix;
           MACBOOK-KOMI = ./profiles/MACBOOK-KOMI-config.nix;
         };
       };
@@ -78,5 +74,11 @@
 
     # Hardware-specific configurations (used by LAPTOP profiles)
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
+    # Voice dictation (Whisper-based, local)
+    voxtype = {
+      url = "github:peteonrails/voxtype";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }

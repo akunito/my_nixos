@@ -24,6 +24,8 @@ in
     # Security
     fuseAllowOther = false;
     pkiCertificates = [ ];
+    # GUI askpass: popup password dialog when sudo has no terminal (e.g., Claude Code)
+    sudoAskpassEnable = true;
     sudoTimestampTimeoutMinutes = 180;
 
     # SSH agent sudo authentication
@@ -47,32 +49,43 @@ in
     resolvedEnable = false;
 
     # Firewall
-    allowedTCPPorts = [ ];
+    allowedTCPPorts = [ 9100 ]; # prometheus workstation exporter
     allowedUDPPorts = [ ];
+
+    # NFS nofail safety net (prevents boot hang when TrueNAS is unreachable)
+    disk3_enabled = true;
+    disk3_name = "/mnt/NFS_media";
+    disk3_device = "192.168.20.200:/mnt/ssdpool/media";
+    disk3_fsType = "nfs4";
+    disk3_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
+    # disk4 (emulators) and disk5 (library) removed — datasets no longer exist on TrueNAS,
+    # data lives on VPS (romm-library, calibre-library). See IAKU-247.
+    disk4_enabled = false;
+    disk5_enabled = false;
+    disk8_enabled = true;
+    disk8_name = "/mnt/NFS_Backups";
+    disk8_device = "192.168.20.200:/mnt/ssdpool/workstation_backups";
+    disk8_fsType = "nfs4";
+    disk8_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
 
     # NFS client
     nfsClientEnable = true;
     nfsMounts = [
       {
-        what = "192.168.20.200:/mnt/hddpool/media";
+        what = "192.168.20.200:/mnt/ssdpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
         options = "noatime";
       }
+      # library and emulators NFS mounts removed — datasets no longer exist (IAKU-247)
       {
-        what = "192.168.20.200:/mnt/ssdpool/library";
-        where = "/mnt/NFS_library";
-        type = "nfs";
-        options = "noatime";
-      }
-      {
-        what = "192.168.20.200:/mnt/ssdpool/emulators";
-        where = "/mnt/NFS_emulators";
-        type = "nfs";
-        options = "noatime";
-      }
-      {
-        what = "192.168.20.200:/mnt/hddpool/workstation_backups";
+        what = "192.168.20.200:/mnt/ssdpool/workstation_backups";
         where = "/mnt/NFS_Backups";
         type = "nfs";
         options = "noatime";
@@ -85,18 +98,7 @@ in
           TimeoutIdleSec = "600";
         };
       }
-      {
-        where = "/mnt/NFS_library";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
-      {
-        where = "/mnt/NFS_emulators";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
+      # NFS_library and NFS_emulators automounts removed (IAKU-247)
       {
         where = "/mnt/NFS_Backups";
         automountConfig = {
@@ -148,6 +150,7 @@ in
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = "lenovo-thinkpad-x13-amd"; # X13 Gen 2 AMD
+    thinkfanEnable = true; # Active fan curve: quiet at idle, full speed at 80°C
     thunderboltEnable = false; # X13 AMD has no Thunderbolt
     amdPstateEnable = true; # AMD P-State EPP driver (Zen 3)
     fprintdEnable = true; # Fingerprint reader support
@@ -161,8 +164,21 @@ in
 
     # === Development Tools & AI ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
+    perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for Claude Code MCP
+    planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
+    planeApiUrl = "https://plane.${secrets.publicDomain}";
+    planeWorkspaceSlug = "akuworkspace";
+    grafanaMcpToken = secrets.grafanaMcpToken; # Grafana MCP (read-only dashboards + PromQL)
+    grafanaMcpUrl = "https://grafana.${secrets.publicDomain}";
+    dbClaudeReadonlyConnStr = "postgresql://claude_readonly:${secrets.dbClaudeReadonlyPassword}@100.64.0.6:5432/plane";
+    n8nMcpApiKey = secrets.n8nApiKey; # n8n MCP (workflow automation)
+    n8nMcpUrl = "https://n8n.${secrets.publicDomain}";
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
+    voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)
+
+    # === Monitoring ===
+    prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
 
     # === Control Panel ===
     controlPanelEnable = true; # Enable NixOS infrastructure control panel
@@ -177,7 +193,7 @@ in
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
     dbCredentialsEnable = true;
-    dbCredentialsHost = "192.168.8.103"; # LXC_database server
+    dbCredentialsHost = "100.64.0.6"; # VPS_PROD via Tailscale
     dbCredentialsPostgres = [
       { database = "plane"; user = "plane"; password = secrets.dbPlanePassword; }
       { database = "rails_database_prod"; user = "liftcraft"; password = secrets.dbLiftcraftPassword; }
@@ -218,6 +234,11 @@ in
     userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
     rangerFullPreviewEnable = true; # Full ranger preview (fonts, ebooks, spreadsheets, etc.)
+
+    # === Gaming & Entertainment ===
+    gamesEnable = true; # Master gate for gaming submodules
+    gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus
+    steamPackEnable = true; # Steam gaming platform
 
     # Different prompt color for LAPTOP
     zshinitContent = ''

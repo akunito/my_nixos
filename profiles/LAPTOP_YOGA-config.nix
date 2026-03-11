@@ -34,6 +34,10 @@ in
     fuseAllowOther = false;
     pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
 
+    # GUI askpass: popup password dialog when sudo has no terminal (e.g., Claude Code)
+    sudoAskpassEnable = true;
+    sudoTimestampTimeoutMinutes = 180;
+
     # SSH agent sudo authentication
     # Allows passwordless sudo when connected via SSH with agent forwarding (-A)
     # Local sessions without SSH agent still require password
@@ -113,6 +117,7 @@ in
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = "lenovo-thinkpad-x280"; # X380 Yoga → X280 (same generation)
+    thinkfanEnable = true; # Active fan curve: quiet at idle, full speed at 80°C
     thunderboltEnable = false; # X380 Yoga has no Thunderbolt 3
 
     # Intel GPU power tuning (Intel UHD 620)
@@ -124,7 +129,7 @@ in
 
     # === System Services & Features ===
     sambaEnable = false; # Disable Samba file sharing
-    sunshineEnable = true; # Enable Sunshine game streaming
+    sunshineEnable = false; # Disabled: unstable package broken, stable substitution not working
     wireguardEnable = true; # Enable WireGuard VPN
     nextcloudEnable = true; # Enable Nextcloud client
     appImageEnable = false; # Disable AppImage support (override base)

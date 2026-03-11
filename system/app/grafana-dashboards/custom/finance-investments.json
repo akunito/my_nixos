@@ -1,0 +1,415 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["finance"],
+      "targetBlank": false,
+      "title": "Finance Dashboards",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "Investment Overview",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0 },
+              { "color": "green", "value": 1000 }
+            ]
+          },
+          "unit": "currencyPLN"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 1 },
+      "id": 25,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT ROUND(COALESCE(SUM(COALESCE(amount_base, amount)), 0), 2) as value FROM transactions WHERE tx_type='investment'",
+          "refId": "A",
+          "queryText": "SELECT ROUND(COALESCE(SUM(COALESCE(amount_base, amount)), 0), 2) as value FROM transactions WHERE tx_type='investment'"
+        }
+      ],
+      "title": "Total Invested (All Time)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0 },
+              { "color": "green", "value": 10000 }
+            ]
+          },
+          "unit": "currencyPLN"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 1 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT ROUND(COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol",
+          "refId": "A",
+          "queryText": "SELECT ROUND(COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol"
+        }
+      ],
+      "title": "Current Portfolio Value",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0 }
+            ]
+          },
+          "unit": "currencyPLN"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 1 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT ROUND(COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0) - COALESCE(SUM(h.quantity * COALESCE(h.avg_buy_price, 0)), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol",
+          "refId": "A",
+          "queryText": "SELECT ROUND(COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0) - COALESCE(SUM(h.quantity * COALESCE(h.avg_buy_price, 0)), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol"
+        }
+      ],
+      "title": "Unrealized Gain/Loss",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 200,
+      "panels": [],
+      "title": "Holdings & Allocation",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 6 },
+      "id": 17,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": true },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='investment' GROUP BY category ORDER BY total DESC",
+          "refId": "A",
+          "queryText": "SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='investment' GROUP BY category ORDER BY total DESC"
+        }
+      ],
+      "title": "Investment Split",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyPLN"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 6 },
+      "id": 26,
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "value_pln" }]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT h.asset_type, h.symbol, h.quantity, COALESCE(ap.price_base, 0) as price_pln, ROUND(h.quantity * COALESCE(ap.price_base, 0), 2) as value_pln, COALESCE(h.avg_buy_price, 0) as avg_buy_price, ROUND(h.quantity * COALESCE(ap.price_base, 0) - h.quantity * COALESCE(h.avg_buy_price, 0), 2) as gain_loss, h.source, h.updated_at FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol ORDER BY value_pln DESC",
+          "refId": "A",
+          "queryText": "SELECT h.asset_type, h.symbol, h.quantity, COALESCE(ap.price_base, 0) as price_pln, ROUND(h.quantity * COALESCE(ap.price_base, 0), 2) as value_pln, COALESCE(h.avg_buy_price, 0) as avg_buy_price, ROUND(h.quantity * COALESCE(ap.price_base, 0) - h.quantity * COALESCE(h.avg_buy_price, 0), 2) as gain_loss, h.source, h.updated_at FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol ORDER BY value_pln DESC"
+        }
+      ],
+      "title": "Current Holdings & Valuation",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 300,
+      "panels": [],
+      "title": "Currency & Exchange Rates",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 15 },
+      "id": 16,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": true },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT currency, ROUND(SUM(ABS(amount)), 2) as total FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') GROUP BY currency ORDER BY total DESC",
+          "refId": "A",
+          "queryText": "SELECT currency, ROUND(SUM(ABS(amount)), 2) as total FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') GROUP BY currency ORDER BY total DESC"
+        }
+      ],
+      "title": "Spending by Currency",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "always"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 15 },
+      "id": 18,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT month || '-01' as time, from_currency || '/' || to_currency as pair, rate FROM exchange_rates ORDER BY month",
+          "refId": "A",
+          "queryText": "SELECT month || '-01' as time, from_currency || '/' || to_currency as pair, rate FROM exchange_rates ORDER BY month"
+        }
+      ],
+      "title": "Exchange Rate History",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 400,
+      "panels": [],
+      "title": "Investment Activity",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "purple" },
+          "unit": "currencyPLN",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "id": 33,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as invested FROM transactions WHERE tx_type='investment' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
+          "refId": "A",
+          "queryText": "SELECT substr(date,1,7) || '-07' as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as invested FROM transactions WHERE tx_type='investment' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
+        }
+      ],
+      "title": "Monthly Investment Contributions (12mo)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "id": 500,
+      "panels": [],
+      "title": "Projected Growth",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "unit": "currencyPLN",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "always",
+            "gradientMode": "scheme"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 33 },
+      "id": 34,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "WITH portfolio AS (SELECT COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0) as current_value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), growth(year_n, value) AS (SELECT 0, current_value FROM portfolio UNION ALL SELECT year_n + 1, ROUND(value * (1 + ${annual_return}/100.0), 0) FROM growth WHERE year_n < 20) SELECT (CAST(strftime('%Y','now') AS INTEGER) + year_n) || '-01-01' as time, value as projected_value FROM growth",
+          "refId": "A",
+          "queryText": "WITH portfolio AS (SELECT COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0) as current_value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), growth(year_n, value) AS (SELECT 0, current_value FROM portfolio UNION ALL SELECT year_n + 1, ROUND(value * (1 + ${annual_return}/100.0), 0) FROM growth WHERE year_n < 20) SELECT (CAST(strftime('%Y','now') AS INTEGER) + year_n) || '-01-01' as time, value as projected_value FROM growth"
+        }
+      ],
+      "title": "Projected Portfolio Growth (${annual_return}% annual return, no contributions)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": ["custom", "finance"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+        "definition": "SELECT DISTINCT substr(date,1,7) as m FROM transactions ORDER BY m DESC",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Cycle",
+        "multi": false,
+        "name": "cycle",
+        "options": [],
+        "query": "SELECT DISTINCT substr(date,1,7) as m FROM transactions ORDER BY m DESC",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "8",
+          "value": "8"
+        },
+        "hide": 0,
+        "label": "Annual Return %",
+        "name": "annual_return",
+        "options": [{ "selected": true, "text": "8", "value": "8" }],
+        "query": "8",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": { "from": "now-1y", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Finance Investments",
+  "uid": "finance-investments",
+  "version": 1,
+  "weekStart": ""
+}

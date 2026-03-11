@@ -3,6 +3,7 @@
   lib,
   pkgs,
   pkgs-unstable,
+  pkgs-stable,
   systemSettings,
   ...
 }:
@@ -40,11 +41,12 @@
       python3
       qt5.qtbase
 
-      # === Remote Access & Streaming ===
-      pkgs-unstable.sunshine
-
       # === Printing ===
       cups-filters
-    ];
+
+      # === Security ===
+      gitleaks
+    ]
+    ++ lib.optional (systemSettings.sunshineEnable or false) pkgs-unstable.sunshine;
   };
 }

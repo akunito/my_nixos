@@ -1,0 +1,72 @@
+# VPN Media stack - TrueNAS Docker (ROOT daemon)
+# Gluetun + qBittorrent require NET_ADMIN / host netns — cannot run rootless.
+# qBittorrent uses gluetun's network namespace for VPN-only traffic.
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    hostname: qbittorrent
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 8085:8085
+      - 6881:6881
+      - 6881:6881/udp
+    volumes:
+      - ${DATA_PATH}/gluetun:/gluetun
+    environment:
+      - TZ=Europe/Warsaw
+      - UPDATER_PERIOD=24h
+    env_file:
+      - /mnt/ssdpool/docker/compose/env/media/gluetun.env
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8085"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    depends_on:
+      - gluetun
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - WEBUI_PORT=8085
+    volumes:
+      - ${DATA_PATH}/mediarr/qbittorrent:/config
+      - ${MEDIA_PATH}/downloads:/data/downloads
+      - /mnt/extpool/downloads:/data/game-downloads
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+        max-file: "3"
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider http://127.0.0.1:8085 || exit 1"
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 3G

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Claude Matrix Bot Setup Script
 #
-# Run on LXC_matrix to install and configure the Claude Matrix bot.
+# Run on VPS_PROD to install and configure the Claude Matrix bot.
 #
 # Prerequisites:
 # 1. Python 3.11+ installed (via NixOS profile)
@@ -25,7 +25,17 @@ echo "Copying bot files..."
 cp "$TEMPLATES_DIR/bot.py" "$BOT_DIR/"
 cp "$TEMPLATES_DIR/claude_cli.py" "$BOT_DIR/"
 cp "$TEMPLATES_DIR/session_manager.py" "$BOT_DIR/"
+cp "$TEMPLATES_DIR/permission_manager.py" "$BOT_DIR/"
 cp "$TEMPLATES_DIR/requirements.txt" "$BOT_DIR/"
+
+# Copy and install Node.js bridge
+echo "Setting up Node.js bridge..."
+mkdir -p "$BOT_DIR/bridge"
+cp "$TEMPLATES_DIR/bridge/package.json" "$BOT_DIR/bridge/"
+cp "$TEMPLATES_DIR/bridge/bridge.mjs" "$BOT_DIR/bridge/"
+(cd "$BOT_DIR/bridge" && npm install --production 2>&1) || {
+    echo "WARNING: npm install failed — bridge will be unavailable, falling back to legacy mode"
+}
 
 # Copy config if not exists
 if [ ! -f "$BOT_DIR/config.yaml" ]; then
@@ -38,10 +48,17 @@ fi
 echo "Creating Python virtual environment..."
 python3 -m venv "$BOT_DIR/venv"
 
-# Install dependencies
-echo "Installing Python dependencies..."
-"$BOT_DIR/venv/bin/pip" install --upgrade pip
-"$BOT_DIR/venv/bin/pip" install -r "$BOT_DIR/requirements.txt"
+# Install dependencies (with libolm build paths for E2E encryption)
+# python-olm needs make, gcc, cmake to build CFFI bindings against system libolm
+echo "Installing Python dependencies (via nix-shell for build tools)..."
+OLM_STORE_PATH="$(readlink -f /run/current-system/sw/lib/libolm.so | sed 's|/lib/libolm.so||')"
+nix-shell -p gnumake gcc cmake pkg-config --run "
+  export C_INCLUDE_PATH='${OLM_STORE_PATH}/include'
+  export LIBRARY_PATH='/run/current-system/sw/lib'
+  export CMAKE_POLICY_VERSION_MINIMUM=3.5
+  '$BOT_DIR/venv/bin/pip' install --upgrade pip
+  '$BOT_DIR/venv/bin/pip' install -r '$BOT_DIR/requirements.txt'
+"
 
 # Create store directory for Matrix client
 mkdir -p "$BOT_DIR/store"

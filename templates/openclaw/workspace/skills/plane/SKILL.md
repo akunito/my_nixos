@@ -1,0 +1,46 @@
+# Skill: Plane Project Management
+
+## Purpose
+Manage work items, track progress, and maintain project boards in Plane (self-hosted project management).
+
+## Tools
+Use the `plane-restricted` MCP server exclusively. Available tools:
+- `list_projects` — List all accessible projects
+- `list_states` — Get workflow states for a project (required before updating state)
+- `list_work_items` — List items with optional filters
+- `search_work_items` — Search by keyword across projects
+- `retrieve_work_item` — Get full details of a specific item
+- `create_work_item` — Create a new ticket
+- `create_work_item_comment` — Add a comment to an existing item
+- `list_work_item_comments` — Read comments on an item
+- `list_cycles` — List sprint cycles
+- `list_modules` — List project modules
+- `list_labels` — List available labels
+
+## When to Use
+- **On request** when Aku asks to create tickets, check project status, or manage work items
+- **During weekly review** (Sunday 19:00) — summarize open items across IAKU, LW, and other active projects
+- **After completing work** — comment on relevant tickets with progress updates
+- **Morning brief** — mention any high-priority items due today/this week if relevant
+
+## Project Routing
+| ID | Project | Scope |
+|----|---------|-------|
+| IAKU | Infrastructure Aku | NixOS, homelab, VPS, networking, gaming |
+| AWN | AKU - Work Notes | Work documentation |
+| CAL | Career & Learning | Certifications, interview prep |
+| LW | Liftcraft | Rails training app |
+| N8N | n8n Workflows | Automation workflows |
+
+## Rate Limits
+- 10 work item creates per hour
+- 30 comments per hour
+- Body length: 50KB maximum per field
+- All enforced by MCP wrapper
+
+## Rules
+- Always fetch `list_states` before attempting to update work item state — state UUIDs differ per project
+- Use imperative mood for ticket titles (e.g., "Fix DNS split circular dependency")
+- Include ticket ID in related commits (e.g., "IAKU-42: fix DNS split")
+- Priority values: `urgent` / `high` / `medium` / `low` / `none`
+- Do NOT create duplicate tickets — search first

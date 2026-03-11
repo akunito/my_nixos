@@ -350,7 +350,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_receive_bytes_total{device=\"wg0\", instance=~\".*wireguard.*\"}[5m])",
+          "expr": "rate(node_network_receive_bytes_total{device=\"wg0\", instance=\"monitoring\"}[5m])",
           "legendFormat": "Receive",
           "range": true,
           "refId": "A"
@@ -361,7 +361,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_transmit_bytes_total{device=\"wg0\", instance=~\".*wireguard.*\"}[5m])",
+          "expr": "rate(node_network_transmit_bytes_total{device=\"wg0\", instance=\"monitoring\"}[5m])",
           "legendFormat": "Transmit",
           "range": true,
           "refId": "B"
@@ -422,7 +422,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "increase(node_network_receive_bytes_total{device=\"wg0\", instance=~\".*wireguard.*\"}[24h])",
+          "expr": "increase(node_network_receive_bytes_total{device=\"wg0\", instance=\"monitoring\"}[24h])",
           "legendFormat": "Received (24h)",
           "range": true,
           "refId": "A"
@@ -483,7 +483,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "increase(node_network_transmit_bytes_total{device=\"wg0\", instance=~\".*wireguard.*\"}[24h])",
+          "expr": "increase(node_network_transmit_bytes_total{device=\"wg0\", instance=\"monitoring\"}[24h])",
           "legendFormat": "Transmitted (24h)",
           "range": true,
           "refId": "A"

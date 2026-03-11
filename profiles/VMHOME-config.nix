@@ -82,50 +82,27 @@
     ];
     disk3_enabled = true;
     disk3_name = "/mnt/NFS_media";
-    disk3_device = "192.168.20.200:/mnt/hddpool/media";
+    disk3_device = "192.168.20.200:/mnt/ssdpool/media";
     disk3_fsType = "nfs4";
     disk3_options = [
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
-    disk4_enabled = true;
-    disk4_name = "/mnt/NFS_emulators";
-    disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
-    disk4_fsType = "nfs4";
-    disk4_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
-    disk5_enabled = true;
-    disk5_name = "/mnt/NFS_library";
-    disk5_device = "192.168.20.200:/mnt/ssdpool/library";
-    disk5_fsType = "nfs4";
-    disk5_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
+    # disk4 (emulators) and disk5 (library) removed — datasets no longer exist on TrueNAS,
+    # data lives on VPS (romm-library, calibre-library). See IAKU-247.
+    disk4_enabled = false;
+    disk5_enabled = false;
 
     # NFS client
     nfsClientEnable = true;
     nfsMounts = [
       {
-        what = "192.168.20.200:/mnt/hddpool/media";
+        what = "192.168.20.200:/mnt/ssdpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
         options = "noatime";
       }
-      {
-        what = "192.168.20.200:/mnt/ssdpool/library";
-        where = "/mnt/NFS_library";
-        type = "nfs";
-        options = "noatime";
-      }
-      {
-        what = "192.168.20.200:/mnt/ssdpool/emulators";
-        where = "/mnt/NFS_emulators";
-        type = "nfs";
-        options = "noatime";
-      }
+      # library and emulators NFS mounts removed — datasets no longer exist (IAKU-247)
     ];
     nfsAutoMounts = [
       {
@@ -134,18 +111,7 @@
           TimeoutIdleSec = "600";
         };
       }
-      {
-        where = "/mnt/NFS_library";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
-      {
-        where = "/mnt/NFS_emulators";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
+      # NFS_library and NFS_emulators automounts removed (IAKU-247)
     ];
 
     # SSH

@@ -13,40 +13,43 @@ pgrep xmonad &> /dev/null && echo "Reapplying background from stylix via feh" &&
 
 # hyprland
 pgrep Hyprland &> /dev/null && echo "Reloading hyprland" && hyprctl reload &> /dev/null;
-if pgrep .waybar-wrapped &> /dev/null; then
-  # IMPORTANT:
-  # In Sway, Waybar is managed by systemd --user (waybar.service). Killing waybar and spawning a new
-  # instance here causes duplicates: systemd restarts the service, and this script also launches one.
+# sway — detect session via systemd target (works even when all services are dead)
+if systemctl --user is-active --quiet sway-session.target 2>/dev/null; then
+  # Kill kded6 if running - it claims StatusNotifierWatcher but doesn't implement it properly
+  if pgrep -x kded6 &>/dev/null; then
+    echo "Killing kded6 (conflicts with waybar SNI)"
+    pkill -x kded6 2>/dev/null || true
+    sleep 0.3
+  fi
+
+  # Ensure waybar is running (restart if active, start if dead)
   if systemctl --user is-active --quiet waybar.service 2>/dev/null; then
-    # Kill kded6 if running - it claims StatusNotifierWatcher but doesn't implement it properly
-    if pgrep -x kded6 &>/dev/null; then
-      echo "Killing kded6 (conflicts with waybar SNI)"
-      pkill -x kded6 2>/dev/null || true
-      sleep 0.3
-    fi
     echo "Restarting waybar.service (systemd-managed)"
     systemctl --user restart waybar.service
-    # Kill any stray non-systemd waybar instances (keep the service MainPID)
-    MAINPID="$(systemctl --user show -p MainPID --value waybar.service 2>/dev/null || true)"
-    if [ -n "$MAINPID" ] && [ "$MAINPID" != "0" ]; then
-      for pid in $(pgrep -x waybar 2>/dev/null || true); do
-        [ "$pid" = "$MAINPID" ] || kill "$pid" 2>/dev/null || true
-      done
-    fi
-    # Restart tray apps so they re-register with new waybar SNI host
-    sleep 1.5  # Wait for waybar to initialize SNI host
-    for svc in nm-applet blueman-applet nextcloud-client sunshine; do
-      if systemctl --user is-active --quiet "$svc.service" 2>/dev/null; then
-        echo "Restarting $svc.service (re-register tray icon)"
-        systemctl --user restart "$svc.service"
-      fi
-    done
   else
-    echo "Restarting waybar (manually launched)"
-    killall .waybar-wrapped &> /dev/null || true
-    echo "Running waybar"
-    waybar &> /dev/null & disown;
+    echo "Starting waybar.service (was inactive after rebuild)"
+    systemctl --user start waybar.service
   fi
+
+  # Kill any stray non-systemd waybar instances (keep the service MainPID)
+  MAINPID="$(systemctl --user show -p MainPID --value waybar.service 2>/dev/null || true)"
+  if [ -n "$MAINPID" ] && [ "$MAINPID" != "0" ]; then
+    for pid in $(pgrep -x waybar 2>/dev/null || true); do
+      [ "$pid" = "$MAINPID" ] || kill "$pid" 2>/dev/null || true
+    done
+  fi
+
+  # Restart/start tray apps so they re-register with waybar SNI host
+  sleep 1.5  # Wait for waybar to initialize SNI host
+  for svc in nm-applet blueman-applet nextcloud-client sunshine; do
+    if systemctl --user is-active --quiet "$svc.service" 2>/dev/null; then
+      echo "Restarting $svc.service (re-register tray icon)"
+      systemctl --user restart "$svc.service"
+    elif systemctl --user is-enabled --quiet "$svc.service" 2>/dev/null; then
+      echo "Starting $svc.service (was inactive after rebuild)"
+      systemctl --user start "$svc.service"
+    fi
+  done
 fi
 pgrep fnott &> /dev/null && echo "Restarting fnott" && killall fnott && echo "Running fnott" && fnott &> /dev/null & disown;
 pgrep hyprpaper &> /dev/null && echo "Reapplying background via hyprpaper" && killall hyprpaper && echo "Running hyprpaper" && hyprpaper &> /dev/null & disown;

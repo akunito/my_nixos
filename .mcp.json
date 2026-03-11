@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "perplexity": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@perplexity-ai/mcp-server"],
+      "env": {
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+      }
+    },
+    "plane": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["plane-mcp-server", "stdio"],
+      "env": {
+        "PLANE_API_KEY": "${PLANE_API_KEY}",
+        "PLANE_BASE_URL": "${PLANE_BASE_URL}",
+        "PLANE_WORKSPACE_SLUG": "${PLANE_WORKSPACE_SLUG}"
+      }
+    },
+    "grafana": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-grafana", "--transport", "stdio", "--disable-write"],
+      "env": {
+        "GRAFANA_URL": "${GRAFANA_URL}",
+        "GRAFANA_API_KEY": "${GRAFANA_API_KEY}"
+      }
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${POSTGRES_MCP_CONNECTION_STRING}"],
+      "env": {}
+    },
+    "n8n": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "n8n-mcp"],
+      "env": {
+        "N8N_API_KEY": "${N8N_MCP_API_KEY}",
+        "N8N_BASE_URL": "${N8N_MCP_BASE_URL}"
+      }
+    }
+  }
+}

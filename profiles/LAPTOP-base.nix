@@ -145,6 +145,11 @@
         User akunito
         IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
         AddKeysToAgent yes
+
+      # VPS (SSH via Tailscale or WireGuard — VPN-only, non-standard port)
+      Host vps vps-prod 100.64.0.6 172.26.5.155
+        Port 56777
+        ForwardAgent yes
     '';
   };
 }

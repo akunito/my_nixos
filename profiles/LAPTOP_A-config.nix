@@ -30,6 +30,10 @@ in
     fuseAllowOther = false;
     pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
 
+    # GUI askpass: popup password dialog when sudo has no terminal (e.g., Claude Code)
+    sudoAskpassEnable = true;
+    sudoTimestampTimeoutMinutes = 180;
+
     # SSH agent sudo authentication
     # Allows passwordless sudo when connected via SSH with agent forwarding (-A)
     # Local sessions without SSH agent still require password
@@ -50,8 +54,9 @@ in
     ];
     resolvedEnable = false;
 
-    # Firewall - sunshine ports
+    # Firewall - sunshine ports + monitoring
     allowedTCPPorts = [
+      9100 # prometheus workstation exporter
       47984
       47989
       47990
@@ -103,6 +108,7 @@ in
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = "lenovo-thinkpad-t490"; # T580 → T490 (next generation, same family)
+    thinkfanEnable = true; # Active fan curve: quiet at idle, full speed at 80°C
     thunderboltEnable = true; # Enable Thunderbolt dock/device support (TB3 port)
 
     # === Intel GPU & Thermal Power Tuning (T490 = 8th gen Intel UHD 620) ===
@@ -112,7 +118,7 @@ in
 
     # === System Services & Features ===
     sambaEnable = false; # Disable Samba file sharing
-    sunshineEnable = true; # Enable Sunshine game streaming
+    sunshineEnable = false; # Disabled: unstable package broken, stable substitution not working
     wireguardEnable = true; # Enable WireGuard VPN
     nextcloudEnable = true; # Enable Nextcloud client
     appImageEnable = false; # Disable AppImage support (override base)
@@ -129,6 +135,9 @@ in
 
     # === Development Tools & AI ===
     aichatEnable = false; # Disable aichat CLI tool
+
+    # === Monitoring ===
+    prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
 
     # === Other Features ===
     starCitizenModules = false; # Disable Star Citizen optimizations

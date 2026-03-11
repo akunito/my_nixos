@@ -15,26 +15,34 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ## Profiles
 
 - **profiles/DESK-config.nix**: DESK Profile Configuration
-- **profiles/DESK_A-config.nix**: DESK_A Profile Configuration (nixosaga)
+- **profiles/DESK_A-config.nix**: DESK_AGA Profile Configuration (nixosaga)
 - **profiles/DESK_VMDESK-config.nix**: DESK_VMDESK Profile Configuration (nixosdesk)
 - **profiles/DESKold-config.nix**: DESKold Profile Configuration (Backup of DESK with Plasma 6 + ungoogled-chromium)
-- **profiles/LAPTOP_A-config.nix**: LAPTOP_A Profile Configuration (nixosaga)
-- **profiles/LAPTOP_X13-config.nix**: LAPTOP Profile Configuration (nixolaptopaku)
-- **profiles/LAPTOP_YOGA-config.nix**: YOGAAKU Profile Configuration
+- **profiles/KOMI_LXC-base-config.nix**: KOMI_LXC Base Profile Configuration
+- **profiles/KOMI_LXC_database-config.nix**: KOMI_LXC_database Profile Configuration
+- **profiles/KOMI_LXC_mailer-config.nix**: KOMI_LXC_mailer Profile Configuration
+- **profiles/KOMI_LXC_monitoring-config.nix**: KOMI_LXC_monitoring Profile Configuration
+- **profiles/KOMI_LXC_proxy-config.nix**: KOMI_LXC_proxy Profile Configuration
+- **profiles/KOMI_LXC_tailscale-config.nix**: KOMI_LXC_tailscale Profile Configuration
+- **profiles/LAPTOP_A-config.nix**: LAPTOP_AGA Profile Configuration (nixosaga)
+- **profiles/LAPTOP_X13-config.nix**: LAPTOP_X13 Profile Configuration (nixosx13aku)
+- **profiles/LAPTOP_YOGA-config.nix**: LAPTOP_YOGA Profile Configuration (nixosyogaaga)
 - **profiles/LXC-base-config.nix**: LXC Base Profile Configuration
 - **profiles/LXC_HOME-config.nix**: LXC_HOME Profile Configuration
-- **profiles/LXC_database-config.nix**: LXC_database Profile Configuration
-- **profiles/LXC_liftcraftTEST-config.nix**: LXC liftcraftTEST Profile Configuration
-- **profiles/LXC_mailer-config.nix**: LXC mailer Profile Configuration
-- **profiles/LXC_matrix-config.nix**: LXC_matrix Profile Configuration
-- **profiles/LXC_monitoring-config.nix**: LXC_monitoring Profile Configuration
-- **profiles/LXC_plane-config.nix**: LXC Default Profile Configuration
-- **profiles/LXC_portfolioprod-config.nix**: LXC portfolioprod Profile Configuration
-- **profiles/LXC_proxy-config.nix**: LXC_proxy Profile Configuration
 - **profiles/LXC_tailscale-config.nix**: LXC_tailscale Profile Configuration
 - **profiles/MACBOOK-KOMI-config.nix**: MACBOOK-KOMI Configuration
 - **profiles/VMHOME-config.nix**: VMHOME Profile Configuration
+- **profiles/VPS-base-config.nix**: VPS Base Profile Configuration
+- **profiles/VPS_PROD-config.nix**: VPS_PROD Profile Configuration
 - **profiles/WSL-config.nix**: WSL Profile Configuration
+- **profiles/archived/LXC_database-config.nix**: LXC_database Profile Configuration
+- **profiles/archived/LXC_liftcraftTEST-config.nix**: LXC liftcraftTEST Profile Configuration
+- **profiles/archived/LXC_mailer-config.nix**: LXC mailer Profile Configuration
+- **profiles/archived/LXC_matrix-config.nix**: LXC_matrix Profile Configuration
+- **profiles/archived/LXC_monitoring-config.nix**: LXC_monitoring Profile Configuration
+- **profiles/archived/LXC_plane-config.nix**: LXC Default Profile Configuration
+- **profiles/archived/LXC_portfolioprod-config.nix**: LXC portfolioprod Profile Configuration
+- **profiles/archived/LXC_proxy-config.nix**: LXC_proxy Profile Configuration
 
 ## System Modules
 
@@ -47,29 +55,42 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/database-backup.nix**: Database Backup Module *Enabled when:*
    - `lib.mkIf cfg.postgresqlEnable { systemd.services.postgresql-backup = { description = "PostgreSQL Database Daily Backup"; after = [ "postgresql.service" ] ++ lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; wants = lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; requires = [ "postgresql.service" ]; serviceConfig = { Type = "oneshot"; ExecStart = postgresqlBackupScript; User = "root"; Group = "root"; # Security hardening PrivateTmp = true; ProtectSystem = "strict"; ReadWritePaths = [ cfg.location "/var/lib/prometheus-node-exporter" ]; }; }; systemd.timers.postgresql-backup = { description = "PostgreSQL Database Daily Backup Timer"; wantedBy = [ "timers.target" ]; timerConfig = { OnCalendar = cfg.startAt; Persistent = true; RandomizedDelaySec = "5m"; }; }; # Create backup directory systemd.tmpfiles.rules = [ "d ${cfg.location}/postgresql/daily 0750 root root -" ]; }`
    - `cfg.postgresqlEnable && cfg.hourlyEnable`
-   - `lib.mkIf (cfg.mariadbEnable && cfg.hourlyEnable) { systemd.services.mariadb-backup-hourly = { description = "MariaDB Database Hourly Backup"; after = [ "mysql.service" ] ++ lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; wants = lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; requires = [ "mysql.service" ]; serviceConfig = { Type = "oneshot"; ExecStart = mariadbBackupHourlyScript; User = "root"; Group = "root"; # Security hardening PrivateTmp = true; ProtectSystem = "strict"; ReadWritePaths = [ cfg.location "/var/lib/prometheus-node-exporter" ]; }; }; systemd.timers.mariadb-backup-hourly = { description = "MariaDB Database Hourly Backup Timer"; wantedBy = [ "timers.target" ]; timerConfig = { OnCalendar = cfg.hourlySchedule; Persistent = true; RandomizedDelaySec = "2m"; }; }; # Create hourly backup directory systemd.tmpfiles.rules = [ "d ${cfg.location}/mariadb/hourly 0750 root root -" ]; }`
+   - `lib.mkIf (cfg.mariadbEnable && cfg.hourlyEnable) { systemd.services.mariadb-backup-hourly = { description = "MariaDB Database Hourly Backup"; after = [ "mysql.service" ] ++ lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; wants = lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; requires = [ "mysql.service" ]; serviceConfig = { Type = "oneshot"; ExecStart = mariadbBackupHourlyScript; User = "root"; Group = "root"; # Security hardening PrivateTmp = true; ProtectSystem = "strict"; ReadWritePaths = [ cfg.location "/var/lib/prometheus-node-exporter" ]; }; }; systemd.timers.mariadb-backup-hourly = { description = "MariaDB Database Periodic Backup Timer"; wantedBy = [ "timers.target" ]; timerConfig = { OnCalendar = cfg.mariadbHourlySchedule; Persistent = true; RandomizedDelaySec = "2m"; }; }; # Create hourly backup directory systemd.tmpfiles.rules = [ "d ${cfg.location}/mariadb/hourly 0750 root root -" ]; }`
    - `cfg.postgresqlEnable || cfg.mariadbEnable`
 - **system/app/database-secrets.nix**: Database Secrets Module *Enabled when:*
    - `needed for postgres/mysql postStart scripts`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbPlanePassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbLiftcraftPassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMatrixPassword or "") != ""`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMinifluxPassword or "") != ""`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbVaultwardenPassword or "") != ""`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbN8nPassword or "") != ""`
    - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
+   - `(systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != ""`
 - **system/app/docker.nix**: Allow dockerd to be restarted without affecting running container. *Enabled when:* `userSettings.dockerEnable == true`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
    - `systemSettings.gamemodeEnable == true`
    - `systemSettings.gpuType == "amd"`
-- **system/app/grafana.nix**: Grafana & Prometheus Monitoring Stack
+- **system/app/grafana.nix**: Grafana & Prometheus Monitoring Stack *Enabled when:*
+   - `(systemSettings.prometheusBasicAuthHtpasswd or null) != null`
+   - `local access with SSL`
+- **system/app/headscale.nix**: Headscale — Self-hosted Tailscale Coordination Server *Enabled when:*
+   - `systemSettings.headscaleEnable or false`
+   - `ACME challenge`
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:* `systemSettings.homelabDockerEnable or false`
 - **system/app/mariadb.nix**: MariaDB Server Module *Enabled when:*
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
+- **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
+- **system/app/openclaw-matrix-bridge.nix**: OpenClaw Matrix Bridge + Fallback Monitor
+- **system/app/openclaw.nix**: OpenClaw Services
 - **system/app/pgbouncer.nix**: PgBouncer Connection Pooler Module *Enabled when:*
    - `moved from top-level`
    - `systemSettings.postgresqlServerEnable or false`
 - **system/app/portals.nix**: XDG Desktop Portal Configuration
+- **system/app/postfix-relay.nix**: Native Postfix Relay via SMTP2GO *Enabled when:* `systemSettings.postfixRelayEnable or false`
 - **system/app/postgresql.nix**: PostgreSQL Server Module *Enabled when:*
    - `moved from top-level to settings`
    - `systemSettings.prometheusPostgresExporterEnable or false`
@@ -79,17 +100,21 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `tlsTargets != [] || httpTargets != []`
 - **system/app/prometheus-exporters.nix**: Prometheus Exporters Module *Enabled when:*
    - `systemSettings.prometheusExporterEnable or false`
+   - `(systemSettings.prometheusExporterEnable or false) || (systemSettings.grafanaEnable or false)`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
 - **system/app/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
-- **system/app/prometheus-pfsense-backup.nix**: pfSense Backup Monitoring *Enabled when:* `systemSettings.prometheusPfsenseBackupEnable or false`
+- **system/app/prometheus-pfsense-backup.nix**: pfSense Full Backup + Sync + Monitoring *Enabled when:* `systemSettings.prometheusPfsenseBackupEnable or false`
 - **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
 - **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
-- **system/app/prometheus-truenas-backup.nix**: TrueNAS ZFS Replication Backup Monitoring *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
+- **system/app/prometheus-truenas-backup.nix**: TrueNAS Restic Backup Monitoring *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
+- **system/app/prometheus-workstation-exporter.nix**: Prometheus Workstation Exporter Module *Enabled when:* `(systemSettings.prometheusWorkstationExporterEnable or false) && !(systemSettings.prometheusExporterEnable or false)`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
 - **system/app/redis-server.nix**: Redis Server Module *Enabled when:*
    - `allows multiple instances if needed`
    - `systemSettings.prometheusRedisExporterEnable or false`
+- **system/app/restic-backup-truenas.nix**: TrueNAS Offsite Backup — VPS pulls Docker data + configs from TrueNAS *Enabled when:* `systemSettings.truenasResticBackupEnable or false`
+- **system/app/restic-backup-vps.nix**: VPS Restic Backup to TrueNAS via SFTP *Enabled when:* `systemSettings.vpsResticBackupEnable or false`
 - **system/app/samba.nix**: System module: samba.nix
 - **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`
 - **system/app/steam.nix**: /bin/bash compatibility symlink *Enabled when:* `userSettings.steamPackEnable == true`
@@ -101,6 +126,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `config.services.prometheus.exporters.node.enable or false`
    - `${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null`
    - `allow network to stabilize`
+- **system/app/vaultwarden.nix**: Vaultwarden — Self-hosted Bitwarden-compatible password manager *Enabled when:* `systemSettings.vaultwardenEnable or false`
 - **system/app/virtualization.nix**: Virt-manager doc > https://nixos.wiki/wiki/Virt-manager *Enabled when:*
    - `userSettings.virtualizationEnable == true`
    - `userSettings.qemuGuestAddition == true`
@@ -138,6 +164,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.disk5_enabled`
    - `systemSettings.disk6_enabled`
    - `systemSettings.disk7_enabled`
+   - `systemSettings.disk8_enabled`
+- **system/hardware/fingerprint.nix**: Fingerprint reader support (fprintd)
 - **system/hardware/gpu-monitoring.nix**: GPU Monitoring Packages based on GPU type *Enabled when:*
    - `systemSettings.gpuType == "amd"`
    - `systemSettings.gpuType == "intel"`
@@ -147,6 +175,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `better than none for modern NVMe`
    - `same as desktop - good for interactive workloads`
    - `systemSettings.profile == "homelab"`
+- **system/hardware/joycond.nix**: Enable joycond daemon: combines Joy-Con pairs into a single virtual gamepad
 - **system/hardware/kernel.nix**: System module: kernel.nix
 - **system/hardware/keychron.nix**: Grant access to Keychron keyboards for the Keychron Launcher / VIA
 - **system/hardware/laptop-power-tuning.nix**: Laptop power tuning — idle power reduction
@@ -156,7 +185,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `lib.listToAttrs (map (iface: { name = iface; value = { useDHCP = false; }; }) interfaces) // { # Configure bond0 IP addressing bond0 = if useDhcp then { useDHCP = true; } else if staticIp != null then { useDHCP = false; ipv4.addresses = [{ address = lib.head (lib.splitString "/" staticIp.address); prefixLength = lib.toInt (lib.last (lib.splitString "/" staticIp.address)); }]; } else { useDHCP = true; # Fallback to DHCP }; }`
    - `useNetworkd && staticIp != null && !useDhcp`
    - `{ "NetworkManager/system-connections/bond0.nmconnection" = { text = nmBondConnection; mode = "0600"; }; } // lib.listToAttrs (map (iface: { name = "NetworkManager/system-connections/bond0-slave-${iface}.nmconnection"; value = { text = nmSlaveConnection iface; mode = "0600"; }; }) interfaces) // lib.listToAttrs (map (vlan: { name = "NetworkManager/system-connections/bond0-vlan${toString vlan.id}.nmconnection"; value = { text = nmVlanConnection vlan; mode = "0600"; }; }) vlans)`
-   - `lib.stringAfter [ "etc" ] '' if systemctl is-active --quiet NetworkManager; then ${pkgs.networkmanager}/bin/nmcli connection reload || true fi ''`
+   - `lib.stringAfter [ "etc" ] '' if ${pkgs.systemd}/bin/systemctl is-active --quiet NetworkManager; then ${pkgs.networkmanager}/bin/nmcli connection reload || true fi ''`
    - `ringBufferSize != null`
 - **system/hardware/nfs_client.nix**: You need to install pkgs.nfs-utils *Enabled when:* `systemSettings.nfsClientEnable == true`
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
@@ -177,7 +206,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.sharePrinter == true`
 - **system/hardware/suspend-debug.nix**: Suspend/resume debug instrumentation *Enabled when:* `systemSettings.suspendDebugEnable or false`
 - **system/hardware/systemd.nix**: Journald limits - prevent disk thrashing and limit log size
-- **system/hardware/thinkpad.nix**: Lenovo Thinkpad hardware optimizations via nixos-hardware
+- **system/hardware/thinkpad.nix**: Lenovo Thinkpad hardware optimizations via nixos-hardware *Enabled when:*
+   - `set above`
+   - `systemSettings.thinkpadEnable && (systemSettings.thinkfanEnable or false)`
 - **system/hardware/thunderbolt.nix**: Thunderbolt support: bolt daemon, auto-authorization, and diagnostic tools *Enabled when:* `systemSettings.thunderboltEnable or false`
 - **system/hardware/time.nix**: System module: time.nix
 - **system/hardware/xbox.nix**: NOTE you might need to add xpad as Kernel Module on your flake.nix
@@ -193,13 +224,16 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Security
 
-- **system/security/acme.nix**: ACME Certificate Management (Let's Encrypt) *Enabled when:* `systemSettings.acmeEnable or false`
+- **system/security/acme.nix**: ACME Certificate Management (Let's Encrypt) *Enabled when:*
+   - `systemSettings.acmeEnable or false`
+   - `systemSettings.acmeCopyToSharedCerts or true`
 - **system/security/automount.nix**: System module: automount.nix
 - **system/security/autoupgrade.nix**: ====================== Auto System Update ====================== *Enabled when:*
    - `systemSettings.autoSystemUpdateEnable == true`
    - `systemSettings.notificationOnFailureEnable or false`
    - `systemSettings.autoUserUpdateEnable == true`
 - **system/security/blocklist.nix**: networking.extraHosts = ''
+- **system/security/egress-audit.nix**: Egress Monitoring — Daily Outbound Connection Audit (SEC-AUDIT-04) *Enabled when:* `systemSettings.egressAuditEnable or false`
 - **system/security/fail2ban.nix**: Global settings
 - **system/security/firejail.nix**: prismlauncher = {
 - **system/security/firewall.nix**: Firewall settings
@@ -211,15 +245,15 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.resticWrapper == true`
    - `systemSettings.homeBackupEnable == true`
    - `systemSettings.remoteBackupEnable == true`
-   - `systemSettings.vpsBackupEnable == true`
    - `systemSettings.backupMonitoringEnable or false`
-   - `systemSettings.pfsenseBackupEnable or false`
 - **system/security/sshd.nix**: Enable incoming ssh
 - **system/security/sudo.nix**: groups = [ "wheel" ]; *Enabled when:*
    - `systemSettings.sudoNOPASSWD == true`
    - `systemSettings.sshAgentSudoEnable or false`
+   - `systemSettings.sudoAskpassEnable or false`
    - `systemSettings.wrappSudoToDoas == true`
 - **system/security/update-failure-notification.nix**: Email notification service for auto-update failures *Enabled when:* `systemSettings.notificationOnFailureEnable or false`
+- **system/security/wireguard-server.nix**: WireGuard Server — Point-to-Point Backup Tunnel (VPS <-> pfSense) *Enabled when:* `systemSettings.wireguardServerEnable or false`
 
 ### Shell
 
@@ -274,6 +308,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/qute-containers.nix**: User module: qute-containers.nix
 - **user/app/browser/qutebrowser.nix**: bindings from doom emacs
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
+- **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
 - **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:*
    - `builtins.length postgresCredentials > 0`
    - `builtins.length mariadbCredentials > 0`
@@ -283,7 +318,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/doom-emacs/doom.nix**: This block from https://github.com/znewman01/dotfiles/blob/be9f3a24c517a4ff345f213bf1cf7633713c9278/emacs/default.nix#L12-L34
 - **user/app/file-manager/file-manager.nix**: File manager configuration module
 - **user/app/flatpak/flatpak.nix**: services.flatpak.enable = true;
-- **user/app/games/games.nix**: Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery *Enabled when:* `userSettings.protongamesEnable == true`
+- **user/app/games/games-heavy.nix**: Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery *Enabled when:* `userSettings.protongamesEnable or false`
+- **user/app/games/games-light.nix**: Handheld consoles *Enabled when:* `userSettings.gamesLightEnable or false`
+- **user/app/games/games.nix**: Gaming module dispatcher *Enabled when:* `gamesLightEnable`
 - **user/app/gaming/mangohud.nix**: MangoHud Configuration
 - **user/app/git/git.nix**: https://nixos.wiki/wiki/Git
 - **user/app/hammerspoon/hammerspoon.nix**: Hammerspoon Configuration Module for macOS *Enabled when:* `systemSettings.osType == "darwin" && userSettings.hammerspoonEnable`
@@ -292,6 +329,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
 - **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
+- **user/app/ssh-hosts.nix**: Shared SSH host definitions for workstations
 - **user/app/swaybgplus/swaybgplus.nix**: ============================================================================ *Enabled when:* `systemSettings.swaybgPlusEnable or false`
 - **user/app/swww/swww.nix**: !/bin/sh *Enabled when:*
    - `wallpaper backend for SwayFX`
@@ -306,6 +344,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/terminal/tmux.nix**: Clipboard command differs between macOS (pbcopy) and Linux (wl-copy) *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/terminal/xterm.nix**: XTerm configuration via X resources *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
+- **user/app/voxtype/voxtype.nix**: Voxtype - Local voice dictation for Sway *Enabled when:* `userSettings.wm == "sway"`
 - **user/app/waypaper/waypaper.nix**: Watch for hot-plugged monitors and trigger wallpaper restore. *Enabled when:* `swww/swaybg`
 
 ### Hardware
@@ -390,8 +429,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/README.md**: NixOS infrastructure documentation specific to akunito's environment.
 - **docs/akunito/hardware.md**: Complete guide to hardware-specific configurations and optimizations.
 - **docs/akunito/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
-- **docs/akunito/lxc-deployment.md**: Centralized deployment script for managing multiple LXC containers
-- **docs/akunito/proxmox-lxc.md**: Guide to managing Proxmox LXC containers using a Base + Override pattern. Explains how to create and install new container profiles while keeping configuration DRY.
 - **docs/akunito/security.md**: Complete guide to security configurations and features in this NixOS setup.
 
 ### Akunito / Gaming
@@ -407,25 +444,48 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Akunito / Infrastructure
 
-- **docs/akunito/infrastructure/INFRASTRUCTURE.md**: Public infrastructure overview with architecture diagram and component descriptions
+- **docs/akunito/infrastructure/INFRASTRUCTURE.md**: Infrastructure overview: VPS + TrueNAS + pfSense architecture
 - **docs/akunito/infrastructure/INFRASTRUCTURE_INTERNAL.md**: Complete internal infrastructure documentation with sensitive details (ENCRYPTED)
+- **docs/akunito/infrastructure/archived/audits/migration-plan-audit-2026-02-19.md**: Comprehensive audit of Proxmox-to-VPS+TrueNAS migration plan
+- **docs/akunito/infrastructure/archived/audits/migration-plan-network-security-audit-2026-02-19.md**: Network architecture, VPS hardening, and Nextcloud security audit of the Proxmox-to-VPS migration plan
+- **docs/akunito/infrastructure/archived/audits/truenas-audit-2026-02-12.md**: Performance, reliability, and configuration audit of TrueNAS storage server
+- **docs/akunito/infrastructure/archived/migration/PORTFOLIO_SUMMARY.md**: Portfolio-ready migration summary for interviews
+- **docs/akunito/infrastructure/archived/migration/README.md**: VPS migration plan and execution docs
+- **docs/akunito/infrastructure/archived/migration/phase-0-preparation.md**: Migration preparation, LXC_HOME to TrueNAS, DB fallback
+- **docs/akunito/infrastructure/archived/migration/phase-1-vps-base.md**: VPS base setup: NixOS, LUKS, Tailscale, WireGuard
+- **docs/akunito/infrastructure/archived/migration/phase-2-foundation.md**: VPS foundation: databases, proxy, mailer, monitoring
+- **docs/akunito/infrastructure/archived/migration/phase-3-applications.md**: Application migration: Plane, Portfolio, Matrix, Nextcloud
+- **docs/akunito/infrastructure/archived/migration/phase-4-cutover.md**: DNS cutover, TrueNAS NPM/cloudflared, LXC decommission
+- **docs/akunito/infrastructure/archived/migration/phase-5-8-completion.md**: TrueNAS sleep, backups, hardening, decommission
+- **docs/akunito/infrastructure/archived/migration/post-migration-tasks.md**: Post-migration documentation and operational updates
+- **docs/akunito/infrastructure/archived/migration/truenas-migration-complete.md**: Successfully migrated TrueNAS SCALE from failing Patriot Burst Elite 120GB SSD to mirrored Samsung 970 EVO Plus NVMe drives.
+- **docs/akunito/infrastructure/audits/docker-security-audit-2026-03-06.md**: VPS Docker container security audit — network isolation, database access, secrets, hardening
 - **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
-- **docs/akunito/infrastructure/audits/truenas-audit-2026-02-12.md**: Performance, reliability, and configuration audit of TrueNAS storage server
-- **docs/akunito/infrastructure/docker-projects.md**: Docker-based project conventions - wrapper scripts, config locations, restart patterns
-- **docs/akunito/infrastructure/services/database-redis.md**: Centralized PostgreSQL and Redis services on LXC_database
-- **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS
-- **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma monitoring - local homelab and public VPS status pages with API integration
-- **docs/akunito/infrastructure/services/liftcraft.md**: LiftCraft (LeftyWorkout) - Training plan management Rails application
-- **docs/akunito/infrastructure/services/matrix.md**: Self-hosted Matrix server with Element web client and Claude bot integration.
+- **docs/akunito/infrastructure/audits/truenas-docker-security-audit-2026-03-06.md**: TrueNAS Docker rootless migration and security hardening audit
+- **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
+- **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS
+- **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: consolidated monitoring on VPS
+- **docs/akunito/infrastructure/services/matrix.md**: Matrix Synapse + Element on VPS
 - **docs/akunito/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
-- **docs/akunito/infrastructure/services/monitoring-stack.md**: Monitoring stack - Prometheus, Grafana, exporters, alerting
+- **docs/akunito/infrastructure/services/monitoring-stack.md**: Monitoring: Prometheus + Grafana on VPS
 - **docs/akunito/infrastructure/services/network-switching.md**: Physical switching layer documentation - USW Aggregation, USW-24-G2, 10GbE LACP bonds, ARP flux
+- **docs/akunito/infrastructure/services/openclaw/README.md**: OpenClaw AI personal assistant: architecture, integrations, and VPS deployment
+- **docs/akunito/infrastructure/services/openclaw/architecture.md**: OpenClaw gateway architecture, deployment modes, and filesystem layout
+- **docs/akunito/infrastructure/services/openclaw/audio-tts.md**: OpenClaw voice transcription, text-to-speech, and voice wake
+- **docs/akunito/infrastructure/services/openclaw/automation.md**: OpenClaw automation: cron jobs, webhooks, hooks, and Gmail PubSub
+- **docs/akunito/infrastructure/services/openclaw/channels.md**: OpenClaw messaging channel integrations: 23+ platforms, configuration, and policies
+- **docs/akunito/infrastructure/services/openclaw/docker-deployment.md**: OpenClaw Docker deployment for VPS_PROD with rootless Docker
+- **docs/akunito/infrastructure/services/openclaw/finance-system.md**: Vaultkeeper finance system: Revolut import, multi-currency budgeting, salary-cycle reports
+- **docs/akunito/infrastructure/services/openclaw/integrations.md**: OpenClaw integrations with existing VPS services: Plane, Matrix, n8n, Calendar, Postfix
+- **docs/akunito/infrastructure/services/openclaw/security.md**: OpenClaw security: authentication, sandboxing, secrets, and hardening
+- **docs/akunito/infrastructure/services/openclaw/skills-plugins.md**: OpenClaw skills, MCP servers, plugins, and the community ecosystem
+- **docs/akunito/infrastructure/services/openclaw/tools.md**: OpenClaw tools: browser automation, exec, Lobster workflows, sub-agents
 - **docs/akunito/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
-- **docs/akunito/infrastructure/services/proxy-stack.md**: Proxy stack - NPM, cloudflared, ACME certificates
-- **docs/akunito/infrastructure/services/tailscale-headscale.md**: Tailscale mesh VPN with self-hosted Headscale coordination server
+- **docs/akunito/infrastructure/services/proxy-stack.md**: Proxy stack: NPM on TrueNAS, cloudflared on VPS and TrueNAS
+- **docs/akunito/infrastructure/services/tailscale-headscale.md**: Headscale on VPS, Tailscale mesh topology
+- **docs/akunito/infrastructure/services/truenas-services.md**: TrueNAS Docker services: media, NPM, monitoring
 - **docs/akunito/infrastructure/services/truenas.md**: TrueNAS storage server operations, monitoring, and maintenance
-- **docs/akunito/infrastructure/services/vps-wireguard.md**: VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring
-- **docs/akunito/infrastructure/truenas-migration-complete.md**: Successfully migrated TrueNAS SCALE from failing Patriot Burst Elite 120GB SSD to mirrored Samsung 970 EVO Plus NVMe drives.
+- **docs/akunito/infrastructure/services/vps-services.md**: VPS services: Docker containers and NixOS native services
 
 ### Akunito / Keybindings
 
@@ -438,44 +498,73 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/system-modules/hibernate.md**: Hibernation with LUKS-encrypted swap for laptops and desktops
 - **docs/akunito/system-modules/network-bonding.md**: Network bonding (LACP link aggregation) for increased bandwidth and failover
 
+### Archived
+
+- **docs/archived/configuration.md**: Complete guide to understanding and customizing the NixOS configuration system.
+- **docs/archived/grafana-dashboard-reference.md**: Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures.
+- **docs/archived/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
+- **docs/archived/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
+- **docs/archived/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
+- **docs/archived/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.
+
+### Archived / Old-Root-Docs
+
+- **docs/archived/old-root-docs/BACKUP_DEPLOYMENT_STATUS.md**: **Last Updated:** 2026-02-20 CET
+- **docs/archived/old-root-docs/install.md**: > **Note**: This document contains historical installation notes from the original LibrePhoenix repository. Some sections are outdated. For current, up-to-date installation instructions, see [Insta...
+- **docs/archived/old-root-docs/kernelModules.md**: Certainly! Let\'s dive deeper into the comparison of the different CPU
+
 ### Future
 
 - **docs/future/README.md**: This directory contains temporary documentation for planning, analysis, design ideas, recommendations, bug fixes, and other topics that are under consideration and may be deleted after implementati...
 - **docs/future/syncthing-nextcloud-integration.md**: The Syncthing to Nextcloud integration was not working. Files synced from phones via Syncthing were not appearing in Nextcloud's web interface or mobile apps.
-- **docs/future/terraform-proxmox-integration-plan.md**: **Created:** 2026-01-29
 - **docs/future/waybar-drawer-and-idle-toggle.md**: Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX.
 
 ### Future / Archived
 
-- **docs/future/archived/aga-to-laptop-base-migration-plan.md**: This document outlines the plan to migrate AGA from a standalone profile under Personal Profile to inherit from LAPTOP-base.nix, following the same pattern as LAPTOP_X13 and LAPTOP_YOGA.
+- **docs/future/archived/INFRASTRUCTURE-lxc-era.md**: Public infrastructure overview with architecture diagram and component descriptions
+- **docs/future/archived/aga-to-laptop-base-migration-plan.md**: This document outlines the plan to migrate AGA from a standalone profile under Personal Profile to inherit from LAPTOP-base.nix, following the same pattern as LAPTOP_L15 and LAPTOP_YOGAAKU.
 - **docs/future/archived/agadesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate AGADESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as LAPTOP profiles inherit from LAPTO...
+- **docs/future/archived/database-redis-lxc.md**: Centralized PostgreSQL and Redis services on LXC_database
 - **docs/future/archived/debug-instrumentation-analysis.md**: **Date**: 2026-01-XX
 - **docs/future/archived/debug-instrumentation-removal-plan.md**: **Date**: 2026-01-XX
 - **docs/future/archived/desk-to-laptop-migration-improved.md**: **Status: IMPLEMENTED** (2026-01-28)
-- **docs/future/archived/desk-vs-laptop-packages.md**: Complete package and feature comparison between DESK and LAPTOP_X13 profiles
+- **docs/future/archived/desk-vs-laptop-packages.md**: Complete package and feature comparison between DESK and LAPTOP_L15 profiles
+- **docs/future/archived/docker-projects-lxc.md**: Docker-based project conventions - wrapper scripts, config locations, restart patterns
 - **docs/future/archived/fix-home-manager-deprecated-install-warning.md**: During home-manager activation, you see this warning:
 - **docs/future/archived/fix-mnt-ext-mount-error.md**: The error occurs during NixOS configuration switch when systemd tries to stop `mnt-EXT.mount` from the previous generation, but the unit doesn't exist in the new generation (because we disabled dis...
 - **docs/future/archived/flake-refactoring-migration.md**: The flake profile refactoring has been successfully implemented to eliminate code duplication across multiple `flake.*.nix` files. The new structure reduces each profile file from ~750 lines to ~30...
 - **docs/future/archived/flake-scalability-analysis.md**: **Date**: 2025-01-XX
+- **docs/future/archived/homelab-stack-lxc.md**: Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS
 - **docs/future/archived/improvements-analysis.md**: **Date**: 2025-01-XX
 - **docs/future/archived/improvements-implemented.md**: **Date**: 2025-01-XX
 - **docs/future/archived/improvements-summary.md**: **Date**: 2025-01-XX
 - **docs/future/archived/incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08.md**: Waybar delayed 2–4 minutes after fast relog in Sway due to xdg-desktop-portal-gtk failures + systemd start-limit lockout; fixed via portal-gtk drop-in (UnsetEnvironment=DISPLAY + no start-limit + restart).
+- **docs/future/archived/kuma-lxc.md**: Uptime Kuma monitoring - local homelab and public VPS status pages with API integration
+- **docs/future/archived/liftcraft-lxc.md**: LiftCraft (LeftyWorkout) - Training plan management Rails application
+- **docs/future/archived/lxc-deployment.md**: Centralized deployment script for managing multiple LXC containers
 - **docs/future/archived/lxc-shell-improvements-implementation.md**: **Date:** 2026-01-29
 - **docs/future/archived/lxc-shell-improvements.md**: **Created:** 2026-01-29
+- **docs/future/archived/matrix-lxc.md**: Self-hosted Matrix server with Element web client and Claude bot integration.
 - **docs/future/archived/migration-verification-results.md**: **Date**: 2025-01-02
+- **docs/future/archived/monitoring-stack-lxc.md**: Monitoring stack - Prometheus, Grafana, exporters, alerting
 - **docs/future/archived/phoenix-to-aku-rename-plan.md**: This document outlines the plan to replace all "phoenix" command references with "aku" throughout the dotfiles repository. The rename affects 33 files with 128 total occurrences.
 - **docs/future/archived/profile-comparison-desk-laptop-analysis.md**: This document provides a comprehensive analysis of the differences between three key profiles in the NixOS configuration hierarchy:
 - **docs/future/archived/profile-migration-status.md**: **Date**: 2025-01-02
+- **docs/future/archived/proxmox-lxc.md**: Guide to managing Proxmox LXC containers using a Base + Override pattern. Explains how to create and install new container profiles while keeping configuration DRY.
+- **docs/future/archived/proxy-stack-lxc.md**: Proxy stack - NPM, cloudflared, ACME certificates
 - **docs/future/archived/router-drift-audit-2026-01-08.md**: Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system).
-- **docs/future/archived/slow-rebuild-investigation.md**: NixOS rebuild via `install.sh` is extremely slow on LAPTOP_X13.
+- **docs/future/archived/slow-rebuild-investigation.md**: NixOS rebuild via `install.sh` is extremely slow on LAPTOP_L15.
 - **docs/future/archived/sov-crash-analysis.md**: **Date**: 2026-01-07
 - **docs/future/archived/sov-dependency-analysis.md**: **Date**: 2026-01-07
-- **docs/future/archived/stylix-verification-and-fix.md**: Verified that **all Stylix configurations are properly controlled by the `stylixEnable` flag**. Found one issue: **DESK_A** should disable Stylix but currently inherits it enabled from DESK.
+- **docs/future/archived/stylix-verification-and-fix.md**: Verified that **all Stylix configurations are properly controlled by the `stylixEnable` flag**. Found one issue: **DESK_AGA** should disable Stylix but currently inherits it enabled from DESK.
 - **docs/future/archived/sway-daemon-relog-notes-2026-01-08.md**: This document captures **runtime observations** and **log evidence** from debugging the SwayFX daemon integration system on **NixOS**.
-- **docs/future/archived/vmdesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate VMDESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as DESK_A.
+- **docs/future/archived/tailscale-headscale-lxc.md**: Tailscale mesh VPN with self-hosted Headscale coordination server
+- **docs/future/archived/terraform-proxmox-integration-plan.md**: **Created:** 2026-01-29
+- **docs/future/archived/ubuntu-node-exporter.md**: This guide documents how to install and configure Prometheus Node Exporter on Ubuntu LXC containers (like cloudflared at 192.168.8.102) for monitoring with the homelab Prometheus/Grafana stack.
+- **docs/future/archived/vmdesk-to-desk-inheritance-plan.md**: This document outlines the plan to migrate VMDESK from a standalone profile under Personal Profile to inherit from DESK-config.nix, following the same pattern as DESK_AGA.
 - **docs/future/archived/vmhome-migration-test.md**: **Date**: 2025-01-XX
 - **docs/future/archived/vmhome-to-lxc-migration-plan.md**: Migrate the VMHOME VM to an LXC container (`LXC_HOME`) while preserving all functionality (Docker, NFS, services) and optimizing for LXC. Must not impact existing `LXC*-config.nix` profiles.
+- **docs/future/archived/vps-wireguard-hetzner.md**: VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring
 - **docs/future/archived/waybar-sov-debug-analysis.md**: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).
 
 ### Komi
@@ -486,19 +575,27 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/komi/macos-installation.md**: This guide covers installing and configuring this dotfiles repository on macOS using nix-darwin and Home Manager.
 - **docs/komi/macos-komi-migration.md**: This guide helps you migrate from your current ko-mi/macos-setup to the new Nix-managed dotfiles. You can use Claude Code to help with any step.
 
-- **docs/00_INDEX.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
+### Komi / Infrastructure
+
+- **docs/komi/infrastructure/README.md**: Index of all Komi infrastructure documentation
+- **docs/komi/infrastructure/komi-cloudflare-guide.md**: Domain purchase, Cloudflare setup, tunnel creation, and DNS configuration
+- **docs/komi/infrastructure/komi-database-setup.md**: PostgreSQL and Redis setup guide for Komi's database container
+- **docs/komi/infrastructure/komi-headscale-setup.md**: VPS headscale deployment and client registration for Komi
+- **docs/komi/infrastructure/komi-lxc-deployment-plan.md**: Full deployment plan for Komi's LXC infrastructure
+- **docs/komi/infrastructure/komi-lxc-overview.md**: Master overview of Komi's LXC infrastructure
+- **docs/komi/infrastructure/komi-mailer-setup.md**: SMTP2GO relay and Uptime Kuma setup for Komi
+- **docs/komi/infrastructure/komi-monitoring-setup.md**: Grafana and Prometheus setup for Komi's monitoring container
+- **docs/komi/infrastructure/komi-proxy-setup.md**: Cloudflare tunnel, NPM, and ACME certificate setup for Komi
+
 - **docs/00_ROUTER.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/01_CATALOG.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
-- **docs/agent-context.md**: How this repo manages AI agent context (Router/Catalog + Cursor rules + AGENTS.md + Claude Code) and a reusable template for other projects.
-- **docs/configuration.md**: Complete guide to understanding and customizing the NixOS configuration system.
-- **docs/installation.md**: Complete guide for installing and setting up this NixOS configuration repository.
-- **docs/maintenance.md**: Complete guide to maintaining your NixOS configuration and using the provided scripts.
+- **docs/agent-context.md**: How AI agents retrieve context in this repo (Router/Catalog protocol, index regeneration, key files).
+- **docs/daily-usage.md**: Daily aku commands, common operations, backup overview, maintenance, and script reference.
+- **docs/getting-started.md**: Installation, profile selection, configuration structure, and troubleshooting for new users.
 - **docs/multi-user-workflow.md**: Multi-user branch management workflow for akunito (main) and ko-mi (komi)
-- **docs/navigation.md**: User guide for navigating this repository's documentation using the Router and Catalog system.
 - **docs/nix-quote-escaping.md**: Guide to properly escaping quotes and special characters in Nix strings to avoid common syntax errors.
 - **docs/patches.md**: Guide to understanding and using Nixpkgs patches in this configuration.
 - **docs/profile-feature-flags.md**: Guide to creating and using feature flags for profile-specific module enabling. Explains the pattern of setting defaults to false and enabling features only in specific profiles.
-- **docs/profiles.md**: Guide to understanding and using system profiles in this NixOS configuration.
 - **docs/themes.md**: Complete guide to the theming system and available themes.
 
 ### Scripts
@@ -522,10 +619,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Setup
 
-- **docs/setup/claude-code-setup.md**: Claude Code CLI configuration guide — permissions, hooks, and MCP servers
-- **docs/setup/grafana-dashboard-reference.md**: Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures.
+- **docs/setup/claude-code-setup.md**: Claude Code CLI configuration guide — security, permissions, hooks, MCP servers, and declarative sync
 - **docs/setup/grafana-dashboards-alerting.md**: This guide documents how to configure Grafana dashboards and alerting for the homelab monitoring stack.
-- **docs/setup/ubuntu-node-exporter.md**: This guide documents how to install and configure Prometheus Node Exporter on Ubuntu LXC containers (like cloudflared at 192.168.8.102) for monitoring with the homelab Prometheus/Grafana stack.
+- **docs/setup/plane-integration.md**: Plane project management MCP integration for Claude Code workflows
 
 ### System-Modules
 

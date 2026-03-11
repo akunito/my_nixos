@@ -1,115 +1,159 @@
 # Gather Database Credentials
 
-Skill for gathering database credentials from all application containers and centralizing them in secrets/domains.nix.
+Skill for verifying database credentials on VPS_PROD match the centralized secrets in secrets/domains.nix.
 
 ## Purpose
 
 Use this skill to:
-- Extract PostgreSQL, MariaDB, and Redis credentials from all LXC containers
-- Identify current database users, passwords, and connection strings
-- Compare with centralized secrets/domains.nix
-- Prepare for database migrations
+- Verify deployed database passwords on VPS match secrets/domains.nix
+- Check PostgreSQL, MariaDB, and Redis user accounts and connectivity
+- Audit database access and connection strings
+- Troubleshoot authentication failures after deployment
 
 ---
 
-## Credential Sources
+## Architecture Overview
 
-### PostgreSQL Databases
+All databases run as **NixOS native services** on VPS_PROD (not Docker containers).
 
-| Container | Service | SSH Target | Config Location |
-|-----------|---------|------------|-----------------|
-| LXC_plane | Plane | 192.168.8.86 | ~/PLANE/.env |
-| LXC_liftcraftTEST | LiftCraft | 192.168.8.87 | ~/leftyworkout_TEST/.env.prod |
+| Service | Host | Port | Description |
+|---------|------|------|-------------|
+| PostgreSQL | 127.0.0.1 | 5432 | Primary relational database |
+| MariaDB | 127.0.0.1 | 3306 | Nextcloud database |
+| Redis | 127.0.0.1 | 6379 | Caching and session store |
+| PgBouncer | 127.0.0.1 | 6432 | PostgreSQL connection pooler |
 
-### MariaDB Databases
-
-| Container | Service | SSH Target | Config Location |
-|-----------|---------|------------|-----------------|
-| LXC_HOME | Nextcloud | 192.168.8.80 | Docker container env (inspect) |
-
-### Redis/Valkey
-
-| Container | Service | SSH Target | Config Location |
-|-----------|---------|------------|-----------------|
-| LXC_plane | Plane (Valkey) | 192.168.8.86 | ~/PLANE/docker-compose.yml |
-| LXC_HOME | Nextcloud (Redis) | 192.168.8.80 | ~/.homelab/homelab/docker-compose.yml |
+**SSH Target**: `ssh -A -p 56777 akunito@100.64.0.6`
 
 ---
 
-## Gather Commands
+## Database Inventory
 
-### 1. LiftCraft PostgreSQL (LXC_liftcraftTEST)
+### PostgreSQL Databases (VPS localhost:5432)
 
-```bash
-# Get database credentials
-ssh -A akunito@192.168.8.87 "grep -E '^(POSTGRES_|DB_|DATABASE_)' ~/leftyworkout_TEST/.env.prod 2>/dev/null || grep -E '^(POSTGRES_|DB_|DATABASE_)' ~/leftyworkout_TEST/.env"
-```
+| Database | User | Service | Password File |
+|----------|------|---------|---------------|
+| plane | plane | Plane project management | /etc/secrets/db-plane-password |
+| rails_database_prod | liftcraft | LiftCraft fitness app | /etc/secrets/db-liftcraft-password |
+| nextcloud | nextcloud | Nextcloud (via PgBouncer or direct) | /etc/secrets/db-nextcloud-password |
+| matrix | matrix | Matrix Synapse homeserver | /etc/secrets/db-matrix-password |
+| freshrss | freshrss | FreshRSS feed reader | /etc/secrets/db-freshrss-password |
 
-Expected format:
-```
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=<password>
-POSTGRES_DB=rails_database_prod
-```
+### MariaDB Databases (VPS localhost:3306)
 
-### 2. Plane PostgreSQL (LXC_plane)
+| Database | User | Service | Password File |
+|----------|------|---------|---------------|
+| nextcloud | nextcloud | Nextcloud (legacy/alternate) | /etc/secrets/db-nextcloud-password |
 
-```bash
-# Get database credentials
-ssh -A akunito@192.168.8.86 "grep -E '^(POSTGRES_|PGUSER_SUPERUSER_PASSWORD)' ~/PLANE/.env"
-```
+### Redis Databases (VPS localhost:6379)
 
-Expected format:
-```
-POSTGRES_USER=plane
-POSTGRES_PASSWORD=<password>
-POSTGRES_DB=plane
-```
+| DB | Service | Notes |
+|----|---------|-------|
+| db0 | Plane | Plane cache |
+| db1 | Nextcloud | Nextcloud session/cache |
+| db2 | LiftCraft | Sidekiq job queue |
+| db3 | FreshRSS | FreshRSS cache |
+| db4 | Matrix Synapse | Synapse replication/cache |
 
-### 3. Nextcloud MariaDB (LXC_HOME)
+---
 
-```bash
-# Get password from running container (most reliable)
-ssh -A akunito@192.168.8.80 "docker inspect nextcloud-db 2>/dev/null | grep -E 'MYSQL_ROOT_PASSWORD|MYSQL_PASSWORD' | head -3"
-```
+## Verification Commands
 
-Expected format:
-```
-"MYSQL_ROOT_PASSWORD=<root_password>",
-"MYSQL_PASSWORD=<password>",
-```
-
-### 4. Redis/Valkey Config
+### 1. Check PostgreSQL Users and Databases
 
 ```bash
-# Plane Valkey (check for password)
-ssh -A akunito@192.168.8.86 "grep -i 'redis' ~/PLANE/.env ~/PLANE/docker-compose.yml | head -20"
+# List all PostgreSQL users
+ssh -A -p 56777 akunito@100.64.0.6 "sudo -u postgres psql -c '\du'"
 
-# Nextcloud Redis (check for password)
-ssh -A akunito@192.168.8.80 "grep -A5 'nextcloud-redis' ~/.homelab/homelab/docker-compose.yml"
+# List all databases
+ssh -A -p 56777 akunito@100.64.0.6 "sudo -u postgres psql -c '\l'"
+```
+
+Expected users: postgres, plane, liftcraft, nextcloud, matrix, freshrss, pgbouncer
+
+### 2. Test PostgreSQL Passwords
+
+```bash
+# Test plane user
+ssh -A -p 56777 akunito@100.64.0.6 "PGPASSWORD=\$(sudo cat /etc/secrets/db-plane-password) psql -h 127.0.0.1 -U plane -d plane -c '\conninfo'"
+
+# Test liftcraft user
+ssh -A -p 56777 akunito@100.64.0.6 "PGPASSWORD=\$(sudo cat /etc/secrets/db-liftcraft-password) psql -h 127.0.0.1 -U liftcraft -d rails_database_prod -c '\conninfo'"
+
+# Test matrix user
+ssh -A -p 56777 akunito@100.64.0.6 "PGPASSWORD=\$(sudo cat /etc/secrets/db-matrix-password) psql -h 127.0.0.1 -U matrix -d matrix -c '\conninfo'"
+
+# Test nextcloud user
+ssh -A -p 56777 akunito@100.64.0.6 "PGPASSWORD=\$(sudo cat /etc/secrets/db-nextcloud-password) psql -h 127.0.0.1 -U nextcloud -d nextcloud -c '\conninfo'"
+
+# Test freshrss user
+ssh -A -p 56777 akunito@100.64.0.6 "PGPASSWORD=\$(sudo cat /etc/secrets/db-freshrss-password) psql -h 127.0.0.1 -U freshrss -d freshrss -c '\conninfo'"
+```
+
+### 3. Check MariaDB Users
+
+```bash
+ssh -A -p 56777 akunito@100.64.0.6 "sudo mysql -e 'SELECT User, Host FROM mysql.user;'"
+```
+
+### 4. Test MariaDB Password
+
+```bash
+ssh -A -p 56777 akunito@100.64.0.6 "mysql -h 127.0.0.1 -u nextcloud -p\$(sudo cat /etc/secrets/db-nextcloud-password) -e 'SELECT 1'"
+```
+
+### 5. Check Redis Auth
+
+```bash
+# Test Redis authentication
+ssh -A -p 56777 akunito@100.64.0.6 "redis-cli -a \$(sudo cat /etc/secrets/redis-password) ping"
+
+# Check all Redis database sizes
+ssh -A -p 56777 akunito@100.64.0.6 "redis-cli -a \$(sudo cat /etc/secrets/redis-password) INFO keyspace"
+```
+
+### 6. Check PgBouncer
+
+```bash
+# Test PgBouncer connectivity
+ssh -A -p 56777 akunito@100.64.0.6 "PGPASSWORD=\$(sudo cat /etc/secrets/db-plane-password) psql -h 127.0.0.1 -p 6432 -U plane -d plane -c '\conninfo'"
 ```
 
 ---
 
-## All-in-One Gather Script
+## All-in-One Verification Script
 
-Run this to gather all credentials at once:
+Run this to verify all credentials at once:
 
 ```bash
-echo "=== LiftCraft (LXC_liftcraftTEST - 192.168.8.87) ==="
-ssh -A -o ConnectTimeout=10 akunito@192.168.8.87 "grep -E 'POSTGRES_PASSWORD' ~/leftyworkout_TEST/.env.prod 2>/dev/null || grep -E 'POSTGRES_PASSWORD' ~/leftyworkout_TEST/.env" 2>/dev/null
+VPS_SSH="ssh -A -p 56777 akunito@100.64.0.6"
+
+echo "=== PostgreSQL Users ==="
+$VPS_SSH "sudo -u postgres psql -c '\du'" 2>/dev/null
 
 echo ""
-echo "=== Plane (LXC_plane - 192.168.8.86) ==="
-ssh -A -o ConnectTimeout=10 akunito@192.168.8.86 "grep -E 'POSTGRES_PASSWORD' ~/PLANE/.env" 2>/dev/null
+echo "=== PostgreSQL Databases ==="
+$VPS_SSH "sudo -u postgres psql -c '\l'" 2>/dev/null
 
 echo ""
-echo "=== Nextcloud MariaDB (LXC_HOME - 192.168.8.80) ==="
-ssh -A -o ConnectTimeout=10 akunito@192.168.8.80 "docker inspect nextcloud-db 2>/dev/null | grep 'MYSQL_PASSWORD' | head -1"
+echo "=== MariaDB Users ==="
+$VPS_SSH "sudo mysql -e 'SELECT User, Host FROM mysql.user;'" 2>/dev/null
+
+echo ""
+echo "=== Redis Ping ==="
+$VPS_SSH "redis-cli -a \$(sudo cat /etc/secrets/redis-password) ping" 2>/dev/null
+
+echo ""
+echo "=== Redis Keyspace ==="
+$VPS_SSH "redis-cli -a \$(sudo cat /etc/secrets/redis-password) INFO keyspace" 2>/dev/null
+
+echo ""
+echo "=== Secret Files ==="
+$VPS_SSH "sudo ls -la /etc/secrets/" 2>/dev/null
 
 echo ""
 echo "=== Current secrets/domains.nix database section ==="
-grep -A 15 "CENTRALIZED DATABASE SERVER" secrets/domains.nix | head -20
+grep -A 20 "CENTRALIZED DATABASE SERVER" secrets/domains.nix | head -25
 ```
 
 ---
@@ -126,15 +170,17 @@ grep -A 15 "CENTRALIZED DATABASE SERVER" secrets/domains.nix | head -20
 
 ### How Secrets Get Deployed
 
-1. **Gather credentials** from source containers (this skill)
-2. **Update secrets/domains.nix** with the credentials
-3. **Commit and push** to git repository
-4. **Deploy to LXC_database** with `nixos-rebuild switch`
+1. **Credentials defined** in `secrets/domains.nix` (source of truth)
+2. **`database-secrets.nix` module** reads secrets and writes to `/etc/secrets/*` on VPS
+3. **NixOS services** (PostgreSQL, MariaDB, Redis) reference password files
+4. **Deploy** via `./install.sh ~/.dotfiles VPS_PROD -s -u -d`
 
-The `database-secrets.nix` module reads from `secrets/domains.nix` and creates:
+The `database-secrets.nix` module creates:
 - `/etc/secrets/db-plane-password` (PostgreSQL)
 - `/etc/secrets/db-liftcraft-password` (PostgreSQL)
-- `/etc/secrets/db-nextcloud-password` (MariaDB)
+- `/etc/secrets/db-nextcloud-password` (MariaDB/PostgreSQL)
+- `/etc/secrets/db-matrix-password` (PostgreSQL)
+- `/etc/secrets/db-freshrss-password` (PostgreSQL)
 - `/etc/secrets/redis-password` (Redis)
 
 ### Current Secret Variables
@@ -145,9 +191,9 @@ The `database-secrets.nix` module reads from `secrets/domains.nix` and creates:
 # PostgreSQL
 dbPlanePassword = "...";
 dbLiftcraftPassword = "...";
-
-# MariaDB
+dbMatrixPassword = "...";
 dbNextcloudPassword = "...";
+dbFreshrssPassword = "...";
 
 # Redis
 redisServerPassword = "...";
@@ -155,49 +201,13 @@ redisServerPassword = "...";
 
 ---
 
-## Update Workflow
+## Deployment Target
 
-After gathering credentials:
-
-```bash
-# 1. Edit secrets/domains.nix with new values
-vim secrets/domains.nix
-
-# 2. Update template (structure only, no real values)
-vim secrets/domains.nix.template
-
-# 3. Verify encryption
-git-crypt status secrets/domains.nix
-# Expected: encrypted: secrets/domains.nix
-
-# 4. Test syntax
-nix-instantiate --parse secrets/domains.nix
-
-# 5. Commit and push
-git add secrets/domains.nix secrets/domains.nix.template
-git commit -m "chore: update database credentials"
-git push
-
-# 6. Deploy to LXC_database
-ssh -A akunito@192.168.8.103 "cd ~/.dotfiles && git reset --hard HEAD && git pull && ./install.sh ~/.dotfiles LXC_database -s -u -q 2>&1"
-```
-
----
-
-## Verification After Deployment
+After verifying or updating credentials, deploy to VPS_PROD:
 
 ```bash
-# On LXC_database - verify password files exist
-ssh -A akunito@192.168.8.103 "sudo ls -la /etc/secrets/"
-
-# Verify PostgreSQL can authenticate
-ssh -A akunito@192.168.8.103 "sudo -u postgres psql -c '\du'"
-
-# Verify MariaDB users
-ssh -A akunito@192.168.8.103 "sudo mysql -e 'SELECT User, Host FROM mysql.user;'"
-
-# Verify Redis password
-ssh -A akunito@192.168.8.103 "redis-cli -a \$(sudo cat /etc/secrets/redis-password) ping"
+git add secrets/domains.nix && git commit -m "chore: update database credentials" && git push
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
 ```
 
 ---
@@ -209,27 +219,32 @@ When reporting gathered credentials, use this format:
 ```markdown
 ## Database Credentials Report - [DATE]
 
-### PostgreSQL
+### PostgreSQL (VPS localhost:5432)
 | Service | User | Database | Password Verified |
 |---------|------|----------|-------------------|
-| Plane | plane | plane | ✓ |
-| LiftCraft | liftcraft | rails_database_prod | ✓ |
+| Plane | plane | plane | yes/no |
+| LiftCraft | liftcraft | rails_database_prod | yes/no |
+| Matrix | matrix | matrix | yes/no |
+| Nextcloud | nextcloud | nextcloud | yes/no |
+| FreshRSS | freshrss | freshrss | yes/no |
 
-### MariaDB
+### MariaDB (VPS localhost:3306)
 | Service | User | Database | Password Verified |
 |---------|------|----------|-------------------|
-| Nextcloud | nextcloud | nextcloud | ✓ |
+| Nextcloud | nextcloud | nextcloud | yes/no |
 
-### Redis
-| Service | Has Password | Database Number |
-|---------|--------------|-----------------|
-| Plane | Yes (new) | db0 |
-| Nextcloud | Yes (new) | db1 |
-| LiftCraft | Yes (new) | db2 |
+### Redis (VPS localhost:6379)
+| DB | Service | Has Password | Verified |
+|----|---------|--------------|----------|
+| db0 | Plane | Yes | yes/no |
+| db1 | Nextcloud | Yes | yes/no |
+| db2 | LiftCraft | Yes | yes/no |
+| db3 | FreshRSS | Yes | yes/no |
+| db4 | Matrix | Yes | yes/no |
 
 ### Actions Taken
-- [x] Updated secrets/domains.nix
-- [x] Verified git-crypt encryption
-- [x] Updated template file
-- [x] Deployed to LXC_database
+- [x] Verified secrets/domains.nix matches deployed passwords
+- [x] All PostgreSQL users authenticated successfully
+- [x] MariaDB users authenticated successfully
+- [x] Redis authentication verified
 ```

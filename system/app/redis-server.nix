@@ -29,6 +29,7 @@ let
     port = systemSettings.redisServerPort or 6379;
     maxMemory = systemSettings.redisServerMaxMemory or "1gb";
     passwordFile = systemSettings.redisServerPasswordFile or "";
+    bindAddress = systemSettings.databaseBindAddress or "0.0.0.0";
   };
 
 in
@@ -38,8 +39,8 @@ lib.mkIf cfg.enable {
     enable = true;
     port = cfg.port;
 
-    # Bind to all interfaces for LAN access
-    bind = "0.0.0.0";
+    # Bind address from systemSettings
+    bind = cfg.bindAddress;
 
     # Password authentication
     requirePassFile = if cfg.passwordFile != "" then cfg.passwordFile else null;
@@ -93,18 +94,19 @@ lib.mkIf cfg.enable {
         "${pkgs.writeShellScript "redis-exporter-start" ''
           REDIS_PASSWORD=$(cat ${cfg.passwordFile})
           exec ${pkgs.prometheus-redis-exporter}/bin/redis_exporter \
-            -web.listen-address 0.0.0.0:${toString (systemSettings.prometheusRedisExporterPort or 9121)} \
+            -web.listen-address 127.0.0.1:${toString (systemSettings.prometheusRedisExporterPort or 9121)} \
             --redis.addr=redis://127.0.0.1:${toString cfg.port} \
             --redis.password="$REDIS_PASSWORD"
         ''}"
       else
-        "${pkgs.prometheus-redis-exporter}/bin/redis_exporter -web.listen-address 0.0.0.0:${toString (systemSettings.prometheusRedisExporterPort or 9121)} --redis.addr=redis://127.0.0.1:${toString cfg.port}"
+        "${pkgs.prometheus-redis-exporter}/bin/redis_exporter -web.listen-address 127.0.0.1:${toString (systemSettings.prometheusRedisExporterPort or 9121)} --redis.addr=redis://127.0.0.1:${toString cfg.port}"
     );
   };
 
-  # Open firewall ports
-  networking.firewall.allowedTCPPorts = [
-    cfg.port
-  ] ++ lib.optional (systemSettings.prometheusRedisExporterEnable or false)
-    (systemSettings.prometheusRedisExporterPort or 9121);
+  # Open firewall ports (gated by databaseFirewallOpen — false on VPS where only local access needed)
+  networking.firewall.allowedTCPPorts =
+    lib.optionals (systemSettings.databaseFirewallOpen or true) [
+      cfg.port
+    ] ++ lib.optionals ((systemSettings.databaseFirewallOpen or true) && (systemSettings.prometheusRedisExporterEnable or false))
+      [ (systemSettings.prometheusRedisExporterPort or 9121) ];
 }

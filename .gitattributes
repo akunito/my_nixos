@@ -19,6 +19,7 @@ flake.lock merge=ours
 # Secrets directory - all .nix and .txt files encrypted
 secrets/*.nix filter=git-crypt diff=git-crypt
 secrets/*.txt filter=git-crypt diff=git-crypt
+secrets/vps/** filter=git-crypt diff=git-crypt
 
 # Exclude template files from encryption (they're public)
 secrets/*.template !filter !diff
@@ -39,3 +40,22 @@ docs/komi/infrastructure/KOMI_INFRASTRUCTURE_INTERNAL.md filter=git-crypt-komi d
 
 # TrueNAS migration doc contains iSCSI CHAP credentials
 docs/akunito/infrastructure/truenas-migration-complete.md filter=git-crypt diff=git-crypt
+
+# Media stack documentation (service details, provider accounts, API structure)
+docs/akunito/infrastructure/services/media-stack.md filter=git-crypt diff=git-crypt
+
+# OpenClaw finance skill (contains financial schema, category details, personal names, salary)
+templates/openclaw/workspace/skills/finance/SKILL.md filter=git-crypt diff=git-crypt
+templates/openclaw/workspace/skills/finance/PROCEDURES.md filter=git-crypt diff=git-crypt
+docs/akunito/infrastructure/services/openclaw/finance-system.md filter=git-crypt diff=git-crypt
+
+# Deploy config with public IPs (VPS entries)
+deploy-servers-private.conf filter=git-crypt diff=git-crypt
+
+# ============================================================================
+# Belt-and-Suspenders: File types that must always be encrypted if tracked
+# ============================================================================
+*.p12 filter=git-crypt diff=git-crypt
+*.pfx filter=git-crypt diff=git-crypt
+*.keystore filter=git-crypt diff=git-crypt
+*.jks filter=git-crypt diff=git-crypt

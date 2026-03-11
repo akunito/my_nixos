@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""Write-only Plane MCP server for Vaultkeeper agent.
+Only create work items and comments in PERSONAL project.
+All read/list/search/update/delete: NOT IMPLEMENTED (code-level block).
+Rate-limited: create_work_item (5/hour), create_work_item_comment (15/hour).
+Rate state persists to disk — survives process restarts.
+"""
+import os, json, re, time, fcntl, urllib.request
+from pathlib import Path
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp.types import Tool, TextContent
+
+API_URL = os.environ["PLANE_API_URL"]
+API_TOKEN = os.environ["PLANE_API_TOKEN"]
+WORKSPACE = os.environ["PLANE_WORKSPACE_SLUG"]
+
+# --- Input length validation (anti-payload-abuse) ---
+MAX_BODY_LENGTH = 50_000  # 50KB
+def _validate_body_length(arguments: dict, fields: list[str]) -> str | None:
+    for f in fields:
+        if f in arguments and len(str(arguments[f])) > MAX_BODY_LENGTH:
+            return f"ERROR: {f} too long ({len(str(arguments[f]))} > {MAX_BODY_LENGTH} chars)"
+    return None
+
+# Hardcoded PERSONAL project — Vaultkeeper cannot access any other project
+PERSONAL_PROJECT_ID = "5c7802e2-9a11-46d4-b771-7891164bb5c5"
+TODO_STATE_ID = "0efe9d9c-889e-4e9b-9b0b-37816be88114"
+
+# --- Input validation (anti-path-traversal) ---
+_UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+def _validate_uuid(val: str, name: str):
+    if not val or not _UUID_RE.match(val):
+        raise ValueError(f"Invalid {name}: must be UUID format")
+
+# --- Persistent rate limiter (file-backed, survives process restarts) ---
+RATE_LIMITS = {
+    "create_work_item":         {"max": 5,  "window": 3600},
+    "create_work_item_comment": {"max": 15, "window": 3600},
+}
+_RATE_FILE = Path(os.environ.get("HOME", "/home/node")) / ".openclaw/mcp/.ratelimit-plane-vaultkeeper.json"
+
+def _check_rate(op: str) -> str | None:
+    if op not in RATE_LIMITS:
+        return None
+    cfg = RATE_LIMITS[op]
+    now = time.time()
+    _RATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(_RATE_FILE, "a+") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            f.seek(0)
+            data = json.loads(f.read() or "{}")
+            timestamps = [t for t in data.get(op, []) if now - t < cfg["window"]]
+            if len(timestamps) >= cfg["max"]:
+                remaining = int(cfg["window"] - (now - timestamps[0]))
+                return f"RATE LIMITED: {op} exceeded {cfg['max']}/{cfg['window']}s. Try again in {remaining}s."
+            timestamps.append(now)
+            data[op] = timestamps
+            f.seek(0); f.truncate()
+            f.write(json.dumps(data))
+    except (json.JSONDecodeError, OSError) as e:
+        # Fail-CLOSED permanently: deny if rate state is unreadable (no auto-reset — see plane-restricted-mcp)
+        return f"RATE LIMITED: {op} denied — rate state file corrupted ({type(e).__name__}). Manual fix: delete {_RATE_FILE}"
+    return None
+
+server = Server("plane-vaultkeeper")
+
+def _api(method: str, path: str, body: dict | None = None) -> dict:
+    if method != "POST":
+        raise ValueError(f"Method {method} not allowed (only POST)")
+    url = f"{API_URL}/api/v1/workspaces/{WORKSPACE}/{path}"
+    data = json.dumps(body).encode() if body else None
+    req = urllib.request.Request(url, data=data, method=method, headers={
+        "X-Api-Key": API_TOKEN, "Content-Type": "application/json",
+    })
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read())
+
+@server.list_tools()
+async def list_tools():
+    return [
+        Tool(name="create_work_item",
+             description="Create a new work item in PERSONAL project",
+             inputSchema={"type": "object", "properties": {
+                 "name": {"type": "string"},
+                 "description_html": {"type": "string"},
+                 "priority": {"type": "string", "enum": ["urgent","high","medium","low","none"]},
+             }, "required": ["name"]}),
+        Tool(name="create_work_item_comment",
+             description="Add a comment to a work item in PERSONAL project",
+             inputSchema={"type": "object", "properties": {
+                 "work_item_id": {"type": "string"},
+                 "comment_html": {"type": "string"}
+             }, "required": ["work_item_id", "comment_html"]}),
+    ]
+
+@server.call_tool()
+async def call_tool(name: str, arguments: dict):
+    # Validate work_item_id if provided (anti-path-traversal)
+    wid = arguments.get("work_item_id", "")
+    try:
+        if wid: _validate_uuid(wid, "work_item_id")
+    except ValueError as e:
+        return [TextContent(type="text", text=f"ERROR: {e}")]
+    match name:
+        case "create_work_item":
+            if err := _check_rate("create_work_item"):
+                return [TextContent(type="text", text=err)]
+            if err := _validate_body_length(arguments, ["name", "description_html"]):
+                return [TextContent(type="text", text=err)]
+            body = {
+                "name": arguments["name"],
+                "state_id": TODO_STATE_ID,
+            }
+            if "description_html" in arguments:
+                body["description_html"] = arguments["description_html"]
+            if "priority" in arguments:
+                body["priority"] = arguments["priority"]
+            r = _api("POST",
+                      f"projects/{PERSONAL_PROJECT_ID}/work-items/", body)
+        case "create_work_item_comment":
+            if err := _check_rate("create_work_item_comment"):
+                return [TextContent(type="text", text=err)]
+            if err := _validate_body_length(arguments, ["comment_html"]):
+                return [TextContent(type="text", text=err)]
+            wid = arguments["work_item_id"]
+            r = _api("POST",
+                      f"projects/{PERSONAL_PROJECT_ID}/work-items/{wid}/comments/",
+                      {"comment_html": arguments["comment_html"]})
+        case _:
+            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+    return [TextContent(type="text", text=json.dumps(r, indent=2, default=str))]
+
+async def main():
+    async with stdio_server() as (read, write):
+        await server.run(read, write, server.create_initialization_options())
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())

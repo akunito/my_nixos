@@ -1,107 +1,179 @@
-# pfSense Backup Monitoring
+# pfSense Full Backup + Sync + Monitoring
 #
-# Monitors pfSense backup files on Proxmox NFS storage and exposes metrics via textfile collector.
-# This runs on the monitoring server and checks backup files via SSH to Proxmox.
+# 1. SSH to pfSense (admin@192.168.8.1 via WireGuard), pull:
+#    - /conf/config.xml (main config — firewall, VPN keys, DHCP, DNS, etc.)
+#    - /conf/backup/ (pfSense auto-generated config history)
+#    - /var/db/tailscale/tailscaled.state (Tailscale node identity)
+# 2. Save as compressed .tar.gz in local backup dir on VPS
+# 3. Rotate old backups (configurable retention days)
+# 4. Rsync backup dir to TrueNAS (truenas_admin@192.168.20.200)
+# 5. Write textfile metrics for Prometheus
 #
 # Metrics exposed:
 #   pfsense_backup_last_success - Unix timestamp of last successful backup
 #   pfsense_backup_age_seconds - Seconds since last backup
 #   pfsense_backup_count - Number of backup files retained
-#   pfsense_backup_size_bytes - Size of latest backup in bytes
+#   pfsense_backup_status - 1 if backup succeeded, 0 if failed
 #
 # Feature flag: prometheusPfsenseBackupEnable
+# Runs as: User = "akunito" (has SSH keys to pfSense and TrueNAS)
+# Timer: daily at 14:00 (TrueNAS awake window 11:00-23:00)
 
 { config, pkgs, lib, systemSettings, ... }:
 
 let
-  proxmoxHost = systemSettings.prometheusPfsenseBackupProxmoxHost or "192.168.8.82";
-  backupPath = systemSettings.prometheusPfsenseBackupPath or "/mnt/pve/proxmox_backups/pfsense";
+  localDir = systemSettings.prometheusPfsenseBackupLocalDir or "/var/lib/pfsense-backups";
+  truenasDir = systemSettings.prometheusPfsenseBackupTruenasDir or "/mnt/ssdpool/pfsense-backups";
+  keepDays = toString (systemSettings.prometheusPfsenseBackupKeepDays or 30);
+  truenasHost = systemSettings.prometheusTruenasBackupHost or "192.168.20.200";
+  truenasUser = systemSettings.prometheusTruenasBackupUser or "truenas_admin";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
 
-  # Script to check pfSense backup status via SSH to Proxmox
-  pfsenseBackupScript = pkgs.writeShellScript "pfsense-backup-metrics" ''
-    set -euo pipefail
-    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.gawk pkgs.openssh ]}:$PATH"
+  pfsenseBackupScript = pkgs.writeShellScript "pfsense-backup" ''
+    set -uo pipefail
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.openssh pkgs.rsync pkgs.gzip pkgs.gnutar pkgs.findutils ]}:$PATH"
 
-    PROXMOX_HOST="${proxmoxHost}"
-    BACKUP_PATH="${backupPath}"
+    BACKUP_DIR="${localDir}"
     TEXTFILE="${textfileDir}/pfsense_backup.prom"
     TEMP_FILE=$(mktemp)
+    STAGING_DIR=$(mktemp -d)
+    NOW=$(date +%s)
+    DATE=$(date +%Y%m%d-%H%M%S)
+    SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new"
+    BACKUP_OK=0
+    RSYNC_OK=0
 
-    # Check backup files via SSH
-    BACKUP_INFO=$(ssh -o ConnectTimeout=10 -o BatchMode=yes \
-      "root@$PROXMOX_HOST" \
-      "ls -lt --time-style=+%s ${backupPath}/pfsense-full-backup-*.tar.gz 2>/dev/null | head -1" \
-      2>/dev/null || echo "")
+    mkdir -p "$BACKUP_DIR"
 
-    if [ -z "$BACKUP_INFO" ]; then
-      # No backups found
-      cat > "$TEMP_FILE" << 'METRICS'
-# HELP pfsense_backup_last_success Unix timestamp of last successful backup
-# TYPE pfsense_backup_last_success gauge
-pfsense_backup_last_success 0
-# HELP pfsense_backup_status 1 if backup exists, 0 if not
-# TYPE pfsense_backup_status gauge
-pfsense_backup_status 0
-# HELP pfsense_backup_count Number of backup files retained
-# TYPE pfsense_backup_count gauge
-pfsense_backup_count 0
-METRICS
+    # --- Step 1: Pull files from pfSense into staging dir ---
+    BACKUP_FILE="$BACKUP_DIR/pfsense-backup-$DATE.tar.gz"
+
+    # Create staging directory structure
+    mkdir -p "$STAGING_DIR/conf/backup" "$STAGING_DIR/tailscale"
+
+    # Pull config.xml (main config — contains firewall rules, VPN keys, etc.)
+    if ssh $SSH_OPTS admin@192.168.8.1 "cat /conf/config.xml" > "$STAGING_DIR/conf/config.xml" 2>/dev/null; then
+      echo "Pulled config.xml"
     else
-      # Parse backup info: -rwxrwxrwx 1 nobody root 2644361 1738963850 pfsense-full-backup-...
-      MTIME=$(echo "$BACKUP_INFO" | awk '{print $6}')
-      SIZE=$(echo "$BACKUP_INFO" | awk '{print $5}')
+      echo "ERROR: Failed to pull config.xml" >&2
+    fi
 
-      # Get backup count
-      COUNT=$(ssh -o ConnectTimeout=10 -o BatchMode=yes \
-        "root@$PROXMOX_HOST" \
-        "ls -1 ${backupPath}/pfsense-full-backup-*.tar.gz 2>/dev/null | wc -l" \
-        2>/dev/null || echo "0")
+    # Pull config history (pfSense auto-backups)
+    if ssh $SSH_OPTS admin@192.168.8.1 "tar cf - -C /conf backup/" 2>/dev/null | tar xf - -C "$STAGING_DIR/conf/" 2>/dev/null; then
+      echo "Pulled config history ($(ls "$STAGING_DIR/conf/backup/" 2>/dev/null | wc -l) files)"
+    else
+      echo "WARNING: Failed to pull config history (non-fatal)" >&2
+    fi
 
-      NOW=$(date +%s)
-      AGE=$((NOW - MTIME))
+    # Pull Tailscale node identity (irreplaceable — re-registration required without it)
+    if ssh $SSH_OPTS admin@192.168.8.1 "cat /var/db/tailscale/tailscaled.state" > "$STAGING_DIR/tailscale/tailscaled.state" 2>/dev/null; then
+      echo "Pulled tailscaled.state"
+    else
+      echo "WARNING: Failed to pull tailscaled.state (non-fatal)" >&2
+    fi
+
+    # Create tarball if config.xml was pulled successfully
+    if [ -s "$STAGING_DIR/conf/config.xml" ]; then
+      if tar czf "$BACKUP_FILE.tmp" -C "$STAGING_DIR" . 2>/dev/null; then
+        mv "$BACKUP_FILE.tmp" "$BACKUP_FILE"
+        BACKUP_OK=1
+        echo "pfSense backup saved to $BACKUP_FILE"
+      else
+        rm -f "$BACKUP_FILE.tmp"
+        echo "ERROR: Failed to create tarball" >&2
+      fi
+    else
+      echo "ERROR: config.xml is empty or missing — aborting" >&2
+    fi
+
+    rm -rf "$STAGING_DIR"
+
+    # --- Step 2: Rotate old backups ---
+    if [ "$BACKUP_OK" -eq 1 ]; then
+      find "$BACKUP_DIR" -name "pfsense-backup-*.tar.gz" -mtime +${keepDays} -delete 2>/dev/null || true
+      # Also clean up legacy single-file backups
+      find "$BACKUP_DIR" -name "pfsense-config-*.xml.gz" -mtime +${keepDays} -delete 2>/dev/null || true
+    fi
+
+    # --- Step 3: Rsync to TrueNAS (non-fatal) ---
+    if [ "$BACKUP_OK" -eq 1 ]; then
+      if rsync -az --timeout=30 -e "ssh $SSH_OPTS" \
+        "$BACKUP_DIR/" "${truenasUser}@${truenasHost}:${truenasDir}/" 2>/dev/null; then
+        RSYNC_OK=1
+        echo "Rsync to TrueNAS succeeded"
+      else
+        echo "WARNING: Rsync to TrueNAS failed (non-fatal)" >&2
+      fi
+    fi
+
+    # --- Step 4: Write metrics ---
+    if [ "$BACKUP_OK" -eq 1 ]; then
+      # Find newest backup file timestamp (check both new tarball and legacy patterns)
+      NEWEST=$(find "$BACKUP_DIR" \( -name "pfsense-backup-*.tar.gz" -o -name "pfsense-config-*.xml.gz" \) -printf '%T@\n' | sort -n | tail -1)
+      NEWEST_INT=''${NEWEST%.*}
+      AGE=$((NOW - NEWEST_INT))
+      COUNT=$(find "$BACKUP_DIR" \( -name "pfsense-backup-*.tar.gz" -o -name "pfsense-config-*.xml.gz" \) | wc -l)
 
       cat > "$TEMP_FILE" << METRICS
 # HELP pfsense_backup_last_success Unix timestamp of last successful backup
 # TYPE pfsense_backup_last_success gauge
-pfsense_backup_last_success $MTIME
-# HELP pfsense_backup_status 1 if backup exists, 0 if not
-# TYPE pfsense_backup_status gauge
-pfsense_backup_status 1
+pfsense_backup_last_success $NEWEST_INT
 # HELP pfsense_backup_age_seconds Seconds since last backup
 # TYPE pfsense_backup_age_seconds gauge
 pfsense_backup_age_seconds $AGE
 # HELP pfsense_backup_count Number of backup files retained
 # TYPE pfsense_backup_count gauge
 pfsense_backup_count $COUNT
-# HELP pfsense_backup_size_bytes Size of latest backup in bytes
-# TYPE pfsense_backup_size_bytes gauge
-pfsense_backup_size_bytes $SIZE
+# HELP pfsense_backup_status 1 if backup succeeded, 0 if failed
+# TYPE pfsense_backup_status gauge
+pfsense_backup_status 1
+# HELP pfsense_backup_rsync_status 1 if rsync to TrueNAS succeeded, 0 if failed
+# TYPE pfsense_backup_rsync_status gauge
+pfsense_backup_rsync_status $RSYNC_OK
+METRICS
+    else
+      cat > "$TEMP_FILE" << 'METRICS'
+# HELP pfsense_backup_last_success Unix timestamp of last successful backup
+# TYPE pfsense_backup_last_success gauge
+pfsense_backup_last_success 0
+# HELP pfsense_backup_age_seconds Seconds since last backup
+# TYPE pfsense_backup_age_seconds gauge
+pfsense_backup_age_seconds 0
+# HELP pfsense_backup_count Number of backup files retained
+# TYPE pfsense_backup_count gauge
+pfsense_backup_count 0
+# HELP pfsense_backup_status 1 if backup succeeded, 0 if failed
+# TYPE pfsense_backup_status gauge
+pfsense_backup_status 0
+# HELP pfsense_backup_rsync_status 1 if rsync to TrueNAS succeeded, 0 if failed
+# TYPE pfsense_backup_rsync_status gauge
+pfsense_backup_rsync_status 0
 METRICS
     fi
 
-    # Atomically move to final location
     mv "$TEMP_FILE" "$TEXTFILE"
     chmod 644 "$TEXTFILE"
-
     echo "pfSense backup metrics written to $TEXTFILE"
   '';
 
 in
 {
   config = lib.mkIf (systemSettings.prometheusPfsenseBackupEnable or false) {
-    # Systemd service to collect backup metrics
+    # Ensure backup directory exists
+    systemd.tmpfiles.rules = [
+      "d ${localDir} 0755 akunito users -"
+    ];
+
+    # Systemd service
     systemd.services.prometheus-pfsense-backup = {
-      description = "pfSense Backup Metrics Collector";
+      description = "pfSense Config Backup + Sync + Metrics";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
 
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${pfsenseBackupScript}";
-        User = "root";
-        Restart = "on-failure";
-        RestartSec = "60s";
+        User = "akunito";
       };
 
       preStart = ''
@@ -109,14 +181,13 @@ in
       '';
     };
 
-    # Timer to run hourly
+    # Timer: daily at 14:00
     systemd.timers.prometheus-pfsense-backup = {
-      description = "pfSense Backup Metrics Collection Timer";
+      description = "pfSense Backup Timer (daily 14:00)";
       wantedBy = [ "timers.target" ];
 
       timerConfig = {
-        OnBootSec = "5min";
-        OnUnitActiveSec = "1h";
+        OnCalendar = "*-*-* 14:00:00";
         RandomizedDelaySec = "5min";
         Persistent = true;
       };

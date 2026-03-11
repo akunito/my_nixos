@@ -85,7 +85,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_truenas_cpu_usage_cpu_cpu{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_truenas_cpu_usage_cpu_cpu{job=\"truenas_graphite\"}",
           "legendFormat": "CPU Usage",
           "range": true,
           "refId": "A"
@@ -329,8 +329,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_zfspool_healthy{pool=\"hddpool\",job=\"truenas_graphite\"}",
-          "legendFormat": "hddpool",
+          "expr": "truenas_zfspool_healthy{pool=\"extpool\",job=\"truenas_graphite\"}",
+          "legendFormat": "extpool",
           "range": true,
           "refId": "B"
         },
@@ -438,7 +438,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_truenas_arcstats_size_size{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_truenas_arcstats_size_size{job=\"truenas_graphite\"}",
           "legendFormat": "ARC Size",
           "range": true,
           "refId": "A"
@@ -536,7 +536,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_truenas_cpu_usage_cpu_cpu{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_truenas_cpu_usage_cpu_cpu{job=\"truenas_graphite\"}",
           "legendFormat": "CPU Usage",
           "range": true,
           "refId": "A"
@@ -647,7 +647,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_net_received{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_net_bond0_received{job=\"truenas_graphite\"}",
           "legendFormat": "received",
           "range": true,
           "refId": "A"
@@ -658,7 +658,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_net_sent{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_net_bond0_sent{job=\"truenas_graphite\"}",
           "legendFormat": "sent",
           "range": true,
           "refId": "B"
@@ -862,7 +862,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_load_load1{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_system_load_load1{job=\"truenas_graphite\"}",
           "legendFormat": "1 min",
           "range": true,
           "refId": "A"
@@ -873,7 +873,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_load_load5{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_system_load_load5{job=\"truenas_graphite\"}",
           "legendFormat": "5 min",
           "range": true,
           "refId": "B"
@@ -884,7 +884,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_system_load_load15{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "truenas_system_load_load15{job=\"truenas_graphite\"}",
           "legendFormat": "15 min",
           "range": true,
           "refId": "C"
@@ -995,7 +995,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum({__name__=~\"truenas_truenas_disk_stats__serial_.*_reads\", job=\"truenas_graphite\"})",
+          "expr": "sum({__name__=~\"servers_truenas_truenas_disk_stats_ops__serial_.*_read_ops\", job=\"truenas_graphite\"})",
           "legendFormat": "read",
           "range": true,
           "refId": "A"
@@ -1006,7 +1006,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum({__name__=~\"truenas_truenas_disk_stats__serial_.*_writes\", job=\"truenas_graphite\"})",
+          "expr": "sum({__name__=~\"servers_truenas_truenas_disk_stats_ops__serial_.*_write_ops\", job=\"truenas_graphite\"})",
           "legendFormat": "write",
           "range": true,
           "refId": "B"
@@ -1198,173 +1198,6 @@
       ],
       "title": "ZFS Pool Fragmentation",
       "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 1,
-                  "text": "FAILED"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 0,
-                  "text": "OK"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": 0
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 0,
-        "y": 56
-      },
-      "id": 13,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_backup_status",
-          "legendFormat": "{{dataset}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "ZFS Replication Status",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 72,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 24
-              },
-              {
-                "color": "red",
-                "value": 48
-              }
-            ]
-          },
-          "unit": "h"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 12,
-        "y": 56
-      },
-      "id": 14,
-      "options": {
-        "displayMode": "gradient",
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "maxVizHeight": 300,
-        "minVizHeight": 16,
-        "minVizWidth": 8,
-        "namePlacement": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "sizing": "auto",
-        "valueMode": "color"
-      },
-      "pluginVersion": "12.3.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "truenas_backup_age_seconds / 3600",
-          "legendFormat": "{{dataset}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Backup Age",
-      "type": "bargauge"
     }
   ],
   "preload": false,

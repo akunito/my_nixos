@@ -5,19 +5,21 @@
 { systemSettings, pkgs, lib, ... }:
 
 let
+  logger = "${pkgs.util-linux}/bin/logger";
+  hostname = "${pkgs.hostname}/bin/hostname";
   suspendScript = pkgs.writeShellScript "suspend-debug-pre" ''
     echo "$(date -Iseconds) SUSPENDING battery=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo N/A)%" \
       >> /var/log/suspend-debug.log
-    logger -t suspend-debug "SUSPENDING"
+    ${logger} -t suspend-debug "SUSPENDING"
   '';
   resumeScript = pkgs.writeShellScript "suspend-debug-post" ''
     echo "$(date -Iseconds) RESUMED battery=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo N/A)%" \
       >> /var/log/suspend-debug.log
-    logger -t suspend-debug "RESUMED"
-    # Network beacon: send UDP to DESK to confirm wake
-    echo "RESUMED $(hostname) $(date -Iseconds)" | ${pkgs.netcat-gnu}/bin/nc -u -w1 192.168.8.96 9999 2>/dev/null || true
+    ${logger} -t suspend-debug "RESUMED"
+    # Network beacon: send UDP to DESK to confirm wake (timeout 2s to avoid hanging)
+    echo "RESUMED $(${hostname}) $(date -Iseconds)" | timeout 2 ${pkgs.netcat-gnu}/bin/nc -u -w1 192.168.8.96 9999 2>/dev/null || true
     # Log network status
-    ${pkgs.iproute2}/bin/ip link show | logger -t suspend-debug
+    ${pkgs.iproute2}/bin/ip link show | ${logger} -t suspend-debug
   '';
 in
 lib.mkIf (systemSettings.suspendDebugEnable or false) {
@@ -41,6 +43,7 @@ lib.mkIf (systemSettings.suspendDebugEnable or false) {
     serviceConfig = {
       Type = "oneshot";
       ExecStart = resumeScript;
+      TimeoutStartSec = "10s";
     };
   };
 }

@@ -47,6 +47,9 @@
     # When enabled, sudo authenticates via forwarded SSH agent (-A flag)
     # Local sessions without agent still require password
     sshAgentSudoEnable = false;
+    # GUI askpass: show password dialog for non-TTY sudo (e.g., Claude Code)
+    # Installs lxqt-openssh-askpass and sets SUDO_ASKPASS environment variable
+    sudoAskpassEnable = false; # Default off (LXC/WSL have no display); profiles enable explicitly
     sshAgentSudoAuthorizedKeysFiles = [ "/etc/ssh/authorized_keys.d/%u" ];
     sudoCommands = [
       {
@@ -106,14 +109,18 @@
     remoteBackupUser = "akunito";
     remoteBackupTimerDescription = "Timer for remote_backup service";
 
-    vpsBackupEnable = false;
-    vpsBackupDescription = "Backup VPS Configuration with Restic";
-    vpsBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/scripts/backup-manager.sh --auto --target nfs --job vps";
-    vpsBackupUser = "akunito";
-    vpsBackupTimerDescription = "Timer for vps_backup service";
-    vpsBackupOnCalendar = "weekly";
-
     nfsBackupEnable = false; # Documentation flag - actual NFS mount configured via nfsMounts
+
+    # OpenClaw sanitizer timers (CSV + memory file sanitizers)
+    openclawSanitizersEnable = false;
+
+    # OpenClaw Matrix bridge (E2E encrypted Matrix channels for agents + Telegram fallback)
+    openclawMatrixBridgeEnable = false;
+
+    # VPS Restic backup to TrueNAS (via SFTP over Tailscale)
+    vpsResticBackupEnable = false;
+    vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
+    vpsResticTargetUser = "truenas_admin";
 
     # Network defaults
     networkManager = true;
@@ -125,6 +132,13 @@
     ];
     wifiPowerSave = true;
     resolvedEnable = false;
+
+    # VPS static networking (only used by VPS profiles, defaults are no-ops)
+    vpsStaticIp = "";
+    vpsStaticCidr = "";
+    vpsGateway = "";
+    vpsSubnetMask = "";
+    vpsInterface = "ens3";
 
     # Network bonding (LACP link aggregation)
     networkBondingEnable = false; # Enable network bonding (requires switch LAG configuration)
@@ -141,6 +155,7 @@
     # Service defaults
     havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant
     fail2banEnable = true; # Can disable for systems behind firewall
+    fail2banGiteaJailEnable = false; # Enable Gitea jail (requires /var/log/gitea/gitea.log)
 
     # Journald defaults (applied to all profiles)
     journaldMaxUse = "100M";
@@ -174,15 +189,17 @@
     ];
     disk3_enabled = false;
     disk3_name = "/mnt/NFS_media";
-    disk3_device = "192.168.20.200:/mnt/hddpool/media";
+    disk3_device = "192.168.20.200:/mnt/ssdpool/media";
     disk3_fsType = "nfs4";
     disk3_options = [
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
+    # disk4 (emulators) and disk5 (library) deprecated — TrueNAS datasets removed,
+    # data lives exclusively on VPS. No profile should enable these. See IAKU-247.
     disk4_enabled = false;
     disk4_name = "/mnt/NFS_emulators";
-    disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
+    disk4_device = "100.64.0.6:/home/akunito/romm-library";
     disk4_fsType = "nfs4";
     disk4_options = [
       "nofail"
@@ -190,7 +207,7 @@
     ];
     disk5_enabled = false;
     disk5_name = "/mnt/NFS_library";
-    disk5_device = "192.168.20.200:/mnt/ssdpool/library";
+    disk5_device = "100.64.0.6:/home/akunito/calibre-library";
     disk5_fsType = "nfs4";
     disk5_options = [
       "nofail"
@@ -212,6 +229,14 @@
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
+    disk8_enabled = false;
+    disk8_name = "/mnt/NFS_Backups";
+    disk8_device = "192.168.20.200:/mnt/ssdpool/workstation_backups";
+    disk8_fsType = "nfs4";
+    disk8_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
 
     # NFS defaults
     nfsServerEnable = false;
@@ -224,9 +249,19 @@
     nfsAutoMounts = [ ];
 
     # SSH defaults
+    sshPort = 22; # SSH port (used by sshd, fail2ban, and firewall)
     authorizedKeys = [ ];
     hostKeys = [ "/etc/secrets/initrd/ssh_host_rsa_key" ];
     sshHostsManaged = false; # Enable Nix-managed ~/.ssh/config (shared SSH host definitions)
+
+    sshVpnOnly = false; # When true, SSH port is NOT opened in public firewall (VPN interfaces only)
+
+    # SSH hardening (SEC-SSH-001 + SEC-SSH-002) — stricter settings for public-facing servers
+    sshHardenEnable = false; # Enable SSH hardening (MaxAuthTries, ciphers, timeouts)
+    sshMaxAuthTries = 3; # Default 6 — reduce brute-force window
+    sshLoginGraceTime = 30; # Default 120s — reduce idle pre-auth connection window
+    sshClientAliveInterval = 300; # Disconnect idle sessions after interval × count
+    sshClientAliveCountMax = 3; # 300s × 3 = 15min idle timeout
 
     # Printer defaults
     servicePrinting = false;
@@ -281,6 +316,7 @@
     wireguardEnable = false;
     stylixEnable = false;
     xboxControllerEnable = false;
+    joycondEnable = false; # Joy-Con controller support (joycond daemon + hid_nintendo)
     appImageEnable = false;
     aichatEnable = false; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = false; # Enable NixVim configuration (Cursor IDE-like experience)
@@ -289,11 +325,13 @@
     waypaperEnable = false; # Enable Waypaper GUI wallpaper manager (requires swwwEnable)
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
+    voxtypeEnable = false; # Enable Voxtype local voice dictation (Whisper-based, hold-to-speak, works in Sway)
     swayPrimaryMonitor = null; # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
 
     # Thinkpad hardware optimizations (via nixos-hardware)
     thinkpadEnable = false; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = ""; # Thinkpad model (e.g., "lenovo-thinkpad-l14-intel", "lenovo-thinkpad-x280", "lenovo-thinkpad-t490")
+    thinkfanEnable = false; # Enable thinkfan daemon for active fan curve management (requires thinkpadEnable)
 
     # Thunderbolt support (bolt daemon, auto-authorization, diagnostic tools)
     thunderboltEnable = false; # Enable Thunderbolt/bolt daemon for dock and device support
@@ -321,6 +359,20 @@
     # Development tools feature flags
     developmentToolsEnable = false; # Enable development IDEs and cloud tools (Cursor, Claude Code, Azure CLI, etc.)
     developmentFullRuntimesEnable = false; # Enable full development runtimes (Node.js, Python, Go, Rust)
+    claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
+    claudeCodeReadOnly = false; # When true, deny Edit/Write tools in Claude Code settings.json
+    perplexityApiKey = ""; # Perplexity API key for MCP server (set from secrets/domains.nix in profiles)
+    planeApiToken = ""; # Plane API token for MCP server (set from secrets/domains.nix in profiles)
+    planeApiUrl = ""; # Plane instance URL (e.g., "https://plane.akunito.com")
+    planeWorkspaceSlug = ""; # Plane workspace slug (e.g., "akuworkspace")
+    grafanaTelegramBotToken = ""; # Telegram bot token for Grafana alert notifications (from @BotFather)
+    grafanaTelegramChatId = ""; # Telegram chat ID for Grafana alert notifications
+
+    grafanaMcpToken = ""; # Grafana service account token for MCP server (Viewer role)
+    grafanaMcpUrl = ""; # Grafana instance URL (e.g., "https://grafana.akunito.com")
+    dbClaudeReadonlyConnStr = ""; # PostgreSQL connection string for read-only MCP (e.g., "postgresql://claude_readonly:pass@host:5432/plane")
+    n8nMcpApiKey = ""; # n8n API key for MCP server
+    n8nMcpUrl = ""; # n8n instance URL (e.g., "https://n8n.akunito.com")
 
     # Package module feature flags
     systemBasicToolsEnable = true; # Enable basic system tools (vim, wget, rsync, cryptsetup, etc.)
@@ -329,8 +381,22 @@
     # Homelab feature flags
     cloudflaredEnable = false; # Enable Cloudflare tunnel service (remotely-managed, token at /etc/secrets/cloudflared-token)
     acmeEnable = false; # Enable ACME (Let's Encrypt) certificate management
+    acmeCopyToSharedCerts = true; # Copy certs to /mnt/shared-certs (Proxmox shared mount; disable on VPS)
     acmeEmail = "admin@example.com"; # Email for Let's Encrypt notifications
     grafanaEnable = false; # Enable Grafana/Prometheus monitoring stack (only on monitoring server)
+    grafanaLocalSslEnable = true; # Enable local SSL vhosts (requires /mnt/shared-certs/ from Proxmox)
+    prometheusBasicAuthHtpasswd = null; # htpasswd content for Prometheus nginx auth (null = no auth)
+
+    # === Nginx Local Access (*.local.akunito.com via Tailscale) ===
+    nginxLocalEnable = false; # Enable Tailscale-only nginx vhosts for local service access
+    nginxLocalListenAddress = "127.0.0.1"; # IP to bind local nginx vhosts (set to Tailscale IP on VPS)
+    nginxLocalServices = {}; # Attrset of services: { grafana = { port = 3002; }; status = { port = 3009; }; }
+
+    # === Vaultwarden (password manager) ===
+    vaultwardenEnable = false; # Enable Vaultwarden NixOS native service
+    vaultwardenDomain = ""; # Public domain (e.g., "vault.akunito.com")
+    vaultwardenPort = 8222; # Internal port (localhost only)
+
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
 
     # === Control Panel (Web-based infrastructure management) ===
@@ -340,8 +406,10 @@
     dotfilesPath = "/home/akunito/.dotfiles"; # Path to dotfiles repository
 
     # === Prometheus Exporters (for monitored nodes) ===
+    prometheusWorkstationExporterEnable = false; # Lightweight node exporter for workstations (textfile + filesystem + diskstats only)
     prometheusExporterEnable = false; # Enable Node Exporter on this host
     prometheusExporterCadvisorEnable = false; # Enable cAdvisor for Docker metrics on this host
+    prometheusExporterLocalOnly = false; # Bind exporters to 127.0.0.1 (true on VPS, false on remote nodes)
     prometheusNodeExporterPort = 9100; # Port for Node Exporter
     prometheusCadvisorPort = 9092; # Port for cAdvisor
     # Remote targets for Prometheus scraping (used by monitoring server only)
@@ -365,10 +433,11 @@
     # === PVE Backup Monitoring (queries Proxmox API for backup status) ===
     prometheusPveBackupEnable = false;
 
-    # === pfSense Backup Monitoring (checks backup files on Proxmox NFS) ===
+    # === pfSense Backup Monitoring (SSH pull from pfSense + rsync to TrueNAS) ===
     prometheusPfsenseBackupEnable = false;
-    prometheusPfsenseBackupProxmoxHost = "192.168.8.82";
-    prometheusPfsenseBackupPath = "/mnt/pve/proxmox_backups/pfsense";
+    prometheusPfsenseBackupLocalDir = "/var/lib/pfsense-backups"; # Local backup dir on VPS
+    prometheusPfsenseBackupTruenasDir = "/mnt/ssdpool/pfsense-backups"; # Rsync target on TrueNAS
+    prometheusPfsenseBackupKeepDays = 30; # Retention in days
 
     # === SNMP Exporter (pfSense/network devices) ===
     prometheusSnmpExporterEnable = false;
@@ -385,7 +454,20 @@
     prometheusTruenasBackupHost = "192.168.20.200"; # TrueNAS storage IP
     prometheusTruenasBackupUser = "truenas_admin";  # SSH user for snapshot queries
 
+    # === TrueNAS Offsite Backup (VPS pulls Docker data + configs from TrueNAS) ===
+    truenasResticBackupEnable = false;
+    truenasResticBackupHost = "192.168.20.200";       # TrueNAS storage IP
+    truenasResticBackupUser = "truenas_admin";         # SSH user for rsync
+    truenasResticBackupApiKeyFile = "/etc/secrets/truenas-api-key"; # TrueNAS API key for config export
+    truenasResticBackupApiPort = 9443;                             # TrueNAS web UI HTTPS port
+    truenasResticBackupLocalDir = "/var/lib/truenas-backups";       # Local staging + restic repo dir
+
     # === Centralized Database Server (LXC_database) ===
+    # Database bind address: "0.0.0.0" for LAN access (LXC), "127.0.0.1" for local-only (VPS)
+    databaseBindAddress = "0.0.0.0";
+    # Open database ports in firewall (true for LXC/LAN access, false for VPS where only local access needed)
+    databaseFirewallOpen = true;
+
     # PostgreSQL server configuration
     postgresqlServerEnable = false;
     postgresqlServerPort = 5432;
@@ -440,8 +522,8 @@
     # === Database Client Credentials (for workstations) ===
     # Generate ~/.pgpass and ~/.my.cnf for CLI tools and DBeaver
     dbCredentialsEnable = false;
-    # Database server host (LXC_database)
-    dbCredentialsHost = "192.168.8.103";
+    # Database server host (VPS via Tailscale)
+    dbCredentialsHost = "100.64.0.6";
     # PostgreSQL credentials (plane, liftcraft databases)
     dbCredentialsPostgres = []; # List of { database, user, password }
     # MariaDB credentials (nextcloud database)
@@ -578,14 +660,12 @@
 
     # Homelab docker stacks - start docker-compose stacks on boot
     homelabDockerEnable = false; # Enable systemd service for homelab docker stacks
-
-    # pfSense backup configuration
-    pfsenseBackupEnable = false; # Enable daily pfSense config backup
-    pfsenseBackupOnCalendar = "daily"; # Backup schedule (systemd calendar format)
-    pfsenseBackupDir = "/mnt/DATA_4TB/backups/pfsense"; # Backup directory
+    homelabDockerStacks = []; # Configurable stacks: [{ name = "portfolio"; path = "portfolio"; }]
 
     # Email notifications for auto-update failures
     notificationOnFailureEnable = false; # Enable email notifications on auto-update failure
+    notificationTelegramOnFailureEnable = false; # Enable Telegram notifications on service failure (requires grafanaTelegramBotToken + grafanaTelegramChatId)
+    smtpRelayHost = "192.168.8.89:25"; # Default SMTP relay host:port for Grafana/services
     notificationSmtpHost = ""; # SMTP relay host (e.g., "192.168.8.1")
     notificationSmtpPort = 25; # SMTP port (25 for relay, 587 for submission)
     notificationSmtpAuth = false; # Enable SMTP authentication
@@ -618,6 +698,23 @@
     tailscaleLanAutoToggle = false; # Auto-toggle accept-routes/dns based on LAN presence (for roaming laptops)
     tailscaleLanGateway = "192.168.8.1"; # Gateway IP to detect home LAN (ping target for auto-toggle)
     tailscaleGuiAutostart = false; # Auto-start Tailscale GUI (trayscale) with desktop session
+
+    # ============================================================================
+    # VPS-SPECIFIC FLAGS
+    # ============================================================================
+    headscaleEnable = false; # Enable Headscale coordination server (VPS only)
+    headscaleDomain = ""; # Public domain for Headscale (e.g., "headscale.example.com")
+    headscalePort = 8080; # Internal port (nginx handles TLS on 443)
+    wireguardServerEnable = false; # Enable WireGuard point-to-point backup tunnel (VPS <-> pfSense)
+    wireguardServerPort = 51820; # WireGuard listen port
+    wireguardServerIp = "172.26.5.155/24"; # WireGuard tunnel IP
+    wireguardServerPrivateKeyFile = "/etc/secrets/wireguard/private.key"; # Path to WG private key
+    wireguardServerPeers = [ ]; # List of WG peers: [{ publicKey, presharedKeyFile?, allowedIPs, persistentKeepalive? }]
+    vpsBackupSyncEnable = false; # Enable rsync database/nextcloud backups to TrueNAS over Tailscale
+    egressAuditEnable = false; # Enable daily outbound connection audit (SEC-AUDIT-04)
+    postfixRelayEnable = false; # Native Postfix relay via SMTP2GO (VPS only)
+    postfixRelaySmtpUser = ""; # SMTP2GO username for Postfix relay
+    postfixRelaySmtpPassword = ""; # SMTP2GO password for Postfix relay
 
     # ============================================================================
     # DARWIN (macOS) SETTINGS
@@ -687,6 +784,7 @@
 
     # Feature flags
     dockerEnable = true;
+    dockerRootlessEnable = false; # Rootless Docker (VPS); mutually exclusive with dockerEnable
     virtualizationEnable = true;
     qemuGuestAddition = false;
 
@@ -696,12 +794,13 @@
     dolphinEmulatorPrimehackEnable = false;
     steamPackEnable = false;
     rpcs3Enable = false;
+    gamesLightEnable = false; # Light gaming: RetroArch, emulators, light games, pegasus launcher
 
     # Package module feature flags
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
     rangerFullPreviewEnable = false; # Enable heavy ranger preview deps (fontforge, djvulibre, calibre, etc.)
-    gamesEnable = false; # Enable gaming packages and tools (Lutris, Bottles, RetroArch, etc.)
+    gamesEnable = false; # Master gate for gaming submodules (must be true for any gaming packages)
 
     # === Shell Customization ===
     starshipEnable = true; # Enable Starship cross-shell prompt with Nerd Font symbols

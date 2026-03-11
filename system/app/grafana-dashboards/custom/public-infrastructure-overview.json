@@ -19,7 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 16,
+  "id": 10,
   "links": [
     {
       "asDropdown": true,
@@ -48,7 +48,20 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Offline"
+                },
+                "to": 0
+              },
+              "type": "range"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -57,8 +70,12 @@
                 "value": 0
               },
               {
+                "color": "#EAB839",
+                "value": 0.05
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 0.5
               }
             ]
           },
@@ -72,7 +89,7 @@
         "x": 0,
         "y": 0
       },
-      "id": 2,
+      "id": 171,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -90,7 +107,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -98,7 +115,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wireguard_tunnel\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wireguard_tunnel\"} * probe_success{job=\"blackbox_icmp_wireguard_tunnel\"}",
           "legendFormat": "WG Tunnel",
           "range": true,
           "refId": "A"
@@ -109,7 +126,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_wan\"} * probe_success{job=\"blackbox_icmp_wan\"}",
           "legendFormat": "WAN",
           "range": true,
           "refId": "B"
@@ -120,7 +137,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pfsense\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pfsense\"} * probe_success{job=\"blackbox_icmp_pfsense\"}",
           "legendFormat": "pfSense",
           "range": true,
           "refId": "C"
@@ -131,7 +148,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_aggr\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_aggr\"} * probe_success{job=\"blackbox_icmp_switch_usw_aggr\"}",
           "legendFormat": "Switch Aggr",
           "range": true,
           "refId": "D"
@@ -142,7 +159,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_24\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_switch_usw_24\"} * probe_success{job=\"blackbox_icmp_switch_usw_24\"}",
           "legendFormat": "Switch 24",
           "range": true,
           "refId": "E"
@@ -153,8 +170,8 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_pve\"}",
-          "legendFormat": "PVE",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_lan_wifi\"} * probe_success{job=\"blackbox_icmp_lan_wifi\"}",
+          "legendFormat": "LAN WiFi",
           "range": true,
           "refId": "F"
         },
@@ -164,21 +181,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_lan_wifi\"}",
-          "legendFormat": "LAN WiFi",
-          "range": true,
-          "refId": "G"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox_icmp_guest_wifi\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_icmp_guest_wifi\"} * probe_success{job=\"blackbox_icmp_guest_wifi\"}",
           "legendFormat": "Guest WiFi",
           "range": true,
-          "refId": "H"
+          "refId": "G"
         }
       ],
       "title": "",
@@ -255,7 +261,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -340,7 +346,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -425,7 +431,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -433,7 +439,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_up{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_up{instance=\"monitoring\"}",
           "legendFormat": "Tailscale",
           "refId": "A"
         }
@@ -509,7 +515,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -594,7 +600,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -602,7 +608,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_backend_running{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_backend_running{instance=\"monitoring\"}",
           "legendFormat": "Backend",
           "refId": "A"
         }
@@ -678,7 +684,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -747,7 +753,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -755,7 +761,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "tailscale_peers_direct{instance=\"lxc_tailscale\"}",
+          "expr": "tailscale_peers_direct{instance=\"monitoring\"}",
           "legendFormat": "Direct",
           "refId": "A"
         }
@@ -832,7 +838,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -851,8 +857,8 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "truenas_zfspool_healthy{pool=\"hddpool\",job=\"truenas_graphite\"}",
-          "legendFormat": "hddpool",
+          "expr": "truenas_zfspool_healthy{pool=\"extpool\",job=\"truenas_graphite\"}",
+          "legendFormat": "extpool",
           "range": true,
           "refId": "B"
         },
@@ -954,7 +960,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1041,7 +1047,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1128,7 +1134,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1215,7 +1221,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1271,12 +1277,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 21
       },
-      "id": 145,
+      "id": 170,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -1294,19 +1300,8 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "min by (name)(pve_backup_age_seconds) / 86400",
-          "legendFormat": "PVE {{name}}",
-          "range": true,
-          "refId": "A"
-        },
         {
           "datasource": {
             "type": "prometheus",
@@ -1315,7 +1310,19 @@
           "editorMode": "code",
           "expr": "pfsense_backup_age_seconds / 86400",
           "hide": false,
-          "legendFormat": "pfSense config",
+          "legendFormat": "pfSense_Config (to VPS)",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"desk_home\"} / 86400",
+          "hide": false,
+          "legendFormat": "DESK_Home (to NAS)",
           "range": true,
           "refId": "B"
         },
@@ -1325,245 +1332,120 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "truenas_backup_age_seconds / 86400",
+          "expr": "truenas_backup_age_seconds{dataset=\"vps_databases\"} / 86400",
           "hide": false,
-          "legendFormat": "TrueNAS {{dataset}}",
+          "legendFormat": "VPS_Databases (to NAS)",
           "range": true,
           "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"vps_nextcloud\"} / 86400",
+          "hide": false,
+          "legendFormat": "VPS_Nextcloud (to NAS)",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"vps_services\"} / 86400",
+          "hide": false,
+          "legendFormat": "VPS_Services (to NAS)",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "truenas_backup_age_seconds{dataset=\"x13_home\"} / 86400",
+          "hide": false,
+          "legendFormat": "X13_Home (to NAS)",
+          "range": true,
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"configs\"}) / 86400",
+          "hide": false,
+          "legendFormat": "NAS_Configs (to VPS)",
+          "range": true,
+          "refId": "G"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"data\"}) / 86400",
+          "hide": false,
+          "legendFormat": "NAS_Data (to VPS)",
+          "range": true,
+          "refId": "H"
         }
       ],
       "title": "Backups Age",
       "type": "stat"
     },
     {
-      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Size of each backup repository (restic repos on TrueNAS and VPS)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 53687091200
+              },
+              {
+                "color": "orange",
+                "value": 107374182400
+              },
+              {
+                "color": "red",
+                "value": 214748364800
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
       "gridPos": {
-        "h": 1,
+        "h": 6,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 29
       },
-      "id": 110,
-      "panels": [],
-      "title": "Proxmox VE",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "CPU usage",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 3,
-        "x": 0,
-        "y": 28
-      },
-      "id": 50,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.3.3",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "pve_cpu_usage_ratio{id=\"node/pve\"} * 100",
-          "legendFormat": "CPU",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "(pve_memory_usage_bytes{id=\"node/pve\"} / pve_memory_size_bytes{id=\"node/pve\"}) * 100",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "RAM",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "",
-      "transparent": true,
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Proxmox storage usage per pool",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 7,
-        "x": 3,
-        "y": 28
-      },
-      "id": 55,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.3.3",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "(pve_disk_usage_bytes{id=~\"storage/pve/.*\"} / pve_disk_size_bytes{id=~\"storage/pve/.*\"}) * 100 and pve_disk_size_bytes{id=~\"storage/pve/.*\"} > 0",
-          "legendFormat": "{{id}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "storage/pve/(.*)",
-            "renamePattern": "$1"
-          }
-        }
-      ],
-      "transparent": true,
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "LXC container disk usage",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "displayName": "Disk Usage",
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 10,
-        "x": 10,
-        "y": 28
-      },
-      "id": 13,
+      "id": 172,
       "options": {
         "displayMode": "gradient",
         "legend": {
@@ -1576,7 +1458,7 @@
         "minVizHeight": 16,
         "minVizWidth": 8,
         "namePlacement": "auto",
-        "orientation": "vertical",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1588,7 +1470,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1596,108 +1478,80 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(pve_disk_usage_bytes{id=~\"lxc/.*\"} / pve_disk_size_bytes{id=~\"lxc/.*\"}) * 100",
-          "legendFormat": "{{id}}",
+          "expr": "backup_repo_size_bytes{dataset=\"desk_home\"}",
+          "legendFormat": "DESK_Home (to NAS)",
           "range": true,
           "refId": "A"
-        }
-      ],
-      "title": "",
-      "transformations": [
+        },
         {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "lxc/(.*)",
-            "renamePattern": "$1"
-          }
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"x13_home\"}",
+          "legendFormat": "X13_Home (to NAS)",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"vps_databases\"}",
+          "legendFormat": "VPS_Databases (to NAS)",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"vps_nextcloud\"}",
+          "legendFormat": "VPS_Nextcloud (to NAS)",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"vps_services\"}",
+          "legendFormat": "VPS_Services (to NAS)",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"offsite_configs\"}",
+          "legendFormat": "NAS_Configs (to VPS)",
+          "range": true,
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "backup_repo_size_bytes{dataset=\"offsite_data\"}",
+          "legendFormat": "NAS_Data (to VPS)",
+          "range": true,
+          "refId": "G"
         }
       ],
-      "transparent": true,
+      "title": "Backup Repository Sizes",
       "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Proxmox disk temperatures",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 40
-              },
-              {
-                "color": "red",
-                "value": 50
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 20,
-        "y": 28
-      },
-      "id": 108,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.3",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "node_hwmon_temp_celsius{job=\"monitoring_node\", chip=~\"nvme_nvme.*\", sensor=\"temp1\"}",
-          "legendFormat": "{{chip}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "nvme_(nvme[0-9]+)",
-            "renamePattern": "$1"
-          }
-        }
-      ],
-      "transparent": true,
-      "type": "stat"
     },
     {
       "collapsed": false,
@@ -1705,7 +1559,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 35
       },
       "id": 109,
       "panels": [],
@@ -1752,7 +1606,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 34
+        "y": 36
       },
       "id": 151,
       "options": {
@@ -1770,7 +1624,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1829,7 +1683,7 @@
         "h": 4,
         "w": 3,
         "x": 3,
-        "y": 34
+        "y": 36
       },
       "id": 152,
       "options": {
@@ -1847,7 +1701,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1909,7 +1763,7 @@
         "h": 4,
         "w": 7,
         "x": 6,
-        "y": 34
+        "y": 36
       },
       "id": 155,
       "options": {
@@ -1936,7 +1790,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -1990,7 +1844,7 @@
         "h": 4,
         "w": 11,
         "x": 13,
-        "y": 34
+        "y": 36
       },
       "id": 23,
       "options": {
@@ -2010,7 +1864,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2043,7 +1897,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 40
       },
       "id": 156,
       "panels": [],
@@ -2079,7 +1933,7 @@
         "h": 6,
         "w": 9,
         "x": 0,
-        "y": 39
+        "y": 41
       },
       "id": 157,
       "options": {
@@ -2106,7 +1960,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2152,7 +2006,7 @@
         "h": 6,
         "w": 9,
         "x": 9,
-        "y": 39
+        "y": 41
       },
       "id": 158,
       "options": {
@@ -2179,7 +2033,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2224,7 +2078,7 @@
         "h": 6,
         "w": 6,
         "x": 18,
-        "y": 39
+        "y": 41
       },
       "id": 163,
       "options": {
@@ -2251,7 +2105,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2274,7 +2128,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 47
       },
       "id": 130,
       "panels": [],
@@ -2316,12 +2170,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 24,
+        "h": 4,
+        "w": 12,
         "x": 0,
-        "y": 46
+        "y": 48
       },
-      "id": 133,
+      "id": 173,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -2339,7 +2193,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2347,7 +2201,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(time() - nixos_autoupdate_system_last_success) / 86400",
+          "expr": "(time() - nixos_last_update_system_timestamp) / 86400",
           "legendFormat": "{{hostname}}",
           "range": true,
           "refId": "A"
@@ -2392,12 +2246,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 24,
-        "x": 0,
-        "y": 49
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 48
       },
-      "id": 144,
+      "id": 174,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -2415,7 +2269,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.3",
+      "pluginVersion": "12.3.4",
       "targets": [
         {
           "datasource": {
@@ -2423,7 +2277,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(time() - nixos_autoupdate_user_last_success) / 86400",
+          "expr": "(time() - nixos_last_update_user_timestamp) / 86400",
           "legendFormat": "{{hostname}}",
           "range": true,
           "refId": "A"
@@ -2468,5 +2322,5 @@
   "timezone": "browser",
   "title": "Public Infrastructure Overview",
   "uid": "public-infrastructure-overview",
-  "version": 4
+  "version": 6
 }

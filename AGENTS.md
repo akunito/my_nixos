@@ -8,10 +8,10 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
 - **Source of truth**: `flake.nix` and its `inputs` define dependencies.
 - **Application workflow**: apply changes via `install.sh` (or `aku sync`), not manual systemd enable/start.
 - **Flake purity**: prefer repo-relative paths (`./.`) and `self`; avoid absolute host paths inside Nix.
-- **LXC Container Modularity**: For Proxmox LXC containers, use the **Base + Override** pattern:
-  - Common settings in `profiles/LXC-base-config.nix`.
-  - Hostname/specific overrides in `profiles/<NAME>-config.nix`.
-  - Point `flake.<NAME>.nix` to the override.
+- **LXC Container Modularity**: For Komi's Proxmox LXC containers, use the **Base + Override** pattern:
+  - Common settings in `profiles/KOMI_LXC-base-config.nix`.
+  - Hostname/specific overrides in `profiles/KOMI_LXC_<name>-config.nix`.
+  - All profiles registered in unified `flake.nix`.
 
 ## Home Manager updates
 

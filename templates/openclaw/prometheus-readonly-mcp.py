@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""Read-only Prometheus MCP server for OpenClaw.
+Only exposes query, query_range, alerts, and targets.
+Blocks: admin API, config reload, TSDB operations.
+
+Anti-DoS defense layers:
+  1. Prometheus server: --query.timeout=10s (kills expensive queries server-side)
+  2. Prometheus server: --query.max-samples=5000000 (caps result cardinality)
+  3. Prometheus server: --query.max-concurrency=4 (limits parallel queries)
+  4. MCP wrapper: Rate limit 30 queries/hour (prevents rapid-fire instant query DoS)
+  5. MCP wrapper: MAX_QUERY_LENGTH=512 (blocks oversized PromQL)
+  6. MCP wrapper: MAX_RANGE_HOURS=168 (7 days max range per query)
+  7. MCP wrapper: MIN_STEP_SECONDS=60 (prevents 90d × 1s = 7.7M data points)
+  8. MCP wrapper: urllib timeout=15s (HTTP-level kill switch)
+The primary defense is --query.timeout at the Prometheus level (same principle as
+statement_timeout for PostgreSQL). MCP limits are defense-in-depth.
+Rate limit on instant queries prevents rapid-fire retries that exhaust resources
+even with the 10s server-side kill switch.
+"""
+import os, json, time, fcntl, urllib.request, urllib.parse
+from pathlib import Path
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp.types import Tool, TextContent
+
+PROM_URL = os.environ.get("PROMETHEUS_URL", "http://host.docker.internal:9090")
+ALLOWED_API_PREFIXES = ("/api/v1/query", "/api/v1/alerts", "/api/v1/targets")
+MAX_QUERY_LENGTH = 512
+MAX_RANGE_HOURS = 168   # 7 days max per range query (use Grafana for longer)
+MIN_STEP_SECONDS = 60   # Minimum 60s step (prevents high-cardinality explosions)
+
+# --- Persistent rate limiter (file-backed, survives process restarts) ---
+# Instant queries with large range vectors (e.g., [90d]) bypass MAX_RANGE_HOURS.
+# Rate limiting prevents rapid-fire expensive queries that --query.timeout=10s
+# kills individually but still consume CPU/memory before being killed.
+RATE_LIMITS = {
+    "query": {"max": 30, "window": 3600},  # 30 queries/hour (instant + range combined)
+}
+_RATE_FILE = Path(os.environ.get("HOME", "/home/node")) / ".openclaw/mcp/.ratelimit-prometheus.json"
+
+def _check_rate(op: str) -> str | None:
+    if op not in RATE_LIMITS:
+        return None
+    cfg = RATE_LIMITS[op]
+    now = time.time()
+    _RATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(_RATE_FILE, "a+") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            f.seek(0)
+            data = json.loads(f.read() or "{}")
+            timestamps = [t for t in data.get(op, []) if now - t < cfg["window"]]
+            if len(timestamps) >= cfg["max"]:
+                remaining = int(cfg["window"] - (now - timestamps[0]))
+                return f"RATE LIMITED: {op} exceeded {cfg['max']}/{cfg['window']}s. Try again in {remaining}s."
+            timestamps.append(now)
+            data[op] = timestamps
+            f.seek(0); f.truncate()
+            f.write(json.dumps(data))
+    except (json.JSONDecodeError, OSError) as e:
+        return f"RATE LIMITED: {op} denied — rate state file corrupted ({type(e).__name__}). Manual fix: delete {_RATE_FILE}"
+    return None
+
+server = Server("prometheus-readonly")
+
+def _prom(path: str) -> dict:
+    if not any(path.startswith(p) for p in ALLOWED_API_PREFIXES):
+        return {"error": f"Path not allowed: {path}", "status": "error"}
+    url = f"{PROM_URL}{path}"
+    req = urllib.request.Request(url, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read())
+    except urllib.error.URLError as e:
+        return {"error": f"Prometheus unreachable: {e}", "status": "error"}
+    except json.JSONDecodeError as e:
+        return {"error": f"Invalid JSON response: {e}", "status": "error"}
+
+@server.list_tools()
+async def list_tools():
+    return [
+        Tool(name="query_prometheus", description="Run an instant PromQL query",
+             inputSchema={"type": "object", "properties": {
+                 "query": {"type": "string", "description": "PromQL expression"}
+             }, "required": ["query"]}),
+        Tool(name="query_range", description="Run a range PromQL query (max 7 days, min 60s step)",
+             inputSchema={"type": "object", "properties": {
+                 "query": {"type": "string"}, "start": {"type": "string"},
+                 "end": {"type": "string"}, "step": {"type": "string", "default": "300s",
+                     "description": "Step interval (minimum 60s, default 300s)"}
+             }, "required": ["query", "start", "end"]}),
+        Tool(name="list_firing_alerts", description="List all currently firing alerts",
+             inputSchema={"type": "object", "properties": {}}),
+        Tool(name="check_targets", description="Check Prometheus scrape target health",
+             inputSchema={"type": "object", "properties": {}}),
+    ]
+
+def _parse_step(step_str: str) -> int:
+    """Parse step string (e.g., '60s', '5m', '1h') to seconds."""
+    import re
+    m = re.match(r"^(\d+)([smh]?)$", step_str.strip())
+    if not m:
+        return 60  # default
+    val, unit = int(m.group(1)), m.group(2) or "s"
+    return val * {"s": 1, "m": 60, "h": 3600}[unit]
+
+@server.call_tool()
+async def call_tool(name: str, arguments: dict):
+    if "query" in arguments and len(arguments["query"]) > MAX_QUERY_LENGTH:
+        return [TextContent(type="text",
+                text=f"ERROR: Query too long ({len(arguments['query'])} > {MAX_QUERY_LENGTH})")]
+    match name:
+        case "query_prometheus":
+            if err := _check_rate("query"):
+                return [TextContent(type="text", text=err)]
+            q = urllib.parse.quote(arguments["query"])
+            r = _prom(f"/api/v1/query?query={q}")
+        case "query_range":
+            if err := _check_rate("query"):
+                return [TextContent(type="text", text=err)]
+            # Enforce minimum step to prevent high-cardinality DoS
+            step_str = arguments.get("step", "300s")
+            step_secs = _parse_step(step_str)
+            if step_secs < MIN_STEP_SECONDS:
+                return [TextContent(type="text",
+                    text=f"ERROR: Step too small ({step_str}). Minimum is {MIN_STEP_SECONDS}s.")]
+            # Enforce max range (7 days) — use Grafana for historical queries
+            try:
+                from datetime import datetime
+                start = datetime.fromisoformat(arguments["start"].replace("Z", "+00:00"))
+                end = datetime.fromisoformat(arguments["end"].replace("Z", "+00:00"))
+                range_hours = (end - start).total_seconds() / 3600
+                if range_hours > MAX_RANGE_HOURS:
+                    return [TextContent(type="text",
+                        text=f"ERROR: Range too large ({range_hours:.0f}h > {MAX_RANGE_HOURS}h). "
+                             f"Use Grafana for queries longer than {MAX_RANGE_HOURS // 24} days.")]
+            except (ValueError, TypeError):
+                pass  # Let Prometheus handle invalid timestamps
+            params = urllib.parse.urlencode({
+                "query": arguments["query"], "start": arguments["start"],
+                "end": arguments["end"], "step": f"{max(step_secs, MIN_STEP_SECONDS)}s"
+            })
+            r = _prom(f"/api/v1/query_range?{params}")
+        case "list_firing_alerts":
+            r = _prom("/api/v1/alerts")
+        case "check_targets":
+            r = _prom("/api/v1/targets")
+        case _:
+            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+    return [TextContent(type="text", text=json.dumps(r, indent=2, default=str))]
+
+async def main():
+    async with stdio_server() as (read, write):
+        await server.run(read, write, server.create_initialization_options())
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())

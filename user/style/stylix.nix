@@ -229,8 +229,7 @@ if systemSettings.stylixEnable == true then
         gtk-theme-name = if config.stylix.polarity == "dark" then "Adwaita-dark" else "Adwaita";
         gtk-application-prefer-dark-theme = 1;
 
-        # CRITICAL: Force Portal for file chooser
-        gtk-use-portal = 1;
+        # Portal for file chooser handled by GTK_USE_PORTAL env var (line 284)
 
         # Restore legacy settings requested by user
         gtk-button-images = 1;

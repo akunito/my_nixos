@@ -1,0 +1,210 @@
+services:
+  openclaw-gateway:
+    image: ghcr.io/openclaw/openclaw:2026.2.26
+    container_name: openclaw-gateway
+    init: true
+    restart: unless-stopped
+    # NOTE: Do NOT set user: "1000:1000" — rootless Docker remaps UIDs via /etc/subuid.
+    # Container UID 1000 maps to host UID 101000, breaking bind mount access.
+    # The image's default user (node) is correctly mapped by rootless Docker.
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    ports:
+      - "127.0.0.1:18789:18789"
+      - "127.0.0.1:18790:18790"   # Bridge port (Nodes, mobile)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Resolves to actual host IP on Linux Docker
+      # DNS overrides for MCP servers (mcporter) — *.local.akunito.com resolves to home LAN
+      # from public DNS, but VPS nginx serves these on Tailscale IP (100.64.0.6)
+      - "miniflux.local.akunito.com:100.64.0.6"
+      - "prometheus.local.akunito.com:100.64.0.6"
+      - "matrix.local.akunito.com:100.64.0.6"
+    tmpfs:
+      - /tmp:noexec,nosuid,size=256m
+      - /home/node/.npm:size=128m
+    environment:
+      - HOME=/home/node
+      - TERM=xterm-256color
+      - NODE_OPTIONS=--max-old-space-size=768
+      - PYTHONPATH=/home/node/.openclaw/mcp-packages
+      - OPENCLAW_GATEWAY_PORT=18789
+      - MODELSTUDIO_API_KEY=${MODELSTUDIO_API_KEY}
+      # NOTE: OPENCLAW_HOOKS_TOKEN is NOT in env — loaded from file at runtime by OpenClaw
+      # gateway config (see openclaw.json "hooks.token"). This prevents MCP subprocesses
+      # from reading the webhook token via environment inspection.
+      - PLANE_OPENCLAW_TOKEN=${PLANE_OPENCLAW_TOKEN}
+      - JELLYSEERR_URL=http://192.168.20.200:5055
+      - JELLYSEERR_OPENCLAW_KEY=${JELLYSEERR_OPENCLAW_KEY}
+      - GITHUB_OPENCLAW_TOKEN=${GITHUB_OPENCLAW_TOKEN}
+      - LEFTYWORKOUT_DB_URL=${LEFTYWORKOUT_DB_URL}
+      - LEFTYWORKOUT_USER_ID=${LEFTYWORKOUT_USER_ID:-1}
+      - MINIFLUX_OPENCLAW_KEY=${MINIFLUX_OPENCLAW_KEY}
+      - GITHUB_ALLOWED_OWNERS=akunito
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+      - GENERIC_TIMEZONE=Europe/Madrid
+      - TZ=Europe/Madrid
+      # MCP server env vars (mcporter subprocesses inherit these)
+      # Direct access to Plane via rootless Docker gateway — bypasses Cloudflare User-Agent block
+      - PLANE_API_URL=http://10.0.2.2:3003
+      - PLANE_API_TOKEN=${PLANE_OPENCLAW_TOKEN}
+      - PLANE_WORKSPACE_SLUG=akuworkspace
+      - JELLYSEERR_API_KEY=${JELLYSEERR_OPENCLAW_KEY}
+      - JELLYFIN_URL=http://192.168.20.200:8096
+      - JELLYFIN_API_KEY=${JELLYFIN_OPENCLAW_KEY}
+      - JELLYFIN_USER_ID=${JELLYFIN_USER_ID}
+      - MINIFLUX_API_URL=https://miniflux.local.akunito.com
+      - MINIFLUX_API_KEY=${MINIFLUX_OPENCLAW_KEY}
+      - PROMETHEUS_URL=${PROMETHEUS_URL}
+      # Gmail/Calendar MCP env vars (credentials volume already mounted :ro)
+      - GMAIL_CREDENTIALS_PATH=/home/node/.openclaw/credentials
+      - GMAIL_ACCOUNT=${GMAIL_ACCOUNT}
+      - CALENDAR_CREDENTIALS_PATH=/home/node/.openclaw/credentials
+      - CALENDAR_ACCOUNT=${CALENDAR_ACCOUNT}
+      - CALENDAR_TIMEZONE=Europe/Madrid
+    volumes:
+      - ${HOME}/.openclaw:/home/node/.openclaw
+      - openclaw_workspace:/home/node/.openclaw/workspace
+      - ${HOME}/.openclaw/credentials:/home/node/.openclaw/credentials:ro  # OAuth tokens read-only — prevents overwrite on container compromise
+      - ${HOME}/.openclaw/finance-imports:/home/node/.openclaw/finance-imports:ro  # Syncthing CSV imports (read-only)
+      - ${HOME}/.homelab/openclaw/hooks-token:/run/secrets/hooks_token:ro  # Webhook token as file — not in env
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:18789/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  openclaw-cli:
+    image: ghcr.io/openclaw/openclaw:2026.2.26
+    container_name: openclaw-cli
+    network_mode: "service:openclaw-gateway"
+    profiles: ["cli"]
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:noexec,nosuid,size=256m
+      - /home/node/.npm:size=128m
+    environment:
+      - HOME=/home/node
+      - TERM=xterm-256color
+    volumes:
+      - ${HOME}/.openclaw:/home/node/.openclaw
+    entrypoint: ["node", "/app/openclaw.mjs"]
+
+  api-proxy:
+    # HTTP proxy sidecar — wraps Plane/Jellyseerr/GitHub/Miniflux/Prometheus/LeftyWorkout APIs.
+    # Tokens stay in env vars, never exposed to the LLM. Rate-limited writes.
+    # Accessible from gateway at http://127.0.0.1:18795/
+    image: ghcr.io/openclaw/openclaw:2026.2.26
+    container_name: openclaw-api-proxy
+    network_mode: "service:openclaw-gateway"
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    environment:
+      - HOME=/home/node
+      - PYTHONPATH=/home/node/.openclaw/mcp-packages
+      - API_PROXY_PORT=18795
+      - PLANE_OPENCLAW_TOKEN=${PLANE_OPENCLAW_TOKEN}
+      - PLANE_API_URL=https://plane.akunito.com
+      - PLANE_WORKSPACE_SLUG=akuworkspace
+      - JELLYSEERR_URL=http://192.168.20.200:5055
+      - JELLYSEERR_OPENCLAW_KEY=${JELLYSEERR_OPENCLAW_KEY}
+      - GITHUB_OPENCLAW_TOKEN=${GITHUB_OPENCLAW_TOKEN}
+      - GITHUB_ALLOWED_OWNERS=akunito
+      - MINIFLUX_URL=https://miniflux.local.akunito.com
+      - MINIFLUX_OPENCLAW_KEY=${MINIFLUX_OPENCLAW_KEY}
+      - PROMETHEUS_URL=${PROMETHEUS_URL}
+      - LEFTYWORKOUT_DB_URL=${LEFTYWORKOUT_DB_URL}
+      - LEFTYWORKOUT_USER_ID=${LEFTYWORKOUT_USER_ID:-1}
+    volumes:
+      - ${HOME}/.openclaw/mcp:/home/node/.openclaw/mcp:ro
+      - ${HOME}/.openclaw/mcp-packages:/home/node/.openclaw/mcp-packages:ro
+    entrypoint: ["python3", "/home/node/.openclaw/mcp/api-proxy.py"]
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 32M
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:18795/health')\" || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  faster-whisper:
+    # CRITICAL: Pin to specific release — never use :latest (supply chain risk)
+    # Check https://github.com/fedirz/faster-whisper-server/releases before deploying
+    image: fedirz/faster-whisper-server:0.6.0-rc.3-cpu
+    container_name: faster-whisper
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:noexec,nosuid,size=512m
+    ports:
+      - "127.0.0.1:8787:8000"
+    environment:
+      - WHISPER__MODEL=Systran/faster-whisper-large-v3
+      - WHISPER__COMPUTE_TYPE=int8           # CPU-optimized quantization
+      - WHISPER__DEVICE=cpu
+      - WHISPER__VAD_FILTER=true             # Silero VAD — eliminates silence hallucinations
+    volumes:
+      - whisper_models:/root/.cache/huggingface   # Model cache (persists across restarts)
+    deploy:
+      resources:
+        limits:
+          cpus: "6.0"                         # Cap at 6 cores — leaves 6 for other services during transcription spikes
+          memory: 2G                          # large-v3 needs ~1.5GB for int8
+        reservations:
+          memory: 512M
+    healthcheck:
+      # Use python3 instead of curl — slim images may not include curl/wget
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\" || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s                      # Model download + load on first boot
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "2"
+
+volumes:
+  openclaw_workspace:
+    driver: local
+  whisper_models:
+    driver: local

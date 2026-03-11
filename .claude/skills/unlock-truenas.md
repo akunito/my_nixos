@@ -25,7 +25,7 @@ If no pool name is provided, unlocks all locked pools.
 
 ## Parameters
 
-- `pool-name` (optional): Specific pool to unlock (e.g., `hddpool`, `ssdpool`)
+- `pool-name` (optional): Specific pool to unlock (e.g., `ssdpool`, `extpool`)
 - If omitted, unlocks all locked pools
 
 ## Requirements
@@ -38,24 +38,22 @@ If no pool name is provided, unlocks all locked pools.
 
 TrueNAS is on VLAN 100 (Storage), accessible from:
 - **DESK**: via bond0.100 (192.168.20.96) — direct L2
-- **Proxmox**: via vmbr10.100 (192.168.20.82) — direct L2
 - **pfSense**: via ix0.100 (192.168.20.1) — VLAN gateway
-- **LXC containers**: via Proxmox host (bind mount NFS shares)
 
 ## Example Output
 
 ```
 Locked datasets found:
-- hddpool/media
-- hddpool/proxmox_backups
-- ssdpool/library
-
-Unlocking hddpool...
-✓ hddpool/media unlocked
-✓ hddpool/proxmox_backups unlocked
+- ssdpool/media
+- ssdpool/docker
+- extpool
 
 Unlocking ssdpool...
-✓ ssdpool/library unlocked
+✓ ssdpool/media unlocked
+✓ ssdpool/docker unlocked
+
+Unlocking extpool...
+✓ extpool unlocked
 
 All datasets unlocked successfully!
 ```

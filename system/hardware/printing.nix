@@ -25,5 +25,24 @@
       };
     };
 
-  }; 
+    # Auto-re-enable printer queues when Brother USB printer is reconnected
+    udev.extraRules = lib.mkIf (systemSettings.servicePrinting == true) ''
+      ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="04f9", TAG+="systemd", ENV{SYSTEMD_WANTS}="cups-auto-enable.service"
+    '';
+
+  };
+
+  # Oneshot service triggered by udev to re-enable all CUPS printer queues
+  systemd.services.cups-auto-enable = lib.mkIf (systemSettings.servicePrinting == true) {
+    description = "Auto-enable CUPS printer queues after USB reconnection";
+    after = [ "cups.service" ];
+    serviceConfig.Type = "oneshot";
+    path = [ pkgs.cups ];
+    script = ''
+      sleep 2
+      for printer in $(lpstat -e 2>/dev/null); do
+        cupsenable "$printer" 2>/dev/null || true
+      done
+    '';
+  };
 }

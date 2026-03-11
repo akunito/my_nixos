@@ -1,0 +1,225 @@
+#!/usr/bin/env python3
+"""Restricted Gmail MCP server for OpenClaw.
+
+Code-level RBAC — the "Plane treatment" for email:
+- READ: INBOX label only (cannot query quarantine, suspicious, trash, or any other label)
+- SEND: Draft creation only (human must hit Send in Gmail UI)
+- NOT IMPLEMENTED: delete, trash, modify filters, manage labels, forward, search all mail, send
+
+OAuth scope: gmail.readonly + gmail.compose (NOT gmail.modify).
+  - gmail.readonly: read all labels (MCP further restricts to INBOX only)
+  - gmail.compose: create drafts (NOTE: scope also allows messages.send at API level,
+    but this wrapper does NOT implement send — monitored by n8n sent-audit)
+  - gmail.modify was REMOVED to eliminate messages.trash() and messages.modify()
+    from the token in case of exfiltration (see Step 7e)
+
+Uses Google's official API client with an existing OAuth token from gog setup.
+Rate-limited: create_draft (10/hour).
+Rate state persists to disk — survives process restarts.
+"""
+import os, json, time, fcntl, base64
+from pathlib import Path
+from email.mime.text import MIMEText
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp.types import Tool, TextContent
+
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
+CREDENTIALS_PATH = os.environ["GMAIL_CREDENTIALS_PATH"]
+GMAIL_ACCOUNT = os.environ["GMAIL_ACCOUNT"]
+
+# --- Input length validation (anti-payload-abuse) ---
+MAX_BODY_LENGTH = 50_000  # 50KB
+def _validate_body_length(arguments: dict, fields: list[str]) -> str | None:
+    for f in fields:
+        if f in arguments and len(str(arguments[f])) > MAX_BODY_LENGTH:
+            return f"ERROR: {f} too long ({len(str(arguments[f]))} > {MAX_BODY_LENGTH} chars)"
+    return None
+
+# Hardcoded label restriction — Alfred can ONLY read these labels
+ALLOWED_READ_LABELS = {"INBOX"}
+# Blocked operations — not implemented, listed for audit clarity
+# delete, trash, modify, send, filter_create, filter_delete, label_create, label_delete
+
+# --- Persistent rate limiter (file-backed, survives process restarts) ---
+RATE_LIMITS = {
+    "create_draft":  {"max": 10, "window": 3600},
+}
+_RATE_FILE = Path(os.environ.get("HOME", "/home/node")) / ".openclaw/mcp/.ratelimit-gmail-restricted.json"
+
+def _check_rate(op: str) -> str | None:
+    if op not in RATE_LIMITS:
+        return None
+    cfg = RATE_LIMITS[op]
+    now = time.time()
+    _RATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(_RATE_FILE, "a+") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            f.seek(0)
+            data = json.loads(f.read() or "{}")
+            timestamps = [t for t in data.get(op, []) if now - t < cfg["window"]]
+            if len(timestamps) >= cfg["max"]:
+                remaining = int(cfg["window"] - (now - timestamps[0]))
+                return f"RATE LIMITED: {op} exceeded {cfg['max']}/{cfg['window']}s. Try again in {remaining}s."
+            timestamps.append(now)
+            data[op] = timestamps
+            f.seek(0); f.truncate()
+            f.write(json.dumps(data))
+    except (json.JSONDecodeError, OSError) as e:
+        # Fail-CLOSED permanently: deny if rate state is unreadable (no auto-reset — see plane-restricted-mcp)
+        return f"RATE LIMITED: {op} denied — rate state file corrupted ({type(e).__name__}). Manual fix: delete {_RATE_FILE}"
+    return None
+
+server = Server("gmail-restricted")
+
+_TOKEN_CACHE = Path("/tmp/gmail_mcp_token_refreshed.json")
+
+def _get_service():
+    """Build Gmail API service from stored OAuth credentials.
+    Credentials volume is mounted :ro to prevent overwrite on container compromise.
+    Token refresh writes to /tmp (tmpfs) — survives within session, cleared on restart.
+    On restart, falls back to the :ro original and re-refreshes.
+    """
+    token_path = Path(CREDENTIALS_PATH) / "gmail_mcp_token.json"
+    # Use cached refreshed token if available (written by previous refresh)
+    source = _TOKEN_CACHE if _TOKEN_CACHE.exists() else token_path
+    creds = Credentials.from_authorized_user_file(str(source))
+    if creds.expired and creds.refresh_token:
+        from google.auth.transport.requests import Request
+        creds.refresh(Request())
+        # Write refreshed token to tmpfs (writable), not :ro volume
+        _TOKEN_CACHE.write_text(creds.to_json())
+    return build("gmail", "v1", credentials=creds)
+
+@server.list_tools()
+async def list_tools():
+    return [
+        Tool(name="list_inbox",
+             description="List recent emails from INBOX only (cannot access other labels)",
+             inputSchema={"type": "object", "properties": {
+                 "max_results": {"type": "integer", "default": 20,
+                                 "description": "Max emails to return (1-50)"},
+                 "query": {"type": "string", "default": "",
+                           "description": "Gmail search query (applied within INBOX only)"}
+             }}),
+        Tool(name="read_email",
+             description="Read a specific email by ID (must be in INBOX)",
+             inputSchema={"type": "object", "properties": {
+                 "message_id": {"type": "string"}
+             }, "required": ["message_id"]}),
+        Tool(name="create_draft",
+             description="Create a draft email (does NOT send — human must send from Gmail UI)",
+             inputSchema={"type": "object", "properties": {
+                 "to": {"type": "string"}, "subject": {"type": "string"},
+                 "body": {"type": "string"},
+                 "reply_to_message_id": {"type": "string",
+                     "description": "Optional: message ID to reply to (sets In-Reply-To header)"}
+             }, "required": ["to", "subject", "body"]}),
+        # label_message REMOVED — required gmail.modify scope, which grants messages.trash()
+        # to any attacker who exfiltrates the OAuth token. See Step 7e.
+    ]
+
+@server.call_tool()
+async def call_tool(name: str, arguments: dict):
+    svc = _get_service()
+
+    match name:
+        case "list_inbox":
+            max_r = min(arguments.get("max_results", 20), 50)
+            query = arguments.get("query", "")
+            # HARDCODED: only search within INBOX label
+            result = svc.users().messages().list(
+                userId="me", labelIds=["INBOX"],
+                q=query, maxResults=max_r
+            ).execute()
+            messages = result.get("messages", [])
+            summaries = []
+            for msg in messages[:max_r]:
+                detail = svc.users().messages().get(
+                    userId="me", id=msg["id"], format="metadata",
+                    metadataHeaders=["From", "Subject", "Date"]
+                ).execute()
+                headers = {h["name"]: h["value"] for h in detail.get("payload", {}).get("headers", [])}
+                summaries.append({
+                    "id": msg["id"],
+                    "from": headers.get("From", ""),
+                    "subject": headers.get("Subject", ""),
+                    "date": headers.get("Date", ""),
+                    "snippet": detail.get("snippet", "")[:200]
+                })
+            r = {"count": len(summaries), "messages": summaries}
+
+        case "read_email":
+            mid = arguments["message_id"]
+            # Verify message is in INBOX before reading
+            msg = svc.users().messages().get(userId="me", id=mid, format="full").execute()
+            label_ids = set(msg.get("labelIds", []))
+            if not label_ids.intersection(ALLOWED_READ_LABELS):
+                return [TextContent(type="text",
+                    text="ERROR: Message is not in INBOX. Cannot read emails outside INBOX.")]
+            headers = {h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])}
+            # Extract body (prefer plain text)
+            body_text = ""
+            payload = msg.get("payload", {})
+            if "parts" in payload:
+                for part in payload["parts"]:
+                    if part.get("mimeType") == "text/plain" and "data" in part.get("body", {}):
+                        body_text = base64.urlsafe_b64decode(part["body"]["data"]).decode("utf-8", errors="replace")
+                        break
+            elif "body" in payload and "data" in payload["body"]:
+                body_text = base64.urlsafe_b64decode(payload["body"]["data"]).decode("utf-8", errors="replace")
+            # Truncate to prevent context overflow
+            if len(body_text) > 4000:
+                body_text = body_text[:4000] + "\n... [truncated]"
+            r = {
+                "id": mid, "from": headers.get("From", ""),
+                "to": headers.get("To", ""), "subject": headers.get("Subject", ""),
+                "date": headers.get("Date", ""), "body": body_text,
+                "labels": list(label_ids),
+                "attachments": [
+                    {"filename": p.get("filename", ""), "mimeType": p.get("mimeType", ""),
+                     "size": p.get("body", {}).get("size", 0)}
+                    for p in payload.get("parts", []) if p.get("filename")
+                ]
+            }
+
+        case "create_draft":
+            if err := _check_rate("create_draft"):
+                return [TextContent(type="text", text=err)]
+            if err := _validate_body_length(arguments, ["body", "subject"]):
+                return [TextContent(type="text", text=err)]
+            # DRAFT ONLY — does NOT send. Human must open Gmail and hit Send.
+            message = MIMEText(arguments["body"])
+            message["to"] = arguments["to"]
+            message["from"] = GMAIL_ACCOUNT
+            message["subject"] = arguments["subject"]
+            if "reply_to_message_id" in arguments:
+                message["In-Reply-To"] = arguments["reply_to_message_id"]
+                message["References"] = arguments["reply_to_message_id"]
+            raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
+            draft = svc.users().drafts().create(
+                userId="me", body={"message": {"raw": raw}}
+            ).execute()
+            r = {
+                "status": "draft_created",
+                "draft_id": draft["id"],
+                "note": "Draft created. You must open Gmail to review and send it manually."
+            }
+
+        # label_message case REMOVED — see Step 7e (OAuth scope hardening)
+
+        case _:
+            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+
+    return [TextContent(type="text", text=json.dumps(r, indent=2, default=str))]
+
+async def main():
+    async with stdio_server() as (read, write):
+        await server.run(read, write, server.create_initialization_options())
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())

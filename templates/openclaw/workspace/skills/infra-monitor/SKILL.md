@@ -1,0 +1,39 @@
+# Skill: Infrastructure Monitor
+
+## Purpose
+Query Prometheus metrics to assess infrastructure health, diagnose issues, and produce trend analysis reports.
+
+## Tools
+Use the `prometheus-readonly` MCP server exclusively. Available tools:
+- `query_prometheus` — Instant PromQL query (current value)
+- `query_range` — Range query with start/end/step (time series)
+- `list_firing_alerts` — Currently firing alert rules
+- `check_targets` — Scrape target health status
+
+## When to Use
+- **Proactively** during `infra-deep-analysis` cron (weekly Sunday 11:30) — run a full 90-day trend analysis
+- **On request** when Aku asks to "check infrastructure", "how are the servers", etc.
+- **During morning brief** if firing alerts exist — mention them briefly
+- **Never** during heartbeat cycles unless explicitly asked (see HEARTBEAT.md)
+
+## Standard Checks (for weekly deep analysis)
+1. `check_targets` — identify any DOWN scrape targets
+2. `list_firing_alerts` — active alerts needing attention
+3. Disk space trends: `predict_linear(node_filesystem_avail_bytes[30d], 86400*30)` for 30-day projections
+4. Memory trends: `node_memory_MemAvailable_bytes` over 7d and 30d
+5. CPU saturation: `avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[1h]))` over 7d
+6. Database connections: `pg_stat_activity_count` trends, Redis memory usage
+7. Backup freshness: `postgresql_backup_daily_last_success_timestamp`, `mariadb_backup_daily_last_success_timestamp`
+8. Certificate expiry: `probe_ssl_earliest_cert_expiry` for all blackbox targets
+
+## Rate Limits
+- 30 queries per hour (enforced by MCP wrapper)
+- Maximum query length: 512 characters
+- Maximum range: 168 hours (7 days) per range query
+- Minimum step: 60 seconds
+
+## Output Format
+- Lead with a 1-line status summary (all green / N issues found)
+- Use tables for multi-target comparisons
+- Flag anything crossing thresholds defined in MEMORY.md
+- For weekly analysis: include 30-day trend direction (improving/stable/degrading) per metric category

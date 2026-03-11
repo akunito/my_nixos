@@ -330,11 +330,9 @@ pre_install_checks() {
 
 # Get current system generation for rollback
 get_current_generation() {
-    if [ -d /nix/var/nix/profiles/system ]; then
-        nix-env --list-generations --profile /nix/var/nix/profiles/system 2>/dev/null | tail -1 | awk '{print $1}' || echo ""
-    else
-        echo ""
-    fi
+    # Use ls instead of nix-env to avoid needing sudo for the lock file
+    local latest=$(ls /nix/var/nix/profiles/system-*-link 2>/dev/null | sort -V | tail -1 | grep -oP 'system-\K\d+' || echo "")
+    echo "$latest"
 }
 
 # Get current home-manager generation for verification
@@ -688,9 +686,27 @@ generate_hardware_config() {
 
     run_script_to_stop_drives() {
         echo -e "Attempting to stop external drives ..."
-        $SUDO_CMD $SCRIPT_DIR/stop_external_drives.sh 
+        $SUDO_CMD $SCRIPT_DIR/stop_external_drives.sh
         echo "Generating hardware configuration file..."
         $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+        # Clean up autofs/NFS entries captured from running automounts.
+        # These mounts are managed by drives.nix + nfs_client.nix; having them
+        # in hardware-configuration.nix causes duplicate attribute errors.
+        local HW_CONFIG="$SCRIPT_DIR/system/hardware-configuration.nix"
+        if grep -q 'fsType = "autofs"' "$HW_CONFIG" 2>/dev/null; then
+            echo "Cleaning up autofs/NFS entries from hardware-configuration.nix..."
+            python3 -c "
+import re, sys
+with open('$HW_CONFIG', 'r') as f:
+    content = f.read()
+# Remove fileSystems blocks with autofs or nfs/nfs4 type (managed by drives.nix)
+content = re.sub(
+    r'\n  fileSystems\.\"[^\"]+\" =\n    \{ device = \"[^\"]*\";\n      fsType = \"(?:autofs|nfs4?)\";\n    \};\n',
+    '\n', content)
+with open('$HW_CONFIG', 'w') as f:
+    f.write(content)
+" 2>/dev/null || echo "Warning: Could not clean hardware-configuration.nix (python3 not available)"
+        fi
     }
 
     # Ask user if they want to generate hardware-configuration.nix
@@ -978,27 +994,17 @@ if [ "$REBUILD_EXIT_CODE" -eq 0 ]; then
     debug_log "A_parse_quote" "install.sh:rebuild" "rebuildSuccess" "{\"postGeneration\":\"$POST_REBUILD_GENERATION\"}"
     # #endregion
 elif [ "$REBUILD_EXIT_CODE" -eq 4 ]; then
-    # Exit code 4 = known partial success case (system installed, services may have failed)
-    # Verify by checking if generation was created
-    if check_rebuild_success "$PRE_REBUILD_GENERATION"; then
-        POST_REBUILD_GENERATION=$(get_current_generation)
-        echo -e "\n${YELLOW}⚠ System rebuild completed with warnings${RESET}"
-        echo -e "${YELLOW}  Some services may have failed to start, but the system configuration was applied${RESET}"
-        echo -e "${GREEN}  New generation created: $POST_REBUILD_GENERATION${RESET}"
-        echo -e "${CYAN}  Review service logs if needed: journalctl -p err${RESET}"
-        # #region agent log
-        debug_log "A_parse_quote" "install.sh:rebuild" "rebuildPartialSuccess" "{\"exitCode\":$REBUILD_EXIT_CODE,\"postGeneration\":\"$POST_REBUILD_GENERATION\"}"
-        # #endregion
-    else
-        # Exit code 4 but no new generation - actual failure
-        echo -e "\n${RED}System rebuild failed!${RESET}"
-        echo -e "${RED}  Exit code: $REBUILD_EXIT_CODE (no new generation was created)${RESET}"
-        # #region agent log
-        debug_log "A_parse_quote" "install.sh:rebuild" "rebuildFailureNoGeneration" "{\"exitCode\":$REBUILD_EXIT_CODE}"
-        # #endregion
-        rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
-        exit 1
-    fi
+    # Exit code 4 = switch-to-configuration ran but some units failed to start/restart
+    # The system configuration IS applied regardless (generation may or may not increment
+    # if the closure is identical to the current one)
+    POST_REBUILD_GENERATION=$(get_current_generation)
+    echo -e "\n${YELLOW}⚠ System rebuild completed with warnings${RESET}"
+    echo -e "${YELLOW}  Some services may have failed to start, but the system configuration was applied${RESET}"
+    echo -e "${GREEN}  Current generation: $POST_REBUILD_GENERATION${RESET}"
+    echo -e "${CYAN}  Review service logs if needed: journalctl -p err${RESET}"
+    # #region agent log
+    debug_log "A_parse_quote" "install.sh:rebuild" "rebuildPartialSuccess" "{\"exitCode\":$REBUILD_EXIT_CODE,\"postGeneration\":\"$POST_REBUILD_GENERATION\"}"
+    # #endregion
 else
     # Other exit codes (1, 243, etc.) - check if generation was created
     # This handles cases where rebuild partially succeeded despite non-zero exit code
@@ -1076,6 +1082,11 @@ else
     fi
 fi
 
+# Run post-sync hooks (restart desktop services like waybar, tray apps, etc.)
+# The posthook self-detects the desktop environment; no-ops on headless/server profiles.
+echo -e "\n${CYAN}Running post-sync hooks...${RESET}"
+$SCRIPT_DIR/sync-posthook.sh
+
 # Run maintenance script
 maintenance_script $SCRIPT_DIR $SILENT_MODE
 echo "  " # To clean up color codes
@@ -1089,6 +1100,12 @@ if [ -f "$SCRIPT_DIR/scripts/flatpak-reconcile.sh" ]; then
     if declare -F flatpak_reconcile >/dev/null 2>&1; then
         flatpak_reconcile || true
     fi
+fi
+
+# Install git hooks (pre-commit secret scanner)
+if [ -f "$SCRIPT_DIR/scripts/setup-hooks.sh" ]; then
+    echo -e "\n${CYAN}Installing git hooks...${RESET}"
+    bash "$SCRIPT_DIR/scripts/setup-hooks.sh"
 fi
 
 # Ending menu

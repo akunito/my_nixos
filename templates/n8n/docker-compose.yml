@@ -1,0 +1,63 @@
+# n8n Workflow Automation
+# Deploy to: ~/.homelab/n8n/docker-compose.yml on VPS_PROD
+#
+# Prerequisites:
+# 1. PostgreSQL database 'n8n' must exist (created by NixOS)
+# 2. Create .env file with credentials (see .env.template)
+# 3. Cloudflare tunnel configured for n8n.akunito.com (webhook access)
+
+services:
+  n8n:
+    image: n8nio/n8n:2.11.0
+    container_name: n8n
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:5678:5678"
+    extra_hosts:
+      - "host.docker.internal:10.0.2.2"
+    environment:
+      # Database (external VPS PostgreSQL)
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: host.docker.internal
+      DB_POSTGRESDB_PORT: "5432"
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD}
+
+      # Webhook & proxy (behind Cloudflare tunnel — n8n runs HTTP internally)
+      # HTTPS termination is handled by Cloudflare/nginx, not n8n
+      WEBHOOK_URL: https://n8n.${PUBLIC_DOMAIN}/
+      N8N_HOST: n8n.${PUBLIC_DOMAIN}
+      N8N_PROXY_HOPS: "1"
+
+      # Encryption key for stored credentials (CRITICAL — never lose this)
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+
+      # Execution data retention (7 days, max 10k records)
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "168"
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
+
+      # Timezone
+      GENERIC_TIMEZONE: Europe/Madrid
+      TZ: Europe/Madrid
+    volumes:
+      - n8n_data:/home/node/.n8n
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  n8n_data:
+    driver: local

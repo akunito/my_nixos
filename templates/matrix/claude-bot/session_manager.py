@@ -5,7 +5,7 @@ Session Manager
 SQLite-based session persistence for Matrix users.
 Tracks Claude Code sessions, working directories, and activity.
 
-Deploy to: ~/.claude-matrix-bot/session_manager.py on LXC_matrix
+Deploy to: ~/.claude-matrix-bot/session_manager.py on VPS_PROD
 """
 
 import asyncio

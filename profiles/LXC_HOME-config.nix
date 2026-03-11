@@ -133,13 +133,6 @@ in
     backupMonitoringRepo = "/mnt/DATA_4TB/backups/NixOS_homelab/Home.restic/";
     backupMonitoringPasswordFile = "/home/akunito/myScripts/restic.key";
 
-    # ============================================================================
-    # PFSENSE BACKUP (Daily config backup via SSH)
-    # ============================================================================
-    pfsenseBackupEnable = true;
-    pfsenseBackupOnCalendar = "daily"; # Daily backup
-    pfsenseBackupDir = "/mnt/DATA_4TB/backups/pfsense";
-
     systemStable = true; # LXC_HOME uses stable
   };
 

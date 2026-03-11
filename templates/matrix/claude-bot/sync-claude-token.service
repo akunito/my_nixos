@@ -1,0 +1,6 @@
+[Unit]
+Description=Sync Claude Code OAuth token to VPS for Matrix bot
+
+[Service]
+Type=oneshot
+ExecStart=%h/.dotfiles/templates/matrix/claude-bot/sync-claude-token.sh

@@ -21,6 +21,8 @@
 
   boot.initrd.luks.devices."luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c".device = "/dev/disk/by-uuid/9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
 
+
+
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/7620-B197";
       fsType = "vfat";
@@ -49,21 +51,6 @@
   fileSystems."/mnt/DATA_SATA3" =
     { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
       fsType = "ntfs3";
-    };
-
-  fileSystems."/mnt/NFS_media" =
-    { device = "192.168.20.200:/mnt/hddpool/media";
-      fsType = "nfs4";
-    };
-
-  fileSystems."/mnt/NFS_library" =
-    { device = "192.168.20.200:/mnt/ssdpool/library";
-      fsType = "nfs4";
-    };
-
-  fileSystems."/mnt/NFS_emulators" =
-    { device = "192.168.20.200:/mnt/ssdpool/emulators";
-      fsType = "nfs4";
     };
 
   swapDevices =

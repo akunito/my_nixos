@@ -1,0 +1,48 @@
+# Homelab stack - TrueNAS Docker
+# All services migrated to VPS. Compose kept for NPM network connectivity.
+#
+# Migrated to VPS: nextcloud, syncthing, freshrss, obsidian-remote, redis-local, romm, calibre-web
+
+services: {}
+
+  # === Calibre-Web — MIGRATED TO VPS (Mar 2026) ===
+  # calibre-web-automated:
+  #   image: crocodilestick/calibre-web-automated:latest
+  #   container_name: calibre-web-automated
+  #   ports:
+  #     - "8083:8083"
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Europe/Warsaw
+  #     - NETWORK_SHARE_MODE=true
+  #     - SKIP_CHOWN=true
+  #     - NO_PERMISSIONS_CHECK=true
+  #     - DISABLE_LIBRARY_AUTOMOUNT=true
+  #   volumes:
+  #     - ${DATA_PATH}/calibre-web:/config
+  #     - /mnt/ssdpool/library/Ingest:/cwa-book-ingest
+  #     - /mnt/ssdpool/library/Books:/calibre-library:rw
+  #     - ${DATA_PATH}/calibre-web/custom-services/cwa-ingest-run.sh:/etc/s6-overlay/s6-rc.d/cwa-ingest-service/run:ro
+  #     - ${DATA_PATH}/calibre-web/custom-services/apply-db-patch.sh:/custom-cont-init.d/99-apply-db-patch.sh:ro
+  #     - ${DATA_PATH}/calibre-web/custom-patches:/config/custom-patches:ro
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: 100m
+  #       max-file: "3"
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8083"]
+  #     interval: 60s
+  #     timeout: 5s
+  #     retries: 3
+  #     start_period: 20s
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 4G
+
+  # === RomM — MIGRATED TO VPS (Feb 2026) ===
+  # romm-db and romm removed. ROMs copied to VPS NVMe.
+  # See VPS Docker stack: romm/docker-compose.yml

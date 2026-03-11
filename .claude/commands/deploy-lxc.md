@@ -1,6 +1,6 @@
-# Deploy to LXC Container
+# Deploy to Remote Machines
 
-Skill for deploying NixOS configurations to LXC containers and other machines.
+Skill for deploying NixOS configurations to VPS, laptops, desktops, and Komi LXC containers.
 
 ## CRITICAL: Always Use install.sh — NEVER Bare nixos-rebuild
 
@@ -10,8 +10,11 @@ Skill for deploying NixOS configurations to LXC containers and other machines.
 - Use `deploy.sh` or the `git fetch && git reset --hard && ./install.sh` pattern ALWAYS
 
 **Flag rules for deploy-servers.conf:**
-- **LXC containers**: Use `-d -h` (skip docker + skip hardware — no docker overlay issues, no hardware changes)
+- **LXC containers (Komi only)**: Use `-d -h` (skip docker + skip hardware — no docker overlay issues, no hardware changes)
+- **VPS (VPS_PROD)**: Use `-d` only (skip docker). Do NOT use `-h` — hardware-config MUST be regenerated on VPS
 - **Laptops/Desktops**: Use NO skip flags — hardware-config MUST be regenerated on physical machines
+
+**ONLY `-h` may be used for LXC containers** — all other machine types (VPS, laptops, desktops) MUST regenerate hardware-config.
 
 ## Usage
 
@@ -33,13 +36,18 @@ git push origin main
 # Option A: Use deploy.sh (preferred — handles IP probing, git fetch+reset, install.sh)
 ./deploy.sh --profile <PROFILE>
 
-# Option B: Single LXC container via SSH (passwordless sudo)
-ssh -A akunito@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -u -d -h"
+# Option B: VPS via SSH (passwordless sudo, VPN-only access)
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
+
+# Option C: Komi LXC container via SSH (passwordless sudo)
+ssh -A admin@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <KOMI_LXC_PROFILE> -s -u -d -h"
 ```
 
-## Important: LXC vs Physical Machines
+## Important: VPS vs Komi LXC vs Physical Machines
 
-**LXC containers** have passwordless sudo configured (see `sudoCommands` in `profiles/LXC-base-config.nix`), so they can be deployed non-interactively via SSH.
+**VPS (VPS_PROD)** has passwordless sudo via SSH agent forwarding. Can be deployed non-interactively via SSH. Use `-d` flag only — do NOT use `-h` because hardware-config MUST be regenerated on VPS (it's a real machine, not an LXC container).
+
+**Komi LXC containers** have passwordless sudo configured, so they can be deployed non-interactively via SSH. Use `-d -h` flags.
 
 **Physical machines (laptops/desktops)** require sudo password authentication. These CANNOT be deployed non-interactively from Claude Code. The user must run the deployment manually:
 
@@ -50,31 +58,21 @@ git fetch origin && git reset --hard origin/main
 ./install.sh ~/.dotfiles <PROFILE> -s -u
 ```
 
+## VPS Reference
+
+| Profile | IPs (VPN) | SSH Port | User | Description |
+|---------|-----------|----------|------|-------------|
+| VPS_PROD | 100.64.0.6 (TS), 172.26.5.155 (WG) | 56777 | akunito | Netcup RS 4000 G12 (Nuremberg) |
+
+**VPS SSH is VPN-only** — connect via Tailscale or WireGuard, never via public IP.
+
 ## Laptop/Desktop Reference
 
 | Profile | IP | User | Description |
 |---------|-----|------|-------------|
 | DESK | 192.168.8.96 | akunito | Main desktop |
-| LAPTOP_X13 | 192.168.8.92 | akunito | ThinkPad L15 laptop |
 | LAPTOP_X13 | 192.168.8.92 | akunito | ThinkPad X13 AMD laptop |
-| LAPTOP_A | 192.168.8.78 | aga | AGA's laptop |
-
-## Container Reference
-
-| Profile | IP | Bridge | Description |
-|---------|-----|--------|-------------|
-| LXC_HOME | 192.168.8.80 | vmbr10 | Homelab services |
-| LXC_proxy | 192.168.1.102 | vmbr10 | Cloudflare tunnel & NPM |
-| LXC_plane | 192.168.8.86 | vmbr10 | Production container |
-| LXC_portfolioprod | 192.168.8.88 | vmbr10 | Portfolio service |
-| LXC_mailer | 192.168.8.89 | vmbr10 | Mail & monitoring |
-| LXC_liftcraftTEST | 192.168.8.87 | vmbr10 | Test environment |
-| LXC_monitoring | 192.168.8.85 | vmbr10 | Prometheus & Grafana |
-| LXC_database | 192.168.1.103 | vmbr10 | PostgreSQL, MariaDB & Redis |
-| LXC_matrix | 192.168.1.104 | vmbr10 | Matrix Synapse, Element & Claude Bot |
-| LXC_tailscale | 192.168.1.105 | vmbr10 | Tailscale subnet router (mesh VPN) |
-
-All akunito containers use vmbr10 (bond0 LACP 2x10G → USW Aggregation SFP+ 3+4).
+| LAPTOP_A | 192.168.8.78 | aga | A's laptop |
 
 ## Komi Container Reference (Proxmox 192.168.1.3)
 
@@ -90,28 +88,12 @@ All Komi containers use vmbr0 on Komi's Proxmox (192.168.1.3).
 
 ## Examples
 
-### Deploy to LXC_database
+### Deploy to VPS_PROD (via Tailscale or WireGuard — NO -h flag!)
 
 ```bash
-ssh -A akunito@192.168.1.103 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_database -s -u -d -h"
-```
-
-### Deploy to LXC_monitoring
-
-```bash
-ssh -A akunito@192.168.8.85 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_monitoring -s -u -d -h"
-```
-
-### Deploy to LXC_matrix
-
-```bash
-ssh -A akunito@192.168.1.104 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_matrix -s -u -d -h"
-```
-
-### Deploy to LXC_tailscale
-
-```bash
-ssh -A akunito@192.168.1.105 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles LXC_tailscale -s -u -d -h"
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
+# Or via WireGuard:
+ssh -A -p 56777 akunito@172.26.5.155 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
 ```
 
 ### Deploy to LAPTOP_A (Manual - requires password)
@@ -153,7 +135,7 @@ ssh -A admin@192.168.1.13 "cd ~/.dotfiles && git fetch origin && git reset --har
 ssh -A admin@192.168.1.14 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles KOMI_LXC_tailscale -s -u -d -h"
 ```
 
-### Deploy to Multiple Containers
+### Deploy to Multiple Machines
 
 Use the unified deploy script (interactive TUI):
 
@@ -170,13 +152,12 @@ Or deploy to all:
 Or deploy to specific profiles:
 
 ```bash
-./deploy.sh --profile LXC_database --profile LXC_monitoring
+./deploy.sh --profile VPS_PROD --profile KOMI_LXC_monitoring
 ```
 
 Or deploy an entire group:
 
 ```bash
-./deploy.sh --group "LXC Containers"
 ./deploy.sh --group "Komi LXC Containers"
 ```
 

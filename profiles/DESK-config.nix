@@ -58,12 +58,14 @@ in
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
     kernelModules = [
       "xpadneo" # xbox controller
+      "hid_nintendo" # Joy-Con controller
     ];
 
     # Security
     fuseAllowOther = true;
     pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
-    # Sudo UX: keep sudo authentication cached longer (minutes)
+    # GUI askpass: popup password dialog when sudo has no terminal (e.g., Claude Code)
+    sudoAskpassEnable = true;
     sudoTimestampTimeoutMinutes = 180;
 
     # Polkit
@@ -101,7 +103,6 @@ in
     # Backups
     homeBackupEnable = true;
     homeBackupCallNextEnabled = false;
-    vpsBackupEnable = true;
     nfsBackupEnable = true;
 
     # Network
@@ -140,6 +141,7 @@ in
 
     # Firewall
     allowedTCPPorts = [
+      9100 # prometheus workstation exporter
       # 47984 47989 47990 48010 # sunshine
     ];
     allowedUDPPorts = [
@@ -171,28 +173,16 @@ in
     ];
     disk3_enabled = true;
     disk3_name = "/mnt/NFS_media";
-    disk3_device = "192.168.20.200:/mnt/hddpool/media";
+    disk3_device = "192.168.20.200:/mnt/ssdpool/media";
     disk3_fsType = "nfs4";
     disk3_options = [
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
-    disk4_enabled = true;
-    disk4_name = "/mnt/NFS_emulators";
-    disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
-    disk4_fsType = "nfs4";
-    disk4_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
-    disk5_enabled = true;
-    disk5_name = "/mnt/NFS_library";
-    disk5_device = "192.168.20.200:/mnt/ssdpool/library";
-    disk5_fsType = "nfs4";
-    disk5_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
+    # disk4 (emulators) and disk5 (library) removed — datasets no longer exist on TrueNAS,
+    # data lives on VPS (romm-library, calibre-library). See IAKU-247.
+    disk4_enabled = false;
+    disk5_enabled = false;
     disk6_enabled = true;
     disk6_name = "/mnt/DATA";
     disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
@@ -200,6 +190,7 @@ in
     disk6_options = [
       "nofail"
       "x-systemd.device-timeout=3s"
+      "force"
       "uid=1000"
       "gid=1000"
     ];
@@ -211,30 +202,27 @@ in
     # disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
     # disk7_fsType = "ext4";
     # disk7_options = [ "nofail" "x-systemd.device-timeout=5s" "noatime" "nodiratime" ];
+    disk8_enabled = true;
+    disk8_name = "/mnt/NFS_Backups";
+    disk8_device = "192.168.20.200:/mnt/ssdpool/workstation_backups";
+    disk8_fsType = "nfs4";
+    disk8_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
 
     # NFS client
     nfsClientEnable = true;
     nfsMounts = [
       {
-        what = "192.168.20.200:/mnt/hddpool/media";
+        what = "192.168.20.200:/mnt/ssdpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
       }
+      # library and emulators NFS mounts removed — datasets no longer exist (IAKU-247)
       {
-        what = "192.168.20.200:/mnt/ssdpool/library";
-        where = "/mnt/NFS_library";
-        type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
-      }
-      {
-        what = "192.168.20.200:/mnt/ssdpool/emulators";
-        where = "/mnt/NFS_emulators";
-        type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
-      }
-      {
-        what = "192.168.20.200:/mnt/hddpool/workstation_backups";
+        what = "192.168.20.200:/mnt/ssdpool/workstation_backups";
         where = "/mnt/NFS_Backups";
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
@@ -247,18 +235,7 @@ in
           TimeoutIdleSec = "600";
         };
       }
-      {
-        where = "/mnt/NFS_library";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
-      {
-        where = "/mnt/NFS_emulators";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
+      # NFS_library and NFS_emulators automounts removed (IAKU-247)
       {
         where = "/mnt/NFS_Backups";
         automountConfig = {
@@ -315,12 +292,13 @@ in
     kanshiImperativeMode = true; # Use nwg-displays to manage monitors (config in ~/.config/kanshi/config)
 
     # === System Services & Features ===
-    sambaEnable = true; # Enable Samba file sharing
+    sambaEnable = false; # Samba file sharing disabled (not currently needed)
     sunshineEnable = true; # Enable Sunshine game streaming
     wireguardEnable = true; # Enable WireGuard VPN
     appImageEnable = true; # Enable AppImage support
     gamemodeEnable = true; # Enable GameMode for performance optimization
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
+    joycondEnable = true; # Enable Joy-Con controller support (joycond daemon)
 
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable daemon (but don't auto-connect - manual via Trayscale GUI)
@@ -335,18 +313,31 @@ in
 
     # === Development Tools & AI ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
+    perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for Claude Code MCP
+    planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
+    planeApiUrl = "https://plane.${secrets.publicDomain}";
+    planeWorkspaceSlug = "akuworkspace";
+    grafanaMcpToken = secrets.grafanaMcpToken; # Grafana MCP (read-only dashboards + PromQL)
+    grafanaMcpUrl = "https://grafana.${secrets.publicDomain}";
+    dbClaudeReadonlyConnStr = "postgresql://claude_readonly:${secrets.dbClaudeReadonlyPassword}@100.64.0.6:5432/plane";
+    n8nMcpApiKey = secrets.n8nApiKey; # n8n MCP (workflow automation)
+    n8nMcpUrl = "https://n8n.${secrets.publicDomain}";
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
+    voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)
 
     # === Control Panel ===
     controlPanelEnable = true; # Enable NixOS infrastructure control panel (web server)
     controlPanelNativeEnable = true; # Enable NixOS infrastructure control panel (native desktop app)
 
+    # === Monitoring ===
+    prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
+
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
     dbCredentialsEnable = true;
-    dbCredentialsHost = "192.168.8.103"; # LXC_database server
+    dbCredentialsHost = "100.64.0.6"; # VPS_PROD via Tailscale
     dbCredentialsPostgres = [
       { database = "plane"; user = "plane"; password = secrets.dbPlanePassword; }
       { database = "rails_database_prod"; user = "liftcraft"; password = secrets.dbLiftcraftPassword; }
@@ -493,8 +484,9 @@ in
     rangerFullPreviewEnable = true; # Full ranger preview (fonts, ebooks, spreadsheets, etc.)
 
     # === Gaming & Entertainment ===
-    gamesEnable = true; # Enable gaming packages (RetroArch, Pegasus, etc.)
-    protongamesEnable = true; # Enable Proton games support (Lutris, Bottles, Heroic)
+    gamesEnable = true; # Master gate for gaming submodules
+    gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus
+    protongamesEnable = true; # Heavy gaming: Wine, Bottles, Lutris, Proton
     starcitizenEnable = true; # Enable Star Citizen support and optimizations
     GOGlauncherEnable = true; # Enable Heroic Games Launcher for GOG games
     steamPackEnable = true; # Enable Steam gaming platform
@@ -547,6 +539,11 @@ in
         User akunito
         IdentityFile ~/.ssh/id_ed25519 # Generate this key for github if needed
         AddKeysToAgent yes
+
+      # VPS (SSH via Tailscale or WireGuard — VPN-only, non-standard port)
+      Host vps vps-prod 100.64.0.6 172.26.5.155
+        Port 56777
+        ForwardAgent yes
     '';
   };
 }

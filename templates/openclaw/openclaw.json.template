@@ -1,0 +1,182 @@
+{
+  "gateway": {
+    "port": 18789,
+    "bind": "lan",
+    "auth": { "mode": "token", "token": "REPLACE_WITH_RANDOM_TOKEN" },
+    "controlUi": {
+      "allowedOrigins": ["https://openclaw.local.akunito.com"]
+    }
+  },
+
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "modelstudio": {
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "apiKey": "${MODELSTUDIO_API_KEY}",
+        "api": "openai-completions",
+        "models": [
+          { "id": "qwen3.5-plus", "name": "Qwen 3.5 Plus", "reasoning": false,
+            "input": ["text"], "contextWindow": 1000000, "maxTokens": 8192 },
+          { "id": "qwen3-coder-plus", "name": "Qwen 3 Coder Plus", "reasoning": false,
+            "input": ["text"], "contextWindow": 1000000, "maxTokens": 8192 }
+        ]
+      }
+    }
+  },
+
+  "agents": {
+    "defaults": {
+      "model": { "primary": "modelstudio/qwen3.5-plus" },
+      "envelopeTimezone": "Europe/Madrid",
+      "userTimezone": "Europe/Madrid",
+      "timeFormat": "24"
+    },
+    "list": [
+      {
+        "id": "alfred",
+        "default": true,
+        "tools": {
+          "allow": ["group:web"]
+        }
+      },
+      {
+        "id": "vaultkeeper",
+        "tools": {
+          "deny": ["group:web"]
+        }
+      },
+      {
+        "id": "scout",
+        "tools": {
+          "allow": ["group:web"]
+        }
+      }
+    ]
+  },
+
+  "tools": {
+    "profile": "full",
+    "deny": ["group:automation", "group:runtime", "sessions_spawn", "sessions_send", "http"],
+    "fs": { "workspaceOnly": true },
+    "exec": { "security": "deny", "ask": "always" },
+    "elevated": { "enabled": false },
+    "web": { "search": { "provider": "perplexity" } }
+  },
+
+  "bindings": [
+    {
+      "agentId": "alfred",
+      "comment": "Alfred agent — Telegram group",
+      "match": { "channel": "telegram", "peer": { "kind": "group", "id": "ALFRED_GROUP_CHAT_ID" } }
+    },
+    {
+      "agentId": "vaultkeeper",
+      "comment": "Vaultkeeper agent — Telegram group",
+      "match": { "channel": "telegram", "peer": { "kind": "group", "id": "VAULTKEEPER_GROUP_CHAT_ID" } }
+    },
+    {
+      "agentId": "scout",
+      "comment": "Scout agent — Telegram group",
+      "match": { "channel": "telegram", "peer": { "kind": "group", "id": "SCOUT_GROUP_CHAT_ID" } }
+    },
+    {
+      "agentId": "alfred",
+      "comment": "Alfred agent — Matrix room (primary channel)",
+      "match": { "channel": "matrix", "accountId": "alfred", "peer": { "kind": "channel", "id": "ALFRED_MATRIX_ROOM_ID" } }
+    },
+    {
+      "agentId": "vaultkeeper",
+      "comment": "Vaultkeeper agent — Matrix room (primary channel)",
+      "match": { "channel": "matrix", "accountId": "vaultkeeper", "peer": { "kind": "channel", "id": "VAULTKEEPER_MATRIX_ROOM_ID" } }
+    },
+    {
+      "agentId": "scout",
+      "comment": "Scout agent — Matrix room (primary channel)",
+      "match": { "channel": "matrix", "accountId": "scout", "peer": { "kind": "channel", "id": "SCOUT_MATRIX_ROOM_ID" } }
+    }
+  ],
+
+  "channels": {
+    "telegram": {
+      "botToken": "REPLACE_WITH_TELEGRAM_BOT_TOKEN",
+      "dmPolicy": "allowlist",
+      "allowFrom": ["YOUR_TELEGRAM_USER_ID"],
+      "groups": {
+        "ALFRED_GROUP_CHAT_ID": { "requireMention": false },
+        "VAULTKEEPER_GROUP_CHAT_ID": { "requireMention": false },
+        "SCOUT_GROUP_CHAT_ID": { "requireMention": false }
+      }
+    },
+    "matrix": {
+      "enabled": true,
+      "homeserver": "https://matrix.local.akunito.com",
+      "encryption": true,
+      "dm": { "policy": "allowlist", "allowFrom": ["@akunito:akunito.com"] },
+      "groupPolicy": "allowlist",
+      "groupAllowFrom": ["@akunito:akunito.com"],
+      "threadReplies": "inbound",
+      "autoJoin": "allowlist",
+      "autoJoinAllowlist": ["@akunito:akunito.com"],
+      "accounts": {
+        "alfred": {
+          "userId": "@alfredbot:akunito.com",
+          "accessToken": "REPLACE_WITH_ALFRED_MATRIX_TOKEN",
+          "deviceName": "OPENCLAW_ALFRED",
+          "rooms": {
+            "ALFRED_MATRIX_ROOM_ID": { "requireMention": false }
+          }
+        },
+        "vaultkeeper": {
+          "userId": "@vaultkeeperbot:akunito.com",
+          "accessToken": "REPLACE_WITH_VAULTKEEPER_MATRIX_TOKEN",
+          "deviceName": "OPENCLAW_VAULTKEEPER",
+          "rooms": {
+            "VAULTKEEPER_MATRIX_ROOM_ID": { "requireMention": false }
+          }
+        },
+        "scout": {
+          "userId": "@scoutbot:akunito.com",
+          "accessToken": "REPLACE_WITH_SCOUT_MATRIX_TOKEN",
+          "deviceName": "OPENCLAW_SCOUT",
+          "rooms": {
+            "SCOUT_MATRIX_ROOM_ID": { "requireMention": false }
+          }
+        }
+      }
+    }
+  },
+
+  "skills": {
+    "entries": {
+      "weather": { "enabled": true },
+      "summarize": { "enabled": true },
+      "session-logs": { "enabled": true },
+      "model-usage": { "enabled": true }
+    }
+  },
+
+  "hooks": {
+    "enabled": true,
+    "token": "REPLACE_WITH_HOOKS_TOKEN",
+    "path": "/hooks",
+    "allowedAgentIds": ["hooks"],
+    "allowRequestSessionKey": false,
+    "allowedSessionKeyPrefixes": ["hook:"],
+    "presets": ["session-memory", "command-logger", "boot-md"]
+  },
+
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 1,
+    "sessionRetention": "24h",
+    "runLog": { "maxBytes": "2mb", "keepLines": 2000 }
+  },
+
+  "discovery": { "mdns": { "mode": "off" } },
+  "logging": { "redactSensitive": "tools" }
+}

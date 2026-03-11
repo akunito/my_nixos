@@ -1,0 +1,133 @@
+# Application Metrics Exporters - TrueNAS Docker (ROOTLESS daemon)
+# Exports metrics from *arr stack for Prometheus scraping
+# Metrics available at: http://192.168.20.200:9707-9710/metrics
+
+networks:
+  mediarr-net:
+    external: true
+    name: media_default
+
+services:
+  exportarr-sonarr:
+    image: ghcr.io/onedr0p/exportarr:latest
+    container_name: exportarr-sonarr
+    command: ["sonarr"]
+    environment:
+      - PORT=9707
+      - URL=http://sonarr:8989
+      - APIKEY=${SONARR_API_KEY}
+      - ENABLE_ADDITIONAL_METRICS=true
+      - ENABLE_UNKNOWN_QUEUE_ITEMS=true
+    ports:
+      - "9707:9707"
+    networks:
+      - mediarr-net
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "2"
+    # Note: exportarr is a scratch/distroless image (no shell)
+    # Health monitoring via Docker restart policy + cadvisor
+    healthcheck:
+      disable: true
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  exportarr-radarr:
+    image: ghcr.io/onedr0p/exportarr:latest
+    container_name: exportarr-radarr
+    command: ["radarr"]
+    environment:
+      - PORT=9708
+      - URL=http://radarr:7878
+      - APIKEY=${RADARR_API_KEY}
+      - ENABLE_ADDITIONAL_METRICS=true
+      - ENABLE_UNKNOWN_QUEUE_ITEMS=true
+    ports:
+      - "9708:9708"
+    networks:
+      - mediarr-net
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "2"
+    healthcheck:
+      disable: true
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  exportarr-prowlarr:
+    image: ghcr.io/onedr0p/exportarr:latest
+    container_name: exportarr-prowlarr
+    command: ["prowlarr"]
+    environment:
+      - PORT=9709
+      - URL=http://prowlarr:9696
+      - APIKEY=${PROWLARR_API_KEY}
+      - ENABLE_ADDITIONAL_METRICS=true
+    ports:
+      - "9709:9709"
+    networks:
+      - mediarr-net
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "2"
+    healthcheck:
+      disable: true
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  exportarr-bazarr:
+    image: ghcr.io/onedr0p/exportarr:latest
+    container_name: exportarr-bazarr
+    command: ["bazarr"]
+    environment:
+      - PORT=9710
+      - URL=http://bazarr:6767
+      - APIKEY=${BAZARR_API_KEY}
+      - ENABLE_ADDITIONAL_METRICS=true
+    ports:
+      - "9710:9710"
+    networks:
+      - mediarr-net
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "2"
+    healthcheck:
+      disable: true
+    deploy:
+      resources:
+        limits:
+          memory: 128M

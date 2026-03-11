@@ -4,12 +4,16 @@
 # Triggered by OnFailure= directive in auto-update services
 
 let
+  telegramBotToken = systemSettings.grafanaTelegramBotToken or "";
+  telegramChatId = systemSettings.grafanaTelegramChatId or "";
+  telegramEnabled = (systemSettings.notificationTelegramOnFailureEnable or false) && telegramBotToken != "" && telegramChatId != "";
+
   # Script to send failure notification email
   notificationScript = pkgs.writeShellScript "send-update-failure-notification" ''
     set -e
 
     # Set PATH to ensure all commands are available
-    export PATH=${pkgs.coreutils}/bin:${pkgs.systemd}/bin:${pkgs.msmtp}/bin:$PATH
+    export PATH=${pkgs.coreutils}/bin:${pkgs.systemd}/bin:${pkgs.msmtp}/bin:${pkgs.curl}/bin:$PATH
 
     # Parameters
     SERVICE_NAME="$1"
@@ -58,6 +62,18 @@ This is an automated notification from the NixOS auto-update system.
     echo "$EMAIL_BODY" | ${pkgs.msmtp}/bin/msmtp -t -C /etc/msmtprc
 
     echo "Failure notification sent to $TO_EMAIL"
+
+    ${lib.optionalString telegramEnabled ''
+    # Telegram notification
+    TELEGRAM_TOKEN="${telegramBotToken}"
+    TELEGRAM_CHAT_ID="${telegramChatId}"
+    ${pkgs.curl}/bin/curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
+      -d chat_id="$TELEGRAM_CHAT_ID" \
+      -d parse_mode="HTML" \
+      -d text="<b>🔴 Service Failed</b>%0A<b>Host:</b> $HOSTNAME%0A<b>Service:</b> $SERVICE_NAME%0A<b>Time:</b> $TIMESTAMP" \
+      > /dev/null 2>&1 || echo "WARNING: Telegram notification failed (non-fatal)"
+    echo "Telegram notification sent to chat $TELEGRAM_CHAT_ID"
+    ''}
   '';
 
   # msmtp configuration file

@@ -1,209 +1,121 @@
 ---
-id: infrastructure.database-redis
-summary: Centralized PostgreSQL and Redis services on LXC_database
-tags: [infrastructure, database, redis, postgresql, lxc, caching]
-related_files: [profiles/LXC_database-config.nix, secrets/domains.nix]
+id: infrastructure.services.database
+summary: "Database services: PostgreSQL, MariaDB, Redis on VPS"
+tags: [infrastructure, database, vps, postgresql, redis]
+date: 2026-02-23
+status: published
 ---
 
-# Database & Redis Services (LXC_database)
+# Database & Redis Services
 
-Centralized database infrastructure providing PostgreSQL and Redis for all homelab services.
+All database services run on the VPS as NixOS native services, bound to **127.0.0.1 only**.
 
-## Overview
+## PostgreSQL 17
 
-| Property | Value |
-|----------|-------|
-| **Container** | LXC_database |
-| **IP Address** | 192.168.8.103 |
-| **Profile** | `profiles/proxmox-lxc/LXC_database-config.nix` |
-| **Services** | PostgreSQL 15, Redis 7 |
+| Setting | Value |
+|---------|-------|
+| Listen | 127.0.0.1:5432 |
+| shared_buffers | 2GB |
+| effective_cache_size | 8GB |
+| maintenance_work_mem | 512MB |
+| work_mem | 64MB |
+| max_connections | 200 |
 
-## PostgreSQL Databases
+### Databases
 
-| Database | Service | Port | Notes |
-|----------|---------|------|-------|
-| `plane` | Plane (Project Management) | 5432 | LXC_plane (192.168.8.86) |
-| `nextcloud` | Nextcloud | 5432 | LXC_HOME (192.168.8.80) |
-| `liftcraft_test` | LiftCraft TEST | 5432 | LXC_liftcraftTEST (192.168.8.87) |
-| `matrix` | Matrix Synapse | 5432 | LXC_matrix (192.168.8.104) |
+| Database | Application | Notes |
+|----------|-------------|-------|
+| plane | Plane | Project management |
+| rails_database_prod | LiftCraft | Rails app |
+| matrix | Matrix Synapse | Federation server |
 
-### Connection String Format
-
-```
-postgresql://USER:PASSWORD@192.168.8.103:5432/DATABASE
-```
-
-Credentials are stored in `secrets/domains.nix` (git-crypt encrypted).
-
-## Redis Database Allocation
-
-Redis uses database numbers (0-15) to separate data for different services.
-
-| Database | Service | Container | Purpose |
-|----------|---------|-----------|---------|
-| **db0** | Plane | LXC_plane (192.168.8.86) | Session cache, job queue |
-| **db1** | Nextcloud | LXC_HOME (192.168.8.80) | Distributed cache, file locking |
-| **db2** | LiftCraft TEST | LXC_liftcraftTEST (192.168.8.87) | Rails cache, Action Cable |
-| **db3** | Portfolio | LXC_portfolioprod (192.168.8.88) | Next.js page cache |
-| **db4** | *(Reserved)* | - | Available for future use |
-
-**Note**: Matrix Synapse uses a local Redis container (`matrix-redis`) on LXC_matrix instead of the centralized Redis, for better resilience and independence.
-
-### Redis Connection URL Format
-
-```
-redis://:PASSWORD@192.168.8.103:6379/DB_NUMBER
-```
-
-Example for Portfolio (db3):
-```
-redis://:PASSWORD@192.168.8.103:6379/3
-```
-
-## Service Configuration
-
-### Nextcloud (db1)
-
-In `config/config.php`:
-```php
-'redis' => array (
-  'host' => '192.168.8.103',
-  'password' => 'REDIS_PASSWORD',
-  'port' => 6379,
-  'dbindex' => 1,
-),
-'memcache.distributed' => '\\OC\\Memcache\\Redis',
-'memcache.locking' => '\\OC\\Memcache\\Redis',
-```
-
-**Note**: The container has a `redis-fallback.sh` script that automatically configures Redis at startup. Ensure `EXTERNAL_REDIS_DBINDEX="1"` is set in that script.
-
-### Plane (db0)
-
-In `.env`:
-```bash
-REDIS_HOST=192.168.8.103
-REDIS_PORT=6379
-REDIS_PASSWORD=REDIS_PASSWORD
-# Note: Plane defaults to db0, no explicit database config needed
-```
-
-### LiftCraft (db2)
-
-In `.env.test` or `.env.prod`:
-```bash
-REDIS_URL=redis://:REDIS_PASSWORD@192.168.8.103:6379/2
-```
-
-Rails automatically uses this for:
-- `config.cache_store = :redis_cache_store`
-- Action Cable connections
-
-### Portfolio (db3)
-
-In `.env.dev` and `.env.prod`:
-```bash
-REDIS_URL=redis://:REDIS_PASSWORD@192.168.8.103:6379/3
-```
-
-The Next.js app uses a custom Redis client (`lib/cache/redis.ts`) with automatic fallback to in-memory cache.
-
-### Matrix Synapse (Local Redis)
-
-Matrix Synapse uses a **local Redis container** (`matrix-redis`) on LXC_matrix for improved resilience:
-
-In `~/.homelab/matrix/config/homeserver.yaml`:
-```yaml
-redis:
-  enabled: true
-  host: "matrix-redis"  # Local Docker container
-  port: 6379
-  dbid: 0
-  # No password - local container only
-```
-
-The local Redis is configured in `docker-compose.yml`:
-```yaml
-services:
-  redis:
-    image: redis:alpine
-    container_name: matrix-redis
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-```
-
-Redis is used for:
-- User presence tracking
-- Session synchronization
-- Pubsub replication streams
-
-## Troubleshooting
-
-### Check Redis Connectivity
-
-From any machine with access to LXC_HOME:
-```bash
-# Connect to Redis and check all databases
-ssh -A akunito@192.168.8.80
-
-# Check specific database key count
-docker exec redis-local redis-cli -h 192.168.8.103 -a 'PASSWORD' -n 3 DBSIZE
-
-# List keys in a database
-docker exec redis-local redis-cli -h 192.168.8.103 -a 'PASSWORD' -n 3 KEYS '*'
-
-# Check TTL of a key
-docker exec redis-local redis-cli -h 192.168.8.103 -a 'PASSWORD' -n 3 TTL 'key_name'
-```
-
-### Check All Database Sizes
+### Access
 
 ```bash
-# Check centralized Redis databases (0-3)
-for db in 0 1 2 3; do
-  echo "db$db: $(docker exec redis-local redis-cli -h 192.168.8.103 -a 'PASSWORD' -n $db DBSIZE 2>/dev/null)"
-done
-
-# Check Matrix local Redis (on LXC_matrix)
-ssh akunito@192.168.8.104 "docker exec matrix-redis redis-cli DBSIZE"
+ssh -A -p 56777 akunito@100.64.0.6
+sudo -u postgres psql
+# Or specific DB:
+sudo -u postgres psql -d plane
 ```
 
-### Common Issues
+## MariaDB 11
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| `NOAUTH Authentication required` | Wrong password | Check `secrets/domains.nix` for correct password |
-| Keys in wrong database | Missing dbindex config | Add `dbindex` to service config and restart |
-| Empty database after restart | Service not caching | Trigger service activity (access web UI) |
-| Connection refused | Redis not running | Check `systemctl status redis` on LXC_database |
+| Setting | Value |
+|---------|-------|
+| Listen | 127.0.0.1:3306 |
+| innodb_buffer_pool_size | 1G |
+| max_connections | 200 |
 
-### Verify Service Health
+### Databases
 
-**Portfolio**:
+| Database | Application |
+|----------|-------------|
+| nextcloud | Nextcloud |
+
+### Access
+
 ```bash
-curl -s https://portfolio.akunito.com/api/health | jq
-# Expected: {"cache": "redis", "cacheDetails": {"redisConnected": true}}
+ssh -A -p 56777 akunito@100.64.0.6
+sudo mysql
 ```
 
-**Nextcloud**:
+## Redis 7
+
+| Setting | Value |
+|---------|-------|
+| Listen | 127.0.0.1:6379 |
+| maxmemory | 2GB |
+| maxmemory-policy | volatile-lru |
+
+### DB Allocations
+
+| DB | Application |
+|----|-------------|
+| db0 | Plane |
+| db1 | Nextcloud |
+| db2 | LiftCraft |
+| db3 | Portfolio |
+| db4 | Matrix Synapse |
+
+### Access
+
 ```bash
-docker exec -u www-data nextcloud-app php occ status
-# No Redis errors = working
+ssh -A -p 56777 akunito@100.64.0.6
+redis-cli -a "$(sudo cat /etc/secrets/redis-password)" -n 0  # Plane
 ```
 
-**LiftCraft**:
-```bash
-docker exec leftyworkout_test-backend-1 bin/rails runner "puts Rails.cache.class"
-# Expected: ActiveSupport::Cache::RedisCacheStore
-```
+## PgBouncer
 
-## Backup Considerations
+**Deferred** — not deployed. 200 max_connections is sufficient for ~5 applications. Module exists at `system/app/pgbouncer.nix` for future use if connection exhaustion occurs.
 
-- PostgreSQL: Managed via NixOS PostgreSQL backup service
-- Redis: Data is cache-only, no backup required (services rebuild cache on restart)
+## Backup Schedule
 
-## Related Documentation
+### Layer 1: Local Dumps (database-backup.nix)
 
-- [Monitoring Stack](./monitoring-stack.md) - Prometheus metrics for database/Redis
-- [LiftCraft Service](./liftcraft.md) - Rails application setup
-- [Homelab Stack](./homelab-stack.md) - Nextcloud and other services
-- [Matrix Server](./matrix.md) - Matrix Synapse + Element + Claude Bot
+| Schedule | Type | Retention | Location |
+|----------|------|-----------|----------|
+| Hourly | pg_dump -Fc + mysqldump + redis BGSAVE | 72 count (3 days) | /var/backup/databases/ |
+| Daily | pg_dump -Fc + SQL format | 7 days | /var/backup/databases/ |
+
+### Layer 2: Restic to TrueNAS
+
+| Schedule | Repo | Retention |
+|----------|------|-----------|
+| Every 2h (18:00-22:30) | sftp:truenas:/mnt/ssdpool/vps-backups/databases.restic | 7 daily, 4 weekly, 1 monthly |
+
+### Integrity Checks
+
+- Weekly: `restic check` (index + structure)
+- Monthly: `restic check --read-data` (full data verification)
+
+## DBeaver Access
+
+Connect via SSH tunnel:
+1. SSH Host: 100.64.0.6, Port: 56777, User: akunito
+2. DB Host: 127.0.0.1, Port: 5432 (PostgreSQL) or 3306 (MariaDB)
+
+## Previous Setup [Archived]
+
+*(Archived: akunito's Proxmox LXC containers were shut down Feb 2026, services migrated to VPS_PROD)*
+
+All databases previously ran on LXC_database (192.168.8.103, decommissioned Feb 2026). Data was dumped and restored on VPS during Phase 2 of migration.

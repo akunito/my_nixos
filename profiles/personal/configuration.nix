@@ -27,6 +27,7 @@
       ../../system/app/control-panel.nix # NixOS infrastructure control panel (web)
       ../../system/app/control-panel-native.nix # NixOS infrastructure control panel (native desktop app)
     ]
-    ++ lib.optional (systemSettings.networkBondingEnable or false) ../../system/hardware/network-bonding.nix; # Network bonding (LACP)
+    ++ lib.optional (systemSettings.networkBondingEnable or false) ../../system/hardware/network-bonding.nix # Network bonding (LACP)
+    ++ lib.optional (systemSettings.prometheusWorkstationExporterEnable or false) ../../system/app/prometheus-workstation-exporter.nix; # Lightweight metrics exporter for workstations
 }
 

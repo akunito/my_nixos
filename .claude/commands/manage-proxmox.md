@@ -1,5 +1,9 @@
 # Manage Proxmox
 
+> **AKUNITO PROXMOX (192.168.8.82) IS SHUT DOWN** (Feb 2026)
+> All akunito LXC containers have been migrated to VPS + TrueNAS.
+> This skill now only applies to **Komi's Proxmox (192.168.1.3)**.
+
 Skill for managing Proxmox VE, including LXC container operations, LVM storage, and cloning.
 
 ## Purpose
@@ -15,10 +19,10 @@ Use this skill to:
 
 ## Connection Details
 
-| Host | SSH Command | Repository |
-|------|-------------|------------|
-| Proxmox VE (akunito) | `ssh -A root@192.168.8.82` | `/root/` |
-| Proxmox VE (komi) | `ssh -A root@192.168.1.3` | `/root/` |
+| Host | SSH Command | Status |
+|------|-------------|--------|
+| Proxmox VE (akunito) | ~~`ssh -A root@192.168.8.82`~~ | **SHUT DOWN** (Feb 2026) |
+| Proxmox VE (komi) | `ssh -A root@192.168.1.3` | Active |
 
 **Important**: Always use `-A` flag for SSH agent forwarding.
 
@@ -29,31 +33,31 @@ Use this skill to:
 ### List All Containers
 
 ```bash
-ssh -A root@192.168.8.82 "pct list"
+ssh -A root@192.168.1.3 "pct list"
 ```
 
 ### Container Status
 
 ```bash
 # Single container
-ssh -A root@192.168.8.82 "pct status <CTID>"
+ssh -A root@192.168.1.3 "pct status <CTID>"
 
 # All containers with resources
-ssh -A root@192.168.8.82 "pct list && echo '---' && pvesh get /cluster/resources --type vm --output-format table"
+ssh -A root@192.168.1.3 "pct list && echo '---' && pvesh get /cluster/resources --type vm --output-format table"
 ```
 
 ### Start/Stop/Restart Container
 
 ```bash
-ssh -A root@192.168.8.82 "pct start <CTID>"
-ssh -A root@192.168.8.82 "pct stop <CTID>"
-ssh -A root@192.168.8.82 "pct reboot <CTID>"
+ssh -A root@192.168.1.3 "pct start <CTID>"
+ssh -A root@192.168.1.3 "pct stop <CTID>"
+ssh -A root@192.168.1.3 "pct reboot <CTID>"
 ```
 
 ### Enter Container Console
 
 ```bash
-ssh -A root@192.168.8.82 "pct enter <CTID>"
+ssh -A root@192.168.1.3 "pct enter <CTID>"
 ```
 
 ---
@@ -69,7 +73,7 @@ When cloning a container with LUKS-encrypted LVM storage, you must clone the LVM
 #### 1. Identify Source Container Storage
 
 ```bash
-ssh -A root@192.168.8.82 "pct config <SOURCE_CTID> | grep rootfs"
+ssh -A root@192.168.1.3 "pct config <SOURCE_CTID> | grep rootfs"
 # Example output: rootfs: zfspool:subvol-285-disk-0,size=24G
 # or: rootfs: pve/vm-285-disk-0,size=24G
 ```
@@ -77,27 +81,27 @@ ssh -A root@192.168.8.82 "pct config <SOURCE_CTID> | grep rootfs"
 #### 2. Stop Source Container (if needed for consistency)
 
 ```bash
-ssh -A root@192.168.8.82 "pct stop <SOURCE_CTID>"
+ssh -A root@192.168.1.3 "pct stop <SOURCE_CTID>"
 ```
 
 #### 3. Clone LVM Volume
 
 ```bash
 # For LVM thin volumes
-ssh -A root@192.168.8.82 "lvcreate -s -n vm-<NEW_CTID>-disk-0 pve/vm-<SOURCE_CTID>-disk-0"
+ssh -A root@192.168.1.3 "lvcreate -s -n vm-<NEW_CTID>-disk-0 pve/vm-<SOURCE_CTID>-disk-0"
 
-# Example: Clone container 285 to new container 204
-ssh -A root@192.168.8.82 "lvcreate -s -n vm-204-disk-0 pve/vm-285-disk-0"
+# Example: Clone container 110 to new container 120
+ssh -A root@192.168.1.3 "lvcreate -s -n vm-120-disk-0 pve/vm-110-disk-0"
 ```
 
 #### 4. Create Container Config
 
 ```bash
 # Copy and modify config
-ssh -A root@192.168.8.82 "cp /etc/pve/lxc/<SOURCE_CTID>.conf /etc/pve/lxc/<NEW_CTID>.conf"
+ssh -A root@192.168.1.3 "cp /etc/pve/lxc/<SOURCE_CTID>.conf /etc/pve/lxc/<NEW_CTID>.conf"
 
 # Edit config (change hostname, IP, etc.)
-ssh -A root@192.168.8.82 "nano /etc/pve/lxc/<NEW_CTID>.conf"
+ssh -A root@192.168.1.3 "nano /etc/pve/lxc/<NEW_CTID>.conf"
 ```
 
 Config modifications needed:
@@ -110,20 +114,20 @@ Config modifications needed:
 
 ```bash
 # Extend LVM volume
-ssh -A root@192.168.8.82 "lvextend -L +46G pve/vm-<NEW_CTID>-disk-0"
+ssh -A root@192.168.1.3 "lvextend -L +46G pve/vm-<NEW_CTID>-disk-0"
 
 # Resize filesystem (must stop container first, or do from inside)
 # From host (container stopped):
-ssh -A root@192.168.8.82 "e2fsck -f /dev/pve/vm-<NEW_CTID>-disk-0 && resize2fs /dev/pve/vm-<NEW_CTID>-disk-0"
+ssh -A root@192.168.1.3 "e2fsck -f /dev/pve/vm-<NEW_CTID>-disk-0 && resize2fs /dev/pve/vm-<NEW_CTID>-disk-0"
 
 # From inside container (container running):
-ssh -A root@192.168.8.82 "pct exec <NEW_CTID> -- resize2fs /dev/sda"
+ssh -A root@192.168.1.3 "pct exec <NEW_CTID> -- resize2fs /dev/sda"
 ```
 
 #### 6. Start New Container
 
 ```bash
-ssh -A root@192.168.8.82 "pct start <NEW_CTID>"
+ssh -A root@192.168.1.3 "pct start <NEW_CTID>"
 ```
 
 ---
@@ -134,30 +138,30 @@ ssh -A root@192.168.8.82 "pct start <NEW_CTID>"
 
 ```bash
 # List all logical volumes
-ssh -A root@192.168.8.82 "lvs"
+ssh -A root@192.168.1.3 "lvs"
 
 # Detailed view
-ssh -A root@192.168.8.82 "lvs -o +devices"
+ssh -A root@192.168.1.3 "lvs -o +devices"
 
 # View thin pool status
-ssh -A root@192.168.8.82 "lvs -o lv_name,data_percent,metadata_percent pve/data"
+ssh -A root@192.168.1.3 "lvs -o lv_name,data_percent,metadata_percent pve/data"
 ```
 
 ### Resize LVM Volume
 
 ```bash
 # Extend by amount
-ssh -A root@192.168.8.82 "lvextend -L +20G pve/vm-<CTID>-disk-0"
+ssh -A root@192.168.1.3 "lvextend -L +20G pve/vm-<CTID>-disk-0"
 
 # Set absolute size
-ssh -A root@192.168.8.82 "lvextend -L 70G pve/vm-<CTID>-disk-0"
+ssh -A root@192.168.1.3 "lvextend -L 70G pve/vm-<CTID>-disk-0"
 ```
 
 ### Delete LVM Volume
 
 ```bash
 # WARNING: Destructive!
-ssh -A root@192.168.8.82 "lvremove pve/vm-<CTID>-disk-0"
+ssh -A root@192.168.1.3 "lvremove pve/vm-<CTID>-disk-0"
 ```
 
 ---
@@ -167,31 +171,31 @@ ssh -A root@192.168.8.82 "lvremove pve/vm-<CTID>-disk-0"
 ### View Config
 
 ```bash
-ssh -A root@192.168.8.82 "pct config <CTID>"
+ssh -A root@192.168.1.3 "pct config <CTID>"
 ```
 
 ### Edit Config
 
 ```bash
 # Direct edit
-ssh -A root@192.168.8.82 "nano /etc/pve/lxc/<CTID>.conf"
+ssh -A root@192.168.1.3 "nano /etc/pve/lxc/<CTID>.conf"
 
 # Or via pct set
-ssh -A root@192.168.8.82 "pct set <CTID> --memory 16384 --cores 6"
+ssh -A root@192.168.1.3 "pct set <CTID> --memory 16384 --cores 6"
 ```
 
 ### Common Config Settings
 
 ```conf
-# Example LXC config (/etc/pve/lxc/204.conf)
+# Example LXC config (/etc/pve/lxc/110.conf)
 arch: amd64
 cores: 6
 features: nesting=1
-hostname: database
+hostname: komi-database
 memory: 16384
 net0: name=eth0,bridge=vmbr0,hwaddr=BC:24:11:DB:04:01,ip=dhcp,type=veth
 ostype: nixos
-rootfs: pve/vm-204-disk-0,size=70G
+rootfs: pve/vm-110-disk-0,size=70G
 swap: 512
 unprivileged: 1
 ```
@@ -213,29 +217,29 @@ unprivileged: 1
 
 ```bash
 # Container must be stopped for consistent snapshots
-ssh -A root@192.168.8.82 "pct stop <CTID>"
-ssh -A root@192.168.8.82 "pct snapshot <CTID> <snapshot_name> --description 'Description'"
-ssh -A root@192.168.8.82 "pct start <CTID>"
+ssh -A root@192.168.1.3 "pct stop <CTID>"
+ssh -A root@192.168.1.3 "pct snapshot <CTID> <snapshot_name> --description 'Description'"
+ssh -A root@192.168.1.3 "pct start <CTID>"
 ```
 
 ### List Snapshots
 
 ```bash
-ssh -A root@192.168.8.82 "pct listsnapshot <CTID>"
+ssh -A root@192.168.1.3 "pct listsnapshot <CTID>"
 ```
 
 ### Rollback to Snapshot
 
 ```bash
-ssh -A root@192.168.8.82 "pct stop <CTID>"
-ssh -A root@192.168.8.82 "pct rollback <CTID> <snapshot_name>"
-ssh -A root@192.168.8.82 "pct start <CTID>"
+ssh -A root@192.168.1.3 "pct stop <CTID>"
+ssh -A root@192.168.1.3 "pct rollback <CTID> <snapshot_name>"
+ssh -A root@192.168.1.3 "pct start <CTID>"
 ```
 
 ### Delete Snapshot
 
 ```bash
-ssh -A root@192.168.8.82 "pct delsnapshot <CTID> <snapshot_name>"
+ssh -A root@192.168.1.3 "pct delsnapshot <CTID> <snapshot_name>"
 ```
 
 ---
@@ -246,124 +250,25 @@ ssh -A root@192.168.8.82 "pct delsnapshot <CTID> <snapshot_name>"
 
 ```bash
 # CPU, memory, disk for all VMs/containers
-ssh -A root@192.168.8.82 "pvesh get /cluster/resources --type vm --output-format table"
+ssh -A root@192.168.1.3 "pvesh get /cluster/resources --type vm --output-format table"
 ```
 
 ### Storage Usage
 
 ```bash
 # Storage pools
-ssh -A root@192.168.8.82 "pvesm status"
+ssh -A root@192.168.1.3 "pvesm status"
 
 # Detailed storage info
-ssh -A root@192.168.8.82 "df -h /var/lib/vz"
+ssh -A root@192.168.1.3 "df -h /var/lib/vz"
 ```
 
 ### Network
 
 ```bash
 # Check container network
-ssh -A root@192.168.8.82 "pct exec <CTID> -- ip addr"
+ssh -A root@192.168.1.3 "pct exec <CTID> -- ip addr"
 ```
-
----
-
-## Network Management
-
-### Bond Status
-
-```bash
-# Check Proxmox bond0 (LACP to USW Aggregation SFP+ 3+4)
-ssh -A root@192.168.8.82 "cat /proc/net/bonding/bond0"
-
-# Key fields: MII Status (up/down), Partner Mac, Aggregator ID (both same = OK)
-```
-
-### ARP Flux Verification
-
-```bash
-# Check ARP sysctl settings (all should be non-zero)
-ssh -A root@192.168.8.82 "sysctl net.ipv4.conf.all.arp_filter net.ipv4.conf.all.arp_ignore net.ipv4.conf.all.arp_announce"
-
-# Expected:
-# net.ipv4.conf.all.arp_filter = 1
-# net.ipv4.conf.all.arp_ignore = 1
-# net.ipv4.conf.all.arp_announce = 2
-
-# Check route metrics (vmbr0 should have metric 200, vmbr10 default/lower)
-ssh -A root@192.168.8.82 "ip route show default"
-```
-
-### NIC Ring Buffers
-
-```bash
-# Check ring buffer sizes (if current << max, consider increasing)
-ssh -A root@192.168.8.82 "ethtool -g enp4s0f0"
-ssh -A root@192.168.8.82 "ethtool -g enp4s0f1"
-```
-
-### Container Bridge Assignments
-
-```bash
-# List which bridge each container uses
-ssh -A root@192.168.8.82 "for ct in \$(pct list | tail -n+2 | awk '{print \$1}'); do echo \"CT \$ct: \$(pct config \$ct | grep net0 | grep -o 'bridge=[^ ,]*')\"; done"
-```
-
-### VLAN 100 Storage Network
-
-Proxmox has a VLAN 100 sub-interface on vmbr10 for direct L2 access to TrueNAS:
-
-```bash
-# Check VLAN 100 interface
-ssh -A root@192.168.8.82 "ip addr show vmbr10.100"
-# Should show 192.168.20.82/24
-
-# Test direct path to TrueNAS
-ssh -A root@192.168.8.82 "ping -c 2 192.168.20.200"
-
-# Config location: /etc/network/interfaces
-# Backup: /etc/network/interfaces.bak-pre-vlan100
-```
-
-LXC containers access TrueNAS NFS via Proxmox bind mounts — the VLAN 100 path is handled at the Proxmox host level. No per-container VLAN config needed.
-
-### Known Issues
-
-**ARP Flux**: When Proxmox has both vmbr0 (1G) and vmbr10 (10G bond) on the same subnet, Linux may send ARP replies from the wrong interface, causing 10G clients to route traffic over 1G. Fixed via sysctl (`/etc/sysctl.d/99-arp-fix.conf`) and route metric on vmbr0. See `docs/akunito/infrastructure/services/network-switching.md`.
-
-**Proxmox TCP/ring buffer tuning**: Currently runtime-only. To make persistent:
-```bash
-# Ring buffers (add to /etc/network/interfaces post-up)
-ssh -A root@192.168.8.82 "ethtool -G enp4s0f0 rx 4096 tx 4096; ethtool -G enp4s0f1 rx 4096 tx 4096"
-
-# TCP tuning
-ssh -A root@192.168.8.82 "cat > /etc/sysctl.d/99-tcp-tuning.conf << 'EOF'
-net.core.rmem_max = 16777216
-net.core.wmem_max = 16777216
-net.ipv4.tcp_rmem = 4096 1048576 16777216
-net.ipv4.tcp_wmem = 4096 1048576 16777216
-net.core.netdev_max_backlog = 10000
-EOF
-sysctl --system"
-```
-
----
-
-## LUKS Encryption (LXC_database)
-
-The LXC_database container uses LUKS encryption managed at the LVM level.
-
-### Check Encryption Status
-
-```bash
-# View LUKS info (if applicable)
-ssh -A root@192.168.8.82 "cryptsetup status pve-vm--<CTID>--disk--0 2>/dev/null || echo 'Not a LUKS device (encryption at different layer)'"
-```
-
-### Unlock Script Location
-
-For containers with encrypted root, the unlock script is at:
-- `/root/unlock_luks.sh` on Proxmox host
 
 ---
 
@@ -394,29 +299,11 @@ For containers with encrypted root, the unlock script is at:
 
 ## Container Inventory
 
-### Akunito's Proxmox (192.168.8.82)
-
-| CTID | Name | IP | Bridge | Purpose |
-|------|------|-----|--------|---------|
-| 80 | LXC_HOME | 192.168.8.80 | vmbr10 | Media/Homelab services |
-| 85 | LXC_monitoring | 192.168.8.85 | vmbr10 | Grafana/Prometheus |
-| 86 | LXC_plane | 192.168.8.86 | vmbr10 | Plane project management |
-| 87 | LXC_liftcraftTEST | 192.168.8.87 | vmbr10 | LiftCraft test |
-| 88 | LXC_portfolioprod | 192.168.8.88 | vmbr10 | Portfolio production |
-| 89 | LXC_mailer | 192.168.8.89 | vmbr10 | Postfix/Kuma |
-| 102 | LXC_proxy | 192.168.1.102 | vmbr10 | NPM/Cloudflared |
-| 204 | LXC_database | 192.168.1.103 | vmbr10 | PostgreSQL/MariaDB/Redis |
-| 251 | LXC_matrix | 192.168.1.104 | vmbr10 | Matrix Synapse/Element/Claude Bot |
-| 205 | LXC_tailscale | 192.168.1.105 | vmbr10 | Tailscale subnet router |
-| 285 | Template | - | - | NixOS template (encrypted) |
-
-**All containers use vmbr10** (backed by bond0 LACP 2x10G → USW Aggregation SFP+ 3+4), providing up to 20G aggregate bandwidth to the switch.
-
 ### Komi's Proxmox (192.168.1.3)
 
 | CTID | Name | IP | Bridge | Purpose |
 |------|------|-----|--------|---------|
-| 102 | (template) | DHCP | vmbr0 | Clone source — do NOT start |
+| 102 | (template) | DHCP | vmbr0 | Clone source -- do NOT start |
 | 110 | KOMI_LXC_database | 192.168.1.10 | vmbr0 | PostgreSQL & Redis |
 | 111 | KOMI_LXC_mailer | 192.168.1.11 | vmbr0 | SMTP relay & Uptime Kuma |
 | 112 | KOMI_LXC_monitoring | 192.168.1.12 | vmbr0 | Grafana & Prometheus |
@@ -435,33 +322,33 @@ All Komi containers use LUKS-encrypted storage. After reboot: `ssh root@192.168.
 
 ```bash
 # Check config syntax
-ssh -A root@192.168.8.82 "pct config <CTID>"
+ssh -A root@192.168.1.3 "pct config <CTID>"
 
 # Check logs
-ssh -A root@192.168.8.82 "journalctl -u pve-container@<CTID> --no-pager | tail -50"
+ssh -A root@192.168.1.3 "journalctl -u pve-container@<CTID> --no-pager | tail -50"
 
 # Check storage exists
-ssh -A root@192.168.8.82 "lvs | grep vm-<CTID>"
+ssh -A root@192.168.1.3 "lvs | grep vm-<CTID>"
 ```
 
 ### Disk Full
 
 ```bash
 # Check disk usage inside container
-ssh -A root@192.168.8.82 "pct exec <CTID> -- df -h"
+ssh -A root@192.168.1.3 "pct exec <CTID> -- df -h"
 
 # Extend disk
-ssh -A root@192.168.8.82 "lvextend -L +10G pve/vm-<CTID>-disk-0"
-ssh -A root@192.168.8.82 "pct exec <CTID> -- resize2fs /dev/sda"
+ssh -A root@192.168.1.3 "lvextend -L +10G pve/vm-<CTID>-disk-0"
+ssh -A root@192.168.1.3 "pct exec <CTID> -- resize2fs /dev/sda"
 ```
 
 ### Network Issues
 
 ```bash
 # Check network config
-ssh -A root@192.168.8.82 "pct config <CTID> | grep net"
+ssh -A root@192.168.1.3 "pct config <CTID> | grep net"
 
 # Check from inside
-ssh -A root@192.168.8.82 "pct exec <CTID> -- ip addr"
-ssh -A root@192.168.8.82 "pct exec <CTID> -- ip route"
+ssh -A root@192.168.1.3 "pct exec <CTID> -- ip addr"
+ssh -A root@192.168.1.3 "pct exec <CTID> -- ip route"
 ```

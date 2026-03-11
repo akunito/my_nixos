@@ -52,8 +52,8 @@ This document describes the physical switching layer, SFP+ port assignments, LAC
 |------|-------|------------|-------|
 | SFP+ 1 | 1G | USW-24-G2 SFP 2 | Inter-switch uplink (OFS-DAC-10G-1M, limited by 24-G2 1G SFP) |
 | SFP+ 2 | 10G | pfSense ix0 (LAN) | Single link, VLAN trunk: LAN + VLAN 100 + VLAN 200 (Mellanox MCP2104-X001B) |
-| SFP+ 3 | 10G | Proxmox enp4s0f0 | LACP bond, trunk: LAN + VLAN 100 (OFS-DAC-10G-2M) |
-| SFP+ 4 | 10G | Proxmox enp4s0f1 | LACP bond, trunk: LAN + VLAN 100 (OFS-DAC-10G-2M) |
+| SFP+ 3 | 10G | Proxmox enp4s0f0 | LACP bond, trunk: LAN + VLAN 100 (OFS-DAC-10G-2M) **INACTIVE — Proxmox shut down Feb 2026** |
+| SFP+ 4 | 10G | Proxmox enp4s0f1 | LACP bond, trunk: LAN + VLAN 100 (OFS-DAC-10G-2M) **INACTIVE — Proxmox shut down Feb 2026** |
 | SFP+ 5 | 10G | TrueNAS enp8s0f0 | LACP bond, VLAN-NAS 100 access mode (OFS-DAC-10G-1M) |
 | SFP+ 6 | 10G | TrueNAS enp8s0f1 | LACP bond, VLAN-NAS 100 access mode (OFS-DAC-10G-1M) |
 | SFP+ 7 | 10G | DESK enp11s0f0 | LACP bond, trunk: LAN + VLAN 100 (OFS-DAC-10G-3M) |

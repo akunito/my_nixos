@@ -179,7 +179,7 @@ in
     # Reload NetworkManager after activation to pick up new connection files
     system.activationScripts.reloadNetworkManager = lib.mkIf useNetworkManager (
       lib.stringAfter [ "etc" ] ''
-        if systemctl is-active --quiet NetworkManager; then
+        if ${pkgs.systemd}/bin/systemctl is-active --quiet NetworkManager; then
           ${pkgs.networkmanager}/bin/nmcli connection reload || true
         fi
       ''

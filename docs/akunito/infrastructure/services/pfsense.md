@@ -2,7 +2,7 @@
 id: infrastructure.services.pfsense
 summary: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 tags: [infrastructure, pfsense, firewall, gateway, wireguard, dns, dhcp, snmp, pfblockerng, openvpn]
-related_files: [docs/akunito/infrastructure/INFRASTRUCTURE.md, docs/akunito/infrastructure/services/vps-wireguard.md, profiles/LXC_monitoring-config.nix]
+related_files: [docs/akunito/infrastructure/INFRASTRUCTURE.md, docs/akunito/infrastructure/services/vps-wireguard.md, profiles/VPS_PROD-config.nix]
 ---
 
 # pfSense Firewall & Gateway
@@ -131,27 +131,28 @@ The DNS Resolver uses Unbound with local host overrides and pfBlockerNG integrat
 
 ### Host Overrides
 
-Most `*.local.akunito.com` domains resolve to **192.168.8.102** (LXC_proxy NPM):
+Most `*.local.akunito.com` domains resolve to **192.168.20.200** (TrueNAS NPM, bridge networking):
+
+> **Updated Mar 2026**: DNS overrides changed from 192.168.20.201 (macvlan) to 192.168.20.200 (bridge) as part of rootless Docker migration. Previously changed from 192.168.8.102 (old LXC_proxy) in Feb 2026.
 
 | Domain | IP | Service |
 |--------|-----|---------|
-| `nextcloud.local.akunito.com` | 192.168.8.102 | Nextcloud |
-| `jellyfin.local.akunito.com` | 192.168.8.102 | Jellyfin |
-| `syncthing.local.akunito.com` | 192.168.8.102 | Syncthing |
-| `freshrss.local.akunito.com` | 192.168.8.102 | FreshRSS |
-| `books.local.akunito.com` | 192.168.8.102 | Calibre-Web |
-| `emulators.local.akunito.com` | 192.168.8.102 | EmulatorJS |
-| `jellyseerr.local.akunito.com` | 192.168.8.102 | Jellyseerr |
-| `sonarr.local.akunito.com` | 192.168.8.102 | Sonarr |
-| `radarr.local.akunito.com` | 192.168.8.102 | Radarr |
-| `prowlarr.local.akunito.com` | 192.168.8.102 | Prowlarr |
-| `bazarr.local.akunito.com` | 192.168.8.102 | Bazarr |
-| `qbittorrent.local.akunito.com` | 192.168.8.102 | qBittorrent |
-| `grafana.local.akunito.com` | 192.168.8.85 | Grafana |
-| `prometheus.local.akunito.com` | 192.168.8.85 | Prometheus |
+| `jellyfin.local.akunito.com` | 192.168.20.200 | Jellyfin (TrueNAS) |
+| `sonarr.local.akunito.com` | 192.168.20.200 | Sonarr (TrueNAS) |
+| `radarr.local.akunito.com` | 192.168.20.200 | Radarr (TrueNAS) |
+| `prowlarr.local.akunito.com` | 192.168.20.200 | Prowlarr (TrueNAS) |
+| `bazarr.local.akunito.com` | 192.168.20.200 | Bazarr (TrueNAS) |
+| `jellyseerr.local.akunito.com` | 192.168.20.200 | Jellyseerr (TrueNAS) |
+| `calibre.local.akunito.com` | 192.168.20.200 | Calibre-Web (TrueNAS) |
+| `emulatorjs.local.akunito.com` | 192.168.20.200 | EmulatorJS (TrueNAS) |
+| `uptime.local.akunito.com` | 192.168.20.200 | Uptime Kuma (TrueNAS) |
+| `qbt.local.akunito.com` | 192.168.20.200 | qBittorrent (TrueNAS) |
+| `grafana.local.akunito.com` | 192.168.20.200 | Grafana (VPS, proxied via TrueNAS NPM) |
+| `prometheus.local.akunito.com` | 192.168.20.200 | Prometheus (VPS, proxied via TrueNAS NPM) |
+| `truenas.local.akunito.com` | 192.168.20.200 | TrueNAS Web UI (port 9443) |
 
-**Pattern**: `*.local.akunito.com` → `192.168.8.102` (LXC_proxy)
-**Exceptions**: Monitoring services → `192.168.8.85` (LXC_monitoring)
+**Pattern**: `*.local.akunito.com` → `192.168.20.200` (TrueNAS NPM, bridge networking)
+**Note**: Monitoring services (Grafana, Prometheus) run on VPS but are accessed locally via TrueNAS NPM reverse proxy.
 
 ---
 
@@ -167,7 +168,7 @@ Most `*.local.akunito.com` domains resolve to **192.168.8.102** (LXC_proxy NPM):
 ### Static Mappings
 
 Static DHCP reservations are configured for:
-- LXC containers (192.168.8.80-89, 102)
+- Infrastructure servers (TrueNAS, VPS via Tailscale)
 - Network equipment (APs, switches)
 - Personal devices
 
@@ -189,7 +190,7 @@ Static DHCP reservations are configured for:
 | Anti-lockout | any | pfSense | Pass | SSH, HTTP, HTTPS |
 | pfB_DNSBL_Ping | any | 10.10.10.1 | Pass | DNSBL health check |
 | pfB_DNSBL_Permit | any | 10.10.10.1:80,443 | Pass | DNSBL redirect |
-| SNMP monitoring | 192.168.8.85 | pfSense:161 | Pass | Prometheus SNMP |
+| SNMP monitoring | VPS (Tailscale) | pfSense:161 | Pass | Prometheus SNMP |
 | LAN to Guest ping | LAN | Guest | Pass | ICMP only |
 | Servers to NAS | AllowedTrueNAS | NAS subnet | Pass | TCP only |
 | NAS subnet | NAS subnet | any | Pass | |
@@ -361,7 +362,7 @@ pfBlockerNG creates PF tables and rules:
 
 ## SNMP Monitoring
 
-SNMP is enabled for Prometheus monitoring from LXC_monitoring.
+SNMP is enabled for Prometheus monitoring from VPS_PROD.
 
 | Setting | Value |
 |---------|-------|
@@ -377,7 +378,7 @@ SNMP is enabled for Prometheus monitoring from LXC_monitoring.
 - `snmpv3AuthPass` - Authentication password
 - `snmpv3PrivPass` - Privacy password
 
-**Firewall rule**: Allow SNMP (UDP 161) from 192.168.8.85 (LXC_monitoring) only.
+**Firewall rule**: Allow SNMP (UDP 161) from VPS (Prometheus, via Tailscale) only.
 
 ---
 
@@ -675,7 +676,7 @@ ls /usr/local/etc/rc.d/
 
 2. Test SNMPv3 (preferred):
    ```bash
-   # From LXC_monitoring or any host with net-snmp-utils
+   # From VPS_PROD or any host with net-snmp-utils
    snmpwalk -v3 -l authPriv \
      -u prometheus \
      -a SHA -A "<auth-password>" \
@@ -692,17 +693,19 @@ ls /usr/local/etc/rc.d/
 
 ## Backup
 
-### Automated Backup to Proxmox NFS
+### Automated Backup (Historical)
 
-pfSense is configured with automated daily backups to Proxmox NFS storage at `/mnt/pve/proxmox_backups/pfsense/`.
+> **Note (Mar 2026)**: Proxmox has been shut down. The previous automated backup to `/mnt/pve/proxmox_backups/pfsense/` via SCP to Proxmox (192.168.8.82) is no longer operational. A new backup destination should be configured (e.g., TrueNAS ssdpool or VPS).
+
+Previously, pfSense was configured with automated daily backups to Proxmox NFS storage.
 
 | Setting | Value |
 |---------|-------|
 | **Script Location** | `/root/backup-to-proxmox.sh` |
 | **Schedule** | Daily at 02:00 (via cron) |
-| **Destination** | `root@192.168.8.82:/mnt/pve/proxmox_backups/pfsense/` |
+| **Destination** | ~~`root@192.168.8.82:/mnt/pve/proxmox_backups/pfsense/`~~ (Proxmox shut down) |
 | **Retention** | 30 days |
-| **Monitoring** | Prometheus metrics via LXC_monitoring |
+| **Monitoring** | Prometheus metrics via VPS_PROD |
 
 #### Files Backed Up
 
@@ -717,7 +720,7 @@ pfSense is configured with automated daily backups to Proxmox NFS storage at `/m
 
 The backup script (`/root/backup-to-proxmox.sh`) performs:
 1. Creates timestamped tar.gz archive of all important files
-2. Transfers to Proxmox via SCP (SSH key authentication)
+2. Transfers to Proxmox via SCP (SSH key authentication) -- **no longer operational (Proxmox shut down)**
 3. Cleans up backups older than 30 days
 4. Writes Prometheus-compatible metrics file
 
@@ -725,11 +728,8 @@ The backup script (`/root/backup-to-proxmox.sh`) performs:
 # View backup script
 ssh admin@192.168.8.1 "cat /root/backup-to-proxmox.sh"
 
-# Run manual backup
+# Run manual backup (will fail — Proxmox destination no longer available)
 ssh admin@192.168.8.1 "/root/backup-to-proxmox.sh"
-
-# Check backup files on Proxmox
-ssh root@192.168.8.82 "ls -la /mnt/pve/proxmox_backups/pfsense/"
 ```
 
 #### Cron Configuration
@@ -760,7 +760,7 @@ ssh admin@192.168.8.1 "cat /root/.ssh/id_ed25519.pub" >> /root/.ssh/authorized_k
 
 ### Prometheus Monitoring
 
-Backup status is monitored via `prometheus-pfsense-backup` service on LXC_monitoring.
+Backup status is monitored via `prometheus-pfsense-backup` service on VPS_PROD.
 
 **Metrics exposed**:
 | Metric | Description |
@@ -783,7 +783,7 @@ The complete pfSense configuration is stored in `/conf/config.xml`.
 
 ### Recommended Backup Schedule
 
-- **Automated**: Daily backup to Proxmox NFS (configured above)
+- **Automated**: Previous Proxmox NFS target is offline. Needs new destination (TrueNAS ssdpool or VPS).
 - **Before changes**: Manual backup before significant configuration changes
 - **Off-site**: Consider periodic backup to cloud storage for disaster recovery
 

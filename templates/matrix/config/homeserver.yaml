@@ -111,7 +111,13 @@ password_config:
   pepper: ""  # Optional additional password security
 
 # Session configuration
-session_lifetime: "24h"
+# session_lifetime removed — it caps ALL tokens including bot tokens, causing 24h expiry.
+# Instead, use per-type lifetimes:
+#   - refreshable_access_token_lifetime: 5min (Element auto-refreshes)
+#   - nonrefreshable_access_token_lifetime: unlimited (for bot tokens)
+#   - refresh_token_lifetime: 24h (how long a refresh token stays valid)
+refreshable_access_token_lifetime: "5m"
+nonrefreshable_access_token_lifetime: "999y"
 refresh_token_lifetime: "24h"
 
 # =============================================================================

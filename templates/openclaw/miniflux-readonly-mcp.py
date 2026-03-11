@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""Read-only Miniflux MCP server for OpenClaw.
+Replaces unpinned `npx -y miniflux-mcp` to eliminate supply chain risk.
+Exposes: list feeds, list/read entries, list categories, search.
+Blocks: create/update/delete feeds, mark entries read/unread, user management.
+"""
+import os, json, urllib.request, urllib.parse
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp.types import Tool, TextContent
+
+API_URL = os.environ["MINIFLUX_API_URL"].rstrip("/")
+API_KEY = os.environ["MINIFLUX_API_KEY"]
+
+# Read-only: only GET requests allowed
+ALLOWED_METHODS = {"GET"}
+
+server = Server("miniflux-readonly")
+
+def _api(path: str) -> dict:
+    url = f"{API_URL}/v1{path}"
+    req = urllib.request.Request(url, method="GET", headers={
+        "X-Auth-Token": API_KEY,
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read())
+    except urllib.error.URLError as e:
+        return {"error": f"Miniflux unreachable: {e}", "status": "error"}
+
+@server.list_tools()
+async def list_tools():
+    return [
+        Tool(name="list_categories", description="List all feed categories",
+             inputSchema={"type": "object", "properties": {}}),
+        Tool(name="list_feeds", description="List all RSS feeds",
+             inputSchema={"type": "object", "properties": {}}),
+        Tool(name="list_entries", description="List entries with optional filters",
+             inputSchema={"type": "object", "properties": {
+                 "category_id": {"type": "integer", "description": "Filter by category ID"},
+                 "status": {"type": "string", "enum": ["unread", "read", "removed"], "default": "unread"},
+                 "limit": {"type": "integer", "default": 25, "description": "Max entries (1-100)"},
+                 "direction": {"type": "string", "enum": ["asc", "desc"], "default": "desc"},
+                 "order": {"type": "string", "enum": ["published_at", "created_at", "category_title"],
+                           "default": "published_at"}
+             }}),
+        Tool(name="get_entry", description="Get full content of a single entry",
+             inputSchema={"type": "object", "properties": {
+                 "entry_id": {"type": "integer"}
+             }, "required": ["entry_id"]}),
+        Tool(name="search_entries", description="Search entries by text",
+             inputSchema={"type": "object", "properties": {
+                 "query": {"type": "string"},
+                 "limit": {"type": "integer", "default": 25}
+             }, "required": ["query"]}),
+    ]
+
+@server.call_tool()
+async def call_tool(name: str, arguments: dict):
+    match name:
+        case "list_categories":
+            r = _api("/categories")
+        case "list_feeds":
+            r = _api("/feeds")
+        case "list_entries":
+            params = {}
+            if "category_id" in arguments:
+                cid = arguments["category_id"]
+                if not isinstance(cid, int) or cid < 0:
+                    return [TextContent(type="text", text="ERROR: category_id must be a positive integer")]
+                params["category_id"] = cid
+            if "status" in arguments:
+                params["status"] = arguments["status"]
+            params["limit"] = min(arguments.get("limit", 25), 100)
+            params["direction"] = arguments.get("direction", "desc")
+            params["order"] = arguments.get("order", "published_at")
+            qs = urllib.parse.urlencode(params)
+            r = _api(f"/entries?{qs}")
+        case "get_entry":
+            entry_id = arguments["entry_id"]
+            if not isinstance(entry_id, int) or entry_id < 0:
+                return [TextContent(type="text", text="ERROR: entry_id must be a positive integer")]
+            r = _api(f"/entries/{entry_id}")
+            # Truncate content to prevent context overflow (same pattern as gmail body)
+            if isinstance(r, dict) and "content" in r and len(str(r["content"])) > 4000:
+                r["content"] = str(r["content"])[:4000] + "\n... [truncated]"
+        case "search_entries":
+            q = urllib.parse.quote(arguments["query"])
+            limit = min(arguments.get("limit", 25), 100)
+            r = _api(f"/entries?search={q}&limit={limit}")
+        case _:
+            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+    return [TextContent(type="text", text=json.dumps(r, indent=2, default=str))]
+
+async def main():
+    async with stdio_server() as (read, write):
+        await server.run(read, write, server.create_initialization_options())
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())

@@ -8,6 +8,10 @@
 }:
 
 {
+  imports = [
+    ../claude-code/claude-code.nix # Claude Code settings.json, hooks, and security rules
+  ];
+
   # Development tools and IDEs
   # Controlled by systemSettings.developmentToolsEnable flag
   home.packages = lib.optionals (systemSettings.developmentToolsEnable == true) [
@@ -21,9 +25,12 @@
     # === Version Control Tools ===
     pkgs.git-crypt                 # Transparent file encryption in git
 
+    # === Python Tooling ===
+    pkgs-unstable.uv               # Fast Python package installer and runner (uvx)
+
     # === Shell and Cloud Tools ===
     pkgs-unstable.powershell       # PowerShell 7+
-    pkgs.azure-cli                 # Azure command-line interface
+    pkgs-unstable.azure-cli        # Azure command-line interface
     pkgs-unstable.cloudflared      # Cloudflare tunnel client
 
     # === Database Management ===

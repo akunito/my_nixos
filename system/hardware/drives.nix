@@ -70,5 +70,12 @@
         neededForBoot = false;  # Not needed for boot, allows systemd unit generation even if device missing
       };
     })
+    (lib.mkIf (systemSettings.disk8_enabled) {
+      "${systemSettings.disk8_name}" = lib.mkForce {
+        device = systemSettings.disk8_device;
+        fsType = systemSettings.disk8_fsType;
+        options = systemSettings.disk8_options;
+      };
+    })
   ];
 }

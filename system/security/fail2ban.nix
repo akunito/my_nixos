@@ -1,8 +1,12 @@
-{ ... }:
+{ lib, systemSettings, ... }:
+
+let
+  sshPort = toString (systemSettings.sshPort or 22);
+in
 
 {
   services.fail2ban = {
-    enable = true;
+    enable = systemSettings.fail2banEnable or false;
 
     # Global settings
     maxretry = 5;               # Number of failures before banning
@@ -13,10 +17,14 @@
       "fd86:ea04:1111::1/128"     # WG pfsense ipv6
       "172.26.3.155/16"           # WG server network
       "fd86:ea04:1111::155/64"    # WG server IPv6 network
-      "::1/128"                   # IPv6 localhost    ]; 
-      "192.168.8.96/32"           # My desktop
-      "192.168.8.97/32"           # My desktop
-      "192.168.8.92/32"           # My laptop
+      "192.168.8.96/32"           # DESK (primary)
+      "192.168.8.97/32"           # DESK (bond)
+      "192.168.8.92/32"           # LAPTOP_X13 (primary)
+      "192.168.8.93/32"           # LAPTOP_X13 (alt)
+    ]
+    # Tailscale CGNAT range — prevent VPN connections from being banned
+    ++ lib.optionals (systemSettings.tailscaleEnable or false) [
+      "100.64.0.0/10"             # Tailscale CGNAT range
     ];
     bantime = "24h";            # Ban duration
     bantime-increment = {
@@ -30,7 +38,7 @@
       sshd = {
         settings = {
           enabled = true;
-          port = "ssh,22";
+          port = "ssh,${sshPort}";
           filter = "sshd[mode=aggressive]";
           findtime = "600";
           maxretry = 3;
@@ -62,7 +70,7 @@
 
       gitea = {
         settings = {
-          enabled = true;
+          enabled = systemSettings.fail2banGiteaJailEnable or false;
           port = "http,https,3000";
           filter = "gitea";
           findtime = "600";

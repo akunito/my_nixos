@@ -162,28 +162,16 @@ in
     ];
     disk3_enabled = true;
     disk3_name = "/mnt/NFS_media";
-    disk3_device = "192.168.20.200:/mnt/hddpool/media";
+    disk3_device = "192.168.20.200:/mnt/ssdpool/media";
     disk3_fsType = "nfs4";
     disk3_options = [
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
-    disk4_enabled = true;
-    disk4_name = "/mnt/NFS_emulators";
-    disk4_device = "192.168.20.200:/mnt/ssdpool/emulators";
-    disk4_fsType = "nfs4";
-    disk4_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
-    disk5_enabled = true;
-    disk5_name = "/mnt/NFS_library";
-    disk5_device = "192.168.20.200:/mnt/ssdpool/library";
-    disk5_fsType = "nfs4";
-    disk5_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
+    # disk4 (emulators) and disk5 (library) removed — datasets no longer exist on TrueNAS,
+    # data lives on VPS (romm-library, calibre-library). See IAKU-247.
+    disk4_enabled = false;
+    disk5_enabled = false;
     disk6_enabled = true;
     disk6_name = "/mnt/DATA";
     disk6_device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
@@ -207,23 +195,12 @@ in
     nfsClientEnable = true;
     nfsMounts = [
       {
-        what = "192.168.20.200:/mnt/hddpool/media";
+        what = "192.168.20.200:/mnt/ssdpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
       }
-      {
-        what = "192.168.20.200:/mnt/ssdpool/library";
-        where = "/mnt/NFS_library";
-        type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
-      }
-      {
-        what = "192.168.20.200:/mnt/ssdpool/emulators";
-        where = "/mnt/NFS_emulators";
-        type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
-      }
+      # library and emulators NFS mounts removed — datasets no longer exist (IAKU-247)
     ];
     nfsAutoMounts = [
       {
@@ -232,18 +209,7 @@ in
           TimeoutIdleSec = "600";
         };
       }
-      {
-        where = "/mnt/NFS_library";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
-      {
-        where = "/mnt/NFS_emulators";
-        automountConfig = {
-          TimeoutIdleSec = "600";
-        };
-      }
+      # NFS_library and NFS_emulators automounts removed (IAKU-247)
     ];
 
     # SSH
@@ -288,7 +254,7 @@ in
 
     # === System Services & Features ===
     sambaEnable = true; # Enable Samba file sharing
-    sunshineEnable = true; # Enable Sunshine game streaming
+    sunshineEnable = false; # Disabled: unstable package broken, stable substitution not working
     wireguardEnable = true; # Enable WireGuard VPN
     appImageEnable = true; # Enable AppImage support
     gamemodeEnable = true; # Enable GameMode for performance optimization
@@ -451,8 +417,9 @@ in
     userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm) - DESK only
 
     # === Gaming & Entertainment ===
-    gamesEnable = true; # Enable gaming packages (RetroArch, Pegasus, etc.)
-    protongamesEnable = true; # Enable Proton games support (Lutris, Bottles, Heroic)
+    gamesEnable = true; # Master gate for gaming submodules
+    gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus
+    protongamesEnable = true; # Heavy gaming: Wine, Bottles, Lutris, Proton
     starcitizenEnable = true; # Enable Star Citizen support and optimizations
     GOGlauncherEnable = true; # Enable Heroic Games Launcher for GOG games
     steamPackEnable = true; # Enable Steam gaming platform

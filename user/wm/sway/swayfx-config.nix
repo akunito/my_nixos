@@ -517,6 +517,9 @@ in
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
           # Waypaper (wallpaper GUI) - Hyper+Shift+b (b for background)
           "${hyper}+Shift+b" = lib.mkIf (systemSettings.waypaperEnable or false) "exec waypaper";
+          # Element (Matrix client) - hyper+o
+          "${hyper}+o" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh element element-desktop --password-store=kwallet5";
 
           # Workspace navigation with auto-creation and wrapping (Option B)
           # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
@@ -795,6 +798,18 @@ in
           {
             criteria = {
               app_id = "Bitwarden";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "element";
+            };
+            command = "floating enable";
+          }
+          {
+            criteria = {
+              app_id = "Element";
             };
             command = "floating enable";
           }

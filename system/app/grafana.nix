@@ -16,7 +16,7 @@
 # - Grafana (public): https://grafana.akunito.com (via Cloudflare Tunnel, port 80 → nginx)
 # - Prometheus: https://prometheus.local.akunito.com (port 443, SSL, with basic auth + IP whitelist)
 
-{ pkgs, lib, systemSettings, config, ... }:
+{ pkgs, lib, systemSettings, userSettings, config, ... }:
 
 let
   # Domain secrets are passed through systemSettings by each profile
@@ -26,6 +26,10 @@ let
   alertEmail = systemSettings.notificationToEmail or "admin@example.com";
   remoteTargets = systemSettings.prometheusRemoteTargets or [];
   appTargets = systemSettings.prometheusAppTargets or [];
+  localSslEnable = systemSettings.grafanaLocalSslEnable or true;
+  telegramBotToken = systemSettings.grafanaTelegramBotToken or "";
+  telegramChatId = systemSettings.grafanaTelegramChatId or "";
+  telegramEnabled = telegramBotToken != "" && telegramChatId != "";
 
   # Build scrape configs for remote Node Exporters
   remoteNodeScrapeConfigs = map (target: {
@@ -63,6 +67,16 @@ let
         };
       }];
     }
+  ] ++ lib.optionals (systemSettings.prometheusExporterCadvisorEnable or false) [
+    {
+      job_name = "vps_docker";
+      static_configs = [{
+        targets = [ "127.0.0.1:${toString (systemSettings.prometheusCadvisorPort or 9092)}" ];
+        labels = {
+          instance = "vps";
+        };
+      }];
+    }
   ];
 
   # Build scrape configs for application exporters (exportarr, etc.)
@@ -91,10 +105,10 @@ in
         enforce_domain = false;
       };
 
-      # SMTP configuration for alerts (uses local postfix relay at pve-290)
+      # SMTP configuration for alerts (uses local postfix relay)
       smtp = {
         enabled = true;
-        host = "192.168.8.89:25";
+        host = systemSettings.smtpRelayHost or "192.168.8.89:25";
         from_address = grafanaAlertsFrom;
         from_name = "Grafana Monitoring";
         skip_verify = true;  # Local relay, no TLS
@@ -103,6 +117,11 @@ in
       # Unified alerting (Grafana 9+) - replaces legacy alerting
       unified_alerting = {
         enabled = true;
+      };
+
+      # Allow unsigned community plugins (SQLite datasource for finance data)
+      plugins = {
+        allow_loading_unsigned_plugins = "frser-sqlite-datasource";
       };
 
       # Enable public dashboards feature (Grafana 9.1+)
@@ -134,14 +153,26 @@ in
       enable = true;
 
       # Data source provisioning (fixed UID for dashboard references)
-      datasources.settings.datasources = [{
-        name = "Prometheus";
-        type = "prometheus";
-        url = "http://127.0.0.1:${toString config.services.prometheus.port}";
-        isDefault = true;
-        editable = false;
-        uid = "prometheus";
-      }];
+      datasources.settings.datasources = [
+        {
+          name = "Prometheus";
+          type = "prometheus";
+          url = "http://127.0.0.1:${toString config.services.prometheus.port}";
+          isDefault = true;
+          editable = false;
+          uid = "prometheus";
+        }
+        {
+          name = "Finance SQLite";
+          type = "frser-sqlite-datasource";
+          jsonData = {
+            # URI format with immutable=1 for read-only access to WAL-mode DB
+            path = "file:/home/${userSettings.username}/.openclaw/finance-data/vaultkeeper.db?immutable=1";
+          };
+          editable = false;
+          uid = "finance-sqlite";
+        }
+      ];
 
       # Dashboard provisioning from /etc/grafana-dashboards
       dashboards.settings.providers = [{
@@ -158,21 +189,48 @@ in
       # Alert contact points provisioning (email notifications)
       alerting.contactPoints.settings = {
         apiVersion = 1;
-        contactPoints = [{
-          orgId = 1;
-          name = "email-alerts";
-          receivers = [{
-            uid = "email-receiver";
-            type = "email";
-            settings = {
-              addresses = alertEmail;
-              singleEmail = true;
-            };
-          }];
-        }];
+        contactPoints = [
+          {
+            orgId = 1;
+            name = "email-alerts";
+            receivers = [{
+              uid = "email-receiver";
+              type = "email";
+              settings = {
+                addresses = alertEmail;
+                singleEmail = true;
+              };
+            }];
+          }
+        ] ++ lib.optionals telegramEnabled [
+          {
+            orgId = 1;
+            name = "critical-alerts";
+            receivers = [
+              {
+                uid = "critical-email-receiver";
+                type = "email";
+                settings = {
+                  addresses = alertEmail;
+                  singleEmail = true;
+                };
+              }
+              {
+                uid = "critical-telegram-receiver";
+                type = "telegram";
+                settings = {
+                  bottoken = telegramBotToken;
+                  chatid = telegramChatId;
+                  parse_mode = "HTML";
+                };
+              }
+            ];
+          }
+        ];
       };
 
-      # Alert notification policies (route all alerts to email contact point)
+      # Alert notification policies
+      # Root: email for all alerts. Child route: critical → email + telegram.
       alerting.policies.settings = {
         apiVersion = 1;
         policies = [{
@@ -182,6 +240,10 @@ in
           group_wait = "30s";
           group_interval = "5m";
           repeat_interval = "4h";
+          routes = lib.optionals telegramEnabled [{
+            receiver = "critical-alerts";
+            object_matchers = [["severity" "=" "critical"]];
+          }];
         }];
       };
     };
@@ -198,12 +260,17 @@ in
     extraFlags = [
       "--web.enable-admin-api"
       "--web.enable-lifecycle"
+      "--storage.tsdb.retention.time=90d"
+      "--query.timeout=10s"
+      "--query.max-samples=5000000"
+      "--query.max-concurrency=4"
     ];
 
     # Local Node Exporter for monitoring server system metrics
     exporters = {
       node = {
         enable = true;
+        listenAddress = "127.0.0.1";
         enabledCollectors = [
           "systemd"
           "processes"
@@ -341,6 +408,39 @@ in
                   description = "Node exporter on {{ $labels.instance }} has been unreachable for more than 2 minutes";
                 };
               }
+              # Host memory critically low (<1GB available)
+              {
+                alert = "HostMemoryCritical";
+                expr = ''node_memory_MemAvailable_bytes < 1073741824'';
+                "for" = "5m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} memory critically low";
+                  description = "Host {{ $labels.instance }} has less than 1GB available memory";
+                };
+              }
+              # TLS certificate expiring soon (<7 days)
+              {
+                alert = "TLSCertExpiringSoon";
+                expr = ''probe_ssl_earliest_cert_expiry - time() < 7 * 86400'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "TLS certificate expiring soon for {{ $labels.instance }}";
+                  description = "Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}";
+                };
+              }
+              # TLS certificate expiring critical (<3 days)
+              {
+                alert = "TLSCertExpiryCritical";
+                expr = ''probe_ssl_earliest_cert_expiry - time() < 3 * 86400'';
+                "for" = "30m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "TLS certificate expiring in <3 days for {{ $labels.instance }}";
+                  description = "Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }} - immediate renewal needed";
+                };
+              }
             ];
           }
           {
@@ -387,7 +487,7 @@ in
               # Backup too old (more than 25 hours - allows for daily backup window)
               {
                 alert = "BackupTooOld";
-                expr = ''backup_age_seconds{repo="home"} > 90000'';
+                expr = ''backup_age_seconds{repo=~"home_nfs|home_legacy"} > 90000'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
@@ -398,7 +498,7 @@ in
               # Backup critically old (more than 48 hours)
               {
                 alert = "BackupCriticallyOld";
-                expr = ''backup_age_seconds{repo="home"} > 172800'';
+                expr = ''backup_age_seconds{repo=~"home_nfs|home_legacy"} > 172800'';
                 "for" = "1h";
                 labels.severity = "critical";
                 annotations = {
@@ -415,6 +515,143 @@ in
                 annotations = {
                   summary = "Backup repository unhealthy on {{ $labels.instance }}";
                   description = "Cannot access backup repository on {{ $labels.instance }} - check restic configuration";
+                };
+              }
+              # pfSense backup stale (>36h)
+              {
+                alert = "PfsenseBackupStale";
+                expr = ''pfsense_backup_age_seconds > 129600'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "pfSense backup is stale";
+                  description = "pfSense config backup is {{ $value | humanizeDuration }} old (threshold: 36h)";
+                };
+              }
+              # pfSense backup critical (>72h)
+              {
+                alert = "PfsenseBackupCritical";
+                expr = ''pfsense_backup_age_seconds > 259200'';
+                "for" = "1h";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "pfSense backup is critically old";
+                  description = "pfSense config backup is {{ $value | humanizeDuration }} old (threshold: 72h) - immediate attention required";
+                };
+              }
+              # pfSense backup missing/failed
+              {
+                alert = "PfsenseBackupMissing";
+                expr = ''pfsense_backup_status == 0'';
+                "for" = "15m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "pfSense backup failed";
+                  description = "pfSense config backup job failed - check SSH connectivity to pfSense";
+                };
+              }
+              # TrueNAS VPS restic backup stale (>36h)
+              {
+                alert = "TruenasVpsBackupStale";
+                expr = ''truenas_backup_age_seconds{dataset=~"vps_.*"} > 129600'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "TrueNAS VPS backup stale: {{ $labels.dataset }}";
+                  description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 36h)";
+                };
+              }
+              # TrueNAS workstation restic backup stale (>30h)
+              {
+                alert = "TruenasWorkstationBackupStale";
+                expr = ''truenas_backup_age_seconds{dataset=~"desk_.*|x13_.*"} > 108000'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "TrueNAS workstation backup stale: {{ $labels.dataset }}";
+                  description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 30h)";
+                };
+              }
+              # TrueNAS backup missing (any repo)
+              {
+                alert = "TruenasBackupMissing";
+                expr = ''truenas_backup_status == 0'';
+                "for" = "15m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "TrueNAS backup repo missing: {{ $labels.dataset }}";
+                  description = "Cannot find snapshot files in restic repo {{ $labels.dataset }} on TrueNAS";
+                };
+              }
+              # TrueNAS offsite backup stale (VPS pulls from TrueNAS, >36h)
+              {
+                alert = "TruenasOffsiteBackupStale";
+                expr = ''(time() - truenas_offsite_backup_last_success) > 129600'';
+                "for" = "1h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "TrueNAS offsite backup stale: {{ $labels.exported_job }}";
+                  description = "TrueNAS→VPS offsite backup {{ $labels.exported_job }} last succeeded {{ $value | humanizeDuration }} ago (threshold: 36h)";
+                };
+              }
+              # TrueNAS offsite backup failed
+              {
+                alert = "TruenasOffsiteBackupFailed";
+                expr = ''truenas_offsite_backup_status == 0'';
+                "for" = "15m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "TrueNAS offsite backup failed: {{ $labels.exported_job }}";
+                  description = "TrueNAS→VPS offsite backup {{ $labels.exported_job }} failed - check systemd journal for truenas-backup-{{ $labels.exported_job }}";
+                };
+              }
+            ];
+          }
+          {
+            name = "infrastructure_alerts";
+            rules = [
+              # Systemd service failed on any monitored host
+              {
+                alert = "SystemdServiceFailed";
+                expr = ''node_systemd_unit_state{state="failed"} == 1'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Systemd unit failed on {{ $labels.instance }}";
+                  description = "Unit {{ $labels.name }} is in failed state on {{ $labels.instance }}";
+                };
+              }
+              # Blackbox HTTP probe failure
+              {
+                alert = "BlackboxProbeFailed";
+                expr = ''probe_success == 0'';
+                "for" = "5m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Probe failed: {{ $labels.instance }}";
+                  description = "HTTP/ICMP probe to {{ $labels.instance }} has been failing for 5 minutes";
+                };
+              }
+              # High swap usage (memory pressure indicator)
+              {
+                alert = "HostSwapUsageHigh";
+                expr = ''(node_memory_SwapTotal_bytes > 0) and ((node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes) / node_memory_SwapTotal_bytes * 100 > 50)'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} swap usage high";
+                  description = "Swap usage on {{ $labels.instance }} is {{ $value | printf \"%.1f\" }}% (threshold: 50%)";
+                };
+              }
+              # File descriptor exhaustion risk
+              {
+                alert = "HostFileDescriptorsHigh";
+                expr = ''node_filefd_allocated / node_filefd_maximum * 100 > 80'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Host {{ $labels.instance }} file descriptors high";
+                  description = "File descriptor usage on {{ $labels.instance }} is {{ $value | printf \"%.1f\" }}% (threshold: 80%)";
                 };
               }
             ];
@@ -524,44 +761,6 @@ in
                 annotations = {
                   summary = "Home-manager auto-update failed on {{ $labels.hostname }}";
                   description = "User auto-update failed on {{ $labels.hostname }} - check logs with 'journalctl -u home-manager-autoupgrade'";
-                };
-              }
-            ];
-          }
-          {
-            name = "pve_backup_alerts";
-            rules = [
-              # PVE backup failed
-              {
-                alert = "PVEBackupFailed";
-                expr = ''pve_backup_status == 0'';
-                "for" = "1h";
-                labels.severity = "warning";
-                annotations = {
-                  summary = "Proxmox backup failed for {{ $labels.name }}";
-                  description = "Most recent backup for VM/LXC {{ $labels.name }} ({{ $labels.vmid }}) failed";
-                };
-              }
-              # PVE backup too old (more than 7 days)
-              {
-                alert = "PVEBackupTooOld";
-                expr = ''pve_backup_age_seconds > 604800'';
-                "for" = "1h";
-                labels.severity = "warning";
-                annotations = {
-                  summary = "Proxmox backup too old for {{ $labels.name }}";
-                  description = "Last successful backup for {{ $labels.name }} ({{ $labels.vmid }}) was {{ $value | humanizeDuration }} ago";
-                };
-              }
-              # PVE backup critically old (more than 14 days)
-              {
-                alert = "PVEBackupCriticallyOld";
-                expr = ''pve_backup_age_seconds > 1209600'';
-                "for" = "1h";
-                labels.severity = "critical";
-                annotations = {
-                  summary = "Proxmox backup critically old for {{ $labels.name }}";
-                  description = "Last successful backup for {{ $labels.name }} ({{ $labels.vmid }}) was {{ $value | humanizeDuration }} ago - immediate attention required";
                 };
               }
             ];
@@ -756,6 +955,30 @@ in
     ];
   };
 
+  # Install frser-sqlite-datasource plugin if not present (community plugin, not in nixpkgs)
+  systemd.services.grafana.preStart = lib.mkAfter ''
+    PLUGIN_DIR="${config.services.grafana.dataDir}/plugins/frser-sqlite-datasource"
+    if [ ! -d "$PLUGIN_DIR" ]; then
+      ${config.services.grafana.package}/bin/grafana cli --pluginsDir "${config.services.grafana.dataDir}/plugins" plugins install frser-sqlite-datasource || true
+    fi
+  '';
+
+  # Allow grafana to read the Vaultkeeper finance SQLite database
+  # Default systemd sandboxing (ProtectHome=yes) blocks access to /home/
+  # ACLs (set via activation script) restrict grafana to only the finance-data dir
+  systemd.services.grafana.serviceConfig.ProtectHome = lib.mkForce false;
+
+  # Grant grafana traverse/read access to the Vaultkeeper finance SQLite database
+  # Must run as root (activation script) since grafana user can't setfacl on other users' dirs
+  system.activationScripts.grafana-finance-db-access = lib.stringAfter [ "users" ] ''
+    FINANCE_DB_DIR="/home/${userSettings.username}/.openclaw/finance-data"
+    if [ -d "$FINANCE_DB_DIR" ]; then
+      ${pkgs.acl}/bin/setfacl -m u:grafana:x /home/${userSettings.username} || true
+      ${pkgs.acl}/bin/setfacl -m u:grafana:x /home/${userSettings.username}/.openclaw || true
+      ${pkgs.acl}/bin/setfacl -m u:grafana:rx "$FINANCE_DB_DIR" || true
+    fi
+  '';
+
   # Create textfile directory for custom metrics (auto-update status, backup status)
   # Mode 0775 allows group write access for user update scripts (wheel group)
   systemd.tmpfiles.rules = [
@@ -763,7 +986,15 @@ in
   ];
 
   # Copy dashboard JSON files to /etc/grafana-dashboards for provisioning
+  # Also provisions Prometheus htpasswd if basic auth is configured
   environment.etc = {
+    # Prometheus HTTP Basic Auth (for nginx-local vhost)
+    "nginx/auth/prometheus.htpasswd" = lib.mkIf ((systemSettings.prometheusBasicAuthHtpasswd or null) != null) {
+      text = systemSettings.prometheusBasicAuthHtpasswd;
+      mode = "0640";
+      user = "root";
+      group = config.services.nginx.group;
+    };
     # Custom dashboards
     "grafana-dashboards/custom/wireguard.json".source = ./grafana-dashboards/custom/wireguard.json;
     "grafana-dashboards/custom/truenas.json".source = ./grafana-dashboards/custom/truenas.json;
@@ -775,11 +1006,15 @@ in
     "grafana-dashboards/custom/database-overview.json".source = ./grafana-dashboards/custom/database-overview.json;
     "grafana-dashboards/custom/database-deep-dive.json".source = ./grafana-dashboards/custom/database-deep-dive.json;
     "grafana-dashboards/custom/tailscale.json".source = ./grafana-dashboards/custom/tailscale.json;
+    "grafana-dashboards/custom/finance-overview.json".source = ./grafana-dashboards/custom/finance-overview.json;
+    "grafana-dashboards/custom/finance-budgeting.json".source = ./grafana-dashboards/custom/finance-budgeting.json;
+    "grafana-dashboards/custom/finance-savings.json".source = ./grafana-dashboards/custom/finance-savings.json;
+    "grafana-dashboards/custom/finance-investments.json".source = ./grafana-dashboards/custom/finance-investments.json;
+    "grafana-dashboards/custom/finance-fire.json".source = ./grafana-dashboards/custom/finance-fire.json;
     # Community dashboards
     "grafana-dashboards/community/node-exporter-full.json".source = ./grafana-dashboards/community/node-exporter-full.json;
     "grafana-dashboards/community/docker-cadvisor.json".source = ./grafana-dashboards/community/docker-cadvisor.json;
     "grafana-dashboards/community/blackbox-exporter.json".source = ./grafana-dashboards/community/blackbox-exporter.json;
-    "grafana-dashboards/community/proxmox-ve.json".source = ./grafana-dashboards/community/proxmox-ve.json;
     "grafana-dashboards/community/docker-system-monitoring.json".source = ./grafana-dashboards/community/docker-system-monitoring.json;
   };
 
@@ -789,49 +1024,61 @@ in
     defaultHTTPListenPort = 80;
     defaultSSLListenPort = 443;
 
-    virtualHosts = {
-      # Grafana - main monitoring UI (local access with SSL)
-      "${config.services.grafana.settings.server.domain}" = {
-        onlySSL = true;
-        sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
-        sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
-        sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
-          proxyWebsockets = true;
-          recommendedProxySettings = true;
-        };
-      };
+    # Security headers for all vhosts (SEC-AUDIT-001)
+    appendHttpConfig = ''
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    '';
 
+    virtualHosts = lib.mkMerge [
       # Grafana - public access via Cloudflare Tunnel (HTTP - TLS terminated by Cloudflare)
-      "grafana.${publicDomain}" = {
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
-          proxyWebsockets = true;
-          recommendedProxySettings = true;
+      {
+        "grafana.${publicDomain}" = {
+          listenAddresses = [ "127.0.0.1" ]; # Only cloudflared reaches this (SEC-AUDIT-001)
+          locations."/" = {
+            proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
+            proxyWebsockets = true;
+            recommendedProxySettings = true;
+          };
         };
-      };
+      }
 
-      # Prometheus - metrics API (protected with basic auth + IP whitelist)
-      "prometheus.${wildcardLocal}" = {
-        onlySSL = true;
-        sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
-        sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
-        sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
-        basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd";
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${toString config.services.prometheus.port}";
-          proxyWebsockets = true;
-          recommendedProxySettings = true;
-          # IP whitelist: Only allow access from local LAN and WireGuard tunnel
-          extraConfig = ''
-            allow 192.168.8.0/24;   # Main LAN
-            allow 172.26.5.0/24;    # WireGuard tunnel
-            allow 127.0.0.1;        # Localhost
-            deny all;
-          '';
+      # Local SSL vhosts (requires shared certs from Proxmox — not available on VPS)
+      (lib.mkIf localSslEnable {
+        # Grafana - main monitoring UI (local access with SSL)
+        "${config.services.grafana.settings.server.domain}" = {
+          onlySSL = true;
+          sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+          sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
+          sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+          locations."/" = {
+            proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
+            proxyWebsockets = true;
+            recommendedProxySettings = true;
+          };
         };
-      };
-    };
+
+        # Prometheus - metrics API (protected with basic auth + IP whitelist)
+        "prometheus.${wildcardLocal}" = {
+          onlySSL = true;
+          sslCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+          sslCertificateKey = "/mnt/shared-certs/${wildcardLocal}.key";
+          sslTrustedCertificate = "/mnt/shared-certs/${wildcardLocal}.crt";
+          basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd";
+          locations."/" = {
+            proxyPass = "http://127.0.0.1:${toString config.services.prometheus.port}";
+            proxyWebsockets = true;
+            recommendedProxySettings = true;
+            # IP whitelist: Only allow access from local LAN and WireGuard tunnel
+            extraConfig = ''
+              allow 192.168.8.0/24;   # Main LAN
+              allow 172.26.5.0/24;    # WireGuard tunnel
+              allow 127.0.0.1;        # Localhost
+              deny all;
+            '';
+          };
+        };
+      })
+    ];
   };
 }

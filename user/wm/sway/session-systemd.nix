@@ -1,4 +1,4 @@
-{ config, pkgs, lib, systemSettings, userSettings, pkgs-unstable ? pkgs, ... }:
+{ config, pkgs, lib, systemSettings, userSettings, pkgs-unstable ? pkgs, pkgs-stable ? pkgs, ... }:
 
 {
     # Volume/brightness OSD (matches Hyprland behavior)
@@ -17,8 +17,9 @@
       Unit = {
         BindsTo = [ "graphical-session.target" ];
         After = [ "graphical-session.target" ];
-        # Stop the target when no services require it (helps with cleanup on logout)
-        StopWhenUnneeded = true;
+        # Note: Do NOT set StopWhenUnneeded here — it causes Home Manager's
+        # reloadSystemd to kill all sway services during deployment (NXD-150).
+        # BindsTo already ensures cleanup when graphical-session stops on logout.
       };
       Install = {
         WantedBy = [];
@@ -230,7 +231,7 @@
         After = [ "sway-session.target" "waybar.service" ];
       };
       Service = {
-        ExecStart = "${pkgs.sunshine}/bin/sunshine";
+        ExecStart = "${pkgs-stable.sunshine}/bin/sunshine"; # Using stable due to unstable build failures
         Restart = "on-failure";
         RestartSec = "2s";
         EnvironmentFile = [ "-%t/sway-session.env" ];

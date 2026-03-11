@@ -1,0 +1,15 @@
+# Tier 1 Memory — Core Preferences
+
+## Signal Tuning
+- Infrastructure alerts: IMMEDIATE (no batching)
+- English corrections: WEEKLY (Monday mornings)
+- Week type: A (alternates each Monday)
+
+## Thresholds
+- Disk space warning: 15% free
+- Disk space critical: 5% free
+- Backup age warning: 25 hours
+- Backup age critical: 48 hours
+
+## Recurring Patterns
+(Updated as patterns emerge from interactions)

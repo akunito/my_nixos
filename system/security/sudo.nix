@@ -15,6 +15,7 @@
       ]}:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
     '' + lib.optionalString (systemSettings.sudoTimestampTimeoutMinutes != null) ''
       Defaults:${userSettings.username} timestamp_timeout=${toString systemSettings.sudoTimestampTimeoutMinutes}
+      Defaults:${userSettings.username} timestamp_type=global
     '';
   };
 
@@ -24,6 +25,21 @@
   security.pam.sshAgentAuth = lib.mkIf (systemSettings.sshAgentSudoEnable or false) {
     enable = true;
     authorizedKeysFiles = systemSettings.sshAgentSudoAuthorizedKeysFiles or [ "/etc/ssh/authorized_keys.d/%u" ];
+  };
+
+  # GUI askpass for non-TTY sudo invocations (e.g., Claude Code)
+  # When sudo has no terminal, it automatically uses SUDO_ASKPASS to show a GUI dialog
+  # Uses zenity --password for a proper GTK password entry dialog (Wayland-native)
+  environment.systemPackages = lib.mkIf (systemSettings.sudoAskpassEnable or false) [
+    pkgs.zenity
+  ];
+
+  environment.variables = lib.mkIf (systemSettings.sudoAskpassEnable or false) {
+    SUDO_ASKPASS = let
+      askpass-script = pkgs.writeShellScript "sudo-askpass" ''
+        ${pkgs.zenity}/bin/zenity --password --title="sudo: Authentication Required"
+      '';
+    in "${askpass-script}";
   };
 
   # security.doas.enable = systemSettings.doasEnable;

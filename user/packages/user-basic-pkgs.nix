@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  pkgs-stable,
   pkgs-unstable,
   userSettings,
   systemSettings,
@@ -33,6 +34,7 @@
       pkgs-unstable.nextcloud-client
 
       # Communication & Messaging
+      pkgs-unstable.element-desktop # Matrix client (matrix.akunito.com)
       pkgs-unstable.telegram-desktop
       pkgs-unstable.discord
       pkgs-unstable.vesktop # Alternative Discord with Wayland support
@@ -42,7 +44,7 @@
       # Productivity & Office
       pkgs-unstable.obsidian
       pkgs-unstable.libreoffice
-      pkgs.calibre # eBook manager
+      pkgs-stable.calibre # eBook manager (using stable — unstable broken: missing qmake)
       pkgs-unstable.qbittorrent
 
       # Media & Entertainment
@@ -59,5 +61,18 @@
       pkgs-unstable.chromium
       pkgs-unstable.brave
     ];
+
+    # Element (Matrix) — pre-configure default homeserver (no credentials)
+    home.file.".config/Element/config.json".text = builtins.toJSON {
+      default_server_config = {
+        "m.homeserver" = {
+          base_url = "https://matrix.akunito.com";
+          server_name = "matrix.akunito.com";
+        };
+      };
+      room_directory = {
+        servers = [ "matrix.akunito.com" ];
+      };
+    };
   };
 }

@@ -1,0 +1,33 @@
+# SSH keys and credentials
+.ssh/id_*
+.ssh/*.key
+.ssh/*.pem
+!.ssh/*.key.pub
+
+# GPG keyring
+.gnupg/
+
+# Cloud credentials
+.aws/credentials
+.kube/config
+.docker/config.json
+
+# Git-crypt keys
+.git-crypt/
+
+# Environment files with secrets
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.*.example
+!.env.*.template
+
+# Claude Code's own credentials and local overrides
+.claude/.credentials.json
+.claude/settings.local.json
+
+# Certificate and key files in sensitive directories
+*.pem
+*.key
+!*.key.pub

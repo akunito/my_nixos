@@ -28,6 +28,7 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
   services.prometheus.exporters.blackbox = {
     enable = true;
     port = 9115;
+    listenAddress = "127.0.0.1";
     configFile = pkgs.writeText "blackbox.yml" ''
       modules:
         http_2xx:

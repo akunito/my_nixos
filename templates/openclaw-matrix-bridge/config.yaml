@@ -1,0 +1,30 @@
+matrix:
+  homeserver: "https://matrix.local.akunito.com"
+  allowed_users:
+    - "@akunito:akunito.com"
+
+agents:
+  alfred:
+    bot_user: "@alfredbot:akunito.com"
+    room_id: "!REPLACE_WITH_ALFRED_ROOM_ID:akunito.com"
+    access_token_file: "/home/akunito/.homelab/openclaw/matrix-token-alfred"
+    device_id: "OPENCLAW_ALFRED"
+  vaultkeeper:
+    bot_user: "@vaultkeeperbot:akunito.com"
+    room_id: "!REPLACE_WITH_VAULTKEEPER_ROOM_ID:akunito.com"
+    access_token_file: "/home/akunito/.homelab/openclaw/matrix-token-vaultkeeper"
+    device_id: "OPENCLAW_VAULTKEEPER"
+  scout:
+    bot_user: "@scoutbot:akunito.com"
+    room_id: "!REPLACE_WITH_SCOUT_ROOM_ID:akunito.com"
+    access_token_file: "/home/akunito/.homelab/openclaw/matrix-token-scout"
+    device_id: "OPENCLAW_SCOUT"
+
+openclaw:
+  gateway_url: "http://127.0.0.1:18789"
+  gateway_token_file: "/home/akunito/.homelab/openclaw/hooks-token"
+  model: "modelstudio/qwen3.5-plus"
+
+logging:
+  level: INFO
+  file: "/home/akunito/.openclaw-matrix-bridge/bridge.log"

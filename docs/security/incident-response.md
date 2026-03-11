@@ -38,10 +38,9 @@ Procedures for responding to security incidents and performing credential rotati
    # Update snmpCommunity value
    ```
 
-4. Rebuild monitoring:
+4. Rebuild monitoring on VPS:
    ```bash
-   ssh akunito@192.168.8.85
-   cd ~/.dotfiles && ./install.sh ~/.dotfiles LXC_monitoring -s -u
+   ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
    ```
 
 5. Verify scraping:
@@ -69,37 +68,21 @@ Procedures for responding to security incidents and performing credential rotati
    git add secrets/domains.nix && git commit -m "chore: rotate SMTP2GO credentials"
    ```
 
-5. Update LXC_mailer .env (git-crypt encrypted):
+5. Update VPS Postfix (NixOS native service):
    ```bash
-   ssh akunito@192.168.8.89
-   cd ~/homelab-watcher
-   git-crypt unlock ~/.keys/homelab-watcher.key
-   vim .env
-   # Update SMTP2GO_PASSWORD value
-   git add .env && git commit -m "chore: rotate SMTP2GO credentials"
-   docker compose down && docker compose up -d
+   # Update secrets/domains.nix with new SMTP2GO password, commit, then deploy
+   ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
    ```
 
-6. Update VPS postfix-relay .env (git-crypt encrypted):
+6. Test email delivery:
    ```bash
-   ssh -p 56777 root@172.26.5.155
-   cd /opt/postfix-relay
-   git-crypt unlock /root/.keys/postfix-relay.key
-   vim .env
-   # Update SMTP_PASSWORD value
-   git add .env && git commit -m "chore: rotate SMTP2GO credentials"
-   docker compose down && docker compose up -d
-   ```
-
-7. Test email delivery:
-   ```bash
-   # On LXC_mailer
-   curl --url "smtp://localhost:25" \
+   # On VPS
+   ssh -A -p 56777 akunito@100.64.0.6 'curl --url "smtp://localhost:25" \
      --mail-from "nixos@akunito.com" \
      --mail-rcpt "diego88aku@gmail.com" \
      --upload-file - <<< "Subject: Credential Rotation Test
 
-   SMTP2GO credentials rotated successfully."
+   SMTP2GO credentials rotated successfully."'
    ```
 
 ---
@@ -140,26 +123,19 @@ Procedures for responding to security incidents and performing credential rotati
 
 ---
 
-### 1.4 Proxmox API Token
+### 1.4 Proxmox API Token (Komi only)
+
+**Note:** Akunito's Proxmox (192.168.8.82) is SHUT DOWN since Feb 2026. PVE exporter removed from VPS monitoring. This section applies only to Komi's Proxmox (192.168.1.3) if monitoring is enabled.
 
 **When to rotate:** Suspected exposure or annual review.
 
 **Steps:**
 
-1. Log into Proxmox web UI (https://192.168.8.82:8006)
+1. Log into Proxmox web UI (https://192.168.1.3:8006)
 2. Navigate to Datacenter > Permissions > API Tokens
 3. Remove old token for `prometheus@pve`
 4. Create new token with same permissions (PVEAuditor)
-5. Update token file on monitoring server:
-   ```bash
-   ssh akunito@192.168.8.85
-   sudo vim /etc/secrets/pve-token
-   # Paste new token value
-   ```
-6. Rebuild monitoring:
-   ```bash
-   cd ~/.dotfiles && ./install.sh ~/.dotfiles LXC_monitoring -s -u
-   ```
+5. Update monitoring configuration and deploy
 
 ---
 
@@ -172,15 +148,10 @@ Procedures for responding to security incidents and performing credential rotati
 1. Log into Cloudflare dashboard
 2. Navigate to My Profile > API Tokens
 3. Revoke old token, create new one with DNS edit permissions
-4. Update on LXC_proxy:
+4. Update in secrets/domains.nix and deploy to VPS:
    ```bash
-   ssh akunito@192.168.8.102
-   sudo vim /etc/secrets/cloudflare-acme
-   # Paste new API token
-   ```
-5. Test certificate renewal:
-   ```bash
-   sudo acme.sh --renew -d "*.local.akunito.com" --force
+   # VPS handles public certs via cloudflared tunnel; TrueNAS NPM handles local certs
+   ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"
    ```
 
 ---
@@ -213,43 +184,58 @@ If git-crypt encrypted repo is corrupted:
 
 ### 2.2 Docker Volume Recovery
 
-For Docker services on LXC_HOME:
+For Docker services on VPS:
 
 1. Stop affected stack:
    ```bash
-   ssh akunito@192.168.8.80
-   cd ~/.homelab/<stack>
-   docker-compose down
+   ssh -A -p 56777 akunito@100.64.0.6
+   cd ~/docker/<stack>
+   docker compose down
    ```
 
 2. Restore from backup (if using restic):
    ```bash
-   restic -r <repo> restore latest --target /mnt/DATA_4TB/docker/<stack>
+   restic -r <repo> restore latest --target ~/docker/<stack>
    ```
 
 3. Restart stack:
    ```bash
-   docker-compose up -d
+   docker compose up -d
+   ```
+
+For Docker services on TrueNAS:
+
+1. Stop affected stack:
+   ```bash
+   ssh truenas_admin@192.168.20.200
+   cd ~/docker/<stack>
+   docker compose down
+   ```
+
+2. Restore from ZFS snapshot or restic backup
+3. Restart stack:
+   ```bash
+   docker compose up -d
    ```
 
 ---
 
-### 2.3 LXC Container Recovery
+### 2.3 VPS Recovery
 
-If LXC container is corrupted:
+If VPS needs full rebuild:
 
-1. Create new LXC from Proxmox template
-2. Configure network (same IP as original)
-3. Mount Proxmox bind mounts
-4. Clone dotfiles:
+1. SSH into VPS and clone dotfiles:
    ```bash
+   ssh -A -p 56777 akunito@100.64.0.6
    git clone git@github.com:akunito/dotnix.git ~/.dotfiles
    cd ~/.dotfiles && git-crypt unlock ~/.git-crypt/dotfiles-key
    ```
-5. Run install script:
+2. Run install script:
    ```bash
-   ./install.sh ~/.dotfiles <PROFILE> -s -u
+   ./install.sh ~/.dotfiles VPS_PROD -s -u -d
    ```
+3. Restore Docker volumes from restic backups
+4. Start Docker stacks: `cd ~/docker && docker compose up -d`
 
 ---
 
@@ -351,11 +337,10 @@ If LXC container is corrupted:
 | Purpose | Location | Host |
 |---------|----------|------|
 | Dotfiles git-crypt key | ~/.git-crypt/dotfiles-key | All |
-| Proxmox git-crypt key | /root/.git-crypt-key | Proxmox |
 | VPS git-crypt key | /root/.git-crypt-key | VPS |
-| Cloudflare ACME token | /etc/secrets/cloudflare-acme | LXC_proxy |
-| PVE API token | /etc/secrets/pve-token | LXC_monitoring |
-| Cloudflared tunnel token | /etc/secrets/cloudflared-token | LXC_proxy |
+| Database secrets | /etc/secrets/db-*-password | VPS |
+| Redis password | /etc/secrets/redis-password | VPS |
+| Cloudflared tunnel token | Environment variable | VPS (Docker) + TrueNAS (Docker) |
 
 ---
 

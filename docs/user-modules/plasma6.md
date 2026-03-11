@@ -155,7 +155,7 @@ The configuration supports different profiles for different users or computers:
 ├── akunito/    # Configurations for akunito user
 │   ├── kded6/
 │   └── kwinrc
-└── aga/        # Configurations for aga user
+└── aga/        # Configurations for A's user
     ├── kded6/
     └── kwinrc
 ```

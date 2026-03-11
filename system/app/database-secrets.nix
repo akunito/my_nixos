@@ -10,17 +10,18 @@
 # - postgresqlServerEnable: Creates PostgreSQL user password files
 # - mariadbServerEnable: Creates MariaDB user password files
 # - redisServerEnable: Creates Redis password file
-# - dbPlanePassword, dbLiftcraftPassword, dbMatrixPassword: PostgreSQL passwords
+# - dbPlanePassword, dbLiftcraftPassword, dbMatrixPassword, dbMinifluxPassword: PostgreSQL passwords
 # - dbNextcloudPassword: MariaDB password
 # - redisServerPassword: Redis password
 
 { pkgs, lib, systemSettings, config, ... }:
 
 let
-  # Check if any database service is enabled
+  # Check if any database service or credential-dependent service is enabled
   anyDatabaseEnabled = (systemSettings.postgresqlServerEnable or false)
                     || (systemSettings.mariadbServerEnable or false)
-                    || (systemSettings.redisServerEnable or false);
+                    || (systemSettings.redisServerEnable or false)
+                    || (systemSettings.postfixRelayEnable or false);
 
 in
 lib.mkIf anyDatabaseEnabled {
@@ -67,6 +68,33 @@ lib.mkIf anyDatabaseEnabled {
       };
     })
 
+    (lib.mkIf ((systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMinifluxPassword or "") != "") {
+      "secrets/db-miniflux-password" = {
+        text = systemSettings.dbMinifluxPassword;
+        mode = "0440";
+        user = "root";
+        group = "postgres";
+      };
+    })
+
+    (lib.mkIf ((systemSettings.postgresqlServerEnable or false) && (systemSettings.dbVaultwardenPassword or "") != "") {
+      "secrets/db-vaultwarden-password" = {
+        text = systemSettings.dbVaultwardenPassword;
+        mode = "0440";
+        user = "root";
+        group = "postgres";
+      };
+    })
+
+    (lib.mkIf ((systemSettings.postgresqlServerEnable or false) && (systemSettings.dbN8nPassword or "") != "") {
+      "secrets/db-n8n-password" = {
+        text = systemSettings.dbN8nPassword;
+        mode = "0440";
+        user = "root";
+        group = "postgres";
+      };
+    })
+
     # MariaDB passwords
     (lib.mkIf ((systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != "") {
       "secrets/db-nextcloud-password" = {
@@ -82,6 +110,16 @@ lib.mkIf anyDatabaseEnabled {
       "secrets/redis-password" = {
         text = systemSettings.redisServerPassword;
         mode = "0444";  # Redis exporter needs to read this
+        user = "root";
+        group = "root";
+      };
+    })
+
+    # SMTP2GO credentials for Postfix relay (SEC-DOCKER-SEC-001)
+    (lib.mkIf ((systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != "") {
+      "secrets/smtp2go-credentials" = {
+        text = "[mail.smtp2go.com]:2525 ${systemSettings.postfixRelaySmtpUser}:${systemSettings.postfixRelaySmtpPassword}";
+        mode = "0600";
         user = "root";
         group = "root";
       };

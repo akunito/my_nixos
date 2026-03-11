@@ -1,0 +1,27 @@
+# Cloudflared - TrueNAS Docker (ROOTLESS daemon)
+# Cloudflare Tunnel for external access to TrueNAS services
+# Outbound-only tunnel — no host network mode needed
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    environment:
+      TZ: Europe/Warsaw
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    # Note: cloudflared image is distroless (no shell, no wget/curl)
+    # Health monitoring via Docker restart policy + cadvisor container status
+    healthcheck:
+      disable: true
+    deploy:
+      resources:
+        limits:
+          memory: 256M

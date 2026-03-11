@@ -135,7 +135,7 @@ Using flake profiles we can adjust our setup to different computers / users, whi
 
 In our example we create a service that:
 - runs every 6 hours 
-- for the user aga
+- for the user A
 - execute by sh the script on the given path
 ```sh
 	systemSettings = {

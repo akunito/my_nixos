@@ -58,7 +58,7 @@ systemSettings = {
   nfsClientEnable = true;
   nfsMounts = [
     {
-      what = "192.168.20.200:/mnt/hddpool/media";
+      what = "192.168.20.200:/mnt/ssdpool/media";
       where = "/mnt/NFS_media";
       type = "nfs";
       options = "noatime";
@@ -434,7 +434,7 @@ disk2_options = [ "nofail" "x-systemd.device-timeout=3s" "uid=1000" "gid=1000" ]
 ```nix
 nfsMounts = [
   {
-    what = "192.168.20.200:/mnt/hddpool/media";
+    what = "192.168.20.200:/mnt/ssdpool/media";
     where = "/mnt/NFS_media";
     type = "nfs";
     options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";

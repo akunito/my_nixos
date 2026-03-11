@@ -1,0 +1,323 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["finance"],
+      "targetBlank": false,
+      "title": "Finance Dashboards",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "FIRE Status",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "green", "value": 25 },
+              { "color": "yellow", "value": 50 },
+              { "color": "orange", "value": 75 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+      "id": 27,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT ROUND(COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) / ${fire_target} * 100, 1) as value",
+          "refId": "A",
+          "queryText": "SELECT ROUND(COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) / ${fire_target} * 100, 1) as value"
+        }
+      ],
+      "title": "FIRE Progress",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 1 },
+      "id": 28,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT CASE WHEN avg_monthly_savings > 0 THEN CAST(ROUND((${fire_target} - current_value) / avg_monthly_savings, 0) AS INTEGER) ELSE -1 END as value FROM (SELECT COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) as current_value, COALESCE((SELECT AVG(savings) FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)), 0) as avg_monthly_savings)",
+          "refId": "A",
+          "queryText": "SELECT CASE WHEN avg_monthly_savings > 0 THEN CAST(ROUND((${fire_target} - current_value) / avg_monthly_savings, 0) AS INTEGER) ELSE -1 END as value FROM (SELECT COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) as current_value, COALESCE((SELECT AVG(savings) FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)), 0) as avg_monthly_savings)"
+        }
+      ],
+      "title": "Months to FIRE (savings only)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+      "id": 31,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "WITH params AS (SELECT COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) as current_value, COALESCE((SELECT AVG(savings) FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)), 0) as avg_monthly_savings), sim(month_n, portfolio) AS (SELECT 0, current_value FROM params UNION ALL SELECT month_n + 1, portfolio * (1 + ${annual_return}/100.0/12) + (SELECT avg_monthly_savings FROM params) FROM sim WHERE month_n < 600 AND portfolio < ${fire_target}) SELECT CASE WHEN (SELECT current_value FROM params) >= ${fire_target} THEN 0 ELSE MAX(month_n) END as value FROM sim",
+          "refId": "A",
+          "queryText": "WITH params AS (SELECT COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) as current_value, COALESCE((SELECT AVG(savings) FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)), 0) as avg_monthly_savings), sim(month_n, portfolio) AS (SELECT 0, current_value FROM params UNION ALL SELECT month_n + 1, portfolio * (1 + ${annual_return}/100.0/12) + (SELECT avg_monthly_savings FROM params) FROM sim WHERE month_n < 600 AND portfolio < ${fire_target}) SELECT CASE WHEN (SELECT current_value FROM params) >= ${fire_target} THEN 0 ELSE MAX(month_n) END as value FROM sim"
+        }
+      ],
+      "title": "Months to FIRE (with ${annual_return}% returns)",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "id": 200,
+      "panels": [],
+      "title": "FIRE Details",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyPLN"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 10 },
+      "id": 29,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT 'Current Portfolio' as scenario, ROUND(COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0), 0) as value UNION ALL SELECT 'Target (FIRE)', ${fire_target} UNION ALL SELECT 'Remaining', ${fire_target} - COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) UNION ALL SELECT 'Avg Monthly Savings', ROUND(COALESCE((SELECT AVG(savings) FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)), 0), 0)",
+          "refId": "A",
+          "queryText": "SELECT 'Current Portfolio' as scenario, ROUND(COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0), 0) as value UNION ALL SELECT 'Target (FIRE)', ${fire_target} UNION ALL SELECT 'Remaining', ${fire_target} - COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) UNION ALL SELECT 'Avg Monthly Savings', ROUND(COALESCE((SELECT AVG(savings) FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)), 0), 0)"
+        }
+      ],
+      "title": "FIRE Summary",
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "target_pln" },
+            "properties": [
+              { "id": "unit", "value": "currencyPLN" }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 10 },
+      "id": 32,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "WITH params AS (SELECT COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) as current_value, COALESCE((SELECT AVG(savings) FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)), 0) as avg_monthly_savings), sim(month_n, portfolio) AS (SELECT 0, current_value FROM params UNION ALL SELECT month_n + 1, portfolio * (1 + ${annual_return}/100.0/12) + (SELECT avg_monthly_savings FROM params) FROM sim WHERE month_n < 600 AND portfolio < ${fire_target}), milestones(milestone, target_value) AS (SELECT '25%', ${fire_target} * 0.25 UNION ALL SELECT '50%', ${fire_target} * 0.50 UNION ALL SELECT '75%', ${fire_target} * 0.75 UNION ALL SELECT '100%', CAST(${fire_target} AS REAL)) SELECT m.milestone, ROUND(m.target_value, 0) as target_pln, CASE WHEN (SELECT current_value FROM params) >= m.target_value THEN 'Reached!' ELSE COALESCE((SELECT date(date('now'), '+' || MIN(s.month_n) || ' months') FROM sim s WHERE s.portfolio >= m.target_value), 'N/A') END as estimated_date FROM milestones m",
+          "refId": "A",
+          "queryText": "WITH params AS (SELECT COALESCE((SELECT SUM(h.quantity * COALESCE(ap.price_base, 0)) FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), 0) as current_value, COALESCE((SELECT AVG(savings) FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)), 0) as avg_monthly_savings), sim(month_n, portfolio) AS (SELECT 0, current_value FROM params UNION ALL SELECT month_n + 1, portfolio * (1 + ${annual_return}/100.0/12) + (SELECT avg_monthly_savings FROM params) FROM sim WHERE month_n < 600 AND portfolio < ${fire_target}), milestones(milestone, target_value) AS (SELECT '25%', ${fire_target} * 0.25 UNION ALL SELECT '50%', ${fire_target} * 0.50 UNION ALL SELECT '75%', ${fire_target} * 0.75 UNION ALL SELECT '100%', CAST(${fire_target} AS REAL)) SELECT m.milestone, ROUND(m.target_value, 0) as target_pln, CASE WHEN (SELECT current_value FROM params) >= m.target_value THEN 'Reached!' ELSE COALESCE((SELECT date(date('now'), '+' || MIN(s.month_n) || ' months') FROM sim s WHERE s.portfolio >= m.target_value), 'N/A') END as estimated_date FROM milestones m"
+        }
+      ],
+      "title": "FIRE Milestones",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "id": 300,
+      "panels": [],
+      "title": "FIRE Progress Over Time",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "currencyPLN",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "always"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "fire_target" },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": { "fill": "dash", "dash": [10, 10] }
+              },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } },
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineWidth", "value": 2 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "net_worth" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 17 },
+      "id": 33,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "finance-sqlite" },
+          "rawQueryText": "SELECT month || '-07' as time, net_worth_base as net_worth, ${fire_target} as fire_target FROM monthly_summaries ORDER BY month",
+          "refId": "A",
+          "queryText": "SELECT month || '-07' as time, net_worth_base as net_worth, ${fire_target} as fire_target FROM monthly_summaries ORDER BY month"
+        }
+      ],
+      "title": "Net Worth vs FIRE Target",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": ["custom", "finance"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "1000000",
+          "value": "1000000"
+        },
+        "hide": 0,
+        "label": "FIRE Target (PLN)",
+        "name": "fire_target",
+        "options": [{ "selected": true, "text": "1000000", "value": "1000000" }],
+        "query": "1000000",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "8",
+          "value": "8"
+        },
+        "hide": 0,
+        "label": "Annual Return %",
+        "name": "annual_return",
+        "options": [{ "selected": true, "text": "8", "value": "8" }],
+        "query": "8",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": { "from": "now-1y", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Finance FIRE Tracker",
+  "uid": "finance-fire",
+  "version": 1,
+  "weekStart": ""
+}
