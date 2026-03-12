@@ -71,10 +71,10 @@ lib.mkIf cfg.enable {
         reserve_pool_size = 5;
         reserve_pool_timeout = 3;
 
-        # Authentication - delegate to PostgreSQL via auth_query
-        # This avoids maintaining a separate userlist with passwords
+        # Authentication - delegate to PostgreSQL via SECURITY DEFINER function
+        # pgbouncer.get_auth() runs as superuser to read pg_shadow (direct access denied)
         auth_type = "scram-sha-256";
-        auth_query = "SELECT usename, passwd FROM pg_shadow WHERE usename=$1";
+        auth_query = "SELECT usename, passwd FROM pgbouncer.get_auth($1)";
         auth_user = "pgbouncer";
 
         # Logging
@@ -109,11 +109,23 @@ lib.mkIf cfg.enable {
     }
   ];
 
-  # Grant pgbouncer user access to pg_shadow for auth_query
+  # Create pgbouncer schema + SECURITY DEFINER auth function in every proxied database
+  # (pg_shadow requires superuser; auth_query runs in the target database, not postgres)
   systemd.services.postgresql.postStart = lib.mkIf (systemSettings.postgresqlServerEnable or false) (lib.mkAfter ''
     PSQL="psql --port=${toString pgPort}"
-    # Grant pgbouncer user permission to read pg_shadow for auth_query
-    $PSQL -c "GRANT SELECT ON pg_shadow TO pgbouncer;" || true
+    for db in ${lib.concatStringsSep " " pgDatabases}; do
+      $PSQL -d "$db" -c "CREATE SCHEMA IF NOT EXISTS pgbouncer AUTHORIZATION pgbouncer;" || true
+      $PSQL -d "$db" -c "
+        CREATE OR REPLACE FUNCTION pgbouncer.get_auth(p_usename TEXT)
+        RETURNS TABLE(usename name, passwd text) AS
+        \$\$
+          SELECT usename, passwd::text FROM pg_catalog.pg_shadow WHERE usename = p_usename;
+        \$\$
+        LANGUAGE sql SECURITY DEFINER;
+      " || true
+      $PSQL -d "$db" -c "REVOKE ALL ON FUNCTION pgbouncer.get_auth(TEXT) FROM PUBLIC;" || true
+      $PSQL -d "$db" -c "GRANT EXECUTE ON FUNCTION pgbouncer.get_auth(TEXT) TO pgbouncer;" || true
+    done
   '');
 
   # Open firewall port (gated by databaseFirewallOpen — false on VPS where only local access needed)
