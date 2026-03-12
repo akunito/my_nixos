@@ -96,6 +96,9 @@ lib.mkIf cfg.enable {
       local   all             all                                     peer
       local   all             postgres                                peer
 
+      # PgBouncer auth_user: trust from localhost (no password, auth_query only)
+      host    all             pgbouncer       127.0.0.1/32            trust
+
       # IPv4 localhost
       host    all             all             127.0.0.1/32            scram-sha-256
 
@@ -107,6 +110,9 @@ lib.mkIf cfg.enable {
 
       # WireGuard tunnel access
       host    all             all             172.26.5.0/24           scram-sha-256
+
+      # Tailscale mesh access (DBeaver, CLI tools from DESK/LAPTOP via Headscale)
+      host    all             all             100.64.0.0/10           scram-sha-256
 
       # Extra authentication rules from profile config
       ${cfg.extraAuth}
