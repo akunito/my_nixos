@@ -380,6 +380,11 @@ def create_rule():
     )
     db.commit()
 
+    # If created from matching-rules panel, refresh that panel instead
+    refresh_tx = request.form.get("_refresh_matching", "").strip()
+    if refresh_tx:
+        return redirect(url_for("matching_rules", tx_id=int(refresh_tx)), code=303)
+
     rows = db.execute("SELECT * FROM category_rules ORDER BY priority ASC, id ASC").fetchall()
     return render_template("_rules.html",
                            rules=rows,
@@ -466,8 +471,10 @@ def matching_rules(tx_id):
     db = get_db()
     ensure_category_rules_table()
 
+    ensure_override_columns()
     tx = db.execute(
-        "SELECT id, description, raw_description, raw_category FROM transactions WHERE id = ?",
+        "SELECT id, description, raw_description, raw_category "
+        f"{EFF_COLUMNS} FROM transactions WHERE id = ?",
         (tx_id,)
     ).fetchone()
     if not tx:

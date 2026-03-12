@@ -2,6 +2,65 @@
   <h3 style="color:var(--accent);font-size:1rem;">Matching rules for: {{ tx['description'][:80] }}</h3>
   <button class="btn btn-sm btn-danger" onclick="document.getElementById('matching-rules-panel').innerHTML=''">Close</button>
 </div>
+
+{# --- Create Rule form pre-filled from transaction --- #}
+<details open style="margin-bottom:1rem;border:1px solid var(--border);border-radius:4px;padding:0.5rem;">
+  <summary style="cursor:pointer;font-weight:bold;color:var(--accent);">Create Rule from this transaction</summary>
+  <form hx-post="/rules"
+        hx-target="#matching-rules-panel"
+        hx-swap="innerHTML"
+        hx-vals='{"_refresh_matching": "{{ tx['id'] }}"}'
+        style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:end;margin-top:0.5rem;">
+    <label style="font-size:0.8rem;">Field
+      <select name="match_field">
+        {% for f in ['description', 'raw_description', 'raw_category'] %}
+        <option value="{{ f }}" {{ 'selected' if f == 'description' }}>{{ f }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label style="font-size:0.8rem;">Type
+      <select name="match_type">
+        <option value="like" selected>LIKE</option>
+        <option value="exact">Exact</option>
+      </select>
+    </label>
+    <label style="font-size:0.8rem;">Pattern
+      <input type="text" name="match_pattern" value="%{{ tx['description'] }}%" style="width:200px">
+    </label>
+    <label style="font-size:0.8rem;">&#8594; tx_type
+      <select name="set_tx_type">
+        <option value="">—</option>
+        {% for t in tx_types %}
+        <option value="{{ t }}" {{ 'selected' if tx['eff_tx_type'] == t }}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label style="font-size:0.8rem;">&#8594; group
+      <select name="set_category_group">
+        <option value="">—</option>
+        {% for g in category_groups %}
+        <option value="{{ g }}" {{ 'selected' if tx['eff_category_group'] == g }}>{{ g }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label style="font-size:0.8rem;">&#8594; category
+      <select name="set_category">
+        <option value="">—</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {{ 'selected' if tx['eff_category'] == c }}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label style="font-size:0.8rem;">Priority
+      <input type="number" name="priority" value="100" style="width:60px">
+    </label>
+    <label style="font-size:0.8rem;">Note
+      <input type="text" name="note" value="" style="width:120px">
+    </label>
+    <button type="submit" class="btn btn-sm btn-primary">Create Rule</button>
+  </form>
+</details>
+
 {% if matching %}
 <table>
 <thead>
