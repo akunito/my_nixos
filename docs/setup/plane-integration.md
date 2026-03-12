@@ -3,7 +3,7 @@ id: setup.plane-integration
 summary: Plane project management MCP integration for Claude Code workflows
 tags: [plane, mcp, project-management, claude-code, setup, tooling]
 related_files: [".claude/agents/plane-context.md", "CLAUDE.md"]
-date: 2026-02-26
+date: 2026-03-11
 status: published
 ---
 
@@ -23,8 +23,11 @@ This repository uses a self-hosted [Plane](https://plane.so) instance for projec
 
 | Identifier | Name | Scope |
 |------------|------|-------|
-| IAKU | Infrastructure Aku | NixOS desktop/WM, homelab, networking, pfSense, TrueNAS, VPS, Docker, VLANs, monitoring, theming, gaming, profiles |
-| CAL | Career & Learning | Certifications, interview prep, AI exploration |
+| AINF | AKU - Infrastructure | NixOS desktop/WM, homelab, networking, pfSense, TrueNAS, VPS, Docker, VLANs, monitoring, theming, gaming, profiles |
+| APER | AKU - Personal | Vaultkeeper finance items, personal tasks |
+| AWORK | AKU - Work Notes | Work documentation (Schenker, BEAM, Bee360, PowerBI, SQL, AD, ServiceNow) |
+| ALEA | AKU - Learning | Certifications, interview prep, AI exploration |
+| APORT | AKU - Portfolio | Akunito's portfolio site |
 
 ### Projects (shared/other)
 
@@ -33,10 +36,6 @@ This repository uses a self-hosted [Plane](https://plane.so) instance for projec
 | INF | Infrastructure & DevOps | Komi cross-cutting infra, CI/CD |
 | LW | Liftcraft | Rails training app |
 | JLE | JL Engine | CV generation engine |
-| PWS | KOMI Portfolio | Komi's portfolio site |
-| AKU | AKU Portfolio | Akunito's portfolio site |
-| ISG | Inventory Simulator | Game project |
-| N8N | n8n Workflows | Automation workflows |
 
 ## Workflow States
 
@@ -73,7 +72,7 @@ The integration uses a three-tier approach to minimize always-on token cost:
 
 | Tier | File | Tokens | When Loaded |
 |------|------|--------|-------------|
-| 1 | CLAUDE.md (Plane section) | ~400 | Every session |
+| 1 | CLAUDE.md (Plane section) | ~200 | Every session |
 | 2 | `.claude/agents/plane-context.md` | ~800 | On-demand (agent context) |
 | 3 | This file (`docs/setup/plane-integration.md`) | 0 | Manual lookup only |
 
@@ -93,8 +92,9 @@ MCP tool definitions (~200 each) are lazy-loaded via `ToolSearch` only when need
 
 ### Project not found
 - Use `list_projects()` to get current project list and UUIDs
-- Project identifiers (IAKU, CAL, etc.) are for human reference; API calls use UUIDs
+- Project identifiers (AINF, AWORK, etc.) are for human reference; API calls use UUIDs
 
 ## History
 
-- **2026-02-26**: Created. Merged HLN (Homelab & Networking) + NXD (NixOS Desktop & WM) into IAKU (Infrastructure Aku) to consolidate all akunito infrastructure tickets.
+- **2026-02-26**: Created. Merged HLN (Homelab & Networking) + NXD (NixOS Desktop & WM) into IAKU (Infrastructure Aku).
+- **2026-03-10**: Renamed projects: IAKU→AINF, AWN→AWORK, CAL→ALEA, AKU→APORT. Added APER (AKU - Personal).

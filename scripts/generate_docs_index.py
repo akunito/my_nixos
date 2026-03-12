@@ -363,37 +363,77 @@ def _escape_md_table_cell(value: str) -> str:
     return value.replace('|', '\\|').replace('\n', ' ').strip()
 
 
+def _deduplicate_docs(docs: List[Dict]) -> List[Dict]:
+    """
+    Deduplicate docs by ID, keeping the entry with the most specific path
+    (deepest nesting / longest path string).
+    """
+    seen: Dict[str, Dict] = {}
+    for d in docs:
+        doc_id = d.get('id')
+        if not doc_id:
+            continue
+        if doc_id not in seen:
+            seen[doc_id] = d
+        else:
+            existing_path = str(seen[doc_id].get('path', ''))
+            new_path = str(d.get('path', ''))
+            if len(new_path) > len(existing_path):
+                seen[doc_id] = d
+    return list(seen.values())
+
+
+def _is_archived(doc: Dict) -> bool:
+    """Check if a doc is under an archived path."""
+    path_str = str(doc.get('path', ''))
+    return 'archived' in path_str.lower()
+
+
 def generate_router(data: Dict) -> str:
     """Generate docs/00_ROUTER.md as a Markdown table: ID | Summary | Tags | Primary Path."""
     lines: List[str] = []
-    lines.append("⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`")
+    lines.append("\u26a0\ufe0f **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`")
     lines.append("")
     lines.append("# Router Index")
     lines.append("")
     lines.append("Use this file to select the best node ID(s), then read the referenced docs/files.")
     lines.append("")
-    lines.append("| ID | Summary | Tags | Primary Path |")
-    lines.append("|---|---|---|---|")
 
-    docs = [d for d in data.get('markdown_files', []) if d.get('id')]
-    docs.sort(key=lambda d: str(d.get('id')))
+    all_docs = [d for d in data.get('markdown_files', []) if d.get('id')]
+    all_docs = _deduplicate_docs(all_docs)
 
-    for d in docs:
-        doc_id = _escape_md_table_cell(str(d.get('id')))
-        summary = _escape_md_table_cell(str(d.get('summary') or ""))
-        tags_list = d.get('tags') if isinstance(d.get('tags'), list) else []
-        tags = _escape_md_table_cell(", ".join(str(t) for t in tags_list))
+    active_docs = [d for d in all_docs if not _is_archived(d)]
+    archived_docs = [d for d in all_docs if _is_archived(d)]
 
-        related = d.get('related_files') if isinstance(d.get('related_files'), list) else []
-        primary_path = str(related[0]) if related else str(d.get('path'))  # fallback rule
-        primary_path = _escape_md_table_cell(primary_path)
+    active_docs.sort(key=lambda d: str(d.get('id')))
+    archived_docs.sort(key=lambda d: str(d.get('id')))
 
-        lines.append(f"| {doc_id} | {summary} | {tags} | {primary_path} |")
+    def _render_table(docs_list: List[Dict]) -> None:
+        lines.append("| ID | Summary | Tags | Primary Path |")
+        lines.append("|---|---|---|---|")
+        for d in docs_list:
+            doc_id = _escape_md_table_cell(str(d.get('id')))
+            summary = _escape_md_table_cell(str(d.get('summary') or ""))
+            tags_list = d.get('tags') if isinstance(d.get('tags'), list) else []
+            tags = _escape_md_table_cell(", ".join(str(t) for t in tags_list))
 
-    lines.append("")
+            related = d.get('related_files') if isinstance(d.get('related_files'), list) else []
+            primary_path = str(related[0]) if related else str(d.get('path'))
+            primary_path = _escape_md_table_cell(primary_path)
+
+            lines.append(f"| {doc_id} | {summary} | {tags} | {primary_path} |")
+        lines.append("")
+
+    _render_table(active_docs)
+
+    if archived_docs:
+        lines.append("## Archived")
+        lines.append("")
+        _render_table(archived_docs)
+
     lines.append("## Notes")
     lines.append("")
-    lines.append("- If a document is missing `related_files`, the generator falls back to using the document’s own path as the default scope.")
+    lines.append("- If a document is missing `related_files`, the generator falls back to using the document\\'s own path as the default scope.")
     lines.append("")
     return "\n".join(lines)
 

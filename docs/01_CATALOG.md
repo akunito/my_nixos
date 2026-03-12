@@ -309,15 +309,18 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/qutebrowser.nix**: bindings from doom emacs
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
 - **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
+- **user/app/colima/colima.nix**: Colima settings - can be overridden in profile config *Enabled when:* `systemSettings.profile == "darwin"`
 - **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:*
    - `builtins.length postgresCredentials > 0`
    - `builtins.length mariadbCredentials > 0`
    - `redisPassword != ""`
+- **user/app/development/development-komi.nix**: Development tools and IDEs
 - **user/app/development/development.nix**: Development tools and IDEs
 - **user/app/dmenu-scripts/networkmanager-dmenu.nix**: gui_if_available = <True or False> (Default: True)
 - **user/app/doom-emacs/doom.nix**: This block from https://github.com/znewman01/dotfiles/blob/be9f3a24c517a4ff345f213bf1cf7633713c9278/emacs/default.nix#L12-L34
 - **user/app/file-manager/file-manager.nix**: File manager configuration module
 - **user/app/flatpak/flatpak.nix**: services.flatpak.enable = true;
+- **user/app/games/games-darwin.nix**: macOS Gaming packages (Darwin-only)
 - **user/app/games/games-heavy.nix**: Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery *Enabled when:* `userSettings.protongamesEnable or false`
 - **user/app/games/games-light.nix**: Handheld consoles *Enabled when:* `userSettings.gamesLightEnable or false`
 - **user/app/games/games.nix**: Gaming module dispatcher *Enabled when:* `gamesLightEnable`
@@ -570,6 +573,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Komi
 
 - **docs/komi/README.md**: macOS/darwin documentation specific to komi's environment.
+- **docs/komi/gaming-performance.md**: Gaming performance tuning for macOS (Whisky/Wine, Warblade)
 - **docs/komi/komi-onboarding.md**: Quick guide for ko-mi on the multi-user branch setup and what changed
 - **docs/komi/komi-proxmox-guide.md**: - **Machine**: Laptop running as headless server (lid closed)
 - **docs/komi/macos-installation.md**: This guide covers installing and configuring this dotfiles repository on macOS using nix-darwin and Home Manager.

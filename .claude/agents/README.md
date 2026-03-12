@@ -13,11 +13,14 @@ All agents MUST follow the router-first retrieval protocol:
 
 ## Available Agent Contexts
 
-- `nixos-context.md` - NixOS/flake-specific agent instructions
-- `docs-context.md` - Documentation maintenance agent instructions
+- `nixos-context.md` - NixOS/flake-specific: profiles, feature flags, software management, secrets
+- `docs-context.md` - Documentation maintenance: frontmatter, router/catalog, encryption
+- `deployment-context.md` - Deployment procedures: install.sh flags, SSH connections, machine types
+- `darwin-context.md` - macOS/nix-darwin: cross-platform rules, Homebrew, apply workflow
 - `sway-context.md` - Sway/Wayland agent instructions
 - `gaming-context.md` - Gaming modules (Lutris, Bottles, Vulkan, controllers)
 - `plane-context.md` - Plane ticket management integration and MCP tool reference
+- `infrastructure-registry.md` - Infrastructure registry: nodes, services (multi-instance), local projects, management skills
 
 ## When to Use
 

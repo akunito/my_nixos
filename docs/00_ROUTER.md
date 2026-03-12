@@ -7,50 +7,24 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
 | audits.docker-security.2026-03-06 | VPS Docker container security audit — network isolation, database access, secrets, hardening | audit, security, docker, vps, containers, networking, secrets | profiles/VPS*-config.nix |
-| audits.migration-plan.2026-02-19 | Comprehensive audit of Proxmox-to-VPS+TrueNAS migration plan | audit, migration, vps, truenas, security, backups, performance, networking | profiles/VPS*-config.nix |
-| audits.migration-plan.network-security.2026-02-19 | Network architecture, VPS hardening, and Nextcloud security audit of the Proxmox-to-VPS migration plan | audit, security, network, vps, nextcloud, tailscale, wireguard, cloudflare, firewall, dns | docs/akunito/infrastructure/archived/audits/migration-plan-network-security-audit-2026-02-19.md |
 | audits.pfsense.2026-02-04 | Security, performance, and reliability audit of pfSense firewall | audit, security, performance, pfsense, firewall | docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md |
 | audits.truenas-docker-security.2026-03-06 | TrueNAS Docker rootless migration and security hardening audit | audit, security, docker, truenas, rootless, monitoring, networking | templates/truenas/*/docker-compose.yml |
-| audits.truenas.2026-02-12 | Performance, reliability, and configuration audit of TrueNAS storage server | audit, performance, truenas, zfs, storage, network, iscsi | docs/akunito/infrastructure/archived/audits/truenas-audit-2026-02-12.md |
 | claude-code-setup | Claude Code CLI configuration guide — security, permissions, hooks, MCP servers, and declarative sync | claude-code, setup, permissions, hooks, mcp, security, tooling | .claude/** |
-| desk-vs-laptop-packages | Complete package and feature comparison between DESK and LAPTOP_L15 profiles | packages, profiles, comparison, DESK, LAPTOP | docs/future/archived/desk-vs-laptop-packages.md |
 | docs.agent-context | How AI agents retrieve context in this repo (Router/Catalog protocol, index regeneration, key files). | cursor, claude-code, agents, docs, routing, rules | docs/00_ROUTER.md |
 | docs.daily-usage | Daily aku commands, common operations, backup overview, maintenance, and script reference. | aku, commands, maintenance, scripts, backup, garbage-collection | system/bin/aku.nix |
 | docs.getting-started | Installation, profile selection, configuration structure, and troubleshooting for new users. | installation, profiles, configuration, getting-started, flake | install.sh |
-| docs.navigation | User guide for navigating this repository's documentation using the Router and Catalog system. | docs, navigation, router, catalog, user-guide | docs/00_ROUTER.md |
 | docs.nix-quote-escaping | Guide to properly escaping quotes and special characters in Nix strings to avoid common syntax errors. | nix, nixos, home-manager, syntax, escaping, quotes, strings, troubleshooting | docs/nix-quote-escaping.md |
 | docs.profile-feature-flags | Guide to creating and using feature flags for profile-specific module enabling. Explains the pattern of setting defaults to false and enabling features only in specific profiles. | profiles, feature-flags, modules, nixos, home-manager, configuration, best-practices | lib/defaults.nix |
-| docs.proxmox-lxc | Guide to managing Proxmox LXC containers using a Base + Override pattern. Explains how to create and install new container profiles while keeping configuration DRY. | proxmox, lxc, virtualization, profiles, modularity, dry | profiles/LXC-base-config.nix |
-| future.incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08 | Waybar delayed 2–4 minutes after fast relog in Sway due to xdg-desktop-portal-gtk failures + systemd start-limit lockout; fixed via portal-gtk drop-in (UnsetEnvironment=DISPLAY + no start-limit + restart). | incident, sway, swayfx, waybar, xdg-desktop-portal, xdg-desktop-portal-gtk, systemd-user, dbus, relog | user/wm/sway/session-env.nix |
-| future.router-drift-audit-2026-01-08 | Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system). | router, catalog, audit, docs, drift | docs/00_ROUTER.md |
 | future.waybar-drawer-and-idle-toggle | Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX. | waybar, sway, swayfx, keybindings, systemd-user | user/wm/sway/waybar.nix |
-| future.waybar-sov-debug-analysis-2026-01-07 | Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical). | waybar, sov, sway, swayfx, debug, incident, deprecated, daemon-manager | user/wm/sway/** |
 | gaming.skyrim-linux-setup | Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning | gaming, skyrim, enb, gamescope, proton, amd, performance, wayland | system/app/gamemode.nix |
 | hardware.thunderbolt-dock | Thunderbolt dock setup, OWC Dock 96W, ATTO ThunderLink NS 3102 (Linux incompatible), PS/2 keyboard/touchpad fixes | thunderbolt, dock, owc, atto, 10gbe, thinkpad, keyboard, touchpad, ps2, hardware | system/hardware/thunderbolt.nix |
 | hibernate | Hibernation with LUKS-encrypted swap for laptops and desktops | hibernation, suspend, luks, swap, encryption, power, laptop, desktop, sway, idle, lid, acpid | system/hardware/hibernate.nix |
-| infrastructure.database-redis | Centralized PostgreSQL and Redis services on LXC_database | infrastructure, database, redis, postgresql, lxc, caching | profiles/LXC_database-config.nix |
-| infrastructure.docker-projects | Docker-based project conventions - wrapper scripts, config locations, restart patterns | infrastructure, docker, projects, portfolio, liftcraft, plane | profiles/LXC_portfolioprod-config.nix |
 | infrastructure.internal | Complete internal infrastructure documentation with sensitive details (ENCRYPTED) | infrastructure, audit, security, monitoring, proxmox, lxc, secrets | profiles/LXC*-config.nix |
-| infrastructure.migration | VPS migration plan and execution docs | infrastructure, migration, vps, truenas | docs/akunito/infrastructure/archived/migration/README.md |
-| infrastructure.migration.phase-0 | Migration preparation, LXC_HOME to TrueNAS, DB fallback | infrastructure, migration, truenas, docker | docs/akunito/infrastructure/archived/migration/phase-0-preparation.md |
-| infrastructure.migration.phase-1 | VPS base setup: NixOS, LUKS, Tailscale, WireGuard | infrastructure, migration, vps, nixos, security | docs/akunito/infrastructure/archived/migration/phase-1-vps-base.md |
-| infrastructure.migration.phase-2 | VPS foundation: databases, proxy, mailer, monitoring | infrastructure, migration, vps, database, monitoring | docs/akunito/infrastructure/archived/migration/phase-2-foundation.md |
-| infrastructure.migration.phase-3 | Application migration: Plane, Portfolio, Matrix, Nextcloud | infrastructure, migration, vps, docker, applications | docs/akunito/infrastructure/archived/migration/phase-3-applications.md |
-| infrastructure.migration.phase-4 | DNS cutover, TrueNAS NPM/cloudflared, LXC decommission | infrastructure, migration, dns, truenas, decommission | docs/akunito/infrastructure/archived/migration/phase-4-cutover.md |
-| infrastructure.migration.phase-5-8 | TrueNAS sleep, backups, hardening, decommission | infrastructure, migration, truenas, backup, security | docs/akunito/infrastructure/archived/migration/phase-5-8-completion.md |
-| infrastructure.migration.portfolio | Portfolio-ready migration summary for interviews | infrastructure, migration, portfolio | docs/akunito/infrastructure/archived/migration/PORTFOLIO_SUMMARY.md |
-| infrastructure.migration.post-tasks | Post-migration documentation and operational updates | infrastructure, migration, documentation | docs/akunito/infrastructure/archived/migration/post-migration-tasks.md |
-| infrastructure.overview | Public infrastructure overview with architecture diagram and component descriptions | infrastructure, architecture, proxmox, lxc, monitoring, homelab, pfsense, gateway | profiles/LXC*-config.nix |
-| infrastructure.overview | Infrastructure overview: VPS + TrueNAS + pfSense architecture | infrastructure, architecture, vps, truenas, pfsense, docker | docs/akunito/infrastructure/INFRASTRUCTURE.md |
 | infrastructure.services.database | Database services: PostgreSQL, MariaDB, Redis on VPS | infrastructure, database, vps, postgresql, redis | docs/akunito/infrastructure/services/database-redis.md |
-| infrastructure.services.homelab | Homelab stack services - Nextcloud, Syncthing, FreshRSS, Calibre-Web, EmulatorJS | infrastructure, homelab, docker, nextcloud, syncthing | profiles/LXC_HOME-config.nix |
 | infrastructure.services.homelab | Homelab services: split between VPS and TrueNAS | infrastructure, homelab, nextcloud, syncthing, media | docs/akunito/infrastructure/services/homelab-stack.md |
-| infrastructure.services.kuma | Uptime Kuma monitoring - local homelab and public VPS status pages with API integration | infrastructure, kuma, uptime-kuma, monitoring, status-pages, lxc_mailer, vps, docker | profiles/LXC_mailer-config.nix |
 | infrastructure.services.kuma | Uptime Kuma: consolidated monitoring on VPS | infrastructure, monitoring, kuma, vps | docs/akunito/infrastructure/services/kuma.md |
-| infrastructure.services.liftcraft | LiftCraft (LeftyWorkout) - Training plan management Rails application | infrastructure, liftcraft, leftyworkout, rails, docker, redis | profiles/LXC_liftcraftTEST-config.nix |
 | infrastructure.services.matrix | Matrix Synapse + Element on VPS | infrastructure, matrix, vps, docker | docs/akunito/infrastructure/services/matrix.md |
 | infrastructure.services.media | Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent | infrastructure, media, docker, jellyfin, arr, plex-alternative, truenas | profiles/LXC_HOME-config.nix |
-| infrastructure.services.monitoring | Monitoring stack - Prometheus, Grafana, exporters, alerting | infrastructure, monitoring, prometheus, grafana, alerting | profiles/LXC_monitoring-config.nix |
 | infrastructure.services.monitoring | Monitoring: Prometheus + Grafana on VPS | infrastructure, monitoring, prometheus, grafana, vps | docs/akunito/infrastructure/services/monitoring-stack.md |
 | infrastructure.services.network-switching | Physical switching layer documentation - USW Aggregation, USW-24-G2, 10GbE LACP bonds, ARP flux | infrastructure, network, switching, 10gbe, lacp, sfp, aggregation, arp | profiles/DESK-config.nix |
 | infrastructure.services.openclaw | OpenClaw AI personal assistant: architecture, integrations, and VPS deployment | openclaw, ai, assistant, vps, docker, telegram, discord, matrix, automation | templates/openclaw/** |
@@ -65,15 +39,14 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | infrastructure.services.openclaw.skills | OpenClaw skills, MCP servers, plugins, and the community ecosystem | openclaw, skills, mcp, plugins, community, clawhub | docs/akunito/infrastructure/services/openclaw/skills-plugins.md |
 | infrastructure.services.openclaw.tools | OpenClaw tools: browser automation, exec, Lobster workflows, sub-agents | openclaw, tools, browser, playwright, exec, lobster, subagents | docs/akunito/infrastructure/services/openclaw/tools.md |
 | infrastructure.services.pfsense | pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP | infrastructure, pfsense, firewall, gateway, wireguard, dns, dhcp, snmp, pfblockerng, openvpn | docs/akunito/infrastructure/INFRASTRUCTURE.md |
-| infrastructure.services.proxy | Proxy stack - NPM, cloudflared, ACME certificates | infrastructure, proxy, nginx, cloudflare, ssl, certificates | profiles/LXC_proxy-config.nix |
 | infrastructure.services.proxy | Proxy stack: NPM on TrueNAS, cloudflared on VPS and TrueNAS | infrastructure, proxy, npm, cloudflare, truenas, vps | docs/akunito/infrastructure/services/proxy-stack.md |
 | infrastructure.services.tailscale | Headscale on VPS, Tailscale mesh topology | infrastructure, tailscale, headscale, vpn, vps | docs/akunito/infrastructure/services/tailscale-headscale.md |
 | infrastructure.services.truenas | TrueNAS storage server operations, monitoring, and maintenance | infrastructure, storage, truenas, zfs, monitoring, nas | system/app/prometheus-graphite.nix |
 | infrastructure.services.truenas-docker | TrueNAS Docker services: media, NPM, monitoring | infrastructure, truenas, docker, media | docs/akunito/infrastructure/services/truenas-services.md |
-| infrastructure.services.vps | VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring | infrastructure, vps, wireguard, vpn, cloudflare, nginx, monitoring | system/app/prometheus-node-exporter.nix |
 | infrastructure.services.vps | VPS services: Docker containers and NixOS native services | infrastructure, vps, docker, nixos | docs/akunito/infrastructure/services/vps-services.md |
 | keybindings.mouse-button-mapping | Quick guide to mapping mouse side buttons to modifier keys using keyd. | keyd, mouse, keybindings, modifiers | system/wm/keyd.nix |
 | keybindings.sway | SwayFX keybindings reference, including unified rofi launcher and window overview. | sway, swayfx, keybindings, rofi, wayland | user/wm/sway/swayfx-config.nix |
+| komi.gaming-performance | Gaming performance tuning for macOS (Whisky/Wine, Warblade) | gaming, darwin, performance, whisky, wine | user/app/games/** |
 | komi.infrastructure.cloudflare-guide | Domain purchase, Cloudflare setup, tunnel creation, and DNS configuration | komi, infrastructure, cloudflare, domain, dns, tunnel | profiles/KOMI_LXC_proxy-config.nix |
 | komi.infrastructure.database-setup | PostgreSQL and Redis setup guide for Komi's database container | komi, infrastructure, database, postgresql, redis | profiles/KOMI_LXC_database-config.nix |
 | komi.infrastructure.deployment-plan | Full deployment plan for Komi's LXC infrastructure | komi, infrastructure, lxc, proxmox, deployment, plan | profiles/KOMI_LXC* |
@@ -83,7 +56,6 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | komi.infrastructure.mailer-setup | SMTP2GO relay and Uptime Kuma setup for Komi | komi, infrastructure, mailer, smtp, kuma, monitoring | profiles/KOMI_LXC_mailer-config.nix |
 | komi.infrastructure.monitoring-setup | Grafana and Prometheus setup for Komi's monitoring container | komi, infrastructure, monitoring, grafana, prometheus | profiles/KOMI_LXC_monitoring-config.nix |
 | komi.infrastructure.proxy-setup | Cloudflare tunnel, NPM, and ACME certificate setup for Komi | komi, infrastructure, proxy, cloudflare, npm, acme | profiles/KOMI_LXC_proxy-config.nix |
-| lxc-deployment | Centralized deployment script for managing multiple LXC containers | lxc, deployment, automation, proxmox, containers | deploy.sh |
 | network-bonding | Network bonding (LACP link aggregation) for increased bandwidth and failover | networking, bonding, lacp, performance, failover | system/hardware/network-bonding.nix |
 | scripts | Complete reference for all shell scripts — installation, sync, update, maintenance, security, and utilities | scripts, automation, installation, maintenance, deployment | *.sh |
 | scripts.installation | Installation and deployment scripts — install.sh, deploy.sh, set_environment.sh, flatpak-reconcile.sh | scripts, installation, deployment, flatpak | install.sh |
@@ -94,14 +66,12 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | security.git-crypt | Git-crypt encryption for sensitive configuration data (domains, IPs, credentials) | git-crypt, secrets, encryption, security, domains, credentials | secrets/*.nix |
 | security.hardening | Security hardening guidelines for NixOS homelab infrastructure | security, hardening, firewall, services, credentials | system/app/*.nix |
 | security.incident-response | Security incident response procedures for NixOS homelab infrastructure | security, incident-response, credentials, rotation, recovery | secrets/*.nix |
-| setup.grafana-dashboards | Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures. | grafana, prometheus, dashboards, monitoring, alerting, metrics, truenas, wireguard, pfsense, exportarr | system/app/grafana.nix |
 | setup.plane-integration | Plane project management MCP integration for Claude Code workflows | plane, mcp, project-management, claude-code, setup, tooling | .claude/agents/plane-context.md |
 | shell-multiline-input | Multi-line shell input with Shift+Enter configuration | shell, zsh, terminal, keyboard, keybindings | lib/defaults.nix |
 | system-modules | Complete reference for system-level NixOS modules — app, hardware, security, WM, and utility modules | system-modules, nixos, configuration, modules | system/**/*.nix |
 | system-modules.app | System application modules — Docker, Virtualization (QEMU/KVM/SPICE), Flatpak, Steam, Gamemode, Samba, AppImage | system-modules, docker, virtualization, flatpak, steam, gamemode, samba, appimage | system/app/*.nix |
 | system-modules.hardware | System hardware modules — drives, power, kernel, Bluetooth, printing, OpenGL, Xbox, NFS, SystemD, time | system-modules, hardware, drives, power, kernel, bluetooth, printing, opengl, nfs | system/hardware/*.nix |
 | system-modules.security-wm-utils | Security, window manager, and utility modules — SSH, firewall, sudo, Polkit, Restic, WMs, keyd, aku wrapper | system-modules, security, ssh, firewall, sudo, polkit, restic, wm, keyd, aku | system/security/*.nix |
-| tailscale-headscale | Tailscale mesh VPN with self-hosted Headscale coordination server | tailscale, headscale, vpn, mesh, networking, wireguard | profiles/LXC_tailscale-config.nix |
 | user-modules | Complete reference for user-level Home Manager modules — applications, shells, window managers, theming, and packages | user-modules, home-manager, configuration, modules | user/**/*.nix |
 | user-modules.db-credentials | Home Manager module for database credential files (pgpass, my.cnf, redis) | database, credentials, postgresql, mariadb, redis, dbeaver, home-manager | user/app/database/db-credentials.nix |
 | user-modules.doom-emacs | Doom Emacs user module and config layout, including Stylix theme templates and profile integration. | emacs, doom-emacs, editor, stylix, user-modules | user/app/doom-emacs/** |
@@ -125,19 +95,39 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | user-modules.windows11-qxl-setup | Complete guide for setting up QXL display drivers in Windows 11 VMs with SPICE for bidirectional clipboard and dynamic resolution support. Includes troubleshooting for resolution issues and driver installation. | virtualization, windows11, qxl, spice, vm, qemu, kvm, virt-manager, display, resolution, clipboard | system/app/virtualization.nix |
 | user-modules.xmonad | XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo. | xmonad, x11, window-manager, haskell, user-modules | user/wm/xmonad/** |
 | waypaper | Waypaper GUI wallpaper manager — single source of truth for wallpaper restore in Sway (swww backend) | waypaper, wallpaper, sway, swww, gui, stylix, systemd-user | user/app/waypaper/waypaper.nix |
-| komi.infrastructure.index | Index of all Komi infrastructure documentation | komi, infrastructure, index | docs/komi/infrastructure/README.md |
-| komi.infrastructure.lxc-overview | Master overview of Komi's LXC infrastructure | komi, infrastructure, lxc, proxmox, overview | docs/komi/infrastructure/komi-lxc-overview.md |
-| komi.infrastructure.database-setup | PostgreSQL and Redis setup for Komi's database container | komi, infrastructure, database, postgresql, redis | profiles/KOMI_LXC_database-config.nix |
-| komi.infrastructure.proxy-setup | Cloudflare tunnel, NPM, and ACME setup for Komi | komi, infrastructure, proxy, cloudflare, npm, acme | profiles/KOMI_LXC_proxy-config.nix |
-| komi.infrastructure.mailer-setup | SMTP2GO relay and Uptime Kuma setup for Komi | komi, infrastructure, mailer, smtp, kuma | profiles/KOMI_LXC_mailer-config.nix |
-| komi.infrastructure.monitoring-setup | Grafana and Prometheus setup for Komi's monitoring | komi, infrastructure, monitoring, grafana, prometheus | profiles/KOMI_LXC_monitoring-config.nix |
-| komi.infrastructure.headscale-setup | VPS headscale deployment and client registration for Komi | komi, infrastructure, headscale, tailscale, vpn | profiles/KOMI_LXC_tailscale-config.nix |
-| komi.infrastructure.cloudflare-guide | Domain purchase, Cloudflare setup, and DNS configuration for Komi | komi, infrastructure, cloudflare, domain, dns, tunnel | profiles/KOMI_LXC_proxy-config.nix |
-| komi.infrastructure.deployment-plan | Full deployment plan for Komi's LXC infrastructure | komi, infrastructure, deployment, plan | docs/komi/infrastructure/komi-lxc-deployment-plan.md |
-| komi.gaming-performance | Gaming performance tuning for macOS (Whisky/Wine, Warblade) | komi, gaming, darwin, performance, whisky, wine | docs/komi/gaming-performance.md |
 | workflow.komi-onboarding | Quick guide for ko-mi on the multi-user branch setup and what changed | komi, onboarding, multi-user, darwin | docs/komi/komi-onboarding.md |
 | workflow.multi-user | Multi-user branch management workflow for akunito (main) and ko-mi (komi) | git, workflow, multi-user, branches, merge | profiles/MACBOOK-KOMI-config.nix |
 
+## Archived
+
+| ID | Summary | Tags | Primary Path |
+|---|---|---|---|
+| audits.migration-plan.2026-02-19 | Comprehensive audit of Proxmox-to-VPS+TrueNAS migration plan | audit, migration, vps, truenas, security, backups, performance, networking | profiles/VPS*-config.nix |
+| audits.migration-plan.network-security.2026-02-19 | Network architecture, VPS hardening, and Nextcloud security audit of the Proxmox-to-VPS migration plan | audit, security, network, vps, nextcloud, tailscale, wireguard, cloudflare, firewall, dns | docs/akunito/infrastructure/archived/audits/migration-plan-network-security-audit-2026-02-19.md |
+| audits.truenas.2026-02-12 | Performance, reliability, and configuration audit of TrueNAS storage server | audit, performance, truenas, zfs, storage, network, iscsi | docs/akunito/infrastructure/archived/audits/truenas-audit-2026-02-12.md |
+| desk-vs-laptop-packages | Complete package and feature comparison between DESK and LAPTOP_L15 profiles | packages, profiles, comparison, DESK, LAPTOP | docs/future/archived/desk-vs-laptop-packages.md |
+| docs.navigation | User guide for navigating this repository's documentation using the Router and Catalog system. | docs, navigation, router, catalog, user-guide | docs/00_ROUTER.md |
+| docs.proxmox-lxc | Guide to managing Proxmox LXC containers using a Base + Override pattern. Explains how to create and install new container profiles while keeping configuration DRY. | proxmox, lxc, virtualization, profiles, modularity, dry | profiles/LXC-base-config.nix |
+| future.incident-waybar-slow-relog-xdg-portal-gtk-2026-01-08 | Waybar delayed 2–4 minutes after fast relog in Sway due to xdg-desktop-portal-gtk failures + systemd start-limit lockout; fixed via portal-gtk drop-in (UnsetEnvironment=DISPLAY + no start-limit + restart). | incident, sway, swayfx, waybar, xdg-desktop-portal, xdg-desktop-portal-gtk, systemd-user, dbus, relog | user/wm/sway/session-env.nix |
+| future.router-drift-audit-2026-01-08 | Audit findings for Router/Catalog doc drift vs current repo state (install.sh + Sway daemon system). | router, catalog, audit, docs, drift | docs/00_ROUTER.md |
+| future.waybar-sov-debug-analysis-2026-01-07 | Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical). | waybar, sov, sway, swayfx, debug, incident, deprecated, daemon-manager | user/wm/sway/** |
+| infrastructure.database-redis | Centralized PostgreSQL and Redis services on LXC_database | infrastructure, database, redis, postgresql, lxc, caching | profiles/LXC_database-config.nix |
+| infrastructure.docker-projects | Docker-based project conventions - wrapper scripts, config locations, restart patterns | infrastructure, docker, projects, portfolio, liftcraft, plane | profiles/LXC_portfolioprod-config.nix |
+| infrastructure.migration | VPS migration plan and execution docs | infrastructure, migration, vps, truenas | docs/akunito/infrastructure/archived/migration/README.md |
+| infrastructure.migration.phase-0 | Migration preparation, LXC_HOME to TrueNAS, DB fallback | infrastructure, migration, truenas, docker | docs/akunito/infrastructure/archived/migration/phase-0-preparation.md |
+| infrastructure.migration.phase-1 | VPS base setup: NixOS, LUKS, Tailscale, WireGuard | infrastructure, migration, vps, nixos, security | docs/akunito/infrastructure/archived/migration/phase-1-vps-base.md |
+| infrastructure.migration.phase-2 | VPS foundation: databases, proxy, mailer, monitoring | infrastructure, migration, vps, database, monitoring | docs/akunito/infrastructure/archived/migration/phase-2-foundation.md |
+| infrastructure.migration.phase-3 | Application migration: Plane, Portfolio, Matrix, Nextcloud | infrastructure, migration, vps, docker, applications | docs/akunito/infrastructure/archived/migration/phase-3-applications.md |
+| infrastructure.migration.phase-4 | DNS cutover, TrueNAS NPM/cloudflared, LXC decommission | infrastructure, migration, dns, truenas, decommission | docs/akunito/infrastructure/archived/migration/phase-4-cutover.md |
+| infrastructure.migration.phase-5-8 | TrueNAS sleep, backups, hardening, decommission | infrastructure, migration, truenas, backup, security | docs/akunito/infrastructure/archived/migration/phase-5-8-completion.md |
+| infrastructure.migration.portfolio | Portfolio-ready migration summary for interviews | infrastructure, migration, portfolio | docs/akunito/infrastructure/archived/migration/PORTFOLIO_SUMMARY.md |
+| infrastructure.migration.post-tasks | Post-migration documentation and operational updates | infrastructure, migration, documentation | docs/akunito/infrastructure/archived/migration/post-migration-tasks.md |
+| infrastructure.overview | Public infrastructure overview with architecture diagram and component descriptions | infrastructure, architecture, proxmox, lxc, monitoring, homelab, pfsense, gateway | profiles/LXC*-config.nix |
+| infrastructure.services.liftcraft | LiftCraft (LeftyWorkout) - Training plan management Rails application | infrastructure, liftcraft, leftyworkout, rails, docker, redis | profiles/LXC_liftcraftTEST-config.nix |
+| lxc-deployment | Centralized deployment script for managing multiple LXC containers | lxc, deployment, automation, proxmox, containers | deploy.sh |
+| setup.grafana-dashboards | Comprehensive reference for all Grafana dashboards including metrics sources, panel specifications, alert rules, and verification procedures. | grafana, prometheus, dashboards, monitoring, alerting, metrics, truenas, wireguard, pfsense, exportarr | system/app/grafana.nix |
+| tailscale-headscale | Tailscale mesh VPN with self-hosted Headscale coordination server | tailscale, headscale, vpn, mesh, networking, wireguard | profiles/LXC_tailscale-config.nix |
+
 ## Notes
 
-- If a document is missing `related_files`, the generator falls back to using the document’s own path as the default scope.
+- If a document is missing `related_files`, the generator falls back to using the document\'s own path as the default scope.
