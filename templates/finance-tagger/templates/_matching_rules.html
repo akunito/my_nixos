@@ -20,54 +20,8 @@
 </thead>
 <tbody>
 {% for rule in matching %}
-<tr>
-  <td>{{ rule['id'] }}</td>
-  <td><input type="number" name="priority" value="{{ rule['priority'] }}" style="width:60px" form="mr-edit-{{ rule['id'] }}"></td>
-  <td>
-    <select name="match_field" form="mr-edit-{{ rule['id'] }}">
-      {% for f in ['description', 'raw_description', 'raw_category'] %}
-      <option value="{{ f }}" {{ 'selected' if rule['match_field'] == f }}>{{ f }}</option>
-      {% endfor %}
-    </select>
-  </td>
-  <td>
-    <select name="match_type" form="mr-edit-{{ rule['id'] }}">
-      <option value="like" {{ 'selected' if rule['match_type'] == 'like' }}>LIKE</option>
-      <option value="exact" {{ 'selected' if rule['match_type'] == 'exact' }}>Exact</option>
-    </select>
-  </td>
-  <td><input type="text" name="match_pattern" value="{{ rule['match_pattern'] }}" style="width:160px" form="mr-edit-{{ rule['id'] }}"></td>
-  <td>
-    <select name="set_tx_type" form="mr-edit-{{ rule['id'] }}">
-      <option value="">—</option>
-      {% for t in tx_types %}
-      <option value="{{ t }}" {{ 'selected' if rule['set_tx_type'] == t }}>{{ t }}</option>
-      {% endfor %}
-    </select>
-  </td>
-  <td>
-    <select name="set_category_group" form="mr-edit-{{ rule['id'] }}">
-      <option value="">—</option>
-      {% for g in category_groups %}
-      <option value="{{ g }}" {{ 'selected' if rule['set_category_group'] == g }}>{{ g }}</option>
-      {% endfor %}
-    </select>
-  </td>
-  <td>
-    <select name="set_category" form="mr-edit-{{ rule['id'] }}">
-      <option value="">—</option>
-      {% for c in categories %}
-      <option value="{{ c }}" {{ 'selected' if rule['set_category'] == c }}>{{ c }}</option>
-      {% endfor %}
-    </select>
-  </td>
-  <td><input type="text" name="note" value="{{ rule['note'] or '' }}" style="width:120px" form="mr-edit-{{ rule['id'] }}"></td>
-  <td style="white-space:nowrap">
-    <form id="mr-edit-{{ rule['id'] }}" hx-put="/rules/{{ rule['id'] }}" hx-target="#rules-table" hx-swap="innerHTML" style="display:inline">
-      <button type="submit" class="btn btn-sm btn-primary">Save</button>
-    </form>
-  </td>
-</tr>
+{% set form_prefix = "mr-edit" %}
+{% include '_rule_row.html' %}
 {% endfor %}
 </tbody>
 </table>

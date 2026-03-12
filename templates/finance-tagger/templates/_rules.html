@@ -15,63 +15,8 @@
 </thead>
 <tbody>
 {% for rule in rules %}
-<tr style="{{ 'opacity:0.5' if not rule['enabled'] }}">
-  <td>{{ rule['id'] }}</td>
-  <td><input type="number" name="priority" value="{{ rule['priority'] }}" style="width:60px" form="edit-rule-{{ rule['id'] }}"></td>
-  <td>
-    <select name="match_field" form="edit-rule-{{ rule['id'] }}">
-      {% for f in ['description', 'raw_description', 'raw_category'] %}
-      <option value="{{ f }}" {{ 'selected' if rule['match_field'] == f }}>{{ f }}</option>
-      {% endfor %}
-    </select>
-  </td>
-  <td>
-    <select name="match_type" form="edit-rule-{{ rule['id'] }}">
-      <option value="like" {{ 'selected' if rule['match_type'] == 'like' }}>LIKE</option>
-      <option value="exact" {{ 'selected' if rule['match_type'] == 'exact' }}>Exact</option>
-    </select>
-  </td>
-  <td><input type="text" name="match_pattern" value="{{ rule['match_pattern'] }}" style="width:160px" form="edit-rule-{{ rule['id'] }}"></td>
-  <td>
-    <select name="set_tx_type" form="edit-rule-{{ rule['id'] }}">
-      <option value="">—</option>
-      {% for t in tx_types %}
-      <option value="{{ t }}" {{ 'selected' if rule['set_tx_type'] == t }}>{{ t }}</option>
-      {% endfor %}
-    </select>
-  </td>
-  <td>
-    <select name="set_category_group" form="edit-rule-{{ rule['id'] }}">
-      <option value="">—</option>
-      {% for g in category_groups %}
-      <option value="{{ g }}" {{ 'selected' if rule['set_category_group'] == g }}>{{ g }}</option>
-      {% endfor %}
-    </select>
-  </td>
-  <td>
-    <select name="set_category" form="edit-rule-{{ rule['id'] }}">
-      <option value="">—</option>
-      {% for c in categories %}
-      <option value="{{ c }}" {{ 'selected' if rule['set_category'] == c }}>{{ c }}</option>
-      {% endfor %}
-    </select>
-  </td>
-  <td><input type="text" name="note" value="{{ rule['note'] or '' }}" style="width:120px" form="edit-rule-{{ rule['id'] }}"></td>
-  <td style="white-space:nowrap">
-    <form id="edit-rule-{{ rule['id'] }}" hx-put="/rules/{{ rule['id'] }}" hx-target="#rules-table" hx-swap="innerHTML" style="display:inline">
-      <button type="submit" class="btn btn-sm btn-primary">Save</button>
-    </form>
-    <button class="btn btn-sm btn-primary"
-            hx-put="/rules/{{ rule['id'] }}/toggle"
-            hx-target="#rules-table"
-            hx-swap="innerHTML">{{ 'Disable' if rule['enabled'] else 'Enable' }}</button>
-    <button class="btn btn-sm btn-danger"
-            hx-delete="/rules/{{ rule['id'] }}"
-            hx-target="#rules-table"
-            hx-swap="innerHTML"
-            hx-confirm="Delete rule {{ rule['id'] }}?">Del</button>
-  </td>
-</tr>
+{% set form_prefix = "edit-rule" %}
+{% include '_rule_row.html' %}
 {% endfor %}
 {% if not rules %}
 <tr><td colspan="10" style="color:var(--fg2);text-align:center">No rules yet</td></tr>
