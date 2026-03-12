@@ -3,31 +3,45 @@
   <td title="{{ row['description'] }}">{{ row['description'][:50] }}</td>
   <td class="{{ 'amount-pos' if row['amount'] >= 0 else 'amount-neg' }}">{{ "%.2f"|format(row['amount']) }}</td>
   <td>{{ row['currency'] }}</td>
-  <td>
+  <td{% if row['override_tx_type'] and not row['overrides_disabled'] %} class="cell-override"{% endif %}>
     <select hx-put="/transactions/{{ row['id'] }}" hx-target="#tx-{{ row['id'] }}" hx-swap="outerHTML" hx-trigger="change" name="tx_type">
       {% for t in tx_types %}
-      <option value="{{ t }}" {{ 'selected' if row['tx_type'] == t }}>{{ t }}</option>
+      <option value="{{ t }}" {{ 'selected' if row['eff_tx_type'] == t }}>{{ t }}</option>
       {% endfor %}
     </select>
   </td>
-  <td>
+  <td{% if row['override_category_group'] and not row['overrides_disabled'] %} class="cell-override"{% endif %}>
     <select hx-put="/transactions/{{ row['id'] }}" hx-target="#tx-{{ row['id'] }}" hx-swap="outerHTML" hx-trigger="change" name="category_group">
       {% for g in category_groups %}
-      <option value="{{ g }}" {{ 'selected' if row['category_group'] == g }}>{{ g }}</option>
+      <option value="{{ g }}" {{ 'selected' if row['eff_category_group'] == g }}>{{ g }}</option>
       {% endfor %}
     </select>
   </td>
-  <td>
+  <td{% if row['override_category'] and not row['overrides_disabled'] %} class="cell-override"{% endif %}>
     <select hx-put="/transactions/{{ row['id'] }}" hx-target="#tx-{{ row['id'] }}" hx-swap="outerHTML" hx-trigger="change" name="category">
       {% for c in categories %}
-      <option value="{{ c }}" {{ 'selected' if row['category'] == c }}>{{ c }}</option>
+      <option value="{{ c }}" {{ 'selected' if row['eff_category'] == c }}>{{ c }}</option>
       {% endfor %}
     </select>
   </td>
-  <td>
+  <td style="white-space:nowrap">
     <button class="btn btn-sm btn-primary"
             hx-get="/transactions/{{ row['id'] }}/matching-rules"
             hx-target="#matching-rules-panel"
             hx-swap="innerHTML">Rules</button>
+    {% set has_override = row['override_tx_type'] or row['override_category_group'] or row['override_category'] %}
+    {% if has_override %}
+    <button class="btn btn-sm btn-warn"
+            hx-post="/transactions/{{ row['id'] }}/override/toggle"
+            hx-target="#tx-{{ row['id'] }}"
+            hx-swap="outerHTML"
+            title="{{ 'Enable override' if row['overrides_disabled'] else 'Disable override' }}">{{ 'En' if row['overrides_disabled'] else 'Dis' }}</button>
+    <button class="btn btn-sm btn-danger"
+            hx-delete="/transactions/{{ row['id'] }}/override"
+            hx-target="#tx-{{ row['id'] }}"
+            hx-swap="outerHTML"
+            hx-confirm="Remove override?"
+            title="Delete override">X</button>
+    {% endif %}
   </td>
 </tr>

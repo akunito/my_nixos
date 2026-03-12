@@ -37,6 +37,16 @@ ALL_CATEGORY_GROUPS = sorted(CATEGORY_MAP.keys())
 
 ROWS_PER_PAGE = 50
 
+# SQL fragment for effective (override-aware) values
+EFF_COLUMNS = """,
+    override_tx_type, override_category_group, override_category, overrides_disabled,
+    CASE WHEN overrides_disabled = 0 AND override_tx_type IS NOT NULL
+         THEN override_tx_type ELSE tx_type END AS eff_tx_type,
+    CASE WHEN overrides_disabled = 0 AND override_category_group IS NOT NULL
+         THEN override_category_group ELSE category_group END AS eff_category_group,
+    CASE WHEN overrides_disabled = 0 AND override_category IS NOT NULL
+         THEN override_category ELSE category END AS eff_category"""
+
 
 def get_db():
     """Get a database connection for the current request."""
@@ -53,6 +63,18 @@ def close_db(exception):
     db = g.pop("db", None)
     if db is not None:
         db.close()
+
+
+def ensure_override_columns():
+    """Add override columns to transactions table if missing."""
+    db = get_db()
+    existing = {row[1] for row in db.execute("PRAGMA table_info(transactions)").fetchall()}
+    for col in ("override_tx_type", "override_category_group", "override_category"):
+        if col not in existing:
+            db.execute(f"ALTER TABLE transactions ADD COLUMN {col} TEXT DEFAULT NULL")
+    if "overrides_disabled" not in existing:
+        db.execute("ALTER TABLE transactions ADD COLUMN overrides_disabled INTEGER DEFAULT 0")
+    db.commit()
 
 
 def ensure_category_rules_table():
@@ -137,8 +159,14 @@ def index():
 @login_required
 def transactions():
     db = get_db()
+    ensure_override_columns()
     page = max(1, request.args.get("page", 1, type=int))
     offset = (page - 1) * ROWS_PER_PAGE
+
+    # Effective-value expressions for filters
+    eff_tx_type = "(CASE WHEN overrides_disabled=0 AND override_tx_type IS NOT NULL THEN override_tx_type ELSE tx_type END)"
+    eff_cat_group = "(CASE WHEN overrides_disabled=0 AND override_category_group IS NOT NULL THEN override_category_group ELSE category_group END)"
+    eff_cat = "(CASE WHEN overrides_disabled=0 AND override_category IS NOT NULL THEN override_category ELSE category END)"
 
     # Build filters
     conditions = []
@@ -158,16 +186,16 @@ def transactions():
         conditions.append("date <= ?")
         params.append(date_to)
     if tx_type:
-        conditions.append("tx_type = ?")
+        conditions.append(f"{eff_tx_type} = ?")
         params.append(tx_type)
     if category_group:
-        conditions.append("category_group = ?")
+        conditions.append(f"{eff_cat_group} = ?")
         params.append(category_group)
     if search:
         conditions.append("(description LIKE ? OR raw_description LIKE ?)")
         params.extend([f"%{search}%", f"%{search}%"])
     if unclassified == "1":
-        conditions.append("(category IN ('Revolut Misc', 'Other') OR category IS NULL OR tx_type = 'unknown')")
+        conditions.append(f"({eff_cat} IN ('Revolut Misc', 'Other') OR {eff_cat} IS NULL OR {eff_tx_type} = 'unknown')")
 
     where = " AND ".join(conditions) if conditions else "1=1"
 
@@ -179,6 +207,7 @@ def transactions():
     # Fetch rows
     rows = db.execute(
         f"SELECT id, date, description, amount, currency, tx_type, category_group, category "
+        f"{EFF_COLUMNS} "
         f"FROM transactions WHERE {where} ORDER BY date DESC, id DESC LIMIT ? OFFSET ?",
         params + [ROWS_PER_PAGE, offset]
     ).fetchall()
@@ -217,6 +246,7 @@ def transactions():
 @login_required
 def update_transaction(tx_id):
     db = get_db()
+    ensure_override_columns()
     data = request.form
 
     updates = []
@@ -231,22 +261,18 @@ def update_transaction(tx_id):
                 return jsonify({"error": f"Invalid category_group: {val}"}), 400
             if field == "category" and val not in ALL_CATEGORIES:
                 return jsonify({"error": f"Invalid category: {val}"}), 400
-            updates.append(f"{field} = ?")
+            updates.append(f"override_{field} = ?")
             params.append(val)
 
     if not updates:
         return jsonify({"error": "No fields to update"}), 400
 
+    updates.append("overrides_disabled = 0")
     params.append(tx_id)
     db.execute(f"UPDATE transactions SET {', '.join(updates)} WHERE id = ?", params)
     db.commit()
 
-    # Return the updated row for htmx swap
-    row = db.execute(
-        "SELECT id, date, description, amount, currency, tx_type, category_group, category "
-        "FROM transactions WHERE id = ?", (tx_id,)
-    ).fetchone()
-
+    row = _fetch_tx_row(db, tx_id)
     if not row:
         return jsonify({"error": "Transaction not found"}), 404
 
@@ -257,6 +283,60 @@ def update_transaction(tx_id):
                            categories=ALL_CATEGORIES,
                            category_map=CATEGORY_MAP,
                            flash="success")
+
+
+def _fetch_tx_row(db, tx_id):
+    """Fetch a single transaction row with override + effective columns."""
+    return db.execute(
+        f"SELECT id, date, description, amount, currency, tx_type, category_group, category "
+        f"{EFF_COLUMNS} FROM transactions WHERE id = ?", (tx_id,)
+    ).fetchone()
+
+
+def _render_tx_row(row, flash=None):
+    """Render a single transaction row partial."""
+    return render_template("_transaction_row.html",
+                           row=row,
+                           tx_types=VALID_TX_TYPES,
+                           category_groups=ALL_CATEGORY_GROUPS,
+                           categories=ALL_CATEGORIES,
+                           category_map=CATEGORY_MAP,
+                           flash=flash)
+
+
+# --- Override endpoints ---
+
+@app.route("/transactions/<int:tx_id>/override/toggle", methods=["POST"])
+@login_required
+def toggle_override(tx_id):
+    db = get_db()
+    ensure_override_columns()
+    db.execute(
+        "UPDATE transactions SET overrides_disabled = 1 - overrides_disabled WHERE id = ?",
+        (tx_id,)
+    )
+    db.commit()
+    row = _fetch_tx_row(db, tx_id)
+    if not row:
+        return jsonify({"error": "Transaction not found"}), 404
+    return _render_tx_row(row, flash="success")
+
+
+@app.route("/transactions/<int:tx_id>/override", methods=["DELETE"])
+@login_required
+def delete_override(tx_id):
+    db = get_db()
+    ensure_override_columns()
+    db.execute(
+        "UPDATE transactions SET override_tx_type = NULL, override_category_group = NULL, "
+        "override_category = NULL, overrides_disabled = 0 WHERE id = ?",
+        (tx_id,)
+    )
+    db.commit()
+    row = _fetch_tx_row(db, tx_id)
+    if not row:
+        return jsonify({"error": "Transaction not found"}), 404
+    return _render_tx_row(row, flash="success")
 
 
 # --- Rules CRUD ---
@@ -423,6 +503,7 @@ def matching_rules(tx_id):
 def apply_rules():
     db = get_db()
     ensure_category_rules_table()
+    ensure_override_columns()
 
     rules = db.execute("""
         SELECT id, match_field, match_pattern, match_type,
@@ -443,27 +524,21 @@ def apply_rules():
         sg = rule["set_category_group"]
         note = rule["note"]
 
-        sets = []
-        vals = []
-        if st:
-            sets.append("tx_type=?")
-            vals.append(st)
-        if sc:
-            sets.append("category=?")
-            vals.append(sc)
-        if sg:
-            sets.append("category_group=?")
-            vals.append(sg)
-        if not sets:
-            continue
-
         op = "LIKE" if mtype == "like" else "="
-        sql = f"UPDATE transactions SET {','.join(sets)} WHERE {field} {op} ?"
-        vals.append(pattern)
-        cnt = db.execute(sql, vals).rowcount
-        if cnt > 0:
-            total_affected += cnt
-            details.append(f"Rule {rid}: {cnt} rows ({note or pattern})")
+        rule_cnt = 0
+
+        for col, val in [("tx_type", st), ("category", sc), ("category_group", sg)]:
+            if not val:
+                continue
+            sql = (f"UPDATE transactions SET {col} = ? "
+                   f"WHERE {field} {op} ? "
+                   f"AND (override_{col} IS NULL OR overrides_disabled = 1)")
+            cnt = db.execute(sql, (val, pattern)).rowcount
+            rule_cnt += cnt
+
+        if rule_cnt > 0:
+            total_affected += rule_cnt
+            details.append(f"Rule {rid}: {rule_cnt} field-updates ({note or pattern})")
 
     db.commit()
 
