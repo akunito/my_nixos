@@ -1,0 +1,98 @@
+<div style="margin-bottom:1rem">
+  <h3 style="color:var(--accent);font-size:1rem;">Revolut Enrichment Data</h3>
+</div>
+
+<!-- Stats -->
+<div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+  <div style="padding:0.5rem 1rem;background:var(--bg2);border-radius:6px;">
+    <strong>{{ total }}</strong> total records
+  </div>
+  <div style="padding:0.5rem 1rem;background:var(--bg2);border-radius:6px;color:var(--success)">
+    <strong>{{ matched }}</strong> matched ({{ "%.0f"|format(matched / total * 100) if total else 0 }}%)
+  </div>
+  <div style="padding:0.5rem 1rem;background:var(--bg2);border-radius:6px;color:var(--warn)">
+    <strong>{{ total - matched }}</strong> unmatched
+  </div>
+</div>
+
+<!-- Upload form -->
+<div style="margin-bottom:1rem;padding:0.8rem;background:var(--bg2);border-radius:6px;">
+  <form hx-post="/enrichment/upload" hx-target="#enrichment-results" hx-swap="innerHTML" hx-encoding="multipart/form-data">
+    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+      <input type="file" name="file" accept=".json" required style="color:var(--fg)">
+      <button type="submit" class="btn btn-primary">Upload &amp; Import</button>
+    </div>
+  </form>
+  <div id="enrichment-results" style="margin-top:0.5rem"></div>
+</div>
+
+<!-- Rematch button -->
+{% if total > 0 %}
+<div style="margin-bottom:1rem">
+  <button class="btn btn-warn"
+          hx-post="/enrichment/rematch"
+          hx-target="#enrichment-results"
+          hx-swap="innerHTML">Re-match Unlinked Records</button>
+</div>
+{% endif %}
+
+<!-- How-to guide -->
+<details style="margin-bottom:1rem;border:1px solid var(--border);border-radius:4px;padding:0.5rem;">
+  <summary style="cursor:pointer;font-weight:bold;color:var(--accent);">How to export from Revolut</summary>
+  <ol style="padding-left:1.5rem;margin-top:0.5rem;color:var(--fg2);font-size:0.9rem;">
+    <li>Open <a href="https://app.revolut.com" target="_blank" style="color:var(--accent)">app.revolut.com</a> and log in</li>
+    <li>Open DevTools Console (F12 &rarr; Console tab)</li>
+    <li>Copy-paste the export script (<code>revolut-export.js</code> from the repo)</li>
+    <li>Wait for completion (progress shown in console)</li>
+    <li>Upload the downloaded JSON file using the form above</li>
+  </ol>
+  <p style="margin-top:0.5rem;color:var(--fg2);font-size:0.85rem;">
+    The script auto-discovers all your pockets/currencies, paginates through all transactions,
+    and downloads a single JSON file. Rate-limited to avoid blocks (500ms between requests).
+  </p>
+</details>
+
+<!-- Unmatched records table -->
+{% if unmatched %}
+<h4 style="color:var(--fg2);margin-bottom:0.5rem">Unmatched Records ({{ unmatched|length }})</h4>
+<table>
+<thead>
+<tr>
+  <th>Date</th>
+  <th>Amount</th>
+  <th>Description</th>
+  <th>Type</th>
+  <th>Merchant / Recipient</th>
+  <th>Tag</th>
+  <th>Actions</th>
+</tr>
+</thead>
+<tbody>
+{% for row in unmatched %}
+<tr id="enr-{{ row['id'] }}">
+  <td>{{ row['source_date'] }}</td>
+  <td>{{ "%.2f"|format(row['source_amount']) }} {{ row['source_currency'] }}</td>
+  <td title="{{ row['source_description'] }}">{{ (row['localised_description'] or row['source_description'] or '')[:40] }}</td>
+  <td>{{ row['revolut_type'] }}</td>
+  <td>{{ row['merchant_name'] or row['recipient_name'] or '' }}</td>
+  <td>{{ row['revolut_tag'] or '' }}</td>
+  <td style="white-space:nowrap">
+    <form style="display:inline"
+          hx-post="/enrichment/{{ row['id'] }}/link"
+          hx-target="#tab-enrichment"
+          hx-swap="innerHTML">
+      <input type="number" name="tx_id" placeholder="TX ID"
+             style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:0.2rem;border-radius:3px;font-size:0.8rem;">
+      <button type="submit" class="btn btn-sm btn-primary">Link</button>
+    </form>
+    <button class="btn btn-sm btn-danger"
+            hx-delete="/enrichment/{{ row['id'] }}"
+            hx-target="#tab-enrichment"
+            hx-swap="innerHTML"
+            hx-confirm="Delete this enrichment record?">Del</button>
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}

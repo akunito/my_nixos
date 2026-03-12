@@ -12,11 +12,9 @@
   <th>Rules</th>
 </tr>
 </thead>
-<tbody>
 {% for row in rows %}
 {% include '_transaction_row.html' %}
 {% endfor %}
-</tbody>
 </table>
 
 {% if total_pages > 1 %}

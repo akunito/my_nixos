@@ -1,8 +1,10 @@
 """Finance Transaction Tagger — Flask + htmx web UI for Vaultkeeper DB."""
 
 import os
+import json
 import sqlite3
 import functools
+from datetime import datetime, timezone
 from flask import Flask, request, render_template, jsonify, g, session, redirect, url_for
 
 app = Flask(__name__)
@@ -37,15 +39,21 @@ ALL_CATEGORY_GROUPS = sorted(CATEGORY_MAP.keys())
 
 ROWS_PER_PAGE = 50
 
-# SQL fragment for effective (override-aware) values
+# SQL fragment for effective (override-aware) values (t. prefix for JOIN queries)
 EFF_COLUMNS = """,
-    override_tx_type, override_category_group, override_category, overrides_disabled,
-    CASE WHEN overrides_disabled = 0 AND override_tx_type IS NOT NULL
-         THEN override_tx_type ELSE tx_type END AS eff_tx_type,
-    CASE WHEN overrides_disabled = 0 AND override_category_group IS NOT NULL
-         THEN override_category_group ELSE category_group END AS eff_category_group,
-    CASE WHEN overrides_disabled = 0 AND override_category IS NOT NULL
-         THEN override_category ELSE category END AS eff_category"""
+    t.override_tx_type, t.override_category_group, t.override_category, t.overrides_disabled,
+    CASE WHEN t.overrides_disabled = 0 AND t.override_tx_type IS NOT NULL
+         THEN t.override_tx_type ELSE t.tx_type END AS eff_tx_type,
+    CASE WHEN t.overrides_disabled = 0 AND t.override_category_group IS NOT NULL
+         THEN t.override_category_group ELSE t.category_group END AS eff_category_group,
+    CASE WHEN t.overrides_disabled = 0 AND t.override_category IS NOT NULL
+         THEN t.override_category ELSE t.category END AS eff_category"""
+
+ENR_COLUMNS = """,
+    e.id AS enr_id, e.recipient_name, e.merchant_name, e.merchant_city,
+    e.merchant_country, e.user_comment, e.revolut_tag, e.localised_description"""
+
+TX_JOIN = "FROM transactions t LEFT JOIN transaction_enrichment e ON e.transaction_id = t.id"
 
 
 def get_db():
@@ -96,6 +104,43 @@ def ensure_category_rules_table():
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """)
+    db.commit()
+
+
+def ensure_enrichment_table():
+    """Create transaction_enrichment table if it doesn't exist."""
+    db = get_db()
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS transaction_enrichment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transaction_id INTEGER REFERENCES transactions(id) ON DELETE SET NULL,
+            revolut_id TEXT,
+            revolut_leg_id TEXT,
+            recipient_name TEXT,
+            merchant_name TEXT,
+            merchant_city TEXT,
+            merchant_country TEXT,
+            merchant_address TEXT,
+            merchant_mcc TEXT,
+            user_comment TEXT,
+            revolut_type TEXT,
+            revolut_tag TEXT,
+            revolut_category TEXT,
+            exchange_rate REAL,
+            balance_after INTEGER,
+            localised_description TEXT,
+            source_date TEXT,
+            source_amount REAL,
+            source_currency TEXT,
+            source_description TEXT,
+            match_confidence TEXT DEFAULT 'none',
+            raw_json TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            UNIQUE(revolut_id, revolut_leg_id)
+        )
+    """)
+    db.execute("CREATE INDEX IF NOT EXISTS idx_enr_tx_id ON transaction_enrichment(transaction_id)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_enr_revolut_id ON transaction_enrichment(revolut_id)")
     db.commit()
 
 
@@ -160,13 +205,14 @@ def index():
 def transactions():
     db = get_db()
     ensure_override_columns()
+    ensure_enrichment_table()
     page = max(1, request.args.get("page", 1, type=int))
     offset = (page - 1) * ROWS_PER_PAGE
 
-    # Effective-value expressions for filters
-    eff_tx_type = "(CASE WHEN overrides_disabled=0 AND override_tx_type IS NOT NULL THEN override_tx_type ELSE tx_type END)"
-    eff_cat_group = "(CASE WHEN overrides_disabled=0 AND override_category_group IS NOT NULL THEN override_category_group ELSE category_group END)"
-    eff_cat = "(CASE WHEN overrides_disabled=0 AND override_category IS NOT NULL THEN override_category ELSE category END)"
+    # Effective-value expressions for filters (t. prefix for aliased queries)
+    eff_tx_type = "(CASE WHEN t.overrides_disabled=0 AND t.override_tx_type IS NOT NULL THEN t.override_tx_type ELSE t.tx_type END)"
+    eff_cat_group = "(CASE WHEN t.overrides_disabled=0 AND t.override_category_group IS NOT NULL THEN t.override_category_group ELSE t.category_group END)"
+    eff_cat = "(CASE WHEN t.overrides_disabled=0 AND t.override_category IS NOT NULL THEN t.override_category ELSE t.category END)"
 
     # Build filters
     conditions = []
@@ -180,10 +226,10 @@ def transactions():
     unclassified = request.args.get("unclassified", "").strip()
 
     if date_from:
-        conditions.append("date >= ?")
+        conditions.append("t.date >= ?")
         params.append(date_from)
     if date_to:
-        conditions.append("date <= ?")
+        conditions.append("t.date <= ?")
         params.append(date_to)
     if tx_type:
         conditions.append(f"{eff_tx_type} = ?")
@@ -192,7 +238,7 @@ def transactions():
         conditions.append(f"{eff_cat_group} = ?")
         params.append(category_group)
     if search:
-        conditions.append("(description LIKE ? OR raw_description LIKE ?)")
+        conditions.append("(t.description LIKE ? OR t.raw_description LIKE ?)")
         params.extend([f"%{search}%", f"%{search}%"])
     if unclassified == "1":
         conditions.append(f"({eff_cat} IN ('Revolut Misc', 'Other') OR {eff_cat} IS NULL OR {eff_tx_type} = 'unknown')")
@@ -200,15 +246,15 @@ def transactions():
     where = " AND ".join(conditions) if conditions else "1=1"
 
     # Count
-    count = db.execute(f"SELECT COUNT(*) FROM transactions WHERE {where}", params).fetchone()[0]
+    count = db.execute(f"SELECT COUNT(*) FROM transactions t WHERE {where}", params).fetchone()[0]
     total_pages = max(1, (count + ROWS_PER_PAGE - 1) // ROWS_PER_PAGE)
     page = min(page, total_pages)
 
-    # Fetch rows
+    # Fetch rows with enrichment LEFT JOIN
     rows = db.execute(
-        f"SELECT id, date, description, amount, currency, tx_type, category_group, category "
-        f"{EFF_COLUMNS} "
-        f"FROM transactions WHERE {where} ORDER BY date DESC, id DESC LIMIT ? OFFSET ?",
+        f"SELECT t.id, t.date, t.description, t.amount, t.currency, t.tx_type, t.category_group, t.category "
+        f"{EFF_COLUMNS} {ENR_COLUMNS} "
+        f"{TX_JOIN} WHERE {where} ORDER BY t.date DESC, t.id DESC LIMIT ? OFFSET ?",
         params + [ROWS_PER_PAGE, offset]
     ).fetchall()
 
@@ -286,10 +332,11 @@ def update_transaction(tx_id):
 
 
 def _fetch_tx_row(db, tx_id):
-    """Fetch a single transaction row with override + effective columns."""
+    """Fetch a single transaction row with override + effective + enrichment columns."""
+    ensure_enrichment_table()
     return db.execute(
-        f"SELECT id, date, description, amount, currency, tx_type, category_group, category "
-        f"{EFF_COLUMNS} FROM transactions WHERE id = ?", (tx_id,)
+        f"SELECT t.id, t.date, t.description, t.amount, t.currency, t.tx_type, t.category_group, t.category "
+        f"{EFF_COLUMNS} {ENR_COLUMNS} {TX_JOIN} WHERE t.id = ?", (tx_id,)
     ).fetchone()
 
 
@@ -473,8 +520,8 @@ def matching_rules(tx_id):
 
     ensure_override_columns()
     tx = db.execute(
-        "SELECT id, description, raw_description, raw_category "
-        f"{EFF_COLUMNS} FROM transactions WHERE id = ?",
+        "SELECT t.id, t.description, t.raw_description, t.raw_category "
+        f"{EFF_COLUMNS} FROM transactions t WHERE t.id = ?",
         (tx_id,)
     ).fetchone()
     if not tx:
@@ -557,6 +604,306 @@ def apply_rules():
         result_html += "</ul>"
 
     return result_html
+
+
+# --- Enrichment helpers ---
+
+def _parse_revolut_transaction(obj):
+    """Parse a Revolut API transaction object into enrichment fields."""
+    revolut_id = obj.get("id", "")
+    revolut_leg_id = obj.get("legId", "")
+
+    # Date from epoch ms
+    started_date = obj.get("startedDate") or obj.get("createdDate")
+    if started_date:
+        dt = datetime.fromtimestamp(started_date / 1000, tz=timezone.utc)
+        source_date = dt.strftime("%Y-%m-%d")
+    else:
+        source_date = None
+
+    # Amount in cents → decimal
+    amount_cents = obj.get("amount", 0)
+    source_amount = amount_cents / 100.0
+    source_currency = obj.get("currency", "")
+
+    revolut_type = obj.get("type", "")
+
+    # Merchant info
+    merchant = obj.get("merchant") or {}
+    merchant_name = merchant.get("name")
+    merchant_city = merchant.get("city")
+    merchant_country = merchant.get("country")
+    merchant_address = merchant.get("address")
+    merchant_mcc = merchant.get("mcc")
+
+    # Counterpart (for transfers)
+    counterpart = obj.get("counterpart") or {}
+    recipient_name = counterpart.get("name")
+
+    source_description = obj.get("description", "")
+
+    # Localised description
+    loc_desc_obj = obj.get("localisedDescription") or {}
+    if isinstance(loc_desc_obj, dict):
+        loc_params = loc_desc_obj.get("params") or {}
+        if loc_params:
+            parts = [str(v) for v in loc_params.values() if v]
+            localised_description = " ".join(parts) if parts else loc_desc_obj.get("key", "")
+        else:
+            localised_description = loc_desc_obj.get("key", "")
+    elif isinstance(loc_desc_obj, str):
+        localised_description = loc_desc_obj
+    else:
+        localised_description = None
+
+    # Fall back to localised_description for transfers without counterpart
+    if not recipient_name and revolut_type == "TRANSFER" and localised_description:
+        recipient_name = localised_description
+
+    user_comment = obj.get("comment") or obj.get("note")
+    revolut_tag = obj.get("tag")
+    revolut_category = obj.get("category")
+    exchange_rate = obj.get("rate")
+    balance_after = obj.get("balance")
+
+    return {
+        "revolut_id": revolut_id,
+        "revolut_leg_id": revolut_leg_id or "",
+        "recipient_name": recipient_name,
+        "merchant_name": merchant_name,
+        "merchant_city": merchant_city,
+        "merchant_country": merchant_country,
+        "merchant_address": merchant_address,
+        "merchant_mcc": merchant_mcc,
+        "user_comment": user_comment,
+        "revolut_type": revolut_type,
+        "revolut_tag": revolut_tag,
+        "revolut_category": revolut_category,
+        "exchange_rate": exchange_rate,
+        "balance_after": balance_after,
+        "localised_description": localised_description,
+        "source_date": source_date,
+        "source_amount": source_amount,
+        "source_currency": source_currency,
+        "source_description": source_description,
+        "raw_json": json.dumps(obj),
+    }
+
+
+def _match_enrichment_to_transaction(db, enrichment):
+    """Match an enrichment record to an existing transaction.
+
+    Returns (transaction_id, confidence) tuple.
+    Tiers: exact → fuzzy → loose → none.
+    """
+    date = enrichment["source_date"]
+    amount = enrichment["source_amount"]
+    currency = enrichment["source_currency"]
+    desc = enrichment["source_description"] or ""
+
+    if not date or amount is None:
+        return None, "none"
+
+    abs_amount = abs(amount)
+
+    # Find candidates: same date, same currency, matching absolute amount (±0.005)
+    rows = db.execute(
+        "SELECT id, description FROM transactions "
+        "WHERE date = ? AND ABS(amount) BETWEEN ? AND ? AND currency = ?",
+        (date, abs_amount - 0.005, abs_amount + 0.005, currency)
+    ).fetchall()
+
+    if not rows:
+        return None, "none"
+
+    # Tier 1 — Exact: description substring match
+    if desc:
+        for row in rows:
+            tx_desc = (row["description"] or "").lower()
+            src_desc = desc.lower()
+            if src_desc in tx_desc or tx_desc in src_desc:
+                return row["id"], "exact"
+
+    # Tier 2 — Fuzzy: word overlap ≥ 2
+    if desc:
+        for row in rows:
+            tx_words = set((row["description"] or "").lower().split())
+            src_words = set(desc.lower().split())
+            if len(tx_words & src_words) >= 2:
+                return row["id"], "fuzzy"
+
+    # Tier 3 — Loose: single candidate
+    if len(rows) == 1:
+        return rows[0]["id"], "loose"
+
+    return None, "none"
+
+
+# --- Enrichment routes ---
+
+@app.route("/enrichment")
+@login_required
+def enrichment():
+    db = get_db()
+    ensure_enrichment_table()
+
+    total = db.execute("SELECT COUNT(*) FROM transaction_enrichment").fetchone()[0]
+    matched = db.execute(
+        "SELECT COUNT(*) FROM transaction_enrichment WHERE transaction_id IS NOT NULL"
+    ).fetchone()[0]
+    unmatched_rows = db.execute(
+        "SELECT * FROM transaction_enrichment WHERE transaction_id IS NULL "
+        "ORDER BY source_date DESC"
+    ).fetchall()
+
+    return render_template("_enrichment.html",
+                           total=total,
+                           matched=matched,
+                           unmatched=unmatched_rows)
+
+
+@app.route("/enrichment/upload", methods=["POST"])
+@login_required
+def upload_enrichment():
+    db = get_db()
+    ensure_enrichment_table()
+
+    file = request.files.get("file")
+    if not file:
+        return "<div class='error'>No file uploaded</div>", 400
+
+    try:
+        data = json.loads(file.read())
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        return f"<div class='error'>Invalid JSON: {e}</div>", 400
+
+    if not isinstance(data, list):
+        return "<div class='error'>Expected a JSON array</div>", 400
+
+    stats = {"imported": 0, "skipped": 0, "matched": 0, "errors": 0}
+
+    for obj in data:
+        try:
+            enrichment_data = _parse_revolut_transaction(obj)
+
+            # Skip if already exists
+            existing = db.execute(
+                "SELECT id FROM transaction_enrichment WHERE revolut_id = ? AND revolut_leg_id = ?",
+                (enrichment_data["revolut_id"], enrichment_data["revolut_leg_id"])
+            ).fetchone()
+
+            if existing:
+                stats["skipped"] += 1
+                continue
+
+            tx_id, confidence = _match_enrichment_to_transaction(db, enrichment_data)
+
+            db.execute("""
+                INSERT INTO transaction_enrichment (
+                    transaction_id, revolut_id, revolut_leg_id,
+                    recipient_name, merchant_name, merchant_city, merchant_country,
+                    merchant_address, merchant_mcc, user_comment, revolut_type,
+                    revolut_tag, revolut_category, exchange_rate, balance_after,
+                    localised_description, source_date, source_amount, source_currency,
+                    source_description, match_confidence, raw_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                tx_id, enrichment_data["revolut_id"], enrichment_data["revolut_leg_id"],
+                enrichment_data["recipient_name"], enrichment_data["merchant_name"],
+                enrichment_data["merchant_city"], enrichment_data["merchant_country"],
+                enrichment_data["merchant_address"], enrichment_data["merchant_mcc"],
+                enrichment_data["user_comment"], enrichment_data["revolut_type"],
+                enrichment_data["revolut_tag"], enrichment_data["revolut_category"],
+                enrichment_data["exchange_rate"], enrichment_data["balance_after"],
+                enrichment_data["localised_description"], enrichment_data["source_date"],
+                enrichment_data["source_amount"], enrichment_data["source_currency"],
+                enrichment_data["source_description"], confidence, enrichment_data["raw_json"]
+            ))
+
+            stats["imported"] += 1
+            if tx_id:
+                stats["matched"] += 1
+        except Exception:
+            stats["errors"] += 1
+
+    db.commit()
+
+    return (
+        f"<div class='apply-result success'>"
+        f"Imported: {stats['imported']} | Matched: {stats['matched']} | "
+        f"Skipped (duplicates): {stats['skipped']} | Errors: {stats['errors']}"
+        f"</div>"
+    )
+
+
+@app.route("/enrichment/<int:enr_id>/link", methods=["POST"])
+@login_required
+def link_enrichment(enr_id):
+    db = get_db()
+    ensure_enrichment_table()
+
+    tx_id = request.form.get("tx_id", type=int)
+    if not tx_id:
+        return "<div class='error'>Transaction ID is required</div>", 400
+
+    # Verify transaction exists
+    tx = db.execute("SELECT id FROM transactions WHERE id = ?", (tx_id,)).fetchone()
+    if not tx:
+        return f"<div class='error'>Transaction {tx_id} not found</div>", 404
+
+    db.execute(
+        "UPDATE transaction_enrichment SET transaction_id = ?, match_confidence = 'manual' WHERE id = ?",
+        (tx_id, enr_id)
+    )
+    db.commit()
+
+    # Re-render enrichment tab
+    return redirect(url_for("enrichment"), code=303)
+
+
+@app.route("/enrichment/<int:enr_id>", methods=["DELETE"])
+@login_required
+def delete_enrichment(enr_id):
+    db = get_db()
+    ensure_enrichment_table()
+    db.execute("DELETE FROM transaction_enrichment WHERE id = ?", (enr_id,))
+    db.commit()
+    return redirect(url_for("enrichment"), code=303)
+
+
+@app.route("/enrichment/rematch", methods=["POST"])
+@login_required
+def rematch_enrichment():
+    db = get_db()
+    ensure_enrichment_table()
+
+    unmatched = db.execute(
+        "SELECT * FROM transaction_enrichment WHERE transaction_id IS NULL"
+    ).fetchall()
+
+    matched_count = 0
+    for row in unmatched:
+        enrichment_data = {
+            "source_date": row["source_date"],
+            "source_amount": row["source_amount"],
+            "source_currency": row["source_currency"],
+            "source_description": row["source_description"],
+        }
+        tx_id, confidence = _match_enrichment_to_transaction(db, enrichment_data)
+        if tx_id:
+            db.execute(
+                "UPDATE transaction_enrichment SET transaction_id = ?, match_confidence = ? WHERE id = ?",
+                (tx_id, confidence, row["id"])
+            )
+            matched_count += 1
+
+    db.commit()
+
+    return (
+        f"<div class='apply-result success'>"
+        f"Re-matched {matched_count} of {len(unmatched)} unlinked records"
+        f"</div>"
+    )
 
 
 if __name__ == "__main__":

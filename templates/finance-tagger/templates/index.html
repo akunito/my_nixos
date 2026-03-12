@@ -78,17 +78,29 @@ td select { background: var(--bg2); border: 1px solid var(--border); color: var(
 .htmx-request .htmx-indicator { display: inline; }
 #matching-rules-panel { margin-top: 1rem; padding: 1rem; background: var(--bg2); border-radius: 6px; }
 #matching-rules-panel:empty { display: none; }
+
+/* Enrichment subtitles */
+.enr-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 4px; vertical-align: middle; }
+.enrichment-subtitle { display: none; }
+.enrichment-subtitle td { background: rgba(0, 180, 216, 0.05); }
+body.show-enrichment .enrichment-subtitle { display: table-row; }
+.btn-toggle-enr { background: var(--bg3); color: var(--fg2); border: 1px solid var(--border); }
+.btn-toggle-enr.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 </style>
 </head>
 <body>
 <div class="container">
   <div style="display:flex;justify-content:space-between;align-items:center;">
     <h1>Finance Tagger</h1>
-    <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+    <div style="display:flex;gap:0.5rem;align-items:center">
+      <button class="btn btn-sm btn-toggle-enr" onclick="toggleEnrichment(this)" title="Show/hide enrichment details">Details</button>
+      <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+    </div>
   </div>
   <div class="tabs">
     <div class="tab active" onclick="switchTab('transactions')">Transactions</div>
     <div class="tab" onclick="switchTab('rules')">Rules</div>
+    <div class="tab" onclick="switchTab('enrichment')">Enrichment</div>
   </div>
 
   <!-- Transactions Tab -->
@@ -201,6 +213,13 @@ td select { background: var(--bg2); border: 1px solid var(--border); color: var(
       <p style="color:var(--fg2)">Loading rules...</p>
     </div>
   </div>
+
+  <!-- Enrichment Tab -->
+  <div id="tab-enrichment" class="tab-content">
+    <div hx-get="/enrichment" hx-trigger="intersect once" hx-swap="innerHTML">
+      <p style="color:var(--fg2)">Loading enrichment data...</p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -209,6 +228,10 @@ function switchTab(name) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
+}
+function toggleEnrichment(btn) {
+  document.body.classList.toggle('show-enrichment');
+  btn.classList.toggle('active');
 }
 </script>
 </body>

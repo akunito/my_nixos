@@ -1,6 +1,7 @@
-<tr id="tx-{{ row['id'] }}" {% if flash is defined and flash == 'success' %}class="flash-success"{% endif %}>
+<tbody id="tx-{{ row['id'] }}">
+  <tr {% if flash is defined and flash == 'success' %}class="flash-success"{% endif %}>
   <td>{{ row['date'] }}</td>
-  <td title="{{ row['description'] }}">{{ row['description'][:50] }}</td>
+  <td title="{{ row['description'] }}">{% if row['enr_id'] %}<span class="enr-dot" title="Enrichment data available"></span>{% endif %}{{ row['description'][:50] }}</td>
   <td class="{{ 'amount-pos' if row['amount'] >= 0 else 'amount-neg' }}">{{ "%.2f"|format(row['amount']) }}</td>
   <td>{{ row['currency'] }}</td>
   <td{% if row['override_tx_type'] and not row['overrides_disabled'] %} class="cell-override"{% endif %}>
@@ -45,3 +46,28 @@
     {% endif %}
   </td>
 </tr>
+{% if row['enr_id'] %}
+<tr class="enrichment-subtitle">
+  <td colspan="8" style="padding:0.1rem 0.5rem 0.3rem 1.5rem;border-bottom:1px solid var(--border);font-size:0.78rem;color:var(--fg2);">
+    {% set parts = [] %}
+    {% if row['recipient_name'] %}{% if parts.append('To: ' + row['recipient_name']) %}{% endif %}{% endif %}
+    {% if row['merchant_name'] %}
+      {% set loc = [] %}
+      {% if row['merchant_city'] %}{% if loc.append(row['merchant_city']) %}{% endif %}{% endif %}
+      {% if row['merchant_country'] %}{% if loc.append(row['merchant_country']) %}{% endif %}{% endif %}
+      {% if loc %}
+        {% if parts.append('Merchant: ' + row['merchant_name'] + ' (' + loc|join(', ') + ')') %}{% endif %}
+      {% else %}
+        {% if parts.append('Merchant: ' + row['merchant_name']) %}{% endif %}
+      {% endif %}
+    {% endif %}
+    {% if row['user_comment'] %}{% if parts.append('Note: ' + row['user_comment']) %}{% endif %}{% endif %}
+    {% if row['revolut_tag'] %}{% if parts.append('Tag: ' + row['revolut_tag']) %}{% endif %}{% endif %}
+    {% if row['localised_description'] and not row['merchant_name'] and not row['recipient_name'] %}
+      {% if parts.append(row['localised_description']) %}{% endif %}
+    {% endif %}
+    {{ parts|join(' | ') }}
+  </td>
+</tr>
+{% endif %}
+</tbody>
