@@ -44,8 +44,8 @@ services:
       - MINIFLUX_OPENCLAW_KEY=${MINIFLUX_OPENCLAW_KEY}
       - GITHUB_ALLOWED_OWNERS=akunito
       - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
-      - GENERIC_TIMEZONE=Europe/Madrid
-      - TZ=Europe/Madrid
+      - GENERIC_TIMEZONE=Europe/Warsaw
+      - TZ=Europe/Warsaw
       # MCP server env vars (mcporter subprocesses inherit these)
       # Direct access to Plane via rootless Docker gateway — bypasses Cloudflare User-Agent block
       - PLANE_API_URL=http://10.0.2.2:3003
@@ -63,7 +63,7 @@ services:
       - GMAIL_ACCOUNT=${GMAIL_ACCOUNT}
       - CALENDAR_CREDENTIALS_PATH=/home/node/.openclaw/credentials
       - CALENDAR_ACCOUNT=${CALENDAR_ACCOUNT}
-      - CALENDAR_TIMEZONE=Europe/Madrid
+      - CALENDAR_TIMEZONE=Europe/Warsaw
     volumes:
       - ${HOME}/.openclaw:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace

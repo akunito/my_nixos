@@ -32,8 +32,8 @@
   "agents": {
     "defaults": {
       "model": { "primary": "modelstudio/qwen3.5-plus" },
-      "envelopeTimezone": "Europe/Madrid",
-      "userTimezone": "Europe/Madrid",
+      "envelopeTimezone": "Europe/Warsaw",
+      "userTimezone": "Europe/Warsaw",
       "timeFormat": "24"
     },
     "list": [

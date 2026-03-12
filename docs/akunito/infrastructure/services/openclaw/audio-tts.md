@@ -192,7 +192,7 @@ Trigger words that activate listening on connected devices (macOS, iOS):
     "defaults": {
       "envelopeTimezone": "local",     // utc | local | user | IANA zone
       "envelopeTimestamp": "on",
-      "userTimezone": "Europe/Madrid",
+      "userTimezone": "Europe/Warsaw",
       "timeFormat": "auto"             // auto | 12 | 24
     }
   }

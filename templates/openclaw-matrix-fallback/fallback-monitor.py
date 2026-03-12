@@ -78,7 +78,7 @@ class FallbackMonitor:
         self.check_interval = fallback_cfg.get("check_interval_minutes", 30) * 60
         self.active_start = fallback_cfg.get("active_hours", {}).get("start", 8)
         self.active_end = fallback_cfg.get("active_hours", {}).get("end", 22)
-        self.tz = ZoneInfo(fallback_cfg.get("timezone", "Europe/Madrid"))
+        self.tz = ZoneInfo(fallback_cfg.get("timezone", "Europe/Warsaw"))
         self.allowed_users = self.config.get("allowed_users", [])
 
     def _load_config(self, path: str) -> dict:

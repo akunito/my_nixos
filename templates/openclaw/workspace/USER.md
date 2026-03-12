@@ -8,6 +8,6 @@
 
 # COMMUNICATION PREFERENCES
 - **Language:** English (primary). Spanish (occasional).
-- **Timezone:** Europe/Madrid (CET/CEST)
+- **Timezone:** Europe/Warsaw (CET/CEST)
 - **Preferred channels:** Telegram (primary)
 - **Notification priority:** Infrastructure alerts -> immediate. News briefs -> morning only. Weekly reviews -> Sunday evening.

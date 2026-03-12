@@ -67,7 +67,7 @@ services:
     environment:
       - SYNAPSE_SERVER_NAME=${SYNAPSE_SERVER_NAME:-matrix.local.akunito.com}
       - SYNAPSE_REPORT_STATS=${SYNAPSE_REPORT_STATS:-no}
-      - TZ=Europe/Madrid
+      - TZ=Europe/Warsaw
     ports:
       - "127.0.0.1:8008:8008"   # Client-Server API
       - "127.0.0.1:9000:9000"   # Prometheus metrics
@@ -104,7 +104,7 @@ services:
     volumes:
       - ./element-config/config.json:/app/config.json:ro
     environment:
-      - TZ=Europe/Madrid
+      - TZ=Europe/Warsaw
     ports:
       - "127.0.0.1:8088:80"  # 8088 to avoid Headscale on 8080; matches nginxLocalServices
     networks:

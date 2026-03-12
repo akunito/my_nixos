@@ -66,7 +66,7 @@ cd ~/.homelab/openclaw && docker compose up -d
 ```yaml
 - CALENDAR_CREDENTIALS_PATH=/home/node/.openclaw/credentials
 - CALENDAR_ACCOUNT=diego88aku@gmail.com
-- CALENDAR_TIMEZONE=Europe/Madrid
+- CALENDAR_TIMEZONE=Europe/Warsaw
 ```
 
 ### Capabilities

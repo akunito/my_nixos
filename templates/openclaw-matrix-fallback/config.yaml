@@ -29,7 +29,7 @@ fallback:
   active_hours:
     start: 8
     end: 22
-  timezone: "Europe/Madrid"
+  timezone: "Europe/Warsaw"
 
 allowed_users:
   - "@akunito:akunito.com"

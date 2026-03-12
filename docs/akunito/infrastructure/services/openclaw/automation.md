@@ -53,9 +53,9 @@ Top-of-hour jobs get deterministic stagger (up to 5min). Use `--exact` to disabl
 ### CLI Examples
 
 ```bash
-# Daily morning brief at 08:00 Madrid time → Telegram
+# Daily morning brief at 08:00 Warsaw time → Telegram
 openclaw cron add --name "morning-brief" \
-  --cron "0 8 * * *" --tz "Europe/Madrid" \
+  --cron "0 8 * * *" --tz "Europe/Warsaw" \
   --session isolated \
   --message "Summarize calendar and overdue Plane tickets" \
   --announce --channel telegram --to "CHAT_ID"
@@ -67,7 +67,7 @@ openclaw cron add --name "meeting-prep" \
 
 # Weekly review Sunday 19:00
 openclaw cron add --name "weekly-review" \
-  --cron "0 19 * * 0" --tz "Europe/Madrid" \
+  --cron "0 19 * * 0" --tz "Europe/Warsaw" \
   --session isolated --agent main \
   --message "Create weekly review summary" \
   --announce --channel telegram --to "CHAT_ID"

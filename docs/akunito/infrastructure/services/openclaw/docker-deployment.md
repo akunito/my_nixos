@@ -40,7 +40,7 @@ services:
       - MODELSTUDIO_API_KEY=${MODELSTUDIO_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
       - OPENCLAW_HOOKS_TOKEN=${OPENCLAW_HOOKS_TOKEN}
-      - TZ=Europe/Madrid
+      - TZ=Europe/Warsaw
     volumes:
       - ${HOME}/.openclaw:/home/node/.openclaw
       - openclaw_workspace:/home/node/workspace

@@ -24,7 +24,7 @@ from googleapiclient.discovery import build
 
 CREDENTIALS_PATH = os.environ["CALENDAR_CREDENTIALS_PATH"]
 CALENDAR_ACCOUNT = os.environ["CALENDAR_ACCOUNT"]
-CALENDAR_TIMEZONE = os.environ.get("CALENDAR_TIMEZONE", "Europe/Madrid")
+CALENDAR_TIMEZONE = os.environ.get("CALENDAR_TIMEZONE", "Europe/Warsaw")
 
 # --- Input length validation (anti-payload-abuse) ---
 MAX_BODY_LENGTH = 50_000  # 50KB

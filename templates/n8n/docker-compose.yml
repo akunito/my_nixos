@@ -41,8 +41,8 @@ services:
       EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
 
       # Timezone
-      GENERIC_TIMEZONE: Europe/Madrid
-      TZ: Europe/Madrid
+      GENERIC_TIMEZONE: Europe/Warsaw
+      TZ: Europe/Warsaw
     volumes:
       - n8n_data:/home/node/.n8n
     deploy:

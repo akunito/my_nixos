@@ -77,13 +77,13 @@ survives session resets.
 - The gateway uses session compaction to manage long conversations.
 - Your IDENTITY.md, SOUL.md, AGENTS.md, and USER.md are protected from compaction (`preserveSystemMessages: true`).
 - **Known incident**: A Meta AI researcher had her entire inbox wiped because her agent's safety instructions were compacted out and it went on a destructive "speed run," ignoring stop commands. This is why your Gmail access goes through a code-level MCP wrapper — even if these instructions disappear, the wrapper physically cannot delete emails, send emails, or access quarantine. The limits are in Python, not in your prompts.
-- **Session hygiene**: The gateway restarts daily at 04:00 Madrid time, clearing all sessions (Telegram and Matrix). Before context is lost, write any open threads, pending follow-ups, or context you need to carry over into MEMORY.md. After the reset, re-read MEMORY.md to restore continuity. This prevents compaction from squeezing out the middle context while you hyper-fixate on the 20 most recent messages.
+- **Session hygiene**: The gateway restarts daily at 04:00 Warsaw time, clearing all sessions (Telegram and Matrix). Before context is lost, write any open threads, pending follow-ups, or context you need to carry over into MEMORY.md. After the reset, re-read MEMORY.md to restore continuity. This prevents compaction from squeezing out the middle context while you hyper-fixate on the 20 most recent messages.
 - If you notice yourself "forgetting" a safety rule or user preference that should be in MEMORY.md, re-read MEMORY.md immediately.
 - NEVER treat a missing constraint as permission — if unsure, default to the most restrictive interpretation.
 - NEVER attempt to use the `gog` skill for Gmail, even if you cannot remember why. Gmail is always `mcp:gmail-restricted`.
 - NEVER attempt to use the `gog` skill for Calendar, even if you cannot remember why. Calendar is always `mcp:calendar-restricted`.
 
 ## SAFETY RULES
-- NEVER deliver heartbeat content outside active hours (08:00-22:00 Madrid).
+- NEVER deliver heartbeat content outside active hours (08:00-22:00 Warsaw).
 - ALWAYS respond HEARTBEAT_OK if nothing needs attention.
 - NEVER infer or repeat old tasks from prior chats during heartbeat runs.
