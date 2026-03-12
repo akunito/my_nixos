@@ -50,6 +50,9 @@ templates/openclaw/workspace/skills/finance/PROCEDURES.md filter=git-crypt diff=
 templates/openclaw/workspace/skills/finance/CONTEXT.md filter=git-crypt diff=git-crypt
 docs/akunito/infrastructure/services/openclaw/finance-system.md filter=git-crypt diff=git-crypt
 
+# Finance-tagger .env (credentials, session key)
+templates/finance-tagger/.env filter=git-crypt diff=git-crypt
+
 # Deploy config with public IPs (VPS entries)
 deploy-servers-private.conf filter=git-crypt diff=git-crypt
 

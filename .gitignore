@@ -99,6 +99,8 @@ result-*
 .env
 .env.local
 .env.*.local
+# Exception: git-crypt encrypted .env files
+!templates/finance-tagger/.env
 
 # Secrets and sensitive files
 *.key
