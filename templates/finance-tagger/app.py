@@ -2,11 +2,15 @@
 
 import os
 import sqlite3
-from flask import Flask, request, render_template, jsonify, g
+import functools
+from flask import Flask, request, render_template, jsonify, g, session, redirect, url_for
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", os.urandom(32).hex())
 
 DB_PATH = os.environ.get("DB_PATH", "/data/vaultkeeper.db")
+FINANCE_USER = os.environ.get("FINANCE_USER", "")
+FINANCE_PASSWORD = os.environ.get("FINANCE_PASSWORD", "")
 
 # Classification constants
 VALID_TX_TYPES = [
@@ -73,6 +77,36 @@ def ensure_category_rules_table():
     db.commit()
 
 
+def login_required(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get("authenticated"):
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return wrapper
+
+
+# --- Auth routes ---
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        if (request.form.get("username") == FINANCE_USER and
+                request.form.get("password") == FINANCE_PASSWORD and
+                FINANCE_USER):
+            session["authenticated"] = True
+            return redirect(url_for("index"))
+        error = "Invalid credentials"
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 # --- Health check ---
 
 @app.route("/health")
@@ -88,6 +122,7 @@ def health():
 # --- Main page ---
 
 @app.route("/")
+@login_required
 def index():
     return render_template("index.html",
                            tx_types=VALID_TX_TYPES,
@@ -99,6 +134,7 @@ def index():
 # --- Transaction list (htmx partial) ---
 
 @app.route("/transactions")
+@login_required
 def transactions():
     db = get_db()
     page = max(1, request.args.get("page", 1, type=int))
@@ -178,6 +214,7 @@ def transactions():
 # --- Update a single transaction field ---
 
 @app.route("/transactions/<int:tx_id>", methods=["PUT"])
+@login_required
 def update_transaction(tx_id):
     db = get_db()
     data = request.form
@@ -225,6 +262,7 @@ def update_transaction(tx_id):
 # --- Rules CRUD ---
 
 @app.route("/rules")
+@login_required
 def rules():
     db = get_db()
     ensure_category_rules_table()
@@ -237,6 +275,7 @@ def rules():
 
 
 @app.route("/rules", methods=["POST"])
+@login_required
 def create_rule():
     db = get_db()
     ensure_category_rules_table()
@@ -270,6 +309,7 @@ def create_rule():
 
 
 @app.route("/rules/<int:rule_id>/toggle", methods=["PUT"])
+@login_required
 def toggle_rule(rule_id):
     db = get_db()
     db.execute(
@@ -287,6 +327,7 @@ def toggle_rule(rule_id):
 
 
 @app.route("/rules/<int:rule_id>", methods=["DELETE"])
+@login_required
 def delete_rule(rule_id):
     db = get_db()
     db.execute("DELETE FROM category_rules WHERE id = ?", (rule_id,))
@@ -303,6 +344,7 @@ def delete_rule(rule_id):
 # --- Apply all rules ---
 
 @app.route("/rules/apply", methods=["POST"])
+@login_required
 def apply_rules():
     db = get_db()
     ensure_category_rules_table()

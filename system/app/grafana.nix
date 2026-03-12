@@ -995,13 +995,6 @@ in
       user = "root";
       group = config.services.nginx.group;
     };
-    # Finance Tagger HTTP Basic Auth (for nginx-local vhost)
-    "nginx/auth/finance.htpasswd" = lib.mkIf ((systemSettings.financeBasicAuthHtpasswd or null) != null) {
-      text = systemSettings.financeBasicAuthHtpasswd;
-      mode = "0640";
-      user = "root";
-      group = config.services.nginx.group;
-    };
     # Custom dashboards
     "grafana-dashboards/custom/wireguard.json".source = ./grafana-dashboards/custom/wireguard.json;
     "grafana-dashboards/custom/truenas.json".source = ./grafana-dashboards/custom/truenas.json;

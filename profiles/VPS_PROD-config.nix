@@ -259,14 +259,15 @@ in
       calibre    = { port = 8083; };
       n8n        = { port = 5678; };
       openclaw   = { port = 18789; };
-      finance    = { port = 8190; basicAuthFile = "/etc/nginx/auth/finance.htpasswd"; };
+      finance    = { port = 8190; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
     grafanaEnable = true;
     grafanaLocalSslEnable = false; # No /mnt/shared-certs/ on VPS — use Cloudflare Tunnel for HTTPS
     prometheusBasicAuthHtpasswd = secrets.prometheusHtpasswd; # HTTP Basic Auth for prometheus.local.akunito.com
-    financeBasicAuthHtpasswd = secrets.financeBasicAuthHtpasswd; # HTTP Basic Auth for finance.local.akunito.com
+    financeUser = secrets.financeUser; # Flask app auth for finance-tagger
+    financePassword = secrets.financePassword; # Flask app auth for finance-tagger
     # Disable standalone node exporter — grafana.nix runs its own on port 9091
     prometheusExporterEnable = false;
     prometheusExporterCadvisorEnable = true;

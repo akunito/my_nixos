@@ -79,7 +79,10 @@ td select { background: var(--bg2); border: 1px solid var(--border); color: var(
 </head>
 <body>
 <div class="container">
-  <h1>Finance Tagger</h1>
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h1>Finance Tagger</h1>
+    <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+  </div>
   <div class="tabs">
     <div class="tab active" onclick="switchTab('transactions')">Transactions</div>
     <div class="tab" onclick="switchTab('rules')">Rules</div>
