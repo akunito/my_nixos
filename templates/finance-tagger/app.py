@@ -326,6 +326,43 @@ def toggle_rule(rule_id):
                            categories=ALL_CATEGORIES)
 
 
+@app.route("/rules/<int:rule_id>", methods=["PUT"])
+@login_required
+def update_rule(rule_id):
+    db = get_db()
+    ensure_category_rules_table()
+
+    match_field = request.form.get("match_field", "description")
+    match_pattern = request.form.get("match_pattern", "").strip()
+    match_type = request.form.get("match_type", "like")
+    set_tx_type = request.form.get("set_tx_type", "").strip() or None
+    set_category = request.form.get("set_category", "").strip() or None
+    set_category_group = request.form.get("set_category_group", "").strip() or None
+    priority = request.form.get("priority", 100, type=int)
+    note = request.form.get("note", "").strip() or None
+
+    if not match_pattern:
+        return "<tr><td colspan='11' class='error'>Pattern is required</td></tr>", 400
+
+    db.execute(
+        """UPDATE category_rules
+           SET match_field=?, match_pattern=?, match_type=?, set_tx_type=?,
+               set_category=?, set_category_group=?, priority=?, note=?,
+               updated_at=datetime('now')
+           WHERE id=?""",
+        (match_field, match_pattern, match_type, set_tx_type,
+         set_category, set_category_group, priority, note, rule_id)
+    )
+    db.commit()
+
+    rows = db.execute("SELECT * FROM category_rules ORDER BY priority ASC, id ASC").fetchall()
+    return render_template("_rules.html",
+                           rules=rows,
+                           tx_types=VALID_TX_TYPES,
+                           category_groups=ALL_CATEGORY_GROUPS,
+                           categories=ALL_CATEGORIES)
+
+
 @app.route("/rules/<int:rule_id>", methods=["DELETE"])
 @login_required
 def delete_rule(rule_id):
@@ -336,6 +373,44 @@ def delete_rule(rule_id):
     rows = db.execute("SELECT * FROM category_rules ORDER BY priority ASC, id ASC").fetchall()
     return render_template("_rules.html",
                            rules=rows,
+                           tx_types=VALID_TX_TYPES,
+                           category_groups=ALL_CATEGORY_GROUPS,
+                           categories=ALL_CATEGORIES)
+
+
+# --- Transaction matching rules ---
+
+@app.route("/transactions/<int:tx_id>/matching-rules")
+@login_required
+def matching_rules(tx_id):
+    db = get_db()
+    ensure_category_rules_table()
+
+    tx = db.execute(
+        "SELECT id, description, raw_description, raw_category FROM transactions WHERE id = ?",
+        (tx_id,)
+    ).fetchone()
+    if not tx:
+        return "<p class='error'>Transaction not found</p>", 404
+
+    rules = db.execute(
+        "SELECT * FROM category_rules WHERE enabled = 1 ORDER BY priority ASC, id ASC"
+    ).fetchall()
+
+    matching = []
+    for rule in rules:
+        field_val = tx[rule["match_field"]] or ""
+        pattern = rule["match_pattern"]
+        if rule["match_type"] == "like":
+            hit = db.execute("SELECT ? LIKE ?", (field_val, pattern)).fetchone()[0]
+        else:
+            hit = (field_val == pattern)
+        if hit:
+            matching.append(rule)
+
+    return render_template("_matching_rules.html",
+                           tx=tx,
+                           matching=matching,
                            tx_types=VALID_TX_TYPES,
                            category_groups=ALL_CATEGORY_GROUPS,
                            categories=ALL_CATEGORIES)

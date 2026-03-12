@@ -24,4 +24,10 @@
       {% endfor %}
     </select>
   </td>
+  <td>
+    <button class="btn btn-sm btn-primary"
+            hx-get="/transactions/{{ row['id'] }}/matching-rules"
+            hx-target="#matching-rules-panel"
+            hx-swap="innerHTML">Rules</button>
+  </td>
 </tr>

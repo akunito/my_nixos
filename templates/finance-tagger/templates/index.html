@@ -75,6 +75,8 @@ td select { background: var(--bg2); border: 1px solid var(--border); color: var(
 .error { color: var(--danger); }
 .htmx-indicator { display: none; }
 .htmx-request .htmx-indicator { display: inline; }
+#matching-rules-panel { margin-top: 1rem; padding: 1rem; background: var(--bg2); border-radius: 6px; }
+#matching-rules-panel:empty { display: none; }
 </style>
 </head>
 <body>
@@ -127,6 +129,7 @@ td select { background: var(--bg2); border: 1px solid var(--border); color: var(
     <div id="tx-table" hx-get="/transactions" hx-trigger="load" hx-swap="innerHTML">
       <p style="color:var(--fg2)">Loading...</p>
     </div>
+    <div id="matching-rules-panel"></div>
   </div>
 
   <!-- Rules Tab -->
