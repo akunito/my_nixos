@@ -94,22 +94,20 @@ in
       text = ''
         FINANCE_DIR="${homelabDir}/finance-tagger"
         ENV_FILE="$FINANCE_DIR/.env"
-        mkdir -p "$FINANCE_DIR"
+        ${pkgs.coreutils}/bin/mkdir -p "$FINANCE_DIR"
         # Generate SECRET_KEY if not already present
-        if [ -f "$ENV_FILE" ] && grep -q '^SECRET_KEY=' "$ENV_FILE"; then
-          EXISTING_KEY=$(grep '^SECRET_KEY=' "$ENV_FILE" | cut -d= -f2)
+        if [ -f "$ENV_FILE" ] && ${pkgs.gnugrep}/bin/grep -q '^SECRET_KEY=' "$ENV_FILE"; then
+          EXISTING_KEY=$(${pkgs.gnugrep}/bin/grep '^SECRET_KEY=' "$ENV_FILE" | ${pkgs.coreutils}/bin/cut -d= -f2)
         else
           EXISTING_KEY=$(${pkgs.openssl}/bin/openssl rand -hex 32)
         fi
-        cat > "$ENV_FILE" <<ENVEOF
-        FINANCE_USER=${systemSettings.financeUser}
-        FINANCE_PASSWORD=${systemSettings.financePassword}
-        SECRET_KEY=$EXISTING_KEY
-        ENVEOF
-        # Remove leading whitespace from heredoc
-        sed -i 's/^[[:space:]]*//' "$ENV_FILE"
-        chown ${userSettings.username}:${userSettings.username} "$ENV_FILE"
-        chmod 0600 "$ENV_FILE"
+        cat > "$ENV_FILE" <<'ENVEOF'
+FINANCE_USER=${systemSettings.financeUser}
+FINANCE_PASSWORD=${systemSettings.financePassword}
+ENVEOF
+        echo "SECRET_KEY=$EXISTING_KEY" >> "$ENV_FILE"
+        ${pkgs.coreutils}/bin/chown 1000:1000 "$ENV_FILE"
+        ${pkgs.coreutils}/bin/chmod 0600 "$ENV_FILE"
       '';
       deps = [ "etc" ];
     };
