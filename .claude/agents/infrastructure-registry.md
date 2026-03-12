@@ -64,6 +64,7 @@ All doc paths relative to `docs/akunito/infrastructure/`.
 | calibre-web | calibre.local.akunito.com | 8083 | — | `calibre` |
 | n8n | — | 5678 | pg:n8n | `n8n` |
 | openclaw | — | 18789 | — | `openclaw/` |
+| finance-tagger | finance.local.akunito.com | 8190 | sqlite:vaultkeeper.db | `finance-tagger` |
 
 Template paths relative to `templates/`.
 

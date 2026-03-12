@@ -591,6 +591,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/komi/infrastructure/komi-monitoring-setup.md**: Grafana and Prometheus setup for Komi's monitoring container
 - **docs/komi/infrastructure/komi-proxy-setup.md**: Cloudflare tunnel, NPM, and ACME certificate setup for Komi
 
+- **docs/00_INDEX.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/00_ROUTER.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/01_CATALOG.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/agent-context.md**: How AI agents retrieve context in this repo (Router/Catalog protocol, index regeneration, key files).

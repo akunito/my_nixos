@@ -1,0 +1,52 @@
+<div class="count">{{ count }} transactions (page {{ page }}/{{ total_pages }})</div>
+<table>
+<thead>
+<tr>
+  <th>Date</th>
+  <th>Description</th>
+  <th>Amount</th>
+  <th>Cur</th>
+  <th>Type</th>
+  <th>Group</th>
+  <th>Category</th>
+</tr>
+</thead>
+<tbody>
+{% for row in rows %}
+{% include '_transaction_row.html' %}
+{% endfor %}
+</tbody>
+</table>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}
+  <a hx-get="/transactions?page={{ page - 1 }}&{{ filter_qs }}" hx-target="#tx-table" hx-swap="innerHTML">&laquo; Prev</a>
+  {% endif %}
+
+  {% set start_page = [1, page - 3] | max %}
+  {% set end_page = [total_pages, page + 3] | min %}
+
+  {% if start_page > 1 %}
+  <a hx-get="/transactions?page=1&{{ filter_qs }}" hx-target="#tx-table" hx-swap="innerHTML">1</a>
+  {% if start_page > 2 %}<span style="color:var(--fg2)">...</span>{% endif %}
+  {% endif %}
+
+  {% for p in range(start_page, end_page + 1) %}
+    {% if p == page %}
+    <span class="current">{{ p }}</span>
+    {% else %}
+    <a hx-get="/transactions?page={{ p }}&{{ filter_qs }}" hx-target="#tx-table" hx-swap="innerHTML">{{ p }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if end_page < total_pages %}
+  {% if end_page < total_pages - 1 %}<span style="color:var(--fg2)">...</span>{% endif %}
+  <a hx-get="/transactions?page={{ total_pages }}&{{ filter_qs }}" hx-target="#tx-table" hx-swap="innerHTML">{{ total_pages }}</a>
+  {% endif %}
+
+  {% if page < total_pages %}
+  <a hx-get="/transactions?page={{ page + 1 }}&{{ filter_qs }}" hx-target="#tx-table" hx-swap="innerHTML">Next &raquo;</a>
+  {% endif %}
+</div>
+{% endif %}

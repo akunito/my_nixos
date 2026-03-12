@@ -259,6 +259,7 @@ in
       calibre    = { port = 8083; };
       n8n        = { port = 5678; };
       openclaw   = { port = 18789; };
+      finance    = { port = 8190; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
@@ -353,6 +354,7 @@ in
       { name = "calibre"; path = "calibre"; }
       { name = "n8n"; path = "n8n"; }
       { name = "openclaw"; path = "openclaw"; }
+      { name = "finance-tagger"; path = "finance-tagger"; }
     ];
 
     # ============================================================================

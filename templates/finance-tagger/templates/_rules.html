@@ -1,0 +1,45 @@
+<table>
+<thead>
+<tr>
+  <th>ID</th>
+  <th>Pri</th>
+  <th>Field</th>
+  <th>Type</th>
+  <th>Pattern</th>
+  <th>&#8594; tx_type</th>
+  <th>&#8594; group</th>
+  <th>&#8594; category</th>
+  <th>Note</th>
+  <th>Actions</th>
+</tr>
+</thead>
+<tbody>
+{% for rule in rules %}
+<tr style="{{ 'opacity:0.5' if not rule['enabled'] }}">
+  <td>{{ rule['id'] }}</td>
+  <td>{{ rule['priority'] }}</td>
+  <td>{{ rule['match_field'] }}</td>
+  <td>{{ rule['match_type'] }}</td>
+  <td title="{{ rule['match_pattern'] }}">{{ rule['match_pattern'][:40] }}</td>
+  <td>{{ rule['set_tx_type'] or '—' }}</td>
+  <td>{{ rule['set_category_group'] or '—' }}</td>
+  <td>{{ rule['set_category'] or '—' }}</td>
+  <td>{{ rule['note'] or '' }}</td>
+  <td style="white-space:nowrap">
+    <button class="btn btn-sm btn-primary"
+            hx-put="/rules/{{ rule['id'] }}/toggle"
+            hx-target="#rules-table"
+            hx-swap="innerHTML">{{ 'Disable' if rule['enabled'] else 'Enable' }}</button>
+    <button class="btn btn-sm btn-danger"
+            hx-delete="/rules/{{ rule['id'] }}"
+            hx-target="#rules-table"
+            hx-swap="innerHTML"
+            hx-confirm="Delete rule {{ rule['id'] }}?">Del</button>
+  </td>
+</tr>
+{% endfor %}
+{% if not rules %}
+<tr><td colspan="10" style="color:var(--fg2);text-align:center">No rules yet</td></tr>
+{% endif %}
+</tbody>
+</table>

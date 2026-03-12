@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finance Tagger</title>
+<script src="/static/htmx.min.js"></script>
+<style>
+:root {
+  --bg: #1a1a2e;
+  --bg2: #16213e;
+  --bg3: #0f3460;
+  --fg: #e0e0e0;
+  --fg2: #a0a0b0;
+  --accent: #00b4d8;
+  --success: #2ecc71;
+  --danger: #e74c3c;
+  --warn: #f39c12;
+  --border: #2a2a4a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.5; }
+.container { max-width: 1400px; margin: 0 auto; padding: 1rem; }
+h1 { color: var(--accent); margin-bottom: 0.5rem; font-size: 1.5rem; }
+.tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+.tab { padding: 0.5rem 1rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px 6px 0 0; cursor: pointer; color: var(--fg2); font-size: 0.9rem; }
+.tab.active { background: var(--bg3); color: var(--accent); border-bottom-color: var(--bg3); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Filters */
+.filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; align-items: end; }
+.filter-group { display: flex; flex-direction: column; gap: 0.2rem; }
+.filter-group label { font-size: 0.75rem; color: var(--fg2); text-transform: uppercase; }
+.filter-group input, .filter-group select { background: var(--bg2); border: 1px solid var(--border); color: var(--fg); padding: 0.4rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+.filter-group input[type="date"] { width: 150px; }
+.filter-group input[type="text"] { width: 200px; }
+.btn { padding: 0.4rem 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { opacity: 0.85; }
+.btn-warn { background: var(--warn); color: #000; }
+.btn-warn:hover { opacity: 0.85; }
+.btn-sm { padding: 0.2rem 0.5rem; font-size: 0.8rem; }
+.checkbox-group { display: flex; align-items: center; gap: 0.3rem; padding-top: 1.2rem; }
+.checkbox-group input { width: auto; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th { background: var(--bg3); color: var(--accent); padding: 0.5rem; text-align: left; position: sticky; top: 0; }
+td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); }
+tr:hover { background: var(--bg2); }
+tr.flash-success { animation: flashGreen 1s ease; }
+@keyframes flashGreen {
+  0% { background: rgba(46, 204, 113, 0.3); }
+  100% { background: transparent; }
+}
+td select { background: var(--bg2); border: 1px solid var(--border); color: var(--fg); padding: 0.2rem; border-radius: 3px; font-size: 0.8rem; max-width: 140px; }
+.amount-pos { color: var(--success); }
+.amount-neg { color: var(--danger); }
+
+/* Pagination */
+.pagination { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; justify-content: center; }
+.pagination a { color: var(--accent); text-decoration: none; padding: 0.3rem 0.6rem; border: 1px solid var(--border); border-radius: 4px; }
+.pagination a:hover { background: var(--bg3); }
+.pagination .current { background: var(--bg3); padding: 0.3rem 0.6rem; border-radius: 4px; }
+.count { color: var(--fg2); font-size: 0.8rem; text-align: center; margin-top: 0.3rem; }
+
+/* Rules */
+.rule-form { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; align-items: end; padding: 0.8rem; background: var(--bg2); border-radius: 6px; }
+.apply-result { padding: 0.8rem; border-radius: 6px; margin-bottom: 0.5rem; }
+.apply-result.success { background: rgba(46, 204, 113, 0.15); border: 1px solid var(--success); }
+.apply-details { margin-top: 0.3rem; padding-left: 1.5rem; font-size: 0.85rem; color: var(--fg2); }
+.error { color: var(--danger); }
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator { display: inline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Finance Tagger</h1>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('transactions')">Transactions</div>
+    <div class="tab" onclick="switchTab('rules')">Rules</div>
+  </div>
+
+  <!-- Transactions Tab -->
+  <div id="tab-transactions" class="tab-content active">
+    <form class="filters" hx-get="/transactions" hx-target="#tx-table" hx-trigger="submit" hx-push-url="false">
+      <div class="filter-group">
+        <label>From</label>
+        <input type="date" name="date_from">
+      </div>
+      <div class="filter-group">
+        <label>To</label>
+        <input type="date" name="date_to">
+      </div>
+      <div class="filter-group">
+        <label>Type</label>
+        <select name="tx_type">
+          <option value="">All</option>
+          {% for t in tx_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Group</label>
+        <select name="category_group">
+          <option value="">All</option>
+          {% for g in category_groups %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Search</label>
+        <input type="text" name="search" placeholder="description...">
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" name="unclassified" value="1" id="unclassified">
+        <label for="unclassified" style="font-size:0.85rem">Unclassified only</label>
+      </div>
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+
+    <div id="tx-table" hx-get="/transactions" hx-trigger="load" hx-swap="innerHTML">
+      <p style="color:var(--fg2)">Loading...</p>
+    </div>
+  </div>
+
+  <!-- Rules Tab -->
+  <div id="tab-rules" class="tab-content">
+    <div class="rule-form">
+      <div class="filter-group">
+        <label>Field</label>
+        <select name="match_field" form="add-rule-form">
+          <option value="description">description</option>
+          <option value="raw_description">raw_description</option>
+          <option value="raw_category">raw_category</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Pattern</label>
+        <input type="text" name="match_pattern" placeholder="%keyword%" form="add-rule-form" required>
+      </div>
+      <div class="filter-group">
+        <label>Type</label>
+        <select name="match_type" form="add-rule-form">
+          <option value="like">LIKE</option>
+          <option value="exact">Exact</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Set tx_type</label>
+        <select name="set_tx_type" form="add-rule-form">
+          <option value="">—</option>
+          {% for t in tx_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Set group</label>
+        <select name="set_category_group" form="add-rule-form">
+          <option value="">—</option>
+          {% for g in category_groups %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Set category</label>
+        <select name="set_category" form="add-rule-form">
+          <option value="">—</option>
+          {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Priority</label>
+        <input type="number" name="priority" value="100" style="width:70px" form="add-rule-form">
+      </div>
+      <div class="filter-group">
+        <label>Note</label>
+        <input type="text" name="note" placeholder="optional" form="add-rule-form">
+      </div>
+      <form id="add-rule-form" hx-post="/rules" hx-target="#rules-table" hx-swap="innerHTML" style="display:inline">
+        <button type="submit" class="btn btn-primary">Add Rule</button>
+      </form>
+    </div>
+
+    <div style="margin-bottom:1rem">
+      <button class="btn btn-warn" hx-post="/rules/apply" hx-target="#apply-result" hx-swap="innerHTML">
+        Apply All Rules
+      </button>
+      <span class="htmx-indicator">applying...</span>
+    </div>
+    <div id="apply-result"></div>
+
+    <div id="rules-table" hx-get="/rules" hx-trigger="load" hx-swap="innerHTML">
+      <p style="color:var(--fg2)">Loading rules...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+</body>
+</html>

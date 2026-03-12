@@ -38,7 +38,7 @@ Profile: `VPS_PROD` (VPS-base-config.nix → VPS_PROD-config.nix)
 
 Deploy: `ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"`
 
-## Docker Containers (16, rootless)
+## Docker Containers (17, rootless)
 
 All containers run as `akunito` user via rootless Docker. ALL ports bound to `127.0.0.1`.
 
@@ -60,6 +60,8 @@ All containers run as `akunito` user via rootless Docker. ALL ports bound to `12
 | unifi-network-app | unifi.akunito.com | — | Network controller |
 | unifi-mongodb | — | 27017 | MongoDB 4.4 for UniFi |
 | cloudflared | — | — | Cloudflare tunnel |
+
+| finance-tagger | finance.local.akunito.com | 8190 | Finance transaction tagger (Flask + htmx) |
 
 ## NixOS Native Services
 

@@ -1,0 +1,27 @@
+<tr id="tx-{{ row['id'] }}" {% if flash is defined and flash == 'success' %}class="flash-success"{% endif %}>
+  <td>{{ row['date'] }}</td>
+  <td title="{{ row['description'] }}">{{ row['description'][:50] }}</td>
+  <td class="{{ 'amount-pos' if row['amount'] >= 0 else 'amount-neg' }}">{{ "%.2f"|format(row['amount']) }}</td>
+  <td>{{ row['currency'] }}</td>
+  <td>
+    <select hx-put="/transactions/{{ row['id'] }}" hx-target="#tx-{{ row['id'] }}" hx-swap="outerHTML" hx-trigger="change" name="tx_type">
+      {% for t in tx_types %}
+      <option value="{{ t }}" {{ 'selected' if row['tx_type'] == t }}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </td>
+  <td>
+    <select hx-put="/transactions/{{ row['id'] }}" hx-target="#tx-{{ row['id'] }}" hx-swap="outerHTML" hx-trigger="change" name="category_group">
+      {% for g in category_groups %}
+      <option value="{{ g }}" {{ 'selected' if row['category_group'] == g }}>{{ g }}</option>
+      {% endfor %}
+    </select>
+  </td>
+  <td>
+    <select hx-put="/transactions/{{ row['id'] }}" hx-target="#tx-{{ row['id'] }}" hx-swap="outerHTML" hx-trigger="change" name="category">
+      {% for c in categories %}
+      <option value="{{ c }}" {{ 'selected' if row['category'] == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </td>
+</tr>

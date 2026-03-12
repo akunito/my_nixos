@@ -21,6 +21,7 @@ Services split between VPS and TrueNAS after migration (Feb 2026).
 | Obsidian-remote | obsidian.akunito.com | Remote Obsidian access |
 | UniFi | unifi.akunito.com | Network controller (MongoDB 4.4) |
 | Uptime Kuma | status.akunito.com | Public monitoring |
+| Finance Tagger | finance.local.akunito.com | Transaction classification UI (Flask + htmx, Tailscale-only) |
 
 ### Nextcloud
 
