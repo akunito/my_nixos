@@ -41,15 +41,8 @@ name = "LXC_plane"
 host = "192.168.8.86"
 ctid = 186
 
-[[docker_nodes]]
-name = "LXC_liftcraftTEST"
-host = "192.168.8.87"
-ctid = 187
-
-[[docker_nodes]]
-name = "LXC_portfolioprod"
-host = "192.168.8.88"
-ctid = 188
+# LXC_liftcraftTEST (was 192.168.8.87, ctid 187) → migrated to VPS
+# LXC_portfolioprod (was 192.168.8.88, ctid 188) → migrated to VPS
 
 [[docker_nodes]]
 name = "LXC_mailer"
