@@ -636,18 +636,28 @@ def _parse_revolut_transaction(obj):
     merchant_address = merchant.get("address")
     merchant_mcc = merchant.get("mcc")
 
-    # Counterpart (for transfers)
-    counterpart = obj.get("counterpart") or {}
-    recipient_name = counterpart.get("name")
-
     source_description = obj.get("description", "")
+
+    # Extract recipient from description for transfers
+    recipient_name = None
+    if revolut_type == "TRANSFER" and source_description:
+        for prefix in ("To ", "From "):
+            if source_description.startswith(prefix):
+                name = source_description[len(prefix):]
+                # Skip pocket/savings transfers like "To PLN", "To pocket PLN ..."
+                if not any(name.startswith(c) for c in ("PLN", "EUR", "USD", "GBP", "BTC", "ETH", "XRP", "DOT", "pocket")):
+                    recipient_name = name
+                break
 
     # Localised description
     loc_desc_obj = obj.get("localisedDescription") or {}
     if isinstance(loc_desc_obj, dict):
-        loc_params = loc_desc_obj.get("params") or {}
+        loc_params = loc_desc_obj.get("params") or []
         if loc_params:
-            parts = [str(v) for v in loc_params.values() if v]
+            if isinstance(loc_params, list):
+                parts = [str(d.get("value", "")) for d in loc_params if isinstance(d, dict) and d.get("value")]
+            else:
+                parts = [str(v) for v in loc_params.values() if v]
             localised_description = " ".join(parts) if parts else loc_desc_obj.get("key", "")
         else:
             localised_description = loc_desc_obj.get("key", "")
@@ -655,10 +665,6 @@ def _parse_revolut_transaction(obj):
         localised_description = loc_desc_obj
     else:
         localised_description = None
-
-    # Fall back to localised_description for transfers without counterpart
-    if not recipient_name and revolut_type == "TRANSFER" and localised_description:
-        recipient_name = localised_description
 
     user_comment = obj.get("comment") or obj.get("note")
     revolut_tag = obj.get("tag")

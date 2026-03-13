@@ -42,13 +42,16 @@
   <ol style="padding-left:1.5rem;margin-top:0.5rem;color:var(--fg2);font-size:0.9rem;">
     <li>Open <a href="https://app.revolut.com" target="_blank" style="color:var(--accent)">app.revolut.com</a> and log in</li>
     <li>Open DevTools Console (F12 &rarr; Console tab)</li>
-    <li>Copy-paste the export script (<code>revolut-export.js</code> from the repo)</li>
-    <li>Wait for completion (progress shown in console)</li>
+    <li>Copy-paste the export script (<code>revolut-export.js</code> from the repo) and press Enter</li>
+    <li><strong>Click around in the app</strong> (e.g. open transactions or accounts) &mdash; this triggers the header capture</li>
+    <li>Wait for the script to paginate through all pockets (progress shown in console)</li>
+    <li>A JSON file downloads automatically when done</li>
     <li>Upload the downloaded JSON file using the form above</li>
   </ol>
   <p style="margin-top:0.5rem;color:var(--fg2);font-size:0.85rem;">
-    The script auto-discovers all your pockets/currencies, paginates through all transactions,
-    and downloads a single JSON file. Rate-limited to avoid blocks (500ms between requests).
+    The script intercepts the app&rsquo;s own API calls to capture auth headers (including
+    the dynamic <code>X-Device-Id</code>), then paginates through all pockets/currencies.
+    Rate-limited to 500ms between requests. Re-uploading is safe &mdash; duplicates are skipped.
   </p>
 </details>
 

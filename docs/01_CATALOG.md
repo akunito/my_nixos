@@ -79,7 +79,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/headscale.nix**: Headscale — Self-hosted Tailscale Coordination Server *Enabled when:*
    - `systemSettings.headscaleEnable or false`
    - `ACME challenge`
-- **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:* `systemSettings.homelabDockerEnable or false`
+- **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:*
+   - `systemSettings.homelabDockerEnable or false`
+   - `(systemSettings.financeUser or "") != ""`
 - **system/app/mariadb.nix**: MariaDB Server Module *Enabled when:*
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
@@ -433,6 +435,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/hardware.md**: Complete guide to hardware-specific configurations and optimizations.
 - **docs/akunito/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
 - **docs/akunito/security.md**: Complete guide to security configurations and features in this NixOS setup.
+
+### Akunito / Finance
+
+- **docs/akunito/finance/revolut-enrichment.md**: Enrichment data supplements bank transactions imported via CSV with additional details from the Revolut API: merchant location, user comments, tags, recipient names, and localised descriptions.
 
 ### Akunito / Gaming
 

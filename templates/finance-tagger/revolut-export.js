@@ -2,48 +2,92 @@
  * Revolut Transaction Export Script
  *
  * Run this in the browser console while logged into app.revolut.com.
- * It paginates through all transactions across all pockets (accounts)
- * and downloads a JSON file with the full API data.
+ * It intercepts the app's XHR requests to capture auth headers (including
+ * the dynamically generated X-Device-Id), then paginates through all
+ * transactions across all pockets and downloads a JSON file.
  *
  * Usage:
  *   1. Log in to app.revolut.com
  *   2. Open DevTools (F12) → Console tab
  *   3. Paste this entire script and press Enter
- *   4. Wait for completion (progress shown in console)
- *   5. A JSON file will be downloaded automatically
+ *   4. Click around in the app (e.g. open transactions) to trigger header capture
+ *   5. Wait for completion (progress shown in console)
+ *   6. A JSON file will be downloaded automatically
  */
 (async function exportRevolutTransactions() {
-  const BATCH_SIZE = 50;
-  const DELAY_MS = 500;
+  var BATCH_SIZE = 50;
+  var DELAY_MS = 500;
 
-  // --- Discover all pockets (accounts) ---
-  console.log('[Revolut Export] Discovering accounts...');
-  let pockets;
-  try {
-    const resp = await fetch('/api/retail/user/current/wallet', {
+  // --- Step 1: Intercept XHR to capture auth headers ---
+  var capturedHeaders = {};
+  var headersCaptured = false;
+  var origOpen = XMLHttpRequest.prototype.open;
+  var origSetHeader = XMLHttpRequest.prototype.setRequestHeader;
+
+  XMLHttpRequest.prototype.open = function(m, url) {
+    this._isRetail = (typeof url === 'string' && url.indexOf('/api/retail/') !== -1);
+    return origOpen.apply(this, arguments);
+  };
+  XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
+    if (this._isRetail) {
+      capturedHeaders[name] = value;
+      headersCaptured = true;
+    }
+    return origSetHeader.apply(this, arguments);
+  };
+
+  console.log('[Revolut Export] Waiting for auth headers (click around in the app)...');
+
+  // Wait up to 30s for the app to make an API call
+  var waited = 0;
+  while (!headersCaptured && waited < 30000) {
+    await new Promise(function(r) { setTimeout(r, 500); });
+    waited += 500;
+  }
+
+  // Restore XHR prototypes
+  XMLHttpRequest.prototype.open = origOpen;
+  XMLHttpRequest.prototype.setRequestHeader = origSetHeader;
+
+  if (!headersCaptured) {
+    console.error('[Revolut Export] Timeout: no API requests captured. Click on your transactions and try again.');
+    return;
+  }
+
+  console.log('[Revolut Export] Headers captured (' + Object.keys(capturedHeaders).length + ' headers)');
+
+  // Helper: make API requests using captured headers
+  function apiGet(path) {
+    return fetch(path, {
       credentials: 'include',
+      headers: capturedHeaders,
     });
+  }
+
+  // --- Step 2: Discover all pockets (accounts) ---
+  console.log('[Revolut Export] Discovering accounts...');
+  var pockets;
+  try {
+    var resp = await apiGet('/api/retail/user/current/wallet');
     if (!resp.ok) throw new Error('Wallet API returned ' + resp.status);
-    const wallet = await resp.json();
+    var wallet = await resp.json();
     pockets = wallet.pockets || [];
     console.log(
       '[Revolut Export] Found ' + pockets.length + ' pockets: ' +
       pockets.map(function(p) { return p.currency + ' (' + p.id + ')'; }).join(', ')
     );
   } catch (e) {
-    console.error(
-      '[Revolut Export] Failed to discover pockets. ' +
-      'Make sure you are logged into app.revolut.com'
-    );
+    console.error('[Revolut Export] Failed to discover pockets.');
     console.error(e);
     return;
   }
 
   if (pockets.length === 0) {
-    console.error('[Revolut Export] No pockets found. Are you logged in?');
+    console.error('[Revolut Export] No pockets found.');
     return;
   }
 
+  // --- Step 3: Paginate through all transactions ---
   var allTransactions = [];
   var seenIds = {};
 
@@ -68,7 +112,7 @@
 
       var batch;
       try {
-        var resp = await fetch(url, { credentials: 'include' });
+        var resp = await apiGet(url);
         if (!resp.ok) {
           if (resp.status === 429) {
             console.warn('[Revolut Export] Rate limited, waiting 5s...');
