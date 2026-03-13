@@ -141,6 +141,8 @@ def ensure_enrichment_table():
     """)
     db.execute("CREATE INDEX IF NOT EXISTS idx_enr_tx_id ON transaction_enrichment(transaction_id)")
     db.execute("CREATE INDEX IF NOT EXISTS idx_enr_revolut_id ON transaction_enrichment(revolut_id)")
+    # Index on transactions table for faster enrichment matching lookups
+    db.execute("CREATE INDEX IF NOT EXISTS idx_tx_date_currency_amount ON transactions(date, currency, amount)")
     db.commit()
 
 
@@ -696,27 +698,24 @@ def _parse_revolut_transaction(obj):
     }
 
 
-def _match_enrichment_to_transaction(db, enrichment):
-    """Match an enrichment record to an existing transaction.
+def _try_match(db, date, amount, currency, desc, date_range, amount_tol, suffix):
+    """Try to match a single enrichment record within the given date/amount window.
 
     Returns (transaction_id, confidence) tuple.
-    Tiers: exact → fuzzy → loose → none.
     """
-    date = enrichment["source_date"]
-    amount = enrichment["source_amount"]
-    currency = enrichment["source_currency"]
-    desc = enrichment["source_description"] or ""
-
-    if not date or amount is None:
-        return None, "none"
-
     abs_amount = abs(amount)
 
-    # Find candidates: same date, same currency, matching absolute amount (±0.005)
+    if date_range == 0:
+        date_clause = "date = ?"
+        date_params = [date]
+    else:
+        date_clause = "date BETWEEN date(?, ?) AND date(?, ?)"
+        date_params = [date, f"-{date_range} days", date, f"+{date_range} days"]
+
     rows = db.execute(
-        "SELECT id, description FROM transactions "
-        "WHERE date = ? AND ABS(amount) BETWEEN ? AND ? AND currency = ?",
-        (date, abs_amount - 0.005, abs_amount + 0.005, currency)
+        f"SELECT id, description FROM transactions "
+        f"WHERE {date_clause} AND ABS(amount) BETWEEN ? AND ? AND currency = ?",
+        (*date_params, abs_amount - amount_tol, abs_amount + amount_tol, currency)
     ).fetchall()
 
     if not rows:
@@ -728,7 +727,7 @@ def _match_enrichment_to_transaction(db, enrichment):
             tx_desc = (row["description"] or "").lower()
             src_desc = desc.lower()
             if src_desc in tx_desc or tx_desc in src_desc:
-                return row["id"], "exact"
+                return row["id"], f"exact{suffix}"
 
     # Tier 2 — Fuzzy: word overlap ≥ 2
     if desc:
@@ -736,13 +735,44 @@ def _match_enrichment_to_transaction(db, enrichment):
             tx_words = set((row["description"] or "").lower().split())
             src_words = set(desc.lower().split())
             if len(tx_words & src_words) >= 2:
-                return row["id"], "fuzzy"
+                return row["id"], f"fuzzy{suffix}"
 
     # Tier 3 — Loose: single candidate
     if len(rows) == 1:
-        return rows[0]["id"], "loose"
+        return rows[0]["id"], f"loose{suffix}"
 
     return None, "none"
+
+
+def _match_enrichment_to_transaction(db, enrichment):
+    """Match an enrichment record to an existing transaction.
+
+    Returns (transaction_id, confidence) tuple.
+    Uses multi-pass matching with progressively wider date/amount windows:
+      Pass 1: exact date, ±0.005 amount
+      Pass 2: ±1 day, ±0.02 amount (settlement date offset)
+      Pass 3: ±2 days, ±0.02 amount (weekend/holiday delays)
+    """
+    date = enrichment["source_date"]
+    amount = enrichment["source_amount"]
+    currency = enrichment["source_currency"]
+    desc = enrichment["source_description"] or ""
+
+    if not date or amount is None:
+        return None, "none"
+
+    # Pass 1: exact date, tight tolerance
+    result = _try_match(db, date, amount, currency, desc, date_range=0, amount_tol=0.005, suffix="")
+    if result[0]:
+        return result
+
+    # Pass 2: ±1 day, wider tolerance (Revolut UTC vs bank settlement date)
+    result = _try_match(db, date, amount, currency, desc, date_range=1, amount_tol=0.02, suffix="_fuzzydate")
+    if result[0]:
+        return result
+
+    # Pass 3: ±2 days (weekend/holiday settlement delays)
+    return _try_match(db, date, amount, currency, desc, date_range=2, amount_tol=0.02, suffix="_extdate")
 
 
 # --- Enrichment routes ---
