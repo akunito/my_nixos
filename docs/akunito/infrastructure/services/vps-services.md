@@ -38,14 +38,15 @@ Profile: `VPS_PROD` (VPS-base-config.nix → VPS_PROD-config.nix)
 
 Deploy: `ssh -A -p 56777 akunito@100.64.0.6 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles VPS_PROD -s -u -d"`
 
-## Docker Containers (17, rootless)
+## Docker Containers (16, rootless)
 
 All containers run as `akunito` user via rootless Docker. ALL ports bound to `127.0.0.1`.
+
+**Note**: LiftCraft (leftyworkout) runs from `~/Projects/leftyworkout` (separate repo, not a homelab stack). See domain `leftyworkout-test.akunito.com` on ports 3000 (BE) / 3001 (FE).
 
 | Container | Domain | Port | Notes |
 |-----------|--------|------|-------|
 | portfolio | info.akunito.com | — | Static/Node app |
-| liftcraft | leftyworkout-test.akunito.com | 3001 | Rails app |
 | plane | plane.akunito.com | 3000 | Project management |
 | matrix-synapse | matrix.akunito.com | 8008 | Federation server |
 | element-web | element.akunito.com | 8088 | Matrix web client |

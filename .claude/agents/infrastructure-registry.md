@@ -48,7 +48,7 @@ All doc paths relative to `docs/akunito/infrastructure/`.
 | Container | Domain | Port | DB | Template |
 |-----------|--------|------|----|----------|
 | portfolio | info.akunito.com | 3005 | — | `portfolio` |
-| liftcraft | leftyworkout-test.akunito.com | 3001 | pg:rails_database_prod | `liftcraft` |
+| leftyworkout (test) | leftyworkout-test.akunito.com | 3001 (FE), 3000 (BE) | pg:rails_database_prod | `~/Projects/leftyworkout` (separate repo) |
 | plane | plane.akunito.com | 3000 | pg:plane, redis:db0 | `plane` |
 | matrix-synapse | matrix.akunito.com | 8008 | pg:matrix | `matrix/` |
 | element-web | element.akunito.com | 8088 | — | `matrix/` |
@@ -115,7 +115,7 @@ All module paths relative to `system/app/`.
 | Project | Path | Tech Stack | Environment | Git Remote | CLAUDE.md | Plane ID |
 |---------|------|------------|-------------|------------|-----------|----------|
 | portfolio | `~/Projects/portfolio/` | Next.js + Python + Docker | dev (DESK), prod (VPS Docker) | github:akunito/portfolio | Yes | APORT |
-| leftyworkout (LiftCraft) | `~/Projects/leftyworkout/` | Rails + React + Docker | dev (DESK), prod (VPS Docker) | github:akunito/leftyworkout | No | LW |
+| leftyworkout (LiftCraft) | `~/Projects/leftyworkout/` | Rails + React + Docker | dev (DESK), test+prod (VPS `~/Projects/leftyworkout`) | github:akunito/lefty_workout | No | LW |
 | portfolio_komi | `~/Projects/portfolio_komi/` | Next.js | dev (DESK) | github:ko-mi/... | No | — (komi) |
 | odin_rails_01 | `~/Projects/odin_rails_01/` | Rails + React + Docker | dev only | github:akunito/odin_rails_01 | No | — |
 | odin_rails_02_blog | `~/Projects/odin_rails_02_blog/` | Rails + Docker | dev only | github:akunito/... | No | — |

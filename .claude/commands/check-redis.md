@@ -79,11 +79,11 @@ ssh -A -p 56777 akunito@100.64.0.6 "docker exec nextcloud-app cat /var/www/html/
 ssh -A -p 56777 akunito@100.64.0.6 "redis-cli -a \$(sudo cat /etc/secrets/redis-password) -n 2 DBSIZE"
 
 # Check Rails cache store type
-ssh -A -p 56777 akunito@100.64.0.6 "docker exec liftcraft-backend bin/rails runner \"puts Rails.cache.class\"" 2>/dev/null
+ssh -A -p 56777 akunito@100.64.0.6 "docker exec leftyworkout-backend-1 bin/rails runner \"puts Rails.cache.class\"" 2>/dev/null
 # Expected: ActiveSupport::Cache::RedisCacheStore
 
 # Test Redis connection from Rails
-ssh -A -p 56777 akunito@100.64.0.6 "docker exec liftcraft-backend bin/rails runner \"require 'redis'; r = Redis.new(url: ENV['REDIS_URL']); puts r.ping\"" 2>/dev/null
+ssh -A -p 56777 akunito@100.64.0.6 "docker exec leftyworkout-backend-1 bin/rails runner \"require 'redis'; r = Redis.new(url: ENV['REDIS_URL']); puts r.ping\"" 2>/dev/null
 # Expected: PONG
 ```
 

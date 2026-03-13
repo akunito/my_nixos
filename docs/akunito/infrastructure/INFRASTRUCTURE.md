@@ -18,7 +18,7 @@ INTERNET
     |         v
     |   [Netcup VPS - RS 4000 G12, Nuremberg]
     |     NixOS, LUKS encrypted, rootless Docker
-    |     15 containers + native services (DB, monitoring, mail)
+    |     15 homelab containers + native services (DB, monitoring, mail)
     |         |
     |         | Tailscale mesh (100.x.x.x) + WireGuard backup (172.26.5.x)
     |         v
@@ -53,7 +53,9 @@ DECOMMISSIONED (Feb 2026):
 | NixOS Profile | VPS_PROD |
 | Encryption | LUKS full-disk, initrd SSH unlock on port 2222 |
 
-**Docker containers (16, rootless)**: portfolio, liftcraft, plane, matrix-synapse, element-web, matrix-redis, miniflux, miniflux-ai, nextcloud, nextcloud-cron, syncthing, obsidian-remote, uptime-kuma, unifi-network-app, unifi-mongodb, cloudflared
+**Docker containers (15, rootless)**: portfolio, plane, matrix-synapse, element-web, matrix-redis, miniflux, miniflux-ai, nextcloud, nextcloud-cron, syncthing, obsidian-remote, uptime-kuma, unifi-network-app, unifi-mongodb, cloudflared
+
+**Separate repos (Docker, not homelab stacks)**: LiftCraft (`~/Projects/leftyworkout`, leftyworkout-test.akunito.com)
 
 **NixOS native services**: PostgreSQL 17 (plane, liftcraft, matrix, miniflux, vaultwarden), MariaDB 11, Redis 7, Vaultwarden, Prometheus, Grafana, Postfix relay, Headscale, fail2ban, node-exporter, blackbox-exporter, snmp-exporter, graphite-exporter, postgres-exporter, mysqld-exporter, redis-exporter
 
