@@ -49,21 +49,8 @@
         identityFile = "~/.ssh/id_ed25519";
         extraOptions.AddKeysToAgent = "yes";
       };
-      "ssh-leftyworkout-test.akunito.com" = {
-        user = "admin";
-        proxyCommand = "cloudflared access ssh --hostname %h";
-        forwardAgent = true;
-      };
-      "leftyworkoutTest" = {
-        hostname = "192.168.8.87";
-        user = "admin";
-        forwardAgent = true;
-      };
-      "portfolioprod" = {
-        hostname = "192.168.8.88";
-        user = "admin";
-        forwardAgent = true;
-      };
+      # leftyworkoutTest and portfolioprod LXCs (192.168.8.87, 192.168.8.88)
+      # migrated to VPS — use "ssh vps" instead
     };
   };
 }

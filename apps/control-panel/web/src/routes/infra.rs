@@ -250,9 +250,8 @@ const LXC_SERVERS: &[LxcServer] = &[
     LxcServer { profile: "LXC_HOME", ip: "192.168.8.80", description: "Homelab services" },
     LxcServer { profile: "LXC_proxy", ip: "192.168.8.102", description: "Cloudflare tunnel & NPM" },
     LxcServer { profile: "LXC_plane", ip: "192.168.8.86", description: "Production container" },
-    LxcServer { profile: "LXC_portfolioprod", ip: "192.168.8.88", description: "Portfolio service" },
+    // LXC_liftcraftTEST and LXC_portfolioprod migrated to VPS (100.64.0.6)
     LxcServer { profile: "LXC_mailer", ip: "192.168.8.89", description: "Mail & monitoring" },
-    LxcServer { profile: "LXC_liftcraftTEST", ip: "192.168.8.87", description: "Test environment" },
     LxcServer { profile: "LXC_monitoring", ip: "192.168.8.85", description: "Prometheus & Grafana monitoring" },
     LxcServer { profile: "LXC_database", ip: "192.168.8.103", description: "Centralized PostgreSQL, MariaDB & Redis" },
 ];

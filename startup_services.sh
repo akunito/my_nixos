@@ -56,9 +56,9 @@ case $hostname in
                     echo -e "Mounting homelab HDD_4TB via SSHFS..."
                     sshfs akunito@192.168.8.80:/mnt/HDD_4TB /home/akunito/Volumes/homelab_HDD_4TB
                     ;;
-                4)  
-                    echo -e "Mounting leftyworkout_TEST project via SSHFS..."
-                    sshfs admin@192.168.8.87:/admin/leftyworkout_TEST /home/akunito/Volumes/leftyworkout_TEST
+                4)
+                    echo -e "Mounting leftyworkout (VPS) project via SSHFS..."
+                    sshfs -p 56777 akunito@100.64.0.6:/home/akunito/Projects/leftyworkout /home/akunito/Volumes/leftyworkout_TEST
                     ;;
                 5)
                     echo -e "Starting NFS media mount..."
