@@ -776,15 +776,15 @@ def upload_enrichment():
 
     file = request.files.get("file")
     if not file:
-        return "<div class='error'>No file uploaded</div>", 400
+        return "<div class='apply-result' style='border:1px solid var(--danger);color:var(--danger)'>No file uploaded</div>", 400
 
     try:
         data = json.loads(file.read())
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
-        return f"<div class='error'>Invalid JSON: {e}</div>", 400
+        return f"<div class='apply-result' style='border:1px solid var(--danger);color:var(--danger)'>Invalid JSON: {e}</div>", 400
 
     if not isinstance(data, list):
-        return "<div class='error'>Expected a JSON array</div>", 400
+        return "<div class='apply-result' style='border:1px solid var(--danger);color:var(--danger)'>Expected a JSON array</div>", 400
 
     stats = {"imported": 0, "skipped": 0, "matched": 0, "errors": 0}
 

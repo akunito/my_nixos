@@ -17,10 +17,14 @@
 
 <!-- Upload form -->
 <div style="margin-bottom:1rem;padding:0.8rem;background:var(--bg2);border-radius:6px;">
-  <form hx-post="/enrichment/upload" hx-target="#enrichment-results" hx-swap="innerHTML" hx-encoding="multipart/form-data">
+  <form hx-post="/enrichment/upload" hx-target="#enrichment-results" hx-swap="innerHTML"
+        hx-encoding="multipart/form-data" hx-indicator="#upload-spinner" hx-disabled-elt="find button">
     <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
       <input type="file" name="file" accept=".json" required style="color:var(--fg)">
       <button type="submit" class="btn btn-primary">Upload &amp; Import</button>
+      <span id="upload-spinner" class="htmx-indicator" style="color:var(--accent);font-size:0.9rem;">
+        &#9203; Importing&hellip; this may take a minute for large files
+      </span>
     </div>
   </form>
   <div id="enrichment-results" style="margin-top:0.5rem"></div>
@@ -99,3 +103,12 @@
 </tbody>
 </table>
 {% endif %}
+
+<!-- Swap error responses into the results div so the user sees them -->
+<script>
+document.body.addEventListener('htmx:beforeSwap', function(evt) {
+  if (evt.detail.target && evt.detail.target.id === 'enrichment-results') {
+    evt.detail.shouldSwap = true;
+  }
+});
+</script>
