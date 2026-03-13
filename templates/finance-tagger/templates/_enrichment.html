@@ -30,13 +30,18 @@
   <div id="enrichment-results" style="margin-top:0.5rem"></div>
 </div>
 
-<!-- Rematch button -->
+<!-- Rematch / Clear buttons -->
 {% if total > 0 %}
-<div style="margin-bottom:1rem">
+<div style="margin-bottom:1rem;display:flex;gap:0.5rem;flex-wrap:wrap">
   <button class="btn btn-warn"
           hx-post="/enrichment/rematch"
           hx-target="#enrichment-results"
           hx-swap="innerHTML">Re-match Unlinked Records</button>
+  <button class="btn btn-danger"
+          hx-post="/enrichment/clear"
+          hx-target="#tab-enrichment"
+          hx-swap="innerHTML"
+          hx-confirm="Delete ALL enrichment data? This cannot be undone.">Clear All Enrichment</button>
 </div>
 {% endif %}
 

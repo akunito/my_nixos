@@ -701,6 +701,11 @@ def _parse_revolut_transaction(obj):
 def _try_match(db, date, amount, currency, desc, date_range, amount_tol, suffix):
     """Try to match a single enrichment record within the given date/amount window.
 
+    Only matches against poorly-categorized transactions that need enrichment:
+    - category is 'Revolut Misc', 'Other', or NULL
+    - tx_type is 'unknown'
+    - description contains 'Revolut Bank UAB' (generic bank description)
+
     Returns (transaction_id, confidence) tuple.
     """
     abs_amount = abs(amount)
@@ -714,7 +719,9 @@ def _try_match(db, date, amount, currency, desc, date_range, amount_tol, suffix)
 
     rows = db.execute(
         f"SELECT id, description FROM transactions "
-        f"WHERE {date_clause} AND ABS(amount) BETWEEN ? AND ? AND currency = ?",
+        f"WHERE {date_clause} AND ABS(amount) BETWEEN ? AND ? AND currency = ? "
+        f"AND (category IN ('Revolut Misc', 'Other') OR category IS NULL "
+        f"     OR tx_type = 'unknown' OR description LIKE '%Revolut Bank UAB%')",
         (*date_params, abs_amount - amount_tol, abs_amount + amount_tol, currency)
     ).fetchall()
 
@@ -903,6 +910,17 @@ def delete_enrichment(enr_id):
     db = get_db()
     ensure_enrichment_table()
     db.execute("DELETE FROM transaction_enrichment WHERE id = ?", (enr_id,))
+    db.commit()
+    return redirect(url_for("enrichment"), code=303)
+
+
+@app.route("/enrichment/clear", methods=["POST"])
+@login_required
+def clear_enrichment():
+    db = get_db()
+    ensure_enrichment_table()
+    count = db.execute("SELECT COUNT(*) FROM transaction_enrichment").fetchone()[0]
+    db.execute("DELETE FROM transaction_enrichment")
     db.commit()
     return redirect(url_for("enrichment"), code=303)
 
