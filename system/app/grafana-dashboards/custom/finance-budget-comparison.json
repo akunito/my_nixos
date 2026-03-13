@@ -105,9 +105,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT ROUND(AVG(pct), 1) as value FROM (SELECT substr(t.date,1,7) as month, SUM(ABS(COALESCE(t.amount_base, t.amount))) / NULLIF((SELECT SUM(monthly_limit) FROM budget_targets WHERE monthly_limit > 0), 0) * 100 as pct FROM transactions t WHERE t.tx_type='expense' AND t.date >= date('now', '-12 months') GROUP BY month)",
+          "rawQueryText": "SELECT ROUND(AVG(pct), 1) as value FROM (SELECT substr(t.date,1,7) as month, SUM(ABS((t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)))) / NULLIF((SELECT SUM(b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) FROM budget_targets b WHERE b.monthly_limit > 0), 0) * 100 as pct FROM transactions t WHERE t.tx_type='expense' AND t.date >= date('now', '-12 months') GROUP BY month)",
           "refId": "A",
-          "queryText": "SELECT ROUND(AVG(pct), 1) as value FROM (SELECT substr(t.date,1,7) as month, SUM(ABS(COALESCE(t.amount_base, t.amount))) / NULLIF((SELECT SUM(monthly_limit) FROM budget_targets WHERE monthly_limit > 0), 0) * 100 as pct FROM transactions t WHERE t.tx_type='expense' AND t.date >= date('now', '-12 months') GROUP BY month)"
+          "queryText": "SELECT ROUND(AVG(pct), 1) as value FROM (SELECT substr(t.date,1,7) as month, SUM(ABS((t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)))) / NULLIF((SELECT SUM(b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) FROM budget_targets b WHERE b.monthly_limit > 0), 0) * 100 as pct FROM transactions t WHERE t.tx_type='expense' AND t.date >= date('now', '-12 months') GROUP BY month)"
         }
       ],
       "title": "Avg 12mo Budget Utilization",
@@ -133,7 +133,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -193,9 +194,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category_group IN (${category_group:sqlstring}) GROUP BY month, category ORDER BY month DESC, spent DESC",
+          "rawQueryText": "SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category_group IN (${category_group:sqlstring}) GROUP BY month, category ORDER BY month DESC, spent DESC",
           "refId": "A",
-          "queryText": "SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category_group IN (${category_group:sqlstring}) GROUP BY month, category ORDER BY month DESC, spent DESC"
+          "queryText": "SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category_group IN (${category_group:sqlstring}) GROUP BY month, category ORDER BY month DESC, spent DESC"
         }
       ],
       "title": "Category Spending by Month (12mo)",
@@ -221,7 +222,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -327,9 +329,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT m.month, b.category, COALESCE(t.spent, 0) as actual_spent, b.monthly_limit as budget_limit, CASE WHEN b.monthly_limit > 0 THEN ROUND(COALESCE(t.spent, 0) / b.monthly_limit * 100, 1) ELSE NULL END as pct_used FROM budget_targets b CROSS JOIN (SELECT DISTINCT substr(date,1,7) as month FROM transactions WHERE date >= date('now', '-12 months')) m LEFT JOIN (SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') GROUP BY month, category) t ON t.month = m.month AND t.category = b.category WHERE b.monthly_limit > 0 AND b.category IN (${category:sqlstring}) ORDER BY m.month DESC, b.category",
+          "rawQueryText": "SELECT m.month, b.category, COALESCE(t.spent, 0) as actual_spent, (b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) as budget_limit, CASE WHEN b.monthly_limit > 0 THEN ROUND(COALESCE(t.spent, 0) / (b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) * 100, 1) ELSE NULL END as pct_used FROM budget_targets b CROSS JOIN (SELECT DISTINCT substr(date,1,7) as month FROM transactions WHERE date >= date('now', '-12 months')) m LEFT JOIN (SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') GROUP BY month, category) t ON t.month = m.month AND t.category = b.category WHERE b.monthly_limit > 0 AND b.category IN (${category:sqlstring}) ORDER BY m.month DESC, b.category",
           "refId": "A",
-          "queryText": "SELECT m.month, b.category, COALESCE(t.spent, 0) as actual_spent, b.monthly_limit as budget_limit, CASE WHEN b.monthly_limit > 0 THEN ROUND(COALESCE(t.spent, 0) / b.monthly_limit * 100, 1) ELSE NULL END as pct_used FROM budget_targets b CROSS JOIN (SELECT DISTINCT substr(date,1,7) as month FROM transactions WHERE date >= date('now', '-12 months')) m LEFT JOIN (SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') GROUP BY month, category) t ON t.month = m.month AND t.category = b.category WHERE b.monthly_limit > 0 AND b.category IN (${category:sqlstring}) ORDER BY m.month DESC, b.category"
+          "queryText": "SELECT m.month, b.category, COALESCE(t.spent, 0) as actual_spent, (b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) as budget_limit, CASE WHEN b.monthly_limit > 0 THEN ROUND(COALESCE(t.spent, 0) / (b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) * 100, 1) ELSE NULL END as pct_used FROM budget_targets b CROSS JOIN (SELECT DISTINCT substr(date,1,7) as month FROM transactions WHERE date >= date('now', '-12 months')) m LEFT JOIN (SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') GROUP BY month, category) t ON t.month = m.month AND t.category = b.category WHERE b.monthly_limit > 0 AND b.category IN (${category:sqlstring}) ORDER BY m.month DESC, b.category"
         }
       ],
       "title": "Budget vs Actual (12 Months)",
@@ -355,7 +357,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "color": {
             "mode": "palette-classic"
           },
@@ -392,9 +395,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT substr(date,1,7) || '-07' as time, category_group, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='expense' AND category_group IN ('Essential', 'Discretionary') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7), category_group ORDER BY time",
+          "rawQueryText": "SELECT substr(date,1,7) || '-07' as time, category_group, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as total FROM transactions WHERE tx_type='expense' AND category_group IN ('Essential', 'Discretionary') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7), category_group ORDER BY time",
           "refId": "A",
-          "queryText": "SELECT substr(date,1,7) || '-07' as time, category_group, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='expense' AND category_group IN ('Essential', 'Discretionary') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7), category_group ORDER BY time"
+          "queryText": "SELECT substr(date,1,7) || '-07' as time, category_group, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as total FROM transactions WHERE tx_type='expense' AND category_group IN ('Essential', 'Discretionary') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7), category_group ORDER BY time"
         }
       ],
       "title": "Essential vs Discretionary Trend (12mo)",
@@ -407,7 +410,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "color": {
             "mode": "palette-classic"
           },
@@ -481,9 +485,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total_spent, (SELECT SUM(monthly_limit) FROM budget_targets WHERE monthly_limit > 0) as total_budget FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
+          "rawQueryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as total_spent, (SELECT SUM(b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) FROM budget_targets b WHERE b.monthly_limit > 0) as total_budget FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
           "refId": "A",
-          "queryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total_spent, (SELECT SUM(monthly_limit) FROM budget_targets WHERE monthly_limit > 0) as total_budget FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
+          "queryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as total_spent, (SELECT SUM(b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) FROM budget_targets b WHERE b.monthly_limit > 0) as total_budget FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
         }
       ],
       "title": "Total Spend vs Total Budget (12mo)",
@@ -523,7 +527,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -538,7 +543,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "change_pln"
+              "options": "change_${currency}"
             },
             "properties": [
               {
@@ -623,7 +628,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "change_pln"
+            "displayName": "change_${currency}"
           }
         ]
       },
@@ -633,9 +638,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "WITH curr AS (SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND category_group IN (${category_group:sqlstring}) GROUP BY category), prev AS (SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('${cycle}-07', '-1 month') AND date < '${cycle}-07' AND category_group IN (${category_group:sqlstring}) GROUP BY category) SELECT curr.category, curr.spent as current_spend, COALESCE(prev.spent, 0) as prev_spend, ROUND(curr.spent - COALESCE(prev.spent, 0), 2) as change_pln, CASE WHEN COALESCE(prev.spent, 0) > 0 THEN ROUND((curr.spent - prev.spent) / prev.spent * 100, 1) ELSE NULL END as change_pct FROM curr LEFT JOIN prev ON prev.category = curr.category ORDER BY change_pln DESC",
+          "rawQueryText": "WITH curr AS (SELECT category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND category_group IN (${category_group:sqlstring}) GROUP BY category), prev AS (SELECT category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('${cycle}-07', '-1 month') AND date < '${cycle}-07' AND category_group IN (${category_group:sqlstring}) GROUP BY category) SELECT curr.category, curr.spent as current_spend, COALESCE(prev.spent, 0) as prev_spend, ROUND(curr.spent - COALESCE(prev.spent, 0), 2) as \"change_${currency}\", CASE WHEN COALESCE(prev.spent, 0) > 0 THEN ROUND((curr.spent - prev.spent) / prev.spent * 100, 1) ELSE NULL END as change_pct FROM curr LEFT JOIN prev ON prev.category = curr.category ORDER BY \"change_${currency}\" DESC",
           "refId": "A",
-          "queryText": "WITH curr AS (SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND category_group IN (${category_group:sqlstring}) GROUP BY category), prev AS (SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('${cycle}-07', '-1 month') AND date < '${cycle}-07' AND category_group IN (${category_group:sqlstring}) GROUP BY category) SELECT curr.category, curr.spent as current_spend, COALESCE(prev.spent, 0) as prev_spend, ROUND(curr.spent - COALESCE(prev.spent, 0), 2) as change_pln, CASE WHEN COALESCE(prev.spent, 0) > 0 THEN ROUND((curr.spent - prev.spent) / prev.spent * 100, 1) ELSE NULL END as change_pct FROM curr LEFT JOIN prev ON prev.category = curr.category ORDER BY change_pln DESC"
+          "queryText": "WITH curr AS (SELECT category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= '${cycle}-07' AND date < date('${cycle}-07', '+1 month') AND category_group IN (${category_group:sqlstring}) GROUP BY category), prev AS (SELECT category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' AND date >= date('${cycle}-07', '-1 month') AND date < '${cycle}-07' AND category_group IN (${category_group:sqlstring}) GROUP BY category) SELECT curr.category, curr.spent as current_spend, COALESCE(prev.spent, 0) as prev_spend, ROUND(curr.spent - COALESCE(prev.spent, 0), 2) as \"change_${currency}\", CASE WHEN COALESCE(prev.spent, 0) > 0 THEN ROUND((curr.spent - prev.spent) / prev.spent * 100, 1) ELSE NULL END as change_pct FROM curr LEFT JOIN prev ON prev.category = curr.category ORDER BY \"change_${currency}\" DESC"
         }
       ],
       "title": "Month-over-Month Spending Change",
@@ -658,7 +663,8 @@
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "currencyPLN",
+              "decimals": 2,
+              "unit": "locale",
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -733,9 +739,9 @@
                 "type": "frser-sqlite-datasource",
                 "uid": "finance-sqlite"
               },
-              "rawQueryText": "SELECT m.month, b.category, COALESCE(t.spent, 0) as spent, b.monthly_limit as budget, CASE WHEN b.monthly_limit > 0 THEN ROUND(COALESCE(t.spent, 0) / b.monthly_limit * 100, 1) ELSE NULL END as pct_used FROM budget_targets b CROSS JOIN (SELECT DISTINCT substr(date,1,7) as month FROM transactions WHERE date >= date('now', '-12 months')) m LEFT JOIN (SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' GROUP BY month, category) t ON t.month = m.month AND t.category = b.category WHERE b.monthly_limit > 0 ORDER BY m.month DESC, b.category",
+              "rawQueryText": "SELECT m.month, b.category, COALESCE(t.spent, 0) as spent, (b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) as budget, CASE WHEN b.monthly_limit > 0 THEN ROUND(COALESCE(t.spent, 0) / (b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) * 100, 1) ELSE NULL END as pct_used FROM budget_targets b CROSS JOIN (SELECT DISTINCT substr(date,1,7) as month FROM transactions WHERE date >= date('now', '-12 months')) m LEFT JOIN (SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' GROUP BY month, category) t ON t.month = m.month AND t.category = b.category WHERE b.monthly_limit > 0 ORDER BY m.month DESC, b.category",
               "refId": "A",
-              "queryText": "SELECT m.month, b.category, COALESCE(t.spent, 0) as spent, b.monthly_limit as budget, CASE WHEN b.monthly_limit > 0 THEN ROUND(COALESCE(t.spent, 0) / b.monthly_limit * 100, 1) ELSE NULL END as pct_used FROM budget_targets b CROSS JOIN (SELECT DISTINCT substr(date,1,7) as month FROM transactions WHERE date >= date('now', '-12 months')) m LEFT JOIN (SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent FROM transactions WHERE tx_type='expense' GROUP BY month, category) t ON t.month = m.month AND t.category = b.category WHERE b.monthly_limit > 0 ORDER BY m.month DESC, b.category"
+              "queryText": "SELECT m.month, b.category, COALESCE(t.spent, 0) as spent, (b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) as budget, CASE WHEN b.monthly_limit > 0 THEN ROUND(COALESCE(t.spent, 0) / (b.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = b.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) * 100, 1) ELSE NULL END as pct_used FROM budget_targets b CROSS JOIN (SELECT DISTINCT substr(date,1,7) as month FROM transactions WHERE date >= date('now', '-12 months')) m LEFT JOIN (SELECT substr(date,1,7) as month, category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent FROM transactions WHERE tx_type='expense' GROUP BY month, category) t ON t.month = m.month AND t.category = b.category WHERE b.monthly_limit > 0 ORDER BY m.month DESC, b.category"
             }
           ],
           "title": "Detailed Budget History (All Categories x 12 Months)",
@@ -765,7 +771,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "color": {
             "mode": "palette-classic"
           },
@@ -850,9 +857,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent, COALESCE((SELECT monthly_limit FROM budget_targets WHERE category = '${category}'), 0) as budget_limit FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category = '${category}' GROUP BY substr(date,1,7) ORDER BY time",
+          "rawQueryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent, COALESCE((SELECT (bt.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = bt.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) FROM budget_targets bt WHERE bt.category = '${category}'), 0) as budget_limit FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category = '${category}' GROUP BY substr(date,1,7) ORDER BY time",
           "refId": "A",
-          "queryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as spent, COALESCE((SELECT monthly_limit FROM budget_targets WHERE category = '${category}'), 0) as budget_limit FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category = '${category}' GROUP BY substr(date,1,7) ORDER BY time"
+          "queryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND exchange_rates.date <= transactions.date ORDER BY exchange_rates.date DESC LIMIT 1), 1.0)))), 2) as spent, COALESCE((SELECT (bt.monthly_limit * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = bt.currency AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) FROM budget_targets bt WHERE bt.category = '${category}'), 0) as budget_limit FROM transactions WHERE tx_type='expense' AND date >= date('now', '-12 months') AND category = '${category}' GROUP BY substr(date,1,7) ORDER BY time"
         }
       ],
       "title": "${category}",
@@ -899,6 +906,23 @@
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "PLN",
+          "value": "PLN"
+        },
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "finance-sqlite"
+        },
+        "definition": "SELECT DISTINCT currency FROM exchange_rates UNION SELECT 'EUR' ORDER BY 1",
+        "hide": 0,
+        "label": "Currency",
+        "name": "currency",
+        "query": "SELECT DISTINCT currency FROM exchange_rates UNION SELECT 'EUR' ORDER BY 1",
+        "refresh": 1,
         "type": "query"
       },
       {

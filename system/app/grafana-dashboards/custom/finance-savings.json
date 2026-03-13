@@ -57,6 +57,7 @@
           "color": {
             "mode": "thresholds"
           },
+          "decimals": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -74,7 +75,7 @@
               }
             ]
           },
-          "unit": "currencyPLN"
+          "unit": "locale"
         },
         "overrides": []
       },
@@ -105,9 +106,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT ROUND(AVG(savings), 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)",
+          "rawQueryText": "SELECT ROUND(AVG(savings), 2) as value FROM (SELECT substr(t.date,1,7) as m, SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) as savings FROM transactions t WHERE t.date >= date('now', '-6 months') AND t.tx_type IN ('income','expense') GROUP BY m)",
           "refId": "A",
-          "queryText": "SELECT ROUND(AVG(savings), 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)"
+          "queryText": "SELECT ROUND(AVG(savings), 2) as value FROM (SELECT substr(t.date,1,7) as m, SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) as savings FROM transactions t WHERE t.date >= date('now', '-6 months') AND t.tx_type IN ('income','expense') GROUP BY m)"
         }
       ],
       "title": "Avg Monthly Savings (6mo)",
@@ -123,6 +124,7 @@
           "color": {
             "mode": "thresholds"
           },
+          "decimals": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -140,7 +142,7 @@
               }
             ]
           },
-          "unit": "currencyPLN"
+          "unit": "locale"
         },
         "overrides": []
       },
@@ -171,9 +173,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT ROUND(AVG(savings) * 6, 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)",
+          "rawQueryText": "SELECT ROUND(AVG(savings) * 6, 2) as value FROM (SELECT substr(t.date,1,7) as m, SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) as savings FROM transactions t WHERE t.date >= date('now', '-6 months') AND t.tx_type IN ('income','expense') GROUP BY m)",
           "refId": "A",
-          "queryText": "SELECT ROUND(AVG(savings) * 6, 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)"
+          "queryText": "SELECT ROUND(AVG(savings) * 6, 2) as value FROM (SELECT substr(t.date,1,7) as m, SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) as savings FROM transactions t WHERE t.date >= date('now', '-6 months') AND t.tx_type IN ('income','expense') GROUP BY m)"
         }
       ],
       "title": "Projected 6-Month Savings",
@@ -189,6 +191,7 @@
           "color": {
             "mode": "thresholds"
           },
+          "decimals": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -206,7 +209,7 @@
               }
             ]
           },
-          "unit": "currencyPLN"
+          "unit": "locale"
         },
         "overrides": []
       },
@@ -237,9 +240,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT ROUND(AVG(savings) * 12, 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)",
+          "rawQueryText": "SELECT ROUND(AVG(savings) * 12, 2) as value FROM (SELECT substr(t.date,1,7) as m, SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) as savings FROM transactions t WHERE t.date >= date('now', '-12 months') AND t.tx_type IN ('income','expense') GROUP BY m)",
           "refId": "A",
-          "queryText": "SELECT ROUND(AVG(savings) * 12, 2) as value FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-12 months') AND tx_type IN ('income','expense') GROUP BY m)"
+          "queryText": "SELECT ROUND(AVG(savings) * 12, 2) as value FROM (SELECT substr(t.date,1,7) as m, SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) as savings FROM transactions t WHERE t.date >= date('now', '-12 months') AND t.tx_type IN ('income','expense') GROUP BY m)"
         }
       ],
       "title": "Projected 12-Month Savings",
@@ -268,7 +271,8 @@
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 60,
@@ -299,9 +303,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as savings FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
+          "rawQueryText": "SELECT CAST(strftime('%s', substr(t.date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END), 2) as savings FROM transactions t WHERE t.tx_type IN ('income','expense') AND t.date >= date('now', '-12 months') GROUP BY substr(t.date,1,7) ORDER BY time",
           "refId": "A",
-          "queryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as savings FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
+          "queryText": "SELECT CAST(strftime('%s', substr(t.date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END), 2) as savings FROM transactions t WHERE t.tx_type IN ('income','expense') AND t.date >= date('now', '-12 months') GROUP BY substr(t.date,1,7) ORDER BY time"
         }
       ],
       "title": "Monthly Savings History",
@@ -384,9 +388,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(CASE WHEN SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) > 0 THEN (SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) - SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base,amount)) ELSE 0 END)) / SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) * 100 ELSE 0 END, 1) as savings_rate FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
+          "rawQueryText": "SELECT CAST(strftime('%s', substr(t.date,1,7) || '-07') AS INTEGER) as time, ROUND(CASE WHEN SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) > 0 THEN (SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) - SUM(CASE WHEN t.tx_type='expense' THEN ABS((t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0))) ELSE 0 END)) / SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) * 100 ELSE 0 END, 1) as savings_rate FROM transactions t WHERE t.tx_type IN ('income','expense') AND t.date >= date('now', '-12 months') GROUP BY substr(t.date,1,7) ORDER BY time",
           "refId": "A",
-          "queryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(CASE WHEN SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) > 0 THEN (SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) - SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base,amount)) ELSE 0 END)) / SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) * 100 ELSE 0 END, 1) as savings_rate FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
+          "queryText": "SELECT CAST(strftime('%s', substr(t.date,1,7) || '-07') AS INTEGER) as time, ROUND(CASE WHEN SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) > 0 THEN (SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) - SUM(CASE WHEN t.tx_type='expense' THEN ABS((t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0))) ELSE 0 END)) / SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) * 100 ELSE 0 END, 1) as savings_rate FROM transactions t WHERE t.tx_type IN ('income','expense') AND t.date >= date('now', '-12 months') GROUP BY substr(t.date,1,7) ORDER BY time"
         }
       ],
       "title": "Savings Rate Trend (12mo)",
@@ -429,7 +433,8 @@
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 60,
@@ -493,9 +498,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as income, ROUND(SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base,amount)) ELSE 0 END), 2) as expenses FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
+          "rawQueryText": "SELECT CAST(strftime('%s', substr(t.date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END), 2) as income, ROUND(SUM(CASE WHEN t.tx_type='expense' THEN ABS((t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0))) ELSE 0 END), 2) as expenses FROM transactions t WHERE t.tx_type IN ('income','expense') AND t.date >= date('now', '-12 months') GROUP BY substr(t.date,1,7) ORDER BY time",
           "refId": "A",
-          "queryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as income, ROUND(SUM(CASE WHEN tx_type='expense' THEN ABS(COALESCE(amount_base,amount)) ELSE 0 END), 2) as expenses FROM transactions WHERE tx_type IN ('income','expense') AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
+          "queryText": "SELECT CAST(strftime('%s', substr(t.date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END), 2) as income, ROUND(SUM(CASE WHEN t.tx_type='expense' THEN ABS((t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0))) ELSE 0 END), 2) as expenses FROM transactions t WHERE t.tx_type IN ('income','expense') AND t.date >= date('now', '-12 months') GROUP BY substr(t.date,1,7) ORDER BY time"
         }
       ],
       "title": "Income vs Expenses (12mo)",
@@ -526,7 +531,8 @@
             "mode": "fixed",
             "fixedColor": "blue"
           },
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 30,
@@ -560,9 +566,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT time, SUM(savings) OVER (ORDER BY time) as cumulative_savings FROM (SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as savings FROM transactions WHERE tx_type IN ('income','expense') GROUP BY substr(date,1,7)) ORDER BY time",
+          "rawQueryText": "SELECT time, SUM(savings) OVER (ORDER BY time) as cumulative_savings FROM (SELECT CAST(strftime('%s', substr(t.date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END), 2) as savings FROM transactions t WHERE t.tx_type IN ('income','expense') GROUP BY substr(t.date,1,7)) ORDER BY time",
           "refId": "A",
-          "queryText": "SELECT time, SUM(savings) OVER (ORDER BY time) as cumulative_savings FROM (SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END), 2) as savings FROM transactions WHERE tx_type IN ('income','expense') GROUP BY substr(date,1,7)) ORDER BY time"
+          "queryText": "SELECT time, SUM(savings) OVER (ORDER BY time) as cumulative_savings FROM (SELECT CAST(strftime('%s', substr(t.date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END), 2) as savings FROM transactions t WHERE t.tx_type IN ('income','expense') GROUP BY substr(t.date,1,7)) ORDER BY time"
         }
       ],
       "title": "Cumulative Savings (All Time)",
@@ -602,7 +608,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyPLN",
+          "decimals": 2,
+          "unit": "locale",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -631,9 +638,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "WITH avg_savings AS (SELECT AVG(savings) as avg_save FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)), months(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM months WHERE n < 12) SELECT 'Month +' || m.n as period, ROUND(m.n * a.avg_save, 0) as projected_savings, ROUND(a.avg_save, 0) as monthly_rate FROM months m, avg_savings a",
+          "rawQueryText": "WITH avg_savings AS (SELECT AVG(savings) as avg_save FROM (SELECT substr(t.date,1,7) as m, SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) as savings FROM transactions t WHERE t.date >= date('now', '-6 months') AND t.tx_type IN ('income','expense') GROUP BY m)), months(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM months WHERE n < 12) SELECT 'Month +' || m.n as period, ROUND(m.n * a.avg_save, 0) as projected_savings, ROUND(a.avg_save, 0) as monthly_rate FROM months m, avg_savings a",
           "refId": "A",
-          "queryText": "WITH avg_savings AS (SELECT AVG(savings) as avg_save FROM (SELECT substr(date,1,7) as m, SUM(CASE WHEN tx_type='income' THEN COALESCE(amount_base,amount) ELSE 0 END) + SUM(CASE WHEN tx_type='expense' THEN COALESCE(amount_base,amount) ELSE 0 END) as savings FROM transactions WHERE date >= date('now', '-6 months') AND tx_type IN ('income','expense') GROUP BY m)), months(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM months WHERE n < 12) SELECT 'Month +' || m.n as period, ROUND(m.n * a.avg_save, 0) as projected_savings, ROUND(a.avg_save, 0) as monthly_rate FROM months m, avg_savings a"
+          "queryText": "WITH avg_savings AS (SELECT AVG(savings) as avg_save FROM (SELECT substr(t.date,1,7) as m, SUM(CASE WHEN t.tx_type='income' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) + SUM(CASE WHEN t.tx_type='expense' THEN (t.amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = t.currency AND date <= t.date ORDER BY date DESC LIMIT 1), 1.0)) ELSE 0 END) as savings FROM transactions t WHERE t.date >= date('now', '-6 months') AND t.tx_type IN ('income','expense') GROUP BY m)), months(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM months WHERE n < 12) SELECT 'Month +' || m.n as period, ROUND(m.n * a.avg_save, 0) as projected_savings, ROUND(a.avg_save, 0) as monthly_rate FROM months m, avg_savings a"
         }
       ],
       "title": "Projected Savings Timeline (based on 6mo avg)",
@@ -666,6 +673,17 @@
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {"text": "PLN", "value": "PLN"},
+        "datasource": {"type": "frser-sqlite-datasource", "uid": "finance-sqlite"},
+        "definition": "SELECT DISTINCT currency FROM exchange_rates UNION SELECT 'EUR' ORDER BY 1",
+        "hide": 0,
+        "label": "Currency",
+        "name": "currency",
+        "query": "SELECT DISTINCT currency FROM exchange_rates UNION SELECT 'EUR' ORDER BY 1",
+        "refresh": 1,
         "type": "query"
       }
     ]

@@ -74,7 +74,8 @@
               }
             ]
           },
-          "unit": "currencyPLN"
+          "unit": "locale",
+          "decimals": 2
         },
         "overrides": []
       },
@@ -105,9 +106,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT ROUND(COALESCE(SUM(COALESCE(amount_base, amount)), 0), 2) as value FROM transactions WHERE tx_type='investment'",
+          "rawQueryText": "SELECT ROUND(COALESCE(SUM((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0))), 0), 2) as value FROM transactions WHERE tx_type='investment'",
           "refId": "A",
-          "queryText": "SELECT ROUND(COALESCE(SUM(COALESCE(amount_base, amount)), 0), 2) as value FROM transactions WHERE tx_type='investment'"
+          "queryText": "SELECT ROUND(COALESCE(SUM((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0))), 0), 2) as value FROM transactions WHERE tx_type='investment'"
         }
       ],
       "title": "Total Invested (All Time)",
@@ -140,7 +141,8 @@
               }
             ]
           },
-          "unit": "currencyPLN"
+          "unit": "locale",
+          "decimals": 2
         },
         "overrides": []
       },
@@ -171,9 +173,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT ROUND(COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol",
+          "rawQueryText": "SELECT ROUND(COALESCE(SUM(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0))), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base, date FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol",
           "refId": "A",
-          "queryText": "SELECT ROUND(COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol"
+          "queryText": "SELECT ROUND(COALESCE(SUM(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0))), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base, date FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol"
         }
       ],
       "title": "Current Portfolio Value",
@@ -202,7 +204,8 @@
               }
             ]
           },
-          "unit": "currencyPLN"
+          "unit": "locale",
+          "decimals": 2
         },
         "overrides": []
       },
@@ -233,9 +236,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT ROUND(COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0) - COALESCE(SUM(h.quantity * COALESCE(h.avg_buy_price, 0)), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol",
+          "rawQueryText": "SELECT ROUND(COALESCE(SUM(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0))), 0) - COALESCE(SUM(h.quantity * (COALESCE(h.avg_buy_price, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0))), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base, date FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol",
           "refId": "A",
-          "queryText": "SELECT ROUND(COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0) - COALESCE(SUM(h.quantity * COALESCE(h.avg_buy_price, 0)), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol"
+          "queryText": "SELECT ROUND(COALESCE(SUM(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0))), 0) - COALESCE(SUM(h.quantity * (COALESCE(h.avg_buy_price, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0))), 0), 2) as value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base, date FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol"
         }
       ],
       "title": "Unrealized Gain/Loss",
@@ -301,9 +304,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='investment' GROUP BY category ORDER BY total DESC",
+          "rawQueryText": "SELECT category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0)))), 2) as total FROM transactions WHERE tx_type='investment' GROUP BY category ORDER BY total DESC",
           "refId": "A",
-          "queryText": "SELECT category, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as total FROM transactions WHERE tx_type='investment' GROUP BY category ORDER BY total DESC"
+          "queryText": "SELECT category, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0)))), 2) as total FROM transactions WHERE tx_type='investment' GROUP BY category ORDER BY total DESC"
         }
       ],
       "title": "Investment Split",
@@ -316,7 +319,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyPLN"
+          "unit": "locale",
+          "decimals": 2
         },
         "overrides": []
       },
@@ -332,7 +336,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "value_pln"
+            "displayName": "Value (${currency})"
           }
         ]
       },
@@ -342,9 +346,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT h.asset_type, h.symbol, h.quantity, COALESCE(ap.price_base, 0) as price_pln, ROUND(h.quantity * COALESCE(ap.price_base, 0), 2) as value_pln, COALESCE(h.avg_buy_price, 0) as avg_buy_price, ROUND(h.quantity * COALESCE(ap.price_base, 0) - h.quantity * COALESCE(h.avg_buy_price, 0), 2) as gain_loss, h.source, h.updated_at FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol ORDER BY value_pln DESC",
+          "rawQueryText": "SELECT h.asset_type, h.symbol, h.quantity, (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0)) as \"Price (${currency})\", ROUND(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0)), 2) as \"Value (${currency})\", (COALESCE(h.avg_buy_price, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) as avg_buy_price, ROUND(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0)) - h.quantity * (COALESCE(h.avg_buy_price, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)), 2) as gain_loss, h.source, h.updated_at FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base, date FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol ORDER BY \"Value (${currency})\" DESC",
           "refId": "A",
-          "queryText": "SELECT h.asset_type, h.symbol, h.quantity, COALESCE(ap.price_base, 0) as price_pln, ROUND(h.quantity * COALESCE(ap.price_base, 0), 2) as value_pln, COALESCE(h.avg_buy_price, 0) as avg_buy_price, ROUND(h.quantity * COALESCE(ap.price_base, 0) - h.quantity * COALESCE(h.avg_buy_price, 0), 2) as gain_loss, h.source, h.updated_at FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol ORDER BY value_pln DESC"
+          "queryText": "SELECT h.asset_type, h.symbol, h.quantity, (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0)) as \"Price (${currency})\", ROUND(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0)), 2) as \"Value (${currency})\", (COALESCE(h.avg_buy_price, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)) as avg_buy_price, ROUND(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0)) - h.quantity * (COALESCE(h.avg_buy_price, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= date('now') ORDER BY date DESC LIMIT 1), 1.0)), 2) as gain_loss, h.source, h.updated_at FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base, date FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol ORDER BY \"Value (${currency})\" DESC"
         }
       ],
       "title": "Current Holdings & Valuation",
@@ -506,7 +510,8 @@
             "mode": "fixed",
             "fixedColor": "purple"
           },
-          "unit": "currencyPLN",
+          "unit": "locale",
+          "decimals": 2,
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 80,
@@ -537,9 +542,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as invested FROM transactions WHERE tx_type='investment' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
+          "rawQueryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0)))), 2) as invested FROM transactions WHERE tx_type='investment' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time",
           "refId": "A",
-          "queryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS(COALESCE(amount_base, amount))), 2) as invested FROM transactions WHERE tx_type='investment' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
+          "queryText": "SELECT CAST(strftime('%s', substr(date,1,7) || '-07') AS INTEGER) as time, ROUND(SUM(ABS((amount * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = transactions.currency AND date <= transactions.date ORDER BY date DESC LIMIT 1), 1.0)))), 2) as invested FROM transactions WHERE tx_type='investment' AND date >= date('now', '-12 months') GROUP BY substr(date,1,7) ORDER BY time"
         }
       ],
       "title": "Monthly Investment Contributions (12mo)",
@@ -583,7 +588,8 @@
             "mode": "fixed",
             "fixedColor": "green"
           },
-          "unit": "currencyPLN",
+          "unit": "locale",
+          "decimals": 2,
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 20,
@@ -617,9 +623,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "finance-sqlite"
           },
-          "rawQueryText": "WITH portfolio AS (SELECT COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0) as current_value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), growth(year_n, value) AS (SELECT 0, current_value FROM portfolio UNION ALL SELECT year_n + 1, ROUND(value * (1 + ${annual_return}/100.0), 0) FROM growth WHERE year_n < 20) SELECT CAST(strftime('%s', (CAST(strftime('%Y','now') AS INTEGER) + year_n) || '-01-01') AS INTEGER) as time, value as projected_value FROM growth",
+          "rawQueryText": "WITH portfolio AS (SELECT COALESCE(SUM(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0))), 0) as current_value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base, date FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), growth(year_n, value) AS (SELECT 0, current_value FROM portfolio UNION ALL SELECT year_n + 1, ROUND(value * (1 + ${annual_return}/100.0), 0) FROM growth WHERE year_n < 20) SELECT CAST(strftime('%s', (CAST(strftime('%Y','now') AS INTEGER) + year_n) || '-01-01') AS INTEGER) as time, value as projected_value FROM growth",
           "refId": "A",
-          "queryText": "WITH portfolio AS (SELECT COALESCE(SUM(h.quantity * COALESCE(ap.price_base, 0)), 0) as current_value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), growth(year_n, value) AS (SELECT 0, current_value FROM portfolio UNION ALL SELECT year_n + 1, ROUND(value * (1 + ${annual_return}/100.0), 0) FROM growth WHERE year_n < 20) SELECT CAST(strftime('%s', (CAST(strftime('%Y','now') AS INTEGER) + year_n) || '-01-01') AS INTEGER) as time, value as projected_value FROM growth"
+          "queryText": "WITH portfolio AS (SELECT COALESCE(SUM(h.quantity * (COALESCE(ap.price_base, 0) * COALESCE((SELECT rate FROM exchange_rates WHERE currency = '${currency}' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0) / COALESCE((SELECT rate FROM exchange_rates WHERE currency = 'PLN' AND date <= ap.date ORDER BY date DESC LIMIT 1), 1.0))), 0) as current_value FROM holdings h LEFT JOIN (SELECT asset_type, symbol, price_base, date FROM asset_prices WHERE (asset_type, symbol, date) IN (SELECT asset_type, symbol, MAX(date) FROM asset_prices GROUP BY asset_type, symbol)) ap ON h.asset_type = ap.asset_type AND h.symbol = ap.symbol), growth(year_n, value) AS (SELECT 0, current_value FROM portfolio UNION ALL SELECT year_n + 1, ROUND(value * (1 + ${annual_return}/100.0), 0) FROM growth WHERE year_n < 20) SELECT CAST(strftime('%s', (CAST(strftime('%Y','now') AS INTEGER) + year_n) || '-01-01') AS INTEGER) as time, value as projected_value FROM growth"
         }
       ],
       "title": "Projected Portfolio Growth (${annual_return}% annual return, no contributions)",
@@ -666,6 +672,23 @@
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "PLN",
+          "value": "PLN"
+        },
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "finance-sqlite"
+        },
+        "definition": "SELECT DISTINCT currency FROM exchange_rates UNION SELECT 'EUR' ORDER BY 1",
+        "hide": 0,
+        "label": "Currency",
+        "name": "currency",
+        "query": "SELECT DISTINCT currency FROM exchange_rates UNION SELECT 'EUR' ORDER BY 1",
+        "refresh": 1,
         "type": "query"
       },
       {
