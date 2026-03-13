@@ -151,9 +151,17 @@ body.show-enrichment .enrichment-subtitle { display: table-row; }
       <div class="filter-group">
         <label>Field</label>
         <select name="match_field" form="add-rule-form">
-          <option value="description">description</option>
-          <option value="raw_description">raw_description</option>
-          <option value="raw_category">raw_category</option>
+          <optgroup label="Transaction">
+            <option value="description">description</option>
+            <option value="raw_description">raw_description</option>
+            <option value="raw_category">raw_category</option>
+          </optgroup>
+          <optgroup label="Enrichment">
+            <option value="merchant_name">merchant_name</option>
+            <option value="recipient_name">recipient_name</option>
+            <option value="localised_description">localised_description</option>
+            <option value="revolut_tag">revolut_tag</option>
+          </optgroup>
         </select>
       </div>
       <div class="filter-group">

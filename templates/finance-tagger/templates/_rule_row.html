@@ -3,7 +3,7 @@
   <td><input type="number" name="priority" value="{{ rule['priority'] }}" style="width:60px" form="{{ form_prefix }}-{{ rule['id'] }}"></td>
   <td>
     <select name="match_field" form="{{ form_prefix }}-{{ rule['id'] }}">
-      {% for f in ['description', 'raw_description', 'raw_category'] %}
+      {% for f in (match_fields or ['description', 'raw_description', 'raw_category']) %}
       <option value="{{ f }}" {{ 'selected' if rule['match_field'] == f }}>{{ f }}</option>
       {% endfor %}
     </select>

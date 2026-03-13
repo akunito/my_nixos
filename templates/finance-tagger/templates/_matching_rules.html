@@ -3,6 +3,20 @@
   <button class="btn btn-sm btn-danger" onclick="document.getElementById('matching-rules-panel').innerHTML=''">Close</button>
 </div>
 
+{# --- Enrichment data panel --- #}
+{% set has_enr = tx['merchant_name'] or tx['recipient_name'] or tx['localised_description'] or tx['revolut_tag'] %}
+{% if has_enr %}
+<div style="margin-bottom:0.8rem;padding:0.5rem 0.8rem;background:rgba(0,180,216,0.08);border:1px solid var(--accent);border-radius:4px;font-size:0.85rem;">
+  <strong style="color:var(--accent);">Enrichment data</strong>
+  <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-top:0.3rem;">
+    {% if tx['merchant_name'] %}<span><b>merchant:</b> {{ tx['merchant_name'] }}</span>{% endif %}
+    {% if tx['recipient_name'] %}<span><b>recipient:</b> {{ tx['recipient_name'] }}</span>{% endif %}
+    {% if tx['localised_description'] %}<span><b>localised:</b> {{ tx['localised_description'] }}</span>{% endif %}
+    {% if tx['revolut_tag'] %}<span><b>tag:</b> {{ tx['revolut_tag'] }}</span>{% endif %}
+  </div>
+</div>
+{% endif %}
+
 {# --- Create Rule form pre-filled from transaction --- #}
 <details open style="margin-bottom:1rem;border:1px solid var(--border);border-radius:4px;padding:0.5rem;">
   <summary style="cursor:pointer;font-weight:bold;color:var(--accent);">Create Rule from this transaction</summary>
@@ -12,10 +26,25 @@
         hx-vals='{"_refresh_matching": "{{ tx['id'] }}"}'
         style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:end;margin-top:0.5rem;">
     <label style="font-size:0.8rem;">Field
-      <select name="match_field">
+      <select name="match_field" id="mr-field-select"
+              data-merchant_name="{{ tx['merchant_name'] or '' }}"
+              data-recipient_name="{{ tx['recipient_name'] or '' }}"
+              data-localised_description="{{ tx['localised_description'] or '' }}"
+              data-revolut_tag="{{ tx['revolut_tag'] or '' }}"
+              data-description="{{ tx['description'] or '' }}"
+              data-raw_description="{{ tx['raw_description'] or '' }}"
+              data-raw_category="{{ tx['raw_category'] or '' }}"
+              onchange="var v=this.dataset[this.value]||'';var inp=document.getElementById('mr-pattern-input');if(v){inp.value='%'+v+'%';}else{inp.value='';}">
+        <optgroup label="Transaction">
         {% for f in ['description', 'raw_description', 'raw_category'] %}
         <option value="{{ f }}" {{ 'selected' if f == 'description' }}>{{ f }}</option>
         {% endfor %}
+        </optgroup>
+        <optgroup label="Enrichment">
+        {% for f in ['merchant_name', 'recipient_name', 'localised_description', 'revolut_tag'] %}
+        <option value="{{ f }}">{{ f }}</option>
+        {% endfor %}
+        </optgroup>
       </select>
     </label>
     <label style="font-size:0.8rem;">Type
@@ -25,7 +54,7 @@
       </select>
     </label>
     <label style="font-size:0.8rem;">Pattern
-      <input type="text" name="match_pattern" value="%{{ tx['description'] }}%" style="width:200px">
+      <input type="text" name="match_pattern" id="mr-pattern-input" value="%{{ tx['description'] }}%" style="width:200px">
     </label>
     <label style="font-size:0.8rem;">&#8594; tx_type
       <select name="set_tx_type">

@@ -55,6 +55,11 @@ ENR_COLUMNS = """,
 
 TX_JOIN = "FROM transactions t LEFT JOIN transaction_enrichment e ON e.transaction_id = t.id"
 
+# Fields that live in the enrichment table (rules can match against these via JOIN)
+ENRICHMENT_FIELDS = {"merchant_name", "recipient_name", "localised_description", "revolut_tag"}
+ALL_MATCH_FIELDS = ["description", "raw_description", "raw_category",
+                    "merchant_name", "recipient_name", "localised_description", "revolut_tag"]
+
 
 def get_db():
     """Get a database connection for the current request."""
@@ -398,6 +403,7 @@ def rules():
     rows = db.execute("SELECT * FROM category_rules ORDER BY priority ASC, id ASC").fetchall()
     return render_template("_rules.html",
                            rules=rows,
+                           match_fields=ALL_MATCH_FIELDS,
                            tx_types=VALID_TX_TYPES,
                            category_groups=ALL_CATEGORY_GROUPS,
                            categories=ALL_CATEGORIES)
@@ -437,6 +443,7 @@ def create_rule():
     rows = db.execute("SELECT * FROM category_rules ORDER BY priority ASC, id ASC").fetchall()
     return render_template("_rules.html",
                            rules=rows,
+                           match_fields=ALL_MATCH_FIELDS,
                            tx_types=VALID_TX_TYPES,
                            category_groups=ALL_CATEGORY_GROUPS,
                            categories=ALL_CATEGORIES)
@@ -455,6 +462,7 @@ def toggle_rule(rule_id):
     rows = db.execute("SELECT * FROM category_rules ORDER BY priority ASC, id ASC").fetchall()
     return render_template("_rules.html",
                            rules=rows,
+                           match_fields=ALL_MATCH_FIELDS,
                            tx_types=VALID_TX_TYPES,
                            category_groups=ALL_CATEGORY_GROUPS,
                            categories=ALL_CATEGORIES)
@@ -492,6 +500,7 @@ def update_rule(rule_id):
     rows = db.execute("SELECT * FROM category_rules ORDER BY priority ASC, id ASC").fetchall()
     return render_template("_rules.html",
                            rules=rows,
+                           match_fields=ALL_MATCH_FIELDS,
                            tx_types=VALID_TX_TYPES,
                            category_groups=ALL_CATEGORY_GROUPS,
                            categories=ALL_CATEGORIES)
@@ -507,6 +516,7 @@ def delete_rule(rule_id):
     rows = db.execute("SELECT * FROM category_rules ORDER BY priority ASC, id ASC").fetchall()
     return render_template("_rules.html",
                            rules=rows,
+                           match_fields=ALL_MATCH_FIELDS,
                            tx_types=VALID_TX_TYPES,
                            category_groups=ALL_CATEGORY_GROUPS,
                            categories=ALL_CATEGORIES)
@@ -521,9 +531,10 @@ def matching_rules(tx_id):
     ensure_category_rules_table()
 
     ensure_override_columns()
+    ensure_enrichment_table()
     tx = db.execute(
         "SELECT t.id, t.description, t.raw_description, t.raw_category "
-        f"{EFF_COLUMNS} FROM transactions t WHERE t.id = ?",
+        f"{EFF_COLUMNS} {ENR_COLUMNS} {TX_JOIN} WHERE t.id = ?",
         (tx_id,)
     ).fetchone()
     if not tx:
@@ -547,6 +558,7 @@ def matching_rules(tx_id):
     return render_template("_matching_rules.html",
                            tx=tx,
                            matching=matching,
+                           match_fields=ALL_MATCH_FIELDS,
                            tx_types=VALID_TX_TYPES,
                            category_groups=ALL_CATEGORY_GROUPS,
                            categories=ALL_CATEGORIES)
@@ -560,6 +572,7 @@ def apply_rules():
     db = get_db()
     ensure_category_rules_table()
     ensure_override_columns()
+    ensure_enrichment_table()
 
     rules = db.execute("""
         SELECT id, match_field, match_pattern, match_type,
@@ -586,9 +599,17 @@ def apply_rules():
         for col, val in [("tx_type", st), ("category", sc), ("category_group", sg)]:
             if not val:
                 continue
-            sql = (f"UPDATE transactions SET {col} = ? "
-                   f"WHERE {field} {op} ? "
-                   f"AND (override_{col} IS NULL OR overrides_disabled = 1)")
+            if field in ENRICHMENT_FIELDS:
+                sql = (f"UPDATE transactions SET {col} = ? "
+                       f"WHERE id IN ("
+                       f"  SELECT t.id FROM transactions t "
+                       f"  JOIN transaction_enrichment e ON e.transaction_id = t.id "
+                       f"  WHERE e.{field} {op} ?"
+                       f") AND (override_{col} IS NULL OR overrides_disabled = 1)")
+            else:
+                sql = (f"UPDATE transactions SET {col} = ? "
+                       f"WHERE {field} {op} ? "
+                       f"AND (override_{col} IS NULL OR overrides_disabled = 1)")
             cnt = db.execute(sql, (val, pattern)).rowcount
             rule_cnt += cnt
 
