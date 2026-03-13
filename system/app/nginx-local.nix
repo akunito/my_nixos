@@ -32,6 +32,9 @@ let
       forceSSL = true;
       useACMEHost = wildcardLocal; # Uses cert from acme.nix
       basicAuthFile = cfg.basicAuthFile or null;
+      extraConfig = lib.optionalString ((cfg.maxBodySize or "") != "") ''
+        client_max_body_size ${cfg.maxBodySize};
+      '';
       locations."/" = {
         proxyPass =
           if cfg.https or false

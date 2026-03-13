@@ -259,7 +259,7 @@ in
       calibre    = { port = 8083; };
       n8n        = { port = 5678; };
       openclaw   = { port = 18789; };
-      finance    = { port = 8190; };
+      finance    = { port = 8190; maxBodySize = "50M"; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
