@@ -14,6 +14,7 @@ This file is loaded on-demand when agents need detailed Plane integration info.
 | INF | Infrastructure & DevOps | `4ec09847-9c12-4a0a-854e-a50ceafa9ea9` |
 | LW | Liftcraft | `3a917926-76e4-420f-b729-3dfbb76b4602` |
 | JLE | JL Engine | `09772481-bcf3-4ffb-95e6-3ceddf3563de` |
+| FIN | Finance | `d1984602-39ab-4e7f-9485-e51620954043` |
 
 **Workspace**: `akuworkspace` | **URL**: https://plane.akunito.com
 
@@ -107,6 +108,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 | Cross-cutting infra, CI/CD (Komi) | INF |
 | Rails workout app | LW |
 | CV generation engine | JLE |
+| Finance tagger, Vaultkeeper DB, Revolut enrichment, budgeting | FIN |
 
 ## Workflow (every session)
 
