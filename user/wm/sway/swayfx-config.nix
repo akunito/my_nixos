@@ -1157,9 +1157,6 @@ in
     };
 
     extraConfig = ''
-      # Fallback background: prevents red/garbage screen if wallpaper daemon dies
-      output * bg #000000 solid_color
-
       # Window border settings
       default_border pixel 2
 
