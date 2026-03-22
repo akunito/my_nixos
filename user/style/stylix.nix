@@ -141,7 +141,7 @@ if systemSettings.stylixEnable == true then
       }
     ];
     stylix.autoEnable = false;
-    stylix.overlays.enable = !pkgs.stdenv.isDarwin;
+    stylix.overlays.enable = systemSettings.osType != "darwin";
     stylix.polarity = themePolarity;
     stylix.image = pkgs.fetchurl {
       url = backgroundUrl;

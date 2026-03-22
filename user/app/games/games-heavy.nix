@@ -39,7 +39,7 @@ in
       pkgs.wineWow64Packages.stagingFull # Wine 64-bit with WoW64 32-bit support (binary cached)
       pkgs.winetricks # Wine helper tool
       pkgs.vulkan-tools # Provides vulkaninfo, vkcube
-      pkgs.mesa-demos # OpenGL debugging (glxinfo, eglinfo)
+      (lib.lowPrio pkgs.mesa-demos) # OpenGL debugging (glxinfo, eglinfo) — low priority to avoid /bin/engine conflict with ollama
     ]
     ++ (lib.optionals (userSettings.GOGlauncherEnable == true) [
       pkgs-unstable.heroic

@@ -268,6 +268,9 @@
     networkPrinters = false;
     sharePrinter = false;
 
+    # Scanner defaults
+    serviceScannerEnable = false;
+
     # Power management defaults
     iwlwifiDisablePowerSave = false;
     TLP_ENABLE = false;

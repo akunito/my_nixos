@@ -1,12 +1,33 @@
-{ pkgs, lib, systemSettings, ... }:
+{ pkgs, lib, systemSettings, userSettings, ... }:
 
 {
   # https://nixos.wiki/wiki/Printing
-  
-  environment.systemPackages = lib.mkIf (systemSettings.servicePrinting == true) [ pkgs.cups-filters ];
+  # https://nixos.wiki/wiki/Scanners
+
+  environment.systemPackages =
+    lib.optionals (systemSettings.servicePrinting == true) [ pkgs.cups-filters ]
+    ++ lib.optionals (systemSettings.serviceScannerEnable == true) [
+      pkgs.simple-scan # GTK scanning GUI
+    ];
+
+  # Scanner support (SANE + brscan4 for Brother DCP-7055)
+  hardware.sane = lib.mkIf (systemSettings.serviceScannerEnable == true) {
+    enable = true;
+    brscan4 = {
+      enable = true;
+      netDevices = {
+        # Add network scanners here if needed, e.g.:
+        # brother = { model = "DCP-7055"; ip = "192.168.8.x"; };
+      };
+    };
+  };
+
+  # Add user to scanner group (required for SANE access)
+  users.users.${userSettings.username}.extraGroups =
+    lib.mkIf (systemSettings.serviceScannerEnable == true) [ "scanner" "lp" ];
 
   services = {
-    printing = lib.mkIf (systemSettings.servicePrinting == true) { 
+    printing = lib.mkIf (systemSettings.servicePrinting == true) {
       enable = true;
       drivers = [ pkgs.brlaser ]; # brlaser is for my printer Brother Laser
       listenAddresses = [ "*:631" ];

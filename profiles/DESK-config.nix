@@ -250,9 +250,10 @@ in
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAwUXqQXLaKW/WjsZ95fjHKU7sIhNEeqW685TbsrePiK diego88aku@gmail.com" # Laptop (X13)
     ];
 
-    # Printer
+    # Printer & Scanner
     servicePrinting = true;
     networkPrinters = true;
+    serviceScannerEnable = true;
 
     # Power management
     powerManagement_ENABLE = true;
