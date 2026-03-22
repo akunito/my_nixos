@@ -14,6 +14,10 @@ let
   isStandalone = (systemSettings.claudeCodeEnable or false) && !isDesktop;
   dotfilesPath = systemSettings.dotfilesPath or "/home/${userSettings.username}/.dotfiles";
 
+  # Claude config Nextcloud backup
+  claudeBackupToNextcloudEnable = systemSettings.claudeBackupToNextcloudEnable or false;
+  nextcloudFolder = systemSettings.nextcloudSyncFolder or "/home/${userSettings.username}/Nextcloud";
+
   # Notification command: notify-send on desktop, no-op on headless
   notificationCommand =
     if isDarwin then
@@ -362,5 +366,47 @@ in
       ++ lib.optional (n8nMcpUrl != "") "N8N_MCP_BASE_URL=${n8nMcpUrl}"
     ) + "\n";
     force = true;
+  };
+
+  # Nextcloud backup: daily compressed archive of ~/.claude/ (excludes ephemeral + credentials)
+  systemd.user.services."claude-nextcloud-backup" = lib.mkIf claudeBackupToNextcloudEnable {
+    Unit = {
+      Description = "Backup Claude Code config to Nextcloud";
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = let
+        backupScript = pkgs.writeShellScript "claude-nextcloud-backup" ''
+          set -euo pipefail
+          DEST="${nextcloudFolder}/backups"
+          mkdir -p "$DEST"
+          ${pkgs.gnutar}/bin/tar \
+            --create \
+            --zstd \
+            --file "$DEST/claude-backup.tar.zst.tmp" \
+            --directory="$HOME" \
+            --exclude='.claude/debug' \
+            --exclude='.claude/telemetry' \
+            --exclude='.claude/.credentials.json' \
+            --exclude='.claude/settings.json.bak' \
+            .claude/
+          mv "$DEST/claude-backup.tar.zst.tmp" "$DEST/claude-backup.tar.zst"
+        '';
+      in "${backupScript}";
+    };
+  };
+
+  systemd.user.timers."claude-nextcloud-backup" = lib.mkIf claudeBackupToNextcloudEnable {
+    Unit = {
+      Description = "Daily Claude Code backup to Nextcloud";
+    };
+    Timer = {
+      OnCalendar = "daily";
+      Persistent = true;
+      RandomizedDelaySec = "15m";
+    };
+    Install = {
+      WantedBy = [ "timers.target" ];
+    };
   };
 }

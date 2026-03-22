@@ -45,6 +45,8 @@ HOME_EXCLUDES=(
   ".local/share/suyu"
   ".var"
   ".lmstudio/models"
+  ".claude/debug"
+  ".claude/telemetry"
   "Downloads"
   "Games"
   "tmp"

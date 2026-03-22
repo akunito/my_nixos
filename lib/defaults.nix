@@ -364,6 +364,8 @@
     developmentFullRuntimesEnable = false; # Enable full development runtimes (Node.js, Python, Go, Rust)
     claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
     claudeCodeReadOnly = false; # When true, deny Edit/Write tools in Claude Code settings.json
+    claudeBackupToNextcloudEnable = false; # Daily compressed backup of ~/.claude/ to Nextcloud folder
+    nextcloudSyncFolder = ""; # Path to Nextcloud sync folder (e.g., "/home/user/Nextcloud")
     perplexityApiKey = ""; # Perplexity API key for MCP server (set from secrets/domains.nix in profiles)
     planeApiToken = ""; # Plane API token for MCP server (set from secrets/domains.nix in profiles)
     planeApiUrl = ""; # Plane instance URL (e.g., "https://plane.akunito.com")

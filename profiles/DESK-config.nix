@@ -54,6 +54,8 @@ in
     # Shell features
     atuinAutoSync = true; # Enable Atuin cloud sync for shell history
     nextcloudEnable = true; # To startup with Sway daemon
+    claudeBackupToNextcloudEnable = true;
+    nextcloudSyncFolder = "/home/akunito/Nextcloud";
 
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
     kernelModules = [
