@@ -53,6 +53,8 @@
       fsType = "ntfs3";
     };
 
+
+
   swapDevices =
     [ { device = "/dev/mapper/luks-swap"; }
     ];

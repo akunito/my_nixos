@@ -45,8 +45,10 @@ git checkout backend
 
 ### 2. Pull latest on VPS
 
+Stash any local changes first (e.g., leftover from previous deploys), then pull:
+
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 "cd ~/Projects/leftyworkout && git checkout main && git pull"
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/Projects/leftyworkout && git stash && git checkout main && git pull"
 ```
 
 ### 3. Unlock git-crypt (if needed)
@@ -72,7 +74,21 @@ ssh -A -p 56777 akunito@100.64.0.6 "cd ~/Projects/leftyworkout && ./deploy.sh fr
 
 Use the argument from $ARGUMENTS to decide which variant. Default to `all --skip-seed`.
 
-### 5. Handle db container port conflict
+### 5. Run pending database migrations
+
+After deploy, run any pending migrations. The `liftcraft` DB user must have CREATE privilege on the public schema (PostgreSQL 15+ default restricts this). If migration fails with `PG::InsufficientPrivilege`, grant it first:
+
+```bash
+# Grant CREATE if needed (only once, idempotent):
+ssh -A -p 56777 akunito@100.64.0.6 "sudo -u postgres psql -d rails_database_prod -c 'GRANT CREATE ON SCHEMA public TO liftcraft;'"
+
+# Run migrations:
+ssh -A -p 56777 akunito@100.64.0.6 "cd ~/Projects/leftyworkout && ./docker-compose.test.sh exec backend bin/rails db:migrate"
+```
+
+**IMPORTANT**: The database runs as **system PostgreSQL on the VPS** (accessed via `10.0.2.2` from Docker). It is NOT on any LXC container. Do NOT SSH to any `192.168.1.x` address for database operations.
+
+### 6. Handle db container port conflict
 
 The test environment uses system PostgreSQL (not Docker). If `deploy.sh all` tries to start the `db` container, it will fail on port 5432 (system postgres). This is expected — remove the failed container:
 
@@ -80,7 +96,7 @@ The test environment uses system PostgreSQL (not Docker). If `deploy.sh all` tri
 ssh -A -p 56777 akunito@100.64.0.6 "docker rm leftyworkout-db-1 2>/dev/null; echo 'db container cleanup: ok'"
 ```
 
-### 6. Verify deployment
+### 7. Verify deployment
 
 ```bash
 # Check containers are running
