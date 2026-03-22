@@ -162,6 +162,8 @@ in
       Description = "swww-daemon (wallpaper backend for SwayFX)";
       PartOf = [ "sway-session.target" ];
       After = [ "sway-session.target" "graphical-session.target" ];
+      # Prevent sd-switch from restarting during rebuilds
+      X-RestartIfChanged = "false";
     };
     Service = {
       Type = "simple";
@@ -173,8 +175,6 @@ in
     Install = {
       WantedBy = [ "sway-session.target" ];
     };
-    # Prevent sd-switch from killing the running wallpaper daemon during rebuilds
-    restartIfChanged = false;
   };
 
   systemd.user.services.swww-restore = lib.mkIf cfgEnable {

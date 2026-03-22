@@ -186,6 +186,8 @@ in
         Description = "Watch for new Sway outputs and restore wallpaper";
         PartOf = [ "sway-session.target" ];
         After = [ "swww-daemon.service" "sway-session.target" "graphical-session.target" ];
+        # Prevent sd-switch from restarting during rebuilds
+        X-RestartIfChanged = "false";
       };
 
       Service = {
@@ -199,9 +201,6 @@ in
       Install = {
         WantedBy = [ "sway-session.target" ];
       };
-
-      # Prevent sd-switch from killing the output watcher during rebuilds
-      restartIfChanged = false;
     };
 
     # Systemd service for wallpaper restoration
