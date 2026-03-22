@@ -112,9 +112,23 @@ let
   # Resume monitors and restore wallpaper (wraps multi-command sequence for swayidle)
   sway-resume-monitors = pkgs.writeShellScript "sway-resume-monitors" ''
     ${pkgs.sway}/bin/swaymsg 'output * power on'
+    sleep 0.5
     ${if (systemSettings.waypaperEnable or false)
       then "${pkgs.systemd}/bin/systemctl --user start waypaper-restore.service"
       else "${pkgs.systemd}/bin/systemctl --user start swww-restore.service"}
+  '';
+
+  # Manual wallpaper recovery: power-cycle outputs and restore wallpaper
+  sway-refresh-wallpaper = pkgs.writeShellScript "sway-refresh-wallpaper" ''
+    ${pkgs.sway}/bin/swaymsg 'output * power off'
+    sleep 0.3
+    ${pkgs.sway}/bin/swaymsg 'output * power on'
+    sleep 0.5
+    ${if (systemSettings.waypaperEnable or false)
+      then "${pkgs.systemd}/bin/systemctl --user start waypaper-restore.service"
+      else if (systemSettings.swwwEnable or false)
+      then "${pkgs.systemd}/bin/systemctl --user start swww-restore.service"
+      else "true"}
   '';
 
   # Smart lid handler: context-aware lid close behavior
@@ -409,6 +423,9 @@ in
         {
           # Reload SwayFX configuration
           "${hyper}+Shift+r" = "reload";
+
+          # Refresh wallpaper (manual recovery from red/blank screen)
+          "${hyper}+F5" = "exec ${sway-refresh-wallpaper}";
 
           # Keyboard layout switching (English/Spanish/Polish)
           "${hyper}+Return" = "exec ${keyboard-layout-switch}/bin/keyboard-layout-switch";
@@ -1140,6 +1157,9 @@ in
     };
 
     extraConfig = ''
+      # Fallback background: prevents red/garbage screen if wallpaper daemon dies
+      output * bg #000000 solid_color
+
       # Window border settings
       default_border pixel 2
 

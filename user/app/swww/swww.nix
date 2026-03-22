@@ -173,6 +173,8 @@ in
     Install = {
       WantedBy = [ "sway-session.target" ];
     };
+    # Prevent sd-switch from killing the running wallpaper daemon during rebuilds
+    restartIfChanged = false;
   };
 
   systemd.user.services.swww-restore = lib.mkIf cfgEnable {
@@ -204,10 +206,12 @@ in
       . "$ENV_FILE"
     fi
     if [ -n "''${SWAYSOCK:-}" ] && [ -S "''${SWAYSOCK:-}" ]; then
+      sleep 1
       ${pkgs.systemd}/bin/systemctl --user start swww-restore.service >/dev/null 2>&1 || true
     else
       CAND="$(ls -t "$RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -n1 || true)"
       if [ -n "$CAND" ] && [ -S "$CAND" ]; then
+        sleep 1
         ${pkgs.systemd}/bin/systemctl --user start swww-restore.service >/dev/null 2>&1 || true
       fi
     fi
