@@ -389,6 +389,7 @@ in
             --exclude='.claude/telemetry' \
             --exclude='.claude/.credentials.json' \
             --exclude='.claude/settings.json.bak' \
+            --exclude='.claude/mcp-env' \
             .claude/
           mv "$DEST/claude-backup.tar.zst.tmp" "$DEST/claude-backup.tar.zst"
         '';
