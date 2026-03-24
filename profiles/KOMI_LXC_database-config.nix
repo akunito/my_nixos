@@ -63,6 +63,10 @@ in
     postgresqlServerPort = 5432;
     postgresqlServerDatabases = [ ]; # Komi will add databases as needed
     postgresqlServerUsers = [ ];     # Komi will add users as needed
+    postgresqlServerAuthentication = ''
+      # Tailscale mesh VPN access (CGNAT range)
+      host    all             all             100.64.0.0/10           scram-sha-256
+    '';
 
     # Redis Server
     redisServerEnable = true;
