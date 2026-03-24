@@ -26,6 +26,7 @@ in
         "telegram"
         "whatsapp"
         "discord"
+        "slack"
 
         # === Productivity ===
         "obsidian"
@@ -42,6 +43,9 @@ in
         # === Gaming ===
         "steam"         # Steam client (native macOS app)
         "openemu"       # Retro console emulator (NES, SNES, N64, PS1, etc.)
+
+        # === Networking ===
+        "tailscale"          # Mesh VPN (connects Mac, VPS, home server)
 
         # === Utilities ===
         "kitty"

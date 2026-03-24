@@ -40,7 +40,9 @@ in
       9121  # Redis Exporter
       9187  # PostgreSQL Exporter
     ];
-    allowedUDPPorts = [ ];
+    allowedUDPPorts = [
+      41641 # Tailscale direct connections
+    ];
 
     # System packages (extends base with database-specific packages)
     systemPackages = pkgs: pkgs-unstable:
@@ -113,6 +115,10 @@ in
     # Optimizations
     havegedEnable = false;
     fail2banEnable = false;
+
+    # === Tailscale Mesh VPN ===
+    tailscaleEnable = true;
+    tailscaleAcceptRoutes = true; # Accept routes from other Tailscale nodes
 
     # Swap file (Disabled in LXC, managed by Proxmox)
     swapFileEnable = false;
