@@ -1,6 +1,7 @@
-# VPN Media stack - TrueNAS Docker (ROOT daemon)
-# Gluetun + qBittorrent require NET_ADMIN / host netns — cannot run rootless.
+# VPN Media stack - TrueNAS Docker (rootless daemon)
+# Gluetun requires NET_ADMIN + /dev/net/tun for VPN tunnel.
 # qBittorrent uses gluetun's network namespace for VPN-only traffic.
+# gluetun.env configures VPN provider, protocol, and firewall (FIREWALL_VPN_INPUT_PORTS).
 
 services:
   gluetun:
