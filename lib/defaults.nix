@@ -237,6 +237,14 @@
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
+    disk9_enabled = false;
+    disk9_name = "/mnt/NFS_downloads";
+    disk9_device = "192.168.20.200:/mnt/extpool/downloads";
+    disk9_fsType = "nfs4";
+    disk9_options = [
+      "nofail"
+      "x-systemd.device-timeout=5s"
+    ];
 
     # NFS defaults
     nfsServerEnable = false;

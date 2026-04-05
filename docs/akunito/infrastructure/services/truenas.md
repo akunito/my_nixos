@@ -100,6 +100,7 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
 |-------|---------|---------|---------|
 | /mnt/ssdpool/media | ssdpool/media | TrueNAS Docker (Jellyfin) | Media streaming |
 | /mnt/ssdpool/workstation_backups | ssdpool/workstation_backups | 192.168.8.96, 192.168.8.92 | Workstation restic backups (NFS-based unified backup system) |
+| /mnt/extpool/downloads | extpool/downloads | 192.168.20.0/24, 192.168.8.0/24 | Game downloads (FitGirl, etc.) |
 
 **Access**: NFSv4, all_squash (mapall_user=akunito) for workstations. Docker containers on TrueNAS access datasets via bind mounts (no NFS needed).
 

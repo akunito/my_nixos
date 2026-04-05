@@ -212,6 +212,7 @@ in
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
+    disk9_enabled = true;
 
     # NFS client
     nfsClientEnable = true;
@@ -229,6 +230,12 @@ in
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
       }
+      {
+        what = "192.168.20.200:/mnt/extpool/downloads";
+        where = "/mnt/NFS_downloads";
+        type = "nfs";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
+      }
     ];
     nfsAutoMounts = [
       {
@@ -240,6 +247,12 @@ in
       # NFS_library and NFS_emulators automounts removed (IAKU-247)
       {
         where = "/mnt/NFS_Backups";
+        automountConfig = {
+          TimeoutIdleSec = "600";
+        };
+      }
+      {
+        where = "/mnt/NFS_downloads";
         automountConfig = {
           TimeoutIdleSec = "600";
         };
