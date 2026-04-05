@@ -46,8 +46,10 @@ related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-expor
 > **Removed (IAKU-247)**: `ssdpool/library` and `ssdpool/emulators` datasets removed. Data lives on VPS with restic backups.
 
 **extpool** (USB NVMe, ~4TB, no redundancy):
-- `extpool/downloads` - Game downloads
+- `extpool/downloads` - Game storage (long-term, NOT for active torrent downloads)
 - `extpool/vps-backups` - VPS restic services, libraries, nextcloud (re-downloadable)
+
+> **USB NVMe limitation**: extpool uses a Lexar NQ790 4TB via RTL9210 USB adapter. It cannot handle sustained random writes (ZFS pool goes SUSPENDED). Torrents download to ssdpool, then move to extpool via `~/scripts/move-games-to-extpool.sh` after completion. Recovery: reseat USB → `sudo zpool clear extpool`. See AINF-334.
 
 ---
 

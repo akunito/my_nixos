@@ -54,7 +54,9 @@ services:
     volumes:
       - ${DATA_PATH}/mediarr/qbittorrent:/config
       - ${MEDIA_PATH}/downloads:/data/downloads
-      - /mnt/extpool/downloads:/data/game-downloads
+      # extpool removed — USB NVMe (RTL9210) can't handle sustained torrent writes.
+      # Games download to /data/downloads/games (ssdpool), then move to extpool via
+      # ~/scripts/move-games-to-extpool.sh after download completes.
     restart: unless-stopped
     logging:
       driver: json-file
