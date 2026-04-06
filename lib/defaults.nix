@@ -120,7 +120,7 @@
     # VPS Restic backup to TrueNAS (via SFTP over Tailscale)
     vpsResticBackupEnable = false;
     vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
-    vpsResticTargetUser = "truenas_admin";
+    vpsResticTargetUser = "akunito";  # NixOS NAS uses akunito (no truenas_admin user)
 
     # Network defaults
     networkManager = true;
@@ -467,12 +467,12 @@
     # === TrueNAS Backup Monitoring (checks ZFS replication snapshots via SSH) ===
     prometheusTruenasBackupEnable = false;
     prometheusTruenasBackupHost = "192.168.20.200"; # TrueNAS storage IP
-    prometheusTruenasBackupUser = "truenas_admin";  # SSH user for snapshot queries
+    prometheusTruenasBackupUser = "akunito";  # SSH user for snapshot queries (was truenas_admin)
 
     # === TrueNAS Offsite Backup (VPS pulls Docker data + configs from TrueNAS) ===
     truenasResticBackupEnable = false;
     truenasResticBackupHost = "192.168.20.200";       # TrueNAS storage IP
-    truenasResticBackupUser = "truenas_admin";         # SSH user for rsync
+    truenasResticBackupUser = "akunito";         # SSH user for rsync (was truenas_admin)
     truenasResticBackupApiKeyFile = "/etc/secrets/truenas-api-key"; # TrueNAS API key for config export
     truenasResticBackupApiPort = 9443;                             # TrueNAS web UI HTTPS port
     truenasResticBackupLocalDir = "/var/lib/truenas-backups";       # Local staging + restic repo dir

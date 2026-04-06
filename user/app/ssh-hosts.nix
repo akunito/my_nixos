@@ -40,7 +40,7 @@
       };
       "truenas" = {
         hostname = "192.168.20.200";
-        user = "truenas_admin";
+        user = "akunito";  # NixOS NAS uses akunito (was truenas_admin)
         forwardAgent = true;
       };
       "github.com" = {

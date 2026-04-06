@@ -14,7 +14,7 @@
 # Feature flag: vpsResticBackupEnable = true (in profile config)
 #
 # Prerequisites:
-#   - SSH key at /home/<user>/.ssh/id_ed25519_restic (passwordless, for truenas_admin)
+#   - SSH key at /home/<user>/.ssh/id_ed25519_restic (passwordless, for akunito on NAS)
 #   - Password files at /etc/secrets/restic-{databases,services,nextcloud}
 #   - Restic repos initialized on TrueNAS:
 #     - /mnt/extpool/vps-backups/databases.restic
@@ -27,7 +27,7 @@
 let
   username = userSettings.username;
   target = systemSettings.vpsResticTarget or "100.64.0.9";
-  targetUser = systemSettings.vpsResticTargetUser or "truenas_admin";
+  targetUser = systemSettings.vpsResticTargetUser or "akunito";
   sshKey = "/home/${username}/.ssh/id_ed25519_restic";
   sftpCommand = "ssh -i ${sshKey} ${targetUser}@${target} -s sftp";
   repoBase = "sftp:${targetUser}@${target}:/mnt/extpool/vps-backups";

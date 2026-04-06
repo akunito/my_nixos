@@ -388,7 +388,7 @@ in
     # databases → ssdpool/vps-backups (critical), services+libraries+nextcloud → extpool/vps-backups
     vpsResticBackupEnable = true;
     vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
-    vpsResticTargetUser = "truenas_admin";
+    vpsResticTargetUser = "akunito";  # NixOS NAS uses akunito (no truenas_admin user)
 
     # === Backup Monitoring (pfSense config + TrueNAS restic repos) ===
     prometheusPfsenseBackupEnable = true;

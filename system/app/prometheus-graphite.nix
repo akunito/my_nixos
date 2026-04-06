@@ -168,7 +168,7 @@ lib.mkIf (systemSettings.prometheusGraphiteEnable or false) {
       User = "akunito";
       ExecStart = pkgs.writeShellScript "truenas-zfs-exporter" ''
         set -euo pipefail
-        TRUENAS_HOST="truenas_admin@192.168.20.200"
+        TRUENAS_HOST="akunito@192.168.20.200"
         GRAPHITE_HOST="127.0.0.1"
         GRAPHITE_PORT="${toString graphiteInputPort}"
         TIMESTAMP=$(date +%s)
