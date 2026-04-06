@@ -200,7 +200,9 @@ in
     dotfilesDir = "/home/akunito/.dotfiles";
     extraGroups = [
       "wheel"
-      "docker"
+      "docker" # For root Docker (vpn-media)
+      "render" # For Jellyfin GPU access (rootless)
+      "video"  # For Jellyfin GPU access (rootless)
     ];
 
     theme = "io";
@@ -215,8 +217,8 @@ in
     term = "";
     font = "";
 
-    dockerEnable = true; # Root Docker (rootless migration deferred — needs module support)
-    dockerRootlessEnable = false;
+    dockerEnable = true; # Root Docker for vpn-media (gluetun needs NET_ADMIN)
+    dockerRootlessEnable = true; # Rootless Docker for media, npm, cloudflared, exporters, monitoring
     virtualizationEnable = false;
 
     # Minimal user packages

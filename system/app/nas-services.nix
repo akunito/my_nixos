@@ -9,16 +9,25 @@
 let
   nasEnabled = systemSettings.nasServicesEnable or false;
   username = userSettings.username;
+  isRootless = userSettings.dockerRootlessEnable or false;
   composeBase = "/mnt/ssdpool/docker/compose";
-  # Docker compose projects to start on boot (in order)
-  composeProjects = systemSettings.nasDockerProjects or [
+  # Root Docker projects (need NET_ADMIN / privileged)
+  rootDockerProjects = systemSettings.nasRootDockerProjects or [ "vpn-media" ];
+  # Rootless Docker projects (everything else)
+  rootlessDockerProjects = systemSettings.nasRootlessDockerProjects or [
     "npm"
     "cloudflared"
     "media"
-    "vpn-media"
     "exporters"
     "monitoring"
   ];
+  # Combined for backward compat (used by suspend/resume)
+  composeProjects = rootDockerProjects ++ rootlessDockerProjects;
+  # Rootless environment
+  rootlessEnv = {
+    XDG_RUNTIME_DIR = "/run/user/1000";
+    DOCKER_HOST = "unix:///run/user/1000/docker.sock";
+  };
 in
 {
   config = lib.mkIf nasEnabled {
@@ -223,9 +232,66 @@ in
     };
 
     # ========================================================================
-    # Docker Compose auto-start on boot
+    # Docker Compose auto-start on boot — Root Docker (vpn-media)
     # ========================================================================
-    systemd.services.nas-docker-compose-up = {
+    systemd.services.nas-docker-root-compose-up = {
+      description = "Start root Docker Compose projects on boot (vpn-media)";
+      after = [ "docker.service" "zfs-mount.service" "network-online.target" ];
+      requires = [ "docker.service" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        TimeoutSec = 120;
+      };
+      script = ''
+        echo "Starting root Docker Compose projects..."
+        for project in ${lib.concatMapStringsSep " " (p: "'${p}'") rootDockerProjects}; do
+          if [ -d "${composeBase}/$project" ]; then
+            echo "  Starting $project (root)..."
+            cd "${composeBase}/$project" && ${pkgs.docker-compose}/bin/docker-compose up -d || true
+          fi
+        done
+        echo "Root Docker projects started."
+      '';
+    };
+
+    # ========================================================================
+    # Docker Compose auto-start on boot — Rootless Docker (media, npm, etc.)
+    # ========================================================================
+    systemd.services.nas-docker-rootless-compose-up = lib.mkIf isRootless {
+      description = "Start rootless Docker Compose projects on boot";
+      after = [ "user@1000.service" "zfs-mount.service" "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        TimeoutSec = 300;
+        User = username;
+      };
+      environment = rootlessEnv;
+      script = ''
+        echo "Starting rootless Docker Compose projects..."
+        # Wait for rootless Docker socket
+        for i in $(seq 1 30); do
+          [ -S "/run/user/1000/docker.sock" ] && break
+          echo "  Waiting for rootless Docker socket ($i/30)..."
+          sleep 2
+        done
+        for project in ${lib.concatMapStringsSep " " (p: "'${p}'") rootlessDockerProjects}; do
+          if [ -d "${composeBase}/$project" ]; then
+            echo "  Starting $project (rootless)..."
+            cd "${composeBase}/$project" && ${pkgs.docker-compose}/bin/docker-compose up -d || true
+          fi
+        done
+        echo "Rootless Docker projects started."
+      '';
+    };
+
+    # Fallback: single compose-up for non-rootless setups
+    systemd.services.nas-docker-compose-up = lib.mkIf (!isRootless) {
       description = "Start all Docker Compose projects on boot";
       after = [ "docker.service" "zfs-mount.service" "network-online.target" ];
       requires = [ "docker.service" ];

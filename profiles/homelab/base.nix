@@ -94,6 +94,8 @@ in
     "net.ipv4.tcp_window_scaling" = 1; # Enables window scaling for better throughput
     "net.core.netdev_max_backlog" = 5000; # Increases queue length for incoming packets
     "net.ipv4.tcp_timestamps" = 1; # Enables TCP timestamps for better RTT estimation
+  } // lib.optionalAttrs (userSettings.dockerRootlessEnable or false) {
+    "net.ipv4.ip_unprivileged_port_start" = 80; # Allow rootless Docker to bind ports < 1024 (NPM)
   };
 
   # Bootloader
@@ -153,7 +155,29 @@ in
     extraGroups = userSettings.extraGroups;
     packages = [ ];
     uid = 1000;
+    linger = lib.mkIf (userSettings.dockerRootlessEnable or false) true;
   };
+
+  # ==========================================================================
+  # Rootless Docker (hybrid model — can coexist with root Docker)
+  # ==========================================================================
+  virtualisation.docker.rootless = lib.mkIf (userSettings.dockerRootlessEnable or false) {
+    enable = true;
+    setSocketVariable = true;
+    daemon.settings = {
+      "log-driver" = "json-file";
+      "log-opts" = { "max-size" = "10m"; "max-file" = "3"; };
+      "dns" = [ "1.1.1.1" "9.9.9.9" ]; # slirp4netns can't reach systemd-resolved stub
+    };
+  };
+
+  # Allow rootless containers to reach host services via slirp4netns gateway (10.0.2.2)
+  systemd.user.services.docker = lib.mkIf (userSettings.dockerRootlessEnable or false) {
+    environment.DOCKERD_ROOTLESS_ROOTLESSKIT_DISABLE_HOST_LOOPBACK = "false";
+  };
+
+  # Note: rootless Docker port binding (net.ipv4.ip_unprivileged_port_start)
+  # is set in the existing boot.kernel.sysctl block above
 
   # Additional users
   # users.users.${userSettings.username2} = lib.mkIf (usersettings.username2enable == true) {
