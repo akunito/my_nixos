@@ -27,6 +27,7 @@
           KOMI_LXC_proxy = ./profiles/KOMI_LXC_proxy-config.nix;
           KOMI_LXC_tailscale = ./profiles/KOMI_LXC_tailscale-config.nix;
           VPS_PROD = ./profiles/VPS_PROD-config.nix;
+          NAS_PROD = ./profiles/NAS_PROD-config.nix;
           MACBOOK-KOMI = ./profiles/MACBOOK-KOMI-config.nix;
         };
       };

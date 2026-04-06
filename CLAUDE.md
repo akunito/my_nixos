@@ -97,6 +97,7 @@ Full workflow, project routing, and MCP tool reference: `.claude/agents/plane-co
 | LAPTOP_A | nixosaga (192.168.8.78) | akunito | main |
 | VPS_PROD | vps-prod (100.64.0.6 via Tailscale, SSH port 56777) | akunito | main |
 | VMHOME | nixosLabaku (192.168.8.80) | akunito | main |
+| NAS_PROD | nas-aku (192.168.20.200) | akunito | main |
 | KOMI_LXC_database | komi-database (192.168.1.10) | admin | komi |
 | KOMI_LXC_mailer | komi-mailer (192.168.1.11) | admin | komi |
 | KOMI_LXC_monitoring | komi-monitoring (192.168.1.12) | admin | komi |
