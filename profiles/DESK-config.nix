@@ -335,7 +335,7 @@ in
     planeWorkspaceSlug = "akuworkspace";
     grafanaMcpToken = secrets.grafanaMcpToken; # Grafana MCP (read-only dashboards + PromQL)
     grafanaMcpUrl = "https://grafana.${secrets.publicDomain}";
-    dbClaudeReadonlyConnStr = "postgresql://claude_readonly:${secrets.dbClaudeReadonlyPassword}@100.64.0.6:5432/plane";
+    dbClaudeReadonlyConnStr = "postgresql://claude_readonly:${secrets.dbClaudeReadonlyPassword}@vps-prod:5432/plane";
     n8nMcpApiKey = secrets.n8nApiKey; # n8n MCP (workflow automation)
     n8nMcpUrl = "https://n8n.${secrets.publicDomain}";
     aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
@@ -353,7 +353,7 @@ in
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
     dbCredentialsEnable = true;
-    dbCredentialsHost = "100.64.0.6"; # VPS_PROD via Tailscale
+    dbCredentialsHost = "vps-prod"; # VPS Tailscale hostname
     dbCredentialsPostgres = [
       { database = "plane"; user = "plane"; password = secrets.dbPlanePassword; }
       { database = "rails_database_prod"; user = "liftcraft"; password = secrets.dbLiftcraftPassword; }

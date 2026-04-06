@@ -26,7 +26,7 @@
 
 let
   username = userSettings.username;
-  target = systemSettings.vpsResticTarget or "100.64.0.9";
+  target = systemSettings.vpsResticTarget or "nas-aku";  # NAS Tailscale hostname
   targetUser = systemSettings.vpsResticTargetUser or "akunito";
   sshKey = "/home/${username}/.ssh/id_ed25519_restic";
   sftpCommand = "ssh -i ${sshKey} ${targetUser}@${target} -s sftp";

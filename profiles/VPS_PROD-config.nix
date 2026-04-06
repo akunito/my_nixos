@@ -240,7 +240,7 @@ in
 
     # === Nginx Local Access (*.local.akunito.com via Tailscale — bypasses Cloudflare Access) ===
     nginxLocalEnable = true;
-    nginxLocalListenAddress = "100.64.0.6"; # VPS Tailscale IP
+    nginxLocalListenAddress = "100.64.0.6"; # VPS Tailscale IP (must be IP, not hostname — nginx bind)
     nginxLocalServices = {
       grafana    = { port = 3002; };
       prometheus = { port = 9090; basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd"; };
@@ -286,10 +286,10 @@ in
     # TrueNAS: node-exporter (9100) + cadvisor (8081) on rootless Docker
     # Laptops use Tailscale IPs (roaming — not always on LAN)
     prometheusRemoteTargets = [
-      { name = "truenas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; }
+      { name = "nas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; }
       { name = "desk"; host = "192.168.8.96"; nodePort = 9100; cadvisorPort = null; }
-      { name = "x13"; host = "100.64.0.8"; nodePort = 9100; cadvisorPort = null; }
-      { name = "laptop_a"; host = "100.64.0.4"; nodePort = 9100; cadvisorPort = null; }
+      { name = "x13"; host = "nixosx13aku"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (roaming)
+      { name = "laptop_a"; host = "nixosaga"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (roaming)
     ];
 
     # Application metrics (local VPS databases only — LXC_database decommissioned)
@@ -384,10 +384,10 @@ in
     # ============================================================================
     # Repos: databases (19:00), services (19:30), nextcloud (Sun 20:00), libraries (Sun 20:30)
     # Window: 19:00-22:00 (TrueNAS sleeps 23:00-11:00)
-    # Target: TrueNAS via Tailscale (100.64.0.9)
+    # Target: NAS via Tailscale hostname (nas-aku)
     # databases → ssdpool/vps-backups (critical), services+libraries+nextcloud → extpool/vps-backups
     vpsResticBackupEnable = true;
-    vpsResticTarget = "100.64.0.1";       # NAS Tailscale IP (was 100.64.0.9 on TrueNAS)
+    vpsResticTarget = "nas-aku";           # NAS Tailscale hostname (resolves via MagicDNS)
     vpsResticTargetUser = "akunito";  # NixOS NAS uses akunito (no truenas_admin user)
 
     # === Backup Monitoring (pfSense config + TrueNAS restic repos) ===

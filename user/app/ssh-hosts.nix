@@ -13,7 +13,7 @@
         forwardAgent = true;
       };
       "vps" = {
-        hostname = "100.64.0.6"; # VPS_PROD via Tailscale (Netcup RS 4000 G12)
+        hostname = "vps-prod"; # VPS Tailscale hostname (resolves via MagicDNS)
         user = "akunito";
         port = 56777;
         forwardAgent = true;

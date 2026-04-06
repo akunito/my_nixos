@@ -119,7 +119,7 @@
 
     # VPS Restic backup to TrueNAS (via SFTP over Tailscale)
     vpsResticBackupEnable = false;
-    vpsResticTarget = "100.64.0.9";       # TrueNAS Tailscale IP
+    vpsResticTarget = "nas-aku";           # NAS Tailscale hostname (resolves via MagicDNS)
     vpsResticTargetUser = "akunito";  # NixOS NAS uses akunito (no truenas_admin user)
 
     # Network defaults
@@ -199,7 +199,7 @@
     # data lives exclusively on VPS. No profile should enable these. See IAKU-247.
     disk4_enabled = false;
     disk4_name = "/mnt/NFS_emulators";
-    disk4_device = "100.64.0.6:/home/akunito/romm-library";
+    disk4_device = "vps-prod:/home/akunito/romm-library";  # VPS Tailscale hostname
     disk4_fsType = "nfs4";
     disk4_options = [
       "nofail"
@@ -207,7 +207,7 @@
     ];
     disk5_enabled = false;
     disk5_name = "/mnt/NFS_library";
-    disk5_device = "100.64.0.6:/home/akunito/calibre-library";
+    disk5_device = "vps-prod:/home/akunito/calibre-library";  # VPS Tailscale hostname
     disk5_fsType = "nfs4";
     disk5_options = [
       "nofail"
@@ -538,7 +538,7 @@
     # Generate ~/.pgpass and ~/.my.cnf for CLI tools and DBeaver
     dbCredentialsEnable = false;
     # Database server host (VPS via Tailscale)
-    dbCredentialsHost = "100.64.0.6";
+    dbCredentialsHost = "vps-prod";  # VPS Tailscale hostname (was 100.64.0.6)
     # PostgreSQL credentials (plane, liftcraft databases)
     dbCredentialsPostgres = []; # List of { database, user, password }
     # MariaDB credentials (nextcloud database)
