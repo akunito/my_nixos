@@ -27,10 +27,51 @@ in
     # ========================================================================
     boot.supportedFilesystems = [ "zfs" ];
     boot.zfs.extraPools = systemSettings.nasZfsPools or [ "ssdpool" "extpool" ];
-    # Don't auto-request credentials at boot — unlock manually via SSH
+    # Don't prompt at boot — we auto-unlock from passphrase file on encrypted root
     boot.zfs.requestEncryptionCredentials = false;
     # REQUIRED for ZFS — generate with: head -c 8 /dev/urandom | od -A none -t x1 | tr -d ' ' | head -c 8
     networking.hostId = systemSettings.nasHostId or "deadbeef";
+
+    # ========================================================================
+    # ZFS pool auto-unlock after boot
+    # ========================================================================
+    # The NixOS boot drive is LUKS-encrypted (passphrase at boot).
+    # Pool passphrases are stored on the encrypted root at /etc/zfs/keys/.
+    # This is safe because the root filesystem is only accessible after
+    # the user enters the LUKS passphrase at boot.
+    #
+    # Setup (one-time, during migration):
+    #   sudo mkdir -p /etc/zfs/keys
+    #   echo -n "your-ssdpool-passphrase" | sudo tee /etc/zfs/keys/ssdpool > /dev/null
+    #   sudo chmod 000 /etc/zfs/keys && sudo chmod 400 /etc/zfs/keys/*
+    #
+    systemd.services.nas-zfs-unlock = {
+      description = "Unlock encrypted ZFS pools";
+      after = [ "zfs-import.target" ];
+      wantedBy = [ "zfs-mount.service" ];
+      before = [ "zfs-mount.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        KEY_DIR="/etc/zfs/keys"
+        for pool in ${lib.concatStringsSep " " (systemSettings.nasZfsPools or [ "ssdpool" ])}; do
+          KEY_FILE="$KEY_DIR/$pool"
+          if [ -f "$KEY_FILE" ]; then
+            # Check if pool needs unlocking
+            if ${pkgs.zfs}/bin/zfs get -H -o value keystatus "$pool" 2>/dev/null | grep -q "unavailable"; then
+              echo "Unlocking $pool..."
+              ${pkgs.zfs}/bin/zfs load-key -r "$pool" < "$KEY_FILE" && echo "  $pool unlocked" || echo "  $pool unlock failed"
+            else
+              echo "$pool already unlocked or not encrypted"
+            fi
+          else
+            echo "No key file for $pool at $KEY_FILE — manual unlock needed"
+          fi
+        done
+      '';
+    };
 
     # ZFS auto-scrub (monthly)
     services.zfs.autoScrub = {
