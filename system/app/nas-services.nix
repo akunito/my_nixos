@@ -23,6 +23,21 @@ in
 {
   config = lib.mkIf nasEnabled {
     # ========================================================================
+    # LAN fallback interface (2.5GbE for management when bond is down)
+    # ========================================================================
+    systemd.network.networks."20-lan-fallback" = {
+      matchConfig.Name = systemSettings.nasLanInterface or "enp10s0";
+      networkConfig = {
+        DHCP = "yes";
+        IPv6AcceptRA = true;
+      };
+      dhcpV4Config = {
+        RouteMetric = 1024; # Higher metric than bond (lower priority)
+        UseDNS = false; # Don't override bond DNS
+      };
+    };
+
+    # ========================================================================
     # ZFS
     # ========================================================================
     boot.supportedFilesystems = [ "zfs" ];
