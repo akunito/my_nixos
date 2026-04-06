@@ -187,11 +187,6 @@ in
       serviceConfig = {
         Type = "oneshot";
         TimeoutSec = 120;
-        User = username;
-      };
-      environment = {
-        XDG_RUNTIME_DIR = "/run/user/1000";
-        DOCKER_HOST = "unix:///run/user/1000/docker.sock";
       };
       script = ''
         echo "Stopping Docker containers for suspend..."
@@ -213,12 +208,7 @@ in
       serviceConfig = {
         Type = "oneshot";
         TimeoutSec = 180;
-        User = username;
         ExecStartPre = "${pkgs.coreutils}/bin/sleep 10"; # Wait for networking
-      };
-      environment = {
-        XDG_RUNTIME_DIR = "/run/user/1000";
-        DOCKER_HOST = "unix:///run/user/1000/docker.sock";
       };
       script = ''
         echo "Starting Docker containers after resume..."
@@ -245,11 +235,6 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         TimeoutSec = 300;
-        User = username;
-      };
-      environment = {
-        XDG_RUNTIME_DIR = "/run/user/1000";
-        DOCKER_HOST = "unix:///run/user/1000/docker.sock";
       };
       script = ''
         echo "Starting Docker Compose projects..."
