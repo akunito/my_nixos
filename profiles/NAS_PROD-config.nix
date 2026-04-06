@@ -48,7 +48,7 @@ in
     useNetworkd = true;
     networkManager = false;
     resolvedEnable = false;
-    nameServers = [ "192.168.8.1" ]; # pfSense DNS
+    nameServers = [ "192.168.20.1" "1.1.1.1" ]; # VLAN router + Cloudflare
     wifiPowerSave = false;
 
     # LACP Bond (2x Intel X520 10GbE SFP+)
@@ -86,6 +86,11 @@ in
       9100  # Node exporter
       8081  # cAdvisor
       6881  # qBittorrent torrent
+      9707  # Exportarr sonarr
+      9708  # Exportarr radarr
+      9709  # Exportarr prowlarr
+      9710  # Exportarr bazarr
+      8191  # Solvearr (captcha solver)
     ];
     allowedUDPPorts = [
       111   # NFS
@@ -182,7 +187,6 @@ in
     dotfilesDir = "/home/akunito/.dotfiles";
     extraGroups = [
       "wheel"
-      "docker"
     ];
 
     theme = "io";
@@ -197,8 +201,8 @@ in
     term = "";
     font = "";
 
-    dockerEnable = true; # Root Docker for gluetun (NET_ADMIN)
-    dockerRootlessEnable = false; # TODO: evaluate rootless for media stack
+    dockerEnable = false; # Rootless only — gluetun NET_ADMIN works in rootless Docker
+    dockerRootlessEnable = true;
     virtualizationEnable = false;
 
     # Minimal user packages
