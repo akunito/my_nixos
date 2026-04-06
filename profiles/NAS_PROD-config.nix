@@ -197,6 +197,7 @@ in
     dotfilesDir = "/home/akunito/.dotfiles";
     extraGroups = [
       "wheel"
+      "docker"
     ];
 
     theme = "io";
@@ -211,8 +212,8 @@ in
     term = "";
     font = "";
 
-    dockerEnable = false; # Rootless only — gluetun NET_ADMIN works in rootless Docker
-    dockerRootlessEnable = true;
+    dockerEnable = true; # Root Docker (rootless migration deferred — needs module support)
+    dockerRootlessEnable = false;
     virtualizationEnable = false;
 
     # Minimal user packages
