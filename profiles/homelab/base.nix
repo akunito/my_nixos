@@ -37,7 +37,9 @@ in
   ++ lib.optional systemSettings.sambaEnable ../../system/app/samba.nix # Samba config
   ++ lib.optional systemSettings.appImageEnable ../../system/app/appimage.nix # AppImage support
   ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix # Mount drives
-  ++ lib.optional (systemSettings.nasServicesEnable or false) ../../system/app/nas-services.nix; # NAS: ZFS, SMART, sleep, Docker auto-start
+  ++ lib.optional (systemSettings.nasServicesEnable or false) ../../system/app/nas-services.nix # NAS: ZFS, SMART, sleep, Docker auto-start
+  ++ lib.optional (systemSettings.networkBondingEnable or false) ../../system/hardware/network-bonding.nix # LACP bond
+  ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix; # Tailscale mesh VPN
 
   # Disable documentation to reduce build time (headless servers)
   documentation.enable = lib.mkDefault false;
@@ -116,7 +118,8 @@ in
   networking.nameservers = systemSettings.nameServers; # Define your DNS servers
 
   # systemd-networkd DHCP configuration (when useNetworkd is enabled)
-  systemd.network.networks."10-lan" = lib.mkIf systemSettings.useNetworkd {
+  # When bonding is enabled, exclude bond slave interfaces from DHCP
+  systemd.network.networks."10-lan" = lib.mkIf (systemSettings.useNetworkd && !(systemSettings.networkBondingEnable or false)) {
     matchConfig.Name = "en*"; # Match ethernet interfaces (ens18, enp0s3, etc.)
     networkConfig = {
       DHCP = "yes";
