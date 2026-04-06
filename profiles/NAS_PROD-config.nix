@@ -106,7 +106,7 @@ in
     # ============================================================================
     nasServicesEnable = true;
     nasZfsPools = [ "ssdpool" "extpool" ];
-    nasHostId = "a1b2c3d4"; # TODO: generate real hostId during NixOS install
+    nasHostId = "47bff07a";
     nasAutoSnapshotEnable = true;
     nasDockerProjects = [
       "npm"
