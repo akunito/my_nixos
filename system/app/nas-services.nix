@@ -61,10 +61,11 @@ in
     #   sudo chmod 000 /etc/zfs/keys && sudo chmod 400 /etc/zfs/keys/*
     #
     systemd.services.nas-zfs-unlock = {
-      description = "Unlock encrypted ZFS pools";
+      description = "Load ZFS encryption keys from file";
       after = [ "zfs-import.target" ];
+      before = [ "zfs-mount.service" "local-fs.target" ];
       wantedBy = [ "zfs-mount.service" ];
-      before = [ "zfs-mount.service" ];
+      requiredBy = [ "zfs-mount.service" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -74,15 +75,15 @@ in
         for pool in ${lib.concatStringsSep " " (systemSettings.nasZfsPools or [ "ssdpool" ])}; do
           KEY_FILE="$KEY_DIR/$pool"
           if [ -f "$KEY_FILE" ]; then
-            # Check if pool needs unlocking
-            if ${pkgs.zfs}/bin/zfs get -H -o value keystatus "$pool" 2>/dev/null | grep -q "unavailable"; then
-              echo "Unlocking $pool..."
-              ${pkgs.zfs}/bin/zfs load-key -r "$pool" < "$KEY_FILE" && echo "  $pool unlocked" || echo "  $pool unlock failed"
+            KEYSTATUS=$(${pkgs.zfs}/bin/zfs get -H -o value keystatus "$pool" 2>/dev/null || echo "unknown")
+            if [ "$KEYSTATUS" = "unavailable" ]; then
+              echo "Unlocking $pool from $KEY_FILE..."
+              ${pkgs.zfs}/bin/zfs load-key -L "file://$KEY_FILE" "$pool" && echo "  $pool unlocked" || echo "  $pool unlock FAILED"
             else
-              echo "$pool already unlocked or not encrypted"
+              echo "$pool keystatus=$KEYSTATUS (no unlock needed)"
             fi
           else
-            echo "No key file for $pool at $KEY_FILE — manual unlock needed"
+            echo "WARNING: No key file for $pool at $KEY_FILE"
           fi
         done
       '';
