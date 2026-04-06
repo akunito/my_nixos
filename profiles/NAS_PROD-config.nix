@@ -52,17 +52,18 @@ in
     wifiPowerSave = false;
 
     # LACP Bond (2x Intel X520 10GbE SFP+)
+    # Note: VLAN 100 is tagged at the switch, not on the host.
+    # Bond0 gets 192.168.20.200 directly (same as TrueNAS config).
     networkBondingEnable = true;
     networkBondingMode = "802.3ad";
     networkBondingInterfaces = [ "enp8s0f0" "enp8s0f1" ];
     networkBondingDhcp = false;
     networkBondingLacpRate = "slow";
     networkBondingXmitHashPolicy = "layer3+4";
-
-    # VLAN 100 (storage) on bond — primary interface
-    networkBondingVlans = [
-      { id = 100; name = "storage"; address = "192.168.20.200/24"; }
-    ];
+    networkBondingStaticIp = {
+      address = "192.168.20.200/24";
+      gateway = "192.168.20.1";
+    };
 
     # Firewall
     firewall = true;
@@ -101,12 +102,20 @@ in
     ];
 
     # ============================================================================
-    # ZFS — import existing pools from TrueNAS
+    # NAS SERVICES — ZFS, SMART, NFS tuning, S3 sleep, Docker auto-start
     # ============================================================================
-    # ssdpool: 4x2TB SATA SSD RAIDZ1, AES-256-GCM encrypted
-    # extpool: 4TB NVMe (PCIe, was USB), unencrypted
-    # Pools are imported at boot via boot.zfs.extraPools
-    # Encryption unlock: manual via SSH (zfs load-key -r ssdpool)
+    nasServicesEnable = true;
+    nasZfsPools = [ "ssdpool" "extpool" ];
+    nasHostId = "a1b2c3d4"; # TODO: generate real hostId during NixOS install
+    nasAutoSnapshotEnable = true;
+    nasDockerProjects = [
+      "npm"
+      "cloudflared"
+      "media"
+      "vpn-media"
+      "exporters"
+      "monitoring"
+    ];
 
     # ============================================================================
     # NFS SERVER — exports for DESK, LAPTOP_X13, VPS
@@ -133,6 +142,7 @@ in
     # SSH
     # ============================================================================
     sshPort = 22;
+    sshHardenEnable = true; # Strict SSH: modern ciphers, auth limits, timeouts
     authorizedKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAwUXqQXLaKW/WjsZ95fjHKU7sIhNEeqW685TbsrePiK diego88aku@gmail.com" # Laptop (X13)

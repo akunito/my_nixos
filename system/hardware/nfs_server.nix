@@ -9,6 +9,6 @@
     lockdPort = 4001;
     mountdPort = 4002;
     statdPort = 4000;
-    extraNfsdConfig = '''';
+    extraNfsdConfig = lib.mkDefault '''';
   };
 }
