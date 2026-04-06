@@ -131,6 +131,9 @@ in
     # SERVICES
     # ============================================================================
     tailscaleEnable = true;
+    tailscaleLoginServer = "https://${secrets.headscaleDomain}";
+    # Advertise same subnets as TrueNAS Docker Tailscale did
+    tailscaleAdvertiseRoutes = [ "192.168.8.0/24" "192.168.20.0/24" ];
     havegedEnable = false;
     fail2banEnable = true;
     claudeCodeEnable = true; # Claude Code CLI for remote management
