@@ -21,6 +21,8 @@ in
       "192.168.8.97/32"           # DESK (bond)
       "192.168.8.92/32"           # LAPTOP_X13 (primary)
       "192.168.8.93/32"           # LAPTOP_X13 (alt)
+      "192.168.20.96/32"          # DESK (VLAN 100 / storage bond)
+      "192.168.20.0/24"           # Storage VLAN subnet
     ]
     # Tailscale CGNAT range — prevent VPN connections from being banned
     ++ lib.optionals (systemSettings.tailscaleEnable or false) [
