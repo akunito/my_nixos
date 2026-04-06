@@ -324,8 +324,33 @@ in
       chmod 644 "$settings_file"
       echo "Claude Code: Generated writable settings.json"
     else
-      # Already a regular file: don't touch it (preserve user changes)
-      echo "Claude Code: settings.json exists (preserving user changes)"
+      # Already a regular file: merge hooks from base (preserve user's other changes)
+      if command -v ${pkgs.python3}/bin/python3 &>/dev/null; then
+        ${pkgs.python3}/bin/python3 -c "
+import json, sys
+try:
+    with open('$base_file') as f:
+        base = json.load(f)
+    with open('$settings_file') as f:
+        current = json.load(f)
+    # Always sync hooks and deny from base (security-critical)
+    changed = False
+    for key in ['hooks']:
+        if base.get(key) != current.get(key):
+            current[key] = base[key]
+            changed = True
+    if changed:
+        with open('$settings_file', 'w') as f:
+            json.dump(current, f, indent=2)
+        print('Claude Code: hooks synced from base settings')
+    else:
+        print('Claude Code: settings.json up to date')
+except Exception as e:
+    print(f'Claude Code: hooks sync failed: {e}', file=sys.stderr)
+"
+      else
+        echo "Claude Code: settings.json exists (preserving user changes, python3 unavailable for hooks sync)"
+      fi
     fi
   '';
 
