@@ -149,6 +149,7 @@ in
     authorizedKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAwUXqQXLaKW/WjsZ95fjHKU7sIhNEeqW685TbsrePiK diego88aku@gmail.com" # Laptop (X13)
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIErY0vLODupjDrteqGt3SuNW7neUD/ig7lkMiatcmHOU vps-restic-to-truenas" # VPS_PROD restic backups (sftp to extpool/vps-backups)
     ];
 
     # ============================================================================

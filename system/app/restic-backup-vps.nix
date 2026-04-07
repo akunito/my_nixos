@@ -29,7 +29,7 @@ let
   target = systemSettings.vpsResticTarget or "nas-aku";  # NAS Tailscale hostname
   targetUser = systemSettings.vpsResticTargetUser or "akunito";
   sshKey = "/home/${username}/.ssh/id_ed25519_restic";
-  sftpCommand = "ssh -i ${sshKey} ${targetUser}@${target} -s sftp";
+  sftpCommand = "ssh -i ${sshKey} -o BatchMode=yes -o StrictHostKeyChecking=accept-new ${targetUser}@${target} -s sftp";
   repoBase = "sftp:${targetUser}@${target}:/mnt/extpool/vps-backups";
 
   # Helper to create a restic backup service + timer
