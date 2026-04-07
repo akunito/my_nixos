@@ -146,6 +146,7 @@ in
     # ============================================================================
     sshPort = 22;
     sshHardenEnable = true; # Strict SSH: modern ciphers, auth limits, timeouts
+    sshAgentSudoEnable = true; # Passwordless sudo via forwarded SSH agent (matches VPS pattern)
     authorizedKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAwUXqQXLaKW/WjsZ95fjHKU7sIhNEeqW685TbsrePiK diego88aku@gmail.com" # Laptop (X13)
