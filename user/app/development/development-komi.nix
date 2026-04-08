@@ -23,7 +23,7 @@
     pkgs-unstable.vscode           # Visual Studio Code
     pkgs-unstable.code-cursor      # Cursor AI-powered code editor
     pkgs-unstable.opencode         # Open-source code editor
-    pkgs-unstable.claude-code      # Claude Code CLI
+    pkgs-unstable.claude-code-bin  # Claude Code CLI (native binary from GCS, not npm)
     pkgs-unstable.qwen-code        # Alibaba Qwen Code editor
 
     # === Version Control Tools ===

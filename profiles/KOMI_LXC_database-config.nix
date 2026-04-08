@@ -156,7 +156,7 @@ in
     homePackages = pkgs: pkgs-unstable: [
       pkgs.zsh
       pkgs.git
-      pkgs-unstable.claude-code
+      pkgs-unstable.claude-code-bin
     ];
 
     # ============================================================================
