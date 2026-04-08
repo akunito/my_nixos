@@ -105,6 +105,8 @@ let
       libnotify
       swaylock-effects
       bc
+      util-linux # flock (single-instance guard)
+      procps     # pgrep (single-instance guard)
     ];
     text = builtins.readFile ./scripts/swaylock-with-grace.sh;
   };
@@ -462,8 +464,9 @@ in
           "Mod4+Tab" = "workspace back_and_forth";
 
           # Lock screen (Meta/Super + l)
-          "Mod4+l" =
-            "exec ${pkgs.swaylock-effects}/bin/swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono'";
+          # Routes through swaylock-with-grace so the single-instance guard, DPMS pre-warm,
+          # and --color 000000 (no screencopy) apply uniformly to keybind, idle timeout, and rofi.
+          "Mod4+l" = "exec ${swaylock-with-grace}/bin/swaylock-with-grace";
 
           # Media keys (volume)
           # Uses swayosd-client to both adjust volume and show an on-screen display.

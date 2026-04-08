@@ -37,9 +37,11 @@ CHOICE="$1"
 case "$CHOICE" in
   Lock)
     # Prefer swaylock-effects (your config uses swaylock-effects package but binary is still "swaylock")
+    # --color 000000 (NOT --screenshots): screencopy can fail when monitors are mid-DPMS-cycle,
+    # leaving the lock surfaces in a broken state. Mirrors the fix in swaylock-with-grace.sh.
     if [ -n "$SWAYLOCK_BIN" ]; then
-      "$SWAYLOCK_BIN" --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 \
-        --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033
+      "$SWAYLOCK_BIN" --clock --indicator --indicator-radius 100 --indicator-thickness 7 \
+        --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --color 000000
     fi
     ;;
   Logout)
