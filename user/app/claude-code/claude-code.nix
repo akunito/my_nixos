@@ -286,7 +286,7 @@ in
 {
   # Standalone mode: install claude-code + nodejs (for npx/MCP) without full dev IDEs
   home.packages = lib.optionals isStandalone [
-    pkgs-unstable.claude-code      # Claude Code CLI
+    pkgs-unstable.claude-code-bin  # Claude Code CLI (pre-built binary)
     pkgs.nodejs_22                 # Node.js for npx (required by Perplexity MCP)
     pkgs-unstable.uv               # Python package runner (uvx, required by Plane MCP)
     pkgs.git-crypt                 # Transparent file encryption in git
