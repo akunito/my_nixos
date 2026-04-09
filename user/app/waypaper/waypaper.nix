@@ -9,7 +9,7 @@
 let
   cfgEnable = (systemSettings.waypaperEnable or false);
 
-  SWWW = lib.getExe pkgs.swww;
+  SWWW = lib.getExe pkgs.awww;
   SWAYMSG = lib.getExe' pkgs.sway "swaymsg";
 
   waypaperConfigFile = "${config.xdg.configHome}/waypaper/config.ini";
@@ -73,7 +73,7 @@ let
     #!/bin/sh
     set -eu
 
-    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.waypaper ]}:$PATH"
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.waypaper pkgs.awww ]}:$PATH"
 
     SWAYMSG='${SWAYMSG}'
     SWWW='${SWWW}'
@@ -137,7 +137,7 @@ let
 [Settings]
 folder = /nix/store
 wallpaper = ${fallbackImage}
-backend = swww
+backend = awww
 monitors = All
 fill = fill
 sort = name

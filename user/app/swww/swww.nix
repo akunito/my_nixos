@@ -4,7 +4,7 @@ let
   cfgEnable = (systemSettings.swwwEnable or false);
   waypaperTakesOver = (systemSettings.waypaperEnable or false);
 
-  SWWW = lib.getExe pkgs.swww;
+  SWWW = lib.getExe pkgs.awww;
   JQ = lib.getExe pkgs.jq;
   SWAYMSG = lib.getExe' pkgs.sway "swaymsg";
 
@@ -152,7 +152,7 @@ let
 in
 {
   home.packages = lib.mkIf cfgEnable [
-    pkgs.swww
+    pkgs.awww
     pkgs.jq
     swwwSet
   ];
@@ -167,7 +167,7 @@ in
     };
     Service = {
       Type = "simple";
-      ExecStart = "${pkgs.swww}/bin/swww-daemon";
+      ExecStart = "${pkgs.awww}/bin/awww-daemon";
       Restart = "on-failure";
       RestartSec = "1s";
       EnvironmentFile = [ "-%t/sway-session.env" ];
