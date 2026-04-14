@@ -45,12 +45,6 @@ profile_dir = "personal"
 hostname = "yogaaku"
 description = "Older laptop, reduced features"
 
-[profiles.WSL]
-config_file = "profiles/WSL-config.nix"
-profile_dir = "wsl"
-hostname = "nixosdiego"
-description = "Windows Subsystem for Linux"
-
 [profiles.LXC_HOME]
 config_file = "profiles/LXC_HOME-config.nix"
 profile_dir = "homelab"

@@ -48,7 +48,6 @@ in
   };
 
   # Ensure nix flakes are enabled
-  nix.package = pkgs.nixFlakes;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.extraOptions = ''
     experimental-features = nix-command flakes

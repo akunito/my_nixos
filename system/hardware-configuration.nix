@@ -8,60 +8,55 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "mpt3sas" "xhci_pci" "ahci" "nvme" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ ];
+  boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/mapper/cryptroot";
+    { device = "/dev/mapper/luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
+      fsType = "btrfs";
+      options = [ "subvol=@" ];
+    };
+
+  boot.initrd.luks.devices."luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c".device = "/dev/disk/by-uuid/9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
+
+
+
+
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/7620-B197";
+      fsType = "vfat";
+      options = [ "fmask=0077" "dmask=0077" ];
+    };
+
+  fileSystems."/mnt/2nd_NVME" =
+    { device = "/dev/mapper/2nd_NVME";
       fsType = "ext4";
     };
 
-  boot.initrd.luks.devices."cryptroot".device = "/dev/disk/by-uuid/c36addf8-193b-47b2-bf52-dfdf7d6e3a41";
+  boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/41C0-160E";
-      fsType = "vfat";
-      options = [ "fmask=0022" "dmask=0022" ];
+  fileSystems."/home" =
+    { device = "/dev/mapper/luks-a40d2e06-e814-4344-99c8-c2e00546beb3";
+      fsType = "btrfs";
     };
 
-  fileSystems."/mnt/ssdpool" =
-    { device = "ssdpool";
-      fsType = "zfs";
+  boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
+
+  fileSystems."/mnt/DATA" =
+    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
+      fsType = "ntfs3";
     };
 
-  fileSystems."/mnt/extpool" =
-    { device = "extpool";
-      fsType = "zfs";
+  fileSystems."/mnt/DATA_SATA3" =
+    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
+      fsType = "ntfs3";
     };
 
-  fileSystems."/mnt/ssdpool/docker" =
-    { device = "ssdpool/docker";
-      fsType = "zfs";
-    };
-
-  fileSystems."/mnt/ssdpool/vps-backups" =
-    { device = "ssdpool/vps-backups";
-      fsType = "zfs";
-    };
-
-  fileSystems."/mnt/ssdpool/media" =
-    { device = "ssdpool/media";
-      fsType = "zfs";
-    };
-
-  fileSystems."/mnt/ssdpool/workstation_backups" =
-    { device = "ssdpool/workstation_backups";
-      fsType = "zfs";
-    };
-
-  fileSystems."/mnt/extpool/vps-backups" =
-    { device = "extpool/vps-backups";
-      fsType = "zfs";
-    };
-
-  swapDevices = [ ];
+  swapDevices =
+    [ { device = "/dev/mapper/luks-swap"; }
+    ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

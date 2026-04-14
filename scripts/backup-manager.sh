@@ -170,22 +170,15 @@ run_retention() {
 # ============================================================================
 
 ensure_nfs_mount() {
-  if mountpoint -q "$NFS_BASE" 2>/dev/null; then
-    log "NFS already mounted at $NFS_BASE"
-    return 0
-  fi
-
-  log "Triggering NFS automount at $NFS_BASE"
-  # Access the directory to trigger automount
-  ls "$NFS_BASE" >/dev/null 2>&1 || true
-
-  sleep 2
-
-  if mountpoint -q "$NFS_BASE" 2>/dev/null; then
-    log_success "NFS mounted at $NFS_BASE"
+  # mountpoint -q returns true for automount placeholders even when NAS is
+  # unreachable, so we must verify actual accessibility with a timeout.
+  log "Verifying NFS accessibility at $NFS_BASE"
+  if timeout 20 stat "$NFS_BASE" >/dev/null 2>&1 && \
+     timeout 10 ls "$NFS_BASE" >/dev/null 2>&1; then
+    log_success "NFS accessible at $NFS_BASE"
     return 0
   else
-    log_error "Failed to mount NFS at $NFS_BASE"
+    log_error "NFS not accessible at $NFS_BASE (NAS offline or mount failed)"
     return 1
   fi
 }

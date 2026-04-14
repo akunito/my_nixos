@@ -14,7 +14,6 @@
           LAPTOP_X13 = ./profiles/LAPTOP_X13-config.nix;
           LAPTOP_A = ./profiles/LAPTOP_A-config.nix;
           LAPTOP_YOGA = ./profiles/LAPTOP_YOGA-config.nix;
-          WSL = ./profiles/WSL-config.nix;
           LXC_HOME = ./profiles/LXC_HOME-config.nix;
           LXC_tailscale = ./profiles/LXC_tailscale-config.nix;
           # Archived (migrated to VPS_PROD / TrueNAS — profiles in profiles/archived/):
