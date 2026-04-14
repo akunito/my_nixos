@@ -8,7 +8,7 @@
     (map (entry: entry // {
       # Timeout mount attempts so unreachable NFS won't hang processes
       mountConfig = (entry.mountConfig or {}) // {
-        TimeoutSec = "30";
+        TimeoutSec = "15";
       };
     }) systemSettings.nfsMounts);
 

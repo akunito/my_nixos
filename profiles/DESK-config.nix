@@ -173,7 +173,7 @@ in
       "uid=1000"
       "gid=1000"
     ];
-    disk3_enabled = true;
+    disk3_enabled = false; # NFS_media handled by nfsMounts + nfsAutoMounts (no duplicate)
     disk3_name = "/mnt/NFS_media";
     disk3_device = "192.168.20.200:/mnt/ssdpool/media";
     disk3_fsType = "nfs4";
@@ -204,7 +204,7 @@ in
     # disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
     # disk7_fsType = "ext4";
     # disk7_options = [ "nofail" "x-systemd.device-timeout=5s" "noatime" "nodiratime" ];
-    disk8_enabled = true;
+    disk8_enabled = false; # NFS_Backups handled by nfsMounts + nfsAutoMounts (no duplicate)
     disk8_name = "/mnt/NFS_Backups";
     disk8_device = "192.168.20.200:/mnt/ssdpool/workstation_backups";
     disk8_fsType = "nfs4";
@@ -212,7 +212,7 @@ in
       "nofail"
       "x-systemd.device-timeout=5s"
     ];
-    disk9_enabled = true;
+    disk9_enabled = false; # NFS_downloads handled by nfsMounts + nfsAutoMounts (no duplicate)
 
     # NFS client
     nfsClientEnable = true;
@@ -221,20 +221,20 @@ in
         what = "192.168.20.200:/mnt/ssdpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
       # library and emulators NFS mounts removed — datasets no longer exist (IAKU-247)
       {
         what = "192.168.20.200:/mnt/ssdpool/workstation_backups";
         where = "/mnt/NFS_Backups";
         type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
       {
         what = "192.168.20.200:/mnt/extpool/downloads";
         where = "/mnt/NFS_downloads";
         type = "nfs";
-        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,hard,intr,timeo=600";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
     ];
     nfsAutoMounts = [

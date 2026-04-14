@@ -96,7 +96,6 @@ Full workflow, project routing, and MCP tool reference: `.claude/agents/plane-co
 | LAPTOP_YOGA | nixosyogaaga (192.168.8.100) | aga | main |
 | LAPTOP_A | nixosaga (192.168.8.78) | akunito | main |
 | VPS_PROD | vps-prod (100.64.0.6 via Tailscale, SSH port 56777) | akunito | main |
-| VMHOME | nixosLabaku (192.168.8.80) | akunito | main |
 | NAS_PROD | nas-aku (192.168.20.200) | akunito | main |
 | KOMI_LXC_database | komi-database (192.168.1.10) | admin | komi |
 | KOMI_LXC_mailer | komi-mailer (192.168.1.11) | admin | komi |
@@ -107,7 +106,7 @@ Full workflow, project routing, and MCP tool reference: `.claude/agents/plane-co
 
 **Step 2**: Route to the right reference:
 
-- **akunito** (DESK, LAPTOP_*, VPS_*, VMHOME): use the **Infrastructure & Service Reference** section below for operational docs
+- **akunito** (DESK, LAPTOP_*, VPS_*, NAS_PROD): use the **Infrastructure & Service Reference** section below for operational docs
 - **komi/admin** (MACBOOK_KOMI, KOMI_LXC_*): use the **Darwin/macOS Reference** for macOS, or `docs/komi/infrastructure/` for LXC infra
 
 **Step 3**: For any architectural or implementation question, follow the Router-first protocol:

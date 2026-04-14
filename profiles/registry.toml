@@ -45,12 +45,6 @@ profile_dir = "personal"
 hostname = "yogaaku"
 description = "Older laptop, reduced features"
 
-[profiles.VMHOME]
-config_file = "profiles/VMHOME-config.nix"
-profile_dir = "homelab"
-hostname = "nixosLabaku"
-description = "Homelab server (Docker, NFS, no GUI)"
-
 [profiles.WSL]
 config_file = "profiles/WSL-config.nix"
 profile_dir = "wsl"
