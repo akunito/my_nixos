@@ -203,12 +203,14 @@ in
     };
 
     # TCP buffer tuning for high-bandwidth 10GbE links
+    # Note: uses lib.mkForce to override homelab/base.nix 8 MB defaults (priority 100)
+    # when ring buffers are explicitly tuned for 10GbE performance.
     boot.kernel.sysctl = lib.mkIf (ringBufferSize != null) {
-      "net.core.rmem_max" = lib.mkDefault 16777216;
-      "net.core.wmem_max" = lib.mkDefault 16777216;
-      "net.ipv4.tcp_rmem" = lib.mkDefault "4096 1048576 16777216";
-      "net.ipv4.tcp_wmem" = lib.mkDefault "4096 1048576 16777216";
-      "net.core.netdev_max_backlog" = lib.mkDefault 10000;
+      "net.core.rmem_max" = lib.mkForce 16777216;
+      "net.core.wmem_max" = lib.mkForce 16777216;
+      "net.ipv4.tcp_rmem" = lib.mkForce "4096 1048576 16777216";
+      "net.ipv4.tcp_wmem" = lib.mkForce "4096 1048576 16777216";
+      "net.core.netdev_max_backlog" = lib.mkForce 10000;
     };
   };
 }

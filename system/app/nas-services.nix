@@ -105,11 +105,67 @@ in
     };
 
     # ZFS auto-snapshot (daily for media, 7-day retention)
+    # NOTE: Datasets must have com.sun:auto-snapshot=true set for snapshots to be taken.
+    # The nas-zfs-properties service below ensures this property is set on relevant datasets.
     services.zfs.autoSnapshot = {
       enable = systemSettings.nasAutoSnapshotEnable or false;
       daily = 7;
       weekly = 0;
       monthly = 0;
+    };
+
+    # ========================================================================
+    # ZFS dataset property normalization (idempotent one-shot)
+    # ========================================================================
+    # Ensures post-migration datasets use optimal properties:
+    #   - com.sun:auto-snapshot=true (required for zfs-auto-snapshot to work)
+    #   - dnodesize=auto (better metadata handling)
+    #   - recordsize=1M on large-file datasets (media, backups)
+    # Runs after pool mount, idempotent (setting same value is a no-op).
+    systemd.services.nas-zfs-properties = {
+      description = "Normalize ZFS dataset properties";
+      after = [ "zfs-mount.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = let
+        pools = systemSettings.nasZfsPools or [ "ssdpool" "extpool" ];
+        zfs = "${pkgs.zfs}/bin/zfs";
+      in ''
+        set -u
+        apply() {
+          local dataset="$1" prop="$2" want="$3"
+          if ! ${zfs} list "$dataset" >/dev/null 2>&1; then return; fi
+          local have
+          have=$(${zfs} get -H -o value "$prop" "$dataset" 2>/dev/null || echo "?")
+          if [ "$have" != "$want" ]; then
+            echo "  [set] $dataset $prop: $have -> $want"
+            ${zfs} set "$prop=$want" "$dataset" || echo "  [err] failed: $prop=$want on $dataset"
+          fi
+        }
+
+        echo "Normalizing ZFS properties..."
+
+        # Enable auto-snapshots on key datasets
+        for ds in ${lib.concatStringsSep " " pools}; do
+          apply "$ds" com.sun:auto-snapshot true
+          apply "$ds" dnodesize auto
+        done
+
+        # Child datasets that need auto-snapshot
+        for ds in ssdpool/media ssdpool/docker ssdpool/workstation_backups extpool/vps-backups; do
+          apply "$ds" com.sun:auto-snapshot true
+        done
+
+        # Large-file datasets: recordsize=1M for sequential throughput
+        for ds in ssdpool/media extpool/vps-backups; do
+          apply "$ds" recordsize 1M
+        done
+
+        echo "ZFS property normalization complete."
+      '';
     };
 
     # ========================================================================

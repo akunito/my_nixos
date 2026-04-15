@@ -58,7 +58,8 @@ in
     networkBondingMode = "802.3ad";
     networkBondingInterfaces = [ "enp8s0f0" "enp8s0f1" ];
     networkBondingDhcp = false;
-    networkBondingLacpRate = "slow";
+    networkBondingLacpRate = "slow"; # TODO: switch to "fast" after confirming Unifi switch LAG is in fast mode
+    networkBondingRingBufferSize = 8192; # Max for Intel X520 — prevents rx_missed_errors (NIC-001 from TrueNAS audit)
     networkBondingXmitHashPolicy = "layer3+4";
     networkBondingStaticIp = {
       address = "192.168.20.200/24";
@@ -175,6 +176,7 @@ in
     systemPackages =
       pkgs: pkgs-unstable: with pkgs; [
         btop
+        ethtool # Required for NIC ring buffer tuning (bond-ring-buffers service)
         fzf
         p7zip
         smartmontools
