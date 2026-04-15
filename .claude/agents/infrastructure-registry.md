@@ -11,7 +11,7 @@ Compact lookup for all nodes, services, local projects, and management skills. L
 | LAPTOP_YOGA | 192.168.8.100 | `ssh -A aga@192.168.8.100` | LAPTOP_YOGA | laptop |
 | LAPTOP_A | 192.168.8.78, 100.64.0.4 | `ssh -A akunito@192.168.8.78` | LAPTOP_A | laptop |
 | VPS_PROD | 100.64.0.6, 172.26.5.155 | `ssh -A -p 56777 akunito@100.64.0.6` | VPS_PROD | vps |
-| TrueNAS | 192.168.20.200 | `ssh akunito@192.168.20.200` | — (FreeBSD) | nas |
+| NAS_PROD | 192.168.20.200, 100.64.0.1 (TS) | `ssh -A akunito@192.168.20.200` | NAS_PROD | nas |
 | pfSense | 192.168.8.1 | `ssh admin@192.168.8.1` | — (FreeBSD) | firewall |
 | KOMI_LXC_database | 192.168.1.10 | `ssh admin@192.168.1.10` | KOMI_LXC_database | lxc |
 | KOMI_LXC_mailer | 192.168.1.11 | `ssh admin@192.168.1.11` | KOMI_LXC_mailer | lxc |
@@ -24,7 +24,7 @@ For deploy commands see `deployment-context.md` or `deploy-servers.conf`.
 
 ## Multi-Instance Services
 
-| Service | VPS_PROD | TrueNAS | KOMI_LXC | Type | Doc |
+| Service | VPS_PROD | NAS_PROD | KOMI_LXC | Type | Doc |
 |---------|----------|---------|----------|------|-----|
 | Grafana | ✅ NixOS :3002 | — | monitoring :3002 | NixOS native | `services/monitoring-stack.md` |
 | Prometheus | ✅ NixOS :9090 | — | monitoring :9090 | NixOS native | `services/monitoring-stack.md` |
@@ -67,7 +67,7 @@ All doc paths relative to `docs/akunito/infrastructure/`.
 
 Template paths relative to `templates/`.
 
-## TrueNAS Docker Containers
+## NAS_PROD Docker Containers
 
 | Container | Domain | Port | Compose Project | Notes |
 |-----------|--------|------|-----------------|-------|
@@ -131,11 +131,11 @@ All module paths relative to `system/app/`.
 
 | Skill | Target Node(s) | Purpose |
 |-------|---------------|---------|
-| `/audit-infrastructure` | VPS, TrueNAS | Gather current state from all infra nodes |
+| `/audit-infrastructure` | VPS, NAS_PROD | Gather current state from all infra nodes |
 | `/check-database` | VPS_PROD | PostgreSQL + MariaDB health check |
 | `/check-redis` | VPS_PROD | Redis connectivity, DB allocation, key counts |
 | `/check-kuma` | VPS_PROD | Uptime Kuma health verification |
-| `/manage-truenas` | TrueNAS | Storage, NFS, bonds, VLAN 100 |
+| `/manage-nas` | NAS_PROD | Storage, NFS, bonds, VLAN 100 |
 | `/manage-pfsense` | pfSense | Firewall, DNS, WireGuard, SNMP |
 | `/manage-tailscale` | Tailscale/Headscale | VPN mesh management |
 | `/manage-matrix` | VPS_PROD | Matrix Synapse + Element + Claude bot |
@@ -158,8 +158,8 @@ All module paths relative to `system/app/`.
 |-------|----------|
 | Architecture overview | `docs/akunito/infrastructure/INFRASTRUCTURE.md` |
 | VPS services | `docs/akunito/infrastructure/services/vps-services.md` |
-| TrueNAS services | `docs/akunito/infrastructure/services/truenas-services.md` |
-| TrueNAS operations | `docs/akunito/infrastructure/services/truenas.md` |
+| NAS services | `docs/akunito/infrastructure/services/nas-services.md` |
+| NAS operations | `docs/akunito/infrastructure/services/nas.md` |
 | Databases & Redis | `docs/akunito/infrastructure/services/database-redis.md` |
 | Monitoring (Grafana/Prometheus) | `docs/akunito/infrastructure/services/monitoring-stack.md` |
 | Grafana dashboards | `docs/setup/grafana-dashboards-alerting.md` |

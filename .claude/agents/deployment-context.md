@@ -24,7 +24,7 @@ This context applies when deploying NixOS configurations to remote or local mach
 |------|--------|----------|
 | `-s` | System rebuild | Always |
 | `-u` | User (Home Manager) rebuild | Always |
-| `-d` | Skip docker | LXC + VPS (keeps containers running) |
+| `-d` | Skip docker | LXC + VPS + NAS (keeps containers running) |
 | `-h` | Skip hardware-config generation | LXC only (no real hardware) |
 | `-q` | Quick = `-d -h` | Backward compatibility shorthand |
 
@@ -34,6 +34,7 @@ This context applies when deploying NixOS configurations to remote or local mach
 |-------------|-------|--------|
 | **LXC containers** | `-s -u -d -h` | No docker, no real hardware |
 | **VPS (VPS_PROD)** | `-s -u -d` | Skip docker, but DO regenerate hardware-config |
+| **NAS (NAS_PROD)** | `-s -u -d` | Skip docker, DO regenerate hardware-config (same as VPS) |
 | **Laptops/Desktops** | `-s -u` | Full rebuild including docker and hardware |
 
 ## Key Points
