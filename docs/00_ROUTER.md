@@ -7,6 +7,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
 | audits.docker-security.2026-03-06 | VPS Docker container security audit — network isolation, database access, secrets, hardening | audit, security, docker, vps, containers, networking, secrets | profiles/VPS*-config.nix |
+| audits.nas-nixos.2026-04-15 | Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring | audit, nas, nixos, zfs, storage, network, performance | docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md |
 | audits.pfsense.2026-02-04 | Security, performance, and reliability audit of pfSense firewall | audit, security, performance, pfsense, firewall | docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md |
 | audits.truenas-docker-security.2026-03-06 | TrueNAS Docker rootless migration and security hardening audit | audit, security, docker, truenas, rootless, monitoring, networking | templates/truenas/*/docker-compose.yml |
 | claude-code-setup | Claude Code CLI configuration guide — security, permissions, hooks, MCP servers, and declarative sync | claude-code, setup, permissions, hooks, mcp, security, tooling | .claude/** |
@@ -26,6 +27,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | infrastructure.services.matrix | Matrix Synapse + Element on VPS | infrastructure, matrix, vps, docker | docs/akunito/infrastructure/services/matrix.md |
 | infrastructure.services.media | Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent | infrastructure, media, docker, jellyfin, arr, plex-alternative, truenas | profiles/LXC_HOME-config.nix |
 | infrastructure.services.monitoring | Monitoring: Prometheus + Grafana on VPS | infrastructure, monitoring, prometheus, grafana, vps | docs/akunito/infrastructure/services/monitoring-stack.md |
+| infrastructure.services.nas | NixOS NAS (nas-aku) operations, monitoring, and maintenance | infrastructure, storage, nixos, zfs, monitoring, nas | system/app/nas-services.nix |
 | infrastructure.services.network-switching | Physical switching layer documentation - USW Aggregation, USW-24-G2, 10GbE LACP bonds, ARP flux | infrastructure, network, switching, 10gbe, lacp, sfp, aggregation, arp | profiles/DESK-config.nix |
 | infrastructure.services.openclaw | OpenClaw AI personal assistant: architecture, integrations, and VPS deployment | openclaw, ai, assistant, vps, docker, telegram, discord, matrix, automation | templates/openclaw/** |
 | infrastructure.services.openclaw.architecture | OpenClaw gateway architecture, deployment modes, and filesystem layout | openclaw, architecture, gateway, deployment | docs/akunito/infrastructure/services/openclaw/architecture.md |
@@ -41,8 +43,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | infrastructure.services.pfsense | pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP | infrastructure, pfsense, firewall, gateway, wireguard, dns, dhcp, snmp, pfblockerng, openvpn | docs/akunito/infrastructure/INFRASTRUCTURE.md |
 | infrastructure.services.proxy | Proxy stack: NPM on TrueNAS, cloudflared on VPS and TrueNAS | infrastructure, proxy, npm, cloudflare, truenas, vps | docs/akunito/infrastructure/services/proxy-stack.md |
 | infrastructure.services.tailscale | Headscale on VPS, Tailscale mesh topology | infrastructure, tailscale, headscale, vpn, vps | docs/akunito/infrastructure/services/tailscale-headscale.md |
-| infrastructure.services.truenas | TrueNAS storage server operations, monitoring, and maintenance | infrastructure, storage, truenas, zfs, monitoring, nas | system/app/prometheus-graphite.nix |
-| infrastructure.services.truenas-docker | TrueNAS Docker services: media, NPM, monitoring | infrastructure, truenas, docker, media | docs/akunito/infrastructure/services/truenas-services.md |
+| infrastructure.services.truenas-docker | TrueNAS Docker services: media, NPM, monitoring | infrastructure, truenas, docker, media | docs/akunito/infrastructure/services/nas-services.md |
 | infrastructure.services.vps | VPS services: Docker containers and NixOS native services | infrastructure, vps, docker, nixos | docs/akunito/infrastructure/services/vps-services.md |
 | keybindings.mouse-button-mapping | Quick guide to mapping mouse side buttons to modifier keys using keyd. | keyd, mouse, keybindings, modifiers | system/wm/keyd.nix |
 | keybindings.sway | SwayFX keybindings reference, including unified rofi launcher and window overview. | sway, swayfx, keybindings, rofi, wayland | user/wm/sway/swayfx-config.nix |

@@ -17,7 +17,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/DESK-config.nix**: DESK Profile Configuration
 - **profiles/DESK_A-config.nix**: DESK_AGA Profile Configuration (nixosaga)
 - **profiles/DESK_VMDESK-config.nix**: DESK_VMDESK Profile Configuration (nixosdesk)
-- **profiles/DESKold-config.nix**: DESKold Profile Configuration (Backup of DESK with Plasma 6 + ungoogled-chromium)
 - **profiles/KOMI_LXC-base-config.nix**: KOMI_LXC Base Profile Configuration
 - **profiles/KOMI_LXC_database-config.nix**: KOMI_LXC_database Profile Configuration
 - **profiles/KOMI_LXC_mailer-config.nix**: KOMI_LXC_mailer Profile Configuration
@@ -31,10 +30,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/LXC_HOME-config.nix**: LXC_HOME Profile Configuration
 - **profiles/LXC_tailscale-config.nix**: LXC_tailscale Profile Configuration
 - **profiles/MACBOOK-KOMI-config.nix**: MACBOOK-KOMI Configuration
-- **profiles/VMHOME-config.nix**: VMHOME Profile Configuration
+- **profiles/NAS_PROD-config.nix**: NAS_PROD Profile Configuration
 - **profiles/VPS-base-config.nix**: VPS Base Profile Configuration
 - **profiles/VPS_PROD-config.nix**: VPS_PROD Profile Configuration
-- **profiles/WSL-config.nix**: WSL Profile Configuration
+- **profiles/archived/DESKold-config.nix**: DESKold Profile Configuration (Backup of DESK with Plasma 6 + ungoogled-chromium)
 - **profiles/archived/LXC_database-config.nix**: LXC_database Profile Configuration
 - **profiles/archived/LXC_liftcraftTEST-config.nix**: LXC liftcraftTEST Profile Configuration
 - **profiles/archived/LXC_mailer-config.nix**: LXC mailer Profile Configuration
@@ -43,6 +42,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/archived/LXC_plane-config.nix**: LXC Default Profile Configuration
 - **profiles/archived/LXC_portfolioprod-config.nix**: LXC portfolioprod Profile Configuration
 - **profiles/archived/LXC_proxy-config.nix**: LXC_proxy Profile Configuration
+- **profiles/archived/VMHOME-config.nix**: VMHOME Profile Configuration
+- **profiles/archived/WSL-config.nix**: WSL Profile Configuration
 
 ## System Modules
 
@@ -85,6 +86,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/mariadb.nix**: MariaDB Server Module *Enabled when:*
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
+- **system/app/nas-services.nix**: NAS-specific services module *Enabled when:*
+   - `2.5GbE for management when bond is down`
+   - `systemSettings.nfsServerEnable or false`
+   - `seq 1 30`
+   - `!isRootless`
 - **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
 - **system/app/openclaw-matrix-bridge.nix**: OpenClaw Matrix Bridge + Fallback Monitor
 - **system/app/openclaw.nix**: OpenClaw Services
@@ -109,13 +115,13 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
 - **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
-- **system/app/prometheus-truenas-backup.nix**: TrueNAS Restic Backup Monitoring *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
+- **system/app/prometheus-truenas-backup.nix**: NAS Restic Backup Monitoring *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
 - **system/app/prometheus-workstation-exporter.nix**: Prometheus Workstation Exporter Module *Enabled when:* `(systemSettings.prometheusWorkstationExporterEnable or false) && !(systemSettings.prometheusExporterEnable or false)`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
 - **system/app/redis-server.nix**: Redis Server Module *Enabled when:*
    - `allows multiple instances if needed`
    - `systemSettings.prometheusRedisExporterEnable or false`
-- **system/app/restic-backup-truenas.nix**: TrueNAS Offsite Backup — VPS pulls Docker data + configs from TrueNAS *Enabled when:* `systemSettings.truenasResticBackupEnable or false`
+- **system/app/restic-backup-truenas.nix**: NAS Offsite Backup — VPS pulls Docker data + configs from NAS *Enabled when:* `systemSettings.truenasResticBackupEnable or false`
 - **system/app/restic-backup-vps.nix**: VPS Restic Backup to TrueNAS via SFTP *Enabled when:* `systemSettings.vpsResticBackupEnable or false`
 - **system/app/samba.nix**: System module: samba.nix
 - **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`
@@ -167,6 +173,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.disk6_enabled`
    - `systemSettings.disk7_enabled`
    - `systemSettings.disk8_enabled`
+   - `systemSettings.disk9_enabled`
 - **system/hardware/fingerprint.nix**: Fingerprint reader support (fprintd)
 - **system/hardware/gpu-monitoring.nix**: GPU Monitoring Packages based on GPU type *Enabled when:*
    - `systemSettings.gpuType == "amd"`
@@ -203,6 +210,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.LOGIND_ENABLE == true`
    - `systemSettings.iwlwifiDisablePowerSave == true`
 - **system/hardware/printing.nix**: https://nixos.wiki/wiki/Printing *Enabled when:*
+   - `systemSettings.serviceScannerEnable == true`
    - `systemSettings.servicePrinting == true`
    - `systemSettings.networkPrinters == true`
    - `systemSettings.sharePrinter == true`
@@ -469,6 +477,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/archived/migration/post-migration-tasks.md**: Post-migration documentation and operational updates
 - **docs/akunito/infrastructure/archived/migration/truenas-migration-complete.md**: Successfully migrated TrueNAS SCALE from failing Patriot Burst Elite 120GB SSD to mirrored Samsung 970 EVO Plus NVMe drives.
 - **docs/akunito/infrastructure/audits/docker-security-audit-2026-03-06.md**: VPS Docker container security audit — network isolation, database access, secrets, hardening
+- **docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md**: Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring
 - **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
 - **docs/akunito/infrastructure/audits/truenas-docker-security-audit-2026-03-06.md**: TrueNAS Docker rootless migration and security hardening audit
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
@@ -477,6 +486,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/matrix.md**: Matrix Synapse + Element on VPS
 - **docs/akunito/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
 - **docs/akunito/infrastructure/services/monitoring-stack.md**: Monitoring: Prometheus + Grafana on VPS
+- **docs/akunito/infrastructure/services/nas-services.md**: TrueNAS Docker services: media, NPM, monitoring
+- **docs/akunito/infrastructure/services/nas.md**: NixOS NAS (nas-aku) operations, monitoring, and maintenance
 - **docs/akunito/infrastructure/services/network-switching.md**: Physical switching layer documentation - USW Aggregation, USW-24-G2, 10GbE LACP bonds, ARP flux
 - **docs/akunito/infrastructure/services/openclaw/README.md**: OpenClaw AI personal assistant: architecture, integrations, and VPS deployment
 - **docs/akunito/infrastructure/services/openclaw/architecture.md**: OpenClaw gateway architecture, deployment modes, and filesystem layout
@@ -492,8 +503,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 - **docs/akunito/infrastructure/services/proxy-stack.md**: Proxy stack: NPM on TrueNAS, cloudflared on VPS and TrueNAS
 - **docs/akunito/infrastructure/services/tailscale-headscale.md**: Headscale on VPS, Tailscale mesh topology
-- **docs/akunito/infrastructure/services/truenas-services.md**: TrueNAS Docker services: media, NPM, monitoring
-- **docs/akunito/infrastructure/services/truenas.md**: TrueNAS storage server operations, monitoring, and maintenance
 - **docs/akunito/infrastructure/services/vps-services.md**: VPS services: Docker containers and NixOS native services
 
 ### Akunito / Keybindings
@@ -501,6 +510,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/keybindings/hyprland.md**: Complete reference for all Hyprland keybindings in this NixOS configuration.
 - **docs/akunito/keybindings/mouse-button-mapping.md**: Quick guide to mapping mouse side buttons to modifier keys using keyd.
 - **docs/akunito/keybindings/sway.md**: SwayFX keybindings reference, including unified rofi launcher and window overview.
+
+### Akunito / Plans
+
+- **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
+- **docs/akunito/plans/vivaldi-floating-toggle-bug.md**: While using Vivaldi on the DESK profile under SwayFX, the user *very rarely* sees a window unexpectedly toggle between tiled and floating — the same effect as pressing `hyper+shift+f`. They have to...
 
 ### Akunito / System-Modules
 
