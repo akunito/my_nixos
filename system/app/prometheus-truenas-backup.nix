@@ -1,7 +1,7 @@
-# TrueNAS Restic Backup Monitoring
+# NAS Restic Backup Monitoring
 #
-# Monitors restic backup repositories on TrueNAS by checking the newest file
-# timestamp in each repo's snapshots/ directory (no restic password needed).
+# Monitors restic backup repositories on NAS (nas-aku) by checking the newest
+# file timestamp in each repo's snapshots/ directory (no restic password needed).
 #
 # Monitored repos:
 #   vps_databases  — /mnt/extpool/vps-backups/databases.restic
@@ -16,15 +16,15 @@
 #   truenas_backup_status{dataset} - 1 = files found, 0 = no files or unreachable
 #   backup_repo_size_bytes{dataset,direction} - Size of backup repository in bytes
 #
-# Feature flag: prometheusTruenasBackupEnable
-# Runs as: User = "akunito" (has SSH key to truenas_admin)
+# Feature flag: prometheusTruenasBackupEnable (name kept for backward compat)
+# Runs as: User = "akunito" (has SSH key authorized on NAS)
 # Timer: daily at 13:00 (before pfSense backup at 14:00)
 
 { config, pkgs, lib, systemSettings, ... }:
 
 let
   truenasHost = systemSettings.prometheusTruenasBackupHost or "192.168.20.200";
-  truenasUser = systemSettings.prometheusTruenasBackupUser or "truenas_admin";
+  truenasUser = systemSettings.prometheusTruenasBackupUser or "akunito";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
 
   # Restic repos to monitor: { label, path, direction }

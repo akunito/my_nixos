@@ -15,7 +15,7 @@ TrueNAS SCALE runs ~21 Docker containers using a hybrid root + rootless Docker s
 | Property | Value |
 |----------|-------|
 | Host | 192.168.20.200 (VLAN 20), 192.168.8.200 (LAN) |
-| SSH | `ssh truenas_admin@192.168.20.200` |
+| SSH | `ssh -A akunito@192.168.20.200` |
 | Docker root | /mnt/ssdpool/docker/ |
 | Compose root | /mnt/ssdpool/docker/compose/ |
 
@@ -111,7 +111,7 @@ Scraped by VPS Prometheus via Tailscale/WireGuard.
 - Pools stay unlocked during S3
 - **Pre-suspend**: systemd service (`docker-pre-suspend.service`) gracefully stops all containers (prevents stale state)
 - **Post-resume**: systemd service (`docker-post-resume.service`) starts all containers in order (10s network settle delay)
-- Script: `/home/truenas_admin/docker-suspend-hook.sh` (deployed by startup script)
+- Script: `/home/akunito/docker-suspend-hook.sh` (deployed by startup script)
 - Log: `/var/log/docker-suspend-hook.log`
 - All backups scheduled within 11:00-23:00 window
 
@@ -119,10 +119,10 @@ Scraped by VPS Prometheus via Tailscale/WireGuard.
 
 ```bash
 # Status
-ssh truenas_admin@192.168.20.200 "sudo docker ps --format 'table {{.Names}}\t{{.Status}}' | sort"
+ssh -A akunito@192.168.20.200 "sudo docker ps --format 'table {{.Names}}\t{{.Status}}' | sort"
 
 # Compose projects
-ssh truenas_admin@192.168.20.200 "sudo docker compose ls -a"
+ssh -A akunito@192.168.20.200 "sudo docker compose ls -a"
 
 # Startup script
 bash /home/akunito/.dotfiles/scripts/truenas-docker-startup.sh

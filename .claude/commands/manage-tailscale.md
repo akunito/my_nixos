@@ -51,7 +51,7 @@ Remote Clients                    VPS (Headscale - NixOS native)      Home Netwo
 | Component | Access | Purpose |
 |-----------|--------|---------|
 | Headscale (VPS) | `ssh -A -p 56777 akunito@100.64.0.6` | Coordination server (NixOS native) |
-| TrueNAS (subnet router) | `ssh truenas_admin@192.168.20.200` | Primary subnet router (Docker) |
+| TrueNAS (subnet router) | `ssh -A akunito@192.168.20.200` | Primary subnet router (Docker) |
 | pfSense (fallback router) | Web UI at `192.168.8.1` | Fallback subnet router (package) |
 
 ---
@@ -132,13 +132,13 @@ TrueNAS runs Tailscale as a Docker container that advertises home subnets.
 
 ```bash
 # Check Tailscale container status
-ssh truenas_admin@192.168.20.200 "docker ps | grep tailscale"
+ssh -A akunito@192.168.20.200 "docker ps | grep tailscale"
 
 # Check Tailscale logs
-ssh truenas_admin@192.168.20.200 "docker logs tailscale --tail 20"
+ssh -A akunito@192.168.20.200 "docker logs tailscale --tail 20"
 
 # Check advertised routes from inside the container
-ssh truenas_admin@192.168.20.200 "docker exec tailscale tailscale status"
+ssh -A akunito@192.168.20.200 "docker exec tailscale tailscale status"
 ```
 
 **Advertised subnets**: 192.168.8.0/24, 192.168.20.0/24
@@ -249,8 +249,8 @@ ssh -A -p 56777 akunito@100.64.0.6 "sudo cp /var/lib/headscale/db.sqlite3 /var/l
 
 2. Check TrueNAS Tailscale container:
    ```bash
-   ssh truenas_admin@192.168.20.200 "docker ps | grep tailscale"
-   ssh truenas_admin@192.168.20.200 "docker exec tailscale tailscale status"
+   ssh -A akunito@192.168.20.200 "docker ps | grep tailscale"
+   ssh -A akunito@192.168.20.200 "docker exec tailscale tailscale status"
    ```
 
 3. If TrueNAS is sleeping (23:00-11:00), verify pfSense fallback is active:
@@ -318,5 +318,5 @@ ssh -A -p 56777 akunito@100.64.0.6 "sudo cp /var/lib/headscale/db.sqlite3 /var/l
 | Headscale data | `/var/lib/headscale/` (VPS) |
 | Headscale database | `/var/lib/headscale/db.sqlite3` (VPS) |
 | Headscale NixOS config | `profiles/VPS_PROD-config.nix` |
-| TrueNAS Tailscale container | Docker on `truenas_admin@192.168.20.200` |
+| TrueNAS Tailscale container | Docker on `akunito@192.168.20.200` |
 | pfSense Tailscale | Web UI at `192.168.8.1` > VPN > Tailscale |

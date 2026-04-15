@@ -50,7 +50,7 @@ This context applies when deploying NixOS configurations to remote or local mach
 ssh -A akunito@192.168.8.96                  # DESK
 ssh -A -p 56777 akunito@100.64.0.6           # VPS_PROD (via Tailscale)
 ssh -A -p 56777 akunito@172.26.5.155         # VPS_PROD (via WireGuard)
-ssh truenas_admin@192.168.20.200             # TrueNAS
+ssh -A akunito@192.168.20.200                  # NAS_PROD (NixOS NAS)
 ssh admin@192.168.8.1                        # pfSense
 ```
 

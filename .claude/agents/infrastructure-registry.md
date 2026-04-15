@@ -11,7 +11,7 @@ Compact lookup for all nodes, services, local projects, and management skills. L
 | LAPTOP_YOGA | 192.168.8.100 | `ssh -A aga@192.168.8.100` | LAPTOP_YOGA | laptop |
 | LAPTOP_A | 192.168.8.78, 100.64.0.4 | `ssh -A akunito@192.168.8.78` | LAPTOP_A | laptop |
 | VPS_PROD | 100.64.0.6, 172.26.5.155 | `ssh -A -p 56777 akunito@100.64.0.6` | VPS_PROD | vps |
-| TrueNAS | 192.168.20.200 | `ssh truenas_admin@192.168.20.200` | — (FreeBSD) | nas |
+| TrueNAS | 192.168.20.200 | `ssh akunito@192.168.20.200` | — (FreeBSD) | nas |
 | pfSense | 192.168.8.1 | `ssh admin@192.168.8.1` | — (FreeBSD) | firewall |
 | KOMI_LXC_database | 192.168.1.10 | `ssh admin@192.168.1.10` | KOMI_LXC_database | lxc |
 | KOMI_LXC_mailer | 192.168.1.11 | `ssh admin@192.168.1.11` | KOMI_LXC_mailer | lxc |

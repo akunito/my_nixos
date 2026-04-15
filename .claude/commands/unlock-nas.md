@@ -1,13 +1,13 @@
-# Unlock TrueNAS Encrypted Datasets
+# Unlock NAS Encrypted Datasets
 
-Unlock encrypted ZFS datasets on TrueNAS after a reboot or when datasets are locked.
+Unlock encrypted ZFS datasets on NAS after a reboot or when datasets are locked.
 
 ## Instructions
 
 When this command is invoked, run the unlock script from the dotfiles repo:
 
 ```bash
-bash /home/akunito/.dotfiles/scripts/truenas-unlock-pools.sh
+bash /home/akunito/.dotfiles/scripts/nas-unlock-pools.sh
 ```
 
 ### Arguments
@@ -25,7 +25,7 @@ bash /home/akunito/.dotfiles/scripts/truenas-unlock-pools.sh
 
 1. Checks API connectivity and secrets availability
 2. Queries all encrypted datasets for lock status
-3. Unlocks locked datasets using the passphrase via TrueNAS API
+3. Unlocks locked datasets using the passphrase via NAS API
 4. Waits for unlock jobs to complete
 5. Verifies and reports final status
 
@@ -33,7 +33,7 @@ bash /home/akunito/.dotfiles/scripts/truenas-unlock-pools.sh
 
 ```bash
 # Check lock status via SSH
-ssh truenas_admin@192.168.20.200 'midclt call pool.dataset.query' | python3 -c '
+ssh akunito@192.168.20.200 'midclt call pool.dataset.query' | python3 -c '
 import json, sys
 for ds in json.load(sys.stdin):
     if ds.get("encrypted"):
@@ -58,19 +58,19 @@ curl -sk -X POST "https://192.168.20.200/api/v2.0/pool/dataset/unlock" \
   }"
 ```
 
-### Deploying Script to TrueNAS (optional)
+### Deploying Script to NAS (optional)
 
-The script can also be deployed to TrueNAS for local execution:
+The script can also be deployed to NAS for local execution:
 
 ```bash
-scp scripts/truenas-unlock-pools.sh truenas_admin@192.168.20.200:/home/truenas_admin/
-# Then on TrueNAS: bash /home/truenas_admin/truenas-unlock-pools.sh --status
+scp scripts/nas-unlock-pools.sh akunito@192.168.20.200:/home/akunito/
+# Then on NAS: bash /home/akunito/nas-unlock-pools.sh --status
 ```
 
-Note: On TrueNAS the secrets paths won't exist, so the script is designed to run from DESK where the dotfiles repo has git-crypt unlocked.
+Note: On NAS the secrets paths won't exist, so the script is designed to run from DESK where the dotfiles repo has git-crypt unlocked.
 
 ### Related
 
-- [TrueNAS Service Docs](../../docs/akunito/infrastructure/services/truenas.md)
-- [Manage TrueNAS](./manage-truenas.md) - General TrueNAS management
-- [Unlock Pools Script](../../scripts/truenas-unlock-pools.sh)
+- [NAS Service Docs](../../docs/akunito/infrastructure/services/truenas.md)
+- [Manage NAS](./manage-truenas.md) - General NAS management
+- [Unlock Pools Script](../../scripts/nas-unlock-pools.sh)

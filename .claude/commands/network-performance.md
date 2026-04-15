@@ -86,7 +86,7 @@ nix-shell -p iperf3 --run 'iperf3 ...'
 
 ```bash
 # TrueNAS
-ssh truenas_admin@192.168.20.200 "iperf3 -s -D"
+ssh -A akunito@192.168.20.200 "iperf3 -s -D"
 ```
 
 ### VLAN 100 Storage Tests (192.168.20.0/24)
@@ -130,7 +130,7 @@ watch -n 0.5 'cat /sys/class/net/enp11s0f0/statistics/tx_bytes; cat /sys/class/n
 ### TrueNAS (bond0)
 
 ```bash
-ssh truenas_admin@192.168.20.200 "cat /proc/net/bonding/bond0"
+ssh -A akunito@192.168.20.200 "cat /proc/net/bonding/bond0"
 # Should show access mode (no VLAN, IP = 192.168.20.200)
 ```
 
@@ -146,7 +146,7 @@ nix-shell -p ethtool --run 'ethtool -g enp11s0f0'
 # Look for: Current hardware settings: RX 4096, TX 4096
 
 # TrueNAS
-ssh truenas_admin@192.168.20.200 "ethtool -g enp8s0f0"
+ssh -A akunito@192.168.20.200 "ethtool -g enp8s0f0"
 ```
 
 ### TCP Buffer Tuning
@@ -157,7 +157,7 @@ sysctl net.core.rmem_max net.core.wmem_max net.ipv4.tcp_rmem net.ipv4.tcp_wmem n
 # Expected: rmem_max=16777216, wmem_max=16777216, tcp_rmem/wmem="4096 1048576 16777216", backlog=10000
 
 # TrueNAS
-ssh truenas_admin@192.168.20.200 "sysctl net.core.rmem_max net.core.wmem_max"
+ssh -A akunito@192.168.20.200 "sysctl net.core.rmem_max net.core.wmem_max"
 # Note: TrueNAS tuning is runtime-only, needs persistence
 ```
 

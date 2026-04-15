@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# TrueNAS Wake-on-LAN Script
-# Sends WOL magic packet to wake TrueNAS from sleep/shutdown
+# NAS Wake-on-LAN Script
+# Sends WOL magic packet to wake NAS from sleep/shutdown
 #
 # Usage:
-#   truenas-wol.sh              # Send WOL and wait for TrueNAS to come up
-#   truenas-wol.sh --check      # Just check if TrueNAS is reachable
-#   truenas-wol.sh --suspend     # Suspend TrueNAS (S3 sleep) with RTC wake at 11:00
-#   truenas-wol.sh --suspend-for 3600  # Suspend for N seconds (with RTC safety net)
+#   nas-wol.sh              # Send WOL and wait for NAS to come up
+#   nas-wol.sh --check      # Just check if NAS is reachable
+#   nas-wol.sh --suspend     # Suspend NAS (S3 sleep) with RTC wake at 11:00
+#   nas-wol.sh --suspend-for 3600  # Suspend for N seconds (with RTC safety net)
 #
 # WOL NIC: RTL8125B (enp10s0) on LAN VLAN, MAC: 10:ff:e0:02:ad:9a
 # Primary NIC: bond0 (Intel X520) on VLAN 20, IP: 192.168.20.200
@@ -19,8 +19,8 @@
 #
 set -euo pipefail
 
-TRUENAS_HOST="192.168.20.200"
-TRUENAS_MAC="10:ff:e0:02:ad:9a"
+NAS_HOST="192.168.20.200"
+NAS_MAC="10:ff:e0:02:ad:9a"
 PFSENSE_HOST="192.168.8.1"
 LAN_BROADCAST="192.168.8.255"
 
@@ -46,10 +46,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --help|-h)
             echo "Usage: $0 [--check] [--suspend] [--suspend-for SECONDS]"
-            echo "  (no args)          Send WOL and wait for TrueNAS"
-            echo "  --check            Check if TrueNAS is reachable"
-            echo "  --suspend          Suspend TrueNAS until 11:00 next day"
-            echo "  --suspend-for N    Suspend TrueNAS for N seconds (RTC safety net)"
+            echo "  (no args)          Send WOL and wait for NAS"
+            echo "  --check            Check if NAS is reachable"
+            echo "  --suspend          Suspend NAS until 11:00 next day"
+            echo "  --suspend-for N    Suspend NAS for N seconds (RTC safety net)"
             exit 0
             ;;
         *) echo "Unknown: $1"; exit 1 ;;
@@ -66,7 +66,7 @@ log_warn() { echo "[$(date '+%H:%M:%S')] WARN: $*"; }
 log_error() { echo "[$(date '+%H:%M:%S')] ERROR: $*" >&2; }
 
 is_reachable() {
-    ping -c 1 -W 2 "$TRUENAS_HOST" >/dev/null 2>&1
+    ping -c 1 -W 2 "$NAS_HOST" >/dev/null 2>&1
 }
 
 send_wol() {
@@ -74,17 +74,17 @@ send_wol() {
 
     # Method 1: wakeonlan (Perl tool, available via nix-shell)
     if command -v wakeonlan >/dev/null 2>&1; then
-        wakeonlan -i "$LAN_BROADCAST" "$TRUENAS_MAC" >/dev/null 2>&1 && sent=true
+        wakeonlan -i "$LAN_BROADCAST" "$NAS_MAC" >/dev/null 2>&1 && sent=true
     fi
 
     # Method 2: wol via pfSense
-    if ssh -o ConnectTimeout=5 admin@"$PFSENSE_HOST" "wol -i $LAN_BROADCAST $TRUENAS_MAC" 2>/dev/null; then
+    if ssh -o ConnectTimeout=5 admin@"$PFSENSE_HOST" "wol -i $LAN_BROADCAST $NAS_MAC" 2>/dev/null; then
         sent=true
     fi
 
     # Method 3: etherwake if available
     if command -v etherwake >/dev/null 2>&1; then
-        sudo etherwake "$TRUENAS_MAC" 2>/dev/null && sent=true
+        sudo etherwake "$NAS_MAC" 2>/dev/null && sent=true
     fi
 
     $sent
@@ -96,11 +96,11 @@ send_wol() {
 
 check_truenas() {
     if is_reachable; then
-        log_ok "TrueNAS is reachable at $TRUENAS_HOST"
-        ssh truenas_admin@"$TRUENAS_HOST" "uptime" 2>/dev/null || true
+        log_ok "NAS is reachable at $NAS_HOST"
+        ssh akunito@"$NAS_HOST" "uptime" 2>/dev/null || true
         return 0
     else
-        log_warn "TrueNAS is NOT reachable at $TRUENAS_HOST (sleeping or offline)"
+        log_warn "TrueNAS is NOT reachable at $NAS_HOST (sleeping or offline)"
         return 1
     fi
 }
@@ -116,7 +116,7 @@ wake_truenas() {
     fi
 
     log "TrueNAS is not reachable. Sending Wake-on-LAN magic packet..."
-    log "  MAC: $TRUENAS_MAC"
+    log "  MAC: $NAS_MAC"
     log "  Broadcast: $LAN_BROADCAST"
 
     # Send WOL packets multiple times for reliability
@@ -130,7 +130,7 @@ wake_truenas() {
             # Wait for services to settle
             log "Waiting 10s for services to stabilize..."
             sleep 10
-            ssh truenas_admin@"$TRUENAS_HOST" "uptime" 2>/dev/null || true
+            ssh akunito@"$NAS_HOST" "uptime" 2>/dev/null || true
             return 0
         fi
     done
@@ -162,17 +162,17 @@ suspend_truenas() {
     log "Suspending TrueNAS for ${seconds}s (RTC safety net)..."
 
     # Ensure WOL is enabled before suspend
-    ssh truenas_admin@"$TRUENAS_HOST" "sudo ethtool -s enp10s0 wol g" 2>/dev/null
+    ssh akunito@"$NAS_HOST" "sudo ethtool -s enp10s0 wol g" 2>/dev/null
 
     # Enable PCI bridge wakeup for WOL (best-effort)
-    ssh truenas_admin@"$TRUENAS_HOST" "
+    ssh akunito@"$NAS_HOST" "
         for dev in 0000:00:02.1 0000:06:00.2 0000:07:08.0 0000:0a:00.0; do
             echo enabled > /sys/bus/pci/devices/\$dev/power/wakeup 2>/dev/null || true
         done
     " 2>/dev/null
 
     # Set RTC alarm (no suspend yet), then suspend via systemctl so sleep hooks fire
-    ssh truenas_admin@"$TRUENAS_HOST" "sudo rtcwake -m no -s $seconds && sudo systemctl suspend" &
+    ssh akunito@"$NAS_HOST" "sudo rtcwake -m no -s $seconds && sudo systemctl suspend" &
     local ssh_pid=$!
 
     sleep 5
@@ -212,17 +212,17 @@ suspend_until_morning() {
     log "Will wake at $(date -d @$wake_time '+%Y-%m-%d %H:%M') (in ${seconds}s / $((seconds/3600))h)"
 
     # Ensure WOL is enabled
-    ssh truenas_admin@"$TRUENAS_HOST" "sudo ethtool -s enp10s0 wol g" 2>/dev/null
+    ssh akunito@"$NAS_HOST" "sudo ethtool -s enp10s0 wol g" 2>/dev/null
 
     # Enable PCI bridge wakeup
-    ssh truenas_admin@"$TRUENAS_HOST" "
+    ssh akunito@"$NAS_HOST" "
         for dev in 0000:00:02.1 0000:06:00.2 0000:07:08.0 0000:0a:00.0; do
             echo enabled > /sys/bus/pci/devices/\$dev/power/wakeup 2>/dev/null || true
         done
     " 2>/dev/null
 
     # Set RTC alarm (no suspend yet), then suspend via systemctl so sleep hooks fire
-    ssh truenas_admin@"$TRUENAS_HOST" "sudo rtcwake -m no -t $wake_time && sudo systemctl suspend" &
+    ssh akunito@"$NAS_HOST" "sudo rtcwake -m no -t $wake_time && sudo systemctl suspend" &
 
     sleep 8
     if ! is_reachable; then

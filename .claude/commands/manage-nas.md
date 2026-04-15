@@ -1,11 +1,11 @@
-# Manage TrueNAS
+# Manage NAS
 
-Skill for managing TrueNAS storage server, NFS shares, bonds, and VLAN 100 connectivity.
+Skill for managing NAS storage server, NFS shares, bonds, and VLAN 100 connectivity.
 
 ## Purpose
 
 Use this skill to:
-- Check TrueNAS bond and network status
+- Check NAS bond and network status
 - Manage NFS shares and ACLs
 - Verify VLAN 100 storage network connectivity
 - Monitor disk health and pool status
@@ -18,11 +18,11 @@ Use this skill to:
 
 | Access | Address | User |
 |--------|---------|------|
-| SSH | `ssh truenas_admin@192.168.20.200` | truenas_admin |
+| SSH | `ssh akunito@192.168.20.200` | akunito |
 | Web GUI | `https://192.168.20.200` | root |
 | API | `https://192.168.20.200/api/v2.0/` | API key |
 
-**Network:** TrueNAS is on VLAN 100 (192.168.20.0/24). Access from DESK via bond0.100 (192.168.20.96) or Proxmox via vmbr10.100 (192.168.20.82).
+**Network:** NAS is on VLAN 100 (192.168.20.0/24). Access from DESK via bond0.100 (192.168.20.96) or Proxmox via vmbr10.100 (192.168.20.82).
 
 **Switch port:** USW Aggregation SFP+ 5+6 (LACP bond, VLAN-NAS 100 access mode, untagged).
 
@@ -33,7 +33,7 @@ Use this skill to:
 ### Check Bond
 
 ```bash
-ssh truenas_admin@192.168.20.200 "cat /proc/net/bonding/bond0"
+ssh akunito@192.168.20.200 "cat /proc/net/bonding/bond0"
 # Key fields:
 # - Bonding Mode: IEEE 802.3ad
 # - MII Status: up (both slaves)
@@ -44,10 +44,10 @@ ssh truenas_admin@192.168.20.200 "cat /proc/net/bonding/bond0"
 ### Check IP & Routes
 
 ```bash
-ssh truenas_admin@192.168.20.200 "ip addr show bond0"
+ssh akunito@192.168.20.200 "ip addr show bond0"
 # Should show 192.168.20.200/24
 
-ssh truenas_admin@192.168.20.200 "ip route show"
+ssh akunito@192.168.20.200 "ip route show"
 # default via 192.168.20.1 dev bond0
 ```
 
@@ -72,28 +72,28 @@ ssh -A -p 56777 akunito@100.64.0.6 "ping -c 2 192.168.20.200"
 
 ```bash
 # Check current ring buffer sizes
-ssh truenas_admin@192.168.20.200 "ethtool -g enp8s0f0"
+ssh akunito@192.168.20.200 "ethtool -g enp8s0f0"
 # If RX/TX < 8192, increase to max:
-ssh truenas_admin@192.168.20.200 "sudo ethtool -G enp8s0f0 rx 8192 tx 8192; sudo ethtool -G enp8s0f1 rx 8192 tx 8192"
-# Persisted via TrueNAS POSTINIT script: /home/truenas_admin/ring-buffer-init.sh
+ssh akunito@192.168.20.200 "sudo ethtool -G enp8s0f0 rx 8192 tx 8192; sudo ethtool -G enp8s0f1 rx 8192 tx 8192"
+# Persisted via NAS POSTINIT script: /home/akunito/ring-buffer-init.sh
 ```
 
 ### TCP Buffer Tuning
 
 ```bash
 # Check current settings
-ssh truenas_admin@192.168.20.200 "sysctl net.core.rmem_max net.core.wmem_max net.ipv4.tcp_rmem net.ipv4.tcp_wmem"
+ssh akunito@192.168.20.200 "sysctl net.core.rmem_max net.core.wmem_max net.ipv4.tcp_rmem net.ipv4.tcp_wmem"
 
 # Apply tuning (runtime only)
-ssh truenas_admin@192.168.20.200 "sudo sysctl -w net.core.rmem_max=16777216 net.core.wmem_max=16777216 'net.ipv4.tcp_rmem=4096 1048576 16777216' 'net.ipv4.tcp_wmem=4096 1048576 16777216' net.core.netdev_max_backlog=10000"
-# Note: TrueNAS SCALE uses /etc/sysctl.d/ or TrueNAS GUI for persistence
+ssh akunito@192.168.20.200 "sudo sysctl -w net.core.rmem_max=16777216 net.core.wmem_max=16777216 'net.ipv4.tcp_rmem=4096 1048576 16777216' 'net.ipv4.tcp_wmem=4096 1048576 16777216' net.core.netdev_max_backlog=10000"
+# Note: NAS SCALE uses /etc/sysctl.d/ or NAS GUI for persistence
 ```
 
 ### NIC Error Counters
 
 ```bash
-ssh truenas_admin@192.168.20.200 "ethtool -S enp8s0f0 | grep -E 'rx_errors|tx_errors|rx_dropped|tx_dropped|rx_missed'"
-ssh truenas_admin@192.168.20.200 "ethtool -S enp8s0f1 | grep -E 'rx_errors|tx_errors|rx_dropped|tx_dropped|rx_missed'"
+ssh akunito@192.168.20.200 "ethtool -S enp8s0f0 | grep -E 'rx_errors|tx_errors|rx_dropped|tx_dropped|rx_missed'"
+ssh akunito@192.168.20.200 "ethtool -S enp8s0f1 | grep -E 'rx_errors|tx_errors|rx_dropped|tx_dropped|rx_missed'"
 # rx_missed_errors > 0 → need larger ring buffers
 ```
 
@@ -104,7 +104,7 @@ ssh truenas_admin@192.168.20.200 "ethtool -S enp8s0f1 | grep -E 'rx_errors|tx_er
 ### List NFS Shares
 
 ```bash
-ssh truenas_admin@192.168.20.200 "cat /etc/exports"
+ssh akunito@192.168.20.200 "cat /etc/exports"
 # Or via API:
 # curl -sk -H "Authorization: Bearer <token>" https://192.168.20.200/api/v2.0/sharing/nfs
 ```
@@ -137,32 +137,32 @@ nfsstat -c
 ### Check Pool Status
 
 ```bash
-ssh truenas_admin@192.168.20.200 "sudo zpool status"
-ssh truenas_admin@192.168.20.200 "sudo zpool list -o name,size,alloc,free,frag,cap,health"
+ssh akunito@192.168.20.200 "sudo zpool status"
+ssh akunito@192.168.20.200 "sudo zpool list -o name,size,alloc,free,frag,cap,health"
 ```
 
 ### Run Manual Scrub
 
 ```bash
 # Run scrubs (ssdpool ~1h, extpool ~30min)
-ssh truenas_admin@192.168.20.200 "sudo zpool scrub ssdpool"
+ssh akunito@192.168.20.200 "sudo zpool scrub ssdpool"
 # Wait for completion, then:
-ssh truenas_admin@192.168.20.200 "sudo zpool scrub extpool"
+ssh akunito@192.168.20.200 "sudo zpool scrub extpool"
 # Check progress:
-ssh truenas_admin@192.168.20.200 "sudo zpool status | grep scan"
+ssh akunito@192.168.20.200 "sudo zpool status | grep scan"
 ```
 
 ### Check Disk Health
 
 ```bash
-ssh truenas_admin@192.168.20.200 "sudo smartctl -a /dev/sdX"  # Replace X
+ssh akunito@192.168.20.200 "sudo smartctl -a /dev/sdX"  # Replace X
 ```
 
 ### SMART Check (SSDs)
 
 ```bash
 # Check SSD health (SMART for NVMe/SATA SSDs)
-ssh truenas_admin@192.168.20.200 "sudo smartctl -a /dev/sdX"  # Replace X with SSD device
+ssh akunito@192.168.20.200 "sudo smartctl -a /dev/sdX"  # Replace X with SSD device
 # Note: SMART may not work through USB adapter for extpool NVMe — check via zpool status instead
 ```
 
@@ -173,7 +173,7 @@ ssh truenas_admin@192.168.20.200 "sudo smartctl -a /dev/sdX"  # Replace X with S
 ### Check Lock Status
 
 ```bash
-# Via TrueNAS API
+# Via NAS API
 curl -sk -H "Authorization: Bearer <token>" \
   https://192.168.20.200/api/v2.0/pool/dataset?extra.properties=encrypted,locked | \
   python3 -c "import sys,json; [print(f'{d[\"name\"]}: locked={d.get(\"locked\",False)}') for d in json.load(sys.stdin) if d.get('encrypted')]"
@@ -189,11 +189,11 @@ Use the `/unlock-truenas` skill for guided unlocking.
 
 ```
 USW Aggregation
-  SFP+ 5: TrueNAS enp8s0f0 (LACP member)
-  SFP+ 6: TrueNAS enp8s0f1 (LACP member)
+  SFP+ 5: NAS enp8s0f0 (LACP member)
+  SFP+ 6: NAS enp8s0f1 (LACP member)
   Profile: VLAN-NAS 100 access mode (untagged)
 
-TrueNAS bond0:
+NAS bond0:
   Mode: 802.3ad (LACP)
   Slaves: enp8s0f0 + enp8s0f1
   IP: 192.168.20.200/24
@@ -202,18 +202,18 @@ TrueNAS bond0:
 ```
 
 **Traffic paths:**
-- DESK ↔ TrueNAS: bond0.100 → switch L2 → TrueNAS (direct, ~6.8 Gbps per stream)
-- Proxmox ↔ TrueNAS: vmbr10.100 → switch L2 → TrueNAS (direct, ~6.8 Gbps)
-- LXC containers ↔ TrueNAS: via Proxmox bind mounts (same as Proxmox path)
-- pfSense ↔ TrueNAS: ix0.100 → switch VLAN 100 → TrueNAS (~10G single link)
+- DESK ↔ NAS: bond0.100 → switch L2 → NAS (direct, ~6.8 Gbps per stream)
+- Proxmox ↔ NAS: vmbr10.100 → switch L2 → NAS (direct, ~6.8 Gbps)
+- LXC containers ↔ NAS: via Proxmox bind mounts (same as Proxmox path)
+- pfSense ↔ NAS: ix0.100 → switch VLAN 100 → NAS (~10G single link)
 
-**Previous:** TrueNAS was directly cabled to pfSense (lagg0: ix2+ix3), limiting all traffic to ~940 Mbps through pfSense routing.
+**Previous:** NAS was directly cabled to pfSense (lagg0: ix2+ix3), limiting all traffic to ~940 Mbps through pfSense routing.
 
 ---
 
 ## Troubleshooting
 
-### TrueNAS unreachable
+### NAS unreachable
 
 ```bash
 # Check from pfSense (gateway)
@@ -222,14 +222,14 @@ ssh admin@192.168.8.1 "ping -c 2 192.168.20.200"
 # Check VLAN 100 on switch (UniFi GUI)
 # Verify SFP+ 5+6 show UP and in VLAN-NAS 100 LAG
 
-# Check bond on TrueNAS (requires console/IPMI access if SSH down)
+# Check bond on NAS (requires console/IPMI access if SSH down)
 ```
 
 ### NFS mount hanging
 
 ```bash
 # Check NFS server is running
-ssh truenas_admin@192.168.20.200 "systemctl status nfs-server"
+ssh akunito@192.168.20.200 "systemctl status nfs-server"
 
 # Check mountpoint from client
 mount | grep nfs
@@ -243,6 +243,6 @@ sudo umount -f /mnt/truenas-share
 
 ```bash
 # USB NVMe may not be ready at boot — manually import
-ssh truenas_admin@192.168.20.200 "sudo zpool import extpool"
+ssh akunito@192.168.20.200 "sudo zpool import extpool"
 # Then unlock encryption if needed
 ```

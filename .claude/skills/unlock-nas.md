@@ -1,11 +1,11 @@
 ---
 name: unlock-truenas
-description: Unlock encrypted TrueNAS datasets via API
+description: Unlock encrypted NAS datasets via API
 ---
 
-# Unlock TrueNAS Encrypted Datasets
+# Unlock NAS Encrypted Datasets
 
-This skill unlocks encrypted datasets on TrueNAS via the API.
+This skill unlocks encrypted datasets on NAS via the API.
 
 ## Usage
 
@@ -17,7 +17,7 @@ If no pool name is provided, unlocks all locked pools.
 
 ## What This Skill Does
 
-1. Connects to TrueNAS via SSH/API
+1. Connects to NAS via SSH/API
 2. Identifies locked encrypted datasets
 3. Unlocks datasets using provided passphrase
 4. Verifies unlock status
@@ -30,13 +30,13 @@ If no pool name is provided, unlocks all locked pools.
 
 ## Requirements
 
-- SSH access to TrueNAS (truenas_admin@192.168.20.200)
+- SSH access to NAS (akunito@192.168.20.200)
 - Encryption passphrase
-- TrueNAS API access
+- NAS API access
 
 ## Network Access
 
-TrueNAS is on VLAN 100 (Storage), accessible from:
+NAS is on VLAN 100 (Storage), accessible from:
 - **DESK**: via bond0.100 (192.168.20.96) — direct L2
 - **pfSense**: via ix0.100 (192.168.20.1) — VLAN gateway
 

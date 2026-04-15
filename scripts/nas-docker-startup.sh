@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# TrueNAS Docker Startup Script (Hybrid: Root + Rootless)
-# Starts all Docker services on TrueNAS in the correct order
+# NAS Docker Startup Script (Hybrid: Root + Rootless)
+# Starts all Docker services on NAS in the correct order
 #
 # Usage:
-#   truenas-docker-startup.sh                  # Sync compose files + start all
-#   truenas-docker-startup.sh --status         # Show status only
-#   truenas-docker-startup.sh --stop           # Stop all services (graceful)
-#   truenas-docker-startup.sh --no-sync        # Start without syncing compose files
+#   nas-docker-startup.sh                  # Sync compose files + start all
+#   nas-docker-startup.sh --status         # Show status only
+#   nas-docker-startup.sh --stop           # Stop all services (graceful)
+#   nas-docker-startup.sh --no-sync        # Start without syncing compose files
 #
 # Architecture:
 #   ROOT Docker (sudo docker):
@@ -26,12 +26,12 @@
 # A VPN watchdog cron is deployed to auto-recover gluetun after non-suspend VPN drops.
 #
 # Compose files are tracked in the dotfiles repo under templates/truenas/
-# and synced to TrueNAS on startup (unless --no-sync is used).
+# and synced to NAS on startup (unless --no-sync is used).
 #
 set -euo pipefail
 
 COMPOSE_ROOT="/mnt/ssdpool/docker/compose"
-TRUENAS_HOST="192.168.20.200"
+NAS_HOST="192.168.20.200"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMPLATES_DIR="$REPO_ROOT/templates/truenas"
@@ -86,7 +86,7 @@ run_cmd() {
     if is_local; then
         eval "$@"
     else
-        ssh truenas_admin@${TRUENAS_HOST} "$@"
+        ssh akunito@${NAS_HOST} "$@"
     fi
 }
 
@@ -153,11 +153,11 @@ sync_compose_files() {
             local dest="$COMPOSE_ROOT/$project/docker-compose.yml"
             run_cmd "mkdir -p $COMPOSE_ROOT/$project"
             local remote_content
-            remote_content=$(ssh truenas_admin@${TRUENAS_HOST} "cat $dest 2>/dev/null" || echo "")
+            remote_content=$(ssh akunito@${NAS_HOST} "cat $dest 2>/dev/null" || echo "")
             local local_content
             local_content=$(cat "$src")
             if [[ "$remote_content" != "$local_content" ]]; then
-                scp -q "$src" "truenas_admin@${TRUENAS_HOST}:$dest"
+                scp -q "$src" "akunito@${NAS_HOST}:$dest"
                 log "  UPDATED $project"
             else
                 log "  OK $project (unchanged)"
@@ -278,7 +278,7 @@ connect_npm_to_networks() {
 
 deploy_suspend_hook() {
     local hook_src="$SCRIPT_DIR/truenas-docker-suspend-hook.sh"
-    local hook_dest="/home/truenas_admin/docker-suspend-hook.sh"
+    local hook_dest="/home/akunito/docker-suspend-hook.sh"
 
     if [[ ! -f "$hook_src" ]]; then
         log "  SKIP suspend hook (script not found in repo)"
@@ -289,7 +289,7 @@ deploy_suspend_hook() {
     if is_local; then
         cp "$hook_src" "$hook_dest"
     else
-        scp -q "$hook_src" "truenas_admin@${TRUENAS_HOST}:$hook_dest"
+        scp -q "$hook_src" "akunito@${NAS_HOST}:$hook_dest"
     fi
     run_cmd "chmod +x $hook_dest"
 
@@ -306,7 +306,7 @@ StopWhenUnneeded=yes
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash /home/truenas_admin/docker-suspend-hook.sh pre suspend
+ExecStart=/bin/bash /home/akunito/docker-suspend-hook.sh pre suspend
 TimeoutStartSec=120
 
 [Install]
@@ -321,7 +321,7 @@ Conflicts=shutdown.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash /home/truenas_admin/docker-suspend-hook.sh post suspend
+ExecStart=/bin/bash /home/akunito/docker-suspend-hook.sh post suspend
 TimeoutStartSec=180
 
 [Install]
@@ -336,7 +336,7 @@ UNIT_EOF
 
 deploy_vpn_watchdog() {
     local watchdog_src="$SCRIPT_DIR/truenas-vpn-watchdog.sh"
-    local watchdog_dest="/home/truenas_admin/vpn-watchdog.sh"
+    local watchdog_dest="/home/akunito/vpn-watchdog.sh"
     local cron_entry="*/5 * * * * /bin/bash $watchdog_dest >> /var/log/vpn-watchdog.log 2>&1"
 
     if [[ ! -f "$watchdog_src" ]]; then
@@ -348,7 +348,7 @@ deploy_vpn_watchdog() {
     if is_local; then
         cp "$watchdog_src" "$watchdog_dest"
     else
-        scp -q "$watchdog_src" "truenas_admin@${TRUENAS_HOST}:$watchdog_dest"
+        scp -q "$watchdog_src" "akunito@${NAS_HOST}:$watchdog_dest"
     fi
     run_cmd "chmod +x $watchdog_dest"
 

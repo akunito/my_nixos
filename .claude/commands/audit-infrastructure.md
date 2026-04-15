@@ -45,22 +45,22 @@ ssh -A -p 56777 akunito@100.64.0.6 "free -h && echo '---' && uptime"
 
 ```bash
 # List running Docker containers (19 expected)
-ssh truenas_admin@192.168.20.200 "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
+ssh -A akunito@192.168.20.200 "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
 
 # Docker networks (rootless + root)
-ssh truenas_admin@192.168.20.200 "docker network ls && echo '--- Root ---' && sudo docker network ls"
+ssh -A akunito@192.168.20.200 "docker network ls && echo '--- Root ---' && sudo docker network ls"
 
 # Check NPM is accessible on bridge (port 81)
-ssh truenas_admin@192.168.20.200 "curl -sf http://localhost:81 > /dev/null && echo 'NPM OK' || echo 'NPM FAIL'"
+ssh -A akunito@192.168.20.200 "curl -sf http://localhost:81 > /dev/null && echo 'NPM OK' || echo 'NPM FAIL'"
 
 # Check Tailscale subnet router
-ssh truenas_admin@192.168.20.200 "docker ps --filter 'name=tailscale' --format 'table {{.Names}}\t{{.Status}}'"
+ssh -A akunito@192.168.20.200 "docker ps --filter 'name=tailscale' --format 'table {{.Names}}\t{{.Status}}'"
 
 # Check cloudflared tunnel
-ssh truenas_admin@192.168.20.200 "docker ps --filter 'name=cloudflared' --format 'table {{.Names}}\t{{.Status}}'"
+ssh -A akunito@192.168.20.200 "docker ps --filter 'name=cloudflared' --format 'table {{.Names}}\t{{.Status}}'"
 
 # Disk usage (datasets)
-ssh truenas_admin@192.168.20.200 "df -h | grep -E '(Filesystem|pool)'"
+ssh -A akunito@192.168.20.200 "df -h | grep -E '(Filesystem|pool)'"
 ```
 
 ### 3. Check Monitoring (VPS)
@@ -107,7 +107,7 @@ ssh admin@192.168.8.1 "ifconfig ix0.100"
 # Should show 192.168.20.1/24
 
 # Check TrueNAS bond0
-ssh truenas_admin@192.168.20.200 "ip addr show bond0"
+ssh -A akunito@192.168.20.200 "ip addr show bond0"
 # Should show 192.168.20.200/24
 
 # Verify direct L2 paths (no pfSense routing)
@@ -118,7 +118,7 @@ ping -c 1 192.168.20.200  # DESK -> TrueNAS
 
 ```bash
 # Kuma on TrueNAS (Home Watchdog) - check container running
-ssh truenas_admin@192.168.20.200 "docker ps | grep kuma"
+ssh -A akunito@192.168.20.200 "docker ps | grep kuma"
 
 # Kuma on VPS (Public status page) - check container running
 ssh -A -p 56777 akunito@100.64.0.6 "docker ps | grep kuma"
@@ -166,7 +166,7 @@ ssh -A -o ConnectTimeout=5 -p 56777 akunito@100.64.0.6 "echo OK" 2>/dev/null || 
 
 # Check TrueNAS
 echo -n "TrueNAS (192.168.20.200): "
-ssh -o ConnectTimeout=5 truenas_admin@192.168.20.200 "echo OK" 2>/dev/null || echo "FAILED"
+ssh -o ConnectTimeout=5 akunito@192.168.20.200 "echo OK" 2>/dev/null || echo "FAILED"
 
 # Check pfSense
 echo -n "pfSense (192.168.8.1): "

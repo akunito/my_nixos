@@ -1,6 +1,6 @@
-# Update Infrastructure: VPS and TrueNAS
+# Update Infrastructure: VPS and NAS
 
-Full infrastructure update: NixOS rebuild on VPS, then docker container updates on both VPS and TrueNAS.
+Full infrastructure update: NixOS rebuild on VPS, then docker container updates on both VPS and NAS.
 
 ## Instructions
 
@@ -68,11 +68,11 @@ Expected: ~26 containers (including leftyworkout which was not stopped).
 
 ---
 
-## Step 3: TrueNAS Docker Update
+## Step 3: NAS Docker Update
 
-**SSH target:** `ssh truenas_admin@192.168.20.200`
+**SSH target:** `ssh akunito@192.168.20.200`
 
-TrueNAS has **two Docker daemons**: root (sudo) and rootless (user).
+NAS has **two Docker daemons**: root (sudo) and rootless (user).
 
 ### Docker Layout
 
@@ -90,24 +90,24 @@ TrueNAS has **two Docker daemons**: root (sudo) and rootless (user).
 
 Compose files: `/mnt/ssdpool/docker/compose/<project>/docker-compose.yml`
 
-### 3a. Stop all TrueNAS containers
+### 3a. Stop all NAS containers
 
 ```bash
-ssh truenas_admin@192.168.20.200 'echo "=== ROOT ==="; for proj in cloudflared media tailscale vpn-media; do echo "--- $proj ---"; sudo docker compose -f /mnt/ssdpool/docker/compose/$proj/docker-compose.yml stop 2>&1; done; echo "=== ROOTLESS ==="; for proj in cloudflared exporters media monitoring npm; do echo "--- $proj ---"; docker compose -f /mnt/ssdpool/docker/compose/$proj/docker-compose.yml stop 2>&1; done'
+ssh akunito@192.168.20.200 'echo "=== ROOT ==="; for proj in cloudflared media tailscale vpn-media; do echo "--- $proj ---"; sudo docker compose -f /mnt/ssdpool/docker/compose/$proj/docker-compose.yml stop 2>&1; done; echo "=== ROOTLESS ==="; for proj in cloudflared exporters media monitoring npm; do echo "--- $proj ---"; docker compose -f /mnt/ssdpool/docker/compose/$proj/docker-compose.yml stop 2>&1; done'
 ```
 
 ### 3b. Pull latest images (both daemons)
 
 ```bash
-ssh truenas_admin@192.168.20.200 'echo "=== ROOT ==="; for proj in cloudflared tailscale vpn-media media; do echo "--- $proj ---"; sudo docker compose -f /mnt/ssdpool/docker/compose/$proj/docker-compose.yml pull 2>&1; done; echo "=== ROOTLESS ==="; for proj in cloudflared npm media monitoring exporters; do echo "--- $proj ---"; docker compose -f /mnt/ssdpool/docker/compose/$proj/docker-compose.yml pull 2>&1; done'
+ssh akunito@192.168.20.200 'echo "=== ROOT ==="; for proj in cloudflared tailscale vpn-media media; do echo "--- $proj ---"; sudo docker compose -f /mnt/ssdpool/docker/compose/$proj/docker-compose.yml pull 2>&1; done; echo "=== ROOTLESS ==="; for proj in cloudflared npm media monitoring exporters; do echo "--- $proj ---"; docker compose -f /mnt/ssdpool/docker/compose/$proj/docker-compose.yml pull 2>&1; done'
 ```
 
-### 3c. Start all TrueNAS containers (correct order)
+### 3c. Start all NAS containers (correct order)
 
 **IMPORTANT:** Root `media` project must only start `solvearr` — not the full media stack. The full media stack runs rootless.
 
 ```bash
-ssh truenas_admin@192.168.20.200 '
+ssh akunito@192.168.20.200 '
 echo "=== ROOT ===";
 echo "--- tailscale ---"; sudo docker compose -f /mnt/ssdpool/docker/compose/tailscale/docker-compose.yml up -d 2>&1;
 echo "--- cloudflared ---"; sudo docker compose -f /mnt/ssdpool/docker/compose/cloudflared/docker-compose.yml up -d 2>&1;
@@ -121,10 +121,10 @@ echo "--- monitoring ---"; docker compose -f /mnt/ssdpool/docker/compose/monitor
 echo "--- exporters ---"; docker compose -f /mnt/ssdpool/docker/compose/exporters/docker-compose.yml up -d 2>&1'
 ```
 
-### 3d. Verify TrueNAS containers
+### 3d. Verify NAS containers
 
 ```bash
-ssh truenas_admin@192.168.20.200 "echo '=== ROOT ==='; sudo docker ps --format 'table {{.Names}}\t{{.Status}}' | sort; echo '=== ROOTLESS ==='; docker ps --format 'table {{.Names}}\t{{.Status}}' | sort"
+ssh akunito@192.168.20.200 "echo '=== ROOT ==='; sudo docker ps --format 'table {{.Names}}\t{{.Status}}' | sort; echo '=== ROOTLESS ==='; docker ps --format 'table {{.Names}}\t{{.Status}}' | sort"
 ```
 
 Expected: 5 root containers, 15 rootless containers.
@@ -133,14 +133,14 @@ Expected: 5 root containers, 15 rootless containers.
 
 ## Post-Update Checks
 
-After both VPS and TrueNAS are updated, optionally verify key services:
+After both VPS and NAS are updated, optionally verify key services:
 
 ```bash
 # VPS: check Plane is healthy
 ssh -A -p 56777 akunito@100.64.0.6 "docker ps --format '{{.Names}} {{.Status}}' | grep plane"
 
-# TrueNAS: check Jellyfin is healthy
-ssh truenas_admin@192.168.20.200 "docker ps --format '{{.Names}} {{.Status}}' | grep jellyfin"
+# NAS: check Jellyfin is healthy
+ssh akunito@192.168.20.200 "docker ps --format '{{.Names}} {{.Status}}' | grep jellyfin"
 ```
 
 ---
@@ -150,7 +150,7 @@ ssh truenas_admin@192.168.20.200 "docker ps --format '{{.Names}} {{.Status}}' | 
 ### Docker DNS timeout on VPS after NixOS rebuild
 Rootless Docker uses slirp4netns with its own DNS (`10.0.2.3`). After a NixOS rebuild this can break. Fix: `systemctl --user restart docker` on VPS.
 
-### Port conflict on TrueNAS
+### Port conflict on NAS
 If a rootless container fails with "address already in use", check if the root Docker started the same service. Stop the root version first: `sudo docker compose -f <path> stop <service>`.
 
 ### Root media starts too many containers
@@ -160,7 +160,7 @@ The `media/docker-compose.yml` is shared between root and rootless. Under root, 
 
 ## Related Skills
 
-- [Docker Startup TrueNAS](./docker-startup-truenas.md) — Start TrueNAS Docker after reboot (includes compose sync)
-- [Unlock TrueNAS](./unlock-truenas.md) — Unlock encrypted datasets (prerequisite for TrueNAS Docker)
+- [Docker Startup NAS](./docker-startup-truenas.md) — Start NAS Docker after reboot (includes compose sync)
+- [Unlock NAS](./unlock-truenas.md) — Unlock encrypted datasets (prerequisite for NAS Docker)
 - [Check Kuma](./check-kuma.md) — Verify Uptime Kuma after update
 - [Check Database](./check-database.md) — Verify PostgreSQL/MariaDB after VPS rebuild

@@ -1,15 +1,15 @@
 ---
-id: infrastructure.services.truenas
-summary: TrueNAS storage server operations, monitoring, and maintenance
-tags: [infrastructure, storage, truenas, zfs, monitoring, nas]
-related_files: [system/app/prometheus-graphite.nix, .local/bin/truenas-zfs-exporter.sh, .claude/skills/unlock-truenas.md]
+id: infrastructure.services.nas
+summary: NixOS NAS (nas-aku) operations, monitoring, and maintenance
+tags: [infrastructure, storage, nixos, zfs, monitoring, nas]
+related_files: [system/app/nas-services.nix, profiles/NAS_PROD-config.nix, .claude/skills/unlock-nas.md]
 ---
 
-# TrueNAS Storage Server
+# NAS Storage Server (NixOS)
 
-**Version**: TrueNAS SCALE 25.04.2.6
-**SSH Access**: `ssh truenas_admin@192.168.20.200`
-**Web UI**: https://192.168.20.200 (HTTPS only)
+**Version**: NixOS 25.11 (Xantusia) — migrated from TrueNAS SCALE in March 2026
+**SSH Access**: `ssh -A akunito@192.168.20.200` (or `ssh -A akunito@nas-aku` via Tailscale)
+**Profile**: NAS_PROD | **Deploy**: `./deploy.sh --profile NAS_PROD` | **Flags**: `-s -u -d`
 
 ---
 
@@ -66,7 +66,7 @@ TrueNAS suspends to RAM (S3) nightly to save power (~280W → 0W during sleep).
 - **Docker lifecycle**: Two systemd services (`docker-pre-suspend.service`, `docker-post-resume.service`) bound to `sleep.target` handle graceful stop/start of all Docker containers around suspend
 - **Pre-suspend**: Stops all compose projects in reverse order (30s timeout per project)
 - **Post-resume**: Waits 10s for networking, then starts projects in order (media force-recreated for fresh mounts)
-- **Script**: `/home/truenas_admin/docker-suspend-hook.sh` (deployed by startup script)
+- **Script**: `/home/akunito/docker-suspend-hook.sh` (deployed by startup script)
 - **Log**: `/var/log/docker-suspend-hook.log`
 - **IMPORTANT**: TrueNAS root is read-only (`/usr/lib/`), so services go in `/etc/systemd/system/`. TrueNAS updates may reset `/etc/systemd/` — re-run `truenas-docker-startup.sh` to redeploy
 - All backup jobs (restic) scheduled within 11:00–23:00 window
@@ -87,10 +87,10 @@ See [TrueNAS Docker Services](./truenas-services.md) for full details.
 **Management**:
 ```bash
 # Check all containers
-ssh truenas_admin@192.168.20.200 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
+ssh -A akunito@192.168.20.200 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
 
 # Restart a compose project
-ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && docker compose restart'
+ssh -A akunito@192.168.20.200 'cd /home/akunito/docker/<project> && docker compose restart'
 ```
 
 ---
@@ -122,7 +122,7 @@ ssh truenas_admin@192.168.20.200 'cd /home/truenas_admin/docker/<project> && doc
 - ✅ Root login: **DISABLED**
 - ✅ Weak ciphers: **REMOVED** (no AES128-CBC)
 - ✅ TCP forwarding: Disabled
-- **Authorized User**: `truenas_admin` (sudo access)
+- **Authorized User**: `akunito` (sudo access)
 - **SSH Keys**: Stored in `~/.ssh/authorized_keys`
 
 ### API Access
@@ -277,18 +277,18 @@ curl -X POST https://192.168.20.200/api/v2.0/pool/dataset/unlock \
 
 **Check Pool Status**:
 ```bash
-ssh truenas_admin@192.168.20.200 'zpool status'
-ssh truenas_admin@192.168.20.200 'zpool list'
+ssh -A akunito@192.168.20.200 'zpool status'
+ssh -A akunito@192.168.20.200 'zpool list'
 ```
 
 **Manual Scrub**:
 ```bash
-ssh truenas_admin@192.168.20.200 'midclt call pool.scrub "ssdpool" "START"'
+ssh -A akunito@192.168.20.200 'midclt call pool.scrub "ssdpool" "START"'
 ```
 
 **Check SMART Status**:
 ```bash
-ssh truenas_admin@192.168.20.200 'midclt call disk.query | jq ".[] | {name: .devname, temp: .temperature, smart: .smart_enabled}"'
+ssh -A akunito@192.168.20.200 'midclt call disk.query | jq ".[] | {name: .devname, temp: .temperature, smart: .smart_enabled}"'
 ```
 
 **Download Config Backup**:
@@ -307,8 +307,8 @@ curl -X POST https://192.168.20.200/api/v2.0/config/save \
 
 **Restart Services**:
 ```bash
-ssh truenas_admin@192.168.20.200 'midclt call service.restart nfs'
-ssh truenas_admin@192.168.20.200 'midclt call service.restart cifs'
+ssh -A akunito@192.168.20.200 'midclt call service.restart nfs'
+ssh -A akunito@192.168.20.200 'midclt call service.restart cifs'
 ```
 
 ### ZFS Local Replication (ELIMINATED)
@@ -354,7 +354,7 @@ ssh -A -p 56777 akunito@100.64.0.6 'curl -s http://localhost:9109/metrics | grep
 /unlock-truenas
 
 # Check dataset lock status
-ssh truenas_admin@192.168.20.200 'midclt call pool.dataset.query | jq ".[] | select(.encrypted == true) | {name, locked, key_loaded}"'
+ssh -A akunito@192.168.20.200 'midclt call pool.dataset.query | jq ".[] | select(.encrypted == true) | {name, locked, key_loaded}"'
 ```
 
 ### Email Alerts Not Received
@@ -369,7 +369,7 @@ ssh truenas_admin@192.168.20.200 'midclt call pool.dataset.query | jq ".[] | sel
 **Verification**:
 ```bash
 # Test email from TrueNAS
-ssh truenas_admin@192.168.20.200 'midclt call mail.send "{\"subject\": \"Test\", \"text\": \"Test email\"}"'
+ssh -A akunito@192.168.20.200 'midclt call mail.send "{\"subject\": \"Test\", \"text\": \"Test email\"}"'
 
 # Check postfix logs on VPS
 ssh -A -p 56777 akunito@100.64.0.6 'journalctl -u postfix --no-pager -n 50'
@@ -388,10 +388,10 @@ umount -f /mnt/truenas_media
 mount -a
 
 # Check NFS service on TrueNAS
-ssh truenas_admin@192.168.20.200 'midclt call service.query | jq ".[] | select(.service == \"nfs\") | {state, enable}"'
+ssh -A akunito@192.168.20.200 'midclt call service.query | jq ".[] | select(.service == \"nfs\") | {state, enable}"'
 
 # Restart NFS if needed
-ssh truenas_admin@192.168.20.200 'midclt call service.restart nfs'
+ssh -A akunito@192.168.20.200 'midclt call service.restart nfs'
 ```
 
 ---
@@ -434,7 +434,7 @@ ssh truenas_admin@192.168.20.200 'midclt call service.restart nfs'
 **Essential Commands**:
 ```bash
 # SSH access
-ssh truenas_admin@192.168.20.200
+ssh -A akunito@192.168.20.200
 
 # Pool status
 zpool status

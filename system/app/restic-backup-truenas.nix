@@ -1,18 +1,18 @@
-# TrueNAS Offsite Backup — VPS pulls Docker data + configs from TrueNAS
+# NAS Offsite Backup — VPS pulls Docker data + configs from NAS
 #
-# Pull model: VPS SSHes into TrueNAS, rsyncs to local staging, runs restic locally.
+# Pull model: VPS SSHes into NAS (nas-aku), rsyncs to local staging, runs restic locally.
 # Two independent jobs with separate restic repos and passwords:
-#   - configs: compose files + TrueNAS system config export (daily 15:00)
+#   - configs: compose files + NAS system config export (daily 15:00)
 #   - data:    container data directories (daily 16:00)
 #
 # Each job writes Prometheus textfile metrics for alerting.
 #
 # Feature flag: truenasResticBackupEnable = true (in profile config)
+# (flag name kept for backward compatibility — "truenas" is historical)
 #
 # Prerequisites:
-#   - SSH key at /home/<user>/.ssh/id_ed25519_restic (authorized on TrueNAS)
+#   - SSH key at /home/<user>/.ssh/id_ed25519_restic (authorized on NAS akunito user)
 #   - Password files at /etc/secrets/restic-truenas-{configs,data}
-#   - TrueNAS API key at /etc/secrets/truenas-api-key
 #   - Restic repos initialized:
 #       restic init --repo /var/lib/truenas-backups/configs.restic
 #       restic init --repo /var/lib/truenas-backups/data.restic
@@ -22,7 +22,7 @@
 let
   username = userSettings.username;
   truenasHost = systemSettings.truenasResticBackupHost or "192.168.20.200";
-  truenasUser = systemSettings.truenasResticBackupUser or "truenas_admin";
+  truenasUser = systemSettings.truenasResticBackupUser or "akunito";
   localDir = systemSettings.truenasResticBackupLocalDir or "/var/lib/truenas-backups";
   apiKeyFile = systemSettings.truenasResticBackupApiKeyFile or "/etc/secrets/truenas-api-key";
   truenasApiPort = toString (systemSettings.truenasResticBackupApiPort or 9443);

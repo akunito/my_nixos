@@ -207,7 +207,7 @@ For Docker services on TrueNAS:
 
 1. Stop affected stack:
    ```bash
-   ssh truenas_admin@192.168.20.200
+   ssh -A akunito@192.168.20.200
    cd ~/docker/<stack>
    docker compose down
    ```
