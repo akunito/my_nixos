@@ -338,8 +338,8 @@ in
     dbClaudeReadonlyConnStr = "postgresql://claude_readonly:${secrets.dbClaudeReadonlyPassword}@vps-prod:5432/plane";
     n8nMcpApiKey = secrets.n8nApiKey; # n8n MCP (workflow automation)
     n8nMcpUrl = "https://n8n.${secrets.publicDomain}";
-    aichatEnable = true; # Enable aichat CLI tool with OpenRouter support
-    nixvimEnabled = true; # Enable NixVim configuration (Cursor IDE-like experience)
+    aichatEnable = false; # Enable aichat CLI tool with OpenRouter support
+    nixvimEnabled = false; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
     voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)
 
