@@ -162,6 +162,56 @@ METRICS
     };
 
     # ========================================================================
+    # Network stats textfile collector
+    # ========================================================================
+    # Rootless Docker node-exporter can't see host network interfaces
+    # (netlink and /proc/net/dev are namespace-scoped). This service reads
+    # the real host /proc/net/dev and writes metrics for bond0/enp* interfaces.
+    systemd.services.nas-network-metrics = {
+      description = "Network interface metrics for Prometheus textfile collector";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      path = [ pkgs.coreutils pkgs.gawk ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = pkgs.writeShellScript "nas-network-metrics" ''
+          set -euo pipefail
+          OUTFILE="/var/lib/prometheus-node-exporter/textfile/network.prom"
+          TMPFILE="$OUTFILE.tmp"
+
+          cat > "$TMPFILE" << 'HEADER'
+# HELP nas_network_receive_bytes_total Network device receive bytes (from host /proc/net/dev)
+# TYPE nas_network_receive_bytes_total counter
+# HELP nas_network_transmit_bytes_total Network device transmit bytes (from host /proc/net/dev)
+# TYPE nas_network_transmit_bytes_total counter
+HEADER
+
+          # Parse /proc/net/dev — columns: iface, rx_bytes, ..., tx_bytes (col 10)
+          awk 'NR>2 {
+            gsub(/:/, "", $1)
+            iface=$1
+            if (iface ~ /^(bond|enp|eth)/) {
+              printf "nas_network_receive_bytes_total{device=\"%s\"} %s\n", iface, $2
+              printf "nas_network_transmit_bytes_total{device=\"%s\"} %s\n", iface, $10
+            }
+          }' /proc/net/dev >> "$TMPFILE"
+
+          mv "$TMPFILE" "$OUTFILE"
+          chmod 644 "$OUTFILE"
+        '';
+      };
+    };
+
+    systemd.timers.nas-network-metrics = {
+      description = "Network metrics timer (every 15 seconds)";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "30s";
+        OnUnitActiveSec = "15s";
+      };
+    };
+
+    # ========================================================================
     # LAN fallback interface (2.5GbE for management when bond is down)
     # ========================================================================
     systemd.network.networks."20-lan-fallback" = {

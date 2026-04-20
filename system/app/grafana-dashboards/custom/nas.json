@@ -360,7 +360,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
-          "expr": "rate(node_network_receive_bytes_total{job=\"nas_node\",device=\"bond0\"}[5m])",
+          "expr": "rate(nas_network_receive_bytes_total{job=\"nas_node\",device=\"bond0\"}[5m])",
           "legendFormat": "received",
           "range": true,
           "refId": "A"
@@ -368,7 +368,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
-          "expr": "rate(node_network_transmit_bytes_total{job=\"nas_node\",device=\"bond0\"}[5m])",
+          "expr": "rate(nas_network_transmit_bytes_total{job=\"nas_node\",device=\"bond0\"}[5m])",
           "legendFormat": "sent",
           "range": true,
           "refId": "B"
