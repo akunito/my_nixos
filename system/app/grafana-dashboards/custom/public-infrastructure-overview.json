@@ -1788,7 +1788,7 @@
           },
           "editorMode": "code",
           "expr": "(1 - node_filesystem_avail_bytes{job=\"nas_node\",fstype=\"zfs\",mountpoint=~\"/mnt/(ssdpool|extpool)\"} / node_filesystem_size_bytes{job=\"nas_node\",fstype=\"zfs\",mountpoint=~\"/mnt/(ssdpool|extpool)\"}) * 100",
-          "legendFormat": "{{pool}}",
+          "legendFormat": "{{device}}",
           "range": true,
           "refId": "A"
         }
