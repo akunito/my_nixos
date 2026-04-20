@@ -32,6 +32,136 @@ in
 {
   config = lib.mkIf nasEnabled {
     # ========================================================================
+    # Kernel modules — drivetemp for SATA disk temperature via hwmon
+    # ========================================================================
+    boot.kernelModules = [ "drivetemp" ];
+
+    # ========================================================================
+    # Textfile collector directory for Docker node-exporter
+    # ========================================================================
+    # The NAS runs node-exporter as a Docker container (not NixOS-native).
+    # This directory is bind-mounted into the container so NixOS systemd
+    # services can write .prom files that node-exporter exposes.
+    systemd.tmpfiles.rules = [
+      "d /var/lib/prometheus-node-exporter/textfile 0775 root wheel -"
+    ];
+
+    # ========================================================================
+    # ZFS pool metrics textfile collector
+    # ========================================================================
+    # Writes pool-level metrics (size, allocated, free, fragmentation, health)
+    # to a .prom file for node-exporter's textfile collector.
+    # Replaces the old SSH-based truenas-zfs-exporter that pushed to Graphite.
+    systemd.services.nas-zfs-pool-metrics = {
+      description = "ZFS pool metrics for Prometheus textfile collector";
+      after = [ "zfs-mount.service" ];
+      path = [ pkgs.zfs pkgs.coreutils pkgs.gawk ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = pkgs.writeShellScript "nas-zfs-pool-metrics" ''
+          set -euo pipefail
+          OUTFILE="/var/lib/prometheus-node-exporter/textfile/zfs_pools.prom"
+          TMPFILE="$OUTFILE.tmp"
+
+          cat > "$TMPFILE" << 'HEADER'
+# HELP nas_zfs_pool_size_bytes Total size of ZFS pool in bytes
+# TYPE nas_zfs_pool_size_bytes gauge
+# HELP nas_zfs_pool_allocated_bytes Allocated space in ZFS pool in bytes
+# TYPE nas_zfs_pool_allocated_bytes gauge
+# HELP nas_zfs_pool_free_bytes Free space in ZFS pool in bytes
+# TYPE nas_zfs_pool_free_bytes gauge
+# HELP nas_zfs_pool_fragmentation ZFS pool fragmentation percentage
+# TYPE nas_zfs_pool_fragmentation gauge
+# HELP nas_zfs_pool_healthy ZFS pool health (1=ONLINE, 0=degraded/faulted)
+# TYPE nas_zfs_pool_healthy gauge
+HEADER
+
+          # zpool list -Hp columns: name, size, alloc, free, ckpoint, expandsz, frag%, cap%, dedup, health, altroot
+          zpool list -Hp | while IFS=$'\t' read -r name size alloc free _ _ frag _ _ health _; do
+            [ -z "$name" ] && continue
+            # Handle OFFLINE pools with null values
+            [ "$size" = "-" ] || [ -z "$size" ] && size=0
+            [ "$alloc" = "-" ] || [ -z "$alloc" ] && alloc=0
+            [ "$free" = "-" ] || [ -z "$free" ] && free=0
+            [ "$frag" = "-" ] || [ -z "$frag" ] && frag=0
+            healthy=0
+            [ "$health" = "ONLINE" ] && healthy=1
+            echo "nas_zfs_pool_size_bytes{pool=\"$name\"} $size" >> "$TMPFILE"
+            echo "nas_zfs_pool_allocated_bytes{pool=\"$name\"} $alloc" >> "$TMPFILE"
+            echo "nas_zfs_pool_free_bytes{pool=\"$name\"} $free" >> "$TMPFILE"
+            echo "nas_zfs_pool_fragmentation{pool=\"$name\"} $frag" >> "$TMPFILE"
+            echo "nas_zfs_pool_healthy{pool=\"$name\"} $healthy" >> "$TMPFILE"
+          done
+
+          mv "$TMPFILE" "$OUTFILE"
+          chmod 644 "$OUTFILE"
+        '';
+      };
+    };
+
+    systemd.timers.nas-zfs-pool-metrics = {
+      description = "ZFS pool metrics timer (every 5 minutes)";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "2min";
+        OnUnitActiveSec = "5min";
+        RandomizedDelaySec = "30s";
+      };
+    };
+
+    # ========================================================================
+    # NixOS update timestamp metrics (textfile collector)
+    # ========================================================================
+    # Writes last system/user rebuild timestamps to a .prom file.
+    # Same logic as prometheus-exporters.nix but decoupled from the
+    # NixOS-native node-exporter (NAS uses Docker node-exporter).
+    systemd.services.nas-update-metrics = {
+      description = "Export NixOS last update timestamps for Prometheus";
+      after = [ "network.target" ];
+      path = [ pkgs.coreutils ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = pkgs.writeShellScript "nas-update-metrics" ''
+          set -euo pipefail
+          TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile"
+          HOSTNAME=$(cat /proc/sys/kernel/hostname)
+          OUTFILE="$TEXTFILE_DIR/nixos_updates.prom"
+
+          # System rebuild timestamp (current NixOS generation)
+          SYSTEM_TS=$(stat -c %Y /nix/var/nix/profiles/system 2>/dev/null || echo 0)
+
+          # Home Manager rebuild timestamp
+          USER_TS=0
+          for hm_profile in /nix/var/nix/profiles/per-user/*/home-manager /home/*/.local/state/nix/profiles/home-manager; do
+            if [ -e "$hm_profile" ]; then
+              ts=$(stat -c %Y "$hm_profile" 2>/dev/null || echo 0)
+              [ "$ts" -gt "$USER_TS" ] && USER_TS=$ts
+            fi
+          done
+
+          cat > "$OUTFILE.tmp" <<METRICS
+# HELP nixos_last_update_system_timestamp Unix timestamp of last NixOS system rebuild
+# TYPE nixos_last_update_system_timestamp gauge
+nixos_last_update_system_timestamp{hostname="$HOSTNAME"} $SYSTEM_TS
+# HELP nixos_last_update_user_timestamp Unix timestamp of last Home Manager rebuild
+# TYPE nixos_last_update_user_timestamp gauge
+nixos_last_update_user_timestamp{hostname="$HOSTNAME"} $USER_TS
+METRICS
+          mv "$OUTFILE.tmp" "$OUTFILE"
+        '';
+      };
+    };
+
+    systemd.timers.nas-update-metrics = {
+      description = "Export NixOS update timestamps periodically";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "1min";
+        OnUnitActiveSec = "15min";
+      };
+    };
+
+    # ========================================================================
     # LAN fallback interface (2.5GbE for management when bond is down)
     # ========================================================================
     systemd.network.networks."20-lan-fallback" = {

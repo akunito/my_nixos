@@ -846,8 +846,8 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "truenas_zfspool_healthy{pool=\"boot-pool\",job=\"truenas_graphite\"}",
-          "legendFormat": "boot-pool",
+          "expr": "node_zfs_zpool_state{state=\"online\",zpool=\"extpool\",job=\"nas_node\"}",
+          "legendFormat": "extpool",
           "range": true,
           "refId": "A"
         },
@@ -857,21 +857,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "truenas_zfspool_healthy{pool=\"extpool\",job=\"truenas_graphite\"}",
-          "legendFormat": "extpool",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "truenas_zfspool_healthy{pool=\"ssdpool\",job=\"truenas_graphite\"}",
+          "expr": "node_zfs_zpool_state{state=\"online\",zpool=\"ssdpool\",job=\"nas_node\"}",
           "legendFormat": "ssdpool",
           "range": true,
-          "refId": "C"
+          "refId": "B"
         }
       ],
       "title": "ZFS Pool Status",
@@ -1563,7 +1552,7 @@
       },
       "id": 109,
       "panels": [],
-      "title": "TrueNAS",
+      "title": "NAS",
       "type": "row"
     },
     {
@@ -1633,7 +1622,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "truenas_truenas_cpu_usage_cpu_cpu{host=\"truenas\",job=\"truenas_graphite\"}",
+          "expr": "100 - avg(rate(node_cpu_seconds_total{job=\"nas_node\",mode=\"idle\"}[5m])) * 100",
           "legendFormat": "CPU",
           "range": true,
           "refId": "A"
@@ -1710,7 +1699,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "(1 - truenas_truenas_meminfo_available_available{job=\"truenas_graphite\"} / truenas_truenas_meminfo_total_total{job=\"truenas_graphite\"}) * 100",
+          "expr": "(1 - node_memory_MemAvailable_bytes{job=\"nas_node\"} / node_memory_MemTotal_bytes{job=\"nas_node\"}) * 100",
           "legendFormat": "CPU",
           "range": true,
           "refId": "A"
@@ -1798,7 +1787,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(truenas_zfspool_allocated{job=\"truenas_graphite\"} / truenas_zfspool_size{job=\"truenas_graphite\"}) * 100",
+          "expr": "(1 - node_filesystem_avail_bytes{job=\"nas_node\",fstype=\"zfs\",mountpoint=~\"/mnt/(ssdpool|extpool)\"} / node_filesystem_size_bytes{job=\"nas_node\",fstype=\"zfs\",mountpoint=~\"/mnt/(ssdpool|extpool)\"}) * 100",
           "legendFormat": "{{pool}}",
           "range": true,
           "refId": "A"
@@ -1872,22 +1861,14 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "{__name__=~\"servers_truenas_smart_log_smart_disktemp.*\",job=\"truenas_graphite\"}",
-          "legendFormat": "{{__name__}}",
+          "expr": "node_hwmon_temp_celsius{job=\"nas_node\",chip=~\"drivetemp.*|nvme.*|.*k10temp.*\",sensor=\"temp1\"}",
+          "legendFormat": "{{chip}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "servers_truenas_smart_log_smart_disktemp_([^_]+)_.*",
-            "renamePattern": "$1"
-          }
-        }
-      ],
+      "title": "Temperatures",
+      "transformations": [],
       "transparent": true,
       "type": "stat"
     },

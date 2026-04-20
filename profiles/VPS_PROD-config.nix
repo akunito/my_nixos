@@ -222,10 +222,8 @@ in
       { name = "pfsense"; host = "192.168.8.1"; module = "pfsense"; }
     ];
 
-    # === Graphite Exporter (TrueNAS metrics — migrated from LXC_monitoring) ===
-    prometheusGraphiteEnable = true;
-    prometheusGraphitePort = 9109;
-    prometheusGraphiteInputPort = 2003;
+    # === Graphite Exporter (DISABLED — TrueNAS migrated to NixOS, metrics now via node-exporter) ===
+    prometheusGraphiteEnable = false;
 
     # === ACME Wildcard Certificate (for *.local.akunito.com) ===
     acmeEnable = true;

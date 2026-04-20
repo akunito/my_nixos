@@ -550,59 +550,143 @@ in
                   description = "pfSense config backup job failed - check SSH connectivity to pfSense";
                 };
               }
-              # TrueNAS VPS restic backup stale (>36h)
+              # NAS VPS restic backup stale (>36h)
               {
-                alert = "TruenasVpsBackupStale";
+                alert = "NasVpsBackupStale";
                 expr = ''truenas_backup_age_seconds{dataset=~"vps_.*"} > 129600'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
-                  summary = "TrueNAS VPS backup stale: {{ $labels.dataset }}";
+                  summary = "NAS VPS backup stale: {{ $labels.dataset }}";
                   description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 36h)";
                 };
               }
-              # TrueNAS workstation restic backup stale (>30h)
+              # NAS workstation restic backup stale (>30h)
               {
-                alert = "TruenasWorkstationBackupStale";
+                alert = "NasWorkstationBackupStale";
                 expr = ''truenas_backup_age_seconds{dataset=~"desk_.*|x13_.*"} > 108000'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
-                  summary = "TrueNAS workstation backup stale: {{ $labels.dataset }}";
+                  summary = "NAS workstation backup stale: {{ $labels.dataset }}";
                   description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 30h)";
                 };
               }
-              # TrueNAS backup missing (any repo)
+              # NAS backup missing (any repo)
               {
-                alert = "TruenasBackupMissing";
+                alert = "NasBackupMissing";
                 expr = ''truenas_backup_status == 0'';
                 "for" = "15m";
                 labels.severity = "critical";
                 annotations = {
-                  summary = "TrueNAS backup repo missing: {{ $labels.dataset }}";
-                  description = "Cannot find snapshot files in restic repo {{ $labels.dataset }} on TrueNAS";
+                  summary = "NAS backup repo missing: {{ $labels.dataset }}";
+                  description = "Cannot find snapshot files in restic repo {{ $labels.dataset }} on NAS";
                 };
               }
-              # TrueNAS offsite backup stale (VPS pulls from TrueNAS, >36h)
+              # NAS offsite backup stale (VPS pulls from NAS, >36h)
               {
-                alert = "TruenasOffsiteBackupStale";
+                alert = "NasOffsiteBackupStale";
                 expr = ''(time() - truenas_offsite_backup_last_success) > 129600'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
-                  summary = "TrueNAS offsite backup stale: {{ $labels.exported_job }}";
-                  description = "TrueNAS→VPS offsite backup {{ $labels.exported_job }} last succeeded {{ $value | humanizeDuration }} ago (threshold: 36h)";
+                  summary = "NAS offsite backup stale: {{ $labels.exported_job }}";
+                  description = "NAS→VPS offsite backup {{ $labels.exported_job }} last succeeded {{ $value | humanizeDuration }} ago (threshold: 36h)";
                 };
               }
-              # TrueNAS offsite backup failed
+              # NAS offsite backup failed
               {
-                alert = "TruenasOffsiteBackupFailed";
+                alert = "NasOffsiteBackupFailed";
                 expr = ''truenas_offsite_backup_status == 0'';
                 "for" = "15m";
                 labels.severity = "critical";
                 annotations = {
-                  summary = "TrueNAS offsite backup failed: {{ $labels.exported_job }}";
-                  description = "TrueNAS→VPS offsite backup {{ $labels.exported_job }} failed - check systemd journal for truenas-backup-{{ $labels.exported_job }}";
+                  summary = "NAS offsite backup failed: {{ $labels.exported_job }}";
+                  description = "NAS→VPS offsite backup {{ $labels.exported_job }} failed - check systemd journal for truenas-backup-{{ $labels.exported_job }}";
+                };
+              }
+            ];
+          }
+          {
+            # NAS storage & health alerts (migrated from prometheus-graphite.nix)
+            # Uses node_exporter metrics instead of Graphite
+            name = "nas_alerts";
+            rules = [
+              # ZFS pool capacity warning (>80%)
+              {
+                alert = "NASPoolCapacityWarning";
+                expr = ''(1 - node_filesystem_avail_bytes{job="nas_node",fstype="zfs",mountpoint=~"/mnt/(ssdpool|extpool)"} / node_filesystem_size_bytes{job="nas_node",fstype="zfs",mountpoint=~"/mnt/(ssdpool|extpool)"}) * 100 > 80'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "NAS pool {{ $labels.mountpoint }} capacity warning";
+                  description = "Pool {{ $labels.mountpoint }} is at {{ $value | printf \"%.1f\" }}% capacity";
+                };
+              }
+              # ZFS pool capacity critical (>90%)
+              {
+                alert = "NASPoolCapacityCritical";
+                expr = ''(1 - node_filesystem_avail_bytes{job="nas_node",fstype="zfs",mountpoint=~"/mnt/(ssdpool|extpool)"} / node_filesystem_size_bytes{job="nas_node",fstype="zfs",mountpoint=~"/mnt/(ssdpool|extpool)"}) * 100 > 90'';
+                "for" = "5m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "NAS pool {{ $labels.mountpoint }} capacity critical";
+                  description = "Pool {{ $labels.mountpoint }} is at {{ $value | printf \"%.1f\" }}% capacity - immediate attention required";
+                };
+              }
+              # ZFS pool unhealthy
+              {
+                alert = "NASPoolUnhealthy";
+                expr = ''node_zfs_zpool_state{job="nas_node",state="online"} == 0'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "NAS ZFS pool {{ $labels.zpool }} unhealthy";
+                  description = "Pool {{ $labels.zpool }} is not ONLINE - check pool status immediately";
+                };
+              }
+              # Disk temperature warning (>45C)
+              {
+                alert = "NASDiskTempWarning";
+                expr = ''node_hwmon_temp_celsius{job="nas_node",chip=~"drivetemp.*"} > 45'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "NAS disk temperature warning ({{ $labels.chip }})";
+                  description = "Disk {{ $labels.chip }} temperature is {{ $value | printf \"%.1f\" }}C";
+                };
+              }
+              # Disk temperature critical (>55C)
+              {
+                alert = "NASDiskTempCritical";
+                expr = ''node_hwmon_temp_celsius{job="nas_node",chip=~"drivetemp.*"} > 55'';
+                "for" = "5m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "NAS disk temperature critical ({{ $labels.chip }})";
+                  description = "Disk {{ $labels.chip }} temperature is {{ $value | printf \"%.1f\" }}C - risk of hardware damage";
+                };
+              }
+              # NAS not reporting metrics
+              {
+                alert = "NASNotReporting";
+                expr = ''up{job="nas_node"} == 0'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "NAS not reporting metrics";
+                  description = "Node exporter on NAS has been unreachable for more than 5 minutes (may be in S3 sleep)";
+                };
+              }
+              # NAS memory high (>90%)
+              {
+                alert = "NASMemoryHigh";
+                expr = ''(1 - node_memory_MemAvailable_bytes{job="nas_node"} / node_memory_MemTotal_bytes{job="nas_node"}) * 100 > 90'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "NAS memory usage high";
+                  description = "NAS memory usage is at {{ $value | printf \"%.1f\" }}%";
                 };
               }
             ];
@@ -997,7 +1081,7 @@ in
     };
     # Custom dashboards
     "grafana-dashboards/custom/wireguard.json".source = ./grafana-dashboards/custom/wireguard.json;
-    "grafana-dashboards/custom/truenas.json".source = ./grafana-dashboards/custom/truenas.json;
+    "grafana-dashboards/custom/nas.json".source = ./grafana-dashboards/custom/nas.json;
     "grafana-dashboards/custom/pfsense.json".source = ./grafana-dashboards/custom/pfsense.json;
     "grafana-dashboards/custom/media-stack.json".source = ./grafana-dashboards/custom/media-stack.json;
     "grafana-dashboards/custom/infrastructure-status.json".source = ./grafana-dashboards/custom/infrastructure-status.json;
