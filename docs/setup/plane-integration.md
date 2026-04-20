@@ -2,7 +2,7 @@
 id: setup.plane-integration
 summary: Plane project management MCP integration for Claude Code workflows
 tags: [plane, mcp, project-management, claude-code, setup, tooling]
-related_files: [".claude/agents/plane-context.md", "CLAUDE.md"]
+related_files: [".claude/reference/plane-context.md", "CLAUDE.md"]
 date: 2026-03-11
 status: published
 ---
@@ -73,7 +73,7 @@ The integration uses a three-tier approach to minimize always-on token cost:
 | Tier | File | Tokens | When Loaded |
 |------|------|--------|-------------|
 | 1 | CLAUDE.md (Plane section) | ~200 | Every session |
-| 2 | `.claude/agents/plane-context.md` | ~800 | On-demand (agent context) |
+| 2 | `.claude/reference/plane-context.md` | ~800 | On-demand (reference file) |
 | 3 | This file (`docs/setup/plane-integration.md`) | 0 | Manual lookup only |
 
 MCP tool definitions (~200 each) are lazy-loaded via `ToolSearch` only when needed.

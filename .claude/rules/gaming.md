@@ -1,17 +1,20 @@
-# Gaming Agent Context
+---
+paths:
+  - "user/app/games/**"
+  - "system/app/proton.nix"
+  - "system/app/starcitizen.nix"
+  - "system/app/gamemode.nix"
+  - "system/hardware/opengl.nix"
+---
 
-This context applies when working with gaming modules: `user/app/games/**`, `system/app/proton.nix`, `system/app/starcitizen.nix`
-
-## Required Reading
+# Gaming Rules
 
 Before making changes, read: `docs/user-modules/gaming.md`
 
 ## Architecture
 
-The gaming stack is split across system and user levels:
-
 ### System Level
-- `system/app/proton.nix`: Bottles overlay + `BOTTLES_IGNORE_SANDBOX` env var (no packages)
+- `system/app/proton.nix`: Bottles overlay + `BOTTLES_IGNORE_SANDBOX` env var
 - `system/app/starcitizen.nix`: Kernel tweaks for Star Citizen performance
 - `system/hardware/opengl.nix`: Mesa/Vulkan driver configuration
 

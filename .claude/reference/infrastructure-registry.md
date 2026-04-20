@@ -20,7 +20,7 @@ Compact lookup for all nodes, services, local projects, and management skills. L
 | KOMI_LXC_tailscale | 192.168.1.14 | `ssh admin@192.168.1.14` | KOMI_LXC_tailscale | lxc |
 | MACBOOK-KOMI | — | — | MACBOOK-KOMI | macbook |
 
-For deploy commands see `deployment-context.md` or `deploy-servers.conf`.
+For deploy commands see `deploy-servers.conf` or read `deploy.sh` / `install.sh` (deployment rules auto-load).
 
 ## Multi-Instance Services
 

@@ -1,6 +1,12 @@
-# Darwin/macOS Agent Context
+---
+paths:
+  - "system/darwin/**"
+  - "profiles/darwin/**"
+  - "profiles/MACBOOK-*"
+  - "install-darwin.sh"
+---
 
-This context applies when working with macOS/nix-darwin configurations or cross-platform modules.
+# Darwin/macOS Rules
 
 ## Key References
 
@@ -19,7 +25,7 @@ When modifying shared modules (`user/`, `lib/`, `system/` but not `system/darwin
 
 - Use `pkgs.stdenv.isDarwin` / `lib.mkIf (!pkgs.stdenv.isDarwin)` for platform guards
 - Never break existing Linux functionality when adding darwin support
-- Never comment out packages globally — use `lib.optionals` with platform check
+- Never comment out packages globally -- use `lib.optionals` with platform check
 - Use feature flags for optional features (default false, each profile enables)
 
 ### Examples:
@@ -41,8 +47,8 @@ Use `systemSettings.darwin.homebrewCasks` for GUI apps (managed by Homebrew), Ni
 
 ## Key Darwin Settings
 
-- `homebrewCasks` — list of GUI apps installed via Homebrew
-- `dockAutohide` — auto-hide the Dock
-- `dockOrientation` — Dock position (left, bottom, right)
-- `touchIdSudo` — enable Touch ID for sudo
-- `keyboardKeyRepeat` — key repeat rate
+- `homebrewCasks` -- list of GUI apps installed via Homebrew
+- `dockAutohide` -- auto-hide the Dock
+- `dockOrientation` -- Dock position (left, bottom, right)
+- `touchIdSudo` -- enable Touch ID for sudo
+- `keyboardKeyRepeat` -- key repeat rate

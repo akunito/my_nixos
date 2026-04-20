@@ -1,6 +1,0 @@
-⚠️ **DEPRECATED**: `.cursorrules` is legacy in this repo.
-
-Use:
-- `AGENTS.md` for global agent instructions + router-first retrieval protocol
-- `.cursor/rules/*.mdc` for scoped Cursor Project Rules
-
