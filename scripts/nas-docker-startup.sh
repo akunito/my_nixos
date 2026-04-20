@@ -86,7 +86,7 @@ run_cmd() {
     if is_local; then
         eval "$@"
     else
-        ssh akunito@${NAS_HOST} "$@"
+        ssh -A akunito@${NAS_HOST} "$@"
     fi
 }
 
@@ -153,10 +153,12 @@ sync_compose_files() {
             local dest="$COMPOSE_ROOT/$project/docker-compose.yml"
             run_cmd "mkdir -p $COMPOSE_ROOT/$project"
             local remote_content
-            remote_content=$(ssh akunito@${NAS_HOST} "cat $dest 2>/dev/null" || echo "")
+            remote_content=$(ssh -A akunito@${NAS_HOST} "cat $dest 2>/dev/null" || echo "")
             local local_content
             local_content=$(cat "$src")
             if [[ "$remote_content" != "$local_content" ]]; then
+                # Fix ownership if needed (rootless Docker or sudo tee may have changed it)
+                ssh -A akunito@${NAS_HOST} "sudo chown -R akunito:users $COMPOSE_ROOT/$project 2>/dev/null; true"
                 scp -q "$src" "akunito@${NAS_HOST}:$dest"
                 log "  UPDATED $project"
             else
@@ -235,7 +237,7 @@ start_root_project() {
     fi
 
     log "Starting $name (root)..."
-    if root_compose "$name" "up -d $extra_args" 2>/dev/null; then
+    if root_compose "$name" "up -d $extra_args" 2>&1; then
         log_ok "$name started (root)"
     else
         log_error "$name failed to start (root)"
@@ -254,9 +256,18 @@ start_rootless_project() {
     fi
 
     log "Starting $name (rootless)..."
-    if rootless_compose "$name" "up -d $extra_args" 2>/dev/null; then
-        log_ok "$name started (rootless)"
+    local output
+    output=$(rootless_compose "$name" "up -d $extra_args" 2>&1)
+    local rc=$?
+    if [[ $rc -eq 0 ]] || echo "$output" | grep -q "no service selected"; then
+        if echo "$output" | grep -q "no service selected"; then
+            log_ok "$name skipped (no active services)"
+        else
+            echo "$output"
+            log_ok "$name started (rootless)"
+        fi
     else
+        echo "$output"
         log_error "$name failed to start (rootless)"
         return 1
     fi
