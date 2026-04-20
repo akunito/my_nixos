@@ -20,6 +20,13 @@ in
     envProfile = "VPS_PROD";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles VPS_PROD -s -u -d";
 
+    # Auto-updates (weekly Saturday morning, before backup window 19:00-22:00)
+    autoSystemUpdateEnable = true;
+    autoUserUpdateEnable = true;
+    autoSystemUpdateOnCalendar = "Sat *-*-* 08:00:00";
+    autoUpgradeRestartDocker = true;
+    autoUserUpdateBranch = "release-25.11";
+
     # System packages (extends base with database CLI tools)
     systemPackages = pkgs: pkgs-unstable:
       (base.systemSettings.systemPackages pkgs pkgs-unstable) ++ [
