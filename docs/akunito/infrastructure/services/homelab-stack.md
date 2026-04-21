@@ -17,7 +17,7 @@ Services split between VPS and TrueNAS after migration (Feb 2026).
 | Nextcloud | nextcloud.akunito.com | Cloud storage, ~200GB data |
 | Syncthing | syncthing.akunito.com | File sync |
 | Miniflux | freshrss.akunito.com | RSS reader (Go, PostgreSQL backend, domain kept for URL stability) |
-| miniflux-ai | — (internal) | AI news summaries via Gemini |
+| miniflux-ai | — (internal) | AI news summaries via DashScope (qwen-turbo-latest), Spanish |
 | Obsidian-remote | obsidian.akunito.com | Remote Obsidian access |
 | UniFi | unifi.akunito.com | Network controller (MongoDB 4.4) |
 | Uptime Kuma | status.akunito.com | Public monitoring |

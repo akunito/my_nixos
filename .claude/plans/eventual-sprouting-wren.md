@@ -1,6 +1,6 @@
 ---
 id: plans.rss-ai-upgrade
-summary: Migrate FreshRSS to Miniflux, add feeds, deploy miniflux-ai with Gemini
+summary: Migrate FreshRSS to Miniflux, add feeds, deploy miniflux-ai with DashScope (Qwen)
 tags: [infrastructure, vps, docker, rss, ai]
 date: 2026-02-23
 status: draft
@@ -13,7 +13,7 @@ status: draft
 FreshRSS runs on VPS_PROD (256MB, SQLite, port 8082) but has no AI capabilities. Goals:
 1. Migrate to Miniflux (leaner Go-based reader, uses existing PostgreSQL 17)
 2. Add RSS feeds: Linux, self-hosting, NixOS, security/privacy, IPTorrents, international news
-3. Deploy miniflux-ai with Gemini API for daily AI summaries
+3. Deploy miniflux-ai with DashScope API (Qwen) for daily AI summaries
 4. Keep full RSS reading available -- AI summaries are additive, not a replacement
 
 ## Architecture
@@ -21,7 +21,7 @@ FreshRSS runs on VPS_PROD (256MB, SQLite, port 8082) but has no AI capabilities.
 ```
 RSS Feeds ──► Miniflux (full reader + API) ──► miniflux-ai (AI processing)
                  port 8084                         port 8085 (internal)
-                 PostgreSQL 17                     Gemini API
+                 PostgreSQL 17                     DashScope API (Qwen)
                  news.akunito.com                  config.yml-based
                  ▲                                 │
                  │                                 │
@@ -171,7 +171,7 @@ Configure Cloudflare tunnel route: `news.akunito.com` -> `127.0.0.1:8084`.
 
 Add all feeds from the list above via Miniflux web UI, organized into categories.
 
-### Phase 5: Deploy miniflux-ai with Gemini
+### Phase 5: Deploy miniflux-ai with DashScope (Qwen)
 
 Create `~/.homelab/miniflux-ai/docker-compose.yml` on VPS:
 ```yaml
@@ -206,13 +206,13 @@ miniflux:
   schedule_interval: 15
 
 llm:
-  provider: gemini
-  base_url: https://generativelanguage.googleapis.com
-  api_key: YOUR_GEMINI_API_KEY
-  model: gemini-2.5-flash
+  provider: openai  # OpenAI-compatible mode for DashScope
+  base_url: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+  api_key: ${MODELSTUDIO_API_KEY}  # Same key as OpenClaw
+  model: qwen-plus-latest
   timeout: 60
   max_workers: 4
-  RPM: 15  # Gemini free tier limit
+  RPM: 30
 
 ai_news:
   url: http://miniflux_ai
