@@ -621,6 +621,46 @@ switch_flake_profile_nix() {
     echo -e "${CYAN}  Will build: nixosConfigurations.${PROFILE}${RESET}"
 }
 
+# Run a home_backup.service snapshot before touching flake.lock, so game saves
+# and user state can be restored from the NAS if a package update breaks them
+# (like the 2026-04-20 lutris/umu upgrade that hid Rimworld saves).
+# Only runs when the profile has protongamesEnable = true. Opt out with
+# BACKUP_BEFORE_UPDATE=0 for test runs.
+pre_update_home_backup() {
+    local SCRIPT_DIR=$1
+    local PROFILE=$2
+    local UPDATE_FLAKE_LOCK=$3
+
+    [ "$UPDATE_FLAKE_LOCK" = true ] || return 0
+    [ "${BACKUP_BEFORE_UPDATE:-1}" != "0" ] || { echo -e "${YELLOW}BACKUP_BEFORE_UPDATE=0, skipping pre-update home_backup${RESET}"; return 0; }
+
+    local PROFILE_CFG="$SCRIPT_DIR/profiles/${PROFILE}-config.nix"
+    if [ ! -f "$PROFILE_CFG" ]; then
+        echo -e "${YELLOW}Profile config not found, skipping pre-update backup check: $PROFILE_CFG${RESET}"
+        return 0
+    fi
+
+    if ! grep -qE '^\s*protongamesEnable\s*=\s*true' "$PROFILE_CFG"; then
+        return 0
+    fi
+
+    if ! systemctl list-unit-files home_backup.service >/dev/null 2>&1; then
+        echo -e "${YELLOW}home_backup.service not present, skipping pre-update backup${RESET}"
+        return 0
+    fi
+
+    echo -e "\n${CYAN}Running home_backup.service synchronously before flake update...${RESET}"
+    if systemctl start --wait home_backup.service; then
+        echo -e "${GREEN}✓ Pre-update backup completed${RESET}"
+        return 0
+    fi
+
+    echo -e "${RED}✗ Pre-update backup failed${RESET}"
+    echo -e "${YELLOW}  Check: journalctl -u home_backup.service -n 30${RESET}"
+    echo -e "${YELLOW}  Aborting flake update. Set BACKUP_BEFORE_UPDATE=0 to bypass.${RESET}"
+    exit 1
+}
+
 update_flake_lock() {
     local SCRIPT_DIR=$1
     local SILENT_MODE=$2
@@ -913,6 +953,9 @@ set_environment $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 # Generate SSH keys for SSH on BOOT
 # SSH on boot is used to unlock encrypted drives by SSH
 generate_root_ssh_keys_for_ssh_server_on_boot $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
+
+# Snapshot home directory to NAS before moving flake.lock (saves game saves etc.)
+pre_update_home_backup $SCRIPT_DIR $PROFILE $UPDATE_FLAKE_LOCK
 
 # Update flake.lock
 update_flake_lock $SCRIPT_DIR $SILENT_MODE $UPDATE_FLAKE_LOCK

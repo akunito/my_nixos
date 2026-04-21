@@ -55,3 +55,28 @@ Lutris and Bottles are wrapped with `makeWrapper` to inject:
 1. **"Found no drivers"**: Check `NODEVICE_SELECT=1` is set
 2. **Bottles sandbox warning**: Ensure `BOTTLES_IGNORE_SANDBOX=1` in environment
 3. **Wine arch mismatch**: Delete `~/.wine` and reinit with `WINEARCH=win64`
+
+## Lutris save-protection hygiene
+
+Context: on 2026-04-20 a `nix flake update` bumped `lutris` + `umu-launcher`
+and the default wine prefix resolution changed, hiding Rimworld saves behind
+a fresh empty prefix. Rule of thumb to prevent a repeat:
+
+1. **Pin `game.prefix` in every Lutris yml** (`~/.local/share/lutris/games/*.yml`).
+   Never rely on Lutris/umu defaults — they can change across updates.
+   Audit with `scripts/pin-lutris-prefix.sh` (dry run) / `--fix` (to patch).
+2. **Save dirs must be symlinks into `~/GameSaves/`**:
+   - `<prefix>/drive_c/users/steamuser/AppData/LocalLow` → `~/GameSaves/LocalLow`
+   - `<prefix>/drive_c/users/steamuser/AppData/Roaming`  → `~/GameSaves/Roaming`
+   - `<prefix>/drive_c/users/steamuser/Documents`        → `~/GameSaves/Documents`
+   Use `scripts/redirect-game-saves.sh <prefix-path>` (dry run) / `--execute`.
+   Skip `AppData/Local` — caches must stay per-prefix.
+3. **Why `~/GameSaves/`**: `scripts/backup-manager.sh` excludes `Games/` and
+   `.local/share/bottles/` from restic (too bulky). `~/GameSaves/` has no
+   exclude rule, so the 6-hour NAS backup covers all saves automatically.
+4. **Automatic pre-update snapshot**: `install.sh` runs `home_backup.service`
+   synchronously before `nix flake update` when the profile has
+   `protongamesEnable = true`. Override with `BACKUP_BEFORE_UPDATE=0`.
+5. **Adding a new game**: after Lutris creates the yml, re-run
+   `scripts/pin-lutris-prefix.sh` and `scripts/redirect-game-saves.sh` for the
+   new prefix (Lutris has no native "default prefix template" mechanism).
