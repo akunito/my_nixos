@@ -266,6 +266,27 @@
     environment.DOCKERD_ROOTLESS_ROOTLESSKIT_DISABLE_HOST_LOOPBACK = "false";
   };
 
+  # slirp4netns's DNS forwarder (10.0.2.3) — used by the daemon itself for image pulls —
+  # degrades after long uptime (~weeks), producing `i/o timeout` on docker.io lookups
+  # while containers still resolve fine via daemon.settings.dns above. A restart clears it.
+  # Weekly restart on Sunday 04:00 keeps the forwarder fresh. ~15-30s of container downtime.
+  systemd.user.timers.docker-restart = lib.mkIf (userSettings.dockerRootlessEnable or false) {
+    description = "Weekly rootless Docker restart (refresh slirp4netns DNS forwarder)";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "Sun *-*-* 04:00:00";
+      RandomizedDelaySec = "5m";
+      Persistent = true;
+    };
+  };
+  systemd.user.services.docker-restart = lib.mkIf (userSettings.dockerRootlessEnable or false) {
+    description = "Restart rootless Docker to refresh slirp4netns DNS forwarder";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.systemd}/bin/systemctl --user restart docker.service";
+    };
+  };
+
   # ==========================================================================
   # Journald limits
   # ==========================================================================
