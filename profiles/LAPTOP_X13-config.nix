@@ -181,6 +181,7 @@ in
 
     # === Development Tools & AI ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
+    developmentFullRuntimesEnable = true; # Node.js, Python, Go, Rust on host (needed by npx-based MCP servers and local Node builds)
     perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for Claude Code MCP
     planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
     planeApiUrl = "https://plane.${secrets.publicDomain}";
