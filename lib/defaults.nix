@@ -391,6 +391,9 @@
     systemBasicToolsEnable = true; # Enable basic system tools (vim, wget, rsync, cryptsetup, etc.)
     systemNetworkToolsEnable = false; # Enable advanced networking tools (nmap, traceroute, dnsutils, etc.)
 
+    # === WiFi Security Audit ===
+    wifiAuditEnable = false; # Enable WiFi security audit toolkit (aircrack-ng, hcxtools, hashcat, wireshark, etc.) — for AUTHORIZED testing of own networks only
+
     # Homelab feature flags
     cloudflaredEnable = false; # Enable Cloudflare tunnel service (remotely-managed, token at /etc/secrets/cloudflared-token)
     acmeEnable = false; # Enable ACME (Let's Encrypt) certificate management

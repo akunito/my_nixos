@@ -173,6 +173,9 @@ in
     sunshineEnable = true; # Enable Sunshine game streaming
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
 
+    # === Security Audit Tools ===
+    wifiAuditEnable = true; # WiFi security audit toolkit (authorized testing on Actina)
+
     # === SSH Configuration ===
     sshHostsManaged = true; # Nix-managed ~/.ssh/config (shared SSH host definitions)
 
