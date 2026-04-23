@@ -78,6 +78,13 @@ let
                            "exec " + userSettingsMerged.term + " -e " + userSettingsMerged.editor
                      else
                        userSettingsMerged.editor);
+
+    # Auto-enable tmux session persistence for personal/darwin profiles using kitty.
+    # Profiles can still override explicitly (profileConfig wins over the default via recursiveUpdate).
+    tmuxPersistenceEnable =
+      let explicit = (profileConfig.userSettings or {}).tmuxPersistenceEnable or null;
+      in if explicit != null then explicit
+         else (systemSettings.profile or "") == "personal" && userSettingsMerged.term == "kitty";
   };
 
   # Evaluate package lists if they're functions (now that userSettings is defined)

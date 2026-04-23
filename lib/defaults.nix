@@ -828,6 +828,11 @@
     gitUser = "akunito";
     gitEmail = "diego88aku@gmail.com";
 
+    # Tmux session persistence (tmux-continuum + resurrect + kitty-tmux wrapper)
+    # When true: systemd.user timer saves every 5 min, ExecStop saves on shutdown,
+    # kitty-tmux wrapper restores sessions on cold boot. Enabled by personal profiles.
+    tmuxPersistenceEnable = false;
+
     # Application defaults
     browser = "vivaldi";
     spawnBrowser = "vivaldi";

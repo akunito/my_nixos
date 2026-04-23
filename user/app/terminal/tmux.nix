@@ -167,6 +167,27 @@ let
     fi
   '';
 
+  # Ensure a detached bootstrap session exists so continuum's auto-save has a target
+  # and the save-wrapper's "skip empty" guard only fires when there are no real sessions.
+  # Matches the '__bootstrap' name the restore-wrapper already expects (see below).
+  tmux-bootstrap-session = pkgs.writeShellScriptBin "tmux-bootstrap-session" ''
+    #!/usr/bin/env bash
+    TMUX_BIN="${pkgs.tmux}/bin/tmux"
+    if ! "$TMUX_BIN" has-session -t __bootstrap 2>/dev/null; then
+      "$TMUX_BIN" new-session -d -s __bootstrap "${pkgs.coreutils}/bin/sleep infinity"
+    fi
+  '';
+
+  # Save current state if (and only if) there are real sessions. Used as ExecStop
+  # so systemd saves the session before killing tmux on reboot/shutdown.
+  tmux-save-on-stop = pkgs.writeShellScriptBin "tmux-save-on-stop" ''
+    #!/usr/bin/env bash
+    TMUX_BIN="${pkgs.tmux}/bin/tmux"
+    if "$TMUX_BIN" list-sessions >/dev/null 2>&1; then
+      "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper" || true
+    fi
+  '';
+
   # Fix broken resurrect 'last' symlink before tmux server starts
   tmux-resurrect-fix-last = pkgs.writeShellScriptBin "tmux-resurrect-fix-last" ''
     #!/usr/bin/env bash
@@ -444,8 +465,10 @@ in
   };
 
   # Systemd user service to start tmux server at login (Linux only)
-  # This ensures the server is running before terminals open, allowing continuum to restore sessions
-  systemd.user.services = lib.mkIf (!pkgs.stdenv.isDarwin) {
+  # This ensures the server is running before terminals open, allowing continuum to restore sessions.
+  # Persistence behaviour (ExecStop save, ExecStartPost bootstrap, periodic save timer) is gated
+  # behind userSettings.tmuxPersistenceEnable so server/LXC profiles don't pick it up.
+  systemd.user.services = lib.mkIf (!pkgs.stdenv.isDarwin) ({
     tmux-server = {
       Unit = {
         Description = "Tmux server";
@@ -460,10 +483,43 @@ in
         ExecStartPre = [ "${tmux-resurrect-fix-last}/bin/tmux-resurrect-fix-last" ];
         ExecStart = "${pkgs.tmux}/bin/tmux -f %h/.config/tmux/tmux.conf start-server";
         Restart = "on-failure";
+      } // lib.optionalAttrs (userSettings.tmuxPersistenceEnable or false) {
+        ExecStartPost = [ "${tmux-bootstrap-session}/bin/tmux-bootstrap-session" ];
+        # CRITICAL: save before systemd kills tmux on reboot/shutdown. This is what
+        # gives reboot-persistence — continuum's auto-save alone is not sufficient.
+        ExecStop = [ "${tmux-save-on-stop}/bin/tmux-save-on-stop" ];
+        TimeoutStopSec = "10";
+        KillMode = "mixed";
       };
       Install = {
         WantedBy = [ "sway-session.target" "graphical-session.target" ];
       };
+    };
+  } // lib.optionalAttrs (userSettings.tmuxPersistenceEnable or false) {
+    # Timer-driven periodic save — decoupled from tmux's status-right hack,
+    # which our extraConfig overrides and therefore disables continuum's auto-save.
+    tmux-resurrect-save = {
+      Unit = {
+        Description = "Periodic tmux-resurrect save";
+        After = [ "tmux-server.service" ];
+        Requisite = [ "tmux-server.service" ];
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper";
+      };
+    };
+  });
+
+  systemd.user.timers = lib.mkIf (!pkgs.stdenv.isDarwin && (userSettings.tmuxPersistenceEnable or false)) {
+    tmux-resurrect-save = {
+      Unit = { Description = "Periodic tmux-resurrect save timer"; };
+      Timer = {
+        OnBootSec = "5min";
+        OnUnitActiveSec = "5min";
+        Unit = "tmux-resurrect-save.service";
+      };
+      Install = { WantedBy = [ "timers.target" ]; };
     };
   };
 

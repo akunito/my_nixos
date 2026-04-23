@@ -59,27 +59,46 @@ let
     fi
     log "kitty session not found"
 
-    # CRITICAL: Trigger manual restore if no sessions exist and continuum is enabled.
-    # This prevents a deadlock where continuum waits for a client attach, but we wait for sessions.
-    if [ -z "$($TMUX list-sessions 2>/dev/null)" ] && [ "$CONTINUUM" = "on" ] && [ -n "$RES_RESTORE" ]; then
-      log "triggering manual restore via $RES_RESTORE"
-      $TMUX run-shell "$RES_RESTORE"
+    # Check whether a previous save exists. "last" is a symlink; readlink follows one level.
+    RES_LAST="$HOME/.tmux/resurrect/last"
+    RES_LAST_TARGET=""
+    if [ -L "$RES_LAST" ]; then
+      RES_LAST_TARGET="$(readlink "$RES_LAST" 2>/dev/null || true)"
+    fi
+    RES_LAST_FILE=""
+    if [ -n "$RES_LAST_TARGET" ]; then
+      case "$RES_LAST_TARGET" in
+        /*) RES_LAST_FILE="$RES_LAST_TARGET" ;;
+        *)  RES_LAST_FILE="$HOME/.tmux/resurrect/$RES_LAST_TARGET" ;;
+      esac
     fi
 
-    # Wait for continue restore to populate sessions (avoid creating a fresh session too early)
-    i=0
-    while [ "$i" -lt 50 ]; do
-      if $TMUX has-session -t kitty 2>/dev/null; then
-        log "attach kitty (restored during wait)"
-        exec $TMUX attach -t kitty
+    if [ -z "$RES_LAST_FILE" ] || [ ! -s "$RES_LAST_FILE" ]; then
+      # No prior save — skip restore and the 10s wait entirely. Create fresh session now.
+      log "no prior save at $RES_LAST; skipping restore"
+    else
+      # CRITICAL: Trigger manual restore. Prevents a deadlock where continuum waits for a client
+      # attach, but we wait for sessions.
+      if [ "$CONTINUUM" = "on" ] && [ -n "$RES_RESTORE" ]; then
+        log "triggering manual restore via $RES_RESTORE (save=$RES_LAST_FILE)"
+        $TMUX run-shell "$RES_RESTORE"
       fi
 
-      SESSIONS="$($TMUX list-sessions -F '#S' 2>/dev/null || true)"
-      log "wait loop $i: sessions=[$SESSIONS]"
-      
-      sleep 0.2
-      i=$((i + 1))
-    done
+      # Wait for restore to populate sessions (15s — 10s was insufficient on cold disk cache)
+      i=0
+      while [ "$i" -lt 75 ]; do
+        if $TMUX has-session -t kitty 2>/dev/null; then
+          log "attach kitty (restored during wait)"
+          exec $TMUX attach -t kitty
+        fi
+
+        SESSIONS="$($TMUX list-sessions -F '#S' 2>/dev/null || true)"
+        log "wait loop $i: sessions=[$SESSIONS]"
+
+        sleep 0.2
+        i=$((i + 1))
+      done
+    fi
 
     # Fallback 1: no restored sessions, create new kitty session
     log "no restored sessions; creating kitty session"
