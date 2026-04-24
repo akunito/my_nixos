@@ -191,6 +191,10 @@ in
     dbClaudeReadonlyConnStr = "postgresql://claude_readonly:${secrets.dbClaudeReadonlyPassword}@vps-prod:5432/plane";
     n8nMcpApiKey = secrets.n8nApiKey; # n8n MCP (workflow automation)
     n8nMcpUrl = "https://n8n.${secrets.publicDomain}";
+    jlOnboardEngineUrl = secrets.jlOnboardEngineUrl; # jl-onboard MCP (Michalina JL Engine)
+    jlOnboardAccessToken = secrets.jlOnboardAccessToken;
+    jlOnboardRefreshToken = secrets.jlOnboardRefreshToken;
+    jlOnboardPackagePath = "/home/akunito/Projects/jl-onboard/packages/mcp-onboard"; # Set to real clone path; leave "" to skip
     aichatEnable = false; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = false; # Enable NixVim configuration (Cursor IDE-like experience)
     voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)

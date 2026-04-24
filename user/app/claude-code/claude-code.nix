@@ -49,6 +49,12 @@ let
   n8nMcpApiKey = systemSettings.n8nMcpApiKey or "";
   n8nMcpUrl = systemSettings.n8nMcpUrl or "";
 
+  # jl-onboard MCP credentials
+  jlOnboardEngineUrl = systemSettings.jlOnboardEngineUrl or "";
+  jlOnboardAccessToken = systemSettings.jlOnboardAccessToken or "";
+  jlOnboardRefreshToken = systemSettings.jlOnboardRefreshToken or "";
+  jlOnboardPackagePath = systemSettings.jlOnboardPackagePath or "";
+
   # Build the settings.json structure
   # NOTE: MCP servers are NOT configured here — Claude Code reads them from
   # .mcp.json (project-scoped) or ~/.claude.json (user-scoped), NOT settings.json.
@@ -71,6 +77,9 @@ let
         "mcp__grafana__*"
         "mcp__postgres__*"
         "mcp__n8n__*"
+
+        # MCP tools — jl-onboard (Michalina JL Engine)
+        "mcp__jl-onboard__*"
 
         # Safe Bash patterns — read-only system inspection
         "Bash(ls *)"
@@ -374,6 +383,12 @@ except Exception as e:
     // lib.optionalAttrs (n8nMcpApiKey != "") {
       N8N_MCP_API_KEY = n8nMcpApiKey;
       N8N_MCP_BASE_URL = n8nMcpUrl;
+    }
+    // lib.optionalAttrs (jlOnboardAccessToken != "") {
+      JL_ENGINE_URL = jlOnboardEngineUrl;
+      JL_ENGINE_TOKEN = jlOnboardAccessToken;
+      JL_ENGINE_REFRESH_TOKEN = jlOnboardRefreshToken;
+      JL_ONBOARD_PACKAGE_PATH = jlOnboardPackagePath;
     };
 
   # Generate env file for systemd services (e.g., claude-matrix-bot) that need MCP credentials.
@@ -389,6 +404,10 @@ except Exception as e:
       ++ lib.optional (dbClaudeReadonlyConnStr != "") "POSTGRES_MCP_CONNECTION_STRING=${dbClaudeReadonlyConnStr}"
       ++ lib.optional (n8nMcpApiKey != "") "N8N_MCP_API_KEY=${n8nMcpApiKey}"
       ++ lib.optional (n8nMcpUrl != "") "N8N_MCP_BASE_URL=${n8nMcpUrl}"
+      ++ lib.optional (jlOnboardEngineUrl != "") "JL_ENGINE_URL=${jlOnboardEngineUrl}"
+      ++ lib.optional (jlOnboardAccessToken != "") "JL_ENGINE_TOKEN=${jlOnboardAccessToken}"
+      ++ lib.optional (jlOnboardRefreshToken != "") "JL_ENGINE_REFRESH_TOKEN=${jlOnboardRefreshToken}"
+      ++ lib.optional (jlOnboardPackagePath != "") "JL_ONBOARD_PACKAGE_PATH=${jlOnboardPackagePath}"
     ) + "\n";
     force = true;
   };
