@@ -43,13 +43,10 @@
       }
     },
     "jl-onboard": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": ["--from", "${JL_ONBOARD_PACKAGE_PATH}", "jl-onboard-mcp"],
-      "env": {
-        "JL_ENGINE_URL": "${JL_ENGINE_URL}",
-        "JL_ENGINE_TOKEN": "${JL_ENGINE_TOKEN}",
-        "JL_ENGINE_REFRESH_TOKEN": "${JL_ENGINE_REFRESH_TOKEN}"
+      "type": "http",
+      "url": "https://jlengine.michalina.dev/mcp/onboard/mcp",
+      "headers": {
+        "Authorization": "Bearer ${JL_ENGINE_TOKEN}"
       }
     }
   }

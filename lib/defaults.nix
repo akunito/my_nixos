@@ -387,11 +387,9 @@
     n8nMcpApiKey = ""; # n8n API key for MCP server
     n8nMcpUrl = ""; # n8n instance URL (e.g., "https://n8n.akunito.com")
 
-    # jl-onboard MCP server (Michalina JL Engine — uvx-run local package)
-    jlOnboardEngineUrl = ""; # JL Engine base URL (set from secrets/domains.nix in profiles)
+    # jl-onboard MCP server (Michalina JL Engine — hosted HTTP transport)
+    # URL is hardcoded in .mcp.json; only the bearer access token comes from secrets.
     jlOnboardAccessToken = ""; # Access JWT (set from secrets/domains.nix in profiles)
-    jlOnboardRefreshToken = ""; # Refresh JWT (set from secrets/domains.nix in profiles)
-    jlOnboardPackagePath = ""; # Absolute path to the local mcp-onboard package (uvx --from target). Empty = MCP skipped.
 
     # Package module feature flags
     systemBasicToolsEnable = true; # Enable basic system tools (vim, wget, rsync, cryptsetup, etc.)
