@@ -1,6 +1,14 @@
-# Cloudflared - TrueNAS Docker (ROOTLESS daemon)
-# Cloudflare Tunnel for external access to TrueNAS services
-# Outbound-only tunnel — no host network mode needed
+# =============================================================================
+# Cloudflared — ROOTLESS Docker ONLY. NEVER run with `sudo docker compose up`.
+# =============================================================================
+# Running this stack in system Docker creates a duplicate cloudflared instance
+# on the same Cloudflare tunnel token (618b9988-…), which Cloudflare will
+# load-balance across — wasting resources and making logs/debugging confusing.
+# nas-docker-startup.sh treats this as a ROOTLESS project; do not start it any
+# other way. The script also auto-removes any misplaced system-Docker copy on
+# next run (cleanup_misplaced_projects).
+#
+# Outbound-only tunnel — no host network mode needed.
 
 services:
   cloudflared:

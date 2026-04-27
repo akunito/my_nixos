@@ -1,76 +1,58 @@
-# Unlock NAS Encrypted Datasets
+# Unlock NAS (NixOS) — boot/ZFS recovery
 
-Unlock encrypted ZFS datasets on NAS after a reboot or when datasets are locked.
+The NAS (`nas-aku`, 192.168.20.200) runs **NixOS** (migrated from TrueNAS in AINF-336, March 2026). The legacy TrueNAS `pool.dataset.unlock` API and the `nas-unlock-pools.sh` script are gone — do **not** invoke them.
 
-## Instructions
+## Architecture
 
-When this command is invoked, run the unlock script from the dotfiles repo:
+1. **Boot drive** is LUKS-encrypted (`cryptroot` on `sdd2`). LUKS passphrase must be entered at the **physical / IPMI console** at boot. There is **no** initrd-SSH (no Dropbear) configured — remote unlock is not possible.
+2. **ZFS pools** (`ssdpool`, `extpool`) are encrypted; their key files live at `/etc/zfs/keys/<pool>` on the encrypted root. Once LUKS is open, the `nas-zfs-unlock.service` (oneshot, before `zfs-mount.service`) calls `zfs load-key -L file://...` automatically. See `system/app/nas-services.nix:252-279`.
+3. `boot.zfs.requestEncryptionCredentials = false` — the boot process never prompts interactively for ZFS keys; it relies on the key file or the explicit unlock service.
 
-```bash
-bash /home/akunito/.dotfiles/scripts/nas-unlock-pools.sh
-```
+## When this command applies
 
-### Arguments
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `ssh: connect to host nas-aku ... timed out` AND ping works AND ALL TCP ports closed | Stuck at LUKS prompt at console | Physical/IPMI console — type LUKS passphrase |
+| SSH works, but `zpool status` shows pool not imported | ZFS pool unavailable | `sudo zpool import <pool>` then check key |
+| `zfs get keystatus <pool>` shows `unavailable` | Key not loaded (key file missing or service skipped) | `sudo zfs load-key -L file:///etc/zfs/keys/<pool> <pool>` |
 
-- If the user specifies a pool name (e.g., `/unlock-truenas ssdpool`), pass it: `--pool ssdpool`
-- If the user asks for status only, pass `--status`
-- If the user asks for a dry run, pass `--dry-run`
-
-### Prerequisites
-
-- Must be run from a machine with access to VLAN 100 (storage network) — typically **DESK** (192.168.20.96)
-- `secrets/truenas-api-key.txt` and `secrets/truenas-encryption-passphrase.txt` must be available (git-crypt unlocked)
-
-### What It Does
-
-1. Checks API connectivity and secrets availability
-2. Queries all encrypted datasets for lock status
-3. Unlocks locked datasets using the passphrase via NAS API
-4. Waits for unlock jobs to complete
-5. Verifies and reports final status
-
-### Manual Alternative (if script is unavailable)
+## Status check (run from DESK)
 
 ```bash
-# Check lock status via SSH
-ssh akunito@192.168.20.200 'midclt call pool.dataset.query' | python3 -c '
-import json, sys
-for ds in json.load(sys.stdin):
-    if ds.get("encrypted"):
-        print(f"{ds[\"id\"]}: locked={ds.get(\"locked\")}")
-'
-
-# Unlock via API (per pool)
-API_KEY=$(cat secrets/truenas-api-key.txt | tr -d '\n')
-PASSPHRASE=$(cat secrets/truenas-encryption-passphrase.txt | tr -d '\n')
-
-curl -sk -X POST "https://192.168.20.200/api/v2.0/pool/dataset/unlock" \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"id\": \"ssdpool\",
-    \"unlock_options\": {
-      \"recursive\": true,
-      \"datasets\": [
-        {\"name\": \"ssdpool\", \"passphrase\": \"$PASSPHRASE\"}
-      ]
-    }
-  }"
+ssh -A akunito@192.168.20.200 'sudo zpool status; echo ===; sudo zfs get -H keystatus ssdpool extpool; echo ===; lsblk -o NAME,FSTYPE,MOUNTPOINT,SIZE | head -15'
 ```
 
-### Deploying Script to NAS (optional)
+Healthy output:
+- `pool: ssdpool` / `state: ONLINE` (and same for `extpool`)
+- `keystatus = available` for both pools
+- `cryptroot` listed under `sdd2`, mounted at `/`
 
-The script can also be deployed to NAS for local execution:
+## Manual unlock (only if `nas-zfs-unlock.service` failed)
 
 ```bash
-scp scripts/nas-unlock-pools.sh akunito@192.168.20.200:/home/akunito/
-# Then on NAS: bash /home/akunito/nas-unlock-pools.sh --status
+ssh -A akunito@192.168.20.200 'sudo systemctl status nas-zfs-unlock.service'
+# If the service failed, check the key file exists and is readable
+ssh -A akunito@192.168.20.200 'sudo ls -la /etc/zfs/keys/ && sudo cat /etc/zfs/keys/ssdpool | wc -c'
+# Re-run the unlock script
+ssh -A akunito@192.168.20.200 'sudo systemctl restart nas-zfs-unlock.service'
+# Or manually
+ssh -A akunito@192.168.20.200 'sudo zfs load-key -L file:///etc/zfs/keys/ssdpool ssdpool'
+ssh -A akunito@192.168.20.200 'sudo zfs load-key -L file:///etc/zfs/keys/extpool extpool'
+ssh -A akunito@192.168.20.200 'sudo zfs mount -a'
 ```
 
-Note: On NAS the secrets paths won't exist, so the script is designed to run from DESK where the dotfiles repo has git-crypt unlocked.
+## If the NAS is at the LUKS prompt (cannot SSH at all)
 
-### Related
+There is **no remote unlock path**. Either:
+1. Walk to the NAS and type the passphrase at the attached monitor/keyboard
+2. Connect via IPMI / KVM-over-IP if the AORUS B550 board has it configured
+3. As a last resort, RTC-wake or power-cycle and pre-enter passphrase via attached console
 
-- [NAS Service Docs](../../docs/akunito/infrastructure/services/truenas.md)
-- [Manage NAS](./manage-truenas.md) - General NAS management
-- [Unlock Pools Script](../../scripts/nas-unlock-pools.sh)
+If you need remote unlock for the future, add `boot.initrd.network` + `boot.initrd.luks.devices.cryptroot.keyFile` or a Dropbear-in-initrd setup to `profiles/NAS_PROD-config.nix`. This was intentionally not configured during the migration.
+
+## Related
+
+- Profile: `profiles/NAS_PROD-config.nix`
+- Module: `system/app/nas-services.nix` (auto-unlock service definition)
+- Hardware: `cryptroot` on Samsung 840 EVO 500GB (`/dev/sdd2`)
+- Migration history: `memory/project_truenas_to_nixos.md`

@@ -1,8 +1,16 @@
-# Media stack - TrueNAS Docker (ROOTLESS daemon)
-# Unified /data mount for hardlinks (TRaSH Guides best practice)
-# All services accessible via host ports on 192.168.20.200
+# =============================================================================
+# Media stack — ROOTLESS Docker ONLY. NEVER run with `sudo docker compose up`.
+# =============================================================================
+# Running this stack in system Docker creates duplicate containers (jellyfin,
+# *arr, solvearr, …) bound to the same host ports — port conflicts at best,
+# silent traffic split at worst (e.g. solvearr served by the wrong instance).
+# nas-docker-startup.sh treats this as a ROOTLESS project; do not start it any
+# other way. The script also auto-removes any misplaced system-Docker copy on
+# next run (cleanup_misplaced_projects).
 #
-# gluetun + qbittorrent moved to vpn-media/ (root Docker — NET_ADMIN required)
+# Unified /data mount for hardlinks (TRaSH Guides best practice).
+# All services accessible via host ports on 192.168.20.200.
+# gluetun + qbittorrent moved to vpn-media/ (root Docker — NET_ADMIN required).
 
 services:
   jellyfin:

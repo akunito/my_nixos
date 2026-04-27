@@ -375,6 +375,40 @@ deploy_vpn_watchdog() {
     fi
 }
 
+# Detect compose projects running in the WRONG Docker runtime and clean them up.
+# Guards against accidental `sudo docker compose up` of rootless-only projects
+# (and vice versa). Such duplicates cause port/network conflicts and confused
+# routing — e.g. two cloudflared instances on the same tunnel token, or a
+# system-Docker solvearr that the rootless *arr stack ignores.
+cleanup_misplaced_projects() {
+    log "--- Checking for misplaced compose projects ---"
+    local removed=0
+
+    # ROOTLESS_PROJECTS must NEVER appear in system Docker
+    for project in "${ROOTLESS_PROJECTS[@]}"; do
+        if run_cmd "sudo docker compose ls --format json 2>/dev/null | grep -q '\"Name\":\"$project\"'"; then
+            log "  WRONG-RUNTIME: $project found in SYSTEM Docker — removing"
+            run_cmd "cd $COMPOSE_ROOT/$project && sudo docker compose down" 2>&1 || true
+            removed=$((removed + 1))
+        fi
+    done
+
+    # ROOT_PROJECTS must NEVER appear in rootless Docker
+    for project in "${ROOT_PROJECTS[@]}"; do
+        if run_cmd "DOCKER_HOST=unix:///run/user/\$(id -u)/docker.sock docker compose ls --format json 2>/dev/null | grep -q '\"Name\":\"$project\"'"; then
+            log "  WRONG-RUNTIME: $project found in ROOTLESS Docker — removing"
+            run_cmd "cd $COMPOSE_ROOT/$project && DOCKER_HOST=unix:///run/user/\$(id -u)/docker.sock docker compose down" 2>&1 || true
+            removed=$((removed + 1))
+        fi
+    done
+
+    if [[ $removed -eq 0 ]]; then
+        log_ok "No misplaced projects found"
+    else
+        log_ok "Removed $removed misplaced project(s)"
+    fi
+}
+
 start_all() {
     local failures=0
 
@@ -389,6 +423,10 @@ start_all() {
         sync_compose_files
         echo ""
     fi
+
+    # Self-healing: clean up any compose project running in the wrong daemon
+    cleanup_misplaced_projects
+    echo ""
 
     # === ROOT DOCKER ===
     log "--- Starting root Docker containers ---"

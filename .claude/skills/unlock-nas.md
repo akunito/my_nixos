@@ -1,75 +1,43 @@
 ---
-name: unlock-truenas
-description: Unlock encrypted NAS datasets via API
+name: unlock-nas
+description: Recover NAS access when LUKS or ZFS encryption is locked. NixOS-based — does NOT use TrueNAS API.
 ---
 
-# Unlock NAS Encrypted Datasets
+# Unlock NAS (NixOS) — boot/ZFS recovery
 
-This skill unlocks encrypted datasets on NAS via the API.
+NAS (`nas-aku`, 192.168.20.200) runs NixOS since the AINF-336 migration. Legacy TrueNAS API endpoints and `nas-unlock-pools.sh` are gone.
 
-## Usage
+## Decision tree
+
+1. **SSH works?** → run the status check below; pools may already be unlocked.
+2. **SSH refused, ping works, all ports closed?** → likely stuck at LUKS prompt at console. **Physical/IPMI console required** (no remote LUKS unlock configured).
+3. **SSH works but `zpool status` missing pools or `keystatus = unavailable`?** → manual ZFS key load, see below.
+
+## Status check (read-only, from DESK)
 
 ```bash
-/unlock-truenas [pool-name]
+ssh -A akunito@192.168.20.200 'sudo zpool status; sudo zfs get -H keystatus ssdpool extpool'
 ```
 
-If no pool name is provided, unlocks all locked pools.
+Healthy: both pools ONLINE, `keystatus = available`.
 
-## What This Skill Does
+## Manual ZFS unlock (only if `nas-zfs-unlock.service` failed)
 
-1. Connects to NAS via SSH/API
-2. Identifies locked encrypted datasets
-3. Unlocks datasets using provided passphrase
-4. Verifies unlock status
-5. Reports results
-
-## Parameters
-
-- `pool-name` (optional): Specific pool to unlock (e.g., `ssdpool`, `extpool`)
-- If omitted, unlocks all locked pools
-
-## Requirements
-
-- SSH access to NAS (akunito@192.168.20.200)
-- Encryption passphrase
-- NAS API access
-
-## Network Access
-
-NAS is on VLAN 100 (Storage), accessible from:
-- **DESK**: via bond0.100 (192.168.20.96) — direct L2
-- **pfSense**: via ix0.100 (192.168.20.1) — VLAN gateway
-
-## Example Output
-
-```
-Locked datasets found:
-- ssdpool/media
-- ssdpool/docker
-- extpool
-
-Unlocking ssdpool...
-✓ ssdpool/media unlocked
-✓ ssdpool/docker unlocked
-
-Unlocking extpool...
-✓ extpool unlocked
-
-All datasets unlocked successfully!
+```bash
+ssh -A akunito@192.168.20.200 'sudo systemctl restart nas-zfs-unlock.service'
+# or per-pool:
+ssh -A akunito@192.168.20.200 'sudo zfs load-key -L file:///etc/zfs/keys/ssdpool ssdpool && sudo zfs mount -a'
 ```
 
-## Implementation
+Key files live on the encrypted root at `/etc/zfs/keys/{ssdpool,extpool}`. They become accessible only after LUKS is open.
 
-When invoked, this skill will:
-1. Query for locked datasets
-2. Request passphrase if not provided
-3. Unlock pools recursively (children inherit from parent)
-4. Verify all datasets are unlocked
-5. Report any failures
+## If LUKS is locked (cannot SSH)
 
-## Security Note
+There is no Dropbear-in-initrd or `boot.initrd.network` configured on NAS_PROD. Remote unlock is **not** possible. Walk to the box, use IPMI/KVM if available, or power-cycle and enter passphrase at the console.
 
-- **Passphrase Storage**: Encrypted in `secrets/truenas-encryption-passphrase.txt` (git-crypt)
-- **Transmission**: Securely transmitted via SSH
-- **Access**: Read from encrypted secrets file when needed
-- **Permissions**: File has 600 permissions (owner read/write only)
+## Reference
+
+- `profiles/NAS_PROD-config.nix` — `boot.zfs.requestEncryptionCredentials = false`, `nasZfsPools = [ "ssdpool" "extpool" ]`
+- `system/app/nas-services.nix:252-279` — `nas-zfs-unlock.service` (oneshot, runs before `zfs-mount.service`)
+- Slash command body: `.claude/commands/unlock-nas.md`
+- Migration: `memory/project_truenas_to_nixos.md`
