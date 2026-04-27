@@ -62,7 +62,9 @@ in
         # without requiring a full re-login (the WM inherits a stale guard from login)
         envExtra = ''
           unset __HM_SESS_VARS_SOURCED
-          . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+          if [[ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]]; then
+            . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+          fi
         '';
       }
     else
@@ -79,7 +81,9 @@ in
         # without requiring a full re-login (the WM inherits a stale guard from login)
         envExtra = ''
           unset __HM_SESS_VARS_SOURCED
-          . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+          if [[ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]]; then
+            . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+          fi
         '';
       };
 

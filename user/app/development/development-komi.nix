@@ -13,11 +13,14 @@
   home.packages = lib.optionals (systemSettings.developmentToolsEnable == true) [
     # === Programming Language Runtimes ===
     pkgs-unstable.nodejs_22        # Node.js 22.x LTS (includes npm, npx)
-    pkgs-unstable.python312        # Python 3.12 (includes pip)
-    pkgs-unstable.python312Packages.pip # Ensure pip is available
+    (pkgs-unstable.python312.withPackages (ps: [
+      ps.pip
+      ps.telethon
+    ]))                            # Python 3.12 with pip and telethon
     pkgs-unstable.uv               # Python package manager (provides uvx for MCP servers)
     pkgs-unstable.go               # Go programming language
     pkgs-unstable.rustup           # Rust toolchain installer (provides cargo, rustc)
+    pkgs-unstable.bun              # Bun JavaScript runtime and package manager
 
     # === Code Editors and IDEs ===
     pkgs-unstable.vscode           # Visual Studio Code

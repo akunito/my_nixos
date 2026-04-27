@@ -85,6 +85,7 @@ in
 
     homePackages = pkgs: pkgs-unstable: [
       pkgs.python3Packages.subliminal # CLI subtitle downloader
+      pkgs.python3Packages.telethon # Telegram client library
     ];
 
     # ========================================================================
@@ -104,24 +105,32 @@ in
 
     # Komi's Hyperkey app bindings (Cmd+Ctrl+Alt+Shift)
     # Based on ko-mi/macos-setup init.lua
+    #
+    # NOTE: This list is NOT used because hammerspoonConfig = "komi" makes
+    # user/app/hammerspoon/hammerspoon.nix read komi-init.lua directly.
+    # To change actual bindings, edit user/app/hammerspoon/komi-init.lua
+    # (the `apps` table near the top). This list is kept for reference only.
     hammerspoonAppBindings = [
       # Single-app launchers
       { key = "s"; app = "Spotify"; }
-      { key = "t"; app = "Terminal"; }
       { key = "c"; app = "Cursor"; }
-      { key = "d"; app = "Telegram"; }
+      { key = "t"; app = "Telegram"; }
       { key = "w"; app = "WhatsApp"; }
       { key = "a"; app = "Arc"; }
       { key = "o"; app = "Obsidian"; }
       { key = "l"; app = "Linear"; }
-      { key = "g"; app = "System Preferences"; }
-      { key = "p"; app = "Passwords"; }
+      { key = "y"; app = "System Preferences"; }
+      { key = "d"; app = "Discord"; }
+      { key = "e"; app = "Passwords"; }
       { key = "q"; app = "Claude"; }
       { key = "n"; app = "Notes"; }
       { key = "x"; app = "Calendar"; }
       { key = "f"; app = "Finder"; }
-      { key = "u"; app = "Calculator"; }
+      { key = "z"; app = "Calculator"; }
       { key = "v"; app = "kitty"; }
+      { key = "b"; app = "Slack"; }
+      { key = "g"; app = "Granola"; }
+      { key = "u"; app = "NordVPN"; }
 
       # Window cycling (multiple apps on number keys)
       { key = "1"; action = "cycleApp"; apps = [ "Arc" ]; }

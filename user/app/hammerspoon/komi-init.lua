@@ -33,21 +33,24 @@ local hyper = {"cmd", "ctrl", "alt", "shift"}
 
 local apps = {
     S = "Spotify",
-    T = "Terminal",
     C = "Cursor",
-    D = "Telegram",
+    T = "Telegram",
     W = "WhatsApp",
     A = "Arc",
     O = "Obsidian",
     L = "Linear",
-    G = "System Settings",
-    P = "Passwords",
+    Y = "System Settings",
+    E = "Passwords",
     Q = "Claude",             -- One-handed access near CapsLock
     N = "Notes",
     X = "Calendar",
     F = "Finder",
-    U = "Calculator",
-    V = "kitty"
+    Z = "Calculator",
+    V = "kitty",
+    B = "Slack",
+    G = "Granola",
+    U = "NordVPN",
+    D = "Discord"
 }
 
 -- ============================================================================

@@ -189,7 +189,23 @@ let
         "olm-3.2.16"
       ];
     };
-    overlays = lib.optional useRustOverlay rustOverlay;
+    overlays = lib.optional useRustOverlay rustOverlay ++ [
+      (final: prev: {
+        claude-code-bin = prev.claude-code-bin.overrideAttrs (old: let
+          version = "2.1.113";  # claude-code-pin
+          platformKey = "${final.stdenvNoCC.hostPlatform.node.platform}-${final.stdenvNoCC.hostPlatform.node.arch}";
+          hashes = {
+            "darwin-arm64" = "sha256-GJsclKzj8+kM1INlYsu38eumkUixNTupKjj/lmy2ywA=";
+          };
+        in {
+          inherit version;
+          src = final.fetchurl {
+            url = "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/${version}/${platformKey}/claude";
+            hash = hashes.${platformKey};
+          };
+        });
+      })
+    ];
   };
 
   # Configure pkgs based on systemStable and profile
