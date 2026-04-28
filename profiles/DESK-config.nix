@@ -46,6 +46,7 @@ in
     gpuType = "amd";
     enableDesktopPerformance = true; # Enable desktop-optimized I/O scheduler and performance tuning
     amdLACTdriverEnable = true;
+    amdgpuSuspendWorkaround = true; # AINF-282: kernel 6.17→7.0+ SMU suspend regression on Navi 48
 
     # Display Manager Configuration
     greetdEnable = false;

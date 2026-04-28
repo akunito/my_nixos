@@ -72,6 +72,7 @@ in
   ++ lib.optional systemSettings.thinkpadEnable ../../system/hardware/thinkpad.nix # Lenovo Thinkpad hardware optimizations
   ++ lib.optional (systemSettings.thunderboltEnable or false) ../../system/hardware/thunderbolt.nix # Thunderbolt dock/device support
   ++ lib.optional (systemSettings.suspendDebugEnable or false) ../../system/hardware/suspend-debug.nix # Suspend/resume instrumentation
+  ++ lib.optional (systemSettings.amdgpuSuspendWorkaround or false) ../../system/hardware/amdgpu-suspend-workaround.nix # AINF-282: AMDGPU SMU suspend regression mitigation
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix # Tailscale mesh VPN
   ++ lib.optional ((systemSettings.hibernateEnable or false)
     && (systemSettings.hibernateSwapLuksUUID or null) != null) ../../system/hardware/hibernate.nix # Hibernation with LUKS-encrypted swap
