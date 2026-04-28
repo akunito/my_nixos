@@ -73,7 +73,7 @@ let
     #!/bin/sh
     set -eu
 
-    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.waypaper pkgs.awww ]}:$PATH"
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.waypaper pkgs.awww pkgs.procps ]}:$PATH"
 
     SWAYMSG='${SWAYMSG}'
     SWWW='${SWWW}'
