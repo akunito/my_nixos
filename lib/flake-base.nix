@@ -168,6 +168,14 @@ let
       ];
     };
 
+  # Disable openldap's flaky test017-syncreplication-refresh in pkgs-unstable only
+  # (timing-dependent test; unreliable on busy hardware). Scoped to pkgs-unstable
+  # because that's where bottles/lutris pull openldap from — keeping it off
+  # pkgs-stable preserves cache hits for the much larger stable graph (libreoffice etc).
+  noOpenldapTestsOverlay = _: super: {
+    openldap = super.openldap.overrideAttrs (_: { doCheck = false; });
+  };
+
   # Configure pkgs-stable
   pkgs-stable = import inputs.nixpkgs-stable {
     system = systemSettingsWithFonts.system;
@@ -196,7 +204,7 @@ let
         "olm-3.2.16"
       ];
     };
-    overlays = lib.optional useRustOverlay rustOverlay;
+    overlays = (lib.optional useRustOverlay rustOverlay) ++ [ noOpenldapTestsOverlay ];
   };
 
   # Configure pkgs based on systemStable and profile

@@ -17,6 +17,15 @@
       FastConnectable = true;
     };
   };
-  services.blueman.enable = true;
+  services.blueman = {
+    enable = true;
+    # Disable NixOS-side user applet — HM owns blueman-applet via
+    # `services.blueman-applet.enable` in user/hardware/bluetooth.nix.
+    # Without this, both define systemd.user.services.blueman-applet
+    # (NixOS generates /etc/systemd/user/.../overrides.conf, HM generates
+    # ~/.config/systemd/user/blueman-applet.service), each with its own
+    # ExecStart= — systemd refuses to merge two ExecStart entries.
+    withApplet = false;
+  };
 }
 
