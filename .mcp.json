@@ -39,7 +39,7 @@
       "args": ["-y", "n8n-mcp"],
       "env": {
         "N8N_API_KEY": "${N8N_MCP_API_KEY}",
-        "N8N_BASE_URL": "${N8N_MCP_BASE_URL}"
+        "N8N_API_URL": "${N8N_MCP_BASE_URL}"
       }
     },
     "jl-onboard": {
