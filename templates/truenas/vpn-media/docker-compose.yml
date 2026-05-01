@@ -1,7 +1,9 @@
-# VPN Media stack - TrueNAS Docker (rootless daemon)
-# Gluetun requires NET_ADMIN + /dev/net/tun for VPN tunnel.
+# VPN Media stack - rootful Docker (gluetun needs NET_ADMIN + /dev/net/tun)
 # qBittorrent uses gluetun's network namespace for VPN-only traffic.
 # gluetun.env configures VPN provider, protocol, and firewall (FIREWALL_VPN_INPUT_PORTS).
+# PUID/PGID = 100999 to match the rootless docker namespace (akunito subuid 100000 + 999),
+# so files under /mnt/ssdpool/media/downloads stay writable by both this rootful qBittorrent
+# and the rootless *arr containers that hardlink/move them on import.
 
 services:
   gluetun:
@@ -47,8 +49,8 @@ services:
       - gluetun
     network_mode: "service:gluetun"
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=100999
+      - PGID=100999
       - TZ=Europe/Warsaw
       - WEBUI_PORT=8085
     volumes:
