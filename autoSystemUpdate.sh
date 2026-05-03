@@ -33,6 +33,21 @@ echo -e "Configuring git safe.directory for $SCRIPT_DIR"
 echo -e "Updating flake.lock"
 $SCRIPT_DIR/update.sh
 
+# Defense-in-depth: regenerate hardware-config before rebuild so autoupdate
+# never builds against a foreign hardware-config left in the local repo
+# (e.g., after a `git reset --hard origin/main` that pulled another machine's
+# hardware-config). Non-fatal: LXC/no-real-hardware profiles may produce
+# empty/unhelpful output and don't import this file anyway.
+HW_CONFIG="$SCRIPT_DIR/system/hardware-configuration.nix"
+echo -e "Regenerating $HW_CONFIG for current host"
+if nixos-generate-config --show-hardware-config > "$HW_CONFIG.new" 2>/dev/null && [ -s "$HW_CONFIG.new" ]; then
+    mv "$HW_CONFIG.new" "$HW_CONFIG"
+    echo -e "Hardware-config regenerated"
+else
+    rm -f "$HW_CONFIG.new"
+    echo -e "WARNING: hardware-config regen produced no output; keeping existing file"
+fi
+
 echo -e "Rebuilding system"
 if nixos-rebuild switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace --impure; then
     echo -e "Rebuild successful"
