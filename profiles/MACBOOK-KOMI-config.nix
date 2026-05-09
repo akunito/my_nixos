@@ -19,6 +19,7 @@ in
 
         # === Development ===
         "cursor"
+        "zed"           # Zed high-performance code editor
         "github"        # GitHub Desktop
         "hammerspoon"
 
@@ -113,7 +114,7 @@ in
     hammerspoonAppBindings = [
       # Single-app launchers
       { key = "s"; app = "Spotify"; }
-      { key = "c"; app = "Cursor"; }
+      { key = "c"; app = "Calculator"; }
       { key = "t"; app = "Telegram"; }
       { key = "w"; app = "WhatsApp"; }
       { key = "a"; app = "Arc"; }
@@ -126,7 +127,7 @@ in
       { key = "n"; app = "Notes"; }
       { key = "x"; app = "Calendar"; }
       { key = "f"; app = "Finder"; }
-      { key = "z"; app = "Calculator"; }
+      { key = "z"; app = "Zed"; }
       { key = "v"; app = "kitty"; }
       { key = "b"; app = "Slack"; }
       { key = "g"; app = "Granola"; }

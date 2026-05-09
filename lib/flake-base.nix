@@ -192,10 +192,10 @@ let
     overlays = lib.optional useRustOverlay rustOverlay ++ [
       (final: prev: {
         claude-code-bin = prev.claude-code-bin.overrideAttrs (old: let
-          version = "2.1.113";  # claude-code-pin
+          version = "2.1.138";  # claude-code-pin
           platformKey = "${final.stdenvNoCC.hostPlatform.node.platform}-${final.stdenvNoCC.hostPlatform.node.arch}";
           hashes = {
-            "darwin-arm64" = "sha256-GJsclKzj8+kM1INlYsu38eumkUixNTupKjj/lmy2ywA=";
+            "darwin-arm64" = "sha256-dZ0jzmJhk8ibyLNcXGyoqeM7nC5QTuFD5M0RmYh3QJc=";
           };
         in {
           inherit version;

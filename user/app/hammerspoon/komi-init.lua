@@ -33,7 +33,7 @@ local hyper = {"cmd", "ctrl", "alt", "shift"}
 
 local apps = {
     S = "Spotify",
-    C = "Cursor",
+    C = "Calculator",
     T = "Telegram",
     W = "WhatsApp",
     A = "Arc",
@@ -45,7 +45,7 @@ local apps = {
     N = "Notes",
     X = "Calendar",
     F = "Finder",
-    Z = "Calculator",
+    Z = "Zed",
     V = "kitty",
     B = "Slack",
     G = "Granola",

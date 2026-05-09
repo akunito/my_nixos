@@ -25,6 +25,8 @@
     # === Code Editors and IDEs ===
     pkgs-unstable.vscode           # Visual Studio Code
     pkgs-unstable.code-cursor      # Cursor AI-powered code editor
+    # Zed is installed via Homebrew cask (see MACBOOK-KOMI-config.nix homebrewCasks)
+    # — the nixpkgs darwin build is CLI-only and lacks a proper .app bundle.
     pkgs-unstable.opencode         # Open-source code editor
     pkgs-unstable.claude-code-bin  # Claude Code CLI (pre-built binary)
     pkgs-unstable.qwen-code        # Alibaba Qwen Code editor
