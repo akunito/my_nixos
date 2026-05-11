@@ -4,8 +4,16 @@
   # ====================== Auto System Update ======================
   systemd.services.autoSystemUpdate = lib.mkIf (systemSettings.autoSystemUpdateEnable == true) {
     description = systemSettings.autoSystemUpdateDescription;
+    # Don't let switch-to-configuration kill/restart this unit mid-rebuild.
+    # Without these flags, the running service is stopped+restarted by its
+    # own nixos-rebuild, causing OnSuccess to fire prematurely and (with
+    # nixos-rebuild-ng 25.11+) a fatal "transient unit already loaded"
+    # collision on the restarted second invocation.
+    restartIfChanged = false;
+    stopIfChanged    = false;
+    reloadIfChanged  = false;
     serviceConfig = {
-      Type = "simple";
+      Type = "oneshot";
       ExecStart = let
         scriptDir = "/home/${systemSettings.autoUserUpdateUser}/.dotfiles";
         restartDocker = if systemSettings.autoUpgradeRestartDocker or false then "true" else "false";
@@ -39,8 +47,13 @@
   # ====================== Auto User Update (Home-Manager) ======================
   systemd.services.autoUserUpdate = lib.mkIf (systemSettings.autoUserUpdateEnable == true) {
     description = systemSettings.autoUserUpdateDescription;
+    # Same rationale as autoSystemUpdate: keep switch-to-configuration from
+    # disturbing the running update.
+    restartIfChanged = false;
+    stopIfChanged    = false;
+    reloadIfChanged  = false;
     serviceConfig = {
-      Type = "simple";
+      Type = "oneshot";
       ExecStart = let
         scriptDir = "/home/${systemSettings.autoUserUpdateUser}/.dotfiles";
         hmBranch = systemSettings.autoUserUpdateBranch or "master";
