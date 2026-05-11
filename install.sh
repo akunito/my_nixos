@@ -649,6 +649,12 @@ pre_update_home_backup() {
         return 0
     fi
 
+    if ! timeout 10 stat /mnt/NFS_Backups >/dev/null 2>&1 || \
+       ! timeout 10 ls /mnt/NFS_Backups >/dev/null 2>&1; then
+        echo -e "${YELLOW}NAS not reachable at /mnt/NFS_Backups, skipping pre-update home_backup${RESET}"
+        return 0
+    fi
+
     echo -e "\n${CYAN}Running home_backup.service synchronously before flake update...${RESET}"
     if systemctl start --wait home_backup.service; then
         echo -e "${GREEN}✓ Pre-update backup completed${RESET}"
