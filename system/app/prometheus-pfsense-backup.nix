@@ -6,7 +6,7 @@
 #    - /var/db/tailscale/tailscaled.state (Tailscale node identity)
 # 2. Save as compressed .tar.gz in local backup dir on VPS
 # 3. Rotate old backups (configurable retention days)
-# 4. Rsync backup dir to TrueNAS (truenas_admin@192.168.20.200)
+# 4. Rsync backup dir to NAS (akunito@192.168.20.200)
 # 5. Write textfile metrics for Prometheus
 #
 # Metrics exposed:
@@ -16,17 +16,17 @@
 #   pfsense_backup_status - 1 if backup succeeded, 0 if failed
 #
 # Feature flag: prometheusPfsenseBackupEnable
-# Runs as: User = "akunito" (has SSH keys to pfSense and TrueNAS)
-# Timer: daily at 14:00 (TrueNAS awake window 11:00-23:00)
+# Runs as: User = "akunito" (has SSH keys to pfSense and NAS)
+# Timer: daily at 14:00 (NAS awake window 11:00-23:00)
 
 { config, pkgs, lib, systemSettings, ... }:
 
 let
   localDir = systemSettings.prometheusPfsenseBackupLocalDir or "/var/lib/pfsense-backups";
-  truenasDir = systemSettings.prometheusPfsenseBackupTruenasDir or "/mnt/ssdpool/pfsense-backups";
+  nasDir = systemSettings.prometheusPfsenseBackupNasDir or "/mnt/ssdpool/pfsense-backups";
   keepDays = toString (systemSettings.prometheusPfsenseBackupKeepDays or 30);
-  truenasHost = systemSettings.prometheusTruenasBackupHost or "192.168.20.200";
-  truenasUser = systemSettings.prometheusTruenasBackupUser or "truenas_admin";
+  nasHost = systemSettings.prometheusNasBackupHost or "192.168.20.200";
+  nasUser = systemSettings.prometheusNasBackupUser or "akunito";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
 
   pfsenseBackupScript = pkgs.writeShellScript "pfsense-backup" ''
@@ -95,14 +95,14 @@ let
       find "$BACKUP_DIR" -name "pfsense-config-*.xml.gz" -mtime +${keepDays} -delete 2>/dev/null || true
     fi
 
-    # --- Step 3: Rsync to TrueNAS (non-fatal) ---
+    # --- Step 3: Rsync to NAS (non-fatal) ---
     if [ "$BACKUP_OK" -eq 1 ]; then
       if rsync -az --timeout=30 -e "ssh $SSH_OPTS" \
-        "$BACKUP_DIR/" "${truenasUser}@${truenasHost}:${truenasDir}/" 2>/dev/null; then
+        "$BACKUP_DIR/" "${nasUser}@${nasHost}:${nasDir}/" 2>/dev/null; then
         RSYNC_OK=1
-        echo "Rsync to TrueNAS succeeded"
+        echo "Rsync to NAS succeeded"
       else
-        echo "WARNING: Rsync to TrueNAS failed (non-fatal)" >&2
+        echo "WARNING: Rsync to NAS failed (non-fatal)" >&2
       fi
     fi
 
@@ -127,7 +127,7 @@ pfsense_backup_count $COUNT
 # HELP pfsense_backup_status 1 if backup succeeded, 0 if failed
 # TYPE pfsense_backup_status gauge
 pfsense_backup_status 1
-# HELP pfsense_backup_rsync_status 1 if rsync to TrueNAS succeeded, 0 if failed
+# HELP pfsense_backup_rsync_status 1 if rsync to NAS succeeded, 0 if failed
 # TYPE pfsense_backup_rsync_status gauge
 pfsense_backup_rsync_status $RSYNC_OK
 METRICS
@@ -145,7 +145,7 @@ pfsense_backup_count 0
 # HELP pfsense_backup_status 1 if backup succeeded, 0 if failed
 # TYPE pfsense_backup_status gauge
 pfsense_backup_status 0
-# HELP pfsense_backup_rsync_status 1 if rsync to TrueNAS succeeded, 0 if failed
+# HELP pfsense_backup_rsync_status 1 if rsync to NAS succeeded, 0 if failed
 # TYPE pfsense_backup_rsync_status gauge
 pfsense_backup_rsync_status 0
 METRICS

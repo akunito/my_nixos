@@ -553,7 +553,7 @@ in
               # NAS VPS restic backup stale (>36h)
               {
                 alert = "NasVpsBackupStale";
-                expr = ''truenas_backup_age_seconds{dataset=~"vps_.*"} > 129600'';
+                expr = ''nas_backup_age_seconds{dataset=~"vps_.*"} > 129600'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
@@ -564,7 +564,7 @@ in
               # NAS workstation restic backup stale (>30h)
               {
                 alert = "NasWorkstationBackupStale";
-                expr = ''truenas_backup_age_seconds{dataset=~"desk_.*|x13_.*"} > 108000'';
+                expr = ''nas_backup_age_seconds{dataset=~"desk_.*|x13_.*"} > 108000'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
@@ -575,7 +575,7 @@ in
               # NAS backup missing (any repo)
               {
                 alert = "NasBackupMissing";
-                expr = ''truenas_backup_status == 0'';
+                expr = ''nas_backup_status == 0'';
                 "for" = "15m";
                 labels.severity = "critical";
                 annotations = {
@@ -586,7 +586,7 @@ in
               # NAS offsite backup stale (VPS pulls from NAS, >36h)
               {
                 alert = "NasOffsiteBackupStale";
-                expr = ''(time() - truenas_offsite_backup_last_success) > 129600'';
+                expr = ''(time() - nas_offsite_backup_last_success) > 129600'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
@@ -597,12 +597,12 @@ in
               # NAS offsite backup failed
               {
                 alert = "NasOffsiteBackupFailed";
-                expr = ''truenas_offsite_backup_status == 0'';
+                expr = ''nas_offsite_backup_status == 0'';
                 "for" = "15m";
                 labels.severity = "critical";
                 annotations = {
                   summary = "NAS offsite backup failed: {{ $labels.exported_job }}";
-                  description = "NAS→VPS offsite backup {{ $labels.exported_job }} failed - check systemd journal for truenas-backup-{{ $labels.exported_job }}";
+                  description = "NAS→VPS offsite backup {{ $labels.exported_job }} failed - check systemd journal for nas-backup-{{ $labels.exported_job }}";
                 };
               }
             ];

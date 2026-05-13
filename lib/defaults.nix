@@ -456,10 +456,10 @@
     # === PVE Backup Monitoring (queries Proxmox API for backup status) ===
     prometheusPveBackupEnable = false;
 
-    # === pfSense Backup Monitoring (SSH pull from pfSense + rsync to TrueNAS) ===
+    # === pfSense Backup Monitoring (SSH pull from pfSense + rsync to NAS) ===
     prometheusPfsenseBackupEnable = false;
     prometheusPfsenseBackupLocalDir = "/var/lib/pfsense-backups"; # Local backup dir on VPS
-    prometheusPfsenseBackupTruenasDir = "/mnt/ssdpool/pfsense-backups"; # Rsync target on TrueNAS
+    prometheusPfsenseBackupNasDir = "/mnt/ssdpool/pfsense-backups"; # Rsync target on NAS
     prometheusPfsenseBackupKeepDays = 30; # Retention in days
 
     # === SNMP Exporter (pfSense/network devices) ===
@@ -467,23 +467,26 @@
     prometheusSnmpCommunity = "";  # SNMP community string
     prometheusSnmpTargets = [];    # [{name, host, module}]
 
-    # === Graphite Exporter (TrueNAS pushes metrics here) ===
+    # === Graphite Exporter (kept as dormant scaffolding; TrueNAS-era producer removed) ===
     prometheusGraphiteEnable = false;
     prometheusGraphitePort = 9109;       # Prometheus scrape port
     prometheusGraphiteInputPort = 2003;  # Graphite input port
 
-    # === TrueNAS Backup Monitoring (checks ZFS replication snapshots via SSH) ===
-    prometheusTruenasBackupEnable = false;
-    prometheusTruenasBackupHost = "192.168.20.200"; # TrueNAS storage IP
-    prometheusTruenasBackupUser = "akunito";  # SSH user for snapshot queries (was truenas_admin)
+    # === NAS Backup Monitoring (checks restic snapshot timestamps via SSH) ===
+    prometheusNasBackupEnable = false;
+    prometheusNasBackupHost = "192.168.20.200"; # NAS storage IP
+    prometheusNasBackupUser = "akunito";        # SSH user for snapshot queries
 
-    # === TrueNAS Offsite Backup (VPS pulls Docker data + configs from TrueNAS) ===
-    truenasResticBackupEnable = false;
-    truenasResticBackupHost = "192.168.20.200";       # TrueNAS storage IP
-    truenasResticBackupUser = "akunito";         # SSH user for rsync (was truenas_admin)
-    truenasResticBackupApiKeyFile = "/etc/secrets/truenas-api-key"; # TrueNAS API key for config export
-    truenasResticBackupApiPort = 9443;                             # TrueNAS web UI HTTPS port
-    truenasResticBackupLocalDir = "/var/lib/truenas-backups";       # Local staging + restic repo dir
+    # === NAS Offsite Backup (VPS pulls Docker data + configs from NAS) ===
+    # On-disk paths preserve their TrueNAS-era names ("/var/lib/truenas-backups",
+    # "/etc/secrets/truenas-api-key") to avoid restic repo / secret migration —
+    # backup history survives the rename.
+    nasResticBackupEnable = false;
+    nasResticBackupHost = "192.168.20.200";                          # NAS storage IP
+    nasResticBackupUser = "akunito";                                 # SSH user for rsync
+    nasResticBackupApiKeyFile = "/etc/secrets/truenas-api-key";      # API key file (path kept — live secret)
+    nasResticBackupApiPort = 9443;                                    # NAS web UI HTTPS port (legacy TrueNAS UI port — audit if still used)
+    nasResticBackupLocalDir = "/var/lib/truenas-backups";             # Local staging + restic repo dir (path kept — live restic repos)
 
     # === Centralized Database Server (LXC_database) ===
     # Database bind address: "0.0.0.0" for LAN access (LXC), "127.0.0.1" for local-only (VPS)

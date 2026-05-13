@@ -7,31 +7,32 @@
 #
 # Each job writes Prometheus textfile metrics for alerting.
 #
-# Feature flag: truenasResticBackupEnable = true (in profile config)
-# (flag name kept for backward compatibility — "truenas" is historical)
+# Feature flag: nasResticBackupEnable = true (in profile config)
 #
 # Prerequisites:
 #   - SSH key at /home/<user>/.ssh/id_ed25519_restic (authorized on NAS akunito user)
 #   - Password files at /etc/secrets/restic-truenas-{configs,data}
+#     (filename historical — file is on disk, do not rename without restic repo migration)
 #   - Restic repos initialized:
 #       restic init --repo /var/lib/truenas-backups/configs.restic
 #       restic init --repo /var/lib/truenas-backups/data.restic
+#     (path historical — disk state preserved across rename)
 
 { config, lib, pkgs, systemSettings, userSettings, ... }:
 
 let
   username = userSettings.username;
-  truenasHost = systemSettings.truenasResticBackupHost or "192.168.20.200";
-  truenasUser = systemSettings.truenasResticBackupUser or "akunito";
-  localDir = systemSettings.truenasResticBackupLocalDir or "/var/lib/truenas-backups";
-  apiKeyFile = systemSettings.truenasResticBackupApiKeyFile or "/etc/secrets/truenas-api-key";
-  truenasApiPort = toString (systemSettings.truenasResticBackupApiPort or 9443);
+  nasHost = systemSettings.nasResticBackupHost or "192.168.20.200";
+  nasUser = systemSettings.nasResticBackupUser or "akunito";
+  localDir = systemSettings.nasResticBackupLocalDir or "/var/lib/truenas-backups";
+  apiKeyFile = systemSettings.nasResticBackupApiKeyFile or "/etc/secrets/truenas-api-key";
+  nasApiPort = toString (systemSettings.nasResticBackupApiPort or 9443);
   sshKey = "/home/${username}/.ssh/id_ed25519_restic";
   sshOpts = "-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new -i ${sshKey}";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
 
-  # Helper: create a TrueNAS backup job (rsync + restic + metrics)
-  mkTruenasBackup = {
+  # Helper: create a NAS backup job (rsync + restic + metrics)
+  mkNasBackup = {
     name,           # Job name: "configs" or "data"
     passwordFile,   # Path to restic password file
     schedule,       # OnCalendar value
@@ -40,9 +41,9 @@ let
   }: let
     repoDir = "${localDir}/${name}.restic";
     stagingDir = "${localDir}/staging-${name}";
-    promFile = "${textfileDir}/truenas_offsite_${name}.prom";
+    promFile = "${textfileDir}/nas_offsite_${name}.prom";
 
-    backupScript = pkgs.writeShellScript "truenas-backup-${name}" ''
+    backupScript = pkgs.writeShellScript "nas-backup-${name}" ''
       set -uo pipefail
       export PATH="${lib.makeBinPath [
         pkgs.coreutils pkgs.openssh pkgs.rsync pkgs.curl pkgs.gzip pkgs.findutils
@@ -54,7 +55,7 @@ let
       PROM_FILE="${promFile}"
       TEMP_PROM=$(mktemp)
       NOW=$(date +%s)
-      LOG_TAG="truenas-backup-${name}"
+      LOG_TAG="nas-backup-${name}"
       START=$NOW
       STATUS=0
 
@@ -65,27 +66,27 @@ let
         local duration=$(($(date +%s) - START))
         if [ "$success" -eq 1 ]; then
           cat > "$TEMP_PROM" << METRICS
-# HELP truenas_offsite_backup_last_success Unix timestamp of last successful backup
-# TYPE truenas_offsite_backup_last_success gauge
-truenas_offsite_backup_last_success{job="${name}"} $(date +%s)
-# HELP truenas_offsite_backup_status 1 if backup succeeded, 0 if failed
-# TYPE truenas_offsite_backup_status gauge
-truenas_offsite_backup_status{job="${name}"} 1
-# HELP truenas_offsite_backup_duration_seconds Duration of last backup run in seconds
-# TYPE truenas_offsite_backup_duration_seconds gauge
-truenas_offsite_backup_duration_seconds{job="${name}"} $duration
+# HELP nas_offsite_backup_last_success Unix timestamp of last successful backup
+# TYPE nas_offsite_backup_last_success gauge
+nas_offsite_backup_last_success{job="${name}"} $(date +%s)
+# HELP nas_offsite_backup_status 1 if backup succeeded, 0 if failed
+# TYPE nas_offsite_backup_status gauge
+nas_offsite_backup_status{job="${name}"} 1
+# HELP nas_offsite_backup_duration_seconds Duration of last backup run in seconds
+# TYPE nas_offsite_backup_duration_seconds gauge
+nas_offsite_backup_duration_seconds{job="${name}"} $duration
 METRICS
         else
           cat > "$TEMP_PROM" << METRICS
-# HELP truenas_offsite_backup_last_success Unix timestamp of last successful backup
-# TYPE truenas_offsite_backup_last_success gauge
-truenas_offsite_backup_last_success{job="${name}"} 0
-# HELP truenas_offsite_backup_status 1 if backup succeeded, 0 if failed
-# TYPE truenas_offsite_backup_status gauge
-truenas_offsite_backup_status{job="${name}"} 0
-# HELP truenas_offsite_backup_duration_seconds Duration of last backup run in seconds
-# TYPE truenas_offsite_backup_duration_seconds gauge
-truenas_offsite_backup_duration_seconds{job="${name}"} $duration
+# HELP nas_offsite_backup_last_success Unix timestamp of last successful backup
+# TYPE nas_offsite_backup_last_success gauge
+nas_offsite_backup_last_success{job="${name}"} 0
+# HELP nas_offsite_backup_status 1 if backup succeeded, 0 if failed
+# TYPE nas_offsite_backup_status gauge
+nas_offsite_backup_status{job="${name}"} 0
+# HELP nas_offsite_backup_duration_seconds Duration of last backup run in seconds
+# TYPE nas_offsite_backup_duration_seconds gauge
+nas_offsite_backup_duration_seconds{job="${name}"} $duration
 METRICS
         fi
         mv "$TEMP_PROM" "$PROM_FILE"
@@ -96,14 +97,14 @@ METRICS
       mkdir -p "$STAGING"
 
       # --- Step 1: Check SSH connectivity ---
-      log "Checking SSH connectivity to ${truenasUser}@${truenasHost}..."
-      if ! ssh ${sshOpts} ${truenasUser}@${truenasHost} "echo ok" >/dev/null 2>&1; then
-        log "ERROR: Cannot reach TrueNAS (may be asleep or unreachable)"
+      log "Checking SSH connectivity to ${nasUser}@${nasHost}..."
+      if ! ssh ${sshOpts} ${nasUser}@${nasHost} "echo ok" >/dev/null 2>&1; then
+        log "ERROR: Cannot reach NAS (may be asleep or unreachable)"
         write_metrics 0
         exit 1
       fi
 
-      # --- Step 2: Rsync from TrueNAS ---
+      # --- Step 2: Rsync from NAS ---
       log "Starting rsync: ${description}"
       ${rsyncScript}
 
@@ -123,7 +124,7 @@ METRICS
     '';
   in {
     service = {
-      description = "TrueNAS Offsite Backup: ${description}";
+      description = "NAS Offsite Backup: ${description}";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       serviceConfig = {
@@ -140,9 +141,14 @@ METRICS
         StartLimitIntervalSec = "30min";
         OnFailure = lib.optional (systemSettings.notificationOnFailureEnable or false) "notify-failure@%n.service";
       };
+      # One-time cleanup so node-exporter stops publishing stale legacy series
+      # after the truenas→nas rename. Safe to run every invocation.
+      preStart = ''
+        rm -f ${textfileDir}/truenas_offsite_${name}.prom
+      '';
     };
     timer = {
-      description = "Timer for TrueNAS Offsite Backup: ${description}";
+      description = "Timer for NAS Offsite Backup: ${description}";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnCalendar = schedule;
@@ -152,51 +158,51 @@ METRICS
     };
   };
 
-  # --- Configs job: compose files + TrueNAS system config export ---
-  configsBackup = mkTruenasBackup {
+  # --- Configs job: compose files + NAS system config export ---
+  configsBackup = mkNasBackup {
     name = "configs";
-    passwordFile = "/etc/secrets/restic-truenas-configs";
+    passwordFile = "/etc/secrets/restic-truenas-configs";  # path historical, file is on disk
     schedule = "*-*-* 15:00:00";
-    description = "Docker compose files + TrueNAS system config";
+    description = "Docker compose files + NAS system config";
     rsyncScript = ''
       # Rsync compose directory (all docker-compose.yml + env files)
       log "Rsyncing compose configs..."
       rsync -az --delete --timeout=60 \
         -e "ssh ${sshOpts}" \
         --exclude='*.log' --exclude='*.tmp' --exclude='*.cache' \
-        ${truenasUser}@${truenasHost}:/mnt/ssdpool/docker/compose/ \
+        ${nasUser}@${nasHost}:/mnt/ssdpool/docker/compose/ \
         "$STAGING/docker-configs/" 2>&1
 
-      # Export TrueNAS system config via API
-      log "Exporting TrueNAS system config via API..."
+      # Export NAS system config via API (legacy TrueNAS UI endpoint — audit if still served)
+      log "Exporting NAS system config via API..."
       API_KEY=$(cat ${apiKeyFile})
       CONFIG_FILE="$STAGING/truenas-config/truenas-config-$(date +%Y%m%d).tar"
       mkdir -p "$STAGING/truenas-config"
 
       if curl -sk --max-time 30 \
         -H "Authorization: Bearer $API_KEY" \
-        -X POST "https://${truenasHost}:${truenasApiPort}/api/v2.0/config/save" \
+        -X POST "https://${nasHost}:${nasApiPort}/api/v2.0/config/save" \
         -o "$CONFIG_FILE.tmp" 2>/dev/null; then
         if [ -s "$CONFIG_FILE.tmp" ]; then
           mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
           # Remove old config exports (keep 7 days)
           find "$STAGING/truenas-config" -name "truenas-config-*.tar" -mtime +7 -delete 2>/dev/null || true
-          log "TrueNAS config saved to $CONFIG_FILE"
+          log "NAS config saved to $CONFIG_FILE"
         else
           rm -f "$CONFIG_FILE.tmp"
-          log "WARNING: TrueNAS config export returned empty file (non-fatal)"
+          log "WARNING: NAS config export returned empty file (non-fatal)"
         fi
       else
         rm -f "$CONFIG_FILE.tmp"
-        log "WARNING: TrueNAS config API call failed (non-fatal)"
+        log "WARNING: NAS config API call failed (non-fatal)"
       fi
     '';
   };
 
   # --- Data job: container data directories ---
-  dataBackup = mkTruenasBackup {
+  dataBackup = mkNasBackup {
     name = "data";
-    passwordFile = "/etc/secrets/restic-truenas-data";
+    passwordFile = "/etc/secrets/restic-truenas-data";  # path historical, file is on disk
     schedule = "*-*-* 16:00:00";
     description = "Docker container data directories";
     rsyncScript = ''
@@ -212,7 +218,7 @@ METRICS
         shift 3
         log "Rsyncing $label..."
         if ! rsync $RSYNC_OPTS -e "ssh ${sshOpts}" "$@" \
-          "${truenasUser}@${truenasHost}:$src" "$dst" 2>&1; then
+          "${nasUser}@${nasHost}:$src" "$dst" 2>&1; then
           log "WARNING: rsync $label had errors (non-fatal)"
         fi
       }
@@ -235,20 +241,20 @@ METRICS
       rsync_dir /mnt/ssdpool/docker/npm/ "$STAGING/docker-data/npm/" "npm"
 
       # NPM compose-relative data (if it exists)
-      if ssh ${sshOpts} ${truenasUser}@${truenasHost} "test -d /mnt/ssdpool/docker/compose/npm/data" 2>/dev/null; then
+      if ssh ${sshOpts} ${nasUser}@${nasHost} "test -d /mnt/ssdpool/docker/compose/npm/data" 2>/dev/null; then
         rsync_dir /mnt/ssdpool/docker/compose/npm/data/ "$STAGING/docker-data/npm-compose-data/" "npm compose data"
         rsync_dir /mnt/ssdpool/docker/compose/npm/letsencrypt/ "$STAGING/docker-data/npm-compose-letsencrypt/" "npm compose letsencrypt"
       else
         log "NPM compose-relative data not found (skipping)"
       fi
 
-      # Note: calibre-web and emulatorjs are VPS services, not TrueNAS — not backed up here
+      # Note: calibre-web and emulatorjs are VPS services, not NAS — not backed up here
       # Note: tailscale config is inside compose/ (backed up by configs job)
       # Note: qbittorrent is inside mediarr/ (backed up above)
     '';
   };
 
-in lib.mkIf (systemSettings.truenasResticBackupEnable or false) {
+in lib.mkIf (systemSettings.nasResticBackupEnable or false) {
   # Ensure directories exist
   systemd.tmpfiles.rules = [
     "d ${localDir} 0755 ${username} users -"
@@ -257,10 +263,10 @@ in lib.mkIf (systemSettings.truenasResticBackupEnable or false) {
   ];
 
   # Backup services
-  systemd.services.truenas-backup-configs = configsBackup.service;
-  systemd.services.truenas-backup-data = dataBackup.service;
+  systemd.services.nas-backup-configs = configsBackup.service;
+  systemd.services.nas-backup-data = dataBackup.service;
 
   # Backup timers
-  systemd.timers.truenas-backup-configs = configsBackup.timer;
-  systemd.timers.truenas-backup-data = dataBackup.timer;
+  systemd.timers.nas-backup-configs = configsBackup.timer;
+  systemd.timers.nas-backup-data = dataBackup.timer;
 }

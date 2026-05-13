@@ -36,7 +36,7 @@
   ++ lib.optional (systemSettings.prometheusGraphiteEnable or false) ../../system/app/prometheus-graphite.nix
   ++ lib.optional (systemSettings.prometheusPveBackupEnable or false) ../../system/app/prometheus-pve-backup.nix
   ++ lib.optional (systemSettings.prometheusPfsenseBackupEnable or false) ../../system/app/prometheus-pfsense-backup.nix
-  ++ lib.optional (systemSettings.prometheusTruenasBackupEnable or false) ../../system/app/prometheus-truenas-backup.nix
+  ++ lib.optional (systemSettings.prometheusNasBackupEnable or false) ../../system/app/prometheus-nas-backup.nix
   ++ lib.optional (systemSettings.cloudflaredEnable or false) ../../system/app/cloudflared.nix
   ++ lib.optional (systemSettings.acmeEnable or false) ../../system/security/acme.nix
   ++ lib.optional (systemSettings.postgresqlServerEnable or false) ../../system/app/postgresql.nix
@@ -55,7 +55,7 @@
   ++ lib.optional (systemSettings.openclawSanitizersEnable or false) ../../system/app/openclaw.nix
   ++ lib.optional (systemSettings.openclawMatrixBridgeEnable or false) ../../system/app/openclaw-matrix-bridge.nix
   ++ lib.optional (systemSettings.vpsResticBackupEnable or false) ../../system/app/restic-backup-vps.nix
-  ++ lib.optional (systemSettings.truenasResticBackupEnable or false) ../../system/app/restic-backup-truenas.nix
+  ++ lib.optional (systemSettings.nasResticBackupEnable or false) ../../system/app/restic-backup-nas.nix
   ++ lib.optional (systemSettings.nfsServerEnable or false) ../../system/hardware/nfs_server.nix;
 
   # ==========================================================================

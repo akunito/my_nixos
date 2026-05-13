@@ -37,7 +37,7 @@
   ++ lib.optional (systemSettings.prometheusGraphiteEnable or false) ../../system/app/prometheus-graphite.nix
   ++ lib.optional (systemSettings.prometheusPveBackupEnable or false) ../../system/app/prometheus-pve-backup.nix
   ++ lib.optional (systemSettings.prometheusPfsenseBackupEnable or false) ../../system/app/prometheus-pfsense-backup.nix
-  ++ lib.optional (systemSettings.prometheusTruenasBackupEnable or false) ../../system/app/prometheus-truenas-backup.nix
+  ++ lib.optional (systemSettings.prometheusNasBackupEnable or false) ../../system/app/prometheus-nas-backup.nix
   ++ lib.optional (systemSettings.cloudflaredEnable or false) ../../system/app/cloudflared.nix
   ++ lib.optional (systemSettings.acmeEnable or false) ../../system/security/acme.nix
   # Centralized database server modules

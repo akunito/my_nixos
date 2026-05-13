@@ -1322,7 +1322,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_backup_age_seconds{dataset=\"desk_home\"} / 86400",
+          "expr": "nas_backup_age_seconds{dataset=\"desk_home\"} / 86400",
           "hide": false,
           "legendFormat": "DESK_Home (to NAS)",
           "range": true,
@@ -1334,7 +1334,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_backup_age_seconds{dataset=\"vps_databases\"} / 86400",
+          "expr": "nas_backup_age_seconds{dataset=\"vps_databases\"} / 86400",
           "hide": false,
           "legendFormat": "VPS_Databases (to NAS)",
           "range": true,
@@ -1346,7 +1346,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_backup_age_seconds{dataset=\"vps_nextcloud\"} / 86400",
+          "expr": "nas_backup_age_seconds{dataset=\"vps_nextcloud\"} / 86400",
           "hide": false,
           "legendFormat": "VPS_Nextcloud (to NAS)",
           "range": true,
@@ -1358,7 +1358,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_backup_age_seconds{dataset=\"vps_services\"} / 86400",
+          "expr": "nas_backup_age_seconds{dataset=\"vps_services\"} / 86400",
           "hide": false,
           "legendFormat": "VPS_Services (to NAS)",
           "range": true,
@@ -1370,7 +1370,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "truenas_backup_age_seconds{dataset=\"x13_home\"} / 86400",
+          "expr": "nas_backup_age_seconds{dataset=\"x13_home\"} / 86400",
           "hide": false,
           "legendFormat": "X13_Home (to NAS)",
           "range": true,
@@ -1382,7 +1382,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"configs\"}) / 86400",
+          "expr": "(time() - nas_offsite_backup_last_success{exported_job=\"configs\"}) / 86400",
           "hide": false,
           "legendFormat": "NAS_Configs (to VPS)",
           "range": true,
@@ -1394,7 +1394,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(time() - truenas_offsite_backup_last_success{exported_job=\"data\"}) / 86400",
+          "expr": "(time() - nas_offsite_backup_last_success{exported_job=\"data\"}) / 86400",
           "hide": false,
           "legendFormat": "NAS_Data (to VPS)",
           "range": true,

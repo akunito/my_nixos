@@ -288,7 +288,7 @@ in
     grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";
 
     # Remote targets for Prometheus scraping (via WireGuard/Tailscale tunnel to LAN)
-    # TrueNAS: node-exporter (9100) + cadvisor (8081) on rootless Docker
+    # NAS: node-exporter (9100) + cadvisor (8081) on rootless Docker
     # Laptops use Tailscale IPs (roaming — not always on LAN)
     prometheusRemoteTargets = [
       { name = "nas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; }
@@ -395,12 +395,12 @@ in
     vpsResticTarget = "nas-aku";           # NAS Tailscale hostname (resolves via MagicDNS)
     vpsResticTargetUser = "akunito";  # NixOS NAS uses akunito (no truenas_admin user)
 
-    # === Backup Monitoring (pfSense config + TrueNAS restic repos) ===
+    # === Backup Monitoring (pfSense config + NAS restic repos) ===
     prometheusPfsenseBackupEnable = true;
-    prometheusTruenasBackupEnable = true;
+    prometheusNasBackupEnable = true;
 
-    # === TrueNAS Offsite Backup (VPS pulls Docker data + configs daily) ===
-    truenasResticBackupEnable = true;
+    # === NAS Offsite Backup (VPS pulls Docker data + configs daily) ===
+    nasResticBackupEnable = true;
   };
 
   userSettings = base.userSettings // {
