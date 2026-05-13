@@ -11,7 +11,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | audits.pfsense.2026-02-04 | Security, performance, and reliability audit of pfSense firewall | audit, security, performance, pfsense, firewall | docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md |
 | audits.truenas-docker-security.2026-03-06 | TrueNAS Docker rootless migration and security hardening audit | audit, security, docker, truenas, rootless, monitoring, networking | templates/truenas/*/docker-compose.yml |
 | claude-code-setup | Claude Code CLI configuration guide — security, permissions, hooks, MCP servers, and declarative sync | claude-code, setup, permissions, hooks, mcp, security, tooling | .claude/** |
-| docs.agent-context | How AI agents retrieve context in this repo (Router/Catalog protocol, index regeneration, key files). | cursor, claude-code, agents, docs, routing, rules | docs/00_ROUTER.md |
+| docs.agent-context | How Claude Code loads context in this repo (rules, reference files, skills). | claude-code, rules, docs, context | CLAUDE.md |
 | docs.daily-usage | Daily aku commands, common operations, backup overview, maintenance, and script reference. | aku, commands, maintenance, scripts, backup, garbage-collection | system/bin/aku.nix |
 | docs.getting-started | Installation, profile selection, configuration structure, and troubleshooting for new users. | installation, profiles, configuration, getting-started, flake | install.sh |
 | docs.nix-quote-escaping | Guide to properly escaping quotes and special characters in Nix strings to avoid common syntax errors. | nix, nixos, home-manager, syntax, escaping, quotes, strings, troubleshooting | docs/nix-quote-escaping.md |
@@ -67,7 +67,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | security.git-crypt | Git-crypt encryption for sensitive configuration data (domains, IPs, credentials) | git-crypt, secrets, encryption, security, domains, credentials | secrets/*.nix |
 | security.hardening | Security hardening guidelines for NixOS homelab infrastructure | security, hardening, firewall, services, credentials | system/app/*.nix |
 | security.incident-response | Security incident response procedures for NixOS homelab infrastructure | security, incident-response, credentials, rotation, recovery | secrets/*.nix |
-| setup.plane-integration | Plane project management MCP integration for Claude Code workflows | plane, mcp, project-management, claude-code, setup, tooling | .claude/agents/plane-context.md |
+| setup.plane-integration | Plane project management MCP integration for Claude Code workflows | plane, mcp, project-management, claude-code, setup, tooling | .claude/reference/plane-context.md |
 | shell-multiline-input | Multi-line shell input with Shift+Enter configuration | shell, zsh, terminal, keyboard, keybindings | lib/defaults.nix |
 | system-modules | Complete reference for system-level NixOS modules — app, hardware, security, WM, and utility modules | system-modules, nixos, configuration, modules | system/**/*.nix |
 | system-modules.app | System application modules — Docker, Virtualization (QEMU/KVM/SPICE), Flatpak, Steam, Gamemode, Samba, AppImage | system-modules, docker, virtualization, flatpak, steam, gamemode, samba, appimage | system/app/*.nix |

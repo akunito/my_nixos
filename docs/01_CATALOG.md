@@ -87,7 +87,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
 - **system/app/nas-services.nix**: NAS-specific services module *Enabled when:*
-   - `2.5GbE for management when bond is down`
+   - `not NixOS-native`
    - `systemSettings.nfsServerEnable or false`
    - `seq 1 30`
    - `!isRootless`
@@ -111,17 +111,17 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.prometheusExporterEnable or false) || (systemSettings.grafanaEnable or false)`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
 - **system/app/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
+- **system/app/prometheus-nas-backup.nix**: NAS Restic Backup Monitoring *Enabled when:* `systemSettings.prometheusNasBackupEnable or false`
 - **system/app/prometheus-pfsense-backup.nix**: pfSense Full Backup + Sync + Monitoring *Enabled when:* `systemSettings.prometheusPfsenseBackupEnable or false`
 - **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
 - **system/app/prometheus-pve.nix**: Proxmox VE Exporter for VM/container metrics *Enabled when:* `systemSettings.prometheusPveExporterEnable or false`
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
-- **system/app/prometheus-truenas-backup.nix**: NAS Restic Backup Monitoring *Enabled when:* `systemSettings.prometheusTruenasBackupEnable or false`
 - **system/app/prometheus-workstation-exporter.nix**: Prometheus Workstation Exporter Module *Enabled when:* `(systemSettings.prometheusWorkstationExporterEnable or false) && !(systemSettings.prometheusExporterEnable or false)`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
 - **system/app/redis-server.nix**: Redis Server Module *Enabled when:*
    - `allows multiple instances if needed`
    - `systemSettings.prometheusRedisExporterEnable or false`
-- **system/app/restic-backup-truenas.nix**: NAS Offsite Backup — VPS pulls Docker data + configs from NAS *Enabled when:* `systemSettings.truenasResticBackupEnable or false`
+- **system/app/restic-backup-nas.nix**: NAS Offsite Backup — VPS pulls Docker data + configs from NAS *Enabled when:* `systemSettings.nasResticBackupEnable or false`
 - **system/app/restic-backup-vps.nix**: VPS Restic Backup to TrueNAS via SFTP *Enabled when:* `systemSettings.vpsResticBackupEnable or false`
 - **system/app/samba.nix**: System module: samba.nix
 - **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`
@@ -162,6 +162,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Hardware
 
+- **system/hardware/amdgpu-suspend-workaround.nix**: AMD GPU suspend/resume workaround for the SMU regression that started in
 - **system/hardware/bluetooth.nix**: hardware.bluetooth.enable = true;
 - **system/hardware/drives.nix**: Enable SSH server to unlock LUKS drives on BOOT *Enabled when:*
    - `systemSettings.bootSSH == true`
@@ -263,6 +264,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.sudoAskpassEnable or false`
    - `systemSettings.wrappSudoToDoas == true`
 - **system/security/update-failure-notification.nix**: Email notification service for auto-update failures *Enabled when:* `systemSettings.notificationOnFailureEnable or false`
+- **system/security/wifi-audit.nix**: WiFi Security Audit Toolkit *Enabled when:* `CLI`
 - **system/security/wireguard-server.nix**: WireGuard Server — Point-to-Point Backup Tunnel (VPS <-> pfSense) *Enabled when:* `systemSettings.wireguardServerEnable or false`
 
 ### Shell
@@ -354,7 +356,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/terminal/kitty.nix**: Wrapper script to auto-start tmux with kitty session *Enabled when:*
    - `default shows decorations, window manager handles styling`
    - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)`
-- **user/app/terminal/tmux.nix**: Clipboard command differs between macOS (pbcopy) and Linux (wl-copy) *Enabled when:* `!pkgs.stdenv.isDarwin`
+- **user/app/terminal/tmux.nix**: Clipboard command differs between macOS (pbcopy) and Linux (wl-copy) *Enabled when:*
+   - `!pkgs.stdenv.isDarwin`
+   - `!pkgs.stdenv.isDarwin && (userSettings.tmuxPersistenceEnable or false)`
 - **user/app/terminal/xterm.nix**: XTerm configuration via X resources *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
 - **user/app/voxtype/voxtype.nix**: Voxtype - Local voice dictation for Sway *Enabled when:* `userSettings.wm == "sway"`
@@ -378,6 +382,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **user/packages/user-ai-pkgs.nix**: === AI & Machine Learning === *Enabled when:* `userSettings.userAiPkgsEnable or false`
 - **user/packages/user-basic-pkgs.nix**: === Basic User Packages === *Enabled when:* `userSettings.userBasicPkgsEnable or true`
+- **user/packages/user-media-recording.nix**: === Screen Recording & Video Production === *Enabled when:* `userSettings.userMediaRecordingEnable or false`
 
 ### Pkgs
 
@@ -614,7 +619,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/00_INDEX.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/00_ROUTER.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
 - **docs/01_CATALOG.md**: ⚠️ **AUTO-GENERATED**: Do not edit manually. Regenerate with `python3 scripts/generate_docs_index.py`
-- **docs/agent-context.md**: How AI agents retrieve context in this repo (Router/Catalog protocol, index regeneration, key files).
+- **docs/agent-context.md**: How Claude Code loads context in this repo (rules, reference files, skills).
 - **docs/daily-usage.md**: Daily aku commands, common operations, backup overview, maintenance, and script reference.
 - **docs/getting-started.md**: Installation, profile selection, configuration structure, and troubleshooting for new users.
 - **docs/multi-user-workflow.md**: Multi-user branch management workflow for akunito (main) and ko-mi (komi)

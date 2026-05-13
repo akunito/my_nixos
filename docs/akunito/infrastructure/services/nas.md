@@ -148,6 +148,30 @@ ssh -A akunito@192.168.20.200 'cd /home/akunito/docker/<project> && docker compo
 
 ## Monitoring & Alerting
 
+> **NOTE — STALE SECTION (pre-AINF-336)**: The Graphite reporter, the user-level
+> `~/.local/bin/truenas-zfs-exporter.sh` script + user timer, the `midclt call`
+> API operations, and the `TrueNAS*` alert names described below all refer to
+> the **decommissioned TrueNAS SCALE deployment**. The NAS is now NixOS-based.
+>
+> **Current state:**
+> - ZFS pool metrics are produced by the `nas-zfs-pool-metrics` systemd timer
+>   defined in `system/app/nas-services.nix`, writing
+>   `/var/lib/prometheus-node-exporter/textfile/zfs_pools.prom` (textfile
+>   collector). Metrics: `nas_zfs_pool_{size_bytes,allocated_bytes,free_bytes,fragmentation,healthy}{pool="…"}`.
+> - Backup-age metrics come from `prometheus-nas-backup.service` (timer 13:00 daily)
+>   defined in `system/app/prometheus-nas-backup.nix`. Metrics: `nas_backup_age_seconds`,
+>   `nas_backup_last_success`, `nas_backup_status` (plus `backup_repo_size_bytes`).
+> - VPS-side offsite restic backups expose `nas_offsite_backup_*` from
+>   `system/app/restic-backup-nas.nix`.
+> - Scrape job: `nas_node` → `192.168.20.200:9100` via Tailscale (`grafana.nix`).
+> - Active alerts live in the `nas_alerts` / `backup_alerts` groups in
+>   `grafana.nix` with prefix `NAS*` / `BackupTooOld` / `NasOffsiteBackup*`.
+> - Dashboard: `system/app/grafana-dashboards/custom/nas.json` (uses new names).
+>
+> The detail below documents the **historical** TrueNAS-era setup and is kept
+> for archaeological reference only. Operational commands (`midclt call`, etc.)
+> will fail on NixOS — use `zpool`/`zfs` directly via SSH.
+
 ### Metrics Collection
 
 **1. Built-in Graphite Reporter** (TrueNAS → Prometheus Graphite Exporter)
@@ -210,7 +234,7 @@ ssh -A akunito@192.168.20.200 'cd /home/akunito/docker/<project> && docker compo
 
 ### Prometheus Alerts
 
-**Alert Rules** (in `prometheus-graphite.nix`):
+**Alert Rules — historical** (`prometheus-graphite.nix` legacy `truenas_alerts` group, **removed**):
 
 | Alert | Query | Threshold | Severity | Duration |
 |-------|-------|-----------|----------|----------|
@@ -221,6 +245,23 @@ ssh -A akunito@192.168.20.200 'cd /home/akunito/docker/<project> && docker compo
 | TrueNASDiskTempCritical | `truenas_disk_temperature_celsius` | >55°C | critical | 5m |
 | TrueNASNotReporting | `absent(truenas_cpu_percent)` | No data >5min | warning | 5m |
 | TrueNASMemoryHigh | `(used / total) * 100` | >90% | warning | 10m |
+
+**Alert Rules — current** (`grafana.nix` `nas_alerts` + `backup_alerts` groups):
+
+| Alert | Query (source metric) | Threshold | Severity | Duration |
+|-------|----------------------|-----------|----------|----------|
+| NASPoolCapacityWarning | `node_filesystem_avail/size` (zfs mounts) | >80% | warning | 5m |
+| NASPoolCapacityCritical | same | >90% | critical | 5m |
+| NASPoolUnhealthy | `node_zfs_zpool_state{state="online"} == 0` | online state lost | critical | 2m |
+| NASDiskTempWarning | `node_hwmon_temp_celsius{chip~"drivetemp.*"}` | >45°C | warning | 10m |
+| NASDiskTempCritical | same | >55°C | critical | 5m |
+| NASNotReporting | `up{job="nas_node"} == 0` | no scrape >5min | warning | 5m |
+| NASMemoryHigh | `node_memory_*` | >90% | warning | 10m |
+| NasVpsBackupStale | `nas_backup_age_seconds{dataset=~"vps_.*"}` | >36h | warning | 1h |
+| NasWorkstationBackupStale | `nas_backup_age_seconds{dataset=~"desk_.*\|x13_.*"}` | >30h | warning | 1h |
+| NasBackupMissing | `nas_backup_status == 0` | repo missing | critical | 15m |
+| NasOffsiteBackupStale | `(time() - nas_offsite_backup_last_success)` | >36h | warning | 1h |
+| NasOffsiteBackupFailed | `nas_offsite_backup_status == 0` | last run failed | critical | 15m |
 
 **Notification Channel**: Email (via VPS Postfix relay)
 
