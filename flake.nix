@@ -75,8 +75,9 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     # Voice dictation (Whisper-based, local)
+    # Pinned: newer revs (e.g. ddc93de) fail to build — missing xorg.libX11 in Rust build inputs.
     voxtype = {
-      url = "github:peteonrails/voxtype";
+      url = "github:peteonrails/voxtype/adf0ea62c2310b90c55febdc6515cca9f264e25a";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

@@ -43,7 +43,7 @@
 
       # Productivity & Office
       pkgs-unstable.obsidian
-      pkgs-unstable.libreoffice
+      pkgs-stable.libreoffice # using stable — unstable rev not in binary cache (builds from source for hours)
       pkgs-stable.calibre # eBook manager (using stable — unstable broken: missing qmake)
       pkgs-unstable.qbittorrent
 
