@@ -11,6 +11,7 @@
   imports = [ ../work/home.nix # Personal is essentially work system + games
               ../../user/packages/user-basic-pkgs.nix # Basic user packages (browsers, office, communication, etc.)
               ../../user/packages/user-ai-pkgs.nix # AI & ML packages (lmstudio, ollama-rocm)
+              ../../user/packages/user-media-recording.nix # Media recording (OBS, HandBrake, ffmpeg) — flag-gated
               ../../user/app/database/db-credentials.nix # Database credentials for CLI tools (psql, mysql, redis-cli)
             ]
             ++ lib.optional (userSettings.gamesEnable == true) ../../user/app/games/games.nix # Various videogame apps
