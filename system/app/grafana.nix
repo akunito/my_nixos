@@ -605,6 +605,17 @@ in
                   description = "NAS→VPS offsite backup {{ $labels.exported_job }} failed - check systemd journal for nas-backup-{{ $labels.exported_job }}";
                 };
               }
+              # NAS offsite backup has rsync warnings (silent coverage gap)
+              {
+                alert = "NasOffsiteBackupRsyncWarnings";
+                expr = ''nas_offsite_backup_rsync_warnings > 0'';
+                "for" = "15m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "NAS offsite backup {{ $labels.exported_job }} has rsync warnings";
+                  description = "{{ $value }} rsync_dir call(s) in nas-backup-{{ $labels.exported_job }} hit non-fatal errors. Restic snapshot succeeded but some source paths were not captured. Check journal for 'WARNING: rsync ... had errors'.";
+                };
+              }
             ];
           }
           {

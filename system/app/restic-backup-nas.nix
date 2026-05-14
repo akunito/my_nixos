@@ -64,6 +64,11 @@ let
       write_metrics() {
         local success=$1
         local duration=$(($(date +%s) - START))
+        # Read rsync warning count if the rsync phase wrote it; default 0
+        local rsync_warnings=0
+        if [ -r "$STAGING/.rsync-warnings" ]; then
+          rsync_warnings=$(cat "$STAGING/.rsync-warnings" 2>/dev/null || echo 0)
+        fi
         if [ "$success" -eq 1 ]; then
           cat > "$TEMP_PROM" << METRICS
 # HELP nas_offsite_backup_last_success Unix timestamp of last successful backup
@@ -75,6 +80,9 @@ nas_offsite_backup_status{job="${name}"} 1
 # HELP nas_offsite_backup_duration_seconds Duration of last backup run in seconds
 # TYPE nas_offsite_backup_duration_seconds gauge
 nas_offsite_backup_duration_seconds{job="${name}"} $duration
+# HELP nas_offsite_backup_rsync_warnings Number of rsync_dir calls that hit non-fatal errors
+# TYPE nas_offsite_backup_rsync_warnings gauge
+nas_offsite_backup_rsync_warnings{job="${name}"} $rsync_warnings
 METRICS
         else
           cat > "$TEMP_PROM" << METRICS
@@ -87,6 +95,9 @@ nas_offsite_backup_status{job="${name}"} 0
 # HELP nas_offsite_backup_duration_seconds Duration of last backup run in seconds
 # TYPE nas_offsite_backup_duration_seconds gauge
 nas_offsite_backup_duration_seconds{job="${name}"} $duration
+# HELP nas_offsite_backup_rsync_warnings Number of rsync_dir calls that hit non-fatal errors
+# TYPE nas_offsite_backup_rsync_warnings gauge
+nas_offsite_backup_rsync_warnings{job="${name}"} $rsync_warnings
 METRICS
         fi
         mv "$TEMP_PROM" "$PROM_FILE"
@@ -190,7 +201,11 @@ METRICS
       # Create parent directory for all data rsyncs
       mkdir -p "$STAGING/docker-data"
 
-      # Helper: rsync a directory, non-fatal on failure (some dirs may have permission issues)
+      # Track rsync warnings so the failure surface is visible in metrics later.
+      RSYNC_WARNINGS=0
+
+      # Helper: rsync a directory, non-fatal on failure (some dirs may have permission issues).
+      # WARNINGS are counted so the metric layer can surface coverage gaps.
       rsync_dir() {
         local src="$1" dst="$2" label="$3"
         shift 3
@@ -198,11 +213,21 @@ METRICS
         if ! rsync $RSYNC_OPTS -e "ssh ${sshOpts}" "$@" \
           "${nasUser}@${nasHost}:$src" "$dst" 2>&1; then
           log "WARNING: rsync $label had errors (non-fatal)"
+          RSYNC_WARNINGS=$((RSYNC_WARNINGS + 1))
         fi
       }
 
-      # Mediarr stack (sonarr, radarr, prowlarr, bazarr, jellyseerr, qbittorrent)
-      rsync_dir /mnt/ssdpool/docker/mediarr/ "$STAGING/docker-data/mediarr/" "mediarr" $EXCLUDES
+      # Mediarr stack (sonarr, radarr, prowlarr, bazarr, jellyseerr, qbittorrent).
+      # Exclude regenerable container-internal junk that's owned by sub-UIDs
+      # and would otherwise produce "Permission denied" rsync warnings.
+      rsync_dir /mnt/ssdpool/docker/mediarr/ "$STAGING/docker-data/mediarr/" "mediarr" $EXCLUDES \
+        --exclude='calibre-server/config/.XDG/' \
+        --exclude='calibre-server/config/.cache/' \
+        --exclude='calibre-server/config/.dbus/' \
+        --exclude='calibre-server/config/.config/pulse/' \
+        --exclude='calibre-server/config/.config/calibre/fonts/' \
+        --exclude='calibre-server/config/.config/calibre/plugins/' \
+        --exclude='qbittorrent/qBittorrent/logs/*.bak*'
 
       # Jellyfin config
       rsync_dir /mnt/ssdpool/docker/jellyfin/etc/ "$STAGING/docker-data/jellyfin-etc/" "jellyfin config" \
@@ -218,13 +243,19 @@ METRICS
       # NPM data (ZFS dataset)
       rsync_dir /mnt/ssdpool/docker/npm/ "$STAGING/docker-data/npm/" "npm"
 
-      # NPM compose-relative data (if it exists)
+      # NPM compose-relative data (if it exists).
+      # /letsencrypt is owned root:700 — akunito reads it via POSIX ACL on the
+      # ssdpool/docker dataset (acltype=posixacl + setfacl -R u:akunito:rX).
       if ssh ${sshOpts} ${nasUser}@${nasHost} "test -d /mnt/ssdpool/docker/compose/npm/data" 2>/dev/null; then
         rsync_dir /mnt/ssdpool/docker/compose/npm/data/ "$STAGING/docker-data/npm-compose-data/" "npm compose data"
         rsync_dir /mnt/ssdpool/docker/compose/npm/letsencrypt/ "$STAGING/docker-data/npm-compose-letsencrypt/" "npm compose letsencrypt"
       else
         log "NPM compose-relative data not found (skipping)"
       fi
+
+      # Surface rsync warning count for the calling backupScript to emit as metric.
+      log "rsync warning count: $RSYNC_WARNINGS"
+      echo "$RSYNC_WARNINGS" > "$STAGING/.rsync-warnings"
 
       # Note: calibre-web and emulatorjs are VPS services, not NAS — not backed up here
       # Note: tailscale config is inside compose/ (backed up by configs job)
