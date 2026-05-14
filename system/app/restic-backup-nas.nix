@@ -227,7 +227,7 @@ METRICS
         --exclude='calibre-server/config/.config/pulse/' \
         --exclude='calibre-server/config/.config/calibre/fonts/' \
         --exclude='calibre-server/config/.config/calibre/plugins/' \
-        --exclude='qbittorrent/qBittorrent/logs/*.bak*'
+        --exclude='qbittorrent/qBittorrent/logs/'
 
       # Jellyfin config
       rsync_dir /mnt/ssdpool/docker/jellyfin/etc/ "$STAGING/docker-data/jellyfin-etc/" "jellyfin config" \
