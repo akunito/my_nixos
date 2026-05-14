@@ -55,42 +55,45 @@ related_files: [system/app/nas-services.nix, profiles/NAS_PROD-config.nix, .clau
 
 ## S3 Sleep Schedule
 
-TrueNAS suspends to RAM (S3) nightly to save power (~280W → 0W during sleep).
+The NixOS NAS suspends to RAM (S3) nightly to save power (~280W → 0W during sleep).
 
 | Event | Time | Method |
 |-------|------|--------|
-| Suspend | 23:00 | `systemctl suspend` via cron |
+| Suspend | 23:00 | `systemctl suspend` via systemd timer |
 | Wake | 11:00 | RTC alarm (`rtcwake -m no`) |
 
 - ZFS pools remain unlocked in RAM during S3
-- **Docker lifecycle**: Two systemd services (`docker-pre-suspend.service`, `docker-post-resume.service`) bound to `sleep.target` handle graceful stop/start of all Docker containers around suspend
+- **Docker lifecycle**: Two NixOS-managed systemd services (`docker-pre-suspend.service`, `docker-post-resume.service`) bound to `sleep.target` handle graceful stop/start of all Docker containers around suspend. Defined declaratively in `system/app/nas-services.nix`.
 - **Pre-suspend**: Stops all compose projects in reverse order (30s timeout per project)
 - **Post-resume**: Waits 10s for networking, then starts projects in order (media force-recreated for fresh mounts)
-- **Script**: `/home/akunito/docker-suspend-hook.sh` (deployed by startup script)
-- **Log**: `/var/log/docker-suspend-hook.log`
-- **IMPORTANT**: TrueNAS root is read-only (`/usr/lib/`), so services go in `/etc/systemd/system/`. TrueNAS updates may reset `/etc/systemd/` — re-run `truenas-docker-startup.sh` to redeploy
-- All backup jobs (restic) scheduled within 11:00–23:00 window
+- All backup jobs (restic on VPS pulling from NAS) scheduled within 11:00–23:00 window
 - WOL unreliable (r8169 driver limitation) — RTC alarm is the primary wake method
+- Suspend/resume race condition with Docker post-resume tracked in `memory/project_nas_suspend_resume_race.md`
 
 ---
 
 ## Docker Services
 
-TrueNAS runs **15 Docker containers** across **6 compose projects** for media, local proxy, and monitoring exporters.
+The NixOS NAS runs Docker containers across multiple compose projects for media, local proxy, and monitoring exporters. Most run **rootless** (UID 100999+ namespace); `vpn-media` runs root for `NET_ADMIN`. Project list is managed declaratively in `nas-services.nix` (`nasRootDockerProjects` + `nasRootlessDockerProjects`).
 
-See [TrueNAS Docker Services](./truenas-services.md) for full details.
+See [nas-services.md](./nas-services.md) for full Docker container inventory and compose-project details.
 
-**Key services**: Jellyfin, *arr stack (Sonarr/Radarr/Prowlarr/Bazarr), qBittorrent, NPM (bridge on 192.168.20.200), cloudflared, Tailscale (subnet router), exportarr instances, node-exporter, cadvisor.
+**Key services**: Jellyfin, *arr stack (Sonarr/Radarr/Prowlarr/Bazarr), qBittorrent, Nginx Proxy Manager (NPM, bridge on 192.168.20.200), cloudflared, Tailscale (subnet router), exportarr instances, node-exporter, cAdvisor.
 
-**NPM**: NPM runs on bridge networking (rootless Docker) with ports 80/443/81 on host 192.168.20.200. pfSense DNS resolves `*.local.akunito.com` → 192.168.20.200.
+**NPM**: bridge networking (rootless Docker) with ports 80/443/81 on host 192.168.20.200. pfSense DNS resolves `*.local.akunito.com` → 192.168.20.200.
+
+**Compose root**: `/mnt/ssdpool/docker/compose/<project>/docker-compose.yml`.
 
 **Management**:
 ```bash
-# Check all containers
+# Check all containers (rootless via DOCKER_HOST env)
 ssh -A akunito@192.168.20.200 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
 
 # Restart a compose project
-ssh -A akunito@192.168.20.200 'cd /home/akunito/docker/<project> && docker compose restart'
+ssh -A akunito@192.168.20.200 'cd /mnt/ssdpool/docker/compose/<project> && docker compose restart'
+
+# Root-Docker project (vpn-media)
+ssh -A akunito@192.168.20.200 'sudo docker ps; sudo systemctl status docker-compose-vpn-media.service'
 ```
 
 ---
@@ -125,19 +128,16 @@ ssh -A akunito@192.168.20.200 'cd /home/akunito/docker/<project> && docker compo
 - **Authorized User**: `akunito` (sudo access)
 - **SSH Keys**: Stored in `~/.ssh/authorized_keys`
 
-### API Access
-- **Endpoint**: https://192.168.20.200/api/v2.0
-- **Authentication**: Bearer token (X-API-Key header)
-- **API Key Name**: automation-key
-- **API Key Storage**: `secrets/truenas-api-key.txt` (git-crypt encrypted)
-- **Permissions**: Full access (method: *, resource: *)
+### API Access (REMOVED)
+
+The TrueNAS-era REST API on port 9443 (`https://192.168.20.200/api/v2.0/`) was retired with the AINF-336 migration. NixOS NAS administration is via SSH + direct shell tools (`zpool`, `zfs`, `systemctl`, `smartctl`). The `secrets/truenas-api-key.txt` file is kept on VPS_PROD for git-crypt history compatibility but is no longer consumed by any active service.
 
 ### Encryption
 **Dataset Encryption**:
-- **ssdpool datasets**: AES-256-GCM (passphrase-based)
+- **ssdpool datasets**: AES-256-GCM (passphrase-based, ZFS native encryption)
 - **extpool**: Not encrypted
-- **Passphrase Storage**: `secrets/truenas-encryption-passphrase.txt` (git-crypt encrypted)
-- **Unlock Method**: Manual after reboot (API call via `/unlock-truenas` skill)
+- **Passphrase Storage**: `secrets/truenas-encryption-passphrase.txt` (git-crypt encrypted — filename kept for historical compat)
+- **Unlock Method**: Use the `/unlock-nas` skill (replaces the old `/unlock-truenas` skill) or run `zfs load-key -r ssdpool` and `zfs mount -a` after reboot
 
 **Boot Pool Encryption**:
 - **Status**: Not encrypted (by design)
@@ -148,209 +148,130 @@ ssh -A akunito@192.168.20.200 'cd /home/akunito/docker/<project> && docker compo
 
 ## Monitoring & Alerting
 
-> **NOTE — STALE SECTION (pre-AINF-336)**: The Graphite reporter, the user-level
-> `~/.local/bin/truenas-zfs-exporter.sh` script + user timer, the `midclt call`
-> API operations, and the `TrueNAS*` alert names described below all refer to
-> the **decommissioned TrueNAS SCALE deployment**. The NAS is now NixOS-based.
->
-> **Current state:**
-> - ZFS pool metrics are produced by the `nas-zfs-pool-metrics` systemd timer
->   defined in `system/app/nas-services.nix`, writing
->   `/var/lib/prometheus-node-exporter/textfile/zfs_pools.prom` (textfile
->   collector). Metrics: `nas_zfs_pool_{size_bytes,allocated_bytes,free_bytes,fragmentation,healthy}{pool="…"}`.
-> - Backup-age metrics come from `prometheus-nas-backup.service` (timer 13:00 daily)
->   defined in `system/app/prometheus-nas-backup.nix`. Metrics: `nas_backup_age_seconds`,
->   `nas_backup_last_success`, `nas_backup_status` (plus `backup_repo_size_bytes`).
-> - VPS-side offsite restic backups expose `nas_offsite_backup_*` from
->   `system/app/restic-backup-nas.nix`.
-> - Scrape job: `nas_node` → `192.168.20.200:9100` via Tailscale (`grafana.nix`).
-> - Active alerts live in the `nas_alerts` / `backup_alerts` groups in
->   `grafana.nix` with prefix `NAS*` / `BackupTooOld` / `NasOffsiteBackup*`.
-> - Dashboard: `system/app/grafana-dashboards/custom/nas.json` (uses new names).
->
-> The detail below documents the **historical** TrueNAS-era setup and is kept
-> for archaeological reference only. Operational commands (`midclt call`, etc.)
-> will fail on NixOS — use `zpool`/`zfs` directly via SSH.
+### Metrics Collection (current — post-AINF-336)
 
-### Metrics Collection
+All monitoring is Prometheus-native. No TrueNAS Graphite reporter, no
+`midclt` API calls — the NAS runs Docker `node-exporter` + custom
+NixOS-managed systemd timers that write to the textfile collector.
 
-**1. Built-in Graphite Reporter** (TrueNAS → Prometheus Graphite Exporter)
-- **Target**: VPS Graphite Exporter (port 2003, via Tailscale 100.64.0.6)
-- **Protocol**: Graphite plaintext
-- **Interval**: 10 seconds
-- **Metrics Exported**:
-  - `servers.truenas.cpu.*` - CPU usage (user, system, iowait, irq, softirq)
-  - `servers.truenas.memory.*` - RAM usage (used, free, cached, buffers)
-  - `servers.truenas.disktemp.*` - Disk temperatures (SMART)
-  - `servers.truenas.interface.*` - Network interface stats (bond0)
-  - `servers.truenas.zfs_arc.*` - ZFS ARC statistics
-  - `servers.truenas.system.*` - System load, network traffic, disk I/O
+| Producer | Where | Output | Schedule |
+|----------|-------|--------|----------|
+| `nas-zfs-pool-metrics.service` (NAS-side, NixOS) | `system/app/nas-services.nix` | `/var/lib/prometheus-node-exporter/textfile/zfs_pools.prom` → `nas_zfs_pool_{size_bytes,allocated_bytes,free_bytes,fragmentation,healthy}` | every 5 min |
+| `prometheus-nas-backup.service` (VPS-side) | `system/app/prometheus-nas-backup.nix` | textfile on VPS node-exporter → `nas_backup_{age_seconds,last_success,status}` + `backup_repo_size_bytes` | daily 13:00 |
+| `nas-backup-{configs,data}.service` (VPS-side) | `system/app/restic-backup-nas.nix` | textfile → `nas_offsite_backup_{last_success,status,duration_seconds,rsync_warnings}{job}` | daily 15:00 / 16:00 |
+| Docker `node-exporter` (NAS) | container in `exporters` compose project | host + ZFS + filesystem + hwmon metrics | scraped 9100 |
+| Docker `cadvisor` (NAS) | container in `exporters` compose project | container resource metrics | scraped 8081 |
 
-**2. Custom ZFS Pool Metrics Exporter** (API-based)
-- **Script**: `~/.local/bin/truenas-zfs-exporter.sh`
-- **Automation**: systemd user timer (`truenas-zfs-exporter.timer`)
-- **Schedule**: Every 5 minutes (OnBootSec=2min, OnUnitActiveSec=5min)
-- **Method**: SSH to TrueNAS → `midclt call pool.query` + `boot.get_state` → parse with jq → send to Graphite
-- **Metrics Exported**:
-  - `truenas.zfspool.<pool>.size` - Total pool capacity (bytes)
-  - `truenas.zfspool.<pool>.allocated` - Used space (bytes)
-  - `truenas.zfspool.<pool>.free` - Available space (bytes)
-  - `truenas.zfspool.<pool>.fragmentation` - Pool fragmentation percentage
-  - `truenas.zfspool.<pool>.healthy` - Pool health (1=ONLINE, 0=DEGRADED/OFFLINE)
-- **Pools Covered**: boot-pool, ssdpool, extpool
+**Scrape target**: `nas_node` (job) — Prometheus on VPS_PROD pulls `192.168.20.200:9100` (and `8081` for cAdvisor) over Tailscale. Configured via `prometheusRemoteTargets` in `VPS_PROD-config.nix`.
 
-**Prometheus Mapping** (in `prometheus-graphite.nix`):
-```nix
-{
-  match = "truenas.zfspool.*.*";
-  name = "truenas_zfspool_${2}";  # Metric name: truenas_zfspool_allocated
-  labels = {
-    pool = "${1}";  # Label: pool="boot-pool"
-  };
-}
-```
+### Grafana Dashboard (current)
 
-### Grafana Dashboard
+**Dashboard**: `system/app/grafana-dashboards/custom/nas.json` (auto-provisioned)
+**URL**: `https://grafana.${publicDomain}/d/<nas-uid>/nas`
 
-**Dashboard**: TrueNAS (UID: `truenas-storage`)
-**URL**: https://grafana.local.akunito.com/d/truenas-storage/truenas
+Panels use `node_*` and `nas_zfs_pool_*` metric names. No `truenas_*` series remain (`servers_truenas_*` TSDB tombstones purged 2026-05-14).
 
-**Key Panels**:
-1. **CPU Usage** - Stacked area chart (user, system, iowait, irq, softirq)
-2. **Memory Usage** - Gauge (used RAM as %)
-3. **ZFS ARC Hit Rate** - Gauge (cache efficiency, target >80%)
-4. **ZFS Pool Status** - Stat panel (1=ONLINE, 0=DEGRADED/OFFLINE) ✅
-5. **ZFS ARC Size** - Time series (current, target, max)
-6. **Memory Usage Over Time** - Time series (used, cached, buffers, free)
-7. **Network Traffic** - Time series (bond0 received/sent)
-8. **CPU Temperature** - Time series (4 cores, thresholds: 45°C yellow, 55°C red)
-9. **System Load** - Time series (1min, 5min, 15min averages)
-10. **Disk I/O** - Time series (read/write in KiB/s)
-11. **ZFS Pool Capacity** - Bar gauge (% used, thresholds: 70% yellow, 80% orange, 90% red) ✅
+### Prometheus Alert Rules
 
-**Recent Fixes (2026-02-09)**:
-- Panel 4: Fixed to use `truenas_zfspool_healthy{pool="X"}` instead of non-existent `truenas_zfspool_state_*_online`
-- Panel 11: Added new capacity bar gauge using `(truenas_zfspool_allocated / truenas_zfspool_size) * 100`
+Defined in `system/app/grafana.nix` under the `nas_alerts` and `backup_alerts` rule groups:
 
-### Prometheus Alerts
+| Alert | Source metric | Threshold | Severity | for |
+|-------|---------------|-----------|----------|-----|
+| `NASPoolCapacityWarning` | `node_filesystem_avail_bytes / node_filesystem_size_bytes` (zfs mounts) | >80% | warning | 5m |
+| `NASPoolCapacityCritical` | same | >90% | critical | 5m |
+| `NASPoolUnhealthy` | `node_zfs_zpool_state{state="online"} == 0` | online state lost | critical | 2m |
+| `NASDiskTempWarning` | `node_hwmon_temp_celsius{chip~"drivetemp.*"}` | >45°C | warning | 10m |
+| `NASDiskTempCritical` | same | >55°C | critical | 5m |
+| `NASNotReporting` | `up{job="nas_node"} == 0` | no scrape >5min | warning | 5m |
+| `NASMemoryHigh` | `node_memory_*` | >90% | warning | 10m |
+| `NasVpsBackupStale` | `nas_backup_age_seconds{dataset=~"vps_.*"}` | >36h | warning | 1h |
+| `NasWorkstationBackupStale` | `nas_backup_age_seconds{dataset=~"desk_.*\|x13_.*"}` | >30h | warning | 1h |
+| `NasBackupMissing` | `nas_backup_status == 0` | repo missing | critical | 15m |
+| `NasOffsiteBackupStale` | `(time() - nas_offsite_backup_last_success)` | >36h | warning | 1h |
+| `NasOffsiteBackupFailed` | `nas_offsite_backup_status == 0` | last run failed | critical | 15m |
+| `NasOffsiteBackupRsyncWarnings` | `nas_offsite_backup_rsync_warnings` | >0 | warning | 15m |
 
-**Alert Rules — historical** (`prometheus-graphite.nix` legacy `truenas_alerts` group, **removed**):
+> The legacy `truenas_alerts` rule group (used by the Graphite-based exporter) was removed in commit `f0ab8d4`. The legacy `TrueNAS*`-prefixed alert names are gone — see git history if needed.
 
-| Alert | Query | Threshold | Severity | Duration |
-|-------|-------|-----------|----------|----------|
-| TrueNASPoolCapacityWarning | `(allocated / size) * 100` | >80% | warning | 5m |
-| TrueNASPoolCapacityCritical | `(allocated / size) * 100` | >90% | critical | 5m |
-| TrueNASPoolUnhealthy | `truenas_zfspool_healthy` | ==0 | critical | 2m |
-| TrueNASDiskTempWarning | `truenas_disk_temperature_celsius` | >45°C | warning | 10m |
-| TrueNASDiskTempCritical | `truenas_disk_temperature_celsius` | >55°C | critical | 5m |
-| TrueNASNotReporting | `absent(truenas_cpu_percent)` | No data >5min | warning | 5m |
-| TrueNASMemoryHigh | `(used / total) * 100` | >90% | warning | 10m |
-
-**Alert Rules — current** (`grafana.nix` `nas_alerts` + `backup_alerts` groups):
-
-| Alert | Query (source metric) | Threshold | Severity | Duration |
-|-------|----------------------|-----------|----------|----------|
-| NASPoolCapacityWarning | `node_filesystem_avail/size` (zfs mounts) | >80% | warning | 5m |
-| NASPoolCapacityCritical | same | >90% | critical | 5m |
-| NASPoolUnhealthy | `node_zfs_zpool_state{state="online"} == 0` | online state lost | critical | 2m |
-| NASDiskTempWarning | `node_hwmon_temp_celsius{chip~"drivetemp.*"}` | >45°C | warning | 10m |
-| NASDiskTempCritical | same | >55°C | critical | 5m |
-| NASNotReporting | `up{job="nas_node"} == 0` | no scrape >5min | warning | 5m |
-| NASMemoryHigh | `node_memory_*` | >90% | warning | 10m |
-| NasVpsBackupStale | `nas_backup_age_seconds{dataset=~"vps_.*"}` | >36h | warning | 1h |
-| NasWorkstationBackupStale | `nas_backup_age_seconds{dataset=~"desk_.*\|x13_.*"}` | >30h | warning | 1h |
-| NasBackupMissing | `nas_backup_status == 0` | repo missing | critical | 15m |
-| NasOffsiteBackupStale | `(time() - nas_offsite_backup_last_success)` | >36h | warning | 1h |
-| NasOffsiteBackupFailed | `nas_offsite_backup_status == 0` | last run failed | critical | 15m |
-
-**Notification Channel**: Email (via VPS Postfix relay)
-
-### Email Alerts (TrueNAS Native)
-
-**SMTP Configuration**:
-- **Server**: VPS Postfix (100.64.0.6:25 via Tailscale)
-- **From**: truenas@akunito.com
-- **To**: diego88aku@gmail.com
-- **Security**: PLAIN (no TLS for internal relay)
-- **Test Status**: ✅ Working
-
-**Alert Levels**:
-- CRITICAL: Pool degradation, disk failures, scrub errors with errors
-- WARNING: Capacity warnings (>80%), SMART warnings, temperature warnings
-- NOTICE: Update availability, scrub completion (no errors)
+**Notification Channel**: Email + Matrix via VPS Postfix relay (Grafana alerts → contact points configured in `grafana.nix`).
 
 ---
 
 ## Maintenance Operations
 
-### Scheduled Tasks
+### Scheduled Tasks (NixOS-managed)
 
-| Task | Schedule | Retention | Purpose |
-|------|----------|-----------|---------|
-| **ZFS Scrub (ssdpool)** | 1st Sunday, 2:00 AM | N/A | Data integrity check |
-| **ZFS Scrub (extpool)** | 2nd Sunday, 2:00 AM | N/A | Data integrity check |
-| **SMART Short Test** | Every Saturday, 4:00 AM | N/A | Quick drive health check |
-| **SMART Long Test** | 15th of month, 3:00 AM | N/A | Comprehensive drive test |
-| **Config Backup** | Every Sunday, 3:00 AM | 30 days | System configuration export |
-| **Snapshots (media)** | Daily, 1:00 AM | 7 days | Point-in-time recovery |
-| **Custom ZFS Metrics** | Every 5 minutes | N/A | Prometheus monitoring |
+All scheduled tasks are declared as systemd timers in `system/app/nas-services.nix` or via standard NixOS modules (`services.zfs.autoScrub`, `services.smartd`).
+
+| Task | Schedule | Retention | Mechanism |
+|------|----------|-----------|-----------|
+| **ZFS scrub** (all pools) | Monthly, 1st Sun 02:00 | N/A | `services.zfs.autoScrub` |
+| **ZFS auto-snapshot** (ssdpool/media) | Daily 01:00 | 7 days | `services.zfs.autoSnapshot` |
+| **SMART short test** | Weekly, Sat 04:00 | N/A | `services.smartd.tests` |
+| **SMART long test** | Monthly, 15th 03:00 | N/A | `services.smartd.tests` |
+| **`nas-zfs-pool-metrics`** (Prometheus textfile) | Every 5 min | N/A | systemd timer |
+| **`nas-update-metrics`** (Prometheus textfile) | Every 5 min | N/A | systemd timer |
+| **NixOS auto-update** | Weekly | N/A | `services.nixos-auto-update` (see autoSystemUpdate module) |
 
 ### Manual Operations
 
-**Unlock Encrypted Datasets** (after reboot):
+**Unlock encrypted datasets** (after reboot — passphrase in `secrets/truenas-encryption-passphrase.txt`):
 ```bash
-# Using skill (recommended)
-/unlock-truenas
+# Recommended: use the skill
+/unlock-nas
 
-# Or manually via API
-curl -X POST https://192.168.20.200/api/v2.0/pool/dataset/unlock \
-  -H "Authorization: Bearer $(cat secrets/truenas-api-key.txt)" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "ssdpool",
-    "unlock_options": {
-      "datasets": [
-        {"name": "ssdpool/media", "passphrase": "YOUR_PASSPHRASE"}
-      ]
-    }
-  }'
+# Or manually via ZFS native commands
+ssh -A akunito@192.168.20.200 'sudo zfs load-key -r ssdpool && sudo zfs mount -a'
+# (Will prompt for the passphrase; or pipe via -L file:///path/to/keyfile)
 ```
 
-**Check Pool Status**:
+**Check pool status**:
 ```bash
-ssh -A akunito@192.168.20.200 'zpool status'
-ssh -A akunito@192.168.20.200 'zpool list'
+ssh -A akunito@192.168.20.200 'zpool status -v'
+ssh -A akunito@192.168.20.200 'zpool list -v'
 ```
 
-**Manual Scrub**:
+**Trigger a manual scrub**:
 ```bash
-ssh -A akunito@192.168.20.200 'midclt call pool.scrub "ssdpool" "START"'
+ssh -A akunito@192.168.20.200 'sudo zpool scrub ssdpool'
+# Monitor with: zpool status ssdpool
+# Cancel with:  sudo zpool scrub -s ssdpool
 ```
 
-**Check SMART Status**:
+**Check SMART status of all drives**:
 ```bash
-ssh -A akunito@192.168.20.200 'midclt call disk.query | jq ".[] | {name: .devname, temp: .temperature, smart: .smart_enabled}"'
+ssh -A akunito@192.168.20.200 'sudo smartctl --scan | awk "{print \$1}" | xargs -I{} sudo smartctl -H -A {} 2>&1 | grep -E "Device|Temperature_Celsius|SMART overall|Reallocated"'
+# Or use the existing audit doc: docs/akunito/known-issues/reference_nas_disk_smart.md
 ```
 
-**Download Config Backup**:
+**Trigger backup metric refresh** (idempotent, used during triage):
 ```bash
-curl -X POST https://192.168.20.200/api/v2.0/config/save \
-  -H "Authorization: Bearer $(cat secrets/truenas-api-key.txt)" \
-  -H "Content-Type: application/json" \
-  -d '{"secretseed": true}' \
-  -k -o truenas-config-$(date +%Y%m%d).tar
+ssh -A akunito@192.168.20.200 'sudo systemctl start nas-zfs-pool-metrics.service'
+# Then on VPS: curl localhost:9090/api/v1/query?query=nas_zfs_pool_healthy
 ```
 
-**Manual ZFS Metrics Export**:
+**Restart NFS / SMB**:
 ```bash
-~/.local/bin/truenas-zfs-exporter.sh
+ssh -A akunito@192.168.20.200 'sudo systemctl restart nfs-server.service'
+ssh -A akunito@192.168.20.200 'sudo systemctl restart smbd.service nmbd.service'
 ```
 
-**Restart Services**:
+**Restart all Docker projects** (after suspend/resume race or upgrade):
 ```bash
-ssh -A akunito@192.168.20.200 'midclt call service.restart nfs'
-ssh -A akunito@192.168.20.200 'midclt call service.restart cifs'
+ssh -A akunito@192.168.20.200 'systemctl --user restart docker-compose-*.service'
+# Root-Docker project (vpn-media):
+ssh -A akunito@192.168.20.200 'sudo systemctl restart docker-compose-vpn-media.service'
 ```
+
+**Deploy a config change**:
+```bash
+# From a workstation:
+git push origin main
+ssh -A akunito@192.168.20.200 "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles NAS_PROD -s -u -d"
+# Flags: -s system rebuild, -u Home Manager, -d skip docker auto-restart (containers are already managed by systemd-compose units)
+```
+
+> **Reminder**: never run bare `sudo nixos-rebuild switch` on the NAS — it picks up the wrong `hardware-configuration.nix` and can brick the boot. See `CLAUDE.md` for the deploy invariant.
 
 ### ZFS Local Replication (ELIMINATED)
 
@@ -360,80 +281,80 @@ ssh -A akunito@192.168.20.200 'midclt call service.restart cifs'
 
 ## Troubleshooting
 
-### Boot Pool Shows Offline/Degraded in Grafana
+### Datasets locked after reboot
 
-**Symptoms**: Grafana dashboard shows boot-pool as offline/degraded despite TrueNAS reporting ONLINE
+**Symptoms**: NFS/SMB shares unavailable, Docker containers fail to start with "no such file or directory" on `/mnt/ssdpool/*` paths.
 
-**Root Cause**: TrueNAS SCALE 25.04+ doesn't export ZFS pool capacity metrics via built-in Graphite reporter
+**Root cause**: ssdpool datasets are encrypted (AES-256-GCM, passphrase-based). Keys are not auto-loaded on boot by design — manual unlock prevents unattended dataset access if the host is physically stolen.
 
-**Solution**: Custom ZFS exporter (implemented 2026-02-09)
-- Script: `~/.local/bin/truenas-zfs-exporter.sh`
-- Automation: `truenas-zfs-exporter.timer` (systemd user timer, every 5 minutes)
-- Grafana panel fixed to use `truenas_zfspool_healthy{pool="boot-pool"}`
-
-**Verification**:
+**Solution**:
 ```bash
-# Check timer status
-systemctl --user status truenas-zfs-exporter.timer
+# Recommended skill:
+/unlock-nas
 
-# Manually run exporter
-~/.local/bin/truenas-zfs-exporter.sh
+# Or manually:
+ssh -A akunito@192.168.20.200 'sudo zfs load-key -r ssdpool && sudo zfs mount -a'
 
-# Verify metrics in Prometheus (on VPS)
-ssh -A -p 56777 akunito@100.64.0.6 'curl -s http://localhost:9109/metrics | grep truenas_zfspool_healthy'
+# Check dataset lock state
+ssh -A akunito@192.168.20.200 'zfs get -t filesystem encryption,keystatus,mounted ssdpool'
 ```
 
-### Datasets Locked After Reboot
+### Backup metric reporting wrong values
 
-**Symptoms**: NFS/SMB shares unavailable, services report "Dataset not found"
+**Symptoms**: `nas_backup_status{dataset="X"} == 0` or `backup_repo_size_bytes` much smaller than expected.
 
-**Root Cause**: Encrypted datasets require manual passphrase entry after reboot
+**Diagnostic path** (informed by AINF triage 2026-05-14):
+1. Confirm the source dir actually has data — `sudo du -sh <source>` on the writer.
+2. Confirm the user running the backup can read everything — `find <source> | wc -l` as that user.
+3. If unreadable: check ZFS `acltype`, then apply POSIX ACL — see `vps-backup-source-acls.service` / `nas-backup-source-acls.service` patterns.
+4. Check restic exclude patterns — unanchored `*/foo/*` patterns can accidentally match parent directories. Use absolute paths (`/var/lib/nextcloud-data/foo/*`).
+5. Check `nas_offsite_backup_rsync_warnings{job}` — non-zero means rsync is silently dropping files.
 
-**Solution**: Use `/unlock-truenas` skill or unlock via API
+Full root-cause history of the nextcloud 0-byte saga is in `docs/akunito/known-issues.md`.
+
+### Email alerts not received
+
+**Symptoms**: No emails from Grafana despite alerts being triggered.
+
+**Common issues**:
+1. **VPS Postfix not running** — `ssh -A -p 56777 akunito@100.64.0.6 'systemctl status postfix'`
+2. **Network not allowed** — ensure NAS Tailscale IP is in `mynetworks` (managed declaratively in postfix module on VPS_PROD).
+3. **Grafana contact point** — check `grafana.nix` contact points + alertmanager rules.
+
+**Test**:
 ```bash
-# Using skill (recommended)
-/unlock-truenas
-
-# Check dataset lock status
-ssh -A akunito@192.168.20.200 'midclt call pool.dataset.query | jq ".[] | select(.encrypted == true) | {name, locked, key_loaded}"'
-```
-
-### Email Alerts Not Received
-
-**Symptoms**: No emails from TrueNAS despite alerts being triggered
-
-**Common Issues**:
-1. **SMTP relay not accessible** - Check if VPS Postfix is running and reachable via Tailscale
-2. **Network not allowed** - Ensure TrueNAS Tailscale IP is in postfix mynetworks on VPS
-3. **Email configuration wrong** - Verify SMTP settings in TrueNAS System > Email
-
-**Verification**:
-```bash
-# Test email from TrueNAS
-ssh -A akunito@192.168.20.200 'midclt call mail.send "{\"subject\": \"Test\", \"text\": \"Test email\"}"'
+# Send a test mail from the NAS via the Postfix relay
+ssh -A akunito@192.168.20.200 'echo "test body" | mail -s "NAS test" diego88aku@gmail.com'
 
 # Check postfix logs on VPS
 ssh -A -p 56777 akunito@100.64.0.6 'journalctl -u postfix --no-pager -n 50'
 ```
 
-### NFS Mounts Stale on Proxmox/LXC
+### NFS mounts stale on workstations / containers
 
-**Symptoms**: NFS mounts hang, `ls` commands freeze, containers unable to access storage
+**Symptoms**: NFS mounts hang, `ls` freezes, services fail with `Stale file handle`.
 
 **Solutions**:
 ```bash
-# On Proxmox/LXC - force unmount
-umount -f /mnt/truenas_media
+# On the client (DESK, LAPTOP, LXC) — force-unmount
+sudo umount -f /mnt/NFS_media
 
-# Remount
-mount -a
+# Trigger automount remount
+ls /mnt/NFS_media  # or whatever path
 
-# Check NFS service on TrueNAS
-ssh -A akunito@192.168.20.200 'midclt call service.query | jq ".[] | select(.service == \"nfs\") | {state, enable}"'
+# Check the NFS server side
+ssh -A akunito@192.168.20.200 'sudo systemctl status nfs-server.service'
+ssh -A akunito@192.168.20.200 'sudo exportfs -v'
 
-# Restart NFS if needed
-ssh -A akunito@192.168.20.200 'midclt call service.restart nfs'
+# Restart NFS server if needed
+ssh -A akunito@192.168.20.200 'sudo systemctl restart nfs-server.service'
 ```
+
+### Post-suspend Docker race
+
+**Symptoms**: After S3 resume (11:00), some Docker containers don't restart; `sshd` may appear refused briefly.
+
+**Known issue**: tracked in `memory/project_nas_suspend_resume_race.md`. Workaround: `sudo systemctl restart docker` on the NAS after the resume completes. The `docker-post-resume.service` should handle it, but a kernel/iptables interaction occasionally needs a manual nudge.
 
 ---
 
@@ -441,64 +362,58 @@ ssh -A akunito@192.168.20.200 'midclt call service.restart nfs'
 
 | Version | Date | Changes | Issues |
 |---------|------|---------|--------|
-| 24.10.2 | 2025-12-XX | Fresh install on new NVMe boot devices after Patriot SSD failure | Boot pool migration successful |
-| 25.04.2.6 | 2026-02-09 | Major version upgrade | Datasets locked after reboot (expected), Graphite pool metrics missing (fixed with custom exporter) |
+| TrueNAS 24.10.2 | 2025-12-XX | Fresh install on new NVMe boot devices after Patriot SSD failure | Boot pool migration successful |
+| TrueNAS 25.04.2.6 | 2026-02-09 | Major version upgrade | Datasets locked after reboot, Graphite pool-capacity metrics missing |
+| **NixOS 25.11** | **2026-03 (AINF-336)** | **Migrated off TrueNAS SCALE to NixOS NAS**: declarative system, native ZFS, Docker compose under systemd, all monitoring moved from Graphite to Prometheus textfile collector | See `memory/project_truenas_to_nixos.md` and `docs/akunito/infrastructure/archived/migration/` |
+| NixOS auto-update | ongoing | Weekly `services.nixos-auto-update` keeps the system patched declaratively | See `feedback_nas_deploy_flags.md` post-migration audit (2026-04-15) |
 
-**Upgrade Notes (25.04.2.6)**:
-- Boot pool upgraded from 24.10.2 → 25.04.2.6 without issues
-- All datasets locked after reboot (expected behavior for encrypted pools)
-- Built-in Graphite reporter no longer exports ZFS pool capacity metrics
-- Custom exporter created to fill monitoring gap
-- Alert rules updated from filesystem-based to pool-based metrics
-- Grafana dashboard updated to use new metric names
-
-**Next Upgrade Considerations**:
-- Test dataset auto-unlock on major version upgrades
-- Verify Graphite metrics compatibility
-- Review API changes (automation-key may need regeneration)
+**Next upgrade considerations**:
+- Test that `services.zfs.autoSnapshot` continues to work across nixpkgs `system.stateVersion` bumps
+- Verify Docker compose project units still come up cleanly on major nixpkgs jumps (Docker / runc API changes)
+- After ANY change touching `prometheus-nas-backup.nix` or `restic-backup-nas.nix`: trigger the units manually and verify zero `nas_offsite_backup_rsync_warnings`
 
 ---
 
 ## Related Documentation
 
-- [TrueNAS Docker Services](./truenas-services.md) - Full Docker container inventory and compose projects
-- [TrueNAS Migration Complete Report](../truenas-migration-complete.md)
-- [Boot Pool Analysis (2026-02-09)](~/Nextcloud/myLibrary/MySecurity/TrueNAS/boot-pool-analysis-2026-02-09.md)
-- [Unlock TrueNAS Skill](.claude/skills/unlock-truenas.md)
-- [Infrastructure Overview](../INFRASTRUCTURE.md)
-- [Monitoring Stack](./monitoring-stack.md)
+- [NAS Docker services](./nas-services.md) — full Docker container inventory + compose projects
+- [TrueNAS → NixOS migration archive](../archived/migration/) — historical migration record (AINF-336)
+- [Unlock NAS skill](../../../../.claude/skills/unlock-nas.md) — interactive ZFS dataset unlock
+- [Known issues](../../known-issues.md) — backup pipeline triage history (nextcloud 0-byte bug, ACL fixes, etc.)
+- [Infrastructure overview](../INFRASTRUCTURE.md)
 
 ---
 
 ## Quick Reference
 
-**Essential Commands**:
+**Essential commands** (all NixOS / ZFS native — no `midclt`):
 ```bash
-# SSH access
-ssh -A akunito@192.168.20.200
+# SSH
+ssh -A akunito@192.168.20.200          # LAN
+ssh -A akunito@nas-aku                  # Tailscale (if magic DNS is up)
 
 # Pool status
-zpool status
-zpool list
+zpool status -v
+zpool list -v
 
-# Dataset lock status
-midclt call pool.dataset.query | jq '.[] | select(.encrypted) | {name, locked}'
+# Dataset state (encryption / mount)
+zfs get -t filesystem encryption,keystatus,mounted ssdpool
 
-# Service status
-midclt call service.query | jq '.[] | select(.service | test("nfs|cifs")) | {service, state}'
+# Service state (NFS / SMB / Docker compose units)
+sudo systemctl status nfs-server.service smbd.service nmbd.service
+systemctl --user status 'docker-compose-*.service'
 
 # System info
-midclt call system.info | jq '{version, uptime_seconds, hostname}'
-
-# API health
-curl -s https://192.168.20.200/api/v2.0/system/info -H "Authorization: Bearer $TRUENAS_API_KEY" | jq .version
+hostnamectl
+uptime
+zpool history -i ssdpool | tail
 ```
 
-**Monitoring URLs**:
-- Grafana Dashboard: https://grafana.akunito.com/d/truenas-storage/truenas
-- Prometheus Metrics: VPS localhost:9109/metrics (search: `truenas_`)
-- Prometheus Alerts: VPS localhost:9090/alerts (search: `TrueNAS`)
+**Monitoring URLs** (replace `${publicDomain}` with the live one from `secrets/domains.nix`):
+- Grafana: `https://grafana.${publicDomain}/d/<nas-uid>/nas`
+- Prometheus targets: `https://prometheus.${publicDomain}/targets?search=nas_node`
+- Prometheus alerts: `https://prometheus.${publicDomain}/alerts?search=NAS`
 
 **Emergency Contacts**:
-- Email Alerts: diego88aku@gmail.com
-- Matrix Bot: @claudebot:akunito.com (on VPS)
+- Email Alerts: diego88aku@gmail.com (Grafana → Postfix on VPS_PROD)
+- Matrix Bot: `@claudebot:matrix.${publicDomain}`

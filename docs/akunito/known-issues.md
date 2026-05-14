@@ -144,7 +144,22 @@ NixOS NAS, then removed the entire config-export block from
 `restic-backup-nas.nix` plus the now-unreferenced `nasResticBackupApiKeyFile`
 and `nasResticBackupApiPort` defaults.
 
-## `docs/akunito/infrastructure/services/nas.md` monitoring section is broadly stale
+## ~~`docs/akunito/infrastructure/services/nas.md` monitoring section is broadly stale~~ — FIXED 2026-05-14
+
+**Resolved**. Full rewrite of the operational sections:
+- "S3 Sleep Schedule" — NixOS systemd terminology, drop TrueNAS read-only-root warning
+- "Docker Services" — point at `nas-services.md`, mention rootless + root project split, compose root
+- "Security Configuration" — `API Access (REMOVED)` notice, `/unlock-nas` skill in place of `/unlock-truenas`, native `zfs load-key` recipe
+- "Monitoring & Alerting" — clean current-state table (producers / textfiles / metrics / scrape job), current alert rules table with all 13 NAS-related rules
+- "Maintenance Operations" — replaced every `midclt call` recipe with `zpool` / `zfs` / `systemctl` / `smartctl` equivalents; added a reminder about the `install.sh` deploy invariant
+- "Troubleshooting" — replaced the boot-pool/Graphite section with a current backup-metric triage path (informed by the AINF triage), updated NFS recipes
+- "Upgrade History" — added the NixOS migration row
+- "Related Documentation" — updated links
+- "Quick Reference" — NixOS-native commands; URLs templated on `${publicDomain}`
+
+File shrunk from ~505 → ~419 lines.
+
+## (historical entry kept for reference of what was wrong before)
 
 **Found**: 2026-05-14, during the TrueNAS→NAS rename.
 
