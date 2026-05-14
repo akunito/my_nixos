@@ -84,7 +84,8 @@ let
       log "Backing up: ${lib.concatStringsSep " " backupPaths}"
       $RESTIC -r "$REPO" -o "sftp.command=$SFTP_CMD" \
         backup ${lib.concatStringsSep " " backupPaths}${excludeFlags}${tagFlags} \
-        --limit-upload 50000 --verbose 2>&1
+        --limit-upload 50000 --verbose=2 2>&1 | head -200 || true
+      # NB: pipe to head guards against gigantic verbose output flooding the journal during triage
 
       # Prune old snapshots
       log "Pruning snapshots (keep-within ${toString retentionDays}d${retentionExtra})..."
