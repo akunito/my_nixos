@@ -381,7 +381,7 @@ in {
               return-type = "json";
               interval = systemSettings.goaCalendarWidgetInterval;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ps.recurring-ical-events ])}/bin/python3";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal-open.sh";
+              on-click = "${pkgs.gnome-calendar}/bin/gnome-calendar";
               tooltip = true;
             };
 
@@ -577,7 +577,7 @@ in {
               return-type = "json";
               interval = systemSettings.goaCalendarWidgetInterval;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ps.recurring-ical-events ])}/bin/python3";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal-open.sh";
+              on-click = "${pkgs.gnome-calendar}/bin/gnome-calendar";
               tooltip = true;
             };
 

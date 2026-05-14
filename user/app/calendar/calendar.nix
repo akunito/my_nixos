@@ -1,14 +1,18 @@
 { config, pkgs, lib, systemSettings, ... }:
 
 let
-  # Typelibs needed by gi.require_version(...) inside eds-refresh.py.
-  # EDataServer.typelib pulls in libxml2 (from gobject-introspection itself),
-  # GLib/Gio (from glib), and libsoup. Missing any -> import fails at runtime.
-  edsTypelibPath = lib.concatStringsSep ":" [
-    "${pkgs.evolution-data-server}/lib/girepository-1.0"
-    "${pkgs.gobject-introspection}/lib/girepository-1.0"
-    "${pkgs.glib.out}/lib/girepository-1.0"
-    "${pkgs.libsoup_3.out}/lib/girepository-1.0"
+  # Typelibs needed by gi.require_version() inside eds-refresh.py.
+  # EDataServer.typelib transitively imports libxml2 (from gobject-introspection
+  # itself), GLib/Gio (glib), libsoup, json-glib, libnotify, libical. Missing
+  # any one -> the gi import fails at runtime.
+  edsTypelibPath = lib.makeSearchPath "lib/girepository-1.0" [
+    pkgs.evolution-data-server
+    pkgs.gobject-introspection
+    pkgs.glib
+    pkgs.libsoup_3
+    pkgs.json-glib
+    pkgs.libnotify
+    pkgs.libical
   ];
   edsRefreshWrapper = pkgs.writeShellApplication {
     name = "eds-refresh";
@@ -32,11 +36,6 @@ in
 
     home.file.".config/sway/scripts/waybar-gcal.sh" = {
       source = ../../wm/sway/scripts/waybar-gcal.sh;
-      executable = true;
-    };
-
-    home.file.".config/sway/scripts/waybar-gcal-open.sh" = {
-      source = ../../wm/sway/scripts/waybar-gcal-open.sh;
       executable = true;
     };
 
