@@ -3,9 +3,14 @@
 let
   # Wrapper for Vivaldi to force KWallet 6 password store
   # This ensures Vivaldi uses KWallet instead of defaulting to GNOME Keyring or Basic storage
+  # proprietaryCodecs=true bundles libffmpeg.so at build time so Vivaldi
+  # doesn't try to fetch it at runtime (fails on read-only /nix/store and
+  # crashes the first launch — breaks GOA's xdg-open OAuth handoff).
+  vivaldi-pkg = pkgs.vivaldi.override { proprietaryCodecs = true; };
+
   vivaldi-with-kwallet = pkgs.symlinkJoin {
     name = "vivaldi";
-    paths = [ pkgs.vivaldi ];
+    paths = [ vivaldi-pkg ];
     buildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/vivaldi \
