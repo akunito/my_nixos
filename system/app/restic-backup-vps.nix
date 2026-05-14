@@ -74,16 +74,9 @@ let
 
       # Run backup
       log "Backing up: ${lib.concatStringsSep " " backupPaths}"
-      # --no-scan: skip the upfront file-count scan. The scan is purely cosmetic
-      # (for progress estimation), but it has a bug when the source path has
-      # UID-mapped (rootless docker) ownership at parent levels — it returns
-      # 0 files even when the actual backup walker can see everything correctly.
-      # AINF triage 2026-05-14 isolated this; experiment confirmed --no-scan
-      # processes 152,581 files / 152 GiB on the same nextcloud source where
-      # the default scan reported 0.
       $RESTIC -r "$REPO" -o "sftp.command=$SFTP_CMD" \
         backup ${lib.concatStringsSep " " backupPaths}${excludeFlags}${tagFlags} \
-        --no-scan --limit-upload 50000 --verbose 2>&1
+        --limit-upload 50000 --verbose 2>&1
 
       # Prune old snapshots
       log "Pruning snapshots (keep-within ${toString retentionDays}d${retentionExtra})..."
@@ -208,19 +201,27 @@ let
     backupPaths = [ "/var/lib/nextcloud-data" ];
     excludes = [
       "*.log" "*.part" "upload_tmp/*"
-      # Nextcloud app code (regenerated from Docker image / app store)
-      "*/3rdparty/*"
-      "*/apps/*"
-      "*/core/*"
-      "*/dist/*"
-      "*/lib/*"
-      "*/themes/*"
-      "*/vendor-bin/*"
-      # Nextcloud data caches and regenerable content
-      "*/files_trashbin/*"
-      "*/files_versions/*"
-      "*/appdata_*/preview/*"
-      "*/cache/*"
+      # Nextcloud app code (regenerated from Docker image / app store).
+      # IMPORTANT: anchor each pattern to the source root with the
+      # /var/lib/nextcloud-data/ prefix. A naked "*/lib/*" pattern matches
+      # /var/lib/ANYTHING because restic glob `*` doesn't cross `/`, so
+      # "*/lib/*" matches the 3-segment path /var/lib/nextcloud-data itself
+      # — excluding the entire source. (AINF triage 2026-05-14: this caused
+      # all nextcloud backups to be 0 B for months.)
+      "/var/lib/nextcloud-data/3rdparty/*"
+      "/var/lib/nextcloud-data/apps/*"
+      "/var/lib/nextcloud-data/core/*"
+      "/var/lib/nextcloud-data/dist/*"
+      "/var/lib/nextcloud-data/lib/*"
+      "/var/lib/nextcloud-data/themes/*"
+      "/var/lib/nextcloud-data/vendor-bin/*"
+      # Nextcloud data caches and regenerable content (these patterns are
+      # already unambiguous because no parent of the source contains them,
+      # but anchored for consistency).
+      "/var/lib/nextcloud-data/data/*/files_trashbin/*"
+      "/var/lib/nextcloud-data/data/*/files_versions/*"
+      "/var/lib/nextcloud-data/data/appdata_*/preview/*"
+      "/var/lib/nextcloud-data/data/*/cache/*"
     ];
     tags = [ "nextcloud" ];
     schedule = "Sun *-*-* 20:00:00";
