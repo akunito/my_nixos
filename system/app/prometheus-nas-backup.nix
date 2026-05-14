@@ -69,10 +69,13 @@ HEADER
       REPO_PATH="$(echo "$entry" | cut -d'|' -f2)"
       DIRECTION="$(echo "$entry" | cut -d'|' -f3)"
 
-      # Get newest snapshot timestamp + repo size in one SSH call
+      # Get newest snapshot timestamp + repo size in one SSH call.
+      # No sudo — restic repos on the NAS are owned akunito:users.
+      # (Previously used sudo, which silently failed with "a password is required"
+      # because akunito on NAS doesn't have NOPASSWD for find/du.)
       RESULT=$(ssh $SSH_OPTS "$NAS_USER@$NAS_HOST" \
-        "echo NEWEST=\$(sudo find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1); echo SIZE=\$(sudo du -sb $REPO_PATH 2>/dev/null | cut -f1)" \
-        2>/dev/null || echo "")
+        "echo NEWEST=\$(find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1); echo SIZE=\$(du -sb $REPO_PATH 2>/dev/null | cut -f1)" \
+        || echo "")
 
       NEWEST_TS=$(echo "$RESULT" | grep '^NEWEST=' | cut -d= -f2)
       REPO_SIZE=$(echo "$RESULT" | grep '^SIZE=' | cut -d= -f2)
