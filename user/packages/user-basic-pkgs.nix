@@ -26,7 +26,7 @@
 
       # Security & Privacy
       pkgs-unstable.bitwarden-desktop
-      pkgs.git-crypt # Git transparent encryption
+      pkgs-unstable.git-crypt # Git transparent encryption (unstable to dedupe with development.nix on stable-system profiles)
       pkgs.bfg-repo-cleaner # Git history cleaner (BFG Repo-Cleaner)
 
       # Cloud & Sync

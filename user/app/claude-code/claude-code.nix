@@ -299,7 +299,7 @@ in
     pkgs-unstable.claude-code  # Claude Code CLI (native binary from GCS, not npm)
     pkgs.nodejs_22                 # Node.js for npx (required by Perplexity MCP)
     pkgs-unstable.uv               # Python package runner (uvx, required by Plane MCP)
-    pkgs.git-crypt                 # Transparent file encryption in git
+    pkgs-unstable.git-crypt        # Transparent file encryption in git (unstable to dedupe across modules)
   ];
 
   # Generate settings JSON as a base reference file (for the activation script to copy from)
