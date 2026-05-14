@@ -28,7 +28,12 @@ in
 
     # Security
     fuseAllowOther = false;
-    pkiCertificates = [ /home/aga/.certificates/ca.cert.pem ];
+    # Guard with pathExists so the profile is eval-clean on other machines
+    # (e.g. DESK) that don't have /home/aga/.certificates/ca.cert.pem on disk.
+    pkiCertificates =
+      if builtins.pathExists /home/aga/.certificates/ca.cert.pem
+      then [ /home/aga/.certificates/ca.cert.pem ]
+      else [ ];
 
     # GUI askpass: popup password dialog when sudo has no terminal (e.g., Claude Code)
     sudoAskpassEnable = true;

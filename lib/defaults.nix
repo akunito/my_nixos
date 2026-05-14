@@ -489,8 +489,9 @@
     nasResticBackupEnable = false;
     nasResticBackupHost = "192.168.20.200";                          # NAS storage IP
     nasResticBackupUser = "akunito";                                 # SSH user for rsync
-    nasResticBackupApiKeyFile = "/etc/secrets/truenas-api-key";      # API key file (path kept — live secret)
-    nasResticBackupApiPort = 9443;                                    # NAS web UI HTTPS port (legacy TrueNAS UI port — audit if still used)
+    # nasResticBackupApiKeyFile + nasResticBackupApiPort removed — TrueNAS UI
+    # on 9443 isn't served by the NixOS NAS; the config-export block they
+    # backed was retired in restic-backup-nas.nix.
     nasResticBackupLocalDir = "/var/lib/truenas-backups";             # Local staging + restic repo dir (path kept — live restic repos)
 
     # === Centralized Database Server (LXC_database) ===

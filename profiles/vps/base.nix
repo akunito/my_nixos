@@ -33,7 +33,8 @@
   ++ lib.optional (systemSettings.prometheusBlackboxEnable or false) ../../system/app/prometheus-blackbox.nix
   ++ lib.optional (systemSettings.prometheusPveExporterEnable or false) ../../system/app/prometheus-pve.nix
   ++ lib.optional (systemSettings.prometheusSnmpExporterEnable or false) ../../system/app/prometheus-snmp.nix
-  ++ lib.optional (systemSettings.prometheusGraphiteEnable or false) ../../system/app/prometheus-graphite.nix
+  # prometheus-graphite removed 2026-05-14 (archived to system/app/archived/) —
+  # all consumers (truenas Graphite reporter, custom ZFS exporter) retired.
   ++ lib.optional (systemSettings.prometheusPveBackupEnable or false) ../../system/app/prometheus-pve-backup.nix
   ++ lib.optional (systemSettings.prometheusPfsenseBackupEnable or false) ../../system/app/prometheus-pfsense-backup.nix
   ++ lib.optional (systemSettings.prometheusNasBackupEnable or false) ../../system/app/prometheus-nas-backup.nix

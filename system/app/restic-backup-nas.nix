@@ -25,8 +25,8 @@ let
   nasHost = systemSettings.nasResticBackupHost or "192.168.20.200";
   nasUser = systemSettings.nasResticBackupUser or "akunito";
   localDir = systemSettings.nasResticBackupLocalDir or "/var/lib/truenas-backups";
-  apiKeyFile = systemSettings.nasResticBackupApiKeyFile or "/etc/secrets/truenas-api-key";
-  nasApiPort = toString (systemSettings.nasResticBackupApiPort or 9443);
+  # apiKeyFile + nasApiPort removed alongside the config-export block (the
+  # legacy TrueNAS UI on port 9443 isn't served by the NixOS NAS).
   sshKey = "/home/${username}/.ssh/id_ed25519_restic";
   sshOpts = "-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new -i ${sshKey}";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
@@ -158,12 +158,14 @@ METRICS
     };
   };
 
-  # --- Configs job: compose files + NAS system config export ---
+  # --- Configs job: compose files only (NAS system config export retired
+  # after AINF-336 migration — TrueNAS UI on port 9443 is not served by the
+  # NixOS NAS; the API-export block was a no-op + WARNING noise on every run) ---
   configsBackup = mkNasBackup {
     name = "configs";
     passwordFile = "/etc/secrets/restic-truenas-configs";  # path historical, file is on disk
     schedule = "*-*-* 15:00:00";
-    description = "Docker compose files + NAS system config";
+    description = "Docker compose files (NixOS NAS — no API config export)";
     rsyncScript = ''
       # Rsync compose directory (all docker-compose.yml + env files)
       log "Rsyncing compose configs..."
@@ -172,30 +174,6 @@ METRICS
         --exclude='*.log' --exclude='*.tmp' --exclude='*.cache' \
         ${nasUser}@${nasHost}:/mnt/ssdpool/docker/compose/ \
         "$STAGING/docker-configs/" 2>&1
-
-      # Export NAS system config via API (legacy TrueNAS UI endpoint — audit if still served)
-      log "Exporting NAS system config via API..."
-      API_KEY=$(cat ${apiKeyFile})
-      CONFIG_FILE="$STAGING/truenas-config/truenas-config-$(date +%Y%m%d).tar"
-      mkdir -p "$STAGING/truenas-config"
-
-      if curl -sk --max-time 30 \
-        -H "Authorization: Bearer $API_KEY" \
-        -X POST "https://${nasHost}:${nasApiPort}/api/v2.0/config/save" \
-        -o "$CONFIG_FILE.tmp" 2>/dev/null; then
-        if [ -s "$CONFIG_FILE.tmp" ]; then
-          mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-          # Remove old config exports (keep 7 days)
-          find "$STAGING/truenas-config" -name "truenas-config-*.tar" -mtime +7 -delete 2>/dev/null || true
-          log "NAS config saved to $CONFIG_FILE"
-        else
-          rm -f "$CONFIG_FILE.tmp"
-          log "WARNING: NAS config export returned empty file (non-fatal)"
-        fi
-      else
-        rm -f "$CONFIG_FILE.tmp"
-        log "WARNING: NAS config API call failed (non-fatal)"
-      fi
     '';
   };
 
