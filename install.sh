@@ -20,8 +20,16 @@ RESET='\033[0m'
 
 #
 # Argument parsing
-# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-d|--skip-docker] [-h|--skip-hardware] [-q|--quick] [-n|--no-git-update]
+# - Supports: ./install.sh <path> <profile> [sudo_password] [-s|--silent] [-u|--update] [-d|--skip-docker] [-h|--skip-hardware] [-q|--quick] [-n|--no-git-update] [-b|--boot]
 # - Also supports flags anywhere without breaking positional parsing.
+#
+# -b|--boot: Use `nixos-rebuild boot` instead of `switch`. Stages the new
+#            system generation as the next boot target WITHOUT activating it
+#            live. Required when nixos-rebuild reports a "switch inhibitor"
+#            (e.g. dbus -> dbus-broker, kernel upgrade across major versions)
+#            that would break the running session. Home Manager + post-sync
+#            hooks are SKIPPED in boot mode — re-run install.sh after reboot
+#            to apply them on the new generation.
 #
 SILENT_MODE=false
 UPDATE_FLAKE_LOCK=false
@@ -29,6 +37,7 @@ SKIP_DOCKER=false
 SKIP_HARDWARE=false
 FORCE_MODE=false
 NO_GIT_UPDATE=false
+BOOT_MODE=false
 POSITIONAL_ARGS=()
 for arg in "$@"; do
     case "$arg" in
@@ -54,6 +63,9 @@ for arg in "$@"; do
             ;;
         -n|--no-git-update)
             NO_GIT_UPDATE=true
+            ;;
+        -b|--boot)
+            BOOT_MODE=true
             ;;
         *)
             POSITIONAL_ARGS+=("$arg")
@@ -987,7 +999,11 @@ fi
 hardening_files $SCRIPT_DIR $SUDO_CMD
 
 # Rebuild system
-echo -e "\n${CYAN}Rebuilding system with flake...${RESET} "
+if [ "$BOOT_MODE" = true ]; then
+    echo -e "\n${CYAN}Rebuilding system with flake (BOOT mode — staging for next reboot)...${RESET} "
+else
+    echo -e "\n${CYAN}Rebuilding system with flake...${RESET} "
+fi
 echo "  " # To clean up color codes
 
 # Save generation before rebuild for rollback
@@ -1019,7 +1035,12 @@ debug_log "A_parse_quote" "install.sh:rebuild" "preRebuildGeneration" "{\"genera
 debug_log "A_parse_quote" "install.sh:rebuild" "nixos-rebuild starting" "{\"flake\":\"$SCRIPT_DIR#$PROFILE\"}"
 # #endregion
 
-$SUDO_CMD nixos-rebuild switch --flake $SCRIPT_DIR#$PROFILE --show-trace --impure || REBUILD_EXIT_CODE=$?
+if [ "$BOOT_MODE" = true ]; then
+    NIXOS_REBUILD_OP="boot"
+else
+    NIXOS_REBUILD_OP="switch"
+fi
+$SUDO_CMD nixos-rebuild $NIXOS_REBUILD_OP --flake $SCRIPT_DIR#$PROFILE --show-trace --impure || REBUILD_EXIT_CODE=$?
 
 # #region agent log
 debug_log "A_parse_quote" "install.sh:rebuild" "nixos-rebuild finished" "{\"exitCode\":$REBUILD_EXIT_CODE}"
@@ -1072,6 +1093,22 @@ else
         rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
         exit 1
     fi
+fi
+
+# In BOOT mode, the new system isn't running yet — Home Manager + post-sync
+# hooks would activate against the OLD running system, which would either
+# duplicate work or fail. Skip them; user must reboot then re-run install.sh
+# (without -b) to apply HM and hooks on the new generation.
+if [ "$BOOT_MODE" = true ]; then
+    echo -e "\n${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${YELLOW}BOOT mode: new system staged for next reboot.${RESET}"
+    echo -e "${YELLOW}  Home Manager + post-sync hooks SKIPPED.${RESET}"
+    echo -e "${YELLOW}  Reboot now, then re-run install.sh WITHOUT -b to apply them.${RESET}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    FILES_HARDENED=false
+    trap - EXIT
+    echo -e "\n${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${RESET} Installation script finished (BOOT mode)"
+    exit 0
 fi
 
 # Temporarily soften files for Home-Manager

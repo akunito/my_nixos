@@ -34,6 +34,28 @@ paths:
 | `-d` | Skip docker | LXC + VPS + NAS (keeps containers running) |
 | `-h` | Skip hardware-config generation | LXC only (no real hardware) |
 | `-q` | Quick = `-d -h` | Backward compatibility shorthand |
+| `-b` / `--boot` | Use `nixos-rebuild boot` instead of `switch`; skips HM + post-sync hooks | When a "switch inhibitor" is reported (e.g. `dbus -> dbus-broker`, kernel major upgrade) that would break the running session |
+
+### `-b` boot-mode workflow
+
+When `nixos-rebuild switch` refuses to apply changes live due to a switch
+inhibitor (e.g. dbus implementation swap, kernel jump), use `-b` to stage
+the new system for the next reboot:
+
+```bash
+# 1. Stage new generation, no live activation
+ssh -A user@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/main && ./install.sh ~/.dotfiles <PROFILE> -s -b"
+
+# 2. User reboots the machine (lands on the staged generation)
+ssh -A user@<IP> 'sudo reboot'
+
+# 3. Re-run install.sh WITHOUT -b to apply HM + post-sync hooks on the new generation
+ssh -A user@<IP> "cd ~/.dotfiles && ./install.sh ~/.dotfiles <PROFILE> -s"
+```
+
+In boot mode install.sh **skips** Home Manager activation and post-sync hooks,
+because they would run against the OLD still-running system and either fail or
+duplicate work. They are applied on the second run after reboot.
 
 ## Flag Combinations by Machine Type
 
