@@ -199,6 +199,62 @@ nix flake update voxtype
 If upstream stays broken long-term, consider forking voxtype with the
 fix patched in (low maintenance burden — single `buildInputs` addition).
 
+## Deploy-time evaluation warnings (collected during AINF deploys)
+
+Warnings surfaced by `nix eval` / `nixos-rebuild` during deploys. Each lives
+in upstream code that has since changed but our config still calls the old
+names/options. None blocks builds — fix opportunistically.
+
+### `'claude-code-bin' has been merged into 'claude-code'`
+
+**Seen on**: LAPTOP_X13 deploy 2026-05-14.
+
+**Cause**: nixpkgs deprecated the `claude-code-bin` package in favour of
+unified `claude-code`. Our config still references `claude-code-bin` somewhere
+(likely `user/app/claude-code/` or `user/packages/`).
+
+**Recommendation**: grep the repo for `claude-code-bin`, replace with
+`claude-code`. Confirm with `nix eval` that the warning is gone.
+
+### `xdg.userDirs.setSessionVariables` default changed from `true` to `false`
+
+**Seen on**: LAPTOP_X13 deploy 2026-05-14, NAS_PROD deploy 2026-05-14.
+
+**Cause**: Home Manager option default flipped. Our config implicitly relied
+on the old `true` default; under the new default, session env vars like
+`XDG_DOCUMENTS_DIR` won't be exported to children.
+
+**Recommendation**: explicitly set `xdg.userDirs.setSessionVariables = true;`
+in the relevant Home Manager module (search for `xdg.userDirs` to find where
+we already configure it) to keep the legacy behaviour. Or migrate consumers
+to read `.config/user-dirs.dirs` directly.
+
+## Stylix theming forces large source rebuilds on every deploy
+
+**Found**: 2026-05-14, during LAPTOP_X13 deploy.
+
+**Symptom**: Each `install.sh` on a desktop/laptop profile rebuilds
+Thunderbird, Bitwarden, KDE libs (kio, kwallet, gcr, gnupg-gnupg-gnome-keyring),
+Cursor IDE, RetroArch, and any other theme-able package from source —
+dozens of minutes of CPU. Server profiles (VPS_PROD, NAS_PROD) don't suffer
+because they don't pull theme-able GUI packages.
+
+**Cause**: `stylixEnable = true` in `LAPTOP-base.nix:18` (and DESK's profile)
+adds a system overlay that re-themes packages with our local Base16 color
+scheme. The overlay changes the build inputs, so the store hash differs from
+what Hydra published → no binary cache → source build.
+
+**Trade-off**: this is by design — system-wide colour consistency vs. fast
+deploys. Disabling Stylix would speed up deploys dramatically.
+
+**Recommendation (if deploy time becomes painful)**: Two options:
+1. Set up a **private nix binary cache** (e.g. via `nix-serve` on NAS_PROD or
+   VPS_PROD) — first deploy to one host populates it, subsequent deploys to
+   other hosts pull from it. Avoids re-themeing every host.
+2. **Scope Stylix to user-level only** (Home Manager Stylix instead of NixOS
+   Stylix). Cuts the system-overlay rebuild explosion, theming still applies
+   to GTK/Qt via env vars and ~/.config files.
+
 ## LAPTOP_A profile eval fails locally on DESK
 
 **Found**: 2026-05-14, during pre-deploy multi-profile eval.
