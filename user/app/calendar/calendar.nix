@@ -1,6 +1,15 @@
 { config, pkgs, lib, systemSettings, ... }:
 
 let
+  # Typelibs needed by gi.require_version(...) inside eds-refresh.py.
+  # EDataServer.typelib pulls in libxml2 (from gobject-introspection itself),
+  # GLib/Gio (from glib), and libsoup. Missing any -> import fails at runtime.
+  edsTypelibPath = lib.concatStringsSep ":" [
+    "${pkgs.evolution-data-server}/lib/girepository-1.0"
+    "${pkgs.gobject-introspection}/lib/girepository-1.0"
+    "${pkgs.glib.out}/lib/girepository-1.0"
+    "${pkgs.libsoup_3.out}/lib/girepository-1.0"
+  ];
   edsRefreshWrapper = pkgs.writeShellApplication {
     name = "eds-refresh";
     runtimeInputs = [
@@ -8,7 +17,7 @@ let
       (pkgs.python3.withPackages (ps: [ ps.pygobject3 ]))
     ];
     text = ''
-      export GI_TYPELIB_PATH="${pkgs.evolution-data-server}/lib/girepository-1.0''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
+      export GI_TYPELIB_PATH="${edsTypelibPath}''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
       exec python3 "${config.home.homeDirectory}/.config/sway/scripts/eds-refresh.py" "$@"
     '';
   };
