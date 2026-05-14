@@ -69,6 +69,12 @@ let
 
       log "Starting backup: ${description}"
 
+      # Debug: capability + file-visibility check (temporary diagnostic for AINF triage)
+      log "DEBUG caps: $(${pkgs.coreutils}/bin/grep -E '^Cap' /proc/self/status | ${pkgs.coreutils}/bin/tr '\n' ' ')"
+      for p in ${lib.concatStringsSep " " backupPaths}; do
+        log "DEBUG path=$p files=$(${pkgs.findutils}/bin/find "$p" -type f 2>/dev/null | ${pkgs.coreutils}/bin/wc -l) du=$(${pkgs.coreutils}/bin/du -sb "$p" 2>/dev/null | ${pkgs.coreutils}/bin/cut -f1)"
+      done
+
       ${lib.optionalString (preScript != "") ''
         log "Running pre-backup script..."
         ${preScript}
