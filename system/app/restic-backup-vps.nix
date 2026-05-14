@@ -55,11 +55,9 @@ let
     backupScript = pkgs.writeShellScript "vps-restic-${name}" ''
       set -euo pipefail
       export RESTIC_PASSWORD_FILE="${passwordFile}"
-      # Use raw restic binary, not /run/wrappers/bin/restic — the wrapper is
-      # a "privileged file" (has file capabilities), so the kernel clears our
-      # AmbientCapabilities=CAP_DAC_READ_SEARCH on exec into it. The raw
-      # nixpkgs binary preserves ambient caps, so restic-as-akunito can read
-      # root-owned and UID-mapped paths.
+      # Use raw restic binary, not /run/wrappers/bin/restic — the wrapper has
+      # file capabilities and would otherwise interfere with capability/ACL
+      # inheritance for non-root invocations.
       RESTIC="${pkgs.restic}/bin/restic"
       REPO="${repo}"
       SFTP_CMD="${sftpCommand}"
@@ -68,12 +66,6 @@ let
       log() { echo "$(date -Iseconds) [$LOG_TAG] $*"; }
 
       log "Starting backup: ${description}"
-
-      # Debug: capability + file-visibility check (temporary diagnostic for AINF triage)
-      log "DEBUG caps: $(${pkgs.coreutils}/bin/grep -E '^Cap' /proc/self/status | ${pkgs.coreutils}/bin/tr '\n' ' ')"
-      for p in ${lib.concatStringsSep " " backupPaths}; do
-        log "DEBUG path=$p files=$(${pkgs.findutils}/bin/find "$p" -type f 2>/dev/null | ${pkgs.coreutils}/bin/wc -l) du=$(${pkgs.coreutils}/bin/du -sb "$p" 2>/dev/null | ${pkgs.coreutils}/bin/cut -f1)"
-      done
 
       ${lib.optionalString (preScript != "") ''
         log "Running pre-backup script..."
@@ -84,8 +76,7 @@ let
       log "Backing up: ${lib.concatStringsSep " " backupPaths}"
       $RESTIC -r "$REPO" -o "sftp.command=$SFTP_CMD" \
         backup ${lib.concatStringsSep " " backupPaths}${excludeFlags}${tagFlags} \
-        --limit-upload 50000 --verbose=2 2>&1 | head -200 || true
-      # NB: pipe to head guards against gigantic verbose output flooding the journal during triage
+        --limit-upload 50000 --verbose 2>&1
 
       # Prune old snapshots
       log "Pruning snapshots (keep-within ${toString retentionDays}d${retentionExtra})..."
@@ -108,13 +99,14 @@ let
         # Retry on failure (network glitches)
         Restart = "on-failure";
         RestartSec = "5min";
-        # Allow restic to read root-owned and UID-mapped paths (e.g. rootless docker
-        # Nextcloud data at UID 100032, root-only database backup dirs) without
-        # escalating to full root. CAP_DAC_READ_SEARCH bypasses DAC permission checks
-        # for read+search only. Do not restrict CapabilityBoundingSet here — the
-        # NixOS restic wrapper at /run/wrappers/bin/restic needs the default
-        # capability set to exec correctly.
-        AmbientCapabilities = [ "CAP_DAC_READ_SEARCH" ];
+        # Note: restic 0.18.x uses access(2) for permission probing, which by
+        # POSIX semantics ignores process capabilities for non-root users
+        # (restic issues #2447, #2563). So AmbientCapabilities=CAP_DAC_READ_SEARCH
+        # is NOT enough on its own — restic skips directories whose access()
+        # check fails even when CAP_DAC_READ_SEARCH would let the kernel-level
+        # syscall succeed. Workaround: grant akunito real DAC read access via
+        # POSIX ACLs on UID-mapped source paths (see systemd.tmpfiles.rules in
+        # the consuming module / profile). The cap was a dead end; removed.
       };
       unitConfig = {
         # Limit retries (must be in [Unit], not [Service])
