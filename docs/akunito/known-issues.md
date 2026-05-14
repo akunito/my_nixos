@@ -99,6 +99,48 @@ the repo (72.730 GiB stored after restic dedup). `nas_backup_status=1`,
 **Follow-up** (low priority): add a `systemd.tmpfiles.rules` entry for the
 ACL so it's declaratively reinforced. Currently applied imperatively only.
 
+## nas-backup-data: silent rsync "permission denied" on UID-mapped paths
+
+**Found**: 2026-05-14, during full backup pipeline audit (post-nextcloud fix).
+
+**Symptom**: `nas-backup-data.service` reports `WARNING: rsync mediarr had errors
+(non-fatal)` and similar for `npm compose letsencrypt`. The service exits 0
+and the prometheus metric reports `nas_offsite_backup_status=1`. But specific
+subtrees are silently skipped because the rsync runs as `akunito` on the NAS
+and hits `opendir`/`send_files` "Permission denied (13)" on:
+
+- **Regenerable junk (low concern)**:
+  - `/mnt/ssdpool/docker/mediarr/calibre-server/config/.XDG/` (dbus, cache dirs)
+  - `/mnt/ssdpool/docker/mediarr/calibre-server/config/.cache/{mesa_shader_cache,openbox/sessions}`
+  - `/mnt/ssdpool/docker/mediarr/calibre-server/config/.dbus/`
+  - `/mnt/ssdpool/docker/mediarr/calibre-server/config/.config/pulse`
+  - `/mnt/ssdpool/docker/mediarr/calibre-server/config/.config/calibre/{fonts,plugins}`
+  - `/mnt/ssdpool/docker/mediarr/qbittorrent/qBittorrent/logs/*.log.bak*` (~60 rotated logs)
+  - All owned by container internal UIDs with mode 700.
+
+- **REAL gap (must fix)**:
+  - `/mnt/ssdpool/docker/compose/npm/letsencrypt/{accounts,archive,...}` — owned
+    `root:root` mode 700. **TLS cert tree (ACME accounts + archive of issued
+    certs + live deployment) NOT being backed up**. After NAS restore, all
+    certs would need to be re-issued (a few hours of cert renewal storms +
+    new ACME accounts).
+
+**Effect**: nas-backup-data appears healthy in metrics but is missing the
+above. The status=1 metric is misleading.
+
+**Recommendation**:
+1. For the regenerable dirs: add `--exclude '.cache/' --exclude '.XDG/'
+   --exclude '.dbus/' --exclude '.config/pulse/' --exclude '*.log.bak*'`
+   to the mediarr rsync line in `restic-backup-nas.nix`.
+2. For LetsEncrypt: same fix pattern as nextcloud-data — apply a POSIX ACL on
+   the NAS side granting akunito read access to
+   `/mnt/ssdpool/docker/compose/npm/letsencrypt/`, OR run the rsync sub-process
+   on the NAS side via `sudo -n rsync --server` (requires NAS-side sudo NOPASSWD
+   for rsync, narrower than the cert ACL approach).
+3. Make the rsync warnings FATAL or at least surfaced loudly so the alert
+   fires when these paths are skipped. The current `|| true` muzzle hides
+   real coverage gaps.
+
 ## NAS API port (9443) likely dead after NixOS migration
 
 **Found**: 2026-05-14, during `restic-backup-nas.nix` audit.
