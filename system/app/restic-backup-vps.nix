@@ -99,9 +99,10 @@ let
         # Allow restic to read root-owned and UID-mapped paths (e.g. rootless docker
         # Nextcloud data at UID 100032, root-only database backup dirs) without
         # escalating to full root. CAP_DAC_READ_SEARCH bypasses DAC permission checks
-        # for read+search only.
+        # for read+search only. Do not restrict CapabilityBoundingSet here — the
+        # NixOS restic wrapper at /run/wrappers/bin/restic needs the default
+        # capability set to exec correctly.
         AmbientCapabilities = [ "CAP_DAC_READ_SEARCH" ];
-        CapabilityBoundingSet = [ "CAP_DAC_READ_SEARCH" ];
       };
       unitConfig = {
         # Limit retries (must be in [Unit], not [Service])
