@@ -141,30 +141,12 @@ above. The status=1 metric is misleading.
    fires when these paths are skipped. The current `|| true` muzzle hides
    real coverage gaps.
 
-## NAS API port (9443) likely dead after NixOS migration
+## ~~NAS API port (9443) likely dead after NixOS migration~~ — FIXED 2026-05-14
 
-**Found**: 2026-05-14, during `restic-backup-nas.nix` audit.
-
-**Symptom**: The configs-backup job calls
-`POST https://${nasHost}:${nasApiPort}/api/v2.0/config/save` (`restic-backup-nas.nix:177-184`).
-This is the TrueNAS SCALE web UI / API endpoint. NixOS NAS doesn't serve it.
-
-**Effect**: Each daily run logs `WARNING: NAS config API call failed (non-fatal)`
-and stops generating `truenas-config-YYYYMMDD.tar` files in the configs staging
-directory. Rest of the configs job (rsync of `/mnt/ssdpool/docker/compose/`)
-still runs, so the offsite backup still has docker-compose snapshots — but the
-NAS system-config export is missing.
-
-**Repro**: On VPS_PROD:
-```bash
-ssh -A -p 56777 akunito@100.64.0.6 'sudo ss -tlnp | grep :9443'
-# Empty output = port not listening = feature is dead
-```
-
-**Recommendation**: Either remove the API-export block from `restic-backup-nas.nix`
-and the corresponding flags (`nasResticBackupApiKeyFile`, `nasResticBackupApiPort`),
-or replace it with a NixOS-native equivalent (e.g. `nixos-rebuild dry-build`
-output capture, or just `nix flake archive` of the NAS profile).
+**Resolved by commit `1125709`**. Verified port 9443 is not listening on the
+NixOS NAS, then removed the entire config-export block from
+`restic-backup-nas.nix` plus the now-unreferenced `nasResticBackupApiKeyFile`
+and `nasResticBackupApiPort` defaults.
 
 ## `docs/akunito/infrastructure/services/nas.md` monitoring section is broadly stale
 
@@ -188,43 +170,17 @@ sections of `nas.md`. Replace `midclt`-based recipes with direct `zpool`/`zfs`
 SSH commands. Drop the `~/.local/bin/truenas-zfs-exporter.sh` references — that
 script never existed as a Nix-managed user script anyway.
 
-## `prometheus-graphite.nix` is dormant — could be archived
+## ~~`prometheus-graphite.nix` is dormant — could be archived~~ — FIXED 2026-05-14
 
-**Found**: 2026-05-13, during TrueNAS naming cleanup.
+**Resolved by commit `1125709`**. File moved to `system/app/archived/`; the
+two gated import lines in `profiles/vps/base.nix` and `profiles/proxmox-lxc/base.nix`
+removed.
 
-**Status**: Gutted of TrueNAS-specific service/scrape/alerts in commit `f0ab8d4`.
-The remaining ~155 lines are just a Graphite-exporter shell with TrueNAS-flavoured
-mapping rules (e.g. line 121: `name = "truenas_zfspool_${2}"`). The file is
-imported only on profiles with `prometheusGraphiteEnable = true`, and no current
-profile sets that flag (only `profiles/archived/LXC_monitoring-config.nix` did,
-and it's archived).
+## ~~Stale `servers_truenas_*` series in Prometheus TSDB~~ — FIXED 2026-05-14
 
-**Recommendation**: After a grace period, move `system/app/prometheus-graphite.nix`
-to `system/app/archived/` (or delete outright) and drop the gated imports in
-`profiles/vps/base.nix:36` and `profiles/proxmox-lxc/base.nix:37`. Resurrect from
-git history if a future Graphite producer ever needs it.
-
-## Stale `servers_truenas_*` series in Prometheus TSDB
-
-**Found**: 2026-05-14, during pre-deploy snapshot.
-
-**Symptom**: `curl 'localhost:9090/api/v1/label/__name__/values'` on VPS_PROD
-still returns ~hundreds of `servers_truenas_smart_log_*`, `servers_truenas_truenas_*`,
-`servers_truenas_zfs_*` metric names — produced by the long-gone TrueNAS SCALE
-Graphite reporter.
-
-**Effect**: Label-value autocomplete in Grafana is noisy; storage is wasted on
-historical data nobody queries. No active scraper produces these, so no new
-data is being ingested.
-
-**Recommendation**: Either wait for Prometheus retention (default 15d) to age
-them out naturally, or run a one-off `delete_series` admin API call to purge
-matching series:
-```bash
-ssh -A -p 56777 akunito@100.64.0.6 \
-  'curl -X POST -g "localhost:9090/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"servers_truenas.*\"}"'
-```
-(Requires `--storage.tsdb.retention.time` admin API enabled.)
+**Resolved** by `delete_series` admin API call + `clean_tombstones`. All 43
+stale `servers_truenas_*` series purged (Prometheus admin API was already
+enabled via `--web.enable-admin-api`).
 
 ## Voxtype input pinned to old rev — upstream regression
 
@@ -277,29 +233,15 @@ Warnings surfaced by `nix eval` / `nixos-rebuild` during deploys. Each lives
 in upstream code that has since changed but our config still calls the old
 names/options. None blocks builds — fix opportunistically.
 
-### `'claude-code-bin' has been merged into 'claude-code'`
+### ~~`'claude-code-bin' has been merged into 'claude-code'`~~ — FIXED 2026-05-14
 
-**Seen on**: LAPTOP_X13 deploy 2026-05-14.
+**Resolved by commit `8baa676`**. Renamed all 9 references across 6 profile
+configs + 3 modules. Eval output confirmed no longer warns.
 
-**Cause**: nixpkgs deprecated the `claude-code-bin` package in favour of
-unified `claude-code`. Our config still references `claude-code-bin` somewhere
-(likely `user/app/claude-code/` or `user/packages/`).
+### ~~`xdg.userDirs.setSessionVariables` default changed from `true` to `false`~~ — FIXED 2026-05-14
 
-**Recommendation**: grep the repo for `claude-code-bin`, replace with
-`claude-code`. Confirm with `nix eval` that the warning is gone.
-
-### `xdg.userDirs.setSessionVariables` default changed from `true` to `false`
-
-**Seen on**: LAPTOP_X13 deploy 2026-05-14, NAS_PROD deploy 2026-05-14.
-
-**Cause**: Home Manager option default flipped. Our config implicitly relied
-on the old `true` default; under the new default, session env vars like
-`XDG_DOCUMENTS_DIR` won't be exported to children.
-
-**Recommendation**: explicitly set `xdg.userDirs.setSessionVariables = true;`
-in the relevant Home Manager module (search for `xdg.userDirs` to find where
-we already configure it) to keep the legacy behaviour. Or migrate consumers
-to read `.config/user-dirs.dirs` directly.
+**Resolved by commit `8baa676`**. Set `xdg.userDirs.setSessionVariables = true;`
+explicitly in `profiles/work/home.nix` (which is imported by personal too).
 
 ## Stylix theming forces large source rebuilds on every deploy
 
@@ -327,17 +269,8 @@ deploys. Disabling Stylix would speed up deploys dramatically.
    Stylix). Cuts the system-overlay rebuild explosion, theming still applies
    to GTK/Qt via env vars and ~/.config files.
 
-## LAPTOP_A profile eval fails locally on DESK
+## ~~LAPTOP_A profile eval fails locally on DESK~~ — FIXED 2026-05-14
 
-**Found**: 2026-05-14, during pre-deploy multi-profile eval.
-
-**Symptom**: `nix eval --impure '.#nixosConfigurations.LAPTOP_A.config.system.build.toplevel.drvPath'`
-on DESK fails with `error: path '/home/aga/.certificates/ca.cert.pem' does not exist`.
-
-**Effect**: Can't eval-check LAPTOP_A from DESK before deploying. Doesn't affect
-LAPTOP_A's own builds (which run with `/home/aga` actually populated).
-
-**Recommendation**: Wrap the cert path in `lib.optionalPath` or guard
-`pkiCertificates` so missing files don't blow up eval on machines where the
-profile doesn't apply. Pattern already used in `pkiCertificates` for DESK
-(`profiles/DESK-config.nix:69`).
+**Resolved by commit `1125709`**. Wrapped the cert path in
+`if builtins.pathExists ... then [...] else []`. LAPTOP_A now evals cleanly
+from DESK.
