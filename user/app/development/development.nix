@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-stable,
   pkgs-unstable,
   userSettings,
   systemSettings,
@@ -37,7 +38,7 @@
     pkgs-unstable.dbeaver-bin      # Universal database management tool
 
     # === Design and Documentation ===
-    pkgs-unstable.drawio           # Diagramming and flowchart tool
+    pkgs-stable.drawio             # Diagramming and flowchart tool (stable — unstable 29.7.9 fails npm dep-tree parse from source)
 
     # === Development Framework Tools ===
     pkgs-unstable.antigravity      # Development automation and tooling
