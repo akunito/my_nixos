@@ -96,6 +96,12 @@ let
         # Retry on failure (network glitches)
         Restart = "on-failure";
         RestartSec = "5min";
+        # Allow restic to read root-owned and UID-mapped paths (e.g. rootless docker
+        # Nextcloud data at UID 100032, root-only database backup dirs) without
+        # escalating to full root. CAP_DAC_READ_SEARCH bypasses DAC permission checks
+        # for read+search only.
+        AmbientCapabilities = [ "CAP_DAC_READ_SEARCH" ];
+        CapabilityBoundingSet = [ "CAP_DAC_READ_SEARCH" ];
       };
       unitConfig = {
         # Limit retries (must be in [Unit], not [Service])
