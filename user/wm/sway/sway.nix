@@ -5,6 +5,7 @@
     ./default.nix
     ./waybar.nix
     ./rofi.nix
+    ../../app/calendar/calendar.nix
   ];
 }
 

@@ -55,6 +55,7 @@ in
     # Shell features
     atuinAutoSync = true; # Enable Atuin cloud sync for shell history
     nextcloudEnable = true; # To startup with Sway daemon
+    googleCalendarWidgetEnable = true; # Waybar Google Calendar widget (click opens calendar.google.com in Vivaldi)
     claudeBackupToNextcloudEnable = true;
     nextcloudSyncFolder = "/home/akunito/Nextcloud";
 

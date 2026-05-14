@@ -156,6 +156,7 @@ in
 
     # === Desktop Environment ===
     enableSwayForDESK = false; # Not needed when wm = "sway" (no dual-WM setup)
+    googleCalendarWidgetEnable = true; # Waybar Google Calendar widget (click opens calendar.google.com in default browser)
 
     # === Package Modules ===
     systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)

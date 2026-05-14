@@ -259,7 +259,10 @@ in {
               "custom/ram"
             ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
+            modules-right =
+              [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" ]
+              ++ lib.optional systemSettings.googleCalendarWidgetEnable "custom/gcal"
+              ++ [ "clock" "custom/power-menu" ];
             
             "sway/workspaces" = primaryWorkspaces;
             # Use shared modules
@@ -372,6 +375,15 @@ in {
               tooltip = true;
             };
 
+            # Google Calendar next-event widget (gcalcli); click opens calendar.google.com in default browser
+            "custom/gcal" = lib.mkIf systemSettings.googleCalendarWidgetEnable {
+              return-type = "json";
+              interval = systemSettings.googleCalendarWidgetInterval;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.gcalcli}/bin/gcalcli";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal-open.sh";
+              tooltip = true;
+            };
+
             # Coffee button: toggle idle inhibition (prevents swayidle screen blank/suspend logic that respects inhibit)
             idle_inhibitor = {
               format = "{icon}";
@@ -451,7 +463,10 @@ in {
               "custom/ram"
             ];
             modules-center = [ "sway/workspaces" ];
-            modules-right = [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" "clock" "custom/power-menu" ];
+            modules-right =
+              [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" ]
+              ++ lib.optional systemSettings.googleCalendarWidgetEnable "custom/gcal"
+              ++ [ "clock" "custom/power-menu" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
             # Use shared modules
@@ -554,6 +569,14 @@ in {
               interval = 3600;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-nixos-update.sh";
               on-click = "${pkgs.kitty}/bin/kitty --title 'Update NixOS' -e ${pkgs.bash}/bin/bash -lc '${systemSettings.installCommand}; rc=$?; if [ $rc -eq 0 ]; then echo \"Update completed. Bye bye!\"; sleep 3; exit 0; else echo \"Update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
+              tooltip = true;
+            };
+
+            "custom/gcal" = lib.mkIf systemSettings.googleCalendarWidgetEnable {
+              return-type = "json";
+              interval = systemSettings.googleCalendarWidgetInterval;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.gcalcli}/bin/gcalcli";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal-open.sh";
               tooltip = true;
             };
 
