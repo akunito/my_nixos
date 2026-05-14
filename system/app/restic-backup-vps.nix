@@ -74,9 +74,16 @@ let
 
       # Run backup
       log "Backing up: ${lib.concatStringsSep " " backupPaths}"
+      # --no-scan: skip the upfront file-count scan. The scan is purely cosmetic
+      # (for progress estimation), but it has a bug when the source path has
+      # UID-mapped (rootless docker) ownership at parent levels — it returns
+      # 0 files even when the actual backup walker can see everything correctly.
+      # AINF triage 2026-05-14 isolated this; experiment confirmed --no-scan
+      # processes 152,581 files / 152 GiB on the same nextcloud source where
+      # the default scan reported 0.
       $RESTIC -r "$REPO" -o "sftp.command=$SFTP_CMD" \
         backup ${lib.concatStringsSep " " backupPaths}${excludeFlags}${tagFlags} \
-        --limit-upload 50000 --verbose 2>&1
+        --no-scan --limit-upload 50000 --verbose 2>&1
 
       # Prune old snapshots
       log "Pruning snapshots (keep-within ${toString retentionDays}d${retentionExtra})..."
