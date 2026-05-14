@@ -1100,12 +1100,14 @@ fi
 # duplicate work or fail. Skip them; user must reboot then re-run install.sh
 # (without -b) to apply HM and hooks on the new generation.
 if [ "$BOOT_MODE" = true ]; then
+    # Soften files so the next deploy can `git reset --hard` cleanly.
+    # The cleanup trap would also do this, but we want a successful exit (0).
+    soften_files_for_home_manager $SCRIPT_DIR $SUDO_CMD
     echo -e "\n${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${YELLOW}BOOT mode: new system staged for next reboot.${RESET}"
     echo -e "${YELLOW}  Home Manager + post-sync hooks SKIPPED.${RESET}"
     echo -e "${YELLOW}  Reboot now, then re-run install.sh WITHOUT -b to apply them.${RESET}"
     echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    FILES_HARDENED=false
     trap - EXIT
     echo -e "\n${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${RESET} Installation script finished (BOOT mode)"
     exit 0
