@@ -380,7 +380,7 @@ in {
             "custom/gcal" = lib.mkIf systemSettings.goaCalendarEnable {
               return-type = "json";
               interval = systemSettings.goaCalendarWidgetInterval;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ])}/bin/python3";
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ps.recurring-ical-events ])}/bin/python3";
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal-open.sh";
               tooltip = true;
             };
@@ -576,7 +576,7 @@ in {
             "custom/gcal" = lib.mkIf systemSettings.goaCalendarEnable {
               return-type = "json";
               interval = systemSettings.goaCalendarWidgetInterval;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ])}/bin/python3";
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ps.recurring-ical-events ])}/bin/python3";
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal-open.sh";
               tooltip = true;
             };
