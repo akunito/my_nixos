@@ -129,7 +129,7 @@ in
     homePackages = pkgs: pkgs-unstable: [
       pkgs.zsh
       pkgs.git
-      pkgs-unstable.claude-code-bin
+      pkgs-unstable.claude-code
     ];
 
     # === Shell Customization ===

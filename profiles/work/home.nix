@@ -54,6 +54,7 @@
   xdg.userDirs = {
     enable = true;
     createDirectories = true;
+    setSessionVariables = true;  # Keep legacy behaviour (HM default flipped to false)
     music = "${config.home.homeDirectory}/Media/Music";
     videos = "${config.home.homeDirectory}/Media/Videos";
     pictures = "${config.home.homeDirectory}/Media/Pictures";

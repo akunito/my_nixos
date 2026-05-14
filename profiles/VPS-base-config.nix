@@ -171,7 +171,7 @@ in
       pkgs.zsh
       pkgs.git
       pkgs.git-crypt
-      pkgs-unstable.claude-code-bin
+      pkgs-unstable.claude-code
     ];
 
     # === Shell Customization ===
