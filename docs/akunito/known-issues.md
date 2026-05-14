@@ -142,6 +142,51 @@ ssh -A -p 56777 akunito@100.64.0.6 \
 ```
 (Requires `--storage.tsdb.retention.time` admin API enabled.)
 
+## Voxtype input pinned to old rev — upstream regression
+
+**Found**: 2026-05-13, during OBS install Home Manager apply.
+
+**Symptom**: After `nix flake update` bumped voxtype from
+`adf0ea62c2310b90c55febdc6515cca9f264e25a` (2026-04-20) to
+`ddc93de3d387a55982813ead3777a129285deaef` (2026-05-11), the build failed
+with:
+
+```
+thread 'main' panicked at /build/cargo-vendor-dir/x11-2.21.0/build.rs:42:14:
+called `Result::unwrap()` on an `Err` value: pkg-config exited with status code 1
+The system library `x11` required by crate `x11` was not found.
+```
+
+**Workaround in repo**: `flake.nix` pins voxtype to the working
+2026-04-20 rev:
+
+```nix
+voxtype = {
+  url = "github:peteonrails/voxtype/adf0ea62c2310b90c55febdc6515cca9f264e25a";
+  inputs.nixpkgs.follows = "nixpkgs";
+};
+```
+
+**Effect**: Voxtype works on DESK / any host with `voxtypeEnable = true`,
+but stays frozen at the 2026-04-20 release until the upstream Rust build
+inputs are fixed (likely needs `xorg.libX11` added to the package's
+`buildInputs`/`nativeBuildInputs` via `pkg-config`).
+
+**Recommendation**: Periodically check upstream
+https://github.com/peteonrails/voxtype/commits/main for a fix that adds
+`xorg.libX11` to the Nix package. When found:
+
+```bash
+cd ~/.dotfiles
+# Remove the explicit rev from flake.nix voxtype input:
+#   url = "github:peteonrails/voxtype";
+nix flake update voxtype
+# Test build, then commit
+```
+
+If upstream stays broken long-term, consider forking voxtype with the
+fix patched in (low maintenance burden — single `buildInputs` addition).
+
 ## LAPTOP_A profile eval fails locally on DESK
 
 **Found**: 2026-05-14, during pre-deploy multi-profile eval.
