@@ -99,7 +99,29 @@ the repo (72.730 GiB stored after restic dedup). `nas_backup_status=1`,
 **Follow-up** (low priority): add a `systemd.tmpfiles.rules` entry for the
 ACL so it's declaratively reinforced. Currently applied imperatively only.
 
-## nas-backup-data: silent rsync "permission denied" on UID-mapped paths
+## ~~nas-backup-data: silent rsync "permission denied" on UID-mapped paths~~ — FIXED 2026-05-14
+
+**Resolved by commits `db34ef2` + `14ebcec`**.
+
+1. Enabled POSIX ACLs on the ZFS dataset (`zfs set acltype=posixacl ssdpool/docker`)
+   — was `acltype=off`, prevented any `setfacl` operations.
+2. Granted akunito read access on the LetsEncrypt cert tree:
+   `setfacl -R -m u:akunito:rX + default ACL on /mnt/ssdpool/docker/compose/npm/letsencrypt`.
+   Cert tree now backed up (verified: 27 files / 184 K in the staging tree).
+3. Added explicit excludes for container-internal regenerable junk in the
+   `mediarr` rsync call: calibre `.XDG/.cache/.dbus/pulse`, calibre fonts +
+   plugins config, and the full `qbittorrent/qBittorrent/logs/` dir.
+4. Added a metric `nas_offsite_backup_rsync_warnings{job}` that counts
+   non-fatal rsync errors per run, plus a Prometheus alert
+   `NasOffsiteBackupRsyncWarnings` that fires on `> 0` for 15m. Future
+   silent coverage gaps will now surface in alerting.
+
+**Verified**: post-fix run reports `rsync warning count: 0`. LetsEncrypt
+cert tree confirmed present in the restic staging dir.
+
+**Open sub-item below — same root cause but for vps_nextcloud:**
+
+## (Original "nas-backup-data" entry continues for reference of the historical findings)
 
 **Found**: 2026-05-14, during full backup pipeline audit (post-nextcloud fix).
 

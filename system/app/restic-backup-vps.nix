@@ -242,4 +242,33 @@ in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
   systemd.timers.vps-restic-services = servicesBackup.timer;
   systemd.timers.vps-restic-libraries = librariesBackup.timer;
   systemd.timers.vps-restic-nextcloud = nextcloudBackup.timer;
+
+  # Declarative ACL grant on /var/lib/nextcloud-data so the non-root
+  # akunito-owned restic backup can read it. Idempotent; runs at boot and
+  # before each nextcloud backup. If the Nextcloud Docker container is
+  # ever recreated and resets ownership/perms, this re-applies the grant.
+  # See known-issues.md for the full root-cause context.
+  systemd.services.vps-backup-source-acls = {
+    description = "Apply POSIX ACLs to backup source paths (idempotent)";
+    after = [ "local-fs.target" ];
+    wantedBy = [ "multi-user.target" ];
+    before = [ "vps-restic-nextcloud.service" ];
+    path = [ pkgs.acl pkgs.coreutils ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "vps-backup-source-acls" ''
+        set -uo pipefail
+        for dir in /var/lib/nextcloud-data; do
+          if [ -d "$dir" ]; then
+            setfacl -R -m u:${username}:rX "$dir" 2>&1 || true
+            setfacl -R -d -m u:${username}:rX "$dir" 2>&1 || true
+            echo "ACL applied: $dir"
+          else
+            echo "Skipping (not present): $dir"
+          fi
+        done
+      '';
+    };
+  };
 }

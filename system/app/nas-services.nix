@@ -110,6 +110,50 @@ HEADER
     };
 
     # ========================================================================
+    # ACL grants for backup source paths
+    # ========================================================================
+    # Re-apply read access for akunito on container-owned paths so the
+    # offsite restic pull (vps_to_nas direction) captures them even if the
+    # source dir is recreated (e.g. container teardown + redeploy).
+    # Idempotent — setfacl on already-correct ACL is a no-op.
+    # See known-issues.md entry for context (LetsEncrypt cert tree was
+    # the original gap; gone-silent rsync warnings caught it).
+    systemd.services.nas-backup-source-acls = {
+      description = "Apply POSIX ACLs to backup source paths (idempotent)";
+      after = [ "zfs-mount.service" "docker.service" ];
+      wantedBy = [ "multi-user.target" ];
+      path = [ pkgs.acl pkgs.zfs pkgs.coreutils ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = pkgs.writeShellScript "nas-backup-source-acls" ''
+          set -uo pipefail
+
+          # Ensure POSIX ACLs are enabled on the docker dataset.
+          # Required before setfacl will accept new entries; persisted in ZFS
+          # property so this is also a no-op after the first run.
+          current=$(zfs get -H -o value acltype ssdpool/docker 2>/dev/null || echo unknown)
+          if [ "$current" != "posix" ]; then
+            echo "Setting acltype=posixacl on ssdpool/docker (was: $current)"
+            zfs set acltype=posixacl ssdpool/docker
+          fi
+
+          # LetsEncrypt cert tree — root:700, akunito needs read access
+          # for the nas-backup-data rsync pull from VPS.
+          for dir in /mnt/ssdpool/docker/compose/npm/letsencrypt; do
+            if [ -d "$dir" ]; then
+              setfacl -R -m u:${username}:rX "$dir" 2>&1 || true
+              setfacl -R -d -m u:${username}:rX "$dir" 2>&1 || true
+              echo "ACL applied: $dir"
+            else
+              echo "Skipping (not present): $dir"
+            fi
+          done
+        '';
+      };
+    };
+
+    # ========================================================================
     # NixOS update timestamp metrics (textfile collector)
     # ========================================================================
     # Writes last system/user rebuild timestamps to a .prom file.
