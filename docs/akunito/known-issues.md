@@ -12,50 +12,62 @@ Bugs and stale-code findings surfaced as side-effects of other work. Each item
 notes when it was found and roughly how to reproduce. Triage and fix on its own
 schedule — none are blocking.
 
-## NAS backup monitoring: status=0 for all datasets (pre-existing)
+## ~~NAS backup monitoring: status=0 for all datasets~~ — FIXED 2026-05-14
 
-**Found**: 2026-05-14, during the TrueNAS→NAS rename deploy prep.
+**Resolved by commits `65a9f09` + `6b9776c`** (drop sudo + use restic SSH key).
 
-**Symptom**: On VPS_PROD, the textfile `/var/lib/prometheus-node-exporter/textfile/nas_backup.prom`
-(formerly `truenas_backup.prom`) reports `nas_backup_status{dataset=...} 0` for
-all five datasets (`vps_databases`, `vps_services`, `vps_nextcloud`, `desk_home`,
-`x13_home`). Only `backup_repo_size_bytes` reports non-zero values for
-`offsite_configs` / `offsite_data`.
+**Original symptom**: `nas_backup_status` was `0` for all 5 datasets; the alert
+`NasBackupMissing` was firing.
 
-**Effect**: The Prometheus metric `nas_backup_age_seconds` returns zero series.
-The `NasBackupMissing` alert in `grafana.nix` (`backup_alerts` group) would fire
-critical on `nas_backup_status == 0` if it were not silenced (currently has
-`for=15m` — check whether it's been firing).
+**Actual root cause** (revealed once the script's outer `2>/dev/null` was
+removed): the SSH command had no `-i` keyfile and the systemd service runs
+without an SSH agent, so authentication to the NAS failed with
+`Permission denied (publickey,keyboard-interactive)`. The mistaken initial
+diagnosis (sudo) was wrong; restic repos are owned `akunito:users` on the NAS
+and don't need sudo at all.
 
-**Likely root cause** in `system/app/prometheus-nas-backup.nix:73-85`:
+**Fix applied**:
+1. Drop `sudo` from `find`/`du` in `prometheus-nas-backup.nix:73-74`
+2. Add `-i /home/akunito/.ssh/id_ed25519_restic` to `SSH_OPTS` (reusing the key
+   already authorized for `restic-backup-nas.nix`)
+3. Remove the outermost `2>/dev/null` so future SSH failures surface in the
+   service journal
 
+**Verified**: all 5 datasets now report `status=1` with real ages + sizes.
+`NasBackupMissing` resolved from `firing` to `inactive`.
+
+## vps_nextcloud backup is unhealthy — tiny repo + 3.5d stale (NEW 2026-05-14)
+
+**Found**: 2026-05-14, immediately after the NasBackupMissing fix
+(commit `6b9776c`) made monitoring functional.
+
+**Symptom**: `backup_repo_size_bytes{dataset="vps_nextcloud",direction="vps_to_nas"} 4955`
+— a 5 KB restic repo. By contrast, `vps_databases` is 10 GB, `vps_services`
+is 272 GB. And `nas_backup_age_seconds{dataset="vps_nextcloud"}` is ~84 h
+(3.5 days), already over the 36 h threshold of `NasVpsBackupStale`.
+
+**Effect**: Nextcloud data backup to NAS is either broken, silently failing,
+or the wrong path is being read. Alert `NasVpsBackupStale` will fire critical
+once its 1 h `for` countdown elapses (~09:50 today).
+
+**Hypothesis**: One of:
+1. The nextcloud restic push timer on VPS isn't actually running (or its
+   `vpsResticBackupEnable`-derived service is failing silently).
+2. The snapshot path on the NAS for nextcloud changed and the monitor reads
+   the wrong dir, returning age but missing real snapshot files.
+3. Nextcloud data is being excluded from the backup by some filter / exclude
+   rule that bypasses the actual data dirs.
+
+**Repro**:
 ```bash
-RESULT=$(ssh ... "sudo find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' ... ; sudo du -sb $REPO_PATH ...")
-NEWEST_TS=$(echo "$RESULT" | grep '^NEWEST=' | cut -d= -f2)
+ssh -A -p 56777 akunito@100.64.0.6 'systemctl list-timers --no-pager | grep -i nextcloud'
+ssh -A -p 56777 akunito@100.64.0.6 'systemctl status vps-restic-nextcloud.service 2>&1 | head -20'
+ssh -A akunito@192.168.20.200 'ls -la /mnt/extpool/vps-backups/nextcloud.restic/snapshots/ && du -sh /mnt/extpool/vps-backups/nextcloud.restic'
 ```
 
-`sudo find` and `sudo du` on the new NixOS NAS may be:
-1. Failing on `akunito` lacking NOPASSWD sudo for those commands (sudoers
-   currently only grants NOPASSWD for systemctl-suspend/hibernate/restic per
-   `system/security/sudo.nix:4-20`)
-2. Or `pam_ssh_agent_auth` not authenticating because the script's SSH command
-   uses `-o BatchMode=yes` without `-A` agent forwarding
-3. Or the snapshot path layout on the new NAS differs from TrueNAS (restic
-   snapshot dirs may not be where the script expects)
-4. Or the `2>/dev/null` mask is swallowing the error invisibly
-
-**Repro**: On VPS_PROD, run the renamed script manually and watch for
-errors:
-```bash
-ssh -A -p 56777 akunito@100.64.0.6 'sudo systemctl start prometheus-nas-backup.service && journalctl -u prometheus-nas-backup.service -n 50 --no-pager'
-```
-
-**Recommendation**: Drop the `2>/dev/null` muzzles from the script to surface
-the real SSH/sudo failure. If sudo is the issue, add a NOPASSWD rule for
-`/run/current-system/sw/bin/find /mnt/extpool/vps-backups/* /mnt/ssdpool/workstation_backups/*`
-and `du` on those paths on `NAS_PROD`. Or — cleaner — move the snapshot-timestamp
-producer to run on the NAS itself (like `nas-zfs-pool-metrics`) writing a
-textfile, eliminating the SSH dependency entirely.
+**Recommendation**: Investigate the nextcloud push service on VPS_PROD. The
+restic-backup-vps.nix module + its vpsResticTargets list. Compare to the
+working `vps_databases` and `vps_services` flows.
 
 ## NAS API port (9443) likely dead after NixOS migration
 
