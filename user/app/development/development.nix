@@ -24,7 +24,7 @@
     pkgs-unstable.qwen-code        # Alibaba Qwen Code editor
 
     # === Version Control Tools ===
-    pkgs.git-crypt                 # Transparent file encryption in git
+    pkgs-unstable.git-crypt        # Transparent file encryption in git (unstable — preserves current behaviour on stable-system profiles)
 
     # === Python Tooling ===
     pkgs-unstable.uv               # Fast Python package installer and runner (uvx)
@@ -45,11 +45,14 @@
   ]
   # === Full Development Runtimes (opt-in per profile) ===
   ++ lib.optionals (systemSettings.developmentFullRuntimesEnable or false) [
-    pkgs.nodejs_22                 # Node.js 22 LTS
-    pkgs.python312                 # Python 3.12
-    pkgs.python312Packages.pip     # Python package manager
-    pkgs.go                        # Go programming language
-    pkgs.rustup                    # Rust toolchain manager
+    # Pinned to unstable so dev runtimes stay current even on stable-system
+    # profiles (e.g. LAPTOP_X13 with systemStable = true). No-op on profiles
+    # where pkgs already == pkgs-unstable.
+    pkgs-unstable.nodejs_22                 # Node.js 22 LTS
+    pkgs-unstable.python312                 # Python 3.12
+    pkgs-unstable.python312Packages.pip     # Python package manager
+    pkgs-unstable.go                        # Go programming language
+    pkgs-unstable.rustup                    # Rust toolchain manager
   ];
 
   nixpkgs.config = {

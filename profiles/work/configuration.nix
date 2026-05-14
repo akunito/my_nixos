@@ -89,7 +89,13 @@ in
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
   nix.nixPath = [ "nixpkgs=flake:nixpkgs" ];
-  nix.registry.nixpkgs.flake = lib.mkForce inputs.nixpkgs;
+  # On unstable (nixos-26.05+) we override the registry to point at our flake's
+  # nixpkgs input. On nixos-25.11 (stable), nix-flakes.nix and nixpkgs-flake.nix
+  # both set this path and conflict — we let the NixOS-module auto-config win
+  # there (same pattern as profiles/homelab/base.nix and proxmox-lxc/base.nix).
+  nix.registry = lib.mkIf (!(systemSettings.systemStable or false)) {
+    nixpkgs.flake = lib.mkForce inputs.nixpkgs;
+  };
   nixpkgs.overlays = [
     (final: prev: {
       logseq = prev.logseq.overrideAttrs (oldAttrs: {

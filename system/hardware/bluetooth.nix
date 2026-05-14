@@ -1,4 +1,4 @@
-{ systemSettings, ... }:
+{ systemSettings, lib, ... }:
 
 {
   # Bluetooth
@@ -19,12 +19,15 @@
   };
   services.blueman = {
     enable = true;
-    # Disable NixOS-side user applet — HM owns blueman-applet via
-    # `services.blueman-applet.enable` in user/hardware/bluetooth.nix.
-    # Without this, both define systemd.user.services.blueman-applet
-    # (NixOS generates /etc/systemd/user/.../overrides.conf, HM generates
-    # ~/.config/systemd/user/blueman-applet.service), each with its own
-    # ExecStart= — systemd refuses to merge two ExecStart entries.
+  }
+  # NixOS 26.05 split blueman into `enable` + `withApplet`. On 26.05+ we set
+  # withApplet=false so the applet is owned by Home Manager
+  # (services.blueman-applet.enable in user/hardware/bluetooth.nix) and we
+  # avoid the dual systemd.user.services.blueman-applet ExecStart conflict.
+  # On 25.11 the option doesn't exist (applet is bundled with enable); HM's
+  # service still takes precedence because it defines the unit with its own
+  # full ExecStart.
+  // lib.optionalAttrs (lib.versionAtLeast lib.version "26") {
     withApplet = false;
   };
 }

@@ -18,6 +18,12 @@ in
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_X13 -s -u";
     gpuType = "amd";
 
+    # Pin system base to nixos-25.11 (stable). pkgs resolves to pkgs-stable on
+    # this profile; user-facing apps still come from pkgs-unstable.X explicit
+    # pins (Vivaldi, OBS, IDEs, dev runtimes, etc.). DESK stays on unstable
+    # for now — flip it after LAPTOP_X13 soaks for a week.
+    systemStable = true;
+
     # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
     kernelModules = [ ];
 

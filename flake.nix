@@ -48,8 +48,13 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
 
     stylix = {
-      url = "github:danth/stylix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # Track Stylix's release-25.11 branch (matches our nixos-25.11 stable
+      # base). Avoids 26.05-only NixOS option assumptions in Stylix's modules
+      # (e.g. services.displayManager.generic). When we bump nixpkgs-stable
+      # to 26.04 in the future, also bump this branch suffix to release-26.04
+      # in lockstep — a once-per-year one-line change.
+      url = "github:danth/stylix/release-25.11";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
     };
 
     nixvim = {
