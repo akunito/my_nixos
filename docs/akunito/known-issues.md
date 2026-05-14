@@ -36,38 +36,68 @@ and don't need sudo at all.
 **Verified**: all 5 datasets now report `status=1` with real ages + sizes.
 `NasBackupMissing` resolved from `firing` to `inactive`.
 
-## vps_nextcloud backup is unhealthy — tiny repo + 3.5d stale (NEW 2026-05-14)
+## ~~vps_nextcloud backup is unhealthy — tiny repo + 3.5d stale~~ — FIXED 2026-05-14
 
-**Found**: 2026-05-14, immediately after the NasBackupMissing fix
-(commit `6b9776c`) made monitoring functional.
+**Resolved by commit `b813ad2`** (anchor exclude patterns to source root) + the
+imperative ACL grant on `/var/lib/nextcloud-data`.
 
-**Symptom**: `backup_repo_size_bytes{dataset="vps_nextcloud",direction="vps_to_nas"} 4955`
-— a 5 KB restic repo. By contrast, `vps_databases` is 10 GB, `vps_services`
-is 272 GB. And `nas_backup_age_seconds{dataset="vps_nextcloud"}` is ~84 h
-(3.5 days), already over the 36 h threshold of `NasVpsBackupStale`.
+**Actual root cause** (took a long triage to find): hypothesis #3 from the
+original entry — exclude pattern misconfiguration. The Nextcloud excludes
+in `restic-backup-vps.nix` were unanchored:
 
-**Effect**: Nextcloud data backup to NAS is either broken, silently failing,
-or the wrong path is being read. Alert `NasVpsBackupStale` will fire critical
-once its 1 h `for` countdown elapses (~09:50 today).
-
-**Hypothesis**: One of:
-1. The nextcloud restic push timer on VPS isn't actually running (or its
-   `vpsResticBackupEnable`-derived service is failing silently).
-2. The snapshot path on the NAS for nextcloud changed and the monitor reads
-   the wrong dir, returning age but missing real snapshot files.
-3. Nextcloud data is being excluded from the backup by some filter / exclude
-   rule that bypasses the actual data dirs.
-
-**Repro**:
-```bash
-ssh -A -p 56777 akunito@100.64.0.6 'systemctl list-timers --no-pager | grep -i nextcloud'
-ssh -A -p 56777 akunito@100.64.0.6 'systemctl status vps-restic-nextcloud.service 2>&1 | head -20'
-ssh -A akunito@192.168.20.200 'ls -la /mnt/extpool/vps-backups/nextcloud.restic/snapshots/ && du -sh /mnt/extpool/vps-backups/nextcloud.restic'
+```nix
+excludes = [
+  "*/3rdparty/*" "*/apps/*" "*/core/*" "*/dist/*"
+  "*/lib/*"        # <-- THIS pattern
+  "*/themes/*" ...
+];
 ```
 
-**Recommendation**: Investigate the nextcloud push service on VPS_PROD. The
-restic-backup-vps.nix module + its vpsResticTargets list. Compare to the
-working `vps_databases` and `vps_services` flows.
+Restic's glob `*` does not cross `/`, so `*/lib/*` matches any 3-segment path
+of shape `*/lib/*`. The literal path `/var/lib/nextcloud-data` IS such a path
+(`/var/lib/nextcloud-data` = `/<*>/lib/<*>`). So restic excluded the entire
+source dir before walking into it, producing 0-byte snapshots since the
+backup was first set up — months of empty offsite backups for ~150 GB of
+real Nextcloud user data.
+
+**Sequence of discovery** (so we know what NOT to repeat):
+1. Saw 5 KB repo size + 0-files restic output and assumed permission issue.
+2. Tried `AmbientCapabilities=CAP_DAC_READ_SEARCH` — didn't help because
+   restic uses `access(2)` for permission probing, which by POSIX ignores
+   capabilities for non-root users (restic issues #2447, #2563).
+3. Bypassed the `/run/wrappers/bin/restic` wrapper (it's a "privileged file"
+   and clears ambient caps) — still 0 files.
+4. Applied a real DAC ACL on the source dir (`setfacl -R -m u:akunito:rX`) —
+   `find`/`du`/`test -r` from akunito now all worked, but restic STILL
+   reported 0 files.
+5. Tried `--no-scan` — also didn't fix it on its own.
+6. Ran `restic backup /var/lib/nextcloud-data/data` (different path) — found
+   120k files. Then ran `restic backup /var/lib/nextcloud-data --no-scan`
+   (verbose=2) and saw real files. Both succeeded because the offending
+   exclude only collided with the parent path string `/var/lib/nextcloud-data`.
+7. Re-read the deployed script and spotted `--exclude "*/lib/*"`. End of
+   triage.
+
+**What stayed in place after the fix**:
+- ACL grant on `/var/lib/nextcloud-data` is still required and useful — without
+  it, akunito couldn't enter `data/` (mode 770 owned UID 100032), and even
+  with the exclude-fix the user data wouldn't be backed up. ACL was applied
+  imperatively; xattrs persist on disk.
+
+**Lessons for future restic exclude rules**:
+- Always anchor exclude patterns to the absolute source path (e.g.
+  `/var/lib/nextcloud-data/foo/*` not `*/foo/*`).
+- Add a smoke test: any non-trivial backup config should be tagged-tested
+  against expected file count before going to production.
+- `--verbose=2` in restic prints per-file decisions and would have revealed
+  the empty walk much faster than the default `--verbose` summary.
+
+**Verified result**: 90,832 files / 95.208 GiB processed; 74.214 GiB added to
+the repo (72.730 GiB stored after restic dedup). `nas_backup_status=1`,
+`nas_backup_age_seconds=23s` post-fix.
+
+**Follow-up** (low priority): add a `systemd.tmpfiles.rules` entry for the
+ACL so it's declaratively reinforced. Currently applied imperatively only.
 
 ## NAS API port (9443) likely dead after NixOS migration
 
