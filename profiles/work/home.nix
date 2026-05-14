@@ -54,7 +54,6 @@
   xdg.userDirs = {
     enable = true;
     createDirectories = true;
-    setSessionVariables = true;  # Keep legacy behaviour (HM default flipped to false)
     music = "${config.home.homeDirectory}/Media/Music";
     videos = "${config.home.homeDirectory}/Media/Videos";
     pictures = "${config.home.homeDirectory}/Media/Pictures";
@@ -71,6 +70,13 @@
       PODCAST = "${config.home.homeDirectory}/Media/Podcasts";
       BOOK = "${config.home.homeDirectory}/Media/Books";
     };
+  }
+  # `setSessionVariables` was added in Home Manager release-26.05; on stable
+  # release-25.11 the option doesn't exist (session vars are exported by
+  # default). Set it explicitly only on unstable HM to keep the legacy
+  # behaviour after the default flipped to false there.
+  // lib.optionalAttrs (lib.versionAtLeast lib.version "26") {
+    setSessionVariables = true;
   };
 
   # XDG MIME configuration is now handled by user/app/file-manager/file-manager.nix

@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  pkgs-unstable,
   lib,
   systemSettings,
   ...
@@ -9,7 +10,8 @@
 let
   cfgEnable = (systemSettings.waypaperEnable or false);
 
-  SWWW = lib.getExe pkgs.awww;
+  # awww doesn't exist on nixos-25.11 — pin to unstable.
+  SWWW = lib.getExe pkgs-unstable.awww;
   SWAYMSG = lib.getExe' pkgs.sway "swaymsg";
 
   waypaperConfigFile = "${config.xdg.configHome}/waypaper/config.ini";
@@ -73,7 +75,7 @@ let
     #!/bin/sh
     set -eu
 
-    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.waypaper pkgs.awww pkgs.procps ]}:$PATH"
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.waypaper pkgs-unstable.awww pkgs.procps ]}:$PATH"
 
     SWAYMSG='${SWAYMSG}'
     SWWW='${SWWW}'

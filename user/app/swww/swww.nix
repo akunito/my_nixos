@@ -1,10 +1,12 @@
-{ config, lib, pkgs, systemSettings, ... }:
+{ config, lib, pkgs, pkgs-unstable, systemSettings, ... }:
 
 let
   cfgEnable = (systemSettings.swwwEnable or false);
   waypaperTakesOver = (systemSettings.waypaperEnable or false);
 
-  SWWW = lib.getExe pkgs.awww;
+  # awww doesn't exist on nixos-25.11 — pin to unstable so swww works on
+  # both stable and unstable system bases.
+  SWWW = lib.getExe pkgs-unstable.awww;
   JQ = lib.getExe pkgs.jq;
   SWAYMSG = lib.getExe' pkgs.sway "swaymsg";
 
@@ -152,7 +154,7 @@ let
 in
 {
   home.packages = lib.mkIf cfgEnable [
-    pkgs.awww
+    pkgs-unstable.awww
     pkgs.jq
     swwwSet
   ];
@@ -167,7 +169,7 @@ in
     };
     Service = {
       Type = "simple";
-      ExecStart = "${pkgs.awww}/bin/awww-daemon";
+      ExecStart = "${pkgs-unstable.awww}/bin/awww-daemon";
       Restart = "on-failure";
       RestartSec = "1s";
       EnvironmentFile = [ "-%t/sway-session.env" ];

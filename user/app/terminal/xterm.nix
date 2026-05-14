@@ -65,7 +65,8 @@
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${pkgs.xrdb}/bin/xrdb -merge ${config.home.homeDirectory}/.Xresources";
+        # pkgs.xrdb top-level alias removed in nixos-25.11; use the xorg namespace.
+        ExecStart = "${pkgs.xorg.xrdb}/bin/xrdb -merge ${config.home.homeDirectory}/.Xresources";
       };
       Install = {
         WantedBy = [ "graphical-session.target" ];
