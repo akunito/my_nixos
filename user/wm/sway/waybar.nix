@@ -261,7 +261,7 @@ in {
             modules-center = [ "sway/workspaces" ];
             modules-right =
               [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" ]
-              ++ lib.optional systemSettings.googleCalendarWidgetEnable "custom/gcal"
+              ++ lib.optional systemSettings.goaCalendarEnable "custom/gcal"
               ++ [ "clock" "custom/power-menu" ];
             
             "sway/workspaces" = primaryWorkspaces;
@@ -375,11 +375,12 @@ in {
               tooltip = true;
             };
 
-            # Google Calendar next-event widget (gcalcli); click opens calendar.google.com in default browser
-            "custom/gcal" = lib.mkIf systemSettings.googleCalendarWidgetEnable {
+            # Google Calendar next-event widget (reads EDS-cached ICS via icalendar python lib)
+            # Click opens calendar.google.com in default browser.
+            "custom/gcal" = lib.mkIf systemSettings.goaCalendarEnable {
               return-type = "json";
-              interval = systemSettings.googleCalendarWidgetInterval;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.gcalcli}/bin/gcalcli";
+              interval = systemSettings.goaCalendarWidgetInterval;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ])}/bin/python3";
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal-open.sh";
               tooltip = true;
             };
@@ -465,7 +466,7 @@ in {
             modules-center = [ "sway/workspaces" ];
             modules-right =
               [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" ]
-              ++ lib.optional systemSettings.googleCalendarWidgetEnable "custom/gcal"
+              ++ lib.optional systemSettings.goaCalendarEnable "custom/gcal"
               ++ [ "clock" "custom/power-menu" ];
             
             "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
@@ -572,10 +573,10 @@ in {
               tooltip = true;
             };
 
-            "custom/gcal" = lib.mkIf systemSettings.googleCalendarWidgetEnable {
+            "custom/gcal" = lib.mkIf systemSettings.goaCalendarEnable {
               return-type = "json";
-              interval = systemSettings.googleCalendarWidgetInterval;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.gcalcli}/bin/gcalcli";
+              interval = systemSettings.goaCalendarWidgetInterval;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ])}/bin/python3";
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal-open.sh";
               tooltip = true;
             };

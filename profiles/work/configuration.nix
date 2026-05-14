@@ -33,6 +33,7 @@ in
     (./. + "../../../system/wm" + ("/" + userSettings.wm) + ".nix") # My window manager
     ../../system/app/flatpak.nix
     ../../system/app/portals.nix # XDG Desktop Portal (KDE file picker)
+    ../../system/app/online-accounts.nix # GNOME Online Accounts + Evolution Data Server (gated by goaCalendarEnable)
     ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
     (import ../../system/app/docker.nix {
       storageDriver = null;

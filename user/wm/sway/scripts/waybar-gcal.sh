@@ -1,97 +1,94 @@
 #!/usr/bin/env bash
+# Waybar module: shows the next upcoming event from evolution-data-server's
+# locally cached ICS files (populated by GNOME Online Accounts).
+# Click handler (waybar-gcal-open.sh) opens calendar.google.com in the default browser.
+
 set -euo pipefail
 
-# Waybar module: shows the next upcoming Google Calendar event.
-# Click handler (waybar-gcal-open.sh) opens calendar.google.com in the default browser.
-# Auth is one-shot via `gcalcli init` (uses creds from secrets/domains.nix).
-
-GCALCLI_BIN="${1:-gcalcli}"
-
+PY="${1:-python3}"
 icon="📅"
 
-emit() {
-  # $1=text $2=tooltip $3=class
-  local text tooltip class
-  text="$1"
-  tooltip="$2"
-  class="$3"
-  # Minimal JSON escaping
-  text="${text//\\/\\\\}"; text="${text//\"/\\\"}"
-  tooltip="${tooltip//\\/\\\\}"; tooltip="${tooltip//\"/\\\"}"
-  printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' "$text" "$tooltip" "$class"
-}
+# EDS ICS cache locations (try both modern and legacy paths)
+CACHE_DIRS=(
+  "$HOME/.cache/evolution/calendar"
+  "$HOME/.local/share/evolution/calendar"
+)
 
-if ! command -v "$GCALCLI_BIN" >/dev/null 2>&1; then
-  emit "$icon ?" "gcalcli not found in PATH" "error"
+ics_files=()
+for d in "${CACHE_DIRS[@]}"; do
+  [[ -d "$d" ]] || continue
+  while IFS= read -r -d '' f; do
+    ics_files+=("$f")
+  done < <(find "$d" -name 'calendar.ics' -type f -print0 2>/dev/null)
+done
+
+if [[ ${#ics_files[@]} -eq 0 ]]; then
+  printf '{"text":"%s ?","tooltip":"No calendars synced yet — open GNOME Control Center → Online Accounts","class":"error"}\n' "$icon"
   exit 0
 fi
 
-# Detect un-authenticated state cheaply: oauth_creds file location varies by gcalcli version.
-if [[ ! -f "${HOME}/.gcalcli_oauth" && ! -f "${HOME}/.config/gcalcli/oauth_creds" ]]; then
-  emit "$icon ?" "gcalcli not authenticated — run: gcalcli init" "error"
-  exit 0
-fi
+"$PY" - "$icon" "${ics_files[@]}" <<'PYEOF'
+import sys, json, datetime
+from datetime import timezone
 
-# Fetch agenda from now through end of tomorrow. --tsv gives stable parse-able output.
-# Columns: start_date \t start_time \t end_date \t end_time \t link \t title
-if ! agenda="$("$GCALCLI_BIN" agenda --nostarted --tsv --military 2>/dev/null)"; then
-  emit "$icon !" "gcalcli agenda failed" "error"
-  exit 0
-fi
+try:
+    from icalendar import Calendar
+except ImportError:
+    print(json.dumps({"text": "📅 !", "tooltip": "python icalendar missing", "class": "error"}))
+    sys.exit(0)
 
-if [[ -z "${agenda//[[:space:]]/}" ]]; then
-  emit "$icon" "No upcoming events" "empty"
-  exit 0
-fi
+icon = sys.argv[1]
+paths = sys.argv[2:]
+now = datetime.datetime.now(timezone.utc)
+horizon = now + datetime.timedelta(days=7)
 
-# First non-empty line = next event.
-first_line=""
-while IFS= read -r line; do
-  [[ -n "${line//[[:space:]]/}" ]] || continue
-  first_line="$line"
-  break
-done <<<"$agenda"
+events = []
+for p in paths:
+    try:
+        with open(p, 'rb') as fh:
+            cal = Calendar.from_ical(fh.read())
+        for comp in cal.walk('VEVENT'):
+            dtstart = comp.get('DTSTART')
+            if dtstart is None:
+                continue
+            start = dtstart.dt
+            # All-day events come as date; normalize to midnight UTC
+            if isinstance(start, datetime.date) and not isinstance(start, datetime.datetime):
+                start = datetime.datetime.combine(start, datetime.time.min, tzinfo=timezone.utc)
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+            if now <= start <= horizon:
+                title = str(comp.get('SUMMARY') or '(no title)')
+                events.append((start, title))
+    except Exception:
+        # Tolerate a broken/partial ICS — others may still parse
+        continue
 
-if [[ -z "$first_line" ]]; then
-  emit "$icon" "No upcoming events" "empty"
-  exit 0
-fi
+events.sort(key=lambda x: x[0])
 
-# Parse TSV
-IFS=$'\t' read -r start_date start_time _end_date _end_time _link title <<<"$first_line"
+if not events:
+    print(json.dumps({"text": icon, "tooltip": "No upcoming events (next 7d)", "class": "empty"}))
+    sys.exit(0)
 
-# Compact "HH:MM Title" (truncate long titles for the bar)
-short_title="${title:0:40}"
-[[ ${#title} -gt 40 ]] && short_title="${short_title}…"
+local_tz = datetime.datetime.now().astimezone().tzinfo
+today = datetime.datetime.now(local_tz).date()
 
-# If start_date is today, drop the date; otherwise show "Mon DD HH:MM"
-today="$(date +%Y-%m-%d)"
-if [[ "$start_date" == "$today" ]]; then
-  bar_text="$icon ${start_time} ${short_title}"
-else
-  # %b = abbreviated month
-  day_label="$(date -d "$start_date" +'%b %d' 2>/dev/null || echo "$start_date")"
-  bar_text="$icon ${day_label} ${start_time} ${short_title}"
-fi
+def format_label(s, t):
+    sl = s.astimezone(local_tz)
+    if sl.date() == today:
+        time_str = sl.strftime("%H:%M")
+    else:
+        time_str = sl.strftime("%a %d %H:%M")
+    return f"{time_str} {t}"
 
-# Tooltip: today + tomorrow agenda (up to 8 lines)
-tooltip_lines=""
-count=0
-while IFS= read -r line; do
-  [[ -n "${line//[[:space:]]/}" ]] || continue
-  IFS=$'\t' read -r sd st _ed _et _ln ttl <<<"$line"
-  if [[ "$sd" == "$today" ]]; then
-    label="${st} ${ttl}"
-  else
-    label="$(date -d "$sd" +'%a %d' 2>/dev/null || echo "$sd") ${st} ${ttl}"
-  fi
-  if [[ -z "$tooltip_lines" ]]; then
-    tooltip_lines="$label"
-  else
-    tooltip_lines="${tooltip_lines}\n${label}"
-  fi
-  count=$((count + 1))
-  [[ $count -ge 8 ]] && break
-done <<<"$agenda"
+nxt_start, nxt_title = events[0]
+nxt_local = nxt_start.astimezone(local_tz)
+short = (nxt_title[:40] + "…") if len(nxt_title) > 40 else nxt_title
+bar_time = nxt_local.strftime("%H:%M") if nxt_local.date() == today else nxt_local.strftime("%b %d %H:%M")
+bar_text = f"{icon} {bar_time} {short}"
 
-emit "$bar_text" "$tooltip_lines" "ok"
+tooltip_lines = [format_label(s, t) for s, t in events[:8]]
+tooltip = "\n".join(tooltip_lines)
+
+print(json.dumps({"text": bar_text, "tooltip": tooltip, "class": "ok"}))
+PYEOF

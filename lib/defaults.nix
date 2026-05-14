@@ -336,8 +336,11 @@
     waypaperEnable = false; # Enable Waypaper GUI wallpaper manager (requires swwwEnable)
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
-    googleCalendarWidgetEnable = false; # Enable Waybar Google Calendar widget (gcalcli-backed); click opens calendar.google.com in default browser
-    googleCalendarWidgetInterval = 300; # Refresh interval in seconds for the calendar widget
+    # GNOME Online Accounts + gnome-calendar + Waybar ICS widget (GUI login via gnome-control-center)
+    # When enabled: pulls in GOA + EDS daemons (system), gnome-calendar + gnome-control-center (user),
+    # and activates the "custom/gcal" Waybar module that reads EDS-cached ICS files.
+    goaCalendarEnable = false;
+    goaCalendarWidgetInterval = 300; # Refresh seconds for the Waybar widget
     voxtypeEnable = false; # Enable Voxtype local voice dictation (Whisper-based, hold-to-speak, works in Sway)
     swayPrimaryMonitor = null; # Optional: Primary monitor for SwayFX dock (e.g., "DP-1")
 
