@@ -48,7 +48,9 @@ let
     TEXTFILE="${textfileDir}/nas_backup.prom"
     TEMP_FILE=$(mktemp)
     NOW=$(date +%s)
-    SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new"
+    # Reuse the restic backup key — it's already authorized on the NAS for akunito.
+    # Required because this service runs as a systemd unit (no SSH agent available).
+    SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new -i /home/akunito/.ssh/id_ed25519_restic"
 
     # Write metric headers
     cat > "$TEMP_FILE" << 'HEADER'
