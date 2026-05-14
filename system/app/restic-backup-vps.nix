@@ -55,7 +55,12 @@ let
     backupScript = pkgs.writeShellScript "vps-restic-${name}" ''
       set -euo pipefail
       export RESTIC_PASSWORD_FILE="${passwordFile}"
-      RESTIC="/run/wrappers/bin/restic"
+      # Use raw restic binary, not /run/wrappers/bin/restic — the wrapper is
+      # a "privileged file" (has file capabilities), so the kernel clears our
+      # AmbientCapabilities=CAP_DAC_READ_SEARCH on exec into it. The raw
+      # nixpkgs binary preserves ambient caps, so restic-as-akunito can read
+      # root-owned and UID-mapped paths.
+      RESTIC="${pkgs.restic}/bin/restic"
       REPO="${repo}"
       SFTP_CMD="${sftpCommand}"
       LOG_TAG="vps-restic-${name}"
