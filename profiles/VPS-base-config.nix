@@ -167,10 +167,16 @@ in
     qemuGuestAddition = false;
 
     # Home packages
+    # git-crypt: use pkgs-unstable to share store path with the unstable
+    # version pulled in by user/packages/user-basic-pkgs.nix +
+    # user/app/claude-code/claude-code.nix + user/app/development/development.nix
+    # (normalised in commit 991f714). On stable-system profiles, pkgs.git-crypt
+    # and pkgs-unstable.git-crypt resolve to different store paths and
+    # collide in HM's buildEnv.
     homePackages = pkgs: pkgs-unstable: [
       pkgs.zsh
       pkgs.git
-      pkgs.git-crypt
+      pkgs-unstable.git-crypt
       pkgs-unstable.claude-code
     ];
 
