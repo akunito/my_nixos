@@ -55,10 +55,17 @@ let
     backupScript = pkgs.writeShellScript "vps-restic-${name}" ''
       set -euo pipefail
       export RESTIC_PASSWORD_FILE="${passwordFile}"
-      # Use raw restic binary, not /run/wrappers/bin/restic — the wrapper has
-      # file capabilities and would otherwise interfere with capability/ACL
-      # inheritance for non-root invocations.
-      RESTIC="${pkgs.restic}/bin/restic"
+      # Use the security.wrappers restic binary — it carries
+      # CAP_DAC_READ_SEARCH so this user-level service can read root-owned
+      # source files (DB dumps in /var/backups/databases, /etc/secrets,
+      # /var/lib/{headscale,vaultwarden}, container-owned dirs under
+      # ~/.openclaw and ~/.homelab). Switching to the raw binary on
+      # 2026-05-14 (d46a962) broke databases/services/libraries backups
+      # because they relied on that capability. The nextcloud backup
+      # additionally needs filesystem ACLs because restic 0.18.x uses
+      # access(2) which ignores process capabilities (issues #2447, #2563)
+      # — those ACLs are applied by vps-backup-source-acls.service below.
+      RESTIC="/run/wrappers/bin/restic"
       REPO="${repo}"
       SFTP_CMD="${sftpCommand}"
       LOG_TAG="vps-restic-${name}"
@@ -99,14 +106,14 @@ let
         # Retry on failure (network glitches)
         Restart = "on-failure";
         RestartSec = "5min";
-        # Note: restic 0.18.x uses access(2) for permission probing, which by
-        # POSIX semantics ignores process capabilities for non-root users
-        # (restic issues #2447, #2563). So AmbientCapabilities=CAP_DAC_READ_SEARCH
-        # is NOT enough on its own — restic skips directories whose access()
-        # check fails even when CAP_DAC_READ_SEARCH would let the kernel-level
-        # syscall succeed. Workaround: grant akunito real DAC read access via
-        # POSIX ACLs on UID-mapped source paths (see systemd.tmpfiles.rules in
-        # the consuming module / profile). The cap was a dead end; removed.
+        # Permission model: /run/wrappers/bin/restic carries
+        # CAP_DAC_READ_SEARCH (file capability) so it bypasses DAC checks at
+        # the syscall level, allowing this user-level service to read
+        # root-owned source files. The wrapper covers databases + services
+        # + libraries. The nextcloud backup additionally needs POSIX ACLs
+        # because restic 0.18.x uses access(2) on directory entries which
+        # ignores process capabilities for non-root users (issues #2447,
+        # #2563) — see vps-backup-source-acls.service below.
       };
       unitConfig = {
         # Limit retries (must be in [Unit], not [Service])
