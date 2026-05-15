@@ -104,24 +104,25 @@ let
 
     echo "Starting PostgreSQL DAILY backup at $(date)"
 
-    # Backup each database
+    # Backup each database. pg_dump runs as postgres but writes to stdout;
+    # the surrounding shell (root) handles the redirect, so the destination
+    # files inherit root ownership and the dir's 0750 root:root mode (set
+    # by the tmpfiles rule below) is respected. Previously we passed
+    # --file= which made pg_dump (uid 71) try to create the file itself
+    # and hit "Permission denied" — silently breaking PG dumps since the
+    # 0750 tmpfiles rule landed (last successful PG dump: 2026-03-08).
     ${lib.concatMapStrings (db: ''
       echo "Backing up database: ${db}"
       ${pkgs.sudo}/bin/sudo -u postgres ${cfg.package}/bin/pg_dump \
         --port=${toString pgPort} \
         --format=custom \
-        --file="$BACKUP_DIR/${db}_$DATE.dump" \
-        ${db}
+        ${db} > "$BACKUP_DIR/${db}_$DATE.dump"
 
       # Also create a plain SQL backup for easy inspection
       ${pkgs.sudo}/bin/sudo -u postgres ${cfg.package}/bin/pg_dump \
         --port=${toString pgPort} \
         --format=plain \
-        --file="$BACKUP_DIR/${db}_$DATE.sql" \
-        ${db}
-
-      # Compress SQL backup
-      ${pkgs.gzip}/bin/gzip -f "$BACKUP_DIR/${db}_$DATE.sql"
+        ${db} | ${pkgs.gzip}/bin/gzip > "$BACKUP_DIR/${db}_$DATE.sql.gz"
 
       echo "Completed backup of ${db}"
     '') pgDatabases}
@@ -160,14 +161,15 @@ EOF
 
     echo "Starting PostgreSQL HOURLY backup at $(date)"
 
-    # Backup each database (custom format only for speed)
+    # Backup each database (custom format only for speed).
+    # See postgresqlBackupScript above for why we use shell redirect
+    # instead of pg_dump --file= (postgres user can't write to BACKUP_DIR).
     ${lib.concatMapStrings (db: ''
       echo "Backing up database: ${db}"
       ${pkgs.sudo}/bin/sudo -u postgres ${cfg.package}/bin/pg_dump \
         --port=${toString pgPort} \
         --format=custom \
-        --file="$BACKUP_DIR/${db}_$DATE.dump" \
-        ${db}
+        ${db} > "$BACKUP_DIR/${db}_$DATE.dump"
 
       echo "Completed hourly backup of ${db}"
 
