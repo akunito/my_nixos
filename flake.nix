@@ -14,11 +14,10 @@
           LAPTOP_X13 = ./profiles/LAPTOP_X13-config.nix;
           LAPTOP_A = ./profiles/LAPTOP_A-config.nix;
           LAPTOP_YOGA = ./profiles/LAPTOP_YOGA-config.nix;
-          LXC_HOME = ./profiles/LXC_HOME-config.nix;
-          LXC_tailscale = ./profiles/LXC_tailscale-config.nix;
-          # Archived (migrated to VPS_PROD / TrueNAS — profiles in profiles/archived/):
-          # LXC_proxy, LXC_database, LXC_monitoring, LXC_mailer,
-          # LXC_plane, LXC_matrix, LXC_liftcraftTEST, LXC_portfolioprod
+          # Archived (akunito LXCs decommissioned — workload moved to VPS_PROD
+          # and NAS_PROD; profiles preserved in profiles/archived/):
+          # LXC_HOME, LXC_tailscale, LXC_proxy, LXC_database, LXC_monitoring,
+          # LXC_mailer, LXC_plane, LXC_matrix, LXC_liftcraftTEST, LXC_portfolioprod
           KOMI_LXC_database = ./profiles/KOMI_LXC_database-config.nix;
           KOMI_LXC_mailer = ./profiles/KOMI_LXC_mailer-config.nix;
           KOMI_LXC_monitoring = ./profiles/KOMI_LXC_monitoring-config.nix;
