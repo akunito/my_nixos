@@ -45,12 +45,17 @@ for db in dbs:
         # Only fetch rows whose occurrence window overlaps [now, horizon].
         # For recurring rows, occur_end is the LAST recurrence end (often far future),
         # so they pass this filter and get expanded below.
+        # EDS stores occur_start/occur_end as "YYYYMMDDhhmmss" (no T separator,
+        # no Z suffix). String comparison only works if both sides match that
+        # format exactly — using strftime("%Y%m%dT%H%M%S") here caused the 'T'
+        # at position 8 to sort *higher* than the digits in DB rows, silently
+        # filtering out most timed events.
         rows = conn.execute(
             "SELECT ECacheOBJ FROM ECacheObjects "
             "WHERE (occur_start IS NULL OR occur_start <= ?) "
             "  AND (occur_end IS NULL OR occur_end >= ?) "
             "  AND (status IS NULL OR status != 'CANCELLED')",
-            (horizon.strftime("%Y%m%dT%H%M%SZ"), now.strftime("%Y%m%dT%H%M%S")),
+            (horizon.strftime("%Y%m%d%H%M%S"), now.strftime("%Y%m%d%H%M%S")),
         ).fetchall()
         conn.close()
     except Exception:
