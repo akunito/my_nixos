@@ -468,9 +468,9 @@ HEADER
       '';
     };
 
-    # Docker pre-suspend: stop all containers gracefully
+    # Docker pre-suspend (root daemon): stop rootful compose projects
     systemd.services.nas-docker-pre-suspend = {
-      description = "Stop Docker containers before suspend";
+      description = "Stop root Docker Compose projects before suspend";
       before = [ "sleep.target" ];
       wantedBy = [ "sleep.target" ];
       serviceConfig = {
@@ -478,20 +478,47 @@ HEADER
         TimeoutSec = 120;
       };
       script = ''
-        echo "Stopping Docker containers for suspend..."
-        for project in ${lib.concatMapStringsSep " " (p: "'${p}'") (lib.reverseList composeProjects)}; do
+        echo "Stopping root Docker Compose projects for suspend..."
+        for project in ${lib.concatMapStringsSep " " (p: "'${p}'") (lib.reverseList rootDockerProjects)}; do
           if [ -d "${composeBase}/$project" ]; then
-            echo "  Stopping $project..."
+            echo "  Stopping $project (root)..."
             cd "${composeBase}/$project" && ${pkgs.docker-compose}/bin/docker-compose stop -t 30 || true
           fi
         done
-        echo "All containers stopped."
+        echo "Root Docker projects stopped."
       '';
     };
 
-    # Docker post-resume: start all containers
+    # Docker pre-suspend (rootless daemon): stop rootless compose projects
+    # Why: without this, rootless containers stay live through suspend and
+    # rootlesskit's port driver loses port bindings at wake — orphan
+    # docker-proxy procs then squat the ports and `up -d` fails with
+    # "address already in use". See memory/project_nas_suspend_resume_race.md.
+    systemd.services.nas-docker-rootless-pre-suspend = lib.mkIf isRootless {
+      description = "Stop rootless Docker Compose projects before suspend";
+      before = [ "sleep.target" ];
+      wantedBy = [ "sleep.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        TimeoutSec = 180;
+        User = username;
+      };
+      environment = rootlessEnv;
+      script = ''
+        echo "Stopping rootless Docker Compose projects for suspend..."
+        for project in ${lib.concatMapStringsSep " " (p: "'${p}'") (lib.reverseList rootlessDockerProjects)}; do
+          if [ -d "${composeBase}/$project" ]; then
+            echo "  Stopping $project (rootless)..."
+            cd "${composeBase}/$project" && ${pkgs.docker-compose}/bin/docker-compose stop -t 30 || true
+          fi
+        done
+        echo "Rootless Docker projects stopped."
+      '';
+    };
+
+    # Docker post-resume (root daemon): start rootful compose projects
     systemd.services.nas-docker-post-resume = {
-      description = "Start Docker containers after resume";
+      description = "Start root Docker Compose projects after resume";
       after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
       wantedBy = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
       serviceConfig = {
@@ -500,14 +527,44 @@ HEADER
         ExecStartPre = "${pkgs.coreutils}/bin/sleep 10"; # Wait for networking
       };
       script = ''
-        echo "Starting Docker containers after resume..."
-        for project in ${lib.concatMapStringsSep " " (p: "'${p}'") composeProjects}; do
+        echo "Starting root Docker Compose projects after resume..."
+        for project in ${lib.concatMapStringsSep " " (p: "'${p}'") rootDockerProjects}; do
           if [ -d "${composeBase}/$project" ]; then
-            echo "  Starting $project..."
+            echo "  Starting $project (root)..."
             cd "${composeBase}/$project" && ${pkgs.docker-compose}/bin/docker-compose up -d || true
           fi
         done
-        echo "All containers started."
+        echo "Root Docker projects started."
+      '';
+    };
+
+    # Docker post-resume (rootless daemon): start rootless compose projects
+    systemd.services.nas-docker-rootless-post-resume = lib.mkIf isRootless {
+      description = "Start rootless Docker Compose projects after resume";
+      after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+      wantedBy = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        TimeoutSec = 300;
+        User = username;
+        ExecStartPre = "${pkgs.coreutils}/bin/sleep 15"; # Wait for networking + user@.service
+      };
+      environment = rootlessEnv;
+      script = ''
+        echo "Starting rootless Docker Compose projects after resume..."
+        # Wait for rootless Docker socket
+        for i in $(seq 1 30); do
+          [ -S "/run/user/1000/docker.sock" ] && break
+          echo "  Waiting for rootless Docker socket ($i/30)..."
+          sleep 2
+        done
+        for project in ${lib.concatMapStringsSep " " (p: "'${p}'") rootlessDockerProjects}; do
+          if [ -d "${composeBase}/$project" ]; then
+            echo "  Starting $project (rootless)..."
+            cd "${composeBase}/$project" && ${pkgs.docker-compose}/bin/docker-compose up -d || true
+          fi
+        done
+        echo "Rootless Docker projects started."
       '';
     };
 
