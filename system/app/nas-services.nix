@@ -561,7 +561,13 @@ HEADER
         for project in ${lib.concatMapStringsSep " " (p: "'${p}'") rootlessDockerProjects}; do
           if [ -d "${composeBase}/$project" ]; then
             echo "  Starting $project (rootless)..."
-            cd "${composeBase}/$project" && ${pkgs.docker-compose}/bin/docker-compose up -d || true
+            # `exporters` attaches to `media_default` as an external network;
+            # media is re-created each wake with a new network ID, so the
+            # stale exporter containers fail with `network <uuid> not found`.
+            # --force-recreate rebuilds them against the current network.
+            extra_args=""
+            [ "$project" = "exporters" ] && extra_args="--force-recreate"
+            cd "${composeBase}/$project" && ${pkgs.docker-compose}/bin/docker-compose up -d $extra_args || true
           fi
         done
         echo "Rootless Docker projects started."
