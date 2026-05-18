@@ -230,6 +230,9 @@ METRICS
       # Mediarr stack (sonarr, radarr, prowlarr, bazarr, jellyseerr, qbittorrent).
       # Exclude regenerable container-internal junk that's owned by sub-UIDs
       # and would otherwise produce "Permission denied" rsync warnings.
+      # bazarr/cache/ — subtitle search cache, root-owned 0600 inside the
+      # rootful bazarr container, unreadable to akunito on NAS. Cache only,
+      # regenerable; same treatment as tailscale/state/ in the configs job.
       rsync_dir /mnt/ssdpool/docker/mediarr/ "$STAGING/docker-data/mediarr/" "mediarr" $EXCLUDES \
         --exclude='calibre-server/config/.XDG/' \
         --exclude='calibre-server/config/.cache/' \
@@ -237,7 +240,8 @@ METRICS
         --exclude='calibre-server/config/.config/pulse/' \
         --exclude='calibre-server/config/.config/calibre/fonts/' \
         --exclude='calibre-server/config/.config/calibre/plugins/' \
-        --exclude='qbittorrent/qBittorrent/logs/'
+        --exclude='qbittorrent/qBittorrent/logs/' \
+        --exclude='bazarr/cache/'
 
       # Jellyfin config
       rsync_dir /mnt/ssdpool/docker/jellyfin/etc/ "$STAGING/docker-data/jellyfin-etc/" "jellyfin config" \
