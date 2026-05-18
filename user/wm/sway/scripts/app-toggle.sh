@@ -1,25 +1,38 @@
 #!/usr/bin/env bash
-# Usage: app-toggle.sh <app_id|class> <launch_command...>
+# Usage: app-toggle.sh <app_id|class|title:REGEX> <launch_command...>
 # Example: app-toggle.sh cursor cursor --flags
+# Example: app-toggle.sh title:^Element element-desktop  (for apps without a useful Wayland app_id, e.g. Electron)
 
 APP_ID=$1
 shift
 CMD="$@"
 
-[ -n "$APP_ID" ] && [ -n "$CMD" ] || { echo "Usage: $0 <app_id|class> <command...>"; exit 1; }
+[ -n "$APP_ID" ] && [ -n "$CMD" ] || { echo "Usage: $0 <app_id|class|title:REGEX> <command...>"; exit 1; }
 
-NORMALIZED_APP="${APP_ID,,}"
+# Opt-in title-regex match mode (default: existing app_id/class behavior, unchanged)
+MATCH_MODE="app"
+PATTERN="$APP_ID"
+if [[ "$APP_ID" == title:* ]]; then
+    MATCH_MODE="title"
+    PATTERN="${APP_ID#title:}"
+fi
+
+NORMALIZED_APP="${PATTERN,,}"
 
 # === SINGLE tree fetch + combined parse ===
 TREE=$(swaymsg -t get_tree 2>/dev/null)
-PARSED=$(printf '%s' "$TREE" | jq --arg norm_app "$NORMALIZED_APP" '{
+PARSED=$(printf '%s' "$TREE" | jq --arg norm_app "$NORMALIZED_APP" --arg mode "$MATCH_MODE" '{
   focused_id: ([recurse(.nodes[]?, .floating_nodes[]?) | select(.focused == true) | .id] | .[0] // null),
   windows: [
     recurse(.nodes[]?, .floating_nodes[]?)
     | select(.type=="con" or .type=="floating_con")
     | select(
-        ((.app_id // "") | ascii_downcase == $norm_app) or
-        ((.window_properties.class // "") | ascii_downcase == $norm_app)
+        if $mode == "title" then
+            ((.name // "") | test($norm_app; "i"))
+        else
+            ((.app_id // "") | ascii_downcase == $norm_app) or
+            ((.window_properties.class // "") | ascii_downcase == $norm_app)
+        end
     )
     | { id, floating: (.floating == "user_on" or .floating == "auto_on"), w: .rect.width, h: .rect.height }
   ]
@@ -30,17 +43,28 @@ FOCUSED_ID=$(printf '%s' "$PARSED" | jq -r '.focused_id // "none"')
 
 # Function to wait for window to appear after launch
 wait_for_window() {
-    local norm_app="${1,,}"
+    local raw="$1"
+    local mode="app"
+    local pat="$raw"
+    if [[ "$raw" == title:* ]]; then
+        mode="title"
+        pat="${raw#title:}"
+    fi
+    local norm_app="${pat,,}"
     local max_iterations=50
     local iteration=0
 
     while [ "$iteration" -lt "$max_iterations" ]; do
-        local count=$(swaymsg -t get_tree 2>/dev/null | jq --arg n "$norm_app" '
+        local count=$(swaymsg -t get_tree 2>/dev/null | jq --arg n "$norm_app" --arg m "$mode" '
             [recurse(.nodes[]?, .floating_nodes[]?)
              | select(.type=="con" or .type=="floating_con")
              | select(
-                 ((.app_id // "") | ascii_downcase == $n) or
-                 ((.window_properties.class // "") | ascii_downcase == $n)
+                 if $m == "title" then
+                     ((.name // "") | test($n; "i"))
+                 else
+                     ((.app_id // "") | ascii_downcase == $n) or
+                     ((.window_properties.class // "") | ascii_downcase == $n)
+                 end
              )] | length' 2>/dev/null)
 
         [ "${count:-0}" -gt 0 ] && return 0

@@ -538,8 +538,10 @@ in
           # Waypaper (wallpaper GUI) - Hyper+Shift+b (b for background)
           "${hyper}+Shift+b" = lib.mkIf (systemSettings.waypaperEnable or false) "exec waypaper";
           # Element (Matrix client) - hyper+o
+          # Electron sets Wayland app_id to "electron" (no flag overrides this).
+          # Match by title regex via app-toggle.sh's title: prefix.
           "${hyper}+o" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh element element-desktop --password-store=kwallet5";
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh title:^Element element-desktop --password-store=kwallet5";
 
           # Workspace navigation with auto-creation and wrapping (Option B)
           # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
@@ -821,17 +823,13 @@ in
             };
             command = "floating enable";
           }
+          # Element (Electron): app_id is "electron"; disambiguate by title
           {
             criteria = {
-              app_id = "element";
+              app_id = "electron";
+              title = "^Element";
             };
-            command = "floating enable";
-          }
-          {
-            criteria = {
-              app_id = "Element";
-            };
-            command = "floating enable";
+            command = "floating enable, sticky enable";
           }
           {
             criteria = {
@@ -1186,6 +1184,11 @@ in
       include ~/.config/sway/outputs
       include ~/.config/sway/workspaces
 
+      # Force 10-bit rendering on the Samsung Odyssey G70NC (panel is 10-bit; default is 8-bit).
+      # Targeted by EDID make/model/serial, so this directive is inert on hosts where
+      # this exact monitor isn't connected (laptops, other profiles, replacement units).
+      output "${mainMon}" render_bit_depth 10
+
       # Output layout is managed dynamically by kanshi (official wlroots/Sway output profile manager).
       # This avoids phantom pointer/workspace regions on monitors that are usually OFF.
       #
@@ -1288,6 +1291,8 @@ in
       for_window [app_id="kitty-ranger"] floating enable, sticky enable
       for_window [app_id="org.telegram.desktop"] floating enable
       for_window [app_id="telegram-desktop"] floating enable
+      # Element (Electron): app_id="electron" + title regex
+      for_window [app_id="electron" title="^Element"] floating enable, sticky enable
       for_window [app_id="bitwarden"] floating enable
       for_window [app_id="bitwarden-desktop"] floating enable
       for_window [app_id="Bitwarden"] floating enable
