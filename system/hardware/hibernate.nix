@@ -32,8 +32,13 @@ lib.mkIf ((systemSettings.hibernateEnable or false)
   # Resume from hibernate: adds resume= kernel param + initrd hook
   boot.resumeDevice = "/dev/mapper/luks-swap";
 
-  # Auto-hibernate delay for suspend-then-hibernate
-  systemd.sleep.settings.Sleep.HibernateDelaySec = systemSettings.hibernateDelaySec;
+  # Auto-hibernate delay for suspend-then-hibernate. Use the free-form
+  # `extraConfig` so the same expression works on both nixos-25.11 (which
+  # lacks the structured `systemd.sleep.settings` attribute set added in
+  # nixos-26.05) and on unstable.
+  systemd.sleep.extraConfig = ''
+    HibernateDelaySec=${toString systemSettings.hibernateDelaySec}
+  '';
 
   # logind: ignore power button (acpid handles it conditionally)
   services.logind.settings.Login.HandlePowerKey = lib.mkForce "ignore";

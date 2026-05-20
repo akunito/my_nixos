@@ -452,7 +452,11 @@ in
     #   }
     # ];
 
-    systemStable = false;
+    # Pin DESK system base to nixos-25.11 (stable). Mirrors the LAPTOP_X13
+    # change from 2026-05-14 (commits 32d0712 + 3476490 + 991f714). pkgs
+    # resolves to pkgs-stable; user-facing apps stay on unstable via
+    # explicit pkgs-unstable.X pins (Vivaldi, OBS, IDEs, dev runtimes, etc.).
+    systemStable = true;
   };
 
   userSettings = {

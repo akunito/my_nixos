@@ -331,13 +331,22 @@ in
           command = "${pkgs.systemd}/bin/systemctl suspend";
         }
       ];
-    events = {
-      # Use --color instead of --screenshots for before-sleep: monitors may be powered off,
-      # causing screencopy to fail and leaving the session unlocked after resume.
-      before-sleep = "${pkgs.swaylock-effects}/bin/swaylock --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono' --color 000000";
-      # Ensure monitors are powered on after resume (safety net — timeout resumeCommand may not fire)
-      after-resume = "${sway-resume-monitors}";
-    };
+    # Note: HM release-26.05 accepts `events = { before-sleep = ...; }`
+    # (attrset form). HM release-25.11 only accepts the list-of-submodules
+    # form below. Using the list form here so this evaluates on both.
+    events = [
+      {
+        event = "before-sleep";
+        # Use --color instead of --screenshots: monitors may be powered off,
+        # causing screencopy to fail and leaving the session unlocked after resume.
+        command = "${pkgs.swaylock-effects}/bin/swaylock --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono' --color 000000";
+      }
+      {
+        event = "after-resume";
+        # Ensure monitors are powered on after resume (safety net — timeout resumeCommand may not fire)
+        command = "${sway-resume-monitors}";
+      }
+    ];
   };
 
   # Power-aware swayidle: custom systemd services (replaces HM swayidle when enabled)
