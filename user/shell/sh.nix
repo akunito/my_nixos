@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-unstable,
   userSettings,
   systemSettings,
   lib,
@@ -102,7 +103,7 @@ in
     bottom
     fd
     bc
-    atuin
+    pkgs-unstable.atuin
   ];
 
   programs.direnv.enable = true;
@@ -110,8 +111,11 @@ in
   programs.direnv.nix-direnv.enable = true;
 
   # Atuin shell history sync (controlled by atuinAutoSync flag)
+  # Pinned to pkgs-unstable so DESK (stable nixos-25.11) gets a build that
+  # knows the `history author intent` migration already applied to history.db.
   programs.atuin = {
     enable = true;
+    package = pkgs-unstable.atuin;
     enableZshIntegration = true;
     settings = {
       auto_sync = systemSettings.atuinAutoSync;
