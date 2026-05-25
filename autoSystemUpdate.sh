@@ -33,19 +33,68 @@ echo -e "Configuring git safe.directory for $SCRIPT_DIR"
 echo -e "Updating flake.lock"
 $SCRIPT_DIR/update.sh
 
-# Defense-in-depth: regenerate hardware-config before rebuild so autoupdate
-# never builds against a foreign hardware-config left in the local repo
-# (e.g., after a `git reset --hard origin/main` that pulled another machine's
-# hardware-config). Non-fatal: LXC/no-real-hardware profiles may produce
-# empty/unhelpful output and don't import this file anyway.
+# Defense-in-depth: regenerate hardware-config and validate before accepting,
+# so autoupdate never builds against a foreign hardware-config left in the
+# local repo (e.g., after `git reset --hard origin/main` that pulled another
+# machine's content) nor against a partial regen (e.g., produced while NFS
+# automounts were hot or hardware enumeration hadn't settled).
 HW_CONFIG="$SCRIPT_DIR/system/hardware-configuration.nix"
+HW_CONFIG_NEW="$HW_CONFIG.new"
+HW_CONFIG_REGEN_OK=0
 echo -e "Regenerating $HW_CONFIG for current host"
-if nixos-generate-config --show-hardware-config > "$HW_CONFIG.new" 2>/dev/null && [ -s "$HW_CONFIG.new" ]; then
-    mv "$HW_CONFIG.new" "$HW_CONFIG"
-    echo -e "Hardware-config regenerated"
+if ! nixos-generate-config --show-hardware-config > "$HW_CONFIG_NEW" 2>/dev/null || [ ! -s "$HW_CONFIG_NEW" ]; then
+    rm -f "$HW_CONFIG_NEW"
+    echo -e "WARNING: nixos-generate-config produced no output; keeping existing $HW_CONFIG"
 else
-    rm -f "$HW_CONFIG.new"
-    echo -e "WARNING: hardware-config regen produced no output; keeping existing file"
+    # Scrub autofs/nfs/nfs4 fileSystems entries (managed by drives.nix /
+    # nfs_client.nix). Without this, a hot automount at autoupdate-time
+    # leaks into the regen and conflicts with the declarative mount.
+    if grep -qE 'fsType = "(autofs|nfs4?)"' "$HW_CONFIG_NEW"; then
+        if command -v python3 >/dev/null 2>&1; then
+            echo -e "Stripping autofs/NFS fileSystems entries from regenerated file"
+            python3 - "$HW_CONFIG_NEW" <<'PYEOF'
+import re, sys
+p = sys.argv[1]
+with open(p, 'r') as f:
+    content = f.read()
+content = re.sub(
+    r'\n  fileSystems\."[^"]+" =\n    \{ device = "[^"]*";\n      fsType = "(?:autofs|nfs4?)";\n    \};\n',
+    '\n', content)
+with open(p, 'w') as f:
+    f.write(content)
+PYEOF
+        else
+            echo -e "WARNING: python3 unavailable; cannot strip autofs/NFS from regen — rejecting"
+            rm -f "$HW_CONFIG_NEW"
+        fi
+    fi
+
+    # Validate the regen against profile-specific anchors before committing.
+    # If markers the running system definitely has are missing, the regen
+    # is partial/wrong and we must NOT replace the existing file.
+    if [ -s "$HW_CONFIG_NEW" ]; then
+        REQUIRED_MARKERS=""
+        case "$ACTIVE_PROFILE" in
+            NAS_PROD) REQUIRED_MARKERS="mpt3sas cryptroot ssdpool extpool" ;;
+            # Add other physical-host anchors here as new failure modes surface.
+        esac
+        MISSING=""
+        for m in $REQUIRED_MARKERS; do
+            grep -q "$m" "$HW_CONFIG_NEW" || MISSING="$MISSING $m"
+        done
+        if ! grep -q 'fileSystems."/"' "$HW_CONFIG_NEW"; then
+            MISSING="$MISSING fileSystems(root)"
+        fi
+        if [ -n "$MISSING" ]; then
+            echo -e "WARNING: regen missing required markers for $ACTIVE_PROFILE:$MISSING"
+            echo -e "WARNING: keeping existing $HW_CONFIG to avoid building a broken system"
+            rm -f "$HW_CONFIG_NEW"
+        else
+            mv "$HW_CONFIG_NEW" "$HW_CONFIG"
+            HW_CONFIG_REGEN_OK=1
+            echo -e "Hardware-config regenerated and validated"
+        fi
+    fi
 fi
 
 echo -e "Rebuilding system"
@@ -86,6 +135,9 @@ nixos_autoupdate_system_last_success{hostname="$HOSTNAME"} $TIMESTAMP
 # HELP nixos_autoupdate_system_status Status of last system update (1=success)
 # TYPE nixos_autoupdate_system_status gauge
 nixos_autoupdate_system_status{hostname="$HOSTNAME"} 1
+# HELP nixos_autoupdate_hw_config_regen_status Whether the autoupdate accepted a regenerated hardware-config (1=accepted, 0=rejected/kept-existing)
+# TYPE nixos_autoupdate_hw_config_regen_status gauge
+nixos_autoupdate_hw_config_regen_status{hostname="$HOSTNAME"} $HW_CONFIG_REGEN_OK
 EOF
         echo -e "Prometheus metrics written to $TEXTFILE_DIR/autoupdate_system.prom"
     fi
@@ -99,6 +151,9 @@ else
 # HELP nixos_autoupdate_system_status Status of last system update (1=success, 0=failure)
 # TYPE nixos_autoupdate_system_status gauge
 nixos_autoupdate_system_status{hostname="$HOSTNAME"} 0
+# HELP nixos_autoupdate_hw_config_regen_status Whether the autoupdate accepted a regenerated hardware-config (1=accepted, 0=rejected/kept-existing)
+# TYPE nixos_autoupdate_hw_config_regen_status gauge
+nixos_autoupdate_hw_config_regen_status{hostname="$HOSTNAME"} $HW_CONFIG_REGEN_OK
 EOF
     fi
     exit 1
