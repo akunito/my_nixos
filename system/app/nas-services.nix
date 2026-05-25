@@ -281,6 +281,34 @@ HEADER
     networking.hostId = systemSettings.nasHostId or "deadbeef";
 
     # ========================================================================
+    # Break systemd ordering cycle around nas-zfs-unlock + local-fs.target
+    # ========================================================================
+    # NixOS 25.11 + systemd 258 introduces `systemd-bootctl.socket
+    # After=local-fs.target` and ships `systemd-boot-random-seed.service
+    # After=local-fs.target`. With our `nas-zfs-unlock.service
+    # Before=local-fs.target`, the chain
+    #   local-fs.target
+    #     ← After zfs-mount.service
+    #         ← After nas-zfs-unlock.service
+    #             ← After basic.target (default dep)
+    #                 ← After sockets.target
+    #                     ← After {systemd-bootctl.socket | …}
+    #                         ← After local-fs.target
+    # forms a cycle. systemd breaks one edge non-deterministically per boot;
+    # when it picks nas-zfs-unlock the keys never load, encrypted ZFS
+    # datasets fail to mount, local-fs.target fails → emergency mode.
+    # This is what bit gen 35 (2026-05-23) and gen 37 (2026-05-25).
+    # VPS_PROD doesn't see this because it uses GRUB (no systemd-boot units).
+    #
+    # Both suppressed units are systemd-boot housekeeping, not on the boot
+    # critical path: `bootctl` CLI still works without the socket; the
+    # kernel still seeds entropy without the random-seed service.
+    systemd.suppressedSystemUnits = [
+      "systemd-bootctl.socket"
+      "systemd-boot-random-seed.service"
+    ];
+
+    # ========================================================================
     # ZFS pool auto-unlock after boot
     # ========================================================================
     # The NixOS boot drive is LUKS-encrypted (passphrase at boot).
