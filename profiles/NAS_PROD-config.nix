@@ -185,6 +185,7 @@ in
         usbutils
         pciutils
         git-crypt
+        python3 # Required by autoSystemUpdate.sh autofs/NFS scrub step
       ];
 
     # ============================================================================
