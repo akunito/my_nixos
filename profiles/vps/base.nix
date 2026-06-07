@@ -254,6 +254,8 @@
   virtualisation.docker.rootless = lib.mkIf (userSettings.dockerRootlessEnable or false) {
     enable = true;
     setSocketVariable = true;
+    # Track docker from pkgs-unstable (stable docker_28 was flagged unmaintained).
+    package = pkgs-unstable.docker;
     daemon.settings = {
       "log-driver" = "json-file";
       "log-opts" = { "max-size" = "10m"; "max-file" = "3"; };
