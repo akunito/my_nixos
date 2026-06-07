@@ -1,4 +1,4 @@
-{ pkgs, systemSettings, userSettings, lib, ... }:
+{ pkgs, pkgs-unstable, systemSettings, userSettings, lib, ... }:
 
 # Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot
 # Enable with homelabDockerEnable = true in profile config
@@ -23,7 +23,7 @@ let
   rootlessEnv = [
     "DOCKER_HOST=unix:///run/user/1000/docker.sock"
     "XDG_RUNTIME_DIR=/run/user/1000"
-    "PATH=${pkgs.docker}/bin:${pkgs.docker-compose}/bin:/run/wrappers/bin:/run/current-system/sw/bin"
+    "PATH=${pkgs-unstable.docker}/bin:${pkgs.docker-compose}/bin:/run/wrappers/bin:/run/current-system/sw/bin"
   ];
 
   # === Configurable stacks mode ===

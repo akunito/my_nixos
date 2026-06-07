@@ -7,7 +7,7 @@
 #
 # Feature flag: openclawSanitizersEnable = true (in profile config)
 
-{ pkgs, lib, systemSettings, userSettings, ... }:
+{ pkgs, pkgs-unstable, lib, systemSettings, userSettings, ... }:
 
 let
   username = userSettings.username;
@@ -71,7 +71,7 @@ in
     description = "OpenClaw: Restart gateway to clear stale sessions";
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs.bash}/bin/bash -c 'cd ${homeDir}/.homelab/openclaw && ${pkgs.docker}/bin/docker compose restart openclaw-gateway'";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'cd ${homeDir}/.homelab/openclaw && ${pkgs-unstable.docker}/bin/docker compose restart openclaw-gateway'";
       User = username;
     };
   };

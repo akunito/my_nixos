@@ -231,11 +231,12 @@
   # System packages
   # ==========================================================================
   environment.systemPackages = systemSettings.systemPackages
-    ++ lib.optionals (userSettings.dockerRootlessEnable or false) (with pkgs; [
-      docker
-      docker-compose
-      lazydocker
-    ]);
+    ++ lib.optionals (userSettings.dockerRootlessEnable or false) [
+      # docker/docker-compose from pkgs-unstable (stable docker_28 was flagged unmaintained)
+      pkgs-unstable.docker
+      pkgs-unstable.docker-compose
+      pkgs.lazydocker
+    ];
 
   # Server environment variable
   environment.sessionVariables.SERVER_ENV = systemSettings.serverEnv;
