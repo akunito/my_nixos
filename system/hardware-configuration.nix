@@ -24,18 +24,18 @@
 
 
 
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/7620-B197";
+      fsType = "vfat";
+      options = [ "fmask=0077" "dmask=0077" ];
+    };
+
   fileSystems."/home" =
     { device = "/dev/mapper/luks-a40d2e06-e814-4344-99c8-c2e00546beb3";
       fsType = "btrfs";
     };
 
   boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
-
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/7620-B197";
-      fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
-    };
 
   fileSystems."/mnt/2nd_NVME" =
     { device = "/dev/mapper/2nd_NVME";
@@ -53,9 +53,6 @@
     { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
       fsType = "ntfs3";
     };
-
-
-
 
   swapDevices =
     [ { device = "/dev/mapper/luks-swap"; }

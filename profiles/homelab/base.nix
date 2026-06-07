@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  pkgs-unstable,
   systemSettings,
   userSettings,
   inputs,
@@ -26,7 +27,7 @@ in
     ../../system/security/polkit.nix # Security rules
     (import ../../system/app/docker.nix {
       storageDriver = null;
-      inherit pkgs userSettings lib;
+      inherit pkgs pkgs-unstable userSettings lib;
     })
   ]
   ++ lib.optional systemSettings.fail2banEnable ../../system/security/fail2ban.nix # Conditional fail2ban

@@ -202,6 +202,9 @@ let
       allowUnfreePredicate = (_: true);
       permittedInsecurePackages = [
         "olm-3.2.16"
+        # bitwarden-desktop-2026.5.0 still bundles electron 39 (EOL upstream).
+        # Allow until nixpkgs ships a bitwarden-desktop on a maintained Electron.
+        "electron-39.8.10"
       ];
     };
     overlays = (lib.optional useRustOverlay rustOverlay) ++ [ noOpenldapTestsOverlay ];

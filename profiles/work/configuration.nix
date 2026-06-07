@@ -37,7 +37,7 @@ in
     ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
     (import ../../system/app/docker.nix {
       storageDriver = null;
-      inherit pkgs userSettings lib;
+      inherit pkgs pkgs-unstable userSettings lib;
     })
     ../../system/security/sudo.nix # Doas instead of sudo
     ../../system/security/gpg.nix # GnuPG (ssh/key agent)

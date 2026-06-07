@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  pkgs-unstable,
   systemSettings,
   userSettings,
   inputs,
@@ -26,7 +27,7 @@
     ../../system/app/prometheus-exporters.nix
     (import ../../system/app/docker.nix {
       storageDriver = "overlay2";
-      inherit pkgs userSettings lib;
+      inherit pkgs pkgs-unstable userSettings lib;
     })
   ]
   ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix

@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  pkgs-unstable,
   systemSettings,
   userSettings,
   inputs,
@@ -25,7 +26,7 @@
   # Rootless Docker (VPS) vs root Docker (LXC) — mutually exclusive
   ++ lib.optional (!(userSettings.dockerRootlessEnable or false)) (import ../../system/app/docker.nix {
     storageDriver = "overlay2";
-    inherit pkgs userSettings lib;
+    inherit pkgs pkgs-unstable userSettings lib;
   })
   # Optional service modules (same as proxmox-lxc/base.nix)
   ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix
