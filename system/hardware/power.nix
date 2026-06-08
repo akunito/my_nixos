@@ -56,6 +56,15 @@
     };
   };
 
+  # Disable USB autosuspend at the kernel level when USB_AUTOSUSPEND=0.
+  # TLP's USB_AUTOSUSPEND=0 alone is NOT enough: the kernel default
+  # (usbcore.autosuspend=2) still autosuspends USB devices after 2s idle, which
+  # resets dock-attached USB-ethernet adapters and re-enumerates the USB tree
+  # (intermittent NIC drops). This also overrides powertop auto-tune re-enabling
+  # autosuspend. Gated so only opted-in machines (e.g. LAPTOP_X13 on a
+  # Thunderbolt dock) get it; requires a reboot to take effect.
+  boot.kernelParams = lib.optionals (systemSettings.USB_AUTOSUSPEND == 0) [ "usbcore.autosuspend=-1" ];
+
   powerManagement.enable = systemSettings.powerManagement_ENABLE;
 
   # LOGIND
