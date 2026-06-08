@@ -651,6 +651,7 @@
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config
     workspaceGroupsGuiEnable = false;    # Install workspace groups GUI
     kanshiImperativeMode = false;        # User-managed kanshi config (not Nix)
+    swaysomeNativeGroups = false;        # Laptops: use focus-immune swaysome init+rearrange for per-monitor workspace groups (drops focus-fragile assign-groups.sh). DESK keeps legacy path.
 
     # Font defaults - will be computed based on systemStable in flake-base.nix
     # This is just a placeholder
