@@ -40,6 +40,18 @@ in
 
     # Imperative mode - User manages ~/.config/kanshi/config directly
     (lib.mkIf imperativeMode {
+      # Migration: strip the stale `exec swaysome init 1` line from existing
+      # live kanshi configs. `init` belongs at session startup (run once), not
+      # on every monitor hotplug where it reshuffles per-monitor workspace
+      # groups. Idempotent: only rewrites the file if the line is present.
+      home.activation.kanshiMigrateRemoveInit =
+        lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] ''
+          KANSHI_CONFIG="$HOME/.config/kanshi/config"
+          if [ -f "$KANSHI_CONFIG" ] && ${pkgs.gnugrep}/bin/grep -qE '^[[:space:]]*exec swaysome init' "$KANSHI_CONFIG"; then
+            ${pkgs.gnused}/bin/sed -i '/^[[:space:]]*exec swaysome init/d' "$KANSHI_CONFIG"
+          fi
+        '';
+
       # Create a default config if none exists
       home.activation.kanshiCreateDefaultConfig =
         lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] ''
@@ -57,9 +69,13 @@ in
 # }
 
 # Default profile - enable all outputs
+# NOTE: `swaysome init` is intentionally NOT run here. init re-initializes
+# ALL workspace groups from scratch, so running it on every monitor hotplug
+# reshuffles/collapses existing per-monitor groups. init is run ONCE at sway
+# session startup (see startup list in swayfx-config.nix). On monitor change
+# we only run the hotplug-safe commands: rearrange + the assign script.
 profile default-auto {
   output * enable
-  exec swaysome init 1
   exec swaysome rearrange-workspaces
   exec $HOME/.config/sway/scripts/swaysome-assign-groups.sh
 }

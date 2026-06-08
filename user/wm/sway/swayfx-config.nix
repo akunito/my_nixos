@@ -700,6 +700,15 @@ in
           command = "/home/akunito/.dotfiles/user/wm/sway/scripts/workspace-startup-logger.sh";
           always = false; # Only run on initial startup, not on config reload
         }
+        # Initialize swaysome per-output workspace groups ONCE per session.
+        # Deliberately NOT in the kanshi profile: kanshi re-applies on every
+        # monitor hotplug, and `swaysome init` re-initializes ALL groups, which
+        # reshuffles/collapses existing per-monitor workspaces. On hotplug only
+        # `rearrange-workspaces` + the assign script run (see kanshi.nix).
+        {
+          command = "${pkgs.swaysome}/bin/swaysome init 1";
+          always = false; # Once per session start, never on config reload
+        }
         # DESK-only: focus the primary output and warp cursor onto it early
         {
           command = "${sway-focus-primary-output}/bin/sway-focus-primary-output";
