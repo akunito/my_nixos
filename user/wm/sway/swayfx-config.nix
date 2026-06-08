@@ -114,7 +114,7 @@ let
   # Resume monitors and restore wallpaper (wraps multi-command sequence for swayidle)
   sway-resume-monitors = pkgs.writeShellScript "sway-resume-monitors" ''
     ${pkgs.sway}/bin/swaymsg 'output * power on'
-    sleep 0.5
+    ${pkgs.coreutils}/bin/sleep 0.5
     ${if (systemSettings.waypaperEnable or false)
       then "${pkgs.systemd}/bin/systemctl --user start waypaper-restore.service"
       else "${pkgs.systemd}/bin/systemctl --user start swww-restore.service"}
@@ -123,9 +123,9 @@ let
   # Manual wallpaper recovery: power-cycle outputs and restore wallpaper
   sway-refresh-wallpaper = pkgs.writeShellScript "sway-refresh-wallpaper" ''
     ${pkgs.sway}/bin/swaymsg 'output * power off'
-    sleep 0.3
+    ${pkgs.coreutils}/bin/sleep 0.3
     ${pkgs.sway}/bin/swaymsg 'output * power on'
-    sleep 0.5
+    ${pkgs.coreutils}/bin/sleep 0.5
     ${if (systemSettings.waypaperEnable or false)
       then "${pkgs.systemd}/bin/systemctl --user start waypaper-restore.service"
       else if (systemSettings.swwwEnable or false)
@@ -146,7 +146,7 @@ let
       ${pkgs.sway}/bin/swaymsg output eDP-1 disable
     else
       # No external monitors: only suspend if on battery
-      BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+      BAT_STATUS=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
       if [ "$BAT_STATUS" = "Discharging" ]; then
         ${if (systemSettings.hibernateEnable or false)
           then "${pkgs.systemd}/bin/systemctl suspend-then-hibernate"
@@ -173,7 +173,7 @@ let
 
   sway-idle-suspend = pkgs.writeShellScript "sway-idle-suspend" ''
     ${if (systemSettings.hibernateEnable or false) then ''
-      BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+      BAT_STATUS=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
       if [ "$BAT_STATUS" = "Discharging" ]; then
         ${pkgs.systemd}/bin/systemctl suspend-then-hibernate
       else
@@ -190,7 +190,7 @@ let
 
   # Power-aware swayidle launcher: selects timeouts based on AC/battery state
   sway-power-swayidle = pkgs.writeShellScript "sway-power-swayidle" ''
-    BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+    BAT_STATUS=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
 
     if [ "$BAT_STATUS" = "Discharging" ]; then
       DIM_TIMEOUT=${toString (systemSettings.swayIdleDimTimeoutBat or 60)}
@@ -228,7 +228,7 @@ let
   sway-power-monitor = pkgs.writeShellScript "sway-power-monitor" ''
     ${lib.optionalString (systemSettings.swayBatteryReduceEffects or false) ''
     # Set initial SwayFX effects based on current power state
-    INIT_BAT=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+    INIT_BAT=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
     if [ "$INIT_BAT" = "Discharging" ]; then
       ${pkgs.sway}/bin/swaymsg blur disable 2>/dev/null || true
       ${pkgs.sway}/bin/swaymsg shadows disable 2>/dev/null || true
@@ -237,7 +237,7 @@ let
     ''}
     LAST_STATE=""
     while true; do
-      BAT_STATUS=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
+      BAT_STATUS=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
       if [ "$BAT_STATUS" = "Discharging" ]; then
         CURRENT="battery"
       else
@@ -266,7 +266,7 @@ let
         ''}
       fi
       LAST_STATE="$CURRENT"
-      sleep 5
+      ${pkgs.coreutils}/bin/sleep 5
     done
   '';
 
