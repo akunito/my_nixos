@@ -254,6 +254,16 @@ EOF
     executable = true;
   };
 
+  home.file.".config/sway/scripts/swaysome-groups-setup.sh" = {
+    source = ./scripts/swaysome-groups-setup.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/swaysome-groups-startup.sh" = {
+    source = ./scripts/swaysome-groups-startup.sh;
+    executable = true;
+  };
+
   home.file.".config/sway/scripts/workspace-utils.sh" = {
     source = ./scripts/workspace-utils.sh;
     executable = true;

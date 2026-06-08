@@ -766,6 +766,16 @@ in
           command = "${desk-startup-apps-init}/bin/desk-startup-apps-init";
           always = false; # Only run on initial startup, not on config reload
         }
+      ]
+      ++ lib.optionals (systemSettings.swaysomeNativeGroups or false) [
+        # Laptops: close the swaysome login-timing race. kanshi runs the group
+        # setup on apply, but at login that can fire before the built-in display
+        # is ready, leaving it on the ungrouped default workspace "1". This re-
+        # runs the setup a few seconds later (only while a group-0 orphan exists).
+        {
+          command = "${config.home.homeDirectory}/.config/sway/scripts/swaysome-groups-startup.sh";
+          always = false; # Once per session start, never on config reload
+        }
       ];
 
       # Window rules

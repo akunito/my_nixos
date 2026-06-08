@@ -17,10 +17,11 @@ let
   nativeGroups = systemSettings.swaysomeNativeGroups or false;
 
   # swaysome exec lines for the imperative kanshi default-auto profile.
+  # Native path routes through one setup script (init + rearrange + group-0
+  # orphan sweep) so logic lives in the script, not the user-managed config.
   swaysomeExecLines =
     if nativeGroups then ''
-  exec swaysome init 1
-  exec swaysome rearrange-workspaces''
+  exec $HOME/.config/sway/scripts/swaysome-groups-setup.sh''
     else ''
   exec swaysome init 1
   exec swaysome rearrange-workspaces
@@ -93,17 +94,18 @@ EOF
         lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] ''
           KANSHI_CONFIG="$HOME/.config/kanshi/config"
           if [ -f "$KANSHI_CONFIG" ]; then
-            # Remove the focus-fragile assign script (corrupts assignment under
-            # focus_follows_mouse).
-            ${pkgs.gnused}/bin/sed -i '/swaysome-assign-groups/d' "$KANSHI_CONFIG"
-            # Remove the orphan-sweep exec from any earlier iteration: group 0 is
-            # now a labeled, first-class group in waybar, so the default ws "1"
-            # does not need migrating away.
-            ${pkgs.gnused}/bin/sed -i '/swaysome-sweep-orphans/d' "$KANSHI_CONFIG"
-            # Ensure swaysome init runs (re-add if a prior migration stripped it).
-            if ${pkgs.gnugrep}/bin/grep -qE 'exec swaysome rearrange-workspaces' "$KANSHI_CONFIG" \
-               && ! ${pkgs.gnugrep}/bin/grep -qE 'exec swaysome init' "$KANSHI_CONFIG"; then
-              ${pkgs.gnused}/bin/sed -i '/exec swaysome rearrange-workspaces/i\  exec swaysome init 1' "$KANSHI_CONFIG"
+            # Collapse all legacy swaysome exec lines (per-command init/rearrange,
+            # the focus-fragile assign script, and any earlier orphan-sweep) into
+            # the single consolidated setup script. Deletions are idempotent.
+            ${pkgs.gnused}/bin/sed -i \
+              -e '/exec swaysome /d' \
+              -e '/swaysome-assign-groups/d' \
+              -e '/swaysome-sweep-orphans/d' \
+              "$KANSHI_CONFIG"
+            # Ensure the consolidated setup runs after outputs are enabled.
+            if ${pkgs.gnugrep}/bin/grep -qE 'output \* enable' "$KANSHI_CONFIG" \
+               && ! ${pkgs.gnugrep}/bin/grep -q 'swaysome-groups-setup' "$KANSHI_CONFIG"; then
+              ${pkgs.gnused}/bin/sed -i '/output \* enable/a\  exec $HOME/.config/sway/scripts/swaysome-groups-setup.sh' "$KANSHI_CONFIG"
             fi
           fi
         '';
