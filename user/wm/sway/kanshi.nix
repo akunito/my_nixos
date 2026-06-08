@@ -20,8 +20,7 @@ let
   swaysomeExecLines =
     if nativeGroups then ''
   exec swaysome init 1
-  exec swaysome rearrange-workspaces
-  exec $HOME/.config/sway/scripts/swaysome-sweep-orphans.sh''
+  exec swaysome rearrange-workspaces''
     else ''
   exec swaysome init 1
   exec swaysome rearrange-workspaces
@@ -97,16 +96,14 @@ EOF
             # Remove the focus-fragile assign script (corrupts assignment under
             # focus_follows_mouse).
             ${pkgs.gnused}/bin/sed -i '/swaysome-assign-groups/d' "$KANSHI_CONFIG"
+            # Remove the orphan-sweep exec from any earlier iteration: group 0 is
+            # now a labeled, first-class group in waybar, so the default ws "1"
+            # does not need migrating away.
+            ${pkgs.gnused}/bin/sed -i '/swaysome-sweep-orphans/d' "$KANSHI_CONFIG"
             # Ensure swaysome init runs (re-add if a prior migration stripped it).
             if ${pkgs.gnugrep}/bin/grep -qE 'exec swaysome rearrange-workspaces' "$KANSHI_CONFIG" \
                && ! ${pkgs.gnugrep}/bin/grep -qE 'exec swaysome init' "$KANSHI_CONFIG"; then
               ${pkgs.gnused}/bin/sed -i '/exec swaysome rearrange-workspaces/i\  exec swaysome init 1' "$KANSHI_CONFIG"
-            fi
-            # Ensure the orphan sweep runs after rearrange (migrates the default
-            # ungrouped workspace "1" and its windows into the monitor's group).
-            if ${pkgs.gnugrep}/bin/grep -qE 'exec swaysome rearrange-workspaces' "$KANSHI_CONFIG" \
-               && ! ${pkgs.gnugrep}/bin/grep -qE 'swaysome-sweep-orphans' "$KANSHI_CONFIG"; then
-              ${pkgs.gnused}/bin/sed -i '/exec swaysome rearrange-workspaces/a\  exec $HOME/.config/sway/scripts/swaysome-sweep-orphans.sh' "$KANSHI_CONFIG"
             fi
           fi
         '';

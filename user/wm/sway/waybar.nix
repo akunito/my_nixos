@@ -152,7 +152,11 @@ let
     # "sway/window" removed (active window title not shown in bar)
   };
 
-  # Swaysome workspace groups (10s/20s/30s/40s) -> readable labels on a single bar.
+  # Swaysome workspace groups (group 0 = 1-10, group 1 = 11-20, ...) -> readable
+  # labels on a single bar. Group 0 is labeled too: sway's default workspace "1"
+  # (and a monitor that lands on it before swaysome assigns a higher group) lives
+  # in group 0, and without a label it renders blank. Labeling it is additive and
+  # inert where no group-0 workspace exists (e.g. DESK, whose monitors use 1-4).
   #
   # Important: `sway/workspaces` does NOT support a generic `rewrite` map.
   # Instead we encode the decoded label into `format-icons` and display `{icon}`.
@@ -181,10 +185,12 @@ let
     ) 10);
 
   swaysomeWorkspaceIcons =
+    (mkSwaysomeGroupIcons 0 "󰍹" config.lib.stylix.colors.base0B) //
     (mkSwaysomeGroupIcons 1 "󰍹" config.lib.stylix.colors.base0C) //
     (mkSwaysomeGroupIcons 2 "󰍹" config.lib.stylix.colors.base08) //
     (mkSwaysomeGroupIcons 3 "󰍹" config.lib.stylix.colors.base0A) //
-    (mkSwaysomeGroupIcons 4 "󰍹" config.lib.stylix.colors.base0E);
+    (mkSwaysomeGroupIcons 4 "󰍹" config.lib.stylix.colors.base0E) //
+    (mkSwaysomeGroupIcons 5 "󰍹" config.lib.stylix.colors.base0D);
   
   # Workspace configuration for primary monitor (all workspaces grouped)
   primaryWorkspaces = {
