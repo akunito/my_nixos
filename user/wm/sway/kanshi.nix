@@ -20,7 +20,8 @@ let
   swaysomeExecLines =
     if nativeGroups then ''
   exec swaysome init 1
-  exec swaysome rearrange-workspaces''
+  exec swaysome rearrange-workspaces
+  exec $HOME/.config/sway/scripts/swaysome-sweep-orphans.sh''
     else ''
   exec swaysome init 1
   exec swaysome rearrange-workspaces
@@ -100,6 +101,12 @@ EOF
             if ${pkgs.gnugrep}/bin/grep -qE 'exec swaysome rearrange-workspaces' "$KANSHI_CONFIG" \
                && ! ${pkgs.gnugrep}/bin/grep -qE 'exec swaysome init' "$KANSHI_CONFIG"; then
               ${pkgs.gnused}/bin/sed -i '/exec swaysome rearrange-workspaces/i\  exec swaysome init 1' "$KANSHI_CONFIG"
+            fi
+            # Ensure the orphan sweep runs after rearrange (migrates the default
+            # ungrouped workspace "1" and its windows into the monitor's group).
+            if ${pkgs.gnugrep}/bin/grep -qE 'exec swaysome rearrange-workspaces' "$KANSHI_CONFIG" \
+               && ! ${pkgs.gnugrep}/bin/grep -qE 'swaysome-sweep-orphans' "$KANSHI_CONFIG"; then
+              ${pkgs.gnused}/bin/sed -i '/exec swaysome rearrange-workspaces/a\  exec $HOME/.config/sway/scripts/swaysome-sweep-orphans.sh' "$KANSHI_CONFIG"
             fi
           fi
         '';

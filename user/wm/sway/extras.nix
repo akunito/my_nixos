@@ -254,6 +254,11 @@ EOF
     executable = true;
   };
 
+  home.file.".config/sway/scripts/swaysome-sweep-orphans.sh" = {
+    source = ./scripts/swaysome-sweep-orphans.sh;
+    executable = true;
+  };
+
   home.file.".config/sway/scripts/workspace-utils.sh" = {
     source = ./scripts/workspace-utils.sh;
     executable = true;
