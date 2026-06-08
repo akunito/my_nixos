@@ -286,6 +286,10 @@
     PROFILE_ON_AC = "performance";
     WIFI_PWR_ON_AC = "off";
     WIFI_PWR_ON_BAT = "on";
+    # USB autosuspend (TLP). Default on (1). Set 0 on machines with a USB dock /
+    # USB-ethernet adapter where autosuspend causes the dock to reset and the
+    # NIC to drop (e.g. LAPTOP_X13 on a Thunderbolt dock).
+    USB_AUTOSUSPEND = 1;
     # Battery charge thresholds (default: full charge)
     START_CHARGE_THRESH_BAT0 = 95;
     STOP_CHARGE_THRESH_BAT0 = 100;

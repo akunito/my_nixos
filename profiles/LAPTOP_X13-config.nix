@@ -145,6 +145,11 @@ in
     MEM_SLEEP_ON_AC = "s2idle";
     MEM_SLEEP_ON_BAT = "s2idle";
 
+    # Disable USB autosuspend: on the Thunderbolt dock, autosuspend resets the
+    # dock + its USB-ethernet adapter, re-enumerating the USB tree and dropping
+    # the NIC (intermittent network loss). Default stays 1 for other laptops.
+    USB_AUTOSUSPEND = 0;
+
     # LUKS UUID of encrypted swap partition (set after NixOS install on X13)
     hibernateSwapLuksUUID = null;
 
