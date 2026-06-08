@@ -70,14 +70,37 @@ let
     ECHO="${pkgs.coreutils}/bin/echo"
     GREP="${pkgs.gnugrep}/bin/grep"
     FLOCK="${pkgs.util-linux}/bin/flock"
+    READLINK="${pkgs.coreutils}/bin/readlink"
+    LN="${pkgs.coreutils}/bin/ln"
+    RM="${pkgs.coreutils}/bin/rm"
 
     LOCK_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
     LOCK_FILE="$LOCK_DIR/tmux-resurrect-save.lock"
     STATE_FILE="$LOCK_DIR/tmux-resurrect-save.last"
 
+    RES_DIR="$HOME/.tmux/resurrect"
+    RES_LAST="$RES_DIR/last"
+
     exec 9>"$LOCK_FILE"
     if ! $FLOCK -n 9; then
       exit 0
+    fi
+
+    # Don't save during the boot restore race. A save that fires while resurrect is
+    # still rebuilding panes can capture 'pane' lines without the matching 'window'
+    # (layout) lines. Such a file restores as even splits instead of the saved 2x2
+    # layout, because restore_window_properties has no '^window' lines to apply via
+    # select-layout. Skip until restore has completed (@resurrect-restored=1) or the
+    # server has been up past a short grace window.
+    restored="$($TMUX_BIN show-options -gqv @resurrect-restored 2>/dev/null || true)"
+    if [ "$restored" != "1" ]; then
+      start="$($TMUX_BIN display-message -p -F '#{start_time}' 2>/dev/null || true)"
+      now0="$($DATE +%s)"
+      if [ -n "$start" ] && [ "$start" -gt 0 ] 2>/dev/null; then
+        if [ "$(( now0 - start ))" -lt 90 ]; then
+          exit 0
+        fi
+      fi
     fi
 
     # Avoid overwriting 'last' with an empty save
@@ -99,7 +122,29 @@ let
     fi
 
     $ECHO "$now" > "$STATE_FILE"
-    exec "$TMUX_SAVE" "$@"
+
+    # Remember the previous good save so we can roll back if this one is corrupt.
+    prev_target="$($READLINK "$RES_LAST" 2>/dev/null || true)"
+
+    "$TMUX_SAVE" "$@"
+    rc=$?
+
+    # Validate the freshly written save: a file with panes but no 'window' (layout)
+    # lines would restore as even splits. If that happens, roll 'last' back to the
+    # previous good save and discard the corrupt file rather than restore broken.
+    new_target="$($READLINK "$RES_LAST" 2>/dev/null || true)"
+    if [ -n "$new_target" ] && [ -f "$RES_DIR/$new_target" ]; then
+      panes="$($GREP -cE '^pane' "$RES_DIR/$new_target" 2>/dev/null || $ECHO 0)"
+      wins="$($GREP -cE '^window' "$RES_DIR/$new_target" 2>/dev/null || $ECHO 0)"
+      if [ "$panes" -gt 0 ] && [ "$wins" -eq 0 ]; then
+        if [ -n "$prev_target" ] && [ "$prev_target" != "$new_target" ] && [ -f "$RES_DIR/$prev_target" ]; then
+          $LN -sfn "$prev_target" "$RES_LAST"
+          $RM -f "$RES_DIR/$new_target"
+        fi
+      fi
+    fi
+
+    exit $rc
   '';
 
   # Restore once per server start, triggered on first client attach
