@@ -285,6 +285,8 @@ in
     # System packages
     systemPackages = pkgs: pkgs-unstable: [
       pkgs.hdparm # Disk parameter utility (ATA secure erase, etc.)
+      pkgs.cameractrls-gtk4 # Webcam control GUI (brightness/focus/PTZ for Logitech C920); CLI v4l2-ctl via v4l-utils below
+      pkgs.v4l-utils # v4l2-ctl CLI for scripting camera controls
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
 
