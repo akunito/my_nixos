@@ -140,6 +140,13 @@
     vpsSubnetMask = "";
     vpsInterface = "ens3";
 
+    # Webcam controls persistence (v4l2 brightness/contrast/etc. across reboot + hotplug)
+    webcamControlsEnable = false; # Enable udev+systemd reapply of v4l2 controls
+    webcamControlsDevice = ""; # Stable node, e.g. "/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_...-video-index0"
+    webcamControlsIdVendor = ""; # USB vendor id for the udev match (e.g. "046d")
+    webcamControlsIdProduct = ""; # USB product id for the udev match (e.g. "082d")
+    webcamControlsSettings = ""; # v4l2-ctl --set-ctrl string, e.g. "brightness=136,contrast=35"
+
     # Network bonding (LACP link aggregation)
     networkBondingEnable = false; # Enable network bonding (requires switch LAG configuration)
     networkBondingMode = "802.3ad"; # Bonding mode: "802.3ad" (LACP), "balance-rr", "active-backup", etc.

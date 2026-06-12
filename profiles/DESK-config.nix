@@ -290,6 +290,13 @@ in
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
 
+    # === Webcam controls (Logitech C920) — persist across reboot/hotplug/resume ===
+    webcamControlsEnable = true;
+    webcamControlsIdVendor = "046d";
+    webcamControlsIdProduct = "082d";
+    webcamControlsDevice = "/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_D524172F-video-index0";
+    webcamControlsSettings = "brightness=136,contrast=35,saturation=128,sharpness=128,gain=194,power_line_frequency=1,white_balance_automatic=1,backlight_compensation=1";
+
     # ============================================================================
     # SOFTWARE & FEATURE FLAGS - Centralized Control
     # ============================================================================
