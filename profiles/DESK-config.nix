@@ -356,7 +356,7 @@ in
     voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)
 
     # === Control Panel ===
-    controlPanelEnable = true; # Enable NixOS infrastructure control panel (web server)
+    controlPanelEnable = false; # Disabled for now (web server) — not in use; re-enable when needed
     controlPanelNativeEnable = true; # Enable NixOS infrastructure control panel (native desktop app)
 
     # === Monitoring ===
@@ -524,7 +524,7 @@ in
     GOGlauncherEnable = true; # Enable Heroic Games Launcher for GOG games
     steamPackEnable = true; # Enable Steam gaming platform
     dolphinEmulatorPrimehackEnable = true; # Enable Dolphin Emulator with Primehack
-    rpcs3Enable = true; # Enable RPCS3 PS3 emulator
+    rpcs3Enable = false; # Temporarily disabled — upstream nixpkgs-unstable build broken (GLEW/GLX link error); re-enable once fixed
 
     # === Shell Customization ===
     # starshipEnable = true is now the default in lib/defaults.nix

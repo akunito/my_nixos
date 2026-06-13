@@ -212,7 +212,7 @@ in
     prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
 
     # === Control Panel ===
-    controlPanelEnable = true; # Enable NixOS infrastructure control panel
+    controlPanelEnable = false; # Disabled for now — not in use; re-enable when needed
 
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable daemon (but don't auto-connect - manual via Trayscale GUI)
