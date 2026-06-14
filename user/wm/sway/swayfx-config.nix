@@ -532,7 +532,7 @@ in
           "${hyper}+P" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Bitwarden bitwarden";
           "${hyper}+C" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh cursor cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch";
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh code code --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto --unity-launch";
           # Mission Center (app_id is io.missioncenter.MissionCenter, binary is missioncenter)
           "${hyper}+m" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
@@ -1242,9 +1242,8 @@ in
       assign [app_id="vivaldi"] workspace number 11
       assign [app_id="vivaldi-stable"] workspace number 11
 
-      # Cursor - support both Flatpak and native versions
-      assign [app_id="cursor"] workspace number 12
-      assign [app_id="com.todesktop.230313mzl4w4u92"] workspace number 12
+      # VSCode (native) on workspace 12
+      assign [app_id="code"] workspace number 12
 
       # Obsidian - support both Flatpak and native versions
       assign [app_id="obsidian"] workspace number 21

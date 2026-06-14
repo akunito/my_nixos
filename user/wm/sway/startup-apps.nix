@@ -312,15 +312,11 @@ let
       launch_startup_apps() {
         echo "Launching startup applications..."
 
-        # Launch Cursor (workspace 12)
-        if is_flatpak_installed "com.todesktop.230313mzl4w4u92"; then
-          flatpak run com.todesktop.230313mzl4w4u92 >/dev/null 2>&1 &
-        else
-          if [ -f "${pkgs-unstable.code-cursor}/bin/cursor" ]; then
-            ${pkgs-unstable.code-cursor}/bin/cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
-          elif command -v cursor >/dev/null 2>&1; then
-            cursor --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
-          fi
+        # Launch VSCode (workspace 12)
+        if [ -f "${pkgs-unstable.vscode}/bin/code" ]; then
+          ${pkgs-unstable.vscode}/bin/code --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
+        elif command -v code >/dev/null 2>&1; then
+          code --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
         fi
 
         # Launch Chromium (workspace 22)
