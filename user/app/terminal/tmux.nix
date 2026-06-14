@@ -73,6 +73,8 @@ let
     READLINK="${pkgs.coreutils}/bin/readlink"
     LN="${pkgs.coreutils}/bin/ln"
     RM="${pkgs.coreutils}/bin/rm"
+    LS="${pkgs.coreutils}/bin/ls"
+    BASENAME="${pkgs.coreutils}/bin/basename"
 
     LOCK_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
     LOCK_FILE="$LOCK_DIR/tmux-resurrect-save.lock"
@@ -123,22 +125,32 @@ let
 
     $ECHO "$now" > "$STATE_FILE"
 
-    # Remember the previous good save so we can roll back if this one is corrupt.
-    prev_target="$($READLINK "$RES_LAST" 2>/dev/null || true)"
+    rc=0
+    "$TMUX_SAVE" "$@" || rc=$?
 
-    "$TMUX_SAVE" "$@"
-    rc=$?
-
-    # Validate the freshly written save: a file with panes but no 'window' (layout)
-    # lines would restore as even splits. If that happens, roll 'last' back to the
-    # previous good save and discard the corrupt file rather than restore broken.
+    # Validate the freshly written save. A real session always produces at least one
+    # 'window' (layout) line. A save with zero window lines is degraded:
+    #   * panes but no windows  -> restores as even splits (mid-restore snapshot), or
+    #   * no panes at all        -> an 8-byte 'state'-only file (a save/teardown race
+    #                               where the session vanished mid-dump).
+    # Either one, left as 'last', restores broken or blank. So if the new save has no
+    # window lines, discard it and repoint 'last' at the most recent save that DOES
+    # have window lines (not just the immediate previous one, in case it was already
+    # clobbered by an earlier degraded save).
     new_target="$($READLINK "$RES_LAST" 2>/dev/null || true)"
     if [ -n "$new_target" ] && [ -f "$RES_DIR/$new_target" ]; then
-      panes="$($GREP -cE '^pane' "$RES_DIR/$new_target" 2>/dev/null || $ECHO 0)"
       wins="$($GREP -cE '^window' "$RES_DIR/$new_target" 2>/dev/null || $ECHO 0)"
-      if [ "$panes" -gt 0 ] && [ "$wins" -eq 0 ]; then
-        if [ -n "$prev_target" ] && [ "$prev_target" != "$new_target" ] && [ -f "$RES_DIR/$prev_target" ]; then
-          $LN -sfn "$prev_target" "$RES_LAST"
+      if [ "$wins" -eq 0 ]; then
+        good=""
+        for f in $($LS -t "$RES_DIR"/tmux_resurrect_*.txt 2>/dev/null); do
+          [ "$f" = "$RES_DIR/$new_target" ] && continue
+          if [ "$($GREP -cE '^window' "$f" 2>/dev/null || $ECHO 0)" -gt 0 ]; then
+            good="$f"
+            break
+          fi
+        done
+        if [ -n "$good" ]; then
+          $LN -sfn "$($BASENAME "$good")" "$RES_LAST"
           $RM -f "$RES_DIR/$new_target"
         fi
       fi
