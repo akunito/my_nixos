@@ -391,6 +391,7 @@
     claudeCodeReadOnly = false; # When true, deny Edit/Write tools in Claude Code settings.json
     claudeBackupToNextcloudEnable = false; # Daily compressed backup of ~/.claude/ to Nextcloud folder
     nextcloudSyncFolder = ""; # Path to Nextcloud sync folder (e.g., "/home/user/Nextcloud")
+    githubAccessToken = ""; # GitHub PAT to lift github.com anon rate limit on flake-input fetches (set from secrets/domains.nix in profiles; empty = anonymous, no secrets needed)
     perplexityApiKey = ""; # Perplexity API key for MCP server (set from secrets/domains.nix in profiles)
     planeApiToken = ""; # Plane API token for MCP server (set from secrets/domains.nix in profiles)
     planeApiUrl = ""; # Plane instance URL (e.g., "https://plane.akunito.com")

@@ -340,6 +340,7 @@ in
 
     # === Development Tools & AI ===
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
+    githubAccessToken = secrets.githubAccessToken; # GitHub PAT: lifts anon rate limit on flake-input fetches
     perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for Claude Code MCP
     planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
     planeApiUrl = "https://plane.${secrets.publicDomain}";

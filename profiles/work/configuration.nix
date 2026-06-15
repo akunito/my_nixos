@@ -12,10 +12,6 @@
   ...
 }:
 
-let
-  secrets = import ../../secrets/domains.nix;
-in
-
 {
   imports = [
     ../../system/hardware-configuration.nix
@@ -82,9 +78,16 @@ in
 
   # Ensure nix flakes are enabled
   nix.package = pkgs.nixVersions.stable;
+  # The github.com access-token only lifts GitHub's anonymous rate limit when
+  # fetching flake inputs; anonymous fetches work fine without it. Gate it on a
+  # token actually being set, so machines that don't have secrets (e.g. a
+  # partner's laptop with the git-crypt repo locked) never force-read
+  # secrets/domains.nix at eval. Same pattern as profiles/vps/base.nix and
+  # profiles/proxmox-lxc/base.nix.
   nix.extraOptions = ''
     experimental-features = nix-command flakes
-    access-tokens = github.com=${secrets.githubAccessToken}
+  '' + lib.optionalString ((systemSettings.githubAccessToken or "") != "") ''
+    access-tokens = github.com=${systemSettings.githubAccessToken}
   '';
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
