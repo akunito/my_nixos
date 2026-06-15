@@ -1,4 +1,4 @@
-{ systemSettings, lib, ... }:
+{ systemSettings, lib, options, ... }:
 
 {
   # Bluetooth
@@ -20,14 +20,16 @@
   services.blueman = {
     enable = true;
   }
-  # NixOS 26.05 split blueman into `enable` + `withApplet`. On 26.05+ we set
-  # withApplet=false so the applet is owned by Home Manager
-  # (services.blueman-applet.enable in user/hardware/bluetooth.nix) and we
-  # avoid the dual systemd.user.services.blueman-applet ExecStart conflict.
-  # On 25.11 the option doesn't exist (applet is bundled with enable); HM's
-  # service still takes precedence because it defines the unit with its own
-  # full ExecStart.
-  // lib.optionalAttrs (lib.versionAtLeast lib.version "26") {
+  # Some nixpkgs revisions split blueman into `enable` + `withApplet`. When
+  # that option exists we set withApplet=false so the applet is owned by Home
+  # Manager (services.blueman-applet.enable in user/hardware/bluetooth.nix),
+  # avoiding the dual systemd.user.services.blueman-applet ExecStart conflict.
+  # When the option is absent (e.g. 25.11, and some 26.05pre revisions where
+  # it was reverted) we omit it; HM's service still takes precedence because
+  # it defines the unit with its own full ExecStart.
+  # Gate on the option's actual existence rather than a lib.version string,
+  # since unstable churns withApplet in/out independently of the version bump.
+  // lib.optionalAttrs (options.services.blueman ? withApplet) {
     withApplet = false;
   };
 }
