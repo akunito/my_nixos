@@ -148,15 +148,20 @@ in
     starCitizenModules = false; # Disable Star Citizen optimizations
     vivaldiPatch = true; # Enable Vivaldi patches
 
-    # Auto update - DISABLED (unstable profile)
-    # Custom paths kept for reference if manually enabled
-    autoSystemUpdateEnable = false;
-    autoUserUpdateEnable = false;
+    # Auto update - weekly stable updates (mirrors VPS/NAS). autoSystemUpdate.sh
+    # runs as root against .active-profile=LAPTOP_A: bumps flake.lock, regenerates
+    # + validates hardware-config, then nixos-rebuild switch. Needs no secrets, so
+    # the git-crypt repo can stay locked. autoUserUpdate runs HM as aga.
+    # Weekly default OnCalendar (Sat 07:00) with Persistent=true catches up missed
+    # runs on next boot — robust for a laptop that's often off.
+    autoSystemUpdateEnable = true;
+    autoUserUpdateEnable = true;
     autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoSystemUpdate.sh";
     autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoUserUpdate.sh";
     autoUserUpdateUser = "aga";
+    autoUserUpdateBranch = "release-25.11"; # match the stable system channel
 
-    systemStable = false;
+    systemStable = true; # pin system base to nixos-25.11 (stable); dev runtimes stay unstable via development.nix
   };
 
   userSettings = base.userSettings // {
