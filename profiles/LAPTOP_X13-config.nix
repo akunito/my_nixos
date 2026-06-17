@@ -266,6 +266,7 @@ in
     userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
     rangerFullPreviewEnable = true; # Full ranger preview (fonts, ebooks, spreadsheets, etc.)
+    meetingTranscribeEnable = true; # Local meeting record + whisper.cpp transcription (Vulkan on AMD iGPU)
 
     # === Gaming & Entertainment ===
     gamesEnable = true; # Master gate for gaming submodules
