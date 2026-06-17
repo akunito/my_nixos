@@ -515,6 +515,7 @@ in
     userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm) - DESK only
     userMediaRecordingEnable = true; # OBS Studio, HandBrake, ffmpeg-full — DESK only
+    meetingTranscribeEnable = true; # Local meeting recording + whisper.cpp transcription (Vulkan/AMD)
     rangerFullPreviewEnable = true; # Full ranger preview (fonts, ebooks, spreadsheets, etc.)
 
     # === Gaming & Entertainment ===

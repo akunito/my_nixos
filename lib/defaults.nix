@@ -845,6 +845,7 @@
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
     userMediaRecordingEnable = false; # OBS Studio, HandBrake, ffmpeg-full (screen recording)
+    meetingTranscribeEnable = false; # Local meeting recording + whisper.cpp transcription (DESK only)
     rangerFullPreviewEnable = false; # Enable heavy ranger preview deps (fontforge, djvulibre, calibre, etc.)
     gamesEnable = false; # Master gate for gaming submodules (must be true for any gaming packages)
 

@@ -40,6 +40,7 @@
   ++ lib.optional systemSettings.aichatEnable ../../user/app/ai/aichat.nix # Aichat/OpenRouter support
   ++ lib.optional systemSettings.lmstudioEnabled ../../user/app/lmstudio/lmstudio.nix # LM Studio configuration and MCP server support
   ++ lib.optional systemSettings.voxtypeEnable ../../user/app/voxtype/voxtype.nix # Voxtype voice dictation (hold Super+V to speak)
+  ++ lib.optional (userSettings.meetingTranscribeEnable or false) ../../user/app/meeting-transcribe/meeting-transcribe.nix # Local meeting recording + whisper.cpp transcription
   ++ lib.optional (systemSettings.sshHostsManaged or false) ../../user/app/ssh-hosts.nix # Nix-managed ~/.ssh/config (shared SSH host definitions)
   # NOTE: Starship is now integrated into sh.nix (controlled by userSettings.starshipEnable)
   ;
