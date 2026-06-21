@@ -88,11 +88,31 @@ in
     servicePrinting = false;
     networkPrinters = false;
 
-    # Power management - Lid behavior (suspend on close)
-    lidSwitch = "suspend";
+    # ============================================================================
+    # Power management — Plasma-managed (imperative)
+    # ============================================================================
+    # AGA runs Plasma 6 only. We hand ALL energy management to KDE PowerDevil so
+    # the user can change suspend/lid/screen/charge-limit on demand from System
+    # Settings → Power Management, instead of having it forced by Nix.
+    #
+    # This overrides LAPTOP-base.nix (which uses TLP + forced logind lid actions).
+    # Only LAPTOP_A is affected — X13/YOGA keep the base TLP behavior.
+    #
+    #   - TLP OFF + power-profiles-daemon ON: the two are mutually exclusive, and
+    #     PowerDevil's profile slider (Power Save/Balanced/Performance) needs PPD.
+    #     This also restores the "Energy" controls that had disappeared in Plasma.
+    #   - logind lid/power-key = "ignore": logind stays out of the way so it can't
+    #     race PowerDevil. PowerDevil owns lid, power button and idle suspend, all
+    #     user-configurable in the GUI. (Trade-off: lid/power-key do nothing at the
+    #     SDDM login screen, before a Plasma session exists — acceptable here.)
+    #   - Battery charge thresholds are no longer Nix-forced (TLP is off); set the
+    #     "Charge limit" imperatively in Plasma → Power Management if desired.
+    TLP_ENABLE = false;                  # override LAPTOP-base (was true)
+    power-profiles-daemon_ENABLE = true; # override base (was false) — drives PowerDevil profiles
+    lidSwitch = "ignore";                # PowerDevil handles lid
     lidSwitchExternalPower = "ignore";
     lidSwitchDocked = "ignore";
-    powerKey = "suspend";
+    powerKey = "ignore";                 # PowerDevil handles power button (override base "suspend")
 
     # System packages
     systemPackages = pkgs: pkgs-unstable: [
