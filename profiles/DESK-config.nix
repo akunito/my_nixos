@@ -52,6 +52,17 @@ in
     greetdEnable = false;
     sddmEnable = true;
 
+    # Keyboard: US International WITH DEAD KEYS (not altgr-intl).
+    # Accents on the same key, no AltGr: ' then a = á, " then u = ü, ~ then n = ñ.
+    # ' " ` ^ ~ are dead keys: for a literal one type the key then SPACE
+    # (e.g. let's = l e t ' space s). ' + s/c/n/z compose Polish ś/ć/ń/ź, so the
+    # space is required for apostrophes too. es/pl kept as switchable fallbacks.
+    swayKeyboardLayouts = [
+      "us(intl)"
+      "es"
+      "pl"
+    ];
+
     # Shell features
     atuinAutoSync = true; # Enable Atuin cloud sync for shell history
     nextcloudEnable = true; # To startup with Sway daemon
@@ -474,6 +485,14 @@ in
     name = "akunito";
     email = "diego88aku@gmail.com";
     dotfilesDir = "/home/akunito/.dotfiles";
+
+    # us(intl) compose override is OFF for consistency: Chromium/Electron use a
+    # hardcoded compose table that can't be changed on Wayland, so "'s" -> ś
+    # there no matter what. Rather than have terminals/Qt behave differently from
+    # browsers, we keep stock dead-key behavior everywhere and type ' + space for
+    # a literal apostrophe (let's = l e t ' space s). Flip to true to re-enable
+    # the smart "'s" fallback in compose-aware apps only. (See xcompose.nix.)
+    usIntlApostropheComposeFix = false;
     extraGroups = [
       "networkmanager"
       "wheel"

@@ -39,6 +39,7 @@
     ./nwg-displays.nix
     ./workspace-groups-gui.nix
     ./startup-apps.nix
+    ./xcompose.nix
     ./swayfx-config.nix
     ./extras.nix
     ./kde-apps.nix

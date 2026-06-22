@@ -827,6 +827,12 @@
     wmType = "wayland"; # Will be computed from wm
     wmEnableHyprland = false;
 
+    # Keyboard: when using the us(intl) dead-keys layout, make the acute dead key
+    # (') compose accented VOWELS only. dead-acute + consonant falls back to a
+    # literal "'X" so English contractions (let's, don't, we've) type normally
+    # instead of producing Polish ś/ć/ń/ź. Writes a ~/.XCompose override.
+    usIntlApostropheComposeFix = false;
+
     # Feature flags
     dockerEnable = true;
     dockerRootlessEnable = false; # Rootless Docker (VPS); mutually exclusive with dockerEnable
