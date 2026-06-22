@@ -105,7 +105,25 @@ let
 
   # -------------------------------------------------------------------------
   # meeting-merge : interleave two whisper JSONs into transcript.txt
-  #   args: <me.json> <them.json> <out.txt>
+  #   args: <me.json> <them.json> <out.txt> [me.silence.json] [them.silence.json]
+  #
+  # Two post-filters keep the dead air out of the transcript WITHOUT ever
+  # changing how real speech is transcribed (Whisper already ran; this only
+  # decides which output lines to keep):
+  #   (1) per-segment silence gate — drop a line if >95% of its time window is
+  #       covered by silence intervals detected on the WAV (passed in as ms
+  #       pairs). Surgical: lines over real audio are byte-for-byte unchanged.
+  #       The 95% (not 80%) keep-margin preserves brief real speech buried in a
+  #       long sparse segment (e.g. a "¿Hola?" greeting then a 20s connect wait,
+  #       which Whisper groups as one ~91%-silent segment); a true hallucination
+  #       sits over ~100% silence and is still dropped.
+  #   (2) caption-hallucination filter — Whisper emits YouTube training
+  #       artifacts over silence ("Gracias por ver el video", "Suscríbete al
+  #       canal", "Subtitles by amara.org", "Thanks for watching", ...). Drop
+  #       those, plus collapse runs of identical lines (keep at most 2) so a
+  #       genuine repeat survives but a flood of "Gracias" does not.
+  # Silence files are optional: legacy dirs whose WAVs were deleted fall back
+  # to filter (2) only (silence defaults to []).
   # -------------------------------------------------------------------------
   meeting-merge = pkgs.writeShellScriptBin "meeting-merge" ''
     #!/bin/sh
@@ -114,18 +132,60 @@ let
     JQ='${JQ}'
 
     ME_JSON="$1"; THEM_JSON="$2"; OUT="$3"
+    ME_SIL_FILE="''${4:-}"; THEM_SIL_FILE="''${5:-}"
 
-    # Tag each segment with a speaker, concat both, sort by start offset (ms),
-    # then format as [HH:MM:SS] Speaker: text. Zero-pad via (n+100|tostring)[1:].
+    ME_SIL='[]'; THEM_SIL='[]'
+    [ -n "$ME_SIL_FILE" ]   && [ -f "$ME_SIL_FILE" ]   && ME_SIL="$(cat "$ME_SIL_FILE")"
+    [ -n "$THEM_SIL_FILE" ] && [ -f "$THEM_SIL_FILE" ] && THEM_SIL="$(cat "$THEM_SIL_FILE")"
+
     "$JQ" -rn \
       --slurpfile me   "$ME_JSON" \
-      --slurpfile them "$THEM_JSON" '
-        ( ($me[0].transcription   // []) | map({spk:"Me",   from:.offsets.from, text:.text}) )
-      + ( ($them[0].transcription // []) | map({spk:"Them", from:.offsets.from, text:.text}) )
-      | sort_by(.from) | .[]
-      | (.from/1000|floor) as $t
-      | ($t/3600|floor) as $h | (($t%3600)/60|floor) as $m | ($t%60) as $s
-      | "[\(($h+100|tostring)[1:]):\(($m+100|tostring)[1:]):\(($s+100|tostring)[1:])] \(.spk): \(.text|gsub("^\\s+|\\s+$";""))"
+      --slurpfile them "$THEM_JSON" \
+      --argjson  meSil   "$ME_SIL" \
+      --argjson  themSil "$THEM_SIL" '
+        # normalized form (lowercase, punctuation -> space) for empty/run checks
+        def norm: ((. // "") | ascii_downcase | gsub("[[:punct:]]";" ") | gsub("\\s+";" ") | gsub("^ +| +$";""));
+
+        # caption-style hallucinations Whisper emits over silence
+        def isJunk:
+          ((. // "") | ascii_downcase | gsub("\\s+";" ") | gsub("^ +| +$";"")) as $t
+          | ($t | test("gracias por ver"))
+            or ($t | test("suscr.bete"))
+            or ($t | test("subt.tulos (por|realizados)"))
+            or ($t | test("amara\\.org"))
+            or ($t | test("thanks for watching"))
+            or ($t | test("thank you for watching"))
+            or ($t | test("^cc "))
+            or ($t | test("subscribe to"));
+
+        # fraction of [a,b] (ms) covered by the silence intervals
+        def overlapFrac($a; $b; $sil):
+          (($b - $a) | if . < 1 then 1 else . end) as $len
+          | ([ $sil[] | (([$b, .[1]] | min) - ([$a, .[0]] | max)) | if . > 0 then . else 0 end ] | add // 0) / $len;
+
+        # per-channel: drop silence-covered + junk + empty, then collapse identical runs (keep <=2)
+        def clean($sil):
+          [ .[]
+            | select( overlapFrac(.offsets.from; .offsets.to; $sil) <= 0.95 )
+            | select( (.text | norm) != "" )
+            | select( (.text | isJunk) | not ) ]
+          | reduce .[] as $x ({out:[], prev:null, run:0};
+              ($x.text | norm) as $n
+              | if $n == .prev
+                then (.run + 1) as $r
+                  | (if $r < 2 then {out:(.out+[$x]), prev:$n, run:$r}
+                     else {out:.out, prev:$n, run:$r} end)
+                else {out:(.out+[$x]), prev:$n, run:0} end)
+          | .out;
+
+        # Tag each kept segment with a speaker, concat both, sort by start
+        # offset (ms), then format as [HH:MM:SS] Speaker: text.
+          ( ($me[0].transcription   // []) | clean($meSil)   | map({spk:"Me",   from:.offsets.from, text:.text}) )
+        + ( ($them[0].transcription // []) | clean($themSil) | map({spk:"Them", from:.offsets.from, text:.text}) )
+        | sort_by(.from) | .[]
+        | (.from/1000|floor) as $t
+        | ($t/3600|floor) as $h | (($t%3600)/60|floor) as $m | ($t%60) as $s
+        | "[\(($h+100|tostring)[1:]):\(($m+100|tostring)[1:]):\(($s+100|tostring)[1:])] \(.spk): \(.text|gsub("^\\s+|\\s+$";""))"
       ' > "$OUT"
 
     echo "$OUT"
@@ -190,11 +250,33 @@ let
       "$WHISPER" "$@"
     }
 
+    # Detect silence intervals on each WAV (one cheap CPU pass, no GPU). Whisper
+    # has already produced its JSON from the full audio; this only feeds the
+    # per-segment silence gate in meeting-merge so phantom lines emitted over
+    # dead air get dropped. noise floor -40 dB, min silent run 2 s. Output is a
+    # JSON array of [start_ms, end_ms] pairs (or [] if the WAV is gone/all sound).
+    detect_silence() {
+      WAV="$1"; OUT="$2"
+      if [ ! -f "$WAV" ]; then echo "[]" > "$OUT"; return 0; fi
+      "$FFMPEG" -hide_banner -nostats -i "$WAV" -af silencedetect=noise=-40dB:d=2 -f null - 2>&1 \
+      | awk '
+          BEGIN { printf "[" }
+          /silence_start:/ { for (i=1;i<=NF;i++) if ($i=="silence_start:") s=$(i+1); open=1 }
+          /silence_end:/   { for (i=1;i<=NF;i++) if ($i=="silence_end:")   e=$(i+1);
+                             if (open) { printf "%s[%d,%d]", (n++?",":""), s*1000, e*1000; open=0 } }
+          END { if (open) { printf "%s[%d,%d]", (n++?",":""), s*1000, 2147483647 } printf "]" }
+        ' > "$OUT"
+    }
+
     transcribe_one "$DIR/me.wav"   "$DIR/me"
     transcribe_one "$DIR/them.wav" "$DIR/them"
 
+    detect_silence "$DIR/me.wav"   "$DIR/me.silence.json"
+    detect_silence "$DIR/them.wav" "$DIR/them.silence.json"
+
     if [ -f "$DIR/me.json" ] && [ -f "$DIR/them.json" ]; then
-      meeting-merge "$DIR/me.json" "$DIR/them.json" "$DIR/transcript.txt"
+      meeting-merge "$DIR/me.json" "$DIR/them.json" "$DIR/transcript.txt" \
+        "$DIR/me.silence.json" "$DIR/them.silence.json"
       echo "meeting-transcribe: wrote $DIR/transcript.txt" >&2
     else
       echo "meeting-transcribe: one or both JSONs missing; check WAVs" >&2
