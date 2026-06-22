@@ -139,12 +139,21 @@ let
     # clobbered by an earlier degraded save).
     new_target="$($READLINK "$RES_LAST" 2>/dev/null || true)"
     if [ -n "$new_target" ] && [ -f "$RES_DIR/$new_target" ]; then
-      wins="$($GREP -cE '^window' "$RES_DIR/$new_target" 2>/dev/null || $ECHO 0)"
+      # NOTE: 'grep -c' PRINTS the count (0) on no match AND exits 1, so the old
+      # idiom `grep -c ... || echo 0` produced the two-line string "0\n0", making
+      # the `[ "$wins" -eq 0 ]` test error out ("integer expression expected").
+      # As an `if` condition that error read as false, so this rollback NEVER ran
+      # and degraded saves (even-splits or empty) survived as 'last'. Use `|| true`
+      # (grep already prints the count) and default empty -> 0.
+      wins="$($GREP -cE '^window' "$RES_DIR/$new_target" 2>/dev/null || true)"
+      wins="''${wins:-0}"
       if [ "$wins" -eq 0 ]; then
         good=""
         for f in $($LS -t "$RES_DIR"/tmux_resurrect_*.txt 2>/dev/null); do
           [ "$f" = "$RES_DIR/$new_target" ] && continue
-          if [ "$($GREP -cE '^window' "$f" 2>/dev/null || $ECHO 0)" -gt 0 ]; then
+          fw="$($GREP -cE '^window' "$f" 2>/dev/null || true)"
+          fw="''${fw:-0}"
+          if [ "$fw" -gt 0 ]; then
             good="$f"
             break
           fi
@@ -530,6 +539,10 @@ in
       Unit = {
         Description = "Tmux server";
         After = [ "sway-session.target" "graphical-session.target" ];
+        # Never let a home-manager switch restart the running tmux server — that
+        # kills the live session and every attached client. Restarts should only
+        # happen on real login/reboot. sd-switch honours keep-old = leave running.
+        "X-SwitchMethod" = "keep-old";
       };
       Service = {
         Type = "forking";
@@ -563,6 +576,15 @@ in
       };
       Service = {
         Type = "oneshot";
+        # CRITICAL: without TMUX_TMPDIR the wrapper can't find the server socket
+        # (it lives under %t=/run/user/$UID, not /tmp), so it sees zero sessions
+        # and skips EVERY periodic save — leaving 'last' to be updated only by the
+        # racy detach/shutdown hooks. PATH is needed because resurrect's save.sh
+        # shells out to `tmux`/`pgrep`. Mirror tmux-server.service's environment.
+        Environment = [
+          "TMUX_TMPDIR=%t"
+          "PATH=${lib.makeBinPath [ pkgs.tmux pkgs.coreutils pkgs.procps pkgs.gnugrep pkgs.gnused pkgs.gawk pkgs.util-linux pkgs.bash pkgs.nettools pkgs.gnutar ]}"
+        ];
         ExecStart = "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper";
       };
     };
