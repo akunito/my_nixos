@@ -18,6 +18,17 @@ in
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles LAPTOP_X13 -s -u";
     gpuType = "amd";
 
+    # Keyboard: US International WITH DEAD KEYS (not altgr-intl). Same as DESK.
+    # Accents on the same key, no AltGr: ' then a = á, " then u = ü, ~ then n = ñ.
+    # ' " ` ^ ~ are dead keys: for a literal one type the key then SPACE
+    # (e.g. let's = l e t ' space s). ' + s/c/n/z compose Polish ś/ć/ń/ź, so the
+    # space is required for apostrophes too. es/pl kept as switchable fallbacks.
+    swayKeyboardLayouts = [
+      "us(intl)"
+      "es"
+      "pl"
+    ];
+
     # Pin system base to nixos-25.11 (stable). pkgs resolves to pkgs-stable on
     # this profile; user-facing apps still come from pkgs-unstable.X explicit
     # pins (Vivaldi, OBS, IDEs, dev runtimes, etc.). DESK stays on unstable
@@ -242,6 +253,13 @@ in
     email = "diego88aku@gmail.com";
     dotfilesDir = "/home/akunito/.dotfiles";
     wm = "sway"; # Switched from plasma6 for Sway-only setup (no KDE compilation)
+
+    # us(intl) compose override OFF for cross-app consistency (same as DESK):
+    # Chromium/Electron ignore ~/.XCompose on Wayland, so terminals/Qt would
+    # differ from browsers. Stock dead-key behavior everywhere; ' + space for a
+    # literal apostrophe. Flip to true to re-enable the smart "'s" fallback in
+    # compose-aware apps only. See user/wm/sway/xcompose.nix and AINF-343.
+    usIntlApostropheComposeFix = false;
 
     # Different theme for YOGAAKU
     theme = "ashes";
