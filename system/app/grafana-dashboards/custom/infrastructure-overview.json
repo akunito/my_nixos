@@ -2157,7 +2157,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Disk usage on DESK (nixosaku). One bar per mountpoint (max across device renames). Last-known value carried up to 90d when offline.",
+      "description": "Disk usage on DESK (nixosaku), by mountpoint, sorted by usage. Live values when online; last-known when offline (auto-corrects on reconnect). Hover for device.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2250,7 +2250,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (mountpoint) ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d])) * 100)",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"} / node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}) * 100 or ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d])) * 100) and on(instance) (up{instance=\"desk\"} == 0)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2263,14 +2263,31 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true
+              "Time": true,
+              "__name__": true,
+              "container": true,
+              "fstype": true,
+              "instance": true,
+              "job": true
             },
             "includeByName": {},
-            "indexByName": {
-              "Value #A": 1,
-              "mountpoint": 0
-            },
-            "renameByName": {}
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Usage",
+              "Value #A": "Usage"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Usage"
+              }
+            ]
           }
         }
       ],
@@ -2282,7 +2299,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Disk usage on X13 (nixosx13aku). One bar per mountpoint (max across device renames). Last-known value carried up to 90d when offline.",
+      "description": "Disk usage on X13 (nixosx13aku), by mountpoint, sorted by usage. Live values when online; last-known when offline (auto-corrects on reconnect). Hover for device.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2375,7 +2392,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (mountpoint) ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d])) * 100)",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"} / node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}) * 100 or ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d])) * 100) and on(instance) (up{instance=\"x13\"} == 0)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2388,14 +2405,31 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true
+              "Time": true,
+              "__name__": true,
+              "container": true,
+              "fstype": true,
+              "instance": true,
+              "job": true
             },
             "includeByName": {},
-            "indexByName": {
-              "Value #A": 1,
-              "mountpoint": 0
-            },
-            "renameByName": {}
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Usage",
+              "Value #A": "Usage"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Usage"
+              }
+            ]
           }
         }
       ],
@@ -2407,7 +2441,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Disk usage on LAPTOP_A (nixosaga). One bar per mountpoint (max across device renames). Last-known value carried up to 90d when offline.",
+      "description": "Disk usage on LAPTOP_A (nixosaga), by mountpoint, sorted by usage. Live values when online; last-known when offline (auto-corrects on reconnect). Hover for device.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2500,7 +2534,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (mountpoint) ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d])) * 100)",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"} / node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}) * 100 or ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d])) * 100) and on(instance) (up{instance=\"laptop_a\"} == 0)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2513,14 +2547,31 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true
+              "Time": true,
+              "__name__": true,
+              "container": true,
+              "fstype": true,
+              "instance": true,
+              "job": true
             },
             "includeByName": {},
-            "indexByName": {
-              "Value #A": 1,
-              "mountpoint": 0
-            },
-            "renameByName": {}
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Usage",
+              "Value #A": "Usage"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Usage"
+              }
+            ]
           }
         }
       ],
