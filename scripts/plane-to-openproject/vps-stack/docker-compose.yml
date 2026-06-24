@@ -12,7 +12,7 @@ services:
     environment:
       OPENPROJECT_HOST__NAME: "openproject.local.akunito.com"
       OPENPROJECT_HTTPS: "true"       # TLS terminated by nginx-local
-      OPENPROJECT_SECRET_KEY_BASE: "${OPENPROJECT_SECRET_KEY_BASE}"
+      SECRET_KEY_BASE: "${OPENPROJECT_SECRET_KEY_BASE}"   # Rails-standard name (OpenProject 17.x)
       OPENPROJECT_SEED_ADMIN_USER_PASSWORD: "${OPENPROJECT_ADMIN_PASSWORD}"
       OPENPROJECT_SEED_ADMIN_USER_PASSWORD_RESET: "false"
       # Outbound mail via the host Postfix relay (rootless slirp4netns gateway).

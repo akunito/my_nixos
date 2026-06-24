@@ -9,8 +9,16 @@ import re
 # --- Plane (SOURCE, read-only) ---------------------------------------------
 # Pages live on the patched internal `/api/` (see obsidian-to-plane notes);
 # issues/states/labels use the public `/api/v1/`.
-PLANE_BASE = os.environ.get("PLANE_BASE_URL", "https://plane.akunito.com/api")
-PLANE_BASE_V1 = PLANE_BASE.rstrip("/") + "/v1" if not PLANE_BASE.rstrip("/").endswith("/v1") else PLANE_BASE
+# PLANE_BASE_URL may be set in the environment to the bare host (e.g. the VPS
+# exports "https://plane.akunito.com" with no /api). Normalize so /api is always
+# present, accepting host, host/api, or host/api/v1.
+_plane_raw = os.environ.get("PLANE_BASE_URL", "https://plane.akunito.com").rstrip("/")
+if _plane_raw.endswith("/api/v1"):
+    _plane_raw = _plane_raw[: -len("/v1")]
+if not _plane_raw.endswith("/api"):
+    _plane_raw = _plane_raw + "/api"
+PLANE_BASE = _plane_raw                 # .../api      (pages live here)
+PLANE_BASE_V1 = PLANE_BASE + "/v1"      # .../api/v1   (issues/states/labels)
 WORKSPACE_SLUG = os.environ.get("PLANE_WORKSPACE_SLUG", "akuworkspace")
 AINF_PROJECT_ID = "ea5c0b30-a3ab-4ab3-bd11-a4b47d3d7171"
 
