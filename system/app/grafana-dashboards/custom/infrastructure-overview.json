@@ -2230,7 +2230,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[30d]) / last_over_time(node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[30d])) * 100",
+          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d])) * 100",
           "instant": true,
           "legendFormat": "{{mountpoint}}",
           "range": false,
@@ -2318,7 +2318,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[30d]) / last_over_time(node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[30d])) * 100",
+          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d])) * 100",
           "instant": true,
           "legendFormat": "{{mountpoint}}",
           "range": false,
@@ -2406,7 +2406,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[30d]) / last_over_time(node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[30d])) * 100",
+          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d])) * 100",
           "instant": true,
           "legendFormat": "{{mountpoint}}",
           "range": false,
@@ -2726,9 +2726,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(time() - nixos_last_update_system_timestamp) / 86400",
+          "expr": "(time() - last_over_time(nixos_last_update_system_timestamp[90d])) / 86400",
+          "instant": true,
           "legendFormat": "{{hostname}}",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -2802,9 +2803,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(time() - nixos_last_update_user_timestamp) / 86400",
+          "expr": "(time() - last_over_time(nixos_last_update_user_timestamp[90d])) / 86400",
+          "instant": true,
           "legendFormat": "{{hostname}}",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
