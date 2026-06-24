@@ -2157,7 +2157,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Disk usage on DESK (nixosaku). Bar = device; hover for mountpoint.",
+      "description": "Disk usage on DESK (nixosaku). One bar per mountpoint (max across device renames). Last-known value carried up to 90d when offline.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2238,7 +2238,7 @@
           "mode": "single",
           "sort": "none"
         },
-        "xField": "device",
+        "xField": "mountpoint",
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
       },
@@ -2250,7 +2250,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d])) * 100",
+          "expr": "max by (mountpoint) ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d])) * 100)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2263,18 +2263,12 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "container": true,
-              "fstype": true,
-              "instance": true,
-              "job": true
+              "Time": true
             },
             "includeByName": {},
             "indexByName": {
-              "Value #A": 2,
-              "device": 0,
-              "mountpoint": 1
+              "Value #A": 1,
+              "mountpoint": 0
             },
             "renameByName": {}
           }
@@ -2288,7 +2282,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Disk usage on X13 (nixosx13aku). Bar = device; hover for mountpoint.",
+      "description": "Disk usage on X13 (nixosx13aku). One bar per mountpoint (max across device renames). Last-known value carried up to 90d when offline.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2369,7 +2363,7 @@
           "mode": "single",
           "sort": "none"
         },
-        "xField": "device",
+        "xField": "mountpoint",
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
       },
@@ -2381,7 +2375,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d])) * 100",
+          "expr": "max by (mountpoint) ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[90d])) * 100)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2394,18 +2388,12 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "container": true,
-              "fstype": true,
-              "instance": true,
-              "job": true
+              "Time": true
             },
             "includeByName": {},
             "indexByName": {
-              "Value #A": 2,
-              "device": 0,
-              "mountpoint": 1
+              "Value #A": 1,
+              "mountpoint": 0
             },
             "renameByName": {}
           }
@@ -2419,7 +2407,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Disk usage on LAPTOP_A (nixosaga). Bar = device; hover for mountpoint.",
+      "description": "Disk usage on LAPTOP_A (nixosaga). One bar per mountpoint (max across device renames). Last-known value carried up to 90d when offline.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2500,7 +2488,7 @@
           "mode": "single",
           "sort": "none"
         },
-        "xField": "device",
+        "xField": "mountpoint",
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
       },
@@ -2512,7 +2500,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d])) * 100",
+          "expr": "max by (mountpoint) ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d])) * 100)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2525,18 +2513,12 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "container": true,
-              "fstype": true,
-              "instance": true,
-              "job": true
+              "Time": true
             },
             "includeByName": {},
             "indexByName": {
-              "Value #A": 2,
-              "device": 0,
-              "mountpoint": 1
+              "Value #A": 1,
+              "mountpoint": 0
             },
             "renameByName": {}
           }
