@@ -2232,7 +2232,7 @@
           "editorMode": "code",
           "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d])) * 100",
           "instant": true,
-          "legendFormat": "{{mountpoint}}",
+          "legendFormat": "{{device}}",
           "range": false,
           "refId": "A"
         }
