@@ -2230,9 +2230,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"} / node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}) * 100",
+          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[30d]) / last_over_time(node_filesystem_size_bytes{instance=\"desk\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[30d])) * 100",
+          "instant": true,
           "legendFormat": "{{mountpoint}}",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -2317,9 +2318,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"} / node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}) * 100",
+          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[30d]) / last_over_time(node_filesystem_size_bytes{instance=\"x13\", mountpoint=~\"/|/boot\"}[30d])) * 100",
+          "instant": true,
           "legendFormat": "{{mountpoint}}",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -2404,9 +2406,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"} / node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}) * 100",
+          "expr": "(1 - last_over_time(node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[30d]) / last_over_time(node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[30d])) * 100",
+          "instant": true,
           "legendFormat": "{{mountpoint}}",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],

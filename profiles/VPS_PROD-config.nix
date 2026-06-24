@@ -293,7 +293,7 @@ in
     # Laptops use Tailscale IPs (roaming — not always on LAN)
     prometheusRemoteTargets = [
       { name = "nas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; }
-      { name = "desk"; host = "192.168.8.96"; nodePort = 9100; cadvisorPort = null; }
+      { name = "desk"; host = "nixosaku"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (workstation VLAN not routed over tailnet)
       { name = "x13"; host = "nixosx13aku"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (roaming)
       { name = "laptop_a"; host = "nixosaga"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (roaming)
     ];
