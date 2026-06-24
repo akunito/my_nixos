@@ -393,6 +393,8 @@
     nextcloudSyncFolder = ""; # Path to Nextcloud sync folder (e.g., "/home/user/Nextcloud")
     githubAccessToken = ""; # GitHub PAT to lift github.com anon rate limit on flake-input fetches (set from secrets/domains.nix in profiles; empty = anonymous, no secrets needed)
     perplexityApiKey = ""; # Perplexity API key for MCP server (set from secrets/domains.nix in profiles)
+    jellyseerrApiKey = ""; # Jellyseerr API key for MCP server (set from secrets/domains.nix in profiles)
+    jellyseerrUrl = "http://192.168.20.200:5055"; # Jellyseerr base URL for MCP server
     planeApiToken = ""; # Plane API token for MCP server (set from secrets/domains.nix in profiles)
     planeApiUrl = ""; # Plane instance URL (e.g., "https://plane.akunito.com")
     planeWorkspaceSlug = ""; # Plane workspace slug (e.g., "akuworkspace")

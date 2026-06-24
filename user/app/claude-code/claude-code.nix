@@ -30,6 +30,10 @@ let
   # Perplexity API key from secrets (passed through systemSettings)
   perplexityApiKey = systemSettings.perplexityApiKey or "";
 
+  # Jellyseerr MCP credentials (media search/request)
+  jellyseerrApiKey = systemSettings.jellyseerrApiKey or "";
+  jellyseerrUrl = systemSettings.jellyseerrUrl or "http://192.168.20.200:5055";
+
   # Claude Code read-only mode (deny edit/write tools)
   claudeCodeReadOnly = systemSettings.claudeCodeReadOnly or false;
 
@@ -77,6 +81,17 @@ let
 
         # MCP tools — jl-onboard (Michalina JL Engine)
         "mcp__jl-onboard__*"
+
+        # MCP tools — Jellyseerr media (read-only auto-allowed; request_media
+        # is intentionally omitted so queuing a download always prompts)
+        "mcp__jellyseerr__search_media"
+        "mcp__jellyseerr__get_requests"
+        "mcp__jellyseerr__get_request"
+        "mcp__jellyseerr__get_media"
+        "mcp__jellyseerr__get_trending"
+        "mcp__jellyseerr__get_discover"
+        "mcp__jellyseerr__get_watch_history"
+        "mcp__jellyseerr__get_library_recent"
 
         # Safe Bash patterns — read-only system inspection
         "Bash(ls *)"
@@ -365,6 +380,10 @@ except Exception as e:
     lib.optionalAttrs (perplexityApiKey != "") {
       PERPLEXITY_API_KEY = perplexityApiKey;
     }
+    // lib.optionalAttrs (jellyseerrApiKey != "") {
+      JELLYSEERR_URL = jellyseerrUrl;
+      JELLYSEERR_API_KEY = jellyseerrApiKey;
+    }
     // lib.optionalAttrs (planeApiToken != "") {
       PLANE_API_KEY = planeApiToken;
       PLANE_BASE_URL = planeApiUrl;
@@ -390,6 +409,8 @@ except Exception as e:
   home.file.".claude/mcp-env" = {
     text = lib.concatStringsSep "\n" (
       lib.optional (perplexityApiKey != "") "PERPLEXITY_API_KEY=${perplexityApiKey}"
+      ++ lib.optional (jellyseerrApiKey != "") "JELLYSEERR_URL=${jellyseerrUrl}"
+      ++ lib.optional (jellyseerrApiKey != "") "JELLYSEERR_API_KEY=${jellyseerrApiKey}"
       ++ lib.optional (planeApiToken != "") "PLANE_API_KEY=${planeApiToken}"
       ++ lib.optional (planeApiUrl != "") "PLANE_BASE_URL=${planeApiUrl}"
       ++ lib.optional (planeWorkspaceSlug != "") "PLANE_WORKSPACE_SLUG=${planeWorkspaceSlug}"

@@ -48,6 +48,15 @@
       "headers": {
         "Authorization": "Bearer ${JL_ENGINE_TOKEN}"
       }
+    },
+    "jellyseerr": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--no-project", "--with", "mcp", "python", "templates/openclaw/jellyseerr-mcp.py"],
+      "env": {
+        "JELLYSEERR_URL": "${JELLYSEERR_URL}",
+        "JELLYSEERR_API_KEY": "${JELLYSEERR_API_KEY}"
+      }
     }
   }
 }
