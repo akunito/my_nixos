@@ -1,0 +1,45 @@
+# Disposable OpenProject CE demo — deploy to ~/.homelab/openproject-demo/ on VPS_PROD.
+# All-in-one image (web + workers + bundled Postgres + memcached). Uses its OWN
+# database inside the named volume — does NOT touch the shared NixOS Postgres or Plane.
+# Fronted by nginx-local at https://openproject.local.akunito.com (Tailscale-only).
+services:
+  openproject:
+    image: openproject/openproject:${OPENPROJECT_TAG}
+    container_name: openproject-demo
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8200:80"          # nginx-local proxies here; never public
+    environment:
+      OPENPROJECT_HOST__NAME: "openproject.local.akunito.com"
+      OPENPROJECT_HTTPS: "true"       # TLS terminated by nginx-local
+      OPENPROJECT_SECRET_KEY_BASE: "${OPENPROJECT_SECRET_KEY_BASE}"
+      OPENPROJECT_SEED_ADMIN_USER_PASSWORD: "${OPENPROJECT_ADMIN_PASSWORD}"
+      OPENPROJECT_SEED_ADMIN_USER_PASSWORD_RESET: "false"
+      # Outbound mail via the host Postfix relay (rootless slirp4netns gateway).
+      OPENPROJECT_EMAIL__DELIVERY__METHOD: "smtp"
+      OPENPROJECT_SMTP__ADDRESS: "host.docker.internal"
+      OPENPROJECT_SMTP__PORT: "25"
+      OPENPROJECT_SMTP__DOMAIN: "akunito.com"
+      OPENPROJECT_SMTP__AUTHENTICATION: "none"
+      OPENPROJECT_SMTP__ENABLE__STARTTLS__AUTO: "false"
+    volumes:
+      - opdemo_pgdata:/var/openproject/pgdata
+      - opdemo_assets:/var/openproject/assets
+    extra_hosts:
+      - "host.docker.internal:10.0.2.2"
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:80/health_checks/default"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s            # first boot seeds the DB (several minutes)
+
+volumes:
+  opdemo_pgdata:
+  opdemo_assets:

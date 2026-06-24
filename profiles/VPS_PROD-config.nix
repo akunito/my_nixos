@@ -265,6 +265,7 @@ in
       n8n        = { port = 5678; };
       openclaw   = { port = 18789; };
       finance    = { port = 8190; maxBodySize = "50M"; };
+      openproject = { port = 8200; maxBodySize = "256M"; };  # TEMP: disposable OpenProject CE eval (remove after demo)
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
