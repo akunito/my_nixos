@@ -2534,7 +2534,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(1 - node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"} / node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}) * 100 or ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs\"}[90d])) * 100) and on(instance) (up{instance=\"laptop_a\"} == 0)",
+          "expr": "(1 - node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"} / node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}) * 100 or ((1 - last_over_time(node_filesystem_avail_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d]) / last_over_time(node_filesystem_size_bytes{instance=\"laptop_a\", fstype!~\"tmpfs|overlay|devtmpfs|ramfs|nfs4\", mountpoint!~\"/nix/store|/run.*\"}[90d])) * 100) and on(instance) (up{instance=\"laptop_a\"} == 0)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
