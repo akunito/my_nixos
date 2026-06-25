@@ -257,6 +257,7 @@ in
       syncthing  = { port = 8384; };
       status     = { port = 3009; };
       plane      = { port = 3003; };
+      plane-dev  = { port = 3007; maxBodySize = "50M"; };  # isolated Plane dev/test clone (own pg/redis/mq/minio)
       unifi      = { port = 8443; https = true; };
       portfolio  = { port = 3005; };
       vault      = { port = 8222; };
