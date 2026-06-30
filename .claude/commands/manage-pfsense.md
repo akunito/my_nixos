@@ -160,6 +160,36 @@ If pfSense enters a boot loop after bridge config:
 4. Edit config: remove `<bridges>` section from `/cf/conf/config.xml`
 5. Reboot
 
+### Tailscale boot hang / interface-assignment wizard ("Configuration references interfaces that do not exist: tailscale0")
+
+**Symptom:** After a reboot, pfSense halts on the console at the interface-assignment wizard
+(`Network interface mismatch -- Running interface assignment option` / `Should VLANs be set up now [y|n]?`).
+Boot never completes; if someone answers the wizard, it can **strip all OPT interface assignments** from the config.
+
+**Cause:** `tailscale0` is assigned as a pfSense interface (opt1, for firewall/NAT/routing rules), but it is a
+TUN device created by `tailscaled` at runtime. The boot-time interface-existence check runs *before* `tailscaled`
+starts (`REQUIRE: NETWORKING`), so the interface is missing → wizard. WireGuard avoids this via its own
+`earlyshellcmd`; Tailscale needs an equivalent.
+
+**Two pfSense gotchas combine here:**
+1. pfSense's interface check runs ~5s into boot — the interface must exist *synchronously* by then.
+2. pfSense does **not** reliably auto-start `/usr/local/etc/rc.d` services from `tailscaled_enable="YES"` alone
+   (that's why the WireGuard pkg force-starts `wireguardd` via `earlyshellcmd`). So the daemon must be started explicitly.
+
+**Permanent fix** — one `<earlyshellcmd>` under `<system>` in `/cf/conf/config.xml` (alongside the WireGuard one):
+```xml
+<earlyshellcmd>/sbin/ifconfig tun create name tailscale0 group tun; /usr/sbin/daemon -f /bin/sh -c 'sleep 60; /usr/local/etc/rc.d/tailscaled onestart'</earlyshellcmd>
+```
+- The `ifconfig tun create` runs synchronously → `tailscale0` exists for the boot check (no wizard).
+- The detached, 60s-delayed `tailscaled onestart` starts the daemon *after* networking; its rc prestart destroys
+  the stub and recreates the real `tailscale0` (mtu 1280, owns the /32). opt1 keeps the static `100.64.0.7/10`
+  only as the "Tailscale net" source for firewall aliases — the daemon's /32 is the live address.
+
+**Recovery if the wizard already stripped OPT interfaces:** restore the last-good `/cf/conf/backup/config-*.xml`
+(verify with `sed -n '/<interfaces>/,/<\/interfaces>/p' <file> | grep -oE '<(wan|lan|opt[0-9]+)>'`), inject the
+earlyshellcmd above, validate (`php -r 'echo @simplexml_load_file("...")?"OK":"BAD";'`), copy to
+`/cf/conf/config.xml`, `rm -f /tmp/config.cache`, reboot. Fixed 2026-06-25.
+
 ### VLAN 100 unreachable from pfSense
 
 ```bash
