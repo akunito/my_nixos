@@ -205,6 +205,10 @@ let
         # bitwarden-desktop-2026.5.0 still bundles electron 39 (EOL upstream).
         # Allow until nixpkgs ships a bitwarden-desktop on a maintained Electron.
         "electron-39.8.10"
+        # pnpm-10.29.2 is a build-time-only tool for vesktop (JS/Electron app);
+        # flagged insecure upstream (CVE-2026-48995 et al.). Not shipped at
+        # runtime. Allow until nixpkgs-unstable bumps vesktop's pnpm.
+        "pnpm-10.29.2"
       ];
     };
     overlays = (lib.optional useRustOverlay rustOverlay) ++ [ noOpenldapTestsOverlay ];
