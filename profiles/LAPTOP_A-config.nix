@@ -98,15 +98,23 @@ in
     # This overrides LAPTOP-base.nix (which uses TLP + forced logind lid actions).
     # Only LAPTOP_A is affected — X13/YOGA keep the base TLP behavior.
     #
-    #   - TLP OFF + power-profiles-daemon ON: the two are mutually exclusive, and
-    #     PowerDevil's profile slider (Power Save/Balanced/Performance) needs PPD.
-    #     This also restores the "Energy" controls that had disappeared in Plasma.
+    #   - powerManagement.enable = TRUE is the key fix: NixOS's plasma6 module
+    #     gates the WHOLE PowerDevil stack on it — it only installs the `powerdevil`
+    #     daemon and enables `services.upower` when powerManagement.enable is true
+    #     (see nixos/modules/services/desktop-managers/plasma6.nix). With it false
+    #     (the LAPTOP-base default, set so TLP could take over), PowerDevil was
+    #     absent: the "Energy" page vanished from System Settings and nothing ever
+    #     auto-suspended. Turning it on restores default, GUI-configurable Plasma
+    #     power management (idle suspend, lid, screen, charge limit).
+    #   - TLP OFF + power-profiles-daemon ON: TLP and PPD are mutually exclusive,
+    #     and default Plasma drives CPU profiles via PPD (the applet slider).
     #   - logind lid/power-key = "ignore": logind stays out of the way so it can't
-    #     race PowerDevil. PowerDevil owns lid, power button and idle suspend, all
-    #     user-configurable in the GUI. (Trade-off: lid/power-key do nothing at the
+    #     race PowerDevil, which now owns lid, power button and idle suspend (all
+    #     user-configurable in the GUI). (Trade-off: lid/power-key do nothing at the
     #     SDDM login screen, before a Plasma session exists — acceptable here.)
     #   - Battery charge thresholds are no longer Nix-forced (TLP is off); set the
     #     "Charge limit" imperatively in Plasma → Power Management if desired.
+    powerManagement_ENABLE = true;       # override base (was false) — REQUIRED for PowerDevil/upower
     TLP_ENABLE = false;                  # override LAPTOP-base (was true)
     power-profiles-daemon_ENABLE = true; # override base (was false) — drives PowerDevil profiles
     lidSwitch = "ignore";                # PowerDevil handles lid
