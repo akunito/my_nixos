@@ -6,6 +6,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
+| akunito.known-issues | Out-of-scope bugs and stale code surfaced during other work — to fix later | bugs, tech-debt, backlog | docs/akunito/known-issues.md |
 | audits.docker-security.2026-03-06 | VPS Docker container security audit — network isolation, database access, secrets, hardening | audit, security, docker, vps, containers, networking, secrets | profiles/VPS*-config.nix |
 | audits.nas-nixos.2026-04-15 | Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring | audit, nas, nixos, zfs, storage, network, performance | docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md |
 | audits.pfsense.2026-02-04 | Security, performance, and reliability audit of pfSense firewall | audit, security, performance, pfsense, firewall | docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md |

@@ -27,13 +27,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/LAPTOP_X13-config.nix**: LAPTOP_X13 Profile Configuration (nixosx13aku)
 - **profiles/LAPTOP_YOGA-config.nix**: LAPTOP_YOGA Profile Configuration (nixosyogaaga)
 - **profiles/LXC-base-config.nix**: LXC Base Profile Configuration
-- **profiles/LXC_HOME-config.nix**: LXC_HOME Profile Configuration
-- **profiles/LXC_tailscale-config.nix**: LXC_tailscale Profile Configuration
 - **profiles/MACBOOK-KOMI-config.nix**: MACBOOK-KOMI Configuration
 - **profiles/NAS_PROD-config.nix**: NAS_PROD Profile Configuration
 - **profiles/VPS-base-config.nix**: VPS Base Profile Configuration
 - **profiles/VPS_PROD-config.nix**: VPS_PROD Profile Configuration
 - **profiles/archived/DESKold-config.nix**: DESKold Profile Configuration (Backup of DESK with Plasma 6 + ungoogled-chromium)
+- **profiles/archived/LXC_HOME-config.nix**: LXC_HOME Profile Configuration
 - **profiles/archived/LXC_database-config.nix**: LXC_database Profile Configuration
 - **profiles/archived/LXC_liftcraftTEST-config.nix**: LXC liftcraftTEST Profile Configuration
 - **profiles/archived/LXC_mailer-config.nix**: LXC mailer Profile Configuration
@@ -42,6 +41,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/archived/LXC_plane-config.nix**: LXC Default Profile Configuration
 - **profiles/archived/LXC_portfolioprod-config.nix**: LXC portfolioprod Profile Configuration
 - **profiles/archived/LXC_proxy-config.nix**: LXC_proxy Profile Configuration
+- **profiles/archived/LXC_tailscale-config.nix**: LXC_tailscale Profile Configuration
 - **profiles/archived/VMHOME-config.nix**: VMHOME Profile Configuration
 - **profiles/archived/WSL-config.nix**: WSL Profile Configuration
 
@@ -50,6 +50,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### App
 
 - **system/app/appimage.nix**: System module: appimage.nix
+- **system/app/archived/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
 - **system/app/control-panel-native.nix**: Build the web control panel (standalone server binary) *Enabled when:* `systemSettings.controlPanelNativeEnable or false`
 - **system/app/control-panel.nix**: Build the control panel web server from workspace *Enabled when:* `systemSettings.controlPanelEnable or false`
@@ -69,7 +70,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
    - `(systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != ""`
-- **system/app/docker.nix**: Allow dockerd to be restarted without affecting running container. *Enabled when:* `userSettings.dockerEnable == true`
+- **system/app/docker.nix**: Track docker from pkgs-unstable so we don't have to bump pins each time *Enabled when:* `userSettings.dockerEnable == true`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
    - `systemSettings.gamemodeEnable == true`
@@ -89,9 +90,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/nas-services.nix**: NAS-specific services module *Enabled when:*
    - `not NixOS-native`
    - `systemSettings.nfsServerEnable or false`
+   - `p: "'${p}'"`
    - `seq 1 30`
    - `!isRootless`
 - **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
+- **system/app/online-accounts.nix**: System module: online-accounts.nix
 - **system/app/openclaw-matrix-bridge.nix**: OpenClaw Matrix Bridge + Fallback Monitor
 - **system/app/openclaw.nix**: OpenClaw Services
 - **system/app/pgbouncer.nix**: PgBouncer Connection Pooler Module *Enabled when:*
@@ -110,7 +113,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.prometheusExporterEnable or false`
    - `(systemSettings.prometheusExporterEnable or false) || (systemSettings.grafanaEnable or false)`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
-- **system/app/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
 - **system/app/prometheus-nas-backup.nix**: NAS Restic Backup Monitoring *Enabled when:* `systemSettings.prometheusNasBackupEnable or false`
 - **system/app/prometheus-pfsense-backup.nix**: pfSense Full Backup + Sync + Monitoring *Enabled when:* `systemSettings.prometheusPfsenseBackupEnable or false`
 - **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
@@ -222,6 +224,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.thinkpadEnable && (systemSettings.thinkfanEnable or false)`
 - **system/hardware/thunderbolt.nix**: Thunderbolt support: bolt daemon, auto-authorization, and diagnostic tools *Enabled when:* `systemSettings.thunderboltEnable or false`
 - **system/hardware/time.nix**: System module: time.nix
+- **system/hardware/webcam-controls.nix**: Persist v4l2 webcam controls (brightness/contrast/gain/etc.) across reboot,
 - **system/hardware/xbox.nix**: NOTE you might need to add xpad as Kernel Module on your flake.nix
 
 ### Hardware-Configuration.Nix
@@ -320,6 +323,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/qute-containers.nix**: User module: qute-containers.nix
 - **user/app/browser/qutebrowser.nix**: bindings from doom emacs
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
+- **user/app/calendar/calendar.nix**: Typelibs needed by gi.require_version() inside eds-refresh.py. *Enabled when:* `sign in`
 - **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
 - **user/app/colima/colima.nix**: Colima settings - can be overridden in profile config *Enabled when:* `systemSettings.profile == "darwin"`
 - **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:*
@@ -342,11 +346,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/karabiner/karabiner.nix**: Karabiner-Elements Configuration
 - **user/app/keepass/keepass.nix**: nixpkgs.overlays = [
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
+- **user/app/meeting-transcribe/meeting-transcribe.nix**: Local meeting recording + transcription *Enabled when:* `e.g. DESK already ships ffmpeg-full -> duplicate bin/ffmpeg`
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
 - **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
 - **user/app/ssh-hosts.nix**: Shared SSH host definitions for workstations
 - **user/app/swaybgplus/swaybgplus.nix**: ============================================================================ *Enabled when:* `systemSettings.swaybgPlusEnable or false`
-- **user/app/swww/swww.nix**: !/bin/sh *Enabled when:*
+- **user/app/swww/swww.nix**: awww doesn't exist on nixos-25.11 — pin to unstable so swww works on *Enabled when:*
    - `wallpaper backend for SwayFX`
    - `SwayFX`
    - `!waypaperTakesOver`
@@ -362,7 +367,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/terminal/xterm.nix**: XTerm configuration via X resources *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
 - **user/app/voxtype/voxtype.nix**: Voxtype - Local voice dictation for Sway *Enabled when:* `userSettings.wm == "sway"`
-- **user/app/waypaper/waypaper.nix**: Watch for hot-plugged monitors and trigger wallpaper restore. *Enabled when:* `swww/swaybg`
+- **user/app/waypaper/waypaper.nix**: awww doesn't exist on nixos-25.11 — pin to unstable. *Enabled when:* `swww/swaybg`
 
 ### Hardware
 
@@ -419,6 +424,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/kanshi.nix**: Declarative mode: Nix manages kanshi config *Enabled when:*
    - `lib.mkIf declarativeMode { services.kanshi.settings = systemSettings.swayKanshiSettings; # Ensure Home Manager owns kanshi config robustly xdg.configFile."kanshi/config".force = true; }`
    - `dirname "$KANSHI_CONFIG"`
+   - `imperativeMode && nativeGroups`
 - **user/wm/sway/kde-apps.nix**: KDE companion apps, Wayland-native viewers, and MIME associations for Sway session.
 - **user/wm/sway/nwg-displays.nix**: User module: nwg-displays.nix
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
@@ -436,8 +442,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.stylixEnable == true`
    - `systemSettings.waypaperEnable or false`
    - `systemSettings.gamemodeEnable == true`
-- **user/wm/sway/waybar.nix**: Some GPU tooling is optional depending on hardware / nixpkgs settings.
+- **user/wm/sway/waybar.nix**: Some GPU tooling is optional depending on hardware / nixpkgs settings. *Enabled when:* `ps: [ ps.icalendar ps.recurring-ical-events ]`
 - **user/wm/sway/workspace-groups-gui.nix**: Python with GTK dependencies
+- **user/wm/sway/xcompose.nix**: US-International dead-keys fix: make the acute dead key (') accent VOWELS only.
 - **user/wm/xmonad/xmonad.nix**: User module: xmonad.nix
 
 ## Documentation
@@ -447,6 +454,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/README.md**: NixOS infrastructure documentation specific to akunito's environment.
 - **docs/akunito/hardware.md**: Complete guide to hardware-specific configurations and optimizations.
 - **docs/akunito/keybindings.md**: Complete reference for all keybindings across window managers and applications in this NixOS configuration.
+- **docs/akunito/known-issues.md**: Out-of-scope bugs and stale code surfaced during other work — to fix later
 - **docs/akunito/security.md**: Complete guide to security configurations and features in this NixOS setup.
 
 ### Akunito / Finance
