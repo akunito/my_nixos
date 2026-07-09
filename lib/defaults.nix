@@ -171,9 +171,10 @@
     # tailscale0. Manual-start by default so it doesn't hold VRAM during gaming.
     # See system/app/llama-server.nix.
     llamaServerEnable = false;
-    llamaServerAutoStart = false;                          # false = unit exists, started on demand
     llamaServerHost = "0.0.0.0";                           # firewall restricts exposure to tailscale0
-    llamaServerPort = 8090;
+    llamaServerPort = 8090;                                # public (socket) port
+    llamaServerInternalPort = 8091;                        # backend port (localhost only)
+    llamaServerIdleTimeout = "15min";                      # stop backend + free VRAM after this idle
     llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF";  # auto-downloaded via -hf on first start
     llamaServerModelHfFile = "";                           # optional specific GGUF filename ("" = repo default)
     llamaServerCtxSize = 16384;                            # context window

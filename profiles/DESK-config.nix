@@ -168,12 +168,12 @@ in
     # Local LLM inference server (llama.cpp Vulkan on RX 9070 XT, 16GB)
     # ========================================================================
     # OpenAI-compatible endpoint, Tailscale-only (100.64.0.5), for VPS/NAS apps.
-    # Manual-start (autoStart=false) so it doesn't hold ~13GB VRAM during gaming;
-    # the wake-and-wait proxy will start it on demand. Swap model via HfRepo.
+    # Socket-activated: loads on first connection, auto-stops after idle so it
+    # doesn't hold ~14GB VRAM during gaming. Swap model via HfRepo.
     llamaServerEnable = true;
-    llamaServerAutoStart = false;
     llamaServerHost = "0.0.0.0"; # firewalled to tailscale0 only
     llamaServerPort = 8090;
+    llamaServerIdleTimeout = "15min"; # free VRAM 15 min after last request
     llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF"; # Qwen3-14B alt: "ggml-org/Qwen3-14B-GGUF"
     llamaServerCtxSize = 16384;
     llamaServerApiKey = ""; # no key yet (tailscale-only + firewalled); add from secrets to harden
