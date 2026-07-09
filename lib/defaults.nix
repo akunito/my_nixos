@@ -183,6 +183,20 @@
     llamaServerExtraArgs = [ "--jinja" ];                  # --jinja enables the tool-calling chat template
     llamaServerOpenFirewallTailscale = true;               # open the port only on tailscale0
 
+    # === Wake-and-wait proxy (runs on an always-on host, e.g. VPS) ===
+    # Apps point at this proxy; it wakes DESK via pfSense WoL if asleep, waits,
+    # then forwards to DESK's llama socket. See system/app/llama-wake-proxy.nix.
+    llamaWakeProxyEnable = false;
+    llamaWakeProxyListenAddress = "127.0.0.1";             # VPS sets its Tailscale IP (100.64.0.6)
+    llamaWakeProxyListenPort = 8090;
+    llamaWakeProxyTargetHost = "100.64.0.5";               # DESK Tailscale IP
+    llamaWakeProxyTargetPort = 8090;
+    llamaWakeProxyUser = "akunito";                        # its SSH key must be authorised on pfSense
+    llamaWakeProxyPfsenseSshHost = "admin@100.64.0.7";     # always-on LAN host that sends the magic packet
+    llamaWakeProxyWolBroadcast = "192.168.8.255";
+    llamaWakeProxyWolMac = "";                             # DESK eno1 MAC (set in profile)
+    llamaWakeProxyWakeTimeoutSec = 120;                    # max wait for DESK to wake + rejoin tailnet
+
     # Service defaults
     havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant
     fail2banEnable = true; # Can disable for systems behind firewall

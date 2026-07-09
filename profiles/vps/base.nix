@@ -58,7 +58,8 @@
   ++ lib.optional (systemSettings.openclawMatrixBridgeEnable or false) ../../system/app/openclaw-matrix-bridge.nix
   ++ lib.optional (systemSettings.vpsResticBackupEnable or false) ../../system/app/restic-backup-vps.nix
   ++ lib.optional (systemSettings.nasResticBackupEnable or false) ../../system/app/restic-backup-nas.nix
-  ++ lib.optional (systemSettings.nfsServerEnable or false) ../../system/hardware/nfs_server.nix;
+  ++ lib.optional (systemSettings.nfsServerEnable or false) ../../system/hardware/nfs_server.nix
+  ++ lib.optional (systemSettings.llamaWakeProxyEnable or false) ../../system/app/llama-wake-proxy.nix;
 
   # ==========================================================================
   # Boot — real bootloader (not LXC)

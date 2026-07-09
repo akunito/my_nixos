@@ -243,6 +243,13 @@ in
     # === Cloudflare Tunnel (Phase 2b — ENABLED) ===
     cloudflaredEnable = true;
 
+    # === Local LLM wake-and-wait proxy (fronts DESK's llama-server) ===
+    # Apps use http://100.64.0.6:8090/v1 ; this wakes DESK via pfSense WoL if
+    # asleep, waits, then forwards to DESK (100.64.0.5:8090). See memory reference_desk_wol.
+    llamaWakeProxyEnable = true;
+    llamaWakeProxyListenAddress = "100.64.0.6"; # VPS Tailscale IP
+    llamaWakeProxyWolMac = "08:bf:b8:6c:ab:92"; # DESK onboard 2.5GbE (eno1)
+
     # === Nginx Local Access (*.local.akunito.com via Tailscale — bypasses Cloudflare Access) ===
     nginxLocalEnable = true;
     nginxLocalListenAddress = "100.64.0.6"; # VPS Tailscale IP (must be IP, not hostname — nginx bind)
