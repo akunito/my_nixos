@@ -154,6 +154,30 @@ in
     ];
     networkBondingRingBufferSize = 8192; # Max NIC ring buffers for 10GbE (prevents rx_missed_errors)
 
+    # ========================================================================
+    # Wake-on-LAN (onboard 2.5GbE eno1 — woken by pfSense magic packet)
+    # ========================================================================
+    # The 10GbE X520 bond has NO WoL; only the onboard Realtek 2.5GbE (eno1)
+    # supports it. Wired to the LAN switch, kept at static .99 (pingable for
+    # waker liveness). Proven 2026-07-09 (memory: reference_desk_wol).
+    wolEnable = true;
+    wolInterface = "eno1";
+    wolStaticIp = "192.168.8.99/24"; # "" for a pure IP-less listener
+
+    # ========================================================================
+    # Local LLM inference server (llama.cpp Vulkan on RX 9070 XT, 16GB)
+    # ========================================================================
+    # OpenAI-compatible endpoint, Tailscale-only (100.64.0.5), for VPS/NAS apps.
+    # Manual-start (autoStart=false) so it doesn't hold ~13GB VRAM during gaming;
+    # the wake-and-wait proxy will start it on demand. Swap model via HfRepo.
+    llamaServerEnable = true;
+    llamaServerAutoStart = false;
+    llamaServerHost = "0.0.0.0"; # firewalled to tailscale0 only
+    llamaServerPort = 8090;
+    llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF"; # Qwen3-14B alt: "ggml-org/Qwen3-14B-GGUF"
+    llamaServerCtxSize = 16384;
+    llamaServerApiKey = ""; # no key yet (tailscale-only + firewalled); add from secrets to harden
+
     # Firewall
     allowedTCPPorts = [
       9100 # prometheus workstation exporter

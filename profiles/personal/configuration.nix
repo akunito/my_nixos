@@ -30,6 +30,8 @@
     ++ lib.optional (systemSettings.webcamControlsEnable or false) ../../system/hardware/webcam-controls.nix # Persist v4l2 webcam controls across reboot/hotplug
     ++ lib.optional (systemSettings.networkBondingEnable or false) ../../system/hardware/network-bonding.nix # Network bonding (LACP)
     ++ lib.optional (systemSettings.prometheusWorkstationExporterEnable or false) ../../system/app/prometheus-workstation-exporter.nix # Lightweight metrics exporter for workstations
-    ++ lib.optional (systemSettings.wifiAuditEnable or false) ../../system/security/wifi-audit.nix; # WiFi security audit toolkit (aircrack-ng + hashcat + wireshark)
+    ++ lib.optional (systemSettings.wifiAuditEnable or false) ../../system/security/wifi-audit.nix # WiFi security audit toolkit (aircrack-ng + hashcat + wireshark)
+    ++ lib.optional (systemSettings.wolEnable or false) ../../system/hardware/wol.nix # Persist Wake-on-LAN arming on a dedicated NIC (woken by pfSense)
+    ++ lib.optional (systemSettings.llamaServerEnable or false) ../../system/app/llama-server.nix; # Local LLM inference server (llama.cpp Vulkan, OpenAI-compatible)
 }
 

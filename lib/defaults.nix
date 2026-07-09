@@ -159,6 +159,29 @@
     networkBondingVlans = []; # VLAN overlays on bond: [{ id = 20; name = "storage"; address = "192.168.20.96/24"; }]
     networkBondingRingBufferSize = null; # NIC ring buffer size (e.g., 4096). null = driver default. Max depends on NIC (typically 8192 for Intel 82599).
 
+    # === Wake-on-LAN (magic-packet listener) ===
+    # Persist WoL arming on a dedicated NIC so the host can be woken from S3/S5
+    # by a magic packet (e.g. pfSense as the LAN-side sender). See system/hardware/wol.nix.
+    wolEnable = false;         # Enable WoL persistence for wolInterface
+    wolInterface = "eno1";     # WoL-capable NIC, wired to the LAN
+    wolStaticIp = "";          # "" = IP-less listener; else e.g. "192.168.8.99/24"
+
+    # === Local LLM inference server (llama.cpp / llama-server, Vulkan) ===
+    # OpenAI-compatible endpoint on the local GPU. Bound to host + opened only on
+    # tailscale0. Manual-start by default so it doesn't hold VRAM during gaming.
+    # See system/app/llama-server.nix.
+    llamaServerEnable = false;
+    llamaServerAutoStart = false;                          # false = unit exists, started on demand
+    llamaServerHost = "0.0.0.0";                           # firewall restricts exposure to tailscale0
+    llamaServerPort = 8090;
+    llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF";  # auto-downloaded via -hf on first start
+    llamaServerModelHfFile = "";                           # optional specific GGUF filename ("" = repo default)
+    llamaServerCtxSize = 16384;                            # context window
+    llamaServerGpuLayers = 999;                            # offload all layers to GPU
+    llamaServerApiKey = "";                                # "" = no auth (tailscale-only + firewalled)
+    llamaServerExtraArgs = [ "--jinja" ];                  # --jinja enables the tool-calling chat template
+    llamaServerOpenFirewallTailscale = true;               # open the port only on tailscale0
+
     # Service defaults
     havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant
     fail2banEnable = true; # Can disable for systems behind firewall
