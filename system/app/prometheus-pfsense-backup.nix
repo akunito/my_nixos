@@ -17,7 +17,7 @@
 #
 # Feature flag: prometheusPfsenseBackupEnable
 # Runs as: User = "akunito" (has SSH keys to pfSense and NAS)
-# Timer: daily at 14:00 (NAS awake window 11:00-23:00)
+# Timer: daily at 18:30 (rsyncs to NAS; NAS awake window 16:00-23:00)
 
 { config, pkgs, lib, systemSettings, ... }:
 
@@ -181,13 +181,13 @@ in
       '';
     };
 
-    # Timer: daily at 14:00
+    # Timer: daily at 18:30 (inside NAS awake window 16:00-23:00 for the rsync step)
     systemd.timers.prometheus-pfsense-backup = {
-      description = "pfSense Backup Timer (daily 14:00)";
+      description = "pfSense Backup Timer (daily 18:30)";
       wantedBy = [ "timers.target" ];
 
       timerConfig = {
-        OnCalendar = "*-*-* 14:00:00";
+        OnCalendar = "*-*-* 18:30:00";
         RandomizedDelaySec = "5min";
         Persistent = true;
       };

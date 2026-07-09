@@ -39,7 +39,7 @@ in
     TLP_ENABLE = false;
     powerManagement_ENABLE = false;
     power-profiles-daemon_ENABLE = false;
-    # S3 suspend at 23:00, RTC wake at 11:00 — configured in NAS-specific module
+    # S3 suspend at 23:00, RTC wake at 16:00 — configured in NAS-specific module
     # (see system/app/nas-services.nix suspend/resume services)
     powerKey = "suspend"; # Physical power button triggers S3 sleep (same as TrueNAS did)
 

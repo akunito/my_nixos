@@ -106,14 +106,14 @@ Scraped by VPS Prometheus via Tailscale/WireGuard.
 
 ## Sleep Schedule
 
-- **Awake**: 11:00 - 23:00 (cron ID=8: suspend at 23:00, RTC wake at 11:00)
-- **Suspended**: 23:00 - 11:00 (S3 suspend-to-RAM)
+- **Awake**: 16:00 - 23:00 (cron ID=8: suspend at 23:00, RTC wake at 16:00)
+- **Suspended**: 23:00 - 16:00 (S3 suspend-to-RAM)
 - Pools stay unlocked during S3
 - **Pre-suspend**: systemd service (`docker-pre-suspend.service`) gracefully stops all containers (prevents stale state)
 - **Post-resume**: systemd service (`docker-post-resume.service`) starts all containers in order (10s network settle delay)
 - Script: `/home/akunito/docker-suspend-hook.sh` (deployed by startup script)
 - Log: `/var/log/docker-suspend-hook.log`
-- All backups scheduled within 11:00-23:00 window
+- All backups scheduled within 16:00-23:00 window
 
 ## Management
 

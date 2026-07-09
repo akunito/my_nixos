@@ -22,7 +22,7 @@ related_files: [system/app/nas-services.nix, profiles/NAS_PROD-config.nix, .clau
 - **Motherboard**: Gigabyte B550 AORUS ELITE V2
 - **Network**: 2x 10GbE LACP bond (bond0: enp8s0f0 + enp8s0f1)
 - **Boot Devices**: 2x Samsung 970 EVO Plus 250GB NVMe (mirrored)
-- **Power**: S3 suspend schedule (23:00–11:00), RTC alarm wake
+- **Power**: S3 suspend schedule (23:00–16:00), RTC alarm wake
 
 ### Storage Pools
 
@@ -60,13 +60,13 @@ The NixOS NAS suspends to RAM (S3) nightly to save power (~280W → 0W during sl
 | Event | Time | Method |
 |-------|------|--------|
 | Suspend | 23:00 | `systemctl suspend` via systemd timer |
-| Wake | 11:00 | RTC alarm (`rtcwake -m no`) |
+| Wake | 16:00 | RTC alarm (`rtcwake -m no`) |
 
 - ZFS pools remain unlocked in RAM during S3
 - **Docker lifecycle**: Two NixOS-managed systemd services (`docker-pre-suspend.service`, `docker-post-resume.service`) bound to `sleep.target` handle graceful stop/start of all Docker containers around suspend. Defined declaratively in `system/app/nas-services.nix`.
 - **Pre-suspend**: Stops all compose projects in reverse order (30s timeout per project)
 - **Post-resume**: Waits 10s for networking, then starts projects in order (media force-recreated for fresh mounts)
-- All backup jobs (restic on VPS pulling from NAS) scheduled within 11:00–23:00 window
+- All backup jobs (restic on VPS pulling from NAS) scheduled within 16:00–23:00 window
 - WOL unreliable (r8169 driver limitation) — RTC alarm is the primary wake method
 - Suspend/resume race condition with Docker post-resume tracked in `memory/project_nas_suspend_resume_race.md`
 
@@ -352,7 +352,7 @@ ssh -A akunito@192.168.20.200 'sudo systemctl restart nfs-server.service'
 
 ### Post-suspend Docker race
 
-**Symptoms**: After S3 resume (11:00), some Docker containers don't restart; `sshd` may appear refused briefly.
+**Symptoms**: After S3 resume (16:00), some Docker containers don't restart; `sshd` may appear refused briefly.
 
 **Known issue**: tracked in `memory/project_nas_suspend_resume_race.md`. Workaround: `sudo systemctl restart docker` on the NAS after the resume completes. The `docker-post-resume.service` should handle it, but a kernel/iptables interaction occasionally needs a manual nudge.
 

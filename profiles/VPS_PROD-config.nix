@@ -389,7 +389,7 @@ in
     # RESTIC BACKUP TO TRUENAS (Phase 3f — via Tailscale SFTP)
     # ============================================================================
     # Repos: databases (19:00), services (19:30), nextcloud (Sun 20:00), libraries (Sun 20:30)
-    # Window: 19:00-22:00 (TrueNAS sleeps 23:00-11:00)
+    # Window: 19:00-22:00 (NAS sleeps 23:00-16:00)
     # Target: NAS via Tailscale hostname (nas-aku)
     # databases → ssdpool/vps-backups (critical), services+libraries+nextcloud → extpool/vps-backups
     vpsResticBackupEnable = true;

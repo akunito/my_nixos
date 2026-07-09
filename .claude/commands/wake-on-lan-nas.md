@@ -14,7 +14,7 @@ bash /home/akunito/.dotfiles/scripts/nas-wol.sh
 
 - If the user wants to **wake** NAS (default): no args
 - If the user wants to **check** if NAS is reachable: pass `--check`
-- If the user wants to **suspend** NAS until 11:00 tomorrow: pass `--suspend`
+- If the user wants to **suspend** NAS until 16:00 tomorrow: pass `--suspend`
 - If the user wants to **suspend for N seconds** (testing): pass `--suspend-for <seconds>`
 
 ### How WOL Works
@@ -34,7 +34,7 @@ The driver takes the NIC link down during suspend, preventing magic packet recep
 - **Physical power button** — always works
 - **WOL from S5** (full power-off) — may work, untested
 
-The `--suspend` command uses `rtcwake` for guaranteed wake at 11:00 the next day.
+The `--suspend` command uses `rtcwake` for guaranteed wake at 16:00 the next day.
 WOL is provided as a best-effort on-demand wake mechanism.
 
 ### Network Topology
@@ -56,8 +56,8 @@ WOL is provided as a best-effort on-demand wake mechanism.
 ### NAS Sleep Schedule (Phase 8)
 
 NAS follows a sleep schedule:
-- **Awake**: 11:00 - 23:00 daily
-- **Suspended**: 23:00 - 11:00 (S3 suspend-to-RAM, RTC alarm wake)
+- **Awake**: 16:00 - 23:00 daily
+- **Suspended**: 23:00 - 16:00 (S3 suspend-to-RAM, RTC alarm wake)
 - Pools remain unlocked in RAM during S3 (no re-unlock needed)
 - Docker services resume automatically after wake
 

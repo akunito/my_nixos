@@ -15,7 +15,7 @@ status: published
 | Headscale | VPS (NixOS native) | 100.64.0.6 | Coordination server |
 | Tailscale | VPS | 100.64.0.6 | Client node |
 | Tailscale | pfSense (package) | 100.64.0.7 | Primary subnet router (always on) |
-| Tailscale | TrueNAS (Docker) | 100.64.0.9 | Secondary subnet router (sleeps 23:00-11:00) |
+| Tailscale | TrueNAS (Docker) | 100.64.0.9 | Secondary subnet router (sleeps 23:00-16:00) |
 | Tailscale | DESK, laptops, phones | 100.64.0.x | Client nodes |
 
 ## Headscale
@@ -43,7 +43,7 @@ Headscale pushes DNS settings to all Tailscale clients:
   |                                  192.168.8.0/24
   |                                  192.168.20.0/24
   |
-  ←→ [TrueNAS 100.64.0.9] (secondary subnet router, sleeps 23:00-11:00)
+  ←→ [TrueNAS 100.64.0.9] (secondary subnet router, sleeps 23:00-16:00)
   ←→ [DESK], [laptops], [phones]
 ```
 
@@ -52,7 +52,7 @@ Headscale pushes DNS settings to all Tailscale clients:
 | Router | Advertised Subnets | Status |
 |--------|-------------------|--------|
 | pfSense | 192.168.8.0/24, 192.168.20.0/24 | Primary (always on, 24/7) |
-| TrueNAS | 192.168.8.0/24, 192.168.20.0/24 | Secondary (sleeps 23:00-11:00) |
+| TrueNAS | 192.168.8.0/24, 192.168.20.0/24 | Secondary (sleeps 23:00-16:00) |
 
 pfSense serves as primary subnet router. TrueNAS routes are approved but not serving while pfSense is primary.
 

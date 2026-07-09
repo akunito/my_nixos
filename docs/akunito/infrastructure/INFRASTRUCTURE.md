@@ -26,7 +26,7 @@ INTERNET
               |
               +---> [TrueNAS 192.168.20.200]  (storage + media Docker)
               |       15 containers, 6 compose projects
-              |       Sleep: 23:00-11:00 (S3 suspend, RTC wake)
+              |       Sleep: 23:00-16:00 (S3 suspend, RTC wake)
               |
               +---> [DESK 192.168.8.96]  (workstation)
               +---> [Laptops]  (X13, YOGA, A)
@@ -85,7 +85,7 @@ Rootless Docker (~18 containers, 6 compose projects):
 7. **exporters** (4): exportarr-sonarr/radarr/prowlarr/bazarr
 8. **monitoring** (2): node-exporter, cadvisor
 
-**Sleep schedule**: Awake 11:00-23:00, Suspended 23:00-11:00 (S3 + RTC alarm)
+**Sleep schedule**: Awake 16:00-23:00, Suspended 23:00-16:00 (S3 + RTC alarm)
 
 ### pfSense (192.168.8.1)
 
@@ -183,12 +183,12 @@ graph LR
 | Restic services | Daily 09:00 | VPS Docker volumes | TrueNAS ssdpool |
 | Restic nextcloud | Daily 10:00 | VPS nextcloud data | TrueNAS ssdpool |
 | TrueNAS→VPS config | Daily 18:30 | TrueNAS configs | VPS |
-| TrueNAS suspend | Daily 23:00 | — | RTC wake at 11:00 |
+| TrueNAS suspend | Daily 23:00 | — | RTC wake at 16:00 |
 
 ## Sleep Schedule
 
-- **Awake**: 11:00 - 23:00 daily
-- **Suspended**: 23:00 - 11:00 (S3 suspend-to-RAM, RTC alarm wake)
+- **Awake**: 16:00 - 23:00 daily
+- **Suspended**: 23:00 - 16:00 (S3 suspend-to-RAM, RTC alarm wake)
 - ZFS pools remain unlocked during S3 (data in RAM)
 - Docker services auto-resume after wake
 - WOL from S3 unreliable (r8169 driver limitation)

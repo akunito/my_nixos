@@ -137,13 +137,14 @@ in
       '';
     };
 
-    # Timer: daily at 13:00
+    # Timer: daily at 19:30 (inside NAS awake window 16:00-23:00; runs after the
+    # 17:30/18:00 restic pulls so snapshot-age metrics reflect the fresh backups)
     systemd.timers.prometheus-nas-backup = {
-      description = "NAS Backup Metrics Timer (daily 13:00)";
+      description = "NAS Backup Metrics Timer (daily 19:30)";
       wantedBy = [ "timers.target" ];
 
       timerConfig = {
-        OnCalendar = "*-*-* 13:00:00";
+        OnCalendar = "*-*-* 19:30:00";
         RandomizedDelaySec = "5min";
         Persistent = true;
       };

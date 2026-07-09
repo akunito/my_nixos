@@ -39,10 +39,10 @@ Remote Clients                    VPS (Headscale - NixOS native)      Home Netwo
                                                    | 192.168.8.x  |   | 192.168.8.x  |
                                                    | 192.168.20.x |   | 192.168.20.x |
                                                    +--------------+   +--------------+
-                                                   Offline 23:00-11:00   Always on
+                                                   Offline 23:00-16:00   Always on
 ```
 
-**Failover behavior**: TrueNAS is the primary subnet router but goes offline when TrueNAS sleeps (23:00-11:00). Headscale automatically fails over to the pfSense fallback router, which advertises the same subnets and is always on.
+**Failover behavior**: TrueNAS is the primary subnet router but goes offline when TrueNAS sleeps (23:00-16:00). Headscale automatically fails over to the pfSense fallback router, which advertises the same subnets and is always on.
 
 ---
 
@@ -143,7 +143,7 @@ ssh -A akunito@192.168.20.200 "docker exec tailscale tailscale status"
 
 **Advertised subnets**: 192.168.8.0/24, 192.168.20.0/24
 
-**Availability**: Offline when TrueNAS sleeps (approximately 23:00-11:00). Headscale automatically fails over to pfSense.
+**Availability**: Offline when TrueNAS sleeps (approximately 23:00-16:00). Headscale automatically fails over to pfSense.
 
 ### pfSense (Fallback Subnet Router)
 
@@ -253,7 +253,7 @@ ssh -A -p 56777 akunito@100.64.0.6 "sudo cp /var/lib/headscale/db.sqlite3 /var/l
    ssh -A akunito@192.168.20.200 "docker exec tailscale tailscale status"
    ```
 
-3. If TrueNAS is sleeping (23:00-11:00), verify pfSense fallback is active:
+3. If TrueNAS is sleeping (23:00-16:00), verify pfSense fallback is active:
    - Check pfSense web UI > VPN > Tailscale > Status
    - Routes should show as enabled on the pfSense node in Headscale
 

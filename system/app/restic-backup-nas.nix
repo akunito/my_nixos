@@ -2,8 +2,9 @@
 #
 # Pull model: VPS SSHes into NAS (nas-aku), rsyncs to local staging, runs restic locally.
 # Two independent jobs with separate restic repos and passwords:
-#   - configs: compose files + NAS system config export (daily 15:00)
-#   - data:    container data directories (daily 16:00)
+#   - configs: compose files + NAS system config export (daily 17:30)
+#   - data:    container data directories (daily 18:00)
+# Scheduled inside the NAS awake window (16:00-23:00); NAS can't be WoL-woken from S3.
 #
 # Each job writes Prometheus textfile metrics for alerting.
 #
@@ -175,7 +176,7 @@ METRICS
   configsBackup = mkNasBackup {
     name = "configs";
     passwordFile = "/etc/secrets/restic-truenas-configs";  # path historical, file is on disk
-    schedule = "*-*-* 15:00:00";
+    schedule = "*-*-* 17:30:00";  # NAS awake 16:00-23:00; buffer past wake + post-resume docker race
     description = "Docker compose files (NixOS NAS — no API config export)";
     rsyncScript = ''
       # Rsync compose directory (all docker-compose.yml + env files).
@@ -202,7 +203,7 @@ METRICS
   dataBackup = mkNasBackup {
     name = "data";
     passwordFile = "/etc/secrets/restic-truenas-data";  # path historical, file is on disk
-    schedule = "*-*-* 16:00:00";
+    schedule = "*-*-* 18:00:00";  # NAS awake 16:00-23:00; runs after the configs job
     description = "Docker container data directories";
     rsyncScript = ''
       RSYNC_OPTS="-az --delete --timeout=120"

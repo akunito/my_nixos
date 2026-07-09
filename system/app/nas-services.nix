@@ -452,26 +452,26 @@ HEADER
     };
 
     # ========================================================================
-    # S3 sleep schedule — suspend at 23:00, wake at 11:00 via RTC
+    # S3 sleep schedule — suspend at 23:00, wake at 16:00 via RTC
     # ========================================================================
 
     # Set RTC alarm for next wake (runs before each suspend)
     systemd.services.nas-rtc-wake = {
-      description = "Set RTC alarm to wake NAS at 11:00";
+      description = "Set RTC alarm to wake NAS at 16:00";
       before = [ "sleep.target" ];
       wantedBy = [ "sleep.target" ];
       serviceConfig = {
         Type = "oneshot";
       };
       script = ''
-        # Calculate next 11:00 timestamp
-        TOMORROW_11=$(date -d "tomorrow 11:00" +%s)
-        TODAY_11=$(date -d "today 11:00" +%s)
+        # Calculate next 16:00 timestamp
+        TOMORROW_16=$(date -d "tomorrow 16:00" +%s)
+        TODAY_16=$(date -d "today 16:00" +%s)
         NOW=$(date +%s)
-        if [ "$NOW" -lt "$TODAY_11" ]; then
-          WAKE_TIME=$TODAY_11
+        if [ "$NOW" -lt "$TODAY_16" ]; then
+          WAKE_TIME=$TODAY_16
         else
-          WAKE_TIME=$TOMORROW_11
+          WAKE_TIME=$TOMORROW_16
         fi
         ${pkgs.util-linux}/bin/rtcwake -m no -t "$WAKE_TIME"
         echo "RTC alarm set for $(date -d @$WAKE_TIME)"

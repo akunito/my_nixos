@@ -9,7 +9,7 @@
 #
 # All VPS backups target extpool/vps-backups/ on TrueNAS.
 #
-# Schedule rationale: TrueNAS sleeps 23:00-11:00. Backups run 19:00-22:00 window.
+# Schedule rationale: NAS sleeps 23:00-16:00. Backups run 19:00-22:00 window.
 #
 # Feature flag: vpsResticBackupEnable = true (in profile config)
 #
