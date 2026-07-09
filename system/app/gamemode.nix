@@ -21,6 +21,14 @@
       };
       # CPU optimizations are kept but should be compatible with power-profiles-daemon
       # Process and I/O priority optimizations are enabled by default (safe)
+    }
+    # When the local LLM is enabled, lock it out for the duration of a game so
+    # inference never competes with the game for the GPU (see llama-server.nix).
+    // lib.optionalAttrs (systemSettings.llamaServerEnable or false) {
+      custom = {
+        start = "${pkgs.coreutils}/bin/touch /run/llama-gaming/lock";
+        end = "${pkgs.coreutils}/bin/rm -f /run/llama-gaming/lock";
+      };
     };
   };
 

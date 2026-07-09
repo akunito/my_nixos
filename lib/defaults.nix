@@ -182,6 +182,7 @@
     llamaServerApiKey = "";                                # "" = no auth (tailscale-only + firewalled)
     llamaServerExtraArgs = [ "--jinja" ];                  # --jinja enables the tool-calling chat template
     llamaServerOpenFirewallTailscale = true;               # open the port only on tailscale0
+    llamaServerVramBusyBytes = 5368709120;                 # gaming VRAM guard: refuse to load if GPU already uses > this (5 GiB)
 
     # === Wake-and-wait proxy (runs on an always-on host, e.g. VPS) ===
     # Apps point at this proxy; it wakes DESK via pfSense WoL if asleep, waits,
