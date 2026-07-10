@@ -192,10 +192,10 @@
     llamaWakeProxyListenPort = 8090;
     llamaWakeProxyTargetHost = "100.64.0.5";               # DESK Tailscale IP
     llamaWakeProxyTargetPort = 8090;
-    llamaWakeProxyUser = "akunito";                        # its SSH key must be authorised on pfSense
-    llamaWakeProxyPfsenseSshHost = "admin@100.64.0.7";     # always-on LAN host that sends the magic packet
-    llamaWakeProxyWolBroadcast = "192.168.8.255";
+    llamaWakeProxyPfsenseApiUrl = "https://100.64.0.7";    # pfSense REST API (Tailscale) — sends the magic packet
+    llamaWakeProxyWolInterface = "lan";                    # pfSense interface DESK is connected to
     llamaWakeProxyWolMac = "";                             # DESK eno1 MAC (set in profile)
+    llamaWakeProxyApiKeyFile = "/etc/secrets/pfsense-wol-key"; # out-of-band root-only x-api-key file
     llamaWakeProxyWakeTimeoutSec = 120;                    # max wait for DESK to wake + rejoin tailnet
 
     # Service defaults
