@@ -6,6 +6,7 @@
 #   - services:   Docker configs, Headscale, Vaultwarden, secrets (daily at 19:30, keep 30 days) → extpool
 #   - nextcloud:  Nextcloud data directory (weekly Sunday at 20:00, keep 14 days) → extpool
 #   - libraries:  RomM ROMs + Calibre books ~260GB (weekly Sunday at 20:30, keep 30 days) → extpool
+#   - immich:     Immich photo library ~92GB + DB dump (weekly Sunday at 21:00, keep 30 days) → extpool
 #
 # All VPS backups target extpool/vps-backups/ on TrueNAS.
 #
@@ -15,11 +16,12 @@
 #
 # Prerequisites:
 #   - SSH key at /home/<user>/.ssh/id_ed25519_restic (passwordless, for akunito on NAS)
-#   - Password files at /etc/secrets/restic-{databases,services,nextcloud}
+#   - Password files at /etc/secrets/restic-{databases,services,nextcloud,immich}
 #   - Restic repos initialized on TrueNAS:
 #     - /mnt/extpool/vps-backups/databases.restic
 #     - /mnt/extpool/vps-backups/services.restic
 #     - /mnt/extpool/vps-backups/nextcloud.restic
+#     - /mnt/extpool/vps-backups/immich.restic
 #   - TrueNAS reachable via Tailscale at vpsResticTarget IP
 
 { lib, pkgs, systemSettings, userSettings, ... }:
@@ -237,18 +239,57 @@ let
     description = "Nextcloud user data + config";
   };
 
+  # Immich photo library — full library incl. generated thumbnails + ML data,
+  # plus a logical dump of the containerized VectorChord Postgres. Weekly
+  # Sunday 21:00 (after libraries 20:30, before NAS sleep 23:00). The first
+  # snapshot (~92GB) may exceed the window at the 50 MB/s throttle — seed it
+  # manually once during a long NAS-awake window; incrementals are small.
+  immichBackup = mkResticBackup {
+    name = "immich";
+    passwordFile = "/etc/secrets/restic-immich";
+    repoSuffix = "immich.restic";
+    backupPaths = [
+      "/home/${username}/immich-library"
+      "/home/${username}/.backups/immich"
+    ];
+    excludes = [ "*.tmp" "*.part" ];
+    tags = [ "immich" "photos" ];
+    schedule = "Sun *-*-* 21:00:00";
+    retentionDays = 30;
+    retentionPolicy = "--keep-monthly 3";
+    preScript = ''
+      # Logical dump of the containerized Immich Postgres so the DB is captured
+      # consistently in the same snapshot as the library. Uses the rootless
+      # Docker socket; docker is on the service PATH (/run/current-system/sw/bin).
+      export DOCKER_HOST="unix:///run/user/1000/docker.sock"
+      DUMP_DIR="/home/${username}/.backups/immich"
+      mkdir -p "$DUMP_DIR"
+      if docker ps --format '{{.Names}}' | grep -qx immich_postgres; then
+        log "Dumping Immich Postgres (pg_dumpall)..."
+        docker exec immich_postgres pg_dumpall --username=postgres \
+          > "$DUMP_DIR/immich-dumpall.sql" 2>>"$DUMP_DIR/dump.log" \
+          || log "WARNING: Immich DB dump failed (non-fatal)"
+      else
+        log "WARNING: immich_postgres not running — skipping DB dump"
+      fi
+    '';
+    description = "Immich photo library (~92GB incl. cache) + Postgres dump";
+  };
+
 in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
   # Backup services
   systemd.services.vps-restic-databases = databasesBackup.service;
   systemd.services.vps-restic-services = servicesBackup.service;
   systemd.services.vps-restic-libraries = librariesBackup.service;
   systemd.services.vps-restic-nextcloud = nextcloudBackup.service;
+  systemd.services.vps-restic-immich = immichBackup.service;
 
   # Backup timers
   systemd.timers.vps-restic-databases = databasesBackup.timer;
   systemd.timers.vps-restic-services = servicesBackup.timer;
   systemd.timers.vps-restic-libraries = librariesBackup.timer;
   systemd.timers.vps-restic-nextcloud = nextcloudBackup.timer;
+  systemd.timers.vps-restic-immich = immichBackup.timer;
 
   # Declarative ACL grant on /var/lib/nextcloud-data so the non-root
   # akunito-owned restic backup can read it. Idempotent; runs at boot and

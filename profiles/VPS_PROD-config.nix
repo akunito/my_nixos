@@ -261,6 +261,7 @@ in
       miniflux   = { port = 8084; };
       freshrss   = { port = 8084; };
       nextcloud  = { port = 8089; };
+      pictures   = { port = 2283; maxBodySize = "4G"; };  # Immich (large photo/video uploads)
       syncthing  = { port = 8384; };
       status     = { port = 3009; };
       plane      = { port = 3003; };
@@ -369,6 +370,7 @@ in
       { name = "n8n"; path = "n8n"; }
       { name = "openclaw"; path = "openclaw"; }
       { name = "finance-tagger"; path = "finance-tagger"; }
+      { name = "immich"; path = "immich"; }
     ];
 
     # ============================================================================
