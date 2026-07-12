@@ -359,8 +359,6 @@ in
       { name = "portfolio"; path = "portfolio"; }
       { name = "plane"; path = "plane"; }
       { name = "matrix"; path = "matrix"; }
-      { name = "miniflux"; path = "miniflux"; }
-      { name = "miniflux-ai"; path = "miniflux-ai"; }
       { name = "nextcloud"; path = "nextcloud"; }
       { name = "syncthing"; path = "syncthing"; }
       { name = "uptime-kuma"; path = "uptime-kuma"; }
@@ -368,8 +366,6 @@ in
       { name = "romm"; path = "romm"; }
       { name = "calibre"; path = "calibre"; }
       { name = "n8n"; path = "n8n"; }
-      { name = "openclaw"; path = "openclaw"; }
-      { name = "finance-tagger"; path = "finance-tagger"; }
       { name = "immich"; path = "immich"; }
       { name = "pocket-id"; path = "pocket-id"; }
     ];
