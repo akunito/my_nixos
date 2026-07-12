@@ -31,6 +31,10 @@ let
   telegramChatId = systemSettings.grafanaTelegramChatId or "";
   telegramEnabled = telegramBotToken != "" && telegramChatId != "";
 
+  # Pocket ID OIDC login (auth.akunito.com). Enabled when a client id is provided.
+  oauthClientId = systemSettings.grafanaOauthClientId or "";
+  oauthEnabled = oauthClientId != "";
+
   # Build scrape configs for remote Node Exporters
   remoteNodeScrapeConfigs = map (target: {
     job_name = "${target.name}_node";
@@ -103,6 +107,9 @@ in
         domain = "grafana.${wildcardLocal}";
         # Allow both local and public domains (local via nginx SSL, public via Cloudflare Tunnel)
         enforce_domain = false;
+        # Canonical external URL — needed so the OAuth redirect_uri is correct.
+        # Use the public domain (reachable over Tailscale hairpin + internet).
+        root_url = lib.mkIf oauthEnabled "https://grafana.${publicDomain}";
       };
 
       # SMTP configuration for alerts (uses local postfix relay)
@@ -145,6 +152,27 @@ in
         enabled = true;
         org_name = "Main Org.";
         org_role = "Viewer";  # Read-only access
+      };
+
+      # Pocket ID OIDC login (auth.akunito.com). Built-in admin login stays as fallback.
+      # Client secret read from /etc/secrets at runtime (not baked into grafana.ini).
+      "auth.generic_oauth" = lib.mkIf oauthEnabled {
+        enabled = true;
+        name = "Pocket ID";
+        icon = "signin";
+        client_id = oauthClientId;
+        client_secret = "$__file{/etc/secrets/grafana-oauth-client-secret}";
+        scopes = "openid email profile";
+        auth_url = "https://auth.${publicDomain}/authorize";
+        token_url = "https://auth.${publicDomain}/api/oidc/token";
+        api_url = "https://auth.${publicDomain}/api/oidc/userinfo";
+        use_pkce = true;
+        login_attribute_path = "preferred_username";
+        email_attribute_path = "email";
+        name_attribute_path = "name";
+        allow_sign_up = true;
+        # 2-person trusted setup: OAuth logins get org Admin.
+        role_attribute_path = "'Admin'";
       };
     };
 
@@ -1089,6 +1117,14 @@ in
       mode = "0640";
       user = "root";
       group = config.services.nginx.group;
+    };
+    # Pocket ID OIDC client secret → read by Grafana at runtime via $__file{}
+    # (keeps it out of the grafana.ini store path).
+    "secrets/grafana-oauth-client-secret" = lib.mkIf oauthEnabled {
+      text = systemSettings.grafanaOauthClientSecret or "";
+      mode = "0440";
+      user = "root";
+      group = "grafana";
     };
     # Custom dashboards
     "grafana-dashboards/custom/wireguard.json".source = ./grafana-dashboards/custom/wireguard.json;

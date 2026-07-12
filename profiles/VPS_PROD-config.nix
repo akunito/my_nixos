@@ -279,6 +279,8 @@ in
     # === Monitoring Stack (Phase 2d — ENABLED) ===
     grafanaEnable = true;
     grafanaLocalSslEnable = false; # No /mnt/shared-certs/ on VPS — use Cloudflare Tunnel for HTTPS
+    grafanaOauthClientId = secrets.grafanaOauthClientId;         # Pocket ID OIDC (auth.akunito.com)
+    grafanaOauthClientSecret = secrets.grafanaOauthClientSecret;
     prometheusBasicAuthHtpasswd = secrets.prometheusHtpasswd; # HTTP Basic Auth for prometheus.local.akunito.com
     financeUser = secrets.financeUser; # Flask app auth for finance-tagger
     financePassword = secrets.financePassword; # Flask app auth for finance-tagger
