@@ -371,6 +371,7 @@ in
       { name = "openclaw"; path = "openclaw"; }
       { name = "finance-tagger"; path = "finance-tagger"; }
       { name = "immich"; path = "immich"; }
+      { name = "pocket-id"; path = "pocket-id"; }
     ];
 
     # ============================================================================
