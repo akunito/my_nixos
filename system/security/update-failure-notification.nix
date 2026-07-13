@@ -32,6 +32,35 @@ let
       exit 0
     fi
 
+    # ------------------------------------------------------------------
+    # Per-service notification cooldown (deduplication)
+    # ------------------------------------------------------------------
+    # A failing service can re-enter the failed state many times in a short
+    # window (systemd Restart= storms) or on every scheduled run. Without a
+    # cooldown this floods email + Telegram with duplicates for the SAME
+    # service. We record the last-sent epoch per service and suppress repeats
+    # inside the cooldown window (anchored to the last message actually sent).
+    COOLDOWN_SEC=${toString (systemSettings.notificationCooldownSec or 21600)}
+    STATE_DIR=/var/lib/notify-failure
+    if [ "$COOLDOWN_SEC" -gt 0 ]; then
+      ${pkgs.coreutils}/bin/mkdir -p "$STATE_DIR"
+      # Sanitize service name into a safe filename
+      SAFE_NAME=$(printf '%s' "$SERVICE_NAME" | ${pkgs.gnused}/bin/sed 's#[^A-Za-z0-9._-]#_#g')
+      STATE_FILE="$STATE_DIR/$SAFE_NAME"
+      NOW=$(${pkgs.coreutils}/bin/date +%s)
+      if [ -f "$STATE_FILE" ]; then
+        LAST=$(${pkgs.coreutils}/bin/cat "$STATE_FILE" 2>/dev/null || echo 0)
+        case "$LAST" in (*[!0-9]*|"") LAST=0 ;; esac
+        ELAPSED=$((NOW - LAST))
+        if [ "$ELAPSED" -lt "$COOLDOWN_SEC" ]; then
+          echo "Suppressing duplicate notification for $SERVICE_NAME (last sent ''${ELAPSED}s ago, cooldown ''${COOLDOWN_SEC}s)"
+          exit 0
+        fi
+      fi
+      # Record this send up-front so concurrent/rapid retries are suppressed
+      printf '%s' "$NOW" > "$STATE_FILE"
+    fi
+
     # Get recent logs for the failed service
     LOGS=$(${pkgs.systemd}/bin/journalctl -u "$SERVICE_NAME" -n 50 --no-pager 2>&1 || echo "Could not retrieve logs")
 
@@ -118,6 +147,7 @@ in
         Type = "oneshot";
         ExecStart = "${notificationScript} %i";
         User = "root";
+        StateDirectory = "notify-failure"; # /var/lib/notify-failure — cooldown state
       };
     };
 
@@ -128,6 +158,7 @@ in
         Type = "oneshot";
         ExecStart = "${notificationScript} %i";
         User = "root";
+        StateDirectory = "notify-failure"; # /var/lib/notify-failure — cooldown state
       };
     };
   };
