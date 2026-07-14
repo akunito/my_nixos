@@ -176,6 +176,41 @@ let
     openldap = super.openldap.overrideAttrs (_: { doCheck = false; });
   };
 
+  # Disable python patool's test suite in pkgs-unstable only. patool 4.0.5's
+  # tests assert exact libmagic MIME strings (e.g. expecting application/x-tar
+  # for `t.tar.bz2.foo` but current file/libmagic returns application/x-bzip2)
+  # and require optional archiver program modules absent from the build sandbox
+  # (list_bzip2/list_xz/list_lzma) — environment-sensitive, not a real defect.
+  # patool is a direct dep of bottles-unwrapped (games-heavy.nix), so this
+  # unblocks the Home Manager build. Scoped to pkgs-unstable to preserve stable
+  # cache hits, mirroring noOpenldapTestsOverlay above.
+  noPatoolTestsOverlay = _: super: {
+    python3Packages = super.python3Packages // {
+      patool = super.python3Packages.patool.overridePythonAttrs (_: { doCheck = false; });
+    };
+  };
+
+  # SwayFX 0.5.3 SEGFAULTs the whole compositor in view_autoconfigure when a
+  # client (gamescope running a fullscreen game, e.g. Metro Exodus) commits a
+  # fullscreen-workspace surface before its workspace has an output assigned
+  # (ws->output == NULL). Fixed upstream by PR #478 ("view: check for NULL output
+  # on autoconfigure"), on master but NOT in any tagged release. Applied as an
+  # overlay on swayfx-unwrapped so every `pkgs.swayfx` (system programs.sway AND
+  # Home Manager wayland.windowManager.sway — the latter is what SDDM actually
+  # launches) picks it up. Added to BOTH pkgs-stable and the nixpkgs-patched
+  # branch below, since a profile's `pkgs` is one or the other by systemStable.
+  swayfxNullOutputCrashFixOverlay = _: super: {
+    swayfx-unwrapped = super.swayfx-unwrapped.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [
+        (super.fetchpatch {
+          name = "swayfx-478-null-output-autoconfigure.patch";
+          url = "https://github.com/WillPower3309/swayfx/commit/a6ea43430eac3a104b688906c7f09a80242d4782.patch";
+          hash = "sha256-oxpDQxRIc6QKeTd0fvEoWPbMcklS1bM7EUedB/2e3cc=";
+        })
+      ];
+    });
+  };
+
   # Configure pkgs-stable
   pkgs-stable = import inputs.nixpkgs-stable {
     system = systemSettingsWithFonts.system;
@@ -187,6 +222,10 @@ let
         "olm-3.2.16"
       ];
     };
+    # swayfx #478 crash fix — DESK is systemStable=true, so its `pkgs` (and thus
+    # the Home Manager compositor via homeConfigurations `inherit pkgs`) is
+    # pkgs-stable. The overlay must live here too, not only on the unstable branch.
+    overlays = [ swayfxNullOutputCrashFixOverlay ];
   };
 
   # Configure pkgs-unstable
@@ -211,7 +250,7 @@ let
         "pnpm-10.29.2"
       ];
     };
-    overlays = (lib.optional useRustOverlay rustOverlay) ++ [ noOpenldapTestsOverlay ];
+    overlays = (lib.optional useRustOverlay rustOverlay) ++ [ noOpenldapTestsOverlay noPatoolTestsOverlay ];
   };
 
   # Configure pkgs based on systemStable and profile
@@ -235,7 +274,7 @@ let
                allowUnfree = true;
                allowUnfreePredicate = (_: true);
              };
-             overlays = lib.optional useRustOverlay rustOverlay;
+             overlays = (lib.optional useRustOverlay rustOverlay) ++ [ swayfxNullOutputCrashFixOverlay ];
            });
 
   # Configure home-manager

@@ -158,14 +158,15 @@ in
     # Wake-on-LAN (onboard 2.5GbE eno1 — woken by pfSense magic packet)
     # ========================================================================
     # The 10GbE X520 bond has NO WoL; only the onboard Realtek 2.5GbE (eno1)
-    # supports it. Wired to the LAN switch as an IP-LESS listener: giving it an
-    # IP on the same 192.168.8.0/24 subnet as bond0 caused dual-homing / ARP
-    # flux (switch MAC table flapping -> 30-60s network hangs, 2026-07-10).
-    # WoL needs only link + `wol g`, not an IP; pfSense wakes by MAC and the VPS
-    # proxy reaches DESK over Tailscale. Proven 2026-07-09.
+    # supports it. It MUST keep an IP: with an IP-less (method=disabled) NM
+    # connection the NIC doesn't retain its WoL-armed state through S3, so the
+    # magic packet no longer wakes DESK (WoL proven working WITH .99 on
+    # 2026-07-09, failed IP-less on 2026-07-10). The dual-homing ARP flux that
+    # an IP on bond0's subnet caused is fixed instead by arp_ignore/arp_announce
+    # sysctls in system/hardware/wol.nix — so we keep .99 and avoid the flux.
     wolEnable = true;
     wolInterface = "eno1";
-    wolStaticIp = ""; # IP-less listener — do NOT put an IP on bond0's subnet
+    wolStaticIp = "192.168.8.99/24"; # needed for WoL to survive suspend; flux handled by arp sysctls
 
     # ========================================================================
     # Local LLM inference server (llama.cpp Vulkan on RX 9070 XT, 16GB)

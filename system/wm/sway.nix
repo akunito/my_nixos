@@ -25,7 +25,11 @@ in
   # CRITICAL: Use swayfx instead of standard sway
   programs.sway = lib.mkIf swayEnabled {
     enable = true;
-    package = pkgs.swayfx; # Use SwayFX for blur, shadows, rounded corners
+    # SwayFX #478 NULL-output crash fix is applied globally via
+    # swayfxNullOutputCrashFixOverlay in lib/flake-base.nix (patches
+    # swayfx-unwrapped for BOTH this and Home Manager's wayland.windowManager.sway,
+    # which is the one SDDM actually launches). So plain pkgs.swayfx is patched.
+    package = pkgs.swayfx; # SwayFX for blur, shadows, rounded corners
     extraPackages = with pkgs; [
       swaylock-effects # Elegant lock screen with blurred screenshot
       swayidle # Idle daemon for screen locking

@@ -83,5 +83,17 @@ in
     powerManagement.resumeCommands = ''
       ${pkgs.ethtool}/bin/ethtool -s ${iface} wol g || true
     '';
+
+    # (d) When the WoL NIC has an IP on the same subnet as another interface
+    #     (e.g. bond0), prevent ARP flux (switch MAC-table flapping -> network
+    #     hangs): each interface answers ARP only for its own IPs, using its own
+    #     source address. This lets eno1 keep an IP (needed for WoL to survive
+    #     S3 — method=disabled drops the NIC's WoL-armed state) without flux.
+    boot.kernel.sysctl = lib.mkIf (staticIp != "") {
+      "net.ipv4.conf.all.arp_ignore" = lib.mkDefault 1;
+      "net.ipv4.conf.all.arp_announce" = lib.mkDefault 2;
+      "net.ipv4.conf.${iface}.arp_ignore" = 1;
+      "net.ipv4.conf.${iface}.arp_announce" = 2;
+    };
   };
 }
