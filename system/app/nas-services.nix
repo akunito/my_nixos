@@ -28,6 +28,9 @@ let
     XDG_RUNTIME_DIR = "/run/user/1000";
     DOCKER_HOST = "unix:///run/user/1000/docker.sock";
   };
+  # Minimum time after a resume before a suspend may be honoured. The post-resume
+  # Docker units alone take ~15s+, and the HBAs/NICs need longer than that.
+  settleSeconds = 600;
 in
 {
   config = lib.mkIf nasEnabled {
@@ -478,19 +481,55 @@ HEADER
       '';
     };
 
-    # Nightly suspend timer
+    # Record when the machine last came back from S3, so nas-suspend can refuse
+    # to re-suspend a machine whose devices (mpt3sas HBAs, ixgbe, ZFS) are still
+    # re-initializing — doing so wedges the box on the following resume.
+    systemd.services.nas-resume-marker = {
+      description = "Record last resume timestamp";
+      after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+      wantedBy = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+      serviceConfig.Type = "oneshot";
+      script = ''
+        ${pkgs.coreutils}/bin/date +%s > /run/nas-last-resume
+      '';
+    };
+
+    # Nightly suspend timer.
+    # Persistent = false is deliberate: with Persistent = true, a manual suspend
+    # before 23:00 means the 23:00 trigger is missed while asleep and systemd
+    # replays it the instant the RTC wake fires — suspending <1s after resume and
+    # corrupting device state (2026-07-14 hang). A missed nightly suspend is
+    # harmless; the NAS simply stays awake until the next 23:00.
     systemd.timers.nas-suspend = {
       description = "Suspend NAS at 23:00";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnCalendar = "*-*-* 23:00:00";
-        Persistent = true;
+        Persistent = false;
       };
     };
     systemd.services.nas-suspend = {
       description = "Suspend NAS to RAM";
       serviceConfig.Type = "oneshot";
       script = ''
+        # Guard 1: never suspend while the machine is still settling after a
+        # resume — that is what wedged the box on 2026-07-14.
+        if [ -r /run/nas-last-resume ]; then
+          RESUMED_AGO=$(( $(${pkgs.coreutils}/bin/date +%s) - $(${pkgs.coreutils}/bin/cat /run/nas-last-resume) ))
+          if [ "$RESUMED_AGO" -lt ${toString settleSeconds} ]; then
+            echo "Resumed ''${RESUMED_AGO}s ago (< ${toString settleSeconds}s) — refusing to suspend."
+            exit 0
+          fi
+        fi
+
+        # Guard 2: only suspend inside the sleep window (23:00–16:00). Any stray
+        # trigger outside it is a bug, not an intent to sleep.
+        HOUR=$(${pkgs.coreutils}/bin/date +%H)
+        if [ "$HOUR" -lt 23 ] && [ "$HOUR" -ge 16 ]; then
+          echo "Outside the 23:00–16:00 sleep window (hour=$HOUR) — refusing to suspend."
+          exit 0
+        fi
+
         echo "NAS suspending at $(date)"
         ${pkgs.systemd}/bin/systemctl suspend
       '';
