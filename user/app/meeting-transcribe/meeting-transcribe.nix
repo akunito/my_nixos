@@ -219,6 +219,22 @@ let
       PROMPT="$MEETING_PROMPT"
     fi
 
+    # Language selection. Priority: $DIR/lang.txt > $MEETING_LANG > "auto".
+    # "auto" does NOT hand the raw WAV to whisper's -l auto: whisper detects the
+    # language from ONLY the first 30 s and then locks it for the whole file. On a
+    # sparse channel where you are silent at the start, that 30 s is dead air over
+    # which whisper hallucinates a caption-ghost in a random language (a real case:
+    # a Russian "Субтитры создавал…" ghost detected ru p=0.48 and force-decoded two
+    # hours of Spanish into Cyrillic). Instead, per channel below we detect on a
+    # DE-SILENCED speech-only sample (es p=0.97 on the same audio). A fixed override
+    # skips detection entirely.
+    LANG_OPT="auto"
+    if [ -f "$DIR/lang.txt" ]; then
+      LANG_OPT="$(cat "$DIR/lang.txt")"
+    elif [ -n "''${MEETING_LANG:-}" ]; then
+      LANG_OPT="$MEETING_LANG"
+    fi
+
     transcribe_one() {
       WAV="$1"; BASE="$2"
       [ -f "$WAV" ] || { echo "meeting-transcribe: missing $WAV" >&2; return 0; }
@@ -234,15 +250,37 @@ let
         return 0
       fi
 
+      # Resolve this channel's language. A fixed override applies as-is; "auto"
+      # detects on a de-silenced sample so leading/inter-word dead air can't force
+      # the wrong language for the whole file (see LANG_OPT note above). Detection
+      # is a cheap ~30 s pass; if it yields nothing we fall back to whisper's own
+      # -l auto (raw) rather than guessing.
+      LANG="$LANG_OPT"
+      if [ "$LANG" = "auto" ]; then
+        SAMPLE="$BASE.langprobe.wav"
+        # start_periods=1 strips leading silence; stop_periods=-1 removes every
+        # silent gap > stop_duration too, packing ~40 s of pure speech to detect on.
+        "$FFMPEG" -hide_banner -loglevel error -i "$WAV" \
+          -af "silenceremove=start_periods=1:stop_periods=-1:stop_threshold=-40dB:stop_duration=1:start_threshold=-40dB" \
+          -t 40 "$SAMPLE" 2>/dev/null || true
+        if [ -s "$SAMPLE" ]; then
+          DET="$("$WHISPER" -m "$MODEL" -f "$SAMPLE" -l auto -dl 2>&1 \
+            | sed -n 's/.*auto-detected language: \([a-z][a-z]\).*/\1/p' | head -n1)"
+          [ -n "$DET" ] && LANG="$DET"
+        fi
+        rm -f "$SAMPLE"
+        echo "meeting-transcribe: $WAV language = $LANG (de-silenced auto-detect)" >&2
+      fi
+
       echo "meeting-transcribe: $WAV (Vulkan GPU)..." >&2
-      # -l auto : multilingual detection (default would be 'en')
+      # -l LANG : detected/overridden language (never raw -l auto; see above)
       # -sns    : suppress non-speech tokens
       # -bs/-bo : beam search (already the build default; explicit for clarity)
       # -mc 0   : do NOT carry previous-text context. Critical: without this, large-v3
       #           can spiral into repetition loops (a whole tail of duplicated lines),
       #           especially once an initial prompt is in play. Costs a little prompt
       #           potency but removes the catastrophic failure mode.
-      set -- -m "$MODEL" -f "$WAV" -l auto -sns -bs 5 -bo 5 -mc 0 -oj -osrt -of "$BASE"
+      set -- -m "$MODEL" -f "$WAV" -l "$LANG" -sns -bs 5 -bo 5 -mc 0 -oj -osrt -of "$BASE"
       # Optional vocabulary priming. --carry-initial-prompt re-applies it to every window
       # (since -mc 0 otherwise drops it after the first). Separate args so multi-word
       # prompts don't word-split.
