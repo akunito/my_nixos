@@ -330,7 +330,7 @@ in
     ];
 
     # === Gaming ===
-    minecraftClientEnable = true; # Minecraft client (connect to offline-mode AkuCraft server over Tailscale)
+    freesmLauncherEnable = true; # FreeSM Launcher (Prism fork, offline accounts) — connect to AkuCraft over Tailscale
 
     # === Webcam controls (Logitech C920) — persist across reboot/hotplug/resume ===
     webcamControlsEnable = true;

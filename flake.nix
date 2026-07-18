@@ -84,5 +84,12 @@
       url = "github:peteonrails/voxtype/adf0ea62c2310b90c55febdc6515cca9f264e25a";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # FreeSM Launcher (Freesm Launcher) — Prism Launcher fork with offline accounts.
+    # Consumed as packages.<system>.default in system/app/freesm-launcher.nix.
+    # NOTE: nixpkgs deliberately NOT following ours — keeping upstream's locked
+    # nixpkgs lets us pull prebuilt binaries from their Cachix (see nix.settings
+    # in the module) instead of a heavy local Qt source build.
+    freesm-launcher.url = "github:FreesmTeam/FreesmLauncher/develop";
   };
 }

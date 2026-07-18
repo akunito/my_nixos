@@ -140,8 +140,9 @@
     vpsSubnetMask = "";
     vpsInterface = "ens3";
 
-    # Minecraft client (PrismLauncher + JDK, FOSS) — for connecting to the offline-mode AkuCraft server
-    minecraftClientEnable = false; # Install Minecraft client stack (per-profile; DESK + LAPTOP_X13 only)
+    # FreeSM Launcher (Freesm Launcher, Prism Launcher fork; official flake) — offline-account Minecraft launcher
+    # for connecting to the self-hosted offline-mode AkuCraft server. Replaces the old PrismLauncher module.
+    freesmLauncherEnable = false; # Install FreeSM Launcher (per-profile; DESK + LAPTOP_X13 only)
 
     # Webcam controls persistence (v4l2 brightness/contrast/etc. across reboot + hotplug)
     webcamControlsEnable = false; # Enable udev+systemd reapply of v4l2 controls
