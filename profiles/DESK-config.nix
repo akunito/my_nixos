@@ -329,6 +329,9 @@ in
       # SDDM wallpaper override is automatically added in flake-base.nix for plasma6
     ];
 
+    # === Gaming ===
+    minecraftClientEnable = true; # Minecraft client (connect to offline-mode AkuCraft server over Tailscale)
+
     # === Webcam controls (Logitech C920) — persist across reboot/hotplug/resume ===
     webcamControlsEnable = true;
     webcamControlsIdVendor = "046d";

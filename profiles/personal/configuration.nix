@@ -17,7 +17,6 @@
       ../../system/app/steam.nix
       ../../system/app/proton.nix
       ../../system/app/starcitizen.nix # Kernel tweaks only (packages in games.nix)
-      # ../../system/app/prismlauncher.nix # Minecraft Launcher
       ../../system/hardware/nfs_client.nix # NFS share directories over network
       ../../system/hardware/keychron.nix # Keychron keyboard udev rules for WebHID access
       ../../system/security/sudo.nix
@@ -32,6 +31,7 @@
     ++ lib.optional (systemSettings.prometheusWorkstationExporterEnable or false) ../../system/app/prometheus-workstation-exporter.nix # Lightweight metrics exporter for workstations
     ++ lib.optional (systemSettings.wifiAuditEnable or false) ../../system/security/wifi-audit.nix # WiFi security audit toolkit (aircrack-ng + hashcat + wireshark)
     ++ lib.optional (systemSettings.wolEnable or false) ../../system/hardware/wol.nix # Persist Wake-on-LAN arming on a dedicated NIC (woken by pfSense)
-    ++ lib.optional (systemSettings.llamaServerEnable or false) ../../system/app/llama-server.nix; # Local LLM inference server (llama.cpp Vulkan, OpenAI-compatible)
+    ++ lib.optional (systemSettings.llamaServerEnable or false) ../../system/app/llama-server.nix # Local LLM inference server (llama.cpp Vulkan, OpenAI-compatible)
+    ++ lib.optional (systemSettings.minecraftClientEnable or false) ../../system/app/minecraft-client.nix; # Minecraft client (PrismLauncher + JDK, FOSS)
 }
 

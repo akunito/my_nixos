@@ -195,6 +195,7 @@ in
     # === System Services & Features ===
     sunshineEnable = true; # Enable Sunshine game streaming
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
+    minecraftClientEnable = true; # Minecraft client (connect to offline-mode AkuCraft server over Tailscale)
 
     # === Security Audit Tools ===
     wifiAuditEnable = true; # WiFi security audit toolkit (authorized testing on Actina)

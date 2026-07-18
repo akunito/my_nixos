@@ -140,6 +140,9 @@
     vpsSubnetMask = "";
     vpsInterface = "ens3";
 
+    # Minecraft client (PrismLauncher + JDK, FOSS) — for connecting to the offline-mode AkuCraft server
+    minecraftClientEnable = false; # Install Minecraft client stack (per-profile; DESK + LAPTOP_X13 only)
+
     # Webcam controls persistence (v4l2 brightness/contrast/etc. across reboot + hotplug)
     webcamControlsEnable = false; # Enable udev+systemd reapply of v4l2 controls
     webcamControlsDevice = ""; # Stable node, e.g. "/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_...-video-index0"
