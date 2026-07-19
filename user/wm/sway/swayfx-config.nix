@@ -1203,10 +1203,13 @@ in
       include ~/.config/sway/outputs
       include ~/.config/sway/workspaces
 
-      # Force 10-bit rendering on the Samsung Odyssey G70NC (panel is 10-bit; default is 8-bit).
-      # Targeted by EDID make/model/serial, so this directive is inert on hosts where
-      # this exact monitor isn't connected (laptops, other profiles, replacement units).
-      output "${mainMon}" render_bit_depth 10
+      # NOTE: Do NOT force `render_bit_depth 10` on the main monitor.
+      # A 10-bit output framebuffer makes the wlr screencast portal offer only
+      # 10-bit DMA-BUF formats (abgr2101010), which Electron/Chromium (Vesktop,
+      # Discord) cannot negotiate — screen sharing then fails with pipewire
+      # "no more input formats" and xdg-desktop-portal-wlr crashes. Sway captures
+      # the output framebuffer as-is with no per-app override, so 8-bit is required
+      # for Electron screenshare to work. (Was added in 8cf134f, reverted here.)
 
       # Output layout is managed dynamically by kanshi (official wlroots/Sway output profile manager).
       # This avoids phantom pointer/workspace regions on monitors that are usually OFF.
