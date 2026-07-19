@@ -51,18 +51,18 @@
     # GTK apps will still use the portal for file chooser dialogs, but xdg-open will work directly
     xdgOpenUsePortal = false;
 
-    # xdg-desktop-portal-wlr ScreenCast output chooser (Sway screen sharing).
-    # The portal's built-in chooser shells out to a bare `slurp`, but the
-    # systemd user service runs with a restricted PATH that does NOT include
-    # slurp — so under systemd the picker silently fails: no output is ever
-    # selected and screen sharing (Vesktop/Discord/OBS) appears to do nothing
-    # when you click. Pin slurp by absolute path so it works regardless of PATH.
-    # `-o -r` = pick a whole output with a single click; `%o` prints its name.
-    wlr.settings.screencast = {
-      chooser_type = "simple";
-      chooser_cmd = "${pkgs.slurp}/bin/slurp -f %o -or";
-    };
   };
+
+  # xdg-desktop-portal-wlr ScreenCast output picker (Sway screen sharing).
+  # Its built-in "default" chooser shells out to `slurp` (found on PATH) to let
+  # you click which monitor to share. But the systemd user service runs with a
+  # restricted PATH that omits slurp, so the picker silently fails: selecting a
+  # monitor does nothing and Vesktop/Discord/OBS never start sharing. Put slurp
+  # on the service PATH so the default chooser works.
+  # NOTE: we deliberately do NOT set chooser_cmd + chooser_type=simple — xdph
+  # 0.8.0's generic "simple" parser fails to match a bare output name ("selected
+  # unknown target: DP-1"); the hardcoded default chooser parses correctly.
+  systemd.user.services.xdg-desktop-portal-wlr.path = [ pkgs.slurp ];
 
   # Ensure KDE frameworks are available for the portal
   environment.systemPackages = with pkgs; [
