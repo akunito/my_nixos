@@ -23,7 +23,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="${SCRIPT_DIR}/deploy-servers.conf"
 CONFIG_PRIVATE="${SCRIPT_DIR}/deploy-servers-private.conf"
-DOTFILES_DIR="/home/akunito/.dotfiles"
+# Remote dotfiles dir is derived per-server from the deploying user
+# (/home/<user>/.dotfiles) inside deploy_to_server, not fixed here.
 
 # === Nerd Font Icons (UTF-8 glyphs, JetBrainsMono Nerd Font) ===
 ICON_CHECK="󰄬"
@@ -698,6 +699,13 @@ deploy_server() {
   local cmd_template="${SRV_CMD[$si]}"
   local timeout="${SRV_TIMEOUT[$si]}"
 
+  # Remote repo lives under the deploying user's home, not a fixed path.
+  # e.g. aga laptops (LAPTOP_A/LAPTOP_YOGA) use /home/aga/.dotfiles, akunito
+  # hosts use /home/akunito/.dotfiles. Deriving from the user avoids the
+  # "dubious ownership" failure when the hardcoded /home/akunito/.dotfiles
+  # is a foreign-owned, unreadable directory on aga's machines.
+  local dotfiles_dir="/home/${user}/.dotfiles"
+
   local -a ssh_opts=(-A -o "ConnectTimeout=${timeout}" -o BatchMode=yes)
 
   echo ""
@@ -721,7 +729,7 @@ deploy_server() {
 
   # Git fetch
   echo "   ${ICON_GIT} Fetching latest changes..."
-  if ! ssh "${ssh_opts[@]}" "${user}@${ip}" "cd ${DOTFILES_DIR} && git fetch origin" 2>&1; then
+  if ! ssh "${ssh_opts[@]}" "${user}@${ip}" "cd ${dotfiles_dir} && git fetch origin" 2>&1; then
     echo "   ${RED}${ICON_FAIL} Git fetch failed${NC}"
     return 1
   fi
@@ -729,23 +737,23 @@ deploy_server() {
 
   # Soften files before git reset (hardened files are owned by root, git can't overwrite them)
   echo "   ${ICON_GIT} Softening files for git..."
-  ssh "${ssh_opts[@]}" "${user}@${ip}" "cd ${DOTFILES_DIR} && sudo ./soften.sh ${DOTFILES_DIR}" 2>&1 || true
+  ssh "${ssh_opts[@]}" "${user}@${ip}" "cd ${dotfiles_dir} && sudo ./soften.sh ${dotfiles_dir}" 2>&1 || true
 
   # Git reset
   echo "   ${ICON_GIT} Resetting to origin/main..."
-  if ! ssh "${ssh_opts[@]}" "${user}@${ip}" "cd ${DOTFILES_DIR} && git reset --hard origin/main" 2>&1; then
+  if ! ssh "${ssh_opts[@]}" "${user}@${ip}" "cd ${dotfiles_dir} && git reset --hard origin/main" 2>&1; then
     echo "   ${RED}${ICON_FAIL} Git reset failed${NC}"
     return 1
   fi
   echo "   ${GREEN}${ICON_SUCCESS} Git reset complete${NC}"
 
   # Build deploy command from template
-  local deploy_cmd="${cmd_template//\{DIR\}/${DOTFILES_DIR}}"
+  local deploy_cmd="${cmd_template//\{DIR\}/${dotfiles_dir}}"
   deploy_cmd="${deploy_cmd//\{PROFILE\}/${profile}}"
 
   echo "   ${ICON_SYNC} Running: ${DIM}${deploy_cmd}${NC}"
   echo "   ${DIM}(This may take a while...)${NC}"
-  if ! ssh "${ssh_opts[@]}" -t "${user}@${ip}" "cd ${DOTFILES_DIR} && ${deploy_cmd}" 2>&1; then
+  if ! ssh "${ssh_opts[@]}" -t "${user}@${ip}" "cd ${dotfiles_dir} && ${deploy_cmd}" 2>&1; then
     echo "   ${RED}${ICON_FAIL} Deploy command failed${NC}"
     return 1
   fi
