@@ -13,13 +13,13 @@ in
     # ============================================================================
     # MACHINE IDENTITY - Override Required
     # ============================================================================
-    hostname = "nixosaga";
+    hostname = "nixosagadesk"; # renamed from "nixosaga" to avoid clash with LAPTOP_A (also nixosaga)
     envProfile = "DESK_A"; # Environment profile for Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK_A -s -u";
 
-    # Network - keep placeholders until actual IPs provided
-    ipAddress = "192.168.8.xxx"; # ip to be reserved on router by mac (manually)
-    wifiIpAddress = "192.168.8.xxx"; # ip to be reserved on router by mac (manually)
+    # Network (informational — no module consumes these; wired LAN, reserved by MAC on pfSense)
+    ipAddress = "192.168.8.79";
+    wifiIpAddress = "192.168.8.79";
     wifiPowerSave = true; # Override - DESK_AGA needs wifi power save
 
     # ============================================================================
@@ -27,6 +27,42 @@ in
     # ============================================================================
     fuseAllowOther = false; # Override - DESK_AGA is more restrictive
     pkiCertificates = [ ]; # Override - No certificates needed
+
+    # ============================================================================
+    # SECRETS-FREE — git-crypt stays LOCKED on Aga's machines (like LAPTOP_A)
+    # ============================================================================
+    # DESK_A inherits DESK-config.nix, which imports secrets/domains.nix and wires
+    # many secrets.* values (MCP tokens, DB passwords, headscale domain). Aga never
+    # unlocks git-crypt, so NONE of those values may reach the built config — else
+    # Nix tries to parse the still-encrypted file and evaluation fails. Overriding
+    # every secret-derived key here means the `secrets` import is never forced.
+    # KEEP IN SYNC: if DESK-config.nix adds a new secrets.* key, override it here.
+    tailscaleLoginServer = "https://headscale.akunito.com"; # literal (was secrets.headscaleDomain)
+    tailscaleGuiAutostart = true;  # autostart Trayscale in Plasma 6 (like LAPTOP_A)
+    githubAccessToken = "";        # was secrets.githubAccessToken (anon flake fetches are fine here)
+    perplexityApiKey = "";         # Claude Code MCP — not used on Aga's machine
+    jellyseerrApiKey = "";
+    planeApiToken = "";
+    planeApiUrl = "";
+    grafanaMcpToken = "";
+    grafanaMcpUrl = "";
+    dbClaudeReadonlyConnStr = "";
+    n8nMcpApiKey = "";
+    n8nMcpUrl = "";
+    jlOnboardAccessToken = "";
+    # Database client credentials (~/.pgpass etc.) — akunito-only; disable + empty
+    dbCredentialsEnable = false;
+    dbCredentialsPostgres = [ ];
+    dbCredentialsMariadb = [ ];
+    dbCredentialsRedisPassword = "";
+
+    # ============================================================================
+    # SUDO — passwordless sudo over SSH with agent forwarding (remote management)
+    # ============================================================================
+    # Lets akunito `ssh -A aga@<ip> sudo ...` without a password (authorized key
+    # required — see authorizedKeys below). Local sessions still require password.
+    # sudoAskpassEnable + sudoTimestampTimeoutMinutes=180 are inherited from DESK.
+    sshAgentSudoEnable = true;
 
     # ============================================================================
     # SHELL & BACKUP - Override from DESK
@@ -76,7 +112,23 @@ in
     # OTHER FEATURES - Override
     # ============================================================================
     starCitizenModules = false; # Override - No Star Citizen optimizations
-    vivaldiPatch = false; # Override - No Vivaldi patches
+    vivaldiPatch = false; # Override - not needed (DESK doesn't use it either; LAPTOP_A cleanup is separate)
+
+    # ============================================================================
+    # AUTO-UPDATE — weekly stable updates (mirrors LAPTOP_A / VPS / NAS)
+    # ============================================================================
+    # autoSystemUpdate.sh runs as root against .active-profile=DESK_A: bumps
+    # flake.lock, regenerates + validates hardware-config, then nixos-rebuild
+    # switch. Needs no secrets, so git-crypt stays locked. autoUserUpdate runs HM
+    # as aga on the release-25.11 channel (matches systemStable=true from DESK).
+    # Weekly OnCalendar (Sat 07:00) + Persistent=true catches up missed runs —
+    # robust for a desktop that may be off.
+    autoSystemUpdateEnable = true;
+    autoUserUpdateEnable = true;
+    autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoSystemUpdate.sh";
+    autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoUserUpdate.sh";
+    autoUserUpdateUser = "aga";
+    autoUserUpdateBranch = "release-25.11"; # HM channel matching stable system (systemStable=true inherited)
 
     # System packages - inherit empty list from DESK (no python313Full needed)
   };
