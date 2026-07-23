@@ -55,6 +55,9 @@ in
     dbCredentialsPostgres = [ ];
     dbCredentialsMariadb = [ ];
     dbCredentialsRedisPassword = "";
+    # Native control panel imports secrets/control-panel.nix (also git-crypt encrypted)
+    # and is akunito infra-only — disable so that second encrypted file is never forced.
+    controlPanelNativeEnable = false; # override DESK (was true)
 
     # ============================================================================
     # SUDO — passwordless sudo over SSH with agent forwarding (remote management)
