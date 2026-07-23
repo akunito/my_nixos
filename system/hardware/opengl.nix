@@ -28,8 +28,13 @@
     with pkgs;
     lib.mkIf (systemSettings.amdLACTdriverEnable == true) [ lact ];
   systemd.packages = with pkgs; lib.mkIf (systemSettings.amdLACTdriverEnable == true) [ lact ];
-  systemd.services.lactd.wantedBy = lib.mkIf (systemSettings.amdLACTdriverEnable == true) [
-    "multi-user.target"
-  ];
+  # Guard the WHOLE lactd service under the flag. Setting only `.wantedBy` via
+  # mkIf still instantiates `systemd.services.lactd`, which — when the flag is
+  # false (no `lact` in systemd.packages to supply [Service]/ExecStart) — emits
+  # an empty, invalid unit ("bad unit file setting", degraded systemd). Guarding
+  # the service itself means it simply doesn't exist when LACT is disabled.
+  systemd.services.lactd = lib.mkIf (systemSettings.amdLACTdriverEnable == true) {
+    wantedBy = [ "multi-user.target" ];
+  };
 
 }
