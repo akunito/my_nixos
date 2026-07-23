@@ -1,198 +1,208 @@
-# DESK_AGA Profile Configuration (nixosaga)
-# Inherits from DESK-config.nix with machine-specific overrides
-# AGADESK is essentially a simplified DESK without multi-monitor, development tools, and advanced gaming
+# DESK_A Profile Configuration — Aga's desktop (hostname: nixosagadesk)
+#
+# Re-parented 2026-07-23: inherits LAPTOP-base.nix (NOT DESK-config.nix).
+#   Why: DESK-config is akunito's Sway + homelab/dev rig and imports git-crypt
+#   secrets (domains.nix + control-panel.nix). Aga's machines keep git-crypt
+#   LOCKED, and DESK_A diverges from DESK on every major axis (Plasma6 vs Sway,
+#   no dev/infra, different AMD hardware). Inheriting LAPTOP-base gives us the
+#   shared "personal Plasma6 desktop software" baseline with NO secrets wired in
+#   (secrets-free by construction, exactly like LAPTOP_A), then we swap the
+#   laptop hardware/power flags for an AMD desktop and add DESK's full gaming
+#   stack + a Brother printer.
+#
+# Hardware: AMD Ryzen 7 7800X3D + Radeon RX 9060 XT (Navi 44, RDNA4), amdgpu.
 
 let
-  base = import ./DESK-config.nix;
+  base = import ./LAPTOP-base.nix;
+  # Headscale domain is public — no git-crypt needed on this machine
+  headscaleDomain = "headscale.akunito.com";
 in
 {
-  # Flag to use rust-overlay - adopt DESK's false
   useRustOverlay = false;
 
   systemSettings = base.systemSettings // {
     # ============================================================================
-    # MACHINE IDENTITY - Override Required
+    # MACHINE IDENTITY
     # ============================================================================
-    hostname = "nixosagadesk"; # renamed from "nixosaga" to avoid clash with LAPTOP_A (also nixosaga)
-    envProfile = "DESK_A"; # Environment profile for Claude Code context awareness
+    hostname = "nixosagadesk"; # renamed from "nixosaga" (LAPTOP_A is also nixosaga)
+    profile = "personal"; # selects profiles/personal/configuration.nix (LAPTOP-base omits this)
+    envProfile = "DESK_A"; # Claude Code context awareness
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK_A -s -u";
 
-    # Network (informational — no module consumes these; wired LAN, reserved by MAC on pfSense)
+    # ============================================================================
+    # HARDWARE — AMD CPU + GPU desktop (override LAPTOP-base laptop hardware)
+    # ============================================================================
+    gpuType = "amd"; # RX 9060 XT — drives amdgpu/ROCm + gaming AMD wrappers (radv)
+    amdgpuSuspendWorkaround = true; # RDNA4 SMU suspend regression (as on DESK's RX 9070 XT)
+    kernelModules = [
+      "xpadneo"      # Xbox controller
+      "hid_nintendo" # Joy-Con controller
+    ];
+
+    # Network (informational fields; wired LAN, reserved by MAC on pfSense)
     ipAddress = "192.168.8.79";
     wifiIpAddress = "192.168.8.79";
-    wifiPowerSave = true; # Override - DESK_AGA needs wifi power save
+    wifiPowerSave = false;   # desktop — override LAPTOP-base (true)
+    nameServers = [ "192.168.8.1" "192.168.8.1" ];
+    resolvedEnable = false;
 
     # ============================================================================
-    # SECURITY & CERTIFICATES - Override from DESK
+    # POWER — desktop, handed to Plasma 6 / PowerDevil (mirror LAPTOP_A)
     # ============================================================================
-    fuseAllowOther = false; # Override - DESK_AGA is more restrictive
-    pkiCertificates = [ ]; # Override - No certificates needed
+    # Override every laptop power/battery flag from LAPTOP-base. No TLP, no
+    # battery thresholds, no lid/idle-on-battery logic — Plasma PowerDevil owns
+    # energy management (Settings → Power Management).
+    enableLaptopPerformance = false;   # override LAPTOP-base (true)
+    TLP_ENABLE = false;                # override LAPTOP-base (true) — laptop-only
+    power-profiles-daemon_ENABLE = true;  # drives Plasma power profiles
+    powerManagement_ENABLE = true;     # REQUIRED for PowerDevil/upower Energy page
+    powerKey = "ignore";               # override LAPTOP-base "suspend" (desktop)
+    swaySmartLidEnable = false;         # no lid
+    swayIdlePowerAwareEnable = false;   # Sway/laptop only
+    swayBatteryReduceEffects = false;   # no battery
+    hibernateEnable = false;            # no hibernate on this desktop
+    laptopPowerTuningEnable = false;    # laptop idle power tuning
+    bluetoothPowerOnBoot = true;        # desktop — radio on at boot (override LAPTOP-base false)
 
     # ============================================================================
-    # SECRETS-FREE — git-crypt stays LOCKED on Aga's machines (like LAPTOP_A)
+    # DESKTOP ENVIRONMENT — Plasma 6 ONLY, no Sway/wlroots tooling
     # ============================================================================
-    # DESK_A inherits DESK-config.nix, which imports secrets/domains.nix and wires
-    # many secrets.* values (MCP tokens, DB passwords, headscale domain). Aga never
-    # unlocks git-crypt, so NONE of those values may reach the built config — else
-    # Nix tries to parse the still-encrypted file and evaluation fails. Overriding
-    # every secret-derived key here means the `secrets` import is never forced.
-    # KEEP IN SYNC: if DESK-config.nix adds a new secrets.* key, override it here.
-    tailscaleLoginServer = "https://headscale.akunito.com"; # literal (was secrets.headscaleDomain)
-    tailscaleGuiAutostart = true;  # autostart Trayscale in Plasma 6 (like LAPTOP_A)
-    githubAccessToken = "";        # was secrets.githubAccessToken (anon flake fetches are fine here)
-    perplexityApiKey = "";         # Claude Code MCP — not used on Aga's machine
-    jellyseerrApiKey = "";
-    planeApiToken = "";
-    planeApiUrl = "";
-    grafanaMcpToken = "";
-    grafanaMcpUrl = "";
-    dbClaudeReadonlyConnStr = "";
-    n8nMcpApiKey = "";
-    n8nMcpUrl = "";
-    jlOnboardAccessToken = "";
-    # Database client credentials (~/.pgpass etc.) — akunito-only; disable + empty
-    dbCredentialsEnable = false;
-    dbCredentialsPostgres = [ ];
-    dbCredentialsMariadb = [ ];
-    dbCredentialsRedisPassword = "";
-    # Native control panel imports secrets/control-panel.nix (also git-crypt encrypted)
-    # and is akunito infra-only — disable so that second encrypted file is never forced.
-    controlPanelNativeEnable = false; # override DESK (was true)
-
-    # ============================================================================
-    # SUDO — passwordless sudo over SSH with agent forwarding (remote management)
-    # ============================================================================
-    # Lets akunito `ssh -A aga@<ip> sudo ...` without a password (authorized key
-    # required — see authorizedKeys below). Local sessions still require password.
-    # sudoAskpassEnable + sudoTimestampTimeoutMinutes=180 are inherited from DESK.
-    sshAgentSudoEnable = true;
-
-    # ============================================================================
-    # SHELL & BACKUP - Override from DESK
-    # ============================================================================
-    atuinAutoSync = false; # Override - No shell history sync for DESK_AGA
-
-    # homeBackupEnable not set (inherits false/undefined) - No auto backup for DESK_AGA
-
-    # ============================================================================
-    # DESKTOP ENVIRONMENT - Override from DESK
-    # ============================================================================
-    # Disable Sway/SwayFX - DESK_AGA uses Plasma6 only
+    # LAPTOP-base ships a Sway environment (stylix/swww/waypaper/nwg/kanshi/
+    # swaysome). DESK_A is Plasma 6 (userSettings.wm inherited "plasma6"), so
+    # disable ALL of it — the user explicitly wants no Sway stuff (incl. stylix).
     enableSwayForDESK = false;
-    swwwEnable = false;
-    stylixEnable = false; # Override - Plasma6 only, no Stylix (Plasma has its own theming)
-
-    # SDDM multi-monitor fixes - inherit from DESK (won't break anything if monitors don't match)
-
-    # ============================================================================
-    # STORAGE & NFS - Disable NFS for DESK_AGA
-    # ============================================================================
-    nfsClientEnable = false; # Override - Disable NFS completely
-    # Disable all NFS mounts
-    disk3_enabled = false;
-    disk4_enabled = false;
-    disk5_enabled = false;
-    nfsMounts = [ ]; # Override - No NFS mounts
-    nfsAutoMounts = [ ]; # Override - No NFS automounts
+    stylixEnable = false;             # Plasma has its own theming
+    swwwEnable = false;               # Sway wallpaper daemon
+    waypaperEnable = false;           # Sway wallpaper GUI (broke HM under DESK)
+    nwgDisplaysEnable = false;        # wlroots monitor GUI
+    kanshiImperativeMode = false;     # wlroots monitor manager
+    swaysomeNativeGroups = false;     # Sway workspace groups
+    workspaceGroupsGuiEnable = false; # Sway workspace-groups GUI
 
     # ============================================================================
-    # SSH KEYS - Override with DESK_AGA's ed25519 keys
+    # SECURITY / SUDO
     # ============================================================================
+    fuseAllowOther = false;
+    pkiCertificates = [ ];
+    sudoAskpassEnable = true;              # GUI askpass when sudo has no TTY
+    sudoTimestampTimeoutMinutes = 180;
+    sshAgentSudoEnable = true;             # passwordless sudo over `ssh -A` (authorized key)
     authorizedKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAwUXqQXLaKW/WjsZ95fjHKU7sIhNEeqW685TbsrePiK diego88aku@gmail.com" # Laptop (X13)
     ];
 
     # ============================================================================
-    # DEVELOPMENT TOOLS - Override to Disable (DESK_AGA is not a dev machine)
+    # PRINTING — Brother laser (brlaser driver)
+    # ============================================================================
+    servicePrinting = true;   # CUPS + brlaser + USB auto-enable
+    networkPrinters = true;    # avahi/mDNS discovery
+    serviceScannerEnable = false; # no scanner for now
+
+    # ============================================================================
+    # GAMING (system side) — full stack like DESK
+    # ============================================================================
+    gamemodeEnable = true;        # GameMode perf tuning (+ AMD split_lock_detect=off)
+    xboxControllerEnable = true;  # xpadneo
+    joycondEnable = true;         # Joy-Con daemon
+    freesmLauncherEnable = true;  # FreeSM Launcher (Minecraft over Tailscale/AkuCraft)
+    sunshineEnable = false;       # streaming off (stable pkg unreliable, as on LAPTOP_A)
+
+    # ============================================================================
+    # TAILSCALE / HEADSCALE (self-hosted) — desktop always on LAN
+    # ============================================================================
+    tailscaleEnable = true;
+    tailscaleLoginServer = "https://${headscaleDomain}";
+    tailscaleAcceptRoutes = false; # already on LAN — reach peers by tailscale IP
+    tailscaleAcceptDns = false;    # keep pfSense DNS
+    tailscaleLanAutoToggle = false;
+    tailscaleGuiAutostart = true;  # autostart Trayscale in Plasma 6
+
+    # ============================================================================
+    # MONITORING
+    # ============================================================================
+    prometheusWorkstationExporterEnable = true; # update/disk/backup metrics
+    allowedTCPPorts = [ 9100 ];                  # prometheus workstation exporter
+
+    # ============================================================================
+    # DEV / AI — off (not a dev machine; only audio transcription is kept, below)
     # ============================================================================
     developmentToolsEnable = false;
     aichatEnable = false;
     nixvimEnabled = false;
     lmstudioEnabled = false;
+    voxtypeEnable = false; # Sway-keybind dictation — not on Plasma
+    starCitizenModules = false;
+    vivaldiPatch = false;
 
     # ============================================================================
-    # OTHER FEATURES - Override
+    # CHANNEL — pin to stable 25.11 (user wants stable on DESK_A)
     # ============================================================================
-    starCitizenModules = false; # Override - No Star Citizen optimizations
-    vivaldiPatch = false; # Override - not needed (DESK doesn't use it either; LAPTOP_A cleanup is separate)
+    systemStable = true; # override LAPTOP-base (false)
 
     # ============================================================================
     # AUTO-UPDATE — weekly stable updates (mirrors LAPTOP_A / VPS / NAS)
     # ============================================================================
-    # autoSystemUpdate.sh runs as root against .active-profile=DESK_A: bumps
-    # flake.lock, regenerates + validates hardware-config, then nixos-rebuild
-    # switch. Needs no secrets, so git-crypt stays locked. autoUserUpdate runs HM
-    # as aga on the release-25.11 channel (matches systemStable=true from DESK).
-    # Weekly OnCalendar (Sat 07:00) + Persistent=true catches up missed runs —
-    # robust for a desktop that may be off.
     autoSystemUpdateEnable = true;
     autoUserUpdateEnable = true;
     autoSystemUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoSystemUpdate.sh";
     autoUserUpdateExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/autoUserUpdate.sh";
     autoUserUpdateUser = "aga";
-    autoUserUpdateBranch = "release-25.11"; # HM channel matching stable system (systemStable=true inherited)
+    autoUserUpdateBranch = "release-25.11"; # HM channel matching stable system
 
-    # System packages - inherit empty list from DESK (no python313Full needed)
+    # System packages
+    systemPackages = pkgs: pkgs-unstable: [
+      pkgs.tldr
+    ];
+
+    # NOTE (deferred to a later step): workstation home backup to the NAS
+    # (homeBackupEnable + NFS /mnt/NFS_Backups mount) — set up once the NAS
+    # target is confirmed, mirroring LAPTOP_X13.
   };
 
   userSettings = base.userSettings // {
     # ============================================================================
-    # USER IDENTITY - Override Required
+    # USER IDENTITY
     # ============================================================================
     username = "aga";
     name = "aga";
     email = "diego88aku@gmail.com";
     dotfilesDir = "/home/aga/.dotfiles";
+    # wm ("plasma6"), theme ("ashes"), browser (vivaldi), term (kitty),
+    # fileManager (dolphin), font, git*, zshinitContent, sshExtraConfig — all
+    # inherited from LAPTOP-base.
+
+    dockerEnable = false;
+    virtualizationEnable = true;
+    qemuGuestAddition = false;
 
     # ============================================================================
-    # THEME & APPEARANCE - Adopt "ashes" from DESK
+    # PACKAGES
     # ============================================================================
-    # theme = "ashes" - inherits from DESK (consistent theming)
-
-    # ============================================================================
-    # PACKAGES - Override
-    # ============================================================================
-    # Home packages - keep only essential ones (clinfo, dolphin)
+    userBasicPkgsEnable = true;
+    userAiPkgsEnable = false; # no big AI (lmstudio/ollama)
     homePackages = pkgs: pkgs-unstable: [
-      pkgs.clinfo # OpenCL diagnostics
-      pkgs.kdePackages.dolphin # DESK_AGA-specific file manager
-      # kcalc removed - gnome-calculator in module
+      pkgs.clinfo                     # OpenCL diagnostics
+      pkgs.kdePackages.dolphin        # file manager
+      pkgs-unstable.kdePackages.kcalc # calculator
     ];
 
     # ============================================================================
-    # AI PACKAGES - Override to Disable
+    # AUDIO TRANSCRIPTION — kept (whisper.cpp, Vulkan/AMD). CLI: meeting-record /
+    # meeting-transcribe. This is the only "AI" the user wants on DESK_A.
     # ============================================================================
-    userAiPkgsEnable = false; # Override - No AI packages for DESK_AGA
+    meetingTranscribeEnable = true;
 
     # ============================================================================
-    # GAMING & ENTERTAINMENT
+    # GAMING (user side) — Steam + Proton + Lutris + Bottles + light games
     # ============================================================================
-    gamesEnable = true; # Master gate for gaming submodules
-    gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus
-    protongamesEnable = true; # Heavy gaming: Wine, Bottles, Lutris, Proton
-    steamPackEnable = true; # Enable Steam
-    # Disable advanced gaming features
+    gamesEnable = true;         # master gate
+    gamesLightEnable = true;    # RetroArch, emulators, pegasus, light games
+    protongamesEnable = true;   # Wine, Bottles, Lutris, Proton (AMD-wrapped)
+    steamPackEnable = true;     # Steam (+ gamescope, mangohud)
     starcitizenEnable = false;
     GOGlauncherEnable = false;
     dolphinEmulatorPrimehackEnable = false;
     rpcs3Enable = false;
-
-    # ============================================================================
-    # ZSH PROMPT - Override with Blue hostname for visual distinction
-    # ============================================================================
-    zshinitContent = ''
-      # Keybindings for Home/End/Delete keys
-      bindkey '\e[1~' beginning-of-line     # Home key
-      bindkey '\e[4~' end-of-line           # End key
-      bindkey '\e[3~' delete-char           # Delete key
-
-      PROMPT=" ◉ %U%F{magenta}%n%f%u@%U%F{blue}%m%f%u:%F{yellow}%~%f
-      %F{green}→%f "
-      RPROMPT="%F{red}▂%f%F{yellow}▄%f%F{green}▆%f%F{cyan}█%f%F{blue}▆%f%F{magenta}▄%f%F{white}▂%f"
-      [ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
-    '';
-
-    # sshExtraConfig - inherits from DESK (github config)
   };
 }
