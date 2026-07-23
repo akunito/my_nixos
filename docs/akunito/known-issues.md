@@ -285,3 +285,50 @@ deploys. Disabling Stylix would speed up deploys dramatically.
 **Resolved by commit `1125709`**. Wrapped the cert path in
 `if builtins.pathExists ... then [...] else []`. LAPTOP_A now evals cleanly
 from DESK.
+
+## ~~DESK: Vesktop screenshare broken — "AbortError: Invalid capture constraints"~~ — FIXED 2026-07-24
+
+**Symptom** (2026-07-23): screen sharing in Vesktop stopped working; Firefox
+screenshare on the same machine fine. The portal chooser (slurp overlay)
+appeared, a monitor could be highlighted and clicked, then nothing happened.
+Devtools showed `Uncaught (in promise) AbortError: Invalid capture constraints`.
+NOT a repeat of the 2026-07-19 portal regressions (`render_bit_depth` /
+slurp-PATH, commit `c7068fb`) — nothing on the nix side changed (HM generations
+857→858 "No changes", same vesktop 1.6.5 + electron 42.5.1 store paths).
+
+**Root cause**: Vesktop does not bundle Vencord — it downloads the runtime to
+`~/.config/vesktop/sessionData/vencordFiles/` and only re-downloads when files
+are *missing*; updates are manual. Ours was frozen at an April 22 build.
+Discord's mid-July web update changed internals the old Vencord modal API
+relied on, so Vesktop's screenshare picker crashed with
+`TypeError: Cannot read properties of undefined (reading 'm')`. Vesktop
+swallows that error (`.catch(() => null)`) and answers Electron's
+display-media handler with an empty stream → main process logs
+`Video was requested, but no video stream was provided` → Discord surfaces the
+misleading `AbortError: Invalid capture constraints` (Chromium string from
+`user_media_processor.cc`).
+
+**Fix**: refresh the Vencord runtime files from the rolling `devbuild` release:
+
+```bash
+VDIR=~/.config/vesktop/sessionData/vencordFiles
+cp -a "$VDIR" "$VDIR.bak-$(date +%F)"
+cd "$VDIR"
+for f in vencordDesktopMain.js vencordDesktopMain.js.LEGAL.txt vencordDesktopMain.js.map \
+         vencordDesktopPreload.js vencordDesktopPreload.js.map \
+         vencordDesktopRenderer.css vencordDesktopRenderer.css.map \
+         vencordDesktopRenderer.js vencordDesktopRenderer.js.LEGAL.txt vencordDesktopRenderer.js.map; do
+  curl -sL -o "$f.new" "https://github.com/Vendicated/Vencord/releases/download/devbuild/$f" \
+    && [ -s "$f.new" ] && mv "$f.new" "$f"
+done
+```
+
+Then fully restart Vesktop. Alternatively update Vencord from inside Vesktop's
+settings UI.
+
+**Debugging method** (for next time this signature appears): the real error is
+hidden. Extract the asar (`npx @electron/asar extract .../app.asar dir`), patch
+the swallowed `.catch(()=>null)` in `dist/js/main.js` (wayland branch of
+`setDisplayMediaRequestHandler`) to log the rejection, and run the unpacked dir
+with the store electron binary + `--enable-logging`. Same applies to any future
+"screenshare picker silently does nothing" report on 1.6.x.
