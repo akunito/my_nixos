@@ -624,6 +624,19 @@
     # Profiles can override/populate this and then build `swayKanshiSettings` from it.
     swayMonitorInventory = { };
 
+    # Deterministic workspace->output pinning by hardware ID (anti-drift).
+    # List of { criteria = "<make model serial>"; group = N; }: group N owns
+    # workspaces N1..N0 (group 1 => 11-20). Emits declarative
+    # `workspace N output` lines in swayfx-config.nix and feeds the hotplug
+    # restore script's orphan migration.
+    swayWorkspaceOutputPins = [ ];
+
+    # Monitor-hotplug snapshot/restore (DESK): daemon snapshots visible
+    # workspaces, focus and floating-window geometry per monitor set; kanshi
+    # runs the focus-immune restore script on output changes (replaces the
+    # legacy focus-fragile swaysome-assign-groups exec chain).
+    swayHotplugRestoreEnable = false;
+
     # Sway/SwayFX dynamic outputs (kanshi)
     #
     # Default: enabled with a generic "enable everything" profile so new/unknown monitors work
@@ -708,7 +721,7 @@
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config
     workspaceGroupsGuiEnable = false;    # Install workspace groups GUI
     kanshiImperativeMode = false;        # User-managed kanshi config (not Nix)
-    swaysomeNativeGroups = false;        # Laptops: use focus-immune swaysome init+rearrange for per-monitor workspace groups (drops focus-fragile assign-groups.sh). DESK keeps legacy path.
+    swaysomeNativeGroups = false;        # Laptops: use focus-immune swaysome init+rearrange for per-monitor workspace groups (drops focus-fragile assign-groups.sh). DESK uses swayHotplugRestoreEnable instead.
 
     # Font defaults - will be computed based on systemStable in flake-base.nix
     # This is just a placeholder

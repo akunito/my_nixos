@@ -16,11 +16,18 @@ let
   # DESK keeps the legacy path (flag false) so its current groups are untouched.
   nativeGroups = systemSettings.swaysomeNativeGroups or false;
 
+  # Hotplug snapshot/restore (DESK): one focus-immune script handles orphan
+  # migration AND restores workspaces/focus/floating windows for the returning
+  # monitor set. Supersedes both legacy paths below when enabled.
+  hotplugRestore = systemSettings.swayHotplugRestoreEnable or false;
+
   # swaysome exec lines for the imperative kanshi default-auto profile.
   # Native path routes through one setup script (init + rearrange + group-0
   # orphan sweep) so logic lives in the script, not the user-managed config.
   swaysomeExecLines =
-    if nativeGroups then ''
+    if hotplugRestore then ''
+  exec $HOME/.config/sway/scripts/sway-hotplug-restore.sh''
+    else if nativeGroups then ''
   exec $HOME/.config/sway/scripts/swaysome-groups-setup.sh''
     else ''
   exec swaysome init 1
@@ -85,11 +92,34 @@ EOF
         '';
     })
 
+    # Hotplug snapshot/restore (DESK): migrate the existing live kanshi config
+    # to the single focus-immune restore exec — drop ALL legacy swaysome exec
+    # lines (init/rearrange/assign-groups and the laptop setup script).
+    # Idempotent; gated on the flag so other profiles are untouched.
+    (lib.mkIf (imperativeMode && hotplugRestore) {
+      home.activation.kanshiMigrateHotplugRestore =
+        lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] ''
+          KANSHI_CONFIG="$HOME/.config/kanshi/config"
+          if [ -f "$KANSHI_CONFIG" ]; then
+            ${pkgs.gnused}/bin/sed -i \
+              -e '/exec swaysome /d' \
+              -e '/swaysome-assign-groups/d' \
+              -e '/swaysome-groups-setup/d' \
+              -e '/swaysome-sweep-orphans/d' \
+              "$KANSHI_CONFIG"
+            if ${pkgs.gnugrep}/bin/grep -qE 'output \* enable' "$KANSHI_CONFIG" \
+               && ! ${pkgs.gnugrep}/bin/grep -q 'sway-hotplug-restore' "$KANSHI_CONFIG"; then
+              ${pkgs.gnused}/bin/sed -i '/output \* enable/a\  exec $HOME/.config/sway/scripts/sway-hotplug-restore.sh' "$KANSHI_CONFIG"
+            fi
+          fi
+        '';
+    })
+
     # Native swaysome groups (laptops): migrate existing live kanshi configs to
     # the focus-immune path — drop the focus-fragile assign-groups.sh exec and
     # ensure `swaysome init` runs. Idempotent. Gated on the flag so DESK's live
     # config is never touched.
-    (lib.mkIf (imperativeMode && nativeGroups) {
+    (lib.mkIf (imperativeMode && nativeGroups && !hotplugRestore) {
       home.activation.kanshiMigrateNativeGroups =
         lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] ''
           KANSHI_CONFIG="$HOME/.config/kanshi/config"

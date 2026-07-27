@@ -426,6 +426,23 @@ in
     # Monitor inventory (data-only); used to build DESK kanshi settings.
     swayMonitorInventory = monitors;
 
+    # Deterministic workspace->output pinning (group N => workspaces N1..N0).
+    # Drives the declarative `workspace N output` lines in swayfx-config.nix
+    # and the hotplug restore script's group-0 orphan migration.
+    swayWorkspaceOutputPins = [
+      { criteria = monitors.samsungMain.criteria; group = 1; } # 11-20
+      { criteria = monitors.nslVertical.criteria; group = 2; } # 21-30
+      { criteria = monitors.philipsTv.criteria;   group = 3; } # 31-40
+      { criteria = monitors.bnqLeft.criteria;     group = 4; } # 41-50
+    ];
+
+    # Monitor-hotplug snapshot/restore: when monitors are switched off and back
+    # on, restore the visible workspace per output, the focused workspace, and
+    # floating-window positions (fixes focus jumps + floating windows straddling
+    # two monitors after power-off/on). Replaces the focus-fragile legacy
+    # swaysome init/rearrange/assign-groups kanshi exec chain.
+    swayHotplugRestoreEnable = true;
+
     # Sway/SwayFX: kanshi output layout (DESK-only).
     # Other profiles keep default behavior by leaving this as null (see lib/defaults.nix).
     #

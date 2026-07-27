@@ -10,7 +10,6 @@
 let
   # Hyper key combination (Super+Ctrl+Alt)
   hyper = "Mod4+Control+Mod1";
-  mainMon = "Samsung Electric Company Odyssey G70NC H1AK500000";
 
   # Pull script derivations from the submodules that own them (session-env/startup-apps).
   scripts = config.user.wm.sway._internal.scripts;
@@ -1223,18 +1222,16 @@ in
       workspace_auto_back_and_forth yes
 
       # Workspace-to-Output assignments (hardware ID-based, declarative)
-      # Sway supports hardware IDs directly - no need for connector names or scripts
+      # Sway supports hardware IDs directly - no need for connector names or scripts.
+      # Data comes from systemSettings.swayWorkspaceOutputPins (profile-owned;
+      # group N pins workspaces N1..N0 to that monitor's hardware ID).
       ${lib.concatStringsSep "\n" (
-        let
-          samsung = "Samsung Electric Company Odyssey G70NC H1AK500000";
-          nsl = "NSL RGB-27QHDS    Unknown";
-          philips = "Philips Consumer Electronics Company PHILIPS FTV 0x01010101";
-          bnq = "BNQ ZOWIE XL LCD 7CK03588SL0";
-        in
-        (map (i: "workspace ${toString i} output \"${samsung}\"") (lib.range 11 20))
-        ++ (map (i: "workspace ${toString i} output \"${nsl}\"") (lib.range 21 30))
-        ++ (map (i: "workspace ${toString i} output \"${philips}\"") (lib.range 31 40))
-        ++ (map (i: "workspace ${toString i} output \"${bnq}\"") (lib.range 41 50))
+        lib.concatMap (
+          p:
+          map (i: "workspace ${toString i} output \"${p.criteria}\"") (
+            lib.range (p.group * 10 + 1) (p.group * 10 + 10)
+          )
+        ) (systemSettings.swayWorkspaceOutputPins or [ ])
       )}
 
       # DESK startup apps - assign to specific workspaces
