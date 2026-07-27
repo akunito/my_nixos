@@ -57,7 +57,6 @@
 
   ]
   ++ lib.optional systemSettings.stylixEnable ../../system/style/stylix.nix # Stylix theme
-  ++ lib.optional systemSettings.vivaldiPatch ../../patches/vivaldifixes.nix # vivaldi fix https://github.com/NixOS/nixpkgs/pull/292148
   ++ lib.optional systemSettings.sambaEnable ../../system/app/samba.nix # Samba config
   ++ lib.optional systemSettings.xboxControllerEnable ../../system/hardware/xbox.nix # Xbox wireless controller
   ++ lib.optional systemSettings.joycondEnable ../../system/hardware/joycond.nix # Joy-Con controller support

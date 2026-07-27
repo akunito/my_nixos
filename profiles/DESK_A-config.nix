@@ -169,7 +169,6 @@ in
     lmstudioEnabled = false;
     voxtypeEnable = false; # Sway-keybind dictation — not on Plasma
     starCitizenModules = false;
-    vivaldiPatch = false;
 
     # ============================================================================
     # CHANNEL — pin to stable 25.11 (user wants stable on DESK_A)

@@ -32,10 +32,17 @@ in
     CUPS_SERVER = "localhost:631";
   };
 
-  # Custom desktop entry for pkgs Vivaldi using standard "vivaldi" name
-  # This ensures Vivaldi recognizes itself as default browser
-  # The desktop file in ~/.local/share/applications/ takes precedence over Flatpak
-  xdg.desktopEntries."vivaldi" = {
+  # Desktop entry named "vivaldi-stable" — the SAME id the Vivaldi package ships,
+  # so this KWallet-wrapped launcher OVERRIDES the package's desktop file (ours in
+  # ~/.local/share/applications wins over the package's in the profile).
+  #
+  # Why the exact name matters: Vivaldi's "am I the default browser?" self-check
+  # compares the system default handler against its OWN desktop id
+  # (vivaldi-stable.desktop). Previously we named the entry "vivaldi.desktop" and
+  # set that as default — so the check always failed and Vivaldi nagged to be set
+  # as default on EVERY launch, even though it already was. Using the matching
+  # vivaldi-stable.desktop id + defaulting to it makes the self-check pass.
+  xdg.desktopEntries."vivaldi-stable" = {
     name = "Vivaldi";
     genericName = "Web Browser";
     exec = "${vivaldi-with-kwallet}/bin/vivaldi %U";
@@ -51,13 +58,13 @@ in
     ];
   };
 
-  # Set pkgs Vivaldi as default browser (using standard desktop entry name)
+  # Default to vivaldi-stable.desktop (the id Vivaldi self-checks) — stops the nag.
   xdg.mimeApps.defaultApplications = {
-    "text/html" = "vivaldi.desktop";
-    "x-scheme-handler/http" = "vivaldi.desktop";
-    "x-scheme-handler/https" = "vivaldi.desktop";
-    "x-scheme-handler/about" = "vivaldi.desktop";
-    "x-scheme-handler/unknown" = "vivaldi.desktop";
+    "text/html" = "vivaldi-stable.desktop";
+    "x-scheme-handler/http" = "vivaldi-stable.desktop";
+    "x-scheme-handler/https" = "vivaldi-stable.desktop";
+    "x-scheme-handler/about" = "vivaldi-stable.desktop";
+    "x-scheme-handler/unknown" = "vivaldi-stable.desktop";
   };
 
   # Desktop file for Flatpak Vivaldi using unique name to avoid conflicts

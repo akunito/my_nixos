@@ -150,7 +150,6 @@ in
 
     # === Other Features ===
     starCitizenModules = false; # Disable Star Citizen optimizations
-    vivaldiPatch = true; # Enable Vivaldi patches
 
     # Auto update - DISABLED (unstable profile)
     autoSystemUpdateEnable = false;

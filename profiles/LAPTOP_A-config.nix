@@ -174,7 +174,6 @@ in
 
     # === Other Features ===
     starCitizenModules = false; # Disable Star Citizen optimizations
-    vivaldiPatch = true; # Enable Vivaldi patches
     freesmLauncherEnable = true; # FreeSM Launcher (Prism fork, offline accounts) — connect to AkuCraft over Tailscale
 
     # Auto update - weekly stable updates (mirrors VPS/NAS). autoSystemUpdate.sh
