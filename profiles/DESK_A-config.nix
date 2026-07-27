@@ -126,6 +126,41 @@ in
     allowedTCPPorts = [ 9100 ];                  # prometheus workstation exporter
 
     # ============================================================================
+    # WORKSTATION BACKUP → NAS (over Tailscale)
+    # ============================================================================
+    # DESK_A is on WiFi with NO route to the storage VLAN (pfSense firewalls it),
+    # so it reaches the NAS over Tailscale (100.64.0.1) instead of 192.168.20.200.
+    # The NAS export allows DESK_A's tailnet IP 100.64.0.11 (see NAS_PROD-config).
+    # restic backup of /home/aga (excludes Games/ + Bottles) → NAS
+    # /mnt/ssdpool/workstation_backups/nixosagadesk/home.restic, keyed by the local
+    # file ~/myScripts/restic.key (NOT git-crypt — DESK_A stays secrets-free).
+    homeBackupEnable = true;
+    homeBackupOnCalendar = "0/6:00:00"; # every 6h; only the 18:00 run lands (NAS sleeps 23:00–16:00)
+    homeBackupCallNextEnabled = false;
+    homeBackupUser = "aga";             # override default akunito
+    homeBackupExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/scripts/backup-manager.sh --auto --target nfs --job home";
+    nfsBackupEnable = true;
+
+    # NFS client — backup mount ONLY, on-demand autofs over Tailscale. On-demand so
+    # it mounts when the backup runs (Tailscale up by then), not at early boot;
+    # soft + retry=0 (nfs_client.nix) means a sleeping NAS fails fast, never hangs.
+    nfsClientEnable = true;
+    nfsMounts = [
+      {
+        what = "100.64.0.1:/mnt/ssdpool/workstation_backups";
+        where = "/mnt/NFS_Backups";
+        type = "nfs";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
+      }
+    ];
+    nfsAutoMounts = [
+      {
+        where = "/mnt/NFS_Backups";
+        automountConfig = { TimeoutIdleSec = "600"; };
+      }
+    ];
+
+    # ============================================================================
     # DEV / AI — off (not a dev machine; only audio transcription is kept, below)
     # ============================================================================
     developmentToolsEnable = false;
