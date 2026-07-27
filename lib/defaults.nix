@@ -699,6 +699,7 @@
     # Laptop power tuning (idle power reduction)
     laptopPowerTuningEnable = false;       # Master gate for laptop-power-tuning.nix
     laptopPowerTuningAggressive = false;   # Aggressive tier (PCIe ASPM force, powertop auto-tune)
+    autoSuspendInhibit = false;            # Block idle auto-suspend (always-on desktop; Plasma/PowerDevil) — see system/hardware/inhibit-auto-suspend.nix
 
     # Bluetooth power-on-boot override
     bluetoothPowerOnBoot = true;           # Default preserves current behavior

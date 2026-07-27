@@ -63,6 +63,9 @@ in
     hibernateEnable = false;            # no hibernate on this desktop
     laptopPowerTuningEnable = false;    # laptop idle power tuning
     bluetoothPowerOnBoot = true;        # desktop — radio on at boot (override LAPTOP-base false)
+    autoSuspendInhibit = true;          # NEVER idle-suspend: PowerDevil was auto-suspending this
+                                        # always-on desktop, dropping SSH + risking missed backups.
+                                        # Energy GUI stays usable; only the suspend is blocked.
 
     # ============================================================================
     # DESKTOP ENVIRONMENT — Plasma 6 ONLY, no Sway/wlroots tooling
