@@ -11,6 +11,7 @@ PATH="$HOME/.nix-profile/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/de
 SWAYMSG_BIN="$(command -v swaymsg 2>/dev/null || true)"
 SYSTEMCTL_BIN="$(command -v systemctl 2>/dev/null || true)"
 SWAYLOCK_BIN="$(command -v swaylock 2>/dev/null || true)"
+SWAYLOCK_GRACE_BIN="$(command -v swaylock-with-grace 2>/dev/null || true)"
 
 [ -n "$SYSTEMCTL_BIN" ] || SYSTEMCTL_BIN="/run/current-system/sw/bin/systemctl"
 [ -n "$SWAYMSG_BIN" ] || SWAYMSG_BIN="/run/current-system/sw/bin/swaymsg"
@@ -36,12 +37,17 @@ CHOICE="$1"
 
 case "$CHOICE" in
   Lock)
-    # Prefer swaylock-effects (your config uses swaylock-effects package but binary is still "swaylock")
-    # --color 000000 (NOT --screenshots): screencopy can fail when monitors are mid-DPMS-cycle,
-    # leaving the lock surfaces in a broken state. Mirrors the fix in swaylock-with-grace.sh.
-    if [ -n "$SWAYLOCK_BIN" ]; then
-      "$SWAYLOCK_BIN" --clock --indicator --indicator-radius 100 --indicator-thickness 7 \
-        --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --color 000000
+    # Route through swaylock-with-grace (same as the Mod4+l keybind): single-instance
+    # guard, DPMS pre-warm, --daemonize and --color 000000 all apply uniformly.
+    if [ -n "$SWAYLOCK_GRACE_BIN" ]; then
+      "$SWAYLOCK_GRACE_BIN"
+    elif [ -n "$SWAYLOCK_BIN" ]; then
+      # Fallback: guarded + daemonized raw swaylock.
+      # --color 000000 (NOT --screenshots): screencopy can fail when monitors are
+      # mid-DPMS-cycle, leaving the lock surfaces broken. Mirrors swaylock-with-grace.sh.
+      pgrep -x swaylock >/dev/null 2>&1 || \
+        "$SWAYLOCK_BIN" --daemonize --clock --indicator --indicator-radius 100 --indicator-thickness 7 \
+          --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --color 000000
     fi
     ;;
   Logout)

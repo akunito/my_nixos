@@ -132,6 +132,16 @@ let
       else "true"}
   '';
 
+  # Hibernate is only actually usable when the encrypted-swap UUID is configured:
+  # hibernate.nix gates resumeDevice/initrd-unlock/HibernateDelaySec on the same
+  # pair. hibernateEnable alone MUST NOT trigger suspend-then-hibernate — without
+  # a resume device the hibernation image is lost on next boot, and if hibernation
+  # is unsupported the call can fail outright, leaving lid-close/idle-timeout with
+  # no suspend at all.
+  hibernateReady =
+    (systemSettings.hibernateEnable or false)
+    && ((systemSettings.hibernateSwapLuksUUID or null) != null);
+
   # Smart lid handler: context-aware lid close behavior
   # External monitor(s) present → disable internal display only
   # No external monitors + on battery → suspend
@@ -147,7 +157,7 @@ let
       # No external monitors: only suspend if on battery
       BAT_STATUS=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
       if [ "$BAT_STATUS" = "Discharging" ]; then
-        ${if (systemSettings.hibernateEnable or false)
+        ${if hibernateReady
           then "${pkgs.systemd}/bin/systemctl suspend-then-hibernate"
           else "${pkgs.systemd}/bin/systemctl suspend"}
       fi
@@ -171,7 +181,7 @@ let
   '';
 
   sway-idle-suspend = pkgs.writeShellScript "sway-idle-suspend" ''
-    ${if (systemSettings.hibernateEnable or false) then ''
+    ${if hibernateReady then ''
       BAT_STATUS=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
       if [ "$BAT_STATUS" = "Discharging" ]; then
         ${pkgs.systemd}/bin/systemctl suspend-then-hibernate
@@ -184,7 +194,18 @@ let
   '';
 
   sway-idle-before-sleep = pkgs.writeShellScript "sway-idle-before-sleep" ''
-    ${pkgs.swaylock-effects}/bin/swaylock --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono' --color 000000
+    # Skip if a locker is already running (the idle lock timeout usually fires
+    # long before the suspend timeout): a second swaylock instance fights for
+    # the same lock surfaces — known black-screen failure mode, same guard as
+    # swaylock-with-grace.sh.
+    if ${pkgs.procps}/bin/pgrep -x swaylock >/dev/null 2>&1; then
+      exit 0
+    fi
+    # --daemonize: swayidle runs with -w, so a foreground locker would block
+    # swayidle's event loop (including the after-resume monitor/wallpaper
+    # restore) until unlock, and hold the sleep inhibitor for the full
+    # logind InhibitDelayMaxSec on every manual suspend.
+    exec ${pkgs.swaylock-effects}/bin/swaylock --daemonize --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono' --color 000000
   '';
 
   # Power-aware swayidle launcher: selects timeouts based on AC/battery state
@@ -243,7 +264,10 @@ let
         CURRENT="ac"
       fi
       if [ -n "$LAST_STATE" ] && [ "$CURRENT" != "$LAST_STATE" ]; then
-        ${pkgs.systemd}/bin/systemctl --user restart swayidle.service
+        # try-restart (NOT restart): only restart swayidle if it is currently
+        # running. Plain restart would START a stopped unit, silently undoing
+        # the user's idle-inhibit toggle (which works by stopping swayidle).
+        ${pkgs.systemd}/bin/systemctl --user try-restart swayidle.service
         if [ "$CURRENT" = "ac" ]; then
           # Restore brightness in case screen was dimmed on battery
           ${pkgs.brightnessctl}/bin/brightnessctl -r 2>/dev/null || true
@@ -304,6 +328,10 @@ in
     XDG_MENU_PREFIX = "plasma-";
   };
 
+  # On PATH so callers outside this module (rofi-power-mode.sh "Lock") can route
+  # through the same single-instance guard + DPMS pre-warm as the Mod4+l keybind.
+  home.packages = [ swaylock-with-grace ];
+
   # CRITICAL: Idle daemon with swaylock-effects
   # Timeouts are ABSOLUTE from last user activity, not incremental
   # When power-aware mode is enabled (laptops), this is disabled and replaced by custom systemd services
@@ -336,9 +364,11 @@ in
     events = [
       {
         event = "before-sleep";
-        # Use --color instead of --screenshots: monitors may be powered off,
-        # causing screencopy to fail and leaving the session unlocked after resume.
-        command = "${pkgs.swaylock-effects}/bin/swaylock --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --font 'JetBrainsMono Nerd Font Mono' --color 000000";
+        # Shared guarded locker: skips if swaylock already runs, daemonizes so
+        # swayidle's -w doesn't block, uses --color instead of --screenshots
+        # (screencopy can fail with powered-off monitors, leaving the session
+        # unlocked after resume).
+        command = "${sway-idle-before-sleep}";
       }
       {
         event = "after-resume";
