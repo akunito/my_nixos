@@ -117,6 +117,7 @@ in
     tailscaleAcceptDns = false;    # keep pfSense DNS
     tailscaleLanAutoToggle = false;
     tailscaleGuiAutostart = true;  # autostart Trayscale in Plasma 6
+    tailscaleOperator = "aga";     # let aga control tailscaled (Trayscale/CLI) without sudo
 
     # ============================================================================
     # MONITORING

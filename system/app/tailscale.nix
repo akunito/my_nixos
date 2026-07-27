@@ -95,6 +95,30 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
     '';
   };
 
+  # Set the local Tailscale operator so a non-root desktop user can control the
+  # daemon (Trayscale GUI / `tailscale` CLI) without sudo. Persists in tailscaled
+  # prefs, but we (re)assert it declaratively on every boot so a GUI re-auth
+  # (`tailscale up` without --operator) can't silently lose it. Idempotent.
+  systemd.services.tailscale-operator = lib.mkIf ((systemSettings.tailscaleOperator or "") != "") {
+    description = "Set Tailscale operator user (${systemSettings.tailscaleOperator})";
+    after = [ "tailscaled.service" ];
+    wants = [ "tailscaled.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "tailscale-set-operator" ''
+        # tailscaled may not be ready the instant this runs — retry briefly.
+        for i in 1 2 3 4 5 6; do
+          ${pkgs.tailscale}/bin/tailscale set --operator=${systemSettings.tailscaleOperator} && exit 0
+          sleep 2
+        done
+        echo "tailscale-operator: failed to set operator after retries" >&2
+        exit 0
+      '';
+    };
+  };
+
   # Helper script for connecting with the configured settings
   environment.etc."tailscale/connect.sh" = {
     mode = "0755";

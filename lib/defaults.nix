@@ -802,6 +802,7 @@
     tailscaleLanAutoToggle = false; # Auto-toggle accept-routes/dns based on LAN presence (for roaming laptops)
     tailscaleLanGateway = "192.168.8.1"; # Gateway IP to detect home LAN (ping target for auto-toggle)
     tailscaleGuiAutostart = false; # Auto-start Tailscale GUI (trayscale) with desktop session
+    tailscaleOperator = ""; # Local user allowed to control tailscaled without sudo (for GUI/CLI). "" = root-only. Set to the desktop user on GUI machines.
 
     # ============================================================================
     # VPS-SPECIFIC FLAGS
