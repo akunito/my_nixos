@@ -81,7 +81,10 @@
     # Power-aware idle: shorter timeouts on battery, normal on AC
     swayIdlePowerAwareEnable = true;
 
-    # Hibernation: auto-hibernate after 10 min suspend on battery
+    # Hibernation: auto-hibernate after 10 min suspend on battery.
+    # ONLY takes effect on machines that also set hibernateSwapLuksUUID
+    # (per-machine, after creating the LUKS swap — see hibernate.nix).
+    # Without the UUID, idle/lid scripts fall back to plain suspend.
     hibernateEnable = true;
 
     # Laptop power tuning: idle power reduction

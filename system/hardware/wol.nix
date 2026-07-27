@@ -79,10 +79,24 @@ in
       };
     };
 
-    # (c) Re-arm after resume (S3) as a final safety net.
-    powerManagement.resumeCommands = ''
-      ${pkgs.ethtool}/bin/ethtool -s ${iface} wol g || true
-    '';
+    # (c) Re-arm after resume (S3) as a final safety net. Implemented as a
+    #     dedicated systemd unit (NOT powerManagement.resumeCommands, which
+    #     only materializes when powerManagement.enable = true — false on the
+    #     laptop profiles, so the re-arm would silently no-op there).
+    systemd.services.wol-rearm-resume = {
+      description = "Re-arm Wake-on-LAN (magic packet) on ${iface} after resume";
+      after = [
+        "systemd-suspend.service"
+        "systemd-hibernate.service"
+        "systemd-hybrid-sleep.service"
+        "systemd-suspend-then-hibernate.service"
+      ];
+      wantedBy = [ "sleep.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "-${pkgs.ethtool}/bin/ethtool -s ${iface} wol g";
+      };
+    };
 
     # (d) When the WoL NIC has an IP on the same subnet as another interface
     #     (e.g. bond0), prevent ARP flux (switch MAC-table flapping -> network

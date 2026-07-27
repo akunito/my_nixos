@@ -34,10 +34,19 @@ lib.mkIf (systemSettings.suspendDebugEnable or false) {
     };
   };
 
-  # Post-resume: log after system wakes
+  # Post-resume: log after system wakes.
+  # Must be ordered after the systemd-{suspend,hibernate,...}.service units that
+  # actually perform the sleep — `after sleep.target` alone is NOT enough:
+  # systemd-suspend.service is also merely After=sleep.target, so with no mutual
+  # ordering this unit could run (and log "RESUMED") BEFORE the machine sleeps.
   systemd.services."suspend-debug-post" = {
     description = "Suspend debug logging (post-resume)";
-    after = [ "sleep.target" ];
+    after = [
+      "systemd-suspend.service"
+      "systemd-hibernate.service"
+      "systemd-hybrid-sleep.service"
+      "systemd-suspend-then-hibernate.service"
+    ];
     wantedBy = [ "sleep.target" ];
     conflicts = [ "shutdown.target" ];
     serviceConfig = {

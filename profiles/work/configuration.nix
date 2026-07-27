@@ -71,8 +71,7 @@
   ++ lib.optional (systemSettings.suspendDebugEnable or false) ../../system/hardware/suspend-debug.nix # Suspend/resume instrumentation
   ++ lib.optional (systemSettings.amdgpuSuspendWorkaround or false) ../../system/hardware/amdgpu-suspend-workaround.nix # AINF-282: AMDGPU SMU suspend regression mitigation
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix # Tailscale mesh VPN
-  ++ lib.optional ((systemSettings.hibernateEnable or false)
-    && (systemSettings.hibernateSwapLuksUUID or null) != null) ../../system/hardware/hibernate.nix # Hibernation with LUKS-encrypted swap
+  ++ lib.optional (systemSettings.hibernateEnable or false) ../../system/hardware/hibernate.nix # Hibernation with LUKS-encrypted swap (self-gates on hibernateSwapLuksUUID; warns when half-configured)
   ++ lib.optional (systemSettings.laptopPowerTuningEnable or false) ../../system/hardware/laptop-power-tuning.nix # Laptop idle power reduction
   ++ lib.optional (systemSettings.fprintdEnable or false) ../../system/hardware/fingerprint.nix; # Fingerprint reader support
 

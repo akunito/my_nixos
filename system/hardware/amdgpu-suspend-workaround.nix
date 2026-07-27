@@ -29,7 +29,6 @@ in
 
   environment.etc."systemd/system-sleep/lact-pause" = lib.mkIf enabled {
     source = pkgs.writeShellScript "lact-pause" ''
-      #!${pkgs.runtimeShell}
       case "$1/$2" in
         pre/suspend|pre/hibernate|pre/hybrid-sleep|pre/suspend-then-hibernate)
           ${pkgs.systemd}/bin/systemctl stop lactd.service || true

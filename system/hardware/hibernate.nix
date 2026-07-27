@@ -17,10 +17,22 @@
 #   sudo mkswap /dev/mapper/luks-swap
 #   sudo cryptsetup luksClose luks-swap
 
-{ systemSettings, pkgs, lib, ... }:
+{ systemSettings, pkgs, lib, options, ... }:
 
-lib.mkIf ((systemSettings.hibernateEnable or false)
-  && (systemSettings.hibernateSwapLuksUUID or null) != null) {
+lib.mkMerge [
+
+  {
+    # Half-configured hibernate: flag it loudly. With no swap UUID this module is
+    # inert (no resume device, no HibernateDelaySec), and the sway idle/lid
+    # scripts fall back to plain suspend (they gate on the same pair).
+    warnings = lib.optional
+      ((systemSettings.hibernateEnable or false)
+        && (systemSettings.hibernateSwapLuksUUID or null) == null)
+      "hibernateEnable is true but hibernateSwapLuksUUID is null: hibernation is NOT configured (no resume device); suspend-then-hibernate paths fall back to plain suspend. Set the LUKS swap UUID or disable hibernateEnable.";
+  }
+
+  (lib.mkIf ((systemSettings.hibernateEnable or false)
+    && (systemSettings.hibernateSwapLuksUUID or null) != null) {
 
   # LUKS-encrypted swap: unlock in initrd using reused passphrase
   boot.initrd.luks.devices."luks-swap".device =
@@ -32,13 +44,16 @@ lib.mkIf ((systemSettings.hibernateEnable or false)
   # Resume from hibernate: adds resume= kernel param + initrd hook
   boot.resumeDevice = "/dev/mapper/luks-swap";
 
-  # Auto-hibernate delay for suspend-then-hibernate. Use the free-form
-  # `extraConfig` so the same expression works on both nixos-25.11 (which
-  # lacks the structured `systemd.sleep.settings` attribute set added in
-  # nixos-26.05) and on unstable.
-  systemd.sleep.extraConfig = ''
-    HibernateDelaySec=${toString systemSettings.hibernateDelaySec}
-  '';
+  # Auto-hibernate delay for suspend-then-hibernate. Gate on option EXISTENCE
+  # (not channel version): nixos-25.11 only has the free-form `extraConfig`,
+  # while newer channels removed it in favor of the structured
+  # `systemd.sleep.settings` — defining the removed option there is an eval
+  # error, so one fixed spelling cannot serve both.
+  systemd.sleep =
+    if options.systemd.sleep ? settings then
+      { settings.Sleep.HibernateDelaySec = systemSettings.hibernateDelaySec; }
+    else
+      { extraConfig = "HibernateDelaySec=${toString systemSettings.hibernateDelaySec}"; };
 
   # logind: ignore power button (acpid handles it conditionally)
   services.logind.settings.Login.HandlePowerKey = lib.mkForce "ignore";
@@ -67,4 +82,6 @@ lib.mkIf ((systemSettings.hibernateEnable or false)
       }
     });
   '';
-}
+  })
+
+]
