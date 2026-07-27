@@ -18,10 +18,10 @@
   home.packages = lib.optionals (systemSettings.developmentToolsEnable == true) [
     # === Code Editors and IDEs ===
     pkgs-unstable.vscode           # Visual Studio Code
-    pkgs-unstable.code-cursor      # Cursor AI-powered code editor
+    # pkgs-unstable.code-cursor      # Cursor AI-powered code editor
     pkgs-unstable.opencode         # Open-source code editor
     pkgs-unstable.claude-code  # Claude Code CLI (native binary from GCS, not npm)
-    pkgs-unstable.qwen-code        # Alibaba Qwen Code editor
+    # pkgs-unstable.qwen-code        # Alibaba Qwen Code editor
 
     # === Version Control Tools ===
     pkgs-unstable.git-crypt        # Transparent file encryption in git (unstable — preserves current behaviour on stable-system profiles)
@@ -41,7 +41,7 @@
     pkgs-stable.drawio             # Diagramming and flowchart tool (stable — unstable 29.7.9 fails npm dep-tree parse from source)
 
     # === Development Framework Tools ===
-    pkgs-unstable.antigravity      # Development automation and tooling
+    # pkgs-unstable.antigravity-ide      # Development automation and tooling
   ]
   # === Full Development Runtimes (opt-in per profile) ===
   ++ lib.optionals (systemSettings.developmentFullRuntimesEnable or false) [

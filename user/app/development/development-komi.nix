@@ -24,7 +24,7 @@
     pkgs-unstable.code-cursor      # Cursor AI-powered code editor
     pkgs-unstable.opencode         # Open-source code editor
     pkgs-unstable.claude-code  # Claude Code CLI (native binary from GCS, not npm)
-    pkgs-unstable.qwen-code        # Alibaba Qwen Code editor
+    # pkgs-unstable.qwen-code        # Alibaba Qwen Code editor
 
     # === Version Control Tools ===
     pkgs.git-crypt                 # Transparent file encryption in git
@@ -41,7 +41,7 @@
     pkgs-unstable.drawio           # Diagramming and flowchart tool
 
     # === Development Framework Tools ===
-    pkgs-unstable.antigravity      # Development automation and tooling
+    pkgs-unstable.antigravity-ide      # Development automation and tooling
   ];
 
 }
