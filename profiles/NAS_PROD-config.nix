@@ -120,12 +120,15 @@ in
     ];
 
     # ============================================================================
-    # NFS SERVER — exports for DESK, LAPTOP_X13, VPS
+    # NFS SERVER — exports for DESK, LAPTOP_X13, VPS, DESK_A
+    # DESK_A (Aga's desktop, WiFi) has no route to the storage VLAN and reaches the
+    # NAS over Tailscale (source = its tailnet IP 100.64.0.11), so it's listed by
+    # that IP rather than a LAN address.
     # ============================================================================
     nfsServerEnable = true;
     nfsExports = ''
       /mnt/ssdpool/media                192.168.20.0/24(rw,sync,insecure,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,no_subtree_check)
-      /mnt/ssdpool/workstation_backups  192.168.8.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.20.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
+      /mnt/ssdpool/workstation_backups  192.168.8.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.20.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.11(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
       /mnt/extpool/downloads            192.168.20.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
     '';
 
