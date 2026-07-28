@@ -143,6 +143,9 @@ $JQ -n -r --argjson tree "$TREE" --argjson ws "$WS" --argjson outs "$OUTPUTS" '
   | . as $f
   | ($orects[$wsout[$w.name] // ""] // null) as $orect
   | select($orect != null)
+  # Skip degraded outputs (EDID read failure after resume leaves the monitor
+  # at 640x480 fallback): never shrink windows to fit a bogus mode.
+  | select($orect.width >= 700)
   | ([$act[] | select(ovl(.rect; $f.rect))] | length) as $novl
   | (($f.rect.x + $f.rect.width / 2)  >= $orect.x
      and ($f.rect.x + $f.rect.width / 2)  < $orect.x + $orect.width
