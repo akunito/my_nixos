@@ -30,19 +30,21 @@ Remote Clients                    VPS (Headscale - NixOS native)      Home Netwo
    Clients                                                     Subnet Routers
    (laptops,                                              +--------------------+
     phones)                                               |                    |
-                                                   TrueNAS Docker       pfSense pkg
-                                                   (PRIMARY)            (FALLBACK)
-                                                   192.168.20.200       192.168.8.1
+                                                     pfSense pkg          NAS_PROD
+                                                     (PRIMARY)            (STANDBY)
+                                                     192.168.8.1          192.168.20.200
                                                         |                    |
                                                    +----+----+         +----+----+
                                                    | Subnets |         | Subnets |
                                                    | 192.168.8.x  |   | 192.168.8.x  |
                                                    | 192.168.20.x |   | 192.168.20.x |
                                                    +--------------+   +--------------+
-                                                   Offline 23:00-16:00   Always on
+                                                     Always on         Offline 23:00-16:00
 ```
 
-**Failover behavior**: TrueNAS is the primary subnet router but goes offline when TrueNAS sleeps (23:00-16:00). Headscale automatically fails over to the pfSense fallback router, which advertises the same subnets and is always on.
+**Failover behavior**: pfSense is the primary subnet router and is always on, so it serves both subnets under normal conditions. NAS_PROD advertises the same two subnets and has them approved, but Headscale only promotes it to serving if pfSense drops out — and the NAS itself sleeps 23:00-16:00, so pfSense is the one to trust.
+
+Verify who is actually serving with `headscale nodes list-routes` (the `Serving (Primary)` column).
 
 ---
 
@@ -51,14 +53,18 @@ Remote Clients                    VPS (Headscale - NixOS native)      Home Netwo
 | Component | Access | Purpose |
 |-----------|--------|---------|
 | Headscale (VPS) | `ssh -A -p 56777 akunito@100.64.0.6` | Coordination server (NixOS native) |
-| TrueNAS (subnet router) | `ssh -A akunito@192.168.20.200` | Primary subnet router (Docker) |
-| pfSense (fallback router) | Web UI at `192.168.8.1` | Fallback subnet router (package) |
+| pfSense (primary router) | Web UI at `192.168.8.1` | Primary subnet router (package), always on |
+| NAS_PROD (standby router) | `ssh -A akunito@192.168.20.200` | Standby subnet router, sleeps 23:00-16:00 |
 
 ---
 
 ## Headscale Administration (VPS)
 
 Headscale runs as a **NixOS native service** on the VPS (not Docker). All `headscale` commands run directly on the VPS.
+
+**Every `headscale` command needs `sudo`** — the CLI talks to `/run/headscale/headscale.sock`, which is root-owned. Without it you get `permission denied` on the socket.
+
+**CLI syntax is version-sensitive.** The server currently runs **0.29.2** (`sudo headscale version`). Two breaking changes from older runbooks: `headscale routes …` no longer exists (it moved under `headscale nodes`), and `preauthkeys` takes a numeric **user ID**, not a username.
 
 ### Check Headscale Status
 
@@ -69,57 +75,117 @@ ssh -A -p 56777 akunito@100.64.0.6 "sudo systemctl status headscale"
 ### List Registered Nodes
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 "headscale nodes list"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale nodes list"
 ```
 
 ### List Users
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 "headscale users list"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale users list"
 ```
+
+The `ID` column is what `preauthkeys create -u` wants. Users are per-device-owner here (`Android_Akunito`, `Android_Aga`, `DESK`, `Desk_Aga`, `Laptop_Aga`, `nixosx13aku`, `VPS_PROD`, `pfSense`, `TrueNAS`, `Komi_Macbook`), not per-person.
 
 ### Create New User
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 "headscale users create <username>"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale users create <username>"
 ```
 
 ### Generate Pre-Auth Key
 
+`-u` takes the **numeric user ID** from `users list`. `--user <name>` was removed.
+
 ```bash
-# Single-use key (expires in 1 hour)
-ssh -A -p 56777 akunito@100.64.0.6 "headscale preauthkeys create --user <username>"
+# Single-use key, default 1h expiry
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale preauthkeys create -u <userID>"
+
+# Longer window for a device you will set up later today
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale preauthkeys create -u <userID> --expiration 24h"
 
 # Reusable key (for multiple devices)
-ssh -A -p 56777 akunito@100.64.0.6 "headscale preauthkeys create --user <username> --reusable"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale preauthkeys create -u <userID> --reusable"
 ```
 
-### List Pre-Auth Keys
+Treat the printed `hskey-auth-…` string as a credential: it registers a node into the tailnet, and the ACL grants every member full access to all peers and both home subnets. Expire it once used.
+
+### List / Expire Pre-Auth Keys
+
+`preauthkeys list` takes no user filter in 0.29 — it prints keys for all users.
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 "headscale preauthkeys list --user <username>"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale preauthkeys list"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale preauthkeys expire <key>"
 ```
+
+---
+
+## Adding a New Device
+
+### Linux / NixOS
+
+Deploy the profile with `tailscaleEnable = true`, then authenticate once (the NixOS module never handles auth keys):
+
+```bash
+sudo tailscale up --login-server=https://headscale.akunito.com
+```
+
+The assembled command for the machine's own flags is written to `/etc/tailscale/connect.sh`.
+
+### Android / iOS (official Tailscale app)
+
+The app talks to Headscale through its "alternate server" setting. Order matters — set the server *before* the auth key, otherwise the key is rejected by Tailscale's own control plane.
+
+1. Generate a key on the VPS: `sudo headscale preauthkeys create -u <userID> --expiration 24h`
+2. In the app: **Settings** (top-right) → **Accounts** → **⋮** (kebab, top-right) → **Use an alternate server**
+3. Enter `https://headscale.akunito.com`. Dismiss any login prompt that appears.
+4. Back in **Settings** → **Accounts** → **⋮** → **Use an auth key**, paste the key, log in.
+
+Then verify from the VPS and give the node a readable name:
+
+```bash
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale nodes list"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale nodes rename -i <nodeID> <new-name>"
+```
+
+Mobile clients accept advertised subnet routes and the pushed DNS config by default, so `*.local.akunito.com` and the 192.168.8.x / 192.168.20.x LANs work without further toggles.
+
+### Retiring a Device
+
+```bash
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale nodes expire -i <nodeID>"   # log out, keep record
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale nodes delete -i <nodeID>"   # remove entirely
+```
+
+`prefixes.allocation` is `sequential`, so a deleted node's IP can be handed to the next device that registers. Check for hardcoded references (nginx binds, Prometheus targets, NFS export allowlists) before deleting anything that is not a phone.
 
 ---
 
 ## Route Management
 
+`headscale routes` was removed in 0.26+. Routes are managed per-node.
+
 ### List All Routes
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 "headscale routes list"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale nodes list-routes"
 ```
 
-### Enable a Route
+Columns: `Approved` (allowed by you), `Available` (advertised by the node), `Serving (Primary)` (actually carrying traffic right now).
+
+### Approve Routes for a Node
+
+Approval is declarative — pass the full set of routes the node should have, not a delta. Passing a subset revokes the rest.
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 "headscale routes enable -r <route-id>"
+ssh -A -p 56777 akunito@100.64.0.6 \
+  "sudo headscale nodes approve-routes -i <nodeID> -r 192.168.8.0/24,192.168.20.0/24"
 ```
 
-### Disable a Route
+### Revoke All Routes for a Node
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 "headscale routes disable -r <route-id>"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale nodes approve-routes -i <nodeID> -r ''"
 ```
 
 ---
@@ -128,30 +194,27 @@ ssh -A -p 56777 akunito@100.64.0.6 "headscale routes disable -r <route-id>"
 
 ### TrueNAS (Primary Subnet Router)
 
-TrueNAS runs Tailscale as a Docker container that advertises home subnets.
+Since the TrueNAS-to-NixOS migration the NAS runs Tailscale as a **NixOS service**, not a Docker container — it is node `nas-aku` (100.64.0.1), configured by `tailscaleAdvertiseRoutes` in `profiles/NAS_PROD-config.nix`.
 
 ```bash
-# Check Tailscale container status
-ssh -A akunito@192.168.20.200 "docker ps | grep tailscale"
-
-# Check Tailscale logs
-ssh -A akunito@192.168.20.200 "docker logs tailscale --tail 20"
-
-# Check advertised routes from inside the container
-ssh -A akunito@192.168.20.200 "docker exec tailscale tailscale status"
+ssh -A akunito@192.168.20.200 "systemctl status tailscaled"
+ssh -A akunito@192.168.20.200 "tailscale status"
 ```
 
-**Advertised subnets**: 192.168.8.0/24, 192.168.20.0/24
+**Advertised subnets**: 192.168.8.0/24, 192.168.20.0/24 (approved, but not serving while pfSense is up)
 
-**Availability**: Offline when TrueNAS sleeps (approximately 23:00-16:00). Headscale automatically fails over to pfSense.
+**Availability**: Offline when the NAS sleeps (approximately 23:00-16:00).
 
-### pfSense (Fallback Subnet Router)
+The old Docker-era node is still registered as `truenas` (100.64.0.9, expired, routes unapproved). It is a leftover, not a live router.
 
-pfSense runs the Tailscale package natively.
+### pfSense (Primary Subnet Router)
+
+pfSense runs the Tailscale package natively and is the node actually serving both subnets.
 
 - **Web UI**: `https://192.168.8.1`
-- **Advertised subnets**: 192.168.8.0/24, 192.168.20.0/24 (same as TrueNAS)
+- **Advertised subnets**: 192.168.8.0/24, 192.168.20.0/24 (same as the NAS)
 - **Availability**: Always on
+- Also the split-DNS resolver Headscale pushes for `*.local.akunito.com` (100.64.0.7)
 
 pfSense Tailscale is managed via the pfSense web UI under VPN > Tailscale. No SSH commands needed for routine operations.
 
@@ -242,24 +305,24 @@ ssh -A -p 56777 akunito@100.64.0.6 "sudo cp /var/lib/headscale/db.sqlite3 /var/l
 
 ### Subnet Routes Not Working
 
-1. Check which subnet router is active:
+1. Check which subnet router is actually serving:
    ```bash
-   ssh -A -p 56777 akunito@100.64.0.6 "headscale routes list"
+   ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale nodes list-routes"
+   ```
+   Under normal conditions `pfsense` holds both subnets in `Serving (Primary)`.
+
+2. If the routes are `Available` but not `Approved`, approve them (pass the full set):
+   ```bash
+   ssh -A -p 56777 akunito@100.64.0.6 \
+     "sudo headscale nodes approve-routes -i <nodeID> -r 192.168.8.0/24,192.168.20.0/24"
    ```
 
-2. Check TrueNAS Tailscale container:
-   ```bash
-   ssh -A akunito@192.168.20.200 "docker ps | grep tailscale"
-   ssh -A akunito@192.168.20.200 "docker exec tailscale tailscale status"
-   ```
+3. Check pfSense itself: web UI > VPN > Tailscale > Status.
 
-3. If TrueNAS is sleeping (23:00-16:00), verify pfSense fallback is active:
-   - Check pfSense web UI > VPN > Tailscale > Status
-   - Routes should show as enabled on the pfSense node in Headscale
-
-4. Verify routes are enabled on Headscale:
+4. On the client, confirm it is accepting routes at all — DESK and LAPTOP_X13 deliberately run with
+   `acceptRoutes = false` and connect manually via Trayscale:
    ```bash
-   ssh -A -p 56777 akunito@100.64.0.6 "headscale routes list"
+   tailscale status  # "Some peers are advertising routes but --accept-routes is false"
    ```
 
 ### Traffic Going Through Relay Instead of Direct
@@ -295,21 +358,27 @@ ssh -A -p 56777 akunito@100.64.0.6 "sudo cp /var/lib/headscale/db.sqlite3 /var/l
 
 ### Common Commands
 
+All VPS-side commands need `sudo` (root-owned socket).
+
 | Task | Command (on VPS) |
 |------|-------------------|
-| List all nodes | `headscale nodes list` |
-| List routes | `headscale routes list` |
-| Enable route | `headscale routes enable -r <id>` |
+| List all nodes | `sudo headscale nodes list` |
+| List users (for the ID) | `sudo headscale users list` |
+| New device key | `sudo headscale preauthkeys create -u <userID> --expiration 24h` |
+| List routes | `sudo headscale nodes list-routes` |
+| Approve routes | `sudo headscale nodes approve-routes -i <nodeID> -r <cidr,cidr>` |
+| Rename a node | `sudo headscale nodes rename -i <nodeID> <new-name>` |
+| Retire a node | `sudo headscale nodes expire -i <nodeID>` / `delete -i <nodeID>` |
 | Check status | `tailscale status` (on any client) |
 | NAT diagnostics | `tailscale netcheck` (on any client) |
 | Ping via mesh | `tailscale ping <ip>` (on any client) |
 
 ### Advertised Subnets
 
-| Subnet | Purpose | Primary Router | Fallback Router |
-|--------|---------|----------------|-----------------|
-| 192.168.8.0/24 | Main LAN (desktops, services) | TrueNAS Docker | pfSense package |
-| 192.168.20.0/24 | TrueNAS/Storage network | TrueNAS Docker | pfSense package |
+| Subnet | Purpose | Primary Router | Standby Router |
+|--------|---------|----------------|----------------|
+| 192.168.8.0/24 | Main LAN (desktops, services) | pfSense package | NAS_PROD (NixOS) |
+| 192.168.20.0/24 | NAS/Storage network | pfSense package | NAS_PROD (NixOS) |
 
 ### Key Locations
 
@@ -317,6 +386,8 @@ ssh -A -p 56777 akunito@100.64.0.6 "sudo cp /var/lib/headscale/db.sqlite3 /var/l
 |-----------|----------|
 | Headscale data | `/var/lib/headscale/` (VPS) |
 | Headscale database | `/var/lib/headscale/db.sqlite3` (VPS) |
-| Headscale NixOS config | `profiles/VPS_PROD-config.nix` |
-| TrueNAS Tailscale container | Docker on `akunito@192.168.20.200` |
+| Headscale runtime config | `/etc/headscale/config.yaml` is a **stub** (socket path only); the real config is the Nix store file passed to `headscale serve --config` (see `systemctl cat headscale`) |
+| Headscale NixOS config | `system/app/headscale.nix`, enabled in `profiles/VPS_PROD-config.nix` |
+| ACL policy | Database-backed (`policy.mode = "database"`), **not** in this repo — read with `sudo headscale policy get`, set with `sudo headscale policy set --file <f>` |
+| NAS Tailscale | NixOS service on `akunito@192.168.20.200` |
 | pfSense Tailscale | Web UI at `192.168.8.1` > VPN > Tailscale |
