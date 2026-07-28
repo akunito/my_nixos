@@ -111,12 +111,24 @@ Treat the printed `hskey-auth-…` string as a credential: it registers a node i
 
 ### List / Expire Pre-Auth Keys
 
-`preauthkeys list` takes no user filter in 0.29 — it prints keys for all users.
+`preauthkeys list` takes no user filter in 0.29 — it prints keys for all users. `expire` wants the key's
+numeric **`--id`**, not the `hskey-auth-…` string:
 
 ```bash
 ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale preauthkeys list"
-ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale preauthkeys expire <key>"
+ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale preauthkeys expire --id <keyID>"
 ```
+
+`-o json` is easier to grep when you need to map a key back to its ID.
+
+### ⚠️ `--user` is inconsistent across subcommands
+
+This will waste your time otherwise:
+
+| Subcommand | What `--user` / `-u` wants |
+|---|---|
+| `preauthkeys create -u` | numeric **user ID** (`1`) — a name errors with `unknown flag` semantics |
+| `auth register --user` | **username string** (`Android_Akunito`) — an ID fails with `looking up user: user not found` |
 
 ---
 
@@ -134,14 +146,37 @@ The assembled command for the machine's own flags is written to `/etc/tailscale/
 
 ### Android / iOS (official Tailscale app)
 
-The app talks to Headscale through its "alternate server" setting. Order matters — set the server *before* the auth key, otherwise the key is rejected by Tailscale's own control plane.
+Point the app at Headscale first:
 
-1. Generate a key on the VPS: `sudo headscale preauthkeys create -u <userID> --expiration 24h`
-2. In the app: **Settings** (top-right) → **Accounts** → **⋮** (kebab, top-right) → **Use an alternate server**
-3. Enter `https://headscale.akunito.com`. Dismiss any login prompt that appears.
-4. Back in **Settings** → **Accounts** → **⋮** → **Use an auth key**, paste the key, log in.
+1. **Settings** (top-right) → **Accounts** → **⋮** (kebab, top-right) → **Use an alternate server**
+2. Enter `https://headscale.akunito.com`
 
-Then verify from the VPS and give the node a readable name:
+From here there are two paths. **The web flow is the one that actually happens by default** — after
+step 2 the app opens a browser page that prints a ready-made command:
+
+```
+headscale auth register --auth-id hskey-authreq-XXXXXXXX --user USERNAME
+```
+
+Run it on the VPS, substituting the **username** (not the ID):
+
+```bash
+ssh -A -p 56777 akunito@100.64.0.6 \
+  "sudo headscale auth register --auth-id hskey-authreq-XXXXXXXX --user Android_Akunito"
+# -> "Node pixel-9a registered"
+```
+
+The phone connects within a second or two; no key ever leaves the server. The node name is derived
+from the device's own hostname (a Pixel 9a registers itself as `pixel-9a`), so a rename is often
+unnecessary.
+
+The pre-auth key path is the alternative if you would rather not have server access at that moment:
+generate `sudo headscale preauthkeys create -u <userID> --expiration 24h`, then in the app
+**Settings** → **Accounts** → **⋮** → **Use an auth key** and paste it. Set the alternate server
+*before* entering the key — otherwise the app sends it to Tailscale's own control plane and it is
+rejected. Expire the key afterwards if it went unused.
+
+Then verify from the VPS and, if needed, give the node a readable name:
 
 ```bash
 ssh -A -p 56777 akunito@100.64.0.6 "sudo headscale nodes list"
