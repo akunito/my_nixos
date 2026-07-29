@@ -413,6 +413,9 @@
     # Fingerprint reader (fprintd)
     fprintdEnable = false; # Enable fingerprint reader support
 
+    # Firmware updates (fwupd / LVFS) — UEFI/BIOS and device firmware from Linux
+    fwupdEnable = false; # Enable fwupd daemon for LVFS firmware/BIOS updates (fwupdmgr)
+
     # GPU-related feature flags
     amdLACTdriverEnable = false; # Enable LACT (Linux AMD GPU Control Application) for AMD GPU management
     amdgpuSuspendWorkaround = false; # AINF-282: disable amdgpu runpm/bapm/aspm + pause lactd around sleep (RDNA 4 / Navi 48 SMU regression, kernel 6.17–7.0+)

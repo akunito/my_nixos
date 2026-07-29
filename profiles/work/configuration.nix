@@ -79,7 +79,8 @@
   ++ lib.optional (systemSettings.hibernateEnable or false) ../../system/hardware/hibernate.nix # Hibernation with LUKS-encrypted swap (self-gates on hibernateSwapLuksUUID; warns when half-configured)
   ++ lib.optional (systemSettings.laptopPowerTuningEnable or false) ../../system/hardware/laptop-power-tuning.nix # Laptop idle power reduction
   ++ lib.optional (systemSettings.autoSuspendInhibit or false) ../../system/hardware/inhibit-auto-suspend.nix # Block idle auto-suspend on always-on desktops (Plasma/PowerDevil)
-  ++ lib.optional (systemSettings.fprintdEnable or false) ../../system/hardware/fingerprint.nix; # Fingerprint reader support
+  ++ lib.optional (systemSettings.fprintdEnable or false) ../../system/hardware/fingerprint.nix # Fingerprint reader support
+  ++ lib.optional (systemSettings.fwupdEnable or false) ../../system/hardware/fwupd.nix; # fwupd/LVFS firmware & BIOS updates
 
   # Ensure nix flakes are enabled
   nix.package = pkgs.nixVersions.stable;

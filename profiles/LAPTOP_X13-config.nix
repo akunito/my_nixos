@@ -191,6 +191,12 @@ in
     thunderboltEnable = false; # X13 AMD has no Thunderbolt
     amdPstateEnable = true; # AMD P-State EPP driver (Zen 3)
     fprintdEnable = true; # Fingerprint reader support
+    fwupdEnable = true; # fwupd/LVFS firmware & BIOS updates (fwupdmgr) — needed to fix the ACPI S5 poweroff hang via a BIOS bump past 1.34
+    # AINF-282: AMD SMU s2idle resume hang (kernel 6.17→7.x). Cezanne iGPU hung
+    # on resume (black screen, LED on, no input, hard-reset only) on 2026-07-11.
+    # Disables amdgpu runpm/bapm/aspm so suspend skips the broken SMU path.
+    # lactd absent here, so the module's LACT-pause hook is a no-op.
+    amdgpuSuspendWorkaround = true;
 
     # === System Services & Features ===
     sunshineEnable = true; # Enable Sunshine game streaming
