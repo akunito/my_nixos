@@ -100,7 +100,13 @@ in
       User = systemSettings.homeBackupUser;
       Environment = "PATH=/run/current-system/sw/bin:/usr/bin:/bin";
     };
-    unitConfig = { # Call next service on success
+    # Chain to the next backup stage on success — but only when the profile
+    # actually asked for it. homeBackupCallNextEnabled existed yet was never
+    # consulted here, so profiles that set it to false still inherited the
+    # default OnSuccess=[ "remote_backup.service" ] and every successful run
+    # ended with "Failed to enqueue OnSuccess=remote_backup.service job,
+    # ignoring: Unit remote_backup.service not found."
+    unitConfig = lib.mkIf (systemSettings.homeBackupCallNextEnabled or false) {
       OnSuccess = systemSettings.homeBackupCallNext;
     };
   };
