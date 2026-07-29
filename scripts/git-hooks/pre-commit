@@ -87,11 +87,18 @@ for file in "${UNENCRYPTED_FILES[@]}"; do
     # --- Check 3: High-entropy secret assignments ---
     # Matches: KEY|TOKEN|SECRET|PASSWORD = "value-at-least-12-chars"
     # Skips: references to secrets.*, ${...}, nix variable interpolation, placeholders
+    #
+    # *passwordSecret / *ApiKeySecret / *PasswordSecret are exempt for the same
+    # reason passwordFile and hashedPassword already are: by construction they
+    # hold the NAME of an attribute in secrets/domains.nix, resolved at runtime,
+    # never the value. That indirection is what keeps credentials out of the
+    # world-readable Nix store (see user/app/database/db-credentials.nix), so
+    # flagging it would push people back toward inlining the real password.
     if echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' > /dev/null 2>&1; then
         # Filter out safe patterns: secrets.foo, passwordFile, hashedPassword, comments,
         # placeholder values (your-*, generate-*, GENERATE_*), ssh key paths, documentation
         suspicious=$(echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' \
-            | grep -viE '(secrets\.|passwordFile|hashedPassword|sslCertificate|sshKey|mkOption|description|example|default =.*lib\.|[0-9]+:\s*#|your-|placeholder|generate-|GENERATE_|\.ssh/)' || true)
+            | grep -viE '(secrets\.|passwordFile|passwordSecret|ApiKeySecret|PasswordSecret|hashedPassword|sslCertificate|sshKey|mkOption|description|example|default =.*lib\.|[0-9]+:\s*#|your-|placeholder|generate-|GENERATE_|\.ssh/)' || true)
         if [ -n "$suspicious" ]; then
             FINDINGS+="  ${YELLOW}Possible secret assignment${RESET} in $file:\n$suspicious\n"
             BLOCKED=true

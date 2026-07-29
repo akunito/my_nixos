@@ -23,9 +23,10 @@
 #   journalctl -u llama-server -f
 #
 # See: memory reference_desk_wol (wake-on-demand context)
-{ config, pkgs, pkgs-unstable, lib, systemSettings, ... }:
+{ config, pkgs, pkgs-unstable, lib, systemSettings, userSettings, ... }:
 let
   cfg = systemSettings;
+  secretsFile = "${userSettings.dotfilesDir}/secrets/domains.nix";
   enabled = cfg.llamaServerEnable or false;
   host = cfg.llamaServerHost or "0.0.0.0";
   port = cfg.llamaServerPort or 8090;                  # public socket port
@@ -36,6 +37,12 @@ let
   ctxSize = cfg.llamaServerCtxSize or 16384;
   gpuLayers = cfg.llamaServerGpuLayers or 999;
   apiKey = cfg.llamaServerApiKey or "";
+  # Preferred over llamaServerApiKey: the NAME of an attribute in
+  # secrets/domains.nix. Resolved at activation into a 0400 root-owned file and
+  # handed to the unit via LoadCredential, so the key never enters the
+  # world-readable store (same pattern as llama-wake-proxy's apiKeyFile).
+  apiKeySecret = cfg.llamaServerApiKeySecret or "";
+  apiKeyFile = "/var/lib/llama-server-secrets/api-key";
   extraArgs = cfg.llamaServerExtraArgs or [ "--jinja" ];
   openFwTs = cfg.llamaServerOpenFirewallTailscale or true;
   vramBusy = cfg.llamaServerVramBusyBytes or 5368709120;
@@ -56,7 +63,10 @@ let
     "-c" (toString ctxSize)
     "-hf" modelRef                # auto-download GGUF (cached in StateDirectory)
   ]
-  ++ lib.optionals (apiKey != "") [ "--api-key" apiKey ]
+  # --api-key-file keeps the key out of both the store AND the process table
+  # (`--api-key <secret>` would be visible in `ps` to every local user).
+  ++ lib.optionals (apiKeySecret != "") [ "--api-key-file" "%d/api-key" ]
+  ++ lib.optionals (apiKeySecret == "" && apiKey != "") [ "--api-key" apiKey ]
   ++ extraArgs;
 
   # Preflight gate: refuse to load while gaming (lock present, or GPU already busy).
@@ -112,14 +122,23 @@ in
       # ExecCondition (not ExecStartPre): a non-zero exit cleanly SKIPS the start
       # (marked condition-failed, not failed) so refusing during gaming doesn't
       # trip the restart rate-limit. StartLimitIntervalSec=0 belt-and-suspenders.
-      unitConfig.StartLimitIntervalSec = 0;
+      #
+      # StopWhenUnneeded is a [Unit] key — putting it in serviceConfig makes
+      # systemd log "Unknown key ... in section [Service], ignoring" and the
+      # backend then NEVER stops on its own, pinning ~14GB VRAM indefinitely.
+      unitConfig = {
+        StartLimitIntervalSec = 0;
+        StopWhenUnneeded = true;      # stop (free VRAM) once the proxy no longer needs it
+      };
       serviceConfig = {
         ExecCondition = "${preflight}";
         ExecStart = "${lib.getExe' llamaVulkan "llama-server"} ${lib.escapeShellArgs args}";
         ExecStartPost = "${waitReady}";
         TimeoutStartSec = "360";      # covers first-run GGUF download + model load
-        StopWhenUnneeded = true;      # stop (free VRAM) once the proxy no longer needs it
         DynamicUser = true;
+      } // lib.optionalAttrs (apiKeySecret != "") {
+        # Exposed to the (DynamicUser) service as %d/api-key, mode 0400.
+        LoadCredential = "api-key:${apiKeyFile}";
         StateDirectory = "llama-server";
         SupplementaryGroups = [ "video" "render" ];  # /dev/dri access for the GPU
         Restart = "on-failure";
@@ -161,6 +180,30 @@ in
     # Expose the public port ONLY over Tailscale (localhost always works).
     networking.firewall.interfaces."tailscale0".allowedTCPPorts =
       lib.mkIf openFwTs [ port ];
+
+    # Materialise the API key at runtime (never through a derivation).
+    system.activationScripts.llamaServerApiKey = lib.mkIf (apiKeySecret != "") {
+      text = ''
+        install -d -m 0700 -o root -g root "$(dirname ${apiKeyFile})"
+        key=""
+        if [ -r ${secretsFile} ]; then
+          key="$(${pkgs.nix}/bin/nix eval --impure --raw \
+            --expr '(import ${secretsFile}).${apiKeySecret} or ""' 2>/dev/null || true)"
+        fi
+        if [ -n "$key" ]; then
+          umask 077
+          printf '%s' "$key" > ${apiKeyFile}.tmp
+          chmod 0400 ${apiKeyFile}.tmp
+          mv -f ${apiKeyFile}.tmp ${apiKeyFile}
+        else
+          # Fail closed: without the file LoadCredential refuses to start the
+          # backend, which is preferable to silently serving unauthenticated.
+          echo "llama-server: llamaServerApiKeySecret is set but could not be resolved — backend will refuse to start" >&2
+          rm -f ${apiKeyFile}
+        fi
+        unset key
+      '';
+    };
 
     # --- Gaming lockout ---------------------------------------------------
     # World-writable (sticky) dir so any local user / GameMode hook can toggle

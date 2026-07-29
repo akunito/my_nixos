@@ -354,20 +354,42 @@ try:
         base = json.load(f)
     with open('$settings_file') as f:
         current = json.load(f)
-    # Always sync hooks and deny from base (security-critical)
+    # Always sync hooks from base (security-critical)
     changed = False
     for key in ['hooks']:
         if base.get(key) != current.get(key):
             current[key] = base[key]
             changed = True
+
+    # Always sync permissions.deny from base (security-critical).
+    # Historically this loop only covered 'hooks', so a settings.json that had
+    # lost its 'permissions' block never got the deny rules back and Claude Code
+    # ran with an empty deny list. Deny is force-synced from base; the user's own
+    # allow/ask entries (and any extra deny entries they added) are preserved.
+    base_perms = base.get('permissions', {})
+    if base_perms:
+        cur_perms = current.setdefault('permissions', {})
+        base_deny = base_perms.get('deny', [])
+        cur_deny = cur_perms.get('deny', [])
+        # base rules first, then user-added ones we don't own, order-stable
+        merged_deny = base_deny + [d for d in cur_deny if d not in base_deny]
+        if merged_deny != cur_deny:
+            cur_perms['deny'] = merged_deny
+            changed = True
+        # seed allow/ask only when absent — never clobber user edits
+        for key in ('allow', 'ask'):
+            if key not in cur_perms and key in base_perms:
+                cur_perms[key] = base_perms[key]
+                changed = True
+
     if changed:
         with open('$settings_file', 'w') as f:
             json.dump(current, f, indent=2)
-        print('Claude Code: hooks synced from base settings')
+        print('Claude Code: hooks + deny rules synced from base settings')
     else:
         print('Claude Code: settings.json up to date')
 except Exception as e:
-    print(f'Claude Code: hooks sync failed: {e}', file=sys.stderr)
+    print(f'Claude Code: hooks/deny sync failed: {e}', file=sys.stderr)
 "
       else
         echo "Claude Code: settings.json exists (preserving user changes, python3 unavailable for hooks sync)"

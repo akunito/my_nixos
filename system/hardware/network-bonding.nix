@@ -202,6 +202,24 @@ in
       };
     };
 
+    # LACP needs time to converge: the switch and both NICs exchange LACPDUs and
+    # the bond reports speed 0 until an aggregator is selected — roughly 60s here
+    # ("bond0: Warning: No 802.3ad response from the link partner for any
+    # adapters in the bond" at boot). nm-online's 60s default expires first, so
+    # NetworkManager-wait-online.service fails on EVERY boot, leaving a
+    # permanently degraded system and delaying network-online.target consumers.
+    # Give it enough headroom to actually wait for the bond.
+    systemd.services.NetworkManager-wait-online = lib.mkIf useNetworkManager {
+      serviceConfig = {
+        ExecStart = [
+          "" # clear the upstream ExecStart before replacing it
+          "${pkgs.networkmanager}/bin/nm-online -s -q --timeout=180"
+        ];
+        # Must exceed the nm-online timeout, or systemd kills it first.
+        TimeoutStartSec = 200;
+      };
+    };
+
     # TCP buffer tuning for high-bandwidth 10GbE links
     # Note: uses lib.mkForce to override homelab/base.nix 8 MB defaults (priority 100)
     # when ring buffers are explicitly tuned for 10GbE performance.

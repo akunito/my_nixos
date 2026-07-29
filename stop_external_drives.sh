@@ -16,6 +16,16 @@ BOLD='\033[1m'
 RESET='\033[0m'
 
 stop_docker_containers_if_any() {
+    # Honour install.sh's -d/--skip-docker. install.sh only used to gate its own
+    # handle_docker step on that flag, but generate_hardware_config calls this
+    # script unconditionally — so `-d` advertised "keeps containers running"
+    # while this function still stopped every container on the box, killing
+    # in-progress dev stacks. install.sh now exports SKIP_DOCKER=true for -d.
+    if [ "${SKIP_DOCKER:-false}" = "true" ]; then
+        echo -e "${CYAN}SKIP_DOCKER set — leaving running containers alone${RESET}"
+        return 0
+    fi
+
     # If docker isn't available or daemon isn't running, do nothing
     command -v docker >/dev/null 2>&1 || return 0
     systemctl is-active --quiet docker 2>/dev/null || return 0

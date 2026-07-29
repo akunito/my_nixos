@@ -76,6 +76,11 @@ in
       "hid_nintendo" # Joy-Con controller
     ];
 
+    # Btrfs scrub — both / and /home are btrfs on LUKS and had never been scrubbed.
+    btrfsAutoScrubEnable = true;
+    btrfsAutoScrubInterval = "monthly";
+    btrfsAutoScrubFileSystems = [ "/" "/home" ];
+
     # Security
     fuseAllowOther = true;
     pkiCertificates = [ /home/akunito/.myCA/ca.cert.pem ];
@@ -102,12 +107,14 @@ in
             // Allow managing specific systemd units
             (action.id == "org.freedesktop.systemd1.manage-units" &&
               action.lookup("verb") == "start" &&
-              action.lookup("unit") == "mnt-NFS_Backups.mount") ||
+              action.lookup("unit") == "mnt-NFS_Backups.mount")
 
-            // Allow running rsync and restic
-            (action.id == "org.freedesktop.policykit.exec" &&
-              (action.lookup("command") == "/run/current-system/sw/bin/rsync" ||
-              action.lookup("command") == "/run/current-system/sw/bin/restic"))
+            // REMOVED: passwordless policykit.exec for rsync/restic.
+            // Both run as root with arbitrary paths, so that rule handed every
+            // member of the "users" group a silent root-equivalent primitive
+            // (rsync can overwrite /etc; restic's rclone backend executes an
+            // arbitrary program). Backups don't need it — they use the
+            // security.wrappers.restic capability binary instead.
           )
         ) {
           return polkit.Result.YES;
@@ -119,6 +126,13 @@ in
     homeBackupEnable = true;
     homeBackupCallNextEnabled = false;
     nfsBackupEnable = true;
+    # The NAS S3-suspends at 23:00 and RTC-wakes at 16:00 (see NAS_PROD-config.nix).
+    # The default "0/6:00:00" fires at 00:00/06:00/12:00/18:00, so three of the
+    # four daily runs landed inside the sleep window and failed by construction —
+    # backup-manager.sh has no wake step, it just reports "NFS not accessible"
+    # and leaves home_backup.service + mnt-NFS_Backups.mount in a failed state.
+    # Run inside the awake window instead, so a failure now means something real.
+    homeBackupOnCalendar = "*-*-* 17,21:00:00";
 
     # Network
     ipAddress = "192.168.8.96";
@@ -180,16 +194,53 @@ in
     llamaServerIdleTimeout = "15min"; # free VRAM 15 min after last request
     llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF"; # Qwen3-14B alt: "ggml-org/Qwen3-14B-GGUF"
     llamaServerCtxSize = 16384;
-    llamaServerApiKey = ""; # no key yet (tailscale-only + firewalled); add from secrets to harden
+    # Auth: still OFF, deliberately. The endpoint is tailscale-only + firewalled,
+    # and VPS_PROD fronts it with llamaWakeProxyEnable — that proxy forwards
+    # requests verbatim, so switching auth on here breaks every app behind it
+    # until each one is taught to send the key. To enable, add the key to
+    # secrets/domains.nix, set the line below, then update the consumers:
+    #   llamaServerApiKeySecret = "llamaServerApiKey";
+    # (llamaServerApiKeySecret takes the attribute NAME, so the key stays out of
+    # the store and out of `ps` — unlike the legacy llamaServerApiKey option.)
+    llamaServerApiKey = "";
 
     # Firewall
+    # NOTE: sunshineEnable = true makes system/app/sunshine.nix open 47984/47989/
+    # 47990/48010 (TCP) and the 47998-48010 UDP range itself — the commented-out
+    # entries below are historical, NOT proof that Sunshine is firewalled off.
     allowedTCPPorts = [
       9100 # prometheus workstation exporter
-      # 47984 47989 47990 48010 # sunshine
     ];
     allowedUDPPorts = [
-      # 47998 47999 48000 8000 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 # sunshine
       # 51820 # Wireguard
+    ];
+
+    # ========================================================================
+    # Docker firewall backstop
+    # ========================================================================
+    # Published container ports (docker-compose `ports:` defaults to 0.0.0.0)
+    # bypass allowedTCPPorts entirely — they are DNAT'd through FORWARD, not
+    # INPUT. Without this, the leftyworkout dev/test stacks exposed Postgres
+    # 5432/5433, Redis 6380 and the Rails apps to the whole LAN and to every
+    # Tailscale peer. Compose files live in project repos, so the block has to
+    # happen here.
+    dockerFirewallEnable = true;
+    dockerFirewallExternalInterfaces = [
+      "bond0"      # 10GbE LACP (LAN)
+      "bond0.100"  # storage VLAN
+      "eno1"       # onboard 2.5GbE (WoL NIC)
+      "tailscale0" # mesh peers are NOT a trust boundary for raw DB ports
+    ];
+    # Exceptions: the dev/test web UIs stay reachable over Tailscale so the
+    # phone can hit them for mobile testing. Databases and Redis are NOT listed
+    # here on purpose — they stay blocked on every external interface.
+    dockerFirewallAllowedPorts = [
+      { interface = "tailscale0"; port = 3110; } # leftyworkout backend (dev)
+      { interface = "tailscale0"; port = 3111; } # leftyworkout frontend (dev)
+      { interface = "tailscale0"; port = 3210; } # leftyworkout backend (dev2)
+      { interface = "tailscale0"; port = 3211; } # leftyworkout frontend (dev2)
+      { interface = "tailscale0"; port = 6006; } # Storybook (dev)
+      { interface = "tailscale0"; port = 6007; } # Storybook (dev2)
     ];
 
     # Drives
@@ -214,14 +265,12 @@ in
       "uid=1000"
       "gid=1000"
     ];
-    disk3_enabled = false; # NFS_media handled by nfsMounts + nfsAutoMounts (no duplicate)
-    disk3_name = "/mnt/NFS_media";
-    disk3_device = "192.168.20.200:/mnt/ssdpool/media";
-    disk3_fsType = "nfs4";
-    disk3_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
+    # NFS_media / NFS_Backups / NFS_downloads are declared ONCE, in
+    # nfsMounts + nfsAutoMounts below. The disk3/disk8/disk9 slots used to carry
+    # duplicate definitions; the bodies are deleted rather than left commented so
+    # nobody can flip _enabled back to true and end up with two competing mount
+    # units for the same path.
+    disk3_enabled = false;
     # disk4 (emulators) and disk5 (library) removed — datasets no longer exist on TrueNAS,
     # data lives on VPS (romm-library, calibre-library). See IAKU-247.
     disk4_enabled = false;
@@ -245,15 +294,8 @@ in
     # disk7_device = "/dev/disk/by-uuid/b6be2dd5-d6c0-4839-8656-cb9003347c93";
     # disk7_fsType = "ext4";
     # disk7_options = [ "nofail" "x-systemd.device-timeout=5s" "noatime" "nodiratime" ];
-    disk8_enabled = false; # NFS_Backups handled by nfsMounts + nfsAutoMounts (no duplicate)
-    disk8_name = "/mnt/NFS_Backups";
-    disk8_device = "192.168.20.200:/mnt/ssdpool/workstation_backups";
-    disk8_fsType = "nfs4";
-    disk8_options = [
-      "nofail"
-      "x-systemd.device-timeout=5s"
-    ];
-    disk9_enabled = false; # NFS_downloads handled by nfsMounts + nfsAutoMounts (no duplicate)
+    disk8_enabled = false; # see note at disk3
+    disk9_enabled = false; # see note at disk3
 
     # NFS client
     nfsClientEnable = true;
@@ -410,14 +452,16 @@ in
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
     dbCredentialsEnable = true;
     dbCredentialsHost = "vps-prod"; # VPS Tailscale hostname
+    # NOTE: pass the secret ATTRIBUTE NAME, not the value — the value would be
+    # baked into a world-readable /nix/store path. Resolved at activation time.
     dbCredentialsPostgres = [
-      { database = "plane"; user = "plane"; password = secrets.dbPlanePassword; }
-      { database = "rails_database_prod"; user = "liftcraft"; password = secrets.dbLiftcraftPassword; }
+      { database = "plane"; user = "plane"; passwordSecret = "dbPlanePassword"; }
+      { database = "rails_database_prod"; user = "liftcraft"; passwordSecret = "dbLiftcraftPassword"; }
     ];
     dbCredentialsMariadb = [
-      { database = "nextcloud"; user = "nextcloud"; password = secrets.dbNextcloudPassword; }
+      { database = "nextcloud"; user = "nextcloud"; passwordSecret = "dbNextcloudPassword"; }
     ];
-    dbCredentialsRedisPassword = secrets.redisServerPassword;
+    dbCredentialsRedisPasswordSecret = "redisServerPassword";
 
     # === Monitor Configuration (Sway/SwayFX) ===
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.

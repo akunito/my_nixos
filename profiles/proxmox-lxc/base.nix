@@ -18,6 +18,7 @@
     ../../system/security/fail2ban.nix
     ../../system/hardware/nfs_client.nix
     ../../system/security/sudo.nix
+    ../../system/security/nix-access-token.nix # GitHub PAT -> 0600 per-user nix.conf (keeps it out of the world-readable store)
     ../../system/security/gpg.nix
     ../../system/security/autoupgrade.nix
     ../../system/security/update-failure-notification.nix
@@ -59,10 +60,11 @@
 
   # Ensure nix flakes are enabled
   nix.package = pkgs.nixVersions.stable;
+  # access-tokens intentionally omitted: /etc/nix/nix.conf is a world-readable
+  # store file. The PAT is written to 0600 per-user nix.conf files at activation
+  # instead — see system/security/nix-access-token.nix.
   nix.extraOptions = ''
     experimental-features = nix-command flakes
-  '' + lib.optionalString ((systemSettings.githubAccessToken or "") != "") ''
-    access-tokens = github.com=${systemSettings.githubAccessToken}
   '';
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels

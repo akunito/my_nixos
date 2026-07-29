@@ -59,11 +59,15 @@
     };
   };
 
-  # Ensure libvirt-guests service stops before libvirtd and has proper timeout
-  # This prevents hanging during system shutdown
+  # Ensure libvirt-guests has a bounded stop timeout so shutdown can't hang.
+  #
+  # Do NOT add `before = [ "libvirtd.service" ]` here: upstream libvirt-guests
+  # already ships After=libvirtd.service, so adding Before= creates an ordering
+  # cycle ("Found ordering cycle ... Job libvirt-guests.service/start deleted")
+  # and systemd resolves it by dropping libvirt-guests entirely — autostarted
+  # VMs then never come up. Shutdown ordering is the reverse of start ordering,
+  # so the existing After= already guarantees guests stop before libvirtd does.
   systemd.services.libvirt-guests = lib.mkIf (userSettings.virtualizationEnable == true) {
-    # Ensure guests are shut down before libvirtd stops
-    before = [ "libvirtd.service" ];
     # Set service timeout to prevent indefinite hanging
     serviceConfig = {
       TimeoutStopSec = 10;  # 10 seconds total timeout (includes shutdownTimeout)

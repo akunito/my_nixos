@@ -64,13 +64,17 @@
         command = "/run/current-system/sw/bin/systemctl hibernate";
         options = [ "NOPASSWD" ];
       }
-      {
-        command = "/run/current-system/sw/bin/restic";
-        options = [
-          "NOPASSWD"
-          "SETENV"
-        ];
-      }
+      # NOTE: `restic` deliberately has NO passwordless entry.
+      # `sudo restic` with NOPASSWD+SETENV is an unauthenticated root shell:
+      # restic's rclone backend takes an arbitrary program
+      # (`-o rclone.program=<cmd>`) and executes it, so any local process
+      # running as this user could become root without a prompt.
+      #
+      # Nothing needs it: backups go through the security.wrappers.restic
+      # binary (cap_dac_read_search, no sudo) — see system/security/restic.nix
+      # and scripts/backup-manager.sh, which calls /run/wrappers/bin/restic.
+      # Interactive `sudo restic` still works, it just asks for a password
+      # (via the zenity askpass dialog when there's no TTY).
     ];
     pkiCertificates = [ ];
 
@@ -183,7 +187,8 @@
     llamaServerModelHfFile = "";                           # optional specific GGUF filename ("" = repo default)
     llamaServerCtxSize = 16384;                            # context window
     llamaServerGpuLayers = 999;                            # offload all layers to GPU
-    llamaServerApiKey = "";                                # "" = no auth (tailscale-only + firewalled)
+    llamaServerApiKey = "";                                # legacy literal; leaks into the store AND `ps` — prefer llamaServerApiKeySecret
+    llamaServerApiKeySecret = "";                          # attribute NAME in secrets/domains.nix; resolved at activation into a 0400 file passed via LoadCredential
     llamaServerExtraArgs = [ "--jinja" ];                  # --jinja enables the tool-calling chat template
     llamaServerOpenFirewallTailscale = true;               # open the port only on tailscale0
     llamaServerVramBusyBytes = 5368709120;                 # gaming VRAM guard: refuse to load if GPU already uses > this (5 GiB)
@@ -607,16 +612,44 @@
     prometheusRedisExporterEnable = false;
     prometheusRedisExporterPort = 9121;
 
+    # === Nix store housekeeping (workstation profiles) ===
+    nixGcAutomatic = true;
+    nixGcDates = "weekly";
+    nixGcOptions = "--delete-older-than 30d";
+
+    # === Btrfs scrub ===
+    # Detects (cannot repair, on single-device volumes) silent corruption.
+    btrfsAutoScrubEnable = false;
+    btrfsAutoScrubInterval = "monthly";
+    btrfsAutoScrubFileSystems = [ "/" ];
+
+    # === Docker firewall backstop ===
+    # Published container ports bypass networking.firewall (they traverse
+    # FORWARD, not INPUT). When enabled, unsolicited inbound traffic to
+    # containers is dropped on the listed interfaces via the DOCKER-USER chain.
+    # See system/security/docker-firewall.nix.
+    dockerFirewallEnable = false;
+    dockerFirewallExternalInterfaces = [ ]; # e.g. [ "bond0" "eno1" "tailscale0" ]
+    # Exceptions, evaluated before the drops:
+    #   [ { interface = "tailscale0"; port = 3110; protocol = "tcp"; } ]
+    dockerFirewallAllowedPorts = [ ];
+
     # === Database Client Credentials (for workstations) ===
     # Generate ~/.pgpass and ~/.my.cnf for CLI tools and DBeaver
     dbCredentialsEnable = false;
     # Database server host (VPS via Tailscale)
     dbCredentialsHost = "vps-prod";  # VPS Tailscale hostname (was 100.64.0.6)
     # PostgreSQL credentials (plane, liftcraft databases)
-    dbCredentialsPostgres = []; # List of { database, user, password }
-    # MariaDB credentials (nextcloud database)
-    dbCredentialsMariadb = []; # List of { database, user, password }
-    # Redis credentials
+    # List of { database, user, passwordSecret } where passwordSecret is the
+    # ATTRIBUTE NAME in secrets/domains.nix — never the password value itself.
+    # Passing the value (legacy `password = secrets.X`) bakes it into a
+    # world-readable /nix/store path; see user/app/database/db-credentials.nix.
+    dbCredentialsPostgres = [];
+    # MariaDB credentials (nextcloud database) — same { database, user, passwordSecret } shape
+    dbCredentialsMariadb = [];
+    # Redis credentials — attribute NAME in secrets/domains.nix (preferred)
+    dbCredentialsRedisPasswordSecret = "";
+    # Legacy literal form; leaks into the store. Kept only for unmigrated profiles.
     dbCredentialsRedisPassword = "";
 
     # Sway/SwayFX monitor inventory (data-only; safe default for all profiles)

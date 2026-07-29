@@ -239,14 +239,16 @@ in
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver
     dbCredentialsEnable = true;
     dbCredentialsHost = "vps-prod"; # VPS Tailscale hostname
+    # NOTE: pass the secret ATTRIBUTE NAME, not the value — the value would be
+    # baked into a world-readable /nix/store path. Resolved at activation time.
     dbCredentialsPostgres = [
-      { database = "plane"; user = "plane"; password = secrets.dbPlanePassword; }
-      { database = "rails_database_prod"; user = "liftcraft"; password = secrets.dbLiftcraftPassword; }
+      { database = "plane"; user = "plane"; passwordSecret = "dbPlanePassword"; }
+      { database = "rails_database_prod"; user = "liftcraft"; passwordSecret = "dbLiftcraftPassword"; }
     ];
     dbCredentialsMariadb = [
-      { database = "nextcloud"; user = "nextcloud"; password = secrets.dbNextcloudPassword; }
+      { database = "nextcloud"; user = "nextcloud"; passwordSecret = "dbNextcloudPassword"; }
     ];
-    dbCredentialsRedisPassword = secrets.redisServerPassword;
+    dbCredentialsRedisPasswordSecret = "redisServerPassword";
   };
 
   userSettings = base.userSettings // {

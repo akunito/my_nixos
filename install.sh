@@ -149,7 +149,7 @@ else
     echo "Example: $0 /path/to/repo DESK -s -u"
     echo "  -s|--silent: Silent mode (skip prompts, use defaults)"
     echo "  -u|--update: Update flake.lock"
-    echo "  -d|--skip-docker: Skip docker container handling (keeps containers running)"
+    echo "  -d|--skip-docker: Skip docker container handling AND stop_external_drives.sh's docker stop (keeps containers running)"
     echo "  -h|--skip-hardware: Skip hardware-configuration.nix generation"
     echo "  -q|--quick: Shorthand for -d -h (backward compatibility)"
     echo "  -f|--force: Bypass ENV_PROFILE safety check (for first-time installs)"
@@ -738,7 +738,10 @@ generate_hardware_config() {
 
     run_script_to_stop_drives() {
         echo -e "Attempting to stop external drives ..."
-        $SUDO_CMD $SCRIPT_DIR/stop_external_drives.sh
+        # Propagate -d/--skip-docker: stop_external_drives.sh otherwise runs
+        # `docker stop` on every running container, which silently defeated the
+        # flag's documented "keeps containers running" behaviour.
+        $SUDO_CMD env SKIP_DOCKER="$SKIP_DOCKER" $SCRIPT_DIR/stop_external_drives.sh
         echo "Generating hardware configuration file..."
         $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
         # Clean up autofs/NFS entries captured from running automounts.
@@ -924,6 +927,19 @@ else
 fi
 # Continue with installation regardless of update status
 # (update is optional, installation should proceed)
+
+# Tighten permissions on decrypted secrets.
+# `git-crypt unlock` writes the plaintext with the umask default (0644), which
+# leaves live credentials world-readable in the working tree. Git only tracks
+# the executable bit, so the mode has to be re-asserted here on every run.
+harden_secret_permissions() {
+    local dir="$1/secrets"
+    [ -d "$dir" ] || return 0
+    chmod 0700 "$dir" 2>/dev/null || true
+    find "$dir" -type f \( -name '*.nix' -o -name '*.txt' \) \
+        ! -name '*.template' -exec chmod 0600 {} + 2>/dev/null || true
+}
+harden_secret_permissions "$SCRIPT_DIR"
 
 # Validate profile before starting
 validate_profile "$SCRIPT_DIR" "$PROFILE"

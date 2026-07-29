@@ -33,6 +33,10 @@
     ../../system/app/virtualization.nix # qemu, virt-manager, distrobox
     (import ../../system/app/docker.nix {
       storageDriver = null;
+      # Workstations run dev stacks whose compose files publish on 0.0.0.0.
+      # Disabling the userland proxy makes DOCKER-USER the single enforcement
+      # point for those ports (see system/security/docker-firewall.nix).
+      userlandProxy = !(systemSettings.dockerFirewallEnable or false);
       inherit pkgs pkgs-unstable userSettings lib;
     })
     ../../system/security/sudo.nix # Doas instead of sudo
@@ -45,6 +49,8 @@
     ../../system/security/automount.nix
     ../../system/security/restic.nix # Manage backups
     ../../system/security/polkit.nix # Security rules
+    ../../system/security/nix-access-token.nix # GitHub PAT -> 0600 per-user nix.conf (keeps it out of the world-readable store)
+    ../../system/security/docker-firewall.nix # DOCKER-USER backstop: published container ports otherwise bypass the firewall
     (import ../../system/security/sshd.nix {
       authorizedKeys = systemSettings.authorizedKeys; # SSH keys
       inherit userSettings;
@@ -77,20 +83,44 @@
 
   # Ensure nix flakes are enabled
   nix.package = pkgs.nixVersions.stable;
-  # The github.com access-token only lifts GitHub's anonymous rate limit when
-  # fetching flake inputs; anonymous fetches work fine without it. Gate it on a
-  # token actually being set, so machines that don't have secrets (e.g. a
-  # partner's laptop with the git-crypt repo locked) never force-read
-  # secrets/domains.nix at eval. Same pattern as profiles/vps/base.nix and
-  # profiles/proxmox-lxc/base.nix.
+  # NOTE: access-tokens is deliberately NOT set here. /etc/nix/nix.conf is a
+  # world-readable store file, so interpolating the PAT into it exposes it to
+  # every local user/process. The token is written at activation time to
+  # per-user nix.conf files with mode 0600 instead — see
+  # system/security/nix-access-token.nix (imported below).
   nix.extraOptions = ''
     experimental-features = nix-command flakes
-  '' + lib.optionalString ((systemSettings.githubAccessToken or "") != "") ''
-    access-tokens = github.com=${systemSettings.githubAccessToken}
   '';
 
   # Set nix path to use flake inputs (not channels) - suppresses warning about missing channels
   nix.nixPath = [ "nixpkgs=flake:nixpkgs" ];
+
+  # Automatic garbage collection + store dedup.
+  # The server-side profiles (homelab, vps, proxmox-lxc) have always had this;
+  # the workstation profiles never did, so /nix/store grew unbounded (209 GB on
+  # DESK with only 8 system generations — the rest was old user/dev closures).
+  # Workstations churn a lot more than servers, so keep a longer retention.
+  nix.gc = {
+    automatic = lib.mkDefault (systemSettings.nixGcAutomatic or true);
+    dates = lib.mkDefault (systemSettings.nixGcDates or "weekly");
+    options = lib.mkDefault (systemSettings.nixGcOptions or "--delete-older-than 30d");
+  };
+  # Hard-link identical files in the store. Cheaper than auto-optimise-store
+  # (which slows down every single build) since it runs on a timer instead.
+  nix.optimise = {
+    automatic = lib.mkDefault true;
+    dates = lib.mkDefault [ "weekly" ];
+  };
+
+  # Btrfs scrub: verifies every checksum on the LUKS-backed / and /home volumes.
+  # Neither had ever been scrubbed ("no stats available"). These are
+  # single-device volumes so a scrub can only DETECT bitrot, not repair it — but
+  # silent detection beats discovering it from a corrupt restore.
+  services.btrfs.autoScrub = lib.mkIf (systemSettings.btrfsAutoScrubEnable or false) {
+    enable = true;
+    interval = systemSettings.btrfsAutoScrubInterval or "monthly";
+    fileSystems = systemSettings.btrfsAutoScrubFileSystems or [ "/" ];
+  };
   # On unstable (nixos-26.05+) we override the registry to point at our flake's
   # nixpkgs input. On nixos-25.11 (stable), nix-flakes.nix and nixpkgs-flake.nix
   # both set this path and conflict — we let the NixOS-module auto-config win
