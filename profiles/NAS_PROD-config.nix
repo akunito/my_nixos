@@ -135,6 +135,13 @@ in
     # ============================================================================
     # SERVICES
     # ============================================================================
+    # GitHub PAT: lifts the anonymous rate limit on flake-input fetches.
+    # homelab/base.nix used to read secrets.githubAccessToken directly into
+    # nix.extraOptions (i.e. into the world-readable /etc/nix/nix.conf). It now
+    # goes through system/security/nix-access-token.nix, which gates on this
+    # flag and writes a 0600 per-user nix.conf instead — so the flag has to be
+    # set here or the machine silently falls back to anonymous fetches.
+    githubAccessToken = secrets.githubAccessToken;
     tailscaleEnable = true;
     tailscaleLoginServer = "https://${secrets.headscaleDomain}";
     # Advertise same subnets as TrueNAS Docker Tailscale did
