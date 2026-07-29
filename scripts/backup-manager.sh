@@ -50,6 +50,20 @@ HOME_EXCLUDES=(
   "Downloads"
   "Games"
   "tmp"
+  # Gaming runtimes — re-downloadable, not user data (game SAVES live in ~/GameSaves,
+  # which is NOT excluded). Steam/bottles already excluded above.
+  ".local/share/lutris"              # Lutris wine/Proton runners + runtime (re-fetched)
+  ".local/share/umu"                 # umu-launcher Proton builds (re-fetched)
+  ".local/share/FreesmLauncher/libraries"  # Minecraft libs (re-fetched); worlds in instances/ are KEPT
+  ".local/share/FreesmLauncher/assets"
+  ".local/share/FreesmLauncher/meta"
+  ".local/share/FreesmLauncher/cache"
+  # Nextcloud sync folders — already backed up on the Nextcloud SERVER (see the
+  # server-side nextcloud.restic), so backing up the local client copy to the NAS
+  # is redundant double-storage.
+  "Nextcloud"
+  ".config/Nextcloud"
+  ".local/share/Nextcloud"
 )
 
 # Retention policies per job type

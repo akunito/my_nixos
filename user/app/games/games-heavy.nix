@@ -34,6 +34,12 @@ in
             --set PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION "python"
         '';
       }))
+      # umu-launcher: Lutris runs GE-Proton/Proton games through `umu-run`. It must
+      # be on PATH or Proton games silently fail to launch. It was only present
+      # transitively (Heroic pulls it in when GOGlauncherEnable=true), so profiles
+      # with Proton games but no Heroic (e.g. DESK_A) had no umu and couldn't launch
+      # any Lutris Proton game. Declare it explicitly here.
+      pkgs-unstable.umu-launcher
       pkgs-unstable.protonup-qt
       # Wine and debugging tools
       pkgs.wineWow64Packages.stagingFull # Wine 64-bit with WoW64 32-bit support (binary cached)
