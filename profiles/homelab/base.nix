@@ -22,6 +22,8 @@ in
     ../../system/hardware/nfs_client.nix # NFS share directories over network
     ../../system/security/sudo.nix
     ../../system/security/nix-access-token.nix # GitHub PAT -> 0600 per-user nix.conf (keeps it out of the world-readable store)
+    ../../system/app/nix-binary-cache.nix # Local binary cache server (self-gates on nixBinaryCacheServeEnable)
+    ../../system/app/nix-binary-cache-client.nix # Consume a local binary cache (self-gates on nixBinaryCacheSubstituters)
     ../../system/security/gpg.nix
     ../../system/security/autoupgrade.nix # auto upgrade
     ../../system/security/restic.nix # Manage backups

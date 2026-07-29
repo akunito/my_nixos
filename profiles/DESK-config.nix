@@ -76,6 +76,23 @@ in
       "hid_nintendo" # Joy-Con controller
     ];
 
+    # ========================================================================
+    # Local Nix binary cache (harmonia) — DESK serves the fleet
+    # ========================================================================
+    # The laptops and servers were each rebuilding identical closures from
+    # source (X13, 62 commits behind, spent ~an hour on bitwarden-desktop,
+    # nextcloud-client and voxtype). DESK has the fastest CPU and has usually
+    # built them already, so it publishes its store as a substituter.
+    #
+    # Reachable over tailscale0 (works for laptops off-site) and over the 10GbE
+    # bond for full-speed LAN pulls. NOT exposed publicly — the store is a read
+    # surface, and store paths are exactly where credentials used to leak from.
+    #
+    # DESK suspends; clients set fallback + a short connect-timeout so a
+    # sleeping cache costs seconds, not a hung rebuild.
+    nixBinaryCacheServeEnable = true;
+    nixBinaryCacheLanInterfaces = [ "bond0" "eno1" ];
+
     # Btrfs scrub — both / and /home are btrfs on LUKS and had never been scrubbed.
     btrfsAutoScrubEnable = true;
     btrfsAutoScrubInterval = "monthly";

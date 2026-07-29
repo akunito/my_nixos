@@ -69,6 +69,15 @@ in
     allowedTCPPorts = [ 9100 ]; # prometheus workstation exporter
     allowedUDPPorts = [ ];
 
+    # Pull prebuilt paths from DESK's harmonia cache before cache.nixos.org
+    # (priority 30 vs 40). Reachable over Tailscale, so it works off-LAN too.
+    # Extra substituter only — cache.nixos.org stays, and fallback +
+    # connect-timeout mean a sleeping DESK costs seconds, never a failed build.
+    # This machine is the reason the cache exists: 62 commits of drift meant
+    # rebuilding bitwarden-desktop/nextcloud-client/voxtype from source.
+    nixBinaryCacheSubstituters = [ "http://100.64.0.5:5000" ];
+    nixBinaryCachePublicKeys = [ "nixosaku-1:a1t91oU1udPpLWvLr8lWwj2kS5a7lPxhH38p094Ps+s=" ];
+
     # NFS nofail safety net (prevents boot hang when TrueNAS is unreachable)
     disk3_enabled = true;
     disk3_name = "/mnt/NFS_media";

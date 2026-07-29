@@ -615,6 +615,26 @@
     prometheusRedisExporterEnable = false;
     prometheusRedisExporterPort = 9121;
 
+    # === Local Nix binary cache ===
+    # Server half (one machine, normally DESK) — see system/app/nix-binary-cache.nix
+    nixBinaryCacheServeEnable = false;
+    nixBinaryCachePort = 5000;
+    nixBinaryCacheBindAddress = "[::]";        # firewall decides who reaches it
+    nixBinaryCacheOpenFirewallTailscale = true;
+    nixBinaryCacheLanInterfaces = [ ];         # e.g. [ "bond0" ] for full LAN speed
+    nixBinaryCachePriority = 30;               # < 40 so it beats cache.nixos.org
+    # Client half — see system/app/nix-binary-cache-client.nix
+    #
+    # Left EMPTY by default on purpose. Enabling it fleet-wide would also point
+    # the KOMI_LXC_* containers at DESK, which sits on a different network and
+    # is unreachable from them — every narinfo query would burn the full
+    # connect-timeout for nothing. Opt in per profile instead (the akunito
+    # machines set nixBinaryCacheSubstituters = [ deskCache ]).
+    nixBinaryCacheSubstituters = [ ];
+    nixBinaryCachePublicKeys = [ ];
+    nixBinaryCacheConnectTimeout = 5;          # seconds; keeps a sleeping cache from stalling builds
+    nixBinaryCacheNegativeTtl = 60;            # remember a genuine miss briefly, but re-check once DESK is back
+
     # === Nix store housekeeping (workstation profiles) ===
     nixGcAutomatic = true;
     nixGcDates = "weekly";

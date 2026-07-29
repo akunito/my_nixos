@@ -142,6 +142,12 @@ in
     # flag and writes a 0600 per-user nix.conf instead — so the flag has to be
     # set here or the machine silently falls back to anonymous fetches.
     githubAccessToken = secrets.githubAccessToken;
+    # Pull prebuilt paths from DESK's harmonia cache before cache.nixos.org
+    # (priority 30 vs 40). Reachable over Tailscale, so it works off-LAN too.
+    # Extra substituter only — cache.nixos.org stays, and fallback +
+    # connect-timeout mean a sleeping DESK costs seconds, never a failed build.
+    nixBinaryCacheSubstituters = [ "http://100.64.0.5:5000" ];
+    nixBinaryCachePublicKeys = [ "nixosaku-1:a1t91oU1udPpLWvLr8lWwj2kS5a7lPxhH38p094Ps+s=" ];
     tailscaleEnable = true;
     tailscaleLoginServer = "https://${secrets.headscaleDomain}";
     # Advertise same subnets as TrueNAS Docker Tailscale did

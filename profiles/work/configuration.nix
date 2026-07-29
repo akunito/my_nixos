@@ -50,6 +50,8 @@
     ../../system/security/restic.nix # Manage backups
     ../../system/security/polkit.nix # Security rules
     ../../system/security/nix-access-token.nix # GitHub PAT -> 0600 per-user nix.conf (keeps it out of the world-readable store)
+    ../../system/app/nix-binary-cache.nix # Local binary cache server (self-gates on nixBinaryCacheServeEnable)
+    ../../system/app/nix-binary-cache-client.nix # Consume a local binary cache (self-gates on nixBinaryCacheSubstituters)
     ../../system/security/docker-firewall.nix # DOCKER-USER backstop: published container ports otherwise bypass the firewall
     (import ../../system/security/sshd.nix {
       authorizedKeys = systemSettings.authorizedKeys; # SSH keys

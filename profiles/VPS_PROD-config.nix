@@ -43,6 +43,11 @@ in
     # ============================================================================
 
     # === Tailscale (Phase 1 — first thing needed) ===
+    # Pull prebuilt paths from DESK's harmonia cache before cache.nixos.org
+    # (priority 30 vs 40) over Tailscale. Extra substituter only — cache.nixos.org
+    # stays, and fallback + connect-timeout mean a sleeping DESK costs seconds.
+    nixBinaryCacheSubstituters = [ "http://100.64.0.5:5000" ];
+    nixBinaryCachePublicKeys = [ "nixosaku-1:a1t91oU1udPpLWvLr8lWwj2kS5a7lPxhH38p094Ps+s=" ];
     tailscaleEnable = true;
     tailscaleLoginServer = "https://${secrets.headscaleDomain}";
     tailscaleAcceptRoutes = true; # Accept routes from home subnet router

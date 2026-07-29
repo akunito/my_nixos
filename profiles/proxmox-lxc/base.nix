@@ -19,6 +19,8 @@
     ../../system/hardware/nfs_client.nix
     ../../system/security/sudo.nix
     ../../system/security/nix-access-token.nix # GitHub PAT -> 0600 per-user nix.conf (keeps it out of the world-readable store)
+    ../../system/app/nix-binary-cache.nix # Local binary cache server (self-gates on nixBinaryCacheServeEnable)
+    ../../system/app/nix-binary-cache-client.nix # Consume a local binary cache (self-gates on nixBinaryCacheSubstituters)
     ../../system/security/gpg.nix
     ../../system/security/autoupgrade.nix
     ../../system/security/update-failure-notification.nix
