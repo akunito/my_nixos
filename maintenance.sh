@@ -78,6 +78,49 @@ mark_gc_ran_successfully() {
     date +%s 2>/dev/null > "$GC_STAMP_FILE" || true
 }
 
+# ======================================== Store Optimise Throttling ======================================== #
+#
+# `nix-store --optimise` hard-links identical files in the store. GC alone never does this,
+# so duplicate files accumulate forever: on DESK_A (2026-07-30) an optimise freed 12.7 GB by
+# hard-linking 1.35M files, and ~2 GB on LAPTOP_A — on top of what GC had just reclaimed.
+# Only the WORKSTATION profiles set `nix.optimise.automatic`; the VPS/LXC/homelab profiles
+# never had it, so servers deduplicated never. Doing it here means every machine that runs
+# maintenance.sh (install.sh AND the weekly autoSystemUpdate) benefits uniformly.
+#
+# It's I/O heavy (walks the whole store), so throttle it harder than GC. Default: 14 days.
+#
+OPTIMISE_STAMP_FILE="$STATE_DIR/last_optimise_success_epoch"
+OPTIMISE_MIN_INTERVAL_SECONDS=$((14 * 24 * 60 * 60)) # 14 days
+
+should_run_optimise() {
+    ensure_state_dir
+
+    if [ ! -f "$OPTIMISE_STAMP_FILE" ]; then
+        return 0
+    fi
+
+    local last now age
+    last=$(cat "$OPTIMISE_STAMP_FILE" 2>/dev/null || echo "")
+    if ! [[ "$last" =~ ^[0-9]+$ ]]; then
+        # Corrupt stamp file: allow optimise and overwrite stamp later.
+        return 0
+    fi
+
+    now=$(date +%s 2>/dev/null || echo 0)
+    age=$((now - last))
+
+    if [ "$age" -ge 0 ] && [ "$age" -lt "$OPTIMISE_MIN_INTERVAL_SECONDS" ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+mark_optimise_ran_successfully() {
+    ensure_state_dir
+    date +%s 2>/dev/null > "$OPTIMISE_STAMP_FILE" || true
+}
+
 # CRITICAL: Refuse to run as root
 # This script must run as a normal user and uses sudo internally when needed
 check_root() {
@@ -523,7 +566,43 @@ task_gc() {
         space_freed_ref="Skipped (GC ran recently; interval: ${GC_MIN_INTERVAL_SECONDS}s)"
         log_message "Garbage collection: Skipped (ran within the last $((GC_MIN_INTERVAL_SECONDS / 3600))h)"
     fi
-    
+
+    return $has_error
+}
+
+# Hard-link duplicate files in the nix store (nix-store --optimise).
+# Sets space_freed via name reference. Throttled to once per OPTIMISE_MIN_INTERVAL_SECONDS.
+task_optimise() {
+    local -n optimise_freed_ref=$1
+    local has_error=0
+
+    log_message "=== Store Optimise (hard-link dedup) ==="
+
+    if [ "${SUDO_AVAILABLE:-true}" != "true" ]; then
+        optimise_freed_ref="Skipped (sudo not available in silent mode)"
+        log_message "Store optimise: Skipped (sudo not available in silent mode)"
+        return 0
+    fi
+
+    if should_run_optimise; then
+        local opt_output
+        opt_output=$(sudo_exec nix-store --optimise 2>&1)
+        if ! log_task "Optimising nix store" echo "$opt_output"; then
+            has_error=1
+        fi
+
+        # nix-store --optimise reports e.g. "1234.56 MiB freed by hard-linking 42 files"
+        optimise_freed_ref=$(echo "$opt_output" | grep -oE "[0-9.]+ [KMG]iB freed" | tail -1)
+        [ -z "$optimise_freed_ref" ] && optimise_freed_ref="0 (nothing to dedup)"
+
+        if [ $has_error -eq 0 ]; then
+            mark_optimise_ran_successfully
+        fi
+    else
+        optimise_freed_ref="Skipped (optimise ran recently; interval: ${OPTIMISE_MIN_INTERVAL_SECONDS}s)"
+        log_message "Store optimise: Skipped (ran within the last $((OPTIMISE_MIN_INTERVAL_SECONDS / 86400))d)"
+    fi
+
     return $has_error
 }
 
@@ -541,7 +620,8 @@ execute_all() {
     local user_after=0
     local user_deleted=0
     local gc_space_freed="N/A"
-    
+    local optimise_space_freed="N/A"
+
     # Run all cleanup tasks
     if ! task_system_cleanup system_before system_after system_deleted; then
         has_error=1
@@ -558,6 +638,11 @@ execute_all() {
     if ! task_gc gc_space_freed; then
         has_error=1
     fi
+
+    # Dedup AFTER gc: gc removes paths first, so optimise only walks what remains.
+    if ! task_optimise optimise_space_freed; then
+        has_error=1
+    fi
     
     # Summary
     log_message ""
@@ -566,6 +651,7 @@ execute_all() {
     log_message "Home-manager generations: $hm_before -> $hm_after (deleted: $hm_deleted)"
     log_message "User generations: $user_before -> $user_after (deleted: $user_deleted)"
     log_message "Space freed: $gc_space_freed"
+    log_message "Space freed by store optimise: $optimise_space_freed"
 
     # Export summary for silent-mode one-liner
     SUMMARY_SYSTEM_BEFORE="$system_before"

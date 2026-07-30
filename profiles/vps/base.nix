@@ -155,6 +155,14 @@
     options = "--delete-older-than 8d";
   };
 
+  # Hard-link identical files in the store. GC alone never dedups, so duplicates
+  # accumulate forever (a first optimise on a long-lived machine can reclaim tens
+  # of GB). The workstation profiles have had this; the server profiles never did.
+  nix.optimise = {
+    automatic = true;
+    dates = [ "weekly" ];
+  };
+
   nix.settings.trusted-users = [ "root" "@wheel" ];
 
   nixpkgs.config.allowUnfree = true;
