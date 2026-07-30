@@ -198,9 +198,6 @@ in
       pkgs.tldr
     ];
 
-    # NOTE (deferred to a later step): workstation home backup to the NAS
-    # (homeBackupEnable + NFS /mnt/NFS_Backups mount) — set up once the NAS
-    # target is confirmed, mirroring LAPTOP_X13.
   };
 
   userSettings = base.userSettings // {
