@@ -85,29 +85,50 @@ let
       -m comment --comment '${marker}' -j RETURN
   '';
 
-  # Second path: docker's userland proxy.
+  # Second path: everything DOCKER-USER cannot reach.
   #
-  # With EnableUserlandProxy (docker's default) each published port ALSO gets a
-  # `docker-proxy` process listening on 0.0.0.0:<port> on the host. Traffic that
-  # reaches it is delivered locally — INPUT, not FORWARD — so DOCKER-USER never
-  # sees it and the rules above do nothing. And because system/app/tailscale.nix
-  # sets `trustedInterfaces = [ "tailscale0" ]`, nixos-fw accepts that traffic
-  # outright: measured from the VPS, DESK's dev Postgres answered on
-  # 100.64.0.5:5432 even with DOCKER-USER fully armed.
+  # DOCKER-USER alone is NOT sufficient, for two compounding reasons found the
+  # hard way (measured from VPS_PROD against 100.64.0.5):
   #
-  # So we mirror the drops into nixos-fw. The published-port list is read back
-  # out of docker's own nat chain, which means it tracks whatever is actually
-  # running instead of a hand-maintained list.
+  #  1. Local delivery instead of forwarding. With docker's userland proxy a
+  #     `docker-proxy` process owns 0.0.0.0:<port>; with userland-proxy = false
+  #     dockerd binds the port itself (verified on moby 29.6.2: `dockerd` held
+  #     0.0.0.0:5432). Either way that traffic lands in INPUT, and DOCKER-USER
+  #     only sits in FORWARD.
   #
-  # virtualisation.docker.daemon.settings.userland-proxy = false (set alongside
-  # this module) removes the second path entirely, but only takes effect for
-  # containers started after the next docker daemon restart — this keeps the
-  # hole closed in the meantime, and stays harmless afterwards.
+  #  2. Tailscale outranks us in BOTH chains. tailscaled installs
+  #     `ts-input -i tailscale0 -j ACCEPT` and, in FORWARD, marks tailscale0
+  #     packets and ACCEPTs on that mark — and INPUT/FORWARD jump to ts-* before
+  #     nixos-fw/DOCKER-USER. So neither a nixos-fw rule nor a DOCKER-USER rule
+  #     can stop tailnet traffic to a published port. (The ts-forward mark-match
+  #     ACCEPT appeared only after a tailscaled restart, which is why an earlier
+  #     DOCKER-USER-only test looked like it worked and then regressed on the
+  #     next reboot.)
+  #
+  # So the drop has to happen in the raw table's PREROUTING, which runs before
+  # conntrack, before nat/DNAT, and before every filter chain — nothing docker
+  # or tailscale installs can precede it. Docker already uses raw/PREROUTING
+  # itself for its direct-container-IP protection, so this is the same layer.
+  #
+  # Matching is on the pre-DNAT --dport, i.e. exactly the published port from
+  # the compose `ports:` mapping. The port list is read back out of docker's own
+  # nat chain so it tracks whatever is actually running.
+  #
+  # NOTE: raw is stateless, so this drops every packet to that port on that
+  # interface, established ones included. That is the intent — these ports
+  # should be unreachable from off-box entirely.
   inputGuard = ipt: ''
+    # Clean up the previous generation's rules in BOTH places (filter nixos-fw
+    # was used before; raw PREROUTING is used now).
     while ${ipt} -S nixos-fw 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q -- '${marker}'; do
       rule="$(${ipt} -S nixos-fw | ${pkgs.gnugrep}/bin/grep -m1 -- '${marker}' | ${pkgs.gnused}/bin/sed 's/^-A nixos-fw //')"
       # shellcheck disable=SC2086
       ${ipt} -D nixos-fw $rule || break
+    done
+    while ${ipt} -t raw -S PREROUTING 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q -- '${marker}'; do
+      rule="$(${ipt} -t raw -S PREROUTING | ${pkgs.gnugrep}/bin/grep -m1 -- '${marker}' | ${pkgs.gnused}/bin/sed 's/^-A PREROUTING //')"
+      # shellcheck disable=SC2086
+      ${ipt} -t raw -D PREROUTING $rule || break
     done
 
     # Whatever docker currently publishes on the host, straight from its own
@@ -125,8 +146,8 @@ let
                   (lib.filter (r: r.interface == iface) allowRules)} " in
           *" $port "*) continue ;;
         esac
-        ${ipt} -I nixos-fw 1 -i ${iface} -p tcp --dport "$port" \
-          -m conntrack --ctstate NEW -m comment --comment '${marker}' -j DROP
+        ${ipt} -t raw -I PREROUTING 1 -i ${iface} -p tcp --dport "$port" \
+          -m comment --comment '${marker}' -j DROP
       done
     '') extIfaces}
   '';
