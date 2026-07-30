@@ -661,6 +661,7 @@ execute_all() {
     SUMMARY_USER_BEFORE="$user_before"
     SUMMARY_USER_AFTER="$user_after"
     SUMMARY_GC_SPACE_FREED="$gc_space_freed"
+    SUMMARY_OPTIMISE_SPACE_FREED="$optimise_space_freed"
     
     # Return error status for automation (cron/systemd)
     return $has_error
@@ -763,9 +764,9 @@ main() {
         
         # Output single result line (nice, stable, one-liner)
         if [ $exit_code -eq 0 ]; then
-            echo "Maintenance: OK (system: ${SUMMARY_SYSTEM_BEFORE}->${SUMMARY_SYSTEM_AFTER}, hm: ${SUMMARY_HM_BEFORE}->${SUMMARY_HM_AFTER}, user: ${SUMMARY_USER_BEFORE}->${SUMMARY_USER_AFTER}, gc: ${SUMMARY_GC_SPACE_FREED}) (log: $LOG_FILE)"
+            echo "Maintenance: OK (system: ${SUMMARY_SYSTEM_BEFORE}->${SUMMARY_SYSTEM_AFTER}, hm: ${SUMMARY_HM_BEFORE}->${SUMMARY_HM_AFTER}, user: ${SUMMARY_USER_BEFORE}->${SUMMARY_USER_AFTER}, gc: ${SUMMARY_GC_SPACE_FREED}, optimise: ${SUMMARY_OPTIMISE_SPACE_FREED}) (log: $LOG_FILE)"
         else
-            echo "Maintenance: ERROR (system: ${SUMMARY_SYSTEM_BEFORE}->${SUMMARY_SYSTEM_AFTER}, hm: ${SUMMARY_HM_BEFORE}->${SUMMARY_HM_AFTER}, user: ${SUMMARY_USER_BEFORE}->${SUMMARY_USER_AFTER}, gc: ${SUMMARY_GC_SPACE_FREED}) (log: $LOG_FILE)" >&2
+            echo "Maintenance: ERROR (system: ${SUMMARY_SYSTEM_BEFORE}->${SUMMARY_SYSTEM_AFTER}, hm: ${SUMMARY_HM_BEFORE}->${SUMMARY_HM_AFTER}, user: ${SUMMARY_USER_BEFORE}->${SUMMARY_USER_AFTER}, gc: ${SUMMARY_GC_SPACE_FREED}, optimise: ${SUMMARY_OPTIMISE_SPACE_FREED}) (log: $LOG_FILE)" >&2
         fi
         
         exit $exit_code
