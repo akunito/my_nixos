@@ -102,17 +102,24 @@ if [ -f "$SNAP" ]; then
       $SWAYMSG "workspace \"$vws\"" >/dev/null 2>&1 || true
     done < <($JQ -r '.visible[]?.ws' "$SNAP")
 
-    # Floating windows: back to their workspace and absolute position.
-    # con_ids are stable within a sway session; vanished windows are skipped.
+    # Floating windows: back to their workspace, original SIZE, and absolute
+    # position. Size must be restored too — while the monitors were off the
+    # window was evacuated to a smaller output and shrunk to fit it (re-fit
+    # pass below and/or sway itself), so position alone brings back a shrunk
+    # window. con_ids are stable within a sway session; vanished windows are
+    # skipped.
     TREE="$($SWAYMSG -t get_tree -r 2>/dev/null)" || TREE='{}'
-    while IFS=$'\t' read -r cid fws fx fy; do
+    while IFS=$'\t' read -r cid fws fx fy fw fh; do
       [ -n "$cid" ] || continue
       exists="$($JQ -r --argjson id "$cid" \
         '[.. | select(.id? == $id)] | length' <<<"$TREE")"
       [ "$exists" != "0" ] || continue
       $SWAYMSG "[con_id=$cid] move container to workspace \"$fws\"" >/dev/null 2>&1 || true
+      if [ -n "$fw" ] && [ -n "$fh" ] && [ "$fw" -gt 0 ] 2>/dev/null; then
+        $SWAYMSG "[con_id=$cid] resize set $fw px $fh px" >/dev/null 2>&1 || true
+      fi
       $SWAYMSG "[con_id=$cid] move absolute position $fx $fy" >/dev/null 2>&1 || true
-    done < <($JQ -r '.floating[]? | "\(.con_id)\t\(.ws)\t\(.x)\t\(.y)"' "$SNAP")
+    done < <($JQ -r '.floating[]? | "\(.con_id)\t\(.ws)\t\(.x)\t\(.y)\t\(.w)\t\(.h)"' "$SNAP")
 
     if [ -n "$FOCUSED" ]; then
       $SWAYMSG "workspace \"$FOCUSED\"" >/dev/null 2>&1 || true
