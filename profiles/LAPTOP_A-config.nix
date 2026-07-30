@@ -177,6 +177,44 @@ in
     # === Monitoring ===
     prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
 
+    # ============================================================================
+    # WORKSTATION BACKUP → NAS (over Tailscale)
+    # ============================================================================
+    # Docs/photos are already covered by Nextcloud (and ~/Nextcloud is excluded from
+    # restic to avoid double-storage) — this backs up what Nextcloud does NOT: app
+    # config (~/.config), ~/Sync, Desktop, Calibre library, Minecraft worlds, etc.
+    # ~4.5 GB after excludes.
+    #
+    # Reaches the NAS over Tailscale (100.64.0.1) rather than 192.168.20.200: the
+    # laptop is WiFi-only and the storage VLAN is firewalled from it. The NAS export
+    # allows this machine's tailnet IP 100.64.0.4 (see NAS_PROD-config).
+    # Password comes from the local ~/myScripts/restic.key — NOT git-crypt, so the
+    # repo stays locked on Aga's machines.
+    homeBackupEnable = true;
+    homeBackupOnCalendar = "0/6:00:00"; # NAS sleeps 23:00–16:00, so the 18:00 run is the one that lands
+    homeBackupCallNextEnabled = false;
+    homeBackupUser = "aga";             # override default akunito
+    homeBackupExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/scripts/backup-manager.sh --auto --target nfs --job home";
+    nfsBackupEnable = true;
+
+    # On-demand autofs mount so a sleeping NAS never blocks boot; soft mount +
+    # retry=0 makes it fail fast instead of hanging the laptop.
+    nfsClientEnable = true;
+    nfsMounts = [
+      {
+        what = "100.64.0.1:/mnt/ssdpool/workstation_backups";
+        where = "/mnt/NFS_Backups";
+        type = "nfs";
+        options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
+      }
+    ];
+    nfsAutoMounts = [
+      {
+        where = "/mnt/NFS_Backups";
+        automountConfig = { TimeoutIdleSec = "600"; };
+      }
+    ];
+
     # === Other Features ===
     starCitizenModules = false; # Disable Star Citizen optimizations
     freesmLauncherEnable = true; # FreeSM Launcher (Prism fork, offline accounts) — connect to AkuCraft over Tailscale

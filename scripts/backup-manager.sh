@@ -75,6 +75,13 @@ HOME_EXCLUDES=(
   "Downloads"
   "Games"
   "tmp"
+  # Stale one-off backup artifacts (found on LAPTOP_A during the 2026-07-30 audit):
+  # ~/.maintenance is 34 GB of Dec-2024 manual backups (Backups/, bak.gz, restored/)
+  # and ~/.config copy is a Mar-2025 manual copy. Backing up old backups to the NAS
+  # is pure double-storage. Harmless no-ops on machines that don't have them.
+  ".maintenance"
+  ".config copy"
+  ".tldrc"
   # Gaming runtimes — re-downloadable, not user data (game SAVES live in ~/GameSaves,
   # which is NOT excluded). Steam/bottles already excluded above.
   ".local/share/lutris"              # Lutris wine/Proton runners + runtime (re-fetched)
