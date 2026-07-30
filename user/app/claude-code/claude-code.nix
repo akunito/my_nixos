@@ -198,8 +198,9 @@ let
         "Read(~/.ssh/*.pem)"
         "Read(~/.ssh/*.key)"
         "Read(~/.ssh/authorized_keys)"
+        # Edit(...) covers all file-editing tools (Write/Edit/NotebookEdit);
+        # a Write(path) rule is never matched by permission checks.
         "Edit(~/.ssh/**)"
-        "Write(~/.ssh/**)"
 
         # === System credential files ===
         "Read(//etc/shadow)"
@@ -237,7 +238,6 @@ let
       # Add read-only deny rules if claudeCodeReadOnly is enabled
       ++ lib.optionals claudeCodeReadOnly [
         "Edit(**)"
-        "Write(**)"
       ];
     };
 
