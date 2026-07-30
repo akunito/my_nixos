@@ -408,6 +408,14 @@ in
     vpsResticBackupEnable = true;
     vpsResticTarget = "nas-aku";           # NAS Tailscale hostname (resolves via MagicDNS)
     vpsResticTargetUser = "akunito";  # NixOS NAS uses akunito (no truenas_admin user)
+    # Restic repo passwords (from git-crypt secrets/domains.nix). Deployed to
+    # /etc/secrets/restic-* by restic-backup-vps.nix so they survive
+    # reboots/redeploys — previously placed by hand and silently vanished,
+    # breaking the scheduled backups (nextcloud, 2026-07).
+    resticDatabasesPassword = secrets.resticDatabasesPassword;
+    resticServicesPassword = secrets.resticServicesPassword;
+    resticNextcloudPassword = secrets.resticNextcloudPassword;
+    resticImmichPassword = secrets.resticImmichPassword;
 
     # === Backup Monitoring (pfSense config + NAS restic repos) ===
     prometheusPfsenseBackupEnable = true;

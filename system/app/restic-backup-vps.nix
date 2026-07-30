@@ -277,6 +277,40 @@ let
   };
 
 in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
+  # Deploy restic repository passwords declaratively to /etc/secrets so they
+  # survive reboots and redeploys. These were previously placed by hand and
+  # silently vanished, which broke the scheduled backups (e.g. nextcloud,
+  # 2026-07 — "Resolving password failed: does not exist"). Values come from
+  # git-crypt secrets/domains.nix via the profile's systemSettings. Owned
+  # root:root 0600 — the non-root (akunito) backup service reads them through
+  # the CAP_DAC_READ_SEARCH restic wrapper (same as the source files).
+  environment.etc = lib.mkMerge [
+    (lib.mkIf ((systemSettings.resticDatabasesPassword or "") != "") {
+      "secrets/restic-databases" = {
+        text = systemSettings.resticDatabasesPassword;
+        mode = "0600"; user = "root"; group = "root";
+      };
+    })
+    (lib.mkIf ((systemSettings.resticServicesPassword or "") != "") {
+      "secrets/restic-services" = {
+        text = systemSettings.resticServicesPassword;
+        mode = "0600"; user = "root"; group = "root";
+      };
+    })
+    (lib.mkIf ((systemSettings.resticNextcloudPassword or "") != "") {
+      "secrets/restic-nextcloud" = {
+        text = systemSettings.resticNextcloudPassword;
+        mode = "0600"; user = "root"; group = "root";
+      };
+    })
+    (lib.mkIf ((systemSettings.resticImmichPassword or "") != "") {
+      "secrets/restic-immich" = {
+        text = systemSettings.resticImmichPassword;
+        mode = "0600"; user = "root"; group = "root";
+      };
+    })
+  ];
+
   # Backup services
   systemd.services.vps-restic-databases = databasesBackup.service;
   systemd.services.vps-restic-services = servicesBackup.service;
