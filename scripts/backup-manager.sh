@@ -39,7 +39,32 @@ HOME_EXCLUDES=(
   ".local/share/dolphin"
   ".local/share/kactivitymanagerd"
   ".local/share/recently-used.xbel"
-  ".local/share/Steam"
+  # Steam: exclude the regenerable bulk but KEEP userdata/ (Steam Cloud saves +
+  # per-game configs) and config/. Previously the whole `.local/share/Steam` tree
+  # was excluded, which silently dropped every Steam save from the backup.
+  # NOTE: steamapps/compatdata (Proton prefixes) stays excluded — it's regenerable,
+  # but that means a game saving ONLY inside its prefix (no Steam Cloud) is not
+  # covered; symlink such save dirs into ~/GameSaves like the Lutris prefix does
+  # (scripts/redirect-game-saves.sh).
+  ".local/share/Steam/steamapps/common"
+  ".local/share/Steam/steamapps/compatdata"
+  ".local/share/Steam/steamapps/shadercache"
+  ".local/share/Steam/steamapps/workshop"
+  ".local/share/Steam/steamapps/downloading"
+  ".local/share/Steam/steamapps/temp"
+  ".local/share/Steam/compatibilitytools.d"
+  ".local/share/Steam/ubuntu12_32"
+  ".local/share/Steam/ubuntu12_64"
+  ".local/share/Steam/linux32"
+  ".local/share/Steam/linux64"
+  ".local/share/Steam/steamrt32"
+  ".local/share/Steam/steamrt64"
+  ".local/share/Steam/package"
+  ".local/share/Steam/depotcache"
+  ".local/share/Steam/appcache"
+  ".local/share/Steam/steamui"
+  ".local/share/Steam/config/avatarcache"
+  ".local/share/Steam/config/librarycache"
   ".local/share/bottles"
   ".local/share/containers"
   ".local/share/suyu"
