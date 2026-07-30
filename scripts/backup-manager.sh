@@ -64,6 +64,27 @@ HOME_EXCLUDES=(
   "Nextcloud"
   ".config/Nextcloud"
   ".local/share/Nextcloud"
+  # Chromium-family browser CACHES (Vivaldi/Chromium). Bookmarks, Preferences,
+  # History, Extensions and Local Storage are all KEPT — only regenerable caches
+  # are dropped. Worth it twice over: "Service Worker" alone was 806 MB on DESK_A,
+  # and these churn on every browsing session, so each backup would otherwise add
+  # a fresh GB of dead blobs to the restic repo forever.
+  ".config/vivaldi/*/Service Worker"
+  ".config/vivaldi/*/GPUCache"
+  ".config/vivaldi/*/Code Cache"
+  ".config/vivaldi/*/Shared Dictionary"
+  ".config/vivaldi/GrShaderCache"
+  ".config/vivaldi/ShaderCache"
+  ".config/vivaldi/component_crx_cache"
+  ".config/vivaldi/extensions_crx_cache"
+  ".config/chromium/*/Service Worker"
+  ".config/chromium/*/GPUCache"
+  ".config/chromium/*/Code Cache"
+  ".config/chromium/*/Shared Dictionary"
+  ".config/chromium/GrShaderCache"
+  ".config/chromium/ShaderCache"
+  ".config/chromium/component_crx_cache"
+  ".config/chromium/extensions_crx_cache"
 )
 
 # Retention policies per job type
