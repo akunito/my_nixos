@@ -18,8 +18,17 @@
 # (see hotplug-restore.nix). Wrapped by writeShellApplication: strict mode is
 # on and coreutils/jq/swaymsg come from runtimeInputs.
 
-STATE_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/sway-hotplug"
+RUNTIME="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+STATE_DIR="$RUNTIME/sway-hotplug"
 mkdir -p "$STATE_DIR"
+
+# Shared lock with sway-hotplug-restore.sh. Snapshots MUST serialize with the
+# restore: after a monitor reconnect the restore sleeps ~1.5s to let sway
+# settle, and an event batch landing in that window used to snapshot the
+# still-shrunk/mid-transition state under the NEW monitor set's signature —
+# overwriting the good snapshot moments before the restore read it (windows
+# came back small / on the wrong workspace on almost every wake).
+exec 8>"$RUNTIME/sway-hotplug-restore.lock"
 
 # Bail out cleanly (no on-failure restart storm) if sway is not reachable.
 if ! swaymsg -t get_version >/dev/null 2>&1; then
@@ -60,9 +69,25 @@ snapshot() {
   return 0
 }
 
+# Wait for any in-flight restore, then snapshot the settled state.
+guarded_snapshot() {
+  flock -w 20 8 || return 0
+  snapshot
+  flock -u 8 || true
+  return 0
+}
+
+# Normalize state once at session start: nothing else runs the group-0 sweep
+# at login (kanshi's wildcard profile never matches with 2 heads), so sway's
+# default workspace "1" used to survive and swaysome keybinds then built
+# plain 1-10 workspaces. The restore script renames them into the output's
+# pinned decade. (Snapshot restore inside it is skipped at login by the
+# same-session SWAYSOCK gate.)
+"$HOME/.config/sway/scripts/sway-hotplug-restore.sh" >/dev/null 2>&1 || true
+
 # Initial snapshot of the current state.
 LAST_SIG="$(current_sig)"
-snapshot
+guarded_snapshot
 
 # Re-snapshot on workspace/window events (debounced: drain event bursts, then
 # capture once). When the monitor set changes, run the restore script instead
@@ -79,7 +104,7 @@ swaymsg -t subscribe -m '["workspace","window","output"]' 2>/dev/null | while re
     LAST_SIG="$SIG"
     "$HOME/.config/sway/scripts/sway-hotplug-restore.sh" >/dev/null 2>&1 &
   else
-    snapshot
+    guarded_snapshot
   fi
 done || true
 

@@ -18,6 +18,7 @@ let
       coreutils
       jq
       sway
+      util-linux # flock: serialize snapshots with the restore script
     ];
     text = builtins.readFile ./scripts/sway-snapshot-daemon.sh;
   };

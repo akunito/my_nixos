@@ -60,9 +60,13 @@ hwid_of_output() {
 }
 
 # --- 1. Migrate group-0 orphans (workspaces 1-10) into the real decade -------
-ORPHANS="$($JQ -r '.[] | select(.num>=1 and .num<=10) | "\(.name)\t\(.output)"' <<<"$WS")"
+# Preserve the digit: workspace "3" becomes "13" (base+3), NOT base+1 — the
+# old collapse-into-X1 behavior dumped e.g. Brave from ws 3 onto Vivaldi's 11.
+# Rename keeps the whole workspace (layout included); if the target workspace
+# already exists, fall back to moving the windows into it one by one.
+ORPHANS="$($JQ -r '.[] | select(.num>=1 and .num<=10) | "\(.name)\t\(.num)\t\(.output)"' <<<"$WS")"
 if [ -n "$ORPHANS" ]; then
-  while IFS=$'\t' read -r wsname output; do
+  while IFS=$'\t' read -r wsname wsnum output; do
     [ -n "$wsname" ] || continue
     base=""
     hwid="$(hwid_of_output "$output")"
@@ -74,7 +78,13 @@ if [ -n "$ORPHANS" ]; then
         '[.[] | select(.output==$o and .num>=11) | ((.num/10)|floor)*10] | min // empty' <<<"$WS")"
     fi
     [ -n "$base" ] || continue
-    target=$((base + 1))
+    target=$((base + wsnum))
+    target_exists="$($JQ -r --arg t "$target" \
+      '[.[] | select(.name==$t)] | length' <<<"$WS")"
+    if [ "$target_exists" = "0" ] && [ "$wsname" = "$wsnum" ]; then
+      $SWAYMSG "rename workspace \"$wsname\" to \"$target\"" >/dev/null 2>&1 || true
+      continue
+    fi
     ids="$($SWAYMSG -t get_tree -r 2>/dev/null | $JQ -r --arg w "$wsname" \
       '.. | select(.type?=="workspace" and .name==$w)
           | [recurse(.nodes[]?, .floating_nodes[]?)
