@@ -34,6 +34,14 @@ RUNTIME="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 STATE_DIR="$RUNTIME/sway-hotplug"
 PINS_CONF="$HOME/.config/sway/workspace-output-pins.conf"
 
+# Lightweight action log for debugging restore behavior (tmpfs, size-capped).
+LOG_FILE="$STATE_DIR/restore.log"
+log() {
+  mkdir -p "$STATE_DIR"
+  [ "$(wc -c <"$LOG_FILE" 2>/dev/null || echo 0)" -lt 65536 ] || : >"$LOG_FILE"
+  printf '%s %s\n' "$(date '+%m-%d %T')" "$*" >>"$LOG_FILE"
+}
+
 exec 9>"$RUNTIME/sway-hotplug-restore.lock"
 flock 9 || exit 0
 
@@ -83,6 +91,7 @@ if [ -n "$ORPHANS" ]; then
       '[.[] | select(.name==$t)] | length' <<<"$WS")"
     if [ "$target_exists" = "0" ] && [ "$wsname" = "$wsnum" ]; then
       $SWAYMSG "rename workspace \"$wsname\" to \"$target\"" >/dev/null 2>&1 || true
+      log "orphan: renamed ws $wsname -> $target ($output)"
       continue
     fi
     ids="$($SWAYMSG -t get_tree -r 2>/dev/null | $JQ -r --arg w "$wsname" \
@@ -99,6 +108,7 @@ fi
 # --- 2. Restore snapshot for this monitor set (same sway session only) -------
 SIG="$($JQ -r '[.[] | select(.active==true) | (.make+" "+.model+" "+.serial)] | sort | join("||")' <<<"$OUTPUTS")"
 SNAP="$STATE_DIR/$(printf '%s' "$SIG" | sha256sum | cut -c1-16).json"
+log "run sig=[$SIG] snap=$([ -f "$SNAP" ] && basename "$SNAP" || echo none)"
 
 if [ -f "$SNAP" ]; then
   SNAP_SOCK="$($JQ -r '.swaysock // ""' "$SNAP" 2>/dev/null || echo "")"
@@ -124,11 +134,19 @@ if [ -f "$SNAP" ]; then
       exists="$($JQ -r --argjson id "$cid" \
         '[.. | select(.id? == $id)] | length' <<<"$TREE")"
       [ "$exists" != "0" ] || continue
-      $SWAYMSG "[con_id=$cid] move container to workspace \"$fws\"" >/dev/null 2>&1 || true
+      # ORDER MATTERS: the workspace move must come LAST. `move absolute
+      # position` re-assigns a floating window to the VISIBLE workspace of
+      # the output containing the coordinates — with the workspace move
+      # first, a window belonging to a hidden workspace (Brave on 13) was
+      # teleported onto the visible one (11) by the position command.
+      # Position/size first, then workspace membership as the final word
+      # (same-output workspace moves keep floating geometry).
       if [ -n "$fw" ] && [ -n "$fh" ] && [ "$fw" -gt 0 ] 2>/dev/null; then
         $SWAYMSG "[con_id=$cid] resize set $fw px $fh px" >/dev/null 2>&1 || true
       fi
       $SWAYMSG "[con_id=$cid] move absolute position $fx $fy" >/dev/null 2>&1 || true
+      $SWAYMSG "[con_id=$cid] move container to workspace \"$fws\"" >/dev/null 2>&1 || true
+      log "restored con=$cid ws=$fws pos=$fx,$fy size=${fw}x${fh}"
     done < <($JQ -r '.floating[]? | "\(.con_id)\t\(.ws)\t\(.x)\t\(.y)\t\(.w)\t\(.h)"' "$SNAP")
 
     if [ -n "$FOCUSED" ]; then
@@ -179,6 +197,7 @@ $JQ -n -r --argjson tree "$TREE" --argjson ws "$WS" --argjson outs "$OUTPUTS" '
 ' | while IFS= read -r cmd; do
   [ -n "$cmd" ] || continue
   $SWAYMSG "$cmd" >/dev/null 2>&1 || true
+  log "refit: $cmd"
 done
 
 exit 0

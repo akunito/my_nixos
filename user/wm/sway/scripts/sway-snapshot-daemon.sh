@@ -87,6 +87,7 @@ guarded_snapshot() {
 
 # Initial snapshot of the current state.
 LAST_SIG="$(current_sig)"
+SIG_SINCE=$SECONDS
 guarded_snapshot
 
 # Re-snapshot on workspace/window events (debounced: drain event bursts, then
@@ -102,8 +103,13 @@ swaymsg -t subscribe -m '["workspace","window","output"]' 2>/dev/null | while re
   SIG="$(current_sig)"
   if [ -n "$SIG" ] && [ "$SIG" != "$LAST_SIG" ]; then
     LAST_SIG="$SIG"
+    SIG_SINCE=$SECONDS
     "$HOME/.config/sway/scripts/sway-hotplug-restore.sh" >/dev/null 2>&1 &
-  else
+  elif [ $((SECONDS - SIG_SINCE)) -ge 30 ]; then
+    # Stability gate: only persist snapshots for a monitor set that has been
+    # active >=30s. Seconds-long transitional states while monitors power
+    # on/off staggered used to leave stale "everything crammed on one
+    # screen" snapshots that later restores faithfully re-applied.
     guarded_snapshot
   fi
 done || true
