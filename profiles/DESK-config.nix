@@ -655,6 +655,7 @@ in
     starcitizenEnable = true; # Enable Star Citizen support and optimizations
     GOGlauncherEnable = true; # Enable Heroic Games Launcher for GOG games
     steamPackEnable = true; # Enable Steam gaming platform
+    vkbasaltEnable = true; # vkBasalt Vulkan post-processing (CAS) — opt-in per game via ENABLE_VKBASALT=1
     dolphinEmulatorPrimehackEnable = true; # Enable Dolphin Emulator with Primehack
     rpcs3Enable = false; # Temporarily disabled — upstream nixpkgs-unstable build broken (GLEW/GLX link error); re-enable once fixed
 

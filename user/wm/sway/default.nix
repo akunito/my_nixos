@@ -27,6 +27,7 @@
     ../../app/terminal/tmux.nix
     ../../app/terminal/xterm.nix
     ../../app/gaming/mangohud.nix
+    ../../app/gaming/vkbasalt.nix
     ../../app/ai/aichat.nix
     ../../app/swaybgplus/swaybgplus.nix
     ../../app/swww/swww.nix

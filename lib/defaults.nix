@@ -962,6 +962,7 @@
     steamPackEnable = false;
     rpcs3Enable = false;
     gamesLightEnable = false; # Light gaming: RetroArch, emulators, light games, pegasus launcher
+    vkbasaltEnable = false; # vkBasalt Vulkan post-processing (CAS sharpening) — opt-in per game via ENABLE_VKBASALT=1
 
     # Package module feature flags
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)

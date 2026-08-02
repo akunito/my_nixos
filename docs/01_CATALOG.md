@@ -15,7 +15,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ## Profiles
 
 - **profiles/DESK-config.nix**: DESK Profile Configuration
-- **profiles/DESK_A-config.nix**: DESK_AGA Profile Configuration (nixosaga)
+- **profiles/DESK_A-config.nix**: DESK_A Profile Configuration — Aga's desktop (hostname: nixosagadesk)
 - **profiles/DESK_VMDESK-config.nix**: DESK_VMDESK Profile Configuration (nixosdesk)
 - **profiles/KOMI_LXC-base-config.nix**: KOMI_LXC Base Profile Configuration
 - **profiles/KOMI_LXC_database-config.nix**: KOMI_LXC_database Profile Configuration
@@ -70,13 +70,19 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
    - `(systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != ""`
-- **system/app/docker.nix**: Track docker from pkgs-unstable so we don't have to bump pins each time *Enabled when:* `userSettings.dockerEnable == true`
+- **system/app/docker.nix**: Track docker from pkgs-unstable so we don't have to bump pins each time *Enabled when:*
+   - `userSettings.dockerEnable == true`
+   - `!userlandProxy`
 - **system/app/flatpak.nix**: Need some flatpaks
+- **system/app/freesm-launcher.nix**: FreeSM Launcher (Freesm Launcher)
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
    - `systemSettings.gamemodeEnable == true`
    - `systemSettings.gpuType == "amd"`
 - **system/app/grafana.nix**: Grafana & Prometheus Monitoring Stack *Enabled when:*
+   - `uses local postfix relay`
+   - `fixed UID for dashboard references`
    - `(systemSettings.prometheusBasicAuthHtpasswd or null) != null`
+   - `SEC-AUDIT-001`
    - `local access with SSL`
 - **system/app/headscale.nix**: Headscale — Self-hosted Tailscale Coordination Server *Enabled when:*
    - `systemSettings.headscaleEnable or false`
@@ -84,6 +90,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:*
    - `systemSettings.homelabDockerEnable or false`
    - `(systemSettings.financeUser or "") != ""`
+- **system/app/llama-server.nix**: Local LLM inference server — llama.cpp `llama-server`, Vulkan backend, *Enabled when:*
+   - `Vulkan`
+   - `never through a derivation`
+   - `apiKeySecret != ""`
+- **system/app/llama-wake-proxy.nix**: Wake-and-wait proxy for the DESK local LLM. *Enabled when:* `WoL via pfSense API`
 - **system/app/mariadb.nix**: MariaDB Server Module *Enabled when:*
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
@@ -94,6 +105,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `seq 1 30`
    - `!isRootless`
 - **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
+- **system/app/nix-binary-cache-client.nix**: Consume a local Nix binary cache (see system/app/nix-binary-cache.nix). *Enabled when:* `not replacing`
+- **system/app/nix-binary-cache.nix**: Local Nix binary cache (harmonia) — serve DESK's /nix/store to the other machines. *Enabled when:* `cat ${pubKey}`
 - **system/app/online-accounts.nix**: System module: online-accounts.nix
 - **system/app/openclaw-matrix-bridge.nix**: OpenClaw Matrix Bridge + Fallback Monitor
 - **system/app/openclaw.nix**: OpenClaw Services
@@ -105,7 +118,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/postgresql.nix**: PostgreSQL Server Module *Enabled when:*
    - `moved from top-level to settings`
    - `systemSettings.prometheusPostgresExporterEnable or false`
-- **system/app/prismlauncher.nix**: System module: prismlauncher.nix
 - **system/app/prometheus-blackbox.nix**: Blackbox Exporter for HTTP/HTTPS probes, ICMP ping checks, and TLS certificate monitoring *Enabled when:*
    - `systemSettings.prometheusBlackboxEnable or false`
    - `tlsTargets != [] || httpTargets != []`
@@ -124,7 +136,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `allows multiple instances if needed`
    - `systemSettings.prometheusRedisExporterEnable or false`
 - **system/app/restic-backup-nas.nix**: NAS Offsite Backup — VPS pulls Docker data + configs from NAS *Enabled when:* `systemSettings.nasResticBackupEnable or false`
-- **system/app/restic-backup-vps.nix**: VPS Restic Backup to TrueNAS via SFTP *Enabled when:* `systemSettings.vpsResticBackupEnable or false`
+- **system/app/restic-backup-vps.nix**: VPS Restic Backup to TrueNAS via SFTP *Enabled when:*
+   - `systemSettings.vpsResticBackupEnable or false`
+   - `(systemSettings.resticDatabasesPassword or "") != ""`
+   - `(systemSettings.resticServicesPassword or "") != ""`
+   - `(systemSettings.resticNextcloudPassword or "") != ""`
+   - `(systemSettings.resticImmichPassword or "") != ""`
 - **system/app/samba.nix**: System module: samba.nix
 - **system/app/starcitizen.nix**: Kernel tweaks for Star Citizen (system-level requirement) *Enabled when:* `userSettings.starcitizenEnable == true`
 - **system/app/steam.nix**: /bin/bash compatibility symlink *Enabled when:* `userSettings.steamPackEnable == true`
@@ -133,6 +150,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `isSubnetRouter || isExitNode`
    - `(systemSettings.tailscaleEnable or false) || (systemSettings.trayscaleGuiEnable or false)`
    - `systemSettings.tailscaleGuiAutostart or false`
+   - `(systemSettings.tailscaleOperator or "") != ""`
    - `config.services.prometheus.exporters.node.enable or false`
    - `${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null`
    - `allow network to stabilize`
@@ -178,11 +196,13 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.disk8_enabled`
    - `systemSettings.disk9_enabled`
 - **system/hardware/fingerprint.nix**: Fingerprint reader support (fprintd)
+- **system/hardware/fwupd.nix**: fwupd / LVFS firmware updates. *Enabled when:* `systemSettings.fwupdEnable or false`
 - **system/hardware/gpu-monitoring.nix**: GPU Monitoring Packages based on GPU type *Enabled when:*
    - `systemSettings.gpuType == "amd"`
    - `systemSettings.gpuType == "intel"`
    - `systemSettings.gpuType != "amd" && systemSettings.gpuType != "intel"`
 - **system/hardware/hibernate.nix**: Hibernation support for laptops with LUKS-encrypted swap *Enabled when:* `(systemSettings.hibernateEnable or false) && (systemSettings.hibernateSwapLuksUUID or null) != null`
+- **system/hardware/inhibit-auto-suspend.nix**: Prevent AUTOMATIC (idle) system suspend on always-on desktops. *Enabled when:* `systemSettings.autoSuspendInhibit or false`
 - **system/hardware/io-scheduler.nix**: Consolidated I/O scheduler optimization for all profile types *Enabled when:*
    - `better than none for modern NVMe`
    - `same as desktop - good for interactive workloads`
@@ -199,6 +219,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `{ "NetworkManager/system-connections/bond0.nmconnection" = { text = nmBondConnection; mode = "0600"; }; } // lib.listToAttrs (map (iface: { name = "NetworkManager/system-connections/bond0-slave-${iface}.nmconnection"; value = { text = nmSlaveConnection iface; mode = "0600"; }; }) interfaces) // lib.listToAttrs (map (vlan: { name = "NetworkManager/system-connections/bond0-vlan${toString vlan.id}.nmconnection"; value = { text = nmVlanConnection vlan; mode = "0600"; }; }) vlans)`
    - `lib.stringAfter [ "etc" ] '' if ${pkgs.systemd}/bin/systemctl is-active --quiet NetworkManager; then ${pkgs.networkmanager}/bin/nmcli connection reload || true fi ''`
    - `ringBufferSize != null`
+   - `priority 100`
 - **system/hardware/nfs_client.nix**: You need to install pkgs.nfs-utils *Enabled when:* `systemSettings.nfsClientEnable == true`
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
 - **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:*
@@ -225,6 +246,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/hardware/thunderbolt.nix**: Thunderbolt support: bolt daemon, auto-authorization, and diagnostic tools *Enabled when:* `systemSettings.thunderboltEnable or false`
 - **system/hardware/time.nix**: System module: time.nix
 - **system/hardware/webcam-controls.nix**: Persist v4l2 webcam controls (brightness/contrast/gain/etc.) across reboot,
+- **system/hardware/wol.nix**: Wake-on-LAN persistence module *Enabled when:*
+   - `a`
+   - `lib.stringAfter [ "etc" ] '' if ${pkgs.systemd}/bin/systemctl is-active --quiet NetworkManager; then ${pkgs.networkmanager}/bin/nmcli connection reload || true fi ''`
+   - `staticIp != ""`
 - **system/hardware/xbox.nix**: NOTE you might need to add xpad as Kernel Module on your flake.nix
 
 ### Hardware-Configuration.Nix
@@ -247,17 +272,20 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.notificationOnFailureEnable or false`
    - `systemSettings.autoUserUpdateEnable == true`
 - **system/security/blocklist.nix**: networking.extraHosts = ''
+- **system/security/docker-firewall.nix**: Close the Docker firewall bypass. *Enabled when:* `e.g. [ \"bond0\" \"eno1\" \"tailscale0\" ]`
 - **system/security/egress-audit.nix**: Egress Monitoring — Daily Outbound Connection Audit (SEC-AUDIT-04) *Enabled when:* `systemSettings.egressAuditEnable or false`
 - **system/security/fail2ban.nix**: Global settings
 - **system/security/firejail.nix**: prismlauncher = {
 - **system/security/firewall.nix**: Firewall settings
 - **system/security/firewallBasic.nix**: Firewall
 - **system/security/gpg.nix**: Some programs need SUID wrappers, can be configured further or are
+- **system/security/nix-access-token.nix**: Nix access-tokens without leaking the PAT into the world-readable Nix store. *Enabled when:* `${nixBin} eval --impure --raw \ --expr '(import ${secretsFile}).githubAccessToken or ""' 2>/dev/null || true`
 - **system/security/openvpn.nix**: System module: openvpn.nix
 - **system/security/polkit.nix**: System module: polkit.nix
 - **system/security/restic.nix**: Script to export backup metrics for Prometheus textfile collector *Enabled when:*
    - `systemSettings.resticWrapper == true`
    - `systemSettings.homeBackupEnable == true`
+   - `systemSettings.homeBackupCallNextEnabled or false`
    - `systemSettings.remoteBackupEnable == true`
    - `systemSettings.backupMonitoringEnable or false`
 - **system/security/sshd.nix**: Enable incoming ssh
@@ -296,7 +324,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.sddmSetupScript != null`
    - `systemSettings.hostname == "nixosaku"`
 - **system/wm/sway.nix**: Helper: is Sway enabled (either as primary WM or as dual-WM with Plasma) *Enabled when:*
-   - `SDDM`
+   - `patches # swayfx-unwrapped for BOTH this and Home Manager's wayland.windowManager.sway, # which is the one SDDM actually launches`
    - `swayEnabled && !(systemSettings.greetdEnable or false)`
    - `!(systemSettings.sddmBreezePatchedTheme or false)`
    - `systemSettings.sddmBreezePatchedTheme or false`
@@ -326,10 +354,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/calendar/calendar.nix**: Typelibs needed by gi.require_version() inside eds-refresh.py. *Enabled when:* `sign in`
 - **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
 - **user/app/colima/colima.nix**: Colima settings - can be overridden in profile config *Enabled when:* `systemSettings.profile == "darwin"`
-- **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:*
-   - `builtins.length postgresCredentials > 0`
-   - `builtins.length mariadbCredentials > 0`
-   - `redisPassword != ""`
+- **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:* `the attribute NAME`
 - **user/app/development/development-komi.nix**: Development tools and IDEs
 - **user/app/development/development.nix**: Development tools and IDEs
 - **user/app/dmenu-scripts/networkmanager-dmenu.nix**: gui_if_available = <True or False> (Default: True)
@@ -341,6 +366,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/games/games-light.nix**: Handheld consoles *Enabled when:* `userSettings.gamesLightEnable or false`
 - **user/app/games/games.nix**: Gaming module dispatcher *Enabled when:* `gamesLightEnable`
 - **user/app/gaming/mangohud.nix**: MangoHud Configuration
+- **user/app/gaming/vkbasalt.nix**: vkBasalt is an *opt-in* Vulkan layer: its manifest declares *Enabled when:*
+   - `same philosophy as MangoHud/RADV_PERFTEST in games-heavy.nix`
+   - `cas, dls, fxaa, smaa, lut`
 - **user/app/git/git.nix**: https://nixos.wiki/wiki/Git
 - **user/app/hammerspoon/hammerspoon.nix**: Hammerspoon Configuration Module for macOS *Enabled when:* `systemSettings.osType == "darwin" && userSettings.hammerspoonEnable`
 - **user/app/karabiner/karabiner.nix**: Karabiner-Elements Configuration
@@ -387,6 +415,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **user/packages/user-ai-pkgs.nix**: === AI & Machine Learning === *Enabled when:* `userSettings.userAiPkgsEnable or false`
 - **user/packages/user-basic-pkgs.nix**: === Basic User Packages === *Enabled when:* `userSettings.userBasicPkgsEnable or true`
+- **user/packages/user-gamedev-pkgs.nix**: === Game Development === *Enabled when:* `userSettings.userGamedevPkgsEnable or false`
 - **user/packages/user-media-recording.nix**: === Screen Recording & Video Production === *Enabled when:* `userSettings.userMediaRecordingEnable or false`
 
 ### Pkgs
@@ -421,10 +450,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/debug/relog-instrumentation.nix**: NDJSON sink for this repo (debug-mode compatible).
 - **user/wm/sway/default.nix**: Internal cross-module wiring (kept minimal).
 - **user/wm/sway/extras.nix**: Btop theme configuration (Stylix colors) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+- **user/wm/sway/hotplug-restore.nix**: Monitor-hotplug snapshot/restore (DESK): keep workspaces, focus and *Enabled when:* `hotplug restore`
 - **user/wm/sway/kanshi.nix**: Declarative mode: Nix manages kanshi config *Enabled when:*
    - `lib.mkIf declarativeMode { services.kanshi.settings = systemSettings.swayKanshiSettings; # Ensure Home Manager owns kanshi config robustly xdg.configFile."kanshi/config".force = true; }`
    - `dirname "$KANSHI_CONFIG"`
-   - `imperativeMode && nativeGroups`
+   - `imperativeMode && hotplugRestore`
+   - `imperativeMode && nativeGroups && !hotplugRestore`
 - **user/wm/sway/kde-apps.nix**: KDE companion apps, Wayland-native viewers, and MIME associations for Sway session.
 - **user/wm/sway/nwg-displays.nix**: User module: nwg-displays.nix
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
@@ -463,6 +494,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Akunito / Gaming
 
+- **docs/akunito/gaming/bg3-linux-modding.md**: Modding Baldur's Gate 3 on NixOS/Proton with Script Extender, vkBasalt CAS and FSR4 upscaling on RDNA4
 - **docs/akunito/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
 - **docs/akunito/gaming/skyrim-linux-setup.md**: Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning
 

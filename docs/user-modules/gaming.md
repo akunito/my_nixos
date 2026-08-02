@@ -38,6 +38,10 @@ user/app/games/
 system/app/
   steam.nix          # Steam (steamPackEnable) — system-level
   gamemode.nix       # GameMode (gamemodeEnable) — system-level
+
+user/app/gaming/
+  mangohud.nix       # MangoHud overlay config (always with Sway)
+  vkbasalt.nix       # vkBasalt post-processing config (vkbasaltEnable)
 ```
 
 ### Flag Reference
@@ -53,6 +57,7 @@ system/app/
 | `rpcs3Enable` | user | Light sub-flag | RPCS3 PS3 emulator |
 | `GOGlauncherEnable` | user | Heavy sub-flag | Heroic Games Launcher |
 | `starcitizenEnable` | user | Heavy sub-flag | RSI Launcher + kernel tweaks |
+| `vkbasaltEnable` | user | Steam sub-flag | vkBasalt Vulkan post-processing (CAS sharpening). Opt-in per game via `ENABLE_VKBASALT=1` — see `gaming.bg3-linux-modding` |
 
 ### Profile Examples
 
