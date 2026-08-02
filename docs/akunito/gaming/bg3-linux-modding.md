@@ -79,7 +79,7 @@ WINEDLLOVERRIDES="DWrite.dll=n,b" ENABLE_VKBASALT=1 PROTON_FSR4_UPGRADE=1 %comma
 |---|---|
 | `WINEDLLOVERRIDES="DWrite.dll=n,b"` | Loads Script Extender's `DWrite.dll` instead of Wine's builtin. Without it SE is inert. |
 | `ENABLE_VKBASALT=1` | Activates the vkBasalt Vulkan layer for this game only (the layer is opt-in — see [§5](#vkbasalt)). |
-| `PROTON_FSR4_UPGRADE=1` | Redirects BG3's DLSS code path to real **FSR4** on RDNA4. |
+| `PROTON_FSR4_UPGRADE=1` | **No-op in BG3 on AMD** — kept for other titles. See below. |
 
 **The second `env`, after gamescope's `--`, is deliberate.** `gamescope-wrapper.sh` passes its
 arguments straight through (`setsid gamescope "$@"`), and gamescope execs whatever follows
@@ -96,14 +96,30 @@ leading `env` as an explicit guard so nothing downstream can turn it on. See
 **Keep the Vulkan renderer** in the BG3 launcher. Do not switch to DX11: it costs frames going
 through DXVK, and vkBasalt only hooks Vulkan.
 
-### FSR4 — why the in-game setting says "DLSS"
+### FSR4 — does NOT work out of the box on this machine
 
-BG3 ships `bin/nvngx_dlss.dll`. With `PROTON_FSR4_UPGRADE=1`, Proton intercepts the DLSS calls
-and services them with FSR4 on RDNA4 hardware. So: set upscaling to **DLSS** in BG3's graphics
-menu — you are actually running FSR4.
+⚠️ **`PROTON_FSR4_UPGRADE=1` alone is inert in BG3 on an AMD GPU.** Verified on DESK: the
+graphics menu offers only FSR 1 and FSR 2.
 
-Requirements, both satisfied on DESK: **Proton 11+** (Experimental 11.0-100) and
-**Mesa ≥ 25.2** (25.2.6, RADV).
+`PROTON_FSR4_UPGRADE` works by intercepting a game's **DLSS** calls and servicing them with
+FSR4. BG3 ships `bin/nvngx_dlss.dll`, but it **gates the DLSS menu entry behind an NVIDIA RTX
+GPU check** — historically people worked around this on Windows with a registry file that
+spoofed an RTX card. On Radeon the DLSS option is simply never drawn, so there is no call path
+to intercept and the variable does nothing.
+
+The Proton/Mesa prerequisites are otherwise satisfied here (Proton Experimental 11.0-100,
+Mesa 25.2.6 RADV) — the blocker is the game, not the stack.
+
+**To actually get FSR4** you need [OptiScaler](https://github.com/optiscaler/OptiScaler),
+which hooks the FSR2/FSR3/XeSS inputs BG3 *does* expose and substitutes FSR4. See
+[§8](#8-troubleshooting) before attempting it — it stacks a second DLL proxy alongside Script
+Extender.
+
+Leaving `PROTON_FSR4_UPGRADE=1` in the launch options is harmless (it is a no-op here) and
+becomes meaningful if OptiScaler is later set up to expose DLSS inputs.
+
+**Without OptiScaler**, the sensible settings at 4K on the RX 9070 XT are native resolution
+(or FSR 2 Quality if you want the frames) plus vkBasalt CAS.
 
 ---
 
@@ -164,9 +180,11 @@ Then in-game: Mods → refresh → enable → drag into position → **Save load
 
 Rules:
 
-- **`Gustav` always loads first** in `modsettings.lsx` — it is the base game.
+- **The base-game module always loads first** in `modsettings.lsx`. On Patch 8 this entry is
+  `GustavX` (older guides say `Gustav`). Never reorder or remove it.
 - Dependencies load **above** the mods that need them (frameworks first).
 - `modsettings.lsx` does not exist until the game writes it once; launch vanilla first.
+- The `Mods/` folder is **not created by the installer** — `mkdir -p` it before the first copy.
 - BG3 Mod Manager (LaughingLeader, or the Linux port) stays available as a fallback if load
   order ever needs surgery — run it via `protontricks` in prefix `1086940`.
 
@@ -269,9 +287,22 @@ ls ~/.nix-profile/share/vulkan/implicit_layer.d/vkBasalt.json
 ENABLE_VKBASALT=1 vkcube    # visible sharpening = layer works
 ```
 
-**FSR4 doesn't engage**
-Upscaling must be set to **DLSS** in-game. Verify with `PROTON_LOG=1 %command%` and grep
-`~/steam-1086940.log`. Needs Proton ≥ 11 and Mesa ≥ 25.2.
+**FSR4 doesn't appear — only FSR 1 and 2**
+Expected. BG3 hides its DLSS option on non-NVIDIA GPUs, so `PROTON_FSR4_UPGRADE` has nothing to
+hook. See [§2](#2-steam-launch-options). The only route to FSR4 is **OptiScaler**:
+
+- Extract OptiScaler into `<game>/bin/` (beside the exes) and run its `setup-linux.sh`, which
+  renames the DLL to a proxy the game will load.
+- ⚠️ **It must not pick `DWrite.dll`** — that name is taken by Script Extender. Choose
+  `dxgi`, `winmm` or `version` instead, or SE will stop loading.
+- Add the chosen proxy to the override list, semicolon-separated:
+  `WINEDLLOVERRIDES="DWrite.dll=n,b;dxgi=n,b"`
+- In OptiScaler's overlay (`Insert`), select **FSR3.X/4 w/Dx12** as the upscaler.
+- `0ptiscaler4linux` automates the Steam/Proton-prefix detection if you prefer.
+
+Worth weighing: this is a second injected DLL layered on top of Script Extender, on a game
+that is frequently CPU-bound. The gain over FSR 2 is image quality (less foliage shimmer and
+ghosting), not raw frames. Consider deferring until the modding stack is proven stable.
 
 **Mods don't appear in the in-game manager**
 Wrong folder (must be inside the Proton prefix, not `~/.local/share`), or hit Refresh. Confirm
