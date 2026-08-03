@@ -37,6 +37,11 @@
     # === Database Management ===
     pkgs-unstable.dbeaver-bin      # Universal database management tool
 
+    # === Mobile / Android ===
+    # adb, fastboot, etc. USB access needs the udev rules + `adbusers` group
+    # from system/app/adb.nix (imported by the same developmentToolsEnable flag).
+    pkgs-unstable.android-tools
+
     # === Design and Documentation ===
     pkgs-stable.drawio             # Diagramming and flowchart tool (stable — unstable 29.7.9 fails npm dep-tree parse from source)
 
