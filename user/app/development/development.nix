@@ -38,8 +38,9 @@
     pkgs-unstable.dbeaver-bin      # Universal database management tool
 
     # === Mobile / Android ===
-    # adb, fastboot, etc. USB access needs the udev rules + `adbusers` group
-    # from system/app/adb.nix (imported by the same developmentToolsEnable flag).
+    # adb, fastboot, etc. USB permissions come from systemd's built-in uaccess
+    # rules — no udev package needed. system/app/adb.nix (same flag) adds the
+    # system-wide copy and a persistent adb server.
     pkgs-unstable.android-tools
 
     # === Design and Documentation ===
