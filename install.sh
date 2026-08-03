@@ -730,6 +730,57 @@ handle_docker() {
     fi
 }
 
+# Restart the rootless Docker daemon if the rebuild upgraded its binary.
+# nixos-rebuild switch only restarts SYSTEM units; virtualisation.docker.rootless
+# runs docker.service as a systemd USER unit, so after an upgrade the old daemon
+# keeps running with stale state until manually restarted. Symptom (AINF, VPS_PROD
+# 2026-08-03): daemon-level DNS breaks with
+#   "lookup registry-1.docker.io on [::1]:53: i/o timeout"
+# Runs even with -d/--skip-docker: -d avoids the long pre-rebuild container stop,
+# while this is a brief post-rebuild bounce done ONLY when the binary changed
+# (containers come back on their own via restart policies).
+restart_rootless_docker_if_stale() {
+    local SILENT_MODE=$1
+
+    command -v docker >/dev/null 2>&1 || return 0
+    # Only applies to rootless setups (user unit); rootful docker is a system
+    # unit and gets restarted by nixos-rebuild itself.
+    systemctl --user is-active --quiet docker 2>/dev/null || return 0
+
+    local CLIENT_VER SERVER_VER
+    CLIENT_VER=$(docker version --format '{{.Client.Version}}' 2>/dev/null)
+    SERVER_VER=$(docker version --format '{{.Server.Version}}' 2>/dev/null)
+    # If the daemon doesn't answer at all, a restart can only help; treat as drift.
+    if [ -n "$SERVER_VER" ] && [ "$CLIENT_VER" = "$SERVER_VER" ]; then
+        return 0
+    fi
+
+    echo ""
+    echo -e "${YELLOW}Rootless Docker daemon is stale (running ${SERVER_VER:-unresponsive}, installed ${CLIENT_VER:-unknown}).${RESET}"
+    echo -e "${YELLOW}A stale daemon breaks registry DNS (lookup on [::1]:53 timeouts).${RESET}"
+
+    if [ "$SILENT_MODE" = false ]; then
+        printf "Restart rootless Docker daemon now? Containers will briefly stop and auto-restart. (Y/n) "
+        read yn
+        case "$yn" in
+            [Nn]*)
+                echo -e "${YELLOW}Skipped. Run 'systemctl --user restart docker' manually before pulling images.${RESET}"
+                return 0
+                ;;
+        esac
+    fi
+
+    echo -e "${CYAN}Restarting rootless Docker daemon...${RESET}"
+    if systemctl --user restart docker; then
+        sleep 5
+        local NEW_VER
+        NEW_VER=$(docker version --format '{{.Server.Version}}' 2>/dev/null)
+        echo -e "${GREEN}✓ Rootless Docker restarted (server now ${NEW_VER:-unknown}); containers restarting via their restart policies${RESET}"
+    else
+        echo -e "${RED}Rootless Docker restart failed — check 'systemctl --user status docker'${RESET}"
+    fi
+}
+
 # Generate hardware config for new system
 generate_hardware_config() {
     local SCRIPT_DIR=$1
@@ -1109,6 +1160,13 @@ else
         rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
         exit 1
     fi
+fi
+
+# Restart rootless Docker if the rebuild changed its binary (user unit —
+# nixos-rebuild won't restart it). Not applicable in BOOT mode (new system
+# isn't active yet, so no drift is observable).
+if [ "$BOOT_MODE" != true ]; then
+    restart_rootless_docker_if_stale $SILENT_MODE
 fi
 
 # In BOOT mode, the new system isn't running yet — Home Manager + post-sync
