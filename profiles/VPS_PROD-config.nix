@@ -80,12 +80,12 @@ in
     # Uses pfSense Tailscale IP (100.64.0.7) so DNS works over mesh without subnet routing
     headscaleDnsSplit = { "${secrets.wildcardLocal}" = [ "100.64.0.7" ]; };
     headscaleDnsSearchDomains = [ secrets.wildcardLocal ];
-    # AkuCraft friendly names — MagicDNS A records so Minecraft clients (family
-    # AND isolated mc-guest nodes) can use hostnames instead of 100.64.0.6.
-    # Creative still needs the explicit port (:25566); survival uses default 25565.
+    # AkuCraft friendly name — MagicDNS A record so Minecraft clients (family
+    # AND isolated mc-guest nodes) can use a hostname instead of 100.64.0.6.
+    # One name serves both servers: survival is the default port (25565),
+    # creative is akucraft.<domain>:25566.
     headscaleExtraDnsRecords = [
-      { name = "akucraft-survival.${secrets.wildcardLocal}"; type = "A"; value = "100.64.0.6"; }
-      { name = "akucraft-creative.${secrets.wildcardLocal}"; type = "A"; value = "100.64.0.6"; }
+      { name = "akucraft.${secrets.wildcardLocal}"; type = "A"; value = "100.64.0.6"; }
     ];
 
     wireguardServerEnable = true;
