@@ -49,6 +49,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### App
 
+- **system/app/adb.nix**: Android Debug Bridge (adb / fastboot) host support
 - **system/app/appimage.nix**: System module: appimage.nix
 - **system/app/archived/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
@@ -365,6 +366,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/games/games-heavy.nix**: Conditional wrapper arguments for AMD GPUs to fix Vulkan driver discovery *Enabled when:* `userSettings.protongamesEnable or false`
 - **user/app/games/games-light.nix**: Handheld consoles *Enabled when:* `userSettings.gamesLightEnable or false`
 - **user/app/games/games.nix**: Gaming module dispatcher *Enabled when:* `gamesLightEnable`
+- **user/app/games/minecraft-client-mods.nix**: AkuCraft client mods — declaratively pinned to match the server
 - **user/app/gaming/mangohud.nix**: MangoHud Configuration
 - **user/app/gaming/vkbasalt.nix**: vkBasalt is an *opt-in* Vulkan layer: its manifest declares *Enabled when:*
    - `same philosophy as MangoHud/RADV_PERFTEST in games-heavy.nix`

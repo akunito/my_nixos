@@ -71,21 +71,34 @@ Independent of Tailscale/Headscale:
 - Breaks circular dependency: if VPS crashes and TrueNAS reboots, Tailscale can't re-auth without Headscale. WireGuard provides recovery path.
 - Same private key reused from old Hetzner VPS (peers only updated endpoint IP)
 
-## ACLs (Planned)
+## ACLs (Active — 2026-08-04)
 
-```json
-{
-  "groups": {
-    "group:infra": ["vps-prod", "truenas-tailscale", "pfsense-tailscale"],
-    "group:personal": ["desk", "laptop-x13", "laptop-yoga", "laptop-a"],
-    "group:mobile": ["phone-diego", "macbook-diego"]
-  }
-}
-```
+Policy lives in the Headscale **database** (`policy.mode = "database"`), managed via
+`sudo headscale policy set --file <json>` on the VPS. Current policy:
 
-- Infra: full mutual access
-- Personal: access home LAN + VPS
-- Mobile: access home LAN + VPS, NOT each other
+- `group:family` — all 11 trusted users (one Headscale user per device) → full access
+  to all family devices + `192.168.8.0/24` + `192.168.20.0/24` + SSH.
+- `tag:mc-guest` — Minecraft guests → **only** `100.64.0.6:25565,25566`. No LAN,
+  no other nodes, no SSH, no other VPS ports.
+
+**CRITICAL gotcha (verified 2026-08-04, headscale 0.29.3)**: tagged devices are NOT
+excluded from `autogroup:member` (headscale diverges from Tailscale semantics here).
+An `autogroup:member` src rule grants tagged guests full access. The family rule
+must use an explicit `group:family` user list. When adding a NEW family device
+user, add it to `group:family` in the policy too, or it will have no access.
+
+Backups: `~/headscale-policy-backup-*.json` on VPS. Verify isolation after any
+policy change by joining a test node with a `tag:mc-guest` preauth key.
+
+### Minecraft guest onboarding
+
+One command on VPS: `~/.homelab/minecraft/akucraft-invite.sh <Name> <email> [player]`
+— creates user, tagged 72h single-use preauth key, optional RCON whitelist add,
+and emails full setup instructions (via Postfix→SMTP2GO).
+
+MagicDNS names (pushed to ALL tailscale clients incl. guests via
+`headscaleExtraDnsRecords`, and mirrored as pfSense host overrides for LAN):
+`akucraft-survival.local.akunito.com` (25565), `akucraft-creative.local.akunito.com:25566`.
 
 ## Previous Setup
 
