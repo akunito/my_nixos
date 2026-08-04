@@ -867,6 +867,7 @@
     headscaleDomain = ""; # Public domain for Headscale (e.g., "headscale.example.com")
     headscalePort = 8080; # Internal port (nginx handles TLS on 443)
     headscaleExtraDnsRecords = [ ]; # Extra MagicDNS A records pushed to all clients: [{ name, type, value }] — resolved locally, works even for ACL-restricted guest nodes
+    akucraftStatusBotEnable = false; # Telegram status bot for AkuCraft Minecraft servers (VPS only; needs akucraftTelegramBotToken/ChatId in secrets)
     wireguardServerEnable = false; # Enable WireGuard point-to-point backup tunnel (VPS <-> pfSense)
     wireguardServerPort = 51820; # WireGuard listen port
     wireguardServerIp = "172.26.5.155/24"; # WireGuard tunnel IP

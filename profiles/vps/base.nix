@@ -52,6 +52,7 @@
   ++ lib.optional ((systemSettings.postgresqlServerEnable or false) || (systemSettings.mariadbServerEnable or false) || (systemSettings.redisServerEnable or false)) ../../system/app/database-secrets.nix
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix
   ++ lib.optional (systemSettings.headscaleEnable or false) ../../system/app/headscale.nix
+  ++ lib.optional (systemSettings.akucraftStatusBotEnable or false) ../../system/app/akucraft-status-bot.nix
   ++ lib.optional (systemSettings.nginxLocalEnable or false) ../../system/app/nginx-local.nix
   ++ lib.optional (systemSettings.vaultwardenEnable or false) ../../system/app/vaultwarden.nix
   ++ lib.optional (systemSettings.wireguardServerEnable or false) ../../system/security/wireguard-server.nix

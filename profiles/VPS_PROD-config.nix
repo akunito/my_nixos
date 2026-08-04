@@ -87,6 +87,9 @@ in
     headscaleExtraDnsRecords = [
       { name = "akucraft.${secrets.wildcardLocal}"; type = "A"; value = "100.64.0.6"; }
     ];
+    # Telegram bot posting AkuCraft server up/down + player join/leave to the
+    # AkuCraft group. No-ops until akucraftTelegramBotToken/ChatId are set in secrets.
+    akucraftStatusBotEnable = true;
 
     wireguardServerEnable = true;
     wireguardServerPort = 51820;
