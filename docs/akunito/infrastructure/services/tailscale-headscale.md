@@ -98,7 +98,7 @@ and emails full setup instructions (via Postfix→SMTP2GO).
 
 MagicDNS names (pushed to ALL tailscale clients incl. guests via
 `headscaleExtraDnsRecords`, and mirrored as pfSense host overrides for LAN):
-`akucraft-survival.local.akunito.com` (25565), `akucraft-creative.local.akunito.com:25566`.
+`akucraft.local.akunito.com` — survival on the default port (25565), creative at `:25566`.
 
 ## Previous Setup
 
