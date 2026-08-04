@@ -795,23 +795,37 @@ generate_hardware_config() {
         $SUDO_CMD env SKIP_DOCKER="$SKIP_DOCKER" $SCRIPT_DIR/stop_external_drives.sh
         echo "Generating hardware configuration file..."
         $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
-        # Clean up autofs/NFS entries captured from running automounts.
-        # These mounts are managed by drives.nix + nfs_client.nix; having them
-        # in hardware-configuration.nix causes duplicate attribute errors.
+        # Clean up runtime mounts captured from the live system.
+        # - autofs/NFS: managed by drives.nix + nfs_client.nix (duplicate attribute errors)
+        # - /var/lib/docker/*: overlay2/volume mounts captured when docker is left
+        #   running (-d/--skip-docker). Baking them in makes local-fs.target require
+        #   them at boot -> lowerdir missing -> EMERGENCY MODE (DESK power-loss
+        #   incident 2026-08-04, generations 844-851 unbootable).
         local HW_CONFIG="$SCRIPT_DIR/system/hardware-configuration.nix"
-        if grep -q 'fsType = "autofs"' "$HW_CONFIG" 2>/dev/null; then
-            echo "Cleaning up autofs/NFS entries from hardware-configuration.nix..."
+        if grep -qE 'fsType = "(autofs|overlay)"|fileSystems\."/var/lib/docker/' "$HW_CONFIG" 2>/dev/null; then
+            echo "Cleaning up runtime (autofs/NFS/docker) entries from hardware-configuration.nix..."
             python3 -c "
 import re, sys
 with open('$HW_CONFIG', 'r') as f:
     content = f.read()
-# Remove fileSystems blocks with autofs or nfs/nfs4 type (managed by drives.nix)
+def keep(m):
+    mountpoint, body = m.group(1), m.group(0)
+    if mountpoint.startswith('/var/lib/docker/'):
+        return '\n'
+    if re.search(r'fsType = \"(?:autofs|nfs4?|overlay)\";', body):
+        return '\n'
+    return body
 content = re.sub(
-    r'\n  fileSystems\.\"[^\"]+\" =\n    \{ device = \"[^\"]*\";\n      fsType = \"(?:autofs|nfs4?)\";\n    \};\n',
-    '\n', content)
+    r'\n  fileSystems\.\"([^\"]+)\" =\n    \{[^}]*?\};\n',
+    keep, content)
 with open('$HW_CONFIG', 'w') as f:
     f.write(content)
 " 2>/dev/null || echo "Warning: Could not clean hardware-configuration.nix (python3 not available)"
+            if grep -qE 'fsType = "(autofs|overlay)"|fileSystems\."/var/lib/docker/' "$HW_CONFIG" 2>/dev/null; then
+                echo -e "${RED}ERROR: hardware-configuration.nix still contains runtime docker/autofs mounts.${RESET}"
+                echo -e "${RED}Building with these WILL produce an unbootable generation. Aborting.${RESET}"
+                exit 1
+            fi
         fi
     }
 
