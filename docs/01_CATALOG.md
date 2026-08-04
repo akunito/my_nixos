@@ -50,6 +50,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### App
 
 - **system/app/adb.nix**: Android Debug Bridge (adb / fastboot) host support
+- **system/app/akucraft-status-bot.nix**: AkuCraft Telegram bot (announcements + group commands) *Enabled when:* `status + commands`
 - **system/app/appimage.nix**: System module: appimage.nix
 - **system/app/archived/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`

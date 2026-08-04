@@ -100,6 +100,11 @@ MagicDNS names (pushed to ALL tailscale clients incl. guests via
 `headscaleExtraDnsRecords`, and mirrored as pfSense host overrides for LAN):
 `akucraft.local.akunito.com` — survival on the default port (25565), creative at `:25566`.
 
+Telegram bot @AkuCraftBot (group "Akucraft Minecraft") announces server status and
+takes commands (/start /stop /status /players /connect /vpn) — daemon
+`system/app/akucraft-bot.py`, module `akucraft-status-bot.nix`, flag
+`akucraftStatusBotEnable` (VPS_PROD), secrets `akucraftTelegram*`.
+
 ## Previous Setup
 
 Tailscale subnet router ran on LXC_tailscale (192.168.8.105). Headscale ran on old Hetzner VPS (Docker). Both decommissioned Feb 2026.
