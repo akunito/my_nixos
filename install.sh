@@ -419,6 +419,54 @@ wait_for_user_input() {
     read -n 1 -s -r -p "Press any key to continue..."
 }
 
+# ==================== Boot-safety guards (anti-brick) ====================
+# Docker overlay2/volume mounts captured into the system config make
+# local-fs.target require them at boot -> "missing lowerdir" -> EMERGENCY
+# MODE (DESK power-loss incident 2026-08-04, generations 849-851 unbootable).
+# Two layers: validate the source file BEFORE building, and verify the
+# built generation's real fstab AFTER building (catches poison from any
+# source: git pull, manual edit, other modules).
+
+# Layer 1: source-file check. Runs before every rebuild, including -h runs.
+validate_hardware_config_safety() {
+    local SCRIPT_DIR=$1
+    local HW_CONFIG="$SCRIPT_DIR/system/hardware-configuration.nix"
+
+    [ -f "$HW_CONFIG" ] || return 0
+
+    local BAD
+    BAD=$(grep -nE 'fileSystems\."/var/lib/docker/|fsType = "(overlay|autofs)"' "$HW_CONFIG" 2>/dev/null)
+    if [ -n "$BAD" ]; then
+        echo -e "\n${RED}✗ BOOT-SAFETY: system/hardware-configuration.nix contains runtime docker/overlay/autofs mounts:${RESET}"
+        echo "$BAD" | head -10
+        echo -e "${RED}  Building this WILL produce an UNBOOTABLE generation (emergency mode at next boot).${RESET}"
+        echo -e "${YELLOW}  Fix: restore a clean version (git checkout -- system/hardware-configuration.nix)${RESET}"
+        echo -e "${YELLOW}  or stop docker and re-run install.sh without -h to regenerate it.${RESET}"
+        return 1
+    fi
+    return 0
+}
+
+# Layer 2: built-generation fstab check. The system profile's fstab is what
+# systemd will actually mount at boot; overlay fstype or /var/lib/docker
+# mountpoints there are guaranteed boot failures.
+verify_generation_fstab_safety() {
+    local SUDO_CMD=$1
+    local FSTAB="/nix/var/nix/profiles/system/etc/fstab"
+
+    [ -e "$FSTAB" ] || return 0
+
+    local BAD
+    BAD=$(awk '$1 !~ /^#/ && ($3 == "overlay" || $2 ~ /^\/var\/lib\/docker\//) {print}' "$FSTAB" 2>/dev/null)
+    if [ -n "$BAD" ]; then
+        echo -e "\n${RED}✗ BOOT-SAFETY: the new generation's fstab contains docker overlay mounts:${RESET}"
+        echo "$BAD" | head -10
+        echo -e "${RED}  This generation CANNOT boot (local-fs.target will fail -> emergency mode).${RESET}"
+        return 1
+    fi
+    return 0
+}
+
 # Check if repository is behind remote
 check_repo_behind_remote() {
     local SCRIPT_DIR=$1
@@ -1121,6 +1169,13 @@ if [ "$BOOT_MODE" = true ]; then
 else
     NIXOS_REBUILD_OP="switch"
 fi
+
+# Boot-safety layer 1: refuse to build a config with runtime docker/overlay
+# mounts (would create an unbootable generation). Runs regardless of -h.
+if ! validate_hardware_config_safety "$SCRIPT_DIR"; then
+    exit 1
+fi
+
 $SUDO_CMD nixos-rebuild $NIXOS_REBUILD_OP --flake $SCRIPT_DIR#$PROFILE --show-trace --impure || REBUILD_EXIT_CODE=$?
 
 # #region agent log
@@ -1174,6 +1229,24 @@ else
         rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
         exit 1
     fi
+fi
+
+# Boot-safety layer 2: verify the generation that was just built/staged.
+# If its fstab is poisoned, roll back immediately so the boot default stays
+# on a bootable generation, and delete the broken generation.
+if ! verify_generation_fstab_safety "$SUDO_CMD"; then
+    POISONED_GENERATION=$(get_current_generation)
+    rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
+    if [ -n "$POISONED_GENERATION" ] && [ "$POISONED_GENERATION" != "$PRE_REBUILD_GENERATION" ]; then
+        echo -e "${YELLOW}Deleting poisoned generation $POISONED_GENERATION...${RESET}"
+        $SUDO_CMD nix-env -p /nix/var/nix/profiles/system --delete-generations "$POISONED_GENERATION" 2>/dev/null \
+            && echo -e "${GREEN}✓ Poisoned generation removed${RESET}" \
+            || echo -e "${RED}Could not delete generation $POISONED_GENERATION - remove it manually${RESET}"
+        # Rewrite bootloader entries so the deleted generation disappears from the boot menu
+        $SUDO_CMD /nix/var/nix/profiles/system/bin/switch-to-configuration boot 2>/dev/null \
+            || echo -e "${YELLOW}Warning: could not regenerate boot menu entries${RESET}"
+    fi
+    exit 1
 fi
 
 # Restart rootless Docker if the rebuild changed its binary (user unit —
