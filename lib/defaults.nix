@@ -866,6 +866,7 @@
     headscaleEnable = false; # Enable Headscale coordination server (VPS only)
     headscaleDomain = ""; # Public domain for Headscale (e.g., "headscale.example.com")
     headscalePort = 8080; # Internal port (nginx handles TLS on 443)
+    headscaleExtraDnsRecords = [ ]; # Extra MagicDNS A records pushed to all clients: [{ name, type, value }] — resolved locally, works even for ACL-restricted guest nodes
     wireguardServerEnable = false; # Enable WireGuard point-to-point backup tunnel (VPS <-> pfSense)
     wireguardServerPort = 51820; # WireGuard listen port
     wireguardServerIp = "172.26.5.155/24"; # WireGuard tunnel IP

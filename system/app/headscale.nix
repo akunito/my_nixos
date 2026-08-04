@@ -35,7 +35,11 @@ let
     name = "${name}.${wildcardLocal}";
     type = "A";
     value = nginxLocalListenAddress;
-  }) nginxLocalServices;
+  }) nginxLocalServices
+  # Manually declared records (non-nginx services, e.g. Minecraft game ports).
+  # Resolved by each client's MagicDNS locally — no pfSense query — so they
+  # also work for ACL-restricted guest nodes that cannot reach 100.64.0.7:53.
+  ++ (systemSettings.headscaleExtraDnsRecords or [ ]);
 in
 lib.mkIf (systemSettings.headscaleEnable or false) {
   services.headscale = {
