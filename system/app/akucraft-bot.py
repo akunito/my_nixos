@@ -31,17 +31,20 @@ IDLE_STOP_MIN = int(os.environ.get("IDLE_STOP_MINUTES", "45"))
 GROUP_LINK = os.environ.get("TG_GROUP_LINK", "")
 
 SERVERS = {
+    # Addresses are given as raw IP:port on purpose: the friendly hostname only
+    # resolves on the home LAN (pfSense) and on tailnet clients using MagicDNS,
+    # so anyone with a different resolver gets NXDOMAIN. The IP always works.
     "survival": {
         "label": "Survival",
         "container": "minecraft",
         "dir": "/home/akunito/.homelab/minecraft",
-        "address": "akucraft.local.akunito.com",
+        "address": "100.64.0.6:25565",
     },
     "creative": {
         "label": "Creative",
         "container": "minecraft-creative",
         "dir": "/home/akunito/.homelab/minecraft-creative",
-        "address": "akucraft.local.akunito.com:25566",
+        "address": "100.64.0.6:25566",
     },
 }
 
@@ -69,9 +72,10 @@ CONNECT_TEXT = """How to join AkuCraft:
    fabric-api 0.116.15, supplementaries 3.8.2, moonlight 3.1.1,
    flan 1.12.7, lithium 0.15.4 (ask for the download links or check
    your invite email - exact versions matter).
-4. Servers:
-   Survival: akucraft.local.akunito.com
-   Creative: akucraft.local.akunito.com:25566
+4. Add the servers in Multiplayer -> Add Server (address = IP and port,
+   copy them exactly):
+   Survival: 100.64.0.6:25565
+   Creative: 100.64.0.6:25566
 5. First join: /auth register <password> <password>
    Later joins: /auth login <password>"""
 
@@ -85,7 +89,11 @@ gives your device access to the Minecraft servers and NOTHING else.
 3. In a terminal (Windows: PowerShell):
    tailscale login --login-server https://headscale.akunito.com --auth-key <YOUR-KEY>
    (macOS app: /Applications/Tailscale.app/Contents/MacOS/Tailscale login ...)
-4. Done - check with /status that a server is up, then join!"""
+4. Done - check with /status that a server is up, then join with
+   100.64.0.6:25565 (survival) or 100.64.0.6:25566 (creative).
+
+Note: always use the IP and port above. Hostnames like akucraft.local...
+only resolve on some networks, so the IP is the reliable way in."""
 
 HELP_TEXT = """AkuCraft bot commands:
 /status - servers status + who is online
