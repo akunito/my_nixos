@@ -36,8 +36,7 @@
       # Communication & Messaging
       pkgs-unstable.element-desktop # Matrix client (matrix.akunito.com)
       pkgs-unstable.telegram-desktop
-      pkgs-unstable.discord
-      pkgs-unstable.vesktop # Alternative Discord with Wayland support
+      pkgs-unstable.vesktop # Discord client (Wayland-native); replaces the official client (AINF-358)
       pkgs-unstable.teams-for-linux
       pkgs-unstable.thunderbird
 
@@ -61,6 +60,14 @@
       pkgs-unstable.chromium
       pkgs-unstable.brave
     ];
+
+    # Discord deep links (OAuth handoff, invite links) → Vesktop.
+    # Kept explicit even though the official client is gone: any app shipping a
+    # .desktop with MimeType=x-scheme-handler/discord would otherwise win the
+    # lookup and the browser hangs forever on "Opening Discord App." (AINF-358)
+    xdg.mimeApps.defaultApplications = {
+      "x-scheme-handler/discord" = "vesktop.desktop";
+    };
 
     # Element (Matrix) — pre-configure default homeserver (no credentials)
     home.file.".config/Element/config.json".text = builtins.toJSON {
