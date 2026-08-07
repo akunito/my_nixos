@@ -124,28 +124,36 @@ def log(msg):
     print(msg, flush=True)
 
 
+def post(label, req_or_url, data, timeout=15, attempts=3):
+    """POST with retries. A dropped announcement is invisible to users, so a
+    transient hiccup (Discord returned 403 mid permission-edit on 2026-08-07,
+    Telegram flakes on network blips) must not silently lose the message."""
+    for attempt in range(1, attempts + 1):
+        try:
+            urllib.request.urlopen(req_or_url, data, timeout=timeout).read()
+            return True
+        except Exception as e:  # noqa: BLE001 - chat outages must never crash us
+            if attempt == attempts:
+                log(f"{label} failed after {attempts} attempts: {e}")
+                return False
+            log(f"{label} attempt {attempt} failed ({e}), retrying")
+            time.sleep(2 * attempt)
+    return False
+
+
 def send(text):
     """Post to the Telegram group."""
-    try:
-        data = urllib.parse.urlencode({"chat_id": CHAT, "text": text}).encode()
-        urllib.request.urlopen(API + "/sendMessage", data, timeout=15).read()
-    except Exception as e:  # noqa: BLE001 - never crash on telegram hiccups
-        log(f"sendMessage failed: {e}")
+    data = urllib.parse.urlencode({"chat_id": CHAT, "text": text}).encode()
+    post("telegram sendMessage", API + "/sendMessage", data)
 
 
 def send_discord(text):
     """Post to the Discord channel via webhook (no bot account required)."""
     if not DISCORD_WEBHOOK:
         return
-    try:
-        req = urllib.request.Request(
-            DISCORD_WEBHOOK,
-            data=json.dumps({"content": text}).encode(),
-            headers={"Content-Type": "application/json"},
-        )
-        urllib.request.urlopen(req, timeout=15).read()
-    except Exception as e:  # noqa: BLE001
-        log(f"discord webhook failed: {e}")
+    req = urllib.request.Request(
+        DISCORD_WEBHOOK, headers={"Content-Type": "application/json"})
+    post("discord webhook", req, json.dumps({"content": text}).encode())
 
 
 def announce(text):
