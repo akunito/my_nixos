@@ -67,6 +67,11 @@ lib.mkIf enabled {
       Restart = "always";
       RestartSec = 10;
       StateDirectory = "akucraft-status";
+      # Restart=always covers crashes, but a unit that gives up entirely (or is
+      # stopped by a failed deploy) would otherwise go unnoticed - the bot is
+      # how everyone sees server state, so its own silence must page us.
+      OnFailure = lib.optional (systemSettings.notificationOnFailureEnable or false)
+        "notify-failure@%n.service";
     };
   };
 }
