@@ -100,10 +100,21 @@ MagicDNS names (pushed to ALL tailscale clients incl. guests via
 `headscaleExtraDnsRecords`, and mirrored as pfSense host overrides for LAN):
 `akucraft.local.akunito.com` — survival on the default port (25565), creative at `:25566`.
 
-Telegram bot @AkuCraftBot (group "Akucraft Minecraft") announces server status and
-takes commands (/start /stop /status /players /connect /vpn) — daemon
+Chat bot announces server status and takes commands (/start /stop /status
+/players /connect /vpn) on **both Telegram** (@AkuCraftBot, group "Akucraft
+Minecraft") **and Discord** (server Patidifusos, `#minecraft⛏️`) — daemon
 `system/app/akucraft-bot.py`, module `akucraft-status-bot.nix`, flag
-`akucraftStatusBotEnable` (VPS_PROD), secrets `akucraftTelegram*`.
+`akucraftStatusBotEnable` (VPS_PROD), secrets `akucraftTelegram*` /
+`akucraftDiscord*`.
+
+Discord has two independent halves: a **webhook** for announcements (no bot
+account, unaffected by channel permissions) and the **gateway** for slash
+commands (outbound WebSocket via discord.py — no public interactions endpoint,
+no privileged intents). Gotchas, all hit in production on 2026-08-07:
+urllib's default User-Agent gets **403** from Discord (must send a `DiscordBot`
+UA); a bot without the Message Content intent reads **empty** message content
+over REST, so verify delivery from daemon logs; and a **private** channel
+returns `403 Missing Access` until the bot is explicitly added to it.
 
 ## Previous Setup
 

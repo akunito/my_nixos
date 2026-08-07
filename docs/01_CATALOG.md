@@ -184,7 +184,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Hardware
 
-- **system/hardware/amdgpu-suspend-workaround.nix**: AMD GPU suspend/resume workaround for the SMU regression that started in
+- **system/hardware/amdgpu-suspend-workaround.nix**: AMD GPU suspend/resume workarounds. Two INDEPENDENT mitigations for two
 - **system/hardware/bluetooth.nix**: hardware.bluetooth.enable = true;
 - **system/hardware/drives.nix**: Enable SSH server to unlock LUKS drives on BOOT *Enabled when:*
    - `systemSettings.bootSSH == true`
