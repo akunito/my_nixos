@@ -151,8 +151,13 @@ def send_discord(text):
     """Post to the Discord channel via webhook (no bot account required)."""
     if not DISCORD_WEBHOOK:
         return
-    req = urllib.request.Request(
-        DISCORD_WEBHOOK, headers={"Content-Type": "application/json"})
+    # The User-Agent is REQUIRED: Discord/Cloudflare answers 403 Forbidden to
+    # urllib's default "Python-urllib/x.y" UA (verified 2026-08-07 - curl
+    # worked while the daemon silently failed). Format per Discord API docs.
+    req = urllib.request.Request(DISCORD_WEBHOOK, headers={
+        "Content-Type": "application/json",
+        "User-Agent": "DiscordBot (https://akunito.com, 1.0)",
+    })
     post("discord webhook", req, json.dumps({"content": text}).encode())
 
 
