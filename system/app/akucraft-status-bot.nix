@@ -25,6 +25,19 @@ let
   token = secrets.akucraftTelegramBotToken or "";
   chatId = secrets.akucraftTelegramChatId or "";
   enabled = (systemSettings.akucraftStatusBotEnable or false) && token != "" && chatId != "";
+
+  # Discord is optional and split in two independent halves:
+  #   webhook  -> announcements only (no bot account, no dependency)
+  #   bot token + guild -> slash commands over the gateway (needs discord.py)
+  discordWebhook = secrets.akucraftDiscordWebhookUrl or "";
+  discordToken = secrets.akucraftDiscordBotToken or "";
+  discordGuild = secrets.akucraftDiscordGuildId or "";
+  discordChannel = secrets.akucraftDiscordChannelId or "";
+  discordCommands = discordToken != "" && discordGuild != "";
+
+  python = if discordCommands
+    then pkgs.python3.withPackages (ps: [ ps.discordpy ])
+    else pkgs.python3;
 in
 lib.mkIf enabled {
   systemd.services.akucraft-status-bot = {
@@ -35,6 +48,10 @@ lib.mkIf enabled {
     environment = {
       TG_TOKEN = token;
       TG_CHAT = chatId;
+      DISCORD_WEBHOOK = discordWebhook;
+      DISCORD_TOKEN = discordToken;
+      DISCORD_GUILD = discordGuild;
+      DISCORD_CHANNEL = discordChannel;
       DOCKER_HOST = "unix:///run/user/1000/docker.sock";
       IDLE_STOP_MINUTES = "45";
       PATH = lib.mkForce (lib.makeBinPath [
@@ -46,7 +63,7 @@ lib.mkIf enabled {
     serviceConfig = {
       Type = "simple";
       User = "akunito";
-      ExecStart = "${pkgs.python3}/bin/python3 ${./akucraft-bot.py}";
+      ExecStart = "${python}/bin/python3 ${./akucraft-bot.py}";
       Restart = "always";
       RestartSec = 10;
       StateDirectory = "akucraft-status";

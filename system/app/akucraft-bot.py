@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AkuCraft Telegram bot - status announcements + group commands.
+"""AkuCraft chat bot - status announcements + commands, on Telegram and Discord.
 
 Runs as systemd service akucraft-status-bot on VPS_PROD (akucraft-status-bot.nix).
 Stdlib only. Talks to the two rootless-docker Minecraft containers via the
@@ -10,8 +10,16 @@ Features:
   - announces player joins/leaves (RCON `list` diff)
   - announces deaths and advancements (docker log tailing)
   - auto-stops a server empty for IDLE_STOP_MINUTES and announces it
-  - group commands: /start /stop /status /players /connect /vpn /help
-    (only honored in the configured group chat)
+  - commands: /start /stop /status /players /connect /vpn /help
+
+Transports (each optional, enabled by its own env vars):
+  - Telegram: long-polls getUpdates; commands honored only in TG_CHAT.
+  - Discord announcements: POSTs to DISCORD_WEBHOOK (no bot account needed).
+  - Discord commands: gateway (outbound WebSocket, no public endpoint) via
+    discord.py, slash commands registered to DISCORD_GUILD and answered only
+    in DISCORD_CHANNEL.
+Announcements fan out to every configured transport; command replies go back
+to whichever transport asked.
 """
 
 import json
@@ -26,6 +34,10 @@ import urllib.request
 TOKEN = os.environ["TG_TOKEN"]
 CHAT = int(os.environ["TG_CHAT"])
 API = "https://api.telegram.org/bot" + TOKEN
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK", "")
+DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN", "")
+DISCORD_GUILD = int(os.environ.get("DISCORD_GUILD") or 0)
+DISCORD_CHANNEL = int(os.environ.get("DISCORD_CHANNEL") or 0)
 STATE_DIR = os.environ.get("STATE_DIRECTORY", "/var/lib/akucraft-status")
 IDLE_STOP_MIN = int(os.environ.get("IDLE_STOP_MINUTES", "45"))
 GROUP_LINK = os.environ.get("TG_GROUP_LINK", "")
@@ -113,11 +125,33 @@ def log(msg):
 
 
 def send(text):
+    """Post to the Telegram group."""
     try:
         data = urllib.parse.urlencode({"chat_id": CHAT, "text": text}).encode()
         urllib.request.urlopen(API + "/sendMessage", data, timeout=15).read()
     except Exception as e:  # noqa: BLE001 - never crash on telegram hiccups
         log(f"sendMessage failed: {e}")
+
+
+def send_discord(text):
+    """Post to the Discord channel via webhook (no bot account required)."""
+    if not DISCORD_WEBHOOK:
+        return
+    try:
+        req = urllib.request.Request(
+            DISCORD_WEBHOOK,
+            data=json.dumps({"content": text}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        urllib.request.urlopen(req, timeout=15).read()
+    except Exception as e:  # noqa: BLE001
+        log(f"discord webhook failed: {e}")
+
+
+def announce(text):
+    """Fan an announcement out to every configured chat transport."""
+    send(text)
+    send_discord(text)
 
 
 def run(cmd, timeout=30, cwd=None):
@@ -185,11 +219,11 @@ def monitor():
                     prev = st.online
                     if is_online != prev:
                         if is_online:
-                            send(f"\U0001F7E2 AkuCraft {srv['label']} is ONLINE - connect: {srv['address']}")
+                            announce(f"\U0001F7E2 AkuCraft {srv['label']} is ONLINE - connect: {srv['address']}")
                             st.idle_since = None
                             st.suppress_offline = False
                         elif prev and not st.suppress_offline:
-                            send(f"\U0001F534 AkuCraft {srv['label']} went OFFLINE")
+                            announce(f"\U0001F534 AkuCraft {srv['label']} went OFFLINE")
                         st.persist(is_online)
                     if not is_online:
                         st.players = set()
@@ -202,9 +236,9 @@ def monitor():
                         left = st.players - players
                         n = len(players)
                         if joined:
-                            send(f"\U0001F3AE {', '.join(sorted(joined))} joined {srv['label']} ({n} online)")
+                            announce(f"\U0001F3AE {', '.join(sorted(joined))} joined {srv['label']} ({n} online)")
                         if left:
-                            send(f"\U0001F44B {', '.join(sorted(left))} left {srv['label']} ({n} online)")
+                            announce(f"\U0001F44B {', '.join(sorted(left))} left {srv['label']} ({n} online)")
                     st.players = players
 
                     # Auto-stop when empty
@@ -215,7 +249,7 @@ def monitor():
                     elif time.time() - st.idle_since > IDLE_STOP_MIN * 60:
                         st.suppress_offline = True
                         st.idle_since = None
-                        send(f"⏸ AkuCraft {srv['label']} was empty for {IDLE_STOP_MIN} min - "
+                        announce(f"⏸ AkuCraft {srv['label']} was empty for {IDLE_STOP_MIN} min - "
                              f"stopping it to save resources. Use /start {name} to boot it again.")
                         compose(srv, "stop")
                         st.persist(False)
@@ -245,13 +279,13 @@ def tail_logs(name):
                     continue
                 a = adv.match(msg)
                 if a:
-                    send(f"\U0001F3C6 [{srv['label']}] {a.group(1)} got {a.group(2)}")
+                    announce(f"\U0001F3C6 [{srv['label']}] {a.group(1)} got {a.group(2)}")
                     continue
                 first = msg.split(" ", 1)[0]
                 with LOCK:
                     known = first in STATES[name].players
                 if known and any(k in msg for k in DEATH_KEYWORDS):
-                    send(f"\U0001F480 [{srv['label']}] {msg}")
+                    announce(f"\U0001F480 [{srv['label']}] {msg}")
             proc.wait()
         except Exception as e:  # noqa: BLE001
             log(f"tail {name}: {e}")
@@ -385,11 +419,91 @@ def poll():
             time.sleep(10)
 
 
+DISCORD_COMMANDS = [
+    ("status", "Servers status + who is online", False),
+    ("players", "Who is playing right now", False),
+    ("start", "Boot a stopped server", True),
+    ("stop", "Stop a server (refuses if players online)", True),
+    ("connect", "How to join the servers", False),
+    ("vpn", "How to set up the VPN (Tailscale)", False),
+    ("help", "List commands", False),
+]
+
+
+def build_discord_client():
+    """Build the gateway client + slash command tree (no connection yet)."""
+    import asyncio
+
+    import discord
+    from discord import app_commands
+
+    intents = discord.Intents.default()  # message content intent NOT needed
+    client = discord.Client(intents=intents)
+    tree = app_commands.CommandTree(client)
+    guild = discord.Object(id=DISCORD_GUILD)
+
+    def make_handler(name, takes_arg):
+        async def handler(interaction, server: str = ""):
+            if DISCORD_CHANNEL and interaction.channel_id != DISCORD_CHANNEL:
+                await interaction.response.send_message(
+                    "Use me in the AkuCraft channel.", ephemeral=True)
+                return
+            # /start and /stop shell out to docker compose and can exceed
+            # Discord's 3s response deadline - defer, then follow up.
+            await interaction.response.defer(thinking=True)
+            text = "/" + name + (f" {server}" if server else "")
+            reply = await asyncio.get_running_loop().run_in_executor(
+                None, handle, text)
+            await interaction.followup.send(reply or "Unknown command.")
+
+        if not takes_arg:
+            async def noarg(interaction):
+                await handler(interaction)
+            return noarg
+        return handler
+
+    for name, description, takes_arg in DISCORD_COMMANDS:
+        cmd = app_commands.Command(
+            name=name, description=description, callback=make_handler(name, takes_arg))
+        tree.add_command(cmd, guild=guild)
+
+    @client.event
+    async def on_ready():  # noqa: D401
+        await tree.sync(guild=guild)
+        log(f"discord gateway ready as {client.user}")
+
+    return client, tree
+
+
+def discord_gateway():
+    """Serve slash commands over the Discord gateway (outbound WebSocket).
+
+    Runs in its own thread with its own event loop: client.run() would try to
+    install signal handlers, which only works on the main thread.
+    """
+    import asyncio
+
+    client, _tree = build_discord_client()
+    while True:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(client.start(DISCORD_TOKEN))
+        except Exception as e:  # noqa: BLE001
+            log(f"discord gateway: {e}")
+        finally:
+            loop.run_until_complete(client.close())
+            loop.close()
+        time.sleep(30)
+
+
 def main():
     os.makedirs(STATE_DIR, exist_ok=True)
     threading.Thread(target=monitor, daemon=True).start()
     for name in SERVERS:
         threading.Thread(target=tail_logs, args=(name,), daemon=True).start()
+    if DISCORD_TOKEN and DISCORD_GUILD:
+        threading.Thread(target=discord_gateway, daemon=True).start()
     log("akucraft bot up")
     poll()
 
