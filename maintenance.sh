@@ -45,8 +45,43 @@ STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles-maintenance"
 GC_STAMP_FILE="$STATE_DIR/last_gc_success_epoch"
 GC_MIN_INTERVAL_SECONDS=$((9 * 24 * 60 * 60)) # 9 days
 
+#
+# Binary cache servers (harmonia, see system/app/nix-binary-cache.nix) get a
+# different GC policy: free-space driven instead of per-run.
+#
+# A plain nix-collect-garbage deletes every unreachable store object — including
+# the flake sources and build inputs the rest of the fleet is about to fetch.
+# That is precisely the closure harmonia exists to hand out, so GC on the cache
+# server undoes the feature on every deploy.
+#
+# It also breaks clients mid-build: harmonia answers .narinfo from a warm cache
+# and only then reads the NAR off disk, so a path collected between the two
+# requests surfaces on the client as
+#   error: file 'nar/<hash>.nar?hash=<hash>' does not exist in binary cache
+# Observed 2026-08-07: a DESK deploy GC'd 15103 paths / 21.8 GB at 14:03, and the
+# LAPTOP_X13 rebuild 13 minutes later took 35 such 404s before falling back.
+#
+# Note --delete-older-than does NOT solve this: it only drops old profile
+# generations and still collects every unreachable object afterwards.
+#
+CACHE_SERVER_GC_MIN_FREE_PERCENT=15
+
 ensure_state_dir() {
     mkdir -p "$STATE_DIR" 2>/dev/null || true
+}
+
+# True when this host serves its store to the fleet.
+is_binary_cache_server() {
+    systemctl is-enabled harmonia.service >/dev/null 2>&1
+}
+
+# Free space on the filesystem holding the nix store, as a whole-number percent.
+# Echoes nothing if df cannot be parsed, so callers must validate.
+nix_store_free_percent() {
+    local used
+    used=$(df --output=pcent /nix/store 2>/dev/null | tail -1 | tr -dc '0-9')
+    [[ "$used" =~ ^[0-9]+$ ]] || return 0
+    echo $((100 - used))
 }
 
 should_run_gc() {
@@ -544,6 +579,19 @@ task_gc() {
         space_freed_ref="Skipped (sudo not available in silent mode)"
         log_message "Garbage collection: Skipped (sudo not available in silent mode)"
         return 0
+    fi
+
+    # On a cache server, only collect under real disk pressure — see the policy
+    # note next to CACHE_SERVER_GC_MIN_FREE_PERCENT.
+    if is_binary_cache_server; then
+        local free_pct
+        free_pct=$(nix_store_free_percent)
+        if [[ "$free_pct" =~ ^[0-9]+$ ]] && [ "$free_pct" -ge "$CACHE_SERVER_GC_MIN_FREE_PERCENT" ]; then
+            space_freed_ref="Skipped (binary cache server; ${free_pct}% free)"
+            log_message "Garbage collection: Skipped — host serves the fleet binary cache and has ${free_pct}% free (floor ${CACHE_SERVER_GC_MIN_FREE_PERCENT}%)"
+            return 0
+        fi
+        log_message "Garbage collection: cache server at ${free_pct:-unknown}% free, below the ${CACHE_SERVER_GC_MIN_FREE_PERCENT}% floor — collecting"
     fi
 
     if should_run_gc; then
