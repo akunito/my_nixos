@@ -35,6 +35,17 @@ let
   discordChannel = secrets.akucraftDiscordChannelId or "";
   discordCommands = discordToken != "" && discordGuild != "";
 
+  # Auto-role on join: the bot matches the new member against the invite codes
+  # of our own invite links, so joins through other invites are left alone.
+  discordJoinRoles = secrets.akucraftDiscordJoinRoleIds or "";
+  # Invite codes are the last path segment of the discord.gg links in secrets.
+  inviteCode = link: lib.last (lib.splitString "/" link);
+  discordInviteCodes = lib.concatStringsSep "," (map inviteCode
+    (lib.filter (l: l != "") [
+      (secrets.akucraftDiscordInviteChat or "")
+      (secrets.akucraftDiscordInviteVoice or "")
+    ]));
+
   python = if discordCommands
     then pkgs.python3.withPackages (ps: [ ps.discordpy ])
     else pkgs.python3;
@@ -52,6 +63,8 @@ lib.mkIf enabled {
       DISCORD_TOKEN = discordToken;
       DISCORD_GUILD = discordGuild;
       DISCORD_CHANNEL = discordChannel;
+      DISCORD_JOIN_ROLES = discordJoinRoles;
+      DISCORD_INVITE_CODES = discordInviteCodes;
       DOCKER_HOST = "unix:///run/user/1000/docker.sock";
       IDLE_STOP_MINUTES = "45";
       PATH = lib.mkForce (lib.makeBinPath [

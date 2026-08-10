@@ -38,6 +38,11 @@ DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK", "")
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN", "")
 DISCORD_GUILD = int(os.environ.get("DISCORD_GUILD") or 0)
 DISCORD_CHANNEL = int(os.environ.get("DISCORD_CHANNEL") or 0)
+# Auto-role: grant these roles to members who join through one of our invites.
+# Patidifusos is a general-purpose server, so joins through other invites must
+# be left alone - hence attribution by invite code rather than "everyone".
+DISCORD_JOIN_ROLES = [int(r) for r in os.environ.get("DISCORD_JOIN_ROLES", "").split(",") if r.strip()]
+DISCORD_INVITE_CODES = {c for c in os.environ.get("DISCORD_INVITE_CODES", "").split(",") if c}
 STATE_DIR = os.environ.get("STATE_DIRECTORY", "/var/lib/akucraft-status")
 IDLE_STOP_MIN = int(os.environ.get("IDLE_STOP_MINUTES", "45"))
 GROUP_LINK = os.environ.get("TG_GROUP_LINK", "")
@@ -443,7 +448,19 @@ DISCORD_COMMANDS = [
 ]
 
 
-def build_discord_client():
+def pick_invite(before, after):
+    """Which invite code was just used? None if it cannot be attributed.
+
+    Discord gives no 'joined via' field, so we diff invite use-counts. If two
+    people join between refreshes, or the invite vanished (single-use/expired),
+    attribution is ambiguous and we deliberately grant nothing rather than
+    guess - a wrong role on a general-purpose server is worse than none.
+    """
+    used = [c for c, u in after.items() if u > before.get(c, 0)]
+    return used[0] if len(used) == 1 else None
+
+
+def build_discord_client(with_members=True):
     """Build the gateway client + slash command tree (no connection yet)."""
     import asyncio
 
@@ -451,6 +468,10 @@ def build_discord_client():
     from discord import app_commands
 
     intents = discord.Intents.default()  # message content intent NOT needed
+    if DISCORD_JOIN_ROLES and with_members:
+        # Privileged "Server Members" intent - required for on_member_join.
+        # Toggle it in the Developer Portal (self-serve under 100 servers).
+        intents.members = True
     client = discord.Client(intents=intents)
     tree = app_commands.CommandTree(client)
     guild = discord.Object(id=DISCORD_GUILD)
@@ -480,10 +501,67 @@ def build_discord_client():
             name=name, description=description, callback=make_handler(name, takes_arg))
         tree.add_command(cmd, guild=guild)
 
+    invite_uses = {}
+
+    async def snapshot_invites(g):
+        try:
+            return {i.code: (i.uses or 0) for i in await g.invites()}
+        except discord.Forbidden:
+            log("discord: cannot read invites (bot needs Manage Server) "
+                "- auto-role disabled")
+        except Exception as e:  # noqa: BLE001
+            log(f"discord: invite snapshot failed: {e}")
+        return {}
+
     @client.event
     async def on_ready():  # noqa: D401
         await tree.sync(guild=guild)
+        if DISCORD_JOIN_ROLES:
+            g = client.get_guild(DISCORD_GUILD)
+            if g:
+                invite_uses.update(await snapshot_invites(g))
+                log(f"discord: tracking {len(invite_uses)} invites for auto-role")
         log(f"discord gateway ready as {client.user}")
+
+    @client.event
+    async def on_invite_create(invite):
+        # Keep the baseline current, otherwise a brand-new invite's first use
+        # looks like "count appeared from nowhere" and stays unattributed.
+        if invite.guild and invite.guild.id == DISCORD_GUILD:
+            invite_uses[invite.code] = invite.uses or 0
+
+    @client.event
+    async def on_member_join(member):
+        if not DISCORD_JOIN_ROLES or member.guild.id != DISCORD_GUILD:
+            return
+        before = dict(invite_uses)
+        after = await snapshot_invites(member.guild)
+        if after:
+            invite_uses.clear()
+            invite_uses.update(after)
+        code = pick_invite(before, after)
+        if code is None:
+            log(f"discord: could not attribute an invite for {member} "
+                f"- no roles granted")
+            return
+        if code not in DISCORD_INVITE_CODES:
+            log(f"discord: {member} joined via '{code}' (not an AkuCraft "
+                f"invite) - no roles granted")
+            return
+        roles = [r for r in (member.guild.get_role(i) for i in DISCORD_JOIN_ROLES) if r]
+        try:
+            await member.add_roles(*roles, reason=f"Joined via AkuCraft invite {code}")
+        except discord.Forbidden:
+            log(f"discord: FORBIDDEN adding roles to {member} - the bot needs "
+                f"Manage Roles AND its own role must sit above them")
+            return
+        except Exception as e:  # noqa: BLE001
+            log(f"discord: adding roles to {member} failed: {e}")
+            return
+        names = ", ".join(r.name for r in roles)
+        log(f"discord: granted {names} to {member} (invite {code})")
+        send_discord(f"\U0001F44B Welcome {member.mention}! Gave you {names}. "
+                     f"Type /connect for how to join the Minecraft servers.")
 
     return client, tree
 
@@ -496,18 +574,33 @@ def discord_gateway():
     """
     import asyncio
 
-    client, _tree = build_discord_client()
+    import discord
+
+    # If the privileged Server Members intent is not enabled in the Developer
+    # Portal, discord.py refuses to connect AT ALL. Slash commands matter more
+    # than auto-role, so fall back to a members-less client instead of leaving
+    # the bot offline in a reconnect loop.
+    with_members = True
     while True:
+        client, _tree = build_discord_client(with_members)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             loop.run_until_complete(client.start(DISCORD_TOKEN))
+        except discord.errors.PrivilegedIntentsRequired:
+            log("discord: SERVER MEMBERS intent is not enabled in the Developer "
+                "Portal - auto-role on join is DISABLED; reconnecting with "
+                "commands only")
+            with_members = False
         except Exception as e:  # noqa: BLE001
             log(f"discord gateway: {e}")
         finally:
-            loop.run_until_complete(client.close())
+            try:
+                loop.run_until_complete(client.close())
+            except Exception:  # noqa: BLE001
+                pass
             loop.close()
-        time.sleep(30)
+        time.sleep(5 if not with_members else 30)
 
 
 def main():
