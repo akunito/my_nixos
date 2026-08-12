@@ -47,6 +47,7 @@ in
     enableDesktopPerformance = true; # Enable desktop-optimized I/O scheduler and performance tuning
     amdLACTdriverEnable = true;
     amdgpuSuspendWorkaround = true; # AINF-282: kernel 6.17→7.0+ SMU suspend regression on Navi 48
+    amdgpuDisableIps = true; # DMCUB wedged on resume 2026-08-07 (INBOX0 HW Lock Ack flood → ~1 FPS desktop)
 
     # Display Manager Configuration
     greetdEnable = false;
@@ -445,7 +446,10 @@ in
     perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for Claude Code MCP
     jellyseerrApiKey = secrets.jellyseerrApiKey; # Jellyseerr API key for Claude Code MCP (media requests)
     planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
-    planeApiUrl = "https://plane.${secrets.publicDomain}";
+    # Internal Tailscale vhost, NOT the public host: plane.<publicDomain> sits
+    # behind Cloudflare Access, which rejects at the edge before Plane ever sees
+    # the API token — the MCP just gets the Access login page as HTML.
+    planeApiUrl = "https://plane.${secrets.wildcardLocal}";
     planeWorkspaceSlug = "akuworkspace";
     grafanaMcpToken = secrets.grafanaMcpToken; # Grafana MCP (read-only dashboards + PromQL)
     grafanaMcpUrl = "https://grafana.${secrets.publicDomain}";
@@ -621,6 +625,7 @@ in
 
     browser = "vivaldi";
     spawnBrowser = "vivaldi";
+    spotifyUrlHandlerEnable = true; # open.spotify.com links open the Spotify app
     defaultRoamDir = "Personal.p";
     term = "kitty";
     font = "JetBrainsMono Nerd Font Mono";

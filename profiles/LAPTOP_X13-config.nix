@@ -225,7 +225,10 @@ in
     perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for Claude Code MCP
     jellyseerrApiKey = secrets.jellyseerrApiKey; # Jellyseerr API key for Claude Code MCP (media requests)
     planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
-    planeApiUrl = "https://plane.${secrets.publicDomain}";
+    # Internal Tailscale vhost, NOT the public host: plane.<publicDomain> sits
+    # behind Cloudflare Access, which rejects at the edge before Plane ever sees
+    # the API token — the MCP just gets the Access login page as HTML.
+    planeApiUrl = "https://plane.${secrets.wildcardLocal}";
     planeWorkspaceSlug = "akuworkspace";
     grafanaMcpToken = secrets.grafanaMcpToken; # Grafana MCP (read-only dashboards + PromQL)
     grafanaMcpUrl = "https://grafana.${secrets.publicDomain}";
@@ -272,6 +275,7 @@ in
     email = "diego88aku@gmail.com";
     dotfilesDir = "/home/akunito/.dotfiles";
     wm = "sway"; # Switched from plasma6 for Sway-only setup (no KDE compilation)
+    spotifyUrlHandlerEnable = true; # open.spotify.com links open the Spotify app
 
     # us(intl) compose override OFF for cross-app consistency (same as DESK):
     # Chromium/Electron ignore ~/.XCompose on Wayland, so terminals/Qt would
