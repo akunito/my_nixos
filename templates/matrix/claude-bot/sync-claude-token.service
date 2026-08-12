@@ -3,4 +3,12 @@ Description=Sync Claude Code OAuth token to VPS for Matrix bot
 
 [Service]
 Type=oneshot
+# The systemd user manager does NOT inherit SSH_AUTH_SOCK: /etc/set-environment
+# only exports it for login shells. It used to arrive by accident, because
+# gcr-ssh-agent.socket ran `systemctl --user set-environment SSH_AUTH_SOCK=%t/gcr/ssh`
+# in ExecStartPost. That unit is masked now (it hijacked the socket from
+# gpg-agent and looped on bad passphrases until fd exhaustion), so this script's
+# ssh call has to be told where the agent lives or it fails with
+# "communication with agent failed". %t = $XDG_RUNTIME_DIR.
+Environment=SSH_AUTH_SOCK=%t/gnupg/S.gpg-agent.ssh
 ExecStart=%h/.dotfiles/templates/matrix/claude-bot/sync-claude-token.sh
