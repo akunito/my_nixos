@@ -57,3 +57,9 @@ pgrep nwggrid-server &> /dev/null && echo "Restarting nwggrid-server" && killall
 
 # emacs
 pgrep emacs &> /dev/null && echo "Reloading emacs stylix theme" && echo "Running emacsclient --no-wait --eval \"(load-theme 'doom-stylix t nil)\"" && emacsclient --no-wait --eval "(load-theme 'doom-stylix t nil)" &> /dev/null;
+
+# Every hook above is a best-effort `pgrep ... && ...` chain, so the LAST one
+# decides this script's exit status — and sync-user.sh propagates it. With
+# emacs not running that chain returns 1 and a fully successful `sync-user.sh`
+# reports failure. Exit explicitly so a real failure stays distinguishable.
+exit 0

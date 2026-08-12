@@ -61,7 +61,10 @@ in
     claudeCodeEnable = true; # Lightweight Claude Code (CLI + settings + MCP) for Matrix bot interface
     perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for MCP server
     planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
-    planeApiUrl = "https://plane.${secrets.publicDomain}";
+    # Internal Tailscale vhost, NOT the public host: plane.<publicDomain> sits
+    # behind Cloudflare Access, which rejects at the edge before Plane ever sees
+    # the API token — the MCP just gets the Access login page as HTML.
+    planeApiUrl = "https://plane.${secrets.wildcardLocal}";
     planeWorkspaceSlug = "akuworkspace";
 
     # === System Services (ALL DISABLED — not needed on VPS) ===
