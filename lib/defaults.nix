@@ -1004,6 +1004,10 @@
     # module adopts nothing and Zen starts on an empty profile. Fresh machines
     # can leave the default and let Zen create it.
     zenProfileDir = "default";
+    # ONE-TIME Vivaldi space/tab import. While true, Home Manager re-asserts the
+    # generated spaces and pins on every activation, so spaces deleted in Zen
+    # come back. Seed once, then set false.
+    zenImportVivaldiSpaces = false;
     # Ship the Sine mod-manager bootloader inside the Zen wrapper, so the
     # `sine-web-panels` mod can restore the Vivaldi-style sidebar web panels
     # that Zen removed in 1.11b. Requires zenBrowserEnable.

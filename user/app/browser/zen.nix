@@ -89,13 +89,16 @@ in
 {
   imports = [
     inputs.zen-browser.homeModules.beta
-    # Spaces / folders / pinned tabs migrated from Vivaldi. GENERATED — rebuild
-    # with scripts/vivaldi-to-zen-spaces.py (reads the extracted session tree
-    # produced by scripts/vivaldi-extract-session.py). Deliberately NOT setting
-    # spacesForce/pinsForce: this is additive, so anything created by hand in
-    # Zen survives a rebuild.
-    ./zen-spaces.nix
-  ];
+  ]
+  # ONE-TIME MIGRATION, off by default. zen-spaces.nix declares the spaces,
+  # folders and pinned tabs imported from Vivaldi, and Home Manager re-asserts
+  # them on EVERY activation — so while it is imported, a space deleted in Zen
+  # reappears on the next rebuild. Enable it, deploy once to seed the profile,
+  # then turn it back off and let Zen's own state be authoritative.
+  #
+  # Regenerate the file with scripts/vivaldi-extract-session.py followed by
+  # scripts/vivaldi-to-zen-spaces.py.
+  ++ lib.optional (userSettings.zenImportVivaldiSpaces or false) ./zen-spaces.nix;
 
   programs.zen-browser = {
     enable = true;
@@ -122,6 +125,17 @@ in
         {
           id = "zen-workspace-forward";
           key = "w";
+          modifiers = {
+            alt = true;
+            accel = true;
+          };
+        }
+        # "List all tabs" — the panel with the tab search field. Zen ships it on
+        # Ctrl+Shift+Tab, which collides with tab cycling muscle memory.
+        # Ctrl+Alt+F is free (Ctrl+F stays in-page find).
+        {
+          id = "key_showAllTabs";
+          key = "f";
           modifiers = {
             alt = true;
             accel = true;
