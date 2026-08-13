@@ -120,3 +120,20 @@ ssh -A -p 56777 akunito@100.64.0.6 'cd ~/Projects/leftyworkout && ./docker-compo
 ## Step 8 — Report
 
 Summarize for the user: commits merged (both directions), test totals (frontend X/X, backend runs/assertions/failures), migrations applied on Test, endpoint checks, and anything unusual (collisions renamed, crash-loops fixed, daemon restarts).
+
+## Step 9 — Publish a short summary to the Telegram Ops topic
+
+After a SUCCESSFUL deploy + verify, post a short human-level summary to the LiftCraft bot's `⚙️ Ops` topic via the helper (creds in `leftyworkout/.env.telegram`, git-crypt). Keep it to a few lines — WHAT shipped (tickets/features in plain language), not the mechanics. HTML parse mode; use `•` bullets and `<code>` for the commit.
+
+```bash
+cd ~/Projects/leftyworkout && ./notify-telegram.sh '<b>🚀 Test deploy — &lt;short title&gt;</b>
+<code>&lt;short-sha&gt;</code> · frontend &lt;X/X&gt; · backend &lt;runs/fail&gt; · migrations &lt;n&gt; · endpoints ✅
+• &lt;ticket/feature 1&gt;
+• &lt;ticket/feature 2&gt;'
+```
+
+Rules:
+- HTML-escape user-derived text (`&`→`&amp;`, `<`→`&lt;`, `>`→`&gt;`).
+- Compose the bullet list from the actual work in this cycle (the tickets/features you just shipped), not a generic line.
+- On a FAILED deploy, instead post a one-line alert: `⚠️ Test deploy FAILED at <step> — <reason>` so the topic reflects reality.
+- `notify-telegram.sh` no-ops silently if `.env.telegram` is absent, so this never blocks the deploy.
