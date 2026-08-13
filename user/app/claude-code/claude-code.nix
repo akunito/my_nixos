@@ -183,6 +183,22 @@ let
         # VPN inspection
         "Bash(tailscale status*)"
         "Bash(wg show*)"
+
+        # === VPS_PROD remote administration (over Tailscale) ===
+        # Deliberately broad: the entire remote command is a single argument to
+        # ssh, so a prefix rule cannot tell `docker ps` from `docker volume rm`.
+        # This grants Claude arbitrary command execution on VPS_PROD as akunito
+        # (and therefore sudo too, via pam_ssh_agent_auth with a forwarded key).
+        #
+        # Still constrained by the deny list below, which takes precedence:
+        # `Bash(ssh*nixos-rebuild*)` keeps install.sh the only deploy path.
+        #
+        # Added 2026-08-13 so container/stack maintenance on VPS_PROD does not
+        # stall on the auto-mode classifier mid-operation, which had already
+        # left the UniFi stack stopped partway through a migration.
+        "Bash(ssh -A -p 56777*akunito@100.64.0.6*)"
+        "Bash(ssh -tA -p 56777*akunito@100.64.0.6*)"
+        "Bash(scp -P 56777*akunito@100.64.0.6*)"
       ];
 
       deny = [
