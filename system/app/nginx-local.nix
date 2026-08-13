@@ -25,7 +25,12 @@ let
   wildcardLocal = systemSettings.wildcardLocal or "local.example.com";
 
   # Generate a vhost for each service
-  # Optional per-service attrs: https (bool), basicAuthFile (path)
+  # Optional per-service attrs: https (bool), basicAuthFile (path),
+  #                             maxBodySize (str), denyPaths (list of str)
+  #
+  # denyPaths returns 403 for a path prefix on the Tailscale vhost only, so a
+  # sensitive path stays reachable exclusively through the public Cloudflare
+  # Access-protected hostname. Longest-prefix match means these win over "/".
   mkVhost = name: cfg: {
     "${name}.${wildcardLocal}" = {
       listenAddresses = [ listenAddr ];
@@ -35,14 +40,18 @@ let
       extraConfig = lib.optionalString ((cfg.maxBodySize or "") != "") ''
         client_max_body_size ${cfg.maxBodySize};
       '';
-      locations."/" = {
-        proxyPass =
-          if cfg.https or false
-          then "https://127.0.0.1:${toString cfg.port}"
-          else "http://127.0.0.1:${toString cfg.port}";
-        proxyWebsockets = true;
-        recommendedProxySettings = true;
-      };
+      locations = {
+        "/" = {
+          proxyPass =
+            if cfg.https or false
+            then "https://127.0.0.1:${toString cfg.port}"
+            else "http://127.0.0.1:${toString cfg.port}";
+          proxyWebsockets = true;
+          recommendedProxySettings = true;
+        };
+      } // lib.listToAttrs (map (path:
+        lib.nameValuePair path { return = "403"; }
+      ) (cfg.denyPaths or []));
     };
   };
 

@@ -286,7 +286,10 @@ in
       plane-dev  = { port = 3007; maxBodySize = "50M"; };  # isolated Plane dev/test clone (own pg/redis/mq/minio)
       unifi      = { port = 8443; https = true; };
       portfolio  = { port = 3005; };
-      vault      = { port = 8222; };
+      # /admin denied here on purpose: the Vaultwarden admin panel is guarded
+      # only by ADMIN_TOKEN, so it must stay behind Cloudflare Access on the
+      # public host rather than be open to every group:family tailnet device.
+      vault      = { port = 8222; denyPaths = [ "/admin" ]; };
       emulators  = { port = 8998; };
       calibre    = { port = 8083; };
       n8n        = { port = 5678; };
