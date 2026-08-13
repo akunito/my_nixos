@@ -14,7 +14,7 @@
 # PostgreSQL database "vaultwarden" must be in postgresqlServerDatabases.
 # Password file at /etc/secrets/db-vaultwarden-password (deployed by database-secrets.nix).
 
-{ config, lib, pkgs, systemSettings, ... }:
+{ config, lib, pkgs, pkgs-unstable, systemSettings, ... }:
 
 let
   port = systemSettings.vaultwardenPort or 8222;
@@ -26,6 +26,15 @@ lib.mkIf (systemSettings.vaultwardenEnable or false) {
   services.vaultwarden = {
     enable = true;
     dbBackend = "postgresql";
+
+    # Pinned to pkgs-unstable: nixos-25.11 still ships 1.36.0, but 1.37.0 is
+    # REQUIRED for Bitwarden clients >= 2026.7.0 (upstream release note) and
+    # fixes 10 advisories, incl. icon-endpoint SSRF and unauthenticated
+    # WebSocket flooding. Both packages must move together — webVaultPackage
+    # otherwise defaults to stable's web vault (2026.4.1 vs 2026.6.4).
+    # Do NOT revert this pin: 1.37 migrates the Postgres schema on first start.
+    package = pkgs-unstable.vaultwarden;
+    webVaultPackage = pkgs-unstable.vaultwarden.webvault;
 
     config = {
       # Domain for links in emails and FIDO2
