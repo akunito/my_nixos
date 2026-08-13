@@ -58,6 +58,7 @@ match. The frontend does **not** — it is a compiled bundle and must be rebuilt
 | A-06 | Custom `Caddyfile` — MinIO `/uploads`, `/god-mode`, SPA fallback | `Caddyfile` | god-mode + attachments load |
 | A-07 | **Pocket-ID-only login** (`ENABLE_EMAIL_PASSWORD=0`) | DB `instance_configurations` | Login page shows **no** password form |
 | A-08 | `ENABLE_MAGIC_LINK_LOGIN=0`, `ENABLE_SIGNUP=0`, `IS_INTERCOM_ENABLED=0` | DB | `/api/instances/` reports all false |
+| A-09 | **Notify assignees, not just subscribers** — `notification_task` builds recipients purely from `IssueSubscriber`; `issue_assignees` was computed but only used to pick the wording. Fix 4 unions assignees in | `start-override.sh` Fix 4 | Change a field on an item assigned to someone who is *not* subscribed → they get an in-app notification |
 
 > **A-07/A-08 live in the database, not env or the image.** `SKIP_ENV_VAR=1` means
 > `instance_configurations` wins and silently overrides env. They survive upgrades — but
@@ -157,6 +158,13 @@ breaks, so a failed patch stops the container instead of silently degrading.
 - **pnpm is not installed on DESK.** Use `nix-shell -p nodejs_22 pnpm` and export `CI=true`
   (otherwise pnpm aborts on "no TTY" when it wants to purge `node_modules`).
 - **Attachments break silently** if Fix 1/2 anchors move — hence the assertions.
-- **Notifications:** assigning via the REST API does **not** subscribe the assignee, so no
-  notification is generated. Plane notifies *subscribers* and excludes the actor. Not a bug we
-  introduced; unchanged in v1.4.1.
+- **Notifications, two separate limits:**
+  1. Plane notifies *subscribers* only and excludes the actor; assigning never subscribes anyone.
+     **Fixed by A-09** — assignees are now recipients too.
+  2. **Creation still notifies nobody**, and A-09 cannot fix that: the task is invoked with
+     `issue_activities_created: '[]'` on the create path, so the loop has nothing to iterate.
+     This is upstream behaviour, not an API quirk.
+  **Recipe for automations:** create the item, then do a **second call** (PATCH the assignee or any
+  field). That generates an activity, and A-09 makes the assignee a recipient of it.
+- Notification **emails** are additionally gated per-user by `user_notification_preferences`, and
+  are batched by celery beat on the `:00` mark (~5 min) — an immediate check looks like failure.
