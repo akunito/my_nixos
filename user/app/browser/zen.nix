@@ -167,6 +167,34 @@ in
             accel = true;
           };
         }
+        # Page history on Ctrl+Alt+R / T. These are the SECONDARY back/forward
+        # bindings (Zen ships them on Ctrl+[ and Ctrl+]), so Alt+Left and
+        # Alt+Right keep working as the primaries.
+        {
+          id = "goBackKb2";
+          key = "r";
+          modifiers = {
+            alt = true;
+            accel = true;
+          };
+        }
+        {
+          id = "goForwardKb2";
+          key = "t";
+          modifiers = {
+            alt = true;
+            accel = true;
+          };
+        }
+        # Displaced by the above: reader mode had Ctrl+Alt+R. Ctrl+Alt+E is free.
+        {
+          id = "key_toggleReaderMode";
+          key = "e";
+          modifiers = {
+            alt = true;
+            accel = true;
+          };
+        }
       ];
       # Activation aborts if Zen's shortcut schema version moves, rather than
       # silently writing bindings against a changed format. Read from
