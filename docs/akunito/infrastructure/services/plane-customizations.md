@@ -10,7 +10,9 @@ Companion skill: `/plane-upgrade` (`.claude/commands/plane-upgrade.md`).
 | Prod | `plane.akunito.com` · `~/.homelab/plane/` · container `plane-aio` · host port 3003 |
 | Dev | `plane-dev.local.akunito.com` · `~/.homelab/plane-dev/` · `plane-dev-aio` · port 3007, own pg/redis/mq/minio |
 | Fork | `~/Projects/plane-up` (DESK), remote `origin git@github.com:akunito/plane-up.git`, upstream `makeplane/plane` |
-| Current fork branch | `akunito/mobile-v1.4.1` (rebased from `akunito/mobile`) |
+| Current fork branch | `akunito/mobile-v1.4.1` (29 commits, pushed to origin) |
+| Deployed version | **v1.4.1 on prod and dev** since 2026-08-13 (prod image `v1.4.1-novol`, frontend `web-override-v141`) |
+| Rollback | image `v1.3.1-novol` + `docker-compose.yml.bak-v1.3.1` + `web-override/` all retained on the VPS; DB dump `~/plane_backup_pre_upgrade_20260813_final.dump` |
 | Internal access | prod/dev are behind **Cloudflare Access** — use the `.local` Tailscale hostnames for API/automation |
 
 ---
