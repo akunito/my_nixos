@@ -1,229 +1,277 @@
 #!/usr/bin/env bash
-# Application Toggle Script
+# Application Toggle Script (Hyprland)
 # Toggle application: launch if not running, focus/hide if running
+#
 # Usage: app-toggle.sh <app_class> <launch_command...>
-#   app_class: Window class to search for (e.g., "kitty", "chromium-browser")
-#   launch_command: Command to launch if not running
+#   app_class:      window class to match (e.g. "kitty", "chromium-browser")
+#   launch_command: command to launch when nothing matches
+#
+# Behaviour:
+#   no windows        -> launch
+#   1 window, focused -> hide into special:scratch_<class>
+#   1 window, else    -> show/focus it (un-hiding its special workspace if needed)
+#   2+ windows        -> cycle focus between them
+#
+# Debug instrumentation (off by default, zero cost when off):
+#   touch ~/.config/hypr/app-toggle.debug     # enable
+#   tail -f ~/.local/state/hypr/app-toggle.log
+#   rm ~/.config/hypr/app-toggle.debug        # disable
 
-set -euo pipefail
+# Deliberately no `set -e`: a toggle script legitimately runs commands that can
+# fail, and aborting mid-way used to leave windows half-moved with no trace.
+set -uo pipefail
 
-APP_CLASS="$1"
-shift
-LAUNCH_CMD="$@"
+# ---------------------------------------------------------------------------
+# Instrumentation (marker-file gated)
+# ---------------------------------------------------------------------------
+DEBUG_MARKER="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/app-toggle.debug"
+LOG_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/hypr/app-toggle.log"
+LOG_MAX_BYTES=$((2 * 1024 * 1024))
 
-if [ -z "$APP_CLASS" ] || [ -z "$LAUNCH_CMD" ]; then
-    echo "Usage: $0 <app_class> <launch_command...>" >&2
-    exit 1
-fi
+DEBUG=0
+[ -e "$DEBUG_MARKER" ] && DEBUG=1
+LOG_READY=0
+T_START="${EPOCHREALTIME:-0}"
 
-# Function to wait for window to appear after launch
-wait_for_window() {
-    local app_class="$1"
-    local max_iterations=50  # 50 * 0.1s = 5 seconds maximum
-    local poll_interval=0.1  # Poll every 0.1 seconds
-    local iteration=0
-    
-    while [ "$iteration" -lt "$max_iterations" ]; do
-        # Check if window exists (case-insensitive)
-        local window_exists=$(hyprctl clients -j 2>/dev/null | jq -r --arg app "$app_class" '
-            [
-                .[] 
-                | select(
-                    ((.class // "") | ascii_downcase == ($app | ascii_downcase)) or 
-                    ((.initialClass // "") | ascii_downcase == ($app | ascii_downcase))
-                )
-            ] | length
-        ' 2>/dev/null || echo "0")
-        
-        if [ "$window_exists" != "0" ] && [ "$window_exists" != "" ]; then
-            return 0  # Window found
-        fi
-        
-        sleep "$poll_interval"
-        iteration=$((iteration + 1))
-    done
-    
-    return 1  # Timeout
+log() {
+    [ "$DEBUG" -eq 1 ] || return 0
+    local lvl="$1"; shift
+    if [ "$LOG_READY" -eq 0 ]; then
+        mkdir -p "${LOG_FILE%/*}" 2>/dev/null || { DEBUG=0; return 0; }
+        local sz
+        sz=$(stat -c %s "$LOG_FILE" 2>/dev/null || echo 0)
+        [ "$sz" -gt "$LOG_MAX_BYTES" ] && mv -f "$LOG_FILE" "${LOG_FILE}.1" 2>/dev/null
+        LOG_READY=1
+    fi
+    printf '%s pid=%-7s %-5s app=%-28s %s\n' \
+        "$(date '+%F %T.%3N')" "$$" "$lvl" "${APP_CLASS:-?}" "$*" >>"$LOG_FILE"
 }
 
-# Function to check if Flatpak app is installed
-is_flatpak_installed() {
-    local APP_ID="$1"
-    if flatpak list --app --columns=application 2>/dev/null | grep -q "^${APP_ID}$"; then
-        return 0
-    elif [[ "$APP_ID" =~ ^(org\.|com\.|io\.|net\.|de\.|app\.) ]]; then
-        # APP_ID matches Flatpak pattern - verify it's actually installed
-        if flatpak info "$APP_ID" &>/dev/null 2>&1; then
+warn() { printf '%s: %s\n' "${0##*/}" "$*" >&2; log WARN "$*"; }
+
+elapsed_ms() {
+    [ -n "${EPOCHREALTIME:-}" ] || { echo "?"; return; }
+    awk -v a="$T_START" -v b="$EPOCHREALTIME" 'BEGIN{printf "%.0f", (b-a)*1000}'
+}
+
+finish() {
+    local rc="${1:-0}"
+    log INFO "run end rc=$rc elapsed=$(elapsed_ms)ms"
+    exit "$rc"
+}
+
+die() { warn "$*"; finish 1; }
+
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+APP_CLASS="${1:-}"
+[ -n "$APP_CLASS" ] && [ "$#" -ge 2 ] || {
+    echo "Usage: $0 <app_class> <launch_command...>" >&2
+    exit 1
+}
+shift
+
+# A single argument containing whitespace is re-split into words (the historical
+# calling convention). Anything else is taken verbatim, so args keep their spaces
+# and are never glob-expanded -- the old `LAUNCH_CMD="$@"` + unquoted expansion
+# did both wrong (an arg containing `*` expanded against the cwd).
+if [ "$#" -eq 1 ] && [[ "$1" == *[[:space:]]* ]]; then
+    read -r -a CMD <<<"$1"
+else
+    CMD=("$@")
+fi
+
+log INFO "run start class=[$APP_CLASS] cmd=[${CMD[*]}]"
+
+command -v hyprctl >/dev/null 2>&1 || die "hyprctl not found in PATH"
+command -v jq >/dev/null 2>&1 || die "jq not found in PATH"
+
+APP_NAME=$(printf '%s' "$APP_CLASS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/_/g')
+SCRATCH_NAMESPACE="scratch_${APP_NAME}"
+
+# ---------------------------------------------------------------------------
+# Debounce: a rapid double-press used to race two instances, both see zero
+# windows, and launch the app twice.
+# ---------------------------------------------------------------------------
+RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}/hypr-app-toggle/${HYPRLAND_INSTANCE_SIGNATURE:-nosig}"
+mkdir -p "$RUN_DIR" 2>/dev/null
+chmod 700 "${RUN_DIR%/*}" 2>/dev/null
+if command -v flock >/dev/null 2>&1 && [ -d "$RUN_DIR" ]; then
+    LOCK_KEY="$(printf '%s' "$APP_CLASS" | cksum | tr -d ' ')"
+    # Braces keep the 2>/dev/null scoped to this group; `exec 9>f 2>/dev/null`
+    # would redirect the *script's* stderr permanently and swallow every warning.
+    { exec 9>"$RUN_DIR/.lock-$LOCK_KEY"; } 2>/dev/null
+    if ! flock -n 9 2>/dev/null; then
+        log INFO "debounced: another instance holds the lock"
+        finish 0
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Single clients fetch + parse
+# ---------------------------------------------------------------------------
+CLIENTS=$(hyprctl clients -j 2>/dev/null) || die "hyprctl clients failed"
+[ -n "$CLIENTS" ] || die "hyprctl clients returned nothing"
+
+JQ_ERR=$(mktemp 2>/dev/null) || JQ_ERR=/dev/null
+WINDOW_JSON=$(printf '%s' "$CLIENTS" | jq -c --arg app "$APP_CLASS" '
+    [ .[]
+      | select(
+          ((.class // "")        | ascii_downcase == ($app | ascii_downcase)) or
+          ((.initialClass // "") | ascii_downcase == ($app | ascii_downcase))
+        )
+      | { address, ws: (.workspace.name // ""), wsid: (.workspace.id // 0), title: (.title // "") }
+    ]' 2>"$JQ_ERR")
+JQ_RC=$?
+
+if [ "$JQ_RC" -ne 0 ] || [ -z "$WINDOW_JSON" ]; then
+    # Never fall through to "launch" here: an unparseable reply used to look
+    # identical to "no windows found" and spawned a duplicate app.
+    die "clients parse failed (rc=$JQ_RC): $(head -c 300 "$JQ_ERR" 2>/dev/null)"
+fi
+[ "$JQ_ERR" = /dev/null ] || rm -f "$JQ_ERR"
+
+WINDOW_COUNT=$(printf '%s' "$WINDOW_JSON" | jq 'length')
+FOCUSED_ADDRESS=$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty' 2>/dev/null)
+
+log INFO "clients: focused=$FOCUSED_ADDRESS matched=$WINDOW_COUNT windows=$WINDOW_JSON"
+
+hypr_do() {
+    local out rc
+    out=$(hyprctl "$@" 2>&1); rc=$?
+    log CMD "hyprctl $* -> rc=$rc out=$(printf '%s' "$out" | tr -d '\n' | head -c 160)"
+    [ "$rc" -eq 0 ] || warn "hyprctl $* failed (rc=$rc): $out"
+    return $rc
+}
+
+# ---------------------------------------------------------------------------
+# Wait for a window to appear after launch
+# ---------------------------------------------------------------------------
+wait_for_window() {
+    local max_iterations=50 iteration=0 count
+    while [ "$iteration" -lt "$max_iterations" ]; do
+        count=$(hyprctl clients -j 2>/dev/null | jq --arg app "$APP_CLASS" '
+            [ .[]
+              | select(
+                  ((.class // "")        | ascii_downcase == ($app | ascii_downcase)) or
+                  ((.initialClass // "") | ascii_downcase == ($app | ascii_downcase))
+                ) ] | length' 2>/dev/null)
+        if [ "${count:-0}" -gt 0 ]; then
+            log INFO "window appeared after ${iteration} poll(s) (~$((iteration * 100))ms)"
             return 0
         fi
-    fi
+        sleep 0.1
+        iteration=$((iteration + 1))
+    done
+    warn "no window matching class [$APP_CLASS] appeared within 5s"
     return 1
 }
 
-# Get all windows matching the app class (case-insensitive)
-WINDOW_JSON=$(hyprctl clients -j 2>/dev/null | jq -r --arg app "$APP_CLASS" '
-    [
-        .[] 
-        | select(
-            ((.class // "") | ascii_downcase == ($app | ascii_downcase)) or 
-            ((.initialClass // "") | ascii_downcase == ($app | ascii_downcase))
-        )
-    ]
-' 2>/dev/null)
+# ---------------------------------------------------------------------------
+# LAUNCH (no matching windows)
+# ---------------------------------------------------------------------------
+launch() {
+    local bin="${CMD[0]}" resolved="" p
+    local -a run=("${CMD[@]}")
 
-# Check if app is running
-if [ -z "$WINDOW_JSON" ] || [ "$WINDOW_JSON" == "[]" ]; then
-    # --- APP IS NOT RUNNING -> LAUNCH ---
-    
-    # Check if this is a Flatpak app
-    IS_FLATPAK=false
-    if is_flatpak_installed "$APP_CLASS"; then
-        IS_FLATPAK=true
-    elif [[ "$APP_CLASS" =~ ^(org\.|com\.|io\.|net\.|de\.|app\.) ]]; then
-        # APP_CLASS matches Flatpak pattern - verify it's actually installed
-        if flatpak info "$APP_CLASS" &>/dev/null 2>&1; then
-            IS_FLATPAK=true
-        fi
+    resolved=$(command -v "$bin" 2>/dev/null) || resolved=""
+    if [ -z "$resolved" ]; then
+        for p in "$HOME/.nix-profile/bin/$bin" "/run/current-system/sw/bin/$bin"; do
+            [ -x "$p" ] && { resolved="$p"; break; }
+        done
     fi
-    
-    if [ "$IS_FLATPAK" = "true" ]; then
-        # Launch via Flatpak - redirect output to prevent EPIPE errors
-        flatpak run "$APP_CLASS" >/dev/null 2>&1 &
+    # Case-insensitive fallback (some Nix packages install differently-cased bins).
+    if [ -z "$resolved" ]; then
+        for p in "$HOME/.nix-profile/bin" "/run/current-system/sw/bin"; do
+            [ -d "$p" ] || continue
+            resolved=$(find "$p" -maxdepth 1 -iname "$bin" -type f -executable 2>/dev/null | head -1)
+            [ -n "$resolved" ] && break
+        done
+    fi
+
+    if [ -z "$resolved" ]; then
+        # Prefer a real binary over flatpak; only fall back when nothing native exists.
+        if [[ "$APP_CLASS" =~ ^(org|com|io|net|de|app)\. ]] && flatpak info "$APP_CLASS" >/dev/null 2>&1; then
+            log INFO "launch: flatpak run $APP_CLASS"
+            if command -v setsid >/dev/null 2>&1; then
+                setsid flatpak run "$APP_CLASS" >/dev/null 2>&1 9>&- &
+            else
+                flatpak run "$APP_CLASS" >/dev/null 2>&1 9>&- &
+            fi
+            return 0
+        fi
+        warn "launch failed: '$bin' not found in PATH, nix profile, or flatpak"
+        return 1
+    fi
+
+    run[0]="$resolved"
+    log INFO "launch: ${run[*]}"
+    # 9>&- closes the debounce lock in the child; otherwise the launched app
+    # inherits it and holds the lock for its entire lifetime.
+    if command -v setsid >/dev/null 2>&1; then
+        setsid "${run[@]}" >/dev/null 2>&1 9>&- &
     else
-        # Launch normally (use the provided command)
-        # Extract first word of command to check if it exists
-        CMD_FIRST=$(echo "$LAUNCH_CMD" | cut -d' ' -f1)
-        
-        # Check if command exists in PATH
-        if command -v "$CMD_FIRST" &>/dev/null; then
-            # Command exists in PATH - use it with output redirection
-            $LAUNCH_CMD >/dev/null 2>&1 &
-        else
-            # Command not in PATH - try Nix profile locations
-            NIX_PROFILE_BIN="$HOME/.nix-profile/bin/$CMD_FIRST"
-            SYSTEM_BIN="/run/current-system/sw/bin/$CMD_FIRST"
-            FOUND_BIN=""
-            
-            # Check exact match first
-            if [ -f "$NIX_PROFILE_BIN" ] && [ -x "$NIX_PROFILE_BIN" ]; then
-                FOUND_BIN="$NIX_PROFILE_BIN"
-            elif [ -f "$SYSTEM_BIN" ] && [ -x "$SYSTEM_BIN" ]; then
-                FOUND_BIN="$SYSTEM_BIN"
-            else
-                # Try case-insensitive search in Nix profile bin directories
-                if [ -d "$HOME/.nix-profile/bin" ]; then
-                    FOUND_BIN=$(find "$HOME/.nix-profile/bin" -maxdepth 1 -iname "$CMD_FIRST" -type f -executable 2>/dev/null | head -1)
-                fi
-                if [ -z "$FOUND_BIN" ] && [ -d "/run/current-system/sw/bin" ]; then
-                    FOUND_BIN=$(find "/run/current-system/sw/bin" -maxdepth 1 -iname "$CMD_FIRST" -type f -executable 2>/dev/null | head -1)
-                fi
-            fi
-            
-            if [ -n "$FOUND_BIN" ]; then
-                # Found binary - use full path
-                CMD_ARGS=$(echo "$LAUNCH_CMD" | cut -d' ' -f2-)
-                if [ -n "$CMD_ARGS" ]; then
-                    "$FOUND_BIN" $CMD_ARGS >/dev/null 2>&1 &
-                else
-                    "$FOUND_BIN" >/dev/null 2>&1 &
-                fi
-            elif [[ "$APP_CLASS" =~ ^(org\.|com\.|io\.|net\.|de\.|app\.) ]]; then
-                # Command not found but APP_CLASS looks like Flatpak - try flatpak run as fallback
-                flatpak run "$APP_CLASS" >/dev/null 2>&1 &
-            else
-                # Last resort - try the command anyway
-                $LAUNCH_CMD >/dev/null 2>&1 &
-            fi
-        fi
+        "${run[@]}" >/dev/null 2>&1 9>&- &
     fi
-    
-    # Wait for window to appear
-    if wait_for_window "$APP_CLASS"; then
-        exit 0
-    fi
-    
-    exit 0
+    return 0
+}
+
+if [ "${WINDOW_COUNT:-0}" -eq 0 ]; then
+    log INFO "decision=LAUNCH (no matching windows)"
+    launch || finish 1
+    wait_for_window || finish 1
+    finish 0
 fi
 
-# --- APP IS RUNNING ---
+# ---------------------------------------------------------------------------
+# TOGGLE (windows exist)
+# ---------------------------------------------------------------------------
+IS_FOCUSED=$(printf '%s' "$WINDOW_JSON" | jq -r --arg a "$FOCUSED_ADDRESS" \
+    '[ .[].address ] | index($a) != null')
 
-# Get focused window address
-FOCUSED_ADDRESS=$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty')
+if [ "$IS_FOCUSED" = "true" ] && [ "$WINDOW_COUNT" -eq 1 ]; then
+    # --- HIDE (focused -> special workspace) ---
+    ADDR=$(printf '%s' "$WINDOW_JSON" | jq -r '.[0].address')
+    log INFO "decision=HIDE addr=$ADDR -> special:$SCRATCH_NAMESPACE"
+    # Scoped by address. A bare `movetoworkspacesilent` acts on whatever is
+    # focused *now*; a focus change between the read and this call moved the
+    # WRONG window into the scratchpad.
+    hypr_do dispatch movetoworkspacesilent "special:${SCRATCH_NAMESPACE},address:${ADDR}"
 
-# Get all matching window addresses and workspace info
-WINDOW_LIST=$(echo "$WINDOW_JSON" | jq -r '.[] | "\(.address)|\(.workspace.id)|\(.workspace.name)"')
+elif [ "$IS_FOCUSED" = "true" ]; then
+    # --- CYCLE (2+ windows, one of ours focused) ---
+    NEXT_ADDRESS=$(printf '%s' "$WINDOW_JSON" | jq -r --arg a "$FOCUSED_ADDRESS" '
+        [ .[].address ] as $addrs
+        | ($addrs | index($a)) as $idx
+        | if $idx then $addrs[($idx + 1) % ($addrs | length)] else $addrs[0] end')
+    log INFO "decision=CYCLE from=$FOCUSED_ADDRESS to=$NEXT_ADDRESS of=$WINDOW_COUNT"
+    hypr_do dispatch focuswindow "address:${NEXT_ADDRESS}"
 
-# Count windows
-WINDOW_COUNT=$(echo "$WINDOW_JSON" | jq 'length')
-
-# Check if any window is focused
-FOCUSED_WINDOW=""
-while IFS='|' read -r addr workspace_id workspace_name; do
-    if [ "$addr" == "$FOCUSED_ADDRESS" ]; then
-        FOCUSED_WINDOW="$addr|$workspace_id|$workspace_name"
-        break
-    fi
-done <<< "$WINDOW_LIST"
-
-if [ -n "$FOCUSED_WINDOW" ]; then
-    # --- APP IS FOCUSED ---
-    
-    if [ "$WINDOW_COUNT" -eq 1 ]; then
-        # SINGLE WINDOW -> Hide to scratchpad
-        # Use app-specific namespace (e.g., scratch_term for kitty)
-        # Extract app name from class for namespace
-        APP_NAME=$(echo "$APP_CLASS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/_/g')
-        SCRATCH_NAMESPACE="scratch_${APP_NAME}"
-        
-        hyprctl dispatch movetoworkspacesilent "special:${SCRATCH_NAMESPACE}"
-    else
-        # MULTIPLE WINDOWS -> Cycle to next window
-        # Get current focused window index
-        CURRENT_INDEX=0
-        INDEX=0
-        while IFS='|' read -r addr workspace_id workspace_name; do
-            if [ "$addr" == "$FOCUSED_ADDRESS" ]; then
-                CURRENT_INDEX=$INDEX
-                break
-            fi
-            INDEX=$((INDEX + 1))
-        done <<< "$WINDOW_LIST"
-        
-        # Calculate next index (wrap around)
-        NEXT_INDEX=$(((CURRENT_INDEX + 1) % WINDOW_COUNT))
-        
-        # Get next window address
-        NEXT_ADDRESS=$(echo "$WINDOW_LIST" | sed -n "$((NEXT_INDEX + 1))p" | cut -d'|' -f1)
-        
-        hyprctl dispatch focuswindow "address:${NEXT_ADDRESS}"
-    fi
 else
-    # --- APP IS NOT FOCUSED ---
-    
-    # Get first window info
-    FIRST_WINDOW=$(echo "$WINDOW_LIST" | head -n 1)
-    FIRST_ADDRESS=$(echo "$FIRST_WINDOW" | cut -d'|' -f1)
-    FIRST_WORKSPACE_NAME=$(echo "$FIRST_WINDOW" | cut -d'|' -f3)
-    
-    # Check if window is in special workspace
-    if [[ "$FIRST_WORKSPACE_NAME" =~ ^special: ]]; then
-        # Window is in special workspace -> Toggle special workspace and focus
-        SCRATCH_NAMESPACE=$(echo "$FIRST_WORKSPACE_NAME" | sed 's/^special://')
-        
-        # Toggle special workspace (shows it if hidden)
-        hyprctl dispatch togglespecialworkspace "$SCRATCH_NAMESPACE"
-        
-        # Small delay to ensure workspace is toggled
-        sleep 0.1
-        
-        # Focus the window
-        hyprctl dispatch focuswindow "address:${FIRST_ADDRESS}"
+    # --- SHOW (special workspace / unfocused -> focus) ---
+    # Prefer a window parked in a special workspace over an already-visible one;
+    # the old code always took the first match and could focus a visible window
+    # while leaving the hidden one stranded.
+    TARGET=$(printf '%s' "$WINDOW_JSON" | jq -c '
+        ( [ .[] | select(.ws | startswith("special:")) ] + . ) | .[0]')
+    ADDR=$(printf '%s' "$TARGET" | jq -r '.address')
+    WS=$(printf '%s' "$TARGET" | jq -r '.ws')
+
+    if [[ "$WS" == special:* ]]; then
+        # togglespecialworkspace is a TOGGLE: firing it while the workspace is
+        # already on screen would hide the window we are trying to reveal.
+        SHOWN=$(hyprctl monitors -j 2>/dev/null \
+            | jq -r --arg ws "$WS" '[ .[] | select((.specialWorkspace.name // "") == $ws) ] | length' 2>/dev/null)
+        log INFO "decision=SHOW addr=$ADDR ws=$WS already_shown=${SHOWN:-?}"
+        if [ "${SHOWN:-0}" -eq 0 ]; then
+            hypr_do dispatch togglespecialworkspace "${WS#special:}"
+        fi
+        hypr_do dispatch focuswindow "address:${ADDR}"
     else
-        # Window is visible on normal workspace -> Just focus it
-        # CRITICAL: Do NOT toggle special workspace, or it might hide the window
-        hyprctl dispatch focuswindow "address:${FIRST_ADDRESS}"
+        log INFO "decision=SHOW addr=$ADDR ws=$WS (visible, focus only)"
+        hypr_do dispatch focuswindow "address:${ADDR}"
     fi
 fi
 
-exit 0
-
+finish 0

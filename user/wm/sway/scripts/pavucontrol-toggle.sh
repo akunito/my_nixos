@@ -24,14 +24,19 @@ if [ -z "$WINDOW_JSON" ] || [ "$WINDOW_JSON" = "[]" ]; then
     exit 0
 fi
 
-# Check if any window is focused
-FOCUSED_ID=$(swaymsg -t get_tree 2>/dev/null | jq -r '.. | select(.focused? == true) | .id' 2>/dev/null || echo "none")
+# Check if any window is focused. Take only the first match: `..` also walks
+# workspace/output nodes, and a multi-line result broke the grep below.
+FOCUSED_ID=$(swaymsg -t get_tree 2>/dev/null \
+    | jq -r '[recurse(.nodes[]?, .floating_nodes[]?) | select(.focused == true) | .id] | .[0] // "none"' \
+    2>/dev/null || echo "none")
 ID_LIST=$(echo "$WINDOW_JSON" | jq -r '.[].id' 2>/dev/null || echo "")
 
 # If focused window is pavucontrol, hide it
 if echo "$ID_LIST" | grep -q "^$FOCUSED_ID$"; then
-    # Hide to scratchpad
-    swaymsg "move scratchpad" 2>/dev/null
+    # Scope by con_id: a bare `move scratchpad` acts on whatever is focused at
+    # that instant, and with `focus_follows_mouse yes` a cursor nudge between
+    # the tree read and this call sends the WRONG window to the scratchpad.
+    swaymsg "[con_id=$FOCUSED_ID] move scratchpad" 2>/dev/null
     exit 0
 fi
 
