@@ -289,7 +289,11 @@ in
       # /admin denied here on purpose: the Vaultwarden admin panel is guarded
       # only by ADMIN_TOKEN, so it must stay behind Cloudflare Access on the
       # public host rather than be open to every group:family tailnet device.
-      vault      = { port = 8222; denyPaths = [ "/admin" ]; };
+      # maxBodySize: this vhost is now the path every native Bitwarden client
+      # uses, and it inherited NixOS's default client_max_body_size of 10m, so
+      # attachments above that failed with 413. Bitwarden caps attachments at
+      # 100 MB, so 128M clears it with headroom.
+      vault      = { port = 8222; maxBodySize = "128M"; denyPaths = [ "/admin" ]; };
       emulators  = { port = 8998; };
       calibre    = { port = 8083; };
       n8n        = { port = 5678; };
