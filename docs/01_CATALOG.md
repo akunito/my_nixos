@@ -312,7 +312,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **system/wm/dbus.nix**: System module: dbus.nix
 - **system/wm/fonts.nix**: Fonts are nice to have
-- **system/wm/gnome-keyring.nix**: System module: gnome-keyring.nix
+- **system/wm/gnome-keyring.nix**: The gcr package ships its own systemd *user* units (gcr-ssh-agent.socket
 - **system/wm/hyprland.nix**: Import wayland config
 - **system/wm/keyd.nix**: Enable keyd service for keyboard remapping *Enabled when:* `userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true || userSettings.wm == "plasma6" || userSettings.wm == "hyprland" || (systemSettings ? wmEnableHyprland && systemSettings.wmEnableHyprland == true)`
 - **system/wm/pipewire.nix**: Pipewire
@@ -549,6 +549,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/openclaw/skills-plugins.md**: OpenClaw skills, MCP servers, plugins, and the community ecosystem
 - **docs/akunito/infrastructure/services/openclaw/tools.md**: OpenClaw tools: browser automation, exec, Lobster workflows, sub-agents
 - **docs/akunito/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
+- **docs/akunito/infrastructure/services/plane-customizations.md**: Plane: register of every customisation + post-upgrade verification checklist
 - **docs/akunito/infrastructure/services/proxy-stack.md**: Proxy stack: NPM on TrueNAS, cloudflared on VPS and TrueNAS
 - **docs/akunito/infrastructure/services/tailscale-headscale.md**: Headscale on VPS, Tailscale mesh topology
 - **docs/akunito/infrastructure/services/vps-services.md**: VPS services: Docker containers and NixOS native services
@@ -562,6 +563,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Akunito / Plans
 
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
+- **docs/akunito/plans/plane-fork-customization-inventory.md**: **Built:** 2026-08-13 from `~/Projects/plane-up` @ `akunito/mobile` (`bcb1cfca9`), 26 commits over `v1.3.1`.
+- **docs/akunito/plans/plane-v1.4.0-upgrade.md**: **Status:** planned, not started · **Audited:** 2026-08-13 · **Ticket:** APLANE-1 (related)
 - **docs/akunito/plans/vivaldi-floating-toggle-bug.md**: While using Vivaldi on the DESK profile under SwayFX, the user *very rarely* sees a window unexpectedly toggle between tiled and floating — the same effect as pressing `hyper+shift+f`. They have to...
 
 ### Akunito / System-Modules

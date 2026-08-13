@@ -1,3 +1,12 @@
+---
+id: infrastructure.services.plane-customizations
+summary: "Plane: register of every customisation + post-upgrade verification checklist"
+tags: [infrastructure, plane, vps, upgrade, customization, checklist]
+related_files: [.claude/commands/plane-upgrade.md]
+date: 2026-08-13
+status: published
+---
+
 # Plane — customisation register & upgrade checklist
 
 **The single source of truth for what we changed in Plane and how to verify it after an upgrade.**
