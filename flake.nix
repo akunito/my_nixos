@@ -86,6 +86,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Our fork of the sine-web-panels Zen mod (restores Vivaldi-style sidebar
+    # web panels). Tracks the `akunito/local` branch, which carries the local
+    # patches on top of upstream: the panel-tab-active fix (sent upstream as
+    # dehyde/sine-web-panels#2) and the configurable panel shortcut.
+    # Consumed by user/app/browser/zen.nix; `flake = false` because the repo is
+    # a plain mod, not a flake. Bump with:
+    #   nix flake update sine-web-panels
+    sine-web-panels = {
+      url = "github:akunito/sine-web-panels/akunito/local";
+      flake = false;
+    };
+
     # Voice dictation (Whisper-based, local)
     # Pinned: newer revs (e.g. ddc93de) fail to build — missing xorg.libX11 in Rust build inputs.
     voxtype = {

@@ -1016,6 +1016,7 @@
         "nixpkgs-stable": "nixpkgs-stable",
         "nixvim": "nixvim",
         "rust-overlay": "rust-overlay",
+        "sine-web-panels": "sine-web-panels",
         "stylix": "stylix",
         "voxtype": "voxtype",
         "zen-browser": "zen-browser"
@@ -1036,6 +1037,23 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "sine-web-panels": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786638518,
+        "narHash": "sha256-5Wwm1DdO69983BAEoRhmeJ3yXsiHrZWQIkm8fDRBuZI=",
+        "owner": "akunito",
+        "repo": "sine-web-panels",
+        "rev": "81d3e8b38b1c3f801b1dfb67f9f22c68aab418b9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "akunito",
+        "ref": "akunito/local",
+        "repo": "sine-web-panels",
         "type": "github"
       }
     },
