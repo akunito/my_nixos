@@ -994,6 +994,17 @@
     # Application defaults
     browser = "vivaldi";
     spawnBrowser = "vivaldi";
+
+    # Zen Browser, installed ALONGSIDE `browser` (does not take over MIME
+    # handlers). See user/app/browser/zen.nix.
+    zenBrowserEnable = false;
+    # Ship the Sine mod-manager bootloader inside the Zen wrapper, so the
+    # `sine-web-panels` mod can restore the Vivaldi-style sidebar web panels
+    # that Zen removed in 1.11b. Requires zenBrowserEnable.
+    zenSineEnable = false;
+    # Open open.spotify.com links in the Spotify app instead of the browser
+    # (URL router wrapped into vivaldi-stable.desktop; see user/app/browser/vivaldi.nix)
+    spotifyUrlHandlerEnable = false;
     defaultRoamDir = "Personal.p";
     term = "kitty";
     font = "Intel One Mono";

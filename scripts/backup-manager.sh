@@ -117,6 +117,19 @@ HOME_EXCLUDES=(
   ".config/chromium/ShaderCache"
   ".config/chromium/component_crx_cache"
   ".config/chromium/extensions_crx_cache"
+  # Zen Browser (Firefox fork) profile lives in ~/.zen — KEPT, since it holds
+  # extensions, history, logins, workspaces and the Sine mods. Only the
+  # re-downloadable blobs are dropped: the DRM/codec plugins Gecko refetches on
+  # demand (~23 MB) and the CRLite/cert revocation state it rebuilds from the
+  # network. Site data under storage/ is deliberately NOT excluded — that is
+  # real per-site state (IndexedDB/localStorage), not cache.
+  ".zen/*/gmp-widevinecdm"
+  ".zen/*/gmp-gmpopenh264"
+  ".zen/*/security_state"
+  ".zen/*/minidumps"
+  ".zen/*/crashes"
+  ".zen/*/datareporting"
+  ".zen/*/saved-telemetry-pings"
 )
 
 # Retention policies per job type

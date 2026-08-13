@@ -1,0 +1,148 @@
+diff --git a/preferences.json b/preferences.json
+index 1ebe257..d433435 100644
+--- a/preferences.json
++++ b/preferences.json
+@@ -11,5 +11,38 @@
+     "property": "sine.web-panels.width",
+     "defaultValue": "420",
+     "placeholder": "420"
++  },
++  {
++    "type": "dropdown",
++    "label": "Panel shortcut",
++    "property": "sine.web-panels.shortcut-modifier",
++    "defaultValue": "ctrl+alt",
++    "placeholder": false,
++    "options": [
++      {
++        "value": "disabled",
++        "label": "Disabled"
++      },
++      {
++        "value": "ctrl",
++        "label": "Ctrl + 1…0"
++      },
++      {
++        "value": "ctrl+alt",
++        "label": "Ctrl + Alt + 1…0"
++      },
++      {
++        "value": "ctrl+shift",
++        "label": "Ctrl + Shift + 1…0"
++      },
++      {
++        "value": "alt",
++        "label": "Alt + 1…0"
++      },
++      {
++        "value": "alt+shift",
++        "label": "Alt + Shift + 1…0"
++      }
++    ]
+   }
+ ]
+diff --git a/scripts/web-panels-store.uc.mjs b/scripts/web-panels-store.uc.mjs
+index 1f6fdb5..eee246f 100644
+--- a/scripts/web-panels-store.uc.mjs
++++ b/scripts/web-panels-store.uc.mjs
+@@ -7,8 +7,20 @@ const PREFS = Object.freeze({
+   enabled: "sine.web-panels.enabled",
+   width: "sine.web-panels.width",
+   items: "sine.web-panels.items",
++  shortcutModifier: "sine.web-panels.shortcut-modifier",
+ });
+ 
++export const SHORTCUT_MODIFIERS = Object.freeze([
++  "disabled",
++  "ctrl",
++  "ctrl+alt",
++  "ctrl+shift",
++  "alt",
++  "alt+shift",
++]);
++
++export const DEFAULT_SHORTCUT_MODIFIER = "ctrl+alt";
++
+ function generateId(prefix = "item") {
+   if (globalThis.crypto?.randomUUID) {
+     return `${prefix}-${globalThis.crypto.randomUUID()}`;
+@@ -121,6 +133,18 @@ export class WebPanelsStore {
+     setStringPref(PREFS.width, String(width));
+   }
+ 
++  get shortcutModifier() {
++    const value = readStringPref(PREFS.shortcutModifier, DEFAULT_SHORTCUT_MODIFIER);
++    return SHORTCUT_MODIFIERS.includes(value) ? value : DEFAULT_SHORTCUT_MODIFIER;
++  }
++
++  set shortcutModifier(value) {
++    setStringPref(
++      PREFS.shortcutModifier,
++      SHORTCUT_MODIFIERS.includes(value) ? value : DEFAULT_SHORTCUT_MODIFIER
++    );
++  }
++
+   get items() {
+     return this.loadItems();
+   }
+diff --git a/scripts/web-panels.uc.mjs b/scripts/web-panels.uc.mjs
+index 9e9a8b4..96f8e4b 100644
+--- a/scripts/web-panels.uc.mjs
++++ b/scripts/web-panels.uc.mjs
+@@ -8,6 +8,29 @@ import {
+   parseWebPanelUnreadCount,
+ } from "./web-panels-store.uc.mjs";
+ 
++// Digit -> panel position. 1..9 map to the first nine panels, 0 to the tenth,
++// matching how browsers number tabs. event.code is used rather than event.key
++// because on several layouts Ctrl+Alt behaves as AltGr and rewrites event.key.
++function panelIndexFromEvent(event) {
++  const match = /^(?:Digit|Numpad)([0-9])$/.exec(event.code || "");
++  const digit = match ? Number(match[1]) : NaN;
++  if (Number.isNaN(digit)) {
++    return -1;
++  }
++  return digit === 0 ? 9 : digit - 1;
++}
++
++function shortcutMatches(event, spec) {
++  if (!spec || spec === "disabled" || event.metaKey || event.repeat) {
++    return false;
++  }
++  return (
++    event.ctrlKey === spec.includes("ctrl") &&
++    event.altKey === spec.includes("alt") &&
++    event.shiftKey === spec.includes("shift")
++  );
++}
++
+ const ROOT_ID = "sine-web-panels-root";
+ const RAIL_ID = "sine-web-panels-rail";
+ const LIST_ID = "sine-web-panels-list";
+@@ -993,6 +1016,26 @@ class SineWebPanels {
+       this.#closeMenu();
+       this.#closeEditor();
+       this.#closePanel();
++      return;
++    }
++
++    // Toggle the Nth panel on the rail. Separators are skipped, so the
++    // numbering follows the visible panel order rather than the raw item
++    // index. The modifier combination is configurable in the mod's settings.
++    if (!shortcutMatches(event, this.#store.shortcutModifier)) {
++      return;
++    }
++
++    const index = panelIndexFromEvent(event);
++    if (index < 0) {
++      return;
++    }
++
++    const target = this.#items.filter(isPanel)[index];
++    if (target) {
++      event.preventDefault();
++      event.stopPropagation();
++      this.#togglePanel(target);
+     }
+   };
+ 
