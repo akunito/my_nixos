@@ -419,6 +419,7 @@
     # GPU-related feature flags
     amdLACTdriverEnable = false; # Enable LACT (Linux AMD GPU Control Application) for AMD GPU management
     amdgpuSuspendWorkaround = false; # AINF-282: disable amdgpu runpm/bapm/aspm + pause lactd around sleep (RDNA 4 / Navi 48 SMU regression, kernel 6.17–7.0+)
+    amdgpuDisableIps = false; # amdgpu.dcdebugmask=0x800 (DC_DISABLE_IPS): stop DMCUB wedging on resume (RDNA 4 INBOX0 HW Lock Ack flood, kernel 7.1.x)
 
     # Display Manager feature flags
     greetdEnable = false; # Enable greetd + ReGreet (modern Wayland-native display manager)
@@ -998,6 +999,11 @@
     # Zen Browser, installed ALONGSIDE `browser` (does not take over MIME
     # handlers). See user/app/browser/zen.nix.
     zenBrowserEnable = false;
+    # Directory name of the Zen profile under ~/.zen. Machines migrated from an
+    # existing install must name their EXISTING directory here, otherwise the
+    # module adopts nothing and Zen starts on an empty profile. Fresh machines
+    # can leave the default and let Zen create it.
+    zenProfileDir = "default";
     # Ship the Sine mod-manager bootloader inside the Zen wrapper, so the
     # `sine-web-panels` mod can restore the Vivaldi-style sidebar web panels
     # that Zen removed in 1.11b. Requires zenBrowserEnable.

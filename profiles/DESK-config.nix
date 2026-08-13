@@ -660,6 +660,8 @@ in
     # Zen removed in 1.11b. See user/app/browser/zen.nix.
     zenBrowserEnable = true;
     zenSineEnable = true;
+    # Migrated from the Flatpak install — must match the existing directory.
+    zenProfileDir = "8fl3a3xu.Default (release)";
 
     # === Gaming & Entertainment ===
     gamesEnable = true; # Master gate for gaming submodules

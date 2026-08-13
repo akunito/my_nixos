@@ -27,11 +27,11 @@
 let
   sineEnabled = userSettings.zenSineEnable or false;
 
-  # The profile directory migrated off the Flatpak install. `path` pins the
-  # module to the EXISTING directory so it adopts that profile instead of
-  # generating a fresh (empty) one — the browser data, extensions and logins
-  # all live there.
-  profileDir = "8fl3a3xu.Default (release)";
+  # `path` pins the module to a SPECIFIC directory under ~/.zen. On a machine
+  # with an existing install this must name that directory, or the module
+  # adopts nothing and Zen starts on an empty profile (DESK carries the
+  # Flatpak-era name). Fresh machines keep the default and let Zen create it.
+  profileDir = userSettings.zenProfileDir or "default";
 
   # Our fork of the sine-web-panels mod, pinned by the `sine-web-panels` flake
   # input. Shipping it from the store (rather than copying it into the profile

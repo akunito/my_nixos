@@ -309,6 +309,14 @@ in
     rangerFullPreviewEnable = true; # Full ranger preview (fonts, ebooks, spreadsheets, etc.)
     meetingTranscribeEnable = true; # Local meeting record + whisper.cpp transcription (Vulkan on AMD iGPU)
 
+    # === Browsers ===
+    # Zen alongside Vivaldi (does not claim the http/https handlers), with the
+    # sine-web-panels fork for sidebar web panels. No profile was migrated here,
+    # so zenProfileDir stays at the default and Zen creates a fresh one — tabs,
+    # extensions and logins do NOT come across from DESK automatically.
+    zenBrowserEnable = true;
+    zenSineEnable = true;
+
     # === Gaming & Entertainment ===
     gamesEnable = true; # Master gate for gaming submodules
     gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus
