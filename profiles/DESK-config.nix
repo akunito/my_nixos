@@ -653,6 +653,14 @@ in
     meetingTranscribeEnable = true; # Local meeting recording + whisper.cpp transcription (Vulkan/AMD)
     rangerFullPreviewEnable = true; # Full ranger preview (fonts, ebooks, spreadsheets, etc.)
 
+    # === Browsers ===
+    # Zen installed ALONGSIDE Vivaldi (does not claim the http/https handlers);
+    # migrating off Vivaldi. zenSineEnable bakes the Sine bootloader into the
+    # wrapper so the sine-web-panels mod can restore sidebar web panels, which
+    # Zen removed in 1.11b. See user/app/browser/zen.nix.
+    zenBrowserEnable = true;
+    zenSineEnable = true;
+
     # === Gaming & Entertainment ===
     gamesEnable = true; # Master gate for gaming submodules
     gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus

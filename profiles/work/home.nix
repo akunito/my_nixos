@@ -42,6 +42,7 @@
   ++ lib.optional systemSettings.voxtypeEnable ../../user/app/voxtype/voxtype.nix # Voxtype voice dictation (hold Super+V to speak)
   ++ lib.optional (userSettings.meetingTranscribeEnable or false) ../../user/app/meeting-transcribe/meeting-transcribe.nix # Local meeting recording + whisper.cpp transcription
   ++ lib.optional (systemSettings.sshHostsManaged or false) ../../user/app/ssh-hosts.nix # Nix-managed ~/.ssh/config (shared SSH host definitions)
+  ++ lib.optional (userSettings.zenBrowserEnable or false) ../../user/app/browser/zen.nix # Zen Browser alongside the default browser (migration)
   # NOTE: Starship is now integrated into sh.nix (controlled by userSettings.starshipEnable)
   ;
 

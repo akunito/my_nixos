@@ -78,6 +78,14 @@
     # Hardware-specific configurations (used by LAPTOP profiles)
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
+    # Zen Browser — not in nixpkgs (NixOS/nixpkgs#327982). This flake wraps the
+    # upstream build with nixpkgs' wrapFirefox, so `.override { extraPrefsFiles }`
+    # works — that's what lets user/app/browser/zen.nix ship the Sine bootloader.
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Voice dictation (Whisper-based, local)
     # Pinned: newer revs (e.g. ddc93de) fail to build — missing xorg.libX11 in Rust build inputs.
     voxtype = {
