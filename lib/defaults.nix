@@ -488,6 +488,9 @@
     vaultwardenEnable = false; # Enable Vaultwarden NixOS native service
     vaultwardenDomain = ""; # Public domain (e.g., "vault.akunito.com")
     vaultwardenPort = 8222; # Internal port (localhost only)
+    vaultwardenSmtpFrom = ""; # Envelope sender; empty = "vault@<vaultwardenDomain>".
+    # Set this to an address on the APEX domain: SMTP2GO verifies domains, and
+    # relying on it accepting a subdomain sender is a thinner guarantee.
 
     gpuMonitoringEnable = true; # Enable GPU monitoring (btop-rocm, nvtop, radeontop)
 

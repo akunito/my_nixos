@@ -256,6 +256,10 @@ in
     # === Vaultwarden (Password Manager — NixOS native, PostgreSQL backend) ===
     vaultwardenEnable = true;
     vaultwardenDomain = "vault.${secrets.publicDomain}";
+    # Apex sender: every other service relays as <service>@<publicDomain> and
+    # SMTP2GO verifies the apex domain. The old default produced the subdomain
+    # vault@vault.<publicDomain>.
+    vaultwardenSmtpFrom = "vault@${secrets.publicDomain}";
     vaultwardenPort = 8222;
 
     # === Cloudflare Tunnel (Phase 2b — ENABLED) ===

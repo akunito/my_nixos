@@ -21,6 +21,13 @@ let
   domain = systemSettings.vaultwardenDomain or "";
   adminToken = systemSettings.vaultwardenAdminToken or "";
   dbPassword = systemSettings.dbVaultwardenPassword or "";
+
+  # Falls back to the historic "vault@<domain>", which resolves to a SUBDOMAIN
+  # sender (vault@vault.akunito.com). That does currently relay, but SMTP2GO
+  # verifies domains, so an apex address is the safer choice — set
+  # vaultwardenSmtpFrom in the profile.
+  smtpFromRaw = systemSettings.vaultwardenSmtpFrom or "";
+  smtpFrom = if smtpFromRaw != "" then smtpFromRaw else "vault@${domain}";
 in
 lib.mkIf (systemSettings.vaultwardenEnable or false) {
   services.vaultwarden = {
@@ -58,7 +65,7 @@ lib.mkIf (systemSettings.vaultwardenEnable or false) {
       SMTP_HOST = "127.0.0.1";
       SMTP_PORT = 25;
       SMTP_SECURITY = "off";
-      SMTP_FROM = "vault@${domain}";
+      SMTP_FROM = smtpFrom;
       SMTP_FROM_NAME = "Vaultwarden";
 
       # WebSocket notifications (for live sync)
