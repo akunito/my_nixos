@@ -82,6 +82,31 @@ let
     mv $out/preferences.json.tmp $out/preferences.json
   '';
 
+  isDefaultBrowser = userSettings.zenIsDefaultBrowser or false;
+  zenExe = "${config.home.profileDirectory}/bin/zen-beta";
+
+  # Ported from vivaldi.nix: route open.spotify.com links to the Spotify app
+  # and let everything else fall through to the browser. Kept as the Exec of a
+  # desktop entry that REUSES Zen's own id (zen-beta.desktop) — ours in
+  # ~/.local/share/applications outranks the package's, so anything Zen checks
+  # about being the default still sees its own id.
+  spotifyUrlRouter = pkgs.writeShellScript "zen-spotify-url-router" ''
+    url="''${1-}"
+    case "$url" in
+      http://open.spotify.com/*|https://open.spotify.com/*)
+        path="''${url#*open.spotify.com/}"
+        path="''${path%%\?*}"
+        path="''${path%%#*}"
+        # Drop locale segment, e.g. intl-es/track/ID -> track/ID
+        case "$path" in intl-*/*) path="''${path#intl-*/}" ;; esac
+        if command -v spotify >/dev/null 2>&1; then
+          exec spotify --uri="spotify:''${path//\//:}"
+        fi
+        ;;
+    esac
+    exec ${zenExe} "$@"
+  '';
+
   modId = "sine-web-panels";
   sineModsDir = "${profilesPath}/${profileDir}/chrome/sine-mods";
   profilesPath = "${config.home.homeDirectory}/.zen";
@@ -102,7 +127,8 @@ in
 
   programs.zen-browser = {
     enable = true;
-    # vivaldi.nix owns the MIME handlers during the migration.
+    # Handlers are declared explicitly below instead, so the Spotify router can
+    # sit in front of the browser the same way it did for Vivaldi.
     setAsDefaultBrowser = false;
 
     # The module defaults profilesPath to $XDG_CONFIG_HOME/zen, but THIS Zen
@@ -151,6 +177,55 @@ in
       # input below instead.
     };
   };
+
+  home.sessionVariables = lib.mkIf isDefaultBrowser {
+    DEFAULT_BROWSER = zenExe;
+  };
+
+  # Same desktop id the package ships, so ours overrides it rather than adding a
+  # second Zen entry to the launcher.
+  xdg.desktopEntries = lib.mkIf isDefaultBrowser {
+    "zen-beta" = {
+      name = "Zen Browser";
+      genericName = "Web Browser";
+      exec =
+        if (userSettings.spotifyUrlHandlerEnable or false)
+        then "${spotifyUrlRouter} %U"
+        else "${zenExe} %U";
+      icon = "zen-browser";
+      terminal = false;
+      categories = [ "Network" "WebBrowser" ];
+      mimeType = [
+        "text/html"
+        "x-scheme-handler/http"
+        "x-scheme-handler/https"
+        "x-scheme-handler/about"
+        "x-scheme-handler/unknown"
+      ];
+    };
+  };
+
+  xdg.mimeApps.defaultApplications = lib.mkIf isDefaultBrowser ({
+    "text/html" = "zen-beta.desktop";
+    "x-scheme-handler/http" = "zen-beta.desktop";
+    "x-scheme-handler/https" = "zen-beta.desktop";
+    "x-scheme-handler/about" = "zen-beta.desktop";
+    "x-scheme-handler/unknown" = "zen-beta.desktop";
+  } // lib.optionalAttrs (userSettings.spotifyUrlHandlerEnable or false) {
+    "x-scheme-handler/spotify" = "spotify.desktop";
+  });
+
+  # Mirrors the Vivaldi guard: a plain-file copy written by a browser's own
+  # "set as default" outranks the managed entry in XDG lookup.
+  home.activation.removeStaleZenDesktopFile = lib.mkIf isDefaultBrowser (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      stale="$HOME/.local/share/applications/zen-beta.desktop"
+      if [ -f "$stale" ] && [ ! -L "$stale" ]; then
+        echo "Removing stale $stale (shadows managed desktop entry)"
+        rm "$stale"
+      fi
+    ''
+  );
 
   # The mod itself, straight from the store. `force` so it replaces whatever a
   # previous hand-install left behind; `recursive` so Sine can still write its

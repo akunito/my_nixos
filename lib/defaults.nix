@@ -1008,6 +1008,10 @@
     # generated spaces and pins on every activation, so spaces deleted in Zen
     # come back. Seed once, then set false.
     zenImportVivaldiSpaces = false;
+    # Zen takes over the http/https handlers, the Spotify URL router and
+    # DEFAULT_BROWSER. Vivaldi stays installed and launchable, it just stops
+    # owning them — both modules declaring the same MIME keys would collide.
+    zenIsDefaultBrowser = false;
     # Ship the Sine mod-manager bootloader inside the Zen wrapper, so the
     # `sine-web-panels` mod can restore the Vivaldi-style sidebar web panels
     # that Zen removed in 1.11b. Requires zenBrowserEnable.

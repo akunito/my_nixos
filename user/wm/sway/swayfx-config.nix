@@ -546,6 +546,10 @@ in
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh kitty-ranger 'kitty --class kitty-ranger ranger'";
           "${hyper}+U" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
+          # Zen: the app_id, binary and desktop entry are all "zen-beta" — the
+          # bare "zen" never matches.
+          "${hyper}+z" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh zen-beta zen-beta";
           "${hyper}+A" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh .blueman-manager-wrapped blueman-manager";
           "${hyper}+D" =

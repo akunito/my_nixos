@@ -54,9 +54,12 @@ in
   # Module installing vivaldi as default browser with KWallet 6 support
   home.packages = [ vivaldi-with-kwallet ];
 
+  # Vivaldi stays installed and launchable; when Zen is the default browser it
+  # simply stops claiming DEFAULT_BROWSER and the MIME handlers.
   home.sessionVariables = {
-    DEFAULT_BROWSER = "${vivaldi-with-kwallet}/bin/vivaldi";
     CUPS_SERVER = "localhost:631";
+  } // lib.optionalAttrs (!(userSettings.zenIsDefaultBrowser or false)) {
+    DEFAULT_BROWSER = "${vivaldi-with-kwallet}/bin/vivaldi";
   };
 
   # Remove a stale plain-file copy of vivaldi-stable.desktop in
@@ -99,13 +102,13 @@ in
   };
 
   # Default to vivaldi-stable.desktop (the id Vivaldi self-checks) — stops the nag.
-  xdg.mimeApps.defaultApplications = {
+  xdg.mimeApps.defaultApplications = lib.optionalAttrs (!(userSettings.zenIsDefaultBrowser or false)) {
     "text/html" = "vivaldi-stable.desktop";
     "x-scheme-handler/http" = "vivaldi-stable.desktop";
     "x-scheme-handler/https" = "vivaldi-stable.desktop";
     "x-scheme-handler/about" = "vivaldi-stable.desktop";
     "x-scheme-handler/unknown" = "vivaldi-stable.desktop";
-  } // lib.optionalAttrs (userSettings.spotifyUrlHandlerEnable or false) {
+  } // lib.optionalAttrs ((userSettings.spotifyUrlHandlerEnable or false) && !(userSettings.zenIsDefaultBrowser or false)) {
     # spotify: URIs (e.g. the "Open App" button on open.spotify.com) go straight
     # to the Spotify client.
     "x-scheme-handler/spotify" = "spotify.desktop";

@@ -316,6 +316,7 @@ in
     # extensions and logins do NOT come across from DESK automatically.
     zenBrowserEnable = true;
     zenSineEnable = true;
+    zenIsDefaultBrowser = true; # Zen owns http/https + the Spotify router; Vivaldi stays installed
 
     # === Gaming & Entertainment ===
     gamesEnable = true; # Master gate for gaming submodules

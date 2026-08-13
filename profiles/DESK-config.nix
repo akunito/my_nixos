@@ -662,6 +662,7 @@ in
     zenSineEnable = true;
     # Migrated from the Flatpak install — must match the existing directory.
     zenProfileDir = "8fl3a3xu.Default (release)";
+    zenIsDefaultBrowser = true; # Zen owns http/https + the Spotify router; Vivaldi stays installed
 
     # === Gaming & Entertainment ===
     gamesEnable = true; # Master gate for gaming submodules
