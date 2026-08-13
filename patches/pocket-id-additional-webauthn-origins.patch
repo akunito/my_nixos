@@ -1,0 +1,48 @@
+--- a/backend/internal/webauthn/service.go
++++ b/backend/internal/webauthn/service.go
+@@ -6,6 +6,8 @@
+ 	"errors"
+ 	"fmt"
+ 	"net/http"
++	"os"
++	"strings"
+ 	"time"
+ 
+ 	"github.com/go-webauthn/webauthn/protocol"
+@@ -36,12 +38,35 @@
+ 	auditLog AuditLogger
+ }
+ 
++// additionalWebAuthnOrigins returns extra allowed WebAuthn origins from the
++// ADDITIONAL_WEBAUTHN_ORIGINS env var (comma-separated).
++//
++// PATCH(akunito): upstream hardcodes APP_URL as the only RP origin, which
++// rejects passkey assertions from the LiftCraft Android app's WebView. That
++// client presents an "android:apk-key-hash:<hash>" origin. Upstream PR #1665
++// was closed unread, so this must be re-applied on every version bump.
++func additionalWebAuthnOrigins() []string {
++	raw := os.Getenv("ADDITIONAL_WEBAUTHN_ORIGINS")
++	if raw == "" {
++		return nil
++	}
++
++	var out []string
++	for _, origin := range strings.Split(raw, ",") {
++		if origin = strings.TrimSpace(origin); origin != "" {
++			out = append(out, origin)
++		}
++	}
++
++	return out
++}
++
+ func newService(deps Dependencies) (*Service, error) {
+ 	wa, err := gowebauthn.New(&gowebauthn.Config{
+ 		// Set a default value, it will be set again later
+ 		RPDisplayName: defaultRPDisplayName,
+ 		RPID:          utils.GetHostnameFromURL(deps.AppURL),
+-		RPOrigins:     []string{deps.AppURL},
++		RPOrigins:     append([]string{deps.AppURL}, additionalWebAuthnOrigins()...),
+ 		AuthenticatorSelection: protocol.AuthenticatorSelection{
+ 			UserVerification: protocol.VerificationRequired,
+ 		},
