@@ -11,8 +11,15 @@
 #
 # Jars are symlinked into the FreesmLauncher instance mods folder, so the
 # launcher's mod UI cannot delete/disable them — manage them here instead.
-# easyauth is server-only and intentionally absent. Client-only mods the
-# user adds by hand (e.g. emi) are left untouched.
+# Client-only mods the user adds by hand (e.g. emi) are left untouched.
+#
+# Deliberately NOT mirrored here — server-only mods (Modrinth client_side:
+# unsupported), which add no registry entries and so never affect the client:
+#   easyauth      — offline-account login
+#   skinrestorer  — custom skins (/skin set mojang <account>); skins reach
+#                   vanilla clients through the normal profile system, so
+#                   nothing is needed launcher-side. The optional GUI
+#                   companion is skinshuffle, a separate client-side mod.
 #
 # Gated by systemSettings.freesmLauncherEnable (imported conditionally from
 # profiles/personal/home.nix) — same gate as the launcher itself.

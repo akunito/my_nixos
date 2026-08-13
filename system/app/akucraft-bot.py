@@ -94,7 +94,22 @@ CONNECT_TEXT = """How to join AkuCraft:
    Survival: 100.64.0.6:25565
    Creative: 100.64.0.6:25566
 5. First join: /auth register <password> <password>
-   Later joins: /auth login <password>"""
+   Later joins: /auth login <password>
+
+6. Skins (optional). We play offline, so by default everyone is Steve.
+   The server handles skins for us - you install nothing, and everyone
+   sees your skin normally.
+   - Your own custom skin, no Minecraft account needed:
+     register for free at https://ely.by, upload your skin there, then
+     in game: /skin set ely.by <your-ely-username>
+     Tip: use the same name on ely.by as your player name and the skin
+     is applied automatically every time you join.
+   - Copy the skin of an existing Minecraft account:
+     /skin set mojang <that-account-name>
+   - From an image URL:
+     /skin set web classic "<url>"   (quotes required; use slim for
+     the Alex-model body shape)
+   - Undo with /skin clear"""
 
 VPN_TEXT = """VPN (Tailscale) setup:
 
