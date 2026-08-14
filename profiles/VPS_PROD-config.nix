@@ -130,6 +130,7 @@ in
     dbLiftcraftPassword = secrets.dbLiftcraftPassword;
     dbMatrixPassword = secrets.dbMatrixPassword;
     dbMinifluxPassword = secrets.dbMinifluxPassword;
+    dbLinkwardenPassword = secrets.dbLinkwardenPassword;
     dbN8nPassword = secrets.dbN8nPassword;
     dbVaultwardenPassword = secrets.dbVaultwardenPassword;
     vaultwardenAdminToken = secrets.vaultwardenAdminToken;
@@ -141,11 +142,16 @@ in
     # PostgreSQL 17 Server
     postgresqlServerEnable = true;
     postgresqlServerPort = 5432;
-    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" "miniflux" "vaultwarden" "n8n" ];
+    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" "miniflux" "vaultwarden" "n8n" "linkwarden" ];
     postgresqlServerUsers = [
       {
         name = "plane";
         passwordFile = "/etc/secrets/db-plane-password";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "linkwarden";
+        passwordFile = "/etc/secrets/db-linkwarden-password";
         ensureDBOwnership = true;
       }
       {
@@ -291,6 +297,10 @@ in
       plane-dev  = { port = 3007; maxBodySize = "50M"; };  # isolated Plane dev/test clone (own pg/redis/mq/minio)
       unifi      = { port = 8443; https = true; };
       portfolio  = { port = 3005; };
+      # Linkwarden — self-hosted bookmarks, replacing Raindrop.io. maxBodySize
+      # because it archives pages as PDF/screenshot and imports run as one
+      # multipart upload (the Raindrop export is ~1300 bookmarks).
+      links      = { port = 3011; maxBodySize = "256M"; };
       # /admin denied here on purpose: the Vaultwarden admin panel is guarded
       # only by ADMIN_TOKEN, so it must stay behind Cloudflare Access on the
       # public host rather than be open to every group:family tailnet device.
