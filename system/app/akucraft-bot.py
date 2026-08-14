@@ -109,7 +109,19 @@ CONNECT_TEXT = """How to join AkuCraft:
    - From an image URL:
      /skin set web classic "<url>"   (quotes required; use slim for
      the Alex-model body shape)
-   - Undo with /skin clear"""
+   - Undo with /skin clear
+
+7. Live map + finding each other (optional, recommended).
+   Website map, works in any browser with the VPN on:
+     http://100.64.0.6:8100
+   To also see everyone on your in-game minimap, add these client mods
+   (client-side only - they change nothing on the server, and versions
+   do not have to match anyone else's):
+     Xaero's Minimap, Xaero's World Map, Map Link, Cloth Config, Mod Menu
+   Then in game: Mod Menu -> Map Link -> General -> Server Entries -> add
+     Web Map Type: Squaremap
+     Server IP:    100.64.0.6:25565
+     Web map link: http://100.64.0.6:8100"""
 
 VPN_TEXT = """VPN (Tailscale) setup:
 
