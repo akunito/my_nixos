@@ -123,7 +123,14 @@ in
       host    vaultwarden        vaultwarden     172.16.0.0/12     scram-sha-256
       host    n8n                n8n             10.0.0.0/8        scram-sha-256
       host    n8n                n8n             172.16.0.0/12     scram-sha-256
+      host    linkwarden         linkwarden      10.0.0.0/8        scram-sha-256
+      host    linkwarden         linkwarden      172.16.0.0/12     scram-sha-256
     '';
+    # Note: Docker's default pool 172.17–172.31 is exhausted on this host, so
+    # newly created bridge networks now land in 192.168.x and fall outside both
+    # ranges above. Any future stack that talks to this PostgreSQL must pin its
+    # network subnet inside 172.16.0.0/12 (as ~/.homelab/linkwarden does with
+    # 172.16.0.0/24, which is below Docker's pool and never auto-assigned).
 
     # === Database Credentials (from git-crypt encrypted secrets/domains.nix) ===
     dbPlanePassword = secrets.dbPlanePassword;
