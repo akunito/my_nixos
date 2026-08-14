@@ -62,6 +62,29 @@ let
       url = "https://cdn.modrinth.com/data/twkfQtEc/versions/OtIOgMN8/moonlight-fabric-1.21.1-3.1.1.jar";
       sha512 = "2980b164727c6530ef6670dc3a26fe75354b6c41e8831da6f11bf5ef4e6ae4696b8a528f10ec3d1489766d28e3407ec4f6e201c7e61b8b58af811118a640d176";
     }
+    # Shield tiers + parry/off-guard mechanics. Adds shield items, hence synced.
+    {
+      name = "shieldexp-fabric-1.21.1-1.4.1.jar";
+      url = "https://cdn.modrinth.com/data/sjxWxSao/versions/XfcwSRkp/shieldexp-fabric-1.21.1-1.4.1.jar";
+      sha512 = "b0d8c15d820376524315081b4f8510c5e27a3aa6071d113f7183f9032897363fb04b0933089424441d4fb1526e5e7f7cacab2cc6c07efa97f098351afff068a2";
+    }
+    # Deterministic enchanting table (pick the enchantment, no gambling).
+    # Adds a block, hence synced. Needs puzzles-lib + forge-config-api-port.
+    {
+      name = "EnchantingInfuser-v21.1.4-1.21.1-Fabric.jar";
+      url = "https://cdn.modrinth.com/data/ePv85y52/versions/lBRm6Aii/EnchantingInfuser-v21.1.4-1.21.1-Fabric.jar";
+      sha512 = "62311364da8480633f082b1e05fff2503a189c06c54ca9600ebca5b06b3b4c15038e9f25d9eab062ac2ff4e6d938e6856603cf9846666bdb0deaa9563a021552";
+    }
+    {
+      name = "PuzzlesLib-v21.1.52-1.21.1-Fabric.jar";
+      url = "https://cdn.modrinth.com/data/QAGBst4M/versions/pqCNhF6A/PuzzlesLib-v21.1.52-1.21.1-Fabric.jar";
+      sha512 = "0a2f8266f175caa575574a6c99c17fb0af96e6e8e2dea9cd8d53835a1055b265beaa9a2a7dece806e623d3404df6d3d5673a82197c5862c9514866d64df689d5";
+    }
+    {
+      name = "ForgeConfigAPIPort-v21.1.6-1.21.1-Fabric.jar";
+      url = "https://cdn.modrinth.com/data/ohNO6lps/versions/N5qzq0XV/ForgeConfigAPIPort-v21.1.6-1.21.1-Fabric.jar";
+      sha512 = "cd9296e78ba969f7aed6e3692aa25eb61c102c79c55ca5f9592576bacaa26feab5d5d48fa30cf07ca852e0f1d42afc4d4558feff69a67b225183d2bc15898cf9";
+    }
   ];
 
   # Client-only mods: the server neither ships nor knows about these, they add

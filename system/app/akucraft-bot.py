@@ -2,7 +2,7 @@
 """AkuCraft chat bot - status announcements + commands, on Telegram and Discord.
 
 Runs as systemd service akucraft-status-bot on VPS_PROD (akucraft-status-bot.nix).
-Stdlib only. Talks to the two rootless-docker Minecraft containers via the
+Stdlib only. Talks to the rootless-docker Minecraft container(s) via the
 docker CLI (DOCKER_HOST set by the unit) and to Telegram via the Bot API.
 
 Features:
@@ -57,12 +57,10 @@ SERVERS = {
         "dir": "/home/akunito/.homelab/minecraft",
         "address": "100.64.0.6:25565",
     },
-    "creative": {
-        "label": "Creative",
-        "container": "minecraft-creative",
-        "dir": "/home/akunito/.homelab/minecraft-creative",
-        "address": "100.64.0.6:25566",
-    },
+    # Creative was decommissioned 2026-08-14 (unused since 2026-08-06, last
+    # container exit 7 days before that). Its world is kept on disk at
+    # ~/.homelab/minecraft-creative and in the restic backups, so it can be
+    # brought back by restoring this entry and its compose file.
 }
 
 DEATH_KEYWORDS = (
@@ -85,14 +83,16 @@ CONNECT_TEXT = """How to join AkuCraft:
 2. Launcher: FreeSM Launcher (no paid account needed):
    https://github.com/FreesmTeam/FreesmLauncher/releases
    Add an OFFLINE account with your player name.
-3. Instance: Minecraft 1.21.1 + Fabric Loader 0.19.3, with these 5 mods:
+3. Instance: Minecraft 1.21.1 + Fabric Loader 0.19.3, with these 9 mods.
+   The exact versions matter - a mismatch kicks you when you join:
    fabric-api 0.116.15, supplementaries 3.8.2, moonlight 3.1.1,
-   flan 1.12.7, lithium 0.15.4 (ask for the download links or check
-   your invite email - exact versions matter).
-4. Add the servers in Multiplayer -> Add Server (address = IP and port,
-   copy them exactly):
+   flan 1.12.7, lithium 0.15.4, shield-expansion 1.4.1,
+   enchanting-infuser 21.1.4, puzzles-lib 21.1.52,
+   forge-config-api-port 21.1.6
+   (ask for the download links, or check your invite email.)
+4. Add the server in Multiplayer -> Add Server (address = IP and port,
+   copy it exactly):
    Survival: 100.64.0.6:25565
-   Creative: 100.64.0.6:25566
 5. First join: /auth register <password> <password>
    Later joins: /auth login <password>
 
@@ -133,8 +133,8 @@ gives your device access to the Minecraft servers and NOTHING else.
 3. In a terminal (Windows: PowerShell):
    tailscale login --login-server https://headscale.akunito.com --auth-key <YOUR-KEY>
    (macOS app: /Applications/Tailscale.app/Contents/MacOS/Tailscale login ...)
-4. Done - check with /status that a server is up, then join with
-   100.64.0.6:25565 (survival) or 100.64.0.6:25566 (creative).
+4. Done - check with /status that the server is up, then join with
+   100.64.0.6:25565
 
 Note: always use the IP and port above. Hostnames like akucraft.local...
 only resolve on some networks, so the IP is the reliable way in."""
@@ -170,8 +170,8 @@ distance to them."""
 HELP_TEXT = """AkuCraft bot commands:
 /status - servers status + who is online
 /players - who is playing right now
-/start [survival|creative] - boot a stopped server
-/stop [survival|creative] - stop a server (refuses if players online)
+/start - boot the server if it is stopped
+/stop - stop the server (refuses if players online)
 /map - live web map + minimap mods to see each other
 /connect - how to join the servers
 /vpn - how to set up the VPN (Tailscale)
@@ -377,7 +377,7 @@ def pick_targets(arg):
 def cmd_start(arg):
     targets = pick_targets(arg)
     if not targets:
-        return "Usage: /start [survival|creative]"
+        return "No such server."
     replies = []
     for name in targets:
         srv = SERVERS[name]
@@ -395,7 +395,7 @@ def cmd_start(arg):
 def cmd_stop(arg):
     targets = pick_targets(arg)
     if not targets:
-        return "Usage: /stop [survival|creative]"
+        return "No such server."
     replies = []
     for name in targets:
         srv = SERVERS[name]
