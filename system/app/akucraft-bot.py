@@ -10,7 +10,7 @@ Features:
   - announces player joins/leaves (RCON `list` diff)
   - announces deaths and advancements (docker log tailing)
   - auto-stops a server empty for IDLE_STOP_MINUTES and announces it
-  - commands: /start /stop /status /players /connect /vpn /help
+  - commands: /start /stop /status /players /map /connect /vpn /help
 
 Transports (each optional, enabled by its own env vars):
   - Telegram: long-polls getUpdates; commands honored only in TG_CHAT.
@@ -139,11 +139,40 @@ gives your device access to the Minecraft servers and NOTHING else.
 Note: always use the IP and port above. Hostnames like akucraft.local...
 only resolve on some networks, so the IP is the reliable way in."""
 
+MAP_TEXT = """Live map of the survival world:
+
+   http://100.64.0.6:8100
+
+Open it in any browser (phone works too) with the VPN on. It shows the
+whole explored world and everyone who is online right now, live.
+
+Want the same player positions on your in-game minimap? Add these 5
+mods to your instance's "mods" folder. They are CLIENT-SIDE ONLY: they
+change nothing on the server, nobody else has to install them, and the
+versions do not have to match anyone.
+
+   Xaero's Minimap    https://modrinth.com/mod/xaeros-minimap
+   Xaero's World Map  https://modrinth.com/mod/xaeros-world-map
+   Map Link           https://modrinth.com/mod/maplink
+   Cloth Config       https://modrinth.com/mod/cloth-config
+   Mod Menu           https://modrinth.com/mod/modmenu
+
+Then in game, open Mod Menu -> Map Link -> General -> Server Entries,
+add one entry and fill it in exactly like this:
+
+   Web Map Type:  Squaremap
+   Server IP:     100.64.0.6:25565
+   Web map link:  http://100.64.0.6:8100
+
+Everyone online then appears on your minimap as a head icon with the
+distance to them."""
+
 HELP_TEXT = """AkuCraft bot commands:
 /status - servers status + who is online
 /players - who is playing right now
 /start [survival|creative] - boot a stopped server
 /stop [survival|creative] - stop a server (refuses if players online)
+/map - live web map + minimap mods to see each other
 /connect - how to join the servers
 /vpn - how to set up the VPN (Tailscale)
 /help - this message
@@ -423,6 +452,8 @@ def handle(text):
         return cmd_status()
     if cmd == "players":
         return cmd_players()
+    if cmd == "map":
+        return MAP_TEXT
     if cmd == "connect":
         return CONNECT_TEXT
     if cmd == "vpn":
@@ -469,6 +500,7 @@ DISCORD_COMMANDS = [
     ("players", "Who is playing right now", False),
     ("start", "Boot a stopped server", True),
     ("stop", "Stop a server (refuses if players online)", True),
+    ("map", "Live web map + minimap mods to see each other", False),
     ("connect", "How to join the servers", False),
     ("vpn", "How to set up the VPN (Tailscale)", False),
     ("help", "List commands", False),
