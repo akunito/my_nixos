@@ -83,13 +83,11 @@ CONNECT_TEXT = """How to join AkuCraft:
 2. Launcher: FreeSM Launcher (no paid account needed):
    https://github.com/FreesmTeam/FreesmLauncher/releases
    Add an OFFLINE account with your player name.
-3. Instance: Minecraft 1.21.1 + Fabric Loader 0.19.3, with these 9 mods.
-   The exact versions matter - a mismatch kicks you when you join:
-   fabric-api 0.116.15, supplementaries 3.8.2, moonlight 3.1.1,
-   flan 1.12.7, lithium 0.15.4, shield-expansion 1.4.1,
-   enchanting-infuser 21.1.4, puzzles-lib 21.1.52,
-   forge-config-api-port 21.1.6
-   (ask for the download links, or check your invite email.)
+3. Instance: Minecraft 1.21.1 + Fabric Loader 0.19.3, plus our mod pack.
+   There are 25 required mods now (RPG classes, spells, shields,
+   enchanting, backpacks...), so do NOT collect them by hand: ask Diego
+   for the mod pack zip and unzip it into the instance's "mods" folder.
+   The exact versions matter - a mismatch kicks you when you join.
 4. Add the server in Multiplayer -> Add Server (address = IP and port,
    copy it exactly):
    Survival: 100.64.0.6:25565
@@ -119,7 +117,7 @@ CONNECT_TEXT = """How to join AkuCraft:
    do not have to match anyone else's):
      Xaero's Minimap, Xaero's World Map, Map Link, Cloth Config, Mod Menu
    Then in game: Mod Menu -> Map Link -> General -> Server Entries -> add
-     Web Map Type: Squaremap
+     Web Map Type: Bluemap
      Server IP:    100.64.0.6:25565
      Web map link: http://100.64.0.6:8100"""
 
@@ -160,7 +158,7 @@ versions do not have to match anyone.
 Then in game, open Mod Menu -> Map Link -> General -> Server Entries,
 add one entry and fill it in exactly like this:
 
-   Web Map Type:  Squaremap
+   Web Map Type:  Bluemap
    Server IP:     100.64.0.6:25565
    Web map link:  http://100.64.0.6:8100
 
