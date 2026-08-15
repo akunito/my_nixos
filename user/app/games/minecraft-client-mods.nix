@@ -213,6 +213,14 @@ let
       url = "https://cdn.modrinth.com/data/kiByZ6gx/versions/nNX7KTbD/maplink-fabric-4.5.1-1.21-1.21.1.jar";
       sha512 = "0788738d3ea30908d7ccefbbf5529afa0aef6aa57b5ae0e55abe7ee0b7eee3bf6d21c5e42e14aff367205efa13174628595d09aec301a8c23af42a26719452b8";
     }
+    # EMI (item/recipe viewer). Was a hand-copied file for a long time, which
+    # meant it was the one mod a mods-folder wipe would NOT restore. Now pinned
+    # like the rest, and it ships in the player mod pack too.
+    {
+      name = "emi-1.1.24+1.21.1+fabric.jar";
+      url = "https://cdn.modrinth.com/data/fRiHVvU7/versions/on5GT1qh/emi-1.1.24%2B1.21.1%2Bfabric.jar";
+      sha512 = "2680e7b0a93152d4220afdc30a0452c911dc4b5c9ce1db1b7246c21b777bc2a1945fe97c98c09941d31b7478ae357135a1ef51cd3ba92d08dce35202a830b70d";
+    }
   ];
 
   modFiles = lib.listToAttrs (lib.concatMap (instance:
