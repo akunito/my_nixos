@@ -104,13 +104,20 @@ tag names): the longest note is 164 characters and the longest tag 20.
 
 Every link is archived as PDF **and** screenshot **and** monolith HTML **and**
 readable text by default, per user, driven by a headless Chromium in the worker.
-Measured during the rehearsal it ran to roughly **24 MB per link** — about 30 GB
-across this library, plus hours of CPU on a box that also runs Immich, Plane and
-Nextcloud.
+Toggle it per user under Settings → Preferences before a bulk import. The columns
+are `archiveAsPDF` / `archiveAsScreenshot` / `archiveAsMonolith` /
+`archiveAsReadable` on `"User"`.
 
-Toggle it per user under Settings → Preferences before a bulk import if that is
-not wanted. The columns are `archiveAsPDF` / `archiveAsScreenshot` /
-`archiveAsMonolith` / `archiveAsReadable` on `"User"`.
+Cost is dominated almost entirely by PDF and monolith:
+
+| Setting | Measured | Projected over 1283 links |
+|---|---|---|
+| All four (default) | ~24 MB/link | ~30 GB |
+| Screenshot + readable | **0.44 MB/link** | **~0.6 GB** |
+
+The all-four figure came off a handful of links during a crash-looping run, so
+treat it as an order of magnitude; the screenshot-only figure is from a clean
+run over 41 links. This install runs screenshot + readable.
 
 ## Gotchas
 
