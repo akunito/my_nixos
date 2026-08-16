@@ -241,6 +241,32 @@ let
       url = "https://cdn.modrinth.com/data/1W98a849/versions/mRrlD2wq/mca-fabric-7.7.32%2B1.21.1.jar";
       sha512 = "63711894458fde2e9889f43f9260a6029ca713a82e738ab19ce619e6849e0fb1597c37dbb28ae97d6f6ebc0022e72be3635dbe1e8f3a974177b0a38dd2a3d782";
     }
+
+    # --- Graduated from staging 2026-08-16, verified in game first ---
+    # Artifacts: passive treasure gear, found in chests and never crafted, worn
+    # in the Trinkets slots. Bosses of Mass Destruction: four optional endgame
+    # bosses whose structures only generate in NEW chunks, spaced far apart in
+    # config/cristellib/bosses_of_mass_destruction on both servers.
+    {
+      name = "artifacts-fabric-13.2.1.jar";
+      url = "https://cdn.modrinth.com/data/P0Mu4wcQ/versions/WTnRdeH6/artifacts-fabric-13.2.1.jar";
+      sha512 = "3a2efe7f3686118ce7159b68d3ab74de901583d50557ac0d5bef08d806e95ec0bdc1ba21c728b6bf6368b34961709eac6b4a4b93a35bdba53f387880db783795";
+    }
+    {
+      name = "geckolib-fabric-1.21.1-4.9.2.jar";
+      url = "https://cdn.modrinth.com/data/8BmcQJ2H/versions/dnJdtm0u/geckolib-fabric-1.21.1-4.9.2.jar";
+      sha512 = "2442ebe35e84ab9dc564f059d4003b6a9d2a3f304f02427e8710ad35b3547637f292b2aced021f765c4cbac7c4e9b5043fe9cb84ac85912151cf6d0e9c09696d";
+    }
+    {
+      name = "cardinal-components-api-6.1.3.jar";
+      url = "https://cdn.modrinth.com/data/K01OU20C/versions/nLsCe2VD/cardinal-components-api-6.1.3.jar";
+      sha512 = "db52fc8c4f14dda723b69eec5a52a693fcb1db72e97114cb530ac8a306d95c13a4234ea54bc6e632134038cb05ba551b5240b9187562fb775a4c7bacb681eff1";
+    }
+    {
+      name = "BOMD-1.10.2-1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/du3UfiLL/versions/aSCbUUL1/BOMD-1.10.2-1.21.1.jar";
+      sha512 = "64e434b0841d594857191eeed066927f3ade0cd71e39e458fffe3208096398123745de57d1e9fce24842496559cb4614e58f34f85201df093647e20dc41dff8f";
+    }
   ];
 
   # Client-only mods: the server neither ships nor knows about these, they add
@@ -293,28 +319,11 @@ let
   # when it graduates to production, and drop it from
   # STAGING_EXTRA_VERSION_IDS in scripts/build-akucraft-pack.py at the same
   # time so the two stay in step.
-  trialMods = [
-    {
-      name = "artifacts-fabric-13.2.1.jar";
-      url = "https://cdn.modrinth.com/data/P0Mu4wcQ/versions/WTnRdeH6/artifacts-fabric-13.2.1.jar";
-      sha512 = "3a2efe7f3686118ce7159b68d3ab74de901583d50557ac0d5bef08d806e95ec0bdc1ba21c728b6bf6368b34961709eac6b4a4b93a35bdba53f387880db783795";
-    }
-    {
-      name = "geckolib-fabric-1.21.1-4.9.2.jar";
-      url = "https://cdn.modrinth.com/data/8BmcQJ2H/versions/dnJdtm0u/geckolib-fabric-1.21.1-4.9.2.jar";
-      sha512 = "2442ebe35e84ab9dc564f059d4003b6a9d2a3f304f02427e8710ad35b3547637f292b2aced021f765c4cbac7c4e9b5043fe9cb84ac85912151cf6d0e9c09696d";
-    }
-    {
-      name = "cardinal-components-api-6.1.3.jar";
-      url = "https://cdn.modrinth.com/data/K01OU20C/versions/nLsCe2VD/cardinal-components-api-6.1.3.jar";
-      sha512 = "db52fc8c4f14dda723b69eec5a52a693fcb1db72e97114cb530ac8a306d95c13a4234ea54bc6e632134038cb05ba551b5240b9187562fb775a4c7bacb681eff1";
-    }
-    {
-      name = "BOMD-1.10.2-1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/du3UfiLL/versions/aSCbUUL1/BOMD-1.10.2-1.21.1.jar";
-      sha512 = "64e434b0841d594857191eeed066927f3ade0cd71e39e458fffe3208096398123745de57d1e9fce24842496559cb4614e58f34f85201df093647e20dc41dff8f";
-    }
-  ];
+  # Mods on trial on the staging server only - empty right now. Add an entry
+  # here to test a candidate against :25599 without touching the instances that
+  # connect to the live server, then move it into syncedMods when it graduates
+  # (and add it to the prod compose in the same change).
+  trialMods = [ ];
 
   mkFiles = instance: mod: {
     name = ".local/share/FreesmLauncher/instances/${instance}/minecraft/mods/${mod.name}";

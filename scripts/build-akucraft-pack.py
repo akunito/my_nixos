@@ -44,12 +44,9 @@ MCA_VERSION_ID = "mRrlD2wq"
 
 # Extra mods carried by --staging only, while they are being trialled. Move an
 # entry into minecraft-client-mods.nix once it graduates to production.
-STAGING_EXTRA_VERSION_IDS = {
-    "artifacts":               "WTnRdeH6",
-    "geckolib":                "dnJdtm0u",
-    "cardinal-components-api": "nLsCe2VD",
-    "bosses-of-mass-destruction": "aSCbUUL1",
-}
+# Empty right now - artifacts/geckolib/cardinal-components/BoMD graduated to
+# production on 2026-08-16.
+STAGING_EXTRA_VERSION_IDS = {}
 
 
 def nbt_servers(entries):
