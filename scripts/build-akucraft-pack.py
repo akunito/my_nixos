@@ -8,6 +8,7 @@ set. Hashes and sizes come from Modrinth, not from local files.
   ./scripts/build-akucraft-pack.py                 # live pack + zip
   ./scripts/build-akucraft-pack.py --staging       # live set + MCA, for :25599
   ./scripts/build-akucraft-pack.py --bootstrap     # AutoModpack only, self-filling
+  ./scripts/build-akucraft-pack.py --hd            # bootstrap + shaders, opt-in
 
 The pack ships overrides/servers.dat so the server is already in the player's
 multiplayer list after import - one less manual step, and one less chance of
@@ -38,6 +39,26 @@ LIVE = ("AkuCraft", "100.64.0.6:25565")
 # CDN, so this one file never goes stale - which the full pack always does the
 # moment a mod is added (see the 2026-08-16 "307 registry entries" kick).
 AUTOMODPACK_VERSION_ID = "ig9vuxA6"
+
+# The opt-in graphics pack. Purely client-side - it changes nothing on the
+# server, so a player on the plain pack and a player on this one see the same
+# world and can play together.
+#
+# Deliberately NOT here: 3D Skin Layers. It requires fabric-api, which on this
+# pack only arrives from the server on first connect - Fabric Loader refuses to
+# launch at all with an unresolved dependency, so it would brick the very first
+# start. Anyone who wants it can add it after their first join.
+HD_MOD_VERSION_IDS = {
+    "sodium":          "KIRFiWG4",   # Iris requires it
+    "iris":            "zsoi0dso",   # shader loader
+    "distant-horizons": "ZpKb4kZp",  # LOD rendering - see far while exploring
+}
+HD_SHADER_VERSION_IDS = {
+    "bliss":                    "kC2Y8q1P",   # default, from the reference guide
+    "complementary-reimagined": "yCCduG44",   # lighter fallback
+}
+HD_RESOURCEPACK_VERSION_IDS = {"better-leaves": "XWtayRKd"}
+HD_DEFAULT_SHADER = "bliss"
 STAGING = ("AkuCraft STAGING (MCA test)", "100.64.0.6:25599")
 # MCA Reborn 7.7.32+1.21.1 - the newest STABLE build. Do not use the betas.
 MCA_VERSION_ID = "mRrlD2wq"
@@ -87,6 +108,111 @@ def mods_from_nix():
         f = next((x for x in v["files"] if x.get("primary")), v["files"][0])
         out.append((name, f))
     return out
+
+
+def _entry(vid, folder, client="required", server="unsupported"):
+    v = fetch(f"https://api.modrinth.com/v2/version/{vid}")
+    f = next((x for x in v["files"] if x.get("primary")), v["files"][0])
+    return v, {
+        "path": f"{folder}/{f['filename']}",
+        "hashes": {"sha1": f["hashes"]["sha1"], "sha512": f["hashes"]["sha512"]},
+        "env": {"client": client, "server": server},
+        "downloads": [f["url"]], "fileSize": f["size"],
+    }
+
+
+def build_hd(outdir, server):
+    """The bootstrap pack plus the opt-in graphics stack.
+
+    Everything added here is client-side only, so this pack and the plain one
+    are interchangeable from the server's point of view - which is the whole
+    point: only players with the hardware for it take the hit, and nobody is
+    split off from the group by their choice of pack.
+    """
+    files, names = [], {}
+    av = fetch(f"https://api.modrinth.com/v2/version/{AUTOMODPACK_VERSION_ID}")
+    af = av["files"][0]
+    files.append({
+        "path": f"mods/{af['filename']}",
+        "hashes": {"sha1": af["hashes"]["sha1"], "sha512": af["hashes"]["sha512"]},
+        "env": {"client": "required", "server": "required"},
+        "downloads": [af["url"]], "fileSize": af["size"],
+    })
+    for label, vid in HD_MOD_VERSION_IDS.items():
+        v, e = _entry(vid, "mods")
+        files.append(e); print(f"  + {label} {v['version_number']}")
+    for label, vid in HD_SHADER_VERSION_IDS.items():
+        v, e = _entry(vid, "shaderpacks")
+        files.append(e); names[label] = e["path"].split("/")[-1]
+        print(f"  + shader {label} {v['version_number']}")
+    for label, vid in HD_RESOURCEPACK_VERSION_IDS.items():
+        v, e = _entry(vid, "resourcepacks")
+        files.append(e); names[label] = e["path"].split("/")[-1]
+        print(f"  + resourcepack {label} {v['version_number']}")
+
+    name = f"{server[0]} HD"
+    index = {
+        "formatVersion": 1, "game": "minecraft",
+        "versionId": f"hd-{av['version_number']}", "name": name,
+        "summary": "AkuCraft with shaders and long-distance rendering. Same server, heavier client.",
+        "files": files,
+        "dependencies": {"minecraft": "1.21.1", "fabric-loader": "0.19.3"},
+    }
+
+    readme = f"""{name}
+
+Same server, same world, same people - this pack only changes what YOUR machine
+draws. You can switch between this and the normal pack whenever you like.
+
+It needs a reasonably capable graphics card. If the game runs badly, the fix in
+order of effect is:
+  1. Shaders -> Complementary Reimagined (much lighter than Bliss)
+  2. Video Settings -> lower the Distant Horizons quality, or turn it off
+  3. Shaders -> off entirely. You keep Sodium, which makes the game FASTER
+     than vanilla even with everything else disabled.
+
+What is in here beyond the normal pack:
+  Sodium            rendering engine - faster than vanilla on its own
+  Iris              loads the shaders
+  Distant Horizons  draws the world far past your render distance, in low
+                    detail. This is the one that makes exploring look good.
+  {names.get('bliss','Bliss')}
+                    the shader from the reference build - ACTIVE by default
+  {names.get('complementary-reimagined','Complementary')}
+                    lighter alternative, already installed
+  {names.get('better-leaves','Better Leaves')}
+                    fluffier, denser tree crowns - ACTIVE by default
+
+Distant Horizons builds its detail from land you have actually visited, so it
+looks sparse at first and fills in as you travel. That is normal.
+
+NOT included: 3D Skin Layers. It needs Fabric API, which this pack only gets
+from the server on your first connect, and Fabric refuses to start with a
+missing dependency. Add it yourself afterwards if you want it - and if you do,
+open its Mod Menu settings and enable everything, or it glitches under Bliss.
+
+Server: {server[1]}   (the VPN must be on)
+If asked which Java: pick 21. Say no to it downloading its own Java.
+"""
+
+    mrpack = outdir / ("AkuCraft-STAGING-hd.mrpack" if server is STAGING
+                       else "AkuCraft-hd.mrpack")
+    with zipfile.ZipFile(mrpack, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("modrinth.index.json", json.dumps(index, indent=2))
+        z.writestr("overrides/README.txt", readme)
+        z.writestr("overrides/servers.dat", nbt_servers([server]))
+        # Turn the shader and the resource pack ON out of the box. A pack that
+        # installs shaders but leaves them switched off just generates support
+        # questions.
+        z.writestr("overrides/config/iris.properties",
+                   "enableShaders=true\n"
+                   f"shaderPack={names[HD_DEFAULT_SHADER]}\n")
+        z.writestr("overrides/options.txt",
+                   f'resourcePacks:["vanilla","file/{names["better-leaves"]}"]\n'
+                   'graphicsMode:2\nrenderDistance:12\nsimulationDistance:8\n')
+    print(f"wrote {mrpack}  ({len(files)} files, {mrpack.stat().st_size} bytes)")
+    print("  Bliss + Better Leaves enabled out of the box")
+    return mrpack
 
 
 def build_bootstrap(outdir, server):
@@ -144,12 +270,17 @@ def main():
     ap.add_argument("--staging", action="store_true", help="add MCA Reborn, point at :25599")
     ap.add_argument("--bootstrap", action="store_true",
                     help="ship only AutoModpack; the server supplies the rest")
+    ap.add_argument("--hd", action="store_true",
+                    help="bootstrap plus the opt-in shader/LOD stack")
     ap.add_argument("--outdir", default=".", help="where to write the artefacts")
     ap.add_argument("--version", default=None, help="versionId for the pack")
     args = ap.parse_args()
 
     outdir = pathlib.Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
+
+    if args.hd:
+        return build_hd(outdir, STAGING if args.staging else LIVE)
 
     if args.bootstrap:
         return build_bootstrap(outdir, STAGING if args.staging else LIVE)
