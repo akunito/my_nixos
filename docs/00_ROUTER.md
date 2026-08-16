@@ -6,8 +6,13 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
+| akunito.infra.services.akucraft-ai | LiteLLM gateway on VPS_PROD and the Discord /ask support assistant it serves | minecraft, akucraft, ai, llm, discord, vps, litellm | system/app/litellm.nix |
+| akunito.infra.services.akucraft-audit-2026-08-16 | Audit of the AkuCraft servers - mod conflicts, configuration, security posture and resource risk | minecraft, akucraft, audit, vps | scripts/audit-akucraft.py |
 | akunito.infra.services.akucraft-manifest | Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server | minecraft, akucraft, vps, gaming, generated | scripts/generate-akucraft-manifest.sh |
+| akunito.infra.services.akucraft-staging-client-setup | How to set up a Minecraft client for the AkuCraft STAGING test server, for someone helping test map sharing | minecraft, akucraft, staging, onboarding | user/app/games/minecraft-client-mods.nix |
 | akunito.known-issues | Out-of-scope bugs and stale code surfaced during other work — to fix later | bugs, tech-debt, backlog | docs/akunito/known-issues.md |
+| akunito.plans.akucraft-ai-handoff | Handoff for building the AkuCraft AI work - villager conversations in MCA and a per-player Discord support assistant with usage limits | minecraft, akucraft, ai, llm, discord, plan, handoff | system/app/akucraft-bot.py |
+| akunito.plans.akucraft-frontier-world | Test plan and rollout plan for a second, harder survival world generated with Terralith, reachable from the existing world | minecraft, akucraft, worldgen, terralith, plan | user/app/games/minecraft-client-mods.nix |
 | akunito.plans.akucraft-roadmap | Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase | minecraft, akucraft, vps, gaming, plan, backup | system/app/restic-backup-vps.nix |
 | audits.docker-security.2026-03-06 | VPS Docker container security audit — network isolation, database access, secrets, hardening | audit, security, docker, vps, containers, networking, secrets | profiles/VPS*-config.nix |
 | audits.nas-nixos.2026-04-15 | Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring | audit, nas, nixos, zfs, storage, network, performance | docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md |

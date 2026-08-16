@@ -93,6 +93,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:*
    - `systemSettings.homelabDockerEnable or false`
    - `(systemSettings.financeUser or "") != ""`
+- **system/app/litellm.nix**: LiteLLM — OpenAI-compatible LLM gateway (AkuCraft AI backend). *Enabled when:* `toString writeEnv`
 - **system/app/llama-server.nix**: Local LLM inference server — llama.cpp `llama-server`, Vulkan backend, *Enabled when:*
    - `Vulkan`
    - `never through a derivation`
@@ -536,7 +537,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md**: Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring
 - **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
 - **docs/akunito/infrastructure/audits/truenas-docker-security-audit-2026-03-06.md**: TrueNAS Docker rootless migration and security hardening audit
+- **docs/akunito/infrastructure/services/akucraft-ai.md**: LiteLLM gateway on VPS_PROD and the Discord /ask support assistant it serves
+- **docs/akunito/infrastructure/services/akucraft-audit-2026-08-16.md**: Audit of the AkuCraft servers - mod conflicts, configuration, security posture and resource risk
 - **docs/akunito/infrastructure/services/akucraft-manifest.md**: Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server
+- **docs/akunito/infrastructure/services/akucraft-staging-client-setup.md**: How to set up a Minecraft client for the AkuCraft STAGING test server, for someone helping test map sharing
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
 - **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS
 - **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: consolidated monitoring on VPS
@@ -572,6 +576,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Akunito / Plans
 
+- **docs/akunito/plans/akucraft-ai-handoff.md**: Handoff for building the AkuCraft AI work - villager conversations in MCA and a per-player Discord support assistant with usage limits
+- **docs/akunito/plans/akucraft-frontier-world.md**: Test plan and rollout plan for a second, harder survival world generated with Terralith, reachable from the existing world
 - **docs/akunito/plans/akucraft-roadmap-plan.md**: Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
