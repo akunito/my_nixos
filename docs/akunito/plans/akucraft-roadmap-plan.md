@@ -492,6 +492,42 @@ MCA after villagers have been converted leaves broken entities. The rollback is
 **restore the world from the pre-deploy snapshot**, accepting the loss of
 playtime since. Announce a freeze window so that loss is bounded and known.
 
+### 11.1 Staging run 2026-08-16 — PASSED the parts a machine can check
+
+Use **7.7.32+1.21.1 (stable)**, not the newest build: every recent release is
+`beta`, including 7.7.36-beta.3 published the same day. 32 stable builds exist
+for 1.21.1.
+
+Staging container `mc-mca-staging` on a **copy** of the live world, now bound to
+`100.64.0.6:25599`. Production never touched.
+
+Verified:
+- **Boots clean** with MCA + all 58 existing mods. 59 loaded, no crash report,
+  no mixin failures, healthy in 70s.
+- **Entities registered** — `mca:male_villager`, `mca:female_villager`. Note
+  there is no `mca:villager`; guessing that ID returns "Invalid or unknown".
+- **MCA is actually doing its job**: `summon mca:male_villager` returned
+  *"Summoned new Li-Li"* — it generated a named NPC, which is the whole point
+  of the mod.
+- **Flan claims survive** — both present in the staged world.
+- **ChatAI can be disabled**: `/mca chatAI [disable|default|player2|inworldAI|<model>]`.
+
+**Trap that cost two boots:** setting `MODRINTH_PROJECTS=""` on a scratch
+container makes itzg treat the desired set as *empty* and it **deletes every mod
+already in the directory** (`Removing old file mods/...`), after which MCA fails
+with "requires fabric, which is missing". Always pass the full live list. This
+is also why the Phase 0 restore drill booted with only 3 mods — same cause,
+diagnosed here.
+
+**Cannot be verified without a human:** whether pre-generated villages populate
+with NPCs. Entity selectors return nothing in force-loaded chunks with no player
+online, so the empty result was an artefact, not evidence of the bug. This needs
+someone to join staging and walk to the village at `688 ~ -208`.
+
+A staging client pack is published for exactly that:
+`http://100.64.0.6:8100/downloads/AkuCraft-STAGING-mca.mrpack` — 34 mods,
+import as a **separate instance**, and use it only for `:25599`.
+
 ---
 
 ## 12. Phase 9 — ChatAI + Ollama
