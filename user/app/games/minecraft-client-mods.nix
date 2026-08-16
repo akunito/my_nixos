@@ -297,6 +297,20 @@ let
       url = "https://cdn.modrinth.com/data/9s6osm5g/versions/HpMb5wGb/cloth-config-15.0.140-fabric.jar";
       sha512 = "1b3f5db4fc1d481704053db9837d530919374bf7518d7cede607360f0348c04fc6347a3a72ccfef355559e1f4aef0b650cd58e5ee79c73b12ff0fc2746797a00";
     }
+    # Sodium - a rewrite of the chunk renderer. This is NOT a graphics mod: it
+    # makes the game faster, most of all on weak hardware, and it replaces the
+    # vanilla Video Settings with a far richer screen. 0.8.12 specifically,
+    # because Supplementaries - which every client already has - breaks with
+    # anything below 0.8.12-beta.1.
+    #
+    # Iris deliberately stays HD-only: the only Iris that accepts Sodium 0.8.x
+    # is a beta, and a beta rendering mod does not belong on everyone's machine
+    # when the shaders it loads are opt-in anyway.
+    {
+      name = "sodium-fabric-0.8.12+mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/AANobbMI/versions/KIRFiWG4/sodium-fabric-0.8.12%2Bmc1.21.1.jar";
+      sha512 = "8afe411eec65a9f677611ed6390ce656e5a3572f9be473e5dca51ae882a9426a547cd2e8c793278577bb14c17e48158030b11753108926ef33698614bd94ed7f";
+    }
     {
       name = "modmenu-11.0.4.jar";
       url = "https://cdn.modrinth.com/data/mOgUt4GM/versions/v6Xx3fbU/modmenu-11.0.4.jar";
