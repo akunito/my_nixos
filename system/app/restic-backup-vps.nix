@@ -358,6 +358,19 @@ in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
   systemd.timers.vps-restic-nextcloud = nextcloudBackup.timer;
   systemd.timers.vps-restic-immich = immichBackup.timer;
 
+  # Let ${username} trigger the services backup without sudo, so
+  # akucraft-backup-now can push offsite itself. Scoped to exactly that one
+  # unit — not blanket systemd control.
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+      if (action.id == "org.freedesktop.systemd1.manage-units" &&
+          action.lookup("unit") == "vps-restic-services.service" &&
+          subject.user == "${username}") {
+        return polkit.Result.YES;
+      }
+    });
+  '';
+
   # AkuCraft operator tooling.
   #
   # Both scripts live here rather than in ~/.homelab so they inherit the repo
