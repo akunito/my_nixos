@@ -413,6 +413,85 @@ let
       url = "https://cdn.modrinth.com/data/Wb5oqrBJ/versions/5t3tM2L3/chat_heads-0.15.7-fabric-1.21.jar";
       sha512 = "2d34ad4031fcf9f8cef8e88d3a69ed2c2d8e0ad32c5571f551e82f045a17c20ed896771c9cd731c8183a4a9134141172a4db733684adfb35e789237d30fec0a9";
     }
+    # LambDynamicLights - a held torch lights the area, in either hand.
+    #
+    # NOT Sodium Dynamic Lights, despite the name fitting our stack better:
+    # Sodium 0.8.12 declares `sodiumdynamiclights: *`, i.e. it refuses to load
+    # alongside ANY version of it, and the client dies at startup. Sodium does
+    # not list lambdynlights at all, and Modrinth marks the two dynamic-light
+    # mods mutually incompatible - they do the same job.
+    #
+    # I shipped the wrong one because I checked compatibility with an ad-hoc
+    # grep instead of running scripts/audit-akucraft.py, which was written that
+    # same afternoon to catch precisely this.
+    {
+      name = "lambdynamiclights-4.8.10+1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/yBW8D80W/versions/DZDOX6ps/lambdynamiclights-4.8.10%2B1.21.1.jar";
+      sha512 = "2a8ca94cd56e9e5ed046126f4b03edba2965c8fe76210ebc5ca53bb075832274dce1cb438082fbc2aea268f93986ad17b6231afad7c100359a9185bba517c4f9";
+    }
+    # --- Quality of life, added 2026-08-16 ---
+    # All client-only, all verified against the installed set: none of them
+    # declares a conflict with anything we run. Deliberately no mod here drags
+    # in a new config library - Zoomify and Controlling were dropped for that
+    # reason, in favour of Logical Zoom which needs nothing.
+    #
+    # libIPN is not optional decoration: Inventory Profiles Next requires it.
+    {
+      name = "libIPN-fabric-1.21.1-6.6.3.jar";
+      url = "https://cdn.modrinth.com/data/onSQdWhM/versions/PSscYPRs/libIPN-fabric-1.21.1-6.6.3.jar";
+      sha512 = "765991facc85b2cbc5a40c5ddc506da16f18a5c43de7c42757195dbc8d43e09573504602d3695de0054e5a868c6368fca7ad982738f509ba17a68d373532d16c";
+    }
+    # The actual request: sorting buttons, auto-refill, lockable slots.
+    {
+      name = "InventoryProfilesNext-fabric-1.21.1-2.2.6.jar";
+      url = "https://cdn.modrinth.com/data/O7RBXm3n/versions/h1db7jG7/InventoryProfilesNext-fabric-1.21.1-2.2.6.jar";
+      sha512 = "329ba98932110af7905e0108f96aef2750a2cc6a6eec6fdc7c4a6b3682a9886d91b695ecc9677c2a619d829642a1f795dd01c32564f18e0151a861c9e3a158b1";
+    }
+    # Drag across slots to move or split stacks. Pairs with the above.
+    {
+      name = "MouseTweaks-fabric-mc1.21-2.26.jar";
+      url = "https://cdn.modrinth.com/data/aC3cM3Vq/versions/ylmBQ38A/MouseTweaks-fabric-mc1.21-2.26.jar";
+      sha512 = "1744a48a47aedcbf19a0a93f78473cf0221fc4782852dca7fc02685719174664b4f9d95d353fcfc16902ac3815594511ba6d9ab14391f9b7e25ec9b2e777927a";
+    }
+    # Look at a block or mob and see what it is. With ~80 mods, half of what
+    # you find is unfamiliar, so this is worth more here than on a vanilla server.
+    {
+      name = "Jade-1.21.1-Fabric-15.10.6.jar";
+      url = "https://cdn.modrinth.com/data/nvQzSEkH/versions/adpNvTZS/Jade-1.21.1-Fabric-15.10.6.jar";
+      sha512 = "fbae1c796368a09c579dd780a1d510fa5ab73f0eca370ddbfe0a9e6ca162e1b806261577306a259773f309dc4938a839b2065c5eef98b2810855c241addf17f5";
+    }
+    # Shows saturation and what a food actually restores - matters more if we
+    # ever turn natural regeneration off in the frontier world.
+    {
+      name = "appleskin-fabric-mc1.21-3.0.6.jar";
+      url = "https://cdn.modrinth.com/data/EsAfCjCV/versions/b5ZiCjAr/appleskin-fabric-mc1.21-3.0.6.jar";
+      sha512 = "accbb36b863bdeaaeb001f7552534f3bdf0f27556795cf8e813f9b32e7732450ec5133da5e0ec9b92dc22588c48ffb61577c375f596dc351f15c15ce6a6f4228";
+    }
+    # A zoom key. Chosen over Zoomify purely because it needs no config library.
+    {
+      name = "logical_zoom-0.0.26.jar";
+      url = "https://cdn.modrinth.com/data/8bOImuGU/versions/8T4BLoiy/logical_zoom-0.0.26.jar";
+      sha512 = "3914d15f37fc208496a13e8956988fc8cbe4b7673e39b4835748ff3655267f4f3d99e39ee4926880d562663e354966096e4b1aba65c5c66ded947dd7a28cc1ed";
+    }
+    # Free frames: skips rendering entities hidden behind blocks. Worth the most
+    # here of anywhere, because MCA fills villages with named NPCs.
+    {
+      name = "entityculling-fabric-1.10.5-mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/NNAgCjsB/versions/hsWvcyFJ/entityculling-fabric-1.10.5-mc1.21.1.jar";
+      sha512 = "5072ddbfc8dbbef450cd80b1e4824a9bd9a5e084ac285eea15f92baef47ab2bf4c37991ec68b56cee47c8b29905ca699f79676ae1c6c964cc92632d2761dd21a";
+    }
+    {
+      name = "ImmediatelyFast-Fabric-1.6.11+1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/5ZwdcRci/versions/ATB4eNEP/ImmediatelyFast-Fabric-1.6.11%2B1.21.1.jar";
+      sha512 = "f80f7d1d046c65795a51f8338c3189d014eb7b7adcab382259c2d1174c196503640ef2e57fea6e89e17bdcb00e3f1847eafe9db1f283c2cd958cb6df28020920";
+    }
+    # Puts each player's face next to their chat messages. Small, but this is a
+    # server of six friends, so it earns its place.
+    {
+      name = "chat_heads-0.15.7-fabric-1.21.jar";
+      url = "https://cdn.modrinth.com/data/Wb5oqrBJ/versions/5t3tM2L3/chat_heads-0.15.7-fabric-1.21.jar";
+      sha512 = "2d34ad4031fcf9f8cef8e88d3a69ed2c2d8e0ad32c5571f551e82f045a17c20ed896771c9cd731c8183a4a9134141172a4db733684adfb35e789237d30fec0a9";
+    }
     # Sodium Dynamic Lights - a held torch lights the area. Vanilla has no such
     # thing, and what Diego was seeing came from the Complementary shader's own
     # HELD_LIGHTING_MODE, so it existed only for HD players and only in the main
