@@ -83,11 +83,14 @@ CONNECT_TEXT = """How to join AkuCraft:
 2. Launcher: FreeSM Launcher (no paid account needed):
    https://github.com/FreesmTeam/FreesmLauncher/releases
    Add an OFFLINE account with your player name.
-3. Instance: Minecraft 1.21.1 + Fabric Loader 0.19.3, plus our mod pack.
-   There are 25 required mods now (RPG classes, spells, shields,
-   enchanting, backpacks...), so do NOT collect them by hand: ask Diego
-   for the mod pack zip and unzip it into the instance's "mods" folder.
-   The exact versions matter - a mismatch kicks you when you join.
+3. Install the modpack - ONE file, the launcher does the rest:
+     http://100.64.0.6:8100/downloads/AkuCraft-2026.08.16.mrpack
+   In the launcher: Add Instance -> Import -> pick that file.
+   It sets up Minecraft 1.21.1, Fabric Loader 0.19.3 and all 31 mods for
+   you, with the right versions. You do NOT create the instance, install
+   Fabric or copy any jars by hand any more.
+   If it asks which Java: choose 21 (not 8, 17 or 25), and say no to
+   downloading its own Java.
 4. Add the server in Multiplayer -> Add Server (address = IP and port,
    copy it exactly):
    Survival: 100.64.0.6:25565
