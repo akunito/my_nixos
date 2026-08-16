@@ -335,7 +335,28 @@ let
   # here to test a candidate against :25599 without touching the instances that
   # connect to the live server, then move it into syncedMods when it graduates
   # (and add it to the prod compose in the same change).
-  trialMods = [ ];
+  trialMods = [
+    # Surveyor: a map backend that keeps explored terrain ON THE SERVER and
+    # shares it between opt-in groups, across dimensions. Being trialled for
+    # the friends/clans map features - position sharing, area sharing, and
+    # selling exploration (it copies explored terrain to and from vanilla
+    # filled maps at a cartography table, and a filled map is a tradeable item).
+    #
+    # Its Modrinth metadata lists McQoy as required; the jar does not - McQoy is
+    # an optional config UI that would drag in yet_another_config_lib. Only
+    # fabric-api is actually needed, and ours is new enough.
+    {
+      name = "surveyor-1.2.4+1.21.jar";
+      url = "https://cdn.modrinth.com/data/4KjqhPc9/versions/egJBsDTn/surveyor-1.2.4%2B1.21.jar";
+      sha512 = "3a91efbc596db7192792de069e814aeb3e9e1d771267ea5a5d4371b1311bef26a7f9bd02a28619026c23e4df702d99a1bbaaf732e06179dd4999dbd01aaf920c";
+    }
+    # The frontend. Client-only, so it never reaches the server jar list.
+    {
+      name = "antique-atlas-3.1.2+1.21.jar";
+      url = "https://cdn.modrinth.com/data/Y5Ve4Ui4/versions/2sDsTAId/antique-atlas-3.1.2%2B1.21.jar";
+      sha512 = "e920516b107f009d8a671c4b07a65afc0060a11fe3d2918169eb8320408cb3a71b4bdfa7d58a59ff73d8161a545ba220f4e5d766434d46aa08de14e7fe6368cc";
+    }
+  ];
 
   mkFiles = instance: mod: {
     name = ".local/share/FreesmLauncher/instances/${instance}/minecraft/mods/${mod.name}";
@@ -396,19 +417,21 @@ let
     }
   ];
 
-  # Bliss is the default; Complementary is the one to switch to when the frame
-  # rate hurts, so it ships alongside rather than being a second download.
-  hdShaderDefault = "Bliss_v2.1.2_(Chocapic13_Shaders_edit).zip";
+  # Complementary Reimagined is the default: it looks better to us and it is far
+  # lighter, so the pack does not need a "turn this off if it stutters" step for
+  # most people. Bliss - the one from the reference build - ships alongside for
+  # anyone who prefers its heavier, foggier look, and switching is one click.
+  hdShaderDefault = "ComplementaryReimagined_r5.8.1.zip";
   hdShaders = [
     {
       name = hdShaderDefault;
-      url = "https://cdn.modrinth.com/data/ZvMtQlho/versions/kC2Y8q1P/Bliss_v2.1.2_%28Chocapic13_Shaders_edit%29.zip";
-      sha512 = "dafc60be4980ec40f40edc0f2625cb0976f3c9ce5ed86383146a120480826bb1de70ef5e38b7f1437294ed4d38c6ef3c82ebef0ae4e00b8cee165788c9c18280";
-    }
-    {
-      name = "ComplementaryReimagined_r5.8.1.zip";
       url = "https://cdn.modrinth.com/data/HVnmMxH1/versions/yCCduG44/ComplementaryReimagined_r5.8.1.zip";
       sha512 = "6bd95215755d25812556ce790d976221f7d677d63112e3e4d3e70b08a62ed41348fa3792dd31bbe720d1e46fe2d525cadb4f66e6358118e1f4aa8e0d11f25c39";
+    }
+    {
+      name = "Bliss_v2.1.2_(Chocapic13_Shaders_edit).zip";
+      url = "https://cdn.modrinth.com/data/ZvMtQlho/versions/kC2Y8q1P/Bliss_v2.1.2_%28Chocapic13_Shaders_edit%29.zip";
+      sha512 = "dafc60be4980ec40f40edc0f2625cb0976f3c9ce5ed86383146a120480826bb1de70ef5e38b7f1437294ed4d38c6ef3c82ebef0ae4e00b8cee165788c9c18280";
     }
   ];
 

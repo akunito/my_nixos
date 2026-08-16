@@ -57,11 +57,11 @@ HD_MOD_VERSION_IDS = {
     "distant-horizons": "ZpKb4kZp",  # LOD rendering - see far while exploring
 }
 HD_SHADER_VERSION_IDS = {
-    "bliss":                    "kC2Y8q1P",   # default, from the reference guide
-    "complementary-reimagined": "yCCduG44",   # lighter fallback
+    "complementary-reimagined": "yCCduG44",   # default - better looking and much lighter
+    "bliss":                    "kC2Y8q1P",   # the one from the reference build, heavier
 }
 HD_RESOURCEPACK_VERSION_IDS = {"better-leaves": "XWtayRKd"}
-HD_DEFAULT_SHADER = "bliss"
+HD_DEFAULT_SHADER = "complementary-reimagined"
 STAGING = ("AkuCraft STAGING (MCA test)", "100.64.0.6:25599")
 # MCA Reborn 7.7.32+1.21.1 - the newest STABLE build. Do not use the betas.
 MCA_VERSION_ID = "mRrlD2wq"
@@ -97,11 +97,27 @@ def fetch(url):
         return json.load(r)
 
 
-def mods_from_nix():
+def mods_from_nix(lists=("syncedMods", "clientMods")):
+    """Parse only the named lists.
+
+    It used to regex the whole file, which was fine until the HD instances added
+    hdMods, hdShaders and hdResourcePack to it - the normal pack then shipped
+    Sodium, Iris, Distant Horizons and two shader ZIPs as if they were mods
+    (caught 2026-08-16). Bound the search to the list it was asked for.
+    """
     src = NIX.read_text()
-    pairs = re.findall(r'name\s*=\s*"([^"]+)";\s*\n\s*url\s*=\s*"([^"]+)";', src)
+    bounds = {}
+    for m in re.finditer(r"^\s*(syncedMods|clientMods|trialMods|hdMods|hdShaders)\s*=\s*\[", src, re.M):
+        bounds[m.group(1)] = m.start()
+    order = sorted(bounds.items(), key=lambda kv: kv[1])
+    pairs = []
+    for i, (name, start) in enumerate(order):
+        if name not in lists:
+            continue
+        end = order[i + 1][1] if i + 1 < len(order) else len(src)
+        pairs += re.findall(r'name\s*=\s*"([^"]+)";\s*\n\s*url\s*=\s*"([^"]+)";', src[start:end])
     if not pairs:
-        sys.exit("ERROR: no mods parsed from the nix module - has its format changed?")
+        sys.exit(f"ERROR: no mods parsed from {lists} in the nix module - has its format changed?")
     out = []
     for name, url in pairs:
         m = re.search(r"/versions/([^/]+)/", url)
@@ -288,8 +304,9 @@ def main():
     if args.bootstrap:
         return build_bootstrap(outdir, STAGING if args.staging else LIVE)
 
-    mods = mods_from_nix()
-    print(f"resolved {len(mods)} mods from {NIX.name}")
+    lists = ("syncedMods", "clientMods") + (("trialMods",) if args.staging else ())
+    mods = mods_from_nix(lists)
+    print(f"resolved {len(mods)} mods from {NIX.name} {lists}")
 
     files = []
     for name, f in mods:
