@@ -487,7 +487,15 @@ let
           renderDistance:12
           simulationDistance:8
         ''; }
-    ] ++ map (m: {
+    ] ++ map (sh: {
+      path = "${dir}/minecraft/shaderpacks/${sh.name}";
+      src = pkgs.fetchurl { inherit (sh) url sha512; };
+    }) hdShaders
+    ++ [{
+      path = "${dir}/minecraft/resourcepacks/${hdResourcePack.name}";
+      src = pkgs.fetchurl { inherit (hdResourcePack) url sha512; };
+    }]
+    ++ map (m: {
       path = "${dir}/minecraft/mods/${m.name}";
       src = pkgs.fetchurl { inherit (m) url sha512; };
       # Bumping a version leaves the old jar behind, and two Sodiums will not
@@ -497,27 +505,21 @@ let
       family = builtins.head (lib.splitString "-" m.name);
     }) hdMods;
 
-  # Shaderpacks and the resource pack can be read-only symlinks. The MODS
-  # cannot: AutoModpack neutralises duplicate jars by writing a dummy file over
-  # them, and against the nix store that fails with "Read-only file system",
-  # after which it declares the modpack updated and asks for a restart - on
-  # every single launch, forever. Diego hit exactly that on 2026-08-16.
+  # NOTHING in an HD instance may be a symlink into the nix store.
   #
-  # So the HD jars are seeded as writable copies below instead. That is safe
-  # here in a way it would not be for the synced set: these four are
-  # client-only cosmetics, so nothing breaks if the launcher's mod UI disables
-  # one, whereas a disabled synced mod gets you kicked.
-  hdFiles = lib.listToAttrs (lib.concatMap (i:
-    let dir = ".local/share/FreesmLauncher/instances/${i.name}"; in
-    map (sh: {
-         name = "${dir}/minecraft/shaderpacks/${sh.name}";
-         value = { source = pkgs.fetchurl { inherit (sh) url sha512; }; force = true; };
-       }) hdShaders
-    ++ [{
-         name = "${dir}/minecraft/resourcepacks/${hdResourcePack.name}";
-         value = { source = pkgs.fetchurl { inherit (hdResourcePack) url sha512; }; force = true; };
-       }]
-  ) hdInstances);
+  # Two separate failures, both on 2026-08-16. AutoModpack neutralises a
+  # duplicate jar by writing a dummy file over it; against the store that fails
+  # with "Read-only file system", so it declares the modpack updated and asks
+  # for a restart on every launch, forever. And because home.file symlinks
+  # point into a single home-manager-files derivation that holds the WHOLE
+  # managed tree, AutoModpack's file indexing walked through them and found the
+  # mods belonging to the other instances - it tried to dummy a jar from the
+  # plain prod instance while running inside the HD one.
+  #
+  # Seeding copies is safe here in a way it would not be for the synced set:
+  # these are client-only cosmetics, so nothing breaks if the launcher's mod UI
+  # disables one, whereas disabling a synced mod gets you kicked - which is the
+  # whole reason those stay read-only symlinks.
 
   hdSeedScript = lib.concatMapStringsSep "\n" (f: ''
     ${lib.optionalString (f ? sweep) ''
@@ -542,7 +544,7 @@ let
     map (mkFiles instance) (syncedMods ++ clientMods ++ trialMods)) stagingInstances);
 in
 {
-  home.file = modFiles // stagingFiles // hdFiles;
+  home.file = modFiles // stagingFiles;
 
   home.activation.akucraftHdInstances =
     lib.hm.dag.entryAfter [ "writeBoundary" ] hdSeedScript;
