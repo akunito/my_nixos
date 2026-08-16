@@ -427,52 +427,86 @@ let
   # A FreesmLauncher instance is only listed if it has these two files, so a
   # purely declarative instance has to provide them - importing the .mrpack by
   # hand is exactly the step we are removing.
+  # Mirrors byte-for-byte what the launcher itself writes for an imported
+  # Fabric 1.21.1 instance. The component ORDER and the cachedRequires links
+  # matter: a hand-written file missing org.lwjgl3 makes FreesmLauncher fail
+  # with "Couldn't load the instance profile".
   mmcPack = pkgs.writeText "mmc-pack.json" (builtins.toJSON {
     formatVersion = 1;
     components = [
-      { uid = "net.fabricmc.intermediary"; version = "1.21.1"; cachedName = "Intermediary Mappings"; dependencyOnly = true; }
-      { uid = "net.minecraft";             version = "1.21.1"; important = true; cachedName = "Minecraft"; }
-      { uid = "net.fabricmc.fabric-loader"; version = "0.19.3"; cachedName = "Fabric Loader"; }
+      { uid = "org.lwjgl3"; version = "3.3.3"; cachedName = "LWJGL 3";
+        cachedVersion = "3.3.3"; cachedVolatile = true; dependencyOnly = true; }
+      { uid = "net.minecraft"; version = "1.21.1"; cachedName = "Minecraft";
+        cachedVersion = "1.21.1"; important = true;
+        cachedRequires = [ { uid = "org.lwjgl3"; suggests = "3.3.3"; } ]; }
+      { uid = "net.fabricmc.intermediary"; version = "1.21.1";
+        cachedName = "Intermediary Mappings"; cachedVersion = "1.21.1";
+        cachedVolatile = true; dependencyOnly = true;
+        cachedRequires = [ { uid = "net.minecraft"; equals = "1.21.1"; } ]; }
+      { uid = "net.fabricmc.fabric-loader"; version = "0.19.3";
+        cachedName = "Fabric Loader"; cachedVersion = "0.19.3";
+        cachedRequires = [ { uid = "net.fabricmc.intermediary"; } ]; }
     ];
   });
 
-  hdFiles = lib.listToAttrs (lib.concatMap (i:
-    let dir = ".local/share/FreesmLauncher/instances/${i.name}"; in
-    [
-      { name = "${dir}/instance.cfg";
-        value.text = ''
+  # Files the LAUNCHER and the GAME rewrite: instance metadata, the server list,
+  # the options, the Iris config. These cannot be home.file symlinks - the store
+  # is read-only, and FreesmLauncher rejects the instance outright with
+  # "Couldn't load the instance profile" after logging that instance.cfg and
+  # mmc-pack.json are "not writable". So nix SEEDS them once and then leaves
+  # them alone; changing a shader or a keybind in game has to keep working.
+  hdSeed = i:
+    let dir = ".local/share/FreesmLauncher/instances/${i.name}"; in [
+      { path = "${dir}/instance.cfg"; src = pkgs.writeText "instance.cfg" ''
+          [General]
+          ConfigVersion=1.3
           InstanceType=OneSix
           name=${i.title}
+          iconKey=default
+          AutomaticJava=true
           OverrideCommands=false
           OverrideJavaArgs=false
-          iconKey=default
         ''; }
-      { name = "${dir}/mmc-pack.json"; value.source = mmcPack; }
-      { name = "${dir}/minecraft/servers.dat";
-        value = { source = mkServersDat i.title i.ip; force = true; }; }
-      # Shaders and the resource pack are switched ON here. A build that ships
-      # shaders and leaves them disabled only generates questions.
-      { name = "${dir}/minecraft/config/iris.properties";
-        value.text = ''
+      { path = "${dir}/mmc-pack.json"; src = mmcPack; }
+      { path = "${dir}/minecraft/servers.dat"; src = mkServersDat i.title i.ip; }
+      # Shaders and the resource pack are switched ON out of the box. A build
+      # that installs shaders and leaves them off only generates questions.
+      { path = "${dir}/minecraft/config/iris.properties";
+        src = pkgs.writeText "iris.properties" ''
           enableShaders=true
           shaderPack=${hdShaderDefault}
         ''; }
-      { name = "${dir}/minecraft/options.txt";
-        value.text = ''
+      { path = "${dir}/minecraft/options.txt"; src = pkgs.writeText "options.txt" ''
           resourcePacks:["vanilla","file/${hdResourcePack.name}"]
           graphicsMode:2
           renderDistance:12
           simulationDistance:8
         ''; }
-      { name = "${dir}/minecraft/resourcepacks/${hdResourcePack.name}";
-        value = { source = pkgs.fetchurl { inherit (hdResourcePack) url sha512; }; force = true; }; }
-    ]
-    ++ map (mkFiles i.name) hdMods
+    ];
+
+  # Jars and packs, by contrast, SHOULD be read-only symlinks: that is exactly
+  # what stops the launcher's mod UI from disabling something the server needs.
+  hdFiles = lib.listToAttrs (lib.concatMap (i:
+    let dir = ".local/share/FreesmLauncher/instances/${i.name}"; in
+    map (mkFiles i.name) hdMods
     ++ map (sh: {
          name = "${dir}/minecraft/shaderpacks/${sh.name}";
          value = { source = pkgs.fetchurl { inherit (sh) url sha512; }; force = true; };
        }) hdShaders
+    ++ [{
+         name = "${dir}/minecraft/resourcepacks/${hdResourcePack.name}";
+         value = { source = pkgs.fetchurl { inherit (hdResourcePack) url sha512; }; force = true; };
+       }]
   ) hdInstances);
+
+  hdSeedScript = lib.concatMapStringsSep "\n" (f: ''
+    if [ ! -f "$HOME/${f.path}" ] || [ -L "$HOME/${f.path}" ]; then
+      rm -f "$HOME/${f.path}"
+      mkdir -p "$(dirname "$HOME/${f.path}")"
+      install -m 644 ${f.src} "$HOME/${f.path}"
+      echo "seeded ${f.path}"
+    fi
+  '') (lib.concatMap hdSeed hdInstances);
 
   modFiles = lib.listToAttrs (lib.concatMap (instance:
     map (mkFiles instance) (syncedMods ++ clientMods)) instances);
@@ -482,4 +516,7 @@ let
 in
 {
   home.file = modFiles // stagingFiles // hdFiles;
+
+  home.activation.akucraftHdInstances =
+    lib.hm.dag.entryAfter [ "writeBoundary" ] hdSeedScript;
 }
