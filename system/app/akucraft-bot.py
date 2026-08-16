@@ -68,6 +68,13 @@ ASK_MAX_QUESTION = int(os.environ.get("ASK_MAX_QUESTION", "500"))   # characters
 ASK_MAX_TOKENS = int(os.environ.get("ASK_MAX_TOKENS", "900"))
 ASK_TIMEOUT = int(os.environ.get("ASK_TIMEOUT", "60"))
 ASK_ADMIN_ROLES = {r for r in os.environ.get("ASK_ADMIN_ROLES", "MCadmin").split(",") if r}
+# Discord category the command is confined to. /ask only knows about Minecraft,
+# and Patidifusos is a general-purpose server, so it stays inside the Minecraft
+# category rather than being offered in every channel. 0 = no restriction.
+# Category rather than a single channel: the category holds the text channel,
+# the announcements channel and the #mc-guides / #mc-support forums, and a
+# question is equally reasonable in any of them.
+ASK_CATEGORY = int(os.environ.get("ASK_CATEGORY") or 0)
 ASK_ENABLE = ASK_ENDPOINT != "" and ASK_TOKEN != ""
 
 SERVERS = {
@@ -793,6 +800,16 @@ def build_discord_client(with_members=True):
     # clean up.
     if ASK_ENABLE:
         async def ask_handler(interaction, question: str = ""):
+            # Confined to the Minecraft category. `category_id` is proxied by
+            # threads to their parent, so asking inside an #mc-support or
+            # #mc-guides forum post works too.
+            if ASK_CATEGORY and getattr(
+                    interaction.channel, "category_id", None) != ASK_CATEGORY:
+                where = f"<#{DISCORD_CHANNEL}>" if DISCORD_CHANNEL else "the Minecraft channels"
+                await interaction.response.send_message(
+                    f"I only know about the Minecraft server, so I only answer in "
+                    f"the Minecraft channels — try {where}.", ephemeral=True)
+                return
             uid = interaction.user.id
             left = ask_quota(uid)
             if not question.strip():

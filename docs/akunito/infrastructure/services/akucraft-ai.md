@@ -83,6 +83,15 @@ clean up — and lets anyone ask a beginner question without an audience.
 - `/ask` with no argument shows the player their remaining quota.
 - `/askreload` (role `MCadmin`) re-reads the manifest without restarting the bot.
 
+**Confined to the Minecraft category** (`akucraftDiscordMinecraftCategoryId`).
+Patidifusos is a general-purpose Discord and the assistant only knows about
+Minecraft, so it is not offered in unrelated channels. A category rather than a
+single channel, because it holds `#minecraft`, the announcements channel and the
+`#mc-guides` / `#mc-support` forums, and a question is reasonable in any of them
+— threads included, since `category_id` is proxied to the parent. `/askreload` is
+deliberately *not* confined: it is role-gated already, and admins run it from
+moderator channels, which sit outside the category.
+
 **Answers come from `akucraft-manifest.md`**, which is generated from the live
 server, so its numbers are read rather than remembered. It is ~11k characters —
 small enough to send whole, which is why there is no retrieval layer.

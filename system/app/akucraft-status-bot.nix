@@ -105,6 +105,10 @@ lib.mkIf enabled {
         "/home/${username}/.dotfiles/docs/akunito/infrastructure/services/akucraft-manifest.md";
       ASK_DAILY_QUOTA = toString (systemSettings.akucraftAskDailyQuota or 20);
       ASK_ADMIN_ROLES = "MCadmin";
+      # Confine /ask to the Minecraft category. Empty = anywhere in the guild.
+      # /askreload is deliberately NOT confined: it is already role-gated, and
+      # admins run it from moderator channels, which sit outside the category.
+      ASK_CATEGORY = secrets.akucraftDiscordMinecraftCategoryId or "";
       # akucraft-invite.sh (driven by /invite) additionally needs bash, python3,
       # sudo and sendmail. /run/wrappers/bin carries the setuid sudo and the
       # sendmail wrapper; without them the invite dies with "command not found"
