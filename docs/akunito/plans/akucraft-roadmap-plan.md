@@ -20,9 +20,9 @@ Written 2026-08-16. Status as of the same day:
 | 1 — `.mrpack` | **DONE server-side.** Import verified; instructions replaced everywhere. Awaiting 2 non-Diego installs before the zip retires |
 | 2 — trinket slots | **DEFERRED** — audited, delivers nothing without items (see 5.1) |
 | 3 — LuckPerms / FerriteCore / Krypton / Styled Chat | **DONE** |
-| 4 — Puffish progression | next; needs a pack bump |
+| 4 — Puffish progression | **DONE** — skills+attributes, trees server-side, no attribute clash |
 | 5 — economy | not started |
-| 6 — structures | **server-side half DONE**; BoMD waits for the Phase 4 pack bump |
+| 6 — structures | **server-side half DONE**; BoMD dropped from the Phase 4 bump (needs geckolib + cardinal-components-api) |
 | 7–10 | not started |
 
 ---
@@ -504,9 +504,24 @@ Rules, already in force:
   `delete`/`deleteAll` autocomplete trap, case-sensitive player names,
   "empty the mods folder first".
 
-### Existing backlog (already owed, before any new phase)
+### Existing backlog — CLEARED 2026-08-16
 
-`#mc-guides` has six posts and is behind by three features shipped since:
+All three owed guides are posted: **Fast travel — waystones**, **Home, warps
+and teleporting to friends**, and **Trading — shops and the market**, plus
+**Skills and character progression** from Phase 4. New forum tags `travel`
+and `trading` added. `#mc-guides` now has 10 posts and describes every live
+feature.
+
+While writing them, sswaystones turned out to expose an **`xp_cost`** option
+that nothing had set. It was `0`, i.e. teleporting was free — which contradicted
+the original requirement that travel should cost something. Now **1 XP level
+per teleport**, so the cost model is complete: crafting a waystone (an Eye of
+Ender) is the price of *marking* a place, and an XP level is the price of
+*using* it. NOTE: `data/config/` is gitignored, so this setting lives only on
+disk and in restic — like skinrestorer's `autoFetch` providers. A rebuild of
+that directory silently reverts it to free.
+
+Superseded, kept for context — the three guides that were owed:
 
 | Missing guide | Covers |
 |---|---|
