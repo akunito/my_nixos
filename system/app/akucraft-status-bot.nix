@@ -111,6 +111,10 @@ lib.mkIf enabled {
       ASK_CATEGORY = secrets.akucraftDiscordMinecraftCategoryId or "";
       # Follow-up questions. Bounded on both axes so a player's questions are a
       # conversation that expires, not a permanent transcript on disk.
+      # Generous on purpose: the backing model reasons before answering and
+      # bills that as output. An open-ended "what should I do next?" spent 1200
+      # tokens thinking and returned NOTHING at a lower ceiling.
+      ASK_MAX_TOKENS = toString (systemSettings.akucraftAskMaxTokens or 3000);
       ASK_HISTORY_TURNS = toString (systemSettings.akucraftAskHistoryTurns or 10);
       ASK_HISTORY_TTL_HOURS = toString (systemSettings.akucraftAskHistoryTtlHours or 24);
       # akucraft-invite.sh (driven by /invite) additionally needs bash, python3,

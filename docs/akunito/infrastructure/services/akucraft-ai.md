@@ -118,11 +118,48 @@ bypass the whitelist, so `Akunito` (the server's own admin) was rejected as an
 unknown player. `usercache.json` is the broadest signal — everyone who has
 actually connected.
 
-⚠️ **Self-declared, not verified.** The whitelist check proves the account
+A name can only be claimed **once**: `/link` refuses a name another Discord
+account already holds, otherwise anyone could impersonate a player and have the
+assistant read that player's claims, stats and inventory back to them.
+
+⚠️ **Self-declared, not verified.** The registry check proves the account
 *exists*, not that this person owns it. That is an accepted trade for a server of
 family and friends — but nothing that grants access or changes anything in game
 may be built on top of it. Verifying properly would mean a challenge code typed
 in game and matched from the log tail the bot already runs.
+
+### What the assistant knows about a linked player
+
+| Data | Source | Notes |
+|---|---|---|
+| Inventory + enchantments | RCON `data get entity <p> Inventory` | **live**, only while online |
+| Land claims (area, home, trusted) | `world/data/claims/<uuid>.json` | plain JSON |
+| Playtime, deaths, top mined/killed | `world/stats/<uuid>.json` | plain JSON |
+| Advancements | `world/advancements/<uuid>.json` | **not used** — ~100 KB per player |
+| — | `world/playerdata/<uuid>.dat` | **unreadable**: mode 0600, gzipped NBT, and only written on logout/autosave |
+
+The inventory comes over RCON rather than from `playerdata`, which is the file
+that would seem obvious: it is 0600 so the bot cannot open it at all, it is
+gzipped NBT rather than JSON, and it is only rewritten on logout or autosave, so
+it would be stale by minutes. `data get entity` has none of those problems and is
+live — at the cost of only working while the player is online.
+
+The SNBT reply is split by tracking brace depth, not by regex: item `components`
+nest arbitrarily and strings contain braces and commas.
+
+### Two kinds of question
+
+The system prompt separates them, and getting this wrong was a real bug:
+
+- **Server facts** (rules, costs, commands, mods, this player's data) — the
+  supplied sections are the only truth; never guess.
+- **Gameplay advice** ("what should I do next") — the model's own Minecraft
+  knowledge is welcome and should be grounded in the player's actual gear.
+
+The first version applied the "never guess" rule to everything, so "what am I
+missing to beat the Ender Dragon?" was refused as not being in the manifest.
+With the split it answers usefully — and catches things like *Smite IV does
+nothing to the dragon, it is not undead*, read off the player's real sword.
 
 ### Follow-up questions
 
