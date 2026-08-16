@@ -95,7 +95,8 @@ in
     akucraftStatusBotEnable = true;
     # /ask - private LLM support in Discord, through the LiteLLM gateway below.
     akucraftAskEnable = true;
-    akucraftAskDailyQuota = 20;
+    akucraftAskDailyQuota = 25;
+    akucraftAskQuotaOverrides = { Akunito = 60; }; # applies once Akunito has /link-ed
     # TEMPORARY (2026-08-16): a Chunky pregeneration of the Overworld out to
     # +-6000 runs for roughly 20 hours with nobody logged in, and the normal
     # 45-minute idle stop would kill it within the first hour. Put this back to

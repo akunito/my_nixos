@@ -103,7 +103,12 @@ lib.mkIf enabled {
       ASK_MODEL = systemSettings.akucraftAskModel or "akucraft-support";
       ASK_MANIFEST =
         "/home/${username}/.dotfiles/docs/akunito/infrastructure/services/akucraft-manifest.md";
-      ASK_DAILY_QUOTA = toString (systemSettings.akucraftAskDailyQuota or 20);
+      ASK_DAILY_QUOTA = toString (systemSettings.akucraftAskDailyQuota or 25);
+      # { Akunito = 60; } -> "Akunito:60". Keyed by Minecraft name, so it reads
+      # the way it is meant ("Akunito gets 60") rather than by Discord snowflake.
+      ASK_QUOTA_OVERRIDES = lib.concatStringsSep "," (lib.mapAttrsToList
+        (n: v: "${n}:${toString v}")
+        (systemSettings.akucraftAskQuotaOverrides or { }));
       ASK_ADMIN_ROLES = "MCadmin";
       # Confine /ask to the Minecraft category. Empty = anywhere in the guild.
       # /askreload is deliberately NOT confined: it is already role-gated, and

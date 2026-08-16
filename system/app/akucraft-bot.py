@@ -63,7 +63,17 @@ ASK_ENDPOINT = os.environ.get("ASK_ENDPOINT", "")      # LiteLLM /v1/chat/comple
 ASK_TOKEN = os.environ.get("ASK_TOKEN", "")            # gateway bearer (never a provider key)
 ASK_MODEL = os.environ.get("ASK_MODEL", "akucraft-support")
 ASK_MANIFEST = os.environ.get("ASK_MANIFEST", "")      # path to akucraft-manifest.md
-ASK_DAILY_QUOTA = int(os.environ.get("ASK_DAILY_QUOTA", "20"))
+ASK_DAILY_QUOTA = int(os.environ.get("ASK_DAILY_QUOTA", "25"))
+# Per-player daily allowances that differ from the default, as
+# "Name:limit,Name:limit". Keyed by MINECRAFT name and resolved through /link,
+# so an override only applies once that player has linked - which is safe now
+# that a name can only be claimed by one Discord account.
+ASK_QUOTA_OVERRIDES = {}
+for _pair in os.environ.get("ASK_QUOTA_OVERRIDES", "").split(","):
+    if ":" in _pair:
+        _n, _, _v = _pair.partition(":")
+        if _n.strip() and _v.strip().isdigit():
+            ASK_QUOTA_OVERRIDES[_n.strip().lower()] = int(_v)
 ASK_MAX_QUESTION = int(os.environ.get("ASK_MAX_QUESTION", "500"))   # characters
 ASK_MAX_TOKENS = int(os.environ.get("ASK_MAX_TOKENS", "3000"))
 ASK_TIMEOUT = int(os.environ.get("ASK_TIMEOUT", "60"))
@@ -927,6 +937,11 @@ def who_text(display_name, mc_name, online):
             f"{'ONLINE right now' if mc_name in online else 'not online right now'}.")
 
 
+def quota_limit(user_id):
+    """This player's daily allowance: their override if any, else the default."""
+    return ASK_QUOTA_OVERRIDES.get(ask_link(user_id).lower(), ASK_DAILY_QUOTA)
+
+
 def ask_quota(user_id, delta=0):
     """Per-player daily allowance; returns what is left after applying delta.
 
@@ -936,6 +951,10 @@ def ask_quota(user_id, delta=0):
     """
     today = time.strftime("%Y-%m-%d")
     path = os.path.join(STATE_DIR, "ask_quota.json")
+    # Resolved BEFORE taking the lock: quota_limit -> ask_link also takes
+    # ASK_LOCK, and threading.Lock is not reentrant, so nesting them deadlocks
+    # the gateway thread permanently.
+    limit = quota_limit(user_id)
     with ASK_LOCK:
         try:
             with open(path) as f:
@@ -953,7 +972,7 @@ def ask_quota(user_id, delta=0):
                     json.dump(data, f)
             except OSError as e:  # noqa: BLE001
                 log(f"ask: cannot persist quota: {e}")
-        return max(0, ASK_DAILY_QUOTA - used)
+        return max(0, limit - used)
 
 
 def ask_llm(question, display_name="", user_id=0, history=()):
@@ -1177,9 +1196,10 @@ def build_discord_client(with_members=True):
                     f"{ASK_MAX_QUESTION}). Try asking one thing at a time.",
                     ephemeral=True)
                 return
+            limit = quota_limit(uid)   # may differ per player; resolved once here
             if left <= 0:
                 await interaction.response.send_message(
-                    f"You have used all {ASK_DAILY_QUOTA} of today's questions - "
+                    f"You have used all {limit} of today's questions - "
                     f"they come back after midnight. Ask in the channel meanwhile, "
                     f"someone will know.", ephemeral=True)
                 return
@@ -1197,7 +1217,7 @@ def build_discord_client(with_members=True):
                 return
             ask_history(uid, add=(q, answer))
             log(f"ask: {interaction.user} asked {q[:80]!r}")
-            footer = f"\n\n_{left} of {ASK_DAILY_QUOTA} questions left today._"
+            footer = f"\n\n_{left} of {limit} questions left today._"
             room = 2000 - len(footer)  # Discord hard-caps a message at 2000 chars
             if len(answer) > room:
                 answer = answer[:room - 1] + "…"
@@ -1232,7 +1252,7 @@ def build_discord_client(with_members=True):
                      if current else
                      "You have not linked a Minecraft account yet. Run "
                      "`/link <your in-game name>` so I know who you are when you /ask.\n")
-                    + f"Questions left today: **{ask_quota(uid)}** of {ASK_DAILY_QUOTA}.\n"
+                    + f"Questions left today: **{ask_quota(uid)}** of {quota_limit(uid)}.\n"
                     + (f"I remember the last **{turns}** of our exchanges; add "
                        f"`new_topic:True` to an /ask to start fresh."
                        if turns else "No conversation in progress."),
