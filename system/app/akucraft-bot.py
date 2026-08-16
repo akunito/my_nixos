@@ -75,6 +75,11 @@ ASK_ADMIN_ROLES = {r for r in os.environ.get("ASK_ADMIN_ROLES", "MCadmin").split
 # the announcements channel and the #mc-guides / #mc-support forums, and a
 # question is equally reasonable in any of them.
 ASK_CATEGORY = int(os.environ.get("ASK_CATEGORY") or 0)
+# Follow-up questions: how many previous exchanges to replay, and how long a
+# conversation stays alive. Bounded on both axes so this is a conversation and
+# not a permanent transcript of everything players ever asked.
+ASK_HISTORY_TURNS = int(os.environ.get("ASK_HISTORY_TURNS", "10"))
+ASK_HISTORY_TTL_H = int(os.environ.get("ASK_HISTORY_TTL_HOURS", "24"))
 ASK_ENABLE = ASK_ENDPOINT != "" and ASK_TOKEN != ""
 
 SERVERS = {
@@ -205,6 +210,7 @@ HELP_TEXT = """AkuCraft bot commands:
 /stop - stop the server (refuses if players online)
 /map - live web map + minimap mods to see each other
 /ask <question> - ask about the server, answered only to you (Discord only)
+/link <name> - tell /ask which Minecraft account is yours (Discord only)
 /invite <name> <email> - invite a friend (Discord only)
 /connect - how to join the servers
 /vpn - how to set up the VPN (Tailscale)
@@ -563,8 +569,14 @@ Be brief - a few sentences. This is a chat message, not documentation.
 === SERVER MANIFEST ===
 {manifest}
 
+=== ONBOARDING NOTES (what /connect, /vpn and /map tell players) ===
+{onboarding}
+
 === LIVE STATE (right now) ===
-{live}"""
+{live}
+
+=== WHO YOU ARE TALKING TO ===
+{who}"""
 
 ASK_LOCK = threading.Lock()
 _manifest = {"text": "", "loaded": False}
@@ -587,19 +599,118 @@ def load_manifest(force=False):
 
 
 def live_state():
-    """Snapshot of what the manifest cannot know, as plain text."""
-    lines = []
+    """Snapshot of what the manifest cannot know.
+
+    Returns (text, online) so the caller can reuse the player list without a
+    second RCON round-trip.
+    """
+    lines, online = [], set()
     for srv in SERVERS.values():
         st = health(srv["container"])
         if st == "healthy":
-            players = sorted(online_players(srv["container"]))
-            who = ", ".join(players) if players else "nobody"
+            players = online_players(srv["container"])
+            online |= players
+            who = ", ".join(sorted(players)) if players else "nobody"
             lines.append(f"{srv['label']}: UP ({srv['address']}). Online now: {who}.")
         elif st == "absent":
             lines.append(f"{srv['label']}: STOPPED. Anyone can start it with /start.")
         else:
             lines.append(f"{srv['label']}: {st} (starting or unhealthy).")
-    return "\n".join(lines) or "unknown"
+    return "\n".join(lines) or "unknown", online
+
+
+def whitelist_names():
+    """Player names on the server whitelist.
+
+    Read from the host filesystem rather than `docker exec`: it works while the
+    server is stopped, needs no docker round-trip, and cannot hang.
+    """
+    names = set()
+    for srv in SERVERS.values():
+        path = os.path.join(srv["dir"], "data", "whitelist.json")
+        try:
+            with open(path) as f:
+                for entry in json.load(f):
+                    if entry.get("name"):
+                        names.add(entry["name"])
+        except Exception as e:  # noqa: BLE001
+            log(f"ask: cannot read whitelist {path}: {e}")
+    return names
+
+
+def ask_link(user_id, name=None):
+    """Get (name=None) or set the Minecraft account a Discord user says is theirs.
+
+    Self-declared and only checked against the whitelist, which proves the
+    account EXISTS, not that this person owns it. That is deliberate for a
+    server of family and friends - but nothing that grants access or changes
+    anything in game may ever be built on top of it.
+    """
+    path = os.path.join(STATE_DIR, "ask_links.json")
+    with ASK_LOCK:
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except Exception:  # noqa: BLE001
+            data = {}
+        key = str(user_id)
+        if name is None:
+            return data.get(key, {}).get("name", "")
+        data[key] = {"name": name, "at": time.strftime("%Y-%m-%d %H:%M")}
+        try:
+            with open(path, "w") as f:
+                json.dump(data, f)
+        except OSError as e:  # noqa: BLE001
+            log(f"ask: cannot persist link: {e}")
+        return name
+
+
+def ask_history(user_id, add=None, clear=False):
+    """Recent (question, answer) pairs for one user, oldest first.
+
+    Lets a player follow up ("and how much does that cost?") instead of having
+    to restate everything. Trimmed to ASK_HISTORY_TURNS and expired after
+    ASK_HISTORY_TTL_H hours, so it stays a conversation rather than becoming a
+    permanent record of what everyone asked.
+    """
+    path = os.path.join(STATE_DIR, "ask_history.json")
+    cutoff = time.time() - ASK_HISTORY_TTL_H * 3600
+    with ASK_LOCK:
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except Exception:  # noqa: BLE001
+            data = {}
+        key = str(user_id)
+        turns = [] if clear else [t for t in data.get(key, []) if t.get("t", 0) > cutoff]
+        if add:
+            turns.append({"q": add[0], "a": add[1], "t": time.time()})
+        turns = turns[-ASK_HISTORY_TURNS:]
+        if add or clear:
+            data[key] = turns
+            # Expire everyone else's stale conversations while we are here, so
+            # the file cannot grow without bound.
+            for k in list(data):
+                data[k] = [t for t in data[k] if t.get("t", 0) > cutoff]
+                if not data[k]:
+                    del data[k]
+            try:
+                with open(path, "w") as f:
+                    json.dump(data, f)
+            except OSError as e:  # noqa: BLE001
+                log(f"ask: cannot persist history: {e}")
+        return turns
+
+
+def who_text(display_name, mc_name, online):
+    """The WHO YOU ARE TALKING TO block of the prompt."""
+    if not mc_name:
+        return (f"Discord user {display_name}. They have NOT linked a Minecraft "
+                f"account, so you do not know their in-game name. If knowing it "
+                f"would help, tell them to run /link <their in-game name>.")
+    return (f"Discord user {display_name}, whose Minecraft account is "
+            f"\"{mc_name}\". They are "
+            f"{'ONLINE right now' if mc_name in online else 'not online right now'}.")
 
 
 def ask_quota(user_id, delta=0):
@@ -631,21 +742,36 @@ def ask_quota(user_id, delta=0):
         return max(0, ASK_DAILY_QUOTA - used)
 
 
-def ask_llm(question):
+def ask_llm(question, display_name="", user_id=0, history=()):
     """Ask the gateway. Returns (answer, error, billed).
 
     `billed` says whether the provider actually ran the request, so the caller
     can refund the player's quota when nothing was spent. Not reusing post():
     that helper retries and discards the body, and here the body IS the answer.
+
+    Runs in a worker thread, so everything slow (RCON, whitelist, the HTTP call)
+    belongs here rather than on the gateway's event loop.
     """
+    live, online = live_state()
+    who = who_text(display_name, ask_link(user_id), online)
+    # The manifest is generated from the server and so covers mods and rules,
+    # but the joining/VPN/map/skin answers live only in this file's own help
+    # texts. Without them /ask says "I don't know" to things the bot itself
+    # documents in /connect - observed with "how do I remove my skin?".
+    onboarding = "\n\n".join([CONNECT_TEXT, VPN_TEXT, MAP_TEXT])
+    messages = [{"role": "system", "content": ASK_SYSTEM.format(
+        manifest=load_manifest(), onboarding=onboarding, live=live, who=who)}]
+    # Replay the conversation so far as real turns rather than pasting it into
+    # the system prompt: the model then treats it as dialogue, and prompt
+    # caching can still hit on the unchanged system prefix.
+    for turn in history:
+        messages.append({"role": "user", "content": turn["q"]})
+        messages.append({"role": "assistant", "content": turn["a"]})
+    messages.append({"role": "user", "content": question})
     body = json.dumps({
         "model": ASK_MODEL,
         "max_tokens": ASK_MAX_TOKENS,
-        "messages": [
-            {"role": "system", "content": ASK_SYSTEM.format(
-                manifest=load_manifest(), live=live_state())},
-            {"role": "user", "content": question},
-        ],
+        "messages": messages,
     }).encode()
     req = urllib.request.Request(ASK_ENDPOINT, data=body, method="POST", headers={
         "Authorization": "Bearer " + ASK_TOKEN,
@@ -799,7 +925,7 @@ def build_discord_client(with_members=True):
     # channel. That is also why there are no threads or per-player channels to
     # clean up.
     if ASK_ENABLE:
-        async def ask_handler(interaction, question: str = ""):
+        async def ask_handler(interaction, question: str = "", new_topic: bool = False):
             # Confined to the Minecraft category. `category_id` is proxied by
             # threads to their parent, so asking inside an #mc-support or
             # #mc-guides forum post works too.
@@ -813,10 +939,17 @@ def build_discord_client(with_members=True):
             uid = interaction.user.id
             left = ask_quota(uid)
             if not question.strip():
+                linked = ask_link(uid)
+                turns = len(ask_history(uid))
                 await interaction.response.send_message(
                     f"Ask me anything about the server, for example:\n"
                     f"`/ask how do I set my skin?`\n\n"
-                    f"You have **{left}** of {ASK_DAILY_QUOTA} questions left today.",
+                    f"You have **{left}** of {ASK_DAILY_QUOTA} questions left today.\n"
+                    + (f"Minecraft account: **{linked}**.\n" if linked else
+                       "You have not linked your Minecraft account - `/link <name>`.\n")
+                    + (f"I remember the last **{turns}** of our exchanges; "
+                       f"add `new_topic:True` to start fresh."
+                       if turns else "No conversation in progress."),
                     ephemeral=True)
                 return
             q = question.strip()
@@ -834,14 +967,17 @@ def build_discord_client(with_members=True):
                 return
             # The gateway takes seconds; Discord wants a reply within 3.
             await interaction.response.defer(thinking=True, ephemeral=True)
+            history = ask_history(uid, clear=new_topic)
+            who = getattr(interaction.user, "display_name", None) or interaction.user.name
             left = ask_quota(uid, delta=1)
             answer, err, billed = await asyncio.get_running_loop().run_in_executor(
-                None, ask_llm, q)
+                None, ask_llm, q, who, uid, history)
             if not billed:
                 left = ask_quota(uid, delta=-1)  # nothing was spent, do not charge
             if err:
                 await interaction.followup.send(err, ephemeral=True)
                 return
+            ask_history(uid, add=(q, answer))
             log(f"ask: {interaction.user} asked {q[:80]!r}")
             footer = f"\n\n_{left} of {ASK_DAILY_QUOTA} questions left today._"
             room = 2000 - len(footer)  # Discord hard-caps a message at 2000 chars
@@ -853,6 +989,58 @@ def build_discord_client(with_members=True):
             name="ask",
             description="Ask about the server - answered privately, from live server info",
             callback=ask_handler), guild=guild)
+
+        # /link - tell the assistant which in-game account is yours, so it can
+        # answer about you rather than in the abstract. Checked against the
+        # whitelist, which proves the account exists but NOT that this person
+        # owns it; see ask_link() before building anything on top of it.
+        async def link_handler(interaction, name: str = ""):
+            if ASK_CATEGORY and getattr(
+                    interaction.channel, "category_id", None) != ASK_CATEGORY:
+                where = f"<#{DISCORD_CHANNEL}>" if DISCORD_CHANNEL else "the Minecraft channels"
+                await interaction.response.send_message(
+                    f"That one lives in the Minecraft channels — try {where}.",
+                    ephemeral=True)
+                return
+            uid = interaction.user.id
+            if not name.strip():
+                current = ask_link(uid)
+                await interaction.response.send_message(
+                    f"Your Minecraft account is set to **{current}**. "
+                    f"Change it with `/link <name>`." if current else
+                    "You have not linked a Minecraft account yet. Run "
+                    "`/link <your in-game name>` so I know who you are when you /ask.",
+                    ephemeral=True)
+                return
+            n = name.strip()
+            names = whitelist_names()
+            if not names:
+                await interaction.response.send_message(
+                    "I cannot read the server whitelist right now, so I cannot check "
+                    "that name. Try again in a minute.", ephemeral=True)
+                return
+            if n not in names:
+                # Names are case-sensitive on an offline-mode server, so a
+                # near-miss is nearly always a capitalisation slip. Fix it for
+                # them rather than refusing and making them guess.
+                near = [w for w in names if w.lower() == n.lower()]
+                if not near:
+                    await interaction.response.send_message(
+                        f"**{n}** is not on the server whitelist. Type it exactly as "
+                        f"you registered it — capitals matter here. If you have never "
+                        f"joined, you need an /invite first.", ephemeral=True)
+                    return
+                n = near[0]
+            ask_link(uid, n)
+            log(f"link: {interaction.user} -> {n}")
+            await interaction.response.send_message(
+                f"Linked you to **{n}**. I will keep that in mind when you /ask.",
+                ephemeral=True)
+
+        tree.add_command(app_commands.Command(
+            name="link",
+            description="Tell the assistant which Minecraft account is yours",
+            callback=link_handler), guild=guild)
 
         # The manifest is regenerated by scripts/generate-akucraft-manifest.sh
         # after mod or config changes; this picks it up without a restart (which

@@ -109,6 +109,10 @@ lib.mkIf enabled {
       # /askreload is deliberately NOT confined: it is already role-gated, and
       # admins run it from moderator channels, which sit outside the category.
       ASK_CATEGORY = secrets.akucraftDiscordMinecraftCategoryId or "";
+      # Follow-up questions. Bounded on both axes so a player's questions are a
+      # conversation that expires, not a permanent transcript on disk.
+      ASK_HISTORY_TURNS = toString (systemSettings.akucraftAskHistoryTurns or 10);
+      ASK_HISTORY_TTL_HOURS = toString (systemSettings.akucraftAskHistoryTtlHours or 24);
       # akucraft-invite.sh (driven by /invite) additionally needs bash, python3,
       # sudo and sendmail. /run/wrappers/bin carries the setuid sudo and the
       # sendmail wrapper; without them the invite dies with "command not found"

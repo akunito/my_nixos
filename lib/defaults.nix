@@ -894,6 +894,8 @@
     akucraftAskEnable = false;       # Discord /ask: LLM support answered privately from the generated manifest; needs litellmEnable + litellmMasterKey in secrets
     akucraftAskModel = "akucraft-support";  # alias served by the LiteLLM gateway, never a provider model name
     akucraftAskDailyQuota = 20;      # questions per Discord user per day; the hard spend ceiling is the provider's prepaid balance, this is the friendly limit
+    akucraftAskHistoryTurns = 10;    # previous /ask exchanges replayed so players can follow up; 0 disables conversation memory
+    akucraftAskHistoryTtlHours = 24; # a conversation expires after this, so stored player questions do not accumulate
     wireguardServerEnable = false; # Enable WireGuard point-to-point backup tunnel (VPS <-> pfSense)
     wireguardServerPort = 51820; # WireGuard listen port
     wireguardServerIp = "172.26.5.155/24"; # WireGuard tunnel IP
