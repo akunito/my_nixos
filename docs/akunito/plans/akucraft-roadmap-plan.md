@@ -142,6 +142,49 @@ Every phase below begins by running it.
 **Acceptance for Phase 0:** a restored world boots in a scratch container with
 claims intact, and `akucraft-backup-now` completes with the NAS asleep.
 
+### 3.5 Result — Phase 0 DONE, 2026-08-16
+
+All three gaps closed and each one exercised for real, not assumed.
+
+**Quiescent snapshot** — real `vps-restic-services` run, exit 0:
+```
+Minecraft is running - flushing world to disk before snapshot...
+World snapshot refreshed          (4 s)
+snapshot 2ff465d0 saved
+world 292M / world-snapshot 291M
+"Saving is already turned on"     <- save-on confirmed
+```
+
+**`akucraft-backup-now`** — local snapshot 4 s, offsite push 24 s. First run
+failed the offsite half with *"Access denied ... requires interactive
+authentication"*: `systemctl start` as a non-root user needs polkit. Fixed with
+a rule scoped to that one unit.
+
+**Restore drill** — restored from the offsite repo, then actually booted:
+```
+Restored 268 files (290.648 MiB) in 0:08
+level.dat OK   region OK   playerdata OK
+scratch server: Done (1.426s), healthy at 30 s, no corruption
+claims restored: 2
+  c0ba52d7  x -491..-389  z -1802..-1724  groups=[Visitor, friends, Co-Owner]  members=2
+  a892b7bd  x -466..-444  z -1723..-1701  groups=[Visitor, Co-Owner]           members=0
+player .dat files: 3
+```
+
+Both claims came back intact, including the `friends` group with komi and
+Julcyxx still in it.
+
+Two caveats worth keeping:
+- The scratch server booted with only **3 mods** (MODRINTH_PROJECTS was blanked
+  in the drill). So this proved the **world data** restores and loads cleanly;
+  it did not re-verify the full 45-mod stack against restored data. Good enough
+  for a data-integrity drill, not a substitute for the staging deploy that
+  Phase 8 (MCA) requires anyway.
+- The first boot failed with `AccessDeniedException: ./world/session.lock`
+  because files copied inside a root container are root-owned while the server
+  runs as uid 1000. Not a backup fault — but any future restore must
+  `chown -R 1000:1000` the data directory.
+
 ### 3.4 Rollback
 
 Phase 0 adds units and scripts and changes no game state. Rollback is removing
