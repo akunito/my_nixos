@@ -49,6 +49,13 @@ let
       (secrets.akucraftDiscordInviteVoice or "")
     ]));
 
+  # /ask needs the gateway reachable AND its bearer token. Both come from the
+  # LiteLLM settings so there is one source of truth for the endpoint.
+  askToken = secrets.litellmMasterKey or "";
+  litellmHost = systemSettings.litellmHost or "127.0.0.1";
+  litellmPort = systemSettings.litellmPort or 4711;
+  askEnable = (systemSettings.akucraftAskEnable or false) && askToken != "";
+
   python = if discordCommands
     then pkgs.python3.withPackages (ps: [ ps.discordpy ])
     else pkgs.python3;
@@ -77,6 +84,27 @@ lib.mkIf enabled {
       # over SSH. Empty string disables the command entirely.
       INVITE_SCRIPT = "/home/${username}/.homelab/minecraft/akucraft-invite.sh";
       INVITE_ROLES = "MCplayer,MCadmin";
+      # /ask - LLM-backed support, answered privately from the generated
+      # manifest. Empty ASK_ENDPOINT or ASK_TOKEN disables the command, so a
+      # half-configured deploy stays quiet rather than erroring at players.
+      #
+      # The manifest is read from the WORKING COPY, not the Nix store, so
+      # /askreload picks up a regenerated file without a rebuild.
+      #
+      # ⚠️ ASK_TOKEN lands in the Nix store, which is world-readable — the same
+      # weakness TG_TOKEN and DISCORD_TOKEN above already have. It is the
+      # gateway's own bearer, not a provider key, so the blast radius is
+      # "someone with a shell on the VPS can spend the prepaid balance". Worth
+      # moving all four to an EnvironmentFile (as system/app/litellm.nix does)
+      # in a follow-up; doing it for one token only would be theatre.
+      ASK_ENDPOINT = lib.optionalString askEnable
+        "http://${litellmHost}:${toString litellmPort}/v1/chat/completions";
+      ASK_TOKEN = lib.optionalString askEnable askToken;
+      ASK_MODEL = systemSettings.akucraftAskModel or "akucraft-support";
+      ASK_MANIFEST =
+        "/home/${username}/.dotfiles/docs/akunito/infrastructure/services/akucraft-manifest.md";
+      ASK_DAILY_QUOTA = toString (systemSettings.akucraftAskDailyQuota or 20);
+      ASK_ADMIN_ROLES = "MCadmin";
       # akucraft-invite.sh (driven by /invite) additionally needs bash, python3,
       # sudo and sendmail. /run/wrappers/bin carries the setuid sudo and the
       # sendmail wrapper; without them the invite dies with "command not found"

@@ -891,6 +891,9 @@
     akucraftStatusBotEnable = false; # Telegram status bot for AkuCraft Minecraft servers (VPS only; needs akucraftTelegramBotToken/ChatId in secrets)
     akucraftIdleStopMinutes = 45;    # stop the Minecraft server after this many minutes with no players; raise it to keep a long pregeneration alive
     akucraftStopLockReason = "";     # non-empty blocks BOTH the idle stop and the /stop command, and is shown to whoever tries
+    akucraftAskEnable = false;       # Discord /ask: LLM support answered privately from the generated manifest; needs litellmEnable + litellmMasterKey in secrets
+    akucraftAskModel = "akucraft-support";  # alias served by the LiteLLM gateway, never a provider model name
+    akucraftAskDailyQuota = 20;      # questions per Discord user per day; the hard spend ceiling is the provider's prepaid balance, this is the friendly limit
     wireguardServerEnable = false; # Enable WireGuard point-to-point backup tunnel (VPS <-> pfSense)
     wireguardServerPort = 51820; # WireGuard listen port
     wireguardServerIp = "172.26.5.155/24"; # WireGuard tunnel IP
