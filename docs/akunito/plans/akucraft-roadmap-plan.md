@@ -210,6 +210,46 @@ update `#mc-guides`, the invite email and `/connect`.
 **Rollback:** keep serving the zip. It stays canonical until the `.mrpack` has
 been used successfully by at least two people who are not Diego.
 
+### 4.1 Progress — blocker cleared, awaiting a human import test
+
+**FreeSM Launcher 2.2.2 does support `.mrpack`.** Verified two ways rather than
+assumed from "it is a Prism fork":
+- it registers `<glob pattern="*.mrpack"/>` as a file handler in
+  `share/mime/packages/org.freesmlauncher.FreesmLauncher.xml`
+- the real binary contains `modrinth.index.json`, `formatVersion`, and 24
+  `Modrinth` references (`bin/freesmlauncher` in the *unwrapped* store path —
+  the wrapped one is a 20 KB stub and greps clean, which is misleading)
+
+It also has a CLI import: `freesmlauncher --dir <root> --import <path|url>`.
+
+**Built and published:** `AkuCraft-2026.08.16.mrpack`, **5.7 KB** instead of the
+67 MB zip, because it is a manifest — the launcher downloads the 71.6 MB of jars
+itself and verifies sha1/sha512 per file. 26 required + 5 optional, with the
+optional five marked `env.client: optional` so a launcher can offer them as
+toggles. Served at:
+
+```
+http://100.64.0.6:8100/downloads/AkuCraft-2026.08.16.mrpack
+```
+
+The zip stays at its existing URL and stays canonical for now.
+
+**Outstanding — needs a human:** the import has not been executed. Run it
+against a scratch root so the real instance cannot be touched:
+
+```
+freesmlauncher --dir /tmp/launcher-test --import <path-to>.mrpack
+```
+
+Then confirm: the instance is created, Fabric 0.19.3 and 1.21.1 are selected,
+26 mods land in `mods/`, and it connects to `100.64.0.6:25565`. Only after that
+does the `.mrpack` get announced, and only after two non-Diego installs does it
+replace the zip.
+
+**Regeneration:** the pack is derived from `minecraft-client-mods.nix` by
+reading each Modrinth CDN URL's version id and pulling hashes/size from the API.
+Any change to the mod list means rebuilding and bumping `versionId`.
+
 ---
 
 ## 5. Phase 2 — Trinkets slots datapack
@@ -463,6 +503,12 @@ Design notes for when it happens:
   docker; `akucraft-invite.sh` needs `sudo headscale`, so either grant a
   narrow sudoers rule or split key creation into a small privileged helper.
   Do not give the bot blanket sudo.
+- **Announce it once it is built AND tested end to end** — a real invite sent
+  to a real address that results in someone joining. Not before: an invite
+  command that half works turns into Diego doing it manually anyway, plus
+  cleaning up broken headscale users. The announcement goes to both channels
+  and a `#mc-guides` post covering who may invite, what the invitee receives,
+  and that the player name is case-sensitive.
 
 ---
 
