@@ -21,7 +21,7 @@ Written 2026-08-16. Status as of the same day:
 | 2 — trinket slots | **DEFERRED** — audited, delivers nothing without items (see 5.1) |
 | 3 — LuckPerms / FerriteCore / Krypton / Styled Chat | **DONE** |
 | 4 — Puffish progression | **DONE** — skills+attributes, trees server-side, no attribute clash |
-| 5 — economy | not started |
+| 5 — economy | **DEFERRED by decision** — staying on diamonds/barter (option A) |
 | 6 — structures | **server-side half DONE**; BoMD dropped from the Phase 4 bump (needs geckolib + cardinal-components-api) |
 | 7–10 | not started |
 
@@ -397,6 +397,31 @@ checking whether Flan exposes an economy integration; if not, a bridge command.
 **Rollback:** shops are world state. Removing a currency mod after people hold
 balances destroys value, so this phase is effectively one-way once players
 adopt it. Decide the sink before, not after.
+
+### 8.1 DECISION 2026-08-16 — stay on barter (option A)
+
+Correction to my own earlier reading: Universal Shops **does** support virtual
+currency. It bundles `common-economy-api-1.1.1.jar` and carries a
+`PriceHandler$VirtualBalance` class, so the roadmap was right that the Patbox
+stack fits together. My first pass only saw the Common *Protection* API mention
+and wrongly concluded it was item-trading only.
+
+The blocker is the other half: Common Economy API is an *interface*, and it
+needs a provider mod supplying the accounts. Of the four server-side candidates
+for 1.21.1 — EconomyCraft (24k), Diamond Economy (23k), Viper Economy, Economy —
+**none advertises Common Economy API support**. That has to be verified per mod
+before committing, and if none qualifies the option dies or requires writing the
+bridge.
+
+Owner chose **A: keep barter in diamonds**. Reasoning that decided it: there are
+three active players and the market district is not built yet. A virtual economy
+with no market and nobody trading solves no problem — it adds commands nobody
+uses, and it is the one phase that cannot be cleanly undone once people hold
+balances.
+
+Revisit when there is concrete friction — "I have no spare diamonds", "I want to
+save", "I want to charge for building" — and decide the **sink** before
+installing anything. Flan claim blocks remain the natural candidate.
 
 ---
 
