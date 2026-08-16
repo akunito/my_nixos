@@ -80,8 +80,14 @@ independent revocation on top.
 per-player isolation for free — no threads, no per-player channels, nothing to
 clean up — and lets anyone ask a beginner question without an audience.
 
-- `/ask` with no argument shows the player their remaining quota.
+- `/link` with no argument is the "about me" view: linked account, quota left,
+  and how many exchanges are remembered.
 - `/askreload` (role `MCadmin`) re-reads the manifest without restarting the bot.
+
+`/ask`'s `question` is a **required** parameter. As an optional one Discord will
+happily submit the command with nothing filled in, and a player who typed their
+question before the field had focus watched it vanish and got the help text back
+— which is why the status view moved to `/link`.
 
 **Confined to the Minecraft category** (`akucraftDiscordMinecraftCategoryId`).
 Patidifusos is a general-purpose Discord and the assistant only knows about

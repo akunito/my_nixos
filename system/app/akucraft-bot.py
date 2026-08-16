@@ -1144,7 +1144,12 @@ def build_discord_client(with_members=True):
     # channel. That is also why there are no threads or per-player channels to
     # clean up.
     if ASK_ENABLE:
-        async def ask_handler(interaction, question: str = "", new_topic: bool = False):
+        # `question` is REQUIRED (no default) on purpose. As an optional
+        # parameter Discord happily submits /ask with nothing filled in, and a
+        # player who typed their question before the field had focus watched it
+        # vanish and got the help text back. Required means Discord refuses to
+        # send until there is something in the box.
+        async def ask_handler(interaction, question: str, new_topic: bool = False):
             # Confined to the Minecraft category. `category_id` is proxied by
             # threads to their parent, so asking inside an #mc-support or
             # #mc-guides forum post works too.
@@ -1158,17 +1163,11 @@ def build_discord_client(with_members=True):
             uid = interaction.user.id
             left = ask_quota(uid)
             if not question.strip():
-                linked = ask_link(uid)
-                turns = len(ask_history(uid))
+                # Discord enforces the field is present, but not that it holds
+                # more than spaces.
                 await interaction.response.send_message(
-                    f"Ask me anything about the server, for example:\n"
-                    f"`/ask how do I set my skin?`\n\n"
-                    f"You have **{left}** of {ASK_DAILY_QUOTA} questions left today.\n"
-                    + (f"Minecraft account: **{linked}**.\n" if linked else
-                       "You have not linked your Minecraft account - `/link <name>`.\n")
-                    + (f"I remember the last **{turns}** of our exchanges; "
-                       f"add `new_topic:True` to start fresh."
-                       if turns else "No conversation in progress."),
+                    "That question was empty — type it in the `question` box. "
+                    "Use `/link` to see your quota and linked account.",
                     ephemeral=True)
                 return
             q = question.strip()
@@ -1223,12 +1222,20 @@ def build_discord_client(with_members=True):
                 return
             uid = interaction.user.id
             if not name.strip():
+                # Bare /link is the "about me" view. It lives here rather than
+                # on a bare /ask because /ask's question field is required, so
+                # /ask can no longer be submitted empty.
                 current = ask_link(uid)
+                turns = len(ask_history(uid))
                 await interaction.response.send_message(
-                    f"Your Minecraft account is set to **{current}**. "
-                    f"Change it with `/link <name>`." if current else
-                    "You have not linked a Minecraft account yet. Run "
-                    "`/link <your in-game name>` so I know who you are when you /ask.",
+                    (f"Minecraft account: **{current}** (change it with `/link <name>`).\n"
+                     if current else
+                     "You have not linked a Minecraft account yet. Run "
+                     "`/link <your in-game name>` so I know who you are when you /ask.\n")
+                    + f"Questions left today: **{ask_quota(uid)}** of {ASK_DAILY_QUOTA}.\n"
+                    + (f"I remember the last **{turns}** of our exchanges; add "
+                       f"`new_topic:True` to an /ask to start fresh."
+                       if turns else "No conversation in progress."),
                     ephemeral=True)
                 return
             n = name.strip()
