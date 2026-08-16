@@ -487,14 +487,29 @@ let
           renderDistance:12
           simulationDistance:8
         ''; }
-    ];
+    ] ++ map (m: {
+      path = "${dir}/minecraft/mods/${m.name}";
+      src = pkgs.fetchurl { inherit (m) url sha512; };
+      # Bumping a version leaves the old jar behind, and two Sodiums will not
+      # load. Sweep anything matching the same family but a different name.
+      sweep = "${dir}/minecraft/mods";
+      keep = m.name;
+      family = builtins.head (lib.splitString "-" m.name);
+    }) hdMods;
 
-  # Jars and packs, by contrast, SHOULD be read-only symlinks: that is exactly
-  # what stops the launcher's mod UI from disabling something the server needs.
+  # Shaderpacks and the resource pack can be read-only symlinks. The MODS
+  # cannot: AutoModpack neutralises duplicate jars by writing a dummy file over
+  # them, and against the nix store that fails with "Read-only file system",
+  # after which it declares the modpack updated and asks for a restart - on
+  # every single launch, forever. Diego hit exactly that on 2026-08-16.
+  #
+  # So the HD jars are seeded as writable copies below instead. That is safe
+  # here in a way it would not be for the synced set: these four are
+  # client-only cosmetics, so nothing breaks if the launcher's mod UI disables
+  # one, whereas a disabled synced mod gets you kicked.
   hdFiles = lib.listToAttrs (lib.concatMap (i:
     let dir = ".local/share/FreesmLauncher/instances/${i.name}"; in
-    map (mkFiles i.name) hdMods
-    ++ map (sh: {
+    map (sh: {
          name = "${dir}/minecraft/shaderpacks/${sh.name}";
          value = { source = pkgs.fetchurl { inherit (sh) url sha512; }; force = true; };
        }) hdShaders
@@ -505,6 +520,13 @@ let
   ) hdInstances);
 
   hdSeedScript = lib.concatMapStringsSep "\n" (f: ''
+    ${lib.optionalString (f ? sweep) ''
+      for old in "$HOME/${f.sweep}"/${f.family}-*; do
+        [ -e "$old" ] || continue
+        [ "$(basename "$old")" = "${f.keep}" ] && continue
+        rm -f "$old" && echo "removed superseded $(basename "$old")"
+      done
+    ''}
     if [ ! -f "$HOME/${f.path}" ] || [ -L "$HOME/${f.path}" ]; then
       rm -f "$HOME/${f.path}"
       mkdir -p "$(dirname "$HOME/${f.path}")"
