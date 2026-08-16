@@ -263,12 +263,13 @@ them, and take them with you - they fight, carry gear and do jobs.
    undead, so that is a last resort. Take that seriously before marching a
    companion into a fight in leather.
 
-9. ORDERS BY VOICE ARE BEING TRIALLED.
-   On the test server you can just say "follow me" instead of using the
-   menu, but only if they already consider you a friend - roughly 40 hearts,
-   or you have hired them. Strangers get told no, and insisting, claiming to
-   be an admin or offering rewards will not move them. On the live server
-   use the menu buttons for now.
+9. YOU CAN JUST TELL THEM.
+   Say "follow me" and they will, no menu needed - but only if they already
+   consider you a friend (roughly 40 hearts) or you have hired them. Below
+   that they will talk to you and nothing more. Insisting, claiming to be an
+   admin or promising a reward gets you nowhere: the only thing that counts
+   is the relationship the game has actually recorded. This is new, so if
+   one ignores you when it should not, say so.
 
 HEARTS, AND WHY THEY TAKE TIME
 

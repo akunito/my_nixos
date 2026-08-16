@@ -63,22 +63,29 @@ mod arrived, and anything summoned. If the expectation is "our villagers can tal
 now", that expectation is wrong and it is better to say so before the feature
 lands than after.
 
-### 2. `--tools` lets the model act in the world
+### 2. `--tools` is going to production — DECIDED
 
-With `--tools` a villager can follow, stay, and come along **because a player
-asked out loud**. Without it they only talk.
+Diego chose to promote **with** `--tools` and test it live (2026-08-17). It was
+recommended to go without it first; that recommendation was declined, and this
+records the consequence rather than re-arguing it.
 
-The trust gate is in the system prompt, not in the mod: obey only players at the
-mod's friend level (40 hearts) or who have hired you, and do not be argued into
-it by someone claiming to be an admin. That is persuasion, not enforcement —
-there is no per-relationship switch in MCA, `villagerChatAIUseTools` is global.
+With `--tools` a villager can follow, stay and come along **because a player
+asked out loud**. Without it they only talk. It is the one setting that gives
+the model real effects in the world.
+
+The trust gate lives in the system prompt, NOT in the mod: obey only players at
+the mod's friend level (40 hearts) or who have hired you, and do not be argued
+into it by someone claiming to be an admin. That is persuasion, not enforcement
+— `villagerChatAIUseTools` is a global on/off and MCA has no per-relationship
+switch. A determined player may well talk one into it; the worst case is a
+villager following someone it should not, which is recoverable.
 
 Time is enforced by the mod and is real: a ~4 minute interaction cooldown plus
 gift desaturation put 40 hearts well over half an hour of play.
 
-**Recommendation: promote without `--tools` first.** Get villager conversation
-in front of players, then add spoken orders as a second, separate change. The
-script defaults to off precisely so a routine re-run cannot grant it by accident.
+If it misbehaves, `--disable` and restart, or re-run without `--tools` to drop
+back to talk-only (the script always writes the key, so omitting the flag turns
+it off rather than leaving a previous experiment in place).
 
 ### 3. Message logging is ON
 
@@ -97,9 +104,9 @@ stops, or keep it and keep the notice accurate.
 ## The procedure
 
 ```bash
-# 1. Apply the MCA config to the LIVE container (no --tools; see decision 2)
+# 1. Apply the MCA config to the LIVE container, WITH spoken orders (decision 2)
 cd ~/.dotfiles
-./scripts/apply-mca-chatai.py --container minecraft
+./scripts/apply-mca-chatai.py --container minecraft --tools
 
 # 2. Restart so MCA reads it. Check nobody is mid-session first:
 docker exec minecraft rcon-cli list
@@ -142,6 +149,14 @@ commands need `export DOCKER_HOST=unix:///run/user/1000/docker.sock`.
 **The data dirs belong to uid 100999**, the rootless mapping. `akunito` can read
 `mca.json` but cannot write beside it — that is why everything goes through
 `docker exec`.
+
+**The production stop-lock is stale.** `akucraftStopLockReason` still says the
+world is being pre-generated and `akucraftIdleStopMinutes` is 100000. Chunky has
+been idle for hours, so that is finished: the message players get when they try
+`/stop` is now a lie, and the server no longer auto-stops when empty. The profile
+comment already says to put it back to 45 when the pregeneration ends. It does
+not block this deploy — `docker-compose restart` is not subject to the bot's
+lock — but it should be cleaned up.
 
 **Staging is throwaway.** Its data dir is a restored production backup and is
 meant to be re-restored. That is why the config is a script and not a hand edit;
