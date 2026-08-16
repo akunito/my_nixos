@@ -93,7 +93,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:*
    - `systemSettings.homelabDockerEnable or false`
    - `(systemSettings.financeUser or "") != ""`
-- **system/app/litellm.nix**: LiteLLM — OpenAI-compatible LLM gateway (AkuCraft AI backend). *Enabled when:* `toString writeEnv`
+- **system/app/litellm.nix**: LiteLLM — OpenAI-compatible LLM gateway (AkuCraft AI backend). *Enabled when:* `cfg.litellmLogMessages or false`
 - **system/app/llama-server.nix**: Local LLM inference server — llama.cpp `llama-server`, Vulkan backend, *Enabled when:*
    - `Vulkan`
    - `never through a derivation`
@@ -577,6 +577,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Akunito / Plans
 
 - **docs/akunito/plans/akucraft-ai-handoff.md**: Handoff for building the AkuCraft AI work - villager conversations in MCA and a per-player Discord support assistant with usage limits
+- **docs/akunito/plans/akucraft-ai-prod-handoff.md**: What is built, what is verified, and the exact steps to take the AkuCraft AI work from staging to production
 - **docs/akunito/plans/akucraft-frontier-world.md**: Test plan and rollout plan for a second, harder survival world generated with Terralith, reachable from the existing world
 - **docs/akunito/plans/akucraft-roadmap-plan.md**: Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
