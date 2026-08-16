@@ -11,8 +11,8 @@ remembering nine keys.
 Idempotent: run it as often as you like. It backs up the file first and prints
 what it changed, with the token redacted.
 
-    ./scripts/apply-mca-chatai.py --data-dir ~/.homelab/backups/mca-staging
-    ./scripts/apply-mca-chatai.py --data-dir ... --disable     # turn it back off
+    ./scripts/apply-mca-chatai.py --container mc-mca-staging
+    ./scripts/apply-mca-chatai.py --container mc-mca-staging --disable
 
 The server must be RESTARTED afterwards: MCA reads this config at startup.
 
@@ -30,7 +30,7 @@ Deliberately left alone:
 import argparse
 import json
 import os
-import shutil
+
 import subprocess
 import sys
 import time
@@ -74,20 +74,38 @@ def secret(name, repo):
 def main():
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data-dir", required=True,
-                    help="server data dir (the one mounted as /data)")
+    # Read and write through the container, not the host filesystem. The data
+    # dirs belong to uid 100999 (the rootless-docker mapping), so `akunito`
+    # cannot create a file in config/ even though it can read one. Inside the
+    # container those same files are owned by the container user. Same approach
+    # akucraft-invite.sh already uses for whitelist.json.
+    ap.add_argument("--container", required=True,
+                    help="running server container, e.g. mc-mca-staging")
     ap.add_argument("--host", default="100.64.0.6", help="LiteLLM host")
     ap.add_argument("--port", default="4711", help="LiteLLM port")
     ap.add_argument("--disable", action="store_true",
                     help="turn villager chat AI back off, leaving the rest")
     args = ap.parse_args()
 
-    cfg = os.path.join(os.path.expanduser(args.data_dir), "config", "mca.json")
-    if not os.path.exists(cfg):
-        sys.exit(f"no MCA config at {cfg} - has the server ever started?")
+    cfg = "/data/config/mca.json"
 
-    with open(cfg) as f:
-        data = json.load(f)
+    # The Minecraft stack runs under ROOTLESS docker as this user. A plain ssh
+    # command inherits no DOCKER_HOST, so `docker` would talk to a root daemon
+    # that does not have these containers and report "no such object".
+    sock = f"/run/user/{os.getuid()}/docker.sock"
+    if "DOCKER_HOST" not in os.environ and os.path.exists(sock):
+        os.environ["DOCKER_HOST"] = f"unix://{sock}"
+
+    def dexec(cmd, stdin=None):
+        return subprocess.run(["docker", "exec"] + (["-i"] if stdin else [])
+                              + [args.container] + cmd,
+                              input=stdin, capture_output=True, text=True)
+
+    got = dexec(["cat", cfg])
+    if got.returncode != 0:
+        sys.exit(f"cannot read {cfg} in {args.container}: "
+                 f"{got.stderr.strip() or 'is the container running?'}")
+    data = json.loads(got.stdout)
 
     if args.disable:
         wanted = {"enableVillagerChatAI": False}
@@ -109,14 +127,17 @@ def main():
         return
 
     backup = f"{cfg}.bak-{time.strftime('%Y%m%d-%H%M%S')}"
-    shutil.copy2(cfg, backup)
+    cp = dexec(["cp", cfg, backup])
+    if cp.returncode != 0:
+        sys.exit(f"could not back up {cfg}: {cp.stderr.strip()}")
     data.update(wanted)
-    tmp = cfg + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(data, f, indent=2)
-    os.replace(tmp, cfg)
+    # tee, not a shell redirect: `docker exec sh -c '> file'` would truncate the
+    # config before the new content is written, losing it if anything fails.
+    wrote = dexec(["tee", cfg], stdin=json.dumps(data, indent=2))
+    if wrote.returncode != 0:
+        sys.exit(f"could not write {cfg}: {wrote.stderr.strip()}")
 
-    print(f"backup: {backup}")
+    print(f"backup: {args.container}:{backup}")
     for k, (old, new) in changed.items():
         redact = lambda v: "<token>" if k == "villagerChatAIToken" and v else v
         print(f"  {k}: {redact(old)!r} -> {redact(new)!r}")
