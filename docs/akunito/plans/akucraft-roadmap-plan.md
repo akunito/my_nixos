@@ -291,6 +291,44 @@ decision (spell books survive death) and must not regress.
 **Rollback:** delete the datapack directory, `/reload`. Items already equipped in
 a removed slot drop to the player; verify that on a test player before shipping.
 
+### 5.1 DEFERRED — the roadmap is wrong about this one
+
+The roadmap calls 7.2 *"máxima relación valor/coste de todo el documento"*.
+Audited on 2026-08-16, and it delivers **nothing**, because the premise is
+wrong: enabling a slot is worthless if no item can go in it.
+
+What is actually installed:
+
+| Layer | State |
+|---|---|
+| Slot definitions | Trinkets already ships all 18 (hat, face, cape, back, belt, shoes, aglet, glove, ring...). **Nothing to define.** |
+| Live on the player | `spell/book`, `spell/trinket`, `misc/quiver`, `chest/necklace`, `hand/ring` (Spell Engine) + `legs/key`, `legs/quiver` (Supplementaries) |
+| Equippable items | **Only Supplementaries' key and quiver.** |
+
+The killer detail: Spell Engine's `#spell_engine:spell_ring` and
+`#spell_engine:spell_necklace` tags are **empty arrays**. They are extension
+points for addon mods, and none of Wizards / Paladins & Priests / Rogues &
+Warriors populate them. So `hand/ring` and `chest/necklace` are already live
+*and already useless* — there is not a single ring or necklace in this modpack.
+
+Assigning the remaining slots would therefore add empty boxes to the inventory
+screen: visible, unfillable, and an invitation to "how do I use this?" in
+#mc-support.
+
+The one thing that could have been free — `offhand/ring`, which Trinkets
+defines and Spell Engine already tags — is worthless for the same reason: the
+tag it points at is empty.
+
+**Decision: do not write the datapack yet.** It is groundwork whose payoff
+depends entirely on a trinket item source that does not exist. Revisit when
+either (a) a mod that adds wearables is installed, or (b) Phase 5's loot work
+creates items worth tagging. At that point this becomes what the roadmap
+claimed — cheap and high value — because the slots are already defined and only
+the entity assignment and item tags are missing.
+
+Recorded because it is exactly the kind of task that looks free on paper and
+would have cost a deploy, an announcement and a support thread for zero gain.
+
 ---
 
 ## 6. Phase 3 — Operational mods (server-side, zero client change)
@@ -359,6 +397,17 @@ client+server and can wait for a later pack bump. `mowzies-mobs` is dropped: no
 **Rollback:** removing a structure mod leaves its already-generated structures
 as unknown blocks. Prefer to keep, or restore from backup. Add structure mods
 one at a time so a bad one is attributable.
+
+### 9.1 Server-side half DONE 2026-08-16
+
+`towns-and-towers:1.13.11` + `when-dungeons-arise:2.1.68` + `cristel-lib`.
+All server-side, so no pack rebuild and nobody reinstalled anything. 55 mods,
+clean startup, no worldgen warnings, both claims verified intact afterwards.
+
+Still outstanding for this phase: `bosses-of-mass-destruction` is client+server
+and waits for the next pack bump, so it should ride along with Phase 4 rather
+than trigger a re-import of its own. `mowzies-mobs` is dropped — no 1.21.1
+Fabric build exists.
 
 ---
 
