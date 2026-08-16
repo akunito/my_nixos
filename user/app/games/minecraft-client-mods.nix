@@ -369,20 +369,25 @@ let
       url = "https://cdn.modrinth.com/data/k68glP2e/versions/ig9vuxA6/automodpack-mc1.21.1-fabric-4.0.6.jar";
       sha512 = "bd7194b62a99b66dbdd3885ad95516c20e81404bbfacccefb013f867713a9afade507c617ecfc77bf50bcb303977d0849ffad4db3e476ac8938829e641298095";
     }
-    # Sodium 0.6.13, NOT the newer 0.8.12. Iris 1.8.8 requires a 0.6.x Sodium,
-    # and Sodium 0.8.12 in turn refuses any Iris below 1.8.13 - picking the
-    # latest release of each independently gives a pair that will not launch.
-    # The only 1.21.1 Iris at/above 1.8.13 is a beta, so this is the newest
-    # combination where both halves are stable releases.
+    # This pair is forced, and not by these three mods alone.
+    #
+    #   Supplementaries (a SERVER mod we ship)  breaks sodium <0.8.12-beta.1
+    #   Sodium 0.8.12                           breaks iris   <1.8.13
+    #   Iris 1.8.14-beta.1                      needs  sodium 0.8.x
+    #
+    # so a beta Iris is the only option, and picking the newest stable release
+    # of each in isolation - as this file did at first - produces a set that
+    # Fabric refuses to load. Check any change here against the FULL delivered
+    # mod list, not just this block.
     {
-      name = "sodium-fabric-0.6.13+mc1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/AANobbMI/versions/u1OEbNKx/sodium-fabric-0.6.13%2Bmc1.21.1.jar";
-      sha512 = "13032e064c554fc8671573dadb07bc70e6ea2f68706c65c086c4feb1d2f664346a3414cbf9d1367b42b8d063a35e40f2f967ef9af31642e1f0093b852161fe91";
+      name = "sodium-fabric-0.8.12+mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/AANobbMI/versions/KIRFiWG4/sodium-fabric-0.8.12%2Bmc1.21.1.jar";
+      sha512 = "8afe411eec65a9f677611ed6390ce656e5a3572f9be473e5dca51ae882a9426a547cd2e8c793278577bb14c17e48158030b11753108926ef33698614bd94ed7f";
     }
     {
-      name = "iris-fabric-1.8.8+mc1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/YL57xq9U/versions/zsoi0dso/iris-fabric-1.8.8%2Bmc1.21.1.jar";
-      sha512 = "2e6ba2ffa1e1a6799288245a7e0ac68ee8df1d41b98362189df58f535cae34fa9277801e4136633467341b7dae5be0e5c698011b480b3d91b66d3dd4f7567aa6";
+      name = "iris-fabric-1.8.14-beta.1+mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/YL57xq9U/versions/bAo1Qhte/iris-fabric-1.8.14-beta.1%2Bmc1.21.1.jar";
+      sha512 = "a7fbb629793c52f0be8b049f787cb598879239b1ad8e1de62e103c8b9efff140e3232b93ef1f14e505d262897d8cf9505b1126396429ad4056bff969c8674e52";
     }
     {
       name = "DistantHorizons-3.2.0-b-1.21.1-fabric-neoforge.jar";

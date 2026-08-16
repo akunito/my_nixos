@@ -112,11 +112,12 @@ def main():
         f"docker exec {container} ls /data/mods").split()
     exclude = sorted(j for j in server_jars if j not in client_ok)
 
+    allow = sorted(j for j in server_jars if j in client_ok)
     print(f"target      : {args.target} ({container})")
     print(f"server jars : {len(server_jars)}")
-    print(f"sent        : {len(server_jars) - len(exclude)} + "
+    print(f"sent        : {len(allow)} from the server + "
           f"{len(client_only)} client-only")
-    print(f"excluded    : {len(exclude)} server-side jars")
+    print(f"withheld    : {len(exclude)} server-side jars")
     for j in exclude:
         print(f"    - {j}")
     print("client-only jars pushed to host-modpack:")
@@ -125,9 +126,14 @@ def main():
     if args.dry_run:
         return
 
-    # syncedFiles is evaluated in order; '!' entries veto. Exclude by exact
-    # filename rather than a pattern so a future jar cannot be dropped silently.
-    synced = ["!/mods/" + j for j in exclude] + ["/mods/*.jar"]
+    # An ALLOW-list, not a deny-list. The first version of this listed the
+    # server-only jars as '!' vetoes followed by /mods/*.jar, which fails OPEN:
+    # every mod added to the server afterwards was shipped to clients by
+    # default. That is how Multiworld and iCommonLib - server-side, and built
+    # for Minecraft 1.21.9 - reached a 1.21.1 client and stopped it launching
+    # (2026-08-16). Naming exactly what may be sent fails closed instead: a new
+    # server mod reaches nobody until it is added to the nix client set.
+    synced = sorted("/mods/" + j for j in server_jars if j in client_ok)
     cfg_patch = json.dumps({
         "syncedFiles": synced,
         "requireAutoModpackOnClient": bool(args.require_client),

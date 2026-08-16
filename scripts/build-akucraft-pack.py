@@ -49,11 +49,11 @@ AUTOMODPACK_VERSION_ID = "ig9vuxA6"
 # launch at all with an unresolved dependency, so it would brick the very first
 # start. Anyone who wants it can add it after their first join.
 HD_MOD_VERSION_IDS = {
-    # Sodium 0.6.13, not 0.8.12: Iris 1.8.8 requires a 0.6.x Sodium and 0.8.12
-    # refuses any Iris below 1.8.13, so the latest release of each does not
-    # launch together. The only 1.21.1 Iris >= 1.8.13 is a beta.
-    "sodium":          "u1OEbNKx",
-    "iris":            "zsoi0dso",   # shader loader
+    # Forced pair: Supplementaries (a server mod) breaks sodium <0.8.12-beta.1,
+    # sodium 0.8.12 breaks iris <1.8.13, and the only 1.21.1 iris that high is a
+    # beta. Check any change against the FULL delivered mod list.
+    "sodium":          "KIRFiWG4",   # 0.8.12
+    "iris":            "bAo1Qhte",   # 1.8.14-beta.1 (beta is forced, see above)
     "distant-horizons": "ZpKb4kZp",  # LOD rendering - see far while exploring
 }
 HD_SHADER_VERSION_IDS = {
