@@ -317,6 +317,67 @@ mod is verified. Lowest priority; the roadmap already puts it last.
 
 ---
 
+## 13b. `#mc-guides` — a first-class deliverable, not an afterthought
+
+Every phase ships player-facing documentation **with worked examples**, or the
+phase is not done. A feature nobody knows how to use is not a feature.
+
+Rules, already in force:
+- Guides describe the **current state**. Never deltas, never "as of update 3".
+  A player reads one post and knows how the thing works today.
+- Announcements carry the delta. That is what they are for.
+- Every guide includes **copy-pasteable examples**, not just command syntax.
+  `/flan permission group friends flan:break true` teaches more than
+  "grant the break permission".
+- Anything that bit us goes in as a warning: the `flan:` prefix, the
+  `delete`/`deleteAll` autocomplete trap, case-sensitive player names,
+  "empty the mods folder first".
+
+### Existing backlog (already owed, before any new phase)
+
+`#mc-guides` has six posts and is behind by three features shipped since:
+
+| Missing guide | Covers |
+|---|---|
+| **Fast travel** | sswaystones: craft, place, name, global vs private, cross-dimension. The crafting cost *is* the price of marking a place |
+| **Homes, warps and tpa** | WarpUtils: 1 home max, 1h cooldown, `/warp market` at 10 min, `/tpa`, `/back`, the 5s stand-still and the 15s combat lockout — and why those limits exist |
+| **Trading and the market** | Universal Shops: the 4 planks + wool + iron recipe, placing against a chest, stocking it, selling while offline. **Diamonds are the currency** — convention, not enforced, so it must be stated loudly |
+
+Also needs a refresh once Phase 2 lands: the death/graves guide should mention
+soulbound and the trinket slots.
+
+### Owed now: the "state of the server" announcement
+
+Separately from the per-phase deltas, one **big summary announcement** is owed.
+Six announcements have gone out in three days and a player who missed one has an
+incoherent picture. This one is not a delta — it is "here is everything AkuCraft
+has now", written so a returning player reads one message and is current:
+
+skins · the 3D map with the Nether · graves and soulbound · shields and parry ·
+the Enchanting Infuser and widened enchanting · backpacks · land claims and
+groups · fast travel · homes, warps and tpa · player shops and diamonds ·
+the RPG classes · and where the guides and support forums are.
+
+Post it once the market and its `/warp` exist, so it describes a finished state
+rather than one with a hole in it.
+
+### Per phase, from now on
+
+| Phase | Guide work |
+|---|---|
+| 0 | none (invisible to players) |
+| 1 | rewrite the install guide for `.mrpack`; keep the zip path until migrated |
+| 2 | new: trinket slots — what each slot takes, where the items come from |
+| 3 | update: chat formatting changes are visible; permissions mostly are not |
+| 4 | new: skills — how to earn points, spend them, and **that ignoring it is fine** |
+| 5 | new: economy — what money is, how to earn, where the sink is |
+| 6 | update: what new structures exist and that they only spawn in fresh land |
+| 7 | `SERVER_MANIFEST.md` is generated *from* these guides; keep them the source |
+| 8 | new: MCA — villagers are people now. Biggest behavioural change; needs the most examples |
+| 9 | update: NPCs can talk; state the moderation rules |
+
+---
+
 ## 14. Per-deployment checklist
 
 Every phase, without exception:

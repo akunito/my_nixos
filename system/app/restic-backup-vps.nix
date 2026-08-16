@@ -182,6 +182,39 @@ let
         log "Dumping Vaultkeeper SQLite database..."
         ${pkgs.sqlite}/bin/sqlite3 "$VAULTKEEPER_DB" ".backup /home/${username}/.openclaw/workspace/finance/data/vaultkeeper-backup.db" 2>&1 || log "WARNING: Vaultkeeper DB dump failed (non-fatal)"
       fi
+
+      # Quiescent copy of the Minecraft world.
+      #
+      # Without this we back up region files while the server is mid-write, so
+      # the snapshot is crash-consistent at best and a restore can carry corrupt
+      # chunks. Restore from data/world-snapshot, not data/world.
+      #
+      # The copy runs INSIDE the container on purpose: data/world is owned by
+      # the container uid (100999 on the host) and this service runs as
+      # ${username}. restic can read it via CAP_DAC_READ_SEARCH on its wrapper,
+      # but a plain cp here cannot. Doing it container-side sidesteps that.
+      #
+      # Every step is `|| true`-guarded so `set -e` can never skip save-on and
+      # leave the live server with saving disabled.
+      export DOCKER_HOST=unix:///run/user/1000/docker.sock
+      if docker ps --format '{{.Names}}' 2>/dev/null | grep -qw minecraft; then
+        DOCKER=docker
+        log "Minecraft is running - flushing world to disk before snapshot..."
+        $DOCKER exec minecraft rcon-cli save-off      >/dev/null 2>&1 || log "WARNING: save-off failed"
+        $DOCKER exec minecraft rcon-cli save-all flush >/dev/null 2>&1 || log "WARNING: save-all flush failed"
+        sleep 3
+        # Copy to .tmp then swap, so an interrupted run never leaves a
+        # half-written snapshot as the thing we would restore from.
+        $DOCKER exec minecraft sh -c 'rm -rf /data/world-snapshot.tmp && cp -a /data/world /data/world-snapshot.tmp && rm -rf /data/world-snapshot && mv /data/world-snapshot.tmp /data/world-snapshot' \
+          >/dev/null 2>&1 && log "World snapshot refreshed" || log "WARNING: world snapshot copy failed (non-fatal)"
+        $DOCKER exec minecraft rcon-cli save-on >/dev/null 2>&1 \
+          && log "Saving re-enabled" \
+          || log "CRITICAL: could not re-enable saving - run 'rcon-cli save-on' by hand"
+      else
+        # Server stopped: data/world on disk is already quiescent, so the live
+        # copy in this snapshot is itself a valid restore point.
+        log "Minecraft not running - live world is already consistent, skipping flush"
+      fi
     '';
     description = "Docker configs, Headscale state, secrets, Vaultwarden, Uptime Kuma, OpenClaw, UniFi, n8n, Plane";
   };
