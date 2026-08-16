@@ -431,9 +431,22 @@ in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
       du -sh "$DEST" 2>/dev/null | sed 's/^/  size: /'
       log "Local snapshot ready: $DEST"
 
-      # Prune to the last 10 local snapshots (292M each)
-      ls -1dt /home/${username}/.homelab/backups/akucraft/*/ 2>/dev/null \
-        | tail -n +11 | xargs -r rm -rf
+      # Prune local snapshots by TOTAL SIZE, not by count.
+      #
+      # This kept the last 10, a number chosen when the world was 292 MB. The
+      # +-12000 pregeneration takes it to roughly 27 GB, at which point ten
+      # snapshots is 270 GB and the disk has 163 GB free - it would have filled
+      # the disk the first time it ran afterwards. Offsite is unaffected either
+      # way: restic deduplicates, so history there is cheap.
+      LOCAL_BUDGET_GB=60
+      total=0
+      for d in $(ls -1dt /home/${username}/.homelab/backups/akucraft/*/ 2>/dev/null); do
+        sz=$(du -sm "$d" 2>/dev/null | cut -f1)
+        total=$(( total + sz ))
+        if [ "$total" -gt $(( LOCAL_BUDGET_GB * 1024 )) ]; then
+          rm -rf "$d" && log "pruned $d (local snapshots over ''${LOCAL_BUDGET_GB}G)"
+        fi
+      done
 
       if [ "$COPY_OK" != "1" ]; then
         log "REFUSING to push a snapshot that failed verification. Fix it first."
