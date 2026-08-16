@@ -48,12 +48,10 @@ AUTOMODPACK_VERSION_ID = "ig9vuxA6"
 # pack only arrives from the server on first connect - Fabric Loader refuses to
 # launch at all with an unresolved dependency, so it would brick the very first
 # start. Anyone who wants it can add it after their first join.
+# Sodium and Iris are NOT here: every client already receives them through the
+# AutoModpack allow-list, and a second copy in this pack is a duplicate mod id
+# that Fabric refuses to load. This pack only carries what nothing else provides.
 HD_MOD_VERSION_IDS = {
-    # Forced pair: Supplementaries (a server mod) breaks sodium <0.8.12-beta.1,
-    # sodium 0.8.12 breaks iris <1.8.13, and the only 1.21.1 iris that high is a
-    # beta. Check any change against the FULL delivered mod list.
-    "sodium":          "KIRFiWG4",   # 0.8.12
-    "iris":            "bAo1Qhte",   # 1.8.14-beta.1 (beta is forced, see above)
     "distant-horizons": "ZpKb4kZp",  # LOD rendering - see far while exploring
 }
 HD_SHADER_VERSION_IDS = {

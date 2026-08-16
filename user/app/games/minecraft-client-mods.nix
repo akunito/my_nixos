@@ -297,59 +297,9 @@ let
       url = "https://cdn.modrinth.com/data/9s6osm5g/versions/HpMb5wGb/cloth-config-15.0.140-fabric.jar";
       sha512 = "1b3f5db4fc1d481704053db9837d530919374bf7518d7cede607360f0348c04fc6347a3a72ccfef355559e1f4aef0b650cd58e5ee79c73b12ff0fc2746797a00";
     }
-    # Sodium - a rewrite of the chunk renderer. This is NOT a graphics mod: it
-    # makes the game faster, most of all on weak hardware, and it replaces the
-    # vanilla Video Settings with a far richer screen. 0.8.12 specifically,
-    # because Supplementaries - which every client already has - breaks with
-    # anything below 0.8.12-beta.1.
-    #
-    # Iris deliberately stays HD-only: the only Iris that accepts Sodium 0.8.x
-    # is a beta, and a beta rendering mod does not belong on everyone's machine
-    # when the shaders it loads are opt-in anyway.
-    {
-      name = "sodium-fabric-0.8.12+mc1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/AANobbMI/versions/KIRFiWG4/sodium-fabric-0.8.12%2Bmc1.21.1.jar";
-      sha512 = "8afe411eec65a9f677611ed6390ce656e5a3572f9be473e5dca51ae882a9426a547cd2e8c793278577bb14c17e48158030b11753108926ef33698614bd94ed7f";
-    }
-    {
-      name = "modmenu-11.0.4.jar";
-      url = "https://cdn.modrinth.com/data/mOgUt4GM/versions/v6Xx3fbU/modmenu-11.0.4.jar";
-      sha512 = "45ea8f7e0749bc0eb98900f94486e323f153b199617fa43977b46472e4196ee5a6739f41a1e7f68e270f84a367df5f7f53c2a1f46145ad7d349ede4297895396";
-    }
-    {
-      name = "xaerominimap-fabric-1.21.1-26.4.2.jar";
-      url = "https://cdn.modrinth.com/data/1bokaNcj/versions/Tx54V6kI/xaerominimap-fabric-1.21.1-26.4.2.jar";
-      sha512 = "153c2273971f2a8b0dbd25a60aff67eb4018b7b8c4786a6d3bdfa97860054200d7d69f634ae2d86f46cc00a66fba53370507bfda7c5f42ed5cc559dbb8d42a59";
-    }
-    {
-      name = "xaeroworldmap-fabric-1.21.1-1.44.2.jar";
-      url = "https://cdn.modrinth.com/data/NcUtCpym/versions/L2nO7ZYD/xaeroworldmap-fabric-1.21.1-1.44.2.jar";
-      sha512 = "991c8745dda265d9a669271a0f72873a2df1592265ca65338dc4f45cd864d1cf6a17217019b962bf5ebe345110796fea0d7bc602bf8f97cbbae75f33ed3569fc";
-    }
-    {
-      name = "maplink-fabric-4.5.1-1.21-1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/kiByZ6gx/versions/nNX7KTbD/maplink-fabric-4.5.1-1.21-1.21.1.jar";
-      sha512 = "0788738d3ea30908d7ccefbbf5529afa0aef6aa57b5ae0e55abe7ee0b7eee3bf6d21c5e42e14aff367205efa13174628595d09aec301a8c23af42a26719452b8";
-    }
-    # EMI (item/recipe viewer). Was a hand-copied file for a long time, which
-    # meant it was the one mod a mods-folder wipe would NOT restore. Now pinned
-    # like the rest, and it ships in the player mod pack too.
-    {
-      name = "emi-1.1.24+1.21.1+fabric.jar";
-      url = "https://cdn.modrinth.com/data/fRiHVvU7/versions/on5GT1qh/emi-1.1.24%2B1.21.1%2Bfabric.jar";
-      sha512 = "2680e7b0a93152d4220afdc30a0452c911dc4b5c9ce1db1b7246c21b777bc2a1945fe97c98c09941d31b7478ae357135a1ef51cd3ba92d08dce35202a830b70d";
-    }
-  ];
-
-  # Mods on trial on the staging server only. Move an entry into syncedMods
-  # when it graduates to production, and drop it from
-  # STAGING_EXTRA_VERSION_IDS in scripts/build-akucraft-pack.py at the same
-  # time so the two stay in step.
-  # Mods on trial on the staging server only - empty right now. Add an entry
-  # here to test a candidate against :25599 without touching the instances that
-  # connect to the live server, then move it into syncedMods when it graduates
-  # (and add it to the prod compose in the same change).
-  trialMods = [
+    # --- Graduated from staging 2026-08-16, after in-game verification ---
+    # Sorting keeps artefacts in their Trinkets slots, the torch lights the
+    # offhand, and the delivered set audits clean.
     # --- Quality of life, added 2026-08-16 ---
     # All client-only, all verified against the installed set: none of them
     # declares a conflict with anything we run. Deliberately no mod here drags
@@ -429,84 +379,75 @@ let
       url = "https://cdn.modrinth.com/data/yBW8D80W/versions/DZDOX6ps/lambdynamiclights-4.8.10%2B1.21.1.jar";
       sha512 = "2a8ca94cd56e9e5ed046126f4b03edba2965c8fe76210ebc5ca53bb075832274dce1cb438082fbc2aea268f93986ad17b6231afad7c100359a9185bba517c4f9";
     }
-    # --- Quality of life, added 2026-08-16 ---
-    # All client-only, all verified against the installed set: none of them
-    # declares a conflict with anything we run. Deliberately no mod here drags
-    # in a new config library - Zoomify and Controlling were dropped for that
-    # reason, in favour of Logical Zoom which needs nothing.
+    # Iris rides along with Sodium for everyone, and not because non-HD players
+    # need shaders - they get an empty Shader Packs menu and nothing else. It is
+    # here because the HD pack CANNOT ship its own copy of Sodium: AutoModpack
+    # now delivers Sodium to every client, so a second copy in the HD instance
+    # is a duplicate mod id and Fabric refuses to start. Iris hard-depends on
+    # Sodium at launch, so if Iris stays HD-local it needs a local Sodium too.
+    # Moving both here removes the duplicate instead of relying on AutoModpack
+    # noticing and neutralising it - which is the mechanism that produced an
+    # infinite "restart your game" loop earlier today.
+    {
+      name = "iris-fabric-1.8.14-beta.1+mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/YL57xq9U/versions/bAo1Qhte/iris-fabric-1.8.14-beta.1%2Bmc1.21.1.jar";
+      sha512 = "a7fbb629793c52f0be8b049f787cb598879239b1ad8e1de62e103c8b9efff140e3232b93ef1f14e505d262897d8cf9505b1126396429ad4056bff969c8674e52";
+    }
+    # Sodium - a rewrite of the chunk renderer. This is NOT a graphics mod: it
+    # makes the game faster, most of all on weak hardware, and it replaces the
+    # vanilla Video Settings with a far richer screen. 0.8.12 specifically,
+    # because Supplementaries - which every client already has - breaks with
+    # anything below 0.8.12-beta.1.
     #
-    # libIPN is not optional decoration: Inventory Profiles Next requires it.
+    # Iris deliberately stays HD-only: the only Iris that accepts Sodium 0.8.x
+    # is a beta, and a beta rendering mod does not belong on everyone's machine
+    # when the shaders it loads are opt-in anyway.
     {
-      name = "libIPN-fabric-1.21.1-6.6.3.jar";
-      url = "https://cdn.modrinth.com/data/onSQdWhM/versions/PSscYPRs/libIPN-fabric-1.21.1-6.6.3.jar";
-      sha512 = "765991facc85b2cbc5a40c5ddc506da16f18a5c43de7c42757195dbc8d43e09573504602d3695de0054e5a868c6368fca7ad982738f509ba17a68d373532d16c";
-    }
-    # The actual request: sorting buttons, auto-refill, lockable slots.
-    {
-      name = "InventoryProfilesNext-fabric-1.21.1-2.2.6.jar";
-      url = "https://cdn.modrinth.com/data/O7RBXm3n/versions/h1db7jG7/InventoryProfilesNext-fabric-1.21.1-2.2.6.jar";
-      sha512 = "329ba98932110af7905e0108f96aef2750a2cc6a6eec6fdc7c4a6b3682a9886d91b695ecc9677c2a619d829642a1f795dd01c32564f18e0151a861c9e3a158b1";
-    }
-    # Drag across slots to move or split stacks. Pairs with the above.
-    {
-      name = "MouseTweaks-fabric-mc1.21-2.26.jar";
-      url = "https://cdn.modrinth.com/data/aC3cM3Vq/versions/ylmBQ38A/MouseTweaks-fabric-mc1.21-2.26.jar";
-      sha512 = "1744a48a47aedcbf19a0a93f78473cf0221fc4782852dca7fc02685719174664b4f9d95d353fcfc16902ac3815594511ba6d9ab14391f9b7e25ec9b2e777927a";
-    }
-    # Look at a block or mob and see what it is. With ~80 mods, half of what
-    # you find is unfamiliar, so this is worth more here than on a vanilla server.
-    {
-      name = "Jade-1.21.1-Fabric-15.10.6.jar";
-      url = "https://cdn.modrinth.com/data/nvQzSEkH/versions/adpNvTZS/Jade-1.21.1-Fabric-15.10.6.jar";
-      sha512 = "fbae1c796368a09c579dd780a1d510fa5ab73f0eca370ddbfe0a9e6ca162e1b806261577306a259773f309dc4938a839b2065c5eef98b2810855c241addf17f5";
-    }
-    # Shows saturation and what a food actually restores - matters more if we
-    # ever turn natural regeneration off in the frontier world.
-    {
-      name = "appleskin-fabric-mc1.21-3.0.6.jar";
-      url = "https://cdn.modrinth.com/data/EsAfCjCV/versions/b5ZiCjAr/appleskin-fabric-mc1.21-3.0.6.jar";
-      sha512 = "accbb36b863bdeaaeb001f7552534f3bdf0f27556795cf8e813f9b32e7732450ec5133da5e0ec9b92dc22588c48ffb61577c375f596dc351f15c15ce6a6f4228";
-    }
-    # A zoom key. Chosen over Zoomify purely because it needs no config library.
-    {
-      name = "logical_zoom-0.0.26.jar";
-      url = "https://cdn.modrinth.com/data/8bOImuGU/versions/8T4BLoiy/logical_zoom-0.0.26.jar";
-      sha512 = "3914d15f37fc208496a13e8956988fc8cbe4b7673e39b4835748ff3655267f4f3d99e39ee4926880d562663e354966096e4b1aba65c5c66ded947dd7a28cc1ed";
-    }
-    # Free frames: skips rendering entities hidden behind blocks. Worth the most
-    # here of anywhere, because MCA fills villages with named NPCs.
-    {
-      name = "entityculling-fabric-1.10.5-mc1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/NNAgCjsB/versions/hsWvcyFJ/entityculling-fabric-1.10.5-mc1.21.1.jar";
-      sha512 = "5072ddbfc8dbbef450cd80b1e4824a9bd9a5e084ac285eea15f92baef47ab2bf4c37991ec68b56cee47c8b29905ca699f79676ae1c6c964cc92632d2761dd21a";
+      name = "sodium-fabric-0.8.12+mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/AANobbMI/versions/KIRFiWG4/sodium-fabric-0.8.12%2Bmc1.21.1.jar";
+      sha512 = "8afe411eec65a9f677611ed6390ce656e5a3572f9be473e5dca51ae882a9426a547cd2e8c793278577bb14c17e48158030b11753108926ef33698614bd94ed7f";
     }
     {
-      name = "ImmediatelyFast-Fabric-1.6.11+1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/5ZwdcRci/versions/ATB4eNEP/ImmediatelyFast-Fabric-1.6.11%2B1.21.1.jar";
-      sha512 = "f80f7d1d046c65795a51f8338c3189d014eb7b7adcab382259c2d1174c196503640ef2e57fea6e89e17bdcb00e3f1847eafe9db1f283c2cd958cb6df28020920";
+      name = "modmenu-11.0.4.jar";
+      url = "https://cdn.modrinth.com/data/mOgUt4GM/versions/v6Xx3fbU/modmenu-11.0.4.jar";
+      sha512 = "45ea8f7e0749bc0eb98900f94486e323f153b199617fa43977b46472e4196ee5a6739f41a1e7f68e270f84a367df5f7f53c2a1f46145ad7d349ede4297895396";
     }
-    # Puts each player's face next to their chat messages. Small, but this is a
-    # server of six friends, so it earns its place.
     {
-      name = "chat_heads-0.15.7-fabric-1.21.jar";
-      url = "https://cdn.modrinth.com/data/Wb5oqrBJ/versions/5t3tM2L3/chat_heads-0.15.7-fabric-1.21.jar";
-      sha512 = "2d34ad4031fcf9f8cef8e88d3a69ed2c2d8e0ad32c5571f551e82f045a17c20ed896771c9cd731c8183a4a9134141172a4db733684adfb35e789237d30fec0a9";
+      name = "xaerominimap-fabric-1.21.1-26.4.2.jar";
+      url = "https://cdn.modrinth.com/data/1bokaNcj/versions/Tx54V6kI/xaerominimap-fabric-1.21.1-26.4.2.jar";
+      sha512 = "153c2273971f2a8b0dbd25a60aff67eb4018b7b8c4786a6d3bdfa97860054200d7d69f634ae2d86f46cc00a66fba53370507bfda7c5f42ed5cc559dbb8d42a59";
     }
-    # Sodium Dynamic Lights - a held torch lights the area. Vanilla has no such
-    # thing, and what Diego was seeing came from the Complementary shader's own
-    # HELD_LIGHTING_MODE, so it existed only for HD players and only in the main
-    # hand. This gives it to everyone, in both hands, without shaders.
-    #
-    # On trial first because the actual requirement - the OFF hand - is not
-    # something either this mod or LambDynamicLights states outright.
-    #
-    # Note for HD players: its own docs say to turn off first-person lighting
-    # when the shader already provides it, or the two stack.
     {
-      name = "sodiumdynamiclights-fabric-1.0.10-1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/PxQSWIcD/versions/BsbJhy7W/sodiumdynamiclights-fabric-1.0.10-1.21.1.jar";
-      sha512 = "395affdb6d2484c071a2905ad247c8c5b13a4fa82f59e1a4c92a043409958f29fab4b4274a2e4aa6d9b55c6fecb4070d4595627e6d309da90bf83ba665fdc84e";
+      name = "xaeroworldmap-fabric-1.21.1-1.44.2.jar";
+      url = "https://cdn.modrinth.com/data/NcUtCpym/versions/L2nO7ZYD/xaeroworldmap-fabric-1.21.1-1.44.2.jar";
+      sha512 = "991c8745dda265d9a669271a0f72873a2df1592265ca65338dc4f45cd864d1cf6a17217019b962bf5ebe345110796fea0d7bc602bf8f97cbbae75f33ed3569fc";
     }
+    {
+      name = "maplink-fabric-4.5.1-1.21-1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/kiByZ6gx/versions/nNX7KTbD/maplink-fabric-4.5.1-1.21-1.21.1.jar";
+      sha512 = "0788738d3ea30908d7ccefbbf5529afa0aef6aa57b5ae0e55abe7ee0b7eee3bf6d21c5e42e14aff367205efa13174628595d09aec301a8c23af42a26719452b8";
+    }
+    # EMI (item/recipe viewer). Was a hand-copied file for a long time, which
+    # meant it was the one mod a mods-folder wipe would NOT restore. Now pinned
+    # like the rest, and it ships in the player mod pack too.
+    {
+      name = "emi-1.1.24+1.21.1+fabric.jar";
+      url = "https://cdn.modrinth.com/data/fRiHVvU7/versions/on5GT1qh/emi-1.1.24%2B1.21.1%2Bfabric.jar";
+      sha512 = "2680e7b0a93152d4220afdc30a0452c911dc4b5c9ce1db1b7246c21b777bc2a1945fe97c98c09941d31b7478ae357135a1ef51cd3ba92d08dce35202a830b70d";
+    }
+  ];
+
+  # Mods on trial on the staging server only. Move an entry into syncedMods
+  # when it graduates to production, and drop it from
+  # STAGING_EXTRA_VERSION_IDS in scripts/build-akucraft-pack.py at the same
+  # time so the two stay in step.
+  # Mods on trial on the staging server only - empty right now. Add an entry
+  # here to test a candidate against :25599 without touching the instances that
+  # connect to the live server, then move it into syncedMods when it graduates
+  # (and add it to the prod compose in the same change).
+  # Still on trial: the Surveyor map-sharing stack, pending the two-player test
+  # with komi. Everything else from the 2026-08-16 batch graduated below.
+  trialMods = [
     # Surveyor: a map backend that keeps explored terrain ON THE SERVER and
     # shares it between opt-in groups, across dimensions. Being trialled for
     # the friends/clans map features - position sharing, area sharing, and
@@ -567,26 +508,6 @@ let
       name = "automodpack-mc1.21.1-fabric-4.0.6.jar";
       url = "https://cdn.modrinth.com/data/k68glP2e/versions/ig9vuxA6/automodpack-mc1.21.1-fabric-4.0.6.jar";
       sha512 = "bd7194b62a99b66dbdd3885ad95516c20e81404bbfacccefb013f867713a9afade507c617ecfc77bf50bcb303977d0849ffad4db3e476ac8938829e641298095";
-    }
-    # This pair is forced, and not by these three mods alone.
-    #
-    #   Supplementaries (a SERVER mod we ship)  breaks sodium <0.8.12-beta.1
-    #   Sodium 0.8.12                           breaks iris   <1.8.13
-    #   Iris 1.8.14-beta.1                      needs  sodium 0.8.x
-    #
-    # so a beta Iris is the only option, and picking the newest stable release
-    # of each in isolation - as this file did at first - produces a set that
-    # Fabric refuses to load. Check any change here against the FULL delivered
-    # mod list, not just this block.
-    {
-      name = "sodium-fabric-0.8.12+mc1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/AANobbMI/versions/KIRFiWG4/sodium-fabric-0.8.12%2Bmc1.21.1.jar";
-      sha512 = "8afe411eec65a9f677611ed6390ce656e5a3572f9be473e5dca51ae882a9426a547cd2e8c793278577bb14c17e48158030b11753108926ef33698614bd94ed7f";
-    }
-    {
-      name = "iris-fabric-1.8.14-beta.1+mc1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/YL57xq9U/versions/bAo1Qhte/iris-fabric-1.8.14-beta.1%2Bmc1.21.1.jar";
-      sha512 = "a7fbb629793c52f0be8b049f787cb598879239b1ad8e1de62e103c8b9efff140e3232b93ef1f14e505d262897d8cf9505b1126396429ad4056bff969c8674e52";
     }
     {
       name = "DistantHorizons-3.2.0-b-1.21.1-fabric-neoforge.jar";

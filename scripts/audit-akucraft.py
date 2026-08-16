@@ -144,14 +144,71 @@ json.dump(out, sys.stdout)
     return json.loads(r.stdout[start:])
 
 
+def collect_client(container):
+    """The set AutoModpack advertises - server mods it is allowed to send PLUS
+    the client-only ones in host-modpack.
+
+    Auditing /data/mods alone misses half the picture: a client-only mod pushed
+    through host-modpack never appears there, so a conflict between it and a
+    delivered server mod is invisible. That is exactly how Sodium 0.8.12 and
+    Sodium Dynamic Lights reached a client together on 2026-08-16 and stopped it
+    booting.
+    """
+    remote_py = r"""
+import json, os, zipfile, io, sys
+manifest = "/data/automodpack/host-modpack/automodpack-content.json"
+names = {os.path.basename(f["file"]) for f in json.load(open(manifest))["list"]}
+roots = ["/data/mods", "/data/automodpack/host-modpack/main/mods"]
+out = {}
+for root in roots:
+    if not os.path.isdir(root):
+        continue
+    for jar in sorted(os.listdir(root)):
+        if jar not in names or jar in out:
+            continue
+        entry = {"nested": []}
+        try:
+            z = zipfile.ZipFile(os.path.join(root, jar))
+            entry["meta"] = json.loads(z.read("fabric.mod.json"))
+            for n in z.namelist():
+                if n.startswith("META-INF/jars/") and n.endswith(".jar"):
+                    try:
+                        nz = zipfile.ZipFile(io.BytesIO(z.read(n)))
+                        entry["nested"].append(json.loads(nz.read("fabric.mod.json")))
+                    except Exception:
+                        pass
+        except Exception as e:
+            entry["error"] = str(e)
+        out[jar] = entry
+missing = sorted(names - set(out))
+if missing:
+    out["__missing__"] = {"error": "advertised but not found on disk: " + ", ".join(missing)}
+json.dump(out, sys.stdout)
+"""
+    script = ("export DOCKER_HOST=unix:///run/user/1000/docker.sock\n"
+              f"docker exec -i {container} python3 - <<'PYEOF'\n{remote_py}\nPYEOF\n")
+    r = subprocess.run(SSH + ["bash -s"], input=script, text=True,
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=600)
+    if r.returncode != 0:
+        sys.exit(f"remote failed:\n{r.stdout}")
+    start = r.stdout.find("{")
+    if start < 0:
+        sys.exit(f"no JSON came back:\n{r.stdout[:800]}")
+    return json.loads(r.stdout[start:])
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", choices=TARGETS, required=True)
+    ap.add_argument("--client", action="store_true",
+                    help="audit the set AutoModpack actually DELIVERS to clients, "
+                         "rather than the jars sitting in /data/mods")
     args = ap.parse_args()
     container = TARGETS[args.target]
 
-    jars = collect(container)
-    print(f"# AkuCraft audit - {args.target} ({container}), {len(jars)} jars\n")
+    jars = collect_client(container) if args.client else collect(container)
+    what = "delivered to clients" if args.client else "server jars"
+    print(f"# AkuCraft audit - {args.target} ({container}), {len(jars)} {what}\n")
 
     installed, by_id, unparsed = {}, {}, []
     metas = {}
@@ -210,7 +267,9 @@ def main():
     # because it is not in the nix client set. This is the Explorer's Compass
     # near-miss: server-side only in the list, client_side required in reality.
     lists = nix_client_set()
-    client_ok = lists["syncedMods"] | lists["trialMods"]
+    # clientMods belongs here too: they reach players through host-modpack
+    # rather than the server jar list, but they ARE part of the client set.
+    client_ok = lists["syncedMods"] | lists["trialMods"] | lists["clientMods"]
     for jar, m in metas.items():
         if m.get("environment") == "client" and jar not in client_ok:
             findings["CLIENT"].append(f"{jar} declares environment=client but is not in the nix client set")
