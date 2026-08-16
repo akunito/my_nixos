@@ -35,17 +35,26 @@ let
   #
   # "1.21.1"           the live instance, used for 100.64.0.6:25565
   # "AkuCraft-STAGING" a second instance for the staging server on :25599,
-  #                    which runs a throwaway copy of the world. Both get the
-  #                    same mod set from this file, which is what you want most
-  #                    of the time: staging should differ from production only
-  #                    by the one thing being tested. To test a candidate mod,
-  #                    add it here temporarily, sync, and point only the staging
-  #                    instance at :25599 — production is a separate server and
-  #                    is unaffected until its compose is changed too.
+  #                    which runs a throwaway copy of the world. It carries the
+  #                    production set PLUS trialMods, so a candidate can be
+  #                    tested without touching the instance that connects to the
+  #                    live server. Production is a separate server and is
+  #                    unaffected until its compose file is changed too.
   #
   # The server address is not managed here; the launcher stores it in binary
-  # NBT (servers.dat). Import the staging .mrpack once and it fills itself in.
-  instances = [ "1.21.1" "AkuCraft-STAGING" ];
+  # NBT (servers.dat). Import the .mrpack once and it fills itself in; after
+  # that, mod changes arrive through sync-user.sh and the pack only needs
+  # re-importing for players who are not on this NixOS config.
+  # Live instances get syncedMods + clientMods.
+  instances = [ "1.21.1" ];
+
+  # Staging instances additionally get trialMods below, so a candidate can be
+  # tested against :25599 without contaminating the instance used for the live
+  # server. Declarative on purpose: a hand-imported .mrpack cannot be updated
+  # in place (FreeSM only refreshes packs published on Modrinth, by project id -
+  # ours is self-hosted, so ManagedPackID is empty), which would mean deleting
+  # and re-importing on every change.
+  stagingInstances = [ "AkuCraft-STAGING" ];
 
   # Mods that MUST match the server pin exactly (they add registry entries).
   # Bump these only together with both server compose files.
@@ -272,16 +281,48 @@ let
     }
   ];
 
+  # Mods on trial on the staging server only. Move an entry into syncedMods
+  # when it graduates to production, and drop it from
+  # STAGING_EXTRA_VERSION_IDS in scripts/build-akucraft-pack.py at the same
+  # time so the two stay in step.
+  trialMods = [
+    {
+      name = "artifacts-fabric-13.2.1.jar";
+      url = "https://cdn.modrinth.com/data/P0Mu4wcQ/versions/WTnRdeH6/artifacts-fabric-13.2.1.jar";
+      sha512 = "3a2efe7f3686118ce7159b68d3ab74de901583d50557ac0d5bef08d806e95ec0bdc1ba21c728b6bf6368b34961709eac6b4a4b93a35bdba53f387880db783795";
+    }
+    {
+      name = "geckolib-fabric-1.21.1-4.9.2.jar";
+      url = "https://cdn.modrinth.com/data/8BmcQJ2H/versions/dnJdtm0u/geckolib-fabric-1.21.1-4.9.2.jar";
+      sha512 = "2442ebe35e84ab9dc564f059d4003b6a9d2a3f304f02427e8710ad35b3547637f292b2aced021f765c4cbac7c4e9b5043fe9cb84ac85912151cf6d0e9c09696d";
+    }
+    {
+      name = "cardinal-components-api-6.1.3.jar";
+      url = "https://cdn.modrinth.com/data/K01OU20C/versions/nLsCe2VD/cardinal-components-api-6.1.3.jar";
+      sha512 = "db52fc8c4f14dda723b69eec5a52a693fcb1db72e97114cb530ac8a306d95c13a4234ea54bc6e632134038cb05ba551b5240b9187562fb775a4c7bacb681eff1";
+    }
+    {
+      name = "BOMD-1.10.2-1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/du3UfiLL/versions/aSCbUUL1/BOMD-1.10.2-1.21.1.jar";
+      sha512 = "64e434b0841d594857191eeed066927f3ade0cd71e39e458fffe3208096398123745de57d1e9fce24842496559cb4614e58f34f85201df093647e20dc41dff8f";
+    }
+  ];
+
+  mkFiles = instance: mod: {
+    name = ".local/share/FreesmLauncher/instances/${instance}/minecraft/mods/${mod.name}";
+    value = {
+      source = pkgs.fetchurl { inherit (mod) url sha512; };
+      # Replace the previously hand-copied jars on first activation.
+      force = true;
+    };
+  };
+
   modFiles = lib.listToAttrs (lib.concatMap (instance:
-    map (mod: {
-      name = ".local/share/FreesmLauncher/instances/${instance}/minecraft/mods/${mod.name}";
-      value = {
-        source = pkgs.fetchurl { inherit (mod) url sha512; };
-        # Replace the previously hand-copied jars on first activation.
-        force = true;
-      };
-    }) (syncedMods ++ clientMods)) instances);
+    map (mkFiles instance) (syncedMods ++ clientMods)) instances);
+
+  stagingFiles = lib.listToAttrs (lib.concatMap (instance:
+    map (mkFiles instance) (syncedMods ++ clientMods ++ trialMods)) stagingInstances);
 in
 {
-  home.file = modFiles;
+  home.file = modFiles // stagingFiles;
 }
