@@ -392,23 +392,38 @@ in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
       log() { echo "$(date -Iseconds) [akucraft-backup-now] $*"; }
 
       mkdir -p "$DEST"
+      COPY_OK=0
       if docker ps --format '{{.Names}}' 2>/dev/null | grep -qw minecraft; then
         log "Flushing world (server is running)..."
         docker exec minecraft rcon-cli save-off       >/dev/null 2>&1 || log "WARNING: save-off failed"
         docker exec minecraft rcon-cli save-all flush >/dev/null 2>&1 || log "WARNING: flush failed"
         sleep 3
         docker cp minecraft:/data/world "$DEST/world" >/dev/null 2>&1 \
-          && log "World copied to $DEST/world" \
+          && { COPY_OK=1; log "World copied to $DEST/world"; } \
           || log "ERROR: world copy FAILED - do not deploy"
         docker exec minecraft rcon-cli save-on >/dev/null 2>&1 \
           && log "Saving re-enabled" \
           || log "CRITICAL: could not re-enable saving - run 'rcon-cli save-on' by hand"
       else
-        log "Server stopped - copying the (already quiescent) world from disk"
-        cp -a /home/${username}/.homelab/minecraft/data/world "$DEST/world" \
-          && log "World copied to $DEST/world" \
+        # The world belongs to uid 100999 inside the rootless userns, and
+        # level.dat, playerdata/ and skinrestorer/ are not world-readable, so a
+        # plain host-side cp silently produced a snapshot with no level.dat and
+        # no player inventories (caught 2026-08-16). Copy through a throwaway
+        # container, which runs as that uid and can read everything.
+        log "Server stopped - copying the world through a container"
+        docker run --rm \
+          -v /home/${username}/.homelab/minecraft/data:/src:ro \
+          -v "$DEST":/dst alpine \
+          sh -c 'cp -a /src/world /dst/world' >/dev/null 2>&1 \
+          && { COPY_OK=1; log "World copied to $DEST/world"; } \
           || log "ERROR: world copy FAILED - do not deploy"
       fi
+
+      # A snapshot missing level.dat or playerdata is worse than no snapshot,
+      # because it looks like one. Check rather than assume.
+      for required in level.dat playerdata region; do
+        [ -e "$DEST/world/$required" ] || { COPY_OK=0; log "ERROR: snapshot has no world/$required"; }
+      done
 
       # Compose files and mod pins, so a rollback can rebuild the exact stack
       cp -a /home/${username}/.homelab/minecraft/docker-compose.yml "$DEST/" 2>/dev/null || true
@@ -419,6 +434,11 @@ in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
       # Prune to the last 10 local snapshots (292M each)
       ls -1dt /home/${username}/.homelab/backups/akucraft/*/ 2>/dev/null \
         | tail -n +11 | xargs -r rm -rf
+
+      if [ "$COPY_OK" != "1" ]; then
+        log "REFUSING to push a snapshot that failed verification. Fix it first."
+        exit 1
+      fi
 
       if timeout 8 ping -c1 -W3 ${target} >/dev/null 2>&1; then
         log "NAS is awake - pushing offsite too"
