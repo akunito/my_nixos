@@ -471,6 +471,13 @@ let
   # 3D Skin Layers is deliberately absent even though it belongs to this stack:
   # it requires fabric-api, which arrives only after the first connect, and
   # Fabric will not launch at all with an unresolved dependency.
+  # HD instances also get a different garbage collector. Distant Horizons warns
+  # about this in game and it is right to: G1 pauses to collect, and with DH
+  # streaming LODs those pauses land as visible stutter. Generational ZGC keeps
+  # pauses under a millisecond, which is the whole point on a client - the trade
+  # is a little throughput for a lot of smoothness, and a Ryzen with 4 GB of
+  # heap can afford it. NOT for the server: it runs Aikar's G1 flags, which are
+  # tuned for exactly the opposite priority.
   hdInstances = [
     { name = "AkuCraft-HD";         title = "AkuCraft HD";         ip = "100.64.0.6:25565"; }
     { name = "AkuCraft-STAGING-HD"; title = "AkuCraft STAGING HD"; ip = "100.64.0.6:25599"; }
@@ -599,7 +606,8 @@ let
           iconKey=default
           AutomaticJava=true
           OverrideCommands=false
-          OverrideJavaArgs=false
+          OverrideJavaArgs=true
+          JvmArgs=-XX:+UseZGC -XX:+ZGenerational
         ''; }
       { path = "${dir}/mmc-pack.json"; src = mmcPack; }
       { path = "${dir}/minecraft/servers.dat"; src = mkServersDat i.title i.ip; }
