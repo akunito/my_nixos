@@ -53,6 +53,7 @@ the seam, and it is somewhere players can walk to.
 | Why does `/worldborder get` report the same value everywhere? | Not a bug | the vanilla command reads the **Overworld's** border regardless of `execute in`, so it is blind to per-world borders by design |
 | Do our structures generate in the frontier? | **Yes** | strongholds, Structory chapels, plains villages, the BoMD lich tower and Dungeons and Taverns crypts all located there |
 | Must clients have Terralith? | Almost certainly not | it ships 11 classes and no new blocks or items; biomes, features and structures are data-driven in 1.21 and sent by the server. Unknown biomes fall back to default colours |
+| Are the seams real, and do they matter? | **Yes to both** | measured first: the identical 64 chunks generate as `minecraft:birch_forest` without Terralith and `terralith:temperate_highlands` with it. Then seen: a sheer stone wall roughly 40 blocks high at x 1257, z −730 on staging. Flat and coastal boundaries look seamless, which is misleading — the wall only appears where the old terrain had relief |
 | Does the backup cover it? | **Yes** | the pre-backup snapshot is `cp -a /data/world`, and the frontier lives at `world/dimensions/multiworld/frontier` |
 
 ## Test plan — do all of this on STAGING first
@@ -68,15 +69,15 @@ changes**, so test it first.
 
 1. ~~Different sizes per world~~ **done** — 12000 / 60000
 2. ~~Persist across a restart~~ **done**
-3. **Walk into the Overworld border in survival.** It must physically stop you.
-   Reporting a size is not the same as enforcing one, and this is the only
-   thing standing between the live world and a permanent seam
+3. ~~Physically stops you, creative and survival~~ **done** — cannot pass
 4. **Two players, two worlds, at once.** One in the Overworld, one in the
    frontier. Each must see and be held by their own border. This is the case a
    single shared border object cannot serve, and the reason the mod exists
-5. **In creative, fly 500 blocks past the border.** Some chunks will generate
-   just outside from view distance — that is unavoidable and unreachable. What
-   must NOT happen is terrain generating far beyond it
+5. ~~Generation past the border~~ **done, with a caveat**: a player who is
+   *teleported* outside can keep flying and keep generating. The guarantee is
+   therefore not "no chunk is ever generated out there" but "no survival player
+   can reach the seam". Do not go sightseeing outside the fence once Terralith
+   is in production
 
 ### B. The frontier world is a real survival world
 

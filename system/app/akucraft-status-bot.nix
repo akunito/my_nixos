@@ -69,7 +69,7 @@ lib.mkIf enabled {
       DISCORD_JOIN_ROLES = discordJoinRoles;
       DISCORD_INVITE_CODES = discordInviteCodes;
       DOCKER_HOST = "unix:///run/user/1000/docker.sock";
-      IDLE_STOP_MINUTES = "45";
+      IDLE_STOP_MINUTES = toString (systemSettings.akucraftIdleStopMinutes or 45);
       # /invite - players onboard their own friends instead of Diego doing it
       # over SSH. Empty string disables the command entirely.
       INVITE_SCRIPT = "/home/${username}/.homelab/minecraft/akucraft-invite.sh";
