@@ -86,6 +86,26 @@ let
   # LiteLLM wants a list of single-key maps: [{ alias: [backup, ...] }]
   fallbackList = lib.mapAttrsToList (alias: backups: { "${alias}" = backups; }) fallbacks;
 
+  # litellm does NOT fail when its port is taken — it silently binds a DIFFERENT
+  # one and logs it, which is dangerous here: the firewall rule below would then
+  # be opening a port belonging to some other service. (Observed 2026-08-16:
+  # rpc.statd held 4000, litellm quietly moved to 8084, and the tailscale0 rule
+  # ended up exposing statd.) So assert after start that something really is
+  # listening on the port we configured, and fail the unit if not.
+  assertPort = pkgs.writeShellScript "litellm-assert-port" ''
+    for i in $(seq 1 60); do
+      code="$(${pkgs.curl}/bin/curl -s -o /dev/null -w '%{http_code}' \
+        --max-time 3 "http://${host}:${toString port}/v1/models" 2>/dev/null || true)"
+      # Any HTTP status (401 included — auth is on) proves WE are on this port.
+      [ -n "$code" ] && [ "$code" != "000" ] && exit 0
+      sleep 1
+    done
+    echo "litellm: nothing answering on ${host}:${toString port} after 60s." >&2
+    echo "         litellm may have silently bound a different port — check" >&2
+    echo "         'journalctl -u litellm | grep Uvicorn' and free the port." >&2
+    exit 1
+  '';
+
   # Materialise the env file at activation. Reading secrets/domains.nix here
   # (rather than in a derivation) is what keeps the keys out of the world-
   # readable store — identical to the llamaServerApiKey pattern.
@@ -181,6 +201,9 @@ in
       # Restart when the key rotates or the config changes.
       restartTriggers = [ (toString writeEnv) ];
       serviceConfig = {
+        # Turns a silent port move into a failed unit (see assertPort above).
+        ExecStartPost = "${assertPort}";
+        TimeoutStartSec = lib.mkDefault "120";
         Restart = lib.mkDefault "on-failure";
         RestartSec = lib.mkDefault 5;
       };

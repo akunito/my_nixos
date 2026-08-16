@@ -297,7 +297,11 @@ in
     # ‼️ Do NOT add port 4000 to the tag:mc-guest headscale ACL.
     litellmEnable = true;
     litellmHost = "100.64.0.6"; # VPS Tailscale IP
-    litellmPort = 4000;
+    # NOT 4000 (litellm's own default): rpc.statd from the NFS server holds
+    # 4000-4002 on this host. litellm does not fail on a taken port, it silently
+    # binds elsewhere — which once made the tailscale0 rule below expose statd
+    # instead. The ExecStartPost assertion in the module now catches that.
+    litellmPort = 4711;
     litellmOpenFirewallTailscale = true;
     # One DeepSeek key per consumer: spend is attributable in the provider
     # dashboard and either can be revoked without taking the other down. They

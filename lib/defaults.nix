@@ -215,7 +215,7 @@
     # BALANCE, not a LiteLLM budget (no Postgres needed).
     litellmEnable = false;
     litellmHost = "127.0.0.1";        # VPS sets its Tailscale IP: the rootless minecraft container cannot reach the host's 127.0.0.1
-    litellmPort = 4000;
+    litellmPort = 4711;               # NOT litellm's default 4000: rpc.statd (NFS) commonly holds 4000-4002, and litellm silently binds a different port instead of failing — which would make the firewall rule open someone else's service
     litellmOpenFirewallTailscale = false;  # open the port on tailscale0 only (never on the guest ACL)
     litellmMasterKeySecret = "litellmMasterKey"; # attribute NAME in secrets/domains.nix; the bearer token consumers send
     litellmProviders = [ ];           # [{ envVar = "DEEPSEEK_API_KEY"; secret = "deepseekApiKey"; }] — materialised into a 0400 env file at activation
