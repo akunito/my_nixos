@@ -13,7 +13,7 @@ status: published
 Regenerate with `./scripts/generate-akucraft-manifest.sh`; every number below
 is read from the running server.
 
-Generated 2026-08-16 10:44 CEST · Minecraft **1.21.1** · Fabric Loader **0.19.3** · **58** mods
+Generated 2026-08-16 12:44 CEST · Minecraft **1.21.1** · Fabric Loader **0.19.3** · **64** mods
 
 ---
 
@@ -27,7 +27,7 @@ maintain, because network access *is* the access control.
 |---|---|
 | Address | `100.64.0.6:25565` (VPN required) |
 | Live 3D map | `http://100.64.0.6:8100` (VPN required) |
-| Modpack | `http://100.64.0.6:8100/downloads/AkuCraft-2026.08.16.mrpack` |
+| Modpack | `http://100.64.0.6:8100/downloads/AkuCraft-auto.mrpack` (AutoModpack; the server supplies the rest) |
 | Difficulty | hard · PVP true · max 10 players |
 | Login | offline accounts + EasyAuth password (`/auth register <pw> <pw>`) |
 
@@ -148,18 +148,31 @@ design rule for this server.
   grindstones move enchantments between items, and many enchantments now fit
   gear they never did.
 
+- **Treasure gear (Artifacts)** — passive items with no recipe, found only in
+  loot chests, worn in the Trinkets slots beside the armour. Double jump,
+  permanent night vision, poison immunity, faster mining. They stack.
+- **Bosses (Bosses of Mass Destruction)** — Night Lich, Obsidilith, Nether
+  Gauntlet, Void Blossom. Structure spacing is widened well past the mod
+  defaults in `config/cristellib/bosses_of_mass_destruction` (lich tower 96/192
+  chunks, void blossom 80/160, obsidilith 48/96, gauntlet 32/64) and they only
+  generate in chunks nobody has visited, so none exist near an established base.
+
 **Deliberately excluded:** Better Combat. It rewrites melee for everyone, which
 breaks the "ignorable" rule.
 
 ---
 
-## Installed mods (58)
+## Installed mods (64)
 
 ```
 architectury                       13.0.11
+artifacts                          13.2.1
+automodpack                        4.0.6
 azurelibarmor                      3.1.3
 bluemap                            5.7
+bosses_of_mass_destruction         1.10.2-1.21.1
 bundleapi                          1.1.0
+cardinal-components                6.1.3
 cloth-config                       15.0.140
 collective                         8.39
 cristellib                         3.1.7
@@ -180,12 +193,14 @@ ferritecore                        7.0.3
 flan                               1.21.1-1.12.7-fabric
 forgeconfigapiport                 21.1.6
 fzzy_config                        0.7.6+1.21
+geckolib                           4.9.2
 grindenchantments                  4.0.0+1.21.1
 inventorytotem                     3.4
 java                               25
 krypton                            0.2.8
 lithium                            0.15.4+mc1.21.1
 luckperms                          5.4.140
+mca                                7.7.32+1.21.1
 minecraft                          1.21.1
 moonlight                          1.21.1-3.1.1
 mr_ly_soulboundenchantment         1-v1.0.6
@@ -214,6 +229,32 @@ universal-graves                   3.4.4+1.21
 universal_shops                    1.7.1+1.21
 warputils                          0.5.3
 wizards                            3.0.4+1.21.1
+```
+
+---
+
+## Keeping clients in sync (AutoModpack)
+
+Clients no longer carry a hand-installed mod list. AutoModpack advertises the
+server's set **over the existing game port** — no extra port, no Headscale ACL
+change — and each client downloads what it lacks from the Modrinth CDN.
+
+What is sent is not the raw `/data/mods` folder: `scripts/sync-akucraft-automodpack.py`
+derives it from `user/app/games/minecraft-client-mods.nix`, the set known to
+work, and excludes everything else (BlueMap would otherwise start a web server
+on a player's machine). Client-only mods — the Xaero map stack, MapLink, EMI,
+Mod Menu — have no server counterpart and are pushed into
+`automodpack/host-modpack/main/mods/`.
+
+Re-run that script after any mod change, then restart. The player-facing pack
+is `AkuCraft-auto.mrpack`, which contains AutoModpack alone and therefore
+cannot go stale.
+
+Each server has its own certificate; players confirm its fingerprint once.
+Read the current one with:
+
+```
+docker exec minecraft cat /data/automodpack/.private/cert.crt | openssl x509 -outform DER | sha256sum
 ```
 
 ---

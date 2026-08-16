@@ -107,7 +107,7 @@ maintain, because network access *is* the access control.
 |---|---|
 | Address | \`100.64.0.6:25565\` (VPN required) |
 | Live 3D map | \`http://100.64.0.6:8100\` (VPN required) |
-| Modpack | \`http://100.64.0.6:8100/downloads/AkuCraft-2026.08.16.mrpack\` |
+| Modpack | \`http://100.64.0.6:8100/downloads/AkuCraft-auto.mrpack\` (AutoModpack; the server supplies the rest) |
 | Difficulty | $(val PROPS difficulty) · PVP $(val PROPS pvp) · max $(val PROPS max-players) players |
 | Login | offline accounts + EasyAuth password (\`/auth register <pw> <pw>\`) |
 
@@ -228,6 +228,15 @@ design rule for this server.
   grindstones move enchantments between items, and many enchantments now fit
   gear they never did.
 
+- **Treasure gear (Artifacts)** — passive items with no recipe, found only in
+  loot chests, worn in the Trinkets slots beside the armour. Double jump,
+  permanent night vision, poison immunity, faster mining. They stack.
+- **Bosses (Bosses of Mass Destruction)** — Night Lich, Obsidilith, Nether
+  Gauntlet, Void Blossom. Structure spacing is widened well past the mod
+  defaults in \`config/cristellib/bosses_of_mass_destruction\` (lich tower 96/192
+  chunks, void blossom 80/160, obsidilith 48/96, gauntlet 32/64) and they only
+  generate in chunks nobody has visited, so none exist near an established base.
+
 **Deliberately excluded:** Better Combat. It rewrites melee for everyone, which
 breaks the "ignorable" rule.
 
@@ -237,6 +246,32 @@ breaks the "ignorable" rule.
 
 \`\`\`
 $(sec MODS | awk '{printf "%-34s %s\n", $1, $2}')
+\`\`\`
+
+---
+
+## Keeping clients in sync (AutoModpack)
+
+Clients no longer carry a hand-installed mod list. AutoModpack advertises the
+server's set **over the existing game port** — no extra port, no Headscale ACL
+change — and each client downloads what it lacks from the Modrinth CDN.
+
+What is sent is not the raw \`/data/mods\` folder: \`scripts/sync-akucraft-automodpack.py\`
+derives it from \`user/app/games/minecraft-client-mods.nix\`, the set known to
+work, and excludes everything else (BlueMap would otherwise start a web server
+on a player's machine). Client-only mods — the Xaero map stack, MapLink, EMI,
+Mod Menu — have no server counterpart and are pushed into
+\`automodpack/host-modpack/main/mods/\`.
+
+Re-run that script after any mod change, then restart. The player-facing pack
+is \`AkuCraft-auto.mrpack\`, which contains AutoModpack alone and therefore
+cannot go stale.
+
+Each server has its own certificate; players confirm its fingerprint once.
+Read the current one with:
+
+\`\`\`
+docker exec minecraft cat /data/automodpack/.private/cert.crt | openssl x509 -outform DER | sha256sum
 \`\`\`
 
 ---
