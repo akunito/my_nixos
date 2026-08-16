@@ -645,7 +645,36 @@ deliberate: players should never have to read three posts to learn one thing.
 
 ---
 
-## 14b. Backlog — after the roadmap is implemented
+## 14b. Backlog
+
+### DONE 2026-08-16 — self-service invites
+
+`/invite player:<name> email:<addr>` in Discord, gated to MCplayer/MCadmin.
+The bot runs `akucraft-invite.sh`, so it does exactly what the manual SSH run
+did: headscale user, tagged 72h key, offline-UUID whitelist entry, setup email.
+
+How the caveats were handled:
+- **Who may call it** — `INVITE_ROLES=MCplayer,MCadmin`. The owner chose
+  MCplayer rather than admin-only; the blast radius is bounded because the key
+  stays `tag:mc-guest`, and that ACL reaches the game port and the map only.
+- **Typed email** — shape-validated, and the reply is **ephemeral** so neither
+  the address nor the pre-auth key is ever posted into a channel.
+- **Case-sensitive name** — validated `[A-Za-z0-9_]{3,16}`, and both the guide
+  and the command's own error text stress that the name *is* the identity.
+- **No blanket sudo** — headscale is root-only, so the grant is exactly
+  `users create *` and `preauthkeys create *`. Verified that `users destroy`,
+  `nodes delete` and `policy set` are all still denied.
+- **PATH** — the bot's PATH was docker+coreutils only; the invite script needs
+  bash, python3, sudo and sendmail. Added, and verified all five resolve.
+  Without this it would have failed as "command not found", which looks
+  nothing like the permission problem it would appear to be.
+
+Announced to both channels with a `#mc-guides` post. **Still untested
+end-to-end** — no real invite has been sent through it yet.
+
+---
+
+## 14c. Backlog — after the roadmap is implemented
 
 **Self-service invites from Discord.** Today every new player costs Diego a
 manual `akucraft-invite.sh` run over SSH on the VPS. Move it into the bot: a
