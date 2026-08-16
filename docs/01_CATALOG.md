@@ -67,6 +67,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbLiftcraftPassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMatrixPassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbMinifluxPassword or "") != ""`
+   - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbLinkwardenPassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbVaultwardenPassword or "") != ""`
    - `(systemSettings.postgresqlServerEnable or false) && (systemSettings.dbN8nPassword or "") != ""`
    - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
@@ -353,6 +354,13 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/qute-containers.nix**: User module: qute-containers.nix
 - **user/app/browser/qutebrowser.nix**: bindings from doom emacs
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
+- **user/app/browser/zen-spaces.nix**: GENERATED from Vivaldi session data — see scratchpad/gen_spaces.py.
+- **user/app/browser/zen.nix**: Zen Browser (Firefox fork), installed ALONGSIDE the default browser module and *Enabled when:*
+   - `userSettings.spotifyUrlHandlerEnable or false`
+   - `{ "text/html" = "zen-beta.desktop"; "x-scheme-handler/http" = "zen-beta.desktop"; "x-scheme-handler/https" = "zen-beta.desktop"; "x-scheme-handler/about" = "zen-beta.desktop"; "x-scheme-handler/unknown" = "zen-beta.desktop"; } // lib.optionalAttrs (userSettings.spotifyUrlHandlerEnable or false) { "x-scheme-handler/spotify" = "spotify.desktop"; }`
+   - `lib.hm.dag.entryAfter [ "writeBoundary" ] '' stale="$HOME/.local/share/applications/zen-beta.desktop" if [ -f "$stale" ] && [ ! -L "$stale" ]; then echo "Removing stale $stale (shadows managed desktop entry)" rm "$stale" fi ''`
+   - `enable/disable, preferences`
+   - `${lib.getExe pkgs.jq} --arg id "${modId}" ' def to_local: if (. // "" | test("^https?://")) then (split("/") | last) else . end; .id = $id | .enabled = true | .origin = "store" | ."no-updates" = true | .style = ( if (.style | type) == "string" then { "chrome": (.style | to_local), "content": "" } elif (.style | type) == "object" then { "chrome": ((.style.chrome // "") | to_local), "content": ((.style.content // "") | to_local) } else { "chrome": "", "content": "" } end ) | if .preferences then .preferences = (.preferences | to_local) else . end | if .readme then .readme = (.readme | to_local) else . end ' "${webPanelsMod}/theme.json"`
 - **user/app/calendar/calendar.nix**: Typelibs needed by gi.require_version() inside eds-refresh.py. *Enabled when:* `sign in`
 - **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
 - **user/app/colima/colima.nix**: Colima settings - can be overridden in profile config *Enabled when:* `systemSettings.profile == "darwin"`
@@ -531,6 +539,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
 - **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS
 - **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: consolidated monitoring on VPS
+- **docs/akunito/infrastructure/services/linkwarden.md**: Linkwarden self-hosted bookmarks on VPS_PROD, replacing Raindrop.io
 - **docs/akunito/infrastructure/services/matrix.md**: Matrix Synapse + Element on VPS
 - **docs/akunito/infrastructure/services/media-stack.md**: Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent
 - **docs/akunito/infrastructure/services/monitoring-stack.md**: Monitoring: Prometheus + Grafana on VPS
@@ -562,9 +571,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Akunito / Plans
 
+- **docs/akunito/plans/akucraft-roadmap-plan.md**: Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
+- **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
 - **docs/akunito/plans/plane-fork-customization-inventory.md**: **Built:** 2026-08-13 from `~/Projects/plane-up` @ `akunito/mobile` (`bcb1cfca9`), 26 commits over `v1.3.1`.
 - **docs/akunito/plans/plane-v1.4.0-upgrade.md**: **Status:** planned, not started · **Audited:** 2026-08-13 · **Ticket:** APLANE-1 (related)
+- **docs/akunito/plans/sine-web-panels-maintainer-issue.md**: Open at: https://github.com/dehyde/sine-web-panels/issues/new
 - **docs/akunito/plans/vivaldi-floating-toggle-bug.md**: While using Vivaldi on the DESK profile under SwayFX, the user *very rarely* sees a window unexpectedly toggle between tiled and floating — the same effect as pressing `hyper+shift+f`. They have to...
 
 ### Akunito / System-Modules
@@ -649,6 +661,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/komi/komi-proxmox-guide.md**: - **Machine**: Laptop running as headless server (lid closed)
 - **docs/komi/macos-installation.md**: This guide covers installing and configuring this dotfiles repository on macOS using nix-darwin and Home Manager.
 - **docs/komi/macos-komi-migration.md**: This guide helps you migrate from your current ko-mi/macos-setup to the new Nix-managed dotfiles. You can use Claude Code to help with any step.
+- **docs/komi/zen-web-panels-install.md**: Sidebar web panels for Zen — pin sites like WhatsApp, Gmail or Proton Mail to a
 
 ### Komi / Infrastructure
 

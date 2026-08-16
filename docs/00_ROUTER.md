@@ -7,6 +7,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
 | akunito.known-issues | Out-of-scope bugs and stale code surfaced during other work — to fix later | bugs, tech-debt, backlog | docs/akunito/known-issues.md |
+| akunito.plans.akucraft-roadmap | Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase | minecraft, akucraft, vps, gaming, plan, backup | system/app/restic-backup-vps.nix |
 | audits.docker-security.2026-03-06 | VPS Docker container security audit — network isolation, database access, secrets, hardening | audit, security, docker, vps, containers, networking, secrets | profiles/VPS*-config.nix |
 | audits.nas-nixos.2026-04-15 | Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring | audit, nas, nixos, zfs, storage, network, performance | docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md |
 | audits.pfsense.2026-02-04 | Security, performance, and reliability audit of pfSense firewall | audit, security, performance, pfsense, firewall | docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md |
@@ -26,6 +27,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | infrastructure.services.database | Database services: PostgreSQL, MariaDB, Redis on VPS | infrastructure, database, vps, postgresql, redis | docs/akunito/infrastructure/services/database-redis.md |
 | infrastructure.services.homelab | Homelab services: split between VPS and TrueNAS | infrastructure, homelab, nextcloud, syncthing, media | docs/akunito/infrastructure/services/homelab-stack.md |
 | infrastructure.services.kuma | Uptime Kuma: consolidated monitoring on VPS | infrastructure, monitoring, kuma, vps | docs/akunito/infrastructure/services/kuma.md |
+| infrastructure.services.linkwarden | Linkwarden self-hosted bookmarks on VPS_PROD, replacing Raindrop.io | infrastructure, vps, bookmarks, linkwarden, raindrop, pocket-id, meilisearch | docs/akunito/infrastructure/services/linkwarden.md |
 | infrastructure.services.matrix | Matrix Synapse + Element on VPS | infrastructure, matrix, vps, docker | docs/akunito/infrastructure/services/matrix.md |
 | infrastructure.services.media | Media stack services - Jellyfin, Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent | infrastructure, media, docker, jellyfin, arr, plex-alternative, truenas | profiles/LXC_HOME-config.nix |
 | infrastructure.services.monitoring | Monitoring: Prometheus + Grafana on VPS | infrastructure, monitoring, prometheus, grafana, vps | docs/akunito/infrastructure/services/monitoring-stack.md |

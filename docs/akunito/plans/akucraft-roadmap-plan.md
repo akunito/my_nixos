@@ -1,9 +1,29 @@
+---
+id: akunito.plans.akucraft-roadmap
+summary: Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase
+tags: [minecraft, akucraft, vps, gaming, plan, backup]
+related_files: [system/app/restic-backup-vps.nix, system/app/akucraft-bot.py, user/app/games/minecraft-client-mods.nix]
+date: 2026-08-16
+status: published
+---
+
 # AkuCraft — Implementation plan for the MMORPG roadmap
 
 Source: `~/Downloads/akucraft-roadmap.md`. This document is the executable
 version: what is verified, what order, and how to undo each step.
 
-Status: **plan agreed, Phase 0 not started.** Written 2026-08-16.
+Written 2026-08-16. Status as of the same day:
+
+| Phase | State |
+|---|---|
+| 0 — backup hardening | **DONE**, restore drill passed (booted, claims intact) |
+| 1 — `.mrpack` | **DONE server-side.** Import verified; instructions replaced everywhere. Awaiting 2 non-Diego installs before the zip retires |
+| 2 — trinket slots | **DEFERRED** — audited, delivers nothing without items (see 5.1) |
+| 3 — LuckPerms / FerriteCore / Krypton / Styled Chat | **DONE** |
+| 4 — Puffish progression | next; needs a pack bump |
+| 5 — economy | not started |
+| 6 — structures | **server-side half DONE**; BoMD waits for the Phase 4 pack bump |
+| 7–10 | not started |
 
 ---
 
