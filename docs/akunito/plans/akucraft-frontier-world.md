@@ -7,7 +7,7 @@ related_files:
   - scripts/sync-akucraft-automodpack.py
   - scripts/mca-signature.py
 date: 2026-08-16
-status: draft
+status: in-progress
 ---
 
 # AkuCraft — the frontier world
@@ -47,7 +47,13 @@ the seam, and it is somewhere players can walk to.
 | Does that world use Terralith? | **Yes** | 240 generated chunks contain `terralith:gravel_beach` and five `terralith:cave/*` biomes |
 | Are gamerules per world? | **Yes** | `naturalRegeneration` set false in frontier, still true in the Overworld |
 | Is the vanilla world border per world? | **No** | Setting 12000 in the Overworld also set 12000 in frontier — hence ShadowBorders |
-| Does ShadowBorders load? | Yes, 0.1 | `/sbw` needs a player, so the real test is in game |
+| Does ShadowBorders load? | Yes, 0.1 | |
+| Are its borders independent per world? | **Yes** | overworld 12000 / frontier 60000, and they survive a restart in `config/shadowboarders/borders.json` |
+| Is it only bookkeeping? | **No** | its mixins are `ServerWorldMixin` (a border per world), `CollisionViewMixin`/`EntityMixin`/`ServerPlayNetworkHandlerMixin` (enforcement), `PlayerManagerMixin`/`ServerPlayerEntityMixin` (per-player sync) and `NetherPortalBlockMixin`/`TeleportTargetMixin` (clamped teleports) |
+| Why does `/worldborder get` report the same value everywhere? | Not a bug | the vanilla command reads the **Overworld's** border regardless of `execute in`, so it is blind to per-world borders by design |
+| Do our structures generate in the frontier? | **Yes** | strongholds, Structory chapels, plains villages, the BoMD lich tower and Dungeons and Taverns crypts all located there |
+| Must clients have Terralith? | Almost certainly not | it ships 11 classes and no new blocks or items; biomes, features and structures are data-driven in 1.21 and sent by the server. Unknown biomes fall back to default colours |
+| Does the backup cover it? | **Yes** | the pre-backup snapshot is `cp -a /data/world`, and the frontier lives at `world/dimensions/multiworld/frontier` |
 
 ## Test plan — do all of this on STAGING first
 
@@ -60,15 +66,17 @@ Everything rests on ShadowBorders keeping the two worlds independent. It is
 version 0.1, a single release, 482 downloads. **If A fails, the whole design
 changes**, so test it first.
 
-1. In the Overworld: `/sbw set 12000` then `/sbw get`
-2. `/mw tp frontier`, then `/sbw set 60000` and `/sbw get`
-3. Back in the Overworld: `/sbw get` — must still say 12000, not 60000
-4. Restart the server. Re-check both. Borders must persist
-   (`config/shadowboarders/borders.json`)
-5. Walk into the Overworld border. It must stop you, with warning and damage
-6. Fly 500 blocks past where the border should be, in creative. If terrain
-   generates out there, the fence does not actually stop generation and the
-   design needs rethinking
+1. ~~Different sizes per world~~ **done** — 12000 / 60000
+2. ~~Persist across a restart~~ **done**
+3. **Walk into the Overworld border in survival.** It must physically stop you.
+   Reporting a size is not the same as enforcing one, and this is the only
+   thing standing between the live world and a permanent seam
+4. **Two players, two worlds, at once.** One in the Overworld, one in the
+   frontier. Each must see and be held by their own border. This is the case a
+   single shared border object cannot serve, and the reason the mod exists
+5. **In creative, fly 500 blocks past the border.** Some chunks will generate
+   just outside from view distance — that is unavoidable and unreachable. What
+   must NOT happen is terrain generating far beyond it
 
 ### B. The frontier world is a real survival world
 
@@ -92,6 +100,7 @@ changes**, so test it first.
 These all worked in the Overworld and may not follow into a Multiworld world.
 
 15. **Flan claims** — can you claim land in the frontier?
+    (structures are already confirmed to generate there — see the table above)
 16. **Graves** — die in the frontier; does a grave appear and does `/graves` find it?
 17. **Waystones** — do they persist across a restart there?
 18. **Structures** — do YUNG's, Structory, Dungeons and Taverns and the BoMD
