@@ -7,6 +7,7 @@ set. Hashes and sizes come from Modrinth, not from local files.
 
   ./scripts/build-akucraft-pack.py                 # live pack + zip
   ./scripts/build-akucraft-pack.py --staging       # live set + MCA, for :25599
+  ./scripts/build-akucraft-pack.py --bootstrap     # AutoModpack only, self-filling
 
 The pack ships overrides/servers.dat so the server is already in the player's
 multiplayer list after import - one less manual step, and one less chance of
@@ -32,6 +33,11 @@ NIX = REPO / "user/app/games/minecraft-client-mods.nix"
 OPTIONAL_PREFIXES = ("emi-", "xaerominimap", "xaeroworldmap", "maplink", "modmenu")
 
 LIVE = ("AkuCraft", "100.64.0.6:25565")
+# The bootstrap pack ships nothing but AutoModpack. On first connect the server
+# hands over the real mod list and the client downloads it from the Modrinth
+# CDN, so this one file never goes stale - which the full pack always does the
+# moment a mod is added (see the 2026-08-16 "307 registry entries" kick).
+AUTOMODPACK_VERSION_ID = "ig9vuxA6"
 STAGING = ("AkuCraft STAGING (MCA test)", "100.64.0.6:25599")
 # MCA Reborn 7.7.32+1.21.1 - the newest STABLE build. Do not use the betas.
 MCA_VERSION_ID = "mRrlD2wq"
@@ -86,15 +92,70 @@ def mods_from_nix():
     return out
 
 
+def build_bootstrap(outdir, server):
+    """A pack containing AutoModpack and nothing else.
+
+    Everything else arrives from the server on first connect, and stays in step
+    on every launch after that. This is the pack to hand to players: it is the
+    only one that does not need re-importing when the server gains a mod.
+    """
+    v = fetch(f"https://api.modrinth.com/v2/version/{AUTOMODPACK_VERSION_ID}")
+    f = v["files"][0]
+    name = f"{server[0]} (auto)"
+    index = {
+        "formatVersion": 1, "game": "minecraft",
+        "versionId": f"auto-{v['version_number']}", "name": name,
+        "summary": "AkuCraft - the server keeps your mods up to date for you.",
+        "files": [{
+            "path": f"mods/{f['filename']}",
+            "hashes": {"sha1": f["hashes"]["sha1"], "sha512": f["hashes"]["sha512"]},
+            "env": {"client": "required", "server": "required"},
+            "downloads": [f["url"]], "fileSize": f["size"],
+        }],
+        "dependencies": {"minecraft": "1.21.1", "fabric-loader": "0.19.3"},
+    }
+    readme = f"""{name}
+
+This instance starts almost empty on purpose. It has one mod: AutoModpack.
+
+Join {server[1]} (with the VPN on) and it downloads every mod the server uses,
+straight from Modrinth. It will ask you to confirm the server's fingerprint the
+first time - say yes, it is ours. Then it restarts the game once and you are in.
+
+From then on you never install anything again. When we add a mod to the server,
+your game picks it up the next time you launch it.
+
+If asked which Java: pick 21. Say no to it downloading its own Java.
+
+Map: http://100.64.0.6:8100
+First join: /auth register <password> <password>
+"""
+    mrpack = outdir / ("AkuCraft-STAGING-auto.mrpack"
+                       if server is STAGING else "AkuCraft-auto.mrpack")
+    with zipfile.ZipFile(mrpack, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("modrinth.index.json", json.dumps(index, indent=2))
+        z.writestr("overrides/README.txt", readme)
+        z.writestr("overrides/servers.dat", nbt_servers([server]))
+    print(f"wrote {mrpack}  (AutoModpack {v['version_number']} only, "
+          f"{mrpack.stat().st_size} bytes)")
+    print("  the server supplies every other mod on first connect")
+    return mrpack
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--staging", action="store_true", help="add MCA Reborn, point at :25599")
+    ap.add_argument("--bootstrap", action="store_true",
+                    help="ship only AutoModpack; the server supplies the rest")
     ap.add_argument("--outdir", default=".", help="where to write the artefacts")
     ap.add_argument("--version", default=None, help="versionId for the pack")
     args = ap.parse_args()
 
     outdir = pathlib.Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
+
+    if args.bootstrap:
+        return build_bootstrap(outdir, STAGING if args.staging else LIVE)
 
     mods = mods_from_nix()
     print(f"resolved {len(mods)} mods from {NIX.name}")

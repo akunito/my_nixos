@@ -46,7 +46,15 @@ let
   # that, mod changes arrive through sync-user.sh and the pack only needs
   # re-importing for players who are not on this NixOS config.
   # Live instances get syncedMods + clientMods.
-  instances = [ "1.21.1" ];
+  #
+  # "AkuCraft 1.21.1" is the instance imported from the .mrpack. It is listed
+  # here because an imported instance goes stale the moment the server gains a
+  # mod: on 2026-08-16 it was still on the pre-MCA mod set and the live server
+  # kicked it with "Received 307 registry entries that are unknown to this
+  # client" (namespace mca). Managing it here keeps it in step without having
+  # to delete and re-import, which would also throw away its Xaero waypoints
+  # and key bindings.
+  instances = [ "1.21.1" "AkuCraft 1.21.1" ];
 
   # Staging instances additionally get trialMods below, so a candidate can be
   # tested against :25599 without contaminating the instance used for the live
