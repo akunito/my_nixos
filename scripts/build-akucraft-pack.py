@@ -36,6 +36,15 @@ STAGING = ("AkuCraft STAGING (MCA test)", "100.64.0.6:25599")
 # MCA Reborn 7.7.32+1.21.1 - the newest STABLE build. Do not use the betas.
 MCA_VERSION_ID = "mRrlD2wq"
 
+# Extra mods carried by --staging only, while they are being trialled. Move an
+# entry into minecraft-client-mods.nix once it graduates to production.
+STAGING_EXTRA_VERSION_IDS = {
+    "artifacts":               "WTnRdeH6",
+    "geckolib":                "dnJdtm0u",
+    "cardinal-components-api": "nLsCe2VD",
+    "bosses-of-mass-destruction": "aSCbUUL1",
+}
+
 
 def nbt_servers(entries):
     """servers.dat is uncompressed NBT: root compound -> list 'servers'."""
@@ -103,15 +112,21 @@ def main():
         })
 
     if args.staging:
-        v = fetch(f"https://api.modrinth.com/v2/version/{MCA_VERSION_ID}")
-        f = v["files"][0]
-        files.append({
-            "path": f"mods/{f['filename']}",
-            "hashes": {"sha1": f["hashes"]["sha1"], "sha512": f["hashes"]["sha512"]},
-            "env": {"client": "required", "server": "required"},
-            "downloads": [f["url"]], "fileSize": f["size"],
-        })
-        print(f"  + MCA Reborn {v['version_number']} (staging only)")
+        have = {f["path"].split("/", 1)[1] for f in files}
+        extras = {"MCA Reborn": MCA_VERSION_ID, **STAGING_EXTRA_VERSION_IDS}
+        for label, vid in extras.items():
+            v = fetch(f"https://api.modrinth.com/v2/version/{vid}")
+            f = v["files"][0]
+            if f["filename"] in have:
+                print(f"  = {label} already in the production set, skipping")
+                continue
+            files.append({
+                "path": f"mods/{f['filename']}",
+                "hashes": {"sha1": f["hashes"]["sha1"], "sha512": f["hashes"]["sha512"]},
+                "env": {"client": "required", "server": "required"},
+                "downloads": [f["url"]], "fileSize": f["size"],
+            })
+            print(f"  + {label} {v['version_number']} (staging only)")
 
     server = STAGING if args.staging else LIVE
     version_id = args.version or ("STAGING-mca" if args.staging else "live")
