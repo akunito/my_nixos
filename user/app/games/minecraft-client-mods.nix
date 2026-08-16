@@ -242,6 +242,18 @@ let
       sha512 = "63711894458fde2e9889f43f9260a6029ca713a82e738ab19ce619e6849e0fb1597c37dbb28ae97d6f6ebc0022e72be3635dbe1e8f3a974177b0a38dd2a3d782";
     }
 
+    # Explorer's Compass - an in-game finder for every structure on the server.
+    # client_side: REQUIRED, unlike the rest of the 2026-08-16 exploration batch
+    # (the YUNG's set is server-only and the structure packs are client-optional).
+    # It adds an item, so a client without it is kicked with "unknown registry
+    # entries" - which is exactly why it has to be in this list and not just in
+    # the server compose.
+    {
+      name = "ExplorersCompass-1.21.1-2.6.0-fabric.jar";
+      url = "https://cdn.modrinth.com/data/RV1qfVQ8/versions/qSRKiE4D/ExplorersCompass-1.21.1-2.6.0-fabric.jar";
+      sha512 = "134501d97f0c264e609a67a8416dbae7bb5dc7f8e11f82b8130efd7ea0cedc6f3be153f0f61b2c503e5ea1efd4734a12c6edfa922503a94981565adfca8b2402";
+    }
+
     # --- Graduated from staging 2026-08-16, verified in game first ---
     # Artifacts: passive treasure gear, found in chests and never crafted, worn
     # in the Trinkets slots. Bosses of Mass Destruction: four optional endgame

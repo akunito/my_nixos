@@ -13,7 +13,7 @@ status: published
 Regenerate with `./scripts/generate-akucraft-manifest.sh`; every number below
 is read from the running server.
 
-Generated 2026-08-16 12:44 CEST · Minecraft **1.21.1** · Fabric Loader **0.19.3** · **64** mods
+Generated 2026-08-16 14:16 CEST · Minecraft **1.21.1** · Fabric Loader **0.19.3** · **78** mods
 
 ---
 
@@ -162,13 +162,22 @@ breaks the "ignorable" rule.
 
 ---
 
-## Installed mods (64)
+## Installed mods (78)
 
 ```
+amplified_nether                   1.2.16
 architectury                       13.0.11
 artifacts                          13.2.1
 automodpack                        4.0.6
 azurelibarmor                      3.1.3
+betterdeserttemples                1.21.1-Fabric-4.1.5
+betterdungeons                     1.21.1-Fabric-5.1.4
+betterfortresses                   1.21.1-Fabric-3.1.5
+betterjungletemples                1.21.1-Fabric-3.1.2
+bettermineshafts                   1.21.1-Fabric-5.1.1
+betteroceanmonuments               1.21.1-Fabric-4.1.2
+betterstrongholds                  1.21.1-Fabric-5.1.3
+betterwitchhuts                    1.21.1-Fabric-4.1.1
 bluemap                            5.7
 bosses_of_mass_destruction         1.10.2-1.21.1
 bundleapi                          1.1.0
@@ -186,6 +195,7 @@ expanded_bow_enchanting            1.1.2
 expanded_crossbow_enchanting       1.0.2
 expanded_trident_enchanting        1.0.11
 expanded_weapon_enchanting         1.1.1
+explorerscompass                   1.21.1-2.6.0-fabric
 fabric-api                         0.116.15+1.21.1
 fabric-language-kotlin             1.13.13+kotlin.2.4.10
 fabricloader                       0.19.3
@@ -203,8 +213,10 @@ luckperms                          5.4.140
 mca                                7.7.32+1.21.1
 minecraft                          1.21.1
 moonlight                          1.21.1-3.1.1
+mr_dungeons_andtaverns             1-v4.4.4
 mr_ly_soulboundenchantment         1-v1.0.6
 mr_vanilla_backpacks               1.3.5
+nullscape                          1.2.14
 paladins                           3.0.5+1.21.1
 playeranimator                     2.0.4+1.21.1
 polymer-bundled                    0.9.19+1.21.1
@@ -220,6 +232,7 @@ skinrestorer                       2.10.0+1.21-fabric
 spell_engine                       1.9.16+1.21.1
 spell_power                        1.6.0+1.21.1
 sswaystones                        1.1.3-HOTFIX
+structory                          1.3.17
 structure_pool_api                 1.2.1+1.21.1
 styledchat                         2.6.1+1.21
 supplementaries                    1.21.1-3.8.2
@@ -229,6 +242,7 @@ universal-graves                   3.4.4+1.21
 universal_shops                    1.7.1+1.21
 warputils                          0.5.3
 wizards                            3.0.4+1.21.1
+yungsapi                           1.21.1-Fabric-5.1.6
 ```
 
 ---
