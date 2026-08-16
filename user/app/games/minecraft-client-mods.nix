@@ -191,6 +191,26 @@ let
       url = "https://cdn.modrinth.com/data/FCFcFw09/versions/969uN2vX/puffish_attributes-0.8.3-1.21-fabric.jar";
       sha512 = "a960469a5a33289eb54949cc4538f163ffb3fd94a9bbeb52715073408b2b057ace50e159f11c30adc10df2876416108d1bd9a1f90c49fde501ec38f7fab4ad4a";
     }
+
+    # MCA Reborn - villagers become named NPCs you can talk to, befriend, marry.
+    # STABLE 7.7.32, not the betas: every recent build is beta, including one
+    # published the day this landed.
+    #
+    # This is the ONE accepted exception to "everything must be ignorable" -
+    # it replaces the villager system outright. Verified on a staging copy of
+    # the real world first: existing villagers are NOT deleted and NOT
+    # converted (33 vanilla survived intact), and 24 NPCs generated in new
+    # villages. So established trading halls keep working; only fresh villages
+    # get people. There is no conversion command and allowedSpawnReasons is
+    # ['natural','structure'], so disk-loaded villagers are never candidates.
+    #
+    # ChatAI ships disabled (enableVillagerChatAI = false) and stays that way
+    # until MCA has been stable for a while - roadmap phase 9.
+    {
+      name = "mca-fabric-7.7.32+1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/1W98a849/versions/mRrlD2wq/mca-fabric-7.7.32%2B1.21.1.jar";
+      sha512 = "63711894458fde2e9889f43f9260a6029ca713a82e738ab19ce619e6849e0fb1597c37dbb28ae97d6f6ebc0022e72be3635dbe1e8f3a974177b0a38dd2a3d782";
+    }
   ];
 
   # Client-only mods: the server neither ships nor knows about these, they add
