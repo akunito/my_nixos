@@ -70,6 +70,9 @@ lib.mkIf enabled {
       DISCORD_INVITE_CODES = discordInviteCodes;
       DOCKER_HOST = "unix:///run/user/1000/docker.sock";
       IDLE_STOP_MINUTES = toString (systemSettings.akucraftIdleStopMinutes or 45);
+      # Non-empty = the server may not be stopped, by the idle timer or by
+      # anyone's /stop. The text is what players are told when they try.
+      STOP_LOCK_REASON = systemSettings.akucraftStopLockReason or "";
       # /invite - players onboard their own friends instead of Diego doing it
       # over SSH. Empty string disables the command entirely.
       INVITE_SCRIPT = "/home/${username}/.homelab/minecraft/akucraft-invite.sh";

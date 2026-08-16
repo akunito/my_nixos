@@ -98,6 +98,7 @@ in
     # 45-minute idle stop would kill it within the first hour. Put this back to
     # 45 the moment the pregeneration finishes, or the server never auto-stops.
     akucraftIdleStopMinutes = 100000;
+    akucraftStopLockReason = "the world is being pre-generated - it will take a few hours, and stopping it now would lose the progress";
 
     wireguardServerEnable = true;
     wireguardServerPort = 51820;

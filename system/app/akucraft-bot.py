@@ -46,6 +46,11 @@ DISCORD_JOIN_ROLES = [int(r) for r in os.environ.get("DISCORD_JOIN_ROLES", "").s
 DISCORD_INVITE_CODES = {c for c in os.environ.get("DISCORD_INVITE_CODES", "").split(",") if c}
 STATE_DIR = os.environ.get("STATE_DIRECTORY", "/var/lib/akucraft-status")
 IDLE_STOP_MIN = int(os.environ.get("IDLE_STOP_MINUTES", "45"))
+# Set while something long-running must not be interrupted - a world
+# pregeneration, a migration - so that neither the idle timer nor a well-meaning
+# /stop from Discord or Telegram can take the server down. The reason is shown
+# to whoever tries, so nobody is left wondering why the command did nothing.
+STOP_LOCK_REASON = os.environ.get("STOP_LOCK_REASON", "").strip()
 GROUP_LINK = os.environ.get("TG_GROUP_LINK", "")
 # /invite: players onboarding their own friends. Off unless a script is set.
 INVITE_SCRIPT = os.environ.get("INVITE_SCRIPT", "")
@@ -327,6 +332,8 @@ def monitor():
                         st.idle_since = None
                     elif st.idle_since is None:
                         st.idle_since = time.time()
+                    elif STOP_LOCK_REASON:
+                        pass          # long job running - never auto-stop
                     elif time.time() - st.idle_since > IDLE_STOP_MIN * 60:
                         st.suppress_offline = True
                         st.idle_since = None
@@ -400,6 +407,8 @@ def cmd_start(arg):
 
 
 def cmd_stop(arg):
+    if STOP_LOCK_REASON:
+        return f"\U0001F512 Stopping is disabled right now: {STOP_LOCK_REASON}"
     targets = pick_targets(arg)
     if not targets:
         return "No such server."
