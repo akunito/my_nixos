@@ -604,8 +604,13 @@ def build_discord_client(with_members=True):
                 return
             # Everything below is slow (headscale + sendmail), so defer first.
             await interaction.response.defer(thinking=True, ephemeral=True)
-            out = run([INVITE_SCRIPT, player, email, player], 180)
-            ok = "Invite sent to" in (out or "")
+            # run() returns (returncode, output). Unpacking it matters: this
+            # used to do `"Invite sent to" in out` against the whole TUPLE,
+            # which asks whether that string IS one of the two elements - always
+            # false. Every invite was reported as failed to the person who ran
+            # it, including the ones that had already sent the email.
+            rc, out = run([INVITE_SCRIPT, player, email, player], 180)
+            ok = rc == 0 and "Invite sent to" in (out or "")
             if ok:
                 log(f"invite: {interaction.user} invited {player} <{email}>")
                 await interaction.followup.send(
@@ -614,7 +619,7 @@ def build_discord_client(with_members=True):
                     f"Remind them: the name must be typed **exactly** as `{player}` "
                     f"when they add their offline account.", ephemeral=True)
             else:
-                log(f"invite FAILED by {interaction.user} for {player}: {out!r}")
+                log(f"invite FAILED by {interaction.user} for {player}: rc={rc} {out!r}")
                 await interaction.followup.send(
                     "That did not work. Diego needs to look at it - the details are "
                     "in the bot log.", ephemeral=True)
