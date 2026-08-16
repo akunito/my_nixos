@@ -106,11 +106,17 @@ mention and `/connect` does (`/skin clear`).
 
 A player tells the assistant which in-game account is theirs; it is stored in
 `STATE_DIR/ask_links.json` and injected into the prompt, so answers can be about
-them ("you are not online right now") instead of abstract. The name is checked
-against `whitelist.json`, **read from the host filesystem** rather than via
-`docker exec` — that works while the server is stopped and cannot hang. A
-case-insensitive near-miss is corrected silently, since names are case-sensitive
-on an offline-mode server and a slip there is the common failure.
+them ("you are not online right now") instead of abstract. A case-insensitive
+near-miss is corrected silently, since names are case-sensitive on an
+offline-mode server and a slip there is the common failure.
+
+The name is checked against the union of **`whitelist.json`, `ops.json` and
+`usercache.json`**, all read from the host filesystem rather than via
+`docker exec` — that works while the server is stopped and cannot hang.
+Checking the whitelist alone is wrong and was the first bug reported: operators
+bypass the whitelist, so `Akunito` (the server's own admin) was rejected as an
+unknown player. `usercache.json` is the broadest signal — everyone who has
+actually connected.
 
 ⚠️ **Self-declared, not verified.** The whitelist check proves the account
 *exists*, not that this person owns it. That is an accepted trade for a server of

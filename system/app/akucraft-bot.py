@@ -619,22 +619,34 @@ def live_state():
     return "\n".join(lines) or "unknown", online
 
 
-def whitelist_names():
-    """Player names on the server whitelist.
+# Where the server records player names. The whitelist alone is NOT enough:
+# operators bypass it (Akunito is in ops.json and was never whitelisted), and
+# usercache holds everyone who has actually connected. Checking only the
+# whitelist rejected a real player - and the server's own admin at that.
+PLAYER_NAME_FILES = ("whitelist.json", "ops.json", "usercache.json")
+
+
+def known_players():
+    """Every player name the server knows, from all of its own records.
 
     Read from the host filesystem rather than `docker exec`: it works while the
-    server is stopped, needs no docker round-trip, and cannot hang.
+    server is stopped, needs no docker round-trip, and cannot hang. A missing
+    file is normal (ops.json does not exist until someone is opped), so only a
+    file that exists and will not parse is worth logging.
     """
     names = set()
     for srv in SERVERS.values():
-        path = os.path.join(srv["dir"], "data", "whitelist.json")
-        try:
-            with open(path) as f:
-                for entry in json.load(f):
-                    if entry.get("name"):
-                        names.add(entry["name"])
-        except Exception as e:  # noqa: BLE001
-            log(f"ask: cannot read whitelist {path}: {e}")
+        for fname in PLAYER_NAME_FILES:
+            path = os.path.join(srv["dir"], "data", fname)
+            if not os.path.exists(path):
+                continue
+            try:
+                with open(path) as f:
+                    for entry in json.load(f):
+                        if entry.get("name"):
+                            names.add(entry["name"])
+            except Exception as e:  # noqa: BLE001
+                log(f"ask: cannot read {path}: {e}")
     return names
 
 
@@ -1013,11 +1025,11 @@ def build_discord_client(with_members=True):
                     ephemeral=True)
                 return
             n = name.strip()
-            names = whitelist_names()
+            names = known_players()
             if not names:
                 await interaction.response.send_message(
-                    "I cannot read the server whitelist right now, so I cannot check "
-                    "that name. Try again in a minute.", ephemeral=True)
+                    "I cannot read the server's player records right now, so I "
+                    "cannot check that name. Try again in a minute.", ephemeral=True)
                 return
             if n not in names:
                 # Names are case-sensitive on an offline-mode server, so a
@@ -1026,9 +1038,10 @@ def build_discord_client(with_members=True):
                 near = [w for w in names if w.lower() == n.lower()]
                 if not near:
                     await interaction.response.send_message(
-                        f"**{n}** is not on the server whitelist. Type it exactly as "
-                        f"you registered it — capitals matter here. If you have never "
-                        f"joined, you need an /invite first.", ephemeral=True)
+                        f"I do not know a player called **{n}** on this server. Type "
+                        f"it exactly as you registered it — capitals matter here. If "
+                        f"you have never joined, you need an /invite first.",
+                        ephemeral=True)
                     return
                 n = near[0]
             ask_link(uid, n)
