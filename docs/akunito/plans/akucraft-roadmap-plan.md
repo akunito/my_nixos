@@ -234,17 +234,36 @@ http://100.64.0.6:8100/downloads/AkuCraft-2026.08.16.mrpack
 
 The zip stays at its existing URL and stays canonical for now.
 
-**Outstanding — needs a human:** the import has not been executed. Run it
-against a scratch root so the real instance cannot be touched:
+**Import VERIFIED 2026-08-16** on FreeSM 2.2.2, into a scratch launcher root
+(`--dir /tmp/launcher-test`) so the real instance could not be touched:
 
 ```
-freesmlauncher --dir /tmp/launcher-test --import <path-to>.mrpack
+instance AkuCraft-2026.08.16
+  Minecraft 1.21.1 · Fabric Loader 0.19.3 · LWJGL 3.3.3
+  31 jars, filenames IDENTICAL to the nix instance - diff empty both ways
 ```
 
-Then confirm: the instance is created, Fabric 0.19.3 and 1.21.1 are selected,
-26 mods land in `mods/`, and it connects to `100.64.0.6:25565`. Only after that
-does the `.mrpack` get announced, and only after two non-Diego installs does it
-replace the zip.
+Notes from the run:
+- FreeSM installs `env.client: optional` mods **by default** rather than
+  skipping them, so the pack ships EMI and the minimap stack out of the box.
+- Java must be **21.0.12**. 1.21.1 requires 21 and the mixin-heavy mods are
+  built against it; the launcher also offers 8/17/25. Decline any offer to
+  auto-download a JRE — a fetched glibc build will not run on NixOS.
+- A `/tmp` instance folder raises a "will be deleted without warning" dialog.
+  Harmless for a disposable root, but never use /tmp for a real install.
+
+**Still outstanding:** two non-Diego installs before the zip is retired.
+Ulfhogg and Ankred are the natural candidates — both are onboarding now and
+would otherwise face the 26-jar manual copy.
+
+**Diego keeps the nix instance, not the mrpack.** They do not collide — the
+pack names itself `AkuCraft-<version>` while the nix module owns
+`instances/1.21.1/minecraft/mods/` — but running both is two sources of truth:
+nix updates on `sync-user.sh` while the pack only changes on re-import, so it
+drifts silently and eventually produces a mismatch kick. The one combination
+that genuinely breaks is naming an imported instance `1.21.1`: home-manager
+(`force = true`) would replace the launcher's real jars with symlinks while its
+mod index still expected files.
 
 **Regeneration:** the pack is derived from `minecraft-client-mods.nix` by
 reading each Modrinth CDN URL's version id and pulling hashes/size from the API.
