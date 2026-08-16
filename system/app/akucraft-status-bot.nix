@@ -115,6 +115,13 @@ lib.mkIf enabled {
   security.sudo.extraRules = [{
     users = [ username ];
     commands = [
+      # Reading the user list is needed BEFORE either of the others: the script
+      # checks whether the guest already exists, then looks up their id to mint
+      # the key against. Granting only the two mutating commands - as this did
+      # until 2026-08-16 - let it create the user and then abort with an empty
+      # id, leaving a half-made guest and an invite that never arrived.
+      { command = "/run/current-system/sw/bin/headscale users list";           options = [ "NOPASSWD" ]; }
+      { command = "/run/current-system/sw/bin/headscale users list *";         options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/headscale users create *";       options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/headscale preauthkeys create *"; options = [ "NOPASSWD" ]; }
     ];
