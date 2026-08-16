@@ -334,6 +334,134 @@ let
     };
   };
 
+  # ---------------------------------------------------------------------------
+  # HD instances - the opt-in shader/LOD build, one per server.
+  #
+  # These are built the OPPOSITE way round to the instances above. They carry
+  # AutoModpack and the client-only graphics stack and NOTHING else: the server
+  # supplies the actual mod list on first connect. Putting the synced mods here
+  # as well would give the client two copies of every jar - one in mods/, one in
+  # the automodpack folder - and Fabric refuses to start on a duplicate mod id.
+  #
+  # 3D Skin Layers is deliberately absent even though it belongs to this stack:
+  # it requires fabric-api, which arrives only after the first connect, and
+  # Fabric will not launch at all with an unresolved dependency.
+  hdInstances = [
+    { name = "AkuCraft-HD";         title = "AkuCraft HD";         ip = "100.64.0.6:25565"; }
+    { name = "AkuCraft-STAGING-HD"; title = "AkuCraft STAGING HD"; ip = "100.64.0.6:25599"; }
+  ];
+
+  hdMods = [
+    {
+      name = "automodpack-mc1.21.1-fabric-4.0.6.jar";
+      url = "https://cdn.modrinth.com/data/k68glP2e/versions/ig9vuxA6/automodpack-mc1.21.1-fabric-4.0.6.jar";
+      sha512 = "bd7194b62a99b66dbdd3885ad95516c20e81404bbfacccefb013f867713a9afade507c617ecfc77bf50bcb303977d0849ffad4db3e476ac8938829e641298095";
+    }
+    {
+      name = "sodium-fabric-0.8.12+mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/AANobbMI/versions/KIRFiWG4/sodium-fabric-0.8.12%2Bmc1.21.1.jar";
+      sha512 = "8afe411eec65a9f677611ed6390ce656e5a3572f9be473e5dca51ae882a9426a547cd2e8c793278577bb14c17e48158030b11753108926ef33698614bd94ed7f";
+    }
+    {
+      name = "iris-fabric-1.8.8+mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/YL57xq9U/versions/zsoi0dso/iris-fabric-1.8.8%2Bmc1.21.1.jar";
+      sha512 = "2e6ba2ffa1e1a6799288245a7e0ac68ee8df1d41b98362189df58f535cae34fa9277801e4136633467341b7dae5be0e5c698011b480b3d91b66d3dd4f7567aa6";
+    }
+    {
+      name = "DistantHorizons-3.2.0-b-1.21.1-fabric-neoforge.jar";
+      url = "https://cdn.modrinth.com/data/uCdwusMi/versions/ZpKb4kZp/DistantHorizons-3.2.0-b-1.21.1-fabric-neoforge.jar";
+      sha512 = "d4199f92f992fbd2c75a3b0e4e81c8a98bee889013f7347f2149ffa62c86748bde22135e9b2c82a10875db94fa576571c661c5ee16d2f567bd8a93d6f255fd22";
+    }
+  ];
+
+  # Bliss is the default; Complementary is the one to switch to when the frame
+  # rate hurts, so it ships alongside rather than being a second download.
+  hdShaderDefault = "Bliss_v2.1.2_(Chocapic13_Shaders_edit).zip";
+  hdShaders = [
+    {
+      name = hdShaderDefault;
+      url = "https://cdn.modrinth.com/data/ZvMtQlho/versions/kC2Y8q1P/Bliss_v2.1.2_%28Chocapic13_Shaders_edit%29.zip";
+      sha512 = "dafc60be4980ec40f40edc0f2625cb0976f3c9ce5ed86383146a120480826bb1de70ef5e38b7f1437294ed4d38c6ef3c82ebef0ae4e00b8cee165788c9c18280";
+    }
+    {
+      name = "ComplementaryReimagined_r5.8.1.zip";
+      url = "https://cdn.modrinth.com/data/HVnmMxH1/versions/yCCduG44/ComplementaryReimagined_r5.8.1.zip";
+      sha512 = "6bd95215755d25812556ce790d976221f7d677d63112e3e4d3e70b08a62ed41348fa3792dd31bbe720d1e46fe2d525cadb4f66e6358118e1f4aa8e0d11f25c39";
+    }
+  ];
+
+  hdResourcePack = {
+    name = "Better-Leaves-9.5.zip";
+    url = "https://cdn.modrinth.com/data/uvpymuxq/versions/XWtayRKd/Better-Leaves-9.5.zip";
+    sha512 = "3f50d72bdc7274aa01a7c68d1e8a8f592eddc5e28ad9c60d796815a9892751bc862c0ee0dbed290dd7c4ad994c68d38b8cde02b21c96ecbaab6fe18808fb8750";
+  };
+
+  # servers.dat is uncompressed NBT, so it cannot be written with a here-doc.
+  # Same layout as scripts/build-akucraft-pack.py - keep the two in step.
+  mkServersDat = title: ip: pkgs.runCommand "akucraft-servers.dat" { } ''
+    ${pkgs.python3}/bin/python3 - "$out" <<'PY'
+    import struct, sys
+    def s(x):
+        b = x.encode("utf-8")
+        return struct.pack(">H", len(b)) + b
+    out  = b"\x0a" + s("") + b"\x09" + s("servers") + b"\x0a" + struct.pack(">i", 1)
+    out += b"\x08" + s("ip") + s("${ip}")
+    out += b"\x08" + s("name") + s("${title}")
+    out += b"\x01" + s("hidden") + b"\x00" + b"\x00" + b"\x00"
+    open(sys.argv[1], "wb").write(out)
+    PY
+  '';
+
+  # A FreesmLauncher instance is only listed if it has these two files, so a
+  # purely declarative instance has to provide them - importing the .mrpack by
+  # hand is exactly the step we are removing.
+  mmcPack = pkgs.writeText "mmc-pack.json" (builtins.toJSON {
+    formatVersion = 1;
+    components = [
+      { uid = "net.fabricmc.intermediary"; version = "1.21.1"; cachedName = "Intermediary Mappings"; dependencyOnly = true; }
+      { uid = "net.minecraft";             version = "1.21.1"; important = true; cachedName = "Minecraft"; }
+      { uid = "net.fabricmc.fabric-loader"; version = "0.19.3"; cachedName = "Fabric Loader"; }
+    ];
+  });
+
+  hdFiles = lib.listToAttrs (lib.concatMap (i:
+    let dir = ".local/share/FreesmLauncher/instances/${i.name}"; in
+    [
+      { name = "${dir}/instance.cfg";
+        value.text = ''
+          InstanceType=OneSix
+          name=${i.title}
+          OverrideCommands=false
+          OverrideJavaArgs=false
+          iconKey=default
+        ''; }
+      { name = "${dir}/mmc-pack.json"; value.source = mmcPack; }
+      { name = "${dir}/minecraft/servers.dat";
+        value = { source = mkServersDat i.title i.ip; force = true; }; }
+      # Shaders and the resource pack are switched ON here. A build that ships
+      # shaders and leaves them disabled only generates questions.
+      { name = "${dir}/minecraft/config/iris.properties";
+        value.text = ''
+          enableShaders=true
+          shaderPack=${hdShaderDefault}
+        ''; }
+      { name = "${dir}/minecraft/options.txt";
+        value.text = ''
+          resourcePacks:["vanilla","file/${hdResourcePack.name}"]
+          graphicsMode:2
+          renderDistance:12
+          simulationDistance:8
+        ''; }
+      { name = "${dir}/minecraft/resourcepacks/${hdResourcePack.name}";
+        value = { source = pkgs.fetchurl { inherit (hdResourcePack) url sha512; }; force = true; }; }
+    ]
+    ++ map (mkFiles i.name) hdMods
+    ++ map (sh: {
+         name = "${dir}/minecraft/shaderpacks/${sh.name}";
+         value = { source = pkgs.fetchurl { inherit (sh) url sha512; }; force = true; };
+       }) hdShaders
+  ) hdInstances);
+
   modFiles = lib.listToAttrs (lib.concatMap (instance:
     map (mkFiles instance) (syncedMods ++ clientMods)) instances);
 
@@ -341,5 +469,5 @@ let
     map (mkFiles instance) (syncedMods ++ clientMods ++ trialMods)) stagingInstances);
 in
 {
-  home.file = modFiles // stagingFiles;
+  home.file = modFiles // stagingFiles // hdFiles;
 }
