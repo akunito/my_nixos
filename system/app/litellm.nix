@@ -183,10 +183,14 @@ in
         };
 
         litellm_settings = {
-          # Prompt/response bodies would otherwise be logged in full. Villager
-          # dialogue and support questions are player content — keep them out of
-          # the journal.
-          turn_off_message_logging = true;
+          # ⚠️ PRIVACY SWITCH. When message logging is ON, full prompts AND
+          # replies land in the journal — that is every villager conversation
+          # AND every /ask question any player asks, not just the one being
+          # debugged. There is no per-model setting; it is all or nothing.
+          # On deliberately while the villager work is being tuned, because
+          # otherwise there is no way to see what the model was actually told.
+          # Turn it back off before this stops being an experiment.
+          turn_off_message_logging = !(cfg.litellmLogMessages or false);
           drop_params = true; # tolerate params a given provider doesn't accept
         };
       };

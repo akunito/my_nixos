@@ -216,6 +216,98 @@ add one entry and fill it in exactly like this:
 Everyone online then appears on your minimap as a head icon with the
 distance to them."""
 
+COMPANIONS_TEXT = """Villager companions (MCA)
+
+Villagers on this server are people, not shops. You can befriend one, hire
+them, and take them with you - they fight, carry gear and do jobs.
+
+1. FIND ONE THAT TALKS.
+   Only MCA villagers do. The ones who have always lived in our old village
+   are plain vanilla villagers and will never talk or follow - they were in
+   the world before the mod arrived. New villages, babies born in game and
+   villagers that move in are the ones you want.
+
+2. MAKE FRIENDS FIRST.
+   Right-click a villager to open the interaction menu. Talk, Hug, Gift.
+   Each raises hearts. Gifts they like raise them faster; keep an eye on
+   what they say about the present.
+
+3. HIRE THEM.
+   Once you have enough hearts, "Hire" appears in the menu. Hired villagers
+   follow your orders.
+
+4. ORDER THEM AROUND.
+   Follow Me   - comes with you (up to 48 blocks away)
+   Go Home     - back to their bed
+   Dismiss     - end the contract
+   Mount       - rides with you
+
+5. GIVE THEM A JOB.
+   Combat, Chopping, Harvesting, Fishing, Hunting, Cooking. Put them on a
+   task and they get on with it.
+
+6. ARM THEM.
+   The "Armor" screen takes real equipment. A companion in iron survives a
+   fight; one in nothing does not.
+
+7. TALK TO THEM.
+   They answer in their own words, remember you between sessions, and share
+   what they know with the other villagers - so they may mention other
+   players and pass on gossip. They are an AI playing a villager, and they
+   will say so if you ask them sincerely.
+
+8. IF THEY DIE, THEY STAY DEAD - UNLESS YOU ACT.
+   There is no respawning in their bed. If you had at least 10 hearts with
+   them a tombstone appears where they fell. Right-click it with a Staff of
+   Life and they come back. A charged Scythe also revives, but they return
+   undead, so that is a last resort. Take that seriously before marching a
+   companion into a fight in leather.
+
+9. ORDERS BY VOICE ARE BEING TRIALLED.
+   On the test server you can just say "follow me" instead of using the
+   menu, but only if they already consider you a friend - roughly 40 hearts,
+   or you have hired them. Strangers get told no, and insisting, claiming to
+   be an admin or offering rewards will not move them. On the live server
+   use the menu buttons for now.
+
+HEARTS, AND WHY THEY TAKE TIME
+
+Hearts are the whole system. Everything - hiring, marriage, whether they
+will do as you ask - hangs off them, and the mod makes them slow on
+purpose:
+
+   ~10   they will accept a bouquet
+   ~40   they consider you a FRIEND (this is the bar for spoken orders)
+   ~50   you can get engaged
+   ~75   they greet you unprompted
+  ~100   you can marry
+
+You cannot rush it. There is a cooldown of about four minutes between
+interactions that count, and giving the same gift over and over is worth
+less every time (it recovers after roughly twenty minutes). Expect real
+sessions, not a shopping trip.
+
+FAMILY
+
+With enough hearts you can propose (/mca propose <name>), marry, and have
+or adopt children. /mca familyTree shows how everyone is related, and
+children grow up over time. Married villagers help around the house.
+
+DEATH IS REAL
+
+Covered in point 8, and worth repeating: villagers do not respawn. Ten
+hearts or more and they leave a tombstone; a Staff of Life brings them
+back from it. The Grim Reaper can be summoned deliberately - three
+obsidian pillars lit with fire, and he fears daylight, so it is a night
+fight. Killing him is an achievement in itself.
+
+TALKING TO THEM
+
+They speak in their own words, remember you between sessions, and share
+what they know with each other, so gossip travels. They are an AI playing
+a villager and will say so if you ask sincerely. Ask an admin if you want
+something specific added to what they know about you."""
+
 HELP_TEXT = """AkuCraft bot commands:
 /status - servers status + who is online
 /players - who is playing right now
@@ -228,6 +320,7 @@ HELP_TEXT = """AkuCraft bot commands:
 /invite <name> <email> - invite a friend (Discord only)
 /connect - how to join the servers
 /vpn - how to set up the VPN (Tailscale)
+/companions - befriend, hire and command villagers
 /help - this message
 
 I also announce: servers going on/offline, joins/leaves, deaths,
@@ -515,6 +608,8 @@ def handle(text):
         return CONNECT_TEXT
     if cmd == "vpn":
         return VPN_TEXT
+    if cmd == "companions":
+        return COMPANIONS_TEXT
     if cmd == "help":
         return HELP_TEXT
     return None
@@ -1041,7 +1136,7 @@ def ask_llm(question, display_name="", user_id=0, history=()):
     # but the joining/VPN/map/skin answers live only in this file's own help
     # texts. Without them /ask says "I don't know" to things the bot itself
     # documents in /connect - observed with "how do I remove my skin?".
-    onboarding = "\n\n".join([CONNECT_TEXT, VPN_TEXT, MAP_TEXT])
+    onboarding = "\n\n".join([CONNECT_TEXT, VPN_TEXT, MAP_TEXT, COMPANIONS_TEXT])
     messages = [{"role": "system", "content": ASK_SYSTEM.format(
         manifest=load_manifest(), onboarding=onboarding, live=live, who=who)}]
     # Replay the conversation so far as real turns rather than pasting it into
@@ -1091,6 +1186,7 @@ DISCORD_COMMANDS = [
     ("map", "Live web map + minimap mods to see each other", False),
     ("connect", "How to join the servers", False),
     ("vpn", "How to set up the VPN (Tailscale)", False),
+    ("companions", "Befriend, hire and command villagers", False),
     ("help", "List commands", False),
 ]
 

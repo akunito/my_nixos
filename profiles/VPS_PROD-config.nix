@@ -307,6 +307,9 @@ in
     # instead. The ExecStartPost assertion in the module now catches that.
     litellmPort = 4711;
     litellmOpenFirewallTailscale = true;
+    # ⚠️ ON while the villager prompts are being tuned - it also logs every
+    # player /ask question, so turn it back off once they are settled.
+    litellmLogMessages = true;
     # One DeepSeek key per consumer: spend is attributable in the provider
     # dashboard and either can be revoked without taking the other down. They
     # share one account balance, so this is attribution, not separate budgets.
