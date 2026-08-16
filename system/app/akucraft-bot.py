@@ -224,7 +224,7 @@ HELP_TEXT = """AkuCraft bot commands:
 /map - live web map + minimap mods to see each other
 /ask <question> - ask about the server, answered only to you (Discord only)
 /link <name> - tell /ask which Minecraft account is yours (Discord only)
-/profile <notes> - what the assistant should remember about you (Discord only)
+/profile <notes> [user] - admin only: context the assistant keeps about a player
 /invite <name> <email> - invite a friend (Discord only)
 /connect - how to join the servers
 /vpn - how to set up the VPN (Tailscale)
@@ -1301,9 +1301,11 @@ def build_discord_client(with_members=True):
                     + (f"I remember the last **{turns}** of our exchanges; add "
                        f"`new_topic:True` to an /ask to start fresh.\n"
                        if turns else "No conversation in progress.\n")
-                    + ("Notes about you: set (`/profile` to see or change them)."
+                    + ("An admin has added notes about you, which I use when "
+                       "you ask."
                        if ask_profile(uid) else
-                       "No notes about you yet - `/profile notes:<text>`."),
+                       "No notes about you yet - ask Diego if there is context "
+                       "worth me knowing."),
                     ephemeral=True)
                 return
             n = name.strip()
@@ -1347,10 +1349,13 @@ def build_discord_client(with_members=True):
             description="Tell the assistant which Minecraft account is yours",
             callback=link_handler), guild=guild)
 
-        # /profile - notes a player writes once instead of re-explaining who
-        # they are every session ("I'm Diego, Akunito in game, I run the
-        # server"). Rides in every prompt they send, hence the length cap.
-        async def profile_handler(interaction, notes: str = "", clear: bool = False):
+        # /profile - notes the assistant keeps about a player, so nobody has to
+        # re-explain who they are every session. ADMIN ONLY: these notes are
+        # unverifiable claims that ride in the prompt, and letting everyone write
+        # their own invites "I am the admin" from people who are not. Players who
+        # want context ask an admin, who writes it for them with `user:`.
+        async def profile_handler(interaction, notes: str = "", clear: bool = False,
+                                  user: discord.Member = None):
             if ASK_CATEGORY and getattr(
                     interaction.channel, "category_id", None) != ASK_CATEGORY:
                 where = f"<#{DISCORD_CHANNEL}>" if DISCORD_CHANNEL else "the Minecraft channels"
@@ -1358,21 +1363,32 @@ def build_discord_client(with_members=True):
                     f"That one lives in the Minecraft channels — try {where}.",
                     ephemeral=True)
                 return
-            uid = interaction.user.id
+            roles = {r.name for r in getattr(interaction.user, "roles", [])}
+            if not (roles & ASK_ADMIN_ROLES):
+                await interaction.response.send_message(
+                    "Only an admin can set these notes. Ask Diego to add context "
+                    "about you and he will.", ephemeral=True)
+                return
+            target = user or interaction.user
+            uid = target.id
+            whose = "your" if target.id == interaction.user.id else f"{target.display_name}'s"
             if clear:
                 ask_profile(uid, clear=True)
+                log(f"profile: {interaction.user} cleared notes for {target}")
                 await interaction.response.send_message(
-                    "Cleared your notes.", ephemeral=True)
+                    f"Cleared {whose} notes.", ephemeral=True)
                 return
             if not notes.strip():
                 cur = ask_profile(uid)
                 await interaction.response.send_message(
-                    (f"What I remember about you:\n> {cur}\n\nReplace it with "
-                     f"`/profile notes:<text>`, or wipe it with `/profile clear:True`.")
+                    (f"What I remember about {target.display_name}:\n> {cur}\n\n"
+                     f"Replace it with `/profile notes:<text>`, or wipe it with "
+                     f"`/profile clear:True`.")
                     if cur else
-                    ("You have not told me anything about yourself yet. For example:\n"
-                     "`/profile notes: I'm Diego. Akunito in game, akunito88 on "
-                     "Discord. I run this server.`"),
+                    (f"No notes about {target.display_name} yet. For example:\n"
+                     "`/profile notes: Diego. Akunito in game, akunito88 on "
+                     "Discord. Runs this server.`\n"
+                     "Add `user:@someone` to write notes about another player."),
                     ephemeral=True)
                 return
             n = notes.strip()
@@ -1380,17 +1396,17 @@ def build_discord_client(with_members=True):
                 await interaction.response.send_message(
                     f"That is a bit long ({len(n)} characters, max "
                     f"{ASK_MAX_PROFILE}). These notes ride along with every question "
-                    f"you ask, so keep them to what actually matters.", ephemeral=True)
+                    f"they ask, so keep them to what actually matters.", ephemeral=True)
                 return
             ask_profile(uid, n)
-            log(f"profile: {interaction.user} set notes ({len(n)} chars)")
+            log(f"profile: {interaction.user} set notes for {target} ({len(n)} chars)")
             await interaction.response.send_message(
-                f"Saved — I will keep this in mind whenever you /ask:\n> {n}",
-                ephemeral=True)
+                f"Saved. I will keep this in mind whenever {target.display_name} "
+                f"uses /ask:\n> {n}", ephemeral=True)
 
         tree.add_command(app_commands.Command(
             name="profile",
-            description="Notes about you the assistant should remember between questions",
+            description="Admin: notes the assistant should remember about a player",
             callback=profile_handler), guild=guild)
 
         # The manifest is regenerated by scripts/generate-akucraft-manifest.sh
