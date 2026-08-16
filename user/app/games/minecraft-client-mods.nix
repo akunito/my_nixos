@@ -417,14 +417,23 @@ let
     }
   ];
 
-  # Complementary Reimagined is the default: it looks better to us and it is far
-  # lighter, so the pack does not need a "turn this off if it stutters" step for
-  # most people. Bliss - the one from the reference build - ships alongside for
-  # anyone who prefers its heavier, foggier look, and switching is one click.
-  hdShaderDefault = "ComplementaryReimagined_r5.8.1.zip";
+  # Three shaders, all installed, one click apart. The default is UNBOUND, and
+  # the distinction matters: by their own authors' descriptions, Reimagined
+  # "preserves the elements of Minecraft" while Unbound "transforms the visuals"
+  # - same author, same version, same performance. Defaulting to Reimagined made
+  # water and lighting look untouched, which is not what an HD pack is for.
+  #   Unbound      dramatic light and water, the default
+  #   Reimagined   the same shader tuned to stay vanilla-faithful
+  #   Bliss        the one from the reference build; heavier, foggier, fantasy
+  hdShaderDefault = "ComplementaryUnbound_r5.8.1.zip";
   hdShaders = [
     {
       name = hdShaderDefault;
+      url = "https://cdn.modrinth.com/data/R6NEzAwj/versions/VMHXIk50/ComplementaryUnbound_r5.8.1.zip";
+      sha512 = "9098dd9e0c18b80f7aba2839cea33ce9a614d97665bbfcac87ccce6e4771667c41602d99088852cb1642ccab20b2ceff9b98af8f2e795bd0d3b90b7c9cbab914";
+    }
+    {
+      name = "ComplementaryReimagined_r5.8.1.zip";
       url = "https://cdn.modrinth.com/data/HVnmMxH1/versions/yCCduG44/ComplementaryReimagined_r5.8.1.zip";
       sha512 = "6bd95215755d25812556ce790d976221f7d677d63112e3e4d3e70b08a62ed41348fa3792dd31bbe720d1e46fe2d525cadb4f66e6358118e1f4aa8e0d11f25c39";
     }

@@ -57,11 +57,15 @@ HD_MOD_VERSION_IDS = {
     "distant-horizons": "ZpKb4kZp",  # LOD rendering - see far while exploring
 }
 HD_SHADER_VERSION_IDS = {
-    "complementary-reimagined": "yCCduG44",   # default - better looking and much lighter
-    "bliss":                    "kC2Y8q1P",   # the one from the reference build, heavier
+    # Unbound "transforms the visuals"; Reimagined "preserves the elements of
+    # Minecraft" - same author, same version. Defaulting to Reimagined made an
+    # HD pack look untouched, which is the opposite of the point.
+    "complementary-unbound":    "VMHXIk50",   # default
+    "complementary-reimagined": "yCCduG44",   # vanilla-faithful alternative
+    "bliss":                    "kC2Y8q1P",   # fantasy styled, heavier
 }
 HD_RESOURCEPACK_VERSION_IDS = {"better-leaves": "XWtayRKd"}
-HD_DEFAULT_SHADER = "complementary-reimagined"
+HD_DEFAULT_SHADER = "complementary-unbound"
 STAGING = ("AkuCraft STAGING (MCA test)", "100.64.0.6:25599")
 # MCA Reborn 7.7.32+1.21.1 - the newest STABLE build. Do not use the betas.
 MCA_VERSION_ID = "mRrlD2wq"
