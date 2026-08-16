@@ -11,6 +11,7 @@ Features:
   - announces deaths and advancements (docker log tailing)
   - auto-stops a server empty for IDLE_STOP_MINUTES and announces it
   - commands: /start /stop /status /players /map /connect /vpn /help
+  - Discord only: /invite <player> <email> - role-gated player onboarding
 
 Transports (each optional, enabled by its own env vars):
   - Telegram: long-polls getUpdates; commands honored only in TG_CHAT.
@@ -46,6 +47,10 @@ DISCORD_INVITE_CODES = {c for c in os.environ.get("DISCORD_INVITE_CODES", "").sp
 STATE_DIR = os.environ.get("STATE_DIRECTORY", "/var/lib/akucraft-status")
 IDLE_STOP_MIN = int(os.environ.get("IDLE_STOP_MINUTES", "45"))
 GROUP_LINK = os.environ.get("TG_GROUP_LINK", "")
+# /invite: players onboarding their own friends. Off unless a script is set.
+INVITE_SCRIPT = os.environ.get("INVITE_SCRIPT", "")
+INVITE_ENABLE = INVITE_SCRIPT != ""
+INVITE_ROLES = {r for r in os.environ.get("INVITE_ROLES", "MCplayer,MCadmin").split(",") if r}
 
 SERVERS = {
     # Addresses are given as raw IP:port on purpose: the friendly hostname only
@@ -174,6 +179,7 @@ HELP_TEXT = """AkuCraft bot commands:
 /start - boot the server if it is stopped
 /stop - stop the server (refuses if players online)
 /map - live web map + minimap mods to see each other
+/invite <name> <email> - invite a friend (Discord only)
 /connect - how to join the servers
 /vpn - how to set up the VPN (Tailscale)
 /help - this message
@@ -560,6 +566,54 @@ def build_discord_client(with_members=True):
         cmd = app_commands.Command(
             name=name, description=description, callback=make_handler(name, takes_arg))
         tree.add_command(cmd, guild=guild)
+
+    # /invite - let players onboard a friend without Diego doing it over SSH.
+    #
+    # This hands out VPN access, so it is deliberately narrow: role-gated,
+    # input-validated, replies only to the caller (the email is someone else's
+    # personal data and the pre-auth key is a secret), and it never echoes the
+    # key into a channel. The key stays tag:mc-guest, so the headscale ACL
+    # still confines the guest to the game port and the map and nothing else.
+    if INVITE_ENABLE:
+        async def invite_handler(interaction, player: str, email: str):
+            roles = {r.name for r in getattr(interaction.user, "roles", [])}
+            if not (roles & INVITE_ROLES):
+                await interaction.response.send_message(
+                    "You need the **MCplayer** role to invite people.", ephemeral=True)
+                return
+            player = player.strip()
+            email = email.strip()
+            if not re.fullmatch(r"[A-Za-z0-9_]{3,16}", player):
+                await interaction.response.send_message(
+                    "That is not a valid Minecraft name (3-16 letters, digits or _).\n"
+                    "**Capitals matter** - it becomes their identity on the server, "
+                    "so type it exactly as they will.", ephemeral=True)
+                return
+            if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[A-Za-z]{2,}", email):
+                await interaction.response.send_message(
+                    "That does not look like an email address.", ephemeral=True)
+                return
+            # Everything below is slow (headscale + sendmail), so defer first.
+            await interaction.response.defer(thinking=True, ephemeral=True)
+            out = run([INVITE_SCRIPT, player, email, player], 180)
+            ok = "Invite sent to" in (out or "")
+            if ok:
+                log(f"invite: {interaction.user} invited {player} <{email}>")
+                await interaction.followup.send(
+                    f"Invited **{player}**. The setup email is on its way to `{email}`.\n"
+                    f"Their key is valid for 72 hours. If they miss it, run /invite again.\n\n"
+                    f"Remind them: the name must be typed **exactly** as `{player}` "
+                    f"when they add their offline account.", ephemeral=True)
+            else:
+                log(f"invite FAILED by {interaction.user} for {player}: {out!r}")
+                await interaction.followup.send(
+                    "That did not work. Diego needs to look at it - the details are "
+                    "in the bot log.", ephemeral=True)
+
+        tree.add_command(app_commands.Command(
+            name="invite",
+            description="Invite a friend: creates their VPN key and emails them the setup",
+            callback=invite_handler), guild=guild)
 
     invite_uses = {}
 

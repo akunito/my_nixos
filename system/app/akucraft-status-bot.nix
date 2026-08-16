@@ -25,6 +25,9 @@ let
   token = secrets.akucraftTelegramBotToken or "";
   chatId = secrets.akucraftTelegramChatId or "";
   enabled = (systemSettings.akucraftStatusBotEnable or false) && token != "" && chatId != "";
+  # The rootless docker socket (uid 1000) and ~/.homelab both belong to this
+  # user, and the service already runs as them.
+  username = "akunito";
 
   # Discord is optional and split in two independent halves:
   #   webhook  -> announcements only (no bot account, no dependency)
@@ -67,15 +70,27 @@ lib.mkIf enabled {
       DISCORD_INVITE_CODES = discordInviteCodes;
       DOCKER_HOST = "unix:///run/user/1000/docker.sock";
       IDLE_STOP_MINUTES = "45";
+      # /invite - players onboard their own friends instead of Diego doing it
+      # over SSH. Empty string disables the command entirely.
+      INVITE_SCRIPT = "/home/${username}/.homelab/minecraft/akucraft-invite.sh";
+      INVITE_ROLES = "MCplayer,MCadmin";
+      # akucraft-invite.sh (driven by /invite) additionally needs bash, python3,
+      # sudo and sendmail. /run/wrappers/bin carries the setuid sudo and the
+      # sendmail wrapper; without them the invite dies with "command not found"
+      # rather than anything that looks like a permissions problem.
       PATH = lib.mkForce (lib.makeBinPath [
         pkgs-unstable.docker
         pkgs-unstable.docker-compose
         pkgs.coreutils
-      ]);
+        pkgs.bash
+        pkgs.python3
+        pkgs.gnugrep
+        pkgs.gnused
+      ] + ":/run/wrappers/bin:/run/current-system/sw/bin");
     };
     serviceConfig = {
       Type = "simple";
-      User = "akunito";
+      User = username;
       ExecStart = "${python}/bin/python3 ${./akucraft-bot.py}";
       Restart = "always";
       RestartSec = 10;
@@ -89,4 +104,16 @@ lib.mkIf enabled {
         "notify-failure@%n.service";
     };
   };
+
+  # /invite calls akucraft-invite.sh, which needs headscale - a root-only
+  # binary. Grant exactly the two subcommands it uses rather than blanket
+  # sudo or the whole binary. Every key it can mint is still tag:mc-guest,
+  # so the ACL keeps the guest to the game port and the map and nothing else.
+  security.sudo.extraRules = [{
+    users = [ username ];
+    commands = [
+      { command = "/run/current-system/sw/bin/headscale users create *";       options = [ "NOPASSWD" ]; }
+      { command = "/run/current-system/sw/bin/headscale preauthkeys create *"; options = [ "NOPASSWD" ]; }
+    ];
+  }];
 }
