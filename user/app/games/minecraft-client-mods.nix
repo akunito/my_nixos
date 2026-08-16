@@ -350,6 +350,21 @@ let
   # connect to the live server, then move it into syncedMods when it graduates
   # (and add it to the prod compose in the same change).
   trialMods = [
+    # Sodium Dynamic Lights - a held torch lights the area. Vanilla has no such
+    # thing, and what Diego was seeing came from the Complementary shader's own
+    # HELD_LIGHTING_MODE, so it existed only for HD players and only in the main
+    # hand. This gives it to everyone, in both hands, without shaders.
+    #
+    # On trial first because the actual requirement - the OFF hand - is not
+    # something either this mod or LambDynamicLights states outright.
+    #
+    # Note for HD players: its own docs say to turn off first-person lighting
+    # when the shader already provides it, or the two stack.
+    {
+      name = "sodiumdynamiclights-fabric-1.0.10-1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/PxQSWIcD/versions/BsbJhy7W/sodiumdynamiclights-fabric-1.0.10-1.21.1.jar";
+      sha512 = "395affdb6d2484c071a2905ad247c8c5b13a4fa82f59e1a4c92a043409958f29fab4b4274a2e4aa6d9b55c6fecb4070d4595627e6d309da90bf83ba665fdc84e";
+    }
     # Surveyor: a map backend that keeps explored terrain ON THE SERVER and
     # shares it between opt-in groups, across dimensions. Being trialled for
     # the friends/clans map features - position sharing, area sharing, and
