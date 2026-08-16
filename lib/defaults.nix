@@ -207,6 +207,23 @@
     llamaWakeProxyApiKeyFile = "/etc/secrets/pfsense-wol-key"; # out-of-band root-only x-api-key file
     llamaWakeProxyWakeTimeoutSec = 120;                    # max wait for DESK to wake + rejoin tailnet
 
+    # === LiteLLM gateway (hosted models; OpenAI-compatible front door) ===
+    # One place for provider keys, fallbacks and the model choice. Consumers
+    # (MCA villagers, akucraft-bot /ask) only ever see an alias from
+    # litellmModels. See system/app/litellm.nix — read the ACL warning there
+    # before opening the port. Hard spend ceiling = the provider PREPAID
+    # BALANCE, not a LiteLLM budget (no Postgres needed).
+    litellmEnable = false;
+    litellmHost = "127.0.0.1";        # VPS sets its Tailscale IP: the rootless minecraft container cannot reach the host's 127.0.0.1
+    litellmPort = 4000;
+    litellmOpenFirewallTailscale = false;  # open the port on tailscale0 only (never on the guest ACL)
+    litellmMasterKeySecret = "litellmMasterKey"; # attribute NAME in secrets/domains.nix; the bearer token consumers send
+    litellmProviders = [ ];           # [{ envVar = "DEEPSEEK_API_KEY"; secret = "deepseekApiKey"; }] — materialised into a 0400 env file at activation
+    litellmModels = [ ];              # [{ name = "alias"; model = "openai/<id>"; apiBase = "https://..."; envVar = "DEEPSEEK_API_KEY"; }] — use the generic openai/ passthrough, not provider-specific names (packaged litellm lags upstream)
+    litellmFallbacks = { };           # { alias = [ "backup-alias" ]; }
+    litellmNumRetries = 2;
+    litellmTimeout = 20;              # seconds; a villager waiting longer than this is already a broken experience
+
     # Service defaults
     havegedEnable = true; # Can disable on modern kernels (5.4+) where it's redundant
     fail2banEnable = true; # Can disable for systems behind firewall

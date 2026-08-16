@@ -291,6 +291,49 @@ in
     llamaWakeProxyListenAddress = "100.64.0.6"; # VPS Tailscale IP
     llamaWakeProxyWolMac = "08:bf:b8:6c:ab:92"; # DESK onboard 2.5GbE (eno1)
 
+    # === LiteLLM gateway (AkuCraft AI: MCA villagers + akucraft-bot /ask) ===
+    # Bound to the Tailscale IP because the rootless `minecraft` container
+    # cannot reach the host's 127.0.0.1 (verified: 302 in 1.3 ms to this IP).
+    # ‼️ Do NOT add port 4000 to the tag:mc-guest headscale ACL.
+    litellmEnable = true;
+    litellmHost = "100.64.0.6"; # VPS Tailscale IP
+    litellmPort = 4000;
+    litellmOpenFirewallTailscale = true;
+    # One DeepSeek key per consumer: spend is attributable in the provider
+    # dashboard and either can be revoked without taking the other down. They
+    # share one account balance, so this is attribution, not separate budgets.
+    litellmProviders = [
+      { envVar = "DEEPSEEK_KEY_DISCORD"; secret = "deepseekApiKeyDiscord"; }
+      { envVar = "DEEPSEEK_KEY_INGAME"; secret = "deepseekApiKeyIngame"; }
+      { envVar = "QWEN_API_KEY"; secret = "qwenApiKey"; }
+    ];
+    # Model ids verified against the provider itself, not a price tracker:
+    #   curl https://api.deepseek.com/v1/models -H "Authorization: Bearer $KEY"
+    #   -> deepseek-v4-flash, deepseek-v4-pro   (2026-08-16)
+    # The generic `openai/` prefix is deliberate — see the version note in
+    # system/app/litellm.nix.
+    litellmModels = [
+      { name = "akucraft-support";
+        model = "openai/deepseek-v4-flash";
+        apiBase = "https://api.deepseek.com/v1";
+        envVar = "DEEPSEEK_KEY_DISCORD"; }
+      { name = "akucraft-support-backup";
+        model = "openai/qwen-flash";
+        apiBase = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
+        envVar = "QWEN_API_KEY"; }
+      # Villagers get their own alias so the model can be chosen on LATENCY
+      # (a player is standing in front of them) independently of /ask. Which
+      # backend wins is decided by measurement, not by the price table.
+      { name = "akucraft-villager";
+        model = "openai/deepseek-v4-flash";
+        apiBase = "https://api.deepseek.com/v1";
+        envVar = "DEEPSEEK_KEY_INGAME"; }
+    ];
+    litellmFallbacks = {
+      akucraft-support = [ "akucraft-support-backup" ];
+      akucraft-villager = [ "akucraft-support-backup" ];
+    };
+
     # === Nginx Local Access (*.local.akunito.com via Tailscale — bypasses Cloudflare Access) ===
     nginxLocalEnable = true;
     nginxLocalListenAddress = "100.64.0.6"; # VPS Tailscale IP (must be IP, not hostname — nginx bind)
