@@ -6,6 +6,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
+| akunito.infra.services.akucraft-manifest | Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server | minecraft, akucraft, vps, gaming, generated | scripts/generate-akucraft-manifest.sh |
 | akunito.known-issues | Out-of-scope bugs and stale code surfaced during other work — to fix later | bugs, tech-debt, backlog | docs/akunito/known-issues.md |
 | akunito.plans.akucraft-roadmap | Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase | minecraft, akucraft, vps, gaming, plan, backup | system/app/restic-backup-vps.nix |
 | audits.docker-security.2026-03-06 | VPS Docker container security audit — network isolation, database access, secrets, hardening | audit, security, docker, vps, containers, networking, secrets | profiles/VPS*-config.nix |

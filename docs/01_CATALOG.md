@@ -536,6 +536,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md**: Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring
 - **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
 - **docs/akunito/infrastructure/audits/truenas-docker-security-audit-2026-03-06.md**: TrueNAS Docker rootless migration and security hardening audit
+- **docs/akunito/infrastructure/services/akucraft-manifest.md**: Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
 - **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS
 - **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: consolidated monitoring on VPS
