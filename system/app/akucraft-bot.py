@@ -306,7 +306,31 @@ TALKING TO THEM
 They speak in their own words, remember you between sessions, and share
 what they know with each other, so gossip travels. They are an AI playing
 a villager and will say so if you ask sincerely. Ask an admin if you want
-something specific added to what they know about you."""
+something specific added to what they know about you.
+
+WHAT IS RECORDED - PLEASE READ
+
+Be aware of this before you talk to them or use /ask:
+
+  - What you say to a villager, and what they say back, IS SAVED. So are
+    the questions you ask the bot with /ask.
+  - It is kept for two reasons. One, so Diego can look at it and fix the
+    thing when a villager answers badly - it is still being tuned. Two,
+    because it is what lets villagers remember you, mention other players
+    by name and pass rumours around the village. The memory IS the
+    feature; without it they forget you every time.
+  - Villagers gossip about players, including you. Expect to be talked
+    about. It is meant to be warm - nothing cruel, nothing anyone would
+    not say to your face - but if a villager says something about you
+    that lands badly, tell Diego and it gets fixed.
+  - /ask replies are private to you in Discord. Nobody else sees them in
+    the channel. That is about who reads it live, not about what is
+    stored.
+  - Do not type anything you would not want kept: passwords, real
+    addresses, anything private. It is a game server run by a friend, not
+    a vault.
+
+Ask Diego to wipe what is stored about you and he will."""
 
 HELP_TEXT = """AkuCraft bot commands:
 /status - servers status + who is online
@@ -331,6 +355,32 @@ def log(msg):
     print(msg, flush=True)
 
 
+def chunk_text(text, limit):
+    """Split on line boundaries so a long reply survives a chat platform's cap.
+
+    Discord rejects anything over 2000 characters with a 400, Telegram over
+    4096. CONNECT_TEXT has been 2207 characters and therefore FAILING in Discord
+    since it was written - nothing caught it because the exception lands in the
+    gateway thread's task, where no player can report it and no log is read.
+    """
+    chunks, cur = [], ""
+    for line in text.split("\n"):
+        while len(line) > limit:          # one absurdly long line, split hard
+            if cur:
+                chunks.append(cur)
+                cur = ""
+            chunks.append(line[:limit])
+            line = line[limit:]
+        if cur and len(cur) + 1 + len(line) > limit:
+            chunks.append(cur)
+            cur = line
+        else:
+            cur = line if not cur else cur + "\n" + line
+    if cur:
+        chunks.append(cur)
+    return chunks or [""]
+
+
 def post(label, req_or_url, data, timeout=15, attempts=3):
     """POST with retries. A dropped announcement is invisible to users, so a
     transient hiccup (Discord returned 403 mid permission-edit on 2026-08-07,
@@ -349,9 +399,10 @@ def post(label, req_or_url, data, timeout=15, attempts=3):
 
 
 def send(text):
-    """Post to the Telegram group."""
-    data = urllib.parse.urlencode({"chat_id": CHAT, "text": text}).encode()
-    post("telegram sendMessage", API + "/sendMessage", data)
+    """Post to the Telegram group, split to fit Telegram's 4096-char cap."""
+    for part in chunk_text(text, 4000):
+        data = urllib.parse.urlencode({"chat_id": CHAT, "text": part}).encode()
+        post("telegram sendMessage", API + "/sendMessage", data)
 
 
 def send_discord(text):
@@ -1231,7 +1282,10 @@ def build_discord_client(with_members=True):
             text = "/" + name + (f" {server}" if server else "")
             reply = await asyncio.get_running_loop().run_in_executor(
                 None, handle, text)
-            await interaction.followup.send(reply or "Unknown command.")
+            parts = chunk_text(reply or "Unknown command.", 1900)
+            await interaction.followup.send(parts[0])
+            for extra in parts[1:]:
+                await interaction.followup.send(extra)
 
         if not takes_arg:
             async def noarg(interaction):

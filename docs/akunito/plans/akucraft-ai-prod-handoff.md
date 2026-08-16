@@ -86,9 +86,11 @@ script defaults to off precisely so a routine re-run cannot grant it by accident
 and replies to the journal. LiteLLM has no per-model switch, so this captures
 **every player's `/ask` question too**, not just villager traffic.
 
-It was turned on to tune the villager prompts. **Turn it off before this stops
-being an experiment**, or accept that player questions are being recorded and say
-so to the players.
+It was turned on to tune the villager prompts. The players are told plainly:
+`/companions` carries a "WHAT IS RECORDED" section saying conversations and
+/ask questions are saved, why (debugging, and villager memory/gossip), and that
+Diego will wipe a player's history on request. Turn logging off when tuning
+stops, or keep it and keep the notice accurate.
 
 ---
 
