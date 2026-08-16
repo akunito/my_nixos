@@ -175,6 +175,22 @@ let
       url = "https://cdn.modrinth.com/data/bK3Ubu9p/versions/gcFhYOoT/simplyswords-fabric-1.63.0-1.21.1.jar";
       sha512 = "95231b5c2ff5cc01e4dae13f82bb5fd2cec9d683c211f8c6e2df498f5763d75c1c1156717be9ba3490623d06b0783bd823ea8614d05694642a4de3c4a78a67dc";
     }
+
+    # --- Character progression (Pufferfish) ---
+    # The framework only. The skill TREES are data and live server-side
+    # (default-skill-trees), so trees can be rebalanced with /reload without
+    # touching the pack or asking anyone to reinstall.
+    # Ignoring the skills screen entirely leaves the game exactly as before.
+    {
+      name = "puffish_skills-0.18.3-1.21-fabric.jar";
+      url = "https://cdn.modrinth.com/data/hqQqvaa4/versions/hz4AXzIa/puffish_skills-0.18.3-1.21-fabric.jar";
+      sha512 = "4f25fc2cacb58e361bf40e9c80e2c422c6df9c743874019e6b88897f9fc19028d2194ee75866a108475ef2de14053570bf57de45e3c708176914d447ccc7f289";
+    }
+    {
+      name = "puffish_attributes-0.8.3-1.21-fabric.jar";
+      url = "https://cdn.modrinth.com/data/FCFcFw09/versions/969uN2vX/puffish_attributes-0.8.3-1.21-fabric.jar";
+      sha512 = "a960469a5a33289eb54949cc4538f163ffb3fd94a9bbeb52715073408b2b057ace50e159f11c30adc10df2876416108d1bd9a1f90c49fde501ec38f7fab4ad4a";
+    }
   ];
 
   # Client-only mods: the server neither ships nor knows about these, they add
