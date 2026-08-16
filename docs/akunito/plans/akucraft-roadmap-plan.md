@@ -398,6 +398,31 @@ deliberate: players should never have to read three posts to learn one thing.
 
 ---
 
+## 14b. Backlog — after the roadmap is implemented
+
+**Self-service invites from Discord.** Today every new player costs Diego a
+manual `akucraft-invite.sh` run over SSH on the VPS. Move it into the bot: a
+Discord command that an authorised member runs to invite a friend, which does
+what the script does now — create the headscale user, mint a tagged 72h
+pre-auth key, whitelist the computed offline UUID, and email the setup.
+
+Design notes for when it happens:
+- **Restrict who may run it.** MCadmin only at first, or a per-user quota.
+  The command hands out VPN access; it is not a toy.
+- The key must stay `tag:mc-guest`, so the ACL keeps guests to the game ports
+  and the map and nothing else. That isolation is the whole reason invites are
+  safe to delegate.
+- The email address is typed by a human into a Discord field. Confirm it back
+  before sending, because a mistyped address emails a VPN key to a stranger.
+- Player name is **case-sensitive** — it becomes the offline UUID. Echo the
+  computed UUID in the confirmation so a typo is visible before it is used.
+- The bot runs as a systemd service on the VPS and already shells out to
+  docker; `akucraft-invite.sh` needs `sudo headscale`, so either grant a
+  narrow sudoers rule or split key creation into a small privileged helper.
+  Do not give the bot blanket sudo.
+
+---
+
 ## 15. Execution order
 
 | # | Phase | Client change | Risk |

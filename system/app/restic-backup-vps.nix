@@ -358,6 +358,100 @@ in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
   systemd.timers.vps-restic-nextcloud = nextcloudBackup.timer;
   systemd.timers.vps-restic-immich = immichBackup.timer;
 
+  # AkuCraft operator tooling.
+  #
+  # Both scripts live here rather than in ~/.homelab so they inherit the repo
+  # path, the sftp command and the ssh key from this module instead of
+  # duplicating them in a shell script that would then drift.
+  environment.systemPackages = [
+
+    # akucraft-backup-now — pre-deployment snapshot.
+    #
+    # LOCAL FIRST, deliberately: the NAS sleeps roughly 23:00-16:00, so an
+    # offsite-only pre-deploy backup is unusable for most of the day. This
+    # always produces a local restore point in seconds, then pushes offsite
+    # only if the NAS answers.
+    (pkgs.writeShellScriptBin "akucraft-backup-now" ''
+      set -uo pipefail
+      export DOCKER_HOST=unix:///run/user/1000/docker.sock
+      STAMP=$(date +%Y%m%d-%H%M%S)
+      DEST="/home/${username}/.homelab/backups/akucraft/$STAMP"
+      log() { echo "$(date -Iseconds) [akucraft-backup-now] $*"; }
+
+      mkdir -p "$DEST"
+      if docker ps --format '{{.Names}}' 2>/dev/null | grep -qw minecraft; then
+        log "Flushing world (server is running)..."
+        docker exec minecraft rcon-cli save-off       >/dev/null 2>&1 || log "WARNING: save-off failed"
+        docker exec minecraft rcon-cli save-all flush >/dev/null 2>&1 || log "WARNING: flush failed"
+        sleep 3
+        docker cp minecraft:/data/world "$DEST/world" >/dev/null 2>&1 \
+          && log "World copied to $DEST/world" \
+          || log "ERROR: world copy FAILED - do not deploy"
+        docker exec minecraft rcon-cli save-on >/dev/null 2>&1 \
+          && log "Saving re-enabled" \
+          || log "CRITICAL: could not re-enable saving - run 'rcon-cli save-on' by hand"
+      else
+        log "Server stopped - copying the (already quiescent) world from disk"
+        cp -a /home/${username}/.homelab/minecraft/data/world "$DEST/world" \
+          && log "World copied to $DEST/world" \
+          || log "ERROR: world copy FAILED - do not deploy"
+      fi
+
+      # Compose files and mod pins, so a rollback can rebuild the exact stack
+      cp -a /home/${username}/.homelab/minecraft/docker-compose.yml "$DEST/" 2>/dev/null || true
+
+      du -sh "$DEST" 2>/dev/null | sed 's/^/  size: /'
+      log "Local snapshot ready: $DEST"
+
+      # Prune to the last 10 local snapshots (292M each)
+      ls -1dt /home/${username}/.homelab/backups/akucraft/*/ 2>/dev/null \
+        | tail -n +11 | xargs -r rm -rf
+
+      if timeout 8 ping -c1 -W3 ${target} >/dev/null 2>&1; then
+        log "NAS is awake - pushing offsite too"
+        systemctl start vps-restic-services.service \
+          && log "Offsite backup complete" \
+          || log "WARNING: offsite backup failed - local snapshot is still valid"
+      else
+        log "NAS asleep - local snapshot only (this is expected outside 16:00-23:00)"
+      fi
+      log "To roll back: stop the server, replace data/world with $DEST/world, start"
+    '')
+
+    # akucraft-restore-drill — prove the offsite repo actually restores.
+    # Restores into a scratch directory only; never touches the live world.
+    (pkgs.writeShellScriptBin "akucraft-restore-drill" ''
+      set -uo pipefail
+      export RESTIC_PASSWORD_FILE="/etc/secrets/restic-services"
+      RESTIC="/run/wrappers/bin/restic"
+      REPO="${repoBase}/services.restic"
+      SFTP_CMD="${sftpCommand}"
+      DEST="''${1:-/home/${username}/.homelab/backups/restore-drill}"
+      log() { echo "$(date -Iseconds) [restore-drill] $*"; }
+
+      if ! timeout 8 ping -c1 -W3 ${target} >/dev/null 2>&1; then
+        log "NAS unreachable - it sleeps outside 16:00-23:00. Aborting."; exit 1
+      fi
+
+      rm -rf "$DEST"; mkdir -p "$DEST"
+      log "Restoring the world snapshot from the latest offsite backup..."
+      $RESTIC -r "$REPO" -o "sftp.command=$SFTP_CMD" restore latest \
+        --target "$DEST" \
+        --include /home/${username}/.homelab/minecraft/data/world-snapshot 2>&1 | tail -5
+
+      W="$DEST/home/${username}/.homelab/minecraft/data/world-snapshot"
+      if [ ! -d "$W" ]; then log "FAIL: world-snapshot not present in the restore"; exit 1; fi
+      log "Restored to $W"
+      du -sh "$W" | sed 's/^/  size: /'
+      for f in level.dat region playerdata; do
+        [ -e "$W/$f" ] && log "  OK   $f" || log "  MISSING $f"
+      done
+      log "Claim data (Flan) in the restore:"
+      ls -1 "$W/data/claims" 2>/dev/null | sed 's/^/    /' || log "    none found"
+      log "Drill complete. Boot it in a scratch container to fully verify."
+    '')
+  ];
+
   # Declarative ACL grant on /var/lib/nextcloud-data so the non-root
   # akunito-owned restic backup can read it. Idempotent; runs at boot and
   # before each nextcloud backup. If the Nextcloud Docker container is
