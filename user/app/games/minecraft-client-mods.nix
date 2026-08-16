@@ -32,7 +32,20 @@
 
 let
   # FreesmLauncher instance names that hold an AkuCraft setup.
-  instances = [ "1.21.1" ];
+  #
+  # "1.21.1"           the live instance, used for 100.64.0.6:25565
+  # "AkuCraft-STAGING" a second instance for the staging server on :25599,
+  #                    which runs a throwaway copy of the world. Both get the
+  #                    same mod set from this file, which is what you want most
+  #                    of the time: staging should differ from production only
+  #                    by the one thing being tested. To test a candidate mod,
+  #                    add it here temporarily, sync, and point only the staging
+  #                    instance at :25599 — production is a separate server and
+  #                    is unaffected until its compose is changed too.
+  #
+  # The server address is not managed here; the launcher stores it in binary
+  # NBT (servers.dat). Import the staging .mrpack once and it fills itself in.
+  instances = [ "1.21.1" "AkuCraft-STAGING" ];
 
   # Mods that MUST match the server pin exactly (they add registry entries).
   # Bump these only together with both server compose files.
