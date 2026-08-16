@@ -369,10 +369,15 @@ let
       url = "https://cdn.modrinth.com/data/k68glP2e/versions/ig9vuxA6/automodpack-mc1.21.1-fabric-4.0.6.jar";
       sha512 = "bd7194b62a99b66dbdd3885ad95516c20e81404bbfacccefb013f867713a9afade507c617ecfc77bf50bcb303977d0849ffad4db3e476ac8938829e641298095";
     }
+    # Sodium 0.6.13, NOT the newer 0.8.12. Iris 1.8.8 requires a 0.6.x Sodium,
+    # and Sodium 0.8.12 in turn refuses any Iris below 1.8.13 - picking the
+    # latest release of each independently gives a pair that will not launch.
+    # The only 1.21.1 Iris at/above 1.8.13 is a beta, so this is the newest
+    # combination where both halves are stable releases.
     {
-      name = "sodium-fabric-0.8.12+mc1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/AANobbMI/versions/KIRFiWG4/sodium-fabric-0.8.12%2Bmc1.21.1.jar";
-      sha512 = "8afe411eec65a9f677611ed6390ce656e5a3572f9be473e5dca51ae882a9426a547cd2e8c793278577bb14c17e48158030b11753108926ef33698614bd94ed7f";
+      name = "sodium-fabric-0.6.13+mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/AANobbMI/versions/u1OEbNKx/sodium-fabric-0.6.13%2Bmc1.21.1.jar";
+      sha512 = "13032e064c554fc8671573dadb07bc70e6ea2f68706c65c086c4feb1d2f664346a3414cbf9d1367b42b8d063a35e40f2f967ef9af31642e1f0093b852161fe91";
     }
     {
       name = "iris-fabric-1.8.8+mc1.21.1.jar";
