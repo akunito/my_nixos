@@ -333,17 +333,37 @@ in
         model = "openai/qwen-flash";
         apiBase = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
         envVar = "QWEN_API_KEY"; }
-      # Villagers get their own alias so the model can be chosen on LATENCY
-      # (a player is standing in front of them) independently of /ask. Which
-      # backend wins is decided by measurement, not by the price table.
+      # Villagers run on DESK's own GPU, falling back to DeepSeek. Measured
+      # 2026-08-17 on the real /ask prompt: a local model matches DeepSeek on
+      # facts, refusals and NOT inventing answers, and is faster on short
+      # replies (1.4-2.0s vs 2.4-3.6s) - which is what a villager needs, since
+      # a player is standing in front of it. It is clearly worse at open-ended
+      # advice, which is why /ask above stays on DeepSeek.
+      #
+      # 100.64.0.5 is DESK DIRECTLY, deliberately NOT the wake proxy on
+      # 100.64.0.6:8090. Pointing at the proxy would send a Wake-on-LAN and
+      # boot the desktop for two villager lines, which costs more in
+      # electricity than the API calls it saves. Direct means: DESK off ->
+      # connection refused in milliseconds -> DeepSeek answers. Same when the
+      # GPU is busy gaming, since llama-server refuses to load above 5 GiB VRAM.
       { name = "akucraft-villager";
+        model = "openai/gpt-oss-20b";
+        apiBase = "http://100.64.0.5:8090/v1";
+        envVar = "";               # local server, no auth
+        # Short on purpose: a dead DESK refuses instantly, but a DESK that is
+        # awake with the model unloaded takes far longer than a villager
+        # conversation can wait. Fail over fast and let it warm up for next time.
+        extra = { timeout = 8; }; }
+      { name = "akucraft-villager-backup";
         model = "openai/deepseek-v4-flash";
         apiBase = "https://api.deepseek.com/v1";
         envVar = "DEEPSEEK_KEY_INGAME"; }
     ];
     litellmFallbacks = {
       akucraft-support = [ "akucraft-support-backup" ];
-      akucraft-villager = [ "akucraft-support-backup" ];
+      # GPU first, then DeepSeek, then the third-party backup if DeepSeek is
+      # down too.
+      akucraft-villager = [ "akucraft-villager-backup" "akucraft-support-backup" ];
     };
 
     # === Nginx Local Access (*.local.akunito.com via Tailscale — bypasses Cloudflare Access) ===

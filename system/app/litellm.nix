@@ -76,7 +76,11 @@ let
     model_name = m.name;
     litellm_params = {
       model = m.model;
-      api_key = "os.environ/${m.envVar}";
+      # A self-hosted backend (llama.cpp on DESK) authenticates nobody, but the
+      # OpenAI client refuses to send a request without SOME api_key. An empty
+      # envVar means "local, no auth" and gets a placeholder the server ignores.
+      api_key = if (m.envVar or "") == "" then "not-needed"
+                else "os.environ/${m.envVar}";
     }
     // (lib.optionalAttrs (m ? apiBase && m.apiBase != "") { api_base = m.apiBase; })
     # Per-model knobs (max_tokens, rpm, temperature...) pass straight through.
