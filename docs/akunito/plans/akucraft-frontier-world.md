@@ -200,7 +200,16 @@ changed and only a border keeps it harmless.
 
 ## Open decisions
 
-- **How big to fence the live Overworld.** This is permanent in practice.
+- ~~**How big to fence the live Overworld.**~~ **Decided 2026-08-17: `size` 24000,
+  which is +-12,000.** Derived, not guessed. `size` is the DIAMETER — a fact
+  that cost a wasted test when 12000 was read as a radius and two players were
+  teleported ~6000 blocks outside the fence, where nothing stops you. The
+  pregeneration reaches region -24..23, i.e. X and Z in [-12288, 12287]. A
+  player standing at the wall still loads chunks `view-distance` beyond it, and
+  production runs view-distance 12 = 192 blocks, so the wall can sit at most
+  12,096 out. 12,000 leaves an 288-block (18 chunk) buffer of already-generated
+  ground past the fence: nothing new ever generates where anyone can reach, so
+  no seam is reachable. Applied on staging; production gets it at rollout.
 - **Whether to add Tectonic.** It applies through Lithostitched *modifiers*
   rather than file overrides, so it cannot be scoped to one world the way the
   data-driven parts can — it would follow wherever the modifier points. Only
