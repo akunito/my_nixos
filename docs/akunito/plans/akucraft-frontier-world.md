@@ -55,6 +55,11 @@ the seam, and it is somewhere players can walk to.
 | Must clients have Terralith? | Almost certainly not | it ships 11 classes and no new blocks or items; biomes, features and structures are data-driven in 1.21 and sent by the server. Unknown biomes fall back to default colours |
 | Are the seams real, and do they matter? | **Yes to both** | measured first: the identical 64 chunks generate as `minecraft:birch_forest` without Terralith and `terralith:temperate_highlands` with it. Then seen: a sheer stone wall roughly 40 blocks high at x 1257, z −730 on staging. Flat and coastal boundaries look seamless, which is misleading — the wall only appears where the old terrain had relief |
 | Does the backup cover it? | **Yes** | the pre-backup snapshot is `cp -a /data/world`, and the frontier lives at `world/dimensions/multiworld/frontier` |
+| **Two players, two worlds, each held by their own border?** | **YES — test A4 passed 2026-08-17** | Akunito in the Overworld and AkuTest in the frontier, both flown east from x=5900 at the same moment. Akunito stopped dead at the wall; AkuTest sailed past it. This is the one test that cannot be faked with a single player, and the whole design rested on it |
+| Is `size` a radius? | **No — it is the DIAMETER** | `/worldborder get` says "12000 blocks **wide**", so `"size": 12000.0` in `borders.json` fences at **±6000**, not ±12000. A first attempt at test A4 placed both players at x=11900 believing they were 100 blocks short of the wall; they were already ~6000 blocks outside it, and a player teleported outside is never pushed back. The test proved nothing until it was redone at x=5900 |
+| Do players in another world block sleeping? | **No** | Overworld set to night with `playersSleepingPercentage=100`, one player asleep in the Overworld and one awake in the frontier: morning came. The sleep count is per level, as in vanilla |
+| Do the worlds share a clock? | **No, but `/time set` does** | measured 23721 in the Overworld against 8103 in the frontier — each world runs its own cycle, which is why it can be day for one player and night for another. But `/time set` loops over every level and resynchronises them all, while `/time query` reads only the world you ask from |
+| Can you see players who are in another world? | **Yes, and you should not** | Map Link draws the other player's head in the sky and on the minimap regardless of dimension. Two causes stacked: BlueMap publishes only `world`, `world_the_nether` and `world_the_end` — there is **no map for the frontier** — and Map Link's `dimensionMapping` is `{ }`, so it cannot associate a marker with a dimension. Fix the BlueMap map first; the mapping is useless without it. Note `dimensionMapping` is CLIENT config, so it has to reach everyone |
 
 ## Test plan — do all of this on STAGING first
 
@@ -70,9 +75,10 @@ changes**, so test it first.
 1. ~~Different sizes per world~~ **done** — 12000 / 60000
 2. ~~Persist across a restart~~ **done**
 3. ~~Physically stops you, creative and survival~~ **done** — cannot pass
-4. **Two players, two worlds, at once.** One in the Overworld, one in the
-   frontier. Each must see and be held by their own border. This is the case a
-   single shared border object cannot serve, and the reason the mod exists
+4. ~~**Two players, two worlds, at once.**~~ **done 2026-08-17 — passed.** One in
+   the Overworld, one in the frontier, both flown east from x=5900 at the same
+   moment: the Overworld player stopped at the wall, the frontier player crossed
+   it freely. ShadowBorders is not bookkeeping; A no longer threatens the design
 5. ~~Generation past the border~~ **done, with a caveat**: a player who is
    *teleported* outside can keep flying and keep generating. The guarantee is
    therefore not "no chunk is ever generated out there" but "no survival player
@@ -100,9 +106,40 @@ changes**, so test it first.
 
 These all worked in the Overworld and may not follow into a Multiworld world.
 
-15. **Flan claims** — can you claim land in the frontier?
-    (structures are already confirmed to generate there — see the table above)
-16. **Graves** — die in the frontier; does a grave appear and does `/graves` find it?
+15. ~~**Flan claims**~~ **done 2026-08-17 — passed, all four parts.** A non-op
+    player claimed land in the frontier with the golden hoe; the blocks were
+    deducted (2500 -> 734); a second player, de-opped and in survival, could not
+    break a block inside it. And claims are per-dimension **by construction**:
+    the file landed in `world/dimensions/multiworld/frontier/data/claims/`,
+    while the Overworld's live in `world/data/claims/`. Note Flan does not write
+    the claim to disk immediately — `save-all flush` was needed before the file
+    appeared, so an empty folder does not mean a failed claim.
+16. ~~**Graves**~~ **done 2026-08-17 — passed.** Died in the frontier: the grave
+    block appeared at the death spot with `World: "multiworld:frontier"`, and it
+    held the worn backpack, the diamonds INSIDE that backpack, the equipped
+    Trinkets artifact and the experience. `blacklisted_worlds` is empty, so
+    graves work in every world.
+    Two things learned the hard way: dying with no bed set sends you to the
+    OVERWORLD spawn, thousands of blocks from your grave, with no `/back`,
+    `/tpa` or `/warp` to get home — the first thing to do in the frontier is
+    sleep. And a player stuck in a respawn loop cannot be teleported out; the
+    `tp` reports success and the game puts them straight back.
+17. **Respawn anchors** — **done 2026-08-17.** Beds work normally in the frontier
+    (it is an `minecraft:overworld` dimension type) and set `SpawnDimension:
+    "multiworld:frontier"`. Traveler's Backpack's sleeping bag ALSO sets the
+    respawn once `enableSleepingBagSpawnPoint` is turned on (done on staging,
+    still false in production) — proven by the anchor moving to the bag's spot
+    after the bed was broken. Verify which one is the anchor by reading
+    `SpawnX/SpawnY/SpawnZ` and checking the block there, not by where the player
+    appears: a bed and a bag a few blocks apart look identical otherwise.
+18. **Experience on death** — **done 2026-08-17.** Universal Graves'
+    `storage.experience_percent` was 100 (nothing lost if the grave is
+    recovered); set to **92** on staging so every death costs 8% permanently.
+    Measured: level 30 = 1395 points, 1283 recovered, 112 lost. Reloads with
+    `/graves reload`, no restart. NOT yet applied to production.
+    Careful reading it: `XpTotal` is NOT recalculated by `/experience set
+    <n> levels`, so it reports a stale figure. Use `experience query <p> levels`
+    plus `points`.
 17. **Waystones** — do they persist across a restart there?
 18. **Structures** — do YUNG's, Structory, Dungeons and Taverns and the BoMD
     bosses generate in the frontier? (`/locate structure`, or the compass)

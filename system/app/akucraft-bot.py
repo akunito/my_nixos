@@ -461,7 +461,12 @@ def online_players(container):
     m = re.search(r"players online:\s*(.*)$", out)
     if not m or not m.group(1).strip():
         return set()
-    return {p.strip() for p in m.group(1).split(",") if p.strip()}
+    # Since the clan system arrived, `list` prefixes names with the scoreboard
+    # team: "[Red] Akunito". Left in, joins and leaves would be announced every
+    # time somebody changed clan, because the set of "names" changed. A player
+    # name cannot contain brackets, so stripping a leading [...] is safe.
+    return {re.sub(r"^\[[^\]]*\]\s*", "", p.strip())
+            for p in m.group(1).split(",") if p.strip()}
 
 
 def compose(server, action):
