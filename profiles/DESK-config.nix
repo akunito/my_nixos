@@ -227,7 +227,7 @@ in
     # Back to the bigger model: set the repo to "ggml-org/gpt-oss-20b-GGUF",
     # drop the file line, and put the VRAM guard back to 5 GiB.
     llamaServerModelHfRepo = "lmstudio-community/GLM-4.6V-Flash-GGUF";
-    llamaServerModelHfFile = "GLM-4.6V-Flash-Q4_K_M.gguf";
+    llamaServerModelHfFile = "Q4_K_M";   # quant TAG, not a filename - see defaults.nix
     # 8192 is plenty: villager turns are short, and /ask (the ~5k-token prompt)
     # does not come here.
     llamaServerCtxSize = 8192;

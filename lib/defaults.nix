@@ -184,7 +184,7 @@
     llamaServerInternalPort = 8091;                        # backend port (localhost only)
     llamaServerIdleTimeout = "15min";                      # stop backend + free VRAM after this idle
     llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF";  # auto-downloaded via -hf on first start
-    llamaServerModelHfFile = "";                           # optional specific GGUF filename ("" = repo default)
+    llamaServerModelHfFile = "";                           # optional QUANT TAG for -hf repo:TAG, e.g. "Q4_K_M" — NOT a filename: passing "Model-Q4_K_M.gguf" makes llama.cpp report "no GGUF files found in repository". "" = repo default
     llamaServerCtxSize = 16384;                            # context window
     llamaServerGpuLayers = 999;                            # offload all layers to GPU
     llamaServerApiKey = "";                                # legacy literal; leaks into the store AND `ps` — prefer llamaServerApiKeySecret
