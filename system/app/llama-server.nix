@@ -136,9 +136,12 @@ in
         ExecStartPost = "${waitReady}";
         TimeoutStartSec = "360";      # covers first-run GGUF download + model load
         DynamicUser = true;
-      } // lib.optionalAttrs (apiKeySecret != "") {
-        # Exposed to the (DynamicUser) service as %d/api-key, mode 0400.
-        LoadCredential = "api-key:${apiKeyFile}";
+        # These are NOT optional. They used to sit inside the api-key branch
+        # below, which meant a server configured WITHOUT an api key got no
+        # StateDirectory (so /var/lib/llama-server did not exist for the
+        # DynamicUser and every start died on "Permission denied" fetching the
+        # model) and no video/render groups (so it would have had no /dev/dri
+        # even if it had started). Observed on DESK 2026-08-17.
         StateDirectory = "llama-server";
         SupplementaryGroups = [ "video" "render" ];  # /dev/dri access for the GPU
         Restart = "on-failure";
@@ -147,6 +150,9 @@ in
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateTmp = true;
+      } // lib.optionalAttrs (apiKeySecret != "") {
+        # Exposed to the (DynamicUser) service as %d/api-key, mode 0400.
+        LoadCredential = "api-key:${apiKeyFile}";
       };
     };
 
