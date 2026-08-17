@@ -80,6 +80,11 @@ lib.mkIf enabled {
       # Non-empty = the server may not be stopped, by the idle timer or by
       # anyone's /stop. The text is what players are told when they try.
       STOP_LOCK_REASON = systemSettings.akucraftStopLockReason or "";
+      # Test accounts whose activity is never announced anywhere - joins,
+      # leaves, deaths and advancements are all suppressed. Death lines name
+      # the killer too, so without this a tester dying to a boss under
+      # development publishes its name to everyone.
+      HIDDEN_PLAYERS = lib.concatStringsSep "," (systemSettings.akucraftHiddenPlayers or [ ]);
       # /invite - players onboard their own friends instead of Diego doing it
       # over SSH. Empty string disables the command entirely.
       INVITE_SCRIPT = "/home/${username}/.homelab/minecraft/akucraft-invite.sh";

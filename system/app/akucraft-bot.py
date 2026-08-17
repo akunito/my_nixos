@@ -51,6 +51,11 @@ IDLE_STOP_MIN = int(os.environ.get("IDLE_STOP_MINUTES", "45"))
 # /stop from Discord or Telegram can take the server down. The reason is shown
 # to whoever tries, so nobody is left wondering why the command did nothing.
 STOP_LOCK_REASON = os.environ.get("STOP_LOCK_REASON", "").strip()
+# Test accounts. Nothing they do is announced anywhere - not their joins and
+# leaves, not their deaths, not their advancements. Without this, testing a
+# boss in production tells everyone its name the first time the tester dies.
+HIDDEN_PLAYERS = {p.strip().lower()
+                  for p in os.environ.get("HIDDEN_PLAYERS", "").split(",") if p.strip()}
 GROUP_LINK = os.environ.get("TG_GROUP_LINK", "")
 # /invite: players onboarding their own friends. Off unless a script is set.
 INVITE_SCRIPT = os.environ.get("INVITE_SCRIPT", "")
@@ -498,6 +503,11 @@ STATES = {name: State(name) for name in SERVERS}
 LOCK = threading.Lock()
 
 
+def hidden(name):
+    """Is this a test account whose activity must never be announced?"""
+    return name.strip().lower() in HIDDEN_PLAYERS
+
+
 def notify(server, text):
     """announce(), unless this server is marked quiet (see SERVERS)."""
     if not server.get("quiet"):
@@ -527,9 +537,9 @@ def monitor():
                 players = online_players(srv["container"])
                 with LOCK:
                     if st.players != players and st.online:
-                        joined = players - st.players
-                        left = st.players - players
-                        n = len(players)
+                        joined = {p for p in players - st.players if not hidden(p)}
+                        left = {p for p in st.players - players if not hidden(p)}
+                        n = len([p for p in players if not hidden(p)])
                         if joined:
                             notify(srv, f"\U0001F3AE {', '.join(sorted(joined))} joined {srv['label']} ({n} online)")
                         if left:
@@ -576,12 +586,15 @@ def tail_logs(name):
                     continue
                 a = adv.match(msg)
                 if a:
-                    notify(srv, f"\U0001F3C6 [{srv['label']}] {a.group(1)} got {a.group(2)}")
+                    if not hidden(a.group(1)):
+                        notify(srv, f"\U0001F3C6 [{srv['label']}] {a.group(1)} got {a.group(2)}")
                     continue
                 first = msg.split(" ", 1)[0]
                 with LOCK:
                     known = first in STATES[name].players
-                if known and any(k in msg for k in DEATH_KEYWORDS):
+                # A death line names the killer as well as the victim, so a
+                # hidden tester dying to a boss would otherwise publish its name.
+                if known and not hidden(first) and any(k in msg for k in DEATH_KEYWORDS):
                     notify(srv, f"\U0001F480 [{srv['label']}] {msg}")
             proc.wait()
         except Exception as e:  # noqa: BLE001

@@ -104,6 +104,10 @@ in
     # -24..23 on both axes), so they are back to normal.
     akucraftIdleStopMinutes = 45;
     akucraftStopLockReason = "";
+    # AkuTest is the second account used to try things in production without
+    # putting Akunito's own character at risk. Nothing it does reaches Discord
+    # or Telegram - including the names of bosses that are still secret.
+    akucraftHiddenPlayers = [ "AkuTest" ];
 
     wireguardServerEnable = true;
     wireguardServerPort = 51820;

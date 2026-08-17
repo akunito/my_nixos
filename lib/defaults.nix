@@ -892,6 +892,7 @@
     akucraftStatusBotEnable = false; # Telegram status bot for AkuCraft Minecraft servers (VPS only; needs akucraftTelegramBotToken/ChatId in secrets)
     akucraftIdleStopMinutes = 45;    # stop the Minecraft server after this many minutes with no players; raise it to keep a long pregeneration alive
     akucraftStopLockReason = "";     # non-empty blocks BOTH the idle stop and the /stop command, and is shown to whoever tries
+    akucraftHiddenPlayers = [ ];     # test accounts: their joins, leaves, deaths and advancements are announced nowhere
     akucraftAskEnable = false;       # Discord /ask: LLM support answered privately from the generated manifest; needs litellmEnable + litellmMasterKey in secrets
     akucraftAskModel = "akucraft-support";  # alias served by the LiteLLM gateway, never a provider model name
     akucraftAskDailyQuota = 25;      # questions per Discord user per day; the hard spend ceiling is the provider's prepaid balance, this is the friendly limit
