@@ -279,6 +279,28 @@ let
       url = "https://cdn.modrinth.com/data/du3UfiLL/versions/aSCbUUL1/BOMD-1.10.2-1.21.1.jar";
       sha512 = "64e434b0841d594857191eeed066927f3ade0cd71e39e458fffe3208096398123745de57d1e9fce24842496559cb4614e58f34f85201df093647e20dc41dff8f";
     }
+    # Traveler's Backpack, replacing Vanilla Backpacks on 2026-08-16.
+    #
+    # Vanilla Backpacks was a datapack in a jar: a backpack was a command_block
+    # with components, opening a 27-slot container in which only 3/9/18/40 slots
+    # were real and the rest held marker items pinned to a slot index. Inventory
+    # Profiles Next sorts those markers out of place, the datapack then ejects
+    # the affected slots by summoning a chest_minecart and killing it - which
+    # DROPS the items on the ground, where they despawn. Not configurable away:
+    # IPN's per-screen exclusions are keyed by Java class, and that container is
+    # the same 9x3 class as an ordinary chest, so excluding it would disable
+    # sorting in every chest in the game.
+    #
+    # This one has its own item and its own screen, so there are no markers and
+    # nothing depends on slot indices. It adds real registry entries, which is
+    # why it belongs here and not in clientMods - every client must match.
+    # All three of its required dependencies (fabric-api, cloth-config,
+    # cardinal-components) were already installed.
+    {
+      name = "travelersbackpack-fabric-1.21.1-10.1.38.jar";
+      url = "https://cdn.modrinth.com/data/rlloIFEV/versions/5I4utX2T/travelersbackpack-fabric-1.21.1-10.1.38.jar";
+      sha512 = "cbe3ba6a35b3d091ba2c6b31649d5bfc08f7e5c43e8400654a42168d9c24a9fe359f0488d45075b8c2d16bb138e03d08ed89a5531a48ca2c9b8b48ac950dd85b";
+    }
   ];
 
   # Client-only mods: the server neither ships nor knows about these, they add
@@ -467,6 +489,25 @@ let
       name = "antique-atlas-3.1.2+1.21.jar";
       url = "https://cdn.modrinth.com/data/Y5Ve4Ui4/versions/2sDsTAId/antique-atlas-3.1.2%2B1.21.jar";
       sha512 = "e920516b107f009d8a671c4b07a65afc0060a11fe3d2918169eb8320408cb3a71b4bdfa7d58a59ff73d8161a545ba220f4e5d766434d46aa08de14e7fe6368cc";
+    }
+    # SecondBrain: AI NPCs driven by an LLM. Being trialled as the "voice
+    # assistant on each player's own model" idea - it carries three backends
+    # (Ollama, an OpenAI-compatible endpoint, and Player2) and bundles ollama4j,
+    # so it can talk to a model on a player's own machine over Tailscale rather
+    # than to anything on the VPS, which has no GPU.
+    #
+    # The client jar is needed only for the configuration GUI (`/secondbrain`);
+    # the mod itself runs server-side. Having the jar is not the same as having
+    # an NPC - none exist until somebody creates one - so it is inert for anyone
+    # who does not want it. That is what makes it opt-in.
+    #
+    # Text-to-speech is the catch: the only TTS path in the jar is Player2's
+    # API, and Player2 is a cloud service with no Linux build. Voice is
+    # unproven; text is not.
+    {
+      name = "secondbrain-1.21.1-v3.1.7-alpha.jar";
+      url = "https://cdn.modrinth.com/data/CfgaDAdq/versions/p7Znfobb/secondbrain-1.21.1-v3.1.7-alpha.jar";
+      sha512 = "349e8c84e97550f4391ce4da52e35e66705c93b888280ea2d187fb282f110172fc53443666790346541c378330fa7fda5b33a1fdaf2045a2a08918815d99f161";
     }
   ];
 

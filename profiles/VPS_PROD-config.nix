@@ -97,12 +97,13 @@ in
     akucraftAskEnable = true;
     akucraftAskDailyQuota = 25;
     akucraftAskQuotaOverrides = { Akunito = 60; }; # applies once Akunito has /link-ed
-    # TEMPORARY (2026-08-16): a Chunky pregeneration of the Overworld out to
-    # +-6000 runs for roughly 20 hours with nobody logged in, and the normal
-    # 45-minute idle stop would kill it within the first hour. Put this back to
-    # 45 the moment the pregeneration finishes, or the server never auto-stops.
-    akucraftIdleStopMinutes = 100000;
-    akucraftStopLockReason = "the world is being pre-generated - it will take a few hours, and stopping it now would lose the progress";
+    # Both of these were raised on 2026-08-16 to protect a Chunky pregeneration
+    # of the Overworld out to +-12000, which the normal 45-minute idle stop would
+    # have killed within the first hour. It finished at 05:45 on 2026-08-17
+    # (2,253,001 chunks, 100.00%, 13h30m, 2304 region files spanning region
+    # -24..23 on both axes), so they are back to normal.
+    akucraftIdleStopMinutes = 45;
+    akucraftStopLockReason = "";
 
     wireguardServerEnable = true;
     wireguardServerPort = 51820;
