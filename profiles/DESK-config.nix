@@ -210,8 +210,33 @@ in
     llamaServerHost = "0.0.0.0"; # firewalled to tailscale0 only
     llamaServerPort = 8090;
     llamaServerIdleTimeout = "15min"; # free VRAM 15 min after last request
-    llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF"; # Qwen3-14B alt: "ggml-org/Qwen3-14B-GGUF"
-    llamaServerCtxSize = 16384;
+    # Sized so gaming and inference COEXIST. Measured on this card 2026-08-17:
+    #   card total ................ 16304 MiB
+    #   one Minecraft client ....... 2060 MiB
+    #   gpt-oss-20b @ ctx 8192 .... 11275 MiB  <- 12 GB of weights, the floor
+    #   GLM-4.6V-Flash Q4 .......... ~6500 MiB
+    # gpt-oss-20b left under 3 GB spare with one client and nothing for a spike,
+    # and context is not the lever: halving ctx from 16384 only saved 200 MiB
+    # because the weights dominate. A smaller model is the only way down.
+    #
+    # Quality is fine for what actually runs here - AkuCraft villager lines.
+    # Tested side by side against DeepSeek on the real prompts: this model
+    # matches it on facts, refusals, and on saying "not in the manifest, ask
+    # Diego" instead of inventing. It is weaker at open-ended advice, which is
+    # why Discord /ask stays on DeepSeek and only villagers come here.
+    # Back to the bigger model: set the repo to "ggml-org/gpt-oss-20b-GGUF",
+    # drop the file line, and put the VRAM guard back to 5 GiB.
+    llamaServerModelHfRepo = "lmstudio-community/GLM-4.6V-Flash-GGUF";
+    llamaServerModelHfFile = "GLM-4.6V-Flash-Q4_K_M.gguf";
+    # 8192 is plenty: villager turns are short, and /ask (the ~5k-token prompt)
+    # does not come here.
+    llamaServerCtxSize = 8192;
+    # Refuse to load only above 9 GiB in use, not 5. The old value was the right
+    # ceiling for an 11 GB model (16304 - 11275 = 5029 MiB), but with a 6.5 GB
+    # model it would needlessly bail out during gaming and silently push
+    # villagers back onto the paid API - the exact thing this is meant to avoid.
+    # 9 GiB still leaves room for the model to fit alongside.
+    llamaServerVramBusyBytes = 9663676416;
     # Auth: still OFF, deliberately. The endpoint is tailscale-only + firewalled,
     # and VPS_PROD fronts it with llamaWakeProxyEnable — that proxy forwards
     # requests verbatim, so switching auth on here breaks every app behind it
