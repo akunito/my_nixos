@@ -219,24 +219,24 @@ in
     # and context is not the lever: halving ctx from 16384 only saved 200 MiB
     # because the weights dominate. A smaller model is the only way down.
     #
-    # Quality is fine for what actually runs here - AkuCraft villager lines.
-    # Tested side by side against DeepSeek on the real prompts: this model
-    # matches it on facts, refusals, and on saying "not in the manifest, ask
-    # Diego" instead of inventing. It is weaker at open-ended advice, which is
-    # why Discord /ask stays on DeepSeek and only villagers come here.
-    # Back to the bigger model: set the repo to "ggml-org/gpt-oss-20b-GGUF",
-    # drop the file line, and put the VRAM guard back to 5 GiB.
-    llamaServerModelHfRepo = "lmstudio-community/GLM-4.6V-Flash-GGUF";
-    llamaServerModelHfFile = "Q4_K_M";   # quant TAG, not a filename - see defaults.nix
+    # GLM-4.6V-Flash Q4 was tried here to buy that headroom (8200 MiB, leaving
+    # 6 GB free) and REVERTED: it is a reasoning model, it reasons in Chinese,
+    # and it spent 461 completion tokens producing a five-word villager line.
+    # At max_tokens=120 it returned finish_reason=length and EMPTY content -
+    # and MCA chooses that budget, not us, so the failure mode is mute
+    # villagers. gpt-oss-20b answered the same prompt at max_tokens=200 in
+    # 1.15s. Costing 3 GB more for replies that actually arrive is the right
+    # trade. A smaller model is still worth having, but it has to be one that
+    # does not think before speaking.
+    llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF";
+    llamaServerModelHfFile = "";   # quant TAG when set (e.g. "Q4_K_M"), NOT a filename
     # 8192 is plenty: villager turns are short, and /ask (the ~5k-token prompt)
     # does not come here.
     llamaServerCtxSize = 8192;
-    # Refuse to load only above 9 GiB in use, not 5. The old value was the right
-    # ceiling for an 11 GB model (16304 - 11275 = 5029 MiB), but with a 6.5 GB
-    # model it would needlessly bail out during gaming and silently push
-    # villagers back onto the paid API - the exact thing this is meant to avoid.
-    # 9 GiB still leaves room for the model to fit alongside.
-    llamaServerVramBusyBytes = 9663676416;
+    # 5 GiB is the correct ceiling for THIS model: 16304 - 11275 = 5029 MiB is
+    # exactly what is left for everything else, so loading above that would
+    # overcommit the card. It must move with the model, not independently.
+    llamaServerVramBusyBytes = 5368709120;
     # Auth: still OFF, deliberately. The endpoint is tailscale-only + firewalled,
     # and VPS_PROD fronts it with llamaWakeProxyEnable — that proxy forwards
     # requests verbatim, so switching auth on here breaks every app behind it
