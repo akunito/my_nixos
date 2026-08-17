@@ -109,6 +109,18 @@ SERVERS = {
     # container exit 7 days before that). Its world is kept on disk at
     # ~/.homelab/minecraft-creative and in the restic backups, so it can be
     # brought back by restoring this entry and its compose file.
+    #
+    # Staging is here only so it stops itself when nobody is on it - it used to
+    # run for days after a test session. "quiet" suppresses every announcement
+    # for it: joins, leaves, deaths, advancements and on/offline. Testing is
+    # noisy by nature and none of it is news to the players.
+    "staging": {
+        "label": "Staging",
+        "container": "mc-mca-staging",
+        "dir": "/home/akunito/.homelab/minecraft-staging",
+        "address": "100.64.0.6:25599",
+        "quiet": True,
+    },
 }
 
 DEATH_KEYWORDS = (
@@ -481,6 +493,12 @@ STATES = {name: State(name) for name in SERVERS}
 LOCK = threading.Lock()
 
 
+def notify(server, text):
+    """announce(), unless this server is marked quiet (see SERVERS)."""
+    if not server.get("quiet"):
+        announce(text)
+
+
 def monitor():
     while True:
         for name, srv in SERVERS.items():
@@ -491,11 +509,11 @@ def monitor():
                     prev = st.online
                     if is_online != prev:
                         if is_online:
-                            announce(f"\U0001F7E2 AkuCraft {srv['label']} is ONLINE - connect: {srv['address']}")
+                            notify(srv, f"\U0001F7E2 AkuCraft {srv['label']} is ONLINE - connect: {srv['address']}")
                             st.idle_since = None
                             st.suppress_offline = False
                         elif prev and not st.suppress_offline:
-                            announce(f"\U0001F534 AkuCraft {srv['label']} went OFFLINE")
+                            notify(srv, f"\U0001F534 AkuCraft {srv['label']} went OFFLINE")
                         st.persist(is_online)
                     if not is_online:
                         st.players = set()
@@ -508,9 +526,9 @@ def monitor():
                         left = st.players - players
                         n = len(players)
                         if joined:
-                            announce(f"\U0001F3AE {', '.join(sorted(joined))} joined {srv['label']} ({n} online)")
+                            notify(srv, f"\U0001F3AE {', '.join(sorted(joined))} joined {srv['label']} ({n} online)")
                         if left:
-                            announce(f"\U0001F44B {', '.join(sorted(left))} left {srv['label']} ({n} online)")
+                            notify(srv, f"\U0001F44B {', '.join(sorted(left))} left {srv['label']} ({n} online)")
                     st.players = players
 
                     # Auto-stop when empty
@@ -523,7 +541,7 @@ def monitor():
                     elif time.time() - st.idle_since > IDLE_STOP_MIN * 60:
                         st.suppress_offline = True
                         st.idle_since = None
-                        announce(f"⏸ AkuCraft {srv['label']} was empty for {IDLE_STOP_MIN} min - "
+                        notify(srv, f"⏸ AkuCraft {srv['label']} was empty for {IDLE_STOP_MIN} min - "
                              f"stopping it to save resources. Use /start {name} to boot it again.")
                         compose(srv, "stop")
                         st.persist(False)
@@ -553,13 +571,13 @@ def tail_logs(name):
                     continue
                 a = adv.match(msg)
                 if a:
-                    announce(f"\U0001F3C6 [{srv['label']}] {a.group(1)} got {a.group(2)}")
+                    notify(srv, f"\U0001F3C6 [{srv['label']}] {a.group(1)} got {a.group(2)}")
                     continue
                 first = msg.split(" ", 1)[0]
                 with LOCK:
                     known = first in STATES[name].players
                 if known and any(k in msg for k in DEATH_KEYWORDS):
-                    announce(f"\U0001F480 [{srv['label']}] {msg}")
+                    notify(srv, f"\U0001F480 [{srv['label']}] {msg}")
             proc.wait()
         except Exception as e:  # noqa: BLE001
             log(f"tail {name}: {e}")
