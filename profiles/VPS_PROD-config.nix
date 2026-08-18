@@ -439,6 +439,13 @@ in
       n8n        = { port = 5678; };
       openclaw   = { port = 18789; };
       finance    = { port = 8190; maxBodySize = "50M"; };
+      # AkuCraft BlueMap. It used to sit at "/" on the players' own port 8100,
+      # the address the invite email tells guests to open — so the live world
+      # map was handed to every guest. akucraft-web now serves the mod pack on
+      # 8100 and BlueMap on 127.0.0.1:8102, and this vhost is one of the two
+      # authenticated ways in. Named to match the public Cloudflare hostname
+      # akucraft-map.akunito.com, which fronts the same port behind Pocket ID.
+      akucraft-map = { port = 8102; };
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
