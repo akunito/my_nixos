@@ -606,7 +606,13 @@ LOCK = threading.Lock()
 
 
 def hidden(name):
-    """Is this a test account whose activity must never be announced?"""
+    """Is this a test account that must not appear anywhere players can see?
+
+    Belt and braces. The server also runs the `vanish` mod, which drops a
+    vanished player from `/list` entirely, so this filter normally has nothing
+    to do - but vanish can be toggled off, and a tester who forgets is exactly
+    the case this list exists for. Covers announcements AND /status, /players.
+    """
     return name.strip().lower() in HIDDEN_PLAYERS
 
 
@@ -742,7 +748,12 @@ def cmd_stop(arg):
         if health(srv["container"]) != "healthy":
             replies.append(f"\U0001F534 {srv['label']} is not running.")
             continue
-        players = online_players(srv["container"])
+        # Hidden testers are excluded from the decision, not just from the
+        # message. Naming one here would undo the whole point of hiding them,
+        # and a generic "someone is online" while /players says nobody is worse
+        # than the cost: the only person who can be kicked this way is the
+        # admin on his own alt, who can start the server again.
+        players = {p for p in online_players(srv["container"]) if not hidden(p)}
         if players:
             replies.append(f"\U0001F465 {srv['label']}: {len(players)} player(s) online "
                            f"({', '.join(sorted(players))}) - not stopping.")
@@ -760,7 +771,7 @@ def cmd_status():
     for name, srv in SERVERS.items():
         h = health(srv["container"])
         if h == "healthy":
-            players = online_players(srv["container"])
+            players = {p for p in online_players(srv["container"]) if not hidden(p)}
             who = f" - online: {', '.join(sorted(players))}" if players else " - nobody on"
             lines.append(f"\U0001F7E2 {srv['label']}: UP ({srv['address']}){who}")
         elif h == "starting":
@@ -774,7 +785,7 @@ def cmd_players():
     lines = []
     for name, srv in SERVERS.items():
         if health(srv["container"]) == "healthy":
-            players = online_players(srv["container"])
+            players = {p for p in online_players(srv["container"]) if not hidden(p)}
             lines.append(f"{srv['label']}: " +
                          (", ".join(sorted(players)) if players else "nobody"))
     return "\n".join(lines) if lines else "No server is running. /start boots one."
@@ -936,7 +947,7 @@ def live_state():
     for srv in SERVERS.values():
         st = health(srv["container"])
         if st == "healthy":
-            players = online_players(srv["container"])
+            players = {p for p in online_players(srv["container"]) if not hidden(p)}
             online |= players
             who = ", ".join(sorted(players)) if players else "nobody"
             lines.append(f"{srv['label']}: UP ({srv['address']}). Online now: {who}.")
