@@ -93,7 +93,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:*
    - `systemSettings.homelabDockerEnable or false`
    - `(systemSettings.financeUser or "") != ""`
-- **system/app/litellm.nix**: LiteLLM — OpenAI-compatible LLM gateway (AkuCraft AI backend). *Enabled when:* `cfg.litellmLogMessages or false`
+- **system/app/litellm.nix**: LiteLLM — OpenAI-compatible LLM gateway (AkuCraft AI backend). *Enabled when:* `verified 2026-08-18 — two # days of villager traffic logged with this ON, zero conversations # recorded`
 - **system/app/llama-server.nix**: Local LLM inference server — llama.cpp `llama-server`, Vulkan backend, *Enabled when:*
    - `Vulkan`
    - `never through a derivation`

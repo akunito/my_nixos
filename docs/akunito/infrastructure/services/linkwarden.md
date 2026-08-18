@@ -103,21 +103,37 @@ tag names): the longest note is 164 characters and the longest tag 20.
 ## Archiving
 
 Every link is archived as PDF **and** screenshot **and** monolith HTML **and**
-readable text by default, per user, driven by a headless Chromium in the worker.
-Toggle it per user under Settings → Preferences before a bulk import. The columns
-are `archiveAsPDF` / `archiveAsScreenshot` / `archiveAsMonolith` /
-`archiveAsReadable` on `"User"`.
+readable text by default, per user. Measured over the full 1283-link library:
 
-Cost is dominated almost entirely by PDF and monolith:
-
-| Setting | Measured | Projected over 1283 links |
+| Type | Files | Size |
 |---|---|---|
-| All four (default) | ~24 MB/link | ~30 GB |
-| Screenshot + readable | **0.44 MB/link** | **~0.6 GB** |
+| Monolith HTML | 1041 | **8.62 GB** |
+| PDF | 1072 | 1.61 GB |
+| Screenshot | 1146 | 0.49 GB |
+| Readable JSON | 993 | 0.03 GB |
+| Preview thumbnails | 1161 | 0.04 GB |
 
-The all-four figure came off a handful of links during a crash-looping run, so
-treat it as an order of magnitude; the screenshot-only figure is from a clean
-run over 41 links. This install runs screenshot + readable.
+Monolith is the whole cost. Previews are the thumbnails the list view shows and
+are worth keeping whatever else you turn off.
+
+**Change the setting through the UI or the API, never with raw SQL.** The flags
+live on `"User"` (`archiveAsPDF` / `archiveAsScreenshot` / `archiveAsMonolith` /
+`archiveAsReadable`), but a browser tab that loaded before the change will write
+its stale copy back on the next Settings save — which is exactly how this
+install archived 11 GB after the flags had been set to false in the database.
+`PUT /api/v1/users/<id>` with the full user object works.
+
+### Clearing archives without triggering a re-archive
+
+The worker picks up links where **`lastPreserved IS NULL`**. Leave that column
+alone and nothing is reprocessed, whatever the flags say. So to reclaim space:
+
+1. Turn the flags off through the API (above).
+2. Point the columns at the sentinel: `UPDATE "Link" SET pdf='unavailable'
+   WHERE pdf LIKE 'archives/%'`, same for `image`, `monolith`, `readable`.
+3. Delete the files under `data/archives/`, keeping `data/archives/preview/`.
+
+This install runs with all four off, keeping only previews — 36 MB total.
 
 ## Gotchas
 
@@ -139,3 +155,19 @@ needs the same treatment.
 `MEILI_MASTER_KEY` the client is null and search silently degrades to a
 PostgreSQL `ILIKE` over name/url/description/tags — archived page content
 becomes unsearchable.
+
+**Never delete the `links` index while the worker is running.** The worker
+configures the index schema once, in `setupLinksIndexSchema()` at startup. Delete
+the index underneath it and the next `addDocuments` call recreates it bare — no
+primary key, no filterable attributes — after which every `/api/v1/search` call
+returns 500:
+
+```
+Index `links`: Attribute `collectionOwnerId` is not filterable.
+```
+
+The web UI search and the browser extension both hang on this; nothing else
+misbehaves, so it is easy to miss. Recovery: stop the `linkwarden` container,
+`DELETE /indexes/links` and wait for the task to reach `succeeded`, run
+`UPDATE "Link" SET "indexVersion" = NULL`, then start the container — startup
+rebuilds the schema and re-indexes everything.
