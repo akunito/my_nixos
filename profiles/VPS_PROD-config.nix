@@ -364,7 +364,33 @@ in
         # tokens, worst case 7.38s (503 tokens at 69 tok/s while the GPU was
         # also driving a Minecraft client). 8s sat right on top of that and
         # would have failed a long line over to paid DeepSeek for nothing.
-        extra = { timeout = 20; }; }
+        #
+        # response_format is not cosmetic - it is the fix for llama.cpp
+        # rejecting its own model's output. MCA hand-builds its request body
+        # with only "model" and "messages" (decompiled OpenAIChatAI.class,
+        # 7.7.32): no tools, no response_format, no max_tokens. It asks for
+        # structure purely in the system prompt - "The reply MUST be in this
+        # JSON format: {message, optionalCommand}" - and then parses
+        # choices[0].message.content with Gson. Commands come back INSIDE that
+        # JSON, never as OpenAI tool_calls.
+        #
+        # Left unconstrained, gpt-oss sometimes answers that demand by
+        # borrowing the marker it knows from tool calling and emitting
+        #   <|channel|>final <|constrain|>json<|message|>{"message":"..."}
+        # on the FINAL channel. llama.cpp's harmony peg grammar does not
+        # accept <|constrain|> there, throws away a perfectly good villager
+        # line and returns HTTP 500 (~2 of 19 live requests, 2026-08-18).
+        # litellm then quietly pays DeepSeek to redo it.
+        #
+        # Declaring the JSON contract on the request instead of only in the
+        # prose sets up the grammar up front, so the model has no reason to
+        # invent the marker. Safe precisely because MCA sends no tools: there
+        # are no tool_calls for the grammar to suppress. Verified against the
+        # real request shape - 12/12 clean, optionalCommand still emitted.
+        extra = {
+          timeout = 20;
+          response_format = { type = "json_object"; };
+        }; }
       { name = "akucraft-villager-backup";
         model = "openai/deepseek-v4-flash";
         apiBase = "https://api.deepseek.com/v1";
