@@ -457,6 +457,37 @@ let
       url = "https://cdn.modrinth.com/data/fRiHVvU7/versions/on5GT1qh/emi-1.1.24%2B1.21.1%2Bfabric.jar";
       sha512 = "2680e7b0a93152d4220afdc30a0452c911dc4b5c9ce1db1b7246c21b777bc2a1945fe97c98c09941d31b7478ae357135a1ef51cd3ba92d08dce35202a830b70d";
     }
+
+    # Ambience pack, trialled on staging 2026-08-18 and kept for the sound
+    # alone: the visual half of that batch (dynamic lights, Effective water,
+    # Physics Mod, first-person body, Better Clouds) was rejected. Effective
+    # in particular HARD CRASHES against our Sodium 0.8.12 - its bundled Veil
+    # library patches a Sodium that no longer exists. Do not re-add it.
+    #
+    # These four are here rather than only in the server modpack because the
+    # non-HD instances carry their own jars and never talk to AutoModpack, so
+    # a server-side entry alone would leave them silent. Sound costs no frames.
+    {
+      name = "sound-physics-remastered-fabric-1.21.1-1.5.1.jar";
+      url = "https://cdn.modrinth.com/data/qyVF9oeo/versions/tVu2EZ4u/sound-physics-remastered-fabric-1.21.1-1.5.1.jar";
+      sha512 = "72c69678b6afc5ec48027f6e40f7421370dffa1483e23767e0b5f1b36581be652308b33864848e186845df9052f512b79698c69242adb297058cdc3357b64d60";
+    }
+    {
+      name = "PresenceFootsteps-1.11.2+1.21.jar";
+      url = "https://cdn.modrinth.com/data/rcTfTZr3/versions/CrvsDgLW/PresenceFootsteps-1.11.2%2B1.21.jar";
+      sha512 = "524e5fd9c063d3ee81baaf4dbe553982a906b9b315dffae4aa64332db22a1f2fa0bb13b339c74ac7c5ddf9a8453b6fdaa9e93abac3c8bc1a9a347405e382f1c5";
+    }
+    # AmbientSounds needs CreativeCore. 81 MB, but it is audio only: no frames.
+    {
+      name = "AmbientSounds_FABRIC_v6.3.8_mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/fM515JnW/versions/wU311vqz/AmbientSounds_FABRIC_v6.3.8_mc1.21.1.jar";
+      sha512 = "d918b7e973be2d3b53cd30d12e02e9f6252e20441ae6694927b050d1b59741946d0f9e48ff558d5a5fc8ab3b454da6305d20ee437ae0378b8367485e90f79f3a";
+    }
+    {
+      name = "CreativeCore_FABRIC_v2.13.39_mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/OsZiaDHq/versions/wZEbqU3j/CreativeCore_FABRIC_v2.13.39_mc1.21.1.jar";
+      sha512 = "4360184be94772c098661b1338b38eb03af47a2f57eab490a5e64e9ffa7598c4fbd9e06aa1c45d80f13d538c8322587944d4a0c0b497b069c29d88291ff8ebf7";
+    }
   ];
 
   # Mods on trial on the staging server only. Move an entry into syncedMods
