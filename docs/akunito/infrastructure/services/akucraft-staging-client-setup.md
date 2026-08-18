@@ -89,6 +89,12 @@ above, stop and tell Diego before continuing.
 
 > This is the STAGING fingerprint. The live server has a different one — each
 > server has its own certificate, and each instance asks once.
+>
+> **Use a separate instance for staging.** AutoModpack stores accepted
+> fingerprints keyed by hostname alone, and both servers answer to
+> `akucraft.local.akunito.com`, so one instance pointed at both re-asks for the
+> fingerprint — and re-downloads the modpack — on every hop. See
+> `akucraft-manifest.md`.
 
 ### Register
 

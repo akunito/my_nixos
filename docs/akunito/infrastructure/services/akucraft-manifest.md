@@ -13,7 +13,7 @@ status: published
 Regenerate with `./scripts/generate-akucraft-manifest.sh`; every number below
 is read from the running server.
 
-Generated 2026-08-16 14:16 CEST · Minecraft **1.21.1** · Fabric Loader **0.19.3** · **78** mods
+Generated 2026-08-16 14:16 CEST · Minecraft **1.21.1** · Fabric Loader **0.19.3** · **78** mods
 
 ---
 
@@ -270,6 +270,29 @@ Read the current one with:
 ```
 docker exec minecraft cat /data/automodpack/.private/cert.crt | openssl x509 -outform DER | sha256sum
 ```
+
+Simpler, and it also proves the value has not moved: `docker logs <container> |
+grep -i "Certificate fingerprint"`. Prod has printed
+`73b00f4d…0034fd` across every restart and mod change; staging prints
+`c4d8172c…b2d539`.
+
+**The client keys accepted fingerprints by HOSTNAME ONLY — the port is not part
+of the key.** Confirmed in the bytecode of `automodpack 4.0.6`
+(`ModpackUtils`): the modpack folder is `getHostString() + ":" + getPort()`,
+but `knownHosts.hosts` is looked up and stored under `getHostString()` alone,
+in `automodpack/.private/automodpack-known-hosts.json`.
+
+Both servers advertise `akucraft.local.akunito.com`, so **one instance used for
+both prod and staging re-asks for the fingerprint on every hop** — and
+re-downloads the modpack, since that part *is* keyed by port. Players read this
+as "it asks again every time we update mods", because updates are when testers
+switch servers (komi reported exactly this, 2026-08-18). Mod updates do not
+touch the certificate.
+
+The fix on the player's side is a separate instance per server. The fix on
+ours, if it ever becomes worth it, is to give staging its own advertised name
+via `addressToSend` in `automodpack-server.json` — untested, and the
+self-signed cert's SAN would have to be checked first.
 
 ---
 
