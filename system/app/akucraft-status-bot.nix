@@ -127,6 +127,26 @@ lib.mkIf enabled {
       ASK_MAX_TOKENS = toString (systemSettings.akucraftAskMaxTokens or 3000);
       ASK_HISTORY_TURNS = toString (systemSettings.akucraftAskHistoryTurns or 10);
       ASK_HISTORY_TTL_HOURS = toString (systemSettings.akucraftAskHistoryTtlHours or 24);
+      # Conversation threads: /ask opens a private thread and the player keeps
+      # typing in it with no command per message, which was the one complaint
+      # about the feature. Needs the privileged MESSAGE CONTENT intent — the
+      # bot degrades to the old ephemeral one-shot answers without it rather
+      # than failing to connect, so turning this on before flipping the switch
+      # in the Developer Portal is safe, just inert.
+      ASK_THREADS = if (systemSettings.akucraftAskThreads or true) then "1" else "0";
+      ASK_THREAD_ARCHIVE_MINUTES =
+        toString (systemSettings.akucraftAskThreadArchiveMinutes or 1440);
+      # Where /guide and /share publish. Empty = both commands refuse politely.
+      ASK_GUIDES_CHANNEL = secrets.akucraftDiscordGuidesChannelId or "";
+      # Published guides ride in EVERY question's prompt, so they are capped by
+      # total size rather than count.
+      ASK_GUIDE_MAX_CHARS = toString (systemSettings.akucraftAskGuideMaxChars or 6000);
+      # On-demand keyword search of the Minecraft channels. Costs nothing when
+      # no question overlaps with what was said, stores nothing, and cannot go
+      # stale — unlike a periodic summary. Same intent as ASK_THREADS.
+      ASK_SEARCH = if (systemSettings.akucraftAskSearch or true) then "1" else "0";
+      ASK_SEARCH_MESSAGES = toString (systemSettings.akucraftAskSearchMessages or 300);
+      ASK_SEARCH_HITS = toString (systemSettings.akucraftAskSearchHits or 6);
       # akucraft-invite.sh (driven by /invite) additionally needs bash, python3,
       # sudo and sendmail. /run/wrappers/bin carries the setuid sudo and the
       # sendmail wrapper; without them the invite dies with "command not found"

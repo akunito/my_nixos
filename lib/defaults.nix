@@ -900,6 +900,12 @@
     akucraftAskMaxTokens = 3000;     # output ceiling per answer; must be generous because the model bills its reasoning as output and can spend the lot thinking, returning nothing
     akucraftAskHistoryTurns = 10;    # previous /ask exchanges replayed so players can follow up; 0 disables conversation memory
     akucraftAskHistoryTtlHours = 24; # a conversation expires after this, so stored player questions do not accumulate
+    akucraftAskThreads = true;       # /ask answers in a PRIVATE thread the player keeps typing in, instead of a one-shot ephemeral reply; needs the Discord MESSAGE CONTENT intent, and degrades to the old behaviour without it
+    akucraftAskThreadArchiveMinutes = 1440; # Discord only accepts 60, 1440, 4320 or 10080
+    akucraftAskGuideMaxChars = 6000; # published guides ride in EVERY question's prompt, so cap the total rather than the count
+    akucraftAskSearch = true;        # let /ask keyword-search the Minecraft channels for context when a question overlaps with what was said; nothing is stored; same intent requirement as akucraftAskThreads
+    akucraftAskSearchMessages = 300; # how far back to scan per channel
+    akucraftAskSearchHits = 6;       # how many matching messages reach the prompt
     wireguardServerEnable = false; # Enable WireGuard point-to-point backup tunnel (VPS <-> pfSense)
     wireguardServerPort = 51820; # WireGuard listen port
     wireguardServerIp = "172.26.5.155/24"; # WireGuard tunnel IP

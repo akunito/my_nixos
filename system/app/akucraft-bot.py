@@ -98,6 +98,22 @@ ASK_CATEGORY = int(os.environ.get("ASK_CATEGORY") or 0)
 # not a permanent transcript of everything players ever asked.
 ASK_HISTORY_TURNS = int(os.environ.get("ASK_HISTORY_TURNS", "10"))
 ASK_HISTORY_TTL_H = int(os.environ.get("ASK_HISTORY_TTL_HOURS", "24"))
+# Conversation threads. /ask opens a PRIVATE thread and the player just keeps
+# typing in it - no command per message, which was the whole complaint. Each
+# thread is its own conversation, so two questions in flight do not bleed into
+# each other the way a single per-user history did.
+ASK_THREADS = os.environ.get("ASK_THREADS", "1").lower() not in ("", "0", "false", "no")
+# Discord only accepts 60, 1440, 4320 or 10080 for auto-archive.
+ASK_THREAD_ARCHIVE_MIN = int(os.environ.get("ASK_THREAD_ARCHIVE_MINUTES", "1440"))
+# Where /guide and /share publish. 0 = publishing disabled.
+ASK_GUIDES_CHANNEL = int(os.environ.get("ASK_GUIDES_CHANNEL") or 0)
+ASK_GUIDE_MAX_CHARS = int(os.environ.get("ASK_GUIDE_MAX_CHARS", "6000"))
+# On-demand search of the Minecraft channels. Nothing is stored and nothing is
+# read unless a question actually overlaps with what was said - see
+# search_channels() for why this is a keyword scan and not a periodic summary.
+ASK_SEARCH = os.environ.get("ASK_SEARCH", "1").lower() not in ("", "0", "false", "no")
+ASK_SEARCH_MESSAGES = int(os.environ.get("ASK_SEARCH_MESSAGES", "300"))  # per channel
+ASK_SEARCH_HITS = int(os.environ.get("ASK_SEARCH_HITS", "6"))
 ASK_ENABLE = ASK_ENDPOINT != "" and ASK_TOKEN != ""
 
 SERVERS = {
@@ -356,8 +372,10 @@ HELP_TEXT = """AkuCraft bot commands:
 /start - boot the server if it is stopped
 /stop - stop the server (refuses if players online)
 /map - live web map + minimap mods to see each other
-/ask <question> - ask about the server, answered only to you (Discord only)
+/ask <question> - ask about the server (Discord only, see below)
 /link <name> - tell /ask which Minecraft account is yours (Discord only)
+/guide [title] - turn the conversation you are in into a published guide
+/share - publish the conversation you are in, as it happened
 /profile <notes> [user] - admin only: context the assistant keeps about a player
 /invite <name> <email> - invite a friend (Discord only)
 /connect - how to join the servers
@@ -367,6 +385,45 @@ HELP_TEXT = """AkuCraft bot commands:
 
 I also announce: servers going on/offline, joins/leaves, deaths,
 advancements, and I auto-stop servers left empty for a while."""
+
+# Kept separate from HELP_TEXT because it also goes to the assistant as
+# context: players ask the bot how the bot works, and it used to have no idea.
+ASSISTANT_TEXT = """Asking the assistant (/ask):
+
+1. LINK YOUR ACCOUNT FIRST - do this once:
+     /link YourMinecraftName
+   Type it exactly as you registered in game, capitals included. Once
+   linked, answers know your claims, your progress and what you are
+   carrying, so "what should I do next?" becomes a real answer instead of
+   a generic one. Without linking you still get answers, just impersonal.
+   Run /link with no name to see who you are linked to and how many
+   questions you have left today.
+   A name can only be claimed by one Discord account, so nobody can
+   pretend to be you. If yours is already taken, ask Diego.
+
+2. ASK: /ask <your question>
+   I answer in a PRIVATE THREAD that only you and I can see.
+
+3. KEEP TALKING - inside that thread just type normally, no command
+   needed. I remember the whole thread, so "and where do I find that?"
+   works. Ask something unrelated with a new /ask and you get a fresh
+   thread, so two topics never get mixed up.
+
+4. WHEN YOU ARE DONE, optionally:
+     /guide          - I rewrite the conversation as a clean guide and
+                       publish it for everyone
+     /guide <title>  - same, with a title you choose
+     /share          - publish the conversation exactly as it happened
+   Published guides become part of what I know, so the next person who
+   asks gets your answer straight away.
+
+Limits and privacy:
+  - Everyone gets a number of questions per day; /link shows yours.
+  - Threads go quiet on their own after a day of silence.
+  - Your questions and my answers are logged so Diego can debug me, and
+    villagers in game may gossip about what players do. Nothing you would
+    not say in the channel.
+  - I only answer in the Minecraft channels."""
 
 
 def log(msg):
@@ -778,8 +835,22 @@ Be brief - a few sentences. This is a chat message, not documentation.
 === SERVER MANIFEST ===
 {manifest}
 
-=== ONBOARDING NOTES (what /connect, /vpn and /map tell players) ===
+=== ONBOARDING NOTES (what /connect, /vpn, /map and /help tell players) ===
 {onboarding}
+
+=== PUBLISHED GUIDES (written by players from earlier conversations) ===
+Treat these as SERVER FACTS: they were written here, about this server, and
+published for everyone. If one answers the question, use it and say which
+guide it came from. They can go stale, so prefer the manifest and live state
+when the two disagree.
+{guides}
+
+=== RELEVANT CHANNEL MESSAGES ===
+Things players actually said in the Discord channels, picked because they
+overlap with this question. Chat, not documentation: quote it as "X said in
+Discord", never as a server rule, and do not repeat it if it looks like
+someone guessing.
+{chat}
 
 === LIVE STATE (right now) ===
 {live}
@@ -789,6 +860,7 @@ Be brief - a few sentences. This is a chat message, not documentation.
 
 ASK_LOCK = threading.Lock()
 _manifest = {"text": "", "loaded": False}
+_guides = {"text": "", "loaded": False}
 
 
 def load_manifest(force=False):
@@ -942,13 +1014,48 @@ def ask_link(user_id, name=None):
         return name
 
 
-def ask_history(user_id, add=None, clear=False):
-    """Recent (question, answer) pairs for one user, oldest first.
+def ask_thread(thread_id, user_id=None):
+    """Who owns a conversation thread. Returns the owner's id, or 0.
+
+    Persisted rather than kept in memory: the bot restarts on every deploy, and
+    a thread whose owner was forgotten would stop answering with no visible
+    reason - the player would just be talking to a bot that ignores them.
+    Entries expire on the same clock as the conversation itself.
+    """
+    path = os.path.join(STATE_DIR, "ask_threads.json")
+    cutoff = time.time() - ASK_HISTORY_TTL_H * 3600
+    with ASK_LOCK:
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except Exception:  # noqa: BLE001
+            data = {}
+        key = str(thread_id)
+        if user_id is not None:
+            data[key] = {"u": user_id, "t": time.time()}
+            for k in list(data):
+                if data[k].get("t", 0) < cutoff:
+                    del data[k]
+            try:
+                with open(path, "w") as f:
+                    json.dump(data, f)
+            except OSError as e:  # noqa: BLE001
+                log(f"ask: cannot persist thread owner: {e}")
+        return int(data.get(key, {}).get("u", 0))
+
+
+def ask_history(key, add=None, clear=False):
+    """Recent (question, answer) pairs for one conversation, oldest first.
 
     Lets a player follow up ("and how much does that cost?") instead of having
     to restate everything. Trimmed to ASK_HISTORY_TURNS and expired after
     ASK_HISTORY_TTL_H hours, so it stays a conversation rather than becoming a
     permanent record of what everyone asked.
+
+    `key` is a Discord user id when the answer is a one-off ephemeral reply,
+    and "t<thread id>" when the conversation lives in its own thread. Keying by
+    thread is what lets one player run two topics at once without the second
+    question inheriting the first one's context.
     """
     path = os.path.join(STATE_DIR, "ask_history.json")
     cutoff = time.time() - ASK_HISTORY_TTL_H * 3600
@@ -958,7 +1065,7 @@ def ask_history(user_id, add=None, clear=False):
                 data = json.load(f)
         except Exception:  # noqa: BLE001
             data = {}
-        key = str(user_id)
+        key = str(key)
         turns = [] if clear else [t for t in data.get(key, []) if t.get("t", 0) > cutoff]
         if add:
             turns.append({"q": add[0], "a": add[1], "t": time.time()})
@@ -1203,7 +1310,80 @@ def ask_quota(user_id, delta=0):
         return max(0, limit - used)
 
 
-def ask_llm(question, display_name="", user_id=0, history=()):
+GUIDE_DIR = os.path.join(STATE_DIR, "guides")
+# Stopwords are English + Spanish because the channels are both. A term has to
+# survive this list to count as a search hit, or every question would "match"
+# every message through words like "the" and "que".
+_STOP = {
+    "the", "and", "for", "with", "from", "that", "this", "what", "when", "where",
+    "how", "why", "who", "you", "your", "are", "was", "can", "does", "did", "not",
+    "have", "has", "que", "como", "donde", "cuando", "para", "por", "con",
+    "una", "uno", "los", "las", "del", "mas", "muy", "hay", "esta", "este", "eso",
+    "algo", "sobre", "hacer", "puedo", "puede", "tiene", "server", "minecraft",
+}
+
+
+def _terms(text):
+    """Content words of a question, lowercased, deduped."""
+    words = re.findall(r"[\w'-]{3,}", (text or "").lower())
+    return {w for w in words if w not in _STOP}
+
+
+def save_guide(title, body, author="", url=""):
+    """Persist a published guide so it can be fed back as context.
+
+    Written to disk rather than re-read from Discord on every question: the
+    channel is the published copy for humans, this is the copy the assistant
+    reads, and a Discord outage or a deleted message must not silently empty
+    what the bot knows.
+    """
+    os.makedirs(GUIDE_DIR, exist_ok=True)
+    slug = re.sub(r"[^a-z0-9]+", "-", (title or "guide").lower()).strip("-")[:60] or "guide"
+    path = os.path.join(GUIDE_DIR, f"{slug}.md")
+    meta = {"title": title, "author": author, "url": url, "at": time.strftime("%Y-%m-%d")}
+    try:
+        with open(path, "w") as f:
+            f.write(json.dumps(meta) + "\n" + body)
+    except OSError as e:  # noqa: BLE001
+        log(f"guide: cannot save {path}: {e}")
+        return ""
+    _guides["loaded"] = False       # invalidate the context cache
+    return path
+
+
+def load_guides(force=False):
+    """All published guides as one bounded block for the prompt."""
+    if _guides["loaded"] and not force:
+        return _guides["text"]
+    out, total = [], 0
+    try:
+        names = sorted(os.listdir(GUIDE_DIR))
+    except OSError:
+        names = []
+    for name in names:
+        if not name.endswith(".md"):
+            continue
+        try:
+            with open(os.path.join(GUIDE_DIR, name)) as f:
+                head, _, body = f.read().partition("\n")
+            meta = json.loads(head)
+        except Exception:  # noqa: BLE001
+            continue
+        block = f"--- {meta.get('title') or name} (by {meta.get('author') or 'a player'}, {meta.get('at','')}) ---\n{body.strip()}"
+        # Hard ceiling: guides ride in EVERY question's prompt, so an
+        # enthusiastic week of publishing must not quietly triple the bill.
+        if total + len(block) > ASK_GUIDE_MAX_CHARS:
+            left = len(names) - len(out)
+            out.append(f"(and {left} more guide{'s' if left != 1 else ''} not shown here)")
+            break
+        out.append(block)
+        total += len(block)
+    _guides["text"] = "\n\n".join(out) or "(none published yet)"
+    _guides["loaded"] = True
+    return _guides["text"]
+
+
+def ask_llm(question, display_name="", user_id=0, history=(), chat=""):
     """Ask the gateway. Returns (answer, error, billed).
 
     `billed` says whether the provider actually ran the request, so the caller
@@ -1224,9 +1404,15 @@ def ask_llm(question, display_name="", user_id=0, history=()):
     # but the joining/VPN/map/skin answers live only in this file's own help
     # texts. Without them /ask says "I don't know" to things the bot itself
     # documents in /connect - observed with "how do I remove my skin?".
-    onboarding = "\n\n".join([CONNECT_TEXT, VPN_TEXT, MAP_TEXT, COMPANIONS_TEXT])
+    # HELP_TEXT and ASSISTANT_TEXT are in here because players ask the bot about
+    # the bot - "what is the full command for linking?" was asked twice in the
+    # first two days and answered with a shrug, because nothing told the model
+    # that /link even exists.
+    onboarding = "\n\n".join([CONNECT_TEXT, VPN_TEXT, MAP_TEXT, COMPANIONS_TEXT,
+                              HELP_TEXT, ASSISTANT_TEXT])
     messages = [{"role": "system", "content": ASK_SYSTEM.format(
-        manifest=load_manifest(), onboarding=onboarding, live=live, who=who)}]
+        manifest=load_manifest(), onboarding=onboarding, guides=load_guides(),
+        chat=chat or "(nothing relevant found)", live=live, who=who)}]
     # Replay the conversation so far as real turns rather than pasting it into
     # the system prompt: the model then treats it as dialogue, and prompt
     # caching can still hit on the unchanged system prefix.
@@ -1291,18 +1477,25 @@ def pick_invite(before, after):
     return used[0] if len(used) == 1 else None
 
 
-def build_discord_client(with_members=True):
+def build_discord_client(with_members=True, with_content=True):
     """Build the gateway client + slash command tree (no connection yet)."""
     import asyncio
 
     import discord
     from discord import app_commands
 
-    intents = discord.Intents.default()  # message content intent NOT needed
+    intents = discord.Intents.default()
     if DISCORD_JOIN_ROLES and with_members:
         # Privileged "Server Members" intent - required for on_member_join.
         # Toggle it in the Developer Portal (self-serve under 100 servers).
         intents.members = True
+    if with_content and (ASK_THREADS or ASK_SEARCH):
+        # Privileged "Message Content" intent. Without it every message arrives
+        # with an EMPTY content field, which would not error - it would just
+        # make follow-ups in threads silently do nothing, and channel search
+        # find nothing, which is far harder to notice than a failure. The
+        # gateway degrades explicitly instead; see discord_gateway().
+        intents.message_content = True
     client = discord.Client(intents=intents)
     tree = app_commands.CommandTree(client)
     guild = discord.Object(id=DISCORD_GUILD)
@@ -1400,6 +1593,76 @@ def build_discord_client(with_members=True):
         # player who typed their question before the field had focus watched it
         # vanish and got the help text back. Required means Discord refuses to
         # send until there is something in the box.
+        # One place that turns a question into a posted answer, shared by the
+        # slash command and by plain messages inside a thread, so the quota,
+        # the refund-on-failure and the channel search cannot drift apart.
+        async def answer_into(channel, question, user, history_key, guild):
+            uid = user.id
+            limit = quota_limit(uid)
+            if ask_quota(uid) <= 0:
+                await channel.send(
+                    f"{user.mention} you have used all {limit} of today's "
+                    f"questions — they come back after midnight.")
+                return
+            history = ask_history(history_key)
+            chat = await search_channels(guild, question, exclude_id=channel.id)
+            who = getattr(user, "display_name", None) or user.name
+            left = ask_quota(uid, delta=1)
+            answer, err, billed = await asyncio.get_running_loop().run_in_executor(
+                None, ask_llm, question, who, uid, history, chat)
+            if not billed:
+                left = ask_quota(uid, delta=-1)   # nothing spent, do not charge
+            if err:
+                await channel.send(err)
+                return
+            ask_history(history_key, add=(question, answer))
+            log(f"ask: {user} asked {question[:80]!r}")
+            # In a thread there is no 2000-char cliff to fall off: send the
+            # whole answer in pieces instead of truncating it, which is what the
+            # ephemeral reply had to do.
+            for part in chunk_text(answer, 1900):
+                await channel.send(part)
+            if left <= 3:
+                await channel.send(f"_{left} of {limit} questions left today._")
+
+        # Search is a keyword scan, not a periodic summary, on purpose: it costs
+        # nothing when nobody asks, it cannot go stale, and it never stores a
+        # copy of the channels. Two matching content words is the bar - one
+        # would match half the server through a single common word.
+        async def search_channels(guild, question, exclude_id=0):
+            if not (ASK_SEARCH and with_content and guild):
+                return ""
+            terms = _terms(question)
+            if len(terms) < 2:
+                return ""
+            hits = []
+            for ch in getattr(guild, "text_channels", []):
+                if ASK_CATEGORY and ch.category_id != ASK_CATEGORY:
+                    continue
+                if ch.id == exclude_id:
+                    continue
+                perms = ch.permissions_for(guild.me)
+                if not (perms.view_channel and perms.read_message_history):
+                    continue
+                try:
+                    async for m in ch.history(limit=ASK_SEARCH_MESSAGES):
+                        if m.author.bot or not m.content:
+                            continue
+                        score = len(terms & _terms(m.content))
+                        if score >= 2:
+                            hits.append((score, m.created_at, ch.name,
+                                         m.author.display_name, m.content))
+                except Exception as e:  # noqa: BLE001 - a channel we cannot read
+                    log(f"ask: search skipped #{ch.name}: {e}")
+            if not hits:
+                return ""
+            hits.sort(key=lambda h: (h[0], h[1]), reverse=True)
+            out = []
+            for _score, when, cname, who, text in hits[:ASK_SEARCH_HITS]:
+                text = " ".join(text.split())[:300]
+                out.append(f"[#{cname} {when:%Y-%m-%d}] {who}: {text}")
+            return "\n".join(out)
+
         async def ask_handler(interaction, question: str, new_topic: bool = False):
             # Confined to the Minecraft category. `category_id` is proxied by
             # threads to their parent, so asking inside an #mc-support or
@@ -1435,29 +1698,66 @@ def build_discord_client(with_members=True):
                     f"they come back after midnight. Ask in the channel meanwhile, "
                     f"someone will know.", ephemeral=True)
                 return
-            # The gateway takes seconds; Discord wants a reply within 3.
-            await interaction.response.defer(thinking=True, ephemeral=True)
-            history = ask_history(uid, clear=new_topic)
-            who = getattr(interaction.user, "display_name", None) or interaction.user.name
-            left = ask_quota(uid, delta=1)
-            answer, err, billed = await asyncio.get_running_loop().run_in_executor(
-                None, ask_llm, q, who, uid, history)
-            if not billed:
-                left = ask_quota(uid, delta=-1)  # nothing was spent, do not charge
-            if err:
-                await interaction.followup.send(err, ephemeral=True)
+
+            parent = interaction.channel
+            can_thread = (ASK_THREADS and with_content
+                          and hasattr(parent, "create_thread")
+                          and parent.permissions_for(parent.guild.me).create_private_threads)
+            if not can_thread:
+                # Ephemeral fallback: one-shot answer, no follow-ups. Reached
+                # when the intent is off, the channel is already a thread, or
+                # the bot lacks the permission - never a hard failure.
+                await interaction.response.defer(thinking=True, ephemeral=True)
+                history = ask_history(uid, clear=new_topic)
+                chat = await search_channels(interaction.guild, q, exclude_id=parent.id)
+                who = getattr(interaction.user, "display_name", None) or interaction.user.name
+                left = ask_quota(uid, delta=1)
+                answer, err, billed = await asyncio.get_running_loop().run_in_executor(
+                    None, ask_llm, q, who, uid, history, chat)
+                if not billed:
+                    left = ask_quota(uid, delta=-1)
+                if err:
+                    await interaction.followup.send(err, ephemeral=True)
+                    return
+                ask_history(uid, add=(q, answer))
+                log(f"ask: {interaction.user} asked {q[:80]!r}")
+                footer = f"\n\n_{left} of {limit} questions left today._"
+                room = 2000 - len(footer)
+                if len(answer) > room:
+                    answer = answer[:room - 1] + "…"
+                await interaction.followup.send(answer + footer, ephemeral=True)
                 return
-            ask_history(uid, add=(q, answer))
-            log(f"ask: {interaction.user} asked {q[:80]!r}")
-            footer = f"\n\n_{left} of {limit} questions left today._"
-            room = 2000 - len(footer)  # Discord hard-caps a message at 2000 chars
-            if len(answer) > room:
-                answer = answer[:room - 1] + "…"
-            await interaction.followup.send(answer + footer, ephemeral=True)
+
+            await interaction.response.defer(thinking=True, ephemeral=True)
+            # Private thread: visible to this player, the bot and moderators.
+            # Named after the question so a player with several open threads can
+            # tell them apart in the sidebar.
+            title = " ".join(q.split())[:80]
+            try:
+                thread = await parent.create_thread(
+                    name=title or f"{interaction.user.display_name}'s question",
+                    auto_archive_duration=ASK_THREAD_ARCHIVE_MIN,
+                    invitable=False,
+                    type=discord.ChannelType.private_thread)
+                await thread.add_user(interaction.user)
+            except Exception as e:  # noqa: BLE001
+                log(f"ask: cannot open thread: {e}")
+                await interaction.followup.send(
+                    "I could not open a private thread for that. Ask Diego to "
+                    "check my permissions in this channel.", ephemeral=True)
+                return
+            ask_thread(thread.id, uid)
+            await interaction.followup.send(
+                f"Answering in {thread.mention} — just keep typing there, no "
+                f"command needed. `/guide` when you are done to publish it.",
+                ephemeral=True)
+            await thread.send(f"**{interaction.user.display_name} asked:** {q}")
+            await answer_into(thread, q, interaction.user, f"t{thread.id}",
+                              interaction.guild)
 
         tree.add_command(app_commands.Command(
             name="ask",
-            description="Ask about the server - answered privately, from live server info",
+            description="Ask about the server - answered in your own private thread",
             callback=ask_handler), guild=guild)
 
         # /link - tell the assistant which in-game account is yours, so it can
@@ -1606,6 +1906,7 @@ def build_discord_client(with_members=True):
                     "That one is admin-only.", ephemeral=True)
                 return
             text = load_manifest(force=True)
+            load_guides(force=True)
             await interaction.response.send_message(
                 f"Manifest reloaded: {len(text)} characters."
                 if text else
@@ -1616,6 +1917,211 @@ def build_discord_client(with_members=True):
             name="askreload",
             description="Admin: re-read the server manifest without restarting the bot",
             callback=askreload_handler), guild=guild)
+
+        # --- publishing a conversation ------------------------------------
+        # Both /guide and /share only make sense INSIDE a conversation thread,
+        # and only for the person whose thread it is: these publish to a channel
+        # everyone reads, and a private thread stops being private the moment
+        # someone else can push it out.
+        async def thread_transcript(channel, max_chars=8000):
+            """(question/answer pairs as text, first question) for a thread.
+
+            Bounded, because this feeds two things that both punish a runaway
+            length: a model prompt (a long thread would blow the context and
+            burn a whole day's quota in one call) and a public post. Ten turns
+            of history times a 3000-token answer is already past what either
+            wants, and nothing stops a player talking all afternoon.
+            """
+            lines, first, total = [], "", 0
+            async for m in channel.history(limit=200, oldest_first=True):
+                body = " ".join((m.content or "").split())
+                if not body:
+                    continue
+                if m.author.bot:
+                    if body.startswith("**") and " asked:**" in body:
+                        # the header the bot posts; it holds the real question
+                        q = body.split(" asked:**", 1)[1].strip()
+                        first = first or q
+                        line = f"Q: {q}"
+                    elif body.startswith("_") and body.endswith("_"):
+                        continue          # the quota footer, not content
+                    else:
+                        line = f"A: {body}"
+                else:
+                    first = first or body
+                    line = f"Q: {body}"
+                if total + len(line) > max_chars:
+                    lines.append("[…conversation truncated here…]")
+                    break
+                lines.append(line)
+                total += len(line)
+            return "\n".join(lines), first
+
+        async def publish_guard(interaction):
+            """Returns (thread, guides_channel) or (None, None) after replying."""
+            ch = interaction.channel
+            owner = ask_thread(getattr(ch, "id", 0))
+            if not owner:
+                await interaction.response.send_message(
+                    "Use this inside one of your `/ask` conversation threads — "
+                    "that is what it publishes.", ephemeral=True)
+                return None, None
+            roles = {r.name for r in getattr(interaction.user, "roles", [])}
+            if owner != interaction.user.id and not (roles & ASK_ADMIN_ROLES):
+                await interaction.response.send_message(
+                    "That is someone else's conversation — only they can "
+                    "publish it.", ephemeral=True)
+                return None, None
+            target = client.get_channel(ASK_GUIDES_CHANNEL) if ASK_GUIDES_CHANNEL else None
+            if target is None:
+                await interaction.response.send_message(
+                    "Publishing is not set up — ask Diego to point me at a "
+                    "guides channel.", ephemeral=True)
+                return None, None
+            return ch, target
+
+        # #mc-guides is a FORUM channel, and a forum takes no plain messages:
+        # every post IS a thread, created in one call with its first message.
+        # Text channels are the other way round - post, then open a thread on
+        # it. Getting this wrong is a 400 at publish time, not at startup, so
+        # both shapes are handled here rather than assumed.
+        async def publish(target, title, blurb, body):
+            """Post a titled block. Returns a jump url, or "" if it failed."""
+            parts = chunk_text(body, 1900)
+            if isinstance(target, discord.ForumChannel):
+                tw = await target.create_thread(
+                    name=title, content=f"{blurb}\n\n{parts[0]}",
+                    auto_archive_duration=ASK_THREAD_ARCHIVE_MIN)
+                thread = tw.thread
+                for part in parts[1:]:
+                    await thread.send(part)
+                return thread.jump_url
+            head = await target.send(f"**{title}**\n{blurb}")
+            try:
+                thread = await head.create_thread(
+                    name=title, auto_archive_duration=ASK_THREAD_ARCHIVE_MIN)
+                for part in parts:
+                    await thread.send(part)
+                return thread.jump_url
+            except Exception as e:  # noqa: BLE001 - fall back to flat messages
+                log(f"publish: cannot open thread on {target}: {e}")
+                for part in parts:
+                    await target.send(part)
+                return head.jump_url
+
+        async def share_handler(interaction):
+            ch, target = await publish_guard(interaction)
+            if ch is None:
+                return
+            await interaction.response.defer(thinking=True, ephemeral=True)
+            body, first = await thread_transcript(ch)
+            if not body:
+                await interaction.followup.send(
+                    "There is nothing in this conversation yet.", ephemeral=True)
+                return
+            who = interaction.user.display_name
+            title = " ".join((first or "conversation").split())[:80]
+            try:
+                await publish(target, title,
+                              f"_shared by {who} — the conversation as it happened_",
+                              body)
+            except Exception as e:  # noqa: BLE001
+                log(f"share: publish failed: {e}")
+                await interaction.followup.send(
+                    "I could not publish that — ask Diego to check my "
+                    "permissions in the guides channel.", ephemeral=True)
+                return
+            log(f"share: {interaction.user} published {title!r}")
+            await interaction.followup.send(
+                f"Shared in {target.mention}.", ephemeral=True)
+
+        async def guide_handler(interaction, title: str = ""):
+            ch, target = await publish_guard(interaction)
+            if ch is None:
+                return
+            await interaction.response.defer(thinking=True, ephemeral=True)
+            body, first = await thread_transcript(ch)
+            if not body:
+                await interaction.followup.send(
+                    "There is nothing in this conversation yet.", ephemeral=True)
+                return
+            uid = interaction.user.id
+            if ask_quota(uid) <= 0:
+                await interaction.followup.send(
+                    "Writing the guide needs one of today's questions and you "
+                    "have none left. `/share` publishes it as-is for free.",
+                    ephemeral=True)
+                return
+            # Rewriting costs a question: it is a full model call, and without
+            # this a player out of quota could still spend on the gateway.
+            ask_quota(uid, delta=1)
+            prompt = (
+                "Rewrite the conversation below as a short guide for other "
+                "players of this server. Keep only what is useful and true; "
+                "drop the small talk, the greetings and anything the assistant "
+                "said it was unsure about. Use a heading and short steps or "
+                "bullets. Do not invent anything that is not in the "
+                "conversation. Start with a single line title.\n\n" + body)
+            answer, err, billed = await asyncio.get_running_loop().run_in_executor(
+                None, ask_llm, prompt, interaction.user.display_name, uid, (), "")
+            if not billed:
+                ask_quota(uid, delta=-1)
+            if err:
+                await interaction.followup.send(err, ephemeral=True)
+                return
+            lines = [l for l in answer.splitlines() if l.strip()]
+            auto = lines[0].lstrip("# ").strip() if lines else (first or "guide")
+            name = " ".join((title.strip() or auto).split())[:80] or "guide"
+            who = interaction.user.display_name
+            try:
+                url = await publish(target, name,
+                                    f"_written from {who}'s conversation with me_",
+                                    answer)
+            except Exception as e:  # noqa: BLE001
+                log(f"guide: publish failed: {e}")
+                await interaction.followup.send(
+                    "I wrote the guide but could not post it — ask Diego to "
+                    "check my permissions in the guides channel.", ephemeral=True)
+                return
+            # Saved locally too: this copy is what future questions are answered
+            # from, so it must not depend on the Discord message surviving.
+            save_guide(name, answer, author=who, url=url)
+            log(f"guide: {interaction.user} published {name!r}")
+            await interaction.followup.send(
+                f"Published in {target.mention}. I will use it when others ask "
+                f"the same thing.", ephemeral=True)
+
+        tree.add_command(app_commands.Command(
+            name="share",
+            description="Publish this conversation to the guides channel, as it happened",
+            callback=share_handler), guild=guild)
+        tree.add_command(app_commands.Command(
+            name="guide",
+            description="Turn this conversation into a written guide and publish it",
+            callback=guide_handler), guild=guild)
+
+        # --- follow-ups without a command ---------------------------------
+        @client.event
+        async def on_message(message):
+            # The whole point of the threads: inside your own conversation you
+            # just type. Everything else the bot sees is ignored, deliberately -
+            # it does not listen in channels, only in threads it opened for you.
+            if message.author.bot or not message.guild:
+                return
+            owner = ask_thread(getattr(message.channel, "id", 0))
+            if not owner or owner != message.author.id:
+                return
+            body = (message.content or "").strip()
+            if not body or body.startswith("/"):
+                return
+            if len(body) > ASK_MAX_QUESTION:
+                await message.channel.send(
+                    f"That is a bit long ({len(body)} characters, max "
+                    f"{ASK_MAX_QUESTION}). Try one thing at a time.")
+                return
+            async with message.channel.typing():
+                await answer_into(message.channel, body, message.author,
+                                  f"t{message.channel.id}", message.guild)
 
     invite_uses = {}
 
@@ -1696,18 +2202,31 @@ def discord_gateway():
     # Portal, discord.py refuses to connect AT ALL. Slash commands matter more
     # than auto-role, so fall back to a members-less client instead of leaving
     # the bot offline in a reconnect loop.
-    with_members = True
+    # Degrade one privileged intent at a time. Discord does not say WHICH one it
+    # refused, so drop the newest first: members has been working for months, so
+    # a refusal that appears the day message_content was added is message
+    # content. Being partly degraded always beats a bot stuck offline in a
+    # reconnect loop, because the announcements matter more than any of this.
+    with_members, with_content = True, True
     while True:
-        client, _tree = build_discord_client(with_members)
+        client, _tree = build_discord_client(with_members, with_content)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             loop.run_until_complete(client.start(DISCORD_TOKEN))
         except discord.errors.PrivilegedIntentsRequired:
-            log("discord: SERVER MEMBERS intent is not enabled in the Developer "
-                "Portal - auto-role on join is DISABLED; reconnecting with "
-                "commands only")
-            with_members = False
+            if with_content:
+                log("discord: MESSAGE CONTENT intent is not enabled in the "
+                    "Developer Portal - conversation threads and channel search "
+                    "are DISABLED. Enable it at "
+                    "https://discord.com/developers -> your app -> Bot -> "
+                    "Privileged Gateway Intents -> Message Content Intent.")
+                with_content = False
+            elif with_members:
+                log("discord: SERVER MEMBERS intent is not enabled in the "
+                    "Developer Portal - auto-role on join is DISABLED; "
+                    "reconnecting with commands only")
+                with_members = False
         except Exception as e:  # noqa: BLE001
             log(f"discord gateway: {e}")
         finally:
@@ -1716,7 +2235,7 @@ def discord_gateway():
             except Exception:  # noqa: BLE001
                 pass
             loop.close()
-        time.sleep(5 if not with_members else 30)
+        time.sleep(5 if not (with_members and with_content) else 30)
 
 
 def main():
