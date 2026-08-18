@@ -312,9 +312,12 @@ in
     # instead. The ExecStartPost assertion in the module now catches that.
     litellmPort = 4711;
     litellmOpenFirewallTailscale = true;
-    # ⚠️ ON while the villager prompts are being tuned - it also logs every
-    # player /ask question, so turn it back off once they are settled.
-    litellmLogMessages = true;
+    # OFF. It was on to read villager conversations and it never produced a
+    # single one: litellm only dumps request/response bodies at DEBUG level,
+    # so its journal carries nothing but access lines either way. The token
+    # and truncation numbers that settled the villager tuning came from
+    # llama-server's own log on DESK. Nothing is lost by leaving this off.
+    litellmLogMessages = false;
     # One DeepSeek key per consumer: spend is attributable in the provider
     # dashboard and either can be revoked without taking the other down. They
     # share one account balance, so this is attribution, not separate budgets.
@@ -354,10 +357,14 @@ in
         model = "openai/gpt-oss-20b";
         apiBase = "http://100.64.0.5:8090/v1";
         envVar = "";               # local server, no auth
-        # Short on purpose: a dead DESK refuses instantly, but a DESK that is
-        # awake with the model unloaded takes far longer than a villager
-        # conversation can wait. Fail over fast and let it warm up for next time.
-        extra = { timeout = 8; }; }
+        # This does NOT cover the "DESK is off" case - that one is a connection
+        # refused in milliseconds and never reaches a timeout. It only bounds a
+        # DESK that is awake but slow, so it has to clear a real generation.
+        # Measured 2026-08-18 on live villager traffic: 77-503 completion
+        # tokens, worst case 7.38s (503 tokens at 69 tok/s while the GPU was
+        # also driving a Minecraft client). 8s sat right on top of that and
+        # would have failed a long line over to paid DeepSeek for nothing.
+        extra = { timeout = 20; }; }
       { name = "akucraft-villager-backup";
         model = "openai/deepseek-v4-flash";
         apiBase = "https://api.deepseek.com/v1";

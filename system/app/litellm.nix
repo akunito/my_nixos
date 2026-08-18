@@ -187,13 +187,19 @@ in
         };
 
         litellm_settings = {
-          # ⚠️ PRIVACY SWITCH. When message logging is ON, full prompts AND
-          # replies land in the journal — that is every villager conversation
-          # AND every /ask question any player asks, not just the one being
-          # debugged. There is no per-model setting; it is all or nothing.
-          # On deliberately while the villager work is being tuned, because
-          # otherwise there is no way to see what the model was actually told.
-          # Turn it back off before this stops being an experiment.
+          # PRIVACY SWITCH, and a weaker one than it looks. Turning logging on
+          # does NOT put prompts in the journal: litellm only writes message
+          # bodies from its DEBUG logger, so at the default log level the
+          # journal holds access lines either way (verified 2026-08-18 — two
+          # days of villager traffic logged with this ON, zero conversations
+          # recorded). It feeds callback/spend loggers, which we do not run.
+          # So leave it off: it buys nothing here, and if a future litellm
+          # version or a raised log level starts honouring it, it would dump
+          # every villager line AND every player /ask at once — all or
+          # nothing, there is no per-model setting.
+          # To actually read what a model was told, use the backend's own log
+          # (llama-server on DESK prints prompt/completion token counts and
+          # truncation per request).
           turn_off_message_logging = !(cfg.litellmLogMessages or false);
           drop_params = true; # tolerate params a given provider doesn't accept
         };
