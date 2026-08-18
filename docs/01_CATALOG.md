@@ -73,9 +73,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
    - `(systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != ""`
-- **system/app/docker.nix**: Track docker from pkgs-unstable so we don't have to bump pins each time *Enabled when:*
-   - `userSettings.dockerEnable == true`
-   - `!userlandProxy`
+- **system/app/docker.nix**: Track docker from pkgs-unstable so we don't have to bump pins each time *Enabled when:* `userSettings.dockerEnable == true`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/freesm-launcher.nix**: FreeSM Launcher (Freesm Launcher)
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
@@ -283,6 +281,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/security/firewall.nix**: Firewall settings
 - **system/security/firewallBasic.nix**: Firewall
 - **system/security/gpg.nix**: Some programs need SUID wrappers, can be configured further or are
+- **system/security/hwconfig-guard.nix**: Boot-safety guard: refuse to build a system whose fileSystems include Docker
 - **system/security/nix-access-token.nix**: Nix access-tokens without leaking the PAT into the world-readable Nix store. *Enabled when:* `${nixBin} eval --impure --raw \ --expr '(import ${secretsFile}).githubAccessToken or ""' 2>/dev/null || true`
 - **system/security/openvpn.nix**: System module: openvpn.nix
 - **system/security/polkit.nix**: System module: polkit.nix

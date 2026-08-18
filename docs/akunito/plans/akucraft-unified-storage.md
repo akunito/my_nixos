@@ -5,9 +5,9 @@ summary: One searchable inventory across every chest in a base, in vanilla style
 tags: [akucraft, minecraft, toms-storage, storagedrawers, flan, claims]
 related_files: [user/app/games/minecraft-client-mods.nix, scripts/sync-akucraft-automodpack.py]
 date: 2026-08-18
-status: draft
+status: published
 owner: akunito
-progress: ON STAGING — tested 2026-08-18, not yet in production
+progress: LIVE in production 2026-08-18; /storage guide shipped in the Discord bot
 ---
 
 # Unified chest storage
@@ -125,16 +125,20 @@ and makes the mod more annoying to use.
 Staging is already running both mods and AutoModpack has been re-synced, so any
 client that connects to `:25599` self-updates.
 
-To graduate to production:
+Graduated to production on 2026-08-18, in this order:
 
-1. Move both entries from `trialMods` to `syncedMods` in
-   `user/app/games/minecraft-client-mods.nix`.
-2. Append `,toms-storage:1.21-2.4.1-fabric,storagedrawers:1.21.1-13.11.4` to
-   `MODRINTH_PROJECTS` in `~/.homelab/minecraft/docker-compose.yml` on VPS_PROD.
-3. `docker compose up -d` in `~/.homelab/minecraft`.
-4. `./scripts/sync-akucraft-automodpack.py --target prod`, then restart so
-   AutoModpack regenerates its manifest.
-5. `./sync-user.sh` on each NixOS client so the launcher instances get the jars.
+1. Both entries moved from `trialMods` to `syncedMods`.
+2. Appended to `MODRINTH_PROJECTS` in `~/.homelab/minecraft/docker-compose.yml`
+   (a YAML block scalar on prod, one project per line — not the single quoted
+   string staging uses).
+3. `docker compose up -d`, then confirmed `toms_storage 2.4.1` and
+   `storagedrawers 13.11.4` in the Fabric mod list.
+4. `./scripts/sync-akucraft-automodpack.py --target prod` — 44 jars plus 21
+   client-only, with `/config/chatplus/chatplus-v2.7.0.json` preserved. Diffed
+   the new client set against the old hand-made one: nothing lost.
+5. Restarted so AutoModpack regenerated its manifest (66 entries).
+6. `./sync-user.sh`, and `install.sh ~/.dotfiles VPS_PROD -s -u -d` for the
+   bot's new `/storage` guide.
 
 Both mods add registry entries, so client and server **must** match — that is
 why they belong in `syncedMods` and not `clientMods`.
@@ -171,3 +175,27 @@ non-`/mods/` entry it finds in the running config.
   `sync-akucraft-automodpack.py` run put it straight back, which is exactly what
   happened on staging on 2026-08-18. Removing the entry is what makes the
   removal stick.
+
+
+## Usability, which turned out to be the real finding
+
+Akunito built the first network on staging and it did not work, three times
+over. None of it was his fault — all three are things the mod never tells you:
+
+1. **The network is made by blocks touching.** The Inventory Configurator looks
+   like the tool for "adding chests" and is not; it only excludes containers
+   from a network that already exists.
+2. **Gaps between shelves cut it into separate networks.** His wall was three
+   shelves with a gap above each row so the chests could be opened — the normal
+   way to build storage, and the one that breaks it. Fixed with a column of
+   Trims at the end of the shelves, plus dropping from three connectors to one.
+3. **The terminal reads the block it is stuck to.** His was one block from the
+   connector but mounted on the stone wall behind it, so it opened empty. The
+   mod's entire documentation for this is four words: "Place it on an
+   inventory".
+
+Diagnosing it needed a server-side scan of the build and a replay of the
+connector's flood fill, which is not something a player can do. That is why the
+`/storage` guide leads with these three points rather than with the feature
+list, and why "Simple Storage" is worth a second look if the group finds it
+fiddly.
