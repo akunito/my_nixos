@@ -337,6 +337,10 @@ let
         modules = [
           (self + "/profiles" + ("/" + systemSettingsWithFonts.profile) + "/configuration.nix")
           (self + "/system/bin/aku.nix")
+          # Refuses to build a generation whose fileSystems carry Docker overlay
+          # mounts (the emergency-mode brick). Applied to every profile on
+          # purpose — script-level guards only cover the install.sh path.
+          (self + "/system/security/hwconfig-guard.nix")
         ];
         specialArgs = {
           inherit pkgs-stable;

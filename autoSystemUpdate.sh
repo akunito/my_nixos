@@ -49,22 +49,44 @@ else
     # Scrub autofs/nfs/nfs4 fileSystems entries (managed by drives.nix /
     # nfs_client.nix). Without this, a hot automount at autoupdate-time
     # leaks into the regen and conflicts with the declarative mount.
-    if grep -qE 'fsType = "(autofs|nfs4?)"' "$HW_CONFIG_NEW"; then
+    #
+    # AND Docker overlay mounts. This scrub used to cover only autofs/NFS, which
+    # is how nas-aku got re-poisoned into generations 56/57 by a weekly
+    # autoupdate after being cleaned in August 2026: containers are up at
+    # autoupdate time, so their `.../docker/overlay2/<id>/merged` mounts land in
+    # the regen as required boot filesystems, and the machine can no longer cold
+    # boot (overlay: missing 'lowerdir' -> emergency mode). Mirrors the strip
+    # install.sh does (b485e7c); system/security/hwconfig-guard.nix is the
+    # backstop that refuses to build if either strip ever misses one.
+    if grep -qE 'fsType = "(autofs|nfs4?|overlay)"' "$HW_CONFIG_NEW" \
+        || grep -q 'fileSystems\."[^"]*/docker/' "$HW_CONFIG_NEW"; then
         if command -v python3 >/dev/null 2>&1; then
-            echo -e "Stripping autofs/NFS fileSystems entries from regenerated file"
+            echo -e "Stripping autofs/NFS/docker-overlay fileSystems entries from regenerated file"
             python3 - "$HW_CONFIG_NEW" <<'PYEOF'
 import re, sys
 p = sys.argv[1]
 with open(p, 'r') as f:
     content = f.read()
+# By fsType: autofs / nfs / nfs4 / overlay.
 content = re.sub(
-    r'\n  fileSystems\."[^"]+" =\n    \{ device = "[^"]*";\n      fsType = "(?:autofs|nfs4?)";\n    \};\n',
+    r'\n  fileSystems\."[^"]+" =\n    \{ device = "[^"]*";\n      fsType = "(?:autofs|nfs4?|overlay)";\n    \};\n',
+    '\n', content)
+# By mount point: anything under a docker data root, whatever the fsType and
+# however many attribute lines the block carries.
+content = re.sub(
+    r'\n  fileSystems\."[^"]*/docker/[^"]*" =\n    \{[^}]*\};\n',
     '\n', content)
 with open(p, 'w') as f:
     f.write(content)
 PYEOF
+            # Never accept a regen that still carries one — that is the brick.
+            if grep -qE 'fsType = "overlay"' "$HW_CONFIG_NEW" \
+                || grep -q 'fileSystems\."[^"]*/docker/' "$HW_CONFIG_NEW"; then
+                echo -e "WARNING: docker/overlay entries survived the strip — rejecting regen"
+                rm -f "$HW_CONFIG_NEW"
+            fi
         else
-            echo -e "WARNING: python3 unavailable; cannot strip autofs/NFS from regen — rejecting"
+            echo -e "WARNING: python3 unavailable; cannot strip autofs/NFS/overlay from regen — rejecting"
             rm -f "$HW_CONFIG_NEW"
         fi
     fi

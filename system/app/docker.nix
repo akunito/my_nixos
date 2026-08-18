@@ -19,10 +19,19 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
     # the stable channel's default docker is flagged unmaintained.
     package = pkgs-unstable.docker;
     storageDriver = storageDriver;
-    # NOTE: this only ever prunes the ROOT daemon. Hosts running rootless docker
-    # (VPS_PROD sets dockerEnable = false) get nothing from it — they need their
-    # own build-cache cap and prune timer; see profiles/vps/base.nix.
-    autoPrune.enable = true;
+    # Off on purpose — replaced by the docker-image-prune timer below.
+    #
+    # autoPrune runs `docker system prune -f`, which also deletes every STOPPED
+    # container and unused network. On a development machine that means the
+    # compose stacks you left down overnight are gone by Monday (harmless for
+    # data — named volumes and tagged images are untouched — but you have to
+    # `compose up` again). `docker image prune -f` reclaims the same disk that
+    # actually grows, without touching containers.
+    #
+    # It also only ever applied to the ROOT daemon: hosts running rootless
+    # docker got nothing from it. See profiles/vps/base.nix and
+    # profiles/homelab/base.nix for the rootless equivalents.
+    autoPrune.enable = false;
     liveRestore = true; # Fix for https://discourse.nixos.org/t/docker-hanging-on-reboot/18270/3
                         # Allow dockerd to be restarted without affecting running container.
                         # This option is incompatible with docker swarm.
@@ -48,6 +57,31 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
         userland-proxy = false;
       };
   };
+  # Dangling-image reaper for the root daemon — the autoPrune replacement.
+  # Same Monday 00:00 slot autoPrune used, so nothing about the timing changes.
+  # Dangling images only: tagged images (rollback targets, compose-built dev
+  # images), volumes, networks and stopped containers are all left alone, and
+  # dockerd refuses to delete an image any container still references.
+  # The build cache is bounded by builder.gc above, not by this.
+  systemd.timers.docker-image-prune = lib.mkIf (userSettings.dockerEnable == true) {
+    description = "Weekly Docker dangling-image prune";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "Mon *-*-* 00:00:00";
+      RandomizedDelaySec = "10m";
+      Persistent = true;
+    };
+  };
+  systemd.services.docker-image-prune = lib.mkIf (userSettings.dockerEnable == true) {
+    description = "Prune dangling (untagged) Docker images";
+    after = [ "docker.service" ];
+    requires = [ "docker.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs-unstable.docker}/bin/docker image prune -f";
+    };
+  };
+
   users.users.${userSettings.username}.extraGroups = lib.mkIf (userSettings.dockerEnable == true) [ "docker" ];
   environment.systemPackages = lib.mkIf (userSettings.dockerEnable == true) [
     pkgs-unstable.docker
