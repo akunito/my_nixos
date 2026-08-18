@@ -2139,6 +2139,62 @@ def build_discord_client(with_members=True, with_content=True):
                 f"Published in {target.mention}. I will use it when others ask "
                 f"the same thing.", ephemeral=True)
 
+        # /publish - put one of the bot's built-in guides into #mc-guides.
+        #
+        # /guide and /share can only publish an /ask conversation, so a written
+        # guide like /storage had nowhere to go but a slash command nobody
+        # thinks to type. This posts the same text as a forum thread, and saves
+        # it where the assistant reads from, so /ask can answer out of it too.
+        # Admin-gated: it writes to a channel everyone reads.
+        PUBLISHABLE = {
+            "storage":    "Storage: one inventory for all your chests",
+            "map":        "The map: seeing what you have explored",
+            "connect":    "Joining AkuCraft",
+            "vpn":        "Setting up the VPN",
+            "companions": "Villager companions",
+        }
+
+        async def publish_handler(interaction, topic: str):
+            roles = {r.name for r in getattr(interaction.user, "roles", [])}
+            if not (roles & ASK_ADMIN_ROLES):
+                await interaction.response.send_message(
+                    "Admins only.", ephemeral=True)
+                return
+            topic = topic.strip().lstrip("/").lower()
+            if topic not in PUBLISHABLE:
+                await interaction.response.send_message(
+                    "Pick one of: " + ", ".join(sorted(PUBLISHABLE)), ephemeral=True)
+                return
+            target = client.get_channel(ASK_GUIDES_CHANNEL) if ASK_GUIDES_CHANNEL else None
+            if target is None:
+                await interaction.response.send_message(
+                    "No guides channel configured.", ephemeral=True)
+                return
+            await interaction.response.defer(thinking=True, ephemeral=True)
+            body = await asyncio.get_running_loop().run_in_executor(
+                None, handle, "/" + topic)
+            if not body:
+                await interaction.followup.send("Nothing to publish.", ephemeral=True)
+                return
+            title = PUBLISHABLE[topic]
+            try:
+                url = await publish(target, title, "_server guide_", body)
+            except Exception as e:  # noqa: BLE001
+                log(f"publish: {topic} failed: {e}")
+                await interaction.followup.send(
+                    "Could not post it - check my permissions in the guides "
+                    "channel.", ephemeral=True)
+                return
+            save_guide(title, body, author="AkuCraft", url=url)
+            log(f"publish: {interaction.user} published {topic!r}")
+            await interaction.followup.send(
+                f"Published in {target.mention}.", ephemeral=True)
+
+        tree.add_command(app_commands.Command(
+            name="publish",
+            description="Admin: post a built-in guide (storage, map, connect, vpn, companions)",
+            callback=publish_handler), guild=guild)
+
         tree.add_command(app_commands.Command(
             name="share",
             description="Publish this conversation to the guides channel, as it happened",
