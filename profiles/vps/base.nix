@@ -277,6 +277,25 @@
       "log-opts" = { "max-size" = "10m"; "max-file" = "3"; };
       # Explicit DNS — slirp4netns can't reach systemd-resolved stub at 127.0.0.53
       "dns" = [ "1.1.1.1" "9.9.9.9" ];
+
+      # BuildKit build cache cap. Left unset, dockerd's default GC policy keeps
+      # roughly 10% of the filesystem, which on this 1 TB root means the cache is
+      # allowed to reach ~100 GB before anything is collected — it had reached
+      # 79 GB by 2026-08-18. maxUsedSpace bounds the total; reservedSpace is the
+      # floor GC will not prune below, so ordinary rebuilds stay warm.
+      #
+      # NOTE: virtualisation.docker.autoPrune (system/app/docker.nix) only ever
+      # applies to the ROOT daemon, which is disabled on the VPS
+      # (dockerEnable = false). Rootless gets nothing from it — hence this cap
+      # plus the docker-prune timer below.
+      "builder" = {
+        "gc" = {
+          "enabled" = true;
+          "policy" = [
+            { "all" = true; "reservedSpace" = "5GB"; "maxUsedSpace" = "20GB"; }
+          ];
+        };
+      };
     };
   };
 
@@ -304,6 +323,41 @@
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "${pkgs.systemd}/bin/systemctl --user restart docker.service";
+    };
+  };
+
+  # Untagged-image reaper. Every deploy that moves a :latest tag (or re-pulls a
+  # digest-pinned image) orphans the previous image; 203 of them holding ~74 GB
+  # had accumulated by 2026-08-18 because nothing ever collected them.
+  #
+  # Deliberately `image prune`, NOT `system prune`:
+  #   * dangling images only — a tagged image is never touched, so rollback
+  #     targets (nextcloud:3x-apache, older plane-aio tags) survive;
+  #   * dockerd refuses to delete any image a container still references, even
+  #     a stopped one, so this cannot strand a service. Verified on 2026-08-18:
+  #     3 of the 203 dangling images were live Immich/Plane database images and
+  #     were correctly skipped;
+  #   * volumes, networks and stopped containers are all out of scope — those
+  #     are what `system prune` would eat, and they hold real data here.
+  #
+  # Runs at 03:00, an hour ahead of docker-restart, so the two never overlap.
+  systemd.user.timers.docker-prune = lib.mkIf (userSettings.dockerRootlessEnable or false) {
+    description = "Weekly rootless Docker dangling-image prune";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "Sun *-*-* 03:00:00";
+      RandomizedDelaySec = "10m";
+      Persistent = true;
+    };
+  };
+  systemd.user.services.docker-prune = lib.mkIf (userSettings.dockerRootlessEnable or false) {
+    description = "Prune dangling (untagged) rootless Docker images";
+    serviceConfig = {
+      Type = "oneshot";
+      # User units don't inherit the shell's DOCKER_HOST from setSocketVariable;
+      # %t is XDG_RUNTIME_DIR, where the rootless daemon puts its socket.
+      Environment = "DOCKER_HOST=unix://%t/docker.sock";
+      ExecStart = "${pkgs-unstable.docker}/bin/docker image prune -f";
     };
   };
 

@@ -18,6 +18,9 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
     # the stable channel's default docker is flagged unmaintained.
     package = pkgs-unstable.docker;
     storageDriver = storageDriver;
+    # NOTE: this only ever prunes the ROOT daemon. Hosts running rootless docker
+    # (VPS_PROD sets dockerEnable = false) get nothing from it — they need their
+    # own build-cache cap and prune timer; see profiles/vps/base.nix.
     autoPrune.enable = true;
     liveRestore = true; # Fix for https://discourse.nixos.org/t/docker-hanging-on-reboot/18270/3
                         # Allow dockerd to be restarted without affecting running container.
