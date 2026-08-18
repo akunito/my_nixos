@@ -186,17 +186,76 @@ someone will eventually try. Verified with exactly that profile: the assistant
 refuses and says it will not output prompts or tokens. The blast radius is
 limited anyway — `/ask` has no tools, so the worst case is text.
 
-### Follow-up questions
+### Conversation threads
 
-Recent exchanges are replayed as real conversation turns, so a player can ask
-"and how do I undo that?" without restating everything. Bounded by
-`akucraftAskHistoryTurns` (10) and `akucraftAskHistoryTtlHours` (24) so it stays a
-conversation and not a permanent record; expired conversations are pruned on
-every write. `/ask new_topic:True` starts fresh, and `/ask` with no argument shows
-quota, linked account and how many turns are remembered.
+`/ask` opens a **private thread** and answers there. Inside it the player simply
+types — no command per message. This replaced a one-shot ephemeral reply where
+every follow-up needed another `/ask`, which is the one complaint the feature
+attracted in its first two days.
 
-Replayed as turns rather than pasted into the system prompt: the model treats it
-as dialogue, and the unchanged system prefix stays cacheable.
+History is keyed by **thread**, not by user, so two topics open at once no longer
+bleed into each other the way a single per-user history did. Bounded by
+`akucraftAskHistoryTurns` (10) and `akucraftAskHistoryTtlHours` (24), and expired
+conversations are pruned on every write. Thread ownership lives in
+`STATE_DIR/ask_threads.json`, persisted rather than held in memory: the bot
+restarts on every deploy, and a thread whose owner was forgotten would stop
+answering with no visible reason.
+
+Exchanges are replayed as real turns rather than pasted into the system prompt:
+the model treats them as dialogue, and the unchanged system prefix stays
+cacheable. A thread also removes Discord's 2000-character cliff — answers are
+chunked across messages instead of being truncated.
+
+**Requires the privileged MESSAGE CONTENT intent** (Developer Portal → your app →
+Bot → Privileged Gateway Intents). Without it every message arrives with an empty
+content field, which does not error — follow-ups would silently do nothing, which
+is far harder to notice than a failure. So `discord_gateway()` degrades
+explicitly: it drops the newest privileged intent first, logs where to switch it
+on, and falls back to the ephemeral one-shot path. Announcements matter more than
+any of this and must never be taken down by it.
+
+### Publishing a conversation — `/guide` and `/share`
+
+Run inside your own thread:
+
+- **`/guide [title]`** — the model rewrites the conversation as a clean guide and
+  publishes it. Costs one question from the daily quota, because it is a full
+  model call.
+- **`/share`** — publishes the conversation verbatim. Free.
+
+Both post to `akucraftDiscordGuidesChannelId` (`#mc-guides`). That channel is a
+**forum**, where every post *is* a thread created together with its first
+message — the opposite of the post-then-open-a-thread shape a text channel wants.
+Both shapes are handled; guessing wrong is a 400 at publish time, not at startup.
+
+Published guides are also written to `STATE_DIR/guides/` and fed back into every
+later prompt, so the next player asking the same thing gets the answer straight
+away. Saved locally on purpose: the copy the assistant reads must not depend on a
+Discord message surviving. Capped by `akucraftAskGuideMaxChars` (6000) in total
+rather than by count, because guides ride in *every* question's prompt.
+
+Only the thread's owner (or an admin) can publish it — a private thread stops
+being private the moment someone else can push it out.
+
+### Reading the channels
+
+`/ask` can search the Minecraft channels for context, on demand. A keyword scan,
+deliberately, not a periodic summary: it costs nothing when no question overlaps
+with what was said, keeps no copy of the channels, and cannot go stale. The bar is
+**two** matching content words after stopwords — one would match half the server
+through a single common word. Tuned by `akucraftAskSearchMessages` (300 per
+channel) and `akucraftAskSearchHits` (6 reaching the prompt). Same intent
+requirement as threads.
+
+Matches are labelled in the prompt as chat rather than documentation, so the model
+quotes them as "X said in Discord" and never as a server rule.
+
+### The bot documents itself
+
+`HELP_TEXT` and `ASSISTANT_TEXT` ride in the prompt alongside `/connect`, `/vpn`,
+`/map` and `/companions`. Without them the assistant had no idea the bot it lives
+in even has a `/link` command — "what's the full command for linking?" was asked
+twice in the first two days and answered with a shrug.
 
 **Live state is pushed, not pulled.** The bot gathers server health and the online
 player list itself and pastes them into the prompt as text. The model is given
@@ -285,3 +344,12 @@ immediately afterwards.
 - `rpc.statd` picks its ports dynamically and could in principle take 4711 after
   a reboot. The start-up assertion turns that into a failed unit rather than a
   silent misconfiguration.
+- **Threads and channel search need a switch nobody can flip from here**: the
+  MESSAGE CONTENT intent is a checkbox in the Discord Developer Portal. Until it
+  is on, the bot logs the exact URL on every start and runs the ephemeral
+  fallback. Check with
+  `journalctl -u akucraft-status-bot | grep "MESSAGE CONTENT"`.
+- A published guide is never revised. If a guide goes stale the assistant keeps
+  quoting it — the prompt tells it to prefer the manifest and live state on a
+  disagreement, but nothing detects the disagreement. Deleting the file in
+  `STATE_DIR/guides/` and running `/askreload` is the current remedy.
