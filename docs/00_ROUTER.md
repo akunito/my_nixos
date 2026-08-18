@@ -6,6 +6,8 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 
 | ID | Summary | Tags | Primary Path |
 |---|---|---|---|
+| akucraft.plans.player-map | Design and phase-1 spike for a web map that shows only what each player has explored, built on Surveyor's data | akucraft, minecraft, surveyor, bluemap, webmap | scripts/surveyor-render.py |
+| akucraft.plans.unified-storage | One searchable inventory across every chest in a base, in vanilla style, plus what it does and does not do to Flan claim protection | akucraft, minecraft, toms-storage, storagedrawers, flan, claims | user/app/games/minecraft-client-mods.nix |
 | akunito.infra.services.akucraft-ai | LiteLLM gateway on VPS_PROD and the Discord /ask support assistant it serves | minecraft, akucraft, ai, llm, discord, vps, litellm | system/app/litellm.nix |
 | akunito.infra.services.akucraft-audit-2026-08-16 | Audit of the AkuCraft servers - mod conflicts, configuration, security posture and resource risk | minecraft, akucraft, audit, vps | scripts/audit-akucraft.py |
 | akunito.infra.services.akucraft-manifest | Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server | minecraft, akucraft, vps, gaming, generated | scripts/generate-akucraft-manifest.sh |

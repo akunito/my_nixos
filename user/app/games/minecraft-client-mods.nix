@@ -301,6 +301,103 @@ let
       url = "https://cdn.modrinth.com/data/rlloIFEV/versions/5I4utX2T/travelersbackpack-fabric-1.21.1-10.1.38.jar";
       sha512 = "cbe3ba6a35b3d091ba2c6b31649d5bfc08f7e5c43e8400654a42168d9c24a9fe359f0488d45075b8c2d16bb138e03d08ed89a5531a48ca2c9b8b48ac950dd85b";
     }
+    # --- Mods that were on both servers but never in this file ---------------
+    # These SEVEN all add registry entries, so a client without them is kicked
+    # with "Received N registry entries that are unknown to this client". They
+    # reached production only because the first version of
+    # sync-akucraft-automodpack.py used a deny-list ending in /mods/*.jar, which
+    # fails OPEN - anything not explicitly vetoed was shipped, so nobody noticed
+    # they were missing here. Production's allow-list is still that hand-made
+    # 46-entry list, complete with a literal "DoggyTalentsNext*.jar" glob.
+    #
+    # The script now builds an ALLOW-list from this file, which fails closed -
+    # correct, but it meant staging shipped 38 files and kicked every client on
+    # 2026-08-18. Adding them here is the actual fix, and it is what makes a
+    # `--target prod` run safe: without it, the next prod sync would have taken
+    # these away from everyone.
+    {
+      name = "DoggyTalentsNext[Fabric]-1.21.1-1.18.63.jar";
+      url = "https://cdn.modrinth.com/data/oXgmplvv/versions/t76oZsgc/DoggyTalentsNext%5BFabric%5D-1.21.1-1.18.63.jar";
+      sha512 = "bb857a9884223a16c7b1dd2bfec705a1518b919108bf86605e84ff96f49f9f0bdd01cbdc5da563a75e882c0c9b12d48696e9b174ae32e5de443c4e313b1601d7";
+    }
+    {
+      name = "naturalist-2.0.3-fabric-1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/F8BQNPWX/versions/DwMaTECx/naturalist-2.0.3-fabric-1.21.1.jar";
+      sha512 = "8834d770b768af12486b0db44a538e3f3f0d0e962d5b7873faed7b59cd42fe26d52047b4785c3ca1eb072cabbfed26c7bd111272c16cb5c0ad9b8031c5d96444";
+    }
+    {
+      name = "respawnablepets-1.21-r2.jar";
+      url = "https://cdn.modrinth.com/data/gbFe1FWa/versions/DxDhy0br/respawnablepets-1.21-r2.jar";
+      sha512 = "076914fc222740c7678b2863549b866ec6f6ff0a94050619329012c5ca735ad32c6f1122dea1e79e9aa3fd997756693f32b398e34ad286057fe60a971e5cbfed";
+    }
+    {
+      name = "smallships-fabric-1.21.1-2.0.0-b2.1.jar";
+      url = "https://cdn.modrinth.com/data/rGWEHQrP/versions/BSRcyUiv/smallships-fabric-1.21.1-2.0.0-b2.1.jar";
+      sha512 = "130a549cfd92daecf9c4cc7e3c84ff49b2fb547b597752fc1d521ecbe4405d219617ea4b92d5b144aad041ba1aca881242492d7c021eb2c258f6a9407d2acb46";
+    }
+    # Balm is Hardcore Revival's library, not a mod on its own.
+    {
+      name = "balm-fabric-1.21.1-21.0.65.jar";
+      url = "https://cdn.modrinth.com/data/MBAkmtvl/versions/VynBiUHt/balm-fabric-1.21.1-21.0.65.jar";
+      sha512 = "8e1cc12d357e09f8e9401468ab5655a58123fd5602b73b6afa8b623151ea1e704d03c194364f4fbb8f778a47838d139ab197b9dce933e0ac371b89241fd4fe1e";
+    }
+    {
+      name = "hardcorerevival-fabric-1.21.1-21.1.19.jar";
+      url = "https://cdn.modrinth.com/data/HqKoXaXz/versions/dXThjEfo/hardcorerevival-fabric-1.21.1-21.1.19.jar";
+      sha512 = "c855fde6f20ac8b51035e90d7df734ddd767076103704b65131b5970357620b4ca63be8ff54b18a31875884e1e7271d48fe5e2ea535a518f94590eb94a9cc6d4";
+    }
+    # The chat tabs. Production also ships /config/chatplus/chatplus-v2.7.0.json
+    # to clients - that entry is preserved by the sync script rather than
+    # rebuilt, because it is a config file and not a jar.
+    {
+      name = "chatplus-fabric-2.8.1.jar";
+      url = "https://cdn.modrinth.com/data/cJlZ132G/versions/O0ucbFxe/chatplus-fabric-2.8.1.jar";
+      sha512 = "c45ae8f9ec44b679a2e1986441d4e6c4dad648ff99f1988d4d0f40b926ea0add375e4fb1b157fe5324cfaf0436b50edbe57a424ce7b972c3ab4b7ce4d6f31b3e";
+    }
+    # --- Unified chest storage: Tom's Simple Storage + Storage Drawers ---
+    # The ask was "one inventory for every chest in my claim, browsable by
+    # category". Tom's is the vanilla-style answer: an Inventory Connector
+    # merges touching containers into one inventory and a Storage Terminal
+    # searches the lot (`@mod`, `#tag`, sort by name/count). No energy, no
+    # progression - ignore the blocks and nothing about the game changes.
+    #
+    # How the connector actually finds chests (read from
+    # InventoryConnectorBlockEntity, not from the mod page, because the mod
+    # page does not say): a flood fill outwards from the connector that hops
+    # ONLY between containers and trims that physically touch, capped at
+    # `invConnectorScanRange` (16). It cannot reach through air, so it cannot
+    # quietly swallow a neighbour's chests - but that is exactly what the
+    # staging test confirmed on 2026-08-18, and Flan does hold: with
+    # `lenientBlockEntityCheck: false` it routes every block entity that is not
+    # a lectern or a sign through OPENCONTAINER, and `/data get block` proved at
+    # runtime that all of these carry one. Tom's also declares `"mixins": []`,
+    # so it cannot intercept the Fabric UseBlockCallback that Flan hooks.
+    #
+    # What it DOES do is reach across a claim border: a connector placed outside
+    # a claim, TOUCHING a chest inside it, pulled an item straight out. No
+    # player interacts, so Flan never sees it. Adjacency only - the same rig
+    # with a three-block air gap pulled nothing - so one empty block at the
+    # border closes it, and that rule lives in the Discord guide (/storage)
+    # rather than in a config knob that would not have helped.
+    #
+    # AE2 was the obvious alternative and is not an option: zero Fabric builds
+    # for 1.21.1. Refined Storage has one, but needs power and storage disks,
+    # which breaks the "ignorable" rule this server is built on.
+    {
+      name = "toms_storage_fabric-1.21-2.4.1.jar";
+      url = "https://cdn.modrinth.com/data/XZNI4Cpy/versions/rfiala5p/toms_storage_fabric-1.21-2.4.1.jar";
+      sha512 = "6f139ba00b373164fe7ebcb5677ec035e19fa28b262b5d0d354650964ad6738f4aebb6d783122b8d1cf314033b4333f996c68cc526ac98e3ff64c70326ff39a6";
+    }
+    # The category half of the ask. Tom's terminal searches and sorts but has
+    # no categories; drawers give them physically - each drawer shows its item
+    # on the face, so a wall of them IS the category view, and the connector
+    # reads them as ordinary inventories. Wants fabric-api (have it) and
+    # optionally forge-config-api-port (have that too).
+    {
+      name = "StorageDrawers-fabric-1.21.1-13.11.4.jar";
+      url = "https://cdn.modrinth.com/data/guitPqEi/versions/78LmfH8Z/StorageDrawers-fabric-1.21.1-13.11.4.jar";
+      sha512 = "1ec2f81b50708b610d0e7024d067ac630c0f9497307e68e1dc22ee41c6d196f2db3249cad6ab243f3192e73b6a569fb2936a96b9bf61a94ea67a643a5f5b6283";
+    }
   ];
 
   # Client-only mods: the server neither ships nor knows about these, they add
@@ -444,11 +541,14 @@ let
       url = "https://cdn.modrinth.com/data/NcUtCpym/versions/L2nO7ZYD/xaeroworldmap-fabric-1.21.1-1.44.2.jar";
       sha512 = "991c8745dda265d9a669271a0f72873a2df1592265ca65338dc4f45cd864d1cf6a17217019b962bf5ebe345110796fea0d7bc602bf8f97cbbae75f33ed3569fc";
     }
-    {
-      name = "maplink-fabric-4.5.1-1.21-1.21.1.jar";
-      url = "https://cdn.modrinth.com/data/kiByZ6gx/versions/nNX7KTbD/maplink-fabric-4.5.1-1.21-1.21.1.jar";
-      sha512 = "0788738d3ea30908d7ccefbbf5529afa0aef6aa57b5ae0e55abe7ee0b7eee3bf6d21c5e42e14aff367205efa13174628595d09aec301a8c23af42a26719452b8";
-    }
+    # Map Link is deliberately gone (2026-08-18). It added a "web map" button
+    # that opened BlueMap, and BlueMap moved behind Cloudflare Access when it
+    # became admin-only - so every player got an error page instead. It was
+    # deleted from both servers' host-modpack folders at the time, but NOT from
+    # here, which meant the next sync-akucraft-automodpack.py run put it
+    # straight back (it did, on staging, on 2026-08-18). Removing the entry is
+    # what actually makes the removal stick. Players read the map at
+    # 100.64.0.6:8100/map/ instead.
     # EMI (item/recipe viewer). Was a hand-copied file for a long time, which
     # meant it was the one mod a mods-folder wipe would NOT restore. Now pinned
     # like the rest, and it ships in the player mod pack too.

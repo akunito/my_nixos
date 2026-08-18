@@ -193,17 +193,15 @@ CONNECT_TEXT = """How to join AkuCraft:
      the Alex-model body shape)
    - Undo with /skin clear
 
-7. Live map + finding each other (optional, recommended).
-   Website map, works in any browser with the VPN on:
-     http://100.64.0.6:8100
-   To also see everyone on your in-game minimap, add these client mods
-   (client-side only - they change nothing on the server, and versions
-   do not have to match anyone else's):
-     Xaero's Minimap, Xaero's World Map, Map Link, Cloth Config, Mod Menu
-   Then in game: Mod Menu -> Map Link -> General -> Server Entries -> add
-     Web Map Type: Bluemap
-     Server IP:    100.64.0.6:25565
-     Web map link: http://100.64.0.6:8100"""
+7. Your map (optional, recommended).
+   Works in any browser with the VPN on, phone included. It shows only
+   the terrain you have explored yourself. Ask an admin for your own
+   private link - it looks like:
+     http://100.64.0.6:8100/map/?k=YOUR-OWN-LINK
+   For the same thing in game, add these client mods (client-side only -
+   they change nothing on the server, and versions do not have to match
+   anyone else's):
+     Xaero's Minimap, Xaero's World Map, Cloth Config, Mod Menu"""
 
 VPN_TEXT = """VPN (Tailscale) setup:
 
@@ -221,33 +219,28 @@ gives your device access to the Minecraft servers and NOTHING else.
 Note: always use the IP and port above. Hostnames like akucraft.local...
 only resolve on some networks, so the IP is the reliable way in."""
 
-MAP_TEXT = """Live map of the survival world:
+MAP_TEXT = """Your map of the survival world:
 
-   http://100.64.0.6:8100
+   http://100.64.0.6:8100/map/?k=YOUR-OWN-LINK
 
-Open it in any browser (phone works too) with the VPN on. It shows the
-whole explored world and everyone who is online right now, live.
+Open it in any browser (phone works too) with the VPN on. It shows
+exactly and only the terrain YOU have explored - not the whole world,
+and not where anyone else is standing. Each player has their own private
+link; ask an admin for yours if you do not have it yet.
 
-Want the same player positions on your in-game minimap? Add these 5
-mods to your instance's "mods" folder. They are CLIENT-SIDE ONLY: they
+Want the same map in game? These 4 mods are CLIENT-SIDE ONLY: they
 change nothing on the server, nobody else has to install them, and the
 versions do not have to match anyone.
 
    Xaero's Minimap    https://modrinth.com/mod/xaeros-minimap
    Xaero's World Map  https://modrinth.com/mod/xaeros-world-map
-   Map Link           https://modrinth.com/mod/maplink
    Cloth Config       https://modrinth.com/mod/cloth-config
    Mod Menu           https://modrinth.com/mod/modmenu
 
-Then in game, open Mod Menu -> Map Link -> General -> Server Entries,
-add one entry and fill it in exactly like this:
+Map Link used to be on this list. It is gone: it only knew how to open
+the old server-wide BlueMap, which is now admin-only, so the button just
+showed an error. Nothing replaces it - use the web link above."""
 
-   Web Map Type:  Bluemap
-   Server IP:     100.64.0.6:25565
-   Web map link:  http://100.64.0.6:8100
-
-Everyone online then appears on your minimap as a head icon with the
-distance to them."""
 
 COMPANIONS_TEXT = """Villager companions (MCA)
 
@@ -366,12 +359,63 @@ Be aware of this before you talk to them or use /ask:
 
 Ask Diego to wipe what is stored about you and he will."""
 
+STORAGE_TEXT = """One inventory for all your chests (Tom's Simple Storage)
+
+Turns a room full of chests into a single searchable window. No power, no
+machines, no progression - ignore the blocks and nothing changes.
+
+THE THREE THINGS NOBODY GUESSES. Get these wrong and it just looks broken:
+
+1. THE NETWORK IS MADE BY BLOCKS TOUCHING.
+   Place ONE Inventory Connector against your chests. It then takes in every
+   container that TOUCHES it, and everything touching those, out to 16 blocks.
+   It cannot reach through air. The Inventory Configurator does NOT build the
+   network - it only lets you kick a chest out of one that already exists.
+
+2. GAPS BETWEEN SHELVES CUT IT INTO PIECES.
+   Most storage rooms are shelves with a gap above each row so the chests can
+   be opened. Each shelf then becomes its own separate network. Fix it with a
+   column of Inventory Trims: put trims in the gaps in ONE column, at the end
+   of the shelves. Trims pass the connection along without being storage, so
+   your chests all stay reachable by hand.
+   Use ONE connector for the whole thing. Several in one network is an error.
+
+3. THE TERMINAL READS THE BLOCK IT IS STUCK TO.
+   Not the one next to it. Aim straight at a chest, or at the connector, and
+   place the Storage Terminal on that face. A terminal one block away, stuck
+   to the wall instead, opens completely empty.
+
+Check it worked: aim at the connector and hold SHIFT. It tells you how many
+inventories and free slots it found. Double chests count as one.
+
+USING IT. Open the terminal and everything is in one list.
+   stone      by name
+   @create    everything from one mod
+   #logs      everything with a tag
+Sort by name, count, mod or free space with the button. The Crafting Terminal
+does the same and crafts straight out of the network. A Wireless Terminal
+opens it from 16 blocks away (64 for the advanced one); sneak + right click a
+terminal to bind it.
+
+CATEGORIES: STORAGE DRAWERS. A drawer shows its item on its face and holds far
+more than a chest, so a wall of them is a visual index - and the connector
+reads drawers like any other container.
+
+ONE SAFETY RULE - LEAVE A GAP AT YOUR CLAIM BORDER.
+The network follows containers that touch, and it does NOT stop at a claim
+edge. A chest pressed against the outer face of your claim can be reached by a
+connector placed on the other side. Your claim still protects the terminal
+itself - nobody can open yours - but not a chest touching unclaimed ground.
+Keep one empty block between your storage and the edge, or claim a couple of
+blocks past your walls. Inside a normal base this is already true."""
+
+
 HELP_TEXT = """AkuCraft bot commands:
 /status - servers status + who is online
 /players - who is playing right now
 /start - boot the server if it is stopped
 /stop - stop the server (refuses if players online)
-/map - live web map + minimap mods to see each other
+/map - your private map of the world you have explored
 /ask <question> - ask about the server (Discord only, see below)
 /link <name> - tell /ask which Minecraft account is yours (Discord only)
 /guide [title] - turn the conversation you are in into a published guide
@@ -381,6 +425,7 @@ HELP_TEXT = """AkuCraft bot commands:
 /connect - how to join the servers
 /vpn - how to set up the VPN (Tailscale)
 /companions - befriend, hire and command villagers
+/storage - one searchable inventory across all your chests
 /help - this message
 
 I also announce: servers going on/offline, joins/leaves, deaths,
@@ -755,6 +800,8 @@ def handle(text):
         return VPN_TEXT
     if cmd == "companions":
         return COMPANIONS_TEXT
+    if cmd == "storage":
+        return STORAGE_TEXT
     if cmd == "help":
         return HELP_TEXT
     return None
@@ -1409,7 +1456,7 @@ def ask_llm(question, display_name="", user_id=0, history=(), chat=""):
     # first two days and answered with a shrug, because nothing told the model
     # that /link even exists.
     onboarding = "\n\n".join([CONNECT_TEXT, VPN_TEXT, MAP_TEXT, COMPANIONS_TEXT,
-                              HELP_TEXT, ASSISTANT_TEXT])
+                              STORAGE_TEXT, HELP_TEXT, ASSISTANT_TEXT])
     messages = [{"role": "system", "content": ASK_SYSTEM.format(
         manifest=load_manifest(), onboarding=onboarding, guides=load_guides(),
         chat=chat or "(nothing relevant found)", live=live, who=who)}]
@@ -1457,10 +1504,11 @@ DISCORD_COMMANDS = [
     ("players", "Who is playing right now", False),
     ("start", "Boot a stopped server", True),
     ("stop", "Stop a server (refuses if players online)", True),
-    ("map", "Live web map + minimap mods to see each other", False),
+    ("map", "Your private map of the world you have explored", False),
     ("connect", "How to join the servers", False),
     ("vpn", "How to set up the VPN (Tailscale)", False),
     ("companions", "Befriend, hire and command villagers", False),
+    ("storage", "One searchable inventory across all your chests", False),
     ("help", "List commands", False),
 ]
 

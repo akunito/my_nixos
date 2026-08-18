@@ -139,7 +139,37 @@ def main():
     # for Minecraft 1.21.9 - reached a 1.21.1 client and stopped it launching
     # (2026-08-16). Naming exactly what may be sent fails closed instead: a new
     # server mod reaches nobody until it is added to the nix client set.
-    synced = sorted("/mods/" + j for j in server_jars if j in client_ok)
+    # AutoModpack matches every syncedFiles entry as a GLOB, not as a literal
+    # path. DoggyTalentsNext ships as "DoggyTalentsNext[Fabric]-...jar", and in
+    # glob syntax "[Fabric]" is a character class - so the entry never matched
+    # its own file, the server silently left the jar out of the modpack, and
+    # every client was kicked for the doggytalents namespace (2026-08-18).
+    # That is also why the hand-made production list carries a literal
+    # "DoggyTalentsNext*.jar". Neutralising each metacharacter with "?" keeps
+    # the version pinned, unlike a "*".
+    def as_glob(name):
+        return "".join("?" if c in "*?[]{}\\" else c for c in name)
+
+    synced = sorted("/mods/" + as_glob(j) for j in server_jars if j in client_ok)
+
+    # Keep anything the running config syncs that is NOT a jar. Production ships
+    # /config/chatplus/chatplus-v2.7.0.json to clients so the chat tabs arrive
+    # configured; that entry cannot be derived from the nix mod list, and
+    # rebuilding syncedFiles from jars alone silently threw it away.
+    existing = remote(
+        f"export DOCKER_HOST=unix:///run/user/1000/docker.sock\n"
+        f"docker exec {container} cat /data/automodpack/automodpack-server.json")
+    try:
+        keep = [f for f in json.loads(existing).get("syncedFiles", [])
+                if not f.startswith("/mods/")]
+    except json.JSONDecodeError:
+        keep = []
+    if keep:
+        print("kept (not jars):")
+        for f in keep:
+            print(f"    = {f}")
+        synced = sorted(set(synced) | set(keep))
+
     cfg_patch = json.dumps({
         "syncedFiles": synced,
         "requireAutoModpackOnClient": bool(args.require_client),

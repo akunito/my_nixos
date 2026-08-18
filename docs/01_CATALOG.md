@@ -187,7 +187,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Hardware
 
 - **system/hardware/amdgpu-suspend-workaround.nix**: AMD GPU suspend/resume workarounds. Two INDEPENDENT mitigations for two
-- **system/hardware/bluetooth.nix**: hardware.bluetooth.enable = true;
+- **system/hardware/bluetooth.nix**: hardware.bluetooth.enable = true; *Enabled when:* `systemSettings.bluetoothDisableUsbAutosuspend or false`
 - **system/hardware/drives.nix**: Enable SSH server to unlock LUKS drives on BOOT *Enabled when:*
    - `systemSettings.bootSSH == true`
    - `systemSettings.disk1_enabled`
@@ -579,7 +579,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/akucraft-ai-handoff.md**: Handoff for building the AkuCraft AI work - villager conversations in MCA and a per-player Discord support assistant with usage limits
 - **docs/akunito/plans/akucraft-ai-prod-handoff.md**: What is built, what is verified, and the exact steps to take the AkuCraft AI work from staging to production
 - **docs/akunito/plans/akucraft-frontier-world.md**: Test plan and rollout plan for a second, harder survival world generated with Terralith, reachable from the existing world
+- **docs/akunito/plans/akucraft-player-map.md**: Design and phase-1 spike for a web map that shows only what each player has explored, built on Surveyor's data
 - **docs/akunito/plans/akucraft-roadmap-plan.md**: Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase
+- **docs/akunito/plans/akucraft-unified-storage.md**: One searchable inventory across every chest in a base, in vanilla style, plus what it does and does not do to Flan claim protection
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
 - **docs/akunito/plans/plane-fork-customization-inventory.md**: **Built:** 2026-08-13 from `~/Projects/plane-up` @ `akunito/mobile` (`bcb1cfca9`), 26 commits over `v1.3.1`.
