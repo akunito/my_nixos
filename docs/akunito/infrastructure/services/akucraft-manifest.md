@@ -296,6 +296,33 @@ self-signed cert's SAN would have to be checked first.
 
 ---
 
+## The admin account is invisible (2026-08-18)
+
+`Akunito` is **no longer op** on production. Admin work is done from `AkuTest`,
+which is op level 4 and hidden everywhere at once:
+
+- **In game** — `vanish 1.6.15+1.21.1` (server-side only, no dependencies, never
+  shipped to clients: it is not in the nix client set, so the allow-list leaves
+  it out). It removes a vanished player from `/list`, from the player count and
+  the server-list sample, from the tab list, from join/leave/death/advancement
+  broadcasts, from entity targeting and from BlueMap. `/config/vanish.hocon`
+  differs from stock in two places: `invulnerable=true` and
+  `send-join-disconnect-message=false` — the fake join/leave message that
+  normally makes a toggle look natural would print the hidden name.
+- **On join** — LuckPerms meta `vanish_on_join=true` on the AkuTest user, so it
+  is never visible for the seconds between joining and typing `/vanish`.
+- **In Discord** — `akucraftHiddenPlayers` (VPS_PROD profile) already covered
+  announcements; `/status`, `/players`, `/stop` and the context handed to the
+  `/ask` model were fixed on 2026-08-18. Vanish makes the bot blind to the
+  account anyway, since it reads `/list`; the filter is the belt to that pair of
+  braces, for when vanish is toggled off.
+- **On the maps** — the per-player map has no live positions at all (static fog
+  per token), so there is nothing to hide there. The account does appear in
+  `admin/roster.json`, which only the admin can read.
+
+Ops with `vanish.feature.view` — that is, any op — can still see vanished
+players. Nobody else is op, which is what makes this hold.
+
 ## Bot commands (Discord and Telegram)
 
 `/status` · `/players` · `/start` · `/stop` · `/map` · `/connect` · `/vpn` · `/help`
