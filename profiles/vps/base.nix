@@ -277,26 +277,11 @@
       "log-opts" = { "max-size" = "10m"; "max-file" = "3"; };
       # Explicit DNS — slirp4netns can't reach systemd-resolved stub at 127.0.0.53
       "dns" = [ "1.1.1.1" "9.9.9.9" ];
-
-      # BuildKit build cache cap. Left unset, dockerd's default GC policy keeps
-      # roughly 10% of the filesystem, which on this 1 TB root means the cache is
-      # allowed to reach ~100 GB before anything is collected — it had reached
-      # 79 GB by 2026-08-18. maxUsedSpace bounds the total; reservedSpace is the
-      # floor GC will not prune below, so ordinary rebuilds stay warm.
-      #
-      # NOTE: virtualisation.docker.autoPrune (system/app/docker.nix) only ever
-      # applies to the ROOT daemon, which is disabled on the VPS
-      # (dockerEnable = false). Rootless gets nothing from it — hence this cap
-      # plus the docker-prune timer below.
-      "builder" = {
-        "gc" = {
-          "enabled" = true;
-          "policy" = [
-            { "all" = true; "reservedSpace" = "5GB"; "maxUsedSpace" = "20GB"; }
-          ];
-        };
-      };
-    };
+    }
+    # Bound the build cache: it had reached 79 GB by 2026-08-18 because
+    # virtualisation.docker.autoPrune only ever wires the ROOT daemon, which is
+    # disabled here (dockerEnable = false). See lib/docker-buildkit-gc.nix.
+    // (import ../../lib/docker-buildkit-gc.nix { });
   };
 
   # Allow rootless Docker containers to reach host services (databases, Redis, Postfix)

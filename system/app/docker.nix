@@ -1,4 +1,5 @@
-{ pkgs, pkgs-unstable, lib, userSettings, storageDriver ? null, userlandProxy ? true, ... }:
+{ pkgs, pkgs-unstable, lib, userSettings, storageDriver ? null, userlandProxy ? true
+, buildCacheMax ? "20GB", buildCacheReserved ? "5GB", ... }:
 
 assert lib.asserts.assertOneOf "storageDriver" storageDriver [
   null
@@ -35,9 +36,17 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
     # single choke point — see system/security/docker-firewall.nix.
     #
     # Only affects containers started after the next daemon restart.
-    daemon.settings = lib.mkIf (!userlandProxy) {
-      userland-proxy = false;
-    };
+    #
+    # autoPrune above reaps dangling images and cache, but nothing bounds the
+    # in-use build cache — see lib/docker-buildkit-gc.nix for why that matters.
+    daemon.settings =
+      (import ../../lib/docker-buildkit-gc.nix {
+        max = buildCacheMax;
+        reserved = buildCacheReserved;
+      })
+      // lib.optionalAttrs (!userlandProxy) {
+        userland-proxy = false;
+      };
   };
   users.users.${userSettings.username}.extraGroups = lib.mkIf (userSettings.dockerEnable == true) [ "docker" ];
   environment.systemPackages = lib.mkIf (userSettings.dockerEnable == true) [

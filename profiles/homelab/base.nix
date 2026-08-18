@@ -184,7 +184,11 @@ in
       "log-driver" = "json-file";
       "log-opts" = { "max-size" = "10m"; "max-file" = "3"; };
       "dns" = [ "1.1.1.1" "9.9.9.9" ]; # slirp4netns can't reach systemd-resolved stub
-    };
+    }
+    # Bound the build cache. virtualisation.docker.autoPrune only ever wires the
+    # ROOT daemon, so on a hybrid host like nas-aku the rootless daemon gets no
+    # collection at all — see lib/docker-buildkit-gc.nix.
+    // (import ../../lib/docker-buildkit-gc.nix { });
   };
 
   # Allow rootless containers to reach host services via slirp4netns gateway (10.0.2.2)
@@ -211,6 +215,34 @@ in
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "${pkgs.systemd}/bin/systemctl --user restart docker.service";
+    };
+  };
+
+  # Untagged-image reaper for the ROOTLESS daemon. autoPrune covers the root
+  # daemon only, so on a hybrid host the rootless side accumulates an orphaned
+  # image on every deploy that moves a tag. Deliberately `image prune`, NOT
+  # `system prune`: tagged rollback images, volumes, networks and stopped
+  # containers are all left alone, and dockerd refuses to delete an image any
+  # container still references — so this cannot strand a running service.
+  #
+  # 03:00, an hour ahead of docker-restart above, so the two never overlap.
+  systemd.user.timers.docker-prune = lib.mkIf (userSettings.dockerRootlessEnable or false) {
+    description = "Weekly rootless Docker dangling-image prune";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "Sun *-*-* 03:00:00";
+      RandomizedDelaySec = "10m";
+      Persistent = true;
+    };
+  };
+  systemd.user.services.docker-prune = lib.mkIf (userSettings.dockerRootlessEnable or false) {
+    description = "Prune dangling (untagged) rootless Docker images";
+    serviceConfig = {
+      Type = "oneshot";
+      # User units don't inherit the shell's DOCKER_HOST from setSocketVariable;
+      # %t is XDG_RUNTIME_DIR, where the rootless daemon puts its socket.
+      Environment = "DOCKER_HOST=unix://%t/docker.sock";
+      ExecStart = "${pkgs-unstable.docker}/bin/docker image prune -f";
     };
   };
 
