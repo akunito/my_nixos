@@ -153,7 +153,25 @@ let
 
     if [ "$master_ok" -eq 1 ]; then
       chmod 0400 "$tmp"
+      # Restart on CONTENT change, not on config change. restartTriggers cannot
+      # do this job: it hashes the writer script, which is identical across a
+      # key rotation, so switching to a new master key left litellm serving the
+      # old one from memory until someone restarted it by hand (observed
+      # 2026-08-18 — the rotated key was rejected while the burnt one still
+      # worked). Hashing the secret itself would put it in the world-readable
+      # store, which is the whole thing this file exists to avoid, so compare
+      # the rendered files instead. try-restart is deliberate: on first boot
+      # the unit is not up yet and this must be a no-op.
+      if ! ${pkgs.diffutils}/bin/diff -q "$tmp" ${envFile} >/dev/null 2>&1; then
+        rotated=1
+      else
+        rotated=0
+      fi
       mv -f "$tmp" ${envFile}
+      if [ "$rotated" -eq 1 ]; then
+        echo "litellm: credentials changed — restarting to pick them up" >&2
+        ${pkgs.systemd}/bin/systemctl try-restart litellm.service || true
+      fi
     else
       rm -f "$tmp" ${envFile}
       echo "litellm: no ${masterKeySecret} in secrets — refusing to write env file;" >&2

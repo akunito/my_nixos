@@ -15,6 +15,9 @@ what it changed, with the token redacted.
     ./scripts/apply-mca-chatai.py --container mc-mca-staging --disable
 
 The server must be RESTARTED afterwards: MCA reads this config at startup.
+Works on a STOPPED container too (the bot auto-stops idle instances): it then
+writes through a throwaway container on the same bind mount, so the file keeps
+its in-container ownership and the change is picked up at the next start.
 
 Deliberately left alone:
   villagerChatAIUseTools          - lets the model ACT in the world. Off until
@@ -117,16 +120,60 @@ def main():
     if "DOCKER_HOST" not in os.environ and os.path.exists(sock):
         os.environ["DOCKER_HOST"] = f"unix://{sock}"
 
-    def dexec(cmd, stdin=None):
-        return subprocess.run(["docker", "exec"] + (["-i"] if stdin else [])
-                              + [args.container] + cmd,
-                              input=stdin, capture_output=True, text=True)
+    def running(name):
+        got = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", name],
+                             capture_output=True, text=True)
+        if got.returncode != 0:
+            sys.exit(f"no such container {name!r}: {got.stderr.strip()}")
+        return got.stdout.strip() == "true"
 
-    got = dexec(["cat", cfg])
-    if got.returncode != 0:
-        sys.exit(f"cannot read {cfg} in {args.container}: "
-                 f"{got.stderr.strip() or 'is the container running?'}")
-    data = json.loads(got.stdout)
+    # A stopped server is a NORMAL state here, not an error: the Discord bot
+    # auto-stops an instance that has been empty for 45 minutes, so a routine
+    # re-apply (a key rotation, say) usually lands while the container is down.
+    # `docker exec` cannot reach a stopped container, so fall back to a
+    # throwaway container on the same bind mount. Same rootless daemon means
+    # the same uid mapping, so the file keeps its 100999 ownership - which is
+    # exactly why this cannot be done from the host user's shell.
+    live = running(args.container)
+
+    def read_cfg():
+        if live:
+            got = subprocess.run(["docker", "exec", args.container, "cat", cfg],
+                                 capture_output=True, text=True)
+        else:
+            got = subprocess.run(
+                ["docker", "run", "--rm", "-v", f"{mount()}:/data",
+                 "--entrypoint", "cat", image(), cfg],
+                capture_output=True, text=True)
+        if got.returncode != 0:
+            sys.exit(f"cannot read {cfg} in {args.container}: {got.stderr.strip()}")
+        return got.stdout
+
+    def run_in(cmd, stdin=None):
+        if live:
+            argv = ["docker", "exec"] + (["-i"] if stdin else []) + [args.container] + cmd
+        else:
+            argv = (["docker", "run", "--rm"] + (["-i"] if stdin else [])
+                    + ["-v", f"{mount()}:/data", "--entrypoint", cmd[0], image()]
+                    + cmd[1:])
+        return subprocess.run(argv, input=stdin, capture_output=True, text=True)
+
+    def inspect(fmt):
+        got = subprocess.run(["docker", "inspect", "-f", fmt, args.container],
+                             capture_output=True, text=True)
+        return got.stdout.strip()
+
+    def mount():
+        src = inspect('{{range .Mounts}}{{if eq .Destination "/data"}}{{.Source}}{{end}}{{end}}')
+        if not src:
+            sys.exit(f"{args.container} has no /data mount to write through while stopped")
+        return src
+
+    def image():
+        return inspect("{{.Config.Image}}")
+
+    dexec = run_in
+    data = json.loads(read_cfg())
 
     if args.disable:
         wanted = {"enableVillagerChatAI": False}
@@ -165,7 +212,10 @@ def main():
     for k, (old, new) in changed.items():
         redact = lambda v: "<token>" if k == "villagerChatAIToken" and v else v
         print(f"  {k}: {redact(old)!r} -> {redact(new)!r}")
-    print("\nRestart the server for MCA to pick this up.")
+    if live:
+        print("\nRestart the server for MCA to pick this up.")
+    else:
+        print("\nServer is stopped - MCA will read this when it next starts.")
 
 
 if __name__ == "__main__":
