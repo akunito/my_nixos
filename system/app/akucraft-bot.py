@@ -929,6 +929,14 @@ Treat these as SERVER FACTS: they were written here, about this server, and
 published for everyone. If one answers the question, use it and say which
 guide it came from. They can go stale, so prefer the manifest and live state
 when the two disagree.
+
+EVERY GUIDE THAT EXISTS, by title. If one of these clearly covers the question
+but its text is not quoted below, say the guide exists and tell the player to
+open it in #mc-guides. Do NOT answer from your own memory instead - that is
+how a wrong number reaches somebody who then acts on it.
+{guide_index}
+
+THE FULL TEXT of the ones that match this question:
 {guides}
 
 === RELEVANT CHANNEL MESSAGES ===
@@ -946,7 +954,7 @@ someone guessing.
 
 ASK_LOCK = threading.Lock()
 _manifest = {"text": "", "loaded": False}
-_guides = {"text": "", "loaded": False}
+_guides = {"items": [], "loaded": False, "index": "", "index_loaded": False}
 
 
 def load_manifest(force=False):
@@ -1434,14 +1442,15 @@ def save_guide(title, body, author="", url=""):
         log(f"guide: cannot save {path}: {e}")
         return ""
     _guides["loaded"] = False       # invalidate the context cache
+    _guides["index_loaded"] = False
     return path
 
 
-def load_guides(force=False):
-    """All published guides as one bounded block for the prompt."""
+def _read_guides(force=False):
+    """(meta, body) for every guide on disk. Cached - they change rarely."""
     if _guides["loaded"] and not force:
-        return _guides["text"]
-    out, total = [], 0
+        return _guides["items"]
+    items = []
     try:
         names = sorted(os.listdir(GUIDE_DIR))
     except OSError:
@@ -1452,21 +1461,63 @@ def load_guides(force=False):
         try:
             with open(os.path.join(GUIDE_DIR, name)) as f:
                 head, _, body = f.read().partition("\n")
-            meta = json.loads(head)
+            items.append((json.loads(head), body))
         except Exception:  # noqa: BLE001
             continue
-        block = f"--- {meta.get('title') or name} (by {meta.get('author') or 'a player'}, {meta.get('at','')}) ---\n{body.strip()}"
-        # Hard ceiling: guides ride in EVERY question's prompt, so an
-        # enthusiastic week of publishing must not quietly triple the bill.
+    _guides["items"] = items
+    _guides["loaded"] = True
+    return items
+
+
+def guides_index(force=False):
+    """One line per guide - the catalogue, always in the prompt.
+
+    Split from the bodies because the two do different jobs. The index is
+    small, stable and cheap, and it is what stops the bot answering a topic
+    from its own memory when somebody already wrote a guide about it here.
+    The bodies are big and only worth paying for when they match the question.
+    """
+    if _guides["index_loaded"] and not force:
+        return _guides["index"]
+    lines = []
+    for meta, _body in _read_guides(force):
+        tags = ", ".join(meta.get("tags") or [])
+        lines.append(f"- {meta.get('title') or '?'}" + (f"  [{tags}]" if tags else ""))
+    _guides["index"] = "\n".join(lines) or "(none published yet)"
+    _guides["index_loaded"] = True
+    return _guides["index"]
+
+
+def select_guides(question, force=False):
+    """The guides worth quoting for THIS question, within the char budget.
+
+    Pasting every guide in stopped working at 29 of them: ASK_GUIDE_MAX_CHARS
+    is reached by the first two in alphabetical order, so the other 27 were
+    invisible no matter what was asked - the bot had a library and could only
+    ever read the shelf nearest the door. Scoring by word overlap and spending
+    the same budget on the ones that match turns that ceiling from a cliff
+    into a ranking, and costs the same per question.
+    """
+    q = _terms(question)
+    scored = []
+    for meta, body in _read_guides(force):
+        # Title and tags are the author's own summary of the guide, so a hit
+        # there says far more about relevance than one buried in the prose.
+        head = _terms(f"{meta.get('title', '')} {' '.join(meta.get('tags') or [])}")
+        score = 3 * len(q & head) + len(q & _terms(body))
+        if score:
+            scored.append((score, meta, body))
+    scored.sort(key=lambda x: (-x[0], (x[1].get("title") or "")))
+    out, total = [], 0
+    for _score, meta, body in scored:
+        block = (f"--- {meta.get('title') or 'guide'} "
+                 f"(by {meta.get('author') or 'a player'}, {meta.get('at', '')}) ---\n"
+                 f"{body.strip()}")
         if total + len(block) > ASK_GUIDE_MAX_CHARS:
-            left = len(names) - len(out)
-            out.append(f"(and {left} more guide{'s' if left != 1 else ''} not shown here)")
             break
         out.append(block)
         total += len(block)
-    _guides["text"] = "\n\n".join(out) or "(none published yet)"
-    _guides["loaded"] = True
-    return _guides["text"]
+    return "\n\n".join(out) or "(none of the guides match this question)"
 
 
 def ask_llm(question, display_name="", user_id=0, history=(), chat=""):
@@ -1497,7 +1548,8 @@ def ask_llm(question, display_name="", user_id=0, history=(), chat=""):
     onboarding = "\n\n".join([CONNECT_TEXT, VPN_TEXT, MAP_TEXT, COMPANIONS_TEXT,
                               STORAGE_TEXT, HELP_TEXT, ASSISTANT_TEXT])
     messages = [{"role": "system", "content": ASK_SYSTEM.format(
-        manifest=load_manifest(), onboarding=onboarding, guides=load_guides(),
+        manifest=load_manifest(), onboarding=onboarding,
+        guide_index=guides_index(), guides=select_guides(question),
         chat=chat or "(nothing relevant found)", live=live, who=who)}]
     # Replay the conversation so far as real turns rather than pasting it into
     # the system prompt: the model then treats it as dialogue, and prompt
@@ -2033,7 +2085,7 @@ def build_discord_client(with_members=True, with_content=True):
                     "That one is admin-only.", ephemeral=True)
                 return
             text = load_manifest(force=True)
-            load_guides(force=True)
+            guides_index(force=True)
             await interaction.response.send_message(
                 f"Manifest reloaded: {len(text)} characters."
                 if text else
