@@ -311,6 +311,33 @@ Two consequences worth knowing:
 
 ---
 
+## Xaero does not run on the server (2026-08-19)
+
+`xaeros-minimap` and `xaeros-world-map` are **client mods**. They reach players
+through `automodpack/host-modpack/main/mods/` and are absent from `syncedFiles`.
+They were also listed in `MODRINTH_PROJECTS`, so itzg put them in `/data/mods`
+and Fabric loaded them server-side — and the server-side half announces a world
+id, which every client files its map under.
+
+That is what split everyone's map on 2026-08-17. `world/xaeromap.txt` looks like
+the knob for it, but the value must be an **int**: `Integer.parseInt` sits in a
+`catch (NumberFormatException) {}` that swallows the failure, and the
+constructor's `new Random().nextInt()` survives with `usable = true`. Pinning it
+to `id:default` therefore announced **a fresh random id on every restart** —
+five stray sub-worlds in 22 hours. Deleting the file is no better: on
+`FileNotFoundException` the mod saves its random id and keeps it.
+
+So both entries were removed from `MODRINTH_PROJECTS` and the jars moved to
+`/data/mods-removed/`. On prod, `xaeros-world-map` shared its line with
+`surveyor:1.2.4+1.21` — **Surveyor must stay**, it is what the per-player web
+map is built on. With nothing announcing an id, every client falls back to
+`mw$default`, which is where the map and the waypoints already were: no merge,
+no client-side work. Verified on staging across two restarts before prod.
+
+Do not re-add them to the server mod list. If a future sync tool wants to, the
+client set in `user/app/games/minecraft-client-mods.nix` is the right place —
+`clientMods`, not `syncedMods`.
+
 ## The admin account is invisible (2026-08-18)
 
 `Akunito` is **no longer op** on production. Admin work is done from `AkuTest`,

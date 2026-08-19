@@ -582,6 +582,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/akucraft-roadmap-plan.md**: Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase
 - **docs/akunito/plans/akucraft-unified-storage.md**: One searchable inventory across every chest in a base, in vanilla style, plus what it does and does not do to Flan claim protection
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
+- **docs/akunito/plans/immich-compression-cutover-audit.md**: Documento para revisar ANTES de tocar producción. Aquí está exactamente qué se
+- **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (v2) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de la auditoría eliminados, con puertas de verificación y reversión quirúrgica
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
 - **docs/akunito/plans/plane-fork-customization-inventory.md**: **Built:** 2026-08-13 from `~/Projects/plane-up` @ `akunito/mobile` (`bcb1cfca9`), 26 commits over `v1.3.1`.
 - **docs/akunito/plans/plane-v1.4.0-upgrade.md**: **Status:** planned, not started · **Audited:** 2026-08-13 · **Ticket:** APLANE-1 (related)
