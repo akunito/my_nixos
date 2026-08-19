@@ -289,10 +289,25 @@ as "it asks again every time we update mods", because updates are when testers
 switch servers (komi reported exactly this, 2026-08-18). Mod updates do not
 touch the certificate.
 
-The fix on the player's side is a separate instance per server. The fix on
-ours, if it ever becomes worth it, is to give staging its own advertised name
-via `addressToSend` in `automodpack-server.json` — untested, and the
-self-signed cert's SAN would have to be checked first.
+**Fixed on 2026-08-19**: both servers now set `addressToSend: "100.64.0.6"` in
+`automodpack-server.json` (`portToSend` left at `-1`, so each keeps its own game
+port). The advertised host no longer depends on what the player typed, so the
+key is stable for everyone. Verified on staging first and then on prod: the
+value survives a restart and **the certificate is not regenerated** — both
+fingerprints printed unchanged afterwards.
+
+Two consequences worth knowing:
+
+- Every client asks for the fingerprint **once more** on its next launch and
+  **re-downloads the whole modpack**, because the modpack folder is keyed
+  `host:port` and the host part changed. The code shown is the same one; the
+  guide says so.
+- Prod and staging now advertise the *same* hostname, and known-hosts ignores
+  the port — so anyone using **one instance for both** still gets a prompt on
+  every hop. That is only ever the admin. A separate instance per server, which
+  is what the staging setup doc already tells testers to do, avoids it. There is
+  no configuration that fixes this while both servers live on one IP and the
+  players do not use our DNS.
 
 ---
 
