@@ -203,9 +203,7 @@ CONNECT_TEXT = """How to join AkuCraft:
 7. Your map (optional, recommended).
    Type /map in Discord and the bot sends you your own private link. It
    shows only the terrain you have explored yourself.
-   Open it on the computer you play on: the map lives behind the VPN, so
-   it only opens on a device that is ON the VPN. That is your PC, not
-   your phone - unless you ask Diego to put the phone on it too.
+   Opens in any browser. It only works with the VPN on.
    For the same thing in game, add these client mods (client-side only -
    they change nothing on the server, and versions do not have to match
    anyone else's):
@@ -231,9 +229,7 @@ MAP_TEXT = """Your map of the survival world:
 
    http://100.64.0.6:8100/map/?k=YOUR-OWN-LINK
 
-Open it in any browser on the computer you play on. The map lives
-behind the VPN, so it only opens on a device that is on the VPN - your
-PC, not your phone, unless you ask Diego to add the phone as well.
+Open it in any browser. It only works with the VPN on.
 
 It shows exactly and only the terrain YOU have explored - not the whole
 world, and not where anyone else is standing. Each player has their own
@@ -1650,8 +1646,8 @@ def build_discord_client(with_members=True, with_content=True):
             "**This link is yours alone — do not paste it in a channel.** "
             "Anyone who has it sees everywhere you have been.\n"
             "It shows only the terrain *you* have explored, and it catches up "
-            "with you every few minutes. Open it on the computer you play on — "
-            "it lives behind the VPN, so it needs a device that is on the VPN.",
+            "with you every few minutes. Any browser — it only works with the "
+            "VPN on.",
             ephemeral=True)
 
     tree.add_command(app_commands.Command(
