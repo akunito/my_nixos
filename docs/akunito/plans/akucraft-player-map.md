@@ -437,8 +437,29 @@ with the current one named beside the label. Same content, nicer gesture.
 
 ## Still to come
 
-- **A Discord command** that DMs each player their private link, plus teaching
-  the bot to explain the map when asked. Wanted once the two above are done.
+Nothing outstanding. **Shipped 2026-08-19**: `/map` in Discord answers with the
+caller's own link, in an ephemeral reply.
+
+How it resolves: the Discord user -> their `/link` name (`ask_links.json`) ->
+the exporter's `admin/roster.json`, which is the only place a name is paired
+with a token. `MAP_ROSTER` and `MAP_URL` are set in
+`system/app/akucraft-status-bot.nix`; the roster is re-read on every call
+because the exporter rewrites it every few minutes, and an unreadable or
+unconfigured roster degrades to the generic text rather than erroring.
+
+Two deliberate departures from the other commands:
+
+- It is **not** built by `make_handler()`. That answers in the open, and this
+  link is a capability — whoever holds it sees everywhere that player has been.
+- It is **not** gated to one channel. An ephemeral reply is safe anywhere, and
+  a player should get their link where they happen to be standing.
+
+Telegram keeps the generic `MAP_TEXT`: the group chat has more than one reader,
+so no token is ever sent there.
+
+The two map guides in `#mc-guides` were rewritten the same day. Both still
+described the old server-wide BlueMap at `:8100` and walked players through
+configuring Map Link, which no longer exists.
 
 ## Exporter: mod or script?
 
