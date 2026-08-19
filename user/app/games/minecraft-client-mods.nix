@@ -792,6 +792,21 @@ let
     }
   ];
 
+  # Shaders on trial, staging HD only - same idea as hdTrialPacks. Graduating
+  # one means moving its entry into hdShaders.
+  hdTrialShaders = [
+    {
+      # Rethinking Voxels: voxel-traced coloured lighting, built on
+      # Complementary Reimagined, with full Distant Horizons support (14 dh
+      # programs). Being a Reimagined derivative it inherits GLOWING_ORE_MASTER
+      # and its style-1 default, so ores need the explicit 2 here as well.
+      name = "rethinking-voxels_r0.1-beta9.zip";
+      url = "https://cdn.modrinth.com/data/kmwfVOoi/versions/cpD4esk9/rethinking-voxels_r0.1-beta9.zip";
+      sha512 = "1e32f41e67e527c3c60149677a05b61c6d305e440812e29abba745b8ed304954780ca48d58b834c49835790bc3c4d38f37c893c5cbdfea9edc07b72e1dabd296";
+      settings = { GLOWING_ORE_MASTER = "2"; };
+    }
+  ];
+
   hdResourcePack = {
     name = "Better-Leaves-9.5.zip";
     url = "https://cdn.modrinth.com/data/uvpymuxq/versions/XWtayRKd/Better-Leaves-9.5.zip";
@@ -925,16 +940,18 @@ let
           renderDistance:12
           simulationDistance:8
         ''; }
-    ] ++ map (sh: {
-      path = "${dir}/minecraft/shaderpacks/${sh.name}";
-      src = pkgs.fetchurl { inherit (sh) url sha512; };
-    }) hdShaders
-    ++ lib.concatMap (sh: lib.optional (sh ? settings) {
-      path = "${dir}/minecraft/shaderpacks/${sh.name}.txt";
-      src = pkgs.writeText "${sh.name}.txt"
-        (lib.concatStringsSep "\n"
-          (lib.mapAttrsToList (k: v: "${k}=${v}") sh.settings) + "\n");
-    }) hdShaders
+    ] ++ (let shaders = hdShaders
+             ++ lib.optionals (i.ip == stagingAddress) hdTrialShaders; in
+      map (sh: {
+        path = "${dir}/minecraft/shaderpacks/${sh.name}";
+        src = pkgs.fetchurl { inherit (sh) url sha512; };
+      }) shaders
+      ++ lib.concatMap (sh: lib.optional (sh ? settings) {
+        path = "${dir}/minecraft/shaderpacks/${sh.name}.txt";
+        src = pkgs.writeText "${sh.name}.txt"
+          (lib.concatStringsSep "\n"
+            (lib.mapAttrsToList (k: v: "${k}=${v}") sh.settings) + "\n");
+      }) shaders)
     ++ [{
       path = "${dir}/minecraft/resourcepacks/${hdResourcePack.name}";
       src = pkgs.fetchurl { inherit (hdResourcePack) url sha512; };
