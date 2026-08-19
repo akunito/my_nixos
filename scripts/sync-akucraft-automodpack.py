@@ -113,9 +113,14 @@ def main():
         if n in client_ok:
             del client_only[n]          # already comes from the server
 
-    server_jars = remote(
+    # `ls` output, split on NEWLINES and not on whitespace. Hybrid Aquatic
+    # ships as "[1.21.1-Fabric] Hybrid Aquatic 1.6.9.jar"; on .split() that
+    # became four tokens, none of which matched the nix entry, so the jar was
+    # silently withheld from every client - the same failure mode as the
+    # DoggyTalents glob, arrived at from the other direction (2026-08-20).
+    server_jars = [j for j in remote(
         f"export DOCKER_HOST=unix:///run/user/1000/docker.sock\n"
-        f"docker exec {container} ls /data/mods").split()
+        f"docker exec {container} ls /data/mods").split("\n") if j.strip()]
     exclude = sorted(j for j in server_jars if j not in client_ok)
 
     allow = sorted(j for j in server_jars if j in client_ok)

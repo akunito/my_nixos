@@ -602,6 +602,34 @@ let
   # Still on trial: the Surveyor map-sharing stack, pending the two-player test
   # with komi. Everything else from the 2026-08-16 batch graduated below.
   trialMods = [
+    # Hybrid Aquatic, on trial from 2026-08-20. 105 sea creatures plus corals,
+    # anemones and sponges. Two things to judge in game, and neither is a crash:
+    #
+    #   - it duplicates a good part of Naturalist. Both give sharks, jellyfish,
+    #     crabs, giant isopods, starfish, piranha, catfish and bass, in two
+    #     different art styles, and Naturalist cannot be split.
+    #   - its animals CANNOT be confined to the frontier world. Spawns are
+    #     injected per biome and both dimensions use the same biome ids, so
+    #     they arrive in the lived-in ocean too. Only the decoration is
+    #     frontier-only, and that comes free: corals are worldgen, and the
+    #     fenced Overworld will never generate another chunk.
+    #
+    # Its worldgen rides Lithostitched, the same system Terralith uses, so
+    # there is no clash there. Biolith comes along for BIOME PLACEMENT only,
+    # and its page claims TerraBlender compatibility without mentioning
+    # Terralith - so the trial runs with `enableBiomes: false` in
+    # config/hybrid-aquatic.json, which keeps the creatures and the blocks and
+    # leaves biome placement, and therefore Biolith, doing nothing.
+    {
+      name = "[1.21.1-Fabric] Hybrid Aquatic 1.6.9.jar";
+      url = "https://cdn.modrinth.com/data/HH4FjUqN/versions/F5POkJG0/%5B1.21.1-Fabric%5D%20Hybrid%20Aquatic%201.6.9.jar";
+      sha512 = "5dc6a76776f71ccd19a2913fb56ae128350285fe7e6b140472f6194ef3ef4f020f04f60e233f76309912a1e33fd14d046e4cb629569f8f9507b342a7fc1d7d63";
+    }
+    {
+      name = "biolith-fabric-3.0.14.jar";
+      url = "https://cdn.modrinth.com/data/iGEl6Crx/versions/aBinwigO/biolith-fabric-3.0.14.jar";
+      sha512 = "3d0f05a9ae4b001f33437cfb789b1fd9d5a90dde1075197f9ea97fe9b5b01505c2936baf748df641b4476cb1bb30ad229926c3afc310800e7bef076186d8fd81";
+    }
     # Surveyor: a map backend that keeps explored terrain ON THE SERVER and
     # shares it between opt-in groups, across dimensions. Being trialled for
     # the friends/clans map features - position sharing, area sharing, and
