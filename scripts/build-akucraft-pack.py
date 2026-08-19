@@ -54,6 +54,11 @@ AUTOMODPACK_VERSION_ID = "ig9vuxA6"
 HD_MOD_VERSION_IDS = {
     "distant-horizons": "ZpKb4kZp",  # LOD rendering - see far while exploring
 }
+# Shipped with env.client "optional", which is how a Modrinth pack says "offer
+# this, do not force it": the launcher asks at import instead of installing it.
+HD_OPTIONAL_MOD_VERSION_IDS = {
+    "not-enough-animations": "HyecdWuC",  # third-person eating, climbing, bow
+}
 HD_SHADER_VERSION_IDS = {
     # Unbound "transforms the visuals"; Reimagined "preserves the elements of
     # Minecraft" - same author, same version. Defaulting to Reimagined made an
@@ -162,6 +167,9 @@ def build_hd(outdir, server):
     for label, vid in HD_MOD_VERSION_IDS.items():
         v, e = _entry(vid, "mods")
         files.append(e); print(f"  + {label} {v['version_number']}")
+    for label, vid in HD_OPTIONAL_MOD_VERSION_IDS.items():
+        v, e = _entry(vid, "mods", client="optional")
+        files.append(e); print(f"  + {label} {v['version_number']} (optional)")
     for label, vid in HD_SHADER_VERSION_IDS.items():
         v, e = _entry(vid, "shaderpacks")
         files.append(e); names[label] = e["path"].split("/")[-1]
@@ -206,6 +214,11 @@ What is in here beyond the normal pack:
 
 Distant Horizons builds its detail from land you have actually visited, so it
 looks sparse at first and fills in as you travel. That is normal.
+
+Offered, not installed: Not Enough Animations. Your launcher asks about it
+when you import this pack - it brings eating, drinking, climbing and bow
+animations to third person, and it changes nothing else. Say no now and you can
+still add it later; say yes and you can switch it off in the Mods tab.
 
 NOT included: 3D Skin Layers. It needs Fabric API, which this pack only gets
 from the server on your first connect, and Fabric refuses to start with a

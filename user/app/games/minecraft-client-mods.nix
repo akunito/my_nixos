@@ -683,6 +683,18 @@ let
       url = "https://cdn.modrinth.com/data/uCdwusMi/versions/ZpKb4kZp/DistantHorizons-3.2.0-b-1.21.1-fabric-neoforge.jar";
       sha512 = "d4199f92f992fbd2c75a3b0e4e81c8a98bee889013f7347f2149ffa62c86748bde22135e9b2c82a10875db94fa576571c661c5ee16d2f567bd8a93d6f255fd22";
     }
+    {
+      # Not Enough Animations: eating, drinking, climbing and the rest, shown
+      # in third person. Installed DISABLED - the launcher's Mods tab is the
+      # switch, one click, per player. Its own config is twenty separate
+      # booleans with no master toggle, so shipping it "off" through the config
+      # would be twenty settings to keep false forever, and a new option in a
+      # future version would arrive on.
+      name = "notenoughanimations-fabric-1.12.4-mc1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/MPCX6s5C/versions/HyecdWuC/notenoughanimations-fabric-1.12.4-mc1.21.1.jar";
+      sha512 = "c5880052f030f6f26b00da5d5fdd4d2efa83174dafb89ec674da8fc9671beaecd1d07a17ab8154b718cdca1a953da827b61ffbd5de62b852191d40b67eddeb83";
+      disabled = true;
+    }
   ];
 
   # Three shaders, all installed, one click apart. The default is UNBOUND, and
@@ -849,23 +861,12 @@ let
   # Candidates on trial: seeded ONLY on the HD instance that points at :25599,
   # so production keeps the set that has already been judged. Graduating one is
   # moving its entry into hdPacks above.
-  hdTrialPacks = [
-    {
-      # Sun and moon with actual shape and detail, 16 MB. Touches only the sky
-      # textures, so it stacks with a block pack rather than fighting it.
-      name = "cubic-sun-moon-v1.8.5.zip";
-      url = "https://cdn.modrinth.com/data/g4bSYbrU/versions/zHa4qeKn/cubic-sun-moon-v1.8.5.zip";
-      sha512 = "6136c94c0c1ba8251a378f791cdca1cdce021fc486c50f4d1c928769e361dd9dadfc6267a2a06c902bd9509136a99fa24ffa88f84395869b889c2257124929af";
-    }
-    {
-      # Photographic skies. 297 MB for a sky, which is the reason it is on
-      # trial rather than installed.
-      name = "Hyper_Realistic_Sky_[v3.9].zip";
-      storeName = "hyper-realistic-sky-3.9.zip";
-      url = "https://cdn.modrinth.com/data/PsMUgCo5/versions/kwKAac4Q/Hyper_Realistic_Sky_%5Bv3.9%5D.zip";
-      sha512 = "e17498b6d09b6c3ded8c2e36b0029cc1350eb2c48c7753321ebcbc493b0e5c4f6920cd37d754f24411de67de42616b81416094ed5b6634dc6f2274fb514cc9c8";
-    }
-  ];
+  #
+  # Empty right now. Cubic Sun & Moon and Hyper Realistic Sky were here on
+  # 2026-08-19 and both were dropped: with a shader running, the shader draws
+  # the sky and its own celestial bodies, so the packs did nothing visible even
+  # when placed above Patrix. A sky pack is for a game WITHOUT shaders.
+  hdTrialPacks = [ ];
 
   automodpackJar = builtins.head hdMods;
 
@@ -939,12 +940,20 @@ let
       src = pkgs.fetchurl { inherit (hdResourcePack) url sha512; };
     }]
     ++ map (m: {
-      path = "${dir}/minecraft/mods/${m.name}";
+      path = "${dir}/minecraft/mods/${m.name}"
+        + lib.optionalString (m.disabled or false) ".disabled";
       src = pkgs.fetchurl { inherit (m) url sha512; };
       # Bumping a version leaves the old jar behind, and two Sodiums will not
       # load. Sweep anything matching the same family but a different name.
       sweep = "${dir}/minecraft/mods";
       keep = m.name;
+      # A mod seeded disabled is the player's to switch on: enabling it in the
+      # launcher renames the file, and neither the sweep nor the seeder may
+      # undo that - otherwise every sync-user.sh would silently turn it back
+      # off, or leave both copies and stop Fabric from starting.
+      keepAlso = lib.optionalString (m.disabled or false) "${m.name}.disabled";
+      skipIf = lib.optionalString (m.disabled or false)
+        "${dir}/minecraft/mods/${m.name}";
       family = builtins.head (lib.splitString "-" m.name);
     }) hdMods
     ++ map (pack: {
@@ -976,10 +985,13 @@ let
       for old in "$HOME/${f.sweep}"/${f.family}-*; do
         [ -e "$old" ] || continue
         [ "$(basename "$old")" = "${f.keep}" ] && continue
+        ${lib.optionalString ((f.keepAlso or "") != "") ''
+          [ "$(basename "$old")" = "${f.keepAlso}" ] && continue''}
         rm -f "$old" && echo "removed superseded $(basename "$old")"
       done
     ''}
-    if [ ! -f "$HOME/${f.path}" ] || [ -L "$HOME/${f.path}" ]; then
+    if [ ! -f "$HOME/${f.path}" ] ${lib.optionalString ((f.skipIf or "") != "")
+        ''&& [ ! -f "$HOME/${f.skipIf}" ]''} || [ -L "$HOME/${f.path}" ]; then
       rm -f "$HOME/${f.path}"
       mkdir -p "$(dirname "$HOME/${f.path}")"
       install -m 644 ${f.src} "$HOME/${f.path}"
