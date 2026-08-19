@@ -201,10 +201,11 @@ CONNECT_TEXT = """How to join AkuCraft:
    - Undo with /skin clear
 
 7. Your map (optional, recommended).
-   Works in any browser with the VPN on, phone included. It shows only
-   the terrain you have explored yourself. Ask an admin for your own
-   private link - it looks like:
-     http://100.64.0.6:8100/map/?k=YOUR-OWN-LINK
+   Type /map in Discord and the bot sends you your own private link. It
+   shows only the terrain you have explored yourself.
+   Open it on the computer you play on: the map lives behind the VPN, so
+   it only opens on a device that is ON the VPN. That is your PC, not
+   your phone - unless you ask Diego to put the phone on it too.
    For the same thing in game, add these client mods (client-side only -
    they change nothing on the server, and versions do not have to match
    anyone else's):
@@ -230,10 +231,13 @@ MAP_TEXT = """Your map of the survival world:
 
    http://100.64.0.6:8100/map/?k=YOUR-OWN-LINK
 
-Open it in any browser (phone works too) with the VPN on. It shows
-exactly and only the terrain YOU have explored - not the whole world,
-and not where anyone else is standing. Each player has their own private
-link: type /map in Discord and I send you yours privately.
+Open it in any browser on the computer you play on. The map lives
+behind the VPN, so it only opens on a device that is on the VPN - your
+PC, not your phone, unless you ask Diego to add the phone as well.
+
+It shows exactly and only the terrain YOU have explored - not the whole
+world, and not where anyone else is standing. Each player has their own
+private link: type /map in Discord and I send you yours.
 
 Want the same map in game? These 4 mods are CLIENT-SIDE ONLY: they
 change nothing on the server, nobody else has to install them, and the
@@ -1646,8 +1650,8 @@ def build_discord_client(with_members=True, with_content=True):
             "**This link is yours alone — do not paste it in a channel.** "
             "Anyone who has it sees everywhere you have been.\n"
             "It shows only the terrain *you* have explored, and it catches up "
-            "with you every few minutes. Any browser with the VPN on; a phone "
-            "is fine.",
+            "with you every few minutes. Open it on the computer you play on — "
+            "it lives behind the VPN, so it needs a device that is on the VPN.",
             ephemeral=True)
 
     tree.add_command(app_commands.Command(
