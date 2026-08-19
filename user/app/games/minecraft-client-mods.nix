@@ -719,13 +719,6 @@ let
       url = "https://cdn.modrinth.com/data/ZvMtQlho/versions/kC2Y8q1P/Bliss_v2.1.2_%28Chocapic13_Shaders_edit%29.zip";
       sha512 = "dafc60be4980ec40f40edc0f2625cb0976f3c9ce5ed86383146a120480826bb1de70ef5e38b7f1437294ed4d38c6ef3c82ebef0ae4e00b8cee165788c9c18280";
     }
-    {
-      # Eclipse - vanilla-like with reflections, and a fraction of the size of
-      # the others (0.2 MB against 0.5-1.8). Added 2026-08-19 on request.
-      name = "EclipseShaders.zip";
-      url = "https://cdn.modrinth.com/data/s8ZCVd1a/versions/3lt2DwGh/EclipseShaders.zip";
-      sha512 = "95c8ebc977d8877b9f3d991f060b25117a57ee9016414959bdd00aa2643bf1eb21246b7fc8ef8bd3a68e83a9839220f1b1bf26ba665ef106df8ba15707de81b1";
-    }
   ];
 
   # Texture packs. Trialled on staging on 2026-08-19, kept, and now seeded on
@@ -853,6 +846,27 @@ let
     { name = "AkuCraft-STAGING"; title = "AkuCraft Staging"; ip = stagingAddress; }
   ];
 
+  # Candidates on trial: seeded ONLY on the HD instance that points at :25599,
+  # so production keeps the set that has already been judged. Graduating one is
+  # moving its entry into hdPacks above.
+  hdTrialPacks = [
+    {
+      # Sun and moon with actual shape and detail, 16 MB. Touches only the sky
+      # textures, so it stacks with a block pack rather than fighting it.
+      name = "cubic-sun-moon-v1.8.5.zip";
+      url = "https://cdn.modrinth.com/data/g4bSYbrU/versions/zHa4qeKn/cubic-sun-moon-v1.8.5.zip";
+      sha512 = "6136c94c0c1ba8251a378f791cdca1cdce021fc486c50f4d1c928769e361dd9dadfc6267a2a06c902bd9509136a99fa24ffa88f84395869b889c2257124929af";
+    }
+    {
+      # Photographic skies. 297 MB for a sky, which is the reason it is on
+      # trial rather than installed.
+      name = "Hyper_Realistic_Sky_[v3.9].zip";
+      storeName = "hyper-realistic-sky-3.9.zip";
+      url = "https://cdn.modrinth.com/data/PsMUgCo5/versions/kwKAac4Q/Hyper_Realistic_Sky_%5Bv3.9%5D.zip";
+      sha512 = "e17498b6d09b6c3ded8c2e36b0029cc1350eb2c48c7753321ebcbc493b0e5c4f6920cd37d754f24411de67de42616b81416094ed5b6634dc6f2274fb514cc9c8";
+    }
+  ];
+
   automodpackJar = builtins.head hdMods;
 
   plainSeed = i:
@@ -939,7 +953,7 @@ let
       # path, so those carry an explicit storeName.
       src = pkgs.fetchurl ({ inherit (pack) url sha512; }
         // lib.optionalAttrs (pack ? storeName) { name = pack.storeName; });
-    }) hdPacks;
+    }) (hdPacks ++ lib.optionals (i.ip == stagingAddress) hdTrialPacks);
 
   # NOTHING in an HD instance may be a symlink into the nix store.
   #

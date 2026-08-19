@@ -61,7 +61,6 @@ HD_SHADER_VERSION_IDS = {
     "complementary-unbound":    "VMHXIk50",   # default
     "complementary-reimagined": "yCCduG44",   # vanilla-faithful alternative
     "bliss":                    "kC2Y8q1P",   # fantasy styled, heavier
-    "eclipse":                  "3lt2DwGh",   # vanilla-like with reflections
 }
 HD_RESOURCEPACK_VERSION_IDS = {"better-leaves": "XWtayRKd"}
 HD_DEFAULT_SHADER = "complementary-unbound"
