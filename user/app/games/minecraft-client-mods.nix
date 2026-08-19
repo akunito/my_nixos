@@ -670,9 +670,13 @@ let
   # is a little throughput for a lot of smoothness, and a Ryzen with 4 GB of
   # heap can afford it. NOT for the server: it runs Aikar's G1 flags, which are
   # tuned for exactly the opposite priority.
+  # The staging port, named once: it is also what marks an instance as the one
+  # trials are allowed to land on.
+  stagingAddress = "100.64.0.6:25599";
+
   hdInstances = [
     { name = "AkuCraft-HD";         title = "AkuCraft HD";         ip = "100.64.0.6:25565"; }
-    { name = "AkuCraft-STAGING-HD"; title = "AkuCraft STAGING HD"; ip = "100.64.0.6:25599"; }
+    { name = "AkuCraft-STAGING-HD"; title = "AkuCraft STAGING HD"; ip = stagingAddress; }
   ];
 
   hdMods = [
@@ -712,6 +716,49 @@ let
       name = "Bliss_v2.1.2_(Chocapic13_Shaders_edit).zip";
       url = "https://cdn.modrinth.com/data/ZvMtQlho/versions/kC2Y8q1P/Bliss_v2.1.2_%28Chocapic13_Shaders_edit%29.zip";
       sha512 = "dafc60be4980ec40f40edc0f2625cb0976f3c9ce5ed86383146a120480826bb1de70ef5e38b7f1437294ed4d38c6ef3c82ebef0ae4e00b8cee165788c9c18280";
+    }
+  ];
+
+  # Texture packs on trial, STAGING INSTANCES ONLY (2026-08-19).
+  #
+  # Patrix is the spectacular one, and it belongs on the HD build because it is
+  # drawn for shaders. It buys its detail with tiling and randomisation rather
+  # than resolution: at 32x the texture memory is four times vanilla, against
+  # sixty-four for the 128x PBR packs, and it carries no parallax to raymarch
+  # per pixel. Its connected textures are an OptiFine-format feature, so it
+  # needs Continuity - shipped alongside. Continuity 3.0.0 depends on fabric-api
+  # alone, so Indium is no longer part of that deal.
+  #
+  # Bare Bones is the opposite bet for the plain build: 16x, the same resolution
+  # as vanilla, so there is nothing extra to draw. It changes the style, not the
+  # cost.
+  #
+  # Both are seeded but NOT switched on. options.txt already exists on an
+  # instance that has been played and the seeder never overwrites one, so the
+  # packs sit in the folder until the player ticks them. For a trial that is
+  # what you want anyway - judging a pack means toggling it off again.
+  stagingHdPacks = [
+    {
+      name = "Patrix_1.21_32x_basic.zip";
+      url = "https://cdn.modrinth.com/data/olO1TaXd/versions/iBo0eCWB/Patrix_1.21_32x_basic.zip";
+      sha512 = "89c948034c2555d6367aefeaad23e7fbcaad0e75915ea3de000d93bfa962b0eecaa8bd71287d70bc28aec27e0cca40bc9430600771160a6583091f928953335a";
+    }
+  ];
+
+  stagingHdExtraMods = [
+    {
+      name = "continuity-3.0.0+1.21.jar";
+      url = "https://cdn.modrinth.com/data/1IjD5062/versions/kSPJ4hQv/continuity-3.0.0%2B1.21.jar";
+      sha512 = "3601ddb50f19142c087d32525bc0afcfb5f49a2e7477b6645a98ec191218739fdf3c6ac95cd298e826eb34fc533af43bb0e78c64e51292866ecabade4d14b13a";
+    }
+  ];
+
+  stagingPacks = [
+    {
+      name = "Bare Bones 1.21.11.zip";
+      storeName = "bare-bones-1.21.11.zip";
+      url = "https://cdn.modrinth.com/data/rox3U8B6/versions/jQBWn2Q3/Bare%20Bones%201.21.11.zip";
+      sha512 = "268b578d6d34adaa2491572af4cabf65fab94edee00e688f5b4cb4f072c0620c492d58a4442769e6a889cd940cfe3c4a4fe65e5bb422b8e283ad174e32ceefb0";
     }
   ];
 
@@ -812,7 +859,17 @@ let
       sweep = "${dir}/minecraft/mods";
       keep = m.name;
       family = builtins.head (lib.splitString "-" m.name);
-    }) hdMods;
+    }) hdMods
+    # Trial-only, and only on the HD instance that points at :25599.
+    ++ lib.optionals (i.ip == stagingAddress) (
+      map (pack: {
+        path = "${dir}/minecraft/resourcepacks/${pack.name}";
+        src = pkgs.fetchurl { inherit (pack) url sha512; };
+      }) stagingHdPacks
+      ++ map (m: {
+        path = "${dir}/minecraft/mods/${m.name}";
+        src = pkgs.fetchurl { inherit (m) url sha512; };
+      }) stagingHdExtraMods);
 
   # NOTHING in an HD instance may be a symlink into the nix store.
   #
@@ -830,6 +887,19 @@ let
   # disables one, whereas disabling a synced mod gets you kicked - which is the
   # whole reason those stay read-only symlinks.
 
+  # The plain staging instance keeps its mods as read-only symlinks, but a
+  # resource pack is not a mod: the player has to be able to tick it, untick it
+  # and delete it. So it rides the same seed-once path the HD instances use.
+  stagingPackSeed = lib.concatMap (instance:
+    let dir = ".local/share/FreesmLauncher/instances/${instance}"; in
+    map (pack: {
+      path = "${dir}/minecraft/resourcepacks/${pack.name}";
+      src = pkgs.fetchurl {
+        name = pack.storeName;
+        inherit (pack) url sha512;
+      };
+    }) stagingPacks) stagingInstances;
+
   hdSeedScript = lib.concatMapStringsSep "\n" (f: ''
     ${lib.optionalString (f ? sweep) ''
       for old in "$HOME/${f.sweep}"/${f.family}-*; do
@@ -844,7 +914,7 @@ let
       install -m 644 ${f.src} "$HOME/${f.path}"
       echo "seeded ${f.path}"
     fi
-  '') (lib.concatMap hdSeed hdInstances);
+  '') (lib.concatMap hdSeed hdInstances ++ stagingPackSeed);
 
   modFiles = lib.listToAttrs (lib.concatMap (instance:
     map (mkFiles instance) (syncedMods ++ clientMods)) instances);
