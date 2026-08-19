@@ -411,6 +411,22 @@ let
   # Map Link needs cloth-config; Mod Menu is what exposes its settings screen
   # (that is where the squaremap URL gets entered on first run).
   clientMods = [
+    # Continuity, added 2026-08-19. Two reasons, and the second is the one that
+    # matters day to day:
+    #   - it is what makes OptiFine-format connected textures work, which every
+    #     HD texture pack worth installing uses;
+    #   - it ships a built-in "Glass Pane Culling Fix" pack that culls the faces
+    #     between adjacent glass panes. That is a real frame-time win wherever
+    #     panes are stacked, and it costs nothing anywhere else.
+    # Client-only, no registry entries, depends on fabric-api alone (3.0.0 no
+    # longer needs Indium). It must NOT also be seeded into an HD instance:
+    # AutoModpack delivers it, and a second copy in mods/ is a duplicate mod id
+    # that stops Fabric from starting at all.
+    {
+      name = "continuity-3.0.0+1.21.jar";
+      url = "https://cdn.modrinth.com/data/1IjD5062/versions/kSPJ4hQv/continuity-3.0.0%2B1.21.jar";
+      sha512 = "3601ddb50f19142c087d32525bc0afcfb5f49a2e7477b6645a98ec191218739fdf3c6ac95cd298e826eb34fc533af43bb0e78c64e51292866ecabade4d14b13a";
+    }
     {
       name = "cloth-config-15.0.140-fabric.jar";
       url = "https://cdn.modrinth.com/data/9s6osm5g/versions/HpMb5wGb/cloth-config-15.0.140-fabric.jar";
@@ -748,25 +764,23 @@ let
       url = "https://cdn.modrinth.com/data/olO1TaXd/versions/iBo0eCWB/Patrix_1.21_32x_basic.zip";
       sha512 = "89c948034c2555d6367aefeaad23e7fbcaad0e75915ea3de000d93bfa962b0eecaa8bd71287d70bc28aec27e0cca40bc9430600771160a6583091f928953335a";
     }
+    # Optimum Realism 64x was here and the game rejected it in red. Modrinth's
+    # version list is not the authority - pack.mcmeta is, and its 4.0.0 declares
+    # pack_format 80 with the min_format/max_format pair that only 1.21.9 and
+    # later understand. No release of it targets 1.21.1. CHECK pack_format
+    # BEFORE ADDING A PACK: 1.21/1.21.1 is 34, or a supported range containing
+    # it. Prime's HD declares exactly 34.
     {
-      name = "Optimum Realism R4.0.0 64x.zip";
-      storeName = "optimum-realism-4.0.0-64x.zip";
-      url = "https://cdn.modrinth.com/data/jbhXFk8s/versions/lqoCWZjS/Optimum%20Realism%20R4.0.0%2064x.zip";
-      sha512 = "2047992cedffb47c3b01f105511a6a6c6f3bf092c331451379a131baf2c018c967d3da6af990fbc33b9a9ab65e72aad0edf93cc7d51ebd07dc540d0e2d607c8a";
+      name = "Prime's HD Textures (32x).zip";
+      storeName = "primes-hd-textures-32x.zip";
+      url = "https://cdn.modrinth.com/data/PTSGmxET/versions/qlT4zvuP/Prime%27s%20HD%20Textures%20%2832x%29.zip";
+      sha512 = "576679d0736d9e6b06f786d554a34d3d08bfe1f5f8d22d6c6ca6ac01e5cb8e364942cda651977d78c640c2b1dc1a3e7da47d336d6267512b5a5ee5cf3fed0665";
     }
     {
       name = "rotrBLOCKS V87 3D Foliage 128x.zip";
       storeName = "rotrblocks-v87-3d-foliage-128x.zip";
       url = "https://cdn.modrinth.com/data/A8aBf1Xa/versions/mPNFFuBE/rotrBLOCKS%20V87%20%5B3D%20Foliage%5D%20128x%2026.2-1.13.zip";
       sha512 = "37c0cbac4252044fe3cbdad8d1675926d2b8969e45aacc18ba6796f89ecf34ebd4d692bbce91b24046cf51055a2aca03fedbff793ead1f24379012cbd608037d";
-    }
-  ];
-
-  stagingHdExtraMods = [
-    {
-      name = "continuity-3.0.0+1.21.jar";
-      url = "https://cdn.modrinth.com/data/1IjD5062/versions/kSPJ4hQv/continuity-3.0.0%2B1.21.jar";
-      sha512 = "3601ddb50f19142c087d32525bc0afcfb5f49a2e7477b6645a98ec191218739fdf3c6ac95cd298e826eb34fc533af43bb0e78c64e51292866ecabade4d14b13a";
     }
   ];
 
@@ -886,10 +900,7 @@ let
         src = pkgs.fetchurl ({ inherit (pack) url sha512; }
           // lib.optionalAttrs (pack ? storeName) { name = pack.storeName; });
       }) stagingHdPacks
-      ++ map (m: {
-        path = "${dir}/minecraft/mods/${m.name}";
-        src = pkgs.fetchurl { inherit (m) url sha512; };
-      }) stagingHdExtraMods);
+);
 
   # NOTHING in an HD instance may be a symlink into the nix store.
   #
