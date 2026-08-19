@@ -231,6 +231,15 @@ If asked which Java: pick 21. Say no to it downloading its own Java.
         z.writestr("overrides/options.txt",
                    f'resourcePacks:["vanilla","file/{names["better-leaves"]}"]\n'
                    'graphicsMode:2\nrenderDistance:12\nsimulationDistance:8\n')
+        # Glowing ores on Reimagined. Complementary gates them on the STYLE,
+        # not on the setting - Unbound is style 4 and gets them, Reimagined is
+        # style 1 and its default value of 1 reads as off. 2 is "always on".
+        # Iris keeps a shader's settings in shaderpacks/<pack name>.txt, so this
+        # ships as an override: it lands only when the pack is imported, and can
+        # never overwrite the settings of somebody who already installed it.
+        z.writestr(
+            f"overrides/shaderpacks/{names['complementary-reimagined']}.txt",
+            "GLOWING_ORE_MASTER=2\n")
     print(f"wrote {mrpack}  ({len(files)} files, {mrpack.stat().st_size} bytes)")
     print("  Bliss + Better Leaves enabled out of the box")
     return mrpack

@@ -721,7 +721,8 @@ let
     }
   ];
 
-  # Texture packs on trial, STAGING INSTANCES ONLY (2026-08-19).
+  # Texture packs. Trialled on staging on 2026-08-19, kept, and now seeded on
+  # every instance of the matching kind.
   #
   # Patrix is the spectacular one, and it belongs on the HD build because it is
   # drawn for shaders. It buys its detail with tiling and randomisation rather
@@ -744,7 +745,7 @@ let
   # 32x tiling (Patrix), 64x PBR (Optimum), 128x PBR + parallax (rotrBLOCKS).
   # The two heavy ones want the shader's advanced-materials option ON or their
   # PBR data is ignored and they just look like big flat textures.
-  stagingHdPacks = [
+  hdPacks = [
     {
       name = "Patrix_1.21_32x_basic.zip";
       url = "https://cdn.modrinth.com/data/olO1TaXd/versions/iBo0eCWB/Patrix_1.21_32x_basic.zip";
@@ -770,7 +771,7 @@ let
     }
   ];
 
-  stagingPacks = [
+  plainPacks = [
     {
       name = "Bare Bones 1.21.11.zip";
       storeName = "bare-bones-1.21.11.zip";
@@ -862,11 +863,11 @@ let
       { path = "${dir}/minecraft/servers.dat"; src = mkServersDat i.title i.ip; }
       { path = "${dir}/minecraft/mods/${automodpackJar.name}";
         src = pkgs.fetchurl { inherit (automodpackJar) url sha512; }; }
-    ] ++ lib.optionals (i.ip == stagingAddress) (map (pack: {
+    ] ++ map (pack: {
       path = "${dir}/minecraft/resourcepacks/${pack.name}";
       src = pkgs.fetchurl ({ inherit (pack) url sha512; }
         // lib.optionalAttrs (pack ? storeName) { name = pack.storeName; });
-    }) stagingPacks);
+    }) plainPacks;
 
   # Files the LAUNCHER and the GAME rewrite: instance metadata, the server list,
   # the options, the Iris config. These cannot be home.file symlinks - the store
@@ -925,16 +926,13 @@ let
       keep = m.name;
       family = builtins.head (lib.splitString "-" m.name);
     }) hdMods
-    # Trial-only, and only on the HD instance that points at :25599.
-    ++ lib.optionals (i.ip == stagingAddress) (
-      map (pack: {
-        path = "${dir}/minecraft/resourcepacks/${pack.name}";
-        # A pack whose own filename has spaces or brackets cannot name a store
-        # path, so those carry an explicit storeName.
-        src = pkgs.fetchurl ({ inherit (pack) url sha512; }
-          // lib.optionalAttrs (pack ? storeName) { name = pack.storeName; });
-      }) stagingHdPacks
-);
+    ++ map (pack: {
+      path = "${dir}/minecraft/resourcepacks/${pack.name}";
+      # A pack whose own filename has spaces or brackets cannot name a store
+      # path, so those carry an explicit storeName.
+      src = pkgs.fetchurl ({ inherit (pack) url sha512; }
+        // lib.optionalAttrs (pack ? storeName) { name = pack.storeName; });
+    }) hdPacks;
 
   # NOTHING in an HD instance may be a symlink into the nix store.
   #
