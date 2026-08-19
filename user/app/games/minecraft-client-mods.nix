@@ -719,6 +719,13 @@ let
       url = "https://cdn.modrinth.com/data/ZvMtQlho/versions/kC2Y8q1P/Bliss_v2.1.2_%28Chocapic13_Shaders_edit%29.zip";
       sha512 = "dafc60be4980ec40f40edc0f2625cb0976f3c9ce5ed86383146a120480826bb1de70ef5e38b7f1437294ed4d38c6ef3c82ebef0ae4e00b8cee165788c9c18280";
     }
+    {
+      # Eclipse - vanilla-like with reflections, and a fraction of the size of
+      # the others (0.2 MB against 0.5-1.8). Added 2026-08-19 on request.
+      name = "EclipseShaders.zip";
+      url = "https://cdn.modrinth.com/data/s8ZCVd1a/versions/3lt2DwGh/EclipseShaders.zip";
+      sha512 = "95c8ebc977d8877b9f3d991f060b25117a57ee9016414959bdd00aa2643bf1eb21246b7fc8ef8bd3a68e83a9839220f1b1bf26ba665ef106df8ba15707de81b1";
+    }
   ];
 
   # Texture packs. Trialled on staging on 2026-08-19, kept, and now seeded on
