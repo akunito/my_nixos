@@ -31,38 +31,23 @@
 { pkgs, lib, ... }:
 
 let
-  # FreesmLauncher instance names that hold an AkuCraft setup.
+  # Four FreesmLauncher instances, and all four are AutoModpack instances:
+  # AkuCraft and AkuCraft HD on the live server, plus a Staging pair on :25599
+  # which runs a throwaway copy of the world. They are declared in
+  # plainInstances and hdInstances further down; nothing here writes jars into
+  # them any more.
   #
-  # "1.21.1"           the live instance, used for 100.64.0.6:25565
-  # "AkuCraft-STAGING" a second instance for the staging server on :25599,
-  #                    which runs a throwaway copy of the world. It carries the
-  #                    production set PLUS trialMods, so a candidate can be
-  #                    tested without touching the instance that connects to the
-  #                    live server. Production is a separate server and is
-  #                    unaffected until its compose file is changed too.
+  # Until 2026-08-19 the two plain ones were the opposite - sixty-five jars
+  # symlinked from the store and kept in step by hand - which is why this file
+  # still holds the mod lists below. They are no longer materialised anywhere:
+  # they exist because scripts/sync-akucraft-automodpack.py parses them out of
+  # this file to build the server's allow-list, which decides what every player
+  # is allowed to receive.
   #
-  # The server address is not managed here; the launcher stores it in binary
-  # NBT (servers.dat). Import the .mrpack once and it fills itself in; after
-  # that, mod changes arrive through sync-user.sh and the pack only needs
-  # re-importing for players who are not on this NixOS config.
-  # Live instances get syncedMods + clientMods.
-  #
-  # "AkuCraft 1.21.1" is the instance imported from the .mrpack. It is listed
-  # here because an imported instance goes stale the moment the server gains a
-  # mod: on 2026-08-16 it was still on the pre-MCA mod set and the live server
-  # kicked it with "Received 307 registry entries that are unknown to this
-  # client" (namespace mca). Managing it here keeps it in step without having
-  # to delete and re-import, which would also throw away its Xaero waypoints
-  # and key bindings.
-  instances = [ "1.21.1" "AkuCraft 1.21.1" ];
-
-  # Staging instances additionally get trialMods below, so a candidate can be
-  # tested against :25599 without contaminating the instance used for the live
-  # server. Declarative on purpose: a hand-imported .mrpack cannot be updated
-  # in place (FreeSM only refreshes packs published on Modrinth, by project id -
-  # ours is self-hosted, so ManagedPackID is empty), which would mean deleting
-  # and re-importing on every change.
-  stagingInstances = [ "AkuCraft-STAGING" ];
+  # syncedMods   must match the server pin exactly - they add registry entries
+  # clientMods   client-only, delivered through host-modpack
+  # trialMods    staging only, so a candidate can be tested against :25599
+  #              without touching what the live server hands out
 
   # Mods that MUST match the server pin exactly (they add registry entries).
   # Bump these only together with both server compose files.
@@ -658,15 +643,6 @@ let
     }
   ];
 
-  mkFiles = instance: mod: {
-    name = ".local/share/FreesmLauncher/instances/${instance}/minecraft/mods/${mod.name}";
-    value = {
-      source = pkgs.fetchurl { inherit (mod) url sha512; };
-      # Replace the previously hand-copied jars on first activation.
-      force = true;
-    };
-  };
-
   # ---------------------------------------------------------------------------
   # HD instances - the opt-in shader/LOD build, one per server.
   #
@@ -689,9 +665,10 @@ let
   # The staging port, named once: it is also what marks an instance as the one
   # trials are allowed to land on.
   stagingAddress = "100.64.0.6:25599";
+  prodAddress = "100.64.0.6:25565";
 
   hdInstances = [
-    { name = "AkuCraft-HD";         title = "AkuCraft HD";         ip = "100.64.0.6:25565"; }
+    { name = "AkuCraft-HD";         title = "AkuCraft HD";         ip = prodAddress; }
     { name = "AkuCraft-STAGING-HD"; title = "AkuCraft STAGING HD"; ip = stagingAddress; }
   ];
 
@@ -840,6 +817,48 @@ let
     ];
   });
 
+  # PLAIN instances - the same AutoModpack build as the HD ones, minus the
+  # graphics stack. Since 2026-08-19 there is no other kind.
+  #
+  # They used to be the opposite: sixty-five jars symlinked in from the store,
+  # kept in step by hand through syncedMods and clientMods. That made every
+  # server-side mod change a home-manager rebuild on the client, and it drifted
+  # the moment anything was added on the server first. Now the instance carries
+  # AutoModpack and nothing else, exactly like the one a player imports, so
+  # Akunito's client updates through the same path as everybody else's - which
+  # also means a break in that path shows up here instead of hiding.
+  #
+  # The mod lists stay where they are: they are still the source of truth for
+  # what the server is allowed to hand out (scripts/sync-akucraft-automodpack.py
+  # reads them straight out of this file).
+  plainInstances = [
+    { name = "AkuCraft";         title = "AkuCraft";         ip = prodAddress; }
+    { name = "AkuCraft-STAGING"; title = "AkuCraft Staging"; ip = stagingAddress; }
+  ];
+
+  automodpackJar = builtins.head hdMods;
+
+  plainSeed = i:
+    let dir = ".local/share/FreesmLauncher/instances/${i.name}"; in [
+      { path = "${dir}/instance.cfg"; src = pkgs.writeText "instance.cfg" ''
+          [General]
+          ConfigVersion=1.3
+          InstanceType=OneSix
+          name=${i.title}
+          iconKey=default
+          AutomaticJava=true
+          OverrideCommands=false
+        ''; }
+      { path = "${dir}/mmc-pack.json"; src = mmcPack; }
+      { path = "${dir}/minecraft/servers.dat"; src = mkServersDat i.title i.ip; }
+      { path = "${dir}/minecraft/mods/${automodpackJar.name}";
+        src = pkgs.fetchurl { inherit (automodpackJar) url sha512; }; }
+    ] ++ lib.optionals (i.ip == stagingAddress) (map (pack: {
+      path = "${dir}/minecraft/resourcepacks/${pack.name}";
+      src = pkgs.fetchurl ({ inherit (pack) url sha512; }
+        // lib.optionalAttrs (pack ? storeName) { name = pack.storeName; });
+    }) stagingPacks);
+
   # Files the LAUNCHER and the GAME rewrite: instance metadata, the server list,
   # the options, the Iris config. These cannot be home.file symlinks - the store
   # is read-only, and FreesmLauncher rejects the instance outright with
@@ -918,19 +937,6 @@ let
   # disables one, whereas disabling a synced mod gets you kicked - which is the
   # whole reason those stay read-only symlinks.
 
-  # The plain staging instance keeps its mods as read-only symlinks, but a
-  # resource pack is not a mod: the player has to be able to tick it, untick it
-  # and delete it. So it rides the same seed-once path the HD instances use.
-  stagingPackSeed = lib.concatMap (instance:
-    let dir = ".local/share/FreesmLauncher/instances/${instance}"; in
-    map (pack: {
-      path = "${dir}/minecraft/resourcepacks/${pack.name}";
-      src = pkgs.fetchurl {
-        name = pack.storeName;
-        inherit (pack) url sha512;
-      };
-    }) stagingPacks) stagingInstances;
-
   hdSeedScript = lib.concatMapStringsSep "\n" (f: ''
     ${lib.optionalString (f ? sweep) ''
       for old in "$HOME/${f.sweep}"/${f.family}-*; do
@@ -945,16 +951,9 @@ let
       install -m 644 ${f.src} "$HOME/${f.path}"
       echo "seeded ${f.path}"
     fi
-  '') (lib.concatMap hdSeed hdInstances ++ stagingPackSeed);
-
-  modFiles = lib.listToAttrs (lib.concatMap (instance:
-    map (mkFiles instance) (syncedMods ++ clientMods)) instances);
-
-  stagingFiles = lib.listToAttrs (lib.concatMap (instance:
-    map (mkFiles instance) (syncedMods ++ clientMods ++ trialMods)) stagingInstances);
+  '') (lib.concatMap hdSeed hdInstances ++ lib.concatMap plainSeed plainInstances);
 in
 {
-  home.file = modFiles // stagingFiles;
 
   home.activation.akucraftHdInstances =
     lib.hm.dag.entryAfter [ "writeBoundary" ] hdSeedScript;
