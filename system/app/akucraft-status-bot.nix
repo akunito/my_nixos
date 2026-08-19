@@ -85,6 +85,12 @@ lib.mkIf enabled {
       # the killer too, so without this a tester dying to a boss under
       # development publishes its name to everyone.
       HIDDEN_PLAYERS = lib.concatStringsSep "," (systemSettings.akucraftHiddenPlayers or [ ]);
+      # /map - each player's own fogged map, handed over privately. The
+      # roster is written by the playermap exporter (name -> token) and is
+      # re-read on every call, since it is rebuilt every few minutes. An empty
+      # path leaves /map answering with the generic text instead of a link.
+      MAP_ROSTER = "/home/${username}/.homelab/akucraft-playermap/out/admin/roster.json";
+      MAP_URL = "http://100.64.0.6:8100/map/";
       # /invite - players onboard their own friends instead of Diego doing it
       # over SSH. Empty string disables the command entirely.
       INVITE_SCRIPT = "/home/${username}/.homelab/minecraft/akucraft-invite.sh";

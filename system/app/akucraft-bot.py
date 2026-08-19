@@ -56,6 +56,13 @@ STOP_LOCK_REASON = os.environ.get("STOP_LOCK_REASON", "").strip()
 # boss in production tells everyone its name the first time the tester dies.
 HIDDEN_PLAYERS = {p.strip().lower()
                   for p in os.environ.get("HIDDEN_PLAYERS", "").split(",") if p.strip()}
+
+# /map hands each player their OWN map. The link is a capability - whoever has
+# it sees that player's explored world - so it is only ever sent privately, and
+# the roster that maps a name to a token is read fresh on every call because the
+# exporter rewrites it every few minutes.
+MAP_ROSTER = os.environ.get("MAP_ROSTER", "")
+MAP_URL = os.environ.get("MAP_URL", "http://100.64.0.6:8100/map/")
 GROUP_LINK = os.environ.get("TG_GROUP_LINK", "")
 # /invite: players onboarding their own friends. Off unless a script is set.
 INVITE_SCRIPT = os.environ.get("INVITE_SCRIPT", "")
@@ -226,7 +233,7 @@ MAP_TEXT = """Your map of the survival world:
 Open it in any browser (phone works too) with the VPN on. It shows
 exactly and only the terrain YOU have explored - not the whole world,
 and not where anyone else is standing. Each player has their own private
-link; ask an admin for yours if you do not have it yet.
+link: type /map in Discord and I send you yours privately.
 
 Want the same map in game? These 4 mods are CLIENT-SIDE ONLY: they
 change nothing on the server, nobody else has to install them, and the
@@ -614,6 +621,27 @@ def hidden(name):
     the case this list exists for. Covers announcements AND /status, /players.
     """
     return name.strip().lower() in HIDDEN_PLAYERS
+
+
+def map_link(name):
+    """That player's own map URL, or "" if there is no map for them yet.
+
+    The roster is written by the playermap exporter, not by us, and it only
+    lists players who actually have tiles - so a missing entry is the normal
+    "you have not explored anything yet" case, not an error.
+    """
+    if not (MAP_ROSTER and name):
+        return ""
+    try:
+        with open(MAP_ROSTER) as f:
+            roster = json.load(f)
+    except Exception as e:  # noqa: BLE001
+        log(f"map: cannot read roster {MAP_ROSTER}: {e}")
+        return ""
+    for p in roster.get("players", []):
+        if p.get("name", "").lower() == name.lower() and p.get("token"):
+            return f"{MAP_URL}?k={p['token']}"
+    return ""
 
 
 def notify(server, text):
@@ -1515,7 +1543,6 @@ DISCORD_COMMANDS = [
     ("players", "Who is playing right now", False),
     ("start", "Boot a stopped server", True),
     ("stop", "Stop a server (refuses if players online)", True),
-    ("map", "Your private map of the world you have explored", False),
     ("connect", "How to join the servers", False),
     ("vpn", "How to set up the VPN (Tailscale)", False),
     ("companions", "Befriend, hire and command villagers", False),
@@ -1586,6 +1613,47 @@ def build_discord_client(with_members=True, with_content=True):
         cmd = app_commands.Command(
             name=name, description=description, callback=make_handler(name, takes_arg))
         tree.add_command(cmd, guild=guild)
+
+    # /map - the player's own fogged map, in a reply only they can see.
+    #
+    # Deliberately NOT gated to one channel like the generic commands: the
+    # answer is ephemeral, so it is safe anywhere, and the whole point is that
+    # a player gets their link where they happen to be. It is also the reason
+    # this is not part of make_handler() - that one answers in the open, and
+    # this link must never land in a channel.
+    async def map_handler(interaction):
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        name = ask_link(interaction.user.id)
+        if not name:
+            await interaction.followup.send(
+                "I do not know which account is yours yet. Run "
+                "`/link YourMinecraftName` — exactly as you registered it in "
+                "game, capitals included — and then `/map` again.",
+                ephemeral=True)
+            return
+        url = map_link(name)
+        if not url:
+            await interaction.followup.send(
+                f"I have no map for **{name}** yet. One appears once you have "
+                "explored some of the world and the map has rebuilt, which "
+                "happens every few minutes. If you have been playing a while "
+                "and it still says this, tell Diego.\n\n" + MAP_TEXT,
+                ephemeral=True)
+            return
+        log(f"map: handed {name} their link")
+        await interaction.followup.send(
+            f"\U0001F5FA **Your map, {name}**\n{url}\n\n"
+            "**This link is yours alone — do not paste it in a channel.** "
+            "Anyone who has it sees everywhere you have been.\n"
+            "It shows only the terrain *you* have explored, and it catches up "
+            "with you every few minutes. Any browser with the VPN on; a phone "
+            "is fine.",
+            ephemeral=True)
+
+    tree.add_command(app_commands.Command(
+        name="map",
+        description="Your private map of the world you have explored",
+        callback=map_handler), guild=guild)
 
     # /invite - let players onboard a friend without Diego doing it over SSH.
     #
