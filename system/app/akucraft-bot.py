@@ -1513,8 +1513,20 @@ def select_guides(question, force=False):
         block = (f"--- {meta.get('title') or 'guide'} "
                  f"(by {meta.get('author') or 'a player'}, {meta.get('at', '')}) ---\n"
                  f"{body.strip()}")
-        if total + len(block) > ASK_GUIDE_MAX_CHARS:
-            break
+        room = ASK_GUIDE_MAX_CHARS - total
+        if len(block) > room:
+            # Skip, never stop: one long guide in the middle of the ranking
+            # must not shut out the shorter ones behind it.
+            if out or room < 500:
+                continue
+            # Nothing fitted yet, so this is the best match and it is simply
+            # bigger than the budget. Dropping it is the worst outcome - the
+            # one guide written about the question goes missing and the model
+            # answers from memory instead. Cut it and say so.
+            out.append(block[:room - 60].rstrip()
+                       + "\n[... cut to fit. The full guide is in #mc-guides]")
+            total = ASK_GUIDE_MAX_CHARS
+            continue
         out.append(block)
         total += len(block)
     return "\n\n".join(out) or "(none of the guides match this question)"

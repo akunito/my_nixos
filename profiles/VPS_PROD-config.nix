@@ -97,6 +97,10 @@ in
     akucraftAskEnable = true;
     akucraftAskDailyQuota = 25;
     akucraftAskQuotaOverrides = { Akunito = 60; }; # applies once Akunito has /link-ed
+    # Raised from the 6000 default: selection is per-question now, and the
+    # longest published guide is ~6.3k on its own. At 6000 the best match
+    # could not fit at all and arrived truncated.
+    akucraftAskGuideMaxChars = 12000;
     # Both of these were raised on 2026-08-16 to protect a Chunky pregeneration
     # of the Overworld out to +-12000, which the normal 45-minute idle stop would
     # have killed within the first hour. It finished at 05:45 on 2026-08-17
