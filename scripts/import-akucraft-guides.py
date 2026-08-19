@@ -10,7 +10,7 @@ server has already documented.
 Idempotent: filenames are slugs of the title, so re-running updates in place
 rather than duplicating. Safe to run after every new guide.
 
-  DISCORD_TOKEN=... ./scripts/import-akucraft-guides.py [--dry-run]
+  DISCORD_TOKEN=... ./scripts/import-akucraft-guides.py [--dry-run] [--no-prune]
 """
 import json
 import os
@@ -25,6 +25,7 @@ FORUM = os.environ.get("ASK_GUIDES_CHANNEL", "1538121365859733526")
 GUIDE_DIR = os.environ.get("GUIDE_DIR", "/var/lib/akucraft-status/guides")
 UA = "akucraft-guide-import/1.0"
 DRY = "--dry-run" in sys.argv
+PRUNE = "--no-prune" not in sys.argv
 
 # A trilingual card stores the same guide three times. The model gains nothing
 # from the repeats and they would eat the whole per-question character budget,
@@ -110,7 +111,7 @@ def main():
     tagnames = {t["id"]: t["name"] for t in api(f"channels/{FORUM}").get("available_tags", [])}
     if not DRY:
         os.makedirs(GUIDE_DIR, exist_ok=True)
-    written = 0
+    written, keep = 0, set()
     for t in sorted(threads(), key=lambda t: int(t["id"])):
         body, author = body_of(t["id"])
         if not body:
@@ -126,11 +127,25 @@ def main():
             "tags": [tagnames.get(x, x) for x in t.get("applied_tags", [])],
         }
         print(f"  {len(body):5d}  {meta['tags']}  {title}")
+        keep.add(f"{slug}.md")
         if not DRY:
             with open(os.path.join(GUIDE_DIR, f"{slug}.md"), "w") as f:
                 f.write(json.dumps(meta) + "\n" + body)
         written += 1
     print(f"{'would write' if DRY else 'wrote'} {written} guides to {GUIDE_DIR}")
+
+    # Renaming a thread changes its slug, so without this the store keeps the
+    # copy under the old name and /ask answers from both. Guarded on having
+    # imported something: a Discord outage returning an empty list must not be
+    # read as "every guide was deleted".
+    if not PRUNE or not written:
+        return
+    for name in sorted(set(os.listdir(GUIDE_DIR)) - keep):
+        if not name.endswith(".md"):
+            continue
+        print(f"  stale, removing: {name}")
+        if not DRY:
+            os.remove(os.path.join(GUIDE_DIR, name))
 
 
 if __name__ == "__main__":
