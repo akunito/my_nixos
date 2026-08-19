@@ -704,6 +704,15 @@ let
       name = "ComplementaryReimagined_r5.8.1.zip";
       url = "https://cdn.modrinth.com/data/HVnmMxH1/versions/yCCduG44/ComplementaryReimagined_r5.8.1.zip";
       sha512 = "6bd95215755d25812556ce790d976221f7d677d63112e3e4d3e70b08a62ed41348fa3792dd31bbe720d1e46fe2d525cadb4f66e6358118e1f4aa8e0d11f25c39";
+      # Glowing ores, which Reimagined leaves off and Unbound has by default.
+      # Complementary gates them on the STYLE rather than on the setting:
+      #   #if GLOWING_ORE_MASTER == 2 || SHADER_STYLE == 4 && GLOWING_ORE_MASTER == 1
+      # Reimagined is style 1, so its default value of 1 means "off"; 2 is the
+      # explicit "always on". Iris reads this from shaderpacks/<pack name>.txt -
+      # the pack name includes the .zip, and it is written by Iris itself the
+      # moment the player touches that shader's settings screen, which is why
+      # this is seeded once and never overwritten.
+      settings = { GLOWING_ORE_MASTER = "2"; };
     }
     {
       name = "Bliss_v2.1.2_(Chocapic13_Shaders_edit).zip";
@@ -896,6 +905,12 @@ let
     ] ++ map (sh: {
       path = "${dir}/minecraft/shaderpacks/${sh.name}";
       src = pkgs.fetchurl { inherit (sh) url sha512; };
+    }) hdShaders
+    ++ lib.concatMap (sh: lib.optional (sh ? settings) {
+      path = "${dir}/minecraft/shaderpacks/${sh.name}.txt";
+      src = pkgs.writeText "${sh.name}.txt"
+        (lib.concatStringsSep "\n"
+          (lib.mapAttrsToList (k: v: "${k}=${v}") sh.settings) + "\n");
     }) hdShaders
     ++ [{
       path = "${dir}/minecraft/resourcepacks/${hdResourcePack.name}";
