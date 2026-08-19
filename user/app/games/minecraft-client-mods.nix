@@ -737,11 +737,28 @@ let
   # instance that has been played and the seeder never overwrites one, so the
   # packs sit in the folder until the player ticks them. For a trial that is
   # what you want anyway - judging a pack means toggling it off again.
+  # Three rungs of the same ladder, so the comparison is about how much detail
+  # is worth how much frame time rather than about one pack in isolation:
+  # 32x tiling (Patrix), 64x PBR (Optimum), 128x PBR + parallax (rotrBLOCKS).
+  # The two heavy ones want the shader's advanced-materials option ON or their
+  # PBR data is ignored and they just look like big flat textures.
   stagingHdPacks = [
     {
       name = "Patrix_1.21_32x_basic.zip";
       url = "https://cdn.modrinth.com/data/olO1TaXd/versions/iBo0eCWB/Patrix_1.21_32x_basic.zip";
       sha512 = "89c948034c2555d6367aefeaad23e7fbcaad0e75915ea3de000d93bfa962b0eecaa8bd71287d70bc28aec27e0cca40bc9430600771160a6583091f928953335a";
+    }
+    {
+      name = "Optimum Realism R4.0.0 64x.zip";
+      storeName = "optimum-realism-4.0.0-64x.zip";
+      url = "https://cdn.modrinth.com/data/jbhXFk8s/versions/lqoCWZjS/Optimum%20Realism%20R4.0.0%2064x.zip";
+      sha512 = "2047992cedffb47c3b01f105511a6a6c6f3bf092c331451379a131baf2c018c967d3da6af990fbc33b9a9ab65e72aad0edf93cc7d51ebd07dc540d0e2d607c8a";
+    }
+    {
+      name = "rotrBLOCKS V87 3D Foliage 128x.zip";
+      storeName = "rotrblocks-v87-3d-foliage-128x.zip";
+      url = "https://cdn.modrinth.com/data/A8aBf1Xa/versions/mPNFFuBE/rotrBLOCKS%20V87%20%5B3D%20Foliage%5D%20128x%2026.2-1.13.zip";
+      sha512 = "37c0cbac4252044fe3cbdad8d1675926d2b8969e45aacc18ba6796f89ecf34ebd4d692bbce91b24046cf51055a2aca03fedbff793ead1f24379012cbd608037d";
     }
   ];
 
@@ -864,7 +881,10 @@ let
     ++ lib.optionals (i.ip == stagingAddress) (
       map (pack: {
         path = "${dir}/minecraft/resourcepacks/${pack.name}";
-        src = pkgs.fetchurl { inherit (pack) url sha512; };
+        # A pack whose own filename has spaces or brackets cannot name a store
+        # path, so those carry an explicit storeName.
+        src = pkgs.fetchurl ({ inherit (pack) url sha512; }
+          // lib.optionalAttrs (pack ? storeName) { name = pack.storeName; });
       }) stagingHdPacks
       ++ map (m: {
         path = "${dir}/minecraft/mods/${m.name}";
