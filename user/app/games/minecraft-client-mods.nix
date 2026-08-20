@@ -626,6 +626,18 @@ let
       sha512 = "5dc6a76776f71ccd19a2913fb56ae128350285fe7e6b140472f6194ef3ef4f020f04f60e233f76309912a1e33fd14d046e4cb629569f8f9507b342a7fc1d7d63";
     }
     {
+      # Lithostitched, on the CLIENT. It has always been a server-side worldgen
+      # library here, so it was never in the client set - and the allow-list is
+      # fail-closed, so the client simply did not get it. Hybrid Aquatic
+      # declares it as a hard dependency, and Fabric refused to start with
+      # "requires version 1.5.0 or later of lithostitched, which is missing"
+      # (2026-08-20). The version must stay identical to the server's.
+      # If Hybrid Aquatic ever graduates, this moves to syncedMods with it.
+      name = "lithostitched-1.7.13-fabric-21.1.jar";
+      url = "https://cdn.modrinth.com/data/XaDC71GB/versions/JWtSqSeY/lithostitched-1.7.13-fabric-21.1.jar";
+      sha512 = "895052dbfdbe65541eb3a0dc12950d803dcfd702872723dcb2c1d842cb12370f18e79b3543ad9e447e6c66caa2d99569329fec412c5645545c6698923f25f5ad";
+    }
+    {
       name = "biolith-fabric-3.0.14.jar";
       url = "https://cdn.modrinth.com/data/iGEl6Crx/versions/aBinwigO/biolith-fabric-3.0.14.jar";
       sha512 = "3d0f05a9ae4b001f33437cfb789b1fd9d5a90dde1075197f9ea97fe9b5b01505c2936baf748df641b4476cb1bb30ad229926c3afc310800e7bef076186d8fd81";
