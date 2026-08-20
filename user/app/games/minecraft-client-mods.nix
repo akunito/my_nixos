@@ -662,6 +662,37 @@ let
       url = "https://cdn.modrinth.com/data/Y5Ve4Ui4/versions/2sDsTAId/antique-atlas-3.1.2%2B1.21.jar";
       sha512 = "e920516b107f009d8a671c4b07a65afc0060a11fe3d2918169eb8320408cb3a71b4bdfa7d58a59ff73d8161a545ba220f4e5d766434d46aa08de14e7fe6368cc";
     }
+    # The quest stack, on trial from 2026-08-20 (plan:
+    # docs/akunito/plans/akucraft-quests-staging-rollout.md). Modrinth declares
+    # ALL FIVE client-required - Kambrik and the Easy NPC config-ui included,
+    # not just the three headline mods. Kambrik is Bountiful's hard dependency
+    # (declared only in fabric.mod.json, not on the Modrinth tab); a client
+    # without it refuses to launch, the lithostitched failure all over again.
+    {
+      name = "kambrik-fabric-8.0.0-beta.2.jar";
+      url = "https://cdn.modrinth.com/data/zfbCkvdZ/versions/eMIEIbFZ/kambrik-fabric-8.0.0-beta.2.jar";
+      sha512 = "54060f83fff566d23d13e5a449076ffbe3230bbc3357170bb17c10de7a63be1fd98f5632e84ddac40eb402bb162d1b4e2762a91ae193d93d60df156dbb6e645c";
+    }
+    {
+      name = "bountiful-fabric-8.0.0-beta.2.jar";
+      url = "https://cdn.modrinth.com/data/BpwWFOVM/versions/LFm1BWOE/bountiful-fabric-8.0.0-beta.2.jar";
+      sha512 = "3a599d9aeb1c329898ead8031f0c6ac1d3c7ab626a144bb4aeb3d53fe5a9dcece4df9db753c822c76e92f7ffeaa33807b84af99e327ac86019ef202584290b4b";
+    }
+    {
+      name = "dailyquests-1.21.1-2.8.jar";
+      url = "https://cdn.modrinth.com/data/saq81j96/versions/Pi5wx5E1/dailyquests-1.21.1-2.8.jar";
+      sha512 = "51c266d063efe15b2f25b7fa2f84776e5a368f8ffd5a4c17a622ad83b857ad0cf57b60277b50a591d3f1532572b23991e946cbfd7518d7dcb92eee7ce4cedd43";
+    }
+    {
+      name = "easy_npc-fabric-1.21.1-7.8.0.jar";
+      url = "https://cdn.modrinth.com/data/Epm6R3P2/versions/b6OVKQ5g/easy_npc-fabric-1.21.1-7.8.0.jar";
+      sha512 = "ac7ae6dd38ce40c31e760c2e5ae835118e13c9a55cde62f3e37e9d82c5a734409806c7bdef5d59c9a2582e6c9c237e3783832213707c266eb4fdb38ca849de33";
+    }
+    {
+      name = "easy_npc_config_ui-fabric-1.21.1-7.8.0.jar";
+      url = "https://cdn.modrinth.com/data/uTGjf7vA/versions/veog5z4u/easy_npc_config_ui-fabric-1.21.1-7.8.0.jar";
+      sha512 = "b17bcce65838bed98194f6cfa9f873564765f84fb5a6276aae01dc562b58994b0a3e386c78fbfbefdda5ed0e04e56367bc6904e596bfe7cabf3b6db75ee2116a";
+    }
   ];
 
   # Mods the SERVER runs but AutoModpack must NOT distribute. Not synced, not
