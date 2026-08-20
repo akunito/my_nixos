@@ -66,27 +66,52 @@ planes cutting through the seabed. Nothing was missing — the wrong SHAPE was
 being textured, which is why the client log only ever complained about eight
 shark plushies.
 
-**The fix is the pack order: put Patrix at the BOTTOM of the selected resource
-packs**, below `fabric` (the mod assets). Verified in game on 2026-08-20 —
-corals correct, Patrix textures still applied everywhere else. A generated
-resource pack that re-parented the 58 models was written first and then
-deleted: it worked, but the order alone does the same job with nothing to
-maintain and nothing to distribute.
+**Superseded on 2026-08-20 — Patrix at the BOTTOM was the wrong fix.** It
+worked, but only by letting every other pack override Patrix, and that is a
+setting with side effects: Continuity's built-in *Default Connected Textures*
+pack ships its own vanilla 16x glass, sandstone and bookshelf art, so glass
+came out looking vanilla in a Patrix world. Better-Leaves was doing the same to
+11 leaf textures. **Patrix belongs on TOP**; the two packs above it are now off
+(Continuity the MOD stays — Patrix needs it for 25,198 CTM files).
 
 Note the UI is displayed in reverse: the bottom of the Selected column is the
 FIRST entry in `options.txt`, and the lowest priority.
 
-**Every other shared parent was checked and is harmless.** A sweep of all
-installed mods found 1348 modded models inheriting a parent Patrix overrides.
-The geometry is identical or near-identical in every remaining case:
+**The real fix is `scripts/build-patrix-fix-pack.py`**, which re-parents the
+affected modded models onto a private copy of the vanilla shape under an
+`akucraft:` namespace. Patrix keeps its 3D corals on vanilla blocks; the mods
+get their own shape back. It overrides nothing in the `minecraft` namespace, so
+its own position in the order does not matter. The build is committed at
+`user/app/games/assets/AkuCraft-Patrix-fixes-1.zip` and seeded on both HD
+instances. **Rebuild it and bump the suffix after any change to the synced mod
+set** — it is derived from the mod jars.
 
-| parent | count | verdict |
-|--------|-------|---------|
-| `item/generated`, `item/handheld` | ~1150 | no elements at all, same as vanilla |
-| `block/cross` | 57 | identical, 2 elements 0.8→15.2 |
-| `block/template_wall_side(_tall)` | 24 | identical |
-| `block/crop` | 16 | half-pixel offset, invisible |
-| `block/coral_fan`, `block/coral_wall_fan` | 58 | **the bug — fixed above** |
+**The sweep, redone properly.** The first pass counted 1348 modded models
+sharing a parent with Patrix and eyeballed the list. The script measures
+instead: it compares each Patrix model's bounding box against vanilla and only
+acts when a face has moved more than half a pixel — Patrix nudges pressure
+plates by 0.01 to stop z-fighting, while the coral wall fan moves by 2.77. Of
+421 reshaped vanilla models, 181 clear that bar and 8 are actually inherited by
+an installed mod:
+
+| parent | moved | models | mods |
+|--------|-------|--------|------|
+| `block/coral_fan` | 2.0 | 29 | Hybrid Aquatic |
+| `block/coral_wall_fan` | 2.77 | 29 | Hybrid Aquatic |
+| `block/crop` | 1.0 | 24 | DoggyTalents, Hybrid Aquatic |
+| `block/flower_pot_cross` | 4.6 | 1 | Supplementaries |
+| `block/redstone_dust_dot`, `_up` | rewritten | 2 | Supplementaries |
+| `block/template_fence_gate`, `_wall` | rewritten | 2 | Hybrid Aquatic |
+
+87 models in total. Everything else — `item/generated`, `block/cross`,
+`template_wall_side`, the doors, the trapdoors — is byte-identical geometry and
+was never at risk.
+
+**The witch's hat was a separate fault.** Patrix ships 85 OptiFine `.jem`
+entity models that Minecraft cannot read, so its 32x witch texture was drawn on
+the VANILLA model and the UV layout belonged to the model being ignored.
+Entity Model Features + Entity Texture Features fix it, and 78 entities besides.
+Both are in `hdMods`.
 
 **Known cosmetic bug in the mod itself**: eight shark plushie items ship no
 texture, and `buoy.geo.json` / `bell_buoy.geo.json` are referenced with a
@@ -143,9 +168,8 @@ need chunks that have never been generated, and production has none within the
 fence. **The reefs arrive with the frontier world**, whenever it is created, and
 nowhere else. Do not promise them before then.
 
-A player running a texture pack that replaces vanilla models (Patrix) must keep
-it at the BOTTOM of their selected packs or the reef renders as huge planes.
-That is in the HD guide in #mc-guides.
+A player running Patrix needs `AkuCraft-Patrix-fixes-1.zip` alongside it or the
+reef renders as huge planes. That is in the HD guide in #mc-guides.
 
 Staging keeps the same set for the next trial.
 Reef coordinates found with `/locate biome`, all in ungenerated ground at the
