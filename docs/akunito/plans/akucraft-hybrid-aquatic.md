@@ -10,7 +10,7 @@ related_files:
 date: 2026-08-20
 status: draft
 owner: akunito
-progress: TRIALLED AND APPROVED on staging 2026-08-20; not in production
+progress: LIVE in production 2026-08-20, shipped quietly - no announcement
 ---
 
 # Hybrid Aquatic
@@ -135,8 +135,19 @@ Nothing here is done. In this order:
 
 ## Where it is now
 
-Staging only, `enableBiomes: true`, and `AkuCraft-STAGING-HD` renders it
-correctly with Patrix moved to the bottom of the selected packs.
+**Production, since 2026-08-20**, with `biomes.enableBiomes: true`. Shipped
+without an announcement or a guide, on purpose.
+
+What players will actually notice: **sea life, everywhere**. Not reefs — those
+need chunks that have never been generated, and production has none within the
+fence. **The reefs arrive with the frontier world**, whenever it is created, and
+nowhere else. Do not promise them before then.
+
+A player running a texture pack that replaces vanilla models (Patrix) must keep
+it at the BOTTOM of their selected packs or the reef renders as huge planes.
+That is in the HD guide in #mc-guides.
+
+Staging keeps the same set for the next trial.
 Reef coordinates found with `/locate biome`, all in ungenerated ground at the
 time: `deep_coral_reef` at `-1712 63 1920`, `coral_reef` at `2896 63 -3168`,
 `tropical_deep_coral_reef` at `3760 63 -3072`.
