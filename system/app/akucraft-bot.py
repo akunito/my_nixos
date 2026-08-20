@@ -1781,6 +1781,13 @@ def build_discord_client(with_members=True, with_content=True):
             # false. Every invite was reported as failed to the person who ran
             # it, including the ones that had already sent the email.
             rc, out = run([INVITE_SCRIPT, player, email, player], 180)
+            # The script refuses re-invites younger than 48h with a protocol
+            # line; relay its text instead of the generic failure message.
+            if rc == 0 and "INVITE_COOLDOWN:" in (out or ""):
+                msg = out.split("INVITE_COOLDOWN:", 1)[1].strip().splitlines()[0]
+                log(f"invite cooldown: {interaction.user} for {player}")
+                await interaction.followup.send("⏳ " + msg, ephemeral=True)
+                return
             ok = rc == 0 and "Invite sent to" in (out or "")
             if ok:
                 log(f"invite: {interaction.user} invited {player} <{email}>")
