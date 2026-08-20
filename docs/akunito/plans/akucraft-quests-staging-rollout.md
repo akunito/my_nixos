@@ -1,12 +1,15 @@
 ---
 id: akunito.plans.akucraft-quests-staging-rollout
-summary: Staging rollout plan and critical test list for adding Bountiful, Daily Quests and Easy NPC to AkuCraft, covering both the fenced Overworld and the frontier
-tags: [minecraft, akucraft, quests, staging, plan, testing]
+summary: Staging rollout plan and critical test list for adding Bountiful, Daily Quests and Easy NPC to AkuCraft, plus phase H wiring SecondBrain AI NPCs to the LiteLLM gateway as an opt-in mod
+tags: [minecraft, akucraft, quests, staging, plan, testing, secondbrain, ai, litellm]
 related_files:
   - docs/akunito/plans/akucraft-quest-mods.md
   - docs/akunito/plans/akucraft-frontier-world.md
+  - docs/akunito/infrastructure/services/akucraft-ai.md
   - user/app/games/minecraft-client-mods.nix
   - scripts/sync-akucraft-automodpack.py
+  - system/app/litellm.nix
+  - profiles/VPS_PROD-config.nix
 date: 2026-08-20
 status: draft
 ---
@@ -58,6 +61,7 @@ of trusting this table's arithmetic.
 **`secondbrain` matters for this test** — it is an AI-NPC mod that spawns
 player-like entities, and Easy NPC is the thing under test. Remove it from
 staging for the duration, or every odd NPC behaviour has two possible causes.
+It comes back in **phase H**, wired to the LiteLLM gateway, once A–G are done.
 
 ### The asymmetry that shapes the test plan
 
@@ -295,6 +299,96 @@ Run in order. A–B are gates: if they fail, stop and report rather than continu
 
 ---
 
+## Phase H — SecondBrain on the gateway (after A–G)
+
+Reinstates the mod step 2 removed, this time wired to my own model. Design in
+one line: SecondBrain talks to the **LiteLLM gateway** (`100.64.0.6:4711`,
+`docs/akunito/infrastructure/services/akucraft-ai.md`), which routes to
+**llama.cpp on DESK's GPU** and falls back to **DeepSeek** — the same chain MCA
+villagers already use. Conversation must work in **Spanish and English**.
+
+### H.1 Gateway — a new alias, never `akucraft-villager`
+
+The villager alias forces `response_format = json_object`, which is safe only
+because MCA sends no tools — SecondBrain **does** send tools, and forcing
+json_object on a request that carries tools breaks tool calling (documented in
+`profiles/VPS_PROD-config.nix`). So: new aliases in `litellmModels`, mirroring
+the villager pair minus that override:
+
+```nix
+{ name = "akucraft-npc";
+  model = "openai/gpt-oss-20b";
+  apiBase = "http://100.64.0.5:8090/v1";   # DESK direct, NOT the wake proxy
+  envVar = "";                              # local server, no auth
+  extra = { timeout = 20; }; }              # no response_format — tools in play
+{ name = "akucraft-npc-backup";
+  model = "openai/deepseek-v4-flash";
+  apiBase = "https://api.deepseek.com/v1";
+  envVar = "DEEPSEEK_KEY_INGAME"; }         # same in-game prepaid pool as villagers
+```
+
+and in `litellmFallbacks`:
+
+```nix
+akucraft-npc = [ "akucraft-npc-backup" "akucraft-support-backup" ];
+```
+
+Deploy: `./install.sh ~/.dotfiles VPS_PROD -s -d` (never `-q` — it skips the
+hardware-config regeneration). DESK-off is a connection-refused in
+milliseconds, so the fallback costs no latency; that is why the wake proxy is
+deliberately not used — two NPC lines must not boot the desktop.
+
+### H.2 Server — reinstate on staging
+
+Re-add `secondbrain:3.1.7` to staging's single-line `MODRINTH_PROJECTS`,
+`docker-compose up -d`. In game, open `/secondbrain` (the config-ui jar) and
+set the **OpenAI-compatible** backend: URL `http://100.64.0.6:4711/v1`, API key
+= the litellm master bearer, model `akucraft-npc`. The token lands in
+`/data/config/secondbrain/` on the VPS — container-owned, never committed.
+`base.json` ships `llmTimeout: 10` (seconds); DESK worst case measured 7.4 s
+and DeepSeek reasons for 1.4–3.3 s, so 10 is plausible but tight — raise it if
+H tests show truncation. Give the NPC persona a bilingual instruction
+("contesta en el idioma en que te hablen; hablas español e inglés") — both
+gpt-oss-20b and DeepSeek handle ES/EN.
+
+### H.3 Client — opt-in, not synced
+
+Done declaratively in `user/app/games/minecraft-client-mods.nix`: secondbrain
+moved from `trialMods` to the new **`optInMods`** list. Consequences, all
+deliberate:
+
+- **AutoModpack withholds it.** `sync-akucraft-automodpack.py` builds the
+  allow-list from `syncedMods ∪ trialMods`; optInMods is a parser *boundary*
+  in both python scripts but never shipped. Nobody receives it automatically.
+- **My HD instances get it seeded, disabled** — one click in the launcher's
+  Mods tab turns it on (the Not Enough Animations pattern; the seeder never
+  undoes the rename). Lands with `sync-user.sh` on DESK and X13.
+- **Everyone else opts in by hand**: download the jar from Modrinth, drop it
+  in the instance mods folder. Publish a short guide in **#mc-guides**
+  (ES + EN) with the Modrinth link, where the jar goes, `/secondbrain` basics,
+  and one line saying AutoModpack will neither add nor remove it.
+
+### H tests
+
+40. A client **with** the jar joins a server **without** the mod (prod, today)
+    — no kick, no log errors. Opt-in players will be in this state for weeks.
+41. A client **without** the jar joins staging **with** the mod — no kick.
+42. Connect twice with AutoModpack active: it must neither install secondbrain
+    on a clean client nor delete/dummy the player-added jar. `optInMods`
+    must appear in the sync run's "withheld" list.
+43. Create an NPC, converse in **Spanish**, then **English**, with DESK awake —
+    replies from the GPU route (check llama-server log), latency playable.
+44. Suspend DESK, converse again — DeepSeek answers via fallback with no long
+    stall (connection refused fails over in milliseconds).
+45. An NPC action that uses **tools** completes through the gateway — this is
+    the reason `akucraft-npc` exists; a tool call surviving is the pass.
+46. No truncated/empty replies; if any, raise `llmTimeout` in
+    `config/secondbrain/base/base.json` before blaming the model.
+47. NPCs persist across a restart; `/secondbrain` removal leaves nothing.
+48. The #mc-guides post is up and a second person has followed it successfully.
+
+---
+
 ## Rollback
 
 ```bash
@@ -313,6 +407,10 @@ world. On staging that is acceptable; restoring the snapshot avoids it entirely.
 ## Gate to production
 
 Do not open the prod compose until every one of A–G is recorded with a result.
+The quest stack graduates on A–G alone; **SecondBrain graduates separately,
+after H** — its prod step is simply adding `secondbrain:3.1.7` to the prod
+block-scalar compose (it stays withheld from AutoModpack by construction, so
+no client coordination is needed) and posting the #mc-guides announcement.
 The ordering below is load-bearing: **the AutoModpack sync must run after the
 new jars exist on the prod server**, because the script builds the allow-list
 from what `/data/mods` actually contains — run early, it silently omits the
@@ -341,3 +439,5 @@ five new jars and every client is kicked on the next connect.
 - Which Daily Quests types are impossible with our mod set? (test 25)
 - Do Easy NPC skins resolve for offline names? (test 33)
 - Does anything let a Visitor act inside a claim? (tests 16, 35)
+- Does a secondbrain client jar tolerate a server without the mod? (test 40)
+- Do SecondBrain tool calls survive the gateway, ES and EN alike? (tests 43, 45)

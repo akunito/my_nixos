@@ -662,16 +662,35 @@ let
       url = "https://cdn.modrinth.com/data/Y5Ve4Ui4/versions/2sDsTAId/antique-atlas-3.1.2%2B1.21.jar";
       sha512 = "e920516b107f009d8a671c4b07a65afc0060a11fe3d2918169eb8320408cb3a71b4bdfa7d58a59ff73d8161a545ba220f4e5d766434d46aa08de14e7fe6368cc";
     }
-    # SecondBrain: AI NPCs driven by an LLM. Being trialled as the "voice
-    # assistant on each player's own model" idea - it carries three backends
-    # (Ollama, an OpenAI-compatible endpoint, and Player2) and bundles ollama4j,
-    # so it can talk to a model on a player's own machine over Tailscale rather
-    # than to anything on the VPS, which has no GPU.
+  ];
+
+  # Mods the SERVER runs but AutoModpack must NOT distribute. Not synced, not
+  # trialled: whoever wants one drops the jar in themselves (guide in Discord's
+  # #mc-guides). The sync script treats these as withheld exactly like any
+  # other server-side jar - which is the point: a player without the jar joins
+  # normally, a player with it gets the feature.
+  #
+  # This list name MUST stay in the boundary regex of BOTH
+  # scripts/sync-akucraft-automodpack.py and scripts/build-akucraft-pack.py.
+  # Those parsers bound each list by the start of the next KNOWN list, so an
+  # unknown name here would be swallowed into trialMods above - and silently
+  # synced to every client, which is the one thing this list exists to prevent.
+  optInMods = [
+    # SecondBrain: AI NPCs driven by an LLM, speaking through the LiteLLM
+    # gateway on the VPS (alias akucraft-npc: llama.cpp on DESK's GPU first,
+    # DeepSeek as fallback - same chain as MCA villagers, but its own alias:
+    # akucraft-villager forces response_format json_object, which would break
+    # SecondBrain's tool calls). Rollout: phase H of
+    # docs/akunito/plans/akucraft-quests-staging-rollout.md.
     #
     # The client jar is needed only for the configuration GUI (`/secondbrain`);
     # the mod itself runs server-side. Having the jar is not the same as having
     # an NPC - none exist until somebody creates one - so it is inert for anyone
     # who does not want it. That is what makes it opt-in.
+    #
+    # Seeded DISABLED on the HD instances (same pattern as Not Enough
+    # Animations): the launcher's Mods tab is the switch, and neither the
+    # seeder nor the sweep will undo the rename that enabling does.
     #
     # Text-to-speech is the catch: the only TTS path in the jar is Player2's
     # API, and Player2 is a cloud service with no Linux build. Voice is
@@ -680,6 +699,7 @@ let
       name = "secondbrain-1.21.1-v3.1.7-alpha.jar";
       url = "https://cdn.modrinth.com/data/CfgaDAdq/versions/p7Znfobb/secondbrain-1.21.1-v3.1.7-alpha.jar";
       sha512 = "349e8c84e97550f4391ce4da52e35e66705c93b888280ea2d187fb282f110172fc53443666790346541c378330fa7fda5b33a1fdaf2045a2a08918815d99f161";
+      disabled = true;
     }
   ];
 
@@ -1012,7 +1032,7 @@ let
       skipIf = lib.optionalString (m.disabled or false)
         "${dir}/minecraft/mods/${m.name}";
       family = builtins.head (lib.splitString "-" m.name);
-    }) hdMods
+    }) (hdMods ++ optInMods)
     ++ map (pack: {
       path = "${dir}/minecraft/resourcepacks/${pack.name}";
       # A pack whose own filename has spaces or brackets cannot name a store

@@ -63,12 +63,14 @@ def nix_lists():
     """Return (name -> url) for each list in the nix module, by list name."""
     src = NIX.read_text()
     bounds = {}
-    # hdMods/hdShaders MUST be in this pattern even though they are not
-    # returned: the last named list otherwise runs to the end of the file and
-    # swallows them. That made trialMods absorb the HD stack, so Sodium looked
-    # like a mod the server already provides and was silently withheld from
-    # every client. Same failure the pack builder had.
-    for m in re.finditer(r"^\s*(syncedMods|clientMods|trialMods|hdMods|hdShaders)\s*=\s*\[", src, re.M):
+    # hdMods/hdShaders/optInMods MUST be in this pattern even though they are
+    # not returned: the last named list otherwise runs to the end of the file
+    # and swallows them. That made trialMods absorb the HD stack, so Sodium
+    # looked like a mod the server already provides and was silently withheld
+    # from every client. Same failure the pack builder had. optInMods is the
+    # inverse hazard: swallowed into trialMods it would be SENT to every
+    # client, and opt-in (secondbrain) is exactly what must never be pushed.
+    for m in re.finditer(r"^\s*(syncedMods|clientMods|trialMods|optInMods|hdMods|hdShaders)\s*=\s*\[", src, re.M):
         bounds[m.group(1)] = m.start()
     order = sorted(bounds.items(), key=lambda kv: kv[1])
     out = {}

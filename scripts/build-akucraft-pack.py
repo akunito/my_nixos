@@ -114,7 +114,7 @@ def mods_from_nix(lists=("syncedMods", "clientMods")):
     """
     src = NIX.read_text()
     bounds = {}
-    for m in re.finditer(r"^\s*(syncedMods|clientMods|trialMods|hdMods|hdShaders)\s*=\s*\[", src, re.M):
+    for m in re.finditer(r"^\s*(syncedMods|clientMods|trialMods|optInMods|hdMods|hdShaders)\s*=\s*\[", src, re.M):
         bounds[m.group(1)] = m.start()
     order = sorted(bounds.items(), key=lambda kv: kv[1])
     pairs = []
