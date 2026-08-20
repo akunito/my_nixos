@@ -678,22 +678,11 @@ let
       url = "https://cdn.modrinth.com/data/BpwWFOVM/versions/LFm1BWOE/bountiful-fabric-8.0.0-beta.2.jar";
       sha512 = "3a599d9aeb1c329898ead8031f0c6ac1d3c7ab626a144bb4aeb3d53fe5a9dcece4df9db753c822c76e92f7ffeaa33807b84af99e327ac86019ef202584290b4b";
     }
-    {
-      # Collective, on the CLIENT. Server-side library here since forever, so
-      # it was never in the client set - but Daily Quests requires it on both
-      # sides, and the fail-closed allow-list withheld it: the client died at
-      # launch with "requires version 8.25 or later of collective" (2026-08-20).
-      # Same version as the server's jar; lithostitched all over again.
-      # If the quest stack graduates, this moves to syncedMods with it.
-      name = "collective-1.21.1-8.39.jar";
-      url = "https://cdn.modrinth.com/data/e0M1UDsY/versions/4XRlrKGN/collective-1.21.1-8.39.jar";
-      sha512 = "5e8d257650b2ace041df4743172797dfa86faeaa3fa2db13890482f433b189bad037c4f5399b5b5b0e3e65fab0c0887ef65e5c5c24eba6c09da8f95ed3435b02";
-    }
-    {
-      name = "dailyquests-1.21.1-2.8.jar";
-      url = "https://cdn.modrinth.com/data/saq81j96/versions/Pi5wx5E1/dailyquests-1.21.1-2.8.jar";
-      sha512 = "51c266d063efe15b2f25b7fa2f84776e5a368f8ffd5a4c17a622ad83b857ad0cf57b60277b50a591d3f1532572b23991e946cbfd7518d7dcb92eee7ce4cedd43";
-    }
+    # Daily Quests was here for two hours on 2026-08-20 and was REJECTED before
+    # any test ran: a daily quest list pushed at every player is the opposite
+    # of the server's casual feel. Quests must come from talking to something -
+    # a board, an NPC - not from a popup. It also dragged collective onto the
+    # client (its one required dep); both entries left with it.
     {
       name = "easy_npc-fabric-1.21.1-7.8.0.jar";
       url = "https://cdn.modrinth.com/data/Epm6R3P2/versions/b6OVKQ5g/easy_npc-fabric-1.21.1-7.8.0.jar";

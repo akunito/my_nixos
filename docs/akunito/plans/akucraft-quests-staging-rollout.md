@@ -1,6 +1,6 @@
 ---
 id: akunito.plans.akucraft-quests-staging-rollout
-summary: Staging rollout plan and critical test list for adding Bountiful, Daily Quests and Easy NPC to AkuCraft, plus phase H wiring SecondBrain AI NPCs to the LiteLLM gateway as an opt-in mod
+summary: Staging rollout plan and critical test list for adding Bountiful and Easy NPC to AkuCraft (Daily Quests rejected as too intrusive), plus phase H wiring SecondBrain AI NPCs to the LiteLLM gateway as an opt-in mod
 tags: [minecraft, akucraft, quests, staging, plan, testing, secondbrain, ai, litellm]
 related_files:
   - docs/akunito/plans/akucraft-quest-mods.md
@@ -16,14 +16,23 @@ status: draft
 
 # AkuCraft — quest stack rollout, staging first
 
-Installs **Bountiful + Kambrik**, **Daily Quests** and **Easy NPC** on staging
-and proves them before production. The conflict analysis behind the choice is in
+Installs **Bountiful + Kambrik** and **Easy NPC** on staging and proves them
+before production. The conflict analysis behind the choice is in
 `akucraft-quest-mods.md`; this document is the execution.
 
 Revised 2026-08-20 after an audit against Modrinth and the live VPS: the Daily
 Quests slug was wrong, the client set is five jars (not three), the prod
 AutoModpack sync was ordered before the jars it needs existed, and the expected
 mod count was miscounted.
+
+**Daily Quests was REJECTED the same day it landed** — deployed to staging,
+pulled two hours later before a single E test ran. The rule it broke, which
+now governs every future mod choice: **mods must feel casual.** Quests may
+exist where a player goes looking for them — a bounty board, a conversation
+with an NPC — never as a daily list pushed at everyone. It also needed
+`collective` on the client (its only required dep, found the hard way when the
+client refused to launch); both entries were reverted together, and staging
+runs 104 jars, not 105. Section E below is kept struck-through as the record.
 
 Nothing here touches production. Staging data is a restore of a prod backup and
 is meant to be thrown away.
@@ -110,14 +119,17 @@ delete its jar from `mca-staging/mods/` — itzg does not remove jars it no long
 manages. Its `trialMods` entry in the nix client set can stay for now: the
 allow-list is an intersection with the server's jars, so it goes inert.
 
-### 3. Add the five entries
+### 3. Add the entries
 
 Staging's `MODRINTH_PROJECTS` is a **single-line comma-separated string** (prod
 uses a block scalar — do not copy one format into the other). Append:
 
 ```
-,kambrik:8.0.0-beta.2,bountiful:8.0.0-beta.2,daily-quests:1.21.1-2.8-fabric+forge+neo,easy-npc-core:7.8.0,easy-npc-config-ui:7.8.0
+,kambrik:8.0.0-beta.2,bountiful:8.0.0-beta.2,easy-npc-core:7.8.0,easy-npc-config-ui:7.8.0
 ```
+
+(As executed this included `daily-quests:1.21.1-2.8-fabric+forge+neo`; it was
+rejected and removed the same day — see the note at the top.)
 
 Four things that will bite:
 
@@ -145,14 +157,15 @@ grep -iE "mixin apply|failed|conflict|incompatible" \
 A mixin that fails to apply is often a **warning**, not a crash — the mod then
 runs with a piece missing. Read the log even when the server is up.
 
-### 5. Client side — five jars, not three
+### 5. Client side — every jar is client-required
 
-Modrinth declares **all five** entries `client: required` — Kambrik and the
-Easy NPC config-ui included, not just the three headline mods. The nix client
+Modrinth declares **all** the entries `client: required` — Kambrik and the
+Easy NPC config-ui included, not just the headline mods. The nix client
 set in `user/app/games/minecraft-client-mods.nix` *is* the AutoModpack
-allow-list, and it fails closed: any of the five missing from it and **every
-client is kicked** (or, for Kambrik, refuses to launch on a missing dependency —
-the exact lithostitched failure of 2026-08-20). Do this before inviting anyone.
+allow-list, and it fails closed: any of them missing from it and **every
+client is kicked** (or refuses to launch on a missing dependency —
+the exact lithostitched failure of 2026-08-20; Daily Quests repeated it with
+`collective` before it was rejected outright). Do this before inviting anyone.
 
 Add to **`trialMods`** (the staging-only list; they move to `syncedMods` only
 at graduation), pins verified against the Modrinth CDN 2026-08-20:
@@ -167,11 +180,6 @@ at graduation), pins verified against the Modrinth CDN 2026-08-20:
   name = "bountiful-fabric-8.0.0-beta.2.jar";
   url = "https://cdn.modrinth.com/data/BpwWFOVM/versions/LFm1BWOE/bountiful-fabric-8.0.0-beta.2.jar";
   sha512 = "3a599d9aeb1c329898ead8031f0c6ac1d3c7ab626a144bb4aeb3d53fe5a9dcece4df9db753c822c76e92f7ffeaa33807b84af99e327ac86019ef202584290b4b";
-}
-{
-  name = "dailyquests-1.21.1-2.8.jar";
-  url = "https://cdn.modrinth.com/data/saq81j96/versions/Pi5wx5E1/dailyquests-1.21.1-2.8.jar";
-  sha512 = "51c266d063efe15b2f25b7fa2f84776e5a368f8ffd5a4c17a622ad83b857ad0cf57b60277b50a591d3f1532572b23991e946cbfd7518d7dcb92eee7ce4cedd43";
 }
 {
   name = "easy_npc-fabric-1.21.1-7.8.0.jar";
@@ -206,8 +214,9 @@ Run in order. A–B are gates: if they fail, stop and report rather than continu
 
 1. Container reaches "Done", `/list` answers over RCON.
 2. `latest.log` has no `Mixin apply failed` and no `Incompatible mod set`.
-3. `/data/mods` holds **105 jars** — the measured 101 baseline − secondbrain
-   + 5 new. Diff against `mods.pre-quests.txt` from step 0 rather than counting.
+3. `/data/mods` holds **104 jars** — the measured 101 baseline − secondbrain
+   + 4 (Daily Quests came and went; the count was 105 for two hours). Diff
+   against `mods.pre-quests.txt` from step 0 rather than counting.
 4. Memory after 10 minutes idle is under the 3G heap — `docker stats`.
 5. Restart the container twice; both come up clean.
 
@@ -217,10 +226,10 @@ Run in order. A–B are gates: if they fail, stop and report rather than continu
    `AnvilScreenHandler` alongside collective, puffish_attributes and puzzleslib;
    this is the only shared-class overlap it has. Check the XP cost looks normal.
 7. **MCA villagers** — trade with one, open its dialogue, confirm profession and
-   name render. Daily Quests mixes `MerchantEntity`, Easy NPC mixes
-   `VillagerEntity` and the villager clothing layer.
-8. **Raids** — trigger one (`/summon`, or a bad omen). Daily Quests mixes `Raid`,
-   which lithium also touches.
+   name render. Easy NPC mixes `VillagerEntity` and the villager clothing layer
+   (Daily Quests' `MerchantEntity` mixin left with it).
+8. **Raids** — trigger one (`/summon`, or a bad omen). The `Raid` mixin risk
+   left with Daily Quests; kept as a cheap regression check.
 9. **Graves** — die in the Overworld, recover the grave with a backpack and a
    trinket equipped.
 10. **Flan** — claim a plot, confirm a second player cannot break blocks in it.
@@ -253,19 +262,12 @@ Run in order. A–B are gates: if they fail, stop and report rather than continu
 22. Watch chunk-generation time and memory while exploring — Terralith plus a new
     pool injection is the load case.
 
-### E. Daily Quests
+### ~~E. Daily Quests~~ — REJECTED 2026-08-20, never tested
 
-23. `/quests` opens; quests generate on the first in-game morning.
-24. Re-roll consumes the one daily re-roll and no more.
-25. **Impossible-quest audit.** Generate and read at least 30 quests. With 100
-    mods it scans registries and can ask for something unobtainable — a BoMD boss
-    drop, a creative-only item. Record every offender and disable those quest
-    types in config.
-26. Rewards and XP actually arrive.
-27. **Per-world behaviour under Multiworld** — accept a quest in the Overworld,
-    complete it in the frontier. Does progress carry? Record the answer either way;
-    this is undocumented and players will hit it.
-28. Quest list survives a restart.
+Pulled before test 23 could run: a daily quest list pushed at every player is
+too intrusive for this server. Quests must come from a board or an NPC the
+player chose to approach. Tests 23–28 (quest generation, re-roll, the
+impossible-quest audit, Multiworld carry-over, restart persistence) are void.
 
 ### F. Easy NPC — the risky one
 
@@ -414,16 +416,16 @@ no client coordination is needed) and posting the #mc-guides announcement.
 The ordering below is load-bearing: **the AutoModpack sync must run after the
 new jars exist on the prod server**, because the script builds the allow-list
 from what `/data/mods` actually contains — run early, it silently omits the
-five new jars and every client is kicked on the next connect.
+new jars and every client is kicked on the next connect.
 
 1. `akucraft-backup-now`, confirm it reached the NAS (prod must be running —
    it was stopped at audit time).
-2. In `user/app/games/minecraft-client-mods.nix`, move the five `trialMods`
-   entries into `syncedMods`. Commit.
-3. Add the five entries to prod's **block-scalar** `MODRINTH_PROJECTS` (one per
-   line, same slugs and versions as staging), plus
-   `MODRINTH_ALLOWED_VERSION_TYPE` if staging needed it. Then
-   `docker-compose up -d` — **not** `compose restart`.
+2. In `user/app/games/minecraft-client-mods.nix`, move the four quest-stack
+   `trialMods` entries into `syncedMods`. Commit.
+3. Add the four entries to prod's **block-scalar** `MODRINTH_PROJECTS` (one per
+   line, same slugs and versions as staging). `MODRINTH_ALLOWED_VERSION_TYPE`
+   is not needed — exact version pins bypass the type filter, staging proved
+   it. Then `docker-compose up -d` — **not** `compose restart`.
 4. `./scripts/sync-akucraft-automodpack.py --target prod`, then
    `docker restart minecraft` so AutoModpack regenerates its manifest.
 5. Steps 3–4 open a short window where the server carries registry mods the
@@ -435,8 +437,6 @@ five new jars and every client is kicked on the next connect.
 ## Open questions the tests must answer
 
 - Does the gazebo survive Towns & Towers' village pools? (test 21)
-- Does Daily Quests progress cross worlds? (test 27)
-- Which Daily Quests types are impossible with our mod set? (test 25)
 - Do Easy NPC skins resolve for offline names? (test 33)
 - Does anything let a Visitor act inside a claim? (tests 16, 35)
 - Does a secondbrain client jar tolerate a server without the mod? (test 40)
