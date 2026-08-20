@@ -458,6 +458,18 @@ in
     appImageEnable = true; # Enable AppImage support
     gamemodeEnable = true; # Enable GameMode for performance optimization
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
+    bluetoothDisableUsbAutosuspend = true; # MT7922 BT: stop USB runtime-suspend killing the HFP mic
+
+    # Fifine K669B sits ~40 cm away, so it picks up the steady hum of DESK, the
+    # NAS and the X13. Measured noise floor -48.7 dBFS against a -16.4 dBFS
+    # voice peak; RNNoise plus a high-pass cleans that up without a boom arm.
+    micNoiseSuppression = {
+      target = "alsa_input.usb-0c76_USB_PnP_Audio_Device-00.mono-fallback";
+      nodeName = "mic_clean";
+      description = "Fifine K669B (clean)";
+      highPassHz = 90;
+      vadThreshold = 50.0;
+    };
     joycondEnable = true; # Enable Joy-Con controller support (joycond daemon)
 
     # === Tailscale Mesh VPN ===

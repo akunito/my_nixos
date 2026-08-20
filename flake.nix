@@ -81,8 +81,29 @@
     # Zen Browser — not in nixpkgs (NixOS/nixpkgs#327982). This flake wraps the
     # upstream build with nixpkgs' wrapFirefox, so `.override { extraPrefsFiles }`
     # works — that's what lets user/app/browser/zen.nix ship the Sine bootloader.
+    #
+    # PINNED 2026-08-20 to 044be1a. Newer revs make the Home-Manager module reach
+    # firefox/wrapper.nix with `ffmpeg_8`:
+    #   error: function 'anonymous lambda' called with unexpected argument
+    #   'ffmpeg_8' ... Did you mean ffmpeg_7?
+    #
+    # The follows below is a red herring — it only sets the nixpkgs used to build
+    # zen itself. The module calls `pkgs.wrapFirefox` with HOME MANAGER's pkgs,
+    # which is pkgs-STABLE, and 25.11's wrapper.nix takes ffmpeg_7 only. Unstable
+    # already takes both ffmpeg_7 and ffmpeg_8, so stable is the broken side —
+    # pointing the follows at nixpkgs-stable makes this worse, not better.
+    # Breaks Home Manager only; the system build is unaffected.
+    #
+    # Because `install.sh -u` runs `nix flake update`, leaving this unpinned
+    # re-breaks HM on every update. Drop the rev when nixpkgs-stable is bumped to
+    # a release whose firefox/wrapper.nix accepts ffmpeg_8. Check with:
+    #   grep -n '^  ffmpeg' "$(nix eval --impure --raw --expr \
+    #     '(builtins.getFlake "/home/akunito/.dotfiles").inputs.nixpkgs-stable.outPath')\
+    #     /pkgs/applications/networking/browsers/firefox/wrapper.nix"
+    # then verify with:
+    #   nix eval --impure --raw .#homeConfigurations.DESK.activationPackage.drvPath
     zen-browser = {
-      url = "github:0xc000022070/zen-browser-flake";
+      url = "github:0xc000022070/zen-browser-flake/044be1aba87c30d42568e817c78a94c1d8eacb14";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

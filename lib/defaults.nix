@@ -780,6 +780,34 @@
     laptopPowerTuningAggressive = false;   # Aggressive tier (PCIe ASPM force, powertop auto-tune)
     autoSuspendInhibit = false;            # Block idle auto-suspend (always-on desktop; Plasma/PowerDevil) — see system/hardware/inhibit-auto-suspend.nix
 
+    # Friendly names for USB audio devices that enumerate with a generic ident.
+    # Keyed by ALSA card name -- get it from `cat /proc/asound/cards`. Consumed
+    # by system/wm/pipewire.nix. Deliberately a global default rather than a
+    # per-profile flag: the rule matches hardware, so it is inert on machines
+    # where the device is not plugged in, and moving the mic to another host
+    # (e.g. LAPTOP_X13) just works with no profile edit.
+    audioDeviceRenames = {
+      "USB PnP Audio Device" = "Fifine K669B"; # Fifine K669B mic, USB 0c76:161e
+    };
+
+    # Bluetooth USB autosuspend. The kernel runtime-suspends BT dongles after 2s
+    # idle (btusb is built with enable_autosuspend=Y). On MediaTek MT7921/MT7922
+    # this destabilises the link: the radio powers down mid-session and HFP/SCO
+    # (headset mic) comes back desynced, forcing a headset power-cycle.
+    bluetoothDisableUsbAutosuspend = false;
+
+    # RNNoise mic cleanup, consumed by system/wm/pipewire.nix. null = off.
+    # Opt in per profile (not a global default like audioDeviceRenames: a chain
+    # whose target is absent still publishes a silent virtual source). Shape:
+    #   micNoiseSuppression = {
+    #     target = "alsa_input.<...>";   # node.name of the real source
+    #     nodeName = "mic_clean";        # node.name of the clean source
+    #     description = "My mic (clean)";
+    #     highPassHz = 90;               # optional, default 90
+    #     vadThreshold = 50.0;           # optional, default 50.0
+    #   };
+    micNoiseSuppression = null;
+
     # Bluetooth power-on-boot override
     bluetoothPowerOnBoot = true;           # Default preserves current behavior
 
