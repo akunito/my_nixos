@@ -169,7 +169,9 @@ fence. **The reefs arrive with the frontier world**, whenever it is created, and
 nowhere else. Do not promise them before then.
 
 A player running Patrix needs `AkuCraft-Patrix-fixes-1.zip` alongside it or the
-reef renders as huge planes. That is in the HD guide in #mc-guides.
+reef renders as huge planes. Published 2026-08-20 as its own #mc-guides thread
+(`1539901563684913203`), with the zip served from
+`http://100.64.0.6:8100/downloads/AkuCraft-Patrix-fixes-1.zip`.
 
 Staging keeps the same set for the next trial.
 Reef coordinates found with `/locate biome`, all in ungenerated ground at the
