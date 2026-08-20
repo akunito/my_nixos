@@ -57,7 +57,7 @@ reefs generated, so the caution was unnecessary — but note that
 `enableBiomes: false` also disables `generateDeepCoralReef`, i.e. the reef
 itself. Off, there are no reefs.
 
-**Patrix — the one real conflict, and it is fixed.** Patrix replaces
+**Patrix — the one real conflict, and the fix is free.** Patrix replaces
 `minecraft:block/coral_fan` and `coral_wall_fan` with its own 3D models, whose
 geometry reaches from -6 to 22 inside a one-block space because it is drawn for
 Patrix's own 32x art. Hybrid Aquatic's 58 coral fan models inherit those two
@@ -66,11 +66,15 @@ planes cutting through the seabed. Nothing was missing — the wrong SHAPE was
 being textured, which is why the client log only ever complained about eight
 shark plushies.
 
-`scripts/build-coral-fix-pack.py` builds an 18 KB pack that re-parents those 58
-models onto a private copy of the vanilla ones. Patrix keeps its 3D corals on
-vanilla blocks; the mod's corals get their own shape back. It touches nothing
-outside the `hybrid_aquatic` namespace, so its position in the load order does
-not matter.
+**The fix is the pack order: put Patrix at the BOTTOM of the selected resource
+packs**, below `fabric` (the mod assets). Verified in game on 2026-08-20 —
+corals correct, Patrix textures still applied everywhere else. A generated
+resource pack that re-parented the 58 models was written first and then
+deleted: it worked, but the order alone does the same job with nothing to
+maintain and nothing to distribute.
+
+Note the UI is displayed in reverse: the bottom of the Selected column is the
+FIRST entry in `options.txt`, and the lowest priority.
 
 **Every other shared parent was checked and is harmless.** A sweep of all
 installed mods found 1348 modded models inheriting a parent Patrix overrides.
@@ -119,10 +123,9 @@ Nothing here is done. In this order:
    `MODRINTH_PROJECTS` (a YAML block scalar on prod, one project per line):
    `hybrid-aquatic:1.6.9-fabric` and `biolith:3.0.14`. Lithostitched is already
    there. Then `docker compose up -d`.
-4. **Ship the coral fix.** Rebuild it against the shipped jar and put it in the
-   HD mrpack's `overrides/resourcepacks/` so new installs get it, and hand the
-   file to anyone already running Patrix. It is 18 KB and harmless to players
-   without Patrix.
+4. **Tell anyone using a texture pack of their own to keep it at the bottom of
+   the selected list.** That is the whole coral fix. It belongs in the HD guide
+   rather than in a file we distribute.
 5. `./scripts/sync-akucraft-automodpack.py --target prod`, then restart so
    AutoModpack regenerates its manifest. Check the new jar appears in
    `syncedFiles` **whole** — the filename has spaces and brackets.
@@ -132,7 +135,8 @@ Nothing here is done. In this order:
 
 ## Where it is now
 
-Staging only, `enableBiomes: true`, coral fix installed in `AkuCraft-STAGING-HD`.
+Staging only, `enableBiomes: true`, and `AkuCraft-STAGING-HD` renders it
+correctly with Patrix moved to the bottom of the selected packs.
 Reef coordinates found with `/locate biome`, all in ungenerated ground at the
 time: `deep_coral_reef` at `-1712 63 1920`, `coral_reef` at `2896 63 -3168`,
 `tropical_deep_coral_reef` at `3760 63 -3072`.
