@@ -438,6 +438,7 @@
     amdLACTdriverEnable = false; # Enable LACT (Linux AMD GPU Control Application) for AMD GPU management
     amdgpuSuspendWorkaround = false; # AINF-282: disable amdgpu runpm/bapm/aspm + pause lactd around sleep (RDNA 4 / Navi 48 SMU regression, kernel 6.17–7.0+)
     amdgpuDisableIps = false; # amdgpu.dcdebugmask=0x800 (DC_DISABLE_IPS): stop DMCUB wedging on resume (RDNA 4 INBOX0 HW Lock Ack flood, kernel 7.1.x)
+    amdgpuGttSizeMiB = null; # Cap amdgpu GTT (system RAM pinned by the GPU) in MiB. null = kernel default (half of RAM). Bounds how much must be evicted at suspend.
 
     # Display Manager feature flags
     greetdEnable = false; # Enable greetd + ReGreet (modern Wayland-native display manager)
