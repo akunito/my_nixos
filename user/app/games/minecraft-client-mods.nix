@@ -383,6 +383,50 @@ let
       url = "https://cdn.modrinth.com/data/guitPqEi/versions/78LmfH8Z/StorageDrawers-fabric-1.21.1-13.11.4.jar";
       sha512 = "1ec2f81b50708b610d0e7024d067ac630c0f9497307e68e1dc22ee41c6d196f2db3249cad6ab243f3192e73b6a569fb2936a96b9bf61a94ea67a643a5f5b6283";
     }
+    # Hybrid Aquatic, graduated 2026-08-20 after a staging trial. 136 sea
+    # creatures plus corals, anemones and sponges. Two things to know:
+    #
+    #   - it duplicates a good part of Naturalist. Both give sharks, jellyfish,
+    #     crabs, giant isopods, starfish, piranha, catfish and bass, in two
+    #     different art styles, and Naturalist cannot be split.
+    #   - its animals CANNOT be confined to the frontier world. Spawns are
+    #     injected per biome and both dimensions use the same biome ids, so
+    #     they arrive in the lived-in ocean too. Only the decoration is
+    #     frontier-only, and that comes free: corals are worldgen, and the
+    #     fenced Overworld will never generate another chunk.
+    #
+    # Its worldgen rides Lithostitched, the same system Terralith uses, and
+    # with biomes ON the reefs placed with no worldgen warning of any kind.
+    # Biolith comes along for biome placement; lithostitched had to join the
+    # client set for the first time, since Hybrid Aquatic declares it as a
+    # hard dependency and the allow-list fails closed.
+    #
+    # A texture pack that replaces vanilla models - Patrix does - must sit at
+    # the BOTTOM of the player's selected packs, or its coral_fan geometry is
+    # inherited by the mod's 58 coral fans and the reef renders as huge planes
+    # through the seabed. Documented in the HD guide.
+    {
+      name = "[1.21.1-Fabric] Hybrid Aquatic 1.6.9.jar";
+      url = "https://cdn.modrinth.com/data/HH4FjUqN/versions/F5POkJG0/%5B1.21.1-Fabric%5D%20Hybrid%20Aquatic%201.6.9.jar";
+      sha512 = "5dc6a76776f71ccd19a2913fb56ae128350285fe7e6b140472f6194ef3ef4f020f04f60e233f76309912a1e33fd14d046e4cb629569f8f9507b342a7fc1d7d63";
+    }
+    {
+      # Lithostitched, on the CLIENT. It has always been a server-side worldgen
+      # library here, so it was never in the client set - and the allow-list is
+      # fail-closed, so the client simply did not get it. Hybrid Aquatic
+      # declares it as a hard dependency, and Fabric refused to start with
+      # "requires version 1.5.0 or later of lithostitched, which is missing"
+      # (2026-08-20). The version must stay identical to the server's, which is
+      # why it sits here in syncedMods rather than among the client-only mods.
+      name = "lithostitched-1.7.13-fabric-21.1.jar";
+      url = "https://cdn.modrinth.com/data/XaDC71GB/versions/JWtSqSeY/lithostitched-1.7.13-fabric-21.1.jar";
+      sha512 = "895052dbfdbe65541eb3a0dc12950d803dcfd702872723dcb2c1d842cb12370f18e79b3543ad9e447e6c66caa2d99569329fec412c5645545c6698923f25f5ad";
+    }
+    {
+      name = "biolith-fabric-3.0.14.jar";
+      url = "https://cdn.modrinth.com/data/iGEl6Crx/versions/aBinwigO/biolith-fabric-3.0.14.jar";
+      sha512 = "3d0f05a9ae4b001f33437cfb789b1fd9d5a90dde1075197f9ea97fe9b5b01505c2936baf748df641b4476cb1bb30ad229926c3afc310800e7bef076186d8fd81";
+    }
   ];
 
   # Client-only mods: the server neither ships nor knows about these, they add
@@ -602,46 +646,6 @@ let
   # Still on trial: the Surveyor map-sharing stack, pending the two-player test
   # with komi. Everything else from the 2026-08-16 batch graduated below.
   trialMods = [
-    # Hybrid Aquatic, on trial from 2026-08-20. 105 sea creatures plus corals,
-    # anemones and sponges. Two things to judge in game, and neither is a crash:
-    #
-    #   - it duplicates a good part of Naturalist. Both give sharks, jellyfish,
-    #     crabs, giant isopods, starfish, piranha, catfish and bass, in two
-    #     different art styles, and Naturalist cannot be split.
-    #   - its animals CANNOT be confined to the frontier world. Spawns are
-    #     injected per biome and both dimensions use the same biome ids, so
-    #     they arrive in the lived-in ocean too. Only the decoration is
-    #     frontier-only, and that comes free: corals are worldgen, and the
-    #     fenced Overworld will never generate another chunk.
-    #
-    # Its worldgen rides Lithostitched, the same system Terralith uses, so
-    # there is no clash there. Biolith comes along for BIOME PLACEMENT only,
-    # and its page claims TerraBlender compatibility without mentioning
-    # Terralith - so the trial runs with `enableBiomes: false` in
-    # config/hybrid-aquatic.json, which keeps the creatures and the blocks and
-    # leaves biome placement, and therefore Biolith, doing nothing.
-    {
-      name = "[1.21.1-Fabric] Hybrid Aquatic 1.6.9.jar";
-      url = "https://cdn.modrinth.com/data/HH4FjUqN/versions/F5POkJG0/%5B1.21.1-Fabric%5D%20Hybrid%20Aquatic%201.6.9.jar";
-      sha512 = "5dc6a76776f71ccd19a2913fb56ae128350285fe7e6b140472f6194ef3ef4f020f04f60e233f76309912a1e33fd14d046e4cb629569f8f9507b342a7fc1d7d63";
-    }
-    {
-      # Lithostitched, on the CLIENT. It has always been a server-side worldgen
-      # library here, so it was never in the client set - and the allow-list is
-      # fail-closed, so the client simply did not get it. Hybrid Aquatic
-      # declares it as a hard dependency, and Fabric refused to start with
-      # "requires version 1.5.0 or later of lithostitched, which is missing"
-      # (2026-08-20). The version must stay identical to the server's.
-      # If Hybrid Aquatic ever graduates, this moves to syncedMods with it.
-      name = "lithostitched-1.7.13-fabric-21.1.jar";
-      url = "https://cdn.modrinth.com/data/XaDC71GB/versions/JWtSqSeY/lithostitched-1.7.13-fabric-21.1.jar";
-      sha512 = "895052dbfdbe65541eb3a0dc12950d803dcfd702872723dcb2c1d842cb12370f18e79b3543ad9e447e6c66caa2d99569329fec412c5645545c6698923f25f5ad";
-    }
-    {
-      name = "biolith-fabric-3.0.14.jar";
-      url = "https://cdn.modrinth.com/data/iGEl6Crx/versions/aBinwigO/biolith-fabric-3.0.14.jar";
-      sha512 = "3d0f05a9ae4b001f33437cfb789b1fd9d5a90dde1075197f9ea97fe9b5b01505c2936baf748df641b4476cb1bb30ad229926c3afc310800e7bef076186d8fd81";
-    }
     # Surveyor: a map backend that keeps explored terrain ON THE SERVER and
     # shares it between opt-in groups, across dimensions. Being trialled for
     # the friends/clans map features - position sharing, area sharing, and
@@ -722,6 +726,35 @@ let
       name = "DistantHorizons-3.2.0-b-1.21.1-fabric-neoforge.jar";
       url = "https://cdn.modrinth.com/data/uCdwusMi/versions/ZpKb4kZp/DistantHorizons-3.2.0-b-1.21.1-fabric-neoforge.jar";
       sha512 = "d4199f92f992fbd2c75a3b0e4e81c8a98bee889013f7347f2149ffa62c86748bde22135e9b2c82a10875db94fa576571c661c5ee16d2f567bd8a93d6f255fd22";
+    }
+    # What Patrix actually needs to render as designed. It ships FIVE
+    # OptiFine-format feature sets and Minecraft understands none of them on
+    # its own:
+    #
+    #   ctm   25198 files  -> Continuity            (in clientMods, everyone)
+    #   cem      78 models -> Entity Model Features  <- these two
+    #   random  114 files  -> Entity Texture Features
+    #   anim     11 files  -> Animatica              (not installed; 11 files)
+    #   colors  color.properties -> Colormatic       (not installed)
+    #
+    # Without EMF the game draws Patrix's 32x entity texture on the VANILLA
+    # model, and the UV layout belongs to the .jem model that is being ignored -
+    # which is why the witch's hat came out as a flat purple plane through her
+    # head (2026-08-20). 78 entities are affected, from allay to zombified
+    # piglin, and 1193 entity textures come from the pack.
+    #
+    # EMF requires ETF, so both. Client-only, no registry entries. The cost is
+    # per VISIBLE entity, not per world: nothing alone in a cave, noticeable in
+    # a mob farm.
+    {
+      name = "entity_texture_features_1.21-fabric-7.1.jar";
+      url = "https://cdn.modrinth.com/data/BVzZfTc1/versions/udcdeUXw/entity_texture_features_1.21-fabric-7.1.jar";
+      sha512 = "ee8ef05dab35287e4df9a5fac0f2b6379da217d79756620d9e5243e72f6e9033ada6f677fd520e70c4c655df0c8c808d785f7f14d25af0c00371047311602c40";
+    }
+    {
+      name = "entity_model_features-3.2.4-1.21-fabric.jar";
+      url = "https://cdn.modrinth.com/data/4I1XuqiY/versions/NLDNY8vg/entity_model_features-3.2.4-1.21-fabric.jar";
+      sha512 = "466bcc2bf542cafde4d308902bce030e3c0ac1719af327f41e6c16833d2fcfedbd6fdebb2ce323fb14e5cdc75fe6f6ff2ebb6f77a53c5d3af1e4c83eff786f0b";
     }
     {
       # Not Enough Animations: eating, drinking, climbing and the rest, shown
