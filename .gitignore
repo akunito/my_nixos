@@ -155,3 +155,7 @@ yarn.lock
 *.rar
 *.tar
 *.zip
+# ...except the one archive that IS source: a 30 KB resource pack built from
+# the AkuCraft mod jars by scripts/build-patrix-fix-pack.py. It cannot be
+# fetched from anywhere and the flake only sees tracked files.
+!user/app/games/assets/*.zip

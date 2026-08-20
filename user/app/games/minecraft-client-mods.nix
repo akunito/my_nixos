@@ -880,6 +880,37 @@ let
     }
   ];
 
+  # Patrix's collateral damage on modded blocks, undone.
+  #
+  # Patrix redraws 421 vanilla block models, and a vanilla model is also a
+  # PARENT: 87 modded models inherit one that Patrix has genuinely moved, then
+  # supply their own 16x texture. The shape and the texture disagree and the
+  # block comes out deformed - Hybrid Aquatic's coral fans as huge angled
+  # planes through the seabed, and the same trap set for Supplementaries'
+  # potted plants, its redstone dust and every modded crop.
+  #
+  # Built by scripts/build-patrix-fix-pack.py, which measures rather than
+  # guesses: it compares each Patrix model's bounding box against vanilla and
+  # only acts when a face has moved by more than half a pixel. Patrix nudges
+  # pressure plates by 0.01 to stop z-fighting; the coral wall fan moves by
+  # 2.77. Of the 421, 181 clear that bar and 8 of those are actually inherited
+  # by a mod.
+  #
+  # The fix re-parents the mod's models onto a private copy of the VANILLA
+  # shape under our own namespace, so Patrix keeps its 3D corals and pots on
+  # vanilla blocks. It touches nothing in the minecraft namespace, so its
+  # position in the resource pack order does not matter - unlike Patrix
+  # itself, which has to sit on TOP or the packs above it show through.
+  #
+  # It is committed as a built artifact because it is derived from the mod
+  # jars, which only exist after AutoModpack has run. Rebuild it after any
+  # change to the synced mod set and bump the -N suffix; the sweep below
+  # removes the older copy.
+  hdFixPack = {
+    name = "AkuCraft-Patrix-fixes-1.zip";
+    src = ./assets/AkuCraft-Patrix-fixes-1.zip;
+  };
+
   hdResourcePack = {
     name = "Better-Leaves-9.5.zip";
     url = "https://cdn.modrinth.com/data/uvpymuxq/versions/XWtayRKd/Better-Leaves-9.5.zip";
@@ -1007,8 +1038,16 @@ let
           enableShaders=true
           shaderPack=${hdShaderDefault}
         ''; }
+      # The pack ORDER is the whole configuration, and it is lowest priority
+      # first. Patrix has to be at the TOP: anything above it shows through,
+      # and Continuity's own "Default Connected Textures" pack was doing
+      # exactly that - it ships VANILLA 16x glass, sandstone and bookshelf art
+      # and Patrix covers all three itself, so it is left OFF. Only the fix
+      # pack goes above Patrix, and only because nothing else may.
+      # Better-Leaves is installed but not enabled for the same reason: it
+      # carries 11 vanilla-namespace leaf textures at 16x.
       { path = "${dir}/minecraft/options.txt"; src = pkgs.writeText "options.txt" ''
-          resourcePacks:["vanilla","file/${hdResourcePack.name}"]
+          resourcePacks:["vanilla","fabric","moonlight:merged_pack","continuity:glass_pane_culling_fix","file/${(builtins.head hdPacks).name}","file/${hdFixPack.name}"]
           graphicsMode:2
           renderDistance:12
           simulationDistance:8
@@ -1028,6 +1067,13 @@ let
     ++ [{
       path = "${dir}/minecraft/resourcepacks/${hdResourcePack.name}";
       src = pkgs.fetchurl { inherit (hdResourcePack) url sha512; };
+    }]
+    ++ [{
+      path = "${dir}/minecraft/resourcepacks/${hdFixPack.name}";
+      src = hdFixPack.src;
+      sweep = "${dir}/minecraft/resourcepacks";
+      family = "AkuCraft-Patrix-fixes";
+      keep = hdFixPack.name;
     }]
     ++ map (m: {
       path = "${dir}/minecraft/mods/${m.name}"
