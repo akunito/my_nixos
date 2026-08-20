@@ -148,6 +148,11 @@ SERVERS = {
         "dir": "/home/akunito/.homelab/minecraft-staging",
         "address": "100.64.0.6:25599",
         "quiet": True,
+        # Only MCadmin may /start and /stop it from Discord: a test session can
+        # be mid-experiment, and a helpful player "booting the server back up"
+        # (or stopping the "forgotten" one) would trample it. Telegram is not
+        # gated - that group has no roles and is admins-only anyway.
+        "admin_only": True,
     },
 }
 
@@ -420,8 +425,8 @@ blocks past your walls. Inside a normal base this is already true."""
 HELP_TEXT = """AkuCraft bot commands:
 /status - servers status + who is online
 /players - who is playing right now
-/start - boot the server if it is stopped
-/stop - stop the server (refuses if players online)
+/start - boot the server if it is stopped (staging: MCadmin only)
+/stop - stop the server (refuses if players online; staging: MCadmin only)
 /map - your private map of the world you have explored
 /ask <question> - ask about the server (Discord only, see below)
 /link <name> - tell /ask which Minecraft account is yours (Discord only)
@@ -738,16 +743,29 @@ def tail_logs(name):
         time.sleep(15)
 
 
-def pick_targets(arg):
+def pick_targets(arg, admin=True):
+    # None means "exists but you may not touch it" - callers turn that into a
+    # role message instead of the misleading "No such server."
     if arg in SERVERS:
+        if SERVERS[arg].get("admin_only") and not admin:
+            return None
         return [arg]
     if not arg:
-        return list(SERVERS)
+        # Bare /start and /stop silently skip admin-only servers for players:
+        # they mean "the server", not the staging box they may not even know of.
+        return [n for n, s in SERVERS.items() if admin or not s.get("admin_only")]
     return []
 
 
-def cmd_start(arg):
-    targets = pick_targets(arg)
+def denied(arg):
+    return (f"\U0001F512 {SERVERS[arg]['label']} is for testing - only an "
+            "**MCadmin** can start or stop it.")
+
+
+def cmd_start(arg, admin=True):
+    targets = pick_targets(arg, admin)
+    if targets is None:
+        return denied(arg)
     if not targets:
         return "No such server."
     replies = []
@@ -764,10 +782,12 @@ def cmd_start(arg):
     return "\n".join(replies)
 
 
-def cmd_stop(arg):
+def cmd_stop(arg, admin=True):
     if STOP_LOCK_REASON:
         return f"\U0001F512 Stopping is disabled right now: {STOP_LOCK_REASON}"
-    targets = pick_targets(arg)
+    targets = pick_targets(arg, admin)
+    if targets is None:
+        return denied(arg)
     if not targets:
         return "No such server."
     replies = []
@@ -805,7 +825,8 @@ def cmd_status():
         elif h == "starting":
             lines.append(f"\U0001F7E1 {srv['label']}: starting...")
         else:
-            lines.append(f"\U0001F534 {srv['label']}: offline - /start {name}")
+            hint = " (MCadmin only)" if srv.get("admin_only") else ""
+            lines.append(f"\U0001F534 {srv['label']}: offline - /start {name}{hint}")
     return "\n".join(lines)
 
 
@@ -819,14 +840,16 @@ def cmd_players():
     return "\n".join(lines) if lines else "No server is running. /start boots one."
 
 
-def handle(text):
+def handle(text, admin=True):
+    # admin=True is the Telegram default: that chat is gated to the private
+    # AkuCraft group. Discord passes the caller's real role membership.
     parts = text.split()
     cmd = parts[0].split("@")[0].lstrip("/").lower()
     arg = parts[1].lower() if len(parts) > 1 else ""
     if cmd == "start":
-        return cmd_start(arg)
+        return cmd_start(arg, admin)
     if cmd == "stop":
-        return cmd_stop(arg)
+        return cmd_stop(arg, admin)
     if cmd == "status":
         return cmd_status()
     if cmd == "players":
@@ -988,7 +1011,10 @@ def live_state():
             who = ", ".join(sorted(players)) if players else "nobody"
             lines.append(f"{srv['label']}: UP ({srv['address']}). Online now: {who}.")
         elif st == "absent":
-            lines.append(f"{srv['label']}: STOPPED. Anyone can start it with /start.")
+            if srv.get("admin_only"):
+                lines.append(f"{srv['label']}: STOPPED. Only an MCadmin can start it.")
+            else:
+                lines.append(f"{srv['label']}: STOPPED. Anyone can start it with /start.")
         else:
             lines.append(f"{srv['label']}: {st} (starting or unhealthy).")
     return "\n".join(lines) or "unknown", online
@@ -1660,8 +1686,10 @@ def build_discord_client(with_members=True, with_content=True):
             # Discord's 3s response deadline - defer, then follow up.
             await interaction.response.defer(thinking=True)
             text = "/" + name + (f" {server}" if server else "")
+            roles = {r.name for r in getattr(interaction.user, "roles", [])}
+            admin = bool(roles & ASK_ADMIN_ROLES)
             reply = await asyncio.get_running_loop().run_in_executor(
-                None, handle, text)
+                None, handle, text, admin)
             parts = chunk_text(reply or "Unknown command.", 1900)
             await interaction.followup.send(parts[0])
             for extra in parts[1:]:
