@@ -184,7 +184,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Hardware
 
-- **system/hardware/amdgpu-suspend-workaround.nix**: AMD GPU suspend/resume workarounds. Two INDEPENDENT mitigations for two
+- **system/hardware/amdgpu-suspend-workaround.nix**: AMD GPU suspend/resume workarounds. Three INDEPENDENT mitigations for three *Enabled when:* `99- prefix`
 - **system/hardware/bluetooth.nix**: hardware.bluetooth.enable = true; *Enabled when:* `systemSettings.bluetoothDisableUsbAutosuspend or false`
 - **system/hardware/drives.nix**: Enable SSH server to unlock LUKS drives on BOOT *Enabled when:*
    - `systemSettings.bootSSH == true`
@@ -316,7 +316,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/wm/gnome-keyring.nix**: The gcr package ships its own systemd *user* units (gcr-ssh-agent.socket
 - **system/wm/hyprland.nix**: Import wayland config
 - **system/wm/keyd.nix**: Enable keyd service for keyboard remapping *Enabled when:* `userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true || userSettings.wm == "plasma6" || userSettings.wm == "hyprland" || (systemSettings ? wmEnableHyprland && systemSettings.wmEnableHyprland == true)`
-- **system/wm/pipewire.nix**: Pipewire
+- **system/wm/pipewire.nix**: ALSA card name -> friendly name. See systemSettings.audioDeviceRenames.
 - **system/wm/plasma6.nix**: CRITICAL: imports must be at top level, NOT inside lib.mkMerge or lib.mkIf *Enabled when:*
    - `KWallet PAM`
    - `userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true`
@@ -578,12 +578,17 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/akucraft-ai-handoff.md**: Handoff for building the AkuCraft AI work - villager conversations in MCA and a per-player Discord support assistant with usage limits
 - **docs/akunito/plans/akucraft-ai-prod-handoff.md**: What is built, what is verified, and the exact steps to take the AkuCraft AI work from staging to production
 - **docs/akunito/plans/akucraft-frontier-world.md**: Test plan and rollout plan for a second, harder survival world generated with Terralith, reachable from the existing world
+- **docs/akunito/plans/akucraft-hybrid-aquatic.md**: 136 sea creatures plus corals, trialled on staging; what it conflicts with, what was fixed, and exactly how to graduate it
 - **docs/akunito/plans/akucraft-player-map.md**: Design and phase-1 spike for a web map that shows only what each player has explored, built on Surveyor's data
+- **docs/akunito/plans/akucraft-quest-mods.md**: Research resolving Phase 10 of the AkuCraft roadmap - which quest mods exist for Fabric 1.21.1, verified against Modrinth and CurseForge, with the two roadmap unknowns settled
+- **docs/akunito/plans/akucraft-quests-staging-rollout.md**: Staging rollout plan and critical test list for adding Bountiful, Daily Quests and Easy NPC to AkuCraft, covering both the fenced Overworld and the frontier
 - **docs/akunito/plans/akucraft-roadmap-plan.md**: Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase
+- **docs/akunito/plans/akucraft-staging-error-audit.md**: Error audit of mc-mca-staging (2026-08-20) — ranked list of real issues vs benign noise, for fixing later
 - **docs/akunito/plans/akucraft-unified-storage.md**: One searchable inventory across every chest in a base, in vanilla style, plus what it does and does not do to Flan claim protection
+- **docs/akunito/plans/akucraft-worlds-and-maps.md**: Research into what extra worlds, community map downloads and dimension mods can be added to AkuCraft, given that Multiworld and ShadowBorders are already in production
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
 - **docs/akunito/plans/immich-compression-cutover-audit.md**: Documento para revisar ANTES de tocar producción. Aquí está exactamente qué se
-- **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (v2) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de la auditoría eliminados, con puertas de verificación y reversión quirúrgica
+- **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (script v2.1) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de las dos auditorías eliminados, con puertas de verificación y reversión quirúrgica
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
 - **docs/akunito/plans/plane-fork-customization-inventory.md**: **Built:** 2026-08-13 from `~/Projects/plane-up` @ `akunito/mobile` (`bcb1cfca9`), 26 commits over `v1.3.1`.
 - **docs/akunito/plans/plane-v1.4.0-upgrade.md**: **Status:** planned, not started · **Audited:** 2026-08-13 · **Ticket:** APLANE-1 (related)

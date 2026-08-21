@@ -392,7 +392,22 @@ in
         # are no tool_calls for the grammar to suppress. Verified against the
         # real request shape - 12/12 clean, optionalCommand still emitted.
         extra = {
-          timeout = 20;
+          # 10, not 20. Measured 2026-08-21: a TRUE cold start (backend stopped,
+          # socket still armed - the state DESK sits in 15 minutes after the last
+          # request) answers in 4.49s, and warm is 0.38s. So 10s clears every
+          # case where DESK is actually going to answer.
+          #
+          # What it really bounds is the case the comment above gets wrong.
+          # DESK asleep does NOT give "connection refused": llama-proxy.socket is
+          # socket-activated, so when DESK is awake the port always accepts, and
+          # when DESK is ASLEEP the SYN is simply never answered. Both hang.
+          # Refused only happens under `llama-lock` (gaming). So this timeout is
+          # the only thing standing between a sleeping desktop and a player
+          # staring at a silent villager.
+          timeout = 10;
+          # Retrying a timeout against the same dead socket just pays the wait
+          # again - 3 x 10s before the fallback even starts. Fail over instead.
+          num_retries = 0;
           response_format = { type = "json_object"; };
         }; }
       { name = "akucraft-villager-backup";
@@ -400,6 +415,18 @@ in
         apiBase = "https://api.deepseek.com/v1";
         envVar = "DEEPSEEK_KEY_INGAME"; }
     ];
+    # 0, not the module default of 2. The retry budget multiplies BEFORE any
+    # fallback runs, and the client on the other end has its own deadline:
+    # akucraft-bot's ASK_TIMEOUT is 60s. At num_retries=2 the primary alone
+    # burns 3 x 20s = 60s, so the bot gives up at the exact moment litellm
+    # would have started asking the backup - the fallback chain never runs and
+    # the player sees a failure. At 0: DeepSeek 20s, then Qwen 20s = 40s worst
+    # case, a clear 20s inside the bot's deadline.
+    #
+    # Retrying the same deployment after a timeout rarely helps anyway; the
+    # useful retry is a DIFFERENT provider, which is what the fallbacks are.
+    litellmNumRetries = 0;
+
     litellmFallbacks = {
       akucraft-support = [ "akucraft-support-backup" ];
       # GPU first, then DeepSeek, then the third-party backup if DeepSeek is
