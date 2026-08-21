@@ -415,17 +415,18 @@ in
         apiBase = "https://api.deepseek.com/v1";
         envVar = "DEEPSEEK_KEY_INGAME"; }
     ];
-    # 0, not the module default of 2. The retry budget multiplies BEFORE any
-    # fallback runs, and the client on the other end has its own deadline:
-    # akucraft-bot's ASK_TIMEOUT is 60s. At num_retries=2 the primary alone
-    # burns 3 x 20s = 60s, so the bot gives up at the exact moment litellm
-    # would have started asking the backup - the fallback chain never runs and
-    # the player sees a failure. At 0: DeepSeek 20s, then Qwen 20s = 40s worst
-    # case, a clear 20s inside the bot's deadline.
+    # 1, not the module default of 2. The retry budget multiplies BEFORE any
+    # fallback runs, and the client has its own deadline: akucraft-bot's
+    # ASK_TIMEOUT is 60s. At 2 the primary alone burns 3 x 20s = 60s, so the bot
+    # gave up at the exact moment litellm would have started asking the backup.
+    # At 1: 2 x 20s = 40s, leaving 20s for the fallback inside the deadline.
     #
-    # Retrying the same deployment after a timeout rarely helps anyway; the
-    # useful retry is a DIFFERENT provider, which is what the fallbacks are.
-    litellmNumRetries = 0;
+    # NOT 0. Zero would be right if the fallback chain were real, but
+    # `akucraft-support-backup` has no key - there is no Qwen subscription - so
+    # it answers AuthenticationError instantly and the fallback is decorative.
+    # With no working backup, one retry is the only resilience against a
+    # transient DeepSeek 429 or 5xx, and it still fits the budget.
+    litellmNumRetries = 1;
 
     litellmFallbacks = {
       akucraft-support = [ "akucraft-support-backup" ];

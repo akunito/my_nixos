@@ -1974,8 +1974,12 @@ def build_discord_client(with_members=True, with_content=True):
                 return
             ask_thread(thread.id, uid)
             await interaction.followup.send(
-                f"Answering in {thread.mention} — just keep typing there, no "
-                f"command needed. `/guide` when you are done to publish it.",
+                f"### 👉 Your answer is in {thread.mention}\n"
+                f"Open that thread — it is private, only you and the "
+                f"moderators can see it. The answer lands there a few seconds "
+                f"after this message.\n"
+                f"Keep typing in the thread to follow up, no command needed. "
+                f"`/guide` when you are done to publish it.",
                 ephemeral=True)
             await thread.send(f"**{interaction.user.display_name} asked:** {q}")
             await answer_into(thread, q, interaction.user, f"t{thread.id}",
