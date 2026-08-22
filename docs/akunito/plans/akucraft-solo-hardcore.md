@@ -58,8 +58,25 @@ login, deshaciendo la muerte permanente en silencio.
 
 Empezar de cero es `./newrun.sh`, a mano. Archiva `data/world` en
 `runs/world-<fecha>/` — **nunca borra** — arranca un mundo nuevo y relanza la
-pregeneración. Sin `SEED` en el compose, archivar el mundo *es* cambiar de
-semilla: cada run se explora de cero sin configurar nada.
+pregeneración, dejando al lado un `.txt` con semilla, días sobrevividos y causa
+de muerte.
+
+```
+./newrun.sh                         mapa nuevo (semilla aleatoria)
+./newrun.sh --same-seed             MISMO mapa, sin rastro de la run anterior
+./newrun.sh --seed 123456           un mapa concreto
+./newrun.sh --spawn 1712 -1680      mueve el spawn del mundo
+./newrun.sh --no-pregen  --yes      sin pregenerar · sin preguntar (ssh)
+```
+
+`--same-seed --spawn` es "el mismo mapa desde otro sitio": el terreno lo
+determina la semilla, así que es idéntico, pero no queda nada construido y
+empiezas en otra región. Usado en la run #2. `SEED` va por entorno del shell
+(`MC_SEED`), no por `.env`, que aquí es sólo para secretos.
+
+La `Y` de `--spawn` es orientativa: al entrar sin cama el juego busca la
+superficie segura cerca del punto de spawn (`PlayerRespawnLogic`), así que
+basta con dar unas coordenadas en tierra firme.
 
 Dos trampas que el script ya cubre:
 
@@ -187,6 +204,19 @@ nombres distinguen mayúsculas: `akunito` en minúsculas es otro jugador
 Para abrirlo a alguien, añade su UUID offline al fichero y
 `docker exec minecraft-solo rcon-cli whitelist reload`. Para desactivarlo,
 `ENABLE_WHITELIST: "FALSE"` en el compose.
+
+## Historial de runs
+
+| Run | Semilla | Spawn | Días | Fin |
+|---|---|---|---|---|
+| 1 | `1020210412285842058` | 16, -48 (`terralith:lavender_valley`) | 8 | creeper |
+| 2 | `1020210412285842058` (misma) | 1712, -1680 (`minecraft:forest`) | — | en curso |
+
+Comprobación de que la run 2 es el mismo mapa: el `lavender_valley` del spawn
+viejo sigue en su sitio, a 2036 bloques del nuevo — exactamente la diagonal
+entre ambos puntos. El mundo pasó de 817 MB a 4,4 MB, y el certificado de
+AutoModpack no se toca porque vive fuera de `world/`, así que el fingerprint
+sigue siendo el mismo y a nadie se le vuelve a pedir.
 
 ## AutoModpack — el fingerprint
 
