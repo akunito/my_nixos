@@ -739,7 +739,14 @@ let
   # AkuCraft Creative (:25566) - three people building, private like solo. Its
   # own instance for the same reason: 82 server mods against solo's 78 and
   # prod's ~104, and AutoModpack hands out a different set per server.
-  creativeAddress = "100.64.0.6:25566";
+  # En NAS_PROD desde 2026-08-22, no en el VPS. El host del NAS tiene
+  # tailscale0 con 100.64.0.1, así que sigue siendo sólo-tailnet.
+  #
+  # ⚠️ knownHosts de AutoModpack se indexa por HOSTNAME, no por puerto, así que
+  # este cambio hace que cada cliente vuelva a pedir el fingerprint una vez y
+  # re-descargue el modpack. El fingerprint EN SÍ no cambia
+  # (cc08a279…68f733): el certificado viajó con el data/.
+  creativeAddress = "100.64.0.1:25566";
 
   # Which instances this machine gets. Not every machine should hold every
   # server: DESK_A is Aga's, and seeding it an instance pointed at a private

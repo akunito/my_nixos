@@ -52,21 +52,25 @@ import sys
 REPO = pathlib.Path(__file__).resolve().parent.parent
 NIX = REPO / "user/app/games/minecraft-client-mods.nix"
 
+# (container, data dir, ssh host). Creative moved to NAS_PROD on 2026-08-22,
+# so the host is no longer a constant.
+VPS = ["ssh", "-A", "-p", "56777", "akunito@100.64.0.6"]
+NAS = ["ssh", "-A", "akunito@100.64.0.1"]
+
 TARGETS = {
-    # container            data dir on the VPS
-    "prod":    ("minecraft",      "~/.homelab/minecraft/data"),
-    "staging": ("mc-mca-staging", "~/.homelab/backups/mca-staging"),
+    # container            data dir                    host
+    "prod":    ("minecraft",      "~/.homelab/minecraft/data", VPS),
+    "staging": ("mc-mca-staging", "~/.homelab/backups/mca-staging", VPS),
     # Solo runs a SUBSET of staging's jars (78 vs 99, plus chunky), and that
     # needs no solo-specific list: the allow-list below is server_jars
     # INTERSECT client_ok, so the 22 mods solo does not have simply never come
     # up, and chunky - server-side, no registry entries - lands in the withheld
     # pile where it belongs. This is the property that makes the design
     # drift-resistant, so do not "fix" it by hardcoding a per-target list.
-    "solo":    ("minecraft-solo",  "~/.homelab/minecraft-solo/data"),
-    "creative": ("minecraft-creative", "~/.homelab/minecraft-creative/data"),
+    "solo":    ("minecraft-solo",  "~/.homelab/minecraft-solo/data", VPS),
+    "creative": ("minecraft-creative",
+                 "/mnt/ssdpool/docker/compose/gameservers/akucraft-creative/data", NAS),
 }
-
-SSH = ["ssh", "-A", "-p", "56777", "akunito@100.64.0.6"]
 
 
 def nix_lists():
@@ -93,8 +97,8 @@ def nix_lists():
     return out
 
 
-def remote(script, capture=True):
-    r = subprocess.run(SSH + ["bash -s"], input=script, text=True,
+def remote(script, ssh, capture=True):
+    r = subprocess.run(ssh + ["bash -s"], input=script, text=True,
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                        timeout=600)
     if r.returncode != 0:
@@ -111,7 +115,7 @@ def main():
                     help="kick clients that do not have AutoModpack installed")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
-    container, _ = TARGETS[args.target]
+    container, _, ssh = TARGETS[args.target]
 
     lists = nix_lists()
     # Mods a client is known to need. trialMods only exist on staging, but
@@ -128,9 +132,9 @@ def main():
     # became four tokens, none of which matched the nix entry, so the jar was
     # silently withheld from every client - the same failure mode as the
     # DoggyTalents glob, arrived at from the other direction (2026-08-20).
-    server_jars = [j for j in remote(
+    server_jars = [j for j in remote(  # noqa: E501
         f"export DOCKER_HOST=unix:///run/user/1000/docker.sock\n"
-        f"docker exec {container} ls /data/mods").split("\n") if j.strip()]
+        f"docker exec {container} ls /data/mods", ssh).split("\n") if j.strip()]
     exclude = sorted(j for j in server_jars if j not in client_ok)
 
     allow = sorted(j for j in server_jars if j in client_ok)
@@ -173,7 +177,7 @@ def main():
     # rebuilding syncedFiles from jars alone silently threw it away.
     existing = remote(
         f"export DOCKER_HOST=unix:///run/user/1000/docker.sock\n"
-        f"docker exec {container} cat /data/automodpack/automodpack-server.json")
+        f"docker exec {container} cat /data/automodpack/automodpack-server.json", ssh)
     try:
         keep = [f for f in json.loads(existing).get("syncedFiles", [])
                 if not f.startswith("/mods/")]
@@ -227,7 +231,7 @@ rm -f /tmp/patch.$$
 docker exec -i "$C" sh -c 'cat > /data/automodpack/automodpack-server.json' < /tmp/am.$$
 rm -f /tmp/am.$$
 echo "config patched"
-""".replace("{cfg_patch}", cfg_patch), capture=False)
+""".replace("{cfg_patch}", cfg_patch), ssh, capture=False)
 
     print("\nDone. Restart the server so AutoModpack regenerates its manifest:")
     print(f"  ssh -A -p 56777 akunito@100.64.0.6 "

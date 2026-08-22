@@ -26,6 +26,7 @@ to whichever transport asked.
 import json
 import os
 import re
+import shlex
 import subprocess
 import threading
 import time
@@ -184,8 +185,12 @@ SERVERS = {
     "creative": {
         "label": "Creative",
         "container": "minecraft-creative",
-        "dir": "/home/akunito/.homelab/minecraft-creative",
-        "address": "100.64.0.6:25566",
+        # On NAS_PROD since 2026-08-22, reached over ssh. Note the NAS sleeps
+        # 23:00-16:00, so /start will fail while it is suspended - that is the
+        # machine being asleep, not the bot being broken.
+        "ssh_host": "akunito@100.64.0.1",
+        "dir": "/mnt/ssdpool/docker/compose/gameservers/akucraft-creative",
+        "address": "100.64.0.1:25566",
         "quiet": True,
         "admin_only": True,
         "private": True,
@@ -602,18 +607,44 @@ def run(cmd, timeout=30, cwd=None):
         return 1, str(e)
 
 
-def health(container):
-    rc, out = run(["docker", "inspect", "-f", "{{.State.Health.Status}}", container], 15)
+def dcmd(server, args):
+    """A docker command for this server, wherever its engine lives.
+
+    Creative moved to the NAS on 2026-08-22 because the VPS could not hold
+    three worlds - the kernel OOM killer took 44 java processes in 30 days and
+    swap was at 100%. The bot still runs here, so it reaches that engine over
+    ssh.
+
+    DOCKER_HOST is set explicitly rather than relying on the remote login
+    profile: a daemon gets a non-interactive shell, and depending on someone's
+    .zshrc for the socket path is how this breaks silently at 3am.
+    """
+    host = server.get("ssh_host")
+    if not host:
+        return args
+    dh = server.get("docker_host", "unix:///run/user/1000/docker.sock")
+    return ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8",
+            "-o", "StrictHostKeyChecking=accept-new", host,
+            "DOCKER_HOST=" + dh + " " + " ".join(args)]
+
+
+def health(server):
+    rc, out = run(dcmd(server, ["docker", "inspect", "-f",
+                                "{{.State.Health.Status}}", server["container"]]), 20)
     return out if rc == 0 else "absent"
 
 
-def rcon(container, command):
-    rc, out = run(["docker", "exec", container, "rcon-cli", command], 20)
+def rcon(server, command):
+    # The command is quoted for the remote shell when this server is remote;
+    # locally the list form needs no quoting.
+    args = ["docker", "exec", server["container"], "rcon-cli",
+            shlex.quote(command) if server.get("ssh_host") else command]
+    rc, out = run(dcmd(server, args), 25)
     return out if rc == 0 else ""
 
 
-def online_players(container):
-    out = rcon(container, "list")
+def online_players(server):
+    out = rcon(server, "list")
     m = re.search(r"players online:\s*(.*)$", out)
     if not m or not m.group(1).strip():
         return set()
@@ -626,6 +657,13 @@ def online_players(container):
 
 
 def compose(server, action):
+    flag = " -d" if action == "up" else ""
+    if server.get("ssh_host"):
+        dh = server.get("docker_host", "unix:///run/user/1000/docker.sock")
+        return run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8",
+                    "-o", "StrictHostKeyChecking=accept-new", server["ssh_host"],
+                    f"cd {shlex.quote(server['dir'])} && DOCKER_HOST={dh} "
+                    f"docker compose {action}{flag}"], 240)
     return run(["docker-compose", "-f", server["dir"] + "/docker-compose.yml", action] +
                (["-d"] if action == "up" else []), 180, cwd=server["dir"])
 
@@ -698,7 +736,7 @@ def pregenerating(server):
     Any server without chunky answers with an unknown-command error, which does
     not contain the phrase, so this is safe to ask of all of them.
     """
-    return "Task running" in (rcon(server["container"], "chunky progress") or "")
+    return "Task running" in (rcon(server, "chunky progress") or "")
 
 
 def public_servers():
@@ -722,7 +760,7 @@ def monitor():
         for name, srv in SERVERS.items():
             st = STATES[name]
             try:
-                is_online = health(srv["container"]) == "healthy"
+                is_online = health(srv) == "healthy"
                 with LOCK:
                     prev = st.online
                     if is_online != prev:
@@ -737,7 +775,7 @@ def monitor():
                         st.players = set()
                         continue
 
-                players = online_players(srv["container"])
+                players = online_players(srv)
                 with LOCK:
                     if st.players != players and st.online:
                         joined = {p for p in players - st.players if not hidden(p)}
@@ -785,10 +823,19 @@ def monitor():
 
 def tail_logs(name):
     srv = SERVERS[name]
+    # A remote engine is not followed. `docker logs -f` over ssh is a
+    # long-lived pipe that dies every time the NAS suspends at 23:00, and the
+    # only thing it feeds is announcements - which a "quiet" server suppresses
+    # anyway. Joins, leaves and online state still work: those come from
+    # monitor(), which polls.
+    if srv.get("ssh_host"):
+        log(f"{name}: remote engine, not following logs "
+            f"(deaths/advancements are announcements only, and it is quiet)")
+        return
     info = re.compile(r"\[Server thread/INFO\]: (.*)$")
     adv = re.compile(r"^(\S+) has (?:made the advancement|completed the challenge|reached the goal) (.+)$")
     while True:
-        if health(srv["container"]) == "absent":
+        if health(srv) == "absent":
             time.sleep(30)
             continue
         try:
@@ -857,7 +904,7 @@ def cmd_start(arg, admin=True):
     replies = []
     for name in targets:
         srv = SERVERS[name]
-        h = health(srv["container"])
+        h = health(srv)
         if h == "healthy":
             replies.append(f"\U0001F7E2 {srv['label']} is already running.")
         elif h == "starting":
@@ -879,7 +926,7 @@ def cmd_stop(arg, admin=True):
     replies = []
     for name in targets:
         srv = SERVERS[name]
-        if health(srv["container"]) != "healthy":
+        if health(srv) != "healthy":
             replies.append(f"\U0001F534 {srv['label']} is not running.")
             continue
         # Hidden testers are excluded from the decision, not just from the
@@ -887,7 +934,7 @@ def cmd_stop(arg, admin=True):
         # and a generic "someone is online" while /players says nobody is worse
         # than the cost: the only person who can be kicked this way is the
         # admin on his own alt, who can start the server again.
-        players = {p for p in online_players(srv["container"]) if not hidden(p)}
+        players = {p for p in online_players(srv) if not hidden(p)}
         if players:
             replies.append(f"\U0001F465 {srv['label']}: {len(players)} player(s) online "
                            f"({', '.join(sorted(players))}) - not stopping.")
@@ -903,9 +950,9 @@ def cmd_stop(arg, admin=True):
 def cmd_status(admin=True):
     lines = []
     for name, srv in (SERVERS if admin else public_servers()).items():
-        h = health(srv["container"])
+        h = health(srv)
         if h == "healthy":
-            players = {p for p in online_players(srv["container"]) if not hidden(p)}
+            players = {p for p in online_players(srv) if not hidden(p)}
             who = f" - online: {', '.join(sorted(players))}" if players else " - nobody on"
             lines.append(f"\U0001F7E2 {srv['label']}: UP ({srv['address']}){who}")
         elif h == "starting":
@@ -919,8 +966,8 @@ def cmd_status(admin=True):
 def cmd_players(admin=True):
     lines = []
     for name, srv in (SERVERS if admin else public_servers()).items():
-        if health(srv["container"]) == "healthy":
-            players = {p for p in online_players(srv["container"]) if not hidden(p)}
+        if health(srv) == "healthy":
+            players = {p for p in online_players(srv) if not hidden(p)}
             lines.append(f"{srv['label']}: " +
                          (", ".join(sorted(players)) if players else "nobody"))
     return "\n".join(lines) if lines else "No server is running. /start boots one."
@@ -1090,9 +1137,9 @@ def live_state():
     """
     lines, online = [], set()
     for srv in public_servers().values():
-        st = health(srv["container"])
+        st = health(srv)
         if st == "healthy":
-            players = {p for p in online_players(srv["container"]) if not hidden(p)}
+            players = {p for p in online_players(srv) if not hidden(p)}
             online |= players
             who = ", ".join(sorted(players)) if players else "nobody"
             lines.append(f"{srv['label']}: UP ({srv['address']}). Online now: {who}.")
@@ -1349,7 +1396,7 @@ def inventory_summary(mc_name):
     this only works while the player is online.
     """
     for srv in public_servers().values():
-        raw = rcon(srv["container"], f"data get entity {mc_name} Inventory")
+        raw = rcon(srv, f"data get entity {mc_name} Inventory")
         if not raw or "entity data" not in raw:
             continue           # offline, or the server is not up
         stacks, gear = {}, []
