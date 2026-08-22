@@ -24,7 +24,7 @@ cambia.
 | Contenedor · directorio | `minecraft-creative` · `~/.homelab/minecraft-creative` |
 | Mods | **82** |
 | Modo | creativo, `force-gamemode=true`, dificultad normal |
-| Jugadores | 3 · whitelist: `Akunito`, `Snizzy_Chan` |
+| Jugadores | 3 · whitelist **y op**: `Akunito`, `SnizzyChan` |
 | Mapa web | ninguno · mapa **en juego** sí (Xaero, vía AutoModpack) |
 | Fingerprint | `cc08a279cda108e22a6ff4bbf789ba09450c593bf9d1a34f3dc64df97968f733` |
 
@@ -58,6 +58,36 @@ seguirían cargándose junto a los nuevos. Archivado como
 servidor habría arrancado con **10 jugadores y 4G** en vez de 3 y 6G. Ahora el
 `.env` sólo lleva la contraseña de RCON y el compose es la única fuente de
 verdad. El viejo está en `.env.bak-old-creative-20260822`.
+
+## Spawn
+
+`-16, 131, 1292`, en `terralith:cloud_forest`. Elegido por lo que hay **alrededor**,
+no por el bioma en sí: a 96 bloques un `lush_valley` a y=164 — o sea 30+ bloques
+de desnivel real, que es de donde salen las cascadas —, un río a 115, un
+`blooming_valley` a 115 y `moonlight_valley` a 524. Bosque montañoso, exótico y
+colorido, con valles, en un radio caminable.
+
+La altura se midió, no se adivinó: al teleportar a y=190 el jugador cayó a
+130,003, así que la superficie está en 130. `setworldspawn` quedó en 131.
+
+## `SnizzyChan`, no `Snizzy_Chan`
+
+La whitelist se creó con `Snizzy_Chan` y su launcher manda **`SnizzyChan`**. En
+modo offline son **dos jugadores distintos**:
+
+```
+SnizzyChan   993e7eed-5b25-398f-99ce-6a5f358d3c02   <- lo que manda su cliente
+Snizzy_Chan  e4116f9c-8175-3b02-8907-134509b06997
+```
+
+Se habría llevado un rechazo en el primer intento. El nombre bueno es el de
+`~/.local/share/FreesmLauncher/accounts.json` en su máquina, que es la única
+fuente de verdad de lo que el cliente envía.
+
+`ops.json` se escribió **a mano** por lo mismo: `/op <nombre>` resuelve contra
+Mojang igual que `whitelist add` y habría guardado el UUID *online* de un
+desconocido. Ambos ficheros se escribieron con el servidor **parado**, porque
+al apagarse los reescribe desde memoria y se habría comido la edición.
 
 ## Instancias por máquina
 
@@ -99,8 +129,17 @@ trabajando, así que puede correr toda la noche con nadie dentro.
 
 ## Pendiente
 
-- **Desplegar a DESK_A** cuando esté comprobado en DESK, y limpiar allí las
-  instancias que sobren.
+- ~~Desplegar a DESK_A~~ **hecho 2026-08-22**. `AkuCraft-CREATIVE-HD` sembrada
+  y verificada contra la de DESK: shaderpacks, shader activo y Eclipse (751
+  ficheros, 50 MB) idénticos; `options.txt` sólo difiere en las nubes y un
+  keybind de MCA que su juego descartará al arrancar. `AutomaticJava=true`,
+  igual que su instancia de prod que ya funciona.
+  `AkuCraft-SOLO-HD` se borró de su máquina: nunca se abrió, no contenía nada
+  suyo y apuntaba a un mundo privado al que no puede entrar. Siguen ahí
+  `AkuCraft`, `AkuCraft-HD`, `AkuCraft-STAGING*` y su `1.21.1` de siempre —
+  ninguna tiene datos de Xaero, pero se dejan por si quiere prod.
+- **Pregeneración**: pendiente, para cuando acabe la de Solo (dos a la vez se
+  comerían los 12 núcleos).
 - **Shader Eclipse**: copiado a mano desde `AkuCraft-HD` (all-rights-reserved,
   no se replica en nix). Es el único paso manual: `options.txt` sí es ya
   declarativo y la instancia nace con los keybinds, fov y audio correctos.
