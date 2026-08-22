@@ -168,27 +168,31 @@ let
       ];
     };
 
-  # Disable openldap's flaky test017-syncreplication-refresh in pkgs-unstable only
-  # (timing-dependent test; unreliable on busy hardware). Scoped to pkgs-unstable
-  # because that's where bottles/lutris pull openldap from — keeping it off
-  # pkgs-stable preserves cache hits for the much larger stable graph (libreoffice etc).
-  noOpenldapTestsOverlay = _: super: {
-    openldap = super.openldap.overrideAttrs (_: { doCheck = false; });
-  };
-
-  # Disable python patool's test suite in pkgs-unstable only. patool 4.0.5's
-  # tests assert exact libmagic MIME strings (e.g. expecting application/x-tar
-  # for `t.tar.bz2.foo` but current file/libmagic returns application/x-bzip2)
-  # and require optional archiver program modules absent from the build sandbox
-  # (list_bzip2/list_xz/list_lzma) — environment-sensitive, not a real defect.
-  # patool is a direct dep of bottles-unwrapped (games-heavy.nix), so this
-  # unblocks the Home Manager build. Scoped to pkgs-unstable to preserve stable
-  # cache hits, mirroring noOpenldapTestsOverlay above.
-  noPatoolTestsOverlay = _: super: {
-    python3Packages = super.python3Packages // {
-      patool = super.python3Packages.patool.overridePythonAttrs (_: { doCheck = false; });
-    };
-  };
+  # NOTE — REMOVED: noOpenldapTestsOverlay / noPatoolTestsOverlay (2026-08-22).
+  #
+  # Both disabled a flaky test suite with `doCheck = false`. That looks free but
+  # is not: overriding a derivation changes its hash, so the result is no longer
+  # the one Hydra built and cache.nixos.org has. openldap is a dependency of
+  # gnupg, so the override forced a from-source rebuild of the ENTIRE reverse
+  # closure on every machine, every update:
+  #
+  #   openldap -> gnupg -> gpgme -> gpgmepp -> kwallet -> kio
+  #                     -> gcr -> gnome-keyring -> bitwarden-desktop
+  #                     -> thunderbird / nextcloud-client / git-crypt
+  #
+  # Measured on LAPTOP_A 2026-08-22: 614 of 664 paths came from cache.nixos.org;
+  # the ~50 that did not were this closure, and they pinned 8 cores for hours.
+  # DESK had built the same overridden openldap locally two days earlier.
+  #
+  # The overrides were also self-perpetuating: a package is only test-run when
+  # it is built locally, and the override is what forced the local build. With
+  # stock derivations the tests never execute here at all — Hydra already ran
+  # them. Upstream additionally deletes the cited flaky test itself: openldap's
+  # preCheck does `rm -f tests/scripts/test*-sync*`, which covers
+  # test017-syncreplication-refresh.
+  #
+  # If Hydra lag ever forces a local openldap/patool build again and the tests
+  # fail, re-add the override TEMPORARILY and drop it once the cache catches up.
 
   # SwayFX 0.5.3 SEGFAULTs the whole compositor in view_autoconfigure when a
   # client (gamescope running a fullscreen game, e.g. Metro Exodus) commits a
@@ -250,7 +254,7 @@ let
         "pnpm-10.29.2"
       ];
     };
-    overlays = (lib.optional useRustOverlay rustOverlay) ++ [ noOpenldapTestsOverlay noPatoolTestsOverlay ];
+    overlays = lib.optional useRustOverlay rustOverlay;
   };
 
   # Configure pkgs based on systemStable and profile

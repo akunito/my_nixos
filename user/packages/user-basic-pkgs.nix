@@ -38,7 +38,6 @@
       pkgs-unstable.telegram-desktop
       pkgs-unstable.vesktop # Discord client (Wayland-native); replaces the official client (AINF-358)
       pkgs-unstable.teams-for-linux
-      pkgs-unstable.thunderbird
 
       # Productivity & Office
       pkgs-unstable.obsidian
@@ -59,7 +58,10 @@
       # Browsers (pre-built from binary cache - no source compilation)
       pkgs-unstable.chromium
       pkgs-unstable.brave
-    ];
+    ]
+    # Thunderbird: opt-out per profile (userThunderbirdEnable). Aga's LAPTOP_A
+    # does not use it, and it is one of the heavier things in this list.
+    ++ lib.optional (userSettings.userThunderbirdEnable or true) pkgs-unstable.thunderbird;
 
     # Discord deep links (OAuth handoff, invite links) → Vesktop.
     # Kept explicit even though the official client is gone: any app shipping a

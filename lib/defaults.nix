@@ -674,6 +674,17 @@
     nixBinaryCacheConnectTimeout = 5;          # seconds; keeps a sleeping cache from stalling builds
     nixBinaryCacheNegativeTtl = 60;            # remember a genuine miss briefly, but re-check once DESK is back
 
+    # === Nix build parallelism ===
+    # null = leave Nix's own default (max-jobs = auto, cores = 0 = all threads).
+    # That default means "cores" parallel derivations, each free to use every
+    # thread — on an 8-core laptop a Home Manager update hits load ~17 and the
+    # machine is unusable. Cap it per profile on machines someone is sitting at.
+    #   nixMaxJobs   = derivations built concurrently
+    #   nixBuildCores = threads per derivation (0 = all)
+    # Peak thread count is roughly nixMaxJobs * nixBuildCores.
+    nixMaxJobs = null;
+    nixBuildCores = null;
+
     # === Nix store housekeeping (workstation profiles) ===
     nixGcAutomatic = true;
     nixGcDates = "weekly";
@@ -1051,6 +1062,7 @@
 
     # Package module feature flags
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
+    userThunderbirdEnable = true; # Thunderbird mail client (part of userBasicPkgs; opt out per profile)
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
     userMediaRecordingEnable = false; # OBS Studio, HandBrake, ffmpeg-full (screen recording)
     userGamedevPkgsEnable = false; # Game dev tools (Godot 4) — Komi Adventures project

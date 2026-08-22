@@ -163,6 +163,13 @@ in
     # stays, and fallback + connect-timeout mean a sleeping DESK costs seconds.
     nixBinaryCacheSubstituters = [ "http://100.64.0.5:5000" ];
     nixBinaryCachePublicKeys = [ "nixosaku-1:a1t91oU1udPpLWvLr8lWwj2kS5a7lPxhH38p094Ps+s=" ];
+
+    # Build parallelism: this is an 8-core ThinkPad someone is actually using.
+    # Nix's default (max-jobs=auto, cores=0) ran 8 concurrent derivations with
+    # unlimited threads each and pushed load past 17 during the weekly update.
+    # 2 jobs x 2 threads = ~4 threads, half the machine, still responsive.
+    nixMaxJobs = 2;
+    nixBuildCores = 2;
     tailscaleEnable = true; # Enable Tailscale client
     tailscaleLoginServer = "https://${headscaleDomain}"; # Self-hosted Headscale
     tailscaleAcceptRoutes = true; # Accept routes from subnet router (LAN access)
@@ -263,6 +270,7 @@ in
 
     # === Package Modules (User) ===
     userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
+    userThunderbirdEnable = false; # Aga does not use Thunderbird — and it is a heavy build
     userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
 
     # zshinitContent and sshExtraConfig inherited from base

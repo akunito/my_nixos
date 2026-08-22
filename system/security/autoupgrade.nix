@@ -25,6 +25,14 @@
       ];
       StandardOutput = "journal";
       StandardError = "journal";
+      # Background maintenance must never starve an interactive session. Without
+      # this the weekly update's compile jobs compete on equal footing with the
+      # desktop and the machine becomes unusable for hours (LAPTOP_A, 2026-08-22).
+      # These only bite under contention — an idle machine still builds full speed.
+      Nice = 19;
+      CPUWeight = 20;
+      IOWeight = 20;
+      IOSchedulingClass = "idle";
     };
     unitConfig = {
       OnSuccess = systemSettings.autoSystemUpdateCallNext;
@@ -62,6 +70,14 @@
       Environment = "PATH=/run/current-system/sw/bin:/usr/bin:/bin";
       StandardOutput = "journal";
       StandardError = "journal";
+      # Background maintenance must never starve an interactive session. Without
+      # this the weekly update's compile jobs compete on equal footing with the
+      # desktop and the machine becomes unusable for hours (LAPTOP_A, 2026-08-22).
+      # These only bite under contention — an idle machine still builds full speed.
+      Nice = 19;
+      CPUWeight = 20;
+      IOWeight = 20;
+      IOSchedulingClass = "idle";
     };
     unitConfig = {
       OnFailure = lib.mkIf (systemSettings.notificationOnFailureEnable or false) "notify-failure@autoUserUpdate.service";

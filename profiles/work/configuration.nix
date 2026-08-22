@@ -245,8 +245,16 @@
     }
   ];
 
+  # NOTE: this must stay an attrset LITERAL — nix.settings.trusted-users is also
+  # set above, and Nix only merges an attribute path with a literal, not with a
+  # computed expression (`//` here fails with "attribute already defined").
   nix.settings = {
     download-buffer-size = systemSettings.downloadBufferSize;
+
+    # Build parallelism caps — only applied when the profile asks for them, so
+    # machines that want Nix's defaults keep them (see lib/defaults.nix).
+    max-jobs = lib.mkIf ((systemSettings.nixMaxJobs or null) != null) systemSettings.nixMaxJobs;
+    cores = lib.mkIf ((systemSettings.nixBuildCores or null) != null) systemSettings.nixBuildCores;
   };
 
   programs.fuse.userAllowOther = systemSettings.fuseAllowOther;
