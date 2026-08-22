@@ -188,6 +188,28 @@ Para abrirlo a alguien, añade su UUID offline al fichero y
 `docker exec minecraft-solo rcon-cli whitelist reload`. Para desactivarlo,
 `ENABLE_WHITELIST: "FALSE"` en el compose.
 
+## AutoModpack — el fingerprint
+
+```
+53a00e48a80fcce55eff674aa24391497d54b4967585ef9ac199a83ac14006a7
+```
+
+Es lo que el cliente pide confirmar la primera vez que se conecta. Comprobado
+por dos vías: lo que imprime el server al arrancar
+(`docker logs minecraft-solo | grep -i "Certificate fingerprint"`) y el
+SHA-256 del certificado
+(`docker exec minecraft-solo cat /data/automodpack/.private/cert.crt | openssl x509 -outform DER | sha256sum`).
+
+`addressToSend` se fijó a `100.64.0.6` (con `portToSend: -1`, así que conserva
+su propio puerto), igual que prod y staging desde 2026-08-19. `knownHosts` se
+indexa **sólo por hostname**, sin puerto, así que con el campo vacío la clave
+dependía de lo que tecleara el cliente. Hoy no cambiaba nada —
+`AkuCraft-SOLO-HD` sólo habla con este server y su `servers.dat` lleva la IP
+cruda— pero deja de ser cierto en cuanto alguien use el nombre amigable.
+
+Prod imprime `73b00f4d…0034fd` y staging `c4d8172c…b2d539`: son tres
+certificados distintos, y por eso cada servidor necesita su propia instancia.
+
 ## Pendiente
 
 - **Shader Eclipse**: la instancia nueva nace con Complementary, que es el
