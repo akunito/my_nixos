@@ -12,7 +12,36 @@ let
 
   # awww doesn't exist on nixos-25.11 — pin to unstable.
   SWWW = lib.getExe pkgs-unstable.awww;
+  SWWW_DAEMON = lib.getExe' pkgs-unstable.awww "awww-daemon";
   SWAYMSG = lib.getExe' pkgs.sway "swaymsg";
+
+  # Waypaper only knows the backend names hardcoded in its own BACKEND_OPTIONS
+  # list ("none", "swaybg", "swww", "feh", ...) and detects each one with
+  # `shutil.which(<name>)`. We drive the awww fork, whose binaries are named
+  # awww/awww-daemon, so Waypaper never finds a Wayland backend: it rewrites the
+  # config to the last backend it *did* find — `feh`, pulled in unconditionally
+  # by stylix — and then silently no-ops, because feh is an X11 tool.
+  # These shims give Waypaper the binary names it looks for.
+  swww-shim = pkgs.writeShellScriptBin "swww" ''
+    exec ${SWWW} "$@"
+  '';
+
+  # Waypaper runs `pgrep swww-daemon` and spawns `swww-daemon` when that finds
+  # nothing. Ours is awww-daemon owned by swww-daemon.service — and the process
+  # name is the `.awww-daemon-wr` nix wrapper, so Waypaper's pgrep can never
+  # match it. Launching a real second daemon is destructive: awww evicts the
+  # running instance, which kills the service and leaves no wallpaper behind
+  # once Waypaper's short-lived child exits. Defer to systemd instead.
+  swww-daemon-shim = pkgs.writeShellScriptBin "swww-daemon" ''
+    SYSTEMCTL='${pkgs.systemd}/bin/systemctl'
+    if "$SYSTEMCTL" --user --quiet is-active swww-daemon.service 2>/dev/null; then
+      exit 0
+    fi
+    if "$SYSTEMCTL" --user start swww-daemon.service >/dev/null 2>&1; then
+      exit 0
+    fi
+    exec ${SWWW_DAEMON} "$@"
+  '';
 
   waypaperConfigFile = "${config.xdg.configHome}/waypaper/config.ini";
   fallbackImage = if systemSettings.stylixEnable == true then config.stylix.image else null;
@@ -75,7 +104,7 @@ let
     #!/bin/sh
     set -eu
 
-    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.waypaper pkgs-unstable.awww pkgs.procps ]}:$PATH"
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.waypaper pkgs-unstable.awww pkgs.procps swww-shim swww-daemon-shim pkgs.gnused pkgs.gnugrep ]}:$PATH"
 
     SWAYMSG='${SWAYMSG}'
     SWWW='${SWWW}'
@@ -139,7 +168,7 @@ let
 [Settings]
 folder = /nix/store
 wallpaper = ${fallbackImage}
-backend = awww
+backend = swww
 monitors = All
 fill = fill
 sort = name
@@ -161,14 +190,31 @@ INIEOF
       exit 0
     fi
 
+    # Self-heal the backend. Waypaper silently rewrites `backend` whenever the
+    # configured value isn't one it recognises, and on a Wayland session that
+    # lands on feh, which sets nothing at all. Pin it back to the swww shim.
+    CURRENT_BACKEND="$(sed -n 's/^backend *= *//p' "$CONFIG_FILE" | head -n1)"
+    if [ "$CURRENT_BACKEND" != "swww" ]; then
+      echo "waypaper-restore: backend was '$CURRENT_BACKEND', forcing swww" >&2
+      if grep -q '^backend *=' "$CONFIG_FILE"; then
+        sed -i 's/^backend *=.*/backend = swww/' "$CONFIG_FILE"
+      else
+        printf '\nbackend = swww\n' >> "$CONFIG_FILE"
+      fi
+    fi
+
     exec waypaper --restore
   '';
 in
 {
   config = lib.mkIf cfgEnable {
     # Install Waypaper GUI package
-    home.packages = with pkgs; [
-      waypaper # GUI frontend for swww/swaybg wallpaper backends
+    home.packages = [
+      pkgs.waypaper # GUI frontend for swww/swaybg wallpaper backends
+      # Must be on the session PATH too: the GUI (Hyper+Shift+B) shells out to
+      # `swww` itself, not through waypaper-restore-wrapper.
+      swww-shim
+      swww-daemon-shim
     ];
 
     # Desktop entry for application launcher
