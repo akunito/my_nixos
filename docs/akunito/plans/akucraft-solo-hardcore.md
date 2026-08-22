@@ -205,12 +205,40 @@ Para abrirlo a alguien, añade su UUID offline al fichero y
 `docker exec minecraft-solo rcon-cli whitelist reload`. Para desactivarlo,
 `ENABLE_WHITELIST: "FALSE"` en el compose.
 
+## El reset rápido: `reset-run.sh` (skill `akucraft-solo-reset`)
+
+Desde 2026-08-23 el reset **no regenera el mapa, lo restaura**. Cuarenta
+minutos pasan a ser segundos.
+
+`master/master.tgz` es una copia intacta del mapa **con sus 16 km² ya
+generados**, sacada del servidor creativo antes de que nadie construyera nada.
+Copia durable en el NAS, en `gameservers/akucraft-master-map/`.
+
+Tres cosas que el script hace y que son fáciles de olvidar a mano:
+
+1. **Devolver el mundo a hardcore.** El maestro sale del creativo, así que trae
+   `hardcore=0`, `GameType=1`, `Difficulty=2`. Viven en el mundo, no en
+   `server.properties`, y en un mundo ya creado mandan sobre él.
+2. **`Difficulty` aparece dos veces** en `level.dat` (`DifficultyLocked`). El
+   script aborta si una búsqueda no da exactamente una coincidencia.
+3. **Verificar el spawn.** Altura medida con una sonda, no estimada; ni agua ni
+   lava a la altura de pies, cuerpo **ni cabeza** — una sonda se hunde hasta el
+   fondo de un lago y aterriza sobre arena, así que el suelo puede parecer
+   bueno estando sumergido. Y **no** se exige `minecraft:air` donde pisas: eso
+   rechazaba todos los valles floridos, porque la hierba alta ocupa el bloque
+   sin estorbar.
+
 ## Historial de runs
 
-| Run | Semilla | Spawn | Días | Fin |
-|---|---|---|---|---|
-| 1 | `1020210412285842058` | 16, -48 (`terralith:lavender_valley`) | 8 | creeper |
-| 2 | `1020210412285842058` (misma) | 1712, -1680 (`minecraft:forest`) | — | en curso |
+| Run | Spawn | Días | Fin |
+|---|---|---|---|
+| 1 | 16, -48 (`lavender_valley`) | 8 | creeper |
+| 2 | 1712, -1680 (`forest`) | 4 | zombi |
+| 3 | 290, -740 (`forested_highlands`) | 9 | caimán |
+| 4 | 290, -240 (`lavender_valley`) | — | en curso |
+
+Todas comparten la semilla `1020210412285842058`: el mapa es siempre el mismo,
+lo que cambia es dónde empiezas.
 
 Comprobación de que la run 2 es el mismo mapa: el `lavender_valley` del spawn
 viejo sigue en su sitio, a 2036 bloques del nuevo — exactamente la diagonal
