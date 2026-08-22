@@ -170,6 +170,12 @@ let
       "*/finance/data/vaultkeeper.db-shm"
       # Calibre Web thumbnail cache (~11G, regenerable from library)
       "*/calibre/data/config/thumbnails/*"
+      # AkuCraft Solo: a hardcore world that is MEANT to be lost, plus runs/
+      # holding every previous one newrun.sh archived. Backing it up would
+      # both defeat the point and grow without bound. The compose file and
+      # newrun.sh are excluded with it; they are in git (docs/akunito/plans/
+      # akucraft-solo-hardcore.md records the design).
+      "*/.homelab/minecraft-solo/*"
     ];
     tags = [ "services" "docker" "headscale" "vaultwarden" "openclaw" "unifi" "n8n" "plane" ];
     schedule = "*-*-* 19:30:00";
@@ -197,7 +203,12 @@ let
       # Every step is `|| true`-guarded so `set -e` can never skip save-on and
       # leave the live server with saving disabled.
       export DOCKER_HOST=unix:///run/user/1000/docker.sock
-      if docker ps --format '{{.Names}}' 2>/dev/null | grep -qw minecraft; then
+      # -qx, not -qw: "-" is not a word character, so `grep -qw minecraft`
+      # also matches "minecraft-solo" and "minecraft-creative". That made the
+      # branch fire with only the solo server up, and every `docker exec
+      # minecraft ...` below then failed against a container that is not
+      # running. --format prints one name per line, so an exact match is right.
+      if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx minecraft; then
         DOCKER=docker
         log "Minecraft is running - flushing world to disk before snapshot..."
         $DOCKER exec minecraft rcon-cli save-off      >/dev/null 2>&1 || log "WARNING: save-off failed"
@@ -393,7 +404,7 @@ in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
 
       mkdir -p "$DEST"
       COPY_OK=0
-      if docker ps --format '{{.Names}}' 2>/dev/null | grep -qw minecraft; then
+      if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx minecraft; then
         log "Flushing world (server is running)..."
         docker exec minecraft rcon-cli save-off       >/dev/null 2>&1 || log "WARNING: save-off failed"
         docker exec minecraft rcon-cli save-all flush >/dev/null 2>&1 || log "WARNING: flush failed"
