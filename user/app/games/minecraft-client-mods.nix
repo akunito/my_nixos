@@ -710,10 +710,23 @@ let
   # trials are allowed to land on.
   stagingAddress = "100.64.0.6:25599";
   prodAddress = "100.64.0.6:25565";
+  # AkuCraft Solo (:25567) - a PRIVATE hardcore single-player world. It runs a
+  # deliberately smaller server-side mod set (78 against prod's ~104: no teams,
+  # chat, claims, shops, tpa, AI-NPC, graves or soulbound), so it must NOT
+  # share an instance with prod: AutoModpack hands out a different mod set per
+  # server and a single instance cannot hold both without being rewritten on
+  # every connect.
+  #
+  # Everything else is a straight copy of the prod HD instance - same
+  # mmc-pack, same JVM args, same Patrix pack order, same shader, same
+  # AutoModpack jar - because the whole point of the world is that it should
+  # look and feel exactly like what we got right on prod.
+  soloAddress = "100.64.0.6:25567";
 
   hdInstances = [
     { name = "AkuCraft-HD";         title = "AkuCraft HD";         ip = prodAddress; }
     { name = "AkuCraft-STAGING-HD"; title = "AkuCraft STAGING HD"; ip = stagingAddress; }
+    { name = "AkuCraft-SOLO-HD";    title = "AkuCraft Solo HD";    ip = soloAddress; }
   ];
 
   hdMods = [

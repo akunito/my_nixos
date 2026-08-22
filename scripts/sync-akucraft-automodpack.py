@@ -34,6 +34,7 @@ What this script configures, and why it is not just the defaults
 Usage:
     ./scripts/sync-akucraft-automodpack.py --target staging
     ./scripts/sync-akucraft-automodpack.py --target prod
+    ./scripts/sync-akucraft-automodpack.py --target solo
     ./scripts/sync-akucraft-automodpack.py --target prod --require-client
 
 --require-client makes the server refuse clients that do not have AutoModpack.
@@ -54,6 +55,13 @@ TARGETS = {
     # container            data dir on the VPS
     "prod":    ("minecraft",      "~/.homelab/minecraft/data"),
     "staging": ("mc-mca-staging", "~/.homelab/backups/mca-staging"),
+    # Solo runs a SUBSET of staging's jars (78 vs 99, plus chunky), and that
+    # needs no solo-specific list: the allow-list below is server_jars
+    # INTERSECT client_ok, so the 22 mods solo does not have simply never come
+    # up, and chunky - server-side, no registry entries - lands in the withheld
+    # pile where it belongs. This is the property that makes the design
+    # drift-resistant, so do not "fix" it by hardcoding a per-target list.
+    "solo":    ("minecraft-solo",  "~/.homelab/minecraft-solo/data"),
 }
 
 SSH = ["ssh", "-A", "-p", "56777", "akunito@100.64.0.6"]

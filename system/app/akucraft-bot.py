@@ -154,6 +154,26 @@ SERVERS = {
         # gated - that group has no roles and is admins-only anyway.
         "admin_only": True,
     },
+    # Solo is a PRIVATE single-player hardcore world (:25567). "quiet" is not
+    # a nicety here, it is the point: every announcement path in monitor()
+    # goes through notify(), so this one flag suppresses online/offline,
+    # joins, leaves, deaths and advancements on both Discord and Telegram.
+    # Nobody but the owner should learn that a run started, or ended.
+    #
+    # It is still listed so the idle timer stops it after IDLE_STOP_MIN and so
+    # /start solo and /stop solo work - admin_only, for the same reason as
+    # staging: a helpful player "restarting the server" would be trampling
+    # someone's hardcore run.
+    "solo": {
+        "label": "Solo",
+        "container": "minecraft-solo",
+        "dir": "/home/akunito/.homelab/minecraft-solo",
+        "address": "100.64.0.6:25567",
+        "quiet": True,
+        "admin_only": True,
+        "private": True,
+        "denied_reason": "is a private single-player world",
+    },
 }
 
 DEATH_KEYWORDS = (
@@ -425,8 +445,8 @@ blocks past your walls. Inside a normal base this is already true."""
 HELP_TEXT = """AkuCraft bot commands:
 /status - servers status + who is online
 /players - who is playing right now
-/start - boot the server if it is stopped (staging: MCadmin only)
-/stop - stop the server (refuses if players online; staging: MCadmin only)
+/start - boot the server if it is stopped (test/private ones: MCadmin only)
+/stop - stop the server (refuses if players online; same restriction)
 /map - your private map of the world you have explored
 /ask <question> - ask about the server (Discord only, see below)
 /link <name> - tell /ask which Minecraft account is yours (Discord only)
@@ -655,6 +675,22 @@ def notify(server, text):
         announce(text)
 
 
+def public_servers():
+    """SERVERS minus the ones whose very existence is private.
+
+    "quiet" only silences announcements. It does NOT stop /status printing the
+    address, nor /ask feeding the model a line like "Solo: UP. Online now:
+    Akunito", nor the profile builders below reading that world's inventory,
+    stats and claims into an answer any player can trigger. A private world
+    needs all of those closed too, so every read path that can reach a player
+    iterates this instead of SERVERS.
+
+    Deliberately NOT used by monitor(), tail_logs(), STATES or pick_targets:
+    those must still see every server to run the idle timer and /start <name>.
+    """
+    return {n: s for n, s in SERVERS.items() if not s.get("private")}
+
+
 def monitor():
     while True:
         for name, srv in SERVERS.items():
@@ -751,14 +787,23 @@ def pick_targets(arg, admin=True):
             return None
         return [arg]
     if not arg:
-        # Bare /start and /stop silently skip admin-only servers for players:
-        # they mean "the server", not the staging box they may not even know of.
-        return [n for n, s in SERVERS.items() if admin or not s.get("admin_only")]
+        # Bare /start and /stop mean "the server" - the survival one everyone
+        # shares - for admins too. Admin-only boxes must be named explicitly.
+        #
+        # Until 2026-08-22 this read "if admin or not s.get('admin_only')", so
+        # an MCadmin typing a bare /stop hit every server at once. Harmless
+        # with two; not with solo, where it would kill a live hardcore run
+        # somebody is in the middle of.
+        return [n for n, s in SERVERS.items() if not s.get("admin_only")]
     return []
 
 
 def denied(arg):
-    return (f"\U0001F512 {SERVERS[arg]['label']} is for testing - only an "
+    # Per-server reason: "is for testing" is true of staging and false of solo,
+    # and telling a player the wrong thing about a server they cannot touch is
+    # worse than telling them nothing.
+    why = SERVERS[arg].get("denied_reason", "is for testing")
+    return (f"\U0001F512 {SERVERS[arg]['label']} {why} - only an "
             "**MCadmin** can start or stop it.")
 
 
@@ -814,9 +859,9 @@ def cmd_stop(arg, admin=True):
     return "\n".join(replies)
 
 
-def cmd_status():
+def cmd_status(admin=True):
     lines = []
-    for name, srv in SERVERS.items():
+    for name, srv in (SERVERS if admin else public_servers()).items():
         h = health(srv["container"])
         if h == "healthy":
             players = {p for p in online_players(srv["container"]) if not hidden(p)}
@@ -830,9 +875,9 @@ def cmd_status():
     return "\n".join(lines)
 
 
-def cmd_players():
+def cmd_players(admin=True):
     lines = []
-    for name, srv in SERVERS.items():
+    for name, srv in (SERVERS if admin else public_servers()).items():
         if health(srv["container"]) == "healthy":
             players = {p for p in online_players(srv["container"]) if not hidden(p)}
             lines.append(f"{srv['label']}: " +
@@ -851,9 +896,9 @@ def handle(text, admin=True):
     if cmd == "stop":
         return cmd_stop(arg, admin)
     if cmd == "status":
-        return cmd_status()
+        return cmd_status(admin)
     if cmd == "players":
-        return cmd_players()
+        return cmd_players(admin)
     if cmd == "map":
         return MAP_TEXT
     if cmd == "connect":
@@ -1003,7 +1048,7 @@ def live_state():
     second RCON round-trip.
     """
     lines, online = [], set()
-    for srv in SERVERS.values():
+    for srv in public_servers().values():
         st = health(srv["container"])
         if st == "healthy":
             players = {p for p in online_players(srv["container"]) if not hidden(p)}
@@ -1049,7 +1094,7 @@ def known_players():
     server is stopped, needs no docker round-trip, and cannot hang.
     """
     players = {}
-    for srv in SERVERS.values():
+    for srv in public_servers().values():
         data = os.path.join(srv["dir"], "data")
         for fname in ("whitelist.json", "ops.json"):
             players.update(_read_name_uuid(os.path.join(data, fname)))
@@ -1262,7 +1307,7 @@ def inventory_summary(mc_name):
     on logout or autosave, so it would be stale by minutes. The trade is that
     this only works while the player is online.
     """
-    for srv in SERVERS.values():
+    for srv in public_servers().values():
         raw = rcon(srv["container"], f"data get entity {mc_name} Inventory")
         if not raw or "entity data" not in raw:
             continue           # offline, or the server is not up
@@ -1293,7 +1338,7 @@ def inventory_summary(mc_name):
 
 def claims_summary(uuid, names_by_uuid):
     """Flan claims: how much land, where, and who is trusted on it."""
-    for srv in SERVERS.values():
+    for srv in public_servers().values():
         path = os.path.join(srv["dir"], "data", "world", "data", "claims", uuid + ".json")
         try:
             with open(path) as f:
@@ -1320,7 +1365,7 @@ def claims_summary(uuid, names_by_uuid):
 
 def stats_summary(uuid):
     """A few numbers that say how far along a player is."""
-    for srv in SERVERS.values():
+    for srv in public_servers().values():
         path = os.path.join(srv["dir"], "data", "world", "stats", uuid + ".json")
         try:
             with open(path) as f:
