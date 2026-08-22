@@ -20,8 +20,8 @@ cambia.
 
 | | |
 |---|---|
-| Dirección | `100.64.0.6:25566` (VPN requerida) |
-| Contenedor · directorio | `minecraft-creative` · `~/.homelab/minecraft-creative` |
+| Dirección | `100.64.0.1:25566` (VPN requerida) — **NAS_PROD** desde 2026-08-22 |
+| Contenedor · directorio | `minecraft-creative` · `/mnt/ssdpool/docker/compose/gameservers/akucraft-creative` |
 | Mods | **82** |
 | Modo | creativo, `force-gamemode=true`, dificultad normal |
 | Jugadores | 3 · whitelist **y op**: `Akunito`, `SnizzyChan` |
@@ -59,7 +59,70 @@ servidor habría arrancado con **10 jugadores y 4G** en vez de 3 y 6G. Ahora el
 `.env` sólo lleva la contraseña de RCON y el compose es la única fuente de
 verdad. El viejo está en `.env.bak-old-creative-20260822`.
 
+## Mudanza al NAS (2026-08-22)
+
+El VPS no daba para tres mundos. Los límites declarados sumaban 27 GB en una
+máquina de 31 que ya gasta 17, y la evidencia no dejaba lugar a dudas:
+
+```
+44 × java          matados por el OOM killer del kernel en 30 días
+17 × meilisearch
+swap               4,0 GB de 4,0 GB usados
+```
+
+El NAS tiene 62 GB de los que **36,7 son ARC de ZFS y por tanto reclamables**;
+sus contenedores gastan 1,2 GB y va a load 0,5. Además la latencia baja de
+Internet a **0,5 ms**, porque los jugadores están en la misma LAN.
+
+**Cómo se movió.** Mundo, mods, config y el certificado de AutoModpack en un
+solo tarball, empaquetado y desempaquetado **desde dentro de contenedores**
+para conservar la propiedad uid 1000 — ambos hosts mapean subuid 100000, así
+que aterriza idéntico. Verificado por sha256 a ambos lados. El fingerprint
+**no cambia** (`cc08a279…`): el certificado viaja con el `data/`.
+
+**Memoria y CPU más holgadas**: 6G de heap con límite 9G (heap + 3G, la regla
+que prod documenta y que en el VPS no se podía pagar) y 8 núcleos.
+
+### ⚠️ El NAS duerme 23:00–16:00
+
+`nas-suspend.timer` dispara a las 23:00 y la ventana de sueño va hasta las
+16:00. El script tiene dos guardas —no suspender recién despertado, no
+suspender fuera de ventana— pero **ninguna que mire si hay jugadores dentro**.
+A las 23:00 se suspende con vosotros conectados.
+
+Es el precio de la mudanza: el creativo sólo está disponible de 16:00 a 23:00.
+Si molesta, la solución es una tercera guarda que consulte `rcon-cli list`.
+
+### El bot lo gestiona por ssh
+
+El bot sigue en el VPS. `health()`, `rcon()` y `online_players()` ahora reciben
+el dict del servidor y `dcmd()` decide local o remoto. `DOCKER_HOST` se pasa
+explícito y no se hereda del perfil del login remoto: un demonio recibe una
+shell no interactiva, y depender de un `.zshrc` para la ruta del socket es
+justo como esto se rompe en silencio a las 3 de la mañana.
+
+`tail_logs()` **no** sigue un servidor remoto a propósito: `docker logs -f` por
+ssh es una tubería que muere cada vez que el NAS se suspende, y sólo alimenta
+anuncios, que un servidor `quiet` suprime igualmente. Entradas, salidas y
+estado online siguen funcionando — eso lo da `monitor()`, que sondea.
+
+`/start creative` fallará mientras el NAS esté suspendido. Eso es la máquina
+dormida, no el bot roto.
+
 ## Spawn
+
+**Actual: `60, 160, 30`** — altiplano boscoso, en el mapa copiado de Solo
+(semilla `1020210412285842058`). Ese mapa ya traía 16 km² pregenerados
+alrededor de `1712, -1680`, y el spawn cae dentro con ~1650 bloques de margen,
+así que **no hizo falta pregenerar nada**.
+
+El `level.dat` copiado traía `hardcore=1`: ese flag vive en el mundo, no en
+`server.properties`, y manda sobre él en un mundo ya creado. Se corrigió con
+ediciones de bytes en sitio a `hardcore=0`, `GameType=1`, `Difficulty=2`. Ojo:
+`Difficulty` aparece **dos veces** en el fichero, porque también existe
+`DifficultyLocked`.
+
+<details><summary>Spawn anterior (mapa descartado)</summary>
 
 `-16, 131, 1292`, en `terralith:cloud_forest`. Elegido por lo que hay **alrededor**,
 no por el bioma en sí: a 96 bloques un `lush_valley` a y=164 — o sea 30+ bloques
@@ -69,6 +132,13 @@ colorido, con valles, en un radio caminable.
 
 La altura se midió, no se adivinó: al teleportar a y=190 el jugador cayó a
 130,003, así que la superficie está en 130. `setworldspawn` quedó en 131.
+
+</details>
+
+Truco para medir la altura del terreno sin jugadores conectados: `forceload
+add`, soltar un `armor_stand` desde y=250, leer su `Pos` cuando pare, y
+`forceload remove`. Sin el forceload el chunk no tickea y la entidad nunca
+cae.
 
 ## `SnizzyChan`, no `Snizzy_Chan`
 
@@ -138,8 +208,15 @@ trabajando, así que puede correr toda la noche con nadie dentro.
   suyo y apuntaba a un mundo privado al que no puede entrar. Siguen ahí
   `AkuCraft`, `AkuCraft-HD`, `AkuCraft-STAGING*` y su `1.21.1` de siempre —
   ninguna tiene datos de Xaero, pero se dejan por si quiere prod.
-- **Pregeneración**: pendiente, para cuando acabe la de Solo (dos a la vez se
-  comerían los 12 núcleos).
+- ~~Pregeneración~~ **innecesaria**: el mapa copiado de Solo ya venía con sus
+  16 km² generados y el spawn cae dentro.
+- **DESK_A**: su `servers.dat` sigue apuntando a `100.64.0.6:25566`. La máquina
+  estaba apagada durante la mudanza. Al encenderla: borrar
+  `AkuCraft-CREATIVE-HD/minecraft/servers.dat` y `./sync-user.sh` — el seeder
+  sólo escribe ficheros que **no existen**, así que sin borrarlo no se
+  actualiza.
+- **Ambos clientes** volverán a pedir el fingerprint una vez y re-descargarán
+  el modpack: `knownHosts` de AutoModpack se indexa por hostname.
 - **Shader Eclipse**: copiado a mano desde `AkuCraft-HD` (all-rights-reserved,
   no se replica en nix). Es el único paso manual: `options.txt` sí es ya
   declarativo y la instancia nace con los keybinds, fov y audio correctos.
