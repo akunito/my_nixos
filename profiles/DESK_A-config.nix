@@ -220,6 +220,7 @@ in
     # PACKAGES
     # ============================================================================
     userBasicPkgsEnable = true;
+    userThunderbirdEnable = false; # Aga does not use Thunderbird (same as LAPTOP_A)
     userAiPkgsEnable = false; # no big AI (lmstudio/ollama)
     homePackages = pkgs: pkgs-unstable: [
       pkgs.clinfo                     # OpenCL diagnostics

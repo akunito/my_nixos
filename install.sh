@@ -716,7 +716,13 @@ pre_update_home_backup() {
     fi
 
     echo -e "\n${CYAN}Running home_backup.service synchronously before flake update...${RESET}"
-    if systemctl start --wait home_backup.service; then
+    # Must go through $SUDO_CMD. A bare `systemctl start` on a system unit is
+    # authorised by polkit, which needs an interactive agent — absent over a
+    # non-interactive `ssh -A` deploy, so it died with "Access denied ...
+    # interactive authentication has not been enabled" and aborted the whole
+    # run before the rebuild. Only profiles with protongamesEnable reach this
+    # branch, which is why it never showed up on LAPTOP_A. (DESK_A, 2026-08-22)
+    if $SUDO_CMD systemctl start --wait home_backup.service; then
         echo -e "${GREEN}✓ Pre-update backup completed${RESET}"
         return 0
     fi
