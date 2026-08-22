@@ -210,11 +210,45 @@ cruda— pero deja de ser cierto en cuanto alguien use el nombre amigable.
 Prod imprime `73b00f4d…0034fd` y staging `c4d8172c…b2d539`: son tres
 certificados distintos, y por eso cada servidor necesita su propia instancia.
 
+## Lo que nix NO replica de la instancia HD
+
+Añadir una entrada a `hdInstances` clona lo *declarado*: mmc-pack, argumentos
+de JVM, orden de packs de Patrix, AutoModpack, Distant Horizons, EMF/ETF y los
+shaders que nix descarga. **No clona nada que se haya tocado a mano en la
+instancia de prod**, y resultó ser bastante:
+
+| Qué | Prod | Instancia recién creada |
+|---|---|---|
+| Shader activo | `Eclipse-Shader-Unstable` (directorio, 50 MB) + su `.txt` de ajustes | `ComplementaryUnbound_r5.8.1.zip`, el `hdShaderDefault` de nix |
+| `dynamic-fps` | instalado a mano + `config/dynamic_fps.json` | ausente |
+| `resourcePacks` | incluye `moonlight:merged_pack` y `continuity:glass_pane_culling_fix` | los pierde en el primer arranque, cuando esos mods aún no han llegado por AutoModpack |
+| Keybinds | hotbar 1-9 **liberadas** para la barra de hechizos de Spell Engine; zoom en `[`, skills en `;`, small ships en F3/F4, Tom's en `=`, mochila en `.` y `,`, Xaero en `n`, iris en Inicio/Supr | por defecto de vanilla |
+| `fov` · audio | `0.5` · `directionalAudio=true` · master `0.196` | `0.0` · `false` · `1.0` |
+
+Todo eso se clonó copiando de `AkuCraft-HD`: el directorio de Eclipse con su
+`.txt`, el jar de dynamic-fps con su config, `options.txt` entero y
+`config/iris.properties`. Verificado después: `shaderpacks`, `resourcepacks`,
+`mods`, `options.txt` e `iris.properties` **idénticos**, y los 50 MB de Eclipse
+sin una sola diferencia (`diff -rq`).
+
+Eclipse no puede entrar en nix — es all-rights-reserved, se enlaza al upstream
+y no se replica — así que este paso de copia hay que repetirlo si algún día se
+rehace la instancia. El seeder solo escribe si el fichero **no existe**
+(`if [ ! -f ... ]`), así que ni `sync-user.sh` ni un rebuild volverán a pisar
+la selección de shader: por eso prod conserva Eclipse desde agosto.
+
+Lo que **sí** difiere con razón y no hay que tocar: los `config/` de mods que
+solo no tiene (`chatplus`, `mca.json`, `surveyor.toml`, `hardcorerevival`,
+`respawnablepets.json`, `explorerscompass.json`, `maplink`) y un
+`incompatibleResourcePacks` vacío, que el juego rellena solo.
+
+`dynamic-fps` sigue siendo un jar puesto a mano en las dos instancias, o sea
+drift fuera del set declarativo. Se arreglaría metiéndolo en `clientMods`, pero
+eso también lo empujaría a la instancia de prod que ya lleva el jar a mano, y
+AutoModpack neutraliza un jar duplicado escribiendo un fichero dummy encima.
+Pendiente de decidir.
+
 ## Pendiente
 
-- **Shader Eclipse**: la instancia nueva nace con Complementary, que es el
-  `hdShaderDefault` en nix. Eclipse está instalado a mano (licencia
-  all-rights-reserved, no se replica), así que hay que copiarlo a
-  `AkuCraft-SOLO-HD/minecraft/shaderpacks/` si lo quieres ahí.
 - **Backups**: `~/.homelab/minecraft-solo` debería quedar **excluido** de
   restic. El mundo está para perderse, y `runs/` acumula los cadáveres.
