@@ -520,6 +520,20 @@ let
       url = "https://cdn.modrinth.com/data/5ZwdcRci/versions/ATB4eNEP/ImmediatelyFast-Fabric-1.6.11%2B1.21.1.jar";
       sha512 = "f80f7d1d046c65795a51f8338c3189d014eb7b7adcab382259c2d1174c196503640ef2e57fea6e89e17bdcb00e3f1847eafe9db1f283c2cd958cb6df28020920";
     }
+    # Throttles the frame rate when the window loses focus or is minimised -
+    # with Eclipse and Distant Horizons running, an alt-tabbed game otherwise
+    # keeps a GPU busy for nothing.
+    #
+    # This was a jar dropped into the prod instance BY HAND, which is why the
+    # Solo instance was born without it: nix seeds what nix declares. Listing
+    # it here is what makes it arrive by itself on every instance. The hash is
+    # the official Modrinth 3.11.4 release and was verified to match the
+    # hand-placed jar byte for byte before it was removed from the instances.
+    {
+      name = "dynamic-fps-3.11.4+minecraft-1.21.0-fabric.jar";
+      url = "https://cdn.modrinth.com/data/LQ3K71Q1/versions/GBH14HiF/dynamic-fps-3.11.4%2Bminecraft-1.21.0-fabric.jar";
+      sha512 = "42c7043517889274f2932f257a78d0a67c22f2bebb1385ab4d0ba7936da2163e907d63f22bfeed5126342b568ddf4d7bc576ab6e76401a07d20a4978ba61bf20";
+    }
     # Puts each player's face next to their chat messages. Small, but this is a
     # server of six friends, so it earns its place.
     {
@@ -1059,11 +1073,245 @@ let
       # pack goes above Patrix, and only because nothing else may.
       # Better-Leaves is installed but not enabled for the same reason: it
       # carries 11 vanilla-namespace leaf textures at 16x.
+      # The FULL options.txt, not the four keys it used to carry.
+      #
+      # A four-key file meant a new instance was born with vanilla keybinds,
+      # vanilla fov and vanilla volume, and lost the two namespaced resource
+      # packs on its first launch because the mods providing them had not
+      # arrived from AutoModpack yet. AkuCraft-SOLO-HD was created that way on
+      # 2026-08-22 and reported as "the graphics are different" - the shader
+      # was the visible half; the rest was an entire remapped keyboard.
+      #
+      # What matters most in here: hotbar 1-9 are UNBOUND so Spell Engine's
+      # spell bar can own those keys. Lose that and the RPG stack is unusable
+      # without rebinding eleven keys by hand.
+      #
+      # incompatibleResourcePacks is deliberately empty - it is session state
+      # the game rebuilds from whatever mods actually loaded, and the prod list
+      # names mods (mca, hardcorerevival, toms_storage) that Solo does not have.
+      #
+      # The seeder only writes a file that does not exist, so this never
+      # overwrites settings anyone has since changed in game.
       { path = "${dir}/minecraft/options.txt"; src = pkgs.writeText "options.txt" ''
-          resourcePacks:["vanilla","fabric","moonlight:merged_pack","continuity:glass_pane_culling_fix","file/${(builtins.head hdPacks).name}","file/${hdFixPack.name}"]
-          graphicsMode:2
+          version:3955
+          ao:true
+          biomeBlendRadius:2
+          enableVsync:true
+          entityDistanceScaling:1.0
+          entityShadows:true
+          forceUnicodeFont:false
+          japaneseGlyphVariants:false
+          fov:0.5
+          fovEffectScale:1.0
+          darknessEffectScale:1.0
+          glintSpeed:0.5
+          glintStrength:0.75
+          prioritizeChunkUpdates:0
+          fullscreen:false
+          gamma:0.5
+          graphicsMode:1
+          guiScale:3
+          maxFps:120
+          mipmapLevels:4
+          narrator:0
+          particles:0
+          reducedDebugInfo:false
+          renderClouds:"true"
           renderDistance:12
           simulationDistance:8
+          screenEffectScale:1.0
+          soundDevice:""
+          autoJump:false
+          operatorItemsTab:false
+          autoSuggestions:true
+          chatColors:true
+          chatLinks:true
+          chatLinksPrompt:true
+          discrete_mouse_scroll:false
+          invertYMouse:false
+          realmsNotifications:true
+          showSubtitles:false
+          directionalAudio:true
+          touchscreen:false
+          bobView:true
+          toggleCrouch:false
+          toggleSprint:false
+          darkMojangStudiosBackground:false
+          hideLightningFlashes:false
+          hideSplashTexts:false
+          mouseSensitivity:0.5
+          damageTiltStrength:1.0
+          highContrast:false
+          narratorHotkey:true
+          resourcePacks:["vanilla","fabric","moonlight:merged_pack","continuity:glass_pane_culling_fix","file/${(builtins.head hdPacks).name}","file/${hdFixPack.name}"]
+          incompatibleResourcePacks:[]
+          lastServer:
+          lang:en_us
+          chatVisibility:0
+          chatOpacity:1.0
+          chatLineSpacing:0.0
+          textBackgroundOpacity:0.5
+          backgroundForChatOnly:true
+          hideServerAddress:false
+          advancedItemTooltips:false
+          pauseOnLostFocus:true
+          overrideWidth:0
+          overrideHeight:0
+          chatHeightFocused:1.0
+          chatDelay:0.0
+          chatHeightUnfocused:0.4375
+          chatScale:1.0
+          chatWidth:1.0
+          notificationDisplayTime:1.0
+          useNativeTransport:true
+          mainHand:"right"
+          attackIndicator:1
+          tutorialStep:none
+          mouseWheelSensitivity:1.0
+          rawMouseInput:true
+          glDebugVerbosity:1
+          skipMultiplayerWarning:true
+          hideMatchedNames:true
+          joinedFirstServer:true
+          hideBundleTutorial:false
+          syncChunkWrites:false
+          showAutosaveIndicator:true
+          allowServerListing:true
+          onlyShowSecureChat:false
+          panoramaScrollSpeed:1.0
+          telemetryOptInExtra:false
+          onboardAccessibility:false
+          menuBackgroundBlurriness:5
+          key_key.attack:key.mouse.left
+          key_key.use:key.mouse.right
+          key_key.forward:key.keyboard.w
+          key_key.left:key.keyboard.a
+          key_key.back:key.keyboard.s
+          key_key.right:key.keyboard.d
+          key_key.jump:key.keyboard.space
+          key_key.sneak:key.keyboard.left.shift
+          key_key.sprint:key.keyboard.left.control
+          key_key.drop:key.keyboard.q
+          key_key.inventory:key.keyboard.e
+          key_key.chat:key.keyboard.t
+          key_key.playerlist:key.keyboard.tab
+          key_key.pickItem:key.mouse.middle
+          key_key.command:key.keyboard.slash
+          key_key.socialInteractions:key.keyboard.p
+          key_key.screenshot:key.keyboard.f2
+          key_key.togglePerspective:key.keyboard.f5
+          key_key.smoothCamera:key.keyboard.unknown
+          key_key.fullscreen:key.keyboard.f11
+          key_key.spectatorOutlines:key.keyboard.unknown
+          key_key.swapOffhand:key.keyboard.f
+          key_key.saveToolbarActivator:key.keyboard.c
+          key_key.loadToolbarActivator:key.keyboard.x
+          key_key.advancements:key.keyboard.l
+          key_key.hotbar.1:key.keyboard.unknown
+          key_key.hotbar.2:key.keyboard.unknown
+          key_key.hotbar.3:key.keyboard.unknown
+          key_key.hotbar.4:key.keyboard.unknown
+          key_key.hotbar.5:key.keyboard.unknown
+          key_key.hotbar.6:key.keyboard.unknown
+          key_key.hotbar.7:key.keyboard.unknown
+          key_key.hotbar.8:key.keyboard.unknown
+          key_key.hotbar.9:key.keyboard.unknown
+          key_key.dynamic_fps.toggle_forced:key.keyboard.unknown
+          key_key.dynamic_fps.toggle_disabled:key.keyboard.unknown
+          key_artifacts.key.helium_flamingo.activate:key.keyboard.unknown
+          key_artifacts.key.charm_of_shrinking.toggle:key.keyboard.unknown
+          key_artifacts.key.charm_of_sinking.toggle:key.keyboard.unknown
+          key_artifacts.key.night_vision_goggles.toggle:key.keyboard.unknown
+          key_artifacts.key.scarf_of_invisibility.toggle:key.keyboard.unknown
+          key_artifacts.key.universal_attractor.toggle:key.keyboard.unknown
+          key_key.entityculling.toggle:key.keyboard.unknown
+          key_key.jade.config:key.keyboard.keypad.0
+          key_key.jade.show_overlay:key.keyboard.keypad.1
+          key_key.jade.toggle_liquid:key.keyboard.keypad.2
+          key_key.jade.narrate:key.keyboard.keypad.5
+          key_key.jade.show_details_alternative:key.keyboard.unknown
+          key_key.logical_zoom.zoom:key.keyboard.left.bracket
+          key_key.mca.skin_library:key.keyboard.f1
+          key_key.modmenu.open_menu:key.keyboard.unknown
+          key_supplementaries.keybind.quiver:key.keyboard.v
+          key_key.presencefootsteps.settings:key.keyboard.f10
+          key_key.presencefootsteps.toggle:key.keyboard.unknown
+          key_key.puffish_skills.open:key.keyboard.semicolon
+          key_key.simplytooltips.cycle_tab:key.keyboard.g
+          key_key.simplytooltips.capture_gif:key.keyboard.h
+          key_key.smallships.ship_sail:key.keyboard.f3
+          key_key.smallships.cannon_barrel_enter:key.keyboard.f4
+          key_keybindings.spell_engine.bypass_spell_hotbar:key.keyboard.left.alt
+          key_keybindings.spell_engine.spell_hotbar_1:key.keyboard.1
+          key_keybindings.spell_engine.spell_hotbar_2:key.keyboard.2
+          key_keybindings.spell_engine.spell_hotbar_3:key.keyboard.3
+          key_keybindings.spell_engine.spell_hotbar_4:key.keyboard.4
+          key_keybindings.spell_engine.spell_hotbar_5:key.keyboard.5
+          key_keybindings.spell_engine.spell_hotbar_6:key.keyboard.6
+          key_keybindings.spell_engine.spell_hotbar_7:key.keyboard.7
+          key_keybindings.spell_engine.spell_hotbar_8:key.keyboard.8
+          key_keybindings.spell_engine.spell_hotbar_9:key.keyboard.9
+          key_key.toms_storage.open_terminal:key.keyboard.equal
+          key_key.travelersbackpack.inventory:key.keyboard.period
+          key_key.travelersbackpack.sort:key.keyboard.unknown
+          key_key.travelersbackpack.ability:key.keyboard.comma
+          key_key.travelersbackpack.cycle_tool:key.keyboard.z
+          key_key.travelersbackpack.toggle_upgrade_0:key.keyboard.unknown
+          key_key.travelersbackpack.toggle_upgrade_1:key.keyboard.unknown
+          key_key.travelersbackpack.toggle_upgrade_2:key.keyboard.unknown
+          key_key.travelersbackpack.toggle_upgrade_3:key.keyboard.unknown
+          key_gui.xaero_minimap_settings:key.keyboard.y
+          key_gui.xaero_minimap_server_profiles:key.keyboard.unknown
+          key_gui.xaero_zoom_in:key.keyboard.unknown
+          key_gui.xaero_zoom_out:key.keyboard.unknown
+          key_gui.xaero_new_waypoint:key.keyboard.b
+          key_gui.xaero_waypoints_key:key.keyboard.u
+          key_gui.xaero_enlarge_map:key.keyboard.n
+          key_gui.xaero_toggle_map:key.keyboard.unknown
+          key_gui.xaero_toggle_waypoints:key.keyboard.unknown
+          key_gui.xaero_toggle_map_waypoints:key.keyboard.unknown
+          key_gui.xaero_toggle_slime:key.keyboard.unknown
+          key_gui.xaero_toggle_grid:key.keyboard.unknown
+          key_gui.xaero_instant_waypoint:key.keyboard.keypad.add
+          key_gui.xaero_switch_waypoint_set:key.keyboard.unknown
+          key_gui.xaero_display_all_sets:key.keyboard.unknown
+          key_gui.xaero_toggle_light_overlay:key.keyboard.unknown
+          key_gui.xaero_toggle_entity_radar:key.keyboard.unknown
+          key_gui.xaero_reverse_entity_radar:key.keyboard.unknown
+          key_gui.xaero_toggle_manual_cave_mode:key.keyboard.unknown
+          key_gui.xaero_alternative_list_players:key.keyboard.unknown
+          key_gui.xaero_toggle_tracked_players_on_map:key.keyboard.unknown
+          key_gui.xaero_toggle_tracked_players_in_world:key.keyboard.unknown
+          key_gui.xaero_toggle_pac_chunk_claims:key.keyboard.unknown
+          key_gui.xaero_open_map:key.keyboard.m
+          key_gui.xaero_open_settings:key.keyboard.right.bracket
+          key_gui.xaero_world_map_server_settings:key.keyboard.unknown
+          key_gui.xaero_map_zoom_in:key.keyboard.unknown
+          key_gui.xaero_map_zoom_out:key.keyboard.unknown
+          key_gui.xaero_quick_confirm:key.keyboard.right.shift
+          key_gui.xaero_toggle_dimension:key.keyboard.unknown
+          key_iris.keybind.reload:key.keyboard.home
+          key_iris.keybind.toggleShaders:key.keyboard.delete
+          key_iris.keybind.shaderPackSelection:key.keyboard.o
+          key_iris.keybind.wireframe:key.keyboard.unknown
+          key_lambdynlights.key.toggle_fps_dynamic_lighting:key.keyboard.unknown
+          soundCategory_master:0.19624496985562814
+          soundCategory_music:1.0
+          soundCategory_record:1.0
+          soundCategory_weather:1.0
+          soundCategory_block:1.0
+          soundCategory_hostile:1.0
+          soundCategory_neutral:1.0
+          soundCategory_player:1.0
+          soundCategory_ambient:1.0
+          soundCategory_voice:1.0
+          modelPart_cape:true
+          modelPart_jacket:true
+          modelPart_left_sleeve:true
+          modelPart_right_sleeve:true
+          modelPart_left_pants_leg:true
+          modelPart_right_pants_leg:true
+          modelPart_hat:true
         ''; }
     ] ++ (let shaders = hdShaders
              ++ lib.optionals (i.ip == stagingAddress) hdTrialShaders; in
