@@ -157,12 +157,39 @@ así que los 22 mods que solo no tiene sencillamente no aparecen y `chunky`
 debe. **No lo "arregles"** metiendo una lista por target: esa derivación es
 justo lo que evita el drift que expulsó a todos los clientes en 2026-08-19.
 
+## Quién puede entrar
+
+Tres capas, y la tercera es la que hace que las otras dos den igual.
+
+**Headscale** confina `tag:mc-guest` a `100.64.0.6:25565,8100` — el puerto de
+prod y la descarga del modpack. Un invitado **no alcanza el 25567**
+(verificado 2026-08-22 en `headscale policy get`). `group:family` llega más
+lejos.
+
+**Modo offline**: la identidad sale del nombre, así que cualquiera que alcance
+el puerto puede presentarse como quiera. La red por sí sola no basta.
+
+**Whitelist**, que es lo que cierra el tema sin depender del ACL:
+`white-list=true` y `enforce-whitelist=true`, con un `data/whitelist.json`
+escrito **a mano**:
+
+```json
+[{ "uuid": "df728f8f-fa67-3b17-ab96-e1e49d70aee7", "name": "Akunito" }]
+```
+
+Ese UUID es el **offline** — `md5("OfflinePlayer:Akunito")` con los bits de
+versión y variante puestos, comprobado contra el usercache de prod. La
+variable `WHITELIST` de la imagen se queda **sin poner** a propósito: resuelve
+el nombre contra Mojang y guardaría el UUID *online* de un desconocido. Y los
+nombres distinguen mayúsculas: `akunito` en minúsculas es otro jugador
+(`1b831a7b-…`).
+
+Para abrirlo a alguien, añade su UUID offline al fichero y
+`docker exec minecraft-solo rcon-cli whitelist reload`. Para desactivarlo,
+`ENABLE_WHITELIST: "FALSE"` en el compose.
+
 ## Pendiente
 
-- **ACL de Headscale**: confirmar que `tag:mc-guest` está limitado al puerto
-  25565 y no al host entero. Si fuera al host, los invitados verían `:25567`.
-  La política vive en la base de datos de headscale y no se pudo leer sin
-  contraseña de sudo.
 - **Shader Eclipse**: la instancia nueva nace con Complementary, que es el
   `hdShaderDefault` en nix. Eclipse está instalado a mano (licencia
   all-rights-reserved, no se replica), así que hay que copiarlo a
