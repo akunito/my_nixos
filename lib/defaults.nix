@@ -193,6 +193,22 @@
     llamaServerOpenFirewallTailscale = true;               # open the port only on tailscale0
     llamaServerVramBusyBytes = 5368709120;                 # gaming VRAM guard: refuse to load if GPU already uses > this (5 GiB)
 
+    # === Local LLM inference server (Ollama, ROCm) ===
+    # The alternative backend to llamaServer above; the two share port 8090 and
+    # an assertion refuses to enable both. Ollama is the one that serves BOTH
+    # /v1/chat/completions (LiteLLM) and /api/chat (SecondBrain's ollama4j
+    # client, which is the only endpoint that mod can be pointed at).
+    # See system/app/ollama-server.nix.
+    ollamaServerEnable = false;
+    ollamaServerHost = "0.0.0.0";                          # firewall restricts exposure to tailscale0
+    ollamaServerPort = 8090;                               # same port as llamaServer, so the VPS wake proxy and LiteLLM need no change
+    ollamaServerModel = "gpt-oss:20b";                     # Ollama naming, NOT the HF repo path llama.cpp used
+    ollamaServerKeepAlive = "15m";                         # unload the model (free VRAM) after this idle
+    ollamaServerCtxSize = 8192;                            # context window
+    ollamaServerVisibleDevices = "0";                      # discrete card only — Ollama also enumerates the CPU's iGPU
+    ollamaServerOpenFirewallTailscale = true;              # open the port only on tailscale0
+    ollamaServerVramNeededBytes = 13958643712;             # refuse to start unless this much VRAM is FREE on the discrete card (13 GiB: gpt-oss:20b weights + KV cache)
+
     # === Wake-and-wait proxy (runs on an always-on host, e.g. VPS) ===
     # Apps point at this proxy; it wakes DESK via pfSense WoL if asleep, waits,
     # then forwards to DESK's llama socket. See system/app/llama-wake-proxy.nix.

@@ -212,7 +212,10 @@ in
     # OpenAI-compatible endpoint, Tailscale-only (100.64.0.5), for VPS/NAS apps.
     # Socket-activated: loads on first connection, auto-stops after idle so it
     # doesn't hold ~14GB VRAM during gaming. Swap model via HfRepo.
-    llamaServerEnable = true;
+    # Backend swapped to Ollama 2026-08-21 so SecondBrain's NPCs have an API to
+    # talk to (see system/app/ollama-server.nix for why that forces the choice).
+    # Rollback is these two lines: true here, false below.
+    llamaServerEnable = false;
     llamaServerHost = "0.0.0.0"; # firewalled to tailscale0 only
     llamaServerPort = 8090;
     llamaServerIdleTimeout = "15min"; # free VRAM 15 min after last request
@@ -243,6 +246,12 @@ in
     # exactly what is left for everything else, so loading above that would
     # overcommit the card. It must move with the model, not independently.
     llamaServerVramBusyBytes = 5368709120;
+
+    # === Local LLM — Ollama (active backend) ===
+    ollamaServerEnable = true;
+    ollamaServerPort = 8090;      # same port llama-server used; nothing upstream changes
+    ollamaServerKeepAlive = "15m";
+    ollamaServerCtxSize = 8192;
     # Auth: still OFF, deliberately. The endpoint is tailscale-only + firewalled,
     # and VPS_PROD fronts it with llamaWakeProxyEnable — that proxy forwards
     # requests verbatim, so switching auth on here breaks every app behind it
