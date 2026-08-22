@@ -675,6 +675,15 @@ def notify(server, text):
         announce(text)
 
 
+def pregenerating(server):
+    """True if chunky has a task running on this server.
+
+    Any server without chunky answers with an unknown-command error, which does
+    not contain the phrase, so this is safe to ask of all of them.
+    """
+    return "Task running" in (rcon(server["container"], "chunky progress") or "")
+
+
 def public_servers():
     """SERVERS minus the ones whose very existence is private.
 
@@ -730,6 +739,21 @@ def monitor():
                         st.idle_since = time.time()
                     elif STOP_LOCK_REASON:
                         pass          # long job running - never auto-stop
+                    elif time.time() - st.idle_since > IDLE_STOP_MIN * 60 \
+                            and pregenerating(srv):
+                        # A chunky pregeneration runs with NOBODY online, which
+                        # is exactly what the idle timer is built to kill. Solo
+                        # makes this routine: newrun.sh starts a ~1h pregen of
+                        # 16 km2 on an empty server, and 45 minutes in the bot
+                        # would stop it. Nothing is lost (continueOnRestart
+                        # picks the task back up) but it stalls until somebody
+                        # starts the server again, silently and for no reason.
+                        #
+                        # The RCON call only happens at the moment the timer
+                        # would fire, not every loop, so it costs nothing.
+                        log(f"{name}: idle {IDLE_STOP_MIN} min but chunky is "
+                            f"pregenerating - not stopping")
+                        st.idle_since = time.time()   # re-arm, check again later
                     elif time.time() - st.idle_since > IDLE_STOP_MIN * 60:
                         st.suppress_offline = True
                         st.idle_since = None
