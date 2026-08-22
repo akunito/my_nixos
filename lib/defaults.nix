@@ -147,6 +147,13 @@
     # FreeSM Launcher (Freesm Launcher, Prism Launcher fork; official flake) — offline-account Minecraft launcher
     # for connecting to the self-hosted offline-mode AkuCraft server. Replaces the old PrismLauncher module.
     freesmLauncherEnable = false; # Install FreeSM Launcher (per-profile; DESK + LAPTOP_X13 only)
+    # Which AkuCraft instances FreeSM gets seeded with, by key:
+    #   "prod" :25565 · "staging" :25599 · "solo" :25567 · "creative" :25566
+    # Default is the PUBLIC pair. Solo and Creative are private worlds, so a
+    # machine has to opt into them - seeding Aga's desktop an instance aimed at
+    # a private single-player world is noise. Only read when
+    # freesmLauncherEnable is true.
+    akucraftInstances = [ "prod" "staging" ];
 
     # Webcam controls persistence (v4l2 brightness/contrast/etc. across reboot + hotplug)
     webcamControlsEnable = false; # Enable udev+systemd reapply of v4l2 controls

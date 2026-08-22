@@ -35,6 +35,7 @@ Usage:
     ./scripts/sync-akucraft-automodpack.py --target staging
     ./scripts/sync-akucraft-automodpack.py --target prod
     ./scripts/sync-akucraft-automodpack.py --target solo
+    ./scripts/sync-akucraft-automodpack.py --target creative
     ./scripts/sync-akucraft-automodpack.py --target prod --require-client
 
 --require-client makes the server refuse clients that do not have AutoModpack.
@@ -62,6 +63,7 @@ TARGETS = {
     # pile where it belongs. This is the property that makes the design
     # drift-resistant, so do not "fix" it by hardcoding a per-target list.
     "solo":    ("minecraft-solo",  "~/.homelab/minecraft-solo/data"),
+    "creative": ("minecraft-creative", "~/.homelab/minecraft-creative/data"),
 }
 
 SSH = ["ssh", "-A", "-p", "56777", "akunito@100.64.0.6"]

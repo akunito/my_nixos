@@ -174,6 +174,23 @@ SERVERS = {
         "private": True,
         "denied_reason": "is a private single-player world",
     },
+    # Creative (:25566) is private too - three people building, not the group.
+    # Rebuilt from scratch 2026-08-22 after being decommissioned in August;
+    # its old data/ is archived beside it as data-decommissioned-20260822.
+    #
+    # Same "quiet" + "private" pair as solo: quiet silences announcements,
+    # private keeps it out of /status, /players, the /ask model context and
+    # the profile readers. See public_servers().
+    "creative": {
+        "label": "Creative",
+        "container": "minecraft-creative",
+        "dir": "/home/akunito/.homelab/minecraft-creative",
+        "address": "100.64.0.6:25566",
+        "quiet": True,
+        "admin_only": True,
+        "private": True,
+        "denied_reason": "is a private build world",
+    },
 }
 
 DEATH_KEYWORDS = (

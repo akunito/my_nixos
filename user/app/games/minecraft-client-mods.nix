@@ -28,7 +28,7 @@
 # Gated by systemSettings.freesmLauncherEnable (imported conditionally from
 # profiles/personal/home.nix) — same gate as the launcher itself.
 
-{ pkgs, lib, ... }:
+{ pkgs, lib, systemSettings, ... }:
 
 let
   # Four FreesmLauncher instances, and all four are AutoModpack instances:
@@ -736,11 +736,26 @@ let
   # AutoModpack jar - because the whole point of the world is that it should
   # look and feel exactly like what we got right on prod.
   soloAddress = "100.64.0.6:25567";
+  # AkuCraft Creative (:25566) - three people building, private like solo. Its
+  # own instance for the same reason: 82 server mods against solo's 78 and
+  # prod's ~104, and AutoModpack hands out a different set per server.
+  creativeAddress = "100.64.0.6:25566";
 
-  hdInstances = [
-    { name = "AkuCraft-HD";         title = "AkuCraft HD";         ip = prodAddress; }
-    { name = "AkuCraft-STAGING-HD"; title = "AkuCraft STAGING HD"; ip = stagingAddress; }
-    { name = "AkuCraft-SOLO-HD";    title = "AkuCraft Solo HD";    ip = soloAddress; }
+  # Which instances this machine gets. Not every machine should hold every
+  # server: DESK_A is Aga's, and seeding it an instance pointed at a private
+  # single-player world is noise at best. Keyed rather than filtered by
+  # hostname, because modules here must never test the hostname (CLAUDE.md).
+  #
+  # The default in lib/defaults.nix is the PUBLIC pair; a machine opts into a
+  # private world explicitly.
+  wanted = systemSettings.akucraftInstances;
+  forThisMachine = lib.filter (i: lib.elem i.key wanted);
+
+  hdInstances = forThisMachine [
+    { key = "prod";     name = "AkuCraft-HD";          title = "AkuCraft HD";          ip = prodAddress; }
+    { key = "staging";  name = "AkuCraft-STAGING-HD";  title = "AkuCraft STAGING HD";  ip = stagingAddress; }
+    { key = "solo";     name = "AkuCraft-SOLO-HD";     title = "AkuCraft Solo HD";     ip = soloAddress; }
+    { key = "creative"; name = "AkuCraft-CREATIVE-HD"; title = "AkuCraft Creative HD"; ip = creativeAddress; }
   ];
 
   hdMods = [
@@ -999,9 +1014,11 @@ let
   # The mod lists stay where they are: they are still the source of truth for
   # what the server is allowed to hand out (scripts/sync-akucraft-automodpack.py
   # reads them straight out of this file).
-  plainInstances = [
-    { name = "AkuCraft";         title = "AkuCraft";         ip = prodAddress; }
-    { name = "AkuCraft-STAGING"; title = "AkuCraft Staging"; ip = stagingAddress; }
+  # Solo and Creative have no plain variant on purpose: both exist to be played
+  # with the full graphics stack, which is the whole point of the HD instance.
+  plainInstances = forThisMachine [
+    { key = "prod";    name = "AkuCraft";         title = "AkuCraft";         ip = prodAddress; }
+    { key = "staging"; name = "AkuCraft-STAGING"; title = "AkuCraft Staging"; ip = stagingAddress; }
   ];
 
   # Candidates on trial: seeded ONLY on the HD instance that points at :25599,

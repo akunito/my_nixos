@@ -97,8 +97,21 @@ for file in "${UNENCRYPTED_FILES[@]}"; do
     if echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' > /dev/null 2>&1; then
         # Filter out safe patterns: secrets.foo, passwordFile, hashedPassword, comments,
         # placeholder values (your-*, generate-*, GENERATE_*), ssh key paths, documentation
+        #
+        # Two of these were widened on 2026-08-22, both to stop false positives
+        # on lines that were never touched (the scan reads the whole changed
+        # file, so inserting lines above an old one drags it into view):
+        #   [A-Za-z]Secret\s*=   was passwordSecret|ApiKeySecret|PasswordSecret,
+        #                        an enumeration that missed litellmMasterKeySecret.
+        #                        Any attribute NAMED *Secret holds the name of an
+        #                        entry in secrets/domains.nix, which is exactly
+        #                        the indirection the comment above says to allow.
+        #   #.*KEY|TOKEN|...=    a match that sits after a "#" on the line is
+        #                        documentation. Whole-line comments were already
+        #                        exempt via [0-9]+:\s*#; this covers a comment
+        #                        that trails real code.
         suspicious=$(echo "$CONTENT" | grep -nEi '(KEY|TOKEN|SECRET|PASSWORD)\s*=\s*"[^$\{"][^"]{12,}"' \
-            | grep -viE '(secrets\.|passwordFile|passwordSecret|ApiKeySecret|PasswordSecret|hashedPassword|sslCertificate|sshKey|mkOption|description|example|default =.*lib\.|[0-9]+:\s*#|your-|placeholder|generate-|GENERATE_|\.ssh/)' || true)
+            | grep -viE '(secrets\.|passwordFile|[A-Za-z]Secret\s*=|hashedPassword|sslCertificate|sshKey|mkOption|description|example|default =.*lib\.|[0-9]+:\s*#|#.*(KEY|TOKEN|SECRET|PASSWORD)\s*=|your-|placeholder|generate-|GENERATE_|\.ssh/)' || true)
         if [ -n "$suspicious" ]; then
             FINDINGS+="  ${YELLOW}Possible secret assignment${RESET} in $file:\n$suspicious\n"
             BLOCKED=true

@@ -431,6 +431,7 @@ in
 
     # === Gaming ===
     freesmLauncherEnable = true; # FreeSM Launcher (Prism fork, offline accounts) — connect to AkuCraft over Tailscale
+    akucraftInstances = [ "prod" "staging" "solo" "creative" ]; # this is the machine that owns the private worlds
 
     # === Webcam controls (Logitech C920) — persist across reboot/hotplug/resume ===
     webcamControlsEnable = true;

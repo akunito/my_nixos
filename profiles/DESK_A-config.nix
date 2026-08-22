@@ -109,6 +109,7 @@ in
     xboxControllerEnable = true;  # xpadneo
     joycondEnable = true;         # Joy-Con daemon
     freesmLauncherEnable = true;  # FreeSM Launcher (Minecraft over Tailscale/AkuCraft)
+    akucraftInstances = [ "creative" ]; # only the shared build world; prod/staging/solo are not hers
     sunshineEnable = false;       # streaming off (stable pkg unreliable, as on LAPTOP_A)
 
     # ============================================================================
