@@ -1,0 +1,6 @@
+{
+  "function": "minecraft:set_components",
+  "components": {
+    "minecraft:enchantments": { "levels": { "soulbound_enchantment:soulbound": 1 } }
+  }
+}

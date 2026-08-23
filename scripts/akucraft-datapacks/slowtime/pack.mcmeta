@@ -1,0 +1,6 @@
+{
+  "pack": {
+    "pack_format": 48,
+    "description": "AkuCraft: day/night passes 3x slower (net +1 daytime per 3 ticks)"
+  }
+}
