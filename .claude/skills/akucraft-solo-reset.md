@@ -42,16 +42,23 @@ aleatorio**, para que dos muertes seguidas no te manden al mismo sitio.
 **Comprueba que el spawn no te mate al llegar.** Esto es lo que más cuesta
 acertar:
 
-- La altura del terreno se **mide**, no se estima: `forceload` del chunk,
-  soltar un `armor_stand` desde y=250 y leer su `Pos` al posarse. Sin el
-  forceload el chunk no tickea y la entidad nunca cae.
+- La sonda (`armor_stand` soltado desde y=250 tras un `forceload`) sirve para
+  **orientar**, no para decidir. Soltada justo después del forceload el chunk
+  aún no tiene la colisión lista y la sonda puede **atravesar el suelo y
+  quedarse dentro del terreno**: el 2026-08-23 eso devolvió un spawn con
+  tierra a la altura de los pies, que en hardcore es asfixiarse. Desde donde
+  cae se busca hacia arriba el primer hueco habitable de verdad.
+- La regla que decide, comprobando bloques:
+  `pies-1` sólido · `pies` y `cabeza` atravesables (aire o
+  `#minecraft:replaceable`).
 - Ni agua ni lava a la altura de los pies, el cuerpo **ni la cabeza**. Lo
   tercero importa: una sonda se hunde hasta el fondo de un lago y aterriza
   sobre arena, así que el suelo puede parecer bueno estando bajo el agua.
 - Se descarta cualquier punto por debajo del nivel del mar (y < 63).
-- **No** se exige `minecraft:air` donde vas a estar de pie. Fue el primer
-  intento y rechazaba todos los valles floridos, porque la hierba alta y la
-  lavanda ocupan el bloque sin estorbar. Si la sonda se posó ahí, cabes.
+- **No** se exige `minecraft:air` donde vas a estar de pie: se acepta también
+  `#minecraft:replaceable`. Exigir aire fue el primer intento y rechazaba
+  todos los valles floridos, porque la hierba alta y la lavanda ocupan el
+  bloque sin estorbar.
 
 **Archiva, nunca borra.** El mundo que muere va a `runs/world-<fecha>/` con un
 `.txt` al lado que anota semilla, días sobrevividos, causa de muerte y el
@@ -62,13 +69,17 @@ spawn que tenía. Poda a mano cuando ocupe.
 El script imprime la verificación final; tiene que verse así:
 
 ```
-y=74   sólido
-y=75   air
-y=76   air
+y=65  SÓLIDO      (suelo)
+y=66  aire        (atravesable)
+y=67  aire        (atravesable)
 ```
 
-Suelo sólido con dos bloques de aire encima. Si sale `water` o `lava` en
-cualquier línea, **no entres** y vuelve a lanzarlo con otro radio.
+Sólido abajo, atravesable en los otros dos. Si sale `SÓLIDO` en las dos
+últimas, o `water`/`lava` en cualquiera, **no entres** y vuelve a lanzarlo.
+
+La salida distingue *atravesable* de *sólido* a propósito: la primera versión
+etiquetaba "sólido" todo lo que no fuese agua, lava o aire —incluida la hierba
+alta—, así que un spawn con tierra en los pies se leía igual que uno correcto.
 
 ## Si algo falla
 
