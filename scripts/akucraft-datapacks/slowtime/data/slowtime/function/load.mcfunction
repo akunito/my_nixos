@@ -7,3 +7,10 @@ scoreboard players set #k24000 slowtime_t 24000
 scoreboard players add #last slowtime_t 0
 scoreboard players add #dbg_deep slowtime_t 0
 scoreboard players add #dbg_skip slowtime_t 0
+scoreboard players add #dbg_jump slowtime_t 0
+scoreboard players add #dbg_jumpsz slowtime_t 0
+scoreboard players add #frplr slowtime_t 0
+scoreboard players add #frslp slowtime_t 0
+scoreboard players add #owplr slowtime_t 0
+scoreboard players add #owslp slowtime_t 0
+scoreboard players add #owfires slowtime_t 0

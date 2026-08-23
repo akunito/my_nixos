@@ -13,6 +13,12 @@ scoreboard players operation #day slowtime_t *= #k24000 slowtime_t
 scoreboard players operation #abs slowtime_t += #day slowtime_t
 scoreboard players operation #diff slowtime_t = #abs slowtime_t
 scoreboard players operation #diff slowtime_t -= #last slowtime_t
+# Count and size every adoption, so "who moved the clock" is answerable
+# after the fact. A vanilla night-skip shows up here as one jump of
+# roughly (24000 - the daytime it was); two jumps for one night means
+# something fired twice. Startup and any admin /time set also show up.
+execute unless score #diff slowtime_t matches 0..10 run scoreboard players add #dbg_jump slowtime_t 1
+execute unless score #diff slowtime_t matches 0..10 run scoreboard players operation #dbg_jumpsz slowtime_t = #diff slowtime_t
 execute unless score #diff slowtime_t matches 0..10 run scoreboard players operation #last slowtime_t = #abs slowtime_t
 execute if score #diff slowtime_t matches 0..10 run scoreboard players add #last slowtime_t 1
 execute store result storage slowtime:tmp t int 1 run scoreboard players get #last slowtime_t
