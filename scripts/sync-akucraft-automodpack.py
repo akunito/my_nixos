@@ -59,15 +59,19 @@ NAS = ["ssh", "-A", "akunito@100.64.0.1"]
 
 TARGETS = {
     # container            data dir                    host
+    # Staging and solo moved to the NAS on 2026-08-25 (creative on 08-22):
+    # the VPS keeps only prod.
     "prod":    ("minecraft",      "~/.homelab/minecraft/data", VPS),
-    "staging": ("mc-mca-staging", "~/.homelab/backups/mca-staging", VPS),
+    "staging": ("mc-mca-staging",
+                "/mnt/ssdpool/docker/compose/gameservers/akucraft-staging/data", NAS),
     # Solo runs a SUBSET of staging's jars (78 vs 99, plus chunky), and that
     # needs no solo-specific list: the allow-list below is server_jars
     # INTERSECT client_ok, so the 22 mods solo does not have simply never come
     # up, and chunky - server-side, no registry entries - lands in the withheld
     # pile where it belongs. This is the property that makes the design
     # drift-resistant, so do not "fix" it by hardcoding a per-target list.
-    "solo":    ("minecraft-solo",  "~/.homelab/minecraft-solo/data", VPS),
+    "solo":    ("minecraft-solo",
+                "/mnt/ssdpool/docker/compose/gameservers/akucraft-solo/data", NAS),
     "creative": ("minecraft-creative",
                  "/mnt/ssdpool/docker/compose/gameservers/akucraft-creative/data", NAS),
 }

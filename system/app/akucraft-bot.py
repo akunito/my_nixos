@@ -146,8 +146,12 @@ SERVERS = {
     "staging": {
         "label": "Staging",
         "container": "mc-mca-staging",
-        "dir": "/home/akunito/.homelab/minecraft-staging",
-        "address": "100.64.0.6:25599",
+        # On NAS_PROD since 2026-08-25, like creative: the VPS keeps only
+        # survival. Same caveat: the NAS sleeps 23:00-16:00, so /start fails
+        # while it is suspended - the machine is asleep, not the bot broken.
+        "ssh_host": "akunito@100.64.0.1",
+        "dir": "/mnt/ssdpool/docker/compose/gameservers/akucraft-staging",
+        "address": "100.64.0.1:25599",
         "quiet": True,
         # Only MCadmin may /start and /stop it from Discord: a test session can
         # be mid-experiment, and a helpful player "booting the server back up"
@@ -168,8 +172,10 @@ SERVERS = {
     "solo": {
         "label": "Solo",
         "container": "minecraft-solo",
-        "dir": "/home/akunito/.homelab/minecraft-solo",
-        "address": "100.64.0.6:25567",
+        # On NAS_PROD since 2026-08-25, same move and caveats as staging.
+        "ssh_host": "akunito@100.64.0.1",
+        "dir": "/mnt/ssdpool/docker/compose/gameservers/akucraft-solo",
+        "address": "100.64.0.1:25567",
         "quiet": True,
         "admin_only": True,
         "private": True,

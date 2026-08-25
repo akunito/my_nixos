@@ -54,8 +54,9 @@ NAS = ["ssh", "-A", "akunito@100.64.0.1"]
 # datapacks and no frontier - pushing slowtime there would silently change how
 # fast its days run.
 TARGETS = {
+    # Solo moved to the NAS on 2026-08-25; the VPS keeps only prod.
     "prod":     ("minecraft",          VPS),
-    "solo":     ("minecraft-solo",     VPS),
+    "solo":     ("minecraft-solo",     NAS),
     "creative": ("minecraft-creative", NAS),
 }
 

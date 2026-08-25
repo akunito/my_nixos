@@ -31,8 +31,10 @@ import pathlib
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 NIX = REPO / "user/app/games/minecraft-client-mods.nix"
-SSH = ["ssh", "-A", "-p", "56777", "akunito@100.64.0.6"]
-TARGETS = {"prod": "minecraft", "staging": "mc-mca-staging"}
+# Staging moved to the NAS on 2026-08-25; the VPS keeps only prod.
+VPS = ["ssh", "-A", "-p", "56777", "akunito@100.64.0.6"]
+NAS = ["ssh", "-A", "akunito@100.64.0.1"]
+TARGETS = {"prod": ("minecraft", VPS), "staging": ("mc-mca-staging", NAS)}
 
 
 def norm(v):
@@ -105,7 +107,7 @@ def nix_client_set():
     return out
 
 
-def collect(container):
+def collect(container, ssh):
     """fabric.mod.json of every jar in /data/mods, read inside the container."""
     # Done with python INSIDE the container so nested jars can be opened. A
     # shell loop can only read the top level, which made the first version of
@@ -134,7 +136,7 @@ json.dump(out, sys.stdout)
 """
     script = ("export DOCKER_HOST=unix:///run/user/1000/docker.sock\n"
               f"docker exec -i {container} python3 - <<'PYEOF'\n{remote_py}\nPYEOF\n")
-    r = subprocess.run(SSH + ["bash -s"], input=script, text=True,
+    r = subprocess.run(ssh + ["bash -s"], input=script, text=True,
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=600)
     if r.returncode != 0:
         sys.exit(f"remote failed:\n{r.stdout}")
@@ -144,7 +146,7 @@ json.dump(out, sys.stdout)
     return json.loads(r.stdout[start:])
 
 
-def collect_client(container):
+def collect_client(container, ssh):
     """The set AutoModpack advertises - server mods it is allowed to send PLUS
     the client-only ones in host-modpack.
 
@@ -187,7 +189,7 @@ json.dump(out, sys.stdout)
 """
     script = ("export DOCKER_HOST=unix:///run/user/1000/docker.sock\n"
               f"docker exec -i {container} python3 - <<'PYEOF'\n{remote_py}\nPYEOF\n")
-    r = subprocess.run(SSH + ["bash -s"], input=script, text=True,
+    r = subprocess.run(ssh + ["bash -s"], input=script, text=True,
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=600)
     if r.returncode != 0:
         sys.exit(f"remote failed:\n{r.stdout}")
@@ -204,9 +206,9 @@ def main():
                     help="audit the set AutoModpack actually DELIVERS to clients, "
                          "rather than the jars sitting in /data/mods")
     args = ap.parse_args()
-    container = TARGETS[args.target]
+    container, ssh = TARGETS[args.target]
 
-    jars = collect_client(container) if args.client else collect(container)
+    jars = collect_client(container, ssh) if args.client else collect(container, ssh)
     what = "delivered to clients" if args.client else "server jars"
     print(f"# AkuCraft audit - {args.target} ({container}), {len(jars)} {what}\n")
 
