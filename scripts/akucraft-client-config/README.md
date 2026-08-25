@@ -15,9 +15,17 @@ Inventory Profiles Next draws its sort buttons over Grind Enchantments'
 IPN merges every `config/inventoryprofilesnext/integrationHints/*.json` over
 its built-in hints; `"ignore": true` disables IPN entirely on that screen.
 
-The keys are Fabric intermediary names, verified against the jars we ship
-(NOT guessed — re-verify on a Minecraft version bump):
+IPN's own editor help says "Usually it's necessary to set this to true for
+both Container and Screen", so both classes of each block are listed. The
+keys are Fabric intermediary names, verified against the jars we ship (NOT
+guessed — re-verify on a Minecraft version bump):
 - `net.minecraft.class_3802` = GrindstoneScreen (grind-enchantments'
-  GrindstoneScreenMixin targets it; the handler is class_3803)
+  GrindstoneScreenMixin targets it)
+- `net.minecraft.class_3803` = GrindstoneScreenHandler (its refmap)
 - `net.minecraft.class_471` = AnvilScreen (IPN's own accesswidener touches
   `class_471 field_2821`)
+- `net.minecraft.class_1706` = AnvilScreenHandler (grind-enchantments'
+  MoveOperation calls its getNextCost)
+
+Players can do the same by hand, no file needed: IPN's in-game Overlay
+Editor has Screen -> Ignore and Container -> Ignore per GUI.
