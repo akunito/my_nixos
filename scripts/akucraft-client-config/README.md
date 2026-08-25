@@ -29,3 +29,12 @@ guessed — re-verify on a Minecraft version bump):
 
 Players can do the same by hand, no file needed: IPN's in-game Overlay
 Editor has Screen -> Ignore and Container -> Ignore per GUI.
+
+### Field notes (2026-08-25, IPN 2.2.6)
+
+- IPN's in-game Overlay Editor EDITS these hint files in place: flipping
+  "Ignore" off DELETED our grindstone entries from the delivered akucraft.json.
+  AutoModpack restores the file on the next launcher start (hash mismatch), so
+  player experiments self-heal.
+- The editor can MOVE buttons (writes player-defined.json) and can turn Ignore
+  OFF, but cannot turn Ignore ON. Enabling ignore is file-only.
