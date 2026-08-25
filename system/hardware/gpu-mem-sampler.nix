@@ -42,13 +42,28 @@ let
       echo "$card vram=''${vram}MiB gtt=''${gtt}/''${gtt_total}MiB memavail=''${avail}MiB swapused=''${swap}MiB"
     done
   '';
+  # Long-running loop rather than a timer + oneshot. A timer costs four journal
+  # lines per sample (systemd's Starting/Finished/Deactivated around each run)
+  # against one line of actual data. At 60s that is ~5760 lines/day, and this
+  # journal is size-capped and shared — the noise would evict the very history
+  # the sampler exists to preserve. The loop logs 1440 lines/day and stays
+  # silent otherwise.
+  loop = pkgs.writeShellScript "gpu-mem-sampler-loop" ''
+    while :; do
+      ${sampler}
+      ${pkgs.coreutils}/bin/sleep ${toString interval}
+    done
+  '';
 in
 {
   systemd.services.gpu-mem-sampler = lib.mkIf enabled {
     description = "Sample AMD GPU VRAM/GTT and memory pressure";
+    wantedBy = [ "multi-user.target" ];
     serviceConfig = {
-      Type = "oneshot";
-      ExecStart = sampler;
+      Type = "simple";
+      ExecStart = loop;
+      Restart = "always";
+      RestartSec = "30s";
       # Read-only diagnostic: no privileges beyond reading sysfs/procfs.
       DynamicUser = true;
       ProtectSystem = "strict";
@@ -56,17 +71,6 @@ in
       PrivateTmp = true;
       NoNewPrivileges = true;
       RestrictAddressFamilies = "";
-    };
-  };
-
-  systemd.timers.gpu-mem-sampler = lib.mkIf enabled {
-    description = "Sample AMD GPU VRAM/GTT periodically";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "2min";
-      OnUnitActiveSec = "${toString interval}s";
-      AccuracySec = "5s";
-      Unit = "gpu-mem-sampler.service";
     };
   };
 }

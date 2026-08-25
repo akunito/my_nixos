@@ -176,14 +176,40 @@ in
         return 0
       }
 
+      # Summed GTT across amdgpu nodes, in MiB.
+      gtt_now() {
+        total=0
+        for d in /sys/class/drm/card*/device; do
+          [ -r "$d/mem_info_gtt_used" ] || continue
+          total=$(( total + $(${pkgs.coreutils}/bin/cat "$d/mem_info_gtt_used") / 1048576 ))
+        done
+        echo "$total"
+      }
+
+      mem_avail() {
+        ${pkgs.gawk}/bin/awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo
+      }
+
+      # One line per sleep transition. This is the signal the per-minute sampler
+      # exists to capture, compressed to ~2 lines per cycle so it stays readable
+      # in the journal long after the fine-grained series has rotated away.
+      # Healthy: post-resume "before" is small. Regression: it climbs each cycle.
+      report() {
+        before=$(gtt_now)
+        avail=$(mem_avail)
+        evict_gtt
+        after=$(gtt_now)
+        echo "amdgpu-reclaim: $1 GTT ''${before} -> ''${after} MiB (MemAvailable ''${avail} MiB)"
+      }
+
       case "$1/$2" in
         pre/suspend|pre/hibernate|pre/hybrid-sleep|pre/suspend-then-hibernate)
-          evict_gtt
+          report pre-sleep
           ${pkgs.coreutils}/bin/sync
           echo 3 > /proc/sys/vm/drop_caches || true
           ;;
         post/suspend|post/hibernate|post/hybrid-sleep|post/suspend-then-hibernate)
-          evict_gtt
+          report post-resume
           ;;
       esac
     '';
