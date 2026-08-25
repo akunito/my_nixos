@@ -100,6 +100,18 @@ let
       url = "https://cdn.modrinth.com/data/ohNO6lps/versions/N5qzq0XV/ForgeConfigAPIPort-v21.1.6-1.21.1-Fabric.jar";
       sha512 = "cd9296e78ba969f7aed6e3692aa25eb61c102c79c55ca5f9592576bacaa26feab5d5d48fa30cf07ca852e0f1d42afc4d4558feff69a67b225183d2bc15898cf9";
     }
+    # Grindstone: move enchantments onto a book instead of destroying them.
+    # It adds no registry entries, so a client without it is never kicked -
+    # which is how it stayed server-only for so long. But the LEVEL COST is
+    # drawn by a client-side mixin on GrindstoneScreen, and in 4.0.0 the
+    # server-side "alternative cost display" is dead code (addLevelCostLore
+    # has no callers). Without this jar the price is invisible and a refusal
+    # for lack of levels looks exactly like a bug (2026-08-24).
+    {
+      name = "grind-enchantments-4.0.0+1.21.1.jar";
+      url = "https://cdn.modrinth.com/data/WC4UgDcZ/versions/fQ1HXxD4/grind-enchantments-4.0.0%2B1.21.1.jar";
+      sha512 = "a6290f8b2a7546d4910389d619937f6e435f731cb206e23baf6888c690ae661d6bca62c26a4af37e26a1e89910c3a9a087ff7a50af27e0643759ad6b4691e263";
+    }
 
     # --- Spell Engine RPG stack (optional CONTENT, not a combat rewrite) ---
     # Deliberately WITHOUT Better Combat: that one rewrites melee for
