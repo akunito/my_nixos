@@ -48,12 +48,14 @@ in
     amdLACTdriverEnable = true;
     amdgpuSuspendWorkaround = true; # AINF-282: kernel 6.17→7.0+ SMU suspend regression on Navi 48
     amdgpuDisableIps = true; # DMCUB wedged on resume 2026-08-07 (INBOX0 HW Lock Ack flood → ~1 FPS desktop)
-    # Cap GTT at 6 GiB. Unbounded (kernel default ~15.6 GiB here) the session crept
-    # to 9.4 GiB of pinned system RAM while only 900 MiB of the 16 GiB VRAM was in
-    # use, so suspend-time buffer eviction OOM'd and took two NVMe controllers down
-    # with it (2026-08-20). Capping pushes allocations back to VRAM, which has
-    # ample headroom.
-    amdgpuGttSizeMiB = 6144;
+    # Loose backstop only — the actual fix is the amdgpu_evict_gtt drain in
+    # amdgpu-suspend-workaround.nix. Kernel default here is ~15.6 GiB (half of
+    # RAM); unbounded, suspend/resume stranding pushed GTT to 9.4 GiB and the
+    # suspend-time eviction OOM'd, taking two NVMe controllers down (2026-08-20).
+    # Was 6144, but that ran to 85% within 5 suspends and would squeeze the local
+    # LLM, which spills ~3.9 GiB into GTT when VRAM is full. 10 GiB leaves the
+    # model room while still bounding a runaway.
+    amdgpuGttSizeMiB = 10240;
 
     # Display Manager Configuration
     greetdEnable = false;
