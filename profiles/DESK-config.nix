@@ -56,6 +56,10 @@ in
     # LLM, which spills ~3.9 GiB into GTT when VRAM is full. 10 GiB leaves the
     # model room while still bounding a runaway.
     amdgpuGttSizeMiB = 10240;
+    # Watch the GTT ratchet stay fixed. Regression signature: gtt_used climbing
+    # across resumes while vram_used stays low.
+    #   journalctl -u gpu-mem-sampler -o cat --since "3 days ago"
+    gpuMemSamplerEnable = true;
 
     # Display Manager Configuration
     greetdEnable = false;

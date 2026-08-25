@@ -77,6 +77,7 @@
   ++ lib.optional (systemSettings.thunderboltEnable or false) ../../system/hardware/thunderbolt.nix # Thunderbolt dock/device support
   ++ lib.optional (systemSettings.suspendDebugEnable or false) ../../system/hardware/suspend-debug.nix # Suspend/resume instrumentation
   ++ lib.optional ((systemSettings.amdgpuSuspendWorkaround or false) || (systemSettings.amdgpuDisableIps or false)) ../../system/hardware/amdgpu-suspend-workaround.nix # AINF-282 SMU mitigation + DMCUB/IPS resume mitigation (independent flags)
+  ++ lib.optional (systemSettings.gpuMemSamplerEnable or false) ../../system/hardware/gpu-mem-sampler.nix # Journal VRAM/GTT/MemAvailable — watches for the suspend GTT ratchet regressing
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix # Tailscale mesh VPN
   ++ lib.optional (systemSettings.hibernateEnable or false) ../../system/hardware/hibernate.nix # Hibernation with LUKS-encrypted swap (self-gates on hibernateSwapLuksUUID; warns when half-configured)
   ++ lib.optional (systemSettings.laptopPowerTuningEnable or false) ../../system/hardware/laptop-power-tuning.nix # Laptop idle power reduction
