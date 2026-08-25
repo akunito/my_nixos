@@ -169,6 +169,12 @@ in
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAwUXqQXLaKW/WjsZ95fjHKU7sIhNEeqW685TbsrePiK diego88aku@gmail.com" # Laptop (X13)
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIErY0vLODupjDrteqGt3SuNW7neUD/ig7lkMiatcmHOU vps-restic-to-truenas" # VPS_PROD restic backups (sftp to extpool/vps-backups)
+      # VPS_PROD main key: the akucraft bot (runs on the VPS as a systemd
+      # service, no agent) reaches the NAS game servers over BatchMode ssh for
+      # health/idle-stop//start//stop. Without this the bot silently saw every
+      # NAS server as "absent" and the 45-min idle timer never fired (creative
+      # ran for 2 days straight, found 2026-08-25).
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICLo+cGyNOJQCaT2YmfJGUbebNetz0eI4RmB5Yfn2eca akunito@vps-prod" # VPS_PROD akucraft bot -> NAS game servers
     ];
 
     # ============================================================================
