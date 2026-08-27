@@ -99,6 +99,12 @@ def body_of(thread_id):
             break
     parts, author = [], ""
     for m in msgs:
+        # Renaming a forum post leaves a CHANNEL_NAME_CHANGE notice (type 4)
+        # whose content is the new title, and Discord refuses to delete system
+        # messages. Without this the title gets appended to the guide body and
+        # there is no way to take it back out. 0 = normal, 19 = reply.
+        if m.get("type") not in (0, 19):
+            continue
         text = m.get("content", "").strip()
         if not text or OTHER_LANG.match(text):
             continue
