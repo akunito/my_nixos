@@ -52,7 +52,7 @@
     "jellyseerr": {
       "type": "stdio",
       "command": "uv",
-      "args": ["run", "--no-project", "--with", "mcp", "python", "templates/openclaw/jellyseerr-mcp.py"],
+      "args": ["run", "--no-project", "--with", "mcp<2", "python", "templates/openclaw/jellyseerr-mcp.py"],
       "env": {
         "JELLYSEERR_URL": "${JELLYSEERR_URL}",
         "JELLYSEERR_API_KEY": "${JELLYSEERR_API_KEY}"
