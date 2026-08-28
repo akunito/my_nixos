@@ -176,6 +176,17 @@ reproducción universal restaurada + ahorro extra. Ejecutarlo el mismo día del 
 
 ## 7. PASO 4 — LIMPIEZA (tras ≥7 días de uso normal; libera el espacio)
 
+> ✅ **COMPLETADO 2026-08-28** — backup post-cutover verificado primero (snapshot
+> `3a1532d9` 84 GiB monthly; restauración de muestra AVIF+stream sha1 OK; `restic check
+> --read-data-subset=2%` sin errores; el timer semanal del 23-ago ya había subido la
+> biblioteca comprimida como `2a0a381e`). Limpieza: **102 GB liberados** (archivo de
+> originales 58 GB + clon dev 83 GB de no-hardlinks + volúmenes + dumps); álbum de
+> muestra prod borrado; vhost pictures-dev retirado del nix. Los originales pre-cutover
+> siguen en los snapshots monthly de julio (~meses de retención). Se conservan en
+> `~/.homelab/immich-dev/`: cutover.sh, cutover_map.tsv, revert_map.tsv y los scripts
+> detect/trash-reuploads (escudo de papelera — sigue vigente NO vaciar la papelera).
+> **PROYECTO CERRADO**: biblioteca 121→84 GB.
+
 ```bash
 rm -rf ~/immich-preclone-originals            # ~74 GB de originales archivados
 docker compose -p immich-dev down -v          # -v: el docker rootless nunca se poda solo

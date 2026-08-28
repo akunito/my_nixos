@@ -447,7 +447,6 @@ in
       freshrss   = { port = 8084; };
       nextcloud  = { port = 8089; };
       pictures   = { port = 2283; maxBodySize = "4G"; };  # Immich (large photo/video uploads)
-      pictures-dev = { port = 2284; maxBodySize = "4G"; };  # Immich dev/compression clone (temporary)
       syncthing  = { port = 8384; };
       status     = { port = 3009; };
       plane      = { port = 3003; };
