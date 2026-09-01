@@ -142,6 +142,29 @@ let
       && echo "local LLM unlocked — the next request will load the model again"
   '';
 
+  # `llama-lock` and `llama-unlock` say what they did but not what the state IS,
+  # and the state is now worth asking about: the lock is normally taken and
+  # released by GameMode, not by hand, so "is it locked, and why" is the first
+  # question when the local model is not answering.
+  llamaStatus = pkgs.writeShellScriptBin "llama-status" ''
+    if [ -e ${lockFile} ]; then
+      echo "lock:     TAKEN — no model will load (a game is running, or llama-lock was run by hand)"
+    else
+      echo "lock:     clear"
+    fi
+    echo -n "service:  "; ${pkgs.systemd}/bin/systemctl is-active ollama.service
+    for d in /sys/class/drm/card*/device; do
+      t=$(${pkgs.coreutils}/bin/cat "$d/mem_info_vram_total" 2>/dev/null || echo 0)
+      [ "$t" -lt 1073741824 ] && continue   # skip the iGPU
+      u=$(${pkgs.coreutils}/bin/cat "$d/mem_info_vram_used" 2>/dev/null || echo 0)
+      echo "vram:     $(( u / 1048576 )) MiB used of $(( t / 1048576 )) MiB ($(( (t - u) / 1048576 )) MiB free)"
+    done
+    echo -n "loaded:   "
+    ${pkgs.curl}/bin/curl -sf --max-time 3 http://127.0.0.1:${toString port}/api/ps 2>/dev/null       | ${pkgs.gnugrep}/bin/grep -o '"name":"[^"]*"' | ${pkgs.gnused}/bin/sed 's/"name":"//;s/"//'       | ${pkgs.coreutils}/bin/paste -sd' ' - || echo "(unreachable)"
+    echo
+    echo "toggle:   llama-lock  (block + free VRAM)   |   llama-unlock  (allow again)"
+  '';
+
   # Pulling is NOT done at activation: these are 10-14 GB each and a nixos-rebuild
   # must not block on a download, nor fail the switch when the network is down.
   # Idempotent — re-running it only fetches what is missing, so it doubles as the
@@ -285,7 +308,7 @@ in
       serviceConfig = { Type = "oneshot"; ExecStart = "${reconcile}"; };
     };
 
-    environment.systemPackages = [ ollamaPkg llamaLock llamaUnlock ollamaPull ];
+    environment.systemPackages = [ ollamaPkg llamaLock llamaUnlock llamaStatus ollamaPull ];
 
     # Tailscale only. openFirewall would punch the port on every interface, and
     # this one answers unauthenticated prompts to a 20B model.

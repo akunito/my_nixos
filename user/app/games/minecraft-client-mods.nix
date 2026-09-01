@@ -1436,4 +1436,52 @@ in
 
   home.activation.akucraftHdInstances =
     lib.hm.dag.entryAfter [ "writeBoundary" ] hdSeedScript;
+
+  # --- Route the launcher through gamemoderun -----------------------------
+  # WHY this exists at all: the local LLM and Minecraft cannot share this card
+  # any more. Measured 2026-09-01 on the RX 9070 XT (16304 MiB):
+  #   desktop (Sway + browser + editor) .... 2.9 GiB
+  #   one AkuCraft HD client ............... 3.9 GiB   (was 2.0 GiB in Aug, before ULTRA shaders)
+  #   gpt-oss:20b resident ................ 11.9 GiB
+  # That totals 18.7 GiB. Worse, ROCm reports the card as nearly empty no matter
+  # what else is on it, so Ollama loads anyway and amdgpu answers with
+  # "Not enough memory for command submission!" — which on 2026-09-01 killed a
+  # running Minecraft client. The lock is what prevents that.
+  #
+  # gamemoderun rather than PreLaunchCommand=llama-lock on purpose. A
+  # PostExitCommand does not run if the game or the launcher dies hard, and a
+  # lock left behind is silent and expensive: the villagers would fall back to
+  # paid DeepSeek indefinitely with nothing to show it. gamemoded drops the
+  # client when its process disappears, crash included, so the unlock always
+  # happens.
+  #
+  # /run/current-system/sw/bin is deliberate: it follows the active generation,
+  # where a /nix/store path baked into the config would break on GC.
+  #
+  # Only the GLOBAL key is touched. Every AkuCraft instance ships
+  # OverrideCommands=false, so all of them inherit it; an instance that opts out
+  # keeps its own setting, which is the escape hatch if one game needs it.
+  home.activation.freesmGamemodeWrapper =
+    lib.hm.dag.entryAfter [ "writeBoundary" ] (
+      let
+        cfg = "$HOME/.local/share/FreesmLauncher/freesmlauncher.cfg";
+        want = if (systemSettings.freesmLauncherGamemodeWrapper or false)
+               then "/run/current-system/sw/bin/gamemoderun" else "";
+      in ''
+        if [ -f "${cfg}" ]; then
+          current=$(${pkgs.gnugrep}/bin/grep -E '^WrapperCommand=' "${cfg}" | ${pkgs.coreutils}/bin/cut -d= -f2- || true)
+          if [ "$current" != "${want}" ]; then
+            if ${pkgs.gnugrep}/bin/grep -qE '^WrapperCommand=' "${cfg}"; then
+              ${pkgs.gnused}/bin/sed -i 's|^WrapperCommand=.*|WrapperCommand=${want}|' "${cfg}"
+            else
+              echo 'WrapperCommand=${want}' >> "${cfg}"
+            fi
+            echo "FreesmLauncher WrapperCommand -> '${want}'"
+          fi
+        else
+          # First run has not happened yet; the launcher writes this file itself
+          # and the next activation will set the key.
+          echo "FreesmLauncher config not present yet — WrapperCommand not set"
+        fi
+      '');
 }

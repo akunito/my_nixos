@@ -485,6 +485,17 @@ in
     # === Gaming ===
     freesmLauncherEnable = true; # FreeSM Launcher (Prism fork, offline accounts) — connect to AkuCraft over Tailscale
     akucraftInstances = [ "prod" "staging" "solo" "creative" ]; # this is the machine that owns the private worlds
+    # Launch every instance under gamemoderun, so GameMode's hooks take the
+    # local-LLM lock while Minecraft runs. Not optional on this box any more:
+    # the HD client grew from 2.0 to 3.9 GiB of VRAM with the ULTRA shaders, and
+    # 3.9 + 11.9 (gpt-oss) + 2.9 (desktop) does not fit in 16.3 GiB. Sharing the
+    # card faults amdgpu and kills the game, measured 2026-09-01.
+    #
+    # THE TRADE: while you are playing, the local model is off, so MCA villagers
+    # answer from DeepSeek (~2.3s, paid) instead of the GPU (~1.5s, free). That
+    # is the cost of not crashing. Set false to take the lock off and manage it
+    # by hand with llama-lock / llama-unlock.
+    freesmLauncherGamemodeWrapper = true;
 
     # === Webcam controls (Logitech C920) — persist across reboot/hotplug/resume ===
     webcamControlsEnable = true;

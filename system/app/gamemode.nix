@@ -23,8 +23,16 @@
       # Process and I/O priority optimizations are enabled by default (safe)
     }
     # When the local LLM is enabled, lock it out for the duration of a game so
-    # inference never competes with the game for the GPU (see llama-server.nix).
-    // lib.optionalAttrs (systemSettings.llamaServerEnable or false) {
+    # inference never competes with the game for the GPU.
+    #
+    # ‼️ This MUST test both backends. It tested only llamaServerEnable, which
+    # the Ollama swap on 2026-08-21 set to false — so from that day the hook was
+    # not emitted at all and the automatic lock silently did nothing. The
+    # consequence showed up on 2026-09-01 as an amdgpu command-submission fault
+    # that killed a running Minecraft client (see system/app/ollama-server.nix).
+    //
+    lib.optionalAttrs ((systemSettings.llamaServerEnable or false)
+                    || (systemSettings.ollamaServerEnable or false)) {
       custom = {
         start = "${pkgs.coreutils}/bin/touch /run/llama-gaming/lock";
         end = "${pkgs.coreutils}/bin/rm -f /run/llama-gaming/lock";

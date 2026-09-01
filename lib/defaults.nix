@@ -154,6 +154,12 @@
     # a private single-player world is noise. Only read when
     # freesmLauncherEnable is true.
     akucraftInstances = [ "prod" "staging" ];
+    # Route every FreesmLauncher instance through `gamemoderun`, which makes
+    # GameMode's custom.start/end hooks fire — and those hold the local-LLM
+    # gaming lock, so the GPU is never shared between Minecraft and inference.
+    # Needs gamemodeEnable and one of llamaServerEnable/ollamaServerEnable to be
+    # worth anything. See user/app/games/minecraft-client-mods.nix.
+    freesmLauncherGamemodeWrapper = false;
 
     # Webcam controls persistence (v4l2 brightness/contrast/etc. across reboot + hotplug)
     webcamControlsEnable = false; # Enable udev+systemd reapply of v4l2 controls
