@@ -417,6 +417,22 @@ in
           # again - 3 x 10s before the fallback even starts. Fail over instead.
           num_retries = 0;
           response_format = { type = "json_object"; };
+          # gpt-oss reasons too, on its harmony "analysis" channel, and MCA picks
+          # the token budget - so a long analysis returns finish_reason=length
+          # with EMPTY content and the line falls through to paid DeepSeek.
+          # Measured 2026-09-01 at max_tokens=80: unset gives an empty reply,
+          # "low" gives valid JSON in 39-53 tokens, 3 of 3.
+          #
+          # "low", NOT "none". Unlike Qwen3.8, gpt-oss REQUIRES its analysis
+          # channel: at "none" the reasoning field is empty but the model writes
+          # its analysis into content instead ("We need to reply as a
+          # villager...") and the JSON contract is broken. Same parameter,
+          # opposite correct value, because the two models express thinking
+          # differently.
+          #
+          # extra_body for the same reason as local-agent: litellm 1.75.5 drops
+          # reasoning_effort for generic openai/ passthrough models.
+          extra_body = { reasoning_effort = "low"; };
         }; }
       { name = "akucraft-villager-backup";
         model = "openai/deepseek-v4-flash";
