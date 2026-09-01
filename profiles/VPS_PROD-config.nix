@@ -358,7 +358,15 @@ in
       # connection refused in milliseconds -> DeepSeek answers. Same when the
       # GPU is busy gaming, since llama-server refuses to load above 5 GiB VRAM.
       { name = "akucraft-villager";
-        model = "openai/gpt-oss-20b";
+        # gpt-oss:20b with a COLON — Ollama's exact model name, and it is not
+        # cosmetic. This said "openai/gpt-oss-20b" until 2026-09-01 and every
+        # villager line 404'd to DeepSeek: llama-server served whatever single
+        # model it had loaded and ignored the name in the request, Ollama does
+        # not ("model 'gpt-oss-20b' not found"). It broke silently the day the
+        # backend was swapped and stayed hidden because the model store was
+        # empty too, so the local endpoint would have 404'd either way. Whenever
+        # this alias changes, check it against `curl <desk>:8090/v1/models`.
+        model = "openai/gpt-oss:20b";
         apiBase = "http://100.64.0.5:8090/v1";
         envVar = "";               # local server, no auth
         # This does NOT cover the "DESK is off" case - that one is a connection
