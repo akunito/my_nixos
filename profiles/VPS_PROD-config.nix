@@ -430,13 +430,25 @@ in
         apiBase = "http://100.64.0.6:8090/v1";
         envVar = "";               # local server, no auth
         extra = {
-          # THE important one. Qwen3.8 thinks by default, and Ollama's OpenAI
-          # endpoint takes the standard `reasoning_effort` — "none" turns it off
-          # outright. Without this we repeat the GLM-4.6V-Flash failure recorded
-          # in DESK-config: the model spends its whole budget reasoning and
-          # returns finish_reason=length with EMPTY content. Raise to "low" if a
-          # given agent task genuinely needs deliberation and can afford it.
-          reasoning_effort = "none";
+          # THE important one, and it has to go through extra_body.
+          #
+          # Qwen3.8 thinks by default. Ollama's /v1 endpoint takes the standard
+          # `reasoning_effort`, and "none" turns thinking off — verified against
+          # Ollama DIRECTLY: the reasoning field comes back empty.
+          #
+          # But litellm 1.75.5 (what nixpkgs pins) DROPS reasoning_effort for a
+          # generic `openai/` passthrough model. It is silently swallowed both
+          # from litellm_params and from the client's own request — measured
+          # 2026-09-01, the request reached Ollama without it and came back
+          # finish_reason=length with EMPTY content and a full reasoning_content.
+          # That is the GLM-4.6V-Flash failure recorded in DESK-config, again.
+          #
+          # extra_body is merged verbatim into the outgoing JSON, so it survives
+          # a gateway that does not know the parameter. Baking it in the model
+          # instead is NOT possible: Ollama's Modelfile TEMPLATE is a Go
+          # template, while the thinking switch lives in the GGUF's Jinja
+          # chat template, which a Modelfile cannot replace.
+          extra_body = { reasoning_effort = "none"; };
           # Sampling: only what /v1 accepts. temperature/top_p match Qwen's
           # official non-thinking profile; top_k and min_p are unsupported on
           # this endpoint and live in the Modelfile on DESK instead.
