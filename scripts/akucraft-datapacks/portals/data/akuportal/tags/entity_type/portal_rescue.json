@@ -1,0 +1,23 @@
+{
+  "values": [
+    "#akuportal:pets",
+    "minecraft:iron_golem",
+    "minecraft:snow_golem",
+    "minecraft:villager",
+    "minecraft:allay",
+    "minecraft:horse",
+    "minecraft:donkey",
+    "minecraft:mule",
+    "minecraft:llama",
+    "minecraft:camel",
+    "minecraft:fox",
+    "minecraft:goat",
+    "minecraft:sheep",
+    "minecraft:cow",
+    "minecraft:pig",
+    "minecraft:chicken",
+    "minecraft:rabbit",
+    "minecraft:armadillo",
+    "minecraft:item"
+  ]
+}

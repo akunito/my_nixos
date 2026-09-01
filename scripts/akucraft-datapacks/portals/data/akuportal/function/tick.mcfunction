@@ -10,3 +10,9 @@ function akuportal:link
 # Frontier gateway curtains - always on, independent of the FX selector.
 execute in minecraft:overworld run particle minecraft:reverse_portal -151.5 71.5 54.5 0.05 1.2 1.2 0.01 8 force
 execute in multiworld:frontier run particle minecraft:reverse_portal -1467.5 150.5 -183.5 0.05 1.2 1.2 0.01 8 force
+
+# Library Nether portal - see nether_guard for why a sealed portal still leaks.
+function akuportal:nether_guard
+
+# Friendly things trapped in the sealed Nether chamber - send them home.
+function akuportal:chamber_rescue

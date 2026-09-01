@@ -1,0 +1,30 @@
+{
+  "values": [
+    "minecraft:zombified_piglin",
+    "minecraft:piglin",
+    "minecraft:piglin_brute",
+    "minecraft:hoglin",
+    "minecraft:zoglin",
+    "minecraft:blaze",
+    "minecraft:ghast",
+    "minecraft:magma_cube",
+    "minecraft:wither_skeleton",
+    "minecraft:skeleton",
+    "minecraft:stray",
+    "minecraft:bogged",
+    "minecraft:husk",
+    "minecraft:drowned",
+    "minecraft:zombie",
+    "minecraft:creeper",
+    "minecraft:spider",
+    "minecraft:cave_spider",
+    "minecraft:enderman",
+    "minecraft:endermite",
+    "minecraft:silverfish",
+    "minecraft:witch",
+    "minecraft:slime",
+    "minecraft:phantom",
+    "minecraft:vex",
+    "minecraft:breeze"
+  ]
+}
