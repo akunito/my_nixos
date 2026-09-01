@@ -18,6 +18,7 @@
             ++ lib.optional (userSettings.gamesEnable == true) ../../user/app/games/games.nix # Various videogame apps
             ++ lib.optional (systemSettings.freesmLauncherEnable == true) ../../user/app/games/minecraft-client-mods.nix # AkuCraft client mods pinned to server versions
             ++ lib.optional (systemSettings.developmentToolsEnable == true) ../../user/app/development/development.nix # Development tools (IDEs, cloud CLI)
+            ++ lib.optional (userSettings.openCodeEnable == true) ../../user/app/opencode/opencode.nix # OpenCode agent wired to the local GPU
             #++ lib.optional systemSettings.starCitizenModules ../../user/app/games/starcitizen.nix # Star Citizen support
             ;
 

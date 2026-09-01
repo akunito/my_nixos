@@ -219,6 +219,9 @@
     ollamaServerKeepAlive = "15m";                         # unload the model (free VRAM) after this idle
     ollamaServerCtxSize = 8192;                            # context window
     ollamaServerVisibleDevices = "0";                      # discrete card only — Ollama also enumerates the CPU's iGPU
+    # --- OpenCode (coding agent) — consumed by user/app/opencode/opencode.nix ---
+    openCodeOllamaUrl = "http://127.0.0.1:8090/v1";        # the local Ollama, NOT the LiteLLM gateway
+    openCodeModels = [ ];                                  # [{ id = "gpt-oss:20b"; label = "..."; contextLimit = 32768; }] — id must match /v1/models exactly
     ollamaServerBackend = "rocm";                          # "rocm" | "vulkan". On RDNA4 vulkan is both FASTER and honest about free VRAM — measured figures in system/app/ollama-server.nix
     ollamaServerOpenFirewallTailscale = true;              # open the port only on tailscale0
     ollamaServerVramNeededBytes = 6442450944;              # GAMING BACKSTOP only (6 GiB free), NOT "does the model fit". See the long note in system/app/ollama-server.nix
@@ -1094,6 +1097,7 @@
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
     userThunderbirdEnable = true; # Thunderbird mail client (part of userBasicPkgs; opt out per profile)
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
+    openCodeEnable = false;   # OpenCode terminal coding agent, driven by the local GPU — see user/app/opencode/opencode.nix
     userMediaRecordingEnable = false; # OBS Studio, HandBrake, ffmpeg-full (screen recording)
     userGamedevPkgsEnable = false; # Game dev tools (Godot 4) — Komi Adventures project
     meetingTranscribeEnable = false; # Local meeting recording + whisper.cpp transcription (DESK only)

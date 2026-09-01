@@ -272,6 +272,26 @@ in
     # 2026-09-01. Vulkan reported 13994 MiB against sysfs's 13994 MiB: exact.
     # An honest number is what lets Ollama decline or offload instead of crash.
     ollamaServerBackend = "vulkan";
+
+    # --- OpenCode: which local models it may drive -------------------------
+    # ids must match `curl 127.0.0.1:8090/v1/models` EXACTLY; a wrong name is
+    # not a startup error, it is a 404 on the first request.
+    #
+    # contextLimit is what OpenCode uses to decide when to compact a session, so
+    # it must match the model's REAL window, which for us is whatever num_ctx
+    # the Modelfile baked in (qwen3.8-agent) or OLLAMA_CONTEXT_LENGTH otherwise
+    # (gpt-oss, 8192 — sized for villagers, not for coding). Telling OpenCode a
+    # bigger number than the server will honour makes it send prompts the runner
+    # silently truncates.
+    #
+    # For coding, qwen3.8-agent is the better of the two despite being 3.5x
+    # slower: 16k of context beats 8k, and a dense 27B reasons better about
+    # multi-file edits than gpt-oss's 3.6B active params. gpt-oss stays listed
+    # for quick questions where 106 tok/s matters more than depth.
+    openCodeModels = [
+      { id = "qwen3.8-agent"; label = "Qwen3.8 27B (agent, 16k)"; contextLimit = 16384; }
+      { id = "gpt-oss:20b";   label = "gpt-oss 20B (fast, 8k)";   contextLimit = 8192; }
+    ];
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
     # both be resident on a 16 GiB card.
     ollamaServerMaxLoadedModels = 1;
@@ -780,6 +800,7 @@ in
     # === Package Modules (User) ===
     userBasicPkgsEnable = true; # Basic user packages (browsers, office, communication, etc.)
     userAiPkgsEnable = true; # AI & ML packages (lmstudio, ollama-rocm) - DESK only
+    openCodeEnable = true;   # OpenCode coding agent on the local GPU (models below, in systemSettings)
     userMediaRecordingEnable = true; # OBS Studio, HandBrake, ffmpeg-full — DESK only
     userGamedevPkgsEnable = true; # Godot 4 — Komi Adventures game project
     meetingTranscribeEnable = true; # Local meeting recording + whisper.cpp transcription (Vulkan/AMD)
