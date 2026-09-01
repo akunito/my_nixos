@@ -219,6 +219,7 @@
     ollamaServerKeepAlive = "15m";                         # unload the model (free VRAM) after this idle
     ollamaServerCtxSize = 8192;                            # context window
     ollamaServerVisibleDevices = "0";                      # discrete card only — Ollama also enumerates the CPU's iGPU
+    ollamaServerBackend = "rocm";                          # "rocm" | "vulkan". On RDNA4 vulkan is both FASTER and honest about free VRAM — measured figures in system/app/ollama-server.nix
     ollamaServerOpenFirewallTailscale = true;              # open the port only on tailscale0
     ollamaServerVramNeededBytes = 6442450944;              # GAMING BACKSTOP only (6 GiB free), NOT "does the model fit". See the long note in system/app/ollama-server.nix
     ollamaServerMaxLoadedModels = 1;                       # never hold two models in VRAM at once — with a 12 GiB villager model and a 12 GiB agent model, two resident would overcommit a 16 GiB card

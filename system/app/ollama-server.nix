@@ -13,13 +13,14 @@
 #   Ollama serves BOTH: /api/chat for SecondBrain and /v1/chat/completions for
 #   LiteLLM. One server, one model in VRAM, two consumers.
 #
-# THE COST, measured and accepted:
-#   On RDNA4 (gfx1201) Vulkan beats ROCm by roughly 30% on decode. nixpkgs
-#   ollama ships only libggml-hip.so — no Vulkan backend — so choosing Ollama
-#   means choosing ROCm. Verified 2026-08-21 that ROCm does work on this card:
-#     library=ROCm compute=gfx1201 "AMD Radeon RX 9070 XT" total=15.9 GiB
-#   with no CPU fallback. If the speed matters more than the unification later,
-#   flip the flags back.
+# THE COST — PAID OFF 2026-09-01, this note is kept for the history:
+#   Choosing Ollama used to mean choosing ROCm, because nixpkgs shipped only
+#   libggml-hip.so and no Vulkan backend, and on RDNA4 Vulkan is the faster of
+#   the two. nixpkgs-unstable now carries `ollama-vulkan` as a separate package
+#   (same 0.32.14, only the ggml backend differs), so the trade no longer
+#   exists — see ollamaServerBackend below. Both were benchmarked here; Vulkan
+#   won on speed AND on reporting free VRAM honestly, and is now the default on
+#   DESK. ROCm remains one flag away.
 #
 # Architecture (all on DESK):
 #   ollama.service  -> always up, but nearly free when idle: with no model
@@ -104,7 +105,22 @@ let
   # the client was 0.32.14 talking to a 0.21.1 server — a skew worth removing on
   # its own. Flip ollamaServerUseUnstable to false to go back to stable.
   useUnstable = cfg.ollamaServerUseUnstable or true;
-  ollamaPkg = if useUnstable then pkgs-unstable.ollama-rocm else pkgs.ollama-rocm;
+
+  # "rocm" or "vulkan". Both come from the same ollama version; they differ only
+  # in which ggml backend is compiled in (ls $out/lib/ollama: `rocm_v7_2` vs
+  # `vulkan`). Benchmarked on this card 2026-09-01, 250 tokens, two runs each:
+  #
+  #                                        ROCm        Vulkan
+  #   qwen3.8-agent (dense 27B, IQ3_S)   27.4 tok/s  30.9 tok/s   +13%
+  #   gpt-oss:20b   (MoE A3.6B, MXFP4)   92.4 tok/s 106.2 tok/s   +15%
+  #
+  # RADV compiles native GFX1201 shaders; ROCm reaches RDNA4 through a generic
+  # path. The speed is the smaller half of the win though — see the VRAM note
+  # under OLLAMA_GPU_OVERHEAD below for the part that actually prevents crashes.
+  backend = cfg.ollamaServerBackend or "rocm";
+  ollamaPkg =
+    let src = if useUnstable then pkgs-unstable else pkgs;
+    in if backend == "vulkan" then src.ollama-vulkan else src.ollama-rocm;
 
   maxLoaded = cfg.ollamaServerMaxLoadedModels or 1;
   gpuOverhead = cfg.ollamaServerGpuOverheadBytes or 0;
@@ -205,6 +221,9 @@ in
 {
   config = lib.mkIf enabled {
     assertions = [{
+      assertion = builtins.elem backend [ "rocm" "vulkan" ];
+      message = "ollamaServerBackend must be \"rocm\" or \"vulkan\", got \"${backend}\".";
+    } {
       assertion = !(cfg.llamaServerEnable or false);
       message = ''
         ollamaServerEnable and llamaServerEnable are both true. They bind the
@@ -248,10 +267,15 @@ in
         # This value covers (2) with margin, so a load that will not fit is
         # declined or partly offloaded instead of faulting the GPU.
         OLLAMA_GPU_OVERHEAD = toString gpuOverhead;
-        # Discrete card only — see visibleDevices above.
-        HIP_VISIBLE_DEVICES = visibleDevices;
-        ROCR_VISIBLE_DEVICES = visibleDevices;
-      };
+      } // (
+        # Discrete card only — see visibleDevices above. The variable that does
+        # this is backend-specific: setting HIP_* under Vulkan pins nothing and
+        # the 7800X3D's iGPU gets enumerated as a second device.
+        if backend == "vulkan"
+        then { GGML_VK_VISIBLE_DEVICES = visibleDevices; }
+        else { HIP_VISIBLE_DEVICES = visibleDevices;
+               ROCR_VISIBLE_DEVICES = visibleDevices; }
+      );
     };
 
     # Refuse to come up while gaming, and do it as ExecCondition so a refusal is

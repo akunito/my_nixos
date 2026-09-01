@@ -1,4 +1,4 @@
-{ pkgs, systemSettings, lib, ... }:
+{ config, pkgs, systemSettings, lib, ... }:
 
 {
   # Feral GameMode
@@ -39,6 +39,16 @@
       };
     };
   };
+
+  # gamemoded reads /etc/gamemode.ini ONCE, at start. Without this the daemon
+  # keeps whatever config it had when the session began, so a deploy that adds
+  # or changes a hook appears to do nothing until the next reboot — and it fails
+  # silently, which is how the llama-lock hook above went unnoticed. Observed
+  # 2026-09-01: a daemon up since Aug 27 ignored a freshly written [custom]
+  # section until it was restarted by hand.
+  systemd.user.services.gamemoded.restartTriggers =
+    lib.mkIf (systemSettings.gamemodeEnable == true)
+      [ config.environment.etc."gamemode.ini".source ];
 
   # AMD GPU gaming optimizations
   boot.kernelParams = lib.mkIf (systemSettings.gpuType == "amd") [

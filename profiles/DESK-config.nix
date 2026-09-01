@@ -262,6 +262,16 @@ in
     # Gated-DeltaNet runtime landed in 0.32.12. Unstable has 0.32.14, which is
     # also the version of the CLI userAiPkgsEnable already puts on this box.
     ollamaServerUseUnstable = true;
+    # Vulkan (RADV), not ROCm. Benchmarked here 2026-09-01, 250 tokens x2:
+    # qwen3.8-agent 27.4 -> 30.9 tok/s (+13%), gpt-oss:20b 92.4 -> 106.2 (+15%).
+    # RADV compiles native GFX1201 shaders where ROCm reaches RDNA4 generically.
+    #
+    # The speed is the smaller half. ROCm reports free VRAM as if no other
+    # process were on the card — it claimed 15.8 GiB free while sysfs showed
+    # 10299 MiB — which is what let Ollama overcommit and fault the GPU on
+    # 2026-09-01. Vulkan reported 13994 MiB against sysfs's 13994 MiB: exact.
+    # An honest number is what lets Ollama decline or offload instead of crash.
+    ollamaServerBackend = "vulkan";
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
     # both be resident on a 16 GiB card.
     ollamaServerMaxLoadedModels = 1;

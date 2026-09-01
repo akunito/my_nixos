@@ -123,6 +123,44 @@ OpenAI endpoint does not accept `top_k` at all.
 Requires **ollama >= 0.32.12** for the hybrid Gated-DeltaNet runtime;
 `nixpkgs-stable` ships 0.21.1, so `ollamaServerUseUnstable = true`.
 
+#### Backend: Vulkan, not ROCm (switched 2026-09-01)
+
+`nixpkgs-unstable` ships `ollama-vulkan` alongside `ollama-rocm` — same 0.32.14,
+only the ggml backend differs (`ls $out/lib/ollama` shows `vulkan` vs
+`rocm_v7_2`). Benchmarked on this card, 250 tokens, two runs each:
+
+| Model | ROCm | Vulkan | Δ |
+|-------|------|--------|---|
+| `qwen3.8-agent` (dense 27B, IQ3_S) | 27.4 tok/s | 30.9 tok/s | +13% |
+| `gpt-oss:20b` (MoE A3.6B, MXFP4) | 92.4 tok/s | 106.2 tok/s | +15% |
+
+RADV compiles native GFX1201 shaders; ROCm reaches RDNA4 through a generic path.
+
+**The bigger win is not speed.** ROCm reports free VRAM as though nothing else
+were on the card — it answered `free="15.8 GiB"` while sysfs showed 10299 MiB —
+and that is what let Ollama overcommit and fault the GPU. Vulkan reported
+`13994 MiB free` against sysfs's `13994 MiB`: exact. Device pinning changes with
+the backend: `GGML_VK_VISIBLE_DEVICES` instead of `HIP_VISIBLE_DEVICES` /
+`ROCR_VISIBLE_DEVICES`, or the 7800X3D's iGPU is enumerated as a second device.
+
+Switch with `ollamaServerBackend = "rocm" | "vulkan"`.
+
+#### Things that do NOT help here
+
+- **`OLLAMA_FLASH_ATTENTION=1`** — already on. The runner logs
+  `flash_attn = auto` then `Flash Attention enabled` without any setting.
+- **`OLLAMA_KV_CACHE_TYPE=q8_0`** — saves VRAM, not time, and there is little to
+  save: Qwen3.8's KV cache is only 1024 MiB at 16k context because 48 of its 64
+  layers are linear.
+- **MTP speculative decoding** — the biggest theoretical win (+33-125% published)
+  and *not reachable from Ollama*. The head ships inside our GGUF and the runner
+  throws it away:
+  `model has unused tensor blk.64.nextn.eh_proj.weight (43 MB) -- ignoring`
+  followed by `no implementations specified for speculative decoding`. Ollama's
+  Modelfile `DRAFT` command currently implements MTP for Gemma 4 only. Reaching
+  it means `llama-server` with `--spec-type draft-mtp --spec-draft-n-max 2`,
+  which does not serve `/api/chat` and so cannot host the villager model.
+
 #### Measured on DESK, 2026-09-01
 
 | | |
