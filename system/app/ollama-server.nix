@@ -107,6 +107,7 @@ let
   ollamaPkg = if useUnstable then pkgs-unstable.ollama-rocm else pkgs.ollama-rocm;
 
   maxLoaded = cfg.ollamaServerMaxLoadedModels or 1;
+  gpuOverhead = cfg.ollamaServerGpuOverheadBytes or 0;
   extraModels = cfg.ollamaServerExtraModels or [ ];
   customModels = cfg.ollamaServerCustomModels or [ ];
 
@@ -205,6 +206,25 @@ in
         # Callers pay a cold start on the switch, which is the right trade for a
         # box where the two models serve completely different workloads.
         OLLAMA_MAX_LOADED_MODELS = toString maxLoaded;
+      } // lib.optionalAttrs (gpuOverhead > 0) {
+        # VRAM to treat as already spent. Ollama sizes a model from what ROCm
+        # calls "free", and ROCm answers for the card as if nothing else were on
+        # it. Measured here 2026-09-01 with a Minecraft client up: ROCm reported
+        # free="15.8 GiB" while sysfs showed 10299 MiB actually free. Ollama
+        # loaded a model it projected at 11928 MiB, amdgpu then refused the work
+        #   amdgpu 0000:03:00.0: [drm] *ERROR* Not enough memory for command submission!
+        # and took the runner AND the game's GPU context down with it.
+        #
+        # Two errors stack there, and this only fixes the second one:
+        #   1. ROCm hides other processes' allocations. Nothing here can fix
+        #      that — the gaming lock (`llama-lock`) is still the answer before
+        #      starting a game.
+        #   2. Ollama's own fitter under-reads its needs. Its 11928 MiB estimate
+        #      against 14517 MiB of measured usage is ~1.5 GiB short, because
+        #      the vision/CLIP buffers land outside the breakdown it prints.
+        # This value covers (2) with margin, so a load that will not fit is
+        # declined or partly offloaded instead of faulting the GPU.
+        OLLAMA_GPU_OVERHEAD = toString gpuOverhead;
         # Discrete card only — see visibleDevices above.
         HIP_VISIBLE_DEVICES = visibleDevices;
         ROCR_VISIBLE_DEVICES = visibleDevices;

@@ -123,6 +123,30 @@ OpenAI endpoint does not accept `top_k` at all.
 Requires **ollama >= 0.32.12** for the hybrid Gated-DeltaNet runtime;
 `nixpkgs-stable` ships 0.21.1, so `ollamaServerUseUnstable = true`.
 
+#### Measured on DESK, 2026-09-01
+
+| | |
+|---|---|
+| VRAM with the model loaded | **14517 MiB** of 16304 (1787 MiB left) |
+| Ollama's own projection | 11928 MiB — **~1.5 GiB short**, the vision/CLIP buffers fall outside its breakdown |
+| Weights on GPU | 10616 MiB, all 66/66 layers |
+| KV cache @ 16k ctx | **1024 MiB** — small because only 16 of 64 layers use full attention |
+| Warm decode | **~29 tok/s** (300 tokens in 10.25 s) |
+| Cold start | ~55 s |
+
+**It cannot share the card with a game.** Proven the hard way: with a Minecraft
+client holding 3.9 GiB, ROCm still reported `free="15.8 GiB"` (it does not see
+other processes' allocations) while sysfs showed 10299 MiB. Ollama loaded
+anyway, and amdgpu answered with
+
+```
+amdgpu 0000:03:00.0: [drm] *ERROR* Not enough memory for command submission!
+```
+
+killing the runner *and* the game's GPU context. `ollamaServerGpuOverheadBytes`
+(2 GiB) now covers Ollama's own under-estimate, but nothing can correct what
+ROCm reports — **use `llama-lock` before gaming**, exactly as before.
+
 It coexists with `gpt-oss:20b` on disk but never in VRAM —
 `OLLAMA_MAX_LOADED_MODELS = 1` makes Ollama evict one to load the other.
 Configuration lives in `system/app/ollama-server.nix` (server) and

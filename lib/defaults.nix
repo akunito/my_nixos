@@ -217,6 +217,7 @@
     ollamaServerVramNeededBytes = 6442450944;              # GAMING BACKSTOP only (6 GiB free), NOT "does the model fit". See the long note in system/app/ollama-server.nix
     ollamaServerMaxLoadedModels = 1;                       # never hold two models in VRAM at once — with a 12 GiB villager model and a 12 GiB agent model, two resident would overcommit a 16 GiB card
     ollamaServerUseUnstable = true;                        # take ollama from pkgs-unstable: nixpkgs-stable ships 0.21.1 and Qwen3.8 needs >= 0.32.12 (hybrid Gated-DeltaNet)
+    ollamaServerGpuOverheadBytes = 0;                      # VRAM Ollama must pretend is already taken. Its fitter trusts ROCm's "free", which ignores every other process on the card — see the crash note in system/app/ollama-server.nix
     ollamaServerExtraModels = [ ];                         # additional library models to fetch with `ollama-pull`, e.g. [ "qwen3.5:9b" ]
     # Models BUILT here from a Modelfile, so sampling defaults and context live
     # in the repo instead of in each caller. Each entry:

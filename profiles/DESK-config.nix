@@ -265,6 +265,11 @@ in
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
     # both be resident on a 16 GiB card.
     ollamaServerMaxLoadedModels = 1;
+    # 2 GiB. Ollama projected 11928 MiB for qwen3.8-agent and it really used
+    # 14517 MiB — the vision/CLIP buffers are not in its breakdown. Without this
+    # the shortfall is paid as an amdgpu command-submission fault, which on
+    # 2026-09-01 killed the running Minecraft client along with the runner.
+    ollamaServerGpuOverheadBytes = 2147483648;
     # Gaming backstop, NOT a fit check. The old 13 GiB floor meant that an
     # ordinary session (2.9 GiB desktop + a 3.9 GiB Minecraft client leaves
     # ~9.5 GiB) refused to start ollama at all, so the villager model went to
