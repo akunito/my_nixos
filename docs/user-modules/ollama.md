@@ -87,6 +87,48 @@ This installs both LM Studio and Ollama. See [LM Studio docs](lmstudio.md) for L
 | Qwen3-14B | 14B | Q4_K_M | ~45 | ~1,500 | Yes (full) |
 | Qwen3-32B | 32B | Q4_K_M | ~15 | ~800 | No (needs ~20GB) |
 
+### Qwen3.8-27B (agent model, added 2026-09-01)
+
+The whole Qwen3.8 family is oversized for this card. Sizes taken from the Ollama
+registry and the unsloth GGUF repo, against a 16304 MiB card:
+
+| Build | Size | Fits? |
+|-------|------|-------|
+| `qwen3.8:27b` (official Ollama tag, q4_K_M + vision projector) | 17.74 GB | No — bigger than the card |
+| `qwen3.8-flash-next` (125B-A6B) | ~70 GB at q4 | No |
+| `qwen3.8-max` (2.4T) | — | No |
+| `UD-IQ4_XS` (unsloth GGUF) | 14.25 GB | Only on a bare desktop |
+| **`UD-IQ3_S`** | **12.04 GB** | **Yes — the one configured** |
+| `UD-IQ3_XXS` | 10.93 GB | Yes, with more headroom (the fallback) |
+
+Measured VRAM baseline on DESK 2026-09-01: Sway + Zen + VSCode + terminals hold
+~2.9 GiB, and one Minecraft client adds another 3.9 GiB. So ~13.4 GiB is free in
+a normal session and ~9.5 GiB with the game running — which is why this model is
+explicitly *not* expected to be usable while gaming.
+
+Two properties make IQ3_S workable where a normal 27B would not be: unsloth's
+dynamic quants keep the sensitive layers at higher precision, and Qwen3.8 runs
+linear attention (Gated DeltaNet) on 48 of its 64 layers, so its KV cache is much
+smaller than a dense 27B's at the same context.
+
+**Thinking is on by default and is turned off deliberately.** Ollama's
+`/v1/chat/completions` accepts the OpenAI-standard `reasoning_effort`, and
+`"none"` disables it; LiteLLM sets that per model on VPS_PROD. Leaving it on
+reproduces the GLM-4.6V-Flash failure already documented in `DESK-config.nix` —
+the budget is spent reasoning and the caller gets `finish_reason=length` with
+empty content. Qwen's official non-thinking sampling profile (temperature 0.7,
+top_p 0.80, top_k 20, min_p 0) is baked into the Modelfile, because Ollama's
+OpenAI endpoint does not accept `top_k` at all.
+
+Requires **ollama >= 0.32.12** for the hybrid Gated-DeltaNet runtime;
+`nixpkgs-stable` ships 0.21.1, so `ollamaServerUseUnstable = true`.
+
+It coexists with `gpt-oss:20b` on disk but never in VRAM —
+`OLLAMA_MAX_LOADED_MODELS = 1` makes Ollama evict one to load the other.
+Configuration lives in `system/app/ollama-server.nix` (server) and
+`profiles/DESK-config.nix` (`ollamaServerCustomModels`); build/fetch everything
+with `ollama-pull`.
+
 ### Recommended Models
 
 **Best overall: GPT-OSS-20B** — 152 t/s, MoE architecture (only 3.6B active params per token), fits in 16GB at Q8_0. Comparable to GPT-4o-mini on common benchmarks.

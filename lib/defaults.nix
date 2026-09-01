@@ -214,7 +214,20 @@
     ollamaServerCtxSize = 8192;                            # context window
     ollamaServerVisibleDevices = "0";                      # discrete card only — Ollama also enumerates the CPU's iGPU
     ollamaServerOpenFirewallTailscale = true;              # open the port only on tailscale0
-    ollamaServerVramNeededBytes = 13958643712;             # refuse to start unless this much VRAM is FREE on the discrete card (13 GiB: gpt-oss:20b weights + KV cache)
+    ollamaServerVramNeededBytes = 6442450944;              # GAMING BACKSTOP only (6 GiB free), NOT "does the model fit". See the long note in system/app/ollama-server.nix
+    ollamaServerMaxLoadedModels = 1;                       # never hold two models in VRAM at once — with a 12 GiB villager model and a 12 GiB agent model, two resident would overcommit a 16 GiB card
+    ollamaServerUseUnstable = true;                        # take ollama from pkgs-unstable: nixpkgs-stable ships 0.21.1 and Qwen3.8 needs >= 0.32.12 (hybrid Gated-DeltaNet)
+    ollamaServerExtraModels = [ ];                         # additional library models to fetch with `ollama-pull`, e.g. [ "qwen3.5:9b" ]
+    # Models BUILT here from a Modelfile, so sampling defaults and context live
+    # in the repo instead of in each caller. Each entry:
+    #   { name = "qwen3.8-agent";                  # the alias callers ask for
+    #     from = "hf.co/unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S";
+    #     parameters = { num_ctx = 16384; temperature = 0.7; };
+    #     system = "";                             # optional SYSTEM block
+    #   }
+    # `ollama-pull` runs `ollama create` for each; FROM may be a library model,
+    # a local .gguf path, or an hf.co/<user>/<repo>:<QUANT> reference.
+    ollamaServerCustomModels = [ ];
 
     # === Wake-and-wait proxy (runs on an always-on host, e.g. VPS) ===
     # Apps point at this proxy; it wakes DESK via pfSense WoL if asleep, waits,

@@ -414,6 +414,40 @@ in
         model = "openai/deepseek-v4-flash";
         apiBase = "https://api.deepseek.com/v1";
         envVar = "DEEPSEEK_KEY_INGAME"; }
+
+      # Agent work (Hermes) on DESK's own GPU — Qwen3.8-27B, dense, sub-Q4.
+      # Deliberately NOT in any fallback chain and NOT used by the villagers:
+      # it is the slow, strong model, and mixing it into a latency path would
+      # undo the whole reason gpt-oss:20b is the primary.
+      #
+      # 100.64.0.6 is the WAKE PROXY, not DESK directly — the opposite choice
+      # from akucraft-villager above, and for the opposite reason. Waking a
+      # desktop for two villager lines costs more in electricity than the API
+      # call it saves; waking it for an agent run that will burn thousands of
+      # tokens on the GPU is exactly what the proxy is for.
+      { name = "local-agent";
+        model = "openai/qwen3.8-agent";
+        apiBase = "http://100.64.0.6:8090/v1";
+        envVar = "";               # local server, no auth
+        extra = {
+          # THE important one. Qwen3.8 thinks by default, and Ollama's OpenAI
+          # endpoint takes the standard `reasoning_effort` — "none" turns it off
+          # outright. Without this we repeat the GLM-4.6V-Flash failure recorded
+          # in DESK-config: the model spends its whole budget reasoning and
+          # returns finish_reason=length with EMPTY content. Raise to "low" if a
+          # given agent task genuinely needs deliberation and can afford it.
+          reasoning_effort = "none";
+          # Sampling: only what /v1 accepts. temperature/top_p match Qwen's
+          # official non-thinking profile; top_k and min_p are unsupported on
+          # this endpoint and live in the Modelfile on DESK instead.
+          temperature = 0.7;
+          top_p = 0.8;
+          # WoL (up to 120s) + a cold load of ~12 GiB of weights + a dense-27B
+          # generation. Nothing like the villagers' 10s, and it must not be:
+          # this path is allowed to be slow, it is not allowed to fail over.
+          timeout = 300;
+          num_retries = 0;
+        }; }
     ];
     # 1, not the module default of 2. The retry budget multiplies BEFORE any
     # fallback runs, and the client has its own deadline: akucraft-bot's

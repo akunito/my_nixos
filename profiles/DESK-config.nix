@@ -258,6 +258,48 @@ in
     ollamaServerPort = 8090;      # same port llama-server used; nothing upstream changes
     ollamaServerKeepAlive = "15m";
     ollamaServerCtxSize = 8192;
+    # 0.21.1 (nixpkgs-stable) cannot load Qwen3.8 at all — its hybrid
+    # Gated-DeltaNet runtime landed in 0.32.12. Unstable has 0.32.14, which is
+    # also the version of the CLI userAiPkgsEnable already puts on this box.
+    ollamaServerUseUnstable = true;
+    # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
+    # both be resident on a 16 GiB card.
+    ollamaServerMaxLoadedModels = 1;
+    # Gaming backstop, NOT a fit check. The old 13 GiB floor meant that an
+    # ordinary session (2.9 GiB desktop + a 3.9 GiB Minecraft client leaves
+    # ~9.5 GiB) refused to start ollama at all, so the villager model went to
+    # paid DeepSeek for no reason. Measured 2026-09-01.
+    ollamaServerVramNeededBytes = 6442450944;
+
+    # --- Second model: Qwen3.8-27B for agent work (Hermes), on demand ---
+    # NOT a replacement for gpt-oss:20b. Different job, different trade:
+    # gpt-oss is MoE (~3.6B active) and answers a villager in 1.4-2.0s; this one
+    # is a DENSE 27B, so it is much slower per token but far stronger at
+    # multi-step agent reasoning. It is expected to be unusable while gaming,
+    # which the lock file and the VRAM backstop already handle.
+    #
+    # Built from a Modelfile because the official qwen3.8:27b tag is 17.74 GB —
+    # larger than the whole card. See system/app/ollama-server.nix for the quant
+    # ladder and how the size was chosen; UD-IQ3_XXS (10.93 GB) is the fallback
+    # if IQ3_S turns out to spill onto the CPU under load.
+    ollamaServerCustomModels = [
+      { name = "qwen3.8-agent";
+        from = "hf.co/unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S";
+        parameters = {
+          # 16384, not the model's native 262144: context is billed in VRAM and
+          # this card has ~1.3 GiB to spare once the weights are in. Agent turns
+          # that need more than 16k belong on a hosted model, not this GPU.
+          num_ctx = 16384;
+          # Qwen's OFFICIAL non-thinking sampling profile. Baked in here because
+          # Ollama's /v1 endpoint accepts no top_k at all, so a caller could not
+          # set it even if it wanted to.
+          temperature = 0.7;
+          top_p = 0.8;
+          top_k = 20;
+          min_p = 0.0;
+        };
+      }
+    ];
     # Auth: still OFF, deliberately. The endpoint is tailscale-only + firewalled,
     # and VPS_PROD fronts it with llamaWakeProxyEnable — that proxy forwards
     # requests verbatim, so switching auth on here breaks every app behind it
