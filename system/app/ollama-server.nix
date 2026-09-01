@@ -266,6 +266,13 @@ in
         #      the vision/CLIP buffers land outside the breakdown it prints.
         # This value covers (2) with margin, so a load that will not fit is
         # declined or partly offloaded instead of faulting the GPU.
+        #
+        # ‼️ SET THIS TO 0 ON THE VULKAN BACKEND. Vulkan reports free VRAM
+        # correctly, so the reserve becomes a second deduction from an already
+        # honest number and pushes weights onto the CPU. Measured 2026-09-01
+        # right after the switch: gpt-oss:20b projected 12342 MiB against a
+        # reported 9807 MiB free, mapped 6713 MiB to CPU RAM, and fell from
+        # 106 to 40 tok/s. This option exists for ROCm, not for Vulkan.
         OLLAMA_GPU_OVERHEAD = toString gpuOverhead;
       } // (
         # Discrete card only — see visibleDevices above. The variable that does

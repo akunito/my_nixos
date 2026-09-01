@@ -275,11 +275,16 @@ in
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
     # both be resident on a 16 GiB card.
     ollamaServerMaxLoadedModels = 1;
-    # 2 GiB. Ollama projected 11928 MiB for qwen3.8-agent and it really used
-    # 14517 MiB — the vision/CLIP buffers are not in its breakdown. Without this
-    # the shortfall is paid as an amdgpu command-submission fault, which on
-    # 2026-09-01 killed the running Minecraft client along with the runner.
-    ollamaServerGpuOverheadBytes = 2147483648;
+    # 0 — and it MUST be 0 while ollamaServerBackend = "vulkan".
+    #
+    # This was 2 GiB, sized to cover how far ROCm's free-VRAM figure was from
+    # reality. Vulkan does not have that problem (it reported 13994 MiB against
+    # sysfs's 13994 MiB), so the reserve became a second, unnecessary deduction
+    # on an already-correct number. Measured immediately after the switch:
+    # gpt-oss:20b projected 12342 MiB against 9807 MiB "free", so 6713 MiB of
+    # weights were mapped to CPU RAM and throughput fell from 106 to 40 tok/s.
+    # Restore a non-zero value ONLY if going back to the rocm backend.
+    ollamaServerGpuOverheadBytes = 0;
     # Gaming backstop, NOT a fit check. The old 13 GiB floor meant that an
     # ordinary session (2.9 GiB desktop + a 3.9 GiB Minecraft client leaves
     # ~9.5 GiB) refused to start ollama at all, so the villager model went to
