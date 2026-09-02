@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Waybar metrics multiplexer.
-# Usage: waybar-metrics.sh {cpu|gpu|ram|cpu-temp|gpu-temp}
+# Usage: waybar-metrics.sh {cpu|gpu|vram|ram|cpu-temp|gpu-temp}
 #
 # Outputs JSON:
 #   {"text":"...","tooltip":"...","class":"..."}
@@ -183,6 +183,18 @@ gpu_busy_percent() {
   echo "$p"
 }
 
+# VRAM used/total, straight off amdgpu's sysfs counters. These are the same
+# figures `llama-status` reports, so the bar and the LLM tooling cannot disagree
+# about how much room is left on the card.
+vram_mib() {
+  local dev="$1" used=0 total=0
+  if [[ -n "$dev" && -r "$dev/mem_info_vram_used" && -r "$dev/mem_info_vram_total" ]]; then
+    read -r used < "$dev/mem_info_vram_used"
+    read -r total < "$dev/mem_info_vram_total"
+  fi
+  printf '%s %s' $((used / 1048576)) $((total / 1048576))
+}
+
 gpu_temp_c() {
   local dev="$1"
   if [[ -z "$dev" ]]; then
@@ -273,6 +285,25 @@ Temp: ${GPU_T}°C
 Click: open btop++"
     printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
       "$(json_escape "$TEXT")" "$(json_escape "$TIP")" "gpu"
+    ;;
+  vram)
+    read -r VRAM_USED VRAM_TOTAL <<<"$(vram_mib "$GPU_DEV" 2>/dev/null || echo "0 0")"
+    if (( VRAM_TOTAL > 0 )); then
+      VRAM_PCT=$(( (100 * VRAM_USED) / VRAM_TOTAL ))
+      VRAM_FREE=$(( VRAM_TOTAL - VRAM_USED ))
+    else
+      VRAM_PCT=0; VRAM_FREE=0
+    fi
+    TEXT="${VRAM_PCT}% 󰍛"
+    TIP="VRAM
+
+Usage: ${VRAM_USED} MiB (${VRAM_PCT}%)
+Free: ${VRAM_FREE} MiB
+Total: ${VRAM_TOTAL} MiB
+
+Click: open btop++"
+    printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
+      "$(json_escape "$TEXT")" "$(json_escape "$TIP")" "vram"
     ;;
   ram)
     RAM_PCT="$(ram_percent 2>/dev/null || echo 0)"

@@ -263,6 +263,7 @@ in {
               "custom/cpu"
               "custom/cpu-temp"
               "custom/gpu"
+              "custom/vram"
               "custom/gpu-temp"
               "custom/ram"
             ];
@@ -313,6 +314,17 @@ in {
               return-type = "json";
               interval = 2;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
+              tooltip = true;
+            };
+            # VRAM used, between GPU load and GPU temp. Same script, same style,
+            # same on-click as the other GPU modules. Reads amdgpu's sysfs
+            # counters directly, so this and `llama-status` can never disagree
+            # about how much room is left on the card.
+            "custom/vram" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh vram";
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
               tooltip = true;
             };
@@ -430,6 +442,7 @@ in {
               "custom/cpu"
               "custom/cpu-temp"
               "custom/gpu"
+              "custom/vram"
               "custom/gpu-temp"
               "custom/ram"
             ];
@@ -477,6 +490,17 @@ in {
               return-type = "json";
               interval = 2;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu";
+              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
+              tooltip = true;
+            };
+            # VRAM used, between GPU load and GPU temp. Same script, same style,
+            # same on-click as the other GPU modules. Reads amdgpu's sysfs
+            # counters directly, so this and `llama-status` can never disagree
+            # about how much room is left on the card.
+            "custom/vram" = {
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh vram";
               on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
               tooltip = true;
             };
@@ -654,6 +678,7 @@ in {
       #custom-mic,
       #custom-cpu,
       #custom-gpu,
+      #custom-vram,
       #custom-ram,
       #custom-cpu-temp,
       #custom-gpu-temp,
@@ -690,6 +715,7 @@ in {
       }
 
       #custom-gpu,
+      #custom-vram,
       #custom-gpu-temp {
         color: #${config.lib.stylix.colors.base0C};
       }
@@ -707,6 +733,7 @@ in {
       #custom-mic:hover,
       #custom-cpu:hover,
       #custom-gpu:hover,
+      #custom-vram:hover,
       #custom-ram:hover,
       #custom-cpu-temp:hover,
       #custom-gpu-temp:hover,
@@ -801,6 +828,7 @@ in {
       #custom-mic,
       #custom-cpu,
       #custom-gpu,
+      #custom-vram,
       #custom-ram,
       #custom-cpu-temp,
       #custom-gpu-temp {
@@ -921,6 +949,7 @@ in {
       #custom-mic,
       #custom-cpu,
       #custom-gpu,
+      #custom-vram,
       #custom-ram,
       #custom-cpu-temp,
       #custom-gpu-temp,
@@ -956,6 +985,7 @@ in {
       #custom-mic,
       #custom-cpu,
       #custom-gpu,
+      #custom-vram,
       #custom-ram,
       #custom-cpu-temp,
       #custom-gpu-temp {
@@ -969,6 +999,7 @@ in {
       #custom-mic,
       #custom-cpu,
       #custom-gpu,
+      #custom-vram,
       #custom-ram,
       #custom-cpu-temp,
       #custom-gpu-temp {
