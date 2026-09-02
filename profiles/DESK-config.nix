@@ -192,7 +192,7 @@ in
     networkBondingEnable = true;
     networkBondingMode = "802.3ad"; # LACP (requires switch support)
     networkBondingInterfaces = [ "enp11s0f0" "enp11s0f1" ];
-    networkBondingDhcp = true; # Get IP from pfSense DHCP (192.168.8.96 reserved)
+    networkBondingDhcp = true; # Get IP from pfSense DHCP (see networkBondingMacAddress below: the ".96 reserved" claim does not hold in practice)
     networkBondingVlans = [
       { id = 100; name = "storage"; address = "192.168.20.96/24"; }
     ];
@@ -201,7 +201,12 @@ in
     # DHCP client-id changed on every recreate and pfSense handed out a different
     # address -- bond0 sat on .97 for days, then flipped to .96 on 2026-09-02,
     # killing every open connection (a browser tab lost its session that way).
-    # Pin it to enp11s0f0's permanent MAC so the lease and the .96 reservation stick.
+    # Pin it to enp11s0f0's permanent MAC so the client-id -- and therefore the
+    # lease -- stops moving. Applied 2026-09-02: client-id is now
+    # 01:90:e2:ba:a5:69:84 and the bond came up on .97, NOT the .96 this profile
+    # claims is reserved, because .96 was still leased to the old random MAC
+    # (2 h TTL). Stability was the point and that is achieved; if .96
+    # specifically is wanted, add a pfSense static mapping for this MAC.
     networkBondingMacAddress = "90:e2:ba:a5:69:84";
 
     # ========================================================================
