@@ -145,7 +145,9 @@ let
         };
     
     tray = {
-      icon-spacing = 48;
+      # 48 was sized for the reveal drawer this used to live in; outside one it
+      # spreads the icons across half the bar.
+      icon-spacing = 8;
       tooltip = true;
     };
     
@@ -266,7 +268,10 @@ in {
             ];
             modules-center = [ "sway/workspaces" ];
             modules-right =
-              [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" ]
+              # Flat, no drawer (2026-09-02). The extras group hid the tray behind
+              # a reveal handle, which is how a missing Vesktop icon could go
+              # unnoticed. Everything that earns a slot is now always visible.
+              [ "idle_inhibitor" "custom/notifications" "tray" ]
               ++ lib.optional systemSettings.goaCalendarEnable "custom/gcal"
               ++ [ "clock" "custom/power-menu" ];
             
@@ -344,42 +349,9 @@ in {
               tooltip = true;
             };
 
-            # Extras drawer (official Waybar group drawer)
-            "custom/reveal" = {
-              interval = 3600;
-              exec = "${pkgs.coreutils}/bin/printf '⋯'";
-              tooltip = true;
-              tooltip-format = "Extras (click)";
-            };
 
-            "group/extras" = {
-              orientation = "inherit";
-              drawer = {
-                transition-duration = 200;
-                children-class = "drawer-hidden";
-                click-to-reveal = false;
-                transition-left-to-right = false;
-              };
-              modules = [ "custom/reveal" "custom/notifications" "custom/vpn" "tray" ];
-            };
 
-            # Flatpak updates indicator (read-only)
-            "custom/flatpak-updates" = {
-              return-type = "json";
-              interval = 1800; # 30min
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-flatpak-updates.sh ${pkgs.flatpak}/bin/flatpak";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'Flatpak update' -e ${pkgs.bash}/bin/bash -lc '${pkgs.flatpak}/bin/flatpak update -y; rc=$?; if [ $rc -eq 0 ]; then echo \"All Flatpaks updated. Bye bye!\"; sleep 3; exit 0; else echo \"Flatpak update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
-              tooltip = true;
-            };
 
-            # Update NixOS (runs install.sh for the active profile)
-            "custom/nixos-update" = {
-              return-type = "json";
-              interval = 3600;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-nixos-update.sh";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'Update NixOS' -e ${pkgs.bash}/bin/bash -lc '${systemSettings.installCommand}; rc=$?; if [ $rc -eq 0 ]; then echo \"Update completed. Bye bye!\"; sleep 3; exit 0; else echo \"Update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
-              tooltip = true;
-            };
 
             # Google Calendar next-event widget (reads EDS-cached ICS via icalendar python lib)
             # Click opens calendar.google.com in default browser.
@@ -405,14 +377,6 @@ in {
               };
             };
 
-            # WireGuard VPN toggle (wg-quick)
-            "custom/vpn" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-vpn-wg-client.sh ${pkgs.iproute2}/bin/ip";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'VPN toggle' -e ${pkgs.bash}/bin/bash -lc 'if ${pkgs.iproute2}/bin/ip link show wg-client >/dev/null 2>&1; then sudo ${pkgs.wireguard-tools}/bin/wg-quick down ~/.wireguard/wg-client.conf; else sudo ${pkgs.wireguard-tools}/bin/wg-quick up ~/.wireguard/wg-client.conf; fi; rc=$?; if [ $rc -eq 0 ]; then echo \"Bye bye!\"; sleep 3; exit 0; else echo \"VPN command failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
-              tooltip = true;
-            };
 
             # Power menu (same as ${hyper}+Shift+BackSpace)
             # Use swaymsg exec to ensure rofi runs with proper environment (ROFI_PLUGIN_PATH, etc.)
@@ -471,7 +435,10 @@ in {
             ];
             modules-center = [ "sway/workspaces" ];
             modules-right =
-              [ "idle_inhibitor" "custom/nixos-update" "custom/flatpak-updates" "group/extras" ]
+              # Flat, no drawer (2026-09-02). The extras group hid the tray behind
+              # a reveal handle, which is how a missing Vesktop icon could go
+              # unnoticed. Everything that earns a slot is now always visible.
+              [ "idle_inhibitor" "custom/notifications" "tray" ]
               ++ lib.optional systemSettings.goaCalendarEnable "custom/gcal"
               ++ [ "clock" "custom/power-menu" ];
             
@@ -544,40 +511,9 @@ in {
               tooltip = true;
             };
 
-            "custom/reveal" = {
-              interval = 3600;
-              exec = "${pkgs.coreutils}/bin/printf '⋯'";
-              tooltip = true;
-              tooltip-format = "Extras (click)";
-            };
 
-            "group/extras" = {
-              orientation = "inherit";
-              drawer = {
-                transition-duration = 200;
-                children-class = "drawer-hidden";
-                click-to-reveal = false;
-                transition-left-to-right = false;
-                hover-timeout = 8000;
-              };
-              modules = [ "custom/reveal" "custom/notifications" "custom/vpn" "tray" ];
-            };
 
-            "custom/flatpak-updates" = {
-              return-type = "json";
-              interval = 1800;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-flatpak-updates.sh ${pkgs.flatpak}/bin/flatpak";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'Flatpak update' -e ${pkgs.bash}/bin/bash -lc '${pkgs.flatpak}/bin/flatpak update -y; rc=$?; if [ $rc -eq 0 ]; then echo \"All Flatpaks updated. Bye bye!\"; sleep 3; exit 0; else echo \"Flatpak update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
-              tooltip = true;
-            };
 
-            "custom/nixos-update" = {
-              return-type = "json";
-              interval = 3600;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-nixos-update.sh";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'Update NixOS' -e ${pkgs.bash}/bin/bash -lc '${systemSettings.installCommand}; rc=$?; if [ $rc -eq 0 ]; then echo \"Update completed. Bye bye!\"; sleep 3; exit 0; else echo \"Update failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
-              tooltip = true;
-            };
 
             "custom/gcal" = lib.mkIf systemSettings.goaCalendarEnable {
               return-type = "json";
@@ -600,13 +536,6 @@ in {
               };
             };
 
-            "custom/vpn" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-vpn-wg-client.sh ${pkgs.iproute2}/bin/ip";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'VPN toggle' -e ${pkgs.bash}/bin/bash -lc 'if ${pkgs.iproute2}/bin/ip link show wg-client >/dev/null 2>&1; then sudo ${pkgs.wireguard-tools}/bin/wg-quick down ~/.wireguard/wg-client.conf; else sudo ${pkgs.wireguard-tools}/bin/wg-quick up ~/.wireguard/wg-client.conf; fi; rc=$?; if [ $rc -eq 0 ]; then echo \"Bye bye!\"; sleep 3; exit 0; else echo \"VPN command failed ($rc).\"; exec ${pkgs.bash}/bin/bash; fi'";
-              tooltip = true;
-            };
 
             # Power menu (same as ${hyper}+Shift+BackSpace)
             # Use swaymsg exec to ensure rofi runs with proper environment (ROFI_PLUGIN_PATH, etc.)
@@ -728,11 +657,7 @@ in {
       #custom-ram,
       #custom-cpu-temp,
       #custom-gpu-temp,
-      #custom-reveal,
       #custom-notifications,
-      #custom-flatpak-updates,
-      #custom-vpn,
-      #custom-nixos-update,
       #custom-power-menu {
         margin: 4px 4px;
         padding: 4px 12px;
@@ -754,8 +679,7 @@ in {
       }
 
       #pulseaudio,
-      #custom-mic,
-      #custom-flatpak-updates {
+      #custom-mic {
         color: #${config.lib.stylix.colors.base0C};
       }
 
@@ -787,9 +711,6 @@ in {
       #custom-cpu-temp:hover,
       #custom-gpu-temp:hover,
       #custom-notifications:hover,
-      #custom-flatpak-updates:hover,
-      #custom-vpn:hover,
-      #custom-nixos-update:hover,
       #custom-power-menu:hover {
         background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
       }
@@ -802,50 +723,12 @@ in {
         border-radius: 0;
       }
 
-      /* Extras are now handled via Waybar's official group drawer (group/extras).
-         Avoid CSS hover hacks for tray/notifications which are flaky in GTK CSS. */
-
-      /* Drawer: hidden children class (configured via drawer.children-class) */
-      .drawer-hidden {
-        /* IMPORTANT:
-         * Do NOT force opacity=0 here.
-         * Waybar's group drawer uses GTK reveal/slide logic; depending on build/theme
-         * the class can remain present during reveal animations (or on wrappers),
-         * which would make revealed modules stay invisible.
-         */
-      }
-
-      /* Drawer leader (always visible handle) */
-      #custom-reveal {
-        margin: 4px 4px;
-        padding: 4px 12px;
-        border-radius: 10px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
-        color: #${config.lib.stylix.colors.base08};
-      }
+      /* Drawer removed 2026-09-02: tray and notifications sit directly in
+         modules-right, so .drawer-hidden and #custom-reveal went with it. */
 
       /* (custom idle toggle removed; keeping built-in idle_inhibitor only) */
 
-      /* VPN: always visible in drawer */
-
       /* Idle inhibitor should stay visible even when deactivated. */
-
-      /* Collapse flatpak module when it's hidden (no updates) */
-      #custom-flatpak-updates.hidden {
-        margin: 0;
-        padding: 0;
-        background-color: transparent;
-        border-radius: 0;
-      }
-
-      /* VPN state hint */
-      #custom-vpn.on {
-        color: #${config.lib.stylix.colors.base0B};
-        background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
-      }
-      #custom-vpn.off {
-        color: #${config.lib.stylix.colors.base0C};
-      }
 
       /* Anfetas (idle inhibitor): green when enabled, white when off */
       #idle_inhibitor {
@@ -862,10 +745,6 @@ in {
         color: #${config.lib.stylix.colors.base0B};
         background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
         box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base0B "4D"};
-      }
-
-      #custom-nixos-update {
-        color: #${config.lib.stylix.colors.base0D};
       }
 
       /* Perf turns red if CPU or GPU temp >= 80C */
@@ -1045,8 +924,7 @@ in {
       #custom-ram,
       #custom-cpu-temp,
       #custom-gpu-temp,
-      #custom-notifications,
-      #custom-flatpak-updates {
+      #custom-notifications {
         padding: 0 10px;
         color: #ffffff;
       }
@@ -1063,8 +941,6 @@ in {
         opacity: 1;
         padding: 0 10px;
       }
-
-      /* VPN: always visible in drawer */
 
       /* Idle inhibitor should stay visible even when deactivated. */
 

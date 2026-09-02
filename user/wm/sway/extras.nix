@@ -228,23 +228,8 @@ EOF
     executable = true;
   };
 
-  home.file.".config/sway/scripts/waybar-flatpak-updates.sh" = {
-    source = ./scripts/waybar-flatpak-updates.sh;
-    executable = true;
-  };
-
   home.file.".config/sway/scripts/waybar-notifications.sh" = {
     source = ./scripts/waybar-notifications.sh;
-    executable = true;
-  };
-
-  home.file.".config/sway/scripts/waybar-vpn-wg-client.sh" = {
-    source = ./scripts/waybar-vpn-wg-client.sh;
-    executable = true;
-  };
-
-  home.file.".config/sway/scripts/waybar-nixos-update.sh" = {
-    source = ./scripts/waybar-nixos-update.sh;
     executable = true;
   };
 
