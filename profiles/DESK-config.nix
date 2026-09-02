@@ -345,6 +345,13 @@ in
     ollamaServerEvictTimerSec = 0;
     ollamaServerEvictTimeoutSec = 60;
 
+    # Measure the peak, because the decision rests on it: rounded corners are
+    # worth giving up ONLY if the reclaimed VRAM is enough to move Qwen3.8 from
+    # UD-IQ3_S (12.04 GB) up to UD-Q3_K_XL (13.15 GB). That needs the desktop to
+    # PEAK under ~2.7 GiB, not to idle under it. Leave this running across a
+    # relogin into each compositor and compare with `vram-report`.
+    vramSamplerEnable = true;
+
     # --- Second model: Qwen3.8-27B for agent work (Hermes), on demand ---
     # NOT a replacement for gpt-oss:20b. Different job, different trade:
     # gpt-oss is MoE (~3.6B active) and answers a villager in 1.4-2.0s; this one

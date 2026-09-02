@@ -33,6 +33,7 @@
     ++ lib.optional (systemSettings.wolEnable or false) ../../system/hardware/wol.nix # Persist Wake-on-LAN arming on a dedicated NIC (woken by pfSense)
     ++ lib.optional (systemSettings.llamaServerEnable or false) ../../system/app/llama-server.nix # Local LLM inference server (llama.cpp Vulkan, OpenAI-compatible)
     ++ lib.optional (systemSettings.ollamaServerEnable or false) ../../system/app/ollama-server.nix # Local LLM inference server (Ollama ROCm; serves BOTH /v1 and /api/chat)
+    ++ lib.optional (systemSettings.vramSamplerEnable or false) ../../system/app/vram-sampler.nix # Longitudinal VRAM peak tracking (answers "what does the desktop ACTUALLY peak at", which no snapshot can)
     ++ lib.optional (systemSettings.freesmLauncherEnable or false) ../../system/app/freesm-launcher.nix # FreeSM Launcher (Prism fork, offline accounts; official flake)
     ++ lib.optional (systemSettings.developmentToolsEnable or false) ../../system/app/adb.nix; # adb/fastboot udev rules + adbusers group (binaries via development.nix)
 }

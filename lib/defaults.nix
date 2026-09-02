@@ -243,7 +243,18 @@
     ollamaServerEvictMaxGpuBusyPercent = 10;               # refuse to evict when the card is already this busy. WEAK heuristic: measured on DESK, vkcube read 13% and an eviction started at that level still livelocked. It catches a pinned card, not a merely-drawing one
     ollamaServerEvictOnOllamaStart = false;                # OPT-IN hook: run an eviction whenever ollama.service starts. Off because that moment is not guaranteed to be a quiet desktop
     ollamaServerEvictTimerSec = 0;                         # 0 = NO periodic timer (the default), same reason as above. Set e.g. 1800 to opt in.
-    ollamaServerEvictTimeoutSec = 60;                      # caps how long the opt-in hook can delay ollama.service. It does NOT stop the kernel-side migration, which runs to completion regardless
+    ollamaServerEvictTimeoutSec = 60;
+    # --- VRAM peak sampler ---
+    # Every VRAM figure taken by hand in this repo is a snapshot of a STATIONARY
+    # desktop, which is the most favourable reading available rather than a
+    # representative one — switching workspaces alone moves it hundreds of MiB
+    # as sway faults each workspace's buffers back in. This samples over time,
+    # keeps the peak PER COMPOSITOR, and dumps the per-process breakdown at each
+    # new peak, so swayUseSwayfx can be judged on two distributions over the
+    # same real workload instead of two lucky moments. Read with `vram-report`.
+    vramSamplerEnable = false;
+    vramSamplerIntervalSec = 5;
+    vramSamplerMaxLines = 120000;                          # ~7 days at 5 s before the log halves                      # caps how long the opt-in hook can delay ollama.service. It does NOT stop the kernel-side migration, which runs to completion regardless
     # Models BUILT here from a Modelfile, so sampling defaults and context live
     # in the repo instead of in each caller. Each entry:
     #   { name = "qwen3.8-agent";                  # the alias callers ask for
