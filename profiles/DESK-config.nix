@@ -197,6 +197,12 @@ in
       { id = 100; name = "storage"; address = "192.168.20.96/24"; }
     ];
     networkBondingRingBufferSize = 8192; # Max NIC ring buffers for 10GbE (prevents rx_missed_errors)
+    # Without this the bond came up with a random MAC (9a:79:1b:40:9e:6a), so the
+    # DHCP client-id changed on every recreate and pfSense handed out a different
+    # address -- bond0 sat on .97 for days, then flipped to .96 on 2026-09-02,
+    # killing every open connection (a browser tab lost its session that way).
+    # Pin it to enp11s0f0's permanent MAC so the lease and the .96 reservation stick.
+    networkBondingMacAddress = "90:e2:ba:a5:69:84";
 
     # ========================================================================
     # Wake-on-LAN (onboard 2.5GbE eno1 — woken by pfSense magic packet)

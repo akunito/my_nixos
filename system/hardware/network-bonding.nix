@@ -33,6 +33,7 @@ let
   miimon = cfg.networkBondingMiimon or "100";
   xmitHashPolicy = cfg.networkBondingXmitHashPolicy or "layer3+4";
   vlans = cfg.networkBondingVlans or [];
+  macAddress = cfg.networkBondingMacAddress or "";
   ringBufferSize = cfg.networkBondingRingBufferSize or null;
 
   # Detect which network manager is active
@@ -48,6 +49,10 @@ let
     interface-name=bond0
     autoconnect=true
 
+    ${lib.optionalString (macAddress != "") ''
+    [ethernet]
+    cloned-mac-address=${macAddress}
+    ''}
     [bond]
     mode=${mode}
     miimon=${miimon}

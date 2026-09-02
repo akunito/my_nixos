@@ -179,6 +179,12 @@
     networkBondingXmitHashPolicy = "layer3+4"; # Hash policy: "layer2", "layer3+4", "encap3+4"
     networkBondingVlans = []; # VLAN overlays on bond: [{ id = 20; name = "storage"; address = "192.168.20.96/24"; }]
     networkBondingRingBufferSize = null; # NIC ring buffer size (e.g., 4096). null = driver default. Max depends on NIC (typically 8192 for Intel 82599).
+    # Pin the bond's MAC. Left empty the kernel invents a NEW random one every
+    # time the bond is (re)created, which changes the DHCP client-id, so the
+    # server hands out a DIFFERENT address and every TCP connection using the
+    # old one dies. Set it to the permanent MAC of the first slave so the lease
+    # (and any reservation keyed on it) is stable. NetworkManager only.
+    networkBondingMacAddress = ""; # "" = kernel-assigned random MAC; else e.g. "90:e2:ba:a5:69:84"
 
     # === Wake-on-LAN (magic-packet listener) ===
     # Persist WoL arming on a dedicated NIC so the host can be woken from S3/S5
