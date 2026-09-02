@@ -186,6 +186,13 @@
     wolEnable = false;         # Enable WoL persistence for wolInterface
     wolInterface = "eno1";     # WoL-capable NIC, wired to the LAN
     wolStaticIp = "";          # "" = IP-less listener; else e.g. "192.168.8.99/24"
+    # Link stability on the WoL NIC. Every carrier flap makes NetworkManager
+    # reconfigure and tailscaled log "LinkChange: major, rebinding", which tears
+    # down the DERP tunnel and kills long-lived TCP sessions on OTHER interfaces
+    # (Minecraft, SSH). Cheapest cure is to stop the NIC flapping in the first
+    # place; both settings are re-applied on resume because the PHY resets in S3.
+    wolDisableEee = false;     # Turn off Energy Efficient Ethernet (classic r8169 flapper)
+    wolAdvertise = "";         # "" = leave autoneg alone; else ethtool mask, e.g. "0x020" = 1000baseT/Full only
 
     # === Local LLM inference server (llama.cpp / llama-server, Vulkan) ===
     # OpenAI-compatible endpoint on the local GPU. Bound to host + opened only on

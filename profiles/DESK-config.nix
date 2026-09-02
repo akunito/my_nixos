@@ -211,6 +211,13 @@ in
     wolEnable = true;
     wolInterface = "eno1";
     wolStaticIp = "192.168.8.99/24"; # needed for WoL to survive suspend; flux handled by arp sysctls
+    # eno1 dropped carrier 34 times in 7 days (the X520 bond: 0). Each drop makes
+    # tailscaled rebind and tear down the DERP tunnel, which times players out of
+    # long-lived sessions (Minecraft, SSH) that ride bond0 and never touch eno1.
+    # EEE is the classic r8169 flapper, and the PHY kept renegotiating 2500baseT
+    # against a switch port that only offers 1G — so turn EEE off and pin 1G.
+    wolDisableEee = true;
+    wolAdvertise = "0x020"; # 1000baseT/Full only
 
     # ========================================================================
     # Local LLM inference server (llama.cpp Vulkan on RX 9070 XT, 16GB)

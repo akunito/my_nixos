@@ -11,9 +11,18 @@
 #   wolEnable = true;
 #   wolInterface = "eno1";
 #   wolStaticIp = "192.168.8.99/24";  # "" = IP-less listener (avoids dual-homing)
+#   wolDisableEee = true;             # stop the NIC flapping (see below)
+#   wolAdvertise = "0x020";           # pin 1000baseT/Full
+#
+# A flapping WoL NIC is not a cosmetic problem: NetworkManager reconfigures on
+# every carrier change and tailscaled answers with "LinkChange: major, rebinding",
+# which closes the DERP connection and kills long-lived TCP sessions riding the
+# tunnel — even sessions that never touched this NIC. Hence the link tuning.
 #
 # Verify after applying:
 #   sudo ethtool eno1 | grep Wake-on          # expect "Wake-on: g"
+#   sudo ethtool --show-eee eno1              # expect "EEE status: disabled"
+#   sudo ethtool eno1 | grep -A3 "Advertised link modes"
 # Wake from another LAN host (pfSense has /usr/local/bin/wol):
 #   ssh admin@192.168.8.1 "/usr/local/bin/wol -i 192.168.8.255 <MAC>"
 #
@@ -25,6 +34,21 @@ let
   iface = cfg.wolInterface or "eno1";
   staticIp = cfg.wolStaticIp or "";
   useNM = cfg.networkManager or false;
+  disableEee = cfg.wolDisableEee or false;
+  advertise = cfg.wolAdvertise or "";
+
+  # Everything that has to be (re)applied to the NIC whenever it comes up: link
+  # tuning first, WoL arming last so a renegotiation triggered by `advertise`
+  # cannot leave the NIC unarmed. Each step is best-effort — a driver that does
+  # not implement one must not fail the unit and skip the arming below it.
+  armScript = pkgs.writeShellScript "wol-arm-${iface}" (''
+  '' + lib.optionalString (advertise != "") ''
+    ${pkgs.ethtool}/bin/ethtool -s ${iface} advertise ${advertise} || true
+  '' + lib.optionalString disableEee ''
+    ${pkgs.ethtool}/bin/ethtool --set-eee ${iface} eee off || true
+  '' + ''
+    ${pkgs.ethtool}/bin/ethtool -s ${iface} wol g || true
+  '');
 
   # NetworkManager connection for the WoL NIC. `wake-on-lan=magic` re-arms the
   # NIC every time the connection activates (including after resume) — this is
@@ -69,13 +93,13 @@ in
     # (b) Belt-and-suspenders: hard-arm `wol g` via ethtool on boot, in case the
     #     driver ignores NM's wake-on-lan property.
     systemd.services.wol-arm = {
-      description = "Arm Wake-on-LAN (magic packet) on ${iface}";
+      description = "Arm Wake-on-LAN (magic packet) + link tuning on ${iface}";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${pkgs.ethtool}/bin/ethtool -s ${iface} wol g";
+        ExecStart = "${armScript}";
       };
     };
 
@@ -84,7 +108,7 @@ in
     #     only materializes when powerManagement.enable = true — false on the
     #     laptop profiles, so the re-arm would silently no-op there).
     systemd.services.wol-rearm-resume = {
-      description = "Re-arm Wake-on-LAN (magic packet) on ${iface} after resume";
+      description = "Re-arm Wake-on-LAN (magic packet) + link tuning on ${iface} after resume";
       after = [
         "systemd-suspend.service"
         "systemd-hibernate.service"
@@ -94,7 +118,7 @@ in
       wantedBy = [ "sleep.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "-${pkgs.ethtool}/bin/ethtool -s ${iface} wol g";
+        ExecStart = "-${armScript}";
       };
     };
 
