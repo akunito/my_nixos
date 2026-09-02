@@ -28,15 +28,30 @@
 let
   enabled = userSettings.openCodeEnable or false;
   host = systemSettings.openCodeOllamaUrl or "http://127.0.0.1:8090/v1";
+  # Each entry needs id, contextLimit and outputLimit — see modelAttrs below for
+  # why a partial `limit` makes OpenCode refuse to start at all.
   models = systemSettings.openCodeModels or [ ];
 
   # OpenCode wants an object keyed by the EXACT model id the backend serves —
   # `curl <host>/v1/models` is the authority. A name that does not match is not
   # an error at startup, it is a 404 on the first request.
+  #
+  # `limit` needs BOTH keys. OpenCode validates its config against a schema and
+  # refuses to start on a partial one, with the model never being reached:
+  #   Configuration is invalid at ~/.config/opencode/opencode.json
+  #   ↳ Missing key provider.ollama.models.qwen3.8-agent.limit.output
+  # context = the window the server will actually honour (Modelfile num_ctx, or
+  # OLLAMA_CONTEXT_LENGTH); output = the ceiling on a single reply, which has to
+  # leave room for the prompt inside that same window.
   modelAttrs = lib.listToAttrs (map (m: {
     name = m.id;
-    value = { name = m.label or m.id; }
-      // lib.optionalAttrs (m ? contextLimit) { limit = { context = m.contextLimit; }; };
+    value = {
+      name = m.label or m.id;
+      limit = {
+        context = m.contextLimit;
+        output = m.outputLimit;
+      };
+    };
   }) models);
 
   opencodeConfig = {

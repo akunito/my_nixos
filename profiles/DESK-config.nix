@@ -288,10 +288,18 @@ in
     # slower: 16k of context beats 8k, and a dense 27B reasons better about
     # multi-file edits than gpt-oss's 3.6B active params. gpt-oss stays listed
     # for quick questions where 106 tok/s matters more than depth.
+    # outputLimit is the ceiling on ONE reply and must leave room for the prompt
+    # inside the same window — half the context is the rule of thumb here. Both
+    # keys are mandatory: OpenCode validates the whole config and refuses to
+    # start on a partial `limit`, so a missing outputLimit takes every model
+    # down, not just its own.
     openCodeModels = [
-      { id = "qwen3.8-agent";    label = "Qwen3.8 27B IQ3_S (16k, safe)";      contextLimit = 16384; }
-      { id = "qwen3.8-agent-xl"; label = "Qwen3.8 27B Q3_K_XL (16k, quiet desktop)"; contextLimit = 16384; }
-      { id = "gpt-oss:20b";      label = "gpt-oss 20B (fast, 8k)";             contextLimit = 8192; }
+      { id = "qwen3.8-agent";    label = "Qwen3.8 27B IQ3_S (16k, safe)";
+        contextLimit = 16384; outputLimit = 8192; }
+      { id = "qwen3.8-agent-xl"; label = "Qwen3.8 27B Q3_K_XL (16k, quiet desktop)";
+        contextLimit = 16384; outputLimit = 8192; }
+      { id = "gpt-oss:20b";      label = "gpt-oss 20B (fast, 8k)";
+        contextLimit = 8192;  outputLimit = 4096; }
     ];
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
     # both be resident on a 16 GiB card.
@@ -392,11 +400,24 @@ in
       #   desktop VRAM   min 1636 · median 2359 · p95 2621 · PEAK 4778 (Minecraft)
       #   needs desktop under:  IQ3_S 3892 · Q3_K_XL 2748 · IQ4_XS 1614 MiB
       #
-      # So Q3_K_XL clears the median and sits ~127 MiB under the p95: it fits a
-      # DELIBERATE session — no game, no vesktop — and does not fit the tail.
-      # IQ3_S has 1144 MiB more headroom and is the one to reach for when the
-      # desktop is whatever it happens to be. Ollama offloads the overflow to
-      # CPU rather than failing, so the penalty for guessing wrong is a slow
+      # Those ceilings are computed from file size and they are OPTIMISTIC.
+      # MEASURED 2026-09-02, desktop ~2.4 GiB, nothing else on the card:
+      #
+      #             projection   free   layers    to CPU    tok/s
+      #   IQ3_S       11940     13662    64/66     785      26-27
+      #   Q3_K_XL     12994     13730    59/66    1706      14.1
+      #
+      # Both were projected to fit and neither did: Ollama's breakdown omits the
+      # vision/CLIP buffers (the same ~1.2 GiB gap that made an 11928 MiB
+      # projection cost 14517 MiB on 2026-09-01), so it loads optimistically and
+      # gives the remainder to the CPU.
+      #
+      # So on today's desktop this entry is a DOWNGRADE: it spills twice as much
+      # as IQ3_S and runs at half the speed for one step of quantisation. It is
+      # wired because it should be available, not because it should be the
+      # default — reach for qwen3.8-agent. It would need a desktop leaner than
+      # anything vram-report has recorded (its minimum is 1636 MiB), so re-measure
+      # if the desktop budget ever drops. Penalty for guessing wrong is a slow
       # answer, not a crash — the crash mode was ROCm's, and we are on Vulkan.
       #
       # `llama-status` prints free VRAM; `llama-evict` recovers ~500 MiB first,
