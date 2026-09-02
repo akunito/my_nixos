@@ -57,6 +57,7 @@ let
   # Which model a bare `opencode` starts on. Without it OpenCode asks on every
   # session and `opencode run` needs an explicit --model every time.
   defaultModel = systemSettings.openCodeDefaultModel or "";
+  runtimeConfig = "${config.home.homeDirectory}/${systemSettings.openCodeRuntimeConfigRel or ".local/state/opencode/model.json"}";
 
   opencodeConfig = {
     "$schema" = "https://opencode.ai/config.json";
@@ -71,6 +72,18 @@ in
 {
   config = lib.mkIf enabled {
     home.packages = [ pkgs-unstable.opencode ];
+
+    # OpenCode MERGES its config sources rather than replacing them, and a path
+    # given in OPENCODE_CONFIG outranks ~/.config/opencode/opencode.json. That is
+    # what lets the store file below stay read-only and declarative while the
+    # rofi menu still changes the default model: the overlay carries nothing but
+    # `{"model": ...}`, and the providers keep coming from Nix.
+    #
+    # Verified: with the overlay present the provider survives and only `model`
+    # changes; with the file ABSENT OpenCode falls back to the Nix default and
+    # warns about nothing. So there is deliberately no activation step creating
+    # it — a missing overlay is a valid state, not an error to paper over.
+    home.sessionVariables.OPENCODE_CONFIG = runtimeConfig;
 
     # A store symlink is safe here: OpenCode keeps credentials and session state
     # in ~/.local/share/opencode, and only READS this file.

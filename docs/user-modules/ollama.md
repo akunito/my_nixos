@@ -158,6 +158,25 @@ is invisible everywhere else:
 󰅗 down                  red     ollama not running
 ```
 
+Two markers, because they are two independent facts and they routinely differ —
+a villager request can make gpt-oss resident while your coding default is Qwen:
+
+```
+● in VRAM right now        ★ OpenCode's default model
+```
+
+Picking a model does both: loads it, and writes OpenCode's default. That works
+without making the Nix config writable because **OpenCode merges its config
+sources** and a path in `OPENCODE_CONFIG` outranks
+`~/.config/opencode/opencode.json`. The overlay at
+`~/.local/state/opencode/model.json` carries nothing but `{"model": ...}`;
+providers keep coming from Nix. A missing overlay is a valid state — OpenCode
+falls back to `openCodeDefaultModel`.
+
+`OPENCODE_MODEL_CONFIG` is passed explicitly in the module's `on-click` rather
+than relied on from the environment: waybar is a systemd user unit, and
+`home.sessionVariables` reaches shells, not units.
+
 Click opens the rofi menu: every model from `/api/tags` with its size, then
 lock/unlock, unload, and `llama-evict`. **The list is built at runtime**, so a
 model added to `ollamaServerCustomModels` and pulled appears with no change to

@@ -351,7 +351,12 @@ in {
               interval = 5;
               signal = 6;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-llm.sh";
-              on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show llm -modi llm:${config.home.homeDirectory}/.config/sway/scripts/rofi-llm-menu.sh\"";
+              # OPENCODE_MODEL_CONFIG is passed explicitly rather than relying on the
+              # session environment: waybar is a systemd user unit, and
+              # home.sessionVariables reaches shells, not units. Without it the
+              # menu would still load models but silently stop setting OpenCode's
+              # default — the worst kind of half-working.
+              on-click = "${pkgs.sway}/bin/swaymsg exec \"env OPENCODE_MODEL_CONFIG=${config.home.homeDirectory}/${systemSettings.openCodeRuntimeConfigRel or ".local/state/opencode/model.json"} rofi -show llm -modi llm:${config.home.homeDirectory}/.config/sway/scripts/rofi-llm-menu.sh\"";
               tooltip = true;
             };
             "custom/vram" = {
@@ -560,7 +565,12 @@ in {
               interval = 5;
               signal = 6;
               exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-llm.sh";
-              on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show llm -modi llm:${config.home.homeDirectory}/.config/sway/scripts/rofi-llm-menu.sh\"";
+              # OPENCODE_MODEL_CONFIG is passed explicitly rather than relying on the
+              # session environment: waybar is a systemd user unit, and
+              # home.sessionVariables reaches shells, not units. Without it the
+              # menu would still load models but silently stop setting OpenCode's
+              # default — the worst kind of half-working.
+              on-click = "${pkgs.sway}/bin/swaymsg exec \"env OPENCODE_MODEL_CONFIG=${config.home.homeDirectory}/${systemSettings.openCodeRuntimeConfigRel or ".local/state/opencode/model.json"} rofi -show llm -modi llm:${config.home.homeDirectory}/.config/sway/scripts/rofi-llm-menu.sh\"";
               tooltip = true;
             };
             "custom/vram" = {

@@ -275,7 +275,26 @@ in
     ollamaServerEnable = true;
     ollamaServerPort = 8090;      # same port llama-server used; nothing upstream changes
     ollamaServerKeepAlive = "15m";
-    ollamaServerCtxSize = 8192;
+    # 32768, raised from 8192 on 2026-09-02. The old value was sized for villager
+    # turns and it made gpt-oss UNUSABLE as a coding agent: OpenCode's system
+    # prompt alone reached 7282 tokens against an 8192 window, so the agent loop
+    # never converged — measured as a run that hung for ten minutes emitting task
+    # after task.
+    #
+    # The rise is nearly free on this model. gpt-oss uses sliding-window
+    # attention on alternating layers, so 32k costs 786 MiB of KV, and it still
+    # loads 25/25 layers with the whole thing on the GPU at 111-113 tok/s
+    # (faster than the 106 measured at 8k, because the desktop is leaner now).
+    #
+    # A separate wide-context COPY of gpt-oss was the obvious alternative and is
+    # the wrong shape: OLLAMA_MAX_LOADED_MODELS=1 would make every switch between
+    # the villager model and the coding model evict and reload 12 GiB of
+    # identical weights. One model with a window big enough for both wins.
+    #
+    # Only models WITHOUT num_ctx in their Modelfile are affected, so the Qwen
+    # entries keep their deliberate 16384 — their KV is 1024 MiB there already,
+    # and Gated-DeltaNet or not, doubling it would push them off the card.
+    ollamaServerCtxSize = 32768;
     # 0.21.1 (nixpkgs-stable) cannot load Qwen3.8 at all — its hybrid
     # Gated-DeltaNet runtime landed in 0.32.12. Unstable has 0.32.14, which is
     # also the version of the CLI userAiPkgsEnable already puts on this box.
@@ -320,8 +339,8 @@ in
         contextLimit = 16384; outputLimit = 8192; }
       { id = "qwen3.8-agent-xl"; label = "Qwen3.8 27B Q3_K_XL (16k, quiet desktop)";
         contextLimit = 16384; outputLimit = 8192; }
-      { id = "gpt-oss:20b";      label = "gpt-oss 20B (fast, 8k)";
-        contextLimit = 8192;  outputLimit = 4096; }
+      { id = "gpt-oss:20b";      label = "gpt-oss 20B (fast, 32k)";
+        contextLimit = 32768; outputLimit = 8192; }
     ];
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
     # both be resident on a 16 GiB card.
