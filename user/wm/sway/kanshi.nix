@@ -49,7 +49,7 @@ in
       # Restart kanshi after HM activation if in a Sway session
       home.activation.kanshiReapplyAfterSwitch =
         lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
-          if ${pkgs.swayfx}/bin/swaymsg -t get_version >/dev/null 2>&1; then
+          if ${if (systemSettings.swayUseSwayfx or true) then pkgs.swayfx else pkgs.sway}/bin/swaymsg -t get_version >/dev/null 2>&1; then
             ${pkgs.systemd}/bin/systemctl --user reset-failed kanshi.service >/dev/null 2>&1 || true
             ${pkgs.systemd}/bin/systemctl --user restart kanshi.service >/dev/null 2>&1 || true
           fi

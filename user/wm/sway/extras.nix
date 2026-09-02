@@ -7,6 +7,15 @@
   ...
 }:
 
+let
+  # The compositor package this profile actually runs. MUST match
+  # user/wm/sway/swayfx-config.nix and system/wm/sway.nix — home.packages below
+  # installs it into the HM profile, so shipping the other one collides on
+  # bin/swaybar and the whole home-manager-path build fails:
+  #   pkgs.buildEnv error: two given paths contain a conflicting subpath:
+  #     `.../sway-1.11/bin/swaybar' and `.../swayfx-0.5.3/bin/swaybar'
+  swayPkg = if (systemSettings.swayUseSwayfx or true) then pkgs.swayfx else pkgs.sway;
+in
 {
   # Btop theme configuration (Stylix colors)
   # CRITICAL: Check if Stylix is actually available (not just enabled)
@@ -43,10 +52,10 @@
     # Libinput-gestures configuration for SwayFX
     # 3-finger swipe for workspace navigation (matches keybindings: next_on_output/prev_on_output)
 
-    gesture swipe left 3 ${pkgs.swayfx}/bin/swaymsg workspace next_on_output
-    gesture swipe right 3 ${pkgs.swayfx}/bin/swaymsg workspace prev_on_output
+    gesture swipe left 3 ${swayPkg}/bin/swaymsg workspace next_on_output
+    gesture swipe right 3 ${swayPkg}/bin/swaymsg workspace prev_on_output
     # Optional: 3-finger swipe up for fullscreen toggle
-    # gesture swipe up 3 ${pkgs.swayfx}/bin/swaymsg fullscreen toggle
+    # gesture swipe up 3 ${swayPkg}/bin/swaymsg fullscreen toggle
   '';
 
   # Swappy configuration (screenshot editor) - managed by Home Manager
@@ -296,8 +305,8 @@ EOF
 
   # Base Sway packages (startup-app scripts are provided by `startup-apps.nix`)
   home.packages = with pkgs; [
-    # SwayFX and related
-    swayfx
+    # The compositor (SwayFX or upstream sway — see swayPkg above)
+    swayPkg
     swaylock-effects
     swayidle
     swaynotificationcenter
