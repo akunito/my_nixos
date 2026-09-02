@@ -203,15 +203,26 @@ let
   # Home Manager wayland.windowManager.sway — the latter is what SDDM actually
   # launches) picks it up. Added to BOTH pkgs-stable and the nixpkgs-patched
   # branch below, since a profile's `pkgs` is one or the other by systemStable.
+  #
+  # ‼️ THE BUG IS NOT SWAYFX'S — SwayFX inherited it, and so does upstream sway.
+  # Verified 2026-09-02 against sway 1.11's own sway/tree/view.c: it computes
+  # `output = ws ? ws->output : NULL` and then dereferences `output->lx` in the
+  # FULLSCREEN_WORKSPACE branch with no further check, byte for byte the same as
+  # the SwayFX code that crashed. So a profile with swayUseSwayfx = false would
+  # walk straight back into the Metro Exodus session-killer if only swayfx were
+  # patched. The fix is a one-line guard and its hunk context is identical in
+  # both trees, so the SAME patch file is applied to both packages.
+  swayNullOutputCrashFix = super: super.fetchpatch {
+    name = "sway-478-null-output-autoconfigure.patch";
+    url = "https://github.com/WillPower3309/swayfx/commit/a6ea43430eac3a104b688906c7f09a80242d4782.patch";
+    hash = "sha256-oxpDQxRIc6QKeTd0fvEoWPbMcklS1bM7EUedB/2e3cc=";
+  };
   swayfxNullOutputCrashFixOverlay = _: super: {
     swayfx-unwrapped = super.swayfx-unwrapped.overrideAttrs (old: {
-      patches = (old.patches or [ ]) ++ [
-        (super.fetchpatch {
-          name = "swayfx-478-null-output-autoconfigure.patch";
-          url = "https://github.com/WillPower3309/swayfx/commit/a6ea43430eac3a104b688906c7f09a80242d4782.patch";
-          hash = "sha256-oxpDQxRIc6QKeTd0fvEoWPbMcklS1bM7EUedB/2e3cc=";
-        })
-      ];
+      patches = (old.patches or [ ]) ++ [ (swayNullOutputCrashFix super) ];
+    });
+    sway-unwrapped = super.sway-unwrapped.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ (swayNullOutputCrashFix super) ];
     });
   };
 
