@@ -255,19 +255,33 @@ in {
             # Set to 0 so the left cluster can truly fuse into a single pill.
             spacing = 0;
             
+            # Ordered so the eye walks it in one direction: machine state first
+            # (screen, power), then input/output, then the CPU triplet, then the
+            # GPU triplet, then what is USING the GPU. custom/llm sits last on
+            # purpose — it is the consumer of the three figures to its left, and
+            # reading "GPU 4% · 49° · VRAM 13.4G · qwen3.8 100%" left to right is
+            # the whole story of the card in one glance.
+            #
+            # battery and backlight are laptop-only in practice; waybar hides a
+            # module whose device is absent, so listing them here costs a desktop
+            # nothing.
             modules-left = [
-              "battery"
               "backlight"
+              "battery"
               "pulseaudio"
               "custom/mic"
               "custom/cpu"
               "custom/cpu-temp"
-              "custom/gpu"
-              "custom/vram"
-            ] ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm" ++ [
-              "custom/gpu-temp"
               "custom/ram"
-            ];
+              "custom/gpu"
+              "custom/gpu-temp"
+              "custom/vram"
+            ]
+            # Only where a local model can actually run. On a host without one
+            # the module is absent from BOTH this list and the settings attrset,
+            # so nothing renders and nothing is clickable — verified against
+            # LAPTOP_X13's generated config.
+            ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm";
             modules-center = [ "sway/workspaces" ];
             modules-right =
               # Flat, no drawer (2026-09-02). The extras group hid the tray behind
@@ -453,19 +467,33 @@ in {
             height = 30;
             spacing = 0;
             
+            # Ordered so the eye walks it in one direction: machine state first
+            # (screen, power), then input/output, then the CPU triplet, then the
+            # GPU triplet, then what is USING the GPU. custom/llm sits last on
+            # purpose — it is the consumer of the three figures to its left, and
+            # reading "GPU 4% · 49° · VRAM 13.4G · qwen3.8 100%" left to right is
+            # the whole story of the card in one glance.
+            #
+            # battery and backlight are laptop-only in practice; waybar hides a
+            # module whose device is absent, so listing them here costs a desktop
+            # nothing.
             modules-left = [
-              "battery"
               "backlight"
+              "battery"
               "pulseaudio"
               "custom/mic"
               "custom/cpu"
               "custom/cpu-temp"
-              "custom/gpu"
-              "custom/vram"
-            ] ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm" ++ [
-              "custom/gpu-temp"
               "custom/ram"
-            ];
+              "custom/gpu"
+              "custom/gpu-temp"
+              "custom/vram"
+            ]
+            # Only where a local model can actually run. On a host without one
+            # the module is absent from BOTH this list and the settings attrset,
+            # so nothing renders and nothing is clickable — verified against
+            # LAPTOP_X13's generated config.
+            ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm";
             modules-center = [ "sway/workspaces" ];
             modules-right =
               # Flat, no drawer (2026-09-02). The extras group hid the tray behind

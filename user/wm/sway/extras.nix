@@ -179,17 +179,20 @@ EOF
   };
 
   # Local-LLM control surface: waybar shows the state, rofi does the acting.
-  # Installed unconditionally (they are two small scripts and cost nothing on a
-  # host without Ollama); the waybar MODULE is what is gated, in waybar.nix.
-  home.file.".config/sway/scripts/waybar-llm.sh" = {
-    source = ./scripts/waybar-llm.sh;
-    executable = true;
-  };
+  # Gated on the same flag as the waybar module, so a host with no local model
+  # (LAPTOP_X13) gets neither the widget, nor the menu, nor the scripts behind
+  # them — nothing to render and nothing to stumble into.
+  home.file.".config/sway/scripts/waybar-llm.sh" =
+    lib.mkIf (systemSettings.ollamaServerEnable or false) {
+      source = ./scripts/waybar-llm.sh;
+      executable = true;
+    };
 
-  home.file.".config/sway/scripts/rofi-llm-menu.sh" = {
-    source = ./scripts/rofi-llm-menu.sh;
-    executable = true;
-  };
+  home.file.".config/sway/scripts/rofi-llm-menu.sh" =
+    lib.mkIf (systemSettings.ollamaServerEnable or false) {
+      source = ./scripts/rofi-llm-menu.sh;
+      executable = true;
+    };
 
   home.file.".config/sway/scripts/ssh-smart.sh" = {
     source = ./scripts/ssh-smart.sh;
