@@ -226,6 +226,41 @@ let
     });
   };
 
+  # Waybar rejects Electron 43.3+ tray icons as "Invalid Status Notifier Item".
+  #
+  # Electron >= 43.3 registers its item under a WELL-KNOWN bus name
+  # (org.freedesktop.StatusNotifierItem-PID-N) instead of the unique connection
+  # name, and answers property requests only on that name. Waybar's watcher does
+  # not parse the combined "bus_name/object_path" string it now receives, so the
+  # item never reaches the bar. Diagnosed here 2026-09-02 by swapping ONLY the
+  # runtime under vesktop: electron 42.7.1 registers instantly, 43.4.1 never
+  # appears. Trayscale publishes the same well-known-name shape and fails the
+  # same way, so this is one bug, not two.
+  #
+  # Upstream fix: Alexays/Waybar PR #5287, OPEN as of 2026-09-02. Six lines in
+  # src/modules/sni/watcher.cpp. Pinned to the COMMIT, not the PR head, so a
+  # force-push cannot silently change what we build.
+  #
+  # WHY A PATCH AND NOT A PIN. Chosen deliberately: when waybar merges this, the
+  # patch stops applying and the build FAILS LOUDLY — which is the signal to
+  # delete this block. A version pin would keep working forever while quietly
+  # going stale, and nothing would ever tell us the moment to remove it.
+  #
+  # Cost: waybar is built from source instead of fetched from cache. Its reverse
+  # closure is empty (nothing depends on waybar), so this rebuilds one package
+  # and no more — unlike the doCheck override removed from this file in Aug 2026.
+  waybarElectronTrayFixOverlay = _: super: {
+    waybar = super.waybar.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [
+        (super.fetchpatch {
+          name = "waybar-5287-electron-combined-sni-name.patch";
+          url = "https://github.com/Alexays/Waybar/commit/bcb91b772f527e54233ea4821b704bf5111b4c32.patch";
+          hash = "sha256-BjgRfO/nN52HzomEavaiqQJ9BZrOTX16+S2WKeuckPU=";
+        })
+      ];
+    });
+  };
+
   # Configure pkgs-stable
   pkgs-stable = import inputs.nixpkgs-stable {
     system = systemSettingsWithFonts.system;
@@ -240,7 +275,7 @@ let
     # swayfx #478 crash fix — DESK is systemStable=true, so its `pkgs` (and thus
     # the Home Manager compositor via homeConfigurations `inherit pkgs`) is
     # pkgs-stable. The overlay must live here too, not only on the unstable branch.
-    overlays = [ swayfxNullOutputCrashFixOverlay ];
+    overlays = [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay ];
   };
 
   # Configure pkgs-unstable
@@ -289,7 +324,7 @@ let
                allowUnfree = true;
                allowUnfreePredicate = (_: true);
              };
-             overlays = (lib.optional useRustOverlay rustOverlay) ++ [ swayfxNullOutputCrashFixOverlay ];
+             overlays = (lib.optional useRustOverlay rustOverlay) ++ [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay ];
            });
 
   # Configure home-manager
