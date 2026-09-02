@@ -289,8 +289,9 @@ in
     # multi-file edits than gpt-oss's 3.6B active params. gpt-oss stays listed
     # for quick questions where 106 tok/s matters more than depth.
     openCodeModels = [
-      { id = "qwen3.8-agent"; label = "Qwen3.8 27B (agent, 16k)"; contextLimit = 16384; }
-      { id = "gpt-oss:20b";   label = "gpt-oss 20B (fast, 8k)";   contextLimit = 8192; }
+      { id = "qwen3.8-agent";    label = "Qwen3.8 27B IQ3_S (16k, safe)";      contextLimit = 16384; }
+      { id = "qwen3.8-agent-xl"; label = "Qwen3.8 27B Q3_K_XL (16k, quiet desktop)"; contextLimit = 16384; }
+      { id = "gpt-oss:20b";      label = "gpt-oss 20B (fast, 8k)";             contextLimit = 8192; }
     ];
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
     # both be resident on a 16 GiB card.
@@ -374,6 +375,40 @@ in
           # Qwen's OFFICIAL non-thinking sampling profile. Baked in here because
           # Ollama's /v1 endpoint accepts no top_k at all, so a caller could not
           # set it even if it wanted to.
+          temperature = 0.7;
+          top_p = 0.8;
+          top_k = 20;
+          min_p = 0.0;
+        };
+      }
+
+      # The same model one quant up. NOT a replacement — both stay, and which
+      # one you ask for is a decision about the session you are in.
+      #
+      # Sized against the vram-sampler's measured PEAKS (see the table in
+      # docs/handoffs/akunito/2026-09-02-main.md), not a snapshot, because every
+      # hand-taken figure in this repo understates the peak by ~25%:
+      #
+      #   desktop VRAM   min 1636 · median 2359 · p95 2621 · PEAK 4778 (Minecraft)
+      #   needs desktop under:  IQ3_S 3892 · Q3_K_XL 2748 · IQ4_XS 1614 MiB
+      #
+      # So Q3_K_XL clears the median and sits ~127 MiB under the p95: it fits a
+      # DELIBERATE session — no game, no vesktop — and does not fit the tail.
+      # IQ3_S has 1144 MiB more headroom and is the one to reach for when the
+      # desktop is whatever it happens to be. Ollama offloads the overflow to
+      # CPU rather than failing, so the penalty for guessing wrong is a slow
+      # answer, not a crash — the crash mode was ROCm's, and we are on Vulkan.
+      #
+      # `llama-status` prints free VRAM; `llama-evict` recovers ~500 MiB first,
+      # but ONLY with no model resident (GTT is 10240 MiB, less than either
+      # model) and ONLY on a quiet desktop — it livelocks on a busy one.
+      { name = "qwen3.8-agent-xl";
+        from = "hf.co/unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL";
+        parameters = {
+          # Identical to the IQ3_S entry on purpose: the two differ ONLY in
+          # quantisation, so any speed or quality difference you observe is the
+          # quant and not a stray sampling change.
+          num_ctx = 16384;
           temperature = 0.7;
           top_p = 0.8;
           top_k = 20;

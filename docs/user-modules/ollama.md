@@ -98,13 +98,30 @@ registry and the unsloth GGUF repo, against a 16304 MiB card:
 | `qwen3.8-flash-next` (125B-A6B) | ~70 GB at q4 | No |
 | `qwen3.8-max` (2.4T) | — | No |
 | `UD-IQ4_XS` (unsloth GGUF) | 14.25 GB | Only on a bare desktop |
-| **`UD-IQ3_S`** | **12.04 GB** | **Yes — the one configured** |
-| `UD-IQ3_XXS` | 10.93 GB | Yes, with more headroom (the fallback) |
+| **`UD-Q3_K_XL`** | **13.15 GB** | **Yes, on a quiet desktop — `qwen3.8-agent-xl`** |
+| **`UD-IQ3_S`** | **12.04 GB** | **Yes, with headroom — `qwen3.8-agent`** |
+| `UD-IQ3_XXS` | 10.93 GB | Yes, most headroom (the fallback) |
 
-Measured VRAM baseline on DESK 2026-09-01: Sway + Zen + VSCode + terminals hold
-~2.9 GiB, and one Minecraft client adds another 3.9 GiB. So ~13.4 GiB is free in
-a normal session and ~9.5 GiB with the game running — which is why this model is
-explicitly *not* expected to be usable while gaming.
+**Both configured quants are wired, and choosing between them is a decision about
+the session you are in.** Ceilings, against the vram-sampler's measured PEAKS
+(`vram-report`) rather than snapshots — every hand-taken figure understates the
+peak by roughly 25%:
+
+| desktop VRAM | min | median | p95 | PEAK (with Minecraft) |
+|---|---|---|---|---|
+| MiB | 1636 | 2359 | 2621 | 4778 |
+
+| Model | Needs desktop under |
+|-------|---------------------|
+| `UD-IQ4_XS` | 1614 MiB — below even the minimum seen |
+| `qwen3.8-agent-xl` (`UD-Q3_K_XL`) | 2748 MiB — clears the median, ~127 MiB under the p95 |
+| `qwen3.8-agent` (`UD-IQ3_S`) | 3892 MiB — clears everything but a game |
+
+So `-xl` fits a *deliberate* session (no game, no vesktop) and not the tail;
+plain `qwen3.8-agent` is the one to reach for when the desktop is whatever it
+happens to be. Guessing wrong costs speed, not stability: Ollama offloads the
+overflow to CPU rather than failing. The crash mode belonged to ROCm's false
+free-VRAM figure, and this host is on Vulkan.
 
 Two properties make IQ3_S workable where a normal 27B would not be: unsloth's
 dynamic quants keep the sensitive layers at higher precision, and Qwen3.8 runs
