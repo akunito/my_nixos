@@ -187,6 +187,22 @@ in
 
     # === Desktop Environment ===
     enableSwayForDESK = false; # Not needed when wm = "sway" (no dual-WM setup)
+
+    # Upstream sway rather than SwayFX. On DESK this is a VRAM decision; here it
+    # is a straight performance one, and the case is stronger. scenefx allocates
+    # four full-output-size framebuffers per output for blur UNCONDITIONALLY —
+    # `blur disable` does not stop it — and on an APU those come out of the same
+    # DDR the CPU is using, not out of a dedicated card. Every blur pass then
+    # spends iGPU time and memory bandwidth, both of which are the scarce
+    # resources on this machine and both of which cost battery.
+    #
+    # Lost: blur, rounded corners, shadows, inactive-dim. Kept: coloured focus
+    # borders and client-side transparency — both upstream features, verified
+    # against sway 1.11's command table. See lib/defaults.nix for the full note.
+    #
+    # NOT YET DEPLOYED HERE — the machine was off on 2026-09-02. It takes effect
+    # on the next install.sh, and needs a logout/login after it.
+    swayUseSwayfx = false;
     goaCalendarEnable = true; # GNOME Online Accounts + gnome-calendar + Waybar widget (click opens calendar.google.com in default browser)
 
     # === Package Modules ===

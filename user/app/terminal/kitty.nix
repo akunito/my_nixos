@@ -123,12 +123,16 @@ in
   programs.kitty.enable = true;
   programs.kitty.settings = lib.mkMerge [
     {
-      # 0.85 -> 0.95 (2026-09-02). Under SwayFX the blur behind the terminal
+      # 0.85 -> 0.98 (2026-09-02). Under SwayFX the blur behind the terminal
       # made 0.85 readable over anything; upstream sway has no blur and cannot
       # get one — it is the reason SwayFX exists as a fork — so a bright window
-      # behind the terminal now shows through sharp and the text fights it.
-      # 0.95 keeps the tint and stops the interference.
-      background_opacity = lib.mkForce "0.95";
+      # behind the terminal shows through sharp and the text fights it. 0.98
+      # keeps a trace of the tint and stops the interference; 0.95 was still
+      # legible over bright content but not comfortably so.
+      #
+      # This file is shared by every machine, so this IS the default — X13
+      # included, which matters because it is also moving off SwayFX.
+      background_opacity = lib.mkForce "0.98";
       # Lets Ctrl+Shift+A then M/L nudge opacity live, so the value above can be
       # tuned by eye in a running terminal instead of guessed and rebuilt. The
       # runtime change is NOT persisted — settle on a number, then set it here.
