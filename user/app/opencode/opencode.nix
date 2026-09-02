@@ -54,6 +54,10 @@ let
     };
   }) models);
 
+  # Which model a bare `opencode` starts on. Without it OpenCode asks on every
+  # session and `opencode run` needs an explicit --model every time.
+  defaultModel = systemSettings.openCodeDefaultModel or "";
+
   opencodeConfig = {
     "$schema" = "https://opencode.ai/config.json";
     provider.ollama = {
@@ -62,7 +66,7 @@ let
       options.baseURL = host;
       models = modelAttrs;
     };
-  };
+  } // lib.optionalAttrs (defaultModel != "") { model = defaultModel; };
 in
 {
   config = lib.mkIf enabled {

@@ -293,6 +293,10 @@ in
     # keys are mandatory: OpenCode validates the whole config and refuses to
     # start on a partial `limit`, so a missing outputLimit takes every model
     # down, not just its own.
+    # IQ3_S is the default because it tolerates a working desktop. The XL entry
+    # is faster-per-quality only while the desktop stays under ~1.2 GiB, and the
+    # cliff is steep — see the measured curve on the entry itself.
+    openCodeDefaultModel = "ollama/qwen3.8-agent";
     openCodeModels = [
       { id = "qwen3.8-agent";    label = "Qwen3.8 27B IQ3_S (16k, safe)";
         contextLimit = 16384; outputLimit = 8192; }
@@ -412,13 +416,22 @@ in
       # projection cost 14517 MiB on 2026-09-01), so it loads optimistically and
       # gives the remainder to the CPU.
       #
-      # So on today's desktop this entry is a DOWNGRADE: it spills twice as much
-      # as IQ3_S and runs at half the speed for one step of quantisation. It is
-      # wired because it should be available, not because it should be the
-      # default — reach for qwen3.8-agent. It would need a desktop leaner than
-      # anything vram-report has recorded (its minimum is 1636 MiB), so re-measure
-      # if the desktop budget ever drops. Penalty for guessing wrong is a slow
-      # answer, not a crash — the crash mode was ROCm's, and we are on Vulkan.
+      # THE CURVE, measured 2026-09-02 by closing apps one at a time. This is the
+      # whole decision, and the cliff is the point:
+      #
+      #   desktop     XL layers  XL tok/s    IQ3_S layers  IQ3_S tok/s
+      #   1133 MiB      66/66     33.7-34.1     66/66        ~36
+      #   1581 MiB      63/66     20.7-21.2     66/66       35.3-36.3
+      #   2480 MiB      59/66     14.1-14.5     64/66        26-27
+      #
+      # XL is a real option — it matches IQ3_S once fully resident — but only
+      # below ~1.2 GiB of desktop, and 450 MiB past that costs it 40% of its
+      # speed. IQ3_S holds 66/66 up to ~1.6 GiB and degrades gently. So XL is
+      # for a deliberately emptied session (this measurement needed vesktop,
+      # VSCode, Obsidian and Chromium all closed) and IQ3_S is the default.
+      #
+      # Penalty for guessing wrong is a slow answer, not a crash — the crash
+      # mode was ROCm's false free-VRAM figure, and we are on Vulkan.
       #
       # `llama-status` prints free VRAM; `llama-evict` recovers ~500 MiB first,
       # but ONLY with no model resident (GTT is 10240 MiB, less than either

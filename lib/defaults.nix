@@ -221,6 +221,7 @@
     ollamaServerVisibleDevices = "0";                      # discrete card only — Ollama also enumerates the CPU's iGPU
     # --- OpenCode (coding agent) — consumed by user/app/opencode/opencode.nix ---
     openCodeOllamaUrl = "http://127.0.0.1:8090/v1";        # the local Ollama, NOT the LiteLLM gateway
+    openCodeDefaultModel = "";                             # "ollama/<id>" the TUI and `opencode run` start on; "" = ask every time
     openCodeModels = [ ];                                  # [{ id = "gpt-oss:20b"; label = "..."; contextLimit = 8192; outputLimit = 4096; }] — id must match /v1/models exactly; BOTH limits are required or OpenCode refuses to start
     ollamaServerBackend = "rocm";                          # "rocm" | "vulkan". On RDNA4 vulkan is both FASTER and honest about free VRAM — measured figures in system/app/ollama-server.nix
     ollamaServerOpenFirewallTailscale = true;              # open the port only on tailscale0

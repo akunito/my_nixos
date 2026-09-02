@@ -111,34 +111,47 @@ peak by roughly 25%:
 |---|---|---|---|---|
 | MiB | 1636 | 2359 | 2621 | 4778 |
 
-Ceilings computed from file size say `UD-IQ4_XS` needs the desktop under
-1614 MiB, `UD-Q3_K_XL` under 2748 and `UD-IQ3_S` under 3892. **Do not trust
-those — they are optimistic.** What actually happens, measured 2026-09-02 with
-the desktop at ~2.4 GiB and nothing else on the card:
+Ceilings computed from file size say `UD-Q3_K_XL` needs the desktop under
+2748 MiB and `UD-IQ3_S` under 3892. **Both are optimistic** — Ollama's printed
+breakdown (`model + context + compute`) omits the vision/CLIP buffers, the same
+~1.2 GiB gap that made an 11928 MiB projection cost 14517 MiB on 2026-09-01, so
+it loads optimistically and hands the remainder to the CPU.
 
-| Model | Ollama's projection | free | layers on GPU | mapped to CPU | tok/s |
-|-------|--------------------|------|---------------|---------------|-------|
-| `qwen3.8-agent` (IQ3_S) | 11940 MiB | 13662 | 64/66 | 785 MiB | **26-27** |
-| `qwen3.8-agent-xl` (Q3_K_XL) | 12994 MiB | 13730 | 59/66 | 1706 MiB | **14.1-14.5** |
+Measured 2026-09-02 by closing applications one at a time. **The cliff is the
+whole decision:**
 
-Both were projected to fit and neither did. Ollama's printed breakdown
-(`model + context + compute`) omits the vision/CLIP buffers — the same ~1.2 GiB
-gap that made a 11928 MiB projection cost 14517 MiB on 2026-09-01 — so it loads
-optimistically and then hands the remainder to the CPU.
+| desktop VRAM | XL layers | XL tok/s | IQ3_S layers | IQ3_S tok/s |
+|---|---|---|---|---|
+| 1133 MiB | **66/66** | **33.7-34.1** | 66/66 | ~36 |
+| 1581 MiB | 63/66 | 20.7-21.2 | **66/66** | **35.3-36.3** |
+| 2480 MiB | 59/66 | 14.1-14.5 | 64/66 | 26-27 |
 
-**The consequence is that `-xl` is currently a downgrade, not an upgrade.** It
-spills more than twice as much as IQ3_S and runs at roughly half the speed for a
-one-step quantisation gain. For reference, IQ3_S managed 30.9 tok/s fully
-resident (66/66) on 2026-09-01 when the desktop was ~1.1 GiB, so even it is
-paying for today's heavier desktop.
+So `-xl` is a genuine option and matches IQ3_S once fully resident — but only
+below roughly 1.2 GiB of desktop, and 450 MiB past that costs it 40% of its
+speed. IQ3_S holds all 66 layers up to about 1.6 GiB and degrades gently
+thereafter. Reaching the top row needed vesktop, VSCode, Obsidian and Chromium
+all closed.
 
-`-xl` earns its place only on a desktop leaner than anything `vram-report` has
-recorded so far (its minimum is 1636 MiB). Keep both wired, reach for
-`qwen3.8-agent`, and re-measure `-xl` if the desktop budget ever drops.
+**`qwen3.8-agent` (IQ3_S) is therefore the default**, set as `model` in the
+generated config. Switch to `-xl` deliberately, for a session where the desktop
+has been emptied on purpose, and use `llama-status` to check the headroom first.
 
 Guessing wrong costs speed, not stability: Ollama offloads rather than failing,
 and the crash mode belonged to ROCm's false free-VRAM figure, which this host no
 longer uses.
+
+#### Switching models
+
+| Where | How |
+|-------|-----|
+| OpenCode TUI | `/models` |
+| OpenCode CLI | `opencode run --model ollama/qwen3.8-agent-xl "..."` |
+| Default | `openCodeDefaultModel` in the profile |
+| Check headroom first | `llama-status` (free VRAM + which model is resident) |
+| Which model is loaded | `curl -s 127.0.0.1:8090/api/ps` |
+
+`OLLAMA_MAX_LOADED_MODELS = 1`, so asking for the other model evicts the first
+and pays a cold load (~10 s) on that request.
 
 Two properties make IQ3_S workable where a normal 27B would not be: unsloth's
 dynamic quants keep the sensitive layers at higher precision, and Qwen3.8 runs
