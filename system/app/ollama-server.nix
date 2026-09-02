@@ -149,6 +149,198 @@ let
   # layers onto it. Pin to the discrete card.
   visibleDevices = cfg.ollamaServerVisibleDevices or "0";
 
+  # --- VRAM eviction ---------------------------------------------------------
+  #
+  # WHAT IT DOES. Reading amdgpu's debugfs `amdgpu_evict_vram` tells TTM to move
+  # every evictable buffer object out of VRAM and into GTT — the window through
+  # which the GPU reaches ordinary system RAM over PCIe. Nothing is freed or
+  # lost; buffers migrate back automatically the moment anything touches them.
+  #
+  # WHY IT IS WORTH DOING. The compositor's allocation is mostly COLD. SwayFX's
+  # scenefx renderer reserves four full-output-size framebuffers per output
+  # (blur_saved_pixels_buffer, effects_buffer, effects_buffer_swapped and
+  # optimized_blur_buffer — scenefx-0.4.1 render/fx_renderer/fx_pass.c:1003 and
+  # :1161-1166) and does so UNCONDITIONALLY: the only gate is
+  # `basic_renderer = (output == NULL)`, so `blur disable` in the config changes
+  # nothing. On DESK's 3840x2160 + 2560x1440 pair that is ~750 MiB that is
+  # allocated, never read, and sitting in the fastest memory on the machine.
+  # Left alone amdgpu only evicts under pressure, at the worst possible moment
+  # and picking whatever is convenient. Doing it up front lets each consumer
+  # fault back exactly what it uses.
+  #
+  # MEASURED ON DESK 2026-09-02 (RX 9070, 16304 MiB):
+  #   idle desktop                      1250 MiB used
+  #   after evict                        104 MiB used   (GTT 78 -> 1166 MiB)
+  #   gpt-oss:20b loaded on top of that 13053 MiB used, of which sway 722 MiB
+  #   +45 s of ordinary desktop use     13053 MiB — flat, nothing thrashing
+  # Loading the same model WITHOUT evicting first lands at 13560 MiB. So the
+  # desktop settles at 722 MiB instead of 1250 MiB and ~500 MiB stays reclaimed
+  # for the model. The flat +45 s reading is the important one: had the desktop
+  # been paging over PCIe every frame, sway's figure would have kept climbing.
+  #
+  # ‼️ IT BLOCKS, AND ON A BUSY DESKTOP IT LIVELOCKS. Reading the knob is not a
+  # poke that returns and lets TTM work in the background: the read returns only
+  # once the migration is done, in an uninterruptible kernel read that `timeout`
+  # cannot cut short (D state until the kernel is finished).
+  #
+  # How long depends entirely on whether anything is drawing. Measured on DESK
+  # 2026-09-02, same machine, same script:
+  #   quiescent desktop           ~1 s, 1248 -> 659 MiB, unnoticeable
+  #   lightly active desktop      14 s, and once still going at 48 s
+  #   actively rendering desktop  245 s with gpu_busy_percent pegged at 98%
+  # In the 245 s run VRAM oscillated 461 -> 824 -> 273 -> 666 MiB while GTT
+  # moved inversely: the evictor pushes buffers out, the compositor faults them
+  # straight back in, and the knob keeps looping until it manages to get
+  # everything out at once. That is a livelock, and it costs the whole GPU while
+  # it lasts.
+  #
+  # ‼️ TimeoutStartSec DOES NOT BOUND THE DAMAGE. It bounds how long systemd
+  # waits before moving on; the kernel keeps churning for the full duration. So
+  # a timeout protects unit ordering, not the desktop.
+  #
+  # Everything automatic is therefore OFF by default: no periodic timer
+  # (ollamaServerEvictTimerSec = 0) and no ollama.service hook
+  # (ollamaServerEvictOnOllamaStart = false). `amdgpu_evict_vram` is a debugfs
+  # facility meant for exercising the eviction path, not a production knob, and
+  # it behaves like one. The supported use is a DELIBERATE `llama-evict` on a
+  # quiet desktop, right before loading a model you want the headroom for.
+  #
+  # ‼️ WHY THE GUARDS ARE NOT OPTIONAL. GTT here is 10240 MiB
+  # (amdgpuGttSizeMiB) and a resident model is ~12.4 GiB. Evicting while a model
+  # is loaded asks TTM to push more into GTT than GTT can hold — at best a long
+  # stall, at worst a failed eviction with the GPU wedged mid-migration. The
+  # same applies to a game holding several GiB of textures. So this runs ONLY
+  # when the card is known to be idle, and every guard failing is a silent
+  # no-op rather than an error.
+  # PORTABILITY. `amdgpu_evict_vram` is an amdgpu debugfs handle: there is no
+  # nvidia or i915 equivalent, so this is gated on gpuType == "amd" and an
+  # assertion makes a mismatched profile fail the build instead of silently
+  # doing nothing. Nothing here is sized to DESK's card: the ceiling is a
+  # PERCENTAGE of whatever the card reports, and the script refuses to touch a
+  # card smaller than evictMinCardBytes — which is what keeps it off an
+  # APU-only box like LAPTOP_X13 (gpuType = "amd", but the only DRM node is a
+  # ~512 MiB iGPU carveout, and evicting that means pushing the desktop out of
+  # the only memory it has).
+  #
+  # The one value that IS workload-shaped rather than card-shaped is the
+  # threshold: it tracks how much VRAM the DESKTOP holds, which scales with
+  # monitor count and resolution, not with how big the GPU is. A single 1080p
+  # screen sits far below it and the whole thing stays a no-op, which is the
+  # right outcome — there is nothing worth reclaiming there.
+  evictEnable = (cfg.ollamaServerEvictVram or false) && (cfg.gpuType or "none") == "amd";
+  evictThreshold = cfg.ollamaServerEvictThresholdBytes or 1073741824;
+  evictCeilingPct = cfg.ollamaServerEvictCeilingPercent or 25;
+  evictMinCard = cfg.ollamaServerEvictMinCardBytes or 2147483648;
+  evictTimerSec = cfg.ollamaServerEvictTimerSec or 0;
+  evictTimeout = cfg.ollamaServerEvictTimeoutSec or 60;
+  evictOnStart = cfg.ollamaServerEvictOnOllamaStart or false;
+  evictMaxBusy = cfg.ollamaServerEvictMaxGpuBusyPercent or 30;
+
+  # Unprivileged users cannot read debugfs, so `llama-evict` does not evict —
+  # it drops a file in a sticky directory and a path unit runs the privileged
+  # part. Exactly the shape llama-lock already uses, and for the same reason.
+  evictDir = "/run/llama-evict";
+
+  evictRun = pkgs.writeShellScript "llama-evict-run" ''
+    set -u
+    say() { echo "llama-evict: $*"; }
+
+    # The discrete card, chosen the same way the preflight does it: biggest
+    # mem_info_vram_total. The 512 MiB iGPU must never be the one we pick.
+    CARD=""; TOTAL=0
+    for d in /sys/class/drm/card*/device; do
+      t=$(${pkgs.coreutils}/bin/cat "$d/mem_info_vram_total" 2>/dev/null || echo 0)
+      if [ "$t" -gt "$TOTAL" ]; then TOTAL=$t; CARD=$d; fi
+    done
+    if [ -z "$CARD" ]; then say "no amdgpu card found — nothing to do"; exit 0; fi
+
+    # GUARD 0 — is there a real discrete card at all? An APU-only machine
+    # (LAPTOP_X13: gpuType = "amd", integrated Radeon) exposes one DRM node
+    # whose "VRAM" is a small carveout of system RAM. Evicting that pushes the
+    # desktop out of the only memory it has, to reach... the same RAM. Refuse.
+    if [ "$TOTAL" -lt ${toString evictMinCard} ]; then
+      say "biggest amdgpu card is only $(( TOTAL / 1048576 )) MiB — no discrete GPU here, skipping"
+      exit 0
+    fi
+
+    USED=$(${pkgs.coreutils}/bin/cat "$CARD/mem_info_vram_used" 2>/dev/null || echo 0)
+    # Card-relative, so an 8 GiB, 16 GiB or 24 GiB card all behave the same
+    # without per-profile tuning.
+    CEILING=$(( TOTAL / 100 * ${toString evictCeilingPct} ))
+
+    # GUARD 1 — a game holds the card. Its textures are hot; moving them to GTT
+    # would trade the LLM's problem for a stuttering game.
+    if [ -e ${lockFile} ]; then
+      say "gaming lock taken — skipping"; exit 0
+    fi
+
+    # GUARD 2 — a model is resident. See the GTT note above: this is the one
+    # that can actually hurt. "ollama is up but will not answer" counts as
+    # resident, because a load in flight looks exactly like that.
+    if ${pkgs.systemd}/bin/systemctl is-active --quiet ollama.service; then
+      URL=http://127.0.0.1:${toString port}/api/ps
+      PS=$(${pkgs.curl}/bin/curl -sf --max-time 3 "$URL" 2>/dev/null) || {
+        say "ollama is up but /api/ps did not answer — skipping (a load may be in flight)"
+        exit 0
+      }
+      case "$PS" in
+        *'"models":[]'*|*'"models": []'*) : ;;
+        *) say "a model is resident — skipping"; exit 0 ;;
+      esac
+    fi
+
+    # GUARD 3 — something big is on the card that did not announce itself: a
+    # game started without gamemode, a stray compute job. Above the ceiling we
+    # do not know whose memory it is, so we leave it alone.
+    if [ "$USED" -gt "$CEILING" ]; then
+      say "$(( USED / 1048576 )) MiB in use, above the $(( CEILING / 1048576 )) MiB ceiling (${toString evictCeilingPct}% of $(( TOTAL / 1048576 )) MiB) — skipping (something big holds the card)"
+      exit 0
+    fi
+
+    # GUARD 4 — nothing worth reclaiming. The desktop's hot set is ~700-860 MiB
+    # here, so a threshold under that would make the timer fire forever and
+    # re-fault cold buffers for no gain.
+    if [ "$USED" -lt ${toString evictThreshold} ]; then
+      exit 0
+    fi
+
+    # GUARD 5 — the card is already working. This is a WEAK heuristic and it is
+    # documented as one: gpu_busy_percent is an instantaneous utilisation
+    # sample, while the livelock is caused by any client faulting buffers back
+    # in, however cheaply. Measured 2026-09-02: vkcube running read 13% — under
+    # the limit, so this guard passed — and the eviction livelocked anyway. It
+    # catches a card that is genuinely pinned (a game that never took the lock,
+    # a compute job); it does NOT make llama-evict safe to fire blindly.
+    BUSY=$(${pkgs.coreutils}/bin/cat "$CARD/gpu_busy_percent" 2>/dev/null || echo 0)
+    if [ "$BUSY" -gt ${toString evictMaxBusy} ]; then
+      say "GPU is $BUSY% busy (limit ${toString evictMaxBusy}%) — skipping, evicting into a busy card livelocks"
+      exit 0
+    fi
+
+    # debugfs exposes the card twice, as dri/<n> and dri/<pci-address>. Address
+    # it by PCI id so we never evict the iGPU by accident.
+    PCI=$(${pkgs.coreutils}/bin/basename "$(${pkgs.coreutils}/bin/readlink -f "$CARD")")
+    KNOB="/sys/kernel/debug/dri/$PCI/amdgpu_evict_vram"
+    if [ ! -e "$KNOB" ]; then
+      say "no $KNOB — kernel built without debugfs?"; exit 0
+    fi
+
+    # A debugfs *get* attribute: the READ performs the eviction. Writing to it
+    # returns EINVAL. Same contract as amdgpu_evict_gtt in
+    # system/hardware/amdgpu-suspend-workaround.nix.
+    ${pkgs.coreutils}/bin/cat "$KNOB" >/dev/null 2>&1 || true
+
+    AFTER=$(${pkgs.coreutils}/bin/cat "$CARD/mem_info_vram_used" 2>/dev/null || echo 0)
+    say "$(( USED / 1048576 )) -> $(( AFTER / 1048576 )) MiB used ($(( (USED - AFTER) / 1048576 )) MiB moved to GTT)"
+    exit 0
+  '';
+
+  llamaEvict = pkgs.writeShellScriptBin "llama-evict" ''
+    ${pkgs.coreutils}/bin/mkdir -p ${evictDir} 2>/dev/null || true
+    ${pkgs.coreutils}/bin/touch ${evictDir}/request || exit 1
+    echo "requested VRAM eviction — result: journalctl -u llama-evict -n 5 --no-pager"
+  '';
+
   llamaLock = pkgs.writeShellScriptBin "llama-lock" ''
     ${pkgs.coreutils}/bin/touch ${lockFile} \
       && echo "local LLM locked — model will not load; any running model is stopped (frees VRAM)"
@@ -178,7 +370,14 @@ let
     echo -n "loaded:   "
     ${pkgs.curl}/bin/curl -sf --max-time 3 http://127.0.0.1:${toString port}/api/ps 2>/dev/null       | ${pkgs.gnugrep}/bin/grep -o '"name":"[^"]*"' | ${pkgs.gnused}/bin/sed 's/"name":"//;s/"//'       | ${pkgs.coreutils}/bin/paste -sd' ' - || echo "(unreachable)"
     echo
+    for d in /sys/class/drm/card*/device; do
+      t=$(${pkgs.coreutils}/bin/cat "$d/mem_info_vram_total" 2>/dev/null || echo 0)
+      [ "$t" -lt 1073741824 ] && continue
+      g=$(${pkgs.coreutils}/bin/cat "$d/mem_info_gtt_used" 2>/dev/null || echo 0)
+      echo "gtt:      $(( g / 1048576 )) MiB parked in system RAM"
+    done
     echo "toggle:   llama-lock  (block + free VRAM)   |   llama-unlock  (allow again)"
+    echo "reclaim:  llama-evict  (cold desktop buffers -> GTT; no-op unless the card is idle)"
   '';
 
   # Pulling is NOT done at activation: these are 10-14 GB each and a nixos-rebuild
@@ -223,6 +422,14 @@ in
     assertions = [{
       assertion = builtins.elem backend [ "rocm" "vulkan" ];
       message = "ollamaServerBackend must be \"rocm\" or \"vulkan\", got \"${backend}\".";
+    } {
+      assertion = !(cfg.ollamaServerEvictVram or false) || (cfg.gpuType or "none") == "amd";
+      message = ''
+        ollamaServerEvictVram = true needs gpuType = "amd" (this profile has
+        "${cfg.gpuType or "none"}"). It works by reading amdgpu's debugfs
+        handle /sys/kernel/debug/dri/<pci>/amdgpu_evict_vram, which no other
+        driver provides. Set ollamaServerEvictVram = false on this profile.
+      '';
     } {
       assertion = !(cfg.llamaServerEnable or false);
       message = ''
@@ -324,7 +531,8 @@ in
 
     # World-writable (sticky) so any local user or a GameMode hook can toggle the
     # lock without privileges; the privileged stop is done by the path unit.
-    systemd.tmpfiles.rules = [ "d /run/llama-gaming 1777 root root -" ];
+    systemd.tmpfiles.rules = [ "d /run/llama-gaming 1777 root root -" ]
+      ++ lib.optional evictEnable "d ${evictDir} 1777 root root -";
 
     systemd.paths.ollama-gaming = {
       description = "Watch the gaming lock and reconcile the local LLM";
@@ -339,7 +547,77 @@ in
       serviceConfig = { Type = "oneshot"; ExecStart = "${reconcile}"; };
     };
 
-    environment.systemPackages = [ ollamaPkg llamaLock llamaUnlock llamaStatus ollamaPull ];
+    # --- llama-evict wiring ---------------------------------------------------
+    #
+    # A SEPARATE unit, not an ExecStartPre on ollama.service, because that unit
+    # runs as User=ollama under ProtectKernelTunables=yes and ProtectSystem=
+    # strict: debugfs is not reachable from inside it at any privilege level.
+    #
+    # Wants= plus After= gives us the pre-load hook for free. A oneshot returns
+    # to inactive when it finishes, so it really does re-run on every ollama
+    # start rather than being skipped as already-satisfied.
+    systemd.services.llama-evict = lib.mkIf evictEnable {
+      description = "Move cold GPU buffers out of VRAM into GTT";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${evictRun}";
+        # Bounds how long the optional After= can hold ollama.service back, and
+        # NOTHING MORE. systemd cannot kill the uninterruptible debugfs read —
+        # the kernel keeps migrating for the full duration whatever this says.
+        # Wants= (not Requires=) means a timed-out evict never keeps ollama
+        # from starting.
+        TimeoutStartSec = "${toString evictTimeout}s";
+      };
+    };
+
+    # OPT-IN, and off by default. ollama.service starting looks like a good
+    # moment to reclaim — after a rebuild, after a boot, and right after
+    # `llama-unlock` ends a gaming session. But it is not a moment we can
+    # promise the desktop is quiet, and an eviction into a busy card pegs the
+    # GPU for minutes (see the livelock note above). GUARD 5 makes it *usually*
+    # a no-op instead, which means the hook mostly does nothing anyway. Enable
+    # it only if you have decided that trade for yourself.
+    #
+    # Dotted paths, not a `systemd.services.ollama = { ... }` block: this file
+    # already defines .serviceConfig.ExecCondition and .unitConfig on the same
+    # attribute set, and two literal definitions of the same attribute is a Nix
+    # syntax error rather than a module merge.
+    systemd.services.ollama.wants =
+      lib.optional (evictEnable && evictOnStart) "llama-evict.service";
+    systemd.services.ollama.after =
+      lib.optional (evictEnable && evictOnStart) "llama-evict.service";
+
+    # The OTHER moment a model loads is a request arriving after
+    # OLLAMA_KEEP_ALIVE unloaded it, which no unit transition can see. A timer
+    # is the only way to cover that — but see the "IT BLOCKS" note above: each
+    # run that actually does something costs tens of seconds of fence-wait, so
+    # this is OPT-IN and off unless a profile sets ollamaServerEvictTimerSec.
+    # If you do turn it on, keep it long (1800s+): the model unloads after 15
+    # min idle, so one sweep per half hour catches the same window at a
+    # fraction of the churn. All four guards still apply on every run.
+    systemd.timers.llama-evict = lib.mkIf (evictEnable && evictTimerSec > 0) {
+      description = "Periodically reclaim cold VRAM while the card is idle";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "10min";
+        OnUnitActiveSec = "${toString evictTimerSec}s";
+        AccuracySec = "60s";
+        Unit = "llama-evict.service";
+      };
+    };
+
+    # `llama-evict` (unprivileged) touches a file here; this runs the real work.
+    systemd.paths.llama-evict = lib.mkIf evictEnable {
+      description = "Watch for a manual llama-evict request";
+      wantedBy = [ "multi-user.target" ];
+      pathConfig = {
+        PathModified = evictDir;
+        Unit = "llama-evict.service";
+      };
+    };
+
+    environment.systemPackages = [ ollamaPkg llamaLock llamaUnlock llamaStatus ollamaPull ]
+      ++ lib.optional evictEnable llamaEvict;
 
     # Tailscale only. openFirewall would punch the port on every interface, and
     # this one answers unauthenticated prompts to a 20B model.

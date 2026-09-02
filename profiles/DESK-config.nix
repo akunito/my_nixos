@@ -311,6 +311,40 @@ in
     # paid DeepSeek for no reason. Measured 2026-09-01.
     ollamaServerVramNeededBytes = 6442450944;
 
+    # --- Reclaim the desktop's COLD VRAM before a model loads ---
+    # SwayFX's scenefx renderer reserves four full-output-size framebuffers per
+    # output for blur, and does it whether blur is enabled or not (the only gate
+    # is `basic_renderer = (output == NULL)` in scenefx-0.4.1
+    # render/fx_renderer/fx_pass.c:1132). On this 3840x2160 + 2560x1440 pair
+    # that is ~750 MiB reserved, never read, sitting in the fastest memory on
+    # the box. `blur disable` at runtime frees nothing — measured.
+    #
+    # Measured 2026-09-02: evicting first takes the idle desktop from 1250 to
+    # 104 MiB; loading gpt-oss:20b on top then lands at 13053 MiB with sway
+    # holding 722 MiB, flat over 45 s of ordinary use. The same load without
+    # evicting lands at 13560 MiB. ~500 MiB recovered, nothing thrashing.
+    #
+    # Ceiling 4 GiB and the resident-model guard in the script are LOAD-BEARING:
+    # GTT here is 10240 MiB (amdgpuGttSizeMiB) and a resident model is ~12.4 GiB,
+    # so evicting with a model up would ask TTM to push more into GTT than GTT
+    # can hold.
+    ollamaServerEvictVram = true;
+    ollamaServerEvictThresholdBytes = 1073741824;  # 1 GiB — DESK-specific: two monitors (3840x2160 + 2560x1440) put the desktop at ~1.2 GiB and it settles at ~860 MiB after an evict, so a lower floor would fire forever for nothing. A single-screen machine sits under this and stays a no-op, which is correct.
+    # EVERYTHING AUTOMATIC IS OFF, and that is the measurement talking, not
+    # caution. On a quiescent desktop the eviction takes ~1 s. On an actively
+    # rendering one it livelocked for 245 s with the GPU pegged at 98%, VRAM
+    # oscillating 461 -> 824 -> 273 MiB as the compositor faulted buffers back
+    # in as fast as TTM pushed them out. Nothing bounds that: TimeoutStartSec
+    # only stops systemd waiting, the kernel keeps going.
+    #
+    # So `llama-evict` is a DELIBERATE command — run it on a quiet desktop right
+    # before loading a model you want the headroom for. GUARD 5 (gpu_busy) makes
+    # it refuse the worst case, but it cannot promise the desktop stays quiet.
+    ollamaServerEvictMaxGpuBusyPercent = 10;   # an idle desktop here reads 1-6%
+    ollamaServerEvictOnOllamaStart = false;
+    ollamaServerEvictTimerSec = 0;
+    ollamaServerEvictTimeoutSec = 60;
+
     # --- Second model: Qwen3.8-27B for agent work (Hermes), on demand ---
     # NOT a replacement for gpt-oss:20b. Different job, different trade:
     # gpt-oss is MoE (~3.6B active) and answers a villager in 1.4-2.0s; this one
@@ -635,6 +669,21 @@ in
       { database = "nextcloud"; user = "nextcloud"; passwordSecret = "dbNextcloudPassword"; }
     ];
     dbCredentialsRedisPasswordSecret = "redisServerPassword";
+
+    # === SwayFX vs upstream sway ===
+    # ON TRIAL as of 2026-09-02: false = upstream sway 1.11, no blur / rounded
+    # corners / shadows / inactive-dim. Coloured focus borders and client-side
+    # transparency (kitty + alacritty at 0.85, waybar rgba) are UNAFFECTED —
+    # those are upstream features, verified against sway 1.11's command table.
+    #
+    # Why: scenefx allocates its blur framebuffers per output unconditionally,
+    # whether or not any effect is enabled. Measured here — nested, same config,
+    # no clients, one output — SwayFX 0.5.3 = 392.6 MiB in 37 BOs vs sway 1.11 =
+    # 99.2 MiB in 16. On this 3840x2160 + 2560x1440 pair that is ~890 MiB of the
+    # desktop's ~1190 MiB, which is roughly one quantisation step for the local
+    # model. Set back to true to get the looks back; it is one line and a
+    # relogin. Full reasoning in lib/defaults.nix.
+    swayUseSwayfx = false;
 
     # === Monitor Configuration (Sway/SwayFX) ===
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.

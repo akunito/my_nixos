@@ -29,7 +29,12 @@ in
     # swayfxNullOutputCrashFixOverlay in lib/flake-base.nix (patches
     # swayfx-unwrapped for BOTH this and Home Manager's wayland.windowManager.sway,
     # which is the one SDDM actually launches). So plain pkgs.swayfx is patched.
-    package = pkgs.swayfx; # SwayFX for blur, shadows, rounded corners
+    # SwayFX for blur/shadows/rounded corners, or upstream sway to get the
+    # ~890 MiB of VRAM that scenefx reserves per output back. See the long note
+    # on swayUseSwayfx in lib/defaults.nix. Home Manager sets the same choice in
+    # user/wm/sway/swayfx-config.nix — the two MUST agree, because SDDM launches
+    # the Home Manager one while this defines the session/wrapper.
+    package = if (systemSettings.swayUseSwayfx or true) then pkgs.swayfx else pkgs.sway;
     extraPackages = with pkgs; [
       swaylock-effects # Elegant lock screen with blurred screenshot
       swayidle # Idle daemon for screen locking

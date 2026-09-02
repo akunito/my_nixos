@@ -11,6 +11,18 @@ let
   # Hyper key combination (Super+Ctrl+Alt)
   hyper = "Mod4+Control+Mod1";
 
+  # SwayFX or upstream sway. Everything SwayFX-only in this file is gated on
+  # this: the effects block, the `blur disable, shadows disable` fragments in
+  # the gamescope rules, and the runtime swaymsg toggles in the power monitor.
+  # Emitting any of them under upstream sway is "unknown command" noise on every
+  # start. See the note on swayUseSwayfx in lib/defaults.nix for what the choice
+  # costs in looks and buys in VRAM.
+  useFx = systemSettings.swayUseSwayfx or true;
+  swayPkg = if useFx then pkgs.swayfx else pkgs.sway;
+
+  # Only appended to a command list when the effects exist.
+  fxOff = lib.optionalString useFx ", blur disable, shadows disable";
+
   # Pull script derivations from the submodules that own them (session-env/startup-apps).
   scripts = config.user.wm.sway._internal.scripts;
   set-sway-theme-vars = scripts.setSwayThemeVars;
@@ -246,7 +258,7 @@ let
 
   # Power state monitor: restarts swayidle when AC/battery state changes
   sway-power-monitor = pkgs.writeShellScript "sway-power-monitor" ''
-    ${lib.optionalString (systemSettings.swayBatteryReduceEffects or false) ''
+    ${lib.optionalString (useFx && (systemSettings.swayBatteryReduceEffects or false)) ''
     # Set initial SwayFX effects based on current power state
     INIT_BAT=$(${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "Full")
     if [ "$INIT_BAT" = "Discharging" ]; then
@@ -275,7 +287,7 @@ let
         else
           ${pkgs.libnotify}/bin/notify-send -t 3000 "Power" "On battery - shorter idle timeouts" -h string:x-canonical-private-synchronous:power-state
         fi
-        ${lib.optionalString (systemSettings.swayBatteryReduceEffects or false) ''
+        ${lib.optionalString (useFx && (systemSettings.swayBatteryReduceEffects or false)) ''
         # Toggle SwayFX effects based on power state
         if [ "$CURRENT" = "ac" ]; then
           ${pkgs.sway}/bin/swaymsg blur enable 2>/dev/null || true
@@ -418,7 +430,9 @@ in
   # SwayFX configuration
   wayland.windowManager.sway = {
     enable = true;
-    package = pkgs.swayfx; # Use SwayFX instead of standard sway
+    # MUST match programs.sway.package in system/wm/sway.nix — this is the one
+    # SDDM actually launches.
+    package = swayPkg;
     checkConfig = false; # Disable config check (fails in build sandbox without DRM FD)
 
     # CRITICAL: Inject theme variables that we force-unset globally
@@ -1295,7 +1309,10 @@ in
         hidden_state hide
       }
 
+      ${lib.optionalString useFx ''
       # SwayFX visual settings matching Khanelinix aesthetic (blur, shadows, rounded corners)
+      # Omitted entirely when swayUseSwayfx = false: upstream sway has none of
+      # these commands and would log an error for each on every start.
       corner_radius 12
       blur enable
       blur_xray disable
@@ -1313,6 +1330,7 @@ in
       # If `layer_effects` isn't supported in your SwayFX build, these lines are ignored and won't break startup.
       layer_effects "waybar" blur disable
       layer_effects "waybar" corner_radius 0
+      ''}
 
       # NumLock (config-only; cannot be toggled via `swaymsg` at runtime)
       #
@@ -1401,9 +1419,9 @@ in
       # Match both app_id (Wayland) and class (XWayland fallback) since gamescope
       # can present as either depending on backend. Use inhibit_idle focus (not fullscreen)
       # because gamescope -f on Wayland creates borderless, not true fullscreen.
-      for_window [app_id="gamescope"] fullscreen enable, inhibit_idle focus, blur disable, shadows disable
-      for_window [class="gamescope"] fullscreen enable, inhibit_idle focus, blur disable, shadows disable
-      for_window [class="Gamescope"] fullscreen enable, inhibit_idle focus, blur disable, shadows disable
+      for_window [app_id="gamescope"] fullscreen enable, inhibit_idle focus${fxOff}
+      for_window [class="gamescope"] fullscreen enable, inhibit_idle focus${fxOff}
+      for_window [class="Gamescope"] fullscreen enable, inhibit_idle focus${fxOff}
       no_focus [app_id="mako"]
       no_focus [app_id="swaync"]
       no_focus [app_id="dunst"]

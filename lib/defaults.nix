@@ -229,6 +229,21 @@
     ollamaServerUseUnstable = true;                        # take ollama from pkgs-unstable: nixpkgs-stable ships 0.21.1 and Qwen3.8 needs >= 0.32.12 (hybrid Gated-DeltaNet)
     ollamaServerGpuOverheadBytes = 0;                      # VRAM Ollama must pretend is already taken. Its fitter trusts ROCm's "free", which ignores every other process on the card — see the crash note in system/app/ollama-server.nix
     ollamaServerExtraModels = [ ];                         # additional library models to fetch with `ollama-pull`, e.g. [ "qwen3.5:9b" ]
+    # --- VRAM eviction (AINF: desktop VRAM reclaim before a model load) ---
+    # Read amdgpu's debugfs `amdgpu_evict_vram` so the compositor's COLD buffers
+    # move to GTT (system RAM) and a model loads against a near-empty card. The
+    # desktop pulls its hot working set straight back; measured on DESK
+    # 2026-09-02: 1250 -> 104 MiB, and only 722 MiB came back with a model up.
+    # amdgpu-only: the module gates this on gpuType == "amd" and asserts if a
+    # profile sets it otherwise, because no other driver exposes the handle.
+    ollamaServerEvictVram = false;                         # master switch for llama-evict + its hooks
+    ollamaServerEvictThresholdBytes = 1073741824;          # below this much VRAM used there is nothing worth reclaiming — skip. Tracks the DESKTOP's footprint (monitors x resolution), not the card's size, so it is the one value worth revisiting per machine
+    ollamaServerEvictCeilingPercent = 25;                  # above this share of the card, something BIG holds it (a model mid-load, a game that never took the lock) — never evict. A percentage so an 8/16/24 GiB card needs no tuning. See the GTT note in system/app/ollama-server.nix
+    ollamaServerEvictMinCardBytes = 2147483648;            # refuse to touch a card smaller than this: an APU-only box (LAPTOP_X13 is gpuType "amd" with no dGPU) would otherwise have its desktop evicted out of the only memory it has
+    ollamaServerEvictMaxGpuBusyPercent = 10;               # refuse to evict when the card is already this busy. WEAK heuristic: measured on DESK, vkcube read 13% and an eviction started at that level still livelocked. It catches a pinned card, not a merely-drawing one
+    ollamaServerEvictOnOllamaStart = false;                # OPT-IN hook: run an eviction whenever ollama.service starts. Off because that moment is not guaranteed to be a quiet desktop
+    ollamaServerEvictTimerSec = 0;                         # 0 = NO periodic timer (the default), same reason as above. Set e.g. 1800 to opt in.
+    ollamaServerEvictTimeoutSec = 60;                      # caps how long the opt-in hook can delay ollama.service. It does NOT stop the kernel-side migration, which runs to completion regardless
     # Models BUILT here from a Modelfile, so sampling defaults and context live
     # in the repo instead of in each caller. Each entry:
     #   { name = "qwen3.8-agent";                  # the alias callers ask for
@@ -881,7 +896,35 @@
     # AMD P-State driver (Zen 2+ CPUs, requires kernel 6.3+)
     amdPstateEnable = false;               # Enable amd_pstate=active kernel parameter
 
-    # SwayFX battery effect reduction
+    # --- SwayFX vs upstream sway -------------------------------------------
+    # true  -> pkgs.swayfx, and the blur/shadows/corner_radius/dim block is
+    #          emitted into the config.
+    # false -> pkgs.sway 1.11, and that block is omitted (it would be "unknown
+    #          command" noise otherwise).
+    #
+    # This is a VRAM decision as much as an aesthetic one. scenefx allocates
+    # four (0.4.1) or five (0.5) full-output-size framebuffers PER OUTPUT for
+    # blur, unconditionally — `blur disable` frees nothing, and the allocation
+    # happens whether or not any effect is on. Measured on DESK 2026-09-02,
+    # nested, same config, no clients, one output: SwayFX 0.5.3 = 392.6 MiB in
+    # 37 BOs vs sway 1.11 = 99.2 MiB in 16 BOs. On DESK's 3840x2160 + 2560x1440
+    # pair that is ~890 MiB of the desktop's ~1190 MiB of VRAM.
+    #
+    # What you LOSE at false: blur, rounded corners, drop shadows, and the 10%
+    # dim on inactive windows. What you KEEP: coloured focus borders
+    # (client.focused is upstream, and this repo does not even override the
+    # stock colours), client-side transparency (kitty/alacritty at 0.85, waybar
+    # rgba — that is plain Wayland alpha), gaps, smart_borders, title_align.
+    # Waybar is unchanged either way because layer_effects already disabled its
+    # blur. Expect transparent terminals to read worse without blur behind
+    # them; raising background_opacity compensates.
+    #
+    # Upgrading is NOT a way out: nixpkgs' swayfx 0.6 / scenefx 0.5 still calls
+    # fx_render_pass_init_offscreen_buffers() unconditionally
+    # (types/scene/wlr_scene.c:3295) and now allocates five buffers, not four.
+    swayUseSwayfx = true;
+
+    # SwayFX battery effect reduction (no-op when swayUseSwayfx = false)
     swayBatteryReduceEffects = false;      # Disable blur/shadows on battery
 
     # Monitor management (imperative GUI approach)
