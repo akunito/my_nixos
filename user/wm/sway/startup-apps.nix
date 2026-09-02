@@ -246,12 +246,13 @@ let
       swaysome
       jq
       libnotify
-      flatpak
       rofi
       dbus
       kitty
       bash
       zsh
+      coreutils
+      gnugrep
     ];
     text = ''
       #!/bin/bash
@@ -297,49 +298,135 @@ let
         exit 1
       fi
 
-      # Function to check if Flatpak app is installed
-      is_flatpak_installed() {
-        local APP_ID="$1"
-        if flatpak list --app --columns=application 2>/dev/null | grep -q "^''${APP_ID}$"; then
-          return 0
-        elif flatpak info "''${APP_ID}" >/dev/null 2>&1; then
-          return 0
-        fi
+      # Zen window bookkeeping.
+      #
+      # Zen is the only startup app left here (VSCode, Chromium and Obsidian
+      # were dropped 2026-09-02), and it now opens TWO windows: one on
+      # workspace 11, where it has always gone, and one on workspace 22, the
+      # slot Chromium used to take.
+      #
+      # Both windows carry app_id "zen-beta", so a sway `assign` rule cannot
+      # tell them apart -- it would drag both onto the same workspace. The
+      # placement is therefore done here, by diffing the window tree for the
+      # con_id that appeared after each launch.
+      zen_window_ids() {
+        swaymsg -t get_tree 2>/dev/null \
+          | jq -r 'recurse(.nodes[]?, .floating_nodes[]?) | select(.app_id=="zen-beta") | .id' \
+          | sort
+      }
+
+      # Echo the con_id of the first zen window that is not in $1 (a
+      # newline-separated list of already-known ids). Empty on timeout.
+      # 60s, because a cold Zen start restores spaces and pinned tabs and is
+      # much slower than the ~1s a second window on a live instance takes.
+      wait_for_new_zen_window() {
+        local known="$1"
+        local i now new
+        i=0
+        while [ "$i" -lt 120 ]; do
+          i=$((i + 1))
+          sleep 0.5
+          now="$(zen_window_ids)"
+          new="$(printf '%s\n' "$now" | grep -vxF -f <(printf '%s\n' "$known") | head -n1 || true)"
+          if [ -n "$new" ]; then
+            printf '%s\n' "$new"
+            return 0
+          fi
+        done
+        return 1
+      }
+
+      # Count of window ids in a newline-separated list ("" -> 0).
+      zen_window_count() {
+        printf '%s\n' "$1" | grep -c '^[0-9]' || true
+      }
+
+      # Workspace number a con_id currently sits on ("" if the window is gone).
+      zen_window_workspace() {
+        swaymsg -t get_tree 2>/dev/null \
+          | jq -r --arg id "$1" '
+              .nodes[] | .nodes[]? | select(.type=="workspace") | .num as $ws
+              | recurse(.nodes[]?, .floating_nodes[]?)
+              | select(.id == ($id | tonumber))
+              | $ws' \
+          | head -n1
+      }
+
+      # Move a window to a workspace, but ONLY when it is not already there.
+      #
+      # Re-issuing `move container to workspace` for the workspace a container
+      # already sits on is not the no-op it looks like: sway detaches and
+      # re-attaches it, and a move of ANOTHER window issued right afterwards
+      # then drags this one along with it. Measured on DESK 2026-09-02 -- with
+      # the redundant move the first window landed on the wrong workspace in
+      # 3 of 5 runs; guarded like this, 5 of 5 were correct.
+      place_zen_window() {
+        local id="$1" ws="$2"
+        local attempt
+        attempt=0
+        while [ "$attempt" -lt 5 ]; do
+          attempt=$((attempt + 1))
+          if [ "$(zen_window_workspace "$id")" = "$ws" ]; then
+            return 0
+          fi
+          swaymsg "[con_id=$id] move container to workspace number $ws" >/dev/null 2>&1 || true
+          sleep 0.5
+        done
+        echo "Zen: could not place window $id on workspace $ws"
         return 1
       }
 
       # Function to launch startup applications
+      #
+      # Idempotent on purpose: this menu entry is triggered by hand and can be
+      # picked twice. A bare `zen-beta` against a live instance only raises an
+      # existing window instead of creating one, so re-running must adopt the
+      # windows that are already there rather than sit in a 60s timeout.
       launch_startup_apps() {
         echo "Launching startup applications..."
 
-        # Launch VSCode (workspace 12)
-        if [ -f "${pkgs-unstable.vscode}/bin/code" ]; then
-          ${pkgs-unstable.vscode}/bin/code --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
-        elif command -v code >/dev/null 2>&1; then
-          code --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --ozone-platform-hint=auto --unity-launch >/dev/null 2>&1 &
-        fi
+        local known first second
 
-        # Launch Chromium (workspace 22)
-        if is_flatpak_installed "org.chromium.Chromium"; then
-          flatpak run org.chromium.Chromium >/dev/null 2>&1 &
-        else
-          (command -v chromium >/dev/null 2>&1 && chromium >/dev/null 2>&1 &) || true
-        fi
-
-        # Launch Obsidian (workspace 21)
-        if is_flatpak_installed "md.obsidian.Obsidian"; then
-          flatpak run md.obsidian.Obsidian >/dev/null 2>&1 &
-        else
-          if [ -f "${pkgs-unstable.obsidian}/bin/obsidian" ]; then
-            ${pkgs-unstable.obsidian}/bin/obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
-          elif command -v obsidian >/dev/null 2>&1; then
-            obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations >/dev/null 2>&1 &
+        known="$(zen_window_ids)"
+        if [ "$(zen_window_count "$known")" -eq 0 ]; then
+          # Cold start: plain launch, so Zen restores its own session.
+          (command -v zen-beta >/dev/null 2>&1 && zen-beta >/dev/null 2>&1 &) || true
+          first="$(wait_for_new_zen_window "$known" || true)"
+          if [ -z "$first" ]; then
+            echo "Zen: window never appeared; nothing placed"
+            notify-send -t 5000 "App Launcher" "Zen did not start; no windows placed." || true
+            return 0
           fi
+          # Let Zen finish opening anything else its session restores, so a
+          # second restored window is adopted instead of a third being spawned.
+          sleep 3
+        else
+          first="$(printf '%s\n' "$known" | head -n1)"
+          echo "Zen: already running, adopting window $first"
+        fi
+        place_zen_window "$first" 11 || true
+        echo "Zen: window $first -> workspace 11"
+
+        known="$(zen_window_ids)"
+        if [ "$(zen_window_count "$known")" -lt 2 ]; then
+          # `--new-window` with no URL opens the homepage on the instance that
+          # is already running, rather than starting a second one (which would
+          # hit the profile lock).
+          zen-beta --new-window >/dev/null 2>&1 &
+          second="$(wait_for_new_zen_window "$known" || true)"
+        else
+          second="$(printf '%s\n' "$known" | grep -vx "$first" | head -n1 || true)"
         fi
 
-        # Launch Zen (workspace 11) - Launch last due to slow startup, slower
-        # still than Vivaldi was because of the restored spaces and pinned tabs
-        (command -v zen-beta >/dev/null 2>&1 && zen-beta >/dev/null 2>&1 &) || true
+        if [ -z "$second" ]; then
+          echo "Zen: second window never appeared"
+        else
+          place_zen_window "$second" 22 || true
+          echo "Zen: window $second -> workspace 22"
+          # Cheap insurance: re-assert the first window, in case placing the
+          # second one disturbed it.
+          place_zen_window "$first" 11 || true
+        fi
 
         echo "Apps launched successfully"
         notify-send -t 3000 "App Launcher" "Startup applications launched successfully." || true
