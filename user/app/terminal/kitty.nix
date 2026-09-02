@@ -123,9 +123,19 @@ in
   programs.kitty.enable = true;
   programs.kitty.settings = lib.mkMerge [
     {
-      background_opacity = lib.mkForce "0.85";
-      # macOS background blur (0-64, higher = more blur)
-      # Blurs content behind terminal while keeping transparency aesthetic
+      # 0.85 -> 0.95 (2026-09-02). Under SwayFX the blur behind the terminal
+      # made 0.85 readable over anything; upstream sway has no blur and cannot
+      # get one — it is the reason SwayFX exists as a fork — so a bright window
+      # behind the terminal now shows through sharp and the text fights it.
+      # 0.95 keeps the tint and stops the interference.
+      background_opacity = lib.mkForce "0.95";
+      # Lets Ctrl+Shift+A then M/L nudge opacity live, so the value above can be
+      # tuned by eye in a running terminal instead of guessed and rebuilt. The
+      # runtime change is NOT persisted — settle on a number, then set it here.
+      dynamic_background_opacity = true;
+      # macOS ONLY, and deliberately so: kitty's own blur needs a compositor
+      # blur protocol. macOS and KWin have one; wlroots/sway does not, so on
+      # Linux this option is inert whichever compositor is running.
       background_blur = lib.mkIf pkgs.stdenv.isDarwin 50;
       modify_font = "cell_width 90%";
       # Window decorations - match Alacritty (default shows decorations, window manager handles styling)
