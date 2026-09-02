@@ -479,9 +479,11 @@ in
     llamaServerApiKey = "";
 
     # Firewall
-    # NOTE: sunshineEnable = true makes system/app/sunshine.nix open 47984/47989/
-    # 47990/48010 (TCP) and the 47998-48010 UDP range itself — the commented-out
-    # entries below are historical, NOT proof that Sunshine is firewalled off.
+    # NOTE: sunshineEnable = true sets services.sunshine.openFirewall in
+    # profiles/work/configuration.nix, which opens 47984/47989/47990/48010 (TCP)
+    # and the 47998-48010 UDP range itself — the commented-out entries below are
+    # historical, NOT proof that Sunshine is firewalled off. The ports stay open
+    # even with sunshineAutoStart off; only the session autostart is gated.
     allowedTCPPorts = [
       9100 # prometheus workstation exporter
     ];

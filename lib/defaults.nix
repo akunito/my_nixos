@@ -487,6 +487,13 @@
     gamemodeEnable = false; # Enable GameMode for performance optimization during gaming
     sambaEnable = false;
     sunshineEnable = false;
+    # Whether Sunshine STARTS with the session. Off everywhere by default:
+    # sunshineEnable only installs it and opens its ports, and the host is
+    # started by hand (`systemctl --user start sunshine`) when a stream is
+    # actually wanted. Applies to every session type -- the NixOS module's
+    # graphical-session hook (Plasma, GNOME) and the Sway user unit both
+    # read this flag.
+    sunshineAutoStart = false;
     wireguardEnable = false;
     stylixEnable = false;
     xboxControllerEnable = false;

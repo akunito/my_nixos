@@ -228,10 +228,16 @@
   # Remote control
   services.sunshine = lib.mkIf (systemSettings.sunshineEnable == true) {
     enable = true;
-    # Conditional autoStart:
-    # - In Sway: false (managed by systemd --user via user/wm/sway/session-systemd.nix)
-    # - In Plasma 6 / other environments: true (managed by Systemd)
-    autoStart = !(userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true);
+    # Autostart is opt-in and off by default (see systemSettings.sunshineAutoStart
+    # in lib/defaults.nix). This covers Plasma 6, GNOME and anything else driven
+    # by graphical-session.target; Sway has its own user unit in
+    # user/wm/sway/session-systemd.nix, gated on the SAME flag, so there is one
+    # switch for every session type.
+    #
+    # autoStart = false still installs the unit, the capabilities and the udev
+    # rules, so `systemctl --user start sunshine` works whenever a stream is
+    # actually wanted.
+    autoStart = systemSettings.sunshineAutoStart or false;
     capSysAdmin = true;
     openFirewall = true;
   };

@@ -237,7 +237,12 @@
         EnvironmentFile = [ "-%t/sway-session.env" ];
       };
       Install = {
-        WantedBy = [ "sway-session.target" ];
+        # Autostart is opt-in and off by default (systemSettings.sunshineAutoStart,
+        # lib/defaults.nix). With it unset the unit is still written, so Sunshine
+        # stays one `systemctl --user start sunshine` away -- it just no longer
+        # comes up with the session. Plasma/GNOME are gated on the same flag via
+        # services.sunshine.autoStart in profiles/work/configuration.nix.
+        WantedBy = lib.optionals (systemSettings.sunshineAutoStart or false) [ "sway-session.target" ];
       };
     };
 
