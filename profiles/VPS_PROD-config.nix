@@ -325,9 +325,14 @@ in
     # One DeepSeek key per consumer: spend is attributable in the provider
     # dashboard and either can be revoked without taking the other down. They
     # share one account balance, so this is attribution, not separate budgets.
+    #
+    # Down to one DeepSeek key since 2026-09-02: DEEPSEEK_KEY_INGAME existed for
+    # the MCA villager fallback, and villager chat AI is now off at the mod
+    # (enableVillagerChatAI=false). The `deepseekApiKeyIngame` secret is left in
+    # secrets/domains.nix — unused here, and worth REVOKING in the provider
+    # dashboard rather than only unwiring.
     litellmProviders = [
       { envVar = "DEEPSEEK_KEY_DISCORD"; secret = "deepseekApiKeyDiscord"; }
-      { envVar = "DEEPSEEK_KEY_INGAME"; secret = "deepseekApiKeyIngame"; }
       { envVar = "QWEN_API_KEY"; secret = "qwenApiKey"; }
     ];
     # Model ids verified against the provider itself, not a price tracker:
@@ -344,100 +349,6 @@ in
         model = "openai/qwen-flash";
         apiBase = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
         envVar = "QWEN_API_KEY"; }
-      # Villagers run on DESK's own GPU, falling back to DeepSeek. Measured
-      # 2026-08-17 on the real /ask prompt: a local model matches DeepSeek on
-      # facts, refusals and NOT inventing answers, and is faster on short
-      # replies (1.4-2.0s vs 2.4-3.6s) - which is what a villager needs, since
-      # a player is standing in front of it. It is clearly worse at open-ended
-      # advice, which is why /ask above stays on DeepSeek.
-      #
-      # 100.64.0.5 is DESK DIRECTLY, deliberately NOT the wake proxy on
-      # 100.64.0.6:8090. Pointing at the proxy would send a Wake-on-LAN and
-      # boot the desktop for two villager lines, which costs more in
-      # electricity than the API calls it saves. Direct means: DESK off ->
-      # connection refused in milliseconds -> DeepSeek answers. Same when the
-      # GPU is busy gaming, since llama-server refuses to load above 5 GiB VRAM.
-      { name = "akucraft-villager";
-        # gpt-oss:20b with a COLON — Ollama's exact model name, and it is not
-        # cosmetic. This said "openai/gpt-oss-20b" until 2026-09-01 and every
-        # villager line 404'd to DeepSeek: llama-server served whatever single
-        # model it had loaded and ignored the name in the request, Ollama does
-        # not ("model 'gpt-oss-20b' not found"). It broke silently the day the
-        # backend was swapped and stayed hidden because the model store was
-        # empty too, so the local endpoint would have 404'd either way. Whenever
-        # this alias changes, check it against `curl <desk>:8090/v1/models`.
-        model = "openai/gpt-oss:20b";
-        apiBase = "http://100.64.0.5:8090/v1";
-        envVar = "";               # local server, no auth
-        # This does NOT cover the "DESK is off" case - that one is a connection
-        # refused in milliseconds and never reaches a timeout. It only bounds a
-        # DESK that is awake but slow, so it has to clear a real generation.
-        # Measured 2026-08-18 on live villager traffic: 77-503 completion
-        # tokens, worst case 7.38s (503 tokens at 69 tok/s while the GPU was
-        # also driving a Minecraft client). 8s sat right on top of that and
-        # would have failed a long line over to paid DeepSeek for nothing.
-        #
-        # response_format is not cosmetic - it is the fix for llama.cpp
-        # rejecting its own model's output. MCA hand-builds its request body
-        # with only "model" and "messages" (decompiled OpenAIChatAI.class,
-        # 7.7.32): no tools, no response_format, no max_tokens. It asks for
-        # structure purely in the system prompt - "The reply MUST be in this
-        # JSON format: {message, optionalCommand}" - and then parses
-        # choices[0].message.content with Gson. Commands come back INSIDE that
-        # JSON, never as OpenAI tool_calls.
-        #
-        # Left unconstrained, gpt-oss sometimes answers that demand by
-        # borrowing the marker it knows from tool calling and emitting
-        #   <|channel|>final <|constrain|>json<|message|>{"message":"..."}
-        # on the FINAL channel. llama.cpp's harmony peg grammar does not
-        # accept <|constrain|> there, throws away a perfectly good villager
-        # line and returns HTTP 500 (~2 of 19 live requests, 2026-08-18).
-        # litellm then quietly pays DeepSeek to redo it.
-        #
-        # Declaring the JSON contract on the request instead of only in the
-        # prose sets up the grammar up front, so the model has no reason to
-        # invent the marker. Safe precisely because MCA sends no tools: there
-        # are no tool_calls for the grammar to suppress. Verified against the
-        # real request shape - 12/12 clean, optionalCommand still emitted.
-        extra = {
-          # 10, not 20. Measured 2026-08-21: a TRUE cold start (backend stopped,
-          # socket still armed - the state DESK sits in 15 minutes after the last
-          # request) answers in 4.49s, and warm is 0.38s. So 10s clears every
-          # case where DESK is actually going to answer.
-          #
-          # What it really bounds is the case the comment above gets wrong.
-          # DESK asleep does NOT give "connection refused": llama-proxy.socket is
-          # socket-activated, so when DESK is awake the port always accepts, and
-          # when DESK is ASLEEP the SYN is simply never answered. Both hang.
-          # Refused only happens under `llama-lock` (gaming). So this timeout is
-          # the only thing standing between a sleeping desktop and a player
-          # staring at a silent villager.
-          timeout = 10;
-          # Retrying a timeout against the same dead socket just pays the wait
-          # again - 3 x 10s before the fallback even starts. Fail over instead.
-          num_retries = 0;
-          response_format = { type = "json_object"; };
-          # gpt-oss reasons too, on its harmony "analysis" channel, and MCA picks
-          # the token budget - so a long analysis returns finish_reason=length
-          # with EMPTY content and the line falls through to paid DeepSeek.
-          # Measured 2026-09-01 at max_tokens=80: unset gives an empty reply,
-          # "low" gives valid JSON in 39-53 tokens, 3 of 3.
-          #
-          # "low", NOT "none". Unlike Qwen3.8, gpt-oss REQUIRES its analysis
-          # channel: at "none" the reasoning field is empty but the model writes
-          # its analysis into content instead ("We need to reply as a
-          # villager...") and the JSON contract is broken. Same parameter,
-          # opposite correct value, because the two models express thinking
-          # differently.
-          #
-          # extra_body for the same reason as local-agent: litellm 1.75.5 drops
-          # reasoning_effort for generic openai/ passthrough models.
-          extra_body = { reasoning_effort = "low"; };
-        }; }
-      { name = "akucraft-villager-backup";
-        model = "openai/deepseek-v4-flash";
-        apiBase = "https://api.deepseek.com/v1";
-        envVar = "DEEPSEEK_KEY_INGAME"; }
 
       # Agent work (Hermes) on DESK's own GPU — Qwen3.8-27B, dense, sub-Q4.
       # Deliberately NOT in any fallback chain and NOT used by the villagers:
@@ -500,9 +411,6 @@ in
 
     litellmFallbacks = {
       akucraft-support = [ "akucraft-support-backup" ];
-      # GPU first, then DeepSeek, then the third-party backup if DeepSeek is
-      # down too.
-      akucraft-villager = [ "akucraft-villager-backup" "akucraft-support-backup" ];
     };
 
     # === Nginx Local Access (*.local.akunito.com via Tailscale — bypasses Cloudflare Access) ===

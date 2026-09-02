@@ -4,10 +4,18 @@
 # that provider API keys live in exactly one place, spending is capped in one
 # place, and the model can be swapped without touching any consumer.
 #
-# Consumers (both speak plain OpenAI /v1/chat/completions):
-#   - MCA Reborn villager chat, from inside the rootless `minecraft` container.
-#     Configured in /data/config/mca.json via `/mca chatAI <model> "<url>" "<token>"`.
+# Consumers (all speak plain OpenAI /v1/chat/completions):
 #   - akucraft-bot.py `/ask`, from the host.
+#   - `local-agent`, the coding/agent model on DESK's GPU, reached through the
+#     wake proxy so a request can wake the desktop.
+#
+# MCA Reborn villager chat used to be the third and was the reason this gateway
+# had to be reachable from inside the rootless `minecraft` container at all. It
+# was turned off at the mod on 2026-09-02 (`enableVillagerChatAI=false`, applied
+# with scripts/apply-mca-chatai.py --disable) because nobody used it. The
+# NETWORK note below still holds: the bot runs on the host, but binding the
+# Tailscale IP costs nothing and keeps the container path available if villager
+# chat is ever restored.
 #
 # NETWORK — why we bind the Tailscale IP and not localhost:
 # the Minecraft server is a ROOTLESS docker container on its own bridge
