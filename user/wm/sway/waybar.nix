@@ -264,6 +264,7 @@ in {
               "custom/cpu-temp"
               "custom/gpu"
               "custom/vram"
+            ] ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm" ++ [
               "custom/gpu-temp"
               "custom/ram"
             ];
@@ -321,6 +322,24 @@ in {
             # same on-click as the other GPU modules. Reads amdgpu's sysfs
             # counters directly, so this and `llama-status` can never disagree
             # about how much room is left on the card.
+            # Local LLM state. custom/vram above says the card is full; this says
+            # WHY, and specifically whether the resident model actually fits.
+            # `size_vram / size` from /api/ps is the number that decides speed:
+            # measured 2026-09-02 the same model ran 36 -> 21 -> 14 tok/s as that
+            # share fell 100% -> 95% -> 89%, purely because the desktop grew. It
+            # is invisible anywhere else, which is why this module exists.
+            #
+            # signal 6 lets the rofi menu refresh the bar the instant an action
+            # lands, instead of waiting out `interval`. The script pkill's
+            # -RTMIN+6, so the two numbers must stay in step.
+            "custom/llm" = lib.mkIf (systemSettings.ollamaServerEnable or false) {
+              return-type = "json";
+              interval = 5;
+              signal = 6;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-llm.sh";
+              on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show llm -modi llm:${config.home.homeDirectory}/.config/sway/scripts/rofi-llm-menu.sh\"";
+              tooltip = true;
+            };
             "custom/vram" = {
               return-type = "json";
               interval = 2;
@@ -443,6 +462,7 @@ in {
               "custom/cpu-temp"
               "custom/gpu"
               "custom/vram"
+            ] ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm" ++ [
               "custom/gpu-temp"
               "custom/ram"
             ];
@@ -497,6 +517,24 @@ in {
             # same on-click as the other GPU modules. Reads amdgpu's sysfs
             # counters directly, so this and `llama-status` can never disagree
             # about how much room is left on the card.
+            # Local LLM state. custom/vram above says the card is full; this says
+            # WHY, and specifically whether the resident model actually fits.
+            # `size_vram / size` from /api/ps is the number that decides speed:
+            # measured 2026-09-02 the same model ran 36 -> 21 -> 14 tok/s as that
+            # share fell 100% -> 95% -> 89%, purely because the desktop grew. It
+            # is invisible anywhere else, which is why this module exists.
+            #
+            # signal 6 lets the rofi menu refresh the bar the instant an action
+            # lands, instead of waiting out `interval`. The script pkill's
+            # -RTMIN+6, so the two numbers must stay in step.
+            "custom/llm" = lib.mkIf (systemSettings.ollamaServerEnable or false) {
+              return-type = "json";
+              interval = 5;
+              signal = 6;
+              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-llm.sh";
+              on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show llm -modi llm:${config.home.homeDirectory}/.config/sway/scripts/rofi-llm-menu.sh\"";
+              tooltip = true;
+            };
             "custom/vram" = {
               return-type = "json";
               interval = 2;
@@ -682,6 +720,7 @@ in {
       #custom-ram,
       #custom-cpu-temp,
       #custom-gpu-temp,
+      #custom-llm,
       #custom-notifications,
       #custom-power-menu {
         margin: 4px 4px;
@@ -691,6 +730,17 @@ in {
         color: #${config.lib.stylix.colors.base07};
         transition: all 0.2s ease;
       }
+
+      /* Local LLM: the colour IS the message, so each state gets its own.
+         `spill` is the one that earns the module — amber means the model is
+         resident but partly in system RAM, which costs 30-60% of decode speed
+         and is otherwise completely silent. */
+      #custom-llm.ok     { color: #${config.lib.stylix.colors.base0B}; }
+      #custom-llm.spill  { color: #${config.lib.stylix.colors.base0A};
+                           background-color: ${hexToRgba config.lib.stylix.colors.base0A "22"}; }
+      #custom-llm.locked { color: #${config.lib.stylix.colors.base0E}; }
+      #custom-llm.down   { color: #${config.lib.stylix.colors.base08}; }
+      #custom-llm.idle   { color: #${config.lib.stylix.colors.base04}; }
 
       /* Stylix color groups (left cluster) */
       #battery,

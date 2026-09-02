@@ -178,6 +178,19 @@ EOF
     executable = true;
   };
 
+  # Local-LLM control surface: waybar shows the state, rofi does the acting.
+  # Installed unconditionally (they are two small scripts and cost nothing on a
+  # host without Ollama); the waybar MODULE is what is gated, in waybar.nix.
+  home.file.".config/sway/scripts/waybar-llm.sh" = {
+    source = ./scripts/waybar-llm.sh;
+    executable = true;
+  };
+
+  home.file.".config/sway/scripts/rofi-llm-menu.sh" = {
+    source = ./scripts/rofi-llm-menu.sh;
+    executable = true;
+  };
+
   home.file.".config/sway/scripts/ssh-smart.sh" = {
     source = ./scripts/ssh-smart.sh;
     executable = true;

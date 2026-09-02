@@ -140,14 +140,44 @@ Guessing wrong costs speed, not stability: Ollama offloads rather than failing,
 and the crash mode belonged to ROCm's false free-VRAM figure, which this host no
 longer uses.
 
+#### Waybar module + rofi menu
+
+`custom/llm` sits next to `custom/vram` in the bar, gated on
+`ollamaServerEnable`. Scripts: `user/wm/sway/scripts/waybar-llm.sh` (status) and
+`rofi-llm-menu.sh` (actions) — the same split as `custom/power-menu`.
+
+The headline number is **the share of the model actually on the GPU**
+(`size_vram / size` from `/api/ps`), because that is what decides speed and it
+is invisible everywhere else:
+
+```
+󰚩 qwen3.8-agent 100%    green   fully resident
+󰚩 qwen3.8-agent  63%    amber   spilled to system RAM — this is the warning
+󰚩 idle                  grey    service up, nothing loaded
+󰍁 locked                purple  gaming lock held
+󰅗 down                  red     ollama not running
+```
+
+Click opens the rofi menu: every model from `/api/tags` with its size, then
+lock/unlock, unload, and `llama-evict`. **The list is built at runtime**, so a
+model added to `ollamaServerCustomModels` and pulled appears with no change to
+waybar or the scripts. `hf.co/...` rows are filtered — they are the GGUF blobs
+`ollama create` used as FROM sources, and loading one bypasses the Modelfile
+(losing `num_ctx` and the sampling profile).
+
+Actions send `RTMIN+6` to waybar so the bar updates the moment they land rather
+than waiting out the 5 s poll. The signal number is in both `waybar.nix` and
+`rofi-llm-menu.sh` and must stay in step.
+
 #### Switching models
 
 | Where | How |
 |-------|-----|
+| Waybar | click `custom/llm` → pick a model |
 | OpenCode TUI | `/models` |
 | OpenCode CLI | `opencode run --model ollama/qwen3.8-agent-xl "..."` |
 | Default | `openCodeDefaultModel` in the profile |
-| Check headroom first | `llama-status` (free VRAM + which model is resident) |
+| Check headroom first | `llama-status`, or the module's tooltip |
 | Which model is loaded | `curl -s 127.0.0.1:8090/api/ps` |
 
 `OLLAMA_MAX_LOADED_MODELS = 1`, so asking for the other model evicts the first
