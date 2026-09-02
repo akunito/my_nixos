@@ -39,9 +39,22 @@ if systemctl --user is-active --quiet sway-session.target 2>/dev/null; then
     done
   fi
 
-  # Restart/start tray apps so they re-register with waybar SNI host
+  # Restart/start tray apps so they re-register with waybar SNI host.
+  #
+  # THIS LIST IS LOAD-BEARING. Restarting waybar tears down the SNI host, and an
+  # app that registered against the old one does not come back on its own — the
+  # icon is simply gone until the app itself is restarted. Anything that owns a
+  # tray icon and is a user service belongs here.
+  #
+  # trayscale was missing until 2026-09-02: the process was running and its icon
+  # was absent, which also removed the only Tailscale status indicator.
+  #
+  # Apps that are NOT user services (Vesktop, for one) cannot be handled here and
+  # have to be restarted by hand after a sync — worth knowing when an icon
+  # vanishes, because "the program is running" and "its icon exists" are separate
+  # facts.
   sleep 1.5  # Wait for waybar to initialize SNI host
-  for svc in nm-applet blueman-applet nextcloud-client sunshine; do
+  for svc in nm-applet blueman-applet nextcloud-client sunshine trayscale; do
     if systemctl --user is-active --quiet "$svc.service" 2>/dev/null; then
       echo "Restarting $svc.service (re-register tray icon)"
       systemctl --user restart "$svc.service"
