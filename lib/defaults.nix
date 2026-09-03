@@ -1213,9 +1213,15 @@
     # generated spaces and pins on every activation, so spaces deleted in Zen
     # come back. Seed once, then set false.
     zenImportVivaldiSpaces = false;
-    # Zen takes over the http/https handlers, the Spotify URL router and
-    # DEFAULT_BROWSER. Vivaldi stays installed and launchable, it just stops
-    # owning them — both modules declaring the same MIME keys would collide.
+    # Zen takes over the http/https handlers, the Spotify URL router,
+    # DEFAULT_BROWSER and $BROWSER (see profiles/work/home.nix — $BROWSER is a
+    # handler path of its own and has to be flipped with the MIME defaults, or
+    # everything that shells out to it keeps opening the old browser).
+    # Vivaldi stays installed and launchable, it just stops owning them — both
+    # modules declaring the same MIME keys would collide.
+    #
+    # Enabled by both Sway machines (DESK, LAPTOP_X13); the Plasma profiles
+    # stay on Vivaldi. Kept false here so profiles opt in explicitly.
     zenIsDefaultBrowser = false;
     # Ship the Sine mod-manager bootloader inside the Zen wrapper, so the
     # `sine-web-panels` mod can restore the Vivaldi-style sidebar web panels

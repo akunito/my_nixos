@@ -90,7 +90,22 @@
     EDITOR = userSettings.editor;
     SPAWNEDITOR = userSettings.spawnEditor;
     TERM = userSettings.term;
-    BROWSER = userSettings.browser;
+    # `userSettings.browser` still selects which browser MODULE is imported
+    # above (Vivaldi stays installed and launchable), but it must NOT keep
+    # owning $BROWSER once Zen owns the http/https handlers.
+    #
+    # Why this was the last thing still opening Vivaldi: the XDG side was
+    # already correct (mimeapps.list -> zen-beta.desktop), but $BROWSER is a
+    # second, independent handler path. Anything that shells out to it directly
+    # — CLI tools, python's webbrowser, gh, and xdg-open's own generic fallback
+    # — never looks at the MIME defaults, so it kept launching Vivaldi.
+    #
+    # `zen-beta` is the binary name (the bare `zen` does not exist), matching
+    # the app_id and desktop id used everywhere else.
+    BROWSER =
+      if (userSettings.zenIsDefaultBrowser or false)
+      then "zen-beta"
+      else userSettings.browser;
   };
 
   # news.display = "silent";

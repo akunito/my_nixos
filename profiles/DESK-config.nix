@@ -79,7 +79,7 @@ in
     # Shell features
     atuinAutoSync = true; # Enable Atuin cloud sync for shell history
     nextcloudEnable = true; # To startup with Sway daemon
-    goaCalendarEnable = true; # GNOME Online Accounts + gnome-calendar + Waybar widget (click opens calendar.google.com in Vivaldi)
+    goaCalendarEnable = true; # GNOME Online Accounts + gnome-calendar + Waybar widget (click opens calendar.google.com in the default browser)
     claudeBackupToNextcloudEnable = true;
     nextcloudSyncFolder = "/home/akunito/Nextcloud";
 

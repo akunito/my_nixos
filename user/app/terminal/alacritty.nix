@@ -103,7 +103,12 @@ in
   programs.alacritty.enable = true;
   programs.alacritty.settings = lib.mkMerge [
     {
-      window.opacity = 0.85;
+      # 0.85 -> 0.98 (2026-09-03), the same value and for the same reason as
+      # kitty.nix: SwayFX blurred whatever was behind the terminal, upstream
+      # sway cannot, so at 0.85 a bright window behind it shows through sharp
+      # and fights the text. mkForce because stylix also writes this key when
+      # stylixEnable is on.
+      window.opacity = lib.mkForce 0.98;
       font = {
         normal = {
           # Use "JetBrainsMono Nerd Font Mono" - the exact family name as registered in the system
