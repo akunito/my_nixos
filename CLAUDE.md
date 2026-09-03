@@ -65,6 +65,7 @@ Rebuild: `sudo nixos-rebuild switch --flake .#DESK --impure` | darwin: `darwin-r
 - **Key**: `~/.git-crypt/dotfiles-key` | **Unlock**: `git-crypt unlock ~/.git-crypt/dotfiles-key`
 - **Docs**: `docs/security/git-crypt.md`
 - **NEVER commit**: git-crypt keys, plaintext secrets, or credentials
+- **Published guides**: `docs/guides/` is git-crypt encrypted and is a safe place to write personal reference documents. Served at `guides.local.akunito.com` from the nix store (edits need a VPS rebuild). git-crypt hides contents, **not file names**. Read `docs/guides/README.md` first.
 
 ## Plane Ticket Management
 

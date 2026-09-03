@@ -56,6 +56,12 @@ templates/finance-tagger/.env filter=git-crypt diff=git-crypt
 # Deploy config with public IPs (VPS entries)
 deploy-servers-private.conf filter=git-crypt diff=git-crypt
 
+# Published guides — personal reference documents served on
+# guides.local.akunito.com. The repo is public, so the whole directory is
+# encrypted. Note git-crypt hides contents, NOT file names.
+# See docs/guides/README.md before adding anything here.
+docs/guides/** filter=git-crypt diff=git-crypt
+
 # ============================================================================
 # Belt-and-Suspenders: File types that must always be encrypted if tracked
 # ============================================================================

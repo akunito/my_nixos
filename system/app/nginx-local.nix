@@ -26,11 +26,18 @@ let
 
   # Generate a vhost for each service
   # Optional per-service attrs: https (bool), basicAuthFile (path),
-  #                             maxBodySize (str), denyPaths (list of str)
+  #                             maxBodySize (str), denyPaths (list of str),
+  #                             root (path)
   #
   # denyPaths returns 403 for a path prefix on the Tailscale vhost only, so a
   # sensitive path stays reachable exclusively through the public Cloudflare
   # Access-protected hostname. Longest-prefix match means these win over "/".
+  #
+  # root serves static files instead of proxying: pass a Nix path (e.g.
+  # ../docs/guides) and it is copied to the store at eval, so the content is
+  # immutable and versioned with the flake. `port` is then unused. Content only
+  # changes on rebuild — that is the trade for not having a mutable directory
+  # on the host. See docs/guides/README.md.
   mkVhost = name: cfg: {
     "${name}.${wildcardLocal}" = {
       listenAddresses = [ listenAddr ];
@@ -41,14 +48,22 @@ let
         client_max_body_size ${cfg.maxBodySize};
       '';
       locations = {
-        "/" = {
-          proxyPass =
-            if cfg.https or false
-            then "https://127.0.0.1:${toString cfg.port}"
-            else "http://127.0.0.1:${toString cfg.port}";
-          proxyWebsockets = true;
-          recommendedProxySettings = true;
-        };
+        "/" =
+          if cfg ? root
+          then {
+            root = cfg.root;
+            extraConfig = ''
+              index index.html;
+            '';
+          }
+          else {
+            proxyPass =
+              if cfg.https or false
+              then "https://127.0.0.1:${toString cfg.port}"
+              else "http://127.0.0.1:${toString cfg.port}";
+            proxyWebsockets = true;
+            recommendedProxySettings = true;
+          };
       } // lib.listToAttrs (map (path:
         lib.nameValuePair path { return = "403"; }
       ) (cfg.denyPaths or []));

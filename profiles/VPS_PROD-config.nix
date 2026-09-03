@@ -446,6 +446,12 @@ in
       emulators  = { port = 8998; };
       calibre    = { port = 8083; };
       n8n        = { port = 5678; };
+      # Static, not a proxy: personal reference guides read from the phone over
+      # Tailscale. Served from the nix store so they survive DESK being offline
+      # and stay versioned with the flake — the cost is that editing a guide
+      # needs a rebuild. Contents are git-crypt encrypted; see
+      # docs/guides/README.md before adding to that directory.
+      guides     = { root = ../docs/guides; };
       openclaw   = { port = 18789; };
       finance    = { port = 8190; maxBodySize = "50M"; };
       # AkuCraft BlueMap. It used to sit at "/" on the players' own port 8100,
