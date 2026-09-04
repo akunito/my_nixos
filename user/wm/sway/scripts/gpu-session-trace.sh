@@ -12,6 +12,15 @@
 #     gpu_busy stays high
 #   - system RAM exhaustion -> swap_used climbing, PSI memory rising
 #   - the local LLM grabbing the card mid-game -> vram_used jumps ~12 GiB at once
+#   - a process leak -> forks_per_s stays high and nproc climbs without bound
+#
+# Measured 2026-09-04 on two laggy Crimson Desert sessions: every GPU and memory
+# figure above was FLAT through the lag window (VRAM 11.5 of 16.3 GiB, GTT 220 of
+# 10240 MiB, junction 81C against a 110C limit, sclk pinned at ~3.05 GHz). The
+# card was saturated from minute 5 and nothing changed when the game turned
+# unplayable. What did stand out was Steam tracking ~400 new processes a MINUTE
+# and reaping 10675 of them at teardown — a scheduler/CPU story, not a GPU one,
+# which is why the process columns below exist.
 #
 # Each of those has a different signature in this CSV, which is the whole point.
 #
@@ -44,9 +53,20 @@ micro() { local v; v=$(r "$1"); [[ -n "$v" ]] && echo $(( v / 1000000 )) || echo
 VRAM_TOTAL=$(mib "$DEV/mem_info_vram_total")
 GTT_TOTAL=$(mib "$DEV/mem_info_gtt_total")
 
+# Sidecar: what is actually spawning. The CSV keeps one number per sample; this
+# records the process mix every 30s so the leak can be named, not just counted.
+PROCS_FILE="${OUT%.csv}.procs"
+: > "$PROCS_FILE"
+
+stat_field() { awk -v k="$1" '$1==k {print $2}' /proc/stat 2>/dev/null; }
+
+prev_forks=$(stat_field processes)
+prev_ctxt=$(stat_field ctxt)
+sample_n=0
+
 {
     echo "# device=$DEV vram_total_mib=$VRAM_TOTAL gtt_total_mib=$GTT_TOTAL interval=${INTERVAL}s"
-    echo "ts,elapsed_s,vram_mib,gtt_mib,vis_vram_mib,gpu_busy,mem_busy,sclk_mhz,mclk_mhz,edge_c,junction_c,mem_c,power_w,fan_rpm,ram_avail_mib,swap_used_mib,psi_mem_some_avg60,psi_io_some_avg60"
+    echo "ts,elapsed_s,vram_mib,gtt_mib,vis_vram_mib,gpu_busy,mem_busy,sclk_mhz,mclk_mhz,edge_c,junction_c,mem_c,power_w,fan_rpm,ram_avail_mib,swap_used_mib,psi_mem_some_avg60,psi_io_some_avg60,nproc,nthreads,forks_per_s,ctxt_per_s,loadavg1"
 } > "$OUT"
 
 start=$(cut -d' ' -f1 /proc/uptime | cut -d. -f1)
@@ -63,7 +83,28 @@ while :; do
     psi_mem=$(awk '/^some/ {for(i=1;i<=NF;i++) if($i ~ /^avg60=/) {sub("avg60=","",$i); print $i; exit}}' /proc/pressure/memory 2>/dev/null)
     psi_io=$(awk '/^some/ {for(i=1;i<=NF;i++) if($i ~ /^avg60=/) {sub("avg60=","",$i); print $i; exit}}' /proc/pressure/io 2>/dev/null)
 
-    printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
+    # Process and scheduler load. /proc/stat's "processes" is a cumulative fork
+    # counter, so its delta is the fork rate — the cheapest way to see a leak.
+    nproc=$(ls -1d /proc/[0-9]* 2>/dev/null | wc -l)
+    nthreads=$(awk '/^Threads:/ {n+=$2} END {print n+0}' /proc/*/status 2>/dev/null)
+    now_forks=$(stat_field processes)
+    now_ctxt=$(stat_field ctxt)
+    forks_ps=$(( ( ${now_forks:-0} - ${prev_forks:-0} ) / INTERVAL ))
+    ctxt_ps=$(( ( ${now_ctxt:-0} - ${prev_ctxt:-0} ) / INTERVAL ))
+    prev_forks=$now_forks
+    prev_ctxt=$now_ctxt
+    load1=$(cut -d' ' -f1 /proc/loadavg 2>/dev/null)
+
+    # Every 30s, name the top process types so a leak is identifiable.
+    if (( sample_n % (30 / INTERVAL == 0 ? 1 : 30 / INTERVAL) == 0 )); then
+        {
+            echo "== $(date +%H:%M:%S) nproc=$nproc forks_per_s=$forks_ps"
+            cat /proc/[0-9]*/comm 2>/dev/null | sort | uniq -c | sort -rn | head -10 | sed 's/^/   /'
+        } >> "$PROCS_FILE"
+    fi
+    sample_n=$(( sample_n + 1 ))
+
+    printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
         "$(date +%H:%M:%S)" "$elapsed" \
         "$(mib "$DEV/mem_info_vram_used")" \
         "$(mib "$DEV/mem_info_gtt_used")" \
@@ -77,7 +118,8 @@ while :; do
         "$(milli "$HW/temp3_input")" \
         "$(micro "$HW/power1_average")" \
         "$(r "$HW/fan1_input")" \
-        "$ram_avail" "$swap_used" "${psi_mem:-}" "${psi_io:-}" >> "$OUT"
+        "$ram_avail" "$swap_used" "${psi_mem:-}" "${psi_io:-}" \
+        "$nproc" "$nthreads" "$forks_ps" "$ctxt_ps" "${load1:-}" >> "$OUT"
 
     sleep "$INTERVAL"
 done
