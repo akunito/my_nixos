@@ -113,23 +113,34 @@ in
     disk9_enabled = true;
 
     # NFS client
+    #
+    # The NAS is addressed as 100.64.0.1 (Tailscale) and NOT 192.168.20.200:
+    # this machine lives on 192.168.8.x and the storage VLAN is firewalled from
+    # there, exactly as LAPTOP_A already documents. Copying DESK's address here
+    # looked like alignment and was not — DESK reaches the NAS directly because
+    # it has a leg on that VLAN (bond0.100, 192.168.20.96) and nothing else
+    # does. Measured 2026-09-04: ping to 192.168.20.200 was 100% loss from
+    # here, and `ls /mnt/NFS_media` took 15s to fail — silently, for as long as
+    # these entries have existed.
+    #
+    # Requires this machine's tailnet IP 100.64.0.8 in the NAS exports.
     nfsClientEnable = true;
     nfsMounts = [
       {
-        what = "192.168.20.200:/mnt/ssdpool/media";
+        what = "100.64.0.1:/mnt/ssdpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
       # library and emulators NFS mounts removed — datasets no longer exist (IAKU-247)
       {
-        what = "192.168.20.200:/mnt/ssdpool/workstation_backups";
+        what = "100.64.0.1:/mnt/ssdpool/workstation_backups";
         where = "/mnt/NFS_Backups";
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
       {
-        what = "192.168.20.200:/mnt/extpool/downloads";
+        what = "100.64.0.1:/mnt/extpool/downloads";
         where = "/mnt/NFS_downloads";
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";

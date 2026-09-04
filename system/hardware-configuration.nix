@@ -55,10 +55,6 @@
     };
 
 
-
-
-
-
   swapDevices =
     [ { device = "/dev/mapper/luks-swap"; }
     ];

@@ -127,9 +127,9 @@ in
     # ============================================================================
     nfsServerEnable = true;
     nfsExports = ''
-      /mnt/ssdpool/media                192.168.20.0/24(rw,sync,insecure,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,no_subtree_check)
-      /mnt/ssdpool/workstation_backups  192.168.8.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.20.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.11(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.4(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
-      /mnt/extpool/downloads            192.168.20.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
+      /mnt/ssdpool/media                192.168.20.0/24(rw,sync,insecure,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,no_subtree_check) 100.64.0.8(rw,sync,insecure,no_subtree_check)   # X13 over Tailscale: it is on 192.168.8.x and the storage VLAN is firewalled from there
+      /mnt/ssdpool/workstation_backups  192.168.8.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.20.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.11(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.4(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
+      /mnt/extpool/downloads            192.168.20.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
     '';
 
     # ============================================================================
