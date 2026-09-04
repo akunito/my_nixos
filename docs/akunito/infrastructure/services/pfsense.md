@@ -438,11 +438,42 @@ curl -sk -H "x-api-key: <api-key>" https://192.168.8.1/api/v2/status/system
 | `/api/v2/status/interface` | GET | Interface status and statistics |
 | `/api/v2/firewall/rule` | GET | Firewall rules |
 | `/api/v2/firewall/alias` | GET | Firewall aliases |
-| `/api/v2/services/unbound` | GET | DNS resolver configuration |
+| `/api/v2/services/dns_resolver/host_overrides` | GET | All Unbound host overrides |
+| `/api/v2/services/dns_resolver/host_override` | POST | Create a host override |
+| `/api/v2/services/dns_resolver/host_override/alias` | POST | Add an alias to an existing override |
+| `/api/v2/services/dns_resolver/apply` | POST | Apply pending resolver changes |
 | `/api/v2/system/config` | GET | Full system configuration |
 | `/api/v2/diagnostics/arp` | GET | ARP table |
 
+> The resolver lives under `dns_resolver`, **not** `unbound` — `/api/v2/services/unbound`
+> returns 404. The full route list is in the OpenAPI schema:
+> `curl -sk -H "x-api-key: $KEY" https://192.168.8.1/api/v2/schema/openapi`
+
 **API documentation**: https://192.168.8.1/api/v2/documentation (Swagger UI)
+
+### Adding a DNS name for a new VPS service
+
+`*.local.akunito.com` resolution is **per host**, not wildcard — an unlisted name
+returns NODATA and the browser reports `DNS_PROBE_POSSIBLE`. Host override id 2
+(`grafana` → the VPS Tailscale IP) is the parent that carries every other VPS
+service as an alias, so a new service is one POST plus an apply:
+
+```bash
+curl -sk -X POST -H "x-api-key: $KEY" -H "Content-Type: application/json" \
+  -d '{"parent_id":2,"host":"<name>","domain":"local.akunito.com","descr":"..."}' \
+  https://192.168.8.1/api/v2/services/dns_resolver/host_override/alias
+curl -sk -X POST -H "x-api-key: $KEY" -H "Content-Type: application/json" \
+  -d '{}' https://192.168.8.1/api/v2/services/dns_resolver/apply
+```
+
+LAN and tailnet clients share this record: `headscaleDnsSplit` sends
+`*.local.akunito.com` to `100.64.0.7`, which is pfSense itself.
+
+**Deleted 2026-09-04**: the public Cloudflare A record `*.local.akunito.com` →
+`192.168.8.102` (the retired proxy LXC). It resolved publicly, leaked an internal
+address and pointed at a host that no longer answers. Public queries now return
+NXDOMAIN; internal resolution is unaffected. To restore it: type `A`, name
+`*.local.akunito.com`, content `192.168.8.102`, not proxied.
 
 ### Security Considerations
 
