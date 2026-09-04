@@ -505,7 +505,37 @@ in
     # even with sunshineAutoStart off; only the session autostart is gated.
     allowedTCPPorts = [
       9100 # prometheus workstation exporter
+      2049 # NFS server (see nfsExports below). Opening the port is not the
+           # access control here — /etc/exports is, and it names individual
+           # hosts. NFSv4 needs only this one port; the fixed lockd/mountd/statd
+           # ports in nfs_server.nix are for v3, which no client here uses.
     ];
+
+    # ========================================================================
+    # NFS server — the two Games drives
+    # ========================================================================
+    # Both live on ntfs3 filesystems mounted uid=1000,gid=1000, so everything
+    # in them is already owned by one user; all_squash keeps it that way for
+    # whoever writes from another machine.
+    #
+    # fsid= is not optional here: NFSv4 needs a stable filesystem identity, and
+    # NTFS does not give nfsd a UUID to derive one from. Without it the export
+    # is refused. The numbers are arbitrary but must stay put — changing one
+    # invalidates every file handle a client is holding.
+    #
+    # Who reaches this machine as what, measured rather than assumed:
+    #   X13       arrives on the LAN as 192.168.8.92 (dock) or .91 (wifi), and
+    #             as 100.64.0.8 when away. Read-write.
+    #   LAPTOP_A  arrives as 100.64.0.4 even though it sits on the same LAN:
+    #             it runs with accept-routes on, so pfSense's advertised
+    #             192.168.8.0/24 sends its traffic through the tunnel. Exporting
+    #             to its LAN address 192.168.8.78 would simply never match.
+    #             Read-only.
+    nfsServerEnable = true;
+    nfsExports = ''
+      /mnt/DATA/Games        192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 100.64.0.4(ro,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11)
+      /mnt/DATA_SATA3/Games  192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 100.64.0.4(ro,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12)
+    '';
     allowedUDPPorts = [
       # 51820 # Wireguard
     ];

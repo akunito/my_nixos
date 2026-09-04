@@ -214,10 +214,39 @@ in
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
+      # DESK's two Games drives, READ-ONLY. `ro` here is only a local promise —
+      # root on this machine could remount rw — so the real guarantee is the
+      # matching ro entry for 100.64.0.4 in DESK's own /etc/exports.
+      #
+      # Addressed by DESK's Tailscale IP rather than its LAN one because this
+      # machine runs with accept-routes on: pfSense advertises 192.168.8.0/24,
+      # so even a neighbour on the same LAN is reached through the tunnel and
+      # arrives at DESK as 100.64.0.4. Naming the tunnel is honest about the
+      # path, and about the speed.
+      {
+        what = "100.64.0.5:/mnt/DATA/Games";
+        where = "/mnt/DESK_Games_DATA";
+        type = "nfs";
+        options = "noatime,ro,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
+      }
+      {
+        what = "100.64.0.5:/mnt/DATA_SATA3/Games";
+        where = "/mnt/DESK_Games_SATA3";
+        type = "nfs";
+        options = "noatime,ro,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
+      }
     ];
     nfsAutoMounts = [
       {
         where = "/mnt/NFS_Backups";
+        automountConfig = { TimeoutIdleSec = "600"; };
+      }
+      {
+        where = "/mnt/DESK_Games_DATA";
+        automountConfig = { TimeoutIdleSec = "600"; };
+      }
+      {
+        where = "/mnt/DESK_Games_SATA3";
         automountConfig = { TimeoutIdleSec = "600"; };
       }
     ];

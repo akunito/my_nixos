@@ -134,6 +134,22 @@ in
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
+        # DESK's two Games drives, read-write. Addressed by bond0 (192.168.8.97)
+        # and not eno1 (.99) on purpose: the bond is the 10 GbE path and eno1 is
+        # the 1 GbE Realtek with a history of carrier flaps. Copying a game is
+        # exactly when that difference shows.
+        {
+          what = "192.168.8.97:/mnt/DATA/Games";
+          where = "/mnt/DESK_Games_DATA";
+          type = "nfs";
+          options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
+        }
+        {
+          what = "192.168.8.97:/mnt/DATA_SATA3/Games";
+          where = "/mnt/DESK_Games_SATA3";
+          type = "nfs";
+          options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
+        }
     ];
     nfsAutoMounts = [
       {
@@ -155,7 +171,25 @@ in
           TimeoutIdleSec = "600";
         };
       }
+      {
+        where = "/mnt/DESK_Games_DATA";
+        automountConfig = {
+          TimeoutIdleSec = "600";
+        };
+      }
+      {
+        where = "/mnt/DESK_Games_SATA3";
+        automountConfig = {
+          TimeoutIdleSec = "600";
+        };
+      }
     ];
+    # Now mounting from two servers that are routinely off: the NAS sleeps
+    # 23:00-16:00 and DESK gets rebooted. A share left mounted when its server
+    # goes away blocks every process that stats it, and the idle timeout above
+    # cannot clear it — the expiry umount comes back EBUSY. See
+    # system/hardware/nfs_client.nix.
+    nfsUnmountUnreachable = true;
 
     # SSH
     authorizedKeys = [
