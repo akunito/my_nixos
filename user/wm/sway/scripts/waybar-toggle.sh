@@ -52,7 +52,11 @@ fi
 MAIN_PID="$(systemctl --user show -p MainPID --value waybar.service 2>/dev/null || true)"
 [ "${MAIN_PID:-0}" = "0" ] && MAIN_PID=""
 
-mapfile -t ALL_PIDS < <(pgrep -x waybar 2>/dev/null)
+# The process name is NOT "waybar": nixpkgs wraps the binary, so `comm` reads
+# ".waybar-wrapped" and a plain `pgrep -x waybar` matches nothing at all. Match
+# both spellings, and stay on `-x` (comm) rather than `-f` (full command line),
+# which would also match this script's own shell.
+mapfile -t ALL_PIDS < <(pgrep -x '\.?waybar(-wrapped)?' 2>/dev/null)
 
 if [ -z "$MAIN_PID" ]; then
     if [ "${#ALL_PIDS[@]}" -eq 0 ]; then

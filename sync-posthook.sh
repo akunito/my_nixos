@@ -32,9 +32,13 @@ if systemctl --user is-active --quiet sway-session.target 2>/dev/null; then
   fi
 
   # Kill any stray non-systemd waybar instances (keep the service MainPID)
+  # `pgrep -x waybar` matched NOTHING here: nixpkgs wraps the binary, so the
+  # process name is ".waybar-wrapped". This stray-killer had therefore been a
+  # no-op since it was written -- a duplicate Waybar would have survived every
+  # sync. Match both spellings.
   MAINPID="$(systemctl --user show -p MainPID --value waybar.service 2>/dev/null || true)"
   if [ -n "$MAINPID" ] && [ "$MAINPID" != "0" ]; then
-    for pid in $(pgrep -x waybar 2>/dev/null || true); do
+    for pid in $(pgrep -x '\.?waybar(-wrapped)?' 2>/dev/null || true); do
       [ "$pid" = "$MAINPID" ] || kill "$pid" 2>/dev/null || true
     done
   fi
