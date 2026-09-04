@@ -1,6 +1,5 @@
 {
   pkgs,
-  pkgs-unstable,
   userSettings,
   lib,
   ...
@@ -26,17 +25,20 @@
     localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
     gamescopeSession.enable = false; # Disabled: designed for Steam Deck DRM sessions, conflicts with nested Wayland gamescope under Sway
     extraPackages =
-      [
-        # UNSTABLE, deliberately. Steam runs in an FHS environment and resolves
-        # gamescope from here, not from PATH — so a home.packages override is
-        # invisible to it and restarting Steam changes nothing. `pkgs` is
-        # nixpkgs-stable (nixos-25.11), still on 3.16.17, which is the version
-        # whose Wayland backend aborts mid-launch (SIGABRT in
-        # CWaylandInputThread::ThreadFunc) and whose --force-grab-cursor causes
-        # multi-second freezes (upstream #1851). Unstable is on 3.16.28.
-        pkgs-unstable.gamescope
-      ]
-      ++ (with pkgs; [
+      (with pkgs; [
+        # ‼️ Must come from `pkgs`, NOT pkgs-unstable. Steam runs inside an FHS
+        # environment built from this same package set, so its /lib/libc.so.6 is
+        # stable's glibc. An unstable gamescope is linked against a newer one and
+        # dies instantly (tried 2026-09-04):
+        #
+        #   gamescope: symbol lookup error: /lib/libc.so.6: undefined symbol:
+        #   __nptl_change_stack_perm, version GLIBC_PRIVATE
+        #
+        # This pins gamescope to 3.16.17 for Steam, which is the version whose
+        # Wayland backend aborts and whose --force-grab-cursor stutters. To move
+        # off it, override THIS package's src/version so it still builds against
+        # stable's glibc — do not swap in a foreign package set.
+        gamescope # Nested Wayland compositor for per-game scaling
         mangohud # FPS/performance overlay
       ])
       ++ lib.optionals (userSettings.vkbasaltEnable or false) [
