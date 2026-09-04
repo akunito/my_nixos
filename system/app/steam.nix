@@ -47,23 +47,22 @@
       ];
   };
 
-  # gamescope asks for realtime scheduling priority for its compositing thread
-  # (that is what `--rt` in the Steam launch options requests). Without
-  # CAP_SYS_NICE the kernel refuses and gamescope logs, every single launch:
+  # gamescope logs this on every launch:
   #
   #   No CAP_SYS_NICE, falling back to regular-priority compute and threads.
   #   Performance will be affected.
   #
-  # Measured 2026-09-04 during a Crimson Desert session that went unplayable at
-  # ~25 minutes: nothing was saturated — IO pressure 0.00, CPU pressure 0.53, 73
-  # of the game's 89 threads asleep, no amdgpu events — while the GPU oscillated
-  # between 100%/338W and 72%/163W and dropped to DPM level 1. A compositor with
-  # no priority, competing against the game's threads, matches that shape.
-  programs.gamescope = lib.mkIf (userSettings.steamPackEnable == true) {
-    enable = true;
-    capSysNice = true;
-    package = pkgs-unstable.gamescope;
-  };
+  # ‼️ DO NOT fix that with `programs.gamescope.capSysNice = true`. Tried
+  # 2026-09-04: the NixOS security wrapper raises capabilities on exec, and Steam
+  # starts its children under no_new_privs, so the wrapper dies immediately with
+  #
+  #   failed to inherit capabilities: Operation not permitted
+  #
+  # and gamescope exits rc=1 before the game ever appears. The capability route
+  # only works for a gamescope launched outside Steam. If realtime priority is
+  # worth chasing again, do it through RLIMIT_RTPRIO (security.pam.loginLimits)
+  # and verify the message actually disappears, rather than through a wrapper in
+  # Steam's PATH.
 
   nixpkgs.config.allowUnfreePredicate =
     pkg:
