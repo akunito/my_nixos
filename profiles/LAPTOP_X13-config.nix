@@ -69,6 +69,17 @@ in
     allowedTCPPorts = [ 9100 ]; # prometheus workstation exporter
     allowedUDPPorts = [ ];
 
+    # Dual-homed (dock ethernet + wifi, both on 192.168.8.0/24) AND running
+    # Tailscale with accept-routes on, while pfSense advertises 192.168.8.0/24
+    # as a subnet route. Strict reverse-path filtering therefore treated EVERY
+    # LAN neighbour as spoofed: `ip rule` 5270 sends the reverse lookup to
+    # table 52, which answers "192.168.8.0/24 dev tailscale0", so packets that
+    # really arrived on the dock NIC were dropped in mangle PREROUTING.
+    # Symptoms: DESK could not ping or SSH this machine over the LAN at all,
+    # and Tailscale never found a direct path — every byte, including nix
+    # cache pulls from DESK, went over the Frankfurt DERP relay.
+    firewallReversePathLoose = true;
+
     # Pull prebuilt paths from DESK's harmonia cache before cache.nixos.org
     # (priority 30 vs 40). Reachable over Tailscale, so it works off-LAN too.
     # Extra substituter only — cache.nixos.org stays, and fallback +

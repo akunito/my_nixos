@@ -7,6 +7,12 @@
     allowedTCPPorts = systemSettings.allowedTCPPorts;
     allowedUDPPorts = systemSettings.allowedUDPPorts;
 
+    # See systemSettings.firewallReversePathLoose in lib/defaults.nix for why a
+    # multi-homed or Tailscale-routed host needs "loose" here. `true` is what
+    # NixOS means by strict, and stays the default for everything else.
+    checkReversePath =
+      if (systemSettings.firewallReversePathLoose or false) then "loose" else true;
+
     # extraCommands = ''
     #   # ================== General rules ==================
     #   # Rules from -> https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands

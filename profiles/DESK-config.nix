@@ -510,6 +510,15 @@ in
       # 51820 # Wireguard
     ];
 
+    # eno1 (192.168.8.99) and bond0 (192.168.8.97) are both on 192.168.8.0/24,
+    # and the route through eno1 has the lower metric. Strict reverse-path
+    # filtering therefore dropped everything that arrived on bond0 from a LAN
+    # host — silently, in mangle PREROUTING, before any rule that logs. That
+    # included Tailscale's LAN discovery probes to bond0, which is the address
+    # this machine advertises as its endpoint, so X13 could never build a
+    # direct path and fell back to the DERP relay.
+    firewallReversePathLoose = true;
+
     # ========================================================================
     # Docker firewall backstop
     # ========================================================================

@@ -332,6 +332,28 @@
     allowedTCPPorts = [ ];
     allowedUDPPorts = [ ];
 
+    # Reverse-path filtering mode. NixOS defaults to STRICT: a packet is dropped
+    # unless the interface it arrived on is the one the kernel would use to
+    # reach its source. Two situations here break that, and both end in traffic
+    # vanishing silently BEFORE the INPUT chain, so no firewall rule and no log
+    # explains it (`iptables -t mangle -L nixos-fw-rpfilter -nv` is where the
+    # drop count shows up):
+    #
+    #  1. Two interfaces in the SAME subnet (DESK: eno1 + bond0 on
+    #     192.168.8.0/24; X13: dock ethernet + wifi). Anything arriving on the
+    #     one that does not own the best route is dropped.
+    #  2. Tailscale with accept-routes ON, when a peer advertises the LAN you
+    #     are physically plugged into. tailscaled's `ip rule` 5270 sends the
+    #     reverse lookup to table 52 FIRST, which then answers "192.168.8.0/24
+    #     dev tailscale0" -- so every packet from a LAN neighbour looks
+    #     spoofed. This also kills Tailscale's own LAN discovery probes, which
+    #     is why two machines on the same switch end up relayed over DERP.
+    #
+    # "loose" accepts the packet when the source is reachable via ANY
+    # interface, which is the documented fix for both. Off by default: single
+    # -homed servers keep the stricter check.
+    firewallReversePathLoose = false;
+
     # Drive defaults
     mount2ndDrives = false;
     bootSSH = false;
