@@ -590,6 +590,12 @@ in
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
           "${hyper}+B" =
             "exec env ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
+          # Show/hide Waybar (W for Waybar; +b and +B were already taken by
+          # Bottles). SIGUSR1 rather than a restart -- see the script for why a
+          # restart is the wrong tool and why sway's `bar ... mode` does not
+          # drive Waybar at all.
+          "${hyper}+W" =
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/waybar-toggle.sh";
           # Control Panel (NixOS Infrastructure Management) - hyper+S
           "${hyper}+s" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh control-panel control-panel";

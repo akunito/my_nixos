@@ -204,6 +204,11 @@ EOF
     executable = true;
   };
 
+  home.file.".config/sway/scripts/waybar-toggle.sh" = {
+    source = ./scripts/waybar-toggle.sh;
+    executable = true;
+  };
+
   home.file.".config/sway/scripts/window-move.sh" = {
     source = ./scripts/window-move.sh;
     executable = true;
