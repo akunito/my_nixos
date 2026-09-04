@@ -43,6 +43,14 @@ done
 
 HW=$(ls -d "$DEV"/hwmon/hwmon* 2>/dev/null | head -1)
 
+# Read helpers. These set RV instead of echoing, because `$(...)` forks a
+# subshell even around a builtin — and this script was measured on 2026-09-04 as
+# the single largest source of fork/exec on the machine during a game session
+# (12249 in 26 minutes, ~9/s), which is absurd for something whose job is to
+# observe. `read` is a builtin, so a sample now costs one fork (sleep) instead of
+# roughly twenty.
+RV=""
+rd() { RV=""; [[ -r "$1" ]] && read -r RV < "$1" 2>/dev/null; return 0; }
 r() { cat "$1" 2>/dev/null || echo ""; }
 mib() { local v; v=$(r "$1"); [[ -n "$v" ]] && echo $(( v / 1024 / 1024 )) || echo ""; }
 # temps are millidegrees; freqs are Hz and power is microwatts, so they need a
@@ -72,12 +80,18 @@ sample_n=0
 start=$(cut -d' ' -f1 /proc/uptime | cut -d. -f1)
 
 while :; do
-    now=$(cut -d' ' -f1 /proc/uptime | cut -d. -f1)
+    printf -v EPOCH_TS '%(%H:%M:%S)T' -1
+    read -r now _ < /proc/uptime; now=${now%%.*}
     elapsed=$(( now - start ))
 
-    ram_avail=$(awk '/^MemAvailable:/ {print int($2/1024)}' /proc/meminfo)
-    swap_total=$(awk '/^SwapTotal:/ {print $2}' /proc/meminfo)
-    swap_free=$(awk '/^SwapFree:/ {print $2}' /proc/meminfo)
+    ram_avail=0; swap_total=0; swap_free=0
+    while read -r key val _; do
+        case "$key" in
+            MemAvailable:) ram_avail=$(( val / 1024 )) ;;
+            SwapTotal:)    swap_total=$val ;;
+            SwapFree:)     swap_free=$val ;;
+        esac
+    done < /proc/meminfo
     swap_used=$(( (swap_total - swap_free) / 1024 ))
 
     psi_mem=$(awk '/^some/ {for(i=1;i<=NF;i++) if($i ~ /^avg60=/) {sub("avg60=","",$i); print $i; exit}}' /proc/pressure/memory 2>/dev/null)
@@ -85,15 +99,40 @@ while :; do
 
     # Process and scheduler load. /proc/stat's "processes" is a cumulative fork
     # counter, so its delta is the fork rate — the cheapest way to see a leak.
-    nproc=$(ls -1d /proc/[0-9]* 2>/dev/null | wc -l)
-    nthreads=$(awk '/^Threads:/ {n+=$2} END {print n+0}' /proc/*/status 2>/dev/null)
-    now_forks=$(stat_field processes)
-    now_ctxt=$(stat_field ctxt)
+    # Glob expansion is builtin; `ls | wc -l` was two forks for one number.
+    set -- /proc/[0-9]*
+    nproc=$#
+    # Summing Threads: across every /proc/*/status opens hundreds of files each
+    # sample. Read the kernel's own counter instead — one file, no fork.
+    nthreads=0
+    while read -r a b _; do [[ "$a" == "threads" ]] && { nthreads=${b%%/*}; break; }; done < /proc/loadavg 2>/dev/null || true
+    if [[ "$nthreads" == 0 ]]; then
+        read -r _ _ _ nthreads _ < /proc/loadavg 2>/dev/null || true
+        nthreads=${nthreads##*/}
+    fi
+    now_forks=0; now_ctxt=0
+    while read -r k v _; do
+        case "$k" in processes) now_forks=$v ;; ctxt) now_ctxt=$v ;; esac
+    done < /proc/stat
     forks_ps=$(( ( ${now_forks:-0} - ${prev_forks:-0} ) / INTERVAL ))
     ctxt_ps=$(( ( ${now_ctxt:-0} - ${prev_ctxt:-0} ) / INTERVAL ))
     prev_forks=$now_forks
     prev_ctxt=$now_ctxt
-    load1=$(cut -d' ' -f1 /proc/loadavg 2>/dev/null)
+    read -r load1 _ < /proc/loadavg 2>/dev/null || load1=""
+
+    # GPU/hwmon fields, all via builtin reads.
+    rd "$DEV/mem_info_vram_used";     v_vram=$(( ${RV:-0} / 1048576 ))
+    rd "$DEV/mem_info_gtt_used";      v_gtt=$(( ${RV:-0} / 1048576 ))
+    rd "$DEV/mem_info_vis_vram_used"; v_vis=$(( ${RV:-0} / 1048576 ))
+    rd "$DEV/gpu_busy_percent";       v_busy=$RV
+    rd "$DEV/mem_busy_percent";       v_mbusy=$RV
+    rd "$HW/freq1_input";             v_sclk=$(( ${RV:-0} / 1000000 ))
+    rd "$HW/freq2_input";             v_mclk=$(( ${RV:-0} / 1000000 ))
+    rd "$HW/temp1_input";             v_edge=$(( ${RV:-0} / 1000 ))
+    rd "$HW/temp2_input";             v_junc=$(( ${RV:-0} / 1000 ))
+    rd "$HW/temp3_input";             v_mem=$(( ${RV:-0} / 1000 ))
+    rd "$HW/power1_average";          v_pow=$(( ${RV:-0} / 1000000 ))
+    rd "$HW/fan1_input";              v_fan=$RV
 
     # Every 30s, name the top process types so a leak is identifiable.
     if (( sample_n % (30 / INTERVAL == 0 ? 1 : 30 / INTERVAL) == 0 )); then
@@ -105,19 +144,9 @@ while :; do
     sample_n=$(( sample_n + 1 ))
 
     printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
-        "$(date +%H:%M:%S)" "$elapsed" \
-        "$(mib "$DEV/mem_info_vram_used")" \
-        "$(mib "$DEV/mem_info_gtt_used")" \
-        "$(mib "$DEV/mem_info_vis_vram_used")" \
-        "$(r "$DEV/gpu_busy_percent")" \
-        "$(r "$DEV/mem_busy_percent")" \
-        "$(micro "$HW/freq1_input")" \
-        "$(micro "$HW/freq2_input")" \
-        "$(milli "$HW/temp1_input")" \
-        "$(milli "$HW/temp2_input")" \
-        "$(milli "$HW/temp3_input")" \
-        "$(micro "$HW/power1_average")" \
-        "$(r "$HW/fan1_input")" \
+        "${EPOCH_TS}" "$elapsed" \
+        "$v_vram" "$v_gtt" "$v_vis" "$v_busy" "$v_mbusy" \
+        "$v_sclk" "$v_mclk" "$v_edge" "$v_junc" "$v_mem" "$v_pow" "$v_fan" \
         "$ram_avail" "$swap_used" "${psi_mem:-}" "${psi_io:-}" \
         "$nproc" "$nthreads" "$forks_ps" "$ctxt_ps" "${load1:-}" >> "$OUT"
 

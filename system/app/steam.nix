@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-unstable,
   userSettings,
   lib,
   ...
@@ -25,8 +26,17 @@
     localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
     gamescopeSession.enable = false; # Disabled: designed for Steam Deck DRM sessions, conflicts with nested Wayland gamescope under Sway
     extraPackages =
-      (with pkgs; [
-        gamescope # Nested Wayland compositor for per-game scaling
+      [
+        # UNSTABLE, deliberately. Steam runs in an FHS environment and resolves
+        # gamescope from here, not from PATH — so a home.packages override is
+        # invisible to it and restarting Steam changes nothing. `pkgs` is
+        # nixpkgs-stable (nixos-25.11), still on 3.16.17, which is the version
+        # whose Wayland backend aborts mid-launch (SIGABRT in
+        # CWaylandInputThread::ThreadFunc) and whose --force-grab-cursor causes
+        # multi-second freezes (upstream #1851). Unstable is on 3.16.28.
+        pkgs-unstable.gamescope
+      ]
+      ++ (with pkgs; [
         mangohud # FPS/performance overlay
       ])
       ++ lib.optionals (userSettings.vkbasaltEnable or false) [
@@ -35,6 +45,24 @@
         # ENABLE_VKBASALT=1 (config: user/app/gaming/vkbasalt.nix).
         pkgs.vkbasalt
       ];
+  };
+
+  # gamescope asks for realtime scheduling priority for its compositing thread
+  # (that is what `--rt` in the Steam launch options requests). Without
+  # CAP_SYS_NICE the kernel refuses and gamescope logs, every single launch:
+  #
+  #   No CAP_SYS_NICE, falling back to regular-priority compute and threads.
+  #   Performance will be affected.
+  #
+  # Measured 2026-09-04 during a Crimson Desert session that went unplayable at
+  # ~25 minutes: nothing was saturated — IO pressure 0.00, CPU pressure 0.53, 73
+  # of the game's 89 threads asleep, no amdgpu events — while the GPU oscillated
+  # between 100%/338W and 72%/163W and dropped to DPM level 1. A compositor with
+  # no priority, competing against the game's threads, matches that shape.
+  programs.gamescope = lib.mkIf (userSettings.steamPackEnable == true) {
+    enable = true;
+    capSysNice = true;
+    package = pkgs-unstable.gamescope;
   };
 
   nixpkgs.config.allowUnfreePredicate =
