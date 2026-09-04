@@ -119,6 +119,47 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
     };
   };
 
+  # accept-routes / accept-dns are daemon PREFS, persisted in
+  # /var/lib/tailscale/tailscaled.state, so the `tailscale up` flags above only
+  # decide their INITIAL value. Anything that flips them afterwards — a
+  # Trayscale toggle, a hand-run `tailscale set`, a GUI re-auth — outlives
+  # every rebuild, and the profile's declaration quietly stops describing the
+  # machine.
+  #
+  # That drift is expensive, not cosmetic. LAPTOP_X13 declared
+  # tailscaleAcceptRoutes = false and was running with it ON: pfSense
+  # advertises 192.168.8.0/24, the LAN X13 is physically plugged into, so
+  # tailscaled installed "192.168.8.0/24 dev tailscale0" into table 52 — and
+  # its `ip rule` (5270) outranks main. Every LAN neighbour became unreachable
+  # (DESK could not even ping it), Tailscale's own LAN discovery probes died
+  # the same way, and two machines on one switch relayed through Frankfurt at
+  # 46 ms instead of talking directly at 1 ms.
+  #
+  # So re-assert both prefs on every boot, same shape and reasoning as
+  # tailscale-operator above. Skipped when tailscaleLanAutoToggle is on: that
+  # service owns these two prefs at runtime by design.
+  systemd.services.tailscale-route-prefs = lib.mkIf (!lanAutoToggle) {
+    description = "Assert Tailscale accept-routes/accept-dns prefs";
+    after = [ "tailscaled.service" ];
+    wants = [ "tailscaled.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "tailscale-set-route-prefs" ''
+        # tailscaled may not be ready the instant this runs — retry briefly.
+        for i in 1 2 3 4 5 6; do
+          ${pkgs.tailscale}/bin/tailscale set \
+            --accept-routes=${lib.boolToString acceptRoutes} \
+            --accept-dns=${lib.boolToString acceptDns} && exit 0
+          sleep 2
+        done
+        echo "tailscale-route-prefs: failed to set prefs after retries" >&2
+        exit 0
+      '';
+    };
+  };
+
   # Helper script for connecting with the configured settings
   environment.etc."tailscale/connect.sh" = {
     mode = "0755";
