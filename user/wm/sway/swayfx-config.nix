@@ -556,7 +556,9 @@ in
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh Alacritty alacritty";
           "${hyper}+L" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram";
-          "${hyper}+e" =
+          # Ranger moved to Shift+e when Dolphin took the bare +e — the file
+          # manager reached for by hand is the graphical one.
+          "${hyper}+Shift+e" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh kitty-ranger 'kitty --class kitty-ranger ranger'";
           "${hyper}+U" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver";
@@ -697,8 +699,9 @@ in
           "${hyper}+Shift+t" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh dev.deedles.Trayscale trayscale";
 
-          # Dolphin file manager (KDE, tabs restore)
-          "${hyper}+Shift+e" =
+          # Dolphin file manager (KDE, tabs restore). On the bare +e, swapped
+          # with ranger.
+          "${hyper}+e" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin";
 
           # Hide window (move to scratchpad) - Previously: hyper+Shift+e

@@ -154,6 +154,7 @@ in
     sunshineEnable = false; # Disabled: unstable package broken, stable substitution not working
     wireguardEnable = true; # Enable WireGuard VPN
     nextcloudEnable = true; # Enable Nextcloud client
+    nextcloudUrl = "https://nextcloud.local.akunito.com"; # public host is behind Cloudflare Access, which no native client can pass
     appImageEnable = false; # Disable AppImage support (override base)
     xboxControllerEnable = false; # Disable Xbox controller support
 

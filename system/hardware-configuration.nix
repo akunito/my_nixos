@@ -23,6 +23,7 @@
 
 
 
+
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/7620-B197";
       fsType = "vfat";
@@ -52,6 +53,7 @@
     { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
       fsType = "ntfs3";
     };
+
 
 
 

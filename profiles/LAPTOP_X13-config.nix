@@ -337,6 +337,7 @@ in
     dotfilesDir = "/home/akunito/.dotfiles";
     wm = "sway"; # Switched from plasma6 for Sway-only setup (no KDE compilation)
     spotifyUrlHandlerEnable = true; # open.spotify.com links open the Spotify app
+    nextcloudUrl = "https://nextcloud.local.akunito.com"; # public host is behind Cloudflare Access, which no native client can pass
 
     # us(intl) compose override OFF for cross-app consistency (same as DESK):
     # Chromium/Electron ignore ~/.XCompose on Wayland, so terminals/Qt would

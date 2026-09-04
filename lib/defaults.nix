@@ -538,6 +538,13 @@
     waypaperEnable = false; # Enable Waypaper GUI wallpaper manager (requires swwwEnable)
     swwwEnable = false; # Enable swww wallpaper manager for SwayFX (robust across reboot + HM rebuilds); disables other wallpaper owners in Sway
     nextcloudEnable = false; # Enable Nextcloud Desktop Client autostart in Sway session
+    # Server URL the desktop client must use. Empty = leave whatever the client
+    # has. Set it and activation re-pins the account, because this is the one
+    # piece of the client that matters and the one piece nothing else describes:
+    # the public host sits behind Cloudflare Access, which answers a native
+    # client with a 302 it can never satisfy, so an account pointed there simply
+    # stops syncing and says nothing. Use the Tailscale-only twin.
+    nextcloudUrl = "";
     # GNOME Online Accounts + gnome-calendar + Waybar ICS widget (GUI login via gnome-control-center)
     # When enabled: pulls in GOA + EDS daemons (system), gnome-calendar + gnome-control-center (user),
     # and activates the "custom/gcal" Waybar module that reads EDS-cached ICS files.
