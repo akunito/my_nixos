@@ -338,12 +338,18 @@ in
 
     # === Browsers ===
     # Zen alongside Vivaldi (does not claim the http/https handlers), with the
-    # sine-web-panels fork for sidebar web panels. No profile was migrated here,
-    # so zenProfileDir stays at the default and Zen creates a fresh one — tabs,
-    # extensions and logins do NOT come across from DESK automatically.
+    # sine-web-panels fork for sidebar web panels.
     zenBrowserEnable = true;
     zenSineEnable = true;
     zenIsDefaultBrowser = true; # Zen owns http/https + the Spotify router; Vivaldi stays installed
+    # DESK's profile directory, NAME INCLUDED, because DESK's profile is copied
+    # here wholesale (spaces, pinned tabs, extensions, logins). The name is
+    # load-bearing twice over: the module adopts nothing unless it matches the
+    # directory on disk, and `extensions.json` stores ABSOLUTE paths to every
+    # installed .xpi — identical usernames plus an identical directory name are
+    # what keep those paths valid across the copy. Renaming it to "default"
+    # would leave every extension pointing at a path that does not exist.
+    zenProfileDir = "8fl3a3xu.Default (release)";
 
     # === Gaming & Entertainment ===
     gamesEnable = true; # Master gate for gaming submodules

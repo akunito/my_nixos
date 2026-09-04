@@ -304,6 +304,11 @@ EOF
     executable = true;
   };
 
+  home.file.".config/sway/scripts/gpu-session-trace.sh" = {
+    source = ./scripts/gpu-session-trace.sh;
+    executable = true;
+  };
+
   # Base Sway packages (startup-app scripts are provided by `startup-apps.nix`)
   home.packages = with pkgs; [
     # The compositor (SwayFX or upstream sway — see swayPkg above)

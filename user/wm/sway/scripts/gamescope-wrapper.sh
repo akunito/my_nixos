@@ -52,6 +52,7 @@
 #   GAMESCOPE_SCALE_OUTPUT=DP-1  target a specific output (default: focused one)
 #   GAMESCOPE_DISABLE=1          skip gamescope, run %command% directly
 #   GAMESCOPE_NO_DRAIN=1         kill the group as soon as gamescope exits
+#   GAMESCOPE_NO_TRACE=1         do not record the GPU/memory trace
 # ---------------------------------------------------------------------------
 
 set -euo pipefail
@@ -140,7 +141,46 @@ drain_group() {
     log "game finished, cleaning up"
 }
 
+# --- session trace ---------------------------------------------------------
+# Progressive stutter (fine for 30 minutes, unplayable after) cannot be
+# diagnosed after the fact, so every session records GPU/memory samples to a
+# CSV. Costs one sample every 2s (~350 KB/hour) and keeps only the last 10
+# sessions. Disable with GAMESCOPE_NO_TRACE=1.
+TRACE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gamescope-traces"
+TRACE_PID=""
+TRACE_FILE=""
+
+start_trace() {
+    [[ "${GAMESCOPE_NO_TRACE:-0}" != "1" ]] || return 0
+    local tracer="$HOME/.config/sway/scripts/gpu-session-trace.sh"
+    [[ -x "$tracer" ]] || return 0
+    mkdir -p "$TRACE_DIR" 2>/dev/null || return 0
+    TRACE_FILE="$TRACE_DIR/$(date +%Y%m%d-%H%M%S).csv"
+    "$tracer" "$TRACE_FILE" 2 >/dev/null 2>&1 &
+    TRACE_PID=$!
+    log "tracing GPU/memory to $TRACE_FILE"
+    # Keep the directory bounded; oldest first. Guarded because an empty
+    # directory makes `ls` exit non-zero, and under `set -o pipefail` that would
+    # abort the whole wrapper before the game is ever launched.
+    local stale
+    stale=$(ls -1t "$TRACE_DIR"/*.csv 2>/dev/null | tail -n +11 || true)
+    if [[ -n "$stale" ]]; then
+        while read -r old; do
+            [[ -n "$old" ]] && rm -f "$old" 2>/dev/null || true
+        done <<< "$stale"
+    fi
+    return 0
+}
+
+stop_trace() {
+    [[ -n "$TRACE_PID" ]] || return 0
+    kill "$TRACE_PID" 2>/dev/null || true
+    TRACE_PID=""
+    [[ -n "$TRACE_FILE" ]] && log "trace written: $TRACE_FILE"
+}
+
 cleanup() {
+    stop_trace
     local pgid="${GAMESCOPE_PGID:-}"
     if [[ -n "$pgid" ]]; then
         # Kill entire process group
@@ -180,6 +220,8 @@ else
 fi
 
 # --- launch ----------------------------------------------------------------
+start_trace
+
 if [[ "${GAMESCOPE_DISABLE:-0}" == "1" ]]; then
     # Everything after the first `--` is the real command.
     cmd=()
