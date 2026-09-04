@@ -301,14 +301,20 @@ let
       # Zen window bookkeeping.
       #
       # Zen is the only startup app left here (VSCode, Chromium and Obsidian
-      # were dropped 2026-09-02), and it now opens TWO windows: one on
-      # workspace 11, where it has always gone, and one on workspace 22, the
-      # slot Chromium used to take.
+      # were dropped 2026-09-02). It restores its own windows from its session
+      # -- currently two -- and every one of them belongs on workspace 11, i.e.
+      # the Samsung (workspaces 11-20 are pinned to it by
+      # swayWorkspaceOutputPins).
       #
-      # Both windows carry app_id "zen-beta", so a sway `assign` rule cannot
-      # tell them apart -- it would drag both onto the same workspace. The
-      # placement is therefore done here, by diffing the window tree for the
-      # con_id that appeared after each launch.
+      # This script does NOT open windows of its own. It used to force a second
+      # one onto workspace 22, which raced Zen's own session restore: when the
+      # restored window took longer than the 3s settle to appear, the forced
+      # `--new-window` made a THIRD. Launch Zen, then place whatever it opens.
+      #
+      # Placement is done here rather than with a sway `assign` rule on purpose.
+      # `assign` is unconditional, so it would also yank a window opened on
+      # demand -- a link from another app, say -- onto 11 while you are working
+      # somewhere else. Doing it here keeps that behaviour to session start.
       zen_window_ids() {
         swaymsg -t get_tree 2>/dev/null \
           | jq -r 'recurse(.nodes[]?, .floating_nodes[]?) | select(.app_id=="zen-beta") | .id' \
@@ -385,48 +391,29 @@ let
       launch_startup_apps() {
         echo "Launching startup applications..."
 
-        local known first second
+        local known id
 
         known="$(zen_window_ids)"
         if [ "$(zen_window_count "$known")" -eq 0 ]; then
           # Cold start: plain launch, so Zen restores its own session.
           (command -v zen-beta >/dev/null 2>&1 && zen-beta >/dev/null 2>&1 &) || true
-          first="$(wait_for_new_zen_window "$known" || true)"
-          if [ -z "$first" ]; then
+          if ! wait_for_new_zen_window "$known" >/dev/null; then
             echo "Zen: window never appeared; nothing placed"
             notify-send -t 5000 "App Launcher" "Zen did not start; no windows placed." || true
             return 0
           fi
-          # Let Zen finish opening anything else its session restores, so a
-          # second restored window is adopted instead of a third being spawned.
+          # The later windows of a restored session trail the first by a second
+          # or two. Wait before collecting, so they are placed as well instead
+          # of being left wherever they happened to map.
           sleep 3
         else
-          first="$(printf '%s\n' "$known" | head -n1)"
-          echo "Zen: already running, adopting window $first"
-        fi
-        place_zen_window "$first" 11 || true
-        echo "Zen: window $first -> workspace 11"
-
-        known="$(zen_window_ids)"
-        if [ "$(zen_window_count "$known")" -lt 2 ]; then
-          # `--new-window` with no URL opens the homepage on the instance that
-          # is already running, rather than starting a second one (which would
-          # hit the profile lock).
-          zen-beta --new-window >/dev/null 2>&1 &
-          second="$(wait_for_new_zen_window "$known" || true)"
-        else
-          second="$(printf '%s\n' "$known" | grep -vx "$first" | head -n1 || true)"
+          echo "Zen: already running, adopting its windows"
         fi
 
-        if [ -z "$second" ]; then
-          echo "Zen: second window never appeared"
-        else
-          place_zen_window "$second" 22 || true
-          echo "Zen: window $second -> workspace 22"
-          # Cheap insurance: re-assert the first window, in case placing the
-          # second one disturbed it.
-          place_zen_window "$first" 11 || true
-        fi
+        for id in $(zen_window_ids); do
+          place_zen_window "$id" 11 || true
+          echo "Zen: window $id -> workspace 11"
+        done
 
         echo "Apps launched successfully"
         notify-send -t 3000 "App Launcher" "Startup applications launched successfully." || true

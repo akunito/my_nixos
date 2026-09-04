@@ -53,6 +53,9 @@
 #   GAMESCOPE_DISABLE=1          skip gamescope, run %command% directly
 #   GAMESCOPE_NO_DRAIN=1         kill the group as soon as gamescope exits
 #   GAMESCOPE_NO_TRACE=1         do not record the GPU/memory trace
+#   GAMESCOPE_WLDEBUG=1          run gamescope under WAYLAND_DEBUG=1 and save the
+#                                protocol log, to catch the Wayland error that
+#                                makes CWaylandInputThread::ThreadFunc abort()
 # ---------------------------------------------------------------------------
 
 set -euo pipefail
@@ -179,14 +182,41 @@ stop_trace() {
     [[ -n "$TRACE_FILE" ]] && log "trace written: $TRACE_FILE"
 }
 
+# Set when the wrapper is torn down by a signal (Steam's Stop button, a session
+# logout) as opposed to gamescope exiting by itself. Only the former justifies
+# killing anything.
+KILLED_BY_SIGNAL=0
+
+# What is still alive in gamescope's process group, as "pid:comm" — recorded at
+# teardown so a failed session says who was there instead of leaving us guessing.
+group_snapshot() {
+    local pgid="${1:-}" pid comm out=""
+    [[ -n "$pgid" ]] || { echo "(no pgid)"; return 0; }
+    for pid in $(pgrep -g "$pgid" 2>/dev/null || true); do
+        [[ "$pid" == "$$" ]] && continue
+        comm=$(cat /proc/"$pid"/comm 2>/dev/null || true)
+        out+="${pid}:${comm:-?} "
+    done
+    echo "${out:-(empty)}"
+}
+
 cleanup() {
     stop_trace
+
     local pgid="${GAMESCOPE_PGID:-}"
-    if [[ -n "$pgid" ]]; then
-        # Kill entire process group
+    log "teardown: signal=${KILLED_BY_SIGNAL} gamescope_rc=${GAMESCOPE_RC:-?} group=[$(group_snapshot "$pgid")]"
+
+    # Only reap the process group when WE are being killed. When gamescope exits
+    # on its own the game may still be starting up — Black Desert's launcher
+    # execs the real client and quits, and Proton puts that client in its own
+    # session anyway, so a group kill here is both useless against the game and
+    # dangerous to whatever is left. Steam and gamescope's own reaper clean up
+    # the Wine side; leaving a stray wineserver is far cheaper than killing a
+    # live game.
+    if [[ -n "$pgid" && "$KILLED_BY_SIGNAL" == "1" ]]; then
+        log "signalled — reaping process group $pgid"
         kill -TERM -"$pgid" 2>/dev/null || true
         sleep 1
-        # Force kill any survivors
         kill -9 -"$pgid" 2>/dev/null || true
     fi
 
@@ -196,7 +226,13 @@ cleanup() {
     restore_scale
 }
 
+on_signal() {
+    KILLED_BY_SIGNAL=1
+    exit 143
+}
+
 trap cleanup EXIT
+trap on_signal INT TERM HUP
 
 if [[ -n "$SCALE_OUTPUT" && -n "$ORIG_SCALE" ]]; then
     if [[ "$ORIG_SCALE" == "1" || "$ORIG_SCALE" == "1.000000" ]]; then
@@ -241,17 +277,34 @@ if [[ "${GAMESCOPE_DISABLE:-0}" == "1" ]]; then
         setsid "${cmd[@]}" &
         GAMESCOPE_PID=$!
         GAMESCOPE_PGID=$GAMESCOPE_PID
-        wait "$GAMESCOPE_PID" 2>/dev/null || true
+        GAMESCOPE_RC=0
+        wait "$GAMESCOPE_PID" 2>/dev/null || GAMESCOPE_RC=$?
         drain_group "$GAMESCOPE_PGID"
         exit 0
     fi
 fi
 
-# Launch gamescope in a new session/process group
-setsid gamescope "$@" &
+# Launch gamescope in a new session/process group.
+#
+# GAMESCOPE_WLDEBUG captures the Wayland protocol conversation. gamescope 3.16.17
+# aborts (SIGABRT, rc=134) inside CWaylandInputThread::ThreadFunc when its
+# display connection errors, which is what killed every Black Desert launch on
+# 2026-09-04 about 10s in. The abort itself says nothing; the protocol tail says
+# which request sway rejected. The log is large (~35k lines per 10s), so it is
+# written to a file rather than Steam's console log, and only on request.
+if [[ "${GAMESCOPE_WLDEBUG:-0}" == "1" ]]; then
+    WLDEBUG_LOG="${TRACE_DIR}/wldebug-$(date +%Y%m%d-%H%M%S).log"
+    mkdir -p "$TRACE_DIR" 2>/dev/null || true
+    log "WAYLAND_DEBUG capture -> $WLDEBUG_LOG"
+    WAYLAND_DEBUG=1 setsid gamescope "$@" >"$WLDEBUG_LOG" 2>&1 &
+else
+    setsid gamescope "$@" &
+fi
 GAMESCOPE_PID=$!
 GAMESCOPE_PGID=$GAMESCOPE_PID
 
 # Wait for gamescope to exit, then for the actual game (see drain_group).
-wait "$GAMESCOPE_PID" 2>/dev/null || true
+GAMESCOPE_RC=0
+wait "$GAMESCOPE_PID" 2>/dev/null || GAMESCOPE_RC=$?
+log "gamescope exited rc=$GAMESCOPE_RC after ${SECONDS}s"
 drain_group "$GAMESCOPE_PGID"
