@@ -53,6 +53,8 @@
 #   GAMESCOPE_DISABLE=1          skip gamescope, run %command% directly
 #   GAMESCOPE_NO_DRAIN=1         kill the group as soon as gamescope exits
 #   GAMESCOPE_NO_TRACE=1         do not record the GPU/memory trace
+#   (LD_PRELOAD is always stripped from gamescope and handed to the game;
+#    see the lag-bomb note further down.)
 #   GAMESCOPE_WLDEBUG=1          run gamescope under WAYLAND_DEBUG=1 and save the
 #                                protocol log, to catch the Wayland error that
 #                                makes CWaylandInputThread::ThreadFunc abort()
@@ -258,23 +260,55 @@ fi
 # --- launch ----------------------------------------------------------------
 start_trace
 
-if [[ "${GAMESCOPE_DISABLE:-0}" == "1" ]]; then
-    # Everything after the first `--` is the real command.
-    cmd=()
-    seen_sep=0
-    for arg in "$@"; do
-        if [[ $seen_sep -eq 1 ]]; then
-            cmd+=("$arg")
-        elif [[ "$arg" == "--" ]]; then
-            seen_sep=1
-        fi
-    done
+# Split our own argv at the first `--`: gamescope's flags before it, the game
+# command after it.
+GS_ARGS=()
+GAME_CMD=()
+seen_sep=0
+for arg in "$@"; do
+    if [[ $seen_sep -eq 1 ]]; then
+        GAME_CMD+=("$arg")
+    elif [[ "$arg" == "--" ]]; then
+        seen_sep=1
+    else
+        GS_ARGS+=("$arg")
+    fi
+done
 
-    if [[ ${#cmd[@]} -eq 0 ]]; then
+# ---------------------------------------------------------------------------
+# The "gamescope lag bomb"
+#
+# Steam exports LD_PRELOAD for the whole launch command, so the Steam overlay
+# (gameoverlayrenderer.so) is preloaded into GAMESCOPE ITSELF, not just into the
+# game. Roughly 24 minutes in, that makes gamescope's frame pacing collapse: the
+# GPU starts flipping between idle and full clocks and the game becomes
+# unplayable. It is documented upstream and matched this machine exactly —
+# measured 2026-09-04 on Crimson Desert, lag at minute 24-26 with the GPU
+# oscillating between 100%/338W and 72%/163W while nothing was saturated (IO
+# pressure 0.00, CPU pressure 0.53, 73 of 89 game threads asleep, no amdgpu
+# events, VRAM 12.9 of 16.3 GiB with GTT flat).
+#
+# The fix is to run gamescope without LD_PRELOAD and hand it back to the game, so
+# the overlay, game recording and the rest of Steam's features keep working.
+# Blanking LD_PRELOAD outright also stops the stutter but loses all of that.
+STEAM_PRELOAD="${LD_PRELOAD:-}"
+if [[ -n "$STEAM_PRELOAD" ]]; then
+    unset LD_PRELOAD
+    log "stripped LD_PRELOAD from gamescope (lag bomb); re-injecting it for the game"
+fi
+
+# Rebuild the game command with LD_PRELOAD restored in front of it.
+run_game=("${GAME_CMD[@]}")
+if [[ -n "$STEAM_PRELOAD" && ${#GAME_CMD[@]} -gt 0 ]]; then
+    run_game=(env "LD_PRELOAD=$STEAM_PRELOAD" "${GAME_CMD[@]}")
+fi
+
+if [[ "${GAMESCOPE_DISABLE:-0}" == "1" ]]; then
+    if [[ ${#GAME_CMD[@]} -eq 0 ]]; then
         log "GAMESCOPE_DISABLE=1 but no '--' in args; running gamescope after all"
     else
-        log "GAMESCOPE_DISABLE=1, running without gamescope: ${cmd[*]}"
-        setsid "${cmd[@]}" &
+        log "GAMESCOPE_DISABLE=1, running without gamescope: ${GAME_CMD[*]}"
+        setsid "${run_game[@]}" &
         GAMESCOPE_PID=$!
         GAMESCOPE_PGID=$GAMESCOPE_PID
         GAMESCOPE_RC=0
@@ -292,13 +326,19 @@ fi
 # 2026-09-04 about 10s in. The abort itself says nothing; the protocol tail says
 # which request sway rejected. The log is large (~35k lines per 10s), so it is
 # written to a file rather than Steam's console log, and only on request.
+if [[ ${#GAME_CMD[@]} -gt 0 ]]; then
+    GS_INVOKE=("${GS_ARGS[@]}" -- "${run_game[@]}")
+else
+    GS_INVOKE=("$@")
+fi
+
 if [[ "${GAMESCOPE_WLDEBUG:-0}" == "1" ]]; then
     WLDEBUG_LOG="${TRACE_DIR}/wldebug-$(date +%Y%m%d-%H%M%S).log"
     mkdir -p "$TRACE_DIR" 2>/dev/null || true
     log "WAYLAND_DEBUG capture -> $WLDEBUG_LOG"
-    WAYLAND_DEBUG=1 setsid gamescope "$@" >"$WLDEBUG_LOG" 2>&1 &
+    WAYLAND_DEBUG=1 setsid gamescope "${GS_INVOKE[@]}" >"$WLDEBUG_LOG" 2>&1 &
 else
-    setsid gamescope "$@" &
+    setsid gamescope "${GS_INVOKE[@]}" &
 fi
 GAMESCOPE_PID=$!
 GAMESCOPE_PGID=$GAMESCOPE_PID
