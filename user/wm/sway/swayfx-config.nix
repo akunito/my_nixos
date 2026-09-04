@@ -590,11 +590,12 @@ in
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter";
           "${hyper}+B" =
             "exec env ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles";
-          # Show/hide Waybar (W for Waybar; +b and +B were already taken by
-          # Bottles). SIGUSR1 rather than a restart -- see the script for why a
-          # restart is the wrong tool and why sway's `bar ... mode` does not
-          # drive Waybar at all.
-          "${hyper}+W" =
+          # Show/hide Waybar. H for Hide: every bare hyper letter except "i" is
+          # already bound, "+b"/"+B" are Bottles, and "+w" is workspace-nav-next
+          # -- which is NOT a free "+W", see the case-folding assertion below.
+          # SIGUSR1 rather than a restart; the script says why a restart is the
+          # wrong tool and why sway's `bar ... mode` does not drive Waybar.
+          "${hyper}+Shift+h" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/waybar-toggle.sh";
           # Control Panel (NixOS Infrastructure Management) - hyper+S
           "${hyper}+s" =
@@ -1520,4 +1521,34 @@ in
       end=${pkgs.systemd}/bin/systemctl --user start swayidle.service
     '';
   };
+
+  # Keybinding collision guard.
+  #
+  # sway resolves a bindsym keysym CASE-INSENSITIVELY, and an uppercase letter
+  # does NOT imply Shift -- that has to be written out. So "${hyper}+W" and
+  # "${hyper}+w" are the same chord: the one defined later silently wins, and
+  # sway raises the red "There are errors in your config file" nagbar on every
+  # reload. Nothing else reports it. `sway --validate` does not: the message is
+  # a *warning*, produced only while loading against a live compositor, and it
+  # is delivered to swaynag on stdin rather than to any log, so the only way to
+  # read it is to point swaynag_command at a capture script.
+  #
+  # That is how a Waybar toggle added on "${hyper}+W" was found dead on X13,
+  # swallowed by the existing "${hyper}+w" (workspace-nav-next). Catch it at
+  # eval time instead, where it costs nothing.
+  assertions =
+    let
+      binds = builtins.attrNames config.wayland.windowManager.sway.config.keybindings;
+      folded = map lib.toLower binds;
+      dupes = lib.unique (lib.filter (k: lib.count (x: x == k) folded > 1) folded);
+    in
+    [
+      {
+        assertion = dupes == [ ];
+        message =
+          "sway: these keybindings collide once sway case-folds the keysym "
+          + "(uppercase does not mean Shift -- write Shift+ explicitly): "
+          + lib.concatStringsSep ", " dupes;
+      }
+    ];
 }
