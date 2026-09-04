@@ -221,6 +221,13 @@ in
         automountConfig = { TimeoutIdleSec = "600"; };
       }
     ];
+    # TimeoutIdleSec above never fires on this machine: the expiry umount comes
+    # back EBUSY, so the share stayed mounted for seven days and every stat of it
+    # blocked while the NAS slept — which is what froze Gwenview badly enough for
+    # KWin to offer to kill it. The reaper lazily unmounts once the NAS stops
+    # answering on 2049. The only consumer here is install.sh's pre-update
+    # home_backup, which re-triggers the automount when it needs it.
+    nfsUnmountUnreachable = true;
 
     # === Other Features ===
     starCitizenModules = false; # Disable Star Citizen optimizations

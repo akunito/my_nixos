@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  pkgs-unstable,
   lib,
   userSettings,
   systemSettings,
@@ -331,7 +332,18 @@ EOF
     font-awesome_5 # Swappy uses Font Awesome icons
 
     # Gaming tools
-    gamescope
+    #
+    # gamescope comes from UNSTABLE deliberately. This profile's `pkgs` is
+    # nixpkgs-stable (nixos-25.11), which is still on 3.16.17 — a version caught
+    # between two 3.16.x bugs we actually hit on DESK:
+    #   - its Wayland backend aborts (SIGABRT in CWaylandInputThread::ThreadFunc)
+    #     partway into a Black Desert launch, killing the game ~10s in
+    #   - `--force-grab-cursor`, which the whole 3.16.x line still needs to stop
+    #     the camera pointing at the floor, causes multi-second freezes on mouse
+    #     movement (upstream #1851)
+    # Refreshing flake.lock cannot fix this, because the lock does not move the
+    # stable input's package set. Unstable is eleven point releases ahead.
+    pkgs-unstable.gamescope
     mangohud
 
     # Terminal and tools

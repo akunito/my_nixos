@@ -441,6 +441,11 @@
     '';
     nfsClientEnable = false;
     nfsMounts = [ ];
+    # Lazily unmount an NFS share once its server stops answering, so a sleeping
+    # NAS cannot leave a stale mount that blocks every process touching it (see
+    # system/hardware/nfs_client.nix for the full mechanism). For machines whose
+    # server sleeps on a schedule; harmless but pointless where it does not.
+    nfsUnmountUnreachable = false;
     nfsAutoMounts = [ ];
 
     # SSH defaults

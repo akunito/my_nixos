@@ -216,7 +216,12 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
             fi
 
             # Count peers and connection types
-            PEERS=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '.Peer | length // 0')
+            # `.Peer` is null, not {}, whenever tailscaled has no peers yet — right
+            # after start, while logged out, or mid-reconnect. `to_entries` on null
+            # is a hard error ("null (null) has no keys"), which is the jq noise this
+            # unit logged three times per run. `// {}` makes every peer walk below
+            # degrade to "zero peers" instead of failing.
+            PEERS=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '(.Peer // {}) | length')
             echo "# HELP tailscale_peers Total number of peers"
             echo "# TYPE tailscale_peers gauge"
             echo "tailscale_peers $PEERS"
@@ -237,7 +242,7 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
             RELAY_COUNT=0
 
             # Process each peer
-            echo "$STATUS" | ${pkgs.jq}/bin/jq -r '.Peer | to_entries[] | @base64' | while read -r peer_b64; do
+            echo "$STATUS" | ${pkgs.jq}/bin/jq -r '(.Peer // {}) | to_entries[] | @base64' | while read -r peer_b64; do
               PEER=$(echo "$peer_b64" | base64 -d)
 
               # Use DNSName (Headscale-assigned name) instead of HostName (device-reported)
@@ -305,8 +310,8 @@ lib.mkIf (systemSettings.tailscaleEnable or false) {
             done
 
             # Summary counts
-            DIRECT_COUNT=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '[.Peer | to_entries[] | select(.value.CurAddr != "" and .value.CurAddr != null)] | length')
-            RELAY_COUNT=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '[.Peer | to_entries[] | select(.value.CurAddr == "" or .value.CurAddr == null)] | length')
+            DIRECT_COUNT=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '[(.Peer // {}) | to_entries[] | select(.value.CurAddr != "" and .value.CurAddr != null)] | length')
+            RELAY_COUNT=$(echo "$STATUS" | ${pkgs.jq}/bin/jq '[(.Peer // {}) | to_entries[] | select(.value.CurAddr == "" or .value.CurAddr == null)] | length')
 
             echo "# HELP tailscale_peers_direct Number of peers with direct connections"
             echo "# TYPE tailscale_peers_direct gauge"
