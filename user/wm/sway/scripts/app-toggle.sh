@@ -216,10 +216,15 @@ sway_do() {
 # ---------------------------------------------------------------------------
 # Wait for a window to appear after launch
 # ---------------------------------------------------------------------------
+# Echoes the con_id of the window that appeared. Only ever called on the launch
+# path, where the match count was 0, so any match is by definition ours. An app
+# that opens two windows at once (splash + main) yields whichever comes first in
+# tree order -- either one identifies the right workspace, which is all the
+# caller needs.
 wait_for_window() {
-    local max_iterations=50 iteration=0 count
+    local max_iterations=50 iteration=0 id
     while [ "$iteration" -lt "$max_iterations" ]; do
-        count=$(swaymsg -t get_tree 2>/dev/null | jq --arg pat "$JQ_PATTERN" --arg mode "$MATCH_MODE" '
+        id=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg pat "$JQ_PATTERN" --arg mode "$MATCH_MODE" '
             [ recurse(.nodes[]?, .floating_nodes[]?)
               | select(.type == "con" or .type == "floating_con")
               | select(
@@ -229,9 +234,10 @@ wait_for_window() {
                       ((.app_id // "") | ascii_downcase == $pat) or
                       ((.window_properties.class // "") | ascii_downcase == $pat)
                   end
-                ) ] | length' 2>/dev/null)
-        if [ "${count:-0}" -gt 0 ]; then
-            log INFO "window appeared after ${iteration} poll(s) (~$((iteration * 100))ms)"
+                ) | .id ] | .[0] // empty' 2>/dev/null)
+        if [ -n "${id:-}" ]; then
+            log INFO "window appeared after ${iteration} poll(s) (~$((iteration * 100))ms) con_id=$id"
+            printf '%s\n' "$id"
             return 0
         fi
         sleep 0.1
@@ -239,6 +245,29 @@ wait_for_window() {
     done
     warn "no window matching [$PATTERN] appeared within 5s"
     return 1
+}
+
+# ---------------------------------------------------------------------------
+# Follow the window we just launched
+#
+# `assign` rules map a new window onto its home workspace WITHOUT giving it
+# focus, so launching Obsidian from workspace 41 left you on 41 looking at an
+# unchanged screen while the window opened on 21. Toggling an app that is
+# ALREADY running has always jumped to it -- the show and cycle branches below
+# focus by con_id -- so the first launch was the one inconsistent case.
+#
+# Deliberately done here and not as a sway rule: `for_window ... focus` would
+# also yank you away when the app opens a window for some OTHER reason, such as
+# a link followed from a different program. This only fires for a launch this
+# script performed.
+#
+# A window that mapped on the current workspace is focused by sway anyway, so
+# for apps with no assign rule this is a no-op.
+# ---------------------------------------------------------------------------
+follow_new_window() {
+    local id="$1"
+    [ -n "$id" ] || return 0
+    sway_do "[con_id=$id] focus" || warn "focus failed for new window con_id=$id"
 }
 
 # ---------------------------------------------------------------------------
@@ -299,8 +328,9 @@ launch() {
 if [ "${ACTUAL_COUNT:-0}" -eq 0 ]; then
     log INFO "decision=LAUNCH (no matching windows)"
     launch || finish 1
-    if wait_for_window; then
+    if NEW_ID=$(wait_for_window); then
         apply_window_properties "$APP_ID"
+        follow_new_window "$NEW_ID"
         finish 0
     fi
     finish 1   # launched but nothing showed up -- surface it instead of pretending success
