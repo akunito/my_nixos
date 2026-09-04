@@ -221,8 +221,16 @@ sway_do() {
 # that opens two windows at once (splash + main) yields whichever comes first in
 # tree order -- either one identifies the right workspace, which is all the
 # caller needs.
+# 20s, not the 5s this used to allow. Timing out early costs more than it used
+# to: it also skips follow_new_window, so a slow launch silently falls back to
+# the old behaviour of leaving you on the workspace you started from. The apps
+# that carry an `assign` rule are the heavy Electron ones, where a cold start
+# is the case most likely to run long. Polling longer is free -- it only runs
+# while nothing has appeared -- and the debounce lock is held for the whole
+# wait, so a second keypress mid-launch is dropped rather than starting the app
+# twice.
 wait_for_window() {
-    local max_iterations=50 iteration=0 id
+    local max_iterations=200 iteration=0 id
     while [ "$iteration" -lt "$max_iterations" ]; do
         id=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg pat "$JQ_PATTERN" --arg mode "$MATCH_MODE" '
             [ recurse(.nodes[]?, .floating_nodes[]?)
@@ -243,7 +251,7 @@ wait_for_window() {
         sleep 0.1
         iteration=$((iteration + 1))
     done
-    warn "no window matching [$PATTERN] appeared within 5s"
+    warn "no window matching [$PATTERN] appeared within 20s"
     return 1
 }
 

@@ -566,8 +566,13 @@ in
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh zen-beta zen-beta";
           "${hyper}+A" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh .blueman-manager-wrapped blueman-manager";
+          # Obsidian reports app_id "md.Obsidian" (its own desktop entry agrees:
+          # StartupWMClass=md.Obsidian). Matching on "obsidian" never hit, so
+          # every press took the no-windows branch and started ANOTHER instance
+          # -- which is why a second Obsidian came up on the vault picker
+          # instead of raising the one already open.
           "${hyper}+D" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh md.Obsidian obsidian --no-sandbox --ozone-platform=wayland --ozone-platform-hint=auto --enable-features=UseOzonePlatform,WaylandWindowDecorations";
           "${hyper}+V" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh vivaldi-stable vivaldi";
           "${hyper}+G" =
@@ -1293,7 +1298,11 @@ in
       # VSCode (native) on workspace 12
       assign [app_id="code"] workspace number 12
 
-      # Obsidian - support both Flatpak and native versions
+      # Obsidian - the native package reports app_id "md.Obsidian"; sway
+      # criteria are CASE-SENSITIVE regexes, so neither the bare "obsidian" nor
+      # the Flatpak id below ever matched it and its windows landed on whatever
+      # workspace happened to be focused. Both kept for the Flatpak build.
+      assign [app_id="^md\.Obsidian$"] workspace number 21
       assign [app_id="obsidian"] workspace number 21
       assign [app_id="md.obsidian.Obsidian"] workspace number 21
 
