@@ -19,9 +19,12 @@ lib.mkIf darwin.homebrewEnable {
       # it for cleanup modes, so pass the current flags directly instead.
       cleanup = "none";
       upgrade = darwin.homebrewOnActivation.upgrade;
+      # --force is required as well: without it `brew bundle install --cleanup`
+      # only prints what it would remove and exits 1, which aborts activation
+      # before home-manager runs.
       extraFlags =
-        if darwin.homebrewOnActivation.cleanup == "zap" then [ "--cleanup" "--zap" ]
-        else if darwin.homebrewOnActivation.cleanup == "uninstall" then [ "--cleanup" ]
+        if darwin.homebrewOnActivation.cleanup == "zap" then [ "--cleanup" "--zap" "--force" ]
+        else if darwin.homebrewOnActivation.cleanup == "uninstall" then [ "--cleanup" "--force" ]
         else [ ];
     };
 
