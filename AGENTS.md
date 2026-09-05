@@ -13,6 +13,22 @@ This is a NixOS flake-based dotfiles repo. Prefer NixOS/Home-Manager modules ove
   - Hostname/specific overrides in `profiles/KOMI_LXC_<name>-config.nix`.
   - All profiles registered in unified `flake.nix`.
 
+## macOS (darwin) app management — ABSOLUTE RULE
+
+The declared list is the only source of truth for installed apps.
+
+- GUI app → `systemSettings.darwin.homebrewCasks` in `profiles/MACBOOK-KOMI-config.nix`
+- CLI tool → `homePackages` / `systemPackages` in the same profile
+- Apply with `./scripts/darwin-rebuild.sh MACBOOK-KOMI` — never `darwin-rebuild switch` directly
+
+NEVER run `brew install`, `brew install --cask`, `brew uninstall`, or `nix-env -i`.
+`homebrewOnActivation.cleanup = "zap"` deletes every cask not in `homebrewCasks`
+on the next rebuild, so an ad-hoc install is silently undone along with its data.
+
+The wrapper script exists because nix-darwin runs Homebrew before home-manager:
+a Homebrew failure aborts activation partway and leaves user config unlinked
+while still looking like a successful rebuild.
+
 ## Home Manager updates
 
 When modifying Home Manager configuration (user-level modules), apply changes using:

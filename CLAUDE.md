@@ -546,9 +546,39 @@ Quick lookup by tag: `docs/00_ROUTER.md` (filter by `hardware`, `gaming`, `user-
   - Use `pkgs.stdenv.isDarwin` / `lib.mkIf (!pkgs.stdenv.isDarwin)` for platform guards
   - Never break existing Linux functionality when adding darwin support
   - Never comment out packages globally — use `lib.optionals` with platform check
-- **Apply workflow**: `darwin-rebuild switch --flake .#MACBOOK-KOMI`
+- **Apply workflow**: `./scripts/darwin-rebuild.sh MACBOOK-KOMI` (never `darwin-rebuild switch` directly — see below)
 - **Homebrew for GUI apps**: Use `systemSettings.darwin.homebrewCasks` for GUI apps, Nix for CLI tools
 - **Key darwin settings**: `homebrewCasks`, `dockAutohide`, `dockOrientation`, `touchIdSudo`, `keyboardKeyRepeat`
+
+### App management is declarative (ABSOLUTE RULE)
+
+**The declared list is the only source of truth for installed apps.**
+
+- **GUI app** → add to `systemSettings.darwin.homebrewCasks` in `profiles/MACBOOK-KOMI-config.nix`
+- **CLI tool** → add to `homePackages` (user) or `systemPackages` (system) in the same profile
+- **Then apply**: `./scripts/darwin-rebuild.sh MACBOOK-KOMI`
+
+**NEVER** `brew install`, `brew install --cask`, `brew uninstall`, or `nix-env -i`.
+These are blocked by deny rules in `user/app/claude-code/claude-code.nix`.
+
+**WHY**: `homebrewOnActivation.cleanup = "zap"` (`lib/defaults.nix`) uninstalls and
+zaps every cask NOT in `homebrewCasks` on the next rebuild. An ad-hoc install is
+deleted — along with its data — the next time anyone rebuilds. It is not a
+shortcut, it is work that gets silently thrown away.
+
+Removing an app follows the same path: delete the entry, then rebuild.
+
+### Rebuilding macOS
+
+**Always use the wrapper**: `./scripts/darwin-rebuild.sh [PROFILE]`
+
+Do NOT call `darwin-rebuild switch` directly. nix-darwin runs Homebrew early in
+the activation script, before home-manager. Any non-zero exit there aborts the
+switch partway — `/etc`, launchd, pam and fonts get applied, but the system
+profile is never switched and **no user config is linked** — while the terminal
+output still looks like success. The wrapper records the store path the build
+should produce and asserts `/run/current-system` actually advanced to it, so a
+half-applied system fails loudly instead of silently.
 
 ## Project-specific rules
 
