@@ -47,6 +47,8 @@ let
     retentionDays,  # --keep-within value in days
     retentionPolicy ? "", # Additional retention flags (optional)
     preScript ? "", # Commands to run before backup (e.g., pg_dumpall)
+    rootPreScript ? "", # Like preScript, but runs as root (ExecStartPre "+")
+                        # for sources the service user cannot read at all
     description,    # Human-readable description
   }: let
     repo = "${repoBase}/${repoSuffix}";
@@ -116,6 +118,11 @@ let
         # because restic 0.18.x uses access(2) on directory entries which
         # ignores process capabilities for non-root users (issues #2447,
         # #2563) — see vps-backup-source-acls.service below.
+      } // lib.optionalAttrs (rootPreScript != "") {
+        # "+" prefix: run with full privileges despite User= above. For dumps
+        # of sources the service user cannot read (e.g. /var/lib/headscale,
+        # 0700 headscale:headscale — even sqlite3 can't open it as ${username}).
+        ExecStartPre = "+${pkgs.writeShellScript "vps-restic-${name}-rootpre" rootPreScript}";
       };
       unitConfig = {
         # Limit retries (must be in [Unit], not [Service])
@@ -225,6 +232,23 @@ let
         # Server stopped: data/world on disk is already quiescent, so the live
         # copy in this snapshot is itself a valid restore point.
         log "Minecraft not running - live world is already consistent, skipping flush"
+      fi
+    '';
+    rootPreScript = ''
+      # Safe SQLite dump of the Headscale DB. It runs in WAL mode, so the live
+      # db.sqlite3 + -wal pair restic copies at different instants is only
+      # crash-consistent — a restore could lose or corrupt recent node/key
+      # state. The .backup API takes a transactionally consistent copy.
+      # RESTORE FROM db-backup.sqlite3, not db.sqlite3.
+      # Runs as root (ExecStartPre "+"): /var/lib/headscale is 0700 headscale.
+      if [ -f /var/lib/headscale/db.sqlite3 ]; then
+        if ${pkgs.sqlite}/bin/sqlite3 /var/lib/headscale/db.sqlite3 \
+             ".backup /var/lib/headscale/db-backup.sqlite3"; then
+          echo "Headscale DB dumped to db-backup.sqlite3"
+        else
+          # Non-fatal: the live copy still lands in the snapshot as fallback.
+          echo "WARNING: Headscale DB dump failed — snapshot carries only the live copy"
+        fi
       fi
     '';
     description = "Docker configs, Headscale state, secrets, Vaultwarden, Uptime Kuma, OpenClaw, UniFi, n8n, Plane";
