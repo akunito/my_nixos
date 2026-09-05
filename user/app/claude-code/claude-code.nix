@@ -168,6 +168,23 @@ let
         "Bash(ssh*nixos-rebuild*)"
         "Bash(ssh*nixos-rebuild switch*)"
 
+        # === Declarative app management ===
+        # Apps are declared in the profile, never installed ad hoc. On darwin,
+        # homebrew cleanup = "zap" deletes anything not listed in
+        # systemSettings.darwin.homebrewCasks on the next rebuild, so an ad-hoc
+        # install is silently undone. Add the app to the profile and rebuild.
+        # Read-only brew commands (list, info, search, outdated) stay allowed.
+        "Bash(brew install*)"
+        "Bash(brew uninstall*)"
+        "Bash(brew remove*)"
+        "Bash(brew tap*)"
+        "Bash(brew bundle*)"
+        "Bash(*brew install*)"
+        "Bash(*brew uninstall*)"
+        "Bash(nix-env -i*)"
+        "Bash(nix-env --install*)"
+        "Bash(*nix-env -i*)"
+
         # === SSH key and credential protection ===
         "Read(~/.ssh/id_*)"
         "Read(~/.ssh/*.pem)"
