@@ -1,0 +1,33 @@
+[mcp_servers.grafana]
+command = "npx"
+args = [
+    "-y",
+    "@modelcontextprotocol/server-grafana",
+    "--transport",
+    "stdio",
+    "--disable-write",
+]
+env_vars = [
+    "GRAFANA_URL",
+    "GRAFANA_API_KEY",
+]
+
+[mcp_servers.perplexity]
+command = "npx"
+args = [
+    "-y",
+    "@perplexity-ai/mcp-server",
+]
+env_vars = ["PERPLEXITY_API_KEY"]
+
+[mcp_servers.plane]
+command = "uvx"
+args = [
+    "plane-mcp-server",
+    "stdio",
+]
+env_vars = [
+    "PLANE_API_KEY",
+    "PLANE_BASE_URL",
+    "PLANE_WORKSPACE_SLUG",
+]
