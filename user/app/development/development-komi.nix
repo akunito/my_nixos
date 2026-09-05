@@ -15,6 +15,10 @@
     pkgs-unstable.nodejs_22        # Node.js 22.x LTS (includes npm, npx)
     (pkgs-unstable.python312.withPackages (ps: [
       ps.pip
+      ps.requests
+      ps.rich
+      ps.matplotlib
+      ps.pandas
       ps.telethon
     ]))                            # Python 3.12 with pip and telethon
     pkgs-unstable.uv               # Python package manager (provides uvx for MCP servers)
@@ -24,10 +28,12 @@
 
     # === Code Editors and IDEs ===
     pkgs-unstable.vscode           # Visual Studio Code
-    pkgs-unstable.code-cursor      # Cursor AI-powered code editor
+    # Cursor is installed via Homebrew cask (see MACBOOK-KOMI-config.nix homebrewCasks)
+    # to avoid duplicate macOS .app bundles.
     # Zed is installed via Homebrew cask (see MACBOOK-KOMI-config.nix homebrewCasks)
     # — the nixpkgs darwin build is CLI-only and lacks a proper .app bundle.
     pkgs-unstable.opencode         # Open-source code editor
+    pkgs-unstable.codex            # OpenAI Codex CLI
     pkgs-unstable.claude-code-bin  # Claude Code CLI (pre-built binary)
     pkgs-unstable.qwen-code        # Alibaba Qwen Code editor
 

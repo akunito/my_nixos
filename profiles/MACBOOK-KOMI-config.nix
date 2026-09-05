@@ -19,19 +19,21 @@ in
         "zen"           # Zen Browser
 
         # === Development ===
-        "cursor"
+        "cursor"        # Cursor GUI app; CLI/editor package kept out of Nix to avoid duplicate .app bundles
         "zed"           # Zed high-performance code editor
         "github"        # GitHub Desktop
         "hammerspoon"
+        "chatgpt"       # ChatGPT/Codex desktop app
 
         # === Communication ===
         "whatsapp"
         "discord"
         "slack"
+        "zoom"          # Video meetings
 
         # === Productivity ===
         "obsidian"
-        "linear-linear"
+        "linear"
         "notion"
         "granola"       # AI meeting notes app
         "claude"        # Claude desktop app
@@ -51,6 +53,7 @@ in
         # === Utilities ===
         "kitty"
         "raycast"
+        "stats"
         "1password"
         "karabiner-elements" # CapsLock → Hyperkey remapping
         "nordvpn"            # VPN client
@@ -68,6 +71,13 @@ in
         "displayplacer"      # Programmatic display resolution control (used by game-mode.sh)
         "human37/open-wispr/open-wispr" # Push-to-talk voice dictation (local Whisper, Metal accelerated)
       ];
+
+      homebrewOnActivation = base.systemSettings.darwin.homebrewOnActivation // {
+        # Keep rebuilds idempotent and avoid upgrading GUI apps that may be running
+        # the rebuild itself, such as ChatGPT/Codex.
+        autoUpdate = false;
+        upgrade = false;
+      };
     };
 
     # === Feature Flags ===
@@ -85,7 +95,9 @@ in
     planeApiKey = secrets.planeApiKey;
 
     homePackages = pkgs: pkgs-unstable: [
+      pkgs-unstable.bitwarden-desktop # Bitwarden desktop app
       pkgs-unstable.brave             # Brave browser app
+      pkgs.php                    # PHP CLI runtime
       pkgs.python3Packages.subliminal # CLI subtitle downloader
       pkgs.python3Packages.telethon # Telegram client library
     ];

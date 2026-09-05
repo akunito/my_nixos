@@ -15,8 +15,14 @@ lib.mkIf darwin.homebrewEnable {
     # Behavior on nix-darwin activation
     onActivation = {
       autoUpdate = darwin.homebrewOnActivation.autoUpdate;
-      cleanup = darwin.homebrewOnActivation.cleanup;
+      # Homebrew removed brew bundle's --force-cleanup flag. nix-darwin still emits
+      # it for cleanup modes, so pass the current flags directly instead.
+      cleanup = "none";
       upgrade = darwin.homebrewOnActivation.upgrade;
+      extraFlags =
+        if darwin.homebrewOnActivation.cleanup == "zap" then [ "--cleanup" "--zap" ]
+        else if darwin.homebrewOnActivation.cleanup == "uninstall" then [ "--cleanup" ]
+        else [ ];
     };
 
     # Global settings

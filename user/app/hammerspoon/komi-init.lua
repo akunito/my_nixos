@@ -61,6 +61,25 @@ local appsExcludedFromCmdN = {
     ["WhatsApp"] = true,  -- Cmd+N opens new chat dropdown
 }
 
+-- Apps that need a bundle-id launch instead of `open -a <name>`
+local appOpenCommands = {}
+
+local function openApp(appName)
+    hs.execute(appOpenCommands[appName] or ("open -a '" .. appName .. "'"))
+end
+
+-- Get windows for an app across ALL Spaces (including fullscreen on other Spaces).
+-- app:allWindows() is Space-scoped and misses fullscreen / other-Space windows,
+-- which made the launcher spawn duplicate windows.
+local function getWindowsAllSpaces(appName)
+    local wf = hs.window.filter.new(false):setAppFilter(appName, {
+        currentSpace = nil, -- include all Spaces
+        visible = nil,      -- include hidden/minimized too
+        allowRoles = "*",   -- include fullscreen and other roles
+    })
+    return wf:getWindows()
+end
+
 -- Function to launch or focus an app (simplified and more reliable)
 local function launchOrFocus(appName)
     local app = hs.application.find(appName)
@@ -77,8 +96,8 @@ local function launchOrFocus(appName)
         app:unhide()
     end
 
-    -- Get all windows for this app
-    local allWindows = app:allWindows()
+    -- Get all windows across Spaces (so fullscreen windows on other Spaces count)
+    local allWindows = getWindowsAllSpaces(appName)
 
     -- If no windows at all, activate app and try to create a window
     if #allWindows == 0 then
@@ -103,7 +122,7 @@ local function launchOrFocus(appName)
                 hs.eventtap.keyStroke({"cmd"}, "n", 0, app)
             else
                 -- For excluded apps (like WhatsApp), try clicking on Dock icon
-                hs.execute("open -a '" .. appName .. "'")
+                openApp(appName)
             end
         end)
         return
@@ -225,8 +244,8 @@ local function launchOrCycle(appName)
         return
     end
 
-    -- App is running - check window states
-    local allWindows = app:allWindows()
+    -- App is running - check window states (across all Spaces)
+    local allWindows = getWindowsAllSpaces(appName)
 
     -- No windows - activate and try to create one
     if #allWindows == 0 then
@@ -394,6 +413,48 @@ end)
 -- ============================================================================
 -- SYSTEM
 -- ============================================================================
+
+-- Copy the newest Desktop screenshot to the clipboard.
+-- Caps Lock is mapped to Hyper by Karabiner, so this is Caps Lock + P.
+local function copyLatestScreenshot()
+    local desktop = os.getenv("HOME") .. "/Desktop"
+    local latestPath = nil
+    local latestModified = -1
+
+    for name in hs.fs.dir(desktop) do
+        -- Covers the current "Screenshot …" and older "Screen Shot …" macOS
+        -- filename formats without picking up unrelated Desktop images.
+        if name:lower():match("^screen ?shot.*%.png$") then
+            local path = desktop .. "/" .. name
+            local modified = hs.fs.attributes(path, "modification")
+            if modified and modified > latestModified then
+                latestPath = path
+                latestModified = modified
+            end
+        end
+    end
+
+    if not latestPath then
+        hs.alert.show("No Desktop screenshots found", 1.5)
+        return
+    end
+
+    -- macOS screenshots are configured as PNGs in system/darwin/defaults.nix.
+    -- AppleScript preserves the image type on the clipboard, allowing Cmd+V in
+    -- apps such as ChatGPT, Slack, and Messages.
+    local escapedPath = latestPath:gsub("\\", "\\\\"):gsub("\"", "\\\"")
+    local copied = hs.osascript.applescript(
+        "set the clipboard to (read (POSIX file \"" .. escapedPath .. "\") as «class PNGf»)"
+    )
+
+    if copied then
+        hs.alert.show("Newest screenshot copied", 1.2)
+    else
+        hs.alert.show("Couldn't copy newest screenshot", 1.5)
+    end
+end
+
+hs.hotkey.bind(hyper, "P", copyLatestScreenshot)
 
 -- Reload config
 hs.hotkey.bind(hyper, "R", function()

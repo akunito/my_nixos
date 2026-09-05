@@ -96,12 +96,12 @@ let
 in
 {
   home.packages = with pkgs; [
-    kitty
     # Explicitly install JetBrains Mono Nerd Font to ensure it's available
     nerd-fonts.jetbrains-mono
     kitty-tmux
   ];
   programs.kitty.enable = true;
+  programs.kitty.package = lib.mkIf pkgs.stdenv.isDarwin null;
   programs.kitty.settings = lib.mkMerge [
     {
       background_opacity = lib.mkForce "0.85";
@@ -186,4 +186,5 @@ in
     # Multi-line input: Shift+Enter sends CSI u encoded escape sequence
     "shift+enter" = "send_text all \\x1b[13;2u";
   };
+
 }
