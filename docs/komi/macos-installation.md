@@ -116,7 +116,7 @@ The darwin profile uses the **same terminal modules** as the DESK (Linux) profil
 
 ### Via Homebrew Casks (GUI apps)
 Configured per-profile in `profiles/MACBOOK-*-config.nix`:
-- Arc browser
+- Zen browser
 - Cursor IDE
 - Obsidian
 - Hammerspoon
@@ -180,13 +180,50 @@ cat /etc/pam.d/sudo
 2. Click menu bar icon -> Reload Config
 3. Check Console.app for Hammerspoon errors
 
+## Managing installed apps
+
+**The declared list is the only source of truth.** Apps are never installed ad hoc.
+
+| Want to... | Do this |
+|------------|---------|
+| Add a GUI app | Add the cask to `systemSettings.darwin.homebrewCasks` in `profiles/MACBOOK-KOMI-config.nix`, then rebuild |
+| Add a CLI tool | Add the package to `homePackages` in the same profile, then rebuild |
+| Remove an app | Delete its entry from the profile, then rebuild |
+
+Do **not** run `brew install`, `brew install --cask`, `brew uninstall`, or
+`nix-env -i`. `homebrewOnActivation.cleanup = "zap"` (set in `lib/defaults.nix`)
+uninstalls and zaps every cask that is not listed in `homebrewCasks` on the next
+rebuild, so anything installed ad hoc is deleted — along with its data — the
+next time anyone rebuilds.
+
+These commands are blocked by Claude Code deny rules in
+`user/app/claude-code/claude-code.nix`. Read-only brew commands (`brew list`,
+`brew info`, `brew search`, `brew outdated`) remain available.
+
 ## Updating
 
 ```bash
 cd ~/.dotfiles
 git pull
-darwin-rebuild switch --flake .#system
+./scripts/darwin-rebuild.sh MACBOOK-KOMI
 ```
+
+### Always rebuild through the wrapper
+
+`./scripts/darwin-rebuild.sh [PROFILE]` replaces calling `darwin-rebuild switch`
+directly.
+
+nix-darwin runs Homebrew early in the activation script, **before** home-manager.
+Any non-zero exit there aborts the switch partway: `/etc`, launchd, pam and fonts
+are applied, but the system profile is never switched and no user config is
+linked — while the terminal output still looks like a success, because the
+failure is buried under hundreds of lines of Homebrew output.
+
+The wrapper records the store path the build should produce, runs the switch,
+then asserts `/run/current-system` actually advanced to it. A half-applied system
+fails loudly instead of silently. It also detects the specific case where
+`brew bundle` degrades into a dry run, which is what caused this failure mode
+historically.
 
 ## Creating Your Own Profile
 
