@@ -18,6 +18,7 @@
 #   GAMESCOPE_TRACE=1     record a GPU/memory/process CSV for the session
 #   GAMESCOPE_DISABLE=1   skip gamescope, run %command% directly (A/B testing)
 #   GAMESCOPE_WLDEBUG=1   run gamescope under WAYLAND_DEBUG=1 into a log file
+#                         (keeps the last 64MB; GAMESCOPE_WLDEBUG_MAX_MB overrides)
 #
 set -euo pipefail
 
@@ -154,8 +155,23 @@ fi
 if [[ "${GAMESCOPE_WLDEBUG:-0}" == "1" ]]; then
     WLDEBUG_LOG="${TRACE_DIR}/wldebug-$(date +%Y%m%d-%H%M%S).log"
     mkdir -p "$TRACE_DIR" 2>/dev/null || true
-    log "WAYLAND_DEBUG capture -> $WLDEBUG_LOG"
-    WAYLAND_DEBUG=1 setsid gamescope "${GS_INVOKE[@]}" >"$WLDEBUG_LOG" 2>&1 &
+    # WAYLAND_DEBUG writes about 600 KB/s, i.e. ~2 GB per hour. An uncapped
+    # capture of one long session produced a 2.9 GB file on 2026-09-04.
+    #
+    # Cap it with `tail -c`, not `head -c`: the evidence for a crash is at the
+    # END. The protocol error that identified this bug —
+    #   wl_display#1.error(xdg_surface#50, 3, "xdg_surface has never been
+    #   configured")
+    # — was in the last 30 lines, and the whole crash log was only 1.3 MB. `tail`
+    # holds the cap in memory and flushes at EOF, which a crashing gamescope
+    # always reaches.
+    #
+    # Process substitution keeps $! pointing at gamescope rather than at the
+    # tail, which a plain pipeline would break.
+    WLDEBUG_MAX=$(( ${GAMESCOPE_WLDEBUG_MAX_MB:-64} * 1048576 ))
+    log "WAYLAND_DEBUG capture (last $(( WLDEBUG_MAX / 1048576 ))MB) -> $WLDEBUG_LOG"
+    WAYLAND_DEBUG=1 setsid gamescope "${GS_INVOKE[@]}" \
+        > >(tail -c "$WLDEBUG_MAX" > "$WLDEBUG_LOG") 2>&1 &
 else
     setsid gamescope "${GS_INVOKE[@]}" &
 fi
