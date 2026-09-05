@@ -16,6 +16,7 @@ in
       homebrewCasks = [
         # === Browsers ===
         "arc"
+        "zen"           # Zen Browser
 
         # === Development ===
         "cursor"
@@ -99,6 +100,10 @@ in
     # === Theme ===
     theme = "ashes"; # Warm, muted base16 palette matching DESK
 
+    # === Browser ===
+    browser = "zen";
+    spawnBrowser = "zen";
+
     # === Hammerspoon (Window Management & App Switching) ===
     hammerspoonEnable = true;
     hammerspoonConfig = "komi"; # Use Komi's exact Hammerspoon config
@@ -115,7 +120,7 @@ in
       { key = "s"; app = "Spotify"; }
       { key = "c"; app = "Calculator"; }
       { key = "w"; app = "WhatsApp"; }
-      { key = "a"; app = "Arc"; }
+      { key = "a"; app = "Zen"; }
       { key = "o"; app = "Obsidian"; }
       { key = "l"; app = "Linear"; }
       { key = "y"; app = "System Preferences"; }
@@ -132,7 +137,7 @@ in
       { key = "u"; app = "NordVPN"; }
 
       # Window cycling (multiple apps on number keys)
-      { key = "1"; action = "cycleApp"; apps = [ "Arc" ]; }
+      { key = "1"; action = "cycleApp"; apps = [ "Zen" ]; }
       { key = "2"; action = "cycleApp"; apps = [ "Cursor" ]; }
       { key = "3"; action = "cycleApp"; apps = [ "kitty" ]; }
       { key = "4"; action = "cycleApp"; apps = [ "Obsidian" ]; }

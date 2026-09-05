@@ -77,4 +77,10 @@
     # Enable DXVK async shader compilation (reduces stutter on first encounter)
     DXVK_ASYNC = "1";
   };
+
+  home.activation.setDefaultBrowser = lib.mkIf (builtins.elem (userSettings.browser or "") [ "brave" "zen" ]) (
+    lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      "${pkgs.defaultbrowser}/bin/defaultbrowser" "${userSettings.browser}"
+    ''
+  );
 }

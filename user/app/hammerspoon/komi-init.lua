@@ -35,7 +35,7 @@ local apps = {
     S = "Spotify",
     C = "Calculator",
     W = "WhatsApp",
-    A = "Arc",
+    A = "Zen",
     O = "Obsidian",
     L = "Linear",
     Y = "System Settings",
@@ -279,8 +279,8 @@ end
 -- WINDOW CYCLING (Hyperkey + Number)
 -- ============================================================================
 
--- Hyper + 1/2/3/4 to switch Arc/Cursor/kitty/Obsidian windows
-hs.hotkey.bind(hyper, "1", function() switchWindows("Arc") end)
+-- Hyper + 1/2/3/4 to switch Zen/Cursor/kitty/Obsidian windows
+hs.hotkey.bind(hyper, "1", function() switchWindows("Zen") end)
 hs.hotkey.bind(hyper, "2", function() switchWindows("Cursor") end)
 hs.hotkey.bind(hyper, "3", function() switchWindows("kitty") end)  -- kitty is now on V, Terminal is on T
 hs.hotkey.bind(hyper, "4", function() switchWindows("Obsidian") end)
