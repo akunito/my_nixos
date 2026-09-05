@@ -33,6 +33,7 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
+    nixpkgs-darwin-latest.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-stable.url = "nixpkgs/nixos-25.11";
 
     home-manager-unstable.url = "github:nix-community/home-manager/master";

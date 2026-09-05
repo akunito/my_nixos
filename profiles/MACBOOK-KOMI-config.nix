@@ -85,6 +85,7 @@ in
     planeApiKey = secrets.planeApiKey;
 
     homePackages = pkgs: pkgs-unstable: [
+      pkgs-unstable.brave             # Brave browser app
       pkgs.python3Packages.subliminal # CLI subtitle downloader
       pkgs.python3Packages.telethon # Telegram client library
     ];

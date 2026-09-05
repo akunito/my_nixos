@@ -32,6 +32,12 @@ let
 
   # Now determine which lib to use
   lib = if systemStable then lib-stable else lib-unstable;
+  # Darwin profiles can track a fresher nixpkgs for user-facing "unstable" apps
+  # without moving the shared NixOS/LXC package input.
+  nixpkgsUnstableInput =
+    if isDarwin && inputs ? nixpkgs-darwin-latest
+    then inputs.nixpkgs-darwin-latest
+    else inputs.nixpkgs;
 
   # Re-merge with correct lib
   systemSettings = lib.recursiveUpdate defaults.systemSettings (profileConfig.systemSettings or {});
@@ -39,7 +45,7 @@ let
 
   # Get temporary pkgs for font computation
   tempPkgsStable = import inputs.nixpkgs-stable { system = systemSettings.system; };
-  tempPkgsUnstable = import inputs.nixpkgs { system = systemSettings.system; };
+  tempPkgsUnstable = import nixpkgsUnstableInput { system = systemSettings.system; };
 
   # Compute fonts based on systemStable (if not overridden in profile config)
   # Check if fonts were explicitly set in profile config
@@ -180,7 +186,7 @@ let
   rustOverlay = if useRustOverlay && (inputs ? rust-overlay)
                 then inputs.rust-overlay.overlays.default
                 else (_: _: {});
-  pkgs-unstable = import inputs.nixpkgs {
+  pkgs-unstable = import nixpkgsUnstableInput {
     system = systemSettingsWithFonts.system;
     config = {
       allowUnfree = true;
@@ -192,16 +198,24 @@ let
     overlays = lib.optional useRustOverlay rustOverlay ++ [
       (final: prev: {
         claude-code-bin = prev.claude-code-bin.overrideAttrs (old: let
-          version = "2.1.138";  # claude-code-pin
+          version = "2.1.261";  # claude-code-pin
           platformKey = "${final.stdenvNoCC.hostPlatform.node.platform}-${final.stdenvNoCC.hostPlatform.node.arch}";
           hashes = {
-            "darwin-arm64" = "sha256-dZ0jzmJhk8ibyLNcXGyoqeM7nC5QTuFD5M0RmYh3QJc=";
+            "darwin-arm64" = "sha256-Xv7K/yMbeYvjxm3vm+VBg2I7MouA6u8X+TxDmHAk6Co=";
           };
         in {
           inherit version;
           src = final.fetchurl {
             url = "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/${version}/${platformKey}/claude";
             hash = hashes.${platformKey};
+          };
+        });
+      } // lib.optionalAttrs isDarwin {
+        brave = prev.brave.overrideAttrs (_old: {
+          version = "1.93.132";
+          src = final.fetchurl {
+            url = "https://github.com/brave/brave-browser/releases/download/v1.93.132/brave-v1.93.132-darwin-arm64.zip";
+            hash = "sha256-CGAzzIabygIh7RHGdYgEqDPjEG8fplnuRWCHgQXdOK0=";
           };
         });
       })
