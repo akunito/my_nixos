@@ -416,6 +416,15 @@ let
           # mounts (the emergency-mode brick). Applied to every profile on
           # purpose — script-level guards only cover the install.sh path.
           (self + "/system/security/hwconfig-guard.nix")
+          # ‼️ lib.nixosSystem instantiates its OWN nixpkgs — flake-base's
+          # pkgs-stable/pkgs-unstable (and their overlays) only feed Home
+          # Manager and specialArgs. Verified 2026-09-05: with the gamescope
+          # patch overlay only on pkgs-stable, the deployed system's gamescope
+          # still came from cache.nixos.org unpatched, because
+          # programs.steam.extraPackages resolves through the module system's
+          # pkgs. Any overlay that must reach SYSTEM-level packages (Steam's
+          # FHS, environment.systemPackages) has to be injected here.
+          { nixpkgs.overlays = [ gamescopeRemapCrashFixOverlay ]; }
         ];
         specialArgs = {
           inherit pkgs-stable;
