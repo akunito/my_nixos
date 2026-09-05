@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(brew install*)",
+      "Bash(brew uninstall*)",
+      "Bash(brew remove*)",
+      "Bash(brew tap*)",
+      "Bash(brew bundle*)",
+      "Bash(*brew install*)",
+      "Bash(*brew uninstall*)",
+      "Bash(nix-env -i*)",
+      "Bash(nix-env --install*)",
+      "Bash(*nix-env -i*)",
+      "Bash(*nixos-rebuild switch*)",
+      "Bash(*sudo nixos-rebuild*)",
+      "Bash(ssh*nixos-rebuild*)"
+    ]
+  }
+}

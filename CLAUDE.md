@@ -559,7 +559,10 @@ Quick lookup by tag: `docs/00_ROUTER.md` (filter by `hardware`, `gaming`, `user-
 - **Then apply**: `./scripts/darwin-rebuild.sh MACBOOK-KOMI`
 
 **NEVER** `brew install`, `brew install --cask`, `brew uninstall`, or `nix-env -i`.
-These are blocked by deny rules in `user/app/claude-code/claude-code.nix`.
+These are blocked by deny rules in `.claude/settings.json` (project-scoped, applies
+to every agent working in this repo) and in `user/app/claude-code/claude-code.nix`
+(user-scoped, Linux profiles only — `development-komi.nix` does not import that
+module, so darwin relies on the project-scoped rules).
 
 **WHY**: `homebrewOnActivation.cleanup = "zap"` (`lib/defaults.nix`) uninstalls and
 zaps every cask NOT in `homebrewCasks` on the next rebuild. An ad-hoc install is
