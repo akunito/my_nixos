@@ -24,7 +24,6 @@ in
         "hammerspoon"
 
         # === Communication ===
-        "telegram"
         "whatsapp"
         "discord"
         "slack"
@@ -115,7 +114,6 @@ in
       # Single-app launchers
       { key = "s"; app = "Spotify"; }
       { key = "c"; app = "Calculator"; }
-      { key = "t"; app = "Telegram"; }
       { key = "w"; app = "WhatsApp"; }
       { key = "a"; app = "Arc"; }
       { key = "o"; app = "Obsidian"; }
