@@ -63,6 +63,10 @@ local/
 # .claude/ - TRACK: Contains project configuration and agents
 # Only ignore local settings
 .claude/settings.local.json
+# .agents/ - IGNORE: portable skill copies generated from .claude/commands.
+# Duplicates content that is already tracked there; drop this rule if the
+# .agents format ever becomes the source of truth.
+.agents/
 *.code-workspace
 
 # OS files
