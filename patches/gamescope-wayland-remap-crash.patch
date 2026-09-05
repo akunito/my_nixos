@@ -1,0 +1,26 @@
+--- a/src/Backends/WaylandBackend.cpp
++++ b/src/Backends/WaylandBackend.cpp
+@@ -1546,8 +1546,21 @@
+         }
+         else
+         {
+-            wl_surface_attach( m_pSurface, nullptr, 0, 0 );
+-            wl_surface_damage( m_pSurface, 0, 0, INT32_MAX, INT32_MAX );
++            // Attaching a null buffer to the primary plane's surface unmaps its
++            // xdg_toplevel. After an unmap, xdg-shell resets the surface: the
++            // client must wait for a fresh configure and ack it before attaching
++            // the next buffer. This code never does that, so on wlroots
++            // compositors (sway) the next Present() races the configure and the
++            // compositor kills the connection with protocol error
++            // "xdg_surface has never been configured", aborting the input
++            // thread and the game with it. Keep the last frame on screen
++            // instead of unmapping; overlay subplanes (no libdecor frame, no
++            // xdg role) still hide via the null attach as before.
++            if ( !m_pFrame )
++            {
++                wl_surface_attach( m_pSurface, nullptr, 0, 0 );
++                wl_surface_damage( m_pSurface, 0, 0, INT32_MAX, INT32_MAX );
++            }
+         }
+     }
+ 

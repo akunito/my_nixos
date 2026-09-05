@@ -34,10 +34,16 @@
         #   gamescope: symbol lookup error: /lib/libc.so.6: undefined symbol:
         #   __nptl_change_stack_perm, version GLIBC_PRIVATE
         #
-        # This pins gamescope to 3.16.17 for Steam, which is the version whose
-        # Wayland backend aborts and whose --force-grab-cursor stutters. To move
-        # off it, override THIS package's src/version so it still builds against
-        # stable's glibc — do not swap in a foreign package set.
+        # This pins gamescope to 3.16.17 for Steam (the version whose
+        # --force-grab-cursor stutters). To move off it, override THIS
+        # package's src/version so it still builds against stable's glibc — do
+        # not swap in a foreign package set.
+        #
+        # Its Wayland backend's abort-on-remap (the intermittent SIGABRT that
+        # killed Black Desert seconds into launch) is fixed by
+        # patches/gamescope-wayland-remap-crash.patch via the overlay in
+        # lib/flake-base.nix — present in 3.16.28 and master too, so upgrading
+        # would not have helped.
         gamescope # Nested Wayland compositor for per-game scaling
         mangohud # FPS/performance overlay
       ])

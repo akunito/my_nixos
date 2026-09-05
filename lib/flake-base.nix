@@ -261,6 +261,31 @@ let
     });
   };
 
+  # gamescope's Wayland backend crashes the game it hosts when its window is
+  # briefly left with nothing to present (Black Desert's launcher chain:
+  # Launcher -> PALauncher -> game window). CWaylandPlane::Present( nullopt )
+  # attaches a NULL buffer to the PRIMARY surface, which unmaps its
+  # xdg_toplevel; xdg-shell then requires a fresh configure/ack cycle before
+  # the next attach, which gamescope never performs. Whether the next
+  # Present() beats the compositor's configure is a race — that is the
+  # intermittency. When it loses, sway kills the connection with
+  #
+  #   xdg_surface#50: "xdg_surface has never been configured"
+  #
+  # and gamescope's input thread aborts (SIGABRT, rc=134), reaping the game
+  # ~10s into launch. Diagnosed 2026-09-05 from WAYLAND_DEBUG captures (three
+  # identical deaths); code identical in 3.16.17, 3.16.28 and master as of
+  # 2026-09-03, so a version bump cannot fix it. The patch keeps the last
+  # frame on screen instead of unmapping (overlay subplanes have no xdg role
+  # and still hide via the null attach). Local patch file — no upstream PR to
+  # pin. Applies to both stable and unstable gamescope; the hunk drifting is
+  # the signal to re-check upstream.
+  gamescopeRemapCrashFixOverlay = _: super: {
+    gamescope = super.gamescope.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ../patches/gamescope-wayland-remap-crash.patch ];
+    });
+  };
+
   # Configure pkgs-stable
   pkgs-stable = import inputs.nixpkgs-stable {
     system = systemSettingsWithFonts.system;
@@ -275,7 +300,7 @@ let
     # swayfx #478 crash fix — DESK is systemStable=true, so its `pkgs` (and thus
     # the Home Manager compositor via homeConfigurations `inherit pkgs`) is
     # pkgs-stable. The overlay must live here too, not only on the unstable branch.
-    overlays = [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay ];
+    overlays = [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay gamescopeRemapCrashFixOverlay ];
   };
 
   # Configure pkgs-unstable
@@ -324,7 +349,7 @@ let
                allowUnfree = true;
                allowUnfreePredicate = (_: true);
              };
-             overlays = (lib.optional useRustOverlay rustOverlay) ++ [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay ];
+             overlays = (lib.optional useRustOverlay rustOverlay) ++ [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay gamescopeRemapCrashFixOverlay ];
            });
 
   # Configure home-manager
