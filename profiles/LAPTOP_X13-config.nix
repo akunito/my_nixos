@@ -259,6 +259,7 @@ in
     # NOT YET DEPLOYED HERE — the machine was off on 2026-09-02. It takes effect
     # on the next install.sh, and needs a logout/login after it.
     swayUseSwayfx = false;
+    swayAppsEnable = true; # Window rules + startup apps GUI/CLI (Hyper+Shift+n); rules live in user/wm/sway/apps/
     goaCalendarEnable = true; # GNOME Online Accounts + gnome-calendar + Waybar widget (click opens calendar.google.com in default browser)
 
     # === Package Modules ===

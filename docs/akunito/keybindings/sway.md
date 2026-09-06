@@ -56,7 +56,8 @@ The Hyper key is the primary modifier for all Sway keybindings. It's configured 
 
 ### Startup Applications
 
-- **`${hyper}+Shift+Return`** → Manual startup apps launcher (`desk-startup-apps-launcher`)
+- **`${hyper}+Shift+Return`** → Manual startup apps launcher (`desk-startup-apps-launcher`); with `swayAppsEnable` its "Startup Apps" entry runs `sway-apps startup run`
+- **`${hyper}+Shift+n`** → sway-apps GUI: window rules + startup apps (only when `swayAppsEnable = true`; rules live in `user/wm/sway/apps/`)
 
 ### Exit
 

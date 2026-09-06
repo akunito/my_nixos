@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sway-apps"
+version = "0.1.0"
+description = "Startup apps and window rules manager for Sway: CLI + GTK4/libadwaita GUI"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+sway-apps = "sway_apps.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sway_apps*"]
+
+[tool.setuptools.package-data]
+"sway_apps.gui" = ["*.css"]

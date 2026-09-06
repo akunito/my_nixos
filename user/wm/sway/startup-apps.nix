@@ -421,11 +421,11 @@ let
 
       # Show Rofi menu using dmenu mode (more reliable than script mode with temp files)
       echo "Showing menu..."
-      SELECTION=$(printf "Startup Apps\nNixOS: Update System\nNixOS: Sync System\nNixOS: Sync User\nFlatpak: Update packages\nRun: startup_services.sh\nRun: stop_external_drives.sh\nControl Panel Menu\n" | \
+      SELECTION=$(printf "Startup Apps\n${lib.optionalString (systemSettings.swayAppsEnable or false) "Sway Apps: rules & startup\\n"}NixOS: Update System\nNixOS: Sync System\nNixOS: Sync User\nFlatpak: Update packages\nRun: startup_services.sh\nRun: stop_external_drives.sh\nControl Panel Menu\n" | \
         rofi -dmenu \
         -p "Menu" \
         -theme-str 'window {width: 400px;}' \
-        -theme-str 'listview {lines: 8;}')
+        -theme-str 'listview {lines: ${if (systemSettings.swayAppsEnable or false) then "9" else "8"};}')
 
       # Handle user cancellation
       if [ -z "$SELECTION" ]; then
@@ -438,7 +438,15 @@ let
       # Execute based on selection
       case "$SELECTION" in
         "Startup Apps")
+          ${if (systemSettings.swayAppsEnable or false) then ''
+          # sway-apps owns the startup list (user/wm/sway/apps/*.json)
+          "$HOME/.nix-profile/bin/sway-apps" startup run --notify
+          '' else ''
           launch_startup_apps
+          ''}
+          ;;
+        "Sway Apps: rules & startup")
+          "$HOME/.nix-profile/bin/sway-apps" &
           ;;
         "NixOS: Update System")
           # Run in terminal to show progress

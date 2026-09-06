@@ -1001,6 +1001,11 @@
     # Monitor management (imperative GUI approach)
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config
     workspaceGroupsGuiEnable = false;    # Install workspace groups GUI
+    # sway-apps: GUI + CLI for window rules and manual startup apps. When ON,
+    # the for_window/assign/no_focus rules hardcoded in swayfx-config.nix are
+    # NOT emitted; the config includes ~/.config/sway/sway-apps.conf instead,
+    # generated from user/wm/sway/apps/{common,<ENV_PROFILE>}.json.
+    swayAppsEnable = false;
     kanshiImperativeMode = false;        # User-managed kanshi config (not Nix)
     swaysomeNativeGroups = false;        # Laptops: use focus-immune swaysome init+rearrange for per-monitor workspace groups (drops focus-fragile assign-groups.sh). DESK uses swayHotplugRestoreEnable instead.
 

@@ -1,0 +1,1035 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "r-1e1c188c",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "rofi"
+      },
+      "actions": [
+        "floating enable"
+      ],
+      "name": "rofi",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-b9aee650",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "kitty"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "kitty",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-45f5c6b3",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "kitty-ranger"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "kitty-ranger",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-f9e463e3",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "SwayBG+"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "SwayBG+",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-3c4eca67",
+      "kind": "for_window",
+      "criteria": {
+        "title": "SwayBG+"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "SwayBG+",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-2bb49f92",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "org.telegram.desktop"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "org.telegram.desktop",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-1c99887e",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "telegram-desktop"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "telegram-desktop",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-406c6d4b",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "bitwarden"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "bitwarden",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-efb40239",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "bitwarden-desktop"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "bitwarden-desktop",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-206d9c12",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "Bitwarden"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "Bitwarden",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-0d68aab4",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "electron",
+        "title": "^Element"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "electron",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-fa656587",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "com.usebottles.bottles"
+      },
+      "actions": [
+        "floating enable"
+      ],
+      "name": "com.usebottles.bottles",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-aac2d656",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "swayfx-settings"
+      },
+      "actions": [
+        "floating enable"
+      ],
+      "name": "swayfx-settings",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-79742e3c",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "io.missioncenter.MissionCenter"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable",
+        "resize set 800 600"
+      ],
+      "name": "io.missioncenter.MissionCenter",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-3e1edc7e",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "lact"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "lact",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-48c623ec",
+      "kind": "for_window",
+      "criteria": {
+        "title": "LACT"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "LACT",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-b8e5793a",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "org.kde.discover"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "org.kde.discover",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-65e60a32",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "plasma-discover"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "plasma-discover",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-2a55681d",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "discover"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "discover",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-5b90bb52",
+      "kind": "for_window",
+      "criteria": {
+        "title": "Discover"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "Discover",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-c9e04e31",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "org.pulseaudio.pavucontrol"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "org.pulseaudio.pavucontrol",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-391987e3",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "org.kde.dolphin"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "org.kde.dolphin",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-650ccd46",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": ".blueman-manager-wrapped"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": ".blueman-manager-wrapped",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-0d1e59ee",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "org.gnome.Calculator"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "org.gnome.Calculator",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-f3c1d3b7",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "nwg-displays"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "nwg-displays",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-0521a889",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "dev.deedles.Trayscale"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "dev.deedles.Trayscale",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-fef3ac31",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "waypaper"
+      },
+      "actions": [
+        "floating enable",
+        "resize set 1200 800"
+      ],
+      "name": "waypaper",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-a8f5e5f8",
+      "kind": "for_window",
+      "criteria": {
+        "class": "SwayBG+"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "SwayBG+",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-fe115559",
+      "kind": "for_window",
+      "criteria": {
+        "class": "Spotify"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "Spotify",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-dc5fa555",
+      "kind": "for_window",
+      "criteria": {
+        "class": "lact"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "lact",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-6c81df63",
+      "kind": "for_window",
+      "criteria": {
+        "class": "LACT"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "LACT",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-22a20675",
+      "kind": "for_window",
+      "criteria": {
+        "class": "discover"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "discover",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-428172e8",
+      "kind": "for_window",
+      "criteria": {
+        "class": "Discover"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "Discover",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-a3b28652",
+      "kind": "for_window",
+      "criteria": {
+        "class": "plasma-discover"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "plasma-discover",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-af92dc8e",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "Alacritty"
+      },
+      "actions": [
+        "sticky enable",
+        "floating enable"
+      ],
+      "name": "Alacritty",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-fd134fa1",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "org.kde.kcalc"
+      },
+      "actions": [
+        "sticky enable"
+      ],
+      "name": "org.kde.kcalc",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-5e59fff2",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "kcalc"
+      },
+      "actions": [
+        "sticky enable"
+      ],
+      "name": "kcalc",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-64369609",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "Vivaldi-flatpak"
+      },
+      "actions": [
+        "workspace number 11"
+      ],
+      "name": "assign Vivaldi-flatpak",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-88febbb5",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "com.vivaldi.Vivaldi"
+      },
+      "actions": [
+        "workspace number 11"
+      ],
+      "name": "assign com.vivaldi.Vivaldi",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-ad5f7f52",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "vivaldi"
+      },
+      "actions": [
+        "workspace number 11"
+      ],
+      "name": "assign vivaldi",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-8ce722d7",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "vivaldi-stable"
+      },
+      "actions": [
+        "workspace number 11"
+      ],
+      "name": "assign vivaldi-stable",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-6ef9b838",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "code"
+      },
+      "actions": [
+        "workspace number 12"
+      ],
+      "name": "assign code",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-7581ac29",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "^md\\.Obsidian$"
+      },
+      "actions": [
+        "workspace number 21"
+      ],
+      "name": "assign ^md\\.Obsidian$",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-2d3aa982",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "obsidian"
+      },
+      "actions": [
+        "workspace number 21"
+      ],
+      "name": "assign obsidian",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-1473f577",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "md.obsidian.Obsidian"
+      },
+      "actions": [
+        "workspace number 21"
+      ],
+      "name": "assign md.obsidian.Obsidian",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-e4053193",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "chromium"
+      },
+      "actions": [
+        "workspace number 22"
+      ],
+      "name": "assign chromium",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-247c1d6a",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "org.chromium.Chromium"
+      },
+      "actions": [
+        "workspace number 22"
+      ],
+      "name": "assign org.chromium.Chromium",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-05c1988a",
+      "kind": "assign",
+      "criteria": {
+        "class": "chromium-browser"
+      },
+      "actions": [
+        "workspace number 22"
+      ],
+      "name": "assign chromium-browser",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-c9504c86",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "alacritty"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "alacritty",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-0bc54270",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "spotify"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "spotify",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-ee00c8dd",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "nm-connection-editor"
+      },
+      "actions": [
+        "floating enable"
+      ],
+      "name": "nm-connection-editor",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-e7fe4669",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "swappy"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "swappy",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-18a1ed7e",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "swaync"
+      },
+      "actions": [
+        "floating enable"
+      ],
+      "name": "swaync",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-0273dfa6",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "gamescope"
+      },
+      "actions": [
+        "fullscreen enable",
+        "inhibit_idle focus"
+      ],
+      "name": "gamescope",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-6854ff9d",
+      "kind": "for_window",
+      "criteria": {
+        "class": "gamescope"
+      },
+      "actions": [
+        "fullscreen enable",
+        "inhibit_idle focus"
+      ],
+      "name": "gamescope",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-539f31cc",
+      "kind": "for_window",
+      "criteria": {
+        "class": "Gamescope"
+      },
+      "actions": [
+        "fullscreen enable",
+        "inhibit_idle focus"
+      ],
+      "name": "Gamescope",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-f92deb27",
+      "kind": "no_focus",
+      "criteria": {
+        "app_id": "mako"
+      },
+      "actions": [],
+      "name": "no_focus mako",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-c7d9f37a",
+      "kind": "no_focus",
+      "criteria": {
+        "app_id": "swaync"
+      },
+      "actions": [],
+      "name": "no_focus swaync",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-251fed8a",
+      "kind": "no_focus",
+      "criteria": {
+        "app_id": "dunst"
+      },
+      "actions": [],
+      "name": "no_focus dunst",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-03ba4184",
+      "kind": "for_window",
+      "criteria": {
+        "class": "^steam_app_"
+      },
+      "actions": [
+        "inhibit_idle focus",
+        "fullscreen enable"
+      ],
+      "name": "^steam_app_",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-be51f9c4",
+      "kind": "for_window",
+      "criteria": {
+        "class": "ModOrganizer"
+      },
+      "actions": [
+        "floating enable"
+      ],
+      "name": "ModOrganizer",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-8c60ddb0",
+      "kind": "for_window",
+      "criteria": {
+        "title": "Mod Organizer"
+      },
+      "actions": [
+        "floating enable"
+      ],
+      "name": "Mod Organizer",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-36017491",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "control-panel"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "control-panel",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-3b08fc19",
+      "kind": "for_window",
+      "criteria": {
+        "title": "NixOS Control Panel"
+      },
+      "actions": [
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "NixOS Control Panel",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-f3b1cce1",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "org.kde.ksecretd"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "org.kde.ksecretd",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-199940b7",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "org.kde.kwalletd5"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "org.kde.kwalletd5",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-b8755857",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "org.kde.kwalletd6"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "org.kde.kwalletd6",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-c1a4da1f",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "kwallet-query"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "kwallet-query",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-e9c2fded",
+      "kind": "for_window",
+      "criteria": {
+        "title": "KDE Wallet Service"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "KDE Wallet Service",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-d8a23e22",
+      "kind": "for_window",
+      "criteria": {
+        "title": "KWallet"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "KWallet",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-0b975c8e",
+      "kind": "for_window",
+      "criteria": {
+        "title": "kwallet"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "kwallet",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-33981026",
+      "kind": "for_window",
+      "criteria": {
+        "class": "kwalletmanager5"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "kwalletmanager5",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-d1191bee",
+      "kind": "for_window",
+      "criteria": {
+        "class": "kwalletmanager6"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "kwalletmanager6",
+      "enabled": true,
+      "notes": ""
+    },
+    {
+      "id": "r-0edbc252",
+      "kind": "for_window",
+      "criteria": {
+        "class": "KWalletManager"
+      },
+      "actions": [
+        "move to output \"DP-1\"",
+        "move to workspace number 1",
+        "floating enable",
+        "sticky enable"
+      ],
+      "name": "KWalletManager",
+      "enabled": true,
+      "notes": ""
+    }
+  ],
+  "startup": []
+}
