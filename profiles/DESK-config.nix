@@ -746,7 +746,6 @@ in
 
     # === Monitor Management (Imperative GUI) ===
     nwgDisplaysEnable = true; # Visual monitor layout GUI (Hyper+Shift+D)
-    workspaceGroupsGuiEnable = true; # Workspace groups assignment GUI (Hyper+`)
     kanshiImperativeMode = true; # Use nwg-displays to manage monitors (config in ~/.config/kanshi/config)
 
     # === System Services & Features ===

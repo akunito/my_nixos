@@ -90,6 +90,31 @@ else
 fi
 check "startup rm"             '.removed == "'"$SID"'"'                          "$(J startup rm "$SID")"
 
+# --- monitors / pins / targets --------------------------------------------
+FOCOUT=$(J monitors outputs | jq -r '.[] | select(.active) | .name' | head -1)
+HWID=$(J monitors outputs | jq -r '.[] | select(.active) | .hw_id' | head -1)
+check "monitors outputs"       'length >= 1 and all(.hw_id != "")'              "$(J monitors outputs)"
+check "monitors add by connector" '.monitor.criteria == "'"$HWID"'" and .monitor.group == 7' "$(J monitors add main "$FOCOUT" --group 7 --name smoke-main --primary --no-live)"
+check "monitors list"          'map(select(.id=="main")) | length == 1 and .[0].connected == true' "$(J monitors list)"
+check "pins rendered"          '.text | test("workspace 71 output")'            "$(J render)"
+check "pins.conf written"      'true' "$(grep -q '^7|' "${XDG_CONFIG_HOME:-$HOME/.config}/sway/workspace-output-pins.conf" 2>/dev/null && echo '{}' || echo null)"
+check "group clash rejected"   '.error | test("already used")'                  "$(J monitors add other "$HWID" --group 7)"
+TADD=$(J rules add --kind assign -c app_id=smoke-target --target main:3 --no-live)
+check "rule with target"       '.rule.target.monitor == "main" and .rule.line == "assign [app_id=\"smoke-target\"] workspace number 73"' "$TADD"
+TID=$(printf '%s' "$TADD" | jq -r .rule.id)
+check "regroup renumbers"      'true' "$(J monitors set main --group 8 --no-live >/dev/null; J rules show "$TID" | jq -e '.line == "assign [app_id=\"smoke-target\"] workspace number 83"' >/dev/null && echo '{}' || echo null)"
+check "bad target role"        '.error | test("not defined")'                   "$(J rules set "$TID" --target nope:1)"
+check "workspaces map"         'map(select(.monitor != null and .monitor.id=="main")) | .[0].slots[2].rules | length == 1' "$(J workspaces map)"
+check "pin-geometry show"      '.pin_geometry == false'                          "$(J monitors pin-geometry)"
+check "pin-geometry on"        '.pin_geometry == true'                           "$(J monitors pin-geometry on --no-reload)"
+check "geometry in include"    'true' "$(grep -q '^output "' "$SWAY_APPS_INCLUDE" && echo '{}' || echo null)"
+J monitors pin-geometry off --no-reload >/dev/null
+check "monitors rm guarded"    '.error | test("target")'                         "$(J monitors rm main)"
+check "monitors rm --force"    '.removed == "main"'                              "$(J monitors rm main --force)"
+check "target falls back"      '.line == "assign [app_id=\"smoke-target\"] workspace number 83"' "$(J rules show "$TID")"
+check "doctor flags target"    '.checks | map(select(.check=="symbolic targets")) | .[0].ok == false' "$(J doctor)"
+J rules rm "$TID" >/dev/null
+
 # --- git -------------------------------------------------------------------
 GS=$(J git status)
 check "git status repo"        '.repo == true and (.dirty|length) == 0'         "$GS"

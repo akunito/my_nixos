@@ -527,7 +527,11 @@
       ],
       "name": "assign Vivaldi-flatpak",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "main",
+        "slot": 1
+      }
     },
     {
       "id": "r-88febbb5",
@@ -540,7 +544,11 @@
       ],
       "name": "assign com.vivaldi.Vivaldi",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "main",
+        "slot": 1
+      }
     },
     {
       "id": "r-ad5f7f52",
@@ -553,7 +561,11 @@
       ],
       "name": "assign vivaldi",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "main",
+        "slot": 1
+      }
     },
     {
       "id": "r-8ce722d7",
@@ -566,7 +578,11 @@
       ],
       "name": "assign vivaldi-stable",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "main",
+        "slot": 1
+      }
     },
     {
       "id": "r-6ef9b838",
@@ -579,7 +595,11 @@
       ],
       "name": "assign code",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "main",
+        "slot": 2
+      }
     },
     {
       "id": "r-7581ac29",
@@ -592,7 +612,11 @@
       ],
       "name": "assign ^md\\.Obsidian$",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "second",
+        "slot": 1
+      }
     },
     {
       "id": "r-2d3aa982",
@@ -605,7 +629,11 @@
       ],
       "name": "assign obsidian",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "second",
+        "slot": 1
+      }
     },
     {
       "id": "r-1473f577",
@@ -618,7 +646,11 @@
       ],
       "name": "assign md.obsidian.Obsidian",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "second",
+        "slot": 1
+      }
     },
     {
       "id": "r-e4053193",
@@ -631,7 +663,11 @@
       ],
       "name": "assign chromium",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "second",
+        "slot": 2
+      }
     },
     {
       "id": "r-247c1d6a",
@@ -644,7 +680,11 @@
       ],
       "name": "assign org.chromium.Chromium",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "second",
+        "slot": 2
+      }
     },
     {
       "id": "r-05c1988a",
@@ -657,7 +697,11 @@
       ],
       "name": "assign chromium-browser",
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "target": {
+        "monitor": "second",
+        "slot": 2
+      }
     },
     {
       "id": "r-c9504c86",

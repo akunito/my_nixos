@@ -39,7 +39,6 @@
     ./kanshi.nix
     ./hotplug-restore.nix
     ./nwg-displays.nix
-    ./workspace-groups-gui.nix
     ./sway-apps
     ./startup-apps.nix
     ./xcompose.nix

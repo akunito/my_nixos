@@ -30,7 +30,10 @@ in
       executable = true;
     };
 
-    home.file.".config/sway/workspace-output-pins.conf".text = pinsConf;
+    # With sway-apps on, the tool writes this file from its monitors table
+    # (sway-apps apply); HM must not own it or it would shadow the tool's copy.
+    home.file.".config/sway/workspace-output-pins.conf" =
+      lib.mkIf (!(systemSettings.swayAppsEnable or false)) { text = pinsConf; };
 
     systemd.user.services.sway-snapshot-daemon = {
       Unit = {

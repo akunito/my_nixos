@@ -260,6 +260,14 @@ in
     # on the next install.sh, and needs a logout/login after it.
     swayUseSwayfx = false;
     swayAppsEnable = true; # Window rules + startup apps GUI/CLI (Hyper+Shift+n); rules live in user/wm/sway/apps/
+    # Workspaces are pinned to monitors by hardware id from sway-apps' monitors
+    # table (LAPTOP_X13.json: built-in panel = group 1, dock monitor = group 2),
+    # the same model as DESK. That rules out swaysome's position-based
+    # init/rearrange (it would renumber against the pins on every hotplug), so
+    # the LAPTOP-base default is overridden here and the DESK hotplug restore
+    # (group-0 orphan migration + snapshot of visible/floating state) takes over.
+    swaysomeNativeGroups = false;
+    swayHotplugRestoreEnable = true;
     goaCalendarEnable = true; # GNOME Online Accounts + gnome-calendar + Waybar widget (click opens calendar.google.com in default browser)
 
     # === Package Modules ===

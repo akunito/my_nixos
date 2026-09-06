@@ -24,7 +24,6 @@
 
     # === Monitor Management (Imperative GUI) ===
     nwgDisplaysEnable = true; # Visual monitor layout GUI (Hyper+Shift+D)
-    workspaceGroupsGuiEnable = true; # Workspace groups assignment GUI (Hyper+`)
     kanshiImperativeMode = true; # User-managed kanshi config for laptops (more flexibility)
     swaysomeNativeGroups = true; # Focus-immune per-monitor workspace groups (swaysome init+rearrange; drops focus-fragile assign-groups.sh that breaks under focus_follows_mouse on hotplug)
 

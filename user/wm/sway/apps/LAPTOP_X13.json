@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "rules": [],
+  "startup": [],
+  "monitors": [
+    {
+      "id": "main",
+      "criteria": "Lenovo Group Limited 0x41A0 Unknown",
+      "group": 1,
+      "name": "Built-in 13.3\" panel",
+      "primary": true,
+      "enabled": true,
+      "notes": "Dock monitor: add it as role 'second' (group 2) once connected: sway-apps monitors add second HDMI-A-1 --group 2"
+    }
+  ],
+  "settings": {}
+}

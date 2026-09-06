@@ -7,8 +7,9 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from .. import discover, generate, gitsync, log, startup, swayipc
+from .. import monitors as mon
 from ..rules import Rule
-from ..state import StartupEntry, State
+from ..state import Monitor, StartupEntry, State
 
 _log = log.get("gui.ctl")
 
@@ -35,7 +36,7 @@ class Controller:
         if apply_rules:
             details["apply"] = generate.apply(self.state, reload=True)
             if live_rule is not None and swayipc.available():
-                details["live"] = generate.apply_live(live_rule)
+                details["live"] = generate.apply_live(live_rule, self.state)
         try:
             details["commit"] = gitsync.commit(self.state.files(), message)
         except RuntimeError as exc:
@@ -74,7 +75,7 @@ class Controller:
             return Outcome(False, "Invalid rule: " + "; ".join(probs))
         if not swayipc.available():
             return Outcome(False, "No sway socket")
-        hits = generate.apply_live(rule)
+        hits = generate.apply_live(rule, self.state)
         bad = [h for h in hits if not h["ok"]]
         wins = {h["window"] for h in hits}
         if bad:
@@ -132,6 +133,51 @@ class Controller:
                 res = {"launched": False, "error": str(exc)}
             done(res)
         threading.Thread(target=worker, name="sway-apps-launch", daemon=True).start()
+
+    # ---- monitors -----------------------------------------------------------
+    def save_monitor(self, m: Monitor, scope: str) -> Outcome:
+        probs = m.problems()
+        if probs:
+            return Outcome(False, "Invalid monitor: " + "; ".join(probs))
+        clash = [x for x in self.state.monitors() if x.group and x.group == m.group and x.id != m.id]
+        if clash:
+            return Outcome(False, f"Group {m.group} is already used by {clash[0].id}")
+        with log.action("gui.monitors.save", role=m.id, criteria=m.criteria, group=m.group, scope=scope):
+            self.state.save_monitor(m, scope)
+            out = self._finish(f"Saved monitor {m.id}", True, None)
+            if swayipc.available():
+                moved = mon.apply_live(self.state)
+                n = sum(1 for h in moved if h.get("ok"))
+                if n:
+                    out.message += f" · moved {n} workspace(s)"
+            return out
+
+    def delete_monitor(self, m: Monitor) -> Outcome:
+        with log.action("gui.monitors.delete", role=m.id):
+            self.state.remove("monitors", m.id)
+            return self._finish(f"Removed monitor {m.id}", True, None)
+
+    def set_pin_geometry(self, on: bool) -> Outcome:
+        self.state.set_setting("pin_geometry", on, "profile")
+        with log.action("gui.monitors.pin_geometry", state=on):
+            return self._finish(f"Geometry pinning {'on' if on else 'off'}", True, None)
+
+    def fix_orphans(self) -> Outcome:
+        res = mon.fix_orphans()
+        after = mon.orphans()
+        if not res.get("ok"):
+            return Outcome(False, res.get("error") or "restore script failed", res)
+        return Outcome(True, f"Group-0 sweep done; {len(after)} orphan workspace(s) left", res)
+
+    def rename_monitor(self, m: Monitor, new_role: str) -> Outcome:
+        old = m.id
+        for r in self.state.rules():
+            if r.target and r.target.get("monitor") == old:
+                r.target["monitor"] = new_role
+                self.state.save_rule(r)
+        self.state.remove("monitors", old)
+        m.id = new_role
+        return self.save_monitor(m, m.scope)
 
     # ---- git ----------------------------------------------------------------
     def git_status(self) -> dict:

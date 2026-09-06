@@ -884,9 +884,10 @@
           # Use user profile PATH (swaysome is installed by the Sway module).
           exec = [
             # IMPORTANT: start swaysome groups at 1 so group 0 (workspaces 1-10) is never used.
-            "$HOME/.nix-profile/bin/swaysome init 1"
-            "$HOME/.nix-profile/bin/swaysome rearrange-workspaces"
-            "$HOME/.config/sway/scripts/swaysome-assign-groups.sh"
+            # Focus-immune consolidated setup (init 1 + rearrange + group-0
+            # sweep). The old swaysome-assign-groups.sh was retired 2026-09-06:
+            # its `focus output` dance raced focus_follows_mouse.
+            "$HOME/.config/sway/scripts/swaysome-groups-setup.sh"
           ];
         };
       }
@@ -1000,7 +1001,6 @@
 
     # Monitor management (imperative GUI approach)
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config
-    workspaceGroupsGuiEnable = false;    # Install workspace groups GUI
     # sway-apps: GUI + CLI for window rules and manual startup apps. When ON,
     # the for_window/assign/no_focus rules hardcoded in swayfx-config.nix are
     # NOT emitted; the config includes ~/.config/sway/sway-apps.conf instead,

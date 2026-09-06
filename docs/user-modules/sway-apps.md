@@ -35,6 +35,32 @@ instead. With it OFF nothing changes (DESK still uses the legacy rules).
 The profile layer overrides a common item with the same `id` field by field,
 so one machine can disable or retarget a shared rule without forking it.
 
+## Monitors, workspace pins and the workspace map
+
+Each machine keeps a **monitor table** in its profile layer: a *role* shared
+across machines (`main`, `second`, `tv`, `left`), the sway hardware id
+(`make model serial`) and a workspace **group** (decade: group 1 = ws 11-20).
+From it the tool emits `workspace N output "<hw id>"` lines into the include
+and `~/.config/sway/workspace-output-pins.conf` for `sway-hotplug-restore.sh`
+(group-0 orphan migration). Both DESK and X13 use this model; X13's dock
+monitor becomes role `second` the first time it is connected
+(`sway-apps monitors add second HDMI-A-1 --group 2`).
+
+Rules can target a workspace **symbolically** (`--target main:2`, or the
+role/slot picker in the GUI): the number is resolved per machine and rewritten
+automatically when a monitor's group changes; the last resolved number stays
+stored as the fallback for machines that lack the role (doctor reports those).
+
+Division of labour with nwg-displays: it still owns the physical layout
+(`~/.config/sway/outputs`, by connector). `sway-apps monitors pin-geometry on`
+re-emits that geometry keyed by hardware id so it survives connector renames.
+Do not use nwg-displays' *workspaces* tab (connector based; doctor warns if
+its file is non-empty). `workspace-groups-gui` (Hyper+`) was retired on
+2026-09-06; the key now opens the Monitors section.
+
+`sway-apps workspaces map` / the Workspaces section show, per monitor and slot,
+the apps assigned there and the windows currently open.
+
 ## What a save does
 
 `write JSON → validate → regenerate include → swaymsg reload → apply to
@@ -49,7 +75,7 @@ starts with a stale file.
 
 ## Opening it
 
-- `Hyper+Shift+n`
+- `Hyper+Shift+n` (Rules) · `Hyper+grave` (Monitors)
 - rofi maintenance menu (`Hyper+Shift+Return`) → "Sway Apps: rules & startup";
   its "Startup Apps" entry now runs `sway-apps startup run`.
 - `sway-apps` / `sway-apps gui --section rules --select <id>`
@@ -67,6 +93,8 @@ sway-apps import-config ~/.config/sway/config --dry-run
 sway-apps startup list|add|set|enable|disable|rm|run [ID...]
 sway-apps startup add --desktop org.kde.kcalc --workspace 3   # from a .desktop entry
 sway-apps apps list [QUERY] [--source flatpak-user] [--all] | apps show ID | apps launch ID
+sway-apps monitors outputs|list|add ROLE OUTPUT --group N|set ROLE [--group N|--output X|--rename R]|rm ROLE|apply|pin-geometry on|off|fix-orphans
+sway-apps workspaces map
 sway-apps windows list|focused|pick
 sway-apps git status|commit|push|pull
 sway-apps log tail [-n 50] [-f] [--level error] [--grep rules.add]

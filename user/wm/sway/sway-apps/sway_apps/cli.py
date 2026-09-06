@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import __version__, discover, generate, gitsync, log, paths, startup, swayipc
+from . import monitors as mon
 from .rules import CRITERIA_KEYS, KINDS, Rule, parse_config
-from .state import SCOPES, StartupEntry, State
+from .state import SCOPES, Monitor, StartupEntry, State
 
 
 class CliError(Exception):
@@ -58,6 +59,35 @@ def _parse_kv(items: list[str] | None) -> dict[str, str]:
     return out
 
 
+def _parse_target(spec: str | None) -> dict[str, Any] | None:
+    """'main:2' -> {"monitor": "main", "slot": 2}; '' / 'none' clears."""
+    if spec is None:
+        return None
+    spec = spec.strip()
+    if spec in ("", "none", "-"):
+        return {}
+    if ":" not in spec:
+        raise CliError("target must be ROLE:SLOT, e.g. main:2")
+    role, slot = spec.rsplit(":", 1)
+    if not slot.isdigit() or not 1 <= int(slot) <= 10:
+        raise CliError("slot must be 1..10")
+    return {"monitor": role.strip(), "slot": int(slot)}
+
+
+def _apply_target(st: State, rule: Rule, target: dict[str, Any] | None) -> None:
+    """Attach a symbolic target (or clear it) and sync the numeric action."""
+    if target is None:
+        return
+    if not target:
+        rule.target = None
+        return
+    rule.target = target
+    n, prob = st.resolve_target(rule)
+    if prob:
+        raise CliError(f"target: {prob}")
+    rule.actions = rule.with_workspace_number(n).actions
+
+
 # --------------------------------------------------------------------------
 # persistence pipeline shared by every mutating command
 
@@ -69,7 +99,7 @@ def _persist(args: argparse.Namespace, state: State, message: str, apply_rules: 
     if apply_rules and not getattr(args, "no_apply", False):
         result["apply"] = generate.apply(state, reload=not getattr(args, "no_reload", False))
         if live_rule is not None and not getattr(args, "no_live", False) and swayipc.available():
-            result["live"] = generate.apply_live(live_rule)
+            result["live"] = generate.apply_live(live_rule, state)
     if not getattr(args, "no_git", False):
         try:
             sha = gitsync.commit(state.files(), message)
@@ -117,6 +147,22 @@ def cmd_doctor(args: argparse.Namespace) -> int:
             check("sway version", False, str(exc))
     check("sway binary (validate)", subprocess.run(["which", paths.SWAY_BIN], capture_output=True).returncode == 0, paths.SWAY_BIN)
     check("log file", paths.LOG_FILE.exists(), f"{paths.LOG_FILE} ({paths.LOG_FILE.stat().st_size if paths.LOG_FILE.exists() else 0} bytes, cap {paths.LOG_MAX_BYTES * (paths.LOG_BACKUP_COUNT + 1) // 1024 // 1024} MiB)")
+    if st is not None:
+        tp = st.target_problems()
+        check("symbolic targets", not tp, "; ".join(f"{r.id}: {p}" for r, p in tp) if tp else f"{sum(1 for r in st.rules() if r.target)} rules resolve", optional=True)
+        mons = st.monitors()
+        check("monitors", bool(mons), ", ".join(f"{m.id}={m.group}" for m in mons) if mons else "none defined (workspaces not pinned)", optional=True)
+    if swayipc.available():
+        orph = mon.orphans()
+        check("no group-0 workspaces", not orph, ", ".join(o["name"] for o in orph) if orph else "ok", optional=True)
+        live = mon.live_outputs()
+        unknown = [o for o in live if o.active and st is not None and st.monitor_by_criteria(o.hw_id) is None]
+        check("all outputs known", not unknown, ", ".join(f"{o.name}={o.hw_id!r}" for o in unknown) if unknown else "ok", optional=True)
+    try:
+        nwg_ws = mon.NWG_WORKSPACES_FILE.read_text().strip()
+    except OSError:
+        nwg_ws = ""
+    check("nwg-displays workspaces file empty", not nwg_ws, "non-empty: it assigns by connector and competes with the pins" if nwg_ws else "ok", optional=True)
     g = gitsync.status()
     check("git", g.get("repo", False) or not g.get("enabled", True),
           f"branch={g.get('branch')} ahead={g.get('ahead')} dirty={len(g.get('dirty', []))}" if g.get("repo") else json.dumps(g))
@@ -146,8 +192,11 @@ def cmd_rules_list(args: argparse.Namespace) -> int:
     if args.query:
         q = args.query.lower()
         rules = [r for r in rules if q in r.render().lower() or q in r.name.lower() or q in r.id]
-    _out(args, [dict(r.to_dict(), scope=r.scope, line=r.render(), problems=r.problems()) for r in rules],
-         lambda: _table([_rule_row(r) for r in rules], ["", "id", "kind", "scope", "criteria", "actions"]))
+    resolved = {r.id: r for r in st.resolved_rules()}
+    _out(args, [dict(r.to_dict(), scope=r.scope, line=resolved.get(r.id, r).render(), problems=r.problems(),
+                     target_problem=st.resolve_target(r)[1]) for r in rules],
+         lambda: _table([_rule_row(resolved.get(r.id, r)) + [f"{r.target['monitor']}:{r.target['slot']}" if r.target else ""] for r in rules],
+                        ["", "id", "kind", "scope", "criteria", "actions", "target"]))
     return 0
 
 
@@ -180,6 +229,7 @@ def cmd_rules_add(args: argparse.Namespace) -> int:
                     enabled=not args.disabled, scope=args.scope)
     if args.id:
         rule.id = args.id
+    _apply_target(st, rule, _parse_target(args.target))
     probs = rule.problems()
     if probs:
         raise CliError("invalid rule: " + "; ".join(probs))
@@ -217,6 +267,7 @@ def cmd_rules_set(args: argparse.Namespace) -> int:
         rule.enabled = True
     if args.disable:
         rule.enabled = False
+    _apply_target(st, rule, _parse_target(args.target))
     scope = args.scope or rule.scope
     probs = rule.problems()
     if probs:
@@ -263,7 +314,7 @@ def cmd_rules_test(args: argparse.Namespace) -> int:
             raise CliError("invalid rule: " + "; ".join(probs))
     if not swayipc.available():
         raise CliError("no sway socket")
-    hits = generate.apply_live(rule)
+    hits = generate.apply_live(rule, st)
     _out(args, {"rule": rule.render(), "hits": hits},
          lambda: _table([[h["window"], h["label"], h["command"], "ok" if h["ok"] else h.get("error", "")] for h in hits],
                         ["con_id", "window", "command", "result"]))
@@ -300,10 +351,11 @@ def cmd_apply(args: argparse.Namespace) -> int:
     res = generate.apply(st, reload=not args.no_reload, do_validate=not args.no_validate)
     live: list[dict] = []
     if args.live and swayipc.available():
-        for r in st.rules():
+        for r in st.resolved_rules():
             if r.enabled:
                 live.extend(generate.apply_live(r))
         res["live"] = live
+        res["monitors_live"] = mon.apply_live(st)
     _out(args, res, lambda: print(f"wrote {res['path']} with {res['rules']} rules; reloaded={res['reloaded']}"
                                   + (f"; live hits={len(live)}" if args.live else "")))
     return 0
@@ -541,6 +593,176 @@ def cmd_windows_pick(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# monitors / workspaces
+
+def cmd_mon_outputs(args: argparse.Namespace) -> int:
+    st = State()
+    outs = mon.live_outputs()
+    rows = []
+    data = []
+    for o in outs:
+        m = st.monitor_by_criteria(o.hw_id)
+        d = o.to_dict(); d["role"] = m.id if m else None; d["group"] = m.group if m else None
+        data.append(d)
+        rows.append([o.name, "on" if o.active else "off", o.hw_id, m.id if m else "-", m.group if m else "-",
+                     f"{o.width}x{o.height}@{o.refresh:.0f}", f"{o.x},{o.y}", o.scale, o.transform, o.current_workspace or ""])
+    _out(args, data, lambda: _table(rows, ["conn", "act", "hardware id", "role", "grp", "mode", "pos", "scale", "xform", "ws"]))
+    return 0
+
+
+def cmd_mon_list(args: argparse.Namespace) -> int:
+    st = State()
+    live = {o.hw_id: o for o in mon.live_outputs()}
+    mons = st.monitors()
+    _out(args, [dict(m.to_dict(), scope=m.scope, connected=(m.criteria in live and live[m.criteria].active),
+                     connector=live[m.criteria].name if m.criteria in live else None,
+                     workspaces=m.workspaces(), problems=m.problems()) for m in mons],
+         lambda: _table([["*" if m.enabled else "-", m.id, m.group, f"{m.group * 10 + 1}-{m.group * 10 + 10}" if m.group else "-", "P" if m.primary else "",
+                          m.scope, live[m.criteria].name if m.criteria in live and live[m.criteria].active else "off", m.name, m.criteria] for m in mons],
+                        ["", "role", "grp", "ws", "", "scope", "conn", "name", "hardware id"]))
+    return 0
+
+
+def _resolve_criteria(spec: str) -> str:
+    """Accept a hardware id, or a connector name of a live output."""
+    for o in mon.live_outputs():
+        if spec == o.name:
+            return o.hw_id
+    return spec
+
+
+def cmd_mon_add(args: argparse.Namespace) -> int:
+    st = State()
+    if st.monitor(args.role) and not args.force:
+        raise CliError(f"monitor role {args.role!r} exists; use `monitors set` or --force")
+    m = Monitor(id=args.role, criteria=_resolve_criteria(args.output), group=args.group if args.group is not None else 0,
+                name=args.name or "", primary=args.primary, enabled=not args.disabled, notes=args.notes or "", scope=args.scope)
+    if m.problems():
+        raise CliError("invalid monitor: " + "; ".join(m.problems()))
+    clash = [x for x in st.monitors() if x.group and x.group == m.group and x.id != m.id]
+    if clash and not args.force:
+        raise CliError(f"group {m.group} already used by {clash[0].id}; pick another or --force")
+    with log.action("monitors.add", role=m.id, criteria=m.criteria, group=m.group, scope=args.scope):
+        st.save_monitor(m, args.scope)
+        res = _persist(args, st, f"add monitor {m.id}", apply_rules=True)
+        if not args.no_apply and swayipc.available():
+            res["monitors_live"] = mon.apply_live(st)
+    _out(args, {"monitor": dict(m.to_dict(), scope=args.scope), **res}, lambda: print(f"added {m.id}: group {m.group} -> {m.criteria}"))
+    return 0
+
+
+def cmd_mon_set(args: argparse.Namespace) -> int:
+    st = State()
+    m = st.monitor(args.role)
+    if m is None:
+        raise CliError(f"no monitor role {args.role!r}")
+    if args.output is not None:
+        m.criteria = _resolve_criteria(args.output)
+    if args.group is not None:
+        m.group = args.group
+    if args.name is not None:
+        m.name = args.name
+    if args.notes is not None:
+        m.notes = args.notes
+    if args.primary:
+        m.primary = True
+    if args.no_primary:
+        m.primary = False
+    if args.enable:
+        m.enabled = True
+    if args.disable:
+        m.enabled = False
+    if args.rename:
+        # role rename: rewrite rule targets pointing at the old role
+        old = m.id
+        m.id = args.rename
+        for r in st.rules():
+            if r.target and r.target.get("monitor") == old:
+                r.target["monitor"] = m.id
+                st.save_rule(r)
+        st.remove("monitors", old)
+    if m.problems():
+        raise CliError("invalid monitor: " + "; ".join(m.problems()))
+    clash = [x for x in st.monitors() if x.group and x.group == m.group and x.id != m.id]
+    if clash and not args.force:
+        raise CliError(f"group {m.group} already used by {clash[0].id}; pick another or --force")
+    scope = args.scope or m.scope
+    with log.action("monitors.set", role=m.id, criteria=m.criteria, group=m.group, scope=scope):
+        st.save_monitor(m, scope)
+        res = _persist(args, st, f"update monitor {m.id}", apply_rules=True)
+        if not args.no_apply and swayipc.available():
+            res["monitors_live"] = mon.apply_live(st)
+    _out(args, {"monitor": dict(m.to_dict(), scope=scope), **res}, lambda: print(f"updated {m.id}: group {m.group} -> {m.criteria}"))
+    return 0
+
+
+def cmd_mon_rm(args: argparse.Namespace) -> int:
+    st = State()
+    m = st.monitor(args.role)
+    if m is None:
+        raise CliError(f"no monitor role {args.role!r}")
+    users = [r for r in st.rules() if r.target and r.target.get("monitor") == m.id]
+    if users and not args.force:
+        raise CliError(f"{len(users)} rule(s) target {m.id!r} ({', '.join(r.id for r in users[:5])}); --force keeps them with their numeric fallback")
+    with log.action("monitors.rm", role=m.id):
+        st.remove("monitors", m.id)
+        res = _persist(args, st, f"remove monitor {m.id}", apply_rules=True)
+    _out(args, {"removed": m.id, **res}, lambda: print(f"removed {m.id}"))
+    return 0
+
+
+def cmd_mon_apply(args: argparse.Namespace) -> int:
+    st = State()
+    res = generate.apply(st, reload=not args.no_reload)
+    if swayipc.available():
+        res["monitors_live"] = mon.apply_live(st)
+    _out(args, res, lambda: print(f"pins applied; moved {sum(1 for h in res.get('monitors_live', []) if h.get('ok'))} workspace(s)"))
+    return 0
+
+
+def cmd_mon_geometry(args: argparse.Namespace) -> int:
+    st = State()
+    if args.state in ("on", "off"):
+        st.set_setting("pin_geometry", args.state == "on", args.scope)
+        with log.action("monitors.pin_geometry", state=args.state):
+            res = _persist(args, st, f"pin geometry {args.state}", apply_rules=True)
+    else:
+        res = {}
+    text, notes = mon.render_geometry(st)
+    _out(args, {"pin_geometry": st.settings().get("pin_geometry"), "lines": text.strip().splitlines(), "notes": notes, **res},
+         lambda: print(f"pin_geometry={st.settings().get('pin_geometry')}\n{text}" + ("\n".join("note: " + n for n in notes))))
+    return 0
+
+
+def cmd_mon_fix(args: argparse.Namespace) -> int:
+    before = mon.orphans()
+    res = mon.fix_orphans()
+    res["orphans_before"] = before
+    res["orphans_after"] = mon.orphans()
+    _out(args, res, lambda: print(f"ok={res.get('ok')} orphans before={len(before)} after={len(res['orphans_after'])}" + (f"\n{res.get('error')}" if res.get('error') else "")))
+    return 0 if res.get("ok") else 1
+
+
+def cmd_ws_map(args: argparse.Namespace) -> int:
+    st = State()
+    m = mon.workspace_map(st)
+
+    def human() -> None:
+        for block in m:
+            mo = block["monitor"]
+            head = f"{mo['id']} (group {mo['group']}, {'connected' if block['connected'] else 'absent'}{', ' + block['connector'] if block['connector'] else ''}) {mo['name'] or mo['criteria']}" if mo else "UNPINNED workspaces"
+            print(f"\n== {head}")
+            for sl in block["slots"]:
+                if not sl["rules"] and not sl["windows"] and mo:
+                    continue
+                apps = ", ".join(r["name"] for r in sl["rules"]) or "-"
+                wins = ", ".join(w["label"] for w in sl["windows"]) or "-"
+                print(f"  ws {sl['workspace']!s:>3}  assigned: {apps:<40} open: {wins}")
+    _out(args, m, human)
+    return 0
+
+
+# --------------------------------------------------------------------------
 # git / log
 
 def cmd_git_status(args: argparse.Namespace) -> int:
@@ -616,7 +838,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd")
 
     x = sub.add_parser("gui", help="open the GUI (default)")
-    x.add_argument("--section", choices=["startup", "rules", "apps", "windows", "log"], help="section to open")
+    x.add_argument("--section", choices=["startup", "rules", "monitors", "workspaces", "apps", "windows", "log"], help="section to open")
     x.add_argument("--select", help="item id to select (rule id, startup id, desktop id or con_id)")
     x.set_defaults(func=cmd_gui)
     sub.add_parser("doctor", help="check the installation").set_defaults(func=cmd_doctor)
@@ -637,6 +859,7 @@ def build_parser() -> argparse.ArgumentParser:
     x.add_argument("-c", "--criteria", action="append", metavar="KEY=REGEX", help="e.g. app_id=kitty (repeatable)")
     x.add_argument("-a", "--action", action="append", metavar="CMD", help="e.g. 'floating enable' (repeatable)")
     x.add_argument("--workspace", help="shortcut: target workspace number")
+    x.add_argument("--target", metavar="ROLE:SLOT", help="symbolic workspace target, e.g. main:2 (resolved per machine)")
     x.add_argument("--name"); x.add_argument("--notes"); x.add_argument("--id")
     x.add_argument("--scope", choices=SCOPES, default="common")
     x.add_argument("--disabled", action="store_true"); x.add_argument("--force", action="store_true")
@@ -646,6 +869,7 @@ def build_parser() -> argparse.ArgumentParser:
     x.add_argument("-c", "--criteria", action="append", metavar="KEY=REGEX", help="replace all criteria")
     x.add_argument("-a", "--action", action="append", metavar="CMD", help="replace all actions")
     x.add_argument("--add-action", action="append", metavar="CMD"); x.add_argument("--remove-action", action="append", metavar="CMD")
+    x.add_argument("--target", metavar="ROLE:SLOT", help="symbolic workspace target; 'none' clears it")
     x.add_argument("--name"); x.add_argument("--notes"); x.add_argument("--scope", choices=SCOPES)
     x.add_argument("--enable", action="store_true"); x.add_argument("--disable", action="store_true")
     persist_flags(x); x.set_defaults(func=cmd_rules_set)
@@ -696,6 +920,27 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_parser("list").set_defaults(func=cmd_windows_list)
     w.add_parser("focused").set_defaults(func=cmd_windows_focused)
     x = w.add_parser("pick", help="wait for you to focus a window, print it"); x.add_argument("--timeout", type=float, default=30); x.set_defaults(func=cmd_windows_pick)
+
+    # monitors
+    m = sub.add_parser("monitors", help="monitor roles, workspace pins, geometry").add_subparsers(dest="sub", required=True)
+    m.add_parser("outputs", help="live outputs with hardware ids").set_defaults(func=cmd_mon_outputs)
+    m.add_parser("list").set_defaults(func=cmd_mon_list)
+    x = m.add_parser("add"); x.add_argument("role", help="main | second | tv | left ... (shared across machines)")
+    x.add_argument("output", help="hardware id or a live connector name (DP-1)"); x.add_argument("--group", type=int, help="workspace decade 1..9")
+    x.add_argument("--name"); x.add_argument("--notes"); x.add_argument("--primary", action="store_true"); x.add_argument("--disabled", action="store_true")
+    x.add_argument("--scope", choices=SCOPES, default="profile"); x.add_argument("--force", action="store_true")
+    persist_flags(x); x.set_defaults(func=cmd_mon_add)
+    x = m.add_parser("set"); x.add_argument("role")
+    x.add_argument("--output"); x.add_argument("--group", type=int); x.add_argument("--name"); x.add_argument("--notes"); x.add_argument("--rename", metavar="NEWROLE")
+    x.add_argument("--primary", action="store_true"); x.add_argument("--no-primary", action="store_true")
+    x.add_argument("--enable", action="store_true"); x.add_argument("--disable", action="store_true"); x.add_argument("--scope", choices=SCOPES); x.add_argument("--force", action="store_true")
+    persist_flags(x); x.set_defaults(func=cmd_mon_set)
+    x = m.add_parser("rm"); x.add_argument("role"); x.add_argument("--force", action="store_true"); persist_flags(x); x.set_defaults(func=cmd_mon_rm)
+    x = m.add_parser("apply", help="regenerate pins, reload, move open workspaces to their monitor"); x.add_argument("--no-reload", action="store_true"); x.set_defaults(func=cmd_mon_apply)
+    x = m.add_parser("pin-geometry", help="emit nwg-displays geometry keyed by hardware id"); x.add_argument("state", nargs="?", choices=["on", "off", "show"], default="show"); x.add_argument("--scope", choices=SCOPES, default="profile"); persist_flags(x); x.set_defaults(func=cmd_mon_geometry)
+    m.add_parser("fix-orphans", help="migrate group-0 workspaces via sway-hotplug-restore.sh").set_defaults(func=cmd_mon_fix)
+    w2 = sub.add_parser("workspaces", help="workspace map").add_subparsers(dest="sub", required=True)
+    w2.add_parser("map", help="monitors x slots with assigned apps and open windows").set_defaults(func=cmd_ws_map)
 
     # git
     g = sub.add_parser("git", help="repo sync of the state files").add_subparsers(dest="sub", required=True)

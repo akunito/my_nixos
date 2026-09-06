@@ -67,8 +67,51 @@ class StartupEntry:
         return out
 
 
+@dataclass
+class Monitor:
+    """A monitor ROLE on this machine: role id (shared vocabulary across
+    profiles: main, second, tv, left...), hardware id and workspace decade."""
+    id: str                  # role: main | second | tv | ...
+    criteria: str            # sway hardware id: "Make Model Serial"
+    group: int = 0           # workspaces group*10+1 .. group*10+10 ; 0 = unpinned
+    name: str = ""           # friendly label
+    primary: bool = False
+    enabled: bool = True
+    notes: str = ""
+    scope: str = "profile"
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any], scope: str = "profile") -> "Monitor":
+        return cls(id=str(d.get("id") or ""), criteria=str(d.get("criteria") or ""), group=int(d.get("group", 0)),
+                   name=str(d.get("name") or ""), primary=bool(d.get("primary", False)),
+                   enabled=bool(d.get("enabled", True)), notes=str(d.get("notes") or ""), scope=scope)
+
+    def to_dict(self) -> dict[str, Any]:
+        d = asdict(self)
+        d.pop("scope", None)
+        return d
+
+    def problems(self) -> list[str]:
+        out = []
+        if not self.id or not all(c.isalnum() or c in "-_" for c in self.id):
+            out.append("role id must be alphanumeric (main, second, tv, ...)")
+        if not self.criteria.strip():
+            out.append("empty hardware id")
+        if not 0 <= self.group <= 9:
+            out.append("group must be 0..9 (0 = unpinned)")
+        return out
+
+    def workspaces(self) -> list[int]:
+        return [self.group * 10 + i for i in range(1, 11)] if self.group else []
+
+
+SETTINGS_DEFAULTS: dict[str, Any] = {
+    "pin_geometry": False,   # emit output geometry keyed by hardware id (from nwg-displays' file)
+}
+
+
 def _empty() -> dict[str, Any]:
-    return {"version": VERSION, "rules": [], "startup": []}
+    return {"version": VERSION, "rules": [], "startup": [], "monitors": [], "settings": {}}
 
 
 def _read(path: Path) -> dict[str, Any]:
@@ -83,6 +126,8 @@ def _read(path: Path) -> dict[str, Any]:
     data.setdefault("version", VERSION)
     data.setdefault("rules", [])
     data.setdefault("startup", [])
+    data.setdefault("monitors", [])
+    data.setdefault("settings", {})
     return data
 
 
@@ -131,6 +176,78 @@ class State:
 
     def rules(self) -> list[Rule]:
         return [Rule.from_dict(d, d["_scope"]) for d in self._merged("rules")]
+
+    def monitors(self) -> list[Monitor]:
+        items = [Monitor.from_dict(d, d["_scope"]) for d in self._merged("monitors")]
+        items.sort(key=lambda m: (m.group or 99, m.id))
+        return items
+
+    def monitor(self, role: str) -> Monitor | None:
+        for m in self.monitors():
+            if m.id == role:
+                return m
+        return None
+
+    def monitor_by_criteria(self, criteria: str) -> Monitor | None:
+        for m in self.monitors():
+            if m.criteria == criteria:
+                return m
+        return None
+
+    def monitor_for_workspace(self, num: int) -> Monitor | None:
+        for m in self.monitors():
+            if m.group and num in m.workspaces():
+                return m
+        return None
+
+    def settings(self) -> dict[str, Any]:
+        out = dict(SETTINGS_DEFAULTS)
+        out.update(self.common.get("settings") or {})
+        out.update(self.profile.get("settings") or {})
+        return out
+
+    def set_setting(self, key: str, value: Any, scope: str = "profile") -> None:
+        layer = self._layer(scope)
+        layer.setdefault("settings", {})[key] = value
+
+    # ---- symbolic targets ---------------------------------------------------
+    def resolve_target(self, rule: Rule) -> tuple[int | None, str | None]:
+        """(workspace number, problem). None/None when the rule has no target."""
+        if not rule.target:
+            return None, None
+        role = str(rule.target.get("monitor", ""))
+        try:
+            slot = int(rule.target.get("slot", 0))
+        except (TypeError, ValueError):
+            return None, f"bad slot {rule.target.get('slot')!r}"
+        if not 1 <= slot <= 10:
+            return None, f"slot must be 1..10, got {slot}"
+        m = self.monitor(role)
+        if m is None:
+            return None, f"monitor role {role!r} is not defined for profile {paths.profile_name()}"
+        if not m.group:
+            return None, f"monitor {role!r} has no workspace group"
+        return m.group * 10 + slot, None
+
+    def resolved_rules(self) -> list[Rule]:
+        """Rules with symbolic targets rewritten to this machine's numbers.
+        Unresolvable targets keep their stored numeric action (fallback)."""
+        out = []
+        for r in self.rules():
+            n, _prob = self.resolve_target(r)
+            out.append(r.with_workspace_number(n) if n is not None else r)
+        return out
+
+    def target_problems(self) -> list[tuple[Rule, str]]:
+        out = []
+        for r in self.rules():
+            _n, prob = self.resolve_target(r)
+            if prob:
+                out.append((r, prob))
+        return out
+
+    def save_monitor(self, mon: Monitor, scope: str | None = None) -> None:
+        self.upsert("monitors", mon.to_dict(), scope or mon.scope)
 
     def startup(self) -> list[StartupEntry]:
         items = [StartupEntry.from_dict(d, d["_scope"]) for d in self._merged("startup")]
@@ -185,12 +302,28 @@ class State:
     def save_startup(self, entry: StartupEntry, scope: str | None = None) -> None:
         self.upsert("startup", entry.to_dict(), scope or entry.scope)
 
+    def sync_targets(self) -> int:
+        """Keep the numeric fallback of every symbolic rule equal to its current
+        resolution, so a machine without the role (or a later role removal)
+        still gets the last known-good number. Returns rules rewritten."""
+        n = 0
+        for r in self.rules():
+            num, _prob = self.resolve_target(r)
+            if num is None:
+                continue
+            synced = r.with_workspace_number(num)
+            if synced.actions != r.actions:
+                self.save_rule(synced, r.scope)
+                n += 1
+        return n
+
     def write(self) -> list[Path]:
+        self.sync_targets()
         written = []
         for path, data in ((self.common_path, self.common), (self.profile_path, self.profile)):
             data["version"] = VERSION
             # Do not create an empty profile file just because we loaded it.
-            if not data["rules"] and not data["startup"] and not path.exists():
+            if not data["rules"] and not data["startup"] and not data["monitors"] and not data["settings"] and not path.exists():
                 continue
             _write(path, data)
             written.append(path)

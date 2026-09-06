@@ -30,9 +30,7 @@ let
     else if nativeGroups then ''
   exec $HOME/.config/sway/scripts/swaysome-groups-setup.sh''
     else ''
-  exec swaysome init 1
-  exec swaysome rearrange-workspaces
-  exec $HOME/.config/sway/scripts/swaysome-assign-groups.sh'';
+  exec $HOME/.config/sway/scripts/swaysome-groups-setup.sh'';
 
   # Either mode enables kanshi
   kanshiEnabled = declarativeMode || imperativeMode;

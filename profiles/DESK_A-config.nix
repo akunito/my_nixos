@@ -80,7 +80,6 @@ in
     nwgDisplaysEnable = false;        # wlroots monitor GUI
     kanshiImperativeMode = false;     # wlroots monitor manager
     swaysomeNativeGroups = false;     # Sway workspace groups
-    workspaceGroupsGuiEnable = false; # Sway workspace-groups GUI
 
     # ============================================================================
     # SECURITY / SUDO

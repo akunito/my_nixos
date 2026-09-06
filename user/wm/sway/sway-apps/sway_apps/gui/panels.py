@@ -174,6 +174,13 @@ class RulesPanel(Panel):
         self.selected_id = None
         self.show_detail(self._draft, is_new=True)
 
+    def new_rule_prefilled(self, rule: Rule) -> None:
+        """Open the editor on an unsaved rule built elsewhere (workspace map)."""
+        self._draft = rule
+        self.listbox.unselect_all()
+        self.selected_id = None
+        self.show_detail(rule, is_new=True)
+
     def new_rule_from_window(self, w: swayipc.Window) -> None:
         crit = {"app_id": w.app_id} if w.app_id else ({"class": w.cls} if w.cls else {"title": w.title or ""})
         self.new_rule(crit, name=w.label)
@@ -240,7 +247,14 @@ class RulesPanel(Panel):
         f_sticky = combo_row("Sticky", ON_OFF, form.sticky)
         f_full = combo_row("Fullscreen", ON_OFF, form.fullscreen)
         f_inh = combo_row("Inhibit idle", INHIBIT, form.inhibit_idle)
-        f_ws = entry_row("Move to workspace", form.workspace)
+        roles = [m.id for m in self.ctl.state.monitors()]
+        cur_role = rule.target.get("monitor", "") if rule.target else ""
+        role_opts = ["(number below)"] + roles + ([cur_role] if cur_role and cur_role not in roles else [])
+        f_role = combo_row("Target monitor (role)", role_opts, cur_role or "(number below)",
+                           "symbolic: resolves to this machine's decade, renumbers if the group changes")
+        f_slot = Adw.SpinRow.new_with_range(1, 10, 1); f_slot.set_title("Target slot (1-10)")
+        f_slot.set_value(int(rule.target.get("slot", 1)) if rule.target else 1)
+        f_ws = entry_row("Move to workspace (number)", form.workspace)
         f_out = entry_row("Move to output", form.output)
         f_rw = entry_row("Resize width", form.resize_w)
         f_rh = entry_row("Resize height", form.resize_h)
@@ -250,7 +264,7 @@ class RulesPanel(Panel):
         f_op = entry_row("Opacity (0-1)", form.opacity)
         f_mark = entry_row("Mark", form.mark)
         f_layout = combo_row("Layout", LAYOUTS, form.layout)
-        for r in (f_floating, f_sticky, f_full, f_inh, f_ws, f_out, f_rw, f_rh, f_center, f_border, f_bpx, f_op, f_mark, f_layout):
+        for r in (f_role, f_slot, f_ws, f_out, f_floating, f_sticky, f_full, f_inh, f_rw, f_rh, f_center, f_border, f_bpx, f_op, f_mark, f_layout):
             g_act.add(r)
         self.detail.append(g_act)
 
@@ -308,6 +322,14 @@ class RulesPanel(Panel):
                 actions = []
             new = Rule(id=rule.id, kind=kind, criteria=crit, actions=actions, name=name_row.get_text().strip(),
                        enabled=enabled_row.get_active(), notes=rule.notes, scope=combo_value(scope_row))
+            role_sel = combo_value(f_role)
+            if role_sel and role_sel != "(number below)" and kind != "no_focus":
+                new.target = {"monitor": role_sel, "slot": int(f_slot.get_value())}
+                n, _prob = self.ctl.state.resolve_target(new)
+                if n is not None:
+                    new.actions = new.with_workspace_number(n).actions
+            else:
+                new.target = None
             if is_new or new.criteria_key() != rule.criteria_key():
                 # criteria changed -> identity changes, unless editing keeps the same id on purpose
                 new.id = new.default_id() if is_new else rule.id
@@ -318,12 +340,16 @@ class RulesPanel(Panel):
         def update_preview(*_a) -> None:
             r = collect()
             probs = r.problems()
+            _n, tprob = self.ctl.state.resolve_target(r)
+            if tprob:
+                probs = probs + [tprob]
             preview.set_text(r.render() + ("\n⚠ " + "; ".join(probs) if probs else ""))
         update_preview()
         for r in list(crit_rows.values()) + [f_ws, f_out, f_rw, f_rh, f_bpx, f_op, f_mark, name_row] + ([f_cr] if f_cr else []):
             r.connect("changed", update_preview)
-        for r in [f_floating, f_sticky, f_full, f_inh, f_border, f_layout, kind_row, scope_row] + ([f_blur, f_shadows] if f_blur else []):
+        for r in [f_floating, f_sticky, f_full, f_inh, f_border, f_layout, kind_row, scope_row, f_role] + ([f_blur, f_shadows] if f_blur else []):
             r.connect("notify::selected", update_preview)
+        f_slot.connect("notify::value", update_preview)
         for r in (flag_floating, flag_tiling, f_center, enabled_row):
             r.connect("notify::active", update_preview)
         adv.get_buffer().connect("changed", update_preview)

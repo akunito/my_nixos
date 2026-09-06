@@ -79,6 +79,10 @@ class Rule:
     name: str = ""
     enabled: bool = True
     notes: str = ""
+    # Symbolic workspace target: {"monitor": "<role>", "slot": 1..10}. Resolved
+    # per machine through the monitors table (role -> group decade); the
+    # numeric action stays stored as the fallback when the role is undefined.
+    target: dict[str, Any] | None = None
     scope: str = "common"  # runtime only: which layer it came from
 
     # ---- construction -----------------------------------------------------
@@ -100,13 +104,40 @@ class Rule:
             name=str(d.get("name") or ""),
             enabled=bool(d.get("enabled", True)),
             notes=str(d.get("notes") or ""),
+            target=dict(d["target"]) if isinstance(d.get("target"), dict) and d["target"].get("monitor") else None,
             scope=scope,
         )
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         d.pop("scope", None)
+        if not d.get("target"):
+            d.pop("target", None)
         return d
+
+    # ---- symbolic workspace target -------------------------------------------
+    def workspace_number(self) -> int | None:
+        """The numeric workspace this rule targets, if any (assign or move)."""
+        for a in self.actions:
+            m = re.match(r"^(?:move (?:container )?to )?workspace (?:number )?(\d+)$", a.strip())
+            if m:
+                return int(m.group(1))
+        return None
+
+    def with_workspace_number(self, n: int) -> "Rule":
+        """Copy with the workspace action rewritten to number n."""
+        new_actions = []
+        replaced = False
+        for a in self.actions:
+            if re.match(r"^(?:move (?:container )?to )?workspace (?:number )?\d+$", a.strip()):
+                new_actions.append(f"workspace number {n}" if self.kind == "assign" else f"move container to workspace number {n}")
+                replaced = True
+            else:
+                new_actions.append(a)
+        if not replaced:
+            new_actions.insert(0, f"workspace number {n}" if self.kind == "assign" else f"move container to workspace number {n}")
+        r = Rule(**{**asdict(self), "actions": new_actions})
+        return r
 
     # ---- identity -----------------------------------------------------------
     def default_id(self) -> str:

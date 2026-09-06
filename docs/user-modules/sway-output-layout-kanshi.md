@@ -5,7 +5,8 @@ tags: [sway, swayfx, wayland, kanshi, outputs, monitors, workspaces, swaysome, h
 related_files:
   - user/wm/sway/kanshi.nix
   - user/wm/sway/swayfx-config.nix
-  - user/wm/sway/scripts/swaysome-assign-groups.sh
+  - user/wm/sway/scripts/swaysome-groups-setup.sh
+  - user/wm/sway/sway-apps/  (monitor roles + workspace pins when swayAppsEnable)
   - profiles/*-config.nix
   - lib/defaults.nix
   - lib/flake-base.nix
