@@ -1029,6 +1029,21 @@
       "name": "KWalletManager",
       "enabled": true,
       "notes": ""
+    },
+    {
+      "id": "r-e680a94e",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "^dev\\.akunito\\.SwayApps$"
+      },
+      "actions": [
+        "floating enable",
+        "resize set 1500 950",
+        "move position center"
+      ],
+      "name": "sway-apps window",
+      "enabled": true,
+      "notes": ""
     }
   ],
   "startup": []
