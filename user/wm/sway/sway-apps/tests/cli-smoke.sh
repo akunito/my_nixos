@@ -95,7 +95,7 @@ if [ -n "$CALC" ]; then
   APPID=$( [ "$CALC" = kcalc ] && echo org.kde.kcalc || echo org.gnome.Calculator )
   J startup set "$SID" --app-id "$APPID" --wait 20 --workspace "$(J windows focused | jq -r '.workspace_num // 1')" >/dev/null
   RUN=$(J startup run "$SID")
-  check "startup run launches+places ($CALC)" '.[0].launched == true and (.[0].windows|length) >= 1 and .[0].placed >= 1' "$RUN"
+  check "startup run launches+places ($CALC)" '.[0].launched == true and (.[0].windows|length) >= 1 and (.[0].placed >= 1 or .[0].sticky >= 1)' "$RUN"
   sleep 1; swaymsg "[app_id=$APPID] kill" >/dev/null 2>&1 || true
   check "learned app_id cache"   'true' "$(grep -q "$APPID" "$SWAY_APPS_LOCAL_STATE_DIR/learned.json" 2>/dev/null && echo '{}' || echo null)"
 else

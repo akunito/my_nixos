@@ -31,33 +31,38 @@ def _workspace_of(con_id: int) -> str | None:
     return None
 
 
-def _place(con_id: int, workspace: str) -> bool:
-    """Move only when needed: a redundant move re-attaches the container and
-    drags the next moved window along (measured on DESK 2026-09-02)."""
+def _is_sticky(con_id: int) -> bool:
+    return any(w.id == con_id and w.sticky for w in swayipc.windows())
+
+
+def _place(con_id: int, workspace: str) -> str:
+    """Returns "ok" | "sticky" | "gone" | "failed".
+
+    Move only when needed: a redundant move re-attaches the container and
+    drags the next moved window along (measured on DESK 2026-09-02).
+    A sticky window (any app with a `sticky enable` rule) follows the VISIBLE
+    workspace of its output by definition; sway even refuses to move it
+    between workspaces of one output, and lifting the flag just snaps it
+    back. Report it instead of fighting it."""
+    if _is_sticky(con_id):
+        _log.info("window %s is sticky: it follows the visible workspace, placement skipped", con_id)
+        return "sticky"
     target = workspace.strip()
     ws_cmd = f"workspace number {target}" if re.fullmatch(r"\d+", target) else f"workspace {target}"
     for _ in range(5):
         cur = _workspace_of(con_id)
         if cur is None:
-            return False
+            return "gone"
         if cur == target or (target.isdigit() and cur.split(":")[0] == target):
-            return True
+            return "ok"
         try:
             swayipc.command(f"[con_id={con_id}] move container to {ws_cmd}")
         except swayipc.SwayError as exc:
             if "sticky" in str(exc).lower():
-                # sway refuses to move a sticky container between workspaces of
-                # the same output (the app has a `sticky enable` rule). Lift the
-                # flag for the move and put it back.
-                try:
-                    swayipc.command(f"[con_id={con_id}] sticky disable, move container to {ws_cmd}, sticky enable")
-                    _log.info("move %s -> %s done with sticky lifted", con_id, target)
-                except swayipc.SwayError as exc2:
-                    _log.warning("move %s -> %s failed even with sticky lifted: %s", con_id, target, exc2)
-            else:
-                _log.warning("move %s -> %s failed: %s", con_id, target, exc)
+                return "sticky"
+            _log.warning("move %s -> %s failed: %s", con_id, target, exc)
         time.sleep(0.5)
-    return _workspace_of(con_id) == target
+    return "ok" if _workspace_of(con_id) == target else "failed"
 
 
 def run_entry(entry: StartupEntry, progress: Progress | None = None) -> dict:
@@ -95,15 +100,20 @@ def run_entry(entry: StartupEntry, progress: Progress | None = None) -> dict:
             observed = [w.app_id for w in swayipc.windows() if w.id in new_ids and w.app_id]
             if observed:
                 learn(entry.desktop_id or entry.command, observed[0])
-        placed = 0
+        placed = sticky = 0
         if entry.workspace:
             for cid in sorted(new_ids):
-                if _place(cid, entry.workspace):
+                status = _place(cid, entry.workspace)
+                if status == "ok":
                     placed += 1
                     say(f"{entry.name}: window {cid} -> workspace {entry.workspace}")
+                elif status == "sticky":
+                    sticky += 1
+                    say(f"{entry.name}: window {cid} is sticky (follows the visible workspace)")
         res["windows"] = len(new_ids)
         res["placed"] = placed
-        return {"id": entry.id, "launched": True, "windows": sorted(new_ids), "placed": placed}
+        res["sticky"] = sticky
+        return {"id": entry.id, "launched": True, "windows": sorted(new_ids), "placed": placed, "sticky": sticky}
 
 
 def run(state: State, only: list[str] | None = None, progress: Progress | None = None) -> list[dict]:
