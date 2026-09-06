@@ -71,6 +71,10 @@ class RuleForm:
                 f.shadows = w[1]
             elif kind == "corner_radius":
                 f.corner_radius = w[1]
+            elif kind == "assign_workspace":   # assign [..] workspace number N
+                f.workspace = w[-1]
+            elif kind == "assign_output":      # assign [..] output NAME
+                f.output = a.split(None, 1)[1].strip().strip('"')
             else:
                 f.advanced.append(a)
         return f

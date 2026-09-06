@@ -9,8 +9,22 @@ from . import log, paths
 _log = log.get("git")
 
 
+_top_cache: Path | None = None
+
+
+def _top() -> Path:
+    """Work-tree root; git pathspecs below are relative to it, so every git
+    call runs from there (running from STATE_DIR made `add user/wm/...` fail)."""
+    global _top_cache
+    if _top_cache is None:
+        proc = subprocess.run(["git", "-C", str(paths.STATE_DIR), "rev-parse", "--show-toplevel"],
+                              capture_output=True, text=True)
+        _top_cache = Path(proc.stdout.strip()) if proc.returncode == 0 and proc.stdout.strip() else paths.STATE_DIR
+    return _top_cache
+
+
 def _git(args: list[str], cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess:
-    cmd = ["git", "-C", str(cwd or paths.STATE_DIR), *args]
+    cmd = ["git", "-C", str(cwd or _top()), *args]
     _log.debug("exec %s", " ".join(cmd))
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if check and proc.returncode != 0:
@@ -21,13 +35,13 @@ def _git(args: list[str], cwd: Path | None = None, check: bool = True) -> subpro
 def in_repo() -> bool:
     if not paths.STATE_DIR.exists():
         return False
-    return _git(["rev-parse", "--is-inside-work-tree"], check=False).returncode == 0
+    return _git(["rev-parse", "--is-inside-work-tree"], cwd=paths.STATE_DIR, check=False).returncode == 0
 
 
 def toplevel() -> Path | None:
     if not in_repo():
         return None
-    return Path(_git(["rev-parse", "--show-toplevel"]).stdout.strip())
+    return _top()
 
 
 def _rel(paths_: list[Path]) -> list[str]:

@@ -92,7 +92,7 @@ def _fmt_kwargs(kwargs: dict[str, Any]) -> str:
 
 
 @contextlib.contextmanager
-def action(name: str, **params: Any) -> Iterator[dict[str, Any]]:
+def action(_name: str, **params: Any) -> Iterator[dict[str, Any]]:
     """Log `name start ... / name ok|fail duration=...` around a block.
 
     The yielded dict can be filled with result fields that end up in the
@@ -100,6 +100,7 @@ def action(name: str, **params: Any) -> Iterator[dict[str, Any]]:
     """
     log = get("action")
     started = time.monotonic()
+    name = _name
     log.info("%s start %s", name, _fmt_kwargs(params))
     result: dict[str, Any] = {}
     try:
