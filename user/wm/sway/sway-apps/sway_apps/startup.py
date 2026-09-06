@@ -45,7 +45,17 @@ def _place(con_id: int, workspace: str) -> bool:
         try:
             swayipc.command(f"[con_id={con_id}] move container to {ws_cmd}")
         except swayipc.SwayError as exc:
-            _log.warning("move %s -> %s failed: %s", con_id, target, exc)
+            if "sticky" in str(exc).lower():
+                # sway refuses to move a sticky container between workspaces of
+                # the same output (the app has a `sticky enable` rule). Lift the
+                # flag for the move and put it back.
+                try:
+                    swayipc.command(f"[con_id={con_id}] sticky disable, move container to {ws_cmd}, sticky enable")
+                    _log.info("move %s -> %s done with sticky lifted", con_id, target)
+                except swayipc.SwayError as exc2:
+                    _log.warning("move %s -> %s failed even with sticky lifted: %s", con_id, target, exc2)
+            else:
+                _log.warning("move %s -> %s failed: %s", con_id, target, exc)
         time.sleep(0.5)
     return _workspace_of(con_id) == target
 

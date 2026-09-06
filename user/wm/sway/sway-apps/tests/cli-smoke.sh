@@ -25,6 +25,19 @@ check() { # name, jq-expr, json
 }
 echo "== sway-apps smoke: $($BIN --version) state=$SWAY_APPS_STATE_DIR"
 
+# This suite reloads sway several times (every rule save does). A reload on
+# DESK restarts kanshi, whose hotplug-restore pass repositions floating
+# windows -- it shrank a fullscreen gamescope session to 5x5 px off-screen on
+# 2026-09-06. Refuse to run while anything is fullscreen or a game is up,
+# unless the caller insists.
+if [ -z "${SWAY_APPS_SMOKE_FORCE:-}" ]; then
+  FS=$(swaymsg -t get_tree 2>/dev/null | jq -r '[.. | select(.type? == "con" or .type? == "floating_con") | select((.fullscreen_mode // 0) != 0 or (.app_id // "" | test("gamescope")) or ((.window_properties.class // "") | test("^steam_app_|gamescope"))) | (.app_id // .window_properties.class // .name)] | unique | join(", ")' 2>/dev/null)
+  if [ -n "$FS" ]; then
+    echo "REFUSING: fullscreen/game windows present ($FS). Reloads would disturb them. Set SWAY_APPS_SMOKE_FORCE=1 to override."
+    exit 3
+  fi
+fi
+
 # --- doctor / discovery -------------------------------------------------
 check "doctor runs"            '.checks | length > 5'                         "$(J doctor)"
 check "apps discovered"        'length > 5'                                    "$(J apps list)"

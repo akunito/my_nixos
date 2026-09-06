@@ -736,7 +736,7 @@ def cmd_mon_geometry(args: argparse.Namespace) -> int:
 
 def cmd_mon_fix(args: argparse.Namespace) -> int:
     before = mon.orphans()
-    res = mon.fix_orphans()
+    res = mon.fix_orphans(State())
     res["orphans_before"] = before
     res["orphans_after"] = mon.orphans()
     _out(args, res, lambda: print(f"ok={res.get('ok')} orphans before={len(before)} after={len(res['orphans_after'])}" + (f"\n{res.get('error')}" if res.get('error') else "")))

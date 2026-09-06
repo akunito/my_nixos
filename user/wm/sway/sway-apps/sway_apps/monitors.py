@@ -189,13 +189,59 @@ def apply_live(state: State) -> list[dict[str, Any]]:
     return hits
 
 
-def fix_orphans() -> dict[str, Any]:
-    """Run the hotplug-restore script (group-0 migration + snapshot restore)."""
-    if RESTORE_SCRIPT.exists():
-        with log.action("monitors.fix_orphans", script=str(RESTORE_SCRIPT)):
-            proc = subprocess.run(["bash", str(RESTORE_SCRIPT)], capture_output=True, text=True, timeout=60)
-            return {"ok": proc.returncode == 0, "script": str(RESTORE_SCRIPT), "output": (proc.stdout + proc.stderr)[-500:]}
-    return {"ok": False, "error": f"{RESTORE_SCRIPT} not installed (swayHotplugRestoreEnable off?)"}
+def fix_orphans(state: State) -> dict[str, Any]:
+    """Migrate group-0 workspaces (1-10) into the pinned decade of the output
+    they sit on. Same rule as sway-hotplug-restore.sh step 1 (digit preserved:
+    "3" -> "13"; rename when the target is free, else move the windows) but
+    WITHOUT the snapshot restore, which is only meaningful on a real hotplug.
+    Empty orphans are simply left to sway's auto-removal unless focused, in
+    which case focus is moved to the decade's first workspace."""
+    if not swayipc.available():
+        return {"ok": False, "error": "no sway socket"}
+    live = {o.name: o for o in live_outputs()}
+    base_for_output: dict[str, int] = {}
+    for m in state.monitors():
+        if m.enabled and m.group:
+            for name, o in live.items():
+                if o.hw_id == m.criteria:
+                    base_for_output[name] = m.group * 10
+    ws = swayipc.workspaces()
+    tree_windows = swayipc.windows()
+    actions: list[dict[str, Any]] = []
+    with log.action("monitors.fix_orphans") as res:
+        for w in ws:
+            num = w.get("num")
+            if not isinstance(num, int) or not 1 <= num <= 10:
+                continue
+            base = base_for_output.get(w.get("output", ""))
+            if base is None:
+                # no pin for this output: lowest existing decade on it
+                decades = [x["num"] // 10 * 10 for x in ws if x.get("output") == w.get("output") and isinstance(x.get("num"), int) and x["num"] >= 11]
+                base = min(decades) if decades else None
+            if base is None:
+                actions.append({"workspace": w["name"], "skipped": "no pinned decade for output " + str(w.get("output"))})
+                continue
+            target = base + num
+            wins = [x for x in tree_windows if x.workspace == w["name"]]
+            exists = any(x.get("num") == target for x in ws)
+            try:
+                if not wins:
+                    if w.get("focused"):
+                        swayipc.command(f"workspace number {base + 1}")
+                        actions.append({"workspace": w["name"], "action": f"focus moved to {base + 1} (empty orphan auto-removes)"})
+                    else:
+                        actions.append({"workspace": w["name"], "action": "empty, left to auto-remove"})
+                elif not exists and w["name"] == str(num):
+                    swayipc.command(f'rename workspace "{w["name"]}" to "{target}"')
+                    actions.append({"workspace": w["name"], "action": f"renamed to {target}", "windows": len(wins)})
+                else:
+                    for x in wins:
+                        swayipc.command(f"[con_id={x.id}] move container to workspace number {target}")
+                    actions.append({"workspace": w["name"], "action": f"{len(wins)} window(s) moved to {target}"})
+            except swayipc.SwayError as exc:
+                actions.append({"workspace": w["name"], "error": str(exc)})
+        res["actions"] = len(actions)
+    return {"ok": all("error" not in a for a in actions), "actions": actions}
 
 
 def orphans() -> list[dict[str, Any]]:

@@ -163,7 +163,7 @@ class Controller:
             return self._finish(f"Geometry pinning {'on' if on else 'off'}", True, None)
 
     def fix_orphans(self) -> Outcome:
-        res = mon.fix_orphans()
+        res = mon.fix_orphans(self.state)
         after = mon.orphans()
         if not res.get("ok"):
             return Outcome(False, res.get("error") or "restore script failed", res)
