@@ -1,0 +1,74 @@
+/* sway-apps base styling. Colours come from the generated token block
+   (see theme.py); this file only shapes the widgets. */
+
+.sa-sidebar row {
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin: 2px 6px;
+}
+.sa-sidebar row:selected {
+  background-color: alpha(@accent_bg_color, 0.18);
+  color: @window_fg_color;
+}
+.sa-sidebar row:selected label.sa-nav-title { color: @accent_color; font-weight: 600; }
+.sa-nav-icon { color: @accent_color; opacity: 0.85; }
+.sa-nav-subtitle { font-size: 0.8em; opacity: 0.6; }
+
+.sa-brand {
+  font-weight: 700;
+  font-size: 1.05em;
+  letter-spacing: 0.02em;
+}
+.sa-brand-dot { color: @accent_color; }
+
+.sa-footer {
+  border-top: 1px solid @sidebar_border_color;
+  padding: 8px 10px;
+  font-size: 0.85em;
+}
+.sa-footer .dim { opacity: 0.6; }
+.sa-badge {
+  background-color: alpha(@accent_bg_color, 0.2);
+  color: @accent_color;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+.sa-badge.warn { background-color: alpha(@warning_bg_color, 0.25); color: @warning_color; }
+.sa-badge.err { background-color: alpha(@error_bg_color, 0.25); color: @error_color; }
+.sa-badge.ok { background-color: alpha(@success_bg_color, 0.2); color: @success_color; }
+
+.sa-list row {
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin: 1px 6px;
+}
+.sa-list row:selected { background-color: alpha(@accent_bg_color, 0.16); color: @window_fg_color; }
+.sa-row-title { font-weight: 600; }
+.sa-row-sub { font-size: 0.85em; opacity: 0.65; font-family: monospace; }
+.sa-row-disabled .sa-row-title { opacity: 0.45; text-decoration: line-through; }
+.sa-chip {
+  font-size: 0.72em;
+  font-weight: 600;
+  padding: 0 6px;
+  border-radius: 6px;
+  background-color: alpha(@window_fg_color, 0.1);
+  opacity: 0.85;
+}
+.sa-chip.profile { background-color: alpha(@sa_base0E, 0.25); color: @sa_base0E; }
+.sa-chip.common { background-color: alpha(@sa_base0C, 0.2); color: @sa_base0C; }
+.sa-chip.assign { background-color: alpha(@sa_base09, 0.2); color: @sa_base09; }
+.sa-chip.no_focus { background-color: alpha(@sa_base0A, 0.2); color: @sa_base0A; }
+.sa-chip.flatpak { background-color: alpha(@sa_base0D, 0.2); color: @sa_base0D; }
+
+.sa-detail { padding: 18px 22px; }
+.sa-detail-title { font-size: 1.25em; font-weight: 700; }
+.sa-detail-sub { opacity: 0.6; font-family: monospace; font-size: 0.85em; }
+.sa-section-title { font-weight: 600; opacity: 0.75; font-size: 0.85em; margin-top: 8px; }
+.sa-mono { font-family: monospace; }
+.sa-empty { opacity: 0.5; font-size: 1.05em; }
+.sa-log textview { font-family: monospace; font-size: 0.85em; }
+.sa-log-line-warning { color: @warning_color; }
+.sa-log-line-error { color: @error_color; }
+.sa-pill-actions button { min-height: 26px; }

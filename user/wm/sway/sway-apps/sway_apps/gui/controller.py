@@ -1,0 +1,156 @@
+"""One place for every mutation the GUI performs; mirrors cli._persist so the
+GUI and the CLI behave identically (write -> apply -> live -> commit)."""
+from __future__ import annotations
+
+import threading
+from dataclasses import dataclass, field
+from typing import Any, Callable
+
+from .. import discover, generate, gitsync, log, startup, swayipc
+from ..rules import Rule
+from ..state import StartupEntry, State
+
+_log = log.get("gui.ctl")
+
+
+@dataclass
+class Outcome:
+    ok: bool
+    message: str
+    details: dict[str, Any] = field(default_factory=dict)
+
+
+class Controller:
+    def __init__(self) -> None:
+        self.state = State()
+        self.swayfx = swayipc.is_swayfx() if swayipc.available() else False
+
+    def reload_state(self) -> None:
+        self.state = State()
+
+    # ---- rules --------------------------------------------------------------
+    def _finish(self, message: str, apply_rules: bool, live_rule: Rule | None) -> Outcome:
+        details: dict[str, Any] = {}
+        self.state.write()
+        if apply_rules:
+            details["apply"] = generate.apply(self.state, reload=True)
+            if live_rule is not None and swayipc.available():
+                details["live"] = generate.apply_live(live_rule)
+        try:
+            details["commit"] = gitsync.commit(self.state.files(), message)
+        except RuntimeError as exc:
+            _log.warning("commit failed: %s", exc)
+            details["commit_error"] = str(exc)
+        live = details.get("live")
+        extra = ""
+        if live is not None:
+            extra = f" · applied to {len({h['window'] for h in live})} open window(s)"
+        commit = details.get("commit")
+        extra += f" · committed {commit}" if commit else ""
+        return Outcome(True, message + extra, details)
+
+    def save_rule(self, rule: Rule, scope: str) -> Outcome:
+        probs = rule.problems()
+        if probs:
+            return Outcome(False, "Invalid rule: " + "; ".join(probs))
+        with log.action("gui.rules.save", id=rule.id, line=rule.render(), scope=scope):
+            self.state.save_rule(rule, scope)
+            return self._finish(f"Saved rule {rule.name}", True, rule if rule.enabled else None)
+
+    def delete_rule(self, rule: Rule) -> Outcome:
+        with log.action("gui.rules.delete", id=rule.id):
+            self.state.remove("rules", rule.id)
+            return self._finish(f"Removed rule {rule.name}", True, None)
+
+    def toggle_rule(self, rule: Rule, enabled: bool) -> Outcome:
+        rule.enabled = enabled
+        with log.action("gui.rules.toggle", id=rule.id, enabled=enabled):
+            self.state.save_rule(rule)
+            return self._finish(f"{'Enabled' if enabled else 'Disabled'} {rule.name}", True, rule if enabled else None)
+
+    def test_rule(self, rule: Rule) -> Outcome:
+        probs = rule.problems()
+        if probs:
+            return Outcome(False, "Invalid rule: " + "; ".join(probs))
+        if not swayipc.available():
+            return Outcome(False, "No sway socket")
+        hits = generate.apply_live(rule)
+        bad = [h for h in hits if not h["ok"]]
+        wins = {h["window"] for h in hits}
+        if bad:
+            return Outcome(False, f"sway rejected: {bad[0]['error']}", {"hits": hits})
+        return Outcome(True, f"Applied to {len(wins)} open window(s)" if wins else "No open window matches", {"hits": hits})
+
+    def matching_windows(self, rule: Rule) -> list[swayipc.Window]:
+        if not swayipc.available():
+            return []
+        return [w for w in swayipc.windows() if swayipc.window_matches(w, rule.criteria)]
+
+    def apply_all(self) -> Outcome:
+        res = generate.apply(self.state, reload=True)
+        return Outcome(True, f"Regenerated {res['rules']} rules; sway reloaded" if res["reloaded"] else f"Regenerated {res['rules']} rules (no sway socket)", res)
+
+    # ---- startup ------------------------------------------------------------
+    def save_startup(self, entry: StartupEntry, scope: str) -> Outcome:
+        probs = entry.problems()
+        if probs:
+            return Outcome(False, "Invalid entry: " + "; ".join(probs))
+        with log.action("gui.startup.save", id=entry.id, command=entry.command, scope=scope):
+            self.state.save_startup(entry, scope)
+            return self._finish(f"Saved startup {entry.name}", False, None)
+
+    def delete_startup(self, entry: StartupEntry) -> Outcome:
+        with log.action("gui.startup.delete", id=entry.id):
+            self.state.remove("startup", entry.id)
+            return self._finish(f"Removed startup {entry.name}", False, None)
+
+    def run_startup_async(self, only: list[str] | None, progress: Callable[[str], None], done: Callable[[list[dict]], None]) -> None:
+        def worker() -> None:
+            try:
+                results = startup.run(self.state, only=only, progress=progress)
+            except Exception as exc:  # surfaced in the UI
+                _log.exception("startup run failed")
+                results = [{"id": "*", "launched": False, "error": str(exc)}]
+            done(results)
+        threading.Thread(target=worker, name="sway-apps-startup", daemon=True).start()
+
+    def launch_app_async(self, app: discover.App, workspace: str, done: Callable[[dict], None]) -> None:
+        def worker() -> None:
+            entry = StartupEntry(id="adhoc", name=app.name, command=app.command, app_id=app.app_id_guess,
+                                 workspace=workspace, wait_seconds=20, settle_seconds=1, desktop_id=app.desktop_id)
+            before = {w.id for w in swayipc.windows()}
+            try:
+                res = startup.run_entry(entry)
+                if res.get("timeout"):
+                    new = [w for w in swayipc.windows() if w.id not in before and w.app_id]
+                    ids = {w.app_id for w in new}
+                    if len(ids) == 1:
+                        discover.learn(app.desktop_id, new[0].app_id)
+                        res["learned_app_id"] = new[0].app_id
+            except Exception as exc:
+                _log.exception("launch failed")
+                res = {"launched": False, "error": str(exc)}
+            done(res)
+        threading.Thread(target=worker, name="sway-apps-launch", daemon=True).start()
+
+    # ---- git ----------------------------------------------------------------
+    def git_status(self) -> dict:
+        try:
+            return gitsync.status()
+        except Exception as exc:
+            return {"enabled": True, "repo": False, "error": str(exc)}
+
+    def git_push(self) -> Outcome:
+        try:
+            out = gitsync.push()
+            return Outcome(True, "Pushed", {"output": out})
+        except RuntimeError as exc:
+            return Outcome(False, f"Push failed: {exc}")
+
+    def git_pull(self) -> Outcome:
+        try:
+            out = gitsync.pull()
+            self.reload_state()
+            return Outcome(True, "Pulled", {"output": out})
+        except RuntimeError as exc:
+            return Outcome(False, f"Pull failed: {exc}")

@@ -602,7 +602,7 @@ def cmd_gui(args: argparse.Namespace) -> int:
         from .gui.app import run as run_gui  # noqa: WPS433
     except ImportError as exc:
         raise CliError(f"GUI not available: {exc}")
-    return run_gui()
+    return run_gui(section=getattr(args, "section", None), select=getattr(args, "select", None))
 
 
 # --------------------------------------------------------------------------
@@ -615,7 +615,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--version", action="version", version=f"sway-apps {__version__}")
     sub = p.add_subparsers(dest="cmd")
 
-    sub.add_parser("gui", help="open the GUI (default)").set_defaults(func=cmd_gui)
+    x = sub.add_parser("gui", help="open the GUI (default)")
+    x.add_argument("--section", choices=["startup", "rules", "apps", "windows", "log"], help="section to open")
+    x.add_argument("--select", help="item id to select (rule id, startup id, desktop id or con_id)")
+    x.set_defaults(func=cmd_gui)
     sub.add_parser("doctor", help="check the installation").set_defaults(func=cmd_doctor)
 
     def persist_flags(sp: argparse.ArgumentParser, rules: bool = True) -> None:

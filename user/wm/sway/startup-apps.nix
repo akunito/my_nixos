@@ -298,6 +298,7 @@ let
         exit 1
       fi
 
+      ${lib.optionalString (!(systemSettings.swayAppsEnable or false)) ''
       # Zen window bookkeeping.
       #
       # Zen is the only startup app left here (VSCode, Chromium and Obsidian
@@ -418,6 +419,7 @@ let
         echo "Apps launched successfully"
         notify-send -t 3000 "App Launcher" "Startup applications launched successfully." || true
       }
+      ''}
 
       # Show Rofi menu using dmenu mode (more reliable than script mode with temp files)
       echo "Showing menu..."
