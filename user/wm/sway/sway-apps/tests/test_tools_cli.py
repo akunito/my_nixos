@@ -26,7 +26,7 @@ from sway_apps import cli, generate, gitsync, paths, swayipc  # noqa: E402
 from sway_apps import shortcuts as sc_mod  # noqa: E402
 
 APP_TOGGLE = "~/.config/sway/scripts/app-toggle.sh"
-TOOL_KEYS = {"id", "name", "command", "app_id", "icon", "order", "enabled", "notes", "updated_at"}
+TOOL_KEYS = {"id", "name", "command", "app_id", "icon", "order", "enabled", "notes", "float", "updated_at"}
 PERSIST = ("--no-git",)                      # tools add|set|rm only know --no-git
 KEY_PERSIST = ("--no-apply", "--no-git")     # tools key has the full persist_flags set
 
@@ -254,17 +254,20 @@ class ToolsCli(unittest.TestCase):
         t = self.add()
         plain = self.add("foo --bar", "", "Foo")
         quoted = self.add("kitty --class scratch", "title:^Scratch Pad", "Pad")
-        with mock.patch.object(swayipc, "available", return_value=True), mock.patch.object(swayipc, "exec_") as ex:
-            rc, data = self.run_cli("tools", "run", t["id"])
+        # windows() empty -> no window to place; --wait 0 keeps the test instant
+        with mock.patch.object(swayipc, "available", return_value=True), mock.patch.object(swayipc, "exec_") as ex, \
+             mock.patch.object(swayipc, "windows", return_value=[]):
+            rc, data = self.run_cli("tools", "run", t["id"], "--wait", "0")
             self.assertEqual(rc, 0, data)
-            self.assertEqual(data, {"launched": t["id"], "command": f"{APP_TOGGLE} org.pa pavucontrol"})
+            self.assertEqual({k: data[k] for k in ("launched", "command")}, {"launched": t["id"], "command": f"{APP_TOGGLE} org.pa pavucontrol"})
+            self.assertEqual((data["con_id"], data["placed"]), (None, False))
             ex.assert_called_once_with(f"{APP_TOGGLE} org.pa pavucontrol")
             ex.reset_mock()
-            rc, data = self.run_cli("tools", "run", "Foo")            # by name
+            rc, data = self.run_cli("tools", "run", "Foo", "--wait", "0")            # by name
             self.assertEqual((rc, data["command"]), (0, "foo --bar"))
             ex.assert_called_once_with("foo --bar")
             ex.reset_mock()
-            rc, data = self.run_cli("tools", "run", quoted["id"])
+            rc, data = self.run_cli("tools", "run", quoted["id"], "--wait", "0")
             self.assertEqual(rc, 0)
             ex.assert_called_once_with(f"{APP_TOGGLE} 'title:^Scratch Pad' kitty --class scratch")
 

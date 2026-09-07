@@ -86,6 +86,14 @@ accounts, LACT, Mission Center, Flatseal, nwg-look, btop, btop as root). Edit
 via "Edit tools…" or `sway-apps tools …`; "Assign key…" creates the matching
 shortcut (category Tools). `sway-apps tools key ID KEYS|none`.
 
+Every tool has **Open floating, sticky, on top** (default on): the include
+gets a `for_window [app_id="^…$"] floating enable, sticky enable, focus` rule
+per tool (plus a `class` twin for X11 apps, or a `title` regex for
+`title:^…` ids), so a key binding opens the tool on top of everything. The
+sidebar launch and `sway-apps tools run ID` additionally wait for the window
+and float it live, which also covers app-toggle.sh restoring a window that
+was tiled. The sway-apps window itself is never touched.
+
 ### Nodes, Docker, Monitoring (the control panel's successor)
 
 The Rust control panel (`apps/control-panel`, flags `controlPanel*`) was

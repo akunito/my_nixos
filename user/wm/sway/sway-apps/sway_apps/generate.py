@@ -35,6 +35,10 @@ def render(state: State, include_disabled: bool = False) -> str:
         _log.warning("shortcut skipped: %s", w)
     if sc_text:
         lines.append(sc_text)
+    from . import toolrun  # noqa: WPS433 (avoid import cycle at module load)
+    tool_rules = toolrun.render_rules(state)
+    if tool_rules:
+        lines.append(tool_rules)
     by_kind = {"assign": [], "no_focus": [], "for_window": []}
     for r in state.resolved_rules():
         if not r.enabled and not include_disabled:

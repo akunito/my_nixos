@@ -93,9 +93,10 @@ class ToolsPanel(Panel):
         icon = combo_row("Icon", ICONS + ([t.icon] if t.icon and t.icon not in ICONS else []), t.icon or ICONS[0])
         order = Adw.SpinRow.new_with_range(0, 9999, 10); order.set_title("Order"); order.set_value(t.order)
         enabled = switch_row("Enabled", t.enabled, "shown in the sidebar")
+        floating = switch_row("Open floating, sticky, on top", t.float, "generates a for_window rule; the sidebar launch also places the window live")
         scope = combo_row("Scope", list(SCOPES), t.scope)
         notes = entry_row("Notes", t.notes)
-        for r in (name, command, app_id, icon, order, enabled, scope, notes):
+        for r in (name, command, app_id, icon, order, enabled, floating, scope, notes):
             g.add(r)
         self.detail.append(g)
         k = self.tool_key(t) if not is_new else None
@@ -111,7 +112,7 @@ class ToolsPanel(Panel):
             cmd = command.get_text().strip(); aid = app_id.get_text().strip()
             return Tool(id=t.id or "t-" + hashlib.sha1(f"{aid}|{cmd}".encode()).hexdigest()[:8], name=name.get_text().strip(), command=cmd,
                         app_id=aid, icon=combo_value(icon), order=int(order.get_value()), enabled=enabled.get_active(),
-                        notes=notes.get_text(), updated_at=t.updated_at, scope=combo_value(scope))
+                        notes=notes.get_text(), float=floating.get_active(), updated_at=t.updated_at, scope=combo_value(scope))
 
         def _dirty(*_a) -> None:
             self.mark_dirty(do_save)
@@ -119,7 +120,7 @@ class ToolsPanel(Panel):
             r.connect("changed", _dirty)
         for r in (icon, scope):
             r.connect("notify::selected", _dirty)
-        order.connect("notify::value", _dirty); enabled.connect("notify::active", _dirty)
+        order.connect("notify::value", _dirty); enabled.connect("notify::active", _dirty); floating.connect("notify::active", _dirty)
         if is_new:
             self.mark_dirty(do_save)
 

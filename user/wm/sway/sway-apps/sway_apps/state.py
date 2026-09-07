@@ -127,6 +127,7 @@ class Tool:
     order: int = 100
     enabled: bool = True
     notes: str = ""
+    float: bool = True        # open floating + sticky + focused (a for_window rule is generated)
     updated_at: int = 0
     scope: str = "common"
 
@@ -135,7 +136,7 @@ class Tool:
         return cls(id=str(d.get("id") or ""), name=str(d.get("name") or ""), command=str(d.get("command") or ""),
                    app_id=str(d.get("app_id") or ""), icon=str(d.get("icon") or "application-x-executable-symbolic"),
                    order=int(d.get("order", 100)), enabled=bool(d.get("enabled", True)), notes=str(d.get("notes") or ""),
-                   updated_at=int(d.get("updated_at", 0) or 0), scope=scope)
+                   float=bool(d.get("float", True)), updated_at=int(d.get("updated_at", 0) or 0), scope=scope)
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self); d.pop("scope", None); return d

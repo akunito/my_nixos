@@ -1127,9 +1127,11 @@ def cmd_tools_run(args: argparse.Namespace) -> int:
     t = _get_tool(st, args.id)
     if not swayipc.available():
         raise CliError("no sway socket")
-    with log.action("tools.run", id=t.id, command=t.launch_command()):
-        swayipc.exec_(t.launch_command())
-    _out(args, {"launched": t.id, "command": t.launch_command()}, lambda: print(f"launched {t.name}"))
+    from . import toolrun  # noqa: WPS433
+    with log.action("tools.run", id=t.id, command=t.launch_command()) as res:
+        r = toolrun.launch(t, timeout=args.wait)
+        res.update(r)
+    _out(args, {"launched": t.id, **r}, lambda: print(f"launched {t.name}" + (f" · con {r['con_id']} floating on top" if r.get("placed") else "")))
     return 0
 
 
@@ -1826,7 +1828,7 @@ def build_parser() -> argparse.ArgumentParser:
     x = tl.add_parser("set"); x.add_argument("id"); x.add_argument("--name"); x.add_argument("--command"); x.add_argument("--app-id", dest="app_id"); x.add_argument("--icon"); x.add_argument("--order", type=int); x.add_argument("--notes")
     x.add_argument("--enable", action="store_true"); x.add_argument("--disable", action="store_true"); x.add_argument("--scope", choices=SCOPES); persist_flags(x, rules=False); x.set_defaults(func=cmd_tools_set)
     x = tl.add_parser("rm"); x.add_argument("id"); persist_flags(x, rules=False); x.set_defaults(func=cmd_tools_rm)
-    x = tl.add_parser("run"); x.add_argument("id"); x.set_defaults(func=cmd_tools_run)
+    x = tl.add_parser("run", help="focus-or-launch the tool and float its window on top"); x.add_argument("id"); x.add_argument("--wait", type=float, default=8.0, help="seconds to wait for the window"); x.set_defaults(func=cmd_tools_run)
     x = tl.add_parser("key", help="bind a key to a tool (creates/updates its shortcut); 'none' unbinds"); x.add_argument("id"); x.add_argument("keys"); x.add_argument("--override", action="store_true"); x.add_argument("--force", action="store_true"); persist_flags(x); x.set_defaults(func=cmd_tools_key)
 
     # nodes

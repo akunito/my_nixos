@@ -237,9 +237,10 @@ class Controller:
     def launch_tool(self, t: Tool) -> Outcome:
         if not swayipc.available():
             return Outcome(False, "No sway socket")
-        with log.action("gui.tools.launch", id=t.id, command=t.launch_command()):
-            swayipc.exec_(t.launch_command())
-        return Outcome(True, f"Launched {t.name}")
+        from .. import toolrun  # noqa: WPS433
+        _log.info("gui.tools.launch id=%s command=%s", t.id, t.launch_command())
+        toolrun.launch_async(t)          # exec + wait for the window + float it on top, off the main loop
+        return Outcome(True, f"Launched {t.name}" + (" (floating, on top)" if t.float and t.app_id else ""))
 
     # ---- nodes ----------------------------------------------------------------
     def save_node(self, n: Node, scope: str) -> Outcome:
