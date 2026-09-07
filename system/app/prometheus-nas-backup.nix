@@ -139,14 +139,17 @@ in
       '';
     };
 
-    # Timer: daily at 19:30 (inside NAS awake window 16:00-23:00; runs after the
-    # 17:30/18:00 restic pulls so snapshot-age metrics reflect the fresh backups)
+    # Timer: daily at 22:15 (inside NAS awake window 16:00-23:00). It must run
+    # AFTER every VPS→NAS restic job (databases 19:00, services 19:30, Sunday:
+    # nextcloud 20:00, libraries 20:30, immich 21:00) — at the old 19:30 slot
+    # the age metrics were measured before the weekly jobs and stayed frozen
+    # for 24 h, so Nextcloud showed "6d 23h" the morning after a good backup.
     systemd.timers.prometheus-nas-backup = {
-      description = "NAS Backup Metrics Timer (daily 19:30)";
+      description = "NAS Backup Metrics Timer (daily 22:15)";
       wantedBy = [ "timers.target" ];
 
       timerConfig = {
-        OnCalendar = "*-*-* 19:30:00";
+        OnCalendar = "*-*-* 22:15:00";
         RandomizedDelaySec = "5min";
         Persistent = true;
       };

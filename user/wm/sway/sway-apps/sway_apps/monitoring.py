@@ -246,13 +246,14 @@ def dashboard(state: State) -> dict[str, Any]:
             {"q": f"node_filesystem_size_bytes{{{fs_filter}}}"},
             {"q": f"node_filesystem_avail_bytes{{{fs_filter}}}"},
             {"q": "nas_zfs_pool_healthy"}, {"q": "nas_zfs_pool_size_bytes"}, {"q": "nas_zfs_pool_allocated_bytes"},
-            {"q": "nas_backup_age_seconds"}, {"q": "nas_backup_status"}, {"q": "backup_repo_size_bytes"},
+            # live age from the timestamp: the exporter's own *_age_seconds gauge freezes between runs
+            {"q": "time() - nas_backup_last_success"}, {"q": "nas_backup_status"}, {"q": "backup_repo_size_bytes"},
             {"q": "time() - nas_offsite_backup_last_success"}, {"q": "nas_offsite_backup_status"},
             {"q": "time() - mariadb_backup_daily_last_success_timestamp"}, {"q": "mariadb_backup_daily_status"},
             {"q": "time() - mariadb_backup_hourly_last_success_timestamp"}, {"q": "mariadb_backup_hourly_status"},
             {"q": "time() - postgresql_backup_daily_last_success_timestamp"}, {"q": "postgresql_backup_daily_status"},
             {"q": "time() - postgresql_backup_hourly_last_success_timestamp"}, {"q": "postgresql_backup_hourly_status"},
-            {"q": "pfsense_backup_age_seconds"}, {"q": "pfsense_backup_status"},
+            {"q": "pfsense_backup_last_success"}, {"q": "pfsense_backup_status"},
             {"q": "probe_success"}, {"q": 'probe_icmp_duration_seconds{phase="rtt"}'}, {"q": 'probe_duration_seconds{job=~"blackbox_http.*"}'}, {"q": "probe_http_status_code"},
             {"q": 'avg by (instance) (probe_icmp_duration_seconds{phase="rtt"}) * 1000', "range": SPARK_RANGE, "step": SPARK_STEP},
         ]
@@ -320,11 +321,13 @@ def dashboard(state: State) -> dict[str, Any]:
         for label, hourly in (("MariaDB daily", False), ("MariaDB hourly", True), ("PostgreSQL daily", False), ("PostgreSQL hourly", True)):
             a = _scalar(nxt()); st = _scalar(nxt())
             add_backup("Databases (VPS)", label, a, None if st is None else st >= 1, hourly=hourly)
-        pa = _scalar(nxt()); ps = _scalar(nxt())
-        if pa == 0 and (ps or 0) < 1:      # exporter writes 0/0 when it has never seen a backup file
+        pts = _scalar(nxt()); ps = _scalar(nxt())
+        pa = (time.time() - pts) if pts else None
+        if pa is None and (ps or 0) < 1:      # exporter writes 0/0 when it has never seen a backup file
             add_backup("pfSense", "config backup", None, False, detail="no backup file found (never ran or unreachable)")
         else:
-            add_backup("pfSense", "config backup", pa, None if ps is None else ps >= 1)
+            add_backup("pfSense", "config backup", pa, None if ps is None else ps >= 1,
+                       detail="" if (ps or 0) >= 1 else "last pull from pfSense FAILED; age = newest file kept on the VPS")
         # network
         succ = _by(nxt(), "instance", "job"); rtt = _by(nxt(), "instance"); hdur = _by(nxt(), "instance"); hcode = _by(nxt(), "instance")
         rtt_series_raw = nxt()

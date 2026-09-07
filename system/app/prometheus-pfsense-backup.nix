@@ -107,49 +107,33 @@ let
     fi
 
     # --- Step 4: Write metrics ---
-    if [ "$BACKUP_OK" -eq 1 ]; then
-      # Find newest backup file timestamp (check both new tarball and legacy patterns)
-      NEWEST=$(find "$BACKUP_DIR" \( -name "pfsense-backup-*.tar.gz" -o -name "pfsense-config-*.xml.gz" \) -printf '%T@\n' | sort -n | tail -1)
-      NEWEST_INT=''${NEWEST%.*}
-      AGE=$((NOW - NEWEST_INT))
-      COUNT=$(find "$BACKUP_DIR" \( -name "pfsense-backup-*.tar.gz" -o -name "pfsense-config-*.xml.gz" \) | wc -l)
+    # Always report the newest LOCAL backup file, even when this run failed:
+    # writing zeros made Prometheus say "never backed up" while 30 days of
+    # backups sat in $BACKUP_DIR (pull failures from Jun 25 to Sep 2026 looked
+    # identical to a fresh install). Status/age tell the two apart.
+    NEWEST=$(find "$BACKUP_DIR" \( -name "pfsense-backup-*.tar.gz" -o -name "pfsense-config-*.xml.gz" \) -printf '%T@\n' 2>/dev/null | sort -n | tail -1)
+    NEWEST_INT=''${NEWEST%.*}
+    NEWEST_INT=''${NEWEST_INT:-0}
+    if [ "$NEWEST_INT" -gt 0 ]; then AGE=$((NOW - NEWEST_INT)); else AGE=0; fi
+    COUNT=$(find "$BACKUP_DIR" \( -name "pfsense-backup-*.tar.gz" -o -name "pfsense-config-*.xml.gz" \) 2>/dev/null | wc -l)
 
-      cat > "$TEMP_FILE" << METRICS
-# HELP pfsense_backup_last_success Unix timestamp of last successful backup
+    cat > "$TEMP_FILE" << METRICS
+# HELP pfsense_backup_last_success Unix timestamp of the newest retained backup file
 # TYPE pfsense_backup_last_success gauge
 pfsense_backup_last_success $NEWEST_INT
-# HELP pfsense_backup_age_seconds Seconds since last backup
+# HELP pfsense_backup_age_seconds Seconds since the newest retained backup file (at run time)
 # TYPE pfsense_backup_age_seconds gauge
 pfsense_backup_age_seconds $AGE
 # HELP pfsense_backup_count Number of backup files retained
 # TYPE pfsense_backup_count gauge
 pfsense_backup_count $COUNT
-# HELP pfsense_backup_status 1 if backup succeeded, 0 if failed
+# HELP pfsense_backup_status 1 if this run's pull from pfSense succeeded, 0 if failed
 # TYPE pfsense_backup_status gauge
-pfsense_backup_status 1
+pfsense_backup_status $BACKUP_OK
 # HELP pfsense_backup_rsync_status 1 if rsync to NAS succeeded, 0 if failed
 # TYPE pfsense_backup_rsync_status gauge
 pfsense_backup_rsync_status $RSYNC_OK
 METRICS
-    else
-      cat > "$TEMP_FILE" << 'METRICS'
-# HELP pfsense_backup_last_success Unix timestamp of last successful backup
-# TYPE pfsense_backup_last_success gauge
-pfsense_backup_last_success 0
-# HELP pfsense_backup_age_seconds Seconds since last backup
-# TYPE pfsense_backup_age_seconds gauge
-pfsense_backup_age_seconds 0
-# HELP pfsense_backup_count Number of backup files retained
-# TYPE pfsense_backup_count gauge
-pfsense_backup_count 0
-# HELP pfsense_backup_status 1 if backup succeeded, 0 if failed
-# TYPE pfsense_backup_status gauge
-pfsense_backup_status 0
-# HELP pfsense_backup_rsync_status 1 if rsync to NAS succeeded, 0 if failed
-# TYPE pfsense_backup_rsync_status gauge
-pfsense_backup_rsync_status 0
-METRICS
-    fi
 
     mv "$TEMP_FILE" "$TEXTFILE"
     chmod 644 "$TEXTFILE"
