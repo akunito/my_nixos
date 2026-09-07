@@ -105,13 +105,13 @@
         "app_id": "bitwarden"
       },
       "actions": [
-        "floating disable",
-        "sticky disable"
+        "floating enable",
+        "sticky enable"
       ],
       "name": "bitwarden",
       "enabled": true,
       "notes": "",
-      "updated_at": 1788758110
+      "updated_at": 1788758126
     },
     {
       "id": "r-efb40239",
