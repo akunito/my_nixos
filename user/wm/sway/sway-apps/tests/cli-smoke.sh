@@ -158,6 +158,18 @@ check "kitty parsed"           'type == "array"'                              "$
 check "tmux shortcut rm"       '.removed == "'"$TMID"'"'                       "$(J shortcuts rm "$TMID")"
 check "tmux include cleaned"   'true' "$(grep -q 'smoke' "$TMUXINC" && echo null || echo '{}')"
 
+# --- tools (sidebar launchers) ---------------------------------------------
+TOOL=$(J tools add --command "smoke-tool-cmd" --app-id smoke-tool --name "Smoke Tool" --icon computer-symbolic --order 5)
+check "tools add"              '.tool.name == "Smoke Tool" and .commit != null'   "$TOOL"
+TID=$(printf '%s' "$TOOL" | jq -r .tool.id)
+check "tools list launch cmd"  '.[0].launch == "~/.config/sway/scripts/app-toggle.sh smoke-tool smoke-tool-cmd"' "$(J tools list)"
+check "tools key binds"        '.shortcut.line == "bindsym Mod4+Control+Mod1+Shift+F8 exec ~/.config/sway/scripts/app-toggle.sh smoke-tool smoke-tool-cmd" and .shortcut.category == "Tools"' "$(J tools key "$TID" Hyper+Shift+F8)"
+check "tools list shows key"   '.[0].key == "Hyper+Shift+F8"'                    "$(J tools list)"
+check "tools key rebind"       '.shortcut.keys == "Hyper+Shift+F6"'                "$(J tools key "$TID" Hyper+Shift+F6)"
+check "tools key none"         '.removed_shortcut != null'                          "$(J tools key "$TID" none)"
+check "tools set"              '.tool.order == 7 and .tool.icon == "folder-symbolic"' "$(J tools set "$TID" --order 7 --icon folder-symbolic)"
+check "tools rm"               '.removed == "'"$TID"'"'                             "$(J tools rm "$TID")"
+
 # --- git -------------------------------------------------------------------
 GS=$(J git status)
 check "git status repo"        '.repo == true and (.dirty|length) == 0'         "$GS"

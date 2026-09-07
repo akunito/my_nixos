@@ -16,7 +16,7 @@ from . import monitors as mon
 from . import shortcuts as sc_mod
 from .rules import CRITERIA_KEYS, KINDS, Rule, parse_config
 from .shortcuts import Shortcut
-from .state import SCOPES, Monitor, StartupEntry, State
+from .state import SCOPES, Monitor, StartupEntry, State, Tool
 
 
 class CliError(Exception):
@@ -1026,6 +1026,138 @@ def cmd_sc_free(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# tools (sidebar launchers)
+
+def _tool_key(st: State, t: Tool) -> Shortcut | None:
+    """The shortcut bound to this tool (same app_id + command)."""
+    for x in st.shortcuts():
+        if x.kind == "app" and x.app_id == t.app_id and x.command == t.command:
+            return x
+        if x.kind == "exec" and not t.app_id and x.command == t.command:
+            return x
+    return None
+
+
+def cmd_tools_list(args: argparse.Namespace) -> int:
+    st = State()
+    items = st.tools()
+    _out(args, [dict(t.to_dict(), scope=t.scope, launch=t.launch_command(), key=(_tool_key(st, t).keys if _tool_key(st, t) else None)) for t in items],
+         lambda: _table([["*" if t.enabled else "-", t.id, t.order, t.name, t.app_id, t.command[:50], (_tool_key(st, t).keys if _tool_key(st, t) else ""), t.scope] for t in items],
+                        ["", "id", "ord", "name", "app_id", "command", "key", "scope"]))
+    return 0
+
+
+def _get_tool(st: State, ident: str) -> Tool:
+    t = st.tool(ident)
+    if t is None:
+        c = [x for x in st.tools() if x.name.lower() == ident.lower()]
+        if len(c) == 1:
+            return c[0]
+        raise CliError(f"no tool {ident!r}")
+    return t
+
+
+def cmd_tools_add(args: argparse.Namespace) -> int:
+    import hashlib
+    st = State()
+    command, name, app_id, icon = args.command, args.name, args.app_id or "", args.icon or "application-x-executable-symbolic"
+    if args.desktop:
+        matches = discover.find(args.desktop)
+        exact = [a for a in matches if a.desktop_id.lower() == args.desktop.lower()]
+        app = exact[0] if exact else (matches[0] if len(matches) == 1 else None)
+        if app is None:
+            raise CliError(f"desktop entry {args.desktop!r} not found or ambiguous")
+        command = command or app.command; name = name or app.name; app_id = app_id or app.app_id_guess
+        icon = args.icon or (app.icon + ("-symbolic" if app.icon and not app.icon.endswith("-symbolic") and "/" not in app.icon else "") if app.icon else icon)
+    if not command:
+        raise CliError("need --command or --desktop")
+    t = Tool(id=args.id or "t-" + hashlib.sha1(f"{app_id}|{command}".encode()).hexdigest()[:8], name=name or command.split()[0],
+             command=command, app_id=app_id, icon=icon, order=args.order if args.order is not None else 100,
+             enabled=not args.disabled, notes=args.notes or "", scope=args.scope)
+    if t.problems():
+        raise CliError("invalid tool: " + "; ".join(t.problems()))
+    if st.tool(t.id) and not args.force:
+        raise CliError(f"tool {t.id} exists; --force to replace")
+    with log.action("tools.add", id=t.id, name=t.name, command=t.command, scope=args.scope):
+        st.save_tool(t, args.scope)
+        res = _persist(args, st, f"add tool {t.name}")
+    _out(args, {"tool": dict(t.to_dict(), scope=args.scope), **res}, lambda: print(f"added {t.id}: {t.name} -> {t.launch_command()}"))
+    return 0
+
+
+def cmd_tools_set(args: argparse.Namespace) -> int:
+    st = State()
+    t = _get_tool(st, args.id)
+    for attr in ("name", "command", "app_id", "icon", "notes"):
+        v = getattr(args, attr, None)
+        if v is not None:
+            setattr(t, attr, v)
+    if args.order is not None:
+        t.order = args.order
+    if args.enable:
+        t.enabled = True
+    if args.disable:
+        t.enabled = False
+    scope = args.scope or t.scope
+    if t.problems():
+        raise CliError("invalid tool: " + "; ".join(t.problems()))
+    with log.action("tools.set", id=t.id, scope=scope):
+        st.save_tool(t, scope)
+        res = _persist(args, st, f"update tool {t.name}")
+    _out(args, {"tool": dict(t.to_dict(), scope=scope), **res}, lambda: print(f"updated {t.id}"))
+    return 0
+
+
+def cmd_tools_rm(args: argparse.Namespace) -> int:
+    st = State()
+    t = _get_tool(st, args.id)
+    with log.action("tools.rm", id=t.id):
+        st.remove("tools", t.id)
+        res = _persist(args, st, f"remove tool {t.name}")
+    _out(args, {"removed": t.id, **res}, lambda: print(f"removed {t.id}"))
+    return 0
+
+
+def cmd_tools_run(args: argparse.Namespace) -> int:
+    st = State()
+    t = _get_tool(st, args.id)
+    if not swayipc.available():
+        raise CliError("no sway socket")
+    with log.action("tools.run", id=t.id, command=t.launch_command()):
+        swayipc.exec_(t.launch_command())
+    _out(args, {"launched": t.id, "command": t.launch_command()}, lambda: print(f"launched {t.name}"))
+    return 0
+
+
+def cmd_tools_key(args: argparse.Namespace) -> int:
+    """Bind (or rebind / unbind) a key to a tool through the shortcuts section."""
+    st = State()
+    t = _get_tool(st, args.id)
+    existing = _tool_key(st, t)
+    if args.keys in ("", "none", "-"):
+        if existing is None:
+            raise CliError(f"{t.name} has no key")
+        with log.action("tools.unkey", id=t.id, shortcut=existing.id):
+            st.remove("shortcuts", existing.id)
+            res = _persist(args, st, f"unbind tool {t.name}", apply_rules=True)
+        _out(args, {"removed_shortcut": existing.id, **res}, lambda: print(f"unbound {t.name}"))
+        return 0
+    x = existing or Shortcut(id="", keys=args.keys, kind="app" if t.app_id else "exec", app_id=t.app_id, command=t.command,
+                             name=t.name, category="Tools")
+    x.keys = args.keys
+    if args.override:
+        x.override = True
+    if not x.id:
+        x.id = x.default_id()
+    _sc_check(st, x, args.force)
+    with log.action("tools.key", id=t.id, keys=x.keys, shortcut=x.id):
+        st.save_shortcut(x, x.scope if existing else t.scope)
+        res = _persist(args, st, f"bind {x.keys} to tool {t.name}", apply_rules=True)
+    _out(args, {"shortcut": dict(x.to_dict(), line=x.render()), **res}, lambda: print(f"{t.name}: {x.render()}"))
+    return 0
+
+
+# --------------------------------------------------------------------------
 # git / log
 
 def cmd_git_status(args: argparse.Namespace) -> int:
@@ -1107,7 +1239,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd")
 
     x = sub.add_parser("gui", help="open the GUI (default)")
-    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "monitors", "workspaces", "apps", "windows", "log"], help="section to open")
+    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows", "log"], help="section to open")
     x.add_argument("--select", help="item id to select (rule id, startup id, desktop id or con_id)")
     x.set_defaults(func=cmd_gui)
     sub.add_parser("doctor", help="check the installation").set_defaults(func=cmd_doctor)
@@ -1248,6 +1380,18 @@ def build_parser() -> argparse.ArgumentParser:
     x = k.add_parser("enable"); x.add_argument("id"); persist_flags(x); x.set_defaults(func=lambda a: cmd_sc_toggle(a, True))
     x = k.add_parser("disable"); x.add_argument("id"); persist_flags(x); x.set_defaults(func=lambda a: cmd_sc_toggle(a, False))
     x = k.add_parser("rm"); x.add_argument("id"); persist_flags(x); x.set_defaults(func=cmd_sc_rm)
+
+    # tools
+    tl = sub.add_parser("tools", help="sidebar launchers (utilities) + their keys").add_subparsers(dest="sub", required=True)
+    tl.add_parser("list").set_defaults(func=cmd_tools_list)
+    x = tl.add_parser("add"); x.add_argument("--desktop", help="take command/name/app_id/icon from a desktop entry"); x.add_argument("--command"); x.add_argument("--name"); x.add_argument("--app-id", dest="app_id"); x.add_argument("--icon", help="symbolic icon name")
+    x.add_argument("--order", type=int); x.add_argument("--notes"); x.add_argument("--id"); x.add_argument("--scope", choices=SCOPES, default="common"); x.add_argument("--disabled", action="store_true"); x.add_argument("--force", action="store_true")
+    persist_flags(x, rules=False); x.set_defaults(func=cmd_tools_add)
+    x = tl.add_parser("set"); x.add_argument("id"); x.add_argument("--name"); x.add_argument("--command"); x.add_argument("--app-id", dest="app_id"); x.add_argument("--icon"); x.add_argument("--order", type=int); x.add_argument("--notes")
+    x.add_argument("--enable", action="store_true"); x.add_argument("--disable", action="store_true"); x.add_argument("--scope", choices=SCOPES); persist_flags(x, rules=False); x.set_defaults(func=cmd_tools_set)
+    x = tl.add_parser("rm"); x.add_argument("id"); persist_flags(x, rules=False); x.set_defaults(func=cmd_tools_rm)
+    x = tl.add_parser("run"); x.add_argument("id"); x.set_defaults(func=cmd_tools_run)
+    x = tl.add_parser("key", help="bind a key to a tool (creates/updates its shortcut); 'none' unbinds"); x.add_argument("id"); x.add_argument("keys"); x.add_argument("--override", action="store_true"); x.add_argument("--force", action="store_true"); persist_flags(x); x.set_defaults(func=cmd_tools_key)
 
     # git
     g = sub.add_parser("git", help="repo sync of the state files").add_subparsers(dest="sub", required=True)

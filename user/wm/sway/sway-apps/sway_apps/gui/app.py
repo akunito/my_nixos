@@ -15,6 +15,7 @@ from .controller import Controller, Outcome  # noqa: E402
 from .panels import AppsPanel, LogPanel, RulesPanel, StartupPanel, WindowsPanel  # noqa: E402
 from .panels_monitors import MonitorsPanel, WorkspacesPanel  # noqa: E402
 from .panels_shortcuts import ShortcutsPanel  # noqa: E402
+from .panels_tools import ToolsPanel  # noqa: E402
 
 _log = log.get("gui")
 
@@ -86,8 +87,19 @@ class MainWindow(Adw.ApplicationWindow):
         self.nav.connect("row-selected", self._on_nav)
         side.append(self.nav)
 
-        spacer = Gtk.Box(vexpand=True)
-        side.append(spacer)
+        # ---- Tools group: launchers below the sections (editable in Tools)
+        tools_hdr = Gtk.Label(label="TOOLS", xalign=0)
+        tools_hdr.add_css_class("sa-section-title"); tools_hdr.set_margin_start(20); tools_hdr.set_margin_top(14)
+        side.append(tools_hdr)
+        self.tools_box = Gtk.ListBox()
+        self.tools_box.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.tools_box.add_css_class("navigation-sidebar")
+        self.tools_box.add_css_class("sa-tools")
+        self.tools_box.connect("row-activated", self._on_tool)
+        side.append(scrolled_tools := Gtk.ScrolledWindow(vexpand=True))
+        scrolled_tools.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scrolled_tools.set_child(self.tools_box)
+        self.refresh_tools_sidebar()
 
         # footer: profile + git
         footer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -128,6 +140,7 @@ class MainWindow(Adw.ApplicationWindow):
             "startup": StartupPanel(self),
             "rules": RulesPanel(self),
             "shortcuts": ShortcutsPanel(self),
+            "tools": ToolsPanel(self),
             "monitors": MonitorsPanel(self),
             "workspaces": WorkspacesPanel(self),
             "apps": AppsPanel(self),
@@ -173,6 +186,37 @@ class MainWindow(Adw.ApplicationWindow):
         self.refresh_git()
         return False
 
+    # ---- tools sidebar --------------------------------------------------------
+    def refresh_tools_sidebar(self) -> None:
+        if not hasattr(self, "tools_box"):
+            return
+        self.tools_box.remove_all()
+        for t in self.ctl.state.tools():
+            if not t.enabled:
+                continue
+            row = Gtk.ListBoxRow()
+            row.tool = t  # type: ignore[attr-defined]
+            box = Gtk.Box(spacing=10)
+            img = Gtk.Image.new_from_icon_name(t.icon); img.add_css_class("sa-nav-icon")
+            lbl = Gtk.Label(label=t.name, xalign=0, hexpand=True, ellipsize=3)
+            box.append(img); box.append(lbl)
+            row.set_child(box)
+            row.set_tooltip_text(t.launch_command())
+            self.tools_box.append(row)
+        edit = Gtk.ListBoxRow(); edit.tool = None  # type: ignore[attr-defined]
+        eb = Gtk.Box(spacing=10)
+        ei = Gtk.Image.new_from_icon_name("document-edit-symbolic"); ei.add_css_class("dim-label")
+        el = Gtk.Label(label="Edit tools…", xalign=0); el.add_css_class("dim-label")
+        eb.append(ei); eb.append(el); edit.set_child(eb)
+        self.tools_box.append(edit)
+
+    def _on_tool(self, _lb, row) -> None:
+        t = getattr(row, "tool", None)
+        if t is None:
+            self.show_section("tools")
+            return
+        self.run_outcome(lambda: self.ctl.launch_tool(t))
+
     # ---- navigation ---------------------------------------------------------
     def _on_nav(self, _lb: Gtk.ListBox, row: Gtk.ListBoxRow | None) -> None:
         if row is None:
@@ -189,6 +233,11 @@ class MainWindow(Adw.ApplicationWindow):
             if row is not None and row.key == key:  # type: ignore[attr-defined]
                 self.nav.select_row(row)
                 return
+        # sections without a nav row (tools editor)
+        if key in self.panels:
+            self.nav.unselect_all()
+            self.stack.set_visible_child_name(key)
+            self.panels[key].on_show()
 
     def apply_all(self) -> None:
         """Footer Apply: persist whatever form is being edited, then regenerate

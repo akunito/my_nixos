@@ -1221,7 +1221,7 @@
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
       "updated_at": 0,
-      "category": "Apps",
+      "category": "Tools",
       "table": "prefix"
     },
     {
@@ -1301,7 +1301,7 @@
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
       "updated_at": 0,
-      "category": "Apps",
+      "category": "Tools",
       "table": "prefix"
     },
     {
@@ -1349,7 +1349,7 @@
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
       "updated_at": 0,
-      "category": "Apps",
+      "category": "Tools",
       "table": "prefix"
     },
     {
@@ -1381,7 +1381,7 @@
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
       "updated_at": 0,
-      "category": "Apps",
+      "category": "Tools",
       "table": "prefix"
     },
     {
@@ -1397,7 +1397,7 @@
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
       "updated_at": 0,
-      "category": "Apps",
+      "category": "Tools",
       "table": "prefix"
     },
     {
@@ -1429,7 +1429,7 @@
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
       "updated_at": 0,
-      "category": "Apps",
+      "category": "Tools",
       "table": "prefix"
     },
     {
@@ -1926,6 +1926,172 @@
       "category": "Terminal",
       "table": "root",
       "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-76a6eb99",
+      "keys": "Hyper+Shift+b",
+      "kind": "app",
+      "app_id": "waypaper",
+      "command": "waypaper",
+      "name": "Wallpaper (waypaper)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Tools",
+      "table": "prefix",
+      "notes": "migrated 2026-09-07 from nix (was a plain exec; app-toggle focuses an open window instead of starting a second one)",
+      "updated_at": 0
+    },
+    {
+      "id": "k-ae21cdd9",
+      "keys": "Hyper+Shift+d",
+      "kind": "app",
+      "app_id": "nwg-displays",
+      "command": "nwg-displays",
+      "name": "Displays (nwg-displays)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Tools",
+      "table": "prefix",
+      "notes": "migrated 2026-09-07 from nix (was a plain exec; app-toggle focuses an open window instead of starting a second one)",
+      "updated_at": 0
+    }
+  ],
+  "tools": [
+    {
+      "id": "t-6f968c59",
+      "name": "Wallpaper",
+      "command": "waypaper",
+      "app_id": "waypaper",
+      "icon": "preferences-desktop-wallpaper-symbolic",
+      "order": 10,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-f0034498",
+      "name": "Displays",
+      "command": "nwg-displays",
+      "app_id": "nwg-displays",
+      "icon": "video-display-symbolic",
+      "order": 20,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-9a549fa8",
+      "name": "Tailscale",
+      "command": "trayscale",
+      "app_id": "dev.deedles.Trayscale",
+      "icon": "network-vpn-symbolic",
+      "order": 30,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-4402e00d",
+      "name": "Audio",
+      "command": "pavucontrol",
+      "app_id": "org.pulseaudio.pavucontrol",
+      "icon": "audio-volume-high-symbolic",
+      "order": 40,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-0ab1554e",
+      "name": "Bluetooth",
+      "command": "blueman-manager",
+      "app_id": ".blueman-manager-wrapped",
+      "icon": "bluetooth-symbolic",
+      "order": 50,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-8c446ce8",
+      "name": "Network",
+      "command": "nm-connection-editor",
+      "app_id": "nm-connection-editor",
+      "icon": "network-wired-symbolic",
+      "order": 60,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-badd23c4",
+      "name": "Online accounts",
+      "command": "~/.config/sway/scripts/online-accounts-launch.sh",
+      "app_id": "gnome-control-center",
+      "icon": "preferences-system-sharing-symbolic",
+      "order": 70,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-225159d6",
+      "name": "GPU (LACT)",
+      "command": "lact gui",
+      "app_id": "io.github.ilya_zlobintsev.LACT",
+      "icon": "computer-symbolic",
+      "order": 80,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-75de19c5",
+      "name": "Mission Center",
+      "command": "missioncenter",
+      "app_id": "io.missioncenter.MissionCenter",
+      "icon": "utilities-system-monitor-symbolic",
+      "order": 90,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-c418e1ff",
+      "name": "Flatseal",
+      "command": "flatpak run com.github.tchx84.Flatseal",
+      "app_id": "com.github.tchx84.Flatseal",
+      "icon": "application-x-addon-symbolic",
+      "order": 100,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-9459d601",
+      "name": "Look (GTK themes)",
+      "command": "nwg-look",
+      "app_id": "nwg-look",
+      "icon": "preferences-desktop-theme-symbolic",
+      "order": 110,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
+      "updated_at": 0
+    },
+    {
+      "id": "t-dab68a57",
+      "name": "Control Panel",
+      "command": "control-panel",
+      "app_id": "control-panel",
+      "icon": "preferences-system-symbolic",
+      "order": 120,
+      "enabled": true,
+      "notes": "seeded 2026-09-07",
       "updated_at": 0
     }
   ]

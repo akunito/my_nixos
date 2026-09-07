@@ -699,6 +699,7 @@ class AppsPanel(Panel):
             button("Launch & learn app_id", launch, icon="media-playback-start-symbolic"),
             button("New rule", lambda: (self.win.panels["rules"].new_rule({"app_id": a.app_id_guess}, a.name), self.win.show_section("rules")), icon="view-grid-symbolic"),
             button("New shortcut", lambda: self.win.panels["shortcuts"].new_from_app(a), icon="input-keyboard-symbolic"),
+            button("Add as tool", lambda: (self.win.panels["tools"].new_tool(__import__("sway_apps.state", fromlist=["Tool"]).Tool(id="", name=a.name, command=a.command, app_id=a.app_id_guess, icon=a.icon if a.icon and "/" not in a.icon else "application-x-executable-symbolic")), self.win.show_section("tools")), icon="emblem-system-symbolic"),
             button("Add to startup", lambda: self.win.panels["startup"].new_entry_from_app(a), style="suggested-action", icon="list-add-symbolic"),
         )
 

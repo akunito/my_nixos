@@ -72,3 +72,8 @@
 .sa-log-line-warning { color: @warning_color; }
 .sa-log-line-error { color: @error_color; }
 .sa-pill-actions button { min-height: 26px; }
+
+/* Tools group in the sidebar: compact launcher rows */
+.sa-tools row { padding: 4px 14px; margin: 0 6px; min-height: 28px; }
+.sa-tools row:hover { background-color: alpha(@accent_bg_color, 0.12); }
+.sa-tools label { font-size: 0.95em; }

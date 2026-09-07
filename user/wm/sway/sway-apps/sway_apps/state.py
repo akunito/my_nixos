@@ -115,6 +115,46 @@ class Monitor:
         return [self.group * 10 + i for i in range(1, 11)] if self.group else []
 
 
+@dataclass
+class Tool:
+    """A launcher shown in the GUI sidebar (Tools group): focus-or-launch via
+    app-toggle.sh, optionally bound to a key through a `shortcuts` entry."""
+    id: str
+    name: str = ""
+    command: str = ""
+    app_id: str = ""          # app_id (or title:^regex) app-toggle.sh should focus
+    icon: str = "application-x-executable-symbolic"
+    order: int = 100
+    enabled: bool = True
+    notes: str = ""
+    updated_at: int = 0
+    scope: str = "common"
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any], scope: str = "common") -> "Tool":
+        return cls(id=str(d.get("id") or ""), name=str(d.get("name") or ""), command=str(d.get("command") or ""),
+                   app_id=str(d.get("app_id") or ""), icon=str(d.get("icon") or "application-x-executable-symbolic"),
+                   order=int(d.get("order", 100)), enabled=bool(d.get("enabled", True)), notes=str(d.get("notes") or ""),
+                   updated_at=int(d.get("updated_at", 0) or 0), scope=scope)
+
+    def to_dict(self) -> dict[str, Any]:
+        d = asdict(self); d.pop("scope", None); return d
+
+    def problems(self) -> list[str]:
+        out = []
+        if not self.command.strip():
+            out.append("empty command")
+        if not self.name.strip():
+            out.append("empty name")
+        return out
+
+    def launch_command(self) -> str:
+        import shlex
+        if self.app_id.strip():
+            return f"~/.config/sway/scripts/app-toggle.sh {shlex.quote(self.app_id)} {self.command}"
+        return self.command
+
+
 SETTINGS_DEFAULTS: dict[str, Any] = {
     "pin_geometry": False,   # emit output geometry keyed by hardware id (from nwg-displays' file)
     "auto_adopt": False,     # unknown outputs get a role + free decade automatically (laptop dock)
@@ -122,7 +162,7 @@ SETTINGS_DEFAULTS: dict[str, Any] = {
 
 
 def _empty() -> dict[str, Any]:
-    return {"version": VERSION, "rules": [], "startup": [], "monitors": [], "shortcuts": [], "settings": {}}
+    return {"version": VERSION, "rules": [], "startup": [], "monitors": [], "shortcuts": [], "tools": [], "settings": {}}
 
 
 def _read(path: Path) -> dict[str, Any]:
@@ -139,6 +179,7 @@ def _read(path: Path) -> dict[str, Any]:
     data.setdefault("startup", [])
     data.setdefault("monitors", [])
     data.setdefault("shortcuts", [])
+    data.setdefault("tools", [])
     data.setdefault("settings", {})
     return data
 
@@ -225,6 +266,20 @@ class State:
 
     def save_shortcut(self, sc: Shortcut, scope: str | None = None) -> None:
         self.upsert("shortcuts", sc.to_dict(), scope or sc.scope)
+
+    def tools(self) -> list[Tool]:
+        items = [Tool.from_dict(d, d["_scope"]) for d in self._merged("tools")]
+        items.sort(key=lambda t: (t.order, t.name.lower()))
+        return items
+
+    def tool(self, tid: str) -> Tool | None:
+        for t in self.tools():
+            if t.id == tid:
+                return t
+        return None
+
+    def save_tool(self, t: Tool, scope: str | None = None) -> None:
+        self.upsert("tools", t.to_dict(), scope or t.scope)
 
     def settings(self) -> dict[str, Any]:
         out = dict(SETTINGS_DEFAULTS)
@@ -351,7 +406,7 @@ class State:
         for path, data in ((self.common_path, self.common), (self.profile_path, self.profile)):
             data["version"] = VERSION
             # Do not create an empty profile file just because we loaded it.
-            if not any(data.get(k) for k in ("rules", "startup", "monitors", "shortcuts", "settings")) and not path.exists():
+            if not any(data.get(k) for k in ("rules", "startup", "monitors", "shortcuts", "tools", "settings")) and not path.exists():
                 continue
             _write(path, data)
             written.append(path)

@@ -346,3 +346,17 @@ class TmuxShortcuts(unittest.TestCase):
         self.assertEqual(sc.guess_category("focus left"), "Windows")
         self.assertEqual(sc.guess_category("exec swayosd-client --output-volume raise"), "Media")
         self.assertEqual(sc.guess_category("reload"), "System")
+
+
+class Tools(unittest.TestCase):
+    def test_tool_launch_command_and_layering(self):
+        t = st.Tool(id="t1", name="Audio", command="pavucontrol", app_id="org.pulseaudio.pavucontrol")
+        self.assertEqual(t.launch_command(), "~/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol")
+        self.assertEqual(st.Tool(id="t2", name="x", command="foo --bar").launch_command(), "foo --bar")
+        self.assertTrue(st.Tool(id="t3", name="", command="").problems())
+        d = Path(tempfile.mkdtemp()); common, prof = d / "common.json", d / "P.json"
+        common.write_text(json.dumps({"version": 1, "tools": [{"id": "t1", "name": "A", "command": "a", "order": 20}, {"id": "t2", "name": "B", "command": "b", "order": 10}]}))
+        prof.write_text(json.dumps({"version": 1, "tools": [{"id": "t1", "enabled": False}]}))
+        s = st.State(common, prof)
+        self.assertEqual([t.id for t in s.tools()], ["t2", "t1"])   # ordered
+        self.assertFalse(s.tool("t1").enabled)                       # profile override

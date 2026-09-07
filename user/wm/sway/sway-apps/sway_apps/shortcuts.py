@@ -24,7 +24,7 @@ from . import paths
 KINDS = ("app", "exec", "sway", "tmux")
 PROGRAMS = ("sway", "tmux")
 TMUX_TABLES = ("prefix", "root", "copy-mode-vi")
-CATEGORIES = ("Apps", "Gaming", "Windows", "Workspaces", "Media", "Screenshots", "System", "Terminal")
+CATEGORIES = ("Apps", "Tools", "Gaming", "Windows", "Workspaces", "Media", "Screenshots", "System", "Terminal")
 TMUX_INCLUDE = paths.TMUX_INCLUDE
 TMUX_CONF = paths.XDG_CONFIG_HOME / "tmux" / "tmux.conf"
 KITTY_CONF = paths.XDG_CONFIG_HOME / "kitty" / "kitty.conf"

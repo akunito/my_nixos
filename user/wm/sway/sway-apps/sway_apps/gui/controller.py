@@ -11,7 +11,7 @@ from .. import monitors as mon
 from .. import shortcuts as sc_mod
 from ..rules import Rule
 from ..shortcuts import Shortcut
-from ..state import Monitor, StartupEntry, State
+from ..state import Monitor, StartupEntry, State, Tool
 
 _log = log.get("gui.ctl")
 
@@ -219,6 +219,27 @@ class Controller:
         with log.action("gui.shortcuts.delete", id=x.id):
             self.state.remove("shortcuts", x.id)
             return self._finish(f"Removed shortcut {x.keys}", True, None)
+
+    # ---- tools ----------------------------------------------------------------
+    def save_tool(self, t: Tool, scope: str) -> Outcome:
+        probs = t.problems()
+        if probs:
+            return Outcome(False, "Invalid tool: " + "; ".join(probs))
+        with log.action("gui.tools.save", id=t.id, name=t.name, command=t.command, scope=scope):
+            self.state.save_tool(t, scope)
+            return self._finish(f"Saved tool {t.name}", False, None)
+
+    def delete_tool(self, t: Tool) -> Outcome:
+        with log.action("gui.tools.delete", id=t.id):
+            self.state.remove("tools", t.id)
+            return self._finish(f"Removed tool {t.name}", False, None)
+
+    def launch_tool(self, t: Tool) -> Outcome:
+        if not swayipc.available():
+            return Outcome(False, "No sway socket")
+        with log.action("gui.tools.launch", id=t.id, command=t.launch_command()):
+            swayipc.exec_(t.launch_command())
+        return Outcome(True, f"Launched {t.name}")
 
     # ---- git ----------------------------------------------------------------
     def git_status(self) -> dict:
