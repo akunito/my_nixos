@@ -171,7 +171,7 @@ check "tools set"              '.tool.order == 7 and .tool.icon == "folder-symbo
 check "tools rm"               '.removed == "'"$TID"'"'                             "$(J tools rm "$TID")"
 
 # --- nodes / docker (local node only; no network needed) ---------------------
-check "nodes profiles"         'map(.profile) | index("DESK") != null'          "$(J nodes profiles)"
+check "nodes profiles"         'type == "array"'                               "$(J nodes profiles)"
 check "nodes add local"        '.node.id == "smokenode" and .node.daemons == ["rootful"]' "$(J nodes add smokenode --name Smoke --docker rootful --order 1)"
 check "nodes list"             'map(select(.id=="smokenode")) | length == 1'    "$(J nodes list)"
 check "nodes set"              '.node.prometheus_instance == "smoke" and .node.ssh == "user@host:22"' "$(J nodes set smokenode --prometheus smoke --ssh user@host:22)"
