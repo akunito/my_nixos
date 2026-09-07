@@ -48,6 +48,18 @@ class Controller:
             extra = f" · applied to {len({h['window'] for h in live})} open window(s)"
         commit = details.get("commit")
         extra += f" · committed {commit}" if commit else ""
+        if commit and gitsync.auto_sync_enabled():
+            try:
+                details["sync"] = gitsync.sync()
+                if details["sync"].get("ok"):
+                    extra += " · pushed" if details["sync"].get("pushed") else ""
+                    if details["sync"].get("merged"):
+                        extra += " · merged upstream edits"
+                else:
+                    extra += f" · sync: {details['sync'].get('error') or details['sync'].get('skipped')}"
+            except Exception as exc:
+                _log.warning("sync failed: %s", exc)
+                extra += " · sync failed (kept locally)"
         return Outcome(True, message + extra, details)
 
     def save_rule(self, rule: Rule, scope: str) -> Outcome:
@@ -142,7 +154,7 @@ class Controller:
         clash = [x for x in self.state.monitors() if x.group and x.group == m.group and x.id != m.id]
         if clash:
             return Outcome(False, f"Group {m.group} is already used by {clash[0].id}")
-        with log.action("gui.monitors.save", role=m.id, criteria=m.criteria, group=m.group, scope=scope):
+        with log.action("gui.monitors.save", role=m.id, criteria=m.criteria, group=m.group, scope=scope, always_connected=m.always_connected):
             self.state.save_monitor(m, scope)
             out = self._finish(f"Saved monitor {m.id}", True, None)
             if swayipc.available():
@@ -150,6 +162,13 @@ class Controller:
                 n = sum(1 for h in moved if h.get("ok"))
                 if n:
                     out.message += f" · moved {n} workspace(s)"
+            force = mon.apply_force(self.state)
+            bad = [f for f in force if f.get("ok") is False]
+            if bad:
+                out.ok = False
+                out.message += f" · connector force FAILED: {bad[0].get('detail')}"
+            elif any(f.get("mode") == "on" for f in force):
+                out.message += " · connector forced on"
             return out
 
     def delete_monitor(self, m: Monitor) -> Outcome:
@@ -192,6 +211,16 @@ class Controller:
             return Outcome(True, "Pushed", {"output": out})
         except RuntimeError as exc:
             return Outcome(False, f"Push failed: {exc}")
+
+    def git_sync(self) -> Outcome:
+        try:
+            res = gitsync.sync()
+        except Exception as exc:
+            return Outcome(False, f"Sync failed: {exc}")
+        if not res.get("ok"):
+            return Outcome(False, f"Sync: {res.get('error') or res.get('skipped')}", res)
+        self.reload_state()
+        return Outcome(True, f"Synced (behind {res.get('behind', 0)}, pushed {res.get('pushed')}" + (f", merged {len(res['merged'])} file(s)" if res.get("merged") else "") + ")", res)
 
     def git_pull(self) -> Outcome:
         try:

@@ -9,7 +9,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from .. import __version__, log, paths  # noqa: E402
+from .. import __version__, gitsync, log, paths  # noqa: E402
 from . import theme  # noqa: E402
 from .controller import Controller, Outcome  # noqa: E402
 from .panels import AppsPanel, LogPanel, RulesPanel, StartupPanel, WindowsPanel  # noqa: E402
@@ -102,9 +102,10 @@ class MainWindow(Adw.ApplicationWindow):
         footer.append(gitline)
         btns = Gtk.Box(spacing=6, homogeneous=True)
         btns.add_css_class("sa-pill-actions")
-        self.push_btn = Gtk.Button(label="Push")
+        self.push_btn = Gtk.Button(label="Sync")
+        self.push_btn.set_tooltip_text("Fetch, rebase this machine's state commits (merging the JSON by id if both sides edited), push")
         self.push_btn.add_css_class("suggested-action")
-        self.push_btn.connect("clicked", lambda *_: self.run_outcome(self.ctl.git_push, refresh_git=True))
+        self.push_btn.connect("clicked", lambda *_: self.run_outcome(self.ctl.git_sync, refresh_git=True, refresh_all=True))
         pull_btn = Gtk.Button(label="Pull")
         pull_btn.connect("clicked", lambda *_: self.run_outcome(self.ctl.git_pull, refresh_git=True, refresh_all=True))
         apply_btn = Gtk.Button(label="Apply")
@@ -137,6 +138,9 @@ class MainWindow(Adw.ApplicationWindow):
         split.set_content(content)
 
         self.nav.select_row(self.nav.get_row_at_index(1))  # Rules first: the main use
+        # Pick up edits made on the other machine before the user edits here.
+        if gitsync.auto_sync_enabled():
+            GLib.idle_add(lambda: (self.run_outcome(self.ctl.git_sync, refresh_git=True, refresh_all=True), False)[1])
         self.refresh_git()
         GLib.timeout_add_seconds(20, self._tick_git)
 
@@ -225,7 +229,7 @@ class MainWindow(Adw.ApplicationWindow):
         else:
             self.git_badge.set_text("synced")
             self.git_badge.add_css_class("ok")
-        self.push_btn.set_sensitive(bool(ahead))
+        self.push_btn.set_sensitive(True)
 
     def _tick_git(self) -> bool:
         self.refresh_git()

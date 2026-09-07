@@ -83,6 +83,7 @@ class Rule:
     # per machine through the monitors table (role -> group decade); the
     # numeric action stays stored as the fallback when the role is undefined.
     target: dict[str, Any] | None = None
+    updated_at: int = 0
     scope: str = "common"  # runtime only: which layer it came from
 
     # ---- construction -----------------------------------------------------
@@ -105,6 +106,7 @@ class Rule:
             enabled=bool(d.get("enabled", True)),
             notes=str(d.get("notes") or ""),
             target=dict(d["target"]) if isinstance(d.get("target"), dict) and d["target"].get("monitor") else None,
+            updated_at=int(d.get("updated_at", 0) or 0),
             scope=scope,
         )
 

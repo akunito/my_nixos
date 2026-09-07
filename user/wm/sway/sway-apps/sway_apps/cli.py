@@ -107,6 +107,12 @@ def _persist(args: argparse.Namespace, state: State, message: str, apply_rules: 
         except RuntimeError as exc:
             log.get("cli").warning("git commit failed: %s", exc)
             result["commit_error"] = str(exc)
+        if result.get("commit") and gitsync.auto_sync_enabled():
+            try:
+                result["sync"] = gitsync.sync()
+            except Exception as exc:  # network down etc.: the commit is safe locally
+                log.get("cli").warning("git sync failed: %s", exc)
+                result["sync"] = {"ok": False, "error": str(exc)}
     return result
 
 
@@ -617,9 +623,10 @@ def cmd_mon_list(args: argparse.Namespace) -> int:
     _out(args, [dict(m.to_dict(), scope=m.scope, connected=(m.criteria in live and live[m.criteria].active),
                      connector=live[m.criteria].name if m.criteria in live else None,
                      workspaces=m.workspaces(), problems=m.problems()) for m in mons],
-         lambda: _table([["*" if m.enabled else "-", m.id, m.group, f"{m.group * 10 + 1}-{m.group * 10 + 10}" if m.group else "-", "P" if m.primary else "",
+         lambda: _table([["*" if m.enabled else "-", m.id, m.group, f"{m.group * 10 + 1}-{m.group * 10 + 10}" if m.group else "-",
+                          ("P" if m.primary else "") + ("A" if m.always_connected else ""),
                           m.scope, live[m.criteria].name if m.criteria in live and live[m.criteria].active else "off", m.name, m.criteria] for m in mons],
-                        ["", "role", "grp", "ws", "", "scope", "conn", "name", "hardware id"]))
+                        ["", "role", "grp", "ws", "P/A", "scope", "conn", "name", "hardware id"]))
     return 0
 
 
@@ -668,6 +675,10 @@ def cmd_mon_set(args: argparse.Namespace) -> int:
         m.primary = True
     if args.no_primary:
         m.primary = False
+    if args.always_connected:
+        m.always_connected = True
+    if args.no_always_connected:
+        m.always_connected = False
     if args.enable:
         m.enabled = True
     if args.disable:
@@ -687,11 +698,13 @@ def cmd_mon_set(args: argparse.Namespace) -> int:
     if clash and not args.force:
         raise CliError(f"group {m.group} already used by {clash[0].id}; pick another or --force")
     scope = args.scope or m.scope
-    with log.action("monitors.set", role=m.id, criteria=m.criteria, group=m.group, scope=scope):
+    with log.action("monitors.set", role=m.id, criteria=m.criteria, group=m.group, scope=scope, always_connected=m.always_connected):
         st.save_monitor(m, scope)
         res = _persist(args, st, f"update monitor {m.id}", apply_rules=True)
         if not args.no_apply and swayipc.available():
             res["monitors_live"] = mon.apply_live(st)
+        if args.always_connected or args.no_always_connected:
+            res["force"] = mon.apply_force(st)
     _out(args, {"monitor": dict(m.to_dict(), scope=scope), **res}, lambda: print(f"updated {m.id}: group {m.group} -> {m.criteria}"))
     return 0
 
@@ -716,7 +729,30 @@ def cmd_mon_apply(args: argparse.Namespace) -> int:
     res = generate.apply(st, reload=not args.no_reload)
     if swayipc.available():
         res["monitors_live"] = mon.apply_live(st)
-    _out(args, res, lambda: print(f"pins applied; moved {sum(1 for h in res.get('monitors_live', []) if h.get('ok'))} workspace(s)"))
+    res["force"] = mon.apply_force(st)
+    _out(args, res, lambda: print(f"pins applied; moved {sum(1 for h in res.get('monitors_live', []) if h.get('ok'))} workspace(s); "
+                                  f"connectors forced: {sum(1 for f in res['force'] if f.get('mode') == 'on' and f.get('ok'))}"))
+    return 0
+
+
+def cmd_mon_force(args: argparse.Namespace) -> int:
+    st = State()
+    if args.action == "status":
+        rows = mon.force_status(st)
+        _out(args, rows, lambda: _table([[r["role"], "yes" if r["always_connected"] else "no", "yes" if r["present"] else "no",
+                                          r["connector"] or "-", r["status"] or "-", "FORCED" if r["forced_now"] else ""] for r in rows],
+                                         ["role", "always_connected", "present", "connector", "kernel status", ""]))
+        return 0
+    res = mon.apply_force(st)
+    _out(args, res, lambda: [print(json.dumps(r)) for r in res])
+    return 0 if all(r.get("ok", True) for r in res) else 1
+
+
+def cmd_mon_login(args: argparse.Namespace) -> int:
+    """Once per session start: group-0 sweep + connector forces. No reload."""
+    st = State()
+    out = {"orphans": mon.fix_orphans(st) if swayipc.available() else {"ok": False, "error": "no sway socket"}, "force": mon.apply_force(st)}
+    _out(args, out, lambda: print(json.dumps(out)))
     return 0
 
 
@@ -782,6 +818,12 @@ def cmd_git_push(args: argparse.Namespace) -> int:
     out = gitsync.push()
     _out(args, {"ok": True, "output": out}, lambda: print(out or "pushed"))
     return 0
+
+
+def cmd_git_sync(args: argparse.Namespace) -> int:
+    res = gitsync.sync(push_after=not args.no_push)
+    _out(args, res, lambda: print(json.dumps(res)))
+    return 0 if res.get("ok") else 1
 
 
 def cmd_git_pull(args: argparse.Namespace) -> int:
@@ -933,12 +975,16 @@ def build_parser() -> argparse.ArgumentParser:
     x = m.add_parser("set"); x.add_argument("role")
     x.add_argument("--output"); x.add_argument("--group", type=int); x.add_argument("--name"); x.add_argument("--notes"); x.add_argument("--rename", metavar="NEWROLE")
     x.add_argument("--primary", action="store_true"); x.add_argument("--no-primary", action="store_true")
+    x.add_argument("--always-connected", action="store_true", help="force the DRM connector on: switching the monitor off no longer evacuates its workspaces")
+    x.add_argument("--no-always-connected", action="store_true", help="back to kernel detection")
     x.add_argument("--enable", action="store_true"); x.add_argument("--disable", action="store_true"); x.add_argument("--scope", choices=SCOPES); x.add_argument("--force", action="store_true")
     persist_flags(x); x.set_defaults(func=cmd_mon_set)
     x = m.add_parser("rm"); x.add_argument("role"); x.add_argument("--force", action="store_true"); persist_flags(x); x.set_defaults(func=cmd_mon_rm)
     x = m.add_parser("apply", help="regenerate pins, reload, move open workspaces to their monitor"); x.add_argument("--no-reload", action="store_true"); x.set_defaults(func=cmd_mon_apply)
     x = m.add_parser("pin-geometry", help="emit nwg-displays geometry keyed by hardware id"); x.add_argument("state", nargs="?", choices=["on", "off", "show"], default="show"); x.add_argument("--scope", choices=SCOPES, default="profile"); persist_flags(x); x.set_defaults(func=cmd_mon_geometry)
     m.add_parser("fix-orphans", help="migrate group-0 workspaces (1-10) into their output's pinned decade").set_defaults(func=cmd_mon_fix)
+    x = m.add_parser("force", help="DRM connector force (always_connected) status / re-apply"); x.add_argument("action", nargs="?", choices=["status", "apply"], default="status"); x.set_defaults(func=cmd_mon_force)
+    m.add_parser("login", help="session start: fix group 0 + apply connector forces (no reload)").set_defaults(func=cmd_mon_login)
     w2 = sub.add_parser("workspaces", help="workspace map").add_subparsers(dest="sub", required=True)
     w2.add_parser("map", help="monitors x slots with assigned apps and open windows").set_defaults(func=cmd_ws_map)
 
@@ -947,6 +993,7 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_parser("status").set_defaults(func=cmd_git_status)
     x = g.add_parser("commit"); x.add_argument("-m", "--message"); x.set_defaults(func=cmd_git_commit)
     g.add_parser("push").set_defaults(func=cmd_git_push)
+    x = g.add_parser("sync", help="fetch, rebase own state commits (semantic JSON merge), push"); x.add_argument("--no-push", action="store_true"); x.set_defaults(func=cmd_git_sync)
     g.add_parser("pull").set_defaults(func=cmd_git_pull)
 
     # log

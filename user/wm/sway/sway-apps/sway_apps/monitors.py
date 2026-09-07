@@ -11,6 +11,7 @@ Layering with the rest of the stack:
 """
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 from dataclasses import dataclass, field
@@ -74,6 +75,114 @@ def connector_of(criteria: str) -> str | None:
         if o.hw_id == criteria and o.active:
             return o.name
     return None
+
+
+# --------------------------------------------------------------------------
+# "always connected": DRM connector force via the sudo helper
+
+FORCE_HELPER = "sway-connector-force"
+FORCED_FILE = paths.LOCAL_STATE_DIR / "forced-connectors.json"
+
+
+def sysfs_connector(output_name: str) -> str | None:
+    """sway output 'DP-1' -> DRM sysfs name 'card1-DP-1' (prefers a connected one)."""
+    import glob
+    cands = sorted(glob.glob(f"/sys/class/drm/card*-{output_name}"))
+    if not cands:
+        return None
+    for c in cands:
+        try:
+            if (Path(c) / "status").read_text().strip() == "connected":
+                return Path(c).name
+        except OSError:
+            pass
+    return Path(cands[0]).name
+
+
+def connector_status(sysfs_name: str) -> str | None:
+    try:
+        return (Path("/sys/class/drm") / sysfs_name / "status").read_text().strip()
+    except OSError:
+        return None
+
+
+def _load_forced() -> dict[str, str]:
+    try:
+        return json.loads(FORCED_FILE.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_forced(d: dict[str, str]) -> None:
+    FORCED_FILE.parent.mkdir(parents=True, exist_ok=True)
+    FORCED_FILE.write_text(json.dumps(d, indent=2, sort_keys=True) + "\n")
+
+
+def set_connector_force(sysfs_name: str, mode: str) -> tuple[bool, str]:
+    """mode: 'on' (always connected) | 'detect' (kernel decides). Runs the
+    NOPASSWD sudo helper installed by nix (system/wm/sway-connector-force.nix)."""
+    if mode not in ("on", "detect"):
+        return False, f"bad mode {mode!r}"
+    cmd = ["sudo", "-n", FORCE_HELPER, sysfs_name, mode]
+    with log.action("monitors.connector_force", connector=sysfs_name, mode=mode) as res:
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        except FileNotFoundError:
+            return False, "sudo not found"
+        out = (proc.stdout + proc.stderr).strip()
+        res["rc"] = proc.returncode
+        if proc.returncode != 0:
+            _log.warning("connector force failed: %s", out)
+            return False, out or f"{FORCE_HELPER} exit {proc.returncode} (sudo rule missing? needs swayAppsEnable on the SYSTEM side)"
+        forced = _load_forced()
+        if mode == "on":
+            forced[sysfs_name] = "on"
+        else:
+            forced.pop(sysfs_name, None)
+        _save_forced(forced)
+    return True, out or f"{sysfs_name}: {mode}"
+
+
+def apply_force(state: State) -> list[dict[str, Any]]:
+    """Reconcile every present monitor's connector with its always_connected
+    flag; release connectors we forced earlier whose flag went off."""
+    results: list[dict[str, Any]] = []
+    live = {o.hw_id: o for o in live_outputs()}
+    wanted: dict[str, Monitor] = {}
+    for m in state.monitors():
+        o = live.get(m.criteria)
+        if o is None:
+            if m.always_connected:
+                results.append({"role": m.id, "skipped": "monitor not present right now; forced when it is"})
+            continue
+        sysfs = sysfs_connector(o.name)
+        if sysfs is None:
+            results.append({"role": m.id, "error": f"no sysfs connector for {o.name}"})
+            continue
+        if m.always_connected:
+            wanted[sysfs] = m
+    forced = _load_forced()
+    for sysfs, m in wanted.items():
+        ok, msg = set_connector_force(sysfs, "on")
+        results.append({"role": m.id, "connector": sysfs, "mode": "on", "ok": ok, "detail": msg})
+    for sysfs in list(forced):
+        if sysfs not in wanted:
+            ok, msg = set_connector_force(sysfs, "detect")
+            results.append({"connector": sysfs, "mode": "detect", "ok": ok, "detail": msg})
+    return results
+
+
+def force_status(state: State) -> list[dict[str, Any]]:
+    live = {o.hw_id: o for o in live_outputs()}
+    forced = _load_forced()
+    out = []
+    for m in state.monitors():
+        o = live.get(m.criteria)
+        sysfs = sysfs_connector(o.name) if o else None
+        out.append({"role": m.id, "always_connected": m.always_connected, "present": o is not None,
+                    "connector": sysfs, "status": connector_status(sysfs) if sysfs else None,
+                    "forced_now": bool(sysfs and forced.get(sysfs) == "on")})
+    return out
 
 
 # --------------------------------------------------------------------------

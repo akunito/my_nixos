@@ -738,6 +738,12 @@ in
 
     # === Desktop Environment & Theming ===
     enableSwayForDESK = false; # Not needed when wm = "sway" (no dual-WM setup)
+    # sway-apps (2026-09-07): window rules, startup apps, monitor roles/pins
+    # and the per-monitor "always connected" toggle. Rules come from
+    # user/wm/sway/apps/common.json + DESK.json (seeded from the legacy nix
+    # rules and swayWorkspaceOutputPins); the nix-hardcoded ones are no longer
+    # emitted. Hyper+Shift+n (rules), Hyper+grave (monitors).
+    swayAppsEnable = true;
     stylixEnable = true; # Enable Stylix for system-wide theming
     swwwEnable = true; # Enable swww wallpaper daemon for Sway (robust across reboot + HM rebuilds)
     waypaperEnable = true; # Enable Waypaper GUI wallpaper manager (Hyper+Shift+S)

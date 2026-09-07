@@ -88,10 +88,12 @@ class MonitorsPanel(Panel):
         crit.add_suffix(pick)
         group = Adw.SpinRow.new_with_range(0, 9, 1); group.set_title("Workspace group (decade)"); group.set_subtitle("0 = not pinned"); group.set_value(m.group)
         primary = switch_row("Primary", m.primary)
+        always = switch_row("Always connected", m.always_connected,
+                            "force the kernel connector on: switching this monitor OFF no longer moves its workspaces (DP drops HPD like an unplug)")
         enabled = switch_row("Enabled", m.enabled)
         scope = combo_row("Scope", list(SCOPES), m.scope)
         notes = entry_row("Notes", m.notes)
-        for r in (role, name, crit, group, primary, enabled, scope, notes):
+        for r in (role, name, crit, group, primary, always, enabled, scope, notes):
             g.add(r)
         self.detail.append(g)
 
@@ -110,8 +112,11 @@ class MonitorsPanel(Panel):
 
         if o is not None:
             g2 = Adw.PreferencesGroup(title=f"Live output {o.name}")
+            sysfs = mon.sysfs_connector(o.name)
+            kstat = mon.connector_status(sysfs) if sysfs else None
             for t, v in (("Mode", f"{o.width}x{o.height} @ {o.refresh:.0f} Hz"), ("Position", f"{o.x},{o.y}"), ("Scale", o.scale),
-                         ("Transform", o.transform), ("Current workspace", o.current_workspace or "-"), ("Active", o.active)):
+                         ("Transform", o.transform), ("Current workspace", o.current_workspace or "-"), ("Active", o.active),
+                         ("Kernel connector", f"{sysfs or '?'} · {kstat or '?'}" + (" · FORCED" if sysfs and mon._load_forced().get(sysfs) == "on" else ""))):
                 r = Adw.ActionRow(title=t, subtitle=str(v)); g2.add(r)
             self.detail.append(g2)
 
@@ -127,7 +132,7 @@ class MonitorsPanel(Panel):
         def collect() -> Monitor:
             return Monitor(id=role.get_text().strip(), criteria=crit.get_text().strip(), group=int(group.get_value()),
                            name=name.get_text().strip(), primary=primary.get_active(), enabled=enabled.get_active(),
-                           notes=notes.get_text(), scope=combo_value(scope))
+                           notes=notes.get_text(), always_connected=always.get_active(), scope=combo_value(scope))
 
         def do_save() -> None:
             n = collect()
@@ -146,7 +151,7 @@ class MonitorsPanel(Panel):
         for r in (role, name, crit, notes):
             r.connect("changed", _dirty)
         group.connect("notify::value", _dirty)
-        for r in (primary, enabled):
+        for r in (primary, always, enabled):
             r.connect("notify::active", _dirty)
         scope.connect("notify::selected", _dirty)
         if is_new:

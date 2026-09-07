@@ -20,6 +20,7 @@ in
     ../dm/sddm.nix # Shared SDDM configuration (KWallet PAM) - used by non-greetd profiles
     ../dm/greetd.nix # greetd + ReGreet configuration - modern Wayland-native display manager
     ./keyd.nix # Keyboard remapping (Caps Lock to Hyper)
+    ./sway-apps-helper.nix # sway-apps: sudo helper for "always connected" monitors
   ];
 
   # CRITICAL: Use swayfx instead of standard sway

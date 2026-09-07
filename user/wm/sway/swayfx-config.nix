@@ -843,11 +843,11 @@ in
         }
       ]
       ++ lib.optionals swayApps [
-        # sway creates workspace "1" (group 0) at login; move it into the
-        # output's pinned decade once. Replaces the retired hotplug restore /
-        # groups-setup sweeps for machines whose pins come from sway-apps.
+        # Session start: move sway's default workspace "1" (group 0) into the
+        # output's pinned decade, and re-apply the "always connected" connector
+        # forces (they do not survive a reboot). Once per login, not on reload.
         {
-          command = "${swayAppsBin} monitors fix-orphans";
+          command = "${swayAppsBin} monitors login";
           always = false;
         }
       ]

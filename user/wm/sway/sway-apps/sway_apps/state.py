@@ -34,6 +34,7 @@ class StartupEntry:
     order: int = 100
     notes: str = ""
     desktop_id: str = ""      # origin .desktop, for the learned cache
+    updated_at: int = 0
     scope: str = "common"
 
     @classmethod
@@ -50,6 +51,7 @@ class StartupEntry:
             order=int(d.get("order", 100)),
             notes=str(d.get("notes") or ""),
             desktop_id=str(d.get("desktop_id") or ""),
+            updated_at=int(d.get("updated_at", 0) or 0),
             scope=scope,
         )
 
@@ -78,13 +80,20 @@ class Monitor:
     primary: bool = False
     enabled: bool = True
     notes: str = ""
+    # Force the DRM connector to "connected" so switching the monitor OFF (DP
+    # drops HPD like an unplug) does not make sway destroy the output and
+    # evacuate its workspaces. Applied via the sudo helper sway-connector-force.
+    always_connected: bool = False
+    updated_at: int = 0
     scope: str = "profile"
 
     @classmethod
     def from_dict(cls, d: dict[str, Any], scope: str = "profile") -> "Monitor":
         return cls(id=str(d.get("id") or ""), criteria=str(d.get("criteria") or ""), group=int(d.get("group", 0)),
                    name=str(d.get("name") or ""), primary=bool(d.get("primary", False)),
-                   enabled=bool(d.get("enabled", True)), notes=str(d.get("notes") or ""), scope=scope)
+                   enabled=bool(d.get("enabled", True)), notes=str(d.get("notes") or ""),
+                   always_connected=bool(d.get("always_connected", False)),
+                   updated_at=int(d.get("updated_at", 0) or 0), scope=scope)
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -275,6 +284,8 @@ class State:
         raise ValueError(f"scope must be one of {SCOPES}, got {scope!r}")
 
     def upsert(self, section: str, item: dict[str, Any], scope: str) -> None:
+        import time
+        item["updated_at"] = int(time.time())
         layer = self._layer(scope)
         other = self._layer("common" if scope == "profile" else "profile")
         items = layer[section]

@@ -212,3 +212,30 @@ output "DP-1" {
         self.assertEqual(b["DP-2"]["transform"], "90")
         self.assertEqual(b["DP-1"]["scale"], "1.5")
         self.assertEqual(b["DP-2"]["mode"], "2560x1440@144.0Hz")
+
+
+class SemanticMerge(unittest.TestCase):
+    def _doc(self, rules):
+        return json.dumps({"version": 1, "rules": rules, "startup": [], "monitors": [], "settings": {}})
+
+    def test_three_way(self):
+        from sway_apps import gitsync
+        r = lambda i, a, t=0: {"id": i, "kind": "for_window", "criteria": {"app_id": i}, "actions": [a], "name": i, "enabled": True, "updated_at": t}
+        base = self._doc([r("a", "floating enable"), r("b", "floating enable"), r("c", "floating enable"), r("d", "floating enable")])
+        ours = self._doc([r("a", "floating disable", 10), r("b", "floating enable"), r("d", "floating enable"), r("e", "sticky enable", 5)])   # a edited, c deleted, e added
+        theirs = self._doc([r("a", "sticky enable", 20), r("b", "sticky enable", 7), r("c", "floating enable"), r("d", "floating enable"), r("f", "border none", 3)])  # a edited (newer), b edited, f added
+        m = json.loads(gitsync.merge_state_json(base, ours, theirs))
+        got = {x["id"]: x["actions"][0] for x in m["rules"]}
+        self.assertEqual(got["a"], "sticky enable")     # both edited: newer wins
+        self.assertEqual(got["b"], "sticky enable")     # only they edited
+        self.assertNotIn("c", got)                      # we deleted, they didn't touch
+        self.assertEqual(got["d"], "floating enable")   # untouched
+        self.assertEqual(got["e"], "sticky enable")     # we added
+        self.assertEqual(got["f"], "border none")       # they added
+
+    def test_delete_vs_edit_keeps_edit(self):
+        from sway_apps import gitsync
+        r = lambda i, a, t=0: {"id": i, "actions": [a], "updated_at": t}
+        base = self._doc([r("a", "x")]); ours = self._doc([]); theirs = self._doc([r("a", "y", 9)])
+        m = json.loads(gitsync.merge_state_json(base, ours, theirs))
+        self.assertEqual([x["actions"] for x in m["rules"]], [["y"]])
