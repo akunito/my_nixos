@@ -58,20 +58,5 @@
     }
   ],
   "settings": {},
-  "shortcuts": [
-    {
-      "id": "k-e9875be9",
-      "keys": "Hyper+f",
-      "kind": "sway",
-      "app_id": "",
-      "command": "fullscreen toggle",
-      "name": "Fullscreen (override test)",
-      "enabled": true,
-      "release": false,
-      "locked": false,
-      "override": true,
-      "notes": "",
-      "updated_at": 1788759053
-    }
-  ]
+  "shortcuts": []
 }
