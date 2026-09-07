@@ -24,7 +24,11 @@ _log = log.get("monitors")
 
 NWG_OUTPUTS_FILE = paths.XDG_CONFIG_HOME / "sway" / "outputs"
 NWG_WORKSPACES_FILE = paths.XDG_CONFIG_HOME / "sway" / "workspaces"
-PINS_CONF = paths.XDG_CONFIG_HOME / "sway" / "workspace-output-pins.conf"
+# Lives next to the include so a scratch SWAY_APPS_INCLUDE (tests) never
+# touches the real file. On 2026-09-06 a hardcoded path let a local test run
+# replace DESK's HM-owned symlink with a regular file, which then blocked the
+# next home-manager activation ("would be clobbered").
+PINS_CONF = paths.INCLUDE_FILE.parent / "workspace-output-pins.conf"
 RESTORE_SCRIPT = paths.XDG_CONFIG_HOME / "sway" / "scripts" / "sway-hotplug-restore.sh"
 
 
