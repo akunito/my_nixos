@@ -236,9 +236,13 @@ class NfsPanel(Panel):
             if m.server_reachable is not None:
                 chips.append(("server up" if m.server_reachable else "SERVER DOWN", "ok" if m.server_reachable else "err"))
             if m.usage.get("pct"):
-                chips.append((f"{m.usage['pct']} used · {m.usage['avail']} free", levels.pct(levels.parse_pct(m.usage["pct"]))))
-            rows.append((m.unit, list_row(m.where, m.what, chips, disabled=not m.active), m))
+                chips.append((f"{m.usage['pct']} · {m.usage['avail']} free", levels.pct(levels.parse_pct(m.usage["pct"]))))
+            row = list_row(m.where, m.what, chips, disabled=not m.active)
+            row.get_child().get_first_child().set_size_request(200, -1)   # keep the mountpoint readable next to the chips
+            rows.append((m.unit, row, m))
         self.fill_list(rows)
+        if rows and self.listbox.get_selected_row() is None:
+            self.show_placeholder("Nothing selected", "Pick a mount on the left.")
         self.toolbar.get_title_widget().set_subtitle(f"{len(self._mounts)} NFS mounts · {sum(1 for m in self._mounts if m.active)} mounted")
 
     def show_detail(self, m: nfsctl.NfsMount) -> None:

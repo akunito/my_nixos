@@ -418,7 +418,7 @@ class MonitoringPanel(Gtk.Box):
             self.status.set_text(f"Updated {when} · targets down {sm.get('targets_down', 0)} · " + " · ".join(
                 f"{k} {v or '—'}" for k, v in (("nodes", sm.get("nodes_level")), ("storage", sm.get("storage_level")), ("backups", sm.get("backups_level")), ("network", sm.get("network_level")))))
             for key, _t, _i in self.TABS:
-                page = self.stack.get_child_by_name(key)
+                page = self.stack.get_page(self.stack.get_child_by_name(key))
                 page.set_badge_number(0); page.set_needs_attention(False)
             self._build_nodes(res); self._build_storage(res); self._build_backups(res); self._build_network(res); self._build_targets(res)
             for e in res.get("errors", []):
@@ -427,7 +427,7 @@ class MonitoringPanel(Gtk.Box):
 
     def _attention(self, key: str, items: list[dict]) -> None:
         bad = sum(1 for x in items if x.get("level") == "err")
-        page = self.stack.get_child_by_name(key)
+        page = self.stack.get_page(self.stack.get_child_by_name(key))
         page.set_badge_number(bad); page.set_needs_attention(bad > 0)
 
     def _legend_label(self) -> Gtk.Label:

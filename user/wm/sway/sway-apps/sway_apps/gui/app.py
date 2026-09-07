@@ -387,7 +387,16 @@ class SwayAppsApplication(Adw.Application):
             return
         win.present()
         if self.section:
+            section, _, tab = self.section.partition(":")   # e.g. monitoring:backups
+            self.section = section
             panel = win.panels[self.section]
+            if tab and hasattr(panel, "on_show"):
+                win.show_section(self.section)
+                try:
+                    panel.on_show(tab)
+                except TypeError:
+                    panel.on_show()
+                return
             if self.select and hasattr(panel, "selected_id"):
                 panel.selected_id = self.select
             win.show_section(self.section)

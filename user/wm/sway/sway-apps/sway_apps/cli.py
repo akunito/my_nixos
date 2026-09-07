@@ -1659,7 +1659,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     x = sub.add_parser("gui", help="open the GUI (default); a second launch talks to the running instance")
     x.add_argument("--toggle", action="store_true", help="hide the window if it is focused, otherwise show/focus it (for a keybinding)")
-    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows", "nodes", "docker", "nfs", "monitoring", "profiles", "log"], help="section to open")
+    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows", "nodes", "docker", "nfs", "monitoring", "monitoring:nodes", "monitoring:storage", "monitoring:backups", "monitoring:network", "monitoring:targets", "profiles", "log"], help="section to open")
     x.add_argument("--select", help="item id to select (rule id, startup id, desktop id or con_id)")
     x.set_defaults(func=cmd_gui)
     sub.add_parser("doctor", help="check the installation").set_defaults(func=cmd_doctor)
