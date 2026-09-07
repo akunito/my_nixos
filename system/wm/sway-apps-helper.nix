@@ -46,7 +46,13 @@ let
         umount-force)  umount -f "$where" ;;
         umount-lazy)   umount -l "$where" ;;
         remount)       mount -o remount "$where" ;;
-        automount-on)  systemctl start "$auto" ;;
+        automount-on)
+          # systemd refuses to arm an automount on a path that is already mounted
+          if systemctl is-active --quiet "$unit"; then
+            systemctl stop "$unit"; systemctl start "$auto"; systemctl start "$unit"
+          else
+            systemctl start "$auto"
+          fi ;;
         automount-off) systemctl stop "$auto" ;;
         *) echo "unknown action $what" >&2; exit 2 ;;
       esac

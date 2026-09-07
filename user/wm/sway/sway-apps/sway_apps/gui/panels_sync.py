@@ -96,6 +96,12 @@ class ProfilesPanel(Gtk.Box):
                 row = list_row(pf.label(sec, x), f"id {x.get('id')}", [(side, style)], trailing=cb)
                 row.set_activatable(False)
                 self.listbox.append(row); self._checks.append((cb, x["id"], side))
+        if not any(d.values()):
+            row = Gtk.ListBoxRow(selectable=False, activatable=False)
+            row.set_child(Gtk.Label(label=f"Neither {other} nor {me} has machine-specific {sec}.\nAll {len(common_items)} {sec} live in common.json, which every machine shares, so they are already identical everywhere. "
+                                          f"Only per-machine overrides (items saved into a <PROFILE>.json layer) show up here.", xalign=0, wrap=True, margin_top=24, margin_start=12, margin_end=12, css_classes=["dim-label"]))
+            self.listbox.append(row)
+            return
         add_group(f"only in {other}", d["only_a"], other, "profile")
         add_group(f"differ ({other} version shown)", [c["a"] for c in d["changed"]], other, "warn")
         add_group(f"only in {me}", d["only_b"], me, "common")
