@@ -1153,6 +1153,14 @@ def cmd_tools_key(args: argparse.Namespace) -> int:
         x.override = True
     if not x.id:
         x.id = x.default_id()
+    # default_id() is derived from the folded keys, so a key another tool already
+    # owns produces the SAME id and would be upserted over it silently (and
+    # _sc_check skips the id it is checking). Refuse unless --force.
+    owner = st.shortcut(x.id)
+    if owner is not None and (existing is None or owner.id != existing.id) and not args.force:
+        raise CliError(f"{x.keys} is already used by {owner.name or owner.id} ({owner.command}); --force to take it over")
+    if existing is not None and existing.id != x.id and st.shortcut(x.id) is not None and not args.force:
+        raise CliError(f"{x.keys} is already used by {st.shortcut(x.id).name}; --force to take it over")
     _sc_check(st, x, args.force)
     with log.action("tools.key", id=t.id, keys=x.keys, shortcut=x.id):
         st.save_shortcut(x, x.scope if existing else t.scope)
@@ -1659,7 +1667,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     x = sub.add_parser("gui", help="open the GUI (default); a second launch talks to the running instance")
     x.add_argument("--toggle", action="store_true", help="hide the window if it is focused, otherwise show/focus it (for a keybinding)")
-    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows", "nodes", "docker", "nfs", "monitoring", "monitoring:nodes", "monitoring:storage", "monitoring:backups", "monitoring:network", "monitoring:targets", "profiles", "log"], help="section to open")
+    from .gui.launch import section_choices  # GTK-free
+    x.add_argument("--section", choices=section_choices(), help="section to open (monitoring:<tab> lands on a tab)")
     x.add_argument("--select", help="item id to select (rule id, startup id, desktop id or con_id)")
     x.set_defaults(func=cmd_gui)
     sub.add_parser("doctor", help="check the installation").set_defaults(func=cmd_doctor)

@@ -10,6 +10,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
 from .. import __version__, gitsync, log, paths, swayipc  # noqa: E402
+from . import launch  # noqa: E402
 from . import theme  # noqa: E402
 from .controller import Controller, Outcome  # noqa: E402
 from .panels import AppsPanel, LogPanel, RulesPanel, StartupPanel, WindowsPanel  # noqa: E402
@@ -332,18 +333,8 @@ class SwayAppsApplication(Adw.Application):
         self.toggle = toggle
 
     def do_command_line(self, cmdline) -> int:
-        args = list(cmdline.get_arguments())[1:]
-        self.section = self.select = None; self.toggle = False
-        i = 0
-        while i < len(args):
-            a = args[i]
-            if a == "--toggle":
-                self.toggle = True
-            elif a == "--section" and i + 1 < len(args):
-                self.section = args[i + 1]; i += 1
-            elif a == "--select" and i + 1 < len(args):
-                self.select = args[i + 1]; i += 1
-            i += 1
+        la = launch.parse_argv(list(cmdline.get_arguments())[1:])
+        self.section, self.select, self.toggle = la.section, la.select, la.toggle
         _log.debug("command line: section=%s select=%s toggle=%s remote=%s", self.section, self.select, self.toggle, cmdline.get_is_remote())
         self.activate()
         return 0
@@ -363,25 +354,24 @@ class SwayAppsApplication(Adw.Application):
 
     def do_activate(self) -> None:
         win = self.get_windows()[0] if self.get_windows() else None
-        if not win:
+        what = launch.decide(win is not None, bool(win and win.is_visible()), bool(win and win.is_active()),
+                             launch.LaunchArgs(self.section, self.select, self.toggle))
+        _log.info("activate: %s", what)
+        if what == "create":
             if self.ctl is None:
                 self.ctl = Controller()
             win = MainWindow(self, self.ctl)
-        elif self.toggle and not self.section:
-            if win.is_visible() and win.is_active():
-                _log.info("toggle: hide")
-                win.set_visible(False)
-                return
-            if win.is_visible():
-                # mapped but not focused (other workspace / behind): ask sway to bring it here
-                _log.info("toggle: focus")
-                try:
-                    swayipc.command(f'[app_id="{APP_ID}"] focus')
-                except Exception as exc:  # noqa: BLE001
-                    _log.debug("focus via sway failed: %s", exc)
-                win.present()
-                return
-            _log.info("toggle: show")
+        elif what == "hide":
+            win.set_visible(False)
+            return
+        elif what == "focus":
+            try:
+                swayipc.command(f'[app_id="{APP_ID}"] focus')
+            except Exception as exc:  # noqa: BLE001
+                _log.debug("focus via sway failed: %s", exc)
+            win.present()
+            return
+        elif what == "show":
             win.present()
             win.refresh_git()
             return
@@ -414,11 +404,4 @@ class SwayAppsApplication(Adw.Application):
 def run(section: str | None = None, select: str | None = None, toggle: bool = False) -> int:
     log.setup()
     app = SwayAppsApplication(section=section, select=select, toggle=toggle)
-    argv = [sys.argv[0]]
-    if section:
-        argv += ["--section", section]
-    if select:
-        argv += ["--select", select]
-    if toggle:
-        argv.append("--toggle")
-    return app.run(argv)
+    return app.run(launch.build_argv(sys.argv[0], section, select, toggle))

@@ -196,6 +196,19 @@ check "restore undid the copy" 'map(select(.id=="k-smokeother")) | length == 0' 
 check "nfs list runs"          'type == "array"'                                   "$(J nfs list --no-probe)"
 rm -f "$SWAY_APPS_STATE_DIR/OTHER.json"
 
+# --- monitoring dashboard / launcher ---------------------------------------
+if "$BIN" --json nodes list | jq -e 'map(select(.id=="VPS_PROD" and .ssh != "")) | length == 1' >/dev/null 2>&1 && timeout 8 ssh -o BatchMode=yes -o ConnectTimeout=5 -p 56777 akunito@100.64.0.6 true 2>/dev/null; then
+  DASH=$(J monitor dashboard)
+  check "dashboard shape"         '.nodes and .backups and .network and .targets and .summary'   "$DASH"
+  check "dashboard levels"        '[.nodes[].level, .backups[].level] | all(. == "" or . == "ok" or . == "warn" or . == "err")' "$DASH"
+  check "dashboard backup groups" '[.backups[].group] | unique | index("VPS → NAS") != null and index("Workstations → NAS") != null' "$DASH"
+  check "dashboard sparklines"    '[.nodes[] | select(.lightweight | not) | .mem_series | length] | all(. > 0)' "$DASH"
+else
+  echo "  skip dashboard checks (VPS not reachable from here)"
+fi
+if "$BIN" gui --section monitoring:bogus --help >/dev/null 2>&1; then bad "gui rejects bogus tab"; else ok "gui rejects bogus tab"; fi
+check "gui accepts tab spec"    '.ok == true' "$("$BIN" gui --section monitoring:backups --help >/dev/null 2>&1 && echo '{"ok":true}' || echo '{"ok":false}')"
+
 # --- git -------------------------------------------------------------------
 GS=$(J git status)
 check "git status repo"        '.repo == true and (.dirty|length) == 0'         "$GS"

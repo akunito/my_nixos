@@ -206,9 +206,10 @@ def _series(res: list[dict[str, Any]]) -> list[float | None]:
     out: list[float | None] = []
     for _ts, v in res[0].get("values", []):
         try:
-            out.append(float(v))
+            f = float(v)
         except (TypeError, ValueError):
-            out.append(None)
+            out.append(None); continue
+        out.append(None if f != f else f)   # Prometheus "NaN" samples -> None (charts skip None, not nan)
     return out
 
 
@@ -331,7 +332,7 @@ def dashboard(state: State) -> dict[str, Any]:
         # network
         succ = _by(nxt(), "instance", "job"); rtt = _by(nxt(), "instance"); hdur = _by(nxt(), "instance"); hcode = _by(nxt(), "instance")
         rtt_series_raw = nxt()
-        rtt_series = {x["metric"].get("instance", ""): [float(v) if v not in (None, "NaN") else None for _t, v in x.get("values", [])] for x in rtt_series_raw}
+        rtt_series = {x["metric"].get("instance", ""): _series([x]) for x in rtt_series_raw}
         for (inst, job), ok in sorted(succ.items(), key=lambda kv: (0 if "icmp" in kv[0][1] else 1, kv[0][0])):
             kind = "icmp" if "icmp" in job else "http"
             if kind == "icmp":
