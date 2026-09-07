@@ -6,7 +6,7 @@ tags: [sway, tmux, kitty, keybindings, sway-apps, generated]
 
 # Bindings (generated 2026-09-07 on DESK)
 
-Owner `sway-apps` = editable in the GUI (Hyper+Shift+n → Shortcuts) or `sway-apps shortcuts`; `nix` / `tmux (nix)` / `kitty (nix)` = read-only, defined in nix (take a key over with a shortcut marked *override*).
+Owner `sway-apps` = editable in the GUI (Hyper+s → Shortcuts) or `sway-apps shortcuts`; `nix` / `tmux (nix)` / `kitty (nix)` = read-only, defined in nix (take a key over with a shortcut marked *override*).
 
 ## Apps
 
@@ -150,13 +150,13 @@ Owner `sway-apps` = editable in the GUI (Hyper+Shift+n → Shortcuts) or `sway-a
 | `Hyper+grave` |  | `exec /home/akunito/.nix-profile/bin/sway-apps gui --section monitors` | nix |
 | `Hyper+period` |  | `exec rofi -show emoji` | nix |
 | `Hyper+Return` |  | `exec /nix/store/cr4h8m35wzmg3j2v739axb6mwagdm68b-keyboard-layout-switch/bin/keyboard-layou` | nix |
+| `Hyper+s` |  | `exec /home/akunito/.nix-profile/bin/sway-apps` | nix |
 | `Hyper+Shift+BackSpace` |  | `exec rofi -show power -show-icons` | nix |
 | `Hyper+Shift+End` |  | `exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway` | nix |
 | `Hyper+Shift+h` |  | `exec /home/akunito/.config/sway/scripts/waybar-toggle.sh` | nix |
 | `Hyper+Shift+j` |  | `exec /home/akunito/.config/sway/scripts/window-move.sh left` | nix |
 | `Hyper+Shift+k` |  | `exec /home/akunito/.config/sway/scripts/window-move.sh down` | nix |
 | `Hyper+Shift+l` |  | `exec /home/akunito/.config/sway/scripts/window-move.sh up` | nix |
-| `Hyper+Shift+n` |  | `exec /home/akunito/.nix-profile/bin/sway-apps` | nix |
 | `Hyper+Shift+r` |  | `reload` | nix |
 | `Hyper+Shift+Return` |  | `exec /home/akunito/.nix-profile/bin/desk-startup-apps-launcher` | nix |
 | `Hyper+Shift+v` |  | `exec sh -c '/nix/store/z7lir4nmf5iw8h21sxqjx85nsdj3vq2j-cliphist-0.7.0/bin/cliphist list \` | nix |
