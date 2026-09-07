@@ -16,7 +16,7 @@ GUI (GTK4 + libadwaita) and CLI that own two things for Sway:
 2. **Startup apps** — a *manual* launch list (nothing runs at login).
 
 Flag: `swayAppsEnable` (`lib/defaults.nix`, default `false`). Enabled on
-`LAPTOP_X13` since 2026-09-06. With the flag ON, `swayfx-config.nix` stops
+`LAPTOP_X13` since 2026-09-06 and on `DESK` since 2026-09-07. With the flag ON, `swayfx-config.nix` stops
 emitting its hardcoded rules and includes `~/.config/sway/sway-apps.conf`
 instead. With it OFF nothing changes (DESK still uses the legacy rules).
 
@@ -61,6 +61,34 @@ its file is non-empty). `workspace-groups-gui` (Hyper+`) was retired on
 `sway-apps workspaces map` / the Workspaces section show, per monitor and slot,
 the apps assigned there and the windows currently open.
 
+### "Always connected" monitors (power-off without evacuation)
+
+A DisplayPort monitor switched OFF drops HPD exactly like an unplugged cable
+(measured on DESK: both DP monitors do it), so sway destroys the output and
+evacuates its workspaces; software DPMS keeps the connector. The kernel
+cannot tell the two apart, so per monitor you can force the connector on:
+`sway-apps monitors set main --always-connected` (GUI: switch in Monitors).
+This writes `on` to `/sys/class/drm/<connector>/status` through
+`sway-connector-force` (system/wm/sway-apps-helper.nix, sudo NOPASSWD, only
+when `swayAppsEnable`), is re-applied at every login by `sway-apps monitors
+login`, and is released with `--no-always-connected` (`detect`). Caveats: a
+genuinely unplugged forced monitor stays a phantom output (pointer can enter
+it; use `--no-always-connected` then), and booting with the monitor off
+leaves the kernel without EDID for it. Use it on fixed desks (DESK), not on
+a laptop's dock monitor (X13 keeps detection). `monitors force status` shows
+the kernel status per role.
+
+### Git sync between machines
+
+Every save commits only `user/wm/sway/apps/*.json`, then runs
+`sway-apps git sync`: fetch, rebase this machine's state commits onto
+upstream and push. If both machines edited the same file the JSON is merged
+**by id** (newest `updated_at` per item wins; a one-sided delete wins over an
+untouched item; delete vs edit keeps the edit), so no manual conflict
+resolution is needed. The GUI also syncs when it opens. Disable with
+`{"auto_sync": false}` in `~/.config/sway-apps/config.json`. The sync refuses
+to touch a checkout whose unpushed commits include non-state files.
+
 ## What a save does
 
 `write JSON → validate → regenerate include → swaymsg reload → apply to
@@ -93,10 +121,10 @@ sway-apps import-config ~/.config/sway/config --dry-run
 sway-apps startup list|add|set|enable|disable|rm|run [ID...]
 sway-apps startup add --desktop org.kde.kcalc --workspace 3   # from a .desktop entry
 sway-apps apps list [QUERY] [--source flatpak-user] [--all] | apps show ID | apps launch ID
-sway-apps monitors outputs|list|add ROLE OUTPUT --group N|set ROLE [--group N|--output X|--rename R]|rm ROLE|apply|pin-geometry on|off|fix-orphans
+sway-apps monitors outputs|list|add ROLE OUTPUT --group N|set ROLE [--group N|--output X|--rename R|--always-connected]|rm ROLE|apply|pin-geometry on|off|fix-orphans|force status|login
 sway-apps workspaces map
 sway-apps windows list|focused|pick
-sway-apps git status|commit|push|pull
+sway-apps git status|commit|push|pull|sync
 sway-apps log tail [-n 50] [-f] [--level error] [--grep rules.add]
 ```
 
