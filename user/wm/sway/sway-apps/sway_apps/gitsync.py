@@ -111,7 +111,7 @@ def push() -> str:
 import json as _json
 import time as _time
 
-_SECTIONS = ("rules", "startup", "monitors")
+_SECTIONS = ("rules", "startup", "monitors", "shortcuts")
 
 
 def stamp(item: dict) -> dict:

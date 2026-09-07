@@ -478,8 +478,18 @@ in
         inner = 8;
       };
 
-      # Keybindings
-      keybindings = lib.mkMerge [
+      # Keybindings. With sway-apps on, the application launchers (every
+      # app-toggle.sh binding) are owned by the tool (user/wm/sway/apps/*.json,
+      # section "shortcuts") and dropped here; the WM core stays in nix as the
+      # safety net. A tool shortcut can still take over a nix key: the include
+      # emits `unbindsym` + `bindsym`.
+      keybindings =
+        let
+          # Values may be plain strings or lib.mkIf wrappers ({ _type = "if"; content = ...; }).
+          bindText = v: if lib.isString v then v else if lib.isAttrs v && v ? content then toString v.content else "";
+          dropAppToggles = a: if swayApps then lib.filterAttrs (_: v: !(lib.hasInfix "app-toggle.sh" (bindText v))) a else a;
+        in
+        lib.mkMerge (map dropAppToggles [
         {
           # Reload SwayFX configuration
           "${hyper}+Shift+r" = "reload";
@@ -754,7 +764,7 @@ in
           "${hyper}+Shift+9" = "exec ${pkgs.swaysome}/bin/swaysome move 9";
           "${hyper}+Shift+0" = "exec ${pkgs.swaysome}/bin/swaysome move 10";
         }
-      ];
+      ]);
 
       # Startup commands
       startup = [

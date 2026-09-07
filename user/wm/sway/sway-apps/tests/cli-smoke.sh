@@ -125,6 +125,26 @@ check "target falls back"      '.line == "assign [app_id=\"smoke-target\"] works
 check "doctor flags target"    '.checks | map(select(.check=="symbolic targets")) | .[0].ok == false' "$(J doctor)"
 J rules rm "$TID" >/dev/null
 
+# --- shortcuts --------------------------------------------------------------
+check "shortcuts nix parsed"   'length > 20'                                    "$(J shortcuts nix)"
+NIXKEY=$(J shortcuts nix | jq -r '.[0].keys')
+check "shortcut add app"       '.shortcut.line == "bindsym Mod4+Control+Mod1+Shift+F7 exec ~/.config/sway/scripts/app-toggle.sh smoke-app smokecmd"' "$(J shortcuts add --keys Hyper+Shift+F7 --app smoke-app --command smokecmd --name smokesc)"
+SCID=$(J shortcuts list smokesc | jq -r '.[0].id')
+check "shortcut in include"    'true' "$(grep -q 'Mod4+Control+Mod1+Shift+F7' "$SWAY_APPS_INCLUDE" && echo '{}' || echo null)"
+check "include validates"      '.valid == true'                                 "$(J render --validate)"
+check "nix key blocked"        '.error | test("bound by nix")'                  "$(J shortcuts add --keys "$NIXKEY" --exec true)"
+OV=$(J shortcuts add --keys "$NIXKEY" --exec true --override --name smokeov)
+check "nix key override"       '.shortcut.override == true'                     "$OV"
+check "unbindsym emitted"      'true' "$(grep -q '^unbindsym' "$SWAY_APPS_INCLUDE" && echo '{}' || echo null)"
+check "conflicts lists it"     'map(select(.override)) | length >= 1'           "$(J shortcuts conflicts)"
+check "shortcut set sway kind" '.shortcut.line | test("^bindsym --locked Mod4\\+Control\\+Mod1\\+Shift\\+F7 workspace number 12$")' "$(J shortcuts set "$SCID" --sway "workspace number 12" --locked)"
+check "duplicate keys rejected" '.error | test("already used")'                 "$(J shortcuts set "$(J shortcuts list smokeov | jq -r '.[0].id')" --keys Hyper+Shift+F7)"
+check "shortcuts free"         '.Hyper | type == "array"'                        "$(J shortcuts free)"
+check "shortcuts doc"          '.markdown | test("smokesc")'                     "$(J shortcuts doc)"
+check "shortcut disable"       '.shortcut.enabled == false'                      "$(J shortcuts disable "$SCID")"
+check "shortcut rm"            '.removed == "'"$SCID"'"'                          "$(J shortcuts rm "$SCID")"
+J shortcuts rm "$(J shortcuts list smokeov | jq -r '.[0].id')" >/dev/null
+
 # --- git -------------------------------------------------------------------
 GS=$(J git status)
 check "git status repo"        '.repo == true and (.dirty|length) == 0'         "$GS"

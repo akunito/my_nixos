@@ -239,3 +239,43 @@ class SemanticMerge(unittest.TestCase):
         base = self._doc([r("a", "x")]); ours = self._doc([]); theirs = self._doc([r("a", "y", 9)])
         m = json.loads(gitsync.merge_state_json(base, ours, theirs))
         self.assertEqual([x["actions"] for x in m["rules"]], [["y"]])
+
+
+class Shortcuts(unittest.TestCase):
+    def test_keys(self):
+        from sway_apps import shortcuts as sc
+        self.assertEqual(sc.sway_keys("hyper+shift+N"), "Mod4+Control+Mod1+Shift+N")
+        self.assertEqual(sc.fold("Hyper+Shift+N"), sc.fold("Mod4+Control+Mod1+Shift+n"))
+        self.assertEqual(sc.sway_keys("Super+Return"), "Mod4+Return")
+        self.assertEqual(sc.friendly_keys("Mod4+Control+Mod1+Shift+n"), "Hyper+Shift+n")
+        self.assertEqual(sc.friendly_keys("Mod4+Tab"), "Super+Tab")
+        with self.assertRaises(ValueError):
+            sc.normalize_keys("Bogus+x")
+        with self.assertRaises(ValueError):
+            sc.normalize_keys("Hyper+Shift")
+
+    def test_render_and_conflicts(self):
+        from sway_apps import shortcuts as sc
+        nix = [{"keys": "Hyper+t", "sway_keys": "Mod4+Control+Mod1+T", "fold": sc.fold("Hyper+T"), "command": "exec kitty", "flags": ""}]
+        a = sc.Shortcut.new("Hyper+t", "app", app_id="kitty", command="kitty")
+        b = sc.Shortcut.new("Hyper+Shift+z", "sway", command="workspace 3", locked=True)
+        c = sc.Shortcut.new("hyper+shift+Z", "exec", command="foo")  # same folded keys as b
+        c.id = "k-other"  # ids derive from the folded keys, so a duplicate can only appear after a `set --keys`
+        conf = sc.conflicts([a, b, c], nix)
+        self.assertEqual(conf[a.id]["nix"], "exec kitty")
+        self.assertEqual(conf[b.id]["tool"], [c.id])
+        text, warns = sc.render_all([a, b], nix)
+        self.assertNotIn("kitty", text)                 # blocked: nix key, no override
+        self.assertTrue(any("override" in w for w in warns))
+        self.assertIn("bindsym --locked Mod4+Control+Mod1+Shift+z workspace 3", text)
+        a.override = True
+        text, warns = sc.render_all([a, b], nix)
+        self.assertIn("unbindsym Mod4+Control+Mod1+t\nbindsym Mod4+Control+Mod1+t exec ~/.config/sway/scripts/app-toggle.sh kitty kitty", text)
+        self.assertEqual(warns, [])
+
+    def test_nix_parse(self):
+        from sway_apps import shortcuts as sc
+        d = Path(tempfile.mkdtemp()); cfg = d / "config"
+        cfg.write_text("bindsym Mod4+Control+Mod1+Shift+r reload\nbindsym --release Mod4+l exec lock\n# bindsym Mod4+x nope\nset $x 1\n")
+        nb = sc.nix_bindings(cfg)
+        self.assertEqual([(b["keys"], b["command"], b["flags"]) for b in nb], [("Hyper+Shift+r", "reload", ""), ("Super+l", "exec lock", "--release")])

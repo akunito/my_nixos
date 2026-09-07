@@ -14,6 +14,7 @@ from . import theme  # noqa: E402
 from .controller import Controller, Outcome  # noqa: E402
 from .panels import AppsPanel, LogPanel, RulesPanel, StartupPanel, WindowsPanel  # noqa: E402
 from .panels_monitors import MonitorsPanel, WorkspacesPanel  # noqa: E402
+from .panels_shortcuts import ShortcutsPanel  # noqa: E402
 
 _log = log.get("gui")
 
@@ -22,6 +23,7 @@ APP_ID = "dev.akunito.SwayApps"
 NAV = [
     ("startup", "Startup", "Manual launch list", "media-playback-start-symbolic"),
     ("rules", "Rules", "for_window · assign · no_focus", "view-grid-symbolic"),
+    ("shortcuts", "Shortcuts", "Your keys · nix keys", "input-keyboard-symbolic"),
     ("monitors", "Monitors", "Roles · workspace pins", "video-display-symbolic"),
     ("workspaces", "Workspaces", "Map: monitors × slots", "view-grid-symbolic"),
     ("apps", "Apps", "Installed .desktop & Flatpak", "view-app-grid-symbolic"),
@@ -125,6 +127,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.panels = {
             "startup": StartupPanel(self),
             "rules": RulesPanel(self),
+            "shortcuts": ShortcutsPanel(self),
             "monitors": MonitorsPanel(self),
             "workspaces": WorkspacesPanel(self),
             "apps": AppsPanel(self),

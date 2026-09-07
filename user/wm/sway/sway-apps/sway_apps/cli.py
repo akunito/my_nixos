@@ -13,7 +13,9 @@ from typing import Any, Callable
 
 from . import __version__, discover, generate, gitsync, log, paths, startup, swayipc
 from . import monitors as mon
+from . import shortcuts as sc_mod
 from .rules import CRITERIA_KEYS, KINDS, Rule, parse_config
+from .shortcuts import Shortcut
 from .state import SCOPES, Monitor, StartupEntry, State
 
 
@@ -154,6 +156,10 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     check("sway binary (validate)", subprocess.run(["which", paths.SWAY_BIN], capture_output=True).returncode == 0, paths.SWAY_BIN)
     check("log file", paths.LOG_FILE.exists(), f"{paths.LOG_FILE} ({paths.LOG_FILE.stat().st_size if paths.LOG_FILE.exists() else 0} bytes, cap {paths.LOG_MAX_BYTES * (paths.LOG_BACKUP_COUNT + 1) // 1024 // 1024} MiB)")
     if st is not None:
+        scs = st.shortcuts()
+        conf = sc_mod.conflicts(scs)
+        blocked = [i for i, c in conf.items() if c["nix"] and not st.shortcut(i).override] + [i for i, c in conf.items() if c["tool"]]
+        check("shortcuts", not blocked, ("; ".join(f"{i}: {st.shortcut(i).keys}" for i in blocked) + " (nix-bound without override, or duplicated)") if blocked else f"{len(scs)} shortcuts, {sum(1 for c in conf.values() if c['nix'])} override nix keys", optional=True)
         tp = st.target_problems()
         check("symbolic targets", not tp, "; ".join(f"{r.id}: {p}" for r, p in tp) if tp else f"{sum(1 for r in st.rules() if r.target)} rules resolve", optional=True)
         mons = st.monitors()
@@ -799,6 +805,170 @@ def cmd_ws_map(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# shortcuts
+
+def _sc_row(x: Shortcut, conf: dict) -> list:
+    c = conf.get(x.id, {})
+    flag = ("OVERRIDE" if x.override and c.get("nix") else "CONFLICT" if c.get("nix") else "") + (" dup" if c.get("tool") else "")
+    return ["*" if x.enabled else "-", x.id, x.keys, x.kind, x.name, x.sway_command()[:70], x.scope, flag]
+
+
+def cmd_sc_list(args: argparse.Namespace) -> int:
+    st = State()
+    items = st.shortcuts()
+    if args.query:
+        q = args.query.lower()
+        items = [x for x in items if q in x.keys.lower() or q in x.name.lower() or q in x.command.lower() or q in x.app_id.lower()]
+    conf = sc_mod.conflicts(st.shortcuts())
+    _out(args, [dict(x.to_dict(), scope=x.scope, line=x.render(), conflict=conf.get(x.id), problems=x.problems()) for x in items],
+         lambda: _table([_sc_row(x, conf) for x in items], ["", "id", "keys", "kind", "name", "command", "scope", ""]))
+    return 0
+
+
+def cmd_sc_nix(args: argparse.Namespace) -> int:
+    nb = sc_mod.nix_bindings()
+    if args.query:
+        q = args.query.lower()
+        nb = [b for b in nb if q in b["keys"].lower() or q in b["command"].lower()]
+    _out(args, nb, lambda: _table([[b["keys"], b["flags"], b["command"][:90]] for b in sorted(nb, key=lambda b: b["fold"])], ["keys", "flags", "command (nix-owned, read-only)"]))
+    return 0
+
+
+def _get_sc(st: State, ident: str) -> Shortcut:
+    x = st.shortcut(ident)
+    if x is None:
+        cands = [y for y in st.shortcuts() if y.name == ident or y.keys.lower() == ident.lower()]
+        if len(cands) == 1:
+            return cands[0]
+        raise CliError(f"no shortcut {ident!r}")
+    return x
+
+
+def _sc_from_args(args: argparse.Namespace, base: Shortcut | None = None) -> Shortcut:
+    x = base or Shortcut(id="", keys="")
+    if args.keys is not None:
+        x.keys = args.keys
+    if getattr(args, "app", None) is not None:
+        x.kind = "app"; x.app_id = args.app
+    if getattr(args, "sway", None) is not None:
+        x.kind = "sway"; x.command = args.sway
+    if getattr(args, "exec_", None) is not None:
+        x.kind = "exec"; x.command = args.exec_
+    if getattr(args, "command", None) is not None:
+        x.command = args.command
+    for attr in ("name", "notes"):
+        v = getattr(args, attr, None)
+        if v is not None:
+            setattr(x, attr, v)
+    for flag in ("release", "locked", "override"):
+        if getattr(args, flag, False):
+            setattr(x, flag, True)
+        if getattr(args, "no_" + flag, False):
+            setattr(x, flag, False)
+    if getattr(args, "enable", False):
+        x.enabled = True
+    if getattr(args, "disable", False) or getattr(args, "disabled", False):
+        x.enabled = False
+    if not x.id:
+        x.id = x.default_id()
+    if not x.name:
+        x.name = x.default_name()
+    return x
+
+
+def _sc_check(st: State, x: Shortcut, force: bool) -> None:
+    probs = x.problems()
+    if probs:
+        raise CliError("invalid shortcut: " + "; ".join(probs))
+    others = [y for y in st.shortcuts() if y.id != x.id]
+    conf = sc_mod.conflicts(others + [x]).get(x.id)
+    if conf and conf["tool"]:
+        raise CliError(f"{x.keys} is already used by shortcut {conf['tool'][0]}")
+    if conf and conf["nix"] and not x.override and not force:
+        raise CliError(f"{x.keys} is bound by nix ({conf['nix'][:70]}); pass --override to take it over")
+
+
+def cmd_sc_add(args: argparse.Namespace) -> int:
+    st = State()
+    x = _sc_from_args(args)
+    x.scope = args.scope
+    if st.shortcut(x.id) and not args.force:
+        raise CliError(f"shortcut {x.id} ({x.keys}) exists; use `shortcuts set` or --force")
+    _sc_check(st, x, args.force)
+    with log.action("shortcuts.add", id=x.id, keys=x.keys, kind=x.kind, override=x.override, scope=args.scope):
+        st.save_shortcut(x, args.scope)
+        res = _persist(args, st, f"add shortcut {x.keys} {x.name}", apply_rules=True)
+    _out(args, {"shortcut": dict(x.to_dict(), scope=args.scope, line=x.render()), **res}, lambda: print(f"added {x.id}: {x.render()}"))
+    return 0
+
+
+def cmd_sc_set(args: argparse.Namespace) -> int:
+    st = State()
+    x = _get_sc(st, args.id)
+    before = x.render()
+    x = _sc_from_args(args, x)
+    scope = args.scope or x.scope
+    _sc_check(st, x, args.force)
+    with log.action("shortcuts.set", id=x.id, before=before, after=x.render(), scope=scope):
+        st.save_shortcut(x, scope)
+        res = _persist(args, st, f"update shortcut {x.keys} {x.name}", apply_rules=True)
+    _out(args, {"shortcut": dict(x.to_dict(), scope=scope, line=x.render()), **res}, lambda: print(f"updated {x.id}: {x.render()}"))
+    return 0
+
+
+def cmd_sc_toggle(args: argparse.Namespace, enabled: bool) -> int:
+    st = State()
+    x = _get_sc(st, args.id)
+    x.enabled = enabled
+    with log.action("shortcuts.enable" if enabled else "shortcuts.disable", id=x.id):
+        st.save_shortcut(x)
+        res = _persist(args, st, f"{'enable' if enabled else 'disable'} shortcut {x.keys}", apply_rules=True)
+    _out(args, {"shortcut": x.to_dict(), **res}, lambda: print(f"{'enabled' if enabled else 'disabled'} {x.id}"))
+    return 0
+
+
+def cmd_sc_rm(args: argparse.Namespace) -> int:
+    st = State()
+    x = _get_sc(st, args.id)
+    with log.action("shortcuts.rm", id=x.id, keys=x.keys):
+        st.remove("shortcuts", x.id)
+        res = _persist(args, st, f"remove shortcut {x.keys}", apply_rules=True)
+    _out(args, {"removed": x.id, **res}, lambda: print(f"removed {x.id}"))
+    return 0
+
+
+def cmd_sc_conflicts(args: argparse.Namespace) -> int:
+    st = State()
+    conf = sc_mod.conflicts(st.shortcuts())
+    rows = [{"id": i, "keys": st.shortcut(i).keys, "override": st.shortcut(i).override, **c} for i, c in conf.items()]
+    _out(args, rows, lambda: _table([[r["id"], r["keys"], (r["nix"] or "")[:60], ",".join(r["tool"]), "yes" if r["override"] else "no"] for r in rows],
+                                     ["id", "keys", "nix binding", "other tool shortcuts", "override"]))
+    return 0
+
+
+def cmd_sc_doc(args: argparse.Namespace) -> int:
+    st = State()
+    md = sc_mod.doc_markdown(st.shortcuts())
+    if args.write:
+        Path(args.write).write_text(md)
+        _out(args, {"written": args.write, "lines": md.count("\n")}, lambda: print(f"wrote {args.write}"))
+    else:
+        _out(args, {"markdown": md}, lambda: print(md, end=""))
+    return 0
+
+
+def cmd_sc_free(args: argparse.Namespace) -> int:
+    """Which Hyper / Hyper+Shift letters are still free (tool + nix)."""
+    st = State()
+    used = {b["fold"] for b in sc_mod.nix_bindings()} | {sc_mod.fold(x.keys) for x in st.shortcuts() if not x.problems()}
+    res = {}
+    for prefix, label in (("Mod4+Control+Mod1+", "Hyper"), ("Mod4+Control+Mod1+Shift+", "Hyper+Shift")):
+        res[label] = [k for k in "abcdefghijklmnopqrstuvwxyz" if prefix + k not in used]
+    _out(args, res, lambda: [print(f"{k}: {' '.join(v) or '(none)'}") for k, v in res.items()])
+    return 0
+
+
+# --------------------------------------------------------------------------
 # git / log
 
 def cmd_git_status(args: argparse.Namespace) -> int:
@@ -880,7 +1050,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd")
 
     x = sub.add_parser("gui", help="open the GUI (default)")
-    x.add_argument("--section", choices=["startup", "rules", "monitors", "workspaces", "apps", "windows", "log"], help="section to open")
+    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "monitors", "workspaces", "apps", "windows", "log"], help="section to open")
     x.add_argument("--select", help="item id to select (rule id, startup id, desktop id or con_id)")
     x.set_defaults(func=cmd_gui)
     sub.add_parser("doctor", help="check the installation").set_defaults(func=cmd_doctor)
@@ -987,6 +1157,32 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_parser("login", help="session start: fix group 0 + apply connector forces (no reload)").set_defaults(func=cmd_mon_login)
     w2 = sub.add_parser("workspaces", help="workspace map").add_subparsers(dest="sub", required=True)
     w2.add_parser("map", help="monitors x slots with assigned apps and open windows").set_defaults(func=cmd_ws_map)
+
+    # shortcuts
+    k = sub.add_parser("shortcuts", help="keyboard shortcuts owned by sway-apps (app launchers + yours)").add_subparsers(dest="sub", required=True)
+    x = k.add_parser("list"); x.add_argument("query", nargs="?"); x.set_defaults(func=cmd_sc_list)
+    x = k.add_parser("nix", help="bindings owned by nix (read-only)"); x.add_argument("query", nargs="?"); x.set_defaults(func=cmd_sc_nix)
+    k.add_parser("conflicts").set_defaults(func=cmd_sc_conflicts)
+    k.add_parser("free", help="free Hyper / Hyper+Shift letters").set_defaults(func=cmd_sc_free)
+    x = k.add_parser("doc", help="markdown table of every binding (tool + nix)"); x.add_argument("--write", metavar="PATH"); x.set_defaults(func=cmd_sc_doc)
+
+    def sc_flags(sp: argparse.ArgumentParser) -> None:
+        sp.add_argument("--keys", help="e.g. 'Hyper+Shift+n', 'Super+Return'")
+        sp.add_argument("--app", metavar="APP_ID", help="launch-or-focus via app-toggle.sh (app_id or title:^regex); needs --command")
+        sp.add_argument("--exec", dest="exec_", metavar="CMD", help="plain exec")
+        sp.add_argument("--sway", metavar="CMD", help="a sway command (workspace 3, focus output left, ...)")
+        sp.add_argument("--command", help="command line for --app")
+        sp.add_argument("--name"); sp.add_argument("--notes")
+        sp.add_argument("--release", action="store_true"); sp.add_argument("--no-release", action="store_true")
+        sp.add_argument("--locked", action="store_true"); sp.add_argument("--no-locked", action="store_true")
+        sp.add_argument("--override", action="store_true", help="allowed to take over a key nix binds (unbindsym + bindsym)")
+        sp.add_argument("--no-override", action="store_true")
+        sp.add_argument("--force", action="store_true")
+    x = k.add_parser("add"); sc_flags(x); x.add_argument("--scope", choices=SCOPES, default="common"); x.add_argument("--disabled", action="store_true"); persist_flags(x); x.set_defaults(func=cmd_sc_add)
+    x = k.add_parser("set"); x.add_argument("id"); sc_flags(x); x.add_argument("--scope", choices=SCOPES); x.add_argument("--enable", action="store_true"); x.add_argument("--disable", action="store_true"); persist_flags(x); x.set_defaults(func=cmd_sc_set)
+    x = k.add_parser("enable"); x.add_argument("id"); persist_flags(x); x.set_defaults(func=lambda a: cmd_sc_toggle(a, True))
+    x = k.add_parser("disable"); x.add_argument("id"); persist_flags(x); x.set_defaults(func=lambda a: cmd_sc_toggle(a, False))
+    x = k.add_parser("rm"); x.add_argument("id"); persist_flags(x); x.set_defaults(func=cmd_sc_rm)
 
     # git
     g = sub.add_parser("git", help="repo sync of the state files").add_subparsers(dest="sub", required=True)

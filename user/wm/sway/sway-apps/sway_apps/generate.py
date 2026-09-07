@@ -8,6 +8,7 @@ from pathlib import Path
 
 from . import log, paths, swayipc
 from . import monitors as _monitors
+from . import shortcuts as _shortcuts
 from .rules import Rule
 from .state import State
 
@@ -29,6 +30,11 @@ def render(state: State, include_disabled: bool = False) -> str:
     pins = _monitors.render_pins(state)
     if pins:
         lines.append(pins)
+    sc_text, sc_warns = _shortcuts.render_all(state.shortcuts())
+    for w in sc_warns:
+        _log.warning("shortcut skipped: %s", w)
+    if sc_text:
+        lines.append(sc_text)
     by_kind = {"assign": [], "no_focus": [], "for_window": []}
     for r in state.resolved_rules():
         if not r.enabled and not include_disabled:

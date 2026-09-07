@@ -15,6 +15,7 @@ from typing import Any
 
 from . import log, paths
 from .rules import Rule
+from .shortcuts import Shortcut
 
 _log = log.get("state")
 VERSION = 1
@@ -120,7 +121,7 @@ SETTINGS_DEFAULTS: dict[str, Any] = {
 
 
 def _empty() -> dict[str, Any]:
-    return {"version": VERSION, "rules": [], "startup": [], "monitors": [], "settings": {}}
+    return {"version": VERSION, "rules": [], "startup": [], "monitors": [], "shortcuts": [], "settings": {}}
 
 
 def _read(path: Path) -> dict[str, Any]:
@@ -136,6 +137,7 @@ def _read(path: Path) -> dict[str, Any]:
     data.setdefault("rules", [])
     data.setdefault("startup", [])
     data.setdefault("monitors", [])
+    data.setdefault("shortcuts", [])
     data.setdefault("settings", {})
     return data
 
@@ -208,6 +210,20 @@ class State:
             if m.group and num in m.workspaces():
                 return m
         return None
+
+    def shortcuts(self) -> list[Shortcut]:
+        items = [Shortcut.from_dict(d, d["_scope"]) for d in self._merged("shortcuts")]
+        items.sort(key=lambda x: x.keys.lower())
+        return items
+
+    def shortcut(self, sid: str) -> Shortcut | None:
+        for x in self.shortcuts():
+            if x.id == sid:
+                return x
+        return None
+
+    def save_shortcut(self, sc: Shortcut, scope: str | None = None) -> None:
+        self.upsert("shortcuts", sc.to_dict(), scope or sc.scope)
 
     def settings(self) -> dict[str, Any]:
         out = dict(SETTINGS_DEFAULTS)
@@ -334,7 +350,7 @@ class State:
         for path, data in ((self.common_path, self.common), (self.profile_path, self.profile)):
             data["version"] = VERSION
             # Do not create an empty profile file just because we loaded it.
-            if not data["rules"] and not data["startup"] and not data["monitors"] and not data["settings"] and not path.exists():
+            if not any(data.get(k) for k in ("rules", "startup", "monitors", "shortcuts", "settings")) and not path.exists():
                 continue
             _write(path, data)
             written.append(path)

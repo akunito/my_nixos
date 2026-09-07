@@ -8,7 +8,9 @@ from typing import Any, Callable
 
 from .. import discover, generate, gitsync, log, startup, swayipc
 from .. import monitors as mon
+from .. import shortcuts as sc_mod
 from ..rules import Rule
+from ..shortcuts import Shortcut
 from ..state import Monitor, StartupEntry, State
 
 _log = log.get("gui.ctl")
@@ -197,6 +199,26 @@ class Controller:
         self.state.remove("monitors", old)
         m.id = new_role
         return self.save_monitor(m, m.scope)
+
+    # ---- shortcuts ----------------------------------------------------------
+    def save_shortcut(self, x: Shortcut, scope: str) -> Outcome:
+        probs = x.problems()
+        if probs:
+            return Outcome(False, "Invalid shortcut: " + "; ".join(probs))
+        others = [y for y in self.state.shortcuts() if y.id != x.id]
+        c = sc_mod.conflicts(others + [x]).get(x.id)
+        if c and c["tool"]:
+            return Outcome(False, f"{x.keys} is already used by shortcut {c['tool'][0]}")
+        if c and c["nix"] and not x.override:
+            return Outcome(False, f"{x.keys} is bound by nix; enable Override to take it over")
+        with log.action("gui.shortcuts.save", id=x.id, keys=x.keys, kind=x.kind, override=x.override, scope=scope):
+            self.state.save_shortcut(x, scope)
+            return self._finish(f"Saved shortcut {x.keys}", True, None)
+
+    def delete_shortcut(self, x: Shortcut) -> Outcome:
+        with log.action("gui.shortcuts.delete", id=x.id):
+            self.state.remove("shortcuts", x.id)
+            return self._finish(f"Removed shortcut {x.keys}", True, None)
 
     # ---- git ----------------------------------------------------------------
     def git_status(self) -> dict:
