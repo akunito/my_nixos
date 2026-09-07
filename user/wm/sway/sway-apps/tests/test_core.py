@@ -285,3 +285,23 @@ class Shortcuts(unittest.TestCase):
         cfg.write_text("bindsym Mod4+Control+Mod1+Shift+r reload\nbindsym --release Mod4+l exec lock\n# bindsym Mod4+x nope\nset $x 1\n")
         nb = sc.nix_bindings(cfg)
         self.assertEqual([(b["keys"], b["command"], b["flags"]) for b in nb], [("Hyper+Shift+r", "reload", ""), ("Super+l", "exec lock", "--release")])
+
+
+class Adopt(unittest.TestCase):
+    def test_adopt_unknown_assigns_role_and_free_decade(self):
+        from unittest import mock
+        from sway_apps import monitors as mon
+        d = Path(tempfile.mkdtemp()); common, prof = d / "common.json", d / "P.json"
+        common.write_text(json.dumps({"version": 1}))
+        prof.write_text(json.dumps({"version": 1, "monitors": [{"id": "main", "criteria": "Lenovo X Y", "group": 1, "primary": True}],
+                                    "settings": {"auto_adopt": True}}))
+        s = st.State(common, prof)
+        fake = [mon.LiveOutput("eDP-1", "Lenovo X Y", "Lenovo", "X", "Y", True, 0, 0, 1920, 1200, 1.0, "normal", 60, "11", True),
+                mon.LiveOutput("HDMI-A-1", "Dell U2720 ABC", "Dell", "U2720", "ABC", True, 1920, 0, 2560, 1440, 1.0, "normal", 60, "1", False),
+                mon.LiveOutput("HEADLESS-1", "Unknown Unknown Unknown", "Unknown", "Unknown", "Unknown", True, 9, 9, 1, 1, 1.0, "normal", 60, None, False)]
+        with mock.patch.object(mon, "live_outputs", return_value=fake):
+            created = mon.adopt_unknown(s)
+        self.assertEqual([(m.id, m.group, m.criteria) for m in created], [("second", 2, "Dell U2720 ABC")])
+        self.assertEqual(s.monitor("second").name, "Dell U2720")
+        with mock.patch.object(mon, "live_outputs", return_value=fake):
+            self.assertEqual(mon.adopt_unknown(s), [])  # idempotent

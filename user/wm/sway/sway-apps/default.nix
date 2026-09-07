@@ -75,6 +75,27 @@ in
     # Published so swayfx-config.nix / startup-apps.nix can call it by store path.
     user.wm.sway._internal.scripts.swayApps = sway-apps;
 
+    # Output-hotplug reconciler: adopts unknown outputs (settings.auto_adopt),
+    # registers the pins with the running compositor and re-applies the
+    # "always connected" connector forces. Never moves windows.
+    systemd.user.services.sway-apps-watch = {
+      Unit = {
+        Description = "sway-apps: react to monitor hotplug (adopt, pin, force)";
+        PartOf = [ "sway-session.target" ];
+        After = [ "sway-session.target" ];
+      };
+      Service = {
+        Type = "simple";
+        EnvironmentFile = "-%t/sway-session.env";
+        ExecStart = "${sway-apps}/bin/sway-apps watch";
+        Restart = "on-failure";
+        RestartSec = "3";
+      };
+      Install = {
+        WantedBy = [ "sway-session.target" ];
+      };
+    };
+
     xdg.configFile."sway-apps/theme-stylix.css" = lib.mkIf stylixAvailable { text = stylixCss; };
 
     # Regenerate the include from the repo state on every activation. No

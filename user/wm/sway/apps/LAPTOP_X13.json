@@ -10,8 +10,10 @@
       "name": "Built-in 13.3\" panel",
       "primary": true,
       "enabled": true,
-      "notes": "Dock monitor: add it as role 'second' (group 2) once connected: sway-apps monitors add second HDMI-A-1 --group 2"
+      "notes": "Dock monitor is adopted automatically as role 'second' (group 2) the first time it is connected (settings.auto_adopt)."
     }
   ],
-  "settings": {}
+  "settings": {
+    "auto_adopt": true
+  }
 }

@@ -755,11 +755,34 @@ def cmd_mon_force(args: argparse.Namespace) -> int:
 
 
 def cmd_mon_login(args: argparse.Namespace) -> int:
-    """Once per session start: group-0 sweep + connector forces. No reload."""
-    st = State()
-    out = {"orphans": mon.fix_orphans(st) if swayipc.available() else {"ok": False, "error": "no sway socket"}, "force": mon.apply_force(st)}
+    """Once per session start: adopt (if enabled) + group-0 sweep + connector forces. No reload."""
+    from . import watch
+    out = {"reconcile": watch.reconcile("login"),
+           "orphans": mon.fix_orphans(State()) if swayipc.available() else {"ok": False, "error": "no sway socket"}}
     _out(args, out, lambda: print(json.dumps(out)))
     return 0
+
+
+def cmd_mon_adopt(args: argparse.Namespace) -> int:
+    st = State()
+    res: dict[str, Any] = {}
+    if args.state in ("on", "off"):
+        st.set_setting("auto_adopt", args.state == "on", "profile")
+        with log.action("monitors.auto_adopt", state=args.state):
+            res = _persist(args, st, f"auto-adopt {args.state}")
+    created = mon.adopt_unknown(st) if args.now else []
+    if created:
+        res.update(_persist(args, st, "adopt monitor " + ", ".join(m.id for m in created), apply_rules=True))
+        if swayipc.available():
+            res["monitors_live"] = mon.apply_live(st)
+    _out(args, {"auto_adopt": st.settings().get("auto_adopt"), "adopted": [m.to_dict() for m in created], **res},
+         lambda: print(f"auto_adopt={st.settings().get('auto_adopt')}; adopted now: {', '.join(m.id + '=' + m.criteria for m in created) or 'nothing'}"))
+    return 0
+
+
+def cmd_watch(args: argparse.Namespace) -> int:
+    from . import watch
+    return watch.run(once=args.once)
 
 
 def cmd_mon_geometry(args: argparse.Namespace) -> int:
@@ -1154,7 +1177,9 @@ def build_parser() -> argparse.ArgumentParser:
     x = m.add_parser("pin-geometry", help="emit nwg-displays geometry keyed by hardware id"); x.add_argument("state", nargs="?", choices=["on", "off", "show"], default="show"); x.add_argument("--scope", choices=SCOPES, default="profile"); persist_flags(x); x.set_defaults(func=cmd_mon_geometry)
     m.add_parser("fix-orphans", help="migrate group-0 workspaces (1-10) into their output's pinned decade").set_defaults(func=cmd_mon_fix)
     x = m.add_parser("force", help="DRM connector force (always_connected) status / re-apply"); x.add_argument("action", nargs="?", choices=["status", "apply"], default="status"); x.set_defaults(func=cmd_mon_force)
-    m.add_parser("login", help="session start: fix group 0 + apply connector forces (no reload)").set_defaults(func=cmd_mon_login)
+    m.add_parser("login", help="session start: adopt + fix group 0 + apply connector forces (no reload)").set_defaults(func=cmd_mon_login)
+    x = m.add_parser("auto-adopt", help="unknown outputs become roles automatically (laptop dock)"); x.add_argument("state", nargs="?", choices=["on", "off", "show"], default="show"); x.add_argument("--now", action="store_true", help="adopt any unknown output right now"); persist_flags(x, rules=False); x.set_defaults(func=cmd_mon_adopt)
+    x = sub.add_parser("watch", help="react to output hotplug: adopt, pin, force (user service)"); x.add_argument("--once", action="store_true"); x.set_defaults(func=cmd_watch)
     w2 = sub.add_parser("workspaces", help="workspace map").add_subparsers(dest="sub", required=True)
     w2.add_parser("map", help="monitors x slots with assigned apps and open windows").set_defaults(func=cmd_ws_map)
 

@@ -78,6 +78,33 @@ def connector_of(criteria: str) -> str | None:
 
 
 # --------------------------------------------------------------------------
+# auto-adoption of unknown outputs (settings.auto_adopt, e.g. a laptop dock)
+
+ROLE_ORDER = ["main", "second", "third", "fourth"]
+
+
+def adopt_unknown(state: State) -> list[Monitor]:
+    """Give every unknown active output a role (first missing of ROLE_ORDER,
+    else monN) and the lowest free decade. Returns the monitors created."""
+    known = {m.criteria for m in state.monitors()}
+    used_groups = {m.group for m in state.monitors() if m.group}
+    roles = {m.id for m in state.monitors()}
+    created: list[Monitor] = []
+    for o in live_outputs():
+        if not o.active or o.hw_id in known or o.name.startswith("HEADLESS"):
+            continue
+        role = next((r for r in ROLE_ORDER if r not in roles), None) or f"mon{len(roles) + 1}"
+        group = next((g for g in range(1, 10) if g not in used_groups), 0)
+        m = Monitor(id=role, criteria=o.hw_id, group=group, name=f"{o.make} {o.model}".strip() or o.name,
+                    primary=not roles, notes=f"auto-adopted {o.name} on first sight", scope="profile")
+        state.save_monitor(m, "profile")
+        known.add(o.hw_id); roles.add(role); used_groups.add(group)
+        created.append(m)
+        _log.info("adopted %s (%s) as role %s group %s", o.name, o.hw_id, role, group)
+    return created
+
+
+# --------------------------------------------------------------------------
 # "always connected": DRM connector force via the sudo helper
 
 FORCE_HELPER = "sway-connector-force"

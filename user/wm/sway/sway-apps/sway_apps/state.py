@@ -117,6 +117,7 @@ class Monitor:
 
 SETTINGS_DEFAULTS: dict[str, Any] = {
     "pin_geometry": False,   # emit output geometry keyed by hardware id (from nwg-displays' file)
+    "auto_adopt": False,     # unknown outputs get a role + free decade automatically (laptop dock)
 }
 
 
