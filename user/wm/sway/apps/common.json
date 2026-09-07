@@ -135,13 +135,12 @@
         "app_id": "Bitwarden"
       },
       "actions": [
-        "floating enable",
-        "sticky enable"
+        "floating disable",
+        "sticky disable"
       ],
       "name": "Bitwarden",
       "enabled": true,
-      "notes": "",
-      "updated_at": 1788757859
+      "notes": ""
     },
     {
       "id": "r-0d68aab4",
