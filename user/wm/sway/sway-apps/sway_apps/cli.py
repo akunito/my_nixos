@@ -159,6 +159,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         scs = st.shortcuts()
         conf = sc_mod.conflicts(scs)
         blocked = [i for i, c in conf.items() if c["nix"] and not st.shortcut(i).override] + [i for i, c in conf.items() if c["tool"]]
+        cross = sc_mod.cross_conflicts(scs)
+        check("tmux keys not shadowed by sway", not cross, "; ".join(f"{c['tmux_key']} <- {c['shadowed_by'][:40]}" for c in cross) if cross else "ok", optional=True)
         check("shortcuts", not blocked, ("; ".join(f"{i}: {st.shortcut(i).keys}" for i in blocked) + " (nix-bound without override, or duplicated)") if blocked else f"{len(scs)} shortcuts, {sum(1 for c in conf.values() if c['nix'])} override nix keys", optional=True)
         tp = st.target_problems()
         check("symbolic targets", not tp, "; ".join(f"{r.id}: {p}" for r, p in tp) if tp else f"{sum(1 for r in st.rules() if r.target)} rules resolve", optional=True)
@@ -833,7 +835,9 @@ def cmd_ws_map(args: argparse.Namespace) -> int:
 def _sc_row(x: Shortcut, conf: dict) -> list:
     c = conf.get(x.id, {})
     flag = ("OVERRIDE" if x.override and c.get("nix") else "CONFLICT" if c.get("nix") else "") + (" dup" if c.get("tool") else "")
-    return ["*" if x.enabled else "-", x.id, x.keys, x.kind, x.name, x.sway_command()[:70], x.scope, flag]
+    keys = x.keys if x.kind != "tmux" else f"tmux:{x.table}:{x.keys}"
+    cmd = x.sway_command() if x.kind != "tmux" else x.command
+    return ["*" if x.enabled else "-", x.id, x.category or sc_mod.guess_category(cmd, x.program), keys, x.kind, x.name, cmd[:60], x.scope, flag]
 
 
 def cmd_sc_list(args: argparse.Namespace) -> int:
@@ -843,8 +847,32 @@ def cmd_sc_list(args: argparse.Namespace) -> int:
         q = args.query.lower()
         items = [x for x in items if q in x.keys.lower() or q in x.name.lower() or q in x.command.lower() or q in x.app_id.lower()]
     conf = sc_mod.conflicts(st.shortcuts())
-    _out(args, [dict(x.to_dict(), scope=x.scope, line=x.render(), conflict=conf.get(x.id), problems=x.problems()) for x in items],
-         lambda: _table([_sc_row(x, conf) for x in items], ["", "id", "keys", "kind", "name", "command", "scope", ""]))
+    if getattr(args, "category", None):
+        items = [x for x in items if (x.category or sc_mod.guess_category(x.command, x.program)).lower() == args.category.lower()]
+    items.sort(key=lambda x: ((x.category or sc_mod.guess_category(x.command, x.program)), x.program, x.keys.lower()))
+    _out(args, [dict(x.to_dict(), scope=x.scope, program=x.program, line=x.render(), conflict=conf.get(x.id), problems=x.problems(),
+                     category=x.category or sc_mod.guess_category(x.command, x.program)) for x in items],
+         lambda: _table([_sc_row(x, conf) for x in items], ["", "id", "category", "keys", "kind", "name", "command", "scope", ""]))
+    return 0
+
+
+def cmd_sc_tmux(args: argparse.Namespace) -> int:
+    tb = sc_mod.tmux_bindings()
+    _out(args, tb, lambda: _table([[t["table"], t["keys"], t["command"][:90]] for t in tb], ["table", "key", "command (tmux.conf, nix-owned)"]))
+    return 0
+
+
+def cmd_sc_kitty(args: argparse.Namespace) -> int:
+    kb = sc_mod.kitty_bindings()
+    _out(args, kb, lambda: _table([[k["keys"], k["command"]] for k in kb], ["keys", "command (kitty.conf, nix-owned)"]))
+    return 0
+
+
+def cmd_sc_cross(args: argparse.Namespace) -> int:
+    st = State()
+    rows = sc_mod.cross_conflicts(st.shortcuts())
+    _out(args, rows, lambda: _table([[r["tmux_key"], r["tmux_owner"], r["tmux_command"][:50], r["shadowed_by"][:60]] for r in rows],
+                                     ["tmux root key", "owner", "tmux command", "shadowed by sway binding"]) if rows else print("no sway binding shadows a tmux root key"))
     return 0
 
 
@@ -871,6 +899,12 @@ def _sc_from_args(args: argparse.Namespace, base: Shortcut | None = None) -> Sho
     x = base or Shortcut(id="", keys="")
     if args.keys is not None:
         x.keys = args.keys
+    if getattr(args, "tmux", None) is not None:
+        x.kind = "tmux"; x.command = args.tmux
+    if getattr(args, "table", None) is not None:
+        x.table = args.table
+    if getattr(args, "category", None) is not None:
+        x.category = args.category
     if getattr(args, "app", None) is not None:
         x.kind = "app"; x.app_id = args.app
     if getattr(args, "sway", None) is not None:
@@ -1185,8 +1219,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     # shortcuts
     k = sub.add_parser("shortcuts", help="keyboard shortcuts owned by sway-apps (app launchers + yours)").add_subparsers(dest="sub", required=True)
-    x = k.add_parser("list"); x.add_argument("query", nargs="?"); x.set_defaults(func=cmd_sc_list)
-    x = k.add_parser("nix", help="bindings owned by nix (read-only)"); x.add_argument("query", nargs="?"); x.set_defaults(func=cmd_sc_nix)
+    x = k.add_parser("list"); x.add_argument("query", nargs="?"); x.add_argument("--category"); x.set_defaults(func=cmd_sc_list)
+    x = k.add_parser("nix", help="sway bindings owned by nix (read-only)"); x.add_argument("query", nargs="?"); x.set_defaults(func=cmd_sc_nix)
+    k.add_parser("tmux", help="tmux binds owned by nix (read-only)").set_defaults(func=cmd_sc_tmux)
+    k.add_parser("kitty", help="kitty maps (read-only)").set_defaults(func=cmd_sc_kitty)
+    k.add_parser("cross", help="sway bindings that shadow tmux root keys (Ctrl+Alt+x)").set_defaults(func=cmd_sc_cross)
     k.add_parser("conflicts").set_defaults(func=cmd_sc_conflicts)
     k.add_parser("free", help="free Hyper / Hyper+Shift letters").set_defaults(func=cmd_sc_free)
     x = k.add_parser("doc", help="markdown table of every binding (tool + nix)"); x.add_argument("--write", metavar="PATH"); x.set_defaults(func=cmd_sc_doc)
@@ -1196,6 +1233,9 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--app", metavar="APP_ID", help="launch-or-focus via app-toggle.sh (app_id or title:^regex); needs --command")
         sp.add_argument("--exec", dest="exec_", metavar="CMD", help="plain exec")
         sp.add_argument("--sway", metavar="CMD", help="a sway command (workspace 3, focus output left, ...)")
+        sp.add_argument("--tmux", metavar="CMD", help="a tmux command; --keys is a tmux key (e, C-M-e), --table picks the key table")
+        sp.add_argument("--table", choices=list(sc_mod.TMUX_TABLES), help="tmux key table (default prefix)")
+        sp.add_argument("--category", help="Apps, Gaming, Windows, Workspaces, Media, Screenshots, System, Terminal")
         sp.add_argument("--command", help="command line for --app")
         sp.add_argument("--name"); sp.add_argument("--notes")
         sp.add_argument("--release", action="store_true"); sp.add_argument("--no-release", action="store_true")

@@ -8,7 +8,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, Gtk  # noqa: E402
 
 from .. import discover, log, shortcuts as sc_mod  # noqa: E402
-from ..shortcuts import KINDS, Shortcut  # noqa: E402
+from ..shortcuts import CATEGORIES, KINDS, TMUX_TABLES, Shortcut  # noqa: E402
 from ..state import SCOPES  # noqa: E402
 from .panels import Panel  # noqa: E402
 from .widgets import button, chip, combo_row, combo_value, confirm, entry_row, list_row, scrolled, switch_row  # noqa: E402
@@ -49,34 +49,75 @@ class ShortcutsPanel(Panel):
         free_hs = [k for k in "abcdefghijklmnopqrstuvwxyz" if "Mod4+Control+Mod1+Shift+" + k not in used]
         self.win.toast(f"Free: Hyper+{' '.join(free_h) or '(none)'} · Hyper+Shift+{' '.join(free_hs) or '(none)'}", timeout=10)
 
+    @staticmethod
+    def _tmux_label(table: str, key: str) -> str:
+        return {"prefix": "Ctrl+O, ", "root": "", "copy-mode-vi": "[copy] "}[table] + key
+
     def refresh(self) -> None:
         self.ctl.reload_state()
         st = self.ctl.state
         items = st.shortcuts()
-        conf = sc_mod.conflicts(items)
+        nix = sc_mod.nix_bindings()
+        tmux_nix = sc_mod.tmux_bindings()
+        kitty = sc_mod.kitty_bindings()
+        conf = sc_mod.conflicts(items, nix, tmux_nix)
+        cross = sc_mod.cross_conflicts(items, nix, tmux_nix)
+        shadowed = {c["tmux_key"] for c in cross}
         q = self.query()
-        rows = []
+        entries: list[tuple[str, str, Gtk.ListBoxRow, object]] = []  # category, id, row, item
         for x in items:
-            if q and not (q in x.keys.lower() or q in x.name.lower() or q in x.command.lower() or q in x.app_id.lower()):
+            hay = (x.keys + x.name + x.command + x.app_id).lower()
+            if q and q not in hay:
                 continue
-            chips = [(x.kind, x.kind if x.kind != "app" else "common"), (x.scope, x.scope)]
+            is_tmux = x.kind == "tmux"
+            label = self._tmux_label(x.table, x.keys) if is_tmux else x.keys
+            chips = [(x.program, "profile" if is_tmux else "common"), (x.scope, x.scope)]
             c = conf.get(x.id)
             if c and c["nix"]:
                 chips.append(("overrides nix" if x.override else "BLOCKED: nix key", "profile" if x.override else "err"))
             if c and c["tool"]:
                 chips.append(("duplicate", "err"))
-            rows.append((x.id, list_row(f"{x.keys}   ·   {x.name}", x.sway_command(), chips, disabled=not x.enabled), x))
+            if is_tmux and x.table == "root" and x.keys in shadowed:
+                chips.append(("shadowed by sway", "err"))
+            cat = x.category or sc_mod.guess_category(x.command, x.program)
+            entries.append((cat, x.id, list_row(f"{label}   ·   {x.name}", x.command if is_tmux else x.sway_command(), chips, disabled=not x.enabled), x))
         if self.show_nix.get_active():
             overridden = {c["nix"] for i, c in conf.items() if c["nix"] and st.shortcut(i).override and st.shortcut(i).enabled}
-            for b in sorted(sc_mod.nix_bindings(), key=lambda b: b["fold"]):
+            for b in nix:
                 if q and not (q in b["keys"].lower() or q in b["command"].lower()):
                     continue
                 if b["command"] in overridden:
                     continue
-                row = list_row(b["keys"], b["command"], [("nix", "")], disabled=True)
-                rows.append((f"nix:{b['fold']}", row, b))
+                entries.append((b["category"], f"nix:{b['fold']}", list_row(b["keys"], b["command"], [("nix", "")], disabled=True), b))
+            tool_tmux = {f"tmux|{x.table}|{x.keys}" for x in items if x.kind == "tmux" and x.enabled and x.override}
+            for t in tmux_nix:
+                if t["fold"] in tool_tmux or (q and not (q in t["keys"].lower() or q in t["command"].lower())):
+                    continue
+                chips = [("tmux · nix", "")]
+                if t["table"] == "root" and t["keys"] in shadowed:
+                    chips.append(("shadowed by sway", "err"))
+                entries.append(("Terminal", "tmuxnix:" + t["fold"], list_row(self._tmux_label(t["table"], t["keys"]), t["command"], chips, disabled=True), t))
+            for k in kitty:
+                if q and not (q in k["keys"].lower() or q in k["command"].lower()):
+                    continue
+                entries.append(("Terminal", "kitty:" + k["fold"], list_row(k["keys"], k["command"], [("kitty · nix", "")], disabled=True), k))
+        order = {c: i for i, c in enumerate(CATEGORIES)}
+        entries.sort(key=lambda e: (order.get(e[0], 99), e[0], not isinstance(e[3], Shortcut), (e[3].keys if isinstance(e[3], Shortcut) else e[3]["keys"]).lower()))
+        rows = []
+        last = None
+        for cat, iid, row, item in entries:
+            if cat != last:
+                hdr = Gtk.ListBoxRow(selectable=False, activatable=False)
+                lbl = Gtk.Label(label=cat.upper(), xalign=0)
+                lbl.add_css_class("sa-section-title"); lbl.set_margin_start(6); lbl.set_margin_top(10)
+                hdr.set_child(lbl)
+                rows.append((f"hdr:{cat}", hdr, None))
+                last = cat
+            rows.append((iid, row, item))
         self.fill_list(rows)
-        self.toolbar.get_title_widget().set_subtitle(f"{len(items)} yours · {len(sc_mod.nix_bindings())} nix · {sum(1 for c in conf.values() if c['nix'])} overrides")
+        self.toolbar.get_title_widget().set_subtitle(f"{len(items)} yours · {len(nix)} sway/nix · {len(tmux_nix)} tmux/nix · {len(kitty)} kitty · {len(cross)} shadowed")
+        if cross:
+            self.win.toast("A sway binding shadows a tmux root key: " + ", ".join(c["tmux_key"] for c in cross[:3]), error=True)
 
     def new_shortcut(self, prefill: Shortcut | None = None) -> None:
         self.listbox.unselect_all()
@@ -88,20 +129,36 @@ class ShortcutsPanel(Panel):
         self.win.show_section("shortcuts")
 
     def show_detail(self, item, is_new: bool = False) -> None:
-        if isinstance(item, dict):  # nix binding
+        if item is None:  # category header
+            return
+        if isinstance(item, dict):  # nix-owned sway / tmux binding or kitty map
             self.clear_detail()
+            prog = item.get("program", "sway")
+            if prog == "tmux":
+                self.detail_header(self._tmux_label(item["table"], item["keys"]), item["command"])
+                g = Adw.PreferencesGroup(title="Owned by nix (tmux.conf)", description="Defined in user/app/terminal/tmux.nix. Read-only here; take it over with a tmux shortcut of your own (Override).")
+                g.add(Adw.ActionRow(title="table", subtitle=item["table"]))
+                self.detail.append(g)
+                self.action_bar(button("Override this key…", lambda: self.new_shortcut(Shortcut(id="", keys=item["keys"], kind="tmux", table=item["table"], command=item["command"], override=True, category="Terminal")), style="suggested-action"))
+                return
+            if prog == "kitty":
+                self.detail_header(item["keys"], item["command"])
+                g = Adw.PreferencesGroup(title="Owned by nix (kitty.conf)", description="Defined in user/app/terminal/kitty.nix. Listed for completeness; not managed here.")
+                self.detail.append(g)
+                return
             self.detail_header(item["keys"], item["command"])
             g = Adw.PreferencesGroup(title="Owned by nix", description="Defined in user/wm/sway/swayfx-config.nix. Read-only here; you can take the key over with a shortcut of your own.")
             g.add(Adw.ActionRow(title="sway keys", subtitle=item["sway_keys"]))
             if item["flags"]:
                 g.add(Adw.ActionRow(title="flags", subtitle=item["flags"]))
+            g.add(Adw.ActionRow(title="category", subtitle=item.get("category", "")))
             self.detail.append(g)
-            self.action_bar(button("Override this key…", lambda: self.new_shortcut(Shortcut(id="", keys=item["keys"], kind="exec", command="", override=True)), style="suggested-action"))
+            self.action_bar(button("Override this key…", lambda: self.new_shortcut(Shortcut(id="", keys=item["keys"], kind="exec", command="", override=True, category=item.get("category", ""))), style="suggested-action"))
             return
         x: Shortcut = item
         self.clear_detail()
         self.attach_banner(lambda: do_save())
-        self.detail_header("New shortcut" if is_new else f"{x.keys}  ·  {x.name}", x.render() if not is_new and not x.problems() else "press the keys, pick what it does, Save & apply")
+        self.detail_header("New shortcut" if is_new else f"{(self._tmux_label(x.table, x.keys) if x.kind == 'tmux' else x.keys)}  ·  {x.name}", x.render() if not is_new and not x.problems() else "press the keys, pick what it does, Save & apply")
 
         g = Adw.PreferencesGroup(title="Keys")
         keys = entry_row("Key combination", x.keys)
@@ -136,15 +193,25 @@ class ShortcutsPanel(Panel):
         cap.connect("clicked", start_capture)
 
         g2 = Adw.PreferencesGroup(title="Action")
-        kind = combo_row("Kind", list(KINDS), x.kind, "app: launch or focus via app-toggle.sh · exec: run a command · sway: a sway command")
+        kind = combo_row("Kind", list(KINDS), x.kind, "app: launch or focus via app-toggle.sh · exec: run a command · sway: a sway command · tmux: a tmux bind")
+        table = combo_row("tmux key table", list(TMUX_TABLES), x.table if x.table in TMUX_TABLES else "prefix", "prefix = after Ctrl+O · root = no prefix (e.g. C-M-e) · copy-mode-vi")
+        category = combo_row("Category", list(CATEGORIES) + ([x.category] if x.category and x.category not in CATEGORIES else []), x.category or "Apps")
         app_id = entry_row("app_id (or title:^regex)", x.app_id)
         pick = Gtk.Button(icon_name="view-app-grid-symbolic", valign=Gtk.Align.CENTER, tooltip_text="Pick from installed apps")
         pick.add_css_class("flat"); app_id.add_suffix(pick)
         command = entry_row("Command", x.command)
         name = entry_row("Name", x.name)
-        for r in (kind, app_id, command, name):
+        for r in (kind, table, category, app_id, command, name):
             g2.add(r)
         self.detail.append(g2)
+
+        def sync_kind(*_a) -> None:
+            k = combo_value(kind)
+            table.set_visible(k == "tmux")
+            app_id.set_visible(k == "app")
+            keys.set_title("tmux key (e, C-M-e, F5)" if k == "tmux" else "Key combination")
+        kind.connect("notify::selected", sync_kind)
+        sync_kind()
 
         def do_pick(*_a) -> None:
             pop = Gtk.Popover(); box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
@@ -190,7 +257,8 @@ class ShortcutsPanel(Panel):
             return Shortcut(id=x.id or "", keys=keys.get_text().strip(), kind=k, app_id=app_id.get_text().strip() if k == "app" else "",
                             command=command.get_text().strip(), name=name.get_text().strip(), enabled=enabled.get_active(),
                             release=release.get_active(), locked=locked.get_active(), override=override.get_active(),
-                            notes=notes.get_text(), updated_at=x.updated_at, scope=combo_value(scope))
+                            notes=notes.get_text(), category=combo_value(category), table=combo_value(table) if k == "tmux" else "prefix",
+                            updated_at=x.updated_at, scope=combo_value(scope))
 
         baseline = x.to_dict()
 
@@ -215,6 +283,7 @@ class ShortcutsPanel(Panel):
         for r in (keys, app_id, command, name, notes):
             r.connect("changed", update)
         kind.connect("notify::selected", update); scope.connect("notify::selected", update)
+        table.connect("notify::selected", update); category.connect("notify::selected", update)
         for r in (override, release, locked, enabled):
             r.connect("notify::active", update)
         update()

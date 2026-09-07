@@ -1108,7 +1108,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-16f69fc2",
@@ -1122,7 +1124,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-06c59b41",
@@ -1136,7 +1140,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-a052d297",
@@ -1150,7 +1156,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-67e5fb2d",
@@ -1164,7 +1172,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-09f1fe7d",
@@ -1178,7 +1188,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-96afece9",
@@ -1192,7 +1204,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-880fecf6",
@@ -1206,7 +1220,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-7c9ffa8c",
@@ -1220,7 +1236,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-55f5c620",
@@ -1234,7 +1252,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-5d479a81",
@@ -1248,7 +1268,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-6fccd600",
@@ -1262,7 +1284,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-f9f9db61",
@@ -1276,7 +1300,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-9cd45ecc",
@@ -1290,7 +1316,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-09430cd7",
@@ -1304,7 +1332,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-c03717e9",
@@ -1318,7 +1348,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-87b631ae",
@@ -1332,7 +1364,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-d42769e6",
@@ -1346,7 +1380,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-e85a57b9",
@@ -1360,7 +1396,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-bba826a2",
@@ -1374,7 +1412,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-dfae0914",
@@ -1388,7 +1428,9 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
     },
     {
       "id": "k-63351f55",
@@ -1402,6 +1444,488 @@
       "locked": false,
       "override": false,
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
+      "updated_at": 0,
+      "category": "Apps",
+      "table": "prefix"
+    },
+    {
+      "id": "k-4e5e56d3",
+      "keys": "Hyper+F9",
+      "kind": "exec",
+      "app_id": "",
+      "command": "swaymsg '[app_id=gamescope] fullscreen enable' 2>/dev/null; swaymsg '[class=gamescope] fullscreen enable' 2>/dev/null; swaymsg '[class=Gamescope] fullscreen enable' 2>/dev/null",
+      "name": "Gamescope: force fullscreen",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Gaming",
+      "table": "prefix",
+      "notes": "Gaming recovery: gamescope loses fullscreen after an output evacuate/return; this puts it back (also works when the window is off-screen).",
+      "updated_at": 0
+    },
+    {
+      "id": "k-11446533",
+      "keys": "e",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "split-window -h -c \"#{pane_current_path}\"",
+      "name": "Split vertical",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-61a937fe",
+      "keys": "r",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "split-window -v -c \"#{pane_current_path}\"",
+      "name": "Split horizontal",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-ba62423d",
+      "keys": "t",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "new-window -c \"#{pane_current_path}\"",
+      "name": "New window",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-62daf643",
+      "keys": "w",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "next-window",
+      "name": "Next window",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-5da3125c",
+      "keys": "q",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "previous-window",
+      "name": "Previous window",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-b992e028",
+      "keys": "2",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "command-prompt -I \"#W\" \"rename-window '%%'\"",
+      "name": "Rename window",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-2711346a",
+      "keys": "z",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "kill-window",
+      "name": "Close window",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-b6fb63b0",
+      "keys": "x",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "kill-pane",
+      "name": "Close pane",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-fda20693",
+      "keys": "j",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "select-pane -L",
+      "name": "Pane left",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-8de19b6e",
+      "keys": "k",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "select-pane -D",
+      "name": "Pane down",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-84d995d8",
+      "keys": "l",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "select-pane -U",
+      "name": "Pane up",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-15ac9fd1",
+      "keys": "\\;",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "select-pane -R",
+      "name": "Pane right",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-4ef3c6f8",
+      "keys": "[",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "copy-mode",
+      "name": "Copy mode",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-56fb7765",
+      "keys": "]",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "paste-buffer",
+      "name": "Paste",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "prefix",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-33b1b4f9",
+      "keys": "C-M-e",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "split-window -h -c \"#{pane_current_path}\"",
+      "name": "Split vertical (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-b1bbfb83",
+      "keys": "C-M-r",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "split-window -v -c \"#{pane_current_path}\"",
+      "name": "Split horizontal (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-2f7079bf",
+      "keys": "C-M-t",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "new-window -c \"#{pane_current_path}\"",
+      "name": "New window (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-19a826c7",
+      "keys": "C-M-w",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "next-window",
+      "name": "Next window (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-5c0336b3",
+      "keys": "C-M-q",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "previous-window",
+      "name": "Previous window (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-906183e7",
+      "keys": "C-M-y",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "command-prompt -I \"#W\" \"rename-window '%%'\"",
+      "name": "Rename window (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-109e7655",
+      "keys": "C-M-z",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "kill-window",
+      "name": "Close window (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-70776278",
+      "keys": "C-M-x",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "kill-pane",
+      "name": "Close pane (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-dc2d3fd3",
+      "keys": "C-M-d",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "copy-mode",
+      "name": "Scroll up (copy mode)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-5af3aece",
+      "keys": "C-M-s",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "copy-mode -u",
+      "name": "Scroll page up",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-20c28695",
+      "keys": "C-Up",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "copy-mode \\; send-keys -X scroll-up",
+      "name": "Scroll up",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-615584aa",
+      "keys": "C-Down",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "copy-mode \\; send-keys -X scroll-down",
+      "name": "Scroll down",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-b518be2a",
+      "keys": "C-M-[",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "copy-mode",
+      "name": "Copy mode (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-489ce360",
+      "keys": "C-M-]",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "paste-buffer",
+      "name": "Paste (fast)",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
+      "updated_at": 0
+    },
+    {
+      "id": "k-d392b53d",
+      "keys": "C-M-p",
+      "kind": "tmux",
+      "app_id": "",
+      "command": "copy-mode \\; send-keys /",
+      "name": "Copycat search",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "category": "Terminal",
+      "table": "root",
+      "notes": "seeded 2026-09-07 from tmux.nix",
       "updated_at": 0
     }
   ]

@@ -21,7 +21,13 @@ from typing import Any
 
 from . import paths
 
-KINDS = ("app", "exec", "sway")
+KINDS = ("app", "exec", "sway", "tmux")
+PROGRAMS = ("sway", "tmux")
+TMUX_TABLES = ("prefix", "root", "copy-mode-vi")
+CATEGORIES = ("Apps", "Gaming", "Windows", "Workspaces", "Media", "Screenshots", "System", "Terminal")
+TMUX_INCLUDE = paths.TMUX_INCLUDE
+TMUX_CONF = paths.XDG_CONFIG_HOME / "tmux" / "tmux.conf"
+KITTY_CONF = paths.XDG_CONFIG_HOME / "kitty" / "kitty.conf"
 HYPER = ("Mod4", "Control", "Mod1")
 MOD_ALIASES = {
     "hyper": HYPER,
@@ -90,8 +96,14 @@ class Shortcut:
     locked: bool = False           # bindsym --locked
     override: bool = False         # allowed to take over a nix-bound key
     notes: str = ""
+    category: str = ""             # Apps, Gaming, Windows, ... (free text, CATEGORIES suggested)
+    table: str = "prefix"          # tmux only: prefix | root | copy-mode-vi
     updated_at: int = 0
     scope: str = "common"
+
+    @property
+    def program(self) -> str:
+        return "tmux" if self.kind == "tmux" else "sway"
 
     @classmethod
     def new(cls, keys: str, kind: str, **kw: Any) -> "Shortcut":
@@ -107,12 +119,15 @@ class Shortcut:
                    app_id=str(d.get("app_id") or ""), command=str(d.get("command") or ""), name=str(d.get("name") or ""),
                    enabled=bool(d.get("enabled", True)), release=bool(d.get("release", False)),
                    locked=bool(d.get("locked", False)), override=bool(d.get("override", False)),
-                   notes=str(d.get("notes") or ""), updated_at=int(d.get("updated_at", 0) or 0), scope=scope)
+                   notes=str(d.get("notes") or ""), category=str(d.get("category") or ""),
+                   table=str(d.get("table") or "prefix"), updated_at=int(d.get("updated_at", 0) or 0), scope=scope)
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self); d.pop("scope", None); return d
 
     def default_id(self) -> str:
+        if self.kind == "tmux":
+            return "k-" + hashlib.sha1(f"tmux|{self.table}|{self.keys}".encode()).hexdigest()[:8]
         try:
             k = fold(self.keys)
         except ValueError:
@@ -128,6 +143,14 @@ class Shortcut:
 
     def problems(self) -> list[str]:
         out = []
+        if self.kind == "tmux":
+            if not self.keys.strip() or " " in self.keys.strip():
+                out.append("tmux key must be a single tmux key name (e, C-M-e, F5, \\;)")
+            if self.table not in TMUX_TABLES:
+                out.append(f"tmux table must be one of {TMUX_TABLES}")
+            if not self.command.strip():
+                out.append("empty tmux command")
+            return out
         try:
             normalize_keys(self.keys)
         except ValueError as exc:
@@ -147,7 +170,14 @@ class Shortcut:
             return f"exec {self.command}"
         return self.command
 
+    def tmux_render(self, with_unbind: bool = False) -> str:
+        tbl = {"prefix": "", "root": "-n ", "copy-mode-vi": "-T copy-mode-vi "}[self.table]
+        line = f"bind {tbl}{self.keys} {self.command}"
+        return (f"unbind {tbl}{self.keys}\n" if with_unbind else "") + line
+
     def render(self, with_unbind: bool = False, unbind_flags: str = "") -> str:
+        if self.kind == "tmux":
+            return self.tmux_render(with_unbind)
         flags = ("--release " if self.release else "") + ("--locked " if self.locked else "")
         keys = sway_keys(self.keys)
         line = f"bindsym {flags}{keys} {self.sway_command()}"
@@ -155,6 +185,25 @@ class Shortcut:
         # ("Could not find binding ... for the given flags" otherwise).
         uf = (unbind_flags.strip() + " ") if unbind_flags.strip() else ""
         return (f"unbindsym {uf}{keys}\n" if with_unbind else "") + line
+
+
+def guess_category(command: str, program: str = "sway") -> str:
+    c = command.lower()
+    if program in ("tmux", "kitty"):
+        return "Terminal"
+    if "app-toggle" in c:
+        return "Apps"
+    if "gamescope" in c or "steam" in c:
+        return "Gaming"
+    if "screenshot" in c or "grim" in c or "swappy" in c:
+        return "Screenshots"
+    if "xf86audio" in c or "playerctl" in c or "swayosd" in c or "brightness" in c or "volume" in c or "mic" in c:
+        return "Media"
+    if c.startswith(("workspace", "move container to workspace", "move workspace")) or "swaysome" in c or "workspace" in c:
+        return "Workspaces"
+    if c.startswith(("focus", "move", "resize", "split", "layout", "fullscreen", "floating", "sticky", "kill", "scratchpad", "border", "opacity")):
+        return "Windows"
+    return "System"
 
 
 # --------------------------------------------------------------------------
@@ -179,13 +228,125 @@ def nix_bindings(config_path: Path | None = None) -> list[dict[str, str]]:
             f = fold(keys)
         except ValueError:
             f = keys.lower()
-        out.append({"keys": friendly_keys(keys), "sway_keys": keys, "fold": f, "command": cmd.strip(), "flags": flags.strip()})
+        out.append({"keys": friendly_keys(keys), "sway_keys": keys, "fold": f, "command": cmd.strip(), "flags": flags.strip(),
+                    "program": "sway", "category": guess_category(cmd)})
     return out
 
 
-def conflicts(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = None) -> dict[str, dict[str, Any]]:
-    """id -> {'nix': cmd | None, 'tool': [other ids]} for every shortcut whose folded keys collide."""
+# --------------------------------------------------------------------------
+# tmux (nix-owned binds from tmux.conf; ours go to the sourced include) + kitty
+
+_TMUX_BIND_RX = re.compile(r"^\s*bind(?:-key)?\s+(?:(-n)\s+|-T\s+(\S+)\s+)?(?:-N\s+\"[^\"]*\"\s+|-N\s+\S+\s+)?(?:-r\s+)?(\S+)\s+(.*)$")
+
+
+def tmux_bindings(conf_path: Path | None = None) -> list[dict[str, str]]:
+    """binds defined by nix in tmux.conf (the sourced include is skipped)."""
+    path = conf_path or TMUX_CONF
+    out = []
+    try:
+        text = path.read_text()
+    except OSError:
+        return out
+    buf = ""
+    for raw in text.splitlines():
+        line = buf + raw
+        if line.rstrip().endswith("\\"):
+            buf = line.rstrip()[:-1] + " "
+            continue
+        buf = ""
+        m = _TMUX_BIND_RX.match(line)
+        if not m:
+            continue
+        root, table, key, cmd = m.groups()
+        tbl = "root" if root else (table or "prefix")
+        if tbl == "copy-mode-vi" and table is None:
+            tbl = "prefix"
+        out.append({"keys": key, "table": tbl, "command": cmd.strip(), "program": "tmux", "category": "Terminal",
+                    "fold": f"tmux|{tbl}|{key}"})
+    return out
+
+
+def kitty_bindings(conf_path: Path | None = None) -> list[dict[str, str]]:
+    path = conf_path or KITTY_CONF
+    out = []
+    try:
+        text = path.read_text()
+    except OSError:
+        return out
+    for raw in text.splitlines():
+        m = re.match(r"^\s*map\s+(\S+)\s+(.*)$", raw)
+        if m:
+            out.append({"keys": m.group(1), "command": m.group(2).strip(), "program": "kitty", "category": "Terminal",
+                        "fold": "kitty|" + m.group(1).lower()})
+    return out
+
+
+_TMUX_ROOT_RX = re.compile(r"^(?:(C)-)?(?:(M)-)?(?:(S)-)?(\S+)$")
+
+
+def tmux_root_to_sway_fold(key: str) -> str | None:
+    """tmux root key 'C-M-e' -> the sway fold 'Control+Mod1+e' a sway binding
+    would need to shadow it (sway sees the key first)."""
+    m = _TMUX_ROOT_RX.match(key)
+    if not m:
+        return None
+    c, mm, sh, k = m.groups()
+    mods = [x for x, f in (("Control", c), ("Mod1", mm), ("Shift", sh)) if f]
+    if not mods:
+        return None
+    mods.sort(key=lambda x: MOD_ORDER.index(x))
+    return "+".join(mods + [k.lower()])
+
+
+def cross_conflicts(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = None,
+                    tmux: list[dict[str, str]] | None = None) -> list[dict[str, str]]:
+    """sway bindings (nix or tool) that shadow a tmux root-table bind."""
     nix = nix if nix is not None else nix_bindings()
+    tmux = tmux if tmux is not None else tmux_bindings()
+    sway_folds: dict[str, str] = {b["fold"]: "nix: " + b["command"] for b in nix}
+    for s in shortcuts:
+        if s.program == "sway" and s.enabled and not s.problems():
+            sway_folds[fold(s.keys)] = "sway-apps: " + s.sway_command()
+    tmux_roots = [(t["keys"], t["command"], "nix") for t in tmux if t["table"] == "root"] + \
+                 [(s.keys, s.command, "sway-apps") for s in shortcuts if s.kind == "tmux" and s.table == "root" and s.enabled]
+    out = []
+    for key, cmd, owner in tmux_roots:
+        f = tmux_root_to_sway_fold(key)
+        if f and f in sway_folds:
+            out.append({"tmux_key": key, "tmux_command": cmd, "tmux_owner": owner, "shadowed_by": sway_folds[f]})
+    return out
+
+
+def render_tmux(shortcuts: list[Shortcut], tmux: list[dict[str, str]] | None = None) -> tuple[str, list[str]]:
+    """Content of ~/.config/tmux/sway-apps.conf."""
+    tmux = tmux if tmux is not None else tmux_bindings()
+    nixset = {t["fold"] for t in tmux}
+    lines = ["# Generated by sway-apps -- DO NOT EDIT BY HAND. Reload: tmux source-file " + str(TMUX_INCLUDE)]
+    warns: list[str] = []
+    seen: set[str] = set()
+    for s in shortcuts:
+        if s.kind != "tmux" or not s.enabled:
+            continue
+        if s.problems():
+            warns.append(f"{s.id}: " + "; ".join(s.problems())); continue
+        f = f"tmux|{s.table}|{s.keys}"
+        if f in seen:
+            warns.append(f"{s.id}: duplicate tmux key {s.table} {s.keys}"); continue
+        if f in nixset and not s.override:
+            warns.append(f"{s.id}: tmux {s.table} {s.keys} is bound by nix's tmux.conf; enable override to take it over"); continue
+        seen.add(f)
+        lines.append(f"# {s.name} [{s.id}]" + (" (overrides nix)" if f in nixset else ""))
+        lines.append(s.tmux_render(with_unbind=f in nixset))
+    return "\n".join(lines) + "\n", warns
+
+
+def conflicts(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = None,
+              tmux: list[dict[str, str]] | None = None) -> dict[str, dict[str, Any]]:
+    """id -> {'nix': cmd | None, 'tool': [other ids]} for every shortcut whose folded keys collide.
+    tmux shortcuts collide on (table, key) against nix's tmux.conf binds."""
+    nix = nix if nix is not None else nix_bindings()
+    tmux = tmux if tmux is not None else tmux_bindings()
+    tmuxmap = {t["fold"]: t["command"] for t in tmux}
     nixmap: dict[str, str] = {}
     nixflags: dict[str, str] = {}
     for b in nix:
@@ -193,12 +354,22 @@ def conflicts(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = None
         nixflags.setdefault(b["fold"], b.get("flags", ""))
     byfold: dict[str, list[str]] = {}
     for sc in shortcuts:
+        if sc.kind == "tmux":
+            byfold.setdefault(f"tmux|{sc.table}|{sc.keys}", []).append(sc.id)
+            continue
         try:
             byfold.setdefault(fold(sc.keys), []).append(sc.id)
         except ValueError:
             pass
     out: dict[str, dict[str, Any]] = {}
     for sc in shortcuts:
+        if sc.kind == "tmux":
+            f = f"tmux|{sc.table}|{sc.keys}"
+            others = [i for i in byfold.get(f, []) if i != sc.id]
+            n = tmuxmap.get(f)
+            if n is not None or others:
+                out[sc.id] = {"nix": n, "nix_flags": "", "tool": others}
+            continue
         try:
             f = fold(sc.keys)
         except ValueError:
@@ -215,7 +386,7 @@ def render_all(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = Non
     conf = conflicts(shortcuts, nix)
     lines: list[str] = []
     warns: list[str] = []
-    enabled = [s for s in shortcuts if s.enabled]
+    enabled = [s for s in shortcuts if s.enabled and s.kind != "tmux"]
     if not enabled:
         return "", warns
     lines.append(f"\n# ---- Shortcuts ({len(enabled)})")
@@ -245,6 +416,39 @@ def validation_context(nix: list[dict[str, str]] | None = None) -> str:
 
 
 def doc_markdown(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = None) -> str:
+    nix = nix if nix is not None else nix_bindings()
+    tmux = tmux_bindings()
+    kitty = kitty_bindings()
+    conf = conflicts(shortcuts, nix)
+    overridden = {conf[s.id]["nix"] for s in shortcuts if s.enabled and s.override and s.id in conf and conf[s.id]["nix"]}
+    rows: list[tuple[str, str, str, str, str]] = []  # category, keys, name, command, owner
+    for s in shortcuts:
+        cat = s.category or guess_category(s.sway_command() if s.kind != "tmux" else s.command, s.program)
+        keys = s.keys if s.kind != "tmux" else ({"prefix": "Ctrl+O, ", "root": "", "copy-mode-vi": "[copy] "}[s.table] + s.keys)
+        rows.append((cat, keys, s.name, s.sway_command() if s.kind != "tmux" else s.command, "sway-apps" + ("" if s.enabled else " (disabled)")))
+    for b in nix:
+        if b["command"] not in overridden:
+            rows.append((b["category"], b["keys"], "", b["command"], "nix"))
+    tool_tmux = {f"tmux|{s.table}|{s.keys}" for s in shortcuts if s.kind == "tmux" and s.enabled}
+    for t in tmux:
+        if t["fold"] in tool_tmux:
+            continue
+        rows.append(("Terminal", {"prefix": "Ctrl+O, ", "root": "", "copy-mode-vi": "[copy] "}[t["table"]] + t["keys"], "", t["command"], "tmux (nix)"))
+    for k in kitty:
+        rows.append(("Terminal", k["keys"], "", k["command"], "kitty (nix)"))
+    out = []
+    for cat in list(CATEGORIES) + sorted({r[0] for r in rows} - set(CATEGORIES)):
+        block = [r for r in rows if r[0] == cat]
+        if not block:
+            continue
+        out += [f"## {cat}", "", "| Keys | Name | Command | Owner |", "|---|---|---|---|"]
+        for _c, k, n, c, o in sorted(block, key=lambda r: (r[4] != "sway-apps", r[1].lower())):
+            out.append(f"| `{k}` | {n} | `{c.replace('|', '\\|')[:90]}` | {o} |")
+        out.append("")
+    return "\n".join(out) + "\n"
+
+
+def _doc_markdown_flat(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = None) -> str:
     nix = nix if nix is not None else nix_bindings()
     conf = conflicts(shortcuts, nix)
     rows = []

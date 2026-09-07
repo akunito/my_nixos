@@ -358,6 +358,11 @@ in
           "Help" "?" "list-keys"
       ''}
       
+      # The navigation binds below are owned by sway-apps when swayAppsEnable
+      # is on (user/wm/sway/apps/common.json, section "shortcuts", kind tmux;
+      # generated into ~/.config/tmux/sway-apps.conf and sourced at the end of
+      # this file). They stay here as the fallback for other profiles.
+      ${lib.optionalString (!(systemSettings.swayAppsEnable or false)) ''
       # Window and pane management
       bind e split-window -h -c "#{pane_current_path}"
       bind r split-window -v -c "#{pane_current_path}"
@@ -407,6 +412,7 @@ in
       # Copycat search - use the plugin's search functionality
       # Copycat uses prefix+/ by default, but we bind it to Ctrl+Alt+P
       bind -n C-M-p copy-mode \; send-keys /
+      ''}
       # SSH smart launcher - open in new window for interactive selection
       bind -n C-M-a run-shell "${ssh-smart-tmux}/bin/ssh-smart-tmux"
       
@@ -527,6 +533,11 @@ in
       # Enable kitty image protocol passthrough for ranger previews
       set -g allow-passthrough on
       set -ga terminal-overrides ',xterm-kitty:Tc'
+
+      ${lib.optionalString (systemSettings.swayAppsEnable or false) ''
+      # sway-apps tmux shortcuts (generated; edit in the sway-apps GUI / CLI)
+      source-file -q ~/.config/tmux/sway-apps.conf
+      ''}
     '';
   };
 

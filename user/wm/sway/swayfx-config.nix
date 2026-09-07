@@ -487,7 +487,10 @@ in
         let
           # Values may be plain strings or lib.mkIf wrappers ({ _type = "if"; content = ...; }).
           bindText = v: if lib.isString v then v else if lib.isAttrs v && v ? content then toString v.content else "";
-          dropAppToggles = a: if swayApps then lib.filterAttrs (_: v: !(lib.hasInfix "app-toggle.sh" (bindText v))) a else a;
+          # Owned by sway-apps when on: every app-toggle launcher + the gamescope
+          # fullscreen rescue (Hyper+F9, category Gaming in common.json).
+          ownedBySwayApps = v: lib.hasInfix "app-toggle.sh" (bindText v) || lib.hasInfix "[app_id=gamescope] fullscreen enable" (bindText v);
+          dropAppToggles = a: if swayApps then lib.filterAttrs (_: v: !(ownedBySwayApps v)) a else a;
         in
         lib.mkMerge (map dropAppToggles [
         {

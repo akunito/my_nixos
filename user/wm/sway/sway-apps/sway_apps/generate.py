@@ -74,6 +74,32 @@ def install(text: str, target: Path | None = None) -> Path:
     return target
 
 
+def apply_tmux(state: State, reload: bool = True) -> dict:
+    """Write ~/.config/tmux/sway-apps.conf and source it into running servers."""
+    text, warns = _shortcuts.render_tmux(state.shortcuts())
+    for w in warns:
+        _log.warning("tmux shortcut skipped: %s", w)
+    path = _shortcuts.TMUX_INCLUDE
+    changed = True
+    try:
+        changed = path.read_text() != text
+    except OSError:
+        pass
+    install(text, path)
+    reloaded = False
+    if reload and paths.TMUX_RELOAD:
+        import shutil
+        import subprocess
+        tmux = shutil.which("tmux")
+        if tmux:
+            proc = subprocess.run([tmux, "source-file", str(path)], capture_output=True, text=True)
+            reloaded = proc.returncode == 0
+            if proc.returncode != 0 and "no server running" not in (proc.stderr + proc.stdout):
+                _log.warning("tmux source-file failed: %s", (proc.stderr + proc.stdout).strip())
+    return {"path": str(path), "changed": changed, "reloaded": reloaded, "warnings": warns,
+            "binds": sum(1 for s in state.shortcuts() if s.kind == "tmux" and s.enabled)}
+
+
 def apply(state: State, reload: bool = True, do_validate: bool = True) -> dict:
     """render -> validate -> install -> reload. Raises on validation failure."""
     with log.action("apply", reload=reload, validate=do_validate) as res:
@@ -93,7 +119,9 @@ def apply(state: State, reload: bool = True, do_validate: bool = True) -> dict:
             else:
                 _log.warning("sway socket not available; include written, reload skipped")
                 res["reloaded"] = False
-        return {"path": str(path), "rules": res["rules"], "reloaded": res.get("reloaded", False)}
+        tm = apply_tmux(state, reload=reload)
+        res["tmux_binds"] = tm["binds"]
+        return {"path": str(path), "rules": res["rules"], "reloaded": res.get("reloaded", False), "tmux": tm}
 
 
 def apply_live(rule: Rule, state: State | None = None) -> list[dict]:

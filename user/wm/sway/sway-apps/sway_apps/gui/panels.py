@@ -105,7 +105,7 @@ class Panel(Gtk.Box):
         pass
 
     def _on_select(self, _lb, row) -> None:
-        if row is None:
+        if row is None or getattr(row, "item", None) is None:
             return
         self.selected_id = getattr(row, "item_id", None)
         self.show_detail(row.item)  # type: ignore[attr-defined]

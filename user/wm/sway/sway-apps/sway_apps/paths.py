@@ -30,6 +30,10 @@ LEARNED_FILE = LOCAL_STATE_DIR / "learned.json"
 # The include consumed by the Sway config.
 INCLUDE_FILE = _env_path("SWAY_APPS_INCLUDE", XDG_CONFIG_HOME / "sway" / "sway-apps.conf")
 
+# tmux shortcuts include (sourced from tmux.conf when swayAppsEnable).
+TMUX_INCLUDE = _env_path("SWAY_APPS_TMUX_INCLUDE", XDG_CONFIG_HOME / "tmux" / "sway-apps.conf")
+TMUX_RELOAD = os.environ.get("SWAY_APPS_TMUX_RELOAD", "1") not in ("0", "false", "no")
+
 # Per-user theme overrides for the GUI (later).
 THEMES_DIR = XDG_CONFIG_HOME / "sway-apps" / "themes"
 

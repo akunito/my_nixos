@@ -305,3 +305,44 @@ class Adopt(unittest.TestCase):
         self.assertEqual(s.monitor("second").name, "Dell U2720")
         with mock.patch.object(mon, "live_outputs", return_value=fake):
             self.assertEqual(mon.adopt_unknown(s), [])  # idempotent
+
+
+class TmuxShortcuts(unittest.TestCase):
+    def test_tmux_parse_render_cross(self):
+        from sway_apps import shortcuts as sc
+        d = Path(tempfile.mkdtemp()); conf = d / "tmux.conf"
+        conf.write_text('set -g prefix C-o\nbind -n S-Enter send-keys Escape\nbind e split-window -h\nbind-key -T copy-mode-vi y send-keys -X copy\n'
+                        'bind -n C-M-e split-window -h -c "#{pane_current_path}"\nbind h display-menu -T "x" \\\n  "a" "b" "c"\n')
+        tb = sc.tmux_bindings(conf)
+        self.assertEqual([(t["table"], t["keys"]) for t in tb], [("root", "S-Enter"), ("prefix", "e"), ("copy-mode-vi", "y"), ("root", "C-M-e"), ("prefix", "h")])
+        s = sc.Shortcut.new("e", "tmux", command="split-window -v", table="prefix", name="split", override=True)
+        self.assertEqual(s.tmux_render(), "bind e split-window -v")
+        r = sc.Shortcut.new("C-M-e", "tmux", command="kill-pane", table="root")
+        text, warns = sc.render_tmux([s, r], tb)
+        self.assertTrue(any("override" in w for w in warns))   # r collides with nix and has no override
+        r.override = True
+        text, warns = sc.render_tmux([s, r], tb)
+        self.assertIn("unbind e\nbind e split-window -v", text)          # overrides the nix bind
+        self.assertIn("unbind -n C-M-e\nbind -n C-M-e kill-pane", text)
+        self.assertEqual(warns, [])
+        c = sc.Shortcut.new("y", "tmux", command="x", table="copy-mode-vi")
+        self.assertEqual(c.tmux_render(with_unbind=True), "unbind -T copy-mode-vi y\nbind -T copy-mode-vi y x")
+        # cross: a sway binding on Ctrl+Alt+e shadows tmux's C-M-e
+        nix = [{"keys": "Ctrl+Alt+e", "sway_keys": "Control+Mod1+e", "fold": sc.fold("Ctrl+Alt+e"), "command": "exec foo", "flags": "", "program": "sway", "category": "System"}]
+        cross = sc.cross_conflicts([], nix, tb)
+        self.assertEqual([(x["tmux_key"], x["shadowed_by"]) for x in cross], [("C-M-e", "nix: exec foo")])
+        self.assertEqual(sc.cross_conflicts([], [], tb), [])
+        self.assertEqual(sc.tmux_root_to_sway_fold("C-M-e"), "Control+Mod1+e")
+        self.assertIsNone(sc.tmux_root_to_sway_fold("e"))
+
+    def test_kitty_parse_and_categories(self):
+        from sway_apps import shortcuts as sc
+        d = Path(tempfile.mkdtemp()); conf = d / "kitty.conf"
+        conf.write_text("font_size 12\nmap ctrl+shift+c send_text all \\x03\nmap shift+enter send_text all x\n")
+        self.assertEqual([k["keys"] for k in sc.kitty_bindings(conf)], ["ctrl+shift+c", "shift+enter"])
+        self.assertEqual(sc.guess_category("exec ~/.config/sway/scripts/app-toggle.sh kitty kitty"), "Apps")
+        self.assertEqual(sc.guess_category("exec swaymsg '[app_id=gamescope] fullscreen enable'"), "Gaming")
+        self.assertEqual(sc.guess_category("exec swaysome focus 3"), "Workspaces")
+        self.assertEqual(sc.guess_category("focus left"), "Windows")
+        self.assertEqual(sc.guess_category("exec swayosd-client --output-volume raise"), "Media")
+        self.assertEqual(sc.guess_category("reload"), "System")

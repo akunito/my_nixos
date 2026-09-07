@@ -14,6 +14,7 @@ git -C "$T/repo" init -q -b main
 git -C "$T/repo" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
 export SWAY_APPS_DOTFILES="$T/repo" SWAY_APPS_STATE_DIR="$T/repo/user/wm/sway/apps" \
        SWAY_APPS_LOCAL_STATE_DIR="$T/local" SWAY_APPS_INCLUDE="$T/cfg/sway/sway-apps.conf" \
+       SWAY_APPS_TMUX_INCLUDE="$T/cfg/tmux/sway-apps.conf" SWAY_APPS_TMUX_RELOAD=0 \
        SWAY_APPS_PROFILE=SMOKE GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
 pass=0; fail=0
 ok()   { pass=$((pass+1)); echo "  ok   $1"; }
@@ -144,6 +145,18 @@ check "shortcuts doc"          '.markdown | test("smokesc")'                    
 check "shortcut disable"       '.shortcut.enabled == false'                      "$(J shortcuts disable "$SCID")"
 check "shortcut rm"            '.removed == "'"$SCID"'"'                          "$(J shortcuts rm "$SCID")"
 J shortcuts rm "$(J shortcuts list smokeov | jq -r '.[0].id')" >/dev/null
+TMUXINC="$SWAY_APPS_TMUX_INCLUDE"
+TADD=$(J shortcuts add --keys F12 --tmux "display-message smoke" --table prefix --name smoketmux --category Terminal)
+check "tmux shortcut add"      '.shortcut.line == "bind F12 display-message smoke" and .apply.tmux.binds >= 1' "$TADD"
+TMID=$(printf '%s' "$TADD" | jq -r .shortcut.id)
+check "tmux include written"   'true' "$(grep -q '^bind F12 display-message smoke' "$TMUXINC" && echo '{}' || echo null)"
+check "tmux root kind"         '.shortcut.line == "bind -n C-M-F12 display-message smoke"' "$(J shortcuts set "$TMID" --table root --keys C-M-F12)"
+check "tmux nix key blocked"   '.error | test("bound by nix|already used")' "$(J shortcuts add --keys S-Enter --tmux "display-message x" --table root)"
+check "cross check runs"       'type == "array"'                              "$(J shortcuts cross)"
+check "list by category"       'all(.category == "Terminal")'                  "$(J shortcuts list --category Terminal)"
+check "kitty parsed"           'type == "array"'                              "$(J shortcuts kitty)"
+check "tmux shortcut rm"       '.removed == "'"$TMID"'"'                       "$(J shortcuts rm "$TMID")"
+check "tmux include cleaned"   'true' "$(grep -q 'smoke' "$TMUXINC" && echo null || echo '{}')"
 
 # --- git -------------------------------------------------------------------
 GS=$(J git status)
