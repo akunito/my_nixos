@@ -552,3 +552,24 @@ class Cli(ProfilesBase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)
+
+
+class CliUnknownSnapshot(unittest.TestCase):
+    """regression: `profiles snapshot diff|restore <unknown>` used to traceback (FileNotFoundError escaped main)."""
+
+    def test_unknown_snapshot_id_is_a_clean_cli_error(self):
+        import contextlib, io, json as _json, tempfile as _tf
+        from sway_apps import cli, paths, profiles as pf
+        old = (paths.STATE_DIR, pf.SNAP_DIR)
+        tmp = Path(_tf.mkdtemp()); paths.STATE_DIR = tmp; pf.SNAP_DIR = tmp / "snapshots"
+        (tmp / "common.json").write_text('{"version": 1}')
+        try:
+            for argv in (["--json", "profiles", "snapshot", "diff", "nope"], ["--json", "profiles", "snapshot", "restore", "nope", "--yes", "--no-apply", "--no-git"]):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    rc = cli.main(argv)
+                self.assertNotEqual(rc, 0)
+                self.assertIn("error", _json.loads(out.getvalue()))
+                self.assertNotIn("Traceback", err.getvalue())
+        finally:
+            paths.STATE_DIR, pf.SNAP_DIR = old

@@ -1484,8 +1484,15 @@ def cmd_snap_create(args: argparse.Namespace) -> int:
     return 0
 
 
+def _snap(snap_id: str):
+    try:
+        return prof.snapshot_dir(snap_id)
+    except FileNotFoundError as exc:
+        raise CliError(f"{exc} (see: sway-apps profiles snapshot list)")
+
+
 def cmd_snap_diff(args: argparse.Namespace) -> int:
-    d = prof.diff_snapshot(args.id)
+    d = prof.diff_snapshot(_snap(args.id).name)
     def human():
         for f, per in d.items():
             changes = {s: v for s, v in per.items() if any(v.values())}
@@ -1495,7 +1502,7 @@ def cmd_snap_diff(args: argparse.Namespace) -> int:
 
 
 def cmd_snap_restore(args: argparse.Namespace) -> int:
-    d = prof.snapshot_dir(args.id)
+    d = _snap(args.id)
     files = args.files or None
     sections = args.sections or None
     if not args.yes:
