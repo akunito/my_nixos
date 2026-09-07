@@ -369,8 +369,8 @@ class DockerBackend(unittest.TestCase):
         self.assertEqual(dk.ssh_target(n), ["-p", "56777", "akunito@100.64.0.6"])
         self.assertEqual(dk.ssh_target(st.Node(id="x", ssh="aga@host")), ["aga@host"])
         self.assertIn("DOCKER_HOST", dk._docker_prefix(n, "rootless"))
-        self.assertEqual(dk._docker_prefix(st.Node(id="d"), "rootful"), "docker")
-        self.assertEqual(dk._docker_prefix(st.Node(id="d", sudo_rootful=True), "rootful"), "sudo -n docker")
+        self.assertEqual(dk._docker_prefix(st.Node(id="d"), "rootful"), "env DOCKER_HOST=unix:///var/run/docker.sock docker")
+        self.assertTrue(dk._docker_prefix(st.Node(id="d", sudo_rootful=True), "rootful").startswith("sudo -n env DOCKER_HOST=unix:///var/run/docker.sock"))
         self.assertEqual(dk._labels("a=1,com.docker.compose.project=immich,b=x=y"), {"a": "1", "com.docker.compose.project": "immich", "b": "x=y"})
         c = dk.Container(node="VPS", daemon="rootless", id="1", name="immich_server", image="i", state="running", status="Up",
                          project="immich", service="immich-server", working_dir="/home/a/.homelab/immich", config_files="/home/a/.homelab/immich/docker-compose.yml")

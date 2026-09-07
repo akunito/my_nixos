@@ -26,9 +26,15 @@ class DockerError(RuntimeError):
 
 
 def _docker_prefix(node: Node, daemon: str) -> str:
+    # Both sockets are named explicitly: on hosts with rootless docker NixOS
+    # exports DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock system-wide
+    # (/etc/set-environment), so a bare `docker` would silently talk to the
+    # rootless daemon even when we mean the rootful one (seen on NAS_PROD).
     if daemon == "rootless":
         return 'env DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock" docker'
-    return "sudo -n docker" if node.sudo_rootful else "docker"
+    if node.sudo_rootful:
+        return "sudo -n env DOCKER_HOST=unix:///var/run/docker.sock docker"
+    return "env DOCKER_HOST=unix:///var/run/docker.sock docker"
 
 
 def ssh_target(node: Node) -> list[str]:
