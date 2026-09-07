@@ -2104,6 +2104,17 @@
       "enabled": true,
       "notes": "system monitor in a kitty window (app_id btop)",
       "updated_at": 1788761162
+    },
+    {
+      "id": "t-f5bc012c",
+      "name": "btop (root)",
+      "command": "kitty --class btop-root -e sudo btop",
+      "app_id": "btop-root",
+      "icon": "utilities-system-monitor-symbolic",
+      "order": 86,
+      "enabled": true,
+      "notes": "sudo prompts inside the terminal",
+      "updated_at": 1788761166
     }
   ]
 }
