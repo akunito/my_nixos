@@ -10,7 +10,9 @@
       "name": "Samsung Odyssey G70NC (4K)",
       "primary": true,
       "enabled": true,
-      "notes": ""
+      "notes": "",
+      "always_connected": true,
+      "updated_at": 1788757773
     },
     {
       "id": "second",

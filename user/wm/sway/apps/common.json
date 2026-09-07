@@ -1090,5 +1090,7 @@
       "notes": ""
     }
   ],
-  "startup": []
+  "startup": [],
+  "monitors": [],
+  "settings": {}
 }
