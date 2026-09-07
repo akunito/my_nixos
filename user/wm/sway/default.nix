@@ -37,7 +37,6 @@
     ./session-env.nix
     ./session-systemd.nix
     ./kanshi.nix
-    ./hotplug-restore.nix
     ./nwg-displays.nix
     ./sway-apps
     ./startup-apps.nix

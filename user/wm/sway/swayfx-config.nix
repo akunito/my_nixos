@@ -494,11 +494,6 @@ in
           "${hyper}+Shift+Return" =
             "exec ${config.home.homeDirectory}/.nix-profile/bin/desk-startup-apps-launcher";
         }
-        (lib.optionalAttrs (systemSettings.swayHotplugParkEnable or false) {
-          # Parked workspaces (monitor switched off) -> bring them to the focused
-          # output: the "it really is unplugged" escape hatch.
-          "${hyper}+Shift+y" = "exec ${config.home.homeDirectory}/.config/sway/scripts/sway-hotplug-restore.sh --evacuate";
-        })
         (lib.optionalAttrs swayApps {
           # sway-apps GUI: window rules + startup apps (also in the rofi maintenance menu)
           "${hyper}+Shift+n" = "exec ${swayAppsBin}";
@@ -845,6 +840,15 @@ in
         {
           command = "${desk-startup-apps-init}/bin/desk-startup-apps-init";
           always = false; # Only run on initial startup, not on config reload
+        }
+      ]
+      ++ lib.optionals swayApps [
+        # sway creates workspace "1" (group 0) at login; move it into the
+        # output's pinned decade once. Replaces the retired hotplug restore /
+        # groups-setup sweeps for machines whose pins come from sway-apps.
+        {
+          command = "${swayAppsBin} monitors fix-orphans";
+          always = false;
         }
       ]
       ++ lib.optionals (systemSettings.swaysomeNativeGroups or false) [

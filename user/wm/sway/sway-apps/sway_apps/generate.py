@@ -78,13 +78,6 @@ def apply(state: State, reload: bool = True, do_validate: bool = True) -> dict:
                 raise RuntimeError(f"generated config failed validation:\n{out}")
         path = install(text)
         res["path"] = str(path)
-        # Pins for sway-hotplug-restore.sh (group-0 orphan migration).
-        pins_text = _monitors.pins_conf_text(state)
-        try:
-            if pins_text or _monitors.PINS_CONF.exists():
-                install(pins_text, _monitors.PINS_CONF)
-        except OSError as exc:
-            _log.warning("could not write %s: %s", _monitors.PINS_CONF, exc)
         if reload:
             if swayipc.available():
                 swayipc.reload()

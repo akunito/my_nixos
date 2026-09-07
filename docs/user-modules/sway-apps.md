@@ -40,9 +40,9 @@ so one machine can disable or retarget a shared rule without forking it.
 Each machine keeps a **monitor table** in its profile layer: a *role* shared
 across machines (`main`, `second`, `tv`, `left`), the sway hardware id
 (`make model serial`) and a workspace **group** (decade: group 1 = ws 11-20).
-From it the tool emits `workspace N output "<hw id>"` lines into the include
-and `~/.config/sway/workspace-output-pins.conf` for `sway-hotplug-restore.sh`
-(group-0 orphan migration). Both DESK and X13 use this model; X13's dock
+From it the tool emits `workspace N output "<hw id>"` lines into the include.
+`sway-apps monitors fix-orphans` (run once at login by the sway startup list)
+moves sway's default group-0 workspace into the pinned decade. Both DESK and X13 use this model; X13's dock
 monitor becomes role `second` the first time it is connected
 (`sway-apps monitors add second HDMI-A-1 --group 2`).
 

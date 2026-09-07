@@ -855,16 +855,13 @@
     # restore script's orphan migration.
     swayWorkspaceOutputPins = [ ];
 
-    # Monitor-hotplug snapshot/restore (DESK): daemon snapshots visible
-    # workspaces, focus and floating-window geometry per monitor set; kanshi
-    # runs the focus-immune restore script on output changes (replaces the
-    # legacy focus-fragile swaysome-assign-groups exec chain).
-    swayHotplugRestoreEnable = false;
-    # Park the workspaces of a switched-off (DP: indistinguishable from
-    # unplugged) pinned monitor on a HEADLESS clone instead of leaving them
-    # piled on the remaining screen. Needs swayHotplugRestoreEnable + pins.
-    # Hyper+Shift+y evacuates the parked workspaces to the focused output.
-    swayHotplugParkEnable = false;
+    # NOTE (2026-09-07): the monitor-hotplug snapshot/restore daemon and the
+    # headless "parking" of switched-off monitors were REMOVED by decision:
+    # sway's native behaviour is kept (pins above bring workspaces back to
+    # their monitor; sticky floating windows stay where sway evacuated them).
+    # A DP monitor switched OFF is indistinguishable from an unplugged cable
+    # at the kernel level; the only way to make "nothing happen" is forcing
+    # the connector (video=DP-1:e + drm.edid_firmware), not done.
 
     # Sway/SwayFX dynamic outputs (kanshi)
     #

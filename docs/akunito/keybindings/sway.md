@@ -58,7 +58,6 @@ The Hyper key is the primary modifier for all Sway keybindings. It's configured 
 
 - **`${hyper}+Shift+Return`** → Manual startup apps launcher (`desk-startup-apps-launcher`); with `swayAppsEnable` its "Startup Apps" entry runs `sway-apps startup run`
 - **`${hyper}+Shift+n`** → sway-apps GUI: window rules + startup apps (only when `swayAppsEnable = true`; rules live in `user/wm/sway/apps/`)
-- **`${hyper}+Shift+y`** → evacuate parked workspaces (a switched-off monitor's decade lives on a HEADLESS clone while `swayHotplugParkEnable`) to the focused output
 - **`${hyper}+grave`** → sway-apps Monitors section: workspace pins per monitor (replaced workspace-groups-gui, retired 2026-09-06)
 
 ### Exit

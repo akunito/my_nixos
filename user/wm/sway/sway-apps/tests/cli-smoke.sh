@@ -25,11 +25,9 @@ check() { # name, jq-expr, json
 }
 echo "== sway-apps smoke: $($BIN --version) state=$SWAY_APPS_STATE_DIR"
 
-# This suite reloads sway several times (every rule save does). A reload on
-# DESK restarts kanshi, whose hotplug-restore pass repositions floating
-# windows -- it shrank a fullscreen gamescope session to 5x5 px off-screen on
-# 2026-09-06. Refuse to run while anything is fullscreen or a game is up,
-# unless the caller insists.
+# This suite reloads sway several times (every rule save does), and a reload
+# re-applies output config, which briefly evacuates workspaces. Refuse to run
+# while anything is fullscreen or a game is up, unless the caller insists.
 if [ -z "${SWAY_APPS_SMOKE_FORCE:-}" ]; then
   FS=$(swaymsg -t get_tree 2>/dev/null | jq -r '[.. | select(.type? == "con" or .type? == "floating_con") | select((.fullscreen_mode // 0) != 0 or (.app_id // "" | test("gamescope")) or ((.window_properties.class // "") | test("^steam_app_|gamescope"))) | (.app_id // .window_properties.class // .name)] | unique | join(", ")' 2>/dev/null)
   if [ -n "$FS" ]; then
@@ -110,7 +108,6 @@ check "monitors outputs"       'length >= 1 and all(.hw_id != "")'              
 check "monitors add by connector" '.monitor.criteria == "'"$HWID"'" and .monitor.group == 7' "$(J monitors add main "$FOCOUT" --group 7 --name smoke-main --primary --no-live)"
 check "monitors list"          'map(select(.id=="main")) | length == 1 and .[0].connected == true' "$(J monitors list)"
 check "pins rendered"          '.text | test("workspace 71 output")'            "$(J render)"
-check "pins.conf written"      'true' "$(grep -q '^7|' "${XDG_CONFIG_HOME:-$HOME/.config}/sway/workspace-output-pins.conf" 2>/dev/null && echo '{}' || echo null)"
 check "group clash rejected"   '.error | test("already used")'                  "$(J monitors add other "$HWID" --group 7)"
 TADD=$(J rules add --kind assign -c app_id=smoke-target --target main:3 --no-live)
 check "rule with target"       '.rule.target.monitor == "main" and .rule.line == "assign [app_id=\"smoke-target\"] workspace number 73"' "$TADD"

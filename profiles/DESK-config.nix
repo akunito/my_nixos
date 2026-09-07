@@ -856,13 +856,8 @@ in
       { criteria = monitors.bnqLeft.criteria;     group = 4; } # 41-50
     ];
 
-    # Monitor-hotplug snapshot/restore: when monitors are switched off and back
-    # on, restore the visible workspace per output, the focused workspace, and
-    # floating-window positions (fixes focus jumps + floating windows straddling
-    # two monitors after power-off/on). Replaces the focus-fragile legacy
-    # swaysome init/rearrange/assign-groups kanshi exec chain.
-    swayHotplugRestoreEnable = true;
-    swayHotplugParkEnable = true; # Samsung OFF -> its decade parks on a headless clone (2026-09-07)
+    # Monitor hotplug: sway defaults only (2026-09-07). The pins above bring a
+    # returning monitor's workspaces back; nothing else re-arranges windows.
 
     # Sway/SwayFX: kanshi output layout (DESK-only).
     # Other profiles keep default behavior by leaving this as null (see lib/defaults.nix).

@@ -938,7 +938,7 @@ def build_parser() -> argparse.ArgumentParser:
     x = m.add_parser("rm"); x.add_argument("role"); x.add_argument("--force", action="store_true"); persist_flags(x); x.set_defaults(func=cmd_mon_rm)
     x = m.add_parser("apply", help="regenerate pins, reload, move open workspaces to their monitor"); x.add_argument("--no-reload", action="store_true"); x.set_defaults(func=cmd_mon_apply)
     x = m.add_parser("pin-geometry", help="emit nwg-displays geometry keyed by hardware id"); x.add_argument("state", nargs="?", choices=["on", "off", "show"], default="show"); x.add_argument("--scope", choices=SCOPES, default="profile"); persist_flags(x); x.set_defaults(func=cmd_mon_geometry)
-    m.add_parser("fix-orphans", help="migrate group-0 workspaces via sway-hotplug-restore.sh").set_defaults(func=cmd_mon_fix)
+    m.add_parser("fix-orphans", help="migrate group-0 workspaces (1-10) into their output's pinned decade").set_defaults(func=cmd_mon_fix)
     w2 = sub.add_parser("workspaces", help="workspace map").add_subparsers(dest="sub", required=True)
     w2.add_parser("map", help="monitors x slots with assigned apps and open windows").set_defaults(func=cmd_ws_map)
 

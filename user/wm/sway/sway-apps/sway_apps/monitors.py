@@ -5,7 +5,7 @@ Layering with the rest of the stack:
     keyed by connector (DP-1, HDMI-A-1). Connectors drift; hardware ids don't.
   - sway-apps owns the LOGICAL layer: role -> hardware id -> workspace decade,
     rendered as `workspace N output "<hw id>"` lines plus the
-    workspace-output-pins.conf consumed by sway-hotplug-restore.sh.
+    (the hotplug snapshot/restore that used to consume a pins file was removed 2026-09-07).
   - Optionally (settings.pin_geometry) it re-emits nwg-displays' geometry
     keyed by hardware id so it survives connector renames.
 """
@@ -24,12 +24,6 @@ _log = log.get("monitors")
 
 NWG_OUTPUTS_FILE = paths.XDG_CONFIG_HOME / "sway" / "outputs"
 NWG_WORKSPACES_FILE = paths.XDG_CONFIG_HOME / "sway" / "workspaces"
-# Lives next to the include so a scratch SWAY_APPS_INCLUDE (tests) never
-# touches the real file. On 2026-09-06 a hardcoded path let a local test run
-# replace DESK's HM-owned symlink with a regular file, which then blocked the
-# next home-manager activation ("would be clobbered").
-PINS_CONF = paths.INCLUDE_FILE.parent / "workspace-output-pins.conf"
-RESTORE_SCRIPT = paths.XDG_CONFIG_HOME / "sway" / "scripts" / "sway-hotplug-restore.sh"
 
 
 @dataclass
@@ -99,7 +93,7 @@ def render_pins(state: State) -> str:
 
 
 def pins_conf_text(state: State) -> str:
-    """Format consumed by sway-hotplug-restore.sh: group|criteria per line."""
+    """group|criteria per line (kept for tooling/tests; no runtime consumer since 2026-09-07)."""
     return "".join(f"{m.group}|{m.criteria}\n" for m in state.monitors() if m.enabled and m.group)
 
 
@@ -195,9 +189,8 @@ def apply_live(state: State) -> list[dict[str, Any]]:
 
 def fix_orphans(state: State) -> dict[str, Any]:
     """Migrate group-0 workspaces (1-10) into the pinned decade of the output
-    they sit on. Same rule as sway-hotplug-restore.sh step 1 (digit preserved:
-    "3" -> "13"; rename when the target is free, else move the windows) but
-    WITHOUT the snapshot restore, which is only meaningful on a real hotplug.
+    they sit on (digit preserved: "3" -> "13"; rename when the target is free,
+    else move the windows).
     Empty orphans are simply left to sway's auto-removal unless focused, in
     which case focus is moved to the decade's first workspace."""
     if not swayipc.available():

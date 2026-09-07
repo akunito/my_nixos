@@ -264,10 +264,10 @@ in
     # table (LAPTOP_X13.json: built-in panel = group 1, dock monitor = group 2),
     # the same model as DESK. That rules out swaysome's position-based
     # init/rearrange (it would renumber against the pins on every hotplug), so
-    # the LAPTOP-base default is overridden here and the DESK hotplug restore
-    # (group-0 orphan migration + snapshot of visible/floating state) takes over.
+    # the LAPTOP-base default is overridden here. Sway's own pins handle the
+    # placement; `sway-apps monitors fix-orphans` runs once at login for the
+    # group-0 workspace sway creates by default.
     swaysomeNativeGroups = false;
-    swayHotplugRestoreEnable = true;
     goaCalendarEnable = true; # GNOME Online Accounts + gnome-calendar + Waybar widget (click opens calendar.google.com in default browser)
 
     # === Package Modules ===
