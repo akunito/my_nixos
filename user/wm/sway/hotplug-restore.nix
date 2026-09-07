@@ -30,6 +30,10 @@ in
       executable = true;
     };
 
+    # Parking policy consumed by the restore script (see its header).
+    home.file.".config/sway/hotplug-park.conf".text =
+      "PARK=${if (systemSettings.swayHotplugParkEnable or false) then "1" else "0"}\n";
+
     # With sway-apps on, the tool writes this file from its monitors table
     # (sway-apps apply); HM must not own it or it would shadow the tool's copy.
     home.file.".config/sway/workspace-output-pins.conf" =

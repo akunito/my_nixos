@@ -860,6 +860,11 @@
     # runs the focus-immune restore script on output changes (replaces the
     # legacy focus-fragile swaysome-assign-groups exec chain).
     swayHotplugRestoreEnable = false;
+    # Park the workspaces of a switched-off (DP: indistinguishable from
+    # unplugged) pinned monitor on a HEADLESS clone instead of leaving them
+    # piled on the remaining screen. Needs swayHotplugRestoreEnable + pins.
+    # Hyper+Shift+y evacuates the parked workspaces to the focused output.
+    swayHotplugParkEnable = false;
 
     # Sway/SwayFX dynamic outputs (kanshi)
     #

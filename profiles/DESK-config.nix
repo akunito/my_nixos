@@ -862,6 +862,7 @@ in
     # two monitors after power-off/on). Replaces the focus-fragile legacy
     # swaysome init/rearrange/assign-groups kanshi exec chain.
     swayHotplugRestoreEnable = true;
+    swayHotplugParkEnable = true; # Samsung OFF -> its decade parks on a headless clone (2026-09-07)
 
     # Sway/SwayFX: kanshi output layout (DESK-only).
     # Other profiles keep default behavior by leaving this as null (see lib/defaults.nix).

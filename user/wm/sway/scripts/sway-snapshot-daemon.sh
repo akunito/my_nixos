@@ -36,15 +36,17 @@ if ! swaymsg -t get_version >/dev/null 2>&1; then
   exit 0
 fi
 
+# HEADLESS-* outputs are parking clones created by sway-hotplug-restore.sh
+# for switched-off monitors; they are not part of the monitor set.
 current_sig() {
   swaymsg -t get_outputs -r 2>/dev/null \
-    | jq -r '[.[] | select(.active==true) | (.make+" "+.model+" "+.serial)] | sort | join("||")' 2>/dev/null
+    | jq -r '[.[] | select(.active==true and (.name|startswith("HEADLESS")|not)) | (.make+" "+.model+" "+.serial)] | sort | join("||")' 2>/dev/null
 }
 
 snapshot() {
   local outputs ws tree sig file
   outputs="$(swaymsg -t get_outputs -r 2>/dev/null)" || return 0
-  sig="$(jq -r '[.[] | select(.active==true) | (.make+" "+.model+" "+.serial)] | sort | join("||")' <<<"$outputs" 2>/dev/null)" || return 0
+  sig="$(jq -r '[.[] | select(.active==true and (.name|startswith("HEADLESS")|not)) | (.make+" "+.model+" "+.serial)] | sort | join("||")' <<<"$outputs" 2>/dev/null)" || return 0
   [ -n "$sig" ] || return 0
   ws="$(swaymsg -t get_workspaces -r 2>/dev/null)" || return 0
   tree="$(swaymsg -t get_tree -r 2>/dev/null)" || return 0
@@ -55,9 +57,11 @@ snapshot() {
       swaysock: $sock,
       visible: [ $ws[] | select(.visible==true) | { output, ws: .name } ],
       focused: ([ $ws[] | select(.focused==true) | .name ] | first // ""),
-      floating: [ $tree
+      floating: [ ($ws | map({key: .name, value: .output}) | from_entries) as $wsout
+        | $tree
         | recurse(.nodes[]?)
         | select(.type? == "workspace" and ((.name // "") | startswith("__") | not)) as $w
+        | select(($wsout[$w.name] // "") | startswith("HEADLESS") | not)
         | $w.floating_nodes[]?
         | { con_id: .id, ws: $w.name,
             x: .rect.x, y: .rect.y, w: .rect.width, h: .rect.height } ]

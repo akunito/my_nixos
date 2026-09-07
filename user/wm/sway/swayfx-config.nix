@@ -494,6 +494,11 @@ in
           "${hyper}+Shift+Return" =
             "exec ${config.home.homeDirectory}/.nix-profile/bin/desk-startup-apps-launcher";
         }
+        (lib.optionalAttrs (systemSettings.swayHotplugParkEnable or false) {
+          # Parked workspaces (monitor switched off) -> bring them to the focused
+          # output: the "it really is unplugged" escape hatch.
+          "${hyper}+Shift+y" = "exec ${config.home.homeDirectory}/.config/sway/scripts/sway-hotplug-restore.sh --evacuate";
+        })
         (lib.optionalAttrs swayApps {
           # sway-apps GUI: window rules + startup apps (also in the rofi maintenance menu)
           "${hyper}+Shift+n" = "exec ${swayAppsBin}";

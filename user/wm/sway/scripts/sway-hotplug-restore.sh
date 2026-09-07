@@ -45,12 +45,136 @@ log() {
 exec 9>"$RUNTIME/sway-hotplug-restore.lock"
 flock 9 || exit 0
 
+# --- Parking (opt-in: ~/.config/sway/hotplug-park.conf sets PARK=1) ----------
+# A DisplayPort monitor switched OFF drops HPD exactly like an unplugged
+# cable, so sway destroys the output and evacuates its workspaces onto the
+# remaining monitors (measured on DESK 2026-09-07: both DP monitors do it).
+# With PARK=1 the evacuated decade of a pinned-but-absent monitor is moved
+# onto a HEADLESS clone of it (same mode/scale, placed at x>=20000 so the
+# pointer cannot reach it) instead of staying piled on the other screen.
+# Windows keep size, layout and fullscreen; when the monitor returns the pins
+# bring the decade back and the clone is unplugged. `--evacuate` moves every
+# parked workspace to the focused real output (the "it really is unplugged"
+# escape hatch, bound to a key).
+PARK=0
+PARK_CONF="$HOME/.config/sway/hotplug-park.conf"
+# shellcheck disable=SC1090
+[ -f "$PARK_CONF" ] && . "$PARK_CONF"
+PARKED_FILE="$STATE_DIR/parked.json"
+GEOM_FILE="$STATE_DIR/geometry.json"
+mkdir -p "$STATE_DIR"
+[ -f "$PARKED_FILE" ] || echo '{}' >"$PARKED_FILE"
+[ -f "$GEOM_FILE" ] || echo '{}' >"$GEOM_FILE"
+
+is_headless() { case "$1" in HEADLESS-*) return 0 ;; *) return 1 ;; esac; }
+
+evacuate_parked() {
+  # Move every parked workspace to the focused real output, drop the clones.
+  local focused ws_json
+  focused="$($SWAYMSG -t get_outputs -r | $JQ -r '[.[] | select(.active==true and (.name|startswith("HEADLESS")|not))] | (map(select(.focused==true)) + .) | .[0].name // empty')"
+  [ -n "$focused" ] || return 0
+  ws_json="$($SWAYMSG -t get_workspaces -r 2>/dev/null)" || return 0
+  while IFS= read -r wsname; do
+    [ -n "$wsname" ] || continue
+    $SWAYMSG "[workspace=\"^${wsname}\$\"] move workspace to output $focused" >/dev/null 2>&1 || true
+    log "evacuate: ws $wsname -> $focused"
+  done < <($JQ -r '.[] | select(.output|startswith("HEADLESS")) | .name' <<<"$ws_json")
+  while IFS= read -r h; do
+    [ -n "$h" ] || continue
+    $SWAYMSG "output $h unplug" >/dev/null 2>&1 || true
+    log "evacuate: unplugged $h"
+  done < <($SWAYMSG -t get_outputs -r | $JQ -r '.[] | select(.name|startswith("HEADLESS")) | .name')
+  echo '{}' >"$PARKED_FILE"
+}
+
+if [ "${1:-}" = "--evacuate" ]; then
+  evacuate_parked
+  exit 0
+fi
+
 # Let sway finish re-placing pinned workspaces on the (re)enabled outputs and
 # coalesce the burst of kanshi applies when several monitors return together.
 sleep 1.5
 
 OUTPUTS="$($SWAYMSG -t get_outputs -r 2>/dev/null)" || exit 0
 WS="$($SWAYMSG -t get_workspaces -r 2>/dev/null)" || exit 0
+
+# Remember the geometry of every real active output (by hardware id) so an
+# absent one can be cloned faithfully later.
+if $JQ -n --slurpfile old "$GEOM_FILE" --argjson outs "$OUTPUTS" '
+    ($old[0] // {}) + ([ $outs[] | select(.active==true and (.name|startswith("HEADLESS")|not))
+      | { key: (.make+" "+.model+" "+.serial),
+          value: { name, w: .current_mode.width, h: .current_mode.height,
+                   r: ((.current_mode.refresh // 60000) / 1000), scale, transform } } ] | from_entries)
+  ' >"$GEOM_FILE.tmp" 2>/dev/null; then mv "$GEOM_FILE.tmp" "$GEOM_FILE"; else rm -f "$GEOM_FILE.tmp"; fi
+
+if [ "$PARK" = "1" ] && [ -f "$PINS_CONF" ]; then
+  ACTIVE_HW="$($JQ -r '[.[] | select(.active==true and (.name|startswith("HEADLESS")|not)) | (.make+" "+.model+" "+.serial)]' <<<"$OUTPUTS")"
+
+  # 0a. Unpark: a parked monitor is back -> move its decade home, drop the clone.
+  while IFS=$'\t' read -r head hw; do
+    [ -n "$head" ] || continue
+    if $JQ -e --arg hw "$hw" 'index($hw) != null' <<<"$ACTIVE_HW" >/dev/null; then
+      real="$($JQ -r --arg hw "$hw" '.[] | select(.active==true and (.make+" "+.model+" "+.serial)==$hw) | .name' <<<"$OUTPUTS" | head -n1)"
+      while IFS= read -r wsname; do
+        [ -n "$wsname" ] || continue
+        $SWAYMSG "[workspace=\"^${wsname}\$\"] move workspace to output $real" >/dev/null 2>&1 || true
+      done < <($JQ -r --arg h "$head" '.[] | select(.output==$h) | .name' <<<"$WS")
+      $SWAYMSG "output $head unplug" >/dev/null 2>&1 || true
+      $JQ --arg h "$head" 'del(.[$h])' "$PARKED_FILE" >"$PARKED_FILE.tmp" && mv "$PARKED_FILE.tmp" "$PARKED_FILE"
+      log "unpark: $hw back on $real, $head unplugged"
+    elif ! $JQ -e --arg h "$head" 'map(select(.output==$h)) | length > 0' <<<"$WS" >/dev/null; then
+      # Nothing left on the clone (windows closed): drop it, re-park later if needed.
+      $SWAYMSG "output $head unplug" >/dev/null 2>&1 || true
+      $JQ --arg h "$head" 'del(.[$h])' "$PARKED_FILE" >"$PARKED_FILE.tmp" && mv "$PARKED_FILE.tmp" "$PARKED_FILE"
+      log "unpark: $head empty, unplugged"
+    fi
+  done < <($JQ -r 'to_entries[] | "\(.key)\t\(.value.hw)"' "$PARKED_FILE")
+  OUTPUTS="$($SWAYMSG -t get_outputs -r 2>/dev/null)" || exit 0
+  WS="$($SWAYMSG -t get_workspaces -r 2>/dev/null)" || exit 0
+
+  # 0b. Park: a pinned monitor is absent and some of its decade exists -> clone + move.
+  slot=0
+  for hw in "${!PIN_BASE[@]}"; do
+    base="${PIN_BASE[$hw]}"
+    if $JQ -e --arg hw "$hw" 'index($hw) != null' <<<"$ACTIVE_HW" >/dev/null; then continue; fi
+    if $JQ -e --arg hw "$hw" '[.[] | select(.hw==$hw)] | length > 0' "$PARKED_FILE" >/dev/null; then continue; fi
+    decade_ws="$($JQ -r --argjson b "$base" '.[] | select(.num > $b and .num <= $b+10 and (.output|startswith("HEADLESS")|not)) | .name' <<<"$WS")"
+    [ -n "$decade_ws" ] || continue
+    before="$($JQ -r '[.[] | .name | select(startswith("HEADLESS"))] | sort' <<<"$OUTPUTS")"
+    $SWAYMSG create_output >/dev/null 2>&1 || { log "park: create_output failed for $hw"; continue; }
+    sleep 0.3
+    OUTPUTS="$($SWAYMSG -t get_outputs -r 2>/dev/null)" || exit 0
+    head="$($JQ -r --argjson before "$before" '[.[] | .name | select(startswith("HEADLESS"))] | sort | map(select(. as $n | $before | index($n) | not)) | .[0] // empty' <<<"$OUTPUTS")"
+    [ -n "$head" ] || { log "park: no new HEADLESS output appeared for $hw"; continue; }
+    slot=$((slot + 1))
+    px=$((20000 + slot * 10000))
+    geo="$($JQ -c --arg hw "$hw" '.[$hw] // empty' "$GEOM_FILE")"
+    if [ -n "$geo" ]; then
+      w="$($JQ -r .w <<<"$geo")"; h="$($JQ -r .h <<<"$geo")"; r="$($JQ -r .r <<<"$geo")"; sc="$($JQ -r .scale <<<"$geo")"; tr="$($JQ -r .transform <<<"$geo")"
+      $SWAYMSG "output $head mode ${w}x${h}@${r}Hz pos $px 0 scale $sc transform $tr" >/dev/null 2>&1 \
+        || $SWAYMSG "output $head pos $px 0 scale $sc" >/dev/null 2>&1 || true
+    else
+      $SWAYMSG "output $head pos $px 0" >/dev/null 2>&1 || true
+    fi
+    moved=0
+    while IFS= read -r wsname; do
+      [ -n "$wsname" ] || continue
+      $SWAYMSG "[workspace=\"^${wsname}\$\"] move workspace to output $head" >/dev/null 2>&1 && moved=$((moved + 1))
+    done <<<"$decade_ws"
+    $JQ --arg h "$head" --arg hw "$hw" --arg t "$(date +%s)" '.[$h] = {hw: $hw, since: ($t|tonumber)}' "$PARKED_FILE" >"$PARKED_FILE.tmp" && mv "$PARKED_FILE.tmp" "$PARKED_FILE"
+    log "park: $hw absent -> $head at $px,0 ($moved workspaces: $(tr '\n' ' ' <<<"$decade_ws"))"
+  done
+  # Never leave focus on a clone.
+  focused_out="$($SWAYMSG -t get_outputs -r | $JQ -r '.[] | select(.focused==true) | .name')"
+  if is_headless "$focused_out"; then
+    real_vis="$($SWAYMSG -t get_workspaces -r | $JQ -r '[.[] | select(.visible==true and (.output|startswith("HEADLESS")|not))] | .[0].name // empty')"
+    [ -n "$real_vis" ] && $SWAYMSG "workspace \"$real_vis\"" >/dev/null 2>&1 || true
+    log "park: focus moved off $focused_out to ws $real_vis"
+  fi
+  OUTPUTS="$($SWAYMSG -t get_outputs -r 2>/dev/null)" || exit 0
+  WS="$($SWAYMSG -t get_workspaces -r 2>/dev/null)" || exit 0
+fi
 
 # --- Pins: hardware ID -> workspace decade base (group*10) -------------------
 declare -A PIN_BASE
@@ -106,7 +230,7 @@ if [ -n "$ORPHANS" ]; then
 fi
 
 # --- 2. Restore snapshot for this monitor set (same sway session only) -------
-SIG="$($JQ -r '[.[] | select(.active==true) | (.make+" "+.model+" "+.serial)] | sort | join("||")' <<<"$OUTPUTS")"
+SIG="$($JQ -r '[.[] | select(.active==true and (.name|startswith("HEADLESS")|not)) | (.make+" "+.model+" "+.serial)] | sort | join("||")' <<<"$OUTPUTS")"
 SNAP="$STATE_DIR/$(printf '%s' "$SIG" | sha256sum | cut -c1-16).json"
 log "run sig=[$SIG] snap=$([ -f "$SNAP" ] && basename "$SNAP" || echo none)"
 
@@ -134,6 +258,11 @@ if [ -f "$SNAP" ]; then
       exists="$($JQ -r --argjson id "$cid" \
         '[.. | select(.id? == $id)] | length' <<<"$TREE")"
       [ "$exists" != "0" ] || continue
+      # A window the user has since hidden in the scratchpad stays there: a
+      # day-old snapshot pulled kitty-tmux out of it on 2026-09-07.
+      in_scratch="$($JQ -r --argjson id "$cid" \
+        '[.. | select(.type? == "workspace" and .name == "__i3_scratch") | recurse(.nodes[]?, .floating_nodes[]?) | select(.id? == $id)] | length' <<<"$TREE")"
+      [ "$in_scratch" = "0" ] || { log "skip con=$cid (in scratchpad)"; continue; }
       # ORDER MATTERS: the workspace move must come LAST. `move absolute
       # position` re-assigns a floating window to the VISIBLE workspace of
       # the output containing the coordinates — with the workspace move
@@ -174,6 +303,7 @@ $JQ -n -r --argjson tree "$TREE" --argjson ws "$WS" --argjson outs "$OUTPUTS" '
   | $tree
   | recurse(.nodes[]?)
   | select(.type? == "workspace" and ((.name // "") | startswith("__") | not)) as $w
+  | select(($wsout[$w.name] // "") | startswith("HEADLESS") | not)
   | $w.floating_nodes[]?
   | . as $f
   | ($orects[$wsout[$w.name] // ""] // null) as $orect
@@ -198,6 +328,20 @@ $JQ -n -r --argjson tree "$TREE" --argjson ws "$WS" --argjson outs "$OUTPUTS" '
   [ -n "$cmd" ] || continue
   $SWAYMSG "$cmd" >/dev/null 2>&1 || true
   log "refit: $cmd"
+done
+
+# --- 4. Games: re-assert fullscreen -----------------------------------------
+# `for_window ... fullscreen enable` only fires at map time; an output
+# evacuate/return cycle leaves gamescope un-fullscreened (and, once floating
+# and un-fullscreened, gamescope shrinks to a few px). Put it back.
+$JQ -r '
+  .. | select(.type? == "con" or .type? == "floating_con")
+  | select((.fullscreen_mode // 0) == 0)
+  | select(((.app_id // "") | test("^[Gg]amescope$")) or ((.window_properties.class // "") | test("^([Gg]amescope|steam_app_)")))
+  | .id' <<<"$TREE" | while IFS= read -r gid; do
+  [ -n "$gid" ] || continue
+  $SWAYMSG "[con_id=$gid] fullscreen enable" >/dev/null 2>&1 || true
+  log "game: con=$gid fullscreen re-enabled"
 done
 
 exit 0
