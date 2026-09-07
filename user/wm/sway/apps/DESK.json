@@ -1,7 +1,22 @@
 {
   "version": 1,
   "rules": [],
-  "startup": [],
+  "startup": [
+    {
+      "id": "s-zen-browser-7367",
+      "name": "Zen Browser",
+      "command": "/nix/store/qb3a224wsql65yfj3h2prwhg7rqnwdzj-zen-spotify-url-router",
+      "app_id": "^zen-beta$",
+      "workspace": "11",
+      "wait_seconds": 60,
+      "settle_seconds": 3.0,
+      "enabled": true,
+      "order": 10,
+      "notes": "Migrated 2026-09-07 from desk-startup-apps-launcher: all Zen windows belong on ws 11 (Samsung). Cold start restores Zen's own session; if already running its windows are adopted.",
+      "desktop_id": "zen-beta",
+      "updated_at": 1788758205
+    }
+  ],
   "monitors": [
     {
       "id": "main",
