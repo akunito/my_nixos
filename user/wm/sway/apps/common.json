@@ -2117,11 +2117,12 @@
       "daemons": [
         "rootful"
       ],
+      "sudo_rootful": false,
+      "prometheus_instance": "x13",
+      "enabled": true,
       "order": 40,
       "notes": "",
-      "sudo_rootful": false,
-      "enabled": true,
-      "updated_at": 0
+      "updated_at": 1788770013
     },
     {
       "id": "LAPTOP_A",
