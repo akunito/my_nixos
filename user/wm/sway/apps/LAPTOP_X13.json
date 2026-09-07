@@ -11,9 +11,23 @@
       "primary": true,
       "enabled": true,
       "notes": "Dock monitor is adopted automatically as role 'second' (group 2) the first time it is connected (settings.auto_adopt)."
+    },
+    {
+      "id": "second",
+      "criteria": "Dell Inc. DELL P2419H 20TZHC3",
+      "group": 2,
+      "name": "Dell Inc. DELL P2419H",
+      "primary": false,
+      "enabled": true,
+      "notes": "auto-adopted HDMI-A-1 on first sight",
+      "always_connected": false,
+      "updated_at": 1788800342
     }
   ],
   "settings": {
     "auto_adopt": true
-  }
+  },
+  "shortcuts": [],
+  "tools": [],
+  "nodes": []
 }
