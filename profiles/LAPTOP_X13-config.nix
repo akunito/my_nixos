@@ -259,7 +259,7 @@ in
     # NOT YET DEPLOYED HERE — the machine was off on 2026-09-02. It takes effect
     # on the next install.sh, and needs a logout/login after it.
     swayUseSwayfx = false;
-    swayAppsEnable = true; # Window rules + startup apps GUI/CLI (Hyper+Shift+n); rules live in user/wm/sway/apps/
+    swayAppsEnable = true; # Window rules + startup apps GUI/CLI (Hyper+s); rules live in user/wm/sway/apps/
     # Workspaces are pinned to monitors by hardware id from sway-apps' monitors
     # table (LAPTOP_X13.json: built-in panel = group 1, dock monitor = group 2),
     # the same model as DESK. That rules out swaysome's position-based

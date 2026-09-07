@@ -133,7 +133,7 @@ starts with a stale file.
 
 ## Opening it
 
-- `Hyper+Shift+n` (Rules) · `Hyper+grave` (Monitors)
+- `Hyper+s` (Rules) · `Hyper+grave` (Monitors)
 - rofi maintenance menu (`Hyper+Shift+Return`) → "Sway Apps: rules & startup";
   its "Startup Apps" entry now runs `sway-apps startup run`.
 - `sway-apps` / `sway-apps gui --section rules --select <id>`

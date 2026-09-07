@@ -512,8 +512,10 @@ in
             "exec ${config.home.homeDirectory}/.nix-profile/bin/desk-startup-apps-launcher";
         }
         (lib.optionalAttrs swayApps {
-          # sway-apps GUI: window rules + startup apps (also in the rofi maintenance menu)
-          "${hyper}+Shift+n" = "exec ${swayAppsBin}";
+          # sway-apps GUI (rules, shortcuts, tools, nodes, docker, monitoring).
+          # Hyper+s since 2026-09-07, the key the retired control panel had;
+          # also in the rofi maintenance menu.
+          "${hyper}+s" = "exec ${swayAppsBin}";
           # Monitors section (workspace pins per monitor). Took over the key of
           # the retired workspace-groups-gui (2026-09-06).
           "${hyper}+grave" = "exec ${swayAppsBin} gui --section monitors";
@@ -677,7 +679,7 @@ in
           # Force gamescope back to fullscreen (gaming recovery keybinding)
           "${hyper}+F9" = "exec swaymsg '[app_id=gamescope] fullscreen enable' 2>/dev/null; swaymsg '[class=gamescope] fullscreen enable' 2>/dev/null; swaymsg '[class=Gamescope] fullscreen enable' 2>/dev/null";
           "${hyper}+Shift+space" = "floating toggle";
-          # Note: "${hyper}+s" is free since the control panel was retired (2026-09-07)
+          # Note: "${hyper}+s" opens sway-apps (took over the retired control panel's key, 2026-09-07)
           # Note: "${hyper}+w" is used for workspace next_on_output (see Workspace navigation above)
           # Note: Removed "${hyper}+e" layout toggle (now used for ranger file manager)
           # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (blueman-manager)

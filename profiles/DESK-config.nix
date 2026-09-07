@@ -742,7 +742,7 @@ in
     # and the per-monitor "always connected" toggle. Rules come from
     # user/wm/sway/apps/common.json + DESK.json (seeded from the legacy nix
     # rules and swayWorkspaceOutputPins); the nix-hardcoded ones are no longer
-    # emitted. Hyper+Shift+n (rules), Hyper+grave (monitors).
+    # emitted. Hyper+s (rules), Hyper+grave (monitors).
     swayAppsEnable = true;
     stylixEnable = true; # Enable Stylix for system-wide theming
     swwwEnable = true; # Enable swww wallpaper daemon for Sway (robust across reboot + HM rebuilds)
