@@ -12,28 +12,34 @@ Owner `sway-apps` = editable in the GUI (Hyper+Shift+n → Shortcuts) or `sway-a
 
 | Keys | Name | Command | Owner |
 |---|---|---|---|
-| `Hyper+a` | Bluetooth manager | `exec ~/.config/sway/scripts/app-toggle.sh .blueman-manager-wrapped blueman-manager` | sway-apps |
 | `Hyper+b` | Bottles | `exec ~/.config/sway/scripts/app-toggle.sh com.usebottles.bottles bottles` | sway-apps |
 | `Hyper+c` | VS Code | `exec ~/.config/sway/scripts/app-toggle.sh code code --enable-features=UseOzonePlatform,Way` | sway-apps |
 | `Hyper+d` | Obsidian | `exec ~/.config/sway/scripts/app-toggle.sh md.Obsidian obsidian --no-sandbox --ozone-platfo` | sway-apps |
 | `Hyper+e` | Dolphin | `exec ~/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin` | sway-apps |
 | `Hyper+g` | Chromium | `exec ~/.config/sway/scripts/app-toggle.sh chromium-browser chromium` | sway-apps |
 | `Hyper+l` | Telegram | `exec ~/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram` | sway-apps |
-| `Hyper+m` | Mission Center | `exec ~/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter` | sway-apps |
-| `Hyper+n` | nwg-look | `exec ~/.config/sway/scripts/app-toggle.sh nwg-look nwg-look` | sway-apps |
 | `Hyper+o` | Element | `exec ~/.config/sway/scripts/app-toggle.sh 'title:^Element' element-desktop --password-stor` | sway-apps |
 | `Hyper+p` | Bitwarden | `exec ~/.config/sway/scripts/app-toggle.sh Bitwarden bitwarden` | sway-apps |
 | `Hyper+r` | Alacritty | `exec ~/.config/sway/scripts/app-toggle.sh Alacritty alacritty` | sway-apps |
-| `Hyper+s` | Control Panel | `exec ~/.config/sway/scripts/app-toggle.sh control-panel control-panel` | sway-apps |
-| `Hyper+Shift+a` | Pavucontrol | `exec ~/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol` | sway-apps |
 | `Hyper+Shift+e` | Ranger (kitty) | `exec ~/.config/sway/scripts/app-toggle.sh kitty-ranger kitty --class kitty-ranger ranger` | sway-apps |
-| `Hyper+Shift+t` | Trayscale | `exec ~/.config/sway/scripts/app-toggle.sh dev.deedles.Trayscale trayscale` | sway-apps |
 | `Hyper+t` | Kitty | `exec ~/.config/sway/scripts/app-toggle.sh kitty kitty` | sway-apps |
 | `Hyper+u` | DBeaver | `exec ~/.config/sway/scripts/app-toggle.sh io.dbeaver.DBeaverCommunity dbeaver` | sway-apps |
 | `Hyper+v` | Vivaldi | `exec ~/.config/sway/scripts/app-toggle.sh vivaldi-stable vivaldi` | sway-apps |
 | `Hyper+x` | Calculator | `exec ~/.config/sway/scripts/app-toggle.sh org.gnome.Calculator gnome-calculator` | sway-apps |
 | `Hyper+y` | Spotify | `exec ~/.config/sway/scripts/app-toggle.sh spotify spotify --enable-features=UseOzonePlatfo` | sway-apps |
 | `Hyper+z` | Zen Browser | `exec ~/.config/sway/scripts/app-toggle.sh zen-beta zen-beta` | sway-apps |
+
+## Tools
+
+| Keys | Name | Command | Owner |
+|---|---|---|---|
+| `Hyper+a` | Bluetooth manager | `exec ~/.config/sway/scripts/app-toggle.sh .blueman-manager-wrapped blueman-manager` | sway-apps |
+| `Hyper+m` | Mission Center | `exec ~/.config/sway/scripts/app-toggle.sh io.missioncenter.MissionCenter missioncenter` | sway-apps |
+| `Hyper+n` | nwg-look | `exec ~/.config/sway/scripts/app-toggle.sh nwg-look nwg-look` | sway-apps |
+| `Hyper+Shift+a` | Pavucontrol | `exec ~/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol` | sway-apps |
+| `Hyper+Shift+b` | Wallpaper (waypaper) | `exec ~/.config/sway/scripts/app-toggle.sh waypaper waypaper` | sway-apps |
+| `Hyper+Shift+d` | Displays (nwg-displays) | `exec ~/.config/sway/scripts/app-toggle.sh nwg-displays nwg-displays` | sway-apps |
+| `Hyper+Shift+t` | Trayscale | `exec ~/.config/sway/scripts/app-toggle.sh dev.deedles.Trayscale trayscale` | sway-apps |
 
 ## Gaming
 
@@ -144,9 +150,7 @@ Owner `sway-apps` = editable in the GUI (Hyper+Shift+n → Shortcuts) or `sway-a
 | `Hyper+grave` |  | `exec /home/akunito/.nix-profile/bin/sway-apps gui --section monitors` | nix |
 | `Hyper+period` |  | `exec rofi -show emoji` | nix |
 | `Hyper+Return` |  | `exec /nix/store/cr4h8m35wzmg3j2v739axb6mwagdm68b-keyboard-layout-switch/bin/keyboard-layou` | nix |
-| `Hyper+Shift+b` |  | `exec waypaper` | nix |
 | `Hyper+Shift+BackSpace` |  | `exec rofi -show power -show-icons` | nix |
-| `Hyper+Shift+d` |  | `exec nwg-displays` | nix |
 | `Hyper+Shift+End` |  | `exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway` | nix |
 | `Hyper+Shift+h` |  | `exec /home/akunito/.config/sway/scripts/waybar-toggle.sh` | nix |
 | `Hyper+Shift+j` |  | `exec /home/akunito/.config/sway/scripts/window-move.sh left` | nix |
