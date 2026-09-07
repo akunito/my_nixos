@@ -102,11 +102,20 @@ retired on 2026-09-07. What replaces it lives here, with no server:
   logs. Actions: start, stop, restart, pull + up, recreate (compose-aware).
   "Disk usage" = `docker system df -v` with volume sizes. CLI:
   `sway-apps docker ps|inspect|logs|df|start|stop|restart|pull|recreate|up|down`.
-- **Monitoring**: Prometheus is only reachable on the VPS, so every query is
-  proxied through one ssh round trip (`curl localhost:9090`). Cards: scrape
-  targets up/down, per node load / memory / root disk / uptime, NAS and
-  MariaDB backup ages, repo size; "Open Grafana" for the dashboards.
-  CLI: `sway-apps monitor overview|targets|query PROMQL`.
+- **Monitoring**: Prometheus is only reachable on the VPS, so every query
+  (instant + 6 h range series) is proxied through ONE ssh round trip
+  (`curl localhost:9090`), only when the section is shown or refreshed. Tabs
+  at the top: **Nodes** (CPU load per core, memory, every filesystem, with
+  gauges + sparklines), **Storage** (NAS ZFS pools + all filesystems),
+  **Backups** (VPS → NAS, Workstations → NAS, NAS → VPS offsite, VPS
+  databases, pfSense; the bar fills towards the 1-week limit), **Network**
+  (blackbox ping from the VPS with rtt sparklines, HTTP probes), **Targets**.
+  Tabs carry a red badge with the number of red items. Colour thresholds
+  live in `sway_apps/levels.py` and are shared with NFS, Docker and Nodes:
+  disk/memory green < 60 %, yellow 60–85 %, red > 85 %; backups yellow > 3 d,
+  red > 7 d (hourly jobs > 3 h / > 24 h); ping yellow > 80 ms, red > 200 ms
+  (LAN targets sit ~40 ms behind the tunnel); CPU load yellow > 70 % of the
+  cores, red > 100 %. CLI: `sway-apps monitor dashboard|overview|targets|query PROMQL`.
 
 ### Profiles: see other machines, copy parts, snapshots
 
@@ -167,6 +176,12 @@ Home Manager activation regenerates the include from the repo state on every
 starts with a stale file.
 
 ## Opening it
+
+`Hyper+s` runs `sway-apps gui --toggle`: the GUI is a single instance per
+session (GApplication over D-Bus), so the key hides the window when it is
+focused, focuses it when it is open elsewhere, and shows it otherwise. Any
+other `sway-apps gui --section X` launch while it runs just switches the
+section in the existing window.
 
 - `Hyper+s` (Rules) · `Hyper+grave` (Monitors)
 - rofi maintenance menu (`Hyper+Shift+Return`) → "Sway Apps: rules & startup";

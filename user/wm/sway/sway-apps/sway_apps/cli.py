@@ -1534,7 +1534,7 @@ def cmd_nfs_action(args: argparse.Namespace) -> int:
 # monitoring
 
 def cmd_monitor(args: argparse.Namespace) -> int:
-    from . import monitoring
+    from . import levels, monitoring
     st = State()
     if args.what == "targets":
         rows = monitoring.targets(st)
@@ -1543,6 +1543,23 @@ def cmd_monitor(args: argparse.Namespace) -> int:
     if args.what == "query":
         res = monitoring.query(st, args.promql or "up")
         _out(args, res, lambda: [print(json.dumps(r["metric"]), r["value"][1]) for r in res])
+        return 0
+    if args.what == "dashboard":
+        d = monitoring.dashboard(st)
+        def human_d():
+            sm = d.get("summary", {})
+            print(f"targets down: {sm.get('targets_down')} · nodes {sm.get('nodes_level') or '—'} · storage {sm.get('storage_level') or '—'} · backups {sm.get('backups_level') or '—'} · network {sm.get('network_level') or '—'}")
+            for c in d["nodes"]:
+                print(f"  [{c['level'] or '  '}] {c['node']:<12} up={c['up']} load {levels.pct_text(c['load_pct'])} mem {levels.pct_text(c['mem_pct'])} " + " ".join(f"{f['mountpoint']}={f['used_pct']:.0f}%[{f['level']}]" for f in c["fs"]))
+            for z in d["storage"]["zfs"]:
+                print(f"  [{z['level']}] zfs {z['pool']} {z['text']} healthy={z['healthy']}")
+            for b in d["backups"]:
+                print(f"  [{b['level'] or '  '}] {b['group']:<22} {b['name']:<18} {b['age_text']:<8} ok={b['ok']} {b['size_text']} {b['detail']}")
+            for n in d["network"]:
+                print(f"  [{n['level']}] {n['kind']:<4} {n['instance']:<18} {n['text']}")
+            for e in d["errors"]:
+                print("  error:", e)
+        _out(args, d, human_d)
         return 0
     ov = monitoring.overview(st)
     def human():
@@ -1627,7 +1644,7 @@ def cmd_gui(args: argparse.Namespace) -> int:
         from .gui.app import run as run_gui  # noqa: WPS433
     except ImportError as exc:
         raise CliError(f"GUI not available: {exc}")
-    return run_gui(section=getattr(args, "section", None), select=getattr(args, "select", None))
+    return run_gui(section=getattr(args, "section", None), select=getattr(args, "select", None), toggle=getattr(args, "toggle", False))
 
 
 # --------------------------------------------------------------------------
@@ -1640,7 +1657,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--version", action="version", version=f"sway-apps {__version__}")
     sub = p.add_subparsers(dest="cmd")
 
-    x = sub.add_parser("gui", help="open the GUI (default)")
+    x = sub.add_parser("gui", help="open the GUI (default); a second launch talks to the running instance")
+    x.add_argument("--toggle", action="store_true", help="hide the window if it is focused, otherwise show/focus it (for a keybinding)")
     x.add_argument("--section", choices=["startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows", "nodes", "docker", "nfs", "monitoring", "profiles", "log"], help="section to open")
     x.add_argument("--select", help="item id to select (rule id, startup id, desktop id or con_id)")
     x.set_defaults(func=cmd_gui)
@@ -1842,7 +1860,7 @@ def build_parser() -> argparse.ArgumentParser:
         x.add_argument("where"); x.set_defaults(func=cmd_nfs_action, what=w)
 
     # monitoring
-    x = sub.add_parser("monitor", help="node status from Prometheus (via the VPS) + backups"); x.add_argument("what", nargs="?", choices=["overview", "targets", "query"], default="overview"); x.add_argument("promql", nargs="?"); x.set_defaults(func=cmd_monitor)
+    x = sub.add_parser("monitor", help="node status from Prometheus (via the VPS) + backups"); x.add_argument("what", nargs="?", choices=["overview", "dashboard", "targets", "query"], default="overview"); x.add_argument("promql", nargs="?"); x.set_defaults(func=cmd_monitor)
 
     # git
     g = sub.add_parser("git", help="repo sync of the state files").add_subparsers(dest="sub", required=True)

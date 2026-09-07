@@ -515,7 +515,7 @@ in
           # sway-apps GUI (rules, shortcuts, tools, nodes, docker, monitoring).
           # Hyper+s since 2026-09-07, the key the retired control panel had;
           # also in the rofi maintenance menu.
-          "${hyper}+s" = "exec ${swayAppsBin}";
+          "${hyper}+s" = "exec ${swayAppsBin} gui --toggle";
           # Monitors section (workspace pins per monitor). Took over the key of
           # the retired workspace-groups-gui (2026-09-06).
           "${hyper}+grave" = "exec ${swayAppsBin} gui --section monitors";

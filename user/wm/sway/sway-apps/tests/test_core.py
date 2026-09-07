@@ -428,3 +428,13 @@ class Profiles(unittest.TestCase):
         self.assertEqual(len(pf.snapshots()), 3)  # copy, copy, before-restore
         pf.prune(keep=1)
         self.assertEqual(len(pf.snapshots()), 1)
+
+
+class Levels(unittest.TestCase):
+    def test_bands(self):
+        from sway_apps import levels
+        self.assertEqual([levels.pct(v) for v in (None, 10, 60, 84.9, 85, 99)], ["", "ok", "warn", "warn", "err", "err"])
+        self.assertEqual([levels.age(v) for v in (3600, 4 * 86400, 8 * 86400)], ["ok", "warn", "err"])
+        self.assertEqual([levels.age(v, hourly=True) for v in (600, 4 * 3600, 30 * 3600)], ["ok", "warn", "err"])
+        self.assertEqual(levels.worst("ok", "", "warn"), "warn"); self.assertEqual(levels.worst("err", "warn"), "err"); self.assertEqual(levels.worst(), "")
+        self.assertEqual(levels.parse_pct("12.5%"), 12.5); self.assertIsNone(levels.parse_pct("")); self.assertEqual(levels.flag(False), "err")

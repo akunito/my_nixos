@@ -9,7 +9,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
-from .. import generate, gitsync, log, nfsctl, paths, profiles as pf  # noqa: E402
+from .. import generate, gitsync, levels, log, nfsctl, paths, profiles as pf  # noqa: E402
 from .panels import Panel  # noqa: E402
 from .widgets import button, chip, confirm, list_row, scrolled  # noqa: E402
 
@@ -230,13 +230,13 @@ class NfsPanel(Panel):
     def refresh(self) -> None:
         rows = []
         for m in self._mounts:
-            chips = [("mounted" if m.active else m.sub_state, "ok" if m.active else "warn")]
+            chips = [("mounted" if m.active else ("not mounted" if m.sub_state == "dead" else m.sub_state), "ok" if m.active else "err")]
             if m.automount_unit:
-                chips.append(("automount " + ("on" if m.automount_active else "off"), "" if m.automount_active else "warn"))
+                chips.append(("automount " + ("on" if m.automount_active else "off"), "ok" if m.automount_active else "warn"))
             if m.server_reachable is not None:
                 chips.append(("server up" if m.server_reachable else "SERVER DOWN", "ok" if m.server_reachable else "err"))
             if m.usage.get("pct"):
-                chips.append((f"{m.usage['pct']} used · {m.usage['avail']} free", ""))
+                chips.append((f"{m.usage['pct']} used · {m.usage['avail']} free", levels.pct(levels.parse_pct(m.usage["pct"]))))
             rows.append((m.unit, list_row(m.where, m.what, chips, disabled=not m.active), m))
         self.fill_list(rows)
         self.toolbar.get_title_widget().set_subtitle(f"{len(self._mounts)} NFS mounts · {sum(1 for m in self._mounts if m.active)} mounted")

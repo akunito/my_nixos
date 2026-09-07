@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import subprocess
 import threading
+import time
 
 import gi
 
@@ -12,8 +13,9 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
-from .. import dockerctl, log, monitoring, paths, swayipc  # noqa: E402
+from .. import levels, dockerctl, log, monitoring, paths, swayipc  # noqa: E402
 from ..state import SCOPES, Node  # noqa: E402
+from . import charts
 from .panels import Panel  # noqa: E402
 from .widgets import button, chip, combo_row, combo_value, confirm, entry_row, list_row, scrolled, switch_row  # noqa: E402
 
@@ -52,6 +54,8 @@ class NodesPanel(Panel):
             pr = self._probe.get(n.id)
             if pr:
                 chips.append(("up" if pr[0] else "DOWN", "ok" if pr[0] else "err"))
+            elif not n.enabled:
+                chips.append(("disabled", "warn"))
             rows.append((n.id, list_row(f"{n.id}  ·  {n.name}", (n.ssh or "this machine") + (f"  ·  {pr[1]}" if pr and pr[0] else ""), chips, disabled=not n.enabled), n))
         self.fill_list(rows)
         self.toolbar.get_title_widget().set_subtitle(f"{len(self.ctl.state.nodes())} nodes · deploy, docker, monitoring targets")
@@ -226,11 +230,13 @@ class DockerPanel(Panel):
                 hdr.set_child(lbl); rows.append((f"hdr:{grp}", hdr, None)); last_group = grp
             chips = [(c.state, "ok" if c.state == "running" else "err" if c.state in ("exited", "dead") else "warn")]
             if c.health:
-                chips.append((c.health, "ok" if c.health == "healthy" else "warn"))
+                chips.append((c.health, "ok" if c.health == "healthy" else "err" if c.health == "unhealthy" else "warn"))
             if c.cpu_pct:
-                chips.append((f"cpu {c.cpu_pct}", ""))
+                chips.append((f"cpu {c.cpu_pct}", levels.load(levels.parse_pct(c.cpu_pct))))
             if c.mem_usage:
-                chips.append((f"mem {c.mem_usage.split(' / ')[0]}" + (f" / {c.mem_limit // 2**20}M" if c.mem_limit else ""), ""))
+                # mem_pct is against the limit when one is set, else against the host
+                chips.append((f"mem {c.mem_usage.split(' / ')[0]}" + (f" / {c.mem_limit // 2**20}M" if c.mem_limit else "") + (f" · {c.mem_pct}" if c.mem_pct else ""),
+                              levels.pct(levels.parse_pct(c.mem_pct)) if c.mem_limit else ""))
             rows.append((f"{c.node}/{c.daemon}/{c.name}", list_row(c.name, f"{c.image}  ·  {c.status}", chips, disabled=c.state != "running"), c))
         self.fill_list(rows)
         self.toolbar.get_title_widget().set_subtitle(f"{len(self._containers)} containers · {sum(1 for c in self._containers if c.state == 'running')} running")
@@ -343,59 +349,188 @@ class DockerPanel(Panel):
 # Monitoring
 
 class MonitoringPanel(Gtk.Box):
+    """Tabs: Nodes · Storage · Backups · Network · Targets. Everything comes from
+    ONE ssh round trip to the VPS (monitoring.dashboard), only when shown/refreshed."""
+
+    TABS = (("nodes", "Nodes", "computer-symbolic"), ("storage", "Storage", "drive-harddisk-symbolic"),
+            ("backups", "Backups", "document-save-symbolic"), ("network", "Network", "network-wireless-symbolic"),
+            ("targets", "Targets", "emblem-ok-symbolic"))
+
     def __init__(self, win) -> None:
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.win = win; self.ctl = win.ctl
-        self.toolbar = Adw.HeaderBar(); self.toolbar.set_title_widget(Adw.WindowTitle(title="Monitoring", subtitle="Prometheus via the VPS · backups"))
+        self.stack = Adw.ViewStack()
+        self.pages: dict[str, Gtk.Box] = {}
+        for key, title, icon in self.TABS:
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12); box.add_css_class("sa-detail")
+            self.pages[key] = box
+            self.stack.add_titled_with_icon(scrolled(box), key, title, icon)
+        switcher = Adw.ViewSwitcher(stack=self.stack, policy=Adw.ViewSwitcherPolicy.WIDE)
+        self.toolbar = Adw.HeaderBar(); self.toolbar.set_title_widget(switcher)
         self.append(self.toolbar)
         self.toolbar.pack_start(button("Refresh", self.load, icon="view-refresh-symbolic"))
-        self.toolbar.pack_end(button("Open Grafana", lambda: (swayipc.exec_(f"xdg-open {monitoring.GRAFANA_URL}"), None), icon="web-browser-symbolic"))
-        self.body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12); self.body.add_css_class("sa-detail")
-        self.append(scrolled(self.body))
+        self.toolbar.pack_end(button("Grafana", lambda: (swayipc.exec_(f"xdg-open {monitoring.GRAFANA_URL}"), None), icon="web-browser-symbolic"))
+        self.status = Gtk.Label(xalign=0, wrap=True); self.status.add_css_class("dim-label"); self.status.set_margin_start(14); self.status.set_margin_top(4)
+        self.append(self.status)
+        self.append(self.stack)
+        self.stack.set_vexpand(True)
         self._loading = False; self._loaded = False
+        self._legend = (f"green < {levels.PCT_WARN:.0f}% · yellow {levels.PCT_WARN:.0f}–{levels.PCT_ERR:.0f}% · red > {levels.PCT_ERR:.0f}% (disk, memory) · "
+                        f"CPU load per core: yellow > {levels.LOAD_WARN:.0f}%, red > {levels.LOAD_ERR:.0f}% · "
+                        f"backups: yellow > {levels.BACKUP_WARN_S / 86400:.0f} d, red > {levels.BACKUP_ERR_S / 86400:.0f} d (hourly jobs: > {levels.HOURLY_WARN_S / 3600:.0f} h / > {levels.HOURLY_ERR_S / 3600:.0f} h) · "
+                        f"ping (from the VPS): yellow > {levels.RTT_WARN_MS:.0f} ms, red > {levels.RTT_ERR_MS:.0f} ms")
 
-    def on_show(self) -> None:
+    def on_show(self, tab: str | None = None) -> None:
+        if tab in self.pages:
+            self.stack.set_visible_child_name(tab)
         if not self._loaded:
             self.load()
 
     def refresh(self) -> None:
         pass
 
-    def _clear(self):
-        c = self.body.get_first_child()
+    @staticmethod
+    def _clear(box: Gtk.Box) -> None:
+        c = box.get_first_child()
         while c is not None:
-            n = c.get_next_sibling(); self.body.remove(c); c = n
+            n = c.get_next_sibling(); box.remove(c); c = n
+
+    def _flow(self) -> Gtk.FlowBox:
+        fb = Gtk.FlowBox(); fb.set_selection_mode(Gtk.SelectionMode.NONE); fb.set_homogeneous(True)
+        fb.set_min_children_per_line(1); fb.set_max_children_per_line(3); fb.set_column_spacing(12); fb.set_row_spacing(12)
+        fb.set_valign(Gtk.Align.START)
+        return fb
 
     def load(self) -> None:
         if self._loading:
             return
         self._loading = True
-        self._clear(); self.body.append(Gtk.Label(label="Querying Prometheus through the VPS…", xalign=0, css_classes=["dim-label"]))
+        self.status.set_text("Querying Prometheus through the VPS (one ssh round trip)…")
         st = self.ctl.state
 
         def done(res, err):
-            self._loading = False; self._loaded = True; self._clear()
+            self._loading = False; self._loaded = True
             if err:
-                self.body.append(Gtk.Label(label=f"Monitoring unavailable: {err}", xalign=0, css_classes=["error"])); return
-            down = [t for t in res["targets"] if not t["up"]]
-            g = Adw.PreferencesGroup(title=f"Targets: {len(res['targets']) - len(down)} up · {len(down)} down")
-            for t in down:
-                g.add(Adw.ActionRow(title=f"{t['job']}", subtitle=t["instance"], css_classes=["error"]))
-            if not down:
-                g.add(Adw.ActionRow(title="Everything scraped by Prometheus is up"))
-            self.body.append(g)
-            for card in res["nodes"]:
-                m = card["metrics"]
-                gn = Adw.PreferencesGroup(title=f"{card['node']}  ·  {m['up']['text']}", description=card["name"])
-                for key, label in (("load1", "Load (1m)"), ("mem_used_pct", "Memory used"), ("root_used_pct", "Root filesystem used"), ("uptime_s", "Uptime")):
-                    gn.add(Adw.ActionRow(title=label, subtitle=m[key]["text"]))
-                self.body.append(gn)
-            gl = Adw.PreferencesGroup(title="Backups")
-            gb = res["global"]
-            for key, label in (("nas_backup_age_s", "NAS backup age"), ("nas_backup_status", "NAS backup status (1 = ok)"), ("nas_offsite_backup_last_success", "NAS offsite backup, last success"),
-                               ("mariadb_backup_daily_age_s", "MariaDB daily backup age"), ("backup_repo_size_bytes", "Backup repo size")):
-                gl.add(Adw.ActionRow(title=label, subtitle=gb.get(key, {}).get("text", "—")))
-            self.body.append(gl)
-            for e in res["errors"]:
-                self.body.append(Gtk.Label(label=e, xalign=0, css_classes=["error"]))
-        _bg(lambda: monitoring.overview(st), done)
+                self.status.set_text(f"Monitoring unavailable: {err}"); self.status.add_css_class("error"); return
+            self.status.remove_css_class("error")
+            sm = res.get("summary", {})
+            when = time.strftime("%H:%M:%S", time.localtime(res.get("generated", time.time())))
+            self.status.set_text(f"Updated {when} · targets down {sm.get('targets_down', 0)} · " + " · ".join(
+                f"{k} {v or '—'}" for k, v in (("nodes", sm.get("nodes_level")), ("storage", sm.get("storage_level")), ("backups", sm.get("backups_level")), ("network", sm.get("network_level")))))
+            for key, _t, _i in self.TABS:
+                page = self.stack.get_child_by_name(key)
+                page.set_badge_number(0); page.set_needs_attention(False)
+            self._build_nodes(res); self._build_storage(res); self._build_backups(res); self._build_network(res); self._build_targets(res)
+            for e in res.get("errors", []):
+                self.status.set_text(self.status.get_text() + f" · {e}")
+        _bg(lambda: monitoring.dashboard(st), done)
+
+    def _attention(self, key: str, items: list[dict]) -> None:
+        bad = sum(1 for x in items if x.get("level") == "err")
+        page = self.stack.get_child_by_name(key)
+        page.set_badge_number(bad); page.set_needs_attention(bad > 0)
+
+    def _legend_label(self) -> Gtk.Label:
+        return Gtk.Label(label=self._legend, xalign=0, wrap=True, css_classes=["sa-legend"])
+
+    # ---- tabs ------------------------------------------------------------------
+    def _build_nodes(self, res: dict) -> None:
+        box = self.pages["nodes"]; self._clear(box)
+        box.append(self._legend_label())
+        fb = self._flow()
+        for c in res["nodes"]:
+            up_text = "UP" if c["up"] else ("DOWN" if c["up"] is False else "not scraped")
+            card, body = charts.card(f"{c['node']}  ·  {c['name']}", up_text, c["up_level"] or "warn")
+            if c["lightweight"]:
+                body.append(Gtk.Label(label="lightweight exporter: filesystems only (no CPU / memory series)", xalign=0, wrap=True, css_classes=["sa-legend"]))
+            else:
+                l1 = c["load1"]; ncpu = c["ncpu"]
+                body.append(charts.Gauge("CPU load (1 m) vs cores", c["load_pct"], f"{l1:.2f} on {int(ncpu)} cores · {c['load_pct']:.0f}%" if c["load_pct"] is not None else "—", c["load_level"]))
+                body.append(charts.Sparkline(c["load_series"], c["load_level"], ymax=100))
+                body.append(charts.Gauge("Memory used", c["mem_pct"], levels.pct_text(c["mem_pct"]), c["mem_level"]))
+                body.append(charts.Sparkline(c["mem_series"], c["mem_level"], ymax=100))
+                body.append(Gtk.Label(label=f"uptime {c['uptime_text']} · sparklines: last 6 h", xalign=0, css_classes=["sa-legend"]))
+            for f in c["fs"]:
+                body.append(charts.Gauge(f["mountpoint"], f["used_pct"], levels.pct_text(f["used_pct"]), f["level"], f["text"]))
+            if not c["fs"] and c["up"] is False:
+                body.append(Gtk.Label(label="no data: the exporter is down", xalign=0, css_classes=["sa-legend"]))
+            fb.append(card)
+        box.append(fb)
+        self._attention("nodes", res["nodes"])
+
+    def _build_storage(self, res: dict) -> None:
+        box = self.pages["storage"]; self._clear(box)
+        fb = self._flow()
+        z = res["storage"]["zfs"]
+        if z:
+            card, body = charts.card("NAS ZFS pools", "healthy" if all(p["healthy"] for p in z) else "DEGRADED", "ok" if all(p["healthy"] for p in z) else "err")
+            for pool in z:
+                body.append(charts.Gauge(pool["pool"], pool["used_pct"], levels.pct_text(pool["used_pct"]), pool["level"], pool["text"] + ("" if pool["healthy"] else " · NOT healthy")))
+            fb.append(card)
+        for c in res["nodes"]:
+            if not c["fs"]:
+                continue
+            worst = levels.worst(*[f["level"] for f in c["fs"]])
+            card, body = charts.card(c["node"], f"{len(c['fs'])} filesystems", worst)
+            for f in c["fs"]:
+                body.append(charts.Gauge(f["mountpoint"], f["used_pct"], levels.pct_text(f["used_pct"]), f["level"], f["text"]))
+            fb.append(card)
+        for inst, fss in res["storage"].get("other", {}).items():
+            card, body = charts.card(f"instance {inst}", "no node entry", "warn")
+            for f in fss:
+                body.append(charts.Gauge(f["mountpoint"], f["used_pct"], levels.pct_text(f["used_pct"]), f["level"], f["text"]))
+            fb.append(card)
+        box.append(fb)
+        self._attention("storage", z + [f for c in res["nodes"] for f in c["fs"]])
+
+    def _build_backups(self, res: dict) -> None:
+        box = self.pages["backups"]; self._clear(box)
+        box.append(Gtk.Label(label="The bar shows how close each backup is to its limit (1 week for daily jobs, 24 h for hourly ones). Red = older than the limit or the last run failed.", xalign=0, wrap=True, css_classes=["sa-legend"]))
+        fb = self._flow()
+        groups: dict[str, list[dict]] = {}
+        for b in res["backups"]:
+            groups.setdefault(b["group"], []).append(b)
+        for g, items in groups.items():
+            worst = levels.worst(*[b["level"] for b in items])
+            card, body = charts.card(g, {"ok": "all fresh", "warn": "getting old", "err": "ATTENTION", "": "—"}[worst], worst)
+            for b in items:
+                limit = levels.HOURLY_ERR_S if b["hourly"] else levels.BACKUP_ERR_S
+                pct = None if b["age_s"] is None else min(100.0, 100 * b["age_s"] / limit)
+                value = ("never" if b["age_s"] is None else f"{b['age_text']} ago") + ("" if b["ok"] in (True, None) else " · FAILED")
+                sub = " · ".join(x for x in (b["size_text"], b["detail"]) if x)
+                body.append(charts.Gauge(b["name"], pct, value, b["level"], sub))
+            fb.append(card)
+        box.append(fb)
+        self._attention("backups", res["backups"])
+
+    def _build_network(self, res: dict) -> None:
+        box = self.pages["network"]; self._clear(box)
+        fb = self._flow()
+        icmp = [n for n in res["network"] if n["kind"] == "icmp"]; http = [n for n in res["network"] if n["kind"] == "http"]
+        if icmp:
+            card, body = charts.card("Ping from the VPS", f"{sum(1 for n in icmp if not n['up'])} down", levels.worst(*[n["level"] for n in icmp]))
+            for n in icmp:
+                pct = None if n["rtt_ms"] is None else min(100.0, 100 * n["rtt_ms"] / levels.RTT_ERR_MS)
+                body.append(charts.Gauge(n["instance"], pct if n["up"] else 100, n["text"] if n["up"] else "DOWN", n["level"]))
+                if n["series"]:
+                    body.append(charts.Sparkline(n["series"], n["level"], height=26))
+            body.append(Gtk.Label(label="sparklines: rtt over the last 6 h", xalign=0, css_classes=["sa-legend"]))
+            fb.append(card)
+        if http:
+            card, body = charts.card("HTTP probes", f"{sum(1 for n in http if not n['up'])} failing", levels.worst(*[n["level"] for n in http]))
+            for n in http:
+                pct = None if n.get("duration_s") is None else min(100.0, 100 * n["duration_s"] / levels.HTTP_ERR_S)
+                body.append(charts.Gauge(n["instance"], pct if n["up"] else 100, n["text"] if n["up"] else f"FAILING · {n['text']}", n["level"]))
+            fb.append(card)
+        box.append(fb)
+        self._attention("network", res["network"])
+
+    def _build_targets(self, res: dict) -> None:
+        box = self.pages["targets"]; self._clear(box)
+        lb = Gtk.ListBox(); lb.add_css_class("sa-list"); lb.set_selection_mode(Gtk.SelectionMode.NONE)
+        for t in res["targets"]:
+            lb.append(list_row(t["job"], t["instance"], [("UP" if t["up"] else "DOWN", t["level"])]))
+        down = sum(1 for t in res["targets"] if not t["up"])
+        box.append(Gtk.Label(label=f"{len(res['targets'])} scrape targets · {down} down", xalign=0, css_classes=["sa-legend"]))
+        box.append(lb)
+        self._attention("targets", res["targets"])

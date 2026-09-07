@@ -9,7 +9,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from .. import __version__, gitsync, log, paths  # noqa: E402
+from .. import __version__, gitsync, log, paths, swayipc  # noqa: E402
 from . import theme  # noqa: E402
 from .controller import Controller, Outcome  # noqa: E402
 from .panels import AppsPanel, LogPanel, RulesPanel, StartupPanel, WindowsPanel  # noqa: E402
@@ -321,11 +321,32 @@ class MainWindow(Adw.ApplicationWindow):
 
 
 class SwayAppsApplication(Adw.Application):
-    def __init__(self, section: str | None = None, select: str | None = None) -> None:
-        super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.NON_UNIQUE)
+    """Single instance per session: a second `sway-apps gui …` forwards its
+    arguments to the running one (D-Bus), so Hyper+s can toggle the window."""
+
+    def __init__(self, section: str | None = None, select: str | None = None, toggle: bool = False) -> None:
+        super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.ctl: Controller | None = None
         self.section = section
         self.select = select
+        self.toggle = toggle
+
+    def do_command_line(self, cmdline) -> int:
+        args = list(cmdline.get_arguments())[1:]
+        self.section = self.select = None; self.toggle = False
+        i = 0
+        while i < len(args):
+            a = args[i]
+            if a == "--toggle":
+                self.toggle = True
+            elif a == "--section" and i + 1 < len(args):
+                self.section = args[i + 1]; i += 1
+            elif a == "--select" and i + 1 < len(args):
+                self.select = args[i + 1]; i += 1
+            i += 1
+        _log.debug("command line: section=%s select=%s toggle=%s remote=%s", self.section, self.select, self.toggle, cmdline.get_is_remote())
+        self.activate()
+        return 0
 
     def do_startup(self) -> None:
         Adw.Application.do_startup(self)
@@ -341,11 +362,29 @@ class SwayAppsApplication(Adw.Application):
         _log.info("theme: source=%s scheme=%s", source, scheme)
 
     def do_activate(self) -> None:
-        win = self.props.active_window
+        win = self.get_windows()[0] if self.get_windows() else None
         if not win:
             if self.ctl is None:
                 self.ctl = Controller()
             win = MainWindow(self, self.ctl)
+        elif self.toggle and not self.section:
+            if win.is_visible() and win.is_active():
+                _log.info("toggle: hide")
+                win.set_visible(False)
+                return
+            if win.is_visible():
+                # mapped but not focused (other workspace / behind): ask sway to bring it here
+                _log.info("toggle: focus")
+                try:
+                    swayipc.command(f'[app_id="{APP_ID}"] focus')
+                except Exception as exc:  # noqa: BLE001
+                    _log.debug("focus via sway failed: %s", exc)
+                win.present()
+                return
+            _log.info("toggle: show")
+            win.present()
+            win.refresh_git()
+            return
         win.present()
         if self.section:
             panel = win.panels[self.section]
@@ -363,7 +402,14 @@ class SwayAppsApplication(Adw.Application):
                     win.toast(f"{self.select}: not found in {self.section}", error=True)
 
 
-def run(section: str | None = None, select: str | None = None) -> int:
+def run(section: str | None = None, select: str | None = None, toggle: bool = False) -> int:
     log.setup()
-    app = SwayAppsApplication(section=section, select=select)
-    return app.run([sys.argv[0]])
+    app = SwayAppsApplication(section=section, select=select, toggle=toggle)
+    argv = [sys.argv[0]]
+    if section:
+        argv += ["--section", section]
+    if select:
+        argv += ["--select", select]
+    if toggle:
+        argv.append("--toggle")
+    return app.run(argv)

@@ -77,3 +77,16 @@
 .sa-tools row { padding: 4px 14px; margin: 0 6px; min-height: 28px; }
 .sa-tools row:hover { background-color: alpha(@accent_bg_color, 0.12); }
 .sa-tools label { font-size: 0.95em; }
+
+/* level colours (see levels.py): ok / warn / err */
+.sa-chip.ok   { background-color: alpha(@sa_base0B, 0.22); color: @sa_base0B; }
+.sa-chip.warn { background-color: alpha(@sa_base0A, 0.25); color: @sa_base0A; }
+.sa-chip.err  { background-color: alpha(@sa_base08, 0.25); color: @sa_base08; }
+.sa-level-ok   { color: @sa_base0B; }
+.sa-level-warn { color: @sa_base0A; }
+.sa-level-err  { color: @sa_base08; }
+.sa-card { background-color: alpha(@window_fg_color, 0.04); border-radius: 12px; padding: 12px 14px; }
+.sa-card-title { font-weight: 700; }
+.sa-gauge-title { font-size: 0.85em; opacity: 0.8; }
+.sa-gauge-value { font-size: 0.85em; font-weight: 600; font-family: monospace; }
+.sa-legend { font-size: 0.78em; opacity: 0.6; }
