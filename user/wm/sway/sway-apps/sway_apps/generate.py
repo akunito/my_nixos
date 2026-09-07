@@ -57,7 +57,9 @@ def render(state: State, include_disabled: bool = False) -> str:
 
 
 def validate(text: str) -> tuple[bool, str]:
-    return swayipc.validate_config_text(text)
+    # Prepend the nix-owned bindings: the include may `unbindsym` one of them,
+    # which sway can only check when the binding exists in the same parse.
+    return swayipc.validate_config_text(_shortcuts.validation_context() + text)
 
 
 def install(text: str, target: Path | None = None) -> Path:

@@ -147,11 +147,14 @@ class Shortcut:
             return f"exec {self.command}"
         return self.command
 
-    def render(self, with_unbind: bool = False) -> str:
+    def render(self, with_unbind: bool = False, unbind_flags: str = "") -> str:
         flags = ("--release " if self.release else "") + ("--locked " if self.locked else "")
         keys = sway_keys(self.keys)
         line = f"bindsym {flags}{keys} {self.sway_command()}"
-        return (f"unbindsym {keys}\n" if with_unbind else "") + line
+        # unbindsym must repeat the flags of the binding it removes
+        # ("Could not find binding ... for the given flags" otherwise).
+        uf = (unbind_flags.strip() + " ") if unbind_flags.strip() else ""
+        return (f"unbindsym {uf}{keys}\n" if with_unbind else "") + line
 
 
 # --------------------------------------------------------------------------
@@ -184,8 +187,10 @@ def conflicts(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = None
     """id -> {'nix': cmd | None, 'tool': [other ids]} for every shortcut whose folded keys collide."""
     nix = nix if nix is not None else nix_bindings()
     nixmap: dict[str, str] = {}
+    nixflags: dict[str, str] = {}
     for b in nix:
         nixmap.setdefault(b["fold"], b["command"])
+        nixflags.setdefault(b["fold"], b.get("flags", ""))
     byfold: dict[str, list[str]] = {}
     for sc in shortcuts:
         try:
@@ -201,7 +206,7 @@ def conflicts(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = None
         others = [i for i in byfold.get(f, []) if i != sc.id]
         n = nixmap.get(f)
         if n is not None or others:
-            out[sc.id] = {"nix": n, "tool": others}
+            out[sc.id] = {"nix": n, "nix_flags": nixflags.get(f, ""), "tool": others}
     return out
 
 
@@ -229,8 +234,14 @@ def render_all(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = Non
             continue
         seen.add(f)
         lines.append(f"# {sc.name} [{sc.id}]" + (" (overrides nix)" if c and c["nix"] else ""))
-        lines.append(sc.render(with_unbind=bool(c and c["nix"])))
+        lines.append(sc.render(with_unbind=bool(c and c["nix"]), unbind_flags=(c or {}).get("nix_flags", "")))
     return "\n".join(lines) + "\n", warns
+
+
+def validation_context(nix: list[dict[str, str]] | None = None) -> str:
+    """The nix bindsym lines, so an include with `unbindsym` validates on its own."""
+    nix = nix if nix is not None else nix_bindings()
+    return "".join(f"bindsym {(b['flags'] + ' ') if b['flags'] else ''}{b['sway_keys']} {b['command']}\n" for b in nix)
 
 
 def doc_markdown(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = None) -> str:

@@ -143,7 +143,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.nav.select_row(self.nav.get_row_at_index(1))  # Rules first: the main use
         # Pick up edits made on the other machine before the user edits here.
         if gitsync.auto_sync_enabled():
-            GLib.idle_add(lambda: (self.run_outcome(self.ctl.git_sync, refresh_git=True, refresh_all=True), False)[1])
+            GLib.idle_add(self._sync_on_open)
         self.refresh_git()
         GLib.timeout_add_seconds(20, self._tick_git)
 
@@ -156,6 +156,22 @@ class MainWindow(Adw.ApplicationWindow):
             ctrl.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(f"<Control>{i}"),
                                                Gtk.CallbackAction.new(lambda *_a, k=key: (self.show_section(k), True)[1])))
         self.add_controller(ctrl)
+
+    def _sync_on_open(self) -> bool:
+        """Quiet unless upstream had something for us or a push happened."""
+        try:
+            out = self.ctl.git_sync()
+        except Exception as exc:
+            self.toast(f"Sync failed: {exc}", error=True); return False
+        d = out.details or {}
+        if not out.ok:
+            self.toast(out.message, error=True)
+        elif d.get("behind") or d.get("pushed") or d.get("merged"):
+            self.toast(out.message)
+            for p in self.panels.values():
+                p.refresh()
+        self.refresh_git()
+        return False
 
     # ---- navigation ---------------------------------------------------------
     def _on_nav(self, _lb: Gtk.ListBox, row: Gtk.ListBoxRow | None) -> None:

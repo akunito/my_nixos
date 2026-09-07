@@ -272,6 +272,12 @@ class Shortcuts(unittest.TestCase):
         text, warns = sc.render_all([a, b], nix)
         self.assertIn("unbindsym Mod4+Control+Mod1+t\nbindsym Mod4+Control+Mod1+t exec ~/.config/sway/scripts/app-toggle.sh kitty kitty", text)
         self.assertEqual(warns, [])
+        # flags of the nix binding are repeated on the unbindsym
+        nix2 = [{"keys": "Super+l", "sway_keys": "Mod4+l", "fold": sc.fold("Super+l"), "command": "exec lock", "flags": "--release"}]
+        d = sc.Shortcut.new("Super+l", "exec", command="other", override=True)
+        text, _ = sc.render_all([d], nix2)
+        self.assertIn("unbindsym --release Mod4+l\nbindsym Mod4+l exec other", text)
+        self.assertIn("bindsym --release Mod4+l exec lock\n", sc.validation_context(nix2))
 
     def test_nix_parse(self):
         from sway_apps import shortcuts as sc

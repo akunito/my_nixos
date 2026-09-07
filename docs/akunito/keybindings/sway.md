@@ -12,6 +12,8 @@ related_files:
 
 # SwayFX Keybindings Reference
 
+> Application launchers (the `app-toggle.sh` bindings) are owned by **sway-apps** since 2026-09-07 and are editable in its Shortcuts section; the complete, generated table of every binding is in [sway-bindings.md](sway-bindings.md).
+
 Complete reference for all SwayFX keybindings in this NixOS configuration.
 
 ## Table of Contents
