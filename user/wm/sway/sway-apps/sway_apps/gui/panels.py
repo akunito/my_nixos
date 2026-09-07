@@ -60,7 +60,42 @@ class Panel(Gtk.Box):
         self.paned.set_end_child(scrolled(self.detail))
         self.items: list[Any] = []
         self.selected_id: str | None = None
+        # Unsaved-edit tracking: the detail form sets self._dirty_save to a
+        # callable that persists the current form; None when nothing pending.
+        self._dirty_save = None
+        self._dirty_banner: Adw.Banner | None = None
         self.show_placeholder()
+
+    def has_unsaved(self) -> bool:
+        return self._dirty_save is not None
+
+    def save_unsaved(self) -> bool:
+        """Persist pending edits (used by the footer Apply). True if saved."""
+        if self._dirty_save is None:
+            return False
+        fn = self._dirty_save
+        self._dirty_save = None
+        fn()
+        return True
+
+    def mark_dirty(self, save_fn) -> None:
+        self._dirty_save = save_fn
+        if self._dirty_banner is not None:
+            self._dirty_banner.set_revealed(True)
+
+    def clear_dirty(self) -> None:
+        self._dirty_save = None
+        if self._dirty_banner is not None:
+            self._dirty_banner.set_revealed(False)
+
+    def attach_banner(self, on_save) -> None:
+        """Top-of-detail banner shown while the form has unsaved changes."""
+        b = Adw.Banner(title="Unsaved changes — Save applies them to sway and commits")
+        b.set_button_label("Save")
+        b.connect("button-clicked", lambda *_: on_save())
+        b.set_revealed(False)
+        self._dirty_banner = b
+        self.detail.append(b)
 
     # hooks
     def on_show(self) -> None:
@@ -79,6 +114,8 @@ class Panel(Gtk.Box):
         pass
 
     def clear_detail(self) -> None:
+        self._dirty_save = None
+        self._dirty_banner = None
         child = self.detail.get_first_child()
         while child is not None:
             nxt = child.get_next_sibling()
@@ -215,6 +252,7 @@ class RulesPanel(Panel):
     def show_detail(self, rule: Rule, is_new: bool = False) -> None:
         self.clear_detail()
         form = RuleForm.from_actions(rule.actions)
+        self.attach_banner(lambda: do_save())
         self.detail_header("New rule" if is_new else rule.name, rule.render() if not is_new else "fill in the criteria and actions, then Test or Save")
 
         g_meta = Adw.PreferencesGroup(title="Rule")
@@ -337,6 +375,8 @@ class RulesPanel(Panel):
                 new.name = new.default_name()
             return new
 
+        baseline = rule.render() + "|" + str(rule.enabled) + "|" + rule.scope + "|" + rule.name
+
         def update_preview(*_a) -> None:
             r = collect()
             probs = r.problems()
@@ -344,6 +384,11 @@ class RulesPanel(Panel):
             if tprob:
                 probs = probs + [tprob]
             preview.set_text(r.render() + ("\n⚠ " + "; ".join(probs) if probs else ""))
+            now = r.render() + "|" + str(r.enabled) + "|" + r.scope + "|" + r.name
+            if is_new or now != baseline:
+                self.mark_dirty(do_save)
+            else:
+                self.clear_dirty()
         update_preview()
         for r in list(crit_rows.values()) + [f_ws, f_out, f_rw, f_rh, f_bpx, f_op, f_mark, name_row] + ([f_cr] if f_cr else []):
             r.connect("changed", update_preview)
@@ -370,6 +415,7 @@ class RulesPanel(Panel):
             r = collect()
             out = self.win.run_outcome(lambda: self.ctl.save_rule(r, r.scope))
             if out is not None and out.ok:
+                self.clear_dirty()
                 self.selected_id = r.id
                 self._draft = None
                 self.refresh()
@@ -379,7 +425,7 @@ class RulesPanel(Panel):
                 self.win.run_outcome(lambda: self.ctl.delete_rule(rule)), self.show_placeholder(), self.refresh()))
 
         btns = [button("Match", do_match), button("Test", do_test, icon="media-playback-start-symbolic"),
-                button("Save", do_save, style="suggested-action", icon="document-save-symbolic")]
+                button("Save & apply", do_save, style="suggested-action", icon="document-save-symbolic")]
         if not is_new:
             btns.insert(0, button("Delete", do_delete, style="destructive-action"))
         self.action_bar(*btns)
@@ -484,6 +530,7 @@ class StartupPanel(Panel):
 
     def show_detail(self, e: StartupEntry, is_new: bool = False) -> None:
         self.clear_detail()
+        self.attach_banner(lambda: do_save())
         self.detail_header("New startup entry" if is_new else e.name, e.command if not is_new else "command is launched via `swaymsg exec`")
         g = Adw.PreferencesGroup(title="Entry")
         name = entry_row("Name", e.name)
@@ -529,8 +576,21 @@ class StartupPanel(Panel):
             n = collect()
             out = self.win.run_outcome(lambda: self.ctl.save_startup(n, n.scope))
             if out is not None and out.ok:
+                self.clear_dirty()
                 self.selected_id = n.id
                 self.refresh()
+
+        def _dirty(*_a) -> None:
+            self.mark_dirty(do_save)
+        for r in (name, cmd, app_id, ws, notes):
+            r.connect("changed", _dirty)
+        for r in (wait, settle, order):
+            r.connect("notify::value", _dirty)
+        for r in (enabled,):
+            r.connect("notify::active", _dirty)
+        scope.connect("notify::selected", _dirty)
+        if is_new:
+            self.mark_dirty(do_save)
 
         def do_run() -> None:
             n = collect()

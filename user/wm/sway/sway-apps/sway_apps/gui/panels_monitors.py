@@ -75,6 +75,7 @@ class MonitorsPanel(Panel):
             is_new = True
         m: Monitor = item
         self.clear_detail()
+        self.attach_banner(lambda: do_save())
         o = next((x for x in mon.live_outputs() if x.hw_id == m.criteria), None)
         self.detail_header(("New monitor: " if is_new else "") + (m.name or m.id), m.criteria)
 
@@ -135,9 +136,21 @@ class MonitorsPanel(Panel):
             else:
                 out = self.win.run_outcome(lambda: self.ctl.save_monitor(n, n.scope))
             if out is not None and out.ok:
+                self.clear_dirty()
                 self.selected_id = n.id
                 self.refresh()
                 self.win.panels["workspaces"].refresh()
+
+        def _dirty(*_a) -> None:
+            self.mark_dirty(do_save)
+        for r in (role, name, crit, notes):
+            r.connect("changed", _dirty)
+        group.connect("notify::value", _dirty)
+        for r in (primary, enabled):
+            r.connect("notify::active", _dirty)
+        scope.connect("notify::selected", _dirty)
+        if is_new:
+            self.mark_dirty(do_save)
 
         def do_delete() -> None:
             users = [r for r in self.ctl.state.rules() if r.target and r.target.get("monitor") == m.id]

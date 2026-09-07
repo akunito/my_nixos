@@ -108,8 +108,8 @@ class MainWindow(Adw.ApplicationWindow):
         pull_btn = Gtk.Button(label="Pull")
         pull_btn.connect("clicked", lambda *_: self.run_outcome(self.ctl.git_pull, refresh_git=True, refresh_all=True))
         apply_btn = Gtk.Button(label="Apply")
-        apply_btn.set_tooltip_text("Regenerate the include and reload sway")
-        apply_btn.connect("clicked", lambda *_: self.run_outcome(self.ctl.apply_all))
+        apply_btn.set_tooltip_text("Save any pending edits, regenerate the include and reload sway")
+        apply_btn.connect("clicked", lambda *_: self.apply_all())
         btns.append(self.push_btn); btns.append(pull_btn); btns.append(apply_btn)
         footer.append(btns)
         ver = Gtk.Label(label=f"v{__version__} · {'SwayFX' if ctl.swayfx else 'sway'}", xalign=0)
@@ -166,6 +166,16 @@ class MainWindow(Adw.ApplicationWindow):
             if row is not None and row.key == key:  # type: ignore[attr-defined]
                 self.nav.select_row(row)
                 return
+
+    def apply_all(self) -> None:
+        """Footer Apply: persist whatever form is being edited, then regenerate
+        + reload. Editing a rule and pressing Apply instead of Save used to
+        silently discard the edit (Bitwarden, X13, 2026-09-07)."""
+        for p in self.panels.values():
+            if hasattr(p, "has_unsaved") and p.has_unsaved():
+                p.save_unsaved()  # save_rule already regenerates + reloads + applies live
+                return
+        self.run_outcome(self.ctl.apply_all)
 
     # ---- feedback -----------------------------------------------------------
     def toast(self, text: str, error: bool = False, timeout: int = 4) -> None:
