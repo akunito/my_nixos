@@ -17,6 +17,7 @@ from .panels_monitors import MonitorsPanel, WorkspacesPanel  # noqa: E402
 from .panels_shortcuts import ShortcutsPanel  # noqa: E402
 from .panels_tools import ToolsPanel  # noqa: E402
 from .panels_infra import DockerPanel, MonitoringPanel, NodesPanel  # noqa: E402
+from .panels_sync import NfsPanel, ProfilesPanel  # noqa: E402
 
 _log = log.get("gui")
 
@@ -32,7 +33,9 @@ NAV = [
     ("windows", "Windows", "Live sway tree", "focus-windows-symbolic"),
     ("nodes", "Nodes", "Machines · deploy", "network-server-symbolic"),
     ("docker", "Docker", "Containers over ssh", "package-x-generic-symbolic"),
+    ("nfs", "NFS", "Mounts · automount", "drive-harddisk-symbolic"),
     ("monitoring", "Monitoring", "Prometheus · backups", "utilities-system-monitor-symbolic"),
+    ("profiles", "Profiles", "Other machines · snapshots", "emblem-synchronizing-symbolic"),
     ("log", "Log", "Action log", "utilities-terminal-symbolic"),
 ]
 
@@ -151,7 +154,9 @@ class MainWindow(Adw.ApplicationWindow):
             "windows": WindowsPanel(self),
             "nodes": NodesPanel(self),
             "docker": DockerPanel(self),
+            "nfs": NfsPanel(self),
             "monitoring": MonitoringPanel(self),
+            "profiles": ProfilesPanel(self),
             "log": LogPanel(self),
         }
         for key, panel in self.panels.items():
@@ -192,6 +197,10 @@ class MainWindow(Adw.ApplicationWindow):
                 p.refresh()
         self.refresh_git()
         return False
+
+    def open_profiles(self, section: str) -> None:
+        self.show_section("profiles")
+        self.panels["profiles"].on_show(section)
 
     # ---- tools sidebar --------------------------------------------------------
     def refresh_tools_sidebar(self) -> None:

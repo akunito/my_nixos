@@ -389,3 +389,42 @@ class DockerBackend(unittest.TestCase):
         self.assertEqual(mo.fmt(90061, "dur"), "1d 1h")
         self.assertEqual(mo.fmt(3700, "dur"), "1h 1m")
         self.assertEqual(mo.fmt(5 * 1024**3, "bytes"), "5.0 GiB")
+
+
+class Profiles(unittest.TestCase):
+    def setUp(self):
+        from sway_apps import paths, profiles
+        self.d = Path(tempfile.mkdtemp())
+        self._old = (paths.STATE_DIR, profiles.SNAP_DIR)
+        paths.STATE_DIR = self.d; profiles.SNAP_DIR = self.d / "snapshots"
+        (self.d / "common.json").write_text(json.dumps({"version": 1, "shortcuts": [{"id": "k1", "keys": "Hyper+a", "name": "A"}]}))
+        (self.d / "DESK.json").write_text(json.dumps({"version": 1, "shortcuts": [{"id": "k2", "keys": "Hyper+b", "name": "B"}, {"id": "k3", "keys": "Hyper+c", "name": "C-desk"}],
+                                                       "monitors": [{"id": "main", "criteria": "S", "group": 1}]}))
+        (self.d / "X13.json").write_text(json.dumps({"version": 1, "shortcuts": [{"id": "k3", "keys": "Hyper+c", "name": "C-x13"}, {"id": "k4", "keys": "Hyper+d", "name": "D"}]}))
+
+    def tearDown(self):
+        from sway_apps import paths, profiles
+        paths.STATE_DIR, profiles.SNAP_DIR = self._old
+
+    def test_diff_copy_snapshot_restore(self):
+        from sway_apps import profiles as pf
+        d = pf.diff("DESK", "X13", "shortcuts")
+        self.assertEqual([x["id"] for x in d["only_a"]], ["k2"])
+        self.assertEqual([x["id"] for x in d["only_b"]], ["k4"])
+        self.assertEqual([c["a"]["id"] for c in d["changed"]], ["k3"])
+        self.assertEqual(pf.summary("DESK", "X13")["monitors"]["only_a"], 1)
+        res = pf.copy_items("DESK", "X13", "shortcuts", ids=["k2"])
+        self.assertEqual(res["copied"], ["k2"])
+        x13 = pf.layer("X13")["shortcuts"]
+        self.assertEqual(sorted(x["id"] for x in x13), ["k2", "k3", "k4"])      # merged by id
+        self.assertEqual([x["name"] for x in x13 if x["id"] == "k3"], ["C-x13"])  # untouched
+        self.assertEqual(len(pf.snapshots()), 1)
+        snap = pf.snapshots()[0]["id"]
+        pf.copy_items("DESK", "X13", "shortcuts", replace=True)
+        self.assertEqual(sorted(x["id"] for x in pf.layer("X13")["shortcuts"]), ["k2", "k3"])
+        self.assertEqual(pf.diff_snapshot(snap)["X13.json"]["shortcuts"], {"only_snapshot": 1, "only_now": 1, "changed": 1})
+        pf.restore(snap, files=["X13.json"], sections=["shortcuts"])
+        self.assertEqual(sorted(x["id"] for x in pf.layer("X13")["shortcuts"]), ["k3", "k4"])
+        self.assertEqual(len(pf.snapshots()), 3)  # copy, copy, before-restore
+        pf.prune(keep=1)
+        self.assertEqual(len(pf.snapshots()), 1)

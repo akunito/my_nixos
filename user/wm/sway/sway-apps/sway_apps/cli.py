@@ -15,6 +15,8 @@ from typing import Any, Callable
 from . import __version__, discover, generate, gitsync, log, paths, startup, swayipc
 from . import monitors as mon
 from . import dockerctl
+from . import nfsctl
+from . import profiles as prof
 from . import shortcuts as sc_mod
 from .rules import CRITERIA_KEYS, KINDS, Rule, parse_config
 from .shortcuts import Shortcut
@@ -1383,6 +1385,152 @@ def cmd_docker_df(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# profiles (cross-machine view / copy) + snapshots
+
+def _commit_profiles(args: argparse.Namespace, message: str, apply_rules: bool = True) -> dict[str, Any]:
+    """Regenerate for THIS profile (if it was touched), commit state + snapshots, sync."""
+    result: dict[str, Any] = {}
+    if apply_rules and not getattr(args, "no_apply", False):
+        result["apply"] = generate.apply(State(), reload=not getattr(args, "no_reload", False))
+    if not getattr(args, "no_git", False):
+        try:
+            result["commit"] = gitsync.commit(prof.copied_files(), message)
+        except RuntimeError as exc:
+            result["commit_error"] = str(exc)
+        if result.get("commit") and gitsync.auto_sync_enabled():
+            try:
+                result["sync"] = gitsync.sync()
+            except Exception as exc:
+                result["sync"] = {"ok": False, "error": str(exc)}
+    return result
+
+
+def cmd_prof_list(args: argparse.Namespace) -> int:
+    files = prof.profile_files()
+    rows = []
+    for name, path in files.items():
+        lay = prof.layer(name)
+        rows.append({"profile": name, "current": name == paths.profile_name(), "file": str(path),
+                     **{s: len(lay.get(s, [])) for s in prof.SECTIONS}})
+    _out(args, rows, lambda: _table([[("*" if r["current"] else ""), r["profile"], *[r[s] for s in prof.SECTIONS]] for r in rows], ["", "profile", *prof.SECTIONS]))
+    return 0
+
+
+def cmd_prof_diff(args: argparse.Namespace) -> int:
+    a, b = args.a, args.b or paths.profile_name()
+    if args.section:
+        d = prof.diff(a, b, args.section)
+        def human():
+            print(f"== {args.section}: {a} vs {b}")
+            for x in d["only_a"]:
+                print(f"  only in {a}: [{x['id']}] {prof.label(args.section, x)}")
+            for x in d["only_b"]:
+                print(f"  only in {b}: [{x['id']}] {prof.label(args.section, x)}")
+            for c in d["changed"]:
+                print(f"  differs [{c['a']['id']}]: {a}: {prof.label(args.section, c['a'])}  |  {b}: {prof.label(args.section, c['b'])}")
+            print(f"  same: {len(d['same'])}")
+        _out(args, d, human)
+        return 0
+    sm = prof.summary(a, b)
+    _out(args, sm, lambda: _table([[s, v["only_a"], v["only_b"], v["changed"], v["same"]] for s, v in sm.items()], ["section", f"only {a}", f"only {b}", "differ", "same"]))
+    return 0
+
+
+def cmd_prof_copy(args: argparse.Namespace) -> int:
+    src, dst, section = args.source, args.to or paths.profile_name(), args.section
+    if src == dst:
+        raise CliError("source and destination are the same profile")
+    ids = args.ids or None
+    items = prof.layer(src).get(section, [])
+    if ids:
+        missing = [i for i in ids if i not in {x.get("id") for x in items}]
+        if missing:
+            raise CliError(f"not in {src}/{section}: {', '.join(missing)}")
+    chosen = [x for x in items if not ids or x.get("id") in ids]
+    if not chosen:
+        raise CliError(f"nothing to copy from {src}/{section}")
+    if not args.yes:
+        print(f"Would copy {len(chosen)} {section} item(s) from {src} to {dst}" + (" (REPLACING the destination section)" if args.replace else ""), file=sys.stderr)
+        for x in chosen[:30]:
+            print(f"  [{x['id']}] {prof.label(section, x)}", file=sys.stderr)
+        print("A snapshot is taken first. Re-run with --yes to apply.", file=sys.stderr)
+        _out(args, {"dry_run": True, "items": [x.get("id") for x in chosen]})
+        return 0
+    with log.action("profiles.copy", source=src, to=dst, section=section, count=len(chosen), replace=args.replace):
+        res = prof.copy_items(src, dst, section, ids=[x["id"] for x in chosen], replace=args.replace)
+        res.update(_commit_profiles(args, f"copy {len(chosen)} {section} from {src} to {dst}", apply_rules=(dst == paths.profile_name())))
+    _out(args, res, lambda: print(f"copied {len(res['copied'])} {section} item(s) {src} -> {dst}; snapshot {res['snapshot']}"))
+    return 0
+
+
+def cmd_snap_list(args: argparse.Namespace) -> int:
+    snaps = prof.snapshots()
+    _out(args, snaps, lambda: _table([[s["id"], s.get("reason", ""), s.get("profile", ""), ",".join(s.get("files", []))[:60]] for s in snaps], ["id", "reason", "taken on", "files"]))
+    return 0
+
+
+def cmd_snap_create(args: argparse.Namespace) -> int:
+    d = prof.snapshot(args.reason or "manual")
+    res = _commit_profiles(args, f"snapshot {d.name}", apply_rules=False)
+    _out(args, {"snapshot": d.name, **res}, lambda: print(f"snapshot {d.name}"))
+    return 0
+
+
+def cmd_snap_diff(args: argparse.Namespace) -> int:
+    d = prof.diff_snapshot(args.id)
+    def human():
+        for f, per in d.items():
+            changes = {s: v for s, v in per.items() if any(v.values())}
+            print(f"{f}: " + (", ".join(f"{s} +{v['only_now']} -{v['only_snapshot']} ~{v['changed']}" for s, v in changes.items()) or "identical"))
+    _out(args, d, human)
+    return 0
+
+
+def cmd_snap_restore(args: argparse.Namespace) -> int:
+    d = prof.snapshot_dir(args.id)
+    files = args.files or None
+    sections = args.sections or None
+    if not args.yes:
+        print(f"Would restore {', '.join(files) if files else 'ALL state files'}" + (f" (sections: {', '.join(sections)})" if sections else "") + f" from {d.name}. A snapshot of the current state is taken first. Re-run with --yes.", file=sys.stderr)
+        _out(args, {"dry_run": True, "snapshot": d.name, "diff": prof.diff_snapshot(d.name)})
+        return 0
+    with log.action("profiles.restore", snapshot=d.name, files=files, sections=sections):
+        touched = prof.restore(d.name, files=files, sections=sections)
+        res = _commit_profiles(args, f"restore {', '.join(touched)} from {d.name}", apply_rules=True)
+    _out(args, {"restored": touched, "snapshot": d.name, **res}, lambda: print(f"restored {', '.join(touched)} from {d.name}"))
+    return 0
+
+
+# --------------------------------------------------------------------------
+# nfs
+
+def cmd_nfs_list(args: argparse.Namespace) -> int:
+    ms = nfsctl.mounts(probe=not args.no_probe, with_usage=not args.no_probe)
+    _out(args, [m.to_dict() for m in ms],
+         lambda: _table([[m.where, m.what, "mounted" if m.active else m.sub_state, ("auto " + ("on" if m.automount_active else "off")) if m.automount_unit else "-",
+                          ("up" if m.server_reachable else "DOWN") if m.server_reachable is not None else "?", m.usage.get("pct", ""), m.usage.get("avail", ""), m.fstype]
+                         for m in ms], ["mountpoint", "server:export", "state", "automount", "server", "used", "avail", "type"]))
+    return 0
+
+
+def cmd_nfs_show(args: argparse.Namespace) -> int:
+    m = nfsctl.get(args.where)
+    ms = [x for x in nfsctl.mounts() if x.unit == m.unit]
+    m = ms[0] if ms else m
+    _out(args, m.to_dict(), lambda: print(json.dumps(m.to_dict(), indent=2)))
+    return 0
+
+
+def cmd_nfs_action(args: argparse.Namespace) -> int:
+    m = nfsctl.get(args.where)
+    out = nfsctl.action(m, args.what)
+    after = nfsctl.get(args.where)
+    _out(args, {"mount": m.where, "action": args.what, "output": out, "active": after.active, "sub_state": after.sub_state},
+         lambda: print(f"{args.what} {m.where}: {'mounted' if after.active else after.sub_state}" + (f"\n{out}" if out else "")))
+    return 0
+
+
+# --------------------------------------------------------------------------
 # monitoring
 
 def cmd_monitor(args: argparse.Namespace) -> int:
@@ -1493,7 +1641,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd")
 
     x = sub.add_parser("gui", help="open the GUI (default)")
-    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows", "nodes", "docker", "monitoring", "log"], help="section to open")
+    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows", "nodes", "docker", "nfs", "monitoring", "profiles", "log"], help="section to open")
     x.add_argument("--select", help="item id to select (rule id, startup id, desktop id or con_id)")
     x.set_defaults(func=cmd_gui)
     sub.add_parser("doctor", help="check the installation").set_defaults(func=cmd_doctor)
@@ -1669,6 +1817,29 @@ def build_parser() -> argparse.ArgumentParser:
         x = dk.add_parser(w); x.add_argument("node"); x.add_argument("name"); x.add_argument("--daemon", choices=["rootful", "rootless"]); x.set_defaults(func=cmd_docker_action, what=w)
     x = dk.add_parser("logs"); x.add_argument("node"); x.add_argument("name"); x.add_argument("--daemon", choices=["rootful", "rootless"]); x.add_argument("-n", "--tail", type=int, default=300); x.add_argument("-f", "--follow", action="store_true"); x.set_defaults(func=cmd_docker_logs)
     x = dk.add_parser("df", help="disk usage + volumes"); x.add_argument("node"); x.add_argument("--daemon", choices=["rootful", "rootless"]); x.set_defaults(func=cmd_docker_df)
+
+    # profiles + snapshots
+    pf = sub.add_parser("profiles", help="see other machines' layers, copy items across, snapshots").add_subparsers(dest="sub", required=True)
+    pf.add_parser("list").set_defaults(func=cmd_prof_list)
+    x = pf.add_parser("diff", help="compare two layers (default b = this profile)"); x.add_argument("a"); x.add_argument("b", nargs="?"); x.add_argument("--section", choices=prof.SECTIONS); x.set_defaults(func=cmd_prof_diff)
+    x = pf.add_parser("copy", help="copy a section (or ids) from one layer to another; dry-run unless --yes")
+    x.add_argument("source", help="profile to copy from (e.g. DESK)"); x.add_argument("--to", help="destination profile (default: this one)"); x.add_argument("--section", required=True, choices=prof.SECTIONS)
+    x.add_argument("--ids", nargs="*"); x.add_argument("--replace", action="store_true", help="replace the destination section instead of merging by id"); x.add_argument("--yes", action="store_true")
+    persist_flags(x); x.set_defaults(func=cmd_prof_copy)
+    sn = pf.add_parser("snapshot", help="snapshots of all state files (apps/snapshots/)").add_subparsers(dest="sub2", required=True)
+    sn.add_parser("list").set_defaults(func=cmd_snap_list)
+    x = sn.add_parser("create"); x.add_argument("reason", nargs="?"); persist_flags(x, rules=False); x.set_defaults(func=cmd_snap_create)
+    x = sn.add_parser("diff"); x.add_argument("id"); x.set_defaults(func=cmd_snap_diff)
+    x = sn.add_parser("restore"); x.add_argument("id"); x.add_argument("--files", nargs="*", help="e.g. DESK.json common.json"); x.add_argument("--sections", nargs="*", choices=prof.SECTIONS); x.add_argument("--yes", action="store_true"); persist_flags(x); x.set_defaults(func=cmd_snap_restore)
+
+    # nfs
+    nf = sub.add_parser("nfs", help="NFS mounts (systemd mount units): state, options, mount/unmount").add_subparsers(dest="sub", required=True)
+    x = nf.add_parser("list"); x.add_argument("--no-probe", action="store_true", help="skip server reachability and df"); x.set_defaults(func=cmd_nfs_list)
+    x = nf.add_parser("show"); x.add_argument("where"); x.set_defaults(func=cmd_nfs_show)
+    for w in nfsctl.ACTIONS:
+        x = nf.add_parser(w, help={"umount-force": "umount -f", "umount-lazy": "umount -l (detach now, clean up later)", "remount": "mount -o remount",
+                                   "automount-on": "start the .automount unit", "automount-off": "stop the .automount unit (so it does not re-trigger)"}.get(w, w))
+        x.add_argument("where"); x.set_defaults(func=cmd_nfs_action, what=w)
 
     # monitoring
     x = sub.add_parser("monitor", help="node status from Prometheus (via the VPS) + backups"); x.add_argument("what", nargs="?", choices=["overview", "targets", "query"], default="overview"); x.add_argument("promql", nargs="?"); x.set_defaults(func=cmd_monitor)

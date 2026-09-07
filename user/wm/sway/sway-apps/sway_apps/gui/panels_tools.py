@@ -29,6 +29,7 @@ class ToolsPanel(Panel):
         super().__init__(win, "Tools")
         self.header_button("Add from apps", self.add_from_apps, icon="view-app-grid-symbolic", start=False)
         self.header_button("New tool", lambda: self.new_tool(), icon="list-add-symbolic", style="suggested-action", start=False)
+        self.header_button("Sync…", lambda: self.win.open_profiles("tools"), icon="emblem-synchronizing-symbolic")
 
     def tool_key(self, t: Tool) -> Shortcut | None:
         for x in self.ctl.state.shortcuts():

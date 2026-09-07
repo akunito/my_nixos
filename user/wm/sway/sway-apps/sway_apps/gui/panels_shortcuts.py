@@ -42,6 +42,7 @@ class ShortcutsPanel(Panel):
         self.show_nix.connect("toggled", lambda *_: self.refresh())
         self.toolbar.pack_start(self.show_nix)
         self.header_button("Free keys", self.show_free, icon="input-keyboard-symbolic")
+        self.header_button("Sync…", lambda: self.win.open_profiles("shortcuts"), icon="emblem-synchronizing-symbolic")
 
     def show_free(self) -> None:
         used = {b["fold"] for b in sc_mod.nix_bindings()} | {sc_mod.fold(x.keys) for x in self.ctl.state.shortcuts() if not x.problems()}

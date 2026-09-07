@@ -79,7 +79,7 @@ def commit(files: list[Path], message: str) -> str | None:
     existing = [f for f in files if f.exists()]
     if not existing:
         return None
-    rel = _rel(existing)
+    rel = _rel(existing)  # files or directories (apps/snapshots/)
     _git(["add", "--", *rel])
     if _git(["diff", "--cached", "--quiet", "--", *rel], check=False).returncode == 0:
         return None

@@ -181,6 +181,21 @@ check "docker ps local"        '(.errors|length) == 0 and (.containers|type) == 
 check "nodes deploy --print"   '.command | test("install.sh .* smokenode -s -u")'  "$(J nodes deploy smokenode --print)"
 check "nodes rm"               '.removed == "smokenode"'                          "$(J nodes rm smokenode)"
 
+# --- profiles / snapshots / nfs ----------------------------------------------
+printf '{"version":1,"shortcuts":[{"id":"k-smokeother","keys":"Hyper+Shift+F11","kind":"exec","command":"true","name":"from-other","enabled":true}]}\n' > "$SWAY_APPS_STATE_DIR/OTHER.json"
+check "profiles list"          'map(.profile) | index("OTHER") != null'          "$(J profiles list)"
+check "profiles diff summary"  '.shortcuts.only_a == 1'                           "$(J profiles diff OTHER)"
+check "profiles copy dry-run"  '.dry_run == true and .items == ["k-smokeother"]'  "$(J profiles copy OTHER --section shortcuts)"
+check "profiles copy --yes"    '.copied == ["k-smokeother"] and .snapshot != null and .commit != null' "$(J profiles copy OTHER --section shortcuts --yes --no-reload)"
+check "copied shortcut live"   'map(select(.id=="k-smokeother")) | length == 1'   "$(J shortcuts list)"
+SNAP=$(J profiles snapshot list | jq -r '.[0].id')
+check "snapshot list"          'length >= 1'                                       "$(J profiles snapshot list)"
+check "snapshot diff"          'to_entries | map(.value.shortcuts.only_now) | add >= 1' "$(J profiles snapshot diff "$SNAP")"
+check "snapshot restore --yes" '.restored | length >= 1'                          "$(J profiles snapshot restore "$SNAP" --yes --no-reload)"
+check "restore undid the copy" 'map(select(.id=="k-smokeother")) | length == 0'   "$(J shortcuts list)"
+check "nfs list runs"          'type == "array"'                                   "$(J nfs list --no-probe)"
+rm -f "$SWAY_APPS_STATE_DIR/OTHER.json"
+
 # --- git -------------------------------------------------------------------
 GS=$(J git status)
 check "git status repo"        '.repo == true and (.dirty|length) == 0'         "$GS"

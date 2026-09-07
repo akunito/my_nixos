@@ -108,9 +108,44 @@ retired on 2026-09-07. What replaces it lives here, with no server:
   MariaDB backup ages, repo size; "Open Grafana" for the dashboards.
   CLI: `sway-apps monitor overview|targets|query PROMQL`.
 
+### Profiles: see other machines, copy parts, snapshots
+
+Most configuration is **shared** (`common.json`), so both machines already
+see the same rules, shortcuts and tools. What differs per machine lives in
+`<PROFILE>.json` (monitors, startup, per-machine overrides). The **Profiles**
+section compares this machine's layer with another profile's layer, section
+by section, and lets you tick items and **Pull → here** or **Push → other**.
+Every copy: confirmation dialog first, then a **snapshot** of all state files
+into `user/wm/sway/apps/snapshots/<stamp>-<profile>-<reason>/` (last 30 kept,
+committed with the state), then the id-keyed merge, regenerate + reload if this
+machine was the destination, commit and sync. Rules / Startup / Shortcuts /
+Tools have a **Sync…** header button that opens Profiles on that section.
+**Snapshots** (button, or `sway-apps profiles snapshot list`) restores
+everything or only the current section; a restore snapshots the current state
+first, so restores are themselves undoable.
+
+```
+sway-apps profiles list                                  # layers and item counts
+sway-apps profiles diff DESK [LAPTOP_X13] [--section shortcuts]
+sway-apps profiles copy DESK --section shortcuts [--ids k1 k2] [--to LAPTOP_X13] [--replace]   # dry-run
+sway-apps profiles copy DESK --section shortcuts --yes   # snapshot + copy + apply + commit + sync
+sway-apps profiles snapshot list|create [REASON]|diff ID|restore ID [--files DESK.json] [--sections rules] --yes
+```
+
+### NFS
+
+The **NFS** section lists the `mnt-*.mount` units (from `nfsMounts`): state,
+server:export, options, automount unit and its idle timeout, server
+reachability (tcp 2049) and usage. Buttons: mount, unmount, **force**
+(`umount -f`, for a server that went away), **lazy** (`umount -l`), remount,
+automount on/off. Root actions go through `sway-apps-mountctl`
+(`system/wm/sway-apps-helper.nix`, sudo NOPASSWD), which only accepts
+mountpoints whose unit is `Type=nfs|nfs4`. CLI: `sway-apps nfs list|show
+MOUNTPOINT|mount|umount|umount-force|umount-lazy|remount|automount-on|automount-off MOUNTPOINT`.
+
 ### Git sync between machines
 
-Every save commits only `user/wm/sway/apps/*.json`, then runs
+Every save commits only `user/wm/sway/apps/*.json` (and `apps/snapshots/`), then runs
 `sway-apps git sync`: fetch, rebase this machine's state commits onto
 upstream and push. If both machines edited the same file the JSON is merged
 **by id** (newest `updated_at` per item wins; a one-sided delete wins over an
@@ -154,6 +189,8 @@ sway-apps apps list [QUERY] [--source flatpak-user] [--all] | apps show ID | app
 sway-apps monitors outputs|list|add ROLE OUTPUT --group N|set ROLE [--group N|--output X|--rename R|--always-connected]|rm ROLE|apply|pin-geometry on|off|fix-orphans|force status|login
 sway-apps workspaces map
 sway-apps windows list|focused|pick
+sway-apps profiles list|diff|copy|snapshot list|create|diff|restore
+sway-apps nfs list|show|mount|umount|umount-force|umount-lazy|remount|automount-on|automount-off MOUNTPOINT
 sway-apps git status|commit|push|pull|sync
 sway-apps log tail [-n 50] [-f] [--level error] [--grep rules.add]
 ```

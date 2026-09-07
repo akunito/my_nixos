@@ -176,6 +176,7 @@ class RulesPanel(Panel):
         self.toolbar.pack_start(self.kind_filter)
         self.header_button("New rule", self.new_rule, icon="list-add-symbolic", style="suggested-action", start=False)
         self.header_button("From window", self.from_window, icon="focus-windows-symbolic", start=False)
+        self.header_button("Sync…", lambda: self.win.open_profiles("rules"), icon="emblem-synchronizing-symbolic")
         self._draft: Rule | None = None
 
     def refresh(self) -> None:
@@ -465,6 +466,7 @@ class StartupPanel(Panel):
         self.header_button("Run all", self.run_all, icon="media-playback-start-symbolic", style="suggested-action")
         self.header_button("Add", self.new_entry, icon="list-add-symbolic", start=False)
         self.header_button("Add from apps", lambda: self.win.show_section("apps"), icon="view-app-grid-symbolic", start=False)
+        self.header_button("Sync…", lambda: self.win.open_profiles("startup"), icon="emblem-synchronizing-symbolic")
         self.progress = Gtk.Label(xalign=0, wrap=True)
         self.progress.add_css_class("dim-label")
         self.progress.set_margin_start(12); self.progress.set_margin_bottom(6)
