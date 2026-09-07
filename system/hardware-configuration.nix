@@ -21,6 +21,8 @@
 
   boot.initrd.luks.devices."luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c".device = "/dev/disk/by-uuid/9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
 
+
+
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/7620-B197";
       fsType = "vfat";
@@ -50,6 +52,10 @@
     { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
       fsType = "ntfs3";
     };
+
+
+
+
 
   swapDevices =
     [ { device = "/dev/mapper/luks-swap"; }
