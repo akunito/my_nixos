@@ -155,6 +155,49 @@ class Tool:
         return self.command
 
 
+@dataclass
+class Node:
+    """An infrastructure node the app can reach (ssh) — docker daemons, deploy, monitoring."""
+    id: str                        # usually the profile name: VPS_PROD, NAS_PROD, DESK ...
+    name: str = ""
+    profile: str = ""              # dotfiles profile for deploy.sh
+    ssh: str = ""                  # user@host[:port]; empty = this machine
+    daemons: list[str] = field(default_factory=list)   # docker daemons: "rootful", "rootless"
+    sudo_rootful: bool = False     # rootful docker needs `sudo -n docker`
+    prometheus_instance: str = ""  # node_exporter instance label, e.g. "nas-aku:9100"
+    enabled: bool = True
+    order: int = 100
+    notes: str = ""
+    updated_at: int = 0
+    scope: str = "common"
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any], scope: str = "common") -> "Node":
+        return cls(id=str(d.get("id") or ""), name=str(d.get("name") or ""), profile=str(d.get("profile") or ""),
+                   ssh=str(d.get("ssh") or ""), daemons=[str(x) for x in (d.get("daemons") or [])],
+                   sudo_rootful=bool(d.get("sudo_rootful", False)), prometheus_instance=str(d.get("prometheus_instance") or ""),
+                   enabled=bool(d.get("enabled", True)), order=int(d.get("order", 100)), notes=str(d.get("notes") or ""),
+                   updated_at=int(d.get("updated_at", 0) or 0), scope=scope)
+
+    def to_dict(self) -> dict[str, Any]:
+        d = asdict(self); d.pop("scope", None); return d
+
+    def problems(self) -> list[str]:
+        out = []
+        if not self.id.strip():
+            out.append("empty id")
+        for dmn in self.daemons:
+            if dmn not in ("rootful", "rootless"):
+                out.append(f"unknown daemon {dmn!r} (rootful|rootless)")
+        if self.ssh and "@" not in self.ssh:
+            out.append("ssh must be user@host[:port]")
+        return out
+
+    @property
+    def is_local(self) -> bool:
+        return not self.ssh.strip()
+
+
 SETTINGS_DEFAULTS: dict[str, Any] = {
     "pin_geometry": False,   # emit output geometry keyed by hardware id (from nwg-displays' file)
     "auto_adopt": False,     # unknown outputs get a role + free decade automatically (laptop dock)
@@ -162,7 +205,7 @@ SETTINGS_DEFAULTS: dict[str, Any] = {
 
 
 def _empty() -> dict[str, Any]:
-    return {"version": VERSION, "rules": [], "startup": [], "monitors": [], "shortcuts": [], "tools": [], "settings": {}}
+    return {"version": VERSION, "rules": [], "startup": [], "monitors": [], "shortcuts": [], "tools": [], "nodes": [], "settings": {}}
 
 
 def _read(path: Path) -> dict[str, Any]:
@@ -180,6 +223,7 @@ def _read(path: Path) -> dict[str, Any]:
     data.setdefault("monitors", [])
     data.setdefault("shortcuts", [])
     data.setdefault("tools", [])
+    data.setdefault("nodes", [])
     data.setdefault("settings", {})
     return data
 
@@ -280,6 +324,20 @@ class State:
 
     def save_tool(self, t: Tool, scope: str | None = None) -> None:
         self.upsert("tools", t.to_dict(), scope or t.scope)
+
+    def nodes(self) -> list[Node]:
+        items = [Node.from_dict(d, d["_scope"]) for d in self._merged("nodes")]
+        items.sort(key=lambda n: (n.order, n.id))
+        return items
+
+    def node(self, nid: str) -> Node | None:
+        for n in self.nodes():
+            if n.id == nid:
+                return n
+        return None
+
+    def save_node(self, n: Node, scope: str | None = None) -> None:
+        self.upsert("nodes", n.to_dict(), scope or n.scope)
 
     def settings(self) -> dict[str, Any]:
         out = dict(SETTINGS_DEFAULTS)
@@ -406,7 +464,7 @@ class State:
         for path, data in ((self.common_path, self.common), (self.profile_path, self.profile)):
             data["version"] = VERSION
             # Do not create an empty profile file just because we loaded it.
-            if not any(data.get(k) for k in ("rules", "startup", "monitors", "shortcuts", "tools", "settings")) and not path.exists():
+            if not any(data.get(k) for k in ("rules", "startup", "monitors", "shortcuts", "tools", "nodes", "settings")) and not path.exists():
                 continue
             _write(path, data)
             written.append(path)

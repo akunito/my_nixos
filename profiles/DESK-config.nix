@@ -808,10 +808,6 @@ in
     lmstudioEnabled = true; # Enable LM Studio configuration and MCP server support
     voxtypeEnable = true; # Enable Voxtype voice dictation (hold Super+V to speak)
 
-    # === Control Panel ===
-    controlPanelEnable = false; # Disabled for now (web server) — not in use; re-enable when needed
-    controlPanelNativeEnable = true; # Enable NixOS infrastructure control panel (native desktop app)
-
     # === Monitoring ===
     prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
 

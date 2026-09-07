@@ -2,7 +2,7 @@
 #
 # Re-parented 2026-07-23: inherits LAPTOP-base.nix (NOT DESK-config.nix).
 #   Why: DESK-config is akunito's Sway + homelab/dev rig and imports git-crypt
-#   secrets (domains.nix + control-panel.nix). Aga's machines keep git-crypt
+#   secrets (domains.nix). Aga's machines keep git-crypt
 #   LOCKED, and DESK_A diverges from DESK on every major axis (Plasma6 vs Sway,
 #   no dev/infra, different AMD hardware). Inheriting LAPTOP-base gives us the
 #   shared "personal Plasma6 desktop software" baseline with NO secrets wired in

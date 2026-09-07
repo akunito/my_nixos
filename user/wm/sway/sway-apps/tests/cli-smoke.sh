@@ -170,6 +170,17 @@ check "tools key none"         '.removed_shortcut != null'                      
 check "tools set"              '.tool.order == 7 and .tool.icon == "folder-symbolic"' "$(J tools set "$TID" --order 7 --icon folder-symbolic)"
 check "tools rm"               '.removed == "'"$TID"'"'                             "$(J tools rm "$TID")"
 
+# --- nodes / docker (local node only; no network needed) ---------------------
+check "nodes profiles"         'map(.profile) | index("DESK") != null'          "$(J nodes profiles)"
+check "nodes add local"        '.node.id == "smokenode" and .node.daemons == ["rootful"]' "$(J nodes add smokenode --name Smoke --docker rootful --order 1)"
+check "nodes list"             'map(select(.id=="smokenode")) | length == 1'    "$(J nodes list)"
+check "nodes set"              '.node.prometheus_instance == "smoke" and .node.ssh == "user@host:22"' "$(J nodes set smokenode --prometheus smoke --ssh user@host:22)"
+check "nodes bad ssh rejected" '.error | test("user@host")'                     "$(J nodes set smokenode --ssh nohost)"
+J nodes set smokenode --ssh "" >/dev/null
+check "docker ps local"        '(.errors|length) == 0 and (.containers|type) == "array"' "$(J docker ps --node smokenode --fast)"
+check "nodes deploy --print"   '.command | test("install.sh .* smokenode -s -u")'  "$(J nodes deploy smokenode --print)"
+check "nodes rm"               '.removed == "smokenode"'                          "$(J nodes rm smokenode)"
+
 # --- git -------------------------------------------------------------------
 GS=$(J git status)
 check "git status repo"        '.repo == true and (.dirty|length) == 0'         "$GS"

@@ -324,9 +324,6 @@ in
     # === Monitoring ===
     prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
 
-    # === Control Panel ===
-    controlPanelEnable = false; # Disabled for now — not in use; re-enable when needed
-
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable daemon (but don't auto-connect - manual via Trayscale GUI)
     # trayscaleGuiEnable inherited from LAPTOP-base.nix (true)

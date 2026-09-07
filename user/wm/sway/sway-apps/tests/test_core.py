@@ -360,3 +360,32 @@ class Tools(unittest.TestCase):
         s = st.State(common, prof)
         self.assertEqual([t.id for t in s.tools()], ["t2", "t1"])   # ordered
         self.assertFalse(s.tool("t1").enabled)                       # profile override
+
+
+class DockerBackend(unittest.TestCase):
+    def test_helpers(self):
+        from sway_apps import dockerctl as dk
+        n = st.Node(id="VPS", ssh="akunito@100.64.0.6:56777", daemons=["rootless"])
+        self.assertEqual(dk.ssh_target(n), ["-p", "56777", "akunito@100.64.0.6"])
+        self.assertEqual(dk.ssh_target(st.Node(id="x", ssh="aga@host")), ["aga@host"])
+        self.assertIn("DOCKER_HOST", dk._docker_prefix(n, "rootless"))
+        self.assertEqual(dk._docker_prefix(st.Node(id="d"), "rootful"), "docker")
+        self.assertEqual(dk._docker_prefix(st.Node(id="d", sudo_rootful=True), "rootful"), "sudo -n docker")
+        self.assertEqual(dk._labels("a=1,com.docker.compose.project=immich,b=x=y"), {"a": "1", "com.docker.compose.project": "immich", "b": "x=y"})
+        c = dk.Container(node="VPS", daemon="rootless", id="1", name="immich_server", image="i", state="running", status="Up",
+                         project="immich", service="immich-server", working_dir="/home/a/.homelab/immich", config_files="/home/a/.homelab/immich/docker-compose.yml")
+        comp = dk._compose(n, "rootless", c)
+        self.assertTrue(comp.startswith("cd /home/a/.homelab/immich && env DOCKER_HOST"))
+        self.assertIn("compose -p immich -f /home/a/.homelab/immich/docker-compose.yml", comp)
+        self.assertTrue(st.Node(id="", ssh="nouser").problems())
+        self.assertTrue(st.Node(id="n", daemons=["weird"]).problems())
+
+    def test_monitoring_fmt(self):
+        from sway_apps import monitoring as mo
+        self.assertEqual(mo.fmt(None, "pct"), "—")
+        self.assertEqual(mo.fmt(1, "bool"), "UP")
+        self.assertEqual(mo.fmt(0, "bool"), "DOWN")
+        self.assertEqual(mo.fmt(93.4, "pct"), "93%")
+        self.assertEqual(mo.fmt(90061, "dur"), "1d 1h")
+        self.assertEqual(mo.fmt(3700, "dur"), "1h 1m")
+        self.assertEqual(mo.fmt(5 * 1024**3, "bytes"), "5.0 GiB")

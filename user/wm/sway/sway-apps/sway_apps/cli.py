@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
 import signal
 import subprocess
 import sys
@@ -13,10 +14,11 @@ from typing import Any, Callable
 
 from . import __version__, discover, generate, gitsync, log, paths, startup, swayipc
 from . import monitors as mon
+from . import dockerctl
 from . import shortcuts as sc_mod
 from .rules import CRITERIA_KEYS, KINDS, Rule, parse_config
 from .shortcuts import Shortcut
-from .state import SCOPES, Monitor, StartupEntry, State, Tool
+from .state import SCOPES, Monitor, Node, StartupEntry, State, Tool
 
 
 class CliError(Exception):
@@ -1158,6 +1160,258 @@ def cmd_tools_key(args: argparse.Namespace) -> int:
 
 
 # --------------------------------------------------------------------------
+# nodes + docker
+
+def _get_node(st: State, ident: str) -> Node:
+    n = st.node(ident)
+    if n is None:
+        c = [x for x in st.nodes() if x.name.lower() == ident.lower() or x.profile == ident]
+        if len(c) == 1:
+            return c[0]
+        raise CliError(f"no node {ident!r} (see: sway-apps nodes list)")
+    return n
+
+
+def _profiles_available() -> list[str]:
+    import glob, os
+    prof_dir = paths.DOTFILES / "profiles"
+    return sorted(os.path.basename(p)[:-len("-config.nix")] for p in glob.glob(str(prof_dir / "*-config.nix")))
+
+
+def cmd_nodes_list(args: argparse.Namespace) -> int:
+    st = State()
+    items = st.nodes()
+    rows = []
+    data = []
+    for n in items:
+        ok, detail = (dockerctl.reachable(n) if args.probe else (None, ""))
+        data.append(dict(n.to_dict(), scope=n.scope, reachable=ok, detail=detail))
+        rows.append(["*" if n.enabled else "-", n.id, n.profile, n.ssh or "(local)", ",".join(n.daemons) or "-", "sudo" if n.sudo_rootful else "",
+                     ("up" if ok else "DOWN") if ok is not None else "", detail[:40]])
+    _out(args, data, lambda: _table(rows, ["", "id", "profile", "ssh", "docker", "", "probe", ""]))
+    return 0
+
+
+def cmd_nodes_profiles(args: argparse.Namespace) -> int:
+    st = State()
+    have = {n.profile for n in st.nodes()}
+    profs = [{"profile": p, "added": p in have} for p in _profiles_available()]
+    _out(args, profs, lambda: _table([[p["profile"], "yes" if p["added"] else ""] for p in profs], ["profile", "node"]))
+    return 0
+
+
+def cmd_nodes_add(args: argparse.Namespace) -> int:
+    st = State()
+    n = Node(id=args.id, name=args.name or args.id, profile=args.profile or args.id, ssh=args.ssh or "",
+             daemons=[d for d in (args.docker or "").split(",") if d], sudo_rootful=args.sudo_rootful,
+             prometheus_instance=args.prometheus or "", enabled=not args.disabled, order=args.order if args.order is not None else 100,
+             notes=args.notes or "", scope=args.scope)
+    if n.problems():
+        raise CliError("invalid node: " + "; ".join(n.problems()))
+    if st.node(n.id) and not args.force:
+        raise CliError(f"node {n.id} exists; use `nodes set` or --force")
+    with log.action("nodes.add", id=n.id, ssh=n.ssh, daemons=n.daemons):
+        st.save_node(n, args.scope)
+        res = _persist(args, st, f"add node {n.id}")
+    _out(args, {"node": dict(n.to_dict(), scope=args.scope), **res}, lambda: print(f"added {n.id}"))
+    return 0
+
+
+def cmd_nodes_set(args: argparse.Namespace) -> int:
+    st = State()
+    n = _get_node(st, args.id)
+    for attr in ("name", "profile", "ssh", "notes"):
+        v = getattr(args, attr, None)
+        if v is not None:
+            setattr(n, attr, v)
+    if args.docker is not None:
+        n.daemons = [d for d in args.docker.split(",") if d]
+    if args.prometheus is not None:
+        n.prometheus_instance = args.prometheus
+    if args.sudo_rootful:
+        n.sudo_rootful = True
+    if args.no_sudo_rootful:
+        n.sudo_rootful = False
+    if args.order is not None:
+        n.order = args.order
+    if args.enable:
+        n.enabled = True
+    if args.disable:
+        n.enabled = False
+    if n.problems():
+        raise CliError("invalid node: " + "; ".join(n.problems()))
+    scope = args.scope or n.scope
+    with log.action("nodes.set", id=n.id):
+        st.save_node(n, scope)
+        res = _persist(args, st, f"update node {n.id}")
+    _out(args, {"node": dict(n.to_dict(), scope=scope), **res}, lambda: print(f"updated {n.id}"))
+    return 0
+
+
+def cmd_nodes_rm(args: argparse.Namespace) -> int:
+    st = State()
+    n = _get_node(st, args.id)
+    with log.action("nodes.rm", id=n.id):
+        st.remove("nodes", n.id)
+        res = _persist(args, st, f"remove node {n.id}")
+    _out(args, {"removed": n.id, **res}, lambda: print(f"removed {n.id}"))
+    return 0
+
+
+def cmd_nodes_deploy(args: argparse.Namespace) -> int:
+    """Open a terminal running deploy.sh --profile X (or install.sh locally)."""
+    st = State()
+    n = _get_node(st, args.id)
+    prof = n.profile or n.id
+    if n.is_local:
+        script = f"cd {paths.DOTFILES} && ./install.sh {paths.DOTFILES} {prof} {args.flags or '-s -u'}"
+    else:
+        script = f"cd {paths.DOTFILES} && ./deploy.sh --profile {prof}"
+    inner = f"{script}; echo; echo '--- deploy finished (exit '$?') --- press Enter to close'; read -r _"
+    term = f"kitty --class sway-apps-deploy --title 'Deploy {prof}' -e bash -lc {shlex.quote(inner)}"
+    if args.print:
+        _out(args, {"command": term}, lambda: print(term))
+        return 0
+    if not swayipc.available():
+        raise CliError("no sway socket")
+    with log.action("nodes.deploy", node=n.id, profile=prof):
+        swayipc.exec_(term)
+    _out(args, {"launched": True, "command": term}, lambda: print(f"deploy of {prof} opened in a terminal"))
+    return 0
+
+
+def _daemons_for(n: Node, wanted: str | None) -> list[str]:
+    if wanted:
+        if wanted not in n.daemons:
+            raise CliError(f"node {n.id} has no {wanted} daemon (has: {', '.join(n.daemons) or 'none'})")
+        return [wanted]
+    return list(n.daemons)
+
+
+def cmd_docker_ps(args: argparse.Namespace) -> int:
+    st = State()
+    nodes = [_get_node(st, args.node)] if args.node else [n for n in st.nodes() if n.enabled and n.daemons]
+    rows: list[list] = []
+    data: list[dict] = []
+    errors: list[str] = []
+    for n in nodes:
+        for dmn in _daemons_for(n, args.daemon):
+            try:
+                cs = dockerctl.containers(n, dmn, with_stats=not args.fast, with_inspect=not args.fast)
+            except dockerctl.DockerError as exc:
+                errors.append(str(exc)); continue
+            for c in cs:
+                if args.query and args.query.lower() not in (c.name + c.image + c.project).lower():
+                    continue
+                data.append(c.to_dict())
+                rows.append([n.id, dmn, c.project or "-", c.name, c.state, c.status[:22], c.cpu_pct, c.mem_usage, (f"{c.mem_limit // 2**20}M" if c.mem_limit else "-"),
+                             (f"{c.cpu_limit:g}" if c.cpu_limit else "-"), c.image[:40]])
+    _out(args, {"containers": data, "errors": errors},
+         lambda: (_table(rows, ["node", "daemon", "stack", "container", "state", "status", "cpu", "mem", "mem lim", "cpu lim", "image"]),
+                  [print("error:", e, file=sys.stderr) for e in errors]))
+    return 0 if not errors or rows else 1
+
+
+def _find_container(st: State, node: str, name: str, daemon: str | None) -> tuple[Node, str, dockerctl.Container]:
+    n = _get_node(st, node)
+    for dmn in _daemons_for(n, daemon):
+        for c in dockerctl.containers(n, dmn, with_stats=False, with_inspect=True):
+            if c.name == name or c.id == name:
+                return n, dmn, c
+    raise CliError(f"container {name!r} not found on {n.id}")
+
+
+def cmd_docker_inspect(args: argparse.Namespace) -> int:
+    st = State()
+    n, dmn, c = _find_container(st, args.node, args.name, args.daemon)
+    d = c.to_dict()
+    def human():
+        print(f"{c.name}  [{n.id}/{dmn}]  {c.state} · {c.status}")
+        print(f"  image:    {c.image}")
+        print(f"  stack:    {c.project or '-'}  service: {c.service or '-'}  restart: {c.restart_policy or '-'}  health: {c.health or '-'}")
+        print(f"  compose:  {c.working_dir or '-'}")
+        print(f"  files:    {c.config_files or '-'}")
+        print(f"  limits:   mem {c.mem_limit // 2**20 if c.mem_limit else '-'}M  cpu {c.cpu_limit or '-'}")
+        print(f"  ports:    {c.ports or '-'}")
+        print("  mounts:")
+        for m in c.mounts:
+            print(f"    {m['type']:6} {m['source']}  ->  {m['destination']}  ({m['rw']})")
+    _out(args, d, human)
+    return 0
+
+
+def cmd_docker_action(args: argparse.Namespace) -> int:
+    st = State()
+    n, dmn, c = _find_container(st, args.node, args.name, args.daemon)
+    out = dockerctl.action(n, dmn, c, args.what)
+    _out(args, {"node": n.id, "daemon": dmn, "container": c.name, "action": args.what, "output": out},
+         lambda: print(f"{args.what} {c.name} on {n.id}/{dmn}: ok\n{out}"))
+    return 0
+
+
+def cmd_docker_logs(args: argparse.Namespace) -> int:
+    st = State()
+    n, dmn, c = _find_container(st, args.node, args.name, args.daemon)
+    if args.follow:
+        proc = dockerctl.follow_logs(n, dmn, c.name, tail=args.tail)
+        try:
+            for line in proc.stdout:  # type: ignore[union-attr]
+                print(line, end="", flush=True)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            proc.terminate()
+        return 0
+    text = dockerctl.logs(n, dmn, c.name, tail=args.tail)
+    _out(args, {"logs": text}, lambda: print(text, end=""))
+    return 0
+
+
+def cmd_docker_df(args: argparse.Namespace) -> int:
+    st = State()
+    n = _get_node(st, args.node)
+    out = {dmn: dockerctl.disk_usage(n, dmn) for dmn in _daemons_for(n, args.daemon)}
+    def human():
+        for dmn, d in out.items():
+            print(f"== {n.id}/{dmn}" + (f"  (error: {d['error']})" if d.get("error") else ""))
+            _table([[s.get("Type"), s.get("TotalCount"), s.get("Active"), s.get("Size"), s.get("Reclaimable")] for s in d["summary"]], ["type", "total", "active", "size", "reclaimable"])
+            vols = sorted(d["volumes"], key=lambda v: str(v.get("size")))[:40]
+            if vols:
+                _table([[v["name"][:50], v["size"], v["links"], (v.get("mountpoint") or "")[:60]] for v in vols], ["volume", "size", "links", "mountpoint"])
+    _out(args, out, human)
+    return 0
+
+
+# --------------------------------------------------------------------------
+# monitoring
+
+def cmd_monitor(args: argparse.Namespace) -> int:
+    from . import monitoring
+    st = State()
+    if args.what == "targets":
+        rows = monitoring.targets(st)
+        _out(args, rows, lambda: _table([["UP" if t["up"] else "DOWN", t["job"], t["instance"]] for t in rows], ["", "job", "instance"]))
+        return 0
+    if args.what == "query":
+        res = monitoring.query(st, args.promql or "up")
+        _out(args, res, lambda: [print(json.dumps(r["metric"]), r["value"][1]) for r in res])
+        return 0
+    ov = monitoring.overview(st)
+    def human():
+        down = [t for t in ov["targets"] if not t["up"]]
+        print(f"targets: {len(ov['targets'])} total, {len(down)} down" + (": " + ", ".join(t["job"] for t in down) if down else ""))
+        for c in ov["nodes"]:
+            m = c["metrics"]
+            print(f"  {c['node']:<12} {m['up']['text']:<5} load {m['load1']['text']:<5} mem {m['mem_used_pct']['text']:<5} root {m['root_used_pct']['text']:<5} up {m['uptime_s']['text']}")
+        g = ov["global"]
+        print(f"  backups: NAS age {g['nas_backup_age_s']['text']} (status {g['nas_backup_status']['text']}) · offsite {g['nas_offsite_backup_last_success']['text']} ago · mariadb daily {g['mariadb_backup_daily_age_s']['text']} ago · repo {g['backup_repo_size_bytes']['text']}")
+        for e in ov["errors"]:
+            print("  error:", e)
+    _out(args, ov, human)
+    return 0
+
+
+# --------------------------------------------------------------------------
 # git / log
 
 def cmd_git_status(args: argparse.Namespace) -> int:
@@ -1239,7 +1493,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd")
 
     x = sub.add_parser("gui", help="open the GUI (default)")
-    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows", "log"], help="section to open")
+    x.add_argument("--section", choices=["startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows", "nodes", "docker", "monitoring", "log"], help="section to open")
     x.add_argument("--select", help="item id to select (rule id, startup id, desktop id or con_id)")
     x.set_defaults(func=cmd_gui)
     sub.add_parser("doctor", help="check the installation").set_defaults(func=cmd_doctor)
@@ -1392,6 +1646,32 @@ def build_parser() -> argparse.ArgumentParser:
     x = tl.add_parser("rm"); x.add_argument("id"); persist_flags(x, rules=False); x.set_defaults(func=cmd_tools_rm)
     x = tl.add_parser("run"); x.add_argument("id"); x.set_defaults(func=cmd_tools_run)
     x = tl.add_parser("key", help="bind a key to a tool (creates/updates its shortcut); 'none' unbinds"); x.add_argument("id"); x.add_argument("keys"); x.add_argument("--override", action="store_true"); x.add_argument("--force", action="store_true"); persist_flags(x); x.set_defaults(func=cmd_tools_key)
+
+    # nodes
+    nd = sub.add_parser("nodes", help="infrastructure nodes (ssh targets, docker daemons, deploy)").add_subparsers(dest="sub", required=True)
+    x = nd.add_parser("list"); x.add_argument("--probe", action="store_true", help="ssh to each node"); x.set_defaults(func=cmd_nodes_list)
+    nd.add_parser("profiles", help="profiles in the repo and whether they are nodes").set_defaults(func=cmd_nodes_profiles)
+    x = nd.add_parser("add"); x.add_argument("id", help="node id (use the profile name)"); x.add_argument("--profile"); x.add_argument("--name"); x.add_argument("--ssh", help="user@host[:port]; omit for this machine")
+    x.add_argument("--docker", help="comma list: rootful,rootless"); x.add_argument("--sudo-rootful", action="store_true", help="rootful docker via sudo -n"); x.add_argument("--prometheus", help="node_exporter instance label")
+    x.add_argument("--order", type=int); x.add_argument("--notes"); x.add_argument("--scope", choices=SCOPES, default="common"); x.add_argument("--disabled", action="store_true"); x.add_argument("--force", action="store_true")
+    persist_flags(x, rules=False); x.set_defaults(func=cmd_nodes_add)
+    x = nd.add_parser("set"); x.add_argument("id"); x.add_argument("--profile"); x.add_argument("--name"); x.add_argument("--ssh"); x.add_argument("--docker"); x.add_argument("--prometheus")
+    x.add_argument("--sudo-rootful", action="store_true"); x.add_argument("--no-sudo-rootful", action="store_true"); x.add_argument("--order", type=int); x.add_argument("--notes")
+    x.add_argument("--enable", action="store_true"); x.add_argument("--disable", action="store_true"); x.add_argument("--scope", choices=SCOPES); persist_flags(x, rules=False); x.set_defaults(func=cmd_nodes_set)
+    x = nd.add_parser("rm"); x.add_argument("id"); persist_flags(x, rules=False); x.set_defaults(func=cmd_nodes_rm)
+    x = nd.add_parser("deploy", help="open a terminal running deploy.sh --profile (install.sh locally)"); x.add_argument("id"); x.add_argument("--flags", help="install.sh flags for the local node (default -s -u)"); x.add_argument("--print", action="store_true"); x.set_defaults(func=cmd_nodes_deploy)
+
+    # docker
+    dk = sub.add_parser("docker", help="containers on the nodes (over ssh)").add_subparsers(dest="sub", required=True)
+    x = dk.add_parser("ps"); x.add_argument("query", nargs="?"); x.add_argument("--node"); x.add_argument("--daemon", choices=["rootful", "rootless"]); x.add_argument("--fast", action="store_true", help="skip inspect/stats"); x.set_defaults(func=cmd_docker_ps)
+    x = dk.add_parser("inspect"); x.add_argument("node"); x.add_argument("name"); x.add_argument("--daemon", choices=["rootful", "rootless"]); x.set_defaults(func=cmd_docker_inspect)
+    for w in ("start", "stop", "restart", "pull", "recreate", "up", "down"):
+        x = dk.add_parser(w); x.add_argument("node"); x.add_argument("name"); x.add_argument("--daemon", choices=["rootful", "rootless"]); x.set_defaults(func=cmd_docker_action, what=w)
+    x = dk.add_parser("logs"); x.add_argument("node"); x.add_argument("name"); x.add_argument("--daemon", choices=["rootful", "rootless"]); x.add_argument("-n", "--tail", type=int, default=300); x.add_argument("-f", "--follow", action="store_true"); x.set_defaults(func=cmd_docker_logs)
+    x = dk.add_parser("df", help="disk usage + volumes"); x.add_argument("node"); x.add_argument("--daemon", choices=["rootful", "rootless"]); x.set_defaults(func=cmd_docker_df)
+
+    # monitoring
+    x = sub.add_parser("monitor", help="node status from Prometheus (via the VPS) + backups"); x.add_argument("what", nargs="?", choices=["overview", "targets", "query"], default="overview"); x.add_argument("promql", nargs="?"); x.set_defaults(func=cmd_monitor)
 
     # git
     g = sub.add_parser("git", help="repo sync of the state files").add_subparsers(dest="sub", required=True)

@@ -144,6 +144,29 @@ in
       isDefault = true;
       sine.enable = sineEnabled;
 
+      # Sine ships an engine auto-updater, and this install must not run it.
+      # The engine (and the autoconfig bootloader beside it) is PINNED by the
+      # zen-browser flake and re-linked from the store into chrome/JS and
+      # chrome/utils on every activation. Left on, the two fight in a loop the
+      # user sees on every single start:
+      #
+      #   activation writes engine.json = the pinned version (2.3.3.0)
+      #   -> Zen starts, Sine reads it, finds a newer release upstream
+      #   -> steps ONE release forward (2.3.4.0c), overwriting the store links
+      #   -> toasts "The Sine engine has been updated ... please restart"
+      #   -> next activation puts 2.3.3.0 back, and round it goes.
+      #
+      # Turning the updater off makes the pin the truth. The engine then moves
+      # only when the zen-browser input moves (it pins the same Sine rev as
+      # upstream today, so there is nothing newer to move to).
+      #
+      # This goes through the profile's user.js rather than programs.zen-browser
+      # .extraPrefs: extraPrefs writes mozilla.cfg, which Sine both asserts
+      # against and — see the header — is never read from the wrapper anyway.
+      settings = lib.mkIf sineEnabled {
+        "sine.engine.auto-update" = false;
+      };
+
       # Space navigation: Zen ships Ctrl+Alt+Q (back) / Ctrl+Alt+E (forward).
       # Move "forward" onto W so both live under the same hand as Q.
       # `accel` is Ctrl on Linux — mirrors the shape Zen already uses for these.

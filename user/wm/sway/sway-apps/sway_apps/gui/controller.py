@@ -11,7 +11,7 @@ from .. import monitors as mon
 from .. import shortcuts as sc_mod
 from ..rules import Rule
 from ..shortcuts import Shortcut
-from ..state import Monitor, StartupEntry, State, Tool
+from ..state import Monitor, Node, StartupEntry, State, Tool
 
 _log = log.get("gui.ctl")
 
@@ -240,6 +240,20 @@ class Controller:
         with log.action("gui.tools.launch", id=t.id, command=t.launch_command()):
             swayipc.exec_(t.launch_command())
         return Outcome(True, f"Launched {t.name}")
+
+    # ---- nodes ----------------------------------------------------------------
+    def save_node(self, n: Node, scope: str) -> Outcome:
+        probs = n.problems()
+        if probs:
+            return Outcome(False, "Invalid node: " + "; ".join(probs))
+        with log.action("gui.nodes.save", id=n.id, ssh=n.ssh, daemons=n.daemons, scope=scope):
+            self.state.save_node(n, scope)
+            return self._finish(f"Saved node {n.id}", False, None)
+
+    def delete_node(self, n: Node) -> Outcome:
+        with log.action("gui.nodes.delete", id=n.id):
+            self.state.remove("nodes", n.id)
+            return self._finish(f"Removed node {n.id}", False, None)
 
     # ---- git ----------------------------------------------------------------
     def git_status(self) -> dict:

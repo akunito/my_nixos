@@ -78,6 +78,36 @@ leaves the kernel without EDID for it. Use it on fixed desks (DESK), not on
 a laptop's dock monitor (X13 keeps detection). `monitors force status` shows
 the kernel status per role.
 
+### Tools (sidebar launchers)
+
+The TOOLS group under the sections launches or focuses utilities
+(waypaper, nwg-displays, Tailscale, audio, Bluetooth, network, online
+accounts, LACT, Mission Center, Flatseal, nwg-look, btop, btop as root). Edit
+via "Edit tools…" or `sway-apps tools …`; "Assign key…" creates the matching
+shortcut (category Tools). `sway-apps tools key ID KEYS|none`.
+
+### Nodes, Docker, Monitoring (the control panel's successor)
+
+The Rust control panel (`apps/control-panel`, flags `controlPanel*`) was
+retired on 2026-09-07. What replaces it lives here, with no server:
+
+- **Nodes** (`nodes` section, common): ssh target, profile, docker daemons
+  (rootful / rootless, optional `sudo -n`), Prometheus instance label. Probe,
+  **Deploy…** (opens a terminal with `deploy.sh --profile X`, or `install.sh`
+  for the local node; push first, the target resets to origin/main), and a
+  picker to add any profile from `profiles/`.
+- **Docker**: containers per node/daemon over ssh (`docker ps` + `inspect` +
+  `stats`): state, health, stack, compose directory and files, restart
+  policy, ports, live CPU/memory against configured limits, mounts, live
+  logs. Actions: start, stop, restart, pull + up, recreate (compose-aware).
+  "Disk usage" = `docker system df -v` with volume sizes. CLI:
+  `sway-apps docker ps|inspect|logs|df|start|stop|restart|pull|recreate|up|down`.
+- **Monitoring**: Prometheus is only reachable on the VPS, so every query is
+  proxied through one ssh round trip (`curl localhost:9090`). Cards: scrape
+  targets up/down, per node load / memory / root disk / uptime, NAS and
+  MariaDB backup ages, repo size; "Open Grafana" for the dashboards.
+  CLI: `sway-apps monitor overview|targets|query PROMQL`.
+
 ### Git sync between machines
 
 Every save commits only `user/wm/sway/apps/*.json`, then runs

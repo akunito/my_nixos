@@ -631,9 +631,6 @@ in
           # wrong tool and why sway's `bar ... mode` does not drive Waybar.
           "${hyper}+Shift+h" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/waybar-toggle.sh";
-          # Control Panel (NixOS Infrastructure Management) - hyper+S
-          "${hyper}+s" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh control-panel control-panel";
           # Pavucontrol (Audio mixer) - hyper+Shift+a (A for Audio)
           "${hyper}+Shift+a" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
@@ -680,7 +677,7 @@ in
           # Force gamescope back to fullscreen (gaming recovery keybinding)
           "${hyper}+F9" = "exec swaymsg '[app_id=gamescope] fullscreen enable' 2>/dev/null; swaymsg '[class=gamescope] fullscreen enable' 2>/dev/null; swaymsg '[class=Gamescope] fullscreen enable' 2>/dev/null";
           "${hyper}+Shift+space" = "floating toggle";
-          # Note: "${hyper}+s" is used for control-panel (see application bindings above)
+          # Note: "${hyper}+s" is free since the control panel was retired (2026-09-07)
           # Note: "${hyper}+w" is used for workspace next_on_output (see Workspace navigation above)
           # Note: Removed "${hyper}+e" layout toggle (now used for ranger file manager)
           # Note: Removed "${hyper}+a" to avoid conflict with "${hyper}+A" (blueman-manager)
@@ -1502,9 +1499,6 @@ in
       # Mission Center - Floating, Sticky, Resized
       for_window [app_id="io.missioncenter.MissionCenter"] floating enable, sticky enable, resize set 800 600
 
-      # Control Panel (NixOS Infrastructure Management) - Floating, Sticky
-      for_window [app_id="control-panel"] floating enable, sticky enable
-      for_window [title="NixOS Control Panel"] floating enable, sticky enable
 
       # KWallet - Force to Primary Monitor, Workspace 1 (Floating, Sticky)
       # Multiple rules to catch all KWallet variants (kwalletd5, kwalletd6, kwallet-query, etc.)

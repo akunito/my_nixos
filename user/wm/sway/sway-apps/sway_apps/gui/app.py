@@ -16,6 +16,7 @@ from .panels import AppsPanel, LogPanel, RulesPanel, StartupPanel, WindowsPanel 
 from .panels_monitors import MonitorsPanel, WorkspacesPanel  # noqa: E402
 from .panels_shortcuts import ShortcutsPanel  # noqa: E402
 from .panels_tools import ToolsPanel  # noqa: E402
+from .panels_infra import DockerPanel, MonitoringPanel, NodesPanel  # noqa: E402
 
 _log = log.get("gui")
 
@@ -29,6 +30,9 @@ NAV = [
     ("workspaces", "Workspaces", "Map: monitors × slots", "view-grid-symbolic"),
     ("apps", "Apps", "Installed .desktop & Flatpak", "view-app-grid-symbolic"),
     ("windows", "Windows", "Live sway tree", "focus-windows-symbolic"),
+    ("nodes", "Nodes", "Machines · deploy", "network-server-symbolic"),
+    ("docker", "Docker", "Containers over ssh", "package-x-generic-symbolic"),
+    ("monitoring", "Monitoring", "Prometheus · backups", "utilities-system-monitor-symbolic"),
     ("log", "Log", "Action log", "utilities-terminal-symbolic"),
 ]
 
@@ -145,6 +149,9 @@ class MainWindow(Adw.ApplicationWindow):
             "workspaces": WorkspacesPanel(self),
             "apps": AppsPanel(self),
             "windows": WindowsPanel(self),
+            "nodes": NodesPanel(self),
+            "docker": DockerPanel(self),
+            "monitoring": MonitoringPanel(self),
             "log": LogPanel(self),
         }
         for key, panel in self.panels.items():
@@ -165,7 +172,7 @@ class MainWindow(Adw.ApplicationWindow):
         ctrl.set_scope(Gtk.ShortcutScope.GLOBAL)
         ctrl.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("<Control>q"),
                                            Gtk.CallbackAction.new(lambda *_: (self.close(), True)[1])))
-        for i, (key, *_r) in enumerate(NAV, start=1):
+        for i, (key, *_r) in enumerate(NAV[:9], start=1):  # <Control>10+ is not a valid trigger
             ctrl.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(f"<Control>{i}"),
                                                Gtk.CallbackAction.new(lambda *_a, k=key: (self.show_section(k), True)[1])))
         self.add_controller(ctrl)

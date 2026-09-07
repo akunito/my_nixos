@@ -889,34 +889,6 @@
       "notes": ""
     },
     {
-      "id": "r-36017491",
-      "kind": "for_window",
-      "criteria": {
-        "app_id": "control-panel"
-      },
-      "actions": [
-        "floating enable",
-        "sticky enable"
-      ],
-      "name": "control-panel",
-      "enabled": true,
-      "notes": ""
-    },
-    {
-      "id": "r-3b08fc19",
-      "kind": "for_window",
-      "criteria": {
-        "title": "NixOS Control Panel"
-      },
-      "actions": [
-        "floating enable",
-        "sticky enable"
-      ],
-      "name": "NixOS Control Panel",
-      "enabled": true,
-      "notes": ""
-    },
-    {
       "id": "r-f3b1cce1",
       "kind": "for_window",
       "criteria": {
@@ -1366,22 +1338,6 @@
       "notes": "seeded 2026-09-07 from swayfx-config.nix",
       "updated_at": 0,
       "category": "Apps",
-      "table": "prefix"
-    },
-    {
-      "id": "k-d42769e6",
-      "keys": "Hyper+s",
-      "kind": "app",
-      "app_id": "control-panel",
-      "command": "control-panel",
-      "name": "Control Panel",
-      "enabled": true,
-      "release": false,
-      "locked": false,
-      "override": false,
-      "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0,
-      "category": "Tools",
       "table": "prefix"
     },
     {
@@ -2084,17 +2040,6 @@
       "updated_at": 0
     },
     {
-      "id": "t-dab68a57",
-      "name": "Control Panel",
-      "command": "control-panel",
-      "app_id": "control-panel",
-      "icon": "preferences-system-symbolic",
-      "order": 120,
-      "enabled": true,
-      "notes": "seeded 2026-09-07",
-      "updated_at": 0
-    },
-    {
       "id": "t-06cccee3",
       "name": "btop",
       "command": "kitty --class btop -e btop",
@@ -2115,6 +2060,93 @@
       "enabled": true,
       "notes": "sudo prompts inside the terminal",
       "updated_at": 1788761166
+    }
+  ],
+  "nodes": [
+    {
+      "id": "VPS_PROD",
+      "name": "VPS prod (Netcup)",
+      "profile": "VPS_PROD",
+      "ssh": "akunito@100.64.0.6:56777",
+      "daemons": [
+        "rootless"
+      ],
+      "prometheus_instance": "monitoring",
+      "order": 10,
+      "notes": "rootless docker; stacks in ~/.homelab",
+      "sudo_rootful": false,
+      "enabled": true,
+      "updated_at": 0
+    },
+    {
+      "id": "NAS_PROD",
+      "name": "NAS (nas-aku)",
+      "profile": "NAS_PROD",
+      "ssh": "akunito@192.168.20.200",
+      "daemons": [
+        "rootful",
+        "rootless"
+      ],
+      "prometheus_instance": "nas",
+      "order": 20,
+      "notes": "sleeps 23:00-16:00; rootful = vpn-media, rootless = *arr",
+      "sudo_rootful": false,
+      "enabled": true,
+      "updated_at": 0
+    },
+    {
+      "id": "DESK",
+      "name": "DESK (nixosaku)",
+      "profile": "DESK",
+      "ssh": "",
+      "daemons": [
+        "rootful"
+      ],
+      "prometheus_instance": "desk",
+      "order": 30,
+      "notes": "this machine when running on DESK",
+      "sudo_rootful": false,
+      "enabled": true,
+      "updated_at": 0
+    },
+    {
+      "id": "LAPTOP_X13",
+      "name": "ThinkPad X13",
+      "profile": "LAPTOP_X13",
+      "ssh": "akunito@100.64.0.8",
+      "daemons": [
+        "rootful"
+      ],
+      "order": 40,
+      "notes": "",
+      "sudo_rootful": false,
+      "enabled": true,
+      "updated_at": 0
+    },
+    {
+      "id": "LAPTOP_A",
+      "name": "Aga laptop",
+      "profile": "LAPTOP_A",
+      "ssh": "aga@192.168.8.78",
+      "daemons": [],
+      "prometheus_instance": "laptop_a",
+      "order": 50,
+      "notes": "no docker",
+      "sudo_rootful": false,
+      "enabled": true,
+      "updated_at": 0
+    },
+    {
+      "id": "DESK_A",
+      "name": "Aga desk (nixosagadesk)",
+      "profile": "DESK_A",
+      "ssh": "aga@nixosagadesk",
+      "daemons": [],
+      "order": 60,
+      "notes": "hostname via Tailscale MagicDNS",
+      "sudo_rootful": false,
+      "enabled": true,
+      "updated_at": 0
     }
   ]
 }

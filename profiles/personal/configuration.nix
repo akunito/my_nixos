@@ -23,8 +23,6 @@
       ../../system/security/gpg.nix
       ../../system/security/blocklist.nix
       ../../system/security/firewall.nix
-      ../../system/app/control-panel.nix # NixOS infrastructure control panel (web)
-      ../../system/app/control-panel-native.nix # NixOS infrastructure control panel (native desktop app)
     ]
     ++ lib.optional (systemSettings.nfsServerEnable or false) ../../system/hardware/nfs_server.nix # Export local directories over NFS (DESK shares its Games drives)
   ++ lib.optional (systemSettings.webcamControlsEnable or false) ../../system/hardware/webcam-controls.nix # Persist v4l2 webcam controls across reboot/hotplug
