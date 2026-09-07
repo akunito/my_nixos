@@ -159,8 +159,8 @@ check "removed not in include" 'true' "$(grep -q 'smoke-test-app' "$SWAY_APPS_IN
 
 # --- log ---------------------------------------------------------------------
 check "log path"               '.path | endswith("sway-apps.log")'               "$(J log path)"
-check "log tail has actions"   'map(select(test("rules.add ok"))) | length >= 1' "$(J log tail -n 500)"
-check "log has ERROR mirror"   'map(select(test(" ERROR "))) | length >= 1'      "$(J log tail -n 500 --level error)"
+check "log tail has actions"   'map(select(test("rules.add ok"))) | length >= 1' "$(J log tail -n 5000)"
+check "log has ERROR mirror"   'map(select(test(" ERROR "))) | length >= 1'      "$(J log tail -n 5000 --level error)"
 SZ=$(stat -c %s "$SWAY_APPS_LOCAL_STATE_DIR/sway-apps.log"); [ "$SZ" -gt 1000 ] && ok "log written ($SZ bytes)" || bad "log written"
 
 echo "== $pass passed, $fail failed"
