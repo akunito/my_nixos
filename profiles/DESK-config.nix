@@ -534,8 +534,8 @@ in
     #             Read-only.
     nfsServerEnable = true;
     nfsExports = ''
-      /mnt/DATA/Games        192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 100.64.0.4(ro,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11)
-      /mnt/DATA_SATA3/Games  192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 100.64.0.4(ro,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12)
+      /mnt/DATA/Games        192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 100.64.0.4(ro,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11) 100.64.0.11(ro,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=11)
+      /mnt/DATA_SATA3/Games  192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 100.64.0.4(ro,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12) 100.64.0.11(ro,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check,fsid=12)
     '';
     allowedUDPPorts = [
       # 51820 # Wireguard

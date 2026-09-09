@@ -149,9 +149,11 @@ in
     homeBackupExecStart = "/run/current-system/sw/bin/sh /home/aga/.dotfiles/scripts/backup-manager.sh --auto --target nfs --job home";
     nfsBackupEnable = true;
 
-    # NFS client — backup mount ONLY, on-demand autofs over Tailscale. On-demand so
-    # it mounts when the backup runs (Tailscale up by then), not at early boot;
-    # soft + retry=0 (nfs_client.nix) means a sleeping NAS fails fast, never hangs.
+    # NFS client — on-demand autofs over Tailscale. On-demand so it mounts when
+    # it is used (Tailscale up by then), not at early boot; soft + retry=0
+    # (nfs_client.nix) means a sleeping NAS fails fast, never hangs. A share that
+    # goes stale after mounting is reaped by nfs-unmount-unreachable, which is
+    # automatic for every NFS client.
     nfsClientEnable = true;
     nfsMounts = [
       {
@@ -160,10 +162,38 @@ in
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
+      # DESK's two Games drives, READ-ONLY, mirroring LAPTOP_A. `ro` here is only
+      # a local promise — root on this machine could remount rw — so the real
+      # guarantee is the matching ro entry for 100.64.0.11 in DESK's nfsExports.
+      #
+      # Addressed by DESK's Tailscale IP even though this machine is on the same
+      # LAN and runs with accept-routes off: it keeps one address for DESK across
+      # both Aga machines, and Tailscale still builds a direct LAN path, so the
+      # WiFi link is the bottleneck rather than the tunnel.
+      {
+        what = "100.64.0.5:/mnt/DATA/Games";
+        where = "/mnt/DESK_Games_DATA";
+        type = "nfs";
+        options = "noatime,ro,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
+      }
+      {
+        what = "100.64.0.5:/mnt/DATA_SATA3/Games";
+        where = "/mnt/DESK_Games_SATA3";
+        type = "nfs";
+        options = "noatime,ro,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
+      }
     ];
     nfsAutoMounts = [
       {
         where = "/mnt/NFS_Backups";
+        automountConfig = { TimeoutIdleSec = "600"; };
+      }
+      {
+        where = "/mnt/DESK_Games_DATA";
+        automountConfig = { TimeoutIdleSec = "600"; };
+      }
+      {
+        where = "/mnt/DESK_Games_SATA3";
         automountConfig = { TimeoutIdleSec = "600"; };
       }
     ];
