@@ -26,6 +26,14 @@ LAYOUTS = ["", "tabbed", "stacking", "splith", "splitv", "default", "toggle spli
 CRIT_TEXT = ["app_id", "class", "instance", "title", "window_role", "window_type", "shell", "con_mark", "workspace"]
 
 
+def _clear_box(box: Gtk.Box) -> None:
+    child = box.get_first_child()
+    while child is not None:
+        nxt = child.get_next_sibling()
+        box.remove(child)
+        child = nxt
+
+
 class Panel(Gtk.Box):
     """Common frame: toolbar row on top, Paned(list, detail) below."""
 
@@ -55,9 +63,18 @@ class Panel(Gtk.Box):
         left.append(scrolled(self.listbox))
         left.set_size_request(320, -1)
         self.paned.set_start_child(left)
+        # detail column: [banner slot] [scrolling form] [pinned action bar]
+        # The Save/Test/Delete buttons used to sit at the END of the scrolling
+        # form: on a long rule form they were below the fold and looked missing.
         self.detail = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.detail.add_css_class("sa-detail")
-        self.paned.set_end_child(scrolled(self.detail))
+        self._banner_slot = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self._actions_slot = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        right.append(self._banner_slot)
+        right.append(scrolled(self.detail))
+        right.append(self._actions_slot)
+        self.paned.set_end_child(right)
         self.items: list[Any] = []
         self.selected_id: str | None = None
         # Unsaved-edit tracking: the detail form sets self._dirty_save to a
@@ -95,7 +112,8 @@ class Panel(Gtk.Box):
         b.connect("button-clicked", lambda *_: on_save())
         b.set_revealed(False)
         self._dirty_banner = b
-        self.detail.append(b)
+        _clear_box(self._banner_slot)
+        self._banner_slot.append(b)
 
     # hooks
     def on_show(self) -> None:
@@ -116,11 +134,8 @@ class Panel(Gtk.Box):
     def clear_detail(self) -> None:
         self._dirty_save = None
         self._dirty_banner = None
-        child = self.detail.get_first_child()
-        while child is not None:
-            nxt = child.get_next_sibling()
-            self.detail.remove(child)
-            child = nxt
+        for box in (self.detail, self._banner_slot, self._actions_slot):
+            _clear_box(box)
 
     def show_placeholder(self, title: str = "Nothing selected", desc: str = "Pick an item on the left.") -> None:
         self.clear_detail()
@@ -159,10 +174,15 @@ class Panel(Gtk.Box):
         self.detail.append(s)
 
     def action_bar(self, *buttons: Gtk.Button) -> None:
-        bar = Gtk.Box(spacing=8, halign=Gtk.Align.END, margin_top=14)
+        """Pinned under the scrolling form, always visible."""
+        strip = Gtk.Box(hexpand=True)
+        strip.add_css_class("sa-actionbar")
+        bar = Gtk.Box(spacing=8, halign=Gtk.Align.END, hexpand=True)
         for b in buttons:
             bar.append(b)
-        self.detail.append(bar)
+        strip.append(bar)
+        _clear_box(self._actions_slot)
+        self._actions_slot.append(strip)
 
 
 # ==========================================================================

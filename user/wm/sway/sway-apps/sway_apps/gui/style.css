@@ -90,3 +90,6 @@
 .sa-gauge-title { font-size: 0.85em; opacity: 0.8; }
 .sa-gauge-value { font-size: 0.85em; font-weight: 600; font-family: monospace; }
 .sa-legend { font-size: 0.78em; opacity: 0.6; }
+
+/* action bar pinned under the detail form (Save / Test / Delete always visible) */
+.sa-actionbar { padding: 10px 22px 12px 22px; border-top: 1px solid alpha(@window_fg_color, 0.08); background-color: @window_bg_color; }
