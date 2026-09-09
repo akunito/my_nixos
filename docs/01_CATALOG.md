@@ -54,8 +54,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/appimage.nix**: System module: appimage.nix
 - **system/app/archived/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
-- **system/app/control-panel-native.nix**: Build the web control panel (standalone server binary) *Enabled when:* `systemSettings.controlPanelNativeEnable or false`
-- **system/app/control-panel.nix**: Build the control panel web server from workspace *Enabled when:* `systemSettings.controlPanelEnable or false`
 - **system/app/database-backup.nix**: Database Backup Module *Enabled when:*
    - `lib.mkIf cfg.postgresqlEnable { systemd.services.postgresql-backup = { description = "PostgreSQL Database Daily Backup"; after = [ "postgresql.service" ] ++ lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; wants = lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; requires = [ "postgresql.service" ]; serviceConfig = { Type = "oneshot"; ExecStart = postgresqlBackupScript; User = "root"; Group = "root"; # Security hardening PrivateTmp = true; ProtectSystem = "strict"; ReadWritePaths = [ cfg.location "/var/lib/prometheus-node-exporter" ]; }; }; systemd.timers.postgresql-backup = { description = "PostgreSQL Database Daily Backup Timer"; wantedBy = [ "timers.target" ]; timerConfig = { OnCalendar = cfg.startAt; Persistent = true; RandomizedDelaySec = "5m"; }; }; # Create backup directory systemd.tmpfiles.rules = [ "d ${cfg.location}/postgresql/daily 0750 root root -" ]; }`
    - `cfg.postgresqlEnable && cfg.hourlyEnable`
@@ -73,6 +71,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.mariadbServerEnable or false) && (systemSettings.dbNextcloudPassword or "") != ""`
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
    - `(systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != ""`
+- **system/app/docker-rootless-maintenance.nix**: Rootless Docker daemon maintenance — shared by every profile that sets *Enabled when:* `databases, Redis, Postfix`
 - **system/app/docker.nix**: Track docker from pkgs-unstable so we don't have to bump pins each time *Enabled when:* `userSettings.dockerEnable == true`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/freesm-launcher.nix**: FreeSM Launcher (Freesm Launcher)
@@ -109,6 +108,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
 - **system/app/nix-binary-cache-client.nix**: Consume a local Nix binary cache (see system/app/nix-binary-cache.nix). *Enabled when:* `not replacing`
 - **system/app/nix-binary-cache.nix**: Local Nix binary cache (harmonia) — serve DESK's /nix/store to the other machines. *Enabled when:* `cat ${pubKey}`
+- **system/app/ollama-server.nix**: Local LLM inference server — Ollama, ROCm backend. *Enabled when:*
+   - `cfg.ollamaServerEvictVram or false`
+   - `not Requires=`
+   - `evictEnable && evictTimerSec > 0`
 - **system/app/online-accounts.nix**: System module: online-accounts.nix
 - **system/app/openclaw-matrix-bridge.nix**: OpenClaw Matrix Bridge + Fallback Monitor
 - **system/app/openclaw.nix**: OpenClaw Services
@@ -153,6 +156,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.tailscaleEnable or false) || (systemSettings.trayscaleGuiEnable or false)`
    - `systemSettings.tailscaleGuiAutostart or false`
    - `(systemSettings.tailscaleOperator or "") != ""`
+   - `!lanAutoToggle`
    - `config.services.prometheus.exporters.node.enable or false`
    - `${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null`
    - `allow network to stabilize`
@@ -160,6 +164,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/virtualization.nix**: Virt-manager doc > https://nixos.wiki/wiki/Virt-manager *Enabled when:*
    - `userSettings.virtualizationEnable == true`
    - `userSettings.qemuGuestAddition == true`
+- **system/app/vram-sampler.nix**: Longitudinal VRAM sampler — what the desktop ACTUALLY peaks at, in use. *Enabled when:* `peak tracking`
 
 ### Bin
 
@@ -199,6 +204,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.disk9_enabled`
 - **system/hardware/fingerprint.nix**: Fingerprint reader support (fprintd)
 - **system/hardware/fwupd.nix**: fwupd / LVFS firmware updates. *Enabled when:* `systemSettings.fwupdEnable or false`
+- **system/hardware/gpu-mem-sampler.nix**: Periodic VRAM / GTT / MemAvailable sampler for AMD GPUs.
 - **system/hardware/gpu-monitoring.nix**: GPU Monitoring Packages based on GPU type *Enabled when:*
    - `systemSettings.gpuType == "amd"`
    - `systemSettings.gpuType == "intel"`
@@ -210,7 +216,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `same as desktop - good for interactive workloads`
    - `systemSettings.profile == "homelab"`
 - **system/hardware/joycond.nix**: Enable joycond daemon: combines Joy-Con pairs into a single virtual gamepad
-- **system/hardware/kernel.nix**: System module: kernel.nix
+- **system/hardware/kernel.nix**: Kernel 7.2 split the AMD 800-series chipset xHCI (1022:43fc/43fd, "Promontory 21")
 - **system/hardware/keychron.nix**: Grant access to Keychron keyboards for the Keychron Launcher / VIA
 - **system/hardware/laptop-power-tuning.nix**: Laptop power tuning — idle power reduction
 - **system/hardware/network-bonding.nix**: Network bonding (LACP link aggregation) module *Enabled when:*
@@ -326,6 +332,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.sddmSetupScript != null`
    - `(userSettings.wm == "plasma6" || systemSettings.enableSwayForDESK == true) && systemSettings.sddmSetupScript != null`
    - `systemSettings.hostname == "nixosaku"`
+- **system/wm/sway-apps-helper.nix**: sway-apps "always connected" monitors: force a DRM connector's status so a
 - **system/wm/sway.nix**: Helper: is Sway enabled (either as primary WM or as dual-WM with Plasma) *Enabled when:*
    - `patches # swayfx-unwrapped for BOTH this and Home Manager's wayland.windowManager.sway, # which is the one SDDM actually launches`
    - `swayEnabled && !(systemSettings.greetdEnable or false)`
@@ -356,6 +363,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
 - **user/app/browser/zen-spaces.nix**: GENERATED from Vivaldi session data — see scratchpad/gen_spaces.py.
 - **user/app/browser/zen.nix**: Zen Browser (Firefox fork), installed ALONGSIDE the default browser module and *Enabled when:*
+   - `back`
    - `userSettings.spotifyUrlHandlerEnable or false`
    - `{ "text/html" = "zen-beta.desktop"; "x-scheme-handler/http" = "zen-beta.desktop"; "x-scheme-handler/https" = "zen-beta.desktop"; "x-scheme-handler/about" = "zen-beta.desktop"; "x-scheme-handler/unknown" = "zen-beta.desktop"; } // lib.optionalAttrs (userSettings.spotifyUrlHandlerEnable or false) { "x-scheme-handler/spotify" = "spotify.desktop"; }`
    - `lib.hm.dag.entryAfter [ "writeBoundary" ] '' stale="$HOME/.local/share/applications/zen-beta.desktop" if [ -f "$stale" ] && [ ! -L "$stale" ]; then echo "Removing stale $stale (shadows managed desktop entry)" rm "$stale" fi ''`
@@ -387,6 +395,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
 - **user/app/meeting-transcribe/meeting-transcribe.nix**: Local meeting recording + transcription *Enabled when:* `e.g. DESK already ships ffmpeg-full -> duplicate bin/ffmpeg`
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
+- **user/app/opencode/opencode.nix**: OpenCode — terminal coding agent, pointed at the local GPU on DESK.
 - **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
 - **user/app/ssh-hosts.nix**: Shared SSH host definitions for workstations
 - **user/app/swaybgplus/swaybgplus.nix**: ============================================================================ *Enabled when:* `systemSettings.swaybgPlusEnable or false`
@@ -406,7 +415,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/terminal/xterm.nix**: XTerm configuration via X resources *Enabled when:* `!pkgs.stdenv.isDarwin`
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
 - **user/app/voxtype/voxtype.nix**: Voxtype - Local voice dictation for Sway *Enabled when:* `userSettings.wm == "sway"`
-- **user/app/waypaper/waypaper.nix**: awww doesn't exist on nixos-25.11 — pin to unstable. *Enabled when:* `swww/swaybg`
+- **user/app/waypaper/waypaper.nix**: awww doesn't exist on nixos-25.11 — pin to unstable. *Enabled when:* `Hyper+Shift+B`
 
 ### Hardware
 
@@ -425,7 +434,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Packages
 
 - **user/packages/user-ai-pkgs.nix**: === AI & Machine Learning === *Enabled when:* `userSettings.userAiPkgsEnable or false`
-- **user/packages/user-basic-pkgs.nix**: === Basic User Packages === *Enabled when:* `userSettings.userBasicPkgsEnable or true`
+- **user/packages/user-basic-pkgs.nix**: === Basic User Packages === *Enabled when:*
+   - `userSettings.userBasicPkgsEnable or true`
+   - `(systemSettings.nextcloudUrl or "") != ""`
 - **user/packages/user-gamedev-pkgs.nix**: === Game Development === *Enabled when:* `userSettings.userGamedevPkgsEnable or false`
 - **user/packages/user-media-recording.nix**: === Screen Recording & Video Production === *Enabled when:* `userSettings.userMediaRecordingEnable or false`
 
@@ -460,13 +471,14 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/plasma6/plasma6.nix**: ++ lib.optional userSettings.wmEnableHyprland (./. + "/../hyprland/hyprland_noStylix.nix")
 - **user/wm/sway/debug/relog-instrumentation.nix**: NDJSON sink for this repo (debug-mode compatible).
 - **user/wm/sway/default.nix**: Internal cross-module wiring (kept minimal).
-- **user/wm/sway/extras.nix**: Btop theme configuration (Stylix colors) *Enabled when:* `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
-- **user/wm/sway/hotplug-restore.nix**: Monitor-hotplug snapshot/restore (DESK): keep workspaces, focus and *Enabled when:* `hotplug restore`
+- **user/wm/sway/extras.nix**: The compositor package this profile actually runs. MUST match *Enabled when:*
+   - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
+   - `systemSettings.ollamaServerEnable or false`
 - **user/wm/sway/kanshi.nix**: Declarative mode: Nix manages kanshi config *Enabled when:*
-   - `lib.mkIf declarativeMode { services.kanshi.settings = systemSettings.swayKanshiSettings; # Ensure Home Manager owns kanshi config robustly xdg.configFile."kanshi/config".force = true; }`
-   - `dirname "$KANSHI_CONFIG"`
-   - `imperativeMode && hotplugRestore`
-   - `imperativeMode && nativeGroups && !hotplugRestore`
+   - `systemSettings.swayUseSwayfx or true`
+   - `lib.mkIf imperativeMode { # Create a default config if none exists home.activation.kanshiCreateDefaultConfig = lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] '' KANSHI_CONFIG="$HOME/.config/kanshi/config" if [ ! -f "$KANSHI_CONFIG" ]; then mkdir -p "$(dirname "$KANSHI_CONFIG")" cat > "$KANSHI_CONFIG" << 'EOF' # Kanshi Configuration (User-Managed) # Edit this file directly or use nwg-displays to configure outputs # # Example profile: # profile { # output eDP-1 mode 1920x1080 position 0,0 # output HDMI-A-1 mode 1920x1080 position 1920,0 # } # Default profile - enable all outputs profile default-auto { output * enable ${swaysomeExecLines} } EOF fi ''; }`
+   - `laptops`
+   - `imperativeMode && nativeGroups`
 - **user/wm/sway/kde-apps.nix**: KDE companion apps, Wayland-native viewers, and MIME associations for Sway session.
 - **user/wm/sway/nwg-displays.nix**: User module: nwg-displays.nix
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
@@ -478,14 +490,19 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.nextcloudEnable == true`
    - `systemSettings.trayscaleGuiEnable == true`
 - **user/wm/sway/startup-apps.nix**: CRITICAL: Restore qt5ct files on Sway startup to ensure correct content
+- **user/wm/sway/sway-apps/default.nix**: sway-apps: window rules + manual startup apps manager (CLI now, GTK4 GUI next). *Enabled when:*
+   - `settings.auto_adopt`
+   - `run 'sway-apps doctor'`
 - **user/wm/sway/sway.nix**: User module: sway.nix
 - **user/wm/sway/swayfx-config.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
    - `systemSettings.swayIdlePowerAwareEnable or false`
    - `systemSettings.stylixEnable == true`
+   - `{ _type = "if"; content = ...; }`
    - `systemSettings.waypaperEnable or false`
    - `systemSettings.gamemodeEnable == true`
-- **user/wm/sway/waybar.nix**: Some GPU tooling is optional depending on hardware / nixpkgs settings. *Enabled when:* `ps: [ ps.icalendar ps.recurring-ical-events ]`
-- **user/wm/sway/workspace-groups-gui.nix**: Python with GTK dependencies
+- **user/wm/sway/waybar.nix**: Some GPU tooling is optional depending on hardware / nixpkgs settings. *Enabled when:*
+   - `systemSettings.ollamaServerEnable or false`
+   - `ps: [ ps.icalendar ps.recurring-ical-events ]`
 - **user/wm/sway/xcompose.nix**: US-International dead-keys fix: make the acute dead key (') accent VOWELS only.
 - **user/wm/xmonad/xmonad.nix**: User module: xmonad.nix
 
@@ -506,6 +523,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Akunito / Gaming
 
 - **docs/akunito/gaming/bg3-linux-modding.md**: Modding Baldur's Gate 3 on NixOS/Proton with Script Extender, vkBasalt CAS and FSR4 upscaling on RDNA4
+- **docs/akunito/gaming/gamescope-lag-bomb.md**: Every game launched through gamescope from Steam became unplayable after roughly
 - **docs/akunito/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
 - **docs/akunito/gaming/skyrim-linux-setup.md**: Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning
 
@@ -571,18 +589,21 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/akunito/keybindings/hyprland.md**: Complete reference for all Hyprland keybindings in this NixOS configuration.
 - **docs/akunito/keybindings/mouse-button-mapping.md**: Quick guide to mapping mouse side buttons to modifier keys using keyd.
+- **docs/akunito/keybindings/sway-bindings.md**: Generated table of every binding on DESK grouped by category — sway-apps shortcuts (editable), nix-owned sway keys, tmux binds and kitty maps. Regenerate with `sway-apps shortcuts doc --write docs/akunito/keybindings/sway-bindings.md`.
 - **docs/akunito/keybindings/sway.md**: SwayFX keybindings reference, including unified rofi launcher and window overview.
 
 ### Akunito / Plans
 
 - **docs/akunito/plans/akucraft-ai-handoff.md**: Handoff for building the AkuCraft AI work - villager conversations in MCA and a per-player Discord support assistant with usage limits
 - **docs/akunito/plans/akucraft-ai-prod-handoff.md**: What is built, what is verified, and the exact steps to take the AkuCraft AI work from staging to production
+- **docs/akunito/plans/akucraft-creative-rebuild.md**: The AkuCraft Creative server rebuilt from scratch on Solo's mod list, private to three players, plus per-machine gating of the FreesmLauncher instances
 - **docs/akunito/plans/akucraft-frontier-world.md**: Test plan and rollout plan for a second, harder survival world generated with Terralith, reachable from the existing world
 - **docs/akunito/plans/akucraft-hybrid-aquatic.md**: 136 sea creatures plus corals, trialled on staging; what it conflicts with, what was fixed, and exactly how to graduate it
 - **docs/akunito/plans/akucraft-player-map.md**: Design and phase-1 spike for a web map that shows only what each player has explored, built on Surveyor's data
 - **docs/akunito/plans/akucraft-quest-mods.md**: Research resolving Phase 10 of the AkuCraft roadmap - which quest mods exist for Fabric 1.21.1, verified against Modrinth and CurseForge, with the two roadmap unknowns settled
 - **docs/akunito/plans/akucraft-quests-staging-rollout.md**: Staging rollout plan and critical test list for adding Bountiful, Daily Quests and Easy NPC to AkuCraft, covering both the fenced Overworld and the frontier
 - **docs/akunito/plans/akucraft-roadmap-plan.md**: Executable plan for evolving the AkuCraft Minecraft server toward an MMORPG - verified mods, phase order, rollback per phase
+- **docs/akunito/plans/akucraft-solo-hardcore.md**: A private single-player hardcore AkuCraft server with Terralith as the Overworld, no web map, no collaboration or AI mods, and a manual world reset
 - **docs/akunito/plans/akucraft-staging-error-audit.md**: Error audit of mc-mca-staging (2026-08-20) — ranked list of real issues vs benign noise, for fixing later
 - **docs/akunito/plans/akucraft-unified-storage.md**: One searchable inventory across every chest in a base, in vanilla style, plus what it does and does not do to Flan claim protection
 - **docs/akunito/plans/akucraft-worlds-and-maps.md**: Research into what extra worlds, community map downloads and dimension mods can be added to AkuCraft, given that Multiworld and ShadowBorders are already in production
@@ -669,6 +690,14 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/future/archived/vps-wireguard-hetzner.md**: VPS WireGuard server - VPN hub, WGUI, Cloudflare tunnel, nginx, monitoring
 - **docs/future/archived/waybar-sov-debug-analysis.md**: Historical debug analysis of Waybar/Sov startup failures from the legacy daemon-manager era (kept for reference; systemd-first is now canonical).
 
+### Guides
+
+- **docs/guides/README.md**: Documentos de referencia personales servidos como HTML estático en
+
+### Handoffs / Akunito
+
+- **docs/handoffs/akunito/2026-09-02-main.md**: - `lib/defaults.nix` — `swayUseSwayfx` (default `true`), `ollamaServerEvictVram` + 7 knobs, `vramSamplerEnable`
+
 ### Komi
 
 - **docs/komi/README.md**: macOS/darwin documentation specific to komi's environment.
@@ -752,6 +781,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/rofi.md**: Rofi configuration (Stylix-templated theme, unified combi launcher, power script-mode, and grouped window overview).
 - **docs/user-modules/shell-multiline-input.md**: Multi-line shell input with Shift+Enter configuration
 - **docs/user-modules/stylix-containment.md**: Stylix theming containment in this repo (Sway gets Stylix; Plasma 6 does not) via env isolation + session-scoped systemd.
+- **docs/user-modules/sway-apps.md**: GUI (GTK4 + libadwaita) and CLI that own two things for Sway:
 - **docs/user-modules/sway-daemon-integration.md**: Sway session services are managed via systemd --user units bound to sway-session.target (official/systemd approach; no custom daemon-manager).
 - **docs/user-modules/sway-output-layout-kanshi.md**: Complete Sway/SwayFX output management with kanshi (monitor config) + swaysome (workspaces), ensuring stability across reloads/rebuilds.
 - **docs/user-modules/sway-to-hyprland-migration.md**: Guide to replicate SwayFX workspace and window management semantics in Hyprland using scripts and conventions.
