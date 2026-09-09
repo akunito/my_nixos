@@ -25,6 +25,7 @@
     ../../system/security/polkit.nix
     ../../system/app/prometheus-exporters.nix
     ../../system/app/homelab-docker.nix
+    ../../system/app/docker-rootless-maintenance.nix # GC-proof daemon ns, docker-prune, user-manager reload (self-gates on dockerRootlessEnable)
   ]
   # Rootless Docker (VPS) vs root Docker (LXC) — mutually exclusive
   ++ lib.optional (!(userSettings.dockerRootlessEnable or false)) (import ../../system/app/docker.nix {
@@ -284,67 +285,9 @@
     // (import ../../lib/docker-buildkit-gc.nix { });
   };
 
-  # Allow rootless Docker containers to reach host services (databases, Redis, Postfix)
-  # via slirp4netns gateway at 10.0.2.2 (default is --disable-host-loopback for security)
-  systemd.user.services.docker = lib.mkIf (userSettings.dockerRootlessEnable or false) {
-    environment.DOCKERD_ROOTLESS_ROOTLESSKIT_DISABLE_HOST_LOOPBACK = "false";
-  };
-
-  # slirp4netns's DNS forwarder (10.0.2.3) — used by the daemon itself for image pulls —
-  # degrades after long uptime (~weeks), producing `i/o timeout` on docker.io lookups
-  # while containers still resolve fine via daemon.settings.dns above. A restart clears it.
-  # Weekly restart on Sunday 04:00 keeps the forwarder fresh. ~15-30s of container downtime.
-  systemd.user.timers.docker-restart = lib.mkIf (userSettings.dockerRootlessEnable or false) {
-    description = "Weekly rootless Docker restart (refresh slirp4netns DNS forwarder)";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "Sun *-*-* 04:00:00";
-      RandomizedDelaySec = "5m";
-      Persistent = true;
-    };
-  };
-  systemd.user.services.docker-restart = lib.mkIf (userSettings.dockerRootlessEnable or false) {
-    description = "Restart rootless Docker to refresh slirp4netns DNS forwarder";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.systemd}/bin/systemctl --user restart docker.service";
-    };
-  };
-
-  # Untagged-image reaper. Every deploy that moves a :latest tag (or re-pulls a
-  # digest-pinned image) orphans the previous image; 203 of them holding ~74 GB
-  # had accumulated by 2026-08-18 because nothing ever collected them.
-  #
-  # Deliberately `image prune`, NOT `system prune`:
-  #   * dangling images only — a tagged image is never touched, so rollback
-  #     targets (nextcloud:3x-apache, older plane-aio tags) survive;
-  #   * dockerd refuses to delete any image a container still references, even
-  #     a stopped one, so this cannot strand a service. Verified on 2026-08-18:
-  #     3 of the 203 dangling images were live Immich/Plane database images and
-  #     were correctly skipped;
-  #   * volumes, networks and stopped containers are all out of scope — those
-  #     are what `system prune` would eat, and they hold real data here.
-  #
-  # Runs at 03:00, an hour ahead of docker-restart, so the two never overlap.
-  systemd.user.timers.docker-prune = lib.mkIf (userSettings.dockerRootlessEnable or false) {
-    description = "Weekly rootless Docker dangling-image prune";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "Sun *-*-* 03:00:00";
-      RandomizedDelaySec = "10m";
-      Persistent = true;
-    };
-  };
-  systemd.user.services.docker-prune = lib.mkIf (userSettings.dockerRootlessEnable or false) {
-    description = "Prune dangling (untagged) rootless Docker images";
-    serviceConfig = {
-      Type = "oneshot";
-      # User units don't inherit the shell's DOCKER_HOST from setSocketVariable;
-      # %t is XDG_RUNTIME_DIR, where the rootless daemon puts its socket.
-      Environment = "DOCKER_HOST=unix://%t/docker.sock";
-      ExecStart = "${pkgs-unstable.docker}/bin/docker image prune -f";
-    };
-  };
+  # Rootless daemon housekeeping (host-loopback env, GC-proof /etc/static in the
+  # daemon namespace, weekly dangling-image prune, user-manager reload at
+  # activation) lives in system/app/docker-rootless-maintenance.nix.
 
   # ==========================================================================
   # Journald limits

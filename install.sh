@@ -804,14 +804,31 @@ restart_rootless_docker_if_stale() {
     local CLIENT_VER SERVER_VER
     CLIENT_VER=$(docker version --format '{{.Client.Version}}' 2>/dev/null)
     SERVER_VER=$(docker version --format '{{.Server.Version}}' 2>/dev/null)
+    local STALE_REASON=""
     # If the daemon doesn't answer at all, a restart can only help; treat as drift.
-    if [ -n "$SERVER_VER" ] && [ "$CLIENT_VER" = "$SERVER_VER" ]; then
-        return 0
+    if [ -z "$SERVER_VER" ] || [ "$CLIENT_VER" != "$SERVER_VER" ]; then
+        STALE_REASON="running ${SERVER_VER:-unresponsive}, installed ${CLIENT_VER:-unknown}"
     fi
 
+    # The daemon's namespace pins /etc/static to the store path of the generation
+    # it started under (rootlesskit --copy-up=/etc copies the symlink verbatim).
+    # Once nix-gc removes that generation, resolv.conf/nsswitch/CA certs are all
+    # dangling inside the daemon and every pull dies with `lookup ... on [::1]:53`.
+    # A version match says nothing about this — check the link itself. The
+    # trailing slash forces the symlink to be followed: an absolute (pinned)
+    # target resolves against the host, a relative one (the GC-proof form set by
+    # system/app/docker-rootless-maintenance.nix) inside the namespace.
+    local DPID
+    DPID=$(pgrep -u "$(id -u)" -x dockerd 2>/dev/null | head -1)
+    if [ -n "$DPID" ] && [ -L "/proc/$DPID/root/etc/static" ] && [ ! -e "/proc/$DPID/root/etc/static/" ]; then
+        STALE_REASON="${STALE_REASON:+$STALE_REASON; }its /etc/static points at a garbage-collected generation"
+    fi
+
+    [ -n "$STALE_REASON" ] || return 0
+
     echo ""
-    echo -e "${YELLOW}Rootless Docker daemon is stale (running ${SERVER_VER:-unresponsive}, installed ${CLIENT_VER:-unknown}).${RESET}"
-    echo -e "${YELLOW}A stale daemon breaks registry DNS (lookup on [::1]:53 timeouts).${RESET}"
+    echo -e "${YELLOW}Rootless Docker daemon is stale (${STALE_REASON}).${RESET}"
+    echo -e "${YELLOW}A stale daemon breaks registry DNS (lookup on [::1]:53 timeouts) and TLS to registries.${RESET}"
 
     if [ "$SILENT_MODE" = false ]; then
         printf "Restart rootless Docker daemon now? Containers will briefly stop and auto-restart. (Y/n) "

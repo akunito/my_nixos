@@ -24,7 +24,7 @@ After rebuild, verify success by checking for `installation successful` in outpu
 
 ### 2a. Restart rootless Docker daemon
 
-The NixOS rebuild can break Docker's slirp4netns DNS (`10.0.2.3`). Restart the user service:
+A rebuild used to leave the rootless daemon with a dangling `/etc/static` (pinned to the old, garbage-collected generation) → `lookup ... on [::1]:53` on every pull. Since 2026-09-09 `system/app/docker-rootless-maintenance.nix` makes the daemon namespace GC-proof and `install.sh` restarts the daemon itself when it detects the dangling link, so this step is normally a no-op. Only if `docker pull hello-world` still fails, restart the user service by hand:
 
 ```bash
 ssh -A -p 56777 akunito@100.64.0.6 "systemctl --user restart docker"
@@ -148,7 +148,7 @@ ssh akunito@192.168.20.200 "docker ps --format '{{.Names}} {{.Status}}' | grep j
 ## Troubleshooting
 
 ### Docker DNS timeout on VPS after NixOS rebuild
-Rootless Docker uses slirp4netns with its own DNS (`10.0.2.3`). After a NixOS rebuild this can break. Fix: `systemctl --user restart docker` on VPS.
+Cause: the daemon namespace's `/etc/static` symlink pinned a store path that nix-gc has since deleted (check: `DPID=$(pgrep -x dockerd|head -1); ls -L /proc/$DPID/root/etc/static/ >/dev/null || echo DANGLING`). `install.sh` now detects and fixes this on deploy (`restart_rootless_docker_if_stale`); the wrapper in `system/app/docker-rootless-maintenance.nix` stops it recurring. Manual fix if ever needed: `systemctl --user restart docker`.
 
 ### Port conflict on NAS
 If a rootless container fails with "address already in use", check if the root Docker started the same service. Stop the root version first: `sudo docker compose -f <path> stop <service>`.
