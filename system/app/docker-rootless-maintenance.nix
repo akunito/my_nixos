@@ -43,6 +43,7 @@ let
   docker = pkgs-unstable.docker;
   coreutils = "${pkgs.coreutils}/bin";
   systemctl = "${pkgs.systemd}/bin/systemctl";
+  runuser = "${pkgs.util-linux}/bin/runuser";
 
   # Runs INSIDE the rootlesskit child. Every guard exits 0: this must never be
   # the reason dockerd fails to start.
@@ -107,19 +108,26 @@ lib.mkIf enabled {
   # restart running services, so the containers are untouched; the explicit
   # `start` afterwards is what actually schedules a timer that was enabled
   # while the manager wasn't looking (reload alone never starts anything).
+  #
+  # Talks to the user's own bus as the user (runuser + XDG_RUNTIME_DIR), not via
+  # `systemctl --machine=user@.host`: that route works from an interactive root
+  # shell but failed from inside nixos-rebuild's activation on VPS_PROD
+  # (2026-09-09). Errors are left visible on purpose — a silent failure here is
+  # exactly how docker-prune stayed inert for months.
   system.activationScripts.reloadLingeringUserManager = lib.stringAfter [ "etc" "users" ] ''
     _uid=$(${coreutils}/id -u ${user} 2>/dev/null || true)
     if [ -n "$_uid" ] && [ -S "/run/user/$_uid/bus" ]; then
-      if ${systemctl} --machine=${user}@.host --user daemon-reload 2>/dev/null; then
+      _usc="${runuser} -u ${user} -- ${coreutils}/env XDG_RUNTIME_DIR=/run/user/$_uid DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$_uid/bus ${systemctl} --user"
+      if $_usc daemon-reload; then
         for _t in /etc/systemd/user/timers.target.wants/*.timer; do
           [ -e "$_t" ] || continue
-          ${systemctl} --machine=${user}@.host --user start "$(${coreutils}/basename "$_t")" 2>/dev/null \
+          $_usc start "$(${coreutils}/basename "$_t")" \
             || echo "docker-rootless: could not start user timer $(${coreutils}/basename "$_t")" >&2
         done
       else
         echo "docker-rootless: could not daemon-reload ${user}'s user manager (units added since it started stay inert)" >&2
       fi
     fi
-    unset _uid _t
+    unset _uid _usc _t
   '';
 }
