@@ -199,8 +199,7 @@ in
     # 23:00-16:00 and DESK gets rebooted. A share left mounted when its server
     # goes away blocks every process that stats it, and the idle timeout above
     # cannot clear it — the expiry umount comes back EBUSY. See
-    # system/hardware/nfs_client.nix.
-    nfsUnmountUnreachable = true;
+    # system/hardware/nfs_client.nix, which now reaps stale mounts automatically.
 
     # SSH
     authorizedKeys = [

@@ -255,9 +255,9 @@ in
     # back EBUSY, so the share stayed mounted for seven days and every stat of it
     # blocked while the NAS slept — which is what froze Gwenview badly enough for
     # KWin to offer to kill it. The reaper lazily unmounts once the NAS stops
-    # answering on 2049. The only consumer here is install.sh's pre-update
-    # home_backup, which re-triggers the automount when it needs it.
-    nfsUnmountUnreachable = true;
+    # answering on 2049 (now automatic for every NFS client). The only consumer
+    # here is install.sh's pre-update home_backup, which re-triggers the
+    # automount when it needs it.
 
     # === Other Features ===
     starCitizenModules = false; # Disable Star Citizen optimizations

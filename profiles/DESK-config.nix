@@ -676,6 +676,12 @@ in
         };
       }
     ];
+    # The NAS sleeps 23:00-16:00. A share left mounted when it goes away blocks
+    # every process that stats it — Dolphin's trash worker scans all mountpoints
+    # for .Trash-$uid, so a plain file delete wedged in D state
+    # (rpc_wait_bit_killable) with no progress and no error. The idle timeout
+    # above cannot clear it: the expiry umount comes back EBUSY. The lazy umount
+    # in system/hardware/nfs_client.nix is what rescues it, and is now automatic.
 
     # SSH
     authorizedKeys = [

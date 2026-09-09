@@ -46,10 +46,15 @@
   # place, so the next access re-mounts if the NAS is back — and if it is not,
   # retry=0 makes that attempt fail in ~3s instead of blocking.
   #
-  # Off by default; profiles whose server sleeps opt in.
+  # Unconditional for every NFS client: it is a safety net, not a feature. The
+  # check is one 4s TCP probe per mount every 5 min, so it is free where the
+  # server is always up, and load-bearing where it sleeps. Making it opt-in was
+  # itself the bug — DESK and DESK_A both mount the sleeping NAS and neither had
+  # opted in, so a plain file delete in Dolphin hung forever (kio_trash scans
+  # every mountpoint for .Trash-$uid).
   # ---------------------------------------------------------------------------
   systemd.services.nfs-unmount-unreachable = lib.mkIf
-    ((systemSettings.nfsClientEnable == true) && (systemSettings.nfsUnmountUnreachable or false))
+    (systemSettings.nfsClientEnable == true)
     {
       description = "Lazily unmount NFS shares whose server has gone away";
       serviceConfig = {
@@ -73,7 +78,7 @@
     };
 
   systemd.timers.nfs-unmount-unreachable = lib.mkIf
-    ((systemSettings.nfsClientEnable == true) && (systemSettings.nfsUnmountUnreachable or false))
+    (systemSettings.nfsClientEnable == true)
     {
       description = "Check for stale NFS mounts every few minutes";
       wantedBy = [ "timers.target" ];
