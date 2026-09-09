@@ -1043,11 +1043,11 @@
     "sine-web-panels": {
       "flake": false,
       "locked": {
-        "lastModified": 1788959785,
-        "narHash": "sha256-saDtViAYnNyWZBEnFjm0T6a5CVVL4fgWuwwayeE14rY=",
+        "lastModified": 1788959884,
+        "narHash": "sha256-tKfGVD0ogyOjdh0eR6WSuQ6KQR8xwXF8eFj/iClIn88=",
         "owner": "akunito",
         "repo": "sine-web-panels",
-        "rev": "67f67b8ff67af4c2ad868501ec5c69e5997cec23",
+        "rev": "2b35892ec930067a9e26997e4e42fbf5cd582fd7",
         "type": "github"
       },
       "original": {
