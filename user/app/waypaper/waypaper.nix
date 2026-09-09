@@ -44,6 +44,7 @@ let
   '';
 
   waypaperConfigFile = "${config.xdg.configHome}/waypaper/config.ini";
+  awwwCacheDir = "${config.xdg.cacheHome}/awww";
   fallbackImage = if systemSettings.stylixEnable == true then config.stylix.image else null;
 
   JQ = lib.getExe pkgs.jq;
@@ -205,6 +206,61 @@ INIEOF
 
     exec waypaper --restore
   '';
+
+  # Force a *full* re-upload of the wallpaper.
+  #
+  # Why this exists at all: after a suspend/resume cycle the wallpaper comes
+  # back peppered with corrupted tiles — ~12x6 px black blocks holding a few
+  # saturated pixels, scattered over both outputs (487 of them measured on DESK
+  # 2026-09-09). They are GPU-side: the daemon's CPU buffers, read straight out
+  # of `/proc/$(pidof awww-daemon)/fd/N` (the `memfd:awww-ipc` whose size is
+  # width*height*4), are clean at exactly those coordinates.
+  #
+  # `waypaper --restore` does NOT clear them. Measured: 487 specks before,
+  # byte-identical 487 specks after. awww/swww is a diff-based protocol — it
+  # uploads only the pixels that changed between the displayed image and the
+  # new one — so re-sending the image that is *already displayed* changes
+  # nothing and never touches the corrupted texture. Only content that actually
+  # differs forces a full re-upload, which is why picking a different wallpaper
+  # in the Waypaper GUI has been the only thing that fixed it by hand.
+  #
+  # So: paint a solid colour (a guaranteed full-frame change), then put the
+  # wallpaper back. `awww clear` does not touch awww's own cache — verified —
+  # so `awww restore` afterwards reinstates the exact same image, resize mode
+  # and filter, without going through Waypaper's ~0.5s Python startup. The
+  # visible cost is 2-3 frames of black on whatever wallpaper is not covered
+  # by a window.
+  waypaper-force-refresh = pkgs.writeShellScriptBin "waypaper-force-refresh" ''
+    #!/bin/sh
+    set -eu
+
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.findutils ]}:$PATH"
+
+    SWWW='${SWWW}'
+    CACHE_DIR='${awwwCacheDir}'
+
+    # The awww client talks to the daemon over its own socket in
+    # XDG_RUNTIME_DIR, so no SWAYSOCK/WAYLAND_DISPLAY is needed here.
+    if ! "$SWWW" query >/dev/null 2>&1; then
+      echo "waypaper-refresh: awww-daemon not running; skipping" >&2
+      exit 0
+    fi
+
+    # `awww restore` replays the daemon's cache. With no cache there is nothing
+    # to put back after the clear, so take the slow path instead of blanking
+    # the desktop.
+    if [ -z "$(find "$CACHE_DIR" -type f -print -quit 2>/dev/null)" ]; then
+      echo "waypaper-refresh: no awww cache; falling back to full restore" >&2
+      exec ${waypaper-restore-wrapper}/bin/waypaper-restore-wrapper
+    fi
+
+    "$SWWW" clear 000000
+
+    if ! "$SWWW" restore; then
+      echo "waypaper-refresh: restore from cache failed; falling back" >&2
+      exec ${waypaper-restore-wrapper}/bin/waypaper-restore-wrapper
+    fi
+  '';
 in
 {
   config = lib.mkIf cfgEnable {
@@ -215,6 +271,8 @@ in
       # `swww` itself, not through waypaper-restore-wrapper.
       swww-shim
       swww-daemon-shim
+      # Manual escape hatch, same thing Hyper+F5 and the post-resume repair run.
+      waypaper-force-refresh
     ];
 
     # Desktop entry for application launcher
@@ -269,6 +327,24 @@ in
 
       Install = {
         WantedBy = [ "sway-session.target" ];
+      };
+    };
+
+    # On-demand full re-upload. Not wanted by any target: it is triggered by the
+    # post-resume repair and by the manual wallpaper-refresh keybinding, both in
+    # the Sway module. Deliberately NOT used for session start or HM activation
+    # — those have nothing on screen to repair, and would only pay the flash.
+    systemd.user.services.waypaper-refresh = {
+      Unit = {
+        Description = "Force a full wallpaper re-upload (clears GPU texture corruption)";
+        PartOf = [ "sway-session.target" ];
+        After = [ "swww-daemon.service" "graphical-session.target" ];
+      };
+
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${waypaper-force-refresh}/bin/waypaper-force-refresh";
+        EnvironmentFile = [ "-%t/sway-session.env" ];
       };
     };
 

@@ -137,17 +137,60 @@ let
       else "${pkgs.systemd}/bin/systemctl --user start swww-restore.service"}
   '';
 
-  # Manual wallpaper recovery: power-cycle outputs and restore wallpaper
+  # after-resume handler: everything sway-resume-monitors does (it is also used
+  # on plain monitor wake, which needs no repair), plus the post-sleep wallpaper
+  # repair. systemd-run gives the repair its own unit, so a second resume while
+  # one is still waiting for the unlock is dropped instead of stacking poll
+  # loops; --collect reaps the unit once it finishes.
+  sway-resume-from-sleep = pkgs.writeShellScript "sway-resume-from-sleep" ''
+    ${sway-resume-monitors}
+    ${lib.optionalString (systemSettings.waypaperEnable or false) ''
+    ${pkgs.systemd}/bin/systemd-run --user --quiet --collect \
+      --unit=waypaper-repair-after-unlock \
+      ${sway-repair-wallpaper-after-unlock} >/dev/null 2>&1 || true
+    ''}
+  '';
+
+  # Manual wallpaper recovery: power-cycle outputs and restore wallpaper.
+  # Uses the *forced* refresh (clear + restore) rather than a plain restore:
+  # re-sending the image that is already displayed uploads nothing, so it can
+  # not repair a corrupted wallpaper texture. See waypaper.nix for the details.
   sway-refresh-wallpaper = pkgs.writeShellScript "sway-refresh-wallpaper" ''
     ${pkgs.sway}/bin/swaymsg 'output * power off'
     ${pkgs.coreutils}/bin/sleep 0.3
     ${pkgs.sway}/bin/swaymsg 'output * power on'
     ${pkgs.coreutils}/bin/sleep 0.5
     ${if (systemSettings.waypaperEnable or false)
-      then "${pkgs.systemd}/bin/systemctl --user start waypaper-restore.service"
+      then "${pkgs.systemd}/bin/systemctl --user start waypaper-refresh.service"
       else if (systemSettings.swwwEnable or false)
       then "${pkgs.systemd}/bin/systemctl --user start swww-restore.service"
       else "true"}
+  '';
+
+  # Repair the wallpaper after a suspend/resume cycle.
+  #
+  # Resume leaves corrupted tiles scattered over the wallpaper texture (see the
+  # long comment in user/app/waypaper/waypaper.nix). sway-resume-monitors below
+  # already fires a restore ~0.5s after resume and that is demonstrably not
+  # enough: on DESK 2026-09-09 resume was at 10:55:07, the restore ran at
+  # 10:55:08, and the specks were still there at 10:57. Two reasons — a restore
+  # of the already-displayed image uploads nothing, and 0.5s is too early for
+  # the GPU to have finished coming back.
+  #
+  # So wait for the lock screen to go away (which is also the moment the user
+  # first sees the desktop, and a good proxy for "the display pipeline has
+  # settled"), then force a real re-upload. If nothing is locked this falls
+  # through immediately and only pays the settle delay. The 30-minute cap keeps
+  # a machine left locked from holding the poll loop forever.
+  sway-repair-wallpaper-after-unlock = pkgs.writeShellScript "sway-repair-wallpaper-after-unlock" ''
+    i=0
+    while [ "$i" -lt 900 ]; do
+      ${pkgs.procps}/bin/pgrep -x swaylock >/dev/null 2>&1 || break
+      ${pkgs.coreutils}/bin/sleep 2
+      i=$((i + 1))
+    done
+    ${pkgs.coreutils}/bin/sleep 2
+    ${pkgs.systemd}/bin/systemctl --user start waypaper-refresh.service
   '';
 
   # Hibernate is only actually usable when the encrypted-swap UUID is configured:
@@ -257,7 +300,7 @@ let
     ''}
     ARGS+=(timeout "$SUSPEND_TIMEOUT" '${sway-idle-suspend}')
     ARGS+=(before-sleep '${sway-idle-before-sleep}')
-    ARGS+=(after-resume '${sway-resume-monitors}')
+    ARGS+=(after-resume '${sway-resume-from-sleep}')
 
     exec ${pkgs.swayidle}/bin/swayidle "''${ARGS[@]}"
   '';
@@ -391,7 +434,7 @@ in
       {
         event = "after-resume";
         # Ensure monitors are powered on after resume (safety net — timeout resumeCommand may not fire)
-        command = "${sway-resume-monitors}";
+        command = "${sway-resume-from-sleep}";
       }
     ];
   };
