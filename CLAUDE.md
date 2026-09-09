@@ -66,6 +66,7 @@ Rebuild: `sudo nixos-rebuild switch --flake .#DESK --impure` | darwin: `darwin-r
 - **Docs**: `docs/security/git-crypt.md`
 - **NEVER commit**: git-crypt keys, plaintext secrets, or credentials
 - **Published guides**: `docs/guides/` is git-crypt encrypted and is a safe place to write personal reference documents. Served at `guides.local.akunito.com` from the nix store (edits need a VPS rebuild). git-crypt hides contents, **not file names**. Read `docs/guides/README.md` first.
+- **Working directory**: `workbench/` is git-crypt encrypted and tracked. Use it for drafts, generators and anything that deletes or rewrites files — never run a destructive script against a deployed directory. Not served by nginx. (`local/` is different: `.gitignore` drops it, so it is never committed.) See `workbench/README.md`.
 
 ## Plane Ticket Management
 

@@ -62,6 +62,13 @@ deploy-servers-private.conf filter=git-crypt diff=git-crypt
 # See docs/guides/README.md before adding anything here.
 docs/guides/** filter=git-crypt diff=git-crypt
 
+# Working directory: drafts, generators and anything that rewrites files.
+# Tracked (so it syncs between machines and survives a session) but encrypted,
+# because the repo is public. Not served by nginx — that is docs/guides only.
+# `local/` is NOT this: .gitignore drops it, so it is never committed at all.
+# See workbench/README.md.
+workbench/** filter=git-crypt diff=git-crypt
+
 # ============================================================================
 # Belt-and-Suspenders: File types that must always be encrypted if tracked
 # ============================================================================
