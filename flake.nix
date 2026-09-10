@@ -131,6 +131,19 @@
     # NOTE: nixpkgs deliberately NOT following ours — keeping upstream's locked
     # nixpkgs lets us pull prebuilt binaries from their Cachix (see nix.settings
     # in the module) instead of a heavy local Qt source build.
-    freesm-launcher.url = "github:FreesmTeam/FreesmLauncher/develop";
+    #
+    # PINNED TO A REV, NOT `develop`, ON PURPOSE. `install.sh -u` runs
+    # `nix flake update` on the TARGET machine, so a branch url re-locks to
+    # whatever upstream pushed since — per machine, independently. Nothing has
+    # ever built that rev: not cache.nixos.org (this is a flake input, not
+    # nixpkgs), not upstream's Cachix (it does not carry every develop commit),
+    # not DESK's harmonia (DESK is on the rev committed here). The machine then
+    # compiles Qt from source for half an hour, which is exactly what Aga's
+    # laptop did on 2026-09-10 after `develop` moved f3c3c7b -> c9222c3.
+    #
+    # Pinned, every machine locks the same rev and pulls it from DESK. Bumping
+    # is a deliberate edit: change the rev, deploy DESK first so harmonia has
+    # the binary, then the rest of the fleet fetches instead of compiling.
+    freesm-launcher.url = "github:FreesmTeam/FreesmLauncher/f3c3c7b77077f30f3b8617c4b5326cd7cac17728";
   };
 }

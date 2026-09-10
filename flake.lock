@@ -278,8 +278,8 @@
       },
       "original": {
         "owner": "FreesmTeam",
-        "ref": "develop",
         "repo": "FreesmLauncher",
+        "rev": "f3c3c7b77077f30f3b8617c4b5326cd7cac17728",
         "type": "github"
       }
     },
