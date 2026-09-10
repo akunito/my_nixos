@@ -119,8 +119,15 @@ PYEOF
     fi
 fi
 
+# Warm DESK's harmonia path before nix opens its first connection. This is the
+# path that produced the 2026-08-22 compile storm: a cold Tailscale relay lost
+# the 5s connect-timeout race, nix wrote the cache off for the whole run, and
+# all 664 paths came from cache.nixos.org. See scripts/warm-binary-caches.sh.
+# Unquoted on purpose: the output is either empty or three plain words.
+NIX_CACHE_OPTS=$(sh "$SCRIPT_DIR/scripts/warm-binary-caches.sh")
+
 echo -e "Rebuilding system"
-if nixos-rebuild switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace --impure; then
+if nixos-rebuild switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace --impure $NIX_CACHE_OPTS; then
     echo -e "Rebuild successful"
 
     # Restart docker containers if requested (non-interactive)

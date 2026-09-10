@@ -1199,7 +1199,14 @@ if ! validate_hardware_config_safety "$SCRIPT_DIR"; then
     exit 1
 fi
 
-$SUDO_CMD nixos-rebuild $NIXOS_REBUILD_OP --flake $SCRIPT_DIR#$PROFILE --show-trace --impure || REBUILD_EXIT_CODE=$?
+# Warm DESK's harmonia path before nix opens its first connection: a cold
+# Tailscale relay loses the 5s connect-timeout race, and nix then ignores the
+# cache for the ENTIRE build — which for flake inputs that live nowhere else
+# means compiling them from source. See scripts/warm-binary-caches.sh.
+# Unquoted on purpose: the output is either empty or three plain words.
+NIX_CACHE_OPTS=$(sh "$SCRIPT_DIR/scripts/warm-binary-caches.sh")
+
+$SUDO_CMD nixos-rebuild $NIXOS_REBUILD_OP --flake $SCRIPT_DIR#$PROFILE --show-trace --impure $NIX_CACHE_OPTS || REBUILD_EXIT_CODE=$?
 
 # #region agent log
 debug_log "A_parse_quote" "install.sh:rebuild" "nixos-rebuild finished" "{\"exitCode\":$REBUILD_EXIT_CODE}"
