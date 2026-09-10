@@ -310,6 +310,16 @@ in
     userThunderbirdEnable = false; # Aga does not use Thunderbird — and it is a heavy build
     userAiPkgsEnable = false; # AI & ML packages (lmstudio, ollama-rocm)
 
+    # === Browsers ===
+    # Zen alongside Vivaldi, so Aga can try it without losing her current
+    # setup: zenIsDefaultBrowser stays false, so Vivaldi keeps the http/https
+    # handlers and nothing outside Zen changes. zenSineEnable brings the
+    # sine-web-panels fork (the sidebar web panels Zen dropped in 1.11b), same
+    # as DESK and LAPTOP_X13. zenProfileDir is left at the "default" default:
+    # this is a fresh install with no profile to adopt.
+    zenBrowserEnable = true;
+    zenSineEnable = true;
+
     # zshinitContent and sshExtraConfig inherited from base
   };
 }
