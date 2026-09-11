@@ -817,6 +817,10 @@ in
     # === Monitoring ===
     prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
     infraNotifyEnable = true; infraNodeName = "desk"; infraBotUrl = "http://100.64.0.6:8765"; # deploy announcements to Infra Alerts (AINF-368)
+    # Infra Alerts bot identity for infra-notify (direct Telegram transport; relay is the fallback)
+    grafanaTelegramBotToken = secrets.grafanaTelegramBotToken or "";
+    grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";
+    infraTelegramDeploysThreadId = secrets.infraTelegramDeploysThreadId or "";
 
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver

@@ -323,6 +323,10 @@ in
     # === Monitoring ===
     prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
     infraNotifyEnable = true; infraNodeName = "x13"; infraBotUrl = "http://100.64.0.6:8765"; # deploy announcements to Infra Alerts (AINF-368)
+    # Infra Alerts bot identity for infra-notify (direct Telegram transport; relay is the fallback)
+    grafanaTelegramBotToken = secrets.grafanaTelegramBotToken or "";
+    grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";
+    infraTelegramDeploysThreadId = secrets.infraTelegramDeploysThreadId or "";
 
     # === Tailscale Mesh VPN ===
     tailscaleEnable = true; # Enable daemon (but don't auto-connect - manual via Trayscale GUI)
