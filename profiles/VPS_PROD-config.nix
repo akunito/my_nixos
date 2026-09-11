@@ -103,6 +103,7 @@ in
     planeBotPublicUrl = "https://plane.${secrets.publicDomain}";
     planeBotWebhookSecret = secrets.planeBotWebhookSecret or ""; # instant events; polling stays as reconciliation
     planeBotWebhookDebug = true; # first days: keep payload samples to verify the normaliser
+    planeBotKumaPushUrl = secrets.planeBotKumaPushUrl or ""; # Kuma push heartbeat after every sync pass
     # /ask - private LLM support in Discord, through the LiteLLM gateway below.
     akucraftAskEnable = true;
     akucraftAskDailyQuota = 25;
