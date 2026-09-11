@@ -235,6 +235,7 @@ METRICS
       # rootful bazarr container, unreadable to akunito on NAS. Cache only,
       # regenerable; same treatment as tailscale/state/ in the configs job.
       rsync_dir /mnt/ssdpool/docker/mediarr/ "$STAGING/docker-data/mediarr/" "mediarr" $EXCLUDES \
+        --exclude='sonarr/asp/' \
         --exclude='calibre-server/config/.XDG/' \
         --exclude='calibre-server/config/.cache/' \
         --exclude='calibre-server/config/.dbus/' \
