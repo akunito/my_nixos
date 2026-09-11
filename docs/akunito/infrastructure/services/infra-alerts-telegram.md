@@ -16,7 +16,7 @@ Group **Infra Alerts** (forum supergroup, bot `@infra_alerts_aku_bot`). Topics:
 
 ## Alert routing
 - `critical` → 🚨 Alerts **once** per problem (`repeat_interval 168h`, AM retention 240h) + 🟢 resolved; also email.
-- `warning` → email only; the bot posts the Sunday 10:00 digest to 📋 Weekly.
+- `warning` → nothing immediate (no email); the bot posts the Sunday 10:00 digest to 📋 Weekly.
 - `node="nas"` muted 23:00–16:05 Europe/Warsaw (NAS sleep timer). `HostDown` inhibits the node's other alerts.
 - Every scrape job carries `node` + `role`: `always_on` (VPS, NAS, pfSense) gets `HostDown`; `roaming` (DESK, X13, LAPTOP_A, DESK_A) only disk / RAM / failed units / stale update while up. Set `role` in `prometheusRemoteTargets`.
 - Message format: `🔴 CRITICAL · <node> · <AlertName>` + summary + description; `🟢 RESOLVED · …`.
