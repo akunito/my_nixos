@@ -240,6 +240,11 @@ run_retention() {
   export RESTIC_REPOSITORY="$repo_path"
   export RESTIC_PASSWORD_FILE
 
+  # A laptop suspended mid-backup leaves a lock behind and every later run then
+  # dies here (X13, lock from 2026-09-05 found 2026-09-11). `unlock` without
+  # --remove-all only drops locks whose process is gone: safe to run every time.
+  $RESTIC_BIN unlock >/dev/null 2>&1 || log_warning "could not clear stale locks on $repo_path"
+
   log "Running retention policy on $repo_path"
   # shellcheck disable=SC2086
   $RESTIC_BIN forget $retention_policy --prune
