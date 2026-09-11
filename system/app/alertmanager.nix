@@ -8,10 +8,11 @@
 # which there are none.
 #
 # Routing (AINF-368):
-#   critical  -> Telegram "Infra Alerts" 🚨 Alerts topic, ONCE per problem
+#   critical  -> Telegram "Infra Alerts" 🚨 Alerts topic (🔴), ONCE per problem
 #                (repeat_interval 7d) + a 🟢 resolved message; also email
-#   warning   -> nothing immediate (owner decision 2026-09-11): the bot's Sunday
-#                digest in 📋 Weekly is where warnings are read
+#   warning   -> same Telegram topic (🟡), same once + resolved; NO email
+#                (owner decision 2026-09-11). The bot's Sunday digest in
+#                📋 Weekly lists everything still open.
 #   node=nas  -> muted 23:00-16:05 Europe/Warsaw (the NAS sleeps on a timer)
 #   HostDown  -> inhibits every other alert of the same node
 #
@@ -130,9 +131,8 @@ lib.mkIf enabled {
 
       receivers = [
         {
-          # A receiver with no integrations is Alertmanager's "drop" — warnings
-          # are still tracked (the bot reads them from the API) but never sent.
           name = "warnings";
+          telegram_configs = lib.optionals telegramEnabled [ telegramConfig ];
         }
         {
           name = "critical";
