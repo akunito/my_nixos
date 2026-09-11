@@ -31,10 +31,25 @@ let
     (systemSettings.prometheusRemoteTargets or []));
 
   python = pkgs.python3;
-  bot = pkgs.writeScriptBin "infra-bot" ''
-    #!${python}/bin/python3
-    ${builtins.readFile ./infra-bot.py}
-  '';
+  # infra-bot.py + the Telegram helpers shared with plane-bot (system/app/tgcommon.py)
+  bot = pkgs.stdenvNoCC.mkDerivation {
+    pname = "infra-bot";
+    version = "0.2";
+    src = lib.fileset.toSource { root = ./.; fileset = lib.fileset.unions [ ./infra-bot.py ./tgcommon.py ]; };
+    nativeBuildInputs = [ pkgs.makeWrapper python ];
+    doCheck = true;
+    checkPhase = ''
+      # import-only smoke test: the module wires TG/send/edit at import time
+      TELEGRAM_BOT_TOKEN=x python3 -c 'import importlib.util as u, sys; sys.path.insert(0, "."); s = u.spec_from_file_location("infra_bot", "infra-bot.py"); m = u.module_from_spec(s); s.loader.exec_module(m); assert m.esc("<") == "&lt;"'
+    '';
+    installPhase = ''
+      mkdir -p $out/lib/infra-bot $out/bin
+      cp infra-bot.py tgcommon.py $out/lib/infra-bot/
+      makeWrapper ${python}/bin/python3 $out/bin/infra-bot \
+        --add-flags "$out/lib/infra-bot/infra-bot.py" \
+        --set PYTHONPATH "$out/lib/infra-bot"
+    '';
+  };
 in
 lib.mkIf enabled {
   environment.etc."secrets/infra-bot.env" = {

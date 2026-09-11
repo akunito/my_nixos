@@ -33,7 +33,6 @@ Config comes from the environment (infra-bot.nix). `infra-bot --selftest`
 prints every handler's output without touching Telegram.
 """
 import datetime as dt
-import html
 import json
 import logging
 import os
@@ -47,6 +46,8 @@ import urllib.request
 import uuid
 import zoneinfo
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+from tgcommon import Telegram, esc  # shared with plane-bot (system/app/tgcommon.py)
 
 log = logging.getLogger("infra-bot")
 
@@ -72,54 +73,23 @@ RESTART_SSH_TARGETS = json.loads(os.environ.get("RESTART_SSH_TARGETS", "{}"))
 LOCAL_NODE = os.environ.get("LOCAL_NODE", "vps")
 RESTART_TARGETS = ("docker-rootless", "docker-rootful")
 CONFIRM_TTL = 120
-TELEGRAM_API = "https://api.telegram.org"
-MAX_TEXT = 4000
 BOT_NAME = ""
+TG = Telegram(TOKEN)
 
 REAL_FS = 'fstype!~"tmpfs|overlay|squashfs|devtmpfs|efivarfs|ramfs|fuse.*|nsfs|autofs|zfs"'
 
 
-def esc(s):
-    return html.escape(str(s), quote=False)
-
-
-# ----------------------------------------------------------------------------
-# Telegram
-# ----------------------------------------------------------------------------
 def telegram(method, timeout=20, **params):
-    data = urllib.parse.urlencode({k: v for k, v in params.items() if v not in ("", None)}).encode()
-    req = urllib.request.Request(f"{TELEGRAM_API}/bot{TOKEN}/{method}", data=data)
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        body = json.load(r)
-    if not body.get("ok"):
-        raise RuntimeError(f"telegram {method}: {body}")
-    return body["result"]
+    return TG.call(method, timeout=timeout, **params)
 
 
 def send(text, thread=None, reply_to=None, reply_markup=None):
     """HTML message into the group; thread = forum topic id ('' = General)."""
-    return telegram(
-        "sendMessage",
-        chat_id=CHAT_ID,
-        message_thread_id=thread,
-        reply_to_message_id=reply_to,
-        parse_mode="HTML",
-        disable_web_page_preview="true",
-        reply_markup=json.dumps(reply_markup) if reply_markup else None,
-        text=text[:MAX_TEXT],
-    )
+    return TG.send(CHAT_ID, text, thread, reply_to, reply_markup)
 
 
 def edit(message_id, text, reply_markup=None):
-    return telegram(
-        "editMessageText",
-        chat_id=CHAT_ID,
-        message_id=message_id,
-        parse_mode="HTML",
-        disable_web_page_preview="true",
-        reply_markup=json.dumps(reply_markup) if reply_markup else None,
-        text=text[:MAX_TEXT],
-    )
+    return TG.edit(CHAT_ID, message_id, text, reply_markup)
 
 
 # ----------------------------------------------------------------------------
@@ -687,60 +657,35 @@ def run_relay():
 def run_commands():
     global BOT_NAME
     try:
-        BOT_NAME = telegram("getMe")["username"]
-        telegram("setMyCommands", commands=json.dumps([
-            {"command": "status", "description": "Node leds, or /status <node> [full]"},
-            {"command": "alerts", "description": "Active alerts by node"},
-            {"command": "deploys", "description": "Last generation change per node"},
-            {"command": "help", "description": "What this bot does"},
-        ] + ([{"command": "restart", "description": "Restart docker-rootless/rootful on a node (admins)"}] if ADMIN_USER_IDS else [])))
+        BOT_NAME = TG.me().get("username", "")
+        TG.set_commands([
+            ("status", "Node leds, or /status <node> [full]"),
+            ("alerts", "Active alerts by node"),
+            ("deploys", "Last generation change per node"),
+            ("help", "What this bot does"),
+        ] + ([("restart", "Restart docker-rootless/rootful on a node (admins)")] if ADMIN_USER_IDS else []))
     except Exception as e:
         log.warning("getMe/setMyCommands failed: %s", e)
-    offset_file = os.path.join(STATE_DIR, "offset")
-    try:
-        offset = int(open(offset_file).read().strip())
-    except (OSError, ValueError):
-        offset = 0
-    while True:
+
+    def on_callback(cq):
+        if str(cq.get("message", {}).get("chat", {}).get("id")) == str(CHAT_ID):
+            handle_callback(cq)
+
+    def on_message(m):
+        text = m.get("text") or ""
+        if str(m.get("chat", {}).get("id")) != str(CHAT_ID) or not text.startswith("/"):
+            return
+        reply = handle_command(text, m.get("from", {}).get("id"), m.get("message_thread_id"), m.get("message_id"))
+        if reply is None:
+            return
         try:
-            qs = urllib.parse.urlencode({"timeout": 50, "offset": offset, "allowed_updates": '["message","callback_query"]'})
-            with urllib.request.urlopen(f"{TELEGRAM_API}/bot{TOKEN}/getUpdates?{qs}", timeout=70) as r:
-                updates = json.load(r).get("result", [])
-        except urllib.error.HTTPError as e:
-            # 409 = another getUpdates consumer; nothing to do but wait it out
-            log.warning("getUpdates HTTP %s", e.code)
-            time.sleep(30 if e.code == 409 else 10)
-            continue
+            send(reply, m.get("message_thread_id"), reply_to=m.get("message_id"))
         except Exception as e:
-            log.warning("getUpdates failed: %s", e)
-            time.sleep(10)
-            continue
-        for u in updates:
-            offset = u["update_id"] + 1
-            cq = u.get("callback_query")
-            if cq:
-                if str(cq.get("message", {}).get("chat", {}).get("id")) == str(CHAT_ID):
-                    try:
-                        handle_callback(cq)
-                    except Exception as e:
-                        log.error("callback failed: %s", e)
-                continue
-            m = u.get("message") or {}
-            text = m.get("text") or ""
-            if str(m.get("chat", {}).get("id")) != str(CHAT_ID) or not text.startswith("/"):
-                continue
-            reply = handle_command(text, m.get("from", {}).get("id"), m.get("message_thread_id"), m.get("message_id"))
-            if reply is None:
-                continue
-            try:
-                send(reply, m.get("message_thread_id"), reply_to=m.get("message_id"))
-            except Exception as e:
-                log.error("reply failed: %s", e)
-        try:
-            with open(offset_file, "w") as fh:
-                fh.write(str(offset))
-        except OSError as e:
-            log.warning("offset not saved: %s", e)
+            log.error("reply failed: %s", e)
+
+    # tgcommon.poll persists the offset, waits out 409 (another consumer) and
+    # never lets one bad update kill the loop — the same contract as before.
+    TG.poll(os.path.join(STATE_DIR, "offset"), on_message, on_callback)
 
 
 # ----------------------------------------------------------------------------
