@@ -213,6 +213,7 @@ class Notifier:
     def _edit_card(self, chat_id, post, row, head="", by=None):
         try:
             self.tg.edit(chat_id, post["message_id"], self.card(row, head, by), reply_markup=keyboard_for(row))
+            log.info("card %s edited in chat %s (%s)", row["identifier"], chat_id, (head or "changed").strip())
         except Exception as e:  # message too old / deleted: fall back to a new card next time
             log.warning("edit card %s in %s failed: %s", row["identifier"], chat_id, e)
 

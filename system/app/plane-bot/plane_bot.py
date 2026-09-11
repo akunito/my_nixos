@@ -521,7 +521,10 @@ def sync_items(plane, mirror, pid, full=False):
 
 
 def _differs(prev, it):
-    return (prev.get("state") != it.get("state") or prev.get("priority", "none") != (it.get("priority") or "none")
+    # updated_at alone counts: a new comment moves it without touching any listed field,
+    # and the notifier needs to see those items to fetch their comments.
+    return (prev.get("updated_at") != it.get("updated_at")
+            or prev.get("state") != it.get("state") or prev.get("priority", "none") != (it.get("priority") or "none")
             or prev.get("name") != it.get("name") or prev.get("target_date") != it.get("target_date")
             or json.loads(prev.get("assignees") or "[]") != sorted(it.get("assignees") or []))
 

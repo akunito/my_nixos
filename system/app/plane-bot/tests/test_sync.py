@@ -55,6 +55,17 @@ class SyncTests(unittest.TestCase):
         self.assertEqual(gone, ["i-HOME-2", "i-HOME-3", "i-HOME-4"])
         self.assertEqual([r["seq"] for r in m.items_in([pid])], [1])
 
+    def test_updated_at_alone_is_a_change_so_comments_are_seen(self):
+        m = make_mirror()
+        pid = PID["HOME"]
+        seed = [i for i in __import__("helpers").seed_items() if i["project"] == pid]
+        plane = ScriptedPlane(seed)
+        sync_items(plane, m, pid, full=True)
+        touched = dict(seed[0], updated_at="2026-09-20T10:00:00+02:00")  # same fields, newer timestamp (a comment)
+        plane.items[0] = touched
+        changes = sync_items(plane, m, pid)
+        self.assertEqual([c[1]["id"] for c in changes], [touched["id"]])
+
     def test_unchanged_rows_are_not_changes(self):
         m = make_mirror()
         pid = PID["HOME"]
