@@ -88,6 +88,10 @@ lib.mkIf enabled {
     listenAddress = "127.0.0.1";
     port = 9093;
     environmentFile = lib.mkIf telegramEnabled "/etc/secrets/alertmanager.env";
+    # Must exceed repeat_interval (168h) or Alertmanager forgets it already
+    # notified and re-sends after the default 120h.
+    # log.level=debug is temporary (AINF-368 test cycle): it prints mute/notify decisions.
+    extraFlags = [ "--data.retention=240h" "--log.level=debug" ];
     configuration = {
       global.resolve_timeout = "5m";
       templates = [ "${telegramTemplate}" ];

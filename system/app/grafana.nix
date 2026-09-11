@@ -351,7 +351,9 @@ in
               {
                 alert = "ContainerDown";
                 expr = ''absent(container_memory_usage_bytes{name=~".+"}) or (container_last_seen{name!=""} < (time() - 60))'';
-                "for" = "2m";
+                # > Prometheus' 5-minute staleness window: after a restart/label change the
+                # old series linger that long and would otherwise fire a false critical
+                "for" = "6m";
                 labels.severity = "critical";
                 annotations = {
                   summary = "Container {{ $labels.name }} is down";
@@ -1143,7 +1145,10 @@ in
             ];
           }
           {
-            # pfSense via SNMP (prometheus-snmp.nix): the only always-on box at home
+            # pfSense via SNMP (prometheus-snmp.nix): the only always-on box at home.
+            # No pf* rules: BEGEMOT-PF-MIB (1.3.6.1.4.1.12325) is served by pfSense's
+            # built-in bsnmpd, not by the NET-SNMP package we query — those OIDs come
+            # back empty (verified 2026-09-11).
             name = "pfsense_alerts";
             rules = [
               {
@@ -1154,16 +1159,6 @@ in
                 annotations = {
                   summary = "pfSense not answering SNMP";
                   description = "The SNMP scrape of pfSense has failed for 3 minutes — router down, WireGuard tunnel down, or NET-SNMP stopped";
-                };
-              }
-              {
-                alert = "PfSenseFirewallNotRunning";
-                expr = ''pfStatusRunning != 1'';
-                "for" = "2m";
-                labels.severity = "critical";
-                annotations = {
-                  summary = "pf packet filter is not running";
-                  description = "pfStatusRunning reports the firewall disabled — pfSense is passing traffic unfiltered or none at all";
                 };
               }
               # admin-up but oper-down: covers WAN, LAN trunk, tailscale0, tun_wg0 without naming them
@@ -1185,16 +1180,6 @@ in
                 annotations = {
                   summary = "pfSense interface {{ $labels.ifDescr }} has errors";
                   description = "{{ $labels.ifDescr }} is seeing {{ $value | printf \"%.1f\" }} errors/s (cable, SFP or duplex problem)";
-                };
-              }
-              {
-                alert = "PfSenseStateTableHigh";
-                expr = ''pfStateTableCount > 400000'';
-                "for" = "10m";
-                labels.severity = "warning";
-                annotations = {
-                  summary = "pfSense state table high";
-                  description = "{{ $value | printf \"%.0f\" }} states — approaching the table limit (a runaway client or a DoS)";
                 };
               }
               {
