@@ -90,8 +90,10 @@ lib.mkIf enabled {
     environmentFile = lib.mkIf telegramEnabled "/etc/secrets/alertmanager.env";
     # Must exceed repeat_interval (168h) or Alertmanager forgets it already
     # notified and re-sends after the default 120h.
-    # log.level=debug is temporary (AINF-368 test cycle): it prints mute/notify decisions.
-    extraFlags = [ "--data.retention=240h" "--log.level=debug" ];
+    extraFlags = [ "--data.retention=240h" ];
+    # debug is temporary (AINF-368 test cycle): it logs mute/notify decisions.
+    # (the module passes --log.level itself; a second copy in extraFlags crashes the binary)
+    logLevel = "debug";
     configuration = {
       global.resolve_timeout = "5m";
       templates = [ "${telegramTemplate}" ];
