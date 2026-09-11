@@ -85,6 +85,8 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
         labels = {
           instance = target.name;
           url = target.url;
+          # node: which machine serves this URL (NAS-hosted probes are muted while it sleeps)
+          node = target.node or "external";
         };
       }];
       relabel_configs = [
@@ -104,6 +106,7 @@ lib.mkIf (systemSettings.prometheusBlackboxEnable or false) {
         labels = {
           instance = target.name;
           host = target.host;
+          node = target.node or "external";
         };
       }];
     }) icmpTargets)

@@ -79,6 +79,13 @@ ${authConfig}modules:
       - 1.3.6.1.2.1.2.2.1.20    # ifOutErrors
       - 1.3.6.1.2.1.31.1.1.1.6  # ifHCInOctets
       - 1.3.6.1.2.1.31.1.1.1.10 # ifHCOutOctets
+      # HOST-RESOURCES-MIB (NET-SNMP): disk + CPU — feeds the pfsense_alerts rules
+      - 1.3.6.1.2.1.25.2.3.1.3  # hrStorageDescr
+      - 1.3.6.1.2.1.25.2.3.1.4  # hrStorageAllocationUnits
+      - 1.3.6.1.2.1.25.2.3.1.5  # hrStorageSize
+      - 1.3.6.1.2.1.25.2.3.1.6  # hrStorageUsed
+      - 1.3.6.1.2.1.25.3.3.1.2  # hrProcessorLoad
+      - 1.3.6.1.4.1.2021.10.1.5 # laLoadInt (UCD-SNMP)
     get:
       # PF Status scalars (with .0 suffix for scalars)
       - 1.3.6.1.4.1.12325.1.200.1.1.1.0  # pfStatusRunning
@@ -94,6 +101,9 @@ ${authConfig}modules:
       - 1.3.6.1.4.1.12325.1.200.1.3.2.0  # pfStateTableSearches
       - 1.3.6.1.4.1.12325.1.200.1.3.3.0  # pfStateTableInserts
       - 1.3.6.1.4.1.12325.1.200.1.3.4.0  # pfStateTableRemovals
+      # UCD-SNMP-MIB memory scalars (kB)
+      - 1.3.6.1.4.1.2021.4.5.0  # memTotalReal
+      - 1.3.6.1.4.1.2021.4.6.0  # memAvailReal
     metrics:
       # Interface description (used as label)
       - name: ifDescr
@@ -242,6 +252,66 @@ ${authConfig}modules:
       - name: pfStateTableRemovals
         oid: 1.3.6.1.4.1.12325.1.200.1.3.4
         type: counter
+      # HOST-RESOURCES storage table (hrStorageDescr becomes a label, e.g. "/")
+      - name: hrStorageDescr
+        oid: 1.3.6.1.2.1.25.2.3.1.3
+        type: DisplayString
+        indexes:
+          - labelname: hrStorageIndex
+            type: Integer
+      - name: hrStorageAllocationUnits
+        oid: 1.3.6.1.2.1.25.2.3.1.4
+        type: gauge
+        indexes:
+          - labelname: hrStorageIndex
+            type: Integer
+        lookups:
+          - labels: [hrStorageIndex]
+            labelname: hrStorageDescr
+            oid: 1.3.6.1.2.1.25.2.3.1.3
+            type: DisplayString
+      - name: hrStorageSize
+        oid: 1.3.6.1.2.1.25.2.3.1.5
+        type: gauge
+        indexes:
+          - labelname: hrStorageIndex
+            type: Integer
+        lookups:
+          - labels: [hrStorageIndex]
+            labelname: hrStorageDescr
+            oid: 1.3.6.1.2.1.25.2.3.1.3
+            type: DisplayString
+      - name: hrStorageUsed
+        oid: 1.3.6.1.2.1.25.2.3.1.6
+        type: gauge
+        indexes:
+          - labelname: hrStorageIndex
+            type: Integer
+        lookups:
+          - labels: [hrStorageIndex]
+            labelname: hrStorageDescr
+            oid: 1.3.6.1.2.1.25.2.3.1.3
+            type: DisplayString
+      # CPU load per core (percent, last minute)
+      - name: hrProcessorLoad
+        oid: 1.3.6.1.2.1.25.3.3.1.2
+        type: gauge
+        indexes:
+          - labelname: hrDeviceIndex
+            type: Integer
+      # UCD load average x100 (1/5/15 min rows)
+      - name: laLoadInt
+        oid: 1.3.6.1.4.1.2021.10.1.5
+        type: gauge
+        indexes:
+          - labelname: laIndex
+            type: Integer
+      - name: memTotalReal
+        oid: 1.3.6.1.4.1.2021.4.5
+        type: gauge
+      - name: memAvailReal
+        oid: 1.3.6.1.4.1.2021.4.6
+        type: gauge
 '';
 in
 lib.mkIf (systemSettings.prometheusSnmpExporterEnable or false) {
@@ -264,7 +334,8 @@ lib.mkIf (systemSettings.prometheusSnmpExporterEnable or false) {
     };
     static_configs = [{
       targets = [ "127.0.0.1:9116" ];
-      labels = { instance = target.name; };
+      # node/role: routed and alerted like any other host (pfSense is always on)
+      labels = { instance = target.name; node = target.node or target.name; role = target.role or "always_on"; };
     }];
   }) snmpTargets;
 }

@@ -43,6 +43,7 @@ in
   ++ lib.optional systemSettings.appImageEnable ../../system/app/appimage.nix # AppImage support
   ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix # Mount drives
   ++ lib.optional (systemSettings.nasServicesEnable or false) ../../system/app/nas-services.nix # NAS: ZFS, SMART, sleep, Docker auto-start
+  ++ lib.optional (systemSettings.prometheusHostHealthEnable or false) ../../system/app/prometheus-host-health.nix # docker daemons + failed units textfile
   ++ lib.optional (systemSettings.networkBondingEnable or false) ../../system/hardware/network-bonding.nix # LACP bond
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix; # Tailscale mesh VPN
 

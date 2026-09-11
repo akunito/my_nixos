@@ -484,13 +484,20 @@ in
     notificationToEmail = secrets.alertEmail;
     grafanaTelegramBotToken = secrets.grafanaTelegramBotToken or "";
     grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";
+    # Forum topics of the Infra Alerts group (AINF-368)
+    infraTelegramDeploysThreadId = secrets.infraTelegramDeploysThreadId or "";
+    infraTelegramAlertsThreadId = secrets.infraTelegramAlertsThreadId or "";
+    infraTelegramWeeklyThreadId = secrets.infraTelegramWeeklyThreadId or "";
+    prometheusHostHealthEnable = true; # docker rootless up + failed system/user units -> host_health.prom
 
     # Remote targets for Prometheus scraping (via WireGuard/Tailscale tunnel to LAN)
     # NAS: node-exporter (9100) + cadvisor (8081) on rootless Docker
     # Laptops use Tailscale IPs (roaming — not always on LAN)
     prometheusRemoteTargets = [
-      { name = "nas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; }
+      # role: always_on -> HostDown alerts (NAS muted 23:00-16:05 while asleep); roaming -> no HostDown
+      { name = "nas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; role = "always_on"; }
       { name = "desk"; host = "nixosaku"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (workstation VLAN not routed over tailnet)
+      { name = "desk_a"; host = "nixosagadesk"; nodePort = 9100; cadvisorPort = null; }  # Aga's desktop, Tailscale 100.64.0.11
       { name = "x13"; host = "nixosx13aku"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (roaming)
       { name = "laptop_a"; host = "nixosaga"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (roaming)
     ];
@@ -503,13 +510,12 @@ in
       { name = "redis";      host = "127.0.0.1"; port = 9121; }
       # Matrix Synapse metrics (VPS Docker)
       { name = "synapse";   host = "127.0.0.1"; port = 9000; }
-      # Miniflux RSS reader (exposes /metrics natively)
-      { name = "miniflux";  host = "127.0.0.1"; port = 8084; }
-      # TrueNAS exportarr targets (via WireGuard tunnel to LAN)
-      { name = "sonarr";    host = "192.168.20.200"; port = 9707; }
-      { name = "radarr";    host = "192.168.20.200"; port = 9708; }
-      { name = "prowlarr";  host = "192.168.20.200"; port = 9709; }
-      { name = "bazarr";    host = "192.168.20.200"; port = 9710; }
+      # miniflux removed 2026-09-11: decommissioned ~Apr 2026, the probe fired ExportarrTargetDown forever
+      # NAS exportarr targets (via WireGuard tunnel to LAN) — node = nas so they are muted while it sleeps
+      { name = "sonarr";    host = "192.168.20.200"; port = 9707; node = "nas"; }
+      { name = "radarr";    host = "192.168.20.200"; port = 9708; node = "nas"; }
+      { name = "prowlarr";  host = "192.168.20.200"; port = 9709; node = "nas"; }
+      { name = "bazarr";    host = "192.168.20.200"; port = 9710; node = "nas"; }
     ];
 
     # Blackbox exporter (HTTP probes for public services)
@@ -523,17 +529,16 @@ in
       { name = "element"; url = "https://element.${secrets.publicDomain}"; }
       { name = "headscale"; url = "https://${secrets.headscaleDomain}"; }
       { name = "status"; url = "https://status.${secrets.publicDomain}"; }
-      { name = "miniflux"; url = "https://freshrss.${secrets.publicDomain}"; }
     ];
     prometheusBlackboxIcmpTargets = [
       { name = "pfsense"; host = "192.168.8.1"; }
-      { name = "truenas"; host = "192.168.20.200"; }
+      { name = "truenas"; host = "192.168.20.200"; node = "nas"; }  # muted while the NAS sleeps
       { name = "wan"; host = "1.1.1.1"; }
       { name = "wireguard_tunnel"; host = "172.26.5.155"; }   # VPS WireGuard tunnel (self-ping)
       { name = "switch_usw_aggr"; host = "192.168.8.180"; }   # UniFi Aggregation Switch
       { name = "switch_usw_24"; host = "192.168.8.181"; }     # UniFi 24-port Switch
       { name = "lan_wifi"; host = "192.168.8.2"; }            # LAN WiFi AP
-      { name = "guest_wifi"; host = "192.168.9.2"; }          # Guest WiFi AP (offline)
+      # guest_wifi (192.168.9.2) removed 2026-09-11: AP is offline for good, probe was a permanent critical
     ];
 
     # === OpenClaw Sanitizers (CSV + memory file injection stripping) ===

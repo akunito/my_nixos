@@ -107,6 +107,7 @@ in
     # NAS SERVICES — ZFS, SMART, NFS tuning, S3 sleep, Docker auto-start
     # ============================================================================
     nasServicesEnable = true;
+    prometheusHostHealthEnable = true; # docker rootful/rootless up + failed units -> host_health.prom (AINF-368)
     nasZfsPools = [ "ssdpool" "extpool" ];
     nasHostId = "47bff07a";
     nasAutoSnapshotEnable = true;

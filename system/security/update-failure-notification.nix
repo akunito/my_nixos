@@ -7,6 +7,8 @@ let
   telegramBotToken = systemSettings.grafanaTelegramBotToken or "";
   telegramChatId = systemSettings.grafanaTelegramChatId or "";
   telegramEnabled = (systemSettings.notificationTelegramOnFailureEnable or false) && telegramBotToken != "" && telegramChatId != "";
+  # Forum topic for alerts ("" = General)
+  telegramThreadId = systemSettings.infraTelegramAlertsThreadId or "";
 
   # Script to send failure notification email
   notificationScript = pkgs.writeShellScript "send-update-failure-notification" ''
@@ -98,6 +100,7 @@ This is an automated notification from the NixOS auto-update system.
     TELEGRAM_CHAT_ID="${telegramChatId}"
     ${pkgs.curl}/bin/curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
       -d chat_id="$TELEGRAM_CHAT_ID" \
+      ${lib.optionalString (telegramThreadId != "") ''-d message_thread_id="${telegramThreadId}" \''}
       -d parse_mode="HTML" \
       -d text="<b>🔴 Service Failed</b>%0A<b>Host:</b> $HOSTNAME%0A<b>Service:</b> $SERVICE_NAME%0A<b>Time:</b> $TIMESTAMP" \
       > /dev/null 2>&1 || echo "WARNING: Telegram notification failed (non-fatal)"

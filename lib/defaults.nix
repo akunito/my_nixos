@@ -603,6 +603,11 @@
     planeWorkspaceSlug = ""; # Plane workspace slug (e.g., "akuworkspace")
     grafanaTelegramBotToken = ""; # Telegram bot token for Grafana alert notifications (from @BotFather)
     grafanaTelegramChatId = ""; # Telegram chat ID for Grafana alert notifications
+    # "Infra Alerts" is a forum group: each kind of message has its own topic (message_thread_id).
+    # Empty = post to General. Values live in secrets/domains.nix (infraTelegram*ThreadId).
+    infraTelegramDeploysThreadId = ""; # 🚀 Deploys — install.sh / autoSystemUpdate results
+    infraTelegramAlertsThreadId = "";  # 🚨 Alerts — Alertmanager criticals + notify-failure
+    infraTelegramWeeklyThreadId = "";  # 📋 Weekly — Sunday warning digest (infra-bot)
 
     grafanaMcpToken = ""; # Grafana service account token for MCP server (Viewer role)
     grafanaMcpUrl = ""; # Grafana instance URL (e.g., "https://grafana.akunito.com")
@@ -655,12 +660,16 @@
     prometheusExporterEnable = false; # Enable Node Exporter on this host
     prometheusExporterCadvisorEnable = false; # Enable cAdvisor for Docker metrics on this host
     prometheusExporterLocalOnly = false; # Bind exporters to 127.0.0.1 (true on VPS, false on remote nodes)
+    prometheusHostHealthEnable = false; # Textfile metrics node_exporter can't see: docker rootful/rootless daemon up, failed system+user units (VPS, NAS)
     prometheusNodeExporterPort = 9100; # Port for Node Exporter
     prometheusCadvisorPort = 9092; # Port for cAdvisor
     # Remote targets for Prometheus scraping (used by monitoring server only)
+    # role: "always_on" nodes get HostDown alerts (and the NAS a sleep mute);
+    # "roaming" (default) nodes are laptops/desktops that are off most of the day —
+    # only disk/RAM/failed-unit/stale-update rules apply while they are up.
     prometheusRemoteTargets = [
       # Example:
-      # { name = "lxc_home"; host = "192.168.8.80"; nodePort = 9100; cadvisorPort = 9092; }
+      # { name = "lxc_home"; host = "192.168.8.80"; nodePort = 9100; cadvisorPort = 9092; role = "always_on"; }
     ];
 
     # === Blackbox Exporter (for HTTP/HTTPS and ICMP probes) ===

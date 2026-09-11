@@ -27,15 +27,14 @@ let
   remoteTargets = systemSettings.prometheusRemoteTargets or [];
   appTargets = systemSettings.prometheusAppTargets or [];
   localSslEnable = systemSettings.grafanaLocalSslEnable or true;
-  telegramBotToken = systemSettings.grafanaTelegramBotToken or "";
-  telegramChatId = systemSettings.grafanaTelegramChatId or "";
-  telegramEnabled = telegramBotToken != "" && telegramChatId != "";
 
   # Pocket ID OIDC login (auth.akunito.com). Enabled when a client id is provided.
   oauthClientId = systemSettings.grafanaOauthClientId or "";
   oauthEnabled = oauthClientId != "";
 
   # Build scrape configs for remote Node Exporters
+  # node = which machine a series belongs to (alert routing groups and mutes on
+  # it); role = always_on|roaming decides whether HostDown applies.
   remoteNodeScrapeConfigs = map (target: {
     job_name = "${target.name}_node";
     static_configs = [{
@@ -43,6 +42,8 @@ let
       labels = {
         instance = target.name;
         container = target.name;
+        node = target.name;
+        role = target.role or "roaming";
       };
     }];
   }) remoteTargets;
@@ -55,6 +56,8 @@ let
       labels = {
         instance = target.name;
         container = target.name;
+        node = target.name;
+        role = target.role or "roaming";
       };
     }];
   }) (builtins.filter (t: t.cadvisorPort != null) remoteTargets);
@@ -68,6 +71,8 @@ let
         labels = {
           instance = "monitoring";
           container = "monitoring";
+          node = "vps";
+          role = "always_on";
         };
       }];
     }
@@ -78,6 +83,8 @@ let
         targets = [ "127.0.0.1:${toString (systemSettings.prometheusCadvisorPort or 9092)}" ];
         labels = {
           instance = "vps";
+          node = "vps";
+          role = "always_on";
         };
       }];
     }
@@ -91,6 +98,8 @@ let
       labels = {
         instance = target.name;
         app = target.name;
+        # exporters that live on another machine say so (node = "nas" for exportarr)
+        node = target.node or "vps";
       };
     }];
   }) appTargets;
@@ -214,7 +223,10 @@ in
         };
       }];
 
-      # Alert contact points provisioning (email notifications)
+      # Contact points only apply to GRAFANA-MANAGED rules, of which there are
+      # none — every rule here is a Prometheus rule delivered by Alertmanager
+      # (system/app/alertmanager.nix, which also owns the Telegram routing).
+      # The email contact point stays for anything created in the UI.
       alerting.contactPoints.settings = {
         apiVersion = 1;
         contactPoints = [
@@ -230,35 +242,9 @@ in
               };
             }];
           }
-        ] ++ lib.optionals telegramEnabled [
-          {
-            orgId = 1;
-            name = "critical-alerts";
-            receivers = [
-              {
-                uid = "critical-email-receiver";
-                type = "email";
-                settings = {
-                  addresses = alertEmail;
-                  singleEmail = true;
-                };
-              }
-              {
-                uid = "critical-telegram-receiver";
-                type = "telegram";
-                settings = {
-                  bottoken = telegramBotToken;
-                  chatid = telegramChatId;
-                  parse_mode = "HTML";
-                };
-              }
-            ];
-          }
         ];
       };
 
-      # Alert notification policies
-      # Root: email for all alerts. Child route: critical → email + telegram.
       alerting.policies.settings = {
         apiVersion = 1;
         policies = [{
@@ -268,10 +254,6 @@ in
           group_wait = "30s";
           group_interval = "5m";
           repeat_interval = "4h";
-          routes = lib.optionals telegramEnabled [{
-            receiver = "critical-alerts";
-            object_matchers = [["severity" "=" "critical"]];
-          }];
         }];
       };
     };
@@ -324,7 +306,7 @@ in
               # Container memory usage approaching limit
               {
                 alert = "ContainerMemoryHigh";
-                expr = ''(container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) * 100 > 85'';
+                expr = ''(container_memory_working_set_bytes{name!=""} / (container_spec_memory_limit_bytes{name!=""} > 0)) * 100 > 85'';
                 "for" = "5m";
                 labels.severity = "warning";
                 annotations = {
@@ -335,7 +317,7 @@ in
               # Container memory critical (>95%)
               {
                 alert = "ContainerMemoryCritical";
-                expr = ''(container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) * 100 > 95'';
+                expr = ''(container_memory_working_set_bytes{name!=""} / (container_spec_memory_limit_bytes{name!=""} > 0)) * 100 > 95'';
                 "for" = "2m";
                 labels.severity = "critical";
                 annotations = {
@@ -425,10 +407,12 @@ in
                   description = "Host {{ $labels.instance }} filesystem {{ $labels.mountpoint }} has only {{ $value | printf \"%.1f\" }}% free";
                 };
               }
-              # Host down (node exporter not responding)
+              # Host down — only for nodes that are supposed to be up 24/7.
+              # Laptops/desktops (role=roaming) are off most of the day; the NAS is
+              # always_on but muted 23:00-16:05 by Alertmanager while it sleeps.
               {
                 alert = "HostDown";
-                expr = ''up{job=~".*_node"} == 0'';
+                expr = ''up{job=~".*_node", role="always_on"} == 0'';
                 "for" = "2m";
                 labels.severity = "critical";
                 annotations = {
@@ -465,7 +449,7 @@ in
                 "for" = "30m";
                 labels.severity = "critical";
                 annotations = {
-                  summary = "TLS certificate expiring in <3 days for {{ $labels.instance }}";
+                  summary = "TLS certificate expiring in under 3 days for {{ $labels.instance }}";
                   description = "Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }} - immediate renewal needed";
                 };
               }
@@ -706,17 +690,6 @@ in
                   description = "Disk {{ $labels.chip }} temperature is {{ $value | printf \"%.1f\" }}C - risk of hardware damage";
                 };
               }
-              # NAS not reporting metrics
-              {
-                alert = "NASNotReporting";
-                expr = ''up{job="nas_node"} == 0'';
-                "for" = "5m";
-                labels.severity = "warning";
-                annotations = {
-                  summary = "NAS not reporting metrics";
-                  description = "Node exporter on NAS has been unreachable for more than 5 minutes (may be in S3 sleep)";
-                };
-              }
               # NAS memory high (>90%)
               {
                 alert = "NASMemoryHigh";
@@ -862,17 +835,6 @@ in
                 annotations = {
                   summary = "NixOS auto-update failed on {{ $labels.hostname }}";
                   description = "System auto-update failed on {{ $labels.hostname }} - check logs with 'journalctl -u nixos-autoupgrade'";
-                };
-              }
-              # NixOS system auto-update stale (no update in 8+ days)
-              {
-                alert = "NixOSAutoUpdateStale";
-                expr = ''(time() - nixos_autoupdate_system_last_success) > 691200'';
-                "for" = "1h";
-                labels.severity = "warning";
-                annotations = {
-                  summary = "NixOS auto-update stale on {{ $labels.hostname }}";
-                  description = "Last successful system update on {{ $labels.hostname }} was {{ $value | humanizeDuration }} ago";
                 };
               }
               # Home-manager auto-update failed
@@ -1069,6 +1031,200 @@ in
                 annotations = {
                   summary = "MariaDB hourly backup stale";
                   description = "MariaDB hourly backup hasn't run in over 2 hours";
+                };
+              }
+            ];
+          }
+          {
+            # Host health from prometheus-host-health.nix textfiles + tailscale.nix
+            name = "host_health_alerts";
+            rules = [
+              {
+                alert = "DockerDaemonDown";
+                expr = ''host_docker_daemon_up == 0'';
+                "for" = "3m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Docker {{ $labels.mode }} daemon down on {{ $labels.node }}";
+                  description = "The {{ $labels.mode }} docker daemon on {{ $labels.node }} is not active — every container it runs is down";
+                };
+              }
+              # Failed units on hosts WITHOUT a native systemd collector (NAS: docker
+              # node-exporter). "unless" drops nodes where SystemdServiceFailed already
+              # sees the same unit, so a unit never alerts twice.
+              {
+                alert = "SystemdServiceFailed";
+                expr = ''host_systemd_unit_failed{scope="system"} == 1 unless on(node, name) node_systemd_unit_state{state="failed"} == 1'';
+                "for" = "5m";
+                labels.severity = "warning";
+                labels.source = "textfile"; # promtool lint: same name as the native rule needs a distinct label set
+                annotations = {
+                  summary = "Systemd unit failed on {{ $labels.node }}";
+                  description = "Unit {{ $labels.name }} is in failed state on {{ $labels.node }}";
+                };
+              }
+              {
+                alert = "SystemdUserUnitFailed";
+                expr = ''host_systemd_unit_failed{scope="user"} == 1'';
+                "for" = "5m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "User unit failed on {{ $labels.node }}";
+                  description = "systemd --user unit {{ $labels.name }} ({{ $labels.user }}) is failed on {{ $labels.node }} — rootless docker stacks live here";
+                };
+              }
+              {
+                alert = "TailscaleDisconnected";
+                expr = ''tailscale_backend_running{role="always_on"} == 0'';
+                "for" = "5m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Tailscale disconnected on {{ $labels.node }}";
+                  description = "tailscaled on {{ $labels.node }} is not in Running state (Headscale unreachable or needs login)";
+                };
+              }
+              {
+                alert = "TailscaleDisconnected";
+                expr = ''tailscale_backend_running{role="roaming"} == 0'';
+                "for" = "15m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "Tailscale disconnected on {{ $labels.node }}";
+                  description = "tailscaled on {{ $labels.node }} is not in Running state (Headscale unreachable or needs login)";
+                };
+              }
+              # The two peers every always-on node must see. nas-aku is not in the
+              # list: the NAS sleeps, and HostDown covers it while it should be awake.
+              {
+                alert = "TailscaleKeyPeerOffline";
+                expr = ''tailscale_peer_online{role="always_on", hostname=~"pfsense|vps-prod"} == 0'';
+                "for" = "5m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "Tailscale peer {{ $labels.hostname }} offline as seen from {{ $labels.node }}";
+                  description = "{{ $labels.node }} has not seen {{ $labels.hostname }} on the tailnet for 5 minutes";
+                };
+              }
+              # "Not updated" = the active generation is old. install.sh and
+              # autoSystemUpdate both create a generation, so both count.
+              {
+                alert = "SystemUpdateStale";
+                expr = ''(time() - nixos_last_update_system_timestamp{role="always_on"}) > 14 * 86400'';
+                "for" = "1h";
+                labels.severity = "warning";
+                labels.threshold = "14d";
+                annotations = {
+                  summary = "{{ $labels.node }} not updated for {{ $value | humanizeDuration }}";
+                  description = "Active NixOS generation on {{ $labels.node }} is older than 14 days — run a deploy";
+                };
+              }
+              {
+                alert = "SystemUpdateStale";
+                expr = ''(time() - nixos_last_update_system_timestamp{role="roaming"}) > 30 * 86400'';
+                "for" = "1h";
+                labels.severity = "warning";
+                labels.threshold = "30d";
+                annotations = {
+                  summary = "{{ $labels.node }} not updated for {{ $value | humanizeDuration }}";
+                  description = "Active NixOS generation on {{ $labels.node }} is older than 30 days — run a deploy";
+                };
+              }
+              # ZFS health from the NAS textfile (the docker node-exporter has no zfs collector)
+              {
+                alert = "NASPoolDegraded";
+                expr = ''nas_zfs_pool_healthy == 0'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "ZFS pool {{ $labels.pool }} is not ONLINE";
+                  description = "zpool list reports {{ $labels.pool }} degraded/faulted on {{ $labels.node }} — check zpool status before a disk is lost";
+                };
+              }
+            ];
+          }
+          {
+            # pfSense via SNMP (prometheus-snmp.nix): the only always-on box at home
+            name = "pfsense_alerts";
+            rules = [
+              {
+                alert = "PfSenseUnreachable";
+                expr = ''up{job="snmp_pfsense"} == 0'';
+                "for" = "3m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "pfSense not answering SNMP";
+                  description = "The SNMP scrape of pfSense has failed for 3 minutes — router down, WireGuard tunnel down, or NET-SNMP stopped";
+                };
+              }
+              {
+                alert = "PfSenseFirewallNotRunning";
+                expr = ''pfStatusRunning != 1'';
+                "for" = "2m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "pf packet filter is not running";
+                  description = "pfStatusRunning reports the firewall disabled — pfSense is passing traffic unfiltered or none at all";
+                };
+              }
+              # admin-up but oper-down: covers WAN, LAN trunk, tailscale0, tun_wg0 without naming them
+              {
+                alert = "PfSenseInterfaceDown";
+                expr = ''ifOperStatus{job="snmp_pfsense"} == 2 and on(ifIndex) ifAdminStatus{job="snmp_pfsense"} == 1'';
+                "for" = "3m";
+                labels.severity = "critical";
+                annotations = {
+                  summary = "pfSense interface {{ $labels.ifDescr }} is down";
+                  description = "{{ $labels.ifDescr }} is administratively up but has no link/operational status for 3 minutes";
+                };
+              }
+              {
+                alert = "PfSenseInterfaceErrors";
+                expr = ''rate(ifInErrors{job="snmp_pfsense"}[5m]) + rate(ifOutErrors{job="snmp_pfsense"}[5m]) > 1'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "pfSense interface {{ $labels.ifDescr }} has errors";
+                  description = "{{ $labels.ifDescr }} is seeing {{ $value | printf \"%.1f\" }} errors/s (cable, SFP or duplex problem)";
+                };
+              }
+              {
+                alert = "PfSenseStateTableHigh";
+                expr = ''pfStateTableCount > 400000'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "pfSense state table high";
+                  description = "{{ $value | printf \"%.0f\" }} states — approaching the table limit (a runaway client or a DoS)";
+                };
+              }
+              {
+                alert = "PfSenseDiskSpaceLow";
+                expr = ''hrStorageUsed{job="snmp_pfsense", hrStorageDescr="/"} / hrStorageSize{job="snmp_pfsense", hrStorageDescr="/"} * 100 > 85'';
+                "for" = "15m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "pfSense root filesystem {{ $value | printf \"%.0f\" }}% full";
+                  description = "Logs or pkg cache filling / on pfSense";
+                };
+              }
+              {
+                alert = "PfSenseCPUHigh";
+                expr = ''avg(hrProcessorLoad{job="snmp_pfsense"}) > 85'';
+                "for" = "15m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "pfSense CPU {{ $value | printf \"%.0f\" }}% for 15 minutes";
+                  description = "Sustained CPU load on the router (IDS/IPS, VPN crypto or a flood)";
+                };
+              }
+              {
+                alert = "PfSenseMemoryLow";
+                expr = ''memAvailReal{job="snmp_pfsense"} / memTotalReal{job="snmp_pfsense"} * 100 < 10'';
+                "for" = "10m";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "pfSense free memory under 10%";
+                  description = "Only {{ $value | printf \"%.1f\" }}% RAM available on pfSense";
                 };
               }
             ];

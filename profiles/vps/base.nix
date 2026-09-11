@@ -35,6 +35,8 @@
   # Optional service modules (same as proxmox-lxc/base.nix)
   ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix
   ++ lib.optional (systemSettings.grafanaEnable or false) ../../system/app/grafana.nix
+  ++ lib.optional (systemSettings.grafanaEnable or false) ../../system/app/alertmanager.nix # Prometheus rules -> Telegram/email (self-gates on grafanaEnable)
+  ++ lib.optional (systemSettings.prometheusHostHealthEnable or false) ../../system/app/prometheus-host-health.nix # docker daemons + failed units textfile
   ++ lib.optional (systemSettings.prometheusBlackboxEnable or false) ../../system/app/prometheus-blackbox.nix
   ++ lib.optional (systemSettings.prometheusPveExporterEnable or false) ../../system/app/prometheus-pve.nix
   ++ lib.optional (systemSettings.prometheusSnmpExporterEnable or false) ../../system/app/prometheus-snmp.nix
