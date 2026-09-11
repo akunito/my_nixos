@@ -567,23 +567,38 @@ in
               # NAS VPS restic backup stale (>36h)
               {
                 alert = "NasVpsBackupStale";
-                expr = ''nas_backup_age_seconds{dataset=~"vps_.*"} > 129600'';
+                expr = ''nas_backup_age_seconds{dataset=~"vps_(databases|services)"} > 129600'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
                   summary = "NAS VPS backup stale: {{ $labels.dataset }}";
-                  description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 36h)";
+                  description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (daily job, threshold: 36h)";
+                };
+              }
+              # nextcloud / libraries / immich run WEEKLY (Sunday evening, restic-backup-vps.nix)
+              {
+                alert = "NasVpsBackupStale";
+                expr = ''nas_backup_age_seconds{dataset=~"vps_(nextcloud|libraries|immich)"} > 8 * 86400'';
+                "for" = "1h";
+                labels.severity = "warning";
+                labels.schedule = "weekly";
+                annotations = {
+                  summary = "NAS VPS backup stale: {{ $labels.dataset }}";
+                  description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (weekly job, threshold: 8d)";
                 };
               }
               # NAS workstation restic backup stale (>30h)
               {
+                # A laptop that was off all day has no backup to make; only alert when the
+                # machine was up for a meaningful share of the last 24h and still didn't back up.
                 alert = "NasWorkstationBackupStale";
-                expr = ''nas_backup_age_seconds{dataset=~"desk_.*|x13_.*"} > 108000'';
+                expr = ''(nas_backup_age_seconds{dataset="desk_home"} > 108000 and on() avg_over_time(up{job="desk_node"}[24h]) > 0.3)
+                          or (nas_backup_age_seconds{dataset="x13_home"} > 108000 and on() avg_over_time(up{job="x13_node"}[24h]) > 0.3)'';
                 "for" = "1h";
                 labels.severity = "warning";
                 annotations = {
                   summary = "NAS workstation backup stale: {{ $labels.dataset }}";
-                  description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 30h)";
+                  description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 30h) although the machine was up today";
                 };
               }
               # NAS backup missing (any repo)
@@ -891,7 +906,8 @@ in
               # High request latency
               {
                 alert = "SynapseHighLatency";
-                expr = ''histogram_quantile(0.99, rate(synapse_http_server_response_time_seconds_bucket[5m])) > 5'';
+                # SyncRestServlet is the clients' long-poll (/sync?timeout=30000): 10s+ is normal there
+                expr = ''histogram_quantile(0.99, sum by (servlet, le, node) (rate(synapse_http_server_response_time_seconds_bucket{servlet!~"SyncRestServlet|SlidingSyncRestServlet"}[5m]))) > 5'';
                 "for" = "5m";
                 labels.severity = "warning";
                 annotations = {
@@ -1027,12 +1043,13 @@ in
               }
               {
                 alert = "MariaDBHourlyBackupStale";
-                expr = ''(time() - mariadb_backup_hourly_last_success_timestamp) > 7200'';
+                # VPS runs this timer every 6h (mariadbHourlySchedule), not hourly
+                expr = ''(time() - mariadb_backup_hourly_last_success_timestamp) > 25200'';
                 "for" = "30m";
                 labels.severity = "warning";
                 annotations = {
-                  summary = "MariaDB hourly backup stale";
-                  description = "MariaDB hourly backup hasn't run in over 2 hours";
+                  summary = "MariaDB periodic backup stale";
+                  description = "MariaDB periodic backup hasn't run in over 7 hours (schedule: every 6h)";
                 };
               }
             ];
