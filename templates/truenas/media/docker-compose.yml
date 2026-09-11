@@ -15,7 +15,7 @@
 services:
   jellyfin:
     container_name: jellyfin
-    image: jellyfin/jellyfin
+    image: jellyfin/jellyfin:10.11.11
     user: 1000:1000
     environment:
       - JELLYFIN_PublishedServerUrl=http://jellyfin.akunito.com
@@ -58,7 +58,7 @@ services:
           memory: 2G
 
   bazarr:
-    image: lscr.io/linuxserver/bazarr:latest
+    image: lscr.io/linuxserver/bazarr:v1.6.0-ls363
     container_name: bazarr
     hostname: bazarr
     ports:
@@ -93,7 +93,7 @@ services:
           memory: 512M
 
   jellyseerr:
-    image: fallenbagel/jellyseerr:latest
+    image: fallenbagel/jellyseerr:2.7.3
     container_name: jellyseerr
     hostname: jellyseerr
     ports:
@@ -126,7 +126,7 @@ services:
           memory: 512M
 
   prowlarr:
-    image: linuxserver/prowlarr:latest
+    image: linuxserver/prowlarr:2.5.2.5491-ls159
     container_name: prowlarr
     hostname: prowlarr
     ports:
@@ -159,7 +159,7 @@ services:
           memory: 512M
 
   solvearr:
-    image: nabilak/solvearr:latest
+    image: nabilak/solvearr@sha256:44fd9a7faa7dcc73447079884a2b33935e1cdc96f50bea28c47598aa264ed191
     container_name: solvearr
     hostname: solvearr
     environment:
@@ -184,7 +184,7 @@ services:
           memory: 512M
 
   radarr:
-    image: lscr.io/linuxserver/radarr:latest
+    image: lscr.io/linuxserver/radarr:6.3.0.10514-ls315
     container_name: radarr
     hostname: radarr
     ports:
@@ -219,7 +219,7 @@ services:
           memory: 1G
 
   sonarr:
-    image: lscr.io/linuxserver/sonarr:latest
+    image: lscr.io/linuxserver/sonarr:4.0.19.2979-ls323
     container_name: sonarr
     hostname: sonarr
     ports:

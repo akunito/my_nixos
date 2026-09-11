@@ -7,7 +7,7 @@
 
 services:
   gluetun:
-    image: qmcgaw/gluetun
+    image: qmcgaw/gluetun@sha256:62810455bc9dacdcf887ddeb33b0e054d39a048ebe9264dff2f2692ce180a35c
     container_name: gluetun
     hostname: qbittorrent
     cap_add:
@@ -43,7 +43,7 @@ services:
           memory: 256M
 
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
+    image: lscr.io/linuxserver/qbittorrent:5.2.3_v2.0.14-ls475
     container_name: qbittorrent
     depends_on:
       - gluetun
