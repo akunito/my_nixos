@@ -184,6 +184,7 @@ in
 
     # === Monitoring ===
     prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
+    infraNotifyEnable = true; infraNodeName = "laptop_a"; infraBotUrl = "http://100.64.0.6:8765"; # deploy announcements to Infra Alerts (AINF-368)
 
     # ============================================================================
     # WORKSTATION BACKUP → NAS (over Tailscale)

@@ -341,6 +341,25 @@ get_current_generation() {
     echo "$latest"
 }
 
+# --- Infra Alerts deploy announcement (AINF-368) ---------------------------
+# The deployed system ships `infra-notify` (system/app/infra-notify.nix) when
+# infraNotifyEnable is set; the node itself posts the result + a post-deploy
+# check to the 🚀 Deploys topic. Absent binary = silent no-op, never fatal.
+INSTALL_START_TS=$(date +%s)
+notify_deploy() {
+    local status=$1 note=${2:-}
+    local bin=/run/current-system/sw/bin/infra-notify
+    [ -x "$bin" ] || return 0
+    local commit; commit=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "")
+    local args=(deploy --status "$status" --profile "$PROFILE" \
+        --duration "$(( $(date +%s) - INSTALL_START_TS ))" \
+        --gen-before "${PRE_REBUILD_GENERATION:-}" --gen-after "$(get_current_generation)" \
+        --commit "$commit" --by "${SUDO_USER:-$USER}" --via install.sh)
+    [ -n "$note" ] && args+=(--note "$note")
+    # the token file is root-only; sudo is already cached for this run
+    $SUDO_CMD "$bin" "${args[@]}" || echo -e "${YELLOW}Warning: deploy announcement failed (non-fatal)${RESET}"
+}
+
 # Get current home-manager generation for verification
 get_current_home_manager_generation() {
     # Extract the current generation ID from home-manager generations output
@@ -1242,6 +1261,7 @@ else
         POST_REBUILD_GENERATION=$(get_current_generation)
         echo -e "\n${YELLOW}⚠ System rebuild completed with warnings${RESET}"
         echo -e "${YELLOW}  Exit code: $REBUILD_EXIT_CODE, but new generation was created${RESET}"
+        DEPLOY_WARN="rebuild exit $REBUILD_EXIT_CODE but a new generation was created"
         echo -e "${GREEN}  New generation: $POST_REBUILD_GENERATION${RESET}"
         echo -e "${CYAN}  The system configuration was applied, but some issues occurred${RESET}"
         echo -e "${CYAN}  Review the rebuild output above for details${RESET}"
@@ -1257,6 +1277,7 @@ else
         debug_log "A_parse_quote" "install.sh:rebuild" "rebuildFailureNoGeneration" "{\"exitCode\":$REBUILD_EXIT_CODE}"
         # #endregion
         rollback_system "$SCRIPT_DIR" "$SUDO_CMD" "$PRE_REBUILD_GENERATION"
+        notify_deploy rollback "rebuild failed (exit $REBUILD_EXIT_CODE), no new generation — rolled back"
         exit 1
     fi
 fi
@@ -1276,6 +1297,7 @@ if ! verify_generation_fstab_safety "$SUDO_CMD"; then
         $SUDO_CMD /nix/var/nix/profiles/system/bin/switch-to-configuration boot 2>/dev/null \
             || echo -e "${YELLOW}Warning: could not regenerate boot menu entries${RESET}"
     fi
+    notify_deploy rollback "new generation had a poisoned fstab (docker overlay) — rolled back and deleted it"
     exit 1
 fi
 
@@ -1300,6 +1322,7 @@ if [ "$BOOT_MODE" = true ]; then
     echo -e "${YELLOW}  Reboot now, then re-run install.sh WITHOUT -b to apply them.${RESET}"
     echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     trap - EXIT
+    notify_deploy ok "boot mode: new system staged for the next reboot, home-manager skipped"
     echo -e "\n${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${RESET} Installation script finished (BOOT mode)"
     exit 0
 fi
@@ -1340,6 +1363,7 @@ else
         POST_HOME_MANAGER_GENERATION=$(get_current_home_manager_generation)
         echo -e "\n${YELLOW}⚠ Home Manager installation completed with warnings${RESET}"
         echo -e "${YELLOW}  Exit code: $HOME_MANAGER_EXIT_CODE, but new generation was created${RESET}"
+        DEPLOY_WARN="${DEPLOY_WARN:+$DEPLOY_WARN; }home-manager exit $HOME_MANAGER_EXIT_CODE but a new generation was created"
         echo -e "${GREEN}  New generation: $POST_HOME_MANAGER_GENERATION${RESET}"
         echo -e "${CYAN}  The user configuration was applied, but some issues occurred${RESET}"
         echo -e "${CYAN}  Review the home-manager output above for details${RESET}"
@@ -1351,6 +1375,7 @@ else
         echo -e "${YELLOW}You may need to fix Home Manager configuration and retry${RESET}"
         echo -e "${CYAN}Common issues: file conflicts, download failures, or configuration errors${RESET}"
         # Don't rollback system for Home Manager failures - system is still functional
+        notify_deploy warn "system rebuilt OK, home-manager switch FAILED (exit $HOME_MANAGER_EXIT_CODE)"
         exit 1
     fi
 fi
@@ -1388,5 +1413,11 @@ ending_menu $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 FILES_HARDENED=false
 # Clear the EXIT trap to prevent cleanup from running
 trap - EXIT
+
+if [ -n "${DEPLOY_WARN:-}" ]; then
+    notify_deploy warn "$DEPLOY_WARN"
+else
+    notify_deploy ok
+fi
 
 echo -e "\n${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${RESET} Installation script finished"

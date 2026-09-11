@@ -126,6 +126,21 @@ fi
 # Unquoted on purpose: the output is either empty or three plain words.
 NIX_CACHE_OPTS=$(sh "$SCRIPT_DIR/scripts/warm-binary-caches.sh")
 
+# --- Infra Alerts deploy announcement (AINF-368): same hook as install.sh ---
+current_generation() { ls /nix/var/nix/profiles/system-*-link 2>/dev/null | sort -V | tail -1 | grep -oP 'system-\K\d+' || echo ""; }
+UPDATE_START_TS=$(date +%s)
+PRE_GEN=$(current_generation)
+notify_deploy() {
+    local bin=/run/current-system/sw/bin/infra-notify
+    [ -x "$bin" ] || return 0
+    local args=(deploy --status "$1" --profile "$ACTIVE_PROFILE" --duration "$(( $(date +%s) - UPDATE_START_TS ))" \
+        --gen-before "$PRE_GEN" --gen-after "$(current_generation)" \
+        --commit "$(/run/current-system/sw/bin/git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "")" \
+        --by root --via autoSystemUpdate)
+    [ -n "${2:-}" ] && args+=(--note "$2")
+    "$bin" "${args[@]}" || echo -e "Warning: deploy announcement failed (non-fatal)"
+}
+
 echo -e "Rebuilding system"
 if nixos-rebuild switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace --impure $NIX_CACHE_OPTS; then
     echo -e "Rebuild successful"
@@ -170,8 +185,10 @@ nixos_autoupdate_hw_config_regen_status{hostname="$HOSTNAME"} $HW_CONFIG_REGEN_O
 EOF
         echo -e "Prometheus metrics written to $TEXTFILE_DIR/autoupdate_system.prom"
     fi
+    if [ "$HW_CONFIG_REGEN_OK" = 1 ]; then notify_deploy ok "weekly auto-update"; else notify_deploy ok "weekly auto-update (hardware-config regen rejected, kept existing)"; fi
 else
     echo -e "Rebuild failed!"
+    notify_deploy failed "weekly auto-update: rebuild failed"
     # Write failure metric if textfile directory exists
     TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile"
     if [ -d "$TEXTFILE_DIR" ]; then

@@ -661,6 +661,13 @@
     prometheusExporterCadvisorEnable = false; # Enable cAdvisor for Docker metrics on this host
     prometheusExporterLocalOnly = false; # Bind exporters to 127.0.0.1 (true on VPS, false on remote nodes)
     prometheusHostHealthEnable = false; # Textfile metrics node_exporter can't see: docker rootful/rootless daemon up, failed system+user units (VPS, NAS)
+
+    # === Infra Alerts Telegram (AINF-368) ===
+    infraNotifyEnable = false; # Install `infra-notify`: install.sh/autoSystemUpdate announce deploy results + post-deploy check
+    infraNodeName = ""; # Prometheus node label of this machine (nas, vps, desk, x13, laptop_a, desk_a); "" = hostname
+    infraBotUrl = ""; # Bot relay base URL on the VPS Tailscale IP (e.g. "http://100.64.0.6:8765"); the only transport for secrets-free nodes
+    infraBotEnable = false; # Run the infra-bot daemon (relay + /status commands) — monitoring server only
+    infraBotPort = 8765; # Relay listen port on the tailscale0 interface
     prometheusNodeExporterPort = 9100; # Port for Node Exporter
     prometheusCadvisorPort = 9092; # Port for cAdvisor
     # Remote targets for Prometheus scraping (used by monitoring server only)

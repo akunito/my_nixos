@@ -489,6 +489,8 @@ in
     infraTelegramAlertsThreadId = secrets.infraTelegramAlertsThreadId or "";
     infraTelegramWeeklyThreadId = secrets.infraTelegramWeeklyThreadId or "";
     prometheusHostHealthEnable = true; # docker rootless up + failed system/user units -> host_health.prom
+    infraNotifyEnable = true; infraNodeName = "vps"; infraBotUrl = "http://100.64.0.6:8765";
+    infraBotEnable = true; # the Infra Alerts bot lives here (relay for secrets-free nodes + /status commands)
 
     # Remote targets for Prometheus scraping (via WireGuard/Tailscale tunnel to LAN)
     # NAS: node-exporter (9100) + cadvisor (8081) on rootless Docker

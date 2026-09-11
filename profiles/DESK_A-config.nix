@@ -131,6 +131,7 @@ in
     # MONITORING
     # ============================================================================
     prometheusWorkstationExporterEnable = true; # update/disk/backup metrics
+    infraNotifyEnable = true; infraNodeName = "desk_a"; infraBotUrl = "http://100.64.0.6:8765"; # deploy announcements to Infra Alerts (AINF-368)
     allowedTCPPorts = [ 9100 ];                  # prometheus workstation exporter
 
     # ============================================================================

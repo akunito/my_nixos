@@ -108,6 +108,7 @@ in
     # ============================================================================
     nasServicesEnable = true;
     prometheusHostHealthEnable = true; # docker rootful/rootless up + failed units -> host_health.prom (AINF-368)
+    infraNotifyEnable = true; infraNodeName = "nas"; infraBotUrl = "http://100.64.0.6:8765"; # deploy announcements (AINF-368)
     nasZfsPools = [ "ssdpool" "extpool" ];
     nasHostId = "47bff07a";
     nasAutoSnapshotEnable = true;
