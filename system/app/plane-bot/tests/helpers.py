@@ -96,11 +96,32 @@ def make_mirror():
 
 
 class FakePlane:
-    """Records writes; returns a plausible created item."""
+    """Records writes; returns plausible items. Shared `store` lets update/work_item round-trip."""
+
+    store = {}
 
     def __init__(self, token):
         self.token = token
         self.created = []
+        self.updated = []
+        self.comments_added = []
+
+    def update_work_item(self, pid, iid, body):
+        self.updated.append((pid, iid, body))
+        base = FakePlane.store.get(iid) or {"id": iid, "project": pid, "sequence_id": 0, "name": "?", "state": None, "priority": "none",
+                                           "assignees": [], "target_date": None, "created_at": "2026-08-01T10:00:00+02:00", "external_source": None}
+        new = dict(base)
+        new.update(body)
+        new["updated_at"] = "2026-09-12T12:00:00+02:00"
+        FakePlane.store[iid] = new
+        return new
+
+    def work_item(self, pid, iid):
+        return dict(FakePlane.store[iid])
+
+    def add_comment(self, pid, iid, comment_html):
+        self.comments_added.append((pid, iid, comment_html))
+        return {"id": "c-new"}
 
     def create_work_item(self, pid, body):
         self.created.append((pid, body))
@@ -115,6 +136,7 @@ class World:
         self.cfg = make_config()
         self.mirror = make_mirror()
         self.planes = []
+        FakePlane.store = {it["id"]: dict(it) for it in seed_items()}
 
         def factory(token):
             p = FakePlane(token)

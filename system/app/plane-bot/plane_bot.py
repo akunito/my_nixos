@@ -39,7 +39,7 @@ import urllib.parse
 import urllib.request
 import zoneinfo
 
-from notify import Notifier
+from notify import Notifier, keyboard_for
 from tgcommon import Telegram, esc
 
 log = logging.getLogger("plane-bot")
@@ -255,6 +255,8 @@ CREATE INDEX IF NOT EXISTS items_project ON items(project, deleted);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 -- the bot's own message about an item in a chat, so later changes edit it instead of posting again
 CREATE TABLE IF NOT EXISTS posts (item TEXT, chat TEXT, message_id INTEGER, thread TEXT, created_at TEXT, PRIMARY KEY (item, chat));
+-- every bot message that is about an item (cards, assignment pings, quoted comments): reply-to resolution
+CREATE TABLE IF NOT EXISTS msgmap (chat TEXT, message_id INTEGER, item TEXT, PRIMARY KEY (chat, message_id));
 """
 # columns added after the first deploy; sqlite has no ADD COLUMN IF NOT EXISTS
 MIGRATIONS = [("items", "created_by", "ALTER TABLE items ADD COLUMN created_by TEXT"),
@@ -275,6 +277,15 @@ class Mirror:
                     self.db.execute(ddl)
                     self.migrated = True  # rows lack the new data: the daemon runs a silent full sync
             self.db.commit()
+
+    def close(self):
+        try:
+            self.db.close()
+        except Exception:
+            pass
+
+    def __del__(self):
+        self.close()
 
     # --- writes
     def upsert_project(self, p):
@@ -326,6 +337,11 @@ class Mirror:
         with self.lock, self.db:
             self.db.execute("INSERT OR REPLACE INTO posts (item, chat, message_id, thread, created_at) VALUES (?,?,?,?,?)",
                             (item_id, str(chat_id), int(message_id), str(thread) if thread is not None else None, dt.datetime.now(dt.timezone.utc).isoformat()))
+            self.db.execute("INSERT OR REPLACE INTO msgmap (chat, message_id, item) VALUES (?,?,?)", (str(chat_id), int(message_id), item_id))
+
+    def map_message(self, chat_id, message_id, item_id):
+        with self.lock, self.db:
+            self.db.execute("INSERT OR REPLACE INTO msgmap (chat, message_id, item) VALUES (?,?,?)", (str(chat_id), int(message_id), item_id))
 
     def get_post(self, item_id, chat_id):
         with self.lock:
@@ -335,8 +351,22 @@ class Mirror:
     def post_item(self, chat_id, message_id):
         """Item id behind one of the bot's own messages (for reply = comment)."""
         with self.lock:
-            r = self.db.execute("SELECT item FROM posts WHERE chat=? AND message_id=?", (str(chat_id), int(message_id))).fetchone()
+            r = self.db.execute("SELECT item FROM msgmap WHERE chat=? AND message_id=?", (str(chat_id), int(message_id))).fetchone()
         return r["item"] if r else None
+
+    def item_by_hex(self, hex32):
+        h = hex32.strip().lower()
+        if len(h) != 32:
+            return None
+        return self.item(f"{h[:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:]}")
+
+    def due_items(self, pids, active_names, today):
+        """Active items with a target_date on or before `today` (ISO date string)."""
+        return [r for r in self.items_in(pids, active_names) if r.get("target_date") and r["target_date"] <= today]
+
+    def closed_since(self, pids, since_iso):
+        rows = [r for r in self.items_in(pids) if (r.get("state_group") == "completed") and (r.get("updated_at") or "") >= since_iso]
+        return sorted(rows, key=lambda r: r["updated_at"], reverse=True)
 
     def is_member(self, pid, email):
         with self.lock:
@@ -499,6 +529,40 @@ def _differs(prev, it):
 # ----------------------------------------------------------------------------
 # Commands: parse -> scope -> query -> render
 # ----------------------------------------------------------------------------
+class Msg(str):
+    """A reply that may carry an inline keyboard and the item it is about (so the
+    daemon can register it as that item's card). Plain str for everything else."""
+
+    def __new__(cls, text, keyboard=None, item=None):
+        o = super().__new__(cls, text)
+        o.keyboard = keyboard
+        o.item = item
+        return o
+
+
+def parse_due(word, today):
+    """'today' 'tomorrow' 'mon'..'sunday' 'YYYY-MM-DD' 'MM-DD' '+3d' 'none' -> ISO date or None; raises ValueError."""
+    w = (word or "").strip().lower()
+    if w in ("none", "clear", "-"):
+        return None
+    if w == "today":
+        return today.isoformat()
+    if w == "tomorrow":
+        return (today + dt.timedelta(days=1)).isoformat()
+    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    for i, d in enumerate(days):
+        if w in (d, d[:3]):
+            delta = (i - today.weekday()) % 7 or 7
+            return (today + dt.timedelta(days=delta)).isoformat()
+    m = re.match(r"^\+(\d{1,3})d?$", w)
+    if m:
+        return (today + dt.timedelta(days=int(m.group(1)))).isoformat()
+    m = re.match(r"^(\d{1,2})-(\d{1,2})$", w)
+    if m:
+        return dt.date(today.year, int(m.group(1)), int(m.group(2))).isoformat()
+    return dt.date.fromisoformat(w).isoformat()
+
+
 class Reply(Exception):
     """A user-facing answer that ends command handling (errors included)."""
 
@@ -580,6 +644,13 @@ def fmt_line(cfg, r, with_state=False):
     due = f" · due {r['target_date'][5:]}" if r.get("target_date") else ""
     st = f" · {esc(r.get('state_name') or '?')}" if with_state else ""
     return f"<a href=\"{item_url(cfg, r)}\">{r['identifier']}</a> {PRIORITY_ICON.get(r.get('priority') or 'none', '⚪')} {esc(r['name'])}{st}{due}"
+
+
+def _mention(cfg, mirror, user_id):
+    u = cfg.user_by_email(mirror.member_email(user_id))
+    if u and u.telegram_id:
+        return f'<a href="tg://user?id={u.telegram_id}">{esc(u.alias)}</a>'
+    return esc(person_label(cfg, mirror, user_id))
 
 
 def person_label(cfg, mirror, user_id):
@@ -697,6 +768,9 @@ def render_show(cfg, mirror, r):
 
 
 HELP = """<b>Plane bot</b> — this group only sees its own projects.
+/assign PROJ-12 &lt;alias|me|none&gt; · /prio PROJ-12 &lt;urgent|high|medium|low|none&gt;
+/due PROJ-12 &lt;date|today|tomorrow|fri|+3d|none&gt; · /state PROJ-12 &lt;todo|progress|review|done|cancel&gt; · /done PROJ-12
+Reply to any bot message about a ticket to add a comment. Buttons under a card change state / assign to you.
 /status — this topic's project, my active tickets (in General: summary of every project)
 /status &lt;project&gt; [user] — active tickets of a user in a project
 /status &lt;project&gt; all — everyone's active tickets, grouped by person
@@ -769,7 +843,180 @@ class Bot:
             if not args:
                 raise Reply("Usage: /new [PROJ] title")
             return self._new(chat_id, thread, args, from_id)
+        if cmd in ("assign", "prio", "due", "state", "done"):
+            return self._write(cmd, chat_id, args, from_id)
         return None  # unknown command: silence (other bots may own it)
+
+    # --- write actions -----------------------------------------------------
+    def _scoped_item(self, chat_id, ident):
+        """The mirror row for PROJ-N, only if PROJ is in this chat's table."""
+        projects = self.cfg.chat_projects(chat_id)
+        m = IDENT_RE.match((ident or "").strip())
+        if not m or m.group(1).upper() not in projects:
+            raise Reply("Unknown project here.")
+        r = self.mirror.item_by_identifier(ident.upper())
+        if not r:
+            raise Reply(f"{esc(ident.upper())} not found (or not synced yet).")
+        return r
+
+    def _actor(self, from_id):
+        u = self.cfg.user_by_telegram(from_id)
+        if not u:
+            raise Reply("Not registered: send /whoami to Diego.")
+        if not u.can_act:
+            raise Reply(f"{esc(u.alias)} is read-only here (no Plane token).")
+        return u
+
+    def _apply(self, user, row, body, chat_id, what):
+        """PATCH with the user's token, refresh the mirror, return the new card."""
+        plane = self.plane_factory(user.token)
+        updated = plane.update_work_item(row["project"], row["id"], body)
+        if not isinstance(updated, dict) or "id" not in updated:
+            updated = plane.work_item(row["project"], row["id"])
+        updated.setdefault("project", row["project"])
+        updated.setdefault("updated_by", self.mirror.user_id_by_email(user.email, [row["project"]]))
+        self.mirror.upsert_item(updated)
+        fresh = self.mirror.item(row["id"]) or row
+        log.info("%s %s in chat %s by %s: %s", what, row["identifier"], chat_id, user.alias, json.dumps(body))
+        return self.card_msg(fresh)
+
+    def card_msg(self, row, head=""):
+        return Msg(head + render_show(self.cfg, self.mirror, row), keyboard=keyboard_for(row), item=row["id"])
+
+    def _write(self, cmd, chat_id, args, from_id):
+        usage = {"assign": "/assign PROJ-12 <alias|me|none>", "prio": "/prio PROJ-12 <urgent|high|medium|low|none>",
+                 "due": "/due PROJ-12 <YYYY-MM-DD|today|tomorrow|fri|+3d|none>", "state": "/state PROJ-12 <todo|progress|review|done|cancel>",
+                 "done": "/done PROJ-12"}
+        need = 1 if cmd == "done" else 2
+        if len(args) != need:
+            raise Reply("Usage: " + usage[cmd])
+        row = self._scoped_item(chat_id, args[0])
+        user = self._actor(from_id)
+        if cmd == "assign":
+            who = args[1].lstrip("@").lower()
+            if who == "none":
+                return self._apply(user, row, {"assignees": []}, chat_id, "assign")
+            target = user if who == "me" else self.cfg.user_by_alias(who)
+            if not target:
+                raise Reply(f"Unknown user {esc(args[1])}. Known: {', '.join(sorted(self.cfg.users))}.")
+            uid = self.mirror.user_id_by_email(target.email, [row["project"]])
+            if not uid:
+                raise Reply(f"{esc(target.alias)} is not a member of {row['pident']}.")
+            return self._apply(user, row, {"assignees": sorted(set(row["assignees"]) | {uid})}, chat_id, "assign")
+        if cmd == "prio":
+            pr = args[1].lower()
+            if pr not in PRIORITY_ORDER:
+                raise Reply("Usage: " + usage[cmd])
+            return self._apply(user, row, {"priority": pr}, chat_id, "prio")
+        if cmd == "due":
+            try:
+                date = parse_due(args[1], dt.datetime.now(self.cfg.tz).date())
+            except ValueError:
+                raise Reply("Usage: " + usage[cmd])
+            return self._apply(user, row, {"target_date": date}, chat_id, "due")
+        # state / done
+        want = "done" if cmd == "done" else args[1].lower()
+        names = {"todo": "Todo", "progress": "In Progress", "inprogress": "In Progress", "review": "In Review",
+                 "done": "Done", "cancel": "Cancelled", "cancelled": "Cancelled", "backlog": "Backlog"}
+        if want not in names:
+            raise Reply("Usage: " + usage["state"])
+        st = self.mirror.state_by_name(row["project"], names[want])
+        if not st:
+            raise Reply(f"{row['pident']} has no state named {names[want]}.")
+        return self._apply(user, row, {"state": st["id"]}, chat_id, "state")
+
+    # --- inline buttons ------------------------------------------------------
+    def callback(self, chat_id, from_id, data):
+        """Returns (toast, Msg|None). Scope: the item's project must be in this chat's table."""
+        if self.cfg.chat_projects(chat_id) is None:
+            return None, None
+        try:
+            _, action, hexid = (data or "").split(":")
+        except ValueError:
+            return "?", None
+        row = self.mirror.item_by_hex(hexid)
+        if not row or row["pident"] not in self.cfg.chat_projects(chat_id):
+            return "Not available here", None
+        try:
+            user = self._actor(from_id)
+            if action == "m":
+                uid = self.mirror.user_id_by_email(user.email, [row["project"]])
+                if not uid:
+                    return f"{user.alias} is not a member of {row['pident']}", None
+                if uid in row["assignees"]:
+                    return "Already yours", None
+                return "Assigned to you", self._apply(user, row, {"assignees": sorted(set(row["assignees"]) | {uid})}, chat_id, "assign")
+            name = {"t": "Todo", "p": "In Progress", "d": "Done"}.get(action)
+            if not name:
+                return "?", None
+            st = self.mirror.state_by_name(row["project"], name)
+            if not st:
+                return f"No {name} state in {row['pident']}", None
+            if row.get("state") == st["id"]:
+                return f"Already {name}", None
+            return name, self._apply(user, row, {"state": st["id"]}, chat_id, "state")
+        except Reply as r:
+            return r.text, None
+        except PlaneError as e:
+            log.warning("callback plane error: %s", e)
+            return "Plane refused (no permission)" if e.status in (401, 403) else f"Plane error {e.status}", None
+
+    # --- reply to a bot message = comment ----------------------------------------
+    def reply_comment(self, chat_id, from_id, replied_message_id, text):
+        item_id = self.mirror.post_item(chat_id, replied_message_id)
+        if not item_id or not (text or "").strip() or text.lstrip().startswith("/"):
+            return None
+        row = self.mirror.item(item_id)
+        if not row or row["pident"] not in (self.cfg.chat_projects(chat_id) or {}):
+            return None
+        try:
+            user = self._actor(from_id)
+            self.plane_factory(user.token).add_comment(row["project"], row["id"], f"<p>{esc(text.strip())}</p>")
+        except Reply as r:
+            return r.text
+        except PlaneError as e:
+            return "Plane refused (no permission)" if e.status in (401, 403) else f"Plane error {e.status}"
+        # the comment bumps updated_at: pull it into the mirror now so the sync does not echo it back
+        try:
+            fresh = self.plane_factory(user.token).work_item(row["project"], row["id"])
+            fresh.setdefault("project", row["project"])
+            self.mirror.upsert_item(fresh)
+        except Exception as e:
+            log.warning("refresh after comment: %s", e)
+        log.info("comment on %s in chat %s by %s", row["identifier"], chat_id, user.alias)
+        return f"💬 added to {row['identifier']}"
+
+    # --- scheduled reports --------------------------------------------------------
+    def due_report(self, chat_id, today):
+        """[(thread, text)] per project topic: active items due today or overdue."""
+        out = []
+        for ident, thread in sorted((self.cfg.chat_projects(chat_id) or {}).items()):
+            p = self.mirror.project_by_identifier(ident)
+            if not p:
+                continue
+            rows = sorted(self.mirror.due_items([p["id"]], self.cfg.active_states, today.isoformat()), key=lambda r: (r["target_date"], _sort_key(self.cfg, r)))
+            if not rows:
+                continue
+            lines = [f"📅 <b>{ident}</b> · due today or overdue ({len(rows)})"]
+            for r in rows[:LIST_CAP]:
+                who = " ".join(_mention(self.cfg, self.mirror, a) for a in r["assignees"])
+                tag = "today" if r["target_date"] == today.isoformat() else f"overdue {r['target_date'][5:]}"
+                lines.append(f"{fmt_line(self.cfg, r)} · <i>{tag}</i>" + (f" {who}" if who else ""))
+            out.append((thread, "\n".join(lines)))
+        return out
+
+    def weekly_digest(self, chat_id, now):
+        projects = sorted((self.cfg.chat_projects(chat_id) or {}).keys())
+        pids = {i: self.mirror.project_by_identifier(i)["id"] for i in projects if self.mirror.project_by_identifier(i)}
+        since = (now - dt.timedelta(days=7)).isoformat()
+        closed = self.mirror.closed_since(list(pids.values()), since)
+        scope = Scope(str(chat_id), sorted(pids), ALL, "summary_all")
+        head = f"📋 <b>Weekly</b> · {now.date().isoformat()}\n✅ closed this week: {len(closed)}"
+        if closed:
+            head += "\n" + "\n".join("  " + fmt_line(self.cfg, r) for r in closed[:LIST_CAP])
+            if len(closed) > LIST_CAP:
+                head += f"\n  +{len(closed) - LIST_CAP} more"
+        return head + "\n\n" + render_status(self.cfg, self.mirror, scope)
 
     def _show(self, chat_id, ident):
         projects = self.cfg.chat_projects(chat_id)
@@ -779,7 +1026,7 @@ class Bot:
         r = self.mirror.item_by_identifier(ident.upper())
         if not r:
             raise Reply(f"{esc(ident.upper())} not found (or not synced yet).")
-        return render_show(self.cfg, self.mirror, r)
+        return self.card_msg(r)
 
     def _new(self, chat_id, thread, args, from_id):
         projects = self.cfg.chat_projects(chat_id)
@@ -825,7 +1072,7 @@ class Bot:
         r = self.mirror.item_by_identifier(f"{ident}-{created.get('sequence_id')}")
         if not r:
             return f"✅ Created {ident}-{created.get('sequence_id')}"
-        return "✅ " + render_show(self.cfg, self.mirror, r)
+        return self.card_msg(r, head="✅ ")
 
 
 # ----------------------------------------------------------------------------
@@ -840,6 +1087,7 @@ class Daemon:
         self.tg = Telegram(os.environ.get("TELEGRAM_BOT_TOKEN", ""))
         self.catalog = {}
         self.notifier = None
+        self.bot_id = None
         self.silent_full_pending = self.mirror.migrated  # schema grew: refill quietly
 
     def sync_once(self, full=False, notify=True):
@@ -891,29 +1139,90 @@ class Daemon:
             return
         thread = m.get("message_thread_id") if m.get("is_topic_message") else None
         frm = m.get("from", {})
-        reply = self.bot.handle(chat_id, thread, m.get("text") or "", frm.get("id"), frm.get("username", ""))
+        text = m.get("text") or ""
+        rt = m.get("reply_to_message") or {}
+        # a reply to one of OUR messages about a ticket = comment (unless it is a command)
+        if rt and str(rt.get("from", {}).get("id")) == str(self.bot_id) and not text.lstrip().startswith("/") and not text.lstrip().startswith("+"):
+            ans = self.bot.reply_comment(chat_id, frm.get("id"), rt.get("message_id"), text)
+            if ans:
+                self.tg.send(chat_id, ans, thread, reply_to=m.get("message_id"))
+            return
+        reply = self.bot.handle(chat_id, thread, text, frm.get("id"), frm.get("username", ""))
         if reply:
-            sent = self.tg.send_long(chat_id, reply, thread, reply_to=m.get("message_id"))
-            if self.bot.last_created and sent:  # the /new reply is this item's card in this chat
-                self.mirror.set_post(self.bot.last_created, chat_id, sent[0]["message_id"], thread)
+            self.send_reply(chat_id, thread, reply, m.get("message_id"))
+
+    def send_reply(self, chat_id, thread, reply, reply_to):
+        kb = getattr(reply, "keyboard", None)
+        item = getattr(reply, "item", None)
+        if kb:
+            sent = [self.tg.send(chat_id, str(reply), thread, reply_to=reply_to, reply_markup=kb)]
+        else:
+            sent = self.tg.send_long(chat_id, str(reply), thread, reply_to=reply_to)
+        if item and sent:
+            self.mirror.map_message(chat_id, sent[0]["message_id"], item)
+            if not self.mirror.get_post(item, chat_id):  # first card of this item here
+                self.mirror.set_post(item, chat_id, sent[0]["message_id"], thread)
+
+    def on_callback(self, cq):
+        msg = cq.get("message") or {}
+        chat_id = str(msg.get("chat", {}).get("id"))
+        if self.cfg.chat_projects(chat_id) is None:
+            return
+        toast, card = self.bot.callback(chat_id, cq.get("from", {}).get("id"), cq.get("data", ""))
+        try:
+            self.tg.answer_callback(cq.get("id"), toast)
+        except Exception as e:
+            log.warning("answerCallbackQuery: %s", e)
+        if card:
+            try:
+                self.tg.edit(chat_id, msg.get("message_id"), str(card), reply_markup=card.keyboard)
+            except Exception as e:
+                log.warning("edit after callback: %s", e)
+
+    def run_scheduler(self):
+        """08:00 due-today per project topic; Sunday 18:00 weekly digest in General. Once per day, via meta."""
+        while True:
+            now = dt.datetime.now(self.cfg.tz)
+            today = now.date().isoformat()
+            try:
+                if now.hour == 8 and self.mirror.get_meta(f"due:{today}") is None:
+                    for chat_id in self.cfg.chats:
+                        for thread, text in self.bot.due_report(chat_id, now.date()):
+                            self.tg.send(chat_id, text, thread)
+                    self.mirror.set_meta(f"due:{today}", "1")
+                    log.info("due report sent")
+                if now.weekday() == 6 and now.hour == 18 and self.mirror.get_meta(f"weekly:{today}") is None:
+                    for chat_id in self.cfg.chats:
+                        self.tg.send_long(chat_id, self.bot.weekly_digest(chat_id, now), None)
+                    self.mirror.set_meta(f"weekly:{today}", "1")
+                    log.info("weekly digest sent")
+            except Exception as e:
+                log.warning("scheduler: %s", e)
+            time.sleep(60)
 
     def run(self):
         if not self.tg.token:
             log.error("TELEGRAM_BOT_TOKEN missing")
             sys.exit(1)
         try:
-            self.tg.me()
+            self.bot_id = self.tg.me().get("id")
             self.tg.set_commands([
                 ("status", "Active tickets: /status [project|all] [user|all]"),
                 ("show", "One ticket: /show PROJ-12"),
                 ("new", "Create a ticket: /new [PROJ] title"),
+                ("assign", "/assign PROJ-12 <alias|me|none>"),
+                ("prio", "/prio PROJ-12 <urgent|high|medium|low|none>"),
+                ("due", "/due PROJ-12 <date|today|tomorrow|fri|+3d|none>"),
+                ("state", "/state PROJ-12 <todo|progress|review|done|cancel>"),
+                ("done", "/done PROJ-12"),
                 ("whoami", "Your Telegram id and mapping"),
                 ("help", "What this bot does"),
             ])
         except Exception as e:
             log.warning("getMe/setMyCommands failed: %s", e)
         threading.Thread(target=self.run_sync, name="sync", daemon=True).start()
-        self.tg.poll(os.path.join(self.cfg.state_dir, "offset"), self.on_message)
+        threading.Thread(target=self.run_scheduler, name="scheduler", daemon=True).start()
+        self.tg.poll(os.path.join(self.cfg.state_dir, "offset"), self.on_message, self.on_callback)
 
 
 def main(argv=None):
@@ -939,7 +1248,18 @@ def main(argv=None):
             else:
                 text.append(a)
         d = Daemon(cfg)
-        reply = d.bot.handle(chat, thread, " ".join(text), user)
+        joined = " ".join(text)
+        if joined == "@due":
+            for th, t in d.bot.due_report(chat, dt.datetime.now(cfg.tz).date()):
+                print(f"[topic {th}]\n{t}\n")
+            return
+        if joined == "@weekly":
+            print(d.bot.weekly_digest(chat, dt.datetime.now(cfg.tz)))
+            return
+        if joined.startswith("a:"):
+            print(d.bot.callback(chat, user, joined))
+            return
+        reply = d.bot.handle(chat, thread, joined, user)
         print(reply if reply is not None else "<silence>")
         return
     Daemon(cfg).run()

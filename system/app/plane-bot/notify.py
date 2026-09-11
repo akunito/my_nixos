@@ -27,6 +27,24 @@ PRIORITY_ICON = {"urgent": "🔥", "high": "🔴", "medium": "🟠", "low": "�
 COMMENT_MAX = 300
 TAG_RE = re.compile(r"<[^>]+>")
 
+# Inline buttons under a card. callback_data = "a:<action>:<item id without dashes>" (<= 64 bytes).
+ACTIONS = {"t": "Todo", "p": "In Progress", "d": "Done", "m": "assign me"}
+
+
+def keyboard_for(row):
+    iid = row["id"].replace("-", "")
+    grp = row.get("state_group") or ""
+    btn = lambda label, a: {"text": label, "callback_data": f"a:{a}:{iid}"}
+    if grp in ("completed", "cancelled"):
+        return {"inline_keyboard": [[btn("↩ Todo", "t")]]}
+    first = []
+    if grp != "started":
+        first.append(btn("▶ In Progress", "p"))
+    else:
+        first.append(btn("☐ Todo", "t"))
+    first.append(btn("✅ Done", "d"))
+    return {"inline_keyboard": [first, [btn("👤 Me", "m")]]}
+
 
 def strip_html(s):
     return html.unescape(TAG_RE.sub("", s or "")).strip()
@@ -157,6 +175,8 @@ class Notifier:
                 text = f"👤 {self.mention(uid)}, you were assigned {self.link(row)} <b>{esc(row['name'])}</b> <i>(by {esc(self.label(actor))})</i>"
                 m = self.tg.send(chat_id, text, thread, reply_to=post["message_id"] if post else None)
                 n += 1
+                if m:
+                    self.mirror.map_message(chat_id, m["message_id"], row["id"])
                 if not post and m:
                     self.mirror.set_post(row["id"], chat_id, m["message_id"], thread)
                     post = self.mirror.get_post(row["id"], chat_id)
@@ -178,19 +198,21 @@ class Notifier:
             if len(body) > COMMENT_MAX:
                 body = body[:COMMENT_MAX - 1] + "…"
             text = f"💬 <b>{esc(self.label(c_actor))}</b> on {self.link(row)} {esc(row['name'])}:\n<i>{esc(body)}</i>"
-            self.tg.send(chat_id, text, thread, reply_to=post["message_id"] if post else None)
+            m = self.tg.send(chat_id, text, thread, reply_to=post["message_id"] if post else None)
+            if m:
+                self.mirror.map_message(chat_id, m["message_id"], row["id"])
             n += 1
         return n
 
     def _send_card(self, chat_id, thread, row, head="", by=None):
-        m = self.tg.send(chat_id, self.card(row, head, by), thread)
+        m = self.tg.send(chat_id, self.card(row, head, by), thread, reply_markup=keyboard_for(row))
         if m:
             self.mirror.set_post(row["id"], chat_id, m["message_id"], thread)
         return 1
 
     def _edit_card(self, chat_id, post, row, head="", by=None):
         try:
-            self.tg.edit(chat_id, post["message_id"], self.card(row, head, by))
+            self.tg.edit(chat_id, post["message_id"], self.card(row, head, by), reply_markup=keyboard_for(row))
         except Exception as e:  # message too old / deleted: fall back to a new card next time
             log.warning("edit card %s in %s failed: %s", row["identifier"], chat_id, e)
 
