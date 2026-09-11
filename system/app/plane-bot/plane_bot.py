@@ -316,7 +316,7 @@ class Mirror:
                 "INSERT OR REPLACE INTO items (id, project, seq, name, state, priority, target_date, updated_at, created_at, external_source, assignees, deleted, created_by, updated_by)"
                 " VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
                 (it["id"], it["project"], it.get("sequence_id"), it.get("name", ""), it.get("state"), it.get("priority") or "none",
-                 it.get("target_date"), it.get("updated_at"), it.get("created_at"), it.get("external_source"),
+                 it.get("target_date"), canon_ts(it.get("updated_at")), canon_ts(it.get("created_at")), it.get("external_source"),
                  json.dumps(sorted(it.get("assignees") or [])), it.get("created_by"), it.get("updated_by")))
             return dict(prev) if prev else None
 
@@ -485,6 +485,16 @@ def parse_ts(s):
         return None
 
 
+def canon_ts(s):
+    """One text per instant: the REST API says +02:00, the webhook says Z. Stored as UTC isoformat."""
+    t = parse_ts(s)
+    if t is None:
+        return s
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=dt.timezone.utc)
+    return t.astimezone(dt.timezone.utc).isoformat()
+
+
 def sync_catalog(plane, mirror, idents):
     """Projects/states/members for the identifiers in scope. Returns {IDENT: project row}."""
     found = {}
@@ -534,7 +544,7 @@ def sync_items(plane, mirror, pid, full=False):
 def _differs(prev, it):
     # updated_at alone counts: a new comment moves it without touching any listed field,
     # and the notifier needs to see those items to fetch their comments.
-    return (prev.get("updated_at") != it.get("updated_at")
+    return (prev.get("updated_at") != canon_ts(it.get("updated_at"))
             or prev.get("state") != it.get("state") or prev.get("priority", "none") != (it.get("priority") or "none")
             or prev.get("name") != it.get("name") or prev.get("target_date") != it.get("target_date")
             or json.loads(prev.get("assignees") or "[]") != sorted(it.get("assignees") or []))
@@ -1143,9 +1153,20 @@ class Daemon:
                     last_full = time.time()
                 if n:
                     log.info("sync: %d change(s)%s", n, " (full)" if full else "")
+                self.heartbeat()
             except Exception as e:
                 log.warning("sync failed: %s", e)
             time.sleep(self.cfg.poll_seconds)
+
+    def heartbeat(self):
+        """Uptime Kuma push monitor: one GET per successful sync pass; a missing ping = the bot or Plane is down."""
+        url = os.environ.get("KUMA_PUSH_URL", "")
+        if not url:
+            return
+        try:
+            urllib.request.urlopen(url, timeout=10).read()
+        except Exception as e:
+            log.warning("kuma push failed: %s", e)
 
     def on_message(self, m):
         chat_id = str(m.get("chat", {}).get("id"))

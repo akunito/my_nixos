@@ -121,6 +121,19 @@ class IssueEvents(unittest.TestCase):
         self.assertEqual(r.tg.sent, [])
 
 
+class Timestamps(unittest.TestCase):
+    def test_webhook_utc_and_rest_offset_are_the_same_instant(self):
+        r = Rig()
+        r.post(issue_payload("updated", "HOME", 1, "Fix the tap", "Done", assignees=["diego"], actor="aga", updated="2026-09-12T08:00:00.5Z"))
+        row = r.mirror.item("i-HOME-1")
+        self.assertEqual(row["updated_at"], "2026-09-12T08:00:00.500000+00:00")
+        from plane_bot import _differs
+        rest_item = {"state": row["state"], "priority": row["priority"], "name": row["name"], "target_date": None,
+                     "assignees": row["assignees"], "updated_at": "2026-09-12T10:00:00.500000+02:00"}
+        prev = dict(row, assignees=json.dumps(sorted(row["assignees"])))
+        self.assertFalse(_differs(prev, rest_item))
+
+
 class CommentEvents(unittest.TestCase):
     def payload(self, cid, issue_id, actor, text):
         return {"event": "issue_comment", "action": "create", "data": {"id": cid, "issue": issue_id, "actor": UID[actor],
@@ -142,6 +155,16 @@ class CommentEvents(unittest.TestCase):
         r.mirror.upsert_item(new)
         r.n.process([(prev, new)])
         self.assertEqual(len(r.tg.sent), 1)
+
+    def test_plane_participle_verbs_are_accepted(self):
+        r = Rig()
+        p = self.payload("c9", "i-HOME-1", "aga", "participle")
+        p["action"] = "created"
+        self.assertEqual(r.post(p)[1], "comment: 1 message(s)")
+        q = issue_payload("created", "HOME", 61, "participle issue", "Todo")
+        self.assertIn("1 message", r.post(q)[1])
+        d = issue_payload("deleted", "HOME", 61, "x", "Todo")
+        self.assertEqual(r.post(d)[1], "delete ignored")
 
     def test_duplicate_delivery_is_ignored(self):
         r = Rig()

@@ -61,6 +61,7 @@ lib.mkIf enabled {
       TELEGRAM_BOT_TOKEN=${token}
       PLANE_USERS=${builtins.toJSON users}
       PLANE_WEBHOOK_SECRET=${systemSettings.planeBotWebhookSecret or ""}
+      KUMA_PUSH_URL=${systemSettings.planeBotKumaPushUrl or ""}
     '';
     mode = "0400";
     user = "root";

@@ -58,6 +58,7 @@ match. The frontend does **not** — it is a compiled bundle and must be rebuilt
 | A-06 | Custom `Caddyfile` — MinIO `/uploads`, `/god-mode`, SPA fallback | `Caddyfile` | god-mode + attachments load |
 | A-07 | **Pocket-ID-only login** (`ENABLE_EMAIL_PASSWORD=0`) | DB `instance_configurations` | Login page shows **no** password form |
 | A-08 | `ENABLE_MAGIC_LINK_LOGIN=0`, `ENABLE_SIGNUP=0`, `IS_INTERCOM_ENABLED=0` | DB | `/api/instances/` reports all false |
+| A-10 | **Bot webhook target allowed** — `WEBHOOK_ALLOWED_HOSTS=host.docker.internal` in `/app/plane.env`. The image ships it empty and loads services from that file, so the compose `environment:` value is overridden and the SSRF guard rejects the Telegram bot's `http://host.docker.internal:8766/plane` (AINF-380) | `start-override.sh` Fix 2b (+ the same key in `docker-compose.yml` for intent) | `docker exec plane-aio sh -c 'tr "\0" "\n" < /proc/$(pgrep -f celery \| head -1)/environ \| grep WEBHOOK_ALLOWED_HOSTS'` → `host.docker.internal`; a Plane edit shows `webhook issue:` in `journalctl -u plane-bot` within a second |
 | A-09 | **Notify assignees, not just subscribers** — `notification_task` builds recipients purely from `IssueSubscriber`; `issue_assignees` was computed but only used to pick the wording. Fix 4 unions assignees in | `start-override.sh` Fix 4 | Change a field on an item assigned to someone who is *not* subscribed → they get an in-app notification |
 
 > **A-07/A-08 live in the database, not env or the image.** `SKIP_ENV_VAR=1` means

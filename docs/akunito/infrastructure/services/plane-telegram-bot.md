@@ -88,9 +88,27 @@ So in *My Tasks* your own web edits are silent while n8n's monthly ticket is not
 yours reach her once her Telegram id is filled in. Deletions are silent. The first sync of a project (no cursor yet)
 and the schema-migration full sync never notify. Cards live in the `posts` table (`item, chat → message_id`).
 
+## Webhook (F3) — instant events, polling kept as reconciliation
+
+Plane workspace webhook `plane-bot` (id `f4e8922a…`, created 2026-09-11 from the Django shell, events **issue** +
+**issue_comment**) posts to `http://host.docker.internal:8766/plane`; the bot listens on **127.0.0.1:8766**
+(`planeBotWebhookPort`) and verifies `X-Plane-Signature` = HMAC-SHA256(`planeBotWebhookSecret`, body). `webhook.py`
+normalises the expanded payload (`state`/`assignees` are objects, timestamps are UTC `Z`) into the REST shape, upserts the
+mirror and feeds the **same** notifier the poller uses — one scope, one echo rule. Comments are quoted straight from the
+payload; `seen_comments` stops the poller from repeating them. Timestamps are stored canonical UTC so the two sources
+never disagree about "changed". Off unless the secret is set; `planeBotWebhookDebug` dumps accepted payloads to
+`/var/lib/plane-bot/webhook-samples/`.
+
+Why it needed a Plane customisation: the rootless container reaches host loopback as `host.docker.internal` (10.0.2.2),
+which Plane's SSRF guard blocks; `WEBHOOK_ALLOWED_HOSTS` is the escape hatch, but the AIO image ships it **empty in
+`/app/plane.env`** and loads services from there, overriding the compose environment. `start-override.sh` **Fix 2b**
+rewrites it (plane-customizations.md **A-10**). Plane writes every delivery to `WebhookLog` (status 400 "Access to
+private/internal networks is not allowed" was the tell) and deactivates a webhook after 5 failed deliveries — the
+receiver answers 200 to anything with a valid signature.
+
 ## Testing
 
-- **Unit tests run in the nix `checkPhase`** (91): parser, scope resolver, renderer, sync, notifications (echo rule, assignment, closing, comments), write commands, button callbacks, reply=comment, scheduled reports, and the **leak matrices** — commands and notifications
+- **Unit tests run in the nix `checkPhase`** (107): parser, scope resolver, renderer, sync, notifications (echo rule, assignment, closing, comments), write commands, button callbacks, reply=comment, scheduled reports, webhook receiver (signature, normaliser, dedupe, participle verbs, UTC timestamps), and the **leak matrices** — commands and notifications
   (`tests/test_leak.py`: every chat × every command form × every requester × every thread asserts no foreign identifier,
   project block or ticket title in any reply; ORB is in the mirror and in no chat). A failing test fails the build, so
   `install.sh` cannot deploy a scope regression. Run locally: `cd system/app/plane-bot/tests && PYTHONPATH=..:../.. python3 -m unittest`.
@@ -113,6 +131,5 @@ and the schema-migration full sync never notify. Cards live in the `posts` table
 
 ## Roadmap
 
-F3: Plane webhook (`WEBHOOK_ALLOWED_IPS` in plane-aio's env — Plane blocks private, loopback and 100.64/10 targets —
-documented in plane-customizations.md) + Kuma monitor; infra-bot onto tgcommon.py; Aga's Telegram id + join PLANE Home;
-LiftCraft integration later.
+Aga's Telegram id + join PLANE Home; turn `planeBotWebhookDebug` off once the samples have served; LiftCraft integration
+later. Done: F1–F3, infra-bot on tgcommon.py.

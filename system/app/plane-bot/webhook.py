@@ -86,7 +86,9 @@ class WebhookReceiver:
         return 200, f"ignored {event}/{action}"
 
     def _issue(self, action, data, activity):
-        if action == "delete":
+        # Plane sends the participle from its activity log ("created"/"updated"/"deleted"),
+        # webhook_send_task's HTTP-method mapping would give "create"/"update"/"delete": accept both.
+        if action in ("delete", "deleted"):
             return "delete ignored"
         item = normalise_issue(data)
         if not item or not item.get("project"):
@@ -97,16 +99,16 @@ class WebhookReceiver:
         actor = _id((activity or {}).get("actor"))
         if actor:
             item["updated_by"] = actor
-            if action == "create":
+            if action in ("create", "created"):
                 item["created_by"] = item.get("created_by") or actor
         prev = self.mirror.upsert_item(item)
-        if prev is not None and prev.get("updated_at") == item.get("updated_at") and _same(prev, item):
+        if prev is not None and prev.get("updated_at") == _canon(item.get("updated_at")) and _same(prev, item):
             return "already mirrored"  # the poller (or a bot command) got here first
         sent = self.notifier.process([(prev, item)])
         return f"issue {action}: {sent} message(s)"
 
     def _comment(self, action, data, activity):
-        if action != "create" or not isinstance(data, dict):
+        if action not in ("create", "created") or not isinstance(data, dict):
             return f"comment {action} ignored"
         cid = data.get("id")
         issue_id = _id(data.get("issue") or data.get("issue_id"))
@@ -172,6 +174,15 @@ class WebhookReceiver:
         srv.daemon_threads = True
         log.info("webhook listening on %s:%d", host, port)
         srv.serve_forever()
+
+
+def _canon(s):
+    import datetime as dt
+    try:
+        t = dt.datetime.fromisoformat((s or "").replace("Z", "+00:00"))
+    except ValueError:
+        return s
+    return (t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)).astimezone(dt.timezone.utc).isoformat()
 
 
 def _same(prev, item):

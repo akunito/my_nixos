@@ -128,8 +128,9 @@ class Notifier:
         except Exception as e:  # never let a comment fetch break the sync
             log.warning("comments %s: %s", row["identifier"], e)
             return []
-        since = prev["updated_at"]
-        return sorted([c for c in comments if (c.get("created_at") or "") > since and not c.get("deleted_at")], key=lambda c: c["created_at"])
+        since = _ts(prev["updated_at"])
+        fresh = [c for c in comments if not c.get("deleted_at") and _ts(c.get("created_at")) and since and _ts(c.get("created_at")) > since]
+        return sorted(fresh, key=lambda c: c["created_at"])
 
     def process(self, changes):
         """changes: [(prev_row_or_None, new_api_item_or_None)] from one sync pass of one project."""
@@ -234,6 +235,17 @@ class Notifier:
             log.info("card %s edited in chat %s (%s)", row["identifier"], chat_id, (head or "changed").strip())
         except Exception as e:  # message too old / deleted: fall back to a new card next time
             log.warning("edit card %s in %s failed: %s", row["identifier"], chat_id, e)
+
+
+def _ts(s):
+    import datetime as dt
+    if not s:
+        return None
+    try:
+        t = dt.datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
 
 
 def _aslist(v):
