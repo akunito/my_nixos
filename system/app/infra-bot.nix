@@ -5,7 +5,8 @@
 #     that lets secrets-free nodes announce deploys and any node ask for its
 #     active alerts without holding the bot token; identity = source
 #     Tailscale IP resolved with `tailscale status`
-#   - (F3) group commands /status /alerts /deploys /help + the Sunday digest
+#   - group commands /status [node [full]] /alerts /deploys /help, answered in
+#     the topic they were asked in, and the Sunday 10:00 digest into 📋 Weekly
 #
 # Gated by systemSettings.infraBotEnable + non-empty grafanaTelegramBotToken /
 # grafanaTelegramChatId (the same bot Alertmanager and notify-failure use).
@@ -57,6 +58,11 @@ lib.mkIf enabled {
       PROMETHEUS_URL = "http://127.0.0.1:${toString config.services.prometheus.port}";
       NODE_MAP = builtins.toJSON nodeMap;
       STATE_DIR = "/var/lib/infra-bot";
+      TZ = systemSettings.timezone or "Europe/Warsaw";
+      SLEEP_NODE = "nas";
+      SLEEP_WINDOW = "23:00-16:05"; # keep in step with alertmanager.nix nas_sleep
+      DIGEST_WEEKDAY = "6"; # Sunday
+      DIGEST_HOUR = "10";
       PYTHONUNBUFFERED = "1";
     };
     serviceConfig = {

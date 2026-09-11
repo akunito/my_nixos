@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Infra Alerts Telegram bot (AINF-368).
 
-One daemon on VPS_PROD, next to Prometheus and Alertmanager. Two halves:
+One daemon on VPS_PROD, next to Prometheus and Alertmanager. Three halves:
 
   1. HTTP relay on the Tailscale interface ONLY (no auth: identity is the
      source Tailscale IP, resolved to a peer with `tailscale status`):
@@ -13,21 +13,32 @@ One daemon on VPS_PROD, next to Prometheus and Alertmanager. Two halves:
      this; nodes that hold the bot token talk to Telegram directly and only use
      /alerts here.
 
-  2. Telegram commands (/status, /alerts, /deploys, /help) via long polling
-     and the Sunday warning digest — phase F3, see run_commands().
+  2. Group commands via long polling, answered in the topic they were asked in:
+       /status                 one led line per node
+       /status <node> [full]   details; "full" lists every container/unit
+       /alerts                 active alerts by node (🔴 critical 🟡 warning)
+       /deploys                last generation change per node
+       /help
+     Data: Prometheus instant queries + Alertmanager API. Read-only.
 
-Everything is read-only. Config comes from the environment (infra-bot.nix).
+  3. Sunday digest into 📋 Weekly: node leds + every active warning.
+
+Config comes from the environment (infra-bot.nix). `infra-bot --selftest`
+prints every handler's output without touching Telegram.
 """
+import datetime as dt
+import html
 import json
 import logging
 import os
-import socket
 import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
+import zoneinfo
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 log = logging.getLogger("infra-bot")
@@ -40,31 +51,46 @@ THREAD_WEEKLY = os.environ.get("THREAD_WEEKLY", "")
 LISTEN_PORT = int(os.environ.get("LISTEN_PORT", "8765"))
 ALERTMANAGER_URL = os.environ.get("ALERTMANAGER_URL", "http://127.0.0.1:9093")
 PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", "http://127.0.0.1:9090")
+STATE_DIR = os.environ.get("STATE_DIR", "/var/lib/infra-bot")
+TZ = zoneinfo.ZoneInfo(os.environ.get("TZ", "Europe/Warsaw"))
 # tailscale hostname -> node label used by Prometheus/Alertmanager
 NODE_MAP = json.loads(os.environ.get("NODE_MAP", "{}"))
+# the NAS sleeps on a timer: "down" inside this window is 💤, not 🔴
+SLEEP_NODE = os.environ.get("SLEEP_NODE", "nas")
+SLEEP_FROM, SLEEP_TO = (os.environ.get("SLEEP_WINDOW", "23:00-16:05").split("-") + ["16:05"])[:2]
+DIGEST_DAY = int(os.environ.get("DIGEST_WEEKDAY", "6"))  # Monday=0 .. Sunday=6
+DIGEST_HOUR = int(os.environ.get("DIGEST_HOUR", "10"))
 TELEGRAM_API = "https://api.telegram.org"
 MAX_TEXT = 4000
+BOT_NAME = ""
+
+REAL_FS = 'fstype!~"tmpfs|overlay|squashfs|devtmpfs|efivarfs|ramfs|fuse.*|nsfs|autofs|zfs"'
+
+
+def esc(s):
+    return html.escape(str(s), quote=False)
 
 
 # ----------------------------------------------------------------------------
 # Telegram
 # ----------------------------------------------------------------------------
-def telegram(method, **params):
+def telegram(method, timeout=20, **params):
     data = urllib.parse.urlencode({k: v for k, v in params.items() if v not in ("", None)}).encode()
     req = urllib.request.Request(f"{TELEGRAM_API}/bot{TOKEN}/{method}", data=data)
-    with urllib.request.urlopen(req, timeout=20) as r:
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         body = json.load(r)
     if not body.get("ok"):
         raise RuntimeError(f"telegram {method}: {body}")
     return body["result"]
 
 
-def send(text, thread=None):
+def send(text, thread=None, reply_to=None):
     """HTML message into the group; thread = forum topic id ('' = General)."""
     return telegram(
         "sendMessage",
         chat_id=CHAT_ID,
         message_thread_id=thread,
+        reply_to_message_id=reply_to,
         parse_mode="HTML",
         disable_web_page_preview="true",
         text=text[:MAX_TEXT],
@@ -102,11 +128,34 @@ def peer_hostname(ip):
 
 
 # ----------------------------------------------------------------------------
-# Alertmanager / Prometheus helpers
+# Prometheus / Alertmanager
 # ----------------------------------------------------------------------------
 def http_json(url, timeout=10):
     with urllib.request.urlopen(url, timeout=timeout) as r:
         return json.load(r)
+
+
+def promq(expr):
+    """Instant query -> list of (labels, float)."""
+    q = urllib.parse.urlencode({"query": expr})
+    res = http_json(f"{PROMETHEUS_URL}/api/v1/query?{q}")
+    if res.get("status") != "success":
+        raise RuntimeError(f"prometheus: {res}")
+    out = []
+    for r in res["data"]["result"]:
+        try:
+            out.append((r["metric"], float(r["value"][1])))
+        except (KeyError, ValueError):
+            pass
+    return out
+
+
+def prom_by(expr, key="node"):
+    """Instant query -> {label value: float} (first sample per key)."""
+    d = {}
+    for m, v in promq(expr):
+        d.setdefault(m.get(key, ""), v)
+    return d
 
 
 def active_alerts(node=None):
@@ -129,6 +178,299 @@ def active_alerts(node=None):
             "since": a.get("startsAt"),
         })
     return out
+
+
+# ----------------------------------------------------------------------------
+# Status model
+# ----------------------------------------------------------------------------
+def in_sleep_window(now=None):
+    now = now or dt.datetime.now(TZ)
+    t = now.strftime("%H:%M")
+    return t >= SLEEP_FROM or t < SLEEP_TO
+
+
+def age(seconds):
+    s = int(seconds)
+    if s < 0:
+        return "?"
+    if s < 3600:
+        return f"{s // 60}m"
+    if s < 86400:
+        return f"{s // 3600}h"
+    return f"{s // 86400}d"
+
+
+def led_of(items):
+    """Worst led among strings starting with an emoji led."""
+    order = {"🔴": 3, "🟡": 2, "🟢": 1}
+    worst = "🟢"
+    for it in items:
+        for k in order:
+            if it.startswith(k) and order[k] > order[worst]:
+                worst = k
+    return worst
+
+
+def nodes():
+    """All nodes Prometheus knows, with role and reachability."""
+    up = {}
+    for m, v in promq('max by (node, role) (up{job=~".*_node|snmp_.*"})'):
+        n = m.get("node")
+        if n:
+            up[n] = {"role": m.get("role", "roaming"), "up": v == 1}
+    return up
+
+
+def node_facts(node):
+    """Everything /status shows for one node; every key optional."""
+    f = {}
+    q = lambda e: prom_by(e).get(node)  # noqa: E731
+    f["boot"] = q(f'node_boot_time_seconds{{node="{node}"}}')
+    f["load"] = q(f'node_load1{{node="{node}"}}')
+    f["cpus"] = q(f'count by (node) (node_cpu_seconds_total{{node="{node}",mode="idle"}})')
+    f["mem"] = q(f'(1 - node_memory_MemAvailable_bytes{{node="{node}"}} / node_memory_MemTotal_bytes{{node="{node}"}}) * 100')
+    f["disks"] = {m["mountpoint"]: v for m, v in promq(
+        f'(1 - node_filesystem_avail_bytes{{node="{node}",{REAL_FS}}} / node_filesystem_size_bytes{{node="{node}",{REAL_FS}}}) * 100')}
+    f["pools"] = {m["pool"]: v for m, v in promq(f'nas_zfs_pool_allocated_bytes{{node="{node}"}} / nas_zfs_pool_size_bytes{{node="{node}"}} * 100')}
+    f["pool_health"] = {m["pool"]: v for m, v in promq(f'nas_zfs_pool_healthy{{node="{node}"}}')}
+    f["docker"] = {m["mode"]: v for m, v in promq(f'host_docker_daemon_up{{node="{node}"}}')}
+    f["containers"] = sorted({m["name"] for m, _ in promq(f'container_last_seen{{node="{node}",name!=""}} > time() - 60')})
+    f["containers_gone"] = sorted({m["name"] for m, _ in promq(f'container_last_seen{{node="{node}",name!=""}} <= time() - 60')} - set(f["containers"]))
+    failed = {m["name"] for m, _ in promq(f'node_systemd_unit_state{{node="{node}",state="failed"}} == 1')}
+    failed |= {m["name"] + (" (user)" if m.get("scope") == "user" else "") for m, _ in promq(f'host_systemd_unit_failed{{node="{node}"}} == 1')}
+    f["failed"] = sorted(failed)
+    f["updated"] = q(f'nixos_last_update_system_timestamp{{node="{node}"}}')
+    f["tailscale"] = q(f'tailscale_backend_running{{node="{node}"}}')
+    # pfSense via SNMP
+    f["pf_cpu"] = q(f'avg by (node) (hrProcessorLoad{{node="{node}"}})')
+    f["pf_mem"] = q(f'(1 - memAvailReal{{node="{node}"}} / memTotalReal{{node="{node}"}}) * 100')
+    f["pf_disk"] = q(f'hrStorageUsed{{node="{node}",hrStorageDescr="/"}} / hrStorageSize{{node="{node}",hrStorageDescr="/"}} * 100')
+    f["pf_ifaces_down"] = [m.get("ifDescr", "?") for m, _ in promq(
+        f'ifOperStatus{{node="{node}"}} == 2 and on(ifIndex) ifAdminStatus{{node="{node}"}} == 1')]
+    return f
+
+
+def pct_led(v, warn=85, crit=95):
+    return "🔴" if v >= crit else "🟡" if v >= warn else "🟢"
+
+
+def node_alert_leds(alerts):
+    """Unmuted, uninhibited alerts -> (critical count, warning count)."""
+    live = [a for a in alerts if not a["muted"] and not a["inhibited"]]
+    return sum(a["severity"] == "critical" for a in live), sum(a["severity"] != "critical" for a in live)
+
+
+def summary_line(node, info, alerts, now):
+    """One line for /status and the digest."""
+    crit, warn = node_alert_leds(alerts)
+    if not info["up"]:
+        if node == SLEEP_NODE and in_sleep_window(now):
+            return f"💤 <b>{esc(node)}</b> · asleep ({SLEEP_FROM}–{SLEEP_TO})"
+        if info["role"] == "always_on":
+            return f"🔴 <b>{esc(node)}</b> · DOWN"
+        return f"⚪ <b>{esc(node)}</b> · offline"
+    f = node_facts(node)
+    parts = []
+    if f["boot"]:
+        parts.append(f"up {age(time.time() - f['boot'])}")
+    if f["load"] is not None:
+        parts.append(f"load {f['load']:.1f}" + (f"/{int(f['cpus'])}" if f["cpus"] else ""))
+    if f["mem"] is not None:
+        parts.append(f"{pct_led(f['mem'], 90, 97)} mem {f['mem']:.0f}%")
+    if f["pf_cpu"] is not None:
+        parts.append(f"cpu {f['pf_cpu']:.0f}%")
+    if f["pf_mem"] is not None:
+        parts.append(f"{pct_led(f['pf_mem'], 90, 97)} mem {f['pf_mem']:.0f}%")
+    if f["pf_disk"] is not None:
+        parts.append(f"{pct_led(f['pf_disk'])} disk {f['pf_disk']:.0f}%")
+    if f["disks"]:
+        worst_m, worst_v = max(f["disks"].items(), key=lambda kv: kv[1])
+        parts.append(f"{pct_led(worst_v)} disk {worst_v:.0f}%" + ("" if worst_m == "/" else f" {esc(worst_m)}"))
+    for p, v in f["pools"].items():
+        healthy = f["pool_health"].get(p, 1) == 1
+        parts.append(f"{'🔴' if not healthy else pct_led(v, 80, 90)} {esc(p)} {v:.0f}%")
+    for mode, v in f["docker"].items():
+        if v != 1:
+            parts.append(f"🔴 docker {esc(mode)} down")
+    if f["containers"]:
+        parts.append(f"{len(f['containers'])} ctr" + (f" (🟡 {len(f['containers_gone'])} stopped)" if f["containers_gone"] else ""))
+    if f["failed"]:
+        parts.append(f"🔴 {len(f['failed'])} failed unit" + ("s" if len(f["failed"]) > 1 else ""))
+    if f["pf_ifaces_down"]:
+        parts.append(f"🔴 iface down: {esc(', '.join(f['pf_ifaces_down']))}")
+    if f["tailscale"] == 0:
+        parts.append("🔴 tailscale down")
+    if f["updated"]:
+        parts.append(f"updated {age(time.time() - f['updated'])} ago")
+    if crit:
+        parts.append(f"🔴 {crit} critical")
+    if warn:
+        parts.append(f"🟡 {warn} warning" + ("s" if warn > 1 else ""))
+    led = "🔴" if crit or any(p.startswith("🔴") for p in parts) else led_of(parts)
+    return f"{led} <b>{esc(node)}</b> · " + " · ".join(parts)
+
+
+def cmd_status(args):
+    now = dt.datetime.now(TZ)
+    info = nodes()
+    if not info:
+        return "Prometheus reports no nodes."
+    alerts = active_alerts()
+    by_node = {}
+    for a in alerts:
+        by_node.setdefault(a["node"], []).append(a)
+    if args:
+        node = args[0].lower()
+        if node not in info:
+            return f"Unknown node <b>{esc(node)}</b>. Known: {esc(', '.join(sorted(info)))}"
+        return status_detail(node, info[node], by_node.get(node, []), "full" in args[1:], now)
+    order = sorted(info, key=lambda n: (info[n]["role"] != "always_on", n))
+    lines = [summary_line(n, info[n], by_node.get(n, []), now) for n in order]
+    return "\n".join(lines)
+
+
+def status_detail(node, info, alerts, full, now):
+    head = summary_line(node, info, alerts, now)
+    if not info["up"]:
+        seen = prom_by(f'max_over_time(timestamp(up{{node="{node}",job=~".*_node|snmp_.*"}} == 1)[7d:5m])')
+        last = seen.get(node)
+        return head + (f"\nlast seen {age(time.time() - last)} ago" if last else "")
+    f = node_facts(node)
+    out = [head]
+    if f["disks"]:
+        ds = sorted(f["disks"].items(), key=lambda kv: -kv[1])
+        shown = ds if full else [d for d in ds if d[1] >= 85] or ds[:1]
+        out.append("<b>Disks</b> " + " · ".join(f"{pct_led(v)} {esc(m)} {v:.0f}%" for m, v in shown)
+                   + ("" if full or len(shown) == len(ds) else f" (+{len(ds) - len(shown)} ok)"))
+    if f["pools"]:
+        out.append("<b>ZFS</b> " + " · ".join(
+            f"{'🔴' if f['pool_health'].get(p, 1) != 1 else pct_led(v, 80, 90)} {esc(p)} {v:.0f}%"
+            + ("" if f["pool_health"].get(p, 1) == 1 else " DEGRADED") for p, v in f["pools"].items()))
+    if f["docker"]:
+        out.append("<b>Docker</b> " + " · ".join(f"{'🟢' if v == 1 else '🔴'} {esc(m)}" for m, v in f["docker"].items()))
+    if f["containers"] or f["containers_gone"]:
+        if full:
+            out.append("<b>Containers</b>\n" + "\n".join([f"🟢 {esc(c)}" for c in f["containers"]] + [f"🔴 {esc(c)}" for c in f["containers_gone"]]))
+        else:
+            out.append(f"<b>Containers</b> {len(f['containers'])} running"
+                       + (f", not running: {esc(', '.join(f['containers_gone']))}" if f["containers_gone"] else " 🟢")
+                       + f"  (<code>/status {esc(node)} full</code> lists them)")
+    if f["failed"]:
+        out.append("<b>Failed units</b> " + " · ".join(f"🔴 {esc(u)}" for u in f["failed"]))
+    elif f["docker"] or full:
+        out.append("🟢 no failed units")
+    live = [a for a in alerts if not a["muted"] and not a["inhibited"]]
+    if live:
+        out.append("<b>Alerts</b>\n" + "\n".join(
+            f"{'🔴' if a['severity'] == 'critical' else '🟡'} {esc(a['alertname'])} — {esc(a['summary'])}" for a in live))
+    else:
+        out.append("🟢 no active alerts")
+    if f["updated"]:
+        out.append(f"Last update: {dt.datetime.fromtimestamp(f['updated'], TZ).strftime('%Y-%m-%d %H:%M')} ({age(time.time() - f['updated'])} ago)")
+    return "\n".join(out)
+
+
+def cmd_alerts(args):
+    alerts = active_alerts()
+    if not alerts:
+        return "🟢 no active alerts"
+    by_node = {}
+    for a in alerts:
+        by_node.setdefault(a["node"] or "-", []).append(a)
+    out = []
+    for node in sorted(by_node):
+        out.append(f"<b>{esc(node)}</b>")
+        for a in sorted(by_node[node], key=lambda a: (a["severity"] != "critical", a["alertname"])):
+            led = "🔴" if a["severity"] == "critical" else "🟡"
+            tag = " (muted)" if a["muted"] else " (inhibited)" if a["inhibited"] else ""
+            out.append(f"{led} {esc(a['alertname'])}{tag} — {esc(a['summary'])}")
+    return "\n".join(out)
+
+
+def cmd_deploys(args):
+    ts = prom_by("nixos_last_update_system_timestamp")
+    if not ts:
+        return "no update timestamps in Prometheus"
+    now = time.time()
+    out = []
+    for node, t in sorted(ts.items(), key=lambda kv: -kv[1]):
+        stale = now - t > 14 * 86400
+        out.append(f"{'🟡' if stale else '🟢'} <b>{esc(node)}</b> · {dt.datetime.fromtimestamp(t, TZ).strftime('%a %Y-%m-%d %H:%M')} ({age(now - t)} ago)")
+    return "<b>Last generation change per node</b>\n" + "\n".join(out)
+
+
+def cmd_help(args):
+    return ("<b>Infra Alerts bot</b> — read-only\n"
+            "/status — one line per node\n"
+            "/status &lt;node&gt; [full] — details (full = every container)\n"
+            "/alerts — active alerts by node\n"
+            "/deploys — last generation change per node\n"
+            "Alerts: 🔴 critical → 🚨 Alerts topic once + 🟢 resolved · 🟡 warnings → Sunday digest in 📋 Weekly")
+
+
+COMMANDS = {"status": cmd_status, "alerts": cmd_alerts, "deploys": cmd_deploys, "help": cmd_help, "start": cmd_help}
+
+
+def handle_command(text):
+    parts = text.strip().split()
+    cmd = parts[0][1:].split("@")[0].lower()
+    if "@" in parts[0] and BOT_NAME and parts[0].split("@")[1].lower() != BOT_NAME.lower():
+        return None
+    fn = COMMANDS.get(cmd)
+    if not fn:
+        return None
+    try:
+        return fn(parts[1:])
+    except Exception as e:
+        log.exception("command %s failed", cmd)
+        return f"⚠️ {esc(cmd)} failed: {esc(e)}"
+
+
+# ----------------------------------------------------------------------------
+# Weekly digest
+# ----------------------------------------------------------------------------
+def digest_text():
+    now = dt.datetime.now(TZ)
+    info = nodes()
+    alerts = active_alerts()
+    by_node = {}
+    for a in alerts:
+        by_node.setdefault(a["node"], []).append(a)
+    order = sorted(info, key=lambda n: (info[n]["role"] != "always_on", n))
+    lines = [f"📋 <b>Weekly infra digest</b> · {now.strftime('%a %Y-%m-%d')}"]
+    lines += [summary_line(n, info[n], by_node.get(n, []), now) for n in order]
+    warns = [a for a in alerts if a["severity"] != "critical" and not a["inhibited"]]
+    if warns:
+        lines.append(f"\n<b>Active warnings ({len(warns)})</b>")
+        for a in sorted(warns, key=lambda a: (a["node"] or "", a["alertname"])):
+            lines.append(f"🟡 {esc(a['node'])} · {esc(a['alertname'])} — {esc(a['summary'])}" + (" (muted)" if a["muted"] else ""))
+    else:
+        lines.append("\n🟢 no active warnings")
+    crits = [a for a in alerts if a["severity"] == "critical" and not a["inhibited"] and not a["muted"]]
+    if crits:
+        lines.append(f"\n<b>Still-firing criticals ({len(crits)})</b>")
+        lines += [f"🔴 {esc(a['node'])} · {esc(a['alertname'])} — {esc(a['summary'])}" for a in crits]
+    return "\n".join(lines)
+
+
+def run_digest():
+    marker = os.path.join(STATE_DIR, "digest_last")
+    while True:
+        now = dt.datetime.now(TZ)
+        stamp = now.strftime("%Y-%m-%d")
+        try:
+            last = open(marker).read().strip()
+        except OSError:
+            last = ""
+        if now.weekday() == DIGEST_DAY and now.hour >= DIGEST_HOUR and last != stamp:
+            try:
+                send(digest_text(), THREAD_WEEKLY)
+                with open(marker, "w") as fh:
+                    fh.write(stamp)
+                log.info("weekly digest posted")
+            except Exception as e:
+                log.error("digest failed: %s", e)
+        time.sleep(300)
 
 
 # ----------------------------------------------------------------------------
@@ -193,7 +535,7 @@ class Handler(BaseHTTPRequestHandler):
             claimed = payload.get("hostname")
             if claimed and claimed != host:
                 log.warning("deploy relay: %s (%s) claims to be %s", host, ip, claimed)
-                text = f"⚠️ <i>relayed by {host}, message claims {claimed}</i>\n" + text
+                text = f"⚠️ <i>relayed by {esc(host)}, message claims {esc(claimed)}</i>\n" + text
             try:
                 send(text, THREAD_DEPLOYS)
             except Exception as e:
@@ -224,26 +566,74 @@ def run_relay():
 
 
 # ----------------------------------------------------------------------------
-# Telegram commands + weekly digest (F3)
+# Telegram long polling
 # ----------------------------------------------------------------------------
 def run_commands():
-    log.info("command handling not enabled yet (F3)")
+    global BOT_NAME
+    try:
+        BOT_NAME = telegram("getMe")["username"]
+        telegram("setMyCommands", commands=json.dumps([
+            {"command": "status", "description": "Node leds, or /status <node> [full]"},
+            {"command": "alerts", "description": "Active alerts by node"},
+            {"command": "deploys", "description": "Last generation change per node"},
+            {"command": "help", "description": "What this bot does"},
+        ]))
+    except Exception as e:
+        log.warning("getMe/setMyCommands failed: %s", e)
+    offset_file = os.path.join(STATE_DIR, "offset")
+    try:
+        offset = int(open(offset_file).read().strip())
+    except (OSError, ValueError):
+        offset = 0
     while True:
-        time.sleep(3600)
+        try:
+            qs = urllib.parse.urlencode({"timeout": 50, "offset": offset, "allowed_updates": '["message"]'})
+            with urllib.request.urlopen(f"{TELEGRAM_API}/bot{TOKEN}/getUpdates?{qs}", timeout=70) as r:
+                updates = json.load(r).get("result", [])
+        except urllib.error.HTTPError as e:
+            # 409 = another getUpdates consumer; nothing to do but wait it out
+            log.warning("getUpdates HTTP %s", e.code)
+            time.sleep(30 if e.code == 409 else 10)
+            continue
+        except Exception as e:
+            log.warning("getUpdates failed: %s", e)
+            time.sleep(10)
+            continue
+        for u in updates:
+            offset = u["update_id"] + 1
+            m = u.get("message") or {}
+            text = m.get("text") or ""
+            if str(m.get("chat", {}).get("id")) != str(CHAT_ID) or not text.startswith("/"):
+                continue
+            reply = handle_command(text)
+            if reply is None:
+                continue
+            try:
+                send(reply, m.get("message_thread_id"), reply_to=m.get("message_id"))
+            except Exception as e:
+                log.error("reply failed: %s", e)
+        try:
+            with open(offset_file, "w") as fh:
+                fh.write(str(offset))
+        except OSError as e:
+            log.warning("offset not saved: %s", e)
 
 
 # ----------------------------------------------------------------------------
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stdout)
+    if "--selftest" in sys.argv:
+        for name, fn in (("status", cmd_status), ("status nas", lambda a: cmd_status(["nas"])),
+                         ("status vps full", lambda a: cmd_status(["vps", "full"])), ("alerts", cmd_alerts),
+                         ("deploys", cmd_deploys), ("digest", lambda a: digest_text())):
+            print(f"===== /{name}\n{fn([])}\n")
+        return
     if not TOKEN or not CHAT_ID:
         log.error("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID missing")
         sys.exit(1)
-    if "--selftest" in sys.argv:
-        print(json.dumps(active_alerts(), indent=1))
-        print("self ip:", self_ipv4())
-        return
-    t = threading.Thread(target=run_relay, name="relay", daemon=True)
-    t.start()
+    os.makedirs(STATE_DIR, exist_ok=True)
+    threading.Thread(target=run_relay, name="relay", daemon=True).start()
+    threading.Thread(target=run_digest, name="digest", daemon=True).start()
     run_commands()
 
 
