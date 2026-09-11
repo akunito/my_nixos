@@ -132,8 +132,9 @@ class Notifier:
         fresh = [c for c in comments if not c.get("deleted_at") and _ts(c.get("created_at")) and since and _ts(c.get("created_at")) > since]
         return sorted(fresh, key=lambda c: c["created_at"])
 
-    def process(self, changes):
-        """changes: [(prev_row_or_None, new_api_item_or_None)] from one sync pass of one project."""
+    def process(self, changes, fetch_comments=True):
+        """changes: [(prev_row_or_None, new_api_item_or_None)] from one sync pass of one project.
+        fetch_comments=False for webhook-driven changes: comments arrive as their own event there."""
         sent = 0
         for prev, new in changes:
             if new is None:
@@ -147,7 +148,7 @@ class Notifier:
             events = self.classify(prev, row)
             is_n8n = (row.get("external_source") or "") == "n8n"
             actor = row.get("created_by") if events == ["created"] else row.get("updated_by")
-            comments = self.new_comments(prev, row) if prev is not None else []
+            comments = self.new_comments(prev, row) if (prev is not None and fetch_comments) else []
             comments = [c for c in comments if not (c.get("id") and self.mirror.comment_seen(c["id"]))]
             for c in comments:
                 if c.get("id"):

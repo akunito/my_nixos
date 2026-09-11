@@ -76,3 +76,29 @@ class SyncTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ClientThrottle(unittest.TestCase):
+    def test_429_waits_and_retries_once(self):
+        from plane_bot import Plane, PlaneError
+        p = Plane("http://x", "ws", "tok")
+        Plane.PACE = 0
+        Plane.RETRY_429 = 0
+        calls = {"n": 0}
+
+        def fake_once(method, path, params=None, body=None):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise PlaneError(429, "RATE_LIMIT_EXCEEDED")
+            return {"ok": True}
+
+        p._req_once = fake_once
+        self.assertEqual(p._req("GET", "projects/"), {"ok": True})
+        self.assertEqual(calls["n"], 2)
+
+        def always(method, path, params=None, body=None):
+            raise PlaneError(429, "RATE_LIMIT_EXCEEDED")
+
+        p._req_once = always
+        with self.assertRaises(PlaneError):
+            p._req("GET", "projects/")

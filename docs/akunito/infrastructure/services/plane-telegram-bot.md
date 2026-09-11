@@ -120,6 +120,12 @@ receiver answers 200 to anything with a valid signature.
 
 ## Gotchas
 
+- **Plane throttles API keys: `API_KEY_RATE_LIMIT=60/minute`** (set in `/app/plane.env`, so a compose value would be
+  overridden like A-10). The client paces every request (0.3 s) and on a 429 waits 20 s and retries once; the first
+  pass after a start is incremental (the hourly full walk, ~40 requests, catches deletions). The one-off 429 storm on
+  2026-09-11 was the timestamp canonicalisation marking 99 items "touched" and fetching their comments at once. Raising
+  the limit (a `start-override.sh` Fix 2c on `API_KEY_RATE_LIMIT`) was **not** applied — Diego's call.
+
 - Only **one** `getUpdates` consumer per bot token: stop `plane-bot.service` before polling the token by hand (409 otherwise).
 - Privacy mode is **off** (BotFather `/setprivacy`) so `+ title` works: the bot receives every group message; it only
   reacts to `/commands` and `+`.

@@ -162,6 +162,15 @@ class PlaneError(Exception):
 
 
 class Plane:
+    """Plane throttles API keys (API_KEY_RATE_LIMIT, 60/minute by default): every call is paced
+    and a 429 waits and retries once instead of failing the whole sync pass."""
+
+    PACE = 0.3        # seconds between requests (<= 200/min)
+    RETRY_429 = 20    # seconds to wait before the single retry
+
+    _last_call = 0.0
+    _pace_lock = threading.Lock()
+
     def __init__(self, base_url, workspace, token, timeout=30):
         self.base = base_url.rstrip("/")
         self.ws = workspace
@@ -169,6 +178,26 @@ class Plane:
         self.timeout = timeout
 
     def _req(self, method, path, params=None, body=None):
+        self._pace()
+        try:
+            return self._req_once(method, path, params, body)
+        except PlaneError as e:
+            if e.status != 429:
+                raise
+            log.warning("plane 429 on %s %s: waiting %ss", method, path, self.RETRY_429)
+            time.sleep(self.RETRY_429)
+            self._pace()
+            return self._req_once(method, path, params, body)
+
+    @classmethod
+    def _pace(cls):
+        with cls._pace_lock:
+            wait = cls._last_call + cls.PACE - time.time()
+            if wait > 0:
+                time.sleep(wait)
+            cls._last_call = time.time()
+
+    def _req_once(self, method, path, params=None, body=None):
         url = f"{self.base}/api/v1/workspaces/{self.ws}/{path.lstrip('/')}"
         if params:
             url += ("&" if "?" in url else "?") + urllib.parse.urlencode({k: v for k, v in params.items() if v not in (None, "")})
@@ -1139,7 +1168,7 @@ class Daemon:
         return n
 
     def run_sync(self):
-        last_full = 0
+        last_full = time.time()  # first pass incremental (rate limit); the hourly full walk catches deletions
         while True:
             try:
                 full = time.time() - last_full > self.cfg.full_sync_minutes * 60

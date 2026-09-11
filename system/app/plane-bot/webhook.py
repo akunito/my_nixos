@@ -104,7 +104,7 @@ class WebhookReceiver:
         prev = self.mirror.upsert_item(item)
         if prev is not None and prev.get("updated_at") == _canon(item.get("updated_at")) and _same(prev, item):
             return "already mirrored"  # the poller (or a bot command) got here first
-        sent = self.notifier.process([(prev, item)])
+        sent = self.notifier.process([(prev, item)], fetch_comments=False)
         return f"issue {action}: {sent} message(s)"
 
     def _comment(self, action, data, activity):
