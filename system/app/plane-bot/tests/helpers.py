@@ -7,6 +7,9 @@ Projects in the mirror but in NO chat: ORB (Komi-only). It must never leak.
 """
 import os
 import sys
+import warnings
+
+warnings.filterwarnings("ignore", category=ResourceWarning)  # in-memory sqlite handles in throwaway Worlds
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -122,3 +125,33 @@ class World:
 
     def say(self, chat, thread, text, user=TG_DIEGO, username=""):
         return self.bot.handle(chat, thread, text, user, username)
+
+
+class FakeTelegram:
+    """Records sends/edits; returns message ids like the Bot API."""
+
+    def __init__(self):
+        self.token = "fake"
+        self.sent = []   # (chat, thread, text, reply_to)
+        self.edited = []  # (chat, message_id, text)
+        self._next = 1000
+
+    def send(self, chat_id, text, thread=None, reply_to=None, reply_markup=None):
+        self._next += 1
+        self.sent.append((str(chat_id), str(thread) if thread is not None else None, text, reply_to))
+        return {"message_id": self._next}
+
+    def send_long(self, chat_id, text, thread=None, reply_to=None):
+        return [self.send(chat_id, text, thread, reply_to)]
+
+    def edit(self, chat_id, message_id, text, reply_markup=None):
+        self.edited.append((str(chat_id), message_id, text))
+        return {"message_id": message_id}
+
+
+class FakeCommentsPlane:
+    def __init__(self):
+        self.comments_by_item = {}
+
+    def comments(self, pid, iid):
+        return list(self.comments_by_item.get(iid, []))

@@ -39,6 +39,7 @@ import urllib.parse
 import urllib.request
 import zoneinfo
 
+from notify import Notifier
 from tgcommon import Telegram, esc
 
 log = logging.getLogger("plane-bot")
@@ -47,7 +48,7 @@ PRIORITY_ORDER = ["urgent", "high", "medium", "low", "none"]
 PRIORITY_ICON = {"urgent": "🔥", "high": "🔴", "medium": "🟠", "low": "🟢", "none": "⚪"}
 DEFAULT_ACTIVE_STATES = ["In Progress", "In Review", "Todo"]  # display order
 LIST_CAP = 20
-ITEM_FIELDS = "id,sequence_id,name,state,priority,assignees,target_date,updated_at,created_at,external_source,project"
+ITEM_FIELDS = "id,sequence_id,name,state,priority,assignees,target_date,updated_at,created_at,external_source,project,created_by,updated_by"
 IDENT_RE = re.compile(r"^([A-Za-z][A-Za-z0-9]*)-(\d+)$")
 
 
@@ -248,10 +249,16 @@ CREATE TABLE IF NOT EXISTS states (id TEXT PRIMARY KEY, project TEXT, name TEXT,
 CREATE TABLE IF NOT EXISTS members (project TEXT, user_id TEXT, email TEXT, display_name TEXT, PRIMARY KEY (project, user_id));
 CREATE TABLE IF NOT EXISTS items (
   id TEXT PRIMARY KEY, project TEXT, seq INTEGER, name TEXT, state TEXT, priority TEXT,
-  target_date TEXT, updated_at TEXT, created_at TEXT, external_source TEXT, assignees TEXT, deleted INTEGER DEFAULT 0);
+  target_date TEXT, updated_at TEXT, created_at TEXT, external_source TEXT, assignees TEXT, deleted INTEGER DEFAULT 0,
+  created_by TEXT, updated_by TEXT);
 CREATE INDEX IF NOT EXISTS items_project ON items(project, deleted);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
+-- the bot's own message about an item in a chat, so later changes edit it instead of posting again
+CREATE TABLE IF NOT EXISTS posts (item TEXT, chat TEXT, message_id INTEGER, thread TEXT, created_at TEXT, PRIMARY KEY (item, chat));
 """
+# columns added after the first deploy; sqlite has no ADD COLUMN IF NOT EXISTS
+MIGRATIONS = [("items", "created_by", "ALTER TABLE items ADD COLUMN created_by TEXT"),
+              ("items", "updated_by", "ALTER TABLE items ADD COLUMN updated_by TEXT")]
 
 
 class Mirror:
@@ -261,6 +268,13 @@ class Mirror:
         self.lock = threading.RLock()
         with self.lock:
             self.db.executescript(SCHEMA)
+            self.migrated = False
+            for table, col, ddl in MIGRATIONS:
+                cols = {r["name"] for r in self.db.execute(f"PRAGMA table_info({table})").fetchall()}
+                if col not in cols:
+                    self.db.execute(ddl)
+                    self.migrated = True  # rows lack the new data: the daemon runs a silent full sync
+            self.db.commit()
 
     # --- writes
     def upsert_project(self, p):
@@ -285,11 +299,11 @@ class Mirror:
         with self.lock, self.db:
             prev = self.db.execute("SELECT * FROM items WHERE id=?", (it["id"],)).fetchone()
             self.db.execute(
-                "INSERT OR REPLACE INTO items (id, project, seq, name, state, priority, target_date, updated_at, created_at, external_source, assignees, deleted)"
-                " VALUES (?,?,?,?,?,?,?,?,?,?,?,0)",
+                "INSERT OR REPLACE INTO items (id, project, seq, name, state, priority, target_date, updated_at, created_at, external_source, assignees, deleted, created_by, updated_by)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
                 (it["id"], it["project"], it.get("sequence_id"), it.get("name", ""), it.get("state"), it.get("priority") or "none",
                  it.get("target_date"), it.get("updated_at"), it.get("created_at"), it.get("external_source"),
-                 json.dumps(sorted(it.get("assignees") or []))))
+                 json.dumps(sorted(it.get("assignees") or [])), it.get("created_by"), it.get("updated_by")))
             return dict(prev) if prev else None
 
     def mark_missing_deleted(self, pid, keep_ids):
@@ -307,6 +321,37 @@ class Mirror:
     def set_meta(self, key, value):
         with self.lock, self.db:
             self.db.execute("INSERT OR REPLACE INTO meta (key, value) VALUES (?,?)", (key, value))
+
+    def set_post(self, item_id, chat_id, message_id, thread):
+        with self.lock, self.db:
+            self.db.execute("INSERT OR REPLACE INTO posts (item, chat, message_id, thread, created_at) VALUES (?,?,?,?,?)",
+                            (item_id, str(chat_id), int(message_id), str(thread) if thread is not None else None, dt.datetime.now(dt.timezone.utc).isoformat()))
+
+    def get_post(self, item_id, chat_id):
+        with self.lock:
+            r = self.db.execute("SELECT * FROM posts WHERE item=? AND chat=?", (item_id, str(chat_id))).fetchone()
+        return dict(r) if r else None
+
+    def post_item(self, chat_id, message_id):
+        """Item id behind one of the bot's own messages (for reply = comment)."""
+        with self.lock:
+            r = self.db.execute("SELECT item FROM posts WHERE chat=? AND message_id=?", (str(chat_id), int(message_id))).fetchone()
+        return r["item"] if r else None
+
+    def is_member(self, pid, email):
+        with self.lock:
+            r = self.db.execute("SELECT 1 FROM members WHERE project=? AND email=?", (pid, (email or "").lower())).fetchone()
+        return bool(r)
+
+    def item(self, item_id):
+        with self.lock:
+            r = self.db.execute("SELECT project FROM items WHERE id=?", (item_id,)).fetchone()
+        if not r:
+            return None
+        for it in self.items_in([r["project"]]):
+            if it["id"] == item_id:
+                return it
+        return None
 
     # --- reads
     def project_by_identifier(self, ident):
@@ -670,6 +715,7 @@ class Bot:
         self.cfg = cfg
         self.mirror = mirror
         self.plane_factory = plane_factory or (lambda token: Plane(cfg.plane_url, cfg.workspace, token))
+        self.last_created = None
 
     # --- entry point used by both the Telegram loop and `simulate`
     def handle(self, chat_id, thread, text, from_id, from_username=""):
@@ -681,6 +727,9 @@ class Bot:
         text = (text or "").strip()
         if not text:
             return None
+        self.last_created = None
+        if text.startswith("/") or text.startswith("+"):
+            log.info("cmd chat=%s thread=%s user=%s: %s", chat_id, thread, from_id, text[:80])
         try:
             if text.startswith("/"):
                 return self._command(chat_id, thread, text, from_id, from_username)
@@ -769,7 +818,10 @@ class Bot:
             body["state"] = state["id"]
         created = self.plane_factory(u.token).create_work_item(p["id"], body)
         created.setdefault("project", p["id"])
+        created.setdefault("created_by", self.mirror.user_id_by_email(u.email, [p["id"]]))
         self.mirror.upsert_item(created)
+        self.last_created = created["id"]  # the daemon registers its reply as this item's card
+        log.info("created %s-%s in chat %s by %s", ident, created.get("sequence_id"), chat_id, u.alias)
         r = self.mirror.item_by_identifier(f"{ident}-{created.get('sequence_id')}")
         if not r:
             return f"✅ Created {ident}-{created.get('sequence_id')}"
@@ -787,18 +839,31 @@ class Daemon:
         self.bot = Bot(cfg, self.mirror)
         self.tg = Telegram(os.environ.get("TELEGRAM_BOT_TOKEN", ""))
         self.catalog = {}
+        self.notifier = None
+        self.silent_full_pending = self.mirror.migrated  # schema grew: refill quietly
 
-    def sync_once(self, full=False):
+    def sync_once(self, full=False, notify=True):
         plane = Plane(self.cfg.plane_url, self.cfg.workspace, self.cfg.sync_user().token)
+        if self.notifier is None:
+            self.notifier = Notifier(self.cfg, self.mirror, self.tg, plane)
         if full or not self.catalog:
             self.catalog = sync_catalog(plane, self.mirror, set(self.cfg.all_project_idents()))
         n = 0
         for ident, p in self.catalog.items():
+            first = self.mirror.get_meta(f"cursor:{p['id']}") is None  # never synced: everything is "new", say nothing
             try:
                 changes = sync_items(plane, self.mirror, p["id"], full=full)
-                n += len(changes)
             except PlaneError as e:
                 log.warning("sync %s: %s", ident, e)
+                continue
+            n += len(changes)
+            if changes and notify and not first and self.tg.token:
+                try:
+                    sent = self.notifier.process(changes)
+                    if sent:
+                        log.info("notify %s: %d message(s)", ident, sent)
+                except Exception as e:
+                    log.exception("notify %s failed: %s", ident, e)
         return n
 
     def run_sync(self):
@@ -806,7 +871,12 @@ class Daemon:
         while True:
             try:
                 full = time.time() - last_full > self.cfg.full_sync_minutes * 60
-                n = self.sync_once(full=full)
+                if self.silent_full_pending:
+                    n = self.sync_once(full=True, notify=False)
+                    self.silent_full_pending = False
+                    full = True
+                else:
+                    n = self.sync_once(full=full)
                 if full:
                     last_full = time.time()
                 if n:
@@ -823,7 +893,9 @@ class Daemon:
         frm = m.get("from", {})
         reply = self.bot.handle(chat_id, thread, m.get("text") or "", frm.get("id"), frm.get("username", ""))
         if reply:
-            self.tg.send_long(chat_id, reply, thread, reply_to=m.get("message_id"))
+            sent = self.tg.send_long(chat_id, reply, thread, reply_to=m.get("message_id"))
+            if self.bot.last_created and sent:  # the /new reply is this item's card in this chat
+                self.mirror.set_post(self.bot.last_created, chat_id, sent[0]["message_id"], thread)
 
     def run(self):
         if not self.tg.token:
@@ -850,7 +922,7 @@ def main(argv=None):
     cfg = Config.from_env()
     if argv and argv[0] == "sync":
         d = Daemon(cfg)
-        n = d.sync_once(full="--full" in argv)
+        n = d.sync_once(full="--full" in argv, notify="--notify" in argv)
         print(f"synced, {n} change(s)")
         return
     if argv and argv[0] == "simulate":

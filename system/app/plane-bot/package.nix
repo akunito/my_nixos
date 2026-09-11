@@ -20,7 +20,7 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p $out/lib/plane-bot $out/bin
-    cp plane-bot/plane_bot.py tgcommon.py $out/lib/plane-bot/
+    cp plane-bot/*.py tgcommon.py $out/lib/plane-bot/
     makeWrapper ${python3}/bin/python3 $out/bin/plane-bot \
       --add-flags "$out/lib/plane-bot/plane_bot.py" \
       --set PYTHONPATH "$out/lib/plane-bot"
