@@ -102,7 +102,7 @@ in
     planeBotSyncAlias = "diego"; # member of every in-scope project; fills the mirror
     planeBotPublicUrl = "https://plane.${secrets.publicDomain}";
     planeBotWebhookSecret = secrets.planeBotWebhookSecret or ""; # instant events; polling stays as reconciliation
-    planeBotWebhookDebug = true; # first days: keep payload samples to verify the normaliser
+    planeBotWebhookDebug = false; # payload samples verified 2026-09-11; flip on to capture new shapes
     planeBotKumaPushUrl = secrets.planeBotKumaPushUrl or ""; # Kuma push heartbeat after every sync pass
     # /ask - private LLM support in Discord, through the LiteLLM gateway below.
     akucraftAskEnable = true;
