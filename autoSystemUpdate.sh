@@ -25,7 +25,9 @@ fi
 # Mark the dotfiles directory as safe for git (required when running as root)
 # This is needed because the directory is owned by a non-root user
 echo -e "Configuring git safe.directory for $SCRIPT_DIR"
-/run/current-system/sw/bin/git config --global --add safe.directory "$SCRIPT_DIR" 2>/dev/null || true
+# git comes from the unit's PATH (pkgs.git) — not every host has it system-wide
+GIT=$(command -v git || echo /run/current-system/sw/bin/git)
+"$GIT" config --global --add safe.directory "$SCRIPT_DIR" || echo -e "WARNING: could not add git safe.directory for $SCRIPT_DIR (nix flake eval as root may fail)"
 
 # echo -e "Stopping Services/etc"
 # $SCRIPT_DIR/stop_external_drives.sh
@@ -135,7 +137,7 @@ notify_deploy() {
     [ -x "$bin" ] || return 0
     local args=(deploy --status "$1" --profile "$ACTIVE_PROFILE" --duration "$(( $(date +%s) - UPDATE_START_TS ))" \
         --gen-before "$PRE_GEN" --gen-after "$(current_generation)" \
-        --commit "$(/run/current-system/sw/bin/git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "")" \
+        --commit "$("$GIT" -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "")" \
         --by root --via autoSystemUpdate)
     [ -n "${2:-}" ] && args+=(--note "$2")
     "$bin" "${args[@]}" || echo -e "Warning: deploy announcement failed (non-fatal)"

@@ -19,8 +19,11 @@
         restartDocker = if systemSettings.autoUpgradeRestartDocker or false then "true" else "false";
       in "${systemSettings.autoSystemUpdateExecStart} ${scriptDir} ${restartDocker}";
       User = systemSettings.autoSystemUpdateUser;
+      # git first: on secrets-free machines (DESK_A, LAPTOP_A) git is only in the
+      # user's home-manager profile, so /run/current-system/sw/bin has none and the
+      # safe.directory step silently failed -> nix refused the aga-owned flake as root.
       Environment = [
-        "PATH=/run/current-system/sw/bin:/usr/bin:/bin"
+        "PATH=${pkgs.git}/bin:/run/current-system/sw/bin:/usr/bin:/bin"
         "HOME=/root"
       ];
       StandardOutput = "journal";
