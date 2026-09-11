@@ -668,6 +668,9 @@
     infraBotUrl = ""; # Bot relay base URL on the VPS Tailscale IP (e.g. "http://100.64.0.6:8765"); the only transport for secrets-free nodes
     infraBotEnable = false; # Run the infra-bot daemon (relay + /status commands) — monitoring server only
     infraBotPort = 8765; # Relay listen port on the tailscale0 interface
+    infraRestartEnable = false; # Install `infra-restart` + sudoers so the bot can restart docker-rootless/rootful here (VPS, NAS)
+    infraRestartSshTargets = {}; # Bot only: node -> "user@host" for remote /restart over BatchMode ssh (e.g. { nas = "akunito@100.64.0.1"; })
+    healthchecksPingUrl = ""; # healthchecks.io ping URL (dead-man's switch); "" = no ping timer
     prometheusNodeExporterPort = 9100; # Port for Node Exporter
     prometheusCadvisorPort = 9092; # Port for cAdvisor
     # Remote targets for Prometheus scraping (used by monitoring server only)

@@ -1,12 +1,15 @@
 # Infra Alerts Telegram bot (AINF-368) — runs on the monitoring server (VPS_PROD)
 #
-# Daemon: system/app/infra-bot.py. Read-only. It serves:
+# Daemon: system/app/infra-bot.py. Read-only except /restart (F4). It serves:
 #   - a relay on the Tailscale interface (POST /deploy, GET /alerts?node=)
 #     that lets secrets-free nodes announce deploys and any node ask for its
 #     active alerts without holding the bot token; identity = source
 #     Tailscale IP resolved with `tailscale status`
 #   - group commands /status [node [full]] /alerts /deploys /help, answered in
 #     the topic they were asked in, and the Sunday 10:00 digest into 📋 Weekly
+#   - /restart <node> docker-rootless|docker-rootful: admins only
+#     (infraTelegramAdminUserIds), inline confirm button, runs `sudo -n
+#     infra-restart` locally or over BatchMode ssh (infraRestartSshTargets)
 #
 # Gated by systemSettings.infraBotEnable + non-empty grafanaTelegramBotToken /
 # grafanaTelegramChatId (the same bot Alertmanager and notify-failure use).
@@ -48,7 +51,7 @@ lib.mkIf enabled {
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" "tailscaled.service" "alertmanager.service" ];
     wants = [ "network-online.target" ];
-    path = [ pkgs.tailscale pkgs.coreutils ];
+    path = [ pkgs.tailscale pkgs.coreutils pkgs.openssh "/run/wrappers" ]; # ssh for remote /restart, sudo wrapper for the local one
     environment = {
       THREAD_DEPLOYS = systemSettings.infraTelegramDeploysThreadId or "";
       THREAD_ALERTS = systemSettings.infraTelegramAlertsThreadId or "";
@@ -57,6 +60,9 @@ lib.mkIf enabled {
       ALERTMANAGER_URL = "http://127.0.0.1:${toString config.services.prometheus.alertmanager.port}";
       PROMETHEUS_URL = "http://127.0.0.1:${toString config.services.prometheus.port}";
       NODE_MAP = builtins.toJSON nodeMap;
+      ADMIN_USER_IDS = systemSettings.infraTelegramAdminUserIds or "";
+      RESTART_SSH_TARGETS = builtins.toJSON (systemSettings.infraRestartSshTargets or {});
+      LOCAL_NODE = systemSettings.infraNodeName or "vps";
       STATE_DIR = "/var/lib/infra-bot";
       TZ = systemSettings.timezone or "Europe/Warsaw";
       SLEEP_NODE = "nas";

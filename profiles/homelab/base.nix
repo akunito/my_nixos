@@ -45,6 +45,7 @@ in
   ++ lib.optional (systemSettings.nasServicesEnable or false) ../../system/app/nas-services.nix # NAS: ZFS, SMART, sleep, Docker auto-start
   ++ lib.optional (systemSettings.prometheusHostHealthEnable or false) ../../system/app/prometheus-host-health.nix # docker daemons + failed units textfile
   ++ lib.optional (systemSettings.infraNotifyEnable or false) ../../system/app/infra-notify.nix # deploy announcements to Infra Alerts (AINF-368)
+  ++ lib.optional (systemSettings.infraRestartEnable or false) ../../system/app/infra-restart.nix # bot's /restart target (sudoers-scoped)
   ++ lib.optional (systemSettings.networkBondingEnable or false) ../../system/hardware/network-bonding.nix # LACP bond
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix; # Tailscale mesh VPN
 

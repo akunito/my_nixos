@@ -39,6 +39,8 @@
   ++ lib.optional (systemSettings.prometheusHostHealthEnable or false) ../../system/app/prometheus-host-health.nix # docker daemons + failed units textfile
   ++ lib.optional (systemSettings.infraNotifyEnable or false) ../../system/app/infra-notify.nix # deploy announcements to Infra Alerts (AINF-368)
   ++ lib.optional (systemSettings.infraBotEnable or false) ../../system/app/infra-bot.nix # Infra Alerts bot: relay + commands (AINF-368)
+  ++ lib.optional (systemSettings.infraRestartEnable or false) ../../system/app/infra-restart.nix # bot's /restart target (sudoers-scoped)
+  ++ lib.optional ((systemSettings.healthchecksPingUrl or "") != "") ../../system/app/healthchecks-ping.nix # dead-man's switch ping
   ++ lib.optional (systemSettings.prometheusBlackboxEnable or false) ../../system/app/prometheus-blackbox.nix
   ++ lib.optional (systemSettings.prometheusPveExporterEnable or false) ../../system/app/prometheus-pve.nix
   ++ lib.optional (systemSettings.prometheusSnmpExporterEnable or false) ../../system/app/prometheus-snmp.nix

@@ -491,6 +491,10 @@ in
     prometheusHostHealthEnable = true; # docker rootless up + failed system/user units -> host_health.prom
     infraNotifyEnable = true; infraNodeName = "vps"; infraBotUrl = "http://100.64.0.6:8765";
     infraBotEnable = true; # the Infra Alerts bot lives here (relay for secrets-free nodes + /status commands)
+    infraRestartEnable = true; # /restart docker-rootless here
+    infraRestartSshTargets = { nas = "akunito@100.64.0.1"; }; # /restart on the NAS over BatchMode ssh (VPS key is in its authorizedKeys)
+    infraTelegramAdminUserIds = secrets.infraTelegramAdminUserIds or "";
+    healthchecksPingUrl = secrets.healthchecksVpsPingUrl or ""; # dead-man's switch (F5)
 
     # Remote targets for Prometheus scraping (via WireGuard/Tailscale tunnel to LAN)
     # NAS: node-exporter (9100) + cadvisor (8081) on rootless Docker

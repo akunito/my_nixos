@@ -91,9 +91,9 @@ lib.mkIf enabled {
     # Must exceed repeat_interval (168h) or Alertmanager forgets it already
     # notified and re-sends after the default 120h.
     extraFlags = [ "--data.retention=240h" ];
-    # debug is temporary (AINF-368 test cycle): it logs mute/notify decisions.
+    # "debug" logs every mute/notify decision — handy when testing routing.
     # (the module passes --log.level itself; a second copy in extraFlags crashes the binary)
-    logLevel = "debug";
+    logLevel = "info";
     configuration = {
       global.resolve_timeout = "5m";
       templates = [ "${telegramTemplate}" ];

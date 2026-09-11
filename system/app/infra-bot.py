@@ -23,6 +23,12 @@ One daemon on VPS_PROD, next to Prometheus and Alertmanager. Three halves:
 
   3. Sunday digest into 📋 Weekly: node leds + every active warning.
 
+  4. /restart <node> docker-rootless|docker-rootful — the ONLY write action.
+     Admin user ids only, inline ✅/❌ confirmation (2 min), then
+     `sudo -n infra-restart <target>` locally or over BatchMode ssh for nodes
+     listed in RESTART_SSH_TARGETS. system/app/infra-restart.nix owns the
+     sudoers rule and the allow-list.
+
 Config comes from the environment (infra-bot.nix). `infra-bot --selftest`
 prints every handler's output without touching Telegram.
 """
@@ -38,6 +44,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 import zoneinfo
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -60,6 +67,11 @@ SLEEP_NODE = os.environ.get("SLEEP_NODE", "nas")
 SLEEP_FROM, SLEEP_TO = (os.environ.get("SLEEP_WINDOW", "23:00-16:05").split("-") + ["16:05"])[:2]
 DIGEST_DAY = int(os.environ.get("DIGEST_WEEKDAY", "6"))  # Monday=0 .. Sunday=6
 DIGEST_HOUR = int(os.environ.get("DIGEST_HOUR", "10"))
+ADMIN_USER_IDS = {x.strip() for x in os.environ.get("ADMIN_USER_IDS", "").split(",") if x.strip()}
+RESTART_SSH_TARGETS = json.loads(os.environ.get("RESTART_SSH_TARGETS", "{}"))
+LOCAL_NODE = os.environ.get("LOCAL_NODE", "vps")
+RESTART_TARGETS = ("docker-rootless", "docker-rootful")
+CONFIRM_TTL = 120
 TELEGRAM_API = "https://api.telegram.org"
 MAX_TEXT = 4000
 BOT_NAME = ""
@@ -84,7 +96,7 @@ def telegram(method, timeout=20, **params):
     return body["result"]
 
 
-def send(text, thread=None, reply_to=None):
+def send(text, thread=None, reply_to=None, reply_markup=None):
     """HTML message into the group; thread = forum topic id ('' = General)."""
     return telegram(
         "sendMessage",
@@ -93,6 +105,19 @@ def send(text, thread=None, reply_to=None):
         reply_to_message_id=reply_to,
         parse_mode="HTML",
         disable_web_page_preview="true",
+        reply_markup=json.dumps(reply_markup) if reply_markup else None,
+        text=text[:MAX_TEXT],
+    )
+
+
+def edit(message_id, text, reply_markup=None):
+    return telegram(
+        "editMessageText",
+        chat_id=CHAT_ID,
+        message_id=message_id,
+        parse_mode="HTML",
+        disable_web_page_preview="true",
+        reply_markup=json.dumps(reply_markup) if reply_markup else None,
         text=text[:MAX_TEXT],
     )
 
@@ -405,17 +430,108 @@ def cmd_help(args):
             "/status &lt;node&gt; [full] — details (full = every container)\n"
             "/alerts — active alerts by node\n"
             "/deploys — last generation change per node\n"
+            "/restart &lt;node&gt; docker-rootless|docker-rootful — admins only, asks to confirm\n"
             "Alerts: 🔴 critical → 🚨 Alerts topic once + 🟢 resolved · 🟡 warnings → Sunday digest in 📋 Weekly")
+
+
+# ----------------------------------------------------------------------------
+# /restart — confirm, then run infra-restart locally or over ssh
+# ----------------------------------------------------------------------------
+PENDING = {}  # nonce -> {node, target, user, created, message_id}
+
+
+def restart_nodes():
+    return [LOCAL_NODE] + sorted(RESTART_SSH_TARGETS)
+
+
+def run_restart(node, target, check=False):
+    """Returns (ok, output). Never raises."""
+    args = ["sudo", "-n", "infra-restart", target] + (["--check"] if check else [])
+    if node != LOCAL_NODE:
+        host = RESTART_SSH_TARGETS.get(node)
+        if not host:
+            return False, f"no ssh target configured for {node}"
+        args = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "-o", "StrictHostKeyChecking=accept-new", host] + args
+    try:
+        out = subprocess.run(args, capture_output=True, text=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        return False, "timed out after 120s"
+    text = (out.stdout + out.stderr).strip()
+    return out.returncode == 0, text or f"exit {out.returncode}"
+
+
+def cmd_restart(args, user=None, thread=None, message_id=None):
+    if str(user) not in ADMIN_USER_IDS:
+        return "⛔ /restart is limited to admins."
+    if len(args) != 2 or args[0].lower() not in restart_nodes() or args[1].lower() not in RESTART_TARGETS:
+        return (f"usage: /restart &lt;{esc('|'.join(restart_nodes()))}&gt; &lt;{esc('|'.join(RESTART_TARGETS))}&gt;")
+    node, target = args[0].lower(), args[1].lower()
+    ok, out = run_restart(node, target, check=True)
+    if not ok:
+        return f"⛔ {esc(node)} refuses {esc(target)}: <code>{esc(out)}</code>"
+    nonce = uuid.uuid4().hex[:12]
+    warn = "every container of that daemon restarts" + (" (rootless has no live-restore)" if target == "docker-rootless" else "")
+    text = (f"⚠️ Restart <b>{esc(target)}</b> on <b>{esc(node)}</b>?\n<i>{esc(warn)}</i>\n"
+            f"<code>{esc(out)}</code>")
+    kb = {"inline_keyboard": [[
+        {"text": "✅ Restart", "callback_data": f"restart:{nonce}:yes"},
+        {"text": "❌ Cancel", "callback_data": f"restart:{nonce}:no"},
+    ]]}
+    m = send(text, thread, reply_to=message_id, reply_markup=kb)
+    PENDING[nonce] = {"node": node, "target": target, "user": str(user), "created": time.time(), "message_id": m["message_id"]}
+    return None  # already answered
+
+
+def handle_callback(cq):
+    data = cq.get("data", "")
+    user = str(cq.get("from", {}).get("id"))
+    cq_id = cq.get("id")
+    try:
+        _, nonce, answer = data.split(":")
+    except ValueError:
+        return
+    p = PENDING.get(nonce)
+    if not p:
+        telegram("answerCallbackQuery", callback_query_id=cq_id, text="expired")
+        return
+    if user != p["user"] and user not in ADMIN_USER_IDS:
+        telegram("answerCallbackQuery", callback_query_id=cq_id, text="not yours")
+        return
+    del PENDING[nonce]
+    head = f"<b>{esc(p['target'])}</b> on <b>{esc(p['node'])}</b>"
+    if answer != "yes" or time.time() - p["created"] > CONFIRM_TTL:
+        telegram("answerCallbackQuery", callback_query_id=cq_id, text="cancelled")
+        edit(p["message_id"], f"❌ Restart {head} cancelled" + ("" if answer != "yes" else " (confirmation expired)"))
+        return
+    telegram("answerCallbackQuery", callback_query_id=cq_id, text="restarting…")
+    edit(p["message_id"], f"⏳ Restarting {head} …")
+
+    def work():
+        ok, out = run_restart(p["node"], p["target"])
+        led = "🟢" if ok else "🔴"
+        try:
+            edit(p["message_id"], f"{led} Restart {head} {'done' if ok else 'FAILED'}\n<code>{esc(out)}</code>")
+        except Exception as e:
+            log.error("edit failed: %s", e)
+        log.info("restart %s %s by %s: %s", p["node"], p["target"], p["user"], "ok" if ok else "FAILED")
+
+    threading.Thread(target=work, daemon=True).start()
 
 
 COMMANDS = {"status": cmd_status, "alerts": cmd_alerts, "deploys": cmd_deploys, "help": cmd_help, "start": cmd_help}
 
 
-def handle_command(text):
+def handle_command(text, user=None, thread=None, message_id=None):
     parts = text.strip().split()
     cmd = parts[0][1:].split("@")[0].lower()
     if "@" in parts[0] and BOT_NAME and parts[0].split("@")[1].lower() != BOT_NAME.lower():
         return None
+    if cmd == "restart":
+        try:
+            return cmd_restart(parts[1:], user, thread, message_id)
+        except Exception as e:
+            log.exception("restart failed")
+            return f"⚠️ restart failed: {esc(e)}"
     fn = COMMANDS.get(cmd)
     if not fn:
         return None
@@ -577,7 +693,7 @@ def run_commands():
             {"command": "alerts", "description": "Active alerts by node"},
             {"command": "deploys", "description": "Last generation change per node"},
             {"command": "help", "description": "What this bot does"},
-        ]))
+        ] + ([{"command": "restart", "description": "Restart docker-rootless/rootful on a node (admins)"}] if ADMIN_USER_IDS else [])))
     except Exception as e:
         log.warning("getMe/setMyCommands failed: %s", e)
     offset_file = os.path.join(STATE_DIR, "offset")
@@ -587,7 +703,7 @@ def run_commands():
         offset = 0
     while True:
         try:
-            qs = urllib.parse.urlencode({"timeout": 50, "offset": offset, "allowed_updates": '["message"]'})
+            qs = urllib.parse.urlencode({"timeout": 50, "offset": offset, "allowed_updates": '["message","callback_query"]'})
             with urllib.request.urlopen(f"{TELEGRAM_API}/bot{TOKEN}/getUpdates?{qs}", timeout=70) as r:
                 updates = json.load(r).get("result", [])
         except urllib.error.HTTPError as e:
@@ -601,11 +717,19 @@ def run_commands():
             continue
         for u in updates:
             offset = u["update_id"] + 1
+            cq = u.get("callback_query")
+            if cq:
+                if str(cq.get("message", {}).get("chat", {}).get("id")) == str(CHAT_ID):
+                    try:
+                        handle_callback(cq)
+                    except Exception as e:
+                        log.error("callback failed: %s", e)
+                continue
             m = u.get("message") or {}
             text = m.get("text") or ""
             if str(m.get("chat", {}).get("id")) != str(CHAT_ID) or not text.startswith("/"):
                 continue
-            reply = handle_command(text)
+            reply = handle_command(text, m.get("from", {}).get("id"), m.get("message_thread_id"), m.get("message_id"))
             if reply is None:
                 continue
             try:
