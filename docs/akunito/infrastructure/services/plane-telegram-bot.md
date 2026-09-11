@@ -56,9 +56,28 @@ The v1 list endpoint ignores every filter (`assignees`, `state`, `state__group`,
 cursor (every `planeBotPollSeconds`); a full walk every `planeBotFullSyncMinutes` marks vanished items deleted.
 `sync_items` returns `(previous_row, new_item)` pairs — the hook for F2 notifications.
 
+## Notifications (F2a)
+
+Source = mirror diffs (`sync_items` returns `(previous_row, new_item)`), so no webhook is needed; a new comment bumps the
+item's `updated_at` (verified), so comments ride the same path. `notify.py`:
+
+| Event | Delivery |
+|---|---|
+| created | 🆕 card in the project's topic (skipped if the bot's own `/new` reply is already the card) |
+| assigned | new message mentioning the assignee (`tg://user?id=`), replying to the card; self-assignment silent |
+| Done / Cancelled | ✅ / 🚫: the card is **edited in place** (silent); a short line if there was no card |
+| priority / due / name / other state | card edited in place; nothing if there is no card |
+| comment | 💬 quoted (HTML stripped, 300 chars) as a reply to the card |
+
+**Audience** of a chat for a project = configured users **with a Telegram id** who are members of the project.
+**Echo rule:** nothing posts when the actor is the only listener — except `external_source=n8n` items, which always post.
+So in *My Tasks* your own web edits are silent while n8n's monthly ticket is not; in *Home*, Aga's actions reach you and
+yours reach her once her Telegram id is filled in. Deletions are silent. The first sync of a project (no cursor yet)
+and the schema-migration full sync never notify. Cards live in the `posts` table (`item, chat → message_id`).
+
 ## Testing
 
-- **Unit tests run in the nix `checkPhase`**: parser, scope resolver, renderer, sync, and the **leak matrix**
+- **Unit tests run in the nix `checkPhase`** (68): parser, scope resolver, renderer, sync, notifications (echo rule, assignment, closing, comments) and the **leak matrices** — commands and notifications
   (`tests/test_leak.py`: every chat × every command form × every requester × every thread asserts no foreign identifier,
   project block or ticket title in any reply; ORB is in the mirror and in no chat). A failing test fails the build, so
   `install.sh` cannot deploy a scope regression. Run locally: `cd system/app/plane-bot/tests && PYTHONPATH=..:../.. python3 -m unittest`.
