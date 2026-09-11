@@ -93,6 +93,14 @@ in
     # Telegram bot posting AkuCraft server up/down + player join/leave to the
     # AkuCraft group. No-ops until akucraftTelegramBotToken/ChatId are set in secrets.
     akucraftStatusBotEnable = true;
+
+    # Plane Telegram bot (@aku_plane_bot): one forum group per audience, scope = planeBotChats.
+    planeBotEnable = true;
+    planeBotToken = secrets.planeBotToken or "";
+    planeBotChats = secrets.planeBotChats or { };
+    planeBotUsers = secrets.planeBotUsers or { };
+    planeBotSyncAlias = "diego"; # member of every in-scope project; fills the mirror
+    planeBotPublicUrl = "https://plane.${secrets.publicDomain}";
     # /ask - private LLM support in Discord, through the LiteLLM gateway below.
     akucraftAskEnable = true;
     akucraftAskDailyQuota = 25;

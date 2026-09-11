@@ -1113,6 +1113,16 @@
     headscaleDomain = ""; # Public domain for Headscale (e.g., "headscale.example.com")
     headscalePort = 8080; # Internal port (nginx handles TLS on 443)
     headscaleExtraDnsRecords = [ ]; # Extra MagicDNS A records pushed to all clients: [{ name, type, value }] — resolved locally, works even for ACL-restricted guest nodes
+    # === Plane Telegram bot (system/app/plane-bot.nix) ===
+    planeBotEnable = false; # Run the Plane Telegram bot daemon (VPS only; needs planeBotToken/Chats/Users from secrets)
+    planeBotToken = ""; # @BotFather token of the Plane bot (secrets/domains.nix)
+    planeBotChats = { }; # chat id -> { PROJECT = "topic id"; }: the ONLY scope a chat ever sees (secrets/domains.nix)
+    planeBotUsers = { }; # alias -> { telegramId, email, token }: who may act and with which Plane token (secrets/domains.nix)
+    planeBotSyncAlias = ""; # alias whose Plane token fills the mirror; must be a member of every project in planeBotChats
+    planeBotPublicUrl = ""; # URL used in ticket links (e.g. "https://plane.akunito.com"); "" = planeApiUrl
+    planeBotActiveStates = "In Progress,In Review,Todo"; # state names /status counts as active, in display order
+    planeBotPollSeconds = 60; # mirror sync interval
+    planeBotFullSyncMinutes = 60; # full walk (catches deletions) interval
     akucraftStatusBotEnable = false; # Telegram status bot for AkuCraft Minecraft servers (VPS only; needs akucraftTelegramBotToken/ChatId in secrets)
     akucraftIdleStopMinutes = 45;    # stop the Minecraft server after this many minutes with no players; raise it to keep a long pregeneration alive
     akucraftStopLockReason = "";     # non-empty blocks BOTH the idle stop and the /stop command, and is shown to whoever tries
