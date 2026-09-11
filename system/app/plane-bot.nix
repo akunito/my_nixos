@@ -48,6 +48,9 @@ let
     STATE_DIR = "/var/lib/plane-bot";
     TZ = systemSettings.timezone or "Europe/Warsaw";
     PYTHONUNBUFFERED = "1";
+    WEBHOOK_HOST = "127.0.0.1"; # Plane's rootless container reaches host loopback as host.docker.internal (10.0.2.2)
+    WEBHOOK_PORT = toString (systemSettings.planeBotWebhookPort or 8766);
+    WEBHOOK_DEBUG = if (systemSettings.planeBotWebhookDebug or false) then "1" else "0";
   };
 in
 lib.mkIf enabled {
@@ -57,6 +60,7 @@ lib.mkIf enabled {
     text = ''
       TELEGRAM_BOT_TOKEN=${token}
       PLANE_USERS=${builtins.toJSON users}
+      PLANE_WEBHOOK_SECRET=${systemSettings.planeBotWebhookSecret or ""}
     '';
     mode = "0400";
     user = "root";

@@ -1123,6 +1123,9 @@
     planeBotActiveStates = "In Progress,In Review,Todo"; # state names /status counts as active, in display order
     planeBotPollSeconds = 60; # mirror sync interval
     planeBotFullSyncMinutes = 60; # full walk (catches deletions) interval
+    planeBotWebhookSecret = ""; # Plane workspace webhook secret_key; "" disables the receiver (polling only)
+    planeBotWebhookPort = 8766; # receiver on 127.0.0.1; Plane reaches it as http://host.docker.internal:<port>/plane (needs WEBHOOK_ALLOWED_HOSTS in plane-aio)
+    planeBotWebhookDebug = false; # dump every accepted payload to /var/lib/plane-bot/webhook-samples/
     akucraftStatusBotEnable = false; # Telegram status bot for AkuCraft Minecraft servers (VPS only; needs akucraftTelegramBotToken/ChatId in secrets)
     akucraftIdleStopMinutes = 45;    # stop the Minecraft server after this many minutes with no players; raise it to keep a long pregeneration alive
     akucraftStopLockReason = "";     # non-empty blocks BOTH the idle stop and the /stop command, and is shown to whoever tries

@@ -147,8 +147,25 @@ class Notifier:
             is_n8n = (row.get("external_source") or "") == "n8n"
             actor = row.get("created_by") if events == ["created"] else row.get("updated_by")
             comments = self.new_comments(prev, row) if prev is not None else []
+            comments = [c for c in comments if not (c.get("id") and self.mirror.comment_seen(c["id"]))]
+            for c in comments:
+                if c.get("id"):
+                    self.mirror.mark_comment_seen(c["id"])
             for chat_id, thread in self.chats_for(row["pident"]):
                 sent += self.deliver(chat_id, thread, row, prev, events, actor, is_n8n, comments)
+        return sent
+
+    def deliver_comments(self, row, comments):
+        """Comments only (webhook path), to every chat of the project; remembers them."""
+        sent = 0
+        fresh = [c for c in comments if c.get("id") and not self.mirror.comment_seen(c["id"])] if any(c.get("id") for c in comments) else comments
+        for c in fresh:
+            if c.get("id"):
+                self.mirror.mark_comment_seen(c["id"])
+        if not fresh:
+            return 0
+        for chat_id, thread in self.chats_for(row["pident"]):
+            sent += self.deliver(chat_id, thread, row, None, [], None, False, fresh)
         return sent
 
     def deliver(self, chat_id, thread, row, prev, events, actor, is_n8n, comments):
@@ -163,6 +180,7 @@ class Notifier:
             if hearers:
                 n += self._send_card(chat_id, thread, row, head="🆕 ", by=actor)
             return n
+        prev = prev or {}
 
         if "assigned" in events:
             gained = set(row["assignees"]) - set(prev.get("assignees") or [])

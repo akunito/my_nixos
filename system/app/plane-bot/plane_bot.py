@@ -40,6 +40,7 @@ import urllib.request
 import zoneinfo
 
 from notify import Notifier, keyboard_for
+from webhook import WebhookReceiver
 from tgcommon import Telegram, esc
 
 log = logging.getLogger("plane-bot")
@@ -257,6 +258,8 @@ CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS posts (item TEXT, chat TEXT, message_id INTEGER, thread TEXT, created_at TEXT, PRIMARY KEY (item, chat));
 -- every bot message that is about an item (cards, assignment pings, quoted comments): reply-to resolution
 CREATE TABLE IF NOT EXISTS msgmap (chat TEXT, message_id INTEGER, item TEXT, PRIMARY KEY (chat, message_id));
+-- comments already notified (webhook and poller both see them)
+CREATE TABLE IF NOT EXISTS seen_comments (id TEXT PRIMARY KEY, at TEXT);
 """
 # columns added after the first deploy; sqlite has no ADD COLUMN IF NOT EXISTS
 MIGRATIONS = [("items", "created_by", "ALTER TABLE items ADD COLUMN created_by TEXT"),
@@ -338,6 +341,14 @@ class Mirror:
             self.db.execute("INSERT OR REPLACE INTO posts (item, chat, message_id, thread, created_at) VALUES (?,?,?,?,?)",
                             (item_id, str(chat_id), int(message_id), str(thread) if thread is not None else None, dt.datetime.now(dt.timezone.utc).isoformat()))
             self.db.execute("INSERT OR REPLACE INTO msgmap (chat, message_id, item) VALUES (?,?,?)", (str(chat_id), int(message_id), item_id))
+
+    def comment_seen(self, cid):
+        with self.lock:
+            return bool(self.db.execute("SELECT 1 FROM seen_comments WHERE id=?", (cid,)).fetchone())
+
+    def mark_comment_seen(self, cid):
+        with self.lock, self.db:
+            self.db.execute("INSERT OR IGNORE INTO seen_comments (id, at) VALUES (?,?)", (cid, dt.datetime.now(dt.timezone.utc).isoformat()))
 
     def map_message(self, chat_id, message_id, item_id):
         with self.lock, self.db:
@@ -1182,6 +1193,13 @@ class Daemon:
             except Exception as e:
                 log.warning("edit after callback: %s", e)
 
+    def run_webhook(self, port, secret):
+        # the notifier is built by the first sync pass; wait for it
+        while self.notifier is None:
+            time.sleep(2)
+        debug = os.path.join(self.cfg.state_dir, "webhook-samples") if os.environ.get("WEBHOOK_DEBUG") == "1" else None
+        WebhookReceiver(self.cfg, self.mirror, self.notifier, secret, debug).serve(os.environ.get("WEBHOOK_HOST", "127.0.0.1"), port)
+
     def run_scheduler(self):
         """08:00 due-today per project topic; Sunday 18:00 weekly digest in General. Once per day, via meta."""
         while True:
@@ -1225,6 +1243,12 @@ class Daemon:
             log.warning("getMe/setMyCommands failed: %s", e)
         threading.Thread(target=self.run_sync, name="sync", daemon=True).start()
         threading.Thread(target=self.run_scheduler, name="scheduler", daemon=True).start()
+        secret = os.environ.get("PLANE_WEBHOOK_SECRET", "")
+        port = int(os.environ.get("WEBHOOK_PORT", "0") or 0)
+        if secret and port:
+            threading.Thread(target=self.run_webhook, args=(port, secret), name="webhook", daemon=True).start()
+        else:
+            log.info("webhook receiver off (PLANE_WEBHOOK_SECRET/WEBHOOK_PORT unset); polling only")
         self.tg.poll(os.path.join(self.cfg.state_dir, "offset"), self.on_message, self.on_callback)
 
 
