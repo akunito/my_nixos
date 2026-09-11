@@ -43,7 +43,20 @@ LW/LiftCraft stays with its own bot for now.
 | `/status all all` | anywhere | group summary: counts per project and person |
 | `/show PROJ-12` | anywhere | one ticket |
 | `/new [PROJ] title`, `+ title` | topic (or `PROJ` given) | creates in **Todo** as the caller |
+| `/assign PROJ-12 <alias|me|none>` | anywhere (project must be in the chat) | adds the person (or clears), answers with the card |
+| `/prio PROJ-12 <urgent|high|medium|low|none>` | anywhere | priority |
+| `/due PROJ-12 <YYYY-MM-DD|MM-DD|today|tomorrow|fri|+3d|none>` | anywhere | target date (weekday = next one, never today) |
+| `/state PROJ-12 <todo|progress|review|done|cancel>`, `/done PROJ-12` | anywhere | state by name in that project |
+| **buttons under a card** | — | `▶ In Progress` / `☐ Todo` / `✅ Done` / `👤 Me`; closed cards show `↩ Todo` |
+| **reply to a bot message about a ticket** | — | adds a Plane comment as you (`💬 added to PROJ-12`) |
 | `/whoami`, `/help` | anywhere | id + mapping; usage |
+
+Every write uses the caller's token (a read-only alias or an unregistered Telegram id is refused), refreshes the mirror
+immediately (so the sync does not echo it back) and answers with the updated card. Button callbacks carry the item id;
+the chat's table is still checked (`Not available here` in the wrong chat).
+
+**Scheduled** (thread `run_scheduler`, once per day via `meta` keys): 08:00 due-today/overdue per project topic with
+assignee mentions; Sunday 18:00 weekly digest in General (closed this week + group summary).
 
 Active = `planeBotActiveStates` by **name** (`In Progress, In Review, Todo`; Hold - Important and Backlog excluded).
 Order: state (as listed) → priority (urgent…none) → due date. 20 per project then `+N more`; long replies are split.
@@ -77,11 +90,12 @@ and the schema-migration full sync never notify. Cards live in the `posts` table
 
 ## Testing
 
-- **Unit tests run in the nix `checkPhase`** (68): parser, scope resolver, renderer, sync, notifications (echo rule, assignment, closing, comments) and the **leak matrices** — commands and notifications
+- **Unit tests run in the nix `checkPhase`** (91): parser, scope resolver, renderer, sync, notifications (echo rule, assignment, closing, comments), write commands, button callbacks, reply=comment, scheduled reports, and the **leak matrices** — commands and notifications
   (`tests/test_leak.py`: every chat × every command form × every requester × every thread asserts no foreign identifier,
   project block or ticket title in any reply; ORB is in the mirror and in no chat). A failing test fails the build, so
   `install.sh` cannot deploy a scope regression. Run locally: `cd system/app/plane-bot/tests && PYTHONPATH=..:../.. python3 -m unittest`.
 - Standalone build: `nix build --impure --expr 'let f = builtins.getFlake (toString ./.); pkgs = f.inputs.nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./system/app/plane-bot/package.nix {}'`.
+- `plane-bot-cli simulate --chat ID "@due"` / `"@weekly"` render the scheduled reports; `"a:d:<item hex>"` runs a button.
 - On the VPS, against the real mirror, without Telegram:
   `sudo -u akunito env $(sudo cat /etc/secrets/plane-bot.env | xargs) $(systemctl show plane-bot -p Environment --value) plane-bot simulate --chat -1004485770269 --thread 5 --user 451343717 "/status HOME all"`
   (`plane-bot sync --full` forces a full walk).
@@ -99,8 +113,6 @@ and the schema-migration full sync never notify. Cards live in the `posts` table
 
 ## Roadmap
 
-F2 notifications (assignment / created / done-cancelled / comments via activities + comments polling; echo rule: post
-only when someone other than the actor is in the chat, or `external_source=n8n`; 60 s aggregation per ticket; edit the
-original message on state change), inline state buttons, reply-to-notification = comment, `/assign` `/prio` `/due`,
-due-today reminder 08:00, Sunday digest. F3: Plane webhook (`WEBHOOK_ALLOWED_IPS` in plane-aio's env — Plane blocks
-private, loopback and 100.64/10 targets — documented in plane-customizations.md) + Kuma monitor; infra-bot onto tgcommon.
+F3: Plane webhook (`WEBHOOK_ALLOWED_IPS` in plane-aio's env — Plane blocks private, loopback and 100.64/10 targets —
+documented in plane-customizations.md) + Kuma monitor; infra-bot onto tgcommon.py; Aga's Telegram id + join PLANE Home;
+LiftCraft integration later.

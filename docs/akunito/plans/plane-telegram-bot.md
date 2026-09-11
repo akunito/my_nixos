@@ -1,6 +1,6 @@
 # Plan: Plane Telegram bot (AINF-380)
 
-Status: **F1 deployed 2026-09-11** · service doc: `../infrastructure/services/plane-telegram-bot.md`
+Status: **F1 + F2 deployed 2026-09-11** (notifications, buttons, reply=comment, write commands, scheduled reports) · service doc: `../infrastructure/services/plane-telegram-bot.md`
 
 ## Decisions (interview 2026-09-11)
 
@@ -22,7 +22,7 @@ Status: **F1 deployed 2026-09-11** · service doc: `../infrastructure/services/p
 ## Phases
 
 - **F1 (done)** — module, secrets, mirror sync, `/status` all forms, `/show`, `/new` + `+` capture, `/whoami`, 47 tests incl. leak matrix, n8n `external_source`.
-- **F2** — notifications from `sync_items` diffs + activities/comments; echo rule; 60 s aggregation; edit-in-place on state change; inline state buttons (Pending nonce/TTL from tgcommon); reply = comment; `/assign` `/prio` `/due`; due-today 08:00; Sunday digest. Tests: notification leak matrix (an IRIN event never lands in My Tasks), echo/n8n cases, aggregation.
+- **F2 (done)** — notifications from `sync_items` diffs + activities/comments; echo rule; 60 s aggregation; edit-in-place on state change; inline state buttons (Pending nonce/TTL from tgcommon); reply = comment; `/assign` `/prio` `/due`; due-today 08:00; Sunday digest. Tests: notification leak matrix (an IRIN event never lands in My Tasks), echo/n8n cases, aggregation.
 - **F3** — Plane webhook with HMAC, `WEBHOOK_ALLOWED_IPS` in plane-aio compose (+ plane-customizations.md), Kuma monitor on the bot; polling stays as reconciliation. infra-bot migrated onto `tgcommon.py` (verify with its `--selftest`).
 - **Later** — Aga: her Telegram id into `planeBotUsers`, add her to PLANE Home. LiftCraft integration. `/ask` over LiteLLM.
 
