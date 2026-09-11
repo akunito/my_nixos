@@ -27,6 +27,28 @@ let
   username = userSettings.username;
 
   pkg = pkgs.callPackage ./plane-bot/package.nix { };
+
+  # Same non-secret environment as the unit, aliases without tokens: lets
+  # `plane-bot-cli simulate --chat ID [--thread N] [--user TGID] "/status all"`
+  # answer from the live mirror on the host without touching Telegram or secrets.
+  usersNoTokens = lib.mapAttrs (_: u: u // { token = ""; }) users;
+  cli = pkgs.writeShellScriptBin "plane-bot-cli" (lib.concatStringsSep "\n" (lib.mapAttrsToList
+    (k: v: "export ${k}=${lib.escapeShellArg v}") (unitEnv // { PLANE_USERS = builtins.toJSON usersNoTokens; }))
+    + "\nexec ${pkg}/bin/plane-bot \"$@\"\n");
+
+  unitEnv = {
+    PLANE_CHATS = builtins.toJSON chats;
+    PLANE_URL = systemSettings.planeApiUrl or "";
+    PLANE_PUBLIC_URL = systemSettings.planeBotPublicUrl or (systemSettings.planeApiUrl or "");
+    PLANE_WORKSPACE = systemSettings.planeWorkspaceSlug or "";
+    SYNC_ALIAS = systemSettings.planeBotSyncAlias or "";
+    ACTIVE_STATES = systemSettings.planeBotActiveStates or "In Progress,In Review,Todo";
+    POLL_SECONDS = toString (systemSettings.planeBotPollSeconds or 60);
+    FULL_SYNC_MINUTES = toString (systemSettings.planeBotFullSyncMinutes or 60);
+    STATE_DIR = "/var/lib/plane-bot";
+    TZ = systemSettings.timezone or "Europe/Warsaw";
+    PYTHONUNBUFFERED = "1";
+  };
 in
 lib.mkIf enabled {
   # Tokens (bot + one Plane API token per person) never go into the unit's
@@ -40,26 +62,14 @@ lib.mkIf enabled {
     user = "root";
   };
 
-  environment.systemPackages = [ pkg ];
+  environment.systemPackages = [ pkg cli ];
 
   systemd.services.plane-bot = {
     description = "Plane Telegram bot (commands + mirror sync)";
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
-    environment = {
-      PLANE_CHATS = builtins.toJSON chats;
-      PLANE_URL = systemSettings.planeApiUrl or "";
-      PLANE_PUBLIC_URL = systemSettings.planeBotPublicUrl or (systemSettings.planeApiUrl or "");
-      PLANE_WORKSPACE = systemSettings.planeWorkspaceSlug or "";
-      SYNC_ALIAS = systemSettings.planeBotSyncAlias or "";
-      ACTIVE_STATES = systemSettings.planeBotActiveStates or "In Progress,In Review,Todo";
-      POLL_SECONDS = toString (systemSettings.planeBotPollSeconds or 60);
-      FULL_SYNC_MINUTES = toString (systemSettings.planeBotFullSyncMinutes or 60);
-      STATE_DIR = "/var/lib/plane-bot";
-      TZ = systemSettings.timezone or "Europe/Warsaw";
-      PYTHONUNBUFFERED = "1";
-    };
+    environment = unitEnv;
     serviceConfig = {
       User = username;
       EnvironmentFile = "/etc/secrets/plane-bot.env";

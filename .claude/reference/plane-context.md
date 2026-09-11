@@ -4,17 +4,28 @@ This file is loaded on-demand when agents need detailed Plane integration info.
 
 ## Project UUID Table (akunito's projects)
 
-| Identifier | Project Name | UUID |
-|------------|-------------|------|
-| AINF | AKU - Infrastructure | `ea5c0b30-a3ab-4ab3-bd11-a4b47d3d7171` |
-| APER | AKU - Personal | `5c7802e2-9a11-46d4-b771-7891164bb5c5` |
-| AWORK | AKU - Work Notes | `ec30de69-c749-4506-9441-9690753391f5` |
-| ALEA | AKU - Learning | `cb002098-d738-4598-8a95-87affe9cd4d5` |
-| APORT | AKU - Portfolio | `e9e0f711-f34a-4a73-938e-fe3c0bf14b19` |
-| INF | Infrastructure & DevOps | `4ec09847-9c12-4a0a-854e-a50ceafa9ea9` |
-| LW | Liftcraft | `3a917926-76e4-420f-b729-3dfbb76b4602` |
-| JLE | JL Engine | `09772481-bcf3-4ffb-95e6-3ceddf3563de` |
-| FIN | Finance | `d1984602-39ab-4e7f-9485-e51620954043` |
+| Identifier | Project Name | UUID | Members |
+|------------|-------------|------|---------|
+| AINF | AKU Infrastructure | `ea5c0b30-a3ab-4ab3-bd11-a4b47d3d7171` | Diego |
+| APER | AKU Personal | `5c7802e2-9a11-46d4-b771-7891164bb5c5` | Diego |
+| AWORK | AKU Work Notes | `ec30de69-c749-4506-9441-9690753391f5` | Diego |
+| ALEA | AKU Learning | `cb002098-d738-4598-8a95-87affe9cd4d5` | Diego |
+| ZEN | Zen Browser Mods | `c3c8a9a5-07c2-428e-8ee8-a81b9f0b6141` | Diego |
+| APORT | AKU Portfolio | `e9e0f711-f34a-4a73-938e-fe3c0bf14b19` | Diego, Komi |
+| APLANE | AKU Plane APP | `f23dccb9-7945-48bc-b228-908b167552a3` | Diego, Komi |
+| LEH | Lefty Home | `490ad552-6cf3-43ca-a1fc-fec9fdf0dd4d` | Diego, Komi |
+| LW | Liftcraft | `3a917926-76e4-420f-b729-3dfbb76b4602` | Diego, Komi |
+| FIN | Finance | `d1984602-39ab-4e7f-9485-e51620954043` | Diego, Komi |
+| IRIN | Irin | `590a3c04-f6fd-4b45-98a8-8ed8c8d27973` | Diego, Aga |
+| HOME | Home | `d54ae942-1de9-452a-833d-381807538c60` | Diego, Aga |
+| JLE | JL Engine | `09772481-bcf3-4ffb-95e6-3ceddf3563de` | Komi (Diego: 404) |
+| INF | Infrastructure & DevOps | `4ec09847-9c12-4a0a-854e-a50ceafa9ea9` | Komi |
+| ORB | KOMI - Orbit | `3b54022f-6fa7-48f8-b0c2-5417a49d22e4` | Komi |
+| N8N | n8n Workflows | `447e76be-1d4a-4156-889e-69fb3389cf60` | Komi |
+| ISG | Inventory Simulator | `5427fcbc-3c8d-4450-946a-8d80c7d13b17` | Komi |
+
+Members (2026-09-11): Diego `794b4ebf-4f96-4532-85e1-24f1b6683fef`, Aga `9ee5907f-308d-4074-927e-57a75f375e6d`, Komi `b24d5e9a-f2f6-4d69-9326-d51c1b7929dd`.
+Telegram bot for tickets: `docs/akunito/infrastructure/services/plane-telegram-bot.md` (AINF-380).
 
 **Workspace**: `akuworkspace` | **URL**: https://plane.akunito.com
 

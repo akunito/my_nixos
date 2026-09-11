@@ -559,7 +559,8 @@ def render_status(cfg, mirror, scope):
         if scope.user not in (ALL, None):
             target_uid = mirror.user_id_by_email(scope.user.email, list(pids.values()))
             if not target_uid:
-                return f"{esc(scope.user.alias)} is not a member of any project here."
+                where = scope.projects[0] if len(scope.projects) == 1 else "any project here"
+                return f"{esc(scope.user.alias)} is not a member of {where}."
         blocks = []
         for ident in scope.projects:
             items = sorted(by_project.get(ident, []), key=lambda r: _sort_key(cfg, r))

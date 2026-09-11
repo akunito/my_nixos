@@ -70,7 +70,8 @@ class RenderTests(unittest.TestCase):
         self.assertIn("<b>IRIN</b> · 2", out)
 
     def test_empty_results_are_explicit(self):
-        self.assertEqual(self.w.say(HOME, "4", "/status IRIN komi"), "komi is not a member of any project here.")
+        self.assertEqual(self.w.say(HOME, "4", "/status IRIN komi"), "komi is not a member of IRIN.")
+        self.assertEqual(self.w.say(HOME, "4", "/status all komi"), "komi is not a member of any project here.")
         self.w.mirror.upsert_item(item("IRIN", 2, "Buy food", "Done", "medium", ["diego"]))
         self.assertEqual(self.w.say(HOME, "4", "/status", TG_DIEGO), "<b>IRIN</b> · no active tickets for diego.")
 
