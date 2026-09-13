@@ -1,4 +1,4 @@
-# DESK_W11 — Windows 11 side bootstrap. Run in an ELEVATED PowerShell.
+﻿# DESK_W11 — Windows 11 side bootstrap. Run in an ELEVATED PowerShell.
 # Idempotent: every step checks before acting. Read it before running it.
 # Companion: docs/akunito/infrastructure/desk-w11-wsl.md (the runbook)
 #
@@ -36,6 +36,7 @@ if (-not $SkipApps) {
   Step "Claude Code (native, for the PowerShell side only — the real one lives in WSL)"
   if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { irm https://claude.ai/install.ps1 | iex }
   Write-Host "  not on winget, install by hand: AMD Adrenalin driver, Aion 2 (NCSoft/Purple launcher), Lineage2Dex launcher, Equalizer APO (EasyEffects stand-in)"
+  Write-Warning "Spotify is elevationProhibited: winget import ALWAYS fails on it from this elevated shell. Install it afterwards from a NORMAL (non-elevated) PowerShell: winget install --id Spotify.Spotify --exact --source winget"
 }
 
 # ---------------------------------------------------------------- WSL
@@ -57,8 +58,10 @@ $lnk = Join-Path $startup 'hyper-desktops.lnk'
 if (-not (Test-Path $lnk)) {
   $uia = "$env:ProgramFiles\AutoHotkey\v2\AutoHotkey64_UIA.exe"   # UI Access build: drives elevated windows without admin
   if (-not (Test-Path $uia)) { $uia = "$env:ProgramFiles\AutoHotkey\v2\AutoHotkey64.exe"; Write-Warning "UIA binary missing — elevated windows will ignore the hotkeys" }
-  $ws = New-Object -ComObject WScript.Shell
-  $s = $ws.CreateShortcut($lnk); $s.TargetPath = $uia; $s.Arguments = "`"$ahk`""; $s.WorkingDirectory = $PSScriptRoot; $s.Save()
+  if (Test-Path $uia) {
+    $ws = New-Object -ComObject WScript.Shell
+    $s = $ws.CreateShortcut($lnk); $s.TargetPath = $uia; $s.Arguments = "`"$ahk`""; $s.WorkingDirectory = $PSScriptRoot; $s.Save()
+  } else { Write-Warning "AutoHotkey v2 not installed yet - shortcut skipped. Re-run without -SkipApps: a shortcut created now would point nowhere and no later run would repair it." }
 }
 Write-Host "  VirtualDesktopAccessor.dll must sit next to the .ahk: https://github.com/Ciantic/VirtualDesktopAccessor/releases"
 

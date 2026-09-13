@@ -23,6 +23,9 @@
         { "PackageIdentifier": "voidtools.Everything" },
         { "PackageIdentifier": "ShareX.ShareX" },
         { "PackageIdentifier": "WinDirStat.WinDirStat" },
+        { "PackageIdentifier": "Notepad++.Notepad++" },
+        { "PackageIdentifier": "Skillbrains.Lightshot" },
+        { "PackageIdentifier": "Microsoft.VCRedist.2015+.x64" },
 
         { "PackageIdentifier": "Tailscale.Tailscale" },
         { "PackageIdentifier": "Nextcloud.NextcloudDesktop" },
@@ -40,7 +43,7 @@
         { "PackageIdentifier": "Mozilla.Thunderbird" },
         { "PackageIdentifier": "TheDocumentFoundation.LibreOffice" },
         { "PackageIdentifier": "calibre.calibre" },
-        { "PackageIdentifier": "dbeaver.dbeaver" },
+        { "PackageIdentifier": "DBeaver.DBeaver.Community" },
 
         { "PackageIdentifier": "Spotify.Spotify" },
         { "PackageIdentifier": "VideoLAN.VLC" },
@@ -50,6 +53,8 @@
         { "PackageIdentifier": "Valve.Steam" },
         { "PackageIdentifier": "GOG.Galaxy" },
         { "PackageIdentifier": "PrismLauncher.PrismLauncher" },
+        { "PackageIdentifier": "RuneLite.RuneLite" },
+        { "PackageIdentifier": "NexusMods.Vortex" },
         { "PackageIdentifier": "EclipseAdoptium.Temurin.21.JRE" },
         { "PackageIdentifier": "LizardByte.Sunshine" },
         { "PackageIdentifier": "MoonlightGameStreamingProject.Moonlight" }

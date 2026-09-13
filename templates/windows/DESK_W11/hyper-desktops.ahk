@@ -1,4 +1,4 @@
-; DESK_W11 — Sway muscle memory on Windows 11 (AutoHotkey v2).
+﻿; DESK_W11 — Sway muscle memory on Windows 11 (AutoHotkey v2).
 ; Hyper = Ctrl+Alt+Win, exactly the Mod4+Control+Mod1 combo from user/wm/sway.
 ; Needs VirtualDesktopAccessor.dll (Ciantic) next to this file; Windows 11 24H2+.
 ;
@@ -33,7 +33,7 @@ if !FileExist(dll) {
     ExitApp
 }
 hVDA := DllCall("LoadLibrary", "Str", dll, "Ptr")
-GoTo(n) => DllCall("VirtualDesktopAccessor\GoToDesktopNumber", "Int", n, "Int")
+GoToDesk(n) => DllCall("VirtualDesktopAccessor\GoToDesktopNumber", "Int", n, "Int")
 Count() => DllCall("VirtualDesktopAccessor\GetDesktopCount", "Int")
 Current() => DllCall("VirtualDesktopAccessor\GetCurrentDesktopNumber", "Int")
 Create() => DllCall("VirtualDesktopAccessor\CreateDesktop", "Int")
@@ -45,21 +45,21 @@ EnsureDesktop(n) {
 }
 Go(n) {
     EnsureDesktop(n)
-    GoTo(n)
+    GoToDesk(n)
 }
 Move(n) {
     EnsureDesktop(n)
     MoveWin(WinGetID("A"), n)
-    GoTo(n)
+    GoToDesk(n)
 }
 Rel(delta) {
     c := Count(), i := Mod(Current() + delta + c, c)
-    GoTo(i)
+    GoToDesk(i)
 }
 RelMove(delta) {
     c := Count(), i := Mod(Current() + delta + c, c)
     MoveWin(WinGetID("A"), i)
-    GoTo(i)
+    GoToDesk(i)
 }
 
 ; Hyper = ^!# (Ctrl Alt Win). Hyper+Shift = ^!#+
@@ -94,17 +94,17 @@ Toggle(exe, cmd) {
     }
 }
 ^!#t:: Toggle("WindowsTerminal.exe", "wt.exe")
-^!#z:: Toggle("zen.exe", "zen")
-^!#v:: Toggle("vivaldi.exe", "vivaldi")
-^!#l:: Toggle("Telegram.exe", A_AppData "\..\Roaming\Telegram Desktop\Telegram.exe")
-^!#d:: Toggle("Obsidian.exe", A_LocalAppData "\Obsidian\Obsidian.exe")
+^!#z:: Toggle("zen.exe", A_ProgramFiles "\Zen Browser\zen.exe")
+^!#v:: Toggle("vivaldi.exe", EnvGet("LOCALAPPDATA") "\Vivaldi\Application\vivaldi.exe")
+^!#l:: Toggle("Telegram.exe", A_AppData "\Telegram Desktop\Telegram.exe")
+^!#d:: Toggle("Obsidian.exe", EnvGet("LOCALAPPDATA") "\Programs\Obsidian\Obsidian.exe")
 ^!#c:: Toggle("Code.exe", "code")
-^!#p:: Toggle("Bitwarden.exe", A_LocalAppData "\Programs\Bitwarden\Bitwarden.exe")
-^!#o:: Toggle("Element.exe", A_LocalAppData "\element-desktop\Element.exe")
-^!#y:: Toggle("Spotify.exe", "spotify:")
+^!#p:: Toggle("Bitwarden.exe", EnvGet("LOCALAPPDATA") "\Programs\Bitwarden\Bitwarden.exe")
+^!#o:: Toggle("Element.exe", EnvGet("LOCALAPPDATA") "\element-desktop\Element.exe")
+^!#y:: Toggle("Spotify.exe", A_AppData "\Spotify\Spotify.exe")
 ^!#x:: Toggle("CalculatorApp.exe", "calc")
 ^!#e:: Toggle("explorer.exe", "explorer")
-^!#u:: Toggle("dbeaver.exe", "dbeaver")
+^!#u:: Toggle("dbeaver.exe", EnvGet("LOCALAPPDATA") "\DBeaver\dbeaver.exe")
 ^!#+r:: Reload
 ^!#+Escape:: Suspend
 

@@ -1,4 +1,4 @@
-# DESK_W11 — conservative Windows 11 debloat. ELEVATED PowerShell. Reboot after.
+﻿# DESK_W11 — conservative Windows 11 debloat. ELEVATED PowerShell. Reboot after.
 # Everything here is reversible with the mirror line in the comment. Nothing
 # touches Defender, Windows Update, Xbox/Game services, audio, Bluetooth,
 # printing or Explorer basics. Companion: docs/akunito/infrastructure/desk-w11-wsl.md
