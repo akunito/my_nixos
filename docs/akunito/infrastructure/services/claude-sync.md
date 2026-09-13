@@ -1,3 +1,11 @@
+---
+id: infrastructure.services.claude-sync
+summary: Claude Code state (memory, skills, session transcripts) synced across DESK, LAPTOP_X13 and DESK_W11 through a hub on VPS_PROD — design, edge cases, bootstrap, operation
+tags: [claude-code, sync, vps, home-manager, hooks]
+related_files: [user/app/claude-code/claude-sync*, system/app/claude-sync-hub.nix]
+date: 2026-09-13
+status: published
+---
 # claude-sync — Claude Code state across DESK, LAPTOP_X13 and DESK_W11
 
 Keeps `~/.claude` (memory, skills, commands, plans, agents, session

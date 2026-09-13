@@ -51,8 +51,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **system/app/adb.nix**: Android Debug Bridge (adb / fastboot) host support
 - **system/app/akucraft-status-bot.nix**: AkuCraft Telegram bot (announcements + group commands) *Enabled when:* `status + commands`
+- **system/app/alertmanager.nix**: Alertmanager — the piece that was missing between Prometheus and Telegram *Enabled when:* `168h`
 - **system/app/appimage.nix**: System module: appimage.nix
 - **system/app/archived/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
+- **system/app/claude-sync-hub.nix**: claude-sync hub — the always-on side of Claude Code state sync (VPS_PROD). *Enabled when:* `k: "restrict,command=\"${shell}/bin/claude-sync-shell\" ${k}"`
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
 - **system/app/database-backup.nix**: Database Backup Module *Enabled when:*
    - `lib.mkIf cfg.postgresqlEnable { systemd.services.postgresql-backup = { description = "PostgreSQL Database Daily Backup"; after = [ "postgresql.service" ] ++ lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; wants = lib.optional cfg.redisBgsave "redis-pre-backup-bgsave.service"; requires = [ "postgresql.service" ]; serviceConfig = { Type = "oneshot"; ExecStart = postgresqlBackupScript; User = "root"; Group = "root"; # Security hardening PrivateTmp = true; ProtectSystem = "strict"; ReadWritePaths = [ cfg.location "/var/lib/prometheus-node-exporter" ]; }; }; systemd.timers.postgresql-backup = { description = "PostgreSQL Database Daily Backup Timer"; wantedBy = [ "timers.target" ]; timerConfig = { OnCalendar = cfg.startAt; Persistent = true; RandomizedDelaySec = "5m"; }; }; # Create backup directory systemd.tmpfiles.rules = [ "d ${cfg.location}/postgresql/daily 0750 root root -" ]; }`
@@ -87,9 +89,13 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/headscale.nix**: Headscale — Self-hosted Tailscale Coordination Server *Enabled when:*
    - `systemSettings.headscaleEnable or false`
    - `ACME challenge`
+- **system/app/healthchecks-ping.nix**: healthchecks.io dead-man's switch (AINF-368 F5) *Enabled when:* `url != ""`
 - **system/app/homelab-docker.nix**: Homelab Docker Stacks - Systemd service to start docker-compose stacks on boot *Enabled when:*
    - `systemSettings.homelabDockerEnable or false`
    - `(systemSettings.financeUser or "") != ""`
+- **system/app/infra-bot.nix**: Infra Alerts Telegram bot (AINF-368) — runs on the monitoring server (VPS_PROD) *Enabled when:* `relay + commands`
+- **system/app/infra-notify.nix**: infra-notify — deploy announcements + post-deploy check for "Infra Alerts"
+- **system/app/infra-restart.nix**: infra-restart — the one write action the Infra Alerts bot may perform (AINF-368 F4) *Enabled when:* `what `sudo infra-restart` # resolves to`
 - **system/app/litellm.nix**: LiteLLM — OpenAI-compatible LLM gateway (AkuCraft AI backend). *Enabled when:* `verified 2026-08-18 — two # days of villager traffic logged with this ON, zero conversations # recorded`
 - **system/app/llama-server.nix**: Local LLM inference server — llama.cpp `llama-server`, Vulkan backend, *Enabled when:*
    - `Vulkan`
@@ -118,6 +124,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/pgbouncer.nix**: PgBouncer Connection Pooler Module *Enabled when:*
    - `moved from top-level`
    - `systemSettings.postgresqlServerEnable or false`
+- **system/app/plane-bot.nix**: Plane Telegram bot (@aku_plane_bot) — runs next to Plane on VPS_PROD *Enabled when:* `bot + one Plane API token per person`
+- **system/app/plane-bot/package.nix**: The plane-bot package: python daemon + shared tgcommon, unit tests in checkPhase.
 - **system/app/portals.nix**: XDG Desktop Portal Configuration
 - **system/app/postfix-relay.nix**: Native Postfix Relay via SMTP2GO *Enabled when:* `systemSettings.postfixRelayEnable or false`
 - **system/app/postgresql.nix**: PostgreSQL Server Module *Enabled when:*
@@ -130,6 +138,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.prometheusExporterEnable or false`
    - `(systemSettings.prometheusExporterEnable or false) || (systemSettings.grafanaEnable or false)`
    - `systemSettings.prometheusExporterCadvisorEnable or false`
+- **system/app/prometheus-host-health.nix**: Host health textfile metrics — the things node_exporter cannot see *Enabled when:* `every minute`
 - **system/app/prometheus-nas-backup.nix**: NAS Restic Backup Monitoring *Enabled when:* `systemSettings.prometheusNasBackupEnable or false`
 - **system/app/prometheus-pfsense-backup.nix**: pfSense Full Backup + Sync + Monitoring *Enabled when:* `systemSettings.prometheusPfsenseBackupEnable or false`
 - **system/app/prometheus-pve-backup.nix**: Proxmox Backup Monitoring *Enabled when:* `systemSettings.prometheusPveBackupEnable or false`
@@ -371,6 +380,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `${lib.getExe pkgs.jq} --arg id "${modId}" ' def to_local: if (. // "" | test("^https?://")) then (split("/") | last) else . end; .id = $id | .enabled = true | .origin = "store" | ."no-updates" = true | .style = ( if (.style | type) == "string" then { "chrome": (.style | to_local), "content": "" } elif (.style | type) == "object" then { "chrome": ((.style.chrome // "") | to_local), "content": ((.style.content // "") | to_local) } else { "chrome": "", "content": "" } end ) | if .preferences then .preferences = (.preferences | to_local) else . end | if .readme then .readme = (.readme | to_local) else . end ' "${webPanelsMod}/theme.json"`
 - **user/app/calendar/calendar.nix**: Typelibs needed by gi.require_version() inside eds-refresh.py. *Enabled when:* `sign in`
 - **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
+- **user/app/claude-code/claude-sync-pkg.nix**: claude-sync package builder — shared by claude-code.nix (hooks need the
+- **user/app/claude-code/claude-sync.nix**: claude-sync — Home Manager side: package, `claude` wrapper, 15-minute timer. *Enabled when:* `Claude killed, hand-edited skill, # machine rebooted mid-session`
 - **user/app/colima/colima.nix**: Colima settings - can be overridden in profile config *Enabled when:* `systemSettings.profile == "darwin"`
 - **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:* `the attribute NAME`
 - **user/app/development/development-komi.nix**: Development tools and IDEs
@@ -525,7 +536,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/gaming/bg3-linux-modding.md**: Modding Baldur's Gate 3 on NixOS/Proton with Script Extender, vkBasalt CAS and FSR4 upscaling on RDNA4
 - **docs/akunito/gaming/gamescope-lag-bomb.md**: Every game launched through gamescope from Steam became unplayable after roughly
 - **docs/akunito/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
-- **docs/akunito/gaming/skyrim-linux-setup.md**: Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning. Install wiped 2026-09-13; section 9 = restore from the DATA_SATA3 bundle
+- **docs/akunito/gaming/skyrim-linux-setup.md**: Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning
 
 ### Akunito / Hardware
 
@@ -558,8 +569,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/akucraft-audit-2026-08-16.md**: Audit of the AkuCraft servers - mod conflicts, configuration, security posture and resource risk
 - **docs/akunito/infrastructure/services/akucraft-manifest.md**: Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server
 - **docs/akunito/infrastructure/services/akucraft-staging-client-setup.md**: How to set up a Minecraft client for the AkuCraft STAGING test server, for someone helping test map sharing
+- **docs/akunito/infrastructure/services/claude-sync.md**: Claude Code state (memory, skills, session transcripts) synced across DESK, LAPTOP_X13 and DESK_W11 through a hub on VPS_PROD — design, edge cases, bootstrap, operation
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
 - **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS
+- **docs/akunito/infrastructure/services/infra-alerts-telegram.md**: Group **Infra Alerts** (forum supergroup, bot `@infra_alerts_aku_bot`). Topics:
 - **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: consolidated monitoring on VPS
 - **docs/akunito/infrastructure/services/linkwarden.md**: Linkwarden self-hosted bookmarks on VPS_PROD, replacing Raindrop.io
 - **docs/akunito/infrastructure/services/matrix.md**: Matrix Synapse + Element on VPS
@@ -581,6 +594,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/openclaw/tools.md**: OpenClaw tools: browser automation, exec, Lobster workflows, sub-agents
 - **docs/akunito/infrastructure/services/pfsense.md**: pfSense firewall - gateway, DNS resolver, WireGuard, DHCP, NAT, pfBlockerNG, SNMP
 - **docs/akunito/infrastructure/services/plane-customizations.md**: Plane: register of every customisation + post-upgrade verification checklist
+- **docs/akunito/infrastructure/services/plane-telegram-bot.md**: One Telegram **forum group per audience**; each group only ever sees its own Plane projects.
 - **docs/akunito/infrastructure/services/proxy-stack.md**: Proxy stack: NPM on TrueNAS, cloudflared on VPS and TrueNAS
 - **docs/akunito/infrastructure/services/tailscale-headscale.md**: Headscale on VPS, Tailscale mesh topology
 - **docs/akunito/infrastructure/services/vps-services.md**: VPS services: Docker containers and NixOS native services
@@ -612,6 +626,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (script v2.1) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de las dos auditorías eliminados, con puertas de verificación y reversión quirúrgica
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
 - **docs/akunito/plans/plane-fork-customization-inventory.md**: **Built:** 2026-08-13 from `~/Projects/plane-up` @ `akunito/mobile` (`bcb1cfca9`), 26 commits over `v1.3.1`.
+- **docs/akunito/plans/plane-telegram-bot.md**: Status: **F1 + F2 + F3 deployed 2026-09-11** (notifications, buttons, reply=comment, write commands, scheduled reports, Plane webhook; infra-bot on tgcommon.py) · service doc: `../infrastructure/se...
 - **docs/akunito/plans/plane-v1.4.0-upgrade.md**: **Status:** planned, not started · **Audited:** 2026-08-13 · **Ticket:** APLANE-1 (related)
 - **docs/akunito/plans/sine-web-panels-maintainer-issue.md**: Open at: https://github.com/dehyde/sine-web-panels/issues/new
 - **docs/akunito/plans/vivaldi-floating-toggle-bug.md**: While using Vivaldi on the DESK profile under SwayFX, the user *very rarely* sees a window unexpectedly toggle between tiled and floating — the same effect as pressing `hyper+shift+f`. They have to...
