@@ -1,0 +1,59 @@
+{
+  "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
+  "CreationDate": "2026-09-13T00:00:00.000-00:00",
+  "WinGetVersion": "1.9.0",
+  "Sources": [
+    {
+      "SourceDetails": {
+        "Argument": "https://cdn.winget.microsoft.com/cache",
+        "Identifier": "Microsoft.Winget.Source_8wekyb3d8bbwe",
+        "Name": "winget",
+        "Type": "Microsoft.PreIndexed.Package"
+      },
+      "Packages": [
+        { "PackageIdentifier": "Microsoft.WindowsTerminal" },
+        { "PackageIdentifier": "Microsoft.PowerShell" },
+        { "PackageIdentifier": "Git.Git" },
+        { "PackageIdentifier": "Microsoft.VisualStudioCode" },
+        { "PackageIdentifier": "Microsoft.PowerToys" },
+        { "PackageIdentifier": "AutoHotkey.AutoHotkey" },
+        { "PackageIdentifier": "RamenSoftware.Windhawk" },
+        { "PackageIdentifier": "DEVCOM.JetBrainsMonoNerdFont" },
+        { "PackageIdentifier": "7zip.7zip" },
+        { "PackageIdentifier": "voidtools.Everything" },
+        { "PackageIdentifier": "ShareX.ShareX" },
+        { "PackageIdentifier": "WinDirStat.WinDirStat" },
+
+        { "PackageIdentifier": "Tailscale.Tailscale" },
+        { "PackageIdentifier": "Nextcloud.NextcloudDesktop" },
+        { "PackageIdentifier": "Bitwarden.Bitwarden" },
+
+        { "PackageIdentifier": "Zen-Team.Zen-Browser" },
+        { "PackageIdentifier": "Vivaldi.Vivaldi" },
+        { "PackageIdentifier": "Brave.Brave" },
+
+        { "PackageIdentifier": "Obsidian.Obsidian" },
+        { "PackageIdentifier": "Telegram.TelegramDesktop" },
+        { "PackageIdentifier": "Element.Element" },
+        { "PackageIdentifier": "Discord.Discord" },
+        { "PackageIdentifier": "Microsoft.Teams" },
+        { "PackageIdentifier": "Mozilla.Thunderbird" },
+        { "PackageIdentifier": "TheDocumentFoundation.LibreOffice" },
+        { "PackageIdentifier": "calibre.calibre" },
+        { "PackageIdentifier": "dbeaver.dbeaver" },
+
+        { "PackageIdentifier": "Spotify.Spotify" },
+        { "PackageIdentifier": "VideoLAN.VLC" },
+        { "PackageIdentifier": "qBittorrent.qBittorrent" },
+        { "PackageIdentifier": "OBSProject.OBSStudio" },
+
+        { "PackageIdentifier": "Valve.Steam" },
+        { "PackageIdentifier": "GOG.Galaxy" },
+        { "PackageIdentifier": "PrismLauncher.PrismLauncher" },
+        { "PackageIdentifier": "EclipseAdoptium.Temurin.21.JRE" },
+        { "PackageIdentifier": "LizardByte.Sunshine" },
+        { "PackageIdentifier": "MoonlightGameStreamingProject.Moonlight" }
+      ]
+    }
+  ]
+}

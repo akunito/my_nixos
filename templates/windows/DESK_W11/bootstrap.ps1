@@ -30,35 +30,12 @@ if ($hp) { powercfg /setactive $hp }
 
 # ---------------------------------------------------------------- apps
 if (-not $SkipApps) {
-  Step "winget packages"
-  $pkgs = @(
-    'Microsoft.WindowsTerminal',
-    'Microsoft.PowerShell',
-    'Git.Git',
-    'Microsoft.VisualStudioCode',
-    'Zen-Team.Zen-Browser',
-    'Vivaldi.Vivaldi',
-    'Nextcloud.NextcloudDesktop',
-    'Tailscale.Tailscale',
-    'AutoHotkey.AutoHotkey',
-    'Bitwarden.Bitwarden',
-    'Obsidian.Obsidian',
-    'Telegram.TelegramDesktop',
-    'Element.Element',
-    'Spotify.Spotify',
-    'dbeaver.dbeaver',
-    'Microsoft.PowerToys',
-    'DEVCOM.JetBrainsMonoNerdFont',
-    'Anthropic.ClaudeCode'
-  )
-  foreach ($p in $pkgs) {
-    if (winget list --id $p --exact --accept-source-agreements 2>$null | Select-String $p) {
-      Write-Host "  ok   $p"
-    } else {
-      Write-Host "  add  $p"
-      winget install --id $p --exact --silent --accept-package-agreements --accept-source-agreements
-    }
-  }
+  Step "winget import (declarative list: winget-packages.json — already-installed packages are skipped)"
+  winget source update
+  winget import -i "$PSScriptRoot\winget-packages.json" --accept-package-agreements --accept-source-agreements --ignore-unavailable --disable-interactivity
+  Step "Claude Code (native, for the PowerShell side only — the real one lives in WSL)"
+  if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { irm https://claude.ai/install.ps1 | iex }
+  Write-Host "  not on winget, install by hand: AMD Adrenalin driver, Aion 2 (NCSoft/Purple launcher), Lineage2Dex launcher, Equalizer APO (EasyEffects stand-in)"
 }
 
 # ---------------------------------------------------------------- WSL

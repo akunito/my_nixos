@@ -40,8 +40,63 @@ Ollama/llama.cpp, printing, Bluetooth tooling, the harmonia cache server.
 - `profiles/DESK_W11-config.nix` — flag sheet (hostname `nixosw11aku`, `envProfile = "DESK_W11"`, `wslWindowsUser`)
 - `profiles/wsl/configuration.nix`, `profiles/wsl/home.nix` — the module set (`profile = "wsl"`)
 - `flake.nix` — input `nixos-wsl` (pinned rev) + `DESK_W11` entry
-- `templates/windows/DESK_W11/` — `bootstrap.ps1`, `debloat.ps1`, `.wslconfig`, `hyper-desktops.ahk`, `windows-terminal.settings.json`
+- `templates/windows/DESK_W11/` — `bootstrap.ps1`, `debloat.ps1`, `winget-packages.json`, `.wslconfig`, `hyper-desktops.ahk`, `windows-terminal.settings.json`
 - Keys: `~/Nextcloud/backups/w11-bootstrap/w11-keys.tar.gpg` (W11 ssh key + claude-sync key, symmetric gpg). The public halves are already in every `authorizedKeys` list (VPS, NAS, DESK, X13) and in `claudeSyncHubKeys`.
+
+## Windows software (declarative: `winget import`)
+
+`templates/windows/DESK_W11/winget-packages.json` is the whole list; `bootstrap.ps1`
+imports it, and re-running skips what is installed. winget ships with Windows 11
+and is the native package manager (Chocolatey adds nothing here). DESK → W11:
+
+| DESK | W11 (winget id) | Notes |
+|---|---|---|
+| kitty/alacritty, zsh, tmux | Microsoft.WindowsTerminal → WSL | shell lives in WSL |
+| vscode, git, git-crypt, uv, dbeaver | Microsoft.VisualStudioCode (+ WSL extension), Git.Git, dbeaver.dbeaver | git-crypt/uv in WSL |
+| rofi, sway shortcuts | AutoHotkey.AutoHotkey + Microsoft.PowerToys (Run) | `hyper-desktops.ahk` |
+| waybar | RamenSoftware.Windhawk | see "Taskbar" below |
+| grim/slurp/swappy | ShareX.ShareX | |
+| fd/fzf for files | voidtools.Everything | |
+| Nerd font | DEVCOM.JetBrainsMonoNerdFont | |
+| tailscale + trayscale | Tailscale.Tailscale | node DESK_W11 |
+| nextcloud-client | Nextcloud.NextcloudDesktop | |
+| bitwarden | Bitwarden.Bitwarden | |
+| zen, vivaldi, brave/chromium | Zen-Team.Zen-Browser, Vivaldi.Vivaldi, Brave.Brave | |
+| obsidian, telegram, element, vesktop, teams-for-linux, thunderbird, libreoffice, calibre | Obsidian.Obsidian, Telegram.TelegramDesktop, Element.Element, Discord.Discord, Microsoft.Teams, Mozilla.Thunderbird, TheDocumentFoundation.LibreOffice, calibre.calibre | |
+| spotify, vlc, qbittorrent, OBS (media recording) | Spotify.Spotify, VideoLAN.VLC, qBittorrent.qBittorrent, OBSProject.OBSStudio | |
+| steam, GOG (Heroic), FreesmLauncher + Java 21 | Valve.Steam, GOG.Galaxy, PrismLauncher.PrismLauncher + EclipseAdoptium.Temurin.21.JRE | AkuCraft: new instance + AutoModpack, never copy jars (see memory) |
+| sunshine, moonlight | LizardByte.Sunshine, MoonlightGameStreamingProject.Moonlight | Sunshine host for DESK_A/X13 |
+| easyeffects | Equalizer APO (manual) | not on winget |
+| mission-center | Task Manager | |
+| ollama / llama.cpp | none | decided: no LLM on W11 |
+| AMD driver | AMD Adrenalin (manual) | winget id unreliable |
+| Aion 2, Lineage2Dex | their launchers (manual) | |
+
+Add a package: append `{ "PackageIdentifier": "..." }` (find ids with `winget search`),
+commit, re-run `bootstrap.ps1`. Remove: `winget uninstall --id ...`.
+
+## Taskbar and look (Windhawk)
+
+Decision 2026-09-13: keep the vanilla taskbar, restyle it with Windhawk mods
+(actively maintained, follow every W11 update; no tiling, no conflicts with games).
+Windhawk has no CLI for mods: open it once → Explore → install these, in order,
+then set each mod's options:
+
+| Mod | Setting |
+|---|---|
+| Taskbar on top (Windows 11) | on — the bar goes to the top like waybar |
+| Taskbar height and icon size | height 36, icon 20 |
+| Taskbar clock customization | `%H:%M  %a %d %b`, top-right like waybar's clock |
+| Taskbar labels for Windows 11 | labels on, combine never (workspace-like readability) |
+| Taskbar tray system icon tweaks | hide Copilot/News/Chat leftovers, keep network/volume |
+| Taskbar notification icon spacing | 24 px |
+| Taskbar button click | middle-click closes |
+| Start menu styler / Taskbar styler (optional) | a dark theme close to `ashes` |
+
+Settings → Personalization → Taskbar: alignment **left**, Widgets off, Search
+hidden, Task view **on** (Hyper+Tab). Dark mode, accent from wallpaper off.
+Windhawk mods survive updates; if one breaks after a Windows feature update,
+Windhawk disables it and shows a badge — update the mod, done.
 
 ## Part A — Windows side (PowerShell as Administrator, with Claude Code if you like)
 
@@ -57,32 +112,31 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
    cd $env:USERPROFILE\.dotfiles\templates\windows\DESK_W11
    Set-ExecutionPolicy -Scope Process Bypass -Force
    ```
-2. `.\bootstrap.ps1` — Fast Startup off, RTC in UTC, high-performance plan, winget
-   apps (Terminal, PowerShell 7, VS Code, Zen, Vivaldi, Nextcloud, Tailscale,
-   AutoHotkey, Bitwarden, Obsidian, Telegram, Element, Spotify, DBeaver,
-   PowerToys, JetBrainsMono Nerd Font, Claude Code), WSL platform, `.wslconfig`,
-   AutoHotkey Startup shortcut (UI-Access binary).
+2. `.\bootstrap.ps1` — Fast Startup off, RTC in UTC, high-performance plan,
+   `winget import` of the whole software list, native Claude Code, WSL platform,
+   `.wslconfig`, AutoHotkey Startup shortcut (UI-Access binary).
 3. `.\debloat.ps1` — Copilot/Recall/Windows AI off, telemetry/ads/Spotlight/widgets
    off, Delivery Optimization P2P off, ten safe services disabled, store bloat and
    OneDrive removed, Edge background off, Game Mode on. Nothing touches Defender,
    Update, Xbox services, audio, Bluetooth or printing. Reboot.
-4. Download `VirtualDesktopAccessor.dll` from
+4. Windhawk: install the mods from the "Taskbar and look" table.
+5. Download `VirtualDesktopAccessor.dll` from
    https://github.com/Ciantic/VirtualDesktopAccessor/releases into the same
    folder as `hyper-desktops.ahk`, then double-click the Startup shortcut once.
    Test: Hyper+2 creates and jumps to desktop 2, Hyper+Shift+1 moves the window back,
    Alt+drag moves, Alt+right-drag resizes. Hyper+Shift+Escape suspends everything for games.
-5. Tailscale: log in against `https://<headscaleDomain>` (Settings → Use a custom
+6. Tailscale: log in against `https://<headscaleDomain>` (Settings → Use a custom
    coordination server), name it `DESK_W11`. On the Headscale side add the node to
    `group:family` (see `reference_headscale_guest_acl`), or it cannot reach anything.
-6. Nextcloud Desktop: server `https://nextcloud.local.akunito.com` (the public host
+7. Nextcloud Desktop: server `https://nextcloud.local.akunito.com` (the public host
    is behind Cloudflare Access, native clients cannot pass it), local folder
    `C:\Users\<you>\Nextcloud`, sync everything you use on DESK (`myLibrary`,
    `git_repos`, `backups` at least).
-7. Zen: sign in to Zen Sync with the account DESK uses. Install Sine, then the
+8. Zen: sign in to Zen Sync with the account DESK uses. Install Sine, then the
    web-panels mod from `akunito/sine-web-panels`, by hand (no Nix here).
-8. Windows Terminal: paste `windows-terminal.settings.json` pieces into Settings →
+9. Windows Terminal: paste `windows-terminal.settings.json` pieces into Settings →
    Open JSON file. The `NixOS` profile appears by itself once the distro exists.
-9. Keyboard layouts: Settings → Time & language → Language → add English (US-International),
+10. Keyboard layouts: Settings → Time & language → Language → add English (US-International),
    Spanish, Polish. Win+Space cycles, same as Hyper+Return on Sway.
 
 ## Part B — NixOS-WSL (PowerShell, then inside the distro)
