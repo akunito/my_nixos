@@ -84,6 +84,12 @@ reachable only over Tailscale, outside restic.
 4. `claude-sync sync` — merges the machine's existing memory with the hub
    (unrelated histories allowed; conflicts kept both ways), pulls sessions.
 5. `claude-sync status` — reachable: yes, conflicts: none.
+6. Routine pushes only cover sessions modified in the last 3 days
+   (`PUSH_WINDOW_DAYS`). To make a machine's whole history resumable elsewhere
+   once: `PUSH_WINDOW_DAYS=90 claude-sync push` (DESK did this on 2026-09-13).
+
+Bootstrapped 2026-09-13: hub deployed on VPS_PROD, DESK (168 memories) and
+LAPTOP_X13 (4 stale memories, merged without conflict) in sync, timers active.
 
 ## Operating
 

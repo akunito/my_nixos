@@ -268,17 +268,18 @@ push_sessions() { # args: explicit jsonl paths; none = every owned session in th
       find "$CLAUDE_DIR/projects" -mindepth 2 -maxdepth 2 -name '*.jsonl' -mtime "-$PUSH_WINDOW_DAYS" 2>/dev/null)
   fi
   local list="$STATE_DIR/push-list"; : >"$list"
-  local j
+  local j foreign=0
   for j in "${jsonls[@]}"; do
     [ -f "$j" ] || continue
-    owned_here "$j" || { log "sessions: skip foreign $(basename "$j") (owner $(owner_of "$j"))"; continue; }
+    owned_here "$j" || { foreign=$((foreign + 1)); continue; }
     echo "$MACHINE" >"${j%.jsonl}.owner"
     session_paths "$j" >>"$list"
   done
   [ -s "$list" ] || return 0
+  [ "$foreign" -gt 0 ] && log "sessions: $foreign foreign session(s) left to their owners"
   if rsync -a -r --relative --partial --partial-dir=.rsync-partial --timeout=90 --files-from="$list" \
        -e "$RSYNC_SSH" "$CLAUDE_DIR/" "$HUB:$HUB_SESSIONS/" 2>>"$LOG"; then
-    log "sessions: pushed $(wc -l <"$list") paths"
+    log "sessions: pushed $(grep -c '\.jsonl$' "$list") session(s), $(wc -l <"$list") paths"
     return 0
   fi
   return 1
