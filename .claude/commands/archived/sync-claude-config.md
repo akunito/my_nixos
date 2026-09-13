@@ -6,6 +6,9 @@ allowed-tools: Bash, AskUserQuestion
 
 # Sync Claude Code Config
 
+> **ARCHIVED 2026-09-13** — replaced by `claude-sync` (automatic, hooks + timer, hub on the VPS).
+> See `docs/akunito/infrastructure/services/claude-sync.md`. Kept for the rsync recipe only.
+
 Syncs the user-level `~/.claude/` config between machines using rsync. Preserves per-machine session state (`projects/`, `sessions/`, `tasks/`, `todos/`, `history.jsonl`, `shell-snapshots/`, `file-history/`, `backups/`) and never touches the nix-managed `mcp-env` symlink or the local `.credentials.json`.
 
 ## Usage

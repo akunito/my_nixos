@@ -150,6 +150,7 @@ All module paths relative to `system/app/`.
 | `/network-performance` | Homelab | 10GbE performance testing |
 | `/update-dbeaver` | DESK | Update DBeaver DB connections |
 | `/sync-vivaldi` | DESK, LAPTOP_X13 | Sync Vivaldi browser config |
+| `claude-sync status` | DESK, LAPTOP_X13 (CLI, not a skill) | Claude Code state sync with the VPS hub — memory/skills via git, sessions via rsync; auto via hooks + timer. Docs: `docs/akunito/infrastructure/services/claude-sync.md` |
 | `/clean-gaming` | DESK | Kill stale gamescope/Wine/Proton |
 | `/darwin-rebuild` | MACBOOK-KOMI | Apply macOS nix-darwin config |
 

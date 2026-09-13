@@ -813,6 +813,7 @@ in
     # === Monitoring ===
     prometheusWorkstationExporterEnable = true; # Lightweight metrics exporter (update timestamps, disk, backup)
     infraNotifyEnable = true; infraNodeName = "desk"; infraBotUrl = "http://100.64.0.6:8765"; # deploy announcements to Infra Alerts (AINF-368)
+    claudeSyncEnable = true; # ~/.claude memory/skills/sessions synced with the VPS hub (hooks + 15-min timer + `claude` wrapper)
     # Infra Alerts bot identity for infra-notify (direct Telegram transport; relay is the fallback)
     grafanaTelegramBotToken = secrets.grafanaTelegramBotToken or "";
     grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";

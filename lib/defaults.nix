@@ -595,6 +595,15 @@
     claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
     claudeCodeReadOnly = false; # When true, deny Edit/Write tools in Claude Code settings.json
     claudeBackupToNextcloudEnable = false; # Daily compressed backup of ~/.claude/ to Nextcloud folder
+    # === Claude Code state sync across machines (DESK / LAPTOP_X13 / DESK_W11) ===
+    claudeSyncEnable = false; # Client: ~/.claude memory+skills+plans via git, sessions via rsync, to the VPS hub; hooks + timer + `claude` wrapper (docs/akunito/infrastructure/services/claude-sync.md)
+    claudeSyncHubUser = "akunito"; # Hub ssh user
+    claudeSyncHubHost = "100.64.0.6"; # Hub Tailscale IP (VPS_PROD)
+    claudeSyncHubPort = 56777; # Hub ssh port
+    claudeSyncHubDir = "claude-sync"; # Hub directory under the hub user's home
+    claudeSyncRetentionDays = 90; # cleanupPeriodDays on every client; the hub deletes one day earlier
+    claudeSyncHubEnable = false; # Hub side (VPS_PROD): restricted forced-command shell, bare repo, retention + Telegram alerts
+    claudeSyncHubKeys = [ ]; # Client public keys (one per machine, `claude-sync pubkey`), pinned to claude-sync-shell
     nextcloudSyncFolder = ""; # Path to Nextcloud sync folder (e.g., "/home/user/Nextcloud")
     githubAccessToken = ""; # GitHub PAT to lift github.com anon rate limit on flake-input fetches (set from secrets/domains.nix in profiles; empty = anonymous, no secrets needed)
     perplexityApiKey = ""; # Perplexity API key for MCP server (set from secrets/domains.nix in profiles)

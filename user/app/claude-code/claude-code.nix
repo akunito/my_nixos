@@ -14,6 +14,10 @@ let
   isStandalone = (systemSettings.claudeCodeEnable or false) && !isDesktop;
   dotfilesPath = systemSettings.dotfilesPath or "/home/${userSettings.username}/.dotfiles";
 
+  # Cross-machine state sync (memory/skills/sessions ↔ VPS hub); hooks below, rest in claude-sync.nix
+  cs = import ./claude-sync-pkg.nix { inherit pkgs pkgs-unstable lib systemSettings userSettings; };
+  claudeSyncBin = "${cs.package}/bin/claude-sync";
+
   # Claude config Nextcloud backup
   claudeBackupToNextcloudEnable = systemSettings.claudeBackupToNextcloudEnable or false;
   nextcloudFolder = systemSettings.nextcloudSyncFolder or "/home/${userSettings.username}/Nextcloud";
@@ -61,7 +65,10 @@ let
   # .mcp.json (project-scoped) or ~/.claude.json (user-scoped), NOT settings.json.
   # Plane MCP is configured in .mcp.json with env var references; the actual
   # credentials are set via home.sessionVariables below.
-  settingsJson = {
+  settingsJson = lib.optionalAttrs cs.enable {
+    # transcripts kept this long on every synced machine (hub ages out one day earlier)
+    cleanupPeriodDays = systemSettings.claudeSyncRetentionDays or 90;
+  } // {
     permissions = {
       allow = [
         # Read-only tools (always safe)
@@ -320,11 +327,33 @@ let
           ];
         }
       ];
+    } // lib.optionalAttrs cs.enable {
+      # claude-sync: pull before Claude reads memory; push after every turn; flag unpushed code on exit
+      SessionStart = [
+        {
+          matcher = "startup|resume|fork";
+          hooks = [ { type = "command"; command = "${claudeSyncBin} hook-start"; timeout = 60; } ];
+        }
+      ];
+      Stop = [
+        {
+          matcher = "";
+          hooks = [ { type = "command"; command = "${claudeSyncBin} hook-stop"; timeout = 10; } ];
+        }
+      ];
+      SessionEnd = [
+        {
+          matcher = "";
+          hooks = [ { type = "command"; command = "${claudeSyncBin} hook-end"; timeout = 1; } ];
+        }
+      ];
     };
   };
 
 in
 {
+  imports = [ ./claude-sync.nix ]; # package, `claude` wrapper, 15-min timer (flag claudeSyncEnable)
+
   # Standalone mode: install claude-code + nodejs (for npx/MCP) without full dev IDEs
   home.packages = lib.optionals isStandalone [
     pkgs-unstable.claude-code  # Claude Code CLI (native binary from GCS, not npm)
@@ -372,7 +401,9 @@ try:
         current = json.load(f)
     # Always sync hooks from base (security-critical)
     changed = False
-    for key in ['hooks']:
+    for key in ['hooks', 'cleanupPeriodDays']:
+        if key not in base:
+            continue
         if base.get(key) != current.get(key):
             current[key] = base[key]
             changed = True
