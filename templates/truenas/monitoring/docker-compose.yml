@@ -26,6 +26,7 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
       - '--path.rootfs=/rootfs'
+      - '--collector.textfile.directory=/rootfs/var/lib/prometheus-node-exporter/textfile'
     restart: unless-stopped
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
