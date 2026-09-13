@@ -115,6 +115,16 @@ in
     grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";
     infraTelegramDeploysThreadId = secrets.infraTelegramDeploysThreadId or "";
     nasZfsPools = [ "ssdpool" "extpool" ];
+    # Every dataset nixos-generate-config puts in fstab (keep in sync with `zfs list`)
+    nasZfsMountPoints = [
+      "/mnt/ssdpool"
+      "/mnt/ssdpool/docker"
+      "/mnt/ssdpool/media"
+      "/mnt/ssdpool/vps-backups"
+      "/mnt/ssdpool/workstation_backups"
+      "/mnt/extpool"
+      "/mnt/extpool/vps-backups"
+    ];
     nasHostId = "47bff07a";
     nasAutoSnapshotEnable = true;
     nasDockerProjects = [

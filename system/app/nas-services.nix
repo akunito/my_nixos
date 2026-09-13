@@ -4,7 +4,7 @@
 #
 # Enabled via: nasServicesEnable = true (in profile systemSettings)
 
-{ config, pkgs, lib, systemSettings, userSettings, ... }:
+{ config, pkgs, lib, utils, systemSettings, userSettings, ... }:
 
 let
   nasEnabled = systemSettings.nasServicesEnable or false;
@@ -31,6 +31,11 @@ let
   # Minimum time after a resume before a suspend may be honoured. The post-resume
   # Docker units alone take ~15s+, and the HBAs/NICs need longer than that.
   settleSeconds = 600;
+  # Mountpoints of the ZFS datasets the generated hardware-config puts in fstab
+  # (profile: nasZfsMountPoints). Used to give them zfsutil/nofail and to order the
+  # key-unlock unit before their .mount units.
+  nasZfsMountPoints = systemSettings.nasZfsMountPoints or [ ];
+  nasZfsMountUnits = map (mp: "${utils.escapeSystemdPath mp}.mount") nasZfsMountPoints;
 in
 {
   config = lib.mkIf nasEnabled {
@@ -58,7 +63,7 @@ in
     systemd.services.nas-zfs-pool-metrics = {
       description = "ZFS pool metrics for Prometheus textfile collector";
       after = [ "zfs-mount.service" ];
-      path = [ pkgs.zfs pkgs.coreutils pkgs.gawk ];
+      path = [ config.boot.zfs.package pkgs.coreutils pkgs.gawk ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = pkgs.writeShellScript "nas-zfs-pool-metrics" ''
@@ -125,7 +130,7 @@ HEADER
       description = "Apply POSIX ACLs to backup source paths (idempotent)";
       after = [ "zfs-mount.service" "docker.service" ];
       wantedBy = [ "multi-user.target" ];
-      path = [ pkgs.acl pkgs.zfs pkgs.coreutils ];
+      path = [ pkgs.acl config.boot.zfs.package pkgs.coreutils ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -277,6 +282,11 @@ HEADER
     # ZFS
     # ========================================================================
     boot.supportedFilesystems = [ "zfs" ];
+    # The generated hardware-config lists every mounted dataset as an fstab entry. They are
+    # NOT mountpoint=legacy, so plain mount.zfs refuses them ("cannot be mounted using
+    # 'mount'") — zfsutil makes the units work; nofail keeps a failing one from taking
+    # local-fs.target (and the whole box, via emergency.target) down with it.
+    fileSystems = lib.genAttrs nasZfsMountPoints (_: { options = [ "zfsutil" "nofail" ]; });
     # OpenZFS 2.4.x: carries the fix for the snapshot-automount race that panicked the
     # kernel on 2026-09-12 (openzfs/zfs#17659, PR #17943 — absent from the 2.3.x line).
     boot.zfs.package = pkgs.zfs_unstable;
@@ -327,12 +337,20 @@ HEADER
     #   echo -n "your-ssdpool-passphrase" | sudo tee /etc/zfs/keys/ssdpool > /dev/null
     #   sudo chmod 000 /etc/zfs/keys && sudo chmod 400 /etc/zfs/keys/*
     #
+    # Boot graph (2026-09-13 post-mortem): with default dependencies this unit sat After=
+    # sysinit.target while being Before=local-fs.target, an ordering cycle systemd broke by
+    # deleting a random job each boot. Deleting local-fs.target hid the fact that the fstab
+    # ZFS mounts fail; deleting nas-zfs-unlock/zfs-mount left local-fs.target alive, the
+    # mounts failed and OnFailure= dropped the NAS into emergency mode (gen 68 first boot).
+    # DefaultDependencies=no takes it out of the loop, like NixOS's own zfs-import-* units.
     systemd.services.nas-zfs-unlock = {
       description = "Load ZFS encryption keys from file";
       after = [ "zfs-import.target" ];
-      before = [ "zfs-mount.service" "local-fs.target" ];
-      wantedBy = [ "zfs-mount.service" ];
+      before = [ "zfs-mount.service" "local-fs.target" "shutdown.target" ] ++ nasZfsMountUnits;
+      wantedBy = [ "zfs-mount.service" ] ++ nasZfsMountUnits;
       requiredBy = [ "zfs-mount.service" ];
+      conflicts = [ "shutdown.target" ];
+      unitConfig.DefaultDependencies = false;
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -342,10 +360,10 @@ HEADER
         for pool in ${lib.concatStringsSep " " (systemSettings.nasZfsPools or [ "ssdpool" ])}; do
           KEY_FILE="$KEY_DIR/$pool"
           if [ -f "$KEY_FILE" ]; then
-            KEYSTATUS=$(${pkgs.zfs}/bin/zfs get -H -o value keystatus "$pool" 2>/dev/null || echo "unknown")
+            KEYSTATUS=$(${config.boot.zfs.package}/bin/zfs get -H -o value keystatus "$pool" 2>/dev/null || echo "unknown")
             if [ "$KEYSTATUS" = "unavailable" ]; then
               echo "Unlocking $pool from $KEY_FILE..."
-              ${pkgs.zfs}/bin/zfs load-key -L "file://$KEY_FILE" "$pool" && echo "  $pool unlocked" || echo "  $pool unlock FAILED"
+              ${config.boot.zfs.package}/bin/zfs load-key -L "file://$KEY_FILE" "$pool" && echo "  $pool unlocked" || echo "  $pool unlock FAILED"
             else
               echo "$pool keystatus=$KEYSTATUS (no unlock needed)"
             fi
@@ -390,7 +408,7 @@ HEADER
       };
       script = let
         pools = systemSettings.nasZfsPools or [ "ssdpool" "extpool" ];
-        zfs = "${pkgs.zfs}/bin/zfs";
+        zfs = "${config.boot.zfs.package}/bin/zfs";
       in ''
         set -u
         apply() {
