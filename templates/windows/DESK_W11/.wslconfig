@@ -1,6 +1,8 @@
-; %USERPROFILE%\.wslconfig — global WSL2 settings for DESK_W11
-; mirrored: WSL shares the Windows interfaces, so it rides the Windows
-; Tailscale tunnel (100.64.x, MagicDNS) and is reachable on the LAN by hostname.
+# %USERPROFILE%\.wslconfig - global WSL2 settings for DESK_W11
+# Comments MUST use '#'. WSL's parser does not accept ';' and reports every such
+# line as "invalid key name" (verified on WSL 2.7.14).
+# mirrored: WSL shares the Windows interfaces, so it rides the Windows
+# Tailscale tunnel (100.64.x, MagicDNS) and is reachable on the LAN by hostname.
 [wsl2]
 networkingMode=mirrored
 dnsTunneling=true
@@ -9,9 +11,12 @@ autoProxy=true
 memory=24GB
 processors=12
 swap=0
-localhostForwarding=true
+# localhostForwarding is deliberately absent: WSL warns that it "has no effect
+# when using mirrored networking mode".
 
 [experimental]
 autoMemoryReclaim=gradual
-sparseVhd=true
 hostAddressLoopback=true
+# sparseVhd is deliberately absent: WSL now refuses it ("sparse VHD support is
+# currently disabled due to possible data corruption"). Forcing it needs
+# --allow-unsafe, which is not worth the risk for a little disk space.

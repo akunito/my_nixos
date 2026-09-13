@@ -23,7 +23,7 @@ in
     systemStable = true; # same base channel as DESK (nixos-25.11)
 
     # === WSL ===
-    wslWindowsUser = "akunito"; # CHANGE to the Windows account name before the first install
+    wslWindowsUser = "diego"; # the Windows account on WINAKU -> C:\Users\diego, /mnt/c/Users/diego
     gpgPinentryCurses = true; # terminal pinentry, no Qt
 
     # === Security ===
