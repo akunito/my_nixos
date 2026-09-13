@@ -18,7 +18,7 @@ lib.mkIf cs.enable {
       Type = "oneshot";
       ExecStart = "${cs.package}/bin/claude-sync sync";
       # the dedicated key needs no agent; keep gpg-agent out of it
-      Environment = [ "SSH_AUTH_SOCK=" ];
+      Environment = [ "SSH_AUTH_SOCK=" "CLAUDE_SYNC_AUTO=1" ];
       Nice = 10;
       IOSchedulingClass = "idle";
     };

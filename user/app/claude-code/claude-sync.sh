@@ -74,6 +74,29 @@ hub_reachable() {
   ssh "${SSH_OPTS[@]}" "$HUB" ping >/dev/null 2>&1
 }
 
+# One probe before a batch of connections. A rejected key means the hub is not
+# provisioned for this machine yet: automatic runs (hooks, timer, wrapper —
+# CLAUDE_SYNC_AUTO=1) back off for 6 h so fail2ban on the VPS never sees a
+# stream of failed logins. Manual `claude-sync sync|pull|push` always tries.
+AUTH_BACKOFF_SECS=21600
+probe_hub() {
+  local out
+  out=$(ssh "${SSH_OPTS[@]}" "$HUB" ping 2>&1 || true)
+  case "$out" in
+    *pong*) rm -f "$STATE_DIR/auth-failed"; return 0 ;;
+    *"Permission denied"*)
+      date +%s >"$STATE_DIR/auth-failed"
+      log "hub: key not authorized — automatic runs back off ${AUTH_BACKOFF_SECS}s (add \`claude-sync pubkey\` to claudeSyncHubKeys)"
+      return 2 ;;
+    *) log "hub: unreachable (${out%%$'\n'*})"; return 1 ;;
+  esac
+}
+backoff_active() {
+  [ "${CLAUDE_SYNC_AUTO:-0}" = 1 ] || return 1
+  local t; t=$(cat "$STATE_DIR/auth-failed" 2>/dev/null || echo 0)
+  [ $(( $(date +%s) - t )) -lt "$AUTH_BACKOFF_SECS" ]
+}
+
 mark_ok()   { date +%s >"$STATE_DIR/last-ok"; rm -f "$STATE_DIR/first-fail"; }
 mark_fail() {
   local now; now=$(date +%s)
@@ -291,6 +314,8 @@ with_lock() { # $1 = -n (skip if busy) or -w (wait) ; rest = command
 
 do_pull() {
   local rc=0
+  if backoff_active; then log "skip pull: auth backoff"; return 1; fi
+  probe_hub || { mark_fail; return 1; }
   pull_state || rc=1
   pull_sessions || rc=1
   if [ $rc = 0 ]; then mark_ok; clear_stale; else mark_fail; fi
@@ -300,6 +325,8 @@ do_pull() {
 # shellcheck disable=SC2120
 do_push() { # optional explicit session jsonl
   local rc=0
+  if backoff_active; then log "skip push: auth backoff"; return 1; fi
+  probe_hub || { mark_fail; return 1; }
   push_state || rc=1
   push_sessions "$@" || rc=1
   push_heartbeat
@@ -327,6 +354,7 @@ conflict_files() {
 }
 
 hook_start() {
+  export CLAUDE_SYNC_AUTO=1
   local input; input=$(hook_json)
   local session_id source transcript
   session_id=$(json_get .session_id "$input")
@@ -353,6 +381,7 @@ hook_start() {
 }
 
 hook_stop() {
+  export CLAUDE_SYNC_AUTO=1
   local input; input=$(hook_json)
   local transcript; transcript=$(json_get .transcript_path "$input")
   # Background: Stop hooks may take long but the user is waiting for the prompt.
@@ -362,6 +391,7 @@ hook_stop() {
 
 hook_end() {
   # SessionEnd has a 1.5 s total budget: only fork and return.
+  export CLAUDE_SYNC_AUTO=1
   local input; input=$(hook_json)
   local transcript cwd; transcript=$(json_get .transcript_path "$input"); cwd=$(json_get .cwd "$input")
   setsid -f "$0" bg-end "$transcript" "$cwd" >/dev/null 2>&1 </dev/null || true
@@ -429,7 +459,7 @@ wrap() {
     esac
   done
   if [ $skip_pull = 0 ]; then
-    timeout 45 "$0" pull >/dev/null 2>&1 || true
+    CLAUDE_SYNC_AUTO=1 timeout 45 "$0" pull >/dev/null 2>&1 || true
   fi
   if [ $has_fork = 0 ] && [ -n "$target" ]; then
     local path=""
