@@ -506,6 +506,7 @@ in
     claudeSyncHubKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBsXshV7sAnq6Oie5qH9Ml/PrybPL9uKg2hvu/itMK9z claude-sync@DESK"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMGggbIOnf1GmOsXM67PZRYLP4DrItISJyz0c1YQI5hi claude-sync@LAPTOP_X13"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA4lbPj8VBtb0rljjdGrl/vJZfFsKhMz4VX+X2Ul2PHz claude-sync@DESK_W11"
     ];
     infraBotEnable = true; # the Infra Alerts bot lives here (relay for secrets-free nodes + /status commands)
     infraRestartEnable = true; # /restart docker-rootless here
