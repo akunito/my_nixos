@@ -13,7 +13,15 @@ services:
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
-      - /:/rootfs:ro
+      # rslave: host unmounts (e.g. .zfs/snapshot expiry) propagate into the container,
+      # so it never pins a snapshot superblock. Without it a later `zfs destroy` hangs
+      # and the statfs() automount race panics ZFS (openzfs/zfs#17659, NAS 2026-09-12).
+      - type: bind
+        source: /
+        target: /rootfs
+        read_only: true
+        bind:
+          propagation: rslave
     command:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
@@ -43,7 +51,15 @@ services:
     ports:
       - "8081:8080"
     volumes:
-      - /:/rootfs:ro
+      # rslave: host unmounts (e.g. .zfs/snapshot expiry) propagate into the container,
+      # so it never pins a snapshot superblock. Without it a later `zfs destroy` hangs
+      # and the statfs() automount race panics ZFS (openzfs/zfs#17659, NAS 2026-09-12).
+      - type: bind
+        source: /
+        target: /rootfs
+        read_only: true
+        bind:
+          propagation: rslave
       - /run/user/1000:/var/run:ro
       - /sys:/sys:ro
       - /home/akunito/.local/share/docker:/var/lib/docker:ro

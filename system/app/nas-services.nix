@@ -277,6 +277,9 @@ HEADER
     # ZFS
     # ========================================================================
     boot.supportedFilesystems = [ "zfs" ];
+    # OpenZFS 2.4.x: carries the fix for the snapshot-automount race that panicked the
+    # kernel on 2026-09-12 (openzfs/zfs#17659, PR #17943 — absent from the 2.3.x line).
+    boot.zfs.package = pkgs.zfs_unstable;
     boot.zfs.extraPools = systemSettings.nasZfsPools or [ "ssdpool" "extpool" ];
     # Don't prompt at boot — we auto-unlock from passphrase file on encrypted root
     boot.zfs.requestEncryptionCredentials = false;
