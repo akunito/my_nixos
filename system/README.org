@@ -36,13 +36,13 @@ As for example:
 
   boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
 
-  fileSystems."/mnt/2nd_NVME" =
-    { device = "/dev/mapper/2nd_NVME";
+  fileSystems."/mnt/DATA_LUKS" =
+    { device = "/dev/mapper/DATA_LUKS";
       fsType = "ext4";
       options = [ "nofail" "x-systemd.device-timeout=3s" ];
     };
 
-  boot.initrd.luks.devices."2nd_NVME".device = "/dev/disk/by-uuid/a949132d-9469-4d17-af95-56fdb79f9e4b";
+  boot.initrd.luks.devices."DATA_LUKS".device = "/dev/disk/by-uuid/<luks-uuid>";
 
   fileSystems."/mnt/DATA" =
     { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";

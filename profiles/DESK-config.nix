@@ -580,16 +580,12 @@ in
 
     # Drives
     mount2ndDrives = true;
-    disk1_enabled = true;
-    disk1_name = "/mnt/2nd_NVME";
-    disk1_device = "/dev/mapper/2nd_NVME";
-    disk1_fsType = "ext4";
-    disk1_options = [
-      "nofail"
-      "x-systemd.device-timeout=3s"
-      "noatime"
-      "nodiratime"
-    ];
+    # disk1 slot free. It used to be /mnt/2nd_NVME (LUKS+ext4 on nvme0n1p5,
+    # Skyrim/LoreRim + VirtPool). Wiped 2026-09-13 and handed back to Windows
+    # as a second NTFS partition (Aion 2 and other Windows-only games). LoreRim
+    # config/saves bundle + VirtPool now live on /mnt/DATA_SATA3 — see
+    # docs/akunito/gaming/skyrim-linux-setup.md section 9.
+    disk1_enabled = false;
     disk2_enabled = true;
     disk2_name = "/mnt/DATA_SATA3";
     disk2_device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";

@@ -358,9 +358,11 @@
     mount2ndDrives = false;
     bootSSH = false;
     # Disk defaults - all disabled by default, profiles enable as needed
+    # disk1: generic LUKS+ext4 slot. The old /mnt/2nd_NVME occupant was wiped
+    # 2026-09-13 (given back to Windows); no profile enables this slot now.
     disk1_enabled = false;
-    disk1_name = "/mnt/2nd_NVME";
-    disk1_device = "/dev/mapper/2nd_NVME";
+    disk1_name = "/mnt/DATA_LUKS";
+    disk1_device = "/dev/mapper/DATA_LUKS";
     disk1_fsType = "ext4";
     disk1_options = [
       "nofail"

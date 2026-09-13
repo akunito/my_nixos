@@ -2,6 +2,16 @@
 
 Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
 
+> **STATUS 2026-09-13**: the LoreRim install this was applied to no longer exists
+> (`/mnt/2nd_NVME` was wiped — see `skyrim-linux-setup.md` section 9). The finished
+> result of this guide survives in the bundle at
+> `/mnt/DATA_SATA3/Skyrim-LoreRim-backup-2026-09-13/`: profile `Ultra-survival`
+> (modlist/plugins/INIs + 695 saves), the 7 survival mod folders, the Nexus archives in
+> `Downloads-survival/`, and `download-survival-mods.py` (its `DOWNLOAD_DIR` is
+> hardcoded to the old path — edit before running). On a fresh LoreRim install, restore
+> those instead of redoing the steps below; the tables stay useful for auditing a newer
+> LoreRim whose mod names may have shifted.
+
 ---
 
 ## Overview of Changes
