@@ -501,6 +501,12 @@ in
     infraTelegramWeeklyThreadId = secrets.infraTelegramWeeklyThreadId or "";
     prometheusHostHealthEnable = true; # docker rootless up + failed system/user units -> host_health.prom
     infraNotifyEnable = true; infraNodeName = "vps"; infraBotUrl = "http://100.64.0.6:8765";
+    # Claude Code state sync hub: ~/claude-sync (state.git + sessions/), keys pinned to claude-sync-shell
+    claudeSyncHubEnable = true;
+    claudeSyncHubKeys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBsXshV7sAnq6Oie5qH9Ml/PrybPL9uKg2hvu/itMK9z claude-sync@DESK"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMGggbIOnf1GmOsXM67PZRYLP4DrItISJyz0c1YQI5hi claude-sync@LAPTOP_X13"
+    ];
     infraBotEnable = true; # the Infra Alerts bot lives here (relay for secrets-free nodes + /status commands)
     infraRestartEnable = true; # /restart docker-rootless here
     infraRestartSshTargets = { nas = "akunito@100.64.0.1"; }; # /restart on the NAS over BatchMode ssh (VPS key is in its authorizedKeys)
