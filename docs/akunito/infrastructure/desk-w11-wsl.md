@@ -27,13 +27,28 @@ same shortcuts. Decisions below come from the 2026-09-13 interview.
 | NTFS data drives (DATA, DATA_SATA3) | native drive letters | `/mnt/d`, `/mnt/e` via WSL automount |
 | SSH to VPS / NAS / pfSense / X13 | – | `~/.ssh/config` managed (`sshHostsManaged`), gpg-agent as ssh agent, pinentry-curses |
 | Git, git-crypt, dotfiles | VS Code (Remote-WSL) | the repo, `install.sh DESK_W11 -s -h -d` |
-| Claude Code | native install only to bootstrap (PowerShell) | the real one: `claude` wrapper, claude-sync identity `DESK_W11`, `ENV_PROFILE=DESK_W11` |
+| Claude Code | native install: bootstrap + elevated (admin) tasks only | the real one, from tmux: `claude` wrapper, claude-sync identity `DESK_W11`, `ENV_PROFILE=DESK_W11`; drives Windows through interop (`pwsh.exe`, `winget.exe`) |
 | Docker | – | native `virtualisation.docker` (rootful), no Docker Desktop |
 | Local LLM | none (VRAM stays for games) | none |
 | Bitwarden, Obsidian, Telegram, Element, Spotify, DBeaver | winget | – |
 
 Not replicated on purpose: Sway/waybar, gamescope/Steam-on-Linux, Sunshine,
 Ollama/llama.cpp, printing, Bluetooth tooling, the harmonia cache server.
+
+## Terminal and Claude workflow (decided 2026-09-13)
+
+One terminal: **Windows Terminal**, default profile `NixOS` (WSL), tmux inside
+it with resurrect, exactly like DESK. Claude Code runs **in WSL only**: that is
+where `ENV_PROFILE=DESK_W11`, the `claude` wrapper, claude-sync and the DESK
+paths (`/home/akunito/.dotfiles`, `~/Nextcloud`) live, so memory and sessions
+are the same ones DESK sees. From that tmux you also drive Windows: WSL interop
+puts `pwsh.exe`, `winget.exe`, `explorer.exe`, `reg.exe` on the PATH, so Claude
+in WSL runs `pwsh.exe -c "winget install --id X"` without leaving the session.
+
+Native Claude Code in PowerShell exists for two cases only: the bootstrap (no
+WSL yet) and anything that needs **elevation** (admin), which interop cannot do —
+open Windows Terminal's PowerShell profile as administrator for those. No kitty
+via WSLg: it would only add a slower forwarded window.
 
 ## Files in the repo
 
