@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, systemSettings ? {}, ... }:
 
 {
   # Some programs need SUID wrappers, can be configured further or are
@@ -10,7 +10,7 @@
     
     # CRITICAL: Ensures the password prompt appears in a nice GUI window
     # Use pinentry-qt since you are on KDE/Plasma
-    pinentryPackage = pkgs.pinentry-qt;
+    pinentryPackage = if (systemSettings.gpgPinentryCurses or false) then pkgs.pinentry-curses else pkgs.pinentry-qt;
 
     settings = {
       # Cache the password for 8 hours (28800 seconds) of inactivity

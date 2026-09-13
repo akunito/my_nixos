@@ -182,6 +182,7 @@ in
       # NAS server as "absent" and the 45-min idle timer never fired (creative
       # ran for 2 days straight, found 2026-08-25).
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICLo+cGyNOJQCaT2YmfJGUbebNetz0eI4RmB5Yfn2eca akunito@vps-prod" # VPS_PROD akucraft bot -> NAS game servers
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIkhQOHvPAXzA41MYcRBC6Vnv15FDgaFljWVrXoSwk1t akunito@DESK_W11" # DESK_W11 (NixOS-WSL on the DESK box)
     ];
 
     # ============================================================================

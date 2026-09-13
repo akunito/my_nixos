@@ -17,6 +17,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/DESK-config.nix**: DESK Profile Configuration
 - **profiles/DESK_A-config.nix**: DESK_A Profile Configuration — Aga's desktop (hostname: nixosagadesk)
 - **profiles/DESK_VMDESK-config.nix**: DESK_VMDESK Profile Configuration (nixosdesk)
+- **profiles/DESK_W11-config.nix**: DESK_W11 — NixOS-WSL inside Windows 11 on the DESK box (dual boot).
 - **profiles/KOMI_LXC-base-config.nix**: KOMI_LXC Base Profile Configuration
 - **profiles/KOMI_LXC_database-config.nix**: KOMI_LXC_database Profile Configuration
 - **profiles/KOMI_LXC_mailer-config.nix**: KOMI_LXC_mailer Profile Configuration
@@ -565,6 +566,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md**: Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring
 - **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
 - **docs/akunito/infrastructure/audits/truenas-docker-security-audit-2026-03-06.md**: TrueNAS Docker rootless migration and security hardening audit
+- **docs/akunito/infrastructure/desk-w11-wsl.md**: DESK_W11 runbook — Windows 11 dual boot on the DESK box with NixOS-WSL; what lives on the Windows side, what lives in WSL, and the exact bootstrap order
 - **docs/akunito/infrastructure/services/akucraft-ai.md**: LiteLLM gateway on VPS_PROD and the Discord /ask support assistant it serves
 - **docs/akunito/infrastructure/services/akucraft-audit-2026-08-16.md**: Audit of the AkuCraft servers - mod conflicts, configuration, security posture and resource risk
 - **docs/akunito/infrastructure/services/akucraft-manifest.md**: Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server

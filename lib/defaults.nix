@@ -604,6 +604,10 @@
     claudeSyncRetentionDays = 90; # cleanupPeriodDays on every client; the hub deletes one day earlier
     claudeSyncHubEnable = false; # Hub side (VPS_PROD): restricted forced-command shell, bare repo, retention + Telegram alerts
     claudeSyncHubKeys = [ ]; # Client public keys (one per machine, `claude-sync pubkey`), pinned to claude-sync-shell
+
+    # === WSL (profile "wsl": NixOS-WSL inside Windows) ===
+    wslWindowsUser = ""; # Windows account name; /mnt/c/Users/<this>/Nextcloud is bind-mounted at ~/Nextcloud so project paths match DESK
+    gpgPinentryCurses = false; # Terminal pinentry instead of pinentry-qt (headless / WSL)
     nextcloudSyncFolder = ""; # Path to Nextcloud sync folder (e.g., "/home/user/Nextcloud")
     githubAccessToken = ""; # GitHub PAT to lift github.com anon rate limit on flake-input fetches (set from secrets/domains.nix in profiles; empty = anonymous, no secrets needed)
     perplexityApiKey = ""; # Perplexity API key for MCP server (set from secrets/domains.nix in profiles)

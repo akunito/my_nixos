@@ -1,0 +1,38 @@
+{
+  "_comment": "Merge into %LOCALAPPDATA%\\Packages\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\LocalState\\settings.json — NixOS-WSL registers the 'NixOS' profile itself; this sets it as default with the DESK look.",
+  "defaultProfile": "{2c4de342-38b7-51cf-b940-2309a097f518}",
+  "copyOnSelect": true,
+  "profiles": {
+    "defaults": {
+      "font": { "face": "JetBrainsMono Nerd Font Mono", "size": 11 },
+      "colorScheme": "Ashes",
+      "opacity": 96,
+      "useAcrylic": false,
+      "padding": "6",
+      "scrollbarState": "hidden",
+      "bellStyle": "none"
+    },
+    "list": [
+      {
+        "name": "NixOS",
+        "source": "Windows.Terminal.Wsl",
+        "commandline": "wsl.exe -d NixOS --cd ~",
+        "startingDirectory": "//wsl$/NixOS/home/akunito"
+      }
+    ]
+  },
+  "schemes": [
+    {
+      "name": "Ashes",
+      "background": "#1C2023",
+      "foreground": "#C7CCD1",
+      "cursorColor": "#C7CCD1",
+      "selectionBackground": "#393F45",
+      "black": "#1C2023", "red": "#C7AE95", "green": "#95C7AE", "yellow": "#AEC795",
+      "blue": "#AE95C7", "purple": "#C795AE", "cyan": "#95AEC7", "white": "#C7CCD1",
+      "brightBlack": "#747C84", "brightRed": "#C7AE95", "brightGreen": "#95C7AE", "brightYellow": "#AEC795",
+      "brightBlue": "#AE95C7", "brightPurple": "#C795AE", "brightCyan": "#95AEC7", "brightWhite": "#F3F4F5"
+    }
+  ],
+  "_defaultProfileNote": "Replace defaultProfile with the GUID Windows Terminal generated for the NixOS profile (Settings > NixOS > copy GUID)."
+}

@@ -14,6 +14,7 @@
           LAPTOP_X13 = ./profiles/LAPTOP_X13-config.nix;
           LAPTOP_A = ./profiles/LAPTOP_A-config.nix;
           LAPTOP_YOGA = ./profiles/LAPTOP_YOGA-config.nix;
+          DESK_W11 = ./profiles/DESK_W11-config.nix; # NixOS-WSL inside Windows 11 on the DESK box
           # Archived (akunito LXCs decommissioned — workload moved to VPS_PROD
           # and NAS_PROD; profiles preserved in profiles/archived/):
           # LXC_HOME, LXC_tailscale, LXC_proxy, LXC_database, LXC_monitoring,
@@ -102,6 +103,13 @@
     #     /pkgs/applications/networking/browsers/firefox/wrapper.nix"
     # then verify with:
     #   nix eval --impure --raw .#homeConfigurations.DESK.activationPackage.drvPath
+    # NixOS on WSL2 (DESK_W11: the Windows 11 side of DESK's dual boot).
+    # Pinned to a rev like every non-nixpkgs input; bump by hand.
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL/72c92b11bb8289e6651c7fef29cc0a885fd6a255";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake/044be1aba87c30d42568e817c78a94c1d8eacb14";
       inputs.nixpkgs.follows = "nixpkgs";

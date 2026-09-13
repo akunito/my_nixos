@@ -1,0 +1,17 @@
+; %USERPROFILE%\.wslconfig — global WSL2 settings for DESK_W11
+; mirrored: WSL shares the Windows interfaces, so it rides the Windows
+; Tailscale tunnel (100.64.x, MagicDNS) and is reachable on the LAN by hostname.
+[wsl2]
+networkingMode=mirrored
+dnsTunneling=true
+firewall=true
+autoProxy=true
+memory=24GB
+processors=12
+swap=0
+localhostForwarding=true
+
+[experimental]
+autoMemoryReclaim=gradual
+sparseVhd=true
+hostAddressLoopback=true
