@@ -91,7 +91,7 @@ and is the native package manager (Chocolatey adds nothing here). DESK → W11:
 | spotify, vlc, qbittorrent, OBS (media recording) | Spotify.Spotify, VideoLAN.VLC, qBittorrent.qBittorrent, OBSProject.OBSStudio | |
 | steam, GOG (Heroic), FreesmLauncher + Java 21 | Valve.Steam, GOG.Galaxy, PrismLauncher.PrismLauncher + EclipseAdoptium.Temurin.21.JRE | AkuCraft: new instance + AutoModpack, never copy jars (see memory) |
 | sunshine, moonlight | LizardByte.Sunshine, MoonlightGameStreamingProject.Moonlight | Sunshine host for DESK_A/X13 |
-| easyeffects | Equalizer APO (manual) | not on winget |
+| easyeffects | — | Equalizer APO declined 2026-09-14 (manual install + per-device setup); revisit only if an EQ is actually missed |
 | mission-center | Task Manager | |
 | ollama / llama.cpp | none | decided: no LLM on W11 |
 | AMD driver | AMD Adrenalin (manual) | winget id unreliable |
@@ -102,8 +102,12 @@ commit, re-run `bootstrap.ps1`. Remove: `winget uninstall --id ...`.
 
 ## Taskbar and look (Windhawk)
 
-Decision 2026-09-13: keep the vanilla taskbar, restyle it with Windhawk mods
-(actively maintained, follow every W11 update; no tiling, no conflicts with games).
+Decision 2026-09-13, re-confirmed 2026-09-14 after weighing GlazeWM/komorebi: keep the
+vanilla taskbar, restyle it with Windhawk mods (actively maintained, follow every W11
+update; no tiling, no conflicts with games). Tiling WMs bring their own workspaces
+(not Windows virtual desktops) and have no "sticky"; sticky and per-app placement
+rules belong in `hyper-desktops.ahk` (VirtualDesktopAccessor `PinWindow`,
+`MoveWindowToDesktopNumber` + `WinMove`).
 Windhawk has no CLI for mods: open it once → Explore → install these, in order,
 then set each mod's options:
 
@@ -268,6 +272,17 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
 - NAS: the W11 ssh public key is in `profiles/NAS_PROD-config.nix`; it lands on the
   NAS at its next `install.sh`. Same for DESK and X13. The VPS was deployed on 2026-09-13.
 - Delete the bundle from Nextcloud after W11 is bootstrapped.
+
+## Steam library shared with NixOS
+
+`D:\SteamLibrary` is `/mnt/DATA` on NixOS (ntfs3, `uid=1000`): BG3, AoE2 DE, Proton 10,
+plus their `compatdata`/`shadercache`. Windows Steam lists the folder too, so both
+clients see the same installs — Proton titles use the Windows depots, nothing to
+sync. Rules: only Proton titles there (force Proton on Linux for games with a native
+Linux build, or Windows re-downloads them); never switch OS mid-download; Windows
+must never hibernate with the drive mounted (Fast Startup is off). Saves do not cross
+over (Proton prefix vs `C:\Users`) unless Steam Cloud handles the title — untested.
+Empty leftovers: `D:\Steam\SteamLibrary`, `C:\Games\steamapps`.
 
 ## Known limits
 
