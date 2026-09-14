@@ -164,6 +164,14 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
    off, Delivery Optimization P2P off, ten safe services disabled, store bloat and
    OneDrive removed, Edge background off, Game Mode on. Nothing touches Defender,
    Update, Xbox services, audio, Bluetooth or printing. Reboot.
+   Run 2026-09-14 (it had been skipped on W11 day). Takes ~40 min: the provisioned-
+   package check calls DISM once per app. `Remove-AppxPackage -AllUsers` is denied for
+   Teams/Clipchamp/Outlook and friends — finish with a plain per-user
+   `Remove-AppxPackage`, `winget uninstall Microsoft.OneDrive` (per-user install) and
+   delete the `OneDrive` + `MicrosoftEdgeAutoLaunch_*` values in `HKCU\...\Run`.
+   **After every Windows feature update** re-run `debloat.ps1` and `ai-off.ps1`: they
+   are idempotent, and updates bring back Teams/Outlook/Clipchamp/OneDrive and the
+   Copilot policies. Phone Link is kept (Pixel 9a).
 4. Windhawk: install the mods from the "Taskbar and look" table.
 5. Download `VirtualDesktopAccessor.dll` from
    https://github.com/Ciantic/VirtualDesktopAccessor/releases into the same
