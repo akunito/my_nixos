@@ -55,22 +55,29 @@ in
     wireguardEnable = false;
 
     # === NAS (same three NFS mounts as DESK) ===
+    # Mounted by the NAS's TAILNET address, not 192.168.20.200. Windows has no
+    # storage-VLAN interface here (the Intel X520 that would carry VLAN 100 gets
+    # no traffic from the switch), so 192.168.20.200 would be reached through the
+    # pfSense subnet router, which SNATs the client to 192.168.20.1 — measured on
+    # the NAS. Going node-to-node over the tailnet keeps our real source address
+    # (100.64.0.15), which is what NAS_PROD-config.nix authorises. Same reasoning
+    # as DESK_A. Needs the Windows Tailscale client up, which it is by design.
     nfsClientEnable = true;
     nfsMounts = [
       {
-        what = "192.168.20.200:/mnt/ssdpool/media";
+        what = "100.64.0.1:/mnt/ssdpool/media";
         where = "/mnt/NFS_media";
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
       {
-        what = "192.168.20.200:/mnt/ssdpool/workstation_backups";
+        what = "100.64.0.1:/mnt/ssdpool/workstation_backups";
         where = "/mnt/NFS_Backups";
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
       {
-        what = "192.168.20.200:/mnt/extpool/downloads";
+        what = "100.64.0.1:/mnt/extpool/downloads";
         where = "/mnt/NFS_downloads";
         type = "nfs";
         options = "noatime,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";

@@ -137,16 +137,23 @@ in
     ];
 
     # ============================================================================
-    # NFS SERVER — exports for DESK, LAPTOP_X13, VPS, DESK_A
+    # NFS SERVER — exports for DESK, LAPTOP_X13, VPS, DESK_A, DESK_W11
     # DESK_A (Aga's desktop, WiFi) has no route to the storage VLAN and reaches the
     # NAS over Tailscale (source = its tailnet IP 100.64.0.11), so it's listed by
     # that IP rather than a LAN address.
+    # DESK_W11 (NixOS-WSL on the DESK box) is the same case: on Windows the Intel
+    # X520 that would carry VLAN 100 gets no traffic from the switch, so there is
+    # no storage-VLAN address. It mounts the NAS by its TAILNET address
+    # (100.64.0.1), which keeps the client's source as its own tailnet IP
+    # 100.64.0.15. Mounting 192.168.20.200 instead would go through the pfSense
+    # subnet router, which SNATs to 192.168.20.1 — measured — and authorising that
+    # would open the export to every device routing through pfSense.
     # ============================================================================
     nfsServerEnable = true;
     nfsExports = ''
-      /mnt/ssdpool/media                192.168.20.0/24(rw,sync,insecure,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,no_subtree_check) 100.64.0.8(rw,sync,insecure,no_subtree_check)   # X13 over Tailscale: it is on 192.168.8.x and the storage VLAN is firewalled from there
-      /mnt/ssdpool/workstation_backups  192.168.8.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.20.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.11(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.4(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
-      /mnt/extpool/downloads            192.168.20.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
+      /mnt/ssdpool/media                192.168.20.0/24(rw,sync,insecure,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,no_subtree_check) 100.64.0.8(rw,sync,insecure,no_subtree_check) 100.64.0.15(rw,sync,insecure,no_subtree_check)   # X13 (.8) and DESK_W11 (.15) over Tailscale: they are on 192.168.8.x and the storage VLAN is firewalled from there
+      /mnt/ssdpool/workstation_backups  192.168.8.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.92(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.20.96(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.11(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.4(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.15(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
+      /mnt/extpool/downloads            192.168.20.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 192.168.8.0/24(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.8(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check) 100.64.0.15(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
     '';
 
     # ============================================================================
