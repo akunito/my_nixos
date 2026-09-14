@@ -37,53 +37,59 @@ if !FileExist(dll) {
     ExitApp
 }
 hVDA := DllCall("LoadLibrary", "Str", dll, "Ptr")
-GoToDesk(n) => DllCall("VirtualDesktopAccessor\GoToDesktopNumber", "Int", n, "Int")
-Count() => DllCall("VirtualDesktopAccessor\GetDesktopCount", "Int")
-Current() => DllCall("VirtualDesktopAccessor\GetCurrentDesktopNumber", "Int")
-Create() => DllCall("VirtualDesktopAccessor\CreateDesktop", "Int")
-MoveWin(hwnd, n) => DllCall("VirtualDesktopAccessor\MoveWindowToDesktopNumber", "Ptr", hwnd, "Int", n, "Int")
-
-EnsureDesktop(n) {
-    while Count() <= n
-        Create()
+; ---- GlazeWM: workspaces, focus, move, layout (the Sway bindings) ----
+; GlazeWM owns the windows (tiling by default, per-monitor workspaces 10-19 on
+; the main monitor, 20-29 on the vertical one; config in glazewm\config.yaml).
+; It has no keybindings of its own: every chord below shells to its CLI, which
+; keeps the Hyper layer in this file and the Win key usable. Hyper+N follows the
+; swaysome rule from Sway: it acts on the monitor that has the focus.
+GLAZE := A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
+Glaze(args) => Run('"' GLAZE '" command ' args, , "Hide")
+PrimaryMon() => DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")
+FocusGroup() {  ; 1 = main monitor (1x), 2 = secondary (2x)
+    h := WinExist("A")
+    if h && WinGetClass("ahk_id " h) != "Progman" && WinGetClass("ahk_id " h) != "WorkerW"
+        mon := DllCall("MonitorFromWindow", "Ptr", h, "UInt", 2, "Ptr")
+    else {
+        MouseGetPos &mx, &my
+        mon := DllCall("MonitorFromPoint", "Int64", (my << 32) | (mx & 0xFFFFFFFF), "UInt", 2, "Ptr")
+    }
+    return mon = PrimaryMon() ? 1 : 2
 }
-Go(n) {
-    EnsureDesktop(n)
-    GoToDesk(n)
+Ws(n) => FocusGroup() * 10 + Mod(n, 10)   ; Hyper+1..9 -> x1..x9, Hyper+0 -> x0
+Loop 10 {
+    k := Mod(A_Index, 10)
+    Hotkey "^!#" k, ((n) => (*) => Glaze("focus --workspace " Ws(n)))(k)
+    Hotkey "^!#+" k, ((n) => (*) => Glaze("move --workspace " Ws(n)))(k)
 }
-Move(n) {
-    EnsureDesktop(n)
-    MoveWin(WinGetID("A"), n)
-    GoToDesk(n)
-}
-Rel(delta) {
-    c := Count(), i := Mod(Current() + delta + c, c)
-    GoToDesk(i)
-}
-RelMove(delta) {
-    c := Count(), i := Mod(Current() + delta + c, c)
-    MoveWin(WinGetID("A"), i)
-    GoToDesk(i)
-}
-
-; Hyper = ^!# (Ctrl Alt Win). Hyper+Shift = ^!#+
-Loop 9 {
-    k := A_Index
-    Hotkey "^!#" k, (*) => Go(k - 1)
-    Hotkey "^!#+" k, (*) => Move(k - 1)
-}
-^!#0:: Go(9)
-^!#+0:: Move(9)
-^!#q:: Rel(-1)
-^!#w:: Rel(+1)
-^!#+q:: RelMove(-1)
-^!#+w:: RelMove(+1)
+^!#q:: Glaze("focus --prev-active-workspace-on-monitor")
+^!#w:: Glaze("focus --next-active-workspace-on-monitor")
+^!#+q:: Glaze("move --prev-active-workspace-on-monitor")
+^!#+w:: Glaze("move --next-active-workspace-on-monitor")
+^!#Left:: Glaze("focus --monitor 0")          ; focus output left/right (main is left)
+^!#Right:: Glaze("focus --monitor 1")
+^!#+Left:: Glaze("move --workspace-in-direction left")
+^!#+Right:: Glaze("move --workspace-in-direction right")
+^!#h:: Glaze("focus --direction left")        ; sway: h/j/k + ? for right (l is an app)
+^!#j:: Glaze("focus --direction down")
+^!#k:: Glaze("focus --direction up")
+^!#+/:: Glaze("focus --direction right")
+^!#+j:: Glaze("move --direction left")        ; sway window-move.sh: Shift+j/:/k/l
+^!#+;:: Glaze("move --direction right")
+^!#+k:: Glaze("move --direction down")
+^!#+l:: Glaze("move --direction up")
+^!#+u:: Glaze("resize --width -5%")
+^!#+p:: Glaze("resize --width +5%")
+^!#+i:: Glaze("resize --height +5%")
+^!#+o:: Glaze("resize --height -5%")
+^!#Escape:: Glaze("close")
+^!#f:: Glaze("toggle-fullscreen")
+^!#+g:: Glaze("toggle-fullscreen")
+^!#+f:: Glaze("toggle-floating")
+^!#+Space:: Glaze("toggle-floating")
+^!#+v:: Glaze("toggle-tiling-direction")     ; sway split toggle (Shift+v is cliphist there; Win+V here)
+^!#+-:: Glaze("toggle-minimized")            ; scratchpad stand-in
 ^!#Tab:: Send "#{Tab}"
-^!#Escape:: WinClose "A"
-^!#f:: {
-    h := WinGetID("A")
-    WinGetMinMax(h) = 1 ? WinRestore(h) : WinMaximize(h)
-}
 ^!#Space:: Send "#!{Space}" ; PowerToys Command Palette (its own hotkey is Win+Alt+Space; PowerToys Run is disabled) — rofi stand-in
 
 ; raise-or-launch — the app-toggle.sh idea: focus if running, minimise if focused, launch otherwise
@@ -157,24 +163,16 @@ PowerAction(choice) {
     if (A_PriorKey = "LWin")
         Send "#!{Space}"
 }
-; ---- "Show on all desktops" (Sway's sticky) ----
-; Hyper+Shift+S toggles it for the active window (VirtualDesktopAccessor pins).
-PinWin(h)   => DllCall("VirtualDesktopAccessor\PinWindow", "Ptr", h, "Int")
-UnpinWin(h) => DllCall("VirtualDesktopAccessor\UnPinWindow", "Ptr", h, "Int")
-IsPinned(h) => DllCall("VirtualDesktopAccessor\IsPinnedWindow", "Ptr", h, "Int")
-^!#+s:: {
-    h := WinExist("A")
-    if !h
-        return
-    if IsPinned(h)
-        UnpinWin(h)
-    else
-        PinWin(h)
-    ToolTip(IsPinned(h) ? "on all desktops" : "this desktop only")
-    SetTimer(() => ToolTip(), -900)
+; (Hyper+Shift+S "sticky" has no GlazeWM equivalent — Windows virtual desktops are
+;  not used any more, so the VirtualDesktopAccessor pin is gone too.)
+^!#+r:: {
+    Glaze("wm-reload-config")
+    Reload
 }
-^!#+r:: Reload
-^!#+Escape:: Suspend
+^!#+Escape:: {
+    Glaze("wm-toggle-pause")
+    Suspend
+}
 
 ; ---- Alt+drag: move (left) / resize (right), Sway's floating_modifier ----
 ; Skips maximised windows, the desktop and the taskbar. Resize grabs the corner
