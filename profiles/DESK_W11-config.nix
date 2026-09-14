@@ -143,14 +143,19 @@ in
     jellyseerrApiKey = secrets.jellyseerrApiKey or "";
     jellyseerrUrl = "http://192.168.20.200:5055";
     planeApiToken = secrets.planeApiToken or "";
-    planeApiUrl = secrets.planeApiUrl or "";
-    planeWorkspaceSlug = secrets.planeWorkspaceSlug or "";
+    # The URLs, slug and connection string are NOT secrets keys (DESK and X13
+    # spell them out the same way); `secrets.planeApiUrl or ""` silently left
+    # every MCP except Perplexity/Jellyseerr unconfigured on the first W11 day.
+    # Internal Tailscale vhost for Plane: the public host sits behind Cloudflare
+    # Access, which answers the API token with the Access login page.
+    planeApiUrl = "https://plane.${secrets.wildcardLocal}";
+    planeWorkspaceSlug = "akuworkspace";
     grafanaMcpToken = secrets.grafanaMcpToken or "";
-    grafanaMcpUrl = secrets.grafanaMcpUrl or "";
-    n8nMcpApiKey = secrets.n8nMcpApiKey or "";
-    n8nMcpUrl = secrets.n8nMcpUrl or "";
+    grafanaMcpUrl = "https://grafana.${secrets.publicDomain}";
+    n8nMcpApiKey = secrets.n8nApiKey or "";
+    n8nMcpUrl = "https://n8n.${secrets.publicDomain}";
     jlOnboardAccessToken = secrets.jlOnboardAccessToken or "";
-    dbClaudeReadonlyConnStr = secrets.dbClaudeReadonlyConnStr or "";
+    dbClaudeReadonlyConnStr = "postgresql://claude_readonly:${secrets.dbClaudeReadonlyPassword}@vps-prod:5432/plane";
 
     # === Auto update: off, W11 is updated by hand ===
     autoSystemUpdate = false;
