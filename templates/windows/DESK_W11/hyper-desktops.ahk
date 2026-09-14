@@ -215,39 +215,50 @@ AltDrag(mode) {
         return
     WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
     WinActivate "ahk_id " hwnd
-    ; Native move/size loops (SC_DRAGMOVE / SC_SIZE) are what GlazeWM understands:
-    ; a tiled window dropped on another swaps places, a tiled resize adjusts the
-    ; split. The hook swallowed the physical click, so Windows thinks no button is
-    ; down and would end the loop at once: send a logical left click without Alt
-    ; (Alt+click means "download" in browsers), start the loop, and release the
-    ; logical button when the physical one comes up.
-    NativeLoop(sc, btn) {
-        Send "{Blind}{Alt up}"
-        Click "down"
-        PostMessage 0x112, sc, 0, , "ahk_id " hwnd
-        KeyWait btn
-        Click "up"
-    }
-    if (mode = "move") {
-        NativeLoop(0xF012, "LButton")   ; SC_DRAGMOVE
-        return
-    }
+    btn := mode = "move" ? "LButton" : "RButton"
     left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
     if GlazeTiled() {
-        edge := top ? (left ? 4 : 5) : (left ? 7 : 8)   ; WMSZ_TOPLEFT/TOPRIGHT/BOTTOMLEFT/BOTTOMRIGHT
-        NativeLoop(0xF000 + edge, "RButton")             ; SC_SIZE + edge
+        ; Tiled window: no live dragging (GlazeWM would take a manual WinMove as
+        ; "un-tile me"). Wait for the release and act once, through GlazeWM:
+        ;  - move: dropped over another window -> move in that direction (sway's
+        ;    drag-to-swap for neighbours);
+        ;  - resize: apply the dragged delta to the split, from the nearest corner.
+        KeyWait btn
+        MouseGetPos &cx, &cy
+        if (mode = "move") {
+            target := DllCall("WindowFromPoint", "Int64", (cy << 32) | (cx & 0xFFFFFFFF), "Ptr")
+            target := DllCall("GetAncestor", "Ptr", target, "UInt", 2, "Ptr")   ; GA_ROOT
+            if (!target || target = hwnd)
+                return
+            WinGetPos &tx, &ty, &tw, &th, "ahk_id " target
+            ddx := (tx + tw / 2) - (wx + ww / 2), ddy := (ty + th / 2) - (wy + wh / 2)
+            dir := Abs(ddx) > Abs(ddy) ? (ddx > 0 ? "right" : "left") : (ddy > 0 ? "down" : "up")
+            Glaze("move --direction " dir)
+        } else {
+            dx := cx - mx, dy := cy - my
+            dw := left ? -dx : dx, dh := top ? -dy : dy
+            if (Abs(dw) > 4)
+                Glaze("resize --width " dw "px")
+            if (Abs(dh) > 4)
+                Glaze("resize --height " dh "px")
+        }
         return
     }
+    ; Floating window: live move/resize, screen coordinates (see CoordMode above).
     SetWinDelay -1
-    while GetKeyState("RButton", "P") {
+    while GetKeyState(btn, "P") {
         MouseGetPos &cx, &cy
         dx := cx - mx, dy := cy - my
-        nx := left ? wx + dx : wx
-        ny := top ? wy + dy : wy
-        nw := left ? ww - dx : ww + dx
-        nh := top ? wh - dy : wh + dy
-        if (nw > 150 && nh > 100)
-            WinMove nx, ny, nw, nh, "ahk_id " hwnd
+        if (mode = "move") {
+            WinMove wx + dx, wy + dy, , , "ahk_id " hwnd
+        } else {
+            nx := left ? wx + dx : wx
+            ny := top ? wy + dy : wy
+            nw := left ? ww - dx : ww + dx
+            nh := top ? wh - dy : wh + dy
+            if (nw > 150 && nh > 100)
+                WinMove nx, ny, nw, nh, "ahk_id " hwnd
+        }
         Sleep 8
     }
 }

@@ -91,8 +91,6 @@ window_rules:
         window_title: { regex: '.*? - Peek' }
       - window_process: { equals: 'ShareX' }
       - window_process: { equals: 'AutoHotkey64_UIA' }
-      - window_process: { equals: 'windhawk' }
-      - window_process: { equals: 'Taskmgr' }
   # Always floating (sway's for_window floating enable) — extend as needed.
   - commands: ['set-floating --centered']
     match:
@@ -100,6 +98,8 @@ window_rules:
         window_title: { regex: '^(Calculator|Calculadora)$' }
       - window_process: { equals: 'CalculatorApp' }
       - window_process: { equals: 'Bitwarden' }
+      - window_process: { equals: 'windhawk' }
+      - window_process: { equals: 'Taskmgr' }
       - window_process: { equals: 'ApplicationFrameHost' }
         window_title: { equals: 'Settings' }
   # Sway assigns: vivaldi -> 11, code -> 12, obsidian -> 21.
