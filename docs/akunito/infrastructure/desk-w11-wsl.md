@@ -273,6 +273,25 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
   NAS at its next `install.sh`. Same for DESK and X13. The VPS was deployed on 2026-09-13.
 - Delete the bundle from Nextcloud after W11 is bootstrapped.
 
+## Backups of the Windows side (restic → NAS)
+
+The same `home_backup` timer as DESK/X13 (17:00 and 21:00) runs
+`backup-manager.sh --auto --target nfs --job windows` from WSL into
+`/mnt/NFS_Backups/nixosw11aku/windows.restic`. It first exports what only lives in
+the registry into `C:\Users\<user>\AppData\Local\w11-backup\` (`windhawk.reg` = mods +
+their settings, `explorer-advanced.reg` = taskbar prefs, `winget-installed.json`), then
+snapshots Windows Terminal, ShareX, PowerToys, Command Palette, Zen profiles, Vivaldi
+`User Data`, Telegram `tdata`, Obsidian, DBeaver, `ProgramData\Windhawk` and Steam
+`userdata` (caches excluded; ~1.8 GB, 21 s over the tailnet). Browsers hold LOCK,
+Cookies and Sessions open, so restic exits 3 ("some files unreadable") — the job treats
+that as a warning; run it with the browsers closed for a complete snapshot.
+Needs `~/myScripts/restic.key` in WSL (same key as the other workstations).
+
+Restore on a fresh W11: `bootstrap.ps1` (winget import), `reg import windhawk.reg` +
+`explorer-advanced.reg` (elevated), then `restic restore latest --target /` from WSL for
+the AppData/Documents paths. Status: `backup-manager.sh --status` or
+`systemctl status home_backup`.
+
 ## Steam library shared with NixOS
 
 `D:\SteamLibrary` is `/mnt/DATA` on NixOS (ntfs3, `uid=1000`): BG3, AoE2 DE, Proton 10,
