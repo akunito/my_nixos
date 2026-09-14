@@ -32,7 +32,9 @@ Reg 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Paint' DisableCocreator 1
 Reg 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Notepad' DisableAIFeatures 1
 Reg 'HKCU:\Software\Policies\Microsoft\Windows\Notepad' DisableAIFeatures 1
 "== Office/Copilot key chord -> no-op (ms-officeapp protocol handler)"
-Reg 'HKCU:\Software\Classes\ms-officeapp\Shell\Open\Command' '(default)' 'rundll32' 'String'
+# New-ItemProperty on this key did not stick from the elevated session; reg.exe does.
+& reg.exe add 'HKCU\Software\Classes\ms-officeapp\Shell\Open\Command' /ve /d rundll32 /f | Out-Null
+"  ms-officeapp handler = rundll32"
 "== Copilot apps"
 foreach ($n in 'Microsoft.Copilot', 'Microsoft.Windows.Ai.Copilot.Provider', 'Microsoft.MicrosoftOfficeHub') {
   Get-AppxPackage -AllUsers -Name $n -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
