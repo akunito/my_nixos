@@ -84,7 +84,7 @@ Loop 9 {
     h := WinGetID("A")
     WinGetMinMax(h) = 1 ? WinRestore(h) : WinMaximize(h)
 }
-^!#Space:: Send "!{Space}" ; PowerToys Run (falls back to nothing if not installed) — change to "#" for Start
+^!#Space:: Send "#!{Space}" ; PowerToys Command Palette (its own hotkey is Win+Alt+Space; PowerToys Run is disabled) — rofi stand-in
 
 ; raise-or-launch — the app-toggle.sh idea: focus if running, minimise if focused, launch otherwise
 Toggle(exe, cmd) {
