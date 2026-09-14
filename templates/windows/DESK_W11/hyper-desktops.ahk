@@ -43,8 +43,8 @@ hVDA := DllCall("LoadLibrary", "Str", dll, "Ptr")
 ; It has no keybindings of its own: every chord below shells to its CLI, which
 ; keeps the Hyper layer in this file and the Win key usable. Hyper+N follows the
 ; swaysome rule from Sway: it acts on the monitor that has the focus.
-GLAZE := A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
-Glaze(args) => Run('"' GLAZE '" command ' args, , "Hide")
+glazeExe := A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
+Glaze(args) => Run('"' glazeExe '" command ' args, , "Hide")
 PrimaryMon() => DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")
 FocusGroup() {  ; 1 = main monitor (1x), 2 = secondary (2x)
     h := WinExist("A")
