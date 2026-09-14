@@ -145,6 +145,17 @@ PowerAction(choice) {
     }
 }
 ^!#+Enter:: PowerMenu()
+; ---- Win tapped alone -> Command Palette instead of the Start menu ----
+; Pressing Win sends an unassigned virtual key (vkE8) while Win is held, so
+; Windows thinks a Win+<key> chord happened and does not open Start on release.
+; Win+E / Win+L / the Hyper chords pass through untouched (~). On release, if no
+; physical key was pressed in between (A_PriorKey ignores keys sent by AHK), open
+; the palette. Delete these two hotkeys to get the Start menu back.
+~LWin:: Send "{Blind}{vkE8}"
+~LWin Up:: {
+    if (A_PriorKey = "LWin")
+        Send "#!{Space}"
+}
 ^!#+r:: Reload
 ^!#+Escape:: Suspend
 
