@@ -32,6 +32,14 @@ in
     wrappSudoToDoas = false;
     sudoNOPASSWD = false;
     sudoAskpassEnable = false; # no GUI askpass
+    # Passwordless sudo through a key held by an ssh-agent, same pattern as
+    # NAS_PROD and VPS_PROD. Here the agent is local rather than forwarded, so
+    # this machine's own key has to be in authorizedKeys below for
+    # pam_ssh_agent_auth to validate it. Effect: whoever can talk to an agent
+    # holding one of those keys gets root without a password — on this box that
+    # is the akunito user, so it is close to NOPASSWD for interactive use, and
+    # it is what lets deploys run without a TTY.
+    sshAgentSudoEnable = true;
     pkiCertificates = [ ];
     firewall = true;
     allowedTCPPorts = [ ];
@@ -40,6 +48,10 @@ in
     authorizedKeys = [ # who may ssh INTO WSL (keys only)
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAwUXqQXLaKW/WjsZ95fjHKU7sIhNEeqW685TbsrePiK diego88aku@gmail.com" # Laptop (X13)
+      # This machine's own key. Not for logging in from elsewhere — it is what
+      # sshAgentSudoEnable checks, since the list lands in
+      # /etc/ssh/authorized_keys.d/akunito, the file pam_ssh_agent_auth reads.
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIkhQOHvPAXzA41MYcRBC6Vnv15FDgaFljWVrXoSwk1t akunito@DESK_W11" # DESK_W11 itself (sudo via local agent)
     ];
 
     # === Network ===
