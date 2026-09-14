@@ -111,16 +111,16 @@ rules belong in `hyper-desktops.ahk` (VirtualDesktopAccessor `PinWindow`,
 Windhawk has no CLI for mods: open it once → Explore → install these, in order,
 then set each mod's options:
 
-| Mod | Setting |
+| Mod | Setting (as applied 2026-09-14) |
 |---|---|
 | Taskbar on top (Windows 11) | on — the bar goes to the top like waybar |
-| Taskbar height and icon size | height 36, icon 20 |
-| Taskbar clock customization | `%H:%M  %a %d %b`, top-right like waybar's clock |
-| Taskbar labels for Windows 11 | labels on, combine never (workspace-like readability) |
+| Taskbar height and icon size | height 28, icon 16 (button width 44) — slimmer than first planned |
+| Taskbar clock customization | Windows date/time pictures, not strftime: `TimeFormat: HH':'mm`, `DateFormat: ddd dd MMM`, `ShowSeconds: 0`, `TopLine: '%time% \| %date%'`, `MiddleLine`/`BottomLine` empty, **`TextSpacing: -14`** (the block reserves two lines; at 28 px the top line is clipped until the spacing goes negative). `Width`/`Height` are Windows-10-only, ignored. Settings apply on save; the first save needed an explorer restart |
 | Taskbar tray system icon tweaks | hide Copilot/News/Chat leftovers, keep network/volume |
-| Taskbar notification icon spacing | 24 px |
-| Taskbar button click | middle-click closes |
-| Start menu styler / Taskbar styler (optional) | a dark theme close to `ashes` |
+| Windows 11 Taskbar Styler | theme `RosePine` |
+| Taskbar labels for Windows 11 | labels on, combine never (workspace-like readability) — pending |
+| Taskbar notification icon spacing | 24 px — pending |
+| Taskbar button click | middle-click closes — pending |
 
 Settings → Personalization → Taskbar: alignment **left**, Widgets off, Search
 hidden, Task view **on** (Hyper+Tab). Dark mode, accent from wallpaper off.
