@@ -47,7 +47,7 @@ window_behavior:
   state_defaults:
     floating:
       centered: true
-      shown_on_top: false
+      shown_on_top: true       # sway: floating windows always above the tiled ones
     fullscreen:
       maximized: false
       shown_on_top: false

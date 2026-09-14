@@ -215,18 +215,27 @@ AltDrag(mode) {
         return
     WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
     WinActivate "ahk_id " hwnd
+    ; Native move/size loops (SC_DRAGMOVE / SC_SIZE) are what GlazeWM understands:
+    ; a tiled window dropped on another swaps places, a tiled resize adjusts the
+    ; split. The hook swallowed the physical click, so Windows thinks no button is
+    ; down and would end the loop at once: send a logical left click without Alt
+    ; (Alt+click means "download" in browsers), start the loop, and release the
+    ; logical button when the physical one comes up.
+    NativeLoop(sc, btn) {
+        Send "{Blind}{Alt up}"
+        Click "down"
+        PostMessage 0x112, sc, 0, , "ahk_id " hwnd
+        KeyWait btn
+        Click "up"
+    }
     if (mode = "move") {
-        ; Native title-bar drag (SC_DRAGMOVE): GlazeWM sees a real move loop, so a
-        ; tiled window dropped over another one swaps places instead of floating.
-        PostMessage 0x112, 0xF012, 0, , "ahk_id " hwnd
+        NativeLoop(0xF012, "LButton")   ; SC_DRAGMOVE
         return
     }
     left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
     if GlazeTiled() {
-        ; Native size loop from the nearest corner (SC_SIZE + WMSZ_*): GlazeWM resizes
-        ; the tiling column/row instead of un-tiling the window.
-        edge := top ? (left ? 4 : 5) : (left ? 7 : 8)
-        PostMessage 0x112, 0xF000 + edge, 0, , "ahk_id " hwnd
+        edge := top ? (left ? 4 : 5) : (left ? 7 : 8)   ; WMSZ_TOPLEFT/TOPRIGHT/BOTTOMLEFT/BOTTOMRIGHT
+        NativeLoop(0xF000 + edge, "RButton")             ; SC_SIZE + edge
         return
     }
     SetWinDelay -1
