@@ -78,7 +78,7 @@ $apps = @(
   'Microsoft.BingNews','Microsoft.BingWeather','Microsoft.BingSearch','Microsoft.GetHelp','Microsoft.Getstarted',
   'Microsoft.MicrosoftOfficeHub','Microsoft.MicrosoftSolitaireCollection','Microsoft.People','Microsoft.PowerAutomateDesktop',
   'Microsoft.Todos','Microsoft.WindowsFeedbackHub','Microsoft.WindowsMaps','Microsoft.ZuneVideo','Microsoft.ZuneMusic',
-  'Microsoft.YourPhone','MicrosoftTeams','MSTeams','Microsoft.OutlookForWindows','Clipchamp.Clipchamp','Microsoft.549981C3F5F10',
+  'MicrosoftTeams','MSTeams','Microsoft.OutlookForWindows','Clipchamp.Clipchamp','Microsoft.549981C3F5F10',
   'MicrosoftCorporationII.QuickAssist','Microsoft.Windows.DevHome','Microsoft.MicrosoftStickyNotes','Microsoft.WindowsAlarms',
   'Microsoft.Copilot','Microsoft.Windows.Ai.Copilot.Provider','Microsoft.OneDrive'
 )
@@ -88,7 +88,7 @@ foreach ($a in $apps) {
 }
 # OneDrive: Nextcloud replaces it
 $od = "$env:SystemRoot\SysWOW64\OneDriveSetup.exe"; if (Test-Path $od) { & $od /uninstall }
-# Kept: Calculator, Photos, Snipping Tool, Terminal, Store, Xbox, Notepad, Paint.
+# Kept: Calculator, Photos, Snipping Tool, Terminal, Store, Xbox, Notepad, Paint, Phone Link (Pixel 9a).
 
 Step "Edge: no background/prelaunch, not the default"      # undo: delete the values
 Reg 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' StartupBoostEnabled 0
