@@ -45,10 +45,20 @@ are the same ones DESK sees. From that tmux you also drive Windows: WSL interop
 puts `pwsh.exe`, `winget.exe`, `explorer.exe`, `reg.exe` on the PATH, so Claude
 in WSL runs `pwsh.exe -c "winget install --id X"` without leaving the session.
 
-Native Claude Code in PowerShell exists for two cases only: the bootstrap (no
-WSL yet) and anything that needs **elevation** (admin), which interop cannot do —
-open Windows Terminal's PowerShell profile as administrator for those. No kitty
-via WSLg: it would only add a slower forwarded window.
+Native Claude Code in PowerShell exists for **one** case: the bootstrap, before
+WSL exists. Elevation is not a second case — interop can raise a UAC prompt, so
+admin work is driveable from the WSL session too (measured 2026-09-14: the
+elevated child reported `IsInRole(Administrator) = True`):
+
+```bash
+powershell.exe -NoProfile -Command "Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile','-File','C:\path\to\script.ps1'"
+```
+
+You still accept the UAC dialog by hand, and the elevated child is a separate
+process, so have it write its output to a file and read that back — its stdout
+does not return to WSL. Note `Out-File` writes **UTF-16LE with a BOM**; decode it
+(or use `Set-Content -Encoding utf8`) or string comparisons on the result silently
+fail. No kitty via WSLg: it would only add a slower forwarded window.
 
 ## Files in the repo
 
