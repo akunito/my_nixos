@@ -1,7 +1,7 @@
 # Home Manager for the "wsl" profile (DESK_W11): the DESK shell experience
 # without the desktop — zsh/starship/atuin, tmux with resurrect + ssh-smart,
 # ranger, git, managed ~/.ssh/config, Claude Code + claude-sync.
-{ config, pkgs, userSettings, systemSettings, lib, ... }:
+{ config, pkgs, pkgs-unstable, userSettings, systemSettings, lib, ... }:
 
 {
   home.username = userSettings.username;
@@ -20,10 +20,15 @@
 
   home.stateVersion = userSettings.homeStateVersion;
 
-  home.packages = with pkgs; [
-    git-crypt
-    rsync
-    nfs-utils
+  home.packages = [
+    # git-crypt MUST come from pkgs-unstable: claude-code.nix, development.nix and
+    # user-basic-pkgs.nix all use pkgs-unstable.git-crypt, and on a stable-system
+    # profile pkgs.git-crypt resolves to a different store path — buildEnv then
+    # fails with "two given paths contain a conflicting subpath". Same rule as
+    # profiles/VPS-base-config.nix:171.
+    pkgs-unstable.git-crypt
+    pkgs.rsync
+    pkgs.nfs-utils
   ];
 
   xdg.enable = true;
