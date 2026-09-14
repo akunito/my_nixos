@@ -112,6 +112,39 @@ Toggle(exe, cmd) {
 ; ShareX cannot RegisterHotKey Ctrl+Alt+Shift+Win+<letter> (Windows keeps that set for
 ; the "Office key"), so the hook-based AHK owns Hyper+Shift+C and runs the workflow.
 ^!#+c:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+C"'
+; ---- Hyper+Shift+Return: power menu, the rofi-power-mode.sh of Sway ----
+; A dark list in the middle of the screen; arrows/Enter/Esc, or type the first
+; letter. Hibernate is left out on purpose: bootstrap.ps1 runs `powercfg /h off`
+; (Fast Startup off protects the NTFS drives NixOS mounts).
+PowerMenu() {
+    static items := ["Lock", "Logout", "Reboot", "Shutdown", "Suspend"]
+    g := Gui("+AlwaysOnTop -Caption +ToolWindow +Border", "Power")
+    g.BackColor := "1e1e2e"
+    g.SetFont("s14 cE0DEF4", "Segoe UI")
+    lb := g.Add("ListBox", "w260 r5 Background313244 -VScroll", items)
+    lb.Choose(1)
+    run := (*) => (choice := lb.Text, g.Destroy(), PowerAction(choice))
+    lb.OnEvent("DoubleClick", run)
+    g.OnEvent("Escape", (*) => g.Destroy())
+    g.OnEvent("Close", (*) => g.Destroy())
+    HotIfWinActive("Power ahk_class AutoHotkeyGUI")
+    Hotkey "Enter", run, "On"
+    Hotkey "Space", run, "On"
+    for i, item in items
+        Hotkey SubStr(item, 1, 1), ((idx) => (*) => (lb.Choose(idx), run()))(i), "On"
+    HotIfWinActive()
+    g.Show("AutoSize Center")
+}
+PowerAction(choice) {
+    switch choice {
+        case "Lock":     DllCall("user32\LockWorkStation")
+        case "Logout":   Shutdown 0
+        case "Reboot":   Shutdown 2
+        case "Shutdown": Shutdown 9      ; 1 shutdown + 8 power off
+        case "Suspend":  DllCall("PowrProf\SetSuspendState", "Int", 0, "Int", 0, "Int", 0)
+    }
+}
+^!#+Enter:: PowerMenu()
 ^!#+r:: Reload
 ^!#+Escape:: Suspend
 
