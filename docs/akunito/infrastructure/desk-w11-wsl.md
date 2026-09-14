@@ -122,8 +122,20 @@ then set each mod's options:
 | Taskbar notification icon spacing | 24 px — pending |
 | Taskbar button click | middle-click closes — pending |
 
-Settings → Personalization → Taskbar: alignment **left**, Widgets off, Search
-hidden, Task view **on** (Hyper+Tab). Dark mode, accent from wallpaper off.
+Settings → Personalization → Taskbar: alignment **center** (apps in the middle,
+metrics + clock on the right — 2026-09-14), Widgets off, Search hidden, Task view
+**on** (Hyper+Tab). Dark mode, accent from wallpaper off.
+
+**Animations off** (Start, tray flyouts and windows appear instantly, like Sway):
+`pwsh -ExecutionPolicy Bypass -File templates\windows\DESK_W11\visual-effects-off.ps1`
+— every SystemParametersInfo animation flag + taskbar/min-max animations, per user, no
+admin, immediate; it is what the Accessibility → "Animation effects" toggle does plus
+the ones that toggle misses. Re-run if a feature update turns them back on.
+
+**Hyper shortcuts beyond Sway's** (all in `hyper-desktops.ahk`): Hyper+Space and the
+**Win key tapped alone** open PowerToys Command Palette (the Start menu replacement;
+PowerToys Run is disabled); Hyper+Shift+Return opens the power menu
+(Lock/Logout/Reboot/Shutdown/Suspend); Hyper+Shift+C the ShareX region capture.
 Windhawk mods survive updates; if one breaks after a Windows feature update,
 Windhawk disables it and shows a badge — update the mod, done.
 
