@@ -109,6 +109,9 @@ Toggle(exe, cmd) {
 ^!#x:: Toggle("CalculatorApp.exe", "calc")
 ^!#e:: Toggle("explorer.exe", "explorer")
 ^!#u:: Toggle("dbeaver.exe", EnvGet("LOCALAPPDATA") "\DBeaver\dbeaver.exe")
+; ShareX cannot RegisterHotKey Ctrl+Alt+Shift+Win+<letter> (Windows keeps that set for
+; the "Office key"), so the hook-based AHK owns Hyper+Shift+C and runs the workflow.
+^!#+c:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+C"'
 ^!#+r:: Reload
 ^!#+Escape:: Suspend
 

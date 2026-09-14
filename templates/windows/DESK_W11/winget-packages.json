@@ -24,7 +24,6 @@
         { "PackageIdentifier": "ShareX.ShareX" },
         { "PackageIdentifier": "WinDirStat.WinDirStat" },
         { "PackageIdentifier": "Notepad++.Notepad++" },
-        { "PackageIdentifier": "Skillbrains.Lightshot" },
         { "PackageIdentifier": "Microsoft.VCRedist.2015+.x64" },
 
         { "PackageIdentifier": "Tailscale.Tailscale" },
@@ -40,7 +39,6 @@
         { "PackageIdentifier": "Element.Element" },
         { "PackageIdentifier": "Discord.Discord" },
         { "PackageIdentifier": "Microsoft.Teams" },
-        { "PackageIdentifier": "Mozilla.Thunderbird" },
         { "PackageIdentifier": "TheDocumentFoundation.LibreOffice" },
         { "PackageIdentifier": "calibre.calibre" },
         { "PackageIdentifier": "DBeaver.DBeaver.Community" },
