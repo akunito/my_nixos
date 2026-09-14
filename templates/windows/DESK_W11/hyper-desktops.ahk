@@ -112,7 +112,8 @@ Toggle(exe, cmd) {
 ; ShareX cannot RegisterHotKey Ctrl+Alt+Shift+Win+<letter> (Windows keeps that set for
 ; the "Office key"), so the hook-based AHK owns Hyper+Shift+C and runs the workflow.
 ^!#+c:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+C"'
-; ---- Hyper+Shift+Return: power menu, the rofi-power-mode.sh of Sway ----
+; ---- Hyper+Shift+Backspace: power menu, the rofi-power-mode.sh of Sway ----
+; (Hyper+Shift+Return is Windows' own Copilot/Office chord and is left alone.)
 ; A dark list in the middle of the screen; arrows/Enter/Esc, or type the first
 ; letter. Hibernate is left out on purpose: bootstrap.ps1 runs `powercfg /h off`
 ; (Fast Startup off protects the NTFS drives NixOS mounts).
@@ -144,7 +145,7 @@ PowerAction(choice) {
         case "Suspend":  DllCall("PowrProf\SetSuspendState", "Int", 0, "Int", 0, "Int", 0)
     }
 }
-^!#+Enter:: PowerMenu()
+^!#+Backspace:: PowerMenu()
 ; ---- Win tapped alone -> Command Palette instead of the Start menu ----
 ; Pressing Win sends an unassigned virtual key (vkE8) while Win is held, so
 ; Windows thinks a Win+<key> chord happened and does not open Start on release.
@@ -156,6 +157,51 @@ PowerAction(choice) {
     if (A_PriorKey = "LWin")
         Send "#!{Space}"
 }
+; ---- "Show on all desktops" (Sway's sticky) ----
+; Hyper+Shift+S toggles it for the active window. The sweep below approximates
+; Sway's per-output workspaces: any window sitting on a secondary monitor is
+; pinned automatically, so that monitor keeps its content while the primary
+; switches desktops; moved back to the primary, it is unpinned. Windows toggled
+; by hand are left alone by the sweep.
+PinWin(h)   => DllCall("VirtualDesktopAccessor\PinWindow", "Ptr", h, "Int")
+UnpinWin(h) => DllCall("VirtualDesktopAccessor\UnPinWindow", "Ptr", h, "Int")
+IsPinned(h) => DllCall("VirtualDesktopAccessor\IsPinnedWindow", "Ptr", h, "Int")
+global stickyAuto := Map(), stickyManual := Map()
+^!#+s:: {
+    h := WinExist("A")
+    if !h
+        return
+    stickyManual[h] := true
+    if IsPinned(h)
+        UnpinWin(h), stickyAuto.Delete(h)
+    else
+        PinWin(h)
+    ToolTip(IsPinned(h) ? "on all desktops" : "this desktop only")
+    SetTimer(() => ToolTip(), -900)
+}
+Cloaked(h) {
+    v := 0
+    DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", h, "UInt", 14, "UInt*", &v, "UInt", 4)
+    return v
+}
+StickySweep() {
+    static prim := DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")  ; MONITOR_DEFAULTTOPRIMARY
+    for h in WinGetList() {
+        if stickyManual.Has(h) || !DllCall("IsWindowVisible", "Ptr", h) || Cloaked(h)
+            continue
+        if (WinGetExStyle("ahk_id " h) & 0x80) || WinGetTitle("ahk_id " h) = ""   ; tool windows, untitled
+            continue
+        cls := WinGetClass("ahk_id " h)
+        if (cls = "Progman" || cls = "WorkerW" || cls = "Shell_TrayWnd" || cls = "Shell_SecondaryTrayWnd" || cls = "AutoHotkeyGUI")
+            continue
+        onPrimary := DllCall("MonitorFromWindow", "Ptr", h, "UInt", 2, "Ptr") = prim
+        if !onPrimary && !IsPinned(h)
+            PinWin(h), stickyAuto[h] := true
+        else if onPrimary && stickyAuto.Has(h)
+            UnpinWin(h), stickyAuto.Delete(h)
+    }
+}
+SetTimer StickySweep, 1500
 ^!#+r:: Reload
 ^!#+Escape:: Suspend
 
