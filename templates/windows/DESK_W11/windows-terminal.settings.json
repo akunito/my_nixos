@@ -6,7 +6,7 @@
     "defaults": {
       "font": { "face": "JetBrainsMono Nerd Font Mono", "size": 11 },
       "colorScheme": "Ashes",
-      "opacity": 96,
+      "opacity": 98,
       "useAcrylic": false,
       "padding": "6",
       "scrollbarState": "hidden",

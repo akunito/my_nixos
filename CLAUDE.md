@@ -33,6 +33,10 @@ ssh -A user@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/
 
 **Workflow**: Make changes locally -> commit and push -> SSH to remote and run `git fetch && git reset --hard origin/main && ./install.sh ...`. NEVER edit files on the remote directly.
 
+## Testing discipline (every change)
+
+Every change is verified before it is called done: run the relevant tests (unit, driven tests, a real deploy check) and work in cycles — change, test, read the result, adjust — until the outcome matches what was expected. If a check cannot be automated (a driven test suite, Claude logged in as a user through `adb` on Android, or the Claude extension in Brave), stop and ask Diego to test it by hand, say exactly what to check, and wait for his verdict before closing the task or the ticket. Never report a change as working on the strength of the code alone.
+
 ## Security Rules
 
 Enforced by deny rules in `~/.claude/settings.json`, hooks in `.claude/hooks/`, and `.claudeignore`.
