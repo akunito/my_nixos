@@ -96,6 +96,8 @@ window_rules:
   # Always floating (sway's for_window floating enable) — extend as needed.
   - commands: ['set-floating --centered']
     match:
+      - window_process: { equals: 'ApplicationFrameHost' }   # UWP host: Calculator lives here
+        window_title: { regex: '^(Calculator|Calculadora)$' }
       - window_process: { equals: 'CalculatorApp' }
       - window_process: { equals: 'Bitwarden' }
       - window_process: { equals: 'ApplicationFrameHost' }

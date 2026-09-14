@@ -44,7 +44,15 @@ hVDA := DllCall("LoadLibrary", "Str", dll, "Ptr")
 ; keeps the Hyper layer in this file and the Win key usable. Hyper+N follows the
 ; swaysome rule from Sway: it acts on the monitor that has the focus.
 glazeExe := A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
-Glaze(args) => Run('"' glazeExe '" command ' args, , "Hide")
+Glaze(args) => RunWait('"' glazeExe '" command ' args, , "Hide")
+GlazeQuery(what) {
+    tmp := A_Temp "\glazewm-query.json"
+    RunWait(A_ComSpec ' /c ""' glazeExe '" query ' what ' > "' tmp '""', , "Hide")
+    return FileRead(tmp)
+}
+GlazeTiled() {  ; is the focused window a tiling one?
+    return InStr(GlazeQuery("focused"), '"state":{"type":"tiling"}') > 0
+}
 PrimaryMon() => DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")
 FocusGroup() {  ; 1 = main monitor (1x), 2 = secondary (2x)
     h := WinExist("A")
@@ -62,10 +70,32 @@ Loop 10 {
     Hotkey "^!#" k, ((n) => (*) => Glaze("focus --workspace " Ws(n)))(k)
     Hotkey "^!#+" k, ((n) => (*) => Glaze("move --workspace " Ws(n)))(k)
 }
-^!#q:: Glaze("focus --prev-active-workspace-on-monitor")
-^!#w:: Glaze("focus --next-active-workspace-on-monitor")
-^!#+q:: Glaze("move --prev-active-workspace-on-monitor")
-^!#+w:: Glaze("move --next-active-workspace-on-monitor")
+; Hyper+Q/W: previous/next workspace inside the focused monitor's group, wrapping
+; (Sway's workspace-nav scripts). Shift moves the window there and follows it.
+CurrentWs(group) {
+    j := GlazeQuery("monitors"), pos := 1
+    while pos := RegExMatch(j, '"name":"(\d+)"[\s\S]*?"isDisplayed":(true|false)', &m, pos) {
+        if (m[2] = "true" && SubStr(m[1], 1, 1) = group)
+            return m[1]
+        pos += StrLen(m[0])
+    }
+    return group "1"
+}
+WsCycle(delta, move := false) {
+    g := FocusGroup(), cur := CurrentWs(g), i := 1
+    order := [g "1", g "2", g "3", g "4", g "5", g "6", g "7", g "8", g "9", g "0"]
+    for k, v in order
+        if (v = cur)
+            i := k
+    n := order[Mod(i - 1 + delta + 10, 10) + 1]
+    if move
+        Glaze("move --workspace " n)
+    Glaze("focus --workspace " n)
+}
+^!#q:: WsCycle(-1)
+^!#w:: WsCycle(+1)
+^!#+q:: WsCycle(-1, true)
+^!#+w:: WsCycle(+1, true)
 ^!#Left:: Glaze("focus --monitor 0")          ; focus output left/right (main is left)
 ^!#Right:: Glaze("focus --monitor 1")
 ^!#+Left:: Glaze("move --workspace-in-direction left")
@@ -86,7 +116,6 @@ Loop 10 {
 ^!#f:: Glaze("toggle-fullscreen")
 ^!#+g:: Glaze("toggle-fullscreen")
 ^!#+f:: Glaze("toggle-floating")
-^!#+Space:: Glaze("toggle-floating")
 ^!#+v:: Glaze("toggle-tiling-direction")     ; sway split toggle (Shift+v is cliphist there; Win+V here)
 ^!#+-:: Glaze("toggle-minimized")            ; scratchpad stand-in
 ^!#Tab:: Send "#{Tab}"
@@ -186,24 +215,30 @@ AltDrag(mode) {
         return
     WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
     WinActivate "ahk_id " hwnd
-    if (mode = "resize") {
-        left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
+    if (mode = "move") {
+        ; Native title-bar drag (SC_DRAGMOVE): GlazeWM sees a real move loop, so a
+        ; tiled window dropped over another one swaps places instead of floating.
+        PostMessage 0x112, 0xF012, 0, , "ahk_id " hwnd
+        return
     }
-    btn := mode = "move" ? "LButton" : "RButton"
+    left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
+    if GlazeTiled() {
+        ; Native size loop from the nearest corner (SC_SIZE + WMSZ_*): GlazeWM resizes
+        ; the tiling column/row instead of un-tiling the window.
+        edge := top ? (left ? 4 : 5) : (left ? 7 : 8)
+        PostMessage 0x112, 0xF000 + edge, 0, , "ahk_id " hwnd
+        return
+    }
     SetWinDelay -1
-    while GetKeyState(btn, "P") {
+    while GetKeyState("RButton", "P") {
         MouseGetPos &cx, &cy
         dx := cx - mx, dy := cy - my
-        if (mode = "move") {
-            WinMove wx + dx, wy + dy, , , "ahk_id " hwnd
-        } else {
-            nx := left ? wx + dx : wx
-            ny := top ? wy + dy : wy
-            nw := left ? ww - dx : ww + dx
-            nh := top ? wh - dy : wh + dy
-            if (nw > 150 && nh > 100)
-                WinMove nx, ny, nw, nh, "ahk_id " hwnd
-        }
+        nx := left ? wx + dx : wx
+        ny := top ? wy + dy : wy
+        nw := left ? ww - dx : ww + dx
+        nh := top ? wh - dy : wh + dy
+        if (nw > 150 && nh > 100)
+            WinMove nx, ny, nw, nh, "ahk_id " hwnd
         Sleep 8
     }
 }
