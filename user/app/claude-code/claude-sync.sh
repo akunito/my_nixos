@@ -472,8 +472,10 @@ wrap() {
     fi
   fi
   if [ $want_fork = 1 ]; then
+    unset GIT_SSH_COMMAND # hub key + port 56777 must not leak into Claude's own git pushes
     exec "$REAL_CLAUDE" "${args[@]}" --fork-session
   fi
+  unset GIT_SSH_COMMAND # hub key + port 56777 must not leak into Claude's own git pushes
   exec "$REAL_CLAUDE" "${args[@]}"
 }
 
