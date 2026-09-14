@@ -37,88 +37,53 @@ if !FileExist(dll) {
     ExitApp
 }
 hVDA := DllCall("LoadLibrary", "Str", dll, "Ptr")
-; ---- GlazeWM: workspaces, focus, move, layout (the Sway bindings) ----
-; GlazeWM owns the windows (tiling by default, per-monitor workspaces 10-19 on
-; the main monitor, 20-29 on the vertical one; config in glazewm\config.yaml).
-; It has no keybindings of its own: every chord below shells to its CLI, which
-; keeps the Hyper layer in this file and the Win key usable. Hyper+N follows the
-; swaysome rule from Sway: it acts on the monitor that has the focus.
-glazeExe := A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
-Glaze(args) => RunWait('"' glazeExe '" command ' args, , "Hide")
-GlazeQuery(what) {
-    tmp := A_Temp "\glazewm-query.json"
-    RunWait(A_ComSpec ' /c ""' glazeExe '" query ' what ' > "' tmp '""', , "Hide")
-    return FileRead(tmp)
+GoToDesk(n) => DllCall("VirtualDesktopAccessor\GoToDesktopNumber", "Int", n, "Int")
+Count() => DllCall("VirtualDesktopAccessor\GetDesktopCount", "Int")
+Current() => DllCall("VirtualDesktopAccessor\GetCurrentDesktopNumber", "Int")
+Create() => DllCall("VirtualDesktopAccessor\CreateDesktop", "Int")
+MoveWin(hwnd, n) => DllCall("VirtualDesktopAccessor\MoveWindowToDesktopNumber", "Ptr", hwnd, "Int", n, "Int")
+
+EnsureDesktop(n) {
+    while Count() <= n
+        Create()
 }
-GlazeTiled() {  ; is the focused window a tiling one?
-    return InStr(GlazeQuery("focused"), '"state":{"type":"tiling"}') > 0
+Go(n) {
+    EnsureDesktop(n)
+    GoToDesk(n)
 }
-PrimaryMon() => DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")
-FocusGroup() {  ; 1 = main monitor (1x), 2 = secondary (2x)
-    h := WinExist("A")
-    if h && WinGetClass("ahk_id " h) != "Progman" && WinGetClass("ahk_id " h) != "WorkerW"
-        mon := DllCall("MonitorFromWindow", "Ptr", h, "UInt", 2, "Ptr")
-    else {
-        MouseGetPos &mx, &my
-        mon := DllCall("MonitorFromPoint", "Int64", (my << 32) | (mx & 0xFFFFFFFF), "UInt", 2, "Ptr")
-    }
-    return mon = PrimaryMon() ? 1 : 2
+Move(n) {
+    EnsureDesktop(n)
+    MoveWin(WinGetID("A"), n)
+    GoToDesk(n)
 }
-Ws(n) => FocusGroup() * 10 + Mod(n, 10)   ; Hyper+1..9 -> x1..x9, Hyper+0 -> x0
-Loop 10 {
-    k := Mod(A_Index, 10)
-    Hotkey "^!#" k, ((n) => (*) => Glaze("focus --workspace " Ws(n)))(k)
-    Hotkey "^!#+" k, ((n) => (*) => Glaze("move --workspace " Ws(n)))(k)
+Rel(delta) {
+    c := Count(), i := Mod(Current() + delta + c, c)
+    GoToDesk(i)
 }
-; Hyper+Q/W: previous/next workspace inside the focused monitor's group, wrapping
-; (Sway's workspace-nav scripts). Shift moves the window there and follows it.
-CurrentWs(group) {
-    j := GlazeQuery("monitors"), pos := 1
-    while pos := RegExMatch(j, '"name":"(\d+)"[\s\S]*?"isDisplayed":(true|false)', &m, pos) {
-        if (m[2] = "true" && SubStr(m[1], 1, 1) = group)
-            return m[1]
-        pos += StrLen(m[0])
-    }
-    return group "1"
+RelMove(delta) {
+    c := Count(), i := Mod(Current() + delta + c, c)
+    MoveWin(WinGetID("A"), i)
+    GoToDesk(i)
 }
-WsCycle(delta, move := false) {
-    g := FocusGroup(), cur := CurrentWs(g), i := 1
-    order := [g "1", g "2", g "3", g "4", g "5", g "6", g "7", g "8", g "9", g "0"]
-    for k, v in order
-        if (v = cur)
-            i := k
-    n := order[Mod(i - 1 + delta + 10, 10) + 1]
-    if move
-        Glaze("move --workspace " n)
-    Glaze("focus --workspace " n)
+
+; Hyper = ^!# (Ctrl Alt Win). Hyper+Shift = ^!#+
+Loop 9 {
+    k := A_Index
+    Hotkey "^!#" k, (*) => Go(k - 1)
+    Hotkey "^!#+" k, (*) => Move(k - 1)
 }
-^!#q:: WsCycle(-1)
-^!#w:: WsCycle(+1)
-^!#+q:: WsCycle(-1, true)
-^!#+w:: WsCycle(+1, true)
-^!#Left:: Glaze("focus --monitor 0")          ; focus output left/right (main is left)
-^!#Right:: Glaze("focus --monitor 1")
-^!#+Left:: Glaze("move --workspace-in-direction left")
-^!#+Right:: Glaze("move --workspace-in-direction right")
-^!#h:: Glaze("focus --direction left")        ; sway: h/j/k + ? for right (l is an app)
-^!#j:: Glaze("focus --direction down")
-^!#k:: Glaze("focus --direction up")
-^!#+/:: Glaze("focus --direction right")
-^!#+j:: Glaze("move --direction left")        ; sway window-move.sh: Shift+j/:/k/l
-^!#+;:: Glaze("move --direction right")
-^!#+k:: Glaze("move --direction down")
-^!#+l:: Glaze("move --direction up")
-^!#+u:: Glaze("resize --width -5%")
-^!#+p:: Glaze("resize --width +5%")
-^!#+i:: Glaze("resize --height +5%")
-^!#+o:: Glaze("resize --height -5%")
-^!#Escape:: Glaze("close")
-^!#f:: Glaze("toggle-fullscreen")
-^!#+g:: Glaze("toggle-fullscreen")
-^!#+f:: Glaze("toggle-floating")
-^!#+v:: Glaze("toggle-tiling-direction")     ; sway split toggle (Shift+v is cliphist there; Win+V here)
-^!#+-:: Glaze("toggle-minimized")            ; scratchpad stand-in
+^!#0:: Go(9)
+^!#+0:: Move(9)
+^!#q:: Rel(-1)
+^!#w:: Rel(+1)
+^!#+q:: RelMove(-1)
+^!#+w:: RelMove(+1)
 ^!#Tab:: Send "#{Tab}"
+^!#Escape:: WinClose "A"
+^!#f:: {
+    h := WinGetID("A")
+    WinGetMinMax(h) = 1 ? WinRestore(h) : WinMaximize(h)
+}
 ^!#Space:: Send "#!{Space}" ; PowerToys Command Palette (its own hotkey is Win+Alt+Space; PowerToys Run is disabled) — rofi stand-in
 
 ; raise-or-launch — the app-toggle.sh idea: focus if running, minimise if focused, launch otherwise
@@ -192,16 +157,24 @@ PowerAction(choice) {
     if (A_PriorKey = "LWin")
         Send "#!{Space}"
 }
-; (Hyper+Shift+S "sticky" has no GlazeWM equivalent — Windows virtual desktops are
-;  not used any more, so the VirtualDesktopAccessor pin is gone too.)
-^!#+r:: {
-    Glaze("wm-reload-config")
-    Reload
+; ---- "Show on all desktops" (Sway's sticky) ----
+; Hyper+Shift+S toggles it for the active window (VirtualDesktopAccessor pins).
+PinWin(h)   => DllCall("VirtualDesktopAccessor\PinWindow", "Ptr", h, "Int")
+UnpinWin(h) => DllCall("VirtualDesktopAccessor\UnPinWindow", "Ptr", h, "Int")
+IsPinned(h) => DllCall("VirtualDesktopAccessor\IsPinnedWindow", "Ptr", h, "Int")
+^!#+s:: {
+    h := WinExist("A")
+    if !h
+        return
+    if IsPinned(h)
+        UnpinWin(h)
+    else
+        PinWin(h)
+    ToolTip(IsPinned(h) ? "on all desktops" : "this desktop only")
+    SetTimer(() => ToolTip(), -900)
 }
-^!#+Escape:: {
-    Glaze("wm-toggle-pause")
-    Suspend
-}
+^!#+r:: Reload
+^!#+Escape:: Suspend
 
 ; ---- Alt+drag: move (left) / resize (right), Sway's floating_modifier ----
 ; Skips maximised windows, the desktop and the taskbar. Resize grabs the corner
@@ -215,36 +188,10 @@ AltDrag(mode) {
         return
     WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
     WinActivate "ahk_id " hwnd
-    btn := mode = "move" ? "LButton" : "RButton"
-    left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
-    if GlazeTiled() {
-        ; Tiled window: no live dragging (GlazeWM would take a manual WinMove as
-        ; "un-tile me"). Wait for the release and act once, through GlazeWM:
-        ;  - move: dropped over another window -> move in that direction (sway's
-        ;    drag-to-swap for neighbours);
-        ;  - resize: apply the dragged delta to the split, from the nearest corner.
-        KeyWait btn
-        MouseGetPos &cx, &cy
-        if (mode = "move") {
-            target := DllCall("WindowFromPoint", "Int64", (cy << 32) | (cx & 0xFFFFFFFF), "Ptr")
-            target := DllCall("GetAncestor", "Ptr", target, "UInt", 2, "Ptr")   ; GA_ROOT
-            if (!target || target = hwnd)
-                return
-            WinGetPos &tx, &ty, &tw, &th, "ahk_id " target
-            ddx := (tx + tw / 2) - (wx + ww / 2), ddy := (ty + th / 2) - (wy + wh / 2)
-            dir := Abs(ddx) > Abs(ddy) ? (ddx > 0 ? "right" : "left") : (ddy > 0 ? "down" : "up")
-            Glaze("move --direction " dir)
-        } else {
-            dx := cx - mx, dy := cy - my
-            dw := left ? -dx : dx, dh := top ? -dy : dy
-            if (Abs(dw) > 4)
-                Glaze("resize --width " dw "px")
-            if (Abs(dh) > 4)
-                Glaze("resize --height " dh "px")
-        }
-        return
+    if (mode = "resize") {
+        left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
     }
-    ; Floating window: live move/resize, screen coordinates (see CoordMode above).
+    btn := mode = "move" ? "LButton" : "RButton"
     SetWinDelay -1
     while GetKeyState(btn, "P") {
         MouseGetPos &cx, &cy

@@ -105,9 +105,13 @@ commit, re-run `bootstrap.ps1`. Remove: `winget uninstall --id ...`.
 Decision 2026-09-13, re-confirmed 2026-09-14 after weighing GlazeWM/komorebi: keep the
 vanilla taskbar, restyle it with Windhawk mods (actively maintained, follow every W11
 update; no tiling, no conflicts with games). Tiling WMs bring their own workspaces
-(not Windows virtual desktops) and have no "sticky"; sticky and per-app placement
-rules belong in `hyper-desktops.ahk` (VirtualDesktopAccessor `PinWindow`,
-`MoveWindowToDesktopNumber` + `WinMove`).
+(not Windows virtual desktops) and have no "sticky". **GlazeWM 3.10 was tried on
+2026-09-14 and removed the same evening**: per-monitor workspaces and tiling worked,
+but every config reload re-evaluates the window rules and reshuffles windows across
+workspaces, and Alt+drag on tiled windows never felt right. Do not retry without a
+fix for the reload behaviour. Per-monitor independent desktops therefore stay
+impossible on W11; sticky and per-app placement belong in `hyper-desktops.ahk`
+(VirtualDesktopAccessor `PinWindow`, `MoveWindowToDesktopNumber` + `WinMove`).
 Windhawk has no CLI for mods: open it once → Explore → install these, in order,
 then set each mod's options:
 
