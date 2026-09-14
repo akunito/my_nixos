@@ -134,6 +134,7 @@
       "192.168.8.1"
       "192.168.8.1"
     ];
+    dnsSearchDomains = [ ]; # resolv.conf "search" line (short MagicDNS names)
     wifiPowerSave = true;
     resolvedEnable = false;
 

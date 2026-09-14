@@ -40,7 +40,11 @@ in
     wslConf = {
       network.hostname = systemSettings.hostname;
       network.generateHosts = true;
-      network.generateResolvConf = true; # mirrored mode + dnsTunneling (see .wslconfig)
+      # false: NixOS owns /etc/resolv.conf. Neither WSL's own generator nor the
+      # dnsTunneling proxy serve the Tailscale MagicDNS zone, so short names
+      # ("vps-prod", "nas-aku") never resolve and ~/.ssh/config breaks.
+      # See networking.nameservers below.
+      network.generateResolvConf = false;
       # metadata: Linux permissions on /mnt/c (needed for ~/.ssh-style perms inside the Nextcloud tree)
       automount.options = "metadata,uid=1000,gid=100,umask=022,fmask=011,case=off";
       automount.root = "/mnt";
@@ -66,6 +70,15 @@ in
 
   networking.hostName = systemSettings.hostname;
   networking.firewall.enable = systemSettings.firewall;
+
+  # DNS. Measured from inside WSL: 100.100.100.100 (MagicDNS, served by the
+  # Windows Tailscale client and reachable because networkingMode=mirrored)
+  # answers BOTH the tailnet zone and public names, while 192.168.8.1 and
+  # 100.64.0.7 answer only public ones. The LAN resolver stays as the fallback
+  # for when the Windows client is logged out. Short names need the search
+  # domain: without it "vps-prod" returns empty and `ssh vps` fails.
+  networking.nameservers = systemSettings.nameServers;
+  networking.search = systemSettings.dnsSearchDomains or [ ];
 
   time.timeZone = systemSettings.timezone;
   i18n.defaultLocale = systemSettings.locale;

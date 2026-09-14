@@ -44,8 +44,12 @@ in
 
     # === Network ===
     networkManager = false; # WSL manages the interface
-    resolvedEnable = false; # WSL writes resolv.conf (dnsTunneling in .wslconfig)
-    nameServers = [ ];
+    resolvedEnable = false; # NixOS writes /etc/resolv.conf (generateResolvConf = false)
+    # 100.100.100.100 is the Windows Tailscale client's MagicDNS resolver; mirrored
+    # networking makes it reachable from WSL. It resolves the tailnet zone AND
+    # forwards public names. 192.168.8.1 is the fallback for a logged-out client.
+    nameServers = [ "100.100.100.100" "192.168.8.1" ];
+    dnsSearchDomains = [ "tailnet.headscale.akunito.com" ]; # so `ssh vps` (HostName vps-prod) resolves
     wifiPowerSave = false;
     tailscaleEnable = false; # Windows client + mirrored networking instead
     wireguardEnable = false;
