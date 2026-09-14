@@ -483,14 +483,23 @@ backup_windows() {
     backup_cmd+=("--dry-run")
   fi
 
-  if "${backup_cmd[@]}"; then
-    log_success "Windows configs backup completed"
+  # restic exits 3 when some files could not be read but the snapshot was saved.
+  # With Vivaldi/Zen/Telegram open that is every run (LOCK files, Cookies,
+  # Sessions are held exclusively by the browser) — a warning, not a failure.
+  local rc=0
+  "${backup_cmd[@]}" || rc=$?
+  if [ "$rc" -eq 0 ] || [ "$rc" -eq 3 ]; then
+    if [ "$rc" -eq 3 ]; then
+      log_warning "Windows configs backup completed with unreadable files (apps open) — snapshot saved"
+    else
+      log_success "Windows configs backup completed"
+    fi
     if [ "$dry_run" = false ]; then
       run_retention "$repo_path" "$RETENTION_WINDOWS"
     fi
     return 0
   else
-    log_error "Windows configs backup failed"
+    log_error "Windows configs backup failed (restic exit $rc)"
     return 1
   fi
 }
