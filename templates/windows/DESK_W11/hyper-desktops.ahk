@@ -24,6 +24,10 @@
 ;   "C:\Program Files\AutoHotkey\v2\AutoHotkey64_UIA.exe" hyper-desktops.ahk
 ; bootstrap.ps1 creates the Startup shortcut with that binary.
 #Requires AutoHotkey v2.0
+; v2 defaults Mouse coords to the active window's CLIENT area; WinGetPos/WinMove
+; are screen coords. Mixing them made Alt+drag feed the window's own motion back
+; into the delta (flicker/jumps). Everything below assumes screen coords.
+CoordMode "Mouse", "Screen"
 #SingleInstance Force
 SetTitleMatchMode 2
 
