@@ -140,9 +140,37 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
    folder as `hyper-desktops.ahk`, then double-click the Startup shortcut once.
    Test: Hyper+2 creates and jumps to desktop 2, Hyper+Shift+1 moves the window back,
    Alt+drag moves, Alt+right-drag resizes. Hyper+Shift+Escape suspends everything for games.
-6. Tailscale: log in against `https://<headscaleDomain>` (Settings → Use a custom
-   coordination server), name it `DESK_W11`. On the Headscale side add the node to
-   `group:family` (see `reference_headscale_guest_acl`), or it cannot reach anything.
+6. Tailscale. The GUI "Log in" button does nothing useful against a custom
+   coordination server, and a bare `tailscale up` hangs for 60 s and prints
+   nothing. Do it from an elevated PowerShell with a preauth key instead:
+   ```powershell
+   # on the VPS: sudo headscale users create DESK_W11
+   #             sudo headscale preauthkeys create -u <user-id> --reusable -e 24h
+   & "C:\Program Files\Tailscale\tailscale.exe" up --reset `
+       --login-server=https://<headscaleDomain> --authkey=<hskey-auth-...> `
+       --hostname=desk-w11 --accept-routes --timeout=60s
+   ```
+   - **`--hostname` must be `desk-w11`, not `DESK_W11`**: an underscore is not a
+     valid DNS label and Tailscale rejects it outright.
+   - **`--reset` is not optional.** Without it a second attempt fails with
+     *"changing settings via 'tailscale up' requires mentioning all non-default
+     flags"*, and earlier half-applied prefs make it hang instead of erroring.
+   - There is no log file under `C:\ProgramData\Tailscale` and nothing in the
+     event log. To see what the daemon is actually doing, run
+     `tailscale debug watch-ipn` in parallel: it prints the state transitions
+     (`2` NeedsLogin → `LoginFinished` → `5` Starting → `6` Running).
+   - **`tailscale-ipn.exe` (the tray GUI) must be running.** Windows ties the IPN
+     state to the user session through the frontend; with the GUI closed the
+     backend falls back to `NoState` and `tailscale status` reports
+     *"Tailscale is starting"* forever, even after the node registered fine.
+   Then add the node to `group:family` on Headscale, or it sees no peers at all
+   (`tailscale ping` answers `no matching peer`):
+   ```bash
+   sudo headscale policy get > /tmp/p.json     # edit: add "DESK_W11@" to group:family
+   sudo headscale policy set -f /tmp/p.json
+   ```
+   The policy lives in the database (`policy.mode = "database"`, see
+   `system/app/headscale.nix`), **not** in the repo — there is nothing to deploy.
 7. Nextcloud Desktop: server `https://nextcloud.local.akunito.com` (the public host
    is behind Cloudflare Access, native clients cannot pass it), local folder
    `C:\Users\<you>\Nextcloud`, sync everything you use on DESK (`myLibrary`,
@@ -241,3 +269,30 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
   normal apps and cannot autostart from the Startup folder.
 - `wsl --shutdown` after any change to `wsl.defaultUser` or `/etc/wsl.conf`.
 - Docker inside WSL uses the WSL2 kernel; `dockerFirewallEnable` stays off there.
+- **The Intel X520 10GbE is unusable under Windows.** Its two SFP+ ports are an
+  802.3ad LAG on the USW Aggregation (ports 7+8, `lag_idx 1`), which is what the
+  DESK NixOS bond talks to. A LAG member whose partner does not speak LACP never
+  reaches forwarding state, so the adapter negotiates 10 Gbps and receives zero
+  frames. Windows 11 Pro cannot speak LACP — verified, elevated:
+  `New-NetLbfoTeam … -WhatIf` → *"LBFO is not supported on this SKU"*; Intel
+  discontinued PROSet/ANS (teaming and VLAN) for Windows 11, X520 included; WSL2
+  cannot take a PCIe NIC (Hyper-V vSwitch shares USB adapters only); and UniFi has
+  no LACP fallback. **Windows therefore uses the Realtek, which links at 1 Gbps**
+  (the USW-24-G2 has no 2.5G port). The fix, if ever wanted, costs DESK its 20 Gbps
+  aggregate: free the dead Proxmox LAG (ports 3+4), give SFP+ 3 the `VLAN100` port
+  profile and move one DAC there — DESK's LAG 1 is left untouched and keeps working
+  on the single remaining link. Declined 2026-09-14 to preserve the aggregate.
+- **WSL runs in NAT, not mirrored**, despite `networkingMode=mirrored` in
+  `.wslconfig` (`ip route get` goes via the Hyper-V vSwitch at `172.17.16.1`). It
+  still reaches the tailnet because it egresses through the Windows stack and
+  inherits its routes.
+- **NFS mounts the NAS at its tailnet address** (`100.64.0.1`), not
+  `192.168.20.200`. Windows has no storage-VLAN interface, so the LAN address would
+  be reached through the pfSense subnet router, which SNATs every client to
+  `192.168.20.1` — authorising that would open the export to anything routing
+  through pfSense. Going node-to-node keeps the real source (`100.64.0.15`).
+- **After `wsl --shutdown`, the first agent-backed `ssh` needs a terminal**:
+  `SSH_AUTH_SOCK` is gpg-agent's, and with `gpgPinentryCurses` it needs a TTY to
+  re-unlock, so non-interactive calls fail with *"agent refused operation"*.
+  `ssh -o IdentityAgent=none` works meanwhile. claude-sync is unaffected — it uses
+  its own key in `~/.config/claude-sync/key`.
