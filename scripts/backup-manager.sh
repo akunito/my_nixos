@@ -5,6 +5,7 @@
 # Usage:
 #   backup-manager.sh                                    # Interactive menu
 #   backup-manager.sh --auto --target nfs --job home     # Automated (systemd)
+#   backup-manager.sh --auto --target nfs --job windows  # DESK_W11: Windows-side configs (see backup_windows)
 #   backup-manager.sh --status                           # Show last snapshots
 #   backup-manager.sh --init --target nfs                # Initialize repos
 #   backup-manager.sh --dry-run --target nfs --job home  # Preview
@@ -135,6 +136,56 @@ HOME_EXCLUDES=(
 # Retention policies per job type
 RETENTION_HOME="--keep-daily 7 --keep-weekly 4 --keep-monthly 3"
 RETENTION_HOMELAB="--keep-daily 5 --keep-weekly 2 --keep-monthly 1"
+
+# Windows-side configs (DESK_W11 = NixOS-WSL inside Windows 11). Everything is
+# read through the drvfs view of C:. The registry-only pieces (Windhawk mods +
+# settings, taskbar prefs) and the winget package list are exported into
+# WINDOWS_STAGING first, so a reinstall is: winget import + reg import + copy.
+# WINDOWS_USER may be set in the environment; otherwise it is asked to Windows.
+WINDOWS_USER="${WINDOWS_USER:-}"
+WINDOWS_STAGING_REL="AppData/Local/w11-backup"
+RETENTION_WINDOWS="--keep-daily 7 --keep-weekly 4 --keep-monthly 3"
+# Relative to /mnt/c/Users/$WINDOWS_USER unless they start with /mnt/c
+WINDOWS_INCLUDES=(
+  "AppData/Local/w11-backup"                                                   # reg exports + winget list (staging)
+  "AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState"  # Windows Terminal settings + state
+  "Documents/ShareX"                                                            # hotkeys, actions, uploaders
+  "AppData/Local/Microsoft/PowerToys"                                           # PowerToys modules
+  "AppData/Local/Packages/Microsoft.CommandPalette_8wekyb3d8bbwe/LocalState"   # Command Palette hotkey + extensions
+  "AppData/Roaming/zen/Profiles"                                                # Zen profiles (Sine, mods, prefs)
+  "AppData/Local/Vivaldi/User Data"                                             # Vivaldi profile: sessions, prefs, bookmarks
+  "AppData/Roaming/Telegram Desktop"                                            # tdata = logged-in session
+  "AppData/Roaming/obsidian"                                                    # vault list + app settings
+  "AppData/Roaming/DBeaverData"                                                 # connections
+  "/mnt/c/ProgramData/Windhawk"                                                 # mod sources + engine state
+  "/mnt/c/Program Files (x86)/Steam/userdata"                                   # Steam Cloud saves + per-game configs
+)
+# Regenerable bulk (restic --exclude globs, absolute after expansion)
+WINDOWS_EXCLUDES=(
+  "Documents/ShareX/Screenshots"
+  "Documents/ShareX/Logs"
+  "Documents/ShareX/Backup"
+  "AppData/Roaming/zen/Profiles/*/cache2"
+  "AppData/Roaming/zen/Profiles/*/startupCache"
+  "AppData/Roaming/zen/Profiles/*/shader-cache"
+  "AppData/Roaming/zen/Profiles/*/minidumps"
+  "AppData/Roaming/zen/Profiles/*/crashes"
+  "AppData/Roaming/zen/Profiles/*/datareporting"
+  "AppData/Roaming/zen/Profiles/*/saved-telemetry-pings"
+  "AppData/Local/Vivaldi/User Data/*/Cache"
+  "AppData/Local/Vivaldi/User Data/*/Code Cache"
+  "AppData/Local/Vivaldi/User Data/*/GPUCache"
+  "AppData/Local/Vivaldi/User Data/*/DawnGraphiteCache"
+  "AppData/Local/Vivaldi/User Data/*/DawnWebGPUCache"
+  "AppData/Local/Vivaldi/User Data/*/Service Worker"
+  "AppData/Local/Vivaldi/User Data/GrShaderCache"
+  "AppData/Local/Vivaldi/User Data/ShaderCache"
+  "AppData/Local/Vivaldi/User Data/GraphiteDawnCache"
+  "AppData/Local/Vivaldi/User Data/component_crx_cache"
+  "AppData/Roaming/Telegram Desktop/tdata/user_data*"
+  "AppData/Roaming/Telegram Desktop/tdata/emoji"
+  "/mnt/c/ProgramData/Windhawk/Engine/Symbols"
+)
 
 # Color output (disabled in --auto mode)
 COLOR_ENABLED=true
@@ -361,6 +412,85 @@ backup_home() {
     return 0
   else
     log_error "Home directory backup failed"
+    return 1
+  fi
+}
+
+backup_windows() {
+  local repo_path="$1"
+  local dry_run="${2:-false}"
+
+  export RESTIC_REPOSITORY="$repo_path"
+  export RESTIC_PASSWORD_FILE
+
+  if [ -z "$WINDOWS_USER" ]; then
+    WINDOWS_USER=$(/mnt/c/Windows/System32/cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r\n' || true)
+  fi
+  local win_home="/mnt/c/Users/$WINDOWS_USER"
+  if [ -z "$WINDOWS_USER" ] || [ ! -d "$win_home" ]; then
+    log_error "Windows profile not found (WINDOWS_USER='$WINDOWS_USER', $win_home)"
+    return 1
+  fi
+  log "Starting Windows configs backup for $WINDOWS_USER"
+  log "Repository: $repo_path"
+
+  # --- staging: registry + winget list (Windows paths for the Windows tools) ---
+  local staging="$win_home/$WINDOWS_STAGING_REL"
+  local staging_win="C:\\Users\\$WINDOWS_USER\\${WINDOWS_STAGING_REL//\//\\}"
+  mkdir -p "$staging"
+  local reg="/mnt/c/Windows/System32/reg.exe"
+  "$reg" export "HKLM\\SOFTWARE\\Windhawk" "$staging_win\\windhawk.reg" /y >/dev/null 2>&1 \
+    && log "  exported Windhawk registry (mods + settings)" \
+    || log_warning "  Windhawk registry export failed"
+  "$reg" export "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced" "$staging_win\\explorer-advanced.reg" /y >/dev/null 2>&1 \
+    && log "  exported Explorer/taskbar prefs" \
+    || log_warning "  Explorer prefs export failed"
+  local winget="$win_home/AppData/Local/Microsoft/WindowsApps/winget.exe"
+  if [ -x "$winget" ]; then
+    "$winget" export -o "$staging_win\\winget-installed.json" --accept-source-agreements >/dev/null 2>&1 \
+      && log "  exported winget package list" \
+      || log_warning "  winget export failed"
+  fi
+
+  # --- include / exclude lists ---
+  local include_args=() exclude_args=() path
+  for path in "${WINDOWS_INCLUDES[@]}"; do
+    [[ "$path" == /mnt/c/* ]] || path="$win_home/$path"
+    if [ -e "$path" ]; then
+      include_args+=("$path")
+    else
+      log "  skip (absent): $path"
+    fi
+  done
+  for path in "${WINDOWS_EXCLUDES[@]}"; do
+    [[ "$path" == /mnt/c/* ]] || path="$win_home/$path"
+    exclude_args+=("--exclude" "$path")
+  done
+  if [ ${#include_args[@]} -eq 0 ]; then
+    log_error "Nothing to back up (no include path exists)"
+    return 1
+  fi
+
+  local backup_cmd=(
+    "$RESTIC_BIN" backup
+    "${include_args[@]}"
+    "${exclude_args[@]}"
+    --tag "windows"
+    --tag "$HOSTNAME"
+    --host "$HOSTNAME"
+  )
+  if [ "$dry_run" = true ]; then
+    backup_cmd+=("--dry-run")
+  fi
+
+  if "${backup_cmd[@]}"; then
+    log_success "Windows configs backup completed"
+    if [ "$dry_run" = false ]; then
+      run_retention "$repo_path" "$RETENTION_WINDOWS"
+    fi
+    return 0
+  else
+    log_error "Windows configs backup failed"
     return 1
   fi
 }
@@ -705,13 +835,18 @@ parse_args() {
           ensure_repo_initialized "$repo_path" "home_nfs"
           backup_home "$repo_path" "$dry_run"
           ;;
+        windows)
+          repo_path="$NFS_BASE/$HOSTNAME/windows.restic"
+          ensure_repo_initialized "$repo_path" "windows_nfs"
+          backup_windows "$repo_path" "$dry_run"
+          ;;
         homelab)
           log_error "Homelab backups are not supported on NFS target (use USB for homelab)"
           log_error "Reason: TrueNAS already has ZFS snapshots of homelab DATA_4TB"
           exit 1
           ;;
         *)
-          log_error "Unknown job: $job (use home for NFS, homelab only on USB)"
+          log_error "Unknown job: $job (NFS: home or windows; homelab only on USB)"
           exit 1
           ;;
       esac

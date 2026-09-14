@@ -132,6 +132,16 @@ in
     claudeCodeEnable = true; # standalone Claude Code: CLI + settings + MCP + git-crypt + uv, no IDEs
     claudeSyncEnable = true; # memory/skills/sessions ↔ VPS hub, identity DESK_W11
     claudeBackupToNextcloudEnable = false; # DESK already does it
+
+    # === Backups: Windows-side configs -> NAS (restic, same service as DESK/X13) ===
+    # backup-manager.sh --job windows: Windhawk registry + winget list exported to
+    # C:\Users\<user>\AppData\Local\w11-backup, then restic of Terminal/ShareX/
+    # PowerToys/CmdPal/Zen/Vivaldi/Telegram/Obsidian/DBeaver/Windhawk/Steam userdata
+    # into /mnt/NFS_Backups/nixosw11aku/windows.restic. Needs ~/myScripts/restic.key.
+    homeBackupEnable = true;
+    homeBackupDescription = "Backup Windows-side configs with Restic (DESK_W11)";
+    homeBackupExecStart = "/run/current-system/sw/bin/sh /home/akunito/.dotfiles/scripts/backup-manager.sh --auto --target nfs --job windows";
+    homeBackupOnCalendar = "*-*-* 17,21:00:00";
     nextcloudEnable = false; # Windows client; ~/Nextcloud is a bind mount of the Windows folder
     nextcloudSyncFolder = "/home/akunito/Nextcloud";
     atuinAutoSync = true;

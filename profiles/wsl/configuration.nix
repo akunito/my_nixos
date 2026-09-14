@@ -18,6 +18,7 @@ in
     ../../system/security/gpg.nix # gpg-agent as ssh agent (pinentry-curses via gpgPinentryCurses)
     ../../system/security/firewall.nix
     ../../system/security/nix-access-token.nix # GitHub PAT → per-user nix.conf
+    ../../system/security/restic.nix # restic wrapper + home_backup timer (self-gated on homeBackupEnable)
     ../../system/hardware/nfs_client.nix # NAS mounts (nfsMounts/nfsAutoMounts) + stale-mount reaper
     (import ../../system/app/docker.nix {
       storageDriver = null;
