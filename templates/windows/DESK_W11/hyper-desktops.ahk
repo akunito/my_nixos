@@ -158,50 +158,21 @@ PowerAction(choice) {
         Send "#!{Space}"
 }
 ; ---- "Show on all desktops" (Sway's sticky) ----
-; Hyper+Shift+S toggles it for the active window. The sweep below approximates
-; Sway's per-output workspaces: any window sitting on a secondary monitor is
-; pinned automatically, so that monitor keeps its content while the primary
-; switches desktops; moved back to the primary, it is unpinned. Windows toggled
-; by hand are left alone by the sweep.
+; Hyper+Shift+S toggles it for the active window (VirtualDesktopAccessor pins).
 PinWin(h)   => DllCall("VirtualDesktopAccessor\PinWindow", "Ptr", h, "Int")
 UnpinWin(h) => DllCall("VirtualDesktopAccessor\UnPinWindow", "Ptr", h, "Int")
 IsPinned(h) => DllCall("VirtualDesktopAccessor\IsPinnedWindow", "Ptr", h, "Int")
-global stickyAuto := Map(), stickyManual := Map()
 ^!#+s:: {
     h := WinExist("A")
     if !h
         return
-    stickyManual[h] := true
     if IsPinned(h)
-        UnpinWin(h), stickyAuto.Delete(h)
+        UnpinWin(h)
     else
         PinWin(h)
     ToolTip(IsPinned(h) ? "on all desktops" : "this desktop only")
     SetTimer(() => ToolTip(), -900)
 }
-Cloaked(h) {
-    v := 0
-    DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", h, "UInt", 14, "UInt*", &v, "UInt", 4)
-    return v
-}
-StickySweep() {
-    static prim := DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")  ; MONITOR_DEFAULTTOPRIMARY
-    for h in WinGetList() {
-        if stickyManual.Has(h) || !DllCall("IsWindowVisible", "Ptr", h) || Cloaked(h)
-            continue
-        if (WinGetExStyle("ahk_id " h) & 0x80) || WinGetTitle("ahk_id " h) = ""   ; tool windows, untitled
-            continue
-        cls := WinGetClass("ahk_id " h)
-        if (cls = "Progman" || cls = "WorkerW" || cls = "Shell_TrayWnd" || cls = "Shell_SecondaryTrayWnd" || cls = "AutoHotkeyGUI")
-            continue
-        onPrimary := DllCall("MonitorFromWindow", "Ptr", h, "UInt", 2, "Ptr") = prim
-        if !onPrimary && !IsPinned(h)
-            PinWin(h), stickyAuto[h] := true
-        else if onPrimary && stickyAuto.Has(h)
-            UnpinWin(h), stickyAuto.Delete(h)
-    }
-}
-SetTimer StickySweep, 1500
 ^!#+r:: Reload
 ^!#+Escape:: Suspend
 
