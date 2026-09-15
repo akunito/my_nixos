@@ -264,7 +264,22 @@ Watchdog(hwnd, ww, wh) {
         }
     }
 }
+; The window under the cursor can vanish mid-gesture (a tooltip, a tab-drag
+; preview, an app closing): every Win* call then throws TargetError. Catch it
+; here, drop the outline and log, instead of AutoHotkey's error dialog.
+altDragGhost := ""
 AltDrag(mode) {
+    global altDragGhost
+    try AltDragCore(mode)
+    catch TargetError as e {
+        if altDragGhost
+            try altDragGhost.Destroy()
+        altDragGhost := ""
+        FileAppend Format("{1} target-lost ({2}): {3}`n", A_Now, mode, e.Message), A_Temp "\altdrag.log"
+    }
+}
+AltDragCore(mode) {
+    global altDragGhost
     MouseGetPos &mx, &my, &hwnd
     if !hwnd
         return
@@ -272,6 +287,16 @@ AltDrag(mode) {
     if (cls = "Progman" || cls = "WorkerW" || cls = "Shell_TrayWnd")
         return
     WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
+    if (ww < 200 || wh < 80) {
+        ; A tooltip or tab-drag preview sits under the cursor (Vivaldi's is 237x39,
+        ; seen 2026-09-15: the watchdog then forced that size onto the real window).
+        ; Drag its owner instead, or leave it alone.
+        owner := DllCall("GetWindow", "Ptr", hwnd, "UInt", 4, "Ptr")
+        if !owner
+            return
+        hwnd := owner
+        WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
+    }
     WinActivate "ahk_id " hwnd
     fromMax := (WinGetMinMax("ahk_id " hwnd) = 1)
     if fromMax {
@@ -343,7 +368,7 @@ AltDrag(mode) {
             ; translucent outline follows the cursor instead, and the real window
             ; jumps once on release.
             if !ghost {
-                ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000 -DPIScale")   ; click-through, layered; -DPIScale = raw pixels (measured: default is x1.5)
+                altDragGhost := ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000 -DPIScale")   ; click-through, layered; -DPIScale = raw pixels (measured: default is x1.5)
                 ghost.BackColor := "c4a7e7"
                 WinSetTransparent 90, ghost
             }
@@ -390,7 +415,7 @@ AltDrag(mode) {
     ; app rescale itself, usually huge. Put the pre-drag physical size back.
     if (mode = "move") {
         if ghost
-            ghost.Destroy()
+            ghost.Destroy(), altDragGhost := ""
         MouseGetPos &cx, &cy
         if (topZone && MonAt(cx, cy) = mon0) {
             WinMaximize "ahk_id " hwnd
