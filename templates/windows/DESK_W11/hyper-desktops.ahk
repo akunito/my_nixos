@@ -171,6 +171,27 @@ Toggle(exe, cmd) {
 ; ShareX cannot RegisterHotKey Ctrl+Alt+Shift+Win+<letter> (Windows keeps that set for
 ; the "Office key"), so the hook-based AHK owns Hyper+Shift+C and runs the workflow.
 ^!#+c:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+C"'
+; ---- Ctrl+Alt+C in Windows Terminal: last Claude Code answer -> Notepad++ ----
+; Claude Code has no keybinding action for /copy, so this types the slash command,
+; waits for the clipboard to change (the fullscreen picker may ask which block:
+; answer it, the macro keeps waiting up to 20 s) and opens the text in a fresh
+; Notepad++ instance. Copying from the terminal breaks on the rendered wraps,
+; this does not. The input box must be empty when you press it.
+CopyLastToNpp() {
+    A_Clipboard := ""
+    Send "/copy{Enter}"
+    if !ClipWait(20) {
+        TrayTip "Nothing copied (clipboard stayed empty)", "Claude Code /copy", 2
+        return
+    }
+    file := A_Temp "\claude-last-response.md"
+    try FileDelete file
+    FileAppend A_Clipboard, file, "UTF-8-RAW"
+    Run '"' A_ProgramFiles '\Notepad++\notepad++.exe" -multiInst -nosession "' file '"'
+}
+#HotIf WinActive("ahk_exe WindowsTerminal.exe")
+^!c:: CopyLastToNpp()
+#HotIf
 ; ---- Hyper+Shift+Backspace: power menu, the rofi-power-mode.sh of Sway ----
 ; (Hyper+Shift+Return is Windows' own Copilot/Office chord and is left alone.)
 ; A dark list in the middle of the screen; arrows/Enter/Esc, or type the first

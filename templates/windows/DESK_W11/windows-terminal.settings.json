@@ -160,6 +160,14 @@
         "direction": "nextInOrder"
       },
       "id": "User.tmux.focusNext"
+    },
+    {
+      "command": {
+        "action": "sendInput",
+        "input": "\u001b\r"
+      },
+      "id": "User.claude.shiftEnter",
+      "name": "Claude Code: newline (Shift+Enter)"
     }
   ],
   "keybindings": [
@@ -238,6 +246,10 @@
     {
       "id": "User.tmux.focusNext",
       "keys": "ctrl+alt+g"
+    },
+    {
+      "id": "User.claude.shiftEnter",
+      "keys": "shift+enter"
     }
   ]
 }
