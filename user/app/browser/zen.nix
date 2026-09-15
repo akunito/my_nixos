@@ -144,26 +144,45 @@ in
       isDefault = true;
       sine.enable = sineEnabled;
 
-      # Sine ships an engine auto-updater, and this install must not run it.
-      # The engine (and the autoconfig bootloader beside it) is PINNED by the
-      # zen-browser flake and re-linked from the store into chrome/JS and
-      # chrome/utils on every activation. Left on, the two fight in a loop the
-      # user sees on every single start:
-      #
-      #   activation writes engine.json = the pinned version (2.3.3.0)
-      #   -> Zen starts, Sine reads it, finds a newer release upstream
-      #   -> steps ONE release forward (2.3.4.0c), overwriting the store links
-      #   -> toasts "The Sine engine has been updated ... please restart"
-      #   -> next activation puts 2.3.3.0 back, and round it goes.
-      #
-      # Turning the updater off makes the pin the truth. The engine then moves
-      # only when the zen-browser input moves (it pins the same Sine rev as
-      # upstream today, so there is nothing newer to move to).
-      #
-      # This goes through the profile's user.js rather than programs.zen-browser
-      # .extraPrefs: extraPrefs writes mozilla.cfg, which Sine both asserts
-      # against and — see the header — is never read from the wrapper anyway.
-      settings = lib.mkIf sineEnabled {
+      # Profile prefs (user.js). These go through the profile rather than
+      # programs.zen-browser.extraPrefs: extraPrefs writes mozilla.cfg, which
+      # Sine both asserts against and — see the header — is never read from the
+      # wrapper anyway.
+      settings = {
+        # Mozilla hard-codes a list of domains where NO WebExtension may run.
+        # accounts.firefox.com is on it, so on the Mozilla-account pages
+        # Bitwarden never sees the document: it cannot create, offer or use the
+        # passkey for that account, and there is no error — the extension is
+        # simply absent. Same default list as Firefox, minus the two account
+        # hosts that carry the login form itself.
+        #
+        # TRADE-OFF: on those two hosts any extension holding broad host
+        # permissions can now read the session and the sign-in flow. Keep the
+        # installed set small and audited (this is why the addons.mozilla.org,
+        # support.mozilla.org and sync.services.mozilla.com entries stay).
+        "extensions.webextensions.restrictedDomains" =
+          "accounts-static.cdn.mozilla.net,addons.cdn.mozilla.net,"
+          + "addons.mozilla.org,api.accounts.firefox.com,"
+          + "content.cdn.mozilla.net,discovery.addons.mozilla.org,"
+          + "install.mozilla.org,oauth.accounts.firefox.com,"
+          + "support.mozilla.org,sync.services.mozilla.com";
+      }
+      // lib.optionalAttrs sineEnabled {
+        # Sine ships an engine auto-updater, and this install must not run it.
+        # The engine (and the autoconfig bootloader beside it) is PINNED by the
+        # zen-browser flake and re-linked from the store into chrome/JS and
+        # chrome/utils on every activation. Left on, the two fight in a loop the
+        # user sees on every single start:
+        #
+        #   activation writes engine.json = the pinned version (2.3.3.0)
+        #   -> Zen starts, Sine reads it, finds a newer release upstream
+        #   -> steps ONE release forward (2.3.4.0c), overwriting the store links
+        #   -> toasts "The Sine engine has been updated ... please restart"
+        #   -> next activation puts 2.3.3.0 back, and round it goes.
+        #
+        # Turning the updater off makes the pin the truth. The engine then moves
+        # only when the zen-browser input moves (it pins the same Sine rev as
+        # upstream today, so there is nothing newer to move to).
         "sine.engine.auto-update" = false;
       };
 
