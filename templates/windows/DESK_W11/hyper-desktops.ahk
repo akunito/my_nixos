@@ -512,12 +512,11 @@ AltDragCore(mode) {
     ; by Windows and rescales (x1.2 height, up to x1.74 width) although the cursor
     ; never left the monitor. Live moves and resizes stop at that edge; crossing
     ; is what the outline + one jump on release are for.
-    mL := 0, mR := 0, onMain := (mon0 = PrimaryMon())
-    Loop MonitorGetCount() {
-        MonitorGet A_Index, &ml, &mt, &mr, &mb
-        if (DllCall("MonitorFromPoint", "Int64", (mt << 32) | (ml & 0xFFFFFFFF), "UInt", 2, "Ptr") = mon0)
-            mL := ml, mR := mr
-    }
+    ; GetMonitorInfo on the handle itself: MonitorFromPoint on a monitor's own
+    ; top-left corner answered the OTHER monitor here (measured), so no points.
+    mi := Buffer(40, 0), NumPut("UInt", 40, mi)
+    DllCall("GetMonitorInfo", "Ptr", mon0, "Ptr", mi)
+    mL := NumGet(mi, 4, "Int"), mR := NumGet(mi, 12, "Int"), onMain := (mon0 = PrimaryMon())
     EdgeClampX(x, w) => onMain ? Min(x, mR - w) : Max(x, mL)
     altDragPhase := "drag"
     WorkAreaAt(px, py, &l, &t, &r, &b) {
