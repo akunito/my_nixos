@@ -110,8 +110,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Zen. Pinned to a rev like every non-nixpkgs input; bump by hand.
+    # This rev ships Zen 1.22.1b, the first release with Mozilla-account sync
+    # for Spaces (Settings -> Sync -> Spaces). Anything older has no Spaces
+    # engine at all, so a machine on it never uploads its Spaces and the other
+    # devices see nothing to pull — which is exactly what DESK (1.21.13b) did.
     zen-browser = {
-      url = "github:0xc000022070/zen-browser-flake/044be1aba87c30d42568e817c78a94c1d8eacb14";
+      url = "github:0xc000022070/zen-browser-flake/6a281d7c09c0ed6450c5c948ee9a387390285317";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
