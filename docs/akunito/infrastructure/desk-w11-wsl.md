@@ -74,10 +74,17 @@ en-GB layout never gets involved:
 | Ctrl+Alt+R | split -v | `splitPane down`, duplicate |
 | Ctrl+Alt+T | new-window | `newTab` |
 | Ctrl+Alt+X | kill-pane | `closePane` |
+| Ctrl+Alt+Y / Z | rename / kill window | `openTabRenamer` / `closeTab` |
+| Ctrl+Alt+D / S | scroll up / down | `scrollUpPage` / `scrollDownPage` |
+| Ctrl+Alt+[ / ] | copy-mode / paste | `markMode` (keyboard selection) / `paste` |
+| Ctrl+Alt+P | copycat search | `find` |
+| Ctrl+Alt+J K L ; | pane left/down/up/right | `moveFocus` left/down/up/right |
+| Ctrl+Alt+F / G | pane left / up | `moveFocus` left / up |
 
 Keybindings are global in Windows Terminal (no per-profile keys), so in a WSL
 tab these now reach the terminal, not tmux: tmux gets them only through its
-prefix. The remaining chords (Y/Z, D/S/[/]/P, J/K/L/;, A/H) are not mapped yet.
+prefix. Not mapped: A (ssh-smart, to try later) and H (tmux menu; Windows
+Terminal's own palette is Ctrl+Shift+P).
 
 ### Claude Code in PowerShell: fullscreen + copying text
 

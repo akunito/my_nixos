@@ -90,6 +90,62 @@
         "action": "closePane"
       },
       "id": "User.tmux.closePane"
+    },
+    {
+      "command": "openTabRenamer",
+      "id": "User.tmux.renameTab"
+    },
+    {
+      "command": "closeTab",
+      "id": "User.tmux.closeTab"
+    },
+    {
+      "command": "scrollUpPage",
+      "id": "User.tmux.pageUp"
+    },
+    {
+      "command": "scrollDownPage",
+      "id": "User.tmux.pageDown"
+    },
+    {
+      "command": "markMode",
+      "id": "User.tmux.markMode"
+    },
+    {
+      "command": "paste",
+      "id": "User.tmux.paste"
+    },
+    {
+      "command": "find",
+      "id": "User.tmux.find"
+    },
+    {
+      "command": {
+        "action": "moveFocus",
+        "direction": "left"
+      },
+      "id": "User.tmux.focusLeft"
+    },
+    {
+      "command": {
+        "action": "moveFocus",
+        "direction": "down"
+      },
+      "id": "User.tmux.focusDown"
+    },
+    {
+      "command": {
+        "action": "moveFocus",
+        "direction": "up"
+      },
+      "id": "User.tmux.focusUp"
+    },
+    {
+      "command": {
+        "action": "moveFocus",
+        "direction": "right"
+      },
+      "id": "User.tmux.focusRight"
     }
   ],
   "keybindings": [
@@ -116,6 +172,58 @@
     {
       "id": "User.tmux.closePane",
       "keys": "ctrl+alt+x"
+    },
+    {
+      "id": "User.tmux.renameTab",
+      "keys": "ctrl+alt+y"
+    },
+    {
+      "id": "User.tmux.closeTab",
+      "keys": "ctrl+alt+z"
+    },
+    {
+      "id": "User.tmux.pageUp",
+      "keys": "ctrl+alt+d"
+    },
+    {
+      "id": "User.tmux.pageDown",
+      "keys": "ctrl+alt+s"
+    },
+    {
+      "id": "User.tmux.markMode",
+      "keys": "ctrl+alt+["
+    },
+    {
+      "id": "User.tmux.paste",
+      "keys": "ctrl+alt+]"
+    },
+    {
+      "id": "User.tmux.find",
+      "keys": "ctrl+alt+p"
+    },
+    {
+      "id": "User.tmux.focusLeft",
+      "keys": "ctrl+alt+j"
+    },
+    {
+      "id": "User.tmux.focusLeft",
+      "keys": "ctrl+alt+f"
+    },
+    {
+      "id": "User.tmux.focusDown",
+      "keys": "ctrl+alt+k"
+    },
+    {
+      "id": "User.tmux.focusUp",
+      "keys": "ctrl+alt+l"
+    },
+    {
+      "id": "User.tmux.focusUp",
+      "keys": "ctrl+alt+g"
+    },
+    {
+      "id": "User.tmux.focusRight",
+      "keys": "ctrl+alt+;"
     }
   ]
 }
