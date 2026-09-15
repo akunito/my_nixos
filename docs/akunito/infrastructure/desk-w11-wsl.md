@@ -207,6 +207,15 @@ on every move, real storms are +19 % to +73 %); activation uses
 active, and its fallback flashed the focus to the desktop); the restore rectangle
 is fitted per side instead of forced to an 80 % box (that made the size drift
 1668x2160 -> 3072x1694 -> 1382x2424 across maximise/restore on both monitors).
+Second capture (29 gestures): every remaining storm (7/7) fired when the window's
+edge entered the virtual gap between the monitors (x 3840..4608 in AutoHotkey's
+space; Windows re-evaluates the window's DPI there), so live moves and resizes
+now stop at the edge facing the other monitor (`edgeL`/`edgeR` from
+`GetMonitorInfo`; crossing is the outline + one jump). Activation falls back to
+`AttachThreadInput` + `SetForegroundWindow` (0 ms) when another app has the
+foreground. Third capture (21 gestures): no storms, no dropped presses, every
+final size as expected, 13 edge clamps. Left as is: restoring from maximised
+costs ~280 ms (the app's own restore time).
 Debug trace: `%TEMP%\hyper-debug.on` present -> gestures, GlazeWM command
 timings and window events (focus, state, size outside gestures, cloak) go to
 `%TEMP%\altdrag.log`; power and display changes are logged always.
