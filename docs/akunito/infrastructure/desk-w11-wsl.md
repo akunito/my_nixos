@@ -116,6 +116,11 @@ windows needed fragile tricks. Rules now: `initial_state: floating`, no
 from the Windows clone, Startup shortcut `GlazeWM.lnk`, native focus-follows-mouse
 OFF (`focus-follows-mouse.ps1 -Off`) because GlazeWM does it. Reload the config
 only when the file changes (`glazewm command wm-reload-config`). No "sticky".
+GlazeWM only manages windows on the *current native* virtual desktop: if windows end
+up on other native desktops (Win+Tab → "New desktop", or leftovers from the old AHK),
+focusing one of them jumps Windows to that desktop and the GlazeWM workspaces
+"vanish". Fix: run `vd-merge.ahk` (merges every native desktop into the first one),
+then restart GlazeWM. Never create native desktops while GlazeWM is in use.
 Windhawk has no CLI for mods: open it once → Explore → install these, in order,
 then set each mod's options:
 
