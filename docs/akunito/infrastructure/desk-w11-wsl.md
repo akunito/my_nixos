@@ -79,7 +79,7 @@ en-GB layout never gets involved:
 | Ctrl+Alt+[ / ] | copy-mode / paste | `markMode` (keyboard selection) / `paste` |
 | Ctrl+Alt+P | copycat search | `find` |
 | Ctrl+Alt+J K L ; | pane left/down/up/right | `moveFocus` left/down/up/right |
-| Ctrl+Alt+F / G | pane left / up | `moveFocus` left / up |
+| Ctrl+Alt+F / G | pane left / up | `moveFocus` previousInOrder / nextInOrder (cycles through the panes, wraps) |
 
 Keybindings are global in Windows Terminal (no per-profile keys), so in a WSL
 tab these now reach the terminal, not tmux: tmux gets them only through its

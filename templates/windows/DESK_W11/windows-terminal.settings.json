@@ -146,6 +146,20 @@
         "direction": "right"
       },
       "id": "User.tmux.focusRight"
+    },
+    {
+      "command": {
+        "action": "moveFocus",
+        "direction": "previousInOrder"
+      },
+      "id": "User.tmux.focusPrev"
+    },
+    {
+      "command": {
+        "action": "moveFocus",
+        "direction": "nextInOrder"
+      },
+      "id": "User.tmux.focusNext"
     }
   ],
   "keybindings": [
@@ -206,10 +220,6 @@
       "keys": "ctrl+alt+j"
     },
     {
-      "id": "User.tmux.focusLeft",
-      "keys": "ctrl+alt+f"
-    },
-    {
       "id": "User.tmux.focusDown",
       "keys": "ctrl+alt+k"
     },
@@ -218,12 +228,16 @@
       "keys": "ctrl+alt+l"
     },
     {
-      "id": "User.tmux.focusUp",
-      "keys": "ctrl+alt+g"
-    },
-    {
       "id": "User.tmux.focusRight",
       "keys": "ctrl+alt+;"
+    },
+    {
+      "id": "User.tmux.focusPrev",
+      "keys": "ctrl+alt+f"
+    },
+    {
+      "id": "User.tmux.focusNext",
+      "keys": "ctrl+alt+g"
     }
   ]
 }
