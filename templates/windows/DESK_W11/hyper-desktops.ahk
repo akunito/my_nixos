@@ -255,7 +255,17 @@ AltDrag(mode) {
     SetWinDelay -1
     mon0 := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
     MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
-    ghost := ""
+    ghost := "", topZone := false
+    WorkAreaAt(px, py, &l, &t, &r, &b) {
+        Loop MonitorGetCount() {
+            MonitorGet A_Index, &ml, &mt, &mr, &mb
+            if (px >= ml && px < mr && py >= mt && py < mb) {
+                MonitorGetWorkArea A_Index, &l, &t, &r, &b
+                return true
+            }
+        }
+        return false
+    }
     while GetKeyState(btn, "P") {
         MouseGetPos &cx, &cy
         dx := cx - mx, dy := cy - my
@@ -266,16 +276,20 @@ AltDrag(mode) {
             ; (1656x1216 -> 3199x28131 in 60 steps). So across the boundary a
             ; translucent outline follows the cursor instead, and the real window
             ; jumps once on release.
-            if (MonAt(cx, cy) = mon0) {
-                if ghost
-                    ghost.Hide()
+            if !ghost {
+                ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000 -DPIScale")   ; click-through, layered; -DPIScale = raw pixels (measured: default is x1.5)
+                ghost.BackColor := "c4a7e7"
+                WinSetTransparent 90, ghost
+            }
+            ; Top zone (<= 6 px under the top of the work area): the outline becomes
+            ; the whole work area and the release maximises there (sway/Windows snap).
+            topZone := WorkAreaAt(cx, cy, &al, &at, &ar, &ab) && (cy - at) <= 6
+            if topZone {
+                ghost.Show("NA x" al " y" at " w" (ar - al) " h" (ab - at))
+            } else if (MonAt(cx, cy) = mon0) {
+                ghost.Hide()
                 WinMove wx + dx, wy + dy, , , "ahk_id " hwnd
             } else {
-                if !ghost {
-                    ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000 -DPIScale")   ; click-through, layered; -DPIScale = raw pixels (measured: default is x1.5)
-                    ghost.BackColor := "c4a7e7"
-                    WinSetTransparent 90, ghost
-                }
                 ghost.Show("NA x" (cx - (mx - wx)) " y" (cy - (my - wy)) " w" ww " h" wh)
             }
         } else {
@@ -294,6 +308,10 @@ AltDrag(mode) {
         if ghost
             ghost.Destroy()
         MouseGetPos &cx, &cy
+        if (topZone && MonAt(cx, cy) = mon0) {
+            WinMaximize "ahk_id " hwnd
+            return
+        }
         if (MonAt(cx, cy) != mon0) {
             ; Measured 2026-09-15: ONE WinMove across the boundary makes the app rescale
             ; once (x1.2 / x0.83) and then it is stable; one WinMove of the size by
@@ -311,6 +329,10 @@ AltDrag(mode) {
             }
             Sleep 15
             WinMove , , ww, wh, "ahk_id " hwnd
+            if topZone {
+                Sleep 100
+                WinMaximize "ahk_id " hwnd
+            }
         }
     }
 }

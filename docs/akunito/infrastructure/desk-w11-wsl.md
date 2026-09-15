@@ -121,6 +121,10 @@ prompts (e.g. the location dialog) could not be clicked. Click to focus, like st
 Windows. Alt+drag never moves a window across the DPI boundary live (150 % vs 125 %
 made the app rescale and GlazeWM re-place it every tick); on release over the other
 monitor the window is moved once through GlazeWM (`move --workspace` + `size`).
+Alt+drag gestures (2026-09-15): a maximised window restores under the cursor and
+keeps dragging; dropping with the cursor in the top 6 px of a monitor's work area
+maximises there (the outline turns into the whole work area); crossing to the other
+monitor shows the outline and jumps once on release (`tests/` has the measurements).
 Hyper+Tab / Win+Tab = AHK list of every window in every workspace (Task View stand-in;
 Ctrl+Win+D and Ctrl+Win+arrows are swallowed so no native desktop can be created).
 
