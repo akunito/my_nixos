@@ -6,11 +6,13 @@
       html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
       body { font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; font-size: 12px; color: #e0def4; }
       #ws { display: flex; align-items: center; gap: 4px; height: 28px; padding-left: 2px; }
-      .ws { border: 0; border-radius: 6px; padding: 2px 8px; line-height: 16px; cursor: pointer;
-            background: rgba(255, 255, 255, 0.06); color: #9ca0b0; }
-      .ws.displayed { background: rgba(122, 162, 247, 0.35); color: #e0def4; }
-      .ws.focused { outline: 1px solid rgba(122, 162, 247, 0.9); }
-      .ws:hover { background: rgba(255, 255, 255, 0.16); }
+      /* Rosé Pine, matched to the Windhawk-styled taskbar: pills #302D47, bar #0A0A0A */
+      .ws { border: 0; border-radius: 6px; padding: 2px 9px; line-height: 16px; cursor: pointer;
+            background: #302d47; color: #908caa; font-weight: 500; }
+      .ws.displayed { background: #c4a7e7; color: #191724; font-weight: 600; }
+      .ws.focused { box-shadow: 0 0 0 1px #c4a7e7 inset; }
+      .ws:hover { background: #403d52; color: #e0def4; }
+      .ws.displayed:hover { background: #d3bff0; color: #191724; }
     </style>
   </head>
   <body>

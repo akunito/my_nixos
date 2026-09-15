@@ -28,7 +28,7 @@ gaps:
 
 window_effects:
   focused_window:
-    border: { enabled: false, color: '#7aa2f7' }
+    border: { enabled: true, color: '#c4a7e7' }   # sway's focused border, Rosé Pine iris
     hide_title_bar: { enabled: false }
     corner_style: { enabled: false, style: 'square' }
     transparency: { enabled: false, opacity: '95%' }

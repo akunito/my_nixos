@@ -266,7 +266,15 @@ AltDrag(mode) {
             ; Never `glazewm command size` here: it acts on the *focused* window,
             ; which after a monitor change was another one (Zen/Terminal got resized).
             WinMove cx - (mx - wx), cy - (my - wy), , , "ahk_id " hwnd
-            Sleep 400
+            ; The rescale lands 125-156 ms after the move (measured x6); poll for it
+            ; instead of sleeping a fixed 400 ms, then put the size back once.
+            Loop 60 {
+                Sleep 5
+                WinGetPos , , &nw, &nh, "ahk_id " hwnd
+                if (nw != ww || nh != wh)
+                    break
+            }
+            Sleep 15
             WinMove , , ww, wh, "ahk_id " hwnd
         }
     }
