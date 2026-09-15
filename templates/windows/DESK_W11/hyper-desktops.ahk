@@ -89,6 +89,8 @@ WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
             Dbg(Format("{1} {2} hwnd {3} {4}", ev = 0x8017 ? "cloaked" : "uncloaked", exe, hwnd, MonName(hwnd)))
             return
         }
+        if !(WinGetStyle("ahk_id " hwnd) & 0xC00000)   ; no caption: dropdowns, menus, previews
+            return
         mm := WinGetMinMax("ahk_id " hwnd)
         WinGetPos &x, &y, &w, &h, "ahk_id " hwnd
     } catch
