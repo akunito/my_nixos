@@ -232,21 +232,46 @@ AltDrag(mode) {
         return
     WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
     WinActivate "ahk_id " hwnd
-    if (WinGetMinMax("ahk_id " hwnd) = 1) {
+    fromMax := (WinGetMinMax("ahk_id " hwnd) = 1)
+    if fromMax {
         ; Maximised: restore first and keep the grab point at the same relative spot
         ; under the cursor (what Windows does when you drag a maximised title bar),
-        ; then carry on with the normal drag/resize. Measured: ~270 ms, GlazeWM
-        ; follows (fullscreen -> floating).
+        ; then carry on with the normal drag/resize. Windows' own restore rectangle
+        ; (GetWindowPlacement.rcNormalPosition, read while still maximised) is the
+        ; authority for the size: a per-monitor-DPI app can come out of maximised
+        ; rescaled, and once that happened to Discord the rectangle grew x1.5 per
+        ; gesture (1171 -> 8946 px high). If the rectangle itself is already bigger
+        ; than the monitor, it is poisoned: shrink it to 80 % of the work area.
         fx := (mx - wx) / ww, fy := (my - wy) / wh
-        WinRestore "ahk_id " hwnd
-        Loop 40 {
-            Sleep 5
-            if WinGetMinMax("ahk_id " hwnd) = 0
-                break
+        wp := Buffer(44, 0), NumPut("UInt", 44, wp, 0)
+        DllCall("GetWindowPlacement", "Ptr", hwnd, "Ptr", wp)
+        nw := NumGet(wp, 36, "Int") - NumGet(wp, 28, "Int"), nh := NumGet(wp, 40, "Int") - NumGet(wp, 32, "Int")
+        MonitorGetWorkArea(1, &al, &at, &ar, &ab)
+        Loop MonitorGetCount() {
+            MonitorGet A_Index, &ml, &mt, &mr, &mb
+            if (mx >= ml && mx < mr && my >= mt && my < mb)
+                MonitorGetWorkArea A_Index, &al, &at, &ar, &ab
         }
-        WinGetPos , , &rw, &rh, "ahk_id " hwnd
-        wx := Round(mx - fx * rw), wy := Round(my - fy * rh), ww := rw, wh := rh
-        WinMove wx, wy, , , "ahk_id " hwnd
+        if (nw > ar - al || nh > ab - at || nw < 200 || nh < 150)
+            nw := Round((ar - al) * 0.8), nh := Round((ab - at) * 0.8)
+        WinRestore "ahk_id " hwnd
+        lw := -1, lh := -1, stable := 0
+        Loop 80 {   ; not maximised AND size unchanged for 3 reads (measured ~170-200 ms)
+            Sleep 5
+            WinGetPos , , &rw, &rh, "ahk_id " hwnd
+            if (WinGetMinMax("ahk_id " hwnd) = 0 && rw = lw && rh = lh) {
+                if (++stable >= 3)
+                    break
+            } else
+                stable := 0
+            lw := rw, lh := rh
+        }
+        ww := nw, wh := nh
+        wx := Round(mx - fx * ww), wy := Max(Round(my - fy * wh), at)
+        ; ONE SetWindowPos with position AND size: measured, two separate calls let
+        ; the app rescale between them (3072x1694 came out 2708x1744), one call sticks.
+        WinMove wx, wy, ww, wh, "ahk_id " hwnd
+        FileAppend Format("{1} max-restore {2}: normal={3}x{4} came-out={5}x{6} -> {7}x{8}`n", A_Now, WinGetProcessName("ahk_id " hwnd), nw, nh, rw, rh, ww, wh), A_Temp "\altdrag.log"
     }
     if (mode = "resize") {
         left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
@@ -311,6 +336,15 @@ AltDrag(mode) {
         if (topZone && MonAt(cx, cy) = mon0) {
             WinMaximize "ahk_id " hwnd
             return
+        }
+        if (MonAt(cx, cy) = mon0) {
+            ; Same monitor: the size must be exactly what we dragged; if the app
+            ; rescaled itself on the way (seen once after a restore), fix it once.
+            WinGetPos , , &ew, &eh, "ahk_id " hwnd
+            if (ew != ww || eh != wh) {
+                WinMove , , ww, wh, "ahk_id " hwnd
+                FileAppend Format("{1} release-fix {2}: {3}x{4} -> {5}x{6}{7}`n", A_Now, WinGetProcessName("ahk_id " hwnd), ew, eh, ww, wh, fromMax ? " (from maximised)" : ""), A_Temp "\altdrag.log"
+            }
         }
         if (MonAt(cx, cy) != mon0) {
             ; Measured 2026-09-15: ONE WinMove across the boundary makes the app rescale
