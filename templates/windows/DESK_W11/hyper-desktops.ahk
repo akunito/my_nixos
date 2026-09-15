@@ -505,7 +505,7 @@ AltDragCore(mode) {
     altDragExp := mode = "resize" ? "(resize)" : ww "x" wh
     Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11} prep {12} ms (activate {13} ms)", mode, WinGetProcessName("ahk_id " hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, mon0 = PrimaryMon() ? "main" : "vertical", A_TickCount - altDragT0, tAct))
     MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
-    ghost := "", topZone := false, unstable := false, outlined := "", clamped := false
+    ghost := "", topZone := false, unstable := false, outlined := "", clamped := false, snapped := false
     ; The side of the origin monitor that faces the other monitor. Measured
     ; 2026-09-15 (7 of 7 storms): a per-monitor-DPI window whose edge enters the
     ; virtual gap between the monitors (3840..4608 here) gets its DPI re-evaluated
@@ -559,7 +559,7 @@ AltDragCore(mode) {
                 ghost.Hide()
                 nx := EdgeClampX(wx + dx, ww)
                 if (nx != wx + dx && !clamped)
-                    Dbg(Format("edge-clamp {1}: kept x >= {2} / <= {3} (window would be at {4})", WinGetProcessName("ahk_id " hwnd), edgeL, edgeR - ww, wx + dx)), clamped := true
+                    Dbg(Format("edge-clamp {1}: kept x {2} {3} (window would be at {4})", WinGetProcessName("ahk_id " hwnd), onMain ? "<=" : ">=", onMain ? edgeR - ww : edgeL, wx + dx)), clamped := true
                 WinMove nx, wy + dy, , , "ahk_id " hwnd
                 ; Storm guard: if the app answered a plain move with a rescale (stale
                 ; DPI context, seen on the vertical monitor), stop touching it and
@@ -570,7 +570,8 @@ AltDragCore(mode) {
                         ; The app snapped to its own grid (Windows Terminal: 1 px per
                         ; move, measured): that is its answer, adopt it. Real storms
                         ; are +19 % to +73 % (log 2026-09-15).
-                        Dbg(Format("grid-snap {1}: {2}x{3} -> {4}x{5} adopted", WinGetProcessName("ahk_id " hwnd), ww, wh, gw, gh))
+                        if !snapped
+                            Dbg(Format("grid-snap {1}: {2}x{3} -> {4}x{5} adopted (further 1-px flips not logged)", WinGetProcessName("ahk_id " hwnd), ww, wh, gw, gh)), snapped := true
                         ww := gw, wh := gh, altDragExp := ww "x" wh
                     } else {
                         unstable := true
