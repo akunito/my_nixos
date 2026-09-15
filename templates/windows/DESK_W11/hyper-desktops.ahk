@@ -234,11 +234,17 @@ AltDrag(mode) {
     btn := mode = "move" ? "LButton" : "RButton"
     SetWinDelay -1
     mon0 := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
+    MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
     while GetKeyState(btn, "P") {
         MouseGetPos &cx, &cy
         dx := cx - mx, dy := cy - my
         if (mode = "move") {
-            WinMove wx + dx, wy + dy, , , "ahk_id " hwnd
+            ; Live-move only inside the starting monitor: a WinMove across the DPI
+            ; boundary (150 % vs 125 %) makes the app rescale and GlazeWM re-place it
+            ; every tick — the "huge window that keeps resizing" loop. Crossing is
+            ; done once, on release, through GlazeWM.
+            if (MonAt(cx, cy) = mon0)
+                WinMove wx + dx, wy + dy, , , "ahk_id " hwnd
         } else {
             nx := left ? wx + dx : wx
             ny := top ? wy + dy : wy
@@ -251,12 +257,15 @@ AltDrag(mode) {
     }
     ; Crossing to a monitor with another DPI (main 150 %, vertical 125 %) makes the
     ; app rescale itself, usually huge. Put the pre-drag physical size back.
-    ; GlazeWM re-applies its own floating placement right after, so the size goes
-    ; through it (`size` updates the placement it tracks), not through WinMove.
-    if (mode = "move" && DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr") != mon0) {
-        Sleep 150
-        WinActivate "ahk_id " hwnd
-        Glaze("size --width " ww "px --height " wh "px")
+    if (mode = "move") {
+        MouseGetPos &cx, &cy
+        if (MonAt(cx, cy) != mon0) {
+            g := MonAt(cx, cy) = PrimaryMon() ? 1 : 2
+            WinActivate "ahk_id " hwnd
+            Glaze("move --workspace " CurrentWs(g))
+            Sleep 200
+            Glaze("size --width " ww "px --height " wh "px")
+        }
     }
 }
 !LButton:: AltDrag("move")
