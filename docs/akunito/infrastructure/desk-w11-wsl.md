@@ -325,6 +325,17 @@ Restore on a fresh W11: `bootstrap.ps1` (winget import), `reg import windhawk.re
 the AppData/Documents paths. Status: `backup-manager.sh --status` or
 `systemctl status home_backup`.
 
+## Windows Update policy (AINF-396, applied 2026-09-15)
+
+`windows-update-policy.ps1` (elevated) — Pro group policies under
+`HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`: release pinned to **25H2**
+(`TargetReleaseVersionInfo`; quality updates for it keep coming), feature updates
+deferred 365 days, quality updates deferred 7 days (a broken cumulative is usually
+pulled within days), no preview builds, no drivers from WU (AMD/Realtek installers
+instead), active hours 08-23 and no automatic reboot with a user logged on. To move to
+a new release: raise `TargetReleaseVersionInfo`, wait for the update, then re-run
+`debloat.ps1` + `ai-off.ps1` and check Windhawk mods.
+
 ## Steam library shared with NixOS
 
 `D:\SteamLibrary` is `/mnt/DATA` on NixOS (ntfs3, `uid=1000`): BG3, AoE2 DE, Proton 10,
