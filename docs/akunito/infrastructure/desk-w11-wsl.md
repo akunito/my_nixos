@@ -95,9 +95,20 @@ terminal breaks on the rendered line wraps, so:
 
 - `/copy` (or `/copy 2`) copies the last response, or one code block from the
   picker, without the wraps.
-- Ctrl+O opens the transcript; `v` there opens it in `$VISUAL`, and the user
-  env var `VISUAL` is `C:\PROGRA~1\Notepad++\notepad++.exe -multiInst -nosession`
-  (8.3 path: no spaces to quote). Ctrl+G edits the prompt in the same editor.
+- Ctrl+O opens the transcript (fullscreen only); `v` there opens it in
+  `$VISUAL`. `VISUAL`/`EDITOR` are set in **Claude's own settings.json `env`
+  block** (`C:\PROGRA~1\Notepad++\notepad++.exe -multiInst -nosession`, 8.3 path
+  so no quoting), which a new `claude` picks up without restarting the shell;
+  the user env var `VISUAL` holds the same value for everything else. Ctrl+G
+  edits the prompt in the same editor.
+- **Ctrl+Alt+C** (AHK, only while Windows Terminal is active) types `/copy`,
+  waits for the clipboard and opens the answer in a fresh Notepad++ instance
+  (`%TEMP%\claude-last-response.md`). Input box must be empty; in fullscreen
+  the picker may ask which block, the macro waits up to 20 s.
+- **Shift+Enter** = newline: Windows Terminal keybinding `sendInput "\u001b\r"`
+  (the same ESC+CR `/terminal-setup` installs for VS Code). Side effect at a
+  PowerShell prompt: PSReadLine reads ESC as RevertLine, so Shift+Enter there
+  clears the line instead of adding one.
 
 ## Files in the repo
 
