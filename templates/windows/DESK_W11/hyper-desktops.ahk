@@ -248,6 +248,7 @@ PowerAction(choice) {
 ; (the size storm seen on the vertical monitor), watch 1.5 s and put the size
 ; back, size-only (that sticks), at most 3 times. Logged.
 Watchdog(hwnd, ww, wh) {
+    DetectHiddenWindows true   ; a GlazeWM-cloaked window still gets its size back
     fixes := 0
     Loop 75 {
         Sleep 20
@@ -267,22 +268,31 @@ Watchdog(hwnd, ww, wh) {
 ; The window under the cursor can vanish mid-gesture (a tooltip, a tab-drag
 ; preview, an app closing): every Win* call then throws TargetError. Catch it
 ; here, drop the outline and log, instead of AutoHotkey's error dialog.
-altDragGhost := ""
+; Measured 2026-09-15: a window GlazeWM parks on a non-displayed workspace is
+; cloaked (DWMWA_CLOAKED = 2) and AutoHotkey then reports it as not found unless
+; DetectHiddenWindows is on. That is what killed a drag right after resume from
+; sleep (main monitor still off): Discord was cloaked 5 ms after the placement
+; WinMove. With DetectHiddenWindows on the gesture finishes on the hidden window.
+altDragGhost := "", altDragHwnd := 0
 AltDrag(mode) {
-    global altDragGhost
+    global altDragGhost, altDragHwnd
     try AltDragCore(mode)
     catch TargetError as e {
         if altDragGhost
             try altDragGhost.Destroy()
         altDragGhost := ""
-        FileAppend Format("{1} target-lost ({2}): {3}`n", A_Now, mode, e.Message), A_Temp "\altdrag.log"
+        DetectHiddenWindows true
+        what := (altDragHwnd && WinExist("ahk_id " altDragHwnd)) ? "still exists, hidden" : "destroyed"
+        FileAppend Format("{1} target-lost ({2}) hwnd {3} {4}: {5}`n", A_Now, mode, altDragHwnd, what, e.Message), A_Temp "\altdrag.log"
     }
 }
 AltDragCore(mode) {
-    global altDragGhost
+    global altDragGhost, altDragHwnd
     MouseGetPos &mx, &my, &hwnd
     if !hwnd
         return
+    altDragHwnd := hwnd
+    DetectHiddenWindows true
     cls := WinGetClass("ahk_id " hwnd)
     if (cls = "Progman" || cls = "WorkerW" || cls = "Shell_TrayWnd")
         return
