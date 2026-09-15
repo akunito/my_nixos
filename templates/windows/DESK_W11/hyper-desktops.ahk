@@ -514,10 +514,14 @@ AltDragCore(mode) {
     ; is what the outline + one jump on release are for.
     ; GetMonitorInfo on the handle itself: MonitorFromPoint on a monitor's own
     ; top-left corner answered the OTHER monitor here (measured), so no points.
+    ; (edgeL/edgeR: AutoHotkey names are case-insensitive, so a capitalised
+    ; variant was the same variable as the MonitorGet loops' lower-case one, and
+    ; WorkAreaAt clobbered it every tick — measured 2026-09-15.)
     mi := Buffer(40, 0), NumPut("UInt", 40, mi)
     DllCall("GetMonitorInfo", "Ptr", mon0, "Ptr", mi)
-    mL := NumGet(mi, 4, "Int"), mR := NumGet(mi, 12, "Int"), onMain := (mon0 = PrimaryMon())
-    EdgeClampX(x, w) => onMain ? Min(x, mR - w) : Max(x, mL)
+    edgeL := NumGet(mi, 4, "Int"), edgeR := NumGet(mi, 12, "Int"), onMain := (mon0 = PrimaryMon())
+    EdgeClampX(x, w) => onMain ? Min(x, edgeR - w) : Max(x, edgeL)
+    Dbg(Format("edges {1}: live moves keep x {2} {3}", onMain ? "main" : "vertical", onMain ? "<=" : ">=", onMain ? edgeR " - width" : edgeL))
     altDragPhase := "drag"
     WorkAreaAt(px, py, &l, &t, &r, &b) {
         Loop MonitorGetCount() {
@@ -555,7 +559,7 @@ AltDragCore(mode) {
                 ghost.Hide()
                 nx := EdgeClampX(wx + dx, ww)
                 if (nx != wx + dx && !clamped)
-                    Dbg(Format("edge-clamp {1}: kept x >= {2} / <= {3} (window would be at {4})", WinGetProcessName("ahk_id " hwnd), mL, mR - ww, wx + dx)), clamped := true
+                    Dbg(Format("edge-clamp {1}: kept x >= {2} / <= {3} (window would be at {4})", WinGetProcessName("ahk_id " hwnd), edgeL, edgeR - ww, wx + dx)), clamped := true
                 WinMove nx, wy + dy, , , "ahk_id " hwnd
                 ; Storm guard: if the app answered a plain move with a rescale (stale
                 ; DPI context, seen on the vertical monitor), stop touching it and
@@ -584,9 +588,9 @@ AltDragCore(mode) {
             nw := left ? ww - dx : ww + dx
             nh := top ? wh - dy : wh + dy
             if onMain
-                nw := Min(nw, mR - nx)            ; right edge stays off the gap
-            else if (left && nx < mL)
-                nw := nw - (mL - nx), nx := mL    ; left edge stays off the gap
+                nw := Min(nw, edgeR - nx)               ; right edge stays off the gap
+            else if (left && nx < edgeL)
+                nw := nw - (edgeL - nx), nx := edgeL    ; left edge stays off the gap
             if (nw > 150 && nh > 100) {
                 WinMove nx, ny, nw, nh, "ahk_id " hwnd
                 WinGetPos , , &gw, &gh, "ahk_id " hwnd
