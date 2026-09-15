@@ -316,6 +316,8 @@ PowerAction(choice) {
 ; (the size storm seen on the vertical monitor), watch 1.5 s and put the size
 ; back, size-only (that sticks), at most 3 times. Logged.
 Watchdog(hwnd, ww, wh) {
+    global altDragPhase
+    altDragPhase := "watchdog"
     DetectHiddenWindows true   ; a GlazeWM-cloaked window still gets its size back
     fixes := 0
     Loop 75 {
@@ -341,10 +343,17 @@ Watchdog(hwnd, ww, wh) {
 ; DetectHiddenWindows is on. That is what killed a drag right after resume from
 ; sleep (main monitor still off): Discord was cloaked 5 ms after the placement
 ; WinMove. With DetectHiddenWindows on the gesture finishes on the hidden window.
-altDragGhost := "", altDragHwnd := 0, altDragT0 := 0, altDragExp := ""
+altDragGhost := "", altDragHwnd := 0, altDragT0 := 0, altDragExp := "", altDragPhase := ""
 AltDrag(mode) {
-    global altDragGhost, altDragHwnd, altDragT0, altDragExp
-    altDragT0 := A_TickCount, altDragExp := ""
+    global altDragGhost, altDragHwnd, altDragT0, altDragExp, altDragPhase
+    if altDragPhase {
+        ; A second Alt+button while the previous gesture is still running (its
+        ; post-release placement or watchdog): AutoHotkey would otherwise drop it
+        ; silently (#MaxThreadsPerHotkey). Logged to measure how often it happens.
+        FileAppend Format("{1} dropped {2}: previous gesture still in phase '{3}' ({4} ms after it started)`n", A_Now, mode, altDragPhase, A_TickCount - altDragT0), A_Temp "\altdrag.log"
+        return
+    }
+    altDragPhase := "prep", altDragT0 := A_TickCount, altDragExp := ""
     try AltDragCore(mode)
     catch TargetError as e {
         if altDragGhost
@@ -365,30 +374,39 @@ AltDrag(mode) {
             Dbg(Format("gesture-end {1} {2}: final {3},{4} {5}x{6} expected {7} minmax={8} win-on-cursor-monitor={9} {10} ms", mode, WinGetProcessName("ahk_id " altDragHwnd), fx, fy, fw, fh, altDragExp, WinGetMinMax("ahk_id " altDragHwnd), mm = mw ? "yes" : "NO", A_TickCount - altDragT0))
         }
     }
-    altDragExp := ""
+    altDragExp := "", altDragPhase := ""
 }
 AltDragCore(mode) {
-    global altDragGhost, altDragHwnd, altDragExp, altDragT0
+    global altDragGhost, altDragHwnd, altDragExp, altDragT0, altDragPhase
     MouseGetPos &mx, &my, &hwnd
-    if !hwnd
+    if !hwnd {
+        Dbg("ignored " mode ": no window under the cursor at " mx "," my)
         return
+    }
     altDragHwnd := hwnd
     DetectHiddenWindows true
     cls := WinGetClass("ahk_id " hwnd)
-    if (cls = "Progman" || cls = "WorkerW" || cls = "Shell_TrayWnd")
+    if (cls = "Progman" || cls = "WorkerW" || cls = "Shell_TrayWnd") {
+        Dbg("ignored " mode ": desktop/taskbar (" cls ")")
         return
+    }
     WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
     if (ww < 200 || wh < 80) {
         ; A tooltip or tab-drag preview sits under the cursor (Vivaldi's is 237x39,
         ; seen 2026-09-15: the watchdog then forced that size onto the real window).
         ; Drag its owner instead, or leave it alone.
         owner := DllCall("GetWindow", "Ptr", hwnd, "UInt", 4, "Ptr")
-        if !owner
+        if !owner {
+            Dbg(Format("ignored {1}: tiny window {2} '{3}' {4}x{5} with no owner", mode, WinGetProcessName("ahk_id " hwnd), cls, ww, wh))
             return
+        }
+        Dbg(Format("tiny window {1} {2}x{3} -> dragging its owner", cls, ww, wh))
         hwnd := owner
         WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
     }
+    tAct := A_TickCount
     WinActivate "ahk_id " hwnd
+    tAct := A_TickCount - tAct
     fromMax := (WinGetMinMax("ahk_id " hwnd) = 1)
     if fromMax {
         ; Maximised: restore first and keep the grab point at the same relative spot
@@ -436,10 +454,11 @@ AltDragCore(mode) {
     btn := mode = "move" ? "LButton" : "RButton"
     SetWinDelay -1
     mon0 := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
-    altDragExp := ww "x" wh
-    Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11}", mode, WinGetProcessName("ahk_id " hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, mon0 = PrimaryMon() ? "main" : "vertical"))
+    altDragExp := mode = "resize" ? "(resize)" : ww "x" wh
+    Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11} prep {12} ms (activate {13} ms)", mode, WinGetProcessName("ahk_id " hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, mon0 = PrimaryMon() ? "main" : "vertical", A_TickCount - altDragT0, tAct))
     MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
-    ghost := "", topZone := false, unstable := false
+    ghost := "", topZone := false, unstable := false, outlined := ""
+    altDragPhase := "drag"
     WorkAreaAt(px, py, &l, &t, &r, &b) {
         Loop MonitorGetCount() {
             MonitorGet A_Index, &ml, &mt, &mr, &mb
@@ -464,12 +483,13 @@ AltDragCore(mode) {
                 altDragGhost := ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000 -DPIScale")   ; click-through, layered; -DPIScale = raw pixels (measured: default is x1.5)
                 ghost.BackColor := "c4a7e7"
                 WinSetTransparent 90, ghost
-                Dbg(Format("ghost-on {1}: cursor {2},{3} ({4}) {5} ms into the gesture", WinGetProcessName("ahk_id " hwnd), cx, cy, unstable ? "storm" : "other monitor", A_TickCount - altDragT0))
             }
             ; Top zone (<= 6 px under the top of the work area): the outline becomes
             ; the whole work area and the release maximises there (sway/Windows snap).
             topZone := WorkAreaAt(cx, cy, &al, &at, &ar, &ab) && (cy - at) <= 6
             if topZone {
+                if (outlined != "top-zone")
+                    Dbg(Format("outline top-zone: cursor {1},{2} {3} ms into the gesture", cx, cy, A_TickCount - altDragT0)), outlined := "top-zone"
                 ghost.Show("NA x" al " y" at " w" (ar - al) " h" (ab - at))
             } else if (MonAt(cx, cy) = mon0 && !unstable) {
                 ghost.Hide()
@@ -483,6 +503,8 @@ AltDragCore(mode) {
                     FileAppend Format("{1} storm-guard {2}: rescaled to {3}x{4} during move (expected {5}x{6})`n", A_Now, WinGetProcessName("ahk_id " hwnd), gw, gh, ww, wh), A_Temp "\altdrag.log"
                 }
             } else {
+                if (outlined != (unstable ? "storm" : "other-monitor"))
+                    Dbg(Format("outline {1}: cursor {2},{3} {4} ms into the gesture", unstable ? "storm" : "other-monitor", cx, cy, A_TickCount - altDragT0)), outlined := unstable ? "storm" : "other-monitor"
                 ghost.Show("NA x" (cx - (mx - wx)) " y" (cy - (my - wy)) " w" ww " h" wh)
             }
         } else {
@@ -505,6 +527,7 @@ AltDragCore(mode) {
         }
         Sleep 8
     }
+    altDragPhase := "release"
     ; Crossing to a monitor with another DPI (main 150 %, vertical 125 %) makes the
     ; app rescale itself, usually huge. Put the pre-drag physical size back.
     if (mode = "move") {
@@ -565,5 +588,7 @@ AltDragCore(mode) {
         }
     }
 }
+#MaxThreadsPerHotkey 2   ; so a press during a running gesture reaches AltDrag (which logs and drops it)
 !LButton:: AltDrag("move")
 !RButton:: AltDrag("resize")
+#MaxThreadsPerHotkey 1
