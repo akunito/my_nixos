@@ -187,6 +187,7 @@ Defined in `system/app/grafana.nix` under the `nas_alerts` and `backup_alerts` r
 | `NasVpsBackupStale` | `nas_backup_age_seconds{dataset=~"vps_.*"}` | >36h | warning | 1h |
 | `NasWorkstationBackupStale` | `nas_backup_age_seconds{dataset=~"desk_.*\|x13_.*"}` | >30h | warning | 1h |
 | `NasBackupMissing` | `nas_backup_status == 0` | repo missing | critical | 15m |
+| `NasBackupProbeFailed` | `nas_backup_probe_failed == 1 and on() up{job="nas_node"} == 1` | VPS cannot ssh into the NAS while it is up (values carried forward; exporter runs hourly at :15) | warning | 2h |
 | `NasOffsiteBackupStale` | `(time() - nas_offsite_backup_last_success)` | >36h | warning | 1h |
 | `NasOffsiteBackupFailed` | `nas_offsite_backup_status == 0` | last run failed | critical | 15m |
 | `NasOffsiteBackupRsyncWarnings` | `nas_offsite_backup_rsync_warnings` | >0 | warning | 15m |
