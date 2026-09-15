@@ -46,7 +46,25 @@ hVDA := DllCall("LoadLibrary", "Str", dll, "Ptr")
 ; numbers). GlazeWM has no keybindings of its own; the chords below shell to
 ; its CLI. Hyper+N acts on the monitor that has the focus, like swaysome.
 glazeExe := A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
-Glaze(args) => RunWait('"' glazeExe '" command ' args, , "Hide")
+Glaze(args) {
+    t := A_TickCount
+    RunWait('"' glazeExe '" command ' args, , "Hide")
+    Dbg(Format("glaze {1} ({2} ms)", args, A_TickCount - t))
+}
+; ---- Debug trace (opt-in): %TEMP%\hyper-debug.on present -> every gesture and
+; every GlazeWM command is appended to %TEMP%\altdrag.log with timings. Power
+; and display-change events are logged always (cheap, and they explain the
+; resume-from-sleep glitches); a display change also dumps GlazeWM's monitor
+; map to %TEMP%\glaze-monitors-<time>.json two seconds later.
+Dbg(msg) {
+    if FileExist(A_Temp "\hyper-debug.on")
+        FileAppend A_Now " " msg "`n", A_Temp "\altdrag.log"
+}
+OnMessage(0x218, (wp, lp, *) => (wp = 0x12 || wp = 7 || wp = 4) ? FileAppend(A_Now " power " (wp = 4 ? "suspend" : "resume(" wp ")") " monitors=" MonitorGetCount() "`n", A_Temp "\altdrag.log") : 0)
+OnMessage(0x7E, (wp, lp, *) => (FileAppend(A_Now " displaychange " (lp & 0xFFFF) "x" (lp >> 16) " bpp=" wp " monitors=" MonitorGetCount() "`n", A_Temp "\altdrag.log"), SetTimer(DumpGlazeMonitors, -2000)))
+DumpGlazeMonitors() {
+    try FileAppend GlazeQuery("monitors"), A_Temp "\glaze-monitors-" A_Now ".json", "UTF-8"
+}
 GlazeQuery(what) {
     tmp := A_Temp "\glazewm-query.json"
     RunWait(A_ComSpec ' /c ""' glazeExe '" query ' what ' > "' tmp '""', , "Hide")
@@ -103,6 +121,7 @@ WsCycle(delta, move := false) {
 ; The Task View replacement. Typing filters (ListBox type-ahead), Enter or double
 ; click focuses the window (GlazeWM switches that monitor to its workspace).
 WinSwitcher() {
+    Dbg("switcher open")
     j := GlazeQuery("workspaces"), items := [], ids := [], ws := "?", pos := 1
     pat := '"type":"workspace","id":"[^"]+","name":"(\d+)"|"type":"window","id":"([^"]+)"[\s\S]*?"title":"((?:[^"\\]|\\.)*)","className":"[^"]*","processName":"([^"]*)"'
     while pos := RegExMatch(j, pat, &m, pos) {
@@ -147,6 +166,7 @@ WinSwitcher() {
 
 ; raise-or-launch — the app-toggle.sh idea: focus if running, minimise if focused, launch otherwise
 Toggle(exe, cmd) {
+    Dbg("toggle " exe " " (WinExist("ahk_exe " exe) ? (WinActive("ahk_exe " exe) ? "minimise" : "activate") : "launch"))
     if WinExist("ahk_exe " exe) {
         if WinActive("ahk_exe " exe)
             WinMinimize
@@ -273,9 +293,10 @@ Watchdog(hwnd, ww, wh) {
 ; DetectHiddenWindows is on. That is what killed a drag right after resume from
 ; sleep (main monitor still off): Discord was cloaked 5 ms after the placement
 ; WinMove. With DetectHiddenWindows on the gesture finishes on the hidden window.
-altDragGhost := "", altDragHwnd := 0
+altDragGhost := "", altDragHwnd := 0, altDragT0 := 0, altDragExp := ""
 AltDrag(mode) {
-    global altDragGhost, altDragHwnd
+    global altDragGhost, altDragHwnd, altDragT0, altDragExp
+    altDragT0 := A_TickCount, altDragExp := ""
     try AltDragCore(mode)
     catch TargetError as e {
         if altDragGhost
@@ -284,10 +305,21 @@ AltDrag(mode) {
         DetectHiddenWindows true
         what := (altDragHwnd && WinExist("ahk_id " altDragHwnd)) ? "still exists, hidden" : "destroyed"
         FileAppend Format("{1} target-lost ({2}) hwnd {3} {4}: {5}`n", A_Now, mode, altDragHwnd, what, e.Message), A_Temp "\altdrag.log"
+        return
+    }
+    if altDragExp {   ; a gesture actually ran: final state, after any watchdog
+        DetectHiddenWindows true
+        try {
+            WinGetPos &fx, &fy, &fw, &fh, "ahk_id " altDragHwnd
+            MouseGetPos &cx, &cy
+            mm := DllCall("MonitorFromPoint", "Int64", (cy << 32) | (cx & 0xFFFFFFFF), "UInt", 2, "Ptr")
+            mw := DllCall("MonitorFromWindow", "Ptr", altDragHwnd, "UInt", 2, "Ptr")
+            Dbg(Format("gesture-end {1} {2}: final {3},{4} {5}x{6} expected {7} minmax={8} win-on-cursor-monitor={9} {10} ms", mode, WinGetProcessName("ahk_id " altDragHwnd), fx, fy, fw, fh, altDragExp, WinGetMinMax("ahk_id " altDragHwnd), mm = mw ? "yes" : "NO", A_TickCount - altDragT0))
+        }
     }
 }
 AltDragCore(mode) {
-    global altDragGhost, altDragHwnd
+    global altDragGhost, altDragHwnd, altDragExp, altDragT0
     MouseGetPos &mx, &my, &hwnd
     if !hwnd
         return
@@ -355,6 +387,8 @@ AltDragCore(mode) {
     btn := mode = "move" ? "LButton" : "RButton"
     SetWinDelay -1
     mon0 := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
+    altDragExp := ww "x" wh
+    Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11}", mode, WinGetProcessName("ahk_id " hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, mon0 = PrimaryMon() ? "main" : "vertical"))
     MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
     ghost := "", topZone := false, unstable := false
     WorkAreaAt(px, py, &l, &t, &r, &b) {
@@ -381,6 +415,7 @@ AltDragCore(mode) {
                 altDragGhost := ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000 -DPIScale")   ; click-through, layered; -DPIScale = raw pixels (measured: default is x1.5)
                 ghost.BackColor := "c4a7e7"
                 WinSetTransparent 90, ghost
+                Dbg(Format("ghost-on {1}: cursor {2},{3} ({4}) {5} ms into the gesture", WinGetProcessName("ahk_id " hwnd), cx, cy, unstable ? "storm" : "other monitor", A_TickCount - altDragT0))
             }
             ; Top zone (<= 6 px under the top of the work area): the outline becomes
             ; the whole work area and the release maximises there (sway/Windows snap).
