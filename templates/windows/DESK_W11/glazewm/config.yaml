@@ -1,0 +1,90 @@
+# GlazeWM for DESK_W11, second attempt (2026-09-15): NO tiling. It is used only
+# for what Windows cannot do — workspaces bound per monitor and independent of
+# each other (10-19 main, 20-29 vertical, Sway's swaysome numbers). Every window
+# floats and behaves like plain Windows; Alt+drag/resize stay in AHK.
+# No keybindings here: hyper-desktops.ahk calls `glazewm command ...`.
+# No `move --workspace` rules on purpose: a config reload re-evaluates rules and
+# would drag windows back to their assigned workspace.
+# Loaded through the GLAZEWM_CONFIG_PATH user env var -> this file in the Windows
+# clone (C:\Users\<user>\.dotfiles). Reload only when this file changes.
+general:
+  startup_commands: []
+  shutdown_commands: []
+  config_reload_commands: []
+  focus_follows_cursor: true             # native tracking is OFF (focus-follows-mouse.ps1 -Off)
+  toggle_workspace_on_refocus: true      # sway: workspace_auto_back_and_forth yes
+  cursor_jump:
+    enabled: false
+    trigger: 'monitor_focus'
+  hide_method: 'cloak'
+  show_all_in_taskbar: false             # taskbar shows only the visible workspaces
+
+gaps:
+  scale_with_dpi: true
+  inner_gap: '0px'
+  outer_gap: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
+
+window_effects:
+  focused_window:
+    border: { enabled: false, color: '#7aa2f7' }
+    hide_title_bar: { enabled: false }
+    corner_style: { enabled: false, style: 'square' }
+    transparency: { enabled: false, opacity: '95%' }
+  other_windows:
+    border: { enabled: false, color: '#3b4252' }
+    hide_title_bar: { enabled: false }
+    corner_style: { enabled: false, style: 'square' }
+    transparency: { enabled: false, opacity: '0%' }
+
+window_behavior:
+  initial_state: 'floating'
+  state_defaults:
+    floating:
+      centered: false                    # keep the position the app asked for
+      shown_on_top: false                # everything floats: normal z-order
+    fullscreen:
+      maximized: true
+      shown_on_top: false
+
+# Monitor 0 = primary (left), monitor 1 = the vertical one (right).
+# Verify with `glazewm query monitors` after a display change.
+workspaces:
+  - { name: '11', bind_to_monitor: 0 }
+  - { name: '12', bind_to_monitor: 0 }
+  - { name: '13', bind_to_monitor: 0 }
+  - { name: '14', bind_to_monitor: 0 }
+  - { name: '15', bind_to_monitor: 0 }
+  - { name: '16', bind_to_monitor: 0 }
+  - { name: '17', bind_to_monitor: 0 }
+  - { name: '18', bind_to_monitor: 0 }
+  - { name: '19', bind_to_monitor: 0 }
+  - { name: '10', bind_to_monitor: 0 }
+  - { name: '21', bind_to_monitor: 1 }
+  - { name: '22', bind_to_monitor: 1 }
+  - { name: '23', bind_to_monitor: 1 }
+  - { name: '24', bind_to_monitor: 1 }
+  - { name: '25', bind_to_monitor: 1 }
+  - { name: '26', bind_to_monitor: 1 }
+  - { name: '27', bind_to_monitor: 1 }
+  - { name: '28', bind_to_monitor: 1 }
+  - { name: '29', bind_to_monitor: 1 }
+  - { name: '20', bind_to_monitor: 1 }
+
+window_rules:
+  # Never managed: overlays, launchers, popups, the tools that must stay put.
+  - commands: ['ignore']
+    match:
+      - window_process: { equals: 'zebar' }
+      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+        window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
+      - window_process: { equals: 'PowerToys' }
+        window_class: { regex: 'HwndWrapper\[PowerToys\.PowerAccent.*?\]' }
+      - window_title: { equals: 'Command Palette' }
+        window_class: { equals: 'WinUIDesktopWin32WindowClass' }
+      - window_process: { equals: 'PowerToys' }
+        window_title: { regex: '.*? - Peek' }
+      - window_process: { equals: 'ShareX' }
+      - window_process: { equals: 'AutoHotkey64_UIA' }
+
+binding_modes: []
+keybindings: []

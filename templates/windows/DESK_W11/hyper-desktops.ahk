@@ -37,47 +37,64 @@ if !FileExist(dll) {
     ExitApp
 }
 hVDA := DllCall("LoadLibrary", "Str", dll, "Ptr")
-GoToDesk(n) => DllCall("VirtualDesktopAccessor\GoToDesktopNumber", "Int", n, "Int")
-Count() => DllCall("VirtualDesktopAccessor\GetDesktopCount", "Int")
-Current() => DllCall("VirtualDesktopAccessor\GetCurrentDesktopNumber", "Int")
-Create() => DllCall("VirtualDesktopAccessor\CreateDesktop", "Int")
-MoveWin(hwnd, n) => DllCall("VirtualDesktopAccessor\MoveWindowToDesktopNumber", "Ptr", hwnd, "Int", n, "Int")
-
-EnsureDesktop(n) {
-    while Count() <= n
-        Create()
+; ---- GlazeWM (floating only): per-monitor, independent workspaces ----
+; 10-19 on the main monitor, 20-29 on the vertical one (Sway's swaysome
+; numbers). GlazeWM has no keybindings of its own; the chords below shell to
+; its CLI. Hyper+N acts on the monitor that has the focus, like swaysome.
+glazeExe := A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
+Glaze(args) => RunWait('"' glazeExe '" command ' args, , "Hide")
+GlazeQuery(what) {
+    tmp := A_Temp "\glazewm-query.json"
+    RunWait(A_ComSpec ' /c ""' glazeExe '" query ' what ' > "' tmp '""', , "Hide")
+    return FileRead(tmp)
 }
-Go(n) {
-    EnsureDesktop(n)
-    GoToDesk(n)
+PrimaryMon() => DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")
+FocusGroup() {  ; 1 = main monitor (1x), 2 = secondary (2x)
+    h := WinExist("A")
+    if h && WinGetClass("ahk_id " h) != "Progman" && WinGetClass("ahk_id " h) != "WorkerW"
+        mon := DllCall("MonitorFromWindow", "Ptr", h, "UInt", 2, "Ptr")
+    else {
+        MouseGetPos &mx, &my
+        mon := DllCall("MonitorFromPoint", "Int64", (my << 32) | (mx & 0xFFFFFFFF), "UInt", 2, "Ptr")
+    }
+    return mon = PrimaryMon() ? 1 : 2
 }
-Move(n) {
-    EnsureDesktop(n)
-    MoveWin(WinGetID("A"), n)
-    GoToDesk(n)
+Ws(n) => FocusGroup() * 10 + Mod(n, 10)   ; Hyper+1..9 -> x1..x9, Hyper+0 -> x0
+Loop 10 {
+    k := Mod(A_Index, 10)
+    Hotkey "^!#" k, ((n) => (*) => Glaze("focus --workspace " Ws(n)))(k)
+    Hotkey "^!#+" k, ((n) => (*) => Glaze("move --workspace " Ws(n)))(k)
 }
-Rel(delta) {
-    c := Count(), i := Mod(Current() + delta + c, c)
-    GoToDesk(i)
+; Hyper+Q/W: previous/next workspace inside the focused monitor's group, wrapping
+; (Sway's workspace-nav scripts). Shift moves the window there and follows it.
+CurrentWs(group) {
+    j := GlazeQuery("monitors"), pos := 1
+    while pos := RegExMatch(j, '"name":"(\d+)"[\s\S]*?"isDisplayed":(true|false)', &m, pos) {
+        if (m[2] = "true" && SubStr(m[1], 1, 1) = group)
+            return m[1]
+        pos += StrLen(m[0])
+    }
+    return group "1"
 }
-RelMove(delta) {
-    c := Count(), i := Mod(Current() + delta + c, c)
-    MoveWin(WinGetID("A"), i)
-    GoToDesk(i)
+WsCycle(delta, move := false) {
+    g := FocusGroup(), cur := CurrentWs(g), i := 1
+    order := [g "1", g "2", g "3", g "4", g "5", g "6", g "7", g "8", g "9", g "0"]
+    for k, v in order
+        if (v = cur)
+            i := k
+    n := order[Mod(i - 1 + delta + 10, 10) + 1]
+    if move
+        Glaze("move --workspace " n)
+    Glaze("focus --workspace " n)
 }
-
-; Hyper = ^!# (Ctrl Alt Win). Hyper+Shift = ^!#+
-Loop 9 {
-    k := A_Index
-    Hotkey "^!#" k, (*) => Go(k - 1)
-    Hotkey "^!#+" k, (*) => Move(k - 1)
-}
-^!#0:: Go(9)
-^!#+0:: Move(9)
-^!#q:: Rel(-1)
-^!#w:: Rel(+1)
-^!#+q:: RelMove(-1)
-^!#+w:: RelMove(+1)
+^!#q:: WsCycle(-1)
+^!#w:: WsCycle(+1)
+^!#+q:: WsCycle(-1, true)
+^!#+w:: WsCycle(+1, true)
+^!#Left:: Glaze("focus --monitor 0")          ; focus output left/right (main is left)
+^!#Right:: Glaze("focus --monitor 1")
+^!#+Left:: Glaze("move --workspace-in-direction left")
+^!#+Right:: Glaze("move --workspace-in-direction right")
 ^!#Tab:: Send "#{Tab}"
 ^!#Escape:: WinClose "A"
 ^!#f:: {
@@ -157,22 +174,7 @@ PowerAction(choice) {
     if (A_PriorKey = "LWin")
         Send "#!{Space}"
 }
-; ---- "Show on all desktops" (Sway's sticky) ----
-; Hyper+Shift+S toggles it for the active window (VirtualDesktopAccessor pins).
-PinWin(h)   => DllCall("VirtualDesktopAccessor\PinWindow", "Ptr", h, "Int")
-UnpinWin(h) => DllCall("VirtualDesktopAccessor\UnPinWindow", "Ptr", h, "Int")
-IsPinned(h) => DllCall("VirtualDesktopAccessor\IsPinnedWindow", "Ptr", h, "Int")
-^!#+s:: {
-    h := WinExist("A")
-    if !h
-        return
-    if IsPinned(h)
-        UnpinWin(h)
-    else
-        PinWin(h)
-    ToolTip(IsPinned(h) ? "on all desktops" : "this desktop only")
-    SetTimer(() => ToolTip(), -900)
-}
+; (no "sticky": GlazeWM workspaces replace Windows virtual desktops here)
 ^!#+r:: Reload
 ^!#+Escape:: Suspend
 
