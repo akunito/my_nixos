@@ -252,7 +252,7 @@ AltDrag(mode) {
                 WinMove wx + dx, wy + dy, , , "ahk_id " hwnd
             } else {
                 if !ghost {
-                    ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000")   ; click-through, layered
+                    ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000 -DPIScale")   ; click-through, layered; -DPIScale = raw pixels (measured: default is x1.5)
                     ghost.BackColor := "c4a7e7"
                     WinSetTransparent 90, ghost
                 }
