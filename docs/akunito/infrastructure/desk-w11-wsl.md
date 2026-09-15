@@ -175,6 +175,15 @@ Alt+drag gestures (2026-09-15): a maximised window restores under the cursor and
 keeps dragging; dropping with the cursor in the top 6 px of a monitor's work area
 maximises there (the outline turns into the whole work area); crossing to the other
 monitor shows the outline and jumps once on release (`tests/` has the measurements).
+Robustness (2026-09-15 pm): the whole gesture runs under `try/catch TargetError`
+(no AHK error dialog; `%TEMP%\altdrag.log` says "destroyed" or "still exists,
+hidden"); windows under 200x80 (tooltips, Vivaldi's 237x39 tab preview) drag their
+owner or are ignored; `DetectHiddenWindows` is on inside the gesture because a
+window GlazeWM parks on a non-displayed workspace is DWM-cloaked and AutoHotkey
+otherwise reports it as not found — that is what crashed a drag right after resume
+from sleep with the main monitor still off (Discord got cloaked 5 ms after the
+placement `WinMove`). The size storm (per-monitor-DPI apps on the vertical
+monitor) is contained by a storm guard in the loop plus a 1.5 s watchdog.
 Hyper+Tab / Win+Tab = AHK list of every window in every workspace (Task View stand-in;
 Ctrl+Win+D and Ctrl+Win+arrows are swallowed so no native desktop can be created).
 
