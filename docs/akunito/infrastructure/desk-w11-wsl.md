@@ -241,8 +241,17 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
    is behind Cloudflare Access, native clients cannot pass it), local folder
    `C:\Users\<you>\Nextcloud`, sync everything you use on DESK (`myLibrary`,
    `git_repos`, `backups` at least).
-8. Zen: sign in to Zen Sync with the account DESK uses. Install Sine, then the
-   web-panels mod from `akunito/sine-web-panels`, by hand (no Nix here).
+8. Zen: sign in to Zen Sync with the account DESK uses. Then two things the
+   account does NOT carry:
+   - **Spaces** sync only exists from Zen **1.22.1b** (Sep 2026). Tabs, bookmarks
+     and passwords sync on any version, so seeing DESK's tabs here proves
+     nothing about Spaces — a machine on an older build never uploads them and
+     the others have nothing to pull. Both sides need 1.22.1b+ and
+     Settings → Sync → Spaces enabled.
+   - **Sine and the web-panels mod** live in the profile's `chrome/` and in the
+     app directory; they are never synced. Install them by hand:
+     `docs/akunito/infrastructure/zen-web-panels-windows.md` (Sine installer as
+     Administrator, then `scripts/zen-webpanels-install-windows.sh` from WSL).
 9. Windows Terminal: paste `windows-terminal.settings.json` pieces into Settings →
    Open JSON file. The `NixOS` profile appears by itself once the distro exists.
 10. Keyboard layouts: Settings → Time & language → Language → add English (US-International),

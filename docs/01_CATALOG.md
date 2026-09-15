@@ -373,7 +373,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/browser/vivaldi.nix**: Wrapper for Vivaldi to force KWallet 6 password store
 - **user/app/browser/zen-spaces.nix**: GENERATED from Vivaldi session data — see scratchpad/gen_spaces.py.
 - **user/app/browser/zen.nix**: Zen Browser (Firefox fork), installed ALONGSIDE the default browser module and *Enabled when:*
-   - `back`
    - `userSettings.spotifyUrlHandlerEnable or false`
    - `{ "text/html" = "zen-beta.desktop"; "x-scheme-handler/http" = "zen-beta.desktop"; "x-scheme-handler/https" = "zen-beta.desktop"; "x-scheme-handler/about" = "zen-beta.desktop"; "x-scheme-handler/unknown" = "zen-beta.desktop"; } // lib.optionalAttrs (userSettings.spotifyUrlHandlerEnable or false) { "x-scheme-handler/spotify" = "spotify.desktop"; }`
    - `lib.hm.dag.entryAfter [ "writeBoundary" ] '' stale="$HOME/.local/share/applications/zen-beta.desktop" if [ -f "$stale" ] && [ ! -L "$stale" ]; then echo "Removing stale $stale (shadows managed desktop entry)" rm "$stale" fi ''`
@@ -600,6 +599,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/proxy-stack.md**: Proxy stack: NPM on TrueNAS, cloudflared on VPS and TrueNAS
 - **docs/akunito/infrastructure/services/tailscale-headscale.md**: Headscale on VPS, Tailscale mesh topology
 - **docs/akunito/infrastructure/services/vps-services.md**: VPS services: Docker containers and NixOS native services
+- **docs/akunito/infrastructure/zen-web-panels-windows.md**: The sidebar web panels Zen dropped in 1.11b come back as the `sine-web-panels`
 
 ### Akunito / Keybindings
 
