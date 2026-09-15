@@ -315,25 +315,52 @@ PowerAction(choice) {
 ; After a placement that may leave a per-monitor-DPI app fighting with GlazeWM
 ; (the size storm seen on the vertical monitor), watch 1.5 s and put the size
 ; back, size-only (that sticks), at most 3 times. Logged.
+; Runs on a timer, NOT in the hotkey thread: measured 2026-09-15, the blocking
+; version kept the hotkey busy up to 4.5 s and AutoHotkey dropped the next
+; Alt+drag (4 presses lost in 35 s). A new gesture cancels it. A small answer
+; (< 8 %: Windows Terminal snapping to its cell grid, 1 px) is accepted, not fought.
+SmallDelta(w, h, ww, wh) => Abs(w - ww) * 12 < ww && Abs(h - wh) * 12 < wh
+wdTick := ""
+WatchdogStop() {
+    global wdTick
+    if wdTick
+        SetTimer wdTick, 0
+    wdTick := ""
+}
 Watchdog(hwnd, ww, wh) {
-    global altDragPhase
-    altDragPhase := "watchdog"
-    DetectHiddenWindows true   ; a GlazeWM-cloaked window still gets its size back
-    fixes := 0
-    Loop 75 {
-        Sleep 20
-        try WinGetPos , , &w, &h, "ahk_id " hwnd
-        catch
-            return
-        if ((w != ww || h != wh) && WinGetMinMax("ahk_id " hwnd) = 0) {
-            if (++fixes > 3) {
-                FileAppend Format("{1} watchdog {2}: giving up at {3}x{4}`n", A_Now, WinGetProcessName("ahk_id " hwnd), w, h), A_Temp "\altdrag.log"
-                return
+    global wdTick
+    WatchdogStop()
+    fixes := 0, n := 0
+    tick() {
+        global wdTick
+        n++
+        DetectHiddenWindows true
+        try {
+            if (WinGetMinMax("ahk_id " hwnd) = 0) {
+                WinGetPos , , &w, &h, "ahk_id " hwnd
+                if (w != ww || h != wh) {
+                    if SmallDelta(w, h, ww, wh) {
+                        Dbg(Format("watchdog {1}: accepted {2}x{3} for {4}x{5} (grid snap)", WinGetProcessName("ahk_id " hwnd), w, h, ww, wh))
+                        n := 999
+                    } else if (++fixes > 3) {
+                        FileAppend Format("{1} watchdog {2}: giving up at {3}x{4}`n", A_Now, WinGetProcessName("ahk_id " hwnd), w, h), A_Temp "\altdrag.log"
+                        n := 999
+                    } else {
+                        WinMove , , ww, wh, "ahk_id " hwnd
+                        FileAppend Format("{1} watchdog {2}: {3}x{4} -> {5}x{6} (fix {7})`n", A_Now, WinGetProcessName("ahk_id " hwnd), w, h, ww, wh, fixes), A_Temp "\altdrag.log"
+                    }
+                }
             }
-            WinMove , , ww, wh, "ahk_id " hwnd
-            FileAppend Format("{1} watchdog {2}: {3}x{4} -> {5}x{6} (fix {7})`n", A_Now, WinGetProcessName("ahk_id " hwnd), w, h, ww, wh, fixes), A_Temp "\altdrag.log"
+        } catch
+            n := 999
+        if (n >= 75) {
+            SetTimer tick, 0
+            if (wdTick = tick)
+                wdTick := ""
         }
     }
+    wdTick := tick
+    SetTimer tick, 20
 }
 ; The window under the cursor can vanish mid-gesture (a tooltip, a tab-drag
 ; preview, an app closing): every Win* call then throws TargetError. Catch it
@@ -384,6 +411,7 @@ AltDragCore(mode) {
         return
     }
     altDragHwnd := hwnd
+    WatchdogStop()
     DetectHiddenWindows true
     cls := WinGetClass("ahk_id " hwnd)
     if (cls = "Progman" || cls = "WorkerW" || cls = "Shell_TrayWnd") {
@@ -404,8 +432,15 @@ AltDragCore(mode) {
         hwnd := owner
         WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
     }
+    ; Measured 2026-09-15: WinActivate costs 110 ms even when the window is
+    ; already active (and its fallback flashed the focus to the desktop);
+    ; SetForegroundWindow is 0 ms from a hook hotkey. Fall back only if it fails.
     tAct := A_TickCount
-    WinActivate "ahk_id " hwnd
+    if !WinActive("ahk_id " hwnd) {
+        DllCall("SetForegroundWindow", "Ptr", hwnd)
+        if !WinActive("ahk_id " hwnd)
+            WinActivate "ahk_id " hwnd
+    }
     tAct := A_TickCount - tAct
     fromMax := (WinGetMinMax("ahk_id " hwnd) = 1)
     if fromMax {
@@ -427,8 +462,13 @@ AltDragCore(mode) {
             if (mx >= ml && mx < mr && my >= mt && my < mb)
                 MonitorGetWorkArea A_Index, &al, &at, &ar, &ab
         }
-        if (nw > ar - al || nh > ab - at || nw < 200 || nh < 150)
+        ; Measured 2026-09-15: forcing an 80 % box whenever one side did not fit
+        ; made the size drift on every maximise/restore across monitors
+        ; (1668x2160 -> 3072x1694 -> 1382x2424). Fit each side on its own.
+        if (nw < 200 || nh < 150)
             nw := Round((ar - al) * 0.8), nh := Round((ab - at) * 0.8)
+        else
+            nw := Min(nw, ar - al), nh := Min(nh, ab - at)
         WinRestore "ahk_id " hwnd
         lw := -1, lh := -1, stable := 0
         Loop 80 {   ; not maximised AND size unchanged for 3 reads (measured ~170-200 ms)
@@ -499,8 +539,16 @@ AltDragCore(mode) {
                 ; finish the drag as an outline; placement happens once on release.
                 WinGetPos , , &gw, &gh, "ahk_id " hwnd
                 if (gw != ww || gh != wh) {
-                    unstable := true
-                    FileAppend Format("{1} storm-guard {2}: rescaled to {3}x{4} during move (expected {5}x{6})`n", A_Now, WinGetProcessName("ahk_id " hwnd), gw, gh, ww, wh), A_Temp "\altdrag.log"
+                    if SmallDelta(gw, gh, ww, wh) {
+                        ; The app snapped to its own grid (Windows Terminal: 1 px per
+                        ; move, measured): that is its answer, adopt it. Real storms
+                        ; are +19 % to +73 % (log 2026-09-15).
+                        Dbg(Format("grid-snap {1}: {2}x{3} -> {4}x{5} adopted", WinGetProcessName("ahk_id " hwnd), ww, wh, gw, gh))
+                        ww := gw, wh := gh, altDragExp := ww "x" wh
+                    } else {
+                        unstable := true
+                        FileAppend Format("{1} storm-guard {2}: rescaled to {3}x{4} during move (expected {5}x{6})`n", A_Now, WinGetProcessName("ahk_id " hwnd), gw, gh, ww, wh), A_Temp "\altdrag.log"
+                    }
                 }
             } else {
                 if (outlined != (unstable ? "storm" : "other-monitor"))
@@ -515,8 +563,9 @@ AltDragCore(mode) {
             if (nw > 150 && nh > 100) {
                 WinMove nx, ny, nw, nh, "ahk_id " hwnd
                 WinGetPos , , &gw, &gh, "ahk_id " hwnd
-                if (Abs(gw - nw) > 4 || Abs(gh - nh) > 4) {
-                    ; Storm guard for resizes: the app is rescaling behind our back.
+                if ((Abs(gw - nw) > 4 || Abs(gh - nh) > 4) && !SmallDelta(gw, gh, nw, nh)) {
+                    ; Storm guard for resizes: the app is rescaling behind our back
+                    ; (a grid snap of a few cells is not that: keep resizing live).
                     FileAppend Format("{1} storm-guard {2}: resize answered {3}x{4} for {5}x{6}, aborting live resize`n", A_Now, WinGetProcessName("ahk_id " hwnd), gw, gh, nw, nh), A_Temp "\altdrag.log"
                     KeyWait btn
                     WinMove , , nw, nh, "ahk_id " hwnd

@@ -184,6 +184,18 @@ otherwise reports it as not found — that is what crashed a drag right after re
 from sleep with the main monitor still off (Discord got cloaked 5 ms after the
 placement `WinMove`). The size storm (per-monitor-DPI apps on the vertical
 monitor) is contained by a storm guard in the loop plus a 1.5 s watchdog.
+Capture session 2026-09-15 (37 gestures, `%TEMP%\hyper-debug.on` trace) fixed:
+the watchdog now runs on a timer (blocking in the hotkey thread made AutoHotkey
+drop the next Alt+drag for up to 4.5 s: 4 presses lost in 35 s); size answers
+under 8 % are adopted, not fought (Windows Terminal snaps 1 px to its cell grid
+on every move, real storms are +19 % to +73 %); activation uses
+`SetForegroundWindow` (0 ms) instead of `WinActivate` (110 ms even when already
+active, and its fallback flashed the focus to the desktop); the restore rectangle
+is fitted per side instead of forced to an 80 % box (that made the size drift
+1668x2160 -> 3072x1694 -> 1382x2424 across maximise/restore on both monitors).
+Debug trace: `%TEMP%\hyper-debug.on` present -> gestures, GlazeWM command
+timings and window events (focus, state, size outside gestures, cloak) go to
+`%TEMP%\altdrag.log`; power and display changes are logged always.
 Hyper+Tab / Win+Tab = AHK list of every window in every workspace (Task View stand-in;
 Ctrl+Win+D and Ctrl+Win+arrows are swallowed so no native desktop can be created).
 
