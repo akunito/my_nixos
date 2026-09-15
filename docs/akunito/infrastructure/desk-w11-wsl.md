@@ -146,7 +146,7 @@ and is the native package manager (Chocolatey adds nothing here). DESK → W11:
 | vscode, git, git-crypt, uv, dbeaver | Microsoft.VisualStudioCode (+ WSL extension), Git.Git, dbeaver.dbeaver | git-crypt/uv in WSL |
 | rofi, sway shortcuts | AutoHotkey.AutoHotkey + Microsoft.PowerToys (Run) | `hyper-desktops.ahk` |
 | waybar | RamenSoftware.Windhawk | see "Taskbar" below |
-| grim/slurp/swappy | ShareX.ShareX | Hyper+Shift+C is bound in `hyper-desktops.ahk` (runs `ShareX -workflow "Hyper+Shift+C"`): region → editor → save → `sharex-wsl-path.ps1` puts the `/mnt/c/...` path on the clipboard for Claude in WSL. Pasting the image itself into Claude Code is **Alt+V** under WSL. |
+| grim/slurp/swappy | ShareX.ShareX | Hyper+Shift+C is bound in `hyper-desktops.ahk` (runs `ShareX -workflow "Hyper+Shift+C"`): region → editor → save → `sharex-wsl-path.ps1` puts the `/mnt/c/...` path on the clipboard for Claude in WSL. Pasting the image itself into Claude Code is **Alt+V** under WSL. **Claude in Chrome from WSL works** (verified 2026-09-15): `claude --chrome` in the distro attaches the browser MCP, and the Windows Brave extension reaches it through Anthropic's cloud bridge (`isLocal:false`), so no native-messaging host is needed. `/chrome` still prints "not supported in WSL" and "Extension: Not detected" — both cosmetic (it only scans Linux profile dirs). Pick the browser with `list_connected_browsers` → `select_browser`. |
 | fd/fzf for files | voidtools.Everything | |
 | Nerd font | DEVCOM.JetBrainsMonoNerdFont | |
 | tailscale + trayscale | Tailscale.Tailscale | node DESK_W11 |
