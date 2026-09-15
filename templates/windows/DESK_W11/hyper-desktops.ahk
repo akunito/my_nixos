@@ -260,11 +260,14 @@ AltDrag(mode) {
     if (mode = "move") {
         MouseGetPos &cx, &cy
         if (MonAt(cx, cy) != mon0) {
-            g := MonAt(cx, cy) = PrimaryMon() ? 1 : 2
-            WinActivate "ahk_id " hwnd
-            Glaze("move --workspace " CurrentWs(g))
-            Sleep 200
-            Glaze("size --width " ww "px --height " wh "px")
+            ; Measured 2026-09-15: ONE WinMove across the boundary makes the app rescale
+            ; once (x1.2 / x0.83) and then it is stable; one WinMove of the size by
+            ; handle afterwards sticks. GlazeWM picks the new monitor up by itself.
+            ; Never `glazewm command size` here: it acts on the *focused* window,
+            ; which after a monitor change was another one (Zen/Terminal got resized).
+            WinMove cx - (mx - wx), cy - (my - wy), , , "ahk_id " hwnd
+            Sleep 400
+            WinMove , , ww, wh, "ahk_id " hwnd
         }
     }
 }
