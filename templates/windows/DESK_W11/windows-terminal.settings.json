@@ -4,7 +4,10 @@
   "copyOnSelect": true,
   "profiles": {
     "defaults": {
-      "font": { "face": "JetBrainsMono Nerd Font Mono", "size": 11 },
+      "font": {
+        "face": "JetBrainsMono Nerd Font Mono",
+        "size": 11
+      },
       "colorScheme": "Ashes",
       "opacity": 98,
       "useAcrylic": false,
@@ -28,11 +31,91 @@
       "foreground": "#C7CCD1",
       "cursorColor": "#C7CCD1",
       "selectionBackground": "#393F45",
-      "black": "#1C2023", "red": "#C7AE95", "green": "#95C7AE", "yellow": "#AEC795",
-      "blue": "#AE95C7", "purple": "#C795AE", "cyan": "#95AEC7", "white": "#C7CCD1",
-      "brightBlack": "#747C84", "brightRed": "#C7AE95", "brightGreen": "#95C7AE", "brightYellow": "#AEC795",
-      "brightBlue": "#AE95C7", "brightPurple": "#C795AE", "brightCyan": "#95AEC7", "brightWhite": "#F3F4F5"
+      "black": "#1C2023",
+      "red": "#C7AE95",
+      "green": "#95C7AE",
+      "yellow": "#AEC795",
+      "blue": "#AE95C7",
+      "purple": "#C795AE",
+      "cyan": "#95AEC7",
+      "white": "#C7CCD1",
+      "brightBlack": "#747C84",
+      "brightRed": "#C7AE95",
+      "brightGreen": "#95C7AE",
+      "brightYellow": "#AEC795",
+      "brightBlue": "#AE95C7",
+      "brightPurple": "#C795AE",
+      "brightCyan": "#95AEC7",
+      "brightWhite": "#F3F4F5"
     }
   ],
-  "_defaultProfileNote": "Replace defaultProfile with the GUID Windows Terminal generated for the NixOS profile (Settings > NixOS > copy GUID)."
+  "_defaultProfileNote": "Replace defaultProfile with the GUID Windows Terminal generated for the NixOS profile (Settings > NixOS > copy GUID).",
+  "actions": [
+    {
+      "command": {
+        "action": "prevTab"
+      },
+      "id": "User.tmux.prevTab"
+    },
+    {
+      "command": {
+        "action": "nextTab"
+      },
+      "id": "User.tmux.nextTab"
+    },
+    {
+      "command": {
+        "action": "splitPane",
+        "split": "right",
+        "splitMode": "duplicate"
+      },
+      "id": "User.tmux.splitRight"
+    },
+    {
+      "command": {
+        "action": "splitPane",
+        "split": "down",
+        "splitMode": "duplicate"
+      },
+      "id": "User.tmux.splitDown"
+    },
+    {
+      "command": {
+        "action": "newTab"
+      },
+      "id": "User.tmux.newTab"
+    },
+    {
+      "command": {
+        "action": "closePane"
+      },
+      "id": "User.tmux.closePane"
+    }
+  ],
+  "keybindings": [
+    {
+      "id": "User.tmux.prevTab",
+      "keys": "ctrl+alt+q"
+    },
+    {
+      "id": "User.tmux.nextTab",
+      "keys": "ctrl+alt+w"
+    },
+    {
+      "id": "User.tmux.splitRight",
+      "keys": "ctrl+alt+e"
+    },
+    {
+      "id": "User.tmux.splitDown",
+      "keys": "ctrl+alt+r"
+    },
+    {
+      "id": "User.tmux.newTab",
+      "keys": "ctrl+alt+t"
+    },
+    {
+      "id": "User.tmux.closePane",
+      "keys": "ctrl+alt+x"
+    }
+  ]
 }

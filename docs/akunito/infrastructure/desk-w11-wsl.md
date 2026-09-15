@@ -60,6 +60,38 @@ does not return to WSL. Note `Out-File` writes **UTF-16LE with a BOM**; decode i
 (or use `Set-Content -Encoding utf8`) or string comparisons on the result silently
 fail. No kitty via WSLg: it would only add a slower forwarded window.
 
+### Windows Terminal keys = tmux keys (2026-09-15)
+
+`windows-terminal.settings.json` carries `actions` + `keybindings` so the tmux
+root-table chords work in every Windows Terminal tab (PowerShell included).
+Diego presses them from the Keychron key that sends Ctrl+Alt, so AltGr on the
+en-GB layout never gets involved:
+
+| Keys | tmux | Windows Terminal |
+|------|------|------------------|
+| Ctrl+Alt+Q / W | previous / next window | `prevTab` / `nextTab` |
+| Ctrl+Alt+E | split -h | `splitPane right`, `splitMode: duplicate` (same profile + cwd) |
+| Ctrl+Alt+R | split -v | `splitPane down`, duplicate |
+| Ctrl+Alt+T | new-window | `newTab` |
+| Ctrl+Alt+X | kill-pane | `closePane` |
+
+Keybindings are global in Windows Terminal (no per-profile keys), so in a WSL
+tab these now reach the terminal, not tmux: tmux gets them only through its
+prefix. The remaining chords (Y/Z, D/S/[/]/P, J/K/L/;, A/H) are not mapped yet.
+
+### Claude Code in PowerShell: fullscreen + copying text
+
+The native `claude.exe` (`C:\Users\diego\.local\bin`, own `C:\Users\diego\.claude`,
+not synced by claude-sync) has `"tui": "fullscreen"` in its settings.json
+(alternate screen buffer, like `/tui fullscreen`). Copying a response from the
+terminal breaks on the rendered line wraps, so:
+
+- `/copy` (or `/copy 2`) copies the last response, or one code block from the
+  picker, without the wraps.
+- Ctrl+O opens the transcript; `v` there opens it in `$VISUAL`, and the user
+  env var `VISUAL` is `C:\PROGRA~1\Notepad++\notepad++.exe -multiInst -nosession`
+  (8.3 path: no spaces to quote). Ctrl+G edits the prompt in the same editor.
+
 ## Files in the repo
 
 - `profiles/DESK_W11-config.nix` — flag sheet (hostname `nixosw11aku`, `envProfile = "DESK_W11"`, `wslWindowsUser`)
