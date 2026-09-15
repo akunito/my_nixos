@@ -51,7 +51,6 @@
         { "PackageIdentifier": "Valve.Steam" },
         { "PackageIdentifier": "GOG.Galaxy" },
         { "PackageIdentifier": "PrismLauncher.PrismLauncher" },
-        { "PackageIdentifier": "RuneLite.RuneLite" },
         { "PackageIdentifier": "NexusMods.Vortex" },
         { "PackageIdentifier": "EclipseAdoptium.Temurin.21.JRE" },
         { "PackageIdentifier": "LizardByte.Sunshine" },
