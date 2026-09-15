@@ -601,7 +601,9 @@ in
                   description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (threshold: 30h) although the machine was up today";
                 };
               }
-              # NAS backup missing (any repo)
+              # NAS backup missing (any repo). Since 2026-09-15 the exporter only writes status=0
+              # when the ssh probe SUCCEEDED and found no snapshot files; an unreachable NAS keeps
+              # the previous values and raises nas_backup_probe_failed instead (see below).
               {
                 alert = "NasBackupMissing";
                 expr = ''nas_backup_status == 0'';
@@ -610,6 +612,19 @@ in
                 annotations = {
                   summary = "NAS backup repo missing: {{ $labels.dataset }}";
                   description = "Cannot find snapshot files in restic repo {{ $labels.dataset }} on NAS";
+                };
+              }
+              # NAS backup probe failing while the NAS is up (ssh from the VPS refused/timing out).
+              # During the NAS sleep window up{nas_node}==0 so this stays quiet; the exporter runs
+              # hourly, so "for 2h" = two consecutive failed probes with the NAS awake.
+              {
+                alert = "NasBackupProbeFailed";
+                expr = ''nas_backup_probe_failed == 1 and on() (up{job="nas_node"} == 1)'';
+                "for" = "2h";
+                labels.severity = "warning";
+                annotations = {
+                  summary = "NAS backup probe failing: {{ $labels.dataset }}";
+                  description = "The VPS cannot ssh into the NAS to inspect restic repo {{ $labels.dataset }} although the NAS is up; nas_backup_* metrics are carried forward from the last good probe";
                 };
               }
               # NAS offsite backup stale (VPS pulls from NAS, >36h)
@@ -745,15 +760,19 @@ in
                   description = "HTTP/ICMP probe to {{ $labels.instance }} has been failing for 5 minutes";
                 };
               }
-              # High swap usage (memory pressure indicator)
+              # High swap usage (memory pressure indicator).
+              # Swap % must be the LEFT operand: `and` returns the left-hand value, so with the
+              # old `(SwapTotal > 0) and (...)` order $value was SwapTotal in bytes ("4294963200%").
+              # Cold pages parked in swap with plenty of RAM free (swappiness 10) are not pressure —
+              # only alert when RAM is short too. SwapTotal=0 yields NaN > 50 = false, no guard needed.
               {
                 alert = "HostSwapUsageHigh";
-                expr = ''(node_memory_SwapTotal_bytes > 0) and ((node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes) / node_memory_SwapTotal_bytes * 100 > 50)'';
+                expr = ''((node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes) / node_memory_SwapTotal_bytes * 100 > 50) and (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 20)'';
                 "for" = "10m";
                 labels.severity = "warning";
                 annotations = {
                   summary = "Host {{ $labels.instance }} swap usage high";
-                  description = "Swap usage on {{ $labels.instance }} is {{ $value | printf \"%.1f\" }}% (threshold: 50%)";
+                  description = "Swap usage on {{ $labels.instance }} is {{ $value | printf \"%.1f\" }}% with less than 20% RAM available (threshold: 50% swap)";
                 };
               }
               # File descriptor exhaustion risk
@@ -794,10 +813,15 @@ in
                   description = "Radarr has {{ $value }} items in queue but no downloads completed in 6 hours";
                 };
               }
+              # *arr health: ignore indexer flaps (public indexers time out and Prowlarr backs
+              # them off for a while, then recovers on its own — Sonarr/Radarr inherit the same
+              # message via Prowlarr) and "new update available" (images are tag-pinned on purpose).
+              # What is left: download client unreachable, root folder missing, indexer without
+              # definition, DB/disk problems — the things that need a hand.
               # Sonarr health issues
               {
                 alert = "SonarrHealthIssue";
-                expr = ''sonarr_system_health_issues > 0'';
+                expr = ''sonarr_system_health_issues{source!~"IndexerStatusCheck|IndexerLongTermStatusCheck|UpdateCheck"} > 0'';
                 "for" = "30m";
                 labels.severity = "warning";
                 annotations = {
@@ -808,7 +832,7 @@ in
               # Radarr health issues
               {
                 alert = "RadarrHealthIssue";
-                expr = ''radarr_system_health_issues > 0'';
+                expr = ''radarr_system_health_issues{source!~"IndexerStatusCheck|IndexerLongTermStatusCheck|UpdateCheck"} > 0'';
                 "for" = "30m";
                 labels.severity = "warning";
                 annotations = {
@@ -819,7 +843,7 @@ in
               # Prowlarr health issues
               {
                 alert = "ProwlarrHealthIssue";
-                expr = ''prowlarr_system_health_issues > 0'';
+                expr = ''prowlarr_system_health_issues{source!~"IndexerStatusCheck|IndexerLongTermStatusCheck|UpdateCheck"} > 0'';
                 "for" = "30m";
                 labels.severity = "warning";
                 annotations = {

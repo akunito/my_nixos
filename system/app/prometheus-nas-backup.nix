@@ -13,7 +13,10 @@
 # Metrics exposed (via textfile collector):
 #   nas_backup_age_seconds{dataset} - Seconds since newest snapshot file
 #   nas_backup_last_success{dataset} - Unix timestamp of newest snapshot file
-#   nas_backup_status{dataset} - 1 = files found, 0 = no files or unreachable
+#   nas_backup_status{dataset} - 1 = files found, 0 = no files (probe succeeded, repo empty)
+#   nas_backup_probe_failed{dataset} - 1 = ssh to the NAS failed; the other metrics are
+#     carried forward from the previous run (age recomputed), so a rebooting NAS never
+#     turns into a 24 h "repo missing" critical (happened 2026-09-13 22:15).
 #   backup_repo_size_bytes{dataset,direction} - Size of backup repository in bytes
 #
 # Feature flag: prometheusNasBackupEnable
@@ -62,6 +65,8 @@ let
 # TYPE nas_backup_last_success gauge
 # HELP nas_backup_status Whether restic repo has snapshot files (1=ok, 0=missing)
 # TYPE nas_backup_status gauge
+# HELP nas_backup_probe_failed 1 when the ssh probe to the NAS failed and values were carried forward
+# TYPE nas_backup_probe_failed gauge
 # HELP backup_repo_size_bytes Size of backup repository in bytes
 # TYPE backup_repo_size_bytes gauge
 HEADER
@@ -78,8 +83,31 @@ HEADER
       # (Previously used sudo, which silently failed with "a password is required"
       # because akunito on NAS doesn't have NOPASSWD for find/du.)
       RESULT=$(ssh $SSH_OPTS "$NAS_USER@$NAS_HOST" \
-        "echo NEWEST=\$(find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1); echo SIZE=\$(du -sb $REPO_PATH 2>/dev/null | cut -f1)" \
-        || echo "")
+        "echo NEWEST=\$(find $REPO_PATH/snapshots/ -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1); echo SIZE=\$(du -sb $REPO_PATH 2>/dev/null | cut -f1)")
+      SSH_RC=$?
+
+      if [ "$SSH_RC" -ne 0 ]; then
+        # Probe failed (NAS asleep, rebooting, sshd down). That is NOT "repo has no
+        # snapshots": keep the previous last_success/status/size from the current
+        # textfile, recompute the age from the kept timestamp, and flag the probe.
+        echo "nas_backup_probe_failed{dataset=\"$LABEL\"} 1" >> "$TEMP_FILE"
+        PREV_TS=$(grep "^nas_backup_last_success{dataset=\"$LABEL\"}" "$TEXTFILE" 2>/dev/null | awk '{print $2}')
+        PREV_STATUS=$(grep "^nas_backup_status{dataset=\"$LABEL\"}" "$TEXTFILE" 2>/dev/null | awk '{print $2}')
+        PREV_SIZE=$(grep "^backup_repo_size_bytes{dataset=\"$LABEL\"," "$TEXTFILE" 2>/dev/null | awk '{print $2}')
+        if [ -n "$PREV_TS" ] && [ "$PREV_TS" -gt 0 ] 2>/dev/null; then
+          echo "nas_backup_age_seconds{dataset=\"$LABEL\"} $((NOW - PREV_TS))" >> "$TEMP_FILE"
+          echo "nas_backup_last_success{dataset=\"$LABEL\"} $PREV_TS" >> "$TEMP_FILE"
+        fi
+        if [ -n "$PREV_STATUS" ]; then
+          echo "nas_backup_status{dataset=\"$LABEL\"} $PREV_STATUS" >> "$TEMP_FILE"
+        fi
+        if [ -n "$PREV_SIZE" ] && [ "$PREV_SIZE" -gt 0 ] 2>/dev/null; then
+          echo "backup_repo_size_bytes{dataset=\"$LABEL\",direction=\"$DIRECTION\"} $PREV_SIZE" >> "$TEMP_FILE"
+        fi
+        echo "probe failed for $LABEL (ssh rc=$SSH_RC), previous values carried forward" >&2
+        continue
+      fi
+      echo "nas_backup_probe_failed{dataset=\"$LABEL\"} 0" >> "$TEMP_FILE"
 
       NEWEST_TS=$(echo "$RESULT" | grep '^NEWEST=' | cut -d= -f2)
       REPO_SIZE=$(echo "$RESULT" | grep '^SIZE=' | cut -d= -f2)
@@ -139,17 +167,18 @@ in
       '';
     };
 
-    # Timer: daily at 22:15 (inside NAS awake window 16:00-23:00). It must run
-    # AFTER every VPS→NAS restic job (databases 19:00, services 19:30, Sunday:
-    # nextcloud 20:00, libraries 20:30, immich 21:00) — at the old 19:30 slot
-    # the age metrics were measured before the weekly jobs and stayed frozen
-    # for 24 h, so Nextcloud showed "6d 23h" the morning after a good backup.
+    # Timer: hourly at :15 (since 2026-09-15; was daily 22:15). Hourly means a
+    # transient probe failure clears at the next run instead of ringing for 24 h,
+    # and ages refresh right after every VPS→NAS restic job (databases 19:00,
+    # services 19:30, Sunday: nextcloud 20:00, libraries 20:30, immich 21:00).
+    # During the NAS sleep window (23:00-16:05) every probe fails fast
+    # (ConnectTimeout 15 s) and the previous values are carried forward.
     systemd.timers.prometheus-nas-backup = {
-      description = "NAS Backup Metrics Timer (daily 22:15)";
+      description = "NAS Backup Metrics Timer (hourly :15)";
       wantedBy = [ "timers.target" ];
 
       timerConfig = {
-        OnCalendar = "*-*-* 22:15:00";
+        OnCalendar = "*-*-* *:15:00";
         RandomizedDelaySec = "5min";
         Persistent = true;
       };

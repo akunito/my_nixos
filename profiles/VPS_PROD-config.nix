@@ -565,10 +565,10 @@ in
     ];
 
     # === OpenClaw Sanitizers (CSV + memory file injection stripping) ===
-    openclawSanitizersEnable = true;
+    openclawSanitizersEnable = false;   # 2026-09-15: OpenClaw retired (no containers left); timers were failing daily. Modules kept for reinstatement.
 
     # === OpenClaw Matrix Bridge (E2E encrypted Matrix channels + Telegram fallback) ===
-    openclawMatrixBridgeEnable = true;
+    openclawMatrixBridgeEnable = false;  # 2026-09-15: retired with OpenClaw (units were already inactive)
 
     # === Docker Services (Phase 3B — service migration) ===
     homelabDockerEnable = true;
