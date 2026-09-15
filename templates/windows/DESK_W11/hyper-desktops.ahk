@@ -46,7 +46,7 @@ Glaze(args) => RunWait('"' glazeExe '" command ' args, , "Hide")
 GlazeQuery(what) {
     tmp := A_Temp "\glazewm-query.json"
     RunWait(A_ComSpec ' /c ""' glazeExe '" query ' what ' > "' tmp '""', , "Hide")
-    return FileRead(tmp)
+    return FileRead(tmp, "UTF-8")
 }
 PrimaryMon() => DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")
 FocusGroup() {  ; 1 = main monitor (1x), 2 = secondary (2x)
@@ -251,8 +251,13 @@ AltDrag(mode) {
     }
     ; Crossing to a monitor with another DPI (main 150 %, vertical 125 %) makes the
     ; app rescale itself, usually huge. Put the pre-drag physical size back.
-    if (mode = "move" && DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr") != mon0)
-        WinMove , , ww, wh, "ahk_id " hwnd
+    ; GlazeWM re-applies its own floating placement right after, so the size goes
+    ; through it (`size` updates the placement it tracks), not through WinMove.
+    if (mode = "move" && DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr") != mon0) {
+        Sleep 150
+        WinActivate "ahk_id " hwnd
+        Glaze("size --width " ww "px --height " wh "px")
+    }
 }
 !LButton:: AltDrag("move")
 !RButton:: AltDrag("resize")
