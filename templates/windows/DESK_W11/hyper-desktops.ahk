@@ -65,6 +65,48 @@ OnMessage(0x7E, (wp, lp, *) => (FileAppend(A_Now " displaychange " (lp & 0xFFFF)
 DumpGlazeMonitors() {
     try FileAppend GlazeQuery("monitors"), A_Temp "\glaze-monitors-" A_Now ".json", "UTF-8"
 }
+; Window events (debug only): focus changes, maximise/restore/minimise, size
+; changes outside our gestures (a size storm shows up here with its own
+; timing) and DWM cloak/uncloak (what GlazeWM does to hide a window).
+MonName(hwnd) => DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr") = PrimaryMon() ? "main" : "vertical"
+WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
+    global altDragExp
+    static state := Map()
+    if (idObj != 0 || idChild != 0 || !hwnd || !FileExist(A_Temp "\hyper-debug.on"))
+        return
+    if (DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr") != hwnd)   ; top-level only
+        return
+    DetectHiddenWindows true
+    try {
+        exe := WinGetProcessName("ahk_id " hwnd)
+        if (exe = "AutoHotkey64_UIA.exe" || exe = "zebar.exe" || WinGetClass("ahk_id " hwnd) = "tooltips_class32")
+            return
+        if (ev = 0x3) {
+            Dbg(Format("focus -> {1} '{2}' hwnd {3} {4}", exe, SubStr(WinGetTitle("ahk_id " hwnd), 1, 40), hwnd, MonName(hwnd)))
+            return
+        }
+        if (ev = 0x8017 || ev = 0x8018) {
+            Dbg(Format("{1} {2} hwnd {3} {4}", ev = 0x8017 ? "cloaked" : "uncloaked", exe, hwnd, MonName(hwnd)))
+            return
+        }
+        mm := WinGetMinMax("ahk_id " hwnd)
+        WinGetPos &x, &y, &w, &h, "ahk_id " hwnd
+    } catch
+        return
+    prev := state.Has(hwnd) ? state[hwnd] : ""
+    state[hwnd] := {mm: mm, w: w, h: h}
+    if (prev = "")
+        return
+    if (prev.mm != mm)
+        Dbg(Format("state {1} hwnd {2}: {3} -> {4} ({5}x{6}) {7}", exe, hwnd, StateName(prev.mm), StateName(mm), w, h, MonName(hwnd)))
+    else if ((prev.w != w || prev.h != h) && altDragExp = "")
+        Dbg(Format("size {1} hwnd {2}: {3}x{4} -> {5}x{6} at {7},{8} {9} (outside gesture)", exe, hwnd, prev.w, prev.h, w, h, x, y, MonName(hwnd)))
+}
+StateName(mm) => mm = 1 ? "maximised" : mm = -1 ? "minimised" : "normal"
+winEvPtr := CallbackCreate(WinEvCb, , 7)
+winEvHooks := [DllCall("SetWinEventHook", "UInt", 0x3, "UInt", 0x3, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
+             , DllCall("SetWinEventHook", "UInt", 0x800B, "UInt", 0x800B, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
+             , DllCall("SetWinEventHook", "UInt", 0x8017, "UInt", 0x8018, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")]
 GlazeQuery(what) {
     tmp := A_Temp "\glazewm-query.json"
     RunWait(A_ComSpec ' /c ""' glazeExe '" query ' what ' > "' tmp '""', , "Hide")
@@ -157,9 +199,13 @@ WinSwitcher() {
 ^#Left:: return
 ^#Right:: return
 ^#F4:: return
-^!#Escape:: WinClose "A"
+^!#Escape:: {
+    Dbg("close " WinGetProcessName("A"))
+    WinClose "A"
+}
 ^!#f:: {
     h := WinGetID("A")
+    Dbg("hyper+f " WinGetProcessName(h) ": " (WinGetMinMax(h) = 1 ? "restore" : "maximise"))
     WinGetMinMax(h) = 1 ? WinRestore(h) : WinMaximize(h)
 }
 ^!#Space:: Send "#!{Space}" ; PowerToys Command Palette (its own hotkey is Win+Alt+Space; PowerToys Run is disabled) — rofi stand-in
@@ -317,6 +363,7 @@ AltDrag(mode) {
             Dbg(Format("gesture-end {1} {2}: final {3},{4} {5}x{6} expected {7} minmax={8} win-on-cursor-monitor={9} {10} ms", mode, WinGetProcessName("ahk_id " altDragHwnd), fx, fy, fw, fh, altDragExp, WinGetMinMax("ahk_id " altDragHwnd), mm = mw ? "yes" : "NO", A_TickCount - altDragT0))
         }
     }
+    altDragExp := ""
 }
 AltDragCore(mode) {
     global altDragGhost, altDragHwnd, altDragExp, altDragT0
