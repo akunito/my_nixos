@@ -3,10 +3,18 @@ id: infrastructure.services.matrix
 summary: "Matrix Synapse + Element on VPS"
 tags: [infrastructure, matrix, vps, docker]
 date: 2026-02-23
-status: published
+status: archived
 ---
 
 # Matrix Synapse + Element
+
+> **ARCHIVED 2026-09-15** — not in use. `docker compose down` run in `~/.homelab/matrix` (bind-mounted
+> `data/`, `config/`, the `matrix_redis-data` volume and the PostgreSQL `matrix` database are all kept);
+> the `matrix` stack, the `matrix`/`element` local vhosts, the `synapse` scrape target and the blackbox
+> probes were removed from `profiles/VPS_PROD-config.nix`; the hand-installed user unit
+> `claude-matrix-bot.service` was `systemctl --user disable`d (file kept in `~/.config/systemd/user/`).
+> The Cloudflare tunnel hostnames still exist (remote-managed) and answer with an origin error.
+> **Reinstate**: re-add the four profile entries, `docker compose up -d`, `systemctl --user enable --now claude-matrix-bot`.
 
 ## Overview
 

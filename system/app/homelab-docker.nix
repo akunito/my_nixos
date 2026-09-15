@@ -114,6 +114,12 @@ ENVEOF
 
     systemd.services.homelab-docker = {
       description = "Homelab Docker Stacks";
+      # Never restart this unit during system activation: ExecStop = `compose down` of
+      # EVERY stack, so a changed stack list bounced all prod containers on each deploy
+      # (journal: 2026-09-09 17:57, 18:22, 2026-09-10 18:06). A removed stack is taken
+      # down by hand; an added one is started by hand (`docker compose up -d`) or at boot.
+      restartIfChanged = false;
+      stopIfChanged = false;
       after = if isRootless
         then [ "user@1000.service" "network-online.target" ]
         else [ "docker.service" "network-online.target" ];

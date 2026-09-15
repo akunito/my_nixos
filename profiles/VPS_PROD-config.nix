@@ -429,8 +429,7 @@ in
     nginxLocalServices = {
       grafana    = { port = 3002; };
       prometheus = { port = 9090; basicAuthFile = "/etc/nginx/auth/prometheus.htpasswd"; };
-      matrix     = { port = 8008; };
-      element    = { port = 8088; };
+      # matrix/element local vhosts removed 2026-09-15 (stack archived)
       miniflux   = { port = 8084; };
       freshrss   = { port = 8084; };
       nextcloud  = { port = 8089; };
@@ -531,8 +530,7 @@ in
       { name = "postgresql"; host = "127.0.0.1"; port = 9187; }
       { name = "mariadb";    host = "127.0.0.1"; port = 9104; }
       { name = "redis";      host = "127.0.0.1"; port = 9121; }
-      # Matrix Synapse metrics (VPS Docker)
-      { name = "synapse";   host = "127.0.0.1"; port = 9000; }
+      # synapse metrics target removed 2026-09-15 (Matrix stack archived; rules in grafana.nix stay inert)
       # miniflux removed 2026-09-11: decommissioned ~Apr 2026, the probe fired ExportarrTargetDown forever
       # NAS exportarr targets (via WireGuard tunnel to LAN) — node = nas so they are muted while it sleeps
       { name = "sonarr";    host = "192.168.20.200"; port = 9707; node = "nas"; }
@@ -548,8 +546,7 @@ in
       { name = "portfolio"; url = "https://${secrets.publicDomain}"; }
       { name = "leftyworkout_test"; url = "https://leftyworkout-test.${secrets.publicDomain}"; }
       { name = "grafana"; url = "https://grafana.${secrets.publicDomain}"; }
-      { name = "matrix"; url = "https://matrix.${secrets.publicDomain}/_matrix/client/versions"; }
-      { name = "element"; url = "https://element.${secrets.publicDomain}"; }
+      # matrix/element probes removed 2026-09-15 (stack archived; Cloudflare tunnel hostnames now answer with an origin error)
       { name = "headscale"; url = "https://${secrets.headscaleDomain}"; }
       { name = "status"; url = "https://status.${secrets.publicDomain}"; }
     ];
@@ -575,7 +572,8 @@ in
     homelabDockerStacks = [
       { name = "portfolio"; path = "portfolio"; }
       { name = "plane"; path = "plane"; }
-      { name = "matrix"; path = "matrix"; }
+      # matrix (synapse + element-web + matrix-redis) ARCHIVED 2026-09-15: not used; `docker compose down`
+      # run by hand (bind-mounted data + matrix_redis-data volume + pg db "matrix" kept). Re-add to reinstate.
       { name = "nextcloud"; path = "nextcloud"; }
       { name = "syncthing"; path = "syncthing"; }
       { name = "uptime-kuma"; path = "uptime-kuma"; }

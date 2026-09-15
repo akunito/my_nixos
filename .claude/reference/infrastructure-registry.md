@@ -49,9 +49,7 @@ All doc paths relative to `docs/akunito/infrastructure/`.
 | portfolio | info.akunito.com | 3005 | — | `portfolio` |
 | leftyworkout (test) | leftyworkout-test.akunito.com | 3001 (FE), 3000 (BE) | pg:rails_database_prod | `~/Projects/leftyworkout` (separate repo) |
 | plane | plane.akunito.com | 3000 | pg:plane, redis:db0 | `plane` |
-| matrix-synapse | matrix.akunito.com | 8008 | pg:matrix | `matrix/` |
-| element-web | element.akunito.com | 8088 | — | `matrix/` |
-| matrix-redis | — | 6380 | — | `matrix/` |
+| ~~matrix-synapse / element-web / matrix-redis~~ | matrix./element.akunito.com | 8008/8088/6380 | pg:matrix (kept) | `matrix/` — **ARCHIVED 2026-09-15** (`compose down`, data+volume kept, stack/vhosts/probes removed from VPS_PROD; claude-matrix-bot user unit disabled) |
 | miniflux | freshrss.akunito.com | 8084 | pg:miniflux | `miniflux` |
 | miniflux-ai | — | — | — | `miniflux-ai` |
 | nextcloud | nextcloud.akunito.com | 8089 | maria:nextcloud, redis:db1 | `nextcloud` |
