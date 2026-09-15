@@ -116,6 +116,21 @@ windows needed fragile tricks. Rules now: `initial_state: floating`, no
 from the Windows clone, Startup shortcut `GlazeWM.lnk`, native focus-follows-mouse
 OFF (`focus-follows-mouse.ps1 -Off`) because GlazeWM does it. Reload the config
 only when the file changes (`glazewm command wm-reload-config`). No "sticky".
+`focus_follows_cursor` is **off** (2026-09-15): with it on, UAC and system consent
+prompts (e.g. the location dialog) could not be clicked. Click to focus, like stock
+Windows. Alt+drag never moves a window across the DPI boundary live (150 % vs 125 %
+made the app rescale and GlazeWM re-place it every tick); on release over the other
+monitor the window is moved once through GlazeWM (`move --workspace` + `size`).
+Hyper+Tab / Win+Tab = AHK list of every window in every workspace (Task View stand-in;
+Ctrl+Win+D and Ctrl+Win+arrows are swallowed so no native desktop can be created).
+
+**Zebar** (installed with GlazeWM) draws the workspaces pill at the top-left of each
+monitor, over the empty end of the Windows taskbar: pack
+`templates/windows/DESK_W11/zebar/akuwm/` (zpack.json + workspaces.html, vanilla JS,
+`createProvider({ type: 'glazewm' })`, one widget per monitor, `top_most`), copied to
+`%USERPROFILE%\.glzr\zebar\akuwm\` and selected in `.glzr\zebar\settings.json`;
+Startup shortcut `Zebar.lnk`. Never run Zebar's starter "vanilla" widget: its weather
+block triggers the Windows location consent prompt.
 GlazeWM only manages windows on the *current native* virtual desktop: if windows end
 up on other native desktops (Win+Tab → "New desktop", or leftovers from the old AHK),
 focusing one of them jumps Windows to that desktop and the GlazeWM workspaces

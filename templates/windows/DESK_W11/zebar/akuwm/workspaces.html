@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+      body { font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; font-size: 12px; color: #e0def4; }
+      #ws { display: flex; align-items: center; gap: 4px; height: 28px; padding-left: 2px; }
+      .ws { border: 0; border-radius: 6px; padding: 2px 8px; line-height: 16px; cursor: pointer;
+            background: rgba(255, 255, 255, 0.06); color: #9ca0b0; }
+      .ws.displayed { background: rgba(122, 162, 247, 0.35); color: #e0def4; }
+      .ws.focused { outline: 1px solid rgba(122, 162, 247, 0.9); }
+      .ws:hover { background: rgba(255, 255, 255, 0.16); }
+    </style>
+  </head>
+  <body>
+    <div id="ws"></div>
+    <script type="module">
+      // Workspaces of the monitor this widget sits on (one widget per monitor).
+      const el = document.getElementById('ws');
+      const show = (t) => { el.textContent = t; };
+      show('…');
+      try {
+        const zebar = await import('https://esm.sh/zebar@3.0');
+        const glazewm = zebar.createProvider({ type: 'glazewm' });
+        function render() {
+          const o = glazewm.output;
+          if (!o) { show('no glazewm'); return; }
+          el.replaceChildren();
+          for (const w of o.currentWorkspaces ?? []) {
+            const b = document.createElement('button');
+            b.className = 'ws' + (w.isDisplayed ? ' displayed' : '') + (w.hasFocus ? ' focused' : '');
+            b.textContent = w.displayName ?? w.name;
+            b.onclick = () => glazewm.runCommand(`focus --workspace ${w.name}`);
+            el.appendChild(b);
+          }
+        }
+        render();
+        glazewm.onOutput(render);
+        glazewm.onError?.((e) => show('error: ' + e));
+      } catch (e) {
+        show('init error: ' + (e && e.message ? e.message : e));
+      }
+    </script>
+  </body>
+</html>

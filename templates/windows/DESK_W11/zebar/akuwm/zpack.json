@@ -1,0 +1,35 @@
+{
+  "$schema": "https://github.com/glzr-io/zebar/raw/v3.0.0/resources/zpack-schema.json",
+  "name": "akuwm",
+  "version": "0.1.0",
+  "description": "DESK_W11: GlazeWM workspaces pill over the empty left end of the Windows taskbar (waybar's workspaces module).",
+  "tags": ["workspaces"],
+  "previewImages": [],
+  "repositoryUrl": "",
+  "widgets": [
+    {
+      "name": "workspaces",
+      "htmlPath": "./workspaces.html",
+      "zOrder": "top_most",
+      "shownInTaskbar": false,
+      "focused": false,
+      "resizable": false,
+      "transparent": true,
+      "includeFiles": ["*.html"],
+      "caching": { "defaultDuration": 604800, "rules": [] },
+      "privileges": { "shellCommands": [] },
+      "presets": [
+        {
+          "name": "default",
+          "anchor": "top_left",
+          "offsetX": "6px",
+          "offsetY": "0px",
+          "width": "340px",
+          "height": "28px",
+          "monitorSelection": { "type": "all" },
+          "dockToEdge": { "enabled": false, "edge": null, "windowMargin": "0px" }
+        }
+      ]
+    }
+  ]
+}

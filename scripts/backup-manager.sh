@@ -148,6 +148,7 @@ RETENTION_WINDOWS="--keep-daily 7 --keep-weekly 4 --keep-monthly 3"
 # Relative to /mnt/c/Users/$WINDOWS_USER unless they start with /mnt/c
 WINDOWS_INCLUDES=(
   "AppData/Local/w11-backup"                                                   # reg exports + winget list (staging)
+  ".glzr"                                                                      # GlazeWM/Zebar state (config itself lives in the repo)
   "AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState"  # Windows Terminal settings + state
   "Documents/ShareX"                                                            # hotkeys, actions, uploaders
   "AppData/Local/Microsoft/PowerToys"                                           # PowerToys modules
