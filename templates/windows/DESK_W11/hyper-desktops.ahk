@@ -235,16 +235,29 @@ AltDrag(mode) {
     SetWinDelay -1
     mon0 := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
     MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
+    ghost := ""
     while GetKeyState(btn, "P") {
         MouseGetPos &cx, &cy
         dx := cx - mx, dy := cy - my
         if (mode = "move") {
-            ; Live-move only inside the starting monitor: a WinMove across the DPI
-            ; boundary (150 % vs 125 %) makes the app rescale and GlazeWM re-place it
-            ; every tick — the "huge window that keeps resizing" loop. Crossing is
-            ; done once, on release, through GlazeWM.
-            if (MonAt(cx, cy) = mon0)
+            ; Live-move only inside the starting monitor. Measured 2026-09-15: once the
+            ; window is on the other monitor, EVERY position-only WinMove makes a
+            ; per-monitor-DPI app (Discord/Electron) rescale again, cumulatively
+            ; (1656x1216 -> 3199x28131 in 60 steps). So across the boundary a
+            ; translucent outline follows the cursor instead, and the real window
+            ; jumps once on release.
+            if (MonAt(cx, cy) = mon0) {
+                if ghost
+                    ghost.Hide()
                 WinMove wx + dx, wy + dy, , , "ahk_id " hwnd
+            } else {
+                if !ghost {
+                    ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000")   ; click-through, layered
+                    ghost.BackColor := "c4a7e7"
+                    WinSetTransparent 90, ghost
+                }
+                ghost.Show("NA x" (cx - (mx - wx)) " y" (cy - (my - wy)) " w" ww " h" wh)
+            }
         } else {
             nx := left ? wx + dx : wx
             ny := top ? wy + dy : wy
@@ -258,6 +271,8 @@ AltDrag(mode) {
     ; Crossing to a monitor with another DPI (main 150 %, vertical 125 %) makes the
     ; app rescale itself, usually huge. Put the pre-drag physical size back.
     if (mode = "move") {
+        if ghost
+            ghost.Destroy()
         MouseGetPos &cx, &cy
         if (MonAt(cx, cy) != mon0) {
             ; Measured 2026-09-15: ONE WinMove across the boundary makes the app rescale
