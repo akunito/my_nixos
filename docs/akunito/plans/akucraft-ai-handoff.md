@@ -33,7 +33,7 @@ optional.
 | Its service | `system/app/akucraft-status-bot.nix` | runs as `akunito` on VPS_PROD, `StateDirectory=akucraft-status` |
 | Server manifest | `docs/akunito/infrastructure/services/akucraft-manifest.md` | **generated from the live server**; written specifically to be the context an assistant answers from |
 | Manifest generator | `scripts/generate-akucraft-manifest.sh` | re-run after any mod or config change |
-| Secrets | `secrets/domains.nix` (git-crypt) | naming convention: `akucraftDiscordBotToken`, `perplexityApiKey`, … |
+| Secrets | `secrets/domains.nix` (git-crypt) | naming convention: `akucraftDiscordBotToken`, `jellyseerrApiKey`, … |
 
 The bot already does the hard Discord parts: gateway client, `CommandTree`,
 role-gated commands, and **ephemeral replies** — see `/invite` around line 575.

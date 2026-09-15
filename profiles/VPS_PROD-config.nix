@@ -59,7 +59,6 @@ in
 
     # === Development Tools & AI ===
     claudeCodeEnable = true; # Lightweight Claude Code (CLI + settings + MCP) for Matrix bot interface
-    perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for MCP server
     planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
     # Internal Tailscale vhost, NOT the public host: plane.<publicDomain> sits
     # behind Cloudflare Access, which rejects at the edge before Plane ever sees

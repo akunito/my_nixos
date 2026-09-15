@@ -303,7 +303,6 @@ in
     developmentToolsEnable = true; # Enable development IDEs and cloud tools
     developmentFullRuntimesEnable = true; # Node.js, Python, Go, Rust on host (needed by npx-based MCP servers and local Node builds)
     githubAccessToken = secrets.githubAccessToken; # GitHub PAT: lifts anon rate limit on flake-input fetches
-    perplexityApiKey = secrets.perplexityApiKey; # Perplexity API key for Claude Code MCP
     jellyseerrApiKey = secrets.jellyseerrApiKey; # Jellyseerr API key for Claude Code MCP (media requests)
     planeApiToken = secrets.planeApiToken; # Plane API token for Claude Code MCP
     # Internal Tailscale vhost, NOT the public host: plane.<publicDomain> sits

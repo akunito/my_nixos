@@ -31,9 +31,6 @@ let
     else
       "true"; # no-op on headless/VPS
 
-  # Perplexity API key from secrets (passed through systemSettings)
-  perplexityApiKey = systemSettings.perplexityApiKey or "";
-
   # Jellyseerr MCP credentials (media search/request)
   jellyseerrApiKey = systemSettings.jellyseerrApiKey or "";
   jellyseerrUrl = systemSettings.jellyseerrUrl or "http://192.168.20.200:5055";
@@ -357,7 +354,7 @@ in
   # Standalone mode: install claude-code + nodejs (for npx/MCP) without full dev IDEs
   home.packages = lib.optionals isStandalone [
     pkgs-unstable.claude-code  # Claude Code CLI (native binary from GCS, not npm)
-    pkgs.nodejs_22                 # Node.js for npx (required by Perplexity MCP)
+    pkgs.nodejs_22                 # Node.js for npx (required by the postgres and n8n MCPs)
     pkgs-unstable.uv               # Python package runner (uvx, required by Plane MCP)
     pkgs-unstable.git-crypt        # Transparent file encryption in git (unstable to dedupe across modules)
   ];
@@ -446,10 +443,7 @@ except Exception as e:
 
   # Set API keys as environment variables for MCP servers (referenced in .mcp.json)
   home.sessionVariables =
-    lib.optionalAttrs (perplexityApiKey != "") {
-      PERPLEXITY_API_KEY = perplexityApiKey;
-    }
-    // lib.optionalAttrs (jellyseerrApiKey != "") {
+    lib.optionalAttrs (jellyseerrApiKey != "") {
       JELLYSEERR_URL = jellyseerrUrl;
       JELLYSEERR_API_KEY = jellyseerrApiKey;
     }
@@ -477,8 +471,7 @@ except Exception as e:
   # Systemd user services don't inherit shell sessionVariables, so they need an EnvironmentFile.
   home.file.".claude/mcp-env" = {
     text = lib.concatStringsSep "\n" (
-      lib.optional (perplexityApiKey != "") "PERPLEXITY_API_KEY=${perplexityApiKey}"
-      ++ lib.optional (jellyseerrApiKey != "") "JELLYSEERR_URL=${jellyseerrUrl}"
+      lib.optional (jellyseerrApiKey != "") "JELLYSEERR_URL=${jellyseerrUrl}"
       ++ lib.optional (jellyseerrApiKey != "") "JELLYSEERR_API_KEY=${jellyseerrApiKey}"
       ++ lib.optional (planeApiToken != "") "PLANE_API_KEY=${planeApiToken}"
       ++ lib.optional (planeApiUrl != "") "PLANE_BASE_URL=${planeApiUrl}"
