@@ -60,6 +60,20 @@ does not return to WSL. Note `Out-File` writes **UTF-16LE with a BOM**; decode i
 (or use `Set-Content -Encoding utf8`) or string comparisons on the result silently
 fail. No kitty via WSLg: it would only add a slower forwarded window.
 
+### Default tab = NixOS at ~/.dotfiles, PowerShell if WSL is down (2026-09-15)
+
+The default Windows Terminal profile is **`NixOS ~/.dotfiles`**, not the WSL-generated
+`NixOS` entry. It runs `templates/windows/DESK_W11/wsl-or-pwsh.ps1` (from the Windows
+clone, `%USERPROFILE%\.dotfiles`) through `pwsh -NoProfile -File`: the script probes
+the distro (`wsl -d NixOS -e /bin/sh -c true`, 45 s timeout), then execs
+`wsl -d NixOS --cd /home/akunito/.dotfiles`, and the tab closes when zsh exits. If the
+probe fails (WSL service missing, distro unregistered, VM hung) it prints wsl.exe's
+own message plus `wsl --status / wsl -l -v / wsl --shutdown` and drops into a normal
+interactive `pwsh` in the same tab instead of a dead "process exited" tab.
+`-Test` prints the decision without starting a shell (`-Distro Nope -Test` and
+`-Timeout 0 -Test` exercise the two failure paths). Not in `$PROFILE` on purpose:
+every `pwsh -Command` interop call from WSL would otherwise re-enter WSL.
+
 ### Windows Terminal keys = tmux keys (2026-09-15)
 
 `windows-terminal.settings.json` carries `actions` + `keybindings` so the tmux

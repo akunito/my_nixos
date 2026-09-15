@@ -1,6 +1,6 @@
 {
-  "_comment": "Merge into %LOCALAPPDATA%\\Packages\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\LocalState\\settings.json — NixOS-WSL registers the 'NixOS' profile itself; this sets it as default with the DESK look.",
-  "defaultProfile": "{2c4de342-38b7-51cf-b940-2309a097f518}",
+  "_comment": "Merge into %LOCALAPPDATA%\\Packages\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\LocalState\\settings.json — NixOS-WSL registers the 'NixOS' profile itself; the default profile is 'NixOS ~/.dotfiles' = wsl-or-pwsh.ps1 (NixOS at ~/.dotfiles, PowerShell fallback when WSL cannot start). Look = DESK.",
+  "defaultProfile": "{5888e963-15e6-518c-b6b3-409caad105f7}",
   "copyOnSelect": true,
   "profiles": {
     "defaults": {
@@ -16,6 +16,13 @@
       "bellStyle": "none"
     },
     "list": [
+      {
+        "guid": "{5888e963-15e6-518c-b6b3-409caad105f7}",
+        "name": "NixOS ~/.dotfiles",
+        "commandline": "pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File \"%USERPROFILE%\\.dotfiles\\templates\\windows\\DESK_W11\\wsl-or-pwsh.ps1\"",
+        "startingDirectory": "%USERPROFILE%",
+        "icon": "ms-appx:///ProfileIcons/{9acb9455-ca41-5af7-950f-6bca1bc9722f}.png"
+      },
       {
         "name": "NixOS",
         "source": "Windows.Terminal.Wsl",
@@ -49,7 +56,7 @@
       "brightWhite": "#F3F4F5"
     }
   ],
-  "_defaultProfileNote": "Replace defaultProfile with the GUID Windows Terminal generated for the NixOS profile (Settings > NixOS > copy GUID).",
+  "_defaultProfileNote": "defaultProfile = the 'NixOS ~/.dotfiles' profile above (fixed GUID, uuid5 of akunito/desk_w11/wsl-or-pwsh). The WSL-generated 'NixOS' profile stays as a plain fallback entry.",
   "actions": [
     {
       "command": {
