@@ -97,8 +97,10 @@ en-GB layout never gets involved:
 
 Keybindings are global in Windows Terminal (no per-profile keys), so in a WSL
 tab these now reach the terminal, not tmux: tmux gets them only through its
-prefix. Not mapped: A (ssh-smart, to try later) and H (tmux menu; Windows
-Terminal's own palette is Ctrl+Shift+P).
+prefix. Not mapped on purpose: Ctrl+Alt+A is tmux's root-table ssh-smart (host
+picker from `~/.ssh/config`) and, since Windows Terminal does not bind it, it still
+reaches tmux in a WSL tab; H has no root chord (the tmux menu is prefix+h) and Windows
+Terminal's own palette is Ctrl+Shift+P.
 
 ### Claude Code in PowerShell: fullscreen + copying text
 
@@ -151,10 +153,10 @@ and is the native package manager (Chocolatey adds nothing here). DESK → W11:
 | nextcloud-client | Nextcloud.NextcloudDesktop | |
 | bitwarden | Bitwarden.Bitwarden | |
 | zen, vivaldi, brave/chromium | Zen-Team.Zen-Browser, Vivaldi.Vivaldi, Brave.Brave | |
-| obsidian, telegram, element, vesktop, teams-for-linux, thunderbird, libreoffice, calibre | Obsidian.Obsidian, Telegram.TelegramDesktop, Element.Element, Discord.Discord, Microsoft.Teams, Mozilla.Thunderbird, TheDocumentFoundation.LibreOffice, calibre.calibre | |
+| obsidian, telegram, element, vesktop, teams-for-linux, thunderbird, libreoffice, calibre | Obsidian.Obsidian, Telegram.TelegramDesktop, Element.Element, Discord.Discord, Microsoft.Teams, Mozilla.Thunderbird, TheDocumentFoundation.LibreOffice, calibre.calibre | Teams stays installed (interviews); `debloat.ps1` no longer removes it |
 | spotify, vlc, qbittorrent, OBS (media recording) | Spotify.Spotify, VideoLAN.VLC, qBittorrent.qBittorrent, OBSProject.OBSStudio | |
 | steam, GOG (Heroic), FreesmLauncher + Java 21 | Valve.Steam, GOG.Galaxy, PrismLauncher.PrismLauncher + EclipseAdoptium.Temurin.21.JRE | AkuCraft: new instance + AutoModpack, never copy jars (see memory) |
-| sunshine, moonlight | LizardByte.Sunshine, MoonlightGameStreamingProject.Moonlight | Sunshine host for DESK_A/X13 |
+| sunshine, moonlight | LizardByte.Sunshine, MoonlightGameStreamingProject.Moonlight | Sunshine host for DESK_A/X13 — **on demand only** (2026-09-15): `SunshineService` set to Manual and stopped; start it from the Start menu (Sunshine) or `Start-Service SunshineService` elevated; not paired with any client yet |
 | easyeffects | — | Equalizer APO declined 2026-09-14 (manual install + per-device setup); revisit only if an EQ is actually missed |
 | mission-center | Task Manager | |
 | ollama / llama.cpp | none | decided: no LLM on W11 |
@@ -244,9 +246,9 @@ then set each mod's options:
 | Taskbar clock customization | Windows date/time pictures, not strftime: `TimeFormat: HH':'mm`, `DateFormat: ddd dd MMM`, `ShowSeconds: 0`, `TopLine: '%time% \| %date%'`, `MiddleLine`/`BottomLine` empty, **`TextSpacing: -14`** (the block reserves two lines; at 28 px the top line is clipped until the spacing goes negative). `Width`/`Height` are Windows-10-only, ignored. Settings apply on save; the first save needed an explorer restart |
 | Taskbar tray system icon tweaks | hide Copilot/News/Chat leftovers, keep network/volume |
 | Windows 11 Taskbar Styler | theme `RosePine` |
-| Taskbar labels for Windows 11 | labels on, combine never (workspace-like readability) — pending |
-| Taskbar notification icon spacing | 24 px — pending |
-| Taskbar button click | middle-click closes — pending |
+| Taskbar labels for Windows 11 | labels on, combine never (workspace-like readability) — **not installed by choice** (2026-09-15), kept here for reference |
+| Taskbar notification icon spacing | 24 px — not installed, reference |
+| Taskbar button click | middle-click closes — not installed, reference |
 
 Settings → Personalization → Taskbar: alignment **center** (apps in the middle,
 metrics + clock on the right — 2026-09-14), Widgets off, Search hidden, Task view
@@ -348,8 +350,9 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
      Administrator, then `scripts/zen-webpanels-install-windows.sh` from WSL).
 9. Windows Terminal: paste `windows-terminal.settings.json` pieces into Settings →
    Open JSON file. The `NixOS` profile appears by itself once the distro exists.
-10. Keyboard layouts: Settings → Time & language → Language → add English (US-International),
-   Spanish, Polish. Win+Space cycles, same as Hyper+Return on Sway.
+10. Keyboard layouts: Settings → Time & language → Language → English (UK) with the
+   **US-International** keyboard only (`0809:00020409`, as wanted — decided 2026-09-15; no
+   Spanish/Polish layouts, dead keys cover them). Win+Space cycles if more are ever added.
 
 ## Part B — NixOS-WSL (PowerShell, then inside the distro)
 
@@ -466,7 +469,12 @@ clients see the same installs — Proton titles use the Windows depots, nothing 
 sync. Rules: only Proton titles there (force Proton on Linux for games with a native
 Linux build, or Windows re-downloads them); never switch OS mid-download; Windows
 must never hibernate with the drive mounted (Fast Startup is off). Saves do not cross
-over (Proton prefix vs `C:\Users`) unless Steam Cloud handles the title — untested.
+over (Proton prefix vs `C:\Users`) unless Steam Cloud handles the title (AINF-392).
+Steam Cloud has to be on in **both** clients: Steam → Settings → Cloud → *Enable Steam
+Cloud*, then per game Library → Properties → General → *Keep games saves in the Steam
+Cloud* (BG3, AoE2 DE, Skyrim SE and Starfield all support it). Test: save on one OS,
+quit the game and wait for the library cloud icon to settle before rebooting, load on
+the other OS. Steam maps the Windows save path into the Proton prefix by itself.
 Empty leftovers: `D:\Steam\SteamLibrary`, `C:\Games\steamapps`.
 
 ## Known limits

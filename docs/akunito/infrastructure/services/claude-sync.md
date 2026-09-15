@@ -127,6 +127,6 @@ delete the `.conflict-*` file, commit happens automatically at the next sync.
 
 ## Pending
 
-- DESK_W11 profile (NixOS-WSL, `envProfile = "DESK_W11"`, tailscaled inside
-  WSL, `~/Nextcloud` symlink) — when Windows 11 gets WSL installed.
-- Plugins are not synced.
+- Plugins are not synced (by design in v1; no machine has plugins installed as of
+  2026-09-15). DESK_W11 is live since 2026-09-13 (Windows Tailscale client, `~/Nextcloud`
+  bind mount). The pre-commit false positive on the VPS profile no longer fires.
