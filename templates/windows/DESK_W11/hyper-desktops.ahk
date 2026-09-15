@@ -223,6 +223,26 @@ PowerAction(choice) {
 ; ---- Alt+drag: move (left) / resize (right), Sway's floating_modifier ----
 ; Skips maximised windows, the desktop and the taskbar. Resize grabs the corner
 ; nearest to the pointer, like sway. Uses the raw event loop (no admin needed).
+; After a placement that may leave a per-monitor-DPI app fighting with GlazeWM
+; (the size storm seen on the vertical monitor), watch 1.5 s and put the size
+; back, size-only (that sticks), at most 3 times. Logged.
+Watchdog(hwnd, ww, wh) {
+    fixes := 0
+    Loop 75 {
+        Sleep 20
+        try WinGetPos , , &w, &h, "ahk_id " hwnd
+        catch
+            return
+        if ((w != ww || h != wh) && WinGetMinMax("ahk_id " hwnd) = 0) {
+            if (++fixes > 3) {
+                FileAppend Format("{1} watchdog {2}: giving up at {3}x{4}`n", A_Now, WinGetProcessName("ahk_id " hwnd), w, h), A_Temp "\altdrag.log"
+                return
+            }
+            WinMove , , ww, wh, "ahk_id " hwnd
+            FileAppend Format("{1} watchdog {2}: {3}x{4} -> {5}x{6} (fix {7})`n", A_Now, WinGetProcessName("ahk_id " hwnd), w, h, ww, wh, fixes), A_Temp "\altdrag.log"
+        }
+    }
+}
 AltDrag(mode) {
     MouseGetPos &mx, &my, &hwnd
     if !hwnd
@@ -280,7 +300,7 @@ AltDrag(mode) {
     SetWinDelay -1
     mon0 := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
     MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
-    ghost := "", topZone := false
+    ghost := "", topZone := false, unstable := false
     WorkAreaAt(px, py, &l, &t, &r, &b) {
         Loop MonitorGetCount() {
             MonitorGet A_Index, &ml, &mt, &mr, &mb
@@ -311,9 +331,17 @@ AltDrag(mode) {
             topZone := WorkAreaAt(cx, cy, &al, &at, &ar, &ab) && (cy - at) <= 6
             if topZone {
                 ghost.Show("NA x" al " y" at " w" (ar - al) " h" (ab - at))
-            } else if (MonAt(cx, cy) = mon0) {
+            } else if (MonAt(cx, cy) = mon0 && !unstable) {
                 ghost.Hide()
                 WinMove wx + dx, wy + dy, , , "ahk_id " hwnd
+                ; Storm guard: if the app answered a plain move with a rescale (stale
+                ; DPI context, seen on the vertical monitor), stop touching it and
+                ; finish the drag as an outline; placement happens once on release.
+                WinGetPos , , &gw, &gh, "ahk_id " hwnd
+                if (gw != ww || gh != wh) {
+                    unstable := true
+                    FileAppend Format("{1} storm-guard {2}: rescaled to {3}x{4} during move (expected {5}x{6})`n", A_Now, WinGetProcessName("ahk_id " hwnd), gw, gh, ww, wh), A_Temp "\altdrag.log"
+                }
             } else {
                 ghost.Show("NA x" (cx - (mx - wx)) " y" (cy - (my - wy)) " w" ww " h" wh)
             }
@@ -322,8 +350,18 @@ AltDrag(mode) {
             ny := top ? wy + dy : wy
             nw := left ? ww - dx : ww + dx
             nh := top ? wh - dy : wh + dy
-            if (nw > 150 && nh > 100)
+            if (nw > 150 && nh > 100) {
                 WinMove nx, ny, nw, nh, "ahk_id " hwnd
+                WinGetPos , , &gw, &gh, "ahk_id " hwnd
+                if (Abs(gw - nw) > 4 || Abs(gh - nh) > 4) {
+                    ; Storm guard for resizes: the app is rescaling behind our back.
+                    FileAppend Format("{1} storm-guard {2}: resize answered {3}x{4} for {5}x{6}, aborting live resize`n", A_Now, WinGetProcessName("ahk_id " hwnd), gw, gh, nw, nh), A_Temp "\altdrag.log"
+                    KeyWait btn
+                    WinMove , , nw, nh, "ahk_id " hwnd
+                    Watchdog(hwnd, nw, nh)
+                    return
+                }
+            }
         }
         Sleep 8
     }
@@ -338,12 +376,28 @@ AltDrag(mode) {
             return
         }
         if (MonAt(cx, cy) = mon0) {
+            if unstable {
+                ; Outline-finished drag on the same monitor: place once, like a jump.
+                WinGetPos , , &cw0, &ch0, "ahk_id " hwnd
+                WinMove cx - (mx - wx), cy - (my - wy), , , "ahk_id " hwnd
+                Loop 40 {
+                    Sleep 5
+                    WinGetPos , , &nw, &nh, "ahk_id " hwnd
+                    if (nw != cw0 || nh != ch0)
+                        break
+                }
+                Sleep 15
+                WinMove , , ww, wh, "ahk_id " hwnd
+                Watchdog(hwnd, ww, wh)
+                return
+            }
             ; Same monitor: the size must be exactly what we dragged; if the app
             ; rescaled itself on the way (seen once after a restore), fix it once.
             WinGetPos , , &ew, &eh, "ahk_id " hwnd
             if (ew != ww || eh != wh) {
                 WinMove , , ww, wh, "ahk_id " hwnd
                 FileAppend Format("{1} release-fix {2}: {3}x{4} -> {5}x{6}{7}`n", A_Now, WinGetProcessName("ahk_id " hwnd), ew, eh, ww, wh, fromMax ? " (from maximised)" : ""), A_Temp "\altdrag.log"
+                Watchdog(hwnd, ww, wh)
             }
         }
         if (MonAt(cx, cy) != mon0) {
@@ -366,7 +420,8 @@ AltDrag(mode) {
             if topZone {
                 Sleep 100
                 WinMaximize "ahk_id " hwnd
-            }
+            } else
+                Watchdog(hwnd, ww, wh)
         }
     }
 }
