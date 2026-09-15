@@ -228,10 +228,26 @@ AltDrag(mode) {
     if !hwnd
         return
     cls := WinGetClass("ahk_id " hwnd)
-    if (cls = "Progman" || cls = "WorkerW" || cls = "Shell_TrayWnd" || WinGetMinMax("ahk_id " hwnd) = 1)
+    if (cls = "Progman" || cls = "WorkerW" || cls = "Shell_TrayWnd")
         return
     WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
     WinActivate "ahk_id " hwnd
+    if (WinGetMinMax("ahk_id " hwnd) = 1) {
+        ; Maximised: restore first and keep the grab point at the same relative spot
+        ; under the cursor (what Windows does when you drag a maximised title bar),
+        ; then carry on with the normal drag/resize. Measured: ~270 ms, GlazeWM
+        ; follows (fullscreen -> floating).
+        fx := (mx - wx) / ww, fy := (my - wy) / wh
+        WinRestore "ahk_id " hwnd
+        Loop 40 {
+            Sleep 5
+            if WinGetMinMax("ahk_id " hwnd) = 0
+                break
+        }
+        WinGetPos , , &rw, &rh, "ahk_id " hwnd
+        wx := Round(mx - fx * rw), wy := Round(my - fy * rh), ww := rw, wh := rh
+        WinMove wx, wy, , , "ahk_id " hwnd
+    }
     if (mode = "resize") {
         left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
     }
