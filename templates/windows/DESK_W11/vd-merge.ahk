@@ -4,7 +4,7 @@
 ; native desktops GlazeWM cannot see (it manages only the current native desktop):
 ; symptom = focusing such a window "throws you out" of the GlazeWM workspaces.
 ; Run it, then restart GlazeWM. Writes a log to %TEMP%\vd-merge.txt.
-dll := "" A_ScriptDir "\VirtualDesktopAccessor.dll"
+dll := A_ScriptDir "\VirtualDesktopAccessor.dll"
 DllCall("LoadLibrary", "Str", dll, "Ptr")
 DllCall("VirtualDesktopAccessor\GoToDesktopNumber", "Int", 0, "Int")
 n := DllCall("VirtualDesktopAccessor\GetDesktopCount", "Int")

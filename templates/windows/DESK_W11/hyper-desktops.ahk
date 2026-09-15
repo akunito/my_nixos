@@ -95,7 +95,45 @@ WsCycle(delta, move := false) {
 ^!#Right:: Glaze("focus --monitor 1")
 ^!#+Left:: Glaze("move --workspace-in-direction left")
 ^!#+Right:: Glaze("move --workspace-in-direction right")
-^!#Tab:: Send "#{Tab}"
+; ---- Hyper+Tab / Win+Tab: overview of every window in every GlazeWM workspace ----
+; The Task View replacement. Typing filters (ListBox type-ahead), Enter or double
+; click focuses the window (GlazeWM switches that monitor to its workspace).
+WinSwitcher() {
+    j := GlazeQuery("workspaces"), items := [], ids := [], ws := "?", pos := 1
+    pat := '"type":"workspace","id":"[^"]+","name":"(\d+)"|"type":"window","id":"([^"]+)"[\s\S]*?"title":"((?:[^"\\]|\\.)*)","className":"[^"]*","processName":"([^"]*)"'
+    while pos := RegExMatch(j, pat, &m, pos) {
+        if m[1]
+            ws := m[1]
+        else if (m[3] != "") {
+            items.Push("[" ws "]  " m[4] "  —  " StrReplace(SubStr(m[3], 1, 70), '\"', '"'))
+            ids.Push(m[2])
+        }
+        pos += StrLen(m[0])
+    }
+    if !items.Length
+        return
+    g := Gui("+AlwaysOnTop -Caption +ToolWindow +Border", "Windows")
+    g.BackColor := "1e1e2e"
+    g.SetFont("s12 cE0DEF4", "Segoe UI")
+    lb := g.Add("ListBox", "w900 r" Min(items.Length, 18) " Background313244", items)
+    lb.Choose(1)
+    go := (*) => (i := lb.Value, g.Destroy(), i ? Glaze("focus --container-id " ids[i]) : 0)
+    lb.OnEvent("DoubleClick", go)
+    g.OnEvent("Escape", (*) => g.Destroy())
+    g.OnEvent("Close", (*) => g.Destroy())
+    HotIfWinActive("Windows ahk_class AutoHotkeyGUI")
+    Hotkey "Enter", go, "On"
+    HotIfWinActive()
+    g.Show("AutoSize Center")
+}
+^!#Tab:: WinSwitcher()
+#Tab:: WinSwitcher()
+; Native virtual desktops must not be created or switched while GlazeWM runs
+; (windows on another native desktop are invisible to it): swallow the chords.
+^#d:: return
+^#Left:: return
+^#Right:: return
+^#F4:: return
 ^!#Escape:: WinClose "A"
 ^!#f:: {
     h := WinGetID("A")
@@ -195,6 +233,7 @@ AltDrag(mode) {
     }
     btn := mode = "move" ? "LButton" : "RButton"
     SetWinDelay -1
+    mon0 := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
     while GetKeyState(btn, "P") {
         MouseGetPos &cx, &cy
         dx := cx - mx, dy := cy - my
@@ -210,6 +249,10 @@ AltDrag(mode) {
         }
         Sleep 8
     }
+    ; Crossing to a monitor with another DPI (main 150 %, vertical 125 %) makes the
+    ; app rescale itself, usually huge. Put the pre-drag physical size back.
+    if (mode = "move" && DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr") != mon0)
+        WinMove , , ww, wh, "ahk_id " hwnd
 }
 !LButton:: AltDrag("move")
 !RButton:: AltDrag("resize")
