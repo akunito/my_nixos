@@ -525,7 +525,9 @@ Empty leftovers: `D:\Steam\SteamLibrary`, `C:\Games\steamapps`.
   rendering: invisible, passphrase typed blind. Now `gpgPinentryWslg = true`
   wraps `pinentry-qt` with `DISPLAY=:0` / `WAYLAND_DISPLAY=wayland-0` pinned
   (`system/security/gpg.nix`), so the prompt is a window on the Windows desktop
-  and the answer is cached 8 h (`default-cache-ttl-ssh`). The same wrapper falls
+  and the answer is cached for 400 days (`gpgCacheTtlSeconds` / `gpgMaxCacheTtlSeconds`
+  = 34560000): one prompt per WSL boot, since the cache lives in the agent's memory
+  and dies with `wsl --shutdown` or a Windows reboot. The same wrapper falls
   back to pinentry-curses when the WSLg X socket is missing. Sudo without a TTY
   goes the same way: `sudoAskpassEnable` (zenity via WSLg), and
   `sshAgentSudoEnable` signs with the now-unlockable agent key. claude-sync is

@@ -25,6 +25,8 @@ in
     # === WSL ===
     wslWindowsUser = "diego"; # the Windows account on WINAKU -> C:\Users\diego, /mnt/c/Users/diego
     gpgPinentryCurses = false;
+    gpgCacheTtlSeconds = 34560000; # 400 d: ask the ssh passphrase once per WSL boot (2026-09-16)
+    gpgMaxCacheTtlSeconds = 34560000;
     gpgPinentryWslg = true; # pinentry-qt window through WSLg (2026-09-16); curses drew the ssh passphrase prompt over Claude Code's TUI, typed blind
 
     # === Security ===

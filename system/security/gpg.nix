@@ -32,17 +32,21 @@
         ''
       else pkgs.pinentry-qt;
 
-    settings = {
-      # Cache the password for 8 hours (28800 seconds) of inactivity
-      default-cache-ttl = 28800;
-      
-      # Allow the password to be cached for a maximum of 24 hours (86400 seconds) 
-      # regardless of activity, before forcing a re-entry.
-      max-cache-ttl = 86400;
-      
-      # Optional: Apply specific limits to SSH keys if different from GPG keys
-      default-cache-ttl-ssh = 28800;
-      max-cache-ttl-ssh = 86400;
+    settings = let
+      # Defaults: 8 h of inactivity, 24 h hard cap. Per-profile overrides via
+      # gpgCacheTtlSeconds / gpgMaxCacheTtlSeconds (DESK_W11 uses 400 days so the
+      # ssh passphrase is asked once per WSL boot — the cache lives in the agent's
+      # memory, so a `wsl --shutdown` or a Windows reboot always empties it).
+      ttl = systemSettings.gpgCacheTtlSeconds or 28800;
+      maxTtl = systemSettings.gpgMaxCacheTtlSeconds or 86400;
+    in {
+      # Time a cache entry stays valid since its last use
+      default-cache-ttl = ttl;
+      # Hard cap regardless of use, before forcing a re-entry
+      max-cache-ttl = maxTtl;
+      # Same limits for the ssh keys held by the agent
+      default-cache-ttl-ssh = ttl;
+      max-cache-ttl-ssh = maxTtl;
     };
   };
 }
