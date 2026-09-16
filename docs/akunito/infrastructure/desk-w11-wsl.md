@@ -126,6 +126,22 @@ terminal breaks on the rendered line wraps, so:
   PowerShell prompt: PSReadLine reads ESC as RevertLine, so Shift+Enter there
   clears the line instead of adding one.
 
+### Smart App Control is OFF (2026-09-16)
+
+Windows 11 shipped with Smart App Control in *evaluation* mode and switched
+itself to *on* (`HKLM\SYSTEM\CurrentControlSet\Control\CI\Policy`:
+`VerifiedAndReputablePolicyState` 2 -> 1, `SAC_EnforcementReason` 1). From then
+on it blocked `AutoHotkey64_UIA.exe` ("An Application Control policy has blocked
+this file", CodeIntegrity events 3077/3033: signature present but not at the
+"Enterprise signing level"), which killed every reload of `hyper-desktops.ahk`;
+the unsigned plain `AutoHotkey64.exe` was still allowed (reputation), and was
+used as a bridge for a few minutes. Turned OFF by hand (Windows Security > App &
+browser control > Smart App Control settings > Off); the switch is one-way — it
+cannot be re-enabled without reinstalling Windows. Accepted on purpose: this box
+runs AutoHotkey UIA, Windhawk (injects into explorer), GlazeWM, Zebar and an
+unsigned ShareX. A fresh install of DESK_W11 must repeat this before the desktop
+tooling is trusted (bootstrap step 3 below).
+
 ## Files in the repo
 
 - `profiles/DESK_W11-config.nix` — flag sheet (hostname `nixosw11aku`, `envProfile = "DESK_W11"`, `wslWindowsUser`)
