@@ -126,6 +126,33 @@ terminal breaks on the rendered line wraps, so:
   PowerShell prompt: PSReadLine reads ESC as RevertLine, so Shift+Enter there
   clears the line instead of adding one.
 
+### GlazeWM is a patched fork build (2026-09-16)
+
+Stock GlazeWM re-stacks EVERY floating window of the workspace by its own focus
+history on each focus change (`windows_to_bring_to_front` in
+`packages/wm/src/commands/general/platform_sync.rs`): clicking one of four
+windows moved others. No config option exists. Installed instead: fork
+`akunito/glazewm`, branch `floating-keep-zorder-nouia` (v3.10.1 + a 3-line
+filter that raises only the focused floating window + CI fixes), version
+**3.10.2**, built by the fork's `package.yaml` workflow (workflow_dispatch on
+GitHub Actions, no local toolchain) and installed from its `installer-x64.msi`
+(copy in `~/Nextcloud/backups/w11-bootstrap/`). `winget pin add --id
+glzr-io.glazewm` keeps upgrades from replacing it; unpin, uninstall with
+winget/msiexec and reinstall stock to go back. Built **without `ui_access`**:
+an unsigned binary with `uiAccess="true"` refuses to start ("A referral was
+returned from the server"), so this build does not manage elevated windows;
+signing it locally (`%TEMP%\sign-glazewm.ps1`, self-signed root) would restore
+that. To update: rebase the branch on the new tag, run the workflow, download
+the artifact, swap with the MSI (exit GlazeWM first; uninstall the previous
+version with its own MSI before installing, or Windows Installer leaves an empty
+Program Files dir — happened 2026-09-16, fixed with `msiexec /fa`).
+
+Pitfall: a Windows process spawned from WSL (`pwsh.exe` via interop) does NOT
+see user environment variables set after WSL started, so `glazewm.exe start`
+launched that way loads the default config (`shell-exec zebar` dialog, workspaces
+1-9). Set `$env:GLAZEWM_CONFIG_PATH` from `HKCU:\Environment` in the launching
+shell, or restart WSL.
+
 ### Smart App Control is OFF (2026-09-16)
 
 Windows 11 shipped with Smart App Control in *evaluation* mode and switched
