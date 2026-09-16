@@ -609,6 +609,7 @@
     # === WSL (profile "wsl": NixOS-WSL inside Windows) ===
     wslWindowsUser = ""; # Windows account name; /mnt/c/Users/<this>/Nextcloud is bind-mounted at ~/Nextcloud so project paths match DESK
     gpgPinentryCurses = false; # Terminal pinentry instead of pinentry-qt (headless / WSL)
+    gpgPinentryWslg = false; # pinentry-qt as a WSLg window (DISPLAY=:0 pinned; curses fallback when WSLg is absent) — the prompt must never draw into a TTY Claude Code is rendering
     nextcloudSyncFolder = ""; # Path to Nextcloud sync folder (e.g., "/home/user/Nextcloud")
     githubAccessToken = ""; # GitHub PAT to lift github.com anon rate limit on flake-input fetches (set from secrets/domains.nix in profiles; empty = anonymous, no secrets needed)
     jellyseerrApiKey = ""; # Jellyseerr API key for MCP server (set from secrets/domains.nix in profiles)

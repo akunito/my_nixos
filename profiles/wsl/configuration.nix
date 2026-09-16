@@ -15,7 +15,7 @@ in
     ../../system/shell/env-profile.nix # ENV_PROFILE=DESK_W11
     ../../system/hardware/systemd.nix # journald limits
     ../../system/security/sudo.nix
-    ../../system/security/gpg.nix # gpg-agent as ssh agent (pinentry-curses via gpgPinentryCurses)
+    ../../system/security/gpg.nix # gpg-agent as ssh agent (pinentry-qt as a WSLg window via gpgPinentryWslg)
     ../../system/security/firewall.nix
     ../../system/security/nix-access-token.nix # GitHub PAT → per-user nix.conf
     ../../system/security/restic.nix # restic wrapper + home_backup timer (self-gated on homeBackupEnable)

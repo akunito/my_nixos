@@ -25,7 +25,7 @@ same shortcuts. Decisions below come from the 2026-09-13 interview.
 | Nextcloud | Nextcloud Desktop → `C:\Users\<you>\Nextcloud` | bind-mounted at `~/Nextcloud` (Journal memory key matches DESK) |
 | NAS | `\\wsl$\NixOS\mnt\NFS_*` in Explorer | NFS 4.2 automounts `/mnt/NFS_media`, `NFS_Backups`, `NFS_downloads` like DESK |
 | NTFS data drives (DATA, DATA_SATA3) | native drive letters | `/mnt/d`, `/mnt/e` via WSL automount |
-| SSH to VPS / NAS / pfSense / X13 | – | `~/.ssh/config` managed (`sshHostsManaged`), gpg-agent as ssh agent, pinentry-curses |
+| SSH to VPS / NAS / pfSense / X13 | – | `~/.ssh/config` managed (`sshHostsManaged`), gpg-agent as ssh agent, **pinentry-qt as a WSLg window** (`gpgPinentryWslg`) |
 | Git, git-crypt, dotfiles | VS Code (Remote-WSL) | the repo, `install.sh DESK_W11 -s -h -d` |
 | Claude Code | native install: bootstrap + elevated (admin) tasks only | the real one, from tmux: `claude` wrapper, claude-sync identity `DESK_W11`, `ENV_PROFILE=DESK_W11`; drives Windows through interop (`pwsh.exe`, `winget.exe`) |
 | Docker | – | native `virtualisation.docker` (rootful), no Docker Desktop |
@@ -517,8 +517,18 @@ Empty leftovers: `D:\Steam\SteamLibrary`, `C:\Games\steamapps`.
   be reached through the pfSense subnet router, which SNATs every client to
   `192.168.20.1` — authorising that would open the export to anything routing
   through pfSense. Going node-to-node keeps the real source (`100.64.0.15`).
-- **After `wsl --shutdown`, the first agent-backed `ssh` needs a terminal**:
-  `SSH_AUTH_SOCK` is gpg-agent's, and with `gpgPinentryCurses` it needs a TTY to
-  re-unlock, so non-interactive calls fail with *"agent refused operation"*.
-  `ssh -o IdentityAgent=none` works meanwhile. claude-sync is unaffected — it uses
-  its own key in `~/.config/claude-sync/key`.
+- **Passphrase prompts are WSLg windows, never TTY prompts** (2026-09-16).
+  `SSH_AUTH_SOCK` is gpg-agent's; the agent runs as a user service with no
+  `DISPLAY`, and the ssh protocol carries no tty, so with `gpgPinentryCurses` the
+  prompt for an `ssh` started by a non-TTY process (Claude Code's Bash tool, a
+  deploy to the VPS/NAS) was drawn into `GPG_TTY` = the pane Claude Code was
+  rendering: invisible, passphrase typed blind. Now `gpgPinentryWslg = true`
+  wraps `pinentry-qt` with `DISPLAY=:0` / `WAYLAND_DISPLAY=wayland-0` pinned
+  (`system/security/gpg.nix`), so the prompt is a window on the Windows desktop
+  and the answer is cached 8 h (`default-cache-ttl-ssh`). The same wrapper falls
+  back to pinentry-curses when the WSLg X socket is missing. Sudo without a TTY
+  goes the same way: `sudoAskpassEnable` (zenity via WSLg), and
+  `sshAgentSudoEnable` signs with the now-unlockable agent key. claude-sync is
+  unaffected — it uses its own key in `~/.config/claude-sync/key`.
+  After a config change to the agent: `gpgconf --kill gpg-agent` (socket-activated,
+  restarts on the next use).

@@ -24,14 +24,16 @@ in
 
     # === WSL ===
     wslWindowsUser = "diego"; # the Windows account on WINAKU -> C:\Users\diego, /mnt/c/Users/diego
-    gpgPinentryCurses = true; # terminal pinentry, no Qt
+    gpgPinentryCurses = false;
+    gpgPinentryWslg = true; # pinentry-qt window through WSLg (2026-09-16); curses drew the ssh passphrase prompt over Claude Code's TUI, typed blind
 
     # === Security ===
     fuseAllowOther = false;
     doasEnable = false;
     wrappSudoToDoas = false;
     sudoNOPASSWD = false;
-    sudoAskpassEnable = false; # no GUI askpass
+    sudoAskpassEnable = true; # zenity through WSLg for non-TTY sudo (Claude Code), like DESK
+    sudoTimestampTimeoutMinutes = 180; # global ticket, like DESK: one interactive `sudo true` primes every pane
     # Passwordless sudo through a key held by an ssh-agent, same pattern as
     # NAS_PROD and VPS_PROD. Here the agent is local rather than forwarded, so
     # this machine's own key has to be in authorizedKeys below for
