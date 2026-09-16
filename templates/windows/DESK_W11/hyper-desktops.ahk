@@ -69,6 +69,44 @@ DumpGlazeMonitors() {
 ; changes outside our gestures (a size storm shows up here with its own
 ; timing) and DWM cloak/uncloak (what GlazeWM does to hide a window).
 MonName(hwnd) => DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr") = PrimaryMon() ? "main" : "vertical"
+; Z-order of the visible top-level windows, top first ("*" marks the focused
+; one), for diagnosing re-stacking: GlazeWM re-applies z-order on focus, so a
+; click on one window can move several. Owned, cloaked, caption-less and
+; shell/bar windows are skipped; first 12 only.
+ZOrderLine(focusHwnd) {
+    DetectHiddenWindows true
+    buf := Buffer(4, 0)
+    zlist := []
+    h := DllCall("GetTopWindow", "Ptr", 0, "Ptr")
+    while (h && zlist.Length < 12) {
+        cur := h
+        h := DllCall("GetWindow", "Ptr", cur, "UInt", 2, "Ptr")          ; GW_HWNDNEXT
+        try {
+            if (!DllCall("IsWindowVisible", "Ptr", cur)
+                || !(WinGetStyle("ahk_id " cur) & 0xC00000)              ; no caption
+                || DllCall("GetWindow", "Ptr", cur, "UInt", 4, "Ptr"))   ; GW_OWNER: owned
+                continue
+            NumPut("UInt", 0, buf)
+            DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", cur, "UInt", 14, "Ptr", buf, "UInt", 4)
+            if NumGet(buf, 0, "UInt")                                    ; DWMWA_CLOAKED
+                continue
+            zexe := WinGetProcessName("ahk_id " cur)
+            if (zexe = "AutoHotkey64_UIA.exe" || zexe = "zebar.exe")
+                continue
+            if (zexe = "explorer.exe") {
+                zcls := WinGetClass("ahk_id " cur)
+                if (zcls = "Progman" || zcls = "WorkerW" || zcls = "Shell_TrayWnd")
+                    continue
+            }
+            zlist.Push(StrReplace(zexe, ".exe") "(" cur ")" (cur = focusHwnd ? "*" : ""))
+        } catch
+            continue
+    }
+    zline := ""
+    for zi, ztxt in zlist
+        zline .= (zi > 1 ? " > " : "") ztxt
+    return zline
+}
 WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
     global altDragExp
     static state := Map()
@@ -83,6 +121,8 @@ WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
             return
         if (ev = 0x3) {
             Dbg(Format("focus -> {1} '{2}' hwnd {3} {4}", exe, SubStr(WinGetTitle("ahk_id " hwnd), 1, 40), hwnd, MonName(hwnd)))
+            Dbg("zorder now: " ZOrderLine(hwnd))
+            SetTimer(() => Dbg("zorder +150ms: " ZOrderLine(hwnd)), -150)   ; after GlazeWM reacts
             return
         }
         if (ev = 0x8017 || ev = 0x8018) {
