@@ -49,7 +49,7 @@ let
   # Generate a vhost for each service
   # Optional per-service attrs: https (bool), basicAuthFile (path),
   #                             maxBodySize (str), denyPaths (list of str),
-  #                             root (path)
+  #                             root (path), publicPort (int)
   #
   # denyPaths returns 403 for a path prefix on the Tailscale vhost only, so a
   # sensitive path stays reachable exclusively through the public Cloudflare
@@ -60,7 +60,36 @@ let
   # immutable and versioned with the flake. `port` is then unused. Content only
   # changes on rebuild — that is the trade for not having a mutable directory
   # on the host. See docs/guides/README.md.
-  mkVhost = name: cfg: {
+  #
+  # publicPort additionally serves the SAME content over plain HTTP on
+  # 127.0.0.1:<publicPort>, as a second vhost named "<name>-public". That is the
+  # origin a remotely-managed Cloudflare Tunnel points at (cloudflared runs on
+  # this host, see system/app/cloudflared.nix), so the site is published on a
+  # real public hostname while the Tailscale vhost above keeps serving it inside
+  # the tailnet. Deliberately no TLS, no ACME and no basic auth: the hop is
+  # loopback-only and cloudflared terminates TLS. Only `root` services support
+  # it — a proxy already has a port of its own to point the tunnel at.
+  mkPublicVhost = name: cfg:
+    lib.optionalAttrs ((cfg ? publicPort) && (cfg ? root)) {
+      "${name}-public" = {
+        # `listen` (not listenAddresses) because the port must be pinned too.
+        listen = [ { addr = "127.0.0.1"; port = cfg.publicPort; ssl = false; } ];
+        forceSSL = false;
+        enableACME = false;
+        default = true; # the only vhost on this port, so name it the default
+        extraConfig = lib.optionalString ((cfg.maxBodySize or "") != "") ''
+          client_max_body_size ${cfg.maxBodySize};
+        '';
+        locations."/" = {
+          root = cfg.root;
+          extraConfig = ''
+            index index.html;
+          '';
+        };
+      };
+    };
+
+  mkVhost = name: cfg: (mkPublicVhost name cfg) // {
     "${name}.${wildcardLocal}" = {
       listenAddresses = [ listenAddr ];
       forceSSL = true;

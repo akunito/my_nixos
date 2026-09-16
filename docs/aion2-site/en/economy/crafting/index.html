@@ -1,0 +1,315 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Crafting, gathering and Supply Requests | Aion 2 Guides</title><link rel="canonical" href="https://aion2.akunito.com/en/economy/crafting/"/><link rel="alternate" hreflang="es" href="https://aion2.akunito.com/es/economy/crafting/"/><link rel="alternate" hreflang="en" href="https://aion2.akunito.com/en/economy/crafting/"/><link rel="alternate" hreflang="x-default" href="https://aion2.akunito.com/es/economy/crafting/"/><link rel="sitemap" href="/sitemap-index.xml"/><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.2"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="Crafting, gathering and Supply Requests"/><meta property="og:type" content="article"/><meta property="og:url" content="https://aion2.akunito.com/en/economy/crafting/"/><meta property="og:locale" content="en"/><meta property="og:description" content="Why crafted gear is PvE best-in-slot, the 25% chain, the five professions, Substance Morph, and the Supply Requests that pay Abyss Points outside the weekly cap."/><meta property="og:site_name" content="Aion 2 Guides"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="Why crafted gear is PvE best-in-slot, the 25% chain, the five professions, Substance Morph, and the Supply Requests that pay Abyss Points outside the weekly cap."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.bjjfGofR.css"><style>@layer starlight.components{.card:where(.astro-oag6qnet){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-oag6qnet):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-oag6qnet):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-oag6qnet):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-oag6qnet):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-oag6qnet){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-oag6qnet) .icon:where(.astro-oag6qnet){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-oag6qnet) .body:where(.astro-oag6qnet){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Skip to content</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/en/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Aion 2 Guides</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancel</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/economy/crafting/" class="astro-2z5xp7gb">Español</option><option value="/en/economy/crafting/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Main"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menu</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="02b7e8e" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Getting started</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/start/launch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Launch, servers and what to buy</span></a></li><li class="astro-rmhv4bp6"><a href="/en/start/settings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Settings, controls and ping</span></a></li><li class="astro-rmhv4bp6"><a href="/en/start/krtw-playtest-anticheat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Playing on KR/TW, the playtest and the anti-cheat</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Classes</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/classes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Overview</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-vs-cleric/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar vs Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar in PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar in PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric in PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric in PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Progression</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/progression/leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Leveling 1-45 and the first days</span></a></li><li class="astro-rmhv4bp6"><a href="/en/progression/routine/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daily and weekly routine</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Systems</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/systems/stigma/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/daevanion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daevanion</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/gear/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gear</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stats and combat formulas</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/character-systems/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Character systems: pets, Genus Insight, the Closet and titles</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/macros-combat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Combat, macros, targeting and controls</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvE</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/pve/dungeons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Dungeons and raids</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvP</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/pvp/abyss/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The Abyss and Abyss Points</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pvp/siege-legion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sieges, artifacts and the legion</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pvp/arena/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Arenas and battlefield</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Economy and routine</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/economy/monetization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Monetization, Kinah and budget</span></a></li><li class="astro-rmhv4bp6"><a href="/en/economy/crafting/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Crafting, gathering and Supply Requests</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Versions</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/versions/regions-and-patches/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Versions and regions</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Reference</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/reference/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glossary</span></a></li><li class="astro-rmhv4bp6"><a href="/en/reference/sources/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sources and method</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/economy/crafting/" class="astro-2z5xp7gb">Español</option><option value="/en/economy/crafting/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">On this page<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#summary" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Summary</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-it-works" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How it works</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#data" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Data</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#supply-requests-out-of-cap-ap" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Supply Requests (out-of-cap AP)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#market-economics-krtw-indicative" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Market economics (KR/TW, indicative)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#plan" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Plan</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#mistakes-and-traps" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Mistakes and traps</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#open-questions" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Open questions</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#main-sources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Main sources</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#summary" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Summary</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-it-works" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How it works</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#data" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Data</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#supply-requests-out-of-cap-ap" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Supply Requests (out-of-cap AP)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#market-economics-krtw-indicative" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Market economics (KR/TW, indicative)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#plan" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Plan</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#mistakes-and-traps" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Mistakes and traps</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#open-questions" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Open questions</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#main-sources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Main sources</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="en" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Crafting, gathering and Supply Requests</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><div class="meta-box"><b>Region:</b> Korea and Taiwan · <b>Version:</b> up to 2026-09-15 · <b>Reviewed:</b> 2026-09-16 · <b>Confidence:</b> medium. The mechanics are well cross-checked; no Kinah figure is from Global and nobody knows whether Global ships the Season 3 rework.</div>
+<div class="sl-heading-wrapper level-h2"><h2 id="summary">Summary</h2><a class="sl-anchor-link" href="#summary"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Summary”</span></a></div>
+<ul>
+<li><strong>Crafting is not a side hobby: crafted gear is PvE best-in-slot.</strong> A crafted piece carries ~+5% PvE damage over the same-tier dungeon drop, more stat-slot flexibility and an extra soulbind line. The crafted weapon also beats the PvP-shop weapon with a fifth soulbind line and harder item-level scaling.</li>
+<li><strong>But you do not craft it yourself on day one.</strong> The realistic casual path: level the <em>cheap</em> professions, sell into the Market, and <strong>buy</strong> the expensive pieces later. Trying to build a full set from raw materials bankrupts your Kinah.</li>
+<li><strong>Global S1 has no Heroic</strong>, from dungeons or crafting. Every KR guide about Dragon Lord, Rudra, Horn Dragon and Magical Breath describes content you will not see at launch. Unique is the ceiling, and the chain is shorter and much cheaper than any Korean video shows.</li>
+<li><strong>The single most valuable thing crafting does for a PvP player is Supply Requests.</strong> You hand in crafted items for Abyss Points and that AP <strong>does not count against the weekly cap</strong>. A white delivery is 1,500 AP; two blue swords were 9,000.</li>
+<li><strong>Gathering is a one-hour investment, not a grind.</strong> Maxing the extraction line took ~1 h on KR. Do it while questing at low level; the same nodes cost ten times as much at 45 with everyone on them.</li>
+<li><strong>Two professions to start: Alchemy and Cooking.</strong> They make what every player burns daily (potions, scrolls, manastones, 5-minute food). As a Templar or Cleric, Blacksmithing is your weapon profession (longsword + shield and mace both come from it) and <strong>Handicrafting makes your accessories</strong>: the ring is the one accessory whose crafted version can roll <em>active skills</em>.</li>
+<li><strong>The core mechanic is a 25% proc that chains.</strong> Craft white → 25% it comes out green; if not, the white is the material for the next attempt. Each roll is independent: 25% does not mean one in four.</li>
+<li><strong>Do not spend playtest hours on crafting.</strong> Cap 37, everything wiped.</li>
+<li><strong>Two things print Kinah with almost no effort:</strong> Alchemy manastone conversion (buy raw stones on the Market, craft in 999 batches, resell at 30-50% margin after tax) and crafting at the <strong>town NPC</strong>, which is free, instead of the crafting menu, which charges Kinah per item.</li>
+<li><strong>Membership gates the Market, not crafting.</strong> Without it, crafting is self-supply only and the whole flip economy is closed.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="how-it-works">How it works</h2><a class="sl-anchor-link" href="#how-it-works"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “How it works”</span></a></div>
+<ul>
+<li><strong>Two life skills are live:</strong> Crafting and Essence Extraction (gathering). Fishing, naval content and Housing are announced and unreleased as of 2026-07.</li>
+<li><strong>Five professions with fixed outputs:</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Profession</th>
+<th>Makes</th>
+<th>For you</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blacksmithing</td>
+<td>Greatsword, Longsword, Shield, Dagger, Mace, Fist, Guard</td>
+<td><strong>Templar longsword + shield, Cleric mace, and the Guard every class wears</strong></td>
+</tr>
+<tr>
+<td>Armorsmithing</td>
+<td>Helm, pauldrons, chest, leggings, gloves, shoes, cloak</td>
+<td>class-agnostic</td>
+</tr>
+<tr>
+<td>Handicrafting</td>
+<td>Longbow, Chanter staff, <strong>necklace, earring, ring, bracelet, brooch</strong></td>
+<td><strong>accessories: the hardest slots to drop and the highest Market value</strong></td>
+</tr>
+<tr>
+<td>Alchemy</td>
+<td>Spellbook, Orb, manastones, spirit stones, potions, scrolls</td>
+<td><strong>the Kinah engine and the consumable supply</strong></td>
+</tr>
+<tr>
+<td>Cooking</td>
+<td>food and drink, 5-minute buffs</td>
+<td>stamina-regen food is called mandatory on bosses</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Levels:</strong> Novice 1→50, promotion quest, Professional 1→50 (70 in KR S3). Do the promotion quest the moment it appears: XP past the cap is wasted. Cooking’s needs 10 fresh raw meat + 6 fresh fruit with very low drop rates; people get stuck at Novice 50.</li>
+<li><strong>Gathering</strong> has three allocatable stats (Proficiency Handling raises the success gauge, Delicate Touch slows the failure gauge, Lady Luck gives large jumps) and per-resource branches: name on the minimap → 2× yield → a chance to upgrade material quality. Points respec. XP comes per <em>successful</em> gather; failure gives nothing.</li>
+<li><strong>Odal</strong> (Ode, Odel) is the universal material, gathered on the ground and <strong>in mid-air while flying</strong> (costs flight stamina; carry Alchemy Wind Serums). After a dungeon boss kill you gather a fixed 6 Ode.</li>
+<li><strong>Crafting and gathering share the success/fail gauge:</strong> two meters race; a “luminous” bonus exists. Attempting a recipe above your level carries heavy hidden penalties or is blocked.</li>
+<li><strong>The 25% chain:</strong> white → green → blue → yellow/gold → (heroic, KR only). The non-proc is the material for the next attempt. On consumables the same roll doubles output.</li>
+<li><strong>Substance Morph (Material Conversion) is a separate system</strong> with no failure roll: it converts a grade of Odal or bound and duplicate drops into other materials at 100% and no Kinah. It makes Ode Energy (extra cube entries), wings from dungeon feathers, Daevanion crystals, medals from fragments, and belt and amulet upgrades. Instant but with no quality-upgrade chance; manual gathering has one.</li>
+<li><strong>Bound items are why crafting is near-mandatory:</strong> converting them via Alchemy or Morph produces a <strong>tradeable</strong> output even when the input was not.</li>
+<li><strong>Where you craft changes the cost:</strong> the menu or a field station charges Kinah per item (300 per Orichalcum Ingot); the town NPC is free. You need not stand at a station to queue.</li>
+<li><strong>It runs semi-AFK:</strong> 5-10 s per item; 999 units per action for consumables (10 for bulk gear); Escape stops after the current item with no loss.</li>
+<li><strong>Supply Requests:</strong> four tiers (Urgent daily, Weekly with Wednesday 05:00 reset, Season Crafting over ~2 months, Season Boss). The list is identical for everyone, so crafting into it is a reliable sale, and the AP is out of cap.</li>
+<li><strong>Crafted gear replacement order:</strong> weapon → guard → accessories → armor. The usual endgame mixes crafted offence (weapon, guard, accessories) with enhanced dungeon armour.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="data">Data</h2><a class="sl-anchor-link" href="#data"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Data”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Value</th>
+<th>Region</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tier-upgrade proc</td>
+<td>25% per attempt, independent</td>
+<td>KR/TW all seasons</td>
+</tr>
+<tr>
+<td>Consumable bonus</td>
+<td>~20-25% by item</td>
+<td>KR/TW 2026-09</td>
+</tr>
+<tr>
+<td>Time to max gathering</td>
+<td>~1 h (30 min for the promotion)</td>
+<td>KR 2025-11</td>
+</tr>
+<tr>
+<td>Attempts per node</td>
+<td>3</td>
+<td>KR/TW 2025-12</td>
+</tr>
+<tr>
+<td>Gathering respec</td>
+<td>50,000</td>
+<td>KR/TW 2025-12</td>
+</tr>
+<tr>
+<td>Food and scroll buff duration</td>
+<td>5 min</td>
+<td>all</td>
+</tr>
+<tr>
+<td>Town NPC cost</td>
+<td>free (300 Kinah per item in the menu)</td>
+<td>KR 2025-11/12</td>
+</tr>
+<tr>
+<td>Ode Energy via conversion</td>
+<td>40 per craft, ~7 a week, ~50k Kinah each; weekly reset 05:00</td>
+<td>KR 2025-11/12</td>
+</tr>
+<tr>
+<td>Wings via conversion</td>
+<td>50 feathers per dungeon wing, 100%, tradeable</td>
+<td>TW/KR</td>
+</tr>
+<tr>
+<td>Medal via Morph</td>
+<td>20 fragments + 100k Kinah → 1 silver at 10%, max 10 a week</td>
+<td>KR 2026-02</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="supply-requests-out-of-cap-ap">Supply Requests (out-of-cap AP)</h3><a class="sl-anchor-link" href="#supply-requests-out-of-cap-ap"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Supply Requests (out-of-cap AP)”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Turn-in</th>
+<th>AP</th>
+<th>Region</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>White craft</td>
+<td>1,500 each</td>
+<td>TW 2026-09</td>
+</tr>
+<tr>
+<td>5 low-grade soul stone</td>
+<td>290</td>
+<td>KR 2025-11</td>
+</tr>
+<tr>
+<td>3 Artisan’s refining stone</td>
+<td>1,280</td>
+<td>KR 2025-11</td>
+</tr>
+<tr>
+<td>5× the same weapon (repeatable)</td>
+<td>1,230</td>
+<td>KR 2025-11</td>
+</tr>
+<tr>
+<td>2 blue swords (season crafting)</td>
+<td>9,000</td>
+<td>TW 2026-09</td>
+</tr>
+<tr>
+<td>Yellow turn-ins</td>
+<td>35-39k tokens</td>
+<td>TW 2025-11</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="market-economics-krtw-indicative">Market economics (KR/TW, indicative)</h3><a class="sl-anchor-link" href="#market-economics-krtw-indicative"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Market economics (KR/TW, indicative)”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alchemy manastone flip</td>
+<td>30% minimum, ~50% optimistic, after tax; raw stone ~374 (300-350 with patience); 2,000 raw → 1,400 normal + 343 superior</td>
+</tr>
+<tr>
+<td>Wind Serum</td>
+<td>~4,000-6,500 Kinah</td>
+</tr>
+<tr>
+<td>Blue brooch (Handicrafting 40, guaranteed)</td>
+<td>3M Kinah + materials</td>
+</tr>
+<tr>
+<td>Unique Arcana</td>
+<td>5 Mysterious Crystals + 2M (2025-12) / 5M (2026-08)</td>
+</tr>
+<tr>
+<td>Dungeon wings → enhancement stones</td>
+<td>~80k per Unique pair</td>
+</tr>
+<tr>
+<td>Legion hall rental (condenses crafting benches)</td>
+<td>1M Kinah a month</td>
+</tr>
+</tbody>
+</table>
+<aside aria-label="Contested or changed by patch" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"/></svg>Contested or changed by patch</p><div class="starlight-aside__content"><p><strong>Whether a failed craft destroys materials: the biggest change in the system’s history.</strong> In KR S1-S2 a high-tier failure deleted everything (one creator lost ~300M Kinah in one click). From KR <strong>Season 3</strong> a failure <strong>downgrades to a guaranteed lower-tier result</strong> that can be pushed up with flat Kinah, and Transfer Crafting (계승 제작) carries enhancement, breakthrough and soulbinds across; the piece binds to the crafter. Nobody confirms Global S1 ships this version: <strong>check in the playtest</strong> by opening a gear recipe and reading whether the failure text says “materials lost” or “downgraded”. Heroic and its whole chain (Magical Breath 5 per server per season, cores 1/2/3/4, 50-100M buy-outs) do not apply on Global. KR moved Ode and special-shop limits from per character to per server. Crafting one at a time gives more XP; batching is more time-efficient.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="plan">Plan</h2><a class="sl-anchor-link" href="#plan"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Plan”</span></a></div>
+<p><strong>Playtest 09-17/18:</strong> nothing.</p>
+<p><strong>Global S1, week 1 (levels 1-45).</strong></p>
+<ol>
+<li>Gather opportunistically while questing, never in a dedicated session. Push the gathering line to at least rank 5 early.</li>
+<li>Gathering points: general skills first (map overlay, 2× yield, the appraiser reroll), then Ore before Herb.</li>
+<li>Start Alchemy and Cooking: stamina food, accuracy food, flight potions, Wind Serums for rifts.</li>
+<li>Promotion quest the moment it appears, in each line.</li>
+<li>Hoard, do not vendor: one storage tab for shards and odd materials.</li>
+<li>Craft only white for Supply Requests: 1,500 out-of-cap AP per delivery is worth more than any week-one gear craft.</li>
+</ol>
+<p><strong>Level 45+, PvE gearing (no Heroic).</strong> Order weapon → guard → accessories → armor. Handicrafting to 40 and the blue brooch (3M, guaranteed, two can be made), enhance to +11 and socket. To level Handicrafting cheaply, spam the level-1 craft overnight with Market spirit stones. Prefer a <strong>crafted ring</strong> (active skills); earrings and necklace only passives. Buy the base off the Market if short on time. Keep duplicate dungeon pieces for Morph and the “Potential” track. <strong>Do not chase the top crafted tier</strong>: poor Kinah-per-power.</p>
+<p><strong>Kinah loop (needs membership).</strong> Manastone conversion in 999 batches; price-check before every bulk craft; PvP manastones and soul stones craft from AP and often sell above PvE ones; Artisan gear is cheap and is an input to Balic crafting; craft at the town NPC; check the delivery board before selling.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="mistakes-and-traps">Mistakes and traps</h2><a class="sl-anchor-link" href="#mistakes-and-traps"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Mistakes and traps”</span></a></div>
+<ul>
+<li>Selling or dismantling an intermediate item: the green you just made <em>is</em> the material for the blue attempt.</li>
+<li>Attempting a recipe above your level.</li>
+<li>Equipping a craft you meant to sell: permanent soulbind. Check the broker icon first.</li>
+<li>Crafting in volume from the menu instead of the NPC.</li>
+<li>Vendoring unidentified shards in week 1.</li>
+<li>Dismantling an item a Supply Request wanted.</li>
+<li>Morphing with the belt or amulet equipped: the equipped one gets consumed. Take them off.</li>
+<li>Letting Ode Energy overflow the weekly cap: the excess is destroyed.</li>
+<li>Skipping the promotion quest.</li>
+<li>Treating 25% as “one in four”. Budget for the tail, not the average.</li>
+<li>Buying all materials in one click: buying across the day moved raw stones from ~374 to ~300-350.</li>
+<li>Dedicated farming sessions.</li>
+<li>Expecting alts to multiply crafting: KR limited it per server.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="open-questions">Open questions</h2><a class="sl-anchor-link" href="#open-questions"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Open questions”</span></a></div>
+<p>Whether Global S1 ships the Season 3 rework (downgrade, buy-out, Transfer Crafting, Professional cap 70). What the actual Global chain is without Heroic. Whether Supply Requests exist on Global, at what values, and whether the out-of-cap rule survives: the most decision-relevant unknown for a PvP player. No Kinah figure is from Global. Market fee and limits are undocumented in every source. No consumable is known to raise base success. Promotion quest names and places are mistranscribed across three sources.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="main-sources">Main sources</h2><a class="sl-anchor-link" href="#main-sources"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Main sources”</span></a></div>
+<p><code dir="auto">pBIMmfSBScU</code>, <code dir="auto">VMgxMG6LdV4</code>, <code dir="auto">G3dQXf-TiVI</code>, <code dir="auto">lyiiolzxYjY</code>, <code dir="auto">V2oYC8ZhMM4</code>, <code dir="auto">aC6PC9HPBxI</code>, <code dir="auto">3rI64z6N5SI</code>, <code dir="auto">WxtWVsWGocs</code>, <code dir="auto">IRMFnzgm9j8</code>, <code dir="auto">GcUSdRZoT3A</code>, <code dir="auto">g2AoP299Jn0</code>, <code dir="auto">uX3giH_nJuI</code>, <code dir="auto">3Qo7dKLMVxY</code>, <code dir="auto">xbZnOdT90-c</code>, <code dir="auto">vwXdOWQDlno</code>, <code dir="auto">0uVidnMsInQ</code>, <code dir="auto">AZKq0K-6mf4</code>, <code dir="auto">STl27SDzZVY</code>, <code dir="auto">cY4I7b5n2bY</code>, <code dir="auto">SaoYjow_o40</code>, <code dir="auto">t2YfmxJvsas</code>, <code dir="auto">eGO8zTYSBmk</code>, <code dir="auto">QNaqmlEVFHM</code>, <code dir="auto">Tn7WKMXt5Wo</code>, <code dir="auto">TkNQiLpdTek</code>, <code dir="auto">w1YHky6Vnyw</code>, <code dir="auto">7I1J2kYxRiw</code>, <code dir="auto">O-awbiYNNLw</code>, <code dir="auto">DtHNz1nyw1s</code>, <code dir="auto">REnRlSuEsf0</code>, <code dir="auto">cTH6f8EPY8U</code>, <code dir="auto">btl98F4aEOc</code>, <code dir="auto">vJWotao0EEs</code>, <code dir="auto">l3m1OWG6VIs</code>; Namu (content overview); Reddit (F2P 300 h).</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/en/economy/monetization/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Previous<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Monetization, Kinah and budget</span></span></a><a href="/en/versions/regions-and-patches/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Next<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Versions and regions</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

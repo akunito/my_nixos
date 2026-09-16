@@ -1,0 +1,715 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Glossary | Aion 2 Guides</title><link rel="canonical" href="https://aion2.akunito.com/en/reference/glossary/"/><link rel="alternate" hreflang="es" href="https://aion2.akunito.com/es/reference/glossary/"/><link rel="alternate" hreflang="en" href="https://aion2.akunito.com/en/reference/glossary/"/><link rel="alternate" hreflang="x-default" href="https://aion2.akunito.com/es/reference/glossary/"/><link rel="sitemap" href="/sitemap-index.xml"/><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.2"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="Glossary"/><meta property="og:type" content="article"/><meta property="og:url" content="https://aion2.akunito.com/en/reference/glossary/"/><meta property="og:locale" content="en"/><meta property="og:description" content="Every term used across this site, with its Korean original where we could source it, what it means, and which page it matters on."/><meta property="og:site_name" content="Aion 2 Guides"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="Every term used across this site, with its Korean original where we could source it, what it means, and which page it matters on."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.bjjfGofR.css"><style>@layer starlight.components{.card:where(.astro-oag6qnet){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-oag6qnet):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-oag6qnet):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-oag6qnet):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-oag6qnet):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-oag6qnet){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-oag6qnet) .icon:where(.astro-oag6qnet){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-oag6qnet) .body:where(.astro-oag6qnet){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Skip to content</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/en/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Aion 2 Guides</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancel</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/reference/glossary/" class="astro-2z5xp7gb">Español</option><option value="/en/reference/glossary/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Main"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menu</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="02b7e8e" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Getting started</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/start/launch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Launch, servers and what to buy</span></a></li><li class="astro-rmhv4bp6"><a href="/en/start/settings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Settings, controls and ping</span></a></li><li class="astro-rmhv4bp6"><a href="/en/start/krtw-playtest-anticheat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Playing on KR/TW, the playtest and the anti-cheat</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Classes</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/classes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Overview</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-vs-cleric/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar vs Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar in PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar in PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric in PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric in PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Progression</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/progression/leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Leveling 1-45 and the first days</span></a></li><li class="astro-rmhv4bp6"><a href="/en/progression/routine/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daily and weekly routine</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Systems</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/systems/stigma/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/daevanion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daevanion</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/gear/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gear</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stats and combat formulas</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/character-systems/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Character systems: pets, Genus Insight, the Closet and titles</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/macros-combat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Combat, macros, targeting and controls</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvE</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/pve/dungeons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Dungeons and raids</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvP</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/pvp/abyss/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The Abyss and Abyss Points</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pvp/siege-legion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sieges, artifacts and the legion</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pvp/arena/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Arenas and battlefield</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Economy and routine</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/economy/monetization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Monetization, Kinah and budget</span></a></li><li class="astro-rmhv4bp6"><a href="/en/economy/crafting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Crafting, gathering and Supply Requests</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Versions</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/versions/regions-and-patches/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Versions and regions</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Reference</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/reference/glossary/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glossary</span></a></li><li class="astro-rmhv4bp6"><a href="/en/reference/sources/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sources and method</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/reference/glossary/" class="astro-2z5xp7gb">Español</option><option value="/en/reference/glossary/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">On this page<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-to-use-this-page" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How to use this page</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#world-and-factions" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">World and factions</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#currencies-and-resources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Currencies and resources</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#progression-and-gear" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Progression and gear</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#stats-and-combat" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Stats and combat</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#pve-content" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">PvE content</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#pvp" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">PvP</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#economy-and-character-systems" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Economy and character systems</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#classes" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Classes</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#sources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sources</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-to-use-this-page" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How to use this page</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#world-and-factions" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">World and factions</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#currencies-and-resources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Currencies and resources</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#progression-and-gear" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Progression and gear</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#stats-and-combat" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Stats and combat</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#pve-content" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">PvE content</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#pvp" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">PvP</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#economy-and-character-systems" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Economy and character systems</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#classes" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Classes</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#sources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sources</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="en" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Glossary</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><div class="meta-box"><b>Region:</b> mixed (Korean originals from KR/TW material, English names from NCsoft Global) · <b>Version:</b> KR/TW up to 2026-09-15 · <b>Reviewed:</b> 2026-09-16 · <b>Confidence:</b> medium. The English meanings are well attested; several Korean spellings come from auto-captions and are marked where uncertain. Empty Korean cells mean we did not find a source we trust.</div>
+<div class="sl-heading-wrapper level-h2"><h2 id="how-to-use-this-page">How to use this page</h2><a class="sl-anchor-link" href="#how-to-use-this-page"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “How to use this page”</span></a></div>
+<p>The Korean column is here for one reason: almost every useful Aion 2 guide is Korean, and the English names NCsoft uses for Global are not consistent with the Korean ones (the press releases alone call Spiritmaster “Elementalist” and Ranger “Marksman”). Search Korean, read English. If you paste a Korean term into YouTube or Inven you will find the guide; if you search the English name you will find a launch trailer.</p>
+<p>Community shorthand is included where it dominates: Koreans almost never write 어비스 포인트 in a comment, they write 어포. Those short forms are given after a slash.</p>
+<p>A blank Korean cell is deliberate. We would rather leave a gap than invent a hangul spelling, and several terms in this game only ever appear in English on the Global side.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="world-and-factions">World and factions</h2><a class="sl-anchor-link" href="#world-and-factions"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “World and factions”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Korean and other spellings</th>
+<th>Meaning</th>
+<th>Where it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Elyos</td>
+<td>천족</td>
+<td>One of the two player factions, literally “heaven kin”.</td>
+<td><a href="/en/start/launch/">Getting started</a></td>
+</tr>
+<tr>
+<td>Asmodian</td>
+<td>마족</td>
+<td>The other faction, literally “demon kin”. Faction is picked at character creation and gates which map your quests sit on.</td>
+<td><a href="/en/start/launch/">Getting started</a>, <a href="/en/systems/daevanion/">Daevanion</a></td>
+</tr>
+<tr>
+<td>Reshanta / Rashanta</td>
+<td>어비스 (the zone is called just “Abyss” in Korean)</td>
+<td>The floating Abyss region inherited from Aion 1. NCsoft Global spells it both ways in its own material; Global Season 1 ships one map, Chaotic Lower Rashanta.</td>
+<td><a href="/en/pvp/abyss/">The Abyss</a></td>
+</tr>
+<tr>
+<td>Season / Chapter</td>
+<td>시즌 / 챕터</td>
+<td>KR’s content cadence: a Season is roughly 10 to 12 weeks, a Chapter is a larger expansion (Chapter 1 landed 2026-07-01 and is not in Global Season 1).</td>
+<td><a href="/en/versions/regions-and-patches/">Versions and regions</a></td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="currencies-and-resources">Currencies and resources</h2><a class="sl-anchor-link" href="#currencies-and-resources"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Currencies and resources”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Korean and other spellings</th>
+<th>Meaning</th>
+<th>Where it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kinah</td>
+<td>키나</td>
+<td>The main in-game currency. Sinks: enhancement, socketing, the Market, Daevanion respecs.</td>
+<td><a href="/en/economy/monetization/">Monetization</a>, <a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Bound / unbound Kinah</td>
+<td></td>
+<td>Bound Kinah cannot leave the character; unbound moves through the warehouse and the Market. Global splits it by dungeon type: Exploration drops bound, Conquest drops unbound.</td>
+<td><a href="/en/economy/monetization/">Monetization</a></td>
+</tr>
+<tr>
+<td>Quna</td>
+<td>퀴나 / 큐나</td>
+<td>The real-money currency. Cosmetics, convenience, the premium Deva Pass track, and the only pay-to-win vector when traded for Kinah through the Market.</td>
+<td><a href="/en/economy/monetization/">Monetization</a></td>
+</tr>
+<tr>
+<td>Abyss Points (AP)</td>
+<td>어비스 포인트 / 어포</td>
+<td>The PvP currency. Buys PvP gear, accessories and, critically, Stigma Shards. Cannot be bought with money and does not transfer between characters.</td>
+<td><a href="/en/pvp/abyss/">The Abyss</a>, <a href="/en/systems/stigma/">Stigma</a></td>
+</tr>
+<tr>
+<td>Capped vs uncapped AP</td>
+<td></td>
+<td>Kills inside the Abyss count against a weekly ceiling; quests, contracts, Supply Requests, Corridor and events do not. A tank or healer should live on the uncapped sources.</td>
+<td><a href="/en/progression/routine/">Routine</a></td>
+</tr>
+<tr>
+<td>Ranking Points</td>
+<td></td>
+<td>The PvP ladder score, separate from spendable AP. Since February 2026 on KR, death costs Ranking Points and not AP.</td>
+<td><a href="/en/pvp/abyss/">The Abyss</a></td>
+</tr>
+<tr>
+<td>Stigma Shard</td>
+<td>스티그마 샤드</td>
+<td>The only thing that levels a stigma skill. The scarcest progression currency in the game and the reason a PvE player still needs the Abyss.</td>
+<td><a href="/en/systems/stigma/">Stigma</a></td>
+</tr>
+<tr>
+<td>Odyle Energy</td>
+<td>오드 에너지 (auto-captions also render it “Ode” or “Odd” Energy)</td>
+<td>Not an entry fee: it opens the reward cube at the end of a dungeon. 10 per 3 h, 15 with membership, 40 per cube, weekly cap 560. Overflow is destroyed.</td>
+<td><a href="/en/progression/routine/">Routine</a></td>
+</tr>
+<tr>
+<td>Daevanion Points and Crystals</td>
+<td>데바니온 포인트 / 데바니온 결정</td>
+<td>The fuel for the node boards. Points come from side quests, sealed dungeons and strongholds; the Ariel and Asphel boards use separate crystals.</td>
+<td><a href="/en/systems/daevanion/">Daevanion</a></td>
+</tr>
+<tr>
+<td>Medal</td>
+<td>훈장 (공훈 훈장), silver 은공 / gold 금공 / platinum 백금</td>
+<td>PvP rank tokens from artifact sieges, won only by the winning faction. Silver buys Centurion gear, gold Tribunus, platinum High Commander.</td>
+<td><a href="/en/pvp/abyss/">The Abyss</a>, <a href="/en/pvp/siege-legion/">Sieges and legions</a></td>
+</tr>
+<tr>
+<td>Minor currencies</td>
+<td></td>
+<td>Centurion Tokens (Shugo mini-games), Phantasmal Fragments (Nightmare bosses), Oath Coins (season, ~3 months), Pass Coins and Mileage (cosmetics).</td>
+<td><a href="/en/economy/monetization/">Monetization</a></td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="progression-and-gear">Progression and gear</h2><a class="sl-anchor-link" href="#progression-and-gear"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Progression and gear”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Korean and other spellings</th>
+<th>Meaning</th>
+<th>Where it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Item level</td>
+<td>아이템 레벨 / 템렙</td>
+<td>The gate number for content. Daevanion points convert into it at 1:1, which is why the free horizontal layer outruns gear early.</td>
+<td><a href="/en/systems/gear/">Gear</a>, <a href="/en/systems/daevanion/">Daevanion</a></td>
+</tr>
+<tr>
+<td>Combat power (CP)</td>
+<td>전투력 / 투력</td>
+<td>A score of how many systems you have filled, not how much damage you deal. Two KR videos with over 150,000 views exist purely to say so. Use it as a content gate.</td>
+<td><a href="/en/systems/stats/">Stats</a></td>
+</tr>
+<tr>
+<td>GS (gear score)</td>
+<td>GS / 전투력</td>
+<td>English-language shorthand that KR creators use interchangeably with combat power. Before the March 2026 overhaul the same ~900 to 3,000 number was called both item level and combat power: date-check every threshold you read.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Rarity tiers</td>
+<td>희귀 (Rare) / 유일 (Unique) / 영웅 (Heroic)</td>
+<td>Common, Rare (blue), Epic, Unique (gold), Heroic (orange). English sites sometimes write Blue, Purple, Gold, Legendary instead. Global Season 1 has no Heroic at all.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Enhancement</td>
+<td>강화 (stones: 강화석)</td>
+<td>The +N upgrade. Guaranteed to +10, about 65% from +11, and a failure never destroys or de-levels the item: it burns stones and raises the next attempt’s odds.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Breakthrough</td>
+<td>돌파 (stones: 돌파석)</td>
+<td>Five extra stages past maximum enhancement, Unique and above only.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Manastone</td>
+<td>마석</td>
+<td>Socketable stat gem for weapon and armour. Top-tier rolls are about 0.07%; high-grade stones become mandatory from item level 67.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Spirit stone</td>
+<td>영석</td>
+<td>The same idea for accessories.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Godstone</td>
+<td>신석</td>
+<td>Adds a proc to a weapon or guard. Duplicate effects do not stack, and replacing one destroys the old one.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Soulbind</td>
+<td>영혼각인 / 영각</td>
+<td>Three actions on one system: engrave raises a rolled line toward 100%, sync destroys a spare Unique to reroll exactly one line on a keeper (once per item), reset clears. Never sell a Unique drop.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Inheritance</td>
+<td>계승</td>
+<td>Carries enhancement level, breakthrough stage and soulbind lines from an old item to its same-grade replacement. Investment in an early piece is not lost.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Transfer Crafting</td>
+<td>계승 제작</td>
+<td>A KR Season 3 addition that carries enhancement, breakthrough and soulbinds across a crafted replacement. The piece binds to the crafter. Not confirmed for Global.</td>
+<td><a href="/en/economy/crafting/">Crafting</a></td>
+</tr>
+<tr>
+<td>Guard</td>
+<td>가더</td>
+<td>The offhand slot. Every gearing guide that gives an order puts weapon first and guard second, ahead of armour.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Stigma</td>
+<td>스티그마</td>
+<td>The second skill track: about 13 class-specific skills levelled only with shards, of which four to six are equipped. Build-defining, mostly instant-cast CC and burst.</td>
+<td><a href="/en/systems/stigma/">Stigma</a></td>
+</tr>
+<tr>
+<td>Daevanion</td>
+<td>데바니온 (auto-captions: 다바니온, 대반이온)</td>
+<td>The node board. Every point spent raises item level and combat power by 1 regardless of the node. Opens at level 12; Global ships four base boards plus Ariel (PvE) and Asphel (PvP).</td>
+<td><a href="/en/systems/daevanion/">Daevanion</a></td>
+</tr>
+<tr>
+<td>Pantheon</td>
+<td>만신전</td>
+<td>The board of ten god stats named after the Empyrean Lords: Justice, Freedom, Illusion, Life, Time, Space, Destiny, Wisdom, Death, Destruction. Conversion is (value × 2) ÷ 10 = %.</td>
+<td><a href="/en/systems/stats/">Stats</a></td>
+</tr>
+<tr>
+<td>Arcana</td>
+<td>아르카나</td>
+<td>Cards from weekly Transcendence that push a skill past the board cap toward level 16 and 20. Cannot be bought.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Revelation Amulet and Monolith</td>
+<td></td>
+<td>The amulet is upgraded with Abyss feathers turned in at the Monolith. A Unique +10 amulet is +10% damage, +1,600 HP, +800 defense.</td>
+<td><a href="/en/systems/gear/">Gear</a></td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="stats-and-combat">Stats and combat</h2><a class="sl-anchor-link" href="#stats-and-combat"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Stats and combat”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Korean and other spellings</th>
+<th>Meaning</th>
+<th>Where it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base stats</td>
+<td></td>
+<td>Might (위력), Dexterity, Precision (정확), Willpower, Intelligence, Constitution. Conversion is value ÷ 10 = %.</td>
+<td><a href="/en/systems/stats/">Stats</a></td>
+</tr>
+<tr>
+<td>Smite</td>
+<td>강타</td>
+<td>A chance to deal double damage, and the single highest-value PvE stat. Fed by Wisdom in the Pantheon and by Genus Insight slots 3 and 9 only. Bosses carry about 30% resist, so push past 100%.</td>
+<td><a href="/en/systems/stats/">Stats</a>, <a href="/en/systems/gear/">Gear</a></td>
+</tr>
+<tr>
+<td>Combat speed</td>
+<td>전투속도</td>
+<td>Shortens the whole cast and animation cycle, and since 2025-12-17 charge speed too. Rolls mainly on weapon, guard and gloves. The stat you actually feel.</td>
+<td><a href="/en/systems/stats/">Stats</a></td>
+</tr>
+<tr>
+<td>Accuracy</td>
+<td>명중</td>
+<td>A threshold, not a curve: every 10 points of enemy block above your accuracy is a 1% chance to be blocked, and a blocked hit deals half. Hit the raid number and stop.</td>
+<td><a href="/en/systems/stats/">Stats</a></td>
+</tr>
+<tr>
+<td>Block</td>
+<td>막기</td>
+<td>The shield check accuracy is measured against. Back attacks ignore it entirely.</td>
+<td><a href="/en/systems/stats/">Stats</a></td>
+</tr>
+<tr>
+<td>Penetration</td>
+<td>관통</td>
+<td>Ignores a defensive stat. Iron Wall Penetration (철벽 관통) is the notorious one: not obtainable from manastones, which is why stacked Iron Wall is effectively uncontested.</td>
+<td><a href="/en/systems/stats/">Stats</a></td>
+</tr>
+<tr>
+<td>Damage amplification</td>
+<td>피해 증폭 / 피증</td>
+<td>A multiplier layer above flat attack. Weapon (무피증), critical (치피증) and Abyss-specific amplification are separate lines.</td>
+<td><a href="/en/systems/stats/">Stats</a></td>
+</tr>
+<tr>
+<td>Tenacity</td>
+<td>근성</td>
+<td>The resistance stat against CC and status effects.</td>
+<td><a href="/en/systems/stats/">Stats</a></td>
+</tr>
+<tr>
+<td>Cooldown reduction</td>
+<td>재사용 시간 감소</td>
+<td>Capped at 60%, sweet spot 33 to 36%. For Cleric the number is ~34%: it drops Earth’s Punishment from 30 s to 20 s for permanent uptime.</td>
+<td><a href="/en/classes/cleric-pve/">Cleric PvE</a></td>
+</tr>
+<tr>
+<td>Animation cancel</td>
+<td>평캔 (평타 캔슬), “weaving” in English</td>
+<td>Cancelling the auto-attack recovery with a skill. The core manual-skill mechanic of the game and the reason Korean DPS charts do not match yours.</td>
+<td><a href="/en/systems/macros-combat/">Combat and macros</a></td>
+</tr>
+<tr>
+<td>Aggro</td>
+<td>어그로 / 어글</td>
+<td>Threat. Tanks generate it through skills, not through damage alone, and lost aggro is what wipes KR groups on the Uruguru boss.</td>
+<td><a href="/en/classes/templar-pve/">Templar PvE</a></td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="pve-content">PvE content</h2><a class="sl-anchor-link" href="#pve-content"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “PvE content”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Korean and other spellings</th>
+<th>Meaning</th>
+<th>Where it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Expedition</td>
+<td>원정 / 원정대</td>
+<td>The standard group dungeon. Global runs them with 5 players (KR 4).</td>
+<td><a href="/en/pve/dungeons/">Dungeons</a></td>
+</tr>
+<tr>
+<td>Exploration</td>
+<td>탐험</td>
+<td>The easy difficulty of an Expedition. Drops bound Kinah on Global.</td>
+<td><a href="/en/pve/dungeons/">Dungeons</a></td>
+</tr>
+<tr>
+<td>Conquest</td>
+<td>정복</td>
+<td>The normal difficulty. Drops unbound Kinah you can funnel to your main. Conquest Hard (정복 어려움) is not in Global Season 1.</td>
+<td><a href="/en/pve/dungeons/">Dungeons</a></td>
+</tr>
+<tr>
+<td>Sealed dungeon</td>
+<td>봉인 던전 / 봉던</td>
+<td>Small solo or duo instances scattered across both factions’ maps. The main Daevanion point faucet, and per character rather than per account.</td>
+<td><a href="/en/systems/daevanion/">Daevanion</a></td>
+</tr>
+<tr>
+<td>Stronghold</td>
+<td>주둔지</td>
+<td>The open-world equivalent of a sealed dungeon. Feeds Daevanion points and the belt.</td>
+<td><a href="/en/systems/daevanion/">Daevanion</a></td>
+</tr>
+<tr>
+<td>Daily Dungeon</td>
+<td>1일 던전</td>
+<td>Badly named: it is a weekly budget of 14 runs per account and server, which you can burn in one sitting.</td>
+<td><a href="/en/progression/routine/">Routine</a></td>
+</tr>
+<tr>
+<td>Ascension Trial</td>
+<td>승천의 시련</td>
+<td>A solo timed trial, 3 a week per character. Also the cleanest class-speed benchmark the community has.</td>
+<td><a href="/en/progression/routine/">Routine</a></td>
+</tr>
+<tr>
+<td>Nightmare</td>
+<td>악몽</td>
+<td>The hard boss tier, gated by tickets (cap 14) and paying Phantasmal Fragments. The one tier where class choice genuinely shows.</td>
+<td><a href="/en/pve/dungeons/">Dungeons</a></td>
+</tr>
+<tr>
+<td>Transcendence</td>
+<td>초월</td>
+<td>A weekly staged dungeon and the only source of Arcana cards. Global ships two of them: Deus Research Base and Shattered Arkanis.</td>
+<td><a href="/en/pve/dungeons/">Dungeons</a></td>
+</tr>
+<tr>
+<td>Sanctuary</td>
+<td>성역</td>
+<td>The raid tier. Global’s launch raid is Abyssal Forge: Ludra, for 10 players (KR 8). Source of bracelets, brooches and seals.</td>
+<td><a href="/en/pve/dungeons/">Dungeons</a></td>
+</tr>
+<tr>
+<td>Named boss</td>
+<td>네임드</td>
+<td>A dungeon boss. Korean guides count them as “1네임드”, “2네임드” rather than by name.</td>
+<td><a href="/en/pve/dungeons/">Dungeons</a></td>
+</tr>
+<tr>
+<td>Duty Mission</td>
+<td>사명 (사명 퀘스트)</td>
+<td>The only true daily: 5 of them, about 15 to 20 minutes, 500 AP each. Per server, not per character. Missing a day costs only that day’s pet crystals.</td>
+<td><a href="/en/progression/routine/">Routine</a></td>
+</tr>
+<tr>
+<td>Supply Request</td>
+<td>보급 의뢰</td>
+<td>Material turn-ins that pay Abyss Points outside the weekly cap. Split into Urgent (daily), Weekly and Season tabs. The reason not to vendor unidentified shards in week 1.</td>
+<td><a href="/en/economy/crafting/">Crafting</a></td>
+</tr>
+<tr>
+<td>Command Scroll</td>
+<td>지령서</td>
+<td>Weekly PvE ticket-quests, 12 a week per account, unused ones carry over. Flat AP regardless of your damage.</td>
+<td><a href="/en/progression/routine/">Routine</a></td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="pvp">PvP</h2><a class="sl-anchor-link" href="#pvp"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “PvP”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Korean and other spellings</th>
+<th>Meaning</th>
+<th>Where it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Abyss</td>
+<td>어비스</td>
+<td>The open-world, always-flagged faction zone and the only route to PvP gear. Unlocks at level 45. Layers are Lower, Middle and Upper; Global ships Lower only.</td>
+<td><a href="/en/pvp/abyss/">The Abyss</a></td>
+</tr>
+<tr>
+<td>Abyss Corridor</td>
+<td>어비스 회랑 / 나락회랑</td>
+<td>A short farm instance that opens for whichever faction wins the artifact siege. The best AP source in the game and the reason legion choice matters.</td>
+<td><a href="/en/pvp/abyss/">The Abyss</a></td>
+</tr>
+<tr>
+<td>Abyss Contract</td>
+<td>어비스 지령서</td>
+<td>The PvP twin of the Command Scroll: 15 a week per character, in white, green and blue tiers.</td>
+<td><a href="/en/progression/routine/">Routine</a></td>
+</tr>
+<tr>
+<td>Artifact</td>
+<td>아티팩트</td>
+<td>Contested capture points in the Abyss. Three are fought over at once.</td>
+<td><a href="/en/pvp/siege-legion/">Sieges and legions</a></td>
+</tr>
+<tr>
+<td>Artifact siege</td>
+<td>아티팩트 점령전</td>
+<td>The recurring faction battle over artifacts, roughly every 48 h on KR and three times a week per NCsoft for Global. Medals only if your faction wins; losses still pay AP.</td>
+<td><a href="/en/pvp/siege-legion/">Sieges and legions</a></td>
+</tr>
+<tr>
+<td>Rift</td>
+<td>시공 / 시공의 균열</td>
+<td>Opt-in PvP invasion of the enemy map, every 3 to 4 h with a 10-minute window and an hour inside. Once flagged you cannot unflag for about an hour.</td>
+<td><a href="/en/pvp/abyss/">The Abyss</a></td>
+</tr>
+<tr>
+<td>Kisk</td>
+<td>키스크</td>
+<td>A placed, destructible respawn point used on the enemy side during a Rift.</td>
+<td><a href="/en/pvp/abyss/">The Abyss</a></td>
+</tr>
+<tr>
+<td>Arena</td>
+<td>투기장</td>
+<td>Ranked and non-equalised. Solo arena is 고독의 투기장, the co-op arena 협력의 투기장.</td>
+<td><a href="/en/pvp/arena/">Arenas</a></td>
+</tr>
+<tr>
+<td>Legion</td>
+<td>레기온</td>
+<td>The guild. Legion Commander is 군단장. Aion 2 has no guild war; the legion matters because it decides whether you get Corridor access.</td>
+<td><a href="/en/pvp/siege-legion/">Sieges and legions</a></td>
+</tr>
+<tr>
+<td>PvP rank tiers</td>
+<td>십부장 / 백부장 / 천부장 / 군단장</td>
+<td>Decanus, Centurion, Tribunus, High Commander. They are gear tiers and medal tiers at once, and Korean guides also use them as gear shorthand (십부, 백부, 천부).</td>
+<td><a href="/en/pvp/abyss/">The Abyss</a></td>
+</tr>
+<tr>
+<td>Shugo Festa</td>
+<td>슈고 페스타</td>
+<td>A wall-clock mini-game event on the hour, paying about 1,000 uncapped AP a clear, gated by keys.</td>
+<td><a href="/en/progression/routine/">Routine</a></td>
+</tr>
+<tr>
+<td>Dimensional Invasion</td>
+<td>차원 침공</td>
+<td>A wall-clock event every 2 h at the half hour, not guaranteed, key-gated. Skip it before max level.</td>
+<td><a href="/en/progression/routine/">Routine</a></td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="economy-and-character-systems">Economy and character systems</h2><a class="sl-anchor-link" href="#economy-and-character-systems"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Economy and character systems”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Korean and other spellings</th>
+<th>Meaning</th>
+<th>Where it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Market</td>
+<td>거래소</td>
+<td>The player auction house. Membership-gated, which is what makes the ~$15 subscription effectively mandatory: enhancement materials and manastones live here.</td>
+<td><a href="/en/economy/monetization/">Monetization</a></td>
+</tr>
+<tr>
+<td>Membership</td>
+<td>멤버십</td>
+<td>Global’s single ~$15 tier. Unlocks the Market, the Kinah to Quna exchange, remote storage, personal trade, the Wind Breeze merchant, more Odyle Energy and more reward picks. It gates convenience, not power.</td>
+<td><a href="/en/economy/monetization/">Monetization</a></td>
+</tr>
+<tr>
+<td>Deva Pass</td>
+<td>데바패스</td>
+<td>A per-character battle pass with a free track and a Quna premium track. Contains materials and currencies, not only cosmetics.</td>
+<td><a href="/en/economy/monetization/">Monetization</a></td>
+</tr>
+<tr>
+<td>Founder’s Pack</td>
+<td>한정팩</td>
+<td>Standard $24.99, Deluxe $49.99, Ultimate $99.99. All three carry 5 days of early access from 2026-09-30 and 30 days of membership; Deluxe and Ultimate add only cosmetics.</td>
+<td><a href="/en/economy/monetization/">Monetization</a></td>
+</tr>
+<tr>
+<td>Substance Morph</td>
+<td>물질 변환</td>
+<td>Converts junk drops into other materials at 100% for no Kinah: Odyle Energy, wings from feathers, Daevanion crystals, medals from fragments, belt and amulet upgrades. Unequip the belt and amulet first or they get consumed.</td>
+<td><a href="/en/economy/crafting/">Crafting</a></td>
+</tr>
+<tr>
+<td>Crafting</td>
+<td>제작</td>
+<td>Five professions. Crafted gear is PvE best-in-slot per tier: +5% PvE damage built in, +2.5% per crafted accessory, more soulbind lines.</td>
+<td><a href="/en/economy/crafting/">Crafting</a></td>
+</tr>
+<tr>
+<td>Genus Insight</td>
+<td>종족 이해도</td>
+<td>The pet stat board, literally “race understanding”. Rerollable, capped at 3 on Global, and the only place Smite rolls outside slots 3 and 9. Crystals come from Duty Missions and Command Scrolls, per account, and cannot be bought.</td>
+<td><a href="/en/systems/character-systems/">Character systems</a></td>
+</tr>
+<tr>
+<td>Collection Effect</td>
+<td>도감 / 내실 (compendium, “inner substance”)</td>
+<td>Permanent stat bonuses for registering skins and items. Cash-shop skins do not count toward it, which is the one honest anti-pay-to-win detail in the model.</td>
+<td><a href="/en/systems/character-systems/">Character systems</a></td>
+</tr>
+<tr>
+<td>Wardrobe (the Closet)</td>
+<td>옷장</td>
+<td>Skin storage and extraction. Locked during the 2026-09-17/18 playtest.</td>
+<td><a href="/en/systems/character-systems/">Character systems</a></td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="classes">Classes</h2><a class="sl-anchor-link" href="#classes"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Classes”</span></a></div>
+<p>Korean class names all end in 성, which is why they look interchangeable at a glance. Learn these nine and every Korean guide becomes searchable.</p>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Korean and other spellings</th>
+<th>Meaning</th>
+<th>Where it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Templar</td>
+<td>수호성</td>
+<td>Plate tank with a shield, the Warrior line with Gladiator. Manual block, real threat generation, and the only class whose survivability has its own party value.</td>
+<td><a href="/en/classes/templar-pve/">Templar PvE</a>, <a href="/en/classes/templar-pvp/">Templar PvP</a></td>
+</tr>
+<tr>
+<td>Cleric</td>
+<td>치유성</td>
+<td>The healer, and in practice a debuff maintainer rather than a healbot. Healing scales off attack power since the 2026-03-25 overhaul.</td>
+<td><a href="/en/classes/cleric-pve/">Cleric PvE</a>, <a href="/en/classes/cleric-pvp/">Cleric PvP</a></td>
+</tr>
+<tr>
+<td>Gladiator</td>
+<td>검성</td>
+<td>Greatsword melee DPS, the other half of the Warrior line.</td>
+<td><a href="/en/classes/gladiator/">Gladiator</a></td>
+</tr>
+<tr>
+<td>Assassin</td>
+<td>살성</td>
+<td>Dagger melee DPS, the Scout line with Ranger. No cooldown ceiling on cooldown reduction.</td>
+<td><a href="/en/classes/assassin/">Assassin</a></td>
+</tr>
+<tr>
+<td>Ranger</td>
+<td>궁성</td>
+<td>Bow ranged DPS. NCsoft’s own press releases sometimes call it Marksman. A slow starter by Korean reputation (대기만성형).</td>
+<td><a href="/en/classes/ranger/">Ranger</a></td>
+</tr>
+<tr>
+<td>Sorcerer</td>
+<td>마도성</td>
+<td>Burst caster, the Mage line with Spiritmaster.</td>
+<td><a href="/en/classes/sorcerer/">Sorcerer</a></td>
+</tr>
+<tr>
+<td>Spiritmaster</td>
+<td>정령성</td>
+<td>Pet caster. NCsoft’s press releases sometimes call it Elementalist.</td>
+<td><a href="/en/classes/spiritmaster/">Spiritmaster</a></td>
+</tr>
+<tr>
+<td>Chanter</td>
+<td>호법성</td>
+<td>Mace support, the Priest line with Cleric. Widely called the hardest class to play well; the Chanter and Cleric pairing is the KR “호치 조합”.</td>
+<td><a href="/en/classes/chanter/">Chanter</a></td>
+</tr>
+<tr>
+<td>Brawler</td>
+<td>권성</td>
+<td>Gauntlet melee class. Exists on KR and TW and is <strong>not</strong> in Global Season 1.</td>
+<td><a href="/en/versions/regions-and-patches/">Versions and regions</a></td>
+</tr>
+</tbody>
+</table>
+<aside aria-label="Terms we could not pin down" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"/></svg>Terms we could not pin down</p><div class="starlight-aside__content"><p>Korean for Odyle Energy beyond the auto-caption spelling 오드 에너지, the original of Reshanta or Rashanta (Korean simply says 어비스), the Korean name behind “Arena of Tactics”, and the exact hangul NCsoft will use for Command Scrolls versus Abyss Contracts on a Korean-language Global client. Several skill names in our class notes are flagged tentative because they come from auto-generated subtitles: 송곳화살, 통곡타살, 아이젤 and 다다니트 among them.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="sources">Sources</h2><a class="sl-anchor-link" href="#sources"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Sources”</span></a></div>
+<p>Korean spellings were taken from the per-video and per-page notes behind this site, not guessed: the term tables in <code dir="auto">research/notes/</code>, the Namu wiki subpages and the class and topic syntheses. Method and counts: <a href="/en/reference/sources/">Sources and method</a>.</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/en/versions/regions-and-patches/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Previous<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Versions and regions</span></span></a><a href="/en/reference/sources/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Next<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Sources and method</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

@@ -1,0 +1,571 @@
+<!DOCTYPE html><html lang="es" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Sistemas de personaje: pets, Genus Insight, Closet y títulos | Aion 2 Guides</title><link rel="canonical" href="https://aion2.akunito.com/es/systems/character-systems/"/><link rel="alternate" hreflang="es" href="https://aion2.akunito.com/es/systems/character-systems/"/><link rel="alternate" hreflang="en" href="https://aion2.akunito.com/en/systems/character-systems/"/><link rel="alternate" hreflang="x-default" href="https://aion2.akunito.com/es/systems/character-systems/"/><link rel="sitemap" href="/sitemap-index.xml"/><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.2"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="Sistemas de personaje: pets, Genus Insight, Closet y títulos"/><meta property="og:type" content="article"/><meta property="og:url" content="https://aion2.akunito.com/es/systems/character-systems/"/><meta property="og:locale" content="es"/><meta property="og:description" content="La mitad del poder que el Combat Power no enseña: Soul Engraving, pets y Genus Insight, Smite en las slots 3 y 9, el Closet y su Collection Effect, títulos por efecto de posesión, wings, vuelo y transformaciones."/><meta property="og:site_name" content="Aion 2 Guides"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="La mitad del poder que el Combat Power no enseña: Soul Engraving, pets y Genus Insight, Smite en las slots 3 y 9, el Closet y su Collection Effect, títulos por efecto de posesión, wings, vuelo y transformaciones."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.bjjfGofR.css"><style>@layer starlight.components{.card:where(.astro-oag6qnet){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-oag6qnet):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-oag6qnet):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-oag6qnet):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-oag6qnet):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-oag6qnet){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-oag6qnet) .icon:where(.astro-oag6qnet){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-oag6qnet) .body:where(.astro-oag6qnet){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Ir al contenido</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/es/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Aion 2 Guides</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Buscar&quot;,&quot;clear_search&quot;:&quot;Limpiar&quot;,&quot;load_more&quot;:&quot;Cargar más resultados&quot;,&quot;search_label&quot;:&quot;Buscar página&quot;,&quot;filters_label&quot;:&quot;Filtros&quot;,&quot;zero_results&quot;:&quot;Ningún resultado para: [SEARCH_TERM]&quot;,&quot;many_results&quot;:&quot;[COUNT] resultados para: [SEARCH_TERM]&quot;,&quot;one_result&quot;:&quot;[COUNT] resultado para: [SEARCH_TERM]&quot;,&quot;alt_search&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Mostrando resultados para: [DIFFERENT_TERM]&quot;,&quot;search_suggestion&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Prueba alguna de estas búsquedas:&quot;,&quot;searching&quot;:&quot;Buscando [SEARCH_TERM]...&quot;}"><button data-open-modal disabled aria-label="Buscar" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Buscar</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Buscar" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancelar</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/systems/character-systems/" selected class="astro-2z5xp7gb">Español</option><option value="/en/systems/character-systems/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Primario"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menú</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="0yy2c03" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Empezar</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/start/launch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Lanzamiento, servidores y qué comprar</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/settings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ajustes, controles y ping</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/krtw-playtest-anticheat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Jugar en KR/TW, el playtest y el anti-cheat</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Clases</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/classes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Visión general</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-vs-cleric/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar vs Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Progresión</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/progression/leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Leveling 1-45 y primeros días</span></a></li><li class="astro-rmhv4bp6"><a href="/es/progression/routine/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Rutina diaria y semanal</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Sistemas</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/systems/stigma/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/daevanion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daevanion</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/gear/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Equipo</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stats y fórmulas de combate</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/character-systems/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sistemas de personaje: pets, Genus Insight, Closet y títulos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/macros-combat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Combate, macros, targeting y controles</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvE</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pve/dungeons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Mazmorras y raids</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvP</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pvp/abyss/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Abyss y puntos de Abyss</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/siege-legion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Asedios, artefactos y legión</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/arena/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Arenas y campo de batalla</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Economía y rutina</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/economy/monetization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Monetización, Kinah y presupuesto</span></a></li><li class="astro-rmhv4bp6"><a href="/es/economy/crafting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Crafting, gathering y Supply Requests</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Versiones</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/versions/regions-and-patches/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Versiones y regiones</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Referencia</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/reference/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glosario</span></a></li><li class="astro-rmhv4bp6"><a href="/es/reference/sources/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Fuentes y método</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/systems/character-systems/" selected class="astro-2z5xp7gb">Español</option><option value="/en/systems/character-systems/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">En esta página<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#resumen" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Resumen</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#cómo-funciona" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Cómo funciona</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#datos" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Datos</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pets-y-genus-insight" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Pets y Genus Insight</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#prioridad-de-stats-en-genus-insight" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Prioridad de stats en Genus Insight</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#soul-engraving-opción-principal-por-slot-pve" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Soul Engraving: opción principal por slot (PvE)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#closet-y-skins" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Closet y skins</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#el-título-de-700-skins-아이고-입을-옷이-없네--fashionista" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">El título de 700 skins (아이고, 입을 옷이 없네 / Fashionista)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#otros-títulos-que-sí-compensan-farmear" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Otros títulos que sí compensan farmear</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#vuelo-y-wings" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Vuelo y wings</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#transformaciones-tres-cosas-distintas-que-se-llaman-igual" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Transformaciones: tres cosas distintas que se llaman igual</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#plan" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Plan</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#mientras-subes-1-a-45" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Mientras subes (1 a 45)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pve-de-dungeons-post-cap" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">PvE de dungeons (post-cap)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pvp-y-abyss" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">PvP y Abyss</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#un-bucle-semanal-realista-para-3-4-h-al-día" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Un bucle semanal realista para 3-4 h al día</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#higiene-de-presets" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Higiene de presets</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#errores-y-trampas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Errores y trampas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#preguntas-abiertas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Preguntas abiertas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes-principales" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes principales</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">En esta página</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#resumen" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Resumen</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#cómo-funciona" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Cómo funciona</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#datos" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Datos</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pets-y-genus-insight" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Pets y Genus Insight</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#prioridad-de-stats-en-genus-insight" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Prioridad de stats en Genus Insight</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#soul-engraving-opción-principal-por-slot-pve" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Soul Engraving: opción principal por slot (PvE)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#closet-y-skins" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Closet y skins</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#el-título-de-700-skins-아이고-입을-옷이-없네--fashionista" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">El título de 700 skins (아이고, 입을 옷이 없네 / Fashionista)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#otros-títulos-que-sí-compensan-farmear" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Otros títulos que sí compensan farmear</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#vuelo-y-wings" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Vuelo y wings</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#transformaciones-tres-cosas-distintas-que-se-llaman-igual" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Transformaciones: tres cosas distintas que se llaman igual</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#plan" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Plan</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#mientras-subes-1-a-45" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Mientras subes (1 a 45)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pve-de-dungeons-post-cap" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">PvE de dungeons (post-cap)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pvp-y-abyss" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">PvP y Abyss</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#un-bucle-semanal-realista-para-3-4-h-al-día" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Un bucle semanal realista para 3-4 h al día</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#higiene-de-presets" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Higiene de presets</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#errores-y-trampas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Errores y trampas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#preguntas-abiertas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Preguntas abiertas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes-principales" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes principales</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="es" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Sistemas de personaje: pets, Genus Insight, Closet y títulos</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><div class="meta-box"><b>Región:</b> Corea y Taiwán, con los ajustes conocidos del Global · <b>Versión:</b> hasta 2026-09-15 · <b>Revisado:</b> 2026-09-16 · <b>Confianza:</b> media. La mecánica está bien contrastada; los recortes del Global sobre pets están en disputa y el Closet no se puede verificar antes del Early Access.</div>
+<div class="sl-heading-wrapper level-h2"><h2 id="resumen">Resumen</h2><a class="sl-anchor-link" href="#resumen"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Resumen»</span></a></div>
+<ul>
+<li><strong>Aquí está tu poder real, y nada de esto aparece en el Combat Power.</strong> Un personaje con Soul Engraving completo a 2.200 CP gana a uno sin engrave a 2.500 CP. Un jugador con gear PvP a +20 y cero inversión en pets y Genus sigue perdiendo peleas por el diferencial de accuracy y evasion. Reserva tiempo para esto desde la semana 1.</li>
+<li><strong>Orden de prioridad para 3-4 h al día:</strong> (1) Soul Engraving sobre tu gear de verdad, (2) niveles de pet y Genus Insight, (3) feathers y Monolith mientras subes, (4) skins del Closet en pasivo con auto-extract, (5) los títulos que te caen gratis del contenido que ya haces. Las wings y el título de 700 skins son proyectos del mes 2 en adelante.</li>
+<li><strong>El stat con más palanca de todo el juego es Smite (강타), un proc de daño doble.</strong> Solo sale en las slots <strong>3 y 9</strong> del Genus Insight, en ningún otro sitio. No bloquees nada antes de que caiga ahí.</li>
+<li><strong>Casi todo esto es de cuenta o de servidor, no por personaje.</strong> Skins, el Collection Effect del Closet, pets, race understanding y sus achievements se comparten entre todos tus personajes del servidor desde el parche KR del 2026-01-07. Los alts te multiplican las rotaciones del Black Cloud Merchant, no tu farmeo.</li>
+<li><strong>El Global recorta el grind de pets pero nadie se pone de acuerdo en cómo.</strong> Cuatro fuentes dicen “cap 3 en vez de 5”: dos se refieren al nivel del pet individual y dos al tablero Genus. Confirmado aparte: el boost de obtención de fragmentos de KR/TW <strong>no</strong> llega al Global.</li>
+<li><strong>Este es el bloque amable del juego para un horario corto.</strong> Casi todo tiene tope semanal o es pasivo sin tope; las 5 Duty Missions (~10 min) son lo único verdaderamente diario. Encaja con tus tardes mucho mejor que el calendario de raids y sieges.</li>
+<li><strong>Nota para Templar y Cleric:</strong> la única decisión que depende de clase aquí es el sesgo defensivo del Genus. A Cleric y Templar se les dice que cojan Defense donde un DPS coge Attack, porque sus pasivas premian seguir vivo. Todo lo demás de esta página es igual para cualquier clase.</li>
+<li><strong>No compres cosméticos por poder.</strong> Skins, mounts y pets de tienda no dan stats y quedan excluidos del Collection Effect. El pet Black Dragon y las wings Blazing Sun del Ultimate Founder’s Pack son cosméticos.</li>
+<li><strong>Dos trampas que cuestan Kinah de verdad:</strong> nunca extraigas rings ni gaiters buscando skin (nunca dan una) y nunca uses un Reset book sobre una pieza de grado Unique.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="cómo-funciona">Cómo funciona</h2><a class="sl-anchor-link" href="#cómo-funciona"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Cómo funciona»</span></a></div>
+<p>Lo que descoloca a todo jugador nuevo es que <strong>el Combat Power es un gear score, no una medida de poder</strong>. El Soul Engraving, los tableros de Genus Insight, los efectos de retención de las wings, los efectos de posesión de los títulos y el Collection Effect del Closet alimentan daño y supervivencia reales aportando poco o nada al número que llevas encima. Hay incluso el exploit inverso documentado: un loadout de Arcana montado solo para inflar el número unos 40 CP y pasar el check de entrada de la party, que se cambia por el build real una vez dentro. Los líderes de party lo saben, y por eso el filtro se ha movido a “enséñame tus soul engraves” a partir de Transcendence stage 9.</p>
+<p><strong>El sistema de pets tiene tres capas anidadas y casi toda la confusión viene de aplastarlas en una.</strong> La capa uno es la criatura individual: matas un tipo de mob hasta tener ~10 fragmentos para poseerlo y sigues matando para llevarlo de 1 a 5, con cada nivel pagando un stat plano. La capa dos es el tablero de categoría: cuando un pet de una categoría llega a 5, las souls de ese mob empiezan a caer como <strong>cristales de categoría</strong>, que suben el tablero de 0 a 10 y abren una de nueve slots de stat por nivel. La capa tres es el reroll: gastas esos cristales más Kinah para rerollear slots sueltas, bloqueando las que quieras, y cada bloqueo encarece el siguiente roll. La capa uno es una tarea que se termina; las capas dos y tres son el endgame. Por eso el consejo estándar es farmear un mob hasta que su pet tope y seguir farmeando ese mismo mob: el sitio no deja de pagar, solo cambia de moneda.</p>
+<p><strong>Smite es la razón de que el tablero importe.</strong> Es un ×2 plano sobre el golpe, es el stat al que converge toda guía de endgame coreana, y es estructuralmente escaso: dos slots de nueve pueden sacarlo, a alrededor de un 0,2% por intento, y solo con el tablero a nivel 9 o más para que aparezca tier Heroic. Una anécdota lo cierra: un jugador con 20% de Smite y 50.000 de inversión en enchant hacía menos daño que un Spiritmaster alt con más de 40% de Smite y 30.000 de inversión.</p>
+<p><strong>El Soul Engraving son tres verbos y una regla dura.</strong> <em>Engrave</em> (각인) empuja una línea que ya tienes hacia el 100% de su valor, con libros de achievements, login y battle pass. <em>Tune / Sync</em> (조율) quema un duplicado de rareza Unique para rerollear <strong>una</strong> línea. <em>Reset</em> (초기화) rerollea <strong>todas</strong> a la vez. La regla dura: los items Unique son el combustible y el suelo, no puedes sincronizar sobre gear Rare ni meterlo como combustible. Eso convierte tu flujo de drops Unique, no la Kinah, en el cuello de botella real, y es la razón de que todas las guías digan que dejes de vender Uniques. El Inheritance / Transfer craft lo compensa: el enchant <strong>y</strong> el progreso de soulbind viajan a una pieza sucesora del mismo grado. Las manastones no viajan, y esa asimetría es el aviso de gearing más repetido de todo el corpus.</p>
+<p><strong>El Closet convierte tu flujo de loot en un stat.</strong> Cada pieza que superas se extrae por Enhance Stones más una tirada a su skin, y tener más skins de un tipo sube un bonus plano para ese tipo <strong>en todo el servidor</strong>. Los duplicados tampoco se tiran: cuatro de una rareza se combinan en una tirada de la rareza siguiente. Como el efecto es de servidor y cada alt tiene su propia rotación horaria del Black Cloud, el truco recomendado son alts <strong>de tu propia clase</strong>: los drops están sesgados hacia la clase que juegas.</p>
+<p><strong>El vuelo no es un taxi a propósito.</strong> La barra baja mientras aleteas, así que todo el techo de habilidad está en <em>no</em> aletear: subes, pliegas, planeas con la gravedad, vuelves a abrir, repites, y la misma barra te lleva tres veces más lejos. Los acceleration rings la rellenan a mitad de vuelo, y por eso los del Abyss son herramienta de escape y no decorado. Los mounts no vuelan: planean, y solo a partir de pet level 5. Las wings van encima como slot de gear con una particularidad: <strong>poseer</strong> una ya paga un efecto de retención aunque lleves otra puesta, así que coleccionarlas es en sí progresión horizontal.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="datos">Datos</h2><a class="sl-anchor-link" href="#datos"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Datos»</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="pets-y-genus-insight">Pets y Genus Insight</h3><a class="sl-anchor-link" href="#pets-y-genus-insight"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Pets y Genus Insight»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Qué</th>
+<th>Valor</th>
+<th>Región / versión</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fragmentos para desbloquear un pet</td>
+<td>10</td>
+<td>KR/TW 2026-08</td>
+</tr>
+<tr>
+<td>Souls para llevar un pet a nivel 5</td>
+<td>~500</td>
+<td>KR 2026-01</td>
+</tr>
+<tr>
+<td>Nivel máximo de pet</td>
+<td>5 (3 en Global, en disputa)</td>
+<td>KR/TW frente a GLOBAL</td>
+</tr>
+<tr>
+<td>Pets y mounts totales</td>
+<td>~300-340 (205 en el build de test de 2025-11)</td>
+<td>KR/TW 2026-08</td>
+</tr>
+<tr>
+<td>Tableros Genus</td>
+<td>5 (지성족, 야성족, 자연족, 변형족, 특수족)</td>
+<td>KR/TW</td>
+</tr>
+<tr>
+<td>Slots por tablero / rango de nivel</td>
+<td>9 slots, nivel 0 a 10 (la slot 9 llega a nivel 9)</td>
+<td>KR/TW</td>
+</tr>
+<tr>
+<td>Líneas rolleables totales</td>
+<td>45 (9 × 5)</td>
+<td>KR/TW</td>
+</tr>
+<tr>
+<td>Probabilidad de roll Heroic</td>
+<td>0,357% declarado; ~1% por intento estimado; ~0,2% para Smite en concreto</td>
+<td>KR 2025-11 / TW 2026-08</td>
+</tr>
+<tr>
+<td>Cristales para llegar a tablero nivel 9</td>
+<td>~10.000</td>
+<td>KR 2026-01</td>
+</tr>
+<tr>
+<td>Coste de reroll con 0 / 3 / casi todos los bloqueos</td>
+<td>~55 cristales (+~11.000 Kinah) / 75 / 405</td>
+<td>KR/TW 2026-06, TW 2026-08</td>
+</tr>
+<tr>
+<td>Slots de Smite</td>
+<td>3 y 9, y solo esas</td>
+<td>KR/TW, todas las versiones</td>
+</tr>
+<tr>
+<td>Umbral de bloqueo de Smite / objetivo realista</td>
+<td>bloquea a partir de 1,3; ~2% es excelente, por encima de 2% es muy difícil</td>
+<td>TW 2026-08</td>
+</tr>
+<tr>
+<td>Efecto de Smite</td>
+<td>×2 de daño al procear</td>
+<td>KR/TW</td>
+</tr>
+<tr>
+<td>Referencia de Smite en endgame (Tier-4 / Ruthra)</td>
+<td>35-40%; el creador va a 43,4%</td>
+<td>KR 2026-03</td>
+</tr>
+<tr>
+<td>Duty Missions (fuente de cristales)</td>
+<td>5 al día, <strong>por cuenta</strong></td>
+<td>KR/TW y GLOBAL</td>
+</tr>
+<tr>
+<td>Command Scrolls</td>
+<td>12 a la semana (KR/TW añade 12 del Abyss = 24)</td>
+<td>GLOBAL / KR-TW</td>
+</tr>
+<tr>
+<td>Pet dungeon (Odillium / Udilium)</td>
+<td>14 tickets a la semana, <strong>por cuenta</strong></td>
+<td>KR/TW 2026-08</td>
+</tr>
+<tr>
+<td>Tope semanal de cristales rainbow</td>
+<td>100 a la semana</td>
+<td>KR 2026-01 / TW 2026-08</td>
+</tr>
+<tr>
+<td>Weekly merchant contracts (nivel 45)</td>
+<td>15 a la semana; deja de rerollear a los 5-6</td>
+<td>TW 2026-08</td>
+</tr>
+<tr>
+<td>Ritmo real de farmeo de cristales</td>
+<td>~3.000 cristales por sesión de 1-2 h (Cleric)</td>
+<td>KR 2026-01</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="prioridad-de-stats-en-genus-insight">Prioridad de stats en Genus Insight</h3><a class="sl-anchor-link" href="#prioridad-de-stats-en-genus-insight"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Prioridad de stats en Genus Insight»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Puesto</th>
+<th>PvE (todas las clases)</th>
+<th>PvP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Smite (slots 3 y 9)</td>
+<td>Smite (slots 3 y 9)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Damage Boost</td>
+<td>Accuracy</td>
+</tr>
+<tr>
+<td>3</td>
+<td>PvE Damage Boost</td>
+<td>Evasion</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Attack Bonus</td>
+<td>PvP Attack</td>
+</tr>
+<tr>
+<td>5</td>
+<td>PvE Attack</td>
+<td>PvP Damage Boost</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Critical Hit</td>
+<td>Damage Tolerance</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Critical Damage Boost</td>
+<td>PvP Defense</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Accuracy</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Damage Tolerance</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<p>Matiz importante: después de Smite, <strong>sube Accuracy a 1.800-2.200 antes de tocar Attack</strong>, porque por debajo de eso los parries de los bosses se comen entre el 30% y el 50% de tu daño. Luego Attack para la mayoría de clases, pero <strong>Defense para Cleric y Templar</strong>. A largo plazo, la “página perfecta” pide como mínimo 2 rolls de Smite, 14 de attack bonus y 25 de crit o 35 de accuracy en las líneas defensivas, y lo correcto es repartir las tres páginas disponibles en una de PvP, una de PvE para alcanzar caps a corto plazo y una de PvE perfecta a largo plazo.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="soul-engraving-opción-principal-por-slot-pve">Soul Engraving: opción principal por slot (PvE)</h3><a class="sl-anchor-link" href="#soul-engraving-opción-principal-por-slot-pve"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Soul Engraving: opción principal por slot (PvE)»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>Opción principal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Weapon + Guard/Gaiter</td>
+<td>amplificación de daño de arma, velocidad de combate, Might, golpe Daevanion (engrava estas primero)</td>
+</tr>
+<tr>
+<td>Gloves</td>
+<td>velocidad de combate</td>
+</tr>
+<tr>
+<td>Leg armor</td>
+<td>amplificación de daño crítico</td>
+</tr>
+<tr>
+<td>Chest / shoulders</td>
+<td>amplificación de daño</td>
+</tr>
+<tr>
+<td>Boots</td>
+<td>velocidad de movimiento</td>
+</tr>
+<tr>
+<td>Pants</td>
+<td>resistencia al daño (y Perfection)</td>
+</tr>
+<tr>
+<td>Helmet / cloak</td>
+<td>Smite, amplificación de ataque, accuracy-crit (curación recibida es aceptable en el casco)</td>
+</tr>
+<tr>
+<td>Ring</td>
+<td>tus skills <strong>activas</strong> clave</td>
+</tr>
+<tr>
+<td>Earring / necklace</td>
+<td>attack power, luego crit o accuracy, más skills <strong>pasivas</strong> de clase</td>
+</tr>
+</tbody>
+</table>
+<p>Orden de prioridad de slots: weapon + guard → gloves, legs, chest → boots → todo lo demás.</p>
+<table>
+<thead>
+<tr>
+<th>Dato de Soul Engraving</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.200 CP con engrave frente a 2.500 CP sin engrave</td>
+<td>gana el que lleva engrave</td>
+</tr>
+<tr>
+<td>Tope de crit chance</td>
+<td>50% (una fuente de 2025-12), 80% (dos fuentes de 2026-08)</td>
+</tr>
+<tr>
+<td>Conversión de Might</td>
+<td>10 puntos = 1% de ataque</td>
+</tr>
+<tr>
+<td>Techo de inversión en Might para weapon + guard</td>
+<td>~8% total</td>
+</tr>
+<tr>
+<td>Combustible de sync</td>
+<td>solo rareza Unique; Rare no puede ser ni combustible ni objetivo</td>
+</tr>
+<tr>
+<td>Reset books</td>
+<td>solo sobre gear Heroic, nunca sobre Unique</td>
+</tr>
+<tr>
+<td>Rerolls de pago (개승)</td>
+<td>no compensan; la reroll stone sale gratis por Material Conversion</td>
+</tr>
+<tr>
+<td>Tuning stones semanales de un clear de Ruthra</td>
+<td>40</td>
+</tr>
+<tr>
+<td>Philosopher’s Stone</td>
+<td>da una línea extra de soulbind cuando una llega al 100% de tasa</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="closet-y-skins">Closet y skins</h3><a class="sl-anchor-link" href="#closet-y-skins"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Closet y skins»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Qué</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Probabilidad de skin al extraer, por rareza</td>
+<td>Common/Rare/Epic 25%, Unique/Heroic 10%</td>
+</tr>
+<tr>
+<td>Probabilidad de skin al extraer, por origen</td>
+<td>market/campo 25%, drop de dungeon 10%, crafteado 20%</td>
+</tr>
+<tr>
+<td>Items de quest y gear PvP del Abyss</td>
+<td>100% garantizado</td>
+</tr>
+<tr>
+<td>Devolución de Abyss Points al extraer</td>
+<td>80%</td>
+</tr>
+<tr>
+<td>Combinar 4 duplicados: probabilidad de subir rareza</td>
+<td>Common 25% / Rare 20% / Epic 15% / Unique 10%</td>
+</tr>
+<tr>
+<td>Lucky Aura</td>
+<td>+10% al proc de mejora, se consume <strong>por combinación</strong>, no por lote</td>
+</tr>
+<tr>
+<td>Rings y gaiters</td>
+<td>nunca dan skin</td>
+</tr>
+<tr>
+<td>Coste de desmontar</td>
+<td>~4.000 Kinah por item; gear Transcended barato 10-20k</td>
+</tr>
+<tr>
+<td>Black Cloud Merchant</td>
+<td>refresco horario, stock <strong>por personaje</strong></td>
+</tr>
+<tr>
+<td>Presets de skin / zonas de tinte / coste de tinte</td>
+<td>3 presets, 4 zonas, 200 Kinah por tinte (KR)</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="el-título-de-700-skins-아이고-입을-옷이-없네--fashionista">El título de 700 skins (아이고, 입을 옷이 없네 / Fashionista)</h3><a class="sl-anchor-link" href="#el-título-de-700-skins-아이고-입을-옷이-없네--fashionista"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «El título de 700 skins (아이고, 입을 옷이 없네 / Fashionista)»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Qué</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Requisito</td>
+<td>700 apariencias coleccionadas (cuentan armas de otras clases)</td>
+</tr>
+<tr>
+<td>Recompensa</td>
+<td>+5% velocidad de combate, +40 regeneración de HP, +5% reducción de enfriamiento, <strong>para todo el servidor</strong></td>
+</tr>
+<tr>
+<td>Equivalente en CP declarado</td>
+<td>~2.100 de combat power</td>
+</tr>
+<tr>
+<td>Coste de 600 a 700</td>
+<td>20-30M Kinah</td>
+</tr>
+<tr>
+<td>Coste de 400 a 700</td>
+<td>50-60M Kinah (100-120M si lo fuerzas, 50-70M farmeando despacio)</td>
+</tr>
+<tr>
+<td>Efecto medido (1 run por título, mismo boss)</td>
+<td>ciclo de skills de 60 s a 56,2 s; charge stance de 30 s a 28,8 s</td>
+</tr>
+<tr>
+<td>Título rival</td>
+<td>명의 계승자, +5% de velocidad de movimiento en vez de CDR</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="otros-títulos-que-sí-compensan-farmear">Otros títulos que sí compensan farmear</h3><a class="sl-anchor-link" href="#otros-títulos-que-sí-compensan-farmear"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Otros títulos que sí compensan farmear»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Título / achievement</th>
+<th>Recompensa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200 pets coleccionados</td>
+<td>+2% de velocidad de movimiento (se describe como casi obligatorio)</td>
+</tr>
+<tr>
+<td>300 kills de jugadores de la facción enemiga</td>
+<td>+5,5% de amplificación de daño y attack power</td>
+</tr>
+<tr>
+<td>2.000 mobs en territorio propio + 1.000 cross-faction</td>
+<td>~1% de velocidad de combate combinado, efecto de <strong>posesión</strong></td>
+</tr>
+<tr>
+<td>50 rifts completados</td>
+<td>defensa</td>
+</tr>
+<tr>
+<td>Boss de campo Legion Commander</td>
+<td>+10 de crit (posesión); +3,5% de combate y +3,5% de movimiento (equipado)</td>
+</tr>
+<tr>
+<td>Bosses Soul Ruler / Executioner</td>
+<td>+2 de PvP attack power (posesión)</td>
+</tr>
+<tr>
+<td>+10 en 15 wings Unique</td>
+<td>천지창조, el mejor título ofensivo según su creador</td>
+</tr>
+<tr>
+<td>Achievements totales / subconjunto útil</td>
+<td>1.307 / ~70</td>
+</tr>
+</tbody>
+</table>
+<p>Los stats de achievement y título <strong>no</strong> cuentan para el item level, pero son substats reales. Y lee siempre el <strong>efecto de posesión</strong> (보유 효과), no el de equipo: ya llevarás puesto algo mejor, así que la línea de posesión es la que farmeas de verdad.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="vuelo-y-wings">Vuelo y wings</h3><a class="sl-anchor-link" href="#vuelo-y-wings"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Vuelo y wings»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Qué</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Controles</td>
+<td>V despega y alterna gliding, Shift acelera, Espacio aterriza</td>
+</tr>
+<tr>
+<td>Tope de mejora de wings</td>
+<td>+10 (sistema añadido el 2026-05-27)</td>
+</tr>
+<tr>
+<td>Craft de wings desde feathers</td>
+<td>50 feathers = craft garantizado, 100% de éxito, resultado tradeable</td>
+</tr>
+<tr>
+<td>Plan de enchant de wings Unique</td>
+<td>+5 primero, +10 cuando tengas materiales de 15 wings</td>
+</tr>
+<tr>
+<td>Prioridad de substats de soulbind en wings</td>
+<td>penetración de defensa / amplificación incondicional → PvP damage → max attack → additional attack → PvP attack → crit → HP</td>
+</tr>
+<tr>
+<td>Feathers en el mapa (incluido el Abyss)</td>
+<td>500+, se recogen <strong>una vez por cuenta</strong></td>
+</tr>
+<tr>
+<td>Fuente de Flight Power</td>
+<td>solo slots de accesorio</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="transformaciones-tres-cosas-distintas-que-se-llaman-igual">Transformaciones: tres cosas distintas que se llaman igual</h3><a class="sl-anchor-link" href="#transformaciones-tres-cosas-distintas-que-se-llaman-igual"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Transformaciones: tres cosas distintas que se llaman igual»</span></a></div>
+<ol>
+<li><strong>Rango militar de facción (총사 신장).</strong> El ranking del Abyss se resetea cada hora sobre los puntos ganados y alimenta un rango militar; los rangos altos desbloquean una transformación. En Commander-in-Chief da <strong>+20% de amplificación de daño PvP</strong>, suficiente para romper objetivos de línea tank que de otro modo serían inmunes. Es la única que importa para un objetivo de PvP competitivo.</li>
+<li><strong>Una transformación ligada a Pet Understanding nivel 5.</strong> Se nombra como umbral; su efecto no está documentado en ninguna fuente.</li>
+<li><strong>Penalización anti-bot:</strong> fallar el reto tipo CAPTCHA fuerza una transformación punitiva con menos velocidad de movimiento y skills desactivadas.</li>
+</ol>
+<aside aria-label="Contestado o cambiado por parche" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"/></svg>Contestado o cambiado por parche</p><div class="starlight-aside__content"><p>El “cap 3” del Global son dos afirmaciones distintas con el mismo abrigo. Cuatro fuentes dicen que el Global baja un cap de pets de 5 a 3: dos se refieren al nivel de <strong>Pet Insight</strong> y dos al <strong>nivel del pet individual</strong>, y dos más lo dan como conjetura. Como toda fuente KR/TW pone el tope del tablero Genus en 10 y no en 5, lo más probable para Global S1 es que el pet individual tope en 3, recortando las souls por pet en torno a un 60%, mientras el tablero conserva su rango 0-10 pero limitado por el menor flujo de cristales. Sin resolver: verifícalo el día 1. El farmeo de souls con alts murió entre enero y agosto de 2026: la pet dungeon pasó a 14 runs semanales <strong>por cuenta</strong> y el farmeo de fragmentos con alts se nombra como feature eliminada. Las tasas de extracción de skins se contradicen y el eje puede ser el origen del item y no solo la rareza; las tres fuentes coinciden en 25% para gear barato de market y 100% para gear del Abyss. Sobre las skins de tienda: todas las fuentes dicen que no dan Collection Effect, pero dos afirman que sí cuentan para el achievement de 700 items sin aparecer en el Wardrobe (dos contadores distintos); no lo confirma ninguna patch note, así que no compres skins por eso. Los Command Quests se citan como 12 scrolls semanales a secas para el Global y como 12 más 12 del Abyss (24 por cuenta) en KR/TW: lo probable es que la mitad del Abyss sea contenido de Season 2 fuera de Global S1. Sin tier Heroic en el Global, el tramo de extracción al 10% queda vacío y Unique pasa a ser el mejor en slot y la única rareza que sirve como combustible y como objetivo de sync. El boost de obtención de fragmentos de KR/TW no llega al Global, así que cualquier estimación de tiempo de farmeo de un vídeo coreano es optimista para ti por un margen desconocido. Las wings solo son mejorables desde el 2026-05-27 y el progreso de race understanding y pets pasó a ser de servidor el 2026-01-07: cualquier guía anterior a esas fechas está obsoleta en esos puntos. Y el tope de crit se cita como 50% en 2025-12 y 80% en 2026-08, probablemente un cambio de parche sin nota que lo confirme.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="plan">Plan</h2><a class="sl-anchor-link" href="#plan"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Plan»</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="mientras-subes-1-a-45">Mientras subes (1 a 45)</h3><a class="sl-anchor-link" href="#mientras-subes-1-a-45"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Mientras subes (1 a 45)»</span></a></div>
+<p>Recoge cada feather que pases y entrégala en el Monolith de cada región: es de cuenta, no hay decisión que tomar y son god stats gratis. Activa la auto-extracción con filtros que excluyan Unique, Heroic y los items de quest, para que el Closet se llene solo. <strong>No hagas soulbind ni metas manastones en gear de leveling.</strong> Coge los pets que caigan de paso pero no te desvíes a farmearlos todavía.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="pve-de-dungeons-post-cap">PvE de dungeons (post-cap)</h3><a class="sl-anchor-link" href="#pve-de-dungeons-post-cap"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «PvE de dungeons (post-cap)»</span></a></div>
+<p>Soul-engrava weapon y guard primero, siguiendo la tabla de opción principal por slot. En Genus, sube Accuracy a 1.800-2.200 antes que nada; después Smite en las slots 3 y 9; después la lista PvE. Para Templar y Cleric, coge <strong>Defense donde un DPS cogería Attack</strong>. Cuando te sobren cristales, monta el reparto de tres páginas: una de PvP, una de PvE para alcanzar caps y una de PvE perfecta.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="pvp-y-abyss">PvP y Abyss</h3><a class="sl-anchor-link" href="#pvp-y-abyss"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «PvP y Abyss»</span></a></div>
+<p>Cambia a la página PvP del Genus: Smite, luego Accuracy, Evasion, PvP Attack, PvP Damage Boost, Damage Tolerance, PvP Defense. Objetivo ~2.500 de accuracy combinada (unos 3.000 para Assassin y Ranger). Extrae gear tier-10 de la tienda del Abyss por skins garantizadas y un 80% de devolución de AP, y ten localizados los flight rings para desengancharte.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="un-bucle-semanal-realista-para-3-4-h-al-día">Un bucle semanal realista para 3-4 h al día</h3><a class="sl-anchor-link" href="#un-bucle-semanal-realista-para-3-4-h-al-día"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Un bucle semanal realista para 3-4 h al día»</span></a></div>
+<p><strong>Diario:</strong> 5 Duty Missions (~10 min, cristales) y mirar el Black Cloud Merchant en cada personaje al que entres. <strong>Semanal:</strong> quemar los 14 tickets de pet dungeon, los 12 Command Scrolls y los 15 merchant contracts de nivel 45. <strong>Pasivo:</strong> deja la auto-extracción encendida y abre los cubos amarillos de campo al verlos (no piden llave; los rojos sí). Todo lo demás de esta página es grind sin tope que haces cuando te apetece.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="higiene-de-presets">Higiene de presets</h3><a class="sl-anchor-link" href="#higiene-de-presets"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Higiene de presets»</span></a></div>
+<p>Configura pronto la tecla de cambio rápido de equipment preset: un preset de combate y un preset de accesorios de Flight Power para los saltos largos entre territorios. Un solo cambio de preset mueve a la vez gear, skills, títulos, wings, Pantheon y página de Genus, pero está bloqueado mientras cualquier stigma esté en enfriamiento.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="errores-y-trampas">Errores y trampas</h2><a class="sl-anchor-link" href="#errores-y-trampas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Errores y trampas»</span></a></div>
+<ul>
+<li><strong>Extraer rings o gaiters buscando skin.</strong> Nunca dan una. Los gaiters parecen una ganga en el market precisamente porque están muertos para extracción.</li>
+<li><strong>Bloquear una slot de Genus antes de que Smite caiga en la 3 o la 9.</strong> Cada bloqueo encarece todos los rerolls siguientes, de ~55 cristales a 75 con tres bloqueos y a 405 cerca del máximo.</li>
+<li><strong>Bloquear un roll que está en el fondo de su rango</strong>, o rerollear con el tablero por debajo de nivel 8: mira el mínimo y el máximo antes de comprometerte, y recuerda que el tier Heroic pide nivel 9.</li>
+<li><strong>Gastar cristales rainbow en una categoría farmeable.</strong> Todos los demás tipos de cristal son infinitamente farmeables; los rainbow son la única moneda de verdad escasa y pertenecen al tablero Special.</li>
+<li><strong>Usar un Reset book sobre gear Unique.</strong> El material de tuning Unique es demasiado escaso para recuperarse de un mal reset: solo sobre Heroic.</li>
+<li><strong>Sincronizar y perder una línea de skill pasiva o activa ya rolleada</strong>, o vender y desencantar drops Unique. Esas líneas se guardan, y los Uniques son tu único combustible de sync.</li>
+<li><strong>Hacer soulbind o meter manastones en gear que vas a cambiar.</strong> Los soulbinds viajan; las manastones se destruyen.</li>
+<li><strong>Pagar por rerolls de Soul Engraving.</strong> Las tasas en slots de baja eficiencia son demasiado malas y la reroll stone es gratis por Material Conversion.</li>
+<li><strong>Combinar skins en lote con un solo Lucky Aura en la bolsa.</strong> Se consume por combinación: un Aura mejora exactamente una de diez. Los items de chance-up para síntesis no compensan.</li>
+<li><strong>Entrar en parties de speed-clear que se saltan los cubos de loot.</strong> Los contadores de achievement de boss solo suben si el cubo se abre de verdad.</li>
+<li><strong>Comparar el efecto de equipo de un título en vez del de posesión.</strong> Ya llevarás puesto algo mejor; la línea de posesión es la que apila gratis.</li>
+<li><strong>Farmear pets cerca de guardias NPC enemigos tras cruzar el rift.</strong> Te auto-aggran y te flaggean para PvP aunque estés en modo PvE.</li>
+<li><strong>Montar un ejército de alts para fragmentos de pet.</strong> Ese camino está eliminado: la pet dungeon son 14 runs semanales por cuenta.</li>
+<li><strong>Perseguirlo todo.</strong> Aion 2 tiene más contenido horizontal opcional del que nadie puede terminar. Haz el puñado que vas a notar y salta el resto: con 3-4 h al día esa es la instrucción correcta.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="preguntas-abiertas">Preguntas abiertas</h2><a class="sl-anchor-link" href="#preguntas-abiertas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Preguntas abiertas»</span></a></div>
+<p>Cuál de los dos “3” es el cap del Global, el nivel del pet individual o el tablero Genus: compruébalo el día 1 del test del 09-17/18, donde el sistema de pets es probable aunque con cap reducido. El Closet está confirmado como <strong>no disponible</strong> en ese test, así que las tasas de extracción, el Collection Effect y el título de 700 skins no se pueden verificar hasta el Early Access del 09-30. Sin rareza Heroic, no se sabe si el tramo de extracción al 10% desaparece o si las tasas de Unique se mueven. Qué hace la transformación de Pet Understanding nivel 5 solo se nombra en una fuente de baja calidad, y de la escalera de rangos militares solo tenemos la cima. Nadie cuantifica el pago por Monolith de las 500+ feathers. Y las zonas de farmeo con nombre (Isle of Spirits, Immortal Island, Elun River Midstream, Kantas Valley East) son nombres KR/TW que pueden no sobrevivir a la localización: el método (partir un spawn en 3 o 4 ciclos y rotar, en un canal poco poblado) sí viaja, las coordenadas puede que no.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="fuentes-principales">Fuentes principales</h2><a class="sl-anchor-link" href="#fuentes-principales"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Fuentes principales»</span></a></div>
+<p><code dir="auto">3x8RTiLlKmc</code>, <code dir="auto">aJdxEVxXv0Q</code>, <code dir="auto">DJfEV5N5vzE</code>, <code dir="auto">fKpfRDOXsLc</code>, <code dir="auto">sTgH4VsyyiE</code>, <code dir="auto">NLwgr_wDLuw</code>, <code dir="auto">GWwChXuq_Dg</code>, <code dir="auto">WW12mQG_U-I</code>, <code dir="auto">aJoQbOnnka0</code>, <code dir="auto">g2lUnXWf6zs</code>, <code dir="auto">ZY9hQvochQw</code>, <code dir="auto">XjQ6xK0V7tc</code>, <code dir="auto">CJzk6CGCG-c</code>, <code dir="auto">UHGhg3MPFtQ</code>, <code dir="auto">IRMFnzgm9j8</code>, <code dir="auto">hCfJOSLahM4</code>, <code dir="auto">WW0ALK73fDQ</code>, <code dir="auto">YMolbjf52nA</code>, <code dir="auto">0uVidnMsInQ</code>, <code dir="auto">t_bKKpLzwj4</code>, <code dir="auto">YpHfBBwlL7c</code>, <code dir="auto">GE4Ne892Al0</code>, <code dir="auto">ilgMDRMoRGU</code>, <code dir="auto">Wi4nhB4yirQ</code>, <code dir="auto">9A_Nk_HNirs</code>, <code dir="auto">4FHDc2YXVVM</code>, <code dir="auto">l3m1OWG6VIs</code>, <code dir="auto">BJcscAr3S0E</code>, <code dir="auto">2vDE38HkpZI</code>, <code dir="auto">UK_ynZTvIO4</code>, <code dir="auto">WxtWVsWGocs</code>, <code dir="auto">Tn7WKMXt5Wo</code>, <code dir="auto">DtHNz1nyw1s</code>, <code dir="auto">O-awbiYNNLw</code>, <code dir="auto">cTH6f8EPY8U</code>, <code dir="auto">YyeyV5GTCC8</code>, <code dir="auto">vJWotao0EEs</code>, <code dir="auto">rKf_-fbsY_c</code>, <code dir="auto">rGR9LjwpXKw</code>, <code dir="auto">aMbWkm2-nAc</code>; síntesis web sobre vuelo y gliding (playforum.net e inven), síntesis web sobre transformaciones y sistema de soul/pet, cronología de parches KR/TW 2025-11-19 a 2026-09 (notas de prensa de NC) y el material oficial de NC sobre el lanzamiento Global.</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/es/systems/stats/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Página anterior<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Stats y fórmulas de combate</span></span></a><a href="/es/systems/macros-combat/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Siguiente página<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Combate, macros, targeting y controles</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

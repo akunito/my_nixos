@@ -1,0 +1,745 @@
+<!DOCTYPE html><html lang="es" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Cleric en PvE | Aion 2 Guides</title><link rel="canonical" href="https://aion2.akunito.com/es/classes/cleric-pve/"/><link rel="alternate" hreflang="es" href="https://aion2.akunito.com/es/classes/cleric-pve/"/><link rel="alternate" hreflang="en" href="https://aion2.akunito.com/en/classes/cleric-pve/"/><link rel="alternate" hreflang="x-default" href="https://aion2.akunito.com/es/classes/cleric-pve/"/><link rel="sitemap" href="/sitemap-index.xml"/><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.2"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="Cleric en PvE"/><meta property="og:type" content="article"/><meta property="og:url" content="https://aion2.akunito.com/es/classes/cleric-pve/"/><meta property="og:locale" content="es"/><meta property="og:description" content="Sacerdote de batalla, no healer de retaguardia. Kit, el bucle Chain of Pain → Condemnation, los dos debuffs que son tu trabajo, la macro, stigmas según los rankers coreanos, y el recorte del global."/><meta property="og:site_name" content="Aion 2 Guides"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="Sacerdote de batalla, no healer de retaguardia. Kit, el bucle Chain of Pain → Condemnation, los dos debuffs que son tu trabajo, la macro, stigmas según los rankers coreanos, y el recorte del global."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.bjjfGofR.css"><style>@layer starlight.components{.card:where(.astro-oag6qnet){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-oag6qnet):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-oag6qnet):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-oag6qnet):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-oag6qnet):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-oag6qnet){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-oag6qnet) .icon:where(.astro-oag6qnet){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-oag6qnet) .body:where(.astro-oag6qnet){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Ir al contenido</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/es/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Aion 2 Guides</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Buscar&quot;,&quot;clear_search&quot;:&quot;Limpiar&quot;,&quot;load_more&quot;:&quot;Cargar más resultados&quot;,&quot;search_label&quot;:&quot;Buscar página&quot;,&quot;filters_label&quot;:&quot;Filtros&quot;,&quot;zero_results&quot;:&quot;Ningún resultado para: [SEARCH_TERM]&quot;,&quot;many_results&quot;:&quot;[COUNT] resultados para: [SEARCH_TERM]&quot;,&quot;one_result&quot;:&quot;[COUNT] resultado para: [SEARCH_TERM]&quot;,&quot;alt_search&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Mostrando resultados para: [DIFFERENT_TERM]&quot;,&quot;search_suggestion&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Prueba alguna de estas búsquedas:&quot;,&quot;searching&quot;:&quot;Buscando [SEARCH_TERM]...&quot;}"><button data-open-modal disabled aria-label="Buscar" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Buscar</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Buscar" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancelar</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/classes/cleric-pve/" selected class="astro-2z5xp7gb">Español</option><option value="/en/classes/cleric-pve/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Primario"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menú</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="0yy2c03" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Empezar</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/start/launch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Lanzamiento, servidores y qué comprar</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/settings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ajustes, controles y ping</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/krtw-playtest-anticheat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Jugar en KR/TW, el playtest y el anti-cheat</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Clases</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/classes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Visión general</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-vs-cleric/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar vs Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pve/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Progresión</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/progression/leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Leveling 1-45 y primeros días</span></a></li><li class="astro-rmhv4bp6"><a href="/es/progression/routine/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Rutina diaria y semanal</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Sistemas</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/systems/stigma/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/daevanion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daevanion</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/gear/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Equipo</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stats y fórmulas de combate</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/character-systems/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sistemas de personaje: pets, Genus Insight, Closet y títulos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/macros-combat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Combate, macros, targeting y controles</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvE</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pve/dungeons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Mazmorras y raids</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvP</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pvp/abyss/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Abyss y puntos de Abyss</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/siege-legion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Asedios, artefactos y legión</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/arena/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Arenas y campo de batalla</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Economía y rutina</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/economy/monetization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Monetización, Kinah y presupuesto</span></a></li><li class="astro-rmhv4bp6"><a href="/es/economy/crafting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Crafting, gathering y Supply Requests</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Versiones</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/versions/regions-and-patches/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Versiones y regiones</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Referencia</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/reference/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glosario</span></a></li><li class="astro-rmhv4bp6"><a href="/es/reference/sources/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Fuentes y método</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/classes/cleric-pve/" selected class="astro-2z5xp7gb">Español</option><option value="/en/classes/cleric-pve/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">En esta página<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#resumen" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Resumen</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#el-kit-base-de-datos-coreana-nivel-1" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">El kit (base de datos coreana, nivel 1)</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#skills-activas" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Skills activas</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pasivas" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Pasivas</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#stigmas-los-13" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Stigmas (los 13)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#cómo-funciona-de-verdad" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Cómo funciona de verdad</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#lo-que-cambió-y-lo-que-las-guías-inglesas-no-saben" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Lo que cambió, y lo que las guías inglesas no saben</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#datos" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Datos</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#deriva-del-top-100-de-clerics-coreanos-enero--febrero-de-2026" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Deriva del top 100 de Clerics coreanos (enero → febrero de 2026)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#umbrales" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Umbrales</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#daño-por-clase-percentil-90-de-más-de-50000-personajes-taiwán-agosto-de-2026" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Daño por clase (percentil 90 de más de 50.000 personajes, Taiwán, agosto de 2026)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#global-temporada-1-frente-a-corea" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Global temporada 1 frente a Corea</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#builds" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Builds</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#leveo-1-45-en-el-global" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Leveo 1-45 en el global</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#stigmas-para-mazmorras-5-ranuras-recorta-a-4-si-el-global-sale-con-4" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Stigmas para mazmorras (5 ranuras; recorta a 4 si el global sale con 4)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#skills-y-especializaciones-para-mazmorras" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Skills y especializaciones para mazmorras</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pasivas-1" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Pasivas</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#la-macro-la-capa-de-ejecución-real" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">La macro (la capa de ejecución real)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#equipo-piedras-de-maná-y-grabados-agregado-del-top-100-corea-diciembre-de-2025" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Equipo, piedras de maná y grabados (agregado del top 100, Corea, diciembre de 2025)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#raid-sanctuary-4-snowfield-of-grief" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Raid (Sanctuary 4, Snowfield of Grief)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#errores-y-trampas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Errores y trampas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#preguntas-abiertas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Preguntas abiertas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes-principales" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes principales</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">En esta página</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#resumen" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Resumen</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#el-kit-base-de-datos-coreana-nivel-1" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">El kit (base de datos coreana, nivel 1)</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#skills-activas" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Skills activas</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pasivas" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Pasivas</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#stigmas-los-13" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Stigmas (los 13)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#cómo-funciona-de-verdad" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Cómo funciona de verdad</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#lo-que-cambió-y-lo-que-las-guías-inglesas-no-saben" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Lo que cambió, y lo que las guías inglesas no saben</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#datos" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Datos</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#deriva-del-top-100-de-clerics-coreanos-enero--febrero-de-2026" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Deriva del top 100 de Clerics coreanos (enero → febrero de 2026)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#umbrales" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Umbrales</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#daño-por-clase-percentil-90-de-más-de-50000-personajes-taiwán-agosto-de-2026" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Daño por clase (percentil 90 de más de 50.000 personajes, Taiwán, agosto de 2026)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#global-temporada-1-frente-a-corea" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Global temporada 1 frente a Corea</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#builds" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Builds</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#leveo-1-45-en-el-global" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Leveo 1-45 en el global</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#stigmas-para-mazmorras-5-ranuras-recorta-a-4-si-el-global-sale-con-4" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Stigmas para mazmorras (5 ranuras; recorta a 4 si el global sale con 4)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#skills-y-especializaciones-para-mazmorras" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Skills y especializaciones para mazmorras</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pasivas-1" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Pasivas</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#la-macro-la-capa-de-ejecución-real" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">La macro (la capa de ejecución real)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#equipo-piedras-de-maná-y-grabados-agregado-del-top-100-corea-diciembre-de-2025" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Equipo, piedras de maná y grabados (agregado del top 100, Corea, diciembre de 2025)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#raid-sanctuary-4-snowfield-of-grief" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Raid (Sanctuary 4, Snowfield of Grief)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#errores-y-trampas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Errores y trampas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#preguntas-abiertas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Preguntas abiertas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes-principales" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes principales</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="es" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Cleric en PvE</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><div class="meta-box"><b>Región:</b> Corea y Taiwán · <b>Versión:</b> parches hasta el 2026-09-15; base de datos de skills del cliente coreano (Inven); estadísticas del top 100 de Clerics coreanos (enero y febrero de 2026) · <b>Revisado:</b> 2026-09-16 · <b>Confianza:</b> alta en mecánicas, más baja en los detalles de la temporada 1 del global. Nombres en inglés provisionales.</div>
+<div class="sl-heading-wrapper level-h2"><h2 id="resumen">Resumen</h2><a class="sl-anchor-link" href="#resumen"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Resumen»</span></a></div>
+<ul>
+<li>Cleric <strong>no</strong> es un healer de MMO occidental. La frase de la comunidad coreana es “힐은 거들뿐”: “la cura es la guarnición”. El trabajo: mantener dos debuffs de daño permanentes en el jefe, mantener el buff de daño del grupo, meter daño entre curas, y guardar dos cooldowns de pánico para mecánicas programadas. Un Cleric que sólo cura juega mal según Corea, no según el gusto.</li>
+<li>Es la <strong>clase con menos DPS del juego</strong>, medido: 71,7 sobre 100 en el percentil 90, -28,3 %, último de 9. Las otras ocho están a menos de un 10,1 % entre sí; Cleric está solo por debajo. No lo arregla ninguna build.</li>
+<li>Aun así es <strong>A por presencia real en las tablas</strong> (101 de 800 plazas del top 100 en 4 modos PvE) y obligatorio en las raids de arriba: es la única clase con resurrección masiva.</li>
+<li><strong>El dolor es subir y farmear en solitario.</strong> Si quieres farmear materiales, diarias y alts rápido, Chanter es mejor; Cleric gana en arena 1v1, PvP masivo y progresión de raid difícil. Como quieres PvP competitivo con clan, ese reparto favorece a Cleric.</li>
+<li><strong>Toda tu rotación va en una tecla de macro.</strong> Mantienes el botón y el juego cicla Mark of Weakening → Chain of Pain → Condemnation → Judgment Lightning por enfriamiento. Curas y el nuke de carga van a mano. Es normal en Corea, no un exploit. Y para tu alergia al ruido: las curas del Cleric son AoE de 25 m centradas en ti; no se selecciona a nadie.</li>
+<li><strong>Desde el parche del 26 de agosto (tiempo mínimo de cancelación) no hace falta macro de hardware</strong> para competir: la macro del juego llega al mismo daño y al mismo número de golpes.</li>
+<li><strong>La única palanca de build:</strong> ~34 % de reducción de enfriamiento, que baja el stigma Earth’s Punishment de 30 s a 20 s para que su debuff nunca caiga, lo que mantiene a Condemnation criticando y reiniciándose. Todo lo demás cuelga de eso.</li>
+<li><strong>El global de la temporada 1 será más débil que cualquier cosa que veas en YouTube.</strong> Skills y stigmas se topan a 20, no a 25; sin equipo Heroic. Toda guía coreana desde julio de 2026 se construye sobre especializaciones de stigma a 25 que no puedes alcanzar.</li>
+<li><strong>Dos botones deciden las raids:</strong> Salvation (3 s de inmunidad total, 2 min 30 de enfriamiento) y Yustiel’s Power (grupo +20 % de tolerancia al daño PvE, 10 s, 1 min). En todos los vídeos de Sanctuary 4 desde el punto de vista del Cleric, lo que salva es Salvation sincronizado con una mecánica con nombre, no el volumen de curación.</li>
+<li><strong>Tu daño es ~30 % Condemnation.</strong> Súbelo con su habilitador primero; deja la inversión en curas para el nivel máximo.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="el-kit-base-de-datos-coreana-nivel-1">El kit (base de datos coreana, nivel 1)</h2><a class="sl-anchor-link" href="#el-kit-base-de-datos-coreana-nivel-1"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «El kit (base de datos coreana, nivel 1)»</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="skills-activas">Skills activas</h3><a class="sl-anchor-link" href="#skills-activas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Skills activas»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>KR</th>
+<th>EN</th>
+<th>Enfriamiento</th>
+<th>MP</th>
+<th>Alcance</th>
+<th>Efecto</th>
+<th>Groggy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>대지의 응보</td>
+<td>Earth’s Retribution</td>
+<td>ninguno</td>
+<td>–</td>
+<td>20 m</td>
+<td>daño de tierra, <strong>+110 MP</strong></td>
+<td>–</td>
+</tr>
+<tr>
+<td>뇌전</td>
+<td>Lightning</td>
+<td>ninguno</td>
+<td>–</td>
+<td>20 m</td>
+<td>daño de viento, +110 MP</td>
+<td>–</td>
+</tr>
+<tr>
+<td>방전</td>
+<td>Discharge</td>
+<td>ninguno</td>
+<td>–</td>
+<td>20 m</td>
+<td>daño de viento, <strong>+150 MP</strong></td>
+<td>–</td>
+</tr>
+<tr>
+<td>심판의 번개</td>
+<td>Judgment Lightning</td>
+<td>ninguno</td>
+<td>120</td>
+<td>20 m</td>
+<td>viento, 4 objetivos en 4 m</td>
+<td>2</td>
+</tr>
+<tr>
+<td>천벌</td>
+<td>Divine Punishment</td>
+<td>ninguno</td>
+<td>120</td>
+<td>20 m</td>
+<td>viento, 4 objetivos en 4 m</td>
+<td>2</td>
+</tr>
+<tr>
+<td>약화의 낙인</td>
+<td>Mark of Weakening</td>
+<td>10 s</td>
+<td>100</td>
+<td>20 m</td>
+<td>4 objetivos; <strong>-5 % de amplificación de daño PvE / -2,5 % PvP</strong> 10 s + DoT</td>
+<td>10</td>
+</tr>
+<tr>
+<td>고통의 연쇄</td>
+<td>Chain of Pain</td>
+<td>20 s</td>
+<td>150</td>
+<td>20 m</td>
+<td>4 objetivos; <strong>-5 % de tolerancia PvE / -7,5 % PvP</strong> 10 s + DoT</td>
+<td>10</td>
+</tr>
+<tr>
+<td>단죄</td>
+<td>Condemnation</td>
+<td><strong>3 s</strong></td>
+<td>–</td>
+<td>20 m</td>
+<td>sólo contra objetivos con Chain of Pain, 4 en 4 m</td>
+<td>7</td>
+</tr>
+<tr>
+<td>벼락 난사</td>
+<td>Lightning Barrage</td>
+<td>ninguno</td>
+<td>–</td>
+<td>20 m</td>
+<td><strong>sólo contra objetivos en groggy</strong></td>
+<td>–</td>
+</tr>
+<tr>
+<td>벽력</td>
+<td>Thunderclap / Bolt</td>
+<td>45 s</td>
+<td>–</td>
+<td>20 m</td>
+<td>3 etapas de carga (0,5 / 1 / 1,5 s), 4 objetivos</td>
+<td>20-35</td>
+</tr>
+<tr>
+<td>신성한 기운</td>
+<td>Holy Aura</td>
+<td>30 s</td>
+<td>–</td>
+<td>20 m</td>
+<td>invocación inmóvil 5 s, daño de tierra periódico</td>
+<td>–</td>
+</tr>
+<tr>
+<td>재생의 빛</td>
+<td>Light of Regeneration</td>
+<td>30 s</td>
+<td>–</td>
+<td>25 m</td>
+<td>curación periódica cada 2 s durante 30 s, tú y el grupo</td>
+<td>–</td>
+</tr>
+<tr>
+<td>치유의 빛</td>
+<td>Light of Healing</td>
+<td>6 s</td>
+<td>50</td>
+<td>25 m</td>
+<td>cura al miembro <strong>con menos vida</strong> y a ti</td>
+<td>–</td>
+</tr>
+<tr>
+<td>쾌유의 광휘</td>
+<td>Radiance of Recovery</td>
+<td>12 s</td>
+<td>–</td>
+<td>25 m</td>
+<td>315-347 a ti y al grupo; <strong>carga máxima: +50 % y limpia 1 debuff</strong></td>
+<td>–</td>
+</tr>
+<tr>
+<td>충격 해제</td>
+<td>Shock Release</td>
+<td>1 min</td>
+<td>–</td>
+<td>propio</td>
+<td>quita aturdir, derribo, aire, agarre, congelar, miedo + 5 s de tenacidad</td>
+<td>–</td>
+</tr>
+<tr>
+<td>재생의 축복</td>
+<td>Blessing of Regeneration</td>
+<td>2 min</td>
+<td>–</td>
+<td>propio</td>
+<td>autocuración + <strong>40 % de MP</strong></td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="pasivas">Pasivas</h3><a class="sl-anchor-link" href="#pasivas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Pasivas»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>KR</th>
+<th>EN</th>
+<th>Efecto a nivel 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>따뜻한 가호</td>
+<td>Warm Blessing</td>
+<td>+6 % de vida, +7 % de MP</td>
+</tr>
+<tr>
+<td>주신의 가호</td>
+<td>Sovereign’s Blessing</td>
+<td>+200 de bloqueo, cura al bloquear (5 s internos)</td>
+</tr>
+<tr>
+<td>주신의 은총</td>
+<td>Sovereign’s Grace</td>
+<td>+100 de crítico, +0,2 % de Smite, daño extra al golpear; <strong>la única pasiva de daño puro</strong></td>
+</tr>
+<tr>
+<td>치유력 강화</td>
+<td>Healing Power Boost</td>
+<td><strong>+10 % de curación, escalado además por poder de ataque</strong></td>
+</tr>
+<tr>
+<td>불사의 장막</td>
+<td>Veil of Immortality</td>
+<td>+2 % de defensa, +901 de resistencia a crítico</td>
+</tr>
+<tr>
+<td>회복 차단</td>
+<td>Recovery Block</td>
+<td>7 % de probabilidad de -32 % a la curación recibida por el objetivo 5 s</td>
+</tr>
+<tr>
+<td>집중의 기도</td>
+<td>Prayer of Focus</td>
+<td>por debajo del 50 %: escudo 30 s + 20 % de curación (1 min internos)</td>
+</tr>
+<tr>
+<td>대지의 은총</td>
+<td>Grace of the Earth</td>
+<td>+3 % de daño crítico, +100 de precisión</td>
+</tr>
+<tr>
+<td>생존 의지</td>
+<td>Will to Survive</td>
+<td>+17 % de resistencia a estados; tras un control, +12 % de tolerancia PvE 5 s</td>
+</tr>
+<tr>
+<td>찬란한 가호</td>
+<td>Radiant Blessing</td>
+<td>7 % de probabilidad de curar a ti y al grupo en 40 m (10 s internos)</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="stigmas-los-13">Stigmas (los 13)</h3><a class="sl-anchor-link" href="#stigmas-los-13"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Stigmas (los 13)»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>KR</th>
+<th>EN</th>
+<th>Enfriamiento</th>
+<th>Efecto a nivel 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>보호의 빛</td>
+<td>Light of Protection</td>
+<td>5 s (toggle)</td>
+<td>tú y el grupo: <strong>+10,5 % de daño PvE y +10,5 % de tolerancia PvE</strong> (5,25 % PvP)</td>
+</tr>
+<tr>
+<td>대지의 징벌</td>
+<td>Earth’s Punishment</td>
+<td>30 s</td>
+<td>daño de tierra + DoT 10 s; groggy 20; <strong>bloquea a Condemnation en críticos garantizados ~10 s a nivel 5</strong></td>
+</tr>
+<tr>
+<td>유스티엘의 권능</td>
+<td>Authority of Yustiel / Yustiel’s Power</td>
+<td>1 min</td>
+<td>grupo en 40 m: <strong>+20 % de tolerancia PvE / +10 % PvP, 10 s</strong>; inmune a aumentos de enfriamiento</td>
+</tr>
+<tr>
+<td>구원</td>
+<td>Salvation</td>
+<td>2 min 30</td>
+<td><strong>3 s de inmunidad a daño y estados</strong>; algunos ataques pesados la atraviesan; no encadenable con otras inmunidades en 30 s</td>
+</tr>
+<tr>
+<td>면죄</td>
+<td>Absolution</td>
+<td>1 min 30</td>
+<td>limpia hasta 2 debuffs a ti y al grupo en 25 m, y cura</td>
+</tr>
+<tr>
+<td>소환 부활</td>
+<td>Summon Revive</td>
+<td>2 s de lanzamiento / 2 min</td>
+<td><strong>resurrección masiva</strong> de los muertos en 40 m</td>
+</tr>
+<tr>
+<td>증폭의 기도</td>
+<td>Prayer of Amplification</td>
+<td>1 min 30</td>
+<td>+20 % de ataque 10 s (propio)</td>
+</tr>
+<tr>
+<td>권능 폭발</td>
+<td>Burst of Authority / Power Burst</td>
+<td>1 min</td>
+<td>daño de tierra; <strong>groggy 50</strong></td>
+</tr>
+<tr>
+<td>파멸의 목소리</td>
+<td>Voice of Ruin / Voice of Doom</td>
+<td>1 min</td>
+<td>DoT 20 s; <strong>-60 % a la curación recibida y a las pociones</strong></td>
+</tr>
+<tr>
+<td>생명의 권능</td>
+<td>Authority of Life</td>
+<td>1 min 30</td>
+<td>curación de suelo 15 s, 7 m</td>
+</tr>
+<tr>
+<td>속박</td>
+<td>Bind</td>
+<td>1 min</td>
+<td>75 % de raíz 10 s (100 % contra NPC); groggy 15</td>
+</tr>
+<tr>
+<td>강습 낙인</td>
+<td>Assault Mark</td>
+<td>2 min</td>
+<td>30 % de raíz; hasta +20 % de defensa según objetivos golpeados</td>
+</tr>
+<tr>
+<td>고결한 기운</td>
+<td>Noble Energy</td>
+<td>1 min</td>
+<td><strong>compañero invocado 5 min</strong> que ataca contigo cada 2 s</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="cómo-funciona-de-verdad">Cómo funciona de verdad</h2><a class="sl-anchor-link" href="#cómo-funciona-de-verdad"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Cómo funciona de verdad»</span></a></div>
+<p><strong>El motor de daño es Chain of Pain → Condemnation.</strong> Condemnation sólo golpea a objetivos que llevan el debuff de Chain of Pain, tiene 3 s de recarga base y una especialización que le da un 50 % de reiniciar su propio enfriamiento al golpear, así que encadena 5-6 lanzamientos por ventana de Chain of Pain. Es ~30 % del daño total.</p>
+<p><strong>Los dos debuffs son tu aportación al grupo.</strong> Mark of Weakening baja la amplificación de daño PvE del objetivo; Chain of Pain baja su tolerancia. Según las notas de parche oficiales sus reducciones de resistencia <strong>se suman</strong> en vez de sobrescribirse. Mantener los dos arriba es, según las fuentes coreanas, el trabajo de verdad.</p>
+<p><strong>Earth’s Punishment es el habilitador del burst.</strong> Bloquea a Condemnation en críticos garantizados ~10 s a nivel 5, y con suficiente reducción de enfriamiento su debuff se vuelve permanente.</p>
+<p><strong>Los ataques básicos llevan la rotación.</strong> Clic izquierdo y derecho son ~70 % del uso de skills; Earth’s Retribution devuelve 110 MP y Discharge 150, y así el kit paga los 120 MP de Judgment Lightning. También suben el medidor de groggy.</p>
+<p><strong>La curación no puede criticar.</strong> Healing Power Boost es casi la única palanca, y desde el 25 de marzo de 2026 <strong>escala con el poder de ataque</strong>: el ataque es una stat de curación.</p>
+<p><strong>Las curas son AoE de 25 m centradas en ti.</strong> No hay selección manual de objetivo en ninguna cura. Light of Healing elige sola al miembro con menos vida cada 6 s; Light of Regeneration es una curación periódica de 30 s que renuevas; Radiance of Recovery es media carga que cura a todos y limpia un debuff a carga completa.</p>
+<p><strong>Sus dos cooldowns reales son respuestas a mecánicas, no gestión de recursos.</strong> Salvation da 3 s de inmunidad total cada 2 min 30; Yustiel’s Power da al grupo 20 % de tolerancia 10 s cada minuto. En cualquier clear de Sanctuary desde el Cleric, la cura no atraviesa los momentos duros: se gasta Salvation en un burst con nombre al 75 % y Yustiel’s Power antes de un patrón conocido.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="lo-que-cambió-y-lo-que-las-guías-inglesas-no-saben">Lo que cambió, y lo que las guías inglesas no saben</h2><a class="sl-anchor-link" href="#lo-que-cambió-y-lo-que-las-guías-inglesas-no-saben"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Lo que cambió, y lo que las guías inglesas no saben»</span></a></div>
+<ul>
+<li><strong>Prayer of Amplification:</strong> descartada en noviembre de 2025 (su +20 % de ataque es sólo propio), obligatoria a 15 en enero de 2026 porque su especialización multiplica Sovereign’s Grace por 1,5 (si eso es de grupo o sólo propio sigue sin resolverse), y “una trampa” en febrero. Testable con dos cuentas.</li>
+<li><strong>Absolution:</strong> de stigma número 1 en diciembre de 2025 (“no te la saltes”) a moda 0 en febrero (adopción del 72 % al 46 %), porque el kit activo de curas ya basta. Situacional: mazmorras con limpieza obligatoria, como los DoT de quemadura de Fire Temple.</li>
+<li><strong>Burst of Authority:</strong> obligatoria en noviembre porque los patrones de jefe exigían groggy forzado; 26 % en febrero, “no la lleves, perdió la carrera de ranuras”. Las guías inglesas de agosto y septiembre la siguen recomendando: leen una meta anterior al rework.</li>
+<li><strong>Light of Protection fue el mayor cambio de la historia del Cleric:</strong> de nivel medio 7,2 y 52 % de adopción a <strong>media 16,8, moda 15 y 97 %</strong> tras ganar +20 % de daño de grupo a nivel 15. <strong>No se apila con el buff de daño del Chanter</strong>; las mitades de resistencia sí.</li>
+<li><strong>El rework del 25 de marzo de 2026:</strong> stigmas 4→5 sin restricciones; coeficientes PvE y PvP separados; curación en el Abyss -50 %; bonificación de etapa de carga del 20 % al 40 %; inmunidades no encadenables en 30 s. Para Cleric: Mark of Weakening se lanza en movimiento y la curación escala con el ataque, la respuesta de los desarrolladores a “el Cleric se siente débil cuando mejora el equipo”.</li>
+<li><strong>Chapter 1 (julio de 2026), especializaciones a nivel 25:</strong> Salvation +10 % de vida instantánea, Light of Protection +5 % de Smite de grupo, Yustiel +20 % de escudo, Earth’s Punishment de 10 s a 20 s de duración. <strong>Nada de esto existe en el global</strong>, que topa los stigmas a 20.</li>
+<li><strong>El parche del 26 de agosto</strong> añadió un tiempo mínimo de cancelación global: cerró la brecha entre macro de hardware y macro del juego, bajó un poco el buff de daño de grupo del Cleric, y dio la vuelta a la rotación contra jefes: ataque básico + Condemnation supera ahora a Judgment Lightning + Condemnation, y un Cleric coreano dejó de usar Judgment Lightning contra jefes. Testable con el medidor de daño (Ctrl+X).</li>
+<li><strong>Earth’s Retribution:</strong> “tejela entre cada skill” contra “no la subas”. Los rankers están en medio: media 16, la mayoría se para en 16, un 10 % llega a 20, y los que no cancelan ataques la saltan.</li>
+<li>Una fuente inglesa nombra un kit de Cleric (“Divine Hammer”, “Radiant Ward”, “Spear of Radiance”) que no aparece en ninguna otra ni en la base de datos: inventado o de otro juego. No se usa nada de ella.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="datos">Datos</h2><a class="sl-anchor-link" href="#datos"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Datos»</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="deriva-del-top-100-de-clerics-coreanos-enero--febrero-de-2026">Deriva del top 100 de Clerics coreanos (enero → febrero de 2026)</h3><a class="sl-anchor-link" href="#deriva-del-top-100-de-clerics-coreanos-enero--febrero-de-2026"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Deriva del top 100 de Clerics coreanos (enero → febrero de 2026)»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Skill o stigma</th>
+<th>Enero</th>
+<th>Febrero</th>
+<th>Veredicto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Light of Protection</td>
+<td>media 7,2, moda 0, 52 %</td>
+<td><strong>media 16,8, moda 15, 97 %</strong></td>
+<td>el mayor cambio de la clase</td>
+</tr>
+<tr>
+<td>Earth’s Punishment</td>
+<td>media 8,5, moda 0, 50 %</td>
+<td><strong>media 12,5, moda 20, 67 %</strong></td>
+<td>el nuevo centro de la meta</td>
+</tr>
+<tr>
+<td>Burst of Authority</td>
+<td>–</td>
+<td><strong>26 %</strong></td>
+<td>fuera</td>
+</tr>
+<tr>
+<td>Absolution</td>
+<td>moda 15, 92 %</td>
+<td>media 6,8, moda 0, <strong>46 %</strong></td>
+<td>situacional</td>
+</tr>
+<tr>
+<td>Salvation</td>
+<td>100 %, moda 15</td>
+<td><strong>93 %, la más alta de todos</strong></td>
+<td>nunca la quites</td>
+</tr>
+<tr>
+<td>Summon Revive</td>
+<td>98 %, moda 10</td>
+<td>87 %, moda 5</td>
+<td>mantenla a nivel bajo</td>
+</tr>
+<tr>
+<td>Yustiel’s Power</td>
+<td>media 5,6, 44 %</td>
+<td>media 8,9, <strong>54 %</strong></td>
+<td>subiendo; a 20 si la llevas</td>
+</tr>
+<tr>
+<td>Judgment Lightning</td>
+<td>media 19,7, 67 % al tope</td>
+<td>media 20,0, <strong>77 %</strong></td>
+<td>central (pero mira el parche de agosto)</td>
+</tr>
+<tr>
+<td>Radiance of Recovery</td>
+<td>media 20,3, 91 % a 20</td>
+<td>86-91 % a 20</td>
+<td>la primera skill que se maxea</td>
+</tr>
+<tr>
+<td>Light of Healing</td>
+<td>media 18,3, <strong>97 % llegan a 16</strong></td>
+<td>moda 20</td>
+<td>la especialización de 16 (-2 s de lanzamiento) es obligatoria</td>
+</tr>
+<tr>
+<td>Holy Aura</td>
+<td>media 11,5, <strong>0 de 100 a 20</strong></td>
+<td>–</td>
+<td>tope a 8</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="umbrales">Umbrales</h3><a class="sl-anchor-link" href="#umbrales"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Umbrales»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Qué</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reducción de enfriamiento para Earth’s Punishment permanente (30 s → 20 s)</td>
+<td><strong>~34 %</strong></td>
+</tr>
+<tr>
+<td>Reducción para Chain of Pain permanente</td>
+<td>~35 %</td>
+</tr>
+<tr>
+<td>Punto de velocidad de combate: animación de Condemnation de 48 a 42 fotogramas</td>
+<td><strong>94,4 %</strong>, sólo endgame con arma legendaria y libros altos; una sola fuente, sin confirmar</td>
+</tr>
+<tr>
+<td>Objetivo práctico de velocidad de combate</td>
+<td>60-70 % (base del Cleric ~42 %)</td>
+</tr>
+<tr>
+<td>Niveles de especialización</td>
+<td>8, 12, 16 (y ranura extra a 20)</td>
+</tr>
+<tr>
+<td>Puntos de skill de un Cleric nuevo a nivel 30</td>
+<td>258</td>
+</tr>
+<tr>
+<td>Puntuación de equipo mínima para las primeras mazmorras</td>
+<td>2.200</td>
+</tr>
+<tr>
+<td>Reembolso de nodo de Daevanion</td>
+<td>500 Kinah por nodo, 13.500 la rama entera</td>
+</tr>
+<tr>
+<td>Cada punto de Daevanion</td>
+<td>+1 de nivel de objeto, en cualquier nodo</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="daño-por-clase-percentil-90-de-más-de-50000-personajes-taiwán-agosto-de-2026">Daño por clase (percentil 90 de más de 50.000 personajes, Taiwán, agosto de 2026)</h3><a class="sl-anchor-link" href="#daño-por-clase-percentil-90-de-más-de-50000-personajes-taiwán-agosto-de-2026"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Daño por clase (percentil 90 de más de 50.000 personajes, Taiwán, agosto de 2026)»</span></a></div>
+<p>Assassin 110,4 · Spiritmaster 106,6 · Gladiator 103,0 · Sorcerer 102,9 · Ranger ~100,3 · Templar 88,4 · Chanter 83,3 · <strong>Cleric 71,7</strong>. Presencia en tablas (800 plazas): Ranger 152, Gladiator 128, Chanter 106, Templar 105, <strong>Cleric 101 (A)</strong>, Assassin 91, Sorcerer 83, Spiritmaster 34.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="global-temporada-1-frente-a-corea">Global temporada 1 frente a Corea</h3><a class="sl-anchor-link" href="#global-temporada-1-frente-a-corea"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Global temporada 1 frente a Corea»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Qué</th>
+<th>KR/TW</th>
+<th>Global S1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tope de nivel de skill / stigma</td>
+<td>25 / 25</td>
+<td><strong>20 / 20</strong></td>
+</tr>
+<tr>
+<td>Ranuras de stigma</td>
+<td>5</td>
+<td>5 esperadas, sin confirmar (4 según otra fuente)</td>
+</tr>
+<tr>
+<td>Equipo Heroic</td>
+<td>sí</td>
+<td><strong>ninguno</strong></td>
+</tr>
+<tr>
+<td>Niveles de mazmorra de trascendencia</td>
+<td>10</td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td>Clases</td>
+<td>9</td>
+<td><strong>8</strong></td>
+</tr>
+<tr>
+<td>Nivel máximo</td>
+<td>50</td>
+<td><strong>45</strong> (37 en el playtest)</td>
+</tr>
+<tr>
+<td>Sistema avanzado de Stigma Shards</td>
+<td>sí</td>
+<td>ausente</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="builds">Builds</h2><a class="sl-anchor-link" href="#builds"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Builds»</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="leveo-1-45-en-el-global">Leveo 1-45 en el global</h3><a class="sl-anchor-link" href="#leveo-1-45-en-el-global"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Leveo 1-45 en el global»</span></a></div>
+<ul>
+<li><strong>Daño antes que curas.</strong> Las dos guías coreanas que se revisaron a sí mismas coinciden: Earth’s Retribution, Judgment Lightning, Lightning Barrage y Thunderclap primero, luego Condemnation; las curas reciben puntos al nivel máximo.</li>
+<li><strong>Los dos ataques básicos a 8 y especializados antes que nada.</strong> Impacto desproporcionado en la velocidad de limpieza aunque todo lo demás esté a 1.</li>
+<li>Mark of Weakening y Lightning Barrage a sus umbrales de nivel 12 si inviertes más: los efectos de 12 (control, proc de Vandanite) importan más que el daño de 8.</li>
+<li>Equipo del día uno: mazmorras selladas y fortalezas, favores para el monolito, transmutar el cinturón noble y el amuleto de revelación a 45 para un arma amarilla gratis a ~1.000 de puntuación. Sin clears completos: ruta hasta la siguiente puerta de puntuación. El primer objeto de selección al 100 %: <strong>botas con velocidad de movimiento</strong> (afecta también a la montura).</li>
+<li>No engastes piedras de maná antes de 45.</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="stigmas-para-mazmorras-5-ranuras-recorta-a-4-si-el-global-sale-con-4">Stigmas para mazmorras (5 ranuras; recorta a 4 si el global sale con 4)</h3><a class="sl-anchor-link" href="#stigmas-para-mazmorras-5-ranuras-recorta-a-4-si-el-global-sale-con-4"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Stigmas para mazmorras (5 ranuras; recorta a 4 si el global sale con 4)»</span></a></div>
+<p>Las tres fijas: <strong>Light of Protection</strong> a 15 (+20 % de daño de grupo; cámbiala si hay Chanter), <strong>Earth’s Punishment</strong> a 20 (el bloqueo de críticos de Condemnation y la razón del 34 %), <strong>Salvation</strong> (93-100 % de adopción; no es una cura, es una respuesta programada). Las otras dos según contenido: <strong>Yustiel’s Power</strong> (el sustituto natural de Light of Protection con Chanter), <strong>Summon Revive</strong> a 1-5 (obligatoria por expectativa con inversión mínima; las piedras de resurrección cubren los grupos normales, guárdala para Sanctuary y asedios), <strong>Absolution</strong> cuando hay limpieza obligatoria, <strong>Prayer of Amplification</strong> para solo y Nightmare, <strong>Burst of Authority</strong> sólo si tu grupo falla los controles de groggy.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="skills-y-especializaciones-para-mazmorras">Skills y especializaciones para mazmorras</h3><a class="sl-anchor-link" href="#skills-y-especializaciones-para-mazmorras"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Skills y especializaciones para mazmorras»</span></a></div>
+<ul>
+<li><strong>Radiance of Recovery</strong> a 20 primero (la activa con más adopción). Especializaciones: +20 % de velocidad de skill obligatoria; “limpia 2 debuffs” a carga máxima para jefes con muchas mecánicas.</li>
+<li><strong>Light of Healing</strong> al menos a 16: la especialización de 16 quita ~2 s de lanzamiento y deja la recarga en ~1 s.</li>
+<li><strong>Condemnation</strong> a 20: 50 % de reinicio al golpear + multi-hit. Es tu daño.</li>
+<li><strong>Chain of Pain</strong> a 16: la especialización de 8 (+3 s) mete una segunda Condemnation en la ventana; la de 12 convierte la reducción de resistencia de un elemento en <strong>todos</strong>.</li>
+<li><strong>Mark of Weakening</strong> a 12-16. <strong>Light of Regeneration</strong> a 16 (los rankers que persiguen daño la paran en 16 para pagar Condemnation). <strong>Earth’s Retribution</strong> a 8 o a 16 según canceles ataques. <strong>Holy Aura</strong> tope 8. <strong>Lightning Barrage</strong> a 16 por el efecto de -1 s a todos los enfriamientos al golpear, para reiniciar stigmas justo tras un groggy.</li>
+<li>Las especializaciones se cambian libremente: revísalas por tipo de contenido.</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="pasivas-1">Pasivas</h3><a class="sl-anchor-link" href="#pasivas-1"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Pasivas»</span></a></div>
+<p>Sovereign’s Grace (la única pasiva de daño puro) → Grace of the Earth → Warm Blessing, Healing Power Boost y Veil of Immortality en rotación (1 punto, luego 2, luego 4) → Radiant Blessing y Prayer of Focus. Variante solo: Warm Blessing antes de Healing Power Boost. Salta Recovery Block.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="la-macro-la-capa-de-ejecución-real">La macro (la capa de ejecución real)</h3><a class="sl-anchor-link" href="#la-macro-la-capa-de-ejecución-real"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «La macro (la capa de ejecución real)»</span></a></div>
+<ul>
+<li>Editor: Ajustes (Esc) → Teclas → General → Macros → clic derecho para crear. Hasta 20 skills; sólo activas y stigmas; hay tres opciones de barra de daño y la macro refleja la activa.</li>
+<li><strong>El orden importa</strong>: de abajo arriba para que los debuffs entren primero: Mark of Weakening → Chain of Pain → Condemnation → Judgment Lightning. Mantienes la tecla y el juego cicla por enfriamiento.</li>
+<li><strong>Fuera de la macro:</strong> Thunderclap (skill de carga: en macro dispara un solo golpe sin cargar). Truco: asígnala a una tecla de mantener sin evento de soltar y se dispara sola a carga completa.</li>
+<li><strong>Bloque de buffs:</strong> una tecla con Earth’s Punishment + Light of Protection + Prayer of Amplification + Noble Energy. Light of Protection es un toggle.</li>
+<li><strong>Las curas van a mano.</strong> Tienen que ser reactivas.</li>
+<li><strong>Variante de daño máximo:</strong> saca Thunderclap, Light of Regeneration y Prayer of Amplification de la automatización y sincronízalas con las ventanas de invulnerabilidad del jefe; el propio creador no llega tan lejos y cambia un poco de daño por comodidad.</li>
+<li><strong>Retardo:</strong> 10 ms en el servidor taiwanés; depende del ping y nunca por debajo del tuyo. Pruébala en la sala de legión con el medidor (Ctrl+X) antes de una mazmorra y reajústala en cada parche.</li>
+<li>Una guía coreana argumenta <strong>en contra</strong> de la cancelación manual de animación: ganancia pequeña, riesgo alto de fallo e interrupción, y la atención liberada vale más para los patrones del jefe. La otra escuela la trata como la habilidad central.</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="equipo-piedras-de-maná-y-grabados-agregado-del-top-100-corea-diciembre-de-2025">Equipo, piedras de maná y grabados (agregado del top 100, Corea, diciembre de 2025)</h3><a class="sl-anchor-link" href="#equipo-piedras-de-maná-y-grabados-agregado-del-top-100-corea-diciembre-de-2025"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Equipo, piedras de maná y grabados (agregado del top 100, Corea, diciembre de 2025)»</span></a></div>
+<p>Las tasas de elección crudas engañan porque las opciones salen con frecuencias muy distintas; corregidas a 2,1 % por opción, Damage Amp, Weapon Damage Amp y Critical Damage Amp (cada una ~0,075 % de tirada natural) suben a lo más alto.</p>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>Stat principal corregida</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Piedras de arma y guardia</td>
+<td>Damage Amp &gt; Weapon Damage Amp &gt; Crit Damage Amp &gt; Attack</td>
+<td>retira Block, Crit Resist, Spirit</td>
+</tr>
+<tr>
+<td>Grabado de arma</td>
+<td><strong>Combat Speed</strong> &gt; Weapon Damage Amp</td>
+<td>acorta todo el ciclo de lanzamiento y movimiento</td>
+</tr>
+<tr>
+<td>Casco</td>
+<td>Received Healing, luego Healing Power Boost, Grace of the Earth</td>
+<td></td>
+</tr>
+<tr>
+<td>Hombros</td>
+<td>Crit Damage Amp (por delante de Healing Power Boost)</td>
+<td></td>
+</tr>
+<tr>
+<td>Pecho</td>
+<td>Damage Amp</td>
+<td></td>
+</tr>
+<tr>
+<td>Piernas</td>
+<td><strong>Damage Resistance</strong> (el slot de supervivencia), luego Veil of Immortality</td>
+<td></td>
+</tr>
+<tr>
+<td>Guantes</td>
+<td>Combat Speed</td>
+<td></td>
+</tr>
+<tr>
+<td>Capa</td>
+<td>Critical Damage Resistance</td>
+<td>contra el golpe único</td>
+</tr>
+<tr>
+<td>Botas</td>
+<td><strong>Movement Speed</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Collar y pendientes</td>
+<td>Healing Power Boost</td>
+<td>los datos crudos dicen Attack y engañan</td>
+</tr>
+<tr>
+<td>Anillo</td>
+<td>todo a grabados de <strong>skills activas</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Brazalete</td>
+<td>sólo de tier principal (los normales tienen 4 stats fijas iguales en todas las copias)</td>
+<td></td>
+</tr>
+<tr>
+<td>Piedras de dios</td>
+<td>Vidar’s Dignity (parálisis) en el arma; Thrud Gelmir’s Insight (sello 6 s, +3 % de proc, no lo quitan las pociones altas) en la guardia</td>
+<td><strong>dos del mismo efecto no se apilan</strong></td>
+</tr>
+<tr>
+<td>Set</td>
+<td>ranks 1-30 mezclan un set base con piezas del Abyss por slot; ranks 31-100 llevan el <strong>set Nua</strong> de mazmorra (235 piezas equipadas)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Orden de mejora: todo a +11 → arma y accesorios a Diamante 2 → arma a Diamante 5 → accesorios → armadura al menos a Diamante 2. Los accesorios y armas crafteados superan a los de mazmorra, pero el grado supera a la fuente en arma y guardia. Arcana: hacen falta cartas para llevar skills de 16 a 20; Chalice, Parchment y Compass mejoran activas; Bell, Mirror y Scale pasivas; busca cartas de las skills que usas y usa extracción y transmutación de fragmentos para garantizar una carta dorada concreta. Pantheon para un Cleric orientado a daño: Life → Wisdom (Smite) → Illusion (reducción de enfriamiento) → Time (velocidad). Genus Insight: los slots 3, 6 y 9 sacan Smite; el 6 también tolerancia. Daevanion: financia las cinco skills de daño más Sovereign’s Grace primero; el resto en nodos de stat planos, porque cada punto es +1 de nivel de objeto; evita los cinco nodos impopulares (espíritu máximo, resistencia a crítico, Holy Aura, Thunderclap, Recovery Block).</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="raid-sanctuary-4-snowfield-of-grief">Raid (Sanctuary 4, Snowfield of Grief)</h3><a class="sl-anchor-link" href="#raid-sanctuary-4-snowfield-of-grief"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Raid (Sanctuary 4, Snowfield of Grief)»</span></a></div>
+<ul>
+<li><strong>Salvation es una respuesta a mecánica, no una cura.</strong> Usos con nombre: el burst de grupo cuando el calor acumulado detona en la fase de aliento al ~75 %, y la ventana de enrage al ~25 % donde gestionar tu congelación mientras esquivas es demasiado. Un Cleric la guarda en vez de usarla en enfriamiento, para las ventanas de patrones superpuestos.</li>
+<li><strong>Yustiel’s Power se lanza antes</strong>, delante de tirones y golpes traseros conocidos, no reaccionando.</li>
+<li><strong>El Cleric rompe los cristales azules</strong> en la puerta del ~50 %: azul sólo con daño mágico, rojo sólo con físico. En el segundo jefe, melé a las 12, 3, 6 y 9 y distancia a la 1, 5, 7 y 11.</li>
+<li>Mecánica de temperatura: a cero, la congelación total hace <strong>10 % de vida cada 5 s</strong> mientras estás inmóvil; acercarte a un aliado más caliente te la devuelve sin coste para él.</li>
+<li>Si un groggy precede a una transición que pone al jefe a vida completa, <strong>deja de pegar y guarda cooldowns</strong>.</li>
+<li>Que se inserte una fase de pilar extra depende del ritmo de daño de la raid: exactamente el control que falla un Cleric que sólo cura.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="errores-y-trampas">Errores y trampas</h2><a class="sl-anchor-link" href="#errores-y-trampas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Errores y trampas»</span></a></div>
+<ul>
+<li>Construir un healer puro: la crítica más repetida en Corea y en inglés.</li>
+<li>Copiar una guía coreana de julio de 2026 en adelante para el día uno del global.</li>
+<li>Meter una skill de carga en la macro.</li>
+<li>Copiar el retardo de 10 ms sin ajustarlo a tu ping.</li>
+<li>Spamear la macro sin mirar el maná: gasta mucho más rápido que a mano.</li>
+<li>Llevar Light of Protection junto al buff de daño de un Chanter.</li>
+<li>Dos piedras de dios con el mismo efecto.</li>
+<li>Leer el poder de combate como preparación: se puede subir haciendo al personaje peor en su trabajo.</li>
+<li>Juzgar la popularidad de las piedras por tasas crudas.</li>
+<li>Sobremejorar equipo que vas a reemplazar.</li>
+<li>Ignorar los puntos de Abyss como jugador de PvE: bloquean la progresión de stigmas.</li>
+<li>Que te interrumpan el lanzamiento de Light of Regeneration: desde febrero de 2026, recibir un golpe o esquivar durante el lanzamiento bloquea la cura de seguimiento los 20 s enteros.</li>
+<li>Farmear brazaletes de tier normal.</li>
+<li>Elegir Cleric por una tier list. El test de un main: “si la clase perdiera el 20 % de lo que la hace meta hoy, ¿seguirías entrando mañana?”</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="preguntas-abiertas">Preguntas abiertas</h2><a class="sl-anchor-link" href="#preguntas-abiertas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Preguntas abiertas»</span></a></div>
+<p>Si el global sale con 5 ranuras de stigma o con 4 (cambia si Prayer of Amplification y Burst of Authority caben). Si el multiplicador de Prayer of Amplification es de grupo o propio. La rotación contra jefes tras el tiempo mínimo de cancelación. Si el 34 % de reducción de enfriamiento se alcanza en el global sin equipo Heroic (el umbral viene del equipo taiwanés de temporada 3 con broches y Arcana que no existen al salir; si no se alcanza, la premisa de la build cambia). Qué estado de balance coreano copia el global. Qué es exactamente “Reincarnating Touch” (el stigma nuevo de marzo en la nota de prensa de NCsoft) frente a Summon Revive. El punto del 94,4 %. Nada en inglés sobre el Cleric en asedios. Si las acciones de soporte dan puntos de Abyss.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="fuentes-principales">Fuentes principales</h2><a class="sl-anchor-link" href="#fuentes-principales"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Fuentes principales»</span></a></div>
+<p>Base de datos de Inven (job 8); estadísticas de rankers <code dir="auto">yUjo_yihn5Y</code>, <code dir="auto">738o_ny0JKY</code>, <code dir="auto">gNfrJ8XFq4A</code>, <code dir="auto">SoMgVCk53Co</code>; guías coreanas <code dir="auto">8cHLf-N_2fE</code>, <code dir="auto">9fx1TccdmQw</code>, <code dir="auto">sDqvWQP0N84</code>, <code dir="auto">Vj8GdfsxBr4</code>, <code dir="auto">wX0zOObK1Pw</code>, <code dir="auto">w9tiBZpHPKg</code>; guías inglesas <code dir="auto">hNnDfDXrWxM</code>, <code dir="auto">N9pok_7x9xA</code>, <code dir="auto">N6MpIwKfZyU</code>, <code dir="auto">Q7zzh1yhfME</code>, <code dir="auto">G4TwZbj0T8w</code>, <code dir="auto">hEft_jbIG_I</code>; raid <code dir="auto">psxsyELxi9g</code>, <code dir="auto">CR0t58WluRM</code>, <code dir="auto">2mtnBYoFoFY</code>; stats <code dir="auto">XjQ6xK0V7tc</code>, <code dir="auto">-6pbNPpf-W8</code>; tier <code dir="auto">vtapHVrOw9c</code>, <code dir="auto">mCxLbeDusUg</code>; global <code dir="auto">4ajjyXvZ0Ts</code>, <code dir="auto">cTH6f8EPY8U</code>; Namu (Cleric, crítica).</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/es/classes/templar-pvp/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Página anterior<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Templar en PvP</span></span></a><a href="/es/classes/cleric-pvp/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Siguiente página<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Cleric en PvP</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

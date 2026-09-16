@@ -1,0 +1,420 @@
+<!DOCTYPE html><html lang="es" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Cleric en PvP | Aion 2 Guides</title><link rel="canonical" href="https://aion2.akunito.com/es/classes/cleric-pvp/"/><link rel="alternate" hreflang="es" href="https://aion2.akunito.com/es/classes/cleric-pvp/"/><link rel="alternate" hreflang="en" href="https://aion2.akunito.com/en/classes/cleric-pvp/"/><link rel="alternate" hreflang="x-default" href="https://aion2.akunito.com/es/classes/cleric-pvp/"/><link rel="sitemap" href="/sitemap-index.xml"/><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.2"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="Cleric en PvP"/><meta property="og:type" content="article"/><meta property="og:url" content="https://aion2.akunito.com/es/classes/cleric-pvp/"/><meta property="og:locale" content="es"/><meta property="og:description" content="Clase de PvP de grupo, no de duelos: casi nunca mueres y casi nunca matas. Kit PvP, stigmas, especializaciones, economía de puntos de Abyss, y el problema estructural de las medallas de asedio."/><meta property="og:site_name" content="Aion 2 Guides"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="Clase de PvP de grupo, no de duelos: casi nunca mueres y casi nunca matas. Kit PvP, stigmas, especializaciones, economía de puntos de Abyss, y el problema estructural de las medallas de asedio."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.bjjfGofR.css"><style>@layer starlight.components{.card:where(.astro-oag6qnet){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-oag6qnet):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-oag6qnet):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-oag6qnet):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-oag6qnet):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-oag6qnet){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-oag6qnet) .icon:where(.astro-oag6qnet){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-oag6qnet) .body:where(.astro-oag6qnet){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Ir al contenido</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/es/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Aion 2 Guides</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Buscar&quot;,&quot;clear_search&quot;:&quot;Limpiar&quot;,&quot;load_more&quot;:&quot;Cargar más resultados&quot;,&quot;search_label&quot;:&quot;Buscar página&quot;,&quot;filters_label&quot;:&quot;Filtros&quot;,&quot;zero_results&quot;:&quot;Ningún resultado para: [SEARCH_TERM]&quot;,&quot;many_results&quot;:&quot;[COUNT] resultados para: [SEARCH_TERM]&quot;,&quot;one_result&quot;:&quot;[COUNT] resultado para: [SEARCH_TERM]&quot;,&quot;alt_search&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Mostrando resultados para: [DIFFERENT_TERM]&quot;,&quot;search_suggestion&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Prueba alguna de estas búsquedas:&quot;,&quot;searching&quot;:&quot;Buscando [SEARCH_TERM]...&quot;}"><button data-open-modal disabled aria-label="Buscar" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Buscar</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Buscar" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancelar</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/classes/cleric-pvp/" selected class="astro-2z5xp7gb">Español</option><option value="/en/classes/cleric-pvp/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Primario"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menú</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="0yy2c03" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Empezar</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/start/launch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Lanzamiento, servidores y qué comprar</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/settings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ajustes, controles y ping</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/krtw-playtest-anticheat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Jugar en KR/TW, el playtest y el anti-cheat</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Clases</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/classes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Visión general</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-vs-cleric/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar vs Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pvp/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Progresión</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/progression/leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Leveling 1-45 y primeros días</span></a></li><li class="astro-rmhv4bp6"><a href="/es/progression/routine/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Rutina diaria y semanal</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Sistemas</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/systems/stigma/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/daevanion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daevanion</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/gear/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Equipo</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stats y fórmulas de combate</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/character-systems/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sistemas de personaje: pets, Genus Insight, Closet y títulos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/macros-combat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Combate, macros, targeting y controles</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvE</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pve/dungeons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Mazmorras y raids</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvP</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pvp/abyss/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Abyss y puntos de Abyss</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/siege-legion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Asedios, artefactos y legión</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/arena/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Arenas y campo de batalla</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Economía y rutina</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/economy/monetization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Monetización, Kinah y presupuesto</span></a></li><li class="astro-rmhv4bp6"><a href="/es/economy/crafting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Crafting, gathering y Supply Requests</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Versiones</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/versions/regions-and-patches/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Versiones y regiones</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Referencia</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/reference/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glosario</span></a></li><li class="astro-rmhv4bp6"><a href="/es/reference/sources/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Fuentes y método</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/classes/cleric-pvp/" selected class="astro-2z5xp7gb">Español</option><option value="/en/classes/cleric-pvp/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">En esta página<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#resumen" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Resumen</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#posición-por-modo-krtw-tras-el--30--julio-de-2026" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Posición por modo (KR/TW, tras el -30 %, julio de 2026)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#lo-que-cambia-al-pasar-de-pve-a-pvp" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Lo que cambia al pasar de PvE a PvP</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#herramientas-de-supervivencia" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Herramientas de supervivencia</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#lo-que-cambió-por-parche" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Lo que cambió por parche</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#economía-del-pvp-corea-febrero-de-2026" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Economía del PvP (Corea, febrero de 2026)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#estructura-del-pvp-en-el-global" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Estructura del PvP en el global</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#builds" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Builds</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#abyss-y-pvp-masivo-el-uso-principal" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Abyss y PvP masivo (el uso principal)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pvp-en-solitario-y-gank-escudo-de-carne" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">PvP en solitario y gank (“escudo de carne”)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#arena-1v1-sin-igualar-equipo" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Arena 1v1 (sin igualar equipo)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#campo-de-batalla-10v10-igualado" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Campo de batalla (10v10 igualado)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#plan-de-equipo-pvp-para-la-temporada-1" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Plan de equipo PvP para la temporada 1</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#macros-y-ajustes" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Macros y ajustes</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#cómo-se-juega" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Cómo se juega</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#errores-y-trampas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Errores y trampas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#preguntas-abiertas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Preguntas abiertas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes-principales" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes principales</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">En esta página</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#resumen" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Resumen</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#posición-por-modo-krtw-tras-el--30--julio-de-2026" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Posición por modo (KR/TW, tras el -30 %, julio de 2026)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#lo-que-cambia-al-pasar-de-pve-a-pvp" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Lo que cambia al pasar de PvE a PvP</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#herramientas-de-supervivencia" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Herramientas de supervivencia</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#lo-que-cambió-por-parche" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Lo que cambió por parche</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#economía-del-pvp-corea-febrero-de-2026" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Economía del PvP (Corea, febrero de 2026)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#estructura-del-pvp-en-el-global" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Estructura del PvP en el global</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#builds" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Builds</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#abyss-y-pvp-masivo-el-uso-principal" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Abyss y PvP masivo (el uso principal)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#pvp-en-solitario-y-gank-escudo-de-carne" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">PvP en solitario y gank (“escudo de carne”)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#arena-1v1-sin-igualar-equipo" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Arena 1v1 (sin igualar equipo)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#campo-de-batalla-10v10-igualado" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Campo de batalla (10v10 igualado)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#plan-de-equipo-pvp-para-la-temporada-1" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Plan de equipo PvP para la temporada 1</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#macros-y-ajustes" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Macros y ajustes</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#cómo-se-juega" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Cómo se juega</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#errores-y-trampas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Errores y trampas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#preguntas-abiertas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Preguntas abiertas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes-principales" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes principales</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="es" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Cleric en PvP</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><div class="meta-box"><b>Región:</b> Corea y Taiwán · <b>Versión:</b> parches hasta el 2026-09-15 · <b>Revisado:</b> 2026-09-16 · <b>Confianza:</b> media. No existe ningún vídeo dedicado a la build PvP del Cleric en el corpus: la build se reconstruye a partir de las secciones de cambio de las guías PvE y de dos VOD de gank. Nada está verificado en el cliente global.</div>
+<div class="sl-heading-wrapper level-h2"><h2 id="resumen">Resumen</h2><a class="sl-anchor-link" href="#resumen"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Resumen»</span></a></div>
+<ul>
+<li><strong>Cleric es una clase de PvP de grupo, no una duelista.</strong> Todos los datos y todas las opiniones coinciden: arriba del todo en arena cooperativa y en las peleas masivas del Abyss, media tabla en 1v1, y casi inútil para <em>matar</em> a alguien en solitario. Si tu PvP es “con el clan”, encaja. Si es “quiero ganar 1v1 y gankear”, no.</li>
+<li><strong>Casi nunca morirás y casi nunca matarás.</strong> El kit: 3 s de inmunidad total (Salvation), ruptura de control con 5 s de inmunidad a estados (Shock Release), escudos de grupo, limpieza y la única resurrección del juego. A cambio, unos 150 de daño por golpe contra un Templar que te quita 3.000 de vida por tajo.</li>
+<li><strong>La queja real que hay que conocer: curar no daba puntos de Abyss al salir en Corea.</strong> Apoyar bien al grupo no pagaba nada; los puntos venían de las muertes. Corea reajustó después los criterios y hay seis rutas de puntos sin PvP, pero los ingresos de <strong>medallas de asedio</strong> de un Cleric siguen siendo pobres porque la contribución premia el daño.</li>
+<li><strong>Responsabilidad de grupo la más alta del juego, junto al Chanter:</strong> 9/10 en la única puntuación estructurada que tenemos, maestría 8/10, rotación sólo 4/10. Lo contrario del ruido de inventario: la complejidad está en leer la pelea, no en gestionar bolsas.</li>
+<li><strong>La rotación de daño se macroiza.</strong> Tras el parche del 26 de agosto la macro del juego iguala a la de hardware. Práctica estándar: daño y buffs en la macro mantenida; curas y Salvation a mano.</li>
+<li><strong>Nada de esto se prueba en el playtest.</strong> Nivel 37, el PvP se abre a 45, Rift y campo de batalla desactivados; puede que sólo funcione el duelo.</li>
+<li><strong>El global sale con un mapa de Abyss</strong> (Chaotic Lower Rashanta, nivel 45, 1.000 de nivel de objeto) y 7 h semanales de Abyss para F2P. Los puntos de Abyss se convierten en puntos de stigma, así que el PvP alimenta tu poder aunque lo odies.</li>
+<li><strong>Dos cosas marcarán tu primer mes más que la build</strong>: el acceso al Abyss (los Stigma Shards son el cuello de botella: 75 para llevar un stigma a 20) y si la facción de tu servidor gana los asedios de artefactos, que hace bola de nieve con los puntos.</li>
+<li><strong>Si quieres un main de PvP al que además inviten a todo</strong>, Cleric es la elección más segura del tablero: con Templar, las dos clases de “demanda garantizada” en el lanzamiento.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="posición-por-modo-krtw-tras-el--30--julio-de-2026">Posición por modo (KR/TW, tras el -30 %, julio de 2026)</h2><a class="sl-anchor-link" href="#posición-por-modo-krtw-tras-el--30--julio-de-2026"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Posición por modo (KR/TW, tras el -30 %, julio de 2026)»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Clase</th>
+<th>KDA Abyss</th>
+<th>Victorias 1v1</th>
+<th>Victorias arena cooperativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Spiritmaster</td>
+<td><strong>13,66</strong> (S)</td>
+<td>64,6 % (C)</td>
+<td>29,9 % (C)</td>
+</tr>
+<tr>
+<td>Templar</td>
+<td>11,5 (A)</td>
+<td><strong>70,8 %</strong> (S)</td>
+<td>41 % (A)</td>
+</tr>
+<tr>
+<td>Sorcerer</td>
+<td>11,46 (A)</td>
+<td>67,9 % (A)</td>
+<td>38 % (B)</td>
+</tr>
+<tr>
+<td><strong>Cleric</strong></td>
+<td><strong>11,36 (A)</strong></td>
+<td><strong>66 % (B)</strong></td>
+<td><strong>47,5 % (S)</strong></td>
+</tr>
+<tr>
+<td>Ranger</td>
+<td>10,09 (B)</td>
+<td>65,6 % (B)</td>
+<td>34,2 % (C)</td>
+</tr>
+<tr>
+<td>Gladiator</td>
+<td>9,89 (B)</td>
+<td>70,1 % (S)</td>
+<td>37,8 % (B)</td>
+</tr>
+<tr>
+<td>Chanter</td>
+<td>9,74 (B)</td>
+<td>67,9 % (A)</td>
+<td>37,3 % (B)</td>
+</tr>
+<tr>
+<td>Assassin</td>
+<td>7,23 (C)</td>
+<td>70,5 % (S)</td>
+<td><strong>54 %</strong> (S)</td>
+</tr>
+</tbody>
+</table>
+<p>Metodología no declarada y la columna de 1v1 no puede ser un porcentaje bruto: la señal es el orden, no los valores. La misma fuente dice que Cleric <strong>era S en 1v1</strong> y cayó tras el nerf a la curación y el recorte del 30 %. Dos fuentes taiwanesas posteriores lo recomiendan <em>para</em> 1v1 porque aguanta más. Las dos describen la misma clase desde ángulos distintos: rara vez pierde, rara vez gana.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="lo-que-cambia-al-pasar-de-pve-a-pvp">Lo que cambia al pasar de PvE a PvP</h2><a class="sl-anchor-link" href="#lo-que-cambia-al-pasar-de-pve-a-pvp"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Lo que cambia al pasar de PvE a PvP»</span></a></div>
+<ul>
+<li><strong>Toda skill que depende del groggy es peso muerto</strong>: los jugadores no tienen medidor de groggy. Lightning Barrage (sólo contra groggy), Burst of Authority (groggy 50) y la contribución de groggy de Earth’s Punishment son sólo PvE. Fuera, y recupera los puntos.</li>
+<li><strong>Los sustitutos son el paquete de control y anti-curación:</strong> <strong>Bind</strong> (75 %, raíz 10 s, 4 objetivos, 1 min), <strong>Voice of Ruin</strong> (DoT 20 s que reduce un 60 % la curación recibida <em>y</em> las pociones), más las pasivas sólo PvP <strong>Recovery Block</strong> y <strong>Will to Survive</strong>.</li>
+<li><strong>Absolution invierte su valor</strong>: los rankers coreanos la abandonaron en PvE (del 72 % al 46 %) pero en PvP es obligatoria como cura instantánea más limpieza de 2 debuffs cada 1:30.</li>
+<li><strong>Las especializaciones se cambian libremente y varias tienen rama PvP:</strong> Judgment Lightning → -10 % de velocidad de combate al enemigo; Mark of Weakening → aturdir; Chain of Pain → raíz; Holy Aura → -40 % de velocidad de movimiento; Condemnation a 16 → 20 % de raíz; Radiance of Recovery → +20 % de curación recibida.</li>
+<li><strong>Chain of Pain vale más en PvP que en PvE</strong>: su debuff es -5 % de tolerancia PvE pero <strong>-7,5 % PvP</strong>.</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="herramientas-de-supervivencia">Herramientas de supervivencia</h3><a class="sl-anchor-link" href="#herramientas-de-supervivencia"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Herramientas de supervivencia»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>KR</th>
+<th>EN</th>
+<th>Tipo</th>
+<th>Enfriamiento</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>구원</td>
+<td>Salvation</td>
+<td>Stigma</td>
+<td>2 min 30</td>
+<td>3 s sin daño ni estados; ignora aumentos de enfriamiento; <strong>30 s de bloqueo con otras inmunidades</strong>; 93-100 % de adopción en el top 100</td>
+</tr>
+<tr>
+<td>충격 해제</td>
+<td>Shock Release / Defiance</td>
+<td>Activa</td>
+<td>1 min</td>
+<td>quita aturdir, derribo, aire, agarre, congelar, miedo + 5 s de inmunidad a estados; a nivel 16, 25 % de reiniciar su propio enfriamiento</td>
+</tr>
+<tr>
+<td>재생의 축복</td>
+<td>Blessing of Regeneration</td>
+<td>Activa</td>
+<td>2 min</td>
+<td>autocuración + 40 % de MP: el reinicio de maná que permite sobrevivir a una pelea larga de desgaste</td>
+</tr>
+<tr>
+<td>속박</td>
+<td>Bind</td>
+<td>Stigma</td>
+<td>1 min</td>
+<td>75 % de raíz 10 s a hasta 4 objetivos</td>
+</tr>
+<tr>
+<td>파멸의 목소리</td>
+<td>Voice of Ruin</td>
+<td>Stigma</td>
+<td>1 min</td>
+<td>DoT 20 s, <strong>-60 % de curación recibida y de pociones</strong></td>
+</tr>
+<tr>
+<td>면죄</td>
+<td>Absolution</td>
+<td>Stigma</td>
+<td>1 min 30</td>
+<td>quita hasta 2 debuffs y cura, tú y el grupo en 25 m</td>
+</tr>
+<tr>
+<td>보호의 빛</td>
+<td>Light of Protection</td>
+<td>Stigma</td>
+<td>toggle</td>
+<td>grupo: +5,25 % de daño PvP y +5,25 % de tolerancia PvP</td>
+</tr>
+<tr>
+<td>유스티엘의 권능</td>
+<td>Yustiel’s Power</td>
+<td>Stigma</td>
+<td>1 min</td>
+<td>grupo en 40 m: <strong>+10 % de tolerancia PvP</strong> 10 s</td>
+</tr>
+<tr>
+<td>회복 차단</td>
+<td>Recovery Block</td>
+<td>Pasiva</td>
+<td>–</td>
+<td>7 % al golpear: -32 % de curación recibida por el objetivo 5 s</td>
+</tr>
+<tr>
+<td>생존 의지</td>
+<td>Will to Survive</td>
+<td>Pasiva</td>
+<td>–</td>
+<td>+17 % de resistencia a estados; al recibir control, 5 s de tolerancia extra</td>
+</tr>
+</tbody>
+</table>
+<p>Los veteranos guardan Salvation y Shock Release para la cadena de control <em>peligrosa</em>, no para el primer proc: se comen el control “normal” a propósito.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="lo-que-cambió-por-parche">Lo que cambió por parche</h2><a class="sl-anchor-link" href="#lo-que-cambió-por-parche"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Lo que cambió por parche»</span></a></div>
+<ul>
+<li><strong>La curación se recortó un 50 % en Abyss y arena (25 de marzo de 2026), y lo presentaron como un buff a los healers</strong>: peleas más largas hacen al soporte relativamente más valioso. El mismo parche separó los coeficientes PvP y PvE y bajó el daño PvP en general; en julio llegó otro -30 %. Neto para el global: peleas lo bastante largas para que un soporte importe.</li>
+<li><strong>Encadenar inmunidades está muerto.</strong> Desde marzo, dos efectos de inmunidad no pueden aplicarse con menos de 30 s de diferencia; Salvation pasó de 5 s a 3 s en el mismo pase. Todo lo escrito antes de marzo de 2026 sobre “Salvation y luego X” no sirve.</li>
+<li><strong>Reincarnating Touch (환생의 손길)</strong>, el stigma nuevo de marzo: 5 min activo, +10 % de defensa, +5 % de tolerancia, +10 % de curación, y te revive al 100 % si mueres mientras dura; 8 min 25 de enfriamiento. Dos fuentes describen la versión por etapas (nivel 5/10/15/20) como reviviendo a un <em>aliado</em>, no a quien lo lanza. Sin resolver, y sin saber si sale en el global.</li>
+<li><strong>Tope de stigma 20 o 25.</strong> Corea lo subió a 25 con el Chapter 1; el global se infiere anterior. Los bonos PvP de nivel 25 (Salvation +10 % de vida instantánea, Prayer of Amplification con amplificación de daño PvP personal, Yustiel con escudo del 20 % de la vida) no existirán al salir.</li>
+<li><strong>El parche del 26 de agosto</strong> añadió tiempo mínimo de cancelación: una prueba A/B en vivo de un Cleric coreano mostró la macro del juego igualando a un dispositivo externo. El mismo parche bajó un poco el buff de daño de grupo del Cleric.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="economía-del-pvp-corea-febrero-de-2026">Economía del PvP (Corea, febrero de 2026)</h2><a class="sl-anchor-link" href="#economía-del-pvp-corea-febrero-de-2026"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Economía del PvP (Corea, febrero de 2026)»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Dato</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Set Decanus completo sin arma</td>
+<td>~715.000 AP</td>
+</tr>
+<tr>
+<td>Reembolso por disolver equipo del Abyss</td>
+<td>80 % (el 20 % se pierde para siempre; la herencia ya lleva tus mejoras)</td>
+</tr>
+<tr>
+<td>Mejora de +0 a +17</td>
+<td>~15 M de Kinah por pieza</td>
+</tr>
+<tr>
+<td>Stigma Shard</td>
+<td>25.000 AP</td>
+</tr>
+<tr>
+<td>Fragmentos para llevar un stigma a 20</td>
+<td>75 (1/2/4/8 por tramo)</td>
+</tr>
+<tr>
+<td>AP semanales por muertes y caza en PvP</td>
+<td>~500.000 (≈20 fragmentos)</td>
+</tr>
+<tr>
+<td>Fragmentos semanales sólo con PvE</td>
+<td>~2,6</td>
+</tr>
+<tr>
+<td>Misiones diarias</td>
+<td>5 × 500 = 2.500 AP al día, sin PvP</td>
+</tr>
+<tr>
+<td>Abyss Corridor (artefacto ganado)</td>
+<td>~10.000 AP por ventana de 5 min</td>
+</tr>
+<tr>
+<td>Shugo Festa</td>
+<td>~1.000 AP por clear, a cada :15 y :45</td>
+</tr>
+<tr>
+<td>Asedio de artefactos</td>
+<td>cada 48 h; medallas por contribución, sólo ganadores</td>
+</tr>
+</tbody>
+</table>
+<p>Tiers de equipo PvP: Decanus → Centurion → Tribunus → High Commander, con puntos de Abyss y medallas de plata, oro y platino; <strong>no se compra con dinero real</strong>. Todo set PvP lleva +40 % de daño a monstruos del Abyss y -20 % en el resto, por eso los loadouts híbridos son una decisión real. Los bonos se apilan entre tiers distintos: 5 Centurion + 8 Tribunus supera a un Tribunus completo. Objetivos de stat del Cleric: velocidad de combate 60-70 % (base ~42 %, la más lenta del juego) y precisión ~2.500 combinada. Prioridades de healer en PvP: vida máxima, curación, velocidad de lanzamiento y movimiento, y <strong>resistencia a estados</strong>, la stat que decide si una cadena de control entra.</p>
+<aside aria-label="El problema estructural: las medallas de asedio" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"/></svg>El problema estructural: las medallas de asedio</p><div class="starlight-aside__content"><p>Los asedios de artefactos pagan medallas por contribución y sólo a la facción ganadora, y la contribución premia el daño. Un main de Cleric lo dice sin rodeos: las medallas de oro le escasean “específicamente por el rendimiento débil en asedio”, y como solución compra antes las piezas caras de Centurion para llegar al siguiente umbral de bono de set. Esto y la queja del lanzamiento sobre los puntos por curar son lo que más separa a Cleric de Templar para un objetivo de PvP con clan.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="estructura-del-pvp-en-el-global">Estructura del PvP en el global</h2><a class="sl-anchor-link" href="#estructura-del-pvp-en-el-global"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Estructura del PvP en el global»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Modo</th>
+<th>Formato</th>
+<th>Equipo igualado</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Duelo</td>
+<td>1v1 sin cola</td>
+<td>no</td>
+<td>quizá el único PvP del playtest</td>
+</tr>
+<tr>
+<td>Arena of Solitude</td>
+<td>1v1 con ranking</td>
+<td><strong>no</strong></td>
+<td>al mejor de 3 rondas, sin reinicio entre rondas</td>
+</tr>
+<tr>
+<td>Arena of Cooperation</td>
+<td>5v5 con ranking (fuentes coreanas: 4v4)</td>
+<td><strong>no</strong></td>
+<td>formato sin resolver</td>
+</tr>
+<tr>
+<td>Campo de batalla / Arena of Tactics</td>
+<td>10v10</td>
+<td><strong>sí</strong></td>
+<td>Sandstorm Temple; 3 victorias y 3 participaciones con recompensa por semana, reinicio el miércoles</td>
+</tr>
+<tr>
+<td>Abyss</td>
+<td>mundo abierto</td>
+<td>no</td>
+<td><strong>un mapa al salir</strong>: Chaotic Lower Rashanta; F2P 7 h por semana</td>
+</tr>
+<tr>
+<td>Rift</td>
+<td>incursión entre facciones</td>
+<td>no</td>
+<td>cada ~3 h, 1 h dentro; la bandera PvP se bloquea ~1 h</td>
+</tr>
+<tr>
+<td>Asedio de artefactos</td>
+<td>facción contra facción</td>
+<td>no</td>
+<td>~3 veces por semana en hora punta; ganar abre el Abyss Corridor</td>
+</tr>
+<tr>
+<td>Jefe de mundo del Abyss</td>
+<td>disputado</td>
+<td>no</td>
+<td>2 veces por semana</td>
+</tr>
+</tbody>
+</table>
+<p>El PvP se abre a <strong>nivel 45</strong> como salvaguarda deliberada. Grupos de 5 y raid de 10 (Corea 4 y 8) reducen un poco la carga por healer.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="builds">Builds</h2><a class="sl-anchor-link" href="#builds"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Builds»</span></a></div>
+<aside aria-label="Nota" class="starlight-aside starlight-aside--note"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 11a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0-1-1Zm.38-3.92a1 1 0 0 0-.76 0 1 1 0 0 0-.33.21 1.15 1.15 0 0 0-.21.33 1 1 0 0 0 .21 1.09c.097.088.209.16.33.21A1 1 0 0 0 13 8a1.05 1.05 0 0 0-.29-.71 1 1 0 0 0-.33-.21ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16.001A8 8 0 0 1 12 20Z"/></svg>Nota</p><div class="starlight-aside__content">Reconstrucciones a partir de fuentes coreanas y taiwanesas. Nivel de stigma y de skill 20 (16 sin cartas de Arcana). Cinco ranuras desde marzo de 2026; si el global sale con cuatro, quita Summon Revive fuera de asedios.</div></aside>
+<div class="sl-heading-wrapper level-h3"><h3 id="abyss-y-pvp-masivo-el-uso-principal">Abyss y PvP masivo (el uso principal)</h3><a class="sl-anchor-link" href="#abyss-y-pvp-masivo-el-uso-principal"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Abyss y PvP masivo (el uso principal)»</span></a></div>
+<p><strong>Stigmas:</strong> Salvation · Light of Protection a 15 como mínimo (cámbiala por Yustiel’s Power si hay Chanter: las mitades de daño no se apilan, las de resistencia sí; es la combinación coreana “호치”) · Voice of Ruin a 15 por el -60 % anti-curación, la mejor pieza para PvP masivo · Absolution · Summon Revive.</p>
+<p><strong>Fuera:</strong> Burst of Authority, Earth’s Punishment (su groggy no vale contra jugadores), Lightning Barrage. <strong>Pasivas a añadir:</strong> Recovery Block y Will to Survive, las dos sólo PvP y saltadas en toda build PvE. <strong>Especializaciones a cambiar:</strong> Judgment Lightning → -10 % de velocidad de combate; Mark of Weakening → aturdir; Chain of Pain → raíz; Holy Aura → -40 % de movimiento; Radiance of Recovery → +20 % de curación recibida.</p>
+<p><strong>Posición:</strong> toda tu ventaja sobre el Chanter es que estás a 20 m en una pelea de decenas de jugadores; el Chanter tiene que estar en melé.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="pvp-en-solitario-y-gank-escudo-de-carne">PvP en solitario y gank (“escudo de carne”)</h3><a class="sl-anchor-link" href="#pvp-en-solitario-y-gank-escudo-de-carne"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «PvP en solitario y gank (“escudo de carne”)»</span></a></div>
+<p>Stats: resistencia a estados, regeneración, pasivas de supervivencia, Constitution para vida, y precisión subida por soulbinds y tiradas de Genus. Skills vistas en juego: Shock Release (guardado para la cadena peligrosa), Holy Aura como daño, Salvation, Voice of Ruin, una raíz. La evasión <strong>no</strong> se recomienda salvo compromiso total: una build de media evasión pierde contra todos, y Ranger y Assassin tienen pasivas que la hacen funcionar donde Cleric no. Encuadre honesto del mismo creador: un Cleric no mata a un Templar, Gladiator o Assassin competente uno contra uno; la build es “sobrevivir y molestar”.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="arena-1v1-sin-igualar-equipo">Arena 1v1 (sin igualar equipo)</h3><a class="sl-anchor-link" href="#arena-1v1-sin-igualar-equipo"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Arena 1v1 (sin igualar equipo)»</span></a></div>
+<p>Ninguna fuente da una build dedicada. Forma reconstruida: resistencia a estados máxima más Will to Survive (pierdes por cadenas de control, no por daño), Voice of Ruin para vencer las pociones y el robo de vida del rival, Bind para cortar el impulso de un melé, y Salvation guardada para su ventana de burst. <strong>Sin verificar.</strong></p>
+<div class="sl-heading-wrapper level-h3"><h3 id="campo-de-batalla-10v10-igualado">Campo de batalla (10v10 igualado)</h3><a class="sl-anchor-link" href="#campo-de-batalla-10v10-igualado"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Campo de batalla (10v10 igualado)»</span></a></div>
+<p>El equipo se nivela: es el único modo donde sólo el kit decide y tu inversión en equipo del Abyss no cuenta. No existe guía de Cleric para este modo en ninguna fuente.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="plan-de-equipo-pvp-para-la-temporada-1">Plan de equipo PvP para la temporada 1</h3><a class="sl-anchor-link" href="#plan-de-equipo-pvp-para-la-temporada-1"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Plan de equipo PvP para la temporada 1»</span></a></div>
+<ol>
+<li>Puntos “fuera de temporada” primero (Corridor, campo de batalla, arenas, peticiones de suministros, Shugo Festa) antes de tener equipo para farmear muertes.</li>
+<li>Set Decanus completo sin arma (~715 k AP), luego arma → guardia → accesorios a +11 en todo antes de subir nada a +17.</li>
+<li>Mezcla tiers a propósito en vez de completar un set.</li>
+<li>Arma <strong>crafteada</strong> antes que la de la tienda PvP (mejor escalado y quinta línea de soulbind).</li>
+<li>El loadout híbrido es legítimo: 8 piezas PvP en slots defensivos más un slot flexible PvE limpia el PvE normal, porque pasado un ~100 % de bono de daño acumulado una diferencia de una sola fuente del 15-40 % es sólo un 5-10 % real.</li>
+<li>Consumibles: bebidas baratas para regenerar el poder de acción de la esquiva con Shift, y pergaminos de resistencia y mitigación al choque en teclas rápidas; el de resistencia <strong>antes</strong> del burst de Gladiator, Assassin y Templar.</li>
+</ol>
+<div class="sl-heading-wrapper level-h3"><h3 id="macros-y-ajustes">Macros y ajustes</h3><a class="sl-anchor-link" href="#macros-y-ajustes"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Macros y ajustes»</span></a></div>
+<ul>
+<li>Daño y buffs fijos (Light of Protection, Prayer of Amplification, Voice of Ruin, Mark of Weakening) en la macro mantenida; <strong>todas las curas y Salvation a mano</strong>.</li>
+<li>Nunca una skill de carga (Thunderclap) en macro.</li>
+<li>Sólo pasos con ~100 % de activación: un test en muñeco dio 2.826 frente a 1.348 de DPS entre incluir y excluir un paso del 15 %.</li>
+<li>Retardo inicial 50 ms y súbelo según el ping.</li>
+<li>Apaga “bloquear objetivo principal al atacar” y pon a los jugadores hostiles por encima de los monstruos en la prioridad de Tab.</li>
+<li>Capacidad de 20 skills; mantener la macro no bloquea los lanzamientos manuales, los pausa.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="cómo-se-juega">Cómo se juega</h2><a class="sl-anchor-link" href="#cómo-se-juega"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Cómo se juega»</span></a></div>
+<p>Cleric en PvP es una clase de desgaste en un juego que pasó 2026 haciendo el PvP más de desgaste. La textura momento a momento se ve en los dos VOD en solitario del corpus: los dos van sobre estar controlado. La parálisis es “lo único contra lo que no puedo hacer nada”; miedos de 7 s; el jugador se niega repetidamente a gastar Shock Release en el primer control que se come porque lo guarda para la cadena que de verdad lo mata.</p>
+<p>En grupo la imagen se invierte, y esa inversión es todo el argumento para jugarlo. La arena cooperativa es donde Cleric es S, y la razón declarada es tanto de emparejamiento como de poder: los equipos sin Cleric simplemente pierden más. En las peleas masivas del Abyss, estar a 20 m en vez de en melé es la diferencia concreta con el Chanter. Y es una clase de macro: tu daño corre solo desde una tecla mantenida mientras tus manos quedan libres para curas, esquivas con Shift y Salvation.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="errores-y-trampas">Errores y trampas</h2><a class="sl-anchor-link" href="#errores-y-trampas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Errores y trampas»</span></a></div>
+<ul>
+<li>Llevar la barra de PvE al Abyss: Lightning Barrage y Burst of Authority no hacen literalmente nada.</li>
+<li>Quitar Absolution porque una guía de rankers PvE lo dijo.</li>
+<li>Disparar Shock Release al primer control.</li>
+<li>Suponer que puedes encadenar Salvation con otra inmunidad.</li>
+<li>Llevar Light of Protection junto a un Chanter.</li>
+<li>Comprometerte a medias con la evasión.</li>
+<li>Poner una skill de carga en la macro.</li>
+<li>Activar la bandera PvP en un Rift “para mirar”: una vez puesta no se quita en ~1 h, y los guardias enemigos la fuerzan aunque no quieras.</li>
+<li>Disolver equipo del Abyss por el 80 %.</li>
+<li>Saltarte el Abyss por no gustarte el PvP: los puntos se convierten en poder de stigma en PvE y en PvP.</li>
+<li>Construir un healer puro.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="preguntas-abiertas">Preguntas abiertas</h2><a class="sl-anchor-link" href="#preguntas-abiertas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Preguntas abiertas»</span></a></div>
+<p>No hay datos de Cleric PvP verificados en el global. Formato de arena (1v1 y 5v5 según el stream oficial; 1v1 y 4v4 según Corea). <strong>¿Funciona la resurrección dentro de la arena?</strong> Preguntado en el stream oficial y dejado sin respuesta; es la pregunta clave para el valor del Cleric en 5v5. Reincarnating Touch: ¿autorresurrección o de aliado, y sale en el global? Tope de stigma 20 o 25. Si el recorte del 50 % a la curación está en la temporada 1. <strong>¿Curar da ya puntos de Abyss?</strong> Un parche de diciembre de 2025 reajustó los criterios pero nadie confirma que se añadiera la curación; verifícalo la primera semana. Ninguna guía de Cleric para asedios ni campo de batalla, en coreano ni en inglés. Ningún dato por matchup (cómo jugar contra el silencio del Sorcerer, la apertura del Assassin, el miedo del Spiritmaster). Vida del Cleric frente a otras clases (una fuente da 53 k contra ~80 k del Assassin, en contradicción con “las stats defensivas más altas”). El pase de balance del Cleric del 8-9 de septiembre no lo cubre ninguna fuente.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="fuentes-principales">Fuentes principales</h2><a class="sl-anchor-link" href="#fuentes-principales"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Fuentes principales»</span></a></div>
+<p>Datos de tier <code dir="auto">554k4v3wXqY</code>; comparativas <code dir="auto">sDo98p3DB-s</code>, <code dir="auto">W9Br8Ec3AQk</code>, <code dir="auto">3I3tK4x49gM</code>, <code dir="auto">scfRK-6sHPs</code>, <code dir="auto">OyG_Yx03kWo</code>; VOD en solitario <code dir="auto">Ut3tsFyj0aI</code>, <code dir="auto">yRX807QY87o</code>; crítica <code dir="auto">tPYLK2zt5v8</code>; rankers <code dir="auto">738o_ny0JKY</code>, <code dir="auto">yUjo_yihn5Y</code>; guías <code dir="auto">N9pok_7x9xA</code>, <code dir="auto">G4TwZbj0T8w</code>, <code dir="auto">hNnDfDXrWxM</code>, <code dir="auto">8cHLf-N_2fE</code>; economía <code dir="auto">IRMFnzgm9j8</code>, <code dir="auto">RWyhmvmoiQw</code>, <code dir="auto">ff8qBw0yTdo</code>; modos del global <code dir="auto">mjyZJy4XAnY</code>, <code dir="auto">1oRJ4MOQjvg</code>, <code dir="auto">BSz-uzzAkk0</code>; macros <code dir="auto">hEft_jbIG_I</code>, <code dir="auto">Zg9ovux0LH4</code>, <code dir="auto">w9tiBZpHPKg</code>; ajustes <code dir="auto">C3cA6CxESNc</code>; parches <code dir="auto">h8mlyITnpoI</code>, <code dir="auto">K8qZfWjiP1U</code>, <code dir="auto">MWxHefKfzz4</code>; base de datos de Inven; Reddit (reseña PvP de un veterano de Aion 1) y Namu.</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/es/classes/cleric-pve/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Página anterior<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Cleric en PvE</span></span></a><a href="/es/classes/gladiator/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Siguiente página<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Gladiator</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

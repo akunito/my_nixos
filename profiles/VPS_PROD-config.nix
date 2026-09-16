@@ -461,6 +461,16 @@ in
       # needs a rebuild. Contents are git-crypt encrypted; see
       # docs/guides/README.md before adding to that directory.
       guides     = { root = ../docs/guides; };
+      # Aion 2 guides — Astro/Starlight site built from github.com/akunito/aion2-guides
+      # and published into docs/aion2-site/ by its tools/publish_local.sh. Two
+      # ways in from one root: this vhost serves it at
+      # https://aion2.local.akunito.com/ over Tailscale, and publicPort adds a
+      # plain-HTTP loopback vhost on 127.0.0.1:8095 that the remotely-managed
+      # Cloudflare Tunnel uses as the origin for the public hostname
+      # aion2.akunito.com (service type HTTP, http://localhost:8095). Unlike
+      # docs/guides this directory is NOT git-crypt encrypted — the site is
+      # meant to be public.
+      aion2      = { root = ../docs/aion2-site; publicPort = 8095; };
       openclaw   = { port = 18789; };
       finance    = { port = 8190; maxBodySize = "50M"; };
       # AkuCraft BlueMap. It used to sit at "/" on the players' own port 8100,
