@@ -417,7 +417,14 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
    claude login && claude-sync status     # reachable: yes
    claude -c                              # continues the last DESK session, forked
    ```
-9. VS Code on Windows: install the WSL extension, `code .` from the distro.
+9. VS Code on Windows: the **WSL** extension (`ms-vscode-remote.remote-wsl`) — installed
+   2026-09-16; the first `code` from the distro downloaded the VS Code Server into
+   `~/.vscode-server`. `code` on the WSL PATH is the Windows binary's shim
+   (`/mnt/c/Users/diego/AppData/Local/Programs/Microsoft VS Code/bin/code`), so from
+   zsh — and from Claude Code in WSL — `code .`, `code <file>` or `code -g <file>:<line>`
+   open the Linux path in the Windows VS Code window connected to NixOS ("WSL: NixOS" in
+   the status bar); `-r` reuses the current window. That is the way to show Diego a file
+   or a diff here (no GUI editor inside WSL).
 
 ## Before W11 day (on DESK, once)
 
