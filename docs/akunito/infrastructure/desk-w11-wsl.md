@@ -261,6 +261,10 @@ now stop at the edge facing the other monitor (`edgeL`/`edgeR` from
 foreground. Third capture (21 gestures): no storms, no dropped presses, every
 final size as expected, 13 edge clamps. Left as is: restoring from maximised
 costs ~280 ms (the app's own restore time).
+Open items from the captures (dropped resize right after a cross-monitor drop,
+2 s workspace switches after a display change, DP monitor flapping, geometric
+edge clamp) are in the Plane ticket "DESK_W11: Alt+drag/GlazeWM open items"
+(AINF, 2026-09-16). Trace switched off 2026-09-16 evening.
 Debug trace: `%TEMP%\hyper-debug.on` present -> gestures, GlazeWM command
 timings and window events (focus, state, size outside gestures, cloak) go to
 `%TEMP%\altdrag.log`; power and display changes are logged always.
