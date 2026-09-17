@@ -1,0 +1,185 @@
+# DESK_W11: GlazeWM, fullscreen games and the future test suite
+
+Knowledge base started 2026-09-17 when Aion 2 ran badly under GlazeWM. Two uses:
+(1) the causes and fixes of the fullscreen-game bugs, (2) everything needed later to
+build a test suite covering every window-management behaviour of the DESK_W11
+desktop (GlazeWM fork + `hyper-desktops.ahk` + Zebar + Windhawk taskbar).
+Setup context lives in `desk-w11-wsl.md`; the harness in
+`templates/windows/DESK_W11/tests/fullscreen/` (README has the measured results).
+
+## 1. The Aion 2 incident (2026-09-17)
+
+Symptoms reported: bad performance from the start; after the first workspace switch
+the taskbar (Windhawk, at the top) sat over the game, even back on the game's
+workspace; the game showed on every workspace of its monitor.
+
+Evidence (real session, sampler + `glazewm sub` + PresentMon):
+
+- 17:29:47 game window `UnrealWindow` WS_POPUP 2560x1440 at 0,0, foreground. Only window
+  above it: `zebar/Tauri Window` TOPMOST 340x28 at 6,0. PresentMon: Independent Flip for
+  ~1 s, then **Composed: Flip for the whole session** (45 fps, 60–130 ms display latency,
+  ~35 % frames not displayed).
+- GlazeWM `window_managed` state=fullscreen. On the workspace switch (17:31:26):
+  `state=floating displayState=hiding`; DWMWA_CLOAKED never became non-zero; the taskbar
+  (`Shell_TrayWnd`, topmost) appeared above the game and stayed.
+
+Reproduced without the game (fliptest, see the harness README):
+
+| Bug | Cause (proven) |
+|---|---|
+| Composed flip from the start | the Zebar pill: any visible window above a fullscreen swapchain that MPO cannot absorb forces DWM composition. Zebar closed → Independent Flip. The taskbar itself does not break it while the game is foreground |
+| Game visible on every workspace | **Aion 2 runs elevated** (its anti-cheat); GlazeWM runs as a normal user and UIPI stops it from cloaking an elevated window. Elevated fliptest reproduces the exact `hiding → showing` stuck sequence; normal fliptest is cloaked fine |
+| Taskbar stuck above the game | follows from the failed hide: GlazeWM keeps the window in Hiding/Showing, so every redraw calls `ITaskbarList::AddTab/DeleteTab` (brings the taskbar forward, upstream #881) and, after Fullscreen→Floating, `MarkFullscreenWindow(FALSE)`. Elevated fliptest: 100 % Composed after returning; normal: taskbar goes away |
+
+## 2. How things work (reference for fixes and tests)
+
+### GlazeWM 3.10.x internals (paths under `packages/` of github.com/glzr-io/glazewm)
+
+- **Workspace switch**: `wm/src/commands/workspace/focus_workspace.rs:65-72` queues both
+  workspaces for redraw → `platform_sync.rs:273-280` sets Shown→Hiding / Hidden→Showing
+  and calls `reposition_window` (`:392-468`): restore/maximize if needed → `SetWindowPos`
+  (ASYNCWINDOWPOS, FRAMECHANGED for non-maximized) → **only then** `set_cloaked` (`:461`).
+  Any earlier error skips the cloak; errors are `warn!` on stdout only (`:288-293`),
+  `errors.log` keeps ERROR level only.
+- **Cloak**: `wm-platform/.../native_window.rs:466-491` + `com.rs` — ImmersiveShell
+  `IApplicationViewCollection::GetViewForHwnd` → `IApplicationView::SetCloak(1, 2|0)`
+  (what virtual desktops use; undocumented vtable).
+- **Hiding→Hidden** only when `EVENT_OBJECT_HIDE`/`EVENT_OBJECT_CLOAKED` arrives
+  (`window_listener.rs:141`, `events/handle_window_hidden.rs:21-25`). No timeout, no
+  read-back of DWMWA_CLOAKED. While Hiding, focus events of that window are ignored
+  (`handle_window_focused.rs:117-122`).
+- **Fullscreen detection**: at manage time, frame ⊇ working area → Fullscreen
+  (`manage_window.rs:285-298`); on every LOCATIONCHANGE `should_fullscreen`
+  (`traits/window_getters.rs:102-124`) and `handle_window_moved_or_resized.rs:331-342`
+  exits fullscreen to `prev_state` or `initial_state` (ours: floating). With the taskbar
+  at the top the working area is smaller than the monitor.
+- **`state_defaults.fullscreen.maximized: true`** → `SW_MAXIMIZE` if the window has
+  WS_MAXIMIZEBOX (a borderless game shrinks to the working area); `shown_on_top` →
+  HWND_TOPMOST/NOTOPMOST (`platform_sync.rs:222-248`).
+- **Taskbar**: `platform_sync.rs:294-314` `MarkFullscreenWindow` (PR #940, too broad —
+  TODO in code); `:320-332` `AddTab/DeleteTab` when `show_all_in_taskbar: false` on every
+  Showing/Hiding redraw (side effect: taskbar comes forward).
+- **`hide_method: hide`**: `ShowWindowAsync(SW_HIDE/SW_SHOWNA)`; windows leave the taskbar
+  and Alt+Tab; open issue #860 (sporadic failed switches).
+- **Floating z-order**: every focus change re-stacks all floating windows by focus history
+  (`windows_to_bring_to_front`); our fork option `keep_z_order` (upstream PR #1431).
+- **Elevated windows**: not manageable by a non-elevated GlazeWM (#867). Options: run
+  GlazeWM elevated, or a signed uiAccess build in Program Files.
+
+### Windows mechanics
+
+- **Independent flip** needs a flip-model swapchain covering the monitor, buffer size =
+  window size, and nothing external on top unless DWM can put it on a hardware overlay
+  plane (MPO; PresentMon then says "Hardware Composed: Independent Flip"). Visible
+  topmost overlays (new Discord overlay, PresentMon's own overlay, Zebar) force
+  Composed: Flip; injected overlays drawn inside the game's Present (Steam, RTSS) do
+  not. A fully transparent (alpha 0) window is optimised away. Check MPO planes: dxdiag
+  → Save All Information → `MPO MaxPlanes`. Sources: devblogs.microsoft.com/directx/dxgi-flip-model,
+  PresentMon README-ConsoleApplication, erikmcclure.com (Discord overlay), github.com/fernandoenzo/ForceComposedFlip.
+- **Taskbar "rude window" logic**: Explorer treats a window as fullscreen when it covers
+  the monitor, re-evaluated only on activation (`HSHELL_WINDOWACTIVATED`,
+  `HSHELL_RUDEAPPACTIVATED`) and fullscreen enter/exit shell messages — not on move/resize.
+  `ITaskbarList2::MarkFullscreenWindow(hwnd, TRUE)` forces it. Known staleness races
+  (restore from minimized, invisible topmost fullscreen windows): github.com/dechamps/RudeWindowFixer.
+  Raymond Chen 2025-05-22 "how does the taskbar detect fullscreen".
+- **Cloak** (`DWMWA_CLOAK` / `IApplicationView::SetCloak`): window still composed and gets
+  paint messages; flip swapchains never get DXGI_STATUS_OCCLUDED, so a cloaked game keeps
+  rendering (GPU load on hidden workspaces unless the game throttles when unfocused).
+- **UIPI**: a medium-integrity process cannot SetWindowPos/cloak/SendMessage an elevated
+  window. AutoHotkey runs as `AutoHotkey64_UIA.exe` (uiAccess) for this reason.
+
+### Other window managers / bars (what they do about games)
+
+komorebi: hiding = cloak/minimize/hide; games via `ignore_rules` (then visible on every
+workspace) or float rules; open issues #1191 (fullscreen minimises on switch), #1237
+(elevated). GlazeWM #699: users `ignore` games or `wm-toggle-pause` while playing; #729
+auto-pause on fullscreen (open); #92 borderless under taskbar (open since 2022); #880
+cloak not hiding (reported again on 3.10.1); #1358 permanently cloaked after native
+minimize. Seelen UI hides its bars on fullscreen; YASB `hide_on_fullscreen` (buggy).
+Zebar: no hide-on-fullscreen option (#174 open); a widget can hide its own window with
+`zebar.currentWidget().tauriWindow.hide()`.
+
+## 3. Test tooling available
+
+| Tool | Gives |
+|---|---|
+| `glazewm query monitors/workspaces/windows` | state (tiling/floating/fullscreen/minimized), displayState, workspace, rects, handle |
+| `glazewm sub -e all` | event stream: focus_changed, window_managed/unmanaged, workspace_activated/deactivated/updated, monitor_* |
+| Win32 via `win32.ps1` | foreground, z-order walk (GetTopWindow/GW_HWNDNEXT), DWMWA_CLOAKED, rect, styles, topmost, iconic/zoomed, windows above X |
+| PresentMon 2.5.1 (elevated; `cap-daemon.ps1`) | per-frame present mode, frame time, display latency, dropped frames |
+| `fliptest.exe` (normal or elevated) | a controllable fullscreen D3D window |
+| AHK debug trace `%TEMP%\hyper-debug.on` → `%TEMP%\altdrag.log` | gestures, focus, z-order snapshots +150 ms, cloak events, GlazeWM command timings |
+| `tests/*.ahk` | Alt+drag measurements (cross-monitor, DPI storms, restore) |
+| `charmap.exe` | a classic Win32 test window with a stable pid (Notepad is a Store app, pid changes) |
+
+Pitfalls learned: a background process cannot raise a window above the foreground one
+(use HWND_BOTTOM for discriminating z-order tests); `focus --workspace N` on the already
+displayed workspace toggles back (`toggle_workspace_on_refocus`) — read the displayed
+workspace instead; `Add-Content` in a long pipeline locks the log file (use
+`[IO.File]::AppendAllText`); PresentMon keeps its CSV locked until it exits (`--timed` +
+`--terminate_after_timed`); tests steal the screen for seconds — warn the user.
+
+## 4. Test-suite catalogue (to build)
+
+Each case: setup → action → assertions (GlazeWM state + Win32 truth + present mode where
+relevant), run for a normal AND an elevated test window where it matters.
+
+**Workspaces**
+- switch per monitor (Hyper+N, Hyper+Q/W cycle): only that monitor's windows change; other monitor untouched
+- windows of hidden workspaces are cloaked (DWMWA_CLOAKED≠0) and displayState settles to hidden/shown within 1 s (no stuck hiding/showing)
+- elevated window on a workspace switch (today FAILS)
+- move window to workspace / to other monitor (Alt+drag drop, Hyper+Shift+N); size kept across DPI
+- `toggle_workspace_on_refocus` back-and-forth
+- display off/on and sleep/resume: workspaces stay on their monitor, no flicker storm (incident 2026-09-15)
+- workspace overview (planned: native-like Task View of every workspace) — thumbnails via DWM thumbnails of cloaked windows, click to go
+
+**Focus**
+- click-to-focus raises only the clicked floating window (`keep_z_order`, bug fixed in fork)
+- focus changes never re-stack other floating windows (z-order walk before/after)
+- Hyper+Tab switcher lists every window of every workspace and jumps to it
+- focus after closing a window stays on the same monitor/workspace
+- UAC / consent prompts clickable (focus_follows_cursor off)
+
+**Z-order / floating**
+- new windows open at their own position, floating, not centered
+- topmost apps (PiP, ShareX, Command Palette) stay ignored and on top
+- restore from minimized keeps position and z-order
+
+**Fullscreen / games**
+- fullscreen window (normal and elevated): Independent Flip while foreground (no overlay above)
+- after switch away and back: hidden while away, Independent Flip again, taskbar below
+- F11 apps (browser/video) keep covering the taskbar
+- GPU load of a game on a hidden workspace (does it throttle?)
+- GlazeWM does not SW_MAXIMIZE or resize a borderless game (fullscreen→floating exit)
+
+**Tiling** (not used today; if ever re-enabled): layout on open/close, Alt+drag on tiled windows, config reload must not move windows (2026-09-14 rollback reasons)
+
+**Windows that must show on every workspace of a monitor ("sticky")**: GlazeWM has no
+sticky; candidates are `ignore` rules (then never hidden) — tests: stays visible on every
+switch, does not steal focus, is not moved.
+
+**Alt+drag / Alt+resize (AHK)**: already measured in `tests/*.ahk` and the three capture
+sessions of 2026-09-15 (no dropped presses, no DPI storms, edge clamp, maximise on top
+edge, restore under cursor, cross-monitor jump) — to be turned into repeatable cases.
+
+**Bars**: Zebar pill must never be above a fullscreen window; taskbar hides for
+fullscreen foreground windows on both monitors; Windhawk mods (section 5).
+
+## 5. Taskbar and Zebar components
+
+Research 2026-09-17 (local mod sources in `C:\ProgramData\Windhawk\ModsSource\`):
+
+| Component | What it touches | Fullscreen / flip impact |
+|---|---|---|
+| Windhawk mods (all) | load only into explorer.exe (taskbar-on-top also StartMenuExperienceHost); no code for rude/fullscreen/topmost | cannot touch a game's swapchain or DWM decisions |
+| taskbar-on-top 1.1.7 | GetDockedRect/MakeStuckRect/GetStuckInfo forced top; WM_WINDOWPOSCHANGING only rewrites Y when moving/sizing | Explorer lowers the taskbar under fullscreen by z-order, not position → not implicated by design; still worth one A/B. Windows build 26200.9457 has a native Top position rolling out (KB5124008, ViVeTool) — could replace the mod |
+| taskbar-icon-size 1.3.10 | XAML metrics, ABM_QUERYPOS | layout only |
+| taskbar-clock-customization 1.8 | clock text, 1 s timer | `TooltipLine` contains `%web1_full%` → a web thread fetches the NYT RSS every 10 min (probably unintended; clear it) |
+| tray-system-icon-tweaks 1.3 | tray IconView | every setting at default = no-op, removable |
+| windows-11-taskbar-styler 1.10 RosePine | CreateWindowInBand + XAML styles | visual only, solid colours |
+| taskbar-system-info 1.3.3 | — | disabled, removable |
+| Zebar pill (`top_most`) | Tauri/WebView2 transparent window over every monitor's top-left | **proven cause of Composed: Flip**. `normal`/`bottom_most` would put it under the topmost taskbar (invisible). No hide-on-fullscreen option (#174); the widget can `currentWidget().tauriWindow.hide()` itself using the glazewm provider (`focusedContainer.state.type`, `focusedMonitor`, `currentMonitor`, window x/y/width/height/handle/processName) |
+
+The stock taskbar staying over borderless games is a long-standing Windows bug too
+(MS Q&A 2023, 2026-01; workarounds: toggle auto-hide, restart explorer). YASB hides
+bars on the shell's `ABN_FULLSCREENAPP` (inherits Explorer's misdetections).
