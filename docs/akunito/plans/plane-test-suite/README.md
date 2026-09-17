@@ -9,7 +9,7 @@ status: draft
 
 # Plan: Plane fork regression suite
 
-**Status:** P1–P4 done 2026-09-17 (`system/app/plane-tests/run.sh`: `setup-dev refresh safety drift seed seed-check config smoke smoke-user`). Next: P5 (vitest + Playwright + VR in the fork). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
+**Status:** P1–P4 done; P5 mostly built 2026-09-17 — fork specs in `plane-up` `apps/web/tests/{unit,e2e}`, runner `run.sh unit|build|e2e`. Open in P5: VR baselines on the runner, E2E mutation validation. Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
 
 **Goal:** every customisation of our Plane (frontend fork, backend patches, instance config) has an
 automated test, and the **whole suite runs on every deploy** through a single `plane-deploy`
@@ -149,3 +149,20 @@ error boundary / console error.
 | APLANE-20 | ~~Pocket ID / CF Access perimeter untested~~ | **Cancelled:** daily use through Pocket ID surfaces any break immediately |
 | APLANE-21 | Prod `WEB_URL=http://plane.akunito.com` (not https) | Plane builds email/notification links from it |
 | APLANE-16 | Register gaps: A-11 session, mount name, removed "More" buttons | Update `plane-customizations.md` (part of P9, don't lose it if P9 slips) |
+
+## 8. P5 findings (2026-09-17)
+
+| # | Finding | Where it lands |
+|---|---|---|
+| P5-1 | **B-02 broken for every new user**: v1.4.1's first sidebar-preferences GET seeds views/analytics unpinned, so the fork default never applies | APLANE-22; E2E L5-10 marked `test.fail` until fixed |
+| P5-2 | v1.4.1 subscribes assignees when assigned — Fix 4 (A-09) only matters for assignees who aren't subscribed | L4-06 tests that case; register note (P9) |
+| P5-3 | Upstream PATCH-before-GET quirks: sidebar preferences answer 200 and change nothing; cycle/module user-properties answer 404 | tests do GET first, like the app |
+| P5-4 | `usePlatformOS` treats only iOS as mobile: iPhone opens the full work item page, Android the side peek | L5-35 accepts both |
+| P5-5 | React #418/#423/#425 recoverable hydration errors on every route (SPA shell) | recorded, not failed |
+| P5-6 | a11y gaps: untranslated aria-label `aria_labels.app_sidebar.close_workspace_menu` (fork), unlabeled page-header panel toggle and global layout buttons (upstream) | backlog |
+| P5-7 | favourites midpoint reorder collides after 51 consecutive moves into the same gap (float precision) | documented in L1-10 |
+| P5-8 | Caddy SPA fallback serves index.html (200) for missing assets | L7-02 checks content type |
+| P5-9 | webhooks deleted through the API are soft-deleted | L3-00 S01 ignores them |
+
+Catalogue deviations: L1-15…L1-18 (Pins) move to P6 with the UUID rewrite; L1-22 / L1-25 are covered by
+E2E L5-13 / L5-17 (components too coupled to render in isolation); VR ships VR-01/02/03/06/08/09/10/11/13.
