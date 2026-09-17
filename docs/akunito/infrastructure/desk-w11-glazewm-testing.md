@@ -28,7 +28,8 @@ Reproduced without the game (fliptest, see the harness README):
 | Bug | Cause (proven) |
 |---|---|
 | Composed flip from the start | the Zebar pill: any visible window above a fullscreen swapchain that MPO cannot absorb forces DWM composition. Zebar closed → Independent Flip. The taskbar itself does not break it while the game is foreground |
-| Game visible on every workspace | **Aion 2 runs elevated** (its anti-cheat); GlazeWM runs as a normal user and UIPI stops it from cloaking an elevated window. Elevated fliptest reproduces the exact `hiding → showing` stuck sequence; normal fliptest is cloaked fine |
+| Game visible on every workspace | **Aion 2 runs elevated** (UAC prompt on launch; measured integrity 0x3000 high). GlazeWM's `reposition_window` moves the window BEFORE hiding it, and `SetWindowPos` on an elevated window fails with `Access is denied (0x80070005)` (seen in `glazewm start --verbose` during a live session), so `set_cloaked` is never reached and the window stays `hiding`. **A non-elevated process CAN cloak an elevated window** (`cloaktest.exe`: `GetViewForHwnd` + `SetCloak(1,2)` → `cloaked=2`), so this is a GlazeWM ordering bug, not a privilege wall |
+| Fullscreen demoted to floating | `should_fullscreen` for a fullscreen state with `maximized: true` takes the `_` arm: `frame.inset(1).contains_rect(workspace_rect)`. A frame equal to the monitor, inset by 1, cannot contain the working area (same width, taskbar only shrinks the height) → demotion to `initial_state` (floating), then GlazeWM tries to maximize/resize the game. `state_defaults.fullscreen.maximized: false` takes the other arm (`frame.contains_rect(workspace_rect.inset(1))`) and the window stays fullscreen |
 | Taskbar stuck above the game | follows from the failed hide: GlazeWM keeps the window in Hiding/Showing, so every redraw calls `ITaskbarList::AddTab/DeleteTab` (brings the taskbar forward, upstream #881) and, after Fullscreen→Floating, `MarkFullscreenWindow(FALSE)`. Elevated fliptest: 100 % Composed after returning; normal: taskbar goes away |
 
 ## 2. How things work (reference for fixes and tests)
@@ -63,8 +64,12 @@ Reproduced without the game (fliptest, see the harness README):
   and Alt+Tab; open issue #860 (sporadic failed switches).
 - **Floating z-order**: every focus change re-stacks all floating windows by focus history
   (`windows_to_bring_to_front`); our fork option `keep_z_order` (upstream PR #1431).
-- **Elevated windows**: not manageable by a non-elevated GlazeWM (#867). Options: run
-  GlazeWM elevated, or a signed uiAccess build in Program Files.
+- **Elevated windows** (measured 2026-09-17, non-elevated caller vs an elevated window):
+  `SetWindowPos` → access denied; `SetCloak` through ImmersiveShell → works
+  (Explorer performs it, like the native virtual desktops). So workspaces CAN hide
+  elevated windows without any privilege; only moving/resizing them needs one.
+  Fork fix: `fix/hide-unmovable-nouia` — position only while visible, and apply the
+  visibility change even when positioning failed.
 
 ### Windows mechanics
 

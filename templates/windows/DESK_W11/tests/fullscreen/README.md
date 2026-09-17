@@ -21,6 +21,10 @@ mkdir -p /mnt/c/Users/diego/AppData/Local/Temp/perf && cp * /mnt/c/Users/diego/A
 | `run-flip.ps1` | starts fliptest and waits for it |
 | `ws-hide-test.ps1` | fliptest on the displayed workspace of monitor 0 → `focus --workspace 13` → back → focus the window; prints visible/cloaked/foreground/windows above at each step and the present modes after the return. Run normally, or elevated through the daemon (`echo ws-hide-test.ps1 > x.elev`) |
 | `win32.ps1` | the Add-Type Win32 helpers shared by the scripts |
+| `cloaktest.c` | `cloaktest.exe <hwnd> <1|0>`: cloak/uncloak any window through the shell (`IApplicationView::SetCloak`, what GlazeWM and the native virtual desktops use) and print DWMWA_CLOAKED before/after |
+| `cloak-from-normal.ps1`, `fliptest-elev.ps1`, `cloak-case.ps1` | the elevated-window experiment: elevated fliptest (through the daemon) vs SetWindowPos and SetCloak from a normal process |
+| `proc-token.ps1` | integrity level / elevation of a process, with the same access Task Manager uses |
+| `glazewm-verbose.ps1` | restart GlazeWM (normal user) with `--verbose` into `glazewm-verbose.log` |
 | `aion-sampler.ps1`, `glazewm-events.ps1`, `start-trace.ps1` | the real-game trace: 500 ms window/overlay sampler (foreground, game rect/style/cloak, uncloaked windows ABOVE the game), CPU per suspect, `glazewm sub -e all` event stream, PresentMon on AION2.exe (UAC), AHK debug marker |
 
 PresentMon modes: `Hardware: Independent Flip` / `Hardware Composed: Independent Flip`
@@ -39,6 +43,9 @@ something else = latency, lost frames, no VRR.
 | fliptest fullscreen, Zebar running with pill auto-hide (workspaces.html hides its Tauri window while the focused window covers its monitor) | 570/583 Hardware Composed: Independent Flip; pills visible again after exit |
 | ws-hide-test, normal fliptest | cloaked=2 when away, uncloaked on return, Independent Flip after return |
 | ws-hide-test, ELEVATED fliptest | never cloaked, GlazeWM stuck `hiding` → `showing` (identical to Aion 2's event stream), taskbar stays above: 465/465 Composed: Flip after return |
+
+| Elevated window, non-elevated caller (`cloaktest.exe`, `cloak-from-normal.ps1`) | `SetWindowPos` → access denied; `GetViewForHwnd`+`SetCloak(1,2)` → `cloaked=2`, uncloak back to 0 |
+| Live Aion 2 session with GlazeWM verbose | `Failed to set window position: Access is denied. (0x80070005)` on every redraw of the game, `Restoring window from fullscreen`, game integrity 0x3000 (high) |
 
 Known gap: GlazeWM classifies Aion 2 as `fullscreen` at manage time but fliptest as
 `floating` (it grows after being managed); the three bugs reproduce anyway.
