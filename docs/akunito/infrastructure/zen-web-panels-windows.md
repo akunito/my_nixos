@@ -103,6 +103,54 @@ python3 -c "import json,io;e=json.load(io.open(r'''$P/chrome/sine-mods/mods.json
 The script replaces only what it owns (see its header) and keeps a `.bak` of
 `mods.json`, so nothing else in the profile is disturbed.
 
+## Carrying DESK's panels and Spaces over
+
+Neither travels by itself: the panel list is a pref, and Spaces sync only
+exists from Zen 1.22.1b (DESK was on 1.21.13b). Done once on 2026-09-17 from
+DESK's restic backup, which is the only complete copy while DESK is powered
+off (it is the same box, dual boot).
+
+**Where they live** (same on both platforms):
+
+| What | File in the profile |
+|---|---|
+| Web panels (list, separators, width, shortcut, last pages) | `prefs.js`, every `sine.web-panels.*` pref — the list is the JSON string in `sine.web-panels.items` |
+| Spaces, folders (nested), pinned tabs, Essentials, split views | `zen-sessions.jsonlz4` (mozLz4: `mozLz40\0` + one LZ4 block of JSON with `spaces`/`folders`/`tabs`/`groups`/`splitViewData`) |
+
+The zen-browser flake itself writes only `zen-sessions.jsonlz4` to declare
+Spaces, which confirms it is the whole state.
+
+**Procedure** (Zen closed on Windows):
+
+```bash
+export RESTIC_REPOSITORY="sftp:akunito@192.168.20.200:/mnt/ssdpool/workstation_backups/nixosaku/home.restic"
+export RESTIC_PASSWORD_FILE="$HOME/myScripts/restic.key"
+DESKP="/home/akunito/.zen/8fl3a3xu.Default (release)"     # zenProfileDir in DESK-config.nix
+nix shell nixpkgs#restic -c restic snapshots --latest 3 --compact
+nix shell nixpkgs#restic -c restic dump <snap> "$DESKP/zen-sessions.jsonlz4" > desk-zen-sessions.jsonlz4
+nix shell nixpkgs#restic -c restic dump <snap> "$DESKP/prefs.js"             > desk-prefs.js
+```
+
+1. Back up the Windows files being replaced (`zen-sessions.jsonlz4`,
+   `zen-sessions-backup/`, `prefs.js`, `zen-spaces-sync.json`) — they went to
+   `%APPDATA%\zen\restore-backup-<timestamp>\`.
+2. Decode `desk-zen-sessions.jsonlz4` (python `lz4.block`) and check the counts
+   before copying it over the Windows one.
+3. In Windows' `prefs.js`, delete every `sine.web-panels.*` line and append
+   DESK's. **Drop `sine.web-panels.probe.*`** — debug leftovers from mod
+   development, not settings.
+
+**Keep `zen-spaces-sync.json`.** It records what this machine already uploaded.
+With it, the sync engine sees its old Spaces as gone locally and can retract
+them; without it, it forgets them and pulls them back as duplicates. Because the
+restored Spaces carry DESK's own UUIDs and `zenSyncId`s, DESK will recognise
+them as the same records once it runs 1.22.1b, rather than doubling them.
+
+The 2026-09-17 restore (snapshot `c7ed5e14`, 2026-09-13 17:00): 5 Spaces
+(Azure, DAILY, Development, HomeLab, Shopping), 24 folders, 126 tabs,
+9 Essentials, 21 panel entries. No containers were in use, so nothing depended
+on Windows' `containers.json`.
+
 ## Troubleshooting
 
 **The rail vanished after a Zen update.** Most likely cause here. The Windows
