@@ -25,9 +25,22 @@
       try {
         const zebar = await import('https://esm.sh/zebar@3.0');
         const glazewm = zebar.createProvider({ type: 'glazewm' });
+        const win = zebar.currentWidget().tauriWindow;
+        // A topmost window over a fullscreen game forces DWM composition (Composed: Flip,
+        // measured 2026-09-17), so the pill hides its whole window while the focused
+        // window of its monitor is fullscreen or covers the monitor.
+        let hidden = false;
+        function coversMonitor(o) {
+          const f = o.focusedContainer, m = o.currentMonitor;
+          if (!f || f.type !== 'window' || !m || o.focusedMonitor?.id !== m.id) return false;
+          if (f.state?.type === 'fullscreen') return true;
+          return f.x <= m.x && f.y <= m.y && f.x + f.width >= m.x + m.width && f.y + f.height >= m.y + m.height;
+        }
         function render() {
           const o = glazewm.output;
           if (!o) { show('no glazewm'); return; }
+          const fs = coversMonitor(o);
+          if (fs !== hidden) { hidden = fs; (fs ? win.hide() : win.show()).catch(() => {}); }
           el.replaceChildren();
           for (const w of o.currentWorkspaces ?? []) {
             const b = document.createElement('button');

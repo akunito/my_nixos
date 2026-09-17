@@ -36,6 +36,7 @@ something else = latency, lost frames, no VRR.
 | fliptest fullscreen, Zebar closed | 589/594 Hardware Composed: Independent Flip |
 | fliptest at y=28 (below the bar), Zebar closed | Independent Flip |
 | fliptest at y=200 (clear of the top strip), Zebar running | 710/715 Independent Flip |
+| fliptest fullscreen, Zebar running with pill auto-hide (workspaces.html hides its Tauri window while the focused window covers its monitor) | 570/583 Hardware Composed: Independent Flip; pills visible again after exit |
 | ws-hide-test, normal fliptest | cloaked=2 when away, uncloaked on return, Independent Flip after return |
 | ws-hide-test, ELEVATED fliptest | never cloaked, GlazeWM stuck `hiding` → `showing` (identical to Aion 2's event stream), taskbar stays above: 465/465 Composed: Flip after return |
 
