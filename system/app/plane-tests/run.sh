@@ -42,5 +42,7 @@ case "$cmd" in
   *) sed -n '4,17p' "$0"; exit 2 ;;
 esac
 
-rsync -a --delete -e "ssh -p $port" "$here/remote/" "$vps:$remote_dir/"
+# keep the runner's own state (fork checkout, corepack cache, pnpm shim, logs) across syncs
+rsync -a --delete --exclude plane-up --exclude corepack --exclude bin --exclude '*.log' --exclude __pycache__ \
+  -e "ssh -p $port" "$here/remote/" "$vps:$remote_dir/"
 exec ssh -A -p "$port" "$vps" "bash $remote_dir/$script $args"
