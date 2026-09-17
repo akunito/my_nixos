@@ -3,7 +3,10 @@
 // whether its frames reach the screen as Independent Flip or Composed Flip.
 // Like Unreal, it opens as a 1280x720 popup and goes to the target rect 500 ms later
 // (GlazeWM only classifies a window as fullscreen on a later size change).
-// usage: fliptest.exe [seconds=20] [monitor-index=0 (primary)] [x y w h]
+// Pass "now" as the last argument to open at the final size instead (GlazeWM
+// then classifies it as fullscreen at manage time, like a game that starts
+// borderless-fullscreen).
+// usage: fliptest.exe [seconds=20] [monitor-index=0 (primary)] [x y w h] [now]
 #define COBJMACROS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -11,6 +14,7 @@
 #include <dxgi1_5.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
@@ -36,10 +40,14 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
     RECT r = mp.r;
     if (__argc > 6) { r.left = atoi(__argv[3]); r.top = atoi(__argv[4]); r.right = r.left + atoi(__argv[5]); r.bottom = r.top + atoi(__argv[6]); }
 
+    int grow_now = 0;
+    for (int i = 1; i < __argc; i++) if (!strcmp(__argv[i], "now")) grow_now = 1;
+
     WNDCLASSW wc = { 0 }; wc.lpfnWndProc = WndProc; wc.hInstance = hi; wc.lpszClassName = L"FlipTestWnd";
     wc.hCursor = LoadCursor(NULL, IDC_ARROW); RegisterClassW(&wc);
     HWND hwnd = CreateWindowExW(WS_EX_APPWINDOW, L"FlipTestWnd", L"fliptest", WS_POPUP | WS_VISIBLE,
-        r.left + 100, r.top + 100, 1280, 720, NULL, NULL, hi, NULL);
+        grow_now ? r.left : r.left + 100, grow_now ? r.top : r.top + 100,
+        grow_now ? r.right - r.left : 1280, grow_now ? r.bottom - r.top : 720, NULL, NULL, hi, NULL);
 
     ID3D11Device *dev; ID3D11DeviceContext *ctx;
     if (FAILED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, &dev, NULL, &ctx))) return 2;
@@ -51,7 +59,7 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
         IDXGIFactory5_CheckFeatureSupport(f5, DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearing, sizeof tearing);
 
     DXGI_SWAP_CHAIN_DESC1 sd = { 0 };
-    sd.Width = 1280; sd.Height = 720; sd.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    sd.Width = grow_now ? r.right - r.left : 1280; sd.Height = grow_now ? r.bottom - r.top : 720; sd.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     sd.SampleDesc.Count = 1; sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; sd.BufferCount = 2;
     sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; sd.Flags = tearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     IDXGISwapChain1 *sc;
@@ -63,7 +71,7 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
 
     DWORD start = GetTickCount(); MSG msg; int frame = 0, grown = 0;
     for (;;) {
-        if (!grown && GetTickCount() - start > 500) {
+        if (!grown && !grow_now && GetTickCount() - start > 500) {
             grown = 1;
             SetWindowPos(hwnd, NULL, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOZORDER);
             ID3D11DeviceContext_OMSetRenderTargets(ctx, 0, NULL, NULL);

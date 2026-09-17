@@ -107,10 +107,44 @@ ZOrderLine(focusHwnd) {
         zline .= (zi > 1 ? " > " : "") ztxt
     return zline
 }
+; ---- Zebar pills vs fullscreen windows -----------------------------------
+; A visible always-on-top window over a fullscreen game costs it the direct
+; path to the screen: DWM composes the frame instead (PresentMon "Composed:
+; Flip" = 45 fps and +60 ms on Aion 2, measured 2026-09-17). A pill is hidden
+; whenever the focused window covers it completely -- only a window spanning
+; the whole monitor does, since the pills sit over the taskbar strip that a
+; maximised window never reaches.
+PillSync(hwnd) {
+    DetectHiddenWindows true
+    try {
+        if (WinGetProcessName("ahk_id " hwnd) = "zebar.exe")
+            return
+        WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
+    } catch
+        return
+    for pill in WinGetList("ahk_class Tauri Window ahk_exe zebar.exe") {
+        try {
+            WinGetPos &px, &py, &pw, &ph, "ahk_id " pill
+            if (pw < 100 || ph > 100)            ; zebar's own utility window
+                continue
+            covered := (wx <= px && wy <= py && wx + ww >= px + pw && wy + wh >= py + ph)
+            shown := DllCall("IsWindowVisible", "Ptr", pill)
+            if (covered && shown)
+                WinHide("ahk_id " pill), Dbg("pill hidden (covered by hwnd " hwnd ")")
+            else if (!covered && !shown)
+                WinShow("ahk_id " pill), Dbg("pill shown")
+        }
+    }
+}
+
 WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
     global altDragExp
     static state := Map()
-    if (idObj != 0 || idChild != 0 || !hwnd || !FileExist(A_Temp "\hyper-debug.on"))
+    if (idObj != 0 || idChild != 0 || !hwnd)
+        return
+    if (ev = 0x3)
+        PillSync(hwnd)
+    if !FileExist(A_Temp "\hyper-debug.on")
         return
     if (DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr") != hwnd)   ; top-level only
         return
