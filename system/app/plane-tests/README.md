@@ -103,7 +103,18 @@ registration fails L3-10 + L3-11; all green again once reverted.
 dotfiles flake's nixpkgs `playwright-driver.browsers` — `@playwright/test` is pinned to that exact
 version (1.61.1) in the fork's catalog. Specs live in the fork: `apps/web/tests/unit`, `apps/web/tests/e2e`.
 
-Verified 2026-09-17 on the VPS: `unit` 7 files green (45 s), `build` L0-01…04 green (1.5 min, 27 type errors = baseline).
+Verified 2026-09-17 on the VPS: `unit` 7 files green (45 s), `build` L0-01…04 green (1.5 min, 27 type
+errors = baseline), `e2e` 187 passed / 9 skipped (11.1 min), visual 11 baselines generated and compared.
+
+**Headless WebKit needs a software EGL** on this GPU-less server (`Could not create WPE EGL display`);
+the runner passes nixpkgs' Mesa (llvmpipe) through `__EGL_VENDOR_LIBRARY_DIRS` / `LIBGL_DRIVERS_PATH` /
+`LD_LIBRARY_PATH` for the run only — no `hardware.graphics` change on the VPS.
+
+**E2E mutation validation (2026-09-17):** a bundle with 7 mutations served on dev killed the tests it
+should — L5-14 (project name navigates), L5-30 phones only (Spreadsheet/Gantt → List), L5-18 (pin
+permalink), L5-51 (Calendar in global layouts), L5-33 phones only (Display sheet), L5-71 (live re-sort),
+and, isolated in a second run, L5-19 (drawer closes after navigating). Dev was restored from prod's
+bundle afterwards; drift + safety green.
 
 ## L4 API functional (`l4_api.py`, stdlib only, on the VPS against dev `qa`)
 
