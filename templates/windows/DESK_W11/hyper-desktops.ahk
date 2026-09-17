@@ -115,6 +115,10 @@ ZOrderLine(focusHwnd) {
 ; the whole monitor does, since the pills sit over the taskbar strip that a
 ; maximised window never reaches.
 PillSync(hwnd) {
+    static last := 0
+    if (A_TickCount - last < 200)          ; location changes arrive in bursts
+        return
+    last := A_TickCount
     DetectHiddenWindows true
     try {
         if (WinGetProcessName("ahk_id " hwnd) = "zebar.exe")
@@ -142,7 +146,9 @@ WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
     static state := Map()
     if (idObj != 0 || idChild != 0 || !hwnd)
         return
-    if (ev = 0x3)
+    ; Foreground changes, and size changes of the foreground window (a game
+    ; usually grows to fullscreen after it is already focused).
+    if (ev = 0x3 || (ev = 0x800B && hwnd = DllCall("GetForegroundWindow", "Ptr")))
         PillSync(hwnd)
     if !FileExist(A_Temp "\hyper-debug.on")
         return
