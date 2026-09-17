@@ -8,6 +8,7 @@
 #   system/app/plane-tests/run.sh refresh     prod -> dev copy + mandatory sanitize + L3-00
 #   system/app/plane-tests/run.sh safety      L3-00 dev safety test only
 #   system/app/plane-tests/run.sh drift       L3-15 dev ↔ prod drift test (read-only)
+#   system/app/plane-tests/run.sh seed        (re)build the qa + qa-2 workspaces on dev (APLANE-10)
 #
 # Env: PLANE_VPS (default akunito@100.64.0.6), PLANE_VPS_PORT (default 56777).
 set -euo pipefail
@@ -24,7 +25,9 @@ case "$cmd" in
   refresh) script=refresh.sh ;;
   safety) script=l3_00_dev_safety.sh ;;
   drift) script=l3_15_drift.sh ;;
-  *) sed -n '4,11p' "$0"; exit 2 ;;
+  seed) script=seed-qa.sh ;;
+  seed-check) script=seed_check.sh ;;
+  *) sed -n '4,12p' "$0"; exit 2 ;;
 esac
 
 rsync -a --delete -e "ssh -p $port" "$here/remote/" "$vps:$remote_dir/"

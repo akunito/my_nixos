@@ -9,7 +9,7 @@ status: draft
 
 # Plan: Plane fork regression suite
 
-**Status:** P1 + P2 done 2026-09-17 (`system/app/plane-tests/`: `run.sh setup-dev|refresh|safety|drift`). Next: P3 QA seed. Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
+**Status:** P1–P3 done 2026-09-17 (`system/app/plane-tests/`: `run.sh setup-dev|refresh|safety|drift|seed|seed-check`). Next: P4 (L3 + L7, incl. creating `qa-smoke` on prod). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
 
 **Goal:** every customisation of our Plane (frontend fork, backend patches, instance config) has an
 automated test, and the **whole suite runs on every deploy** through a single `plane-deploy`
@@ -107,8 +107,8 @@ Instance-config changes (god-mode/shell) also go through `plane-deploy --config-
 |---|---|---|
 | **P1** (APLANE-8) ✅ | `plane-dev-refresh`: full prod → dev copy minus log tables, **always followed by sanitize** (§6); mailpit sink; L3-00 safety test | Re-runnable in < 2 min; L3-00 green right after it |
 | **P2** (APLANE-9) ✅ | Re-align dev code with prod (29-commit bundle, Fix 2b); drift test | L3-15 green |
-| **P3** (APLANE-10) | `qa` workspace seed (fictitious users with passwords, idempotent reset) on dev; `qa-smoke` Guest on prod | Seed re-runnable after every refresh |
-| **P4** (APLANE-11) | L3 + L7 against the **current** system (sed-based) | Green on dev + prod |
+| **P3** (APLANE-10) ✅ | `qa` + `qa-2` workspace seed (fictitious users with passwords, idempotent reset) on dev, chained into every refresh | Seed re-runnable after every refresh |
+| **P4** (APLANE-11) | L3 + L7 against the **current** system (sed-based); create `qa-smoke` Guest on prod (moved from P3: only verifiable together with L7) | Green on dev + prod |
 | **P5** (APLANE-12) | vitest + Playwright + VR in the fork; L1, L4, L5 for the **current** features | Full suite green on dev |
 | **P6** (APLANE-13) | Feature changes: multi-sort per view; pins by UUID + deleted/archived/no-access — each with its tests | Suite green |
 | **P7** (APLANE-14) | `plane-deploy` (dev → gate → prod → smoke → rollback → Telegram); CLAUDE.md rule | One real frontend deploy through it |

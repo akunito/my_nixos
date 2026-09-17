@@ -10,6 +10,8 @@ Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one ov
 | `run.sh refresh` | Copies prod Plane into dev (~45 s), sanitizes it, then runs L3-00. Prod is only read | APLANE-8 |
 | `run.sh safety` | L3-00 dev safety alone — run it before any test that writes to dev | APLANE-8 |
 | `run.sh drift` | L3-15 dev ↔ prod drift, read-only on both sides | APLANE-9 |
+| `run.sh seed` | Rebuilds the `qa` + `qa-2` workspaces on dev (L3-00 first, contract check after) | APLANE-10 |
+| `run.sh seed-check` | QA seed contract alone | APLANE-10 |
 
 ## refresh
 
@@ -24,6 +26,7 @@ Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one ov
 6. `mc mirror` prod uploads → dev bucket
 7. Recreate + start the app, `delete_workspaces.py` hard-deletes `komi` + `leftyspace` (APLANE-19)
 8. `l3_00_dev_safety.sh` — the refresh fails if it fails
+9. `seed-qa.sh` — the prod copy has no `qa` workspaces, so every refresh reseeds them
 
 ## L3-00 dev safety
 
@@ -60,6 +63,28 @@ Verified 2026-09-17: against the unsanitized dev it failed 10 checks (incl. 3 pr
 Verified 2026-09-17: before alignment it failed D03 (dev lacked Fix 2b) and D08
 (`WEBHOOK_ALLOWED_HOSTS`); after alignment all pass; injected drift on dev (extra bundle file,
 `IS_INTERCOM_ENABLED=1`) failed D06 + D09 and passed again once reverted.
+
+## QA seed
+
+`seed_qa.py` runs inside `plane-dev-aio`. Idempotent: hard-deletes `qa`, `qa-2`, every
+`*@plane-tests.invalid` user and orphaned seed bots, then rebuilds. Users, workspaces and memberships
+via the ORM (the rows Plane's own signup / `WorkSpaceViewSet.create` write — **without** the upstream
+`workspace_seed` celery task, which would add an async sample project, issues and a bot member);
+everything else through Plane's API views with a logged-in Django test client (real defaults and
+activities, no API-key rate limit). All dates relative to the fixed anchor **2026-10-01**.
+
+| What | Content |
+|---|---|
+| Users | `qa-alice` (admin everywhere), `qa-bob` (member; Alpha + Beta, **not** Gamma), `qa-carol` (member; Alpha; never touches prefs), `qa-guest` (guest; Alpha) |
+| `qa` projects | QA Alpha `QAA`, QA Beta `QAB`, QA Gamma `QAG` — 12 items each: every state group, priorities with ties, all 8 label combinations, empty assignees/dates, one cycle, one module, one archived item |
+| QAA extras | project views per layout (list, kanban, calendar, spreadsheet, gantt), 3 pages (to pin / delete / archive), comments by Alice and Bob |
+| Global views | QA Table, QA Board, QA Calendar, QA Locked (locked), QA Bob view (owned by Bob) |
+| `qa-2` | QA Two workspace, project `QTW` with 3 items (cross-workspace leak tests) |
+| On the VPS only | `~/.homelab/plane-dev/qa-credentials.env` (password + Alice/Bob API tokens, 600), `qa-manifest.json` (every id) |
+
+Contract (`seed_check.sh`): C01 real password sign-in through `/auth/sign-in/` for all 4 users ·
+C02 exactly QAA/QAB/QAG · C03 no bot members · C04 Bob not a member of Gamma · C05 Alpha has 11 active
+items · C06 locked view · C07 Alice's API token works on `/api/v1/` · C08 no orphan seed bots.
 
 ## Mailpit UI
 

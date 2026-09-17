@@ -9,6 +9,7 @@
 #   6. mirror uploads prod → dev
 #   7. recreate + start the dev app, sanitize part 2 (drop komi + leftyspace workspaces)
 #   8. L3-00 dev safety test — the refresh fails if it fails
+#   9. QA seed (qa + qa-2) + seed contract check
 #
 # Prod is only ever read: pg_dump runs in a read-only transaction, mc only reads the prod bucket.
 source "$(dirname "$0")/common.sh"
@@ -105,5 +106,8 @@ docker exec "$DEV_REDIS" redis-cli FLUSHALL >/dev/null
 # ---- 8. safety test ---------------------------------------------------------
 log "running L3-00 dev safety"
 bash "$here/l3_00_dev_safety.sh"
+
+# ---- 9. QA seed (the prod copy has no qa workspaces) ------------------------
+bash "$here/seed-qa.sh"
 
 log "refresh done in $(( $(date +%s) - start ))s"

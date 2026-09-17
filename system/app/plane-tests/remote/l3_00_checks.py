@@ -35,8 +35,9 @@ def config(key):
 hooks = list(Webhook.all_objects.values_list("url", "is_active"))
 check("S01-webhooks", not hooks, f"{len(hooks)} webhook(s): {hooks}" if hooks else "none")
 
-# S02 no API tokens copied from prod (the shell script also cross-checks against prod)
-check("S02-api-tokens", APIToken.objects.count() == 0, f"{APIToken.objects.count()} token(s)")
+# S02 no API tokens except the QA users' (seed-qa.sh); S10 cross-checks against prod
+foreign = APIToken.objects.exclude(user__email__endswith="@plane-tests.invalid").count()
+check("S02-api-tokens", foreign == 0, f"{foreign} non-QA token(s), {APIToken.objects.count()} total")
 
 # S04 email config rows point at the sink
 host, port = config("EMAIL_HOST"), config("EMAIL_PORT")
