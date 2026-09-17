@@ -31,8 +31,9 @@ def config(key):
     return row.value if row else None
 
 
-# S01 no webhooks at all (a capture receiver will be allow-listed here when L4 exists)
-hooks = list(Webhook.all_objects.values_list("url", "is_active"))
+# S01 no webhook that can deliver. Soft-deleted rows (deleted_at set) never fire — L4-07 leaves one
+# behind when it deletes its capture webhook through the API.
+hooks = list(Webhook.objects.values_list("url", "is_active"))
 check("S01-webhooks", not hooks, f"{len(hooks)} webhook(s): {hooks}" if hooks else "none")
 
 # S02 no API tokens except the QA users' (seed-qa.sh); S10 cross-checks against prod

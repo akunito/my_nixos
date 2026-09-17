@@ -12,6 +12,7 @@ Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one ov
 | `run.sh drift` | L3-15 dev ↔ prod drift, read-only on both sides | APLANE-9 |
 | `run.sh seed` | Rebuilds the `qa` + `qa-2` workspaces on dev (L3-00 first, contract check after) | APLANE-10 |
 | `run.sh seed-check` | QA seed contract alone | APLANE-10 |
+| `run.sh api` | L4 API functional tests on dev as the QA users (L3-00 first, reseed after) | APLANE-12 |
 | `run.sh config prod\|dev` | L3 config contract, read-only | APLANE-11 |
 | `run.sh smoke prod\|dev` | L7 smoke: L3 + SPA shell + authenticated read-only crawl as `qa-smoke` | APLANE-11 |
 | `run.sh smoke-user prod\|dev add\|remove` | Creates / removes `qa-smoke` (Guest) + empty secret project `QA Smoke` (QSMK) in `akuworkspace` | APLANE-11 |
@@ -90,6 +91,28 @@ Verified 2026-09-17: before alignment it failed D03 (dev lacked Fix 2b) and D08
 Verified 2026-09-17: green on prod and dev; injected on dev → DB flag changed with a stale cache
 fails L3-03, after cache bust fails L3-02; a JS file with the APLANE-1 call + a service worker
 registration fails L3-10 + L3-11; all green again once reverted.
+
+## L4 API functional (`l4_api.py`, stdlib only, on the VPS against dev `qa`)
+
+| ID | Check |
+|---|---|
+| L4-01 | attachment: presigned POST is **https + dev host** (A-02/A-03), MinIO upload, mark uploaded, download redirect https, bytes round-trip, delete |
+| L4-02 | Pages on the internal `/api/` with `X-API-Key` (Fix 3): create/retrieve/list/archive/delete; bogus key and anonymous refused |
+| L4-03 | favourites: page + issue entity types, `sequence` update visible to a second session, per-user, delete |
+| L4-04 | workspace search returns the fields the Pins dialog reads (`project__identifier`, `sequence_id`, `project_ids`) |
+| L4-05 | global views: non-owner update refused, owner update OK; member can't delete others' views, admin can |
+| L4-06 | **A-09**: an assignee who is *not subscribed* is notified of another user's change; the actor never is |
+| L4-07/08 | webhooks: 127.0.0.1 / 10.0.0.1 / 169.254.169.254 refused; `host.docker.internal` (A-10) delivers to a capture receiver; `X-Plane-Signature` HMAC verifies; payload keeps `data.id/target_date/assignees/state.name` |
+| L4-09 | API key rate limit: 429 from call 61 |
+| L4-10 | project `sort_order` (user-properties) persists |
+| L4-11 | sidebar preferences are per user (bulk PATCH, as the app calls it) |
+| L4-12 | session cookie rolls forward on each request, ~90 days (A-11) |
+
+Verified 2026-09-17: 11/11. Dev started with **no** start-override patches → L4-01, L4-02, L4-07 fail;
+dev without **only** Fix 4 → L4-06 fails (its first version passed there: assigning someone subscribes
+them natively in v1.4.1, so the test now uses an unsubscribed assignee). Upstream quirks found: a
+sidebar-preferences PATCH before any GET answers 200 and changes nothing (rows are created by the GET);
+webhooks deleted through the API are soft-deleted (L3-00 S01 now ignores those).
 
 ## L7 smoke (`l7_smoke.sh prod|dev`) — read-only, safe on prod
 
