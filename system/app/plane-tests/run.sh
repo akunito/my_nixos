@@ -7,6 +7,7 @@
 #   system/app/plane-tests/run.sh setup-dev   one-off: mailpit sink in the dev stack (APLANE-8)
 #   system/app/plane-tests/run.sh refresh     prod -> dev copy + mandatory sanitize + L3-00
 #   system/app/plane-tests/run.sh safety      L3-00 dev safety test only
+#   system/app/plane-tests/run.sh drift       L3-15 dev ↔ prod drift test (read-only)
 #
 # Env: PLANE_VPS (default akunito@100.64.0.6), PLANE_VPS_PORT (default 56777).
 set -euo pipefail
@@ -22,7 +23,8 @@ case "$cmd" in
   setup-dev) script=setup-dev.sh ;;
   refresh) script=refresh.sh ;;
   safety) script=l3_00_dev_safety.sh ;;
-  *) sed -n '4,10p' "$0"; exit 2 ;;
+  drift) script=l3_15_drift.sh ;;
+  *) sed -n '4,11p' "$0"; exit 2 ;;
 esac
 
 rsync -a --delete -e "ssh -p $port" "$here/remote/" "$vps:$remote_dir/"

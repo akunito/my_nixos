@@ -9,6 +9,7 @@ Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one ov
 | `run.sh setup-dev` | One-off, idempotent: adds the `plane-dev-mailpit` sink to `~/.homelab/plane-dev/docker-compose.yml` and points the dev app's email env at it | APLANE-8 |
 | `run.sh refresh` | Copies prod Plane into dev (~45 s), sanitizes it, then runs L3-00. Prod is only read | APLANE-8 |
 | `run.sh safety` | L3-00 dev safety alone — run it before any test that writes to dev | APLANE-8 |
+| `run.sh drift` | L3-15 dev ↔ prod drift, read-only on both sides | APLANE-9 |
 
 ## refresh
 
@@ -41,6 +42,24 @@ Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one ov
 
 Verified 2026-09-17: against the unsanitized dev it failed 10 checks (incl. 3 prod API tokens and
 28 prod sessions valid on dev); after `refresh` all pass.
+
+## L3-15 drift dev ↔ prod
+
+| ID | Check |
+|---|---|
+| D01 | same image |
+| D02 | same mount destinations (and prod has all 6) |
+| D03/D04 | `start-override.sh` and the OIDC adapter identical, as seen inside the containers |
+| D05 | Caddyfile identical once `plane-dev-minio` → `plane-minio` |
+| D06 | served `/app/web` tree identical (sha256 over every file; fails if < 100 files) |
+| D07 | "All patches applied and verified" in the current run's log, both sides |
+| D08 | container env: same keys and values, except `DEV_ONLY_ENV` / `PER_STACK_ENV` (values never printed) |
+| D09 | non-encrypted `instance_configurations` identical, except the rows `sanitize.sql` sets |
+| D10 | same latest migration |
+
+Verified 2026-09-17: before alignment it failed D03 (dev lacked Fix 2b) and D08
+(`WEBHOOK_ALLOWED_HOSTS`); after alignment all pass; injected drift on dev (extra bundle file,
+`IS_INTERCOM_ENABLED=1`) failed D06 + D09 and passed again once reverted.
 
 ## Mailpit UI
 

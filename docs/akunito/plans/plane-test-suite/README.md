@@ -9,7 +9,7 @@ status: draft
 
 # Plan: Plane fork regression suite
 
-**Status:** P1 built + verified 2026-09-17 (`system/app/plane-tests/`: `run.sh setup-dev|refresh|safety`), awaiting Diego's manual check on dev. Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
+**Status:** P1 + P2 done 2026-09-17 (`system/app/plane-tests/`: `run.sh setup-dev|refresh|safety|drift`). Next: P3 QA seed. Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
 
 **Goal:** every customisation of our Plane (frontend fork, backend patches, instance config) has an
 automated test, and the **whole suite runs on every deploy** through a single `plane-deploy`
@@ -52,7 +52,7 @@ command that blocks and rolls back on failure.
 | F2 | Login can't be automated (Pocket ID passkeys) | Dev password login (P3) |
 | F3 | Writes on prod would notify Aga (Telegram), calendar, email | Prod read-only (L7) |
 | F4 | Deploys are hand rsync/compose — nothing to hook tests onto | `plane-deploy` (P7) |
-| F5 | Dev ≠ prod: frontend 27 vs 29 commits, dev lacks Fix 2b, data from 2026-06-25 | P2 + L3-15 drift |
+| F5 | Dev ≠ prod: dev lacked Fix 2b + `WEBHOOK_ALLOWED_HOSTS`, data from 2026-06-25. *(Correction 2026-09-17: the frontend bundle was already identical — "27 commits" was only a stale compose comment)* | P1 refresh + P2 + L3-15 drift ✅ |
 | F6 | Session lifetime (90 d rolling) is a customisation missing from the register | A-11, L3-05 |
 | F7 | Register says prod mounts `web-override-fork`; it mounts `web-override-v141` | doc fix |
 | F8 | Fork removed the "More" sidebar buttons — undocumented; projects past the limit reachable only via the pin dialog | L5-15 |
@@ -105,8 +105,8 @@ Instance-config changes (god-mode/shell) also go through `plane-deploy --config-
 
 | Phase | Content | Exit criterion |
 |---|---|---|
-| **P1** (APLANE-8) ✅ built | `plane-dev-refresh`: full prod → dev copy minus log tables, **always followed by sanitize** (§6); mailpit sink; L3-00 safety test | Re-runnable in < 2 min; L3-00 green right after it |
-| **P2** (APLANE-9) | Re-align dev code with prod (29-commit bundle, Fix 2b); drift test | L3-15 green |
+| **P1** (APLANE-8) ✅ | `plane-dev-refresh`: full prod → dev copy minus log tables, **always followed by sanitize** (§6); mailpit sink; L3-00 safety test | Re-runnable in < 2 min; L3-00 green right after it |
+| **P2** (APLANE-9) ✅ | Re-align dev code with prod (29-commit bundle, Fix 2b); drift test | L3-15 green |
 | **P3** (APLANE-10) | `qa` workspace seed (fictitious users with passwords, idempotent reset) on dev; `qa-smoke` Guest on prod | Seed re-runnable after every refresh |
 | **P4** (APLANE-11) | L3 + L7 against the **current** system (sed-based) | Green on dev + prod |
 | **P5** (APLANE-12) | vitest + Playwright + VR in the fork; L1, L4, L5 for the **current** features | Full suite green on dev |
