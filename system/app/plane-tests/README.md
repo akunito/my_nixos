@@ -12,6 +12,7 @@ Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one ov
 | `run.sh drift` | L3-15 dev ↔ prod drift, read-only on both sides | APLANE-9 |
 | `run.sh seed` | Rebuilds the `qa` + `qa-2` workspaces on dev (L3-00 first, contract check after) | APLANE-10 |
 | `run.sh seed-check` | QA seed contract alone | APLANE-10 |
+| `run.sh config prod\|dev` | L3 config contract, read-only | APLANE-11 |
 
 ## refresh
 
@@ -63,6 +64,30 @@ Verified 2026-09-17: against the unsanitized dev it failed 10 checks (incl. 3 pr
 Verified 2026-09-17: before alignment it failed D03 (dev lacked Fix 2b) and D08
 (`WEBHOOK_ALLOWED_HOSTS`); after alignment all pass; injected drift on dev (extra bundle file,
 `IS_INTERCOM_ENABLED=1`) failed D06 + D09 and passed again once reverted.
+
+## L3 config contract (`l3_config.sh prod|dev`)
+
+| ID | Check |
+|---|---|
+| L3-01 | healthy + "All patches applied and verified" in this run |
+| L3-02 | served `/api/instances/`: gitea on; magic link, signup, Google/GitHub/GitLab off; password off on prod, on on dev |
+| L3-03 | `instance_configurations` rows agree with what is served (catches a stale 2 h cache) |
+| L3-04 | api (gunicorn) + worker (celery) **process** env: `USE_MINIO=1`, `MINIO_ENDPOINT_SSL=1`, `WEBHOOK_ALLOWED_HOSTS` |
+| L3-05 | api process env: `SESSION_COOKIE_AGE=7776000`, `SESSION_SAVE_EVERY_REQUEST=1` (A-11) |
+| L3-06 | `/auth/gitea/` → `auth.akunito.com/authorize` with this host's callback + client id |
+| L3-07 | prod: `/`, `/god-mode/`, `/api/instances/`, `/api/instances/admins/sign-in/`, `/auth/gitea/`, `/uploads/` on the public host all 302 to Cloudflare Access |
+| L3-08 | SPA deep links, god-mode, spaces → HTML; `/api/instances/`, `/auth/get-csrf-token/` → JSON; `/uploads/` answered by MinIO |
+| L3-09 | `index.html` served over HTTPS = the file mounted in the container |
+| L3-10 | `ric_scan.py`: no unguarded `requestIdleCallback` in served JS (APLANE-1), scanner selftest first |
+| L3-11 | nothing registers a service worker |
+| L3-12 | prod: email rows = host Postfix relay |
+| L3-13 | prod: exactly the bot + n8n webhooks, active, last delivery 2xx |
+| L3-14 | `API_KEY_RATE_LIMIT=60/minute` |
+| L3-16 | latest applied migration = latest shipped in the image |
+
+Verified 2026-09-17: green on prod and dev; injected on dev → DB flag changed with a stale cache
+fails L3-03, after cache bust fails L3-02; a JS file with the APLANE-1 call + a service worker
+registration fails L3-10 + L3-11; all green again once reverted.
 
 ## QA seed
 
