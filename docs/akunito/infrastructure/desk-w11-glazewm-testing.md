@@ -32,6 +32,23 @@ Reproduced without the game (fliptest, see the harness README):
 | Fullscreen demoted to floating | `should_fullscreen` for a fullscreen state with `maximized: true` takes the `_` arm: `frame.inset(1).contains_rect(workspace_rect)`. A frame equal to the monitor, inset by 1, cannot contain the working area (same width, taskbar only shrinks the height) → demotion to `initial_state` (floating), then GlazeWM tries to maximize/resize the game. `state_defaults.fullscreen.maximized: false` takes the other arm (`frame.contains_rect(workspace_rect.inset(1))`) and the window stays fullscreen |
 | Taskbar stuck above the game | follows from the failed hide: GlazeWM keeps the window in Hiding/Showing, so every redraw calls `ITaskbarList::AddTab/DeleteTab` (brings the taskbar forward, upstream #881) and, after Fullscreen→Floating, `MarkFullscreenWindow(FALSE)`. Elevated fliptest: 100 % Composed after returning; normal: taskbar goes away |
 
+### Fixes applied 2026-09-17 (all verified by `tests/fullscreen/run-suite.sh`, 8/8)
+
+1. **Fork patch** `fix/hide-unmovable-nouia` (build run 35256321585, MSI installed as
+   GlazeWM 3.10.2): in `reposition_window`, position the window only while it is
+   visible and apply the cloak/hide even when positioning failed. An elevated window
+   is now hidden and shown with its workspace.
+2. **Config** `state_defaults.fullscreen.maximized: false` — keeps a borderless game in
+   the `fullscreen` state (see the demotion rule below), so GlazeWM calls
+   `MarkFullscreenWindow` for it and stops trying to maximize/resize it.
+3. **AHK `PillSync`** (`hyper-desktops.ahk`, on foreground change and on resizes of the
+   foreground window): hides every Zebar pill fully covered by that window, shows it
+   again afterwards. Zebar itself has no hide-on-fullscreen option and the widget-side
+   attempt (`currentWidget().tauriWindow.hide()`) had no effect.
+
+Still open: an elevated window in the floating state cannot be raised above the
+taskbar (z-order denied); upstreaming the fork patch; `keep_z_order` PR #1431.
+
 ## 2. How things work (reference for fixes and tests)
 
 ### GlazeWM 3.10.x internals (paths under `packages/` of github.com/glzr-io/glazewm)

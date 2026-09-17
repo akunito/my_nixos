@@ -20,6 +20,13 @@ $h = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero) { if ([W]::Pid($x) -eq $p.Id -and [W]::Cls($x) -eq "FlipTestWnd") { $h = $x; break }; $x = [W]::GetWindow($x, 2) }
 if ($h -eq [IntPtr]::Zero) { "no window"; exit 1 }
 $win = (& $glaze query windows | ConvertFrom-Json).data.windows | ? { $_.handle -eq [int64]$h }
+# Match a game: GlazeWM only marks a window fullscreen for the taskbar when its
+# state is fullscreen, and our test window is classified floating.
+if ($env:WSTEST_FULLSCREEN -eq "1") {
+  & $glaze command --id $win.id set-fullscreen "--maximized=false" | Out-Null
+  Start-Sleep 2
+  $win = (& $glaze query windows | ConvertFrom-Json).data.windows | ? { $_.handle -eq [int64]$h }
+}
 "glazewm: state=$($win.state.type) display=$($win.displayState)"
 Snap "1 started" $h
 & $glaze command focus --workspace $OtherWs | Out-Null; Start-Sleep 1.5

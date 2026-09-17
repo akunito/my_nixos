@@ -47,5 +47,20 @@ something else = latency, lost frames, no VRR.
 | Elevated window, non-elevated caller (`cloaktest.exe`, `cloak-from-normal.ps1`) | `SetWindowPos` → access denied; `GetViewForHwnd`+`SetCloak(1,2)` → `cloaked=2`, uncloak back to 0 |
 | Live Aion 2 session with GlazeWM verbose | `Failed to set window position: Access is denied. (0x80070005)` on every redraw of the game, `Restoring window from fullscreen`, game integrity 0x3000 (high) |
 
+## After the fixes (2026-09-17, GlazeWM fork build with `fix/hide-unmovable-nouia`)
+
+`./run-suite.sh` — 8/8 pass. Before the fixes the same suite failed 2 cases (elevated
+window not hidden, taskbar above it after returning). What each fix contributed:
+
+| Fix | Effect |
+|---|---|
+| Fork patch (position only while visible, apply visibility even if positioning failed) | an elevated window is cloaked with its workspace: `cloaked=2` away, `0` back |
+| `state_defaults.fullscreen.maximized: false` | a borderless fullscreen window keeps GlazeWM's `fullscreen` state, so GlazeWM marks it fullscreen for the taskbar (and stops trying to maximize/resize it) |
+| `PillSync` in `hyper-desktops.ahk` | the pills are hidden while a window covers their monitor: 459/465 Independent Flip with Zebar running |
+
+Known limitation: an elevated window in the FLOATING state can't be raised above the
+taskbar at all (`SetWindowPos`/z-order denied), so it stays composed. Games run
+fullscreen, which is the case the suite covers.
+
 Known gap: GlazeWM classifies Aion 2 as `fullscreen` at manage time but fliptest as
 `floating` (it grows after being managed); the three bugs reproduce anyway.

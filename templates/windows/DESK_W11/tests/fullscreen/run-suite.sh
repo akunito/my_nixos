@@ -39,8 +39,11 @@ echo "$out" | grep -q "2 switched away .*cloaked=[1-9]" && ok "hidden while away
 echo "$out" | grep -q "3 back home .*cloaked=0" && ok "shown on return" || ko "shown on return" "still cloaked"
 echo "$out" | grep -q "5 present modes after return: Hardware Composed: Independent Flip\|5 present modes after return: Hardware: Independent Flip" && ok "taskbar not above after return" || ko "taskbar after return" "$(echo "$out" | grep '5 present')"
 
-echo "== 4. same, with an ELEVATED window (what a game with anti-cheat looks like)"
-rm -f "$P/suite-elev.out"; echo "ws-hide-test.ps1" > "$P/suite-elev.elev"
+# A game is elevated (anti-cheat) AND in GlazeWM's fullscreen state; only then
+# does GlazeWM mark it fullscreen for the taskbar. An elevated FLOATING window
+# cannot be raised above the taskbar at all (SetWindowPos is denied).
+echo "== 4. same, with an ELEVATED fullscreen window (what a game looks like)"
+rm -f "$P/suite-elev.out"; echo "wsfs.ps1" > "$P/suite-elev.elev"   # fullscreen state, like a game
 for _ in $(seq 90); do [ -f "$P/suite-elev.out" ] && break; sleep 1; done
 out=$(cat "$P/suite-elev.out")
 echo "$out" | sed 's/^/    /'
