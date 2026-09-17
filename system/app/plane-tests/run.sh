@@ -10,6 +10,7 @@
 #   system/app/plane-tests/run.sh drift       L3-15 dev ↔ prod drift test (read-only)
 #   system/app/plane-tests/run.sh seed        (re)build the qa + qa-2 workspaces on dev (APLANE-10)
 #   system/app/plane-tests/run.sh api         L4 API functional tests on dev, reseeds after (APLANE-12)
+#   system/app/plane-tests/run.sh unit|build|e2e [ref] [pw args]   fork L1 / L0 / L5+VR on the VPS runner
 #   system/app/plane-tests/run.sh config prod|dev   L3 config contract, read-only (APLANE-11)
 #   system/app/plane-tests/run.sh smoke prod|dev    L7 read-only smoke (L3 + qa-smoke crawl)
 #   system/app/plane-tests/run.sh smoke-user prod|dev add|remove   qa-smoke Guest + empty QA Smoke project
@@ -33,11 +34,12 @@ case "$cmd" in
   seed) script=seed-qa.sh ;;
   seed-check) script=seed_check.sh ;;
   api) script=l4-api.sh ;;
+  unit|build|e2e) script=fork-suite.sh; shift; args="$cmd $*" ;;
   smoke) script=l7_smoke.sh; args=${2:?usage: run.sh smoke prod|dev} ;;
   config) script=l3_config.sh; args=${2:?usage: run.sh config prod|dev} ;;
   smoke-user) script=smoke-user.sh; args="${2:?usage: run.sh smoke-user prod|dev add|remove} ${3:?action}"
     case $3 in add|remove) ;; *) echo 'smoke-user: only add|remove from here'; exit 2 ;; esac ;;
-  *) sed -n '4,16p' "$0"; exit 2 ;;
+  *) sed -n '4,17p' "$0"; exit 2 ;;
 esac
 
 rsync -a --delete -e "ssh -p $port" "$here/remote/" "$vps:$remote_dir/"

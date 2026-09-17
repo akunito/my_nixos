@@ -13,6 +13,9 @@ Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one ov
 | `run.sh seed` | Rebuilds the `qa` + `qa-2` workspaces on dev (L3-00 first, contract check after) | APLANE-10 |
 | `run.sh seed-check` | QA seed contract alone | APLANE-10 |
 | `run.sh api` | L4 API functional tests on dev as the QA users (L3-00 first, reseed after) | APLANE-12 |
+| `run.sh unit [ref]` | L1: vitest of the fork (builds `web`'s workspace deps first) | APLANE-12 |
+| `run.sh build [ref]` | L0: build `web`, typecheck ≤ 27-error baseline, requestIdleCallback scan + Pocket ID label in the bundle | APLANE-12 |
+| `run.sh e2e [ref] [playwright args]` | L5 + VR: L3-00, reseed, Playwright (desktop Chromium, Pixel 7, iPhone 14 WebKit) against dev, reseed after | APLANE-12 |
 | `run.sh config prod\|dev` | L3 config contract, read-only | APLANE-11 |
 | `run.sh smoke prod\|dev` | L7 smoke: L3 + SPA shell + authenticated read-only crawl as `qa-smoke` | APLANE-11 |
 | `run.sh smoke-user prod\|dev add\|remove` | Creates / removes `qa-smoke` (Guest) + empty secret project `QA Smoke` (QSMK) in `akuworkspace` | APLANE-11 |
@@ -91,6 +94,16 @@ Verified 2026-09-17: before alignment it failed D03 (dev lacked Fix 2b) and D08
 Verified 2026-09-17: green on prod and dev; injected on dev → DB flag changed with a stale cache
 fails L3-03, after cache bust fails L3-02; a JS file with the APLANE-1 call + a service worker
 registration fails L3-10 + L3-11; all green again once reverted.
+
+## Fork suite (L0 / L1 / L5 / VR) on the VPS runner
+
+`fork-suite.sh` checks the fork out read-only over HTTPS into `~/.cache/plane-tests/plane-up` at `ref`
+(default the `akunito/mobile-v1.4.1` tip), installs with the frozen lockfile through corepack (a
+`pnpm` shim on PATH, because turbo spawns it as a binary) and takes Playwright's browsers from the
+dotfiles flake's nixpkgs `playwright-driver.browsers` — `@playwright/test` is pinned to that exact
+version (1.61.1) in the fork's catalog. Specs live in the fork: `apps/web/tests/unit`, `apps/web/tests/e2e`.
+
+Verified 2026-09-17 on the VPS: `unit` 7 files green (45 s), `build` L0-01…04 green (1.5 min, 27 type errors = baseline).
 
 ## L4 API functional (`l4_api.py`, stdlib only, on the VPS against dev `qa`)
 
