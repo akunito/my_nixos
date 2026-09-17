@@ -82,6 +82,8 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | komi.infrastructure.monitoring-setup | Grafana and Prometheus setup for Komi's monitoring container | komi, infrastructure, monitoring, grafana, prometheus | profiles/KOMI_LXC_monitoring-config.nix |
 | komi.infrastructure.proxy-setup | Cloudflare tunnel, NPM, and ACME certificate setup for Komi | komi, infrastructure, proxy, cloudflare, npm, acme | profiles/KOMI_LXC_proxy-config.nix |
 | network-bonding | Network bonding (LACP link aggregation) for increased bandwidth and failover | networking, bonding, lacp, performance, failover | system/hardware/network-bonding.nix |
+| plans.plane-test-suite | Plane fork regression suite — audit, interview decisions (2026-09-17), architecture, deploy gate, phases | plane, testing, plan, vps, regression, playwright, vitest | docs/akunito/infrastructure/services/plane-customizations.md |
+| plans.plane-test-suite.catalog | Plane fork regression suite — full test catalogue by layer, mapped to register IDs A-xx/B-xx, with combination matrices | plane, testing, plan, catalog, playwright, vitest | docs/akunito/plans/plane-test-suite/README.md |
 | scripts | Complete reference for all shell scripts — installation, sync, update, maintenance, security, and utilities | scripts, automation, installation, maintenance, deployment | *.sh |
 | scripts.installation | Installation and deployment scripts — install.sh, deploy.sh, set_environment.sh, flatpak-reconcile.sh | scripts, installation, deployment, flatpak | install.sh |
 | scripts.maintenance | Maintenance and automated update scripts — maintenance.sh, autoSystemUpdate.sh, autoUserUpdate.sh | scripts, maintenance, cleanup, garbage-collection, automation | maintenance.sh |
