@@ -45,7 +45,12 @@ window_behavior:
       centered: false                    # keep the position the app asked for
       shown_on_top: false                # everything floats: normal z-order
     fullscreen:
-      maximized: true
+      # false on purpose (2026-09-17): with `true`, a borderless fullscreen game
+      # is judged against `frame.inset(1).contains(workspace_rect)`, which fails
+      # when the frame equals the monitor and the taskbar shrinks the working
+      # area -> GlazeWM demotes the game to floating and tries to maximize and
+      # resize it. With `false` it stays fullscreen and is left alone.
+      maximized: false
       shown_on_top: false
 
 # Monitor 0 = primary (left), monitor 1 = the vertical one (right).
