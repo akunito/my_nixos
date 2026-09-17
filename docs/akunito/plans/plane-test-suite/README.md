@@ -9,7 +9,7 @@ status: draft
 
 # Plan: Plane fork regression suite
 
-**Status:** P1–P5 done 2026-09-17. Fork specs in `plane-up` `apps/web/tests/{unit,e2e}`; runner `run.sh unit|build|e2e` on the VPS (E2E 187 passed / 9 skipped, 11 min; VR baselines live on the runner). Next: P6 (multi-sort per view, Pins by UUID) then P7 (`plane-deploy`). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
+**Status:** P1–P6 done 2026-09-17. Fork specs in `plane-up` `apps/web/tests/{unit,e2e}`; runner `run.sh unit|build|e2e` on the VPS (L1 140 tests / 8 files, L4 12/12, E2E 200 passed / 20 skipped, ~13 min; VR baselines live on the runner). Typecheck baseline **2** (was 27). Next: P7 (`plane-deploy`). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
 
 **Goal:** every customisation of our Plane (frontend fork, backend patches, instance config) has an
 automated test, and the **whole suite runs on every deploy** through a single `plane-deploy`
@@ -110,7 +110,7 @@ Instance-config changes (god-mode/shell) also go through `plane-deploy --config-
 | **P3** (APLANE-10) ✅ | `qa` + `qa-2` workspace seed (fictitious users with passwords, idempotent reset) on dev, chained into every refresh | Seed re-runnable after every refresh |
 | **P4** (APLANE-11) ✅ | L3 + L7 (API half) against the current system; `qa-smoke` Guest + empty QA Smoke project on prod. Nix packaging moves to P7, where `plane-deploy` consumes it | Green on dev + prod |
 | **P5** (APLANE-12) ✅ | vitest + Playwright + VR in the fork; L1, L4, L5 for the **current** features | Full suite green on dev |
-| **P6** (APLANE-13) | Feature changes: multi-sort per view; pins by UUID + deleted/archived/no-access — each with its tests | Suite green |
+| **P6** (APLANE-13) ✅ | Feature changes: multi-sort per view; pins by UUID + deleted/archived/no-access — each with its tests | Suite green |
 | **P7** (APLANE-14) | `plane-deploy` (dev → gate → prod → smoke → rollback → Telegram); CLAUDE.md rule | One real frontend deploy through it |
 | **P8** (APLANE-15) | Own images from the fork: port Fix 1/2/2b/3/4, Caddyfile, OIDC adapter, session env into code; L2 pytest | Same suite green on the new images, dev then prod |
 | **P9** (APLANE-16) | Replace `/plane-upgrade` with a security-review procedure; update `plane-customizations.md` (A-11, F7, F8, decisions) | Docs + skill merged |
@@ -149,6 +149,16 @@ error boundary / console error.
 | APLANE-20 | ~~Pocket ID / CF Access perimeter untested~~ | **Cancelled:** daily use through Pocket ID surfaces any break immediately |
 | APLANE-21 | Prod `WEB_URL=http://plane.akunito.com` (not https) | Plane builds email/notification links from it |
 | APLANE-16 | Register gaps: A-11 session, mount name, removed "More" buttons | Update `plane-customizations.md` (part of P9, don't lose it if P9 slips) |
+| APLANE-23 | L3-15 **D06 compares dev's web bundle against prod's** | Since P6, dev runs a fork build prod does not have, so D06 is red by design while a change is in flight. `plane-deploy` (P7) should compare each side against the bundle built from the ref it deployed, not against the other side |
+
+## 8b. P6 findings (2026-09-17)
+
+| # | Finding | Where it lands |
+|---|---|---|
+| P6-1 | Archiving a **page** deletes its favourite server-side; archiving a **work item** keeps it. Upstream deviation, not something the fork chose | Pinned by L4-03b and asserted in L5-18b |
+| P6-2 | A deleted work item leaves its favourite behind (`entity_identifier` is not a FK), so removing the pin is the frontend's job — exactly what B-10 now does | L4-03b |
+| P6-3 | Only work items in a **completed / cancelled** state group can be archived, and a page must be archived before it can be deleted (400 otherwise) | Both tests create their fixtures accordingly |
+| P6-4 | Declaring `currentWorkspaceFavorites` on `IFavoriteStore` removed 25 of the 27 typecheck errors; the 2 that remain are upstream (`filters.tsx` TS2538, `base-list-root.tsx` TS2345) | `TYPE_ERROR_BASELINE=2` |
 
 ## 8. P5 findings (2026-09-17)
 

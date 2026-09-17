@@ -83,9 +83,9 @@ breaks, so a failed patch stops the container instead of silently degrading.
 | B-05 | Header icons equalised, hover-gated on desktop | Icons appear on hover at ≥md |
 | B-06 | Header icons always visible on touch | On phone: visible without hover |
 | B-07 | **Project name single-click → Work Items**; chevron alone expands | Click name → Work Items. Click chevron → expand only |
-| B-08 | **"Pins"** sidebar category (Pages + Tickets, via UserFavorite) | "Pins" appears below Projects |
+| B-08 | **"Pins"** sidebar category (Pages + Tickets, via UserFavorite). Since 2026-09-17 each pin is **resolved from its UUID** (`usePinnedEntities` + `pinned-entity.service`), never from the label stored when it was pinned | "Pins" appears below Projects; rename a pinned page → the sidebar follows |
 | B-09 | Manage-pinned dialog: debounced search, inline results, reorder, remove | Pin a page and a ticket, reorder, remove |
-| B-10 | Pinned ticket opens `/{slug}/browse/{ID-SEQ}/` | Tap a pinned ticket on phone — no 404 |
+| B-10 | Pinned ticket opens `/{slug}/browse/{ID-SEQ}/`, built from the project's **current** identifier. Deleted (404) → the favourite is removed server-side · 401/403 → hidden, never deleted · archived → kept, opens the archived route · 5xx → kept with the last known label | Tap a pinned ticket on phone — no 404; delete a pinned item → the pin disappears |
 | B-11 | `favorites-menu` excludes page/issue types | A pinned page appears once, not twice |
 
 ### B.2 Mobile / responsive
@@ -115,7 +115,7 @@ breaks, so a failed patch stops the container instead of silently degrading.
 ### B.4 Sorting
 | ID | Feature | Test |
 |---|---|---|
-| B-27 | Multi-sort — up to 3 ordered rules, client-side after the persisted primary | Display → Order by → add rules 2–3, reorder, toggle direction |
+| B-27 | Multi-sort — up to 3 ordered rules, client-side after the persisted primary. Since 2026-09-17 the rules are kept **per view** (project / cycle / module / project view / global view / profile) in `plane_multi_sort_secondary_order_by_v2`; the v1 single list migrates as the fallback | Display → Order by → add rules 2–3, reorder, toggle direction; sort one board, check another is untouched |
 | B-28 | Multi-sort persists to localStorage | Set rules, refresh — they survive |
 | B-29 | Multi-sort enabled in global Views | Order-by control present there |
 | B-30 | "State" order-by offered everywhere | Available in project + global |

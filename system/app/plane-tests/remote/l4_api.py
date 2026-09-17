@@ -207,6 +207,63 @@ def t_favorites():
     return "page + issue favourites, sequence persists across sessions, per-user, delete"
 
 
+@test("L4-03b-pin-lifecycle-backend-contract")
+def t_pin_lifecycle():
+    """What the backend does to a favourite when its entity changes (APLANE-13, B-08…B-10).
+
+    The sidebar resolves pins from their UUIDs precisely because of what this pins down:
+    the row's stored label never follows a rename, and a deleted work item leaves its
+    favourite behind — so the frontend is the one that has to drop it.
+    """
+    proj = f"/api/workspaces/{SLUG}/projects/{QAA['id']}"
+    favs = f"/api/workspaces/{SLUG}/user-favorites/"
+    # only a completed / cancelled work item can be archived, so start it there
+    s, issue, _ = alice.req("POST", f"{proj}/issues/", {"name": "L4-03b item before rename",
+                                                       "state_id": QAA["states"]["completed"]})
+    expect(s == 201, f"create item {s} {issue}")
+    s, page, _ = alice.req("POST", f"{proj}/pages/", {"name": "L4-03b page before rename"})
+    expect(s == 201, f"create page {s} {page}")
+    pins = {}
+    try:
+        for kind, eid in (("issue", issue["id"]), ("page", page["id"])):
+            s, r, _ = alice.req("POST", favs, {"entity_type": kind, "entity_identifier": eid,
+                                               "project_id": QAA["id"], "name": "STALE LABEL"})
+            expect(s in (200, 201), f"pin {kind} {s} {r}")
+            pins[kind] = r["id"]
+
+        # renamed: the entity changes, the favourite's stored label does NOT
+        expect(alice.req("PATCH", f"{proj}/issues/{issue['id']}/", {"name": "L4-03b item renamed"})[0] in (200, 204), "rename item")
+        expect(alice.req("PATCH", f"{proj}/pages/{page['id']}/", {"name": "L4-03b page renamed"})[0] in (200, 204), "rename page")
+        s, r, _ = alice.req("GET", f"{proj}/issues/{issue['id']}/")
+        expect(s == 200 and r["name"] == "L4-03b item renamed", f"item reads back renamed: {s} {r.get('name')}")
+        stored = {f["id"]: f for f in alice.req("GET", favs)[1]}
+        expect(stored[pins["issue"]]["name"] == "STALE LABEL",
+               f"favourite label still stale: {stored[pins['issue']]['name']} (this is why pins resolve by UUID)")
+
+        # archived work item: kept, and flagged so the sidebar can link to the archived route
+        expect(alice.req("POST", f"{proj}/issues/{issue['id']}/archive/", {})[0] in (200, 201), "archive item")
+        s, r, _ = alice.req("GET", f"{proj}/issues/{issue['id']}/")
+        expect(s == 200 and r.get("archived_at"), f"archived item still readable with archived_at: {s}")
+        expect(pins["issue"] in {f["id"] for f in alice.req("GET", favs)[1]}, "archiving a work item keeps its favourite")
+
+        # archived page: upstream DELETES the favourite server-side (deviation from work items)
+        expect(alice.req("POST", f"{proj}/pages/{page['id']}/archive/", {})[0] in (200, 201), "archive page")
+        page_pin_after_archive = pins["page"] in {f["id"] for f in alice.req("GET", favs)[1]}
+
+        # deleted work item: 404, and the favourite is LEFT BEHIND — the frontend drops it (B-10)
+        expect(alice.req("DELETE", f"{proj}/issues/{issue['id']}/")[0] == 204, "delete item")
+        expect(alice.req("GET", f"{proj}/issues/{issue['id']}/")[0] == 404, "deleted item reads 404")
+        expect(pins["issue"] in {f["id"] for f in alice.req("GET", favs)[1]},
+               "the backend leaves the favourite of a deleted work item behind (the frontend removes it)")
+    finally:
+        for fid in pins.values():
+            alice.req("DELETE", f"{favs}{fid}/")
+        alice.req("DELETE", f"{proj}/issues/{issue['id']}/")
+        alice.req("DELETE", f"{proj}/pages/{page['id']}/")
+    return ("rename keeps the stale label; archived item kept + archived_at; deleted item 404 with the "
+            f"favourite left behind; archiving a page {'keeps' if page_pin_after_archive else 'deletes'} its favourite")
+
+
 @test("L4-04-workspace-search-shapes")
 def t_search():
     q = urllib.parse.urlencode({"search": "QAA", "workspace_search": "true"})
@@ -408,7 +465,7 @@ def t_rate():
 
 
 if __name__ == "__main__":
-    for t in (t_attachment, t_pages, t_favorites, t_search, t_views, t_notify, t_webhooks, t_sort_order, t_sidebar, t_rolling, t_rate):
+    for t in (t_attachment, t_pages, t_favorites, t_pin_lifecycle, t_search, t_views, t_notify, t_webhooks, t_sort_order, t_sidebar, t_rolling, t_rate):
         t()
     print(f"L4 api: {sum(results)}/{len(results)} passed")
     raise SystemExit(0 if all(results) else 1)

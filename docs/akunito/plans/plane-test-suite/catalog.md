@@ -44,10 +44,10 @@ rows in `plane-customizations.md`. `×` = full combination matrix (one test per 
 | L1-12 | `useResponsiveIssueLayout` [B-13] | widths {0, 320, 767, 768, 1440} × layouts {list, kanban, calendar, spreadsheet, gantt, undefined}; width 0 (SSR/unknown) never overrides |
 | L1-13 | `getWorkspaceItemState` [B-02] | no pref → views+analytics pinned, archives not · stored `is_pinned:false` for views stays false · stored true for archives respected |
 | L1-14 | Order-by editor logic [B-27/B-30/B-31] | addable excludes used bases and `sort_order` · max 2 secondary hides adders · move bounds (first up / last down no-op) · flip toggles `-` · remove middle rule · `-state__name` forced on project pages · `project__name` only when layout allow-list has it |
-| L1-15b | Pins resolved by UUID (decision) | live title after rename · live identifier after project identifier change · entity deleted → pin dropped · archived → kept, archived route · no access → hidden, not deleted, returns with access |
-| L1-15 | Pinned list derivation [B-08] | split pages/tickets · sort by sequence desc · `parent` excluded · other entity types ignored |
-| L1-16 | Ticket permalink [B-10] | built from live identifier + sequence (not the label) · legacy pins with only a label still open |
-| L1-17 | Page pin open | missing `project_id` or `entity_identifier` → no navigation |
+| L1-15b ✅ | Pins resolved by UUID (`usePinnedEntities`) | live title after rename · live identifier after project identifier change · deleted (404) → favourite dropped server-side · archived → kept, archived route · 401/403 → hidden, never deleted · 5xx → kept with the last known label |
+| L1-15 ✅ | Pinned list derivation [B-08] | split pages/tickets · sort by sequence desc · `parent` excluded · other entity types ignored |
+| L1-16 ✅ | Ticket permalink [B-10] | built from the live identifier + sequence, never the stored label |
+| L1-17 ✅ | Page pin open | missing `project_id` or `entity_identifier` → not resolved, never fetched · no workspace → nothing fetched |
 | L1-18 | Manage dialog search [B-09] | results filtered by already-pinned ids · capped at 8 · stale response after query change ignored (`active` flag) · search error → empty |
 | L1-19 | Global Board grouping [B-18] | 5 state-group columns in order · order within column preserved · unknown state → "No status" column shown only when non-empty · Load-more label `n/total` · hidden when no next page |
 | L1-20 | Global Calendar grouping [B-19] | bucket by `YYYY-MM-DD` · no `target_date` excluded · date near midnight in Europe/Madrid vs UTC lands on the right day |
@@ -104,7 +104,7 @@ patches are ordinary code covered by L2-04…11.
 | L4-01 | Attachment upload: presigned URL is `https://` + public host, PUT works, GET via `/uploads/` 200 [A-02/A-03] |
 | L4-02 | Pages API on internal `/api/` with API key: list/create/read/delete [A-04] |
 | L4-03 | Favorites: create page + issue favourites · update `sequence` · delete · second device sees them [B-08/B-09] |
-| L4-03b | Pin lifecycle: delete pinned page/item → favourite gone · archive → kept · remove user from project → hidden · re-add → back |
+| L4-03b ✅ | Pin lifecycle **backend contract**: rename never touches the favourite's stored label · archived work item readable with `archived_at`, favourite kept · deleted work item 404 with its favourite **left behind** (the frontend drops it) · archiving a **page** deletes its favourite server-side (upstream deviation) |
 | L4-04 | Workspace search returns `page` and `issue` result shapes the dialog relies on (`project__identifier`, `sequence_id`, `project_ids`) |
 | L4-05 | Views perms: owner updates · non-owner update rejected · admin deletes · non-owner member delete rejected [B-26] |
 | L4-06 | A-09 end-to-end: user B assigns user A (unsubscribed) → A has in-app notification; B has none |
@@ -140,7 +140,7 @@ uncaught console error**, and on `A`/`I` **no horizontal overflow** (`scrollWidt
 | L5-16 | Favourites drag reorder → reload → order held, no duplicates | D |
 | L5-17 | Pins: empty state CTA · pin page + ticket via search · reorder up/down · remove · collapse state survives reload · pinned page shows once (not in Favorites) | D A I |
 | L5-18 | Pinned ticket tap → `/browse/ID-SEQ/` loads (no 404); pinned page opens page | D A I |
-| L5-18b | Rename ticket title + change project identifier → pin shows new values and still opens · delete pinned page/ticket in another tab → pin gone after refresh on both · archive → pin opens archived item · remove QA user B from the project → B's pin hidden, re-add → back | D I |
+| L5-18b ✅ | Pin stored with a wrong label → sidebar shows the live title · rename ticket + page → pin follows · archive ticket → pin kept, opens the archived route · delete ticket + page → pins gone and the favourites removed server-side. Lost access is covered by L1-15b (the hook), not here: it needs a second user's session mid-test | D A I |
 | L5-19 | Drawer: open → scrim visible → tap outside closes · navigate via project link, Pins ticket, Pins page, workspace item → drawer closes · chevron/pin/"+" keep it open · D sidebar never collapses on navigation | A I D |
 
 ### Project-level layouts [B-12…B-17]

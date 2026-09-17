@@ -103,8 +103,8 @@ registration fails L3-10 + L3-11; all green again once reverted.
 dotfiles flake's nixpkgs `playwright-driver.browsers` — `@playwright/test` is pinned to that exact
 version (1.61.1) in the fork's catalog. Specs live in the fork: `apps/web/tests/unit`, `apps/web/tests/e2e`.
 
-Verified 2026-09-17 on the VPS: `unit` 7 files green (45 s), `build` L0-01…04 green (1.5 min, 27 type
-errors = baseline), `e2e` 187 passed / 9 skipped (11.1 min), visual 11 baselines generated and compared.
+Verified 2026-09-17 on the VPS (P6): `unit` 8 files / 140 tests green (45 s), `build` L0-01…04 green (1.5 min, 2 type
+errors = baseline), `e2e` 200 passed / 20 skipped (12.3 min), visual 11 baselines generated and compared.
 
 **Headless WebKit needs a software EGL** on this GPU-less server (`Could not create WPE EGL display`);
 the runner passes nixpkgs' Mesa (llvmpipe) through `__EGL_VENDOR_LIBRARY_DIRS` / `LIBGL_DRIVERS_PATH` /
@@ -125,6 +125,7 @@ bundle afterwards; drift + safety green.
 | L4-03 | favourites: page + issue entity types, `sequence` update visible to a second session, per-user, delete |
 | L4-04 | workspace search returns the fields the Pins dialog reads (`project__identifier`, `sequence_id`, `project_ids`) |
 | L4-05 | global views: non-owner update refused, owner update OK; member can't delete others' views, admin can |
+| L4-03b | pin lifecycle backend contract: a rename never touches the favourite's stored label; an archived work item stays readable with `archived_at` and keeps its favourite; a deleted work item reads 404 and **leaves its favourite behind** (the frontend drops it); archiving a **page** deletes its favourite server-side |
 | L4-06 | **A-09**: an assignee who is *not subscribed* is notified of another user's change; the actor never is |
 | L4-07/08 | webhooks: 127.0.0.1 / 10.0.0.1 / 169.254.169.254 refused; `host.docker.internal` (A-10) delivers to a capture receiver; `X-Plane-Signature` HMAC verifies; payload keeps `data.id/target_date/assignees/state.name` |
 | L4-09 | API key rate limit: 429 from call 61 |
@@ -132,7 +133,7 @@ bundle afterwards; drift + safety green.
 | L4-11 | sidebar preferences are per user (bulk PATCH, as the app calls it) |
 | L4-12 | session cookie rolls forward on each request, ~90 days (A-11) |
 
-Verified 2026-09-17: 11/11. Dev started with **no** start-override patches → L4-01, L4-02, L4-07 fail;
+Verified 2026-09-17: 12/12. Dev started with **no** start-override patches → L4-01, L4-02, L4-07 fail;
 dev without **only** Fix 4 → L4-06 fails (its first version passed there: assigning someone subscribes
 them natively in v1.4.1, so the test now uses an unsubscribed assignee). Upstream quirks found: a
 sidebar-preferences PATCH before any GET answers 200 and changes nothing (rows are created by the GET);

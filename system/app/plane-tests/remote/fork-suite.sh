@@ -12,7 +12,9 @@ source "$(dirname "$0")/common.sh"
 cmd=${1:?usage: fork-suite.sh unit|build|e2e [ref] [playwright args]}
 ref=${2:-akunito/mobile-v1.4.1}
 shift $(( $# >= 2 ? 2 : $# ))
-TYPE_ERROR_BASELINE=27
+# 2 pre-existing upstream errors (filters.tsx TS2538, base-list-root.tsx TS2345); was 27 until
+# APLANE-13 declared currentWorkspaceFavorites on IFavoriteStore. Only ever lower this.
+TYPE_ERROR_BASELINE=2
 
 repo=$HOME/.cache/plane-tests/plane-up
 export COREPACK_HOME=$HOME/.cache/plane-tests/corepack COREPACK_ENABLE_DOWNLOAD_PROMPT=0 CI=true
