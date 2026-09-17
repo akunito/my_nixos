@@ -125,6 +125,7 @@ uncaught console error**, and on `A`/`I` **no horizontal overflow** (`scrollWidt
 |---|---|---|
 | L5-01 | Login page: "Sign in with Pocket ID" + fingerprint icon; click → redirect to Pocket ID [B-32]; **prod (L7):** no password/magic-link form [A-07] | D A I |
 | L5-02 | Route crawl: home, projects, each project's issues/cycles/modules/views/pages/intake, analytics, archives, notifications, profile, settings, browse permalink | D A I |
+| L5-04 | Switch `qa` ↔ `qa-2`: sidebar, Pins, favourites and multi-sort rules belong to the active workspace only | D I |
 | L5-03 | Read-only crawl of the **real** copied `akuworkspace` on dev: every project × layout {list, kanban, calendar, spreadsheet} + every saved view; only asserts no error boundary / console error | D I |
 
 ### Sidebar & navigation [B-01…B-11, B-15, B-33]

@@ -130,8 +130,8 @@ Measured on prod 2026-09-17: database **557 MB**, of which **516 MB (93 %) is `a
 | Step | What |
 |---|---|
 | Copy | `pg_dump` prod with `--exclude-table-data` for `api_activity_logs`, `webhook_logs` and the session table (prod sessions must not be valid on dev) → restore into an emptied dev DB; `mc mirror` uploads |
-| Sanitize (same script, never skippable) | deactivate every webhook · `EMAIL_HOST` → mailpit · `ENABLE_EMAIL_PASSWORD=1` · delete `api_tokens` (prod tokens would otherwise work on dev) · bust the `/api/instances/` cache · then run L3-00, which aborts if anything real is still reachable |
-| QA seed | `qa` workspace with fictitious users/projects/states/items/views/pages; automated tests only ever touch `qa` |
+| Sanitize (same script, never skippable) | delete workspaces `komi` + `leftyspace` (not relevant for tests; pg_dump can't filter by workspace) · deactivate every webhook · `EMAIL_HOST` → mailpit · `ENABLE_EMAIL_PASSWORD=1` · delete `api_tokens` (prod tokens would otherwise work on dev) · bust the `/api/instances/` cache · then run L3-00, which aborts if anything real is still reachable |
+| QA seed | `qa` workspace with fictitious users/projects/states/items/views/pages + a small `qa-2` workspace (workspace switcher, pins and multi-sort must not leak across workspaces); automated tests only ever touch `qa*` |
 
 **Why both and not only dummy data:** tests and visual baselines need deterministic data that doesn't
 change when you work (`qa`); the real copy is for your manual testing and catches what fixtures
@@ -145,6 +145,6 @@ error boundary / console error.
 |---|---|---|
 | APLANE-17 | Check plane-bot + n8n calendar sync by hand after P8 | Out of scope for the suite; own images can change the webhook payload |
 | APLANE-18 | Prod `api_activity_logs` = 516 MB and growing | No retention; 93 % of the DB is request logs |
-| APLANE-19 | Komi's workspace data is copied to dev | Confirm it's acceptable (dev is Tailscale-only) or exclude the `komi` workspace from the copy |
-| APLANE-20 | Pocket ID / CF Access perimeter untested | Excluded by decision; `/god-mode*` + `/api/instances/admins*` coverage is still only a manual check |
+| APLANE-19 | ~~Komi's workspace data copied to dev~~ | **Decided:** `komi` + `leftyspace` deleted in sanitize; `qa-2` covers multi-workspace |
+| APLANE-20 | ~~Pocket ID / CF Access perimeter untested~~ | **Cancelled:** daily use through Pocket ID surfaces any break immediately |
 | APLANE-16 | Register gaps: A-11 session, mount name, removed "More" buttons | Update `plane-customizations.md` (part of P9, don't lose it if P9 slips) |
