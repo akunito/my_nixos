@@ -393,8 +393,9 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
      Settings → Sync → Spaces enabled.
    - **Sine and the web-panels mod** live in the profile's `chrome/` and in the
      app directory; they are never synced. Install them by hand:
-     `docs/akunito/infrastructure/zen-web-panels-windows.md` (Sine installer as
-     Administrator, then `scripts/zen-webpanels-install-windows.sh` from WSL).
+     `docs/akunito/infrastructure/zen-web-panels-windows.md` — one script from
+     WSL, `scripts/zen-webpanels-install-windows.sh`, with Zen closed and one UAC
+     prompt (Sine at the same pinned revs as NixOS, not Sine's own installer).
 9. Windows Terminal: paste `windows-terminal.settings.json` pieces into Settings →
    Open JSON file. The `NixOS` profile appears by itself once the distro exists.
 10. Keyboard layouts: Settings → Time & language → Language → English (UK) with the

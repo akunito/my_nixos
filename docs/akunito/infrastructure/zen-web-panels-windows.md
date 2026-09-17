@@ -15,15 +15,29 @@ Related: `docs/komi/zen-web-panels-install.md` (the macOS variant, for Komi).
 
 ## What actually has to be in place
 
-| Piece | Where | Who puts it there |
+| Piece | Where | Source (pinned) |
 |---|---|---|
-| Sine bootloader (`config.js`, `defaults/pref/*.js`) | `C:\Program Files\Zen Browser\` | the Sine installer, as Administrator |
-| Sine engine (`chrome/JS`, `chrome/JS/locales`, `chrome/JS/engine.json`, `chrome/utils`) | the Zen profile | the Sine installer |
-| The mod itself (`chrome/sine-mods/sine-web-panels/`) + its entry in `mods.json` | the Zen profile | `scripts/zen-webpanels-install-windows.sh`, from WSL |
+| Sine bootloader (`config.js`, `defaults/pref/config-prefs.js`) | `C:\Program Files\Zen Browser\` | `sineorg/bootloader` rev from the zen-browser input's `sources.json` |
+| Sine engine (`chrome/JS`, `chrome/JS/locales`, `chrome/JS/engine.json`, `chrome/utils`) | the Zen profile | `CosmoCreeper/Sine` rev from the same `sources.json` |
+| `sine.engine.auto-update = false` | the profile's `user.js` | same pref `zen.nix` sets on NixOS |
+| The mod (`chrome/sine-mods/sine-web-panels/`) + its `mods.json` entry | the Zen profile | the `sine-web-panels` flake input — **our fork** |
+
+One script does all of it: `scripts/zen-webpanels-install-windows.sh`, run from
+WSL. It mirrors exactly what the zen-browser flake's `sine.nix` and
+`package.nix` do on NixOS, from the same hash-checked revisions.
+
+**Why not Sine's own Windows installer:** it installs whatever is newest — at
+the time of writing a *prerelease* engine (2.3.4.1c) — while NixOS pins 2.3.3.0.
+The two sides would run different engines against the same mod.
 
 Gecko resolves its application directory from the real executable path, which
 is why the bootloader has to sit next to `zen.exe` in Program Files and cannot
-be shimmed from the profile.
+be shimmed from the profile. That directory is read-only to WSL, so the script
+copies those two files through an **elevated PowerShell** — one UAC prompt on
+the Windows desktop, and only when the files differ from what is already there.
+`general.config.sandbox_enabled = false` in `config-prefs.js` means `config.js`
+runs with full chrome privileges; that is inherent to Sine (same on NixOS), and
+is acceptable only because Program Files is admin-writable only.
 
 ## Install
 
@@ -31,27 +45,41 @@ be shimmed from the profile.
 otherwise: Sine reads `mods.json` at startup and rewrites it on shutdown, so a
 write under a live browser is silently reverted when it exits.
 
-1. **Sine** (Windows, Administrator). Grab `sine-win-x64` from
-   <https://github.com/CosmoCreeper/Sine/releases>, run it, point it at
-   `C:\Program Files\Zen Browser`. That directory is read-only to WSL, which is
-   why this step cannot be scripted from the NixOS side.
+```bash
+cd ~/.dotfiles && ./scripts/zen-webpanels-install-windows.sh
+```
 
-   Start Zen once and check **Settings → Sine Mods** exists. If it does not,
-   the installer could not write into the app directory — rerun it elevated.
+Approve the UAC prompt when it appears. The script verifies the bootloader
+landed (byte-compare) rather than trusting the PowerShell exit code, then:
 
-2. **The mod** (WSL, as `akunito`), with Zen closed again:
+- finds the Windows profile through `profiles.ini` (this Zen carries two
+  profiles and the live one is named under the install section, *not* the one
+  marked `Default=1`);
+- copies the five paths the mod declares and drops `scripts/tests`;
+- rewrites the shortcut labels for a Ctrl/Alt keyboard;
+- registers the mod in `mods.json`.
 
-   ```bash
-   cd ~/.dotfiles && ./scripts/zen-webpanels-install-windows.sh
-   ```
+Start Zen: **Settings → Sine Mods** exists, and the panel rail sits on the edge
+**opposite** the sidebar.
 
-   It finds the Windows profile through `profiles.ini` (this Zen carries two
-   profiles and the live one is named under the install section, *not* the one
-   marked `Default=1`), copies the five paths the mod declares, drops
-   `scripts/tests`, rewrites the shortcut labels for a Ctrl/Alt keyboard, and
-   registers the mod in `mods.json`.
+`--skip-sine` refreshes only the mod (no UAC).
 
-3. Start Zen. The rail appears on the edge **opposite** the sidebar.
+## Which revision of the mod
+
+The fork (`akunito/sine-web-panels`, branch `akunito/local`) is the one to run,
+not `dehyde/sine-web-panels` main — the fork is where work continues. As of
+2026-09-17 they carry the same code: upstream merged the fork's `akunito/local`
+as **dehyde/sine-web-panels#5** on 2026-09-12 at head `f7005666`, which is
+exactly the rev the flake input pins; upstream `main` is that plus only the
+merge commit. Upstream **#6** (dehyde's own surface refinements) was still open
+and is *not* included.
+
+To check again before a bump:
+
+```bash
+curl -s 'https://api.github.com/repos/dehyde/sine-web-panels/pulls?state=all' \
+  | python3 -c "import json,sys;[print(p['number'],p['merged_at'],p['head']['sha'][:8],p['title']) for p in json.load(sys.stdin)]"
+```
 
 ## The registration step is the one that breaks silently
 
@@ -68,20 +96,19 @@ python3 -c "import json,io;e=json.load(io.open(r'''$P/chrome/sine-mods/mods.json
 
 ## Updating
 
-```bash
-cd ~/.dotfiles
-nix flake update sine-web-panels        # or bump the rev in flake.nix
-./scripts/zen-webpanels-install-windows.sh
-```
+- **Mod**: bump the `sine-web-panels` input, then `./scripts/zen-webpanels-install-windows.sh --skip-sine`.
+- **Sine**: bump the `zen-browser` input (it carries the Sine revs), then run the
+  script without flags.
 
-The script replaces only its own directory and its own key in `mods.json` (of
-which it keeps a `.bak`), so nothing else in the profile is disturbed.
+The script replaces only what it owns (see its header) and keeps a `.bak` of
+`mods.json`, so nothing else in the profile is disturbed.
 
 ## Troubleshooting
 
 **The rail vanished after a Zen update.** Most likely cause here. The Windows
-updater replaces the whole install directory, taking Sine's bootloader with it.
-Redo step 1; the mod in the profile is untouched.
+updater replaces the install directory, taking Sine's bootloader with it. Re-run
+the script (it only elevates for the two bootloader files); the profile side is
+untouched.
 
 **Sine Mods is listed and enabled, but there is no rail.** The `origin` field —
 see above, and re-run the script.
