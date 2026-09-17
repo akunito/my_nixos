@@ -66,8 +66,14 @@ case "$cmd" in
     log "reseeding qa (tests start from known data)"
     bash "$here/seed-qa.sh" >/dev/null || die "seed failed"
     trap 'log "reseeding qa after E2E"; bash "$here/seed-qa.sh" >/dev/null 2>&1 || echo "WARN: reseed failed" >&2; rm -rf "$PT_TMP"' EXIT
-    browsers=$(cd "$HOME/.dotfiles" && nix build --no-link --print-out-paths --impure --expr \
-      'let f = builtins.getFlake (toString ./.); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.playwright-driver.browsers')
+    nixpkg() { (cd "$HOME/.dotfiles" && nix build --no-link --print-out-paths --impure --expr \
+      "let f = builtins.getFlake (toString ./.); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.$1" 2>/dev/null | head -1); }
+    browsers=$(nixpkg playwright-driver.browsers)
+    # Headless WebKit (iPhone project) needs an EGL display; this GPU-less server has no
+    # hardware.graphics, so give it nixpkgs' software Mesa (llvmpipe) for this run only.
+    mesa=$(nixpkg mesa)
+    glvnd=$(nixpkg libglvnd)
+    [ -n "$browsers" ] && [ -n "$mesa" ] && [ -n "$glvnd" ] || die "could not build browsers / mesa / libglvnd"
     rc=0
     (
       cd "$repo/apps/web"
@@ -75,6 +81,8 @@ case "$cmd" in
         PT_MANIFEST="$DEV_DIR/qa-manifest.json" \
         PT_QA_PASSWORD="$(envval "$creds" PT_QA_PASSWORD)" \
         PLAYWRIGHT_BROWSERS_PATH="$browsers" PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true \
+        __EGL_VENDOR_LIBRARY_DIRS="$mesa/share/glvnd/egl_vendor.d" LIBGL_DRIVERS_PATH="$mesa/lib/dri" \
+        GBM_BACKENDS_PATH="$mesa/lib/gbm" LD_LIBRARY_PATH="$glvnd/lib:$mesa/lib" LIBGL_ALWAYS_SOFTWARE=1 \
         corepack pnpm exec playwright test --reporter=line "$@"
     ) || rc=$?
     exit $rc
