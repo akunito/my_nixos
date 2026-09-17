@@ -9,7 +9,7 @@ status: draft
 
 # Plan: Plane fork regression suite
 
-**Status:** P1–P3 done 2026-09-17 (`system/app/plane-tests/`: `run.sh setup-dev|refresh|safety|drift|seed|seed-check`). Next: P4 (L3 + L7, incl. creating `qa-smoke` on prod). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
+**Status:** P1–P4 done 2026-09-17 (`system/app/plane-tests/run.sh`: `setup-dev refresh safety drift seed seed-check config smoke smoke-user`). Next: P5 (vitest + Playwright + VR in the fork). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
 
 **Goal:** every customisation of our Plane (frontend fork, backend patches, instance config) has an
 automated test, and the **whole suite runs on every deploy** through a single `plane-deploy`
@@ -108,7 +108,7 @@ Instance-config changes (god-mode/shell) also go through `plane-deploy --config-
 | **P1** (APLANE-8) ✅ | `plane-dev-refresh`: full prod → dev copy minus log tables, **always followed by sanitize** (§6); mailpit sink; L3-00 safety test | Re-runnable in < 2 min; L3-00 green right after it |
 | **P2** (APLANE-9) ✅ | Re-align dev code with prod (29-commit bundle, Fix 2b); drift test | L3-15 green |
 | **P3** (APLANE-10) ✅ | `qa` + `qa-2` workspace seed (fictitious users with passwords, idempotent reset) on dev, chained into every refresh | Seed re-runnable after every refresh |
-| **P4** (APLANE-11) | L3 + L7 against the **current** system (sed-based); create `qa-smoke` Guest on prod (moved from P3: only verifiable together with L7) | Green on dev + prod |
+| **P4** (APLANE-11) ✅ | L3 + L7 (API half) against the current system; `qa-smoke` Guest + empty QA Smoke project on prod. Nix packaging moves to P7, where `plane-deploy` consumes it | Green on dev + prod |
 | **P5** (APLANE-12) | vitest + Playwright + VR in the fork; L1, L4, L5 for the **current** features | Full suite green on dev |
 | **P6** (APLANE-13) | Feature changes: multi-sort per view; pins by UUID + deleted/archived/no-access — each with its tests | Suite green |
 | **P7** (APLANE-14) | `plane-deploy` (dev → gate → prod → smoke → rollback → Telegram); CLAUDE.md rule | One real frontend deploy through it |
@@ -147,4 +147,5 @@ error boundary / console error.
 | APLANE-18 | Prod `api_activity_logs` = 516 MB and growing | No retention; 93 % of the DB is request logs |
 | APLANE-19 | ~~Komi's workspace data copied to dev~~ | **Decided:** `komi` + `leftyspace` deleted in sanitize; `qa-2` covers multi-workspace |
 | APLANE-20 | ~~Pocket ID / CF Access perimeter untested~~ | **Cancelled:** daily use through Pocket ID surfaces any break immediately |
+| APLANE-21 | Prod `WEB_URL=http://plane.akunito.com` (not https) | Plane builds email/notification links from it |
 | APLANE-16 | Register gaps: A-11 session, mount name, removed "More" buttons | Update `plane-customizations.md` (part of P9, don't lose it if P9 slips) |

@@ -13,6 +13,8 @@ Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one ov
 | `run.sh seed` | Rebuilds the `qa` + `qa-2` workspaces on dev (L3-00 first, contract check after) | APLANE-10 |
 | `run.sh seed-check` | QA seed contract alone | APLANE-10 |
 | `run.sh config prod\|dev` | L3 config contract, read-only | APLANE-11 |
+| `run.sh smoke prod\|dev` | L7 smoke: L3 + SPA shell + authenticated read-only crawl as `qa-smoke` | APLANE-11 |
+| `run.sh smoke-user prod\|dev add\|remove` | Creates / removes `qa-smoke` (Guest) + empty secret project `QA Smoke` (QSMK) in `akuworkspace` | APLANE-11 |
 
 ## refresh
 
@@ -88,6 +90,27 @@ Verified 2026-09-17: before alignment it failed D03 (dev lacked Fix 2b) and D08
 Verified 2026-09-17: green on prod and dev; injected on dev → DB flag changed with a stale cache
 fails L3-03, after cache bust fails L3-02; a JS file with the APLANE-1 call + a service worker
 registration fails L3-10 + L3-11; all green again once reverted.
+
+## L7 smoke (`l7_smoke.sh prod|dev`) — read-only, safe on prod
+
+`qa-smoke@plane-tests.invalid` is a **Guest** of `akuworkspace` with an unusable password and no
+Pocket ID account; its only project `QA Smoke` (QSMK) is secret and has **no work items**, so it never
+generates webhook traffic (both prod webhooks listen to issue events only). Each run mints a
+15-minute session through the Django shell and revokes it at the end (also on failure).
+
+| ID | Check |
+|---|---|
+| L7-01 | L3 config contract for the target |
+| L7-02 | Plane shell served; every referenced JS/CSS asset loads **with a JS/CSS content type** — Caddy's `try_files … /index.html` answers a missing asset with index.html and 200 |
+| L7-03 | minted session authenticates as qa-smoke |
+| L7-04 | 22 GET endpoints the app loads return their contract status (200 + valid JSON; `user-favorites` 403 for a Guest) |
+| L7-05 | qa-smoke sees exactly one project, QSMK |
+| L7-06 | qa-smoke sees zero work items workspace-wide |
+| L7-07/08 | session revoked, and a request with it is rejected (401) |
+
+Verified 2026-09-17: prod + dev green; prod webhook log count unchanged by creating the user and by
+the run (328 → 328). Fault injection on dev: qa-smoke added to AINF → L7-05 + L7-06 fail; a hidden JS
+asset → L7-02 fails (first version missed it because of the SPA fallback; fixed); green after revert.
 
 ## QA seed
 
