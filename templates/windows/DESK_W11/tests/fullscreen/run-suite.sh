@@ -102,5 +102,17 @@ for mode in startmax gamelike; do
   done
 done
 
+# The Zebar pills: hidden over a fullscreen window, and still hidden when the
+# focus moves to the other monitor (clicking a window there used to bring the
+# pill back over the game); visible again once the game is gone, on BOTH monitors
+# (a cloaked window of a hidden workspace must not count as covering a monitor).
+echo "== 9. Zebar pills vs a fullscreen window and the other monitor"
+out=$($W 'C:\Users\diego\AppData\Local\Temp\perf\pill-crossmon.ps1')
+echo "$out" | sed 's/^/    /'
+# The game runs on the primary monitor, whose pill sits at x=6.
+echo "$out" | grep "^with the game focused" | grep -q "mon@6,0=hidden" && ok "hidden over the game" || ko "pill over the game" "$(echo "$out" | grep '^with')"
+echo "$out" | grep "^focus on other monitor" | grep -q "mon@6,0=hidden" && ok "stays hidden with focus elsewhere" || ko "pill after focusing the other monitor" "$(echo "$out" | grep '^focus')"
+[ "$(echo "$out" | grep "^after the game closes" | grep -o hidden | wc -l)" = "0" ] && ok "both pills back" || ko "pills after the game closes" "$(echo "$out" | grep '^after')"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]
