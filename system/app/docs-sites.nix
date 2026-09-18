@@ -161,10 +161,14 @@ lib.mkIf enabled {
   users.users = lib.mapAttrs (name: _: {
     isSystemUser = true;
     group = name;
+    # The git-crypt key file is shared between sites, so it cannot be owned by one
+    # publisher at 0400. It belongs to group `docs-crypt` (0440) and every publisher
+    # is a member — see the service doc for the one-time chgrp.
+    extraGroups = [ "docs-crypt" ];
     home = "/var/lib/${name}";
     description = "${name} site publisher";
   }) sites;
-  users.groups = lib.mapAttrs (_: _: { }) sites;
+  users.groups = (lib.mapAttrs (_: _: { }) sites) // { docs-crypt = { }; };
 
   systemd.tmpfiles.rules = lib.flatten (lib.mapAttrsToList (name: cfg: [
     "d /var/lib/${name} 0700 ${name} ${name} -"

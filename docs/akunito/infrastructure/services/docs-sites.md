@@ -60,11 +60,14 @@ Permission denied`), which is why the live link lives one level down.
 Both secrets must be readable by the `babydocs` user:
 
 ```bash
+# one deploy key per site, readable only by its publisher
 sudo chown babydocs /etc/secrets/babydocs-deploy-key
 sudo chown homedocs /etc/secrets/homedocs-deploy-key
-# the shared git-crypt key must be readable by both publishers
-sudo chgrp docs-crypt /etc/secrets/babydocs-git-crypt 2>/dev/null || true
-sudo chmod 400 /etc/secrets/*-deploy-key
+sudo chmod 400 /etc/secrets/babydocs-deploy-key /etc/secrets/homedocs-deploy-key
+
+# the git-crypt key is SHARED, so it belongs to the group every publisher is in
+sudo chgrp docs-crypt /etc/secrets/babydocs-git-crypt
+sudo chmod 440 /etc/secrets/babydocs-git-crypt
 ```
 
 The publisher refuses to publish a checkout it could not decrypt: it checks the first bytes of
