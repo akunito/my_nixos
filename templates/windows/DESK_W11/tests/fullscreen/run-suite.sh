@@ -57,7 +57,11 @@ echo "$out" | grep -q "5 present modes after return: Hardware Composed: Independ
 # cannot be raised above the taskbar at all (SetWindowPos is denied).
 settle
 echo "== 4. same, with an ELEVATED fullscreen window (what a game looks like)"
-rm -f "$P/suite-elev.out"; echo "wsfs.ps1" > "$P/suite-elev.elev"   # fullscreen state, like a game
+# wsgame.ps1, not wsfs.ps1: the window must be classified fullscreen by GlazeWM
+# ITSELF. Forcing the state with set-fullscreen gives the window a previous
+# state, and that hid the bug where the taskbar stayed over the game after
+# coming back from another workspace (Aion 2, 2026-09-18).
+rm -f "$P/suite-elev.out"; echo "wsgame.ps1" > "$P/suite-elev.elev"
 for _ in $(seq 90); do [ -f "$P/suite-elev.out" ] && break; sleep 1; done
 out=$(cat "$P/suite-elev.out")
 echo "$out" | sed 's/^/    /'

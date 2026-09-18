@@ -26,7 +26,8 @@ if (-not $OtherWs -or $OtherWs -eq $HomeWs) {
 $primary = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
 & $glaze command focus --workspace ($primary.children | ? isDisplayed).name | Out-Null
 Start-Sleep 2
-$p = Start-Process "$env:TEMP\perf\fliptest.exe" -ArgumentList "30 $Monitor" -PassThru
+$args = if ($env:WSTEST_GAMELIKE -eq "1") { "30 $Monitor gamelike" } else { "30 $Monitor" }
+$p = Start-Process "$env:TEMP\perf\fliptest.exe" -ArgumentList $args -PassThru
 Start-Sleep 3
 $h = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero) { if ([W]::Pid($x) -eq $p.Id -and [W]::Cls($x) -eq "FlipTestWnd") { $h = $x; break }; $x = [W]::GetWindow($x, 2) }
