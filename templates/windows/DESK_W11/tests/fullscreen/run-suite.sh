@@ -97,8 +97,13 @@ for mode in startmax gamelike; do
       *"state=fullscreen"*) ok "$mode/$step: fullscreen again";;
       *) ko "$mode/$step state" "$line";;
     esac
-    pct=$(echo "$line" | grep -o '[0-9]*% direct' | tr -d '%% direct')
-    if [ -n "$pct" ] && [ "$pct" -ge 90 ]; then ok "$mode/$step: $pct% direct to screen"; else ko "$mode/$step present mode" "$line"; fi
+    # Only a window that covers the whole monitor can reach the screen directly.
+    # `startmax` stays maximized (the taskbar strip is left uncovered), so the
+    # present mode is only asserted for the borderless `gamelike` window.
+    if [ "$mode" = gamelike ]; then
+      pct=$(echo "$line" | grep -o '[0-9]*% direct' | tr -d '%% direct')
+      if [ -n "$pct" ] && [ "$pct" -ge 90 ]; then ok "$mode/$step: $pct% direct to screen"; else ko "$mode/$step present mode" "$line"; fi
+    fi
   done
 done
 

@@ -1,5 +1,5 @@
 # Fullscreen window vs GlazeWM workspace switch: is it hidden, does the taskbar stay above it?
-param([string]$OtherWs = "13", [int]$Monitor = 0)
+param([string]$OtherWs = "", [int]$Monitor = 0)
 . "$env:TEMP\perf\win32.ps1"
 $glaze = "C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"
 function Snap($tag, $h) {
@@ -12,7 +12,15 @@ function Snap($tag, $h) {
   $ws = (& $glaze query workspaces | ConvertFrom-Json).data.workspaces | ? isDisplayed | % name
   "{0,-22} visible={1} cloaked={2} iconic={3} fg={4} displayedWS={5} above=[{6}]" -f $tag, [W]::IsWindowVisible($h), [W]::Cloak($h), [W]::IsIconic($h), ([W]::Cls($fg)), ($ws -join ','), ($above -join ',')
 }
-$HomeWs = ((& $glaze query monitors | ConvertFrom-Json).data.monitors[$Monitor].children | ? isDisplayed).name
+$children = (& $glaze query monitors | ConvertFrom-Json).data.monitors[$Monitor].children
+$HomeWs = ($children | ? isDisplayed).name
+if (-not $OtherWs -or $OtherWs -eq $HomeWs) {
+  # Any other workspace of this monitor: switching to the one we are on is a no-op
+  # (and with toggle_workspace_on_refocus it bounces back).
+  $OtherWs = @($children | ? { $_.name -ne $HomeWs } | % name)[0]
+  if (-not $OtherWs) { $OtherWs = if ($HomeWs -eq "19") { "18" } else { [string]([int]$HomeWs + 1) } }
+}
+"switching to $OtherWs"
 "home workspace $HomeWs"
 $p = Start-Process "$env:TEMP\perf\fliptest.exe" -ArgumentList "30 $Monitor" -PassThru
 Start-Sleep 3

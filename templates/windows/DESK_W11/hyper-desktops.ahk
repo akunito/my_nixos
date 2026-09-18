@@ -115,9 +115,12 @@ ZOrderLine(focusHwnd) {
 ; the whole monitor does, since the pills sit over the taskbar strip that a
 ; maximised window never reaches.
 PillSync(*) {
-    static last := 0
-    if (A_TickCount - last < 200)          ; location changes arrive in bursts
+    static last := 0, recheck := 0
+    if (A_TickCount - last < 200) {        ; location changes arrive in bursts
+        if (!recheck)                      ; but the last one still has to be seen
+            recheck := 1, SetTimer(() => (recheck := 0, PillSync()), -600)
         return
+    }
     last := A_TickCount
     DetectHiddenWindows true
     for pill in WinGetList("ahk_class Tauri Window ahk_exe zebar.exe") {
