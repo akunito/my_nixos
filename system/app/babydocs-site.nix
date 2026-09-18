@@ -44,8 +44,13 @@ let
 
   publisher = pkgs.writeShellApplication {
     name = "babydocs-publish";
+    # bash is not decoration: npm runs a package's install scripts through
+    # `spawn sh`, and writeShellApplication gives the unit ONLY these paths — no
+    # /run/current-system/sw/bin. Without it esbuild's postinstall dies with
+    # `spawn sh ENOENT` and npm ci fails, while the same command works by hand
+    # because an interactive shell has sh on its PATH.
     runtimeInputs = with pkgs; [
-      git git-crypt openssh nodejs_22 python3 rsync coreutils findutils gnugrep util-linux
+      git git-crypt openssh nodejs_22 python3 rsync bash coreutils findutils gnugrep util-linux
     ];
     bashOptions = [ "nounset" "pipefail" ];
     text = ''
