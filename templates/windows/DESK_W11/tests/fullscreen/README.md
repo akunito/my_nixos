@@ -85,6 +85,14 @@ fullscreen resolution and left its title bar and the taskbar on screen. Fork com
 "keep a maximized window maximized when it's first managed"; suite case 7
 (`fliptest.exe ... startmax`). Suite now 13/13.
 
+Lifecycle (2026-09-18, suite case 8, both window shapes): minimize/restore,
+un-maximize (what Alt+drag does) and maximize again, and another window opening
+over the game — after each step the window is back in GlazeWM's fullscreen state
+and ≥90 % of frames reach the screen directly. A plain window on top (charmap,
+forced above the game) does NOT cost the direct path: the GPU puts it on its own
+overlay plane. What did cost it was the Zebar pill, which is transparent and
+repaints; that one is hidden by `PillSync`.
+
 Known limitation: an elevated window in the FLOATING state can't be raised above the
 taskbar at all (`SetWindowPos`/z-order denied), so it stays composed. Games run
 fullscreen, which is the case the suite covers.

@@ -82,5 +82,25 @@ echo "$out" | sed 's/^/    /'
 echo "$out" | grep -q "isZoomed=True" && ok "still maximized" || ko "maximized" "$(echo "$out" | head -1)"
 echo "$out" | grep -qE "state=(fullscreen|tiling)" && ok "state kept ($(echo "$out" | grep -o 'state=[a-z]*'))" || ko "state" "$(echo "$out" | head -1)"
 
+# Life of a game window: minimize/restore, Alt+drag (un-maximize) and maximize
+# again, and another window opening over it. After each step it must be back in
+# the fullscreen state and reaching the screen directly.
+for mode in startmax gamelike; do
+  echo "== 8-$mode. minimize / windowed / window on top, then back to normal"
+  rm -f "$P/cycle-$mode.out"; echo "win-cycle.ps1 $mode" > "$P/cycle-$mode.elev"
+  for _ in $(seq 150); do [ -f "$P/cycle-$mode.out" ] && break; sleep 2; done
+  out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/cycle-$mode.out")   # the daemon writes a BOM
+  echo "$out" | sed 's/^/    /'
+  for step in "1 start" "2 minimize+restore" "3 windowed+max" "5 on top closed"; do
+    line=$(echo "$out" | grep "^$step")
+    case "$line" in
+      *"state=fullscreen"*) ok "$mode/$step: fullscreen again";;
+      *) ko "$mode/$step state" "$line";;
+    esac
+    pct=$(echo "$line" | grep -o '[0-9]*% direct' | tr -d '%% direct')
+    if [ -n "$pct" ] && [ "$pct" -ge 90 ]; then ok "$mode/$step: $pct% direct to screen"; else ko "$mode/$step present mode" "$line"; fi
+  done
+done
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]
