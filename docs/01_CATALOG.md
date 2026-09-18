@@ -55,7 +55,6 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/alertmanager.nix**: Alertmanager — the piece that was missing between Prometheus and Telegram *Enabled when:* `168h`
 - **system/app/appimage.nix**: System module: appimage.nix
 - **system/app/archived/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
-- **system/app/babydocs-site.nix**: babydocs site — baby.local.akunito.com, published from git without a rebuild.
 - **system/app/claude-sync-hub.nix**: claude-sync hub — the always-on side of Claude Code state sync (VPS_PROD). *Enabled when:* `k: "restrict,command=\"${shell}/bin/claude-sync-shell\" ${k}"`
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
 - **system/app/database-backup.nix**: Database Backup Module *Enabled when:*
@@ -77,6 +76,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != ""`
 - **system/app/docker-rootless-maintenance.nix**: Rootless Docker daemon maintenance — shared by every profile that sets *Enabled when:* `databases, Redis, Postfix`
 - **system/app/docker.nix**: Track docker from pkgs-unstable so we don't have to bump pins each time *Enabled when:* `userSettings.dockerEnable == true`
+- **system/app/docs-sites.nix**: Private-repo documentation sites, published from git without a system rebuild. *Enabled when:* `name: _: { isSystemUser = true; group = name; home = "/var/lib/${name}"; description = "${name} site publisher"; }`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/freesm-launcher.nix**: FreeSM Launcher (Freesm Launcher)
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
@@ -110,12 +110,14 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/nas-services.nix**: NAS-specific services module *Enabled when:*
    - `not NixOS-native`
    - `systemSettings.nfsServerEnable or false`
+   - `backupAclPaths != [ ]`
    - `p: "'${p}'"`
    - `seq 1 30`
    - `!isRootless`
 - **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
 - **system/app/nix-binary-cache-client.nix**: Consume a local Nix binary cache (see system/app/nix-binary-cache.nix). *Enabled when:* `not replacing`
 - **system/app/nix-binary-cache.nix**: Local Nix binary cache (harmonia) — serve DESK's /nix/store to the other machines. *Enabled when:* `cat ${pubKey}`
+- **system/app/nix-ld.nix**: nix-ld — run pre-built, dynamically linked Linux binaries on NixOS. *Enabled when:* `systemSettings.nixLdEnable or false`
 - **system/app/ollama-server.nix**: Local LLM inference server — Ollama, ROCm backend. *Enabled when:*
    - `cfg.ollamaServerEvictVram or false`
    - `not Requires=`
@@ -151,7 +153,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/redis-server.nix**: Redis Server Module *Enabled when:*
    - `allows multiple instances if needed`
    - `systemSettings.prometheusRedisExporterEnable or false`
-- **system/app/restic-backup-nas.nix**: NAS Offsite Backup — VPS pulls Docker data + configs from NAS *Enabled when:* `systemSettings.nasResticBackupEnable or false`
+- **system/app/restic-backup-nas.nix**: NAS Offsite Backup — VPS pulls Docker data + configs from NAS *Enabled when:*
+   - `systemSettings.nasResticBackupEnable or false`
+   - `akucraftEnabled && (systemSettings.resticAkucraftPassword or "") != ""`
 - **system/app/restic-backup-vps.nix**: VPS Restic Backup to TrueNAS via SFTP *Enabled when:*
    - `systemSettings.vpsResticBackupEnable or false`
    - `(systemSettings.resticDatabasesPassword or "") != ""`
@@ -380,9 +384,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `enable/disable, preferences`
    - `${lib.getExe pkgs.jq} --arg id "${modId}" ' def to_local: if (. // "" | test("^https?://")) then (split("/") | last) else . end; .id = $id | .enabled = true | .origin = "store" | ."no-updates" = true | .style = ( if (.style | type) == "string" then { "chrome": (.style | to_local), "content": "" } elif (.style | type) == "object" then { "chrome": ((.style.chrome // "") | to_local), "content": ((.style.content // "") | to_local) } else { "chrome": "", "content": "" } end ) | if .preferences then .preferences = (.preferences | to_local) else . end | if .readme then .readme = (.readme | to_local) else . end ' "${webPanelsMod}/theme.json"`
 - **user/app/calendar/calendar.nix**: Typelibs needed by gi.require_version() inside eds-refresh.py. *Enabled when:* `sign in`
-- **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
+- **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless) *Enabled when:*
+   - `lib.mapAttrsToList (k: v: "${k}=${v}") mcpSessionVars`
+   - `lib.mapAttrsToList (k: v: "export ${k}=\"${v}\"") mcpSessionVars`
 - **user/app/claude-code/claude-sync-pkg.nix**: claude-sync package builder — shared by claude-code.nix (hooks need the
 - **user/app/claude-code/claude-sync.nix**: claude-sync — Home Manager side: package, `claude` wrapper, 15-minute timer. *Enabled when:* `Claude killed, hand-edited skill, # machine rebooted mid-session`
+- **user/app/claude-code/projects-workspace.nix**: ~/Projects as a single Claude Code workspace for several projects.
 - **user/app/colima/colima.nix**: Colima settings - can be overridden in profile config *Enabled when:* `systemSettings.profile == "darwin"`
 - **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:* `the attribute NAME`
 - **user/app/development/development-komi.nix**: Development tools and IDEs
@@ -572,9 +579,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/akucraft-audit-2026-08-16.md**: Audit of the AkuCraft servers - mod conflicts, configuration, security posture and resource risk
 - **docs/akunito/infrastructure/services/akucraft-manifest.md**: Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server
 - **docs/akunito/infrastructure/services/akucraft-staging-client-setup.md**: How to set up a Minecraft client for the AkuCraft STAGING test server, for someone helping test map sharing
-- **docs/akunito/infrastructure/services/babydocs-site.md**: baby.local.akunito.com — the private babydocs repo built and published on VPS_PROD by a timer, so neither parent needs an account on the host to publish a page
 - **docs/akunito/infrastructure/services/claude-sync.md**: Claude Code state (memory, skills, session transcripts) synced across DESK, LAPTOP_X13 and DESK_W11 through a hub on VPS_PROD — design, edge cases, bootstrap, operation
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
+- **docs/akunito/infrastructure/services/docs-sites.md**: baby./home.local.akunito.com — the private babydocs and homedocs repos built and published on VPS_PROD by a timer, so nobody needs an account on the host to publish a page
 - **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS
 - **docs/akunito/infrastructure/services/infra-alerts-telegram.md**: Group **Infra Alerts** (forum supergroup, bot `@infra_alerts_aku_bot`). Topics:
 - **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: consolidated monitoring on VPS

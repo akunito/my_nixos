@@ -1,4 +1,8 @@
-# babydocs site — baby.local.akunito.com, published from git without a rebuild.
+# Private-repo documentation sites, published from git without a system rebuild.
+#
+# One instance per site, declared in `docsSites`. Today: babydocs (Irenka, IRIN)
+# and homedocs (the house, HOME) — same procedure, same tooling, separate repos
+# and separate boundaries.
 #
 # A timer pulls github.com/akunito/babydocs (private) with a read-only deploy
 # key, unlocks git-crypt, generates the Starlight content tree from the markdown
@@ -24,26 +28,42 @@
 #   /etc/secrets/babydocs-deploy-key   read-only GitHub deploy key for the repo
 #   /etc/secrets/babydocs-git-crypt    git-crypt key (private/ and journal/)
 #
-# Flags: babydocsSiteEnable, babydocsSiteRepo, babydocsSiteInterval,
-#        babydocsSiteRoot, babydocsSiteDeployKey, babydocsSiteCryptKey.
-# Serve it with nginxLocalServices.baby = { rootPath = "/var/www/baby"; };
+# Flags: docsSites (attrset), e.g.
+#
+#   docsSites = {
+#     babydocs = { repo = "git@github.com:akunito/babydocs.git"; webroot = "/var/www/baby"; };
+#     homedocs = { repo = "git@github.com:akunito/homedocs.git"; webroot = "/var/www/home"; };
+#   };
+#
+# Per site: repo, webroot, interval (default 5min), deployKey, cryptKey, encryptedDirs
+# (the directories whose plaintext is asserted before publishing). The unit is
+# `<name>-publish`, the user `<name>`, the state dir /var/lib/<name>.
+# Serve each with nginxLocalServices.<x> = { rootPath = "<webroot>/current"; };
+#
+# The same git-crypt key file can serve several repositories: `git-crypt unlock`
+# installs whatever key you hand it (verified 2026-09-18), so both sites point at
+# /etc/secrets/babydocs-git-crypt. A deploy key, by contrast, must be unique per
+# repository on GitHub — each site needs its own.
 
 { config, lib, pkgs, systemSettings, ... }:
 
 let
-  enabled = systemSettings.babydocsSiteEnable or false;
-  repoUrl = systemSettings.babydocsSiteRepo or "git@github.com:akunito/babydocs.git";
-  interval = systemSettings.babydocsSiteInterval or "5min";
-  webroot = systemSettings.babydocsSiteRoot or "/var/www/baby";
-  liveLink = "${webroot}/current";
-  releases = "${webroot}/releases";
-  deployKey = systemSettings.babydocsSiteDeployKey or "/etc/secrets/babydocs-deploy-key";
-  cryptKey = systemSettings.babydocsSiteCryptKey or "/etc/secrets/babydocs-git-crypt";
+  sites = systemSettings.docsSites or { };
+  enabled = sites != { };
 
-  state = "/var/lib/babydocs";
-
-  publisher = pkgs.writeShellApplication {
-    name = "babydocs-publish";
+  mkPublisher = name: cfg:
+  let
+    repoUrl = cfg.repo;
+    webroot = cfg.webroot;
+    liveLink = "${webroot}/current";
+    releases = "${webroot}/releases";
+    deployKey = cfg.deployKey or "/etc/secrets/${name}-deploy-key";
+    cryptKey = cfg.cryptKey or "/etc/secrets/babydocs-git-crypt";
+    encryptedDirs = cfg.encryptedDirs or [ "private" "journal" ];
+    state = "/var/lib/${name}";
+  in
+  pkgs.writeShellApplication {
+    name = "${name}-publish";
     # bash is not decoration: npm runs a package's install scripts through
     # `spawn sh`, and writeShellApplication gives the unit ONLY these paths — no
     # /run/current-system/sw/bin. Without it esbuild's postinstall dies with
@@ -63,11 +83,11 @@ let
       export GIT_SSH_COMMAND="ssh -i ${deployKey} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$STATE/known_hosts"
 
       fail() {
-        logger -t babydocs-publish "FAILED: $*"
+        logger -t ${name}-publish "FAILED: $*"
         # announce a new failure once, not on every tick
         if [ "$(cat "$STATE/last-failure" 2>/dev/null || true)" != "$1" ]; then
           printf '%s' "$1" >"$STATE/last-failure"
-          [ -x "$NOTIFY" ] && "$NOTIFY" send "👶 <b>babydocs</b>: publish failed — $1
+          [ -x "$NOTIFY" ] && "$NOTIFY" send "📄 <b>${name}</b>: publish failed — $1
 The site still serves the last good build." || true
         fi
         exit 1
@@ -78,8 +98,8 @@ The site still serves the last good build." || true
 
       if [ ! -d "$REPO/.git" ]; then
         git clone --quiet "${repoUrl}" "$REPO" || fail "clone"
-        git -C "$REPO" config user.email "babydocs@vps-prod"
-        git -C "$REPO" config user.name "babydocs publisher"
+        git -C "$REPO" config user.email "${name}@vps-prod"
+        git -C "$REPO" config user.name "${name} publisher"
         (cd "$REPO" && git-crypt unlock "${cryptKey}") || fail "git-crypt unlock"
       fi
 
@@ -98,9 +118,9 @@ The site still serves the last good build." || true
       # not whether this checkout can read it. Encrypted blobs start \0GITCRYPT.
       while IFS= read -r f; do
         if head -c 9 "$f" 2>/dev/null | grep -qa GITCRYPT; then
-          fail "git-crypt still locked — private/ and journal/ would publish as ciphertext"
+          fail "git-crypt still locked — ${lib.concatStringsSep "/, " encryptedDirs}/ would publish as ciphertext"
         fi
-      done < <(find private journal -type f ! -name '.gitkeep' 2>/dev/null)
+      done < <(find ${lib.concatStringsSep " " encryptedDirs} -type f ! -name '.gitkeep' 2>/dev/null)
 
       python3 tools/build-site.py || fail "content generation"
 
@@ -127,55 +147,57 @@ The site still serves the last good build." || true
       mv -Tf "$LIVE.new" "$LIVE" || fail "symlink swap"
       printf '%s' "$rev" >"$STATE/published.rev"
       rm -f "$STATE/last-failure"
-      logger -t babydocs-publish "published $rev"
+      logger -t ${name}-publish "published $rev"
 
       # keep the three most recent releases
       find "$RELEASES" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' \
         | sort -rn | tail -n +4 | cut -d' ' -f2- | while read -r old; do chmod -R u+w "$old"; rm -rf "$old"; done
     '';
   };
+
+  publishers = lib.mapAttrs mkPublisher sites;
 in
 lib.mkIf enabled {
-  users.users.babydocs = {
+  users.users = lib.mapAttrs (name: _: {
     isSystemUser = true;
-    group = "babydocs";
-    home = state;
-    description = "babydocs site publisher";
-  };
-  users.groups.babydocs = { };
+    group = name;
+    home = "/var/lib/${name}";
+    description = "${name} site publisher";
+  }) sites;
+  users.groups = lib.mapAttrs (_: _: { }) sites;
 
-  systemd.tmpfiles.rules = [
-    "d ${state} 0700 babydocs babydocs -"
+  systemd.tmpfiles.rules = lib.flatten (lib.mapAttrsToList (name: cfg: [
+    "d /var/lib/${name} 0700 ${name} ${name} -"
     # group nginx so the web server can traverse and read; owned by the publisher
     # so it can replace the `current` symlink without touching root-owned /var/www
-    "d ${webroot} 0750 babydocs nginx -"
-    "d ${releases} 0750 babydocs nginx -"
-  ];
+    "d ${cfg.webroot} 0750 ${name} nginx -"
+    "d ${cfg.webroot}/releases 0750 ${name} nginx -"
+  ]) sites);
 
-  systemd.services.babydocs-publish = {
-    description = "babydocs: pull, build and publish baby.local";
+  systemd.services = lib.mapAttrs' (name: cfg: lib.nameValuePair "${name}-publish" {
+    description = "${name}: pull, build and publish ${cfg.webroot}";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     serviceConfig = {
       Type = "oneshot";
-      User = "babydocs";
-      Group = "babydocs";
+      User = name;
+      Group = name;
       SupplementaryGroups = [ "nginx" ];
-      ExecStart = "${publisher}/bin/babydocs-publish";
-      # the checkout holds clinical material: no other service needs to see it
+      ExecStart = "${publishers.${name}}/bin/${name}-publish";
+      # the checkout holds private material: no other service needs to see it
       PrivateTmp = true;
       ProtectHome = true;
       NoNewPrivileges = true;
       UMask = "0027";
     };
-  };
+  }) sites;
 
-  systemd.timers.babydocs-publish = {
+  systemd.timers = lib.mapAttrs' (name: cfg: lib.nameValuePair "${name}-publish" {
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "3min";
-      OnUnitActiveSec = interval;
+      OnUnitActiveSec = cfg.interval or "5min";
       RandomizedDelaySec = "30s";
     };
-  };
+  }) sites;
 }

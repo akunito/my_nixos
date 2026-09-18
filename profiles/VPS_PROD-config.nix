@@ -478,6 +478,7 @@ in
       # and swaps /var/www/baby every 5 minutes. Tailscale only, never public —
       # it carries clinical material.
       baby       = { rootPath = "/var/www/baby/current"; };
+      home       = { rootPath = "/var/www/home/current"; };
       openclaw   = { port = 18789; };
       finance    = { port = 8190; maxBodySize = "50M"; };
       # AkuCraft BlueMap. It used to sit at "/" on the players' own port 8100,
@@ -523,10 +524,23 @@ in
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMGggbIOnf1GmOsXM67PZRYLP4DrItISJyz0c1YQI5hi claude-sync@LAPTOP_X13"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA4lbPj8VBtb0rljjdGrl/vJZfFsKhMz4VX+X2Ul2PHz claude-sync@DESK_W11"
     ];
-    # babydocs: baby.local.akunito.com, rebuilt from git every 5 minutes so that
-    # neither parent needs an account on this host to publish a page. Needs two
-    # files in /etc/secrets (deploy key, git-crypt key) — see the service doc.
-    babydocsSiteEnable = true;
+    # babydocs + homedocs: baby./home.local.akunito.com, rebuilt from git every 5
+    # minutes so that neither of us needs an account on this host to publish a page.
+    # Each repo needs its OWN read-only deploy key on GitHub (they must be globally
+    # unique); the git-crypt key file is shared. See the service doc.
+    docsSites = {
+      babydocs = {
+        repo = "git@github.com:akunito/babydocs.git";
+        webroot = "/var/www/baby";
+        encryptedDirs = [ "private" "journal" ];
+      };
+      homedocs = {
+        repo = "git@github.com:akunito/homedocs.git";
+        webroot = "/var/www/home";
+        encryptedDirs = [ "private" ];
+        cryptKey = "/etc/secrets/babydocs-git-crypt"; # same key, verified to unlock both
+      };
+    };
     infraBotEnable = true; # the Infra Alerts bot lives here (relay for secrets-free nodes + /status commands)
     infraRestartEnable = true; # /restart docker-rootless here
     infraRestartSshTargets = { nas = "akunito@100.64.0.1"; }; # /restart on the NAS over BatchMode ssh (VPS key is in its authorizedKeys)

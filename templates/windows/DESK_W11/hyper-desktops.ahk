@@ -33,6 +33,7 @@
 ; into the delta (flicker/jumps). Everything below assumes screen coords.
 CoordMode "Mouse", "Screen"
 #SingleInstance Force
+#Include lib-window-state.ahk
 SetTitleMatchMode 2
 
 dll := A_ScriptDir "\VirtualDesktopAccessor.dll"
@@ -369,16 +370,7 @@ Toggle(exe, cmd) {
         WinActivate "ahk_id " hwnd      ; not managed (ignored windows, popups)
 }
 
-Cloaked(hwnd) {
-    cloaked := 0
-    DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", hwnd, "UInt", 14, "Int*", &cloaked, "UInt", 4)
-    return cloaked
-}
-; Visible to the user right now: not hidden, not cloaked by the app or by
-; GlazeWM (another workspace), not minimised.
-IsOnScreen(hwnd) =>
-    DllCall("IsWindowVisible", "Ptr", hwnd) && !Cloaked(hwnd)
-        && WinGetMinMax("ahk_id " hwnd) != -1
+
 
 ; GlazeWM's container id for a window handle, or "" if it doesn't manage it.
 GlazeIdOf(hwnd) {

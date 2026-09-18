@@ -612,13 +612,11 @@
     claudeSyncHubEnable = false; # Hub side (VPS_PROD): restricted forced-command shell, bare repo, retention + Telegram alerts
     claudeSyncHubKeys = [ ]; # Client public keys (one per machine, `claude-sync pubkey`), pinned to claude-sync-shell
 
-    # === babydocs site (VPS_PROD): baby.local.akunito.com, published from git ===
-    babydocsSiteEnable = false; # Timer: pull github.com/akunito/babydocs, build Starlight, swap the release symlink
-    babydocsSiteRepo = "git@github.com:akunito/babydocs.git"; # Private repo, read with a deploy key
-    babydocsSiteInterval = "5min"; # How long after a push the site can lag
-    babydocsSiteRoot = "/var/www/baby"; # Web root the publisher owns: releases/<rev> + the `current` symlink nginx serves (rootPath = <this>/current)
-    babydocsSiteDeployKey = "/etc/secrets/babydocs-deploy-key"; # Read-only GitHub deploy key
-    babydocsSiteCryptKey = "/etc/secrets/babydocs-git-crypt"; # git-crypt key: private/ and journal/ would otherwise publish as ciphertext
+    # === Documentation sites from private repos (VPS_PROD), published from git ===
+    # One entry per site: { repo; webroot; interval?; deployKey?; cryptKey?; encryptedDirs?; }
+    # A timer pulls, unlocks git-crypt, builds the Starlight site and swaps
+    # <webroot>/current. See system/app/docs-sites.nix.
+    docsSites = { };
 
     # === WSL (profile "wsl": NixOS-WSL inside Windows) ===
     wslWindowsUser = ""; # Windows account name; /mnt/c/Users/<this>/Nextcloud is bind-mounted at ~/Nextcloud so project paths match DESK
