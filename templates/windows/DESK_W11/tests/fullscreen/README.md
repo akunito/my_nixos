@@ -31,6 +31,26 @@ PresentMon modes: `Hardware: Independent Flip` / `Hardware Composed: Independent
 (MPO) = straight to scanout, good. `Composed: Flip` = DWM composes the game with
 something else = latency, lost frames, no VRR.
 
+## Focus follows the mouse (2026-09-18)
+
+Native Windows tracking (`focus-follows-mouse.ps1`, no raise on hover), NOT
+GlazeWM's `focus_follows_cursor` — measured here, GlazeWM's does not focus the
+window under the pointer and only changes on a restart, not a config reload.
+Three fork changes made it usable:
+
+- a cloaked window is marked click-through while hidden: it is not drawn but
+  still answered hit tests, so hovering it activated a window of another
+  workspace and the WM jumped back to the workspace you had just left;
+- floating windows are never raised on focus (Linux behaviour: hovering focuses,
+  only a click raises — Windows raises on click by itself);
+- the fullscreen mark is re-applied whenever a fullscreen window is shown.
+
+Test-side consequences: every case parks the pointer before measuring (a window
+without the pointer over it has no focus and is composed), the pointer is walked
+with injected relative moves AND finished with an exact `SetCursorPos` (the
+acceleration bends injected moves), and `fliptest.exe` is built for the windows
+subsystem — its console window used to cover the hover point.
+
 ## Repair tools (after a resume / monitor re-detection)
 
 `win-audit.ps1` prints monitors, GlazeWM's view and the real Win32 rect of every
