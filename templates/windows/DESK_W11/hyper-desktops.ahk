@@ -224,6 +224,8 @@ WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
 }
 StateName(mm) => mm = 1 ? "maximised" : mm = -1 ? "minimised" : "normal"
 winEvPtr := CallbackCreate(WinEvCb, , 7)
+PillSync()                                  ; get the pills right on start/reload
+
 winEvHooks := [DllCall("SetWinEventHook", "UInt", 0x3, "UInt", 0x3, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
              , DllCall("SetWinEventHook", "UInt", 0x800B, "UInt", 0x800B, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
              , DllCall("SetWinEventHook", "UInt", 0x8017, "UInt", 0x8018, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")]
