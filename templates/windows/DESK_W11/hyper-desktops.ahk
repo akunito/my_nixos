@@ -127,7 +127,8 @@ PillSync(*) {
                 continue
             mon := MonitorAt(px + pw // 2, py + ph // 2)
             covered := MonitorIsCovered(mon, pill)
-            shown := DllCall("IsWindowVisible", "Ptr", pill)
+            DetectHiddenWindows true          ; MonitorIsCovered turns it off, and
+            shown := DllCall("IsWindowVisible", "Ptr", pill)   ; WinShow needs it
             if (covered && shown)
                 WinHide("ahk_id " pill), Dbg("pill hidden (monitor " mon.i " covered)")
             else if (!covered && !shown)
