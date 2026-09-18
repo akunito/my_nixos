@@ -54,6 +54,13 @@ let
     schedule,       # OnCalendar value
     rsyncScript,    # Shell commands for rsync phase
     description,    # Human-readable description
+    # Retention. The default is the historical configs/data policy: these two
+    # mirror the NAS's current state, so history beyond a couple of days buys
+    # little. A job whose value IS its history (worlds, where corruption can go
+    # unnoticed for days) passes its own.
+    keepDaily ? 2,
+    keepWeekly ? 1,
+    keepMonthly ? 1,
   }: let
     repoDir = "${localDir}/${name}.restic";
     stagingDir = "${localDir}/staging-${name}";
@@ -185,9 +192,9 @@ METRICS
       $RESTIC -r "$REPO" backup "$STAGING" --verbose 2>&1
 
       # --- Step 4: Prune old snapshots ---
-      log "Pruning snapshots (keep-daily 2, keep-weekly 1, keep-monthly 1)..."
+      log "Pruning snapshots (keep-daily ${toString keepDaily}, keep-weekly ${toString keepWeekly}, keep-monthly ${toString keepMonthly})..."
       $RESTIC -r "$REPO" forget \
-        --keep-daily 2 --keep-weekly 1 --keep-monthly 1 \
+        --keep-daily ${toString keepDaily} --keep-weekly ${toString keepWeekly} --keep-monthly ${toString keepMonthly} \
         --prune 2>&1
 
       # --- Step 5: Write success metrics ---
@@ -346,6 +353,13 @@ METRICS
     passwordFile = "/etc/secrets/restic-akucraft";
     schedule = "*-*-* 18:30:00";  # NAS awake 16:00-23:00; runs after the data job
     description = "AkuCraft Minecraft worlds (NAS gameservers)";
+    # Longer than the configs/data default on purpose: a griefed or corrupted
+    # world is usually noticed days later, and "yesterday and the day before" is
+    # no use then. Cheap, because restic dedups and a world changes slowly — the
+    # first snapshot stored 2.07 GiB of 4.72 GiB and later ones are deltas.
+    keepDaily = 7;
+    keepWeekly = 4;
+    keepMonthly = 6;
     rsyncScript = ''
       RSYNC_OPTS="-az --delete --timeout=120"
       mkdir -p "$STAGING/gameservers"
