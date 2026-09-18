@@ -209,5 +209,16 @@ echo "$out" | grep "^3 pointer back" | grep -q "focused=True" && [ "${pct3:-0}" 
 pct4=$(echo "$out" | grep "^4 after workspace trip" | grep -o '[0-9]*% direct' | tr -d '%% direct')
 echo "$out" | grep "^4 after workspace trip" | grep -q "focused=True cloaked=0" && [ "${pct4:-0}" -ge 90 ] && ok "survives a workspace round trip" || ko "workspace trip with the pointer" "$(echo "$out" | grep '^4 ')"
 
+# Linux-style focus: hovering focuses without lifting the window, only a click
+# raises it, and hovering keeps working after a workspace comes back.
+settle
+echo "== 14. hover focuses, click raises"
+out=$($W 'C:\Users\diego\AppData\Local\Temp\perf\hover-noraise.ps1' | tr -d '\r')
+echo "$out" | sed 's/^/    /'
+echo "$out" | grep "^hover A " | grep -q "A-focused=True" && ok "hovering focuses" || ko "hover focus" "$(echo "$out" | grep '^hover A ')"
+echo "$out" | grep "^hover A " | grep -q "B-still-above-A=True" && ok "hovering does NOT raise" || ko "hover raised the window" "$(echo "$out" | grep '^hover A ')"
+echo "$out" | grep "^click on A" | grep -q "A-now-above-B=True" && ok "clicking raises" || ko "click did not raise" "$(echo "$out" | grep '^click')"
+echo "$out" | grep "^after unhide" | grep -q "B-focused=True" && ok "hover still works after a workspace comes back" || ko "hover after unhide" "$(echo "$out" | grep '^after unhide')"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

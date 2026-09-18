@@ -26,15 +26,50 @@ public static class W {
 
 # Focus follows the mouse on this desktop, so every test has to say where the
 # pointer is: a pointer resting over another monitor takes the focus away from
-# the window under test and Windows then composes it.
+# the window under test and Windows then composes it. GlazeWM only reacts to
+# real movement, so the pointer is walked with injected relative moves instead
+# of being teleported with SetCursorPos.
 [void][W]::SetProcessDpiAwarenessContext([IntPtr](-4))
 Add-Type -AssemblyName System.Windows.Forms
-function ParkCursorOn($rect) { [void][W]::SetCursorPos([int]($rect.L + ($rect.Rt - $rect.L) / 2), [int]($rect.T + ($rect.B - $rect.T) / 2)) }
+Add-Type @"
+using System; using System.Runtime.InteropServices; using System.Drawing;
+public static class Mouse {
+  [DllImport("user32.dll")] public static extern void mouse_event(uint f, int dx, int dy, uint d, IntPtr e);
+  [DllImport("user32.dll")] public static extern bool GetCursorPos(out Point p);
+}
+"@ -ReferencedAssemblies System.Drawing
+function WalkCursorTo($x, $y) {
+  for ($i = 0; $i -lt 80; $i++) {
+    $c = New-Object System.Drawing.Point
+    [void][Mouse]::GetCursorPos([ref]$c)
+    $dx = [math]::Sign($x - $c.X) * [math]::Min(80, [math]::Abs($x - $c.X))
+    $dy = [math]::Sign($y - $c.Y) * [math]::Min(80, [math]::Abs($y - $c.Y))
+    if ($dx -eq 0 -and $dy -eq 0) { break }
+    [Mouse]::mouse_event(0x0001, $dx, $dy, 0, [IntPtr]::Zero)
+    Start-Sleep -Milliseconds 25
+  }
+  # Injected relative moves go through the pointer acceleration, so they land
+  # near the target, not on it: finish with an exact placement.
+  [void][W]::SetCursorPos($x, $y)
+  Start-Sleep -Milliseconds 400
+}
+function ParkCursorOn($rect) { WalkCursorTo ([int]($rect.L + ($rect.Rt - $rect.L) / 2)) ([int]($rect.T + ($rect.B - $rect.T) / 2)) }
 function ParkCursorOnPrimary {
   $b = ([System.Windows.Forms.Screen]::AllScreens | ? Primary).Bounds
-  [void][W]::SetCursorPos([int]($b.Left + $b.Width / 2), [int]($b.Top + $b.Height / 2))
+  WalkCursorTo ([int]($b.Left + $b.Width / 2)) ([int]($b.Top + $b.Height / 2))
 }
 function ParkCursorOnSecondary {
   $b = ([System.Windows.Forms.Screen]::AllScreens | ? { -not $_.Primary } | Select-Object -First 1).Bounds
-  if ($b) { [void][W]::SetCursorPos([int]($b.Left + $b.Width / 2), [int]($b.Top + $b.Height / 2)) }
+  if ($b) { WalkCursorTo ([int]($b.Left + $b.Width / 2)) ([int]($b.Top + $b.Height / 2)) }
+}
+
+# Hovering focuses after a moment, and GlazeWM re-syncs focus of its own: poll
+# instead of sampling once, so the test measures the settled state.
+function WaitForFocus($hwnd, $timeoutMs = 3000) {
+  $deadline = (Get-Date).AddMilliseconds($timeoutMs)
+  while ((Get-Date) -lt $deadline) {
+    if ([W]::GetForegroundWindow() -eq $hwnd) { return $true }
+    Start-Sleep -Milliseconds 200
+  }
+  $false
 }
