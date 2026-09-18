@@ -94,6 +94,15 @@ while ($x -ne [IntPtr]::Zero -and $x -ne $h) { if ($x -eq $ch) { $aboveGame = $t
 Stop-Process -Id $cm.Id -Force -EA SilentlyContinue
 Start-Sleep 1
 [void][C]::SetForegroundWindow($h)
+Start-Sleep 1
+# Windows refuses a foreground change from a background process; a window that
+# is not in front is composed no matter what, so make sure it really is.
+if ([W]::GetForegroundWindow() -ne $h) {
+  [void][C]::ShowWindow($h, 6)     # SW_MINIMIZE
+  Start-Sleep 1
+  [void][C]::ShowWindow($h, 9)     # SW_RESTORE gives it the foreground
+  [void][C]::SetForegroundWindow($h)
+}
 Start-Sleep 2
 "5 on top closed   state=$(State) rect=$(Rect2) pills=$(Pills2) $(Modes cyc5)"
 
