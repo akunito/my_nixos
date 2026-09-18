@@ -350,8 +350,17 @@ Toggle(exe, cmd) {
         Run cmd
         return
     }
-    if WinActive("ahk_id " hwnd) {
+    ; Minimise only a window you can actually see. A window sitting behind a
+    ; fullscreen game still counts as "active" for Windows, and minimising apps
+    ; like Telegram sends them to the tray, where they cloak their own window:
+    ; nothing outside the app can bring that back (lost window, 2026-09-18).
+    if (WinActive("ahk_id " hwnd) && IsOnScreen(hwnd)) {
         WinMinimize "ahk_id " hwnd
+        return
+    }
+    if (Cloaked(hwnd) & 1) {           ; hidden by the app itself (tray)
+        Dbg("toggle " exe " is in the tray, re-running it")
+        Run cmd                        ; its own activation path is the only way
         return
     }
     if (id := GlazeIdOf(hwnd))
@@ -359,6 +368,17 @@ Toggle(exe, cmd) {
     else
         WinActivate "ahk_id " hwnd      ; not managed (ignored windows, popups)
 }
+
+Cloaked(hwnd) {
+    cloaked := 0
+    DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", hwnd, "UInt", 14, "Int*", &cloaked, "UInt", 4)
+    return cloaked
+}
+; Visible to the user right now: not hidden, not cloaked by the app or by
+; GlazeWM (another workspace), not minimised.
+IsOnScreen(hwnd) =>
+    DllCall("IsWindowVisible", "Ptr", hwnd) && !Cloaked(hwnd)
+        && WinGetMinMax("ahk_id " hwnd) != -1
 
 ; GlazeWM's container id for a window handle, or "" if it doesn't manage it.
 GlazeIdOf(hwnd) {
