@@ -238,10 +238,19 @@ METRICS
       # bare rsync whose failure was neither retried nor counted, so
       # nas_offsite_backup_rsync_warnings{job="configs"} could never leave 0
       # even when the compose tree had not been copied at all.
+      # gameservers/ is excluded and owned by the akucraft job below. It is 9.4 GB
+      # of Minecraft world data in a tree whose other 15 directories total 190 MB,
+      # and its level.dat / playerdata / skinrestorer files are uid 100999 mode
+      # 0600 (rootless-docker subuid), unreadable to akunito. Copying it here
+      # produced a world backup that could never be restored, and the resulting
+      # rsync IO error made rsync skip --delete on every run, so the staging copy
+      # never dropped deleted files either. Invisible until 2026-09-18, because
+      # this job did not count rsync warnings at all.
       RSYNC_OPTS="-az --delete --timeout=60"
       rsync_dir /mnt/ssdpool/docker/compose/ "$STAGING/docker-configs/" "compose configs" \
         --exclude='*.log' --exclude='*.tmp' --exclude='*.cache' \
-        --exclude='tailscale/state/'
+        --exclude='tailscale/state/' \
+        --exclude='gameservers/'
     '';
   };
 

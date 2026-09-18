@@ -13,6 +13,9 @@ else
 fi
 
 # Install and build home-manager configuration
-home-manager switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace;
+# --impure: same reason as install.sh — a profile may read machine-local files kept
+# out of the repo (LAPTOP_A's Plane MCP credentials), and pure mode makes those
+# silently evaluate to empty.
+home-manager switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace --impure;
 
 $SCRIPT_DIR/sync-posthook.sh

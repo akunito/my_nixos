@@ -1390,7 +1390,12 @@ PRE_HOME_MANAGER_GENERATION=$(get_current_home_manager_generation)
 # Strategy: Trust exit code 0 as complete success. For non-zero codes, verify if a new
 # generation was created to distinguish between complete failures and partial successes.
 HOME_MANAGER_EXIT_CODE=0
-nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#$PROFILE --show-trace || HOME_MANAGER_EXIT_CODE=$?
+# --impure, like the nixos-rebuild above: profiles may read machine-local files that
+# are deliberately not in the repo (e.g. LAPTOP_A reads its Plane MCP credentials from
+# /home/aga/.secrets/plane-mcp.nix because that machine is secrets-free). In pure mode
+# builtins.pathExists on such a path silently returns false and the setting evaluates
+# empty, with no error to explain why the feature is missing.
+nix run home-manager/master --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake $SCRIPT_DIR#$PROFILE --show-trace --impure || HOME_MANAGER_EXIT_CODE=$?
 
 # Determine home-manager switch success based on exit code and generation check
 if [ "$HOME_MANAGER_EXIT_CODE" -eq 0 ]; then

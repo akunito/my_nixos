@@ -128,10 +128,10 @@ for _ in $(seq 120); do [ -f "$P/behind.out" ] && break; sleep 2; done
 out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/behind.out")
 echo "$out" | sed 's/^/    /'
 ws=$(echo "$out" | grep "^game on workspace" | awk '{print $4}')
-echo "$out" | grep "^1 app launched" | grep -q "app\[ws=$ws/" && ok "opens on the game's workspace" || ko "app workspace" "$(echo "$out" | grep '^1 app')"
-echo "$out" | grep "^2 other workspace" | grep -q "app\[ws=$ws/floating/hidden cloaked=2" && ok "hidden with the workspace" || ko "app while away" "$(echo "$out" | grep '^2 other')"
+echo "$out" | grep "^1 app launched" | grep -q "app\[ws=${ws}/" && ok "opens on the game's workspace" || ko "app workspace" "$(echo "$out" | grep '^1 app')"
+echo "$out" | grep "^2 other workspace" | grep -q "app\[ws=${ws}/floating/hidden cloaked=2" && ok "hidden with the workspace" || ko "app while away" "$(echo "$out" | grep '^2 other')"
 echo "$out" | grep "^3 back home" | grep -q "cloaked=0 visible=True" && ok "back with the workspace" || ko "app on return" "$(echo "$out" | grep '^3 back')"
-echo "$out" | grep "^4 game minimized" | grep -q "app\[ws=$ws/floating/shown cloaked=0 visible=True" && ok "usable once the game is minimized" || ko "app with the game minimized" "$(echo "$out" | grep '^4 game')"
+echo "$out" | grep "^4 game minimized" | grep -q "app\[ws=${ws}/floating/shown cloaked=0 visible=True" && ok "usable once the game is minimized" || ko "app with the game minimized" "$(echo "$out" | grep '^4 game')"
 
 # A window parked on a hidden workspace must be reachable again: Hyper+<letter>
 # asks GlazeWM to focus it (a cloaked window cannot be activated by Windows).

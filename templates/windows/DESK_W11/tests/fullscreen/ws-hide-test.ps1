@@ -22,6 +22,10 @@ if (-not $OtherWs -or $OtherWs -eq $HomeWs) {
 }
 "switching to $OtherWs"
 "home workspace $HomeWs"
+# Land on the primary monitor's workspace (a new window goes to the FOCUSED one).
+$primary = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
+& $glaze command focus --workspace ($primary.children | ? isDisplayed).name | Out-Null
+Start-Sleep 2
 $p = Start-Process "$env:TEMP\perf\fliptest.exe" -ArgumentList "30 $Monitor" -PassThru
 Start-Sleep 3
 $h = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
@@ -41,6 +45,10 @@ if (-not (($mon.children | ? isDisplayed).name -eq $HomeWs)) {
   Start-Sleep 2
 }
 $OtherWs = @($mon.children | ? { $_.name -ne $HomeWs } | % name)[0]
+if (-not $OtherWs) {
+  # Workspaces exist on demand; pick another name from the monitor's range.
+  $OtherWs = if ($HomeWs -eq "19") { "18" } else { [string]([int]$HomeWs + 1) }
+}
 "switching away to $OtherWs"
 # Match a game: GlazeWM only marks a window fullscreen for the taskbar when its
 # state is fullscreen, and our test window is classified floating.
