@@ -89,7 +89,7 @@ for mode in startmax gamelike; do
   echo "== 8-$mode. minimize / windowed / window on top, then back to normal"
   rm -f "$P/cycle-$mode.out"; echo "win-cycle.ps1 $mode" > "$P/cycle-$mode.elev"
   for _ in $(seq 150); do [ -f "$P/cycle-$mode.out" ] && break; sleep 2; done
-  out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/cycle-$mode.out")   # the daemon writes a BOM
+  out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/cycle-$mode.out" | tr -d '\r')   # BOM + CRLF
   echo "$out" | sed 's/^/    /'
   for step in "1 start" "2 minimize+restore" "3 windowed+max" "5 on top closed"; do
     line=$(echo "$out" | grep "^$step")
@@ -125,7 +125,7 @@ echo "$out" | grep "^focus on other monitor" | grep -q "mon@6,0=hidden" && ok "s
 echo "== 10. an app launched behind a fullscreen game stays reachable"
 rm -f "$P/behind.out"; echo "behind-game.ps1" > "$P/behind.elev"
 for _ in $(seq 120); do [ -f "$P/behind.out" ] && break; sleep 2; done
-out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/behind.out")
+out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/behind.out" | tr -d '\r')   # BOM + CRLF
 echo "$out" | sed 's/^/    /'
 ws=$(echo "$out" | grep "^game on workspace" | awk '{print $4}')
 echo "$out" | grep "^1 app launched" | grep -q "app\[ws=${ws}/" && ok "opens on the game's workspace" || ko "app workspace" "$(echo "$out" | grep '^1 app')"
@@ -138,7 +138,7 @@ echo "$out" | grep "^4 game minimized" | grep -q "app\[ws=${ws}/floating/shown c
 echo "== 11. reaching a window parked on a hidden workspace"
 rm -f "$P/reach.out"; echo "reach-hidden.ps1" > "$P/reach.elev"
 for _ in $(seq 90); do [ -f "$P/reach.out" ] && break; sleep 1; done
-out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/reach.out")
+out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/reach.out" | tr -d '\r')
 echo "$out" | sed 's/^/    /'
 home=$(echo "$out" | grep "^window on" | awk '{print $3}' | tr -d ,)
 echo "$out" | grep "^hidden:" | grep -q "cloaked=2" && ok "cloaked while away" || ko "cloak" "$(echo "$out" | grep '^hidden')"
