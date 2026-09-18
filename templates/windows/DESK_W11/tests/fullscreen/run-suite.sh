@@ -165,5 +165,16 @@ home=$(echo "$out" | grep "^window on" | awk '{print $3}' | tr -d ,)
 echo "$out" | grep "^hidden:" | grep -q "cloaked=2" && ok "cloaked while away" || ko "cloak" "$(echo "$out" | grep '^hidden')"
 echo "$out" | grep "^after glaze focus" | grep -q "displayed=$home.*cloaked=0" && ok "GlazeWM brings you to it" || ko "focus by id" "$(echo "$out" | grep '^after glaze')"
 
+# The helpers behind Hyper+<letter>: a window you cannot see must never be
+# minimised (that sent Telegram to the tray, where its window is unrecoverable).
+settle
+echo "== 12. window-state helpers (AutoHotkey)"
+rm -f "$P/window-state-test.txt"
+powershell.exe -NoProfile -Command 'Start-Process "C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe" -ArgumentList "C:\Users\diego\.dotfiles\templates\windows\DESK_W11\tests\fullscreen\window-state-test.ahk"' >/dev/null 2>&1
+for _ in $(seq 40); do [ -f "$P/window-state-test.txt" ] && break; sleep 1; done
+out=$(tr -d '\r' < "$P/window-state-test.txt" 2>/dev/null)
+echo "$out" | sed 's/^/    /'
+echo "$out" | grep -q "^all passed" && ok "helpers behave" || ko "window-state helpers" "$(echo "$out" | grep FAIL | head -1)"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]
