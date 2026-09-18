@@ -40,7 +40,7 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
     RECT r = mp.r;
     if (__argc > 6) { r.left = atoi(__argv[3]); r.top = atoi(__argv[4]); r.right = r.left + atoi(__argv[5]); r.bottom = r.top + atoi(__argv[6]); }
 
-    int grow_now = 0, gamelike = 0;
+    int grow_now = 0, gamelike = 0, start_max = 0;
     for (int i = 1; i < __argc; i++) {
         if (!strcmp(__argv[i], "now")) grow_now = 1;
         // "gamelike": open a couple of pixels LARGER than the monitor and
@@ -48,15 +48,23 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
         // That transition is what made GlazeWM drop the window out of its
         // fullscreen state, leaving the taskbar above the game.
         if (!strcmp(__argv[i], "gamelike")) gamelike = grow_now = 1;
+        // "startmax": a normal resizable window that opens MAXIMIZED, the way
+        // Age of Empires II DE does. GlazeWM used to un-maximize it and clamp
+        // it into the workspace gaps, and the game then took that size as its
+        // fullscreen resolution.
+        if (!strcmp(__argv[i], "startmax")) start_max = 1;
     }
     RECT start = r;
     if (gamelike) { start.left -= 2; start.top -= 2; start.right += 2; start.bottom += 2; }
 
     WNDCLASSW wc = { 0 }; wc.lpfnWndProc = WndProc; wc.hInstance = hi; wc.lpszClassName = L"FlipTestWnd";
     wc.hCursor = LoadCursor(NULL, IDC_ARROW); RegisterClassW(&wc);
-    HWND hwnd = CreateWindowExW(WS_EX_APPWINDOW, L"FlipTestWnd", L"fliptest", WS_POPUP | WS_VISIBLE,
+    HWND hwnd = CreateWindowExW(WS_EX_APPWINDOW, L"FlipTestWnd", L"fliptest",
+        (start_max ? (WS_OVERLAPPEDWINDOW | WS_MAXIMIZE) : WS_POPUP) | WS_VISIBLE,
         grow_now ? start.left : r.left + 100, grow_now ? start.top : r.top + 100,
         grow_now ? start.right - start.left : 1280, grow_now ? start.bottom - start.top : 720, NULL, NULL, hi, NULL);
+
+    if (start_max) ShowWindow(hwnd, SW_SHOWMAXIMIZED);
 
     ID3D11Device *dev; ID3D11DeviceContext *ctx;
     if (FAILED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, &dev, NULL, &ctx))) return 2;
@@ -80,7 +88,7 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
 
     DWORD started = GetTickCount(); MSG msg; int frame = 0, grown = 0;
     for (;;) {
-        if (!grown && (gamelike || !grow_now) && GetTickCount() - started > (gamelike ? 700u : 500u)) {
+        if (!grown && !start_max && (gamelike || !grow_now) && GetTickCount() - started > (gamelike ? 700u : 500u)) {
             grown = 1;
             SetWindowPos(hwnd, NULL, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOZORDER);
             ID3D11DeviceContext_OMSetRenderTargets(ctx, 0, NULL, NULL);

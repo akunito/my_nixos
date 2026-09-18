@@ -78,6 +78,13 @@ taskbar stays above the game. Fork commit "treat a window covering the whole mon
 fullscreen" fixes it; suite case 5 covers it (auto-classification, no `set-fullscreen`).
 Suite now 10/10.
 
+Third round (2026-09-18, Age of Empires II DE): a game that opens **maximized**
+was initialized as floating by GlazeWM, which un-maximizes it and clamps it 10px
+inside the workspace (3830x2108 on a 3840x2160 monitor); AoE2 then took that as its
+fullscreen resolution and left its title bar and the taskbar on screen. Fork commit
+"keep a maximized window maximized when it's first managed"; suite case 7
+(`fliptest.exe ... startmax`). Suite now 13/13.
+
 Known limitation: an elevated window in the FLOATING state can't be raised above the
 taskbar at all (`SetWindowPos`/z-order denied), so it stays composed. Games run
 fullscreen, which is the case the suite covers.

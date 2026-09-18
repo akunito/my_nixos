@@ -70,5 +70,17 @@ out=$(cat "$P/fsgame.out")
 echo "$out" | sed 's/^/    /'
 echo "$out" | grep -q "state=fullscreen" && ok "stays fullscreen" || ko "state" "$(echo "$out" | head -1)"
 
+# Age of Empires II DE opens maximized. GlazeWM used to initialize such a window
+# as floating, which un-maximizes it and clamps it 10px inside the workspace; the
+# game then took 3828x2072 as its fullscreen resolution and kept its title bar
+# and the taskbar on screen.
+echo "== 7. a window that opens MAXIMIZED stays maximized"
+rm -f "$P/fsmax.out"; echo "fsmax.ps1" > "$P/fsmax.elev"
+for _ in $(seq 60); do [ -f "$P/fsmax.out" ] && break; sleep 1; done
+out=$(cat "$P/fsmax.out")
+echo "$out" | sed 's/^/    /'
+echo "$out" | grep -q "isZoomed=True" && ok "still maximized" || ko "maximized" "$(echo "$out" | head -1)"
+echo "$out" | grep -qE "state=(fullscreen|tiling)" && ok "state kept ($(echo "$out" | grep -o 'state=[a-z]*'))" || ko "state" "$(echo "$out" | head -1)"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

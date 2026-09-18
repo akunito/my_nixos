@@ -42,25 +42,36 @@ function GameWindow($procIds) {
   $best
 }
 
-L "sampler start game=$Game"
+# Monitor rects in this process' (DPI-unaware) coordinate space.
+$monitors = @()
+Add-Type -AssemblyName System.Windows.Forms
+foreach ($sc in [System.Windows.Forms.Screen]::AllScreens) {
+  $b = $sc.Bounds; $monitors += ,@($b.Left, $b.Top, $b.Right, $b.Bottom)
+}
+L "sampler start, monitors: $(($monitors | % { $_ -join ',' }) -join ' | ')"
 $last = ""; $lastCpu = @{}; $tick = 0
 while ($true) {
   $tick++
-  $gp = @(Get-Process -Name $Game -ErrorAction SilentlyContinue)
-  if (-not $gp.Count) {
-    # Fall back to the window class: the process name can be missed (elevated,
-    # renamed, several processes), the game window class is stable.
-    $x = [W]::GetTopWindow([IntPtr]::Zero)
-    while ($x -ne [IntPtr]::Zero) {
-      if ([W]::Cls($x) -eq "UnrealWindow" -and [W]::IsWindowVisible($x)) { $gp = @(Get-Process -Id ([W]::Pid($x)) -ErrorAction SilentlyContinue); break }
-      $x = [W]::GetWindow($x, 2)
+  # The "game" is any visible window that covers a whole monitor (works for
+  # any game, not just AION2): process names differ per title.
+  $gh = [IntPtr]::Zero
+  $x = [W]::GetTopWindow([IntPtr]::Zero)
+  while ($x -ne [IntPtr]::Zero) {
+    if ([W]::IsWindowVisible($x) -and -not [W]::IsIconic($x)) {
+      $r = [W]::Rect($x); $n = PName ([W]::Pid($x))
+      if ($n -notmatch "^(explorer|zebar|AutoHotkey64_UIA|WindowsTerminal|powershell|ApplicationFrameHost|SearchHost|StartMenuExperienceHost|ShellExperienceHost|TextInputHost|SystemSettings)$") {
+        foreach ($m in $monitors) {
+          if ($r.L -le $m[0] -and $r.T -le $m[1] -and $r.Rt -ge $m[2] -and $r.B -ge $m[3]) { $gh = $x; break }
+        }
+      }
+      if ($gh -ne [IntPtr]::Zero) { break }
     }
+    $x = [W]::GetWindow($x, 2)
   }
   $fg = [W]::GetForegroundWindow()
   $line = "fg=$(PName ([W]::Pid($fg)))/$([W]::Cls($fg)) $(RS ([W]::Rect($fg)))"
-  if ($gp.Count) {
-    $gh = GameWindow ($gp | ForEach-Object Id)
-    if ($gh -ne [IntPtr]::Zero) {
+  if ($gh -ne [IntPtr]::Zero) {
+    if ($true) {
       $st = [W]::GetWindowLong($gh, -16); $ex = [W]::GetWindowLong($gh, -20)
       $flags = @()
       if ($st -band 0x80000000) { $flags += "popup" }; if ($st -band 0x00C00000) { $flags += "caption" }
@@ -68,7 +79,7 @@ while ($true) {
       $ck = [W]::Cloak($gh); if ($ck) { $flags += "CLOAKED=$ck" }
       if ($fg -eq $gh) { $flags += "foreground" }
       $gr = [W]::Rect($gh)
-      $line += " | game $(RS $gr) $($flags -join ',')"
+      $line += " | game $(PName ([W]::Pid($gh))) $(RS $gr) $($flags -join ',')"
       # visible, uncloaked windows ABOVE the game that overlap it (these break independent flip)
       $above = @(); $h = [W]::GetTopWindow([IntPtr]::Zero)
       while ($h -ne [IntPtr]::Zero -and $h -ne $gh) {
@@ -82,8 +93,8 @@ while ($true) {
         $h = [W]::GetWindow($h, 2)
       }
       $line += " | above: " + ($(if ($above.Count) { $above -join "; " } else { "none" }))
-    } else { $line += " | game process, no visible window" }
-  } else { $line += " | game not running" }
+    }
+  } else { $line += " | no fullscreen window" }
   if ($line -ne $last) { L $line; $last = $line }
 
   if ($tick % 4 -eq 0) {
