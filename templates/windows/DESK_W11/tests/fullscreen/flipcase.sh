@@ -16,7 +16,9 @@ powershell.exe -NoProfile -Command 'Get-Process fliptest -EA SilentlyContinue | 
 sleep 1
 rm -f "$P/$n.done" "$P/$n.csv"
 powershell.exe -NoProfile -Command "Start-Process '"'"'$W_EXE'"'"' -ArgumentList '"'"'$*'"'"'" >/dev/null 2>&1
-sleep 3.5
+sleep 2
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Users\diego\AppData\Local\Temp\perf\park-primary.ps1' >/dev/null 2>&1
+sleep 1.5
 echo 6 > "$P/$n.req"
 for i in $(seq 40); do [ -f "$P/$n.done" ] && break; sleep 0.5; done
 python3 - "$P/$n.csv" "$n" <<'PY'
