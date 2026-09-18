@@ -116,7 +116,12 @@ The site still serves the last good build." || true
       rm -rf "$target"
       mkdir -p "$target"
       rsync -a --delete "$REPO/site/dist/" "$target/" || fail "rsync into release"
-      chmod -R a-w "$target"
+      # rsync preserves the repo's ownership (babydocs:babydocs, 0640) and the unit's
+      # UMask makes the directory 0750 — nginx would get 403 on every request. Hand
+      # the tree to the nginx group, read-only: the publisher owns it, the web server
+      # reads it, nobody writes it.
+      chgrp -R nginx "$target" || fail "chgrp release to nginx"
+      chmod -R u=rX,g=rX,o= "$target" || fail "chmod release"
 
       ln -sfn "$target" "$LIVE.new"
       mv -Tf "$LIVE.new" "$LIVE" || fail "symlink swap"
