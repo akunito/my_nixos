@@ -13,7 +13,13 @@ function Pills {
   while ($h -ne [IntPtr]::Zero) {
     if ($ids -contains [W]::Pid($h) -and [W]::Cls($h) -eq "Tauri Window") {
       $r = [W]::Rect($h)
-      if (($r.Rt - $r.L) -gt 100 -and ($r.B - $r.T) -lt 100) { $out += "mon@$($r.L),$($r.T)=$(if ([W]::IsWindowVisible($h)) { 'VISIBLE' } else { 'hidden' })" }
+      if (($r.Rt - $r.L) -gt 100 -and ($r.B - $r.T) -lt 100) {
+        # Name the pill by its monitor, not by its coordinates (those move with
+        # the scaling and with every monitor re-detection).
+        $b = ([System.Windows.Forms.Screen]::AllScreens | ? Primary).Bounds
+        $where = if ($r.L -ge $b.Left -and $r.L -lt $b.Right) { "primary" } else { "secondary" }
+        $out += "$where=$(if ([W]::IsWindowVisible($h)) { 'VISIBLE' } else { 'hidden' })"
+      }
     }
     $h = [W]::GetWindow($h, 2)
   }

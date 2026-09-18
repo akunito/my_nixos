@@ -148,9 +148,9 @@ settle
 echo "== 9. Zebar pills vs a fullscreen window and the other monitor"
 out=$($W 'C:\Users\diego\AppData\Local\Temp\perf\pill-crossmon.ps1')
 echo "$out" | sed 's/^/    /'
-# The game runs on the primary monitor, whose pill sits at x=6.
-echo "$out" | grep "^with the game focused" | grep -q "mon@6,0=hidden" && ok "hidden over the game" || ko "pill over the game" "$(echo "$out" | grep '^with')"
-echo "$out" | grep "^focus on other monitor" | grep -q "mon@6,0=hidden" && ok "stays hidden with focus elsewhere" || ko "pill after focusing the other monitor" "$(echo "$out" | grep '^focus')"
+# The game runs on the primary monitor, so its pill must be the hidden one.
+echo "$out" | grep "^with the game focused" | grep -q "primary=hidden" && ok "hidden over the game" || ko "pill over the game" "$(echo "$out" | grep '^with')"
+echo "$out" | grep "^focus on other monitor" | grep -q "primary=hidden" && ok "stays hidden with focus elsewhere" || ko "pill after focusing the other monitor" "$(echo "$out" | grep '^focus')"
 [ "$(echo "$out" | grep "^after the game closes" | grep -o hidden | wc -l)" = "0" ] && ok "both pills back" || ko "pills after the game closes" "$(echo "$out" | grep '^after')"
 
 # Launching an app while a fullscreen game has the foreground (Hyper+L): the new
