@@ -1,3 +1,11 @@
+---
+id: infrastructure.services.babydocs-site
+summary: baby.local.akunito.com — the private babydocs repo built and published on VPS_PROD by a timer, so neither parent needs an account on the host to publish a page
+tags: [babydocs, vps, nginx, git, tailscale, starlight]
+related_files: [system/app/babydocs-site.nix, system/app/nginx-local.nix]
+date: 2026-09-18
+status: published
+---
 # babydocs site — baby.local.akunito.com
 
 Research, decisions and living documentation about Irenka, published from the private
@@ -19,12 +27,17 @@ timer (5 min) -> git fetch  -> new revision?
                  git-crypt unlock (first clone only)
                  tools/build-site.py      markdown -> Starlight content tree
                  npm ci && npm run build  Astro + Starlight + Pagefind
-                 rsync into /var/www/babydocs-releases/<rev>
-                 swap the /var/www/baby symlink   <- atomic
+                 rsync into /var/www/baby/releases/<rev>
+                 swap the /var/www/baby/current symlink   <- atomic
 ```
 
 A failed build changes nothing: the symlink still points at the last good release and the
 failure is announced once through `infra-notify`. The three most recent releases are kept.
+
+The swap must happen inside a directory the service owns. `/var/www` belongs to root, so a
+symlink directly at `/var/www/baby` could not be replaced by the `babydocs` user — the first
+publish failed on exactly that (`ln: failed to create symbolic link '/var/www/baby.new':
+Permission denied`), which is why the live link lives one level down.
 
 ## Paths
 
@@ -32,8 +45,9 @@ failure is announced once through `infra-notify`. The three most recent releases
 |---|---|
 | `/var/lib/babydocs/repo` | the checkout (0700, user `babydocs`) |
 | `/var/lib/babydocs/published.rev` | revision currently live |
-| `/var/www/babydocs-releases/<rev>` | built releases (0750, group `nginx`) |
-| `/var/www/baby` | symlink to the live release — nginx's root |
+| `/var/www/baby` | web root owned by `babydocs`, group `nginx` (0750) |
+| `/var/www/baby/releases/<rev>` | built releases |
+| `/var/www/baby/current` | symlink to the live release — nginx's root |
 | `/etc/secrets/babydocs-deploy-key` | read-only GitHub deploy key |
 | `/etc/secrets/babydocs-git-crypt` | git-crypt key — without it `private/` and `journal/` would publish as ciphertext |
 

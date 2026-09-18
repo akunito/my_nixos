@@ -55,6 +55,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/alertmanager.nix**: Alertmanager — the piece that was missing between Prometheus and Telegram *Enabled when:* `168h`
 - **system/app/appimage.nix**: System module: appimage.nix
 - **system/app/archived/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
+- **system/app/babydocs-site.nix**: babydocs site — baby.local.akunito.com, published from git without a rebuild.
 - **system/app/claude-sync-hub.nix**: claude-sync hub — the always-on side of Claude Code state sync (VPS_PROD). *Enabled when:* `k: "restrict,command=\"${shell}/bin/claude-sync-shell\" ${k}"`
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
 - **system/app/database-backup.nix**: Database Backup Module *Enabled when:*
@@ -565,11 +566,13 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md**: Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring
 - **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
 - **docs/akunito/infrastructure/audits/truenas-docker-security-audit-2026-03-06.md**: TrueNAS Docker rootless migration and security hardening audit
+- **docs/akunito/infrastructure/desk-w11-glazewm-testing.md**: Knowledge base started 2026-09-17 when Aion 2 ran badly under GlazeWM. Two uses:
 - **docs/akunito/infrastructure/desk-w11-wsl.md**: DESK_W11 runbook — Windows 11 dual boot on the DESK box with NixOS-WSL; what lives on the Windows side, what lives in WSL, and the exact bootstrap order
 - **docs/akunito/infrastructure/services/akucraft-ai.md**: LiteLLM gateway on VPS_PROD and the Discord /ask support assistant it serves
 - **docs/akunito/infrastructure/services/akucraft-audit-2026-08-16.md**: Audit of the AkuCraft servers - mod conflicts, configuration, security posture and resource risk
 - **docs/akunito/infrastructure/services/akucraft-manifest.md**: Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server
 - **docs/akunito/infrastructure/services/akucraft-staging-client-setup.md**: How to set up a Minecraft client for the AkuCraft STAGING test server, for someone helping test map sharing
+- **docs/akunito/infrastructure/services/babydocs-site.md**: baby.local.akunito.com — the private babydocs repo built and published on VPS_PROD by a timer, so neither parent needs an account on the host to publish a page
 - **docs/akunito/infrastructure/services/claude-sync.md**: Claude Code state (memory, skills, session transcripts) synced across DESK, LAPTOP_X13 and DESK_W11 through a hub on VPS_PROD — design, edge cases, bootstrap, operation
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
 - **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS

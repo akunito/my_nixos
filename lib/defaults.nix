@@ -611,7 +611,7 @@
     babydocsSiteEnable = false; # Timer: pull github.com/akunito/babydocs, build Starlight, swap the release symlink
     babydocsSiteRepo = "git@github.com:akunito/babydocs.git"; # Private repo, read with a deploy key
     babydocsSiteInterval = "5min"; # How long after a push the site can lag
-    babydocsSiteRoot = "/var/www/baby"; # Symlink nginx serves; point nginxLocalServices.baby.rootPath here
+    babydocsSiteRoot = "/var/www/baby"; # Web root the publisher owns: releases/<rev> + the `current` symlink nginx serves (rootPath = <this>/current)
     babydocsSiteDeployKey = "/etc/secrets/babydocs-deploy-key"; # Read-only GitHub deploy key
     babydocsSiteCryptKey = "/etc/secrets/babydocs-git-crypt"; # git-crypt key: private/ and journal/ would otherwise publish as ciphertext
 

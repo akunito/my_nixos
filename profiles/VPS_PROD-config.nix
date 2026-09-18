@@ -477,7 +477,7 @@ in
       # must not cost a VPS rebuild. system/app/babydocs-site.nix pulls, builds
       # and swaps /var/www/baby every 5 minutes. Tailscale only, never public —
       # it carries clinical material.
-      baby       = { rootPath = "/var/www/baby"; };
+      baby       = { rootPath = "/var/www/baby/current"; };
       openclaw   = { port = 18789; };
       finance    = { port = 8190; maxBodySize = "50M"; };
       # AkuCraft BlueMap. It used to sit at "/" on the players' own port 8100,

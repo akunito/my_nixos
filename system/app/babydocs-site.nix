@@ -10,8 +10,12 @@
 #
 #   /var/lib/babydocs/repo          the checkout (0700, babydocs user)
 #   /var/lib/babydocs/published.rev the revision currently live
-#   /var/www/babydocs-releases/<r>  one directory per built revision (0750, group nginx)
-#   /var/www/baby                   symlink to the live release — nginx's root
+#   /var/www/baby/releases/<rev>    one directory per built revision (0750, group nginx)
+#   /var/www/baby/current           symlink to the live release — nginx's root
+#
+# The swap has to happen INSIDE a directory this service owns: /var/www is root's,
+# so a symlink directly at /var/www/baby could not be replaced (verified — the
+# first publish failed exactly there).
 #
 # A failed build changes nothing: the symlink still points at the last good
 # release, and the failure is announced once through infra-notify.
@@ -30,12 +34,13 @@ let
   enabled = systemSettings.babydocsSiteEnable or false;
   repoUrl = systemSettings.babydocsSiteRepo or "git@github.com:akunito/babydocs.git";
   interval = systemSettings.babydocsSiteInterval or "5min";
-  liveLink = systemSettings.babydocsSiteRoot or "/var/www/baby";
+  webroot = systemSettings.babydocsSiteRoot or "/var/www/baby";
+  liveLink = "${webroot}/current";
+  releases = "${webroot}/releases";
   deployKey = systemSettings.babydocsSiteDeployKey or "/etc/secrets/babydocs-deploy-key";
   cryptKey = systemSettings.babydocsSiteCryptKey or "/etc/secrets/babydocs-git-crypt";
 
   state = "/var/lib/babydocs";
-  releases = "/var/www/babydocs-releases";
 
   publisher = pkgs.writeShellApplication {
     name = "babydocs-publish";
@@ -131,6 +136,9 @@ lib.mkIf enabled {
 
   systemd.tmpfiles.rules = [
     "d ${state} 0700 babydocs babydocs -"
+    # group nginx so the web server can traverse and read; owned by the publisher
+    # so it can replace the `current` symlink without touching root-owned /var/www
+    "d ${webroot} 0750 babydocs nginx -"
     "d ${releases} 0750 babydocs nginx -"
   ];
 
