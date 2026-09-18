@@ -8,6 +8,16 @@ P=/mnt/c/Users/diego/AppData/Local/Temp/perf
 W='powershell.exe -NoProfile -ExecutionPolicy Bypass -File'
 pass=0; fail=0
 ok()  { printf '  PASS %s\n' "$1"; pass=$((pass+1)); }
+# Every case measures real frames, so the previous window must be gone first:
+# PresentMon filters by process name and would add the leftover's frames too.
+settle() {
+  powershell.exe -NoProfile -Command 'Get-Process fliptest, charmap -EA SilentlyContinue | Stop-Process -Force' 2>/dev/null
+  for _ in $(seq 20); do
+    powershell.exe -NoProfile -Command 'if (Get-Process fliptest -EA SilentlyContinue) { "yes" }' 2>/dev/null | grep -q yes || break
+    sleep 1
+  done
+  sleep 2
+}
 ko()  { printf '  FAIL %s -- %s\n' "$1" "$2"; fail=$((fail+1)); }
 
 flip() { # flip <name> <fliptest args...>  -> prints dominant present mode
@@ -23,15 +33,18 @@ print(c.most_common(1)[0][0] if c else 'no-frames')
 PY
 }
 
+settle
 echo "== 1. fullscreen window reaches the screen directly (no overlay above)"
 m=$(flip s1-fullscreen 6 0)
 case "$m" in *"Independent Flip") ok "present mode: $m";; *) ko "present mode" "$m (an overlay is above the window; check the Zebar pill)";; esac
 
+settle
 echo "== 2. the Zebar pill is back after the fullscreen window closes"
 sleep 1
 p=$($W 'C:\Users\diego\AppData\Local\Temp\perf\pill-state.ps1')
 case "$p" in *"visible=True"*) ok "$p";; *) ko "pill state" "$p";; esac
 
+settle
 echo "== 3. workspace switch hides a normal window and the taskbar drops back"
 out=$($W 'C:\Users\diego\AppData\Local\Temp\perf\ws-hide-test.ps1')
 echo "$out" | sed 's/^/    /'
@@ -42,6 +55,7 @@ echo "$out" | grep -q "5 present modes after return: Hardware Composed: Independ
 # A game is elevated (anti-cheat) AND in GlazeWM's fullscreen state; only then
 # does GlazeWM mark it fullscreen for the taskbar. An elevated FLOATING window
 # cannot be raised above the taskbar at all (SetWindowPos is denied).
+settle
 echo "== 4. same, with an ELEVATED fullscreen window (what a game looks like)"
 rm -f "$P/suite-elev.out"; echo "wsfs.ps1" > "$P/suite-elev.elev"   # fullscreen state, like a game
 for _ in $(seq 90); do [ -f "$P/suite-elev.out" ] && break; sleep 1; done
@@ -51,6 +65,7 @@ echo "$out" | grep -q "2 switched away .*cloaked=[1-9]" && ok "elevated window h
 echo "$out" | grep -q "3 back home .*cloaked=0" && ok "elevated window shown on return" || ko "elevated window shown" "still cloaked"
 echo "$out" | grep -q "5 present modes after return: Hardware Composed: Independent Flip\|5 present modes after return: Hardware: Independent Flip" && ok "taskbar not above after return (elevated)" || ko "taskbar after return (elevated)" "$(echo "$out" | grep '5 present')"
 
+settle
 echo "== 5. GlazeWM sees a monitor-sized ELEVATED window as fullscreen on its own"
 rm -f "$P/fsauto.out"; echo "fsauto.ps1" > "$P/fsauto.elev"
 for _ in $(seq 90); do [ -f "$P/fsauto.out" ] && break; sleep 1; done
@@ -63,6 +78,7 @@ echo "$out" | grep -q "Independent Flip" && ok "reaches the screen directly" || 
 # monitor and settles to the monitor rect. GlazeWM read that as the app leaving
 # OS fullscreen and dropped it to floating -> no MarkFullscreenWindow -> taskbar
 # above the game -> Composed: Flip.
+settle
 echo "== 6. a window that settles from oversized to exactly the monitor stays fullscreen"
 rm -f "$P/fsgame.out"; echo "fsgame.ps1" > "$P/fsgame.elev"
 for _ in $(seq 90); do [ -f "$P/fsgame.out" ] && break; sleep 1; done
@@ -74,6 +90,7 @@ echo "$out" | grep -q "state=fullscreen" && ok "stays fullscreen" || ko "state" 
 # as floating, which un-maximizes it and clamps it 10px inside the workspace; the
 # game then took 3828x2072 as its fullscreen resolution and kept its title bar
 # and the taskbar on screen.
+settle
 echo "== 7. a window that opens MAXIMIZED stays maximized"
 rm -f "$P/fsmax.out"; echo "fsmax.ps1" > "$P/fsmax.elev"
 for _ in $(seq 60); do [ -f "$P/fsmax.out" ] && break; sleep 1; done
@@ -86,6 +103,7 @@ echo "$out" | grep -qE "state=(fullscreen|tiling)" && ok "state kept ($(echo "$o
 # again, and another window opening over it. After each step it must be back in
 # the fullscreen state and reaching the screen directly.
 for mode in startmax gamelike; do
+  settle
   echo "== 8-$mode. minimize / windowed / window on top, then back to normal"
   rm -f "$P/cycle-$mode.out"; echo "win-cycle.ps1 $mode" > "$P/cycle-$mode.elev"
   for _ in $(seq 150); do [ -f "$P/cycle-$mode.out" ] && break; sleep 2; done
@@ -111,6 +129,7 @@ done
 # focus moves to the other monitor (clicking a window there used to bring the
 # pill back over the game); visible again once the game is gone, on BOTH monitors
 # (a cloaked window of a hidden workspace must not count as covering a monitor).
+settle
 echo "== 9. Zebar pills vs a fullscreen window and the other monitor"
 out=$($W 'C:\Users\diego\AppData\Local\Temp\perf\pill-crossmon.ps1')
 echo "$out" | sed 's/^/    /'
@@ -122,6 +141,7 @@ echo "$out" | grep "^focus on other monitor" | grep -q "mon@6,0=hidden" && ok "s
 # Launching an app while a fullscreen game has the foreground (Hyper+L): the new
 # window stays on the same workspace, behind the game, and is still there after
 # leaving the workspace and coming back, and once the game is minimized.
+settle
 echo "== 10. an app launched behind a fullscreen game stays reachable"
 rm -f "$P/behind.out"; echo "behind-game.ps1" > "$P/behind.elev"
 for _ in $(seq 120); do [ -f "$P/behind.out" ] && break; sleep 2; done
@@ -135,6 +155,7 @@ echo "$out" | grep "^4 game minimized" | grep -q "app\[ws=${ws}/floating/shown c
 
 # A window parked on a hidden workspace must be reachable again: Hyper+<letter>
 # asks GlazeWM to focus it (a cloaked window cannot be activated by Windows).
+settle
 echo "== 11. reaching a window parked on a hidden workspace"
 rm -f "$P/reach.out"; echo "reach-hidden.ps1" > "$P/reach.elev"
 for _ in $(seq 90); do [ -f "$P/reach.out" ] && break; sleep 1; done
