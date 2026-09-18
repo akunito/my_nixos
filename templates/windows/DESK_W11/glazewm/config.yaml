@@ -13,11 +13,13 @@ general:
   startup_commands: ['shell-exec C:\Users\diego\.dotfiles\templates\windows\DESK_W11\vd-merge.ahk']
   shutdown_commands: []
   config_reload_commands: ['shell-exec C:\Users\diego\.dotfiles\templates\windows\DESK_W11\vd-merge.ahk']
-  # On again 2026-09-18 (mouse focus wanted back). GlazeWM's own implementation,
-  # not the native one: native tracking activates windows GlazeWM has cloaked on
-  # hidden workspaces (a cloak stops the drawing, not the hit-testing), so the
-  # pointer dragged you back to the workspace you had just left.
-  focus_follows_cursor: true
+  # Off: measured 2026-09-18, GlazeWM's own implementation does not actually
+  # focus the window under the pointer here (and needs a restart, not a config
+  # reload, to change). The native Windows tracking does the job --
+  # focus-follows-mouse.ps1, without raising on hover -- and the fork makes a
+  # cloaked window click-through so hovering can no longer drag you back to the
+  # workspace you just left.
+  focus_follows_cursor: false
   toggle_workspace_on_refocus: true      # sway: workspace_auto_back_and_forth yes
   cursor_jump:
     enabled: false
