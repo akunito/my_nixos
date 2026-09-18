@@ -196,7 +196,7 @@ and is the native package manager (Chocolatey adds nothing here). DESK → W11:
 | nextcloud-client | Nextcloud.NextcloudDesktop | |
 | bitwarden | Bitwarden.Bitwarden | |
 | zen, vivaldi, brave/chromium | Zen-Team.Zen-Browser, Vivaldi.Vivaldi, Brave.Brave | |
-| obsidian, telegram, element, vesktop, teams-for-linux, thunderbird, libreoffice, calibre | Obsidian.Obsidian, Telegram.TelegramDesktop, Element.Element, Discord.Discord, Microsoft.Teams, Mozilla.Thunderbird, TheDocumentFoundation.LibreOffice, calibre.calibre | Teams stays installed (interviews); `debloat.ps1` no longer removes it |
+| obsidian, telegram, element, vesktop, teams-for-linux, thunderbird, libreoffice, calibre | Obsidian.Obsidian, Telegram.TelegramDesktop, Element.Element, Vencord.Vesktop (+ Discord.Discord), Microsoft.Teams, Mozilla.Thunderbird, TheDocumentFoundation.LibreOffice, calibre.calibre | Teams stays installed (interviews); `debloat.ps1` no longer removes it |
 | spotify, vlc, qbittorrent, OBS (media recording) | Spotify.Spotify, VideoLAN.VLC, qBittorrent.qBittorrent, OBSProject.OBSStudio | |
 | steam, GOG (Heroic), FreesmLauncher + Java 21 | Valve.Steam, GOG.Galaxy, PrismLauncher.PrismLauncher + EclipseAdoptium.Temurin.21.JRE | AkuCraft: new instance + AutoModpack, never copy jars (see memory) |
 | sunshine, moonlight | LizardByte.Sunshine, MoonlightGameStreamingProject.Moonlight | Sunshine host for DESK_A/X13 — **on demand only** (2026-09-15): `SunshineService` set to Manual and stopped; start it from the Start menu (Sunshine) or `Start-Service SunshineService` elevated; not paired with any client yet |

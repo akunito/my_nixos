@@ -38,6 +38,7 @@
         { "PackageIdentifier": "Telegram.TelegramDesktop" },
         { "PackageIdentifier": "Element.Element" },
         { "PackageIdentifier": "Discord.Discord" },
+        { "PackageIdentifier": "Vencord.Vesktop" },
         { "PackageIdentifier": "Microsoft.Teams" },
         { "PackageIdentifier": "TheDocumentFoundation.LibreOffice" },
         { "PackageIdentifier": "calibre.calibre" },
