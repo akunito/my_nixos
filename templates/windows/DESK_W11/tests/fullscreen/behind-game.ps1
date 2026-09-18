@@ -11,6 +11,15 @@ public static class B {
 }
 "@
 $glaze = "C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"
+# Hiding is asynchronous (the WM waits for the OS event), and a busy desktop can
+# take a moment: wait for it instead of measuring blind.
+function WaitForCloak($hwnd, $want, $timeoutMs = 4000) {
+  $deadline = (Get-Date).AddMilliseconds($timeoutMs)
+  while ((Get-Date) -lt $deadline) {
+    if ((([W]::Cloak($hwnd)) -ne 0) -eq $want) { return }
+    Start-Sleep -Milliseconds 250
+  }
+}
 $d = "$env:TEMP\perf"
 
 function WinOf($cls) {
@@ -60,10 +69,13 @@ Report "1 app launched" $game $app
 $mon = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.children.name -contains $homeWs }
 $other = @($mon.children | ? { $_.name -ne $homeWs } | % name)[0]
 & $glaze command focus --workspace $other | Out-Null
-Start-Sleep 2
+Start-Sleep 1
+WaitForCloak $game $true
+WaitForCloak $app $true
 Report "2 other workspace" $game $app
 & $glaze command focus --workspace $homeWs | Out-Null
-Start-Sleep 2
+Start-Sleep 1
+WaitForCloak $game $false
 Report "3 back home" $game $app
 
 # Minimize the game to get to the app, as a user would.

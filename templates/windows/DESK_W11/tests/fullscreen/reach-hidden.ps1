@@ -8,6 +8,15 @@ using System; using System.Runtime.InteropServices;
 public static class R { [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h); }
 "@
 $glaze = "C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"
+# Hiding is asynchronous (the WM waits for the OS event), and a busy desktop can
+# take a moment: wait for it instead of measuring blind.
+function WaitForCloak($hwnd, $want, $timeoutMs = 4000) {
+  $deadline = (Get-Date).AddMilliseconds($timeoutMs)
+  while ((Get-Date) -lt $deadline) {
+    if ((([W]::Cloak($hwnd)) -ne 0) -eq $want) { return }
+    Start-Sleep -Milliseconds 250
+  }
+}
 $d = "$env:TEMP\perf"
 function Displayed { ((& $glaze query workspaces | ConvertFrom-Json).data.workspaces | ? isDisplayed | % name) -join "," }
 ParkCursorOnPrimary
@@ -25,7 +34,8 @@ $homeWs = $map[$w.parentId]
 $other = @($primary.children | ? { $_.name -ne $homeWs } | % name)[0]
 "window on $homeWs, leaving to $other"
 & $glaze command focus --workspace $other | Out-Null
-Start-Sleep 2
+Start-Sleep 1
+WaitForCloak $h $true
 "hidden:            displayed=$(Displayed) cloaked=$([W]::Cloak($h))"
 [void][R]::SetForegroundWindow($h)
 Start-Sleep 2
