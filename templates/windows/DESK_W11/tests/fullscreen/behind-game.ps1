@@ -68,6 +68,7 @@ Report "1 app launched" $game $app
 # Leave the workspace and come back, like Hyper+Q/W.
 $mon = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.children.name -contains $homeWs }
 $other = @($mon.children | ? { $_.name -ne $homeWs } | % name)[0]
+if (-not $other) { $other = if ($homeWs -eq "19") { "18" } else { [string]([int]$homeWs + 1) } }
 & $glaze command focus --workspace $other | Out-Null
 Start-Sleep 1
 WaitForCloak $game $true

@@ -31,10 +31,17 @@ while ($x -ne [IntPtr]::Zero) { if ([W]::Cls($x) -eq "FlipTestWnd") { $h = $x; b
 $map = @{}; foreach ($ws in (& $glaze query workspaces | ConvertFrom-Json).data.workspaces) { $map[$ws.id] = $ws.name }
 $w = (& $glaze query windows | ConvertFrom-Json).data.windows | ? { $_.handle -eq [int64]$h }
 $homeWs = $map[$w.parentId]
-$other = @($primary.children | ? { $_.name -ne $homeWs } | % name)[0]
+# Take the other workspace from the monitor that owns the window: with focus
+# following the pointer, a new window can land on the other monitor's workspace.
+$ownMon = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.children.name -contains $homeWs }
+$other = @($ownMon.children | ? { $_.name -ne $homeWs } | % name)[0]
+# GlazeWM's workspaces exist on demand, so the monitor may have only this one:
+# fall back to another name from its range.
+if (-not $other) { $other = if ($homeWs -eq "19") { "18" } else { [string]([int]$homeWs + 1) } }
 "window on $homeWs, leaving to $other"
 & $glaze command focus --workspace $other | Out-Null
 Start-Sleep 1
+"   right after the switch: displayed=$(Displayed) cloaked=$([W]::Cloak($h))"
 WaitForCloak $h $true
 "hidden:            displayed=$(Displayed) cloaked=$([W]::Cloak($h))"
 [void][R]::SetForegroundWindow($h)
