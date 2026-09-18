@@ -31,6 +31,17 @@ PresentMon modes: `Hardware: Independent Flip` / `Hardware Composed: Independent
 (MPO) = straight to scanout, good. `Composed: Flip` = DWM composes the game with
 something else = latency, lost frames, no VRR.
 
+## Repair tools (after a resume / monitor re-detection)
+
+`win-audit.ps1` prints monitors, GlazeWM's view and the real Win32 rect of every
+window side by side — start there. Then, as needed:
+`fix-stuck-windows.ps1` (a window bigger than its monitor is promoted to fullscreen
+forever and can't be moved: stop GlazeWM, shrink it, start GlazeWM),
+`uncloak-orphans.ps1` (windows left DWM-cloaked and invisible; leaves app-cloaked
+ones such as the Command Palette alone), `fix-window.ps1 -Hwnd <h>` (SW_RESTORE +
+a sane rect, for a window shrunk to 237x39 at -32000), `hungcheck.ps1`,
+`steam-audit.ps1`, `winstyle.ps1`. Tracked in the Plane ticket AINF-399.
+
 ## Results 2026-09-17 (GlazeWM fork 3.10.2, Zebar pill top_most, Windhawk top taskbar)
 
 | Case | Result |
