@@ -93,6 +93,14 @@ forced above the game) does NOT cost the direct path: the GPU puts it on its own
 overlay plane. What did cost it was the Zebar pill, which is transparent and
 repaints; that one is hidden by `PillSync`.
 
+`./run-suite.sh` is **28/28** with the fork build of 2026-09-18 (hide-unmovable +
+covers-monitor + no-self-exit-fullscreen + keep-maximized), `fullscreen.maximized:
+false` and `PillSync` in the AHK script. Test-side pitfalls learned: GlazeWM puts a
+new window on the FOCUSED workspace (take the window's own workspace as home rather
+than moving it — `move --workspace` did not put it where asked); the daemon writes
+its output with a BOM; a maximized window can never reach the screen directly (the
+taskbar strip stays uncovered), so only the borderless case asserts present mode.
+
 Known limitation: an elevated window in the FLOATING state can't be raised above the
 taskbar at all (`SetWindowPos`/z-order denied), so it stays composed. Games run
 fullscreen, which is the case the suite covers.
