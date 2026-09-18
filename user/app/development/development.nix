@@ -58,6 +58,7 @@
                     && !(systemSettings.developmentToolsEnable or false)) [
     pkgs-unstable.vscode
     pkgs-unstable.claude-code
+    pkgs-unstable.uv               # uvx: how the Plane MCP server is launched
   ]
   # === Full Development Runtimes (opt-in per profile) ===
   ++ lib.optionals (systemSettings.developmentFullRuntimesEnable or false) [

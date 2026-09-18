@@ -5,6 +5,22 @@ let
   base = import ./LAPTOP-base.nix;
   # Headscale domain is public, no need for git-crypt on this machine
   headscaleDomain = "headscale.akunito.com";
+
+  # Plane MCP for Aga's Claude Code sessions (a finished babydocs research posts the
+  # decision as a ticket comment and moves the ticket to In Review).
+  #
+  # This machine is secrets-free on purpose — it cannot decrypt secrets/domains.nix,
+  # and it should not be handed every credential in this repo for the sake of one
+  # token. So the Plane credentials live in a file placed by hand on the machine:
+  #
+  #   /home/aga/.secrets/plane-mcp.nix
+  #   { token = "<Aga's own Plane token>"; url = "https://plane.<local domain>"; workspace = "akuworkspace"; }
+  #
+  # ~/.secrets is not excluded from the `home` restic job, so it rides along to the
+  # NAS with the rest of her home. If the file is absent the values are empty and
+  # claude-code simply does not configure the MCP server — nothing breaks.
+  planeMcpFile = /home/aga/.secrets/plane-mcp.nix;
+  planeMcp = if builtins.pathExists planeMcpFile then import planeMcpFile else { };
 in
 {
   # Flag to use rust-overlay
@@ -144,6 +160,11 @@ in
     # this machine needs VS Code + Claude Code + git-crypt and nothing else from
     # the dev set (no azure-cli, dbeaver, powershell, android-tools).
     developmentToolsMinimalEnable = true;
+    # Plane MCP credentials, read from the machine (see planeMcp above), never from
+    # this repo. uvx (in the minimal dev set) runs the server.
+    planeApiToken = planeMcp.token or "";
+    planeApiUrl = planeMcp.url or "";
+    planeWorkspaceSlug = planeMcp.workspace or "";
 
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
