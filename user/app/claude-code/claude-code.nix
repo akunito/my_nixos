@@ -347,9 +347,43 @@ let
     };
   };
 
+  # MCP credentials, in one place: consumed by home.sessionVariables (shells), by the
+  # GUI env files below (flag claudeCodeGuiEnvEnable) and by ~/.claude/mcp-env (systemd).
+  mcpSessionVars =
+    lib.optionalAttrs (jellyseerrApiKey != "") {
+      JELLYSEERR_URL = jellyseerrUrl;
+      JELLYSEERR_API_KEY = jellyseerrApiKey;
+    }
+    // lib.optionalAttrs (planeApiToken != "") {
+      PLANE_API_KEY = planeApiToken;
+      PLANE_BASE_URL = planeApiUrl;
+      PLANE_WORKSPACE_SLUG = planeWorkspaceSlug;
+    }
+    // lib.optionalAttrs (grafanaMcpToken != "") {
+      GRAFANA_URL = grafanaMcpUrl;
+      GRAFANA_API_KEY = grafanaMcpToken;
+    }
+    // lib.optionalAttrs (dbClaudeReadonlyConnStr != "") {
+      POSTGRES_MCP_CONNECTION_STRING = dbClaudeReadonlyConnStr;
+    }
+    // lib.optionalAttrs (n8nMcpApiKey != "") {
+      N8N_MCP_API_KEY = n8nMcpApiKey;
+      N8N_MCP_BASE_URL = n8nMcpUrl;
+    }
+    // lib.optionalAttrs (jlOnboardAccessToken != "") {
+      JL_ENGINE_TOKEN = jlOnboardAccessToken;
+    };
+
+  # GUI-launched apps (the VS Code extension) need the MCP vars in the session env,
+  # not just in a shell rc. See the comment at home.file below.
+  guiEnvEnable = systemSettings.claudeCodeGuiEnvEnable or false;
+
 in
 {
-  imports = [ ./claude-sync.nix ]; # package, `claude` wrapper, 15-min timer (flag claudeSyncEnable)
+  imports = [
+    ./claude-sync.nix # package, `claude` wrapper, 15-min timer (flag claudeSyncEnable)
+    ./projects-workspace.nix # ~/Projects router + settings + .mcp.json (flag claudeProjectsWorkspaceEnable)
+  ];
 
   # Standalone mode: install claude-code + nodejs (for npx/MCP) without full dev IDEs
   home.packages = lib.optionals isStandalone [
@@ -442,30 +476,30 @@ except Exception as e:
   '';
 
   # Set API keys as environment variables for MCP servers (referenced in .mcp.json)
-  home.sessionVariables =
-    lib.optionalAttrs (jellyseerrApiKey != "") {
-      JELLYSEERR_URL = jellyseerrUrl;
-      JELLYSEERR_API_KEY = jellyseerrApiKey;
-    }
-    // lib.optionalAttrs (planeApiToken != "") {
-      PLANE_API_KEY = planeApiToken;
-      PLANE_BASE_URL = planeApiUrl;
-      PLANE_WORKSPACE_SLUG = planeWorkspaceSlug;
-    }
-    // lib.optionalAttrs (grafanaMcpToken != "") {
-      GRAFANA_URL = grafanaMcpUrl;
-      GRAFANA_API_KEY = grafanaMcpToken;
-    }
-    // lib.optionalAttrs (dbClaudeReadonlyConnStr != "") {
-      POSTGRES_MCP_CONNECTION_STRING = dbClaudeReadonlyConnStr;
-    }
-    // lib.optionalAttrs (n8nMcpApiKey != "") {
-      N8N_MCP_API_KEY = n8nMcpApiKey;
-      N8N_MCP_BASE_URL = n8nMcpUrl;
-    }
-    // lib.optionalAttrs (jlOnboardAccessToken != "") {
-      JL_ENGINE_TOKEN = jlOnboardAccessToken;
-    };
+  home.sessionVariables = mcpSessionVars;
+
+  # The same variables for GUI-launched applications (flag claudeCodeGuiEnvEnable).
+  #
+  # WHY: home.sessionVariables lands in hm-session-vars.sh, which only a login SHELL
+  # reads. The Claude Code VS Code extension expands ${VAR} in .mcp.json from the
+  # environment of the VS Code window, and a window started from the Plasma menu has
+  # never seen that file — the MCP server then receives the literal string
+  # "${PLANE_BASE_URL}" and fails with `Invalid URL`. Found on Aga's LAPTOP_A,
+  # 2026-09-18, by her own session.
+  #
+  # Two paths, because neither is guaranteed alone: environment.d is read by the
+  # systemd user manager (and inherited by anything it starts), and the Plasma env
+  # script covers a session that is not fully systemd-managed. Both are per-user files.
+  # (dotted paths, because this module already defines home.file.".claude/mcp-env")
+  home.file.".config/environment.d/50-claude-mcp.conf" = lib.mkIf guiEnvEnable {
+    text = lib.concatStringsSep "\n" (lib.mapAttrsToList (k: v: "${k}=${v}") mcpSessionVars) + "\n";
+  };
+  home.file.".config/plasma-workspace/env/50-claude-mcp.sh" = lib.mkIf guiEnvEnable {
+    executable = true;
+    text = "#!/bin/sh\n"
+      + lib.concatStringsSep "\n" (lib.mapAttrsToList (k: v: "export ${k}=\"${v}\"") mcpSessionVars)
+      + "\n";
+  };
 
   # Generate env file for systemd services (e.g., claude-matrix-bot) that need MCP credentials.
   # Systemd user services don't inherit shell sessionVariables, so they need an EnvironmentFile.

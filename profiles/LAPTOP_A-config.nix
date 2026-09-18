@@ -164,6 +164,14 @@ in
     # generic FHS executable; without nix-ld it dies with code 127 before she can
     # even log in. Same for most marketplace extensions that ship a binary.
     nixLdEnable = true;
+
+    # She works from ONE window at ~/Projects, not one per repository: the router
+    # CLAUDE.md, the permission allowlist and the Plane MCP config live there, because
+    # Claude Code resolves settings and .mcp.json from the directory it starts in.
+    claudeProjectsWorkspaceEnable = true;
+    # And the MCP credentials have to be in the session env, not only in a shell rc,
+    # or the VS Code extension expands nothing and Plane fails with `Invalid URL`.
+    claudeCodeGuiEnvEnable = true;
     # Plane MCP credentials, read from the machine (see planeMcp above), never from
     # this repo. uvx (in the minimal dev set) runs the server.
     planeApiToken = planeMcp.token or "";

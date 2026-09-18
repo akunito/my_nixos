@@ -596,6 +596,9 @@
     developmentToolsEnable = false; # Enable development IDEs and cloud tools (Cursor, Claude Code, Azure CLI, etc.)
     developmentFullRuntimesEnable = false; # Enable full development runtimes (Node.js, Python, Go, Rust)
     claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
+    claudeCodeGuiEnvEnable = false; # Put the MCP credentials in the SESSION env (environment.d + Plasma env), so a GUI-launched VS Code extension can expand them
+    claudeProjectsWorkspaceEnable = false; # ~/Projects as ONE Claude workspace: router CLAUDE.md + shared allowlist + .mcp.json one level above the repos
+    claudeProjectsWorkspaceDir = "Projects"; # Directory under $HOME that holds the project repositories
     developmentToolsMinimalEnable = false; # VS Code + Claude Code + git-crypt only, without the full dev set (Aga's LAPTOP_A: she uses the Claude Code VS Code extension, not azure-cli or dbeaver)
     claudeCodeReadOnly = false; # When true, deny Edit/Write tools in Claude Code settings.json
     claudeBackupToNextcloudEnable = false; # Daily compressed backup of ~/.claude/ to Nextcloud folder
