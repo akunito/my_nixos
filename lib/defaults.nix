@@ -532,6 +532,8 @@
     xboxControllerEnable = false;
     joycondEnable = false; # Joy-Con controller support (joycond daemon + hid_nintendo)
     appImageEnable = false;
+    nixLdEnable = false; # Real /lib64 loader so pre-built FHS binaries run (VS Code extensions ship their own, e.g. the Claude Code extension)
+    nixLdExtraLibraries = [ ]; # Extra packages on nix-ld's library path, beyond the defaults in system/app/nix-ld.nix
     aichatEnable = false; # Enable aichat CLI tool with OpenRouter support
     nixvimEnabled = false; # Enable NixVim configuration (Cursor IDE-like experience)
     lmstudioEnabled = false; # Enable LM Studio configuration and MCP server support

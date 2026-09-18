@@ -160,6 +160,10 @@ in
     # this machine needs VS Code + Claude Code + git-crypt and nothing else from
     # the dev set (no azure-cli, dbeaver, powershell, android-tools).
     developmentToolsMinimalEnable = true;
+    # The Claude Code VS Code extension runs its own bundled binary, which is a
+    # generic FHS executable; without nix-ld it dies with code 127 before she can
+    # even log in. Same for most marketplace extensions that ship a binary.
+    nixLdEnable = true;
     # Plane MCP credentials, read from the machine (see planeMcp above), never from
     # this repo. uvx (in the minimal dev set) runs the server.
     planeApiToken = planeMcp.token or "";

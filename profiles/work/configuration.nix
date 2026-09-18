@@ -69,6 +69,7 @@
   ++ lib.optional systemSettings.xboxControllerEnable ../../system/hardware/xbox.nix # Xbox wireless controller
   ++ lib.optional systemSettings.joycondEnable ../../system/hardware/joycond.nix # Joy-Con controller support
   ++ lib.optional systemSettings.appImageEnable ../../system/app/appimage.nix # AppImage support
+  ++ lib.optional (systemSettings.nixLdEnable or false) ../../system/app/nix-ld.nix # run pre-built FHS binaries (VS Code extensions bundle their own)
   ++ lib.optional systemSettings.starCitizenModules ../../system/app/starcitizen.nix # Star Citizen support
   ++ lib.optional systemSettings.mount2ndDrives ../../system/hardware/drives.nix # Mount drives
   ++ lib.optional (userSettings.wmEnableHyprland == true) ../../system/wm/hyprland.nix # Hyprland (if enabled)
