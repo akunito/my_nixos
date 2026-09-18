@@ -194,7 +194,7 @@ and is the native package manager (Chocolatey adds nothing here). DESK → W11:
 | Nerd font | DEVCOM.JetBrainsMonoNerdFont | |
 | tailscale + trayscale | Tailscale.Tailscale | node DESK_W11 |
 | nextcloud-client | Nextcloud.NextcloudDesktop | |
-| bitwarden | Bitwarden.Bitwarden | |
+| bitwarden | Bitwarden.Bitwarden | native app, **not** a Windows passkey provider yet — see "Known limits" |
 | zen, vivaldi, brave/chromium | Zen-Team.Zen-Browser, Vivaldi.Vivaldi, Brave.Brave | |
 | obsidian, telegram, element, vesktop, teams-for-linux, thunderbird, libreoffice, calibre | Obsidian.Obsidian, Telegram.TelegramDesktop, Element.Element, Vencord.Vesktop (+ Discord.Discord), Microsoft.Teams, Mozilla.Thunderbird, TheDocumentFoundation.LibreOffice, calibre.calibre | Teams stays installed (interviews); `debloat.ps1` no longer removes it |
 | spotify, vlc, qbittorrent, OBS (media recording) | Spotify.Spotify, VideoLAN.VLC, qBittorrent.qBittorrent, OBSProject.OBSStudio | |
@@ -572,6 +572,28 @@ Empty leftovers: `D:\Steam\SteamLibrary`, `C:\Games\steamapps`.
   be reached through the pfSense subnet router, which SNATs every client to
   `192.168.20.1` — authorising that would open the export to anything routing
   through pfSense. Going node-to-node keeps the real source (`100.64.0.15`).
+- **Bitwarden cannot fill passkeys outside the browser** (checked 2026-09-18). Apps
+  like Discord/Vesktop ask the OS for the passkey, and Windows only offers a
+  third-party manager if that manager registers through the plugin-authenticator
+  API. Windows is ready (25H2, build 26200) and the client code is already in
+  stable Bitwarden 2026.8 ("Register Windows native passkey plugin", desktop
+  2026.7/2026.8) — but it is gated behind the server flag
+  `windows-native-credential-sync`, which **no server serves**:
+  `vault.bitwarden.com/api/config` does not list it at all (only
+  `macos-native-credential-sync: false`), so the client falls back to its own
+  default of `false`; Vaultwarden is doubly blocked, since it validates flags
+  against a compiled `SUPPORTED_FEATURE_FLAGS` list that lacks it (the PR adding
+  the 2026.7 batch was closed unmerged). Symptom to confirm it is still off:
+  `HKLM\SOFTWARE\Microsoft\Cryptography\FIDO` does not exist, and Settings →
+  Accounts → Passkeys → Advanced lists no provider. The feature is still the open
+  PR [bitwarden/clients#17316](https://github.com/bitwarden/clients/pull/17316)
+  ("Beta: Windows Native Passkeys"); Bitwarden said in April 2026 it is blocked
+  before stable. A working `.appx` beta exists (artifacts posted 2026-09-01,
+  installs side by side as "Bitwarden Beta") — **declined 2026-09-18**, we wait for
+  stable. Re-check with:
+  `curl -s https://vault.bitwarden.com/api/config | grep -o 'windows-native-credential-sync[^,]*'`.
+  Browser passkeys are unaffected: the Bitwarden extension handles those (installed
+  in Zen and Vivaldi; **not** in Brave).
 - **Passphrase prompts are WSLg windows, never TTY prompts** (2026-09-16).
   `SSH_AUTH_SOCK` is gpg-agent's; the agent runs as a user service with no
   `DISPLAY`, and the ssh protocol carries no tty, so with `gpgPinentryCurses` the
