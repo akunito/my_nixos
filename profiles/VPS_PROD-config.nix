@@ -554,10 +554,14 @@ in
       # synapse metrics target removed 2026-09-15 (Matrix stack archived; rules in grafana.nix stay inert)
       # miniflux removed 2026-09-11: decommissioned ~Apr 2026, the probe fired ExportarrTargetDown forever
       # NAS exportarr targets (tailnet address, not the pfSense-routed LAN IP) — node = nas so they are muted while it sleeps
-      { name = "sonarr";    host = "100.64.0.1";      port = 9707; node = "nas"; }
-      { name = "radarr";    host = "100.64.0.1";      port = 9708; node = "nas"; }
-      { name = "prowlarr";  host = "100.64.0.1";      port = 9709; node = "nas"; }
-      { name = "bazarr";    host = "100.64.0.1";      port = 9710; node = "nas"; }
+      # 60s/30s instead of the global 15s/10s: these exporters answer only after
+      # querying their app, and bazarr needs 5-9s to do it (p95 4.8s, p100 was
+      # the 10s timeout itself). Queue and library counters do not need 15s
+      # resolution, and polling bazarr four times less often costs it less work.
+      { name = "sonarr";    host = "100.64.0.1";      port = 9707; node = "nas"; scrapeInterval = "60s"; scrapeTimeout = "30s"; }
+      { name = "radarr";    host = "100.64.0.1";      port = 9708; node = "nas"; scrapeInterval = "60s"; scrapeTimeout = "30s"; }
+      { name = "prowlarr";  host = "100.64.0.1";      port = 9709; node = "nas"; scrapeInterval = "60s"; scrapeTimeout = "30s"; }
+      { name = "bazarr";    host = "100.64.0.1";      port = 9710; node = "nas"; scrapeInterval = "60s"; scrapeTimeout = "30s"; }
     ];
 
     # Blackbox exporter (HTTP probes for public services)

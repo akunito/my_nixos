@@ -91,6 +91,12 @@ let
   ];
 
   # Build scrape configs for application exporters (exportarr, etc.)
+  # scrapeInterval/scrapeTimeout are optional per target: the exportarr
+  # exporters query their app synchronously, so bazarr routinely needs 5-9 s to
+  # answer (p95 4.8 s measured 2026-09-18) against the global 15 s interval and
+  # its implicit 10 s timeout. Every overrun is a failed scrape and enough of
+  # them in a row is a false ExportarrTargetDown, so those jobs get a slower
+  # interval and a timeout with real headroom.
   appScrapeConfigs = map (target: {
     job_name = "${target.name}_app";
     static_configs = [{
@@ -102,7 +108,9 @@ let
         node = target.node or "vps";
       };
     }];
-  }) appTargets;
+  } // lib.optionalAttrs (target ? scrapeInterval) { scrape_interval = target.scrapeInterval; }
+    // lib.optionalAttrs (target ? scrapeTimeout) { scrape_timeout = target.scrapeTimeout; }
+  ) appTargets;
 
 in
 {
