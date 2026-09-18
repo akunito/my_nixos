@@ -36,6 +36,9 @@ let
   # key-unlock unit before their .mount units.
   nasZfsMountPoints = systemSettings.nasZfsMountPoints or [ ];
   nasZfsMountUnits = map (mp: "${utils.escapeSystemdPath mp}.mount") nasZfsMountPoints;
+  # Trees the VPS backup puller must be able to read even though a rootless
+  # container owns them. See the nas-backup-acl service below.
+  backupAclPaths = systemSettings.nasBackupAclPaths or [ ];
 in
 {
   config = lib.mkIf nasEnabled {
@@ -521,6 +524,61 @@ HEADER
     # replays it the instant the RTC wake fires — suspending <1s after resume and
     # corrupting device state (2026-07-14 hang). A missed nightly suspend is
     # harmless; the NAS simply stays awake until the next 23:00.
+    # --- Backup read access for rootless-container-owned trees ---------------
+    # A rootless Docker project writes its files as one of the user's subuids
+    # (the AkuCraft Minecraft servers write level.dat, playerdata and the
+    # skinrestorer/automodpack state as uid 100999, mode 0600). akunito owns the
+    # user namespace but not the files, so the VPS backup puller — plain ssh as
+    # akunito — cannot read them. rsync then copies the tree minus exactly the
+    # files a restore needs and reports a non-fatal warning, which is how the
+    # AkuCraft worlds spent weeks inside the offsite "configs" backup in a state
+    # that could never have been restored (found 2026-09-18).
+    #
+    # A POSIX ACL fixes it without changing ownership, touching the containers or
+    # granting anyone root: the plain entry covers what exists now, the default
+    # entry makes every file the container creates from here on readable too.
+    # setfacl recomputes the mask as the union of the existing entries, so the
+    # owner's and group's own permissions are unchanged — the servers keep
+    # writing exactly as before. acltype=posix is already set on ssdpool.
+    #
+    # Runs daily just after the RTC wake and well before the 18:30 pull, so a new
+    # server directory, a restored dataset or a pool import cannot leave the
+    # backup silently partial again. Metadata only: ~4k files take seconds.
+    # The same mechanism was applied by hand to npm/letsencrypt long ago.
+    systemd.services.nas-backup-acl = lib.mkIf (backupAclPaths != [ ]) {
+      description = "Grant ${username} read access (POSIX ACL) to backup source trees";
+      path = [ pkgs.acl pkgs.findutils pkgs.coreutils ];
+      serviceConfig = {
+        Type = "oneshot";
+        # root: only the owner of a file may change its ACL, and these files
+        # belong to a subuid rather than to ${username}.
+        User = "root";
+      };
+      script = ''
+        for p in ${lib.escapeShellArgs backupAclPaths}; do
+          if [ ! -d "$p" ]; then
+            echo "nas-backup-acl: $p absent, skipping"
+            continue
+          fi
+          setfacl -R -m u:${username}:rX "$p"
+          # Default ACLs exist only on directories, so they get their own pass.
+          find "$p" -type d -exec setfacl -m d:u:${username}:rX {} +
+          echo "nas-backup-acl: applied to $p"
+        done
+      '';
+    };
+
+    systemd.timers.nas-backup-acl = lib.mkIf (backupAclPaths != [ ]) {
+      description = "Timer for backup-source ACL refresh (daily 16:10)";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        # After the 16:00 RTC wake, before the VPS pulls at 17:30/18:00/18:30.
+        OnCalendar = "*-*-* 16:10:00";
+        Persistent = true;
+        RandomizedDelaySec = "2min";
+      };
+    };
+
     systemd.timers.nas-suspend = {
       description = "Suspend NAS at 23:00";
       wantedBy = [ "timers.target" ];

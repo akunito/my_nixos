@@ -126,6 +126,11 @@ in
       "/mnt/extpool/vps-backups"
     ];
     nasHostId = "47bff07a";
+    # Trees the VPS backup puller reads over plain ssh as akunito, but which a
+    # rootless container owns (AkuCraft writes level.dat / playerdata as uid
+    # 100999 mode 0600). nas-backup-acl grants akunito read via POSIX ACL, plus a
+    # default ACL so the files the servers create later stay readable.
+    nasBackupAclPaths = [ "/mnt/ssdpool/docker/compose/gameservers" ];
     nasAutoSnapshotEnable = true;
     nasDockerProjects = [
       "npm"

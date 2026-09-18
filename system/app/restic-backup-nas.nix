@@ -1,9 +1,14 @@
 # NAS Offsite Backup — VPS pulls Docker data + configs from NAS
 #
 # Pull model: VPS SSHes into NAS (nas-aku), rsyncs to local staging, runs restic locally.
-# Two independent jobs with separate restic repos and passwords:
-#   - configs: compose files + NAS system config export (daily 17:30)
-#   - data:    container data directories (daily 18:00)
+# Three independent jobs with separate restic repos and passwords:
+#   - configs:  compose files (daily 17:30) — gameservers/ excluded, see akucraft
+#   - data:     container data directories (daily 18:00)
+#   - akucraft: the Minecraft worlds under compose/gameservers/ (daily 18:30),
+#               split out on 2026-09-18 because they are 9.4 GB of world data in
+#               a tree whose other 15 directories total 190 MB, and because the
+#               files a restore actually needs were unreadable — see the
+#               nasBackupAclPaths / nas-backup-acl service on the NAS.
 # Scheduled inside the NAS awake window (16:00-23:00); NAS can't be WoL-woken from S3.
 #
 # Each job writes Prometheus textfile metrics for alerting.
@@ -14,10 +19,17 @@
 #   - SSH key at /home/<user>/.ssh/id_ed25519_restic (authorized on NAS akunito user)
 #   - Password files at /etc/secrets/restic-truenas-{configs,data}
 #     (filename historical — file is on disk, do not rename without restic repo migration)
+#     /etc/secrets/restic-akucraft is declared from secrets.resticAkucraftPassword
+#     instead, like the restic-backup-vps.nix repos.
 #   - Restic repos initialized:
 #       restic init --repo /var/lib/truenas-backups/configs.restic
 #       restic init --repo /var/lib/truenas-backups/data.restic
-#     (path historical — disk state preserved across rename)
+#       restic init --repo /var/lib/truenas-backups/akucraft.restic
+#     (configs/data paths historical — disk state preserved across rename)
+#   - The NAS grants akunito read access to the gameservers tree
+#     (nasBackupAclPaths in NAS_PROD-config.nix). Without it the akucraft job
+#     copies the worlds minus level.dat, playerdata and skinrestorer state, i.e.
+#     a backup that cannot be restored, and says so only as an rsync warning.
 
 { config, lib, pkgs, systemSettings, userSettings, ... }:
 
@@ -31,6 +43,9 @@ let
   sshKey = "/home/${username}/.ssh/id_ed25519_restic";
   sshOpts = "-o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new -i ${sshKey}";
   textfileDir = "/var/lib/prometheus-node-exporter/textfile";
+  # Separate flag so the VPS job can be switched on only after the NAS has the
+  # ACL service deployed; without it the worlds copy incomplete and silent.
+  akucraftEnabled = systemSettings.nasResticBackupAkucraftEnable or false;
 
   # Helper: create a NAS backup job (rsync + restic + metrics)
   mkNasBackup = {
@@ -314,19 +329,72 @@ METRICS
     '';
   };
 
+  # --- AkuCraft job: the Minecraft worlds under compose/gameservers/ ---
+  # Kept out of the configs job (which is meant to be compose files) and out of
+  # the data job (which covers /mnt/ssdpool/docker/*), because this is ~5 GB of
+  # game state with its own lifetime and its own restore story.
+  #
+  # Included: every world (data/world*, master/, master.tgz, world-seed*), the
+  # server configs, the compose files and the run scripts.
+  # Excluded: everything a fresh server would fetch or regenerate — mods,
+  # libraries, versions, automodpack, the bluemap/squaremap render caches, logs,
+  # crash reports — and akucraft-solo/runs/, which is 2.5 GB of superseded past
+  # solo worlds already sitting on the NAS. Flip that exclude if a past run ever
+  # needs to survive the NAS itself.
+  akucraftBackup = mkNasBackup {
+    name = "akucraft";
+    passwordFile = "/etc/secrets/restic-akucraft";
+    schedule = "*-*-* 18:30:00";  # NAS awake 16:00-23:00; runs after the data job
+    description = "AkuCraft Minecraft worlds (NAS gameservers)";
+    rsyncScript = ''
+      RSYNC_OPTS="-az --delete --timeout=120"
+      mkdir -p "$STAGING/gameservers"
+
+      rsync_dir /mnt/ssdpool/docker/compose/gameservers/ "$STAGING/gameservers/" "akucraft gameservers" \
+        --exclude='*/data/mods/' \
+        --exclude='*/data/libraries/' \
+        --exclude='*/data/versions/' \
+        --exclude='*/data/automodpack/' \
+        --exclude='*/data/bluemap/' \
+        --exclude='*/data/squaremap/' \
+        --exclude='*/data/logs/' \
+        --exclude='*/data/crash-reports/' \
+        --exclude='*/data/dynamic-data-pack-cache/' \
+        --exclude='*/runs/' \
+        --exclude='*.jar' --exclude='*.log' --exclude='*.tmp' --exclude='*.cache'
+
+      # Note: a server that happens to be running is copied live. The AkuCraft
+      # servers idle-stop, so in practice the tree is quiescent at 18:30; if that
+      # stops being true, have the bot issue save-off/save-all first.
+    '';
+  };
+
 in lib.mkIf (systemSettings.nasResticBackupEnable or false) {
   # Ensure directories exist
   systemd.tmpfiles.rules = [
     "d ${localDir} 0755 ${username} users -"
     "d ${localDir}/staging-configs 0755 ${username} users -"
     "d ${localDir}/staging-data 0755 ${username} users -"
+  ] ++ lib.optionals akucraftEnabled [
+    "d ${localDir}/staging-akucraft 0755 ${username} users -"
   ];
+
+  # Declared like the restic-backup-vps.nix repos, so a rebuilt VPS still has it
+  # (the historical restic-truenas-* files are hand-placed and would not).
+  environment.etc = lib.mkIf (akucraftEnabled && (systemSettings.resticAkucraftPassword or "") != "") {
+    "secrets/restic-akucraft" = {
+      text = systemSettings.resticAkucraftPassword;
+      mode = "0600"; user = "root"; group = "root";
+    };
+  };
 
   # Backup services
   systemd.services.nas-backup-configs = configsBackup.service;
   systemd.services.nas-backup-data = dataBackup.service;
+  systemd.services.nas-backup-akucraft = lib.mkIf akucraftEnabled akucraftBackup.service;
 
   # Backup timers
   systemd.timers.nas-backup-configs = configsBackup.timer;
   systemd.timers.nas-backup-data = dataBackup.timer;
+  systemd.timers.nas-backup-akucraft = lib.mkIf akucraftEnabled akucraftBackup.timer;
 }

@@ -663,6 +663,13 @@ in
     # === NAS Offsite Backup (VPS pulls Docker data + configs daily) ===
     nasResticBackupEnable = true;
     nasResticBackupHost = "100.64.0.1";  # same reason as prometheusNasBackupHost above
+    # The AkuCraft worlds get their own repo (2026-09-18). They used to ride
+    # along in the configs job, 9.4 GB of world data in a tree of compose files,
+    # and without level.dat / playerdata / skinrestorer because a rootless
+    # container owns those — a backup that could not have been restored. Depends
+    # on nasBackupAclPaths being deployed on the NAS first.
+    nasResticBackupAkucraftEnable = true;
+    resticAkucraftPassword = secrets.resticAkucraftPassword or "";
   };
 
   userSettings = base.userSettings // {
