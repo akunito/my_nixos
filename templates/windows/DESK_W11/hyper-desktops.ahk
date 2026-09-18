@@ -337,16 +337,38 @@ WinSwitcher() {
 ^!#Space:: Send "#!{Space}" ; PowerToys Command Palette (its own hotkey is Win+Alt+Space; PowerToys Run is disabled) — rofi stand-in
 
 ; raise-or-launch — the app-toggle.sh idea: focus if running, minimise if focused, launch otherwise
+; Hyper+<letter>: go to the app, don't bring it here. A window parked on a hidden
+; workspace is DWM-cloaked and `WinActivate` cannot show it (it only lights up in
+; the taskbar and stays unreachable -- that is how Telegram got trapped behind a
+; fullscreen game), so GlazeWM is asked to focus it instead: it switches to the
+; window's workspace and uncloaks it. Launching a new app leaves it where you are.
 Toggle(exe, cmd) {
-    Dbg("toggle " exe " " (WinExist("ahk_exe " exe) ? (WinActive("ahk_exe " exe) ? "minimise" : "activate") : "launch"))
-    if WinExist("ahk_exe " exe) {
-        if WinActive("ahk_exe " exe)
-            WinMinimize
-        else
-            WinActivate
-    } else {
+    DetectHiddenWindows true
+    hwnd := WinExist("ahk_exe " exe)
+    Dbg("toggle " exe " " (hwnd ? (WinActive("ahk_id " hwnd) ? "minimise" : "focus") : "launch"))
+    if !hwnd {
         Run cmd
+        return
     }
+    if WinActive("ahk_id " hwnd) {
+        WinMinimize "ahk_id " hwnd
+        return
+    }
+    if (id := GlazeIdOf(hwnd))
+        Glaze("focus --container-id " id)
+    else
+        WinActivate "ahk_id " hwnd      ; not managed (ignored windows, popups)
+}
+
+; GlazeWM's container id for a window handle, or "" if it doesn't manage it.
+GlazeIdOf(hwnd) {
+    j := GlazeQuery("windows"), pos := 1
+    while pos := RegExMatch(j, '"type":"window","id":"([^"]+)"[\s\S]*?"handle":(\d+)', &m, pos) {
+        if (m[2] + 0 = hwnd + 0)
+            return m[1]
+        pos += StrLen(m[0])
+    }
+    return ""
 }
 ^!#t:: Toggle("WindowsTerminal.exe", "wt.exe")
 ^!#z:: Toggle("zen.exe", A_ProgramFiles "\Zen Browser\zen.exe")
