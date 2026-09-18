@@ -19,6 +19,17 @@ $h = [IntPtr]$w.handle
 $above = @(); $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero -and $x -ne $h) { if ([W]::IsWindowVisible($x) -and -not [W]::Cloak($x)) { $r = [W]::Rect($x); if (($r.Rt-$r.L) -gt 0 -and $r.T -lt 1400) { $above += [W]::Cls($x) } }; $x = [W]::GetWindow($x, 2) }
 "above: $($above -join ',')"
-Remove-Item "$d\fsauto.csv","$d\fsauto.done" -EA SilentlyContinue
-& "$d\PresentMon.exe" --process_name fliptest.exe --output_file "$d\fsauto.csv" --v2_metrics --timed 5 --terminate_after_timed --stop_existing_session --session_name AkuFs --no_console_stats *> $null
-(Import-Csv "$d\fsauto.csv" | Group-Object PresentMode | % { "$($_.Name)=$($_.Count)" }) -join ", "
+# PresentMon occasionally writes nothing (session still closing from the previous
+# case); one retry rather than a false failure.
+$modes = ""
+foreach ($try in 1..2) {
+  Remove-Item "$d\fsauto.csv" -EA SilentlyContinue
+  & "$d\PresentMon.exe" --process_name fliptest.exe --output_file "$d\fsauto.csv" --v2_metrics --timed 5 --terminate_after_timed --stop_existing_session --session_name AkuFs --no_console_stats *> $null
+  if (Test-Path "$d\fsauto.csv") {
+    $modes = ((Import-Csv "$d\fsauto.csv" | Group-Object PresentMode | % { "$($_.Name)=$($_.Count)" }) -join ", ")
+    if ($modes) { break }
+  }
+  Start-Sleep 2
+}
+if (-not $modes) { $modes = "no frames captured" }
+$modes
