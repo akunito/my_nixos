@@ -8,6 +8,7 @@ $mon = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq
 $ws = ($mon.children | ? isDisplayed).name
 & $glaze command focus --workspace $ws | Out-Null
 Start-Sleep 1
+ParkCursorOnPrimary
 Get-Process fliptest -EA SilentlyContinue | Stop-Process -Force
 Start-Sleep 1
 $p = Start-Process "$d\fliptest.exe" -ArgumentList "20 0" -PassThru

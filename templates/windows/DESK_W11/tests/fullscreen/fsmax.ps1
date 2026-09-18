@@ -4,6 +4,7 @@
 $glaze = "C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"
 . "$env:TEMP\perf\win32.ps1"
 $d = "$env:TEMP\perf"
+ParkCursorOnPrimary
 Get-Process fliptest -EA SilentlyContinue | Stop-Process -Force
 $mon = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
 & $glaze command focus --workspace ($mon.children | ? isDisplayed).name | Out-Null

@@ -191,5 +191,23 @@ out=$(tr -d '\r' < "$P/window-state-test.txt" 2>/dev/null)
 echo "$out" | sed 's/^/    /'
 echo "$out" | grep -q "^all passed" && ok "helpers behave" || ko "window-state helpers" "$(echo "$out" | grep FAIL | head -1)"
 
+# Focus follows the mouse (native Windows tracking, no raise on hover): the
+# pointer decides the focus, so a fullscreen window must keep it while the
+# pointer is over it and get it back — with the direct path to the screen —
+# when the pointer comes back or after a workspace round trip.
+settle
+echo "== 13. focus follows the mouse"
+rm -f "$P/ffm.out"; echo "ffm-test.ps1" > "$P/ffm.elev"
+for _ in $(seq 120); do [ -f "$P/ffm.out" ] && break; sleep 1; done
+out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/ffm.out" | tr -d '\r')
+echo "$out" | sed 's/^/    /'
+pct1=$(echo "$out" | grep "^1 pointer over it" | grep -o '[0-9]*% direct' | tr -d '%% direct')
+echo "$out" | grep "^1 pointer over it" | grep -q "focused=True" && [ "${pct1:-0}" -ge 90 ] && ok "keeps focus and the direct path under the pointer" || ko "pointer over the window" "$(echo "$out" | grep '^1 ')"
+echo "$out" | grep "^2 pointer on monitor2" | grep -q "focused=False" && ok "focus follows the pointer away" || ko "pointer away" "$(echo "$out" | grep '^2 ')"
+pct3=$(echo "$out" | grep "^3 pointer back" | grep -o '[0-9]*% direct' | tr -d '%% direct')
+echo "$out" | grep "^3 pointer back" | grep -q "focused=True" && [ "${pct3:-0}" -ge 90 ] && ok "focus and direct path come back with the pointer" || ko "pointer back" "$(echo "$out" | grep '^3 ')"
+pct4=$(echo "$out" | grep "^4 after workspace trip" | grep -o '[0-9]*% direct' | tr -d '%% direct')
+echo "$out" | grep "^4 after workspace trip" | grep -q "focused=True cloaked=0" && [ "${pct4:-0}" -ge 90 ] && ok "survives a workspace round trip" || ko "workspace trip with the pointer" "$(echo "$out" | grep '^4 ')"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

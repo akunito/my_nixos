@@ -34,6 +34,7 @@ function Report($tag, $game, $app) {
     $tag, (WsOf $game), [W]::Cloak($game), [W]::IsIconic($game), (WsOf $app), [W]::Cloak($app), [W]::IsWindowVisible($app), $aa.L, $aa.T, $behind
 }
 
+ParkCursorOnPrimary
 Get-Process fliptest, charmap -EA SilentlyContinue | Stop-Process -Force
 # Start on the workspace of the primary monitor: GlazeWM puts new windows on the
 # FOCUSED workspace, which may belong to the other monitor.

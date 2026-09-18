@@ -10,6 +10,7 @@ public static class R { [DllImport("user32.dll")] public static extern bool SetF
 $glaze = "C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"
 $d = "$env:TEMP\perf"
 function Displayed { ((& $glaze query workspaces | ConvertFrom-Json).data.workspaces | ? isDisplayed | % name) -join "," }
+ParkCursorOnPrimary
 Get-Process fliptest -EA SilentlyContinue | Stop-Process -Force
 $primary = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
 & $glaze command focus --workspace ($primary.children | ? isDisplayed).name | Out-Null

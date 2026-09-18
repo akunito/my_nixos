@@ -19,6 +19,7 @@ function Pills {
   }
   $out -join " "
 }
+ParkCursorOnPrimary
 Get-Process fliptest -EA SilentlyContinue | Stop-Process -Force
 $p = Start-Process "$d\fliptest.exe" -ArgumentList "14 0 gamelike" -PassThru
 Start-Sleep 6

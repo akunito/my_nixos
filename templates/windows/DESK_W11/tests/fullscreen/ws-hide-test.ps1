@@ -73,7 +73,8 @@ Snap "3 back home" $h
 & $glaze command focus --container-id $win.id 2>$null | Out-Null; Start-Sleep 2
 Snap "4 focused window" $h
 # present mode while the window is back in front (taskbar/overlay above => Composed)
-$d = "$env:TEMP\perf"; Remove-Item "$d\wscap.csv","$d\wscap.done" -EA SilentlyContinue
+$d = "$env:TEMP\perf"
+ParkCursorOnPrimary; Remove-Item "$d\wscap.csv","$d\wscap.done" -EA SilentlyContinue
 $elev = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if ($elev) { & "$d\PresentMon.exe" --process_name fliptest.exe --output_file "$d\wscap.csv" --v2_metrics --timed 4 --terminate_after_timed --stop_existing_session --session_name AkuWs --no_console_stats *> $null }
 else { "4" | Set-Content "$d\wscap.req"; while (-not (Test-Path "$d\wscap.done")) { Start-Sleep -Milliseconds 300 } }

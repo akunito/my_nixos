@@ -48,6 +48,7 @@ function State {
   if ($w) { "$($w.state.type)" } else { "unmanaged" }
 }
 
+ParkCursorOnPrimary
 Get-Process fliptest, charmap -EA SilentlyContinue | Stop-Process -Force
 $mon = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
 & $glaze command focus --workspace ($mon.children | ? isDisplayed).name | Out-Null
