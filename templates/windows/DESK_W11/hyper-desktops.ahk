@@ -117,9 +117,11 @@ ZOrderLine(focusHwnd) {
 ; maximised window never reaches.
 PillSync(*) {
     static last := 0, recheck := 0
-    if (A_TickCount - last < 200) {        ; location changes arrive in bursts
+    ; Short throttle: the pill was visible over the game for up to half a second
+    ; every time the game got the focus back, and those frames are composed.
+    if (A_TickCount - last < 60) {         ; location changes arrive in bursts
         if (!recheck)                      ; but the last one still has to be seen
-            recheck := 1, SetTimer(() => (recheck := 0, PillSync()), -600)
+            recheck := 1, SetTimer(() => (recheck := 0, PillSync()), -250)
         return
     }
     last := A_TickCount
