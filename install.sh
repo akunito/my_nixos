@@ -1157,9 +1157,52 @@ else
     handle_docker $SCRIPT_DIR $SILENT_MODE
 fi
 
+# Guard: -h keeps whatever hardware-configuration.nix is in the tree, and a
+# deploy that just ran `git reset --hard origin/main` has the LAST machine that
+# pushed it — that file thrashes between hosts by design, because install.sh is
+# what rewrites it per machine. Combining the two builds a generation with
+# another machine's disks: the initrd is rebuilt, the bootloader entry is
+# replaced, services that depend on the real mounts fall over, and the next
+# reboot finds no root filesystem. This happened to VPS_PROD on 2026-09-18
+# (`-s -d -h` after a reset; generation had DESK's LUKS UUIDs and btrfs root).
+#
+# So when -h is used, the committed root device must be one this machine
+# actually has. --force bypasses it for a first install on new hardware.
+assert_hardware_config_matches_host() {
+    local HW_CONFIG="$1/system/hardware-configuration.nix"
+    [ -f "$HW_CONFIG" ] || return 0
+
+    local TREE_ROOT
+    TREE_ROOT=$(python3 -c "
+import re, sys
+s = open(sys.argv[1]).read()
+m = re.search(r'fileSystems\.\"/\"\s*=\s*\{[^}]*?device\s*=\s*\"([^\"]+)\"', s, re.S)
+print(m.group(1) if m else '')
+" "$HW_CONFIG" 2>/dev/null)
+    [ -n "$TREE_ROOT" ] || return 0
+
+    local REAL_ROOT
+    REAL_ROOT=$(findmnt -n -o SOURCE / 2>/dev/null | head -1)
+    if [ "$TREE_ROOT" = "$REAL_ROOT" ] || [ -e "$TREE_ROOT" ]; then
+        return 0
+    fi
+
+    echo -e "${RED}ABORTING: -h/--skip-hardware with another machine's hardware-configuration.nix${RESET}"
+    echo -e "${YELLOW}  committed root device: $TREE_ROOT  (does not exist on this machine)${RESET}"
+    echo -e "${YELLOW}  actual root device:    ${REAL_ROOT:-unknown}${RESET}"
+    echo -e "${CYAN}  Building this would give the system another machine's disks and leave it unbootable.${RESET}"
+    echo -e "${CYAN}  Re-run WITHOUT -h so the file is regenerated for this machine:${RESET}"
+    echo -e "${CYAN}    $0 $SCRIPT_DIR $PROFILE -s -d${RESET}"
+    echo -e "${CYAN}  (--force bypasses this check, e.g. a first install on new hardware.)${RESET}"
+    exit 1
+}
+
 # Generate hardware config and check boot mode
 # Skip with -h/--skip-hardware to avoid issues with docker volumes or when not needed
 if [ "$SKIP_HARDWARE" = true ]; then
+    if [ "$FORCE_MODE" != true ]; then
+        assert_hardware_config_matches_host "$SCRIPT_DIR"
+    fi
     echo -e "${CYAN}Skipping hardware-configuration.nix generation (-h flag)${RESET}"
 else
     generate_hardware_config $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
