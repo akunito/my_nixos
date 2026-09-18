@@ -150,7 +150,7 @@ MonitorAt(x, y) {
 ; The pill is checked against the monitor, not against the focused window: with
 ; the focus on the other monitor the pill would otherwise pop back over a game.
 MonitorIsCovered(mon, pill) {
-    DetectHiddenWindows false                ; cloaked windows are on another workspace
+    DetectHiddenWindows false
     for hwnd in WinGetList() {
         if (hwnd = pill)
             continue
@@ -159,6 +159,15 @@ MonitorIsCovered(mon, pill) {
             if (exe = "zebar.exe" || exe = "explorer.exe")   ; the taskbar covers the pill too
                 continue
             if (DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr") != hwnd)
+                continue
+            if (WinGetMinMax("ahk_id " hwnd) = -1)           ; minimised
+                continue
+            ; A window parked on a hidden workspace is DWM-cloaked, and AHK still
+            ; lists it: without this the pill stayed hidden on empty workspaces
+            ; once a game had been open on that monitor.
+            cloaked := 0
+            DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", hwnd, "UInt", 14, "Int*", &cloaked, "UInt", 4)
+            if (cloaked)
                 continue
             WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
             if (wx <= mon.l && wy <= mon.t && wx + ww >= mon.r && wy + wh >= mon.b)
