@@ -114,31 +114,58 @@ ZOrderLine(focusHwnd) {
 ; whenever the focused window covers it completely -- only a window spanning
 ; the whole monitor does, since the pills sit over the taskbar strip that a
 ; maximised window never reaches.
-PillSync(hwnd) {
+PillSync(*) {
     static last := 0
     if (A_TickCount - last < 200)          ; location changes arrive in bursts
         return
     last := A_TickCount
     DetectHiddenWindows true
-    try {
-        if (WinGetProcessName("ahk_id " hwnd) = "zebar.exe")
-            return
-        WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
-    } catch
-        return
     for pill in WinGetList("ahk_class Tauri Window ahk_exe zebar.exe") {
         try {
             WinGetPos &px, &py, &pw, &ph, "ahk_id " pill
             if (pw < 100 || ph > 100)            ; zebar's own utility window
                 continue
-            covered := (wx <= px && wy <= py && wx + ww >= px + pw && wy + wh >= py + ph)
+            mon := MonitorAt(px + pw // 2, py + ph // 2)
+            covered := MonitorIsCovered(mon, pill)
             shown := DllCall("IsWindowVisible", "Ptr", pill)
             if (covered && shown)
-                WinHide("ahk_id " pill), Dbg("pill hidden (covered by hwnd " hwnd ")")
+                WinHide("ahk_id " pill), Dbg("pill hidden (monitor " mon.i " covered)")
             else if (!covered && !shown)
-                WinShow("ahk_id " pill), Dbg("pill shown")
+                WinShow("ahk_id " pill), Dbg("pill shown (monitor " mon.i ")")
         }
     }
+}
+
+MonitorAt(x, y) {
+    loop MonitorGetCount() {
+        MonitorGet(A_Index, &l, &t, &r, &b)
+        if (x >= l && x < r && y >= t && y < b)
+            return {i: A_Index, l: l, t: t, r: r, b: b}
+    }
+    MonitorGet(1, &l, &t, &r, &b)
+    return {i: 1, l: l, t: t, r: r, b: b}
+}
+
+; Is some window covering this whole monitor (a game, a video at full screen)?
+; The pill is checked against the monitor, not against the focused window: with
+; the focus on the other monitor the pill would otherwise pop back over a game.
+MonitorIsCovered(mon, pill) {
+    DetectHiddenWindows false                ; cloaked windows are on another workspace
+    for hwnd in WinGetList() {
+        if (hwnd = pill)
+            continue
+        try {
+            exe := WinGetProcessName("ahk_id " hwnd)
+            if (exe = "zebar.exe" || exe = "explorer.exe")   ; the taskbar covers the pill too
+                continue
+            if (DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr") != hwnd)
+                continue
+            WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
+            if (wx <= mon.l && wy <= mon.t && wx + ww >= mon.r && wy + wh >= mon.b)
+                return true
+        }
+    }
+    return false
 }
 
 WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
@@ -148,8 +175,10 @@ WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
         return
     ; Foreground changes, and size changes of the foreground window (a game
     ; usually grows to fullscreen after it is already focused).
-    if (ev = 0x3 || (ev = 0x800B && hwnd = DllCall("GetForegroundWindow", "Ptr")))
-        PillSync(hwnd)
+    ; Foreground changes, size changes (a game grows to fullscreen after it has
+    ; focus) and cloak/uncloak (workspace switches).
+    if (ev = 0x3 || ev = 0x800B || ev = 0x8017 || ev = 0x8018)
+        PillSync()
     if !FileExist(A_Temp "\hyper-debug.on")
         return
     if (DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr") != hwnd)   ; top-level only
