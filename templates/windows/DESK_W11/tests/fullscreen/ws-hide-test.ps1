@@ -28,14 +28,20 @@ $h = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero) { if ([W]::Pid($x) -eq $p.Id -and [W]::Cls($x) -eq "FlipTestWnd") { $h = $x; break }; $x = [W]::GetWindow($x, 2) }
 if ($h -eq [IntPtr]::Zero) { "no window"; exit 1 }
 $win = (& $glaze query windows | ConvertFrom-Json).data.windows | ? { $_.handle -eq [int64]$h }
-# GlazeWM puts a new window on the FOCUSED workspace, which may be the one of the
-# other monitor; this test needs it on the workspace we are about to leave.
-& $glaze command --id $win.id move --workspace $HomeWs | Out-Null
-Start-Sleep 2
+# GlazeWM puts a new window on the FOCUSED workspace, which may not be the one
+# that was displayed here. Take the window's own workspace as the home one and
+# make sure it is displayed, instead of moving windows around.
 $wsMap = @{}
 foreach ($ws in (& $glaze query workspaces | ConvertFrom-Json).data.workspaces) { $wsMap[$ws.id] = $ws.name }
-$win = (& $glaze query windows | ConvertFrom-Json).data.windows | ? { $_.handle -eq [int64]$h }
-"window is on workspace $($wsMap[$win.parentId])"
+$HomeWs = $wsMap[$win.parentId]
+"window is on workspace $HomeWs"
+$mon = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.children.name -contains $HomeWs }
+if (-not (($mon.children | ? isDisplayed).name -eq $HomeWs)) {
+  & $glaze command focus --workspace $HomeWs | Out-Null
+  Start-Sleep 2
+}
+$OtherWs = @($mon.children | ? { $_.name -ne $HomeWs } | % name)[0]
+"switching away to $OtherWs"
 # Match a game: GlazeWM only marks a window fullscreen for the taskbar when its
 # state is fullscreen, and our test window is classified floating.
 if ($env:WSTEST_FULLSCREEN -eq "1") {
