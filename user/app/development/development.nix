@@ -49,6 +49,16 @@
     # === Development Framework Tools ===
     # pkgs-unstable.antigravity-ide      # Development automation and tooling
   ]
+  # === Minimal set (developmentToolsMinimalEnable) ===
+  # For a machine that only needs to write and talk to Claude — Aga's LAPTOP_A
+  # runs the Claude Code VS Code extension. git-crypt already comes with
+  # userBasicPkgsEnable, and the rest of the list above is 20 tools she will
+  # never open.
+  ++ lib.optionals ((systemSettings.developmentToolsMinimalEnable or false)
+                    && !(systemSettings.developmentToolsEnable or false)) [
+    pkgs-unstable.vscode
+    pkgs-unstable.claude-code
+  ]
   # === Full Development Runtimes (opt-in per profile) ===
   ++ lib.optionals (systemSettings.developmentFullRuntimesEnable or false) [
     # Pinned to unstable so dev runtimes stay current even on stable-system

@@ -471,6 +471,13 @@ in
       # docs/guides this directory is NOT git-crypt encrypted — the site is
       # meant to be public.
       aion2      = { root = ../docs/aion2-site; publicPort = 8095; };
+      # babydocs — research and living documentation about Irenka, from the
+      # private repo github.com/akunito/babydocs. NOT served from the nix store:
+      # both parents write to it from different machines all week, and a page
+      # must not cost a VPS rebuild. system/app/babydocs-site.nix pulls, builds
+      # and swaps /var/www/baby every 5 minutes. Tailscale only, never public —
+      # it carries clinical material.
+      baby       = { rootPath = "/var/www/baby"; };
       openclaw   = { port = 18789; };
       finance    = { port = 8190; maxBodySize = "50M"; };
       # AkuCraft BlueMap. It used to sit at "/" on the players' own port 8100,
@@ -516,6 +523,10 @@ in
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMGggbIOnf1GmOsXM67PZRYLP4DrItISJyz0c1YQI5hi claude-sync@LAPTOP_X13"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA4lbPj8VBtb0rljjdGrl/vJZfFsKhMz4VX+X2Ul2PHz claude-sync@DESK_W11"
     ];
+    # babydocs: baby.local.akunito.com, rebuilt from git every 5 minutes so that
+    # neither parent needs an account on this host to publish a page. Needs two
+    # files in /etc/secrets (deploy key, git-crypt key) — see the service doc.
+    babydocsSiteEnable = true;
     infraBotEnable = true; # the Infra Alerts bot lives here (relay for secrets-free nodes + /status commands)
     infraRestartEnable = true; # /restart docker-rootless here
     infraRestartSshTargets = { nas = "akunito@100.64.0.1"; }; # /restart on the NAS over BatchMode ssh (VPS key is in its authorizedKeys)

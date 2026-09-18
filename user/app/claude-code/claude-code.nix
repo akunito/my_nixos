@@ -9,7 +9,7 @@
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
-  isDesktop = systemSettings.developmentToolsEnable or false;
+  isDesktop = (systemSettings.developmentToolsEnable or false) || (systemSettings.developmentToolsMinimalEnable or false);
   # Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless)
   isStandalone = (systemSettings.claudeCodeEnable or false) && !isDesktop;
   dotfilesPath = systemSettings.dotfilesPath or "/home/${userSettings.username}/.dotfiles";

@@ -39,6 +39,7 @@
   ++ lib.optional (systemSettings.prometheusHostHealthEnable or false) ../../system/app/prometheus-host-health.nix # docker daemons + failed units textfile
   ++ lib.optional (systemSettings.infraNotifyEnable or false) ../../system/app/infra-notify.nix # deploy announcements to Infra Alerts (AINF-368)
   ++ lib.optional (systemSettings.claudeSyncHubEnable or false) ../../system/app/claude-sync-hub.nix # Claude Code state sync hub (memory/sessions of DESK, X13, W11)
+  ++ lib.optional (systemSettings.babydocsSiteEnable or false) ../../system/app/babydocs-site.nix # baby.local.akunito.com: pull babydocs from git, build, publish (no rebuild per page)
   ++ lib.optional (systemSettings.infraBotEnable or false) ../../system/app/infra-bot.nix # Infra Alerts bot: relay + commands (AINF-368)
   ++ lib.optional (systemSettings.infraRestartEnable or false) ../../system/app/infra-restart.nix # bot's /restart target (sudoers-scoped)
   ++ lib.optional ((systemSettings.healthchecksPingUrl or "") != "") ../../system/app/healthchecks-ping.nix # dead-man's switch ping

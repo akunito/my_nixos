@@ -90,7 +90,7 @@ Full workflow and MCP tool reference: `.claude/reference/plane-context.md`
 | DESK | nixosaku (192.168.8.96) | akunito | main |
 | LAPTOP_X13 | nixosx13aku (192.168.8.92) | akunito | main |
 | LAPTOP_YOGA | nixosyogaaga (192.168.8.100) | aga | main |
-| LAPTOP_A | nixosaga (192.168.8.78) | akunito | main |
+| LAPTOP_A | nixosaga (192.168.8.78) | aga | main |
 | DESK_W11 | nixosw11aku (NixOS-WSL inside Windows 11 on the DESK box; Tailscale node DESK_W11) | akunito | main |
 | VPS_PROD | vps-prod (100.64.0.6 via Tailscale, SSH port 56777) | akunito | main |
 | NAS_PROD | nas-aku (192.168.20.200) | akunito | main |

@@ -594,6 +594,7 @@
     developmentToolsEnable = false; # Enable development IDEs and cloud tools (Cursor, Claude Code, Azure CLI, etc.)
     developmentFullRuntimesEnable = false; # Enable full development runtimes (Node.js, Python, Go, Rust)
     claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
+    developmentToolsMinimalEnable = false; # VS Code + Claude Code + git-crypt only, without the full dev set (Aga's LAPTOP_A: she uses the Claude Code VS Code extension, not azure-cli or dbeaver)
     claudeCodeReadOnly = false; # When true, deny Edit/Write tools in Claude Code settings.json
     claudeBackupToNextcloudEnable = false; # Daily compressed backup of ~/.claude/ to Nextcloud folder
     # === Claude Code state sync across machines (DESK / LAPTOP_X13 / DESK_W11) ===
@@ -605,6 +606,14 @@
     claudeSyncRetentionDays = 90; # cleanupPeriodDays on every client; the hub deletes one day earlier
     claudeSyncHubEnable = false; # Hub side (VPS_PROD): restricted forced-command shell, bare repo, retention + Telegram alerts
     claudeSyncHubKeys = [ ]; # Client public keys (one per machine, `claude-sync pubkey`), pinned to claude-sync-shell
+
+    # === babydocs site (VPS_PROD): baby.local.akunito.com, published from git ===
+    babydocsSiteEnable = false; # Timer: pull github.com/akunito/babydocs, build Starlight, swap the release symlink
+    babydocsSiteRepo = "git@github.com:akunito/babydocs.git"; # Private repo, read with a deploy key
+    babydocsSiteInterval = "5min"; # How long after a push the site can lag
+    babydocsSiteRoot = "/var/www/baby"; # Symlink nginx serves; point nginxLocalServices.baby.rootPath here
+    babydocsSiteDeployKey = "/etc/secrets/babydocs-deploy-key"; # Read-only GitHub deploy key
+    babydocsSiteCryptKey = "/etc/secrets/babydocs-git-crypt"; # git-crypt key: private/ and journal/ would otherwise publish as ciphertext
 
     # === WSL (profile "wsl": NixOS-WSL inside Windows) ===
     wslWindowsUser = ""; # Windows account name; /mnt/c/Users/<this>/Nextcloud is bind-mounted at ~/Nextcloud so project paths match DESK

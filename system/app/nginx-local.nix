@@ -49,7 +49,7 @@ let
   # Generate a vhost for each service
   # Optional per-service attrs: https (bool), basicAuthFile (path),
   #                             maxBodySize (str), denyPaths (list of str),
-  #                             root (path), publicPort (int)
+  #                             root (path), rootPath (str), publicPort (int)
   #
   # denyPaths returns 403 for a path prefix on the Tailscale vhost only, so a
   # sensitive path stays reachable exclusively through the public Cloudflare
@@ -61,6 +61,13 @@ let
   # changes on rebuild — that is the trade for not having a mutable directory
   # on the host. See docs/guides/README.md.
   #
+  # rootPath is the mutable twin: a STRING path on the host (e.g. "/var/www/baby")
+  # that something else keeps up to date — a publisher timer, a deploy script.
+  # Use it when the content changes far more often than the system does, so that
+  # publishing a page does not mean rebuilding the VPS. Nothing about it is
+  # versioned with the flake; whatever writes there owns the content, and must
+  # leave it readable by nginx. See system/app/babydocs-site.nix for the pattern.
+  #
   # publicPort additionally serves the SAME content over plain HTTP on
   # 127.0.0.1:<publicPort>, as a second vhost named "<name>-public". That is the
   # origin a remotely-managed Cloudflare Tunnel points at (cloudflared runs on
@@ -69,8 +76,13 @@ let
   # the tailnet. Deliberately no TLS, no ACME and no basic auth: the hop is
   # loopback-only and cloudflared terminates TLS. Only `root` services support
   # it — a proxy already has a port of its own to point the tunnel at.
+
+  # Either kind of static root: a store path (`root`) or a host path (`rootPath`).
+  staticRoot = cfg: if cfg ? root then cfg.root else cfg.rootPath;
+  isStatic = cfg: (cfg ? root) || (cfg ? rootPath);
+
   mkPublicVhost = name: cfg:
-    lib.optionalAttrs ((cfg ? publicPort) && (cfg ? root)) {
+    lib.optionalAttrs ((cfg ? publicPort) && (isStatic cfg)) {
       "${name}-public" = {
         # `listen` (not listenAddresses) because the port must be pinned too.
         listen = [ { addr = "127.0.0.1"; port = cfg.publicPort; ssl = false; } ];
@@ -81,7 +93,7 @@ let
           client_max_body_size ${cfg.maxBodySize};
         '';
         locations."/" = {
-          root = cfg.root;
+          root = staticRoot cfg;
           extraConfig = ''
             index index.html;
           '';
@@ -100,9 +112,9 @@ let
       '';
       locations = {
         "/" =
-          if cfg ? root
+          if isStatic cfg
           then {
-            root = cfg.root;
+            root = staticRoot cfg;
             extraConfig = ''
               index index.html;
             '';

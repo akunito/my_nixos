@@ -9,7 +9,7 @@ Compact lookup for all nodes, services, local projects, and management skills. L
 | DESK | 192.168.8.96 | `ssh -A akunito@192.168.8.96` | DESK | workstation |
 | LAPTOP_X13 | 192.168.8.92, 100.64.0.8 | `ssh -A akunito@192.168.8.92` | LAPTOP_X13 | laptop |
 | LAPTOP_YOGA | 192.168.8.100 | `ssh -A aga@192.168.8.100` | LAPTOP_YOGA | laptop |
-| LAPTOP_A | 192.168.8.78, 100.64.0.4 | `ssh -A akunito@192.168.8.78` | LAPTOP_A | laptop |
+| LAPTOP_A | 192.168.8.78, 100.64.0.4 | `ssh -A aga@192.168.8.78` | LAPTOP_A | laptop (Aga) |
 | VPS_PROD | 100.64.0.6, 172.26.5.155 | `ssh -A -p 56777 akunito@100.64.0.6` | VPS_PROD | vps |
 | NAS_PROD | 192.168.20.200, 100.64.0.1 (TS) | `ssh -A akunito@192.168.20.200` | NAS_PROD | nas |
 | pfSense | 192.168.8.1 | `ssh admin@192.168.8.1` | — (FreeBSD) | firewall |

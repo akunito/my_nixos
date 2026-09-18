@@ -48,6 +48,7 @@ in
     authorizedKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4U8/5LIOEY8OtJhIej2dqWvBQeYXIqVQc6/wD/aAon diego88aku@gmail.com" # Desktop
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAwUXqQXLaKW/WjsZ95fjHKU7sIhNEeqW685TbsrePiK diego88aku@gmail.com" # Laptop (X13)
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIkhQOHvPAXzA41MYcRBC6Vnv15FDgaFljWVrXoSwk1t akunito@DESK_W11" # DESK_W11 (NixOS-WSL on the DESK box)
     ];
 
     # Network
@@ -137,6 +138,12 @@ in
     # === Package Modules ===
     systemBasicToolsEnable = true; # Basic system tools (vim, wget, rsync, cryptsetup, etc.)
     systemNetworkToolsEnable = true; # Advanced networking tools (nmap, traceroute, dnsutils, etc.)
+
+    # === Development Tools & AI ===
+    # Aga writes babydocs research through the Claude Code VS Code extension, so
+    # this machine needs VS Code + Claude Code + git-crypt and nothing else from
+    # the dev set (no azure-cli, dbeaver, powershell, android-tools).
+    developmentToolsMinimalEnable = true;
 
     # === Hardware Optimizations ===
     thinkpadEnable = true; # Enable Lenovo Thinkpad hardware optimizations
