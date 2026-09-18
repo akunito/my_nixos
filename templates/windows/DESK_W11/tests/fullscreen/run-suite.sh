@@ -119,5 +119,30 @@ echo "$out" | grep "^with the game focused" | grep -q "mon@6,0=hidden" && ok "hi
 echo "$out" | grep "^focus on other monitor" | grep -q "mon@6,0=hidden" && ok "stays hidden with focus elsewhere" || ko "pill after focusing the other monitor" "$(echo "$out" | grep '^focus')"
 [ "$(echo "$out" | grep "^after the game closes" | grep -o hidden | wc -l)" = "0" ] && ok "both pills back" || ko "pills after the game closes" "$(echo "$out" | grep '^after')"
 
+# Launching an app while a fullscreen game has the foreground (Hyper+L): the new
+# window stays on the same workspace, behind the game, and is still there after
+# leaving the workspace and coming back, and once the game is minimized.
+echo "== 10. an app launched behind a fullscreen game stays reachable"
+rm -f "$P/behind.out"; echo "behind-game.ps1" > "$P/behind.elev"
+for _ in $(seq 120); do [ -f "$P/behind.out" ] && break; sleep 2; done
+out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/behind.out")
+echo "$out" | sed 's/^/    /'
+ws=$(echo "$out" | grep "^game on workspace" | awk '{print $4}')
+echo "$out" | grep "^1 app launched" | grep -q "app\[ws=$ws/" && ok "opens on the game's workspace" || ko "app workspace" "$(echo "$out" | grep '^1 app')"
+echo "$out" | grep "^2 other workspace" | grep -q "app\[ws=$ws/floating/hidden cloaked=2" && ok "hidden with the workspace" || ko "app while away" "$(echo "$out" | grep '^2 other')"
+echo "$out" | grep "^3 back home" | grep -q "cloaked=0 visible=True" && ok "back with the workspace" || ko "app on return" "$(echo "$out" | grep '^3 back')"
+echo "$out" | grep "^4 game minimized" | grep -q "app\[ws=$ws/floating/shown cloaked=0 visible=True" && ok "usable once the game is minimized" || ko "app with the game minimized" "$(echo "$out" | grep '^4 game')"
+
+# A window parked on a hidden workspace must be reachable again: Hyper+<letter>
+# asks GlazeWM to focus it (a cloaked window cannot be activated by Windows).
+echo "== 11. reaching a window parked on a hidden workspace"
+rm -f "$P/reach.out"; echo "reach-hidden.ps1" > "$P/reach.elev"
+for _ in $(seq 90); do [ -f "$P/reach.out" ] && break; sleep 1; done
+out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/reach.out")
+echo "$out" | sed 's/^/    /'
+home=$(echo "$out" | grep "^window on" | awk '{print $3}' | tr -d ,)
+echo "$out" | grep "^hidden:" | grep -q "cloaked=2" && ok "cloaked while away" || ko "cloak" "$(echo "$out" | grep '^hidden')"
+echo "$out" | grep "^after glaze focus" | grep -q "displayed=$home.*cloaked=0" && ok "GlazeWM brings you to it" || ko "focus by id" "$(echo "$out" | grep '^after glaze')"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]
