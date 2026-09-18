@@ -533,12 +533,12 @@ in
     infraTelegramAdminUserIds = secrets.infraTelegramAdminUserIds or "";
     healthchecksPingUrl = secrets.healthchecksVpsPingUrl or ""; # dead-man's switch (F5)
 
-    # Remote targets for Prometheus scraping (via WireGuard/Tailscale tunnel to LAN)
+    # Remote targets for Prometheus scraping (over the tailnet)
     # NAS: node-exporter (9100) + cadvisor (8081) on rootless Docker
     # Laptops use Tailscale IPs (roaming — not always on LAN)
     prometheusRemoteTargets = [
       # role: always_on -> HostDown alerts (NAS muted 23:00-16:05 while asleep); roaming -> no HostDown
-      { name = "nas"; host = "192.168.20.200"; nodePort = 9100; cadvisorPort = 8081; role = "always_on"; }
+      { name = "nas"; host = "100.64.0.1"; nodePort = 9100; cadvisorPort = 8081; role = "always_on"; }  # tailnet address: the LAN IP goes through pfSense as a subnet router and drops scrapes
       { name = "desk"; host = "nixosaku"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (workstation VLAN not routed over tailnet)
       { name = "desk_a"; host = "nixosagadesk"; nodePort = 9100; cadvisorPort = null; }  # Aga's desktop, Tailscale 100.64.0.11
       { name = "x13"; host = "nixosx13aku"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (roaming)
@@ -553,11 +553,11 @@ in
       { name = "redis";      host = "127.0.0.1"; port = 9121; }
       # synapse metrics target removed 2026-09-15 (Matrix stack archived; rules in grafana.nix stay inert)
       # miniflux removed 2026-09-11: decommissioned ~Apr 2026, the probe fired ExportarrTargetDown forever
-      # NAS exportarr targets (via WireGuard tunnel to LAN) — node = nas so they are muted while it sleeps
-      { name = "sonarr";    host = "192.168.20.200"; port = 9707; node = "nas"; }
-      { name = "radarr";    host = "192.168.20.200"; port = 9708; node = "nas"; }
-      { name = "prowlarr";  host = "192.168.20.200"; port = 9709; node = "nas"; }
-      { name = "bazarr";    host = "192.168.20.200"; port = 9710; node = "nas"; }
+      # NAS exportarr targets (tailnet address, not the pfSense-routed LAN IP) — node = nas so they are muted while it sleeps
+      { name = "sonarr";    host = "100.64.0.1";      port = 9707; node = "nas"; }
+      { name = "radarr";    host = "100.64.0.1";      port = 9708; node = "nas"; }
+      { name = "prowlarr";  host = "100.64.0.1";      port = 9709; node = "nas"; }
+      { name = "bazarr";    host = "100.64.0.1";      port = 9710; node = "nas"; }
     ];
 
     # Blackbox exporter (HTTP probes for public services)
@@ -649,9 +649,16 @@ in
     # === Backup Monitoring (pfSense config + NAS restic repos) ===
     prometheusPfsenseBackupEnable = true;
     prometheusNasBackupEnable = true;
+    # The NAS is addressed by its TAILNET address, not 192.168.20.200: the LAN IP
+    # is only reachable through pfSense as a subnet router, and that extra hop
+    # drops ~10% of TCP connects from here (measured 2026-09-18: 18/20 vs 20/20).
+    # Every "ssh: connect to host 192.168.20.200 port 22: Connection refused" in
+    # prometheus-nas-backup and nas-backup-* came from that path, not from the NAS.
+    prometheusNasBackupHost = "100.64.0.1";
 
     # === NAS Offsite Backup (VPS pulls Docker data + configs daily) ===
     nasResticBackupEnable = true;
+    nasResticBackupHost = "100.64.0.1";  # same reason as prometheusNasBackupHost above
   };
 
   userSettings = base.userSettings // {
