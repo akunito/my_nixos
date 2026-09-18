@@ -40,14 +40,23 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
     RECT r = mp.r;
     if (__argc > 6) { r.left = atoi(__argv[3]); r.top = atoi(__argv[4]); r.right = r.left + atoi(__argv[5]); r.bottom = r.top + atoi(__argv[6]); }
 
-    int grow_now = 0;
-    for (int i = 1; i < __argc; i++) if (!strcmp(__argv[i], "now")) grow_now = 1;
+    int grow_now = 0, gamelike = 0;
+    for (int i = 1; i < __argc; i++) {
+        if (!strcmp(__argv[i], "now")) grow_now = 1;
+        // "gamelike": open a couple of pixels LARGER than the monitor and
+        // settle to exactly the monitor rect, the way Aion 2 (Unreal) does.
+        // That transition is what made GlazeWM drop the window out of its
+        // fullscreen state, leaving the taskbar above the game.
+        if (!strcmp(__argv[i], "gamelike")) gamelike = grow_now = 1;
+    }
+    RECT start = r;
+    if (gamelike) { start.left -= 2; start.top -= 2; start.right += 2; start.bottom += 2; }
 
     WNDCLASSW wc = { 0 }; wc.lpfnWndProc = WndProc; wc.hInstance = hi; wc.lpszClassName = L"FlipTestWnd";
     wc.hCursor = LoadCursor(NULL, IDC_ARROW); RegisterClassW(&wc);
     HWND hwnd = CreateWindowExW(WS_EX_APPWINDOW, L"FlipTestWnd", L"fliptest", WS_POPUP | WS_VISIBLE,
-        grow_now ? r.left : r.left + 100, grow_now ? r.top : r.top + 100,
-        grow_now ? r.right - r.left : 1280, grow_now ? r.bottom - r.top : 720, NULL, NULL, hi, NULL);
+        grow_now ? start.left : r.left + 100, grow_now ? start.top : r.top + 100,
+        grow_now ? start.right - start.left : 1280, grow_now ? start.bottom - start.top : 720, NULL, NULL, hi, NULL);
 
     ID3D11Device *dev; ID3D11DeviceContext *ctx;
     if (FAILED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, &dev, NULL, &ctx))) return 2;
@@ -59,7 +68,7 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
         IDXGIFactory5_CheckFeatureSupport(f5, DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearing, sizeof tearing);
 
     DXGI_SWAP_CHAIN_DESC1 sd = { 0 };
-    sd.Width = grow_now ? r.right - r.left : 1280; sd.Height = grow_now ? r.bottom - r.top : 720; sd.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    sd.Width = grow_now ? start.right - start.left : 1280; sd.Height = grow_now ? start.bottom - start.top : 720; sd.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     sd.SampleDesc.Count = 1; sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; sd.BufferCount = 2;
     sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; sd.Flags = tearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     IDXGISwapChain1 *sc;
@@ -69,9 +78,9 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
     ID3D11RenderTargetView *rtv; ID3D11Device_CreateRenderTargetView(dev, (ID3D11Resource *)bb, NULL, &rtv);
     SetForegroundWindow(hwnd);
 
-    DWORD start = GetTickCount(); MSG msg; int frame = 0, grown = 0;
+    DWORD started = GetTickCount(); MSG msg; int frame = 0, grown = 0;
     for (;;) {
-        if (!grown && !grow_now && GetTickCount() - start > 500) {
+        if (!grown && (gamelike || !grow_now) && GetTickCount() - started > (gamelike ? 700u : 500u)) {
             grown = 1;
             SetWindowPos(hwnd, NULL, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOZORDER);
             ID3D11DeviceContext_OMSetRenderTargets(ctx, 0, NULL, NULL);
@@ -81,7 +90,7 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
             ID3D11Device_CreateRenderTargetView(dev, (ID3D11Resource *)bb, NULL, &rtv);
         }
         while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) { if (msg.message == WM_QUIT) return 0; TranslateMessage(&msg); DispatchMessageW(&msg); }
-        if (secs > 0 && GetTickCount() - start > (DWORD)secs * 1000) { DestroyWindow(hwnd); continue; }
+        if (secs > 0 && GetTickCount() - started > (DWORD)secs * 1000) { DestroyWindow(hwnd); continue; }
         float t = frame++ / 60.0f, c[4] = { 0.1f + 0.1f * sin(t), 0.1f, 0.2f + 0.1f * cos(t), 1 };
         ID3D11DeviceContext_OMSetRenderTargets(ctx, 1, &rtv, NULL);
         ID3D11DeviceContext_ClearRenderTargetView(ctx, rtv, c);

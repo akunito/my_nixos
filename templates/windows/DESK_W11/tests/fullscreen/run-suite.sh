@@ -59,5 +59,16 @@ echo "$out" | sed 's/^/    /'
 echo "$out" | grep -q "state=fullscreen" && ok "classified fullscreen (taskbar gets marked)" || ko "classification" "$(echo "$out" | head -1)"
 echo "$out" | grep -q "Independent Flip" && ok "reaches the screen directly" || ko "present mode" "$(echo "$out" | tail -1)"
 
+# The Aion 2 case: Unreal creates the window a couple of pixels larger than the
+# monitor and settles to the monitor rect. GlazeWM read that as the app leaving
+# OS fullscreen and dropped it to floating -> no MarkFullscreenWindow -> taskbar
+# above the game -> Composed: Flip.
+echo "== 6. a window that settles from oversized to exactly the monitor stays fullscreen"
+rm -f "$P/fsgame.out"; echo "fsgame.ps1" > "$P/fsgame.elev"
+for _ in $(seq 90); do [ -f "$P/fsgame.out" ] && break; sleep 1; done
+out=$(cat "$P/fsgame.out")
+echo "$out" | sed 's/^/    /'
+echo "$out" | grep -q "state=fullscreen" && ok "stays fullscreen" || ko "state" "$(echo "$out" | head -1)"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

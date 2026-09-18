@@ -47,6 +47,15 @@ $last = ""; $lastCpu = @{}; $tick = 0
 while ($true) {
   $tick++
   $gp = @(Get-Process -Name $Game -ErrorAction SilentlyContinue)
+  if (-not $gp.Count) {
+    # Fall back to the window class: the process name can be missed (elevated,
+    # renamed, several processes), the game window class is stable.
+    $x = [W]::GetTopWindow([IntPtr]::Zero)
+    while ($x -ne [IntPtr]::Zero) {
+      if ([W]::Cls($x) -eq "UnrealWindow" -and [W]::IsWindowVisible($x)) { $gp = @(Get-Process -Id ([W]::Pid($x)) -ErrorAction SilentlyContinue); break }
+      $x = [W]::GetWindow($x, 2)
+    }
+  }
   $fg = [W]::GetForegroundWindow()
   $line = "fg=$(PName ([W]::Pid($fg)))/$([W]::Cls($fg)) $(RS ([W]::Rect($fg)))"
   if ($gp.Count) {
