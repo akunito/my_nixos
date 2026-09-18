@@ -69,6 +69,15 @@ window not hidden, taskbar above it after returning). What each fix contributed:
 | `state_defaults.fullscreen.maximized: false` | a borderless fullscreen window keeps GlazeWM's `fullscreen` state, so GlazeWM marks it fullscreen for the taskbar (and stops trying to maximize/resize it) |
 | `PillSync` in `hyper-desktops.ahk` | the pills are hidden while a window covers their monitor: 459/465 Independent Flip with Zebar running |
 
+Second round (2026-09-18, after a real Aion 2 session still showed Composed: Flip):
+GlazeWM demoted the game from fullscreen 4 ms after managing it and never promoted it
+back, because `should_fullscreen` only promotes a window that *exceeds* the workspace
+rect — impossible for a borderless game with 0px outer gaps (upstream even says so in a
+comment). Without the fullscreen state, `MarkFullscreenWindow` is never called and the
+taskbar stays above the game. Fork commit "treat a window covering the whole monitor as
+fullscreen" fixes it; suite case 5 covers it (auto-classification, no `set-fullscreen`).
+Suite now 10/10.
+
 Known limitation: an elevated window in the FLOATING state can't be raised above the
 taskbar at all (`SetWindowPos`/z-order denied), so it stays composed. Games run
 fullscreen, which is the case the suite covers.

@@ -51,5 +51,13 @@ echo "$out" | grep -q "2 switched away .*cloaked=[1-9]" && ok "elevated window h
 echo "$out" | grep -q "3 back home .*cloaked=0" && ok "elevated window shown on return" || ko "elevated window shown" "still cloaked"
 echo "$out" | grep -q "5 present modes after return: Hardware Composed: Independent Flip\|5 present modes after return: Hardware: Independent Flip" && ok "taskbar not above after return (elevated)" || ko "taskbar after return (elevated)" "$(echo "$out" | grep '5 present')"
 
+echo "== 5. GlazeWM sees a monitor-sized ELEVATED window as fullscreen on its own"
+rm -f "$P/fsauto.out"; echo "fsauto.ps1" > "$P/fsauto.elev"
+for _ in $(seq 90); do [ -f "$P/fsauto.out" ] && break; sleep 1; done
+out=$(cat "$P/fsauto.out")
+echo "$out" | sed 's/^/    /'
+echo "$out" | grep -q "state=fullscreen" && ok "classified fullscreen (taskbar gets marked)" || ko "classification" "$(echo "$out" | head -1)"
+echo "$out" | grep -q "Independent Flip" && ok "reaches the screen directly" || ko "present mode" "$(echo "$out" | tail -1)"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]
