@@ -78,6 +78,17 @@ echo "$out" | sed 's/^/    /'
 echo "$out" | grep -q "state=fullscreen" && ok "classified fullscreen (taskbar gets marked)" || ko "classification" "$(echo "$out" | head -1)"
 echo "$out" | grep -q "Independent Flip" && ok "reaches the screen directly" || ko "present mode" "$(echo "$out" | tail -1)"
 
+# Aion 2 after being dragged out and maximized again: maximized AND covering the
+# monitor. Explorer needs the fullscreen mark for that shape too.
+settle
+echo "== 4b. workspace switch with a MAXIMIZED window that covers the monitor"
+rm -f "$P/wsmaxfull.out"; echo "wsmaxfull.ps1" > "$P/wsmaxfull.elev"
+for _ in $(seq 90); do [ -f "$P/wsmaxfull.out" ] && break; sleep 1; done
+out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/wsmaxfull.out" | tr -d '\r')
+echo "$out" | sed 's/^/    /'
+echo "$out" | grep -q "2 switched away .*cloaked=[1-9]" && ok "hidden while away" || ko "hidden while away" "not cloaked"
+echo "$out" | grep -q "5 present modes after return: Hardware Composed: Independent Flip\|5 present modes after return: Hardware: Independent Flip" && ok "taskbar below after return" || ko "taskbar after return" "$(echo "$out" | grep '5 present')"
+
 # The Aion 2 case: Unreal creates the window a couple of pixels larger than the
 # monitor and settles to the monitor rect. GlazeWM read that as the app leaving
 # OS fullscreen and dropped it to floating -> no MarkFullscreenWindow -> taskbar
