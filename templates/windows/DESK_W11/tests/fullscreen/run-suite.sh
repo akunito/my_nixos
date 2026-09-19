@@ -203,7 +203,7 @@ out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/ffm.out" | tr -d '\r')
 echo "$out" | sed 's/^/    /'
 pct1=$(echo "$out" | grep "^1 pointer over it" | grep -o '[0-9]*% direct' | tr -d '%% direct')
 echo "$out" | grep "^1 pointer over it" | grep -q "focused=True" && [ "${pct1:-0}" -ge 90 ] && ok "keeps focus and the direct path under the pointer" || ko "pointer over the window" "$(echo "$out" | grep '^1 ')"
-echo "$out" | grep "^2 pointer on monitor2" | grep -q "focused=False" && ok "focus follows the pointer away" || ko "pointer away" "$(echo "$out" | grep '^2 ')"
+echo "$out" | grep "^2 pointer on monitor2" | grep -q "other-focused=True" && ok "focus follows the pointer away" || ko "pointer away" "$(echo "$out" | grep '^2 ')"
 pct3=$(echo "$out" | grep "^3 pointer back" | grep -o '[0-9]*% direct' | tr -d '%% direct')
 echo "$out" | grep "^3 pointer back" | grep -q "focused=True" && [ "${pct3:-0}" -ge 90 ] && ok "focus and direct path come back with the pointer" || ko "pointer back" "$(echo "$out" | grep '^3 ')"
 pct4=$(echo "$out" | grep "^4 after workspace trip" | grep -o '[0-9]*% direct' | tr -d '%% direct')

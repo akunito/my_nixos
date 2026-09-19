@@ -30,16 +30,22 @@ Note(msg) {
     global out
     out .= "     " msg "`n"
 }
-R(hwnd) {
+; Not R(): AHK names are case-insensitive, so `r := R(x)` reads the local r.
+; The VISIBLE frame, not GetWindowRect: a resizable window carries invisible
+; resize borders (9 px at 150%), so plain window rects of two tiled windows
+; overlap by design and the gap between them measures negative. GlazeWM lays
+; them out by the same extended frame bounds.
+WRect(hwnd) {
     b := Buffer(16, 0)
-    DllCall("GetWindowRect", "Ptr", hwnd, "Ptr", b)
+    if DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", hwnd, "UInt", 9, "Ptr", b, "UInt", 16) != 0
+        DllCall("GetWindowRect", "Ptr", hwnd, "Ptr", b)
     return Map("l", NumGet(b, 0, "Int"), "t", NumGet(b, 4, "Int"),
                "r", NumGet(b, 8, "Int"), "b", NumGet(b, 12, "Int"),
                "w", NumGet(b, 8, "Int") - NumGet(b, 0, "Int"),
                "h", NumGet(b, 12, "Int") - NumGet(b, 4, "Int"))
 }
 Rs(hwnd) {
-    r := R(hwnd)
+    r := WRect(hwnd)
     return r["l"] "," r["t"] " " r["w"] "x" r["h"]
 }
 WinRec(hwnd) {
@@ -49,7 +55,7 @@ WinRec(hwnd) {
     return Map("id", "", "ws", "unmanaged", "state", "-", "display", "-", "sticky", false)
 }
 Overlap(a, b) {
-    ra := R(a), rb := R(b)
+    ra := WRect(a), rb := WRect(b)
     return (ra["l"] < rb["r"] && rb["l"] < ra["r"] && ra["t"] < rb["b"] && rb["t"] < ra["b"]) ? 1 : 0
 }
 StartTiled(&pid) {
@@ -87,7 +93,7 @@ Note("home " home ", started on " startWs)
 a := StartTiled(&pa)
 b := StartTiled(&pb)
 Check("1 both are tiling", WinRec(a)["state"] "/" WinRec(b)["state"], "tiling/tiling")
-ra := R(a), rb := R(b)
+ra := WRect(a), rb := WRect(b)
 Note("1 rects " Rs(a) " | " Rs(b))
 Check("1 they do not overlap", Overlap(a, b), 0)
 Check("1 same height", ra["h"] = rb["h"] ? 1 : 0, 1)
@@ -102,21 +108,21 @@ Check("1 they fill the monitor", (span > mw * 0.9) ? 1 : 0, 1)
 
 ; --- a third one splits again ---------------------------------------------
 c := StartTiled(&pc)
-rc := R(c)
+rc := WRect(c)
 Note("2 rects " Rs(a) " | " Rs(b) " | " Rs(c))
-CheckNear("2 three equal columns", R(a)["w"], rc["w"], 3)
+CheckNear("2 three equal columns", WRect(a)["w"], rc["w"], 3)
 Check("2 none of them overlap", Overlap(a, c) + Overlap(b, c), 0)
 
 ; --- closing one re-flows the rest -----------------------------------------
 ProcessClose(pc)
 Sleep 1500
 Note("3 rects " Rs(a) " | " Rs(b))
-la := R(a), lb := R(b)
+la := WRect(a), lb := WRect(b)
 Check("3 the two left fill the monitor again",
     ((Max(la["r"], lb["r"]) - Min(la["l"], lb["l"])) > mw * 0.9) ? 1 : 0, 1)
 
 ; --- focus and move by direction -------------------------------------------
-leftHwnd := R(a)["l"] < R(b)["l"] ? a : b
+leftHwnd := WRect(a)["l"] < WRect(b)["l"] ? a : b
 rightHwnd := leftHwnd = a ? b : a
 Glaze("focus --container-id " WinRec(leftHwnd)["id"])
 Sleep 800
@@ -127,25 +133,28 @@ Glaze("focus --direction left")
 Sleep 800
 Check("4 and back to the left one", WinRec(leftHwnd)["focus"] ? 1 : 0, 1)
 
-beforeLeft := R(leftHwnd)["l"]
+beforeLeft := WRect(leftHwnd)["l"]
 Glaze("move --direction right")
 Sleep 1200
 Note("5 rects " Rs(leftHwnd) " | " Rs(rightHwnd))
-Check("5 the window swapped sides", R(leftHwnd)["l"] > beforeLeft ? 1 : 0, 1)
+Check("5 the window swapped sides", WRect(leftHwnd)["l"] > beforeLeft ? 1 : 0, 1)
 
 ; --- resize ----------------------------------------------------------------
-wBefore := R(leftHwnd)["w"]
-Glaze("resize --width 10%")
+wBefore := WRect(leftHwnd)["w"]
+GlazeOn(WinRec(leftHwnd)["id"], "resize --width 10%")
 Sleep 1200
-Note("6 width " wBefore " -> " R(leftHwnd)["w"])
-Check("6 the focused window grew", R(leftHwnd)["w"] > wBefore ? 1 : 0, 1)
+wAfter := WRect(leftHwnd)["w"]
+Note("6 width " wBefore " -> " wAfter " (other " WRect(rightHwnd)["w"] ")")
+Check("6 the window grew by about 10% of the monitor", Abs(wAfter - wBefore - mw * 0.1) < 80 ? 1 : 0, 1)
+Check("6 the two still fill the monitor",
+    ((Max(WRect(leftHwnd)["r"], WRect(rightHwnd)["r"]) - Min(WRect(leftHwnd)["l"], WRect(rightHwnd)["l"])) > mw * 0.9) ? 1 : 0, 1)
 
 ; --- floating takes it out of the layout -----------------------------------
-Glaze("toggle-floating --centered=false")
+GlazeOn(WinRec(leftHwnd)["id"], "toggle-floating --centered=false")
 Sleep 1200
 Check("7 it is floating now", WinRec(leftHwnd)["state"], "floating")
-Check("7 the other one fills the workspace", (R(rightHwnd)["w"] > mw * 0.9) ? 1 : 0, 1)
-Glaze("toggle-floating")
+Check("7 the other one fills the workspace", (WRect(rightHwnd)["w"] > mw * 0.9) ? 1 : 0, 1)
+GlazeOn(WinRec(leftHwnd)["id"], "toggle-floating")
 Sleep 1000
 Check("7 and tiling again", WinRec(leftHwnd)["state"], "tiling")
 
@@ -156,10 +165,11 @@ Glaze("focus --workspace " vert)
 Sleep 1200
 d := StartTiled(&pd)
 e := StartTiled(&pe)
-rd := R(d), re := R(e)
+rd := WRect(d), re := WRect(e)
 Note("8 rects " Rs(d) " | " Rs(e))
 Check("8 both tiling on the vertical monitor", WinRec(d)["state"] "/" WinRec(e)["state"], "tiling/tiling")
-Check("8 stacked, not side by side", (rd["w"] = re["w"] && rd["t"] != re["t"]) ? 1 : 0, 1)
+Check("8 stacked, not side by side",
+    (Abs(rd["w"] - re["w"]) <= 6 && Abs(rd["t"] - re["t"]) > 100) ? 1 : 0, 1)
 
 KillFlips()
 if (startWs != "")

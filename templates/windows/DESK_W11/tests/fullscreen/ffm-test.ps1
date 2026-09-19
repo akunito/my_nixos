@@ -40,12 +40,19 @@ while ($x -ne [IntPtr]::Zero) { if ([W]::Cls($x) -eq "FlipTestWnd") { $h = $x; b
 ParkCursorOnPrimary
 Start-Sleep 2
 "1 pointer over it     focused=$([W]::GetForegroundWindow() -eq $h) $(Modes ffm1)"
-ParkCursorOnSecondary
+# Hovering the other monitor must hand the focus to the window under the
+# pointer -- with a window actually there. Parking on an empty desktop proves
+# nothing: Windows leaves the focus where it was, so the case used to pass or
+# fail depending on what happened to be open on that monitor.
+$s = Start-Process "$d\fliptest.exe" -ArgumentList "25 1 now" -PassThru
+Start-Sleep 3
+$side = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
+while ($x -ne [IntPtr]::Zero) { if ([W]::Pid($x) -eq $s.Id -and [W]::Cls($x) -eq "FlipTestWnd") { $side = $x; break }; $x = [W]::GetWindow($x, 2) }
+if ($side -ne [IntPtr]::Zero) { ParkCursorOn ([W]::Rect($side)) } else { ParkCursorOnSecondary }
 Start-Sleep 2
-# A fullscreen window keeps the focus when the pointer wanders off: GlazeWM
-# does not hand the focus to whatever is under the pointer on another monitor
-# while a game is running, which is what you want mid-game.
-"2 pointer on monitor2 focused=$([W]::GetForegroundWindow() -eq $h) fg=$([W]::Cls([W]::GetForegroundWindow()))"
+"2 pointer on monitor2 focused=$([W]::GetForegroundWindow() -eq $h) other-focused=$([W]::GetForegroundWindow() -eq $side) fg=$([W]::Cls([W]::GetForegroundWindow()))"
+Stop-Process -Id $s.Id -Force -EA SilentlyContinue
+Start-Sleep 2
 ParkCursorOnPrimary
 Start-Sleep 2
 "3 pointer back        focused=$([W]::GetForegroundWindow() -eq $h) $(Modes ffm3)"

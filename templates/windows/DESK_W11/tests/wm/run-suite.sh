@@ -25,6 +25,13 @@ cp "$HERE"/*.ahk "$WT/tests/wm/"
 
 run_ahk() { # run_ahk <script.ahk> <result-file> <timeout-s>
   local script=$1 result=$2 timeout=$3
+  # Syntax first: a bad script opens an error dialog and would otherwise sit
+  # there until the timeout, with no output at all.
+  if ! powershell.exe -NoProfile -Command \
+      "& '$AHK' /validate 'C:\\Users\\diego\\AppData\\Local\\Temp\\wmtest\\tests\\wm\\$script'; exit \$LASTEXITCODE" >/dev/null 2>&1; then
+    echo "    (syntax error in $script -- run AutoHotkey64.exe /validate on it)"
+    return 1
+  fi
   rm -f "$P/$result"
   powershell.exe -NoProfile -Command \
     "Start-Process '$AHK' -ArgumentList 'C:\\Users\\diego\\AppData\\Local\\Temp\\wmtest\\tests\\wm\\$script'" >/dev/null 2>&1

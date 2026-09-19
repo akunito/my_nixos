@@ -113,8 +113,10 @@ window_rules:
       - window_process: { equals: 'Spotify' }         # sway: spotify
       - window_process: { equals: 'Element' }         # sway: title ^Element
       - window_process: { equals: 'Taskmgr' }         # sway: MissionCenter
-      - window_process: { equals: 'CalculatorApp' }   # sway: org.gnome.Calculator
-      - window_process: { equals: 'Calculator' }
+      # The calculator is a store app: every one of those is hosted by
+      # ApplicationFrameHost, so it can only be told apart by its title.
+      - window_class: { equals: 'ApplicationFrameWindow' }
+        window_title: { equals: 'Calculator' }   # sway: org.gnome.Calculator
       - window_process: { equals: 'tailscale-ipn' }   # sway: dev.deedles.Trayscale
       - window_process: { equals: 'SystemSettings' }  # sway: blueman / nwg-displays
       - window_process: { equals: 'SndVol' }          # sway: pavucontrol

@@ -86,6 +86,14 @@ EmptyWs(skip := "") {
 Park() {                            ; pointer on empty desktop, nothing focused
     WalkCursorTo(3600, 1900)
 }
+; Focus a workspace, but never ask for the one already focused: with
+; toggle_workspace_on_refocus that jumps to the previous one instead.
+FocusWs(ws) {   ; not GoTo(): that is an AHK control-flow keyword
+    if (GlazeFocusedWs() != ws) {
+        Glaze("focus --workspace " ws)
+        Sleep 1200
+    }
+}
 
 ; ---------------------------------------------------------------------------
 KillFlips()
@@ -96,6 +104,8 @@ Sleep 1200
 other := EmptyWs(home)
 Note("home workspace " home ", spare workspace " other ", started on " startWs)
 Park()
+FocusWs(home)                          ; the walk crosses the other monitor
+Note("1 launching from workspace " GlazeFocusedWs())
 
 ; --- 1. no window -> launch, and follow the new window ---------------------
 AppToggle("fliptest.exe", flip " 300 0 300 300 900 700 now")
@@ -112,9 +122,9 @@ Check("2 focused -> minimised", WinGetMinMax("ahk_id " h), -1)
 Check("2 GlazeWM agrees", StateOf(h), "minimized")
 
 ; --- 3. minimised -> comes to the workspace you are on, restored, focused --
-Glaze("focus --workspace " other)
-Sleep 1200
+FocusWs(other)
 Park()
+FocusWs(other)
 AppToggle("fliptest.exe", flip " 300 0 300 300 900 700 now")
 Sleep 1500
 Check("3 minimised window restored", WinGetMinMax("ahk_id " h) = -1 ? "minimised" : "restored", "restored")
@@ -122,9 +132,9 @@ Check("3 it came to where we are", WsOf(h), other)
 Check("3 and it has the focus", WinActive("ahk_id " h) ? 1 : 0, 1)
 
 ; --- 4. parked on another workspace -> we go to it, it does not move -------
-Glaze("focus --workspace " home)
-Sleep 1200
+FocusWs(home)
 Park()
+FocusWs(home)
 Check("4 setup: window is away", InStr(DisplayedWss(), other) ? 1 : 0, 0)
 AppToggle("fliptest.exe", flip " 300 0 300 300 900 700 now")
 Sleep 1500
@@ -160,8 +170,7 @@ Check("6 restored", WinGetMinMax("ahk_id " h2) = -1 ? "minimised" : "restored", 
 ; --- 7. a fullscreen window keeps the screen when an app is launched -------
 KillFlips()
 Sleep 1000
-Glaze("focus --workspace " home)
-Sleep 1000
+FocusWs(home)
 Run(flip " 120 0 gamelike", , , &gpid)   ; borderless, covers the monitor
 WinWait("ahk_pid " gpid, , 10)
 Sleep 2500

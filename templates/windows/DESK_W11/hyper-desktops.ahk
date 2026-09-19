@@ -8,9 +8,15 @@
 ;   Hyper+Shift+Q / W   move window to previous / next desktop
 ;   Hyper+Tab           Task view                             = window overview
 ;   Hyper+Escape        close active window                   = kill
-;   Hyper+F             toggle maximise                       = fullscreen
+;   Hyper+F             fullscreen toggle                     = fullscreen toggle
 ;   Hyper+Space         Start / PowerToys Run                 = rofi combi
-;   Hyper+<letter>      raise-or-launch, same letters as apps/common.json
+;   Hyper+<letter>      raise-or-launch (lib-app-toggle.ahk)  = app-toggle.sh
+;   Hyper+H/J/K/?       focus left / down / up / right        = focus <dir>
+;   Hyper+Shift+J/K/L/: move the window in that direction     = window-move.sh
+;   Hyper+Shift+U/P/I/O narrower / wider / taller / shorter   = resize
+;   Hyper+Shift+F       floating toggle                       = floating toggle
+;   Hyper+Shift+S       sticky toggle (all workspaces)        = sticky toggle
+;   Hyper+Shift+- / -   hide the window / bring the last one back = scratchpad
 ;   Alt+LeftDrag        move window                            = floating_modifier Mod1
 ;   Alt+RightDrag       resize window (nearest corner)
 ;   Hyper+Shift+Escape  suspend/resume all hotkeys (games)

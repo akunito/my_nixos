@@ -62,9 +62,15 @@ Note("home " home ", started on " startWs)
 Kill("CalculatorApp.exe")
 Sleep 800
 Run("calc")
-w := WaitProc("CalculatorApp")
-if !w
-    w := WaitProc("Calculator")
+w := 0
+deadline := A_TickCount + 15000
+while (A_TickCount < deadline && !w) {
+    for x in GlazeWins()                        ; a store app: the process is
+        if (x["class"] = "ApplicationFrameWindow"   ; ApplicationFrameHost for
+            && InStr(x["title"], "Calculator"))     ; all of them, so match the title
+            w := x
+    Sleep 300
+}
 Check("1 the calculator is managed", w ? 1 : 0, 1)
 if w {
     Note("1 " w["proc"] " state=" w["state"] " sticky=" (w["sticky"] ? 1 : 0) " ws=" w["ws"])
