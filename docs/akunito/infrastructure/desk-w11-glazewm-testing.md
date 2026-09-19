@@ -174,11 +174,20 @@ relevant), run for a normal AND an elevated test window where it matters.
 - GPU load of a game on a hidden workspace (does it throttle?)
 - GlazeWM does not SW_MAXIMIZE or resize a borderless game (fullscreen→floating exit)
 
-**Tiling** (not used today; if ever re-enabled): layout on open/close, Alt+drag on tiled windows, config reload must not move windows (2026-09-14 rollback reasons)
+**Tiling** — BUILT 2026-09-20, `tests/wm/run-suite.sh tiling`: two and three windows share
+the workspace, sway's inner gap (8 px, 12 at 150% DPI), closing one re-flows the rest,
+focus/move/resize/float by direction, the vertical monitor stacks (GlazeWM picks the
+tiling direction from the monitor shape in `activate_workspace`, which is sway's
+`default_orientation auto`). Still open from the 2026-09-14 rollback: a config reload must
+not move windows, and Alt+drag on a tiled window.
 
-**Windows that must show on every workspace of a monitor ("sticky")**: GlazeWM has no
-sticky; candidates are `ignore` rules (then never hidden) — tests: stays visible on every
-switch, does not steal focus, is not moved.
+**Sticky** — BUILT 2026-09-20 in the fork, `tests/wm/run-suite.sh sticky`. GlazeWM had no
+sticky at all. It is a flag on the window (`sticky` in the window DTO, so `query windows`
+shows it) plus `sync_sticky_windows`, called from `focus_workspace`: the sticky windows of
+that monitor are moved onto the workspace about to be displayed. Only floating windows are
+carried, like sway — dragging a tiled window between workspaces would reshuffle both
+layouts on every switch. Commands `set-sticky` / `unset-sticky` / `toggle-sticky`, usable
+in window rules, which is how the sway rule set is ported (section 6).
 
 **Alt+drag / Alt+resize (AHK)**: already measured in `tests/*.ahk` and the three capture
 sessions of 2026-09-15 (no dropped presses, no DPI storms, edge clamp, maximise on top
@@ -205,3 +214,35 @@ Research 2026-09-17 (local mod sources in `C:\ProgramData\Windhawk\ModsSource\`)
 The stock taskbar staying over borderless games is a long-standing Windows bug too
 (MS Q&A 2023, 2026-01; workarounds: toggle auto-hide, restart explorer). YASB hides
 bars on the shell's `ABN_FULLSCREENAPP` (inherits Explorer's misdetections).
+
+
+## 6. Sway parity (2026-09-20)
+
+The goal stopped being "GlazeWM for workspaces only" and became "the Sway setup, on
+Windows". What that means, and where each piece lives:
+
+| Sway | Here | Tested by |
+|---|---|---|
+| `app-toggle.sh` (launch / hide / show / cycle) | `lib-app-toggle.ahk`, bound to Hyper+&lt;letter&gt; | `tests/wm` toggle |
+| scratchpad (`move scratchpad` / `scratchpad show`) | minimise, and showing a minimised window brings it to the workspace you are on | `tests/wm` toggle 2-3 |
+| `focus` a window on another workspace | `glazewm command focus --container-id` — it switches to that workspace, you go to the window | `tests/wm` toggle 4 |
+| `floating enable` / `sticky enable` rules | `set-floating` / `set-sticky` window rules in `glazewm/config.yaml` | `tests/wm` rules |
+| `gaps inner 8` | `gaps.inner_gap: 8px`, scaled with DPI | `tests/wm` tiling 1 |
+| `default_orientation auto` | GlazeWM's own rule: workspace direction from the monitor shape | `tests/wm` tiling 8 |
+| focus/move/resize keymap | the same chords in `hyper-desktops.ahk` (Hyper+H/J/K/?, Hyper+Shift+J/K/L/:, Hyper+Shift+U/P/I/O) | `tests/wm` tiling 4-7 |
+
+Fork commits behind it (branch `fix/hide-unmovable-nouia`, built with the `package.yaml`
+workflow_dispatch and installed from the `package-windows` artifact):
+
+- `fix: redraw the workspaces when focusing a container parked on a hidden one` — a
+  workspace is "displayed" when it is first in its monitor's focus order, so focusing a
+  window on a hidden workspace already made that workspace displayed, but nothing was
+  queued to redraw: the window stayed cloaked, focused and invisible, until some later
+  event resynced it. That is what Hyper+&lt;letter&gt; does, and why hovering did nothing
+  until you clicked something.
+- `feat: sticky windows, shown on every workspace of their monitor`.
+- `fix: a fullscreen window stays on top of its own workspace` — `WindowZOrder::Normal` is
+  `HWND_NOTOPMOST`, which *raises* a window to the top of its band, so anything drawn onto
+  a game's workspace (a sticky chat window carried by a workspace switch, an app launched
+  behind the game) landed above it and cost the game the direct path to the screen. Other
+  windows are now inserted after the fullscreen one, which is what sway does.

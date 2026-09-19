@@ -189,6 +189,40 @@ Check("7 the app did open", cm ? 1 : 0, 1)
 Check("7 the game kept the foreground", WinActive("ahk_id " game) ? 1 : 0, 1)
 Check("7 the app is on the same workspace", WsOf(cm), home)
 
+; --- 8. the same for a TILED app: it must come back tiled, where you are ---
+KillFlips()
+Sleep 800
+FocusWs(home)
+Run("notepad.exe")
+np := 0, deadline := A_TickCount + 15000
+while (A_TickCount < deadline && !np) {
+    for w in GlazeWins()
+        if (StrLower(w["proc"]) = "notepad")
+            np := w
+    Sleep 300
+}
+Check("8 setup: notepad tiles", np ? np["state"] : "missing", "tiling")
+if np {
+    WalkCursorTo(1200, 900)         ; hover it so it is really focused
+    Sleep 600
+    AppToggle("notepad.exe", "notepad.exe")
+    Sleep 1200
+    Check("8 focused -> minimised", WinGetMinMax("ahk_id " np["hwnd"]), -1)
+    FocusWs(other)
+    Park()
+    FocusWs(other)
+    AppToggle("notepad.exe", "notepad.exe")
+    Sleep 1800
+    rec := 0
+    for w in GlazeWins()
+        if (w["hwnd"] = np["hwnd"])
+            rec := w
+    Note("8 after show: ws=" (rec ? rec["ws"] : "?") " state=" (rec ? rec["state"] : "?"))
+    Check("8 came to the workspace we are on", rec ? rec["ws"] : "?", other)
+    Check("8 and tiles again", rec ? rec["state"] : "?", "tiling")
+    try RunWait(A_ComSpec ' /c taskkill /F /IM notepad.exe', , "Hide")
+}
+
 ; ---------------------------------------------------------------------------
 KillFlips()
 if (startWs != "")
