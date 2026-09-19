@@ -1,7 +1,8 @@
-# GlazeWM for DESK_W11, second attempt (2026-09-15): NO tiling. It is used only
-# for what Windows cannot do — workspaces bound per monitor and independent of
-# each other (10-19 main, 20-29 vertical, Sway's swaysome numbers). Every window
-# floats and behaves like plain Windows; Alt+drag/resize stay in AHK.
+# GlazeWM for DESK_W11: the Sway setup (user/wm/sway) on Windows. Workspaces
+# bound per monitor and independent of each other (10-19 main, 20-29 vertical,
+# Sway's swaysome numbers), tiling by default with the same gaps, and the same
+# window rules: the apps that float and follow you between workspaces in Sway
+# do it here too. Alt+drag/resize stay in AHK.
 # No keybindings here: hyper-desktops.ahk calls `glazewm command ...`.
 # No `move --workspace` rules on purpose: a config reload re-evaluates rules and
 # would drag windows back to their assigned workspace.
@@ -27,9 +28,10 @@ general:
   hide_method: 'cloak'
   show_all_in_taskbar: false             # taskbar shows only the visible workspaces
 
+# sway: `gaps inner 8`, no outer gaps.
 gaps:
   scale_with_dpi: true
-  inner_gap: '0px'
+  inner_gap: '8px'
   outer_gap: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
 
 window_effects:
@@ -45,7 +47,8 @@ window_effects:
     transparency: { enabled: false, opacity: '0%' }
 
 window_behavior:
-  initial_state: 'floating'
+  # Tiling like sway. The apps that float there float here too, by rule below.
+  initial_state: 'tiling'
   state_defaults:
     floating:
       centered: false                    # keep the position the app asked for
@@ -98,6 +101,31 @@ window_rules:
         window_title: { regex: '.*? - Peek' }
       - window_process: { equals: 'ShareX' }
       - window_process: { equals: 'AutoHotkey64_UIA' }
+
+  # Floating + sticky, the same set as sway's `floating enable, sticky enable`
+  # (swayfx-config.nix): chat, password manager, music, the system panels and
+  # the file manager. Sticky = shown on every workspace of its monitor, so
+  # they follow you around instead of being parked on one workspace.
+  - commands: ['set-floating', 'set-sticky']
+    match:
+      - window_process: { equals: 'Telegram' }        # sway: org.telegram.desktop
+      - window_process: { equals: 'Bitwarden' }       # sway: bitwarden
+      - window_process: { equals: 'Spotify' }         # sway: spotify
+      - window_process: { equals: 'Element' }         # sway: title ^Element
+      - window_process: { equals: 'Taskmgr' }         # sway: MissionCenter
+      - window_process: { equals: 'CalculatorApp' }   # sway: org.gnome.Calculator
+      - window_process: { equals: 'Calculator' }
+      - window_process: { equals: 'tailscale-ipn' }   # sway: dev.deedles.Trayscale
+      - window_process: { equals: 'SystemSettings' }  # sway: blueman / nwg-displays
+      - window_process: { equals: 'SndVol' }          # sway: pavucontrol
+      - window_process: { equals: 'explorer' }        # sway: org.kde.dolphin
+        window_class: { equals: 'CabinetWClass' }
+
+  # Floating only (sway floats these without sticky).
+  - commands: ['set-floating']
+    match:
+      - window_process: { equals: 'ApplicationFrameHost' }   # store-app hosts
+      - window_class: { equals: '#32770' }                   # plain dialogs
 
 binding_modes: []
 keybindings: []

@@ -40,7 +40,7 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
     RECT r = mp.r;
     if (__argc > 6) { r.left = atoi(__argv[3]); r.top = atoi(__argv[4]); r.right = r.left + atoi(__argv[5]); r.bottom = r.top + atoi(__argv[6]); }
 
-    int grow_now = 0, gamelike = 0, start_max = 0, max_full = 0;
+    int grow_now = 0, gamelike = 0, start_max = 0, max_full = 0, tiled = 0;
     for (int i = 1; i < __argc; i++) {
         if (!strcmp(__argv[i], "now")) grow_now = 1;
         // "gamelike": open a couple of pixels LARGER than the monitor and
@@ -57,6 +57,10 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
         // Aion 2 becomes after being dragged out and maximized again. Explorer
         // needs the fullscreen mark for it too, or the taskbar sits on top.
         if (!strcmp(__argv[i], "maxfull")) max_full = grow_now = 1;
+        // "tiled": an ordinary resizable window with a caption. GlazeWM
+        // initializes a window that cannot be resized as floating, so the
+        // tiling cases need this shape and not the WS_POPUP one.
+        if (!strcmp(__argv[i], "tiled")) tiled = grow_now = 1;
     }
     RECT start = r;
     if (gamelike) { start.left -= 2; start.top -= 2; start.right += 2; start.bottom += 2; }
@@ -65,7 +69,8 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE hp, LPSTR cmd, int show) {
     wc.hCursor = LoadCursor(NULL, IDC_ARROW); RegisterClassW(&wc);
     HWND hwnd = CreateWindowExW(WS_EX_APPWINDOW, L"FlipTestWnd", L"fliptest",
         (start_max ? (WS_OVERLAPPEDWINDOW | WS_MAXIMIZE)
-                   : (max_full ? (WS_POPUP | WS_MAXIMIZEBOX) : WS_POPUP)) | WS_VISIBLE,
+                   : (tiled ? WS_OVERLAPPEDWINDOW
+                            : (max_full ? (WS_POPUP | WS_MAXIMIZEBOX) : WS_POPUP))) | WS_VISIBLE,
         grow_now ? start.left : r.left + 100, grow_now ? start.top : r.top + 100,
         grow_now ? start.right - start.left : 1280, grow_now ? start.bottom - start.top : 720, NULL, NULL, hi, NULL);
 
