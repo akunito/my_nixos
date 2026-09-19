@@ -85,6 +85,27 @@ AppShow(w) {
     ; Telegram got trapped behind a fullscreen game. GlazeWM switches to its
     ; workspace and uncloaks it.
     Glaze("focus --container-id " w["id"])
+    Sleep 250
+    ; Everything on the workspace of a fullscreen window is kept under it, or
+    ; the game loses its direct path to the screen. Asking for a window by its
+    ; own key is an explicit "show me this one", so lift it over the game --
+    ; the opposite of an app that merely starts while you are playing.
+    game := AppFullscreenOn(w["ws"])
+    if (game && game != w["hwnd"]) {
+        Dbg("toggle: lifting the window over the fullscreen one")
+        DllCall("SetWindowPos", "Ptr", w["hwnd"], "Ptr", 0,
+            "Int", 0, "Int", 0, "Int", 0, "Int", 0, "UInt", 0x3)   ; HWND_TOP, NOSIZE|NOMOVE
+    }
+}
+
+; The handle of the fullscreen window on a workspace, or 0.
+AppFullscreenOn(ws) {
+    if (ws = "")
+        return 0
+    for w in GlazeWins()
+        if (w["ws"] = ws && w["state"] = "fullscreen")
+            return w["hwnd"]
+    return 0
 }
 
 AppLaunch(spec, cmd) {

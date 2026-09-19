@@ -189,6 +189,21 @@ Check("7 the app did open", cm ? 1 : 0, 1)
 Check("7 the game kept the foreground", WinActive("ahk_id " game) ? 1 : 0, 1)
 Check("7 the app is on the same workspace", WsOf(cm), home)
 
+; --- 7b. asking for that app by its key lifts it over the game -------------
+if (cm && game) {
+    AppToggle("notepad.exe", "notepad.exe")
+    Sleep 1500
+    top := 0, x := DllCall("GetTopWindow", "Ptr", 0, "Ptr")
+    while (x && !top) {
+        if (x = cm)
+            top := "app"
+        else if (x = game)
+            top := "game"
+        x := DllCall("GetWindow", "Ptr", x, "UInt", 2, "Ptr")
+    }
+    Check("7b asking for it by name lifts it over the game", top, "app")
+}
+
 ; --- 8. the same for a TILED app: it must come back tiled, where you are ---
 KillFlips()
 Sleep 800
