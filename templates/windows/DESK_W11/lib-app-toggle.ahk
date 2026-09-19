@@ -1,0 +1,208 @@
+; Hyper+<letter> = Sway's app-toggle.sh, on Windows (AutoHotkey v2).
+; Same decision table as user/wm/sway/scripts/app-toggle.sh:
+;
+;   no window                 -> launch, then follow the new window
+;   one window, focused       -> hide it          (sway: move scratchpad)
+;   one window, not focused   -> show it
+;   2+ windows, one focused   -> cycle to the next one
+;
+; "Hide" is minimise here, and minimise is this desktop's scratchpad: showing a
+; minimised window brings it to the workspace you are ON (sway's `scratchpad
+; show`), while a window merely parked on another workspace takes you TO IT
+; (sway's `focus`), which is what Diego asked for: "no quiero que Zen venga a
+; mi, sino yo ir a donde Zen esta".
+;
+; Needs lib-glaze.ahk and lib-window-state.ahk. ASCII only, no BOM.
+#Requires AutoHotkey v2.0
+
+AppToggle(spec, cmd) {
+    wins := AppWindows(spec)
+    if (!wins.Length) {
+        ; Cloaked by the app itself = it went to the tray. Nothing outside the
+        ; app can uncloak that window; re-running it is its own way back.
+        if (hwnd := AppTrayWindow(spec)) {
+            Dbg("toggle " spec " is in the tray, re-running it")
+            try Run cmd
+            return
+        }
+        ; A window GlazeWM does not manage (ignored by rule, odd popups).
+        if (hwnd := AppRawWindow(spec)) {
+            Dbg("toggle " spec " unmanaged window, activating it")
+            if (WinGetMinMax("ahk_id " hwnd) = -1)
+                WinRestore "ahk_id " hwnd
+            WinActivate "ahk_id " hwnd
+            return
+        }
+        AppLaunch(spec, cmd)
+        return
+    }
+
+    focused := 0
+    for i, w in wins
+        if (AppIsFocused(w)) {
+            focused := i
+            break
+        }
+
+    if (focused && wins.Length = 1) {
+        Dbg("toggle " spec " hide")
+        WinMinimize "ahk_id " wins[1]["hwnd"]
+        return
+    }
+    if (focused) {
+        next := wins[Mod(focused, wins.Length) + 1]
+        Dbg("toggle " spec " cycle " focused "/" wins.Length)
+        AppShow(next)
+        return
+    }
+    Dbg("toggle " spec " show")
+    AppShow(AppPreferred(wins))
+}
+
+; Which of several windows to show: the hidden one first, like app-toggle.sh
+; (a minimised window is this desktop's scratchpad, so it wins).
+AppPreferred(wins) {
+    for w in wins
+        if (w["state"] = "minimized")
+            return w
+    for w in wins
+        if (w["display"] = "hidden")
+            return w
+    return wins[1]
+}
+
+AppShow(w) {
+    if (w["state"] = "minimized") {
+        ; Bring it to where you are, exactly like `scratchpad show`.
+        cur := GlazeFocusedWs()
+        if (cur != "" && cur != w["ws"])
+            GlazeOn(w["id"], "move --workspace " cur)
+        WinRestore "ahk_id " w["hwnd"]
+        Sleep 150                       ; let GlazeWM see the restore
+    }
+    ; Focus through GlazeWM, never WinActivate: a window parked on a hidden
+    ; workspace is DWM-cloaked and Windows cannot activate it -- that is how
+    ; Telegram got trapped behind a fullscreen game. GlazeWM switches to its
+    ; workspace and uncloaks it.
+    Glaze("focus --container-id " w["id"])
+}
+
+AppLaunch(spec, cmd) {
+    static pending := Map()
+    if (pending.Has(spec) && A_TickCount - pending[spec] < 5000) {
+        Dbg("toggle " spec " debounced (launch in flight)")
+        return
+    }
+    pending[spec] := A_TickCount
+    ; An app launched while a fullscreen window has the focus must NOT take the
+    ; screen: it opens behind the game, on the workspace you are on, and you
+    ; decide when to go and see it (minimise or move the game).
+    game := AppFullscreenFg()
+    Dbg("toggle " spec " launch" (game ? " (behind the fullscreen window " game ")" : ""))
+    try {
+        Run cmd
+    } catch as e {
+        Dbg("toggle " spec " launch failed: " e.Message)
+        return
+    }
+    w := AppWaitForWindow(spec, 15000)
+    if (!w) {
+        Dbg("toggle " spec " launched but no window appeared")
+        return
+    }
+    if (!game) {
+        ; Follow it: a window rule can place it on another workspace, and
+        ; staying put would leave you looking at an unchanged screen.
+        if (w["id"] != "")
+            Glaze("focus --container-id " w["id"])
+        else
+            WinActivate "ahk_id " w["hwnd"]
+        return
+    }
+    ; Windows hands the foreground to a freshly started app, which drops the
+    ; game out of its direct path to the screen. Put the new window under the
+    ; game and give the game the foreground back: it stays on the workspace
+    ; you are on, and you decide when to go and see it.
+    DllCall("SetWindowPos", "Ptr", w["hwnd"], "Ptr", game,
+        "Int", 0, "Int", 0, "Int", 0, "Int", 0, "UInt", 0x13)   ; NOSIZE|NOMOVE|NOACTIVATE
+    WinActivate "ahk_id " game
+}
+
+; The window to wait for may be one GlazeWM does not manage (dialog-like apps
+; are ignored by rule), so fall back to the raw window instead of blocking for
+; the whole timeout.
+AppWaitForWindow(spec, timeoutMs) {
+    start := A_TickCount, deadline := start + timeoutMs
+    while (A_TickCount < deadline) {
+        Sleep 250
+        wins := AppWindows(spec)
+        if (wins.Length)
+            return wins[1]
+        ; Give GlazeWM a moment first: a window it does manage shows up in the
+        ; raw list before it is managed, and the id is what lets us follow it.
+        if (A_TickCount - start > 3000 && (hwnd := AppRawWindow(spec)))
+            return Map("id", "", "hwnd", hwnd, "state", "", "display", "", "ws", "")
+    }
+    return 0
+}
+
+; The focused window's handle when it is fullscreen, else 0.
+AppFullscreenFg() {
+    j := GlazeQuery("focused")
+    if (!InStr(j, '"state":{"type":"fullscreen"'))
+        return 0
+    return RegExMatch(j, '"handle":(-?\d+)', &m) ? m[1] + 0 : 0
+}
+
+; Focused for our purposes = GlazeWM says so AND Windows agrees AND you can
+; actually see it. A window behind a fullscreen game is "active" for Windows
+; while being invisible, and minimising apps like Telegram there sends them to
+; the tray, where their window is unrecoverable.
+AppIsFocused(w) =>
+    w["focus"] && w["state"] != "minimized"
+        && WinActive("ahk_id " w["hwnd"]) && IsOnScreen(w["hwnd"])
+
+; --- matching ---------------------------------------------------------------
+; "telegram.exe" / "telegram"  -> process name
+; "title:^Element"             -> title regex   (sway's title: prefix)
+; "class:CabinetWClass"        -> window class regex
+AppMatch(w, spec) {
+    if (SubStr(spec, 1, 6) = "title:")
+        return RegExMatch(w["title"], "i)" SubStr(spec, 7)) > 0
+    if (SubStr(spec, 1, 6) = "class:")
+        return RegExMatch(w["class"], "i)" SubStr(spec, 7)) > 0
+    return StrLower(w["proc"]) = StrLower(RegExReplace(spec, "i)\.exe$"))
+}
+
+AppWindows(spec) {
+    out := []
+    for w in GlazeWins()
+        if (AppMatch(w, spec))
+            out.Push(w)
+    return out
+}
+
+AppSpecExe(spec) =>
+    (SubStr(spec, 1, 6) = "title:" || SubStr(spec, 1, 6) = "class:") ? ""
+        : (RegExMatch(spec, "i)\.exe$") ? spec : spec ".exe")
+
+AppTrayWindow(spec) {
+    DetectHiddenWindows true
+    if !(exe := AppSpecExe(spec))
+        return 0
+    for hwnd in WinGetList("ahk_exe " exe)
+        if (Cloaked(hwnd) & 1)          ; 1 = cloaked by the app itself
+            return hwnd
+    return 0
+}
+
+AppRawWindow(spec) {
+    DetectHiddenWindows true
+    if !(exe := AppSpecExe(spec))
+        return 0
+    for hwnd in WinGetList("ahk_exe " exe)
+        if (DllCall("IsWindowVisible", "Ptr", hwnd) && !Cloaked(hwnd)
+            && (WinGetStyle("ahk_id " hwnd) & 0xC00000))     ; has a caption
+            return hwnd
+    return 0
+}

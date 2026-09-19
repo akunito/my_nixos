@@ -34,6 +34,8 @@
 CoordMode "Mouse", "Screen"
 #SingleInstance Force
 #Include lib-window-state.ahk
+#Include lib-glaze.ahk
+#Include lib-app-toggle.ahk
 SetTitleMatchMode 2
 
 dll := A_ScriptDir "\VirtualDesktopAccessor.dll"
@@ -46,21 +48,10 @@ hVDA := DllCall("LoadLibrary", "Str", dll, "Ptr")
 ; 10-19 on the main monitor, 20-29 on the vertical one (Sway's swaysome
 ; numbers). GlazeWM has no keybindings of its own; the chords below shell to
 ; its CLI. Hyper+N acts on the monitor that has the focus, like swaysome.
-glazeExe := A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
-Glaze(args) {
-    t := A_TickCount
-    RunWait('"' glazeExe '" command ' args, , "Hide")
-    Dbg(Format("glaze {1} ({2} ms)", args, A_TickCount - t))
-}
-; ---- Debug trace (opt-in): %TEMP%\hyper-debug.on present -> every gesture and
-; every GlazeWM command is appended to %TEMP%\altdrag.log with timings. Power
-; and display-change events are logged always (cheap, and they explain the
-; resume-from-sleep glitches); a display change also dumps GlazeWM's monitor
-; map to %TEMP%\glaze-monitors-<time>.json two seconds later.
-Dbg(msg) {
-    if FileExist(A_Temp "\hyper-debug.on")
-        FileAppend A_Now " " msg "`n", A_Temp "\altdrag.log"
-}
+; glazeExe, Glaze(), GlazeOn(), GlazeQuery() and Dbg() live in lib-glaze.ahk.
+; Power and display-change events are logged always (cheap, and they explain
+; the resume-from-sleep glitches); a display change also dumps GlazeWM's
+; monitor map to %TEMP%\glaze-monitors-<time>.json two seconds later.
 OnMessage(0x218, (wp, lp, *) => (wp = 0x12 || wp = 7 || wp = 4) ? FileAppend(A_Now " power " (wp = 4 ? "suspend" : "resume(" wp ")") " monitors=" MonitorGetCount() "`n", A_Temp "\altdrag.log") : 0)
 OnMessage(0x7E, (wp, lp, *) => (FileAppend(A_Now " displaychange " (lp & 0xFFFF) "x" (lp >> 16) " bpp=" wp " monitors=" MonitorGetCount() "`n", A_Temp "\altdrag.log"), SetTimer(DumpGlazeMonitors, -2000)))
 DumpGlazeMonitors() {
@@ -236,11 +227,6 @@ PillSync()                                  ; get the pills right on start/reloa
 winEvHooks := [DllCall("SetWinEventHook", "UInt", 0x3, "UInt", 0x3, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
              , DllCall("SetWinEventHook", "UInt", 0x800B, "UInt", 0x800B, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
              , DllCall("SetWinEventHook", "UInt", 0x8017, "UInt", 0x8018, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")]
-GlazeQuery(what) {
-    tmp := A_Temp "\glazewm-query.json"
-    RunWait(A_ComSpec ' /c ""' glazeExe '" query ' what ' > "' tmp '""', , "Hide")
-    return FileRead(tmp, "UTF-8")
-}
 PrimaryMon() => DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")
 FocusGroup() {  ; 1 = main monitor (1x), 2 = secondary (2x)
     h := WinExist("A")
@@ -332,70 +318,66 @@ WinSwitcher() {
     Dbg("close " WinGetProcessName("A"))
     WinClose "A"
 }
-^!#f:: {
-    h := WinGetID("A")
-    Dbg("hyper+f " WinGetProcessName(h) ": " (WinGetMinMax(h) = 1 ? "restore" : "maximise"))
-    WinGetMinMax(h) = 1 ? WinRestore(h) : WinMaximize(h)
-}
+^!#f:: Glaze("toggle-fullscreen")             ; sway: fullscreen toggle
+^!#+g:: Glaze("toggle-fullscreen")            ; sway: hyper+Shift+g, same thing
 ^!#Space:: Send "#!{Space}" ; PowerToys Command Palette (its own hotkey is Win+Alt+Space; PowerToys Run is disabled) — rofi stand-in
 
-; raise-or-launch — the app-toggle.sh idea: focus if running, minimise if focused, launch otherwise
-; Hyper+<letter>: go to the app, don't bring it here. A window parked on a hidden
-; workspace is DWM-cloaked and `WinActivate` cannot show it (it only lights up in
-; the taskbar and stays unreachable -- that is how Telegram got trapped behind a
-; fullscreen game), so GlazeWM is asked to focus it instead: it switches to the
-; window's workspace and uncloaks it. Launching a new app leaves it where you are.
-Toggle(exe, cmd) {
-    DetectHiddenWindows true
-    hwnd := WinExist("ahk_exe " exe)
-    Dbg("toggle " exe " " (hwnd ? (WinActive("ahk_id " hwnd) ? "minimise" : "focus") : "launch"))
-    if !hwnd {
-        Run cmd
-        return
-    }
-    ; Minimise only a window you can actually see. A window sitting behind a
-    ; fullscreen game still counts as "active" for Windows, and minimising apps
-    ; like Telegram sends them to the tray, where they cloak their own window:
-    ; nothing outside the app can bring that back (lost window, 2026-09-18).
-    if (WinActive("ahk_id " hwnd) && IsOnScreen(hwnd)) {
-        WinMinimize "ahk_id " hwnd
-        return
-    }
-    if (Cloaked(hwnd) & 1) {           ; hidden by the app itself (tray)
-        Dbg("toggle " exe " is in the tray, re-running it")
-        Run cmd                        ; its own activation path is the only way
-        return
-    }
-    if (id := GlazeIdOf(hwnd))
-        Glaze("focus --container-id " id)
-    else
-        WinActivate "ahk_id " hwnd      ; not managed (ignored windows, popups)
+; ---- Tiling: the sway keymap ---------------------------------------------
+; Windows tile by default (config.yaml `initial_state: tiling`), with sway's
+; gaps and the same orientation rule (GlazeWM picks the tiling direction from
+; the monitor shape, like sway's `default_orientation auto`, so the vertical
+; monitor stacks windows).
+;
+;   focus      hyper+h / j / k / ?        left / down / up / right
+;   move       hyper+Shift+j / k / l / :  left / down / up / right
+;   resize     hyper+Shift+u / p / i / o  narrower / wider / taller / shorter
+;   float      hyper+Shift+f, hyper+Shift+Space
+;   sticky     hyper+Shift+s              shown on every workspace of its monitor
+;   fullscreen hyper+f, hyper+Shift+g
+;   hide/show  hyper+Shift+- / hyper+-    sway's scratchpad, minimise here
+;   split      hyper+Shift+n              toggle tiling direction (no sway twin)
+^!#h:: Glaze("focus --direction left")
+^!#j:: Glaze("focus --direction down")
+^!#k:: Glaze("focus --direction up")
+^!#?:: Glaze("focus --direction right")       ; sway: hyper+question (hyper+l is Telegram)
+^!#+j:: Glaze("move --direction left")
+^!#+k:: Glaze("move --direction down")
+^!#+l:: Glaze("move --direction up")
+^!#+;:: Glaze("move --direction right")       ; sway: hyper+colon
+^!#+u:: Glaze("resize --width -5%")           ; sway: resize shrink width 5 ppt
+^!#+p:: Glaze("resize --width 5%")
+^!#+i:: Glaze("resize --height 5%")
+^!#+o:: Glaze("resize --height -5%")
+^!#+f:: Glaze("toggle-floating --centered=false")
+^!#+Space:: Glaze("toggle-floating --centered=false")
+^!#+s:: Glaze("toggle-sticky")
+^!#+n:: Glaze("toggle-tiling-direction")
+; sway's scratchpad: hide the focused window, and bring back the last hidden one
+; to the workspace you are on (AppShow does the move + restore + focus).
+^!#+-:: Glaze("set-minimized")
+^!#-:: {
+    for w in GlazeWins()
+        if (w["state"] = "minimized" && w["ws"] != "") {
+            AppShow(w)
+            return
+        }
+    Dbg("scratchpad show: nothing minimised")
 }
 
-
-
-; GlazeWM's container id for a window handle, or "" if it doesn't manage it.
-GlazeIdOf(hwnd) {
-    j := GlazeQuery("windows"), pos := 1
-    while pos := RegExMatch(j, '"type":"window","id":"([^"]+)"[\s\S]*?"handle":(\d+)', &m, pos) {
-        if (m[2] + 0 = hwnd + 0)
-            return m[1]
-        pos += StrLen(m[0])
-    }
-    return ""
-}
-^!#t:: Toggle("WindowsTerminal.exe", "wt.exe")
-^!#z:: Toggle("zen.exe", A_ProgramFiles "\Zen Browser\zen.exe")
-^!#v:: Toggle("vivaldi.exe", EnvGet("LOCALAPPDATA") "\Vivaldi\Application\vivaldi.exe")
-^!#l:: Toggle("Telegram.exe", A_AppData "\Telegram Desktop\Telegram.exe")
-^!#d:: Toggle("Obsidian.exe", EnvGet("LOCALAPPDATA") "\Programs\Obsidian\Obsidian.exe")
-^!#c:: Toggle("Code.exe", "code")
-^!#p:: Toggle("Bitwarden.exe", EnvGet("LOCALAPPDATA") "\Programs\Bitwarden\Bitwarden.exe")
-^!#o:: Toggle("Element.exe", EnvGet("LOCALAPPDATA") "\element-desktop\Element.exe")
-^!#y:: Toggle("Spotify.exe", A_AppData "\Spotify\Spotify.exe")
-^!#x:: Toggle("CalculatorApp.exe", "calc")
-^!#e:: Toggle("explorer.exe", "explorer")
-^!#u:: Toggle("dbeaver.exe", EnvGet("LOCALAPPDATA") "\DBeaver\dbeaver.exe")
+; raise-or-launch = Sway's app-toggle.sh; the decision table and the reasons
+; live in lib-app-toggle.ahk (AppToggle).
+^!#t:: AppToggle("WindowsTerminal.exe", "wt.exe")
+^!#z:: AppToggle("zen.exe", A_ProgramFiles "\Zen Browser\zen.exe")
+^!#v:: AppToggle("vivaldi.exe", EnvGet("LOCALAPPDATA") "\Vivaldi\Application\vivaldi.exe")
+^!#l:: AppToggle("Telegram.exe", A_AppData "\Telegram Desktop\Telegram.exe")
+^!#d:: AppToggle("Obsidian.exe", EnvGet("LOCALAPPDATA") "\Programs\Obsidian\Obsidian.exe")
+^!#c:: AppToggle("Code.exe", "code")
+^!#p:: AppToggle("Bitwarden.exe", EnvGet("LOCALAPPDATA") "\Programs\Bitwarden\Bitwarden.exe")
+^!#o:: AppToggle("Element.exe", EnvGet("LOCALAPPDATA") "\element-desktop\Element.exe")
+^!#y:: AppToggle("Spotify.exe", A_AppData "\Spotify\Spotify.exe")
+^!#x:: AppToggle("CalculatorApp.exe", "calc")
+^!#e:: AppToggle("explorer.exe", "explorer")
+^!#u:: AppToggle("dbeaver.exe", EnvGet("LOCALAPPDATA") "\DBeaver\dbeaver.exe")
 ; ShareX cannot RegisterHotKey Ctrl+Alt+Shift+Win+<letter> (Windows keeps that set for
 ; the "Office key"), so the hook-based AHK owns Hyper+Shift+C and runs the workflow.
 ^!#+c:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+C"'
