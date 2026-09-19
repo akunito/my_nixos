@@ -19,6 +19,12 @@ pass=0; fail=0
 ok() { printf '  PASS %s\n' "$1"; pass=$((pass+1)); }
 ko() { printf '  FAIL %s\n' "$1"; fail=$((fail+1)); }
 
+# The user's own sticky windows (Telegram by rule) follow every workspace of
+# their monitor and would sit in the middle of the cases: park them for the run.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File \
+  'C:\Users\diego\AppData\Local\Temp\perf\sticky-park.ps1' off 2>/dev/null | tr -d '\r' | sed 's/^/  /'
+trap "powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Users\diego\AppData\Local\Temp\perf\sticky-park.ps1' on >/dev/null 2>&1" EXIT
+
 mkdir -p "$WT/tests/wm"
 cp "$SRC"/lib-*.ahk "$WT/"
 cp "$HERE"/*.ahk "$WT/tests/wm/"

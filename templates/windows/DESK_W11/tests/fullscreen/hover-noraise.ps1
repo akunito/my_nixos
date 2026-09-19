@@ -81,7 +81,10 @@ if ($displayed -notcontains $homeWs) { & $glaze command focus --workspace $homeW
 Start-Sleep 2
 WalkCursorTo 2100 900          # over the part of B that A does not cover
 $okB = WaitForFocus $b
-"after unhide     B-focused=$okB (hover only, no click)"
+# What the pointer is over decides this case, so report the obstacles too: a
+# sticky window of the user's own follows every workspace and lands here
+# (run-suite.sh parks them for the duration).
+"after unhide     B-focused=$okB (hover only, no click) B-cloaked=$([W]::Cloak($b)) B-ex=0x$(([W]::GetWindowLong($b, -20)).ToString('x')) fg=$([W]::Cls([W]::GetForegroundWindow()))"
 WalkCursorTo 400 900           # back over A
 "hover A again    A-focused=$(WaitForFocus $a)"
 

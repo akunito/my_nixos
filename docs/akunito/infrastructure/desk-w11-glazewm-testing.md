@@ -216,6 +216,25 @@ The stock taskbar staying over borderless games is a long-standing Windows bug t
 bars on the shell's `ABN_FULLSCREENAPP` (inherits Explorer's misdetections).
 
 
+## 5b. Measurement traps found while building the sway-parity suites (2026-09-20)
+
+- **A sticky window of your own sits in the middle of every case.** Telegram follows every
+  workspace of the primary monitor by rule, so it covered the hover points and the
+  fullscreen windows the cases measure. Both suites now run `sticky-park.ps1 off` first and
+  `on` in a shell trap at the end.
+- **A second fullscreen D3D window stalls the first one's presents**, even on the other
+  monitor and with no overlap: after it exits, PresentMon reports *no frames at all* for
+  the first window for several seconds (measured by pid as well as by process name, with
+  the window visible, uncloaked and focused). Hiding and showing it again — a workspace
+  round trip — brings the presents back. `ffm-test.ps1` therefore measures present modes
+  *before* it opens the second window.
+- **`GetWindowRect` is not what the eye sees**: it includes the invisible resize borders
+  (9 px at 150%), so two tiled windows appear to overlap and the gap between them measures
+  negative. `DWMWA_EXTENDED_FRAME_BOUNDS` (attribute 9) is what GlazeWM lays out by.
+- **With focus following the mouse, a window that slides under a stationary pointer takes
+  the focus** — no mouse movement needed. Any command that acts on "the focused window"
+  after a layout change needs `--id`.
+
 ## 6. Sway parity (2026-09-20)
 
 The goal stopped being "GlazeWM for workspaces only" and became "the Sway setup, on
