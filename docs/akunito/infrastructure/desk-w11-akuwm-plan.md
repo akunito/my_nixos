@@ -831,6 +831,46 @@ The stall test on the real machine earned its keep immediately: it found that
 an **idle** loop went silent, so the watchdog killed a healthy daemon ten
 seconds after it started. A quiet desk now beats like a busy one.
 
+### 10.3 What M2 has landed so far (2026-09-20)
+
+AkuWM arranges a real desk. GlazeWM is still the one running it; the proof is
+`tools/smoke-live.ps1`, which exercises the managing path against real Windows
+while touching nothing a person is using -- a configuration whose only rule
+ignores every window whose title is not one of its own, three console windows
+it opens itself, and GlazeWM asked to let go of those three and then paused for
+the length of the test. Every check passes with nothing in the log: three
+windows adopted and nobody else's, three columns of equal width that do not
+overlap, hidden by a workspace switch and shown again, one moved to another
+workspace while the other two take the space, fullscreen covering the screen
+past the taskbar and back, the daemon stopped with nothing left hidden.
+
+Landed: the tiling tree and the layout arithmetic (pure, tested on Linux
+against this desk's pixel counts), the desk model (monitors by role,
+workspaces, states, rules, sticky, fullscreen, the redraw set), the platform
+applier, the single wm thread, and the whole compatibility surface -- the
+WebSocket server on 6123, the container shapes, the command grammar,
+subscriptions, and a `glazewm.exe` shim. 282 unit tests.
+
+**Four Windows facts that cost hours. None of them announce themselves.**
+
+| what | how it shows |
+|---|---|
+| `SetCloak(Shell, 1)` hides a window and **nothing** brings it back -- not any of the eight spellings, not `ShowWindow`, not another process, not `uiAccess`. The reversible pair is `(Default, 1)` ↔ `(Default, 0)` | three windows hidden by a workspace switch and lost for good. M1 measured only half of this: it found the call that brings back a window *GlazeWM* had hidden and never checked that AkuWM's own cloak was the matching one. Spike **s8** is the experiment |
+| `DeferWindowPos` refuses `SWP_ASYNCWINDOWPOS` with `ERROR_INVALID_PARAMETER`, while `SetWindowPos` accepts it happily | the batch handle comes back null, every move already added to it is lost with it, and the windows simply do not move. AkuWM's first attempt at arranging anything did nothing at all. Spike **s9** |
+| an `async` loop is not one thread: after every `await` the work resumes on whichever pool thread is free, and Win32 is full of state that belongs to a thread | found while chasing the batch failure. The wm loop is now a real thread with a blocking queue, and a test asserts every piece of work runs on the same one |
+| a window that lands a few pixels from where it was put **is** where it was put -- a terminal rounds its size to whole character cells | insisting on the exact rectangle re-sends the same move for as long as AkuWM runs. Further than 32 px means somebody moved it, and it goes back |
+
+Because of the first one, AkuWM now **proves the round trip before it hides
+anything**: the first hide of every run hides its window, brings it back, then
+hides it for real. If it does not come back, AkuWM stops hiding windows for the
+rest of the run and says so, and every workspace shows all of its windows. That
+is a bad desk, against a window nobody can see, find in Alt+Tab or click on the
+taskbar, which is a lost one.
+
+Still to do in M2: the Zebar capture and the pill sync, the taskbar mark under
+a real game, `tests/wm` and `tests/fullscreen` driven by AutoHotkey through the
+shim, and a day of normal use.
+
 ## 12. Risks
 
 | risk | what we do |
@@ -840,6 +880,7 @@ seconds after it started. A quiet desk now beats like a busy one.
 | a .NET GC pause in the middle of a redraw | workstation GC, no allocation on the hot path, `DeferWindowPos` batches; measured |
 | Avalonia and the hooks fighting for the main thread | S5; the platform thread is separate by design |
 | the compat layer drifts from what Zebar expects after a Zebar upgrade | the capture is versioned with the plan; `doctor` reports a subscriber that disconnects |
+| **a window is hidden and cannot be brought back** | measured, and it is real: one spelling of the cloak is a one-way door (10.3). AkuWM uses the reversible pair, proves the round trip on the first hide of every run, reads the flag back after every call, and writes the ledger before the cloak rather than after |
 | an anti-cheat treats AkuWM's hook as a macro tool | the policy in `docs/input-and-anticheat.md`: observe always, swallow only chords and never over a game, fabricate input never over a game, no memory access of any kind, and no macro primitives ever. Narrower in substance than the AutoHotkey it replaces, which is the most recognised tool of this class; no reputation with any vendor, which the document says out loud |
 | the clean room slips because the same person read GlazeWM this week | the procedure in section 3; the design differences in 5.2 and 5.5; the tripwire |
 
