@@ -33,6 +33,21 @@ ssh -A user@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/
 
 **Workflow**: Make changes locally -> commit and push -> SSH to remote and run `git fetch && git reset --hard origin/main && ./install.sh ...`. NEVER edit files on the remote directly.
 
+## How code gets written (all repos, not just this one)
+
+Code here is read by Claude and the compiler, not by people. Write it that way.
+
+- **Performance first, always.** Take the faster construct even when it reads worse: `for`
+  over LINQ on hot paths, no allocation in property getters, no `ToList`/`ToDictionary`/
+  `ToHashSet` per call, no string formatting the log level will discard, cached regexes
+  and matchers rather than fresh ones per item. Size and memory count too — trimming,
+  ReadyToRun, GC settings, and not allocating in the first place.
+- **Comments only for what a future session needs to know**: a decision and its reason, a
+  measured platform gotcha, a constraint invisible in the code. Not exposition, not a
+  restatement of the line below, not essays in doc comments.
+- **Keep every measured gotcha verbatim.** Those are the comments that pay for themselves.
+- Measure before optimising, and say which numbers are measured and which are estimated.
+
 ## Testing discipline (every change)
 
 Every change is verified before it is called done: run the relevant tests (unit, driven tests, a real deploy check) and work in cycles — change, test, read the result, adjust — until the outcome matches what was expected. If a check cannot be automated (a driven test suite, Claude logged in as a user through `adb` on Android, or the Claude extension in Brave), stop and ask Diego to test it by hand, say exactly what to check, and wait for his verdict before closing the task or the ticket. Never report a change as working on the strength of the code alone.
