@@ -4,7 +4,13 @@
 # composited over a game costs it ~20 fps and 20 ms of latency (measured on
 # Aion 2, 2026-09-17), so this is the case that guards the whole idea.
 . "$env:TEMP\perf\win32.ps1"
+# The window manager's CLI: AkuWM's shim once the desk has been switched to
+# it (akuwm-switch.ps1 writes the marker), GlazeWM's otherwise. Inline rather
+# than in a library because each of these runs on its own, copied alone into
+# %TEMP%\perf and sometimes by the elevated daemon.
 $glaze = "C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"
+$wmMarker = "$env:LOCALAPPDATA\akuwm\wm-cli.txt"
+if (Test-Path $wmMarker) { $wmCli = (Get-Content $wmMarker -Raw).Trim(); if ($wmCli -and (Test-Path $wmCli)) { $glaze = $wmCli } }
 $d = "$env:TEMP\perf"
 
 # By pid, not by process name: the chat-window stand-in is another fliptest,

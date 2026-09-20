@@ -6,7 +6,18 @@
 set -u
 P=/mnt/c/Users/diego/AppData/Local/Temp/perf
 W='powershell.exe -NoProfile -ExecutionPolicy Bypass -File'
+# The window manager's CLI, seen from WSL: AkuWM's shim once the desk has been
+# switched to it (akuwm-switch.ps1 writes the marker, a Windows path), GlazeWM's
+# otherwise. The suite has to drive whichever one is actually running.
 G="/mnt/c/Program Files/glzr.io/GlazeWM/cli/glazewm.exe"
+marker=/mnt/c/Users/diego/AppData/Local/akuwm/wm-cli.txt
+if [ -f "$marker" ]; then
+  # The BOM goes first: a marker written by Set-Content -Encoding UTF8 has one,
+  # and a path with three invisible bytes in front of it is not executable.
+  wmcli=$(sed '1s/^\xEF\xBB\xBF//' "$marker" | tr -d '\r\n' |
+          sed 's|\\|/|g; s|^C:|/mnt/c|; s|^c:|/mnt/c|')
+  [ -n "$wmcli" ] && [ -x "$wmcli" ] && G="$wmcli"
+fi
 pass=0; fail=0
 ok()  { printf '  PASS %s\n' "$1"; pass=$((pass+1)); }
 # Every case measures real frames, so the previous window must be gone first:

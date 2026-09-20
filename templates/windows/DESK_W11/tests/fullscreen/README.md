@@ -127,3 +127,12 @@ fullscreen, which is the case the suite covers.
 
 Known gap: GlazeWM classifies Aion 2 as `fullscreen` at manage time but fliptest as
 `floating` (it grows after being managed); the three bugs reproduce anyway.
+
+## Which window manager it drives
+
+Both suites drive **whichever window manager is running**. `akuwm-switch.ps1`
+writes `%LOCALAPPDATA%\akuwm\wm-cli.txt` with the path of AkuWM's `glazewm`
+shim; the AHK library, the PowerShell cases and the runners all read that
+marker and fall back to GlazeWM's own CLI when it is absent. So the same 155
+checks guard AkuWM before it has an input layer of its own -- switch the desk,
+run the suite, switch back.

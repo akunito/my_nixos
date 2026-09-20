@@ -18,7 +18,10 @@ WmCli() {
     marker := EnvGet("LOCALAPPDATA") "\akuwm\wm-cli.txt"
     if FileExist(marker) {
         try {
-            path := Trim(FileRead(marker, "UTF-8"), " `t`r`n")
+            ; Chr(0xFEFF) first: a marker written by Set-Content -Encoding UTF8
+            ; carries a BOM, and a path with three invisible bytes in front of
+            ; it fails FileExist and sends the hotkeys silently back to GlazeWM.
+            path := Trim(FileRead(marker, "UTF-8"), " `t`r`n" Chr(0xFEFF))
             if (path != "" && FileExist(path))
                 return path
         }

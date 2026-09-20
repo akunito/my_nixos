@@ -13,6 +13,13 @@ to GlazeWM or the config: tiling and sticky windows both reach into it.
 ./run-suite.sh toggle          # one of: toggle sticky tiling rules
 ```
 
+Both suites drive **whichever window manager is running**. `akuwm-switch.ps1`
+writes `%LOCALAPPDATA%\akuwm\wm-cli.txt` with the path of AkuWM's `glazewm`
+shim; the AHK library, the PowerShell cases and the runners all read that
+marker and fall back to GlazeWM's own CLI when it is absent. So the same 155
+checks guard AkuWM before it has an input layer of its own -- switch the desk,
+run the suite, switch back.
+
 Needs `%TEMP%\perf` populated by `../fullscreen` (`fliptest.exe`, and
 `PresentMon.exe` for that suite). The libraries under test are copied to
 `%TEMP%\wmtest` on every run, so the suite always exercises **this checkout** —

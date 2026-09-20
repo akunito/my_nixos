@@ -4,7 +4,13 @@ Add-Type @"
 using System; using System.Runtime.InteropServices;
 public static class P { [DllImport("user32.dll", SetLastError=true)] public static extern bool SetWindowPos(IntPtr h, IntPtr a, int x, int y, int w, int t, uint f); }
 "@
+# The window manager's CLI: AkuWM's shim once the desk has been switched to
+# it (akuwm-switch.ps1 writes the marker), GlazeWM's otherwise. Inline rather
+# than in a library because each of these runs on its own, copied alone into
+# %TEMP%\perf and sometimes by the elevated daemon.
 $glaze = "C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"
+$wmMarker = "$env:LOCALAPPDATA\akuwm\wm-cli.txt"
+if (Test-Path $wmMarker) { $wmCli = (Get-Content $wmMarker -Raw).Trim(); if ($wmCli -and (Test-Path $wmCli)) { $glaze = $wmCli } }
 $w = (& $glaze query windows | ConvertFrom-Json).data.windows | ? processName -eq $Proc
 $h = [IntPtr]$w.handle
 # Leave fullscreen and shrink it in the same breath: GlazeWM re-promotes any
