@@ -18,6 +18,7 @@
 ;   Hyper+Shift+F       floating toggle                       = floating toggle
 ;   Hyper+Shift+S       sticky toggle (all workspaces)        = sticky toggle
 ;   Hyper+Shift+- / -   hide the window / bring the last one back = scratchpad
+;   Hyper+F5            put the layout back together (after a monitor nap)
 ;   Alt+LeftDrag        move window                            = floating_modifier Mod1
 ;   Alt+RightDrag       resize window (nearest corner)
 ;   Hyper+Shift+Escape  suspend/resume all hotkeys (games)
@@ -45,6 +46,7 @@ CoordMode "Mouse", "Screen"
 #Include lib-app-toggle.ahk
 #Include lib-workspaces.ahk
 #Include lib-tiling-drag.ahk
+#Include lib-repair.ahk
 SetTitleMatchMode 2
 
 dll := A_ScriptDir "\VirtualDesktopAccessor.dll"
@@ -61,8 +63,24 @@ hVDA := DllCall("LoadLibrary", "Str", dll, "Ptr")
 ; Power and display-change events are logged always (cheap, and they explain
 ; the resume-from-sleep glitches); a display change also dumps GlazeWM's
 ; monitor map to %TEMP%\glaze-monitors-<time>.json two seconds later.
-OnMessage(0x218, (wp, lp, *) => (wp = 0x12 || wp = 7 || wp = 4) ? FileAppend(A_Now " power " (wp = 4 ? "suspend" : "resume(" wp ")") " monitors=" MonitorGetCount() "`n", A_Temp "\altdrag.log") : 0)
-OnMessage(0x7E, (wp, lp, *) => (FileAppend(A_Now " displaychange " (lp & 0xFFFF) "x" (lp >> 16) " bpp=" wp " monitors=" MonitorGetCount() "`n", A_Temp "\altdrag.log"), SetTimer(DumpGlazeMonitors, -2000)))
+OnMessage(0x218, PowerEvent)
+PowerEvent(wp, lp, *) {
+    if !(wp = 0x12 || wp = 7 || wp = 4)
+        return
+    FileAppend A_Now " power " (wp = 4 ? "suspend" : "resume(" wp ")") " monitors=" MonitorGetCount() "`n", A_Temp "\altdrag.log"
+    ; Write the layout down before the machine goes away: what comes back is
+    ; not what left, and this is the last healthy state anyone will see.
+    if (wp = 4)
+        JournalSnapshot()
+}
+OnMessage(0x7E, (wp, lp, *) => (FileAppend(A_Now " displaychange " (lp & 0xFFFF) "x" (lp >> 16) " bpp=" wp " monitors=" MonitorGetCount() "`n", A_Temp "\altdrag.log"), SetTimer(DumpGlazeMonitors, -2000), SetTimer(RepairAfterDisplayChange, -6000)))
+; Monitors arrive one at a time and GlazeWM needs a moment to settle, so the
+; repair runs once, six seconds after the last change in a burst.
+RepairAfterDisplayChange() {
+    Dbg("repair: display change settled, " MonitorGetCount() " monitor(s)")
+    RepairLayout(false)
+    SetTimer(() => JournalSnapshot(), -8000)   ; record the repaired layout
+}
 DumpGlazeMonitors() {
     try FileAppend GlazeQuery("monitors"), A_Temp "\glaze-monitors-" A_Now ".json", "UTF-8"
 }
@@ -260,6 +278,9 @@ WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
 StateName(mm) => mm = 1 ? "maximised" : mm = -1 ? "minimised" : "normal"
 winEvPtr := CallbackCreate(WinEvCb, , 7)
 PillSync()                                  ; get the pills right on start/reload
+; The journal: a snapshot every minute while things look healthy, and one now.
+SetTimer(() => JournalSnapshot(), 60000)
+SetTimer(() => JournalSnapshot(), -5000)
 
 winEvHooks := [DllCall("SetWinEventHook", "UInt", 0x3, "UInt", 0x3, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
              , DllCall("SetWinEventHook", "UInt", 0x800B, "UInt", 0x800B, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
@@ -323,6 +344,12 @@ WinSwitcher() {
 ^!#Escape:: {
     Dbg("close " WinGetProcessName("A"))
     WinClose "A"
+}
+; Put the desktop back together: workspaces to the monitor their number says,
+; and every window to the geometry the journal saw it with on that monitor.
+^!#F5:: {
+    r := RepairLayout(true)
+    TrayTip("Layout repaired", r["workspaces"] " workspace(s), " r["windows"] " window(s)")
 }
 ^!#f:: Glaze("toggle-fullscreen")             ; sway: fullscreen toggle
 ^!#+g:: Glaze("toggle-fullscreen")            ; sway: hyper+Shift+g, same thing

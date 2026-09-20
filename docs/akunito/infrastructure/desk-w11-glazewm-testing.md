@@ -287,6 +287,54 @@ while building that case, both worth remembering:
   all, so the stand-in was never topmost. Start it through `explorer.exe` to get
   the normal user token.
 
+## 5e. The layout journal, and what a sleeping monitor breaks (2026-09-20)
+
+Two reports after a resume: windows the size of their title bar (Telegram at
+219x30, the same 237x39 the Alt+drag log caught days earlier), and the
+workspace keys jumping from 12 to 17. Both had the same trigger, visible in the
+AHK trace: `displaychange ... monitors=1` -- the main monitor leaves while the
+machine suspends and comes back a few seconds later.
+
+- **The workspaces get mixed between monitors.** A monitor that goes away hands
+  its workspaces to the survivor; when it returns, GlazeWM's
+  `move_bounded_workspaces_to_new_monitor` only collects the ones bound to the
+  monitor it just added, so the others stay where they were pushed and each
+  sleep cycle mixes them further. Found live: ws 21 on the main monitor, ws 11
+  on the vertical one. Fixed in the fork -- every monitor reclaims its bound
+  workspaces on a display change, and only the misplaced ones are moved
+  (moving a workspace re-centres the floating windows in it). `tests/wm/run-suite.sh
+  display` proves it against a real display-settings change: re-applying the
+  SAME mode broadcasts nothing at all, so the case switches the second monitor
+  to another resolution for eight seconds.
+- **The workspace keys trusted the numbering.** `CurrentWs` looked for a
+  displayed workspace whose name starts with the monitor's digit, so with the
+  workspaces mixed it cycled the wrong monitor -- the 12 -> 17 jump. It now asks
+  the MONITOR under the pointer which workspace it is showing.
+- **Windows come back the size of their title bar**, and that one is Windows,
+  not GlazeWM: a per-monitor-DPI app handed a restore rectangle of 219x30.
+  Nothing can prevent it, so it is repaired from a record.
+
+**The journal** (`lib-layout-journal.ahk`, `%LOCALAPPDATA%\akuwm\layout.tsv`)
+writes down where each window lives and how big it is **on each monitor**, with
+that monitor's work area, every minute and before the machine suspends -- and
+never while a monitor is missing, which would memorise the damage. Sizes cannot
+be extrapolated between monitors (150% vs 125%, 3840x2160 vs 1440x2560), so a
+window that was never seen on a monitor is placed by the *fraction* of the work
+area it used on the one it knows.
+
+**The repair** (`lib-repair.ahk`) runs six seconds after a display change
+settles, and on Hyper+F5 for a full pass. It puts workspaces back on the
+monitor their number says, restores windows that are broken (smaller than
+300x200, or with less than 10% of themselves on a screen) and windows that
+wandered to another monitor, and leaves healthy ones alone. A window launched
+by Hyper+&lt;letter&gt; is placed the same way: on the workspace displayed where
+the pointer is, with the geometry it had on THAT monitor.
+
+Suite: `tests/wm/run-suite.sh repair` -- the journal records per monitor, a
+window shrunk to 219x30 comes back to its recorded size, one parked at -31900
+comes back on screen, a size from another monitor is scaled by work area rather
+than copied, and a misplaced workspace returns to its monitor.
+
 ## 6. Sway parity (2026-09-20)
 
 The goal stopped being "GlazeWM for workspaces only" and became "the Sway setup, on

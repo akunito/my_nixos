@@ -17,6 +17,7 @@
 #Include %A_LineFile%\..\lib-glaze.ahk
 #Include %A_LineFile%\..\lib-window-state.ahk
 #Include %A_LineFile%\..\lib-workspaces.ahk
+#Include %A_LineFile%\..\lib-layout-journal.ahk
 
 AppToggle(spec, cmd) {
     t0 := A_TickCount
@@ -161,8 +162,12 @@ AppLaunch(spec, cmd) {
         return
     }
     if (!game) {
-        ; Follow it: a window rule can place it on another workspace, and
-        ; staying put would leave you looking at an unchanged screen.
+        ; It opens where you are pointing: the workspace displayed on the
+        ; monitor under the cursor, with the size it had there last time (a
+        ; size from another monitor means nothing -- different scale, different
+        ; shape). Then follow it, since a rule could still have placed it
+        ; elsewhere.
+        AppPlaceNewWindow(spec, w)
         if (w["id"] != "")
             Glaze("focus --container-id " w["id"])
         else
@@ -181,6 +186,29 @@ AppLaunch(spec, cmd) {
 ; The window to wait for may be one GlazeWM does not manage (dialog-like apps
 ; are ignored by rule), so fall back to the raw window instead of blocking for
 ; the whole timeout.
+; A freshly launched window belongs on the monitor you are pointing at, with
+; whatever geometry the journal remembers for it THERE.
+AppPlaceNewWindow(spec, w) {
+    if (w["id"] = "")
+        return
+    cur := CurrentWs(CursorGroup())
+    if (cur != "" && w["ws"] != "" && w["ws"] != cur) {
+        Dbg("toggle " spec ": new window on " w["ws"] ", moving to " cur)
+        GlazeOn(w["id"], "move --workspace " cur)
+        Sleep 200
+    }
+    if (w["state"] = "tiling")           ; the layout owns its size
+        return
+    place := JournalPlacement(JournalRead(), JournalKey(w["proc"], w["class"]), CursorDevice())
+    if !place
+        return
+    Dbg(Format("toggle {1}: restoring {2},{3} {4}x{5}{6}", spec, place["x"], place["y"],
+        place["w"], place["h"], place["exact"] ? "" : " (scaled)"))
+    GlazeOn(w["id"], Format("position --x-pos {1} --y-pos {2}", place["x"], place["y"]))
+    Sleep 150
+    GlazeOn(w["id"], Format("size --width {1}px --height {2}px", place["w"], place["h"]))
+}
+
 AppWaitForWindow(spec, timeoutMs) {
     start := A_TickCount, deadline := start + timeoutMs
     while (A_TickCount < deadline) {

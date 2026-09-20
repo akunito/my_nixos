@@ -11,7 +11,7 @@ Start-Sleep 1
 ParkCursorOnPrimary
 Get-Process fliptest -EA SilentlyContinue | Stop-Process -Force
 Start-Sleep 1
-$p = Start-Process "$d\fliptest.exe" -ArgumentList "20 0" -PassThru
+$p = Start-Process "$d\fliptest.exe" -ArgumentList "34 0" -PassThru
 Start-Sleep 6
 $w = @((& $glaze query windows | ConvertFrom-Json).data.windows | ? processName -eq "fliptest" | Sort-Object width -Descending)[0]
 "workspace $ws -> state=$($w.state.type) display=$($w.displayState) glazeRect=$($w.x),$($w.y) $($w.width)x$($w.height)"
@@ -20,17 +20,20 @@ $h = [IntPtr]$w.handle
 $above = @(); $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero -and $x -ne $h) { if ([W]::IsWindowVisible($x) -and -not [W]::Cloak($x)) { $r = [W]::Rect($x); if (($r.Rt-$r.L) -gt 0 -and $r.T -lt 1400) { $above += [W]::Cls($x) } }; $x = [W]::GetWindow($x, 2) }
 "above: $($above -join ',')"
-# PresentMon occasionally writes nothing (session still closing from the previous
-# case); one retry rather than a false failure.
+# PresentMon writes nothing when another fullscreen D3D window has just
+# exited: the presents of this one stall for several seconds (measured
+# 2026-09-20, by pid as well as by name, with the window visible and
+# focused). Three tries with a real pause between them, and by pid so the
+# frames of any other fliptest are not mixed in.
 $modes = ""
-foreach ($try in 1..2) {
+foreach ($try in 1..3) {
   Remove-Item "$d\fsauto.csv" -EA SilentlyContinue
-  & "$d\PresentMon.exe" --process_name fliptest.exe --output_file "$d\fsauto.csv" --v2_metrics --timed 5 --terminate_after_timed --stop_existing_session --session_name AkuFs --no_console_stats *> $null
+  & "$d\PresentMon.exe" --process_id $p.Id --output_file "$d\fsauto.csv" --v2_metrics --timed 5 --terminate_after_timed --stop_existing_session --session_name AkuFs --no_console_stats *> $null
   if (Test-Path "$d\fsauto.csv") {
     $modes = ((Import-Csv "$d\fsauto.csv" | Group-Object PresentMode | % { "$($_.Name)=$($_.Count)" }) -join ", ")
     if ($modes) { break }
   }
-  Start-Sleep 2
+  Start-Sleep 5
 }
 if (-not $modes) { $modes = "no frames captured" }
 $modes

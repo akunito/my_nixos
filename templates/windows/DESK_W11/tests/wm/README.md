@@ -27,6 +27,8 @@ change `glazewm/config.yaml`, copy it over and `glazewm command wm-reload-config
 | `tiling` | `tiling-test.ahk` | Two and three windows share the workspace, sway's inner gap (8 px, 12 at 150% DPI), closing one re-flows the rest, focus/move/resize/float by direction, the vertical monitor stacks instead of splitting |
 | `rules` | `rules-test.ahk` | The rules ported from sway: the calculator, the file manager and both terminals float and are sticky, an app with no rule tiles |
 | `wskeys` | `wskeys-test.ahk` | The workspace keys act on the monitor under the pointer (sway's focused output), leave the other monitor alone, and move a window by its own monitor |
+| `repair` | `repair-test.ahk` | The layout journal (per monitor, with the work area) and the repair: a window shrunk to its title bar, one parked off the desktop, a size scaled onto a monitor it was never seen on, a workspace back on its monitor |
+| `display` | `display-change-test.ps1` | The fork fix against a real display-settings change: a misplaced workspace is reclaimed by its monitor. Switches the SECOND monitor to another resolution for eight seconds |
 | `stacking` | `stacking-test.ahk` | Floating windows stay above the tiled ones (sway's layers), survive focus changes and workspace trips, go under a fullscreen game, and lose the always-on-top when they tile again |
 | `tiledrag` | `tiledrag-test.ahk` | Alt+drag on a tiled window: what a drop means, the gate that keeps a tiled window off the free-form path, and that the layout reflows with everything still tiled |
 
@@ -61,6 +63,12 @@ change `glazewm/config.yaml`, copy it over and `glazewm command wm-reload-config
   Split the gesture instead: a pure function for the decision, the CLI for the
   effect. Injected keys do reach another script's hotkeys, but only with
   `SendLevel 1`.
+- **The pointer decides which monitor a new window is born on** (focus follows
+  the mouse -> focused workspace -> new window), so a case that measures the
+  main monitor has to park the pointer there first. And ask for a workspace
+  only when it is not already the focused one: `toggle_workspace_on_refocus`
+  turns that request into a jump to the previous workspace, which is how test
+  windows kept appearing on the other monitor.
 - **The suites park the user's own sticky windows** (`sticky-park.ps1 off`, and
   `on` in a shell trap): a sticky window follows every workspace and lands in
   the middle of whatever the case is measuring. The `rules` suite is the

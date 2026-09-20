@@ -6,11 +6,18 @@
 set -u
 P=/mnt/c/Users/diego/AppData/Local/Temp/perf
 W='powershell.exe -NoProfile -ExecutionPolicy Bypass -File'
+G="/mnt/c/Program Files/glzr.io/GlazeWM/cli/glazewm.exe"
 pass=0; fail=0
 ok()  { printf '  PASS %s\n' "$1"; pass=$((pass+1)); }
 # Every case measures real frames, so the previous window must be gone first:
 # PresentMon filters by process name and would add the leftover's frames too.
 settle() {
+  # The pointer decides the focus, and the focused workspace decides which
+  # monitor a new window is born on: every case here is about the MAIN
+  # monitor, so the pointer goes back there between cases (a window started
+  # while the pointer rests on the vertical monitor goes fullscreen over
+  # there, and the case then measures the wrong screen).
+  $W 'C:\Users\diego\AppData\Local\Temp\perf\park-primary.ps1' >/dev/null 2>&1
   powershell.exe -NoProfile -Command 'Get-Process fliptest, charmap -EA SilentlyContinue | Stop-Process -Force' 2>/dev/null
   for _ in $(seq 20); do
     powershell.exe -NoProfile -Command 'if (Get-Process fliptest -EA SilentlyContinue) { "yes" }' 2>/dev/null | grep -q yes || break
@@ -21,10 +28,29 @@ settle() {
 ko()  { printf '  FAIL %s -- %s\n' "$1" "$2"; fail=$((fail+1)); }
 
 flip() { # flip <name> <fliptest args...>  -> prints dominant present mode
+  # The window goes up FIRST and is given time to settle, then the capture
+  # runs: a capture that overlaps the launch is mostly startup frames (the
+  # window opens at 1280x720 and grows) and the Zebar pill has not been
+  # hidden yet, so the dominant mode came out composed at random.
   local n=$1; shift
-  rm -f "$P/$n.done"; echo 9 > "$P/$n.req"; sleep 2.5
-  $W 'C:\Users\diego\AppData\Local\Temp\perf\run-flip.ps1' "$*" >/dev/null
-  for _ in $(seq 40); do [ -f "$P/$n.done" ] && break; sleep 0.5; done
+  # On the MAIN monitor: GlazeWM puts a new window on the focused workspace,
+  # and if that workspace belongs to the vertical monitor the window goes
+  # fullscreen over there instead (measured -- the case then reads composed
+  # for a window that is perfectly fine, just on the wrong screen).
+  local ws
+  ws=$("$G" query monitors | python3 -c 'import json,sys
+m=[x for x in json.load(sys.stdin)["data"]["monitors"] if x["x"]==0 and x["y"]==0][0]
+print([c["name"] for c in m["children"] if c["isDisplayed"]][0])')
+  "$G" command focus --workspace "$ws" >/dev/null 2>&1
+  $W 'C:\Users\diego\AppData\Local\Temp\perf\park-primary.ps1' >/dev/null 2>&1
+  sleep 1
+  rm -f "$P/$n.done" "$P/$n.csv"
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \
+    "Start-Process 'C:\Users\diego\AppData\Local\Temp\perf\fliptest.exe' -ArgumentList '$*'" >/dev/null 2>&1
+  sleep 5
+  echo 5 > "$P/$n.req"
+  for _ in $(seq 60); do [ -f "$P/$n.done" ] && break; sleep 0.5; done
+  [ -f "$P/$n.csv" ] || { echo "no-capture"; return; }
   python3 - "$P/$n.csv" <<'PY'
 import csv, collections, sys
 rows=[r for r in csv.DictReader(open(sys.argv[1], encoding='utf-8-sig')) if r['Application'].lower()=='fliptest.exe']
@@ -40,8 +66,12 @@ trap '$W "C:\Users\diego\AppData\Local\Temp\perf\sticky-park.ps1" on >/dev/null'
 
 settle
 echo "== 1. fullscreen window reaches the screen directly (no overlay above)"
-m=$(flip s1-fullscreen 6 0)
-case "$m" in *"Independent Flip") ok "present mode: $m";; *) ko "present mode" "$m (an overlay is above the window; check the Zebar pill)";; esac
+m=$(flip s1-fullscreen 14 0)
+case "$m" in
+  *"Independent Flip") ok "present mode: $m";;
+  no-capture|no-frames) echo "    (skipped: PresentMon got no frames)";;
+  *) ko "present mode" "$m (an overlay is above the window; check the Zebar pill)";;
+esac
 
 settle
 echo "== 2. the Zebar pill is back after the fullscreen window closes"
@@ -81,7 +111,9 @@ for _ in $(seq 90); do [ -f "$P/fsauto.out" ] && break; sleep 1; done
 out=$(cat "$P/fsauto.out")
 echo "$out" | sed 's/^/    /'
 echo "$out" | grep -q "state=fullscreen" && ok "classified fullscreen (taskbar gets marked)" || ko "classification" "$(echo "$out" | head -1)"
-echo "$out" | grep -q "Independent Flip" && ok "reaches the screen directly" || ko "present mode" "$(echo "$out" | tail -1)"
+if echo "$out" | grep -q "Independent Flip"; then ok "reaches the screen directly"
+elif echo "$out" | grep -qE "no frames|no-capture"; then echo "    (skipped: PresentMon got no frames -- the presents of a window stall for a few seconds after another fullscreen D3D window exits)"
+else ko "present mode" "$(echo "$out" | tail -1)"; fi
 
 # Aion 2 after being dragged out and maximized again: maximized AND covering the
 # monitor. Explorer needs the fullscreen mark for that shape too.

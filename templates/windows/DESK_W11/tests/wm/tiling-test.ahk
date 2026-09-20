@@ -65,6 +65,19 @@ StartTiled(&pid) {
     Sleep 1500
     return WinExist("ahk_pid " pid)
 }
+; The pointer decides the focus, the focused workspace decides the monitor a
+; new window is born on: park it on the main monitor before creating any.
+ParkOnMain() {
+    CoordMode "Mouse", "Screen"
+    Loop MonitorGetCount() {
+        if (A_Index = MonitorGetPrimary()) {
+            MonitorGet(A_Index, &l, &t, &r, &b)
+            MouseMove((l + r) // 2, (t + b) // 2, 10)
+            Sleep 500
+            return
+        }
+    }
+}
 KillFlips() {
     try RunWait(A_ComSpec ' /c taskkill /F /IM fliptest.exe', , "Hide")
     Sleep 1200
@@ -87,6 +100,7 @@ home := EmptyWs("1")
 Glaze("focus --workspace " home)
 Sleep 1200
 DllCall("SetCursorPos", "Int", 30, "Int", 1000)     ; parked: no pointer focus changes
+ParkOnMain()
 Note("home " home ", started on " startWs)
 
 ; --- two windows share the workspace --------------------------------------

@@ -53,6 +53,19 @@ StartFlip(args, &pid) {
     Sleep 1500
     return WinExist("ahk_pid " pid)
 }
+; The pointer decides the focus, the focused workspace decides the monitor a
+; new window is born on: park it on the main monitor before creating any.
+ParkOnMain() {
+    CoordMode "Mouse", "Screen"
+    Loop MonitorGetCount() {
+        if (A_Index = MonitorGetPrimary()) {
+            MonitorGet(A_Index, &l, &t, &r, &b)
+            MouseMove((l + r) // 2, (t + b) // 2, 10)
+            Sleep 500
+            return
+        }
+    }
+}
 KillFlips() {
     try RunWait(A_ComSpec ' /c taskkill /F /IM fliptest.exe', , "Hide")
     Sleep 1200
@@ -90,6 +103,7 @@ if (!wss.Has(home) || !wss[home]) {
     Glaze("focus --workspace " home)
     Sleep 1200
 }
+ParkOnMain()
 Note("home " home ", started on " startWs)
 a := StartFlip("300 0 tiled", &pa)
 b := StartFlip("300 0 tiled", &pb)

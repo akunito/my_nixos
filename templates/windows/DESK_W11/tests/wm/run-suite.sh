@@ -63,7 +63,7 @@ collect() { # collect <script> <result> <timeout> <title>
 }
 
 case "${1:-all}" in
-  all)       suites="toggle wskeys sticky stacking tiling tiledrag rules";;
+  all)       suites="toggle wskeys sticky stacking tiling tiledrag rules repair display";;
   *)         suites="$*";;
 esac
 
@@ -79,6 +79,24 @@ for s in $suites; do
     stacking) collect stacking-test.ahk stacking-test.txt 200 "Floating windows stay above the tiled ones (sway's layers)";;
     tiling) collect tiling-test.ahk    tiling-test.txt    240 "Tiling: sway's layout, gaps and keymap";;
     tiledrag) collect tiledrag-test.ahk tiledrag-test.txt 150 "Alt+drag keeps a tiled window tiled";;
+    repair) collect repair-test.ahk    repair-test.txt    240 "The layout journal and the repair after a monitor nap";;
+    display)
+      # The fork fix for the workspaces mixed between monitors, against a real
+      # display-settings change. Switches the SECOND monitor to another
+      # resolution for eight seconds and puts it back; the main one is left
+      # alone. Re-applying the same mode does not work: Windows broadcasts
+      # nothing at all when the mode does not change.
+      echo "== Workspaces go back to their monitor on a display change (fork)"
+      cp display-change-test.ps1 "$P/" 2>/dev/null
+      out=$(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \
+        'C:\Users\diego\AppData\Local\Temp\perf\display-change-test.ps1' 2>/dev/null |
+        tr -d '\r' | grep -vE '^\s*\+|CategoryInfo|FullyQualified|^\s*$')
+      echo "$out" | sed 's/^/    /'
+      if echo "$out" | grep -q "^RESULT ok"; then ok "a misplaced workspace is reclaimed by its monitor"
+      elif echo "$out" | grep -q "no other mode available"; then echo "    (skipped: the second monitor has a single mode)"
+      else ko "misplaced workspace after a display change"; fi
+      echo
+      ;;
     rules)  collect rules-test.ahk     rules-test.txt     120 "Window rules ported from sway";;
     *)      echo "unknown suite: $s" >&2; exit 2;;
   esac

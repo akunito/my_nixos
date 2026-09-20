@@ -36,9 +36,35 @@ FocusGroup() => CursorGroup()             ; kept: the old name, the new rule
 Ws(n) => CursorGroup() * 10 + Mod(n, 10)  ; Hyper+1..9 -> x1..x9, Hyper+0 -> x0
 MoveWs(n) => WindowGroup() * 10 + Mod(n, 10)
 
-; The workspace displayed on a monitor group, from a snapshot when there is one
-; (every query costs ~200 ms, and a gesture should take one at most).
+; The device name ("\\.\DISPLAY2") of the monitor under a point.
+MonitorDeviceAt(x, y) {
+    mon := DllCall("MonitorFromPoint", "Int64", (y << 32) | (x & 0xFFFFFFFF), "UInt", 2, "Ptr")
+    mi := Buffer(104, 0), NumPut("UInt", 104, mi)        ; MONITORINFOEX
+    if !DllCall("GetMonitorInfoW", "Ptr", mon, "Ptr", mi)
+        return ""
+    return StrGet(mi.Ptr + 40, 32, "UTF-16")
+}
+CursorDevice() {
+    MouseGetPos &mx, &my
+    return MonitorDeviceAt(mx, my)
+}
+
+; The workspace displayed on a monitor group. Asked of the MONITOR, not of the
+; workspace names: after a monitor goes away and comes back, GlazeWM leaves
+; workspaces attached to the wrong monitor (measured 2026-09-20, ws 21 on the
+; main monitor and ws 11 on the vertical one), and trusting the name made the
+; cycle jump from 12 straight to 17 -- every step in between was switching the
+; other monitor.
 CurrentWs(group, wss := 0) {
+    device := CursorDevice()
+    for mon in GlazeMonitors() {
+        if (mon["device"] != device)
+            continue
+        for wsEntry in mon["wss"]
+            if (wsEntry["displayed"])
+                return wsEntry["name"]
+    }
+    ; Fall back to the naming convention if the monitor is not in the tree.
     if !wss
         wss := GlazeWss()
     for name, shown in wss

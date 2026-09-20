@@ -73,7 +73,7 @@ GlazeWins() => GlazeWinsFrom(GlazeQuery("workspaces"))
 GlazeWss() => GlazeWssFrom(GlazeQuery("workspaces"))
 
 GlazeWinsFrom(j) {
-    out := [], ws := "", pos := 1
+    out := [], wsName := "", pos := 1
     pat := '"type":"workspace","id":"[^"]+","name":"([^"]+)"'
     pat .= '|"type":"window","id":"([^"]+)","parentId":"([^"]+)","hasFocus":(true|false)'
     pat .= '.*?"state":\{"type":"([a-z]+)".*?"displayState":"([a-z]+)"'
@@ -83,12 +83,12 @@ GlazeWinsFrom(j) {
     pat .= '.*?"handle":(-?\d+),"title":"((?:[^"\\]|\\.)*)","className":"((?:[^"\\]|\\.)*)","processName":"([^"]*)"'
     while pos := RegExMatch(j, pat, &m, pos) {
         if (m[1] != "")
-            ws := m[1]
+            wsName := m[1]
         else
             out.Push(Map("id", m[2], "focus", m[4] = "true", "state", m[5],
                 "display", m[6], "sticky", m[7] = "true", "hwnd", m[8] + 0,
                 "title", JsonUnescape(m[9]), "class", m[10], "proc", m[11],
-                "ws", ws))
+                "ws", wsName))
         pos += StrLen(m[0])
     }
     return out
@@ -118,6 +118,34 @@ GlazeFocusedWs(wins := 0) {
         if (w["focus"])
             return w["ws"]
     return ""
+}
+
+; The monitors, each with the workspaces attached to it and which one it is
+; showing. Read from `query monitors`, where a monitor's own fields come AFTER
+; its children, so the device name closes the block.
+GlazeMonitors() {
+    j := GlazeQuery("monitors"), out := [], cur := 0, pos := 1
+    pat := '"type":"monitor"'
+    pat .= '|"type":"workspace","id":"[^"]+","name":"([^"]+)"'
+    pat .= '|"isDisplayed":(true|false)'
+    pat .= '|"deviceName":"((?:[^"\\]|\\.)*)"'
+    while pos := RegExMatch(j, pat, &m, pos) {
+        hit := m[0]
+        if (InStr(hit, '"type":"monitor"')) {
+            cur := Map("device", "", "wss", [])
+            out.Push(cur)
+        } else if (m[1] != "" && cur) {
+            cur["wss"].Push(Map("name", m[1], "displayed", false))
+        } else if (m[2] != "" && cur && cur["wss"].Length) {
+            ; A workspace's own isDisplayed comes after its children, so it
+            ; belongs to the last workspace seen on this monitor.
+            cur["wss"][cur["wss"].Length]["displayed"] := (m[2] = "true")
+        } else if (m[3] != "" && cur && cur["device"] = "") {
+            cur["device"] := StrReplace(m[3], "\\", "\")
+        }
+        pos += StrLen(m[0])
+    }
+    return out
 }
 
 ; Windows change state rarely between two gestures, and a query costs ~200 ms:

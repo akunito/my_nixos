@@ -22,10 +22,21 @@ if (-not $OtherWs -or $OtherWs -eq $HomeWs) {
 }
 "switching to $OtherWs"
 "home workspace $HomeWs"
-# Land on the primary monitor's workspace (a new window goes to the FOCUSED one).
+# Land on the primary monitor's workspace (a new window goes to the FOCUSED
+# one). The pointer has to be there too: with focus following the mouse, a
+# pointer resting on the other monitor takes the focus straight back and the
+# window is born over there instead (measured -- the case then reported
+# "window is on workspace 21" and measured the wrong screen).
+ParkCursorOnPrimary
 $primary = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
-& $glaze command focus --workspace ($primary.children | ? isDisplayed).name | Out-Null
-Start-Sleep 2
+$target = ($primary.children | ? isDisplayed).name
+# Only if it is not already the focused one: with `toggle_workspace_on_refocus`
+# asking for the workspace you are on switches to the PREVIOUS one, which is
+# how this case kept starting its window on the other monitor.
+$focused = ((& $glaze query workspaces | ConvertFrom-Json).data.workspaces | ? hasFocus | % name)
+if ($focused -ne $target) { & $glaze command focus --workspace $target | Out-Null; Start-Sleep 2 }
+ParkCursorOnPrimary
+Start-Sleep 1
 $args = if ($env:WSTEST_MAXFULL -eq "1") { "30 $Monitor maxfull" }
         elseif ($env:WSTEST_GAMELIKE -eq "1") { "30 $Monitor gamelike" }
         else { "30 $Monitor" }
