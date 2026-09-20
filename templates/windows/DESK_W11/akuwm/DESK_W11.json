@@ -1,3 +1,27 @@
 {
-  "version": 1
+  "version": 1,
+  "monitors": [
+    {
+      "id": "main",
+      "name": "Odyssey G70NC",
+      "match": {
+        "edid": "SAM7233",
+        "name": "Odyssey G70NC"
+      },
+      "orientation": "horizontal",
+      "notes": "identified on this machine; 0,0 3840x2160 at 144 dpi",
+      "updated_at": 1789924163
+    },
+    {
+      "id": "second",
+      "name": "RGB-27QHDS",
+      "match": {
+        "edid": "NSL2711",
+        "name": "RGB-27QHDS"
+      },
+      "orientation": "vertical",
+      "notes": "identified on this machine; 3840,-408 1440x2560 at 120 dpi",
+      "updated_at": 1789924163
+    }
+  ]
 }
