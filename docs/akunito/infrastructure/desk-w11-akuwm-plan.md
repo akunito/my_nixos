@@ -928,9 +928,74 @@ assemblies are private. ReadyToRun costs both and buys no startup. Numbers and
 the ten reflection sites that block trimming: `docs/trimming.md` in the AkuWM
 repo.
 
-Still to do in M2: the Zebar capture and the pill sync, the taskbar mark under
-a real game, `tests/wm` and `tests/fullscreen` driven by AutoHotkey through the
-shim, and a day of normal use.
+### 10.5 What the takeover needs, prepared without taking the desk (2026-09-21)
+
+Everything left in M2 ends at the same place: the desk has to be switched off
+GlazeWM, which is Diego's to choose. So the four items were taken as far as
+they go without it, and four faults came out of the reading that would each
+have shown up only afterwards.
+
+**The capture is built and waiting.** `akuwm daemon --capture <file>` writes
+every frame the compatibility server exchanges to JSONL, on a thread of its
+own so the bar never waits on a disk. `tools/zebar-capture.ps1` runs the whole
+dance: stop the old manager, take 6123 in **shadow mode** -- where `Redraw` is
+never reached and no window is moved, hidden or focused -- let Zebar connect,
+and put everything back in a `finally`, including on Ctrl+C. It needs GlazeWM
+stopped for about a minute, because 6123 is the only port Zebar knows and
+GlazeWM has no option to move.
+
+**The pill sync needs nothing.** `PillSync` in `hyper-desktops.ahk` is pure
+Win32 -- it hides a pill whose monitor is covered and knows nothing about any
+window manager -- and `zebar` is the first `ignore` rule in `common.json`, so
+AkuWM never touches those windows. The widget itself reads only `name`,
+`displayName`, `isDisplayed` and `hasFocus` of the monitor's workspaces and
+sends `focus --workspace N`; all four are in the view and answered.
+
+**`tests/fullscreen` could not have run against AkuWM at all.** `tests/wm`
+drives whichever manager the marker names, through `WmCli()` in
+`lib-glaze.ahk`; the fullscreen suite did not -- nineteen PowerShell cases and
+its bash runner each held GlazeWM's CLI path as a literal, so the suite would
+have measured a manager that was not running. They now read the same marker,
+falling back to exactly what they did before when it is absent.
+
+**The four faults:**
+
+- **`WmCli()` could never have found the marker.** `akuwm-switch.ps1` wrote it
+  with `Set-Content -Encoding UTF8`, which in Windows PowerShell 5.1 means a
+  BOM. `WmCli()` trims spaces and newlines, not three invisible bytes, so
+  `FileExist` failed and **every hotkey would have gone on talking to GlazeWM
+  after the switch, with nothing in any log to say why**. Written with no
+  preamble now, and both readers strip one anyway.
+- **`move-workspace --direction` was unrecognised.** `lib-repair.ahk` sends it
+  when it finds a workspace on the wrong monitor, so the repair after a
+  monitor nap would have failed on every call. AkuWM binds workspaces to
+  monitor roles by EDID and cannot put one on the wrong monitor, so it is
+  accepted and warned about rather than implemented -- if it ever fires, the
+  premise is what is wrong.
+- **The taskbar mark was assumed to have worked.** The applier's own rule is
+  that nothing is (a cloak is read back from DWM); the mark was the exception.
+  The shell refuses it when explorer has just restarted, and the model recorded
+  it as done anyway, so the bar would sit over the game for the rest of the
+  session. Refusals come back in `ApplyResult.Unmarked` and the next pass asks
+  again.
+- **The switch left `glazewm-watcher` running.** It is a child of `glazewm.exe
+  start` -- the only thing in the Startup folder -- and it exists to act when
+  the manager dies, which is exactly what force-stopping the manager looks
+  like to it. Stopped with the manager now, and the switch **fails loudly**
+  when AkuWM did not get port 6123 instead of printing a warn line and saying
+  Done: that is the state where the hotkeys and the bar talk to one manager
+  while another arranges the desk.
+
+Also guarded: the `monitors` query against the regular expression
+`GlazeMonitors()` reads it with -- `deviceName` after the children, a
+workspace's `isDisplayed` after its own, the three workspace keys adjacent.
+420 tests.
+
+**What is left needs the desk**, in this order: run the capture (~1 min off
+GlazeWM, nothing moves), switch with `tools\akuwm-switch.ps1`, run both
+suites, and use it for a day. `tools/publish-dev.sh` puts the three
+executables where the scripts look; the signed copy in Program Files needs
+`tools\install-uiaccess.ps1` as administrator to catch up.
 
 ## 12. Risks
 
