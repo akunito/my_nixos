@@ -63,7 +63,7 @@ collect() { # collect <script> <result> <timeout> <title>
 }
 
 case "${1:-all}" in
-  all)       suites="toggle wskeys sticky tiling tiledrag rules";;
+  all)       suites="toggle wskeys sticky stacking tiling tiledrag rules";;
   *)         suites="$*";;
 esac
 
@@ -76,6 +76,7 @@ for s in $suites; do
     toggle) collect apptoggle-test.ahk apptoggle-test.txt 180 "Hyper+<letter>: Sway's app-toggle decision table";;
     wskeys) collect wskeys-test.ahk    wskeys-test.txt    150 "Workspace keys act on the monitor under the pointer";;
     sticky) collect sticky-test.ahk    sticky-test.txt    180 "Sticky windows: shown on every workspace of their monitor";;
+    stacking) collect stacking-test.ahk stacking-test.txt 200 "Floating windows stay above the tiled ones (sway's layers)";;
     tiling) collect tiling-test.ahk    tiling-test.txt    240 "Tiling: sway's layout, gaps and keymap";;
     tiledrag) collect tiledrag-test.ahk tiledrag-test.txt 150 "Alt+drag keeps a tiled window tiled";;
     rules)  collect rules-test.ahk     rules-test.txt     120 "Window rules ported from sway";;

@@ -133,6 +133,9 @@ PillSync(*) {
                 continue
             mon := MonitorAt(px + pw // 2, py + ph // 2)
             covered := MonitorIsCovered(mon, pill)
+            Dbg(Format("pill {1},{2} {3}x{4} -> monitor {5} [{6},{7} {8}x{9}] covered={10} by {11}",
+                px, py, pw, ph, mon.i, mon.l, mon.t, mon.r - mon.l, mon.b - mon.t,
+                covered, MonitorCoveredBy(mon, pill)))
             DetectHiddenWindows true          ; MonitorIsCovered turns it off, and
             shown := DllCall("IsWindowVisible", "Ptr", pill)   ; WinShow needs it
             if (covered && shown)
@@ -156,6 +159,31 @@ MonitorAt(x, y) {
 ; Is some window covering this whole monitor (a game, a video at full screen)?
 ; The pill is checked against the monitor, not against the focused window: with
 ; the focus on the other monitor the pill would otherwise pop back over a game.
+; Which window covers a monitor, for the trace.
+MonitorCoveredBy(mon, pill) {
+    DetectHiddenWindows false
+    for hwnd in WinGetList() {
+        if (hwnd = pill)
+            continue
+        try {
+            exe := WinGetProcessName("ahk_id " hwnd)
+            if (exe = "zebar.exe" || exe = "explorer.exe")
+                continue
+            if (DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr") != hwnd)
+                continue
+            if (WinGetMinMax("ahk_id " hwnd) = -1)
+                continue
+            cloaked := 0
+            DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", hwnd, "UInt", 14, "Int*", &cloaked, "UInt", 4)
+            if (cloaked)
+                continue
+            WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
+            if (wx <= mon.l && wy <= mon.t && wx + ww >= mon.r && wy + wh >= mon.b)
+                return exe " [" wx "," wy " " ww "x" wh "]"
+        }
+    }
+    return "-"
+}
 MonitorIsCovered(mon, pill) {
     DetectHiddenWindows false
     for hwnd in WinGetList() {

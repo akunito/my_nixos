@@ -27,13 +27,16 @@ change `glazewm/config.yaml`, copy it over and `glazewm command wm-reload-config
 | `tiling` | `tiling-test.ahk` | Two and three windows share the workspace, sway's inner gap (8 px, 12 at 150% DPI), closing one re-flows the rest, focus/move/resize/float by direction, the vertical monitor stacks instead of splitting |
 | `rules` | `rules-test.ahk` | The rules ported from sway: the calculator, the file manager and both terminals float and are sticky, an app with no rule tiles |
 | `wskeys` | `wskeys-test.ahk` | The workspace keys act on the monitor under the pointer (sway's focused output), leave the other monitor alone, and move a window by its own monitor |
+| `stacking` | `stacking-test.ahk` | Floating windows stay above the tiled ones (sway's layers), survive focus changes and workspace trips, go under a fullscreen game, and lose the always-on-top when they tile again |
 | `tiledrag` | `tiledrag-test.ahk` | Alt+drag on a tiled window: what a drop means, the gate that keeps a tiled window off the free-form path, and that the layout reflows with everything still tiled |
 
 ## Things that bite when writing cases here
 
 - **AHK names are case-insensitive**: a function called `R()` cannot be used as
-  `r := R(x)` -- the parser reads the local `r`. `GoTo` and `Log` are taken as
-  well (control flow and the logarithm), so they can never be function names. Both fail as a modal error dialog, i.e. as a
+  `r := R(x)` -- the parser reads the local `r`. `GoTo`, `Log` and `Float` are
+  taken as well (control flow, the logarithm, the number class), so they can
+  never be names of your own -- each one costs a run: the script stops on a
+  modal dialog, which is why `run-suite.sh` validates before running. Both fail as a modal error dialog, i.e. as a
   test that hangs until the timeout; `run-suite.sh` runs `/validate` first so
   that shows up as a syntax error instead.
 - **Measure the visible frame**: `GetWindowRect` includes the invisible resize

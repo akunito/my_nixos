@@ -114,18 +114,27 @@ Check("3 the dropped window swapped places", WRect(leftHwnd)["l"] > beforeLeft ?
 Check("3 and is still tiling", Rec(leftHwnd)["state"], "tiling")
 Check("3 so is the other one", Rec(rightHwnd)["state"], "tiling")
 
-wBefore := WRect(rightHwnd)["w"]
-GlazeOn(Rec(rightHwnd)["id"], TilingDropCommand("resize", 300, 0, false, false))
+; Re-read the layout: the drop above moved a window, and the resize has to
+; act on the one that still HAS a neighbour to its right -- `move --direction
+; right` on the rightmost window sends it to the next monitor, where a lone
+; tiled window fills the workspace and cannot be resized at all.
+Sleep 1000
+r1 := WRect(a), r2 := WRect(b)
+sameMonitor := Abs(r1["l"] - r2["l"]) < 3840 && r1["t"] = r2["t"]
+resizeMe := r1["l"] < r2["l"] ? a : b
+Note("4 resizing the left one of " r1["l"] " / " r2["l"] (sameMonitor ? "" : " (they are not side by side any more)"))
+wBefore := WRect(resizeMe)["w"]
+GlazeOn(Rec(resizeMe)["id"], TilingDropCommand("resize", 300, 0, false, false))
 Sleep 1500
-wAfter := WRect(rightHwnd)["w"]
+wAfter := WRect(resizeMe)["w"]
 Note("4 width " wBefore " -> " wAfter)
 ; GlazeWM moves the split edge, and for the window at the edge of the row that
 ; means the neighbour takes the pixels: what matters is that the drop resized
 ; the layout by the distance dragged, and that nothing left the layout.
 Check("4 the resize drop moved the split by the drag",
     Abs(Abs(wAfter - wBefore) - 300) < 120 ? 1 : 0, 1)
-Check("4 still tiling", Rec(rightHwnd)["state"], "tiling")
-Check("4 neighbour still tiling", Rec(leftHwnd)["state"], "tiling")
+Check("4 still tiling", Rec(resizeMe)["state"], "tiling")
+Check("4 the other one too", Rec(resizeMe = a ? b : a)["state"], "tiling")
 
 KillFlips()
 if (startWs != "")

@@ -257,6 +257,36 @@ Two traps of my own making, both worth remembering:
   `FileAppend` threw a sharing violation as an error dialog and froze a suite
   until it timed out.
 
+## 5d. Always on top, the sway way (2026-09-20)
+
+sway stacks a workspace in three layers: tiling < floating < fullscreen. On
+Windows the middle one is `HWND_TOPMOST`, so `state_defaults.floating.shown_on_top`
+is on and every floating window (the terminals, Telegram, the panels) stays over
+the tiled ones. The third layer is the part that needed work in the fork:
+
+- The fullscreen rule is checked BEFORE `shown_on_top` in `redraw_containers`,
+  so a window that is kept on top still goes under a game sharing its workspace.
+- An always-on-top window lives in its own band, so `SetWindowPos` with an
+  insert-after handle left it above the game all the same: it is taken out of
+  the band (`HWND_NOTOPMOST`) first, then placed behind.
+- Neither of those windows changes by itself when a game appears, so the other
+  windows of the workspace are queued for redraw both when a window is *managed*
+  as fullscreen (a game that starts that way) and when one *becomes* fullscreen
+  (a window that grows into it).
+
+Measured with a chat-window stand-in floating, sticky and on top, sharing the
+workspace with a fullscreen window: **100 % Hardware Composed: Independent
+Flip** (`tests/fullscreen/run-suite.sh`, case 11b). Two measurement traps found
+while building that case, both worth remembering:
+
+- PresentMon's `--process_name` counts EVERY process with that name. The chat
+  stand-in is another `fliptest.exe`, and its own (composed) frames read as
+  "52 % direct" for a game that was at 100 %. Capture by `--process_id`.
+- A script that the elevated daemon runs cannot stand in for a normal app:
+  GlazeWM is not elevated and cannot set the z-order of an elevated window at
+  all, so the stand-in was never topmost. Start it through `explorer.exe` to get
+  the normal user token.
+
 ## 6. Sway parity (2026-09-20)
 
 The goal stopped being "GlazeWM for workspaces only" and became "the Sway setup, on

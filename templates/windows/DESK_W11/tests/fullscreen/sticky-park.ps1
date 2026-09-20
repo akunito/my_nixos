@@ -16,13 +16,25 @@ if ($mode -eq "off") {
   $prev = if (Test-Path $file) { @(Get-Content $file) } else { @() }
   $all = @($prev + $ids | Select-Object -Unique | ? { $_ })
   if ($all.Count) { $all | Set-Content $file }
-  foreach ($id in $ids) { & $glaze command --id $id unset-sticky | Out-Null }
+  # Minimize them too, not just unstick: they float and are kept on top, so a
+  # terminal sitting over the middle of the main monitor is composited over
+  # every fullscreen window the cases measure (case 1 read "Composed: Flip"
+  # with alacritty on top of it, 2026-09-20).
+  foreach ($id in $ids) {
+    & $glaze command --id $id unset-sticky | Out-Null
+    & $glaze command --id $id set-minimized | Out-Null
+  }
   "parked $($ids.Count) sticky window(s)"
 } else {
   if (-not (Test-Path $file)) { "nothing parked"; return }
   $ids = @(Get-Content $file)
   $live = @((& $glaze query windows | ConvertFrom-Json).data.windows | % { $_.id })
-  foreach ($id in $ids) { if ($live -contains $id) { & $glaze command --id $id set-sticky | Out-Null } }
+  foreach ($id in $ids) {
+    if ($live -contains $id) {
+      & $glaze command --id $id set-floating | Out-Null
+      & $glaze command --id $id set-sticky | Out-Null
+    }
+  }
   Remove-Item $file -EA SilentlyContinue
   "restored $($ids.Count) sticky window(s)"
 }

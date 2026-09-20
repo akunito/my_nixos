@@ -185,6 +185,20 @@ home=$(echo "$out" | grep "^window on" | awk '{print $3}' | tr -d ,)
 echo "$out" | grep "^hidden:" | grep -q "cloaked=2" && ok "cloaked while away" || ko "cloak" "$(echo "$out" | grep '^hidden')"
 echo "$out" | grep "^after glaze focus" | grep -q "displayed=$home.*cloaked=0" && ok "GlazeWM brings you to it" || ko "focus by id" "$(echo "$out" | grep '^after glaze')"
 
+# Floating windows are kept above the tiled ones (sway's layers, HWND_TOPMOST
+# here). The one case that must still win: a game on the same workspace stays
+# over them, or it loses the direct path to the screen.
+settle
+echo "== 11b. an always-on-top floating window vs a fullscreen game"
+rm -f "$P/sticky-game.out"; echo "sticky-over-game.ps1" > "$P/sticky-game.elev"
+for _ in $(seq 120); do [ -f "$P/sticky-game.out" ] && break; sleep 1; done
+out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/sticky-game.out" | tr -d '\r')
+echo "$out" | sed 's/^/    /'
+echo "$out" | grep -q "chat floating+sticky topmost=True" && ok "the chat window is kept on top" || ko "topmost" "$(echo "$out" | head -1)"
+echo "$out" | grep -q "chat-above-game=False" && ok "but it goes under the game" || ko "above the game" "$(echo "$out" | grep '^game state')"
+pct=$(echo "$out" | grep "^present modes" | grep -o '[0-9]*% direct' | tr -d '%% direct')
+if [ -n "$pct" ] && [ "$pct" -ge 90 ]; then ok "the game keeps the direct path ($pct%)"; else ko "present mode with a topmost window around" "$(echo "$out" | grep '^present')"; fi
+
 # The helpers behind Hyper+<letter>: a window you cannot see must never be
 # minimised (that sent Telegram to the tray, where its window is unrecoverable).
 settle

@@ -52,7 +52,12 @@ window_behavior:
   state_defaults:
     floating:
       centered: false                    # keep the position the app asked for
-      shown_on_top: false                # everything floats: normal z-order
+      # sway keeps the floating layer above the tiling one, so a floating
+      # terminal or Telegram is never buried under a tiled window. On Windows
+      # that is HWND_TOPMOST. The fork checks the fullscreen rule first, so a
+      # window sharing a workspace with a game still goes UNDER the game and
+      # leaves it its direct path to the screen.
+      shown_on_top: true
     fullscreen:
       # false on purpose (2026-09-17): with `true`, a borderless fullscreen game
       # is judged against `frame.inset(1).contains(workspace_rect)`, which fails
