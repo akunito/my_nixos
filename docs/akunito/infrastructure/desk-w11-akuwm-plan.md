@@ -670,7 +670,7 @@ a commit in the dotfiles repo that documents what changed on the desk.
 |---|---|---|---|---|
 | **M0** ✅ 2026-09-20 | repo skeleton (the five projects), config schema + loader + validator + `import glazewm`, logging, named-pipe CLI with `doctor`/`config`, CI, `LICENSING.md` and the tripwire | **met**: 102 unit tests green on Linux; the import reproduces 21 rules, 20 workspaces, 13 apps (and 4 Startup entries the Python prototype could not find); `akuwm doctor` runs on the desk and sees the live stack | -- | M |
 | **M1** ✅ 2026-09-20 | the platform layer and the model in **shadow mode**: hooks, EDID monitors, rules, the tree; it watches and changes nothing; `query` answers on the pipe | **met**: 270 samples over 45 minutes of real use, all 270 in agreement, nothing found; the bench reports a 0.19 ms hot path against a 5 ms budget. Workspace *names* were not compared and could not be — see 10.2 | S1 the LL hook sees keys while an elevated window (fliptest-elev) is focused · S2 `SetForegroundWindow` on an elevated target from the hook context · S3 `SetCloak` from .NET COM · S4 hotkey → SetWindowPos under 5 ms · S5 hooks on the platform thread with Avalonia on main | L |
-| **M2** | it takes over the WM: cloak-hiding, workspaces, states, rules, layout, z-order, fullscreen, the taskbar mark, the pill sync, the IPC on 6123 and the `glazewm` shim. GlazeWM is switched off; **AutoHotkey stays** and drives AkuWM through the shim | `tests/fullscreen` green (no check fails twice) and `tests/wm` green with AHK on AkuWM; Zebar pills work (its requests captured); one day of normal use | S6 Zebar reconnect when the server restarts · S7 mixed-DPI rects | XL |
+| **M2** | the safety net first (11.1, landed), then it takes over the WM: cloak-hiding, workspaces, states, rules, layout, z-order, fullscreen, the taskbar mark, the pill sync, the IPC on 6123 and the `glazewm` shim. GlazeWM is switched off; **AutoHotkey stays** and drives AkuWM through the shim | `tests/fullscreen` green (no check fails twice) and `tests/wm` green with AHK on AkuWM; Zebar pills work (its requests captured); one day of normal use | S6 Zebar reconnect when the server restarts · S7 mixed-DPI rects | XL |
 | **M3** | input and behaviours: chords, app-toggle, scratchpad, Alt+drag, switcher, power menu, the Terminal quirk, virtual-desktop fold. AutoHotkey is switched off | `tests/wm` green with AkuWM's own input; the bench meets the budget; the keymap gaps of section 8 decided and bound | -- | L |
 | **M4** | journal, repair, display changes, suspend/resume | repair and display suites green; a real suspend with the main monitor off leaves the desk intact; the fork and the AHK are removed from the Startup folder (the code stays in git for one more milestone) | -- | M |
 | **M5** | the GUI: Rules, Startup, Apps, Windows, Shortcuts, Monitors, Tools, Log, Doctor; `Hyper+S` | headless tests green; the driven smoke opens every section; a rule edited in the GUI is live after Apply | -- | L |
@@ -792,13 +792,44 @@ because a `uiAccess` process is launched through AppInfo and its output cannot
 be redirected by whoever starts it -- the driven suites will need it for the
 same reason.
 
-## 11. Migration and rollback
+## 11. Migration, rollback, and getting the desk back
 
-Between M1 and M4 both stacks are installed. Switching is one script,
-`akuwm-switch.ps1 akuwm|glazewm`: it changes which Startup shortcuts exist,
-which of `glazewm.exe`/the shim is on the PATH, restarts Zebar, and runs
-`doctor`. The GlazeWM config and the AHK stay untouched until M7. The
-journal format is new; the old `layout.tsv` is imported once by M4.
+Between M1 and M4 both stacks are installed, and the rule that makes that
+worth anything is this one:
+
+> **Nothing of AkuWM goes into the Startup folder until M4.** Restarting the
+> machine comes up on GlazeWM, AutoHotkey and Zebar exactly as before.
+
+That is a property of the machine, not a feature of the program: no code of
+AkuWM's has to run correctly, or at all, for it to hold. It is the answer to
+"what if something goes wrong and I cannot use the computer" -- the same
+answer whether AkuWM crashed, froze, or is working perfectly and is simply
+not wanted. `akuwm-switch.ps1 -To akuwm|glazewm` switches the **session** and
+deliberately leaves Startup alone; it also restarts Zebar and runs `doctor`.
+The GlazeWM config and the AHK stay untouched until M7. The journal format is
+new; the old `layout.tsv` is imported once by M4.
+
+A cloak cannot outlive a logon either -- it is a property of a live window --
+so logging out and back in cannot leave anything hidden.
+
+### 11.1 The safety net (landed with M2, `AkuWM fa79b7d`)
+
+Written before AkuWM was allowed to move its first window. Full text:
+`docs/recovery.md` in the AkuWM repo.
+
+| | what it is | how it is proven |
+|---|---|---|
+| **cloak ledger** `cloaked.json` | every window AkuWM has hidden, written *before* the cloak | M1 on the desk: nine windows recovered |
+| **geometry journal** `geometry.json` | where each window was before AkuWM first moved it; the **first touch** is what is remembered, because what must come back is the desk before the window manager, not before its last command | 8 unit tests against a fake desk |
+| **restore on every exit** | clean stop, `Ctrl+C`, unhandled exception, and the next start all run the same restore; running it twice is harmless | unit test |
+| **watchdog** | the wm loop leaves a heartbeat; ten seconds of silence and a thread that shares nothing with it restores the desk and ends the process. A crash runs the exit handlers, a freeze does not, and nothing else on the machine would notice | `akuwm daemon --stall-test 30` on the desk: process ends with code 3 at ten seconds |
+| **safe mode** | two runs in a row that never reached their own shutdown and the third manages nothing until `--force` | two kills on the desk: the third start refused |
+| **`akuwm rescue`** | stops the daemon and restores from the files, never handed to the running AkuWM to execute | 10 unit tests; `rescue` on the desk stopped a live daemon and reported |
+| **the Desktop button** | `Rescue my desk (AkuWM).lnk`, installed with the binary, because the way out must be reachable when the WM is the problem | installed by `tools/install-uiaccess.ps1` |
+
+The stall test on the real machine earned its keep immediately: it found that
+an **idle** loop went silent, so the watchdog killed a healthy daemon ten
+seconds after it started. A quiet desk now beats like a busy one.
 
 ## 12. Risks
 
